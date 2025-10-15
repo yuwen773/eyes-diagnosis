@@ -1,0 +1,22 @@
+package com.csust.eyediagnosis.model.dto.diagnosis;
+
+import lombok.Data;
+
+import java.io.Serializable;
+
+/**
+ * @ClassNameDiagnosisDTO
+ * @Description TODO
+ * @Author钰玟
+ * @Date2025/4/27 下午7:16
+ * @Version 1.0
+ **/
+@Data
+public class DiagnosisReexamineDTO implements Serializable {
+    /**
+     * 诊断id
+     */
+    private Long id;
+
+    private static final long serialVersionUID = 1L;
+}
