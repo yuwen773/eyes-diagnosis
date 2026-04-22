@@ -121,3 +121,45 @@ CREATE TABLE t_chat_history
 -- 通用语法
 ALTER TABLE t_chatsession
     DROP COLUMN message;
+
+-- Agent会话表
+CREATE TABLE IF NOT EXISTS t_agent_session (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    title VARCHAR(255) DEFAULT '新会话' COMMENT '会话标题',
+    status TINYINT DEFAULT 1 COMMENT '状态:0结束,1活跃',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_session_id (session_id)
+) COMMENT 'Agent会话表';
+
+-- Agent消息表
+CREATE TABLE IF NOT EXISTS t_agent_message (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
+    role VARCHAR(20) NOT NULL COMMENT '角色:user/assistant/tool/reasoning',
+    content TEXT COMMENT '消息内容',
+    message_type VARCHAR(20) COMMENT '类型:text/tool_request/tool_confirm/reasoning',
+    tool_calls JSON COMMENT '工具调用列表',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_session_id (session_id),
+    INDEX idx_create_time (create_time)
+) COMMENT 'Agent消息表';
+
+-- MCP服务器表
+CREATE TABLE IF NOT EXISTS t_mcp_server (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    mcp_server_code VARCHAR(100) NOT NULL COMMENT '服务器代码',
+    mcp_server_name VARCHAR(255) NOT NULL COMMENT '服务器名称',
+    install_type VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
+    host VARCHAR(500) COMMENT '服务器地址',
+    deploy_config JSON COMMENT '部署配置',
+    status TINYINT DEFAULT 1 COMMENT '状态:0禁用,1启用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    UNIQUE INDEX idx_code_user (mcp_server_code, user_id)
+) COMMENT 'MCP服务器配置表';
