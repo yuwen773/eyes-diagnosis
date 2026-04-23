@@ -1,0 +1,168 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776931536870,
+  "projectRoot": "D:\\Work\\Backend\\JAVA\\Project\\Game\\diagonosis\\SpringBoot3.x\\eye-diagnosis\\frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vue",
+        "version": "3.5.13",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "5.4.10",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "pure-build": "vite build",
+      "build": "run-p type-check \"build-only {@}\" --",
+      "preview": "vite preview",
+      "build-only": "vite build",
+      "type-check": "vue-tsc --build --force",
+      "lint": "eslint . --fix",
+      "format": "prettier --write src/",
+      "openapi": "node openapi.config.js"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 2,
+      "lastAccessed": 1776931536815,
+      "keyFiles": [
+        "favicon.ico",
+        "index.html"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1776931536816,
+      "keyFiles": [
+        "favicon.ico"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1776931536841,
+      "keyFiles": [
+        "App.vue",
+        "main.ts",
+        "request.ts"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 124,
+      "lastAccessed": 1776931536845,
+      "keyFiles": [
+        "ai-ceZUDh2I.png",
+        "apl-B4CMkyY2.js",
+        "asciiarmor-Df11BRmG.js"
+      ]
+    },
+    "src\\api": {
+      "path": "src\\api",
+      "purpose": "API routes",
+      "fileCount": 6,
+      "lastAccessed": 1776931536846,
+      "keyFiles": [
+        "agentController.ts",
+        "diagnosisController.ts",
+        "mcpController.ts"
+      ]
+    },
+    "src\\assets": {
+      "path": "src\\assets",
+      "purpose": "Static assets",
+      "fileCount": 9,
+      "lastAccessed": 1776931536846,
+      "keyFiles": [
+        "agent-theme.css",
+        "banner1.png",
+        "banner2.png"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 2,
+      "lastAccessed": 1776931536847,
+      "keyFiles": [
+        "GlobalHeader.vue",
+        "ImagePreview.vue"
+      ]
+    },
+    "src\\config": {
+      "path": "src\\config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1776931536847,
+      "keyFiles": [
+        "env.ts"
+      ]
+    },
+    "src\\pages": {
+      "path": "src\\pages",
+      "purpose": "Page components",
+      "fileCount": 2,
+      "lastAccessed": 1776931536847,
+      "keyFiles": [
+        "HomePage.vue",
+        "NoAuth.vue"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

@@ -1,0 +1,16 @@
+<template>
+  <div id="app">
+    <BasicLayout />
+  </div>
+</template>
+
+<script setup lang="ts">
+import BasicLayout from "@/layouts/BasicLayout.vue";
+</script>
+<style>
+
+#app {
+  margin: 0;
+  padding: 0;
+}
+</style>

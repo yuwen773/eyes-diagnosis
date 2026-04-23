@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"D:/Work/Backend/JAVA/Project/Game/diagonosis/SpringBoot3.x/eye-diagnosis/frontend\\\" && npx tsc --noEmit src/api/diagnosisController.ts 2>&1\",\"timeout\":60000,\"description\":\"Type-check ...",
+  "error": "Exit code 2\nsrc/api/diagnosisController.ts(3,21): error TS2307: Cannot find module '@/request' or its corresponding type declarations.\r\nsrc/api/diagnosisController.ts(8,11): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(12,18): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(23,18): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(33,11): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(37...",
+  "timestamp": "2026-04-23T07:13:02.223Z",
+  "retry_count": 2
+}

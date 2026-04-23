@@ -1,0 +1,91 @@
+/**
+ * Agent 组件 CSS 变量 - 浅色主题
+ * 兼容 VisionSpace Agent 组件所需的 CSS 变量
+ */
+:root {
+  /* 主色 */
+  --color-primary-50: #e6f7ff;
+  --color-primary-100: #bae7ff;
+  --color-primary-200: #91d5ff;
+  --color-primary-300: #69c0ff;
+  --color-primary-400: #40a9ff;
+  --color-primary-500: #1890ff;
+  --color-primary-600: #096dd9;
+  --color-primary-700: #0050b3;
+  --color-primary-800: #003a8c;
+  --color-primary-900: #002766;
+
+  /* 次要色 */
+  --color-secondary-400: #b37feb;
+  --color-secondary-500: #9254de;
+
+  /* 强调色 */
+  --color-accent-purple: #722ed1;
+  --color-accent-pink: #eb2f96;
+  --color-accent-cyan: #13c2c2;
+
+  /* 背景 */
+  --color-bg-primary: #f5f5f5;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #f0f0f0;
+  --color-bg-elevated: #ffffff;
+  --color-bg-hover: #e6f7ff;
+  --color-bg-active: #bae7ff;
+
+  /* 文字 */
+  --color-text-primary: #262626;
+  --color-text-secondary: #595959;
+  --color-text-tertiary: #8c8c8c;
+  --color-text-disabled: #bfbfbf;
+  --color-text-inverse: #ffffff;
+
+  /* 边框 */
+  --color-border-subtle: #f0f0f0;
+  --color-border-default: #d9d9d9;
+  --color-border-strong: #8c8c8c;
+  --color-border-accent: rgba(24, 144, 255, 0.4);
+
+  /* 状态色 */
+  --color-success: #52c41a;
+  --color-warning: #faad14;
+  --color-error: #ff4d4f;
+  --color-info: #1890ff;
+
+  /* 间距 */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* 磨砂玻璃 */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-light: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(12px);
+  --glass-blur-light: blur(8px);
+
+  /* 字体 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
