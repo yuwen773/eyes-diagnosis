@@ -177,3 +177,21 @@ CREATE TABLE IF NOT EXISTS t_mcp_server (
 -- gRPC 诊断重构：新增图片哈希字段用于缓存去重
 ALTER TABLE t_diagnosis ADD COLUMN image_hash VARCHAR(64) NULL COMMENT '图片SHA-256哈希';
 CREATE INDEX idx_image_hash ON t_diagnosis(image_hash);
+
+-- 知识库文档表
+CREATE TABLE IF NOT EXISTS t_knowledge_document (
+    id           BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    user_id      BIGINT                             NOT NULL COMMENT '上传用户id',
+    title        VARCHAR(255)                       NOT NULL COMMENT '文档标题',
+    file_name    VARCHAR(512)                       NOT NULL COMMENT '原始文件名',
+    file_url     VARCHAR(1024)                      NOT NULL COMMENT 'COS存储地址',
+    file_size    BIGINT                             NULL COMMENT '文件大小(字节)',
+    file_type    VARCHAR(32)                        NOT NULL COMMENT '文件类型:pdf/md/txt/docx',
+    chunk_count  INT                               DEFAULT 0 COMMENT '分块数量',
+    status       TINYINT DEFAULT 0                  NOT NULL COMMENT '状态:0=处理中,1=已完成,2=失败',
+    create_time  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    update_time  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_delete    TINYINT DEFAULT 0                  NOT NULL COMMENT '逻辑删除',
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status)
+) COMMENT '知识库文档表' COLLATE = utf8mb4_unicode_ci;
