@@ -14,6 +14,9 @@ public interface DiagnosisMapper extends BaseMapper<Diagnosis> {
 
     @Select("select id from t_diagnosis where url = #{imageUrl}")
     Long selectIdByImageUrl(String  imageUrl);
+
+    @Select("SELECT * FROM t_diagnosis WHERE image_hash = #{imageHash} AND isDelete = 0 LIMIT 1")
+    Diagnosis selectByImageHash(String imageHash);
 }
 
 

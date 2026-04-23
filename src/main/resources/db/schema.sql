@@ -125,28 +125,38 @@ ALTER TABLE t_chatsession
 -- Agent会话表
 CREATE TABLE IF NOT EXISTS t_agent_session (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
-    user_id BIGINT NOT NULL COMMENT '用户ID',
+    sessionId VARCHAR(64) NOT NULL COMMENT '会话ID',
+    userId BIGINT NOT NULL COMMENT '用户ID',
     title VARCHAR(255) DEFAULT '新会话' COMMENT '会话标题',
+    modelName VARCHAR(100) COMMENT '模型名称',
     status TINYINT DEFAULT 1 COMMENT '状态:0结束,1活跃',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_user_id (user_id),
-    INDEX idx_session_id (session_id)
-) COMMENT 'Agent会话表';
+    lastMessage VARCHAR(500) DEFAULT '' COMMENT '最后一条消息',
+    messageCount INT DEFAULT 0 COMMENT '消息数量',
+    summaryContent TEXT COMMENT '摘要内容',
+    summaryAt DATETIME COMMENT '摘要时间',
+    checkpointData BLOB COMMENT '检查点数据',
+    createdTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedTime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    expiredTime DATETIME COMMENT '过期时间',
+    isDelete INT DEFAULT 0 COMMENT '逻辑删除',
+    INDEX idx_userId (userId),
+    INDEX idx_sessionId (sessionId)
+) COMMENT 'Agent会话表' COLLATE = utf8mb4_unicode_ci;
 
 -- Agent消息表
-CREATE TABLE IF NOT EXISTS t_agent_message (
+DROP TABLE IF EXISTS t_agent_message;
+CREATE TABLE t_agent_message (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
-    role VARCHAR(20) NOT NULL COMMENT '角色:user/assistant/tool/reasoning',
+    sessionId VARCHAR(64) NOT NULL COMMENT '会话ID',
+    role VARCHAR(20) NOT NULL COMMENT '角色:USER/ASSISTANT',
+    subType VARCHAR(30) COMMENT '子类型:reasoning/tool-call/tool-result/mcp-confirm/text',
     content TEXT COMMENT '消息内容',
-    message_type VARCHAR(20) COMMENT '类型:text/tool_request/tool_confirm/reasoning',
-    tool_calls JSON COMMENT '工具调用列表',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_session_id (session_id),
-    INDEX idx_create_time (create_time)
-) COMMENT 'Agent消息表';
+    tokenCount INT DEFAULT 0 COMMENT 'token数',
+    isSummary INT DEFAULT 0 COMMENT '是否摘要',
+    createdTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_sessionId (sessionId),
+    INDEX idx_createdTime (createdTime)
+) COMMENT 'Agent消息表' COLLATE = utf8mb4_unicode_ci;
 
 -- MCP服务器表
 CREATE TABLE IF NOT EXISTS t_mcp_server (
@@ -163,3 +173,7 @@ CREATE TABLE IF NOT EXISTS t_mcp_server (
     INDEX idx_user_id (user_id),
     UNIQUE INDEX idx_code_user (mcp_server_code, user_id)
 ) COMMENT 'MCP服务器配置表';
+
+-- gRPC 诊断重构：新增图片哈希字段用于缓存去重
+ALTER TABLE t_diagnosis ADD COLUMN image_hash VARCHAR(64) NULL COMMENT '图片SHA-256哈希';
+CREATE INDEX idx_image_hash ON t_diagnosis(image_hash);

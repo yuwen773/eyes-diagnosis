@@ -96,6 +96,11 @@ public class Diagnosis {
     private Date createTime;
 
     /**
+     * 图片哈希 (SHA-256)
+     */
+    private String imageHash;
+
+    /**
      * 是否删除
      */
     @TableLogic

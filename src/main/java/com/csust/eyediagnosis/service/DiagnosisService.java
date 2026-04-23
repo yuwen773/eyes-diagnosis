@@ -2,7 +2,6 @@ package com.csust.eyediagnosis.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
@@ -56,8 +55,9 @@ public interface DiagnosisService extends IService<Diagnosis> {
 
     /**
      * 根据上传的图片进行诊断
-     * @param diagnosisDTO dto
+     * @param file 上传的图片文件
+     * @param loginUser 登录用户
      * @return vo
      */
-    DiagnosisResultVO doDiagnosis(DiagnosisDTO diagnosisDTO);
+    DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser);
 }

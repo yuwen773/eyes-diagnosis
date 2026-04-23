@@ -20,12 +20,13 @@
             <result property="picScale" column="picScale" />
             <result property="picFormat" column="picFormat" />
             <result property="createTime" column="createTime" />
+            <result property="imageHash" column="imageHash" />
             <result property="isDelete" column="isDelete" />
     </resultMap>
 
     <sql id="Base_Column_List">
         id,url,userId,result,confidence,recommendations,
         details,severity,reexamineStatus,picSize,picWidth,picHeight,
-        picScale,picFormat,createTime,isDelete
+        picScale,picFormat,createTime,imageHash,isDelete
     </sql>
 </mapper>

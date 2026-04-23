@@ -12,7 +12,6 @@ import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
-import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
@@ -143,12 +142,14 @@ public class DiagnosisController {
 
     @PostMapping("/diagnosis")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<DiagnosisResultVO> doDiagnosis(@RequestBody DiagnosisDTO diagnosisDTO){
-        if(diagnosisDTO.getImageUrl()==null){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+    public BaseResponse<DiagnosisResultVO> doDiagnosis(
+            @RequestPart("file") MultipartFile file,
+            HttpServletRequest request) {
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请上传诊断图片");
         }
-        DiagnosisResultVO diagnosisResultVO = diagnosisService.doDiagnosis(diagnosisDTO);
-        System.err.println(diagnosisResultVO);
+        User loginUser = userService.getLoginUser(request);
+        DiagnosisResultVO diagnosisResultVO = diagnosisService.doDiagnosis(file, loginUser);
         return ResultUtils.success(diagnosisResultVO);
     }
     /**
