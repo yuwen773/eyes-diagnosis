@@ -35,7 +35,7 @@
         </a-tag>
       </template>
       <template v-else-if="column.dataIndex === 'createTime'">
-        {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+        {{ dayjs(Number(record.createTime)).format('YYYY-MM-DD HH:mm:ss') }}
       </template>
       <template v-else-if="column.key === 'action'">
         <a-popconfirm title="确定删除该用户？" @confirm="doDelete(record.id)">
@@ -114,7 +114,7 @@ const fetchData = async () => {
     })
     if (res.data.data) {
       dataList.value = res.data.data.records ?? []
-      total.value = res.data.data.total ?? 0
+      total.value = Number(res.data.data.total) || 0
     } else {
       message.error('获取数据失败' + res.data.msg)
     }

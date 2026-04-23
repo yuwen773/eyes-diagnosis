@@ -34,7 +34,7 @@
             />
           </template>
           <template v-else-if="column.dataIndex === 'uploadTime'">
-            {{ dayjs(record.uploadTime).format('YYYY-MM-DD HH:mm:ss') }}
+            {{ dayjs(Number(record.uploadTime)).format('YYYY-MM-DD HH:mm:ss') }}
           </template>
           <template v-else-if="column.key === 'action'">
             <a-space>

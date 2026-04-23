@@ -15,6 +15,7 @@
       v-model:selectedKeys="selectedKeys"
       theme="dark"
       mode="inline"
+      @click="onMenuClick"
     >
       <a-menu-item key="/admin/dashboard">
         <template #icon>
@@ -53,7 +54,7 @@
         <span>数据分析</span>
       </a-menu-item>
       <a-menu-divider />
-      <a-menu-item key="/" @click="goHome">
+      <a-menu-item key="/">
         <template #icon>
           <RollbackOutlined />
         </template>
@@ -92,8 +93,8 @@ watch(
   }
 )
 
-const goHome = () => {
-  router.push('/')
+const onMenuClick = ({ key }: { key: string }) => {
+  router.push(key)
 }
 </script>
 

@@ -24,7 +24,7 @@
         <div v-html="record.newsContent"></div>
       </template>
       <template v-else-if="column.dataIndex === 'publishTime'">
-        {{ dayjs(record.publishTime).format('YYYY-MM-DD HH:mm:ss') }}
+        {{ dayjs(Number(record.publishTime)).format('YYYY-MM-DD HH:mm:ss') }}
       </template>
       <template v-else-if="column.dataIndex === 'author'">
         {{ record.author }}
@@ -99,7 +99,7 @@ const fetchData = async () => {
     })
     if (res.data.data) {
       dataList.value = res.data.data.records ?? []
-      total.value = res.data.data.total ?? 0
+      total.value = Number(res.data.data.total) || 0
     } else {
       message.error('获取数据失败' + res.data.msg)
     }

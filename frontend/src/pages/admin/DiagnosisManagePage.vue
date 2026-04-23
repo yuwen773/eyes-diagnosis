@@ -51,7 +51,7 @@
           />
         </template>
         <template v-if="column.dataIndex === 'diagnosisTime'">
-          {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+          {{ dayjs(Number(record.createTime)).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
         <template v-if="column.key === 'action'">
           <div class="flex items-center gap-2">
@@ -107,7 +107,7 @@
             </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="诊断时间">
-            {{ dayjs(currentRecord.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+            {{ dayjs(Number(currentRecord.createTime)).format('YYYY-MM-DD HH:mm:ss') }}
           </a-descriptions-item>
         </a-descriptions>
       </template>
@@ -198,7 +198,7 @@ const fetchData = async () => {
     const res = await listDiagnosisVoByPageWithCache(params)
     if (res.data.data) {
       dataList.value = res.data.data.records ?? []
-      total.value = res.data.data.total ?? 0
+      total.value = Number(res.data.data.total) || 0
     } else {
       message.error('获取数据失败：' + (res.data.msg ?? '未知错误'))
     }
