@@ -1,6 +1,6 @@
 <template>
   <a-layout-sider
-    v-model:collapsed="collapsed"
+    :collapsed="collapsed"
     :trigger="null"
     collapsible
     :width="220"
@@ -52,6 +52,7 @@
         </template>
         <span>数据分析</span>
       </a-menu-item>
+      <a-menu-divider />
       <a-menu-item key="/" @click="goHome">
         <template #icon>
           <RollbackOutlined />
