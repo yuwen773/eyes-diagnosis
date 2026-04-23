@@ -38,7 +38,7 @@ public class TextMcpModelInterceptor {
         // 优先级2: 全局启用的服务（status=1）
         if (!Boolean.TRUE.equals(chatRequest.getDisableMcpDefault())) {
             List<McpServer> enabledServers = mcpServerMapper.selectList(
-                new LambdaQueryWrapper<McpServer>
+                new LambdaQueryWrapper<McpServer>()
                     .eq(McpServer::getUserId, userId)
                     .eq(McpServer::getStatus, 1)
             );
