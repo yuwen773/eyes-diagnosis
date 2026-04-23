@@ -9,7 +9,7 @@
       <a-descriptions-item label="手机号">{{ loginUser?.phone || '******' }}</a-descriptions-item>
       <a-descriptions-item label="邮箱">{{ loginUser?.email || '******'}}</a-descriptions-item>
       <a-descriptions-item label="注册时间">{{
-        dayjs(loginUser.createTime).format('YYYY-MM-DD')
+        dayjs(Number(loginUser.createTime)).format('YYYY-MM-DD')
         }}</a-descriptions-item>
       <a-descriptions-item label="角色">
         <a-tag :color="loginUser.userRole === 'admin' ? 'blue' : 'green'">

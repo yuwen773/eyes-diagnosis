@@ -89,6 +89,7 @@ const router = createRouter({
           meta: {
             icon: SettingOutlined,
             access: ACCESS_ENUM.ADMIN,
+            hideInMenu: true,
           },
         },
         {

@@ -124,7 +124,7 @@ import { updateDiagnosisResult } from '@/api/diagnosisController'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 
 const formatDate = (date: string) => {
-  return dayjs(date).format('YYYY年MM月DD日 HH:mm')
+  return dayjs(Number(date)).format('YYYY年MM月DD日 HH:mm')
 }
 
 //获取当前用户的身份

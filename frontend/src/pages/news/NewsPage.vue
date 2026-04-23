@@ -29,7 +29,7 @@
                     <div>
                       <div class="news-author">
                         <span>发布人: {{ item.author }}</span>
-                        <span class="news-date">{{ dayjs(item.publishTime).format('YYYY-MM-DD') }}</span>
+                        <span class="news-date">{{ dayjs(Number(item.publishTime)).format('YYYY-MM-DD') }}</span>
                       </div>
                       <div class="news-brief">{{ item.summary }}</div>
                     </div>

@@ -179,7 +179,7 @@ const searchParams = reactive<API.DiagnosisQueryDTO>({
 
 //格式化日期
 const formatDate = (date: string) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm')
+  return dayjs(Number(date)).format('YYYY-MM-DD HH:mm')
 }
 //状态=>颜色展示
 const getStatusColor = (status: string) => {
