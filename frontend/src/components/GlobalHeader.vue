@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, LogoutOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useRouter } from "vue-router"
@@ -43,6 +43,7 @@ const originItems = computed(() => {
   return router.getRoutes()
     .filter((item) => {
       if(item.meta?.hideInMenu) return false
+      if(!item.meta?.icon) return false
       return checkAccess(loginUserStore.loginUser, item.meta?.access as string)
     })
     .map(menuToRouteItem)
@@ -58,6 +59,12 @@ const items = ref<MenuProps['items']>(originItems)
 
 const goCenter = () => {
   router.push('/user/userCenter')
+}
+
+const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
+
+const goAdmin = () => {
+  router.push('/admin/dashboard')
 }
 </script>
 
@@ -98,6 +105,10 @@ const goCenter = () => {
                   <a-menu-item @click="goCenter">
                     <UserOutlined />
                     个人中心
+                  </a-menu-item>
+                  <a-menu-item v-if="isAdmin" @click="goAdmin">
+                    <SettingOutlined />
+                    系统管理
                   </a-menu-item>
                   <a-menu-item @click="doLogout">
                     <LogoutOutlined />
