@@ -19,7 +19,6 @@ import com.csust.eyediagnosis.model.dto.news.NewsUploadDTO;
 import com.csust.eyediagnosis.model.entity.News;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.news.NewsVO;
-import com.csust.eyediagnosis.service.AttachmentService;
 import com.csust.eyediagnosis.service.NewsService;
 import com.csust.eyediagnosis.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,8 +47,6 @@ public class NewsController {
 
     @Resource
     private NewsService newsService;
-    @Resource
-    private AttachmentService attachmentService;
     @Resource
     private UserService userService;
     @Resource
@@ -155,10 +152,6 @@ public class NewsController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         News news = new News();
-        //图片的url
-//        @Deprecated
-//        List<Attachment> byNewsId = attachmentService.getByNewsId();
-//        newsUpdateDTO.setAttachments(byNewsId);
         //设置摘要
         String summary = newsUpdateDTO.getContent().substring(0,30);
         BeanUtils.copyProperties(newsUpdateDTO, news);

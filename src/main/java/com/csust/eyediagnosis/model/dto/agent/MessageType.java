@@ -1,10 +1,25 @@
 package com.csust.eyediagnosis.model.dto.agent;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
+
+@Getter
 public enum MessageType {
-    ASSISTANT,      // 普通助手回复
-    USER,           // 用户消息
-    TOOL_REQUEST,   // 工具调用请求
-    TOOL_RESULT,    // 工具返回结果
-    TOOL_CONFIRM,   // 工具执行确认
-    REASONING       // 推理过程
+    ASSISTANT("assistant"),
+    USER("user"),
+    TOOL_REQUEST("tool-request"),
+    TOOL_RESULT("tool-result"),
+    TOOL_CONFIRM("tool-confirm"),
+    REASONING("reasoning");
+
+    private final String value;
+
+    MessageType(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
 }
