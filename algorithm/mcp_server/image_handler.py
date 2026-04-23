@@ -36,7 +36,7 @@ def _looks_like_filepath(s: str) -> bool:
 
 def _resolve_url(url: str) -> str:
     try:
-        resp = httpx.get(url, timeout=30)
+        resp = httpx.get(url, timeout=30, max_size=50 * 1024 * 1024)  # 50MB limit
         resp.raise_for_status()
     except httpx.HTTPError as e:
         raise ValueError(f"下载图片失败: {e}") from e
@@ -52,6 +52,8 @@ def _resolve_filepath(path: str) -> str:
 
 
 def _resolve_base64(data: str) -> str:
+    if len(data) > 100 * 1024 * 1024:  # 100MB string limit
+        raise ValueError("Base64 输入数据过大")
     try:
         raw = base64.b64decode(data, validate=True)
     except Exception as e:

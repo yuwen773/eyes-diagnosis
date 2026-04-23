@@ -3,7 +3,7 @@ import logging
 from mcp.server.fastmcp import FastMCP
 
 from mcp_server.config import MCPConfig
-from mcp_server.tools import load_model
+from mcp_server.tools import diagnose, load_model
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,6 @@ async def eye_disease_diagnosis(image_input: str) -> str:
         JSON格式的诊断结果，包含 predicted_label、predicted_label_cn、probability、
         reliability_score、description 和 top_predictions 字段。
     """
-    from mcp_server.tools import diagnose
     return await diagnose(image_input)
 
 

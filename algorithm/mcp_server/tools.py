@@ -3,8 +3,7 @@ import logging
 import os
 import tempfile
 
-import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Run this module from the algorithm/ directory, or ensure the package is on PYTHONPATH.
 from eye_disease_model import EyeDiseaseModel
 
 from mcp_server.config import MCPConfig
