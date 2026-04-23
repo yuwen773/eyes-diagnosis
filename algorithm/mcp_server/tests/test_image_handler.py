@@ -44,7 +44,7 @@ def test_resolve_http_url():
 
     with patch("httpx.get", return_value=mock_response) as mock_get:
         result_path = resolve_image("https://example.com/eye.png")
-        mock_get.assert_called_once_with("https://example.com/eye.png", timeout=30)
+        mock_get.assert_called_once_with("https://example.com/eye.png", timeout=30, max_size=52428800)
         assert os.path.exists(result_path)
 
 
