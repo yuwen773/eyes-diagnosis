@@ -151,6 +151,7 @@ const getTagColor = (type: string): string => {
 }
 
 /** 上传状态回调 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handleUploadChange = (info: any) => {
   const { file } = info
   if (file.status === 'done') {

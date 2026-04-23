@@ -120,6 +120,7 @@ const pagination = computed(() => {
 })
 
 // 分页参数变化
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const doTableChange = (page: any) => {
   searchParams.current = page.current
   searchParams.pageSize = page.pageSize
