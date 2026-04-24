@@ -353,10 +353,17 @@ const loginUserStore = useLoginUserStore()
 //获取数据
 const fetchData = async () => {
   const userId = loginUserStore.loginUser.id
-  const res = await listDiagnosisVoByPageWithCache({
+  // 构建日期范围参数
+  const params: any = {
     ...searchParams,
     userId
-  })
+  }
+  // 添加日期范围筛选
+  if (dateRange.value && dateRange.value.length === 2) {
+    params.startDate = dateRange.value[0].format('YYYY-MM-DD')
+    params.endDate = dateRange.value[1].format('YYYY-MM-DD')
+  }
+  const res = await listDiagnosisVoByPageWithCache(params)
   if (res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = res.data.data.total ?? 0
