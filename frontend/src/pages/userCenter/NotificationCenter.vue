@@ -1,233 +1,259 @@
-<template>
-  <div class="notification-container">
-    <a-page-header title="通知中心" />
-
-    <div class="notification-content">
-      <a-tabs v-model:activeKey="activeTab" @change="handleTabChange">
-        <a-tab-pane key="all" tab="全部通知" />
-        <a-tab-pane key="unread" tab="未读通知" />
-        <a-tab-pane key="read" tab="已读通知" />
-      </a-tabs>
-
-      <div class="notification-list">
-        <a-empty v-if="filteredNotifications.length === 0" description="暂无通知" />
-        <div v-else>
-          <div
-            v-for="notification in filteredNotifications"
-            :key="notification.id"
-            class="notification-item"
-            :class="{ unread: !notification.isRead }"
-            @click="handleNotificationClick(notification)"
-          >
-            <div class="notification-icon">
-              <BellOutlined />
-            </div>
-            <div class="notification-body">
-              <div class="notification-title">{{ notification.title }}</div>
-              <div class="notification-message">{{ notification.message }}</div>
-              <div class="notification-time">{{ formatTime(notification.createTime) }}</div>
-            </div>
-            <div v-if="!notification.isRead" class="unread-badge"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="notification-footer">
-        <a-button v-if="hasUnread" type="primary" @click="handleMarkAllRead">
-          全部标为已读
-        </a-button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue'
-import { BellOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+import {
+  BellOutlined,
+  CheckOutlined,
+  CheckCircleOutlined,
+  InboxOutlined
+} from '@ant-design/icons-vue'
+import { useNotificationStore } from '@/stores/notification'
+import type { Notification } from '@/stores/notification'
+import NotificationStats from '@/components/user/NotificationStats.vue'
+import NotificationItem from '@/components/user/NotificationItem.vue'
 
-interface Notification {
-  id: string
-  title: string
-  message: string
-  isRead: boolean
-  createTime: number
-}
+const notificationStore = useNotificationStore()
 
 const activeTab = ref('all')
-const notifications = ref<Notification[]>([
-  {
-    id: '1',
-    title: '诊断报告已生成',
-    message: '您的眼底图像诊断报告已生成，请及时查看。',
-    isRead: false,
-    createTime: Date.now() - 3600000,
-  },
-  {
-    id: '2',
-    title: '复诊提醒',
-    message: '您有一项待复诊记录，请注意按时复诊。',
-    isRead: false,
-    createTime: Date.now() - 86400000,
-  },
-  {
-    id: '3',
-    title: '系统更新通知',
-    message: '眼疾诊断系统已更新至最新版本。',
-    isRead: true,
-    createTime: Date.now() - 172800000,
-  },
-])
 
 const filteredNotifications = computed(() => {
   switch (activeTab.value) {
     case 'unread':
-      return notifications.value.filter((n) => !n.isRead)
+      return notificationStore.notifications.filter((n) => !n.isRead)
     case 'read':
-      return notifications.value.filter((n) => n.isRead)
+      return notificationStore.notifications.filter((n) => n.isRead)
     default:
-      return notifications.value
+      return notificationStore.notifications
   }
 })
 
-const hasUnread = computed(() => notifications.value.some((n) => !n.isRead))
+const hasUnread = computed(() => notificationStore.unreadCount > 0)
 
-const formatTime = (timestamp: number) => {
-  const now = Date.now()
-  const diff = now - timestamp
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return new Date(timestamp).toLocaleDateString('zh-CN')
-}
-
-const handleTabChange = () => {
-  // Tab change handling if needed
-}
+onMounted(() => {
+  notificationStore.fetchNotifications()
+})
 
 const handleNotificationClick = (notification: Notification) => {
   if (!notification.isRead) {
-    notification.isRead = true
+    notificationStore.markAsRead(notification.id)
     message.success('已标记为已读')
   }
 }
 
+const handleMarkRead = (notification: Notification) => {
+  notificationStore.markAsRead(notification.id)
+  message.success('已标记为已读')
+}
+
 const handleMarkAllRead = () => {
-  notifications.value.forEach((n) => {
-    n.isRead = true
-  })
+  notificationStore.markAllAsRead()
   message.success('已全部标为已读')
 }
 
-onMounted(() => {
-  // Load notifications from API if needed
-})
+const handleDelete = (notification: Notification) => {
+  notificationStore.deleteNotification(notification.id)
+  message.success('通知已删除')
+}
 </script>
+
+<template>
+  <div class="notification-container">
+    <a-page-header title="通知中心" class="page-header">
+      <template #extra>
+        <a-button
+          v-if="hasUnread"
+          type="primary"
+          class="mark-read-btn"
+          @click="handleMarkAllRead"
+        >
+          <template #icon><CheckOutlined /></template>
+          全部已读
+        </a-button>
+      </template>
+    </a-page-header>
+
+    <!-- 通知统计 -->
+    <NotificationStats
+      :total="notificationStore.notifications.length"
+      :unread-count="notificationStore.unreadCount"
+      :read-count="notificationStore.readCount"
+    />
+
+    <!-- 标签页 -->
+    <div class="notification-tabs">
+      <a-tabs v-model:activeKey="activeTab" class="tabs">
+        <a-tab-pane key="all">
+          <template #tab>
+            <span class="tab-label">
+              <InboxOutlined />
+              全部通知
+              <span class="tab-count">{{ notificationStore.notifications.length }}</span>
+            </span>
+          </template>
+        </a-tab-pane>
+        <a-tab-pane key="unread">
+          <template #tab>
+            <span class="tab-label">
+              <BellOutlined />
+              未读通知
+              <span class="tab-count" v-if="notificationStore.unreadCount > 0">{{ notificationStore.unreadCount }}</span>
+            </span>
+          </template>
+        </a-tab-pane>
+        <a-tab-pane key="read">
+          <template #tab>
+            <span class="tab-label">
+              <CheckCircleOutlined />
+              已读通知
+            </span>
+          </template>
+        </a-tab-pane>
+      </a-tabs>
+    </div>
+
+    <!-- 通知列表 -->
+    <div class="notification-list">
+      <a-empty v-if="filteredNotifications.length === 0" class="empty-state">
+        <template #image>
+          <BellOutlined class="empty-icon" />
+        </template>
+        <template #description>
+          <span class="empty-text">暂无通知</span>
+        </template>
+      </a-empty>
+
+      <transition-group name="list" tag="div" class="notification-items" v-else>
+        <NotificationItem
+          v-for="notification in filteredNotifications"
+          :key="notification.id"
+          :notification="notification"
+          @click="handleNotificationClick"
+          @mark-read="handleMarkRead"
+          @delete="handleDelete"
+        />
+      </transition-group>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .notification-container {
-  padding: 24px;
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  min-height: 400px;
+  flex: 1;
+  animation: fadeIn 0.4s ease-out;
 }
 
-.notification-content {
-  margin-top: 16px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.notification-list {
-  margin-top: 16px;
-  max-height: 500px;
-  overflow-y: auto;
+/* === 页面标题 === */
+.page-header {
+  margin-bottom: var(--claude-space-5);
+  padding: 0;
+  background: transparent;
 }
 
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 16px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
-  background: var(--color-bg);
-  margin-bottom: 12px;
+.page-header :deep(.ant-page-header-content) {
+  padding: 0;
 }
 
-.notification-item:hover {
-  background: var(--color-primary-light);
+.mark-read-btn {
+  background: var(--claude-brand);
+  border-color: var(--claude-brand);
+  border-radius: var(--claude-radius-md);
+  transition: all var(--claude-transition-base);
 }
 
-.notification-item.unread {
-  background: rgba(201, 100, 66, 0.08);
+.mark-read-btn:hover {
+  background: var(--claude-brand-dark) !important;
+  border-color: var(--claude-brand-dark) !important;
 }
 
-.notification-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-primary-light);
+/* === 标签页 === */
+.notification-tabs {
+  margin-bottom: var(--claude-space-5);
+}
+
+.tabs :deep(.ant-tabs-nav) {
+  margin-bottom: 0;
+}
+
+.tabs :deep(.ant-tabs-tab) {
+  padding: var(--claude-space-3) 0;
+  font-size: 15px;
+}
+
+.tab-label {
   display: flex;
   align-items: center;
+  gap: var(--claude-space-2);
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.notification-icon :deep(.anticon) {
-  font-size: 18px;
-  color: #c96442;
-}
-
-.notification-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-title {
-  font-weight: 500;
-  color: var(--color-text);
-  margin-bottom: 4px;
-}
-
-.notification-message {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.notification-time {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   font-size: 12px;
-  color: var(--color-text-disabled);
+  font-weight: 600;
+  color: #fff;
+  background: var(--claude-brand);
+  border-radius: 10px;
+  margin-left: 4px;
 }
 
-.unread-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #c96442;
+/* === 通知列表 === */
+.notification-list {
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-cream);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-4);
+  min-height: 300px;
 }
 
-.notification-footer {
-  margin-top: 24px;
-  text-align: center;
+.notification-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-3);
 }
 
-.notification-footer :deep(.ant-btn-primary) {
-  background: #c96442;
-  border-color: #c96442;
+/* === 空状态 === */
+.empty-state {
+  padding: var(--claude-space-12) 0;
 }
 
-.notification-footer :deep(.ant-btn-primary:hover) {
-  background: #b5593a;
-  border-color: #b5593a;
+.empty-icon {
+  font-size: 48px;
+  color: var(--claude-text-disabled);
+}
+
+.empty-text {
+  color: var(--claude-text-tertiary);
+  font-size: 15px;
+}
+
+/* === 列表动画 === */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 </style>

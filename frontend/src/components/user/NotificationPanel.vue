@@ -79,7 +79,7 @@ const loading = ref(false)
 const notifications = computed(() => notificationStore.notifications)
 const unreadCount = computed(() => notificationStore.unreadCount)
 
-const formatTime = (time: string) => {
+const formatTime = (time: string | number) => {
   return dayjs(time).fromNow()
 }
 
