@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-import tempfile
+
+import torch
 
 # Run this module from the algorithm/ directory, or ensure the package is on PYTHONPATH.
 from eye_disease_model import EyeDiseaseModel
@@ -23,7 +24,7 @@ def load_model(config: MCPConfig) -> None:
         num_classes=config.num_classes,
         model_name=config.model_arch,
     )
-    _model.device = __import__("torch").device(config.device)
+    _model.device = torch.device(config.device)
     _model.model = _model.model.to(_model.device)
 
     if config.model_path and os.path.exists(config.model_path):
@@ -55,7 +56,7 @@ async def diagnose(image_input: str) -> str:
     logger.info(f"Diagnosing image, input length: {len(image_input)}")
     temp_path = None
     try:
-        temp_path = resolve_image(image_input)
+        temp_path = await resolve_image(image_input)
         result = _model.predict(temp_path)
         diagnosis = build_diagnosis_result(result)
         return json.dumps(diagnosis, ensure_ascii=False, indent=2)

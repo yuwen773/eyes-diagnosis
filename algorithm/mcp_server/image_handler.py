@@ -6,7 +6,7 @@ from pathlib import Path
 import httpx
 
 
-def resolve_image(image_input: str) -> str:
+async def resolve_image(image_input: str) -> str:
     """Resolve image input to a local file path.
 
     Accepts:
@@ -15,7 +15,7 @@ def resolve_image(image_input: str) -> str:
     - Base64 encoded image data
     """
     if image_input.startswith(("http://", "https://")):
-        return _resolve_url(image_input)
+        return await _resolve_url(image_input)
 
     if _looks_like_filepath(image_input):
         return _resolve_filepath(image_input)
@@ -34,21 +34,23 @@ def _looks_like_filepath(s: str) -> bool:
     return False
 
 
-def _resolve_url(url: str) -> str:
+async def _resolve_url(url: str) -> str:
     try:
-        resp = httpx.get(url, timeout=30, max_size=50 * 1024 * 1024)  # 50MB limit
-        resp.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, timeout=30)
+            resp.raise_for_status()
+            content = resp.content
+            if len(content) > 50 * 1024 * 1024:
+                raise ValueError("下载图片超过 50MB 限制")
     except httpx.HTTPError as e:
         raise ValueError(f"下载图片失败: {e}") from e
-    return _write_temp(resp.content, url)
+    return _write_temp(content, url)
 
 
 def _resolve_filepath(path: str) -> str:
     if not os.path.isfile(path):
         raise FileNotFoundError(f"图片文件不存在: {path}")
-    with open(path, "rb") as f:
-        data = f.read()
-    return _write_temp(data, path)
+    return path
 
 
 def _resolve_base64(data: str) -> str:

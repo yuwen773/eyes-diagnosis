@@ -2,7 +2,8 @@ import os
 import base64
 import tempfile
 import pytest
-from unittest.mock import patch, MagicMock
+import asyncio
+from unittest.mock import patch, MagicMock, AsyncMock
 from pathlib import Path
 
 from mcp_server.image_handler import resolve_image
@@ -25,34 +26,39 @@ def _make_test_image_bytes() -> bytes:
 def test_resolve_filepath(tmp_path):
     img = tmp_path / "test.png"
     img.write_bytes(_make_test_image_bytes())
-    result_path = resolve_image(str(img))
-    assert os.path.exists(result_path)
-    assert result_path != str(img)  # should be a temp copy
+    result_path = asyncio.get_event_loop().run_until_complete(resolve_image(str(img)))
+    assert result_path == str(img)  # returns original path directly
 
 
 def test_resolve_base64():
     data = base64.b64encode(_make_test_image_bytes()).decode()
-    result_path = resolve_image(data)
+    result_path = asyncio.get_event_loop().run_until_complete(resolve_image(data))
     assert os.path.exists(result_path)
 
 
-def test_resolve_http_url():
+@pytest.mark.asyncio
+async def test_resolve_http_url():
     img_bytes = _make_test_image_bytes()
     mock_response = MagicMock()
     mock_response.content = img_bytes
     mock_response.raise_for_status = MagicMock()
 
-    with patch("httpx.get", return_value=mock_response) as mock_get:
-        result_path = resolve_image("https://example.com/eye.png")
-        mock_get.assert_called_once_with("https://example.com/eye.png", timeout=30, max_size=52428800)
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with patch("httpx.AsyncClient", return_value=mock_client):
+        result_path = await resolve_image("https://example.com/eye.png")
+        mock_client.get.assert_called_once_with("https://example.com/eye.png", timeout=30)
         assert os.path.exists(result_path)
 
 
 def test_resolve_invalid_base64():
     with pytest.raises(ValueError, match="Base64"):
-        resolve_image("not-valid-base64!!!")
+        asyncio.get_event_loop().run_until_complete(resolve_image("not-valid-base64!!!"))
 
 
 def test_resolve_missing_file():
     with pytest.raises(FileNotFoundError):
-        resolve_image("/nonexistent/path/to/image.png")
+        asyncio.get_event_loop().run_until_complete(resolve_image("/nonexistent/path/to/image.png"))
