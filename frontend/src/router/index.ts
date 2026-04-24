@@ -124,6 +124,14 @@ const router = createRouter({
                 hideInMenu: true,
               },
             },
+            {
+              path: 'notification',
+              name: 'notification',
+              component: () => import('@/pages/userCenter/NotificationCenter.vue'),
+              meta: {
+                hideInMenu: true,
+              },
+            },
           ],
         },
       ],

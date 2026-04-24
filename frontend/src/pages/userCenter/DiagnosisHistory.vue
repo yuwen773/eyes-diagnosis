@@ -45,15 +45,14 @@
       <a-page-header title="诊断历史" />
       <div class="history-actions" style="margin-bottom: 30px">
       <a-form class="searchForm" layout="inline" :model="searchParams" @finish="doSearch">
-<!--TODO        -->
-<!--        <a-form-item label="日期筛选"
-        >
+        <a-form-item label="日期范围">
           <a-range-picker
             v-model:value="dateRange"
             :placeholder="['开始日期', '结束日期']"
+            format="YYYY-MM-DD"
             @change="handleDateChange"
           />
-        </a-form-item>-->
+        </a-form-item>
         <a-form-item label="诊断Id">
           <a-input v-model:value="searchParams.id" placeholder="输入诊断单号" style="width: 300px" />
         </a-form-item>
@@ -64,13 +63,36 @@
           <a-button type="primary" html-type="submit">搜索</a-button>
         </a-form-item>
       </a-form>
+      <div class="export-actions">
+        <a-checkbox v-model:checked="selectAll" @change="handleSelectAll" :disabled="dataList.length === 0">全选</a-checkbox>
+        <a-dropdown :disabled="selectedRowKeys.length === 0">
+          <a-button type="primary">
+            导出全部
+            <DownOutlined />
+          </a-button>
+          <template #overlay>
+            <a-menu @click="handleExportMenuClick">
+              <a-menu-item key="csv">
+                <FileTextOutlined /> 导出为 CSV
+              </a-menu-item>
+              <a-menu-item key="pdf">
+                <FilePdfOutlined /> 导出为 PDF
+              </a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+        <span v-if="selectedRowKeys.length > 0" class="selected-count">已选择 {{ selectedRowKeys.length }} 条</span>
       </div>
+      </div>
+      <!-- Diagnosis Trend Charts -->
+      <DiagnosisTrendChart :diagnosisData="dataList" />
       <div class="table-container">
         <a-table
           :columns="columns"
           :data-source="dataList"
           :loading="loading"
           :pagination="pagination"
+          :row-selection="rowSelection"
           @change="doTableChange"
           rowKey="id"
           class="history-table"
@@ -122,11 +144,134 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted, getCurrentInstance, computed } from 'vue'
 import { useUserStore } from '@/stores/userCenter'
+import DiagnosisTrendChart from '@/components/user/DiagnosisTrendChart.vue'
 import dayjs from 'dayjs'
+import { DownOutlined, FileTextOutlined, FilePdfOutlined } from '@ant-design/icons-vue'
+
 const diagnosisStore = useDiagnosisStore();
 const userStore = useUserStore()
 const loading = ref(false)
 const dateRange = ref<any>([])
+
+// 批量选择相关
+const selectedRowKeys = ref<string[]>([])
+const selectAll = ref(false)
+
+// 表格行选择配置
+const rowSelection = computed(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  onChange: (keys: string[]) => {
+    selectedRowKeys.value = keys
+    selectAll.value = keys.length === dataList.value.length && dataList.value.length > 0
+  }
+}))
+
+// 全选操作
+const handleSelectAll = () => {
+  if (selectAll.value) {
+    selectedRowKeys.value = dataList.value.map((item: any) => item.id)
+  } else {
+    selectedRowKeys.value = []
+  }
+}
+
+// 获取选中的记录
+const getSelectedRecords = () => {
+  return dataList.value.filter((item: any) => selectedRowKeys.value.includes(item.id))
+}
+
+// 导出为 CSV
+const exportToCSV = () => {
+  const records = getSelectedRecords()
+  if (records.length === 0) return
+
+  const headers = ['诊断单号', '诊断日期', '诊断结果', '置信度', '状态']
+  const csvContent = [
+    headers.join(','),
+    ...records.map((record: any) => [
+      record.id,
+      formatDate(record.createTime),
+      `"${record.result || ''}"`,
+      record.confidence ? `${record.confidence}%` : '',
+      record.status || ''
+    ].join(','))
+  ].join('\n')
+
+  const BOM = '﻿'
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `诊断记录_${dayjs().format('YYYYMMDD_HHmmss')}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+  message.success(`成功导出 ${records.length} 条记录为 CSV`)
+}
+
+// 导出为 PDF
+const exportToPDF = () => {
+  const records = getSelectedRecords()
+  if (records.length === 0) return
+
+  const printContent = `
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>诊断记录导出</title>
+      <style>
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f5f5f5; }
+        .header { background: #1890ff; color: white; }
+      </style>
+    </head>
+    <body>
+      <h1>眼科诊断记录</h1>
+      <p>导出时间: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>
+      <table>
+        <thead>
+          <tr class="header">
+            <th>诊断单号</th>
+            <th>诊断日期</th>
+            <th>诊断结果</th>
+            <th>置信度</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${records.map((record: any) => `
+            <tr>
+              <td>${record.id}</td>
+              <td>${formatDate(record.createTime)}</td>
+              <td>${record.result || ''}</td>
+              <td>${record.confidence ? record.confidence + '%' : ''}</td>
+              <td>${record.status || ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `
+
+  const printWindow = window.open('', '_blank')
+  if (printWindow) {
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.print()
+  }
+}
+
+// 导出菜单点击处理
+const handleExportMenuClick = ({ key }: { key: string }) => {
+  if (key === 'csv') {
+    exportToCSV()
+  } else if (key === 'pdf') {
+    exportToPDF()
+  }
+}
 //表格字段名称
 const columns = [
   {
@@ -208,10 +353,17 @@ const loginUserStore = useLoginUserStore()
 //获取数据
 const fetchData = async () => {
   const userId = loginUserStore.loginUser.id
-  const res = await listDiagnosisVoByPageWithCache({
+  // 构建日期范围参数
+  const params: any = {
     ...searchParams,
     userId
-  })
+  }
+  // 添加日期范围筛选
+  if (dateRange.value && dateRange.value.length === 2) {
+    params.startDate = dateRange.value[0].format('YYYY-MM-DD')
+    params.endDate = dateRange.value[1].format('YYYY-MM-DD')
+  }
+  const res = await listDiagnosisVoByPageWithCache(params)
   if (res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = res.data.data.total ?? 0
@@ -344,6 +496,18 @@ onMounted(() => {
   margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.export-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.selected-count {
+  color: var(--color-primary, #1890ff);
+  font-size: 14px;
 }
 
 /* 响应式设计 */

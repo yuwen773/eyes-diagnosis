@@ -5,8 +5,14 @@
 
     <!-- 用户中心内容 -->
     <a-layout class="user-center-container">
-      <!-- 左侧导航 -->
-      <a-layout-sider width="220" class="sider">
+      <!-- 左侧导航 - 桌面端 -->
+      <a-layout-sider width="220" class="sider desktop-sider">
+        <!-- 通知铃铛 -->
+        <div class="notification-bell" @click="handleNotificationClick">
+          <BellOutlined class="bell-icon" />
+          <span v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </div>
+
         <!--用户昵称和用户头像-->
         <div class="user-info">
           <a-avatar
@@ -45,8 +51,56 @@
             <template #icon><history-outlined /></template>
             诊断历史
           </a-menu-item>
+          <!--导航项 》》 通知中心-->
+          <a-menu-item key="notification">
+            <template #icon><bell-outlined /></template>
+            通知中心
+          </a-menu-item>
         </a-menu>
       </a-layout-sider>
+
+      <!-- 移动端顶部导航标签 -->
+      <div class="mobile-tabs-wrapper">
+        <a-tabs v-model:activeKey="activeMobileTab" class="mobile-tabs" @change="handleMobileTabChange">
+          <a-tab-pane key="profile">
+            <template #tab>
+              <div class="mobile-tab-item">
+                <user-outlined class="tab-icon" />
+                <span class="tab-label">个人资料</span>
+              </div>
+            </template>
+          </a-tab-pane>
+          <a-tab-pane key="accountSettings">
+            <template #tab>
+              <div class="mobile-tab-item">
+                <setting-outlined class="tab-icon" />
+                <span class="tab-label">账号设置</span>
+              </div>
+            </template>
+          </a-tab-pane>
+          <a-tab-pane key="diagnosisHistory">
+            <template #tab>
+              <div class="mobile-tab-item">
+                <history-outlined class="tab-icon" />
+                <span class="tab-label">诊断历史</span>
+              </div>
+            </template>
+          </a-tab-pane>
+          <a-tab-pane key="notification">
+            <template #tab>
+              <div class="mobile-tab-item">
+                <bell-outlined class="tab-icon" />
+                <span class="tab-label">通知中心</span>
+              </div>
+            </template>
+          </a-tab-pane>
+        </a-tabs>
+        <!-- 移动端通知铃铛 -->
+        <div class="mobile-notification-bell" @click="handleNotificationClick">
+          <BellOutlined class="bell-icon" />
+          <span v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </div>
+      </div>
 
       <!-- 右侧内容区 -->
       <a-layout class="content-layout">
@@ -101,7 +155,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DiagnosisReportDetail from '@/components/user/DiagnosisReportDetail.vue'
-import { UserOutlined, SettingOutlined, HistoryOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, HistoryOutlined, BellOutlined } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 import { message } from 'ant-design-vue'
@@ -117,13 +171,20 @@ const selectedKeys = ref<string[]>()//['profile']
 const reportModalVisible = ref(false)
 const currentReport = ref<any>(null)
 const avatarModalVisible = ref(false)
+const unreadCount = ref(0)
+const activeMobileTab = ref('profile')
+
+const handleNotificationClick = () => {
+  router.push('/user/userCenter/notification')
+}
 
 watch(
   () => route.path,
   (newPath) => {
     const key = newPath.split('/').pop()
-    if (key && ['profile', 'accountSettings', 'diagnosisHistory'].includes(key)) {
+    if (key && ['profile', 'accountSettings', 'diagnosisHistory', 'notification'].includes(key)) {
       selectedKeys.value = [key]
+      activeMobileTab.value = key
     }
   },
   { immediate: true },
@@ -131,6 +192,11 @@ watch(
 
 const handleMenuClick = ({ key }: { key: string }) => {
   router.push(`/user/userCenter/${key}`)
+}
+
+const handleMobileTabChange = (key: string) => {
+  router.push(`/user/userCenter/${key}`)
+  activeMobileTab.value = key
 }
 const current = ref<string[]>([])
 router.afterEach((to) => {
@@ -179,14 +245,13 @@ onMounted(() => {
 <style scoped>
 .user-center-wrapper {
   min-height: 86vh;
-  background: url('@/assets/login.png') no-repeat center center fixed;
-  background-size: cover;
+  background: var(--color-bg);
   position: relative;
   overflow: hidden;
-  display: flex; /* 添加flex布局 */
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-6);
 }
 
 .background-layer {
@@ -203,22 +268,56 @@ onMounted(() => {
 .user-center-container {
   position: relative;
   z-index: 1;
-  width: 1200px; /* 固定宽度 */
-  height: 600px; /* 固定高度 */
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 1200px;
+  height: 600px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-whisper);
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  /* 移除margin设置，改用父容器flex布局控制居中 */
 }
 
 .sider {
-  background: rgba(255, 255, 255, 0.7);
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   padding: 24px 0;
+}
+
+.notification-bell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 12px 16px;
+  margin: 0 12px 16px;
+  border-radius: 8px;
+  background: #f5f4f0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.notification-bell:hover {
+  background: var(--color-primary-light);
+}
+
+.bell-icon {
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  font-size: 11px;
+  color: #fff;
+  background: #e54d39;
+  border-radius: 9px;
+  padding: 0 5px;
 }
 
 .user-info {
@@ -226,7 +325,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 0 16px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
 }
 
@@ -234,7 +333,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 500;
   margin: 12px 0 8px;
-  color: #1a3a5f;
+  color: var(--color-text);
 }
 
 .user-role {
@@ -243,7 +342,7 @@ onMounted(() => {
 
 .content-layout {
   padding: 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--color-surface);
 }
 
 .ant-menu {
@@ -255,29 +354,47 @@ onMounted(() => {
   margin: 8px 0;
   border-radius: 4px;
   transition: all 0.3s;
+  position: relative;
+}
+
+.ant-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 0;
+  background: #c96442;
+  border-radius: 1px;
+  transition: height 0.3s;
 }
 
 .ant-menu-item:hover {
-  background: rgba(24, 144, 255, 0.1);
+  background: #e8e6dc;
+}
+
+.ant-menu-item-selected::before {
+  height: 24px;
 }
 
 .ant-menu-item-selected {
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  background: rgba(201, 100, 66, 0.15);
+  color: #c96442;
 }
 
 .report-modal :deep(.ant-modal-content) {
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-surface);
   backdrop-filter: blur(10px);
 }
 
 .report-modal :deep(.ant-modal-header) {
   background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
-/* 响应式设计调整 */
+
 @media (max-width: 2000px) {
   .user-center-container {
     width: calc(100% - 200px);
@@ -295,18 +412,106 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) and (min-width: 768px) {
+  .desktop-sider {
+    width: 64px !important;
+  }
+
+  .desktop-sider .user-info {
+    padding: 0 8px 16px;
+  }
+
+  .desktop-sider .user-info .ant-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .desktop-sider .user-name,
+  .desktop-sider .user-role {
+    display: none;
+  }
+
+  .desktop-sider .ant-menu-item {
+    padding: 0 !important;
+    display: flex;
+    justify-content: center;
+  }
+
+  .desktop-sider .ant-menu-item span {
+    display: none;
+  }
+
+  .desktop-sider .notification-bell {
+    margin: 0 8px 12px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .desktop-sider {
+    display: none;
+  }
+
+  .mobile-tabs-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px 8px 0;
+  }
+
+  .mobile-tabs {
+    flex: 1;
+  }
+
+  .mobile-tabs :deep(.ant-tabs-nav) {
+    margin: 0;
+  }
+
+  .mobile-tabs :deep(.ant-tabs-tab) {
+    padding: 8px 0;
+    margin: 0 4px;
+  }
+
+  .mobile-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .tab-icon {
+    font-size: 18px;
+  }
+
+  .tab-label {
+    font-size: 11px;
+  }
+
+  .mobile-notification-bell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 10px;
+    margin-left: 8px;
+    border-radius: 8px;
+    background: #f5f4f0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mobile-notification-bell:hover {
+    background: #e8e6dc;
+  }
+
   .user-center-container {
     width: calc(100% - 40px);
     margin: 0 20px;
     flex-direction: column;
     height: auto;
-  }
-
-  .sider {
-    width: 100% !important;
-    border-right: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    min-height: calc(100vh - 160px);
   }
 
   .content-layout {
