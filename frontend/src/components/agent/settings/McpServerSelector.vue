@@ -112,7 +112,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: number[]): void
+  (e: 'update:modelValue', value: string[]): void
 }>()
 
 // 状态

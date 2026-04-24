@@ -113,7 +113,7 @@ import AgentResourcePanel from '@/components/agent/AgentResourcePanel.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
 import type { ResourceData, ImageResource, LinkResource } from '@/components/agent/types'
-import { useAgentStream } from '@/composables/useAgentStream'
+import { useAgentStream, type StreamMessageType } from '@/composables/useAgentStream'
 import { getChatHistory, getSessions, type SessionVO } from '@/api/agentController'
 import '@/assets/agent-theme.css'
 
@@ -133,7 +133,7 @@ const saveThreadId = (id: string) => {
 }
 
 // State
-const threadId = ref(generateThreadId())
+const threadId = ref<string>(generateThreadId())
 const currentThreadId = ref('')
 const leftCollapsed = ref(false)
 const resourcePanelVisible = ref(false)
@@ -170,7 +170,7 @@ const loadHistoryMessages = async (sessionId: string) => {
 
     messages.value = data.messages
       .map((m: any) => {
-        let type: string
+        let type: StreamMessageType
         if (m.role === 'USER') {
           type = 'user'
         } else {
@@ -228,6 +228,7 @@ const handleSend = async (text: string, files: File[] = []) => {
   pushMessage({
     type: 'user',
     content: text,
+    node: 'user',
     time: new Date().toLocaleTimeString(DATE_LOCALE, TIME_OPTIONS),
   })
 

@@ -5,11 +5,11 @@ import hljs from 'highlight.js'
 export const DIAGRAM_LANGUAGES = ['mermaid', 'drawio', 'plantuml']
 
 // 创建 markdown-it 实例，启用 GFM
-const md = new MarkdownIt({
+const md: MarkdownIt = new MarkdownIt({
   html: false,
   linkify: true,
   typographer: true,
-  highlight: function (str: string, lang: string) {
+  highlight: function (str: string, lang: string): string {
     // 图表语言不做语法高亮，保持原始内容供前端渲染
     if (lang && DIAGRAM_LANGUAGES.includes(lang.toLowerCase())) {
       return `<pre class="hljs code-block diagram-block" data-lang="${lang}"><div class="code-header"><span class="code-lang">${lang}</span><button class="copy-btn" data-code>复制</button></div><code>${md.utils.escapeHtml(str)}</code></pre>`
@@ -30,13 +30,7 @@ const md = new MarkdownIt({
   },
 })
 
-export function useMarkdown() {
-  const render = (content: string): string => {
-    if (!content) return ''
-    return md.render(content)
-  }
-
-  return {
-    render,
-  }
+export function renderMarkdown(content: string): string {
+  if (!content) return ''
+  return md.render(content)
 }

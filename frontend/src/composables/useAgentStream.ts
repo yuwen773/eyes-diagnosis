@@ -13,8 +13,10 @@ export interface ToolCallArg {
   args: Record<string, any>
 }
 
+export type StreamMessageType = 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading'
+
 export interface StreamMessage {
-  type: string
+  type: StreamMessageType
   content: string
   node: string
   isLoading?: boolean

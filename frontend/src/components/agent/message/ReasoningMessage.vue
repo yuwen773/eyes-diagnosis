@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useMarkdown } from '@/composables/useMarkdown'
+import { renderMarkdown } from '@/utils/markdown'
 
 interface Props {
   content: string
@@ -25,7 +25,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { render } = useMarkdown()
+const render = renderMarkdown
 const collapsed = ref(false)
 const renderedContent = computed(() => render(props.content))
 const preview = computed(() => props.content.slice(0, 50) + (props.content.length > 50 ? '...' : ''))

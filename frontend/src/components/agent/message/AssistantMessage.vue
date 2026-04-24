@@ -55,7 +55,7 @@
           </svg>
         </button>
         <button class="action-icon-btn" :class="{ liked: liked }" title="点赞" @click="liked = !liked">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
             <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
           </svg>
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue'
-import { useMarkdown } from '@/composables/useMarkdown'
+import { renderMarkdown } from '@/utils/markdown'
 import { useDiagramRenderer } from '@/composables/useDiagramRenderer'
 import type { ImageResource, LinkResource, ResourceData } from '../types'
 
@@ -92,7 +92,7 @@ const emit = defineEmits<{
   (e: 'share'): void
 }>()
 
-const { render } = useMarkdown()
+const render = renderMarkdown
 const { renderDiagrams, unbindDiagramEvents } = useDiagramRenderer()
 const liked = ref(false)
 
