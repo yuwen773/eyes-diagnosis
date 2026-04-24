@@ -5,6 +5,18 @@ from pathlib import Path
 
 import httpx
 
+_IMAGE_SUFFIXES = frozenset((".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"))
+_TEMP_SUFFIX_MAP = {".png", ".bmp", ".tif", ".tiff", ".webp"}
+
+_http_client: httpx.AsyncClient | None = None
+
+
+async def _get_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient()
+    return _http_client
+
 
 async def resolve_image(image_input: str) -> str:
     """Resolve image input to a local file path.
@@ -28,22 +40,20 @@ def _looks_like_filepath(s: str) -> bool:
         return False
     if s.startswith("/") or (len(s) >= 2 and s[1] == ":"):
         return True
-    suffixes = (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp")
-    if any(s.lower().endswith(ext) for ext in suffixes):
-        return True
-    return False
+    ext = Path(s).suffix.lower()
+    return ext in _IMAGE_SUFFIXES
 
 
 async def _resolve_url(url: str) -> str:
+    client = await _get_client()
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url, timeout=30)
-            resp.raise_for_status()
-            content = resp.content
-            if len(content) > 50 * 1024 * 1024:
-                raise ValueError("下载图片超过 50MB 限制")
+        resp = await client.get(url, timeout=30)
+        resp.raise_for_status()
     except httpx.HTTPError as e:
         raise ValueError(f"下载图片失败: {e}") from e
+    content = resp.content
+    if len(content) > 50 * 1024 * 1024:
+        raise ValueError("下载图片超过 50MB 限制")
     return _write_temp(content, url)
 
 
@@ -54,7 +64,7 @@ def _resolve_filepath(path: str) -> str:
 
 
 def _resolve_base64(data: str) -> str:
-    if len(data) > 100 * 1024 * 1024:  # 100MB string limit
+    if len(data) > 100 * 1024 * 1024:
         raise ValueError("Base64 输入数据过大")
     try:
         raw = base64.b64decode(data, validate=True)
@@ -67,10 +77,9 @@ def _resolve_base64(data: str) -> str:
 
 def _write_temp(data: bytes, source_hint: str) -> str:
     suffix = ".jpg"
-    if isinstance(source_hint, str):
-        ext = Path(source_hint.split("?")[0]).suffix.lower()
-        if ext in (".png", ".bmp", ".tif", ".tiff", ".webp"):
-            suffix = ext
+    ext = Path(source_hint.split("?")[0]).suffix.lower()
+    if ext in _TEMP_SUFFIX_MAP:
+        suffix = ext
     fd, tmp_path = tempfile.mkstemp(suffix=suffix)
     with os.fdopen(fd, "wb") as f:
         f.write(data)

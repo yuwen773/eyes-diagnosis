@@ -4,7 +4,6 @@ import os
 
 import torch
 
-# Run this module from the algorithm/ directory, or ensure the package is on PYTHONPATH.
 from eye_disease_model import EyeDiseaseModel
 
 from mcp_server.config import MCPConfig
@@ -13,8 +12,13 @@ from mcp_server.image_handler import resolve_image
 
 logger = logging.getLogger(__name__)
 
-# Global model instance, loaded once at startup
 _model: EyeDiseaseModel | None = None
+
+_DEFAULT_MODEL_PATHS = [
+    "models/efficientnet_b4_20250330_211341/best_acc_eye_disease_model.pth",
+    "models/best_acc_eye_disease_model.pth",
+    "models/best_eye_disease_model.pth",
+]
 
 
 def load_model(config: MCPConfig) -> None:
@@ -27,21 +31,21 @@ def load_model(config: MCPConfig) -> None:
     _model.device = torch.device(config.device)
     _model.model = _model.model.to(_model.device)
 
-    if config.model_path and os.path.exists(config.model_path):
-        _model.load_model(config.model_path)
+    resolved_path = _resolve_model_path(config.model_path)
+    if resolved_path:
+        _model.load_model(resolved_path)
+        logger.info(f"Model weights loaded from {resolved_path}")
     else:
-        # Auto-search default paths
-        search_paths = [
-            "models/efficientnet_b4_20250330_211341/best_acc_eye_disease_model.pth",
-            "models/best_acc_eye_disease_model.pth",
-            "models/best_eye_disease_model.pth",
-        ]
-        for path in search_paths:
-            if os.path.exists(path):
-                _model.load_model(path)
-                logger.info(f"Model weights loaded from {path}")
-                return
         logger.warning("No model weights found, using untrained model")
+
+
+def _resolve_model_path(config_path: str | None) -> str | None:
+    if config_path and os.path.exists(config_path):
+        return config_path
+    for path in _DEFAULT_MODEL_PATHS:
+        if os.path.exists(path):
+            return path
+    return None
 
 
 async def diagnose(image_input: str) -> str:
