@@ -4,56 +4,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Spring Boot 3.5.6** backend (port 8081) + **Vue 3** frontend for Eye Diagnosis AI System using LangChain4j + DeepSeek.
+Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
+Base package: `com.csust.eyediagnosis`
 
-## Build Commands
+## Build & Run
 
 ```bash
 # Backend
-mvn clean package          # Build
-mvn spring-boot:run       # Run dev
-mvn test -Dtest=...        # Run test
+mvn clean package                    # Build (includes protobuf codegen)
+mvn spring-boot:run                  # Dev server :8081, context-path /api
+mvn test -Dtest=ClassName#method     # Run single test
 
 # Frontend (in frontend/)
-npm install                # Install deps
-npm run dev                # Dev server (port 5173)
-npm run build              # Production build
+npm run dev                          # Dev server :5173
+npm run build                        # Type-check + build
+npm run openapi                      # Generate API client from OpenAPI spec
+
+# Algorithm (in algorithm/)
+pip install -r requirements.txt
+python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
+python grpc_server.py                # gRPC server :50051
+
+docker-compose up -d                 # ChromaDB vector store :8000
 ```
 
 ## Architecture
 
-**Backend**: Controller → Service → Mapper (MyBatis Plus)
-- `controller/` HTTP请求, `service/` 业务逻辑, `mapper/` 数据库, `model/entity| dto| vo/` 数据模型
+**Backend**: Controller → Service → Mapper (MyBatis Plus). `BaseResponse<T>{code:0, data, msg}` unified response. Auth: Spring Session + Redis, `@AuthCheck(mustRole=...)` AOP. MyBatis Plus `map-underscore-to-camel-case: false`.
 
-**Frontend**: Vue 3 + Vite + TypeScript + Ant Design Vue + Pinia + Vue Router
-- `src/api/` API客户端, `src/stores/` 状态管理, `src/pages/` 路由页面, `src/components/` 组件
+**Agent System** (`agent/`): Core AI chatbot on Spring AI + Spring AI Alibaba.
+- `DiagnosisAgent` — `ReactAgent` with streaming `Flux<MessageDTO>`, SSE endpoint `/api/agent/chat/stream`
+- `tools/EyeImageAnalyzerTool` — DashScope Qwen-VL-Plus vision analysis (`@Tool`)
+- `tools/DocumentSearchTool` — ChromaDB RAG retrieval (`@Tool`)
+- `manager/MCPManager` — MCP client factory (STDIO/SSE/Streamable HTTP), tool discovery cached in Redis 5min
+- `interceptor/TextMcpModelInterceptor` — MCP server resolution priority: session override → user enabled → disabled
+- `rag/` — Document parsing + 512-word chunking → ChromaDB via DashScope embeddings
 
-## API Patterns
+**gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
 
-`BaseResponse`: `{"code": 0, "data": {...}, "msg": "ok"}` (code 0=成功)
+**Frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. Agent chat uses `@microsoft/fetch-event-source` for SSE.
 
-| Controller | Base Path |
-|------------|-----------|
-| UserController | `/api/user/*` |
-| DiagnosisController | `/api/diagnosis/*` |
-| NewsController | `/api/news/*` |
-| ChatSessionController | `/api/chat/*` |
+## API Endpoints
 
-**Auth**: `@AuthCheck(mustRole = "admin")` AOP拦截
+| Controller | Path | Purpose |
+|------------|------|---------|
+| UserController | `/api/user/*` | Auth, CRUD |
+| DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| AgentController | `/api/agent/*` | SSE chat stream, session/history |
+| McpServerController | `/api/mcp/*` | MCP server CRUD |
+| KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
+| NewsController | `/api/news/*` | News CRUD |
 
-## Key Config
+## Database (MySQL `diagnosis`)
 
-| File | Purpose |
-|------|---------|
-| `application.yml` | 端口8081, context-path /api |
-| `application-dev.yml` | 数据库/Redis/COS/LangChain4j配置 |
-| `db/schema.sql` | 7张表 (t_user, t_diagnosis, t_news, t_chatSession等) |
-| `prompt/diagnosis-system-prompt.txt` | AI诊断系统提示词 |
+Schema: `src/main/resources/db/schema.sql`. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
 
-## Error Handling
+## External Services
 
-`ErrorCode` enum (40000-50001) → `BusinessException` → `GlobalExceptionHandler` 统一返回 `BaseResponse`
+MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embeddings + vision) | Tencent COS (file storage) | Python gRPC (image classification)
 
-## Tech Stack
+## Key Patterns
 
-MyBatis Plus 3.5.12 | LangChain4j 1.5.0-beta11 + DeepSeek | Redis + Spring Session | Tencent COS | Knife4j 4.4.0
+- **Agent streaming**: `DiagnosisAgent.stream()` → SSE events (ASSISTANT/REASONING/TOOL_REQUEST/TOOL_CONFIRM), terminal `event: "done"`
+- **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
+- **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
+- **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
+- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
