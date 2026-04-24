@@ -1,11 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import {
-  HomeOutlined,
-  SettingOutlined,
-  MedicineBoxOutlined,
-  RobotOutlined,
-  ReadOutlined,
-} from '@ant-design/icons-vue'
 import ACCESS_ENUM from '@/utils/access/ACCESS_ENUM'
 import adminRoutes from './modules/adminRoutes'
 
@@ -21,7 +14,7 @@ const router = createRouter({
           name: '主页',
           component: () => import('@/pages/HomePage.vue'),
           meta: {
-            icon: HomeOutlined,
+            icon: 'HomeOutlined',
           },
         },
         {
@@ -54,7 +47,7 @@ const router = createRouter({
           name: '疾病诊断',
           component: () => import('@/pages/diagnosis/DiagnosisPage.vue'),
           meta: {
-            icon: MedicineBoxOutlined,
+            icon: 'MedicineBoxOutlined',
           },
         },
         {
@@ -62,7 +55,7 @@ const router = createRouter({
           name: '前沿新闻',
           component: () => import('@/pages/news/NewsPage.vue'),
           meta: {
-            icon: ReadOutlined,
+            icon: 'ReadOutlined',
           },
         },
         {
@@ -79,7 +72,7 @@ const router = createRouter({
           name: 'Agent助手',
           component: () => import('@/pages/agent/AgentChatPage.vue'),
           meta: {
-            icon: RobotOutlined,
+            icon: 'RobotOutlined',
           },
         },
         {
@@ -87,7 +80,7 @@ const router = createRouter({
           name: '系统管理',
           redirect: '/admin/dashboard',
           meta: {
-            icon: SettingOutlined,
+            icon: 'SettingOutlined',
             access: ACCESS_ENUM.ADMIN,
             hideInMenu: true,
           },

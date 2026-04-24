@@ -1,6 +1,12 @@
 <script lang="ts" setup>
-import { computed, h, ref } from 'vue'
-import { HomeOutlined } from '@ant-design/icons-vue'
+import { computed, h, ref, type Component } from 'vue'
+import {
+  HomeOutlined,
+  SettingOutlined,
+  MedicineBoxOutlined,
+  RobotOutlined,
+  ReadOutlined,
+} from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useRouter } from "vue-router"
@@ -31,12 +37,21 @@ const doLogout = async () => {
   }
 }
 
+const iconMap: Record<string, Component> = {
+  HomeOutlined,
+  SettingOutlined,
+  MedicineBoxOutlined,
+  RobotOutlined,
+  ReadOutlined,
+}
+
 const menuToRouteItem = (item: any) => {
+  const iconName = item.meta?.icon as string
   return {
     key: item.path,
     label: item.name,
     title: item.name,
-    icon: h(item.meta?.icon),
+    icon: iconName ? h(iconMap[iconName] ?? iconName) : undefined,
   }
 }
 
@@ -50,13 +65,7 @@ const originItems = computed(() => {
     .map(menuToRouteItem)
 })
 
-const homeIndex = originItems.value.findIndex(item => item.key === '/')
-if (homeIndex !== -1) {
-  const homeItem = originItems.value.splice(homeIndex, 1)[0]
-  originItems.value.unshift(homeItem)
-}
-
-const items = ref<MenuProps['items']>(originItems)
+const items = ref<MenuProps['items']>(originItems.value)
 
 const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
 </script>
