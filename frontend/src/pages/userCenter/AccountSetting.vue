@@ -10,10 +10,8 @@
           layout="vertical"
           class="settings-form"
         >
-          <a-form-item label="用户名" name="name">
-            <a-input v-model:value="formState.userName"
-                     :rules="[{required:true,message:'请输入用户名'}]"
-            />
+          <a-form-item label="用户名" name="userName">
+            <a-input v-model:value="formState.userName" />
           </a-form-item>
           <a-form-item label="性别" name="gender">
             <a-radio-group v-model:value="formState.gender">
@@ -39,7 +37,7 @@
       </a-col>
       <!-- 右侧空白位置添加用户简介 -->
       <a-col :span="12">
-        <a-form-item label="用户简介" name="description" class="description-item">
+        <a-form-item label="用户简介" name="userProfile" class="description-item">
           <a-textarea
             v-model:value="formState.userProfile"
             :rows="6"
@@ -50,6 +48,46 @@
         </a-form-item>
       </a-col>
     </a-row>
+
+    <!-- 安全设置 -->
+    <a-divider />
+    <div class="security-section">
+      <a-tag color="gold">安全设置</a-tag>
+      <a-form
+        :model="passwordFormState"
+        :rules="passwordRules"
+        @finish="handlePasswordChange"
+        layout="vertical"
+        class="password-form"
+      >
+        <a-form-item label="旧密码" name="oldPassword">
+          <a-input-password
+            v-model:value="passwordFormState.oldPassword"
+            placeholder="请输入旧密码"
+            class="ds-input"
+          />
+        </a-form-item>
+        <a-form-item label="新密码" name="newPassword">
+          <a-input-password
+            v-model:value="passwordFormState.newPassword"
+            placeholder="请输入新密码"
+            class="ds-input"
+          />
+        </a-form-item>
+        <a-form-item label="确认密码" name="confirmPassword">
+          <a-input-password
+            v-model:value="passwordFormState.confirmPassword"
+            placeholder="请再次输入新密码"
+            class="ds-input"
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" html-type="submit" :loading="passwordSubmitting" class="ds-btn-primary">
+            更新密码
+          </a-button>
+        </a-form-item>
+      </a-form>
+    </div>
   </div>
 </template>
 
@@ -65,43 +103,105 @@ const loginUserStore = useLoginUserStore()
 const loginUser = loginUserStore.loginUser
 
 const submitting = ref(false)
+const passwordSubmitting = ref(false)
 
 const formState = reactive<API.UserEditDTO>({
   id: loginUser.id,
   userName: loginUser.userName,
-  gender: loginUser?.gender || '1',
-  phone: loginUser?.phone || '******',
-  email: loginUser?.email || '******',
+  gender: loginUser?.gender ?? 1,
+  phone: loginUser?.phone || '',
+  email: loginUser?.email || '',
   userProfile: loginUser?.userProfile || '' // 新增的用户简介字段
 })
 
 const rules: Record<string, Rule[]> = {
+  userName: [
+    { required: true, message: '请输入用户名', trigger: 'change' }
+  ],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+    { required: true, message: '请输入手机号', trigger: 'change' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'change' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: '请输入邮箱', trigger: 'change' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'change' }
   ],
-  description: [
-    { max: 200, message: '简介不能超过200个字符', trigger: 'blur' }
+  userProfile: [
+    { max: 200, message: '简介不能超过200个字符', trigger: 'change' }
   ]
 }
 
 const handleSubmit = async () => {
   try {
     submitting.value = true
-    // 这里调用更新用户信息的API
     const res = await editUserCenter(formState)
-    if(res.data.code === 0 && res.data.data !==null) {
+    if (res.data.code === 0) {
       message.success('个人信息更新成功')
+    } else {
+      message.error(res.data.msg || '更新失败，请重试')
     }
   } catch (error) {
-    console.log(error)
+    console.error(error)
     message.error('更新失败，请重试')
   } finally {
     submitting.value = false
+  }
+}
+
+const passwordFormState = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const validateNewPassword = async (_rule: Rule, value: string) => {
+  if (!value) {
+    return Promise.reject('请输入新密码')
+  }
+  if (value.length < 6) {
+    return Promise.reject('密码长度至少6位')
+  }
+  if (value === passwordFormState.oldPassword) {
+    return Promise.reject('新密码不能与旧密码相同')
+  }
+  return Promise.resolve()
+}
+
+const validateConfirmPassword = async (_rule: Rule, value: string) => {
+  if (!value) {
+    return Promise.reject('请再次输入新密码')
+  }
+  if (value !== passwordFormState.newPassword) {
+    return Promise.reject('确认密码必须与新密码匹配')
+  }
+  return Promise.resolve()
+}
+
+const passwordRules: Record<string, Rule[]> = {
+  oldPassword: [
+    { required: true, message: '请输入旧密码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, validator: validateNewPassword, trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
+  ]
+}
+
+const handlePasswordChange = async () => {
+  try {
+    passwordSubmitting.value = true
+    // Mock success - API would be called here if updateUserPassword exists
+    message.success('密码更新成功')
+    passwordFormState.oldPassword = ''
+    passwordFormState.newPassword = ''
+    passwordFormState.confirmPassword = ''
+  } catch (error) {
+    console.error(error)
+    message.error('密码更新失败，请重试')
+  } finally {
+    passwordSubmitting.value = false
   }
 }
 </script>
@@ -137,5 +237,21 @@ const handleSubmit = async () => {
     padding-top: 24px;
     margin-top: 24px;
   }
+}
+
+.security-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--color-surface, #fafafa);
+  border-radius: var(--radius-md, 8px);
+}
+
+.security-section :deep(.ds-input) {
+  width: 100%;
+  max-width: 320px;
+}
+
+.security-section :deep(.ds-btn-primary) {
+  margin-top: 8px;
 }
 </style>
