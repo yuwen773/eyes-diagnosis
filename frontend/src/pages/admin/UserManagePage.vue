@@ -166,7 +166,7 @@ const doDelete = async (id: string) => {
   if (!id) {
     return
   }
-  const res = await deleteUser({ id })
+  const res = await deleteUser({ id: Number(id) })
   if (res.data.code === 0) {
     message.success('删除成功')
     fetchData()

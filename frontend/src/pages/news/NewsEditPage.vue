@@ -1,3 +1,207 @@
+<script lang="ts" setup>
+import { ref, reactive, computed, onMounted } from 'vue'
+import { DeleteOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
+import { marked } from 'marked'
+import { QuestionCircleOutlined } from '@ant-design/icons-vue';
+import {
+  getNewsVo,
+  updateNews,
+  uploadAttachment,
+  uploadCoverImage
+} from '@/api/newsController'
+import { useRoute } from 'vue-router'
+import router from '@/router'
+const route = useRoute()
+
+
+
+
+
+// 表单数据 -- 类型接口
+interface FormState {
+  title: string
+  articleType: 'original' | 'reprint' | 'translation'
+  content: string
+  coverImage?: string
+}
+//表单响应式数据
+const formState = reactive<FormState>({
+  title: '',
+  articleType: 'original',
+  content: '',
+})
+const news = ref<API.NewsVO | null>(null)
+// 编辑器相关
+const activeTab = ref<'edit' | 'preview'>('edit')//tab类型
+const theme = ref<'light' | 'dark'>('light')//主题
+const previewHtml = computed(() => marked(formState.content))//自动html化
+
+// 图片上传相关
+const fileList = ref<any[]>([])//图片url数组
+const previewVisible = ref(false)//是否预览
+const previewImage = ref('')
+
+// 加载状态
+const saving = ref(false)
+const publishing = ref(false)
+
+
+
+
+
+
+
+//之前的
+
+const pageTitle = computed(()=>{
+  return route.params.id ? '编辑新闻' : '发布新闻'
+})
+
+
+const clearImage = () => {
+  previewImage.value = ''
+  fileList.value = []
+  formState.coverImage = undefined
+}
+const beforeUpload = (file: File) => {
+  const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isImage) {
+    message.error('只能上传 JPG/PNG 格式的图片!')
+    return false
+  }
+
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    message.error('图片大小不能超过5MB!')
+    return false
+  }
+
+  return true
+}
+
+const handleUpload = async ({file}: {file: File})=> {
+  const id = Number(route.params.id)
+  const res = await uploadCoverImage({ newsUploadDTO: { id } },{},file)
+  if (res.data.data && res.data.code === 0) {
+    message.success("封面图片上传成功")
+    previewImage.value = res.data.data
+  }else{
+    message.error("封面图片上传失败")
+  }
+  saving.value = false
+}
+
+
+  const handlePreview = () => {
+    previewVisible.value = true
+  }
+//
+
+const handleCancel = () => {
+  //TODO
+  previewVisible.value = false
+}
+//文中的 图片上传逻辑
+// 图片上传到服务器 (需根据实际API修改)
+const handleUploadImg = async (files: File[], callback: (urls: string[]) => void) => {
+  const urls: string[] = []
+  // 这里应该是上传到服务器的逻辑
+  for (const file of files) {
+    console.log(file)
+    const res = await uploadAttachment({},file)
+    if(res.data.data && res.data.code === 0 ){
+      // urls.push(URL.createObjectURL(file))
+      urls.push(res.data.data)
+    }
+
+    // 模拟上传
+    // await new Promise((resolve) => setTimeout(resolve, 1000))
+    // urls.push(URL.createObjectURL(file))
+  }
+  callback(urls)
+}
+
+// 操作处理
+const handleSave = async () => {
+  saving.value = true
+  try {
+    // 这里调用保存API
+     const res =await updateNews({
+      id: Number(route.params.id),
+      title: formState.title,
+      content: formState.content,
+      coverImage:formState.coverImage,
+       status: 0,
+    })
+    if(res.data.code ===0 && res.data.data){
+      message.success('保存成功')
+    }
+  } catch (error) {
+    message.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+const handlePublish = async () => {
+  publishing.value = true
+  try {
+    // 这里调用发布API
+    const res =await updateNews({
+      id: Number(route.params.id),
+      title: formState.title,
+      content: formState.content,
+      coverImage:formState.coverImage,
+      status: 1,//状态
+    })
+    if(res.data.code ===0 && res.data.data){
+      message.success('发布成功')
+      router.push({
+        path:`/news/${Number(route.params.id)}`,
+      })
+    }
+  } catch (error) {
+    message.error('发布失败')
+  } finally {
+    publishing.value = false
+  }
+}
+
+
+//如果是编辑页面，则获取数据
+
+const fetchNews = async () => {
+  if (!route.params.id) {
+    return
+  }
+  const res = await getNewsVo({
+    id: Number(route.params.id),
+  })
+  if (res.data.code === 0 && res.data.data) {
+    news.value = res.data.data
+    console.log(res.data.data)
+    //复制
+    Object.assign(formState, news.value);
+    console.log()
+    previewImage.value = news.value.coverImage ?? '';
+  } else {
+    if (route.params.id===null) {
+      message.error('获取新闻详情失败: ' + res.data.msg)
+    }
+  }
+}
+
+onMounted(()=>{
+  if (!route.params.id) {
+    return
+  }
+  fetchNews()
+})
+</script>
+
 <template>
   <!--新闻编辑  -->
   <div class="news-edit-container">
@@ -110,212 +314,6 @@
     </a-modal>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { DeleteOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { MdEditor } from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
-import { marked } from 'marked'
-import { QuestionCircleOutlined } from '@ant-design/icons-vue';
-import {
-  getNewsVo,
-  updateNews,
-  uploadAttachment,
-  uploadCoverImage
-} from '@/api/newsController'
-import { useRoute } from 'vue-router'
-import router from '@/router'
-const route = useRoute()
-
-
-
-
-
-
-// 表单数据 -- 类型接口
-interface FormState {
-  title: string
-  articleType: 'original' | 'reprint' | 'translation'
-  content: string
-  coverImage?: string
-}
-//表单响应式数据
-const formState = reactive<FormState>({
-  title: '',
-  articleType: 'original',
-  content: '',
-})
-const news = ref<API.NewsVO | null>(null)
-// 编辑器相关
-const activeTab = ref<'edit' | 'preview'>('edit')//tab类型
-const theme = ref<'light' | 'dark'>('light')//主题
-const previewHtml = computed(() => marked(formState.content))//自动html化
-
-// 图片上传相关
-const fileList = ref<any[]>([])//图片url数组
-const previewVisible = ref(false)//是否预览
-const previewImage = ref('')
-
-// 加载状态
-const saving = ref(false)
-const publishing = ref(false)
-
-
-
-
-
-
-
-
-//之前的
-
-const pageTitle = computed(()=>{
-  return route.params.id ? '编辑新闻' : '发布新闻'
-})
-
-
-const clearImage = () => {
-  previewImage.value = ''
-  fileList.value = []
-  formState.coverImage = null
-}
-const beforeUpload = (file: File) => {
-  const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
-  if (!isImage) {
-    message.error('只能上传 JPG/PNG 格式的图片!')
-    return false
-  }
-
-  const isLt5M = file.size / 1024 / 1024 < 5
-  if (!isLt5M) {
-    message.error('图片大小不能超过5MB!')
-    return false
-  }
-
-  return true
-}
-
-const handleUpload = async ({file}:any)=> {
-  const params = route.params ? { id:route.params.id } :{}
-  const res = await uploadCoverImage(params,{},file)
-  if (res.data.data && res.data.code === 0) {
-    message.success("封面图片上传成功")
-    previewImage.value = res.data.data
-  }else{
-    message.error("封面图片上传失败")
-  }
-  saving.value = false
-}
-
-
-  const handlePreview = () => {
-    previewVisible.value = true
-  }
-//
-
-const handleCancel = () => {
-  //TODO
-  previewVisible.value = false
-}
-//文中的 图片上传逻辑
-// 图片上传到服务器 (需根据实际API修改)
-const handleUploadImg = async (files: File[], callback: (urls: string[]) => void) => {
-  const urls: string[] = []
-  // 这里应该是上传到服务器的逻辑
-  for (const file of files) {
-    console.log(file)
-    const res = await uploadAttachment({},file)
-    if(res.data.data && res.data.code === 0 ){
-      // urls.push(URL.createObjectURL(file))
-      urls.push(res.data.data)
-    }
-
-    // 模拟上传
-    // await new Promise((resolve) => setTimeout(resolve, 1000))
-    // urls.push(URL.createObjectURL(file))
-  }
-  callback(urls)
-}
-
-// 操作处理
-const handleSave = async () => {
-  saving.value = true
-  try {
-    // 这里调用保存API
-     const res =await updateNews({
-      id:route.params.id,
-      title: formState.title,
-      content: formState.content,
-      coverImage:formState.coverImage,
-       status: 0,
-    })
-    if(res.data.code ===0 && res.data.data){
-      message.success('保存成功')
-    }
-  } catch (error) {
-    message.error('保存失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-const handlePublish = async () => {
-  publishing.value = true
-  try {
-    // 这里调用发布API
-    const res =await updateNews({
-      id:route.params.id,
-      title: formState.title,
-      content: formState.content,
-      coverImage:formState.coverImage,
-      status: 1,//状态
-    })
-    if(res.data.code ===0 && res.data.data){
-      message.success('发布成功')
-      router.push({
-        path:`/news/${route.params.id}`,
-      })
-    }
-  } catch (error) {
-    message.error('发布失败')
-  } finally {
-    publishing.value = false
-  }
-}
-
-
-//如果是编辑页面，则获取数据
-
-const fetchNews = async () => {
-  if (!route.params.id) {
-    return
-  }
-  const res = await getNewsVo({
-    id: route.params.id,
-  })
-  if (res.data.code === 0 && res.data.data) {
-    news.value = res.data.data
-    console.log(res.data.data)
-    //复制
-    Object.assign(formState, news.value);
-    console.log()
-    previewImage.value = news.value.coverImage;
-  } else {
-    if (route.params.id===null) {
-      message.error('获取新闻详情失败: ' + res.data.msg)
-    }
-  }
-}
-
-onMounted(()=>{
-  if (!route.params.id) {
-    return
-  }
-  fetchNews()
-})
-</script>
 
 <style scoped>
 .news-edit-container {

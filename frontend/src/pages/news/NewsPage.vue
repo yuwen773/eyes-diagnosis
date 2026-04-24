@@ -1,59 +1,3 @@
-<template>
-  <div class="news-container">
-    <!-- 背景层 -->
-    <div class="background-layer"></div>
-
-    <!-- 新闻内容 -->
-    <div class="content-wrapper">
-      <a-card title="眼科新闻" class="news-list">
-        <div v-if="dataList.length === 0" class="empty-state">
-          <a-empty description="暂无新闻" />
-        </div>
-        <div v-else>
-          <a-list
-            item-layout="vertical"
-            size="large"
-            :pagination="pagination"
-            :data-source="dataList"
-          >
-            <template #renderItem="{ item }">
-              <a-list-item @click="doClickNews(item)" class="news-item">
-                <a-list-item-meta>
-                  <template #avatar>
-                    <a-avatar :src="item.avatar" />
-                  </template>
-                  <template #title>
-                    <h3>{{ item.title }}</h3>
-                  </template>
-                  <template #description>
-                    <div>
-                      <div class="news-author">
-                        <span>发布人: {{ item.author }}</span>
-                        <span class="news-date">{{ dayjs(Number(item.publishTime)).format('YYYY-MM-DD') }}</span>
-                      </div>
-                      <div class="news-brief">{{ item.summary }}</div>
-                    </div>
-                  </template>
-                </a-list-item-meta>
-                <div class="news-content">{{ item.content.substring(0, 150) }}.....</div>
-                <template #extra>
-                  <img
-                    width="272"
-                    height="180"
-                    object-cover="contain"
-                    alt="新闻图片"
-                    :src="item.coverImage"
-                  />
-                </template>
-              </a-list-item>
-            </template>
-          </a-list>
-        </div>
-      </a-card>
-    </div>
-  </div>
-</template>
-
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listNewsVoByPage, listNewsVoByPageWithCache } from '@/api/newsController'
@@ -109,6 +53,62 @@ const doClickNews = (newsItem: API.NewsVO) => {
   });
 };
 </script>
+
+<template>
+  <div class="news-container">
+    <!-- 背景层 -->
+    <div class="background-layer"></div>
+
+    <!-- 新闻内容 -->
+    <div class="content-wrapper">
+      <a-card title="眼科新闻" class="news-list">
+        <div v-if="dataList.length === 0" class="empty-state">
+          <a-empty description="暂无新闻" />
+        </div>
+        <div v-else>
+          <a-list
+            item-layout="vertical"
+            size="large"
+            :pagination="pagination"
+            :data-source="dataList"
+          >
+            <template #renderItem="{ item }">
+              <a-list-item @click="doClickNews(item)" class="news-item">
+                <a-list-item-meta>
+                  <template #avatar>
+                    <a-avatar :src="item.avatar" />
+                  </template>
+                  <template #title>
+                    <h3>{{ item.title }}</h3>
+                  </template>
+                  <template #description>
+                    <div>
+                      <div class="news-author">
+                        <span>发布人: {{ item.author }}</span>
+                        <span class="news-date">{{ dayjs(Number(item.publishTime)).format('YYYY-MM-DD') }}</span>
+                      </div>
+                      <div class="news-brief">{{ item.summary }}</div>
+                    </div>
+                  </template>
+                </a-list-item-meta>
+                <div class="news-content">{{ item.content.substring(0, 150) }}.....</div>
+                <template #extra>
+                  <img
+                    width="272"
+                    height="180"
+                    object-cover="contain"
+                    alt="新闻图片"
+                    :src="item.coverImage"
+                  />
+                </template>
+              </a-list-item>
+            </template>
+          </a-list>
+        </div>
+      </a-card>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .news-container {

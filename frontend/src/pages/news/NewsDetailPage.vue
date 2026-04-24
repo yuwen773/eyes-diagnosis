@@ -1,3 +1,78 @@
+<script lang="ts" setup>
+
+const sanitize = (html: string) => {
+  return html.replace(/<img/g, '<img style="display:block;margin:0 auto"');
+};
+import { ref, onMounted, h } from 'vue'
+import { useRoute, useRouter } from 'vue-router';
+import {
+  UserOutlined,
+  CalendarOutlined,
+  TagOutlined,
+  ArrowLeftOutlined,
+  UpCircleOutlined
+} from '@ant-design/icons-vue';
+import { MdPreview } from 'md-editor-v3';
+import 'md-editor-v3/lib/style.css';
+import { message } from 'ant-design-vue';
+import { getNewsVo } from '@/api/newsController';
+
+const route = useRoute();
+const router = useRouter();
+const news = ref<API.NewsVO | null>(null);
+
+// 格式化日期
+const formatDate = (dateString?: string) => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// 获取新闻详情
+const fetchNews = async () => {
+  try {
+    const res = await getNewsVo({
+      id: Number(route.params.id)
+    });
+
+
+    if (res.data.code === 0 && res.data.data) {
+      news.value = res.data.data;
+    } else {
+      message.error('获取新闻详情失败: ' + res.data.msg);
+      router.push('/news');
+    }
+  } catch (error) {
+    message.error('加载新闻详情出错');
+    console.error(error);
+  }
+};
+const showBackToTop = ref(false)
+// 返回列表
+const goBack = () => {
+  router.go(-1);
+};
+
+onMounted(() => {
+  fetchNews();
+  window.addEventListener('scroll', handleScroll)
+});
+// 监听滚动位置，控制"返回顶部"按钮的显示
+const handleScroll = () => {
+  showBackToTop.value = window.pageYOffset > 300
+}
+
+const backToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+</script>
+
 <template>
   <a-page-header
     style="
@@ -18,7 +93,7 @@
             <calendar-outlined /> {{ formatDate(news.publishTime) }}
           </span>
           <span class="meta-item">
-            <tag-outlined /> {{ news.category || '未分类' }}
+            <tag-outlined /> {{ news.summary || '未分类' }}
           </span>
         </div>
       </div>
@@ -68,90 +143,6 @@
     </a-affix>
   </a-card>
 </template>
-
-<script lang="ts" setup>
-
-const sanitize = (html: string) => {
-  return html.replace(/<img/g, '<img style="display:block;margin:0 auto"');
-};
-import { ref, onMounted, h } from 'vue'
-import { useRoute, useRouter } from 'vue-router';
-import {
-  UserOutlined,
-  CalendarOutlined,
-  TagOutlined,
-  ArrowLeftOutlined,
-  UpCircleOutlined
-} from '@ant-design/icons-vue';
-import { MdPreview } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
-import { message } from 'ant-design-vue';
-import { getNewsVo } from '@/api/newsController';
-
-interface NewsDetail {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  publishTime: string;
-  coverImage?: string;
-  category?: string;
-}
-
-const route = useRoute();
-const router = useRouter();
-const news = ref<NewsDetail | null>(null);
-
-// 格式化日期
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-// 获取新闻详情
-const fetchNews = async () => {
-  try {
-    const res = await getNewsVo({
-      id: route.params.id as string
-    });
-
-
-    if (res.data.code === 0 && res.data.data) {
-      news.value = res.data.data;
-    } else {
-      message.error('获取新闻详情失败: ' + res.data.msg);
-      router.push('/news');
-    }
-  } catch (error) {
-    message.error('加载新闻详情出错');
-    console.error(error);
-  }
-};
-const showBackToTop = ref(false)
-// 返回列表
-const goBack = () => {
-  router.go(-1);
-};
-
-onMounted(() => {
-  fetchNews();
-  window.addEventListener('scroll', handleScroll)
-});
-// 监听滚动位置，控制“返回顶部”按钮的显示
-const handleScroll = () => {
-  showBackToTop.value = window.pageYOffset > 300
-}
-
-const backToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth',
-  })
-}
-</script>
 
 <style scoped>
 /* 全局Markdown图片样式 */
