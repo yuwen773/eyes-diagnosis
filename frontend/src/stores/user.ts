@@ -26,7 +26,7 @@ export const useLoginUserStore = defineStore('loginUser', () => {
   }
 
   //缓存用户信息
-  function setLoginUser(newLoginUser: any) {
+  function setLoginUser(newLoginUser: Partial<API.LoginUserVO>) {
     loginUser.value = newLoginUser
   }
   //返回pinia
