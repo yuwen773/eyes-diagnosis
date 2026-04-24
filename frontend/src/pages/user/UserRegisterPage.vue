@@ -1,3 +1,47 @@
+<script lang="ts" setup>
+import { reactive, ref } from 'vue'
+import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { userRegister } from '@/api/userController'
+import { useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import type { Rule } from 'ant-design-vue/es/form'
+
+const router = useRouter()
+const loading = ref(false)
+
+const formState = reactive({
+  userAccount: '',
+  userPassword: '',
+  checkPassword: '',
+})
+
+// 自定义密码匹配验证
+const validatePasswordMatch = async (_rule: Rule, value: string) => {
+  if (value !== formState.userPassword) {
+    return Promise.reject('两次输入的密码不一致')
+  }
+  return Promise.resolve()
+}
+
+const handleSubmit = async (values: any) => {
+  loading.value = true
+  try {
+    const res = await userRegister(values)
+    if(res.data.code === 0 && res.data.data) {
+      message.success('注册成功')
+      router.push({
+        path: '/user/login',
+        replace: true,
+      })
+    } else {
+      message.error('注册失败: ' + res.data.msg)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
 <template>
   <div class="register-container">
     <!-- 背景层 -->
@@ -89,50 +133,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { reactive, ref } from 'vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
-import { userRegister } from '@/api/userController'
-import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import type { Rule } from 'ant-design-vue/es/form'
-
-const router = useRouter()
-const loading = ref(false)
-
-const formState = reactive({
-  userAccount: '',
-  userPassword: '',
-  checkPassword: '',
-})
-
-// 自定义密码匹配验证
-const validatePasswordMatch = async (_rule: Rule, value: string) => {
-  if (value !== formState.userPassword) {
-    return Promise.reject('两次输入的密码不一致')
-  }
-  return Promise.resolve()
-}
-
-const handleSubmit = async (values: any) => {
-  loading.value = true
-  try {
-    const res = await userRegister(values)
-    if(res.data.code === 0 && res.data.data) {
-      message.success('注册成功')
-      router.push({
-        path: '/user/login',
-        replace: true,
-      })
-    } else {
-      message.error('注册失败: ' + res.data.msg)
-    }
-  } finally {
-    loading.value = false
-  }
-}
-</script>
 
 <style scoped>
 .register-container {

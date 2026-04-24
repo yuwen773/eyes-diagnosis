@@ -1,3 +1,42 @@
+<script lang="ts" setup>
+import { reactive, ref } from 'vue'
+import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { userLogin } from '@/api/userController'
+import { useRouter } from 'vue-router'
+import { useLoginUserStore } from '@/stores/user'
+import { message } from 'ant-design-vue'
+
+const router = useRouter()
+const userLoginStore = useLoginUserStore()
+const loading = ref(false)
+const rememberMe = ref(false)
+
+const formState = reactive<API.UserLoginDTO>({
+  userAccount: '',
+  userPassword: '',
+})
+
+const handleSubmit = async (values: any) => {
+  loading.value = true
+  try {
+    const res = await userLogin(values)
+    if(res.data.code === 0 && res.data.data) {
+      console.log(res.data.data)
+      await userLoginStore.fetchLoginUser()
+      message.success('登录成功')
+      router.push({
+        path: '/',
+        replace: true,
+      })
+    } else {
+      message.error('登录失败: ' + res.data.msg)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
 <template>
   <div class="login-container">
     <!-- 背景层 -->
@@ -69,45 +108,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { reactive, ref } from 'vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
-import { userLogin } from '@/api/userController'
-import { useRouter } from 'vue-router'
-import { useLoginUserStore } from '@/stores/user'
-import { message } from 'ant-design-vue'
-
-const router = useRouter()
-const userLoginStore = useLoginUserStore()
-const loading = ref(false)
-const rememberMe = ref(false)
-
-const formState = reactive<API.UserLoginDTO>({
-  userAccount: '',
-  userPassword: '',
-})
-
-const handleSubmit = async (values: any) => {
-  loading.value = true
-  try {
-    const res = await userLogin(values)
-    if(res.data.code === 0 && res.data.data) {
-      console.log(res.data.data)
-      await userLoginStore.fetchLoginUser()
-      message.success('登录成功')
-      router.push({
-        path: '/',
-        replace: true,
-      })
-    } else {
-      message.error('登录失败: ' + res.data.msg)
-    }
-  } finally {
-    loading.value = false
-  }
-}
-</script>
 
 <style scoped>
 .login-container {

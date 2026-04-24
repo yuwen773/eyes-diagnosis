@@ -1,9 +1,3 @@
-<template>
-  <a-card :title="title" class="chart-card">
-    <div ref="chartRef" class="chart" />
-  </a-card>
-</template>
-
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch } from 'vue';
 import * as echarts from 'echarts';
@@ -103,6 +97,12 @@ export default defineComponent({
   }
 });
 </script>
+
+<template>
+  <a-card :title="title" class="chart-card">
+    <div ref="chartRef" class="chart" />
+  </a-card>
+</template>
 
 <style scoped>
 .chart-card {

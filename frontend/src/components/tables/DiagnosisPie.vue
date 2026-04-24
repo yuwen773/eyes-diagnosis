@@ -1,7 +1,3 @@
-<template>
-  <div ref="chartRef" style="width: 100%; height: 100%;"></div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import * as echarts from 'echarts';
@@ -78,3 +74,7 @@ const renderChart = () => {
   });
 };
 </script>
+
+<template>
+  <div ref="chartRef" style="width: 100%; height: 100%;"></div>
+</template>

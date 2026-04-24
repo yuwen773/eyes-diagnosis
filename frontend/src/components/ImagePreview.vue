@@ -1,74 +1,3 @@
-<template>
-  <Teleport to="body">
-    <Transition name="image-preview">
-      <div v-if="open" class="image-preview-overlay" @click="close">
-        <!-- Close button -->
-        <button class="image-preview-close" @click.stop="close" aria-label="关闭">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        <!-- Image container -->
-        <div class="image-preview-container" @click.stop @wheel.prevent="handleWheel">
-          <img
-            :src="url"
-            :alt="alt"
-            class="image-preview-img"
-            :style="{ transform: imageTransform }"
-            :class="{ dragging: isDragging }"
-            @mousedown.prevent="startDrag"
-            @mousemove="onDrag"
-            @mouseup="endDrag"
-            @mouseleave="endDrag"
-            draggable="false"
-          />
-        </div>
-
-        <!-- Toolbar -->
-        <div class="image-preview-toolbar" @click.stop>
-          <button class="toolbar-btn" @click="zoomOut" title="缩小">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              <line x1="8" y1="11" x2="14" y2="11" />
-            </svg>
-          </button>
-          <span class="zoom-level">{{ zoomPercent }}</span>
-          <button class="toolbar-btn" @click="zoomIn" title="放大">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              <line x1="11" y1="8" x2="11" y2="14" />
-              <line x1="8" y1="11" x2="14" y2="11" />
-            </svg>
-          </button>
-
-          <div class="toolbar-divider" />
-
-          <button class="toolbar-btn" @click="reset" title="重置">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-            </svg>
-          </button>
-
-          <div class="toolbar-divider" />
-
-          <button class="toolbar-btn" @click="rotate" title="旋转90°">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10" />
-              <polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
@@ -177,6 +106,77 @@ watch(() => props.open, (val) => {
   }
 })
 </script>
+
+<template>
+  <Teleport to="body">
+    <Transition name="image-preview">
+      <div v-if="open" class="image-preview-overlay" @click="close">
+        <!-- Close button -->
+        <button class="image-preview-close" @click.stop="close" aria-label="关闭">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <!-- Image container -->
+        <div class="image-preview-container" @click.stop @wheel.prevent="handleWheel">
+          <img
+            :src="url"
+            :alt="alt"
+            class="image-preview-img"
+            :style="{ transform: imageTransform }"
+            :class="{ dragging: isDragging }"
+            @mousedown.prevent="startDrag"
+            @mousemove="onDrag"
+            @mouseup="endDrag"
+            @mouseleave="endDrag"
+            draggable="false"
+          />
+        </div>
+
+        <!-- Toolbar -->
+        <div class="image-preview-toolbar" @click.stop>
+          <button class="toolbar-btn" @click="zoomOut" title="缩小">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <line x1="8" y1="11" x2="14" y2="11" />
+            </svg>
+          </button>
+          <span class="zoom-level">{{ zoomPercent }}</span>
+          <button class="toolbar-btn" @click="zoomIn" title="放大">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <line x1="11" y1="8" x2="11" y2="14" />
+              <line x1="8" y1="11" x2="14" y2="11" />
+            </svg>
+          </button>
+
+          <div class="toolbar-divider" />
+
+          <button class="toolbar-btn" @click="reset" title="重置">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+          </button>
+
+          <div class="toolbar-divider" />
+
+          <button class="toolbar-btn" @click="rotate" title="旋转90°">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
 
 <style scoped>
 .image-preview-overlay {

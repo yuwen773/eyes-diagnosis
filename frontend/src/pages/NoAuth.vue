@@ -1,3 +1,6 @@
+<script lang="ts" setup>
+</script>
+
 <template>
   <a-result status="403" title="403 - Forbidden" sub-title="You do not have permission to access this page.">
     <template #extra>

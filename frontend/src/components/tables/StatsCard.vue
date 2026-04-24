@@ -1,10 +1,3 @@
-<template>
-  <a-card class="stat-card">
-    <div class="stat-value">{{ value }}</div>
-    <div class="stat-label">{{ label }}</div>
-  </a-card>
-</template>
-
 <script lang="ts" >
 import { defineComponent } from 'vue';
 
@@ -33,6 +26,13 @@ export default defineComponent({
 // }>()
 
 </script>
+
+<template>
+  <a-card class="stat-card">
+    <div class="stat-value">{{ value }}</div>
+    <div class="stat-label">{{ label }}</div>
+  </a-card>
+</template>
 
 <style scoped>
 .stat-card {
