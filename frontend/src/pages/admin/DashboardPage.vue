@@ -1,14 +1,12 @@
 <template>
   <div class="dashboard-page">
-    <!-- 统计卡片 -->
     <div class="grid grid-cols-4 gap-4 mb-6">
       <a-card v-for="stat in stats" :key="stat.label" :bordered="false">
-        <div class="text-3xl font-bold text-blue-600">{{ stat.value }}</div>
-        <div class="text-sm text-gray-500 mt-2">{{ stat.label }}</div>
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
       </a-card>
     </div>
 
-    <!-- 图表区域 -->
     <div class="grid grid-cols-2 gap-4 mb-6">
       <a-card title="诊断趋势 (近7天)" :bordered="false">
         <div ref="lineChartRef" style="height: 320px"></div>
@@ -18,7 +16,6 @@
       </a-card>
     </div>
 
-    <!-- 最近诊断记录 -->
     <a-card title="最近诊断记录" :bordered="false">
       <a-table :columns="columns" :data-source="recentDiagnoses" :pagination="false" row-key="id" size="middle" />
     </a-card>
@@ -30,7 +27,6 @@ import { ref, h, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 
-// ── 统计卡片 mock 数据 ─────────────────────────────────
 const stats = [
   { value: '1,284', label: '用户总数' },
   { value: '5,632', label: '诊断总次数' },
@@ -38,13 +34,11 @@ const stats = [
   { value: '126', label: '知识库文件数' },
 ]
 
-// ── 图表 ref ───────────────────────────────────────────
 const lineChartRef = ref<HTMLElement | null>(null)
 const pieChartRef = ref<HTMLElement | null>(null)
 let lineChart: ECharts | null = null
 let pieChart: ECharts | null = null
 
-// ── 折线图配置 ─────────────────────────────────────────
 const initLineChart = () => {
   if (!lineChartRef.value) return
   lineChart = echarts.init(lineChartRef.value)
@@ -63,13 +57,13 @@ const initLineChart = () => {
         type: 'line',
         smooth: true,
         areaStyle: { opacity: 0.3 },
+        itemStyle: { color: '#c96442' },
         data: [62, 78, 53, 91, 84, 47, 65],
       },
     ],
   })
 }
 
-// ── 饼图配置 ───────────────────────────────────────────
 const initPieChart = () => {
   if (!pieChartRef.value) return
   pieChart = echarts.init(pieChartRef.value)
@@ -82,6 +76,7 @@ const initPieChart = () => {
         radius: ['40%', '70%'],
         itemStyle: { borderRadius: 10 },
         label: { show: true, formatter: '{b}: {d}%' },
+        color: ['#c96442', '#d97757', '#7a9e4a', '#b53333', '#87867f', '#5e5d59'],
         data: [
           { value: 1048, name: '近视' },
           { value: 735, name: '远视' },
@@ -95,13 +90,11 @@ const initPieChart = () => {
   })
 }
 
-// ── 窗口 resize 处理 ───────────────────────────────────
 const handleResize = () => {
   lineChart?.resize()
   pieChart?.resize()
 }
 
-// ── 最近诊断记录表格 ──────────────────────────────────
 const columns = [
   { title: '用户', dataIndex: 'user', key: 'user' },
   {
@@ -137,7 +130,6 @@ const recentDiagnoses = [
   { id: 5, user: '孙七', result: '青光眼', confidence: 0.76, time: '2026-04-23 09:05' },
 ]
 
-// ── 生命周期 ───────────────────────────────────────────
 onMounted(async () => {
   await nextTick()
   initLineChart()
@@ -157,5 +149,17 @@ onUnmounted(() => {
 <style scoped>
 .dashboard-page {
   /* AdminLayout already provides padding & background */
+}
+
+.stat-value {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: var(--claude-text-primary);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--claude-text-secondary);
+  margin-top: 0.5rem;
 }
 </style>

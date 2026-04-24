@@ -142,25 +142,23 @@ const backToTop = () => {
 
 <style scoped>
 .home-page {
-  background-color: #fff;
+  background-color: var(--claude-bg-elevated);
 }
 
-/* 导航栏样式 */
 .header {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  background: #001529;
+  background: var(--claude-bg-dark);
 }
 
 .logo {
-  color: white;
+  color: var(--claude-text-inverse);
   font-size: 20px;
   font-weight: bold;
   margin-right: 50px;
 }
 
-/* 轮播图区域 */
 .carousel-section {
   height: 700px;
   width: 100%;
@@ -173,18 +171,18 @@ const backToTop = () => {
   object-fit: cover;
 }
 
-/* 系统特点区域 */
 .features-section {
   height: 650px;
   width: 100%;
   padding: 60px 10%;
-  background-color: #f9f9f9;
+  background-color: var(--claude-bg-card);
 }
 
 .section-title {
   text-align: center;
   margin-bottom: 50px;
-  color: #333;
+  color: var(--claude-text-primary);
+  font-family: var(--claude-font-serif);
 }
 
 .features-grid {
@@ -195,34 +193,33 @@ const backToTop = () => {
 
 .feature-card {
   padding: 30px;
-  background: white;
+  background: var(--claude-bg-elevated);
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(20, 20, 19, 0.08);
   text-align: center;
 }
 
 .feature-icon {
   font-size: 48px;
-  color: #1890ff;
+  color: var(--claude-brand);
   margin-bottom: 20px;
 }
 
 .feature-title {
   margin-bottom: 15px !important;
-  color: #333;
+  color: var(--claude-text-primary);
 }
 
 .feature-desc {
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 15px;
 }
 
-/* 行业问题解决方案区域 */
 .solutions-section {
   height: 650px;
   width: 100%;
   padding: 60px 15%;
-  background-color: white;
+  background-color: var(--claude-bg-elevated);
 }
 
 .solutions-list {
@@ -235,31 +232,31 @@ const backToTop = () => {
   flex: 1 1 45%;
   min-width: 300px;
   padding: 30px;
-  background: #f9f9f9;
+  background: var(--claude-bg-card);
   border-radius: 8px;
 }
 
 .solution-title {
-  color: #1890ff;
+  color: var(--claude-brand);
   margin-bottom: 20px !important;
 }
 
 .solution-desc {
-  color: #555;
+  color: var(--claude-text-secondary);
   font-size: 15px;
   line-height: 1.8;
 }
 
-.toTop {
+.to-top-btn {
   position: fixed;
   right: 20px;
   bottom: 80px;
-  backgroundcolor: '#1a3a5f'; /* 背景颜色改为深蓝色 */
-  bordercolor: '#1a3a5f';
+  background-color: var(--claude-bg-dark);
+  border-color: var(--claude-bg-dark);
   width: 50px;
   height: 50px;
-  fontsize: '20px';
-  boxshadow: '0 2px 8px rgba(0, 0, 0, 0.15)';
+  font-size: 20px;
+  box-shadow: var(--claude-shadow-md);
   margin-right: 15px;
 }
 </style>

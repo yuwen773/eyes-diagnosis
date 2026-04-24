@@ -227,7 +227,7 @@ const handleExport = (type: 'pdf' | 'csv') => {
 <style scoped>
 .report-detail {
   padding: 24px;
-  background: #fff;
+  background: var(--claude-bg-elevated);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
@@ -239,7 +239,7 @@ const handleExport = (type: 'pdf' | 'csv') => {
 
 .report-header h2 {
   margin-bottom: 12px;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   font-size: 24px;
   font-weight: 600;
 }
@@ -248,7 +248,7 @@ const handleExport = (type: 'pdf' | 'csv') => {
   display: flex;
   justify-content: center;
   gap: 32px;
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 14px;
 }
 
@@ -268,7 +268,7 @@ const handleExport = (type: 'pdf' | 'csv') => {
 
 .report-section h3 {
   margin-bottom: 16px;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   font-size: 18px;
   font-weight: 500;
   display: flex;
@@ -278,10 +278,10 @@ const handleExport = (type: 'pdf' | 'csv') => {
 
 .section-content {
   padding: 16px;
-  background: #f9f9f9;
+  background: var(--claude-bg-card);
   border-radius: 6px;
   line-height: 1.8;
-  border-left: 4px solid #1a3a5f;
+  border-left: 4px solid var(--claude-brand);
 }
 
 .image-gallery {
@@ -318,7 +318,7 @@ const handleExport = (type: 'pdf' | 'csv') => {
 
 :deep(.ant-descriptions-item-label) {
   font-weight: 500;
-  color: #595959;
+  color: var(--claude-text-secondary);
 }
 
 :deep(.md-editor-preview-wrapper) {

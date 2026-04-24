@@ -320,7 +320,8 @@ onMounted(()=>{
 <style scoped>
 .news-edit-container {
   padding: 24px;
-  background: #fff;
+  background: var(--claude-bg-card);
+  border-radius: 8px;
 }
 
 .title-section {

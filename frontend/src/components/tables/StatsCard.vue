@@ -45,12 +45,12 @@ export default defineComponent({
 .stat-value {
   font-size: 24px;
   font-weight: bold;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   margin: 16px 0;
 }
 
 .stat-label {
-  color: #8c8c8c;
+  color: var(--claude-text-tertiary);
   font-size: 14px;
 }
 </style>

@@ -209,7 +209,7 @@ const handlePasswordChange = async () => {
 <style scoped>
 .settings-container {
   padding: 24px;
-  background: #fff;
+  background: var(--claude-bg-card);
   border-radius: 4px;
 }
 

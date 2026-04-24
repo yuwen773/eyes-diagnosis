@@ -27,7 +27,7 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
   padding: 0;
 }
 #basicLayout .footer {
-  background: #efefef;
+  background: var(--claude-bg-card);
   padding: 16px;
   position: fixed;
   bottom: 0;
@@ -36,7 +36,7 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
   text-align: center;
 }
 #basicLayout .content {
-  background: linear-gradient(to right,#fefefe,#fff);
+  background: var(--claude-bg-page);
   margin-bottom: 28px;
   padding: 20px 0;
 }

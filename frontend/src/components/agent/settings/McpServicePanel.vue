@@ -339,8 +339,8 @@ onMounted(() => {
 }
 
 .server-card.editing {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--claude-brand);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.1);
   border-radius: 10px 10px 0 0;
 }
 
@@ -407,7 +407,7 @@ onMounted(() => {
 }
 
 .server-edit-form {
-  border: 1px solid #3b82f6;
+  border: 1px solid var(--claude-brand);
   border-top: none;
   border-radius: 0 0 10px 10px;
   padding: 20px;

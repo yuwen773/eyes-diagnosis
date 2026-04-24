@@ -312,7 +312,7 @@ const getReliabilityMessageStyle = (level: string) => {
   flex-direction: column;
   gap: 16px;
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--claude-bg-page);
 }
 /* 骨架屏特定样式 */
 .skeleton-image {
@@ -360,13 +360,13 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .header-icon {
   font-size: 24px;
-  color: #1890ff;
+  color: var(--claude-brand);
   margin-right: 12px;
 }
 
 .diagnosis-title {
   font-size: 22px;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   margin: 0;
   margin-right: 12px;
 }
@@ -386,7 +386,7 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .probability-label {
   font-weight: 500;
-  color: #595959;
+  color: var(--claude-text-secondary);
   margin-right: 12px;
   width: 80px;
 }
@@ -398,14 +398,14 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .probability-value {
   font-weight: bold;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   width: 50px;
   text-align: right;
 }
 
 .section-title {
   font-size: 18px;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -416,14 +416,14 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 .section-content {
-  color: #595959;
+  color: var(--claude-text-secondary);
   line-height: 1.8;
   margin: 0;
 }
 
 /* 治疗建议样式 */
 .recommendation-list {
-  background-color: #f9f9f9;
+  background-color: var(--claude-bg-card);
   border-radius: 6px;
   padding: 16px;
 }
@@ -437,7 +437,7 @@ const getReliabilityMessageStyle = (level: string) => {
 .recommendation-number {
   width: 24px;
   height: 24px;
-  background-color: #52c41a;
+  background-color: var(--claude-success);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -449,7 +449,7 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .recommendation-text {
   flex-grow: 1;
-  color: #595959;
+  color: var(--claude-text-secondary);
   line-height: 1.6;
 }
 
@@ -477,7 +477,7 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .disease-name {
   width: 180px;
-  color: #595959;
+  color: var(--claude-text-secondary);
   font-weight: 500;
 }
 
@@ -508,7 +508,7 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .reliability-label {
   font-weight: 500;
-  color: #595959;
+  color: var(--claude-text-secondary);
   margin-right: 12px;
   display: flex;
   align-items: center;
@@ -543,7 +543,7 @@ const getReliabilityMessageStyle = (level: string) => {
   justify-content: center;
   align-items: center;
   padding: 16px;
-  background-color: #f9f9f9;
+  background-color: var(--claude-bg-card);
   border-radius: 8px;
 }
 

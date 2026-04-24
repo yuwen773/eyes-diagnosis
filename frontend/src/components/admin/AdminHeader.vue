@@ -71,12 +71,12 @@ const handleLogout = async () => {
 
 <style scoped>
 .admin-header {
-  background: #fff;
+  background: var(--claude-bg-elevated);
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: 0 1px 4px rgba(20, 20, 19, 0.08);
   height: 64px;
   line-height: 64px;
 }
@@ -94,7 +94,7 @@ const handleLogout = async () => {
 }
 
 .trigger:hover {
-  color: #1890ff;
+  color: var(--claude-brand);
 }
 
 .breadcrumb {

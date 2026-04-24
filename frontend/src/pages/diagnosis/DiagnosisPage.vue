@@ -25,7 +25,7 @@
               <template #cover>
 <!--特点的icon-->
                 <div class="feature-icon">
-                  <component :is="item.icon" style="font-size: 24px; color: #1a3a5f;" />
+                  <component :is="item.icon" style="font-size: 24px; color: var(--claude-brand);" />
                 </div>
               </template>
               <a-card-meta>
@@ -147,13 +147,14 @@ const closeModal = () =>{
 }
 
 .header h1 {
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   margin-bottom: 8px;
   font-size: 28px;
+  font-family: var(--claude-font-serif);
 }
 
 .header p {
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 16px;
 }
 
@@ -168,13 +169,13 @@ const closeModal = () =>{
   border-radius: 8px;
   transition: all 0.3s ease;
   height: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: white;
+  box-shadow: 0 4px 12px rgba(20, 20, 19, 0.1);
+  background-color: var(--claude-bg-elevated);
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 16px rgba(20, 20, 19, 0.15);
 }
 
 .feature-icon {
@@ -182,14 +183,14 @@ const closeModal = () =>{
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #e6f7ff;
+  background: var(--claude-bg-card);
   border-radius: 8px 8px 0 0;
   padding: 12px;
 }
 
 .desc {
   text-align: center;
-  color: #8c8c8c;
+  color: var(--claude-text-tertiary);
   font-size: 22px;
   margin-bottom: 24px;
   font-weight: 500;
@@ -200,11 +201,11 @@ const closeModal = () =>{
 :deep(.ant-card-meta-title) {
   font-size: 16px;
   margin-bottom: 8px;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
 }
 
 :deep(.ant-card-meta-description) {
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 14px;
   line-height: 1.5;
 }

@@ -195,15 +195,16 @@ const backToTop = () => {
 .news-header h1 {
   font-size: 28px;
   font-weight: 600;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
   margin-bottom: 16px;
+  font-family: var(--claude-font-serif);
 }
 
 .news-meta {
   display: flex;
   justify-content: center;
   gap: 24px;
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 15px;
   margin-bottom: 24px;
 }
@@ -240,7 +241,7 @@ const backToTop = () => {
 .markdown-content {
   line-height: 1.8;
   font-size: 16px;
-  color: #333;
+  color: var(--claude-text-primary);
   margin-bottom: 40px;
 }
 
@@ -255,16 +256,16 @@ const backToTop = () => {
   text-align: center;
 }
 
-.toTop {
+.to-top-btn {
   position: fixed;
   right: 20px;
   bottom: 80px;
-  backgroundcolor: '#1a3a5f'; /* 背景颜色改为深蓝色 */
-  bordercolor: '#1a3a5f';
+  background-color: var(--claude-bg-dark);
+  border-color: var(--claude-bg-dark);
   width: 50px;
   height: 50px;
-  fontsize: '20px';
-  boxshadow: '0 2px 8px rgba(0, 0, 0, 0.15)';
+  font-size: 20px;
+  box-shadow: var(--claude-shadow-md);
   margin-right: 15px;
 }
 /* 响应式设计 */
@@ -309,19 +310,19 @@ const backToTop = () => {
 }
 
 .markdown-content th {
-  background-color: #f5f5f5;
+  background-color: var(--claude-bg-card);
 }
 
 .markdown-content blockquote {
-  border-left: 4px solid #1a3a5f;
-  background: #f8f9fa;
+  border-left: 4px solid var(--claude-brand);
+  background: var(--claude-bg-card);
   padding: 12px 16px;
   margin: 16px 0;
-  color: #555;
+  color: var(--claude-text-secondary);
 }
 
 .markdown-content pre {
-  background: #f5f5f5;
+  background: var(--claude-bg-card);
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;

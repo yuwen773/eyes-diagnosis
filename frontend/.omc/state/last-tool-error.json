@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd \\\"D:/Work/Backend/JAVA/Project/Game/diagonosis/SpringBoot3.x/eye-diagnosis/frontend\\\" && npx tsc --noEmit src/api/diagnosisController.ts 2>&1\",\"timeout\":60000,\"description\":\"Type-check ...",
-  "error": "Exit code 2\nsrc/api/diagnosisController.ts(3,21): error TS2307: Cannot find module '@/request' or its corresponding type declarations.\r\nsrc/api/diagnosisController.ts(8,11): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(12,18): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(23,18): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(33,11): error TS2503: Cannot find namespace 'API'.\r\nsrc/api/diagnosisController.ts(37...",
-  "timestamp": "2026-04-23T07:13:02.223Z",
-  "retry_count": 2
+  "tool_input_preview": "{\"command\":\"taskkill //F //IM node.exe 2>/dev/null; sleep 2; cd D:/Work/code/eye-diagnosis/frontend && npm run dev 2>&1 &\\nsleep 8\\ncurl -s -o /dev/null -w \\\"%{http_code}\\\" http://localhost:5174/\",\"ti...",
+  "error": "Exit code 7\n�ɹ�: ����ֹ���� \"node.exe\"���� PID Ϊ 38512��\r\n�ɹ�: ����ֹ���� \"node.exe\"���� PID Ϊ 41552��\r\n�ɹ�: ����ֹ���� \"node.exe\"���� PID Ϊ 13108��\r\n�ɹ�: ����ֹ���� \"node.exe\"���� PID Ϊ 34576��\r\n�ɹ�: ����ֹ���� \"node.exe\"���� PID Ϊ 6776��\r\n\n> diagnosis-frontend@0.0.0 dev\n> vite\n\n\n  \u001b[32m\u001b[1mVITE\u001b[22m v5.4.18\u001b[39m  \u001b[2mready in \u001b[0m\u001b[1m866\u001b[22m\u001b[2m\u001b[0m ms\u001b[22m\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5173\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b...",
+  "timestamp": "2026-04-24T02:25:35.042Z",
+  "retry_count": 1
 }

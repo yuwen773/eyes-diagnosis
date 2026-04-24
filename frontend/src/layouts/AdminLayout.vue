@@ -30,7 +30,8 @@ const toggleCollapsed = () => {
 .admin-content {
   margin: 24px;
   padding: 24px;
-  background: #fff;
+  background: var(--claude-bg-card);
   min-height: calc(100vh - 64px - 48px);
+  border-radius: 8px;
 }
 </style>

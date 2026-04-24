@@ -98,9 +98,9 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
 <style scoped>
 /* 整体容器 */
 .header-container {
-  background-color: rgb(48, 164, 173);
+  background-color: #30302e;
   padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(20, 20, 19, 0.15);
   height: 85px;
   position: relative;
   z-index: 100;
@@ -120,8 +120,9 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
 
 .title {
   font-size: 22px;
-  color: white;
+  color: #faf9f5;
   font-weight: 600;
+  font-family: var(--claude-font-serif);
 }
 
 /* 深度覆盖 Ant Design 菜单样式 */
@@ -138,20 +139,20 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
   line-height: 85px !important;
   padding: 0 20px !important;
   margin: 0 10px !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(250, 249, 245, 0.9) !important;
   transition: all 0.3s ease !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item:hover),
 :deep(.ant-menu-horizontal > .ant-menu-submenu:hover) {
-  color: white !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #faf9f5 !important;
+  background-color: rgba(250, 249, 245, 0.1) !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item-selected) {
-  color: white !important;
+  color: #faf9f5 !important;
   font-weight: 600 !important;
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: rgba(250, 249, 245, 0.15) !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item::after),
@@ -171,12 +172,12 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
   width: 42px;
   height: 42px;
   line-height: 42px;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background-color: rgba(250, 249, 245, 0.2);
+  color: #faf9f5;
 }
 
 .user-name {
-  color: white;
+  color: #faf9f5;
   font-size: 18px;
   margin-left: 10px;
 }
@@ -185,9 +186,17 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
   height: 42px;
   padding: 0 24px;
   font-size: 18px;
-  background-color: white;
-  color: rgb(48, 164, 173);
-  border-radius: 21px;
+  background-color: #faf9f5;
+  color: #c96442;
+  border-radius: 12px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.login-button:hover {
+  background-color: #f5f4ed;
+  color: #d97757;
+  transform: translateY(-1px);
 }
 
 /* 响应式适配 */
@@ -206,168 +215,4 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
     display: none;
   }
 }
-
 </style>
-
-<!--<style scoped>
-/* 整体容器 */
-.header-container {
-  background-color: rgb(48, 164, 173);
-  padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  height: 64px;
-  position: relative;
-  z-index: 100;
-}
-
-/* 标题部分 */
-.title-bar {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-.title-bar:hover {
-  opacity: 0.9;
-}
-
-.logo {
-  height: 32px;
-  margin-right: 12px;
-  transition: all 0.3s ease;
-}
-
-.title {
-  font-size: 20px;
-  color: white;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-/* 主菜单核心样式 */
-.header-menu {
-  background: transparent !important;
-  line-height: 64px;
-  border-bottom: none !important;
-
-  :deep(.ant-menu-item) {
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-size: 18px !important;
-    font-weight: 500;
-    margin: 0 8px;
-    padding: 0 16px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* 激活状态 */
-    &-selected {
-      color: white !important;
-      font-weight: 600;
-      background-color: rgba(255, 255, 255, 0.15) !important;
-      border-radius: 4px;
-
-      &::after {
-        border-color: white !important;
-        border-bottom-width: 3px;
-        bottom: 12px;
-      }
-    }
-
-    /* 悬停状态 */
-    &:hover:not(.ant-menu-item-selected) {
-      color: white !important;
-      background-color: rgba(255, 255, 255, 0.1) !important;
-      transform: translateY(-2px);
-    }
-  }
-}
-
-/* 用户信息区域 */
-.user-login-status {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  padding-right: 12px;
-
-  .avatar {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: scale(1.1);
-      background-color: rgba(255, 255, 255, 0.3);
-    }
-  }
-
-  .user-name {
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    margin-left: 8px;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .login-button {
-    height: 36px;
-    padding: 0 20px;
-    font-size: 16px;
-    font-weight: 500;
-    background-color: white;
-    color: rgb(48, 164, 173);
-    border: none;
-    border-radius: 18px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
-}
-
-/* 下拉菜单样式 */
-:deep(.dropdown-menu) {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 8px 0;
-
-  .ant-dropdown-menu-item {
-    padding: 10px 16px;
-    font-size: 15px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background-color: #f5f5f5 !important;
-    }
-  }
-}
-
-/* 响应式适配 */
-@media (max-width: 768px) {
-  .header-container {
-    padding: 0 12px;
-  }
-
-  .title {
-    font-size: 18px;
-  }
-
-  .header-menu :deep(.ant-menu-item) {
-    font-size: 16px;
-    padding: 0 10px;
-    margin: 0 4px;
-  }
-
-  .user-name {
-    display: none;
-  }
-}
-</style>-->

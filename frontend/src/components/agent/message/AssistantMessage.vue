@@ -367,7 +367,7 @@ const copyContent = async () => {
   justify-content: center;
   gap: 4px;
   padding: 6px 14px !important;
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%) !important;
+  background: linear-gradient(135deg, var(--claude-brand-light) 0%, var(--claude-brand) 100%) !important;
   border: none !important;
   color: #fff !important;
   border-radius: 6px !important;
@@ -375,7 +375,7 @@ const copyContent = async () => {
   font-weight: 600 !important;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 2px 8px rgba(201, 100, 66, 0.4);
 }
 
 .markdown-body :deep(.copy-btn:hover) {

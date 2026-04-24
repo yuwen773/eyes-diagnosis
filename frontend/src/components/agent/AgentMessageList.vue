@@ -542,13 +542,13 @@ watch(() => props.loading, (val) => {
 }
 
 [data-theme="aurora"] .welcome-title {
-  background: linear-gradient(135deg, #6aa3ff 0%, #a270fc 50%, #2268f5 100%);
+  background: linear-gradient(135deg, #d97757 0%, #c96442 50%, #a34f2f 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
 [data-theme="pop"] .welcome-title {
-  background: linear-gradient(135deg, #c084fc 0%, #f472b6 50%, #a855f7 100%);
+  background: linear-gradient(135deg, #d97757 0%, #e8946a 50%, #c96442 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -718,11 +718,11 @@ watch(() => props.loading, (val) => {
 }
 
 [data-theme="aurora"] .typing-bar {
-  background: #2268f5;
+  background: var(--claude-brand);
 }
 
 [data-theme="pop"] .typing-bar {
-  background: #a855f7;
+  background: var(--claude-brand-light);
 }
 
 /* ============ Scroll Button ============ */
@@ -776,19 +776,19 @@ watch(() => props.loading, (val) => {
 
 /* Aurora theme */
 [data-theme="aurora"] .scroll-btn {
-  background: linear-gradient(135deg, #2268f5, #5b9aff);
-  box-shadow: 0 4px 20px rgba(34, 104, 245, 0.35),
+  background: linear-gradient(135deg, var(--claude-brand), var(--claude-brand-light));
+  box-shadow: 0 4px 20px rgba(201, 100, 66, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 [data-theme="aurora"] .scroll-btn:hover {
-  box-shadow: 0 8px 28px rgba(34, 104, 245, 0.4),
+  box-shadow: 0 8px 28px rgba(201, 100, 66, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Pop theme */
 [data-theme="pop"] .scroll-btn {
-  background: linear-gradient(135deg, #a855f7, #c084fc);
+  background: linear-gradient(135deg, var(--claude-brand-light), var(--claude-brand));
   box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }

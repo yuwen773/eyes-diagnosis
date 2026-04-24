@@ -153,7 +153,7 @@ const handleSubmit = async (values: any) => {
   left: 0;
   width: 100%;
   height: 8px;
-  background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%);
+  background: linear-gradient(90deg, var(--claude-brand) 0%, var(--claude-brand-light) 100%);
 }
 
 .logo-container {
@@ -169,7 +169,7 @@ const handleSubmit = async (values: any) => {
 
 .system-name {
   font-size: 22px;
-  color: #1890ff;
+  color: var(--claude-brand);
   margin-bottom: 0;
   font-weight: 600;
 }
@@ -201,12 +201,12 @@ const handleSubmit = async (values: any) => {
 .register-tip {
   text-align: center;
   margin-top: 20px;
-  color: #666;
+  color: var(--claude-text-secondary);
   font-size: 14px;
 }
 
 .register-link {
-  color: #1890ff;
+  color: var(--claude-brand);
   font-weight: 500;
   margin-left: 5px;
 }

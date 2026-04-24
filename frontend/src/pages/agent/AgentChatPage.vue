@@ -323,8 +323,8 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
 }
 
 .quick-new-chat-btn:hover {
-  color: #1890ff;
-  border-color: #1890ff;
+  color: var(--claude-brand);
+  border-color: var(--claude-brand);
 }
 
 .toggle-right-btn {
@@ -351,8 +351,8 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
 }
 
 .toggle-right-btn.active {
-  color: #1890ff;
-  border-color: #1890ff;
+  color: var(--claude-brand);
+  border-color: var(--claude-brand);
   background: rgba(24, 144, 255, 0.08);
 }
 
@@ -364,7 +364,7 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #1890ff;
+  background: var(--claude-brand);
   color: white;
   font-size: 10px;
   font-weight: 600;

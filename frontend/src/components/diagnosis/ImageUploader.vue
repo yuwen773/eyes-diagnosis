@@ -187,11 +187,11 @@ const startDiagnosis = async () => {
 
 :deep(.ant-upload-drag-icon) {
   font-size: 48px;
-  color: #1a3a5f;
+  color: var(--claude-brand);
 }
 
 :deep(.ant-upload-text),
 :deep(.ant-upload-hint) {
-  color: #1a3a5f;
+  color: var(--claude-text-secondary);
 }
 </style>

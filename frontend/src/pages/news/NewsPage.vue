@@ -55,7 +55,6 @@
 </template>
 
 <script lang="ts" setup>
-import { StarOutlined, LikeOutlined, MessageOutlined } from '@ant-design/icons-vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { listNewsVoByPage, listNewsVoByPageWithCache } from '@/api/newsController'
 import { message } from 'ant-design-vue';
@@ -160,24 +159,24 @@ const doClickNews = (newsItem: API.NewsVO) => {
 
 .news-author span:first-child {
   font-weight: bold;
-  color: #1a3a5f;
+  color: var(--claude-text-primary);
 }
 
 .news-date {
-  color: #8c8c8c;
+  color: var(--claude-text-tertiary);
   font-size: 14px;
 }
 
 .news-brief {
   margin-bottom: 12px;
   line-height: 1.6;
-  color: #666;
+  color: var(--claude-text-secondary);
 }
 
 .news-content {
   margin-bottom: 16px;
   line-height: 1.8;
-  color: #333;
+  color: var(--claude-text-primary);
 }
 
 :deep(.ant-list-item) {
@@ -214,11 +213,11 @@ const doClickNews = (newsItem: API.NewsVO) => {
 
 :deep(.ant-list-item-action a) {
   margin-right: 16px;
-  color: #1a3a5f;
+  color: var(--claude-brand);
 }
 
 :deep(.ant-list-item-action a:hover) {
-  color: #1890ff;
+  color: var(--claude-brand-light);
 }
 
 .empty-state {

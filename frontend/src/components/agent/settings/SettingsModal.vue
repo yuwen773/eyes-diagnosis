@@ -146,12 +146,12 @@ const handleClose = () => {
 }
 
 .nav-item.active {
-  background: #eff6ff;
-  color: #3b82f6;
+  background: var(--claude-bg-card);
+  color: var(--claude-brand);
 }
 
 .nav-item.active svg {
-  stroke: #3b82f6;
+  stroke: var(--claude-brand);
 }
 
 .nav-item.disabled {
