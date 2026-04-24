@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined } from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useRouter } from "vue-router"
 import checkAccess from '@/utils/access/checkAccess'
 import { userLogout } from '@/api/userController'
+import AvatarDropdown from '@/components/user/AvatarDropdown.vue'
 
 const loginUserStore = useLoginUserStore()
 const current = ref<string[]>([])
@@ -57,15 +58,7 @@ if (homeIndex !== -1) {
 
 const items = ref<MenuProps['items']>(originItems)
 
-const goCenter = () => {
-  router.push('/user/userCenter')
-}
-
 const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
-
-const goAdmin = () => {
-  router.push('/admin/dashboard')
-}
 </script>
 
 <template>
@@ -91,32 +84,7 @@ const goAdmin = () => {
       <a-col flex="120px">
         <div class="user-login-status">
           <div v-if="loginUserStore.loginUser.id">
-            <a-dropdown>
-              <ASpace>
-                <a-avatar
-                  :src="loginUserStore.loginUser.userAvatar"
-                  class="avatar"
-                >
-                  {{ loginUserStore.loginUser.userName ?? '无名' }}
-                </a-avatar>
-              </ASpace>
-              <template #overlay>
-                <a-menu class="dropdown-menu">
-                  <a-menu-item @click="goCenter">
-                    <UserOutlined />
-                    个人中心
-                  </a-menu-item>
-                  <a-menu-item v-if="isAdmin" @click="goAdmin">
-                    <SettingOutlined />
-                    系统管理
-                  </a-menu-item>
-                  <a-menu-item @click="doLogout">
-                    <LogoutOutlined />
-                    退出登录
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
+            <AvatarDropdown @logout="doLogout" />
             <span class="user-name">{{ loginUserStore.loginUser.userName ?? '无名' }}</span>
           </div>
           <div v-else>

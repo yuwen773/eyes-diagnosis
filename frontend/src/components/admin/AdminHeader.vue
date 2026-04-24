@@ -11,27 +11,7 @@
       </a-breadcrumb>
     </div>
     <div class="header-right">
-      <a-dropdown>
-        <div class="user-info">
-          <a-avatar :src="loginUser.userAvatar" :size="32">
-            {{ loginUser.userName?.charAt(0) }}
-          </a-avatar>
-          <span class="username">{{ loginUser.userName }}</span>
-        </div>
-        <template #overlay>
-          <a-menu>
-            <a-menu-item key="profile" @click="goProfile">
-              <UserOutlined />
-              <span style="margin-left: 8px">个人中心</span>
-            </a-menu-item>
-            <a-menu-divider />
-            <a-menu-item key="logout" @click="handleLogout">
-              <LogoutOutlined />
-              <span style="margin-left: 8px">退出登录</span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
+      <AvatarDropdown placement="bottom-end" @logout="handleLogout" />
     </div>
   </a-layout-header>
 </template>
@@ -39,13 +19,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UserOutlined,
-  LogoutOutlined,
 } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores/user'
+import { userLogout } from '@/api/userController'
+import AvatarDropdown from '@/components/user/AvatarDropdown.vue'
 
 defineProps<{
   collapsed: boolean
@@ -58,7 +39,6 @@ defineEmits<{
 const route = useRoute()
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
-const loginUser = computed(() => loginUserStore.loginUser)
 
 const pageTitles: Record<string, string> = {
   '/admin/dashboard': '仪表盘',
@@ -73,12 +53,19 @@ const pageTitle = computed(() => {
   return pageTitles[route.path] || '管理页面'
 })
 
-const goProfile = () => {
-  router.push('/user/userCenter/profile')
-}
-
-const handleLogout = () => {
-  router.push('/user/login')
+const handleLogout = async () => {
+  try {
+    const res = await userLogout()
+    if (res.data.code === 0) {
+      loginUserStore.setLoginUser({ userName: '未登录' })
+      message.success('退出登录成功')
+      await router.push('/user/login')
+    } else {
+      message.error('退出登录失败: ' + res.data.msg)
+    }
+  } catch (e) {
+    console.error('logout failed', e)
+  }
 }
 </script>
 
@@ -117,16 +104,5 @@ const handleLogout = () => {
 .header-right {
   display: flex;
   align-items: center;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.username {
-  font-size: 14px;
 }
 </style>
