@@ -4,12 +4,15 @@ import * as Papa from 'papaparse'
 import  { applyPlugin } from 'jspdf-autotable'
 applyPlugin(jsPDF)
 
-
+// Extend jsPDF type to include autoTable plugin
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable(options: Record<string, unknown>): { finalY: number }
+  }
+}
 
 export const exportToPDF = (report: API.DiagnosisResultVO) => {
-  const doc = new jsPDF({
-    encoding: 'UTF-8'
-  })
+  const doc = new jsPDF()
 
   // 标题
   doc.setFontSize(18)
@@ -46,7 +49,7 @@ export const exportToPDF = (report: API.DiagnosisResultVO) => {
   doc.setFontSize(10)
 
   // 处理多行文本
-  const detailsLines = doc.splitTextToSize(report.details, 180)
+  const detailsLines = doc.splitTextToSize(report.details ?? '', 180)
   doc.text(detailsLines, 14, tableEndY + 25)
 
   // 诊断建议
@@ -54,7 +57,7 @@ export const exportToPDF = (report: API.DiagnosisResultVO) => {
   doc.text('诊断建议', 14, tableEndY + 15 + detailsLines.length * 7 + 10) // 根据行数计算位置
   doc.setFontSize(10)
 
-  const suggestionsLines = doc.splitTextToSize(report.recommendations, 180)
+  const suggestionsLines = doc.splitTextToSize(report.recommendations ?? '', 180)
   doc.text(suggestionsLines, 14, tableEndY + 15 + detailsLines.length * 7 + 20)
 
   // 页脚
