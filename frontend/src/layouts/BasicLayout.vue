@@ -7,18 +7,14 @@
       <a-layout-content class="content">
         <router-view />
       </a-layout-content>
-      <a-layout-footer class="footer">
-        <a href="https://lyf1210.top" target="_blank">
-          眼科智能诊断系统 by YuWen
-        </a>
-      </a-layout-footer>
+      <GlobalFooter />
     </a-layout>
   </div>
 </template>
 
 <script setup lang="ts">
 import GlobalHeader from '@/components/GlobalHeader.vue'
-
+import GlobalFooter from '@/components/GlobalFooter.vue'
 </script>
 
 <style scoped>
@@ -26,24 +22,15 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
   margin: 0;
   padding: 0;
 }
-#basicLayout .footer {
-  background: var(--claude-bg-card);
-  padding: 16px;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-}
+
 #basicLayout .content {
   background: var(--claude-bg-page);
-  margin-bottom: 28px;
   padding: 20px 0;
 }
-#basicLayout .header{
+
+#basicLayout .header {
   padding-inline: 20px;
-/*  margin-bottom: 16px;*/
-  color:unset;
+  color: unset;
   background: white;
   padding: 0;
 }
