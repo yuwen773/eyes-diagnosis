@@ -51,6 +51,11 @@
             <template #icon><history-outlined /></template>
             诊断历史
           </a-menu-item>
+          <!--导航项 》》 通知中心-->
+          <a-menu-item key="notification">
+            <template #icon><bell-outlined /></template>
+            通知中心
+          </a-menu-item>
         </a-menu>
       </a-layout-sider>
 
@@ -123,12 +128,17 @@ const selectedKeys = ref<string[]>()//['profile']
 const reportModalVisible = ref(false)
 const currentReport = ref<any>(null)
 const avatarModalVisible = ref(false)
+const unreadCount = ref(0)
+
+const handleNotificationClick = () => {
+  router.push('/user/userCenter/notification')
+}
 
 watch(
   () => route.path,
   (newPath) => {
     const key = newPath.split('/').pop()
-    if (key && ['profile', 'accountSettings', 'diagnosisHistory'].includes(key)) {
+    if (key && ['profile', 'accountSettings', 'diagnosisHistory', 'notification'].includes(key)) {
       selectedKeys.value = [key]
     }
   },
@@ -223,6 +233,43 @@ onMounted(() => {
   padding: 24px 0;
 }
 
+.notification-bell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 12px 16px;
+  margin: 0 12px 16px;
+  border-radius: 8px;
+  background: #f5f4f0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.notification-bell:hover {
+  background: var(--color-primary-light);
+}
+
+.bell-icon {
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  font-size: 11px;
+  color: #fff;
+  background: #e54d39;
+  border-radius: 9px;
+  padding: 0 5px;
+}
+
 .user-info {
   display: flex;
   flex-direction: column;
@@ -257,15 +304,33 @@ onMounted(() => {
   margin: 8px 0;
   border-radius: 4px;
   transition: all 0.3s;
+  position: relative;
+}
+
+.ant-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 0;
+  background: #c96442;
+  border-radius: 1px;
+  transition: height 0.3s;
 }
 
 .ant-menu-item:hover {
-  background: rgba(201, 100, 66, 0.1);
+  background: #e8e6dc;
+}
+
+.ant-menu-item-selected::before {
+  height: 24px;
 }
 
 .ant-menu-item-selected {
   background: rgba(201, 100, 66, 0.15);
-  color: var(--color-primary);
+  color: #c96442;
 }
 
 .report-modal :deep(.ant-modal-content) {
