@@ -7,6 +7,12 @@
     <a-layout class="user-center-container">
       <!-- 左侧导航 -->
       <a-layout-sider width="220" class="sider">
+        <!-- 通知铃铛 -->
+        <div class="notification-bell" @click="handleNotificationClick">
+          <BellOutlined class="bell-icon" />
+          <span v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        </div>
+
         <!--用户昵称和用户头像-->
         <div class="user-info">
           <a-avatar
@@ -101,7 +107,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DiagnosisReportDetail from '@/components/user/DiagnosisReportDetail.vue'
-import { UserOutlined, SettingOutlined, HistoryOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, HistoryOutlined, BellOutlined } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 import { message } from 'ant-design-vue'
@@ -179,14 +185,13 @@ onMounted(() => {
 <style scoped>
 .user-center-wrapper {
   min-height: 86vh;
-  background: url('@/assets/login.png') no-repeat center center fixed;
-  background-size: cover;
+  background: var(--color-bg);
   position: relative;
   overflow: hidden;
-  display: flex; /* 添加flex布局 */
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-6);
 }
 
 .background-layer {
@@ -203,21 +208,18 @@ onMounted(() => {
 .user-center-container {
   position: relative;
   z-index: 1;
-  width: 1200px; /* 固定宽度 */
-  height: 600px; /* 固定高度 */
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 1200px;
+  height: 600px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-whisper);
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  /* 移除margin设置，改用父容器flex布局控制居中 */
 }
 
 .sider {
-  background: rgba(255, 255, 255, 0.7);
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   padding: 24px 0;
 }
 
@@ -226,7 +228,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 0 16px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 16px;
 }
 
@@ -234,7 +236,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 500;
   margin: 12px 0 8px;
-  color: #1a3a5f;
+  color: var(--color-text);
 }
 
 .user-role {
@@ -243,7 +245,7 @@ onMounted(() => {
 
 .content-layout {
   padding: 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--color-surface);
 }
 
 .ant-menu {
@@ -258,26 +260,26 @@ onMounted(() => {
 }
 
 .ant-menu-item:hover {
-  background: rgba(24, 144, 255, 0.1);
+  background: rgba(201, 100, 66, 0.1);
 }
 
 .ant-menu-item-selected {
-  background: rgba(24, 144, 255, 0.1);
-  color: #1890ff;
+  background: rgba(201, 100, 66, 0.15);
+  color: var(--color-primary);
 }
 
 .report-modal :deep(.ant-modal-content) {
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--color-surface);
   backdrop-filter: blur(10px);
 }
 
 .report-modal :deep(.ant-modal-header) {
   background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
-/* 响应式设计调整 */
+
 @media (max-width: 2000px) {
   .user-center-container {
     width: calc(100% - 200px);
@@ -306,7 +308,7 @@ onMounted(() => {
   .sider {
     width: 100% !important;
     border-right: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .content-layout {
