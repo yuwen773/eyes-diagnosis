@@ -1,3 +1,62 @@
+<script lang="ts" setup>
+import { ref } from 'vue';
+import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined } from '@ant-design/icons-vue';
+import ImageUploader from '@/components/diagnosis/ImageUploader.vue';
+import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue';
+
+import { useDiagnosisStore } from '@/stores/diagnosis'
+const diagnosisStore = useDiagnosisStore();
+const { setLoading } = diagnosisStore;
+
+// 系统特点数据
+const features = [
+  {
+    title: '精准诊断',
+    description: '基于深度学习算法和大量医学数据，提供高精度的眼科疾病诊断',
+    icon: EyeOutlined
+  },
+  {
+    title: '快速分析',
+    description: '秒级响应，快速分析眼部图像，及时提供诊断结果',
+    icon: RocketOutlined
+  },
+  {
+    title: '全面评估',
+    description: '对多种眼科疾病进行全面评估，包括近视、远视、白内障等',
+    icon: HeartOutlined
+  },
+  {
+    title: '智能提示',
+    description: '智能提示潜在眼健康问题，帮助用户及时预防和治疗',
+    icon: BellOutlined
+  },
+  {
+    title: '数据安全',
+    description: '严格保护用户数据隐私，确保所有医疗信息安全存储',
+    icon: DatabaseOutlined
+  },
+  {
+    title: '专业建议',
+    description: '提供专业的眼科健康建议和治疗方案参考',
+    icon: StarOutlined
+  }
+];
+
+//TODO
+const diagnosisPicture = ref<API.DiagnosisUploadDTO>()
+//上传成功
+const onSuccess = (newDiagnosisPicture: API.DiagnosisUploadDTO) => {
+  diagnosisPicture.value = newDiagnosisPicture
+  console.log(diagnosisPicture.value)
+}
+
+const closeModal = () =>{
+  setLoading(false)
+  console.log("@@@@@@@@@@@@")
+}
+
+</script>
+
 <template>
 
   <div class="diagnosis-container">
@@ -57,65 +116,6 @@
     </a-modal>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { ref } from 'vue';
-import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined } from '@ant-design/icons-vue';
-import ImageUploader from '@/components/diagnosis/ImageUploader.vue';
-import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue';
-
-import { useDiagnosisStore } from '@/stores/diagnosis'
-const diagnosisStore = useDiagnosisStore();
-const { setLoading } = diagnosisStore;
-
-// 系统特点数据
-const features = [
-  {
-    title: '精准诊断',
-    description: '基于深度学习算法和大量医学数据，提供高精度的眼科疾病诊断',
-    icon: EyeOutlined
-  },
-  {
-    title: '快速分析',
-    description: '秒级响应，快速分析眼部图像，及时提供诊断结果',
-    icon: RocketOutlined
-  },
-  {
-    title: '全面评估',
-    description: '对多种眼科疾病进行全面评估，包括近视、远视、白内障等',
-    icon: HeartOutlined
-  },
-  {
-    title: '智能提示',
-    description: '智能提示潜在眼健康问题，帮助用户及时预防和治疗',
-    icon: BellOutlined
-  },
-  {
-    title: '数据安全',
-    description: '严格保护用户数据隐私，确保所有医疗信息安全存储',
-    icon: DatabaseOutlined
-  },
-  {
-    title: '专业建议',
-    description: '提供专业的眼科健康建议和治疗方案参考',
-    icon: StarOutlined
-  }
-];
-
-//TODO
-const diagnosisPicture = ref<API.DiagnosisVO>()
-//上传成功
-const onSuccess = (newDiagnosisPicture: API.DiagnosisVO) => {
-  diagnosisPicture.value = newDiagnosisPicture
-  console.log(diagnosisPicture.value)
-}
-
-const closeModal = () =>{
-  setLoading(false)
-  console.log("@@@@@@@@@@@@")
-}
-
-</script>
 
 <style scoped>
 .diagnosis-container {

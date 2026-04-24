@@ -28,9 +28,9 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
    * 打开诊断报告模态框
    * @param report 诊断报告
    */
-  async function openReportModal(report: any) {
+  async function openReportModal(report: { id?: number | string }) {
     const res = await getDiagnosisResultVo({
-      id: report.id,
+      id: Number(report.id),
     })
     if(res.data.data && res.data.code ===0 ){
       currentReport.value = res.data.data

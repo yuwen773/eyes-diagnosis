@@ -92,7 +92,7 @@ const loading = ref<boolean>(false)
     //图片
     const fileList = ref([]);
 
-const uploadedImageUrl = ref(null);
+const uploadedImageUrl = ref<string | null>(null);
 const uploadedFile = ref<File | null>(null);
 
 //图片校验
@@ -117,13 +117,13 @@ const handleUpload = async ({ file }: any) => {
   loading.value = true
   try {
     //设置参数
-    const params = props.picture ? { id: props.picture.id } : {};
+    const params = props.picture ? { diagnosisUploadDTO: { id: props.picture.id } } : { diagnosisUploadDTO: {} };
     const res = await uploadPicture(params, {}, file)
 
     if (res.data.code === 0 && res.data.data) {
       message.success('图片上传成功')
       // 设置图像url
-      uploadedImageUrl.value = res.data.data.url
+      uploadedImageUrl.value = res.data.data.url ?? null
       uploadedFile.value = (file as File)
       console.log(uploadedImageUrl.value)
       // setLoading(loading.value)

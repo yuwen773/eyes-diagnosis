@@ -59,7 +59,7 @@
                 <span class="probability-label">诊断概率: </span>
                 <a-progress
                   :percent="diagnosisResult?.confidence"
-                  :stroke-color="getProbabilityColor(diagnosisResult?.confidence)"
+                  :stroke-color="getProbabilityColor(diagnosisResult?.confidence ?? 0)"
                   :show-info="false"
                   class="probability-bar"
                 />
@@ -110,11 +110,11 @@
                   <a-progress
                     type="line"
                     :percent="disease.probability"
-                    :stroke-color="getProbabilityColor(disease.probability )"
+                    :stroke-color="getProbabilityColor(disease.probability ?? 0)"
                     :show-info="false"
                     class="vertical-progress"
                   />
-                  <span class="probability-value">{{ Math.round(disease.probability) }}%</span>
+                  <span class="probability-value">{{ Math.round(disease.probability ?? 0) }}%</span>
                 </div>
               </div>
             </div>
@@ -224,15 +224,15 @@ const topDiagnoses = computed(() => {
 
 
   //怕 other是undefined
-  return diagnosisResult?.value?.otherDisease?.sort((a, b) => b?.probability - a?.probability);
+  return diagnosisResult?.value?.otherDisease?.sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
 });
 
 // 图表数据
 const chartData = computed(() => {
-  return topDiagnoses?.value.map(d => ({
-    name: d.name,
-    value: d.probability
-  }));
+  return topDiagnoses?.value?.map(d => ({
+    name: d.name ?? '',
+    value: d.probability ?? 0
+  })) ?? [];
 });
 
 // 根据概率获取颜色
@@ -302,7 +302,7 @@ const getReliabilityMessageStyle = (level: string) => {
       borderColor: 'rgb(241, 184, 190)'
     }
   };
-  return styles[level] || {};
+  return styles[level as keyof typeof styles] || {};
 };
 </script>
 

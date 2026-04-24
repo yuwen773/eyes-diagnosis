@@ -17,8 +17,8 @@
           <a-input v-else v-model:value="editableData.result" />
         </a-descriptions-item>
         <a-descriptions-item label="置信度">
-          <span v-if="!isEditing">{{ report?.confidence > 85 ? report.confidence : 85 }}%</span>
-          <a-input-number v-else v-model:value="editableData.confidence" :min="0" :max="100" :formatter="value => `${value}%`" :parser="value => value.replace('%', '')" />
+          <span v-if="!isEditing">{{ (report?.confidence ?? 0) > 85 ? report?.confidence : 85 }}%</span>
+          <a-input-number v-else v-model:value="editableData.confidence" :min="0" :max="100" :formatter="(value: number | string) => `${value}%`" :parser="(value: string | undefined) => (value ?? '').replace('%', '')" />
         </a-descriptions-item>
         <a-descriptions-item label="严重程度">
           <span v-if="!isEditing">{{ report.severity || '高' }}</span>
@@ -30,7 +30,7 @@
         </a-descriptions-item>
         <a-descriptions-item label="概率">
           <span v-if="!isEditing">{{ report.probability || 90 }}%</span>
-          <a-input-number v-else v-model:value="editableData.probability" :min="0" :max="100" :formatter="value => `${value}%`" :parser="value => value.replace('%', '')" />
+          <a-input-number v-else v-model:value="editableData.probability" :min="0" :max="100" :formatter="(value: number | string) => `${value}%`" :parser="(value: string | undefined) => (value ?? '').replace('%', '')" />
         </a-descriptions-item>
       </a-descriptions>
 
@@ -123,7 +123,7 @@ import { useRouter } from 'vue-router'
 import { updateDiagnosisResult } from '@/api/diagnosisController'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 
-const formatDate = (date: string) => {
+const formatDate = (date?: string) => {
   return dayjs(Number(date)).format('YYYY年MM月DD日 HH:mm')
 }
 
@@ -146,7 +146,7 @@ const isFromAdminPage = () =>{
 
     const backPath = router.options.history.state.back;
     // 使用startsWith方法检查前缀
-    return backPath.startsWith('/systemManage/admin');
+    return String(backPath).startsWith('/systemManage/admin');
   }
   // 如果路径不完整或不存在，返回false
   return false;
@@ -154,7 +154,7 @@ const isFromAdminPage = () =>{
 const props = defineProps({
   report: {
     type: Object as () => API.DiagnosisResultVO,
-    required: true
+    default: undefined
   }
 })
 
@@ -216,6 +216,7 @@ const saveChanges = async () => {
 }*/
 
 const handleExport = (type: 'pdf' | 'csv') => {
+  if (!props.report) return
   if (type === 'pdf') {
     exportToPDF(props.report)
   } else {

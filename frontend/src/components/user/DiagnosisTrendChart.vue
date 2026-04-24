@@ -23,10 +23,15 @@ import * as echarts from 'echarts';
 import dayjs from 'dayjs';
 
 interface DiagnosisRecord {
-  id: string | number;
+  id?: string | number;
   createTime?: string;
   result?: string;
-  [key: string]: any;
+  url?: string;
+  confidence?: number;
+  severity?: string;
+  reexamineStatus?: number;
+  status?: string;
+  username?: string;
 }
 
 export default defineComponent({
