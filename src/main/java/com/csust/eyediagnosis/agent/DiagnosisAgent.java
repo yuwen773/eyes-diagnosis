@@ -1,15 +1,23 @@
 package com.csust.eyediagnosis.agent;
 
+import com.alibaba.cloud.ai.graph.NodeOutput;
+import com.alibaba.cloud.ai.graph.RunnableConfig;
+import com.alibaba.cloud.ai.graph.action.InterruptionMetadata;
+import com.alibaba.cloud.ai.graph.agent.ReactAgent;
+import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
+import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
+import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.StreamingChatModel;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -57,13 +65,14 @@ public class DiagnosisAgent {
 
 ## 工具使用
 当需要查询医学知识时可以调用MCP工具。
+
+### RAG 工具
+- 当需要查找专业眼科医学知识时，使用 searchDocuments 工具搜索知识库。
+- 基于检索到的信息回答问题时，请引用来源。
 """;
 
     @Resource
     private ChatModel chatModel;
-
-    @Resource
-    private StreamingChatModel streamingChatModel;
 
     @Resource
     private TextMcpModelInterceptor textMcpModelInterceptor;
@@ -73,6 +82,31 @@ public class DiagnosisAgent {
 
     @Resource
     private AgentConstants agentConstants;
+
+    @Resource
+    private EyeImageAnalyzerTool eyeImageAnalyzerTool;
+
+    @Resource
+    private DocumentSearchTool documentSearchTool;
+
+    private ReactAgent agent;
+
+    @PostConstruct
+    public void init() {
+        agent = buildAgent(null);
+    }
+
+    private ReactAgent buildAgent(ToolCallback[] extraTools) {
+        var builder = ReactAgent.builder()
+                .name("eye_diagnosis_assistant")
+                .model(chatModel)
+                .instruction(SYSTEM_PROMPT)
+                .methodTools(eyeImageAnalyzerTool, documentSearchTool);
+        if (extraTools != null && extraTools.length > 0) {
+            builder.tools(extraTools);
+        }
+        return builder.build();
+    }
 
     /**
      * 流式对话入口（支持MCP）
@@ -88,60 +122,97 @@ public class DiagnosisAgent {
         chatRequest.setDisableMcpDefault(disableMcpDefault);
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
-        // 构建消息列表
-        List<dev.langchain4j.data.message.ChatMessage> messages =
-            List.of(new dev.langchain4j.data.message.SystemMessage(SYSTEM_PROMPT),
-                    new dev.langchain4j.data.message.UserMessage(fullMessage));
+        // 选择 Agent：无 MCP 用内置 agent，有 MCP 创建 combined agent
+        ReactAgent activeAgent = (mcpCallbacks == null || mcpCallbacks.length == 0)
+                ? agent
+                : buildAgent(mcpCallbacks);
+
+        RunnableConfig config = RunnableConfig.builder()
+                .threadId(threadId)
+                .build();
 
         try {
-            Flux<dev.langchain4j.data.message.ChatMessage> stream;
+            Flux<NodeOutput> stream = activeAgent.stream(fullMessage, config);
 
-            if (mcpCallbacks != null && mcpCallbacks.length > 0) {
-                // MCP工具调用模式
-                stream = streamingChatModel.stream(messages,
-                    dev.langchain4j.model.chat.request.ChatRequest.builder()
-                        .tools(List.of(mcpCallbacks))
-                        .build());
-            } else {
-                // 普通模式
-                stream = streamingChatModel.stream(messages);
-            }
-
-            final StringBuilder assistantContent = new StringBuilder();
+            StringBuilder assistantContent = new StringBuilder();
+            StringBuilder reasoningContent = new StringBuilder();
 
             return stream
-                    .filter(msg -> msg != null)
-                    .map(msg -> {
-                        MessageDTO messageDTO = new MessageDTO();
-
-                        if (msg instanceof dev.langchain4j.data.message.AiMessage aiMsg) {
-                            // 处理工具调用
-                            if (aiMsg.hasToolCalls()) {
-                                messageDTO.setMessageType(MessageType.TOOL_REQUEST);
-                                messageDTO.setContent(aiMsg.getText());
-                                List<Map<String, Object>> toolCallingList = aiMsg.getToolCalls().stream()
-                                        .map(tc -> {
-                                            Map<String, Object> tcMap = new HashMap<>();
-                                            tcMap.put("name", tc.name());
-                                            tcMap.put("arguments", tc.arguments());
-                                            return tcMap;
-                                        }).toList();
-                                messageDTO.setToolCalls(toolCallingList);
-                                String toolDesc = toolCallingList.stream()
-                                        .map(tc -> tc.get("name") + ": " + tc.get("arguments"))
-                                        .collect(Collectors.joining("\n"));
-                                chatHistoryService.saveToolCallMessage(threadId, toolDesc);
-                            } else {
-                                // 普通文本
-                                String text = aiMsg.getText();
-                                assistantContent.append(text);
-                                messageDTO.setContent(text);
-                                messageDTO.setMessageType(MessageType.ASSISTANT);
-                            }
+                    .filter(output -> {
+                        if (output instanceof StreamingOutput<?> so) {
+                            String typeName = so.getOutputType() != null ? so.getOutputType().name() : "";
+                            return !"AGENT_MODEL_FINISHED".equals(typeName)
+                                && !"AGENT_HOOK_FINISHED".equals(typeName);
                         }
-                        return messageDTO;
+                        return true;
+                    })
+                    .mapNotNull(output -> {
+                        if (output instanceof StreamingOutput<?> streamingOutput) {
+                            Object msg = streamingOutput.message();
+                            if (msg instanceof AssistantMessage assistantMessage) {
+                                MessageDTO messageDTO = new MessageDTO();
+                                Map<String, Object> metadata = assistantMessage.getMetadata();
+
+                                // 工具调用消息
+                                if (assistantMessage.hasToolCalls()) {
+                                    String prevReasoning = reasoningContent.toString();
+                                    if (!prevReasoning.isEmpty()) {
+                                        chatHistoryService.saveReasoningMessage(threadId, prevReasoning);
+                                        reasoningContent.setLength(0);
+                                    }
+                                    messageDTO.setMessageType(MessageType.TOOL_REQUEST);
+                                    messageDTO.setContent(assistantMessage.getText());
+                                    List<Map<String, Object>> toolCallingList = assistantMessage.getToolCalls().stream()
+                                            .map(toolCall -> {
+                                                Map<String, Object> tcMap = new HashMap<>();
+                                                tcMap.put("name", toolCall.name());
+                                                tcMap.put("arguments", toolCall.arguments());
+                                                return tcMap;
+                                            }).toList();
+                                    messageDTO.setToolCalls(toolCallingList);
+                                    StringBuilder toolDesc = new StringBuilder();
+                                    for (Map<String, Object> tc : toolCallingList) {
+                                        if (toolDesc.length() > 0) toolDesc.append("\n");
+                                        toolDesc.append(tc.get("name")).append(": ").append(tc.get("arguments"));
+                                    }
+                                    chatHistoryService.saveToolCallMessage(threadId, toolDesc.toString());
+                                }
+                                // reasoning 消息
+                                else if (metadata.get("reasoningContent") != null
+                                        && !"".equals(metadata.get("reasoningContent"))) {
+                                    String reasoningText = (String) metadata.get("reasoningContent");
+                                    reasoningContent.append(reasoningText);
+                                    messageDTO.setContent(reasoningText);
+                                    messageDTO.setMessageType(MessageType.REASONING);
+                                }
+                                // 普通文本消息
+                                else {
+                                    String text = assistantMessage.getText();
+                                    assistantContent.append(text);
+                                    messageDTO.setContent(text);
+                                    messageDTO.setMessageType(MessageType.ASSISTANT);
+                                }
+                                return messageDTO;
+                            }
+                        } else if (output instanceof InterruptionMetadata interruptionMetadata) {
+                            MessageDTO messageDTO = new MessageDTO();
+                            messageDTO.setMessageType(MessageType.TOOL_CONFIRM);
+                            StringBuilder sb = new StringBuilder();
+                            for (InterruptionMetadata.ToolFeedback feedback : interruptionMetadata.toolFeedbacks()) {
+                                sb.append("工具: ").append(feedback.getName()).append("\n");
+                                sb.append("评估: ").append(feedback.getDescription()).append("\n");
+                            }
+                            messageDTO.setContent(sb.toString());
+                            chatHistoryService.saveToolConfirmMessage(threadId, sb.toString());
+                            return messageDTO;
+                        }
+                        return null;
                     })
                     .doOnComplete(() -> {
+                        String fullReasoning = reasoningContent.toString();
+                        if (!fullReasoning.isEmpty()) {
+                            chatHistoryService.saveReasoningMessage(threadId, fullReasoning);
+                        }
                         String fullResponse = assistantContent.toString();
                         if (!fullResponse.isEmpty()) {
                             chatHistoryService.saveAssistantMessage(threadId, fullResponse, "text");

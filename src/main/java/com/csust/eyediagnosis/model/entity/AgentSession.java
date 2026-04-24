@@ -1,4 +1,4 @@
-package com.csust.eyidiagnosis.model.entity;
+package com.csust.eyediagnosis.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;

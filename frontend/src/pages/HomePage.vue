@@ -1,0 +1,265 @@
+<template>
+  <div class="home-page">
+
+    <!-- 轮播图 -->
+    <div class="carousel-section">
+      <a-carousel autoplay :autoplay-speed="5000">
+        <div v-for="(image, index) in carouselImages" :key="index">
+          <img :src="image" :alt="'轮播图' + (index + 1)" class="carousel-image" />
+        </div>
+      </a-carousel>
+    </div>
+
+    <!-- 系统特点 -->
+    <div class="features-section">
+      <a-typography-title :level="2" class="section-title">系统特点</a-typography-title>
+      <div class="features-grid">
+        <div v-for="(feature, index) in features" :key="index" class="feature-card">
+          <div class="feature-icon">
+            <component :is="feature.icon" />
+          </div>
+          <a-typography-title :level="4" class="feature-title">{{ feature.title }}</a-typography-title>
+          <a-typography-paragraph class="feature-desc">{{ feature.description }}</a-typography-paragraph>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行业问题解决方案 -->
+    <div class="solutions-section">
+      <a-typography-title :level="2" class="section-title">行业问题解决方案</a-typography-title>
+      <div class="solutions-list">
+        <div v-for="(solution, index) in solutions" :key="index" class="solution-item">
+          <a-typography-title :level="3" class="solution-title">{{ solution.title }}</a-typography-title>
+          <a-typography-paragraph class="solution-desc">{{ solution.description }}</a-typography-paragraph>
+        </div>
+      </div>
+    </div>
+    <a-affix :offsetBottom="80">
+      <a-button
+        class="toTop"
+        type="primary"
+        :icon="h(UpCircleOutlined)"
+        v-show="showBackToTop"
+        @click="backToTop"
+      />
+    </a-affix>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { h, onMounted, ref } from 'vue'
+import {
+  EyeOutlined,
+  RobotOutlined,
+  CloudServerOutlined,
+  SafetyOutlined,
+  TeamOutlined,
+  ClockCircleOutlined, UpCircleOutlined
+} from '@ant-design/icons-vue'
+//是否显示
+const showBackToTop = ref(false)
+
+import banner1 from '@/assets/banner1.png';
+import banner2 from '@/assets/banner2.png';
+import banner3 from '@/assets/banner3.png';
+
+// 轮播图图片 - 使用示例图片URL，实际项目中替换为真实图片
+const carouselImages = ref([
+  banner1,
+  banner2,
+  banner3
+])
+// 系统特点数据
+const features = ref([
+  {
+    icon: EyeOutlined,
+    title: '精准诊断',
+    description: '采用先进的AI算法，对眼科疾病进行高精度诊断，准确率高达95%以上'
+  },
+  {
+    icon: RobotOutlined,
+    title: '智能分析',
+    description: '自动分析眼底图像，快速识别多种眼科疾病，大幅提高诊断效率'
+  },
+  {
+    icon: CloudServerOutlined,
+    title: '云端存储',
+    description: '所有诊断数据安全存储在云端，随时随地可查阅历史记录'
+  },
+  {
+    icon: SafetyOutlined,
+    title: '数据安全',
+    description: '采用银行级加密技术，确保患者隐私数据绝对安全'
+  },
+  {
+    icon: TeamOutlined,
+    title: '专家团队',
+    description: '由国内顶尖眼科专家提供技术支持，确保诊断方案权威可靠'
+  },
+  {
+    icon: ClockCircleOutlined,
+    title: '快速响应',
+    description: '10秒内完成初步诊断，为患者争取宝贵治疗时间'
+  }
+])
+
+// 行业问题解决方案数据
+const solutions = ref([
+  {
+    title: '基层医疗资源不足',
+    description: '通过AI辅助诊断，帮助基层医疗机构提升眼科诊疗能力，缓解专业眼科医生短缺问题'
+  },
+  {
+    title: '诊断标准不统一',
+    description: '基于权威医学指南的标准化诊断流程，确保不同地区、不同医院诊断结果一致可靠'
+  },
+  {
+    title: '患者就诊不便',
+    description: '支持远程诊断和在线咨询，减少患者往返医院次数，特别适合偏远地区患者'
+  },
+  {
+    title: '疾病早期筛查难',
+    description: 'AI算法能够发现早期微小病变，实现青光眼、糖尿病视网膜病变等疾病的早期筛查'
+  }
+])
+
+// 监听滚动位置，控制“返回顶部”按钮的显示
+const handleScroll = () => {
+  showBackToTop.value = window.pageYOffset > 300
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+const backToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+</script>
+
+<style scoped>
+.home-page {
+  background-color: #fff;
+}
+
+/* 导航栏样式 */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: #001529;
+}
+
+.logo {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 50px;
+}
+
+/* 轮播图区域 */
+.carousel-section {
+  height: 700px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 700px;
+  object-fit: cover;
+}
+
+/* 系统特点区域 */
+.features-section {
+  height: 650px;
+  width: 100%;
+  padding: 60px 10%;
+  background-color: #f9f9f9;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 50px;
+  color: #333;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.feature-card {
+  padding: 30px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.feature-icon {
+  font-size: 48px;
+  color: #1890ff;
+  margin-bottom: 20px;
+}
+
+.feature-title {
+  margin-bottom: 15px !important;
+  color: #333;
+}
+
+.feature-desc {
+  color: #666;
+  font-size: 15px;
+}
+
+/* 行业问题解决方案区域 */
+.solutions-section {
+  height: 650px;
+  width: 100%;
+  padding: 60px 15%;
+  background-color: white;
+}
+
+.solutions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.solution-item {
+  flex: 1 1 45%;
+  min-width: 300px;
+  padding: 30px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.solution-title {
+  color: #1890ff;
+  margin-bottom: 20px !important;
+}
+
+.solution-desc {
+  color: #555;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.toTop {
+  position: fixed;
+  right: 20px;
+  bottom: 80px;
+  backgroundcolor: '#1a3a5f'; /* 背景颜色改为深蓝色 */
+  bordercolor: '#1a3a5f';
+  width: 50px;
+  height: 50px;
+  fontsize: '20px';
+  boxshadow: '0 2px 8px rgba(0, 0, 0, 0.15)';
+  margin-right: 15px;
+}
+</style>

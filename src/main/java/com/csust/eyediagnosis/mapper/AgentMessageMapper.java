@@ -10,11 +10,13 @@ import java.util.List;
 @Mapper
 public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
 
+    String SUBTYPE_SORT = "CASE subType WHEN 'reasoning' THEN 1 WHEN 'tool-call' THEN 2 WHEN 'tool-result' THEN 3 WHEN 'mcp-confirm' THEN 4 WHEN 'text' THEN 5 ELSE 0 END";
+
     @Select("<script>" +
             "SELECT * FROM t_agent_message " +
-            "WHERE session_id = #{sessionId} " +
-            "<if test='beforeId != null'> AND id < #{beforeId} </if>" +
-            "ORDER BY created_time DESC LIMIT #{limit}" +
+            "WHERE sessionId = #{sessionId} " +
+            "<if test='beforeId != null'> AND id &lt; #{beforeId} </if>" +
+            "ORDER BY createdTime DESC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}" +
             "</script>")
     List<AgentMessage> selectByCursor(
             @Param("sessionId") String sessionId,
@@ -22,21 +24,14 @@ public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
             @Param("limit") int limit);
 
     @Select("SELECT * FROM t_agent_message " +
-            "WHERE session_id = #{sessionId} " +
-            "ORDER BY created_time ASC LIMIT #{limit}")
+            "WHERE sessionId = #{sessionId} " +
+            "ORDER BY createdTime ASC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}")
     List<AgentMessage> selectBySessionIdOrderByTimeASC(
             @Param("sessionId") String sessionId,
             @Param("limit") int limit);
 
-    @Select("SELECT * FROM t_agent_message " +
-            "WHERE session_id = #{sessionId} " +
-            "ORDER BY created_time DESC LIMIT #{limit}")
-    List<AgentMessage> selectBySessionIdOrderByTimeDESC(
-            @Param("sessionId") String sessionId,
-            @Param("limit") int limit);
-
-    @Update("UPDATE t_agent_message SET is_summary = 1 " +
-            "WHERE session_id = #{sessionId} AND created_time < #{summaryTime}")
+    @Update("UPDATE t_agent_message SET isSummary = 1 " +
+            "WHERE sessionId = #{sessionId} AND createdTime < #{summaryTime}")
     int markAsSummary(@Param("sessionId") String sessionId,
                      @Param("summaryTime") Date summaryTime);
 }

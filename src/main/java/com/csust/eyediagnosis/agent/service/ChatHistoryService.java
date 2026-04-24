@@ -1,20 +1,16 @@
 package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.csust.eyidiagnosis.agent.config.AgentConstants;
-import com.csust.eyidiagnosis.mapper.AgentMessageMapper;
-import com.csust.eyidiagnosis.mapper.AgentSessionMapper;
-import com.csust.eyidiagnosis.model.dto.agent.ChatHistoryVO;
-import com.csust.eyidiagnosis.model.dto.agent.MessageVO;
-import com.csust.eyidiagnosis.model.dto.agent.SessionVO;
-import com.csust.eyidiagnosis.model.entity.AgentMessage;
-import com.csust.eyidiagnosis.model.entity.AgentSession;
+import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.mapper.AgentMessageMapper;
+import com.csust.eyediagnosis.mapper.AgentSessionMapper;
+import com.csust.eyediagnosis.model.dto.agent.ChatHistoryVO;
+import com.csust.eyediagnosis.model.dto.agent.MessageVO;
+import com.csust.eyediagnosis.model.dto.agent.SessionVO;
+import com.csust.eyediagnosis.model.entity.AgentMessage;
+import com.csust.eyediagnosis.model.entity.AgentSession;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -23,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -96,7 +91,7 @@ public class ChatHistoryService {
 
         List<MessageVO> vos = entities.stream()
                 .map(this::toMessageVO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new ChatHistoryVO(vos, hasMore, nextCursor);
     }
@@ -107,7 +102,7 @@ public class ChatHistoryService {
 
         return sessions.stream()
                 .map(this::toSessionVO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public boolean isSessionOwner(String sessionId, Long userId) {

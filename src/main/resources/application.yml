@@ -48,3 +48,10 @@ knife4j:
 logging:
   level:
     org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug
+
+# 眼科图像分析配置
+eye-diagnosis:
+  vision-recognition:
+    base-url: https://dashscope.aliyuncs.com/compatible-mode
+    api-key: your-api-key-here
+    model: qwen-vl-plus

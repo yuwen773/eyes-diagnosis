@@ -24,7 +24,8 @@ DISEASE_DESCRIPTIONS = {
 
 
 def calculate_reliability(all_probabilities):
-    sorted_probs = sorted(all_probabilities, reverse=True)
+    # all_probabilities is a dict {label: probability} where probability is already a float (0-1)
+    sorted_probs = sorted(all_probabilities.values(), reverse=True)
     if len(sorted_probs) < 2:
         return 50
     gap = sorted_probs[0] - sorted_probs[1]
@@ -85,7 +86,7 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                 description = DISEASE_DESCRIPTIONS.get(predicted_label, "")
 
                 top_3 = sorted(
-                    [(disease_categories[i], p) for i, p in enumerate(all_probs)],
+                    all_probs.items(),
                     key=lambda x: x[1], reverse=True
                 )[:3]
 

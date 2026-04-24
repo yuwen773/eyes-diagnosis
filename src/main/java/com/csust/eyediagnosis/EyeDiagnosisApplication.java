@@ -1,10 +1,11 @@
 package com.csust.eyediagnosis;
 
-import dev.langchain4j.community.store.embedding.redis.spring.RedisEmbeddingStoreAutoConfiguration;
+import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(exclude = {RedisEmbeddingStoreAutoConfiguration.class})
+@SpringBootApplication(exclude = {DashScopeChatAutoConfiguration.class, OpenAiEmbeddingAutoConfiguration.class})
 public class EyeDiagnosisApplication {
 
     public static void main(String[] args) {

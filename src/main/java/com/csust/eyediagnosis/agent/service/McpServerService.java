@@ -1,10 +1,10 @@
 package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.csust.eyidiagnosis.model.dto.mcp.McpServerCallToolRequest;
-import com.csust.eyidiagnosis.model.dto.mcp.McpServerCallToolResponse;
-import com.csust.eyidiagnosis.model.dto.mcp.McpServerDetail;
-import com.csust.eyidiagnosis.model.dto.mcp.McpTool;
+import com.csust.eyediagnosis.model.dto.mcp.McpServerCallToolRequest;
+import com.csust.eyediagnosis.model.dto.mcp.McpServerCallToolResponse;
+import com.csust.eyediagnosis.model.dto.mcp.McpServerDetail;
+import com.csust.eyediagnosis.model.dto.mcp.McpTool;
 
 import java.util.List;
 

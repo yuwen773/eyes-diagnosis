@@ -5,17 +5,35 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@TableName("t_mcp_server")
+@TableName("mcp_server")
 public class McpServer {
+
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long userId;
+
+    @TableField("mcpServerCode")
     private String mcpServerCode;
-    private String mcpServerName;
-    private String installType;
-    private String host;
+
+    @TableField("userId")
+    private Long userId;
+
+    private String name;
+
+    private String description;
+
+    @TableField("deployConfig")
     private String deployConfig;
+
     private Integer status;
-    private Date createTime;
-    private Date updateTime;
+
+    @TableField("installType")
+    private String installType;
+
+    private String host;
+
+    @TableField(value = "gmtCreate", fill = FieldFill.INSERT)
+    private Date gmtCreate;
+
+    @TableField(value = "gmtModified", fill = FieldFill.INSERT_UPDATE)
+    private Date gmtModified;
 }
