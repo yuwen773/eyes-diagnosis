@@ -188,6 +188,7 @@ CREATE TABLE IF NOT EXISTS t_knowledge_document (
     file_size    BIGINT                             NULL COMMENT '文件大小(字节)',
     file_type    VARCHAR(32)                        NOT NULL COMMENT '文件类型:pdf/md/txt/docx',
     chunk_count  INT                               DEFAULT 0 COMMENT '分块数量',
+    content_hash VARCHAR(64)                      NULL COMMENT '内容SHA-256哈希，用于去重',
     status       TINYINT DEFAULT 0                  NOT NULL COMMENT '状态:0=处理中,1=已完成,2=失败',
     create_time  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
     update_time  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

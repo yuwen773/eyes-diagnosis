@@ -9,175 +9,213 @@
       <a-upload-dragger
         name="file"
         :multiple="true"
-        action="/api/knowledge/upload"
-        :accept="'.pdf,.doc,.docx,.png,.jpg,.jpeg'"
-        @change="handleUploadChange"
-        class="upload-dragger"
+        :customRequest="handleUpload"
+        :accept="'.pdf,.doc,.docx,.txt,.md'"
+        :showUploadList="false"
       >
         <p class="ant-upload-drag-icon">
           <InboxOutlined />
         </p>
         <p class="ant-upload-text">点击或拖拽文件到此区域上传</p>
+        <p class="ant-upload-hint">支持 PDF、Word、TXT、Markdown 文件</p>
       </a-upload-dragger>
     </section>
 
     <!-- 文件列表 -->
-    <section class="list-section">
-      <div class="section-header">
-        <h3 class="section-title">文件列表</h3>
-        <span class="section-meta">{{ fileList.length }} 个文件</span>
-      </div>
-      <div class="file-table">
-        <a-table :columns="columns" :data-source="fileList" :pagination="false">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'type'">
-              <a-tag :color="getTagColor(record.type)">{{ record.type }}</a-tag>
-            </template>
-            <template v-else-if="column.dataIndex === 'size'">
-              {{ formatFileSize(record.size) }}
-            </template>
-            <template v-else-if="column.dataIndex === 'status'">
-              <a-badge
-                :status="record.status"
-                :text="statusTextMap[record.status]"
-              />
-            </template>
-            <template v-else-if="column.dataIndex === 'uploadTime'">
-              {{ dayjs(Number(record.uploadTime)).format('YYYY-MM-DD HH:mm:ss') }}
-            </template>
-            <template v-else-if="column.key === 'action'">
-              <a-space>
-                <a-button type="link" size="small">预览</a-button>
-                <a-popconfirm
-                  title="确定删除该文件？"
-                  @confirm="doDelete(record.id)"
-                >
-                  <a-button type="link" danger size="small">删除</a-button>
-                </a-popconfirm>
-              </a-space>
-            </template>
+    <a-card title="文件列表">
+      <a-table
+        :columns="columns"
+        :data-source="fileList"
+        :loading="loading"
+        :pagination="pagination"
+        @change="handleTableChange"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'fileName'">
+            {{ record.fileName }}
+            <div v-if="record.title && record.title !== record.fileName" class="text-gray-400 text-xs">
+              {{ record.title }}
+            </div>
           </template>
-        </a-table>
-      </div>
-    </section>
+          <template v-else-if="column.dataIndex === 'fileType'">
+            <a-tag :color="getTagColor(record.fileType)">{{ record.fileType.toUpperCase() }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'fileSize'">
+            {{ formatFileSize(record.fileSize) }}
+          </template>
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-badge :status="getStatusType(record.status)" :text="getStatusText(record.status)" />
+          </template>
+          <template v-else-if="column.dataIndex === 'createTime'">
+            {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+          </template>
+          <template v-else-if="column.dataIndex === 'chunkCount'">
+            <span v-if="record.status === 1">{{ record.chunkCount }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <a-popconfirm
+              title="确定删除该文件？删除后知识库中的相关内容也将被移除。"
+              @confirm="doDelete(record.id)"
+            >
+              <a-button type="link" danger size="small">删除</a-button>
+            </a-popconfirm>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { InboxOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
+import {
+  uploadDocument,
+  listKnowledgePage,
+  deleteKnowledge,
+  type KnowledgeDocument,
+} from '@/api/knowledgeController'
 
-interface FileItem {
-  id: string
-  name: string
-  type: string
-  size: number
-  status: 'success' | 'processing' | 'error'
-  uploadTime: string
-}
+const loading = ref(false)
+const fileList = ref<KnowledgeDocument[]>([])
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
-const statusTextMap: Record<string, string> = {
-  success: '已完成',
-  processing: '处理中',
-  error: '失败',
-}
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showTotal: (total: number) => `共 ${total} 条`,
+})
 
 const columns = [
-  {
-    title: '文件名',
-    dataIndex: 'name',
-  },
-  {
-    title: '类型',
-    dataIndex: 'type',
-  },
-  {
-    title: '大小',
-    dataIndex: 'size',
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-  },
-  {
-    title: '上传时间',
-    dataIndex: 'uploadTime',
-  },
-  {
-    title: '操作',
-    key: 'action',
-  },
+  { title: '文件名', dataIndex: 'fileName' },
+  { title: '类型', dataIndex: 'fileType', width: 80 },
+  { title: '大小', dataIndex: 'fileSize', width: 100 },
+  { title: '分块数', dataIndex: 'chunkCount', width: 80 },
+  { title: '状态', dataIndex: 'status', width: 100 },
+  { title: '上传时间', dataIndex: 'createTime', width: 170 },
+  { title: '操作', key: 'action', width: 80 },
 ]
 
-// Mock 数据 —— 后续替换为真实 API
-const fileList = ref<FileItem[]>([
-  {
-    id: '1',
-    name: '眼科诊断指南（第三版）.pdf',
-    type: 'PDF',
-    size: 3145728,
-    status: 'success',
-    uploadTime: '2026-04-20 14:30:00',
-  },
-  {
-    id: '2',
-    name: '糖尿病视网膜病变筛查报告.docx',
-    type: 'Word',
-    size: 1048576,
-    status: 'processing',
-    uploadTime: '2026-04-22 09:15:00',
-  },
-  {
-    id: '3',
-    name: '眼底图像样本合集.jpg',
-    type: '图片',
-    size: 524288,
-    status: 'success',
-    uploadTime: '2026-04-23 11:00:00',
-  },
-])
-
-/** 格式化文件大小 */
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) {
-    return bytes + ' B'
+const loadList = async () => {
+  loading.value = true
+  try {
+    const res = await listKnowledgePage(pagination.value.current, pagination.value.pageSize)
+    if (res.code === 0 && res.data) {
+      fileList.value = res.data.records
+      pagination.value.total = res.data.total
+    }
+  } catch {
+    message.error('加载文件列表失败')
+  } finally {
+    loading.value = false
   }
-  if (bytes < 1024 * 1024) {
-    return (bytes / 1024).toFixed(2) + ' KB'
-  }
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
-/** 根据文件类型返回 tag 颜色 */
-const getTagColor = (type: string): string => {
-  const colorMap: Record<string, string> = {
-    PDF: 'red',
-    Word: 'blue',
-    图片: 'green',
-  }
-  return colorMap[type] ?? 'default'
+const handleTableChange = (pag: any) => {
+  pagination.value.current = pag.current
+  pagination.value.pageSize = pag.pageSize
+  loadList()
 }
 
-/** 上传状态回调 */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const handleUploadChange = (info: any) => {
-  const { file } = info
-  if (file.status === 'done') {
-    message.success(`${file.name} 上传成功`)
-    // TODO: 刷新文件列表
-  } else if (file.status === 'error') {
+const handleUpload = async (options: any) => {
+  const { file, onSuccess, onError } = options
+  try {
+    const res = await uploadDocument(file)
+    if (res.code === 0) {
+      message.success(`${file.name} 上传成功，正在处理中...`)
+      onSuccess?.(res)
+      loadList()
+    } else {
+      message.error(res.msg || '上传失败')
+      onError?.(new Error(res.msg))
+    }
+  } catch (e: any) {
     message.error(`${file.name} 上传失败`)
+    onError?.(e)
   }
 }
 
-/** 删除文件 */
-const doDelete = (id: string) => {
-  // TODO: 调用真实删除 API
-  fileList.value = fileList.value.filter((item) => item.id !== id)
-  message.success('删除成功')
+const doDelete = async (id: number) => {
+  try {
+    const res = await deleteKnowledge(id)
+    if (res.code === 0) {
+      message.success('删除成功')
+      loadList()
+    } else {
+      message.error(res.msg || '删除失败')
+    }
+  } catch {
+    message.error('删除失败')
+  }
 }
+
+const formatFileSize = (bytes: number): string => {
+  if (!bytes) return '-'
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+const getTagColor = (type: string): string => {
+  const map: Record<string, string> = {
+    pdf: 'red', doc: 'blue', docx: 'blue', txt: 'green', md: 'orange', markdown: 'orange',
+  }
+  return map[type?.toLowerCase()] ?? 'default'
+}
+
+const getStatusType = (status: number): 'success' | 'processing' | 'error' | 'default' => {
+  const map: Record<number, 'success' | 'processing' | 'error' | 'default'> = {
+    1: 'success', 0: 'processing', 2: 'error',
+  }
+  return map[status] ?? 'default'
+}
+
+const getStatusText = (status: number): string => {
+  const map: Record<number, string> = {
+    1: '已完成', 0: '处理中', 2: '失败',
+  }
+  return map[status] ?? '未知'
+}
+
+// Poll for status updates if any document is still processing
+const startPolling = () => {
+  if (pollTimer) return
+  pollTimer = setInterval(() => {
+    if (!fileList.value.some((d) => d.status === 0)) {
+      clearInterval(pollTimer!)
+      pollTimer = null
+    } else {
+      loadList()
+    }
+  }, 3000)
+}
+
+onMounted(() => {
+  loadList().then(() => {
+    if (fileList.value.some((d) => d.status === 0)) {
+      startPolling()
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+})
+
+watch(fileList, (list) => {
+  if (list.some((d) => d.status === 0)) {
+    startPolling()
+  }
+})
 </script>
 
 <style scoped>
@@ -189,8 +227,7 @@ const doDelete = (id: string) => {
   gap: var(--claude-space-4);
 }
 
-.upload-section,
-.list-section {
+.upload-section {
   background: var(--claude-bg-card);
   border-radius: var(--claude-radius-lg);
   padding: var(--claude-space-5);
@@ -216,33 +253,5 @@ const doDelete = (id: string) => {
 .section-hint {
   font-size: 0.8rem;
   color: var(--claude-text-tertiary);
-}
-
-.section-meta {
-  font-size: 0.8rem;
-  color: var(--claude-text-tertiary);
-}
-
-.upload-dragger {
-  border-radius: var(--claude-radius-md);
-}
-
-.file-table :deep(.ant-table) {
-  background: transparent;
-}
-
-.file-table :deep(.ant-table-thead > tr > th) {
-  background: transparent;
-  border-bottom: 1px solid var(--claude-border-warm);
-  font-weight: 500;
-  color: var(--claude-text-secondary);
-}
-
-.file-table :deep(.ant-table-tbody > tr > td) {
-  border-bottom: 1px solid var(--claude-border-cream);
-}
-
-.file-table :deep(.ant-table-tbody > tr:hover > td) {
-  background: var(--color-bg-hover);
 }
 </style>

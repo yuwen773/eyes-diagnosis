@@ -15,6 +15,7 @@ public class KnowledgeDocument {
     private String fileUrl;
     private Long fileSize;
     private String fileType;
+    private String contentHash;
     private Integer chunkCount;
     private Integer status; // 0=处理中, 1=已完成, 2=失败
     private LocalDateTime createTime;

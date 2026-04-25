@@ -20,3 +20,10 @@ spring:
           max-idle: 8
           max-wait: -1
       connect-timeout: 3000
+  ai:
+    vectorstore:
+      chroma:
+        client:
+          host: http://localhost
+          port: 8000
+        collection-name: eye-diagnosis-knowledge

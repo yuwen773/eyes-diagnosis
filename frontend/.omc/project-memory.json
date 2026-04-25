@@ -217,6 +217,12 @@
       "accessCount": 1,
       "lastAccessed": 1776998185809,
       "type": "file"
+    },
+    {
+      "path": "src\\pages\\admin\\KnowledgePage.vue",
+      "accessCount": 1,
+      "lastAccessed": 1777038725405,
+      "type": "file"
     }
   ],
   "userDirectives": []

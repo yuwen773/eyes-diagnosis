@@ -1,10 +1,25 @@
 {
   "version": 1,
   "skills": {
+    "java-springboot": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "f1b9c6b1277178fc33e5a612761c1cd1cf6ab5f946d05d69d52026d142c0a0c1"
+    },
     "python-mcp-server-generator": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "computedHash": "2b598920b5fdc807c9ee5b69bad23b8327c4ea5f1178c38d3a99a9e06a49e628"
+    },
+    "rag-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "9e73a9440ca7f419a192901bf38e8c61e7449e0e9340b6f3507b85ca249dce42"
+    },
+    "sql-optimization-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "7d20c24c6f52da9697d3e1c7d2f25cc560150de643d044a5f45e300bb78884fd"
     },
     "tailwind-design-system": {
       "source": "wshobson/agents",

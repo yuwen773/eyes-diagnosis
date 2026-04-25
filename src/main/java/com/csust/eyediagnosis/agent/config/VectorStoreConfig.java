@@ -1,7 +1,6 @@
 package com.csust.eyediagnosis.agent.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Resource;
 import org.springframework.ai.chroma.vectorstore.ChromaApi;
 import org.springframework.ai.chroma.vectorstore.ChromaVectorStore;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -31,10 +30,11 @@ public class VectorStoreConfig {
 
     @Bean
     public ChromaApi chromaApi(RestClient.Builder restClientBuilder) {
-        String chromaUrl = "http://localhost:8000";
+        String chromaUrl = host + ":" + port;
         ObjectMapper objectMapper = new ObjectMapper();
-        return new ChromaApi(chromaUrl, restClientBuilder,objectMapper);
+        return new ChromaApi(chromaUrl, restClientBuilder, objectMapper);
     }
+
     @Bean
     public VectorStore chromaVectorStore(EmbeddingModel dashscopeEmbeddingModel, ChromaApi chromaApi) {
         return ChromaVectorStore.builder(chromaApi, dashscopeEmbeddingModel)

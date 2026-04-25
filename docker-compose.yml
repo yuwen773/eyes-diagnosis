@@ -6,3 +6,8 @@ services:
       - "8000:8000"
     environment:
       - IS_PERSISTENT=TRUE
+    volumes:
+      - chroma-data:/chroma/chroma
+
+volumes:
+  chroma-data:
