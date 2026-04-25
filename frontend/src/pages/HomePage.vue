@@ -16,14 +16,7 @@ import {
 import { RouterLink } from 'vue-router'
 
 import banner1 from '@/assets/banner1.png'
-import banner2 from '@/assets/banner2.png'
-import banner3 from '@/assets/banner3.png'
-
-const carouselImages = ref([
-  { id: 'banner-1', src: banner1 },
-  { id: 'banner-2', src: banner2 },
-  { id: 'banner-3', src: banner3 },
-])
+import GridDistortion from '@/components/GridDistortion.vue'
 
 const diseases = ref([
   { id: 'normal', label: '正常眼底', tag: 'normal' },
@@ -167,14 +160,17 @@ onUnmounted(() => {
   <div class="home-page">
     <!-- ═══ Hero ═══ -->
     <section class="hero">
-      <a-carousel autoplay :autoplay-speed="5000" class="hero-carousel" effect="fade">
-        <div v-for="image in carouselImages" :key="image.id" class="hero-slide">
-          <img :src="image.src" :alt="image.id" class="hero-image" />
-        </div>
-      </a-carousel>
+      <GridDistortion
+        :imageSrc="banner1"
+        :grid="12"
+        :mouse="0.15"
+        :strength="0.2"
+        :relaxation="0.88"
+        className="hero-grid"
+      />
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <span class="hero-eyebrow">长沙理工大学 · 眼科智能诊断系统</span>
+        <span class="hero-eyebrow">明眸智诊，视界无忧 · 眼科智能诊断系统</span>
         <h1 class="hero-title">
           AI 驱动的<br />
           <span class="hero-title-accent">眼底精准诊断</span>
@@ -339,26 +335,24 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.hero-carousel {
+.hero-grid {
   position: absolute;
   inset: 0;
   z-index: 0;
-}
 
-.hero-slide {
-  height: 100%;
-}
-
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  :deep(canvas) {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
+  }
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background: linear-gradient(
     160deg,
     oklch(0.14 0.02 40 / 0.85) 0%,
@@ -372,6 +366,7 @@ onUnmounted(() => {
   position: relative;
   z-index: 2;
   height: 100%;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -434,6 +429,7 @@ onUnmounted(() => {
   border-radius: 100px;
   text-decoration: none;
   width: fit-content;
+  pointer-events: auto;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 20px oklch(0.45 0.08 30 / 0.35);
 }
@@ -458,6 +454,7 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
+  pointer-events: none;
 }
 
 .scroll-line {
