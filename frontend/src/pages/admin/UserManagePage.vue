@@ -1,30 +1,34 @@
 <template>
-  <div class="mb-4 flex items-center gap-3">
-    <a-input
-      v-model:value="searchParams.userAccount"
-      placeholder="输入账号"
-      allow-clear
-      class="w-48"
-      @press-enter="doSearch"
-    />
-    <a-input
-      v-model:value="searchParams.userName"
-      placeholder="输入用户名"
-      allow-clear
-      class="w-48"
-      @press-enter="doSearch"
-    />
-    <a-button type="primary" @click="doSearch">搜索</a-button>
-    <a-button @click="doReset">重置</a-button>
-  </div>
+  <div class="manage-page">
+    <!-- 搜索区域 -->
+    <div class="search-bar">
+      <a-input
+        v-model:value="searchParams.userAccount"
+        placeholder="输入账号"
+        allow-clear
+        class="search-input"
+        @press-enter="doSearch"
+      />
+      <a-input
+        v-model:value="searchParams.userName"
+        placeholder="输入用户名"
+        allow-clear
+        class="search-input"
+        @press-enter="doSearch"
+      />
+      <a-button type="primary" @click="doSearch">搜索</a-button>
+      <a-button @click="doReset">重置</a-button>
+    </div>
 
-  <a-table
-    :columns="columns"
-    :data-source="dataList"
-    :pagination="pagination"
-    :loading="loading"
-    @change="doTableChange"
-  >
+    <!-- 数据表格 -->
+    <div class="data-table">
+      <a-table
+        :columns="columns"
+        :data-source="dataList"
+        :pagination="pagination"
+        :loading="loading"
+        @change="doTableChange"
+      >
     <template #bodyCell="{ column, record }">
       <template v-if="column.dataIndex === 'userAvatar'">
         <a-avatar :src="record.userAvatar" />
@@ -44,6 +48,8 @@
       </template>
     </template>
   </a-table>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -180,3 +186,53 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.manage-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-4);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-3);
+  padding: var(--claude-space-4);
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.search-input {
+  width: 160px;
+}
+
+.data-table {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-4);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.data-table :deep(.ant-table) {
+  background: transparent;
+}
+
+.data-table :deep(.ant-table-thead > tr > th) {
+  background: transparent;
+  border-bottom: 1px solid var(--claude-border-warm);
+  font-weight: 500;
+  color: var(--claude-text-secondary);
+}
+
+.data-table :deep(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--claude-border-cream);
+}
+
+.data-table :deep(.ant-table-tbody > tr:hover > td) {
+  background: var(--color-bg-hover);
+}
+</style>

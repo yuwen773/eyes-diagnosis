@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="manage-page">
     <!-- 搜索栏 -->
-    <div class="mb-4 flex items-center gap-3">
+    <div class="search-bar">
       <a-input
         v-model:value="searchParams.result"
         placeholder="输入疾病名称"
-        style="width: 200px"
+        style="width: 180px"
         allow-clear
         @pressEnter="doSearch"
       />
@@ -20,13 +20,14 @@
     </div>
 
     <!-- 数据表格 -->
-    <a-table
-      :columns="columns"
-      :data-source="dataList"
-      :pagination="pagination"
-      :loading="loading"
-      @change="doTableChange"
-    >
+    <div class="data-table">
+      <a-table
+        :columns="columns"
+        :data-source="dataList"
+        :pagination="pagination"
+        :loading="loading"
+        @change="doTableChange"
+      >
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex === 'diagnosisImage'">
           <a-image
@@ -70,6 +71,7 @@
         </template>
       </template>
     </a-table>
+    </div>
 
     <!-- 诊断详情抽屉 -->
     <a-drawer
@@ -296,3 +298,49 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.manage-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-4);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-3);
+  padding: var(--claude-space-4);
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.data-table {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-4);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.data-table :deep(.ant-table) {
+  background: transparent;
+}
+
+.data-table :deep(.ant-table-thead > tr > th) {
+  background: transparent;
+  border-bottom: 1px solid var(--claude-border-warm);
+  font-weight: 500;
+  color: var(--claude-text-secondary);
+}
+
+.data-table :deep(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--claude-border-cream);
+}
+
+.data-table :deep(.ant-table-tbody > tr:hover > td) {
+  background: var(--color-bg-hover);
+}
+</style>

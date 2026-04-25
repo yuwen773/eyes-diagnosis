@@ -1,108 +1,69 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined } from '@ant-design/icons-vue';
-import ImageUploader from '@/components/diagnosis/ImageUploader.vue';
-import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue';
-
+import { ref } from 'vue'
+import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined } from '@ant-design/icons-vue'
+import ImageUploader from '@/components/diagnosis/ImageUploader.vue'
+import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue'
 import { useDiagnosisStore } from '@/stores/diagnosis'
-const diagnosisStore = useDiagnosisStore();
-const { setLoading } = diagnosisStore;
 
-// 系统特点数据
+const diagnosisStore = useDiagnosisStore()
+const { setLoading } = diagnosisStore
+
 const features = [
-  {
-    title: '精准诊断',
-    description: '基于深度学习算法和大量医学数据，提供高精度的眼科疾病诊断',
-    icon: EyeOutlined
-  },
-  {
-    title: '快速分析',
-    description: '秒级响应，快速分析眼部图像，及时提供诊断结果',
-    icon: RocketOutlined
-  },
-  {
-    title: '全面评估',
-    description: '对多种眼科疾病进行全面评估，包括近视、远视、白内障等',
-    icon: HeartOutlined
-  },
-  {
-    title: '智能提示',
-    description: '智能提示潜在眼健康问题，帮助用户及时预防和治疗',
-    icon: BellOutlined
-  },
-  {
-    title: '数据安全',
-    description: '严格保护用户数据隐私，确保所有医疗信息安全存储',
-    icon: DatabaseOutlined
-  },
-  {
-    title: '专业建议',
-    description: '提供专业的眼科健康建议和治疗方案参考',
-    icon: StarOutlined
-  }
-];
+  { title: '精准诊断', description: '基于深度学习算法和大量医学数据，提供高精度的眼科疾病诊断', icon: EyeOutlined },
+  { title: '快速分析', description: '秒级响应，快速分析眼部图像，及时提供诊断结果', icon: RocketOutlined },
+  { title: '全面评估', description: '对多种眼科疾病进行全面评估，包括近视、远视、白内障等', icon: HeartOutlined },
+  { title: '智能提示', description: '智能提示潜在眼健康问题，帮助用户及时预防和治疗', icon: BellOutlined },
+  { title: '数据安全', description: '严格保护用户数据隐私，确保所有医疗信息安全存储', icon: DatabaseOutlined },
+  { title: '专业建议', description: '提供专业的眼科健康建议和治疗方案参考', icon: StarOutlined }
+]
 
-//TODO
 const diagnosisPicture = ref<API.DiagnosisUploadDTO>()
-//上传成功
+
 const onSuccess = (newDiagnosisPicture: API.DiagnosisUploadDTO) => {
   diagnosisPicture.value = newDiagnosisPicture
-  console.log(diagnosisPicture.value)
 }
 
-const closeModal = () =>{
+const closeModal = () => {
   setLoading(false)
-  console.log("@@@@@@@@@@@@")
 }
-
 </script>
 
 <template>
+  <div class="diagnosis-page">
+    <header class="hero-header">
+      <span class="hero-badge">AI 驱动</span>
+      <h1 class="hero-title">眼科智能诊断</h1>
+      <p class="hero-subtitle">上传眼底照片，获取基于深度学习的高精度分析报告</p>
+      <p class="hero-note" aria-label="说明">本服务仅供参考，不能替代专业医生诊断</p>
+    </header>
 
-  <div class="diagnosis-container">
-<!--诊断标题    -->
-    <div class="header">
-      <h1>眼科智能诊断系统</h1>
-      <p>基于人工智能技术的高精度眼科疾病诊断与分析</p>
-    </div>
-<!--上传图像-->
-    <a-row justify="center" :gutter="[24, 24]" class="uploader-section">
-      <a-col :span="24" :lg="{ span: 12 }">
+    <section class="upload-zone">
+      <div class="upload-glow" aria-hidden="true" />
+      <div class="upload-inner">
         <ImageUploader :picture="diagnosisPicture" :onSuccess="onSuccess" />
-      </a-col>
-    </a-row>
-<!--系统特点-->
-    <a-row justify="center" class="features-section">
-      <div class="desc">系统特点</div>
-      <a-list
-        :grid="{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 6, xxl: 6 }"
-        :data-source="features"
-      >
-        <template #renderItem="{ item }">
-          <a-list-item>
-            <a-card :hoverable="true" class="feature-card">
-              <template #cover>
-<!--特点的icon-->
-                <div class="feature-icon">
-                  <component :is="item.icon" style="font-size: 24px; color: var(--claude-brand);" />
-                </div>
-              </template>
-              <a-card-meta>
-<!--特点标题                -->
-                <template #title>
-                  <h3>{{ item.title }}</h3>
-                </template>
-                <template #description>
-<!--特点描述                  -->
-                  <p>{{ item.description }}</p>
-                </template>
-              </a-card-meta>
-            </a-card>
-          </a-list-item>
-        </template>
-      </a-list>
-    </a-row>
-<!--诊断结果的模态框   v-model:open="diagnosisStore.loading"-->
+      </div>
+    </section>
+
+    <section class="features">
+      <h2 class="features-heading">核心优势</h2>
+      <div class="features-grid">
+        <div
+          v-for="(feature, index) in features"
+          :key="feature.title"
+          class="feature-item"
+          :style="{ '--stagger': `${index * 80}ms` }"
+        >
+          <div class="feature-icon-wrap">
+            <component :is="feature.icon" />
+          </div>
+          <div class="feature-body">
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <a-modal
       v-model:open="diagnosisStore.loading"
       title="诊断结果"
@@ -111,108 +72,253 @@ const closeModal = () =>{
       :afterClose="closeModal"
     >
       <DiagnosisResult />
-
-<!--      <DiagnosisResults />-->
     </a-modal>
   </div>
 </template>
 
 <style scoped>
-.diagnosis-container {
+.diagnosis-page {
   min-height: 100vh;
-  background-image: url('@/assets/img.png');
+  position: relative;
+  background-image: var(--claude-bg-image, none);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  position: relative;
+  overflow-x: hidden;
 }
 
-.diagnosis-container::before {
+.diagnosis-page::before {
   content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.85);
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.75 0.06 30 / 0.06), transparent),
+    var(--claude-bg-page);
+  opacity: 0.93;
   z-index: 0;
+  pointer-events: none;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 32px;
+/* ── Hero Header ── */
+
+.hero-header {
   position: relative;
   z-index: 1;
-  padding-top: 15px;
-}
-
-.header h1 {
-  color: var(--claude-text-primary);
-  margin-bottom: 8px;
-  font-size: 28px;
-  font-family: var(--claude-font-serif);
-}
-
-.header p {
-  color: var(--claude-text-secondary);
-  font-size: 16px;
-}
-
-.uploader-section {
-  margin-bottom: 48px;
-  position: relative;
-  z-index: 2;
-}
-
-.feature-card {
   text-align: center;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  height: 100%;
-  box-shadow: 0 4px 12px rgba(20, 20, 19, 0.1);
-  background-color: var(--claude-bg-elevated);
+  padding: clamp(3rem, 8vh, 5rem) 1.5rem clamp(2rem, 4vh, 3rem);
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(20, 20, 19, 0.15);
+.hero-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--claude-brand);
+  background: oklch(0.75 0.06 30 / 0.1);
+  border: 1px solid oklch(0.75 0.06 30 / 0.2);
+  border-radius: 100px;
+  padding: 0.3rem 0.9rem;
+  margin-bottom: 1.25rem;
 }
 
-.feature-icon {
-  height: 64px;
+.hero-title {
+  font-family: var(--claude-font-serif);
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-weight: 400;
+  color: var(--claude-text-primary);
+  line-height: 1.1;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 1.0625rem;
+  color: var(--claude-text-secondary);
+  max-width: 32ch;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+.hero-note {
+  font-size: 0.75rem;
+  color: var(--claude-text-tertiary);
+  margin: 1rem auto 0;
+  max-width: 40ch;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+/* ── Upload Zone — Hero Moment ── */
+
+.upload-zone {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0 auto clamp(4rem, 8vh, 7rem);
+}
+
+.upload-glow {
+  position: absolute;
+  inset: -1.5rem;
+  background: radial-gradient(ellipse at center, oklch(0.75 0.06 30 / 0.1), transparent 70%);
+  border-radius: var(--claude-radius-2xl);
+  pointer-events: none;
+  animation: pulse-glow 5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.015); }
+}
+
+.upload-inner {
+  position: relative;
+  border-radius: var(--claude-radius-xl);
+  background: var(--claude-bg-elevated);
+  border: 1px solid oklch(0.75 0.04 30 / 0.15);
+  box-shadow:
+    0 8px 32px oklch(0.75 0.03 30 / 0.1),
+    0 1px 3px rgba(20, 20, 19, 0.04);
+  overflow: hidden;
+}
+
+/* ── Features ── */
+
+.features {
+  position: relative;
+  z-index: 1;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 1.5rem clamp(4rem, 6vh, 6rem);
+}
+
+.features-heading {
+  font-family: var(--claude-font-serif);
+  font-size: 1.375rem;
+  font-weight: 400;
+  color: var(--claude-text-primary);
+  text-align: center;
+  margin: 0 0 2.5rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.feature-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: var(--claude-radius-lg);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-cream);
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: feature-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--stagger);
+}
+
+.feature-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px oklch(0.75 0.03 30 / 0.1);
+  border-color: oklch(0.75 0.05 30 / 0.2);
+}
+
+.feature-icon-wrap {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--claude-radius-md);
+  background: oklch(0.75 0.05 30 / 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--claude-bg-card);
-  border-radius: 8px 8px 0 0;
-  padding: 12px;
+  font-size: 1.125rem;
+  color: var(--claude-brand);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.desc {
-  text-align: center;
-  color: var(--claude-text-tertiary);
-  font-size: 22px;
-  margin-bottom: 24px;
-  font-weight: 500;
-  position: relative;
-  z-index: 1;
+.feature-item:hover .feature-icon-wrap {
+  background: oklch(0.75 0.06 30 / 0.15);
+  transform: scale(1.06);
 }
 
-:deep(.ant-card-meta-title) {
-  font-size: 16px;
-  margin-bottom: 8px;
+.feature-body h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
   color: var(--claude-text-primary);
+  margin: 0 0 0.375rem;
 }
 
-:deep(.ant-card-meta-description) {
-  color: var(--claude-text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
+.feature-body p {
+  font-size: 0.8125rem;
+  color: var(--claude-text-tertiary);
+  line-height: 1.6;
+  margin: 0;
 }
 
-.features-section {
-  margin-top: 48px;
-  position: relative;
-  z-index: 1;
+@keyframes feature-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-item {
+    animation: none;
+  }
+
+  .upload-glow {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .feature-item:hover {
+    transform: none;
+  }
+
+  .feature-item:hover .feature-icon-wrap {
+    transform: none;
+  }
+}
+
+/* ── Mobile Responsive ── */
+
+@media (max-width: 768px) {
+  .hero-badge {
+    font-size: 0.625rem;
+    padding: 0.25rem 0.75rem;
+  }
+
+  .hero-title {
+    font-size: clamp(1.75rem, 6vw, 2.25rem);
+  }
+
+  .hero-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .hero-note {
+    font-size: 0.6875rem;
+    padding: 0 1rem;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-zone {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
 }
 </style>

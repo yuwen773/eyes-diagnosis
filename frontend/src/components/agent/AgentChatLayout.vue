@@ -29,11 +29,11 @@ defineProps<{
   display: flex;
   height: 100%;
   overflow: hidden;
-  background: var(--color-bg-primary);
+  background: var(--claude-bg-page);
 }
 
 .layout-left {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.3s ease;
@@ -52,6 +52,7 @@ defineProps<{
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  background: var(--claude-bg-page);
 }
 
 .layout-right {
@@ -59,11 +60,11 @@ defineProps<{
   flex-shrink: 0;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  background: var(--color-bg-secondary);
-  border-left: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-card);
+  border-left: 1px solid var(--claude-border-cream);
 }
 
 .layout-right.expanded {
-  width: 320px;
+  width: 340px;
 }
 </style>

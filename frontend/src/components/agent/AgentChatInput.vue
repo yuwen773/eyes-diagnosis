@@ -140,13 +140,12 @@ const openPreview = (url: string) => {
 
 const canSend = computed(() => inputText.value.trim() || attachments.value.length > 0)
 
-// Truncate filename: keep extension, middle-truncate the name part
 const truncateName = (name: string, maxLen = 16): string => {
   if (name.length <= maxLen) return name
   const dotIdx = name.lastIndexOf('.')
   const ext = dotIdx >= 0 ? name.slice(dotIdx) : ''
   const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name
-  const keep = maxLen - ext.length - 3 // 3 for "..."
+  const keep = maxLen - ext.length - 3
   if (keep <= 0) return name.slice(0, maxLen)
   return base.slice(0, Math.ceil(keep / 2)) + '...' + base.slice(-Math.floor(keep / 2)) + ext
 }
@@ -210,7 +209,6 @@ const handleSend = () => {
   const files = attachments.value.map(a => a.file)
   emit('send', inputText.value.trim(), files)
   inputText.value = ''
-  // Revoke preview URLs
   attachments.value.forEach(a => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl) })
   attachments.value = []
   nextTick(() => {
@@ -238,27 +236,17 @@ onUnmounted(() => {
 /* ============ Input Container ============ */
 .input-container {
   border-radius: 20px;
-  border: 1.5px solid var(--color-border-subtle);
-  background: var(--color-bg-elevated);
+  border: 1.5px solid var(--claude-border-cream);
+  background: var(--claude-bg-elevated);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--claude-shadow-sm);
   overflow: hidden;
 }
 
 .agent-chat-input.focused .input-container {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
-[data-theme="aurora"] .agent-chat-input.focused .input-container {
   border-color: var(--claude-brand);
-  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15), 0 4px 16px rgba(201, 100, 66, 0.08);
-}
-
-[data-theme="pop"] .agent-chat-input.focused .input-container {
-  border-color: var(--claude-brand-light);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), 0 4px 16px rgba(168, 85, 247, 0.06);
+  box-shadow: 0 0 0 3px oklch(0.72 0.09 30 / 0.12), var(--claude-shadow-md);
+  transform: translateY(-1px);
 }
 
 /* ============ Attachment Strip ============ */
@@ -279,13 +267,13 @@ onUnmounted(() => {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* -- Image preview (larger) -- */
+/* -- Image preview -- */
 .img-preview {
   width: 64px;
   height: 64px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1.5px solid var(--color-border-subtle);
+  border: 1.5px solid var(--claude-border-cream);
   background: var(--color-bg-tertiary);
   cursor: pointer;
   position: relative;
@@ -293,8 +281,8 @@ onUnmounted(() => {
 }
 
 .img-preview:hover {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--claude-brand);
+  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.15), var(--claude-shadow-md);
   transform: scale(1.05);
 }
 
@@ -316,8 +304,7 @@ onUnmounted(() => {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(20, 20, 19, 0.55);
   color: white;
   display: flex;
   align-items: center;
@@ -334,18 +321,18 @@ onUnmounted(() => {
   padding: 8px 10px 8px 12px;
   border-radius: 10px;
   background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-cream);
 }
 
 .file-icon {
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   flex-shrink: 0;
 }
 
 .file-name {
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -362,10 +349,10 @@ onUnmounted(() => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--color-bg-elevated);
+  border: 2px solid var(--claude-bg-elevated);
   border-radius: 50%;
   background: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
@@ -375,13 +362,12 @@ onUnmounted(() => {
 }
 
 .remove-badge:hover {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: var(--claude-error);
+  border-color: var(--claude-error);
   color: white;
   transform: scale(1.1);
 }
 
-/* File chip variant: remove badge positioned inline */
 .attachment-card:has(.file-icon) .remove-badge {
   position: static;
   width: 18px;
@@ -393,8 +379,8 @@ onUnmounted(() => {
 }
 
 .attachment-card:has(.file-icon) .remove-badge:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: oklch(0.55 0.18 25 / 0.1);
+  color: var(--claude-error);
 }
 
 .hidden-input {
@@ -425,30 +411,20 @@ onUnmounted(() => {
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toolbar-btn:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
+  background: var(--color-bg-hover);
+  color: var(--claude-text-secondary);
 }
 
 .attach-btn:hover {
-  color: var(--color-primary-500);
-  background: rgba(168, 85, 247, 0.08);
-}
-
-[data-theme="aurora"] .attach-btn:hover {
   color: var(--claude-brand);
-  background: rgba(201, 100, 66, 0.08);
-}
-
-[data-theme="pop"] .attach-btn:hover {
-  color: var(--claude-brand-light);
-  background: rgba(168, 85, 247, 0.06);
+  background: oklch(0.72 0.09 30 / 0.06);
 }
 
 /* ============ Textarea ============ */
@@ -461,10 +437,10 @@ onUnmounted(() => {
 .chat-textarea {
   width: 100%;
   padding: 9px 44px 9px 6px;
-  font-family: var(--font-body);
+  font-family: var(--claude-font-sans);
   font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   background: transparent;
   border: none;
   outline: none;
@@ -474,7 +450,7 @@ onUnmounted(() => {
 }
 
 .chat-textarea::placeholder {
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   opacity: 0.8;
 }
 
@@ -483,7 +459,7 @@ onUnmounted(() => {
 }
 
 .chat-textarea::-webkit-scrollbar-thumb {
-  background: var(--color-border-default);
+  background: var(--claude-border-warm);
   border-radius: 3px;
 }
 
@@ -493,11 +469,11 @@ onUnmounted(() => {
   bottom: 12px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   opacity: 0.6;
-  background: var(--color-bg-elevated);
+  background: var(--claude-bg-elevated);
   padding: 1px 4px;
   border-radius: 4px;
 }
@@ -529,88 +505,37 @@ onUnmounted(() => {
   margin-bottom: 1px;
 }
 
-/* -- Send button: prominent gradient -- */
+/* -- Send button -- */
 .send-btn {
-  background: linear-gradient(135deg, var(--claude-brand-light), var(--claude-brand));
+  background: var(--claude-brand);
   color: white;
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
+  box-shadow: 0 2px 8px oklch(0.72 0.09 30 / 0.3);
 }
 
 .send-btn:disabled {
   background: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
-  filter: none;
-  transform: none;
 }
 
 .send-btn:not(:disabled):hover {
   transform: translateY(-1px) scale(1.08);
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 4px 16px oklch(0.72 0.09 30 / 0.4);
   filter: brightness(1.08);
 }
 
 .send-btn:not(:disabled):active {
   transform: scale(0.93);
-  box-shadow: 0 1px 4px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 1px 4px oklch(0.72 0.09 30 / 0.2);
 }
 
-/* Theme variants */
-[data-theme="aurora"] .send-btn:not(:disabled) {
-  background: linear-gradient(135deg, var(--claude-brand), var(--claude-brand-dark));
-  box-shadow: 0 2px 8px rgba(201, 100, 66, 0.25);
-}
-
-[data-theme="aurora"] .send-btn:not(:disabled):hover {
-  box-shadow: 0 4px 20px rgba(201, 100, 66, 0.4), 0 0 40px rgba(163, 79, 47, 0.15);
-}
-
-[data-theme="pop"] .send-btn:not(:disabled) {
-  background: linear-gradient(135deg, var(--claude-brand-light), #e8946a);
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
-}
-
-[data-theme="pop"] .send-btn:not(:disabled):hover {
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(236, 72, 153, 0.12);
-}
-
-/* Animated glow ring */
-.send-btn:not(:disabled)::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 14px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
-}
-
-[data-theme="aurora"] .send-btn:not(:disabled)::after {
-  background: conic-gradient(from 0deg, transparent, rgba(34, 104, 245, 0.25), transparent, rgba(79, 70, 229, 0.25), transparent);
-  animation: glowSpin 3s linear infinite;
-}
-
-[data-theme="pop"] .send-btn:not(:disabled)::after {
-  background: conic-gradient(from 0deg, transparent, rgba(168, 85, 247, 0.25), transparent, rgba(236, 72, 153, 0.25), transparent);
-  animation: glowSpin 3s linear infinite;
-}
-
-.agent-chat-input.focused .send-btn:not(:disabled)::after {
-  opacity: 1;
-}
-
-@keyframes glowSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* -- Stop button: urgent red -- */
+/* -- Stop button -- */
 .stop-btn {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: var(--claude-error);
   color: white;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 2px 8px oklch(0.55 0.18 25 / 0.3);
   animation: stopPulse 1.5s ease-in-out infinite;
 }
 
@@ -625,8 +550,8 @@ onUnmounted(() => {
 }
 
 @keyframes stopPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.18 25 / 0.3); }
+  50% { box-shadow: 0 0 0 6px oklch(0.55 0.18 25 / 0); }
 }
 
 /* Button swap transition */
@@ -648,14 +573,14 @@ onUnmounted(() => {
   transform: scale(0.8) rotate(10deg);
 }
 
-/* ============ Hint (disclaimer) ============ */
+/* ============ Hint ============ */
 .input-hint {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 6px;
   font-size: 10px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   letter-spacing: 0.02em;
   opacity: 0.45;
   transition: opacity 0.2s ease;

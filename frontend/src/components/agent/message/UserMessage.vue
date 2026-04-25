@@ -98,56 +98,19 @@ const displayTime = computed(() => {
   max-width: 70%;
   padding: 10px 16px 8px;
   /* 深空霓虹气泡：深色底 + 顶部微光 + 左侧描边 */
-  background: var(--color-bg-elevated);
-  border: 1px solid;
-  border-color: transparent;
+  background: var(--claude-bg-elevated);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-subtle);
   border-radius: 18px 18px 4px 18px;
   position: relative;
   overflow: hidden;
   word-break: break-word;
 }
 
-/* 顶部渐变光带 — 模拟深空霓虹 */
-.message-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(34, 104, 245, 0.5) 20%,
-    rgba(110, 53, 235, 0.5) 50%,
-    rgba(168, 85, 247, 0.3) 80%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
-
-/* 左侧边缘微光 */
-.message-content::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 0;
-  bottom: 8px;
-  width: 1.5px;
-  background: linear-gradient(
-    180deg,
-    rgba(34, 104, 245, 0.4) 0%,
-    rgba(110, 53, 235, 0.2) 50%,
-    transparent 100%
-  );
-  border-radius: 1px;
-  pointer-events: none;
-}
-
 .message-text {
   font-size: 14px;
   line-height: 1.55;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   padding: 2px 0;
 }
 
@@ -157,7 +120,7 @@ const displayTime = computed(() => {
   margin-top: 4px;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
 }
 
 /* ============ Image Grid ============ */
@@ -187,8 +150,8 @@ const displayTime = computed(() => {
 }
 
 .img-thumb:hover {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--claude-brand);
+  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 
@@ -211,7 +174,6 @@ const displayTime = computed(() => {
   height: 22px;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
   color: white;
   display: flex;
   align-items: center;

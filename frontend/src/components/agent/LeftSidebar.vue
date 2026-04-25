@@ -1,24 +1,30 @@
 <template>
-  <div class="left-sidebar">
+  <div class="left-sidebar" id="agent-left-sidebar" role="complementary" aria-label="会话历史">
     <!-- Header -->
     <div class="sidebar-header">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <!-- 连线 -->
-            <line x1="12" y1="3" x2="4" y2="9" class="mark-line mark-line-1" />
-            <line x1="12" y1="3" x2="20" y2="9" class="mark-line mark-line-2" />
-            <line x1="4" y1="9" x2="12" y2="21" class="mark-line mark-line-3" />
-            <line x1="20" y1="9" x2="12" y2="21" class="mark-line mark-line-4" />
-            <line x1="4" y1="9" x2="20" y2="9" class="mark-line mark-line-5" />
-            <!-- 节点 -->
-            <circle cx="12" cy="3" r="2" class="mark-node mark-node-top" />
-            <circle cx="4" cy="9" r="1.6" class="mark-node mark-node-left" />
-            <circle cx="20" cy="9" r="1.6" class="mark-node mark-node-right" />
-            <circle cx="12" cy="21" r="2.4" class="mark-node mark-node-core" />
+            <!-- 眼睛轮廓 -->
+            <path d="M2 12C2 12 6 5 12 5C18 5 22 12 22 12C22 12 18 19 12 19C6 19 2 12 2 12Z" class="eye-outline" />
+            <!-- 瞳孔/内核 -->
+            <circle cx="12" cy="12" r="2.5" class="pupil" />
+            <!-- 神经网络脉冲：从瞳孔向外 -->
+            <line x1="12" y1="9.5" x2="12" y2="7" class="pulse-line pl-1" />
+            <circle cx="12" cy="6.5" r="0.8" class="pulse-dot pd-1" />
+            <line x1="14.3" y1="10.5" x2="16.2" y2="9.3" class="pulse-line pl-2" />
+            <circle cx="16.6" cy="8.9" r="0.8" class="pulse-dot pd-2" />
+            <line x1="14.3" y1="13.5" x2="16.2" y2="14.7" class="pulse-line pl-3" />
+            <circle cx="16.6" cy="15.1" r="0.8" class="pulse-dot pd-3" />
+            <line x1="12" y1="14.5" x2="12" y2="17" class="pulse-line pl-4" />
+            <circle cx="12" cy="17.5" r="0.8" class="pulse-dot pd-4" />
+            <line x1="9.7" y1="13.5" x2="7.8" y2="14.7" class="pulse-line pl-5" />
+            <circle cx="7.4" cy="15.1" r="0.8" class="pulse-dot pd-5" />
+            <line x1="9.7" y1="10.5" x2="7.8" y2="9.3" class="pulse-line pl-6" />
+            <circle cx="7.4" cy="8.9" r="0.8" class="pulse-dot pd-6" />
           </svg>
         </div>
-        <span class="brand-name">SpaceMind</span>
+        <span class="brand-name">EyeSight</span>
         <button class="collapse-btn" @click="emit('collapse')" aria-label="收起侧边栏" title="收起侧边栏">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -138,14 +144,14 @@ const groupedHistories = computed(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-secondary);
-  border-right: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-secondary);
+  border-right: 1px solid var(--claude-border-subtle);
 }
 
 /* ============ Header ============ */
 .sidebar-header {
   padding: 16px 14px 12px;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--claude-border-subtle);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -168,57 +174,70 @@ const groupedHistories = computed(() => {
   justify-content: center;
 }
 
-.mark-line {
-  stroke: var(--color-primary-500);
-  stroke-width: 1.2;
-  opacity: 0.35;
+.eye-outline {
+  stroke: var(--claude-brand);
+  stroke-width: 1.4;
+  fill: none;
+  opacity: 0.85;
+}
+
+.pupil {
+  fill: var(--claude-brand);
+  opacity: 0.95;
+  animation: pupilThrob 2s ease-in-out infinite;
+}
+
+.pulse-line {
+  stroke: var(--claude-brand);
+  stroke-width: 1;
   stroke-linecap: round;
+  opacity: 0;
+  animation: pulseOut 2s ease-out infinite;
 }
 
-.mark-node {
-  fill: var(--color-primary-500);
-  opacity: 0.9;
+.pulse-dot {
+  fill: var(--claude-brand);
+  opacity: 0;
+  animation: dotAppear 2s ease-out infinite;
 }
 
-.mark-node-core {
-  fill: url(#markGrad);
-  opacity: 1;
-  animation: nodeBreath 3s ease-in-out infinite;
-}
+.pl-1 { animation-delay: 0s; }
+.pl-2 { animation-delay: 0.2s; }
+.pl-3 { animation-delay: 0.4s; }
+.pl-4 { animation-delay: 0.6s; }
+.pl-5 { animation-delay: 0.8s; }
+.pl-6 { animation-delay: 1s; }
 
-[data-theme="aurora"] .mark-node-core {
-  filter: drop-shadow(0 0 4px rgba(34, 104, 245, 0.5));
-}
+.pd-1 { animation-delay: 0.3s; }
+.pd-2 { animation-delay: 0.5s; }
+.pd-3 { animation-delay: 0.7s; }
+.pd-4 { animation-delay: 0.9s; }
+.pd-5 { animation-delay: 1.1s; }
+.pd-6 { animation-delay: 1.3s; }
 
-[data-theme="pop"] .mark-node-core {
-  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
-}
-
-.mark-line-1 { animation: lineFade 4s ease-in-out 0s infinite; }
-.mark-line-2 { animation: lineFade 4s ease-in-out 0.5s infinite; }
-.mark-line-3 { animation: lineFade 4s ease-in-out 1s infinite; }
-.mark-line-4 { animation: lineFade 4s ease-in-out 1.5s infinite; }
-.mark-line-5 { animation: lineFade 4s ease-in-out 2s infinite; }
-
-.mark-node-top { animation: nodeBreath 3s ease-in-out 0s infinite; }
-.mark-node-left { animation: nodeBreath 3s ease-in-out 0.4s infinite; }
-.mark-node-right { animation: nodeBreath 3s ease-in-out 0.8s infinite; }
-
-@keyframes nodeBreath {
-  0%, 100% { opacity: 0.7; transform-origin: center; }
+@keyframes pupilThrob {
+  0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
 }
 
-@keyframes lineFade {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.6; }
+@keyframes pulseOut {
+  0% { opacity: 0; stroke-dashoffset: 4; }
+  20% { opacity: 0.7; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+@keyframes dotAppear {
+  0% { opacity: 0; transform: scale(0); }
+  30% { opacity: 1; transform: scale(1.2); }
+  60% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.6); }
 }
 
 .brand-name {
-  font-family: var(--font-display);
+  font-family: var(--claude-font-serif);
   font-size: 15px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   letter-spacing: -0.02em;
   flex: 1;
 }
@@ -233,23 +252,15 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .collapse-btn:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
-}
-
-[data-theme="aurora"] .collapse-btn:hover {
-  color: rgba(34, 104, 245, 0.7);
-}
-
-[data-theme="pop"] .collapse-btn:hover {
-  color: rgba(168, 85, 247, 0.7);
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-secondary);
 }
 
 /* New Chat Button */
@@ -261,10 +272,10 @@ const groupedHistories = computed(() => {
   width: 100%;
   padding: 9px 12px;
   border-radius: 10px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--claude-border-default);
   background: transparent;
-  color: var(--color-text-secondary);
-  font-family: var(--font-body);
+  color: var(--claude-text-secondary);
+  font-family: var(--claude-font-sans);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -282,17 +293,9 @@ const groupedHistories = computed(() => {
   border-radius: inherit;
 }
 
-[data-theme="aurora"] .new-chat-btn::before {
-  background: linear-gradient(135deg, rgba(34, 104, 245, 0.06) 0%, rgba(110, 53, 235, 0.03) 100%);
-}
-
-[data-theme="pop"] .new-chat-btn::before {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(236, 72, 153, 0.03) 100%);
-}
-
 .new-chat-btn:hover {
-  border-color: var(--color-primary-500);
-  color: var(--color-primary-500);
+  border-color: var(--claude-brand);
+  color: var(--claude-brand);
   transform: translateY(-1px);
 }
 
@@ -302,14 +305,6 @@ const groupedHistories = computed(() => {
 
 .new-chat-btn:active {
   transform: translateY(0) scale(0.98);
-}
-
-[data-theme="aurora"] .new-chat-btn:hover {
-  box-shadow: 0 0 0 1px rgba(34, 104, 245, 0.15), 0 2px 8px rgba(34, 104, 245, 0.08);
-}
-
-[data-theme="pop"] .new-chat-btn:hover {
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.12), 0 2px 8px rgba(168, 85, 247, 0.06);
 }
 
 .new-chat-btn svg,
@@ -339,7 +334,7 @@ const groupedHistories = computed(() => {
 }
 
 .sidebar-body::-webkit-scrollbar-thumb {
-  background: var(--color-border-default);
+  background: var(--claude-border-default);
   border-radius: 4px;
 }
 
@@ -357,16 +352,16 @@ const groupedHistories = computed(() => {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
 }
 
 .empty-text {
   font-size: 13px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   letter-spacing: 0.01em;
 }
 
@@ -378,7 +373,7 @@ const groupedHistories = computed(() => {
 .group-label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 8px 12px 4px;
@@ -412,27 +407,19 @@ const groupedHistories = computed(() => {
 }
 
 .history-item:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
 }
 
 .history-item.active {
-  background: var(--color-bg-elevated);
+  background: var(--claude-bg-elevated);
 }
 
 .history-item.active .history-indicator {
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
 }
 
 .history-item.active .history-title {
-  color: var(--color-primary-500);
-}
-
-[data-theme="aurora"] .history-item.active {
-  box-shadow: inset 0 0 0 1px rgba(34, 104, 245, 0.08);
-}
-
-[data-theme="pop"] .history-item.active {
-  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.06);
+  color: var(--claude-brand);
 }
 
 .history-content {
@@ -446,7 +433,7 @@ const groupedHistories = computed(() => {
 .history-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -456,14 +443,14 @@ const groupedHistories = computed(() => {
 
 .history-time {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
 /* ============ Footer ============ */
 .sidebar-footer {
   padding: 10px 14px;
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--claude-border-subtle);
 }
 
 .footer-btn {
@@ -475,13 +462,13 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .footer-btn:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-secondary);
 }
 </style>

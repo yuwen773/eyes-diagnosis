@@ -44,14 +44,6 @@ const handleCancel = () => emit('cancel')
   border: 1px solid transparent;
 }
 
-[data-theme="aurora"] .tool-confirm {
-  border-color: rgba(16, 185, 129, 0.25);
-}
-
-[data-theme="pop"] .tool-confirm {
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
 .confirm-icon {
   flex-shrink: 0;
   color: var(--color-success);
@@ -72,7 +64,7 @@ const handleCancel = () => emit('cancel')
 
 .confirm-msg {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   margin-bottom: 12px;
   line-height: 1.5;
 }
@@ -88,18 +80,18 @@ const handleCancel = () => emit('cancel')
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  font-family: var(--font-body);
+  font-family: var(--claude-font-sans);
   cursor: pointer;
   transition: all var(--transition-fast, 150ms ease);
 }
 
 .confirm-btn.cancel {
-  background: var(--color-bg-hover, var(--color-bg-secondary));
-  color: var(--color-text-secondary);
+  background: var(--claude-bg-hover, var(--claude-bg-secondary));
+  color: var(--claude-text-secondary);
 }
 
 .confirm-btn.cancel:hover {
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
 }
 
 .confirm-btn.ok {
