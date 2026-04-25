@@ -1,24 +1,32 @@
 <template>
-  <div class="mb-4 flex items-center gap-3">
-    <a-input
-      v-model:value="searchParams.title"
-      placeholder="输入新闻标题"
-      allow-clear
-      @press-enter="doSearch"
-    />
-    <a-button type="primary" @click="doSearch">搜索</a-button>
-    <a-button @click="doReset">重置</a-button>
-    <div class="flex-1"></div>
-    <a-button type="primary" @click="editNews(null)">新增新闻</a-button>
-  </div>
+  <div class="manage-page">
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="search-group">
+        <a-input
+          v-model:value="searchParams.title"
+          placeholder="输入新闻标题"
+          allow-clear
+          @press-enter="doSearch"
+        />
+        <a-button type="primary" @click="doSearch">搜索</a-button>
+        <a-button @click="doReset">重置</a-button>
+      </div>
+      <a-button type="primary" @click="editNews(null)">
+        <template #icon><PlusOutlined /></template>
+        新增新闻
+      </a-button>
+    </div>
 
-  <a-table
-    :columns="columns"
-    :data-source="dataList"
-    :pagination="pagination"
-    :loading="loading"
-    @change="doTableChange"
-  >
+    <!-- 数据表格 -->
+    <div class="data-table">
+      <a-table
+        :columns="columns"
+        :data-source="dataList"
+        :pagination="pagination"
+        :loading="loading"
+        @change="doTableChange"
+      >
     <template #bodyCell="{ column, record }">
       <template v-if="column.dataIndex === 'newsContent'">
         <div v-html="record.newsContent"></div>
@@ -39,6 +47,8 @@
       </template>
     </template>
   </a-table>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -48,6 +58,7 @@ import {
   listNewsVoByPageWithCache,
 } from '@/api/newsController'
 import { message } from 'ant-design-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
 
@@ -167,3 +178,55 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+<style scoped>
+.manage-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-4);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--claude-space-4);
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-3);
+}
+
+.data-table {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-4);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.data-table :deep(.ant-table) {
+  background: transparent;
+}
+
+.data-table :deep(.ant-table-thead > tr > th) {
+  background: transparent;
+  border-bottom: 1px solid var(--claude-border-warm);
+  font-weight: 500;
+  color: var(--claude-text-secondary);
+}
+
+.data-table :deep(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--claude-border-cream);
+}
+
+.data-table :deep(.ant-table-tbody > tr:hover > td) {
+  background: var(--color-bg-hover);
+}
+</style>

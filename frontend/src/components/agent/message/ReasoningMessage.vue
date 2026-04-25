@@ -36,8 +36,8 @@ const preview = computed(() => props.content.slice(0, 50) + (props.content.lengt
   margin: 4px 16px;
   padding: 8px 12px;
   border-radius: 10px;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-tertiary);
+  border: 1px solid var(--claude-border-subtle);
 }
 
 .reasoning-header {
@@ -49,12 +49,12 @@ const preview = computed(() => props.content.slice(0, 50) + (props.content.lengt
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   font-size: 12px;
 }
 
 .reasoning-header:hover {
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
 }
 
 .reasoning-icon {
@@ -68,12 +68,12 @@ const preview = computed(() => props.content.slice(0, 50) + (props.content.lengt
 
 .reasoning-label {
   font-weight: 500;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
 }
 
 .reasoning-preview {
   margin-left: 8px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-size: 11px;
   opacity: 0.7;
 }
@@ -81,13 +81,13 @@ const preview = computed(() => props.content.slice(0, 50) + (props.content.lengt
 .reasoning-content {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--claude-border-subtle);
 }
 
 .markdown-body {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   padding-left: 2px;
 }
 
@@ -100,7 +100,7 @@ const preview = computed(() => props.content.slice(0, 50) + (props.content.lengt
 }
 
 .markdown-body :deep(code) {
-  background: var(--color-bg-secondary);
+  background: var(--claude-bg-secondary);
   padding: 1px 4px;
   border-radius: 3px;
   font-size: 11px;

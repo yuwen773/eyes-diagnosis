@@ -116,14 +116,14 @@ const isEmptyArgs = (args: Record<string, any>) => {
 .tool-card {
   max-width: min(400px, 100%);
   border-radius: 10px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-subtle);
   overflow: hidden;
   transition: border-color 0.15s;
 }
 
 .tool-card:hover {
-  border-color: var(--color-border-default);
+  border-color: var(--claude-border-default);
 }
 
 /* Header */
@@ -132,28 +132,28 @@ const isEmptyArgs = (args: Record<string, any>) => {
   align-items: center;
   gap: 7px;
   padding: 7px 12px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  background: rgba(59, 130, 246, 0.06);
+  border-bottom: 1px solid var(--claude-border-subtle);
+  background: oklch(0.72 0.09 30 / 0.06);
 }
 
 .tool-icon {
   display: flex;
-  color: var(--color-info);
+  color: var(--claude-brand);
   flex-shrink: 0;
 }
 
 .tool-name {
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
   font-size: 11.5px;
   font-weight: 600;
-  color: var(--color-info);
+  color: var(--claude-brand);
   letter-spacing: 0.01em;
 }
 
 .tool-tag {
   font-size: 10px;
   font-weight: 600;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-left: auto;
@@ -163,7 +163,7 @@ const isEmptyArgs = (args: Record<string, any>) => {
 /* Args */
 .tool-args {
   padding: 8px 12px 10px;
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
   font-size: 12px;
   line-height: 1.65;
 }
@@ -183,21 +183,21 @@ const isEmptyArgs = (args: Record<string, any>) => {
 }
 
 .arg-sep {
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   margin: 0 2px;
 }
 
 .arg-value {
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   word-break: break-word;
   flex: 1;
   min-width: 0;
 }
 
 .empty-args {
-  color: var(--color-text-disabled);
+  color: var(--claude-text-disabled);
   font-size: 12px;
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
 }
 
 /* JSON Syntax Colors */

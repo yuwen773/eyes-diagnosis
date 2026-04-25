@@ -1,5 +1,5 @@
 <template>
-  <div class="resource-panel">
+  <div class="resource-panel" id="agent-resource-panel" role="complementary" aria-label="资源面板">
     <!-- 面板头部 -->
     <div class="panel-header">
       <div class="panel-title-group">
@@ -16,7 +16,7 @@
 
     <!-- 统计行 -->
     <div v-if="totalCount > 0" class="panel-stats">
-      <span>搜索了 {{ totalCount }} 个资源</span>
+      搜索了 {{ totalCount }} 个资源
     </div>
 
     <!-- Tab 切换 -->
@@ -131,7 +131,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--claude-border-cream);
   flex-shrink: 0;
 }
 
@@ -142,10 +142,10 @@ const totalCount = computed(() => props.images.length + props.links.length)
 }
 
 .panel-title {
-  font-family: var(--font-display);
+  font-family: var(--claude-font-serif);
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   margin: 0;
 }
 
@@ -154,7 +154,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 10px;
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
   color: white;
 }
 
@@ -167,21 +167,21 @@ const totalCount = computed(() => props.images.length + props.links.length)
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .close-btn:hover {
   background: var(--color-bg-hover);
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
 }
 
 .panel-stats {
   padding: 8px 16px;
   font-size: 12px;
-  color: var(--color-text-tertiary);
-  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--claude-text-tertiary);
+  border-bottom: 1px solid var(--claude-border-cream);
   flex-shrink: 0;
 }
 
@@ -189,7 +189,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
   display: flex;
   gap: 4px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--claude-border-cream);
   flex-shrink: 0;
 }
 
@@ -201,8 +201,8 @@ const totalCount = computed(() => props.images.length + props.links.length)
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text-tertiary);
-  font-family: var(--font-body);
+  color: var(--claude-text-tertiary);
+  font-family: var(--claude-font-sans);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -211,12 +211,12 @@ const totalCount = computed(() => props.images.length + props.links.length)
 
 .tab-btn:hover {
   background: var(--color-bg-hover);
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
 }
 
 .tab-btn.active {
-  background: var(--color-bg-elevated);
-  color: var(--color-primary-500);
+  background: var(--claude-bg-elevated);
+  color: var(--claude-brand);
 }
 
 .tab-count {
@@ -241,7 +241,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
   gap: 8px;
   height: 100%;
   text-align: center;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   padding: 40px 20px;
 }
 
@@ -253,7 +253,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
 .empty-state p {
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   margin: 0;
 }
 
@@ -281,17 +281,17 @@ const totalCount = computed(() => props.images.length + props.links.length)
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease-out;
 }
 
 .image-item:hover img {
-  transform: scale(1.04);
+  transform: scale(1.06);
 }
 
 .image-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(20, 20, 19, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,7 +312,6 @@ const totalCount = computed(() => props.images.length + props.links.length)
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
   color: white;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -335,21 +334,22 @@ const totalCount = computed(() => props.images.length + props.links.length)
   gap: 4px;
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-bg-elevated);
+  border: 1px solid var(--claude-border-cream);
+  background: var(--claude-bg-elevated);
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .link-card:hover {
-  border-color: var(--color-primary-500);
+  border-color: var(--claude-brand);
   transform: translateY(-1px);
+  box-shadow: var(--claude-shadow-md);
 }
 
 .link-title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -357,7 +357,7 @@ const totalCount = computed(() => props.images.length + props.links.length)
 
 .link-snippet {
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -367,6 +367,6 @@ const totalCount = computed(() => props.images.length + props.links.length)
 
 .link-domain {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
 }
 </style>

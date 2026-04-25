@@ -3,89 +3,110 @@
     <div class="messages-container">
       <!-- Welcome Screen -->
       <div v-if="messages.length === 0" class="welcome">
-        <!-- 星云光晕 -->
+        <!-- Warm radial atmosphere -->
         <div class="nebula" aria-hidden="true">
           <div class="nebula-cloud n1"></div>
           <div class="nebula-cloud n2"></div>
           <div class="nebula-cloud n3"></div>
         </div>
-        <!-- 漂浮星尘 -->
-        <div class="starfield" aria-hidden="true"></div>
 
         <!-- 主舞台 -->
         <div class="welcome-stage">
-          <!-- 星座动画 -->
-          <div class="constellation" aria-hidden="true">
-            <svg class="constellation-svg" viewBox="0 0 240 220" fill="none">
+          <!-- Neural Eye AI 动画 -->
+          <div class="eye-vision" aria-hidden="true">
+            <svg class="ev-svg" viewBox="0 0 240 200" fill="none">
               <defs>
-                <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="var(--color-primary-400)" />
-                  <stop offset="100%" stop-color="var(--color-accent-purple, var(--color-secondary-400))" />
-                </linearGradient>
-                <filter id="nodeGlow">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <filter id="coreGlow">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
+                <radialGradient id="evCoreGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#e8956a" />
+                  <stop offset="100%" stop-color="#d97757" />
+                </radialGradient>
+                <filter id="evGlow">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
               </defs>
-              <!-- 连线 -->
-              <line x1="120" y1="20" x2="60" y2="65" class="c-line" style="animation-delay:0s" />
-              <line x1="120" y1="20" x2="180" y2="65" class="c-line" style="animation-delay:0.2s" />
-              <line x1="60" y1="65" x2="30" y2="130" class="c-line" style="animation-delay:0.4s" />
-              <line x1="60" y1="65" x2="120" y2="110" class="c-line" style="animation-delay:0.6s" />
-              <line x1="180" y1="65" x2="210" y2="130" class="c-line" style="animation-delay:0.3s" />
-              <line x1="180" y1="65" x2="120" y2="110" class="c-line" style="animation-delay:0.5s" />
-              <line x1="60" y1="65" x2="180" y2="65" class="c-line" style="animation-delay:1.2s" />
-              <line x1="120" y1="110" x2="30" y2="130" class="c-line" style="animation-delay:0.8s" />
-              <line x1="120" y1="110" x2="210" y2="130" class="c-line" style="animation-delay:0.7s" />
-              <line x1="120" y1="110" x2="80" y2="180" class="c-line" style="animation-delay:0.9s" />
-              <line x1="120" y1="110" x2="160" y2="180" class="c-line" style="animation-delay:1s" />
-              <line x1="30" y1="130" x2="80" y2="180" class="c-line" style="animation-delay:1.3s" />
-              <line x1="210" y1="130" x2="160" y2="180" class="c-line" style="animation-delay:1.1s" />
-              <line x1="80" y1="180" x2="160" y2="180" class="c-line" style="animation-delay:1.5s" />
-              <!-- 节点 -->
-              <circle cx="120" cy="20" r="4" class="c-node c-node-lg" style="animation-delay:0s" filter="url(#nodeGlow)" />
-              <circle cx="60" cy="65" r="3.2" class="c-node" style="animation-delay:0.3s" />
-              <circle cx="180" cy="65" r="3.2" class="c-node" style="animation-delay:0.5s" />
-              <circle cx="120" cy="110" r="5.5" class="c-node c-node-core" style="animation-delay:0.1s" filter="url(#coreGlow)" />
-              <circle cx="30" cy="130" r="2.8" class="c-node" style="animation-delay:0.7s" />
-              <circle cx="210" cy="130" r="2.8" class="c-node" style="animation-delay:0.9s" />
-              <circle cx="80" cy="180" r="3" class="c-node" style="animation-delay:1.1s" />
-              <circle cx="160" cy="180" r="3" class="c-node" style="animation-delay:1.3s" />
-              <!-- 微尘粒子 -->
-              <circle cx="45" cy="40" r="1" class="c-dust" style="animation-delay:0s" />
-              <circle cx="195" cy="45" r="0.8" class="c-dust" style="animation-delay:1s" />
-              <circle cx="15" cy="100" r="0.7" class="c-dust" style="animation-delay:2s" />
-              <circle cx="225" cy="95" r="0.9" class="c-dust" style="animation-delay:0.5s" />
-              <circle cx="100" cy="200" r="0.8" class="c-dust" style="animation-delay:1.5s" />
-              <circle cx="140" cy="195" r="0.6" class="c-dust" style="animation-delay:2.5s" />
+
+              <!-- 外层神经网络脉冲线 -->
+              <line x1="120" y1="100" x2="60" y2="50" class="ev-pulse" style="--delay:0s" />
+              <line x1="120" y1="100" x2="180" y2="50" class="ev-pulse" style="--delay:0.25s" />
+              <line x1="120" y1="100" x2="30" y2="100" class="ev-pulse" style="--delay:0.5s" />
+              <line x1="120" y1="100" x2="210" y2="100" class="ev-pulse" style="--delay:0.75s" />
+              <line x1="120" y1="100" x2="60" y2="150" class="ev-pulse" style="--delay:1s" />
+              <line x1="120" y1="100" x2="180" y2="150" class="ev-pulse" style="--delay:1.25s" />
+              <!-- 次级连线 -->
+              <line x1="60" y1="50" x2="30" y2="100" class="ev-pulse ev-sub" style="--delay:1.5s" />
+              <line x1="180" y1="50" x2="210" y2="100" class="ev-pulse ev-sub" style="--delay:1.75s" />
+              <line x1="30" y1="100" x2="60" y2="150" class="ev-pulse ev-sub" style="--delay:2s" />
+              <line x1="210" y1="100" x2="180" y2="150" class="ev-pulse ev-sub" style="--delay:2.25s" />
+
+              <!-- 神经节点 -->
+              <circle cx="60" cy="50" r="4" class="ev-node" style="--delay:0.3s" />
+              <circle cx="180" cy="50" r="4" class="ev-node" style="--delay:0.55s" />
+              <circle cx="30" cy="100" r="3.5" class="ev-node" style="--delay:0.8s" />
+              <circle cx="210" cy="100" r="3.5" class="ev-node" style="--delay:1.05s" />
+              <circle cx="60" cy="150" r="4" class="ev-node" style="--delay:1.3s" />
+              <circle cx="180" cy="150" r="4" class="ev-node" style="--delay:1.55s" />
+              <circle cx="120" cy="100" r="6" class="ev-core-node" style="--delay:0.1s" filter="url(#evGlow)" />
+
+              <!-- 眼睛轮廓 -->
+              <path d="M20 100C20 100 60 50 120 50C180 50 220 100 220 100C220 100 180 150 120 150C60 150 20 100 20 100Z" class="ev-eye" />
+              <!-- 眼睛内圈 -->
+              <circle cx="120" cy="100" r="28" class="ev-iris-ring" />
+              <circle cx="120" cy="100" r="20" class="ev-iris-ring ev-iris-inner" />
+              <!-- 瞳孔内核发光 -->
+              <circle cx="120" cy="100" r="10" class="ev-pupil" filter="url(#evGlow)" />
+              <circle cx="124" cy="96" r="2.5" class="ev-light" />
+
+              <!-- 数据流动粒子 -->
+              <circle cx="60" cy="50" r="1.5" class="ev-particle" style="--delay:0s" />
+              <circle cx="180" cy="50" r="1.5" class="ev-particle" style="--delay:0.4s" />
+              <circle cx="30" cy="100" r="1.5" class="ev-particle" style="--delay:0.8s" />
+              <circle cx="210" cy="100" r="1.5" class="ev-particle" style="--delay:1.2s" />
+              <circle cx="60" cy="150" r="1.5" class="ev-particle" style="--delay:1.6s" />
+              <circle cx="180" cy="150" r="1.5" class="ev-particle" style="--delay:2s" />
             </svg>
           </div>
           <div class="welcome-text">
-            <h2 class="welcome-title">SpaceMind</h2>
-            <p class="welcome-desc">描述您想要的画面，我来帮您寻找或创作</p>
+            <h2 class="welcome-title">EyeSight</h2>
+            <p class="welcome-desc">上传眼底图片或描述症状，我来为您分析诊断</p>
           </div>
           <div class="welcome-hints">
             <button
               v-for="(hint, i) in quickHints"
               :key="i"
-              class="hint-card"
-              :style="{ animationDelay: (500 + i * 80) + 'ms' }"
-              @click="emit('send', hint)"
+              class="guide-card"
+              :class="`guide-card-${hint.icon}`"
+              :style="{ animationDelay: (600 + i * 120) + 'ms', '--accent': hint.color }"
+              @click="emit('send', hint.action)"
             >
-              <svg class="hint-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-              <span>{{ hint }}</span>
+              <div class="guide-icon-wrap">
+                <!-- Image icon -->
+                <svg v-if="hint.icon === 'image'" class="guide-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                <!-- Text icon -->
+                <svg v-else-if="hint.icon === 'text'" class="guide-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <!-- Learn icon -->
+                <svg v-else-if="hint.icon === 'learn'" class="guide-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+              </div>
+              <div class="guide-content">
+                <span class="guide-title">{{ hint.title }}</span>
+                <span class="guide-desc">{{ hint.desc }}</span>
+              </div>
+              <div class="guide-action">
+                <span class="guide-action-text">{{ hint.action }}</span>
+                <svg class="guide-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
             </button>
           </div>
         </div>
@@ -179,9 +200,27 @@ const emit = defineEmits<{
 }>()
 
 const quickHints = [
-  '一张赛博朋克风格的城市夜景',
-  '用水彩风格画一只猫',
-  '复古海报风格的旅行插画',
+  {
+    icon: 'image',
+    title: '上传眼底图像',
+    desc: '发送眼底图片，AI 辅助分析',
+    action: '上传我的眼底OCT图像',
+    color: '#d97757',
+  },
+  {
+    icon: 'text',
+    title: '描述症状',
+    desc: '用文字描述眼部不适',
+    action: '我最近眼睛干涩、偶尔模糊是怎么回事',
+    color: '#8b5a7a',
+  },
+  {
+    icon: 'learn',
+    title: '了解眼病',
+    desc: '查询眼科疾病知识',
+    action: '介绍一下白内障的症状和预防',
+    color: '#5a8b7a',
+  },
 ]
 
 const listRef = ref<HTMLElement | null>(null)
@@ -247,7 +286,7 @@ watch(() => props.loading, (val) => {
   flex-direction: column;
   padding: 20px 0;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-default) transparent;
+  scrollbar-color: var(--claude-border-warm) transparent;
 }
 
 .agent-message-list::-webkit-scrollbar {
@@ -259,12 +298,12 @@ watch(() => props.loading, (val) => {
 }
 
 .agent-message-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-default);
+  background: var(--claude-border-warm);
   border-radius: 10px;
 }
 
 .agent-message-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: var(--claude-text-tertiary);
 }
 
 .messages-container {
@@ -287,7 +326,7 @@ watch(() => props.loading, (val) => {
   overflow: hidden;
 }
 
-/* Nebula backdrop */
+/* Warm radial atmosphere */
 .nebula {
   position: absolute;
   inset: 0;
@@ -305,59 +344,33 @@ watch(() => props.loading, (val) => {
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  opacity: 0.35;
+  opacity: 0.25;
   animation: nebulaDrift 12s ease-in-out infinite;
 }
 
-[data-theme="aurora"] .n1 {
+.n1 {
   width: 320px;
   height: 320px;
   top: 5%;
   left: 15%;
-  background: radial-gradient(circle, rgba(34, 104, 245, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.72 0.09 30 / 0.3) 0%, transparent 70%);
 }
 
-[data-theme="aurora"] .n2 {
+.n2 {
   width: 250px;
   height: 250px;
   top: 40%;
   right: 10%;
-  background: radial-gradient(circle, rgba(110, 53, 235, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.55 0.07 320 / 0.2) 0%, transparent 70%);
   animation-delay: 3s;
 }
 
-[data-theme="aurora"] .n3 {
+.n3 {
   width: 200px;
   height: 200px;
   bottom: 10%;
   left: 30%;
-  background: radial-gradient(circle, rgba(0, 212, 170, 0.2) 0%, transparent 70%);
-  animation-delay: 6s;
-}
-
-[data-theme="pop"] .n1 {
-  width: 320px;
-  height: 320px;
-  top: 5%;
-  left: 15%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%);
-}
-
-[data-theme="pop"] .n2 {
-  width: 250px;
-  height: 250px;
-  top: 40%;
-  right: 10%;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%);
-  animation-delay: 3s;
-}
-
-[data-theme="pop"] .n3 {
-  width: 200px;
-  height: 200px;
-  bottom: 10%;
-  left: 30%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.72 0.06 50 / 0.15) 0%, transparent 70%);
   animation-delay: 6s;
 }
 
@@ -367,66 +380,7 @@ watch(() => props.loading, (val) => {
   66% { transform: translate(-10px, 8px) scale(0.97); }
 }
 
-/* Starfield */
-.starfield {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  animation: nebulaFadeIn 2s ease 0.3s both;
-}
-
-[data-theme="aurora"] .starfield::after {
-  content: '';
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: rgba(200, 220, 255, 0.7);
-  box-shadow:
-    30px 40px 0 0 rgba(200, 220, 255, 0.3),
-    80px 15px 0 0 rgba(200, 220, 255, 0.5),
-    140px 70px 0 0 rgba(200, 220, 255, 0.2),
-    200px 30px 0 0 rgba(200, 220, 255, 0.6),
-    260px 80px 0 0 rgba(200, 220, 255, 0.3),
-    50px 120px 0 0 rgba(200, 220, 255, 0.4),
-    180px 140px 0 0 rgba(200, 220, 255, 0.5),
-    100px 180px 0 0 rgba(200, 220, 255, 0.2),
-    300px 100px 0 0 rgba(200, 220, 255, 0.4),
-    220px 170px 0 0 rgba(200, 220, 255, 0.3),
-    350px 50px 0 0 rgba(200, 220, 255, 0.5),
-    370px 160px 0 0 rgba(200, 220, 255, 0.2);
-  animation: starTwinkle 4s ease-in-out infinite;
-}
-
-[data-theme="pop"] .starfield::after {
-  content: '';
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: rgba(220, 200, 255, 0.7);
-  box-shadow:
-    30px 40px 0 0 rgba(220, 200, 255, 0.3),
-    80px 15px 0 0 rgba(220, 200, 255, 0.5),
-    140px 70px 0 0 rgba(220, 200, 255, 0.2),
-    200px 30px 0 0 rgba(220, 200, 255, 0.6),
-    260px 80px 0 0 rgba(220, 200, 255, 0.3),
-    50px 120px 0 0 rgba(220, 200, 255, 0.4),
-    180px 140px 0 0 rgba(220, 200, 255, 0.5),
-    100px 180px 0 0 rgba(220, 200, 255, 0.2),
-    300px 100px 0 0 rgba(220, 200, 255, 0.4),
-    220px 170px 0 0 rgba(220, 200, 255, 0.3),
-    350px 50px 0 0 rgba(220, 200, 255, 0.5),
-    370px 160px 0 0 rgba(220, 200, 255, 0.2);
-  animation: starTwinkle 4s ease-in-out infinite;
-}
-
-@keyframes starTwinkle {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-/* Welcome stage — content above backdrop */
+/* Welcome stage */
 .welcome-stage {
   position: relative;
   z-index: 1;
@@ -446,82 +400,135 @@ watch(() => props.loading, (val) => {
   }
 }
 
-/* Constellation */
-.constellation {
-  width: 160px;
-  height: 150px;
+/* Eye Vision Neural */
+.eye-vision {
+  width: 180px;
+  height: 160px;
   margin-bottom: 20px;
-  animation: constellationIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
+  animation: eyeVisionIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes constellationIn {
+@keyframes eyeVisionIn {
   from { opacity: 0; transform: scale(0.7); }
   to { opacity: 1; transform: scale(1); }
 }
 
-.constellation-svg {
+.ev-svg {
   width: 100%;
   height: 100%;
 }
 
-.c-line {
-  stroke: var(--color-primary-400, var(--color-primary-500));
+.ev-eye {
+  stroke: #d97757;
+  stroke-width: 2;
+  fill: none;
+  opacity: 0.45;
+  animation: evEyeBreath 4s ease-in-out infinite;
+}
+
+.ev-iris-ring {
+  stroke: #d97757;
+  stroke-width: 1.2;
+  fill: none;
+  opacity: 0.5;
+  animation: evRingPulse 3s ease-in-out infinite;
+}
+
+.ev-iris-inner {
+  opacity: 0.3;
+  animation-delay: 0.5s;
+}
+
+.ev-core-node {
+  fill: url(#evCoreGrad);
+  animation: evCorePulse 2.5s ease-in-out infinite;
+}
+
+.ev-pulse {
+  stroke: #d97757;
   stroke-width: 1;
-  opacity: 0.4;
   stroke-linecap: round;
-  animation: cLineBreath 4s ease-in-out infinite;
-}
-
-.c-node {
-  fill: var(--color-primary-400, var(--color-primary-500));
-  opacity: 0.85;
-  animation: cNodeBreath 3.5s ease-in-out infinite;
-}
-
-.c-node-lg {
-  opacity: 0.95;
-}
-
-.c-node-core {
-  fill: url(#nodeGrad);
-  opacity: 1;
-  animation: cCoreBreath 3s ease-in-out infinite;
-}
-
-[data-theme="aurora"] .c-node-core {
-  filter: drop-shadow(0 0 10px rgba(34, 104, 245, 0.6));
-}
-
-[data-theme="pop"] .c-node-core {
-  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.6));
-}
-
-.c-dust {
-  fill: var(--color-primary-300, var(--color-primary-400));
   opacity: 0;
-  animation: dustDrift 5s ease-in-out infinite;
+  stroke-dasharray: 80;
+  animation: evPulseOut 3s ease-out infinite;
+  animation-delay: var(--delay);
 }
 
-@keyframes cLineBreath {
-  0%, 100% { opacity: 0.3; stroke-width: 1; }
-  50% { opacity: 0.65; stroke-width: 1.4; }
+.ev-sub {
+  stroke-width: 0.8;
+  opacity: 0;
 }
 
-@keyframes cNodeBreath {
-  0%, 100% { opacity: 0.75; }
+.ev-node {
+  fill: #d97757;
+  opacity: 0;
+  animation: evNodeAppear 3s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+.ev-pupil {
+  fill: #d97757;
+  opacity: 0.9;
+  animation: evPupilBreath 2.5s ease-in-out infinite;
+}
+
+.ev-light {
+  fill: white;
+  opacity: 0.7;
+  animation: evLightFlicker 2.5s ease-in-out infinite;
+}
+
+.ev-particle {
+  fill: #e8956a;
+  opacity: 0;
+  animation: evParticleFlow 3s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes evEyeBreath {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes evRingPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes evCorePulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes evPulseOut {
+  0% { opacity: 0; stroke-dashoffset: 80; }
+  15% { opacity: 0.7; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+@keyframes evNodeAppear {
+  0%, 10% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes evPupilBreath {
+  0%, 100% { opacity: 0.85; }
   50% { opacity: 1; }
 }
 
-@keyframes cCoreBreath {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 1; }
+@keyframes evLightFlicker {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.9; }
 }
 
-@keyframes dustDrift {
-  0% { opacity: 0; transform: translateY(0); }
-  30% { opacity: 0.5; }
-  70% { opacity: 0.4; }
-  100% { opacity: 0; transform: translateY(-8px); }
+@keyframes evParticleFlow {
+  0% { opacity: 0; transform: scale(0); }
+  20% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(0.5) translateY(-10px); }
 }
 
 /* Welcome text */
@@ -530,126 +537,165 @@ watch(() => props.loading, (val) => {
 }
 
 .welcome-title {
-  font-family: var(--font-display);
-  font-size: 32px;
+  font-family: var(--claude-font-serif);
+  font-size: 36px;
   font-weight: 700;
   margin: 0 0 10px;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, var(--color-primary-400, var(--color-primary-500)) 0%, var(--color-accent-purple, var(--color-secondary-400)) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-[data-theme="aurora"] .welcome-title {
-  background: linear-gradient(135deg, #d97757 0%, #c96442 50%, #a34f2f 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-[data-theme="pop"] .welcome-title {
-  background: linear-gradient(135deg, #d97757 0%, #e8946a 50%, #c96442 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: var(--claude-brand);
 }
 
 .welcome-desc {
   font-size: 15px;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-tertiary);
   margin: 0;
   max-width: 400px;
   line-height: 1.6;
 }
 
-/* Quick hint cards */
+/* Guide Cards — visual action prompts */
 .welcome-hints {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 32px;
   animation: welcomeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 400ms both;
 }
 
-@keyframes hintCardIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.hint-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-default);
-  background: var(--glass-bg, rgba(26, 35, 50, 0.6));
-  backdrop-filter: var(--glass-blur-light, blur(12px));
-  -webkit-backdrop-filter: var(--glass-blur-light, blur(12px));
-  color: var(--color-text-secondary);
-  font-family: var(--font-body);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  line-height: 1.4;
-  animation: hintCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+.guide-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 18px 16px;
+  border-radius: var(--claude-radius-xl);
+  border: 1px solid var(--claude-border-warm);
+  background: var(--claude-bg-card);
+  cursor: pointer;
+  text-align: left;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: guideCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.hint-card::before {
+.guide-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent, var(--claude-brand));
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.guide-card::after {
   content: '';
   position: absolute;
   inset: 0;
+  background: radial-gradient(circle at 30% 0%, var(--accent, var(--claude-brand)) 0%, transparent 60%);
   opacity: 0;
-  transition: opacity 0.25s ease;
-  border-radius: inherit;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-[data-theme="aurora"] .hint-card::before {
-  background: linear-gradient(135deg, rgba(34, 104, 245, 0.1) 0%, rgba(110, 53, 235, 0.05) 100%);
+.guide-card:hover {
+  border-color: var(--accent, var(--claude-brand));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px oklch(0.72 0.09 30 / 0.1);
 }
 
-[data-theme="pop"] .hint-card::before {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(236, 72, 153, 0.04) 100%);
+.guide-card:hover::before {
+  opacity: 1;
 }
 
-.hint-icon {
+.guide-card:hover::after {
+  opacity: 0.06;
+}
+
+.guide-card:hover .guide-icon-wrap {
+  transform: scale(1.1);
+}
+
+.guide-card:hover .guide-arrow {
+  transform: translateX(3px);
+  color: var(--accent, var(--claude-brand));
+}
+
+.guide-card:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+@keyframes guideCardIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.guide-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(from var(--accent, var(--claude-brand)) l c h / 0.12);
+  color: var(--accent, var(--claude-brand));
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
 }
 
-.hint-card:hover {
-  border-color: var(--color-primary-500);
-  color: var(--color-text-primary);
-  transform: translateY(-2px);
+.guide-icon {
+  opacity: 0.9;
 }
 
-.hint-card:hover::before {
-  opacity: 1;
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
 }
 
-.hint-card:hover .hint-icon {
-  opacity: 1;
-  color: var(--color-primary-500);
+.guide-title {
+  font-family: var(--claude-font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--claude-text-primary);
+  line-height: 1.3;
 }
 
-[data-theme="aurora"] .hint-card:hover {
-  box-shadow: 0 0 0 1px rgba(34, 104, 245, 0.15), 0 4px 16px rgba(34, 104, 245, 0.12);
+.guide-desc {
+  font-size: 12px;
+  color: var(--claude-text-tertiary);
+  line-height: 1.4;
 }
 
-[data-theme="pop"] .hint-card:hover {
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.12), 0 4px 16px rgba(168, 85, 247, 0.1);
+.guide-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--claude-border-cream);
 }
 
-.hint-card:active {
-  transform: translateY(0) scale(0.97);
+.guide-action-text {
+  font-size: 12px;
+  color: var(--claude-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  transition: color 0.2s ease;
 }
 
-.hint-card span {
-  position: relative;
-  z-index: 1;
+.guide-card:hover .guide-action-text {
+  color: var(--accent, var(--claude-brand));
+}
+
+.guide-arrow {
+  flex-shrink: 0;
+  color: var(--claude-text-tertiary);
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 /* ============ Typing Indicator ============ */
@@ -663,13 +709,12 @@ watch(() => props.loading, (val) => {
   gap: 4px;
   padding: 10px 18px;
   border-radius: 18px 18px 18px 4px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-cream);
   position: relative;
   overflow: hidden;
 }
 
-/* Subtle shimmer sweep across the pill */
 .typing-pill::before {
   content: '';
   position: absolute;
@@ -677,9 +722,9 @@ watch(() => props.loading, (val) => {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.04) 40%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 60%,
+    oklch(0.72 0.09 30 / 0.04) 40%,
+    oklch(0.72 0.09 30 / 0.08) 50%,
+    oklch(0.72 0.09 30 / 0.04) 60%,
     transparent 100%
   );
   animation: shimmer 2.8s ease-in-out infinite;
@@ -690,13 +735,12 @@ watch(() => props.loading, (val) => {
   100% { transform: translateX(100%); }
 }
 
-/* Three bars that breathe in a wave */
 .typing-bar {
   display: block;
   width: 3px;
   height: 14px;
   border-radius: 2px;
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
   opacity: 0.35;
   animation: barPulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   will-change: transform, opacity;
@@ -717,14 +761,6 @@ watch(() => props.loading, (val) => {
   }
 }
 
-[data-theme="aurora"] .typing-bar {
-  background: var(--claude-brand);
-}
-
-[data-theme="pop"] .typing-bar {
-  background: var(--claude-brand-light);
-}
-
 /* ============ Scroll Button ============ */
 .scroll-btn {
   position: sticky;
@@ -739,21 +775,19 @@ watch(() => props.loading, (val) => {
   aspect-ratio: 1;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-400, var(--color-primary-500)));
+  background: var(--claude-brand);
   color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 20px color-mix(in srgb, var(--color-primary-500) 35%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 20px oklch(0.72 0.09 30 / 0.35);
 }
 
 .scroll-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--color-primary-500) 40%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 28px oklch(0.72 0.09 30 / 0.4);
 }
 
 .scroll-btn:hover .scroll-icon {
@@ -774,35 +808,12 @@ watch(() => props.loading, (val) => {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Aurora theme */
-[data-theme="aurora"] .scroll-btn {
-  background: linear-gradient(135deg, var(--claude-brand), var(--claude-brand-light));
-  box-shadow: 0 4px 20px rgba(201, 100, 66, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-[data-theme="aurora"] .scroll-btn:hover {
-  box-shadow: 0 8px 28px rgba(201, 100, 66, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-/* Pop theme */
-[data-theme="pop"] .scroll-btn {
-  background: linear-gradient(135deg, var(--claude-brand-light), var(--claude-brand));
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-[data-theme="pop"] .scroll-btn:hover {
-  box-shadow: 0 8px 28px rgba(168, 85, 247, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
 /* Unread pulse ring */
 .scroll-pulse {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
+  border: 2px solid oklch(0.72 0.09 30 / 0.5);
   pointer-events: none;
   animation: scrollPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -822,14 +833,6 @@ watch(() => props.loading, (val) => {
   }
 }
 
-[data-theme="aurora"] .scroll-pulse {
-  border: 2px solid rgba(34, 104, 245, 0.5);
-}
-
-[data-theme="pop"] .scroll-pulse {
-  border: 2px solid rgba(168, 85, 247, 0.5);
-}
-
 /* Badge */
 .scroll-badge {
   position: absolute;
@@ -845,9 +848,9 @@ watch(() => props.loading, (val) => {
   text-align: center;
   color: #fff;
   pointer-events: none;
-  background: #ef4444;
-  box-shadow: 0 0 0 2px var(--color-bg-primary, #fff),
-    0 2px 8px rgba(239, 68, 68, 0.4);
+  background: var(--claude-error);
+  box-shadow: 0 0 0 2px var(--claude-bg-page),
+    0 2px 8px oklch(0.55 0.18 25 / 0.4);
   animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 

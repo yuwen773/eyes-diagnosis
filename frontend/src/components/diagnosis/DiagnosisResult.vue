@@ -1,5 +1,10 @@
 <template>
-  <div class="diagnosis-container">
+  <div class="diagnosis-container" role="region" aria-label="诊断结果">
+    <!-- 屏幕阅读器公告 -->
+    <div class="sr-only" aria-live="polite" aria-atomic="true">
+      {{ screenReaderSummary }}
+    </div>
+
     <!-- 加载状态 -->
     <template v-if="!diagnosisResult">
       <!-- 顶部诊断结果骨架 -->
@@ -49,21 +54,20 @@
             <div class="main-diagnosis">
               <div class="diagnosis-header">
                 <CheckCircleOutlined class="header-icon" />
-                <h2 class="diagnosis-title">{{ diagnosisResult?.result}}</h2>
+                <h2 class="diagnosis-title">{{ diagnosisResult?.result }}</h2>
                 <a-tag :color="getSeverityColor(diagnosisResult?.severity||'moderate')" class="severity-tag">
                   {{ formatSeverity(diagnosisResult?.severity||'moderate') }}
                 </a-tag>
               </div>
 
-              <div class="probability-section">
-                <span class="probability-label">诊断概率: </span>
+              <div class="confidence-section">
+                <span class="confidence-label">置信度</span>
                 <a-progress
                   :percent="diagnosisResult?.confidence"
                   :stroke-color="getProbabilityColor(diagnosisResult?.confidence ?? 0)"
-                  :show-info="false"
-                  class="probability-bar"
+                  :format="(percent: number) => `${percent}%`"
+                  class="confidence-bar"
                 />
-                <span class="probability-value">{{ diagnosisResult?.confidence }}%</span>
               </div>
 
               <div class="info-section">
@@ -131,7 +135,21 @@
         </a-row>
       </a-card>
 
+      <!-- 医疗免责声明 -->
+      <a-card class="disclaimer-section">
+        <div class="disclaimer-content">
+          <ExclamationCircleOutlined class="disclaimer-icon" />
+          <div class="disclaimer-text">
+            <p class="disclaimer-title">医疗免责声明</p>
+            <p class="disclaimer-body">本诊断结果由 AI 辅助分析，仅供参考，不能替代专业医生的诊断意见。如有眼部不适，请尽快前往医院眼科就诊，由专业医生进行详细检查和治疗。</p>
+          </div>
+        </div>
+        <div class="doctor-consult">
+          <span class="consult-text">如有疑问，建议咨询专业眼科医生</span>
+        </div>
+      </a-card>
 
+      <!-- 底部可靠性 -->
       <a-card class="bottom-section">
         <div class="reliability">
     <span class="reliability-label">
@@ -153,93 +171,64 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   MedicineBoxOutlined,
   OrderedListOutlined,
   PieChartOutlined,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons-vue';
 import PieChart from '@/components/tables/DiagnosisPie.vue';
 import { useDiagnosisStore } from '@/stores/diagnosis'
 import { storeToRefs } from 'pinia'
 
 const diagnosisStore = useDiagnosisStore();
-const {diagnosisResult} = storeToRefs(diagnosisStore)
-// const diagnosisResult = diagnosisStore.diagnosisResult
+const { diagnosisResult } = storeToRefs(diagnosisStore)
 
-
-const recommendations = computed(()=>{
-  return diagnosisResult?.value?.recommendations?.split('\n');
+const recommendations = computed(() => {
+  const recs = diagnosisResult?.value?.recommendations
+  if (!recs) return []
+  if (typeof recs === 'string') {
+    return recs.split('\n').filter(r => r.trim())
+  }
+  return Array.isArray(recs) ? recs.filter(r => r) : []
 })
 
-
-// 模拟数据
-const result = ref({
-  diagnosis: '糖尿病视网膜病变',
-  confidence: 85,
-  severity: 'moderate',
-  details: '糖尿病引起的视网膜微血管损害，可能导致视力下降甚至失明。发现视网膜有多处微血管瘤和出血点。',
-  recommendations: [
-    '严格控制血糖水平，定期监测HbA1c',
-    '每3-6个月进行一次眼底检查',
-    '考虑进行视网膜激光治疗',
-    '如有黄斑水肿，建议抗VEGF治疗'
-  ]
-});
-
+// 可靠性等级
 const reliability = ref<'极高' | '高' | '低'>('极高');
 
-// 分析点（模拟数据）
-const analysisPoints = ref([
-  { title: '微血管瘤', location: '图像左侧中央' },
-  { title: '出血点', location: '图像右上方' },
-  { title: '硬性渗出', location: '黄斑区周围' }
-]);
-
-// 格式化诊断时间
-const formattedDiagnosisTime = computed(() => {
-  const now = new Date();
-  return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-});
+// 本地化数字格式化
+const formatNumber = (num: number, locale = 'zh-CN'): string => {
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 1
+  }).format(num)
+}
 
 // 获取前三的诊断结果 (包括主诊断)
 const topDiagnoses = computed(() => {
-  // return [
-  //   {
-  //     name: result.value.diagnosis,
-  //     probability: result.value.confidence,
-  //   },
-  //   {
-  //     name: '老年性黄斑变性',
-  //     probability: 12,
-  //   },
-  //   {
-  //     name: '视网膜静脉阻塞',
-  //     probability: 3,
-  //   }
-  // ].sort((a, b) => b.probability - a.probability);
-
-
-  //怕 other是undefined
-  return diagnosisResult?.value?.otherDisease?.sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
+  const other = diagnosisResult?.value?.otherDisease
+  if (!other || !Array.isArray(other) || other.length === 0) return []
+  return [...other].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0))
 });
 
 // 图表数据
 const chartData = computed(() => {
-  return topDiagnoses?.value?.map(d => ({
-    name: d.name ?? '',
+  const diagnoses = topDiagnoses.value
+  if (!diagnoses.length) return []
+  return diagnoses.map(d => ({
+    name: d.name ?? '未知',
     value: d.probability ?? 0
-  })) ?? [];
+  }))
 });
 
-// 根据概率获取颜色
-const getProbabilityColor = (probability:number) => {
-  if (probability > 70) return '#52c41a'; // 绿色
-  if (probability > 30) return '#faad14'; // 橙色
-  return '#f5222d'; // 红色
+// 根据概率获取颜色（使用设计系统语义色）
+const getProbabilityColor = (probability: number) => {
+  if (probability > 70) return 'var(--claude-success)';
+  if (probability > 30) return 'var(--claude-warning)';
+  return 'var(--claude-error)';
 };
 
 // 根据可靠性获取标签颜色
@@ -273,6 +262,7 @@ const formatSeverity = (severity: string) => {
     default: return '未知';
   }
 };
+
 //获取相关诊断可靠性的信息
 const getReliabilityMessage = (level: string) => {
   switch (level) {
@@ -290,30 +280,37 @@ const getReliabilityMessage = (level: string) => {
 const getReliabilityMessageStyle = (level: string) => {
   const styles = {
     '极高': {
-      backgroundColor: 'rgb(209, 231, 221)',
-      borderColor: 'rgb(183, 218, 203)'
+      backgroundColor: 'oklch(from var(--claude-success) l c h / 0.15)',
+      borderColor: 'oklch(from var(--claude-success) l c h / 0.3)'
     },
     '高': {
-      backgroundColor: 'rgb(255, 243, 205)',
-      borderColor: 'rgb(255, 230, 156)'
+      backgroundColor: 'oklch(from var(--claude-warning) l c h / 0.15)',
+      borderColor: 'oklch(from var(--claude-warning) l c h / 0.3)'
     },
     '低': {
-      backgroundColor: 'rgb(246, 213, 216)',
-      borderColor: 'rgb(241, 184, 190)'
+      backgroundColor: 'oklch(from var(--claude-error) l c h / 0.15)',
+      borderColor: 'oklch(from var(--claude-error) l c h / 0.3)'
     }
   };
   return styles[level as keyof typeof styles] || {};
 };
+
+// 诊断结果描述（用于屏幕阅读器）
+const screenReaderSummary = computed(() => {
+  if (!diagnosisResult?.value) return ''
+  return `诊断结果：${diagnosisResult.value.result || '未知'}，置信度 ${diagnosisResult.value.confidence || 0}%，严重程度：${formatSeverity(diagnosisResult.value.severity || 'unknown')}。仅供参考，请咨询专业医生。`
+})
 </script>
 
 <style scoped>
 .diagnosis-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  gap: var(--claude-space-4);
+  padding: var(--claude-space-5);
   background-color: var(--claude-bg-page);
 }
+
 /* 骨架屏特定样式 */
 .skeleton-image {
   width: 100%;
@@ -325,12 +322,12 @@ const getReliabilityMessageStyle = (level: string) => {
 
 /* 添加动画效果使加载更自然 */
 .ant-skeleton {
-  padding: 16px;
+  padding: var(--claude-space-4);
 }
 
 .ant-skeleton-content .ant-skeleton-title {
   height: 24px;
-  margin-bottom: 16px;
+  margin-bottom: var(--claude-space-4);
 }
 
 .ant-skeleton-content .ant-skeleton-paragraph li {
@@ -338,18 +335,17 @@ const getReliabilityMessageStyle = (level: string) => {
   margin-bottom: 12px;
 }
 
-
 .top-section,
 .middle-section,
 .bottom-section {
   width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  border-radius: var(--claude-radius-md);
+  box-shadow: var(--claude-shadow-sm);
 }
 
 /* 顶部诊断结果样式 */
 .main-diagnosis {
-  padding: 16px;
+  padding: var(--claude-space-4);
 }
 
 .diagnosis-header {
@@ -359,41 +355,45 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 .header-icon {
-  font-size: 24px;
+  font-size: 1.5rem;
   color: var(--claude-brand);
   margin-right: 12px;
 }
 
 .diagnosis-title {
-  font-size: 22px;
+  font-size: 1.375rem;
   color: var(--claude-text-primary);
-  margin: 0;
-  margin-right: 12px;
+  margin: 0 12px 0 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .severity-tag {
-  font-size: 14px;
+  font-size: 0.875rem;
   padding: 0 8px;
   height: 24px;
   line-height: 22px;
 }
 
-.probability-section {
+.confidence-section {
   display: flex;
   align-items: center;
   margin: 20px 0;
+  gap: 12px;
 }
 
-.probability-label {
+.confidence-label {
   font-weight: 500;
   color: var(--claude-text-secondary);
-  margin-right: 12px;
-  width: 80px;
+  flex-shrink: 0;
 }
 
-.probability-bar {
+.confidence-bar {
   flex: 1;
-  margin-right: 12px;
+  min-width: 0;
 }
 
 .probability-value {
@@ -404,7 +404,7 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: var(--claude-text-primary);
   margin-bottom: 12px;
   display: flex;
@@ -424,8 +424,8 @@ const getReliabilityMessageStyle = (level: string) => {
 /* 治疗建议样式 */
 .recommendation-list {
   background-color: var(--claude-bg-card);
-  border-radius: 6px;
-  padding: 16px;
+  border-radius: var(--claude-radius-sm);
+  padding: var(--claude-space-4);
 }
 
 .recommendation-item {
@@ -438,7 +438,7 @@ const getReliabilityMessageStyle = (level: string) => {
   width: 24px;
   height: 24px;
   background-color: var(--claude-success);
-  color: white;
+  color: var(--claude-text-inverse);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -449,24 +449,27 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .recommendation-text {
   flex-grow: 1;
+  min-width: 0;
   color: var(--claude-text-secondary);
   line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* 中间部分样式 */
 .middle-section {
-  padding: 16px;
+  padding: var(--claude-space-4);
 }
 
 .other-diagnoses {
-  padding-right: 16px;
+  padding-right: var(--claude-space-4);
 }
 
 .vertical-bars {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: 16px;
+  margin-top: var(--claude-space-4);
 }
 
 .bar-container {
@@ -476,7 +479,11 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 .disease-name {
-  width: 180px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--claude-text-secondary);
   font-weight: 500;
 }
@@ -491,14 +498,14 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 /* 底部可靠性样式 */
-
 .bottom-section {
-  font-size: 18px;
-  color: #1a3a5f;
+  font-size: 1.125rem;
+  color: var(--claude-text-primary);
   margin-bottom: 12px;
   display: flex;
   align-items: flex-start;
 }
+
 .reliability {
   display: flex;
   align-items: center;
@@ -515,36 +522,26 @@ const getReliabilityMessageStyle = (level: string) => {
 }
 
 .reliability-tag {
-  font-size: 16px;
+  font-size: 1rem;
   padding: 0 12px;
   height: 32px;
   line-height: 30px;
 }
 
 /* 严重程度颜色 */
-.severity-normal {
-  color: #52c41a;
-}
+.severity-normal { color: var(--claude-success); }
+.severity-mild { color: var(--claude-warning); }
+.severity-moderate { color: var(--claude-warning); }
+.severity-severe { color: var(--claude-error); }
 
-.severity-mild {
-  color: #faad14;
-}
-
-.severity-moderate {
-  color: #fa8c16;
-}
-
-.severity-severe {
-  color: #f5222d;
-}
 /* 图片列样式 */
 .image-col {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: var(--claude-space-4);
   background-color: var(--claude-bg-card);
-  border-radius: 8px;
+  border-radius: var(--claude-radius-md);
 }
 
 .image-container {
@@ -554,15 +551,15 @@ const getReliabilityMessageStyle = (level: string) => {
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--claude-radius-sm);
+  box-shadow: var(--claude-shadow-sm);
 }
 
 .diagnosis-image {
   max-width: 100%;
-  max-height: 400px; /* 根据实际需要调整 */
+  max-height: 400px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: var(--claude-radius-sm);
   transition: transform 0.3s;
 }
 
@@ -572,17 +569,106 @@ const getReliabilityMessageStyle = (level: string) => {
 
 .reliability {
   display: flex;
-  flex-wrap: wrap; /* 允许换行 */
+  flex-wrap: wrap;
   align-items: center;
   padding: 8px 0;
   justify-content: flex-start;
 }
 
 .reliability-message {
-  width: 100%; /* 占据整行 */
-  margin-top: 8px; /* 与上方元素保持间距 */
-  margin-left: 0; /* 移除左边距 */
+  width: 100%;
+  margin-top: 8px;
+  margin-left: 0;
   padding: 12px;
-  border-radius: 5px;
+  border-radius: var(--claude-radius-sm);
+}
+
+/* 医疗免责声明样式 */
+.disclaimer-section {
+  background: linear-gradient(135deg, oklch(0.92 0.01 60), oklch(0.95 0.02 30));
+  border: 1px solid oklch(0.78 0.05 30 / 0.2);
+}
+
+.disclaimer-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--claude-space-4);
+}
+
+.disclaimer-icon {
+  font-size: 1.5rem;
+  color: var(--claude-brand);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.disclaimer-text {
+  flex: 1;
+}
+
+.disclaimer-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--claude-text-primary);
+  margin: 0 0 0.375rem;
+}
+
+.disclaimer-body {
+  font-size: 0.8125rem;
+  color: var(--claude-text-secondary);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.doctor-consult {
+  margin-top: var(--claude-space-4);
+  padding-top: 0.75rem;
+  border-top: 1px solid oklch(0.78 0.05 30 / 0.15);
+  text-align: center;
+}
+
+.consult-text {
+  font-size: 0.8125rem;
+  color: var(--claude-text-tertiary);
+}
+
+/* 屏幕阅读器专用（视觉隐藏但可读） */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .confidence-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .confidence-label {
+    width: auto;
+  }
+
+  .confidence-bar {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .diagnosis-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .diagnosis-title {
+    flex-basis: 100%;
+  }
 }
 </style>

@@ -2,7 +2,17 @@
   <div class="assistant-message">
     <div class="message-content">
       <div class="message-header">
-        <span class="agent-name">SpaceMind</span>
+        <svg class="agent-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <!-- 眼睛轮廓 -->
+          <path d="M2 12C2 12 6 5 12 5C18 5 22 12 22 12C22 12 18 19 12 19C6 19 2 12 2 12Z" stroke="currentColor" stroke-width="1.5" class="ai-eye-outline" />
+          <!-- 神经脉冲点 -->
+          <circle cx="12" cy="12" r="2" class="ai-pupil" />
+          <circle cx="6" cy="12" r="1" class="ai-node" style="--delay:0s" />
+          <circle cx="18" cy="12" r="1" class="ai-node" style="--delay:0.5s" />
+          <circle cx="12" cy="6" r="1" class="ai-node" style="--delay:1s" />
+          <circle cx="12" cy="18" r="1" class="ai-node" style="--delay:1.5s" />
+        </svg>
+        <span class="agent-name">EyeSight</span>
       </div>
       <div class="message-body markdown-body" v-html="finalContent"></div>
 
@@ -226,18 +236,8 @@ const copyContent = async () => {
   max-width: min(680px, 100%);
   padding: 10px 16px;
   border-radius: 18px 18px 18px 4px;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-subtle);
   position: relative;
-}
-
-[data-theme="aurora"] .message-content {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-border-default);
-}
-
-[data-theme="pop"] .message-content {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-border-subtle);
 }
 
 .message-header {
@@ -247,18 +247,57 @@ const copyContent = async () => {
   margin-bottom: 4px;
 }
 
+.agent-icon {
+  color: var(--claude-brand);
+  flex-shrink: 0;
+}
+
+.ai-eye-outline {
+  opacity: 0.8;
+  animation: aiEyeBreath 3s ease-in-out infinite;
+}
+
+.ai-pupil {
+  fill: currentColor;
+  animation: aiPupilPulse 2s ease-in-out infinite;
+}
+
+.ai-node {
+  fill: currentColor;
+  opacity: 0;
+  animation: aiNodeFlash 2s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes aiEyeBreath {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes aiPupilPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes aiNodeFlash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  60% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
 .agent-name {
-  font-family: var(--font-display);
+  font-family: var(--claude-font-serif);
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
   letter-spacing: -0.01em;
 }
 
 .message-body {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   word-break: break-word;
   padding-left: 2px;
 }
@@ -290,10 +329,10 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(blockquote) {
-  margin: 8px 0;
-  padding-left: 12px;
-  border-left: 3px solid var(--color-border-default);
-  color: var(--color-text-secondary);
+  margin: 0.5rem 0;
+  padding: 0.75rem 1rem;
+  background: oklch(0.72 0.09 30 / 0.06);
+  color: var(--claude-text-secondary);
 }
 
 .markdown-body :deep(p:last-child) {
@@ -301,7 +340,7 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(a) {
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
   text-decoration: none;
   font-weight: 500;
 }
@@ -311,27 +350,27 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(code:not(.hljs)) {
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
 }
 
 /* ============ 代码块样式 - 双主题适配 ============ */
 .markdown-body :deep(.hljs.code-block) {
   position: relative;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   border-radius: 10px;
   margin: 12px 0;
   overflow: hidden;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-subtle);
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 
 .markdown-body :deep(.hljs.code-block:hover) {
-  border-color: var(--color-border-default);
+  border-color: var(--claude-border-default);
   box-shadow: var(--shadow-md);
 }
 
@@ -344,11 +383,11 @@ const copyContent = async () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
   padding: 3px 8px;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   border-radius: 4px;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-subtle);
 }
 
 /* 复制按钮 */
@@ -357,8 +396,8 @@ const copyContent = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-secondary);
+  border-bottom: 1px solid var(--claude-border-subtle);
 }
 
 .markdown-body :deep(.copy-btn) {
@@ -379,7 +418,7 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(.copy-btn:hover) {
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.5) !important;
+  box-shadow: 0 4px 16px oklch(0.72 0.09 30 / 0.5) !important;
 }
 
 .markdown-body :deep(.copy-btn.copied) {
@@ -393,9 +432,9 @@ const copyContent = async () => {
   overflow-x: auto;
   font-size: 13px;
   line-height: 1.5;
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-default) transparent;
+  scrollbar-color: var(--claude-border-default) transparent;
 }
 
 .markdown-body :deep(.hljs.code-block code::-webkit-scrollbar) {
@@ -407,7 +446,7 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(.hljs.code-block code::-webkit-scrollbar-thumb) {
-  background: var(--color-border-default);
+  background: var(--claude-border-default);
   border-radius: 3px;
 }
 
@@ -415,16 +454,16 @@ const copyContent = async () => {
 .markdown-body :deep(.diagram-wrapper) {
   position: relative;
   margin: 12px 0;
-  background: var(--color-bg-secondary);
+  background: var(--claude-bg-secondary);
   border-radius: 10px;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-subtle);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 
 .markdown-body :deep(.diagram-wrapper:hover) {
-  border-color: var(--color-border-default);
+  border-color: var(--claude-border-default);
   box-shadow: var(--shadow-md);
 }
 
@@ -434,8 +473,8 @@ const copyContent = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-tertiary);
+  border-bottom: 1px solid var(--claude-border-subtle);
 }
 
 .markdown-body :deep(.diagram-tabs-left) {
@@ -451,7 +490,7 @@ const copyContent = async () => {
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -459,14 +498,14 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(.diagram-tab:hover) {
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
+  color: var(--claude-text-primary);
+  background: var(--claude-bg-hover);
 }
 
 .markdown-body :deep(.diagram-tab.active) {
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
   color: #fff;
-  border-color: var(--color-primary-500);
+  border-color: var(--claude-brand);
 }
 
 /* 图表内容区 */
@@ -481,9 +520,9 @@ const copyContent = async () => {
   align-items: center;
   min-height: 120px;
   padding: 12px;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   border-radius: 6px;
-  border: 1px dashed var(--color-border-subtle);
+  border: 1px dashed var(--claude-border-subtle);
 }
 
 .markdown-body :deep(.diagram-preview svg),
@@ -526,17 +565,17 @@ const copyContent = async () => {
 .markdown-body :deep(.diagram-code pre.code-block) {
   margin: 0;
   padding: 12px;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.5;
 }
 
 .markdown-body :deep(.diagram-code pre.code-block code) {
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
   white-space: pre-wrap;
   word-break: break-all;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
 }
 
 /* 图表错误状态 */
@@ -567,14 +606,14 @@ const copyContent = async () => {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   font-size: 14px;
 }
 
 .markdown-body :deep(.drawio-placeholder p) {
   margin: 0;
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
 }
 
 .markdown-body :deep(.drawio-open-btn) {
@@ -582,25 +621,25 @@ const copyContent = async () => {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
   color: #fff;
   border-radius: 6px;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
+  box-shadow: 0 2px 8px oklch(0.72 0.09 30 / 0.25);
 }
 
 .markdown-body :deep(.drawio-open-btn:hover) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 4px 12px oklch(0.72 0.09 30 / 0.35);
 }
 
 .typing-cursor {
   display: inline;
   animation: blink 1s step-end infinite;
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
   font-weight: 300;
   margin-left: 1px;
 }
@@ -624,7 +663,7 @@ const copyContent = async () => {
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.15s ease;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--claude-border-subtle);
 }
 
 .message-images img:hover {
@@ -638,10 +677,10 @@ const copyContent = async () => {
   gap: 5px;
   margin-top: 10px;
   padding: 5px 12px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--claude-border-default);
   border-radius: 16px;
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -649,8 +688,8 @@ const copyContent = async () => {
 }
 
 .resource-trigger-btn:hover {
-  border-color: var(--color-primary-500);
-  color: var(--color-primary-500);
+  border-color: var(--claude-brand);
+  color: var(--claude-brand);
 }
 
 /* 操作按钮栏 */
@@ -660,7 +699,7 @@ const copyContent = async () => {
   gap: 2px;
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--claude-border-subtle);
 }
 
 .action-icon-btn {
@@ -672,17 +711,17 @@ const copyContent = async () => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .action-icon-btn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
+  background: var(--claude-bg-hover);
+  color: var(--claude-text-primary);
 }
 
 .action-icon-btn.liked {
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
 }
 </style>

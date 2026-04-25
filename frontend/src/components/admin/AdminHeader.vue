@@ -71,14 +71,15 @@ const handleLogout = async () => {
 
 <style scoped>
 .admin-header {
-  background: var(--claude-bg-elevated);
+  background: var(--claude-bg-card);
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(20, 20, 19, 0.08);
+  box-shadow: 0 1px 0 rgba(20, 20, 19, 0.06);
   height: 64px;
   line-height: 64px;
+  border-bottom: 1px solid var(--claude-border-cream);
 }
 
 .header-left {
@@ -90,15 +91,32 @@ const handleLogout = async () => {
 .trigger {
   font-size: 18px;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: color 0.2s ease, transform 0.2s ease;
+  color: var(--claude-text-secondary);
+  padding: 8px;
+  border-radius: 8px;
 }
 
 .trigger:hover {
   color: var(--claude-brand);
+  background: rgba(201, 100, 66, 0.08);
+}
+
+.trigger:active {
+  transform: scale(0.95);
 }
 
 .breadcrumb {
   line-height: 64px;
+}
+
+.breadcrumb :deep(.ant-breadcrumb-link) {
+  color: var(--claude-text-secondary);
+}
+
+.breadcrumb :deep(.ant-breadcrumb li:last-child .ant-breadcrumb-link) {
+  color: var(--claude-text-primary);
+  font-weight: 500;
 }
 
 .header-right {

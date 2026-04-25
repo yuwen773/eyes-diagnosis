@@ -16,6 +16,9 @@
   --claude-bg-dark: #30302e;
   --claude-bg-deep: #141413;
 
+  /* ─── Background Image (Optional) ─── */
+  --claude-bg-image: url('@/assets/img.png');
+
   /* ─── Brand Colors ─── */
   --claude-brand: #c96442;
   --claude-brand-light: #d97757;

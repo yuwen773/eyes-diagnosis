@@ -1,37 +1,72 @@
 <template>
   <div class="dashboard-page">
-    <div class="grid grid-cols-4 gap-4 mb-6">
-      <a-card v-for="stat in stats" :key="stat.label" :bordered="false">
-        <div class="stat-value">{{ stat.value }}</div>
-        <div class="stat-label">{{ stat.label }}</div>
-      </a-card>
-    </div>
+    <!-- Hero Stats: 4列横向排列 -->
+    <section class="stats-hero">
+      <div class="stat-card stat-card--primary">
+        <div class="stat-indicator"></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats[0].value }}</div>
+          <div class="stat-label">{{ stats[0].label }}</div>
+        </div>
+        <div class="stat-trend">
+          <ArrowUpOutlined />12.5%
+        </div>
+      </div>
+      <div v-for="stat in stats.slice(1)" :key="stat.label" class="stat-card">
+        <div class="stat-content">
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
+      </div>
+    </section>
 
-    <div class="grid grid-cols-2 gap-4 mb-6">
-      <a-card title="诊断趋势 (近7天)" :bordered="false">
-        <div ref="lineChartRef" style="height: 320px"></div>
-      </a-card>
-      <a-card title="疾病类型分布" :bordered="false">
-        <div ref="pieChartRef" style="height: 320px"></div>
-      </a-card>
-    </div>
+    <!-- Charts: 2:1 布局 -->
+    <section class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">诊断趋势</span>
+          <span class="chart-subtitle">近7天</span>
+        </div>
+        <div ref="lineChartRef" class="chart-container"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">疾病分布</span>
+        </div>
+        <div ref="pieChartRef" class="chart-container"></div>
+      </div>
+    </section>
 
-    <a-card title="最近诊断记录" :bordered="false">
-      <a-table :columns="columns" :data-source="recentDiagnoses" :pagination="false" row-key="id" size="middle" />
-    </a-card>
+    <!-- Table Section -->
+    <section class="table-section">
+      <div class="section-header">
+        <span class="section-title">最近诊断记录</span>
+        <span class="section-meta">实时更新</span>
+        <a-button type="link" class="ml-auto">查看全部</a-button>
+      </div>
+      <a-table
+        :columns="columns"
+        :data-source="recentDiagnoses"
+        :pagination="false"
+        row-key="id"
+        size="middle"
+        class="recent-table"
+      />
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, h, onMounted, onUnmounted, nextTick } from 'vue'
+import { ArrowUpOutlined } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 
 const stats = [
-  { value: '1,284', label: '用户总数' },
   { value: '5,632', label: '诊断总次数' },
-  { value: '47', label: '今日新增诊断' },
-  { value: '126', label: '知识库文件数' },
+  { value: '1,284', label: '用户总数' },
+  { value: '47', label: '今日新增' },
+  { value: '126', label: '知识库文件' },
 ]
 
 const lineChartRef = ref<HTMLElement | null>(null)
@@ -69,13 +104,14 @@ const initPieChart = () => {
   pieChart = echarts.init(pieChartRef.value)
   pieChart.setOption({
     tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', left: 'left' },
+    legend: { orient: 'vertical', left: 'left', top: 'middle' },
     series: [
       {
         type: 'pie',
-        radius: ['40%', '70%'],
-        itemStyle: { borderRadius: 10 },
-        label: { show: true, formatter: '{b}: {d}%' },
+        radius: ['45%', '75%'],
+        center: ['60%', '50%'],
+        itemStyle: { borderRadius: 6 },
+        label: { show: true, formatter: '{b}', fontSize: 11 },
         color: ['#c96442', '#d97757', '#7a9e4a', '#b53333', '#87867f', '#5e5d59'],
         data: [
           { value: 1048, name: '近视' },
@@ -148,18 +184,167 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard-page {
-  /* AdminLayout already provides padding & background */
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Hero Stats: 1大3小横向排列 ── */
+.stats-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--claude-space-4);
+}
+
+.stat-card {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.stat-card--primary {
+  background: linear-gradient(135deg, var(--claude-brand) 0%, var(--claude-brand-dark) 100%);
+  color: var(--claude-text-inverse);
+}
+
+.stat-indicator {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.stat-content {
+  position: relative;
+  z-index: 1;
 }
 
 .stat-value {
-  font-size: 1.875rem;
-  font-weight: bold;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--claude-text-primary);
+}
+
+.stat-card--primary .stat-value {
+  color: inherit;
 }
 
 .stat-label {
   font-size: 0.875rem;
   color: var(--claude-text-secondary);
-  margin-top: 0.5rem;
+  margin-top: var(--claude-space-2);
+}
+
+.stat-card--primary .stat-label {
+  color: rgba(255,255,255,0.85);
+}
+
+.stat-trend {
+  position: absolute;
+  top: var(--claude-space-4);
+  right: var(--claude-space-4);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--claude-radius-sm);
+  background: rgba(255,255,255,0.2);
+  color: #d4edda;
+}
+
+/* ── Charts: 2:1 布局 ── */
+.charts-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--claude-space-4);
+  margin-top: var(--claude-space-4);
+}
+
+.chart-card {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.chart-header {
+  margin-bottom: var(--claude-space-4);
+}
+
+.chart-title {
+  font-family: var(--claude-font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--claude-text-primary);
+  margin: 0;
+  display: inline;
+}
+
+.chart-subtitle {
+  font-size: 0.8rem;
+  color: var(--claude-text-tertiary);
+  margin-left: var(--claude-space-2);
+}
+
+.chart-container {
+  height: 300px;
+}
+
+/* ── Table Section ── */
+.table-section {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
+  margin-top: var(--claude-space-4);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--claude-space-4);
+}
+
+.section-title {
+  font-family: var(--claude-font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--claude-text-primary);
+  margin: 0;
+  display: inline;
+}
+
+.section-meta {
+  font-size: 0.75rem;
+  color: var(--claude-text-tertiary);
+  margin-left: var(--claude-space-2);
+}
+
+.recent-table :deep(.ant-table) {
+  background: transparent;
+}
+
+.recent-table :deep(.ant-table-thead > tr > th) {
+  background: transparent;
+  border-bottom: 1px solid var(--claude-border-warm);
+  font-weight: 500;
+  color: var(--claude-text-secondary);
+}
+
+.recent-table :deep(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--claude-border-cream);
+}
+
+.recent-table :deep(.ant-table-tbody > tr:hover > td) {
+  background: var(--color-bg-hover);
 }
 </style>

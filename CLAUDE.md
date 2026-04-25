@@ -70,3 +70,26 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
 - **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
+
+## Design Context
+
+### Users
+混合用户群——眼科医生（临床检查）、医院管理员（记录管理/系统运维）、普通患者（AI 自助诊断）。三种角色技术熟练度和使用场景差异大，界面需根据角色调整复杂度。
+
+### Brand Personality
+**温暖、专业、关怀**。赤陶色(#c96442)主色调 + 米色背景传递人文关怀，Georgia 衬线标题传达医疗专业性，柔和圆角和暖色阴影营造被温柔对待的感受。
+
+### Aesthetic Direction
+浅色为主的暖色调界面，深色主题作为补充。当前 claude-tokens.css 设计代币系统和 Ant Design Vue 主题定制方向正确，重构重点是提升精致度、优化排版层次、改善交互反馈、让深色主题达到同等完成度。
+
+### Priority Areas
+1. **诊断流程**：登录、首页、图片上传、诊断结果——用户最先接触的核心路径
+2. **用户中心**：个人中心、诊断历史、通知——高频使用功能
+3. **Agent 智能对话**：AI 对话、会话管理、资源面板——最复杂的交互界面
+
+### Design Principles
+1. **温度优先**：暖色调、柔和圆角、友善文案，让用户感到被关心
+2. **角色自适应**：医生看专业数据，患者看通俗解读，同一系统不同复杂度
+3. **克制之美**：赤陶色点缀而非铺满，每个视觉元素服务于信息或情感
+4. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
+5. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转

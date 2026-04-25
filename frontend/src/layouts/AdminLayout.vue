@@ -25,13 +25,12 @@ const toggleCollapsed = () => {
 <style scoped>
 .admin-layout {
   min-height: 100vh;
+  background: var(--claude-bg-page);
 }
 
 .admin-content {
-  margin: 24px;
-  padding: 24px;
-  background: var(--claude-bg-card);
-  min-height: calc(100vh - 64px - 48px);
-  border-radius: 8px;
+  padding: var(--claude-space-6);
+  min-height: calc(100vh - 64px);
+  background: transparent;
 }
 </style>

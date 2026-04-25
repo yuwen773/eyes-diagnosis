@@ -19,26 +19,28 @@
       <!-- 中间 -->
       <template #center>
         <!-- 左折叠按钮组 -->
-        <div v-if="leftCollapsed" class="collapsed-actions">
+        <div v-if="leftCollapsed" class="collapsed-actions" role="toolbar" aria-label="侧边栏操作">
           <button
-            class="toggle-left-btn"
+            class="toggle-btn"
             @click="leftCollapsed = false"
+            :aria-expanded="false"
+            aria-controls="agent-left-sidebar"
             aria-label="展开侧边栏"
             title="展开侧边栏"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
           <button
-            class="quick-new-chat-btn"
+            class="toggle-btn accent"
             @click="handleNewChat"
-            aria-label="新对话"
-            title="新对话"
+            aria-label="新建对话"
+            title="新建对话"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -50,6 +52,8 @@
           class="toggle-right-btn"
           :class="{ active: resourcePanelVisible }"
           @click="resourcePanelVisible = !resourcePanelVisible"
+          :aria-expanded="resourcePanelVisible"
+          aria-controls="agent-resource-panel"
           aria-label="切换资源面板"
           title="资源面板"
         >
@@ -237,7 +241,7 @@ const handleSend = async (text: string, files: File[] = []) => {
     saveThreadId(threadId.value)
     currentThreadId.value = threadId.value
   } catch (error) {
-    message.error('发送失败，请重试')
+    message.error('消息发送失败，可能是网络连接不稳定，请检查网络后重试')
   }
 }
 
@@ -265,8 +269,21 @@ const toggleResourcePanel = (data?: ResourceData) => {
   resourcePanelVisible.value = !resourcePanelVisible.value
 }
 
-const handleConfirm = () => {}
-const handleCancel = () => {}
+const handleConfirm = () => {
+  // MCP 工具确认已处理，AI 将继续执行
+  message.success('已确认，AI 将继续执行')
+}
+
+const handleCancel = () => {
+  // 中断当前 MCP 工具调用
+  abort()
+  // 清除工具请求消息
+  const toolRequestIndex = messages.value.findIndex(m => m.type === 'mcp-confirm')
+  if (toolRequestIndex !== -1) {
+    messages.value.splice(toolRequestIndex, 1)
+  }
+  message.info('已取消工具调用')
+}
 
 // 图片预览
 const previewVisible = ref(false)
@@ -285,8 +302,9 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
 .agent-chat-page {
   width: 100%;
   height: 100%;
+  flex: 1;
   overflow: hidden;
-  background: var(--color-bg-primary, #f5f5f5);
+  background: var(--claude-bg-page);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -302,28 +320,27 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
   gap: 6px;
 }
 
-.toggle-left-btn,
-.quick-new-chat-btn {
+.toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--claude-border-warm);
   border-radius: 10px;
-  background: #fff;
-  color: #999;
+  background: var(--claude-bg-elevated);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.toggle-left-btn:hover,
-.quick-new-chat-btn:hover {
-  color: #333;
-  border-color: #d9d9d9;
+.toggle-btn:hover {
+  color: var(--claude-text-primary);
+  border-color: var(--claude-ring-deep);
+  box-shadow: var(--claude-shadow-sm);
 }
 
-.quick-new-chat-btn:hover {
+.toggle-btn.accent:hover {
   color: var(--claude-brand);
   border-color: var(--claude-brand);
 }
@@ -338,23 +355,24 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--claude-border-warm);
   border-radius: 10px;
-  background: #fff;
-  color: #999;
+  background: var(--claude-bg-elevated);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toggle-right-btn:hover {
-  color: #333;
-  border-color: #d9d9d9;
+  color: var(--claude-text-primary);
+  border-color: var(--claude-ring-deep);
+  box-shadow: var(--claude-shadow-sm);
 }
 
 .toggle-right-btn.active {
   color: var(--claude-brand);
   border-color: var(--claude-brand);
-  background: rgba(24, 144, 255, 0.08);
+  background: oklch(0.72 0.09 30 / 0.06);
 }
 
 .resource-badge {
@@ -375,8 +393,7 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
 
 .bottom-area {
   flex-shrink: 0;
-  border-top: 1px solid #f0f0f0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--claude-border-cream);
+  background: var(--claude-bg-card);
 }
 </style>

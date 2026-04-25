@@ -59,8 +59,8 @@ const highlightedContent = computed(() => {
   margin: 6px 16px;
   border-radius: 10px;
   overflow: hidden;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-subtle);
 }
 
 .tool-header {
@@ -94,12 +94,12 @@ const highlightedContent = computed(() => {
 .tool-name {
   font-size: 12px;
   font-weight: 500;
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
+  color: var(--claude-text-secondary);
+  font-family: var(--claude-font-mono);
 }
 
 .expand-icon {
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   transition: transform 0.2s ease;
   display: flex;
 }
@@ -114,10 +114,10 @@ const highlightedContent = computed(() => {
 
 .content-pre {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--claude-font-mono);
   font-size: 12px;
   line-height: 1.65;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
   overflow: hidden;
@@ -131,13 +131,13 @@ const highlightedContent = computed(() => {
   background: transparent;
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
   cursor: pointer;
   transition: color 0.15s;
 }
 
 .expand-trigger:hover {
-  color: var(--color-primary-400, var(--color-primary-500));
+  color: var(--claude-brand-light, var(--claude-brand));
 }
 
 /* Collapse transition */

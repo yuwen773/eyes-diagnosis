@@ -1,7 +1,7 @@
 <template>
-  <div class="analytics-container">
-    <!-- Time range filter -->
-    <div class="mb-4 flex items-center gap-3">
+  <div class="analytics-page">
+    <!-- 时间筛选器 -->
+    <div class="filter-bar">
       <a-radio-group v-model:value="timeRange" button-style="solid">
         <a-radio-button value="7">近7天</a-radio-button>
         <a-radio-button value="30">近30天</a-radio-button>
@@ -9,33 +9,29 @@
       </a-radio-group>
     </div>
 
-    <!-- Stats cards -->
-    <div class="grid grid-cols-4 gap-4 mb-6">
-      <StatsCard
-        v-for="(stat, index) in stats"
-        :key="index"
-        :value="stat.value"
-        :label="stat.label"
-      />
-    </div>
+    <!-- Stats: 4列横向 -->
+    <section class="stats-hero">
+      <div v-for="(stat, index) in stats" :key="index" class="stat-card" :class="{ 'stat-card--primary': index === 0 }">
+        <div v-if="index === 0" class="stat-indicator"></div>
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
+      </div>
+    </section>
 
-    <!-- Charts: Line + Pie side by side -->
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <LineChart
-        title="诊断趋势"
-        :chartData="diagnosisTrend"
-      />
-      <PieChart
-        title="疾病类型分布"
-        :chartData="diseaseDistribution"
-      />
-    </div>
+    <!-- Charts: 2:1 布局 -->
+    <section class="charts-section">
+      <div class="chart-card">
+        <LineChart title="诊断趋势" :chartData="diagnosisTrend" />
+      </div>
+      <div class="chart-card">
+        <PieChart title="疾病类型分布" :chartData="diseaseDistribution" />
+      </div>
+    </section>
 
-    <!-- Chart: Bar full width -->
-    <BarChart
-      title="用户活跃度"
-      :chartData="userActivity"
-    />
+    <!-- Bar Chart: 全宽 -->
+    <section class="bar-section">
+      <BarChart title="用户活跃度" :chartData="userActivity" />
+    </section>
   </div>
 </template>
 
@@ -103,9 +99,91 @@ const userActivity = reactive({
 </script>
 
 <style scoped>
-.analytics-container {
-  min-height: 100vh;
-  background: #f0f2f5;
-  padding: 24px;
+.analytics-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-5);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-3);
+  padding: var(--claude-space-4);
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+/* ── Stats: 4列横向 ── */
+.stats-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--claude-space-4);
+}
+
+.stat-card {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.stat-card--primary {
+  background: linear-gradient(135deg, var(--claude-brand) 0%, var(--claude-brand-dark) 100%);
+  color: var(--claude-text-inverse);
+}
+
+.stat-indicator {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--claude-text-primary);
+}
+
+.stat-card--primary .stat-value {
+  color: inherit;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--claude-text-secondary);
+  margin-top: var(--claude-space-2);
+}
+
+.stat-card--primary .stat-label {
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Charts ── */
+.charts-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--claude-space-4);
+}
+
+.chart-card {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
+}
+
+.bar-section {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
 }
 </style>

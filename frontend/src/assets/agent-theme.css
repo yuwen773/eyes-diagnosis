@@ -1,55 +1,55 @@
 /**
- * Agent 组件 CSS 变量 - 浅色主题
- * 兼容 VisionSpace Agent 组件所需的 CSS 变量
+ * Agent 组件 CSS 变量 — 温暖赤陶品牌
+ * 所有变量均从 claude-tokens.css 派生，保持品牌一致性
  */
 :root {
-  /* 主色 */
-  --color-primary-50: #e6f7ff;
-  --color-primary-100: #bae7ff;
-  --color-primary-200: #91d5ff;
-  --color-primary-300: #69c0ff;
-  --color-primary-400: #40a9ff;
-  --color-primary-500: #1890ff;
-  --color-primary-600: #096dd9;
-  --color-primary-700: #0050b3;
-  --color-primary-800: #003a8c;
-  --color-primary-900: #002766;
+  /* 主色 — 赤陶 */
+  --color-primary-50: #fdf2ef;
+  --color-primary-100: #fbe6de;
+  --color-primary-200: #f7cdbd;
+  --color-primary-300: #f0b496;
+  --color-primary-400: #e69466;
+  --color-primary-500: var(--claude-brand);
+  --color-primary-600: var(--claude-brand-dark);
+  --color-primary-700: #8a4325;
+  --color-primary-800: #6b331c;
+  --color-primary-900: #4d2414;
 
-  /* 次要色 */
-  --color-secondary-400: #b37feb;
-  --color-secondary-500: #9254de;
+  /* 次要色 — 珊瑚 */
+  --color-secondary-400: var(--claude-brand-light);
+  --color-secondary-500: #c06845;
 
-  /* 强调色 */
-  --color-accent-purple: #722ed1;
-  --color-accent-pink: #eb2f96;
-  --color-accent-cyan: #13c2c2;
+  /* 强调色 — 暖调 */
+  --color-accent-purple: #8b5a7a;
+  --color-accent-pink: #c9647a;
+  --color-accent-cyan: #5a9ea0;
 
-  /* 背景 */
-  --color-bg-primary: #f5f5f5;
-  --color-bg-secondary: #fafafa;
-  --color-bg-tertiary: #f0f0f0;
-  --color-bg-elevated: #ffffff;
-  --color-bg-hover: #e6f7ff;
-  --color-bg-active: #bae7ff;
+  /* 背景表面 */
+  --color-bg-primary: var(--claude-bg-page);
+  --color-bg-secondary: var(--claude-bg-card);
+  --color-bg-tertiary: #f0eee6;
+  --color-bg-elevated: var(--claude-bg-elevated);
+  --color-bg-hover: #f7f5ef;
+  --color-bg-active: #f0ebe1;
 
   /* 文字 */
-  --color-text-primary: #262626;
-  --color-text-secondary: #595959;
-  --color-text-tertiary: #8c8c8c;
-  --color-text-disabled: #bfbfbf;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: var(--claude-text-primary);
+  --color-text-secondary: var(--claude-text-secondary);
+  --color-text-tertiary: var(--claude-text-tertiary);
+  --color-text-disabled: #b0aea5;
+  --color-text-inverse: var(--claude-text-inverse);
 
   /* 边框 */
-  --color-border-subtle: #f0f0f0;
-  --color-border-default: #d9d9d9;
-  --color-border-strong: #8c8c8c;
-  --color-border-accent: rgba(24, 144, 255, 0.4);
+  --color-border-subtle: var(--claude-border-cream);
+  --color-border-default: var(--claude-border-warm);
+  --color-border-strong: #c2c0b6;
+  --color-border-accent: rgba(201, 100, 66, 0.4);
 
   /* 状态色 */
-  --color-success: #52c41a;
-  --color-warning: #faad14;
-  --color-error: #ff4d4f;
-  --color-info: #1890ff;
+  --color-success: var(--claude-success);
+  --color-warning: var(--claude-warning);
+  --color-error: var(--claude-error);
+  --color-info: var(--claude-brand);
 
   /* 间距 */
   --space-1: 0.25rem;
@@ -67,14 +67,14 @@
   --radius-2xl: 24px;
 
   /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-sm: var(--claude-shadow-sm);
+  --shadow-md: var(--claude-shadow-md);
+  --shadow-lg: var(--claude-shadow-lg);
 
-  /* 磨砂玻璃 */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-bg-light: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.06);
+  /* 磨砂效果 */
+  --glass-bg: rgba(250, 249, 245, 0.85);
+  --glass-bg-light: rgba(250, 249, 245, 0.6);
+  --glass-border: rgba(20, 20, 19, 0.06);
   --glass-blur: blur(12px);
   --glass-blur-light: blur(8px);
 
