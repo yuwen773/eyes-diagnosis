@@ -1,20 +1,5 @@
 <script setup lang="ts">
-import {
-  type OrthographicCamera,
-  type DataTexture,
-  type Texture,
-  Scene,
-  WebGLRenderer,
-  Vector4,
-  ShaderMaterial,
-  DoubleSide,
-  PlaneGeometry,
-  Mesh,
-  LinearFilter,
-  RGBAFormat,
-  FloatType,
-  TextureLoader,
-} from 'three'
+import * as THREE from 'three'
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue'
 
 interface GridDistortionProps {
@@ -61,7 +46,7 @@ void main() {
 
 const containerRef = useTemplateRef<HTMLDivElement>('containerRef')
 const imageAspectRef = ref(1)
-const cameraRef = ref<OrthographicCamera | null>(null)
+const cameraRef = ref<THREE.OrthographicCamera | null>(null)
 const initialDataRef = ref<Float32Array | null>(null)
 
 let cleanupAnimation: () => void = () => {}
@@ -70,8 +55,8 @@ const setupAnimation = () => {
   const container = containerRef.value
   if (!container) return
 
-  const scene = new Scene()
-  const renderer = new WebGLRenderer({
+  const scene = new THREE.Scene()
+  const renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true,
     powerPreference: 'high-performance',
@@ -79,24 +64,16 @@ const setupAnimation = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   container.appendChild(renderer.domElement)
 
-  const camera = new OrthographicCamera(0, 0, 0, 0, -1000, 1000)
+  const camera = new THREE.OrthographicCamera(0, 0, 0, 0, -1000, 1000)
   camera.position.z = 2
   cameraRef.value = camera
 
   const uniforms = {
     time: { value: 0 },
-    resolution: { value: new Vector4() },
-    uTexture: { value: null as Texture | null },
-    uDataTexture: { value: null as DataTexture | null },
+    resolution: { value: new THREE.Vector4() },
+    uTexture: { value: null as THREE.Texture | null },
+    uDataTexture: { value: null as THREE.DataTexture | null },
   }
-
-  const textureLoader = new TextureLoader()
-  textureLoader.load(props.imageSrc, (texture) => {
-    texture.minFilter = LinearFilter
-    imageAspectRef.value = texture.image.width / texture.image.height
-    uniforms.uTexture.value = texture
-    handleResize()
-  })
 
   const size = props.grid
   const data = new Float32Array(4 * size * size)
@@ -106,18 +83,18 @@ const setupAnimation = () => {
   }
   initialDataRef.value = new Float32Array(data)
 
-  const dataTexture = new DataTexture(data, size, size, RGBAFormat, FloatType)
+  const dataTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType)
   dataTexture.needsUpdate = true
   uniforms.uDataTexture.value = dataTexture
 
-  const material = new ShaderMaterial({
-    side: DoubleSide,
+  const material = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide,
     uniforms,
     vertexShader,
     fragmentShader,
   })
-  const geometry = new PlaneGeometry(1, 1, size - 1, size - 1)
-  const plane = new Mesh(geometry, material)
+  const geometry = new THREE.PlaneGeometry(1, 1, size - 1, size - 1)
+  const plane = new THREE.Mesh(geometry, material)
   scene.add(plane)
 
   const handleResize = () => {
@@ -141,6 +118,14 @@ const setupAnimation = () => {
 
     uniforms.resolution.value.set(width, height, 1, 1)
   }
+
+  const textureLoader = new THREE.TextureLoader()
+  textureLoader.load(props.imageSrc, (texture) => {
+    texture.minFilter = THREE.LinearFilter
+    imageAspectRef.value = texture.image.width / texture.image.height
+    uniforms.uTexture.value = texture
+    handleResize()
+  })
 
   const mouseState = {
     x: 0,
@@ -186,10 +171,10 @@ const setupAnimation = () => {
     requestAnimationFrame(animate)
     uniforms.time.value += 0.05
 
-    const data = dataTexture.image.data as Float32Array
+    const textureData = dataTexture.image.data as Float32Array
     for (let i = 0; i < size * size; i++) {
-      data[i * 4] *= props.relaxation
-      data[i * 4 + 1] *= props.relaxation
+      textureData[i * 4] *= props.relaxation
+      textureData[i * 4 + 1] *= props.relaxation
     }
 
     const gridMouseX = size * mouseState.x
@@ -202,8 +187,8 @@ const setupAnimation = () => {
         if (distSq < maxDist * maxDist) {
           const index = 4 * (i + size * j)
           const power = Math.min(maxDist / Math.sqrt(distSq), 10)
-          data[index] += props.strength * 100 * mouseState.vX * power
-          data[index + 1] -= props.strength * 100 * mouseState.vY * power
+          textureData[index] += props.strength * 100 * mouseState.vX * power
+          textureData[index + 1] -= props.strength * 100 * mouseState.vY * power
         }
       }
     }
