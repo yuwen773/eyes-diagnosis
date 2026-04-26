@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 
 @Slf4j
 @RestController
-@RequestMapping("/mcp")
+@RequestMapping("/mcp-server")
 public class McpServerController {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -35,7 +35,7 @@ public class McpServerController {
     @Resource
     private UserService userService;
 
-    @PostMapping("/server")
+    @PostMapping
     public BaseResponse<String> createMcpServer(@RequestBody McpServerDetail detail, HttpServletRequest request) {
         validateCreateParams(detail);
         Long userId = getLoginUserId(request);
@@ -43,7 +43,7 @@ public class McpServerController {
         return ResultUtils.success(serverCode);
     }
 
-    @PutMapping("/server")
+    @PutMapping
     public BaseResponse<Boolean> updateMcpServer(@RequestBody McpServerDetail detail, HttpServletRequest request) {
         validateUpdateParams(detail);
         Long userId = getLoginUserId(request);
@@ -51,14 +51,14 @@ public class McpServerController {
         return ResultUtils.success(true);
     }
 
-    @DeleteMapping("/server/{mcpServerCode}")
+    @DeleteMapping("/{mcpServerCode}")
     public BaseResponse<Boolean> deleteMcpServer(@PathVariable String mcpServerCode, HttpServletRequest request) {
         Long userId = getLoginUserId(request);
         mcpServerService.deleteMcp(mcpServerCode, userId);
         return ResultUtils.success(true);
     }
 
-    @GetMapping("/server/{mcpServerCode}")
+    @GetMapping("/{mcpServerCode}")
     public BaseResponse<McpServerDetail> getMcpServer(
             @PathVariable String mcpServerCode,
             @RequestParam(value = "needTools", defaultValue = "false") boolean needTools,
@@ -68,7 +68,7 @@ public class McpServerController {
         return ResultUtils.success(detail);
     }
 
-    @GetMapping("/servers")
+    @GetMapping
     public BaseResponse<IPage<McpServerDetail>> listMcpServers(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "current", defaultValue = "1") int current,
