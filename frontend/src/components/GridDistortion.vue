@@ -1,5 +1,20 @@
 <script setup lang="ts">
-import * as THREE from 'three'
+import {
+  type OrthographicCamera,
+  type DataTexture,
+  type Texture,
+  Scene,
+  WebGLRenderer,
+  Vector4,
+  ShaderMaterial,
+  DoubleSide,
+  PlaneGeometry,
+  Mesh,
+  LinearFilter,
+  RGBAFormat,
+  FloatType,
+  TextureLoader,
+} from 'three'
 import { onMounted, onUnmounted, ref, watch, useTemplateRef } from 'vue'
 
 interface GridDistortionProps {
@@ -46,7 +61,7 @@ void main() {
 
 const containerRef = useTemplateRef<HTMLDivElement>('containerRef')
 const imageAspectRef = ref(1)
-const cameraRef = ref<THREE.OrthographicCamera | null>(null)
+const cameraRef = ref<OrthographicCamera | null>(null)
 const initialDataRef = ref<Float32Array | null>(null)
 
 let cleanupAnimation: () => void = () => {}
@@ -55,8 +70,8 @@ const setupAnimation = () => {
   const container = containerRef.value
   if (!container) return
 
-  const scene = new THREE.Scene()
-  const renderer = new THREE.WebGLRenderer({
+  const scene = new Scene()
+  const renderer = new WebGLRenderer({
     antialias: true,
     alpha: true,
     powerPreference: 'high-performance',
@@ -64,20 +79,20 @@ const setupAnimation = () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   container.appendChild(renderer.domElement)
 
-  const camera = new THREE.OrthographicCamera(0, 0, 0, 0, -1000, 1000)
+  const camera = new OrthographicCamera(0, 0, 0, 0, -1000, 1000)
   camera.position.z = 2
   cameraRef.value = camera
 
   const uniforms = {
     time: { value: 0 },
-    resolution: { value: new THREE.Vector4() },
-    uTexture: { value: null as THREE.Texture | null },
-    uDataTexture: { value: null as THREE.DataTexture | null },
+    resolution: { value: new Vector4() },
+    uTexture: { value: null as Texture | null },
+    uDataTexture: { value: null as DataTexture | null },
   }
 
-  const textureLoader = new THREE.TextureLoader()
+  const textureLoader = new TextureLoader()
   textureLoader.load(props.imageSrc, (texture) => {
-    texture.minFilter = THREE.LinearFilter
+    texture.minFilter = LinearFilter
     imageAspectRef.value = texture.image.width / texture.image.height
     uniforms.uTexture.value = texture
     handleResize()
@@ -91,18 +106,18 @@ const setupAnimation = () => {
   }
   initialDataRef.value = new Float32Array(data)
 
-  const dataTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType)
+  const dataTexture = new DataTexture(data, size, size, RGBAFormat, FloatType)
   dataTexture.needsUpdate = true
   uniforms.uDataTexture.value = dataTexture
 
-  const material = new THREE.ShaderMaterial({
-    side: THREE.DoubleSide,
+  const material = new ShaderMaterial({
+    side: DoubleSide,
     uniforms,
     vertexShader,
     fragmentShader,
   })
-  const geometry = new THREE.PlaneGeometry(1, 1, size - 1, size - 1)
-  const plane = new THREE.Mesh(geometry, material)
+  const geometry = new PlaneGeometry(1, 1, size - 1, size - 1)
+  const plane = new Mesh(geometry, material)
   scene.add(plane)
 
   const handleResize = () => {
