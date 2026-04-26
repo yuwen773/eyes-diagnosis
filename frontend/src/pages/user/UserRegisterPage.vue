@@ -51,7 +51,7 @@ const handleSubmit = async (values: any) => {
     <div class="register-card">
       <div class="logo-container">
         <img src="@/assets/logo.png" alt="眼科诊断系统" class="logo">
-        <h1 class="system-name">明眸智诊，视界无忧</h1>
+        <h1 class="system-name">EyeSight</h1>
         <p class="page-title">用户注册</p>
       </div>
 

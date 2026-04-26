@@ -16,11 +16,11 @@
       <div class="footer-brand-section">
         <RouterLink to="/" class="footer-brand">
           <div class="brand-mark">
-            <img src="../assets/logo.png" alt="明眸智诊" class="brand-logo" />
+            <img src="../assets/logo.png" alt="EyeSight" class="brand-logo" />
           </div>
           <div class="brand-identity">
-            <span class="brand-name">明眸智诊</span>
-            <span class="brand-en">Eye Diagnosis AI</span>
+            <span class="brand-name">EyeSight</span>
+            <span class="brand-en">Smart Eye Diagnosis</span>
           </div>
         </RouterLink>
         <p class="brand-tagline">

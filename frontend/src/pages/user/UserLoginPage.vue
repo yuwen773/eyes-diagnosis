@@ -21,7 +21,9 @@ const handleSubmit = async (values: any) => {
   try {
     const res = await userLogin(values)
     if(res.data.code === 0 && res.data.data) {
-      console.log(res.data.data)
+      if (import.meta.env.DEV) {
+        console.log('[Login] Response:', res.data.data)
+      }
       await userLoginStore.fetchLoginUser()
       message.success('登录成功')
       router.push({
@@ -46,7 +48,7 @@ const handleSubmit = async (values: any) => {
     <div class="login-card">
       <div class="logo-container">
         <img src="@/assets/logo.png" alt="眼科诊断系统" class="logo">
-        <h1 class="system-name">明眸智诊，视界无忧</h1>
+        <h1 class="system-name">EyeSight</h1>
       </div>
 
       <a-form

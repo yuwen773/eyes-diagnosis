@@ -78,12 +78,12 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
     <div class="header-inner">
       <RouterLink to="/" class="header-brand">
         <div class="brand-icon">
-          <img class="logo" src="../assets/logo.png" alt="明眸智诊" />
+          <img class="logo" src="../assets/logo.png" alt="EyeSight" />
           <div class="brand-icon-glow"></div>
         </div>
         <div class="brand-text">
-          <span class="brand-name">明眸智诊</span>
-          <span class="brand-tagline">视界无忧</span>
+          <span class="brand-name">EyeSight</span>
+          <span class="brand-tagline">智能眼科诊断</span>
         </div>
       </RouterLink>
 

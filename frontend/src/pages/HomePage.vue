@@ -170,7 +170,7 @@ onUnmounted(() => {
       />
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <span class="hero-eyebrow">明眸智诊，视界无忧 · 眼科智能诊断系统</span>
+        <span class="hero-eyebrow">EyeSight · 基于 EfficientNet-B4 与检索增强生成的多模态眼科诊断系统</span>
         <h1 class="hero-title">
           AI 驱动的<br />
           <span class="hero-title-accent">眼底精准诊断</span>
