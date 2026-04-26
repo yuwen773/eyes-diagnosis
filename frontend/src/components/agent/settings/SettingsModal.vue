@@ -88,6 +88,10 @@ const handleClose = () => {
 </script>
 
 <style scoped>
+.settings-modal :deep(.ant-modal-content) {
+  padding-right: 8px;
+}
+
 .settings-container {
   display: flex;
   height: 700px;
@@ -174,6 +178,7 @@ const handleClose = () => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-top: var(--space-6, 1.5rem);
 }
 
 .content-section {

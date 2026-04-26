@@ -479,50 +479,75 @@ const handleSubmit = async () => {
 
 <style scoped>
 .mcp-server-form {
-  padding: 8px 0;
+  padding: var(--space-2, 0.5rem) 0;
 }
 
 .form-mode-toggle {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-6, 1.5rem);
 }
 
 .json-config-area {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-5, 1.25rem);
 }
 
 .json-hint {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-olive-gray, #5e5d59);
+  margin: 0 0 var(--space-2, 0.5rem) 0;
+  line-height: 1.4;
 }
 
 .json-textarea {
   font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 12px;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.6;
 }
 
 .json-error {
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 8px;
+  color: var(--color-error, #b53333);
+  font-size: var(--text-xs, 0.75rem);
+  margin-top: var(--space-2, 0.5rem);
+  font-weight: 500;
 }
 
 .mcp-form {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-5, 1.25rem);
 }
 
 .timeout-hint {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-left: 8px;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-stone-gray, #87867f);
+  margin-left: var(--space-2, 0.5rem);
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid #f3f4f6;
-  margin-top: 16px;
+  gap: var(--space-3, 0.75rem);
+  padding-top: var(--space-5, 1.25rem);
+  margin-top: var(--space-5, 1.25rem);
+}
+
+/* Ant Design form overrides */
+.mcp-server-form :deep(.ant-form-item-label > label) {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--color-near-black, #141413);
+}
+
+.mcp-server-form :deep(.ant-input),
+.mcp-server-form :deep(.ant-input-number),
+.mcp-server-form :deep(.ant-select-selector),
+.mcp-server-form :deep(.ant-input-textarea textarea) {
+  font-size: var(--text-sm, 0.875rem);
+  border-radius: var(--radius-md, 8px);
+}
+
+.mcp-server-form :deep(.ant-input:focus),
+.mcp-server-form :deep(.ant-input-focused),
+.mcp-server-form :deep(.ant-input-number:focus),
+.mcp-server-form :deep(.ant-select-focused .ant-select-selector) {
+  border-color: var(--color-terracotta, #c96442);
+  box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.1);
 }
 </style>
