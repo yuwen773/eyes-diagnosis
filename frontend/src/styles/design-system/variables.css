@@ -74,10 +74,140 @@
   --transition-base: 250ms ease;
   --transition-slow: 350ms ease;
 
-  /* === Z-Index Scale === */
+/* === Z-Index Scale === */
   --z-dropdown: 100;
   --z-sticky: 200;
   --z-modal: 300;
   --z-tooltip: 400;
   --z-toast: 500;
+
+  /* === Claude Design System Tokens (migrated from claude-tokens.css) === */
+
+  /* Brand Colors */
+  --claude-brand: var(--color-terracotta);
+  --claude-brand-light: #d97757;
+  --claude-brand-dark: #a34f2f;
+
+  /* Text Colors */
+  --claude-text-primary: var(--color-near-black);
+  --claude-text-secondary: var(--color-olive-gray);
+  --claude-text-tertiary: var(--color-stone-gray);
+  --claude-text-inverse: #faf9f5;
+  --claude-text-on-brand: #ffffff;
+
+  /* Semantic States */
+  --claude-error: var(--color-error-crimson);
+  --claude-success: #52c41a;
+  --claude-warning: #faad14;
+  --claude-focus: var(--color-focus-blue);
+
+  /* Borders */
+  --claude-border-cream: var(--color-border-cream);
+  --claude-border-warm: #e8e6dc;
+  --claude-border-dark: var(--color-dark-surface);
+
+  /* Rings */
+  --claude-ring-warm: #d1cfc5;
+  --claude-ring-subtle: #e8e6dc;
+  --claude-ring-deep: #c2c0b6;
+
+  /* Background Colors */
+  --claude-bg-page: var(--color-parchment);
+  --claude-bg-card: var(--color-ivory);
+  --claude-bg-elevated: #ffffff;
+  --claude-bg-dark: var(--color-dark-surface);
+  --claude-bg-deep: #141413;
+
+  /* Typography */
+  --claude-font-serif: var(--font-heading);
+  --claude-font-sans: var(--font-body);
+  --claude-font-mono: Courier New, monospace;
+  --font-display: var(--claude-font-serif);
+
+  /* Shadows */
+  --claude-shadow-sm: var(--shadow-sm);
+  --claude-shadow-md: var(--shadow-md);
+  --claude-shadow-lg: var(--shadow-lg);
+  --claude-shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.1), 0 8px 10px rgba(20, 20, 19, 0.04);
+
+  /* Transitions */
+  --claude-transition-fast: var(--transition-fast);
+  --claude-transition-base: var(--transition-base);
+  --claude-transition-slow: var(--transition-slow);
+
+  /* Z-Index (aliases) */
+  --claude-z-dropdown: var(--z-dropdown);
+  --claude-z-sticky: var(--z-sticky);
+  --claude-z-modal: var(--z-modal);
+  --claude-z-tooltip: var(--z-tooltip);
+
+  /* Border Radius */
+  --claude-radius-sm: 6px;
+  --claude-radius-md: 8px;
+  --claude-radius-lg: 12px;
+  --claude-radius-xl: 16px;
+  --claude-radius-2xl: 24px;
+
+  /* Spacing */
+  --claude-space-1: 0.25rem;
+  --claude-space-2: 0.5rem;
+  --claude-space-3: 0.75rem;
+  --claude-space-4: 1rem;
+  --claude-space-5: 1.25rem;
+  --claude-space-6: 1.5rem;
+  --claude-space-8: 2rem;
+  --claude-space-10: 2.5rem;
+  --claude-space-12: 3rem;
+  --claude-space-16: 4rem;
+  --claude-space-20: 5rem;
+
+  /* Severity Tokens */
+  --severity-low-color: #3a7c20;
+  --severity-low-bg: rgba(82, 196, 26, 0.08);
+  --severity-low-badge-bg: rgba(82, 196, 26, 0.12);
+  --severity-low-badge-color: #3a7c20;
+  --severity-medium-color: var(--claude-brand);
+  --severity-medium-bg: rgba(201, 100, 66, 0.06);
+  --severity-medium-badge-bg: rgba(201, 100, 66, 0.10);
+  --severity-medium-badge-color: var(--claude-brand);
+  --severity-high-color: var(--claude-brand-dark);
+  --severity-high-bg: rgba(163, 79, 47, 0.08);
+  --severity-high-badge-bg: rgba(163, 79, 47, 0.12);
+  --severity-high-badge-color: var(--claude-brand-dark);
+
+  /* Semantic Color Aliases */
+  --color-primary-50: #fdf2ef;
+  --color-primary-100: #fbe6de;
+  --color-primary-200: #f7cdbd;
+  --color-primary-300: #f0b496;
+  --color-primary-400: #e69466;
+  --color-primary-500: var(--claude-brand);
+  --color-primary-600: var(--claude-brand-dark);
+  --color-primary-700: #8a4325;
+  --color-primary-800: #6b331c;
+  --color-primary-900: #4d2414;
+  --color-secondary-400: var(--claude-brand-light);
+  --color-secondary-500: #c06845;
+  --color-accent-purple: #8b5a7a;
+  --color-accent-pink: #c9647a;
+  --color-accent-cyan: #5a9ea0;
+  --color-bg-primary: var(--claude-bg-page);
+  --color-bg-secondary: var(--claude-bg-card);
+  --color-bg-tertiary: #f0eee6;
+  --color-bg-elevated: var(--claude-bg-elevated);
+  --color-bg-hover: #f7f5ef;
+  --color-bg-active: #f0ebe1;
+  --color-text-primary: var(--claude-text-primary);
+  --color-text-secondary: var(--claude-text-secondary);
+  --color-text-tertiary: var(--claude-text-tertiary);
+  --color-text-disabled: #b0aea5;
+  --color-text-inverse: var(--claude-text-inverse);
+  --color-border-subtle: var(--claude-border-cream);
+  --color-border-default: var(--claude-border-warm);
+  --color-border-strong: #c2c0b6;
+  --color-border-accent: rgba(201, 100, 66, 0.4);
+  --color-success: var(--claude-success);
+  --color-warning: var(--claude-warning);
+  --color-error: var(--claude-error);
+  --color-info: var(--claude-brand);
 }

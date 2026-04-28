@@ -29,9 +29,9 @@ export interface BaseResponse<T> {
   msg: string
 }
 
-export const uploadDocument = (file: File, title?: string): Promise<BaseResponse<number>> => {
+export const uploadDocument = (files: File[], title?: string): Promise<BaseResponse<number[]>> => {
   const formData = new FormData()
-  formData.append('file', file)
+  files.forEach(file => formData.append('files', file))
   if (title) {
     formData.append('title', title)
   }

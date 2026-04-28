@@ -1,168 +1,10 @@
 /**
- * Claude Design System Tokens
- * Inspired by Anthropic's Claude interface design
- * https://github.com/VoltAgent/awesome-design-md (Claude)
+ * Claude Design System - Theme Overrides Only
+ * Base tokens moved to styles/design-system/variables.css
+ * This file contains only theme-specific overrides
  */
 
-/* ============================================
-   1. CSS CUSTOM PROPERTIES (DESIGN TOKENS)
-   ============================================ */
-
-:root {
-  /* ─── Page Background ─── */
-  --claude-bg-page: #f5f4ed;
-  --claude-bg-card: #faf9f5;
-  --claude-bg-elevated: #ffffff;
-  --claude-bg-dark: #30302e;
-  --claude-bg-deep: #141413;
-
-  /* ─── Background Image (Optional) ─── */
-  --claude-bg-image: url('@/assets/img.png');
-
-  /* ─── Brand Colors ─── */
-  --claude-brand: #c96442;
-  --claude-brand-light: #d97757;
-  --claude-brand-dark: #a34f2f;
-
-  /* ─── Text Colors ─── */
-  --claude-text-primary: #141413;
-  --claude-text-secondary: #5e5d59;
-  --claude-text-tertiary: #87867f;
-  --claude-text-inverse: #faf9f5;
-  --claude-text-on-brand: #ffffff;
-
-  /* ─── Semantic States ─── */
-  --claude-error: #b53333;
-  --claude-success: #52c41a;
-  --claude-warning: #faad14;
-  --claude-focus: #3898ec;
-
-  /* ─── Borders ─── */
-  --claude-border-cream: #f0eee6;
-  --claude-border-warm: #e8e6dc;
-  --claude-border-dark: #30302e;
-
-  /* ─── Rings ─── */
-  --claude-ring-warm: #d1cfc5;
-  --claude-ring-subtle: #e8e6dc;
-  --claude-ring-deep: #c2c0b6;
-
-  /* ─── Spacing ─── */
-  --claude-space-1: 0.25rem;
-  --claude-space-2: 0.5rem;
-  --claude-space-3: 0.75rem;
-  --claude-space-4: 1rem;
-  --claude-space-5: 1.25rem;
-  --claude-space-6: 1.5rem;
-  --claude-space-8: 2rem;
-  --claude-space-10: 2.5rem;
-  --claude-space-12: 3rem;
-  --claude-space-16: 4rem;
-  --claude-space-20: 5rem;
-
-  /* ─── Border Radius ─── */
-  --claude-radius-sm: 6px;
-  --claude-radius-md: 8px;
-  --claude-radius-lg: 12px;
-  --claude-radius-xl: 16px;
-  --claude-radius-2xl: 24px;
-
-  /* ─── Typography ─── */
-  --claude-font-serif: Georgia, Times New Roman, serif;
-  --claude-font-sans: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
-  --claude-font-mono: Courier New, monospace;
-  --font-display: var(--claude-font-serif);
-
-  /* ─── Shadows ─── */
-  --claude-shadow-sm: 0 1px 2px rgba(20, 20, 19, 0.06);
-  --claude-shadow-md: 0 4px 6px rgba(20, 20, 19, 0.08);
-  --claude-shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.1);
-  --claude-shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.12);
-
-  /* ─── Transitions ─── */
-  --claude-transition-fast: 150ms ease;
-  --claude-transition-base: 200ms ease;
-  --claude-transition-slow: 300ms ease;
-
-  /* ─── Z-Index Scale ─── */
-  --claude-z-dropdown: 100;
-  --claude-z-sticky: 200;
-  --claude-z-modal: 300;
-  --claude-z-tooltip: 400;
-}
-
-/* ============================================
-   2. SEMANTIC ALIASES (Agent Theme Compatibility)
-   Maps agent-theme.css variables → Claude tokens
-   So existing components auto-adapt without var() changes
-   ============================================ */
-
-:root {
-  /* Primary brand - maps to Terracotta */
-  --color-primary-50: #fdf2ef;
-  --color-primary-100: #fbe6de;
-  --color-primary-200: #f7cdbd;
-  --color-primary-300: #f0b496;
-  --color-primary-400: #e69466;
-  --color-primary-500: var(--claude-brand);
-  --color-primary-600: var(--claude-brand-dark);
-  --color-primary-700: #8a4325;
-  --color-primary-800: #6b331c;
-  --color-primary-900: #4d2414;
-
-  /* Secondary - maps to Coral */
-  --color-secondary-400: var(--claude-brand-light);
-  --color-secondary-500: #c06845;
-
-  /* Accent - warm purple variant */
-  --color-accent-purple: #8b5a7a;
-  --color-accent-pink: #c9647a;
-  --color-accent-cyan: #5a9ea0;
-
-  /* Background surfaces */
-  --color-bg-primary: var(--claude-bg-page);
-  --color-bg-secondary: var(--claude-bg-card);
-  --color-bg-tertiary: #f0eee6;
-  --color-bg-elevated: var(--claude-bg-elevated);
-  --color-bg-hover: #f7f5ef;
-  --color-bg-active: #f0ebe1;
-
-  /* Text colors */
-  --color-text-primary: var(--claude-text-primary);
-  --color-text-secondary: var(--claude-text-secondary);
-  --color-text-tertiary: var(--claude-text-tertiary);
-  --color-text-disabled: #b0aea5;
-  --color-text-inverse: var(--claude-text-inverse);
-
-  /* Borders */
-  --color-border-subtle: var(--claude-border-cream);
-  --color-border-default: var(--claude-border-warm);
-  --color-border-strong: #c2c0b6;
-  --color-border-accent: rgba(201, 100, 66, 0.4);
-
-  /* Glass effect - warm tinted */
-  --glass-bg: rgba(250, 249, 245, 0.85);
-  --glass-bg-light: rgba(250, 249, 245, 0.6);
-  --glass-border: rgba(20, 20, 19, 0.06);
-  --glass-blur: blur(12px);
-  --glass-blur-light: blur(8px);
-
-  /* Shadows - warm tinted */
-  --shadow-sm: var(--claude-shadow-sm);
-  --shadow-md: var(--claude-shadow-md);
-  --shadow-lg: var(--claude-shadow-lg);
-
-  /* State colors */
-  --color-success: var(--claude-success);
-  --color-warning: var(--claude-warning);
-  --color-error: var(--claude-error);
-  --color-info: var(--claude-brand);
-}
-
-/* ============================================
-   3. DARK THEME OVERRIDES (Agent data-theme)
-   ============================================ */
-
+/* Dark theme override */
 [data-theme="dark"],
 :root[data-theme="dark"] {
   --claude-bg-page: #141413;
@@ -179,20 +21,15 @@
   --claude-border-cream: #3d3d3a;
   --claude-border-warm: #4d4c48;
 
-  --glass-bg: rgba(48, 48, 46, 0.85);
-  --glass-bg-light: rgba(48, 48, 46, 0.6);
-}
 
-/* Aurora theme override */
-[data-theme="aurora"] {
-  --color-primary-500: #2268f5;
-  --color-primary-600: #1a5ae0;
-  --glass-bg: rgba(30, 60, 120, 0.85);
-}
-
-/* Pop theme override */
-[data-theme="pop"] {
-  --color-primary-500: #a855f7;
-  --color-primary-600: #9333ea;
-  --glass-bg: rgba(80, 40, 120, 0.85);
+  /* Semantic alias overrides for dark theme */
+  --color-bg-primary: #141413;
+  --color-bg-secondary: #1a1a18;
+  --color-bg-tertiary: #2a2a28;
+  --color-bg-elevated: #222220;
+  --color-text-primary: #f5f4ed;
+  --color-text-secondary: #b0aea5;
+  --color-text-tertiary: #87867f;
+  --color-border-subtle: #3d3d3a;
+  --color-border-default: #4d4c48;
 }

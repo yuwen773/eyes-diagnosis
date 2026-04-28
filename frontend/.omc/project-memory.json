@@ -165,15 +165,93 @@
   },
   "hotPaths": [
     {
-      "path": "src\\assets\\claude-tokens.css",
-      "accessCount": 4,
-      "lastAccessed": 1776997628029,
+      "path": "src\\components\\diagnosis\\ImageUploader.vue",
+      "accessCount": 47,
+      "lastAccessed": 1777379105965,
       "type": "file"
     },
     {
+      "path": "src\\layouts\\BasicLayout.vue",
+      "accessCount": 14,
+      "lastAccessed": 1777378133102,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\user\\UserLoginPage.vue",
+      "accessCount": 13,
+      "lastAccessed": 1777378072313,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\user\\UserSider.vue",
+      "accessCount": 12,
+      "lastAccessed": 1777375237604,
+      "type": "directory"
+    },
+    {
       "path": "src\\pages\\admin\\DashboardPage.vue",
+      "accessCount": 11,
+      "lastAccessed": 1777378404056,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 10,
+      "lastAccessed": 1777378712048,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\diagnosis\\DiagnosisResult.vue",
+      "accessCount": 10,
+      "lastAccessed": 1777379306865,
+      "type": "file"
+    },
+    {
+      "path": "src\\assets\\claude-tokens.css",
+      "accessCount": 7,
+      "lastAccessed": 1777374484460,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\user\\UserRegisterPage.vue",
+      "accessCount": 7,
+      "lastAccessed": 1777377844055,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\diagnosis\\DiagnosisPage.vue",
+      "accessCount": 7,
+      "lastAccessed": 1777378961424,
+      "type": "file"
+    },
+    {
+      "path": "src\\stores\\diagnosis.ts",
+      "accessCount": 6,
+      "lastAccessed": 1777379037323,
+      "type": "file"
+    },
+    {
+      "path": "src\\assets\\eyesight-logo.svg",
       "accessCount": 4,
-      "lastAccessed": 1776998025170,
+      "lastAccessed": 1777376743200,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\tables\\PieChart.vue",
+      "accessCount": 4,
+      "lastAccessed": 1777378277354,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\tables\\LineChart.vue",
+      "accessCount": 4,
+      "lastAccessed": 1777378298817,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\tables\\BarChart.vue",
+      "accessCount": 4,
+      "lastAccessed": 1777378300636,
       "type": "file"
     },
     {
@@ -183,9 +261,81 @@
       "type": "file"
     },
     {
+      "path": "src\\pages\\admin\\KnowledgePage.vue",
+      "accessCount": 3,
+      "lastAccessed": 1777266959176,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\agent\\AgentMessageList.vue",
+      "accessCount": 3,
+      "lastAccessed": 1777376565907,
+      "type": "file"
+    },
+    {
+      "path": "src\\router\\index.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777376830467,
+      "type": "file"
+    },
+    {
       "path": "src\\assets\\base.css",
+      "accessCount": 3,
+      "lastAccessed": 1777377902971,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\user\\DiagnosisTrendChart.vue",
+      "accessCount": 3,
+      "lastAccessed": 1777378342640,
+      "type": "file"
+    },
+    {
+      "path": "src/pages/user/UserLoginPage.vue",
       "accessCount": 2,
-      "lastAccessed": 1776997517931,
+      "lastAccessed": 1777204282576,
+      "type": "directory"
+    },
+    {
+      "path": "src/router/index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777204291946,
+      "type": "directory"
+    },
+    {
+      "path": "src\\assets\\main.css",
+      "accessCount": 2,
+      "lastAccessed": 1777270405517,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\user\\DiagnosisReportDetail.vue",
+      "accessCount": 2,
+      "lastAccessed": 1777271109062,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\agent\\AgentChatLayout.vue",
+      "accessCount": 2,
+      "lastAccessed": 1777271576997,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\GlobalHeader.vue",
+      "accessCount": 2,
+      "lastAccessed": 1777378023169,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\tables\\DiagnosisPie.vue",
+      "accessCount": 2,
+      "lastAccessed": 1777378340954,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\agent\\settings\\McpServerForm.vue",
+      "accessCount": 2,
+      "lastAccessed": 1777378359246,
       "type": "file"
     },
     {
@@ -201,27 +351,69 @@
       "type": "directory"
     },
     {
-      "path": "src\\assets\\main.css",
+      "path": "src/pages/admin/KnowledgePage.vue",
       "accessCount": 1,
-      "lastAccessed": 1776997480142,
-      "type": "file"
-    },
-    {
-      "path": "src",
-      "accessCount": 1,
-      "lastAccessed": 1776998180727,
+      "lastAccessed": 1777204021668,
       "type": "directory"
     },
     {
-      "path": "src\\components\\GlobalHeader.vue",
+      "path": "src/utils/access/access.ts",
       "accessCount": 1,
-      "lastAccessed": 1776998185809,
+      "lastAccessed": 1777204291887,
+      "type": "directory"
+    },
+    {
+      "path": "C:\\Users\\yuwen\\.claude\\projects\\D--Work-code-eye-diagnosis\\eb913b32-3614-4785-aba2-3b6688bc3214\\tool-results\\bn3z6cf9k.txt",
+      "accessCount": 1,
+      "lastAccessed": 1777266905510,
       "type": "file"
     },
     {
-      "path": "src\\pages\\admin\\KnowledgePage.vue",
+      "path": "C:\\Users\\yuwen\\.claude\\projects\\D--Work-code-eye-diagnosis\\eb913b32-3614-4785-aba2-3b6688bc3214\\tool-results\\bfk0v7hlv.txt",
       "accessCount": 1,
-      "lastAccessed": 1777038725405,
+      "lastAccessed": 1777266932509,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\userCenter\\UserCenter.vue",
+      "accessCount": 1,
+      "lastAccessed": 1777294860696,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\yuwen\\AppData\\Local\\Temp\\claude\\D--Work-code-eye-diagnosis\\dcb0e7bf-def4-4a2c-ba77-19f0e956767a\\tasks\\bzz94foqr.output",
+      "accessCount": 1,
+      "lastAccessed": 1777376565966,
+      "type": "file"
+    },
+    {
+      "path": "src\\pages\\user",
+      "accessCount": 1,
+      "lastAccessed": 1777376687536,
+      "type": "directory"
+    },
+    {
+      "path": "src\\App.vue",
+      "accessCount": 1,
+      "lastAccessed": 1777376821861,
+      "type": "file"
+    },
+    {
+      "path": "src\\styles\\design-system\\variables.css",
+      "accessCount": 1,
+      "lastAccessed": 1777377111998,
+      "type": "file"
+    },
+    {
+      "path": "src\\styles\\design-system\\base.css",
+      "accessCount": 1,
+      "lastAccessed": 1777377902993,
+      "type": "file"
+    },
+    {
+      "path": "src\\main.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777378083790,
       "type": "file"
     }
   ],
