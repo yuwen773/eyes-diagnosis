@@ -75,7 +75,36 @@
             </div>
             <div class="history-indicator" aria-hidden="true"></div>
             <div class="history-content">
-              <span class="history-title">{{ item.title || '新对话' }}</span>
+              <div class="history-title-wrap">
+                <span
+                  v-if="editingId !== item.id"
+                  class="history-title"
+                  @dblclick="startEdit(item)"
+                >
+                  {{ item.title || '新对话' }}
+                </span>
+                <input
+                  v-else
+                  v-model="editingTitle"
+                  class="title-input"
+                  @keyup.enter="saveEdit"
+                  @keyup.esc="cancelEdit"
+                  @blur="saveEdit"
+                  maxlength="50"
+                  autofocus
+                />
+                <button
+                  v-if="!multiSelectMode && editingId !== item.id"
+                  class="edit-btn"
+                  @click.stop="startEdit(item)"
+                  title="重命名"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+              </div>
               <span class="history-time">{{ item.time }}</span>
             </div>
             <button
@@ -116,7 +145,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
-import { deleteSession, batchDeleteSessions } from '@/api/agentController'
+import { deleteSession, batchDeleteSessions, updateSessionTitle } from '@/api/agentController'
 
 export interface HistoryItem {
   id: string
@@ -146,6 +175,36 @@ const emit = defineEmits<{
 // Multi-select mode
 const multiSelectMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
+
+// Edit state
+const editingId = ref<string | null>(null)
+const editingTitle = ref('')
+
+const startEdit = (item: HistoryItem) => {
+  editingId.value = item.id
+  editingTitle.value = item.title || ''
+}
+
+const saveEdit = async () => {
+  if (editingId.value) {
+    const newTitle = editingTitle.value.trim()
+    if (newTitle) {
+      try {
+        await updateSessionTitle(editingId.value, newTitle)
+        await props.loadSessions()
+      } catch (e) {
+        console.error('更新标题失败', e)
+      }
+    }
+    editingId.value = null
+    editingTitle.value = ''
+  }
+}
+
+const cancelEdit = () => {
+  editingId.value = null
+  editingTitle.value = ''
+}
 
 const toggleMultiSelect = () => {
   multiSelectMode.value = !multiSelectMode.value
@@ -611,15 +670,62 @@ const groupedHistories = computed(() => {
   flex: 1;
 }
 
+.history-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
 .history-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.4;
-  transition: color 0.15s ease;
+  cursor: text;
+}
+
+.title-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--claude-brand);
+  border-radius: 4px;
+  background: var(--claude-bg-page);
+  color: var(--claude-text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.title-input:focus {
+  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.15);
+}
+
+.edit-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--claude-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-item:hover .edit-btn {
+  opacity: 1;
+}
+
+.edit-btn:hover {
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-secondary);
 }
 
 .history-time {
