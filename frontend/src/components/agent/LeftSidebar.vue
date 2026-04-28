@@ -51,7 +51,7 @@
       </div>
 
       <template v-else>
-        <div v-for="group in groupedHistories" :key="group.label" class="history-group">
+        <div v-for="group in groupedHistories" :key="group.label" class="history-group" role="listbox" aria-multiselectable="true">
           <div class="group-label">{{ group.label }}</div>
           <button
             v-for="item in group.items"
@@ -60,7 +60,15 @@
             :class="{ active: activeId === item.id, selected: selectedIds.has(item.id) }"
             @click="multiSelectMode ? toggleSelect(item.id) : emit('select', item.id)"
           >
-            <div v-if="multiSelectMode" class="checkbox" :class="{ checked: selectedIds.has(item.id) }">
+            <div v-if="multiSelectMode"
+                 class="checkbox"
+                 :class="{ checked: selectedIds.has(item.id) }"
+                 role="checkbox"
+                 :aria-checked="selectedIds.has(item.id)"
+                 :aria-label="item.title || '选择会话'"
+                 tabindex="0"
+                 @keydown.space.enter.prevent="toggleSelect(item.id)"
+                 @click="toggleSelect(item.id)">
               <svg v-if="selectedIds.has(item.id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
