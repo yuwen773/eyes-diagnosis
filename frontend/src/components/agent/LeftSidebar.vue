@@ -307,6 +307,10 @@ const handlePin = async (item: HistoryItem) => {
   }
 }
 
+const sanitizeFilename = (name: string): string => {
+  return name.replace(/[/\\:*?"<>|]/g, '_').substring(0, 50)
+}
+
 const handleExport = async (item: HistoryItem, format: 'markdown' | 'json') => {
   try {
     const res = await exportSession(item.id, format)
@@ -315,7 +319,8 @@ const handleExport = async (item: HistoryItem, format: 'markdown' | 'json') => {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${item.title || '会话'}_${Date.now()}.${format === 'json' ? 'json' : 'md'}`
+      const filename = `${sanitizeFilename(item.title || '会话')}_${Date.now()}.${format === 'json' ? 'json' : 'md'}`
+      a.download = filename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
