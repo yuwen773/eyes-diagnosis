@@ -14,7 +14,7 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
             "SELECT * FROM t_agent_session " +
             "WHERE user_id = #{userId} AND is_delete = 0 " +
             "<if test='beforeId != null'> AND id &lt; #{beforeId} </if>" +
-            "ORDER BY updated_time DESC LIMIT #{limit}" +
+            "ORDER BY pinned DESC, pin_time ASC, updated_time DESC LIMIT #{limit}" +
             "</script>")
     java.util.List<AgentSession> selectByUserIdCursor(
             @Param("userId") Long userId,
