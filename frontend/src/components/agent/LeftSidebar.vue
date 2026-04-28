@@ -58,7 +58,7 @@
             :key="item.id"
             class="history-item"
             :class="{ active: activeId === item.id, selected: selectedIds.has(item.id) }"
-            @click="multiSelectMode ? toggleSelect(item.id) : emit('select', item.id)"
+            @click="handleItemClick(item)"
           >
             <div v-if="multiSelectMode"
                  class="checkbox"
@@ -194,7 +194,10 @@ const saveEdit = async () => {
         await props.loadSessions()
       } catch (e) {
         console.error('更新标题失败', e)
+        message.error('更新标题失败，请重试')
       }
+    } else {
+      message.warning('标题不能为空')
     }
     editingId.value = null
     editingTitle.value = ''
@@ -204,6 +207,18 @@ const saveEdit = async () => {
 const cancelEdit = () => {
   editingId.value = null
   editingTitle.value = ''
+}
+
+const handleItemClick = (item: HistoryItem) => {
+  // 如果正在编辑其他项，先取消
+  if (editingId.value && editingId.value !== item.id) {
+    cancelEdit()
+  }
+  if (multiSelectMode.value) {
+    toggleSelect(item.id)
+  } else {
+    emit('select', item.id)
+  }
 }
 
 const toggleMultiSelect = () => {
