@@ -2,6 +2,8 @@ package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.exception.BusinessException;
+import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.mapper.AgentMessageMapper;
 import com.csust.eyediagnosis.mapper.AgentSessionMapper;
 import com.csust.eyediagnosis.model.dto.agent.ChatHistoryVO;
@@ -111,6 +113,13 @@ public class ChatHistoryService {
         }
         AgentSession session = sessionMapper.selectBySessionId(sessionId);
         return session != null && userId.equals(session.getUserId());
+    }
+
+    public void deleteSession(String sessionId, Long userId) {
+        if (!isSessionOwner(sessionId, userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        sessionMapper.softDeleteBySessionId(sessionId);
     }
 
     private void ensureSessionExists(String sessionId, Long userId, String firstMessage) {

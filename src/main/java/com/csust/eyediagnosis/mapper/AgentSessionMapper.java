@@ -35,4 +35,7 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
     @Update("UPDATE t_agent_session SET checkpointData = NULL " +
             "WHERE sessionId = #{sessionId}")
     int clearCheckpointData(@Param("sessionId") String sessionId);
+
+    @Update("UPDATE t_agent_session SET isDelete = 1, updatedTime = NOW() WHERE sessionId = #{sessionId}")
+    int softDeleteBySessionId(@Param("sessionId") String sessionId);
 }

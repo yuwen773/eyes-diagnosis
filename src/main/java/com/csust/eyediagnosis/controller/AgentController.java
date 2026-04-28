@@ -108,6 +108,18 @@ public class AgentController {
         return ResultUtils.success(chatHistoryService.getUserSessions(loginUser.getId(), beforeId, Math.min(limit, 100)));
     }
 
+    @DeleteMapping("/sessions/{sessionId}")
+    public BaseResponse<Boolean> deleteSession(
+            @PathVariable String sessionId,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        chatHistoryService.deleteSession(sessionId, loginUser.getId());
+        return ResultUtils.success(true);
+    }
+
     private String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
