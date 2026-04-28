@@ -92,3 +92,13 @@ export const getSessions = (beforeId?: number, limit = 20): Promise<BaseResponse
     credentials: 'include',
   }).then(res => res.json())
 }
+
+export const exportSession = (
+  sessionId: string,
+  format: 'markdown' | 'json'
+): Promise<BaseResponse<string>> => {
+  return fetch(`${BASE_URL}/agent/history/${sessionId}/export?format=${format}`, {
+    method: 'GET',
+    credentials: 'include',
+  }).then(res => res.json())
+}

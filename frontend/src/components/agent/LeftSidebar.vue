@@ -114,6 +114,20 @@
                     </svg>
                     <span>{{ item.isPinned ? '取消置顶' : '置顶' }}</span>
                   </button>
+                  <button class="menu-item" @click.stop="handleExport(item, 'markdown')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>导出 Markdown</span>
+                  </button>
+                  <button class="menu-item" @click.stop="handleExport(item, 'json')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>导出 JSON</span>
+                  </button>
                 </div>
               </div>
               <span class="history-time">{{ item.time }}</span>
@@ -156,7 +170,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
-import { deleteSession, batchDeleteSessions, updateSessionTitle, updatePinStatus } from '@/api/agentController'
+import { deleteSession, batchDeleteSessions, updateSessionTitle, updatePinStatus, exportSession } from '@/api/agentController'
 
 export interface HistoryItem {
   id: string
@@ -290,6 +304,31 @@ const handlePin = async (item: HistoryItem) => {
     console.error('置顶操作失败', e)
     message.error('操作失败')
     // 失败时保持菜单打开，用户可以重试
+  }
+}
+
+const handleExport = async (item: HistoryItem, format: 'markdown' | 'json') => {
+  try {
+    const res = await exportSession(item.id, format)
+    if (res.code === 0) {
+      const blob = new Blob([res.data], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${item.title || '会话'}_${Date.now()}.${format === 'json' ? 'json' : 'md'}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      message.success(`已导出为 ${format === 'json' ? 'JSON' : 'Markdown'}`)
+    } else {
+      message.error('导出失败')
+    }
+  } catch (e) {
+    console.error('导出失败', e)
+    message.error('导出失败')
+  } finally {
+    showMenuId.value = null
   }
 }
 
