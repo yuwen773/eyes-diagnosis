@@ -81,6 +81,7 @@
             <button
               v-if="!multiSelectMode"
               class="delete-btn"
+              :disabled="deleting"
               @click.stop="handleDelete(item.id)"
               title="删除"
             >
@@ -97,7 +98,7 @@
     <!-- Batch actions -->
     <div v-if="multiSelectMode && selectedIds.size > 0" class="batch-actions">
       <span>已选择 {{ selectedIds.size }} 项</span>
-      <button class="batch-delete-btn" @click="handleBatchDelete">删除</button>
+      <button class="batch-delete-btn" :disabled="deleting" @click="handleBatchDelete">删除</button>
     </div>
 
     <!-- Footer -->
@@ -161,7 +162,10 @@ const toggleSelect = (id: string) => {
   }
 }
 
+const deleting = ref(false)
+
 const handleDelete = (id: string) => {
+  if (deleting.value) return
   Modal.confirm({
     title: '确定删除该会话？',
     content: '删除后可从回收站恢复',
@@ -169,18 +173,22 @@ const handleDelete = (id: string) => {
     okType: 'danger',
     cancelText: '取消',
     async onOk() {
+      deleting.value = true
       try {
         await deleteSession(id)
         message.success('会话已删除')
-        await loadSessions()
+        await props.loadSessions()
       } catch (e) {
         message.error('删除失败')
+      } finally {
+        deleting.value = false
       }
     }
   })
 }
 
 const handleBatchDelete = async () => {
+  if (deleting.value) return
   const count = selectedIds.value.size
   Modal.confirm({
     title: `确定删除选中的 ${count} 个会话？`,
@@ -189,14 +197,17 @@ const handleBatchDelete = async () => {
     okType: 'danger',
     cancelText: '取消',
     async onOk() {
+      deleting.value = true
       try {
         await batchDeleteSessions(Array.from(selectedIds.value))
         message.success(`${count} 个会话已删除`)
         multiSelectMode.value = false
         selectedIds.value.clear()
-        await loadSessions()
+        await props.loadSessions()
       } catch (e) {
         message.error('批量删除失败')
+      } finally {
+        deleting.value = false
       }
     }
   })
