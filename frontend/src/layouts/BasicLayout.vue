@@ -1,13 +1,13 @@
 <template>
   <div id="basicLayout">
-    <a-layout :style="isAgentPage ? 'height: 100vh' : 'min-height: 100vh'">
-      <a-layout-header class="header">
+    <a-layout :style="layoutStyle">
+      <a-layout-header v-if="!isAuthPage" class="header">
         <GlobalHeader></GlobalHeader>
       </a-layout-header>
-      <a-layout-content class="content" :class="{ 'content--flush': isAgentPage }">
+      <a-layout-content class="content" :class="{ 'content--flush': isAgentPage || isAuthPage }">
         <router-view />
       </a-layout-content>
-      <GlobalFooter v-if="!isAgentPage" />
+      <GlobalFooter v-if="showFooter" />
       <ScrollToTop v-if="!isAgentPage" />
     </a-layout>
   </div>
@@ -22,6 +22,12 @@ import ScrollToTop from '@/components/ScrollToTop.vue'
 
 const route = useRoute()
 const isAgentPage = computed(() => route.path.startsWith('/agent'))
+const isAuthPage = computed(() => route.path.startsWith('/user/login') || route.path.startsWith('/user/register'))
+const showFooter = computed(() => !isAgentPage.value && !isAuthPage.value)
+const layoutStyle = computed(() => {
+  if (isAgentPage.value || isAuthPage.value) return 'height: 100vh; overflow: hidden'
+  return ''
+})
 </script>
 
 <style scoped>
@@ -32,7 +38,6 @@ const isAgentPage = computed(() => route.path.startsWith('/agent'))
 
 #basicLayout .content {
   background: var(--claude-bg-page);
-  padding: 0 0 20px 0;
 }
 
 #basicLayout .content.content--flush {

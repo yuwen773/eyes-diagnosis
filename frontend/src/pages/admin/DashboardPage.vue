@@ -76,6 +76,12 @@ let pieChart: ECharts | null = null
 
 const initLineChart = () => {
   if (!lineChartRef.value) return
+
+  const existingInstance = echarts.getInstanceByDom(lineChartRef.value)
+  if (existingInstance) {
+    existingInstance.dispose()
+  }
+
   lineChart = echarts.init(lineChartRef.value)
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
@@ -101,6 +107,12 @@ const initLineChart = () => {
 
 const initPieChart = () => {
   if (!pieChartRef.value) return
+
+  const existingInstance = echarts.getInstanceByDom(pieChartRef.value)
+  if (existingInstance) {
+    existingInstance.dispose()
+  }
+
   pieChart = echarts.init(pieChartRef.value)
   pieChart.setOption({
     tooltip: { trigger: 'item' },

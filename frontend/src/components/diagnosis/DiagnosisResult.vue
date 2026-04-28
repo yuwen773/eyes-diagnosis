@@ -99,18 +99,21 @@
         </a-row>
       </a-card>
 
-      <!-- 中间部分 - 其他诊断结果 -->
+      <!-- 中间部分 - 所有诊断结果 -->
       <a-card class="middle-section">
         <a-row :gutter="24">
           <a-col :span="12">
             <div class="other-diagnoses">
               <h3 class="section-title">
                 <OrderedListOutlined />
-                其他可能诊断
+                所有可能诊断
               </h3>
               <div class="vertical-bars">
-                <div v-for="(disease, index) in topDiagnoses" :key="index" class="bar-container">
-                  <span class="disease-name">{{ disease.name }}</span>
+                <div v-for="(disease, index) in allDiagnoses" :key="index" class="bar-container">
+                  <span class="disease-name">
+                    {{ disease.name }}
+                    <span v-if="disease.isMain" class="main-diagnosis-badge">主诊断</span>
+                  </span>
                   <a-progress
                     type="line"
                     :percent="disease.probability"
@@ -119,6 +122,9 @@
                     class="vertical-progress"
                   />
                   <span class="probability-value">{{ Math.round(disease.probability ?? 0) }}%</span>
+                </div>
+                <div v-if="allDiagnoses.length === 0" class="no-data-message">
+                  暂无其他诊断数据
                 </div>
               </div>
             </div>
@@ -129,7 +135,8 @@
                 <PieChartOutlined />
                 概率分布
               </h3>
-                  <PieChart :data="chartData"  :diagnoses="chartData"/>
+              <PieChart v-if="chartData.length > 0" :data="chartData" />
+              <div v-else class="no-data-message">暂无数据</div>
             </div>
           </a-col>
         </a-row>
@@ -207,18 +214,46 @@ const formatNumber = (num: number, locale = 'zh-CN'): string => {
   }).format(num)
 }
 
-// 获取前三的诊断结果 (包括主诊断)
+// 获取所有诊断结果（包含主诊断）
+const allDiagnoses = computed(() => {
+  const diagnoses = []
+  const result = diagnosisResult?.value
+
+  // 添加主诊断
+  if (result?.result && result.probability != null) {
+    diagnoses.push({
+      name: result.result,
+      probability: result.probability,
+      isMain: true
+    })
+  }
+
+  // 添加其他诊断
+  const other = result?.otherDisease
+  if (other && Array.isArray(other) && other.length > 0) {
+    other.forEach(d => {
+      diagnoses.push({
+        name: d.name ?? '未知',
+        probability: d.probability ?? 0,
+        isMain: false
+      })
+    })
+  }
+
+  return diagnoses.sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0))
+});
+
+// 获取前三的诊断结果 (用于列表展示，不包含主诊断)
 const topDiagnoses = computed(() => {
-  const other = diagnosisResult?.value?.otherDisease
+  const result = diagnosisResult?.value
+  const other = result?.otherDisease
   if (!other || !Array.isArray(other) || other.length === 0) return []
   return [...other].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0))
 });
 
-// 图表数据
+// 图表数据（包含主诊断用于饼图展示）
 const chartData = computed(() => {
-  const diagnoses = topDiagnoses.value
-  if (!diagnoses.length) return []
-  return diagnoses.map(d => ({
+  return allDiagnoses.value.map(d => ({
     name: d.name ?? '未知',
     value: d.probability ?? 0
   }))

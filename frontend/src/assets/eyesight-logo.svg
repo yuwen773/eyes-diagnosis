@@ -1,0 +1,77 @@
+<svg viewBox="0 0 240 200" width="96" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="evCoreGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8956a"/>
+      <stop offset="100%" stop-color="#d97757"/>
+    </radialGradient>
+    <filter id="evGlow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <style>
+      .ev-pulse { stroke: #e8956a; stroke-width: 1.5; animation: pulse 2s ease-in-out infinite; }
+      .ev-node { fill: #e8956a; animation: nodeGlow 2s ease-in-out infinite; }
+      .ev-core-node { fill: url(#evCoreGrad); animation: coreGlow 2s ease-in-out infinite; }
+      .ev-eye { stroke: #e8956a; stroke-width: 2; fill: none; }
+      .ev-iris-ring { stroke: #e8956a; stroke-width: 1.5; fill: none; }
+      .ev-pupil { fill: #d97757; }
+      .ev-light { fill: rgba(255,255,255,0.8); }
+      .ev-particle { fill: #e8956a; animation: particleMove 2s ease-in-out infinite; }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 1; }
+      }
+      @keyframes nodeGlow {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+      @keyframes coreGlow {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+      }
+      @keyframes particleMove {
+        0%, 100% { opacity: 0; transform: translate(0,0); }
+        50% { opacity: 1; transform: translate(var(--tx, 0), var(--ty, 0)); }
+      }
+    </style>
+  </defs>
+
+  <!-- 外层神经网络脉冲线 -->
+  <line x1="120" y1="100" x2="60" y2="50" class="ev-pulse" style="--delay:0s;animation-delay:0s"/>
+  <line x1="120" y1="100" x2="180" y2="50" class="ev-pulse" style="--delay:0.25s;animation-delay:0.25s"/>
+  <line x1="120" y1="100" x2="30" y2="100" class="ev-pulse" style="--delay:0.5s;animation-delay:0.5s"/>
+  <line x1="120" y1="100" x2="210" y2="100" class="ev-pulse" style="--delay:0.75s;animation-delay:0.75s"/>
+  <line x1="120" y1="100" x2="60" y2="150" class="ev-pulse" style="--delay:1s;animation-delay:1s"/>
+  <line x1="120" y1="100" x2="180" y2="150" class="ev-pulse" style="--delay:1.25s;animation-delay:1.25s"/>
+  <!-- 次级连线 -->
+  <line x1="60" y1="50" x2="30" y2="100" class="ev-pulse" style="--delay:1.5s;animation-delay:1.5s;opacity:0.6"/>
+  <line x1="180" y1="50" x2="210" y2="100" class="ev-pulse" style="--delay:1.75s;animation-delay:1.75s;opacity:0.6"/>
+  <line x1="30" y1="100" x2="60" y2="150" class="ev-pulse" style="--delay:2s;animation-delay:2s;opacity:0.6"/>
+  <line x1="210" y1="100" x2="180" y2="150" class="ev-pulse" style="--delay:2.25s;animation-delay:2.25s;opacity:0.6"/>
+
+  <!-- 神经节点 -->
+  <circle cx="60" cy="50" r="4" class="ev-node" style="animation-delay:0.3s"/>
+  <circle cx="180" cy="50" r="4" class="ev-node" style="animation-delay:0.55s"/>
+  <circle cx="30" cy="100" r="3.5" class="ev-node" style="animation-delay:0.8s"/>
+  <circle cx="210" cy="100" r="3.5" class="ev-node" style="animation-delay:1.05s"/>
+  <circle cx="60" cy="150" r="4" class="ev-node" style="animation-delay:1.3s"/>
+  <circle cx="180" cy="150" r="4" class="ev-node" style="animation-delay:1.55s"/>
+  <circle cx="120" cy="100" r="6" class="ev-core-node" style="animation-delay:0.1s" filter="url(#evGlow)"/>
+
+  <!-- 眼睛轮廓 -->
+  <path d="M20 100C20 100 60 50 120 50C180 50 220 100 220 100C220 100 180 150 120 150C60 150 20 100 20 100Z" class="ev-eye"/>
+  <!-- 眼睛内圈 -->
+  <circle cx="120" cy="100" r="28" class="ev-iris-ring" opacity="0.6"/>
+  <circle cx="120" cy="100" r="20" class="ev-iris-ring ev-iris-inner" opacity="0.4"/>
+  <!-- 瞳孔内核发光 -->
+  <circle cx="120" cy="100" r="10" class="ev-pupil" filter="url(#evGlow)"/>
+  <circle cx="124" cy="96" r="2.5" class="ev-light"/>
+
+  <!-- 数据流动粒子 -->
+  <circle cx="60" cy="50" r="1.5" class="ev-particle" style="animation-delay:0s"/>
+  <circle cx="180" cy="50" r="1.5" class="ev-particle" style="animation-delay:0.4s"/>
+  <circle cx="30" cy="100" r="1.5" class="ev-particle" style="animation-delay:0.8s"/>
+  <circle cx="210" cy="100" r="1.5" class="ev-particle" style="animation-delay:1.2s"/>
+  <circle cx="60" cy="150" r="1.5" class="ev-particle" style="animation-delay:1.6s"/>
+  <circle cx="180" cy="150" r="1.5" class="ev-particle" style="animation-delay:2s"/>
+</svg>

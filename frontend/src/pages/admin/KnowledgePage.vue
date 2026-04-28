@@ -9,7 +9,7 @@
       <a-upload-dragger
         name="file"
         :multiple="true"
-        :customRequest="handleUpload"
+        :beforeUpload="beforeUpload"
         :accept="'.pdf,.doc,.docx,.txt,.md'"
         :showUploadList="false"
       >
@@ -19,6 +19,28 @@
         <p class="ant-upload-text">点击或拖拽文件到此区域上传</p>
         <p class="ant-upload-hint">支持 PDF、Word、TXT、Markdown 文件</p>
       </a-upload-dragger>
+      <div v-if="pendingFiles.length > 0" class="mt-4 flex gap-2 items-center">
+        <span class="text-sm text-gray-500">已选择 {{ pendingFiles.length }} 个文件</span>
+        <a-button type="primary" size="small" :loading="uploading" @click="submitBatchUpload">
+          开始上传
+        </a-button>
+        <a-button size="small" @click="clearPendingFiles">清空</a-button>
+      </div>
+    </section>
+
+    <!-- 处理中的文件队列 -->
+    <section v-if="processingFiles.length > 0" class="processing-section">
+      <div class="processing-header">
+        <InboxOutlined class="processing-icon" />
+        <span>正在处理 {{ processingFiles.length }} 个文件...</span>
+      </div>
+      <div class="processing-list">
+        <div v-for="item in processingFiles" :key="item.name" class="processing-item">
+          <FileTextOutlined class="file-icon" />
+          <span class="processing-name">{{ item.name }}</span>
+          <a-badge status="processing" text="正在解析并向量化" class="processing-status" />
+        </div>
+      </div>
     </section>
 
     <!-- 文件列表 -->
@@ -71,7 +93,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { InboxOutlined } from '@ant-design/icons-vue'
+import { InboxOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {
   uploadDocument,
@@ -81,7 +103,10 @@ import {
 } from '@/api/knowledgeController'
 
 const loading = ref(false)
+const uploading = ref(false)
 const fileList = ref<KnowledgeDocument[]>([])
+const pendingFiles = ref<File[]>([])
+const processingFiles = ref<{ name: string; status: number }[]>([])
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const pagination = ref({
@@ -123,22 +148,36 @@ const handleTableChange = (pag: any) => {
   loadList()
 }
 
-const handleUpload = async (options: any) => {
-  const { file, onSuccess, onError } = options
+const beforeUpload = (file: File) => {
+  pendingFiles.value.push(file)
+  return false // 阻止默认上传行为
+}
+
+const submitBatchUpload = async () => {
+  if (pendingFiles.value.length === 0) return
+  uploading.value = true
   try {
-    const res = await uploadDocument(file)
-    if (res.code === 0) {
-      message.success(`${file.name} 上传成功，正在处理中...`)
-      onSuccess?.(res)
+    const res = await uploadDocument(pendingFiles.value)
+    if (res.code === 0 && res.data.length > 0) {
+      message.success(`${res.data.length} 个文件上传成功，正在处理中...`)
+      // 将上传的文件加入处理队列（初始为处理中状态）
+      pendingFiles.value.forEach((file) => {
+        processingFiles.value.push({ name: file.name, status: 0 })
+      })
+      clearPendingFiles()
       loadList()
     } else {
       message.error(res.msg || '上传失败')
-      onError?.(new Error(res.msg))
     }
-  } catch (e: any) {
-    message.error(`${file.name} 上传失败`)
-    onError?.(e)
+  } catch {
+    message.error('上传失败')
+  } finally {
+    uploading.value = false
   }
+}
+
+const clearPendingFiles = () => {
+  pendingFiles.value = []
 }
 
 const doDelete = async (id: number) => {
@@ -187,14 +226,27 @@ const getStatusText = (status: number): string => {
 const startPolling = () => {
   if (pollTimer) return
   pollTimer = setInterval(() => {
-    if (!fileList.value.some((d) => d.status === 0)) {
-      clearInterval(pollTimer!)
-      pollTimer = null
-    } else {
-      loadList()
-    }
+    loadList()
   }, 3000)
 }
+
+// 监听 fileList 变化，将服务器状态同步到 processingFiles 队列
+watch(fileList, (list) => {
+  const processingNames = new Set(
+    list.filter((d) => d.status === 0).map((d) => d.fileName)
+  )
+  // 保留仍在服务器处理中的文件；已完成的（不在 processingNames 中）自动从队列消失
+  processingFiles.value = processingFiles.value.filter((f) =>
+    processingNames.has(f.name)
+  )
+  // 当没有文件在处理时，停止轮询
+  if (list.some((d) => d.status === 0)) {
+    startPolling()
+  } else if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+})
 
 onMounted(() => {
   loadList().then(() => {
@@ -211,11 +263,6 @@ onUnmounted(() => {
   }
 })
 
-watch(fileList, (list) => {
-  if (list.some((d) => d.status === 0)) {
-    startPolling()
-  }
-})
 </script>
 
 <style scoped>
@@ -253,5 +300,66 @@ watch(fileList, (list) => {
 .section-hint {
   font-size: 0.8rem;
   color: var(--claude-text-tertiary);
+}
+
+/* === 处理中队列 === */
+.processing-section {
+  background: var(--claude-bg-card);
+  border-radius: var(--claude-radius-lg);
+  padding: var(--claude-space-4) var(--claude-space-5);
+  box-shadow: var(--claude-shadow-sm);
+  border: 1px solid var(--claude-border-warm);
+}
+
+.processing-header {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--claude-text-primary);
+  margin-bottom: var(--claude-space-3);
+}
+
+.processing-icon {
+  color: var(--claude-brand);
+  font-size: 16px;
+}
+
+.processing-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--claude-space-2);
+}
+
+.processing-item {
+  display: flex;
+  align-items: center;
+  gap: var(--claude-space-2);
+  padding: var(--claude-space-2) var(--claude-space-3);
+  background: var(--claude-bg-page);
+  border-radius: var(--claude-radius-md);
+  border: 1px solid var(--claude-border-cream);
+}
+
+.file-icon {
+  color: var(--claude-text-tertiary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.processing-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--claude-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.processing-status {
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
 </style>

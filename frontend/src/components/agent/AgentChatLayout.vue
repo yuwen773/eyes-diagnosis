@@ -33,15 +33,17 @@ defineProps<{
 }
 
 .layout-left {
-  width: 280px;
   flex-shrink: 0;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+  width: 280px;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.3s ease;
   overflow: hidden;
 }
 
 .layout-left.collapsed {
-  width: 0;
+  transform: scaleX(0);
   opacity: 0;
 }
 
@@ -56,15 +58,27 @@ defineProps<{
 }
 
 .layout-right {
-  width: 0;
   flex-shrink: 0;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 340px;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease;
   overflow: hidden;
   background: var(--claude-bg-card);
   border-left: 1px solid var(--claude-border-cream);
 }
 
+.layout-right:not(.expanded) {
+  /* collapsed state — right panel starts hidden */
+  transform: scaleX(0);
+  opacity: 0;
+  width: 0;
+  border-left: none;
+}
+
 .layout-right.expanded {
-  width: 340px;
+  transform: scaleX(1);
+  opacity: 1;
 }
 </style>

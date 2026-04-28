@@ -96,6 +96,11 @@ export default defineComponent({
     const initLineChart = () => {
       if (!lineChartRef.value) return;
 
+      const existingInstance = echarts.getInstanceByDom(lineChartRef.value);
+      if (existingInstance) {
+        existingInstance.dispose();
+      }
+
       lineChartInstance = echarts.init(lineChartRef.value);
       const { xAxisData, seriesData } = getLineChartData();
 
@@ -155,6 +160,11 @@ export default defineComponent({
 
     const initPieChart = () => {
       if (!pieChartRef.value) return;
+
+      const existingInstance = echarts.getInstanceByDom(pieChartRef.value);
+      if (existingInstance) {
+        existingInstance.dispose();
+      }
 
       pieChartInstance = echarts.init(pieChartRef.value);
       const pieData = getPieChartData();

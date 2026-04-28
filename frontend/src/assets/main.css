@@ -1,3 +1,4 @@
 @import "tailwindcss";
+@import '../styles/design-system/variables.css';
 @import './claude-tokens.css';
 @import './base.css';

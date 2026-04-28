@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import * as echarts from 'echarts';
 
 interface ChartData {
@@ -12,9 +12,14 @@ const props = defineProps<{
 }>();
 
 const chartRef = ref<HTMLElement>();
+let chartInstance: echarts.ECharts | null = null;
 
 onMounted(() => {
   renderChart();
+});
+
+onUnmounted(() => {
+  chartInstance?.dispose();
 });
 
 watch(() => props.data, () => {
@@ -24,7 +29,12 @@ watch(() => props.data, () => {
 const renderChart = () => {
   if (!chartRef.value) return;
 
-  const chart = echarts.init(chartRef.value);
+  const existingInstance = echarts.getInstanceByDom(chartRef.value);
+  if (existingInstance) {
+    existingInstance.dispose();
+  }
+
+  chartInstance = echarts.init(chartRef.value);
 
   const option = {
     tooltip: {
@@ -67,10 +77,10 @@ const renderChart = () => {
     ]
   };
 
-  chart.setOption(option);
+  chartInstance.setOption(option);
 
   window.addEventListener('resize', () => {
-    chart.resize();
+    chartInstance?.resize();
   });
 };
 </script>

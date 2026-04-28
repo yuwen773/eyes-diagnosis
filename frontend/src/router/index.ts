@@ -69,7 +69,7 @@ const router = createRouter({
         },
         {
           path: 'agent',
-          name: 'Agent助手',
+          name: 'Eye智诊',
           component: () => import('@/pages/agent/AgentChatPage.vue'),
           meta: {
             icon: 'RobotOutlined',

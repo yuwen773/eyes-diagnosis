@@ -19,6 +19,16 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
   function setLoading(value: boolean) {
     loading.value = value;
   }
+
+  // 打开诊断结果 Modal
+  function openResultModal() {
+    loading.value = true;
+  }
+
+  // 关闭诊断结果 Modal
+  function closeResultModal() {
+    loading.value = false;
+  }
   // 保存诊断结果
   function setDiagnosisResult(result: API.DiagnosisResultVO) {
     diagnosisResult.value = result;
@@ -47,6 +57,8 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
     diagnosisResult,
     setDiagnosisResult,
     setLoading,
+    openResultModal,
+    closeResultModal,
     openReportModal
   };
 });

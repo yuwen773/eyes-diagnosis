@@ -78,7 +78,7 @@ const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
     <div class="header-inner">
       <RouterLink to="/" class="header-brand">
         <div class="brand-icon">
-          <img class="logo" src="../assets/logo.png" alt="EyeSight" />
+          <img class="logo" src="../assets/eyesight-logo.svg" alt="EyeSight" />
           <div class="brand-icon-glow"></div>
         </div>
         <div class="brand-text">

@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined } from '@ant-design/icons-vue'
+import { ref, computed } from 'vue'
+import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined, DownOutlined } from '@ant-design/icons-vue'
 import ImageUploader from '@/components/diagnosis/ImageUploader.vue'
 import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 
 const diagnosisStore = useDiagnosisStore()
 const { setLoading } = diagnosisStore
+
+const featuresExpanded = ref(false)
 
 const features = [
   { title: '精准诊断', description: '基于深度学习算法和大量医学数据，提供高精度的眼科疾病诊断', icon: EyeOutlined },
@@ -24,7 +26,11 @@ const onSuccess = (newDiagnosisPicture: API.DiagnosisUploadDTO) => {
 }
 
 const closeModal = () => {
-  setLoading(false)
+  diagnosisStore.closeResultModal()
+}
+
+const toggleFeatures = () => {
+  featuresExpanded.value = !featuresExpanded.value
 }
 </script>
 
@@ -44,9 +50,14 @@ const closeModal = () => {
       </div>
     </section>
 
+    <!-- Features collapsed below fold — user proves value first, then reads claims -->
     <section class="features">
-      <h2 class="features-heading">核心优势</h2>
-      <div class="features-grid">
+      <button class="features-toggle" @click="toggleFeatures" :aria-expanded="featuresExpanded">
+        <span class="features-toggle-text">了解系统优势</span>
+        <DownOutlined class="features-toggle-icon" :class="{ rotated: featuresExpanded }" />
+      </button>
+
+      <div class="features-grid" :class="{ expanded: featuresExpanded }">
         <div
           v-for="(feature, index) in features"
           :key="feature.title"
@@ -183,7 +194,7 @@ const closeModal = () => {
   overflow: hidden;
 }
 
-/* ── Features ── */
+/* ── Features — Collapsible below the fold ── */
 
 .features {
   position: relative;
@@ -193,19 +204,51 @@ const closeModal = () => {
   padding: 0 1.5rem clamp(4rem, 6vh, 6rem);
 }
 
-.features-heading {
-  font-family: var(--claude-font-serif);
-  font-size: 1.375rem;
-  font-weight: 400;
-  color: var(--claude-text-primary);
-  text-align: center;
-  margin: 0 0 2.5rem;
+.features-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 auto 2rem;
+  background: transparent;
+  border: 1px solid var(--claude-border-cream);
+  border-radius: 100px;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  color: var(--claude-text-secondary);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.features-toggle:hover {
+  color: var(--claude-brand);
+  border-color: oklch(0.75 0.06 30 / 0.3);
+  background: oklch(0.75 0.06 30 / 0.05);
+}
+
+.features-toggle-icon {
+  font-size: 0.6875rem;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.features-toggle-icon.rotated {
+  transform: rotate(180deg);
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.25rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  opacity: 0;
+}
+
+.features-grid.expanded {
+  max-height: 800px;
+  opacity: 1;
 }
 
 .feature-item {

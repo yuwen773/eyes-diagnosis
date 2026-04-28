@@ -781,7 +781,7 @@ watch(() => props.loading, (val) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   box-shadow: 0 4px 20px oklch(0.72 0.09 30 / 0.35);
 }
 
@@ -805,7 +805,7 @@ watch(() => props.loading, (val) => {
 
 .scroll-icon {
   flex-shrink: 0;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Unread pulse ring */
@@ -851,7 +851,7 @@ watch(() => props.loading, (val) => {
   background: var(--claude-error);
   box-shadow: 0 0 0 2px var(--claude-bg-page),
     0 2px 8px oklch(0.55 0.18 25 / 0.4);
-  animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: badgePop 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @keyframes badgePop {
@@ -861,7 +861,7 @@ watch(() => props.loading, (val) => {
 
 /* Scroll button reveal animation */
 .scroll-reveal-enter-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .scroll-reveal-leave-active {

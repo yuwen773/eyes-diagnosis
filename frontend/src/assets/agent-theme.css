@@ -71,12 +71,6 @@
   --shadow-md: var(--claude-shadow-md);
   --shadow-lg: var(--claude-shadow-lg);
 
-  /* 磨砂效果 */
-  --glass-bg: rgba(250, 249, 245, 0.85);
-  --glass-bg-light: rgba(250, 249, 245, 0.6);
-  --glass-border: rgba(20, 20, 19, 0.06);
-  --glass-blur: blur(12px);
-  --glass-blur-light: blur(8px);
 
   /* 字体 */
   --text-xs: 0.75rem;

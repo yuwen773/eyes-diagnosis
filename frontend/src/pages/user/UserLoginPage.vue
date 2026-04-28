@@ -26,10 +26,12 @@ const handleSubmit = async (values: any) => {
       }
       await userLoginStore.fetchLoginUser()
       message.success('登录成功')
-      router.push({
-        path: '/',
-        replace: true,
-      })
+      const loginUser = userLoginStore.loginUser
+      if (loginUser?.userRole === 'admin') {
+        router.push({ path: '/admin/dashboard', replace: true })
+      } else {
+        router.push({ path: '/', replace: true })
+      }
     } else {
       message.error('登录失败: ' + res.data.msg)
     }
@@ -47,7 +49,7 @@ const handleSubmit = async (values: any) => {
     <!-- 登录表单卡片 -->
     <div class="login-card">
       <div class="logo-container">
-        <img src="@/assets/logo.png" alt="眼科诊断系统" class="logo">
+        <img src="@/assets/eyesight-logo.svg" alt="眼科诊断系统" class="logo">
         <h1 class="system-name">EyeSight</h1>
       </div>
 
@@ -116,7 +118,7 @@ const handleSubmit = async (values: any) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 90vh;
+  height: 100vh;
   background: url('@/assets/login.png') no-repeat center center fixed;
   background-size: cover;
   position: relative;
@@ -137,15 +139,16 @@ const handleSubmit = async (values: any) => {
 .login-card {
   width: 420px;
   padding: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--claude-bg-elevated);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 1px 2px rgba(201, 100, 66, 0.06),
+    0 4px 8px rgba(201, 100, 66, 0.08),
+    0 12px 24px rgba(201, 100, 66, 0.10);
   z-index: 1;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--claude-border-cream);
 }
 
 .login-card::before {
@@ -164,9 +167,10 @@ const handleSubmit = async (values: any) => {
 }
 
 .logo {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 15px;
+  width: 96px;
+  height: auto;
+  margin: 0 auto 15px;
+  display: block;
 }
 
 .system-name {
@@ -183,7 +187,7 @@ const handleSubmit = async (values: any) => {
 .login-form :deep(.ant-input-affix-wrapper) {
   padding: 10px 15px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--claude-bg-elevated);
 }
 
 .login-form :deep(.ant-input) {

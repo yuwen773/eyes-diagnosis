@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref, watch, computed } from 'vue';
+import { defineComponent, onMounted, onUnmounted, ref, watch, computed } from 'vue';
 import * as echarts from 'echarts';
 
 export default defineComponent({
@@ -37,6 +37,12 @@ export default defineComponent({
 
     const initChart = () => {
       if (!chartRef.value) return;
+
+      // 如果 DOM 上已有实例，先销毁
+      const existingInstance = echarts.getInstanceByDom(chartRef.value);
+      if (existingInstance) {
+        existingInstance.dispose();
+      }
 
       const chart = echarts.init(chartRef.value);
       chartInstance = chart;
@@ -164,6 +170,11 @@ export default defineComponent({
     onMounted(() => {
       initChart();
       window.addEventListener('resize', resizeChart);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeChart);
+      chartInstance?.dispose();
     });
 
     watch(

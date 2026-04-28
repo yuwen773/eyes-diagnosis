@@ -16,7 +16,7 @@
       <div class="footer-brand-section">
         <RouterLink to="/" class="footer-brand">
           <div class="brand-mark">
-            <img src="../assets/logo.png" alt="EyeSight" class="brand-logo" />
+            <img src="../assets/eyesight-logo.svg" alt="EyeSight" class="brand-logo" />
           </div>
           <div class="brand-identity">
             <span class="brand-name">EyeSight</span>

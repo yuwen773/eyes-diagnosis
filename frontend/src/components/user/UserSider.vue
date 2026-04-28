@@ -1,5 +1,21 @@
 <template>
-  <a-layout-sider width="240" class="sider desktop-sider">
+  <a-layout-sider
+    width="240"
+    :collapsedWidth="72"
+    :collapsed="collapsed"
+    class="sider desktop-sider"
+    :trigger="null"
+  >
+    <!-- 折叠切换按钮 -->
+    <button
+      class="collapse-toggle"
+      @click="toggleCollapse"
+      :aria-label="collapsed ? '展开侧边栏' : '折叠侧边栏'"
+    >
+      <MenuFoldOutlined v-if="collapsed" class="collapse-icon" />
+      <MenuUnfoldOutlined v-else class="collapse-icon" />
+    </button>
+
     <!-- 通知铃铛 -->
     <div class="notification-bell" @click="emit('notificationClick')">
       <BellOutlined class="bell-icon" />
@@ -39,37 +55,36 @@
     >
       <a-menu-item key="profile" class="nav-item">
         <template #icon><UserOutlined /></template>
-        <span class="nav-text">个人资料</span>
+        <a-tooltip title="个人资料" placement="right"><span class="nav-text">个人资料</span></a-tooltip>
       </a-menu-item>
       <a-menu-item key="accountSettings" class="nav-item">
         <template #icon><SettingOutlined /></template>
-        <span class="nav-text">账号设置</span>
+        <a-tooltip title="账号设置" placement="right"><span class="nav-text">账号设置</span></a-tooltip>
       </a-menu-item>
       <a-menu-item key="diagnosisHistory" class="nav-item">
         <template #icon><HistoryOutlined /></template>
-        <span class="nav-text">诊断历史</span>
+        <a-tooltip title="诊断历史" placement="right"><span class="nav-text">诊断历史</span></a-tooltip>
       </a-menu-item>
       <a-menu-item key="notification" class="nav-item">
         <template #icon><BellOutlined /></template>
-        <span class="nav-text">通知中心</span>
+        <a-tooltip title="通知中心" placement="right"><span class="nav-text">通知中心</span></a-tooltip>
       </a-menu-item>
     </a-menu>
 
-    <!-- 底部装饰 -->
-    <div class="sider-footer">
-      <div class="footer-decoration"></div>
-    </div>
   </a-layout-sider>
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   UserOutlined,
   SettingOutlined,
   HistoryOutlined,
   BellOutlined,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons-vue'
 
 interface Props {
@@ -84,9 +99,22 @@ const emit = defineEmits<{
   (e: 'update:selectedKeys', keys: string[]): void
   (e: 'notificationClick'): void
   (e: 'avatarClick'): void
+  (e: 'collapse', collapsed: boolean): void
 }>()
 
 const router = useRouter()
+
+// 折叠状态，持久化到 localStorage
+const collapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true')
+
+watch(collapsed, (val) => {
+  localStorage.setItem('sidebar-collapsed', String(val))
+  emit('collapse', val)
+})
+
+const toggleCollapse = () => {
+  collapsed.value = !collapsed.value
+}
 
 const handleMenuClick = ({ key }: { key: string }) => {
   router.push(`/user/userCenter/${key}`)
@@ -103,17 +131,43 @@ const handleMenuClick = ({ key }: { key: string }) => {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.sider::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(180deg, transparent, var(--claude-border-warm), transparent);
+/* === 折叠切换按钮 === */
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 var(--claude-space-6) var(--claude-space-4);
+  padding: var(--claude-space-3);
+  border-radius: var(--claude-radius-md);
+  background: transparent;
+  border: 1px solid var(--claude-border-cream);
+  cursor: pointer;
+  color: var(--claude-text-secondary);
+  transition: all var(--claude-transition-base);
 }
+
+.collapse-toggle:hover {
+  background: var(--claude-bg-hover);
+  border-color: var(--claude-brand);
+  color: var(--claude-brand);
+}
+
+.collapse-icon {
+  font-size: 16px;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desktop-sider.collapsed .collapse-toggle {
+  margin: 0 var(--claude-space-2) var(--claude-space-4);
+}
+
+.desktop-sider.collapsed .collapse-toggle .collapse-icon {
+  transform: rotate(180deg);
+}
+
 
 /* === 通知铃铛 === */
 .notification-bell {
@@ -264,12 +318,12 @@ const handleMenuClick = ({ key }: { key: string }) => {
   position: absolute;
   left: 0;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scaleY(0);
   width: 3px;
-  height: 0;
+  height: 24px;
   background: var(--claude-brand);
   border-radius: 0 2px 2px 0;
-  transition: height var(--claude-transition-base);
+  transition: transform var(--claude-transition-base);
 }
 
 .nav-item:hover {
@@ -277,7 +331,7 @@ const handleMenuClick = ({ key }: { key: string }) => {
 }
 
 .nav-item:hover::before {
-  height: 24px;
+  transform: translateY(-50%) scaleY(1);
 }
 
 .nav-item-selected {
@@ -285,7 +339,7 @@ const handleMenuClick = ({ key }: { key: string }) => {
 }
 
 .nav-item-selected::before {
-  height: 24px;
+  transform: translateY(-50%) scaleY(1);
 }
 
 .nav-item-selected .anticon {
@@ -300,18 +354,6 @@ const handleMenuClick = ({ key }: { key: string }) => {
 .nav-text {
   font-size: 15px;
   margin-left: var(--claude-space-2);
-}
-
-/* === 侧边栏底部 === */
-.sider-footer {
-  padding: var(--claude-space-4) var(--claude-space-6);
-  margin-top: auto;
-}
-
-.footer-decoration {
-  height: 4px;
-  background: linear-gradient(90deg, transparent, var(--claude-border-warm), transparent);
-  border-radius: 2px;
 }
 
 /* === 响应式：中等屏幕侧边栏收缩 === */
