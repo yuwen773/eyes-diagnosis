@@ -59,6 +59,8 @@
             class="history-item"
             :class="{ active: activeId === item.id, selected: selectedIds.has(item.id) }"
             @click="handleItemClick(item)"
+            @mouseenter="showMenuId = item.id"
+            @mouseleave="showMenuId = null"
           >
             <div v-if="multiSelectMode"
                  class="checkbox"
@@ -104,6 +106,15 @@
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
                 </button>
+                <div v-if="showMenuId === item.id && !multiSelectMode && editingId !== item.id" class="hover-menu">
+                  <button class="menu-item" @click.stop="handlePin(item)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L12 22M12 2L7 7M12 2L17 7" v-if="!item.isPinned" />
+                      <path d="M12 2v20M7 7l5-5 5 5" v-if="item.isPinned" />
+                    </svg>
+                    <span>{{ item.isPinned ? '取消置顶' : '置顶' }}</span>
+                  </button>
+                </div>
               </div>
               <span class="history-time">{{ item.time }}</span>
             </div>
@@ -145,12 +156,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
-import { deleteSession, batchDeleteSessions, updateSessionTitle } from '@/api/agentController'
+import { deleteSession, batchDeleteSessions, updateSessionTitle, updatePinStatus } from '@/api/agentController'
 
 export interface HistoryItem {
   id: string
   title: string
   time: string
+  isPinned?: boolean
 }
 
 interface Props {
@@ -175,6 +187,13 @@ const emit = defineEmits<{
 // Multi-select mode
 const multiSelectMode = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
+
+// Hover menu
+const showMenuId = ref<string | null>(null)
+
+const toggleMenu = (id: string) => {
+  showMenuId.value = showMenuId.value === id ? null : id
+}
 
 // Edit state
 const editingId = ref<string | null>(null)
@@ -259,6 +278,19 @@ const handleDelete = (id: string) => {
       }
     }
   })
+}
+
+const handlePin = async (item: HistoryItem) => {
+  try {
+    await updatePinStatus(item.id, !item.isPinned)
+    message.success(item.isPinned ? '已取消置顶' : '已置顶')
+    await props.loadSessions()
+  } catch (e) {
+    console.error('置顶操作失败', e)
+    message.error('操作失败')
+  } finally {
+    showMenuId.value = null
+  }
 }
 
 const handleBatchDelete = async () => {
@@ -813,6 +845,40 @@ const groupedHistories = computed(() => {
 
 .batch-delete-btn:hover {
   background: #dc2626;
+}
+
+/* Hover menu */
+.hover-menu {
+  position: absolute;
+  right: 8px;
+  top: calc(100% + 4px);
+  min-width: 120px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  padding: 4px;
+  z-index: 100;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-item:hover {
+  background: var(--color-bg-hover, var(--color-bg-tertiary));
+  color: var(--color-text-primary);
 }
 
 .footer-btn {

@@ -31,6 +31,7 @@ export interface SessionVO {
   summaryContent: string
   createdTime: string
   updatedTime: string
+  isPinned?: boolean
 }
 
 export interface BaseResponse<T> {
@@ -63,6 +64,17 @@ export const getChatHistory = (threadId: string, beforeId?: number, limit = 40):
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const updatePinStatus = (sessionId: string, pinned: boolean): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/pin`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ pinned }),
     credentials: 'include',
   }).then(res => res.json())
 }
