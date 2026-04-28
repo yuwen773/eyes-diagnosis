@@ -35,12 +35,18 @@ public class ChatHistoryService {
     private final AgentMessageMapper messageMapper;
     private final ObjectMapper objectMapper;
     private AgentConstants agentConstants;
+    private TitleGenerationService titleGenerationService;
 
     @Autowired
     public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper, ObjectMapper objectMapper) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.objectMapper = objectMapper;
+    }
+
+    @Autowired
+    public void setTitleGenerationService(TitleGenerationService titleGenerationService) {
+        this.titleGenerationService = titleGenerationService;
     }
 
     @Resource
@@ -54,6 +60,12 @@ public class ChatHistoryService {
         AgentMessage message = buildMessage(sessionId, "USER", null, content);
         messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
+
+        // 如果是第一条消息，异步触发标题生成
+        AgentSession session = sessionMapper.selectBySessionId(sessionId);
+        if (session != null && session.getMessageCount() == 1) {
+            titleGenerationService.generateTitleAsync(sessionId, content);
+        }
     }
 
     @Async("agentAsyncExecutor")
