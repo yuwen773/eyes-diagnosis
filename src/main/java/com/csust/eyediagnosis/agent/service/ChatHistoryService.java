@@ -122,6 +122,16 @@ public class ChatHistoryService {
         sessionMapper.softDeleteBySessionId(sessionId);
     }
 
+    public int batchDeleteSessions(List<String> sessionIds, Long userId) {
+        // 校验用户拥有所有会话
+        for (String sessionId : sessionIds) {
+            if (!isSessionOwner(sessionId, userId)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除会话: " + sessionId);
+            }
+        }
+        return sessionMapper.batchSoftDelete(sessionIds);
+    }
+
     private void ensureSessionExists(String sessionId, Long userId, String firstMessage) {
         AgentSession existing = sessionMapper.selectBySessionId(sessionId);
         if (existing != null) {

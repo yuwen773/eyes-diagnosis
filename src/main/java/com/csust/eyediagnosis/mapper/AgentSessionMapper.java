@@ -38,4 +38,11 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
 
     @Update("UPDATE t_agent_session SET is_delete = 1, updated_time = NOW() WHERE session_id = #{sessionId}")
     int softDeleteBySessionId(@Param("sessionId") String sessionId);
+
+    @Update("<script>" +
+            "UPDATE t_agent_session SET is_delete = 1, updated_time = NOW() WHERE session_id IN " +
+            "<foreach collection='sessionIds' item='id' open='(' separator=',' close=')'>" +
+            "#{id}</foreach>" +
+            "</script>")
+    int batchSoftDelete(@Param("sessionIds") List<String> sessionIds);
 }

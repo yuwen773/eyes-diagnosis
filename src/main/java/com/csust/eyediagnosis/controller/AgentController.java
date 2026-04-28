@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -118,6 +119,22 @@ public class AgentController {
         }
         chatHistoryService.deleteSession(sessionId, loginUser.getId());
         return ResultUtils.success(true);
+    }
+
+    @DeleteMapping("/sessions/batch")
+    public BaseResponse<Integer> batchDeleteSessions(
+            @RequestBody Map<String, List<String>> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        List<String> sessionIds = body.get("sessionIds");
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "sessionIds 不能为空");
+        }
+        int count = chatHistoryService.batchDeleteSessions(sessionIds, loginUser.getId());
+        return ResultUtils.success(count);
     }
 
     private String toJson(Object obj) {
