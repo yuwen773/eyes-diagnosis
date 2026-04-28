@@ -151,6 +151,23 @@ public class AgentController {
         return ResultUtils.success(true);
     }
 
+    @PutMapping("/sessions/{sessionId}/pin")
+    public BaseResponse<Boolean> updatePinStatus(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, Boolean> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        Boolean pinned = body.get("pinned");
+        if (pinned == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        chatHistoryService.updatePinStatus(sessionId, loginUser.getId(), pinned);
+        return ResultUtils.success(true);
+    }
+
     private String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);

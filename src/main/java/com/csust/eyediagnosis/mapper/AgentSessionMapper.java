@@ -48,4 +48,7 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
 
     @Update("UPDATE t_agent_session SET title = #{title}, updated_time = NOW() WHERE session_id = #{sessionId}")
     int updateTitle(@Param("sessionId") String sessionId, @Param("title") String title);
+
+    @Update("UPDATE t_agent_session SET pinned = #{pinned}, pin_time = #{pinTime}, updated_time = NOW() WHERE session_id = #{sessionId}")
+    int updatePinStatus(@Param("sessionId") String sessionId, @Param("pinned") Integer pinned, @Param("pinTime") Date pinTime);
 }

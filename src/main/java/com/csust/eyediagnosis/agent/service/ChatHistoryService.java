@@ -143,6 +143,13 @@ public class ChatHistoryService {
         sessionMapper.updateTitle(sessionId, title);
     }
 
+    public void updatePinStatus(String sessionId, Long userId, boolean pinned) {
+        if (!isSessionOwner(sessionId, userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        sessionMapper.updatePinStatus(sessionId, pinned ? 1 : 0, pinned ? new Date() : null);
+    }
+
     private void ensureSessionExists(String sessionId, Long userId, String firstMessage) {
         AgentSession existing = sessionMapper.selectBySessionId(sessionId);
         if (existing != null) {
