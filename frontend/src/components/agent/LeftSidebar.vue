@@ -25,13 +25,18 @@
           </svg>
         </button>
       </div>
-      <button class="new-chat-btn" @click="emit('newChat')">
+      <div class="header-actions">
+        <button class="multi-select-btn" @click="toggleMultiSelect" :class="{ active: multiSelectMode }">
+          {{ multiSelectMode ? '取消' : '选择' }}
+        </button>
+        <button class="new-chat-btn" @click="emit('newChat')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
         <span>新对话</span>
       </button>
+      </div>
     </div>
 
     <!-- History list -->
@@ -52,9 +57,14 @@
             v-for="item in group.items"
             :key="item.id"
             class="history-item"
-            :class="{ active: activeId === item.id }"
-            @click="emit('select', item.id)"
+            :class="{ active: activeId === item.id, selected: selectedIds.has(item.id) }"
+            @click="multiSelectMode ? toggleSelect(item.id) : emit('select', item.id)"
           >
+            <div v-if="multiSelectMode" class="checkbox" :class="{ checked: selectedIds.has(item.id) }">
+              <svg v-if="selectedIds.has(item.id)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
             <div class="history-indicator" aria-hidden="true"></div>
             <div class="history-content">
               <span class="history-title">{{ item.title || '新对话' }}</span>
@@ -63,6 +73,12 @@
           </button>
         </div>
       </template>
+    </div>
+
+    <!-- Batch actions -->
+    <div v-if="multiSelectMode && selectedIds.size > 0" class="batch-actions">
+      <span>已选择 {{ selectedIds.size }} 项</span>
+      <button class="batch-delete-btn" @click="handleBatchDelete">删除</button>
     </div>
 
     <!-- Footer -->
@@ -78,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export interface HistoryItem {
   id: string
@@ -102,6 +118,29 @@ const emit = defineEmits<{
   (e: 'collapse'): void
   (e: 'settings'): void
 }>()
+
+// Multi-select mode
+const multiSelectMode = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
+
+const toggleMultiSelect = () => {
+  multiSelectMode.value = !multiSelectMode.value
+  if (!multiSelectMode.value) {
+    selectedIds.value.clear()
+  }
+}
+
+const toggleSelect = (id: string) => {
+  if (selectedIds.value.has(id)) {
+    selectedIds.value.delete(id)
+  } else {
+    selectedIds.value.add(id)
+  }
+}
+
+const handleBatchDelete = () => {
+  console.log('batch delete:', Array.from(selectedIds.value))
+}
 
 const groupedHistories = computed(() => {
   const now = new Date()
@@ -318,6 +357,35 @@ const groupedHistories = computed(() => {
   z-index: 1;
 }
 
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.multi-select-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-default);
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.multi-select-btn:hover {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+}
+
+.multi-select-btn.active {
+  background: var(--color-primary-500);
+  color: white;
+  border-color: var(--color-primary-500);
+}
+
 /* ============ Body ============ */
 .sidebar-body {
   flex: 1;
@@ -435,6 +503,35 @@ const groupedHistories = computed(() => {
   box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.06);
 }
 
+.history-item.selected {
+  background: var(--color-bg-elevated);
+}
+
+.history-item.selected .history-indicator {
+  background: var(--color-primary-500);
+}
+
+/* Checkbox */
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border-default);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 8px;
+  transition: all 0.15s ease;
+  color: white;
+}
+
+.checkbox.checked {
+  background: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
 .history-content {
   display: flex;
   flex-direction: column;
@@ -464,6 +561,38 @@ const groupedHistories = computed(() => {
 .sidebar-footer {
   padding: 10px 14px;
   border-top: 1px solid var(--color-border-subtle);
+  position: relative;
+}
+
+/* Batch actions */
+.batch-actions {
+  position: absolute;
+  bottom: 60px;
+  left: 12px;
+  right: 12px;
+  padding: 10px 14px;
+  background: var(--color-bg-elevated);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  font-size: 13px;
+}
+
+.batch-delete-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.batch-delete-btn:hover {
+  background: #dc2626;
 }
 
 .footer-btn {
