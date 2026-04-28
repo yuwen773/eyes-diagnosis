@@ -49,3 +49,5 @@ skills-lock.json
 __pycache__/
 *.pyc
 *.pyo
+/.zread/
+.zread/
