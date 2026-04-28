@@ -137,6 +137,20 @@ public class AgentController {
         return ResultUtils.success(count);
     }
 
+    @PutMapping("/sessions/{sessionId}/title")
+    public BaseResponse<Boolean> updateSessionTitle(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String title = body.get("title");
+        chatHistoryService.updateSessionTitle(sessionId, loginUser.getId(), title);
+        return ResultUtils.success(true);
+    }
+
     private String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
