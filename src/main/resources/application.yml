@@ -48,6 +48,7 @@ knife4j:
 logging:
   level:
     org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug
+    com.csust.eyediagnosis.service.impl.DocumentProcessingService: info
 
 # 眼科图像分析配置
 eye-diagnosis:

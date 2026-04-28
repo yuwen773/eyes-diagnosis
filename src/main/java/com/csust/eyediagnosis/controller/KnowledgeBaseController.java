@@ -15,6 +15,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/knowledge")
@@ -28,21 +30,21 @@ public class KnowledgeBaseController {
 
     @PostMapping("/upload")
     @AuthCheck
-    public BaseResponse<Long> upload(@ModelAttribute KnowledgeUploadRequest request,
-                                     HttpServletRequest httpRequest) {
-        Long userId = getLoginUserId(httpRequest);
-        Long docId = knowledgeBaseService.uploadDocument(request, userId);
-        return ResultUtils.success(docId);
+    public BaseResponse<List<Long>> upload(@ModelAttribute KnowledgeUploadRequest request,
+                                           HttpServletRequest httpRequest) {
+        Long userId = userService.getLoginUser(httpRequest).getId();
+        List<Long> docIds = knowledgeBaseService.uploadDocument(request, userId);
+        return ResultUtils.success(docIds);
     }
 
     @PostMapping("/list/page")
     @AuthCheck
     public BaseResponse<Page<KnowledgeDocument>> listPage(@RequestBody PageRequest pageRequest,
                                                           HttpServletRequest httpRequest) {
-        Long userId = getLoginUserId(httpRequest);
+        Long userId = userService.getLoginUser(httpRequest).getId();
+
         Page<KnowledgeDocument> page = knowledgeBaseService.lambdaQuery()
                 .eq(KnowledgeDocument::getUserId, userId)
-                .eq(KnowledgeDocument::getIsDelete, 0)
                 .orderByDesc(KnowledgeDocument::getCreateTime)
                 .page(new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize()));
         return ResultUtils.success(page);
@@ -52,12 +54,9 @@ public class KnowledgeBaseController {
     @AuthCheck
     public BaseResponse<Boolean> delete(@RequestBody DeleteRequest deleteRequest,
                                         HttpServletRequest httpRequest) {
-        Long userId = getLoginUserId(httpRequest);
+        Long userId = userService.getLoginUser(httpRequest).getId();
+
         knowledgeBaseService.deleteDocument(deleteRequest.getId(), userId);
         return ResultUtils.success(true);
-    }
-
-    private Long getLoginUserId(HttpServletRequest request) {
-        return (Long) request.getSession().getAttribute("userId");
     }
 }

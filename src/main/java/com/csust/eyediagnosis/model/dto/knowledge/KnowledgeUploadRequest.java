@@ -6,5 +6,5 @@ import org.springframework.web.multipart.MultipartFile;
 @Data
 public class KnowledgeUploadRequest {
     private String title;
-    private MultipartFile file;
+    private MultipartFile[] files;
 }

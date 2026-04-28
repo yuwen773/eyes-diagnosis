@@ -17,7 +17,7 @@ public class DiagnosisGrpcClient {
 
     private final GrpcConfig grpcConfig;
     private ManagedChannel channel;
-    private DiagnosisServiceGrpc.DiagnosisServiceBlockingStub blockingStub;
+    private com.csust.eyediagnosis.grpc.DiagnosisServiceGrpc.DiagnosisServiceBlockingStub blockingStub;
 
     public DiagnosisGrpcClient(GrpcConfig grpcConfig) {
         this.grpcConfig = grpcConfig;
@@ -29,11 +29,11 @@ public class DiagnosisGrpcClient {
                 .forAddress(grpcConfig.getHost(), grpcConfig.getPort())
                 .usePlaintext()
                 .build();
-        blockingStub = DiagnosisServiceGrpc.newBlockingStub(channel);
+        blockingStub = com.csust.eyediagnosis.grpc.DiagnosisServiceGrpc.newBlockingStub(channel);
     }
 
-    public DiagnosisProto.DiagnosisResponse diagnose(byte[] imageData, String imageFormat) {
-        DiagnosisProto.DiagnosisRequest request = DiagnosisProto.DiagnosisRequest.newBuilder()
+    public com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisResponse diagnose(byte[] imageData, String imageFormat) {
+        com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisRequest request = com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisRequest.newBuilder()
                 .setImageData(com.google.protobuf.ByteString.copyFrom(imageData))
                 .setImageFormat(imageFormat)
                 .build();

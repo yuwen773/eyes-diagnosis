@@ -65,12 +65,12 @@ public class DocumentParser {
     }
 
     public Map<String, Object> buildMetadata(String content, String fileUrl, String title, String fileType) {
-        return Map.of(
+        return new java.util.HashMap<>(Map.of(
                 "source", fileUrl,
                 "title", title != null ? title : "",
                 "fileType", fileType != null ? fileType : "",
                 "timestamp", Instant.now().toString(),
                 "contentHash", computeContentHash(content)
-        );
+        ));
     }
 }

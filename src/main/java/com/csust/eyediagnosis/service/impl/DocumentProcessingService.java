@@ -55,36 +55,62 @@ public class DocumentProcessingService {
 
     @Async("agentAsyncExecutor")
     public void processDocument(Long docId, File file, String fileType, String title) {
+        log.info("[ETL] 开始处理文档: docId={}, file={}, fileType={}, title={}", docId, file.getAbsolutePath(), fileType, title);
+        long startTime = System.currentTimeMillis();
         try {
+            // ========== 1. Extract ==========
             String fileUrl = file.getAbsolutePath();
+            log.info("[ETL-Extract] 开始解析文档: fileUrl={}", fileUrl);
+            long extractStart = System.currentTimeMillis();
             List<String> paragraphs = documentParser.parse(fileUrl, fileType);
+            log.info("[ETL-Extract] 文档解析完成: docId={}, 段落数={}, 耗时={}ms", docId, paragraphs.size(), System.currentTimeMillis() - extractStart);
             if (paragraphs.isEmpty()) throw new RuntimeException("文档内容为空");
 
+            // ========== 2. Transform ==========
+            log.info("[ETL-Transform] 开始合并文本并构建 metadata");
+            long transformStart = System.currentTimeMillis();
             String rawText = paragraphs.stream().reduce("", (a, b) -> a + "\n\n" + b).trim();
+            log.info("[ETL-Transform] 文本合并完成: docId={}, 原始文本长度={}字符", docId, rawText.length());
 
-            // 构建丰富的 metadata
+            // 构建 metadata
             Map<String, Object> metadata = documentParser.buildMetadata(rawText, fileUrl, title, fileType);
             metadata.put("docId", docId.toString());
+            log.info("[ETL-Transform] Metadata 构建完成: docId={}, metadata={}", docId, metadata);
 
+            // 文本分块
+            log.info("[ETL-Transform] 开始文本分块: docId={}, 策略=512词滑动窗口", docId);
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);
+            log.info("[ETL-Transform] 文本分块完成: docId={}, chunk数量={}, 耗时={}ms", docId, chunks.size(), System.currentTimeMillis() - transformStart);
 
+            // 为每个 chunk 设置唯一 ID
             for (int i = 0; i < chunks.size(); i++) {
                 String chunkId = "doc_" + docId + "_chunk_" + i;
                 chunks.set(i, new Document(chunkId, chunks.get(i).getText(), chunks.get(i).getMetadata()));
+                log.debug("[ETL-Transform] Chunk[{}]: id={}, text长度={}", i, chunkId, chunks.get(i).getText().length());
             }
 
+            // ========== 3. Load ==========
+            log.info("[ETL-Load] 开始存储到向量数据库: docId={}, chunk数量={}", docId, chunks.size());
+            long loadStart = System.currentTimeMillis();
             if (vectorStore != null) {
                 vectorStore.add(chunks);
+                log.info("[ETL-Load] 向量存储完成: docId={}, 耗时={}ms", docId, System.currentTimeMillis() - loadStart);
+            } else {
+                log.warn("[ETL-Load] VectorStore 未配置，跳过向量存储: docId={}", docId);
             }
 
+            // 更新状态
             updateStatus(docId, 1, chunks.size());
+            log.info("[ETL] 文档处理完成: docId={}, chunkCount={}, 总耗时={}ms", docId, chunks.size(), System.currentTimeMillis() - startTime);
         } catch (Exception e) {
-            log.error("文档处理失败: docId={}", docId, e);
+            log.error("[ETL] 文档处理失败: docId={}, 耗时={}ms, error={}", docId, System.currentTimeMillis() - startTime, e.getMessage(), e);
             updateStatus(docId, 2, null);
         } finally {
             if (file != null && file.exists()) {
                 if (!file.delete()) {
-                    log.warn("临时文件删除失败: {}", file.getAbsolutePath());
+                    log.warn("[ETL] 临时文件删除失败: {}", file.getAbsolutePath());
+                } else {
+                    log.debug("[ETL] 临时文件已删除: {}", file.getAbsolutePath());
                 }
             }
         }

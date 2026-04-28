@@ -14,8 +14,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
@@ -30,54 +35,95 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
     @Resource
     private DocumentProcessingService documentProcessingService;
 
+    private final ExecutorService uploadExecutor = Executors.newFixedThreadPool(
+            Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
+
     @Override
-    public Long uploadDocument(KnowledgeUploadRequest request, Long userId) {
-        MultipartFile file = request.getFile();
-        String originalFilename = file.getOriginalFilename();
-        String fileType = getFileType(originalFilename);
+    public List<Long> uploadDocument(KnowledgeUploadRequest request, Long userId) {
+        MultipartFile[] files = request.getFiles();
+        if (files == null || files.length == 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请选择至少一个文件");
+        }
 
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile("upload_", originalFilename);
-            file.transferTo(tempFile);
+        List<String> failedFiles = new ArrayList<>();
+        String title = request.getTitle();
 
-            // 计算 contentHash 用于去重
-            String contentHash = documentProcessingService.computeContentHash(tempFile);
-
-            // 检查相同用户是否已上传相同内容
-            KnowledgeDocument existing = baseMapper.selectList(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<KnowledgeDocument>()
-                            .eq(KnowledgeDocument::getUserId, userId)
-                            .eq(KnowledgeDocument::getContentHash, contentHash)
-                            .eq(KnowledgeDocument::getIsDelete, 0)
-                            .last("LIMIT 1")
-            ).stream().findFirst().orElse(null);
-
-            if (existing != null) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文档已存在，请勿重复上传");
+        List<CompletableFuture<UploadResult>> futures = new ArrayList<>(files.length);
+        for (MultipartFile file : files) {
+            String originalFilename = file.getOriginalFilename();
+            String fileType;
+            try {
+                fileType = getFileType(originalFilename);
+            } catch (BusinessException e) {
+                failedFiles.add(originalFilename + "（" + e.getMessage() + "）");
+                continue;
             }
 
-            String storedFileName = UUID.randomUUID() + "_" + originalFilename;
-            cosManager.putObject(storedFileName, tempFile);
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                File tempFile = null;
+                try {
+                    tempFile = File.createTempFile("upload_", originalFilename);
+                    file.transferTo(tempFile);
 
-            KnowledgeDocument doc = new KnowledgeDocument();
-            doc.setUserId(userId);
-            doc.setTitle(request.getTitle() != null ? request.getTitle() : originalFilename);
-            doc.setFileName(originalFilename);
-            doc.setFileUrl(storedFileName);
-            doc.setFileSize(file.getSize());
-            doc.setFileType(fileType);
-            doc.setContentHash(contentHash);
-            doc.setStatus(0);
-            baseMapper.insert(doc);
+                    String contentHash = documentProcessingService.computeContentHash(tempFile);
 
-            // 通过 Spring 代理调用，@Async 生效
-            documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle());
+                    KnowledgeDocument existing = baseMapper.selectList(
+                            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<KnowledgeDocument>()
+                                    .eq(KnowledgeDocument::getUserId, userId)
+                                    .eq(KnowledgeDocument::getContentHash, contentHash)
+                                    .last("LIMIT 1")
+                    ).stream().findFirst().orElse(null);
 
-            return doc.getId();
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件上传失败");
+                    if (existing != null) {
+                        return new UploadResult(null, originalFilename, "文档已存在");
+                    }
+
+                    String storedFileName = UUID.randomUUID() + "_" + originalFilename;
+                    cosManager.putObject(storedFileName, tempFile);
+
+                    KnowledgeDocument doc = new KnowledgeDocument();
+                    doc.setUserId(userId);
+                    doc.setTitle(title != null ? title : originalFilename);
+                    doc.setFileName(originalFilename);
+                    doc.setFileUrl(storedFileName);
+                    doc.setFileSize(file.getSize());
+                    doc.setFileType(fileType);
+                    doc.setContentHash(contentHash);
+                    doc.setStatus(0);
+                    baseMapper.insert(doc);
+
+                    documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle());
+                    return new UploadResult(doc.getId(), originalFilename, null);
+                } catch (IOException e) {
+                    log.error("文件上传失败: filename={}", originalFilename, e);
+                    return new UploadResult(null, originalFilename, "上传失败");
+                }
+            }, uploadExecutor));
         }
+
+        List<Long> successIds = new ArrayList<>();
+        for (CompletableFuture<UploadResult> future : futures) {
+            try {
+                UploadResult result = future.join();
+                if (result.docId() != null) {
+                    successIds.add(result.docId());
+                } else {
+                    failedFiles.add(result.filename() + "（" + result.error() + "）");
+                }
+            } catch (Exception e) {
+                log.error("批量上传结果收集异常", e);
+            }
+        }
+
+        if (!failedFiles.isEmpty()) {
+            log.warn("批量上传部分文件失败: {}", failedFiles);
+        }
+
+        if (successIds.isEmpty() && !failedFiles.isEmpty()) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "全部文件上传失败: " + String.join(", ", failedFiles));
+        }
+
+        return successIds;
     }
 
     @Override
@@ -89,24 +135,18 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
         }
         if (!doc.getUserId().equals(userId)) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
 
-        // Delete vectors from ChromaDB
         if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
             try {
                 var vectorStore = documentProcessingService.getVectorStore();
                 if (vectorStore != null) {
-                    var chunkIds = new java.util.ArrayList<String>();
-                    for (int i = 0; i < doc.getChunkCount(); i++) {
-                        chunkIds.add("doc_" + documentId + "_chunk_" + i);
-                    }
-                    vectorStore.delete(chunkIds);
+                    vectorStore.delete(buildChunkIds(documentId, doc.getChunkCount()));
                 }
             } catch (Exception e) {
                 log.warn("向量删除失败，继续删除数据库记录: docId={}", documentId, e);
             }
         }
 
-        doc.setIsDelete(1);
-        baseMapper.updateById(doc);
+        baseMapper.deleteById(doc);
     }
 
     @Override
@@ -118,16 +158,11 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
         }
         if (!doc.getUserId().equals(userId)) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
 
-        // 1. 删除旧向量
         if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
             try {
                 var vectorStore = documentProcessingService.getVectorStore();
                 if (vectorStore != null) {
-                    var chunkIds = new java.util.ArrayList<String>();
-                    for (int i = 0; i < doc.getChunkCount(); i++) {
-                        chunkIds.add("doc_" + documentId + "_chunk_" + i);
-                    }
-                    vectorStore.delete(chunkIds);
+                    vectorStore.delete(buildChunkIds(documentId, doc.getChunkCount()));
                 }
             } catch (Exception e) {
                 log.warn("旧向量删除失败: docId={}", documentId, e);
@@ -172,4 +207,14 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
         }
         return type;
     }
+
+    private List<String> buildChunkIds(Long docId, int chunkCount) {
+        List<String> chunkIds = new ArrayList<>(chunkCount);
+        for (int i = 0; i < chunkCount; i++) {
+            chunkIds.add("doc_" + docId + "_chunk_" + i);
+        }
+        return chunkIds;
+    }
+
+    private record UploadResult(Long docId, String filename, String error) {}
 }
