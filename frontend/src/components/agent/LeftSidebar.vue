@@ -285,11 +285,11 @@ const handlePin = async (item: HistoryItem) => {
     await updatePinStatus(item.id, !item.isPinned)
     message.success(item.isPinned ? '已取消置顶' : '已置顶')
     await props.loadSessions()
+    showMenuId.value = null  // 成功后关闭菜单
   } catch (e) {
     console.error('置顶操作失败', e)
     message.error('操作失败')
-  } finally {
-    showMenuId.value = null
+    // 失败时保持菜单打开，用户可以重试
   }
 }
 
