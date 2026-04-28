@@ -137,8 +137,8 @@ public class ChatHistoryService {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         // 标题长度限制
-        if (title == null || title.length() > 50) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "标题长度不能超过50字");
+        if (title == null || title.isBlank() || title.length() > 50) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "标题不能为空且不能超过50字");
         }
         sessionMapper.updateTitle(sessionId, title);
     }
