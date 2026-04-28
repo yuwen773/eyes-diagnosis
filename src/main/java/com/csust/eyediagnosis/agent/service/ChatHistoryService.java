@@ -169,6 +169,13 @@ public class ChatHistoryService {
         sessionMapper.updatePinStatus(sessionId, pinned ? 1 : 0, pinned ? new Date() : null);
     }
 
+    public void triggerTitleGeneration(String sessionId, Long userId, String firstMessage) {
+        if (!isSessionOwner(sessionId, userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        titleGenerationService.generateTitleAsync(sessionId, firstMessage);
+    }
+
     public String exportSession(String sessionId, Long userId, String format) {
         if (!isSessionOwner(sessionId, userId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);

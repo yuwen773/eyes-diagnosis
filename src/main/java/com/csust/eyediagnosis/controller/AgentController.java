@@ -168,6 +168,20 @@ public class AgentController {
         return ResultUtils.success(true);
     }
 
+    @PostMapping("/sessions/{sessionId}/generate-title")
+    public BaseResponse<Boolean> generateTitle(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String firstMessage = body.get("firstMessage");
+        chatHistoryService.triggerTitleGeneration(sessionId, loginUser.getId(), firstMessage);
+        return ResultUtils.success(true);
+    }
+
     @GetMapping("/history/{sessionId}/export")
     public BaseResponse<String> exportSession(
             @PathVariable String sessionId,

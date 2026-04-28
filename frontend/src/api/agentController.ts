@@ -93,6 +93,24 @@ export const getSessions = (beforeId?: number, limit = 20): Promise<BaseResponse
   }).then(res => res.json())
 }
 
+export const generateTitle = (sessionId: string, firstMessage: string): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/generate-title`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstMessage }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const updateSessionTitle = (sessionId: string, title: string): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/title`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
 export const exportSession = (
   sessionId: string,
   format: 'markdown' | 'json'

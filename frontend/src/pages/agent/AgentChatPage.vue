@@ -114,7 +114,7 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
 import type { ResourceData, ImageResource, LinkResource } from '@/components/agent/types'
 import { useAgentStream, type StreamMessageType } from '@/composables/useAgentStream'
-import { getChatHistory, getSessions, type SessionVO } from '@/api/agentController'
+import { getChatHistory, getSessions, updateSessionTitle, updatePinStatus, generateTitle, type SessionVO } from '@/api/agentController'
 import '@/assets/agent-theme.css'
 
 const THREAD_ID_KEY = 'agent_current_thread_id'
@@ -236,6 +236,13 @@ const handleSend = async (text: string, files: File[] = []) => {
     await sendMessage(text, threadId.value, files.length > 0 ? files : undefined)
     saveThreadId(threadId.value)
     currentThreadId.value = threadId.value
+
+    // 如果是第一条消息，触发 AI 生成标题
+    if (currentThreadId.value && messages.value.length === 0) {
+      generateTitle(currentThreadId.value, text).catch(e => {
+        console.warn('标题生成触发失败', e)
+      })
+    }
   } catch (error) {
     message.error('发送失败，请重试')
   }
