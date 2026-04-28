@@ -168,6 +168,19 @@ public class AgentController {
         return ResultUtils.success(true);
     }
 
+    @GetMapping("/history/{sessionId}/export")
+    public BaseResponse<String> exportSession(
+            @PathVariable String sessionId,
+            @RequestParam(defaultValue = "markdown") String format,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String content = chatHistoryService.exportSession(sessionId, loginUser.getId(), format);
+        return ResultUtils.success(content);
+    }
+
     private String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);

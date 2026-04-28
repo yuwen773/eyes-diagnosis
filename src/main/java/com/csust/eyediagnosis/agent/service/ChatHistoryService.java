@@ -19,8 +19,13 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -148,6 +153,50 @@ public class ChatHistoryService {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         sessionMapper.updatePinStatus(sessionId, pinned ? 1 : 0, pinned ? new Date() : null);
+    }
+
+    public String exportSession(String sessionId, Long userId, String format) {
+        if (!isSessionOwner(sessionId, userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        List<AgentMessage> messages = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, 1000);
+        AgentSession session = sessionMapper.selectBySessionId(sessionId);
+
+        if ("json".equalsIgnoreCase(format)) {
+            return exportAsJson(session, messages);
+        } else {
+            return exportAsMarkdown(session, messages);
+        }
+    }
+
+    private String exportAsJson(AgentSession session, List<AgentMessage> messages) throws JsonProcessingException {
+        Map<String, Object> result = new HashMap<>();
+        result.put("sessionId", session.getSessionId());
+        result.put("title", session.getTitle());
+        result.put("createdAt", session.getCreatedTime());
+        result.put("messages", messages.stream().map(m -> {
+            Map<String, Object> msg = new HashMap<>();
+            msg.put("role", m.getRole());
+            msg.put("content", m.getContent());
+            msg.put("time", m.getCreatedTime());
+            return msg;
+        }).toList());
+        return new ObjectMapper().writeValueAsString(result);
+    }
+
+    private String exportAsMarkdown(AgentSession session, List<AgentMessage> messages) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ").append(session.getTitle()).append("\n\n");
+        sb.append("会话 ID: ").append(session.getSessionId()).append("\n");
+        sb.append("创建时间: ").append(session.getCreatedTime()).append("\n\n");
+        sb.append("---\n\n");
+        for (AgentMessage m : messages) {
+            String role = "USER".equals(m.getRole()) ? "用户" : "AI";
+            sb.append("## ").append(role).append("\n");
+            sb.append(m.getContent()).append("\n\n");
+            sb.append("*").append(m.getCreatedTime()).append("*\n\n");
+        }
+        return sb.toString();
     }
 
     private void ensureSessionExists(String sessionId, Long userId, String firstMessage) {
