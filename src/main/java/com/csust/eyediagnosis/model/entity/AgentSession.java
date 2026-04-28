@@ -24,4 +24,6 @@ public class AgentSession {
     private Date expiredTime;
     @TableLogic
     private Integer isDelete;
+    private Integer pinned;  // 默认 0，是否置顶
+    private Date pinTime;    // 置顶时间
 }

@@ -139,6 +139,8 @@ CREATE TABLE IF NOT EXISTS t_agent_session (
     updatedTime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     expiredTime DATETIME COMMENT '过期时间',
     isDelete INT DEFAULT 0 COMMENT '逻辑删除',
+    pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否置顶：0-否，1-是',
+    pinTime DATETIME COMMENT '置顶时间',
     INDEX idx_userId (userId),
     INDEX idx_sessionId (sessionId)
 ) COMMENT 'Agent会话表' COLLATE = utf8mb4_unicode_ci;
