@@ -33,12 +33,14 @@ public class ChatHistoryService {
 
     private final AgentSessionMapper sessionMapper;
     private final AgentMessageMapper messageMapper;
+    private final ObjectMapper objectMapper;
     private AgentConstants agentConstants;
 
     @Autowired
-    public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper) {
+    public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper, ObjectMapper objectMapper) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
+        this.objectMapper = objectMapper;
     }
 
     @Resource
@@ -162,10 +164,15 @@ public class ChatHistoryService {
         List<AgentMessage> messages = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, 1000);
         AgentSession session = sessionMapper.selectBySessionId(sessionId);
 
-        if ("json".equalsIgnoreCase(format)) {
-            return exportAsJson(session, messages);
-        } else {
-            return exportAsMarkdown(session, messages);
+        try {
+            if ("json".equalsIgnoreCase(format)) {
+                return exportAsJson(session, messages);
+            } else {
+                return exportAsMarkdown(session, messages);
+            }
+        } catch (JsonProcessingException e) {
+            log.error("导出会话失败, sessionId={}", sessionId, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "导出失败");
         }
     }
 
@@ -181,7 +188,7 @@ public class ChatHistoryService {
             msg.put("time", m.getCreatedTime());
             return msg;
         }).toList());
-        return new ObjectMapper().writeValueAsString(result);
+        return this.objectMapper.writeValueAsString(result);
     }
 
     private String exportAsMarkdown(AgentSession session, List<AgentMessage> messages) {
@@ -193,7 +200,7 @@ public class ChatHistoryService {
         for (AgentMessage m : messages) {
             String role = "USER".equals(m.getRole()) ? "用户" : "AI";
             sb.append("## ").append(role).append("\n");
-            sb.append(m.getContent()).append("\n\n");
+            sb.append(escapeMarkdown(m.getContent())).append("\n\n");
             sb.append("*").append(m.getCreatedTime()).append("*\n\n");
         }
         return sb.toString();
@@ -219,6 +226,17 @@ public class ChatHistoryService {
         } catch (DuplicateKeyException e) {
             log.debug("Session 已存在（并发创建）, sessionId={}", sessionId);
         }
+    }
+
+    private String escapeMarkdown(String text) {
+        if (text == null) return "";
+        return text
+            .replace("\\", "\\\\")
+            .replace("#", "\\#")
+            .replace("*", "\\*")
+            .replace("`", "\\`")
+            .replace(">", "\\>")
+            .replace("-", "\\-");
     }
 
     private String truncate(String content) {
