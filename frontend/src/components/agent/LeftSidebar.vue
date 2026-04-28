@@ -78,6 +78,17 @@
               <span class="history-title">{{ item.title || '新对话' }}</span>
               <span class="history-time">{{ item.time }}</span>
             </div>
+            <button
+              v-if="!multiSelectMode"
+              class="delete-btn"
+              @click.stop="handleDelete(item.id)"
+              title="删除"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
           </button>
         </div>
       </template>
@@ -103,6 +114,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Modal, message } from 'ant-design-vue'
+import { deleteSession, batchDeleteSessions } from '@/api/agentController'
 
 export interface HistoryItem {
   id: string
@@ -113,11 +126,13 @@ export interface HistoryItem {
 interface Props {
   histories: HistoryItem[]
   activeId?: string
+  loadSessions?: () => Promise<void>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   histories: () => [],
   activeId: '',
+  loadSessions: async () => {}
 })
 
 const emit = defineEmits<{
@@ -146,8 +161,45 @@ const toggleSelect = (id: string) => {
   }
 }
 
-const handleBatchDelete = () => {
-  console.log('batch delete:', Array.from(selectedIds.value))
+const handleDelete = (id: string) => {
+  Modal.confirm({
+    title: '确定删除该会话？',
+    content: '删除后可从回收站恢复',
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        await deleteSession(id)
+        message.success('会话已删除')
+        await loadSessions()
+      } catch (e) {
+        message.error('删除失败')
+      }
+    }
+  })
+}
+
+const handleBatchDelete = async () => {
+  const count = selectedIds.value.size
+  Modal.confirm({
+    title: `确定删除选中的 ${count} 个会话？`,
+    content: '删除后可从回收站恢复',
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        await batchDeleteSessions(Array.from(selectedIds.value))
+        message.success(`${count} 个会话已删除`)
+        multiSelectMode.value = false
+        selectedIds.value.clear()
+        await loadSessions()
+      } catch (e) {
+        message.error('批量删除失败')
+      }
+    }
+  })
 }
 
 const groupedHistories = computed(() => {
@@ -563,6 +615,34 @@ const groupedHistories = computed(() => {
   font-size: 11px;
   color: var(--color-text-tertiary);
   font-variant-numeric: tabular-nums;
+}
+
+.delete-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 /* ============ Footer ============ */
