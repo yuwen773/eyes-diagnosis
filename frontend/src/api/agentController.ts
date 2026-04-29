@@ -31,6 +31,7 @@ export interface SessionVO {
   summaryContent: string
   createdTime: string
   updatedTime: string
+  isPinned?: boolean
 }
 
 export interface BaseResponse<T> {
@@ -67,6 +68,17 @@ export const getChatHistory = (threadId: string, beforeId?: number, limit = 40):
   }).then(res => res.json())
 }
 
+export const updatePinStatus = (sessionId: string, pinned: boolean): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/pin`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ pinned }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
 export const getSessions = (beforeId?: number, limit = 20): Promise<BaseResponse<SessionVO[]>> => {
   let url = `${BASE_URL}/agent/sessions?limit=${limit}`
   if (beforeId) {
@@ -77,6 +89,34 @@ export const getSessions = (beforeId?: number, limit = 20): Promise<BaseResponse
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const generateTitle = (sessionId: string, firstMessage: string): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/generate-title`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstMessage }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const updateSessionTitle = (sessionId: string, title: string): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}/title`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const exportSession = (
+  sessionId: string,
+  format: 'markdown' | 'json'
+): Promise<BaseResponse<string>> => {
+  return fetch(`${BASE_URL}/agent/history/${sessionId}/export?format=${format}`, {
+    method: 'GET',
     credentials: 'include',
   }).then(res => res.json())
 }

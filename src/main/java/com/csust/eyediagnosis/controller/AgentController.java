@@ -24,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -106,6 +107,92 @@ public class AgentController {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
         return ResultUtils.success(chatHistoryService.getUserSessions(loginUser.getId(), beforeId, Math.min(limit, 100)));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public BaseResponse<Boolean> deleteSession(
+            @PathVariable String sessionId,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        chatHistoryService.deleteSession(sessionId, loginUser.getId());
+        return ResultUtils.success(true);
+    }
+
+    @DeleteMapping("/sessions/batch")
+    public BaseResponse<Integer> batchDeleteSessions(
+            @RequestBody Map<String, List<String>> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        List<String> sessionIds = body.get("sessionIds");
+        if (sessionIds == null || sessionIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "sessionIds 不能为空");
+        }
+        int count = chatHistoryService.batchDeleteSessions(sessionIds, loginUser.getId());
+        return ResultUtils.success(count);
+    }
+
+    @PutMapping("/sessions/{sessionId}/title")
+    public BaseResponse<Boolean> updateSessionTitle(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String title = body.get("title");
+        chatHistoryService.updateSessionTitle(sessionId, loginUser.getId(), title);
+        return ResultUtils.success(true);
+    }
+
+    @PutMapping("/sessions/{sessionId}/pin")
+    public BaseResponse<Boolean> updatePinStatus(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, Boolean> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        Boolean pinned = body.get("pinned");
+        if (pinned == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        chatHistoryService.updatePinStatus(sessionId, loginUser.getId(), pinned);
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/sessions/{sessionId}/generate-title")
+    public BaseResponse<Boolean> generateTitle(
+            @PathVariable String sessionId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String firstMessage = body.get("firstMessage");
+        chatHistoryService.triggerTitleGeneration(sessionId, loginUser.getId(), firstMessage);
+        return ResultUtils.success(true);
+    }
+
+    @GetMapping("/history/{sessionId}/export")
+    public BaseResponse<String> exportSession(
+            @PathVariable String sessionId,
+            @RequestParam(defaultValue = "markdown") String format,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        String content = chatHistoryService.exportSession(sessionId, loginUser.getId(), format);
+        return ResultUtils.success(content);
     }
 
     private String toJson(Object obj) {
