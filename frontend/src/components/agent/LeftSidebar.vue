@@ -500,7 +500,7 @@ const groupedHistories = computed(() => {
 }
 
 .collapse-btn:hover {
-  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
   color: var(--claude-text-secondary);
 }
 
@@ -701,7 +701,7 @@ const groupedHistories = computed(() => {
 }
 
 .history-item:hover {
-  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
 }
 
 .history-item.active {
@@ -921,7 +921,7 @@ const groupedHistories = computed(() => {
 }
 
 .menu-item:hover {
-  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
   color: var(--claude-text-primary);
 }
 
@@ -940,7 +940,7 @@ const groupedHistories = computed(() => {
 }
 
 .footer-btn:hover {
-  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
   color: var(--claude-text-secondary);
 }
 </style>
