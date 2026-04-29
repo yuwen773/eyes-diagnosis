@@ -398,14 +398,14 @@ const groupedHistories = computed(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-secondary);
-  border-right: 1px solid var(--color-border-subtle);
+  background: var(--claude-bg-secondary);
+  border-right: 1px solid var(--claude-border-subtle);
 }
 
 /* ============ Header ============ */
 .sidebar-header {
   padding: 16px 14px 12px;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--claude-border-subtle);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -429,14 +429,14 @@ const groupedHistories = computed(() => {
 }
 
 .mark-line {
-  stroke: var(--color-primary-500);
+  stroke: var(--claude-brand);
   stroke-width: 1.2;
   opacity: 0.35;
   stroke-linecap: round;
 }
 
 .mark-node {
-  fill: var(--color-primary-500);
+  fill: var(--claude-brand);
   opacity: 0.9;
 }
 
@@ -475,10 +475,10 @@ const groupedHistories = computed(() => {
 }
 
 .brand-name {
-  font-family: var(--font-display);
+  font-family: var(--claude-font-serif);
   font-size: 15px;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--claude-text-primary);
   letter-spacing: -0.02em;
   flex: 1;
 }
@@ -493,15 +493,15 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .collapse-btn:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
+  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-secondary);
 }
 
 [data-theme="aurora"] .collapse-btn:hover {
@@ -521,10 +521,10 @@ const groupedHistories = computed(() => {
   width: 100%;
   padding: 9px 12px;
   border-radius: 10px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--claude-border-default);
   background: transparent;
-  color: var(--color-text-secondary);
-  font-family: var(--font-body);
+  color: var(--claude-text-secondary);
+  font-family: var(--claude-font-sans);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -551,8 +551,8 @@ const groupedHistories = computed(() => {
 }
 
 .new-chat-btn:hover {
-  border-color: var(--color-primary-500);
-  color: var(--color-primary-500);
+  border-color: var(--claude-brand);
+  color: var(--claude-brand);
   transform: translateY(-1px);
 }
 
@@ -588,23 +588,23 @@ const groupedHistories = computed(() => {
 .multi-select-btn {
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid var(--claude-border-default);
   background: transparent;
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .multi-select-btn:hover {
-  border-color: var(--color-primary-500);
-  color: var(--color-primary-500);
+  border-color: var(--claude-brand);
+  color: var(--claude-brand);
 }
 
 .multi-select-btn.active {
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
   color: white;
-  border-color: var(--color-primary-500);
+  border-color: var(--claude-brand);
 }
 
 /* ============ Body ============ */
@@ -628,7 +628,7 @@ const groupedHistories = computed(() => {
 }
 
 .sidebar-body::-webkit-scrollbar-thumb {
-  background: var(--color-border-default);
+  background: var(--claude-border-default);
   border-radius: 4px;
 }
 
@@ -646,16 +646,16 @@ const groupedHistories = computed(() => {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--color-bg-tertiary);
+  background: var(--claude-bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
 }
 
 .empty-text {
   font-size: 13px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   letter-spacing: 0.01em;
 }
 
@@ -667,7 +667,7 @@ const groupedHistories = computed(() => {
 .group-label {
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 8px 12px 4px;
@@ -701,19 +701,19 @@ const groupedHistories = computed(() => {
 }
 
 .history-item:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
+  background: var(--color-bg-hover, var(--claude-bg-tertiary));
 }
 
 .history-item.active {
-  background: var(--color-bg-elevated);
+  background: var(--claude-bg-elevated);
 }
 
 .history-item.active .history-indicator {
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
 }
 
 .history-item.active .history-title {
-  color: var(--color-primary-500);
+  color: var(--claude-brand);
 }
 
 [data-theme="aurora"] .history-item.active {
@@ -725,11 +725,11 @@ const groupedHistories = computed(() => {
 }
 
 .history-item.selected {
-  background: var(--color-bg-elevated);
+  background: var(--claude-bg-elevated);
 }
 
 .history-item.selected .history-indicator {
-  background: var(--color-primary-500);
+  background: var(--claude-brand);
 }
 
 /* Checkbox */
@@ -737,7 +737,7 @@ const groupedHistories = computed(() => {
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  border: 1.5px solid var(--color-border-default);
+  border: 1.5px solid var(--claude-border-default);
   background: transparent;
   display: flex;
   align-items: center;
@@ -749,8 +749,8 @@ const groupedHistories = computed(() => {
 }
 
 .checkbox.checked {
-  background: var(--color-primary-500);
-  border-color: var(--color-primary-500);
+  background: var(--claude-brand);
+  border-color: var(--claude-brand);
 }
 
 .history-content {
@@ -821,7 +821,7 @@ const groupedHistories = computed(() => {
 
 .history-time {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -835,7 +835,7 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s;
@@ -856,7 +856,7 @@ const groupedHistories = computed(() => {
 /* ============ Footer ============ */
 .sidebar-footer {
   padding: 10px 14px;
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--claude-border-subtle);
   position: relative;
 }
 
@@ -867,12 +867,12 @@ const groupedHistories = computed(() => {
   left: 12px;
   right: 12px;
   padding: 10px 14px;
-  background: var(--color-bg-elevated);
+  background: var(--claude-bg-elevated);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--claude-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
   font-size: 13px;
 }
 
@@ -897,10 +897,10 @@ const groupedHistories = computed(() => {
   right: 8px;
   top: calc(100% + 4px);
   min-width: 120px;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-default);
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-default);
   border-radius: 8px;
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--claude-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
   padding: 4px;
   z-index: 100;
 }
@@ -914,15 +914,15 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--claude-text-secondary);
   font-size: 13px;
   cursor: pointer;
   text-align: left;
 }
 
 .menu-item:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-primary);
+  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-primary);
 }
 
 .footer-btn {
@@ -934,13 +934,13 @@ const groupedHistories = computed(() => {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .footer-btn:hover {
-  background: var(--color-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
+  background: var(--color-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-secondary);
 }
 </style>
