@@ -7,15 +7,20 @@
         <a-radio-button value="30">近30天</a-radio-button>
         <a-radio-button value="90">近90天</a-radio-button>
       </a-radio-group>
+      <div class="spacer"></div>
+      <a-button type="primary" ghost @click="handleRefresh">
+        <template #icon><ReloadOutlined /></template>
+        刷新数据
+      </a-button>
     </div>
 
     <!-- Stats: 4列横向 -->
     <section class="stats-hero">
-      <div v-for="(stat, index) in stats" :key="index" class="stat-card" :class="{ 'stat-card--primary': index === 0 }">
-        <div v-if="index === 0" class="stat-indicator"></div>
-        <div class="stat-value">{{ stat.value }}</div>
-        <div class="stat-label">{{ stat.label }}</div>
-      </div>
+      <StatsCard
+        v-for="(stat, index) in stats"
+        :key="index"
+        v-bind="stat"
+      />
     </section>
 
     <!-- Charts: 2:1 布局 -->
@@ -37,6 +42,14 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { 
+  BarChartOutlined, 
+  CheckCircleOutlined, 
+  AimOutlined, 
+  ThunderboltOutlined,
+  ReloadOutlined
+} from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 import StatsCard from '@/components/tables/StatsCard.vue'
 import LineChart from '@/components/tables/LineChart.vue'
 import PieChart from '@/components/tables/PieChart.vue'
@@ -45,11 +58,45 @@ import BarChart from '@/components/tables/BarChart.vue'
 // TODO: replace mock data with API calls
 const timeRange = ref<string>('30')
 
+const handleRefresh = () => {
+  const hide = message.loading('正在刷新数据...', 0)
+  // 模拟异步请求
+  setTimeout(() => {
+    hide()
+    message.success('数据已更新')
+  }, 800)
+}
+
 const stats = reactive([
-  { label: '总诊断数', value: 8452 },
-  { label: '确诊数', value: 7891 },
-  { label: '准确率', value: '98.7%' },
-  { label: '平均诊断速度', value: '2.3s' },
+  { 
+    label: '总诊断数', 
+    value: 8452, 
+    icon: BarChartOutlined, 
+    trend: 12.5, 
+    color: 'primary' 
+  },
+  { 
+    label: '确诊数', 
+    value: 7891, 
+    icon: CheckCircleOutlined, 
+    trend: 8.2, 
+    color: 'success' 
+  },
+  { 
+    label: '准确率', 
+    value: '98.7%', 
+    icon: AimOutlined, 
+    trend: 0.5, 
+    color: 'warning' 
+  },
+  { 
+    label: '平均诊断速度', 
+    value: '2.3s', 
+    icon: ThunderboltOutlined, 
+    trend: -15.4, 
+    trendLabel: '较上月优化', 
+    color: 'error' 
+  },
 ])
 
 const diagnosisTrend = reactive({
@@ -117,53 +164,15 @@ const userActivity = reactive({
   box-shadow: var(--claude-shadow-sm);
 }
 
+.spacer {
+  flex: 1;
+}
+
 /* ── Stats: 4列横向 ── */
 .stats-hero {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--claude-space-4);
-}
-
-.stat-card {
-  background: var(--claude-bg-card);
-  border-radius: var(--claude-radius-lg);
-  padding: var(--claude-space-5);
-  box-shadow: var(--claude-shadow-sm);
-}
-
-.stat-card--primary {
-  background: linear-gradient(135deg, var(--claude-brand) 0%, var(--claude-brand-dark) 100%);
-  color: var(--claude-text-inverse);
-}
-
-.stat-indicator {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-  border-radius: 50%;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--claude-text-primary);
-}
-
-.stat-card--primary .stat-value {
-  color: inherit;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--claude-text-secondary);
-  margin-top: var(--claude-space-2);
-}
-
-.stat-card--primary .stat-label {
-  color: rgba(255,255,255,0.85);
 }
 
 /* ── Charts ── */
