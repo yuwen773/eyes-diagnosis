@@ -13,3 +13,14 @@ output=$("$SCRIPT" --help 2>&1) || { echo "FAIL: --help exited non-zero"; exit 1
 echo "$output" | grep -q "Usage:" || { echo "FAIL: --help missing 'Usage:'"; exit 1; }
 echo "$output" | grep -q -- "--dry-run" || { echo "FAIL: --help missing --dry-run flag"; exit 1; }
 echo "PASS: test_help"
+
+# --- 测试 2: 不传任何参数 + skip-github 应运行完整流程但不发网络请求 ---
+# 在仓库根目录跑（--skip-github 避免任何 gh 调用）
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+output=$(cd "$ROOT_DIR" && "$SCRIPT" --dry-run --skip-github 2>&1) || \
+  { echo "FAIL: dry-run exited non-zero"; echo "$output"; exit 1; }
+echo "$output" | grep -q "DRY RUN" || { echo "FAIL: missing DRY RUN marker"; echo "$output"; exit 1; }
+echo "$output" | grep -q "gh api.*default_branch=master" || { echo "FAIL: missing default_branch patch"; exit 1; }
+echo "$output" | grep -q "gh repo edit.*--add-topic spring-ai" || { echo "FAIL: missing topic spring-ai"; exit 1; }
+echo "$output" | grep -q "gh repo edit.*--add-topic mcp" || { echo "FAIL: missing topic mcp"; exit 1; }
+echo "PASS: test_dry_run"
