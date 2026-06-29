@@ -5,20 +5,26 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <!-- 连线 -->
-            <line x1="12" y1="3" x2="4" y2="9" class="mark-line mark-line-1" />
-            <line x1="12" y1="3" x2="20" y2="9" class="mark-line mark-line-2" />
-            <line x1="4" y1="9" x2="12" y2="21" class="mark-line mark-line-3" />
-            <line x1="20" y1="9" x2="12" y2="21" class="mark-line mark-line-4" />
-            <line x1="4" y1="9" x2="20" y2="9" class="mark-line mark-line-5" />
-            <!-- 节点 -->
-            <circle cx="12" cy="3" r="2" class="mark-node mark-node-top" />
-            <circle cx="4" cy="9" r="1.6" class="mark-node mark-node-left" />
-            <circle cx="20" cy="9" r="1.6" class="mark-node mark-node-right" />
-            <circle cx="12" cy="21" r="2.4" class="mark-node mark-node-core" />
+            <!-- 眼睛轮廓 -->
+            <path d="M2 12C2 12 6 5 12 5C18 5 22 12 22 12C22 12 18 19 12 19C6 19 2 12 2 12Z" class="eye-outline" />
+            <!-- 瞳孔/内核 -->
+            <circle cx="12" cy="12" r="2.5" class="pupil" />
+            <!-- 神经网络脉冲：从瞳孔向外 -->
+            <line x1="12" y1="9.5" x2="12" y2="7" class="pulse-line pl-1" />
+            <circle cx="12" cy="6.5" r="0.8" class="pulse-dot pd-1" />
+            <line x1="14.3" y1="10.5" x2="16.2" y2="9.3" class="pulse-line pl-2" />
+            <circle cx="16.6" cy="8.9" r="0.8" class="pulse-dot pd-2" />
+            <line x1="14.3" y1="13.5" x2="16.2" y2="14.7" class="pulse-line pl-3" />
+            <circle cx="16.6" cy="15.1" r="0.8" class="pulse-dot pd-3" />
+            <line x1="12" y1="14.5" x2="12" y2="17" class="pulse-line pl-4" />
+            <circle cx="12" cy="17.5" r="0.8" class="pulse-dot pd-4" />
+            <line x1="9.7" y1="13.5" x2="7.8" y2="14.7" class="pulse-line pl-5" />
+            <circle cx="7.4" cy="15.1" r="0.8" class="pulse-dot pd-5" />
+            <line x1="9.7" y1="10.5" x2="7.8" y2="9.3" class="pulse-line pl-6" />
+            <circle cx="7.4" cy="8.9" r="0.8" class="pulse-dot pd-6" />
           </svg>
         </div>
-        <span class="brand-name">SpaceMind</span>
+        <span class="brand-name">EyeSight</span>
         <button class="collapse-btn" @click="emit('collapse')" aria-label="收起侧边栏" title="收起侧边栏">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -59,8 +65,6 @@
             class="history-item"
             :class="{ active: activeId === item.id, selected: selectedIds.has(item.id) }"
             @click="handleItemClick(item)"
-            @mouseenter="showMenuId = item.id"
-            @mouseleave="showMenuId = null"
           >
             <div v-if="multiSelectMode"
                  class="checkbox"
@@ -77,73 +81,106 @@
             </div>
             <div class="history-indicator" aria-hidden="true"></div>
             <div class="history-content">
-              <div class="history-title-wrap">
+              <div class="history-title-wrap" :class="{ editing: editingId === item.id }">
                 <span
                   v-if="editingId !== item.id"
                   class="history-title"
-                  @dblclick="startEdit(item)"
                 >
                   {{ item.title || '新对话' }}
                 </span>
-                <input
-                  v-else
-                  v-model="editingTitle"
-                  class="title-input"
-                  @keyup.enter="saveEdit"
-                  @keyup.esc="cancelEdit"
-                  @blur="saveEdit"
-                  maxlength="50"
-                  autofocus
-                />
-                <button
-                  v-if="!multiSelectMode && editingId !== item.id"
-                  class="edit-btn"
-                  @click.stop="startEdit(item)"
-                  title="重命名"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-                <div v-if="showMenuId === item.id && !multiSelectMode && editingId !== item.id" class="hover-menu">
-                  <button class="menu-item" @click.stop="handlePin(item)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 2L12 22M12 2L7 7M12 2L17 7" v-if="!item.isPinned" />
-                      <path d="M12 2v20M7 7l5-5 5 5" v-if="item.isPinned" />
+                <div v-else class="title-edit-wrap">
+                  <input
+                    v-model="editingTitle"
+                    class="title-input"
+                    @keyup.enter.stop="saveEdit"
+                    @keyup.esc.stop="cancelEdit"
+                    maxlength="50"
+                    ref="titleInputRef"
+                  />
+                  <button class="title-action-btn confirm" @click.stop="saveEdit" title="保存">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <span>{{ item.isPinned ? '取消置顶' : '置顶' }}</span>
                   </button>
-                  <button class="menu-item" @click.stop="handleExport(item, 'markdown')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
+                  <button class="title-action-btn cancel" @click.stop="cancelEdit" title="取消">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
-                    <span>导出 Markdown</span>
-                  </button>
-                  <button class="menu-item" @click.stop="handleExport(item, 'json')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    <span>导出 JSON</span>
                   </button>
                 </div>
+                <button
+                  v-if="!multiSelectMode && editingId !== item.id"
+                  class="more-btn"
+                  @click.stop="toggleMenu(item.id, $event)"
+                  title="更多操作"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </button>
+                <Teleport to="body" v-if="showMenuId === item.id">
+                  <div class="hover-menu" :style="getMenuStyle(item.id)" @click.stop>
+                    <button class="menu-item" @click.stop="handleRename(item)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      <span>重命名</span>
+                    </button>
+                    <button class="menu-item" @click.stop="handlePin(item)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L12 22M12 2L7 7M12 2L17 7" v-if="!item.isPinned" />
+                        <path d="M12 2v20M7 7l5-5 5 5" v-if="item.isPinned" />
+                      </svg>
+                      <span>{{ item.isPinned ? '取消置顶' : '置顶' }}</span>
+                    </button>
+                    <div class="menu-item has-submenu" @click.stop>
+                      <div class="submenu-trigger">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>导出</span>
+                        <svg class="submenu-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </div>
+                      <div class="submenu" :style="getMenuStyle(item.id)">
+                        <button class="menu-item" @click.stop="handleExport(item, 'markdown')">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                          </svg>
+                          <span>Markdown</span>
+                        </button>
+                        <button class="menu-item" @click.stop="handleExport(item, 'json')">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <path d="M8 13h2M8 17h2M14 13h2M14 17h2" />
+                          </svg>
+                          <span>JSON</span>
+                        </button>
+                      </div>
+                    </div>
+                    <button class="menu-item danger" @click.stop="handleDelete(item.id)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                      <span>删除</span>
+                    </button>
+                  </div>
+                </Teleport>
               </div>
               <span class="history-time">{{ item.time }}</span>
             </div>
-            <button
-              v-if="!multiSelectMode"
-              class="delete-btn"
-              :disabled="deleting"
-              @click.stop="handleDelete(item.id)"
-              title="删除"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </button>
           </button>
         </div>
       </template>
@@ -168,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, nextTick } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import { deleteSession, batchDeleteSessions, updateSessionTitle, updatePinStatus, exportSession } from '@/api/agentController'
 
@@ -204,36 +241,69 @@ const selectedIds = ref<Set<string>>(new Set())
 
 // Hover menu
 const showMenuId = ref<string | null>(null)
+const menuPositions = ref<Record<string, { top: number; left: number }>>({})
 
-const toggleMenu = (id: string) => {
-  showMenuId.value = showMenuId.value === id ? null : id
+const toggleMenu = (id: string, event?: MouseEvent) => {
+  if (showMenuId.value === id) {
+    showMenuId.value = null
+  } else {
+    if (event?.target) {
+      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      // 菜单从按钮左下角弹出，避免贴边
+      menuPositions.value[id] = { top: rect.bottom + 4, left: rect.left }
+    }
+    showMenuId.value = id
+  }
+}
+
+const getMenuStyle = (id: string) => {
+  const pos = menuPositions.value[id]
+  if (!pos) return {}
+  return {
+    position: 'fixed' as const,
+    top: `${pos.top}px`,
+    left: `${pos.left}px`,
+    maxWidth: '160px'
+  }
+}
+
+const handleRename = (item: HistoryItem) => {
+  showMenuId.value = null
+  startEdit(item)
 }
 
 // Edit state
 const editingId = ref<string | null>(null)
 const editingTitle = ref('')
+const titleInputRef = ref<HTMLInputElement | null>(null)
+const saving = ref(false)
 
-const startEdit = (item: HistoryItem) => {
+const startEdit = async (item: HistoryItem) => {
   editingId.value = item.id
   editingTitle.value = item.title || ''
+  await nextTick()
+  titleInputRef.value?.focus()
 }
 
 const saveEdit = async () => {
-  if (editingId.value) {
+  if (editingId.value && !saving.value) {
     const newTitle = editingTitle.value.trim()
-    if (newTitle) {
-      try {
-        await updateSessionTitle(editingId.value, newTitle)
-        await props.loadSessions()
-      } catch (e) {
-        console.error('更新标题失败', e)
-        message.error('更新标题失败，请重试')
-      }
-    } else {
+    if (!newTitle) {
       message.warning('标题不能为空')
+      return
     }
-    editingId.value = null
-    editingTitle.value = ''
+    saving.value = true
+    try {
+      await updateSessionTitle(editingId.value, newTitle)
+      await props.loadSessions()
+    } catch (e) {
+      console.error('更新标题失败', e)
+      message.error('更新标题失败，请重试')
+    } finally {
+      saving.value = false
+      editingId.value = null
+      editingTitle.value = ''
+    }
   }
 }
 
@@ -243,9 +313,24 @@ const cancelEdit = () => {
 }
 
 const handleItemClick = (item: HistoryItem) => {
-  // 如果正在编辑其他项，先取消
+  // 正在编辑该项本身 → 忽略点击
+  if (editingId.value === item.id) {
+    return
+  }
+  // 正在编辑其他项时点击 → 弹出确认防丢失
   if (editingId.value && editingId.value !== item.id) {
-    cancelEdit()
+    Modal.confirm({
+      title: '还有未保存的修改',
+      content: '是否放弃当前修改？',
+      okText: '放弃',
+      okType: 'danger',
+      cancelText: '继续编辑',
+      onOk() {
+        cancelEdit()
+        emit('select', item.id)
+      },
+    })
+    return
   }
   if (multiSelectMode.value) {
     toggleSelect(item.id)
@@ -311,21 +396,22 @@ const sanitizeFilename = (name: string): string => {
   return name.replace(/[/\\:*?"<>|]/g, '_').substring(0, 50)
 }
 
-const handleExport = async (item: HistoryItem, format: 'markdown' | 'json') => {
+const handleExport = async (item: HistoryItem, format: 'markdown' | 'json' = 'markdown') => {
   try {
     const res = await exportSession(item.id, format)
     if (res.code === 0) {
-      const blob = new Blob([res.data], { type: 'text/plain;charset=utf-8' })
+      const blob = new Blob([res.data], { type: format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      const filename = `${sanitizeFilename(item.title || '会话')}_${Date.now()}.${format === 'json' ? 'json' : 'md'}`
+      const ext = format === 'json' ? 'json' : 'md'
+      const filename = `${sanitizeFilename(item.title || '会话')}_${Date.now()}.${ext}`
       a.download = filename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      message.success(`已导出为 ${format === 'json' ? 'JSON' : 'Markdown'}`)
+      message.success('已导出')
     } else {
       message.error('导出失败')
     }
@@ -428,50 +514,63 @@ const groupedHistories = computed(() => {
   justify-content: center;
 }
 
-.mark-line {
+.brand-mark svg {
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+}
+
+.eye-outline {
+  stroke: var(--claude-brand);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pupil {
+  fill: var(--claude-brand);
+}
+
+.pulse-line {
   stroke: var(--claude-brand);
   stroke-width: 1.2;
-  opacity: 0.35;
   stroke-linecap: round;
+  opacity: 0.5;
 }
 
-.mark-node {
+.pulse-dot {
   fill: var(--claude-brand);
-  opacity: 0.9;
+  opacity: 0.6;
 }
 
-.mark-node-core {
-  fill: url(#markGrad);
-  opacity: 1;
-  animation: nodeBreath 3s ease-in-out infinite;
+.pl-1 { animation: pulse 2s ease-in-out 0s infinite; }
+.pl-2 { animation: pulse 2s ease-in-out 0.15s infinite; }
+.pl-3 { animation: pulse 2s ease-in-out 0.3s infinite; }
+.pl-4 { animation: pulse 2s ease-in-out 0.45s infinite; }
+.pl-5 { animation: pulse 2s ease-in-out 0.6s infinite; }
+.pl-6 { animation: pulse 2s ease-in-out 0.75s infinite; }
+
+.pd-1 { animation: pulse 2s ease-in-out 0s infinite; }
+.pd-2 { animation: pulse 2s ease-in-out 0.15s infinite; }
+.pd-3 { animation: pulse 2s ease-in-out 0.3s infinite; }
+.pd-4 { animation: pulse 2s ease-in-out 0.45s infinite; }
+.pd-5 { animation: pulse 2s ease-in-out 0.6s infinite; }
+.pd-6 { animation: pulse 2s ease-in-out 0.75s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
 }
 
-[data-theme="aurora"] .mark-node-core {
-  filter: drop-shadow(0 0 4px rgba(34, 104, 245, 0.5));
+[data-theme="aurora"] .pulse-dot,
+[data-theme="aurora"] .pupil {
+  filter: drop-shadow(0 0 3px rgba(34, 104, 245, 0.6));
 }
 
-[data-theme="pop"] .mark-node-core {
-  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
-}
-
-.mark-line-1 { animation: lineFade 4s ease-in-out 0s infinite; }
-.mark-line-2 { animation: lineFade 4s ease-in-out 0.5s infinite; }
-.mark-line-3 { animation: lineFade 4s ease-in-out 1s infinite; }
-.mark-line-4 { animation: lineFade 4s ease-in-out 1.5s infinite; }
-.mark-line-5 { animation: lineFade 4s ease-in-out 2s infinite; }
-
-.mark-node-top { animation: nodeBreath 3s ease-in-out 0s infinite; }
-.mark-node-left { animation: nodeBreath 3s ease-in-out 0.4s infinite; }
-.mark-node-right { animation: nodeBreath 3s ease-in-out 0.8s infinite; }
-
-@keyframes nodeBreath {
-  0%, 100% { opacity: 0.7; transform-origin: center; }
-  50% { opacity: 1; }
-}
-
-@keyframes lineFade {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.6; }
+[data-theme="pop"] .pulse-dot,
+[data-theme="pop"] .pupil {
+  filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.6));
 }
 
 .brand-name {
@@ -582,29 +681,33 @@ const groupedHistories = computed(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .multi-select-btn {
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid var(--claude-border-default);
+  border: none;
   background: transparent;
   font-size: 12px;
-  color: var(--claude-text-secondary);
+  color: var(--claude-text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .multi-select-btn:hover {
-  border-color: var(--claude-brand);
-  color: var(--claude-brand);
+  color: var(--claude-text-secondary);
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
 }
 
 .multi-select-btn.active {
-  background: var(--claude-brand);
-  color: white;
-  border-color: var(--claude-brand);
+  color: var(--claude-brand);
+  background: transparent;
 }
 
 /* ============ Body ============ */
@@ -736,8 +839,8 @@ const groupedHistories = computed(() => {
 .checkbox {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
-  border: 1.5px solid var(--claude-border-default);
+  border-radius: 6px;
+  border: 2px solid var(--claude-ring-warm);
   background: transparent;
   display: flex;
   align-items: center;
@@ -767,6 +870,14 @@ const groupedHistories = computed(() => {
   gap: 6px;
   flex: 1;
   min-width: 0;
+  position: relative;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.history-title-wrap.editing {
+  background: var(--claude-bg-elevated);
+  padding-right: 4px;
 }
 
 .history-title {
@@ -774,27 +885,63 @@ const groupedHistories = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: text;
+}
+
+.title-edit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 .title-input {
   flex: 1;
   min-width: 0;
-  padding: 2px 6px;
-  border: 1px solid var(--claude-brand);
-  border-radius: 4px;
+  padding: 4px 8px;
+  border: 2px solid var(--claude-brand);
+  border-radius: 6px;
   background: var(--claude-bg-page);
   color: var(--claude-text-primary);
   font-size: 13px;
   font-family: inherit;
   outline: none;
+  box-shadow: 0 0 0 3px oklch(0.72 0.09 30 / 0.12);
 }
 
-.title-input:focus {
-  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.15);
+.title-action-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
 
-.edit-btn {
+.title-action-btn.confirm {
+  background: var(--claude-brand);
+  color: white;
+}
+
+.title-action-btn.confirm:hover {
+  background: color-mix(in oklch, var(--claude-brand) 85%, black);
+}
+
+.title-action-btn.cancel {
+  background: var(--claude-bg-tertiary);
+  color: var(--claude-text-secondary);
+}
+
+.title-action-btn.cancel:hover {
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-primary);
+}
+
+.more-btn {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
@@ -810,11 +957,11 @@ const groupedHistories = computed(() => {
   justify-content: center;
 }
 
-.history-item:hover .edit-btn {
+.history-item:hover .more-btn {
   opacity: 1;
 }
 
-.edit-btn:hover {
+.more-btn:hover {
   background: var(--claude-bg-hover, var(--claude-bg-tertiary));
   color: var(--claude-text-secondary);
 }
@@ -823,34 +970,6 @@ const groupedHistories = computed(() => {
   font-size: 11px;
   color: var(--claude-text-tertiary);
   font-variant-numeric: tabular-nums;
-}
-
-.delete-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--claude-text-tertiary);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.history-item:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  background: #fee2e2;
-  color: #ef4444;
 }
 
 /* ============ Footer ============ */
@@ -893,16 +1012,57 @@ const groupedHistories = computed(() => {
 
 /* Hover menu */
 .hover-menu {
+  min-width: 120px;
+  max-width: 160px;
+  background: var(--claude-bg-elevated);
+  border: 1px solid var(--claude-border-default);
+  border-radius: 8px;
+  box-shadow: var(--claude-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  padding: 4px;
+}
+
+.has-submenu {
+  position: relative;
+}
+
+.submenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--claude-text-secondary);
+  font-size: 13px;
+}
+
+.submenu-trigger:hover {
+  background: var(--claude-bg-hover, var(--claude-bg-tertiary));
+  color: var(--claude-text-primary);
+}
+
+.submenu-arrow {
+  margin-left: auto;
+}
+
+.submenu {
   position: absolute;
-  right: 8px;
-  top: calc(100% + 4px);
+  left: 100%;
+  top: 0;
+  margin-left: 4px;
   min-width: 120px;
   background: var(--claude-bg-elevated);
   border: 1px solid var(--claude-border-default);
   border-radius: 8px;
   box-shadow: var(--claude-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
   padding: 4px;
-  z-index: 100;
+  display: none;
+  z-index: 1000;
+}
+
+.has-submenu:hover .submenu {
+  display: block;
 }
 
 .menu-item {
@@ -918,11 +1078,22 @@ const groupedHistories = computed(() => {
   font-size: 13px;
   cursor: pointer;
   text-align: left;
+  word-break: keep-all;
+  white-space: nowrap;
 }
 
 .menu-item:hover {
   background: var(--claude-bg-hover, var(--claude-bg-tertiary));
   color: var(--claude-text-primary);
+}
+
+.menu-item.danger {
+  color: #ef4444;
+}
+
+.menu-item.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .footer-btn {
