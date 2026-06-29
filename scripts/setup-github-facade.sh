@@ -125,7 +125,7 @@ upload_social_preview() {
 verify() {
   local state
   state=$(gh repo view "${EXPECTED_OWNER}/${EXPECTED_REPO}" \
-    --json defaultBranch,description,repositoryTopics,openGraphImageUrl 2>/dev/null) || {
+    --json defaultBranchRef,description,repositoryTopics,openGraphImageUrl 2>/dev/null) || {
     echo "ERROR: verify failed to read repo state" >&2; exit 3; }
 
   local actual_branch actual_desc actual_topics actual_og
