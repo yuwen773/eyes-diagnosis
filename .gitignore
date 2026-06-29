@@ -1,5 +1,7 @@
 ### custom
 application-local.yml
+application-server.yml
+/src/main/resources/application-server.yml
 /tmp/
 
 HELP.md
