@@ -8,26 +8,28 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
   const reportModalVisible = ref(false)
   const currentReport  = ref<API.DiagnosisResultVO>()
 
-  // const diagnosisResult = ref<DiagnosisResult | null>(null);
-  const loading = ref(false);
-  //诊断图片
+  // 诊断结果 Modal 是否可见
+  const resultModalVisible = ref(false);
+  // 是否正在分析中
+  const isAnalyzing = ref(false);
+  // 诊断图片
   const imageUrl = ref<string>('');
-  //诊断结果
+  // 诊断结果
   const diagnosisResult = ref<API.DiagnosisResultVO>()
 
-  //设置加载中
-  function setLoading(value: boolean) {
-    loading.value = value;
+  // 设置分析状态
+  function setAnalyzing(value: boolean) {
+    isAnalyzing.value = value;
   }
 
   // 打开诊断结果 Modal
   function openResultModal() {
-    loading.value = true;
+    resultModalVisible.value = true;
   }
 
   // 关闭诊断结果 Modal
   function closeResultModal() {
-    loading.value = false;
+    resultModalVisible.value = false;
   }
   // 保存诊断结果
   function setDiagnosisResult(result: API.DiagnosisResultVO) {
@@ -52,11 +54,12 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
   return {
     reportModalVisible,
     currentReport,
-    loading,
+    resultModalVisible,
+    isAnalyzing,
     imageUrl,
     diagnosisResult,
     setDiagnosisResult,
-    setLoading,
+    setAnalyzing,
     openResultModal,
     closeResultModal,
     openReportModal

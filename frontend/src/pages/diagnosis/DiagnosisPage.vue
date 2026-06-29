@@ -6,7 +6,7 @@ import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue'
 import { useDiagnosisStore } from '@/stores/diagnosis'
 
 const diagnosisStore = useDiagnosisStore()
-const { setLoading } = diagnosisStore
+const { setAnalyzing } = diagnosisStore
 
 const featuresExpanded = ref(false)
 
@@ -76,7 +76,7 @@ const toggleFeatures = () => {
     </section>
 
     <a-modal
-      v-model:open="diagnosisStore.loading"
+      v-model:open="diagnosisStore.resultModalVisible"
       title="诊断结果"
       width="80%"
       :footer="null"

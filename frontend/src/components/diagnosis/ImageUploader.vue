@@ -277,7 +277,7 @@ const retryDiagnosis = () => {
 }
 
 // 监听 modal 关闭，重置成功状态
-watch(() => diagnosisStore.loading, (isOpen) => {
+watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
   if (!isOpen && diagnoseStage.value === 'success') {
     resetDiagnosisState()
   }
