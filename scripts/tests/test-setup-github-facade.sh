@@ -24,3 +24,13 @@ echo "$output" | grep -q "gh api.*default_branch=master" || { echo "FAIL: missin
 echo "$output" | grep -q "gh repo edit.*--add-topic spring-ai" || { echo "FAIL: missing topic spring-ai"; exit 1; }
 echo "$output" | grep -q "gh repo edit.*--add-topic mcp" || { echo "FAIL: missing topic mcp"; exit 1; }
 echo "PASS: test_dry_run"
+
+# --- 测试 3: 仓库根目录的 LICENSE 必须与 fixture 一致 ---
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+LICENSE="${ROOT_DIR}/LICENSE"
+FIXTURE="${SCRIPT_DIR}/fixtures/expected-MIT.txt"
+test -f "$LICENSE" || { echo "FAIL: LICENSE missing at repo root"; exit 1; }
+test -f "$FIXTURE" || { echo "FAIL: fixture missing: $FIXTURE"; exit 1; }
+diff -q "$LICENSE" "$FIXTURE" >/dev/null || \
+  { echo "FAIL: LICENSE content differs from fixture"; diff "$LICENSE" "$FIXTURE" | head -20; exit 1; }
+echo "PASS: test_license_content"

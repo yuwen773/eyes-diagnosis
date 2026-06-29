@@ -66,7 +66,7 @@ switch_default_branch() {
     return 0
   fi
   local current
-  current=$(gh repo view "${EXPECTED_OWNER}/${EXPECTED_REPO}" --json defaultBranch -q '.defaultBranch' 2>/dev/null || echo "")
+  current=$(gh repo view "${EXPECTED_OWNER}/${EXPECTED_REPO}" --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || echo "")
   if [[ "$current" == "$EXPECTED_DEFAULT_BRANCH" ]]; then
     echo "[skip] default branch already $EXPECTED_DEFAULT_BRANCH"
     return 0
@@ -129,7 +129,7 @@ verify() {
     echo "ERROR: verify failed to read repo state" >&2; exit 3; }
 
   local actual_branch actual_desc actual_topics actual_og
-  actual_branch=$(echo "$state" | jq -r '.defaultBranch')
+  actual_branch=$(echo "$state" | jq -r '.defaultBranchRef.name')
   actual_desc=$(echo "$state" | jq -r '.description')
   actual_topics=$(echo "$state" | jq -r '.repositoryTopics[]?.name' | sort | tr '\n' ',')
   actual_og=$(echo "$state" | jq -r '.openGraphImageUrl // ""')
@@ -170,7 +170,9 @@ main() {
   switch_default_branch || exit 2
   set_metadata || { echo "ERROR: gh repo edit failed" >&2; exit 2; }
   upload_social_preview || exit 2
-  if ! $SKIP_GITHUB; then
+  if $DRY_RUN; then
+    echo "[dry-run] skipping verify (no actual changes to assert)"
+  elif ! $SKIP_GITHUB; then
     verify
   else
     echo "[skip-github] skipping verify"
