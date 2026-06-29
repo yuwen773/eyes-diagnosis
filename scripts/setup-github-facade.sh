@@ -62,7 +62,7 @@ switch_default_branch() {
   if $DRY_RUN; then
     # NOTE: dry-run 模式跳过 live `gh repo view` 预检查，保持 dry-run 真正不连网。
     # 若需看到 `[skip] already master` 行为，去掉此 early-return（会引入 1 次 live read-only 调用）。
-    run_gh api -X PATCH "/repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" -f "default_branch=${EXPECTED_DEFAULT_BRANCH}"
+    run_gh api -X PATCH "repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" -f "default_branch=${EXPECTED_DEFAULT_BRANCH}"
     return 0
   fi
   local current
@@ -73,7 +73,7 @@ switch_default_branch() {
   fi
   local attempt=0 max=3
   while (( attempt < max )); do
-    if run_gh api -X PATCH "/repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" -f "default_branch=${EXPECTED_DEFAULT_BRANCH}"; then
+    if run_gh api -X PATCH "repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" -f "default_branch=${EXPECTED_DEFAULT_BRANCH}"; then
       return 0
     fi
     attempt=$((attempt+1))
@@ -97,7 +97,7 @@ set_metadata() {
 upload_social_preview() {
   if $DRY_RUN; then
     # dry-run：直接打印 gh 命令，不进入 $(...) 捕获路径
-    run_gh api -X POST "/repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" \
+    run_gh api -X POST "repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" \
       -H "Accept: application/vnd.github+json" \
       -F "image=@${SOCIAL_PREVIEW_PATH}"
     return 0
@@ -108,7 +108,7 @@ upload_social_preview() {
   fi
   # 真实模式：捕获输出以便处理 422 already-exists
   local out
-  out=$(gh api -X POST "/repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" \
+  out=$(gh api -X POST "repos/${EXPECTED_OWNER}/${EXPECTED_REPO}" \
     -H "Accept: application/vnd.github+json" \
     -F "image=@${SOCIAL_PREVIEW_PATH}" 2>&1) || {
     if echo "$out" | grep -q "already exists\|422"; then
