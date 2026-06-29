@@ -79,6 +79,22 @@ export const updatePinStatus = (sessionId: string, pinned: boolean): Promise<Bas
   }).then(res => res.json())
 }
 
+export const deleteSession = (sessionId: string): Promise<BaseResponse<boolean>> => {
+  return fetch(`${BASE_URL}/agent/sessions/${sessionId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
+export const batchDeleteSessions = (sessionIds: string[]): Promise<BaseResponse<number>> => {
+  return fetch(`${BASE_URL}/agent/sessions/batch`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionIds }),
+    credentials: 'include',
+  }).then(res => res.json())
+}
+
 export const getSessions = (beforeId?: number, limit = 20): Promise<BaseResponse<SessionVO[]>> => {
   let url = `${BASE_URL}/agent/sessions?limit=${limit}`
   if (beforeId) {
@@ -119,4 +135,38 @@ export const exportSession = (
     method: 'GET',
     credentials: 'include',
   }).then(res => res.json())
+}
+
+// ============ 图片上传相关 ============
+
+/**
+ * 上传 Agent 聊天图片，返回公开 URL
+ * POST /api/agent/image/upload
+ */
+export async function uploadAgentImage(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await fetch(`${BASE_URL}/agent/image/upload`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  })
+  const json = await res.json()
+  if (json.code !== 0) {
+    throw new Error(json.msg || '图片上传失败')
+  }
+  return json.data as string
+}
+
+/**
+ * 删除已上传的 Agent 聊天图片
+ * POST /api/agent/image/upload/delete
+ */
+export async function deleteAgentImage(url: string): Promise<void> {
+  await fetch(`${BASE_URL}/agent/image/upload/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+    credentials: 'include',
+  })
 }

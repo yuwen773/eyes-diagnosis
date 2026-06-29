@@ -49,7 +49,11 @@ const isSafeUrl = (url: string): boolean => {
   return /^https?:\/\//i.test(url.trim())
 }
 
+// 优先使用 props.images，兼容旧的内容解析方式
 const parsedImages = computed<ParsedImage[]>(() => {
+  if (props.images && props.images.length > 0) {
+    return props.images.map(url => ({ url }))
+  }
   if (!props.content) return []
   const urls: ParsedImage[] = []
   const regex = new RegExp(IMAGE_TAG_REGEX.source, 'g')

@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
+import { uploadAgentImage, deleteAgentImage } from '@/api/agentController'
 
 export interface MessageDTO {
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'reasoning'
@@ -23,6 +24,7 @@ export interface StreamMessage {
   toolName?: string
   toolCalls?: ToolCallArg[]
   time?: string
+  images?: string[]
 }
 
 export function useAgentStream() {
@@ -74,7 +76,6 @@ export function useAgentStream() {
 
   const sendMessage = async (message: string, threadId: string, files?: File[]) => {
     isStreaming.value = true
-    reset()
     abortController = new AbortController()
 
     const baseUrl = import.meta.env.VITE_APP_API_BASE_URL || 'http://localhost:8081'
@@ -85,8 +86,16 @@ export function useAgentStream() {
     let streamContent = ''
     let lastAssistantContent = ''
 
-    // 图片上传（eye-diagnosis 使用 COS 直传，暂不在此处理）
-    const uploadedUrls: string[] = []
+    // Step 1: 上传所有图片，拿到 URL
+    let uploadedUrls: string[] = []
+    if (files && files.length > 0) {
+      try {
+        uploadedUrls = await Promise.all(files.map(f => uploadAgentImage(f)))
+      } catch (e) {
+        isStreaming.value = false
+        throw new Error('图片上传失败，无法发送消息')
+      }
+    }
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     const body = JSON.stringify({
@@ -201,6 +210,12 @@ export function useAgentStream() {
     } finally {
       isStreaming.value = false
       abortController = null
+      // 发送失败时清理已上传的图片
+      if (uploadedUrls.length > 0) {
+        for (const url of uploadedUrls) {
+          deleteAgentImage(url).catch(() => {})
+        }
+      }
     }
   }
 

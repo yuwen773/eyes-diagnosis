@@ -125,7 +125,7 @@ const THREAD_ID_KEY = 'agent_current_thread_id'
 const DATE_LOCALE = 'zh-CN'
 const TIME_OPTIONS = { hour: '2-digit', minute: '2-digit' } as const
 
-const generateThreadId = () => crypto.randomUUID()
+const generateThreadId = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
 const loadThreadId = (): string => {
   return localStorage.getItem(THREAD_ID_KEY) || ''
@@ -229,11 +229,24 @@ const totalResourceCount = computed(() => panelImages.value.length + panelLinks.
 const handleSend = async (text: string, files: File[] = []) => {
   if ((!text.trim() && files.length === 0) || streaming.value) return
 
+  // 上传图片并获取 URLs
+  let imageUrls: string[] = []
+  if (files && files.length > 0) {
+    try {
+      const { uploadAgentImage } = await import('@/api/agentController')
+      imageUrls = await Promise.all(files.map(f => uploadAgentImage(f)))
+    } catch (e) {
+      message.error('图片上传失败，无法发送消息')
+      return
+    }
+  }
+
   pushMessage({
     type: 'user',
     content: text,
     node: 'user',
     time: new Date().toLocaleTimeString(DATE_LOCALE, TIME_OPTIONS),
+    images: imageUrls,
   })
 
   try {

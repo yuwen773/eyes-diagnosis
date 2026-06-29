@@ -115,7 +115,7 @@
       <!-- Messages -->
       <template v-for="(msg, index) in messages" :key="index">
         <div class="msg-animate">
-          <UserMessage v-if="msg.type === 'user'" :content="msg.content" :time="msg.time" />
+          <UserMessage v-if="msg.type === 'user'" :content="msg.content" :time="msg.time" :images="msg.images" />
           <ReasoningMessage v-else-if="msg.type === 'reasoning'" :content="msg.content" />
           <AssistantMessage
   v-else-if="msg.type === 'assistant'"
