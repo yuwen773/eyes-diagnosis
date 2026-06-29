@@ -38,8 +38,8 @@ public class VectorStoreConfig {
     @Bean
     public VectorStore chromaVectorStore(EmbeddingModel dashscopeEmbeddingModel, ChromaApi chromaApi) {
         return ChromaVectorStore.builder(chromaApi, dashscopeEmbeddingModel)
-                .tenantName("eye-diagnosis-knowledge")
-                .databaseName("eye-diagnosis-knowledge")
+                .tenantName("default_tenant")
+                .databaseName("default_database")
                 .collectionName(collectionName)
                 .initializeSchema(true)
                 .initializeImmediately(true)
