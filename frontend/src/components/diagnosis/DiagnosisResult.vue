@@ -38,6 +38,20 @@
     </template>
 
     <template v-else>
+      <!-- 操作按钮栏 -->
+      <div class="action-bar">
+        <a-space>
+          <a-button type="primary" ghost @click="handleExportPDF">
+            <template #icon><FilePdfOutlined /></template>
+            导出 PDF 报告
+          </a-button>
+          <a-button @click="handleExportCSV">
+            <template #icon><FileTextOutlined /></template>
+            导出 CSV 数据
+          </a-button>
+        </a-space>
+      </div>
+
       <!-- 顶部诊断结果 -->
       <a-card class="top-section">
         <a-row :gutter="24">
@@ -186,14 +200,30 @@ import {
   OrderedListOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  DownloadOutlined,
+  FilePdfOutlined,
+  FileTextOutlined
 } from '@ant-design/icons-vue';
 import PieChart from '@/components/tables/DiagnosisPie.vue';
 import { useDiagnosisStore } from '@/stores/diagnosis'
 import { storeToRefs } from 'pinia'
+import { exportToPDF, exportToCSV } from '@/utils/exportUtils'
 
 const diagnosisStore = useDiagnosisStore();
 const { diagnosisResult } = storeToRefs(diagnosisStore)
+
+const handleExportPDF = () => {
+  if (diagnosisResult.value) {
+    exportToPDF(diagnosisResult.value)
+  }
+}
+
+const handleExportCSV = () => {
+  if (diagnosisResult.value) {
+    exportToCSV(diagnosisResult.value)
+  }
+}
 
 const recommendations = computed(() => {
   const recs = diagnosisResult?.value?.recommendations
@@ -344,6 +374,12 @@ const screenReaderSummary = computed(() => {
   gap: var(--claude-space-4);
   padding: var(--claude-space-5);
   background-color: var(--claude-bg-page);
+}
+
+.action-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--claude-space-2);
 }
 
 /* 骨架屏特定样式 */
