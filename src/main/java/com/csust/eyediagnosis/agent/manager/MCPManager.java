@@ -1,5 +1,7 @@
 package com.csust.eyediagnosis.agent.manager;
 
+import com.csust.eyediagnosis.agent.exception.McpOverloadException;
+import com.csust.eyediagnosis.agent.exception.McpTimeoutException;
 import com.csust.eyediagnosis.agent.policy.McpConnectionPolicy;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.csust.eyediagnosis.model.dto.mcp.*;
@@ -10,8 +12,9 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +24,6 @@ import java.util.concurrent.*;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class MCPManager {
 
     private static final String TOOLS_CACHE_PREFIX = "mcp:tools:";
@@ -29,7 +31,22 @@ public class MCPManager {
 
     private final StringRedisTemplate redisTemplate;
     private final McpConnectionPolicy mcpConnectionPolicy;
-    private final ExecutorService mcpExecutor = Executors.newCachedThreadPool();
+    private final ExecutorService mcpExecutor;
+    private final long toolCallTimeoutSeconds;
+    private final int perServerMaxInFlight;
+    private final Map<String, Semaphore> perServerGates = new ConcurrentHashMap<>();
+
+    public MCPManager(StringRedisTemplate redisTemplate,
+                      McpConnectionPolicy mcpConnectionPolicy,
+                      @Qualifier("mcpExecutor") ThreadPoolExecutor mcpExecutor,
+                      @Value("${mcp.tool-timeout-seconds:30}") long toolCallTimeoutSeconds,
+                      @Value("${mcp.executor.per-server-max:8}") int perServerMaxInFlight) {
+        this.redisTemplate = redisTemplate;
+        this.mcpConnectionPolicy = mcpConnectionPolicy;
+        this.mcpExecutor = mcpExecutor;
+        this.toolCallTimeoutSeconds = toolCallTimeoutSeconds;
+        this.perServerMaxInFlight = perServerMaxInFlight;
+    }
 
     /**
      * 创建 MCP 客户端（仅支持远端 HTTPS 来源；用户配置禁止 STDIO）。
@@ -121,9 +138,34 @@ public class MCPManager {
     }
 
     public McpServerCallToolResponse callTool(McpServerCallToolRequest request, McpServer entity) {
+        Semaphore gate = perServerGates.computeIfAbsent(entity.getMcpServerCode(),
+                key -> new Semaphore(Math.max(1, perServerMaxInFlight)));
+        if (!gate.tryAcquire()) {
+            throw new McpOverloadException("MCP server busy: " + entity.getMcpServerCode());
+        }
+        Future<McpServerCallToolResponse> future = mcpExecutor.submit(() -> doCallTool(request, entity));
+        try {
+            return future.get(toolCallTimeoutSeconds, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            throw new McpTimeoutException("tool timeout: " + request.getToolName());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new McpTimeoutException("tool interrupted: " + request.getToolName());
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            if (cause instanceof RuntimeException re) {
+                throw re;
+            }
+            throw new McpTimeoutException("tool failed: " + cause.getMessage());
+        } finally {
+            gate.release();
+        }
+    }
+
+    private McpServerCallToolResponse doCallTool(McpServerCallToolRequest request, McpServer entity) {
         McpSyncClient client = getMcpSyncClient(entity);
         McpServerCallToolResponse response = new McpServerCallToolResponse();
-
         try {
             client.initialize();
             McpSchema.CallToolResult result = client.callTool(

@@ -54,6 +54,13 @@ logging:
 mcp:
   remote:
     allowed-origins: ${MCP_ALLOWED_ORIGINS:}
+  executor:
+    core-size: ${MCP_EXECUTOR_CORE:4}
+    max-size: ${MCP_EXECUTOR_MAX:16}
+    queue-capacity: ${MCP_EXECUTOR_QUEUE:64}
+    timeout-seconds: ${MCP_EXECUTOR_TIMEOUT:60}
+    per-server-max: ${MCP_PER_SERVER_MAX:8}
+  tool-timeout-seconds: ${MCP_TOOL_TIMEOUT:30}
 
 # CORS 精确白名单：仅允许配置的 Origin；未配置环境变量时拒绝所有跨域凭据请求
 app:
