@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.csust.eyediagnosis.mapper.InferenceCacheMapper">
+
+    <resultMap id="BaseResultMap" type="com.csust.eyediagnosis.model.entity.InferenceCache">
+        <id property="id" column="id" />
+        <result property="imageHash" column="imageHash" />
+        <result property="modelVersion" column="modelVersion" />
+        <result property="preprocessVersion" column="preprocessVersion" />
+        <result property="predictedLabel" column="predictedLabel" />
+        <result property="probability" column="probability" />
+        <result property="description" column="description" />
+        <result property="reliabilityScore" column="reliabilityScore" />
+        <result property="topPredictions" column="topPredictions" />
+        <result property="createTime" column="createTime" />
+    </resultMap>
+
+    <select id="findByHash" resultMap="BaseResultMap">
+        SELECT id, imageHash, modelVersion, preprocessVersion, predictedLabel, probability,
+               description, reliabilityScore, topPredictions, createTime
+        FROM t_inference_cache
+        WHERE imageHash = #{imageHash}
+          AND modelVersion = #{modelVersion}
+          AND preprocessVersion = #{preprocessVersion}
+        LIMIT 1
+    </select>
+
+    <insert id="insertOne" parameterType="com.csust.eyediagnosis.model.entity.InferenceCache"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_inference_cache
+            (imageHash, modelVersion, preprocessVersion, predictedLabel, probability,
+             description, reliabilityScore, topPredictions, createTime)
+        VALUES
+            (#{imageHash}, #{modelVersion}, #{preprocessVersion}, #{predictedLabel}, #{probability},
+             #{description}, #{reliabilityScore}, #{topPredictions}, #{createTime})
+    </insert>
+
+</mapper>

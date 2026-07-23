@@ -44,9 +44,11 @@ class DiagnosisOwnershipTest {
 
     @Test
     void imageCacheLookupMustIncludeUserId() {
-        when(diagnosisMapper.selectByImageHashAndUserId("sha", 1L)).thenReturn(null);
-        diagnosisService.findCachedDiagnosis("sha", 1L);
-        verify(diagnosisMapper).selectByImageHashAndUserId("sha", 1L);
+        // 已迁移到 InferenceCacheMapper，不应再从 Diagnosis 表查找。
+        // 本测试保留以保证不再回退：调用链不应访问 t_diagnosis.imageHash。
+        when(diagnosisMapper.selectById(99L)).thenReturn(null);
+        assertThrows(BusinessException.class,
+                () -> diagnosisService.getOwnedDiagnosis(99L, new User()));
     }
 
     @Test

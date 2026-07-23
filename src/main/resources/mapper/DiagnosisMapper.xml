@@ -20,23 +20,12 @@
             <result property="picScale" column="picScale" />
             <result property="picFormat" column="picFormat" />
             <result property="createTime" column="createTime" />
-            <result property="imageHash" column="imageHash" />
             <result property="isDelete" column="isDelete" />
     </resultMap>
 
     <sql id="Base_Column_List">
         id,url,userId,result,confidence,recommendations,
         details,severity,reexamineStatus,picSize,picWidth,picHeight,
-        picScale,picFormat,createTime,imageHash,isDelete
+        picScale,picFormat,createTime,isDelete
     </sql>
-
-    <select id="selectByImageHashAndUserId" resultType="com.csust.eyediagnosis.model.entity.Diagnosis">
-        SELECT *
-        FROM t_diagnosis
-        WHERE imageHash = #{imageHash}
-          AND userId = #{userId}
-          AND isDelete = 0
-        ORDER BY createTime DESC
-        LIMIT 1
-    </select>
 </mapper>

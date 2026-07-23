@@ -17,23 +17,28 @@ import com.csust.eyediagnosis.grpc.DiagnosisGrpcClient;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.csust.eyediagnosis.manager.FileManager;
 import com.csust.eyediagnosis.mapper.DiagnosisMapper;
+import com.csust.eyediagnosis.mapper.InferenceCacheMapper;
 import com.csust.eyediagnosis.mapper.UserMapper;
 import com.csust.eyediagnosis.model.vo.diagnosis.Disease;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
 import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
+import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.Resource;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,6 +64,14 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     private DiagnosisGrpcClient diagnosisGrpcClient;
     @Resource
     private DiagnosisMapper diagnosisMapper;
+    @Resource
+    private InferenceCacheMapper inferenceCacheMapper;
+
+    @Value("${eye-diagnosis.inference.model-version:efficientnet-b4@1.0.0}")
+    private String modelVersion;
+
+    @Value("${eye-diagnosis.inference.preprocess-version:v1}")
+    private String preprocessVersion;
 
     @Override
     public DiagnosisManageVO uploadDiagnosisPicture(MultipartFile multipartFile, DiagnosisUploadDTO diagnosisUploadDTO, User loginUser) {
@@ -147,16 +160,19 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             byte[] imageBytes = file.getBytes();
             String imageFormat = file.getContentType();
 
-            // 1. 计算图片 hash 缓存（必须按当前用户隔离）
-            String imageHash = DigestUtils.md5DigestAsHex(imageBytes);
-            Diagnosis cached = diagnosisMapper.selectByImageHashAndUserId(imageHash, loginUser.getId());
-            if (cached != null && cached.getResult() != null) {
-                return DiagnosisResultVO.objToVo(cached);
+            // 1. 计算图片 SHA-256 哈希并查询推理缓存（跨用户共享）
+            String imageHash = sha256Hex(imageBytes);
+            InferenceCache cached = inferenceCacheMapper.findByHash(imageHash, modelVersion, preprocessVersion);
+            DiagnosisProto.DiagnosisResponse grpcResponse;
+            if (cached != null) {
+                grpcResponse = toProto(cached);
+            } else {
+                // 2. gRPC 调用 Python 推理
+                grpcResponse = diagnosisGrpcClient.diagnose(imageBytes, imageFormat);
+                // 持久化推理缓存
+                InferenceCache entry = toCacheEntity(imageHash, grpcResponse);
+                inferenceCacheMapper.insertOne(entry);
             }
-
-            // 2. gRPC 调用 Python 推理
-            DiagnosisProto.DiagnosisResponse grpcResponse =
-                    diagnosisGrpcClient.diagnose(imageBytes, imageFormat);
 
             // 3. 异步上传 COS
             String imageUrl = null;
@@ -168,7 +184,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 log.error("COS upload failed", e);
             }
 
-            // 4. 构建诊断结果
+            // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
             DiagnosisResultVO vo = new DiagnosisResultVO();
             String predictedLabel = grpcResponse.getPredictedLabel();
             vo.setResult(DiagnosisCategoryEnum.getChineseLabelByEnglishLabel(predictedLabel));
@@ -178,8 +194,6 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             vo.setRecommendations(DiagnosisRecommendationEnum.getRecommendationByEnglishLabel(predictedLabel));
             vo.setUrl(imageUrl);
             vo.setCreateTime(now());
-
-            // 严重程度在没有已验证模型输出的情况下统一为 NOT_ASSESSED
             vo.setSeverity("NOT_ASSESSED");
 
             List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()
@@ -192,10 +206,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                     .collect(Collectors.toList());
             vo.setOtherDisease(diseases);
 
-            // 5. 保存到数据库
+            // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
             Diagnosis diagnosis = DiagnosisResultVO.voToObj(vo);
             diagnosis.setUserId(loginUser.getId());
-            diagnosis.setImageHash(imageHash);
             if (imageUrl != null) {
                 diagnosis.setUrl(imageUrl);
             }
@@ -219,9 +232,53 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         return diagnosis;
     }
 
-    @Override
-    public Diagnosis findCachedDiagnosis(String imageHash, Long userId) {
-        return diagnosisMapper.selectByImageHashAndUserId(imageHash, userId);
+    /**
+     * SHA-256 十六进制：哈希升级，避免与 MD5 哈希碰撞与已废弃算法。
+     */
+    static String sha256Hex(byte[] bytes) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(bytes);
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp) {
+        InferenceCache cache = new InferenceCache();
+        cache.setImageHash(imageHash);
+        cache.setModelVersion("efficientnet-b4@1.0.0");
+        cache.setPreprocessVersion("v1");
+        cache.setPredictedLabel(resp.getPredictedLabel());
+        cache.setProbability(resp.getProbability());
+        cache.setDescription(resp.getDescription());
+        cache.setReliabilityScore(resp.getReliabilityScore());
+        // topPredictions: 序列化为 JSON 字符串以便存储
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < resp.getTopPredictionsCount(); i++) {
+            DiagnosisProto.DiseasePrediction p = resp.getTopPredictions(i);
+            if (i > 0) sb.append(",");
+            sb.append("{\"label\":\"").append(p.getLabel())
+                    .append("\",\"probability\":").append(p.getProbability()).append("}");
+        }
+        sb.append("]");
+        cache.setTopPredictions(sb.toString());
+        cache.setCreateTime(new Date());
+        return cache;
+    }
+
+    static DiagnosisProto.DiagnosisResponse toProto(InferenceCache cache) {
+        return DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel(cache.getPredictedLabel())
+                .setProbability(cache.getProbability())
+                .setDescription(cache.getDescription() == null ? "" : cache.getDescription())
+                .setReliabilityScore(cache.getReliabilityScore())
+                .build();
     }
 
     /**

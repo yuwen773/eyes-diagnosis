@@ -2,7 +2,6 @@ package com.csust.eyediagnosis.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
-import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -14,15 +13,5 @@ import org.apache.ibatis.annotations.Select;
 public interface DiagnosisMapper extends BaseMapper<Diagnosis> {
 
     @Select("select id from t_diagnosis where url = #{imageUrl}")
-    Long selectIdByImageUrl(String  imageUrl);
-
-    @Select("SELECT * FROM t_diagnosis WHERE imageHash = #{imageHash} AND isDelete = 0 LIMIT 1")
-    Diagnosis selectByImageHash(String imageHash);
-
-    Diagnosis selectByImageHashAndUserId(@Param("imageHash") String imageHash,
-                                        @Param("userId") Long userId);
+    Long selectIdByImageUrl(String imageUrl);
 }
-
-
-
-
