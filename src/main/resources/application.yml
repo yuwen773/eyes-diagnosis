@@ -55,6 +55,11 @@ mcp:
   remote:
     allowed-origins: ${MCP_ALLOWED_ORIGINS:}
 
+# CORS 精确白名单：仅允许配置的 Origin；未配置环境变量时拒绝所有跨域凭据请求
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+
 # 眼科图像分析配置
 eye-diagnosis:
   vision-recognition:

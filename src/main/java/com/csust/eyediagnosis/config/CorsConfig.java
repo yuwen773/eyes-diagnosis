@@ -1,29 +1,34 @@
 package com.csust.eyediagnosis.config;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * @ClassNameCorsConfig
- * @Description 跨域配置
- * @Author钰玟
- * @Date2025/4/20 下午1:20
- * @Version 1.0
- **/
+import java.util.List;
+
 @Configuration
+@ConfigurationProperties(prefix = "app.cors")
 public class CorsConfig implements WebMvcConfigurer {
+
+    /**
+     * 精确允许的 Origin 列表（如 http://localhost:5173）。
+     * 生产必须显式配置；不得使用 * 或 allowedOriginPatterns("*")。
+     */
+    private List<String> allowedOrigins = List.of();
+
+    public void setAllowedOrigins(List<String> allowedOrigins) {
+        this.allowedOrigins = List.copyOf(allowedOrigins);
+    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // 覆盖所有请求
         registry.addMapping("/**")
-                // 允许发送 Cookie
                 .allowCredentials(true)
-                // 放行哪些域名（必须用 patterns，否则 * 会和 allowCredentials 冲突）
-                .allowedOriginPatterns("*")
+                .allowedOrigins(allowedOrigins.toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .exposedHeaders("*");
+                .allowedHeaders("Content-Type", "X-Requested-With", "Authorization")
+                .exposedHeaders()
+                .maxAge(3600);
     }
 }
