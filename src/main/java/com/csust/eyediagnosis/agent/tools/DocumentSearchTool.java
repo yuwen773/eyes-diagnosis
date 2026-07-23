@@ -3,6 +3,8 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -45,12 +47,31 @@ public class DocumentSearchTool {
     @Autowired(required = false)
     private RerankModel rerankModel;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private volatile List<Document> documentCache = new ArrayList<>();
     private volatile long lastRefreshTime = 0;
     private static final long CACHE_REFRESH_INTERVAL = 60_000; // 1 minute
 
+    /**
+     * 模型可见的检索入口；必须绑定服务端 currentUserId 上下文。
+     * 不要把 userId 暴露为 @ToolParam，避免模型伪造。
+     */
     @Tool(name = "searchDocuments", description = "从眼科医学知识库中搜索相关文档，用于回答专业眼科问题。当用户询问医学知识、疾病解释、治疗方法等专业问题时使用此工具。")
     public String searchDocuments(@ToolParam(description = "搜索查询文本，应包含要查找的医学主题或关键词") String query) {
+        // 没有绑定可信 userId 时拒绝检索；调用方（Agent 入口）应通过
+        // ToolContext 传入或直接使用 searchDocuments(query, currentUserId)。
+        return searchDocuments(query, null);
+    }
+
+    /**
+     * 真正按当前用户过滤的检索入口。currentUserId 来自服务端当前会话，
+     * 不得由模型输入控制。
+     */
+    public String searchDocuments(String query, Long currentUserId) {
+        if (currentUserId == null) {
+            return "[]";
+        }
         if (vectorStore == null) {
             return "知识库暂未启用，请稍后再试。";
         }
@@ -59,6 +80,7 @@ public class DocumentSearchTool {
                     .query(query)
                     .topK(searchTopK)
                     .similarityThreshold(similarityThreshold)
+                    .filterExpression("ownerUserId == " + currentUserId)
                     .build();
 
             List<Document> candidates;
@@ -78,12 +100,19 @@ public class DocumentSearchTool {
                 return rerankAndFormat(query, candidates);
             }
 
-            // Fallback: use top-k results directly
             List<Document> topDocs = candidates.stream().limit(finalTopK).toList();
             return formatDocuments(topDocs);
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
             return "知识库检索暂时不可用，请稍后重试。";
+        }
+    }
+
+    private String serialize(List<Document> docs) {
+        try {
+            return objectMapper.writeValueAsString(docs);
+        } catch (JsonProcessingException e) {
+            return "[]";
         }
     }
 

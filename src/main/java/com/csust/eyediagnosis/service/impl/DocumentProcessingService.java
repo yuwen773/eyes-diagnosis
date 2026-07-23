@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,9 +73,17 @@ public class DocumentProcessingService {
             String rawText = paragraphs.stream().reduce("", (a, b) -> a + "\n\n" + b).trim();
             log.info("[ETL-Transform] 文本合并完成: docId={}, 原始文本长度={}字符", docId, rawText.length());
 
-            // 构建 metadata
+            // 查询文档的 owner（上传用户 id），用于写入向量元数据实现检索隔离
+            KnowledgeDocument knowledgeDocument = knowledgeDocumentMapper.selectById(docId);
+            if (knowledgeDocument == null) {
+                throw new RuntimeException("文档不存在: docId=" + docId);
+            }
+
+            // 构建 metadata（含可信 ownerUserId / documentId）
             Map<String, Object> metadata = documentParser.buildMetadata(rawText, fileUrl, title, fileType);
             metadata.put("docId", docId.toString());
+            metadata.put("documentId", docId);
+            metadata.put("ownerUserId", knowledgeDocument.getUserId());
             log.info("[ETL-Transform] Metadata 构建完成: docId={}, metadata={}", docId, metadata);
 
             // 文本分块
@@ -82,10 +91,13 @@ public class DocumentProcessingService {
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);
             log.info("[ETL-Transform] 文本分块完成: docId={}, chunk数量={}, 耗时={}ms", docId, chunks.size(), System.currentTimeMillis() - transformStart);
 
-            // 为每个 chunk 设置唯一 ID
+            // 为每个 chunk 设置唯一 ID 并确保 metadata 包含 ownerUserId
             for (int i = 0; i < chunks.size(); i++) {
                 String chunkId = "doc_" + docId + "_chunk_" + i;
-                chunks.set(i, new Document(chunkId, chunks.get(i).getText(), chunks.get(i).getMetadata()));
+                Map<String, Object> chunkMetadata = new HashMap<>(chunks.get(i).getMetadata());
+                chunkMetadata.put("ownerUserId", knowledgeDocument.getUserId());
+                chunkMetadata.put("documentId", docId);
+                chunks.set(i, new Document(chunkId, chunks.get(i).getText(), chunkMetadata));
                 log.debug("[ETL-Transform] Chunk[{}]: id={}, text长度={}", i, chunkId, chunks.get(i).getText().length());
             }
 
