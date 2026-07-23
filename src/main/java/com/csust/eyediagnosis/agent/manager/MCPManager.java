@@ -1,17 +1,14 @@
 package com.csust.eyediagnosis.agent.manager;
 
+import com.csust.eyediagnosis.agent.policy.McpConnectionPolicy;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csust.eyediagnosis.model.dto.mcp.*;
 import com.csust.eyediagnosis.model.entity.McpServer;
 import com.csust.eyediagnosis.utils.JsonUtils;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import io.modelcontextprotocol.client.transport.StdioClientTransport;
-import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +28,11 @@ public class MCPManager {
     private static final long TOOLS_CACHE_TTL_MINUTES = 5;
 
     private final StringRedisTemplate redisTemplate;
+    private final McpConnectionPolicy mcpConnectionPolicy;
     private final ExecutorService mcpExecutor = Executors.newCachedThreadPool();
 
     /**
-     * 创建 MCP 客户端（支持 SSE + Streamable HTTP，完美兼容 draw.io 远程版）
+     * 创建 MCP 客户端（仅支持远端 HTTPS 来源；用户配置禁止 STDIO）。
      */
     public McpSyncClient getMcpSyncClient(McpServer entity) {
         McpServerDeployConfig cfg = parseConfig(entity.getDeployConfig());
@@ -44,32 +42,13 @@ public class MCPManager {
             throw new IllegalArgumentException("MCP 服务必须提供 url 或 host！");
         }
 
+        mcpConnectionPolicy.assertRuntimeConnectionAllowed(entity.getInstallType(), url);
+
         log.info("创建 MCP 客户端 - serverCode: {}, URL: {}, installType: {}",
                 entity.getMcpServerCode(), url, entity.getInstallType());
 
-        // 1. STDIO 类型（保持不变）
-        if ("STDIO".equalsIgnoreCase(entity.getInstallType())) {
-            ServerParameters serverParameters = ServerParameters.builder(cfg.getCommand())
-                .args(cfg.getArgs())
-                .env(cfg.getEnvValue())
-                .build();
-
-            StdioClientTransport transport = new StdioClientTransport(
-                serverParameters,
-                new JacksonMcpJsonMapper(new ObjectMapper())
-            );
-
-            return McpClient.sync(transport)
-                .requestTimeout(Duration.ofSeconds(60))
-                .initializationTimeout(Duration.ofSeconds(60))
-                .capabilities(McpSchema.ClientCapabilities.builder().roots(true).build())
-                .build();
-        }
-
-        // 2. Streamable HTTP（draw.io 官方远程版专用）
-        if (url.contains("mcp.draw.io") || url.endsWith("/mcp")) {
-            log.info("检测到 draw.io 远程 MCP，使用 Streamable HTTP 传输");
-
+        if ("STREAMABLE_HTTP".equalsIgnoreCase(entity.getInstallType())) {
+            log.info("使用 Streamable HTTP 传输");
             HttpClientStreamableHttpTransport transport = HttpClientStreamableHttpTransport.builder(url)
                 .build();
 
@@ -79,12 +58,10 @@ public class MCPManager {
                 .capabilities(McpSchema.ClientCapabilities.builder().roots(true).build())
                 .build();
 
-            // draw.io 需要先初始化 session
             client.initialize();
             return client;
         }
 
-        // 3. 普通 SSE（Weather、Filesystem 等本地版）
         log.info("使用标准 SSE 传输");
         HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(url).build();
 

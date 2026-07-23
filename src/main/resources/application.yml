@@ -50,6 +50,11 @@ logging:
     org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug
     com.csust.eyediagnosis.service.impl.DocumentProcessingService: info
 
+# MCP 远程白名单：精确 Origin 列表（如 https://mcp.example.com），默认空（拒绝所有远程）
+mcp:
+  remote:
+    allowed-origins: ${MCP_ALLOWED_ORIGINS:}
+
 # 眼科图像分析配置
 eye-diagnosis:
   vision-recognition:

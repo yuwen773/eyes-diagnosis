@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.agent.manager.MCPManager;
+import com.csust.eyediagnosis.agent.policy.McpConnectionPolicy;
 import com.csust.eyediagnosis.agent.service.McpServerService;
 import com.csust.eyediagnosis.mapper.McpServerMapper;
 import com.csust.eyediagnosis.model.dto.mcp.*;
@@ -25,11 +26,15 @@ public class McpServerServiceImpl implements McpServerService {
 
     private final McpServerMapper mcpServerMapper;
     private final MCPManager mcpManager;
+    private final McpConnectionPolicy mcpConnectionPolicy;
 
     @Override
     public String createMcp(McpServerDetail detail, Long userId) {
         String mcpServerCode = IdGenerator.idStr();
         String host = extractHost(detail.getDeployConfig());
+        String installType = StringUtils.hasText(detail.getInstallType()) ? detail.getInstallType() : "SSE";
+        String url = extractUrl(detail.getDeployConfig());
+        mcpConnectionPolicy.assertUserConfigAllowed(installType, url);
 
         McpServer entity = new McpServer();
         entity.setMcpServerCode(mcpServerCode);
@@ -39,7 +44,7 @@ public class McpServerServiceImpl implements McpServerService {
         entity.setDeployConfig(detail.getDeployConfig());
         entity.setHost(host);
         entity.setStatus(1);
-        entity.setInstallType(StringUtils.hasText(detail.getInstallType()) ? detail.getInstallType() : "SSE");
+        entity.setInstallType(installType);
         entity.setGmtCreate(new Date());
         entity.setGmtModified(new Date());
 
@@ -51,12 +56,15 @@ public class McpServerServiceImpl implements McpServerService {
     public void updateMcp(McpServerDetail detail, Long userId) {
         McpServer entity = getByCodeAndUser(detail.getMcpServerCode(), userId);
         String host = extractHost(detail.getDeployConfig());
+        String installType = StringUtils.hasText(detail.getInstallType()) ? detail.getInstallType() : "SSE";
+        String url = extractUrl(detail.getDeployConfig());
+        mcpConnectionPolicy.assertUserConfigAllowed(installType, url);
 
         entity.setName(detail.getName());
         entity.setDescription(detail.getDescription());
         entity.setDeployConfig(detail.getDeployConfig());
         entity.setHost(host);
-        entity.setInstallType(StringUtils.hasText(detail.getInstallType()) ? detail.getInstallType() : "SSE");
+        entity.setInstallType(installType);
         entity.setGmtModified(new Date());
 
         mcpServerMapper.updateById(entity);
@@ -157,6 +165,23 @@ public class McpServerServiceImpl implements McpServerService {
             return host;
         } catch (Exception e) {
             return "";
+        }
+    }
+
+    private String extractUrl(String deployConfig) {
+        try {
+            Map<String, Object> config = JsonUtils.fromJsonToMap(deployConfig);
+            if (config == null || !config.containsKey("mcpServers")) {
+                return null;
+            }
+            Map<String, Object> mcpServers = (Map<String, Object>) config.get("mcpServers");
+            if (mcpServers == null || mcpServers.isEmpty()) {
+                return null;
+            }
+            Map<String, Object> firstServer = (Map<String, Object>) mcpServers.values().iterator().next();
+            return (String) firstServer.get("url");
+        } catch (Exception e) {
+            return null;
         }
     }
 
