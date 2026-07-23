@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS t_agent_session (
     pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否置顶：0-否，1-是',
     pinTime DATETIME COMMENT '置顶时间',
     INDEX idx_userId (userId),
-    INDEX idx_sessionId (sessionId)
+    UNIQUE KEY uk_agent_session_session_id (sessionId)
 ) COMMENT 'Agent会话表' COLLATE = utf8mb4_unicode_ci;
 
 -- Agent消息表
