@@ -17,6 +17,13 @@ spring:
     active: local,dev
   application:
     name: eye-diagnosis
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    schemas: diagnosis
+    validate-on-migrate: true
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
