@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -48,6 +49,7 @@ public class DocumentSearchTool {
     private RerankModel rerankModel;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Bm25Segmenter segmenter = new Bm25Segmenter();
 
     private volatile List<Document> documentCache = new ArrayList<>();
     private volatile long lastRefreshTime = 0;
@@ -187,9 +189,9 @@ public class DocumentSearchTool {
             return List.of();
         }
         try {
-            String[] tokenizedQuery = query.toLowerCase().split("\\s+");
+            String[] tokenizedQuery = segmenter.tokenize(query).toArray(new String[0]);
             List<String[]> corpus = documentCache.stream()
-                    .map(doc -> doc.getText().toLowerCase().split("\\s+"))
+                    .map(doc -> segmenter.tokenize(doc.getText()).toArray(new String[0]))
                     .toList();
 
             // Custom BM25 implementation
@@ -260,18 +262,18 @@ public class DocumentSearchTool {
         return scores;
     }
 
-    private List<Document> rrfFusion(List<Document> vectorResults, List<Document> bm25Results, int topK) {
+    List<Document> rrfFusion(List<Document> vectorResults, List<Document> bm25Results, int topK) {
         Map<String, Double> rrfScores = new HashMap<>();
         Map<String, Document> docMap = new HashMap<>();
 
-        // Unified RRF scoring loop
-        int idx = 0;
+        // 修复：每组结果的 rank 必须独立从 1 开始，避免 BM25 因 vectorResults 长度而被压低分数。
         for (List<Document> results : List.of(vectorResults, bm25Results)) {
+            int rank = 1;
             for (Document doc : results) {
                 String id = doc.getId();
                 docMap.putIfAbsent(id, doc);
-                rrfScores.merge(id, 1.0 / (rrfK + idx + 1), Double::sum);
-                idx++;
+                rrfScores.merge(id, 1.0 / (rrfK + rank), Double::sum);
+                rank++;
             }
         }
 
