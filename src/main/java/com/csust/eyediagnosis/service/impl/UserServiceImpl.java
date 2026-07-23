@@ -301,6 +301,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return  diagnosisMapper.updateById(diagnosis);
 
     }
+
+    @Override
+    public boolean updateOwnProfile(UserEditDTO input, User loginUser) {
+        ThrowUtils.throwIf(loginUser == null || loginUser.getId() == null, ErrorCode.NO_AUTH_ERROR);
+        ThrowUtils.throwIf(input == null, ErrorCode.PARAMS_ERROR);
+        User update = new User();
+        update.setId(loginUser.getId());
+        update.setUserName(input.getUserName());
+        update.setUserAvatar(input.getUserAvatar());
+        update.setUserProfile(input.getUserProfile());
+        return this.updateById(update);
+    }
 }
 
 

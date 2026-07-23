@@ -251,11 +251,10 @@ public class UserController {
     @PostMapping("/update/userCenter")
     @Operation(summary ="用户中心更新")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<Boolean> editUserCenter(@RequestBody UserEditDTO userEditDTO){
+    public BaseResponse<Boolean> editUserCenter(@RequestBody UserEditDTO userEditDTO, HttpServletRequest request){
         ThrowUtils.throwIf(userEditDTO==null, ErrorCode.PARAMS_ERROR);
-        User user = new User();
-        BeanUtils.copyProperties(userEditDTO,user);
-        boolean result = userService.updateById(user);
+        User loginUser = userService.getLoginUser(request);
+        boolean result = userService.updateOwnProfile(userEditDTO, loginUser);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }

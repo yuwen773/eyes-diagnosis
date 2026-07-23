@@ -105,4 +105,10 @@ public interface UserService extends IService<User> {
      * @param loginUser 当前用户
      */
     int reexamineDiagnosis(DiagnosisReexamineDTO diagnosisReexamineDTO, User loginUser);
+
+    /**
+     * 更新当前登录用户的自助资料。目标 ID 永远取 loginUser.id，
+     * 不接受请求中传入的 id/userRole/userPassword 等身份字段。
+     */
+    boolean updateOwnProfile(UserEditDTO input, User loginUser);
 }
