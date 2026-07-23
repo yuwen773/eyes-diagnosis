@@ -3,7 +3,7 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { uploadAgentImage, deleteAgentImage } from '@/api/agentController'
 
 export interface MessageDTO {
-  messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'reasoning'
+  messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
   content?: string
   toolCalls?: any[]
   toolName?: string
@@ -168,6 +168,9 @@ export function useAgentStream() {
               }
 
               case 'mcp-confirm':
+              case 'tool-confirm':
+                // 兼容后端 MessageType.TOOL_CONFIRM（序列化为 tool-confirm）
+                // 与历史 mcp-confirm 事件名
                 assistantMsgIndex = -1
                 reasoningMsgIndex = -1
                 streamContent = ''
