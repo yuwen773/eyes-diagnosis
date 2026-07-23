@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.csust.eyediagnosis.constant.DiagnosisCategoryEnum;
 import com.csust.eyediagnosis.constant.DiagnosisRecommendationEnum;
 import com.csust.eyediagnosis.constant.ExceptionConstant;
+import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
@@ -33,9 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateTime.now;
@@ -94,7 +93,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         }
         //提取查询字段
         QueryWrapper<Diagnosis> queryWrapper = new QueryWrapper<>();
-        //用户的Id
+        //用户的Id（必须由 Controller 在调用前覆盖为当前登录用户）
         Long userId = diagnosisQueryDTO.getUserId();
         //1. 疾病id
         Long id = diagnosisQueryDTO.getId();
@@ -148,9 +147,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             byte[] imageBytes = file.getBytes();
             String imageFormat = file.getContentType();
 
-            // 1. 计算图片 hash 缓存
+            // 1. 计算图片 hash 缓存（必须按当前用户隔离）
             String imageHash = DigestUtils.md5DigestAsHex(imageBytes);
-            Diagnosis cached = diagnosisMapper.selectByImageHash(imageHash);
+            Diagnosis cached = diagnosisMapper.selectByImageHashAndUserId(imageHash, loginUser.getId());
             if (cached != null && cached.getResult() != null) {
                 return DiagnosisResultVO.objToVo(cached);
             }
@@ -180,8 +179,8 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             vo.setUrl(imageUrl);
             vo.setCreateTime(now());
 
-            List<String> severityList = Arrays.asList("normal", "mild", "moderate", "severe");
-            vo.setSeverity(severityList.get(new Random().nextInt(severityList.size())));
+            // 严重程度在没有已验证模型输出的情况下统一为 NOT_ASSESSED
+            vo.setSeverity("NOT_ASSESSED");
 
             List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()
                     .map(pred -> {
@@ -207,6 +206,39 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Diagnosis getOwnedDiagnosis(Long diagnosisId, User loginUser) {
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+        Diagnosis diagnosis = diagnosisMapper.selectById(diagnosisId);
+        ThrowUtils.throwIf(diagnosis == null, ErrorCode.NOT_FOUND_ERROR);
+        boolean admin = AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+        ThrowUtils.throwIf(!admin && !loginUser.getId().equals(diagnosis.getUserId()),
+                ErrorCode.NO_AUTH_ERROR);
+        return diagnosis;
+    }
+
+    @Override
+    public Diagnosis findCachedDiagnosis(String imageHash, Long userId) {
+        return diagnosisMapper.selectByImageHashAndUserId(imageHash, userId);
+    }
+
+    /**
+     * 将 gRPC 响应转换为前端结果 VO。严重程度在没有已验证模型输出的情况下
+     * 统一为 NOT_ASSESSED，不得通过概率或类别启发式伪造。
+     */
+    public DiagnosisResultVO buildDiagnosisResult(DiagnosisProto.DiagnosisResponse grpcResponse) {
+        DiagnosisResultVO vo = new DiagnosisResultVO();
+        String predictedLabel = grpcResponse.getPredictedLabel();
+        vo.setResult(DiagnosisCategoryEnum.getChineseLabelByEnglishLabel(predictedLabel));
+        vo.setDetails(grpcResponse.getDescription());
+        vo.setProbability(grpcResponse.getProbability());
+        vo.setConfidence((double) grpcResponse.getReliabilityScore());
+        vo.setRecommendations(DiagnosisRecommendationEnum.getRecommendationByEnglishLabel(predictedLabel));
+        vo.setSeverity("NOT_ASSESSED");
+        vo.setCreateTime(now());
+        return vo;
     }
 }
 

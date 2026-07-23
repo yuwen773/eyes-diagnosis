@@ -71,8 +71,11 @@ public class DiagnosisController {
 
     @PostMapping("/list/page/vo")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<Page<DiagnosisManageVO>> listDiagnosisVOByPage(@RequestBody DiagnosisQueryDTO diagnosisQueryDTO){
+    public BaseResponse<Page<DiagnosisManageVO>> listDiagnosisVOByPage(@RequestBody DiagnosisQueryDTO diagnosisQueryDTO,
+                                                                       HttpServletRequest request){
         ThrowUtils.throwIf(diagnosisQueryDTO==null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        diagnosisQueryDTO.setUserId(loginUser.getId());
         // 获取分页相关数据
         long current = diagnosisQueryDTO.getCurrent();
         long pageSize = diagnosisQueryDTO.getPageSize();
@@ -86,14 +89,18 @@ public class DiagnosisController {
     }
     @PostMapping("/list/page/vo/cache")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<Page<DiagnosisManageVO>> listDiagnosisVOByPageWithCache(@RequestBody DiagnosisQueryDTO diagnosisQueryDTO){
+    public BaseResponse<Page<DiagnosisManageVO>> listDiagnosisVOByPageWithCache(@RequestBody DiagnosisQueryDTO diagnosisQueryDTO,
+                                                                                HttpServletRequest request){
         ThrowUtils.throwIf(diagnosisQueryDTO==null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        diagnosisQueryDTO.setUserId(loginUser.getId());
         // 获取分页相关数据
         long current = diagnosisQueryDTO.getCurrent();
         long pageSize = diagnosisQueryDTO.getPageSize();
-        //获得hashKey
+        //获得hashKey（必须包含用户上下文，避免跨用户缓存命中）
         String queryCondition = JSONUtil.toJsonStr(diagnosisQueryDTO);
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cacheScope = loginUser.getId() + ":" + loginUser.getUserRole() + ":" + queryCondition;
+        String hashKey = DigestUtils.md5DigestAsHex(cacheScope.getBytes());
         String redisKey = String.format("diagnosis:listDiagnosisVOByPage:%s",hashKey);
         //获取缓存对象
         String cacheValue = stringRedisTemplate.opsForValue().get(redisKey);
@@ -118,8 +125,11 @@ public class DiagnosisController {
 
     @PostMapping("/list/page/my")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<Page<DiagnosisManageVO>> listMyDiagnosisVOByPage(@RequestBody DiagnosisQueryDTO DiagnosisQueryDTO){
+    public BaseResponse<Page<DiagnosisManageVO>> listMyDiagnosisVOByPage(@RequestBody DiagnosisQueryDTO DiagnosisQueryDTO,
+                                                                         HttpServletRequest request){
         ThrowUtils.throwIf(DiagnosisQueryDTO==null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        DiagnosisQueryDTO.setUserId(loginUser.getId());
         // 获取分页相关数据
         long current = DiagnosisQueryDTO.getCurrent();
         long pageSize = DiagnosisQueryDTO.getPageSize();
@@ -159,12 +169,14 @@ public class DiagnosisController {
      */
     @GetMapping("/get/{id}")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
-    public BaseResponse<DiagnosisResultVO> getDiagnosisResultVO(@PathVariable("id") Long id){
+    public BaseResponse<DiagnosisResultVO> getDiagnosisResultVO(@PathVariable("id") Long id,
+                                                                HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
-        Diagnosis diagnosis = diagnosisService.getById(id);
+        User loginUser = userService.getLoginUser(request);
+        Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
         //
         DiagnosisResultVO diagnosisResultVO = new DiagnosisResultVO();
-        //返回的应该是 脱敏对象 TODO 数据库暂无 List<Disease> 字段
+        //返回的应该是 脱敏对象
         BeanUtil.copyProperties(diagnosis,diagnosisResultVO);
         //返回
         return ResultUtils.success(diagnosisResultVO);

@@ -29,4 +29,14 @@
         details,severity,reexamineStatus,picSize,picWidth,picHeight,
         picScale,picFormat,createTime,imageHash,isDelete
     </sql>
+
+    <select id="selectByImageHashAndUserId" resultType="com.csust.eyediagnosis.model.entity.Diagnosis">
+        SELECT *
+        FROM t_diagnosis
+        WHERE imageHash = #{imageHash}
+          AND userId = #{userId}
+          AND isDelete = 0
+        ORDER BY createTime DESC
+        LIMIT 1
+    </select>
 </mapper>

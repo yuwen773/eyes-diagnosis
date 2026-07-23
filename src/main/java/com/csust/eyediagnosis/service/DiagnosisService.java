@@ -60,4 +60,14 @@ public interface DiagnosisService extends IService<Diagnosis> {
      * @return vo
      */
     DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser);
+
+    /**
+     * 加载当前用户有权访问的诊断详情（普通用户仅限本人；管理员可访问全部）。
+     */
+    Diagnosis getOwnedDiagnosis(Long diagnosisId, User loginUser);
+
+    /**
+     * 查询当前用户已存在的同哈希诊断缓存。返回最近一条由同一用户生成的诊断。
+     */
+    Diagnosis findCachedDiagnosis(String imageHash, Long userId);
 }
