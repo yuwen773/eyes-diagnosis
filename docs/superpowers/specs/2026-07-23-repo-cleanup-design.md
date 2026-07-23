@@ -9,7 +9,7 @@ eye-diagnosis 仓库经多阶段迭代后处于"能用但杂乱"状态，存在�
 | 优先级 | 覆盖项 |
 |--------|--------|
 | **P0 安全** | 删除含明文密码的会话日志；`.gitignore` 排除 `application-local.yml` / `application-dev.yml`；删除 `frontend/2026-04-30-151157-202634.txt` |
-| **P1 卫生** | 完善 `.gitignore`（`.git-rewrite/`、中文文件名、`__pycache__/`、proto 生成件）；删除冗余 `.pth` 模型权重；配置 `.gitattributes` Git LFS；删除已 D 的 `banner3.png` / `img.png`；移除已入仓的 `__pycache__/` |
+| **P1 卫生** | 完善 `.gitignore`（`.git-rewrite/`、`*_2026-*.txt`、`frontend/2026-*-*.txt`、`frontend/src/assets/.omc/`、`*.pdf`、`作品的安装及使用教程文档.md`、`软件著作权申请资料/`、中文文件名、`__pycache__/`、proto 生成件）；删除冗余 `.pth` 模型权重；配置 `.gitattributes` Git LFS；删除已 D 的 `banner3.png` / `img.png`；移除已入仓的 `__pycache__/`；可选清理无引用的遗留样式文件 `frontend/src/styles/design-system/base.css` 与 `components.css`（Task 22，确认无引用后删除） |
 | **P2 代码质量** | 修复 SSE 事件命名不一致（`tool-confirm` ↔ `mcp-confirm`）；显式声明 `@ant-design/icons-vue` 依赖；ESLint 未使用 import/变量清零；拆分 LeftSidebar(1117) / NewsDetailPage(933) / AgentMessageList(915)；拆分 UserController(285) / AgentController(206)；补 Mockito 单元测试骨架；修复 DiagnosisController 删除接口路径前缀 bug；确认 `DiagnosisGrpcClient` 由 Spring 托管 |
 
 ## 非目标
