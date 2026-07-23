@@ -32,7 +32,7 @@ public class TextMcpModelInterceptor {
 
         // 优先级1: 会话覆盖
         if (enabledMcpServers != null && !enabledMcpServers.isEmpty()) {
-            return mcpToolCallbackProvider.getCallbacks(enabledMcpServers);
+            return mcpToolCallbackProvider.getCallbacks(userId, enabledMcpServers);
         }
 
         // 优先级2: 全局启用的服务（status=1）
@@ -46,7 +46,7 @@ public class TextMcpModelInterceptor {
                 List<String> serverCodes = enabledServers.stream()
                         .map(McpServer::getMcpServerCode)
                         .collect(Collectors.toList());
-                return mcpToolCallbackProvider.getCallbacks(serverCodes);
+                return mcpToolCallbackProvider.getCallbacks(userId, serverCodes);
             }
         }
 

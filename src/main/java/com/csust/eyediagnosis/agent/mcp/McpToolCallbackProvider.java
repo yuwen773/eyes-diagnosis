@@ -18,14 +18,15 @@ public class McpToolCallbackProvider {
     private final MCPManager mcpManager;
     private final McpServerMapper mcpServerMapper;
 
-    public ToolCallback[] getCallbacks(List<String> mcpServerCodes) {
-        if (mcpServerCodes == null || mcpServerCodes.isEmpty()) {
+    public ToolCallback[] getCallbacks(Long userId, List<String> mcpServerCodes) {
+        if (userId == null || mcpServerCodes == null || mcpServerCodes.isEmpty()) {
             return new ToolCallback[0];
         }
 
         // Batch fetch all servers in one query to avoid N+1
         List<McpServer> servers = mcpServerMapper.selectList(
             new LambdaQueryWrapper<McpServer>()
+                .eq(McpServer::getUserId, userId)
                 .eq(McpServer::getStatus, 1)
                 .in(McpServer::getMcpServerCode, mcpServerCodes)
         );
