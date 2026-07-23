@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import { uploadAgentImage, deleteAgentImage } from '@/api/agentController'
+import { deleteAgentImage } from '@/api/agentController'
 
 export interface MessageDTO {
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
@@ -25,6 +25,10 @@ export interface StreamMessage {
   toolCalls?: ToolCallArg[]
   time?: string
   images?: string[]
+}
+
+export interface StreamSendOptions {
+  urls?: string[]
 }
 
 export function useAgentStream() {
@@ -74,7 +78,7 @@ export function useAgentStream() {
     links.value = []
   }
 
-  const sendMessage = async (message: string, threadId: string, files?: File[]) => {
+  const sendMessage = async (message: string, threadId: string, options: StreamSendOptions = {}) => {
     isStreaming.value = true
     abortController = new AbortController()
 
@@ -86,16 +90,7 @@ export function useAgentStream() {
     let streamContent = ''
     let lastAssistantContent = ''
 
-    // Step 1: 上传所有图片，拿到 URL
-    let uploadedUrls: string[] = []
-    if (files && files.length > 0) {
-      try {
-        uploadedUrls = await Promise.all(files.map(f => uploadAgentImage(f)))
-      } catch {
-        isStreaming.value = false
-        throw new Error('图片上传失败，无法发送消息')
-      }
-    }
+    const uploadedUrls: string[] = options.urls ?? []
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     const body = JSON.stringify({

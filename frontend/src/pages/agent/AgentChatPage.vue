@@ -118,6 +118,7 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
 import type { ResourceData, ImageResource, LinkResource } from '@/components/agent/types'
 import { useAgentStream, type StreamMessageType } from '@/composables/useAgentStream'
+import { useAgentUpload } from '@/composables/useAgentUpload'
 import { getChatHistory, getSessions, generateTitle, type SessionVO } from '@/api/agentController'
 import '@/assets/agent-theme.css'
 
@@ -223,22 +224,24 @@ const abort = agentStream.abort
 const pushMessage = agentStream.pushMessage
 const resetStream = agentStream.reset
 
+// Agent upload (single-upload composable)
+const uploader = useAgentUpload()
+
 const totalResourceCount = computed(() => panelImages.value.length + panelLinks.value.length)
 
 // Handlers
 const handleSend = async (text: string, files: File[] = []) => {
   if ((!text.trim() && files.length === 0) || streaming.value) return
 
-  // 上传图片并获取 URLs
   let imageUrls: string[] = []
-  if (files && files.length > 0) {
-    try {
-      const { uploadAgentImage } = await import('@/api/agentController')
-      imageUrls = await Promise.all(files.map(f => uploadAgentImage(f)))
-    } catch (e) {
-      message.error('图片上传失败，无法发送消息')
-      return
+  try {
+    if (files.length > 0) {
+      const result = await uploader.uploadFiles(files)
+      imageUrls = result.urls
     }
+  } catch (e) {
+    message.error('图片上传失败，无法发送消息')
+    return
   }
 
   pushMessage({
@@ -250,7 +253,8 @@ const handleSend = async (text: string, files: File[] = []) => {
   })
 
   try {
-    await sendMessage(text, threadId.value, files.length > 0 ? files : undefined)
+    await sendMessage(text, threadId.value, { urls: imageUrls })
+    uploader.commitSuccess(imageUrls)
     saveThreadId(threadId.value)
     currentThreadId.value = threadId.value
 
@@ -261,6 +265,7 @@ const handleSend = async (text: string, files: File[] = []) => {
       })
     }
   } catch (error) {
+    uploader.commitFailure(imageUrls)
     message.error('消息发送失败，可能是网络连接不稳定，请检查网络后重试')
   }
 }
