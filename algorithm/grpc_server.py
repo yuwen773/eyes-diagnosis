@@ -1,8 +1,11 @@
 import grpc
 from concurrent import futures
+import hashlib
+import hmac
 import tempfile
 import os
 import logging
+from pathlib import Path
 
 import diagnosis_pb2
 import diagnosis_pb2_grpc
@@ -24,7 +27,6 @@ DISEASE_DESCRIPTIONS = {
 
 
 def calculate_reliability(all_probabilities):
-    # all_probabilities is a dict {label: probability} where probability is already a float (0-1)
     sorted_probs = sorted(all_probabilities.values(), reverse=True)
     if len(sorted_probs) < 2:
         return 50
@@ -41,24 +43,36 @@ def calculate_reliability(all_probabilities):
         return 50
 
 
+def _resolve_weights_path() -> Path:
+    configured = os.getenv("MODEL_WEIGHTS_PATH")
+    if not configured:
+        raise RuntimeError(
+            "MODEL_WEIGHTS_PATH is required; model weights are not configured"
+        )
+    path = Path(configured)
+    if not path.is_file() or path.stat().st_size == 0:
+        raise RuntimeError(f"Required model weights not found: {path}")
+    return path
+
+
+def _verify_sha256(path: Path) -> str:
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    expected = os.getenv("MODEL_WEIGHTS_SHA256")
+    if expected and not hmac.compare_digest(digest, expected.lower()):
+        raise RuntimeError(
+            f"Model weights SHA-256 mismatch: expected {expected}, got {digest}"
+        )
+    return digest
+
+
 class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
 
     def __init__(self):
+        weights_path = _resolve_weights_path()
+        _verify_sha256(weights_path)
         self.model = EyeDiseaseModel(model_name='efficientnet_b4')
-        self._load_model()
-
-    def _load_model(self):
-        model_paths = [
-            'models/efficientnet_b4_20250330_211341/best_acc_eye_disease_model.pth',
-            'models/best_acc_eye_disease_model.pth',
-            'models/best_eye_disease_model.pth',
-        ]
-        for path in model_paths:
-            if os.path.exists(path):
-                self.model.load_model(path)
-                logger.info(f"Model loaded from {path}")
-                return
-        logger.warning("No model weights found, using untrained model")
+        self.model.load_model(str(weights_path))
+        logger.info(f"Model loaded from {weights_path}")
 
     def Diagnose(self, request, context):
         try:
@@ -111,9 +125,11 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
 
 
 def serve():
+    # 必须在 add_insecure_port 之前构造 Servicer，权重缺失则立即终止
+    servicer = DiagnosisServicer()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
     diagnosis_pb2_grpc.add_DiagnosisServiceServicer_to_server(
-        DiagnosisServicer(), server
+        servicer, server
     )
     server.add_insecure_port('0.0.0.0:50051')
     server.start()
