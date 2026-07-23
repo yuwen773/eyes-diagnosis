@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.manager;
 import com.csust.eyediagnosis.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
@@ -69,5 +70,11 @@ public class CosManager {
         return cosClient.putObject(putObjectRequest);
     }
 
+    /**
+     * 删除对象：调用方必须已校验 object key 的归属（owner 前缀），否则可能删除他人文件。
+     */
+    public void deleteObject(String objectKey) {
+        cosClient.deleteObject(new DeleteObjectRequest(cosClientConfig.getBucket(), objectKey));
+    }
 
 }
