@@ -132,7 +132,7 @@ public class DiagnosisController {
         return ResultUtils.success(DiagnosisVOPage);
     }
 
-    @PostMapping("delete/{id}")
+    @PostMapping("/delete/{id}")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteDiagnosis(@PathVariable("id") Long id){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
