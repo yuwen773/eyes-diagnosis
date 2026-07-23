@@ -23,7 +23,7 @@ public class TitleGenerationService {
         this.messageMapper = messageMapper;
     }
 
-    @Async("agentAsyncExecutor")
+    @Async("titleGenerationExecutor")
     public void generateTitleAsync(String sessionId, String firstMessage) {
         try {
             log.info("开始生成会话标题, sessionId={}", sessionId);

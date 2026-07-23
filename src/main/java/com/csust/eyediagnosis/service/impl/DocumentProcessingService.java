@@ -54,7 +54,7 @@ public class DocumentProcessingService {
         }
     }
 
-    @Async("agentAsyncExecutor")
+    @Async("documentProcessingExecutor")
     public void processDocument(Long docId, File file, String fileType, String title) {
         log.info("[ETL] 开始处理文档: docId={}, file={}, fileType={}, title={}", docId, file.getAbsolutePath(), fileType, title);
         long startTime = System.currentTimeMillis();

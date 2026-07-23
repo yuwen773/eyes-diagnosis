@@ -115,8 +115,8 @@ public class DiagnosisAgent {
                                    List<String> enabledMcpServers, Boolean disableMcpDefault) {
         // Agent 运行前再校验一次会话所有权，防止 Controller 路径被绕过
         chatHistoryService.assertSessionOwner(threadId, userId);
+        // 用户消息由 Controller 在入口处持久化（同步队列），此处不再重复写入。
         String fullMessage = buildUserMessage(userMessage, imageUrls);
-        chatHistoryService.saveUserMessage(threadId, userId, fullMessage);
 
         // 解析MCP回调
         AgentChatRequest chatRequest = new AgentChatRequest();
@@ -159,7 +159,7 @@ public class DiagnosisAgent {
                                 if (assistantMessage.hasToolCalls()) {
                                     String prevReasoning = reasoningContent.toString();
                                     if (!prevReasoning.isEmpty()) {
-                                        chatHistoryService.saveReasoningMessage(threadId, prevReasoning);
+                                        chatHistoryService.saveReasoningMessage(threadId, userId, prevReasoning);
                                         reasoningContent.setLength(0);
                                     }
                                     messageDTO.setMessageType(MessageType.TOOL_REQUEST);
@@ -177,7 +177,7 @@ public class DiagnosisAgent {
                                         if (toolDesc.length() > 0) toolDesc.append("\n");
                                         toolDesc.append(tc.get("name")).append(": ").append(tc.get("arguments"));
                                     }
-                                    chatHistoryService.saveToolCallMessage(threadId, toolDesc.toString());
+                                    chatHistoryService.saveToolCallMessage(threadId, userId, toolDesc.toString());
                                 }
                                 // reasoning 消息
                                 else if (metadata.get("reasoningContent") != null
@@ -205,7 +205,7 @@ public class DiagnosisAgent {
                                 sb.append("评估: ").append(feedback.getDescription()).append("\n");
                             }
                             messageDTO.setContent(sb.toString());
-                            chatHistoryService.saveToolConfirmMessage(threadId, sb.toString());
+                            chatHistoryService.saveToolConfirmMessage(threadId, userId, sb.toString());
                             return messageDTO;
                         }
                         return null;
@@ -213,11 +213,11 @@ public class DiagnosisAgent {
                     .doOnComplete(() -> {
                         String fullReasoning = reasoningContent.toString();
                         if (!fullReasoning.isEmpty()) {
-                            chatHistoryService.saveReasoningMessage(threadId, fullReasoning);
+                            chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning);
                         }
                         String fullResponse = assistantContent.toString();
                         if (!fullResponse.isEmpty()) {
-                            chatHistoryService.saveAssistantMessage(threadId, fullResponse, "text");
+                            chatHistoryService.saveAssistantMessage(threadId, userId, fullResponse, "text");
                         }
                     });
         } catch (Exception e) {

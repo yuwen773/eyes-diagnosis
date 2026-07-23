@@ -2,6 +2,8 @@ package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.agent.outbox.AgentMessageOutboxService;
+import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
@@ -17,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,14 +37,20 @@ public class ChatHistoryService {
     private final AgentSessionMapper sessionMapper;
     private final AgentMessageMapper messageMapper;
     private final ObjectMapper objectMapper;
+    private final SessionMessageQueue messageQueue;
+    private final AgentMessageOutboxService outbox;
     private AgentConstants agentConstants;
     private TitleGenerationService titleGenerationService;
 
     @Autowired
-    public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper, ObjectMapper objectMapper) {
+    public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper,
+                              ObjectMapper objectMapper, SessionMessageQueue messageQueue,
+                              AgentMessageOutboxService outbox) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.objectMapper = objectMapper;
+        this.messageQueue = messageQueue;
+        this.outbox = outbox;
     }
 
     @Autowired
@@ -56,49 +63,46 @@ public class ChatHistoryService {
         this.agentConstants = agentConstants;
     }
 
-    @Async("agentAsyncExecutor")
     public void saveUserMessage(String sessionId, Long userId, String content) {
-        claimOrValidateSession(sessionId, userId, content);
-        AgentMessage message = buildMessage(sessionId, "USER", null, content);
-        messageMapper.insert(message);
-        sessionMapper.updateMessageCount(sessionId, truncate(content));
+        messageQueue.submit(sessionId, () -> {
+            claimOrValidateSession(sessionId, userId, content);
+            outbox.append(sessionId, userId, "USER", null, content);
+            AgentMessage message = buildMessage(sessionId, "USER", null, content);
+            messageMapper.insert(message);
+            sessionMapper.updateMessageCount(sessionId, truncate(content));
 
-        // 如果是第一条消息，异步触发标题生成
-        AgentSession session = sessionMapper.selectBySessionId(sessionId);
-        if (session != null && session.getMessageCount() == 1) {
-            titleGenerationService.generateTitleAsync(sessionId, content);
-        }
+            AgentSession session = sessionMapper.selectBySessionId(sessionId);
+            if (session != null && session.getMessageCount() == 1) {
+                titleGenerationService.generateTitleAsync(sessionId, content);
+            }
+            return null;
+        });
     }
 
-    @Async("agentAsyncExecutor")
-    public void saveAssistantMessage(String sessionId, String content, String subType) {
-        AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
-        messageMapper.insert(message);
-        sessionMapper.updateMessageCount(sessionId, truncate(content));
+    public void saveAssistantMessage(String sessionId, Long userId, String content, String subType) {
+        messageQueue.submit(sessionId, () -> {
+            outbox.append(sessionId, userId, "ASSISTANT", subType, content);
+            AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
+            messageMapper.insert(message);
+            sessionMapper.updateMessageCount(sessionId, truncate(content));
+            return null;
+        });
     }
 
-    @Async("agentAsyncExecutor")
-    public void saveReasoningMessage(String sessionId, String content) {
-        AgentMessage message = buildMessage(sessionId, "ASSISTANT", "reasoning", content);
-        messageMapper.insert(message);
+    public void saveReasoningMessage(String sessionId, Long userId, String content) {
+        saveAssistantMessage(sessionId, userId, content, "reasoning");
     }
 
-    @Async("agentAsyncExecutor")
-    public void saveToolCallMessage(String sessionId, String content) {
-        AgentMessage message = buildMessage(sessionId, "ASSISTANT", "tool-call", content);
-        messageMapper.insert(message);
+    public void saveToolCallMessage(String sessionId, Long userId, String content) {
+        saveAssistantMessage(sessionId, userId, content, "tool-call");
     }
 
-    @Async("agentAsyncExecutor")
-    public void saveToolResultMessage(String sessionId, String content) {
-        AgentMessage message = buildMessage(sessionId, "ASSISTANT", "tool-result", content);
-        messageMapper.insert(message);
+    public void saveToolResultMessage(String sessionId, Long userId, String content) {
+        saveAssistantMessage(sessionId, userId, content, "tool-result");
     }
 
-    @Async("agentAsyncExecutor")
-    public void saveToolConfirmMessage(String sessionId, String content) {
-        AgentMessage message = buildMessage(sessionId, "ASSISTANT", "mcp-confirm", content);
-        messageMapper.insert(message);
+    public void saveToolConfirmMessage(String sessionId, Long userId, String content) {
+        saveAssistantMessage(sessionId, userId, content, "mcp-confirm");
     }
 
     public ChatHistoryVO loadHistory(String sessionId, Long beforeId, int limit) {

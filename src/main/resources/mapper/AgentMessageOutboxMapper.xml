@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.csust.eyediagnosis.mapper.AgentMessageOutboxMapper">
+
+    <resultMap id="BaseResultMap" type="com.csust.eyediagnosis.agent.outbox.AgentMessageOutboxEntity">
+        <id column="id" property="id" />
+        <result column="sessionId" property="sessionId" />
+        <result column="userId" property="userId" />
+        <result column="role" property="role" />
+        <result column="subType" property="subType" />
+        <result column="content" property="content" />
+        <result column="status" property="status" />
+        <result column="retryCount" property="retryCount" />
+        <result column="lastError" property="lastError" />
+        <result column="createdTime" property="createdTime" />
+        <result column="deliveredTime" property="deliveredTime" />
+    </resultMap>
+
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT id, sessionId, userId, role, subType, content, status, retryCount, lastError, createdTime, deliveredTime
+        FROM t_agent_message_outbox
+        WHERE status = 0
+        ORDER BY id ASC
+        LIMIT #{limit}
+    </select>
+
+    <update id="markDelivered">
+        UPDATE t_agent_message_outbox
+        SET status = 1, deliveredTime = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="markRetry">
+        UPDATE t_agent_message_outbox
+        SET retryCount = retryCount + 1, lastError = #{error}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markDead">
+        UPDATE t_agent_message_outbox
+        SET status = 2, lastError = #{error}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

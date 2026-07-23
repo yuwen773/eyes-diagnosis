@@ -61,6 +61,9 @@ public class AgentController {
         // 入口处校验会话所有权：跨用户访问会立即拒绝
         chatHistoryService.claimOrValidateSession(threadId, userId, request.getMessage());
 
+        // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
+        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
+
         log.info("Agent 流式对话请求, threadId={}, userId={}, message={}", threadId, userId, request.getMessage());
 
         return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,

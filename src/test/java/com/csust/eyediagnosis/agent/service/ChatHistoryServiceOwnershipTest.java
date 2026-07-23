@@ -1,6 +1,8 @@
 package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.csust.eyediagnosis.agent.outbox.AgentMessageOutboxService;
+import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.mapper.AgentMessageMapper;
 import com.csust.eyediagnosis.mapper.AgentSessionMapper;
@@ -24,11 +26,16 @@ class ChatHistoryServiceOwnershipTest {
     private AgentMessageMapper agentMessageMapper;
     @Mock
     private TitleGenerationService titleGenerationService;
+    @Mock
+    private SessionMessageQueue sessionMessageQueue;
+    @Mock
+    private AgentMessageOutboxService outboxService;
 
     @Test
     void existingSessionOwnedByAnotherUserIsRejected() {
         ChatHistoryService service = new ChatHistoryService(
-                agentSessionMapper, agentMessageMapper, new ObjectMapper());
+                agentSessionMapper, agentMessageMapper, new ObjectMapper(),
+                sessionMessageQueue, outboxService);
         service.setTitleGenerationService(titleGenerationService);
 
         AgentSession existing = new AgentSession();
