@@ -3,8 +3,11 @@ package com.csust.eyediagnosis.manager;
 import com.csust.eyediagnosis.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.DeleteObjectsRequest;
 import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.GetObjectRequest;
+import com.qcloud.cos.model.ListObjectsRequest;
+import com.qcloud.cos.model.ObjectListing;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
@@ -12,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @ClassNameCosManager
@@ -82,6 +87,24 @@ public class CosManager {
      */
     public boolean objectExists(String objectKey) {
         return cosClient.doesObjectExist(cosClientConfig.getBucket(), objectKey);
+    }
+
+    /**
+     * 按前缀列举对象 key，用于补偿任务对账。
+     */
+    public List<String> listObjectsByPrefix(String prefix) {
+        List<String> keys = new ArrayList<>();
+        ListObjectsRequest request = new ListObjectsRequest();
+        request.setBucketName(cosClientConfig.getBucket());
+        request.setPrefix(prefix);
+        request.setMaxKeys(1000);
+        ObjectListing listing;
+        do {
+            listing = cosClient.listObjects(request);
+            listing.getObjectSummaries().forEach(s -> keys.add(s.getKey()));
+            request.setMarker(listing.getNextMarker());
+        } while (listing.isTruncated());
+        return keys;
     }
 
 }

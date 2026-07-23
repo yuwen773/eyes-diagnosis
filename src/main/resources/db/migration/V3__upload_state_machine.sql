@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS t_upload_task (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    taskId VARCHAR(64) NOT NULL,
+    userId BIGINT NOT NULL,
+    objectKey VARCHAR(512) NOT NULL,
+    status TINYINT NOT NULL,
+    retryCount INT NOT NULL DEFAULT 0,
+    lastError VARCHAR(512),
+    createTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updateTime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_task (taskId),
+    INDEX idx_user (userId)
+) COMMENT '上传任务状态机';

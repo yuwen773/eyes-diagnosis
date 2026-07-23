@@ -5,6 +5,10 @@ import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.manager.CosManager;
+import com.csust.eyediagnosis.mapper.UploadTaskMapper;
+import com.csust.eyediagnosis.model.entity.UploadTask;
+import com.csust.eyediagnosis.upload.state.UploadStateMachine;
+import com.csust.eyediagnosis.upload.state.UploadStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +31,12 @@ public class AgentImageUploadService {
     @Resource
     private CosClientConfig cosClientConfig;
 
+    @Resource
+    private UploadStateMachine uploadStateMachine;
+
+    @Resource
+    private UploadTaskMapper uploadTaskMapper;
+
     private static final long MAX_SIZE = 2 * 1024 * 1024;
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
@@ -48,17 +58,35 @@ public class AgentImageUploadService {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "无法解码为图像");
         }
+
+        String taskId = UUID.randomUUID().toString();
         String extension = getExtension(file.getContentType());
         String objectKey = OBJECT_KEY_PREFIX + userId + "/" + UUID.randomUUID() + extension;
 
         File tempFile = null;
         try {
+            uploadStateMachine.transition(taskId, null, UploadStatus.UPLOADING);
             tempFile = File.createTempFile("upload-", extension);
             file.transferTo(tempFile);
             cosManager.putObject(objectKey, tempFile);
+            uploadStateMachine.transition(taskId, UploadStatus.UPLOADING, UploadStatus.PERSISTED);
+
+            UploadTask task = new UploadTask();
+            task.setTaskId(taskId);
+            task.setUserId(userId);
+            task.setObjectKey(objectKey);
+            task.setStatus(UploadStatus.PERSISTED.ordinal() + 1);
+            task.setRetryCount(0);
+            uploadTaskMapper.insertPending(task);
+
             return cosClientConfig.getHost() + "/" + objectKey;
         } catch (Exception e) {
             log.error("图片上传失败: {}", e.getMessage(), e);
+            try {
+                uploadStateMachine.transition(taskId, UploadStatus.UPLOADING, UploadStatus.FAILED);
+            } catch (Exception ignored) {
+                // state machine transition best-effort
+            }
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图片上传失败");
         } finally {
             if (tempFile != null && !tempFile.delete()) {
