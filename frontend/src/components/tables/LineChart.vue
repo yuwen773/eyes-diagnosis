@@ -94,7 +94,7 @@ export default defineComponent({
             }
           }
         },
-        series: seriesKeys.map((key, index) => ({
+        series: seriesKeys.map((key) => ({
           name: key,
           type: 'line',
           smooth: true,
@@ -151,7 +151,7 @@ export default defineComponent({
         if (chartInstance) {
           const seriesKeys = Object.keys(props.chartData.series);
           const option = {
-            series: seriesKeys.map((key, index) => ({
+            series: seriesKeys.map((key) => ({
               name: key,
               data: props.chartData.series[key]
             }))

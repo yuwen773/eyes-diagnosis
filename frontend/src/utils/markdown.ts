@@ -23,7 +23,7 @@ const md: MarkdownIt = new MarkdownIt({
           '</span><button class="copy-btn" data-code>复制</button></div><code>' +
           hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
           '</code></pre>'
-      } catch (__) {}
+      } catch (e) { void e }
     }
     // 否则返回普通代码块
     return '<pre class="hljs code-block"><div class="code-header"><span class="code-lang">code</span><button class="copy-btn" data-code>复制</button></div><code>' + md.utils.escapeHtml(str) + '</code></pre>'

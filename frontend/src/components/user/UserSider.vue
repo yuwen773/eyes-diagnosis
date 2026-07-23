@@ -93,7 +93,7 @@ interface Props {
   unreadCount: number
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'update:selectedKeys', keys: string[]): void

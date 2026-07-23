@@ -77,7 +77,7 @@ interface Emits {
   (e: 'update:open', value: boolean): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const activeTab = ref<'mcp' | 'preference'>('mcp')

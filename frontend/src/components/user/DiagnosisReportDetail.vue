@@ -150,7 +150,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { exportToCSV, exportToPDF } from '@/utils/exportUtils'
-import { MdPreview, MdEditor } from 'md-editor-v3'
+import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import {
   IdcardOutlined,
@@ -171,7 +171,7 @@ import {
   ExclamationCircleOutlined,
   WarningOutlined,
 } from '@ant-design/icons-vue'
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'

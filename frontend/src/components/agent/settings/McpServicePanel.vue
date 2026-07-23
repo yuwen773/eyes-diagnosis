@@ -128,9 +128,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { listMcpServers, createMcpServer, updateMcpServer, deleteMcpServer } from '@/api/mcpController'
+import { listMcpServers, updateMcpServer, deleteMcpServer } from '@/api/mcpController'
 import McpServerForm from './McpServerForm.vue'
-import type { McpServerVO, McpServerFormData } from '@/types/mcp'
+import type { McpServerVO } from '@/types/mcp'
 import { getServerTypeLabel } from '@/types/mcp'
 
 const loading = ref(false)
@@ -196,7 +196,7 @@ const loadMcpServerList = async () => {
     } else {
       message.error('加载 MCP 服务列表失败: ' + res.data.message)
     }
-  } catch (e) {
+  } catch {
     message.error('加载 MCP 服务列表失败')
   } finally {
     loading.value = false
@@ -223,7 +223,7 @@ const handleToggleEnabled = async (server: McpServerVO, checked: boolean) => {
     } else {
       message.error(res.data.message || '操作失败')
     }
-  } catch (e) {
+  } catch {
     message.error('操作失败')
   }
 }
@@ -251,7 +251,7 @@ const handleDelete = async (mcpServerCode: string) => {
     } else {
       message.error(res.data.message || '删除失败')
     }
-  } catch (e) {
+  } catch {
     message.error('删除失败')
   }
 }

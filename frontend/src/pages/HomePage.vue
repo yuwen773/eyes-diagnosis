@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import {
   ScanOutlined,
   RobotOutlined,

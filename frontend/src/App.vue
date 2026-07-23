@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { theme } from 'ant-design-vue'
+// ant-design-vue theme tokens are configured via ConfigProvider
 
 const claudeTheme = {
   token: {

@@ -84,7 +84,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { message, type UploadProps } from 'ant-design-vue'
 import { UploadOutlined, InboxOutlined, PlayCircleOutlined } from '@ant-design/icons-vue';
 import { useDiagnosisStore } from '@/stores/diagnosis';

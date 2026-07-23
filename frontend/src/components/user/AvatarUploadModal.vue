@@ -43,7 +43,7 @@ interface Props {
   avatarUrl: string
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
@@ -80,7 +80,7 @@ const handleUpload = async (options: { file: File }) => {
     } else {
       message.error('头像上传失败,' + res.data.msg)
     }
-  } catch (error) {
+  } catch {
     message.error('头像上传失败')
   }
 }

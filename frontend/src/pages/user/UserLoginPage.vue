@@ -10,6 +10,7 @@ const router = useRouter()
 const userLoginStore = useLoginUserStore()
 const loading = ref(false)
 const rememberMe = ref(false)
+void rememberMe
 
 const formState = reactive<API.UserLoginDTO>({
   userAccount: '',

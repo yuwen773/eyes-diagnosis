@@ -43,7 +43,6 @@ export interface BaseResponse<T> {
 const BASE_URL = API_BASE_URL
 
 export const chatStream = (request: AgentChatRequest) => {
-  const threadId = request.threadId || ''
   return fetch(`${BASE_URL}/agent/chat/stream`, {
     method: 'POST',
     headers: {

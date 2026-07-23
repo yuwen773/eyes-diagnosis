@@ -91,7 +91,7 @@ export function useAgentStream() {
     if (files && files.length > 0) {
       try {
         uploadedUrls = await Promise.all(files.map(f => uploadAgentImage(f)))
-      } catch (e) {
+      } catch {
         isStreaming.value = false
         throw new Error('图片上传失败，无法发送消息')
       }

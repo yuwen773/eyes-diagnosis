@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined, DownOutlined } from '@ant-design/icons-vue'
 import ImageUploader from '@/components/diagnosis/ImageUploader.vue'
 import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue'
@@ -7,6 +7,7 @@ import { useDiagnosisStore } from '@/stores/diagnosis'
 
 const diagnosisStore = useDiagnosisStore()
 const { setAnalyzing } = diagnosisStore
+void setAnalyzing
 
 const featuresExpanded = ref(false)
 

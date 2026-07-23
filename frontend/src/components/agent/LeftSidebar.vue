@@ -370,7 +370,7 @@ const handleDelete = (id: string) => {
         await deleteSession(id)
         message.success('会话已删除')
         await props.loadSessions()
-      } catch (e) {
+      } catch {
         message.error('删除失败')
       } finally {
         deleting.value = false
@@ -440,7 +440,7 @@ const handleBatchDelete = async () => {
         multiSelectMode.value = false
         selectedIds.value.clear()
         await props.loadSessions()
-      } catch (e) {
+      } catch {
         message.error('批量删除失败')
       } finally {
         deleting.value = false

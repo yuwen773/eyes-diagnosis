@@ -66,8 +66,6 @@ const originItems = computed(() => {
 })
 
 const items = ref<MenuProps['items']>(originItems.value)
-
-const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
 </script>
 
 <template>

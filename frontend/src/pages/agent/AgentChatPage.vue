@@ -118,7 +118,7 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
 import type { ResourceData, ImageResource, LinkResource } from '@/components/agent/types'
 import { useAgentStream, type StreamMessageType } from '@/composables/useAgentStream'
-import { getChatHistory, getSessions, updateSessionTitle, updatePinStatus, generateTitle, type SessionVO } from '@/api/agentController'
+import { getChatHistory, getSessions, generateTitle, type SessionVO } from '@/api/agentController'
 import '@/assets/agent-theme.css'
 
 const THREAD_ID_KEY = 'agent_current_thread_id'

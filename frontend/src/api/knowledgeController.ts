@@ -1,4 +1,3 @@
-import { API_BASE_URL } from '../config/env'
 import myAxios from '../request'
 
 export interface KnowledgeDocument {

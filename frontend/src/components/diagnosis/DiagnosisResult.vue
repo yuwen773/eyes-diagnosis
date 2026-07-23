@@ -201,7 +201,6 @@ import {
   PieChartOutlined,
   SafetyCertificateOutlined,
   ExclamationCircleOutlined,
-  DownloadOutlined,
   FilePdfOutlined,
   FileTextOutlined
 } from '@ant-design/icons-vue';
@@ -237,13 +236,6 @@ const recommendations = computed(() => {
 // 可靠性等级
 const reliability = ref<'极高' | '高' | '低'>('极高');
 
-// 本地化数字格式化
-const formatNumber = (num: number, locale = 'zh-CN'): string => {
-  return new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1
-  }).format(num)
-}
-
 // 获取所有诊断结果（包含主诊断）
 const allDiagnoses = computed(() => {
   const diagnoses = []
@@ -271,14 +263,6 @@ const allDiagnoses = computed(() => {
   }
 
   return diagnoses.sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0))
-});
-
-// 获取前三的诊断结果 (用于列表展示，不包含主诊断)
-const topDiagnoses = computed(() => {
-  const result = diagnosisResult?.value
-  const other = result?.otherDisease
-  if (!other || !Array.isArray(other) || other.length === 0) return []
-  return [...other].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0))
 });
 
 // 图表数据（包含主诊断用于饼图展示）

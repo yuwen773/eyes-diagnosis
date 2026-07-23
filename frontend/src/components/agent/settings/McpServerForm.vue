@@ -301,7 +301,7 @@ const parseJsonToForm = (jsonStr: string) => {
       .join('\n')
     formData.timeout = serverConfig.timeout || 60000
     jsonError.value = ''
-  } catch (e) {
+  } catch {
     jsonError.value = 'JSON 格式错误，请检查'
   }
 }
@@ -336,7 +336,7 @@ const handleSubmit = async () => {
       try {
         config = JSON.parse(jsonConfig.value)
         jsonError.value = ''
-      } catch (e) {
+      } catch {
         jsonError.value = 'JSON 格式错误，请检查'
         return
       }

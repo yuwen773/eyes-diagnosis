@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/user'
 
-const props = defineProps<{
+defineProps<{
   placement?: 'bottom-end' | 'bottom-start'
 }>()
 

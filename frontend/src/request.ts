@@ -3,9 +3,13 @@ import axios from 'axios'
 //导入 message
 import { message } from 'ant-design-vue'
 import { API_BASE_URL } from '@/config/env'
+// DEV_BASE_URL / PRO_BASE_URL / DOMAIN_BASE_URL 已移至 config/env.ts，此处保留历史占位
 const DEV_BASE_URL = '/api'
 const PRO_BASE_URL = 'http://121.199.77.168'
 const DOMAIN_BASE_URL = 'https://lyf1210.top'
+void DEV_BASE_URL
+void PRO_BASE_URL
+void DOMAIN_BASE_URL
 
 // 创建axios 实例
 const myAxios = axios.create({
