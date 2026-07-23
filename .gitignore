@@ -42,7 +42,6 @@ build/
 /.worktrees/
 /.agents/
 .git-rewrite/
-*.pdf
 skills-lock.json
 /algorithm/models
 /DESIGN.md
@@ -57,8 +56,12 @@ __pycache__/
 
 # 会话日志
 *_2026-*.txt
-frontend/2026-*-*.txt
 
 # 中文文件名（开发文档临时文件）
 作品的安装及使用教程文档.md
 软件著作权申请资料/
+
+# 通用
+.DS_Store
+Thumbs.db
+*.pdf
