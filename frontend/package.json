@@ -15,6 +15,7 @@
     "openapi": "node openapi.config.js"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "7.0.1",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@types/three": "^0.184.0",
     "ant-design-vue": "^4.2.6",
