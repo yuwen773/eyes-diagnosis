@@ -77,4 +77,11 @@ public class CosManager {
         cosClient.deleteObject(new DeleteObjectRequest(cosClientConfig.getBucket(), objectKey));
     }
 
+    /**
+     * 判断对象是否存在：用于删除前的对账/补偿，避免无意义的删除请求。
+     */
+    public boolean objectExists(String objectKey) {
+        return cosClient.doesObjectExist(cosClientConfig.getBucket(), objectKey);
+    }
+
 }

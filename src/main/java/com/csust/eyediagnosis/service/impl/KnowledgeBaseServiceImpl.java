@@ -146,6 +146,12 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             }
         }
 
+        try {
+            cosManager.deleteObject(doc.getFileUrl());
+        } catch (Exception e) {
+            log.warn("COS delete failed, will retry via compensation: docId={}", documentId, e);
+        }
+
         baseMapper.deleteById(doc);
     }
 

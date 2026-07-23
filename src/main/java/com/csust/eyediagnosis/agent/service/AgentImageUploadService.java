@@ -73,6 +73,9 @@ public class AgentImageUploadService {
         String ownerPrefix = OBJECT_KEY_PREFIX + userId + "/";
         ThrowUtils.throwIf(!objectKey.startsWith(ownerPrefix), ErrorCode.NO_AUTH_ERROR,
                 "无权删除他人图片");
+        if (!cosManager.objectExists(objectKey)) {
+            return;
+        }
         cosManager.deleteObject(objectKey);
     }
 
