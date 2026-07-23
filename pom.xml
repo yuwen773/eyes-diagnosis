@@ -133,6 +133,11 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
+        <!-- Spring Security Crypto (BCrypt for password migration) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
         <!-- Spring AI -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

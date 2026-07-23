@@ -111,4 +111,9 @@ public interface UserService extends IService<User> {
      * 不接受请求中传入的 id/userRole/userPassword 等身份字段。
      */
     boolean updateOwnProfile(UserEditDTO input, User loginUser);
+
+    /**
+     * 对原始密码执行 BCrypt cost 12 编码，供 Controller 在创建/重置密码时使用。
+     */
+    String encodePassword(String rawPassword);
 }

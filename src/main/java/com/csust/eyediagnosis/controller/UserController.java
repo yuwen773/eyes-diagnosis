@@ -29,8 +29,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.csust.eyediagnosis.utils.EncryptUtils.getEncryptPassWord;
-
 /**
  * @ClassNameUserController
  * @Description 用户控制层
@@ -114,14 +112,15 @@ public class UserController {
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
     public BaseResponse<Long> userAdd(@RequestBody UserAddDTO userAddDTO){
         ThrowUtils.throwIf(userAddDTO==null, ErrorCode.PARAMS_ERROR);
+        // 管理员必须显式提供初始密码；不得写入固定默认值
+        ThrowUtils.throwIf(userAddDTO.getUserPassword() == null
+                || userAddDTO.getUserPassword().isBlank(),
+                ErrorCode.PARAMS_ERROR, "必须提供初始密码");
         User user = new User();
-        // 拷贝基本属性
+        // 仅复制安全字段；userPassword 走 BCrypt 单独写入
         BeanUtil.copyProperties(userAddDTO,user);
-        //赋值其他属性
-        //默认密码
-        String password = "12345678";
-        String encryptPassword = getEncryptPassWord(password);
-        user.setUserPassword(encryptPassword);
+        String encoded = userService.encodePassword(userAddDTO.getUserPassword());
+        user.setUserPassword(encoded);
         boolean result  = userService.save(user);
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(user.getId());

@@ -33,5 +33,9 @@ public class UserAddDTO implements Serializable {
      * 用户角色 (user/admin)
      */
     private String userRole;
+    /**
+     * 初始密码（必须显式提供，BCrypt cost 12 写入）
+     */
+    private String userPassword;
     private static final long serialVersionUID = 1L;
 }

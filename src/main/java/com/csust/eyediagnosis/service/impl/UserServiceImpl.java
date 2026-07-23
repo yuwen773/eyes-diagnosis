@@ -22,6 +22,7 @@ import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.user.LoginUserVO;
 import com.csust.eyediagnosis.model.vo.user.UserVO;
+import com.csust.eyediagnosis.security.PasswordService;
 import com.csust.eyediagnosis.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,7 +39,6 @@ import static com.csust.eyediagnosis.constant.FileConstant.PICTURE_FAIL_UPLOAD;
 import static com.csust.eyediagnosis.constant.OrderConstant.ASC;
 import static com.csust.eyediagnosis.constant.ReexamineConstant.REEXAMINE_STATUS_WAITING;
 import static com.csust.eyediagnosis.constant.UserConstant.*;
-import static com.csust.eyediagnosis.utils.EncryptUtils.getEncryptPassWord;
 
 /**
 * @author 钰玟
@@ -55,6 +55,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private FileManager fileManager;
     @Resource
     private DiagnosisMapper diagnosisMapper;
+    @Resource
+    private PasswordService passwordService;
     /**
      * 用户注册
      *
@@ -89,8 +91,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(accountNum>0){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,ACCOUNT_REPEATED);
         }
-        //3. 加密 数据
-        String encryptPassword = getEncryptPassWord(userPassword);
+        //3. 加密 数据（BCrypt cost 12）
+        String encryptPassword = passwordService.encode(userPassword);
 
         //4. 注册该用户(插入数据)
         User user = new User();
@@ -125,14 +127,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount",userAccount);
-        // 密码加密
-        String encryptPassWord = getEncryptPassWord(userPassword);
-        queryWrapper.eq("userPassword",encryptPassWord);
         User user = this.getBaseMapper().selectOne(queryWrapper);
-        // 用户不存在
-        if(user==null){
+        if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,FAIL_LOGIN);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, FAIL_LOGIN);
+        }
+        // 校验密码：支持 BCrypt 与 legacy MD5
+        PasswordService.PasswordVerification verification =
+                passwordService.verify(userPassword, user.getUserPassword());
+        if (!verification.matches()) {
+            log.info("user login failed, userAccount cannot match userPassword");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, FAIL_LOGIN);
+        }
+        // legacy MD5 命中后即时升级为 BCrypt
+        if (verification.needsUpgrade()) {
+            User passwordUpgrade = new User();
+            passwordUpgrade.setId(user.getId());
+            passwordUpgrade.setUserPassword(passwordService.encode(userPassword));
+            this.updateById(passwordUpgrade);
         }
         // 记录用户的登录状态
         request.getSession().setAttribute(USER_LOGIN_STATE,user);
@@ -312,6 +324,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         update.setUserAvatar(input.getUserAvatar());
         update.setUserProfile(input.getUserProfile());
         return this.updateById(update);
+    }
+
+    @Override
+    public String encodePassword(String rawPassword) {
+        return passwordService.encode(rawPassword);
     }
 }
 
