@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
+import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.mapper.AgentMessageMapper;
 import com.csust.eyediagnosis.mapper.AgentSessionMapper;
 import com.csust.eyediagnosis.model.dto.agent.ChatHistoryVO;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +58,7 @@ public class ChatHistoryService {
 
     @Async("agentAsyncExecutor")
     public void saveUserMessage(String sessionId, Long userId, String content) {
-        ensureSessionExists(sessionId, userId, content);
+        claimOrValidateSession(sessionId, userId, content);
         AgentMessage message = buildMessage(sessionId, "USER", null, content);
         messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
@@ -245,6 +247,55 @@ public class ChatHistoryService {
         } catch (DuplicateKeyException e) {
             log.debug("Session 已存在（并发创建）, sessionId={}", sessionId);
         }
+    }
+
+    /**
+     * 原子声明或校验会话所有权：
+     * 1) 会话不存在 → 创建并绑定当前 userId；
+     * 2) 会话存在但 owner 与 userId 不符 → 抛 NO_AUTH_ERROR；
+     * 3) 并发创建冲突时再次读取并校验 owner。
+     */
+    @Transactional
+    public AgentSession claimOrValidateSession(String sessionId, Long userId, String firstMessage) {
+        if (sessionId == null || userId == null) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "会话标识或用户为空");
+        }
+        AgentSession existing = sessionMapper.selectBySessionId(sessionId);
+        if (existing != null) {
+            ThrowUtils.throwIf(!userId.equals(existing.getUserId()),
+                    ErrorCode.NO_AUTH_ERROR, "无权限访问该会话");
+            return existing;
+        }
+        AgentSession created = new AgentSession();
+        created.setSessionId(sessionId);
+        created.setUserId(userId);
+        created.setTitle(truncate(firstMessage));
+        created.setStatus(1);
+        created.setMessageCount(0);
+        created.setLastMessage("");
+        created.setCreatedTime(new Date());
+        created.setUpdatedTime(new Date());
+        try {
+            sessionMapper.insert(created);
+            return created;
+        } catch (DuplicateKeyException exception) {
+            AgentSession raced = sessionMapper.selectBySessionId(sessionId);
+            ThrowUtils.throwIf(raced == null || !userId.equals(raced.getUserId()),
+                    ErrorCode.NO_AUTH_ERROR, "无权限访问该会话");
+            return raced;
+        }
+    }
+
+    /**
+     * 仅校验会话所有权：存在且属于 userId 则放行，否则抛 NO_AUTH_ERROR。
+     */
+    public void assertSessionOwner(String sessionId, Long userId) {
+        if (sessionId == null || userId == null) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        AgentSession session = sessionMapper.selectBySessionId(sessionId);
+        ThrowUtils.throwIf(session == null || !userId.equals(session.getUserId()),
+                ErrorCode.NO_AUTH_ERROR);
     }
 
     private String escapeMarkdown(String text) {

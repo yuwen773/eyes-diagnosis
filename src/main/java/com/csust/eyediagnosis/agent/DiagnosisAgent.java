@@ -113,6 +113,8 @@ public class DiagnosisAgent {
      */
     public Flux<MessageDTO> stream(String userMessage, List<String> imageUrls, String threadId, Long userId,
                                    List<String> enabledMcpServers, Boolean disableMcpDefault) {
+        // Agent 运行前再校验一次会话所有权，防止 Controller 路径被绕过
+        chatHistoryService.assertSessionOwner(threadId, userId);
         String fullMessage = buildUserMessage(userMessage, imageUrls);
         chatHistoryService.saveUserMessage(threadId, userId, fullMessage);
 
