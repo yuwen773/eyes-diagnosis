@@ -125,7 +125,7 @@ def test_validate_oof_uses_frozen_split_to_reject_test_patient(tmp_path: Path) -
     with OofWriter(oof) as w:
         w.append([_row("pA"), _row("pB")])  # pB is Test in the frozen split
     with pytest.raises(OofIntegrityError):
-        validate_oof(oof, split_assignment_path=split)
+        validate_oof(oof, split_assignment_path=split, mode="smoke_subset")
 
 
 def test_validate_oof_frozen_split_passes_for_dev_only(tmp_path: Path) -> None:
@@ -136,8 +136,8 @@ def test_validate_oof_frozen_split_passes_for_dev_only(tmp_path: Path) -> None:
     oof = tmp_path / "oof.csv"
     with OofWriter(oof) as w:
         w.append([_row("pA"), _row("pB")])
-    # No fold constraint: subset of Dev is OK.
-    summary = validate_oof(oof, split_assignment_path=split)
+    # No fold constraint: subset of Dev is OK in smoke_subset mode.
+    summary = validate_oof(oof, split_assignment_path=split, mode="smoke_subset")
     assert summary["n_rows"] == 2
 
 
@@ -151,10 +151,13 @@ def test_validate_oof_frozen_split_with_fold_constraint(tmp_path: Path) -> None:
     oof = tmp_path / "oof.csv"
     with OofWriter(oof) as w:
         w.append([_row("pA", fold=0), _row("pC", fold=0)])  # fold-0 ids only
-    # No fold constraint: subset passes.
-    validate_oof(oof, split_assignment_path=split)
-    # With fold constraint enforced: only fold-0 patients allowed.
-    validate_oof(oof, split_assignment_path=split, fold_id=0, fold_assignment_path=folds)
+    # smoke_subset mode is allowed to be a fold subset.
+    validate_oof(oof, split_assignment_path=split, mode="smoke_subset")
+    # smoke_subset with explicit fold scope: only fold-0 patients allowed.
+    validate_oof(
+        oof, split_assignment_path=split, mode="smoke_subset",
+        fold_id=0, fold_assignment_path=folds,
+    )
     with pytest.raises(OofIntegrityError):
         # Adding a fold-1 patient trips the fold-membership check.
         with OofWriter(tmp_path / "oof2.csv") as w:
@@ -162,8 +165,108 @@ def test_validate_oof_frozen_split_with_fold_constraint(tmp_path: Path) -> None:
         validate_oof(
             tmp_path / "oof2.csv",
             split_assignment_path=split,
+            mode="smoke_subset",
             fold_id=0,
             fold_assignment_path=folds,
+        )
+
+
+def test_validate_oof_complete_fold_mode(tmp_path: Path) -> None:
+    """complete_fold must be EXACTLY the patients assigned to fold_id."""
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,dev\npC,dev\n")
+    folds = tmp_path / "fold.csv"
+    folds.write_text("patient_id,fold\npA,0\npB,1\npC,0\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([_row("pA", fold=0), _row("pC", fold=0)])
+    # Exactly fold-0 patients → passes.
+    summary = validate_oof(
+        oof, split_assignment_path=split, mode="complete_fold",
+        fold_id=0, fold_assignment_path=folds,
+    )
+    assert summary["mode"] == "complete_fold"
+
+    with pytest.raises(OofIntegrityError):
+        # Missing pC → fails.
+        with OofWriter(tmp_path / "oof_incomplete.csv") as w:
+            w.append([_row("pA", fold=0)])
+        validate_oof(
+            tmp_path / "oof_incomplete.csv",
+            split_assignment_path=split, mode="complete_fold",
+            fold_id=0, fold_assignment_path=folds,
+        )
+
+
+def test_validate_oof_complete_development_mode(tmp_path: Path) -> None:
+    """complete_development must contain every Dev patient exactly once
+    and each row's fold column must match the frozen fold map."""
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,dev\npC,test\n")
+    folds = tmp_path / "fold.csv"
+    folds.write_text("patient_id,fold\npA,0\npB,1\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([
+            _row("pA", fold=0),
+            _row("pB", fold=1),
+        ])
+    summary = validate_oof(
+        oof, split_assignment_path=split, mode="complete_development",
+        fold_assignment_path=folds,
+    )
+    assert summary["mode"] == "complete_development"
+
+    with pytest.raises(OofIntegrityError):
+        # Missing pB → fails.
+        with OofWriter(tmp_path / "oof_incomplete.csv") as w:
+            w.append([_row("pA", fold=0)])
+        validate_oof(
+            tmp_path / "oof_incomplete.csv",
+            split_assignment_path=split, mode="complete_development",
+            fold_assignment_path=folds,
+        )
+    """In complete_development mode, a row whose fold column disagrees
+    with the frozen fold map must be rejected."""
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,dev\n")
+    folds = tmp_path / "fold.csv"
+    folds.write_text("patient_id,fold\npA,0\npB,1\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        # pA is fold-0 per frozen map, but row claims fold=1.
+        w.append([
+            _row("pA", fold=1),
+            _row("pB", fold=1),
+        ])
+    with pytest.raises(OofIntegrityError):
+        validate_oof(
+            oof, split_assignment_path=split, mode="complete_development",
+            fold_assignment_path=folds,
+        )
+
+
+def test_validate_oof_requires_paired_fold_args(tmp_path: Path) -> None:
+    """fold_id without fold_assignment_path (or vice versa) is rejected."""
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([_row("pA")])
+    with pytest.raises(OofIntegrityError):
+        validate_oof(oof, split_assignment_path=split, mode="smoke_subset", fold_id=0)
+    with pytest.raises(OofIntegrityError):
+        validate_oof(
+            oof, split_assignment_path=split, mode="smoke_subset",
+            fold_assignment_path=tmp_path / "fold.csv",
         )
 
 

@@ -9,14 +9,30 @@ patient-level truth.
 p2-01r: the canonical entry point, ``validate_oof``, reads the frozen
 ``split_assignment_v1.csv`` so "is this a Test patient" is decided by
 the immutable artifact, not by caller-supplied sets (self-attestation).
-The legacy keyword API is kept as ``validate_oof_with_sets`` for unit
-tests that don't need the frozen file.
+
+p2-01r2: ``validate_oof`` now requires an explicit ``mode`` argument:
+
+  - ``smoke_subset`` — current fold's OOF may be a subset (smoke only).
+    Pair with ``fold_id`` + ``fold_assignment_path`` to scope the
+    allowed patients.
+  - ``complete_fold`` — OOF must contain EXACTLY the patients assigned
+    to ``fold_id`` in the frozen fold map, no more, no less, and each
+    row's ``fold`` column must match ``fold_id``. Requires both
+    ``fold_id`` and ``fold_assignment_path``.
+  - ``complete_development`` — OOF must contain EXACTLY every
+    Development patient once; each row's ``fold`` column must match
+    the frozen fold map.
+
+There is no implicit "be lenient" mode. The CI test gate, the recipe
+runner, and the multi-fold orchestrator each pick the mode that
+matches their claim.
 """
 
 from __future__ import annotations
 
 import csv
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -33,6 +49,12 @@ OOF_COLUMNS: tuple[str, ...] = (
     *(f"prob_{c}" for c in CLASS_ORDER),
     "checkpoint_sha256",
 )
+
+
+class OofMode(str, Enum):
+    SMOKE_SUBSET = "smoke_subset"
+    COMPLETE_FOLD = "complete_fold"
+    COMPLETE_DEVELOPMENT = "complete_development"
 
 
 class OofIntegrityError(RuntimeError):
@@ -79,6 +101,9 @@ def validate_oof_with_sets(
     ``require_complete=False`` relaxes the "missing patients" check so
     the fold-scoped caller (subset of Dev) can pass. Test membership is
     still decided against the caller-supplied ``dev_patients`` set.
+
+    Kept for unit tests that don't need the frozen file. Production
+    callers must use ``validate_oof`` with an explicit ``mode``.
     """
     path = Path(path)
     if not path.exists():
@@ -147,11 +172,11 @@ def validate_oof(
     path: Path,
     *,
     split_assignment_path: Path,
+    mode: OofMode | str,
     fold_id: Optional[int] = None,
     fold_assignment_path: Optional[Path] = None,
 ) -> dict:
-    """Frozen-split validator. Test membership is decided by the immutable
-    ``split_assignment_path``; the caller cannot self-attest.
+    """Frozen-split validator with explicit completeness mode.
 
     Parameters
     ----------
@@ -159,35 +184,163 @@ def validate_oof(
         Path to the OOF CSV to validate.
     split_assignment_path:
         Path to ``split_assignment_v1.csv``. Required.
+    mode:
+        One of ``OofMode.SMOKE_SUBSET`` / ``COMPLETE_FOLD`` /
+        ``COMPLETE_DEVELOPMENT``. A string is also accepted.
     fold_id, fold_assignment_path:
-        Optional fold constraint. If both are provided, every OOF row's
-        patient must be assigned to ``fold_id`` per the frozen fold map.
+        Optional fold constraint. ``COMPLETE_FOLD`` requires both;
+        ``SMOKE_SUBSET`` may use them to scope the allowed patients;
+        ``COMPLETE_DEVELOPMENT`` ignores them but uses
+        ``fold_assignment_path`` to verify each row's ``fold`` column.
     """
+    if isinstance(mode, str):
+        try:
+            mode = OofMode(mode)
+        except ValueError as e:
+            raise OofIntegrityError(
+                f"invalid mode {mode!r}; expected one of "
+                f"{[m.value for m in OofMode]}"
+            ) from e
+
+    path = Path(path)
+    if not path.exists():
+        raise OofIntegrityError(f"OOF file does not exist: {path}")
+    with path.open() as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames != list(OOF_COLUMNS):
+            raise OofIntegrityError(
+                f"OOF schema mismatch in {path}: expected {list(OOF_COLUMNS)}, "
+                f"got {reader.fieldnames}"
+            )
+        rows = list(reader)
+
     split = load_split_assignment(split_assignment_path)
     dev_patients = {pid for pid, s in split.items() if s == "dev"}
-    result = validate_oof_with_sets(
-        path,
-        expected_dev_patients=dev_patients,
-        dev_patients=dev_patients,
-        require_complete=False,  # fold-scoped OOFs are subsets of Dev
-    )
+    test_patients = {pid for pid, s in split.items() if s == "test"}
 
-    if fold_id is not None and fold_assignment_path is not None:
+    # Pairwise required-ness per mode.
+    if mode is OofMode.COMPLETE_FOLD:
+        # fold_id + fold_assignment_path must both be present.
+        if fold_id is None or fold_assignment_path is None:
+            raise OofIntegrityError(
+                "COMPLETE_FOLD requires both fold_id and fold_assignment_path"
+            )
+    elif mode is OofMode.SMOKE_SUBSET:
+        # Either both or neither.
+        if (fold_id is None) != (fold_assignment_path is None):
+            raise OofIntegrityError(
+                "SMOKE_SUBSET requires fold_id and fold_assignment_path together "
+                "(or both omitted)"
+            )
+    # COMPLETE_DEVELOPMENT accepts fold_assignment_path alone (to verify
+    # each row's fold column) but ignores fold_id.
+
+    folds: dict[str, int] = {}
+    if fold_assignment_path is not None:
         folds = load_fold_assignment(fold_assignment_path)
-        with Path(path).open() as f:
-            for r in csv.DictReader(f):
-                pid = r["patient_id"]
-                if folds.get(pid) != fold_id:
-                    raise OofIntegrityError(
-                        f"OOF {path}: patient {pid} is not in fold {fold_id} "
-                        f"(frozen fold: {folds.get(pid)})"
-                    )
-    return result
+        if mode is OofMode.COMPLETE_DEVELOPMENT:
+            # Every Dev patient must have a fold row.
+            missing = dev_patients - set(folds)
+            if missing:
+                raise OofIntegrityError(
+                    f"fold assignment missing Dev patients: {sorted(missing)[:5]}"
+                )
+            leaked = set(folds) - dev_patients
+            if leaked:
+                raise OofIntegrityError(
+                    f"fold assignment contains non-Dev patients: {sorted(leaked)[:5]}"
+                )
+
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    leaked_test: set[str] = set()
+    bad_sha_rows: list[str] = []
+    bad_fold_rows: list[str] = []
+    for r in rows:
+        pid = r["patient_id"]
+        if pid in seen:
+            duplicates.add(pid)
+        seen.add(pid)
+        if pid in test_patients:
+            leaked_test.add(pid)
+        if not _SHA_RE.match(r["checkpoint_sha256"]):
+            bad_sha_rows.append(pid)
+        if folds and r["fold"] != "":
+            try:
+                row_fold = int(r["fold"])
+            except (ValueError, TypeError) as e:
+                raise OofIntegrityError(
+                    f"OOF {path}: row {pid} fold={r['fold']!r} is not an int"
+                ) from e
+            if pid in folds and row_fold != folds[pid]:
+                bad_fold_rows.append(pid)
+
+    # Universal checks (any mode).
+    if duplicates:
+        raise OofIntegrityError(f"OOF {path}: duplicate patient rows: {sorted(duplicates)[:5]}")
+    if leaked_test:
+        raise OofIntegrityError(
+            f"OOF {path}: contains Test patients: {sorted(leaked_test)[:5]}"
+        )
+    if bad_sha_rows:
+        raise OofIntegrityError(
+            f"OOF {path}: invalid checkpoint_sha256 for patients (first 5): "
+            f"{bad_sha_rows[:5]}"
+        )
+    if bad_fold_rows:
+        raise OofIntegrityError(
+            f"OOF {path}: row.fold != frozen fold for {len(bad_fold_rows)} "
+            f"patients (first 5): {bad_fold_rows[:5]}"
+        )
+
+    if mode is OofMode.SMOKE_SUBSET:
+        # No completeness requirement. Just basic structure + no leaks.
+        # If a fold scope was supplied, every seen patient must be in it.
+        if fold_id is not None and folds:
+            allowed = {p for p, f in folds.items() if f == fold_id}
+            extras = seen - allowed
+            if extras:
+                raise OofIntegrityError(
+                    f"OOF {path} (smoke_subset): contains patients outside "
+                    f"fold {fold_id}: {sorted(extras)[:5]}"
+                )
+
+    elif mode is OofMode.COMPLETE_FOLD:
+        assert fold_id is not None and folds is not None
+        allowed = {p for p, f in folds.items() if f == fold_id}
+        missing = allowed - seen
+        extras = seen - allowed
+        if missing or extras:
+            raise OofIntegrityError(
+                f"OOF {path} (complete_fold): missing={sorted(missing)[:5]} "
+                f"extras={sorted(extras)[:5]} (missing={len(missing)} "
+                f"extras={len(extras)})"
+            )
+
+    elif mode is OofMode.COMPLETE_DEVELOPMENT:
+        missing = dev_patients - seen
+        extras = seen - dev_patients
+        if missing or extras:
+            raise OofIntegrityError(
+                f"OOF {path} (complete_development): missing="
+                f"{sorted(missing)[:5]} extras={sorted(extras)[:5]} "
+                f"(missing={len(missing)} extras={len(extras)})"
+            )
+    else:
+        raise OofIntegrityError(f"unknown mode: {mode!r}")
+
+    return {
+        "n_rows": len(rows),
+        "n_unique_patients": len(seen),
+        "mode": mode.value,
+        "fold_id": fold_id,
+    }
 
 
 __all__ = [
     "OOF_COLUMNS",
     "OofIntegrityError",
+    "OofMode",
     "OofWriter",
     "validate_oof",
     "validate_oof_with_sets",
