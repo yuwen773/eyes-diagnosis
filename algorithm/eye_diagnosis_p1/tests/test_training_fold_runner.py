@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import inspect
 import json
 from pathlib import Path
 
@@ -20,6 +21,8 @@ from p1.training.fold_runner import (
 )
 from p1.training.oof import OOF_COLUMNS
 from p1.training.protocol import default_protocol
+
+_IMAGENET = "EfficientNet_B4_Weights.IMAGENET1K_V1"
 
 
 @pytest.fixture
@@ -47,34 +50,53 @@ def fake_inputs(tmp_path: Path) -> dict:
     }
 
 
-def test_run_fold_writes_receipt_and_oof(tmp_path: Path, fake_inputs: dict) -> None:
-    pids = fake_inputs["pids"]
-    val = pids[:4]
-    train = pids[4:]
-    protocol = default_protocol()
-    out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
-    out_dir.mkdir(parents=True)
-    oof_path = out_dir / "oof.csv"
+def _fake_high(device=None):
+    return (10000 * 1024 * 1024, 16384 * 1024 * 1024)
 
-    # Inject a fake CUDA probe so the test does not depend on local GPU state.
-    fake_high = lambda device=None: (10000 * 1024 * 1024, 16384 * 1024 * 1024)
-    # Pre-create the OOF writer file via the runner; we will read it after.
-    receipt = run_fold(
-        experiment="E3",
+
+def _run_e0(runner, fake_inputs, tmp_path, *, train, val, **extra):
+    out_dir = tmp_path / "artifacts" / "E0" / "fold_0"
+    out_dir.mkdir(parents=True)
+    return runner(
+        experiment="E0",
         fold_id=0,
-        dev_patient_ids=train + val,
+        train_patient_ids=train,
         val_patient_ids=val,
         image_paths=fake_inputs["image_paths"],
         labels=fake_inputs["labels"],
         root_dir=fake_inputs["root_dir"],
-        protocol=protocol,
+        protocol=default_protocol(),
         out_dir=out_dir,
-        _mem_get_info=fake_high,
+        **extra,
+    )
+
+
+def test_run_fold_writes_receipt_and_oof(tmp_path: Path, fake_inputs: dict) -> None:
+    pids = fake_inputs["pids"]
+    train = pids[4:]
+    val = pids[:4]
+    out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
+    out_dir.mkdir(parents=True)
+    oof_path = out_dir / "oof.csv"
+
+    receipt = run_fold(
+        experiment="E3",
+        fold_id=0,
+        train_patient_ids=train,
+        val_patient_ids=val,
+        image_paths=fake_inputs["image_paths"],
+        labels=fake_inputs["labels"],
+        root_dir=fake_inputs["root_dir"],
+        protocol=default_protocol(),
+        out_dir=out_dir,
+        _mem_get_info=_fake_high,
+        _download=False,
     )
     assert isinstance(receipt, FoldReceipt)
     assert receipt.fold == 0
     assert receipt.experiment_id == "E3"
-    assert receipt.amp is True
+    assert receipt.amp_enabled is True
+    assert receipt.weights == _IMAGENET
     assert len(receipt.checkpoint_sha256) == 64
 
     receipt_path = out_dir / "fold_0_receipt.json"
@@ -83,6 +105,10 @@ def test_run_fold_writes_receipt_and_oof(tmp_path: Path, fake_inputs: dict) -> N
     assert payload["experiment_id"] == "E3"
     assert payload["fold"] == 0
     assert payload["val_patient_count"] == 4
+    assert payload["train_patient_count"] == 4
+    assert payload["weights"] == _IMAGENET
+    assert payload["checkpoint_selector"] == "validation_macro_auprc"
+    assert payload["experiment_primary_metric"] == "oof_macro_auprc"
 
     # OOF must have one row per val patient.
     assert oof_path.exists()
@@ -95,7 +121,7 @@ def test_run_fold_writes_receipt_and_oof(tmp_path: Path, fake_inputs: dict) -> N
 
 def test_run_fold_rejects_legacy_weights(tmp_path: Path, fake_inputs: dict, monkeypatch: pytest.MonkeyPatch) -> None:
     pids = fake_inputs["pids"]
-    protocol = default_protocol()
+    train, val = pids[4:], pids[:4]
     out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
     out_dir.mkdir(parents=True)
     monkeypatch.setattr(
@@ -106,61 +132,52 @@ def test_run_fold_rejects_legacy_weights(tmp_path: Path, fake_inputs: dict, monk
         run_fold(
             experiment="E3",
             fold_id=0,
-            dev_patient_ids=pids,
-            val_patient_ids=pids[:2],
+            train_patient_ids=train,
+            val_patient_ids=val,
             image_paths=fake_inputs["image_paths"],
             labels=fake_inputs["labels"],
             root_dir=fake_inputs["root_dir"],
-            protocol=protocol,
+            protocol=default_protocol(),
             out_dir=out_dir,
+            _mem_get_info=_fake_high,
+            _download=False,
         )
 
 
-def test_run_fold_never_reads_test_patients(tmp_path: Path, fake_inputs: dict) -> None:
-    """A malicious caller can only supply a 'dev_patient_ids' list. The
-    runner must not invoke any test-side accessor.
-    """
-    pids = fake_inputs["pids"]
-    protocol = default_protocol()
-    out_dir = tmp_path / "artifacts" / "E0" / "fold_0"
-    out_dir.mkdir(parents=True)
-    # Confirm the public signature does not accept a 'test_patient_ids' kwarg.
-    import inspect
+def test_run_fold_never_reads_test_patients(fake_inputs: dict) -> None:
+    """The public signature must not accept a 'test_patient_ids' kwarg."""
     sig = inspect.signature(run_fold)
     assert "test_patient_ids" not in sig.parameters
+    assert "train_patient_ids" in sig.parameters
+    assert "val_patient_ids" in sig.parameters
+    assert "dev_patient_ids" not in sig.parameters
 
 
 def test_run_fold_e2_smoke_via_assignment(tmp_path: Path, fake_inputs: dict) -> None:
-    """E2 picks one eye per patient. We feed the runner the *image_paths*
-    filtered so that each patient has only the assigned eye, and assert
-    OOF rows match the val set."""
     from p1.training.e2_assignment import assign_e2_eyes
 
     pids = fake_inputs["pids"]
     assignment = assign_e2_eyes(pids, seed=42)
-    # Filter labels/image_paths so that each patient exposes only the assigned eye.
     filtered_paths: dict[str, dict[str, Path]] = {}
     for pid, eyes in fake_inputs["image_paths"].items():
         chosen = assignment[pid]
         filtered_paths[pid] = {chosen: eyes[chosen]}
-    protocol = default_protocol()
+    train, val = pids[4:], pids[:4]
     out_dir = tmp_path / "artifacts" / "E2" / "fold_0"
     out_dir.mkdir(parents=True)
-    val = pids[:4]
-    train = pids[4:]
-    fake_high = lambda device=None: (10000 * 1024 * 1024, 16384 * 1024 * 1024)
     receipt = run_fold(
         experiment="E2",
         fold_id=0,
-        dev_patient_ids=train + val,
+        train_patient_ids=train,
         val_patient_ids=val,
         image_paths=filtered_paths,
         labels=fake_inputs["labels"],
         root_dir=fake_inputs["root_dir"],
-        protocol=protocol,
+        protocol=default_protocol(),
         out_dir=out_dir,
         e2_assignment=assignment,
-        _mem_get_info=fake_high,
+        _mem_get_info=_fake_high,
+        _download=False,
     )
     assert receipt.experiment_id == "E2"
     assert receipt.val_patient_count == 4
@@ -168,7 +185,7 @@ def test_run_fold_e2_smoke_via_assignment(tmp_path: Path, fake_inputs: dict) -> 
 
 def test_run_fold_fails_closed_on_low_vram(tmp_path: Path, fake_inputs: dict) -> None:
     pids = fake_inputs["pids"]
-    protocol = default_protocol()
+    train, val = pids[4:], pids[:4]
     out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
     out_dir.mkdir(parents=True)
     fake_low = lambda device=None: (1024 * 1024 * 1024, 8188 * 1024 * 1024)  # 1 GB free
@@ -177,16 +194,114 @@ def test_run_fold_fails_closed_on_low_vram(tmp_path: Path, fake_inputs: dict) ->
         runner(
             experiment="E3",
             fold_id=0,
-            dev_patient_ids=pids,
-            val_patient_ids=pids[:2],
+            train_patient_ids=train,
+            val_patient_ids=val,
             image_paths=fake_inputs["image_paths"],
             labels=fake_inputs["labels"],
             root_dir=fake_inputs["root_dir"],
-            protocol=protocol,
+            protocol=default_protocol(),
             out_dir=out_dir,
+            _download=False,
         )
     # Either InsufficientVram or TrainingError wrapping it is acceptable.
     assert "vram" in str(ei.value).lower() or "insufficient" in str(ei.value).lower()
+
+
+def test_run_fold_optimizer_never_steps_on_val_patients(
+    tmp_path: Path, fake_inputs: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """batch-recording spy: every ``_stack_batch`` call inside the optimizer
+    step sees only train_patient_ids, never val."""
+    import p1.training.fold_runner as fr
+
+    seen_in_backward: list[str] = []
+    real_stack = fr._stack_batch
+
+    def spy(patient_ids, *a, **k):
+        seen_in_backward.extend(list(patient_ids))
+        return real_stack(patient_ids, *a, **k)
+
+    monkeypatch.setattr(fr, "_stack_batch", spy)
+
+    pids = fake_inputs["pids"]
+    train = pids[:4]
+    val = pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+    )
+    assert receipt.experiment_id == "E0"
+    assert set(seen_in_backward) & set(val) == set(), (
+        f"val patients entered a training batch: {sorted(set(seen_in_backward) & set(val))}"
+    )
+
+
+def test_run_fold_rejects_overlapping_train_val(tmp_path: Path, fake_inputs: dict) -> None:
+    pids = fake_inputs["pids"]
+    with pytest.raises(TrainingError):
+        run_fold(
+            experiment="E0",
+            fold_id=0,
+            train_patient_ids=pids[:5],
+            val_patient_ids=pids[3:],  # overlap
+            image_paths=fake_inputs["image_paths"],
+            labels=fake_inputs["labels"],
+            root_dir=fake_inputs["root_dir"],
+            protocol=default_protocol(),
+            out_dir=tmp_path / "art",
+            _mem_get_info=_fake_high,
+            _download=False,
+        )
+
+
+def test_receipt_records_amp_and_weights(tmp_path: Path, fake_inputs: dict) -> None:
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+    )
+    assert receipt.weights == _IMAGENET
+    assert receipt.grad_scaler_enabled == receipt.amp_enabled
+    assert receipt.amp_dtype in ("float16", "none")
+    assert receipt.checkpoint_selector == "validation_macro_auprc"
+    assert receipt.experiment_primary_metric == "oof_macro_auprc"
+    assert receipt.smoke is True  # one-step = smoke
+
+
+def test_receipt_records_input_hashes(tmp_path: Path, fake_inputs: dict) -> None:
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    hashes = {
+        "manifest_sha256": "m" * 64,
+        "split_sha256": "s" * 64,
+        "fold_sha256": "f" * 64,
+        "protocol_sha256": "p" * 64,
+    }
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+        input_hashes=hashes,
+    )
+    assert receipt.manifest_sha256 == "m" * 64
+    assert receipt.split_sha256 == "s" * 64
+    assert receipt.fold_sha256 == "f" * 64
+    assert receipt.protocol_sha256 == "p" * 64
+
+
+def test_receipt_hashes_default_to_none(tmp_path: Path, fake_inputs: dict) -> None:
+    """Unit tests pass input_hashes=None; the receipt must serialize None, not crash."""
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+    )
+    for f in ("manifest_sha256", "split_sha256", "fold_sha256", "protocol_sha256"):
+        assert getattr(receipt, f) is None
+
+
+# --- CLI plumbing tests --------------------------------------------------
 
 
 def test_cli_parse_args_defaults() -> None:

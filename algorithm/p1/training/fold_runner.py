@@ -1,10 +1,15 @@
 """One-fold training + validation for E0/E1/E2/E3.
 
 This is the minimum verifiable skeleton: preflight, AMP-aware forward
-pass on a small batch, BCEWithLogitsLoss, OOF row append, and a fold
-receipt. It does not run the full epoch loop, early stopping, or model
-selection — those are P2-02 concerns. The runner refuses to read any
-Test patients because its public signature does not accept them.
+pass on a small TRAINING batch (gradScaler-backed), BCEWithLogitsLoss,
+OOF row append on the held-out VAL set, and a fold receipt. It does not
+run the full epoch loop, early stopping, or model selection — those are
+P2-02 concerns.
+
+OOF-integrity contract: optimizer.step is called ONLY on
+``train_patient_ids``; predictions come ONLY from
+``val_patient_ids``. The two sets are asserted disjoint at the entry
+boundary. Test patients are unreachable: they are not in the signature.
 """
 
 from __future__ import annotations
@@ -29,19 +34,30 @@ from p1.training.protocol import E0E3Protocol
 
 
 class TrainingError(RuntimeError):
-    """Wraps a fatal training-time failure (NaN, OOM, etc.)."""
+    """Wraps a fatal training-time failure (NaN, OOM, disjointness, etc.)."""
 
 
 @dataclass
 class FoldReceipt:
     experiment_id: str
     fold: int
-    dev_patient_count: int
+    train_patient_count: int
     val_patient_count: int
     epoch_count: int
-    amp: bool
-    checkpoint_sha256: str
     schema_version: str
+    # New fields (p2-01r):
+    weights: str
+    checkpoint_selector: str
+    experiment_primary_metric: str
+    amp_enabled: bool
+    amp_dtype: str
+    grad_scaler_enabled: bool
+    checkpoint_sha256: str
+    manifest_sha256: Optional[str]
+    split_sha256: Optional[str]
+    fold_sha256: Optional[str]
+    protocol_sha256: Optional[str]
+    smoke: bool
 
 
 def _load_image_tensor(path: Path, target_size: int) -> torch.Tensor:
@@ -92,11 +108,44 @@ def _forward_and_loss(
     return loss
 
 
+def _stack_train_batch(
+    smoke_pids: Sequence[str],
+    *,
+    experiment: str,
+    image_paths: Mapping[str, Mapping[str, Path]],
+    labels: Mapping[str, np.ndarray],
+    root_dir: Path,
+    target_size: int,
+    eye_for_dataset: str,
+    e2_assignment: Optional[Mapping[str, str]] = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Build a training batch from ``smoke_pids`` (TRAIN ids only).
+
+    E3 stacks left then right on the batch axis. E0/E1 use a single eye;
+    E2 uses the per-patient eye resolver.
+    """
+    if experiment == "E3":
+        left_batch, left_labels, _ = _stack_batch(
+            smoke_pids, image_paths, labels, root_dir, target_size, "left"
+        )
+        right_batch, _, _ = _stack_batch(
+            smoke_pids, image_paths, labels, root_dir, target_size, "right"
+        )
+        batch = torch.cat([left_batch, right_batch], dim=0)
+        labels_t = left_labels
+    else:
+        batch, labels_t, _ = _stack_batch(
+            smoke_pids, image_paths, labels, root_dir, target_size,
+            eye_for_dataset, e2_assignment,
+        )
+    return batch, labels_t
+
+
 def run_fold(
     *,
     experiment: str,
     fold_id: int,
-    dev_patient_ids: Sequence[str],
+    train_patient_ids: Sequence[str],
     val_patient_ids: Sequence[str],
     image_paths: Mapping[str, Mapping[str, Path]],
     labels: Mapping[str, np.ndarray],
@@ -104,15 +153,32 @@ def run_fold(
     protocol: E0E3Protocol,
     out_dir: Path,
     e2_assignment: Optional[Mapping[str, str]] = None,
+    input_hashes: Optional[Mapping[str, str]] = None,
     _mem_get_info: Optional[Callable[[Optional[int]], tuple[int, int]]] = None,
+    _download: bool = True,
 ) -> FoldReceipt:
     """Run a minimal one-step training+inference pass for one fold.
 
-    Public signature intentionally does not accept ``test_patient_ids``.
-    ``e2_assignment`` is required when ``experiment == "E2"``.
-    ``_mem_get_info`` is a private injection point for tests; production
-    callers must leave it ``None`` so the real GPU probe runs.
+    Contract:
+      * ``train_patient_ids`` and ``val_patient_ids`` must be DISJOINT.
+      * Optimizer.step is called ONLY with a batch built from
+        ``train_patient_ids`` (no leakage to val).
+      * Predictions (and OOF rows) come ONLY from ``val_patient_ids``.
+      * ``experiment == "E2"`` requires ``e2_assignment``.
+
+    ``_mem_get_info`` and ``_download`` are private injection points for
+    tests; production callers must leave them ``None``/``True``.
     """
+    train_set = set(train_patient_ids)
+    val_set = set(val_patient_ids)
+    overlap = train_set & val_set
+    if overlap:
+        raise TrainingError(
+            f"train∩val must be empty (OOF integrity); overlap: {sorted(overlap)[:5]}"
+        )
+    if not train_set:
+        raise TrainingError("train_patient_ids is empty; cannot run a fold")
+
     check_required_free_vram_mb(
         protocol.preflight_free_vram_mb, mem_get_info=_mem_get_info
     )
@@ -122,7 +188,7 @@ def run_fold(
     oof_path = out_dir / "oof.csv"
     receipt_path = out_dir / f"fold_{fold_id}_receipt.json"
 
-    model = build_model(experiment, pretrained=False)
+    model = build_model(experiment, weights=protocol.weights, _download=_download)
     target_size = protocol.image_size
 
     if experiment == "E2":
@@ -137,27 +203,24 @@ def run_fold(
         eye_for_dataset = {"E0": "left", "E1": "right"}[experiment]
         eye_resolver = lambda pid: eye_for_dataset  # noqa: E731
 
-    # One forward pass over the first 2 validation patients (smoke-sized).
-    smoke_pids = list(val_patient_ids)[: max(2, protocol.patient_batch // 4)]
-    if not smoke_pids:
-        raise TrainingError("val_patient_ids is empty; cannot run a fold")
+    # Optimizer step draws from TRAIN ids only (the smoke batch is a
+    # deterministic prefix of the TRAIN list).
+    smoke_pids = list(train_patient_ids)[: max(2, protocol.patient_batch // 4)]
 
     if experiment == "E3":
-        # E3 needs paired eyes. Stack left then right on the batch axis so
-        # the shared encoder runs once over [2B,3,H,W]; labels correspond to
-        # the post-chunk batch size [B,8].
-        left_batch, left_labels, used_pids = _stack_batch(
-            smoke_pids, image_paths, labels, root_dir, target_size, "left"
+        train_batch, train_labels = _stack_train_batch(
+            smoke_pids,
+            experiment=experiment,
+            image_paths=image_paths, labels=labels, root_dir=root_dir,
+            target_size=target_size, eye_for_dataset=eye_for_dataset,
         )
-        right_batch, _, _ = _stack_batch(
-            smoke_pids, image_paths, labels, root_dir, target_size, "right"
-        )
-        val_batch = torch.cat([left_batch, right_batch], dim=0)
-        val_labels = left_labels
     else:
-        val_batch, val_labels, used_pids = _stack_batch(
-            smoke_pids, image_paths, labels, root_dir, target_size,
-            eye_for_dataset, e2_assignment,
+        train_batch, train_labels = _stack_train_batch(
+            smoke_pids,
+            experiment=experiment,
+            image_paths=image_paths, labels=labels, root_dir=root_dir,
+            target_size=target_size, eye_for_dataset=eye_for_dataset,
+            e2_assignment=e2_assignment,
         )
 
     optimizer = torch.optim.AdamW(
@@ -167,33 +230,36 @@ def run_fold(
     )
 
     use_amp = bool(protocol.amp and torch.cuda.is_available())
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    val_batch = val_batch.to(device)
-    val_labels = val_labels.to(device)
+    train_batch = train_batch.to(device)
+    train_labels = train_labels.to(device)
 
     try:
-        slice_end = min(protocol.patient_batch, val_labels.shape[0])
         if use_amp:
             with torch.amp.autocast(device_type="cuda", dtype=torch.float16):
-                loss = _forward_and_loss(model, val_batch[: slice_end * 2 if experiment == "E3" else slice_end], val_labels[:slice_end])
+                loss = _forward_and_loss(model, train_batch, train_labels)
         else:
-            loss = _forward_and_loss(model, val_batch[: slice_end * 2 if experiment == "E3" else slice_end], val_labels[:slice_end])
+            loss = _forward_and_loss(model, train_batch, train_labels)
         if torch.isnan(loss).any():
             raise TrainingError(f"NaN loss in fold {fold_id} experiment {experiment}")
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
     except RuntimeError as e:  # covers OOM
         raise TrainingError(f"training step failed in fold {fold_id}: {e}") from e
 
-    # Inference pass (no grad) for the full validation set.
+    # Inference pass (no grad) for the full validation set ONLY.
     model.eval()
     with torch.no_grad():
         all_rows: list[dict] = []
         for pid in val_patient_ids:
             chosen = eye_resolver(pid)
-            tensor = _load_image_tensor(root_dir / image_paths[pid][chosen], target_size).unsqueeze(0).to(device)
+            tensor = _load_image_tensor(
+                root_dir / image_paths[pid][chosen], target_size
+            ).unsqueeze(0).to(device)
             if experiment == "E3":
                 tensor_right = _load_image_tensor(
                     root_dir / image_paths[pid]["right"], target_size
@@ -216,18 +282,30 @@ def run_fold(
             row["checkpoint_sha256"] = _sha256_state_dict(model)
             all_rows.append(row)
 
-    with OofWriter(oof_path) as w:
-        w.append(all_rows)
+    if all_rows:
+        with OofWriter(oof_path) as w:
+            w.append(all_rows)
 
+    h = input_hashes or {}
     receipt = FoldReceipt(
         experiment_id=experiment,
         fold=fold_id,
-        dev_patient_count=len(dev_patient_ids),
+        train_patient_count=len(train_patient_ids),
         val_patient_count=len(val_patient_ids),
         epoch_count=1,
-        amp=bool(protocol.amp),
-        checkpoint_sha256=all_rows[0]["checkpoint_sha256"],
         schema_version=protocol.schema_version,
+        weights=protocol.weights,
+        checkpoint_selector=protocol.checkpoint_selector,
+        experiment_primary_metric=protocol.experiment_primary_metric,
+        amp_enabled=use_amp,
+        amp_dtype="float16" if use_amp else "none",
+        grad_scaler_enabled=use_amp,
+        checkpoint_sha256=all_rows[0]["checkpoint_sha256"] if all_rows else "",
+        manifest_sha256=h.get("manifest_sha256"),
+        split_sha256=h.get("split_sha256"),
+        fold_sha256=h.get("fold_sha256"),
+        protocol_sha256=h.get("protocol_sha256"),
+        smoke=True,
     )
     receipt_path.write_text(json.dumps(asdict(receipt), indent=2, sort_keys=True))
     return receipt
@@ -241,15 +319,26 @@ def build_run_fold_with_mock_mem(
     Tests inject a fake ``mem_get_info`` so the failure path is
     deterministic and independent of the local GPU state.
     """
+
     def _runner(**kwargs) -> FoldReceipt:
         original = check_required_free_vram_mb
         from p1.training import fold_runner as _self
 
         def _patched(threshold_mb: int, *, mem_get_info=None) -> int:
             return original(threshold_mb, mem_get_info=mem_get_info)
+
         _self.check_required_free_vram_mb = _patched
         try:
             return run_fold(**kwargs)
         finally:
             _self.check_required_free_vram_mb = original
+
     return _runner
+
+
+__all__ = [
+    "FoldReceipt",
+    "TrainingError",
+    "build_run_fold_with_mock_mem",
+    "run_fold",
+]
