@@ -8,10 +8,14 @@ import com.csust.eyediagnosis.mapper.InferenceCacheMapper;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.entity.User;
+import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
+import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,10 +25,10 @@ class InferenceCacheTest {
     @Test
     void sameImageBytesShareCachedInferenceAcrossUsers() {
         InferenceCacheMapper mapper = mock(InferenceCacheMapper.class);
-        when(mapper.findByHash(any(), any(), any()))
+        when(mapper.findByHash(any(), any(), any(), any(), any()))
                 .thenReturn(buildCache("normal", 0.9, "desc"));
 
-        InferenceCache cached = mapper.findByHash("h", "v1", "p1");
+        InferenceCache cached = mapper.findByHash("h", "v1", "weight", "p1", "medical-safety-v2");
         assertEquals("normal", cached.getPredictedLabel());
         assertEquals(0.9, cached.getProbability());
     }
@@ -56,6 +60,117 @@ class InferenceCacheTest {
         }
         byte[] digest = md.digest(new byte[]{1, 2, 3});
         assertEquals(64, org.apache.commons.codec.binary.Hex.encodeHexString(digest).length());
+    }
+
+    @Test
+    void cachedResponsePreservesEveryMedicalSafetyField() {
+        DiagnosisProto.DiagnosisResponse uncached = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel("normal")
+                .setProbability(91.5)
+                .setCalibratedProbability(90.1)
+                .setCalibrationStatus("CALIBRATED")
+                .setReliabilityScore(90)
+                .setDescription("desc")
+                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel("normal").setProbability(91.5))
+                .setRejected(true)
+                .setAbstainReason("QUALITY_FAIL")
+                .setQualityScore(25)
+                .setQualityReasons("blur")
+                .setIsOod(true)
+                .setOodScore(12.3)
+                .setOodStatus(DiagnosisProto.OodStatus.OUT_OF_DISTRIBUTION)
+                .setModelVersion("efficientnet-b4@1.0.0")
+                .setWeightSha256("a".repeat(64))
+                .setPreprocessVersion("v1")
+                .setInferencePolicyVersion("medical-safety-v2")
+                .setRequiresReview(true)
+                .build();
+
+        InferenceCache cache = DiagnosisServiceImpl.toCacheEntity(
+                "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess", "fallback-policy");
+
+        assertEquals(uncached, DiagnosisServiceImpl.toProto(cache));
+    }
+
+    @Test
+    void cacheRequiresOneCompleteNormalizedDeploymentFingerprint() {
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "", "v1", "medical-safety-v2"));
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "A".repeat(64), "", "medical-safety-v2"));
+        assertTrue(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "A".repeat(64), "v1", "medical-safety-v2"));
+        assertEquals("a".repeat(64), DiagnosisServiceImpl.normalizeWeightSha256("A".repeat(64)));
+    }
+
+    @Test
+    void rejectedResponseContainsNoAiConclusion() {
+        DiagnosisProto.DiagnosisResponse rejected = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel("normal")
+                .setProbability(91.5)
+                .setReliabilityScore(92)
+                .setDescription("must not be public")
+                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel("normal").setProbability(91.5))
+                .setRejected(true)
+                .setAbstainReason("QUALITY_FAIL")
+                .setQualityScore(25)
+                .setModelVersion("efficientnet-b4@1.0.0")
+                .setWeightSha256("a".repeat(64))
+                .setRequiresReview(true)
+                .build();
+
+        DiagnosisResultVO response = DiagnosisServiceImpl.buildDiagnosisResult(rejected);
+
+        assertEquals(true, response.getAiRejected());
+        assertEquals("QUALITY_FAIL", response.getAbstainReason());
+        assertEquals(25, response.getQualityScore());
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getDetails());
+        assertEquals(null, response.getProbability());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getRecommendations());
+        assertEquals(null, response.getOtherDisease());
+    }
+
+    @Test
+    void historicalRejectedResponseContainsNoAiConclusionAndDerivesReviewStatus() {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setAiRejected(true);
+        diagnosis.setHumanReviewStatus("AWAITING_REVIEW");
+        diagnosis.setResult("正常");
+        diagnosis.setDetails("must not be public");
+        diagnosis.setProbability(91.5);
+        diagnosis.setConfidence(92.0);
+        diagnosis.setRecommendations("must not be public");
+
+        DiagnosisResultVO response = DiagnosisResultVO.objToVo(diagnosis);
+
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getDetails());
+        assertEquals(null, response.getProbability());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getRecommendations());
+    }
+
+    @Test
+    void rejectedHistoryListContainsNoAiConclusion() {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setAiRejected(true);
+        diagnosis.setHumanReviewStatus("AWAITING_REVIEW");
+        diagnosis.setResult("正常");
+        diagnosis.setConfidence(92.0);
+        diagnosis.setSeverity("NOT_ASSESSED");
+
+        DiagnosisManageVO response = DiagnosisManageVO.objToVo(diagnosis);
+
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getSeverity());
     }
 
     private DiagnosisProto.DiagnosisResponse mockGrpc() {

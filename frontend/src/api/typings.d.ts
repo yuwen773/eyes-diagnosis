@@ -181,6 +181,10 @@ declare namespace API {
     details?: string
     severity?: string
     createTime?: string
+    humanResult?: string
+    humanSeverity?: string
+    humanRecommendations?: string
+    humanReviewNote?: string
   }
 
   type DiagnosisResultVO = {
@@ -207,6 +211,14 @@ declare namespace API {
     disclaimer?: string
     requiresReview?: boolean
     chunkCount?: number
+    qualityScore?: number
+    qualityReasons?: string
+    preprocessVersion?: string
+    inferencePolicyVersion?: string
+    calibrationStatus?: string
+    calibratedProbability?: number
+    oodStatus?: string
+    oodScore?: number
   }
 
   type DiagnosisUploadDTO = {

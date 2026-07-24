@@ -10,6 +10,7 @@ import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
 import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
+import com.csust.eyediagnosis.agent.tools.UserBoundDocumentSearchTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
@@ -89,19 +90,13 @@ public class DiagnosisAgent {
     @Resource
     private DocumentSearchTool documentSearchTool;
 
-    private ReactAgent agent;
-
-    @PostConstruct
-    public void init() {
-        agent = buildAgent(null);
-    }
-
-    private ReactAgent buildAgent(ToolCallback[] extraTools) {
+    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
                 .model(chatModel)
                 .instruction(SYSTEM_PROMPT)
-                .methodTools(eyeImageAnalyzerTool, documentSearchTool);
+                .methodTools(eyeImageAnalyzerTool,
+                        new UserBoundDocumentSearchTool(documentSearchTool, userId));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
         }
@@ -125,9 +120,7 @@ public class DiagnosisAgent {
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
         // 选择 Agent：无 MCP 用内置 agent，有 MCP 创建 combined agent
-        ReactAgent activeAgent = (mcpCallbacks == null || mcpCallbacks.length == 0)
-                ? agent
-                : buildAgent(mcpCallbacks);
+        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId);
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)

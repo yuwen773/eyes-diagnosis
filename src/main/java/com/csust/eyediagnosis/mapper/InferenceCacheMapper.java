@@ -10,7 +10,9 @@ public interface InferenceCacheMapper extends BaseMapper<InferenceCache> {
 
     InferenceCache findByHash(@Param("imageHash") String imageHash,
                               @Param("modelVersion") String modelVersion,
-                              @Param("preprocessVersion") String preprocessVersion);
+                              @Param("weightSha256") String weightSha256,
+                              @Param("preprocessVersion") String preprocessVersion,
+                              @Param("inferencePolicyVersion") String inferencePolicyVersion);
 
-    int insertOne(InferenceCache entity);
+    int upsert(InferenceCache entity);
 }

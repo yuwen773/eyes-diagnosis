@@ -163,17 +163,18 @@ CREATE TABLE t_agent_message (
 -- MCP服务器表
 CREATE TABLE IF NOT EXISTS t_mcp_server (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL COMMENT '用户ID',
-    mcp_server_code VARCHAR(100) NOT NULL COMMENT '服务器代码',
-    mcp_server_name VARCHAR(255) NOT NULL COMMENT '服务器名称',
-    install_type VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
+    userId BIGINT NOT NULL COMMENT '用户ID',
+    mcpServerCode VARCHAR(100) NOT NULL COMMENT '服务器代码',
+    name VARCHAR(255) NOT NULL COMMENT '服务器名称',
+    description VARCHAR(500) NULL COMMENT '服务器描述',
+    installType VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
     host VARCHAR(500) COMMENT '服务器地址',
-    deploy_config JSON COMMENT '部署配置',
+    deployConfig JSON COMMENT '部署配置',
     status TINYINT DEFAULT 1 COMMENT '状态:0禁用,1启用',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_user_id (user_id),
-    UNIQUE INDEX idx_code_user (mcp_server_code, user_id)
+    createTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updateTime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_userId (userId),
+    UNIQUE INDEX uk_mcp_user_code (mcpServerCode, userId)
 ) COMMENT 'MCP服务器配置表';
 
 -- gRPC 诊断重构：新增图片哈希字段用于缓存去重
@@ -198,3 +199,52 @@ CREATE TABLE IF NOT EXISTS t_knowledge_document (
     INDEX idx_userId (userId),
     INDEX idx_status (status)
 ) COMMENT '知识库文档表' COLLATE = utf8mb4_unicode_ci;
+
+-- Medical inference provenance. This mirrors the current Flyway target schema
+-- for manual development initialization; production upgrades use V1--V9.
+ALTER TABLE t_diagnosis
+    ADD COLUMN aiRejected TINYINT(1) NOT NULL DEFAULT 0,
+    ADD COLUMN abstainReason VARCHAR(40),
+    ADD COLUMN modelVersion VARCHAR(64),
+    ADD COLUMN weightSha256 VARCHAR(128),
+    ADD COLUMN preprocessVersion VARCHAR(64),
+    ADD COLUMN inferencePolicyVersion VARCHAR(64),
+    ADD COLUMN calibrationStatus VARCHAR(32),
+    ADD COLUMN calibratedProbability DOUBLE,
+    ADD COLUMN qualityScore INT,
+    ADD COLUMN qualityReasons VARCHAR(512),
+    ADD COLUMN oodStatus VARCHAR(32),
+    ADD COLUMN oodScore DOUBLE,
+    ADD COLUMN humanReviewStatus VARCHAR(20) NOT NULL DEFAULT 'PENDING_AI',
+    ADD COLUMN humanReviewerId BIGINT,
+    ADD COLUMN humanReviewedAt DATETIME,
+    ADD COLUMN humanReviewNote TEXT,
+    ADD COLUMN humanResult VARCHAR(255),
+    ADD COLUMN humanSeverity VARCHAR(40),
+    ADD COLUMN humanRecommendations TEXT;
+
+CREATE TABLE IF NOT EXISTS t_inference_cache (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    imageHash VARCHAR(64) NOT NULL,
+    modelVersion VARCHAR(64) NOT NULL,
+    weightSha256 VARCHAR(64) NOT NULL,
+    preprocessVersion VARCHAR(64) NOT NULL,
+    inferencePolicyVersion VARCHAR(64) NOT NULL,
+    predictedLabel VARCHAR(64) NOT NULL,
+    probability DOUBLE NOT NULL,
+    calibratedProbability DOUBLE NOT NULL DEFAULT 0,
+    calibrationStatus VARCHAR(32) NOT NULL DEFAULT 'NOT_CALIBRATED',
+    description VARCHAR(512),
+    reliabilityScore INT NOT NULL,
+    topPredictions JSON,
+    qualityScore INT NOT NULL DEFAULT 0,
+    qualityReasons VARCHAR(512),
+    isOod TINYINT NOT NULL DEFAULT 0,
+    oodScore DOUBLE NOT NULL DEFAULT 0,
+    oodStatus VARCHAR(32) NOT NULL DEFAULT 'NOT_EVALUATED',
+    rejected TINYINT NOT NULL DEFAULT 0,
+    abstainReason VARCHAR(64),
+    requiresReview TINYINT NOT NULL DEFAULT 0,
+    createTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_inference (imageHash, modelVersion, weightSha256, preprocessVersion, inferencePolicyVersion)
+) COMMENT '推理结果缓存';

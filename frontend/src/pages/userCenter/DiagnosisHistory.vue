@@ -31,7 +31,8 @@
       <!-- 搜索和筛选区域 -->
       <DiagnosisSearchBar
         v-model:dateRange="dateRange"
-        v-model:searchParams="searchParams"
+        :searchParams="searchParams"
+        @update:search-params="updateSearchParams"
         v-model:selectedRowKeys="selectedRowKeys"
         v-model:selectAll="selectAll"
         :dataList="dataList"
@@ -88,6 +89,10 @@ const selectAll = ref(false)
 const dataList = ref<API.DiagnosisManageVO[]>([])
 const total = ref(0)
 const searchParams = reactive<SearchParams>({ current: 1, pageSize: 10 })
+
+const updateSearchParams = (params: Pick<SearchParams, 'id' | 'result'>) => {
+  Object.assign(searchParams, params)
+}
 
 const getSelectedRecords = () => {
   return dataList.value.filter((item) => selectedRowKeys.value.includes(String(item.id)))

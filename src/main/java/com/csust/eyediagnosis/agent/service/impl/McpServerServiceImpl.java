@@ -45,8 +45,8 @@ public class McpServerServiceImpl implements McpServerService {
         entity.setHost(host);
         entity.setStatus(1);
         entity.setInstallType(installType);
-        entity.setGmtCreate(new Date());
-        entity.setGmtModified(new Date());
+        entity.setCreateTime(new Date());
+        entity.setUpdateTime(new Date());
 
         mcpServerMapper.insert(entity);
         return mcpServerCode;
@@ -65,7 +65,7 @@ public class McpServerServiceImpl implements McpServerService {
         entity.setDeployConfig(detail.getDeployConfig());
         entity.setHost(host);
         entity.setInstallType(installType);
-        entity.setGmtModified(new Date());
+        entity.setUpdateTime(new Date());
 
         mcpServerMapper.updateById(entity);
     }
@@ -101,7 +101,7 @@ public class McpServerServiceImpl implements McpServerService {
         LambdaQueryWrapper<McpServer> wrapper = new LambdaQueryWrapper<McpServer>()
             .eq(McpServer::getUserId, userId)
             .ne(McpServer::getStatus, 3)
-            .orderByDesc(McpServer::getGmtCreate);
+            .orderByDesc(McpServer::getCreateTime);
 
         if (StringUtils.hasText(name)) {
             wrapper.like(McpServer::getName, name);

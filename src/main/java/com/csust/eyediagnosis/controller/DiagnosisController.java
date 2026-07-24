@@ -1,6 +1,5 @@
 package com.csust.eyediagnosis.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,7 +20,6 @@ import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import com.csust.eyediagnosis.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
@@ -100,7 +98,9 @@ public class DiagnosisController {
         String queryCondition = JSONUtil.toJsonStr(diagnosisQueryDTO);
         String cacheScope = loginUser.getId() + ":" + loginUser.getUserRole() + ":" + queryCondition;
         String hashKey = DigestUtils.md5DigestAsHex(cacheScope.getBytes());
-        String redisKey = String.format("diagnosis:listDiagnosisVOByPage:%s",hashKey);
+        // Versioning prevents pre-desensitization list payloads from being
+        // returned after a medical privacy release.
+        String redisKey = String.format("diagnosis:v2:listDiagnosisVOByPage:%s",hashKey);
         //获取缓存对象
         String cacheValue = stringRedisTemplate.opsForValue().get(redisKey);
         if(cacheValue !=null){
@@ -173,12 +173,7 @@ public class DiagnosisController {
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
-        //
-        DiagnosisResultVO diagnosisResultVO = new DiagnosisResultVO();
-        //返回的应该是 脱敏对象
-        BeanUtil.copyProperties(diagnosis,diagnosisResultVO);
-        //返回
-        return ResultUtils.success(diagnosisResultVO);
+        return ResultUtils.success(DiagnosisResultVO.objToVo(diagnosis));
     }
 
     /**

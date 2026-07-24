@@ -36,6 +36,10 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
     diagnosisResult.value = result;
   }
 
+  function clearDiagnosisResult() {
+    diagnosisResult.value = undefined;
+  }
+
   /**
    * 打开诊断报告模态框
    * @param report 诊断报告
@@ -59,6 +63,7 @@ export const useDiagnosisStore = defineStore('diagnosis', () => {
     imageUrl,
     diagnosisResult,
     setDiagnosisResult,
+    clearDiagnosisResult,
     setAnalyzing,
     openResultModal,
     closeResultModal,

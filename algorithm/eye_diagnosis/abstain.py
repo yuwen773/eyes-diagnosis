@@ -28,6 +28,14 @@ class AbstainDecision:
 
 
 CONFIDENCE_REVIEW_THRESHOLD = 0.7
+QUALITY_GATE_MODES = {"observe", "enforce"}
+
+
+def should_reject_for_quality(quality_reasons: List[str], quality_gate_mode: str) -> bool:
+    mode = quality_gate_mode.strip().lower()
+    if mode not in QUALITY_GATE_MODES:
+        raise ValueError("QUALITY_GATE_MODE must be observe or enforce")
+    return mode == "enforce" and bool(quality_reasons)
 
 
 def decide_abstain(

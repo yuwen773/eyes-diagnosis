@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/diagnosis_ci?serverTimezone=UTC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: eyeuser
+    password: ci-password
+  session:
+    store-type: none
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  flyway:
+    schemas: diagnosis_ci
+  ai:
+    openai:
+      api-key: ci-placeholder-openai-api-key
+    dashscope:
+      api-key: ci-placeholder-dashscope-api-key
+
+cos:
+  client:
+    host: https://example.invalid
+    secretId: ci-placeholder-secret-id
+    secretKey: ci-placeholder-secret-key
+    region: ap-guangzhou
+    bucket: ci-placeholder-bucket

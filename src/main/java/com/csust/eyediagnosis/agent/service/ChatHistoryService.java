@@ -2,7 +2,6 @@ package com.csust.eyediagnosis.agent.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
-import com.csust.eyediagnosis.agent.outbox.AgentMessageOutboxService;
 import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
@@ -38,19 +37,16 @@ public class ChatHistoryService {
     private final AgentMessageMapper messageMapper;
     private final ObjectMapper objectMapper;
     private final SessionMessageQueue messageQueue;
-    private final AgentMessageOutboxService outbox;
     private AgentConstants agentConstants;
     private TitleGenerationService titleGenerationService;
 
     @Autowired
     public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper,
-                              ObjectMapper objectMapper, SessionMessageQueue messageQueue,
-                              AgentMessageOutboxService outbox) {
+                              ObjectMapper objectMapper, SessionMessageQueue messageQueue) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.objectMapper = objectMapper;
         this.messageQueue = messageQueue;
-        this.outbox = outbox;
     }
 
     @Autowired
@@ -66,7 +62,6 @@ public class ChatHistoryService {
     public void saveUserMessage(String sessionId, Long userId, String content) {
         messageQueue.submit(sessionId, () -> {
             claimOrValidateSession(sessionId, userId, content);
-            outbox.append(sessionId, userId, "USER", null, content);
             AgentMessage message = buildMessage(sessionId, "USER", null, content);
             messageMapper.insert(message);
             sessionMapper.updateMessageCount(sessionId, truncate(content));
@@ -81,7 +76,6 @@ public class ChatHistoryService {
 
     public void saveAssistantMessage(String sessionId, Long userId, String content, String subType) {
         messageQueue.submit(sessionId, () -> {
-            outbox.append(sessionId, userId, "ASSISTANT", subType, content);
             AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
             messageMapper.insert(message);
             sessionMapper.updateMessageCount(sessionId, truncate(content));

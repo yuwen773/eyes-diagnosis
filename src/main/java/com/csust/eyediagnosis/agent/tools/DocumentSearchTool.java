@@ -51,8 +51,7 @@ public class DocumentSearchTool {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Bm25Segmenter segmenter = new Bm25Segmenter();
 
-    private volatile List<Document> documentCache = new ArrayList<>();
-    private volatile long lastRefreshTime = 0;
+    private final Map<Long, UserDocumentCache> documentCaches = new HashMap<>();
     private static final long CACHE_REFRESH_INTERVAL = 60_000; // 1 minute
 
     /**
@@ -87,8 +86,8 @@ public class DocumentSearchTool {
 
             List<Document> candidates;
             if (hybridSearchEnabled) {
-                refreshDocumentCache();
-                List<Document> bm25Results = bm25Search(query, searchTopK);
+                List<Document> userDocuments = refreshDocumentCache(currentUserId);
+                List<Document> bm25Results = bm25Search(query, userDocuments, searchTopK);
                 candidates = rrfFusion(vectorStore.similaritySearch(searchRequest), bm25Results, searchTopK);
             } else {
                 candidates = vectorStore.similaritySearch(searchRequest);
@@ -165,32 +164,36 @@ public class DocumentSearchTool {
                 hybridSearchEnabled, rerankEnabled);
     }
 
-    private synchronized void refreshDocumentCache() {
-        if (System.currentTimeMillis() - lastRefreshTime < CACHE_REFRESH_INTERVAL) {
-            return;
+    private synchronized List<Document> refreshDocumentCache(Long userId) {
+        UserDocumentCache cached = documentCaches.get(userId);
+        if (cached != null && System.currentTimeMillis() - cached.refreshedAt() < CACHE_REFRESH_INTERVAL) {
+            return cached.documents();
         }
         try {
             if (vectorStore != null) {
                 List<Document> allDocs = vectorStore.similaritySearch(SearchRequest.builder()
                         .query("*")
                         .topK(1000)
+                        .filterExpression("ownerUserId == " + userId)
                         .build());
-                documentCache = new ArrayList<>(allDocs);
-                lastRefreshTime = System.currentTimeMillis();
-                log.debug("Document cache refreshed, size: {}", documentCache.size());
+                List<Document> documents = new ArrayList<>(allDocs);
+                documentCaches.put(userId, new UserDocumentCache(documents, System.currentTimeMillis()));
+                log.debug("Document cache refreshed for user {}, size: {}", userId, documents.size());
+                return documents;
             }
         } catch (Exception e) {
             log.warn("Failed to refresh document cache: {}", e.getMessage());
         }
+        return List.of();
     }
 
-    private List<Document> bm25Search(String query, int topK) {
-        if (documentCache.isEmpty()) {
+    private List<Document> bm25Search(String query, List<Document> documents, int topK) {
+        if (documents.isEmpty()) {
             return List.of();
         }
         try {
             String[] tokenizedQuery = segmenter.tokenize(query).toArray(new String[0]);
-            List<String[]> corpus = documentCache.stream()
+            List<String[]> corpus = documents.stream()
                     .map(doc -> segmenter.tokenize(doc.getText()).toArray(new String[0]))
                     .toList();
 
@@ -207,7 +210,7 @@ public class DocumentSearchTool {
 
             return scoredDocs.stream()
                     .limit(topK)
-                    .map(entry -> documentCache.get(entry.getKey()))
+                    .map(entry -> documents.get(entry.getKey()))
                     .toList();
         } catch (Exception e) {
             log.warn("BM25 search failed: {}", e.getMessage());
@@ -282,5 +285,8 @@ public class DocumentSearchTool {
                 .limit(topK)
                 .map(entry -> docMap.get(entry.getKey()))
                 .toList();
+    }
+
+    private record UserDocumentCache(List<Document> documents, long refreshedAt) {
     }
 }

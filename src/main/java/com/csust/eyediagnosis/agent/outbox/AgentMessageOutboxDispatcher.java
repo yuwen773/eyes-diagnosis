@@ -6,6 +6,7 @@ import com.csust.eyediagnosis.model.entity.AgentMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "eye-diagnosis.agent.outbox", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class AgentMessageOutboxDispatcher {
 

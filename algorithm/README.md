@@ -34,7 +34,7 @@ algorithm/
 ├── train_model.py             # 模型训练脚本
 ├── evaluate_model.py          # 模型评估脚本
 ├── prepare_data.py            # 数据集准备（CSV 分割）
-├── diagnosis.proto            # Protobuf 服务定义
+├── generate_proto.py          # 从后端唯一 Proto 源生成 Python 绑定
 ├── diagnosis_pb2.py           # 自动生成的 Protobuf 代码
 ├── diagnosis_pb2_grpc.py      # 自动生成的 gRPC 存根
 ├── requirements.txt           # Python 依赖
@@ -76,6 +76,7 @@ algorithm/
 供 Java 后端直接调用，进行图像分类。
 
 ```bash
+python generate_proto.py       # 从 ../src/main/proto/diagnosis.proto 生成绑定
 python grpc_server.py    # 监听 0.0.0.0:50051
 ```
 

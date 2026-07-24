@@ -21,7 +21,7 @@ spring:
     enabled: true
     baseline-on-migrate: true
     baseline-version: 0
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/callback
     schemas: diagnosis
     validate-on-migrate: true
 mybatis-plus:
@@ -76,10 +76,17 @@ app:
 
 # 眼科图像分析配置
 eye-diagnosis:
+  agent:
+    # Chat history uses the ordinary single-write persistence path. Do not
+    # enable the legacy dispatcher or it can replay pre-existing Outbox rows.
+    outbox:
+      enabled: false
   inference:
     hash-algorithm: SHA-256
     model-version: efficientnet-b4@1.0.0
+    model-weight-sha256: ${MODEL_WEIGHTS_SHA256:}
     preprocess-version: v1
+    policy-version: ${INFERENCE_POLICY_VERSION:medical-safety-v3-quality-observe}
   vision-recognition:
     base-url: https://dashscope.aliyuncs.com/compatible-mode
     api-key: your-api-key-here

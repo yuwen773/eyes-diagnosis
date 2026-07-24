@@ -5,11 +5,17 @@ import hmac
 import tempfile
 import os
 import logging
+import json
 from pathlib import Path
 
 import diagnosis_pb2
 import diagnosis_pb2_grpc
 from eye_disease_model import EyeDiseaseModel, disease_categories
+from eye_diagnosis.abstain import decide_abstain, should_reject_for_quality
+from eye_diagnosis.calibration import apply_temperature
+from eye_diagnosis.ood import OodDecision
+from eye_diagnosis.quality import evaluate_quality
+from eye_diagnosis.registry import ModelRegistry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,23 +30,6 @@ DISEASE_DESCRIPTIONS = {
     "myopia": "近视眼眼底改变主要表现为视盘倾斜、视网膜脉络膜萎缩、后巩膜葡萄肿等。高度近视者发生视网膜脱离、黄斑出血等并发症的风险增加。",
     "other": "眼底图像存在异常改变，但无法明确归类为特定疾病。建议进一步检查确诊。",
 }
-
-
-def calculate_reliability(all_probabilities):
-    sorted_probs = sorted(all_probabilities.values(), reverse=True)
-    if len(sorted_probs) < 2:
-        return 50
-    gap = sorted_probs[0] - sorted_probs[1]
-    if gap > 0.5:
-        return 95
-    elif gap > 0.3:
-        return 85
-    elif gap > 0.2:
-        return 75
-    elif gap > 0.1:
-        return 65
-    else:
-        return 50
 
 
 def _resolve_weights_path() -> Path:
@@ -70,6 +59,28 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
     def __init__(self):
         weights_path = _resolve_weights_path()
         _verify_sha256(weights_path)
+        registry_path = Path(os.getenv(
+            "MODEL_REGISTRY_PATH",
+            Path(__file__).resolve().parent / "checkpoints" / "registry.json",
+        ))
+        self.provenance = ModelRegistry(weights_path, registry_path).resolve_current()
+        calibration_path = Path(os.getenv(
+            "MODEL_CALIBRATION_PATH",
+            Path(__file__).resolve().parent / "configs" / "calibration" / "efficientnet_b4_temperature.json",
+        ))
+        calibration = json.loads(calibration_path.read_text())
+        self.temperature = float(calibration["temperature"])
+        self.calibration_status = str(calibration.get("status", "NOT_CALIBRATED"))
+        if self.calibration_status not in {"CALIBRATED", "NOT_CALIBRATED"}:
+            raise RuntimeError("Calibration status must be CALIBRATED or NOT_CALIBRATED")
+        if calibration.get("model_version") != self.provenance.version:
+            raise RuntimeError("Calibration model version does not match registered model")
+        self.inference_policy_version = os.getenv("INFERENCE_POLICY_VERSION", "medical-safety-v3-quality-observe").strip()
+        if not self.inference_policy_version:
+            raise RuntimeError("INFERENCE_POLICY_VERSION must not be empty")
+        self.quality_gate_mode = os.getenv("QUALITY_GATE_MODE", "observe").strip().lower()
+        if self.quality_gate_mode not in {"observe", "enforce"}:
+            raise RuntimeError("QUALITY_GATE_MODE must be observe or enforce")
         self.model = EyeDiseaseModel(model_name='efficientnet_b4')
         self.model.load_model(str(weights_path))
         logger.info(f"Model loaded from {weights_path}")
@@ -91,28 +102,59 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                 temp_path = f.name
 
             try:
-                result = self.model.predict(temp_path)
-                predicted_label = result['predicted_label']
-                probability = result['probability'] * 100
-                all_probs = result['all_probabilities']
-
-                reliability = calculate_reliability(all_probs)
-                description = DISEASE_DESCRIPTIONS.get(predicted_label, "")
-
-                top_3 = sorted(
-                    all_probs.items(),
-                    key=lambda x: x[1], reverse=True
-                )[:3]
+                quality = evaluate_quality(image_data)
+                logits = self.model.predict_logits(temp_path)
+                scored_logits = logits
+                if self.calibration_status == "CALIBRATED":
+                    scored_logits = apply_temperature(logits[None, :], self.temperature)[0]
+                exp_logits = scored_logits - scored_logits.max()
+                probabilities = __import__("numpy").exp(exp_logits)
+                probabilities = probabilities / probabilities.sum()
+                ranked_indices = probabilities.argsort()[::-1]
+                predicted_class = int(ranked_indices[0])
+                predicted_label = disease_categories[predicted_class]
+                top1 = float(probabilities[ranked_indices[0]])
+                top2 = float(probabilities[ranked_indices[1]]) if len(ranked_indices) > 1 else 0.0
+                # No evaluated, version-bound OOD reference artifact is available. Do
+                # not use the former all-zero placeholder detector as a rejection gate.
+                ood = OodDecision(is_ood=False, score=0.0, threshold=0.0)
+                abstain = decide_abstain(
+                    quality_rejected=should_reject_for_quality(
+                        quality.reasons, self.quality_gate_mode
+                    ),
+                    quality_reasons=quality.reasons,
+                    ood=ood.is_ood,
+                    top1_prob=top1,
+                    top2_prob=top2,
+                )
+                description = "" if abstain.rejected else DISEASE_DESCRIPTIONS.get(predicted_label, "")
 
                 return diagnosis_pb2.DiagnosisResponse(
                     predicted_label=predicted_label,
-                    probability=probability,
-                    reliability_score=reliability,
+                    probability=top1 * 100,
+                    calibrated_probability=top1 * 100 if self.calibration_status == "CALIBRATED" else 0.0,
+                    calibration_status=self.calibration_status,
+                    reliability_score=round(top1 * 100),
                     description=description,
                     top_predictions=[
-                        diagnosis_pb2.DiseasePrediction(label=label, probability=prob * 100)
-                        for label, prob in top_3
+                        diagnosis_pb2.DiseasePrediction(
+                            label=disease_categories[int(index)],
+                            probability=float(probabilities[index]) * 100,
+                        )
+                        for index in ranked_indices[:3]
                     ],
+                    rejected=abstain.rejected,
+                    abstain_reason=abstain.reason.value if abstain.reason else "",
+                    quality_score=quality.score,
+                    quality_reasons=",".join(quality.reasons),
+                    is_ood=ood.is_ood,
+                    ood_score=ood.score,
+                    ood_status=diagnosis_pb2.NOT_EVALUATED,
+                    model_version=self.provenance.version,
+                    weight_sha256=self.provenance.weight_sha256,
+                    preprocess_version=self.provenance.preprocess_version or "",
+                    inference_policy_version=self.inference_policy_version,
+                    requires_review=abstain.requires_review,
                 )
             finally:
                 os.unlink(temp_path)
