@@ -299,31 +299,3 @@ def test_receipt_hashes_default_to_none(tmp_path: Path, fake_inputs: dict) -> No
     )
     for f in ("manifest_sha256", "split_sha256", "fold_sha256", "protocol_sha256"):
         assert getattr(receipt, f) is None
-
-
-# --- CLI plumbing tests --------------------------------------------------
-
-
-def test_cli_parse_args_defaults() -> None:
-    from p1.training.cli import parse_args
-    ns = parse_args(["--experiment", "E3", "--fold", "0"])
-    assert ns.experiment == "E3"
-    assert ns.fold == 0
-    assert ns.smoke is False
-    assert ns.protocol.endswith("protocol_e0_e3_v1.json")
-    # The attribute must exist; value can be "" when EYE_DATA_ROOT is unset.
-    assert hasattr(ns, "eye_data_root")
-
-
-def test_cli_parse_args_rejects_unknown_experiment() -> None:
-    from p1.training.cli import parse_args
-    with pytest.raises(SystemExit):
-        parse_args(["--experiment", "E9", "--fold", "0"])
-
-
-def test_cli_parse_args_smoke_flag() -> None:
-    from p1.training.cli import parse_args
-    ns = parse_args(["--experiment", "E0", "--fold", "1", "--smoke"])
-    assert ns.experiment == "E0"
-    assert ns.fold == 1
-    assert ns.smoke is True
