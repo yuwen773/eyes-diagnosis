@@ -11,7 +11,7 @@ from p1.training.oof import (
     OOF_COLUMNS,
     OofIntegrityError,
     OofWriter,
-    validate_oof,
+    validate_oof_with_sets,
 )
 
 
@@ -67,7 +67,7 @@ def test_validate_oof_passes_for_2452_unique_dev(tmp_path: Path) -> None:
     dev = {f"p{i:04d}" for i in range(2452)}
     with OofWriter(tmp_path / "oof.csv") as w:
         w.append([_row(pid, fold=hash(pid) % 5) for pid in sorted(dev)])
-    summary = validate_oof(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
+    summary = validate_oof_with_sets(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
     assert summary["n_rows"] == 2452
     assert summary["n_unique_patients"] == 2452
     assert summary["n_test_patients"] == 0
@@ -81,7 +81,7 @@ def test_validate_oof_rejects_test_patient(tmp_path: Path) -> None:
         rows.append(_row("p_TEST"))
         w.append(rows)
     with pytest.raises(OofIntegrityError) as ei:
-        validate_oof(tmp_path / "oof.csv", expected_dev_patients=dev | test, dev_patients=dev)
+        validate_oof_with_sets(tmp_path / "oof.csv", expected_dev_patients=dev | test, dev_patients=dev)
     assert "p_TEST" in str(ei.value) or "test" in str(ei.value).lower()
 
 
@@ -90,7 +90,7 @@ def test_validate_oof_rejects_duplicate(tmp_path: Path) -> None:
     with OofWriter(tmp_path / "oof.csv") as w:
         w.append([_row("p001"), _row("p001")])
     with pytest.raises(OofIntegrityError):
-        validate_oof(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
+        validate_oof_with_sets(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
 
 
 def test_validate_oof_rejects_missing_patient(tmp_path: Path) -> None:
@@ -98,7 +98,7 @@ def test_validate_oof_rejects_missing_patient(tmp_path: Path) -> None:
     with OofWriter(tmp_path / "oof.csv") as w:
         w.append([_row("p001")])
     with pytest.raises(OofIntegrityError):
-        validate_oof(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
+        validate_oof_with_sets(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
 
 
 def test_validate_oof_rejects_bad_sha(tmp_path: Path) -> None:
@@ -106,4 +106,75 @@ def test_validate_oof_rejects_bad_sha(tmp_path: Path) -> None:
     with OofWriter(tmp_path / "oof.csv") as w:
         w.append([_row("p001", sha="not-a-sha")])
     with pytest.raises(OofIntegrityError):
-        validate_oof(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
+        validate_oof_with_sets(tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev)
+
+
+# ---- p2-01r: validate_oof uses the FROZEN split (no self-attestation) -----
+
+
+def test_validate_oof_uses_frozen_split_to_reject_test_patient(tmp_path: Path) -> None:
+    """Caller used to pass dev_patient_ids/excluded_test ids directly (self-attestation).
+    The new frozen-split form reads the immutable split_assignment_v1.csv: any
+    patient marked ``test`` there must NOT appear in the OOF, regardless of
+    what the caller's sets contain."""
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,test\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([_row("pA"), _row("pB")])  # pB is Test in the frozen split
+    with pytest.raises(OofIntegrityError):
+        validate_oof(oof, split_assignment_path=split)
+
+
+def test_validate_oof_frozen_split_passes_for_dev_only(tmp_path: Path) -> None:
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,dev\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([_row("pA"), _row("pB")])
+    # No fold constraint: subset of Dev is OK.
+    summary = validate_oof(oof, split_assignment_path=split)
+    assert summary["n_rows"] == 2
+
+
+def test_validate_oof_frozen_split_with_fold_constraint(tmp_path: Path) -> None:
+    from p1.training.oof import validate_oof
+
+    split = tmp_path / "split.csv"
+    split.write_text("patient_id,split\npA,dev\npB,dev\npC,dev\n")
+    folds = tmp_path / "fold.csv"
+    folds.write_text("patient_id,fold\npA,0\npB,1\npC,0\n")
+    oof = tmp_path / "oof.csv"
+    with OofWriter(oof) as w:
+        w.append([_row("pA", fold=0), _row("pC", fold=0)])  # fold-0 ids only
+    # No fold constraint: subset passes.
+    validate_oof(oof, split_assignment_path=split)
+    # With fold constraint enforced: only fold-0 patients allowed.
+    validate_oof(oof, split_assignment_path=split, fold_id=0, fold_assignment_path=folds)
+    with pytest.raises(OofIntegrityError):
+        # Adding a fold-1 patient trips the fold-membership check.
+        with OofWriter(tmp_path / "oof2.csv") as w:
+            w.append([_row("pA", fold=0), _row("pB", fold=1)])
+        validate_oof(
+            tmp_path / "oof2.csv",
+            split_assignment_path=split,
+            fold_id=0,
+            fold_assignment_path=folds,
+        )
+
+
+def test_validate_oof_with_sets_legacy_still_works(tmp_path: Path) -> None:
+    """Legacy keyword API (self-attestation) keeps working for unit tests."""
+    from p1.training.oof import validate_oof_with_sets
+
+    dev = {"p001"}
+    with OofWriter(tmp_path / "oof.csv") as w:
+        w.append([_row("p001")])
+    summary = validate_oof_with_sets(
+        tmp_path / "oof.csv", expected_dev_patients=dev, dev_patients=dev,
+    )
+    assert summary["n_rows"] == 1
