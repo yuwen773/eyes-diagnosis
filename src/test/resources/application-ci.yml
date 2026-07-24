@@ -12,6 +12,9 @@ spring:
       port: 6379
   flyway:
     schemas: diagnosis_ci
+  ai:
+    openai:
+      api-key: ci-placeholder-openai-api-key
 
 cos:
   client:
