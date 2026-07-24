@@ -41,12 +41,21 @@ class TrainingError(RuntimeError):
 class FoldReceipt:
     experiment_id: str
     fold: int
+    # P2-01R2: training-patient counts are split so the receipt can no
+    # longer be read as "every train patient participated in optimizer.step".
+    # ``train_patient_count`` is kept as a backward-compatible alias of
+    # ``available_train_patient_count``.
+    available_train_patient_count: int
+    optimizer_patient_count: int
+    val_prediction_count: int
     train_patient_count: int
     val_patient_count: int
     epoch_count: int
     schema_version: str
     # New fields (p2-01r):
     weights: str
+    weights_loaded: bool
+    initialization: str  # "imagenet" or "random"
     checkpoint_selector: str
     experiment_primary_metric: str
     amp_enabled: bool
@@ -176,6 +185,17 @@ def run_fold(
         raise TrainingError(
             f"train∩val must be empty (OOF integrity); overlap: {sorted(overlap)[:5]}"
         )
+    if not (0 <= fold_id < protocol.k_folds):
+        raise TrainingError(
+            f"fold_id {fold_id} outside [0, {protocol.k_folds}) defined by "
+            f"protocol.k_folds"
+        )
+    if not val_set:
+        raise TrainingError(
+            f"val_patient_ids is empty for fold {fold_id} experiment "
+            f"{experiment}; an OOF row cannot be produced. Refusing to "
+            f"write an empty receipt."
+        )
     if not train_set:
         raise TrainingError("train_patient_ids is empty; cannot run a fold")
 
@@ -287,14 +307,27 @@ def run_fold(
             w.append(all_rows)
 
     h = input_hashes or {}
+    available_train_count = len(train_patient_ids)
+    val_count = len(val_patient_ids)
     receipt = FoldReceipt(
         experiment_id=experiment,
         fold=fold_id,
-        train_patient_count=len(train_patient_ids),
-        val_patient_count=len(val_patient_ids),
+        available_train_patient_count=available_train_count,
+        optimizer_patient_count=len(smoke_pids),
+        val_prediction_count=val_count,
+        # Backward-compat alias of available_train_patient_count. Older
+        # readers of this receipt expected "the number of training
+        # patients" without distinguishing "available" from
+        # "participated in optimizer.step". We keep the field name to
+        # avoid a breaking schema rename; new readers should prefer
+        # the three explicit fields above.
+        train_patient_count=available_train_count,
+        val_patient_count=val_count,
         epoch_count=1,
         schema_version=protocol.schema_version,
         weights=protocol.weights,
+        weights_loaded=bool(_download),
+        initialization="imagenet" if _download else "random",
         checkpoint_selector=protocol.checkpoint_selector,
         experiment_primary_metric=protocol.experiment_primary_metric,
         amp_enabled=use_amp,

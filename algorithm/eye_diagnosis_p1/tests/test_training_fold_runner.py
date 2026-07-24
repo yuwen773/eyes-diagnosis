@@ -95,7 +95,7 @@ def test_run_fold_writes_receipt_and_oof(tmp_path: Path, fake_inputs: dict) -> N
     assert isinstance(receipt, FoldReceipt)
     assert receipt.fold == 0
     assert receipt.experiment_id == "E3"
-    assert receipt.amp_enabled is True
+    assert receipt.amp_enabled == torch.cuda.is_available()
     assert receipt.weights == _IMAGENET
     assert len(receipt.checkpoint_sha256) == 64
 
@@ -299,3 +299,59 @@ def test_receipt_hashes_default_to_none(tmp_path: Path, fake_inputs: dict) -> No
     )
     for f in ("manifest_sha256", "split_sha256", "fold_sha256", "protocol_sha256"):
         assert getattr(receipt, f) is None
+
+
+def test_receipt_splits_train_counts(tmp_path: Path, fake_inputs: dict) -> None:
+    """The receipt must distinguish *available* train patients from the
+    prefix that actually entered the optimizer.step batch, and from the
+    validation set that produced OOF predictions."""
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+    )
+    assert receipt.available_train_patient_count == 4
+    # patient_batch is 8 in protocol_e0_e3_v1; max(2, 8 // 4) == 2.
+    assert receipt.optimizer_patient_count == 2
+    assert receipt.val_prediction_count == 4
+    # train_patient_count remains as a backward-compat alias.
+    assert receipt.train_patient_count == receipt.available_train_patient_count
+    assert receipt.val_patient_count == receipt.val_prediction_count
+
+
+def test_receipt_records_initialization_truth(tmp_path: Path, fake_inputs: dict) -> None:
+    """``weights_loaded=False`` (e.g. test path with _download=False)
+    must be reflected in the receipt: the model is *not* ImageNet-
+    initialised, even though the protocol pins the weights enum."""
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=False,
+    )
+    assert receipt.weights == _IMAGENET  # enum is pinned
+    assert receipt.weights_loaded is False
+    assert receipt.initialization == "random"
+
+
+def test_receipt_marks_imagenet_init_when_weights_loaded(
+    tmp_path: Path, fake_inputs: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When ``_download=True`` (production path) the receipt must
+    declare ``weights_loaded=True`` and ``initialization='imagenet'``.
+    We stub ``build_model`` so the test does not actually download the
+    ImageNet weights."""
+    from p1.training import fold_runner
+    from p1.training.models import build_model as real_build_model
+
+    monkeypatch.setattr(fold_runner, "build_model", real_build_model)
+
+    pids = fake_inputs["pids"]
+    train, val = pids[:4], pids[4:]
+    receipt = _run_e0(
+        run_fold, fake_inputs, tmp_path, train=train, val=val,
+        _mem_get_info=_fake_high, _download=True,
+    )
+    assert receipt.weights_loaded is True
+    assert receipt.initialization == "imagenet"
