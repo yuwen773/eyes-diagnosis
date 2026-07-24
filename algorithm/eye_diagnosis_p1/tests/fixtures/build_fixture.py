@@ -74,15 +74,22 @@ def write_split(pids: list[str], test_pids: list[str]) -> Path:
     return out
 
 
-def write_folds(pids: list[str], dev_pids: list[str]) -> Path:
-    """Deterministic 2-fold over dev patients via MultilabelStratifiedKFold
-    with ``seed=42`` so the committed file matches what the tests expect."""
+def write_folds(pids: list[str], dev_pids: list[str], *, k: int = 5) -> Path:
+    """Deterministic ``k``-fold over dev patients via
+    MultilabelStratifiedKFold with ``seed=42`` so the committed file
+    matches what the tests expect.
+
+    ``k`` defaults to 5 to match ``protocol_e0_e3_v1.json``'s
+    ``k_folds=5``. The frozen protocol's ``k_folds`` is the only
+    valid setting; reducing it would silently allow fewer folds than
+    the protocol claims.
+    """
     label_cols = [f"label_{c}" for c in "NDGCAHMO"]
     pdf = pd.read_parquet(FIXTURE_DIR / "patient_manifest_v1.parquet")
     pdf = pdf.set_index("patient_id").loc[dev_pids]
     labels = pdf[label_cols].to_numpy(dtype=np.int8)
 
-    mskf = MultilabelStratifiedKFold(n_splits=2, shuffle=True, random_state=42)
+    mskf = MultilabelStratifiedKFold(n_splits=k, shuffle=True, random_state=42)
     pid_to_fold: dict[str, int] = {}
     for fold_id, (_, val_idx) in enumerate(mskf.split(dev_pids, labels)):
         for j in val_idx:
