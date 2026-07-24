@@ -77,3 +77,19 @@ def test_read_raises_on_seed_mismatch(tmp_path: Path) -> None:
 def test_assign_rejects_empty_input() -> None:
     with pytest.raises(E2AssignmentError):
         assign_e2_eyes([], seed=42)
+
+
+def test_e2_seed_high_bits_change_assignment() -> None:
+    # 42 and 2026 share the same parity; the old XOR-of-low-bit hash made
+    # them produce identical assignments. The full-seed hash must not.
+    pids = [f"p{i:04d}" for i in range(200)]
+    a = assign_e2_eyes(pids, seed=42)
+    b = assign_e2_eyes(pids, seed=2026)
+    changed = sum(1 for pid in pids if a[pid] != b[pid])
+    assert changed > 0, "seed high bits must affect the assignment"
+
+
+def test_e2_both_eyes_represented() -> None:
+    pids = [f"p{i:04d}" for i in range(200)]
+    vals = set(assign_e2_eyes(pids, seed=42).values())
+    assert vals == {"left", "right"}
