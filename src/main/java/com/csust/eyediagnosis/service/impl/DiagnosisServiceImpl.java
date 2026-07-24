@@ -10,6 +10,7 @@ import com.csust.eyediagnosis.constant.DiagnosisCategoryEnum;
 import com.csust.eyediagnosis.constant.DiagnosisRecommendationEnum;
 import com.csust.eyediagnosis.constant.ExceptionConstant;
 import com.csust.eyediagnosis.constant.AuthConstant;
+import com.csust.eyediagnosis.constant.HumanReviewStatus;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
@@ -21,6 +22,7 @@ import com.csust.eyediagnosis.mapper.InferenceCacheMapper;
 import com.csust.eyediagnosis.mapper.UserMapper;
 import com.csust.eyediagnosis.model.vo.diagnosis.Disease;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
+import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
 import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
@@ -212,6 +214,13 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             if (imageUrl != null) {
                 diagnosis.setUrl(imageUrl);
             }
+            // 写入医疗可靠性字段（Task 9 后 grpcResponse 会带 rejected/abstainReason/modelVersion/weightSha256；
+            // 现阶段 proto 尚未扩展，置安全默认）
+            diagnosis.setAiRejected(Boolean.FALSE);
+            diagnosis.setAbstainReason("NOT_ASSESSED");
+            diagnosis.setModelVersion(modelVersion);
+            diagnosis.setWeightSha256(null);
+            diagnosis.setHumanReviewStatus(HumanReviewStatus.AI_ONLY);
             this.save(diagnosis);
             vo.setId(diagnosis.getId());
 
@@ -219,6 +228,33 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void recordHumanReview(Long diagnosisId, User reviewer, DiagnosisResultDTO dto) {
+        ThrowUtils.throwIf(reviewer == null, ErrorCode.NO_AUTH_ERROR);
+        ThrowUtils.throwIf(diagnosisId == null || diagnosisId <= 0, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(dto == null, ErrorCode.PARAMS_ERROR);
+        // 仅允许管理员；其他角色绝不能写入 human* 字段
+        ThrowUtils.throwIf(!AuthConstant.ADMIN_ROLE.equals(reviewer.getUserRole()),
+                ErrorCode.NO_AUTH_ERROR, "仅管理员可写入人工复核字段");
+        // humanResult 必填；防止空 DTO 通过校验
+        ThrowUtils.throwIf(StrUtil.isBlank(dto.getHumanResult()),
+                ErrorCode.PARAMS_ERROR, "必须填写人工结论");
+
+        Diagnosis diagnosis = this.getOwnedDiagnosis(diagnosisId, reviewer);
+        diagnosis.setHumanResult(dto.getHumanResult());
+        diagnosis.setHumanSeverity(dto.getHumanSeverity());
+        diagnosis.setHumanRecommendations(dto.getHumanRecommendations());
+        diagnosis.setHumanReviewNote(dto.getHumanReviewNote());
+        diagnosis.setHumanReviewerId(reviewer.getId());
+        diagnosis.setHumanReviewedAt(new Date());
+        // 若 AI 拒识或需复审，标 REVIEWED；否则仍用 AI_ONLY 表示"已记录但与 AI 一致"
+        diagnosis.setHumanReviewStatus(HumanReviewStatus.REVIEWED);
+        // 旧字段同步：保留 reexamineStatus 兼容既有查询
+        diagnosis.setReexamineStatus(3);
+        boolean ok = this.updateById(diagnosis);
+        ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR);
     }
 
     @Override

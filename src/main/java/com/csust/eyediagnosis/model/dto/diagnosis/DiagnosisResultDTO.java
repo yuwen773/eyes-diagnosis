@@ -3,15 +3,15 @@ package com.csust.eyediagnosis.model.dto.diagnosis;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
- * @ClassNameDiagnosisResultVO
- * @Description 人工复诊
- * @Author钰玟
- * @Date2025/4/27 下午8:17
- * @Version 1.0
- **/
+ * 人工复核 DTO：仅允许写入 humanResult / humanSeverity / humanRecommendations / humanReviewNote，
+ * AI 字段（predictedLabel、probability、details、aiRejected 等）不可通过本 DTO 覆盖，
+ * 防止管理员误把 AI 字段写错。
+ *
+ * @Author 钰玟
+ * @Date 2026-07-23
+ */
 @Data
 public class DiagnosisResultDTO implements Serializable {
     /**
@@ -20,47 +20,24 @@ public class DiagnosisResultDTO implements Serializable {
     private Long id;
 
     /**
-     * 图片 url
+     * 人工结论
      */
-    private String url;
+    private String humanResult;
 
     /**
-     * 诊断结果
+     * 人工严重程度
      */
-    private String result;
-    /**
-     * 可靠性
-     */
-    private Double probability;
-    /**
-     * 诊断置信度
-     */
-    private Double confidence;
+    private String humanSeverity;
 
     /**
-     * 诊断建议
+     * 人工建议
      */
-    private String recommendations;
-    /**
-     * 诊断详情
-     */
-    private String details;
-    /**
-     * 严重程度
-     */
-    private String severity;
-    /**
-     * 创建时间
-     */
-    private Date createTime;
+    private String humanRecommendations;
 
     /**
-     * 其他疾病
+     * 人工备注
      */
-//    private List<Disease> otherDisease;
+    private String humanReviewNote;
 
     private static final long serialVersionUID = 1L;
 }
-
-
-
