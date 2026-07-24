@@ -66,6 +66,7 @@ def test_cli_e2e_one_fold_against_frozen_split(
     rc = cli.main(
         [
             "--experiment", "E0", "--fold", "0",
+            "--smoke",  # required since P2-01R2; CLI fails closed otherwise
             "--manifest", str(FIXTURE_DIR / "patient_manifest_v1.parquet"),
             "--split-assignment", str(FIXTURE_DIR / "split_assignment_v1.csv"),
             "--fold-assignment", str(FIXTURE_DIR / "fold_assignment_v1.csv"),
@@ -100,6 +101,7 @@ def test_cli_e2e_one_fold_against_frozen_split(
     summary = validate_oof(
         oof_path,
         split_assignment_path=FIXTURE_DIR / "split_assignment_v1.csv",
+        mode="smoke_subset",
         fold_id=0,
         fold_assignment_path=FIXTURE_DIR / "fold_assignment_v1.csv",
     )

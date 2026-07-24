@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from p1.training.cli import parse_args
@@ -96,3 +98,35 @@ def test_cli_protocol_default() -> None:
         ]
     )
     assert ns.protocol.endswith("protocol_e0_e3_v1.json")
+
+
+def test_cli_smoke_defaults_to_false() -> None:
+    """Without --smoke the CLI must fail closed at the main() layer so
+    a one-step smoke cannot be mistaken for a formal fold result."""
+    ns = parse_args(
+        [
+            "--experiment", "E0", "--fold", "0",
+            "--manifest", "m.parquet",
+            "--split-assignment", "s.csv",
+            "--fold-assignment", "f.csv",
+            "--image-root", "imgs/",
+        ]
+    )
+    assert ns.smoke is False
+
+
+def test_cli_main_fails_closed_without_smoke(tmp_path: Path) -> None:
+    """Integration: ``cli.main`` returns non-zero without --smoke."""
+    from p1.training import cli
+
+    rc = cli.main(
+        [
+            "--experiment", "E0", "--fold", "0",
+            # intentionally omit --smoke
+            "--manifest", "missing.parquet",
+            "--split-assignment", "missing.csv",
+            "--fold-assignment", "missing.csv",
+            "--image-root", "imgs/",
+        ]
+    )
+    assert rc == 2

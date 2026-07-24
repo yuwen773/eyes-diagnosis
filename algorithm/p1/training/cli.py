@@ -6,6 +6,10 @@ four randomness-affecting inputs (manifest, split, fold, protocol) are
 SHA-256-recorded in the fold receipt via ``input_hashes``.
 
 The full multi-fold orchestration lives in P2-02.
+
+**Smoke is opt-in.** Without ``--smoke`` the CLI fails closed: the
+P2-01R plan only ships a one-step smoke path, and silently running it
+as a "formal fold" would mislead downstream readers of the receipt.
 """
 
 from __future__ import annotations
@@ -25,6 +29,7 @@ from p1.training.frozen_inputs import (
     load_fold_assignment,
     load_split_assignment,
     sha256_file,
+    validate_frozen_training_inputs,
 )
 from p1.training.protocol import load_protocol
 
@@ -33,7 +38,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="p1.training.cli")
     parser.add_argument("--experiment", required=True, choices=["E0", "E1", "E2", "E3"])
     parser.add_argument("--fold", required=True, type=int)
-    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help=(
+            "Required to actually run: the P2-01R plan only ships a "
+            "one-step smoke path. Without --smoke the CLI fails closed "
+            "to prevent a silent partial fold from being mistaken for "
+            "a formal result."
+        ),
+    )
     parser.add_argument(
         "--protocol",
         default=str(Path(__file__).resolve().parent.parent / "protocol_e0_e3_v1.json"),
@@ -72,11 +86,23 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
+
+    if not args.smoke:
+        print(
+            "ERROR: --smoke is required. The P2-01R plan only ships a "
+            "one-step smoke path; a missing --smoke would otherwise "
+            "silently produce a partial run that looks like a formal "
+            "fold. Re-run with --smoke to acknowledge.",
+            file=sys.stderr,
+        )
+        return 2
+
     protocol_path = Path(args.protocol)
     if not protocol_path.exists():
         print(f"protocol not found: {protocol_path}", file=sys.stderr)
         return 2
     protocol = load_protocol(protocol_path)
+    expected_folds = protocol.k_folds
 
     manifest_path = Path(args.manifest)
     image_root = Path(args.image_root)
@@ -87,8 +113,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"path not found: {p}", file=sys.stderr)
             return 2
 
+    pdf = pd.read_parquet(manifest_path)
+    manifest_pids = set(pdf["patient_id"].tolist())
+    if not manifest_pids:
+        print(f"manifest has no patient_ids: {manifest_path}", file=sys.stderr)
+        return 2
+
     split = load_split_assignment(split_path)
-    fold_map = load_fold_assignment(fold_path)
+    fold_map = load_fold_assignment(fold_path, expected_folds=expected_folds)
+
+    if not (0 <= args.fold < expected_folds):
+        print(
+            f"--fold {args.fold} outside [0, {expected_folds}) defined by "
+            f"protocol.k_folds",
+            file=sys.stderr,
+        )
+        return 2
+
+    validate_frozen_training_inputs(
+        manifest_pids, split, fold_map, expected_folds=expected_folds
+    )
+
     val = [
         pid
         for pid, f in fold_map.items()
@@ -100,7 +145,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         if f != args.fold and split.get(pid) == "dev"
     ]
 
-    pdf = pd.read_parquet(manifest_path)
+    if not val:
+        print(
+            f"fold {args.fold} has zero Development validation patients "
+            f"(train={len(train)}); fail-closed.",
+            file=sys.stderr,
+        )
+        return 2
+    if not train:
+        print(
+            f"fold {args.fold} has zero Development training patients; "
+            f"fail-closed.",
+            file=sys.stderr,
+        )
+        return 2
+
     image_paths: dict[str, dict[str, Path]] = {}
     labels: dict[str, np.ndarray] = {}
     for row in pdf.to_dict("records"):
@@ -141,6 +200,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         input_hashes=input_hashes,
     )
     print(
+        f"SMOKE ONLY — not a formal fold result. "
         f"fold {args.fold} {args.experiment} ok: "
         f"val={receipt.val_patient_count} sha={receipt.checkpoint_sha256[:12]}..."
     )
