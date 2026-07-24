@@ -214,13 +214,18 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             if (imageUrl != null) {
                 diagnosis.setUrl(imageUrl);
             }
-            // 写入医疗可靠性字段（Task 9 后 grpcResponse 会带 rejected/abstainReason/modelVersion/weightSha256；
-            // 现阶段 proto 尚未扩展，置安全默认）
-            diagnosis.setAiRejected(Boolean.FALSE);
-            diagnosis.setAbstainReason("NOT_ASSESSED");
-            diagnosis.setModelVersion(modelVersion);
-            diagnosis.setWeightSha256(null);
-            diagnosis.setHumanReviewStatus(HumanReviewStatus.AI_ONLY);
+            // 写入医疗可靠性字段（Task 9 proto 扩展后 grpcResponse 会带新字段）
+            String modelVersionFromProto = grpcResponse.getModelVersion();
+            String weightSha256FromProto = grpcResponse.getWeightSha256();
+            diagnosis.setAiRejected(grpcResponse.getRejected());
+            diagnosis.setAbstainReason(grpcResponse.getAbstainReason());
+            diagnosis.setModelVersion(
+                    !modelVersionFromProto.isEmpty() ? modelVersionFromProto : modelVersion);
+            diagnosis.setWeightSha256(
+                    weightSha256FromProto.isEmpty() ? null : weightSha256FromProto);
+            diagnosis.setHumanReviewStatus(grpcResponse.getRequiresReview()
+                    ? HumanReviewStatus.AWAITING_REVIEW
+                    : HumanReviewStatus.AI_ONLY);
             this.save(diagnosis);
             vo.setId(diagnosis.getId());
 

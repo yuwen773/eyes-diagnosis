@@ -20,6 +20,14 @@ message DiagnosisResponse {
   int32 reliability_score = 3;
   string description = 4;
   repeated DiseasePrediction top_predictions = 5;
+  bool rejected = 6;
+  string abstain_reason = 7;
+  int32 quality_score = 8;
+  bool is_ood = 9;
+  string model_version = 10;
+  string weight_sha256 = 11;
+  bool requires_review = 12;
+  string quality_reasons = 13;
 }
 
 service DiagnosisService {
