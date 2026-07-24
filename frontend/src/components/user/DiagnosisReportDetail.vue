@@ -12,6 +12,31 @@
       </div>
     </div>
 
+    <!-- 拒识/复审提示 -->
+    <AbstainNotice
+      :rejected="Boolean(report.aiRejected)"
+      :reason="report.abstainReason ?? ''"
+    />
+    <div class="report-meta">
+      <HumanReviewBadge :status="report.humanReviewStatus ?? 'PENDING_AI'" />
+      <ModelProvenance
+        :modelVersion="report.modelVersion"
+        :weightSha256="report.weightSha256"
+      />
+    </div>
+
+    <!-- AI 输出 vs 人工复核 严格分区 -->
+    <section class="ai-output-block">
+      <h2>AI 输出</h2>
+      <p v-if="report.aiRejected" class="muted">AI 未给出诊断结论，请阅读下方人工复核或前往医院就诊。</p>
+    </section>
+    <section class="human-review-block">
+      <h2>人工复核</h2>
+      <p v-if="report.humanResult" class="muted">结论：{{ report.humanResult }}</p>
+      <p v-else class="muted">尚无人工复核结论。</p>
+    </section>
+    <MedicalDisclaimer scope="review" />
+
     <div class="report-body">
       <!-- AI 分析 -->
       <section v-if="report.details" class="report-section ai-analysis">
@@ -152,6 +177,10 @@ import dayjs from 'dayjs'
 import { exportToCSV, exportToPDF } from '@/utils/exportUtils'
 import { MdPreview } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
+import AbstainNotice from '@/components/medical/AbstainNotice.vue'
+import HumanReviewBadge from '@/components/medical/HumanReviewBadge.vue'
+import ModelProvenance from '@/components/medical/ModelProvenance.vue'
+import MedicalDisclaimer from '@/components/medical/MedicalDisclaimer.vue'
 import {
   IdcardOutlined,
   CalendarOutlined,

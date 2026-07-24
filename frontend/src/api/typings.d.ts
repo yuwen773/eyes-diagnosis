@@ -192,6 +192,19 @@ declare namespace API {
     severity?: string
     createTime?: string
     otherDisease?: Disease[]
+    // 医疗可靠性字段（Batch 3 添加）
+    aiRejected?: boolean
+    abstainReason?: string
+    modelVersion?: string
+    weightSha256?: string
+    humanReviewStatus?: string
+    humanResult?: string
+    humanSeverity?: string
+    humanRecommendations?: string
+    humanReviewNote?: string
+    disclaimer?: string
+    requiresReview?: boolean
+    chunkCount?: number
   }
 
   type DiagnosisUploadDTO = {

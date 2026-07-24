@@ -60,6 +60,14 @@ export const exportToPDF = (report: API.DiagnosisResultVO) => {
   const suggestionsLines = doc.splitTextToSize(report.recommendations ?? '', 180)
   doc.text(suggestionsLines, 14, tableEndY + 15 + detailsLines.length * 7 + 20)
 
+  // 人工复审 + 模型元数据 + 免责声明（强制项，缺一不可）
+  const footerY = tableEndY + 15 + detailsLines.length * 7 + 20 + suggestionsLines.length * 7 + 15
+  doc.setFontSize(11)
+  doc.text('医疗免责声明：本报告由 AI 辅助生成，不能替代专业医生诊断。', 14, footerY + 10)
+  doc.text(`模型版本: ${report.modelVersion ?? 'unknown'}`, 14, footerY + 18)
+  doc.text(`权重指纹: ${report.weightSha256?.slice(0, 12) ?? 'unknown'}`, 14, footerY + 26)
+  doc.text(`复审状态: ${report.humanReviewStatus ?? 'AI_ONLY'}`, 14, footerY + 34)
+
   // 页脚
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
@@ -81,12 +89,16 @@ export const exportToCSV = (report: API.DiagnosisResultVO) => {
     { field: '诊断ID', value: report.id },
     { field: '诊断日期', value: report.createTime },
     { field: '诊断结果', value: report.result },
-    // { field: '诊断结果', value: report.otherDisease },
     { field: '置信度', value: report.confidence },
     { field: '严重程度', value: report.severity },
     { field: '概率', value: report.probability },
     { field: '诊断详情', value: report.details },
-    { field: '诊断建议', value: report.recommendations }
+    { field: '诊断建议', value: report.recommendations },
+    { field: '模型版本', value: report.modelVersion ?? '' },
+    { field: '权重指纹', value: report.weightSha256 ?? '' },
+    { field: '复审状态', value: report.humanReviewStatus ?? '' },
+    { field: 'AI 拒识', value: report.aiRejected ? 'true' : 'false' },
+    { field: '免责声明', value: '本报告由 AI 辅助生成,不能替代专业医生诊断。' }
   ]
 
   const csv = Papa.unparse(csvData)
