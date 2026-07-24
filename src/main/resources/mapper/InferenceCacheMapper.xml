@@ -6,21 +6,32 @@
         <id property="id" column="id" />
         <result property="imageHash" column="imageHash" />
         <result property="modelVersion" column="modelVersion" />
+        <result property="weightSha256" column="weightSha256" />
         <result property="preprocessVersion" column="preprocessVersion" />
         <result property="predictedLabel" column="predictedLabel" />
         <result property="probability" column="probability" />
+        <result property="calibratedProbability" column="calibratedProbability" />
         <result property="description" column="description" />
         <result property="reliabilityScore" column="reliabilityScore" />
         <result property="topPredictions" column="topPredictions" />
+        <result property="qualityScore" column="qualityScore" />
+        <result property="qualityReasons" column="qualityReasons" />
+        <result property="isOod" column="isOod" />
+        <result property="oodScore" column="oodScore" />
+        <result property="rejected" column="rejected" />
+        <result property="abstainReason" column="abstainReason" />
+        <result property="requiresReview" column="requiresReview" />
         <result property="createTime" column="createTime" />
     </resultMap>
 
     <select id="findByHash" resultMap="BaseResultMap">
-        SELECT id, imageHash, modelVersion, preprocessVersion, predictedLabel, probability,
-               description, reliabilityScore, topPredictions, createTime
+        SELECT id, imageHash, modelVersion, weightSha256, preprocessVersion, predictedLabel, probability,
+               calibratedProbability, description, reliabilityScore, topPredictions, qualityScore,
+               qualityReasons, isOod, oodScore, rejected, abstainReason, requiresReview, createTime
         FROM t_inference_cache
         WHERE imageHash = #{imageHash}
           AND modelVersion = #{modelVersion}
+          AND weightSha256 = #{weightSha256}
           AND preprocessVersion = #{preprocessVersion}
         LIMIT 1
     </select>
@@ -28,11 +39,13 @@
     <insert id="insertOne" parameterType="com.csust.eyediagnosis.model.entity.InferenceCache"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_inference_cache
-            (imageHash, modelVersion, preprocessVersion, predictedLabel, probability,
-             description, reliabilityScore, topPredictions, createTime)
+            (imageHash, modelVersion, weightSha256, preprocessVersion, predictedLabel, probability,
+             calibratedProbability, description, reliabilityScore, topPredictions, qualityScore,
+             qualityReasons, isOod, oodScore, rejected, abstainReason, requiresReview, createTime)
         VALUES
-            (#{imageHash}, #{modelVersion}, #{preprocessVersion}, #{predictedLabel}, #{probability},
-             #{description}, #{reliabilityScore}, #{topPredictions}, #{createTime})
+            (#{imageHash}, #{modelVersion}, #{weightSha256}, #{preprocessVersion}, #{predictedLabel}, #{probability},
+             #{calibratedProbability}, #{description}, #{reliabilityScore}, #{topPredictions}, #{qualityScore},
+             #{qualityReasons}, #{isOod}, #{oodScore}, #{rejected}, #{abstainReason}, #{requiresReview}, #{createTime})
     </insert>
 
 </mapper>

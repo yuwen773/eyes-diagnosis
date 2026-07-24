@@ -163,17 +163,17 @@ CREATE TABLE t_agent_message (
 -- MCP服务器表
 CREATE TABLE IF NOT EXISTS t_mcp_server (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL COMMENT '用户ID',
-    mcp_server_code VARCHAR(100) NOT NULL COMMENT '服务器代码',
-    mcp_server_name VARCHAR(255) NOT NULL COMMENT '服务器名称',
-    install_type VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
+    userId BIGINT NOT NULL COMMENT '用户ID',
+    mcpServerCode VARCHAR(100) NOT NULL COMMENT '服务器代码',
+    name VARCHAR(255) NOT NULL COMMENT '服务器名称',
+    installType VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
     host VARCHAR(500) COMMENT '服务器地址',
-    deploy_config JSON COMMENT '部署配置',
+    deployConfig JSON COMMENT '部署配置',
     status TINYINT DEFAULT 1 COMMENT '状态:0禁用,1启用',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_user_id (user_id),
-    UNIQUE INDEX idx_code_user (mcp_server_code, user_id)
+    createTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updateTime DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_userId (userId),
+    UNIQUE INDEX uk_mcp_user_code (mcpServerCode, userId)
 ) COMMENT 'MCP服务器配置表';
 
 -- gRPC 诊断重构：新增图片哈希字段用于缓存去重

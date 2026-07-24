@@ -18,17 +18,35 @@ public class InferenceCache {
 
     private String modelVersion;
 
+    private String weightSha256;
+
     private String preprocessVersion;
 
     private String predictedLabel;
 
     private Double probability;
 
+    private Double calibratedProbability;
+
     private String description;
 
     private Integer reliabilityScore;
 
     private String topPredictions;
+
+    private Integer qualityScore;
+
+    private String qualityReasons;
+
+    private Boolean isOod;
+
+    private Double oodScore;
+
+    private Boolean rejected;
+
+    private String abstainReason;
+
+    private Boolean requiresReview;
 
     private Date createTime;
 }

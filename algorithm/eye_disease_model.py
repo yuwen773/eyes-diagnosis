@@ -520,29 +520,32 @@ class EyeDiseaseModel:
         """
         加载预训练模型
         """
-        try:
-            self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-            self.model.eval()
-            print(f"从 {model_path} 加载模型")
-        except Exception as e:
-            print(f"加载模型时出错: {str(e)}")
-            print("使用未训练的模型继续...")
+        state_dict = torch.load(
+            model_path,
+            map_location=self.device,
+            weights_only=True,
+        )
+        self.model.load_state_dict(state_dict, strict=True)
+        self.model.eval()
+        print(f"从 {model_path} 加载模型")
+
+    def predict_logits(self, image_path):
+        """返回已加载模型对单张图像的原始 logits。"""
+        image = Image.open(image_path).convert('RGB')
+        image_tensor = self.data_transforms['val'](image).unsqueeze(0).to(self.device)
+        self.model.eval()
+        with torch.no_grad():
+            return self.model(image_tensor)[0].detach().cpu().numpy()
     
     def predict(self, image_path):
         """
         对单张图像进行预测
         """
-        # 加载并预处理图像
-        image = Image.open(image_path).convert('RGB')
-        transform = self.data_transforms['val']
-        image_tensor = transform(image).unsqueeze(0).to(self.device)
-        
-        # 进行预测
-        self.model.eval()
-        with torch.no_grad():
-            outputs = self.model(image_tensor)
-            probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
-            predicted_class = torch.argmax(probabilities).item()
+        logits = self.predict_logits(image_path)
+        probabilities = torch.nn.functional.softmax(
+            torch.as_tensor(logits), dim=0
+        )
+        predicted_class = torch.argmax(probabilities).item()
         
         # 获取预测结果和概率
         predicted_label = disease_categories[predicted_class]

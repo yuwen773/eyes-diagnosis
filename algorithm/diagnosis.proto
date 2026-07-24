@@ -28,6 +28,9 @@ message DiagnosisResponse {
   string weight_sha256 = 11;
   bool requires_review = 12;
   string quality_reasons = 13;
+  double calibrated_probability = 14;
+  double ood_score = 15;
+  string preprocess_version = 16;
 }
 
 service DiagnosisService {

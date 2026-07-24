@@ -39,7 +39,7 @@
 
     <template v-else>
       <!-- 操作按钮栏 -->
-      <div class="action-bar">
+      <div v-if="!isRejected" class="action-bar">
         <a-space>
           <a-button type="primary" ghost @click="handleExportPDF">
             <template #icon><FilePdfOutlined /></template>
@@ -54,7 +54,7 @@
 
       <!-- 医疗可靠性提示（拒识 / 需复审 / 模型元数据） -->
       <AbstainNotice
-        :rejected="Boolean(diagnosisResult?.aiRejected)"
+        :rejected="isRejected"
         :reason="diagnosisResult?.abstainReason ?? ''"
       />
       <div class="medical-meta">
@@ -65,7 +65,16 @@
         />
       </div>
 
+      <a-alert
+        v-if="requiresReview && !isRejected"
+        type="warning"
+        show-icon
+        message="AI 初步分析待人工复核"
+        description="该结果不能替代专业医生的诊断；请结合临床检查并等待人工复核。"
+      />
+
       <!-- 顶部诊断结果 -->
+      <template v-if="!isRejected">
       <a-card class="top-section">
         <a-row :gutter="24">
           <a-col :span="10" class="image-col">
@@ -82,8 +91,8 @@
               <div class="diagnosis-header">
                 <CheckCircleOutlined class="header-icon" />
                 <h2 class="diagnosis-title">{{ diagnosisResult?.result }}</h2>
-                <a-tag :color="getSeverityColor(diagnosisResult?.severity||'moderate')" class="severity-tag">
-                  {{ formatSeverity(diagnosisResult?.severity||'moderate') }}
+                <a-tag :color="getSeverityColor(diagnosisResult?.severity || 'NOT_ASSESSED')" class="severity-tag">
+                  {{ formatSeverity(diagnosisResult?.severity || 'NOT_ASSESSED') }}
                 </a-tag>
               </div>
 
@@ -200,6 +209,19 @@
           </div>
         </div>
       </a-card>
+      </template>
+
+      <a-card v-else class="rejected-result">
+        <a-result
+          status="warning"
+          title="本次图像未形成可展示的 AI 诊断结论"
+          :sub-title="rejectionMessage"
+        >
+          <template #extra>
+            <a-button type="primary" @click="diagnosisStore.clearDiagnosisResult">重新上传图片</a-button>
+          </template>
+        </a-result>
+      </a-card>
 
       <!-- 医疗免责声明：必须在结果页最底部常驻 -->
       <MedicalDisclaimer
@@ -212,7 +234,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import {
   CheckCircleOutlined,
   InfoCircleOutlined,
@@ -236,14 +258,20 @@ import MedicalDisclaimer from '@/components/medical/MedicalDisclaimer.vue'
 const diagnosisStore = useDiagnosisStore();
 const { diagnosisResult } = storeToRefs(diagnosisStore)
 
+const isRejected = computed(() => Boolean(diagnosisResult.value?.aiRejected))
+const requiresReview = computed(() => Boolean(diagnosisResult.value?.requiresReview))
+const rejectionMessage = computed(() => diagnosisResult.value?.abstainReason
+  ? `拒识原因：${diagnosisResult.value.abstainReason}。请重新上传清晰图片或申请人工复核。`
+  : '请重新上传清晰图片或申请人工复核。')
+
 const handleExportPDF = () => {
-  if (diagnosisResult.value) {
+  if (diagnosisResult.value && !isRejected.value) {
     exportToPDF(diagnosisResult.value)
   }
 }
 
 const handleExportCSV = () => {
-  if (diagnosisResult.value) {
+  if (diagnosisResult.value && !isRejected.value) {
     exportToCSV(diagnosisResult.value)
   }
 }
@@ -254,11 +282,18 @@ const recommendations = computed(() => {
   if (typeof recs === 'string') {
     return recs.split('\n').filter(r => r.trim())
   }
-  return Array.isArray(recs) ? recs.filter(r => r) : []
+  return []
 })
 
-// 可靠性等级
-const reliability = ref<'极高' | '高' | '低'>('极高');
+// 可靠性由后端经校准后的分数及复核状态决定，前端不再硬编码医疗结论。
+const reliability = computed(() => {
+  if (isRejected.value) return '拒识'
+  if (requiresReview.value) return '待复核'
+  const confidence = diagnosisResult.value?.confidence ?? 0
+  if (confidence >= 85) return '较高'
+  if (confidence >= 70) return '一般'
+  return '较低'
+})
 
 // 获取所有诊断结果（包含主诊断）
 const allDiagnoses = computed(() => {
@@ -307,9 +342,11 @@ const getProbabilityColor = (probability: number) => {
 // 根据可靠性获取标签颜色
 const getReliabilityColor = (level: string) => {
   switch (level) {
-    case '极高': return 'green';
-    case '高': return 'blue';
-    case '低': return 'orange';
+    case '较高': return 'green';
+    case '一般': return 'blue';
+    case '较低': return 'orange';
+    case '待复核': return 'orange';
+    case '拒识': return 'red';
     default: return 'gray';
   }
 };
@@ -332,6 +369,7 @@ const formatSeverity = (severity: string) => {
     case 'mild': return '轻度';
     case 'moderate': return '中度';
     case 'severe': return '严重';
+    case 'NOT_ASSESSED': return '未评估';
     default: return '未知';
   }
 };
@@ -339,12 +377,15 @@ const formatSeverity = (severity: string) => {
 //获取相关诊断可靠性的信息
 const getReliabilityMessage = (level: string) => {
   switch (level) {
-    case '极高':
-      return '诊断结果可靠性非常高，可以较为确定地参考此结果。';
-    case '高':
-      return '诊断结果参考价值一般，有较大不确定性，必须进行专业检查确认。';
-    case '低':
-      return '诊断结果可靠性较低，仅供参考，请务必进行专业医学检查。';
+    case '较高':
+      return '该结果为 AI 辅助分析，仍需结合专业医生意见。';
+    case '一般':
+    case '较低':
+      return '该结果存在不确定性，请进行专业医学检查确认。';
+    case '待复核':
+      return '该结果已标记为待人工复核，不能作为诊断结论。';
+    case '拒识':
+      return 'AI 已拒绝形成诊断结论，请重新上传图片或申请人工复核。';
     default:
       return '';
   }
@@ -352,15 +393,23 @@ const getReliabilityMessage = (level: string) => {
 
 const getReliabilityMessageStyle = (level: string) => {
   const styles = {
-    '极高': {
+    '较高': {
       backgroundColor: 'oklch(from var(--claude-success) l c h / 0.15)',
       borderColor: 'oklch(from var(--claude-success) l c h / 0.3)'
     },
-    '高': {
+    '一般': {
       backgroundColor: 'oklch(from var(--claude-warning) l c h / 0.15)',
       borderColor: 'oklch(from var(--claude-warning) l c h / 0.3)'
     },
-    '低': {
+    '较低': {
+      backgroundColor: 'oklch(from var(--claude-error) l c h / 0.15)',
+      borderColor: 'oklch(from var(--claude-error) l c h / 0.3)'
+    },
+    '待复核': {
+      backgroundColor: 'oklch(from var(--claude-warning) l c h / 0.15)',
+      borderColor: 'oklch(from var(--claude-warning) l c h / 0.3)'
+    },
+    '拒识': {
       backgroundColor: 'oklch(from var(--claude-error) l c h / 0.15)',
       borderColor: 'oklch(from var(--claude-error) l c h / 0.3)'
     }
@@ -371,7 +420,8 @@ const getReliabilityMessageStyle = (level: string) => {
 // 诊断结果描述（用于屏幕阅读器）
 const screenReaderSummary = computed(() => {
   if (!diagnosisResult?.value) return ''
-  return `诊断结果：${diagnosisResult.value.result || '未知'}，置信度 ${diagnosisResult.value.confidence || 0}%，严重程度：${formatSeverity(diagnosisResult.value.severity || 'unknown')}。仅供参考，请咨询专业医生。`
+  if (isRejected.value) return `本次图像被 AI 拒识：${rejectionMessage.value}`
+  return `AI 初步分析：${diagnosisResult.value.result || '未知'}，置信度 ${diagnosisResult.value.confidence || 0}%，严重程度：${formatSeverity(diagnosisResult.value.severity || 'NOT_ASSESSED')}。仅供参考，请咨询专业医生。`
 })
 </script>
 

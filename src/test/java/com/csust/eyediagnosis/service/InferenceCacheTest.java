@@ -58,6 +58,34 @@ class InferenceCacheTest {
         assertEquals(64, org.apache.commons.codec.binary.Hex.encodeHexString(digest).length());
     }
 
+    @Test
+    void cachedResponsePreservesEveryMedicalSafetyField() {
+        DiagnosisProto.DiagnosisResponse uncached = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel("normal")
+                .setProbability(91.5)
+                .setCalibratedProbability(90.1)
+                .setReliabilityScore(90)
+                .setDescription("desc")
+                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel("normal").setProbability(91.5))
+                .setRejected(true)
+                .setAbstainReason("QUALITY_FAIL")
+                .setQualityScore(25)
+                .setQualityReasons("blur")
+                .setIsOod(true)
+                .setOodScore(12.3)
+                .setModelVersion("efficientnet-b4@1.0.0")
+                .setWeightSha256("a".repeat(64))
+                .setPreprocessVersion("v1")
+                .setRequiresReview(true)
+                .build();
+
+        InferenceCache cache = DiagnosisServiceImpl.toCacheEntity(
+                "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess");
+
+        assertEquals(uncached, DiagnosisServiceImpl.toProto(cache));
+    }
+
     private DiagnosisProto.DiagnosisResponse mockGrpc() {
         DiagnosisProto.DiagnosisResponse resp = mock(DiagnosisProto.DiagnosisResponse.class);
         when(resp.getPredictedLabel()).thenReturn("normal");

@@ -6,6 +6,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csust.eyediagnosis.constant.DiagnosisCategoryEnum;
 import com.csust.eyediagnosis.constant.DiagnosisRecommendationEnum;
 import com.csust.eyediagnosis.constant.ExceptionConstant;
@@ -58,6 +60,8 @@ import static com.csust.eyediagnosis.constant.OrderConstant.ASC;
 public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis>
     implements DiagnosisService{
 
+    private static final ObjectMapper CACHE_JSON = new ObjectMapper();
+
     @Resource
     private FileManager fileManager;
     @Resource
@@ -74,6 +78,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
     @Value("${eye-diagnosis.inference.preprocess-version:v1}")
     private String preprocessVersion;
+
+    @Value("${eye-diagnosis.inference.model-weight-sha256:}")
+    private String modelWeightSha256;
 
     @Override
     public DiagnosisManageVO uploadDiagnosisPicture(MultipartFile multipartFile, DiagnosisUploadDTO diagnosisUploadDTO, User loginUser) {
@@ -164,7 +171,10 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
             // 1. 计算图片 SHA-256 哈希并查询推理缓存（跨用户共享）
             String imageHash = sha256Hex(imageBytes);
-            InferenceCache cached = inferenceCacheMapper.findByHash(imageHash, modelVersion, preprocessVersion);
+            // Cache reuse is disabled unless the deployed model fingerprint is configured.
+            // A version alone is not a safe identity for a mutable weight file.
+            InferenceCache cached = StrUtil.isBlank(modelWeightSha256) ? null
+                    : inferenceCacheMapper.findByHash(imageHash, modelVersion, modelWeightSha256, preprocessVersion);
             DiagnosisProto.DiagnosisResponse grpcResponse;
             if (cached != null) {
                 grpcResponse = toProto(cached);
@@ -172,8 +182,13 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 // 2. gRPC 调用 Python 推理
                 grpcResponse = diagnosisGrpcClient.diagnose(imageBytes, imageFormat);
                 // 持久化推理缓存
-                InferenceCache entry = toCacheEntity(imageHash, grpcResponse);
-                inferenceCacheMapper.insertOne(entry);
+                InferenceCache entry = toCacheEntity(
+                        imageHash, grpcResponse, modelVersion, modelWeightSha256, preprocessVersion);
+                if (StrUtil.isNotBlank(entry.getWeightSha256())) {
+                    inferenceCacheMapper.insertOne(entry);
+                } else {
+                    log.warn("Skip inference cache because the response has no model weight SHA-256");
+                }
             }
 
             // 3. 异步上传 COS
@@ -197,6 +212,13 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             vo.setUrl(imageUrl);
             vo.setCreateTime(now());
             vo.setSeverity("NOT_ASSESSED");
+            vo.setAiRejected(grpcResponse.getRejected());
+            vo.setAbstainReason(grpcResponse.getAbstainReason());
+            vo.setModelVersion(grpcResponse.getModelVersion());
+            vo.setWeightSha256(grpcResponse.getWeightSha256());
+            vo.setRequiresReview(grpcResponse.getRequiresReview());
+            vo.setHumanReviewStatus(grpcResponse.getRequiresReview()
+                    ? HumanReviewStatus.AWAITING_REVIEW : HumanReviewStatus.AI_ONLY);
 
             List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()
                     .map(pred -> {
@@ -290,36 +312,64 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         }
     }
 
-    static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp) {
+    static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp,
+                                        String configuredModelVersion, String configuredWeightSha256,
+                                        String configuredPreprocessVersion) {
         InferenceCache cache = new InferenceCache();
         cache.setImageHash(imageHash);
-        cache.setModelVersion("efficientnet-b4@1.0.0");
-        cache.setPreprocessVersion("v1");
+        cache.setModelVersion(StrUtil.blankToDefault(resp.getModelVersion(), configuredModelVersion));
+        cache.setWeightSha256(StrUtil.blankToDefault(resp.getWeightSha256(), configuredWeightSha256));
+        cache.setPreprocessVersion(StrUtil.blankToDefault(resp.getPreprocessVersion(), configuredPreprocessVersion));
         cache.setPredictedLabel(resp.getPredictedLabel());
         cache.setProbability(resp.getProbability());
+        cache.setCalibratedProbability(resp.getCalibratedProbability());
         cache.setDescription(resp.getDescription());
         cache.setReliabilityScore(resp.getReliabilityScore());
-        // topPredictions: 序列化为 JSON 字符串以便存储
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < resp.getTopPredictionsCount(); i++) {
-            DiagnosisProto.DiseasePrediction p = resp.getTopPredictions(i);
-            if (i > 0) sb.append(",");
-            sb.append("{\"label\":\"").append(p.getLabel())
-                    .append("\",\"probability\":").append(p.getProbability()).append("}");
+        try {
+            cache.setTopPredictions(CACHE_JSON.writeValueAsString(resp.getTopPredictionsList()));
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to serialize cached top predictions", exception);
         }
-        sb.append("]");
-        cache.setTopPredictions(sb.toString());
+        cache.setQualityScore(resp.getQualityScore());
+        cache.setQualityReasons(resp.getQualityReasons());
+        cache.setIsOod(resp.getIsOod());
+        cache.setOodScore(resp.getOodScore());
+        cache.setRejected(resp.getRejected());
+        cache.setAbstainReason(resp.getAbstainReason());
+        cache.setRequiresReview(resp.getRequiresReview());
         cache.setCreateTime(new Date());
         return cache;
     }
 
     static DiagnosisProto.DiagnosisResponse toProto(InferenceCache cache) {
-        return DiagnosisProto.DiagnosisResponse.newBuilder()
+        DiagnosisProto.DiagnosisResponse.Builder builder = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setModelVersion(cache.getModelVersion())
+                .setWeightSha256(cache.getWeightSha256())
+                .setPreprocessVersion(cache.getPreprocessVersion())
                 .setPredictedLabel(cache.getPredictedLabel())
                 .setProbability(cache.getProbability())
+                .setCalibratedProbability(cache.getCalibratedProbability())
                 .setDescription(cache.getDescription() == null ? "" : cache.getDescription())
                 .setReliabilityScore(cache.getReliabilityScore())
-                .build();
+                .setQualityScore(cache.getQualityScore())
+                .setQualityReasons(cache.getQualityReasons() == null ? "" : cache.getQualityReasons())
+                .setIsOod(Boolean.TRUE.equals(cache.getIsOod()))
+                .setOodScore(cache.getOodScore())
+                .setRejected(Boolean.TRUE.equals(cache.getRejected()))
+                .setAbstainReason(cache.getAbstainReason() == null ? "" : cache.getAbstainReason())
+                .setRequiresReview(Boolean.TRUE.equals(cache.getRequiresReview()));
+        try {
+            List<Map<String, Object>> topPredictions = CACHE_JSON.readValue(
+                    cache.getTopPredictions(), new TypeReference<>() {});
+            for (Map<String, Object> prediction : topPredictions) {
+                builder.addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel((String) prediction.get("label"))
+                        .setProbability(((Number) prediction.get("probability")).doubleValue()));
+            }
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to restore cached top predictions", exception);
+        }
+        return builder.build();
     }
 
     /**
