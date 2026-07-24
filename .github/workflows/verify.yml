@@ -59,6 +59,10 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
+      chroma:
+        image: ghcr.io/chroma-core/chroma:1.0.0
+        ports:
+          - 8000:8000
     env:
       SPRING_PROFILES_ACTIVE: ci
     steps:
@@ -68,6 +72,7 @@ jobs:
           distribution: corretto
           java-version: '21'
           cache: maven
+      - run: timeout 60 bash -c 'until curl -fsS http://localhost:8000/api/v2/heartbeat; do sleep 2; done'
       - run: mvn test
 
   flyway-mysql:
