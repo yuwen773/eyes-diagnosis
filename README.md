@@ -81,7 +81,12 @@ npm run dev            # 访问 http://localhost:5173
 cd algorithm
 pip install -r requirements.txt
 
+# 先从唯一 Proto 源生成 Python 绑定
+python generate_proto.py
+
 # 方式一：gRPC 服务（供后端直接调用）
+# 必填：MODEL_WEIGHTS_PATH、MODEL_WEIGHTS_SHA256、MODEL_REGISTRY_PATH
+# 可选：MODEL_CALIBRATION_PATH、INFERENCE_POLICY_VERSION（默认 medical-safety-v2）
 python grpc_server.py  # 监听 :50051
 
 # 方式二：MCP 服务（供 Agent 通过 MCP 协议调用）
@@ -89,6 +94,13 @@ python run_mcp_server.py
 ```
 
 > ✅ 全部启动完成后，即可体验图像诊断、AI 问诊与知识库检索功能
+
+### 推理安全状态
+
+- 推理缓存仅在图片哈希、模型版本、权重 SHA-256、预处理版本和安全策略版本全部一致时复用；并发写入采用原子 UPSERT。
+- 当前 OOD 状态为 `NOT_EVALUATED`，不表示图片已被确认属于训练分布。
+- 当前温度配置为 `1.0` 且状态为 `NOT_CALIBRATED`；界面显示的是模型置信分数，不是诊断可靠性或医学结论。
+- 数据库升级使用 Flyway。现有已应用 V8 的数据库在升级前须遵循 [Flyway 迁移历史计划](docs/flyway-migration-history-plan.md)。
 
 ## 🩺 核心功能详解
 

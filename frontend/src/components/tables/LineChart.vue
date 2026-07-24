@@ -94,7 +94,7 @@ export default defineComponent({
             }
           }
         },
-        series: seriesKeys.map((key) => ({
+        series: seriesKeys.map((key, index) => ({
           name: key,
           type: 'line',
           smooth: true,

@@ -70,8 +70,14 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
         ))
         calibration = json.loads(calibration_path.read_text())
         self.temperature = float(calibration["temperature"])
+        self.calibration_status = str(calibration.get("status", "NOT_CALIBRATED"))
+        if self.calibration_status not in {"CALIBRATED", "NOT_CALIBRATED"}:
+            raise RuntimeError("Calibration status must be CALIBRATED or NOT_CALIBRATED")
         if calibration.get("model_version") != self.provenance.version:
             raise RuntimeError("Calibration model version does not match registered model")
+        self.inference_policy_version = os.getenv("INFERENCE_POLICY_VERSION", "medical-safety-v2").strip()
+        if not self.inference_policy_version:
+            raise RuntimeError("INFERENCE_POLICY_VERSION must not be empty")
         self.model = EyeDiseaseModel(model_name='efficientnet_b4')
         self.model.load_model(str(weights_path))
         logger.info(f"Model loaded from {weights_path}")
@@ -95,8 +101,10 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
             try:
                 quality = evaluate_quality(image_data)
                 logits = self.model.predict_logits(temp_path)
-                calibrated_logits = apply_temperature(logits[None, :], self.temperature)[0]
-                exp_logits = calibrated_logits - calibrated_logits.max()
+                scored_logits = logits
+                if self.calibration_status == "CALIBRATED":
+                    scored_logits = apply_temperature(logits[None, :], self.temperature)[0]
+                exp_logits = scored_logits - scored_logits.max()
                 probabilities = __import__("numpy").exp(exp_logits)
                 probabilities = probabilities / probabilities.sum()
                 ranked_indices = probabilities.argsort()[::-1]
@@ -119,7 +127,8 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                 return diagnosis_pb2.DiagnosisResponse(
                     predicted_label=predicted_label,
                     probability=top1 * 100,
-                    calibrated_probability=top1 * 100,
+                    calibrated_probability=top1 * 100 if self.calibration_status == "CALIBRATED" else 0.0,
+                    calibration_status=self.calibration_status,
                     reliability_score=round(top1 * 100),
                     description=description,
                     top_predictions=[
@@ -135,9 +144,11 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                     quality_reasons=",".join(quality.reasons),
                     is_ood=ood.is_ood,
                     ood_score=ood.score,
+                    ood_status=diagnosis_pb2.NOT_EVALUATED,
                     model_version=self.provenance.version,
                     weight_sha256=self.provenance.weight_sha256,
                     preprocess_version=self.provenance.preprocess_version or "",
+                    inference_policy_version=self.inference_policy_version,
                     requires_review=abstain.requires_review,
                 )
             finally:

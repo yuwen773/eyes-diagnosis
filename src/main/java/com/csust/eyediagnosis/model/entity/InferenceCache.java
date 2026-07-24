@@ -22,11 +22,15 @@ public class InferenceCache {
 
     private String preprocessVersion;
 
+    private String inferencePolicyVersion;
+
     private String predictedLabel;
 
     private Double probability;
 
     private Double calibratedProbability;
+
+    private String calibrationStatus;
 
     private String description;
 
@@ -41,6 +45,8 @@ public class InferenceCache {
     private Boolean isOod;
 
     private Double oodScore;
+
+    private String oodStatus;
 
     private Boolean rejected;
 

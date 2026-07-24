@@ -199,3 +199,52 @@ CREATE TABLE IF NOT EXISTS t_knowledge_document (
     INDEX idx_userId (userId),
     INDEX idx_status (status)
 ) COMMENT '知识库文档表' COLLATE = utf8mb4_unicode_ci;
+
+-- Medical inference provenance. This mirrors the current Flyway target schema
+-- for manual development initialization; production upgrades use V1--V9.
+ALTER TABLE t_diagnosis
+    ADD COLUMN aiRejected TINYINT(1) NOT NULL DEFAULT 0,
+    ADD COLUMN abstainReason VARCHAR(40),
+    ADD COLUMN modelVersion VARCHAR(64),
+    ADD COLUMN weightSha256 VARCHAR(128),
+    ADD COLUMN preprocessVersion VARCHAR(64),
+    ADD COLUMN inferencePolicyVersion VARCHAR(64),
+    ADD COLUMN calibrationStatus VARCHAR(32),
+    ADD COLUMN calibratedProbability DOUBLE,
+    ADD COLUMN qualityScore INT,
+    ADD COLUMN qualityReasons VARCHAR(512),
+    ADD COLUMN oodStatus VARCHAR(32),
+    ADD COLUMN oodScore DOUBLE,
+    ADD COLUMN humanReviewStatus VARCHAR(20) NOT NULL DEFAULT 'PENDING_AI',
+    ADD COLUMN humanReviewerId BIGINT,
+    ADD COLUMN humanReviewedAt DATETIME,
+    ADD COLUMN humanReviewNote TEXT,
+    ADD COLUMN humanResult VARCHAR(255),
+    ADD COLUMN humanSeverity VARCHAR(40),
+    ADD COLUMN humanRecommendations TEXT;
+
+CREATE TABLE IF NOT EXISTS t_inference_cache (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    imageHash VARCHAR(64) NOT NULL,
+    modelVersion VARCHAR(64) NOT NULL,
+    weightSha256 VARCHAR(64) NOT NULL,
+    preprocessVersion VARCHAR(64) NOT NULL,
+    inferencePolicyVersion VARCHAR(64) NOT NULL,
+    predictedLabel VARCHAR(64) NOT NULL,
+    probability DOUBLE NOT NULL,
+    calibratedProbability DOUBLE NOT NULL DEFAULT 0,
+    calibrationStatus VARCHAR(32) NOT NULL DEFAULT 'NOT_CALIBRATED',
+    description VARCHAR(512),
+    reliabilityScore INT NOT NULL,
+    topPredictions JSON,
+    qualityScore INT NOT NULL DEFAULT 0,
+    qualityReasons VARCHAR(512),
+    isOod TINYINT NOT NULL DEFAULT 0,
+    oodScore DOUBLE NOT NULL DEFAULT 0,
+    oodStatus VARCHAR(32) NOT NULL DEFAULT 'NOT_EVALUATED',
+    rejected TINYINT NOT NULL DEFAULT 0,
+    abstainReason VARCHAR(64),
+    requiresReview TINYINT NOT NULL DEFAULT 0,
+    createTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_inference (imageHash, modelVersion, weightSha256, preprocessVersion, inferencePolicyVersion)
+) COMMENT '推理结果缓存';

@@ -73,21 +73,21 @@ const stats = reactive([
     value: 8452, 
     icon: BarChartOutlined, 
     trend: 12.5, 
-    color: 'primary' 
+    color: 'primary' as const
   },
   { 
     label: '确诊数', 
     value: 7891, 
     icon: CheckCircleOutlined, 
     trend: 8.2, 
-    color: 'success' 
+    color: 'success' as const
   },
   { 
     label: '准确率', 
     value: '98.7%', 
     icon: AimOutlined, 
     trend: 0.5, 
-    color: 'warning' 
+    color: 'warning' as const
   },
   { 
     label: '平均诊断速度', 
@@ -95,7 +95,7 @@ const stats = reactive([
     icon: ThunderboltOutlined, 
     trend: -15.4, 
     trendLabel: '较上月优化', 
-    color: 'error' 
+    color: 'error' as const
   },
 ])
 

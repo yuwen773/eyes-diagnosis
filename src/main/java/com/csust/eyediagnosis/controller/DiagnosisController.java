@@ -98,7 +98,9 @@ public class DiagnosisController {
         String queryCondition = JSONUtil.toJsonStr(diagnosisQueryDTO);
         String cacheScope = loginUser.getId() + ":" + loginUser.getUserRole() + ":" + queryCondition;
         String hashKey = DigestUtils.md5DigestAsHex(cacheScope.getBytes());
-        String redisKey = String.format("diagnosis:listDiagnosisVOByPage:%s",hashKey);
+        // Versioning prevents pre-desensitization list payloads from being
+        // returned after a medical privacy release.
+        String redisKey = String.format("diagnosis:v2:listDiagnosisVOByPage:%s",hashKey);
         //获取缓存对象
         String cacheValue = stringRedisTemplate.opsForValue().get(redisKey);
         if(cacheValue !=null){

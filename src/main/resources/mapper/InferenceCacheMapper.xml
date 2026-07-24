@@ -8,9 +8,11 @@
         <result property="modelVersion" column="modelVersion" />
         <result property="weightSha256" column="weightSha256" />
         <result property="preprocessVersion" column="preprocessVersion" />
+        <result property="inferencePolicyVersion" column="inferencePolicyVersion" />
         <result property="predictedLabel" column="predictedLabel" />
         <result property="probability" column="probability" />
         <result property="calibratedProbability" column="calibratedProbability" />
+        <result property="calibrationStatus" column="calibrationStatus" />
         <result property="description" column="description" />
         <result property="reliabilityScore" column="reliabilityScore" />
         <result property="topPredictions" column="topPredictions" />
@@ -18,6 +20,7 @@
         <result property="qualityReasons" column="qualityReasons" />
         <result property="isOod" column="isOod" />
         <result property="oodScore" column="oodScore" />
+        <result property="oodStatus" column="oodStatus" />
         <result property="rejected" column="rejected" />
         <result property="abstainReason" column="abstainReason" />
         <result property="requiresReview" column="requiresReview" />
@@ -25,27 +28,29 @@
     </resultMap>
 
     <select id="findByHash" resultMap="BaseResultMap">
-        SELECT id, imageHash, modelVersion, weightSha256, preprocessVersion, predictedLabel, probability,
-               calibratedProbability, description, reliabilityScore, topPredictions, qualityScore,
-               qualityReasons, isOod, oodScore, rejected, abstainReason, requiresReview, createTime
+        SELECT id, imageHash, modelVersion, weightSha256, preprocessVersion, inferencePolicyVersion, predictedLabel, probability,
+               calibratedProbability, calibrationStatus, description, reliabilityScore, topPredictions, qualityScore,
+               qualityReasons, isOod, oodScore, oodStatus, rejected, abstainReason, requiresReview, createTime
         FROM t_inference_cache
         WHERE imageHash = #{imageHash}
           AND modelVersion = #{modelVersion}
           AND weightSha256 = #{weightSha256}
           AND preprocessVersion = #{preprocessVersion}
+          AND inferencePolicyVersion = #{inferencePolicyVersion}
         LIMIT 1
     </select>
 
-    <insert id="insertOne" parameterType="com.csust.eyediagnosis.model.entity.InferenceCache"
+    <insert id="upsert" parameterType="com.csust.eyediagnosis.model.entity.InferenceCache"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_inference_cache
-            (imageHash, modelVersion, weightSha256, preprocessVersion, predictedLabel, probability,
-             calibratedProbability, description, reliabilityScore, topPredictions, qualityScore,
-             qualityReasons, isOod, oodScore, rejected, abstainReason, requiresReview, createTime)
+            (imageHash, modelVersion, weightSha256, preprocessVersion, inferencePolicyVersion, predictedLabel, probability,
+             calibratedProbability, calibrationStatus, description, reliabilityScore, topPredictions, qualityScore,
+             qualityReasons, isOod, oodScore, oodStatus, rejected, abstainReason, requiresReview, createTime)
         VALUES
-            (#{imageHash}, #{modelVersion}, #{weightSha256}, #{preprocessVersion}, #{predictedLabel}, #{probability},
-             #{calibratedProbability}, #{description}, #{reliabilityScore}, #{topPredictions}, #{qualityScore},
-             #{qualityReasons}, #{isOod}, #{oodScore}, #{rejected}, #{abstainReason}, #{requiresReview}, #{createTime})
+            (#{imageHash}, #{modelVersion}, #{weightSha256}, #{preprocessVersion}, #{inferencePolicyVersion}, #{predictedLabel}, #{probability},
+             #{calibratedProbability}, #{calibrationStatus}, #{description}, #{reliabilityScore}, #{topPredictions}, #{qualityScore},
+             #{qualityReasons}, #{isOod}, #{oodScore}, #{oodStatus}, #{rejected}, #{abstainReason}, #{requiresReview}, #{createTime})
+        ON DUPLICATE KEY UPDATE id = id
     </insert>
 
 </mapper>

@@ -110,6 +110,22 @@ public class Diagnosis {
     private String modelVersion;
     /** 权重 SHA-256 */
     private String weightSha256;
+    /** 图像预处理版本 */
+    private String preprocessVersion;
+    /** 推理安全策略版本 */
+    private String inferencePolicyVersion;
+    /** 概率校准状态 */
+    private String calibrationStatus;
+    /** 仅在 calibrationStatus=CALIBRATED 时保存 */
+    private Double calibratedProbability;
+    /** 图像质量分数 */
+    private Integer qualityScore;
+    /** 图像质量原因 */
+    private String qualityReasons;
+    /** OOD 评估状态 */
+    private String oodStatus;
+    /** OOD 评分；未评估时不代表分布内 */
+    private Double oodScore;
     /** 人工复审状态: PENDING_AI / AI_ONLY / AWAITING_REVIEW / REVIEWED / OVERRIDDEN */
     private String humanReviewStatus;
     /** 人工复审人 id */

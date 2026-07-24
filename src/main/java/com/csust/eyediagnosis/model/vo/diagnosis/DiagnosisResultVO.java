@@ -86,6 +86,20 @@ public class DiagnosisResultVO  implements Serializable {
     private Boolean requiresReview;
     /** 图像质量分数 */
     private Integer qualityScore;
+    /** 图像质量原因 */
+    private String qualityReasons;
+    /** 图像预处理版本 */
+    private String preprocessVersion;
+    /** 推理安全策略版本 */
+    private String inferencePolicyVersion;
+    /** 概率校准状态 */
+    private String calibrationStatus;
+    /** 仅在校准完成时返回 */
+    private Double calibratedProbability;
+    /** OOD 评估状态 */
+    private String oodStatus;
+    /** OOD 分数 */
+    private Double oodScore;
 
     private static final long serialVersionUID = 1L;
     /**

@@ -43,6 +43,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateTime.now;
@@ -80,6 +82,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
     @Value("${eye-diagnosis.inference.model-weight-sha256:}")
     private String modelWeightSha256;
+
+    @Value("${eye-diagnosis.inference.policy-version:}")
+    private String inferencePolicyVersion;
 
     @Override
     public DiagnosisManageVO uploadDiagnosisPicture(MultipartFile multipartFile, DiagnosisUploadDTO diagnosisUploadDTO, User loginUser) {
@@ -168,10 +173,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
             // 1. 计算图片 SHA-256 哈希并查询推理缓存（跨用户共享）
             String imageHash = sha256Hex(imageBytes);
-            // Cache reuse is disabled unless the deployed model fingerprint is configured.
-            // A version alone is not a safe identity for a mutable weight file.
-            InferenceCache cached = StrUtil.isBlank(modelWeightSha256) ? null
-                    : inferenceCacheMapper.findByHash(imageHash, modelVersion, modelWeightSha256, preprocessVersion);
+            String normalizedWeightSha256 = normalizeWeightSha256(modelWeightSha256);
+            boolean cacheEnabled = isCacheEnabled(
+                    modelVersion, normalizedWeightSha256, preprocessVersion, inferencePolicyVersion);
+            // Cache reuse is disabled unless the Java deployment has one complete,
+            // versioned fingerprint. This prevents a response-only SHA from being
+            // written under a key Java will never query.
+            InferenceCache cached = cacheEnabled
+                    ? inferenceCacheMapper.findByHash(imageHash, modelVersion, normalizedWeightSha256,
+                    preprocessVersion, inferencePolicyVersion)
+                    : null;
             DiagnosisProto.DiagnosisResponse grpcResponse;
             if (cached != null) {
                 grpcResponse = toProto(cached);
@@ -179,12 +190,14 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 // 2. gRPC 调用 Python 推理
                 grpcResponse = diagnosisGrpcClient.diagnose(imageBytes, imageFormat);
                 // 持久化推理缓存
-                InferenceCache entry = toCacheEntity(
-                        imageHash, grpcResponse, modelVersion, modelWeightSha256, preprocessVersion);
-                if (StrUtil.isNotBlank(entry.getWeightSha256())) {
-                    inferenceCacheMapper.insertOne(entry);
+                if (cacheEnabled && responseMatchesConfiguredFingerprint(
+                        grpcResponse, modelVersion, normalizedWeightSha256, preprocessVersion, inferencePolicyVersion)) {
+                    InferenceCache entry = toCacheEntity(
+                            imageHash, grpcResponse, modelVersion, normalizedWeightSha256,
+                            preprocessVersion, inferencePolicyVersion);
+                    inferenceCacheMapper.upsert(entry);
                 } else {
-                    log.warn("Skip inference cache because the response has no model weight SHA-256");
+                    log.warn("Skip inference cache because deployment and response fingerprints do not match");
                 }
             }
 
@@ -216,7 +229,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             diagnosis.setModelVersion(
                     !modelVersionFromProto.isEmpty() ? modelVersionFromProto : modelVersion);
             diagnosis.setWeightSha256(
-                    weightSha256FromProto.isEmpty() ? null : weightSha256FromProto);
+                    weightSha256FromProto.isEmpty() ? null : normalizeWeightSha256(weightSha256FromProto));
+            diagnosis.setPreprocessVersion(grpcResponse.getPreprocessVersion());
+            diagnosis.setInferencePolicyVersion(grpcResponse.getInferencePolicyVersion());
+            diagnosis.setCalibrationStatus(grpcResponse.getCalibrationStatus());
+            diagnosis.setCalibratedProbability("CALIBRATED".equals(grpcResponse.getCalibrationStatus())
+                    ? grpcResponse.getCalibratedProbability() : null);
+            diagnosis.setQualityScore(grpcResponse.getQualityScore());
+            diagnosis.setQualityReasons(grpcResponse.getQualityReasons());
+            diagnosis.setOodStatus(grpcResponse.getOodStatus().name());
+            diagnosis.setOodScore(grpcResponse.getOodScore());
             diagnosis.setHumanReviewStatus(grpcResponse.getRequiresReview()
                     ? HumanReviewStatus.AWAITING_REVIEW
                     : HumanReviewStatus.AI_ONLY);
@@ -284,21 +306,53 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         }
     }
 
+    public static String normalizeWeightSha256(String weightSha256) {
+        return StrUtil.isBlank(weightSha256) ? "" : weightSha256.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public static boolean isCacheEnabled(String modelVersion, String weightSha256,
+                                         String preprocessVersion, String policyVersion) {
+        return StrUtil.isNotBlank(modelVersion)
+                && StrUtil.isNotBlank(normalizeWeightSha256(weightSha256))
+                && StrUtil.isNotBlank(preprocessVersion)
+                && StrUtil.isNotBlank(policyVersion);
+    }
+
+    private static boolean responseMatchesConfiguredFingerprint(DiagnosisProto.DiagnosisResponse response,
+                                                                String configuredModelVersion,
+                                                                String configuredWeightSha256,
+                                                                String configuredPreprocessVersion,
+                                                                String configuredPolicyVersion) {
+        return StrUtil.equals(response.getModelVersion(), configuredModelVersion)
+                && StrUtil.equals(normalizeWeightSha256(response.getWeightSha256()), configuredWeightSha256)
+                && StrUtil.equals(response.getPreprocessVersion(), configuredPreprocessVersion)
+                && StrUtil.equals(response.getInferencePolicyVersion(), configuredPolicyVersion);
+    }
+
     public static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp,
                                         String configuredModelVersion, String configuredWeightSha256,
-                                        String configuredPreprocessVersion) {
+                                        String configuredPreprocessVersion, String configuredPolicyVersion) {
         InferenceCache cache = new InferenceCache();
         cache.setImageHash(imageHash);
         cache.setModelVersion(StrUtil.blankToDefault(resp.getModelVersion(), configuredModelVersion));
-        cache.setWeightSha256(StrUtil.blankToDefault(resp.getWeightSha256(), configuredWeightSha256));
+        cache.setWeightSha256(normalizeWeightSha256(
+                StrUtil.blankToDefault(resp.getWeightSha256(), configuredWeightSha256)));
         cache.setPreprocessVersion(StrUtil.blankToDefault(resp.getPreprocessVersion(), configuredPreprocessVersion));
+        cache.setInferencePolicyVersion(StrUtil.blankToDefault(
+                resp.getInferencePolicyVersion(), configuredPolicyVersion));
         cache.setPredictedLabel(resp.getPredictedLabel());
         cache.setProbability(resp.getProbability());
         cache.setCalibratedProbability(resp.getCalibratedProbability());
+        cache.setCalibrationStatus(resp.getCalibrationStatus());
         cache.setDescription(resp.getDescription());
         cache.setReliabilityScore(resp.getReliabilityScore());
         try {
-            cache.setTopPredictions(CACHE_JSON.writeValueAsString(resp.getTopPredictionsList()));
+            List<Map<String, Object>> topPredictions = resp.getTopPredictionsList().stream()
+                    .map(prediction -> Map.<String, Object>of(
+                            "label", prediction.getLabel(),
+                            "probability", prediction.getProbability()))
+                    .toList();
+            cache.setTopPredictions(CACHE_JSON.writeValueAsString(topPredictions));
         } catch (Exception exception) {
             throw new IllegalStateException("Unable to serialize cached top predictions", exception);
         }
@@ -306,6 +360,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         cache.setQualityReasons(resp.getQualityReasons());
         cache.setIsOod(resp.getIsOod());
         cache.setOodScore(resp.getOodScore());
+        cache.setOodStatus(resp.getOodStatus().name());
         cache.setRejected(resp.getRejected());
         cache.setAbstainReason(resp.getAbstainReason());
         cache.setRequiresReview(resp.getRequiresReview());
@@ -318,15 +373,18 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 .setModelVersion(cache.getModelVersion())
                 .setWeightSha256(cache.getWeightSha256())
                 .setPreprocessVersion(cache.getPreprocessVersion())
+                .setInferencePolicyVersion(cache.getInferencePolicyVersion())
                 .setPredictedLabel(cache.getPredictedLabel())
                 .setProbability(cache.getProbability())
                 .setCalibratedProbability(cache.getCalibratedProbability())
+                .setCalibrationStatus(cache.getCalibrationStatus() == null ? "NOT_CALIBRATED" : cache.getCalibrationStatus())
                 .setDescription(cache.getDescription() == null ? "" : cache.getDescription())
                 .setReliabilityScore(cache.getReliabilityScore())
                 .setQualityScore(cache.getQualityScore())
                 .setQualityReasons(cache.getQualityReasons() == null ? "" : cache.getQualityReasons())
                 .setIsOod(Boolean.TRUE.equals(cache.getIsOod()))
                 .setOodScore(cache.getOodScore())
+                .setOodStatus(parseOodStatus(cache.getOodStatus()))
                 .setRejected(Boolean.TRUE.equals(cache.getRejected()))
                 .setAbstainReason(cache.getAbstainReason() == null ? "" : cache.getAbstainReason())
                 .setRequiresReview(Boolean.TRUE.equals(cache.getRequiresReview()));
@@ -344,6 +402,14 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         return builder.build();
     }
 
+    private static DiagnosisProto.OodStatus parseOodStatus(String value) {
+        try {
+            return DiagnosisProto.OodStatus.valueOf(value);
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            return DiagnosisProto.OodStatus.NOT_EVALUATED;
+        }
+    }
+
     /**
      * 将 gRPC 响应转换为前端结果 VO。严重程度在没有已验证模型输出的情况下
      * 统一为 NOT_ASSESSED，不得通过概率或类别启发式伪造。
@@ -354,8 +420,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         vo.setAiRejected(grpcResponse.getRejected());
         vo.setAbstainReason(grpcResponse.getAbstainReason());
         vo.setQualityScore(grpcResponse.getQualityScore());
+        vo.setQualityReasons(grpcResponse.getQualityReasons());
         vo.setModelVersion(grpcResponse.getModelVersion());
         vo.setWeightSha256(grpcResponse.getWeightSha256());
+        vo.setPreprocessVersion(grpcResponse.getPreprocessVersion());
+        vo.setInferencePolicyVersion(grpcResponse.getInferencePolicyVersion());
+        vo.setCalibrationStatus(grpcResponse.getCalibrationStatus());
+        vo.setCalibratedProbability("CALIBRATED".equals(grpcResponse.getCalibrationStatus())
+                ? grpcResponse.getCalibratedProbability() : null);
+        vo.setOodStatus(grpcResponse.getOodStatus().name());
+        vo.setOodScore(grpcResponse.getOodScore());
         vo.setRequiresReview(grpcResponse.getRequiresReview());
         vo.setHumanReviewStatus(grpcResponse.getRequiresReview()
                 ? HumanReviewStatus.AWAITING_REVIEW : HumanReviewStatus.AI_ONLY);
@@ -366,7 +440,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         vo.setResult(DiagnosisCategoryEnum.getChineseLabelByEnglishLabel(predictedLabel));
         vo.setDetails(grpcResponse.getDescription());
         vo.setProbability(grpcResponse.getProbability());
-        vo.setConfidence((double) grpcResponse.getReliabilityScore());
+        vo.setConfidence(grpcResponse.getProbability());
         vo.setRecommendations(DiagnosisRecommendationEnum.getRecommendationByEnglishLabel(predictedLabel));
         vo.setSeverity("NOT_ASSESSED");
         List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()

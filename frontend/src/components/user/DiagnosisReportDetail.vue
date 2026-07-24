@@ -74,8 +74,8 @@
         <div class="metrics-grid">
           <div class="metric-card" v-if="report.confidence !== undefined">
             <div class="metric-header">
-              <span class="metric-label">置信度</span>
-              <a-tooltip title="系统对这个诊断结果的确信程度，越高表示 AI 越肯定">
+              <span class="metric-label">模型置信分数</span>
+              <a-tooltip title="模型输出的最大 Softmax 分数；未校准时不代表诊断可靠性">
                 <QuestionCircleOutlined class="metric-help" />
               </a-tooltip>
             </div>
@@ -276,11 +276,11 @@ const displayConfidence = computed(() => {
 
 const confidenceExplanation = computed(() => {
   const c = props.report?.confidence
-  if (c === undefined || c === null) return '暂无置信度数据'
-  if (c >= 90) return '非常肯定，诊断结果高度可靠'
-  if (c >= 75) return '比较肯定，诊断结果可信'
-  if (c >= 60) return '中等肯定，建议结合临床判断'
-  return '确定性较低，建议进一步检查确认'
+  if (c === undefined || c === null) return '暂无模型置信分数'
+  if (props.report?.calibrationStatus === 'CALIBRATED') {
+    return '该分数已按当前部署的校准配置处理，仍不构成医学诊断可靠性。'
+  }
+  return '该分数尚未完成概率校准，不代表诊断可靠性或医学结论。'
 })
 
 const enterEditMode = () => {

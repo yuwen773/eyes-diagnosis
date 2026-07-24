@@ -1,1 +1,1 @@
-{ "model_version": "efficientnet-b4@1.0.0", "temperature": 1.0, "trained_on": "frozen_validation_manifest.json" }
+{ "model_version": "efficientnet-b4@1.0.0", "temperature": 1.0, "status": "NOT_CALIBRATED", "trained_on": "frozen_validation_manifest.json" }

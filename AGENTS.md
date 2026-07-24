@@ -7,6 +7,10 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
 Base package: `com.csust.eyediagnosis`
 
+## Java 21 Runtime
+
+Use the installed JDK 21 at `C:\Users\yuwen\.jdks\corretto-21.0.7` for all Maven and Java validation. Before running Maven in a new shell, set `JAVA_HOME` to this path and prepend `$env:JAVA_HOME\bin` to `Path`; do not rely on the host's default Java launcher.
+
 ## Build & Run
 
 ```bash

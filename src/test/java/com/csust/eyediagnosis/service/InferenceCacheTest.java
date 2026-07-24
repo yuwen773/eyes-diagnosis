@@ -14,6 +14,8 @@ import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,10 +25,10 @@ class InferenceCacheTest {
     @Test
     void sameImageBytesShareCachedInferenceAcrossUsers() {
         InferenceCacheMapper mapper = mock(InferenceCacheMapper.class);
-        when(mapper.findByHash(any(), any(), any(), any()))
+        when(mapper.findByHash(any(), any(), any(), any(), any()))
                 .thenReturn(buildCache("normal", 0.9, "desc"));
 
-        InferenceCache cached = mapper.findByHash("h", "v1", "weight", "p1");
+        InferenceCache cached = mapper.findByHash("h", "v1", "weight", "p1", "medical-safety-v2");
         assertEquals("normal", cached.getPredictedLabel());
         assertEquals(0.9, cached.getProbability());
     }
@@ -66,6 +68,7 @@ class InferenceCacheTest {
                 .setPredictedLabel("normal")
                 .setProbability(91.5)
                 .setCalibratedProbability(90.1)
+                .setCalibrationStatus("CALIBRATED")
                 .setReliabilityScore(90)
                 .setDescription("desc")
                 .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
@@ -76,16 +79,29 @@ class InferenceCacheTest {
                 .setQualityReasons("blur")
                 .setIsOod(true)
                 .setOodScore(12.3)
+                .setOodStatus(DiagnosisProto.OodStatus.OUT_OF_DISTRIBUTION)
                 .setModelVersion("efficientnet-b4@1.0.0")
                 .setWeightSha256("a".repeat(64))
                 .setPreprocessVersion("v1")
+                .setInferencePolicyVersion("medical-safety-v2")
                 .setRequiresReview(true)
                 .build();
 
         InferenceCache cache = DiagnosisServiceImpl.toCacheEntity(
-                "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess");
+                "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess", "fallback-policy");
 
         assertEquals(uncached, DiagnosisServiceImpl.toProto(cache));
+    }
+
+    @Test
+    void cacheRequiresOneCompleteNormalizedDeploymentFingerprint() {
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "", "v1", "medical-safety-v2"));
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "A".repeat(64), "", "medical-safety-v2"));
+        assertTrue(DiagnosisServiceImpl.isCacheEnabled(
+                "efficientnet-b4@1.0.0", "A".repeat(64), "v1", "medical-safety-v2"));
+        assertEquals("a".repeat(64), DiagnosisServiceImpl.normalizeWeightSha256("A".repeat(64)));
     }
 
     @Test

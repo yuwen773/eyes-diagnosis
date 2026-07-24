@@ -97,7 +97,7 @@
               </div>
 
               <div class="confidence-section">
-                <span class="confidence-label">置信度</span>
+                <span class="confidence-label">模型置信分数</span>
                 <a-progress
                   :percent="diagnosisResult?.confidence"
                   :stroke-color="getProbabilityColor(diagnosisResult?.confidence ?? 0)"
@@ -192,20 +192,19 @@
         </div>
       </a-card>
 
-      <!-- 底部可靠性 -->
+      <!-- 概率校准状态 -->
       <a-card class="bottom-section">
         <div class="reliability">
     <span class="reliability-label">
       <SafetyCertificateOutlined />
-      诊断可靠性:
+      概率校准状态:
     </span>
-          <a-tag :color="getReliabilityColor(reliability)" class="reliability-tag">
-            {{ reliability }}
+          <a-tag :color="getCalibrationStatusColor(calibrationStatus)" class="reliability-tag">
+            {{ calibrationStatusLabel }}
           </a-tag>
 
-          <!-- 可靠性提示文字 -->
-          <div class="reliability-message" :style="getReliabilityMessageStyle(reliability)">
-            {{ getReliabilityMessage(reliability) }}
+          <div class="reliability-message">
+            {{ calibrationMessage }}
           </div>
         </div>
       </a-card>
@@ -285,15 +284,15 @@ const recommendations = computed(() => {
   return []
 })
 
-// 可靠性由后端经校准后的分数及复核状态决定，前端不再硬编码医疗结论。
-const reliability = computed(() => {
-  if (isRejected.value) return '拒识'
-  if (requiresReview.value) return '待复核'
-  const confidence = diagnosisResult.value?.confidence ?? 0
-  if (confidence >= 85) return '较高'
-  if (confidence >= 70) return '一般'
-  return '较低'
-})
+const calibrationStatus = computed(() =>
+  diagnosisResult.value?.calibrationStatus === 'CALIBRATED' ? 'CALIBRATED' : 'NOT_CALIBRATED'
+)
+const calibrationStatusLabel = computed(() =>
+  calibrationStatus.value === 'CALIBRATED' ? '已校准' : '未校准'
+)
+const calibrationMessage = computed(() => calibrationStatus.value === 'CALIBRATED'
+  ? '该模型置信分数已按当前部署的校准配置处理，仍不构成诊断可靠性或医学结论。'
+  : '该分数是模型输出的置信分数，尚未完成概率校准，不代表诊断可靠性或医学结论。')
 
 // 获取所有诊断结果（包含主诊断）
 const allDiagnoses = computed(() => {
@@ -339,17 +338,8 @@ const getProbabilityColor = (probability: number) => {
   return 'var(--claude-error)';
 };
 
-// 根据可靠性获取标签颜色
-const getReliabilityColor = (level: string) => {
-  switch (level) {
-    case '较高': return 'green';
-    case '一般': return 'blue';
-    case '较低': return 'orange';
-    case '待复核': return 'orange';
-    case '拒识': return 'red';
-    default: return 'gray';
-  }
-};
+const getCalibrationStatusColor = (status: string) =>
+  status === 'CALIBRATED' ? 'blue' : 'default'
 
 // 根据严重程度获取颜色
 const getSeverityColor = (severity: string) => {
@@ -372,49 +362,6 @@ const formatSeverity = (severity: string) => {
     case 'NOT_ASSESSED': return '未评估';
     default: return '未知';
   }
-};
-
-//获取相关诊断可靠性的信息
-const getReliabilityMessage = (level: string) => {
-  switch (level) {
-    case '较高':
-      return '该结果为 AI 辅助分析，仍需结合专业医生意见。';
-    case '一般':
-    case '较低':
-      return '该结果存在不确定性，请进行专业医学检查确认。';
-    case '待复核':
-      return '该结果已标记为待人工复核，不能作为诊断结论。';
-    case '拒识':
-      return 'AI 已拒绝形成诊断结论，请重新上传图片或申请人工复核。';
-    default:
-      return '';
-  }
-};
-
-const getReliabilityMessageStyle = (level: string) => {
-  const styles = {
-    '较高': {
-      backgroundColor: 'oklch(from var(--claude-success) l c h / 0.15)',
-      borderColor: 'oklch(from var(--claude-success) l c h / 0.3)'
-    },
-    '一般': {
-      backgroundColor: 'oklch(from var(--claude-warning) l c h / 0.15)',
-      borderColor: 'oklch(from var(--claude-warning) l c h / 0.3)'
-    },
-    '较低': {
-      backgroundColor: 'oklch(from var(--claude-error) l c h / 0.15)',
-      borderColor: 'oklch(from var(--claude-error) l c h / 0.3)'
-    },
-    '待复核': {
-      backgroundColor: 'oklch(from var(--claude-warning) l c h / 0.15)',
-      borderColor: 'oklch(from var(--claude-warning) l c h / 0.3)'
-    },
-    '拒识': {
-      backgroundColor: 'oklch(from var(--claude-error) l c h / 0.15)',
-      borderColor: 'oklch(from var(--claude-error) l c h / 0.3)'
-    }
-  };
-  return styles[level as keyof typeof styles] || {};
 };
 
 // 诊断结果描述（用于屏幕阅读器）
