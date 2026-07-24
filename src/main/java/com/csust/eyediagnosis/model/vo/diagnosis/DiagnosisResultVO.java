@@ -84,6 +84,8 @@ public class DiagnosisResultVO  implements Serializable {
     private String disclaimer;
     /** 是否需要人工复核 */
     private Boolean requiresReview;
+    /** 图像质量分数 */
+    private Integer qualityScore;
 
     private static final long serialVersionUID = 1L;
     /**
@@ -107,7 +109,21 @@ public class DiagnosisResultVO  implements Serializable {
         }
         DiagnosisResultVO diagnosisResultVO = new DiagnosisResultVO();
         BeanUtils.copyProperties(diagnosis, diagnosisResultVO);
+        diagnosisResultVO.setRequiresReview("AWAITING_REVIEW".equals(diagnosis.getHumanReviewStatus()));
+        if (Boolean.TRUE.equals(diagnosis.getAiRejected())) {
+            diagnosisResultVO.clearAiConclusion();
+        }
         return diagnosisResultVO;
+    }
+
+    public void clearAiConclusion() {
+        result = null;
+        probability = null;
+        confidence = null;
+        recommendations = null;
+        details = null;
+        severity = null;
+        otherDisease = null;
     }
 }
 

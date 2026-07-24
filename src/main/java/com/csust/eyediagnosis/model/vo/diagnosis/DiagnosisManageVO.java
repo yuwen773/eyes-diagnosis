@@ -65,6 +65,13 @@ public class DiagnosisManageVO implements Serializable{
      */
     private String status = COMPLETED ;
 
+    /** AI 是否拒识 */
+    private Boolean aiRejected;
+    /** 拒识原因 */
+    private String abstainReason;
+    /** 是否需要人工复核 */
+    private Boolean requiresReview;
+
     private static final long serialVersionUID = 1L;
 
 
@@ -89,7 +96,17 @@ public class DiagnosisManageVO implements Serializable{
         }
         DiagnosisManageVO diagnosisVO = new DiagnosisManageVO();
         BeanUtils.copyProperties(diagnosis, diagnosisVO);
+        diagnosisVO.setRequiresReview("AWAITING_REVIEW".equals(diagnosis.getHumanReviewStatus()));
+        if (Boolean.TRUE.equals(diagnosis.getAiRejected())) {
+            diagnosisVO.clearAiConclusion();
+        }
         return diagnosisVO;
+    }
+
+    public void clearAiConclusion() {
+        result = null;
+        confidence = null;
+        severity = null;
     }
 
 }

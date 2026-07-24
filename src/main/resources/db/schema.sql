@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS t_mcp_server (
     userId BIGINT NOT NULL COMMENT '用户ID',
     mcpServerCode VARCHAR(100) NOT NULL COMMENT '服务器代码',
     name VARCHAR(255) NOT NULL COMMENT '服务器名称',
+    description VARCHAR(500) NULL COMMENT '服务器描述',
     installType VARCHAR(20) NOT NULL COMMENT '安装类型:STDIO/SSE/HTTP',
     host VARCHAR(500) COMMENT '服务器地址',
     deployConfig JSON COMMENT '部署配置',

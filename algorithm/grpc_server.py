@@ -7,37 +7,13 @@ import os
 import logging
 import json
 from pathlib import Path
-import sys
-
-
-def _ensure_proto_generated() -> None:
-    """Generate Python protobuf bindings for a clean clone before importing them."""
-    algorithm_dir = Path(__file__).resolve().parent
-    proto = algorithm_dir / "diagnosis.proto"
-    generated = (algorithm_dir / "diagnosis_pb2.py", algorithm_dir / "diagnosis_pb2_grpc.py")
-    if all(path.is_file() and path.stat().st_mtime >= proto.stat().st_mtime for path in generated):
-        return
-    from grpc_tools import protoc
-
-    result = protoc.main([
-        "grpc_tools.protoc",
-        f"-I{algorithm_dir}",
-        f"--python_out={algorithm_dir}",
-        f"--grpc_python_out={algorithm_dir}",
-        str(proto),
-    ])
-    if result != 0:
-        raise RuntimeError(f"Failed to generate protobuf bindings from {proto}")
-
-
-_ensure_proto_generated()
 
 import diagnosis_pb2
 import diagnosis_pb2_grpc
 from eye_disease_model import EyeDiseaseModel, disease_categories
 from eye_diagnosis.abstain import decide_abstain
 from eye_diagnosis.calibration import apply_temperature
-from eye_diagnosis.ood import build_default_detector
+from eye_diagnosis.ood import OodDecision
 from eye_diagnosis.quality import evaluate_quality
 from eye_diagnosis.registry import ModelRegistry
 
@@ -96,9 +72,6 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
         self.temperature = float(calibration["temperature"])
         if calibration.get("model_version") != self.provenance.version:
             raise RuntimeError("Calibration model version does not match registered model")
-        self.ood_detector = build_default_detector(
-            float(os.getenv("OOD_THRESHOLD", "8.0"))
-        )
         self.model = EyeDiseaseModel(model_name='efficientnet_b4')
         self.model.load_model(str(weights_path))
         logger.info(f"Model loaded from {weights_path}")
@@ -131,8 +104,9 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                 predicted_label = disease_categories[predicted_class]
                 top1 = float(probabilities[ranked_indices[0]])
                 top2 = float(probabilities[ranked_indices[1]]) if len(ranked_indices) > 1 else 0.0
-                # The OOD detector's deployed reference space is four logits by design.
-                ood = self.ood_detector.evaluate(calibrated_logits[:4])
+                # No evaluated, version-bound OOD reference artifact is available. Do
+                # not use the former all-zero placeholder detector as a rejection gate.
+                ood = OodDecision(is_ood=False, score=0.0, threshold=0.0)
                 abstain = decide_abstain(
                     quality_rejected=bool(quality.reasons),
                     quality_reasons=quality.reasons,

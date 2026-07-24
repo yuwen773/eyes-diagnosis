@@ -1,6 +1,5 @@
 package com.csust.eyediagnosis.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -147,9 +146,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
     @Override
     public DiagnosisManageVO getDiagnosisManageVO(Diagnosis Diagnosis) {
-        DiagnosisManageVO diagnosisManageVO = new DiagnosisManageVO();
-
-        BeanUtil.copyProperties(Diagnosis,diagnosisManageVO);
+        DiagnosisManageVO diagnosisManageVO = DiagnosisManageVO.objToVo(Diagnosis);
         //获取当前诊断的用户
         User user = userMapper.selectUserNameAndUserAvatarByUserId(Diagnosis.getUserId());
         //设置作者名
@@ -202,33 +199,8 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
 
             // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
-            DiagnosisResultVO vo = new DiagnosisResultVO();
-            String predictedLabel = grpcResponse.getPredictedLabel();
-            vo.setResult(DiagnosisCategoryEnum.getChineseLabelByEnglishLabel(predictedLabel));
-            vo.setDetails(grpcResponse.getDescription());
-            vo.setProbability(grpcResponse.getProbability());
-            vo.setConfidence((double) grpcResponse.getReliabilityScore());
-            vo.setRecommendations(DiagnosisRecommendationEnum.getRecommendationByEnglishLabel(predictedLabel));
+            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse);
             vo.setUrl(imageUrl);
-            vo.setCreateTime(now());
-            vo.setSeverity("NOT_ASSESSED");
-            vo.setAiRejected(grpcResponse.getRejected());
-            vo.setAbstainReason(grpcResponse.getAbstainReason());
-            vo.setModelVersion(grpcResponse.getModelVersion());
-            vo.setWeightSha256(grpcResponse.getWeightSha256());
-            vo.setRequiresReview(grpcResponse.getRequiresReview());
-            vo.setHumanReviewStatus(grpcResponse.getRequiresReview()
-                    ? HumanReviewStatus.AWAITING_REVIEW : HumanReviewStatus.AI_ONLY);
-
-            List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()
-                    .map(pred -> {
-                        Disease d = new Disease();
-                        d.setName(pred.getLabel());
-                        d.setProbability(pred.getProbability());
-                        return d;
-                    })
-                    .collect(Collectors.toList());
-            vo.setOtherDisease(diseases);
 
             // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
             Diagnosis diagnosis = DiagnosisResultVO.voToObj(vo);
@@ -312,7 +284,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         }
     }
 
-    static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp,
+    public static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp,
                                         String configuredModelVersion, String configuredWeightSha256,
                                         String configuredPreprocessVersion) {
         InferenceCache cache = new InferenceCache();
@@ -341,7 +313,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         return cache;
     }
 
-    static DiagnosisProto.DiagnosisResponse toProto(InferenceCache cache) {
+    public static DiagnosisProto.DiagnosisResponse toProto(InferenceCache cache) {
         DiagnosisProto.DiagnosisResponse.Builder builder = DiagnosisProto.DiagnosisResponse.newBuilder()
                 .setModelVersion(cache.getModelVersion())
                 .setWeightSha256(cache.getWeightSha256())
@@ -376,16 +348,36 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
      * 将 gRPC 响应转换为前端结果 VO。严重程度在没有已验证模型输出的情况下
      * 统一为 NOT_ASSESSED，不得通过概率或类别启发式伪造。
      */
-    public DiagnosisResultVO buildDiagnosisResult(DiagnosisProto.DiagnosisResponse grpcResponse) {
+    public static DiagnosisResultVO buildDiagnosisResult(DiagnosisProto.DiagnosisResponse grpcResponse) {
         DiagnosisResultVO vo = new DiagnosisResultVO();
         String predictedLabel = grpcResponse.getPredictedLabel();
+        vo.setAiRejected(grpcResponse.getRejected());
+        vo.setAbstainReason(grpcResponse.getAbstainReason());
+        vo.setQualityScore(grpcResponse.getQualityScore());
+        vo.setModelVersion(grpcResponse.getModelVersion());
+        vo.setWeightSha256(grpcResponse.getWeightSha256());
+        vo.setRequiresReview(grpcResponse.getRequiresReview());
+        vo.setHumanReviewStatus(grpcResponse.getRequiresReview()
+                ? HumanReviewStatus.AWAITING_REVIEW : HumanReviewStatus.AI_ONLY);
+        vo.setCreateTime(now());
+        if (grpcResponse.getRejected()) {
+            return vo;
+        }
         vo.setResult(DiagnosisCategoryEnum.getChineseLabelByEnglishLabel(predictedLabel));
         vo.setDetails(grpcResponse.getDescription());
         vo.setProbability(grpcResponse.getProbability());
         vo.setConfidence((double) grpcResponse.getReliabilityScore());
         vo.setRecommendations(DiagnosisRecommendationEnum.getRecommendationByEnglishLabel(predictedLabel));
         vo.setSeverity("NOT_ASSESSED");
-        vo.setCreateTime(now());
+        List<Disease> diseases = grpcResponse.getTopPredictionsList().stream()
+                .map(pred -> {
+                    Disease d = new Disease();
+                    d.setName(pred.getLabel());
+                    d.setProbability(pred.getProbability());
+                    return d;
+                })
+                .collect(Collectors.toList());
+        vo.setOtherDisease(diseases);
         return vo;
     }
 }

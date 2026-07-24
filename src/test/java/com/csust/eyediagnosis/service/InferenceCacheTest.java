@@ -8,7 +8,9 @@ import com.csust.eyediagnosis.mapper.InferenceCacheMapper;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.entity.User;
+import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
+import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,10 +23,10 @@ class InferenceCacheTest {
     @Test
     void sameImageBytesShareCachedInferenceAcrossUsers() {
         InferenceCacheMapper mapper = mock(InferenceCacheMapper.class);
-        when(mapper.findByHash(any(), any(), any()))
+        when(mapper.findByHash(any(), any(), any(), any()))
                 .thenReturn(buildCache("normal", 0.9, "desc"));
 
-        InferenceCache cached = mapper.findByHash("h", "v1", "p1");
+        InferenceCache cached = mapper.findByHash("h", "v1", "weight", "p1");
         assertEquals("normal", cached.getPredictedLabel());
         assertEquals(0.9, cached.getProbability());
     }
@@ -84,6 +86,75 @@ class InferenceCacheTest {
                 "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess");
 
         assertEquals(uncached, DiagnosisServiceImpl.toProto(cache));
+    }
+
+    @Test
+    void rejectedResponseContainsNoAiConclusion() {
+        DiagnosisProto.DiagnosisResponse rejected = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel("normal")
+                .setProbability(91.5)
+                .setReliabilityScore(92)
+                .setDescription("must not be public")
+                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel("normal").setProbability(91.5))
+                .setRejected(true)
+                .setAbstainReason("QUALITY_FAIL")
+                .setQualityScore(25)
+                .setModelVersion("efficientnet-b4@1.0.0")
+                .setWeightSha256("a".repeat(64))
+                .setRequiresReview(true)
+                .build();
+
+        DiagnosisResultVO response = DiagnosisServiceImpl.buildDiagnosisResult(rejected);
+
+        assertEquals(true, response.getAiRejected());
+        assertEquals("QUALITY_FAIL", response.getAbstainReason());
+        assertEquals(25, response.getQualityScore());
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getDetails());
+        assertEquals(null, response.getProbability());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getRecommendations());
+        assertEquals(null, response.getOtherDisease());
+    }
+
+    @Test
+    void historicalRejectedResponseContainsNoAiConclusionAndDerivesReviewStatus() {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setAiRejected(true);
+        diagnosis.setHumanReviewStatus("AWAITING_REVIEW");
+        diagnosis.setResult("正常");
+        diagnosis.setDetails("must not be public");
+        diagnosis.setProbability(91.5);
+        diagnosis.setConfidence(92.0);
+        diagnosis.setRecommendations("must not be public");
+
+        DiagnosisResultVO response = DiagnosisResultVO.objToVo(diagnosis);
+
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getDetails());
+        assertEquals(null, response.getProbability());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getRecommendations());
+    }
+
+    @Test
+    void rejectedHistoryListContainsNoAiConclusion() {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setAiRejected(true);
+        diagnosis.setHumanReviewStatus("AWAITING_REVIEW");
+        diagnosis.setResult("正常");
+        diagnosis.setConfidence(92.0);
+        diagnosis.setSeverity("NOT_ASSESSED");
+
+        DiagnosisManageVO response = DiagnosisManageVO.objToVo(diagnosis);
+
+        assertEquals(true, response.getRequiresReview());
+        assertEquals(null, response.getResult());
+        assertEquals(null, response.getConfidence());
+        assertEquals(null, response.getSeverity());
     }
 
     private DiagnosisProto.DiagnosisResponse mockGrpc() {

@@ -1,6 +1,5 @@
 package com.csust.eyediagnosis.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,7 +20,6 @@ import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import com.csust.eyediagnosis.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
@@ -173,12 +171,7 @@ public class DiagnosisController {
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
-        //
-        DiagnosisResultVO diagnosisResultVO = new DiagnosisResultVO();
-        //返回的应该是 脱敏对象
-        BeanUtil.copyProperties(diagnosis,diagnosisResultVO);
-        //返回
-        return ResultUtils.success(diagnosisResultVO);
+        return ResultUtils.success(DiagnosisResultVO.objToVo(diagnosis));
     }
 
     /**
