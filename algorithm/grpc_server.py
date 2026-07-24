@@ -11,7 +11,7 @@ from pathlib import Path
 import diagnosis_pb2
 import diagnosis_pb2_grpc
 from eye_disease_model import EyeDiseaseModel, disease_categories
-from eye_diagnosis.abstain import decide_abstain
+from eye_diagnosis.abstain import decide_abstain, should_reject_for_quality
 from eye_diagnosis.calibration import apply_temperature
 from eye_diagnosis.ood import OodDecision
 from eye_diagnosis.quality import evaluate_quality
@@ -75,9 +75,12 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
             raise RuntimeError("Calibration status must be CALIBRATED or NOT_CALIBRATED")
         if calibration.get("model_version") != self.provenance.version:
             raise RuntimeError("Calibration model version does not match registered model")
-        self.inference_policy_version = os.getenv("INFERENCE_POLICY_VERSION", "medical-safety-v2").strip()
+        self.inference_policy_version = os.getenv("INFERENCE_POLICY_VERSION", "medical-safety-v3-quality-observe").strip()
         if not self.inference_policy_version:
             raise RuntimeError("INFERENCE_POLICY_VERSION must not be empty")
+        self.quality_gate_mode = os.getenv("QUALITY_GATE_MODE", "observe").strip().lower()
+        if self.quality_gate_mode not in {"observe", "enforce"}:
+            raise RuntimeError("QUALITY_GATE_MODE must be observe or enforce")
         self.model = EyeDiseaseModel(model_name='efficientnet_b4')
         self.model.load_model(str(weights_path))
         logger.info(f"Model loaded from {weights_path}")
@@ -116,7 +119,9 @@ class DiagnosisServicer(diagnosis_pb2_grpc.DiagnosisServiceServicer):
                 # not use the former all-zero placeholder detector as a rejection gate.
                 ood = OodDecision(is_ood=False, score=0.0, threshold=0.0)
                 abstain = decide_abstain(
-                    quality_rejected=bool(quality.reasons),
+                    quality_rejected=should_reject_for_quality(
+                        quality.reasons, self.quality_gate_mode
+                    ),
                     quality_reasons=quality.reasons,
                     ood=ood.is_ood,
                     top1_prob=top1,

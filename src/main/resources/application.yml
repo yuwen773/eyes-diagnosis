@@ -87,7 +87,7 @@ eye-diagnosis:
     model-version: efficientnet-b4@1.0.0
     model-weight-sha256: ${MODEL_WEIGHTS_SHA256:}
     preprocess-version: v1
-    policy-version: ${INFERENCE_POLICY_VERSION:medical-safety-v2}
+    policy-version: ${INFERENCE_POLICY_VERSION:medical-safety-v3-quality-observe}
   vision-recognition:
     base-url: https://dashscope.aliyuncs.com/compatible-mode
     api-key: your-api-key-here

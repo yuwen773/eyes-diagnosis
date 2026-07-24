@@ -17,7 +17,7 @@ class FlywayMySqlIntegrationTest {
         Flyway flyway = Flyway.configure()
                 .dataSource(url, System.getenv("FLYWAY_TEST_USERNAME"), System.getenv("FLYWAY_TEST_PASSWORD"))
                 .schemas("diagnosis_ci")
-                .locations("classpath:db/migration")
+                .locations("classpath:db/migration", "classpath:db/callback")
                 .load();
 
         assertEquals(9, flyway.migrate().migrationsExecuted);

@@ -6,7 +6,71 @@ on:
     branches: [master]
 
 jobs:
-  backend-and-algorithm:
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: algorithm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: algorithm/requirements.txt
+      - run: python -m pip install -r requirements.txt pytest
+      - run: python generate_proto.py
+      - run: python -m pytest eye_diagnosis/tests tests -q
+
+  backend-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - run: mvn clean package -DskipTests
+
+  backend-unit:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: diagnosis_ci
+          MYSQL_USER: eyeuser
+          MYSQL_PASSWORD: ci-password
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      SPRING_PROFILES_ACTIVE: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - run: mvn test
+
+  flyway-mysql:
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -34,16 +98,7 @@ jobs:
           distribution: corretto
           java-version: '21'
           cache: maven
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: algorithm/requirements.txt
-      - run: python -m pip install -r algorithm/requirements.txt
-      - run: python algorithm/generate_proto.py
-      - run: python -m pytest algorithm/eye_diagnosis/tests algorithm/tests -q
-      - run: mvn clean package -DskipTests
-      - run: mvn "-Dtest=InferenceCacheTest,FlywayMySqlIntegrationTest" test
+      - run: mvn -Dtest=FlywayMySqlIntegrationTest test
 
   frontend:
     runs-on: ubuntu-latest

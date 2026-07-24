@@ -2,7 +2,22 @@ from eye_diagnosis.abstain import (
     AbstainDecision,
     AbstainReason,
     decide_abstain,
+    should_reject_for_quality,
 )
+import pytest
+
+
+def test_quality_gate_observe_records_without_rejecting():
+    assert should_reject_for_quality(["blur"], "observe") is False
+
+
+def test_quality_gate_enforce_rejects():
+    assert should_reject_for_quality(["blur"], "enforce") is True
+
+
+def test_quality_gate_rejects_invalid_mode():
+    with pytest.raises(ValueError, match="QUALITY_GATE_MODE"):
+        should_reject_for_quality([], "invalid")
 
 
 def test_quality_rejection_overrides_others():
