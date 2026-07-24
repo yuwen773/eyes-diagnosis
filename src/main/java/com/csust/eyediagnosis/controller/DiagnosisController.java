@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
 import com.csust.eyediagnosis.common.BaseResponse;
 import com.csust.eyediagnosis.common.ResultUtils;
-import com.csust.eyediagnosis.constant.ReexamineConstant;
 import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
@@ -183,24 +182,17 @@ public class DiagnosisController {
     }
 
     /**
-     * 人工复诊
-     * @param diagnosisResultDTO dto
-     * @return boolean
+     * 人工复诊：仅允许写入 humanResult / humanSeverity / humanRecommendations / humanReviewNote；
+     * AI 字段（result/probability/confidence/details/severity）不可通过本接口覆盖。
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateDiagnosisResult(@RequestBody DiagnosisResultDTO diagnosisResultDTO){
-        //查看是否为空
-        if (diagnosisResultDTO == null || diagnosisResultDTO.getId() == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        Diagnosis diagnosis = new Diagnosis();
-        //属性拷贝
-        BeanUtils.copyProperties(diagnosisResultDTO, diagnosis);
-        diagnosis.setReexamineStatus(ReexamineConstant.REEXAMINE_STATUS_DONE);
-        //使用Update
-        boolean result = diagnosisService.updateById(diagnosis);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    public BaseResponse<Boolean> updateDiagnosisResult(@RequestBody DiagnosisResultDTO diagnosisResultDTO,
+                                                       HttpServletRequest request){
+        ThrowUtils.throwIf(diagnosisResultDTO == null || diagnosisResultDTO.getId() == null,
+                ErrorCode.PARAMS_ERROR);
+        User reviewer = userService.getLoginUser(request);
+        diagnosisService.recordHumanReview(diagnosisResultDTO.getId(), reviewer, diagnosisResultDTO);
         return ResultUtils.success(true);
     }
 

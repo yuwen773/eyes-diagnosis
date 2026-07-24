@@ -62,6 +62,29 @@ public class DiagnosisResultVO  implements Serializable {
      */
     private List<Disease> otherDisease;
 
+    /** AI 是否拒识 */
+    private Boolean aiRejected;
+    /** 拒识原因 */
+    private String abstainReason;
+    /** 模型版本 */
+    private String modelVersion;
+    /** 权重 SHA-256 */
+    private String weightSha256;
+    /** 人工复审状态 */
+    private String humanReviewStatus;
+    /** 人工结论 */
+    private String humanResult;
+    /** 人工严重程度 */
+    private String humanSeverity;
+    /** 人工建议 */
+    private String humanRecommendations;
+    /** 人工备注 */
+    private String humanReviewNote;
+    /** 医学免责声明文本 */
+    private String disclaimer;
+    /** 是否需要人工复核 */
+    private Boolean requiresReview;
+
     private static final long serialVersionUID = 1L;
     /**
      * 封装类转对象

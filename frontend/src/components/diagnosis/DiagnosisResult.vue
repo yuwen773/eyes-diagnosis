@@ -52,6 +52,19 @@
         </a-space>
       </div>
 
+      <!-- 医疗可靠性提示（拒识 / 需复审 / 模型元数据） -->
+      <AbstainNotice
+        :rejected="Boolean(diagnosisResult?.aiRejected)"
+        :reason="diagnosisResult?.abstainReason ?? ''"
+      />
+      <div class="medical-meta">
+        <HumanReviewBadge :status="diagnosisResult?.humanReviewStatus ?? 'PENDING_AI'" />
+        <ModelProvenance
+          :modelVersion="diagnosisResult?.modelVersion"
+          :weightSha256="diagnosisResult?.weightSha256"
+        />
+      </div>
+
       <!-- 顶部诊断结果 -->
       <a-card class="top-section">
         <a-row :gutter="24">
@@ -187,6 +200,13 @@
           </div>
         </div>
       </a-card>
+
+      <!-- 医疗免责声明：必须在结果页最底部常驻 -->
+      <MedicalDisclaimer
+        scope="ai"
+        :modelVersion="diagnosisResult?.modelVersion"
+        :weightSha256="diagnosisResult?.weightSha256"
+      />
     </template>
 
   </div>
@@ -208,6 +228,10 @@ import PieChart from '@/components/tables/DiagnosisPie.vue';
 import { useDiagnosisStore } from '@/stores/diagnosis'
 import { storeToRefs } from 'pinia'
 import { exportToPDF, exportToCSV } from '@/utils/exportUtils'
+import AbstainNotice from '@/components/medical/AbstainNotice.vue'
+import HumanReviewBadge from '@/components/medical/HumanReviewBadge.vue'
+import ModelProvenance from '@/components/medical/ModelProvenance.vue'
+import MedicalDisclaimer from '@/components/medical/MedicalDisclaimer.vue'
 
 const diagnosisStore = useDiagnosisStore();
 const { diagnosisResult } = storeToRefs(diagnosisStore)
@@ -360,6 +384,13 @@ const screenReaderSummary = computed(() => {
   background-color: var(--claude-bg-page);
 }
 
+.medical-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
 .action-bar {
   display: flex;
   justify-content: flex-end;

@@ -101,4 +101,27 @@ public class Diagnosis {
      */
     @TableLogic
     private Integer isDelete;
+
+    /** AI 是否拒识（quality/OOD/low_confidence） */
+    private Boolean aiRejected;
+    /** 拒识原因: QUALITY_FAIL / OOD / LOW_CONFIDENCE / NOT_ASSESSED / MODEL_NOT_LOADED */
+    private String abstainReason;
+    /** 模型版本 */
+    private String modelVersion;
+    /** 权重 SHA-256 */
+    private String weightSha256;
+    /** 人工复审状态: PENDING_AI / AI_ONLY / AWAITING_REVIEW / REVIEWED / OVERRIDDEN */
+    private String humanReviewStatus;
+    /** 人工复审人 id */
+    private Long humanReviewerId;
+    /** 人工复审时间 */
+    private Date humanReviewedAt;
+    /** 人工备注 */
+    private String humanReviewNote;
+    /** 人工结论 */
+    private String humanResult;
+    /** 人工严重程度 */
+    private String humanSeverity;
+    /** 人工建议 */
+    private String humanRecommendations;
 }

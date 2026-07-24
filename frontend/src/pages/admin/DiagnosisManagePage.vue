@@ -51,6 +51,17 @@
             size="small"
           />
         </template>
+        <template v-if="column.dataIndex === 'humanReviewStatus'">
+          <HumanReviewBadge :status="record.humanReviewStatus ?? 'PENDING_AI'" />
+          <a-button
+            v-if="record.humanReviewStatus !== 'REVIEWED' && record.humanReviewStatus !== 'OVERRIDDEN'"
+            size="small"
+            type="link"
+            @click="openReviewModal(record)"
+          >
+            提交复核
+          </a-button>
+        </template>
         <template v-if="column.dataIndex === 'diagnosisTime'">
           {{ dayjs(Number(record.createTime)).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
@@ -114,6 +125,33 @@
         </a-descriptions>
       </template>
     </a-drawer>
+
+    <!-- 人工复核弹窗 -->
+    <a-modal
+      v-model:open="reviewModalOpen"
+      title="人工复核"
+      :destroy-on-close="true"
+      @ok="submitReview"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="人工结论" required>
+          <a-input v-model:value="reviewForm.humanResult" />
+        </a-form-item>
+        <a-form-item label="严重程度">
+          <a-select
+            v-model:value="reviewForm.humanSeverity"
+            :options="severityOptions"
+            allow-clear
+          />
+        </a-form-item>
+        <a-form-item label="建议">
+          <a-textarea v-model:value="reviewForm.humanRecommendations" :rows="4" />
+        </a-form-item>
+        <a-form-item label="备注">
+          <a-input v-model:value="reviewForm.humanReviewNote" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -124,8 +162,10 @@ import dayjs from 'dayjs'
 import {
   deleteDiagnosis,
   listDiagnosisVoByPageWithCache,
+  updateDiagnosisResult,
 } from '@/api/diagnosisController'
 import { message } from 'ant-design-vue'
+import HumanReviewBadge from '@/components/medical/HumanReviewBadge.vue'
 
 // 表格列定义
 const columns = [
@@ -151,6 +191,11 @@ const columns = [
     title: '置信度',
     dataIndex: 'confidence',
     width: 150,
+  },
+  {
+    title: '复审状态',
+    dataIndex: 'humanReviewStatus',
+    width: 180,
   },
   {
     title: '诊断时间',
@@ -181,6 +226,23 @@ const timeRange = ref<[Dayjs, Dayjs] | null>(null)
 // 抽屉状态
 const drawerVisible = ref<boolean>(false)
 const currentRecord = ref<API.DiagnosisManageVO | null>(null)
+
+// 人工复核弹窗状态
+const reviewModalOpen = ref<boolean>(false)
+const reviewTargetId = ref<number | undefined>(undefined)
+const reviewForm = reactive({
+  humanResult: '',
+  humanSeverity: undefined as string | undefined,
+  humanRecommendations: '',
+  humanReviewNote: '',
+})
+const severityOptions = [
+  { value: 'NOT_ASSESSED', label: '未评估' },
+  { value: 'normal', label: '正常' },
+  { value: 'low', label: '低风险' },
+  { value: 'medium', label: '中风险' },
+  { value: 'high', label: '高风险' },
+]
 
 // 时间范围变化
 const onTimeRangeChange = (dates: [Dayjs, Dayjs] | null) => {
@@ -263,6 +325,46 @@ const doDelete = async (id: number | undefined) => {
 const openDrawer = (record: API.DiagnosisManageVO) => {
   currentRecord.value = record
   drawerVisible.value = true
+}
+
+// 打开人工复核弹窗
+const openReviewModal = (record: API.DiagnosisManageVO) => {
+  reviewTargetId.value = record.id
+  reviewForm.humanResult = ''
+  reviewForm.humanSeverity = undefined
+  reviewForm.humanRecommendations = ''
+  reviewForm.humanReviewNote = ''
+  reviewModalOpen.value = true
+}
+
+// 提交人工复核：仅写入 human* 字段，AI 字段绝不动
+const submitReview = async () => {
+  if (!reviewTargetId.value) {
+    message.error('缺少诊断 ID')
+    return
+  }
+  if (!reviewForm.humanResult.trim()) {
+    message.error('必须填写人工结论')
+    return
+  }
+  try {
+    const res = await updateDiagnosisResult({
+      id: reviewTargetId.value,
+      humanResult: reviewForm.humanResult,
+      humanSeverity: reviewForm.humanSeverity,
+      humanRecommendations: reviewForm.humanRecommendations,
+      humanReviewNote: reviewForm.humanReviewNote,
+    })
+    if (res.data.code === 0) {
+      message.success('复核已提交')
+      reviewModalOpen.value = false
+      fetchData()
+    } else {
+      message.error('提交失败：' + (res.data.msg ?? '未知错误'))
+    }
+  } catch {
+    message.error('提交请求异常')
+  }
 }
 
 // 诊断结果颜色映射

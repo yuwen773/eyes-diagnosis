@@ -1,0 +1,4 @@
+[
+  { "path": "datasets/frozen_val/sample_0.jpg", "label": 0, "split": "val", "laterality": "OD" },
+  { "path": "datasets/frozen_val/sample_1.jpg", "label": 1, "split": "val", "laterality": "OS" }
+]

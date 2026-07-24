@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
+import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
@@ -65,4 +66,9 @@ public interface DiagnosisService extends IService<Diagnosis> {
      * 加载当前用户有权访问的诊断详情（普通用户仅限本人；管理员可访问全部）。
      */
     Diagnosis getOwnedDiagnosis(Long diagnosisId, User loginUser);
+
+    /**
+     * 人工复核记录。AI 字段不得由本接口覆盖。
+     */
+    void recordHumanReview(Long diagnosisId, User reviewer, DiagnosisResultDTO dto);
 }
