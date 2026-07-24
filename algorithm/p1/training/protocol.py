@@ -25,6 +25,7 @@ class E0E3Protocol:
     weights: str
     image_size: int
     num_classes: int
+    k_folds: int
     patient_batch: int
     gradient_accumulation: int
     amp: bool
@@ -57,6 +58,7 @@ FROZEN_FIELDS: dict[str, Any] = {
     "weights": "EfficientNet_B4_Weights.IMAGENET1K_V1",
     "image_size": 380,
     "num_classes": 8,
+    "k_folds": 5,
     "patient_batch": 8,
     "gradient_accumulation": 1,
     "amp": True,
