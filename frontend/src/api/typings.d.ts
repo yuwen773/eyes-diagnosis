@@ -151,6 +151,8 @@ declare namespace API {
     reexamineStatus?: number
     createTime?: string
     status?: string
+    humanReviewStatus?: string
+    humanResult?: string
   }
 
   type DiagnosisQueryDTO = {
