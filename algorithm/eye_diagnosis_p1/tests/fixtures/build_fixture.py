@@ -51,8 +51,13 @@ def write_manifest(pids: list[str]) -> Path:
         rows.append(
             {
                 "patient_id": pid,
-                "left_image_relpath": str(Path("images") / f"{pid}_left.jpg"),
-                "right_image_relpath": str(Path("images") / f"{pid}_right.jpg"),
+                # POSIX-style relative paths in the manifest so the fixture
+                # is portable across Windows / Linux CI runners. The
+                # parquet stores these as strings; ``Path(...) / ...`` on
+                # Windows would otherwise emit backslashes that the Linux
+                # GitHub Runner cannot resolve.
+                "left_image_relpath": f"images/{pid}_left.jpg",
+                "right_image_relpath": f"images/{pid}_right.jpg",
                 "age": 40 + (i * 3) % 30,
                 "sex": "M" if i % 2 == 0 else "F",
                 **{f"label_{c}": v for c, v in zip("NDGCAHMO", _label_vector(i % 8))},
