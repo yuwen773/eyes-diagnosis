@@ -1,3 +1,10 @@
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.pt filter=lfs diff=lfs merge=lfs -text
 *.pb filter=lfs diff=lfs merge=lfs -text
+
+# Frozen P1 artifacts must keep canonical line endings on every platform
+# (no CRLF mangling on Windows checkouts). The committed form is LF.
+*.csv -text
+*.parquet -text
+*.json -text
+algorithm/eye_diagnosis_p1/tests/fixtures/** -text

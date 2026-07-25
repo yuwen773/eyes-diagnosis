@@ -19,8 +19,9 @@ from p1.training.protocol import (
 
 def test_default_protocol_matches_frozen_values() -> None:
     p = default_protocol()
-    assert p.schema_version == "p2-01-e0-e3-v1"
+    assert p.schema_version == "p2-01r-e0-e3-v1"
     assert p.backbone == "efficientnet_b4"
+    assert p.weights == "EfficientNet_B4_Weights.IMAGENET1K_V1"
     assert p.image_size == 380
     assert p.num_classes == 8
     assert p.patient_batch == 8
@@ -38,8 +39,8 @@ def test_default_protocol_matches_frozen_values() -> None:
     assert p.warmup_steps == 0
     assert p.gradient_clip_norm == 0.0
     assert p.augmentations == ()
-    assert p.checkpoint_selector == "oof_macro_auprc"
-    assert p.primary_metric == "oof_macro_auprc"
+    assert p.checkpoint_selector == "validation_macro_auprc"
+    assert p.experiment_primary_metric == "oof_macro_auprc"
     assert p.threshold_policy == "fixed_0.5"
     assert p.num_workers == 2
     assert p.pin_memory is True
@@ -108,6 +109,27 @@ def test_load_rejects_wrong_schema_version(tmp_path: Path) -> None:
     bad = tmp_path / "bad.json"
     payload = _protocol_to_jsonable(p)
     payload["schema_version"] = "p2-01-e0-e3-v0"
+    bad.write_text(json.dumps(payload))
+    with pytest.raises(ProtocolError):
+        load_protocol(bad)
+
+
+def test_protocol_pins_imagenet_weights() -> None:
+    p = default_protocol()
+    assert p.weights == "EfficientNet_B4_Weights.IMAGENET1K_V1"
+
+
+def test_protocol_checkpoint_selector_is_validation_metric() -> None:
+    p = default_protocol()
+    assert p.checkpoint_selector == "validation_macro_auprc"
+    assert p.experiment_primary_metric == "oof_macro_auprc"
+
+
+def test_protocol_rejects_non_imagenet_weights(tmp_path: Path) -> None:
+    p = default_protocol()
+    payload = _protocol_to_jsonable(p)
+    payload["weights"] = "DEFAULT"
+    bad = tmp_path / "bad.json"
     bad.write_text(json.dumps(payload))
     with pytest.raises(ProtocolError):
         load_protocol(bad)

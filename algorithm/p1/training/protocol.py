@@ -22,8 +22,10 @@ class ProtocolError(ValueError):
 class E0E3Protocol:
     schema_version: str
     backbone: str
+    weights: str
     image_size: int
     num_classes: int
+    k_folds: int
     patient_batch: int
     gradient_accumulation: int
     amp: bool
@@ -40,7 +42,7 @@ class E0E3Protocol:
     gradient_clip_norm: float
     augmentations: tuple[str, ...]
     checkpoint_selector: str
-    primary_metric: str
+    experiment_primary_metric: str
     threshold_policy: str
     num_workers: int
     pin_memory: bool
@@ -51,10 +53,12 @@ class E0E3Protocol:
 # Every field that the training entry point must NOT be allowed to change.
 # ``load_protocol`` enforces these against any incoming JSON.
 FROZEN_FIELDS: dict[str, Any] = {
-    "schema_version": "p2-01-e0-e3-v1",
+    "schema_version": "p2-01r-e0-e3-v1",
     "backbone": "efficientnet_b4",
+    "weights": "EfficientNet_B4_Weights.IMAGENET1K_V1",
     "image_size": 380,
     "num_classes": 8,
+    "k_folds": 5,
     "patient_batch": 8,
     "gradient_accumulation": 1,
     "amp": True,
@@ -70,8 +74,8 @@ FROZEN_FIELDS: dict[str, Any] = {
     "warmup_steps": 0,
     "gradient_clip_norm": 0.0,
     "augmentations": (),
-    "checkpoint_selector": "oof_macro_auprc",
-    "primary_metric": "oof_macro_auprc",
+    "checkpoint_selector": "validation_macro_auprc",
+    "experiment_primary_metric": "oof_macro_auprc",
     "threshold_policy": "fixed_0.5",
     "num_workers": 2,
     "pin_memory": True,

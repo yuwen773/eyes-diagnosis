@@ -25,15 +25,16 @@ _EYE_BY_EXPERIMENT: dict[str, str] = {
     "E1": "right",
     "E2": "e2",
 }
+_REQUIRED_WEIGHTS = "EfficientNet_B4_Weights.IMAGENET1K_V1"
 
 
 class MonocularB4(nn.Module):
     """Single-eye B4 head. One Linear(F, 8); no fusion, no auxiliary head."""
 
-    def __init__(self, *, eye: str, pretrained: bool = True) -> None:
+    def __init__(self, *, eye: str, _download: bool = True) -> None:
         super().__init__()
         spec = BACKBONE_SPECS["efficientnet_b4"]
-        net = spec.builder(weights=spec.weights if pretrained else None)
+        net = spec.builder(weights=spec.weights if _download else None)
         self.encoder = net.features
         self.pool = net.avgpool
         self.classifier = nn.Linear(spec.feature_dim, 8)
@@ -47,16 +48,23 @@ class MonocularB4(nn.Module):
         return self.classifier(feats)
 
 
-def build_model(experiment: str, *, pretrained: bool = True) -> nn.Module:
+def build_model(
+    experiment: str, *, weights: str, _download: bool = True
+) -> nn.Module:
     if experiment not in EXPERIMENTS:
         raise ValueError(
             f"unknown experiment {experiment!r}; expected one of {EXPERIMENTS}"
         )
+    if weights != _REQUIRED_WEIGHTS:
+        raise ValueError(
+            f"weights must be {_REQUIRED_WEIGHTS!r}; got {weights!r} "
+            "(DEFAULT, None, IMAGENET1K_V2, and legacy checkpoints are prohibited)"
+        )
     if experiment == "E3":
         return build_bilateral_model(
-            "efficientnet_b4", num_classes=8, pretrained=pretrained
+            "efficientnet_b4", num_classes=8, pretrained=_download
         )
-    return MonocularB4(eye=_EYE_BY_EXPERIMENT[experiment], pretrained=pretrained)
+    return MonocularB4(eye=_EYE_BY_EXPERIMENT[experiment], _download=_download)
 
 
 def assert_e3_not_six_channel(model: BilateralSharedEncoder) -> None:

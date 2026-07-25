@@ -1,0 +1,10 @@
+# P1 (P2-01R) training-stack dependencies.
+# These extend `requirements.txt` and are required by `algorithm/p1/**`
+# (audit, manifest, split, freeze_folds, training/*) and the
+# `eye_diagnosis_p1/tests/` test suite.
+#
+# Install both files before running the P1 tests:
+#   python -m pip install -r requirements.txt -r requirements-p1.txt
+pyarrow>=14.0.0          # manifest_v1.parquet read/write (pandas backend)
+openpyxl>=3.1.0          # Traning_Dataset.xlsx reader (p1.audit)
+iterative-stratification==0.1.9  # iterstrat.ml_stratifiers.MultilabelStratifiedKFold (0.1.9 is the latest PyPI release; no 0.5.x exists)

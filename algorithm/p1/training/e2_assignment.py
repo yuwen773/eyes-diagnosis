@@ -1,9 +1,10 @@
 """Deterministic E2 eye assignment.
 
 For each patient we choose ``"left"`` or ``"right"`` based on the low bit
-of ``sha256(patient_id || seed_bytes).digest()[0]``. The same patient and
-seed always produce the same eye, independent of fold/epoch/run, satisfying
-the slice's determinism contract.
+of ``sha256(f"{patient_id}:{seed}").digest()[0]``. The seed is part of the
+hashed payload (not XOR-folded), so every seed bit affects the assignment.
+The same patient and seed always produce the same eye, independent of
+fold/epoch/run, satisfying the slice's determinism contract.
 """
 
 from __future__ import annotations
@@ -23,8 +24,9 @@ class E2AssignmentMismatch(E2AssignmentError):
 
 
 def _eye_for(patient_id: str, seed: int) -> str:
-    digest = hashlib.sha256(patient_id.encode("utf-8")).digest()
-    return "left" if ((digest[0] ^ seed) & 1) == 0 else "right"
+    payload = f"{patient_id}:{seed}".encode("utf-8")
+    digest = hashlib.sha256(payload).digest()
+    return "left" if (digest[0] % 2 == 0) else "right"
 
 
 def assign_e2_eyes(patient_ids: Sequence[str], *, seed: int) -> dict[str, str]:
