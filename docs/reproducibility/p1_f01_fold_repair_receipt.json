@@ -1,0 +1,56 @@
+{
+  "incident": "P1-F01",
+  "discovered": "2026-07-25",
+  "summary": "Silent data-integrity violation: the frozen fold_assignment_v1.csv was generated against a stale split snapshot, causing 372 Test patients to leak into the fold and 372 Development patients to be dropped.",
+  "canonical_path": "algorithm/artifacts/p1_v1/fold_assignment_v1.csv",
+  "invalid_fold_sha256": "11e8b8cbc6a24458e4a68550a07ed6e9aa1b63ae0f064782019a5080546b61e6",
+  "replacement_fold_sha256": "989d5dc95d8cfd31f715cd25dacd8cfffd2acd34a721eeb038aac04f37aa8a59",
+  "source_split_sha256": "8effe740a26caf369868076bf4d4b5b4c8cdab75826caa159628f902f7362c94",
+  "source_manifest_sha256": "aab4831ca7d293a109520a2b6dab56483376559f000490ed12e61b82320ac90d",
+  "source_eye_index_sha256": "eb9c0c9f5b1217d68969520b9aeb6c88ab05f59aacc93364f13bbe673dbcaf51",
+  "protocol_p2_02a_sha256": "9b3226174af8675ae2d8eda67e289b34be6da569343128a6fdf49b34a2f3b575",
+  "patient_counts": {
+    "manifest_total": 2885,
+    "development": 2452,
+    "test": 433,
+    "fold_patients_replacement": 2452
+  },
+  "invalid_fold_violations": {
+    "fold_patients": 2452,
+    "test_in_fold_count": 372,
+    "development_missing_from_fold_count": 372,
+    "fold_set_equals_development": false
+  },
+  "replacement_fold_violations": {
+    "fold_patients": 2452,
+    "test_in_fold_count": 0,
+    "development_missing_from_fold_count": 0,
+    "fold_set_equals_development": true
+  },
+  "regeneration": {
+    "k_folds": 5,
+    "fold_ids": [0, 1, 2, 3, 4],
+    "per_fold_patient_counts": [490, 489, 488, 492, 493],
+    "per_fold_per_class_min_positive": 13,
+    "per_fold_per_class_min_class": "H",
+    "duplicate_patients": 0,
+    "deterministic_regeneration": true,
+    "deterministic_evidence": "Two independent runs of build_oof_folds(...,seed=42,k=5) against the corrected manifest + frozen split produced byte-identical CSVs (SHA 989d5dc9...)",
+    "regenerate_command": "see docs/reproducibility/p1_f01_fold_repair.md section 'Regeneration snippet'"
+  },
+  "promotion_strategy": "option_a_replace",
+  "promotion_decision": "User selected option (a) on 2026-07-25: copy fold_assignment_v2.csv over fold_assignment_v1.csv, write _SUPERSEDED.md marker. CLI path unchanged.",
+  "validator_enforcement": "The P2-02A stability probe (algorithm/p1/stability/probe.py) now calls validate_frozen_training_inputs as the frozen_input_validation stage. Any future drift between fold and Development set short-circuits the probe before CUDA is loaded and before any Test patient is read.",
+  "incident_evidence": {
+    "note": "Detailed receipts with per-fold per-class counts are preserved under algorithm/artifacts/ (gitignored). The on-patch machine can verify via algorithm/artifacts/p1_integrity_incident_20260725/incident_receipt.json and algorithm/artifacts/p1_v2_candidate/fold_v2_integrity_receipt.json.",
+    "on_disk": [
+      "algorithm/artifacts/p1_integrity_incident_20260725/incident_receipt.json",
+      "algorithm/artifacts/p1_integrity_incident_20260725/invalid_fold_assignment_v1.csv (copy)",
+      "algorithm/artifacts/p1_v2_candidate/fold_v2_integrity_receipt.json",
+      "algorithm/artifacts/p1_v2_candidate/candidate_run_1.csv (determinism proof)",
+      "algorithm/artifacts/p1_v2_candidate/candidate_run_2.csv (determinism proof)",
+      "algorithm/artifacts/p1_v1/_SUPERSEDED.md"
+    ]
+  },
+  "patient_id_policy": "No patient IDs are recorded in this receipt. The invalid_fold and replacement_fold were generated from a fixed, frozen split; their integrity is verifiable by SHA + counts, not by patient-level detail."
+}
