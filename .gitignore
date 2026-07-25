@@ -77,3 +77,7 @@ algorithm/diagnosis_pb2.py
 algorithm/diagnosis_pb2_grpc.py
 algorithm/*_pb2.py
 algorithm/*_pb2_grpc.py
+
+# P1 本地原始数据与患者级派生产物：禁止提交
+/algorithm/datasets/DataSet/**
+/algorithm/artifacts/**
