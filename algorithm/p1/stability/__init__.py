@@ -32,6 +32,16 @@ from p1.stability.matrix import (
     expand_matrix,
     matrix_to_dict,
 )
+from p1.stability.stages import (
+    InternalStageState,
+    ProbeContext,
+    ProbeRunResult,
+    ProbeRunner,
+    StageAlreadyExecutedError,
+    StageExecutionError,
+    StageSpec,
+    UnknownStageError,
+)
 
 __all__ = [
     "P202AProtocol",
@@ -49,4 +59,12 @@ __all__ = [
     "Cell",
     "expand_matrix",
     "matrix_to_dict",
+    "InternalStageState",
+    "ProbeContext",
+    "ProbeRunResult",
+    "ProbeRunner",
+    "StageAlreadyExecutedError",
+    "StageExecutionError",
+    "StageSpec",
+    "UnknownStageError",
 ]
