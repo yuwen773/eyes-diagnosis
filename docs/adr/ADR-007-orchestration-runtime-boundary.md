@@ -1,6 +1,6 @@
 # ADR-007: Orchestration Runtime Boundary
 
-**Status:** Reopened — SPIKE-G01 failed for graph-core 1.1.2.2
+**Status:** Accepted — Graph-native segment runtime (SPIKE-G03)
 **Date:** 2026-07-25
 
 ## Decision target
@@ -18,4 +18,12 @@ The target is not feasible with the examined public `graph-core-1.1.2.2` API. Th
 
 SPIKE-G02 evaluated the locally available `graph-core-1.1.2.3` candidate in an independent Maven project and reproduced both failures. The candidate upgrade path is therefore rejected; its executable evidence and record are [SPIKE-G02](../spikes/graph-public-api-upgrade-feasibility.md).
 
-No formal workflow migration, worker, production Graph, or frontend work may start under this ADR. The sole remaining implementation-neutral investigation is a Graph-native segment boundary (SPIKE-G03), while retaining MySQL as the sole business truth.
+SPIKE-G03 passed on `graph-core:1.1.2.2`: a public checkpoint `StateSnapshot` exposes the Graph-selected next node and a public `RunnableConfig` with its checkpoint ID. A new `MysqlSaver` and compiled Graph instance can call `withResume()` on that public token without repeating the completed inference node. The full evidence is [SPIKE-G03](../spikes/graph-native-segment-boundary-feasibility.md).
+
+## Accepted runtime boundary
+
+One database job runs one Graph-native segment. At a public interruption boundary, MySQL stores the immutable workflow business state plus the public Graph recovery token (`threadId` and checkpoint ID). The next job is a generic resume job; it calls Graph's public `withResume()` contract and does not inspect an edge or map a business condition to a node. A public checkpoint whose Graph-selected `next` is `END` records terminal completion without creating a resume job.
+
+Graph checkpoints are an operational continuation mechanism only. They are not a second business state machine: MySQL workflow records remain the sole durable business source of truth, and the checkpoint does not override workflow status, audit records, citations, explanation snapshots, review tasks, or terminal reasons.
+
+Formal workflow development may now be planned against this segment boundary. It must retain the single-inference envelope, node idempotency, MySQL-time leases, fencing tokens, CAS commits, and the prohibition on duplicate Java/database routing.
