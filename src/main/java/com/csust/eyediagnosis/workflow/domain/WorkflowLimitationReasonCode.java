@@ -1,0 +1,11 @@
+package com.csust.eyediagnosis.workflow.domain;
+
+public enum WorkflowLimitationReasonCode {
+    EVIDENCE_INSUFFICIENT,
+    EXPLANATION_REJECTED,
+    EXPLANATION_WITHHELD,
+    AI_ASSESSMENT_CORRECTED,
+    HUMAN_REVIEW_INCONCLUSIVE,
+    SAFETY_ABSTENTION_CONFIRMED,
+    INDEPENDENT_REVIEW_ONLY
+}
