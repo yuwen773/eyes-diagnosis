@@ -114,7 +114,28 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
 
     pdf = pd.read_parquet(manifest_path)
-    manifest_pids = set(pdf["patient_id"].tolist())
+    patient_ids = pdf["patient_id"]
+
+    # Guard the manifest entry point BEFORE collapsing to a set: a corrupted
+    # manifest with a missing or duplicated patient_id would otherwise be
+    # silently deduped by set(), hiding the data error from
+    # validate_frozen_training_inputs downstream.
+    if patient_ids.isna().any():
+        print(
+            f"manifest contains missing patient_id: {manifest_path}",
+            file=sys.stderr,
+        )
+        return 2
+    duplicated = patient_ids[patient_ids.duplicated(keep=False)]
+    if not duplicated.empty:
+        print(
+            f"manifest contains duplicate patient_id: "
+            f"{sorted(set(duplicated.astype(str)))[:5]}",
+            file=sys.stderr,
+        )
+        return 2
+
+    manifest_pids = set(patient_ids.astype(str))
     if not manifest_pids:
         print(f"manifest has no patient_ids: {manifest_path}", file=sys.stderr)
         return 2
