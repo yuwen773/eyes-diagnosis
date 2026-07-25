@@ -1,0 +1,11 @@
+{
+  "backbone": "efficientnet_b4",
+  "experiment": "E3",
+  "fold": 0,
+  "image_size": 380,
+  "num_classes": 8,
+  "schema_version": "p2-02a-v1",
+  "seed": 42,
+  "target_success_batches": 100,
+  "weights": "EfficientNet_B4_Weights.IMAGENET1K_V1"
+}

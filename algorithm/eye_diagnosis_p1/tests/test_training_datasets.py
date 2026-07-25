@@ -30,8 +30,8 @@ def fake_manifest(tmp_path: Path) -> Path:
     pdf = pd.DataFrame(
         {
             "patient_id": pids,
-            "left_image_relpath": [relpaths[p]["OD"] for p in pids],
-            "right_image_relpath": [relpaths[p]["OS"] for p in pids],
+            "left_image_relpath": [relpaths[p]["OS"] for p in pids],
+            "right_image_relpath": [relpaths[p]["OD"] for p in pids],
             "age": [50, 60, 70],
             "sex": ["M", "F", "M"],
             "label_N": [1, 0, 1],

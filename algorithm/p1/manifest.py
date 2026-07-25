@@ -90,8 +90,8 @@ def _build_patient_rows(source: SourceManifest) -> list[dict]:
             )
         record = {
             "patient_id": pid,
-            "left_image_relpath": od.relative_path,   # OD = oculus dexter = right eye
-            "right_image_relpath": os_.relative_path, # OS = oculus sinister = left eye
+            "left_image_relpath": os_.relative_path,  # OS = oculus sinister = left eye
+            "right_image_relpath": od.relative_path,  # OD = oculus dexter = right eye
             "age": od.age,
             "sex": od.sex,
         }

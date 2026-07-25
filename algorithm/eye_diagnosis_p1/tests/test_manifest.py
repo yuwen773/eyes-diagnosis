@@ -108,8 +108,9 @@ def test_patient_manifest_carries_both_eye_paths(tmp_path: Path) -> None:
     paths = build_patient_manifest(src, out_dir=tmp_path)
     df = pd.read_parquet(paths.patient_manifest_path)
     row = df.iloc[0]
-    assert row["left_image_relpath"].endswith("_OD.jpg")
-    assert row["right_image_relpath"].endswith("_OS.jpg")
+    # OD = oculus dexter = right eye; OS = oculus sinister = left eye.
+    assert row["left_image_relpath"].endswith("_OS.jpg")
+    assert row["right_image_relpath"].endswith("_OD.jpg")
 
 
 def test_patient_manifest_rejects_missing_eye(tmp_path: Path) -> None:
