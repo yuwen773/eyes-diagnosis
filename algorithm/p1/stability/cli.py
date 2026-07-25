@@ -69,13 +69,119 @@ def build_real_torch_adapter() -> TorchAdapter:
     return _RealTorchAdapter(_torch=torch)
 
 
+LABEL_COLUMNS: tuple[str, ...] = (
+    "label_N",
+    "label_D",
+    "label_G",
+    "label_C",
+    "label_A",
+    "label_H",
+    "label_M",
+    "label_O",
+)
+
+
+def build_rows_for_fold(
+    manifest_pdf: Any,
+    fold: int,
+    fold_assignment: dict[str, int],
+) -> list[dict[str, Any]]:
+    """Filter the manifest to a single fold and reshape rows for BilateralEyeDataset.
+
+    Frozen ``BilateralEyeDataset`` (in ``p1.benchmark.cuda_runtime``) takes a
+    pre-built list of dicts with ``left_image_relpath``, ``right_image_relpath``,
+    and an 8-element ``labels`` list. This pure function builds that list from
+    the frozen patient manifest + fold assignment.
+    """
+    rows: list[dict[str, Any]] = []
+    for _, row in manifest_pdf.iterrows():
+        pid = str(row["patient_id"])
+        if int(fold_assignment.get(pid, -1)) != int(fold):
+            continue
+        rows.append(
+            {
+                "patient_id": pid,
+                "left_image_relpath": str(row["left_image_relpath"]),
+                "right_image_relpath": str(row["right_image_relpath"]),
+                "labels": [float(row[c]) for c in LABEL_COLUMNS],
+            }
+        )
+    return rows
+
+
+def _unwrap_bilateral_batch(batch: Any) -> Any:
+    """Drop the 4th element (``cpu_ms``) from BilateralEyeDataset's tuple.
+
+    The frozen dataset returns ``(left, right, labels, cpu_ms)``; the probe
+    expects a 3-tuple ``(left, right, labels)`` (or 4-tuple with ``pids``,
+    which we don't have here).
+
+    PyTorch's DataLoader calls a custom ``collate_fn`` with EITHER:
+      - a single 4-tuple (when the dataset yields a tuple and no batching
+        happens — but with batch_size>=1 PyTorch wraps the dataset item
+        in a list first), OR
+      - a list of 4-tuples (one per batch item).
+
+    With ``batch_size=1`` (all T1.2 cells), the collate receives a list
+    of length 1 containing a single 4-tuple. We unwrap one layer and then
+    strip the 4th element.
+
+    The tensors are NOT stacked here — that is the caller's responsibility
+    (see ``_stack_bilateral_batch``). This function is pure structural
+    transform so it can be unit-tested without torch.
+    """
+    # Already a 3-tuple/list: nothing to do.
+    if isinstance(batch, (list, tuple)) and len(batch) == 4:
+        # Recurse in case of a single-item batch wrapper.
+        if isinstance(batch[0], (list, tuple)) and len(batch[0]) == 4:
+            return _unwrap_bilateral_batch(batch[0])
+        return [batch[0], batch[1], batch[2]]
+    # Single-item batch: list with one 4-tuple.
+    if isinstance(batch, (list, tuple)) and len(batch) == 1:
+        inner = batch[0]
+        if isinstance(inner, (list, tuple)) and len(inner) == 4:
+            return [inner[0], inner[1], inner[2]]
+    return batch
+
+
+def _stack_bilateral_batch(batch: Any) -> Any:
+    """Add a batch dimension to the 3-tuple ``(left, right, labels)``.
+
+    The probe's ``first_batch_wait`` stage requires tensors with shape
+    ``(B, 3, image_size, image_size)`` for left/right and ``(B, num_classes)``
+    for labels. With ``batch_size=1`` and a custom collate_fn, PyTorch does
+    not auto-stack tensors, so we do it here.
+
+    For ``batch_size>1`` (Cells C-F), the default collate would have stacked
+    the tensors, but we override collate_fn with our own, so we must stack
+    regardless. With batch_size>1, the input list already has one entry per
+    item; we just ``torch.stack`` each component.
+    """
+    import torch
+
+    if isinstance(batch, list) and len(batch) == 3:
+        left, right, labels = batch
+        # Single-item batch (batch_size=1): add a new batch dim at axis 0.
+        # Multi-item batch (batch_size>1): stack item tensors along axis 0.
+        if isinstance(left, torch.Tensor) and left.dim() == 3:
+            left = left.unsqueeze(0)
+        if isinstance(right, torch.Tensor) and right.dim() == 3:
+            right = right.unsqueeze(0)
+        if isinstance(labels, torch.Tensor) and labels.dim() == 1:
+            labels = labels.unsqueeze(0)
+        return [left, right, labels]
+    return batch
+
+
 @dataclass
 class _RealDataLoaderFactory:
     """Builds a real PyTorch DataLoader for the bilateral dataset.
 
-    The full ``BilateralEyeDataset`` lives in ``p1.training.datasets``;
-    this factory wraps it so the CLI doesn't pull that import at
-    module load time.
+    The frozen ``BilateralEyeDataset`` lives in ``p1.benchmark.cuda_runtime``
+    (this is the only definition in the repo). The factory builds the
+    ``rows`` list from the frozen manifest + fold assignment, then wraps
+    the DataLoader with a collate-fn that drops the 4th element (``cpu_ms``)
+    so the probe sees the 3-tuple ``(left, right, labels)`` it expects.
     """
 
     _torch: Any
@@ -83,6 +189,7 @@ class _RealDataLoaderFactory:
     image_root: Path
     fold: int
     target_size: int
+    fold_assignment_path: Path
 
     def __call__(
         self,
@@ -92,26 +199,42 @@ class _RealDataLoaderFactory:
         num_workers: int,
         pin_memory: bool,
     ) -> Any:
-        from p1.training.datasets import BilateralEyeDataset
+        from p1.benchmark.cuda_runtime import BilateralEyeDataset
 
-        manifest_pdf = self._torch.zeros(0)  # placeholder; unused
-        ds = BilateralEyeDataset(
-            manifest_path=self.manifest_path,
-            image_root=self.image_root,
-            fold=self.fold,
-            target_size=self.target_size,
+        from p1.training.frozen_inputs import load_fold_assignment
+
+        manifest_pdf = self._torch.zeros(0)  # placeholder; replaced below
+        # Read the manifest and the fold via pandas (cheap, CPU-only).
+        import pandas as pd
+
+        manifest_pdf = pd.read_parquet(self.manifest_path)
+        fold_map = load_fold_assignment(
+            self.fold_assignment_path, expected_folds=5
         )
+        rows = build_rows_for_fold(manifest_pdf, self.fold, fold_map)
+        ds = BilateralEyeDataset(rows, self.image_root, self.target_size)
         return self._torch.utils.data.DataLoader(
             ds,
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             pin_memory=pin_memory,
+            collate_fn=_collate_bilateral_batch,
         )
 
 
+def _collate_bilateral_batch(batch: Any) -> Any:
+    """Composable collate: unwrap the 4-tuple, then stack to [B, ...]."""
+    return _stack_bilateral_batch(_unwrap_bilateral_batch(batch))
+
+
 def build_real_dataloader_factory(
-    *, manifest_path: Path, image_root: Path, fold: int, target_size: int
+    *,
+    manifest_path: Path,
+    image_root: Path,
+    fold: int,
+    target_size: int,
+    fold_assignment_path: Path,
 ) -> DataLoaderFactory:
     """Construct the real DataLoader factory."""
     import torch  # local import; only invoked on the GPU host
@@ -122,6 +245,7 @@ def build_real_dataloader_factory(
         image_root=image_root,
         fold=fold,
         target_size=target_size,
+        fold_assignment_path=fold_assignment_path,
     )
 
 
@@ -160,6 +284,27 @@ def build_real_model_factory(
     *, experiment: str, weights: str, device: str
 ) -> ModelFactory:
     return _RealModelFactory(_experiment=experiment, _weights=weights, _device=device)
+
+
+def make_real_optimizer_factory() -> Any:
+    """Return a factory that builds the frozen-config AdamW optimizer.
+
+    Frozen v1 training config (see project memory
+    ``p2-02-pipeline-and-first-round-config``):
+        optimizer: AdamW
+        learning_rate: 1e-4
+        weight_decay: 1e-4
+    """
+    import torch
+
+    def _build(model: Any) -> Any:
+        return torch.optim.AdamW(
+            model.parameters(),
+            lr=1e-4,
+            weight_decay=1e-4,
+        )
+
+    return _build
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -233,6 +378,7 @@ def main(argv: list[str] | None = None) -> int:
         image_root=args.image_root,
         fold=protocol.fold,
         target_size=protocol.image_size,
+        fold_assignment_path=args.fold_assignment,
     )
     model_factory = build_real_model_factory(
         experiment=protocol.experiment,
@@ -260,6 +406,7 @@ def main(argv: list[str] | None = None) -> int:
         torch=torch_a,
         dataloader_factory=dl_factory,
         model_factory=model_factory,
+        optimizer_factory=make_real_optimizer_factory(),
         amp=bool(cell.config["amp"]),
         patient_batch=int(cell.config["patient_batch"]),
         num_workers=int(cell.config["num_workers"]),
