@@ -13,15 +13,20 @@ the immutable artifact, not by caller-supplied sets (self-attestation).
 p2-01r2: ``validate_oof`` now requires an explicit ``mode`` argument:
 
   - ``smoke_subset`` — current fold's OOF may be a subset (smoke only).
-    Pair with ``fold_id`` + ``fold_assignment_path`` to scope the
-    allowed patients.
+    Requires ``fold_id`` + ``fold_assignment_path`` so the allowed
+    patients are scoped to that fold; an unscoped subset is rejected.
   - ``complete_fold`` — OOF must contain EXACTLY the patients assigned
     to ``fold_id`` in the frozen fold map, no more, no less, and each
     row's ``fold`` column must match ``fold_id``. Requires both
     ``fold_id`` and ``fold_assignment_path``.
   - ``complete_development`` — OOF must contain EXACTLY every
     Development patient once; each row's ``fold`` column must match
-    the frozen fold map.
+    the frozen fold map. Requires ``fold_assignment_path`` and must
+    NOT be given ``fold_id`` (completeness spans all folds).
+
+Every mode also rejects any patient absent from the frozen split
+entirely (neither Dev nor Test), so a fabricated or stale patient ID
+cannot slip through unnoticed.
 
 There is no implicit "be lenient" mode. The CI test gate, the recipe
 runner, and the multi-fold orchestrator each pick the mode that
@@ -188,10 +193,9 @@ def validate_oof(
         One of ``OofMode.SMOKE_SUBSET`` / ``COMPLETE_FOLD`` /
         ``COMPLETE_DEVELOPMENT``. A string is also accepted.
     fold_id, fold_assignment_path:
-        Optional fold constraint. ``COMPLETE_FOLD`` requires both;
-        ``SMOKE_SUBSET`` may use them to scope the allowed patients;
-        ``COMPLETE_DEVELOPMENT`` ignores them but uses
-        ``fold_assignment_path`` to verify each row's ``fold`` column.
+        Fold constraint. ``COMPLETE_FOLD`` and ``SMOKE_SUBSET`` require
+        both. ``COMPLETE_DEVELOPMENT`` requires ``fold_assignment_path``
+        (to verify each row's ``fold`` column) and rejects ``fold_id``.
     """
     if isinstance(mode, str):
         try:
@@ -218,7 +222,7 @@ def validate_oof(
     dev_patients = {pid for pid, s in split.items() if s == "dev"}
     test_patients = {pid for pid, s in split.items() if s == "test"}
 
-    # Pairwise required-ness per mode.
+    # Required-ness per mode (fail-closed; no lenient fallbacks).
     if mode is OofMode.COMPLETE_FOLD:
         # fold_id + fold_assignment_path must both be present.
         if fold_id is None or fold_assignment_path is None:
@@ -226,14 +230,25 @@ def validate_oof(
                 "COMPLETE_FOLD requires both fold_id and fold_assignment_path"
             )
     elif mode is OofMode.SMOKE_SUBSET:
-        # Either both or neither.
-        if (fold_id is None) != (fold_assignment_path is None):
+        # A smoke subset is only meaningful when scoped to a fold: without a
+        # fold scope we cannot tell a legitimate subset from an arbitrary set
+        # of patients. Require both, fail-closed.
+        if fold_id is None or fold_assignment_path is None:
             raise OofIntegrityError(
-                "SMOKE_SUBSET requires fold_id and fold_assignment_path together "
-                "(or both omitted)"
+                "SMOKE_SUBSET requires both fold_id and fold_assignment_path"
             )
-    # COMPLETE_DEVELOPMENT accepts fold_assignment_path alone (to verify
-    # each row's fold column) but ignores fold_id.
+    elif mode is OofMode.COMPLETE_DEVELOPMENT:
+        # Development completeness spans all folds, so a single fold_id is
+        # meaningless here; the fold map is still required so each row's
+        # fold column can be verified against the frozen assignment.
+        if fold_assignment_path is None:
+            raise OofIntegrityError(
+                "COMPLETE_DEVELOPMENT requires fold_assignment_path"
+            )
+        if fold_id is not None:
+            raise OofIntegrityError(
+                "COMPLETE_DEVELOPMENT must not be given fold_id"
+            )
 
     folds: dict[str, int] = {}
     if fold_assignment_path is not None:
@@ -281,6 +296,17 @@ def validate_oof(
     if leaked_test:
         raise OofIntegrityError(
             f"OOF {path}: contains Test patients: {sorted(leaked_test)[:5]}"
+        )
+    # No patient may appear that is absent from the frozen split entirely.
+    # ``leaked_test`` only covers patients explicitly marked Test; a patient
+    # ID that exists in neither the Dev nor the Test partition is a data
+    # error (typo, stale export, or fabricated row) and must be rejected in
+    # every mode, including smoke_subset.
+    unknown_patients = seen - set(split)
+    if unknown_patients:
+        raise OofIntegrityError(
+            f"OOF {path}: contains patients absent from frozen split: "
+            f"{sorted(unknown_patients)[:5]}"
         )
     if bad_sha_rows:
         raise OofIntegrityError(
