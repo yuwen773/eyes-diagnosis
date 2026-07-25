@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:eye_diagnosis;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  session:
+    store-type: none
+  ai:
+    openai:
+      api-key: test-not-a-real-openai-key
+    dashscope:
+      api-key: test-not-a-real-dashscope-key
+
+cos:
+  client:
+    host: https://cos.test.invalid
+    secretId: test-not-a-real-secret
+    secretKey: test-not-a-real-secret
+    region: ap-guangzhou
+    bucket: test-not-a-real-bucket
