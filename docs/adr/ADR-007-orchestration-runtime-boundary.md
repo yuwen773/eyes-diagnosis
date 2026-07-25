@@ -16,4 +16,6 @@ The target is not feasible with the examined public `graph-core-1.1.2.2` API. Th
 1. `RunnableConfig.nextNode("imageQuality")` does not start execution at that node; the graph resumes from `START`.
 2. After a public `interruptAfter`, `RunnableConfig.nextNode()` still contains the input node rather than the Graph-selected successor. The only edge-inspection method exposes an `internal` return type, which this architecture forbids.
 
-The executable evidence is `GraphSingleTickFeasibilityTest`; the complete decision record is [SPIKE-G01](../spikes/graph-single-tick-feasibility.md). No formal workflow migration, worker, production Graph, or frontend work may start under this ADR. A follow-up may evaluate a public framework upgrade or a Graph-native segment boundary, while retaining MySQL as the sole business truth.
+SPIKE-G02 evaluated the locally available `graph-core-1.1.2.3` candidate in an independent Maven project and reproduced both failures. The candidate upgrade path is therefore rejected; its executable evidence and record are [SPIKE-G02](../spikes/graph-public-api-upgrade-feasibility.md).
+
+No formal workflow migration, worker, production Graph, or frontend work may start under this ADR. The sole remaining implementation-neutral investigation is a Graph-native segment boundary (SPIKE-G03), while retaining MySQL as the sole business truth.
