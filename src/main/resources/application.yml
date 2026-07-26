@@ -74,6 +74,14 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
+workflow:
+  execution:
+    enabled: false
+    lease-duration: 30s
+    retry-initial-delay: 5s
+    retry-maximum-delay: 1m
+    recovery-batch-size: 20
+
 # 眼科图像分析配置
 eye-diagnosis:
   agent:
