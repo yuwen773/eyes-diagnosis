@@ -167,7 +167,7 @@ class WatchResult:
     ``OTHER_ERROR``). ``failed_stage`` is one of ``STAGE_NAMES`` or
     ``None``. ``last_heartbeat_stage`` is the last stage whose START or
     PASS line the runner saw, used for debugging. ``stderr_tail`` is
-    the last 4 KB of stderr, useful when classification fell back to
+    the last 4096 characters of stderr, useful when classification fell back to
     ``OTHER_ERROR`` and the JSON is absent.
     """
 
@@ -188,7 +188,7 @@ class WatchResult:
 # ---------------------------------------------------------------------------
 
 
-_STDERR_TAIL_BYTES = 4096
+_STDERR_TAIL_CHARS = 4096
 
 
 def _classify(
@@ -236,12 +236,8 @@ def _classify(
             except ValueError:
                 verdict = CellVerdict.OTHER_ERROR.value
             return verdict, failed_stage, True
-        if exit_code == 0:
-            return CellVerdict.OTHER_ERROR.value, None, True
         return CellVerdict.OTHER_ERROR.value, None, True
 
-    if exit_code == 0:
-        return CellVerdict.OTHER_ERROR.value, None, False
     return CellVerdict.OTHER_ERROR.value, None, False
 
 
@@ -356,7 +352,7 @@ class SubprocessRunner:
         elapsed = time.monotonic() - start
         with stderr_lock:
             stderr_text = "".join(stderr_chunks)
-        stderr_tail = stderr_text[-_STDERR_TAIL_BYTES:]
+        stderr_tail = stderr_text[-_STDERR_TAIL_CHARS:]
 
         json_path = self.out_dir / f"{self.cell_label}.json"
         verdict, failed_stage, partial_json = _classify(

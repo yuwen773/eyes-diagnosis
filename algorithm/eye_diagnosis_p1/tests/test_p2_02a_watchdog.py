@@ -265,15 +265,15 @@ def test_subprocess_runner_classifies_cuda_error_via_decide(
         terminator=FakeTerminator(),
     )
     result = runner.run()
-    # Either CUDA_ERROR (decide matches the substring) or OTHER_ERROR
-    # if our substring was too short for decide to recognise. The gate
-    # requires the verdict to be derived from the stderr text, NOT a
-    # generic timeout or pass.
+    # The probe contract says JSON-on-disk + exception_message is the
+    # source of truth for decide(); when the child only writes to stderr
+    # and exits 1 (no JSON), the watchdog classifies OTHER_ERROR by
+    # design (spec section 5). This gate just pins that path.
     assert result.verdict in ("CUDA_ERROR", "OTHER_ERROR")
     assert result.verdict != "PASS"
     assert result.timed_out is False
     assert result.last_heartbeat_stage == "forward"
-    assert "cudnn" in result.stderr_tail or result.verdict == "OTHER_ERROR"
+    assert "cudnn" in result.stderr_tail
 
 
 def test_subprocess_runner_partial_json_preserved_after_failed_child(
