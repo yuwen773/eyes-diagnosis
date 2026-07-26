@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.persistence.repository;
+import com.csust.eyediagnosis.workflow.persistence.entity.HumanReviewTaskEntity; import java.util.Optional;
+public interface HumanReviewTaskRepository { int insert(HumanReviewTaskEntity entity); Optional<HumanReviewTaskEntity> findById(String reviewTaskId); Optional<HumanReviewTaskEntity> findActiveByWorkflowAndType(String workflowId, String reviewType); int updateTaskStateIfVersionMatches(String reviewTaskId, long expectedVersion, String targetStatus, String decisionCode, String decisionReasonCode); }

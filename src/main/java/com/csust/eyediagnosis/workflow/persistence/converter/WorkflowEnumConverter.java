@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.persistence.converter;
+import com.csust.eyediagnosis.workflow.persistence.exception.WorkflowPersistenceMappingException;
+public final class WorkflowEnumConverter { private WorkflowEnumConverter() {} public static <E extends Enum<E>> E fromDatabase(Class<E> type, String value) { try { return Enum.valueOf(type, value); } catch (IllegalArgumentException | NullPointerException e) { throw new WorkflowPersistenceMappingException("Unknown " + type.getSimpleName() + " value: " + value, e); } } public static String toDatabase(Enum<?> value) { if (value == null) throw new WorkflowPersistenceMappingException("Enum value must not be null", null); return value.name(); } }

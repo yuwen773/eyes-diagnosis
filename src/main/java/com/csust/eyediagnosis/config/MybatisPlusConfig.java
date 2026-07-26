@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @Version 1.0
  **/
 @Configuration
-@MapperScan("com.csust.eyediagnosis.mapper")
+@MapperScan({"com.csust.eyediagnosis.mapper", "com.csust.eyediagnosis.workflow.persistence.mapper"})
 public class MybatisPlusConfig {
 
     @Bean

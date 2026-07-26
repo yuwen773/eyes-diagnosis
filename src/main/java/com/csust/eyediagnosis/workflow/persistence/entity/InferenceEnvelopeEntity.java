@@ -1,0 +1,5 @@
+package com.csust.eyediagnosis.workflow.persistence.entity;
+import com.baomidou.mybatisplus.annotation.*; import lombok.Data; import java.time.LocalDateTime;
+@Data @TableName("t_inference_envelope") public class InferenceEnvelopeEntity {
+ @TableId(type=IdType.INPUT) private String inferenceEnvelopeId; private String workflowId; private Long inferenceEpoch; private String imageObjectReference; private String inputDigest; private String detectedMediaType; private String qualityOutcome; private Integer qualityScore; private String qualityReasonCodesSnapshot; private String inferenceOutcomeType; private String predictionSnapshot; private String confidenceSnapshot; private String safetyAbstentionReasonCode; private String technicalFailureCode; private String oodSnapshot; private String calibrationSnapshot; private String modelVersion; private String modelWeightFingerprint; private String preprocessVersion; private String inferencePolicyVersion; private LocalDateTime inferredAt; private LocalDateTime createdAt;
+}
