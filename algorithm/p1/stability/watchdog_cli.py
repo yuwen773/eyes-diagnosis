@@ -38,11 +38,11 @@ def _build_argparser() -> argparse.ArgumentParser:
             "Each cell is its own subprocess of `python -u -m p1.stability.cli`."
         ),
     )
-    parser.add_argument("--protocol", type=Path, default=None)
-    parser.add_argument("--manifest", type=Path, default=None)
-    parser.add_argument("--split-assignment", type=Path, default=None)
-    parser.add_argument("--fold-assignment", type=Path, default=None)
-    parser.add_argument("--image-root", type=Path, default=None)
+    parser.add_argument("--protocol", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--split-assignment", type=Path, required=True)
+    parser.add_argument("--fold-assignment", type=Path, required=True)
+    parser.add_argument("--image-root", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--process-timeout", type=float, default=300.0)
     parser.add_argument("--heartbeat-timeout", type=float, default=90.0)

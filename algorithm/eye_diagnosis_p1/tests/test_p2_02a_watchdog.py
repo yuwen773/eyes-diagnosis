@@ -395,8 +395,14 @@ def test_watchdog_cli_serial_matrix_with_one_timeout(tmp_path: Path) -> None:
     _write_two_cell_harness(child, second_cell_sleep=60.0)
     cell_dir = tmp_path / "out"
     cell_dir.mkdir()
+    dummy = str(tmp_path / "dummy")
     rc = watchdog_main([
         "--child", str(child),
+        "--protocol", dummy,
+        "--manifest", dummy,
+        "--split-assignment", dummy,
+        "--fold-assignment", dummy,
+        "--image-root", dummy,
         "--out-dir", str(cell_dir),
         "--heartbeat-timeout", "0.5",
         "--process-timeout", "30.0",
@@ -415,9 +421,15 @@ def test_watchdog_cli_serial_matrix_runs_not_parallel(tmp_path: Path) -> None:
     _write_two_cell_harness(child, second_cell_sleep=0.0)
     cell_dir = tmp_path / "out"
     cell_dir.mkdir()
+    dummy = str(tmp_path / "dummy")
     started = time.monotonic()
     rc = watchdog_main([
         "--child", str(child),
+        "--protocol", dummy,
+        "--manifest", dummy,
+        "--split-assignment", dummy,
+        "--fold-assignment", dummy,
+        "--image-root", dummy,
         "--out-dir", str(cell_dir),
         "--heartbeat-timeout", "5.0",
         "--process-timeout", "30.0",
