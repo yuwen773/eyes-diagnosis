@@ -338,6 +338,96 @@ def test_subprocess_runner_records_forward_as_last_heartbeat_on_timeout(
     assert result.last_heartbeat_stage == "forward"
 
 
+from p1.stability.watchdog_cli import main as watchdog_main
+
+
+# ---------------------------------------------------------------------------
+# Test 5: watchdog_cli.main (serial matrix execution).
+# ---------------------------------------------------------------------------
+
+
+def _write_two_cell_harness(path: Path, second_cell_sleep: float) -> None:
+    """A child that simulates a 2-cell matrix.
+
+    First child (cell A): print 9 STAGE START/PASS, write A.json, exit 0.
+    Second child (cell B): if second_cell_sleep > 0, print STAGE forward
+    START then sleep second_cell_sleep seconds; else print 9 STAGE
+    START/PASS, write B.json, exit 0.
+
+    The parent invokes the child once per cell with sys.argv[2] ==
+    cell label ("A" or "B") and sys.argv[1] == out_dir. The child
+    discriminates by argv[2] and runs the A or B branch.
+    """
+    body = f'''
+        import sys, time, json
+        from pathlib import Path
+        from p1.stability.schema import STAGE_NAMES
+        cell = sys.argv[2]
+        out = Path(sys.argv[1]) / f"{{cell}}.json"
+        if cell == "B" and {second_cell_sleep} > 0:
+            print("STAGE forward START", flush=True)
+            time.sleep({second_cell_sleep})
+        else:
+            for s in STAGE_NAMES:
+                print(f"STAGE {{s}} START", flush=True)
+                print(f"STAGE {{s}} PASS", flush=True)
+            out.write_text(json.dumps({{
+                "protocol": {{}},
+                "cell": {{"label": cell, "config": {{}}}},
+                "setup": {{}},
+                "records": [],
+                "failed_stage": None,
+                "all_pass": True,
+            }}) + "\\n", encoding="utf-8")
+            for _ in range(10):
+                print("STAGE forward PASS", flush=True)
+                time.sleep(0.1)
+        '''
+    _write_child_program(path, body)
+
+
+def test_watchdog_cli_serial_matrix_with_one_timeout(tmp_path: Path) -> None:
+    """Gate 9: 2-cell matrix; cell A passes, cell B times out.
+
+    The watchdog exits 1 and the summary records A=PASS, B=TIMEOUT.
+    """
+    child = tmp_path / "child.py"
+    _write_two_cell_harness(child, second_cell_sleep=60.0)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    rc = watchdog_main([
+        "--child", str(child),
+        "--out-dir", str(cell_dir),
+        "--heartbeat-timeout", "0.5",
+        "--process-timeout", "30.0",
+    ])
+    assert rc == 1
+    summary_path = cell_dir / "_watchdog_summary.json"
+    assert summary_path.exists()
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["A"]["verdict"] == "PASS"
+    assert summary["B"]["verdict"] == "TIMEOUT"
+
+
+def test_watchdog_cli_serial_matrix_runs_not_parallel(tmp_path: Path) -> None:
+    """Gate 10: 2-cell matrix; each cell sleeps 1s. Total >= 2s proves serial."""
+    child = tmp_path / "child.py"
+    _write_two_cell_harness(child, second_cell_sleep=0.0)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    started = time.monotonic()
+    rc = watchdog_main([
+        "--child", str(child),
+        "--out-dir", str(cell_dir),
+        "--heartbeat-timeout", "5.0",
+        "--process-timeout", "30.0",
+    ])
+    elapsed = time.monotonic() - started
+    assert rc == 0
+    # 2 cells x 1s each, serial. Allow 1.5s of slack for Popen overhead.
+    assert elapsed >= 1.5, f"elapsed {elapsed:.2f}s suggests parallel execution"
+
+
 def test_subprocess_runner_preserves_partial_json_after_kill(
     tmp_path: Path,
 ) -> None:
