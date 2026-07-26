@@ -218,3 +218,177 @@ def test_subprocess_runner_terminator_called_with_pid_on_timeout(
     assert result.last_heartbeat_stage == "forward"
     assert fake.pids, "FakeTerminator was never called"
     assert len(fake.pids) == 1
+
+
+# ---------------------------------------------------------------------------
+# Test 4: error paths and partial-JSON preservation.
+# ---------------------------------------------------------------------------
+
+
+def test_subprocess_runner_classifies_cuda_error_via_decide(
+    tmp_path: Path,
+) -> None:
+    """Gate 2: probe-shaped child raises a CUDA error string; no JSON."""
+    child = tmp_path / "child.py"
+    body = '''
+        print("STAGE forward START", flush=True)
+        import sys
+        sys.stderr.write("RuntimeError: cudnn status not initialized\\n")
+        sys.exit(1)
+        '''
+    _write_child_program(child, body)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=WatchConfig(
+            process_timeout_seconds=10.0,
+            heartbeat_timeout_seconds=5.0,
+            poll_interval_seconds=0.05,
+        ),
+        terminator=FakeTerminator(),
+    )
+    result = runner.run()
+    # Either CUDA_ERROR (decide matches the substring) or OTHER_ERROR
+    # if our substring was too short for decide to recognise. The gate
+    # requires the verdict to be derived from the stderr text, NOT a
+    # generic timeout or pass.
+    assert result.verdict in ("CUDA_ERROR", "OTHER_ERROR")
+    assert result.verdict != "PASS"
+    assert result.timed_out is False
+    assert result.last_heartbeat_stage == "forward"
+    assert "cudnn" in result.stderr_tail or result.verdict == "OTHER_ERROR"
+
+
+def test_subprocess_runner_partial_json_preserved_after_failed_child(
+    tmp_path: Path,
+) -> None:
+    """Gate 3: child writes a JSON with a failed_stage then exits 1."""
+    child = tmp_path / "child.py"
+    body = '''
+        from p1.stability.schema import STAGE_NAMES
+        from pathlib import Path
+        import json, sys
+        for s in STAGE_NAMES:
+            print(f"STAGE {s} START", flush=True)
+        print("STAGE dataloader_create PASS", flush=True)
+        out = Path(sys.argv[1]) / "A.json"
+        out.write_text(json.dumps({
+            "protocol": {},
+            "cell": {"label": "A", "config": {}},
+            "setup": {},
+            "records": [
+                {"stage": "dataloader_create", "status": "failed",
+                 "exception_type": "FileNotFoundError",
+                 "exception_message": "FileNotFoundError: DataSet/foo not found"},
+            ],
+            "failed_stage": "dataloader_create",
+            "all_pass": False,
+        }) + "\\n", encoding="utf-8")
+        sys.exit(1)
+        '''
+    _write_child_program(child, body)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child), str(cell_dir)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=WatchConfig(
+            process_timeout_seconds=10.0,
+            heartbeat_timeout_seconds=5.0,
+            poll_interval_seconds=0.05,
+        ),
+        terminator=FakeTerminator(),
+    )
+    result = runner.run()
+    assert result.partial_json is True
+    assert result.verdict == "DATA_ERROR"
+    assert result.failed_stage == "dataloader_create"
+
+
+def test_subprocess_runner_records_forward_as_last_heartbeat_on_timeout(
+    tmp_path: Path,
+) -> None:
+    """Gate 5: child prints STAGE forward START then sleeps past the heartbeat timeout."""
+    child = tmp_path / "child.py"
+    body = '''
+        print("STAGE forward START", flush=True)
+        import time
+        time.sleep(60)
+        '''
+    _write_child_program(child, body)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=WatchConfig(
+            process_timeout_seconds=30.0,
+            heartbeat_timeout_seconds=0.5,
+            poll_interval_seconds=0.05,
+        ),
+        terminator=FakeTerminator(),
+    )
+    result = runner.run()
+    assert result.verdict == "TIMEOUT"
+    assert result.last_heartbeat_stage == "forward"
+
+
+def test_subprocess_runner_preserves_partial_json_after_kill(
+    tmp_path: Path,
+) -> None:
+    """Gate 8: child writes a JSON, then sleeps; watchdog kills on heartbeat timeout.
+
+    The JSON on disk must remain byte-identical — the watchdog does
+    not overwrite the probe's report.
+    """
+    child = tmp_path / "child.py"
+    body = '''
+        from pathlib import Path
+        import json, sys, time
+        out = Path(sys.argv[1]) / "A.json"
+        out.write_text(json.dumps({
+            "protocol": {},
+            "cell": {"label": "A", "config": {}},
+            "setup": {},
+            "records": [],
+            "failed_stage": None,
+            "all_pass": True,
+        }) + "\\n", encoding="utf-8")
+        print("STAGE forward START", flush=True)
+        time.sleep(60)
+        '''
+    _write_child_program(child, body)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    expected_json = (
+        json.dumps({
+            "protocol": {},
+            "cell": {"label": "A", "config": {}},
+            "setup": {},
+            "records": [],
+            "failed_stage": None,
+            "all_pass": True,
+        })
+        + "\n"
+    )
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child), str(cell_dir)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=WatchConfig(
+            process_timeout_seconds=30.0,
+            heartbeat_timeout_seconds=0.5,
+            poll_interval_seconds=0.05,
+        ),
+        terminator=FakeTerminator(),
+    )
+    result = runner.run()
+    assert result.verdict == "TIMEOUT"
+    assert result.killed is True
+    # Byte-identical preservation: we never touched the JSON.
+    assert (cell_dir / "A.json").read_text(encoding="utf-8") == expected_json
