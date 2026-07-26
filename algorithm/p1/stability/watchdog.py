@@ -386,36 +386,48 @@ class SubprocessRunner:
                 elapsed_seconds=elapsed,
             )
 
-        stdout_log = self.out_dir / f"{self.cell_label}.stdout.log"
-        stderr_log = self.out_dir / f"{self.cell_label}.stderr.log"
-        stdout_fh = stdout_log.open("w", encoding="utf-8", errors="replace")
-        stderr_fh = stderr_log.open("w", encoding="utf-8", errors="replace")
-
-        def _drain_stdout() -> None:
-            nonlocal last_heartbeat_at, last_heartbeat_stage
-            assert child.stdout is not None
-            for line in child.stdout:
-                stdout_fh.write(line)
-                stdout_fh.flush()
-                evt = parse_heartbeat_line(line)
-                if evt is not None:
-                    last_heartbeat_at = time.monotonic()
-                    last_heartbeat_stage = evt.stage
-
-        def _drain_stderr() -> None:
-            assert child.stderr is not None
-            for line in child.stderr:
-                stderr_fh.write(line)
-                stderr_fh.flush()
-                with stderr_lock:
-                    stderr_chunks.append(line)
-
-        t_out = threading.Thread(target=_drain_stdout, name=f"out-{self.cell_label}", daemon=True)
-        t_err = threading.Thread(target=_drain_stderr, name=f"err-{self.cell_label}", daemon=True)
-        t_out.start()
-        t_err.start()
-
+        stdout_fh = None
+        stderr_fh = None
+        t_out = None
+        t_err = None
         try:
+            stdout_log = self.out_dir / f"{self.cell_label}.stdout.log"
+            stderr_log = self.out_dir / f"{self.cell_label}.stderr.log"
+            stdout_fh = stdout_log.open("w", encoding="utf-8", errors="replace")
+            stderr_fh = stderr_log.open("w", encoding="utf-8", errors="replace")
+
+            def _drain_stdout() -> None:
+                nonlocal last_heartbeat_at, last_heartbeat_stage
+                assert child.stdout is not None
+                for line in child.stdout:
+                    stdout_fh.write(line)
+                    stdout_fh.flush()
+                    try:
+                        evt = parse_heartbeat_line(line)
+                    except ValueError:
+                        # A malformed heartbeat means a probe bug, not a
+                        # reason to kill the drain thread: a dead drain
+                        # thread stalls the pipe and the run is then
+                        # misclassified as TIMEOUT. Log-and-skip; the raw
+                        # line is already written to the stdout log above.
+                        continue
+                    if evt is not None:
+                        last_heartbeat_at = time.monotonic()
+                        last_heartbeat_stage = evt.stage
+
+            def _drain_stderr() -> None:
+                assert child.stderr is not None
+                for line in child.stderr:
+                    stderr_fh.write(line)
+                    stderr_fh.flush()
+                    with stderr_lock:
+                        stderr_chunks.append(line)
+
+            t_out = threading.Thread(target=_drain_stdout, name=f"out-{self.cell_label}", daemon=True)
+            t_err = threading.Thread(target=_drain_stderr, name=f"err-{self.cell_label}", daemon=True)
+            t_out.start()
+            t_err.start()
+
             while child.poll() is None:
                 now = time.monotonic()
                 if now - last_heartbeat_at > self.config.heartbeat_timeout_seconds:
@@ -427,12 +439,21 @@ class SubprocessRunner:
                     timed_out = True
                     break
                 time.sleep(self.config.poll_interval_seconds)
+        except Exception:
+            # run() never raises. A setup failure (e.g. an un-openable log
+            # path) lands here; the child is reaped in the finally block and
+            # the result is classified OTHER_ERROR below (no partial JSON).
+            pass
         finally:
             self._ensure_dead(child)
-            t_out.join(timeout=5.0)
-            t_err.join(timeout=5.0)
-            stdout_fh.close()
-            stderr_fh.close()
+            if t_out is not None:
+                t_out.join(timeout=5.0)
+            if t_err is not None:
+                t_err.join(timeout=5.0)
+            if stdout_fh is not None:
+                stdout_fh.close()
+            if stderr_fh is not None:
+                stderr_fh.close()
 
         exit_code = child.returncode
         elapsed = time.monotonic() - start

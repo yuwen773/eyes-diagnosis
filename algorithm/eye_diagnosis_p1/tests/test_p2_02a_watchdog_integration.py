@@ -588,3 +588,71 @@ def test_posix_sigterm_ignoring_child_is_force_killed(tmp_path: Path) -> None:
     assert result.killed is True
     assert result.exit_code is not None
     assert result.exit_code == -signal.SIGKILL
+
+
+# ---------------------------------------------------------------------------
+# Robustness gates (code-review Important #1, #2).
+# ---------------------------------------------------------------------------
+
+
+def test_drain_survives_malformed_heartbeat_line(tmp_path: Path) -> None:
+    """A probe that prints an unknown stage name must NOT crash the stdout
+    drain thread. If it did, the pipe would stall, no further heartbeat
+    would refresh, and the run would be misclassified as TIMEOUT. The
+    malformed line is logged and skipped; valid heartbeats still parse."""
+    child = tmp_path / "child.py"
+    body = '''
+        from pathlib import Path
+        import json, sys
+        print("STAGE not_a_real_stage START", flush=True)   # malformed -> ValueError in parser
+        print("STAGE forward START", flush=True)             # valid, must still be parsed
+        out = Path(sys.argv[1]) / "A.json"
+        out.write_text(json.dumps({
+            "protocol": {}, "cell": {"label": "A", "config": {}}, "setup": {},
+            "records": [], "failed_stage": None, "all_pass": True,
+        }) + "\\n", encoding="utf-8")
+        '''
+    _write_guarded_child(child, body)
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child), str(cell_dir)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=_fast_config(),
+        terminator=FakeTerminator(),
+    )
+    result = runner.run()
+    assert result.verdict == "PASS"
+    assert result.timed_out is False
+    # The drain thread survived the bogus line and kept parsing.
+    assert result.last_heartbeat_stage == "forward"
+    # The malformed line is still captured for debugging.
+    assert "not_a_real_stage" in (cell_dir / "A.stdout.log").read_text(encoding="utf-8")
+
+
+def test_run_returns_other_error_and_reaps_when_log_open_fails(tmp_path: Path) -> None:
+    """If a log file cannot be opened after Popen succeeds, run() must not
+    raise and must still reap the child (no leaked subprocess)."""
+    cell_dir = tmp_path / "out"
+    cell_dir.mkdir()
+    # Make the stdout log path un-openable: a directory sits where the log
+    # file would be created, so open("w") raises OSError.
+    (cell_dir / "A.stdout.log").mkdir()
+    child = tmp_path / "child.py"
+    _write_guarded_child(child, 'print("STAGE forward START", flush=True)\nimport time\ntime.sleep(10)\n')
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", str(child)],
+        out_dir=cell_dir,
+        cell_label="A",
+        config=_fast_config(
+            heartbeat_timeout_seconds=0.5,
+            terminate_grace_seconds=1.0,
+            kill_grace_seconds=2.0,
+        ),
+        terminator=RealTerminator(),
+    )
+    # Must return (not raise) within a bounded time — proves the child was
+    # reaped rather than leaked while run() propagated the open error.
+    result = runner.run()
+    assert result.verdict == "OTHER_ERROR"
