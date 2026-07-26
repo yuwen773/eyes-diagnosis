@@ -99,6 +99,12 @@ class WatchConfig:
     process_timeout_seconds: float = 300.0
     heartbeat_timeout_seconds: float = 90.0
     poll_interval_seconds: float = 0.1
+    # Two-phase reap budgets: after a timeout we send a graceful signal
+    # and wait ``terminate_grace_seconds`` for the tree to exit, then
+    # escalate to a forced kill and wait ``kill_grace_seconds``. Tests
+    # override both with sub-second values.
+    terminate_grace_seconds: float = 10.0
+    kill_grace_seconds: float = 5.0
 
 
 # ---------------------------------------------------------------------------
@@ -109,48 +115,91 @@ class WatchConfig:
 
 
 class Terminator(Protocol):
-    """Platform-aware process-tree killer."""
+    """Platform-aware process-tree killer.
+
+    ``terminate`` requests a graceful stop (POSIX ``SIGTERM`` to the
+    child's process group; Windows ``taskkill /T`` without ``/F``).
+    ``kill`` forces it (POSIX ``SIGKILL``; Windows ``taskkill /F /T``).
+    The runner escalates from the first to the second.
+    """
 
     def terminate(self, pid: int) -> None: ...
 
+    def kill(self, pid: int) -> None: ...
+
 
 class RealTerminator:
-    """Windows: ``taskkill /F /PID <pid> /T`` via array-form subprocess.run.
+    """Windows: ``taskkill /PID <pid> /T`` (add ``/F`` to force).
 
-    POSIX: ``os.killpg(pgid, SIGTERM)``.
+    POSIX: ``os.killpg(os.getpgid(pid), SIGTERM|SIGKILL)``.
 
     The array form of ``subprocess.run`` is used (not the shell) so MSYS
     path translation cannot mangle the arguments. ``check=False``
     swallows the 128 exit code that ``taskkill`` returns when the PID
     is already gone.
+
+    POSIX correctness depends on the child being spawned with
+    ``start_new_session=True`` (see ``_popen_isolation_kwargs``): that
+    makes the child its own session/group leader, so
+    ``os.getpgid(child.pid) == child.pid`` and ``killpg`` reaches only
+    the child's tree — never the watchdog's own process group (pytest /
+    the CI shell).
     """
 
     def terminate(self, pid: int) -> None:
         if sys.platform == "win32":
-            subprocess.run(
-                ["cmd", "/c", "taskkill", "/F", "/PID", str(pid), "/T"],
-                check=False,
-                capture_output=True,
-            )
+            # Console children do not reliably honour a graceful WM_CLOSE
+            # (taskkill without /F), so there is no meaningful soft phase
+            # on Windows — force immediately. The SIGTERM->SIGKILL
+            # escalation only matters on POSIX.
+            self._taskkill(pid, force=True)
             return
+        self._signal_group(pid, signal.SIGTERM)
+
+    def kill(self, pid: int) -> None:
+        if sys.platform == "win32":
+            self._taskkill(pid, force=True)
+            return
+        self._signal_group(pid, signal.SIGKILL)
+
+    @staticmethod
+    def _taskkill(pid: int, *, force: bool) -> None:
+        cmd = ["cmd", "/c", "taskkill"]
+        if force:
+            cmd.append("/F")
+        cmd += ["/PID", str(pid), "/T"]
+        subprocess.run(cmd, check=False, capture_output=True)
+
+    @staticmethod
+    def _signal_group(pid: int, sig: int) -> None:
         try:
             pgid = os.getpgid(pid)
         except ProcessLookupError:
             return
         try:
-            os.killpg(pgid, signal.SIGTERM)
+            os.killpg(pgid, sig)
         except ProcessLookupError:
             return
 
 
 @dataclass
 class FakeTerminator:
-    """Test double: records every pid passed to ``terminate``."""
+    """Test double: records every pid passed to ``terminate``/``kill``.
+
+    ``pids`` is the graceful-terminate ledger; ``killed_pids`` is the
+    forced-kill ledger. A FakeTerminator never actually signals a
+    process, so a runner using it cannot reap a still-running child —
+    real-reap assertions must use ``RealTerminator``.
+    """
 
     pids: list[int] = field(default_factory=list)
+    killed_pids: list[int] = field(default_factory=list)
 
     def terminate(self, pid: int) -> None:
         self.pids.append(int(pid))
+
+    def kill(self, pid: int) -> None:
+        self.killed_pids.append(int(pid))
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +238,22 @@ class WatchResult:
 
 
 _STDERR_TAIL_CHARS = 4096
+
+
+def _popen_isolation_kwargs() -> dict[str, Any]:
+    """Popen kwargs that put the child in its own process group.
+
+    POSIX: ``start_new_session=True`` runs ``setsid()`` in the child, so
+    it becomes a session + process-group leader (``pgid == pid``). This
+    is what makes ``RealTerminator``'s ``killpg`` safe — it kills only
+    the child's tree, never the watchdog's own group (pytest / CI shell).
+
+    Windows: ``CREATE_NEW_PROCESS_GROUP`` gives the child a fresh group
+    id so ``taskkill /T`` targets only its tree.
+    """
+    if sys.platform == "win32":
+        return {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {"start_new_session": True}
 
 
 def _classify(
@@ -251,6 +316,30 @@ class SubprocessRunner:
     config: WatchConfig
     terminator: Terminator = field(default_factory=RealTerminator)
 
+    def _ensure_dead(self, child: "subprocess.Popen[str]") -> None:
+        """Guarantee the child tree is reaped before ``run`` returns.
+
+        No-op if the child already exited on its own. Otherwise escalate:
+        graceful ``terminate`` -> wait ``terminate_grace_seconds`` ->
+        forced ``kill`` -> wait ``kill_grace_seconds``. With a real
+        Terminator this leaves ``child.returncode`` non-None (the child
+        is dead); the only way it stays None is a non-killing Terminator
+        such as the test FakeTerminator, which real-reap gates avoid.
+        """
+        if child.poll() is not None:
+            return
+        self.terminator.terminate(child.pid)
+        try:
+            child.wait(timeout=self.config.terminate_grace_seconds)
+            return
+        except subprocess.TimeoutExpired:
+            pass
+        self.terminator.kill(child.pid)
+        try:
+            child.wait(timeout=self.config.kill_grace_seconds)
+        except subprocess.TimeoutExpired:
+            pass
+
     def run(self) -> WatchResult:
         """Block until the child exits or a timeout fires; return WatchResult.
 
@@ -280,6 +369,7 @@ class SubprocessRunner:
                 bufsize=1,
                 cwd=str(self.out_dir),
                 env=child_env,
+                **_popen_isolation_kwargs(),
             )
         except OSError:
             elapsed = time.monotonic() - start
@@ -329,20 +419,16 @@ class SubprocessRunner:
             while child.poll() is None:
                 now = time.monotonic()
                 if now - last_heartbeat_at > self.config.heartbeat_timeout_seconds:
-                    self.terminator.terminate(child.pid)
                     killed = True
                     timed_out = True
                     break
                 if now - start > self.config.process_timeout_seconds:
-                    self.terminator.terminate(child.pid)
+                    killed = True
                     timed_out = True
                     break
                 time.sleep(self.config.poll_interval_seconds)
         finally:
-            try:
-                child.wait(timeout=5.0)
-            except subprocess.TimeoutExpired:
-                pass
+            self._ensure_dead(child)
             t_out.join(timeout=5.0)
             t_err.join(timeout=5.0)
             stdout_fh.close()

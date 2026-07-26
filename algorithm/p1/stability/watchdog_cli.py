@@ -47,6 +47,8 @@ def _build_argparser() -> argparse.ArgumentParser:
     parser.add_argument("--process-timeout", type=float, default=300.0)
     parser.add_argument("--heartbeat-timeout", type=float, default=90.0)
     parser.add_argument("--poll-interval", type=float, default=0.1)
+    parser.add_argument("--terminate-grace", type=float, default=10.0)
+    parser.add_argument("--kill-grace", type=float, default=5.0)
     parser.add_argument(
         "--child",
         type=Path,
@@ -98,6 +100,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         process_timeout_seconds=args.process_timeout,
         heartbeat_timeout_seconds=args.heartbeat_timeout,
         poll_interval_seconds=args.poll_interval,
+        terminate_grace_seconds=args.terminate_grace,
+        kill_grace_seconds=args.kill_grace,
     )
     summary: dict[str, dict] = {}
     all_pass = True
