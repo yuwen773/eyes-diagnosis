@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.evidence;
+import org.junit.jupiter.api.Test; import java.util.concurrent.atomic.AtomicInteger; import static org.junit.jupiter.api.Assertions.*;
+class QueryRewriteActionTest { @Test void delegatesOnlyTheOriginalControlledQuery() { AtomicInteger calls = new AtomicInteger(); QueryRewriteAction action = new QueryRewriteAction(query -> { calls.incrementAndGet(); return new EvidenceQuery(query.diseaseCodes(), query.topicCodes(), query.controlledTerms(), query.topK(), 1); }); assertEquals(1, action.execute(EvidenceFixtures.query()).rewriteAttempt()); assertEquals(1, calls.get()); } }

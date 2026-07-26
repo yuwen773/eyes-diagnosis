@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.evidence;
+import org.junit.jupiter.api.Test; import static org.junit.jupiter.api.Assertions.*;
+class EvidenceTermCatalogTest { @Test void catalogIsVersionedImmutableAndFailClosed() { EvidenceTermCatalog catalog = new FixedEvidenceTermCatalog(); assertTrue(catalog.termsForDiseaseCode("amd").contains("amd")); assertTrue(catalog.termsForTopicCode("DISEASE_OVERVIEW").contains("disease overview")); assertEquals("evidence-term-catalog-v1", catalog.version()); assertThrows(RuntimeException.class, () -> catalog.termsForDiseaseCode("unknown")); assertThrows(UnsupportedOperationException.class, () -> catalog.termsForDiseaseCode("amd").add("x")); } }

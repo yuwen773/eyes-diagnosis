@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.evidence;
+import org.junit.jupiter.api.Test; import java.util.Set; import static org.junit.jupiter.api.Assertions.*;
+class EvidenceQueryTest { @Test void permitsOnlyOneRewriteAndBoundedTopK() { assertDoesNotThrow(() -> new EvidenceQuery(Set.of("amd"), Set.of("DISEASE_OVERVIEW"), Set.of("amd"), 1, 1)); assertThrows(RuntimeException.class, () -> new EvidenceQuery(Set.of("amd"), Set.of("DISEASE_OVERVIEW"), Set.of("amd"), 11, 0)); assertThrows(RuntimeException.class, () -> new EvidenceQuery(Set.of("amd"), Set.of("DISEASE_OVERVIEW"), Set.of("amd"), 1, 2)); } }

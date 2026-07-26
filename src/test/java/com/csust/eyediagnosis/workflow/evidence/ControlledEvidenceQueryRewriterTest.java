@@ -1,0 +1,3 @@
+package com.csust.eyediagnosis.workflow.evidence;
+import org.junit.jupiter.api.Test; import static org.junit.jupiter.api.Assertions.*;
+class ControlledEvidenceQueryRewriterTest { @Test void expandsOnlyCatalogTermsOnce() { EvidenceQuery initial = EvidenceFixtures.query(); EvidenceQuery rewritten = new CatalogEvidenceQueryRewriter(new FixedEvidenceTermCatalog()).rewrite(initial); assertEquals(1, rewritten.rewriteAttempt()); assertEquals(initial.diseaseCodes(), rewritten.diseaseCodes()); assertEquals(initial.topicCodes(), rewritten.topicCodes()); assertTrue(rewritten.controlledTerms().containsAll(initial.controlledTerms())); assertThrows(RuntimeException.class, () -> new CatalogEvidenceQueryRewriter(new FixedEvidenceTermCatalog()).rewrite(rewritten)); } }
