@@ -68,4 +68,13 @@ public class MybatisDiagnosisWorkflowRepository implements DiagnosisWorkflowRepo
                 .set(DiagnosisWorkflowEntity::getLimitationReasonCode, limitation).set(DiagnosisWorkflowEntity::getUpdatedAt, LocalDateTime.now())
                 .setSql("workflowVersion = workflowVersion + 1"));
     }
+
+    @Override
+    public int attachInferenceEnvelopeIfVersionMatches(String workflowId, long expectedWorkflowVersion, String inferenceEnvelopeId) {
+        return mapper.update(null, new LambdaUpdateWrapper<DiagnosisWorkflowEntity>()
+                .eq(DiagnosisWorkflowEntity::getWorkflowId, workflowId)
+                .eq(DiagnosisWorkflowEntity::getWorkflowVersion, expectedWorkflowVersion)
+                .set(DiagnosisWorkflowEntity::getInferenceEnvelopeId, inferenceEnvelopeId)
+                .set(DiagnosisWorkflowEntity::getUpdatedAt, LocalDateTime.now()));
+    }
 }

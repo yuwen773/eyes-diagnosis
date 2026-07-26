@@ -1,61 +1,36 @@
 package com.csust.eyediagnosis.grpc;
 
-import com.csust.eyediagnosis.config.GrpcConfig;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
+import com.csust.eyediagnosis.workflow.inference.DiagnoseModelClient;
+import com.csust.eyediagnosis.workflow.inference.DiagnoseModelRequest;
+import com.csust.eyediagnosis.workflow.inference.DiagnoseModelResult;
+import com.csust.eyediagnosis.workflow.inference.ModelPrediction;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.TimeUnit;
+import java.security.MessageDigest;
 
-@Slf4j
+/** Legacy synchronous compatibility projection. Transport ownership remains in GrpcDiagnoseModelClient. */
 @Component
 public class DiagnosisGrpcClient {
-
-    private final GrpcConfig grpcConfig;
-    private ManagedChannel channel;
-    private com.csust.eyediagnosis.grpc.DiagnosisServiceGrpc.DiagnosisServiceBlockingStub blockingStub;
-
-    public DiagnosisGrpcClient(GrpcConfig grpcConfig) {
-        this.grpcConfig = grpcConfig;
+    private final DiagnoseModelClient modelClient;
+    public DiagnosisGrpcClient(DiagnoseModelClient modelClient) { this.modelClient = modelClient; }
+    public DiagnosisProto.DiagnosisResponse diagnose(byte[] imageData, String imageFormat) {
+        DiagnoseModelResult result = modelClient.diagnose(new DiagnoseModelRequest("legacy-" + digest(imageData), 0,
+                imageData, digest(imageData), imageFormat));
+        DiagnosisProto.DiagnosisResponse.Builder response = DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel(result.prediction() == null ? "" : result.prediction().diseaseCode())
+                .setProbability(result.prediction() == null ? 0 : result.prediction().calibratedProbability())
+                .setReliabilityScore(result.reliabilityScore()).setDescription(result.description())
+                .setRejected(result.rejected()).setAbstainReason(result.abstainReason() == null ? "" : result.abstainReason())
+                .setQualityScore(result.quality().score()).setRequiresReview(result.requiresReview())
+                .setQualityReasons(result.quality().reasonCodes().stream().map(code -> code.protocolCode() == null ? "" : code.protocolCode()).filter(code -> !code.isBlank()).collect(java.util.stream.Collectors.joining(",")))
+                .setIsOod(result.oodSnapshot().outOfDistribution()).setOodStatus(parseOod(result.oodSnapshot().status()))
+                .setOodScore(result.oodSnapshot().score() == null ? 0 : result.oodSnapshot().score())
+                .setCalibrationStatus(result.calibrationSnapshot().status()).setCalibratedProbability(result.calibrationSnapshot().calibratedProbability() == null ? 0 : result.calibrationSnapshot().calibratedProbability())
+                .setModelVersion(result.modelVersion()).setWeightSha256(result.modelWeightFingerprint())
+                .setPreprocessVersion(result.preprocessVersion()).setInferencePolicyVersion(result.inferencePolicyVersion());
+        for (ModelPrediction prediction : result.topPredictions()) response.addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder().setLabel(prediction.label()).setProbability(prediction.probability()));
+        return response.build();
     }
-
-    @PostConstruct
-    public void init() {
-        channel = ManagedChannelBuilder
-                .forAddress(grpcConfig.getHost(), grpcConfig.getPort())
-                .usePlaintext()
-                .build();
-        blockingStub = com.csust.eyediagnosis.grpc.DiagnosisServiceGrpc.newBlockingStub(channel);
-    }
-
-    public com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisResponse diagnose(byte[] imageData, String imageFormat) {
-        com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisRequest request = com.csust.eyediagnosis.grpc.DiagnosisProto.DiagnosisRequest.newBuilder()
-                .setImageData(com.google.protobuf.ByteString.copyFrom(imageData))
-                .setImageFormat(imageFormat)
-                .build();
-        try {
-            return blockingStub
-                    .withDeadlineAfter(grpcConfig.getDeadlineMs(), TimeUnit.MILLISECONDS)
-                    .diagnose(request);
-        } catch (StatusRuntimeException e) {
-            log.error("gRPC diagnosis failed: {}", e.getStatus().getDescription(), e);
-            throw new RuntimeException("诊断服务调用失败: " + e.getStatus().getDescription(), e);
-        }
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (channel != null && !channel.isShutdown()) {
-            channel.shutdown();
-            try {
-                channel.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                channel.shutdownNow();
-            }
-        }
-    }
+    private static DiagnosisProto.OodStatus parseOod(String value) { try { return DiagnosisProto.OodStatus.valueOf(value); } catch (IllegalArgumentException exception) { return DiagnosisProto.OodStatus.OOD_STATUS_UNSPECIFIED; } }
+    private static String digest(byte[] bytes) { try { return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); } catch (Exception exception) { throw new IllegalStateException(exception); } }
 }

@@ -15,4 +15,7 @@ public interface DiagnosisWorkflowRepository {
                                                             String exposureStatus, String stopReasonCode, String limitationReasonCode) {
         throw new UnsupportedOperationException("Exact graph-binding compare-and-swap is not implemented");
     }
+    default int attachInferenceEnvelopeIfVersionMatches(String workflowId, long expectedWorkflowVersion, String inferenceEnvelopeId) {
+        throw new UnsupportedOperationException("Inference envelope compare-and-swap is not implemented");
+    }
 }
