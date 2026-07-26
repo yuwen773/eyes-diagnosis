@@ -22,7 +22,7 @@ public final class EvidenceCitationDeltaWriter implements SegmentBusinessDeltaWr
         }
     }
     private static DiagnosisCitationEntity entity(long epoch, DiagnosisCitationSnapshot snapshot) {
-        DiagnosisCitationEntity entity = new DiagnosisCitationEntity(); entity.setCitationId(UUID.randomUUID().toString()); entity.setWorkflowId(snapshot.workflowId()); entity.setRetrievalEpoch(epoch);
+        DiagnosisCitationEntity entity = new DiagnosisCitationEntity(); entity.setCitationId(com.csust.eyediagnosis.workflow.evidence.CitationIds.forSnapshot(snapshot)); entity.setWorkflowId(snapshot.workflowId()); entity.setRetrievalEpoch(epoch);
         entity.setSourceDocumentId(snapshot.sourceId()); entity.setSourceRevision(snapshot.sourceRevision()); entity.setVisibilitySnapshot("CURATED_PUBLIC"); entity.setReviewStatusSnapshot("APPROVED");
         entity.setDiseaseCodesSnapshot(String.join(",", snapshot.diseaseCodes())); entity.setTopicCodesSnapshot(String.join(",", snapshot.topicCodes())); entity.setQuotedSpan(snapshot.quotedText()); entity.setQuotedSpanDigest(snapshot.quotedTextDigest());
         entity.setRetrievedAt(LocalDateTime.now()); return entity;

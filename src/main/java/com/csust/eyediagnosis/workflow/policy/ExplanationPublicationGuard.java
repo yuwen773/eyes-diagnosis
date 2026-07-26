@@ -50,7 +50,7 @@ public final class ExplanationPublicationGuard {
                 new EnumMap<>(ExplanationPublicationStatus.class);
         transitions.put(ExplanationPublicationStatus.NONE, EnumSet.of(ExplanationPublicationStatus.DRAFT));
         transitions.put(ExplanationPublicationStatus.DRAFT, EnumSet.of(ExplanationPublicationStatus.VALIDATED,
-                ExplanationPublicationStatus.REJECTED));
+                ExplanationPublicationStatus.REJECTED, ExplanationPublicationStatus.WITHHELD));
         transitions.put(ExplanationPublicationStatus.VALIDATED, EnumSet.of(ExplanationPublicationStatus.WITHHELD,
                 ExplanationPublicationStatus.PUBLISHED));
         for (ExplanationPublicationStatus status : ExplanationPublicationStatus.values()) {
