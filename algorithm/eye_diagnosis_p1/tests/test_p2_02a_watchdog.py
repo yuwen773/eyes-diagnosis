@@ -42,8 +42,35 @@ def test_parse_heartbeat_line_returns_event_for_start_and_pass() -> None:
     assert e1 == HeartbeatEvent(stage="forward", kind="START")
     e2 = parse_heartbeat_line("STAGE optimizer_step PASS")
     assert e2 == HeartbeatEvent(stage="optimizer_step", kind="PASS")
-
-
 def test_parse_heartbeat_line_raises_for_unknown_stage() -> None:
     with pytest.raises(ValueError, match="unknown stage"):
         parse_heartbeat_line("STAGE does_not_exist START")
+
+
+from p1.stability.watchdog import (
+    FakeTerminator,
+    RealTerminator,
+    Terminator,
+    WatchConfig,
+)
+
+
+# ---------------------------------------------------------------------------
+# Test 2: WatchConfig + Terminator
+# ---------------------------------------------------------------------------
+
+
+def test_watchconfig_defaults_match_design() -> None:
+    """Verify WatchConfig uses the design timeout defaults."""
+    c = WatchConfig()
+    assert c.process_timeout_seconds == 300.0
+    assert c.heartbeat_timeout_seconds == 90.0
+    assert c.poll_interval_seconds == 0.1
+
+
+def test_fake_terminator_records_pids() -> None:
+    """Verify FakeTerminator records every terminated process ID."""
+    ft = FakeTerminator()
+    ft.terminate(1234)
+    ft.terminate(5678)
+    assert ft.pids == [1234, 5678]

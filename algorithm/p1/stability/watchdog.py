@@ -71,6 +71,81 @@ def parse_heartbeat_line(line: str) -> Optional[HeartbeatEvent]:
 
 
 __all__ = [
+    "FakeTerminator",
     "HeartbeatEvent",
+    "RealTerminator",
+    "Terminator",
+    "WatchConfig",
     "parse_heartbeat_line",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Watch configuration (frozen dataclass; tests override the timeouts).
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class WatchConfig:
+    """Time-budget knobs for a single SubprocessRunner.
+
+    Defaults are the design values: 5 minutes for the whole cell, 90
+    seconds since the last heartbeat line, 100 ms poll granularity.
+    Tests use much smaller values so the suite finishes in <30 s.
+    """
+
+    process_timeout_seconds: float = 300.0
+    heartbeat_timeout_seconds: float = 90.0
+    poll_interval_seconds: float = 0.1
+
+
+# ---------------------------------------------------------------------------
+# Terminator Protocol + the real Windows/POSIX implementations + a fake
+# for unit tests. The runner holds a Terminator (not a RealTerminator)
+# so the kill path is unit-testable without spawning a child.
+# ---------------------------------------------------------------------------
+
+
+class Terminator(Protocol):
+    """Platform-aware process-tree killer."""
+
+    def terminate(self, pid: int) -> None: ...
+
+
+class RealTerminator:
+    """Windows: ``taskkill /F /PID <pid> /T`` via array-form subprocess.run.
+
+    POSIX: ``os.killpg(pgid, SIGTERM)``.
+
+    The array form of ``subprocess.run`` is used (not the shell) so MSYS
+    path translation cannot mangle the arguments. ``check=False``
+    swallows the 128 exit code that ``taskkill`` returns when the PID
+    is already gone.
+    """
+
+    def terminate(self, pid: int) -> None:
+        if sys.platform == "win32":
+            subprocess.run(
+                ["cmd", "/c", "taskkill", "/F", "/PID", str(pid), "/T"],
+                check=False,
+                capture_output=True,
+            )
+            return
+        try:
+            pgid = os.getpgid(pid)
+        except ProcessLookupError:
+            return
+        try:
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+
+
+@dataclass
+class FakeTerminator:
+    """Test double: records every pid passed to ``terminate``."""
+
+    pids: list[int] = field(default_factory=list)
+
+    def terminate(self, pid: int) -> None:
+        self.pids.append(int(pid))
