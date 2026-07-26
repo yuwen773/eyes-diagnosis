@@ -22,7 +22,32 @@ jobs:
             algorithm/requirements-p1.txt
       - run: python -m pip install -r requirements.txt -r requirements-p1.txt pytest
       - run: python generate_proto.py
-      - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -q
+      - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -m "not slow" -q
+
+  watchdog:
+    # Dedicated job for the P2-02A T2 subprocess watchdog suite. These
+    # tests spawn real subprocesses and exercise POSIX process-group
+    # isolation + kill/reap, so they must run on Linux (they skip on
+    # Windows). They are marked `slow` and therefore excluded from the
+    # `python` job above; this job runs them in full. The watchdog module
+    # and its deps (schema, matrix) are pure stdlib, so only pytest is
+    # installed here — no torch, no proto codegen.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: algorithm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: >-
+          python -m pytest
+          eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py
+          eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py
+          -q
 
   backend-compile:
     runs-on: ubuntu-latest
