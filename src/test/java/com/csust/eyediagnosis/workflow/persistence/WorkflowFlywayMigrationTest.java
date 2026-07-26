@@ -23,7 +23,7 @@ class WorkflowFlywayMigrationTest {
         }
         Flyway flyway = Flyway.configure().dataSource(dataSource).baselineOnMigrate(true).baselineVersion("9")
                 .locations("classpath:db/migration").load();
-        assertEquals(3, flyway.migrate().migrationsExecuted);
+        assertEquals(4, flyway.migrate().migrationsExecuted);
         assertEquals(0, flyway.migrate().migrationsExecuted);
         Set<String> tables = Set.of("t_diagnosis_workflow", "t_diagnosis_workflow_event", "t_workflow_job", "t_workflow_node_execution", "t_inference_envelope", "t_diagnosis_citation", "t_explanation_snapshot", "t_human_review_task");
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
