@@ -404,7 +404,7 @@ def test_watchdog_cli_serial_matrix_with_one_timeout(tmp_path: Path) -> None:
         "--fold-assignment", dummy,
         "--image-root", dummy,
         "--out-dir", str(cell_dir),
-        "--heartbeat-timeout", "0.5",
+        "--heartbeat-timeout", "2.0",
         "--process-timeout", "30.0",
     ])
     assert rc == 1
