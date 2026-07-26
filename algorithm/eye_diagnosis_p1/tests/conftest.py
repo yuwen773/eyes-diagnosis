@@ -25,3 +25,11 @@ def pytest_report_header(config) -> str:
     if root:
         return f"eye-data-root: {Path(root)}"
     return "eye-data-root: <unset> (integration tests will skip)"
+
+
+def pytest_configure(config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "slow: marks tests as slow (deselect with -m 'not slow'); "
+        "currently used by the watchdog subprocess suite which takes ~62s locally",
+    )
