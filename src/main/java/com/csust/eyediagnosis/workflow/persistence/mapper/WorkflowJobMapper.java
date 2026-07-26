@@ -14,8 +14,8 @@ import java.util.List;
 public interface WorkflowJobMapper extends BaseMapper<WorkflowJobEntity> {
 
     @Insert("""
-            INSERT INTO t_workflow_job(jobId, workflowId, jobType, segmentCode, executionEpoch, status, attempt, maxAttempts, availableAt, leaseVersion)
-            VALUES(#{jobId}, #{workflowId}, #{jobType}, #{segmentCode}, #{executionEpoch}, #{status}, #{attempt}, #{maxAttempts}, DEFAULT, #{leaseVersion})
+            INSERT INTO t_workflow_job(jobId, workflowId, jobType, segmentCode, executionEpoch, status, attempt, maxAttempts, availableAt, leaseVersion, graphThreadId, graphCheckpointId)
+            VALUES(#{jobId}, #{workflowId}, #{jobType}, #{segmentCode}, #{executionEpoch}, #{status}, #{attempt}, #{maxAttempts}, DEFAULT, #{leaseVersion}, #{graphThreadId}, #{graphCheckpointId})
             """)
     int insertWithDatabaseDefaultAvailableAt(WorkflowJobEntity entity);
 

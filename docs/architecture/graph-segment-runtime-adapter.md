@@ -1,0 +1,13 @@
+# Graph Segment Runtime Adapter
+
+PR-05 separates immutable graph topology from graph execution. `GraphDefinitionRegistry` owns manifests and validates an exact `(definitionVersion, definitionHash, actionVersion)` binding. `ExecutableGraphDefinitionRegistry` owns separately registered compiled-graph factories and refuses execution unless the binding is also present in the manifest registry. There is no latest-version fallback and no runtime replacement.
+
+`START_SEGMENT` builds a new public `RunnableConfig` with a generated thread id and invokes the graph from `START`. `RESUME_SEGMENT` takes the persisted `GraphRecoveryToken(threadId, checkpointId)`, builds a new public config, and calls `withResume()`. After either invocation, the adapter reads a public `StateSnapshot`; `StateSnapshot.next()` is the only routing result it consumes. `END` completes the current job without creating a successor. Any non-END value is matched only against `GraphSegmentSpec.entryBoundary`; it never inspects conditional edges or business-decision state.
+
+Graph execution and checkpoint writes happen outside the business transaction. The graph action writes a typed `SegmentBusinessCommitPlan` into the controlled graph-state key. Graph Core serializes that state as a map, so the innermost adapter decodes only the PR-05 `NoBusinessDelta` representation; unsupported deltas fail closed until their owning PR supplies a dedicated codec.
+
+The commit coordinator executes one database transaction: it checks the active lease fence, checks the exact workflow binding and version, persists the typed business delta, CAS-updates the workflow, appends an event, marks the current job succeeded with the same fence, and for a non-terminal snapshot creates the unique generic `RESUME_SEGMENT` job carrying the recovery token. A fence loss, binding mismatch, duplicate successor, or CAS conflict rolls all of those business changes back.
+
+Checkpoint data is runtime continuation data, not business truth. A checkpoint becomes accepted only when the coordinator transaction succeeds and the job/workflow/event (and, for non-END, successor job) reference it. A checkpoint produced before a failed commit is an orphan and must not advance MySQL workflow state. Automatic orphan cleanup is intentionally out of scope.
+
+Production execution remains disabled by default. The PR-05 application does not register a fake executable `fundus-diagnosis-v1` graph or any diagnostic node. When execution is explicitly enabled, `MysqlGraphCheckpointSaverFactory` creates a `MysqlSaver` with `CREATE_NONE`: checkpoint tables must be provisioned deliberately and it never creates or alters workflow business tables. Test graphs may use `MemorySaver`.

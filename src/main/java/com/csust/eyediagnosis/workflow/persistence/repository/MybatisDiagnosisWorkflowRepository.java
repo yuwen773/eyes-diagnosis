@@ -50,4 +50,22 @@ public class MybatisDiagnosisWorkflowRepository implements DiagnosisWorkflowRepo
                 .set(DiagnosisWorkflowEntity::getLimitationReasonCode, limitation).set(DiagnosisWorkflowEntity::getUpdatedAt, LocalDateTime.now())
                 .setSql("workflowVersion = workflowVersion + 1"));
     }
+
+    public int updateStateIfExactBindingAndVersionMatches(String id, long version, String expected,
+                                                           String definitionVersion, String definitionHash, String actionVersion,
+                                                           String target, String segment, String publication, String exposure,
+                                                           String stop, String limitation) {
+        return mapper.update(null, new LambdaUpdateWrapper<DiagnosisWorkflowEntity>()
+                .eq(DiagnosisWorkflowEntity::getWorkflowId, id).eq(DiagnosisWorkflowEntity::getWorkflowVersion, version)
+                .eq(DiagnosisWorkflowEntity::getStatus, expected)
+                .eq(DiagnosisWorkflowEntity::getGraphDefinitionVersion, definitionVersion)
+                .eq(DiagnosisWorkflowEntity::getGraphDefinitionHash, definitionHash)
+                .eq(DiagnosisWorkflowEntity::getActionVersion, actionVersion)
+                .set(DiagnosisWorkflowEntity::getStatus, target).set(DiagnosisWorkflowEntity::getCurrentSegmentCode, segment)
+                .set(DiagnosisWorkflowEntity::getExplanationPublicationStatus, publication)
+                .set(DiagnosisWorkflowEntity::getPredictionExposureStatus, exposure)
+                .set(DiagnosisWorkflowEntity::getStopReasonCode, stop)
+                .set(DiagnosisWorkflowEntity::getLimitationReasonCode, limitation).set(DiagnosisWorkflowEntity::getUpdatedAt, LocalDateTime.now())
+                .setSql("workflowVersion = workflowVersion + 1"));
+    }
 }

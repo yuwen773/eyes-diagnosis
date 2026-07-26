@@ -9,4 +9,10 @@ public interface DiagnosisWorkflowRepository {
     List<ActiveWorkflowGraphBinding> findNonTerminalGraphBindings();
     int insert(DiagnosisWorkflowEntity entity);
     int updateStateIfVersionMatches(String workflowId, long expectedVersion, String expectedStatus, String targetStatus, String currentSegmentCode, String publicationStatus, String exposureStatus, String stopReasonCode, String limitationReasonCode);
+    default int updateStateIfExactBindingAndVersionMatches(String workflowId, long expectedVersion, String expectedStatus,
+                                                            String definitionVersion, String definitionHash, String actionVersion,
+                                                            String targetStatus, String currentSegmentCode, String publicationStatus,
+                                                            String exposureStatus, String stopReasonCode, String limitationReasonCode) {
+        throw new UnsupportedOperationException("Exact graph-binding compare-and-swap is not implemented");
+    }
 }

@@ -65,6 +65,21 @@ Schema: `src/main/resources/db/schema.sql`. Key tables: `t_user`, `t_diagnosis`,
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
+### Local MySQL and integration tests
+
+| Server | Port |
+| --- | ---: |
+| MySQL 5 | `3306` |
+| MySQL 8 | `3307` |
+
+Supply credentials only through the active shell or a local secret store; never commit them to this repository.
+
+For workflow MySQL integration tests, use a dedicated schema only. PR-05 uses
+`eye_diagnosis_graph_runtime_it` and supplies the connection through
+`WORKFLOW_IT_MYSQL_URL`, `WORKFLOW_IT_MYSQL_USERNAME`, and
+`WORKFLOW_IT_MYSQL_PASSWORD`. Never run destructive integration-test setup
+against the `diagnosis` application schema.
+
 ## External Services
 
 MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embeddings + vision) | Tencent COS (file storage) | Python gRPC (image classification)

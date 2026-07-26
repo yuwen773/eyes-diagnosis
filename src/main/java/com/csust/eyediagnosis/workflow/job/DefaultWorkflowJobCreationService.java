@@ -28,6 +28,10 @@ public class DefaultWorkflowJobCreationService implements WorkflowJobCreationSer
         entity.setAttempt(0);
         entity.setMaxAttempts(job.maxAttempts());
         entity.setLeaseVersion(0L);
+        if (job.recoveryToken() != null) {
+            entity.setGraphThreadId(job.recoveryToken().threadId());
+            entity.setGraphCheckpointId(job.recoveryToken().checkpointId());
+        }
         try {
             repository.insert(entity);
             return new JobCreationResult(JobCreationResult.Status.CREATED, entity.getJobId());

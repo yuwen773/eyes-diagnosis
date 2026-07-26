@@ -52,7 +52,10 @@ public class DefaultWorkflowJobClaimService implements WorkflowJobClaimService {
         return new LeasedWorkflowJob(job.getJobId(), job.getWorkflowId(), WorkflowJobType.valueOf(job.getJobType()),
                 SegmentCode.valueOf(job.getSegmentCode()), job.getExecutionEpoch(), job.getAttempt(), job.getMaxAttempts(),
                 job.getLeaseOwner(), job.getLeaseToken(), job.getLeaseVersion(),
-                job.getLeaseUntil().atZone(ZoneId.systemDefault()).toInstant());
+                job.getLeaseUntil().atZone(ZoneId.systemDefault()).toInstant(),
+                job.getGraphThreadId() == null || job.getGraphCheckpointId() == null ? null
+                        : new com.csust.eyediagnosis.workflow.graph.runtime.GraphRecoveryToken(
+                                job.getGraphThreadId(), job.getGraphCheckpointId()));
     }
 
     static long micros(java.time.Duration duration) {
