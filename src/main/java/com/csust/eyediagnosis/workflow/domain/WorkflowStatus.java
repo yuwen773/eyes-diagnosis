@@ -1,5 +1,7 @@
 package com.csust.eyediagnosis.workflow.domain;
 
+import java.util.List;
+
 /** Lifecycle state of the workflow business aggregate. */
 public enum WorkflowStatus {
     CREATED,
@@ -21,5 +23,9 @@ public enum WorkflowStatus {
 
     public boolean isActive() {
         return !isTerminal();
+    }
+
+    public static List<String> nonTerminalNames() {
+        return List.of(CREATED.name(), QUEUED.name(), RUNNING.name(), WAITING_HUMAN_REVIEW.name());
     }
 }

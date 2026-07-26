@@ -13,6 +13,10 @@ spring:
       api-key: test-not-a-real-openai-key
     dashscope:
       api-key: test-not-a-real-dashscope-key
+workflow:
+  graph:
+    # This shared test profile intentionally has no legacy schema or workflow runtime.
+    readiness-check-enabled: false
 
 cos:
   client:
