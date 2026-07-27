@@ -28,9 +28,10 @@ class FakeBilateralModel(nn.Module):
         # without needing FakeTensor to behave like torch.Tensor in cat/linear.
         batch = left.shape[0] if hasattr(left, "shape") else int(left.size(0))
         # Construct the 6-feature concat (left.mean + right.mean along HW) via
-        # a real torch tensor so it flows through nn.Linear.
-        l_mean = torch.zeros(batch, 3)
-        r_mean = torch.zeros(batch, 3)
+        # a real torch tensor on the same device as this linear layer.
+        device = next(self.linear.parameters()).device
+        l_mean = torch.zeros(batch, 3, device=device)
+        r_mean = torch.zeros(batch, 3, device=device)
         return self.linear(torch.cat([l_mean, r_mean], dim=1))
 
 

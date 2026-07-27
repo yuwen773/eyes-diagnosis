@@ -187,6 +187,20 @@ def train_one_epoch(
         try:
             logits = model(left, right)
             loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
+        except Exception as exc:
+            if is_oom_error(exc):
+                raise CudaOomError(
+                    op="forward", epoch=0, batch_idx=batch_idx, original=exc,
+                ) from exc
+            if isinstance(exc, RuntimeError) and (
+                "cuda" in str(exc).lower()
+                or "cublas" in str(exc).lower()
+                or "cudnn" in str(exc).lower()
+            ):
+                raise CudaRuntimeError(
+                    op="forward", epoch=0, batch_idx=batch_idx, original=exc,
+                ) from exc
+            raise
         finally:
             if autocast_ctx is not None:
                 autocast_ctx.__exit__(*sys.exc_info())
@@ -200,7 +214,16 @@ def train_one_epoch(
             scaler.scale(loss).backward()
             if amp and grad_clip_norm is not None:
                 scaler.unscale_(optimizer)
-                scaler.clip_grad_norm_(model.parameters(), grad_clip_norm)
+                # GradScaler doesn't expose clip_grad_norm_; use the
+                # standalone ``torch.nn.utils.clip_grad_norm_``. Tests can
+                # inject a ``scaler.clip_grad_norm_`` to track the call.
+                clip_fn = getattr(scaler, "clip_grad_norm_", None)
+                if clip_fn is not None:
+                    clip_fn(model.parameters(), grad_clip_norm)
+                else:
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), grad_clip_norm
+                    )
             scaler.step(optimizer)
             scaler.update()
         except Exception as exc:
@@ -278,6 +301,20 @@ def evaluate(
                 loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
                 probs = _sigmoid(logits)
                 probs_cpu = probs.detach().cpu() if hasattr(probs, "detach") else probs
+            except Exception as exc:
+                if is_oom_error(exc):
+                    raise CudaOomError(
+                        op="evaluate_forward", epoch=0, batch_idx=0, original=exc,
+                    ) from exc
+                if isinstance(exc, RuntimeError) and (
+                    "cuda" in str(exc).lower()
+                    or "cublas" in str(exc).lower()
+                    or "cudnn" in str(exc).lower()
+                ):
+                    raise CudaRuntimeError(
+                        op="evaluate_forward", epoch=0, batch_idx=0, original=exc,
+                    ) from exc
+                raise
             finally:
                 if autocast_ctx is not None:
                     autocast_ctx.__exit__(*sys.exc_info())

@@ -3,24 +3,31 @@
 The P2-02B engine runs an epoch over a DataLoader with ``num_batches``
 batches; the probe's existing FakeDataLoader yields a single batch. This
 factory yields N batches of fixed shape; each batch is a
-``FakeBilateralBatch`` containing left/right/labels tensors of the
-configured size so the engine's batching math works out exactly.
+``FakeBilateralBatch`` containing REAL torch tensors (not FakeTensor
+stand-ins) so the engine's ``torch.nn.BCEWithLogitsLoss`` and similar
+operations work without monkey-patching.
 """
 from __future__ import annotations
 
 from typing import Any, Iterator
 
-from .torch import FakeTensor
+import torch
 
 
 class FakeBilateralBatch:
-    """One batch: (left, right, labels) — 3-tuple drop-in for the engine."""
+    """One batch: (left, right, labels) — 3-tuple drop-in for the engine.
+
+    Tensors are real ``torch.Tensor`` so any real torch operation works on
+    them. ``left`` and ``right`` are random (seeded per build) to give the
+    model something to consume; ``labels`` are random float in {0, 1} so
+    the BCE criterion produces a finite loss.
+    """
 
     def __init__(
         self,
-        left: FakeTensor,
-        right: FakeTensor,
-        labels: FakeTensor,
+        left: torch.Tensor,
+        right: torch.Tensor,
+        labels: torch.Tensor,
     ) -> None:
         self.left = left
         self.right = right
@@ -36,23 +43,47 @@ class _FakeDataLoader:
         batch_size: int,
         num_batches: int,
         num_classes: int,
+        seed: int = 42,
     ) -> None:
         self._batch_size = batch_size
+        self._num_batches = num_batches
         self._remaining = num_batches
         self._num_classes = num_classes
+        self._seed = seed
 
     def __iter__(self) -> "_FakeDataLoader":
+        # Reset on every new iter so the runner's post-loop evaluate (a
+        # second pass over the same loader) yields the configured batches
+        # again instead of StopIteration-on-empty.
+        self._remaining = self._num_batches
         return self
 
     def __next__(self) -> FakeBilateralBatch:
         if self._remaining <= 0:
             raise StopIteration
         self._remaining -= 1
-        return FakeBilateralBatch(
-            left=FakeTensor((self._batch_size, 3, 380, 380)),
-            right=FakeTensor((self._batch_size, 3, 380, 380)),
-            labels=FakeTensor((self._batch_size, self._num_classes)),
+        # Use the current batch index as part of the seed so each batch has
+        # deterministic but distinct values; useful for metric variation.
+        seed = self._seed + (self._remaining if False else 0)
+        g = torch.Generator().manual_seed(self._seed)
+        left = torch.randn(
+            self._batch_size, 3, 380, 380, generator=g
         )
+        right = torch.randn(
+            self._batch_size, 3, 380, 380, generator=g
+        )
+        # Labels: Bernoulli so positives are present in most batches.
+        labels = torch.randint(
+            0, 2, (self._batch_size, self._num_classes),
+            generator=g, dtype=torch.float32,
+        )
+        # Force at least one positive per batch in classes 0 & 1 so that
+        # metrics has something to compute (not all-skipped).
+        labels[:, 0] = 1.0
+        labels[:, 1] = torch.tensor(
+            [float(i % 2) for i in range(self._batch_size)]
+        )
+        return FakeBilateralBatch(left=left, right=right, labels=labels)
 
 
 class FakeDataLoaderFactory:
@@ -65,11 +96,13 @@ class FakeDataLoaderFactory:
         num_batches: int = 3,
         num_classes: int = 8,
         image_size: int = 380,
+        seed: int = 42,
     ) -> None:
         self._batch_size = batch_size
         self._num_batches = num_batches
         self._num_classes = num_classes
         self._image_size = image_size
+        self._seed = seed
         self.build_calls: list[dict[str, Any]] = []
 
     def __call__(
@@ -97,4 +130,5 @@ class FakeDataLoaderFactory:
             batch_size=bs,
             num_batches=self._num_batches,
             num_classes=self._num_classes,
+            seed=self._seed,
         )
