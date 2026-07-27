@@ -61,6 +61,24 @@ class _RealTorchAdapter:
     def float(self, tensor: Any) -> Any:
         return tensor.float()
 
+    def autocast(
+        self,
+        device_type: str = "cuda",
+        dtype: Any = None,
+        enabled: bool = True,
+    ) -> Any:
+        # The probe relies on this default — it calls
+        # ``torch.autocast(device_type="cuda", enabled=True)`` without
+        # passing dtype, so the adapter must default to fp16 to match
+        # the benchmark's amp_dtype=torch.float16 in
+        # ``p1.benchmark.cuda_runtime``. Other callers (the benchmark)
+        # pass dtype explicitly; this default is a fallback for them too.
+        if dtype is None:
+            dtype = self._torch.float16
+        return self._torch.autocast(
+            device_type=device_type, dtype=dtype, enabled=enabled
+        )
+
 
 def build_real_torch_adapter() -> TorchAdapter:
     """Construct the real Torch adapter. Fails fast if torch is unavailable."""
@@ -107,70 +125,6 @@ def build_rows_for_fold(
             }
         )
     return rows
-
-
-def _unwrap_bilateral_batch(batch: Any) -> Any:
-    """Drop the 4th element (``cpu_ms``) from BilateralEyeDataset's tuple.
-
-    The frozen dataset returns ``(left, right, labels, cpu_ms)``; the probe
-    expects a 3-tuple ``(left, right, labels)`` (or 4-tuple with ``pids``,
-    which we don't have here).
-
-    PyTorch's DataLoader calls a custom ``collate_fn`` with EITHER:
-      - a single 4-tuple (when the dataset yields a tuple and no batching
-        happens — but with batch_size>=1 PyTorch wraps the dataset item
-        in a list first), OR
-      - a list of 4-tuples (one per batch item).
-
-    With ``batch_size=1`` (all T1.2 cells), the collate receives a list
-    of length 1 containing a single 4-tuple. We unwrap one layer and then
-    strip the 4th element.
-
-    The tensors are NOT stacked here — that is the caller's responsibility
-    (see ``_stack_bilateral_batch``). This function is pure structural
-    transform so it can be unit-tested without torch.
-    """
-    # Already a 3-tuple/list: nothing to do.
-    if isinstance(batch, (list, tuple)) and len(batch) == 4:
-        # Recurse in case of a single-item batch wrapper.
-        if isinstance(batch[0], (list, tuple)) and len(batch[0]) == 4:
-            return _unwrap_bilateral_batch(batch[0])
-        return [batch[0], batch[1], batch[2]]
-    # Single-item batch: list with one 4-tuple.
-    if isinstance(batch, (list, tuple)) and len(batch) == 1:
-        inner = batch[0]
-        if isinstance(inner, (list, tuple)) and len(inner) == 4:
-            return [inner[0], inner[1], inner[2]]
-    return batch
-
-
-def _stack_bilateral_batch(batch: Any) -> Any:
-    """Add a batch dimension to the 3-tuple ``(left, right, labels)``.
-
-    The probe's ``first_batch_wait`` stage requires tensors with shape
-    ``(B, 3, image_size, image_size)`` for left/right and ``(B, num_classes)``
-    for labels. With ``batch_size=1`` and a custom collate_fn, PyTorch does
-    not auto-stack tensors, so we do it here.
-
-    For ``batch_size>1`` (Cells C-F), the default collate would have stacked
-    the tensors, but we override collate_fn with our own, so we must stack
-    regardless. With batch_size>1, the input list already has one entry per
-    item; we just ``torch.stack`` each component.
-    """
-    import torch
-
-    if isinstance(batch, list) and len(batch) == 3:
-        left, right, labels = batch
-        # Single-item batch (batch_size=1): add a new batch dim at axis 0.
-        # Multi-item batch (batch_size>1): stack item tensors along axis 0.
-        if isinstance(left, torch.Tensor) and left.dim() == 3:
-            left = left.unsqueeze(0)
-        if isinstance(right, torch.Tensor) and right.dim() == 3:
-            right = right.unsqueeze(0)
-        if isinstance(labels, torch.Tensor) and labels.dim() == 1:
-            labels = labels.unsqueeze(0)
-        return [left, right, labels]
-    return batch
 
 
 @dataclass
@@ -224,8 +178,30 @@ class _RealDataLoaderFactory:
 
 
 def _collate_bilateral_batch(batch: Any) -> Any:
-    """Composable collate: unwrap the 4-tuple, then stack to [B, ...]."""
-    return _stack_bilateral_batch(_unwrap_bilateral_batch(batch))
+    """Collate ``BilateralEyeDataset`` items into stacked bilateral tensors.
+
+    PyTorch's DataLoader always hands ``collate_fn`` a list of ``B`` per-item
+    samples (``B == batch_size``), where each sample is the dataset's 4-tuple
+    ``(left, right, labels, cpu_ms)`` with ``left``/``right`` shaped
+    ``[3, H, W]`` and ``labels`` shaped ``[num_classes]``.
+
+    The probe's ``first_batch_wait`` stage expects the 3-tuple
+    ``(left, right, labels)`` with a leading batch dim: ``[B, 3, H, W]``,
+    ``[B, 3, H, W]``, ``[B, num_classes]``. We stack every component along a
+    new axis 0 and drop ``cpu_ms``. This holds for every ``B >= 1`` — the
+    frozen matrix cells A-F use ``B = 1, 1, 2, 4, 8, 8``.
+
+    A batch of ``B`` items is a length-``B`` list; a single 4-tuple is a
+    length-4 tuple. The previous two-step unwrap/stack could not tell a
+    4-item batch (cell D) from one 4-tuple, so it silently collapsed or
+    mis-unpacked cells C-F. Stacking directly removes that ambiguity.
+    """
+    import torch
+
+    lefts = torch.stack([sample[0] for sample in batch], dim=0)
+    rights = torch.stack([sample[1] for sample in batch], dim=0)
+    labels = torch.stack([sample[2] for sample in batch], dim=0)
+    return [lefts, rights, labels]
 
 
 def build_real_dataloader_factory(

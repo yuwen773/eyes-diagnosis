@@ -115,90 +115,50 @@ def test_build_rows_for_fold_empty_fold() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 4: batch unwrapper drops the 4th element (cpu_ms)
+# Test 4: collate stacks a list of per-item samples into batched tensors
 # ---------------------------------------------------------------------------
 
 
-def test_unwrap_batch_drops_cpu_ms() -> None:
-    """The 4-tuple (left, right, labels, cpu_ms) becomes (left, right, labels)."""
-    from p1.stability.cli import _unwrap_bilateral_batch
+@pytest.mark.parametrize("bsize", [1, 2, 4, 8])
+def test_collate_bilateral_batch_stacks_multi_item_batches(bsize: int) -> None:
+    """Regression: the DataLoader collate_fn ALWAYS receives a list of B
+    per-item samples (each the dataset's 4-tuple), for B >= 1.
 
-    left = object()
-    right = object()
-    labels = object()
-    cpu_ms = 12.345
-    out = _unwrap_bilateral_batch([left, right, labels, cpu_ms])
-    assert out == [left, right, labels]
-    assert len(out) == 3
+    The frozen matrix (p1.stability.matrix) uses batch sizes 1, 2, 4, 8
+    across cells A-F. The collate must stack every component into a leading
+    batch dim of size B and drop cpu_ms, yielding (left, right, labels) with
+    shapes [B,3,H,W], [B,3,H,W], [B,num_classes].
 
-
-def test_unwrap_batch_handles_single_item_batch_wrapper() -> None:
-    """PyTorch's DataLoader with batch_size=1 wraps a single 4-tuple in a list.
-
-    The probe's first_batch_wait expects ``len(batch) == 3`` (or 4 with pids).
-    With batch_size=1, the DataLoader's collate_fn receives a list of length 1
-    containing one 4-tuple. The unwrap must peel both layers.
+    Before the fix, batch_size==1 (cells A/B) worked but 2/4/8 (cells C-F)
+    either under-unpacked ("expected 3, got 2"), collapsed to B=1 (cell D
+    shape assert), or over-unpacked ("too many values to unpack").
     """
-    from p1.stability.cli import _unwrap_bilateral_batch
-
-    left = object()
-    right = object()
-    labels = object()
-    cpu_ms = 12.345
-    wrapped = [(left, right, labels, cpu_ms)]  # PyTorch's batch_size=1 shape
-    out = _unwrap_bilateral_batch(wrapped)
-    assert out == [left, right, labels]
-    assert len(out) == 3
-
-
-def test_unwrap_batch_returns_batch_unchanged_for_three_tuple() -> None:
-    """A 3-tuple (already in the expected shape) passes through unchanged."""
-    from p1.stability.cli import _unwrap_bilateral_batch
-
-    left = object()
-    right = object()
-    labels = object()
-    out = _unwrap_bilateral_batch([left, right, labels])
-    assert out == [left, right, labels]
-
-
-# ---------------------------------------------------------------------------
-# Test 5: stack adds a batch dimension to single-item tensors
-# ---------------------------------------------------------------------------
-
-
-def test_stack_bilateral_batch_adds_batch_dim() -> None:
-    """After unwrap, the tensors are shape [3, H, W] and [8]. The probe
-    expects [B, 3, H, W] and [B, 8]. ``_stack_bilateral_batch`` adds the
-    batch dim with unsqueeze(0).
-    """
-    from p1.stability.cli import _stack_bilateral_batch
-
     import torch
 
-    left = torch.zeros(3, 380, 380)
-    right = torch.zeros(3, 380, 380)
-    labels = torch.zeros(8)
-    out = _stack_bilateral_batch([left, right, labels])
-    assert out[0].shape == (1, 3, 380, 380)
-    assert out[1].shape == (1, 3, 380, 380)
-    assert out[2].shape == (1, 8)
-
-
-def test_collate_bilateral_batch_handles_pytorch_default_batch_shape() -> None:
-    """The full collate_bilateral_batch must turn the PyTorch DataLoader's
-    default batch (a list of one 4-tuple when batch_size=1) into a
-    3-list of tensors with batch dim.
-    """
     from p1.stability.cli import _collate_bilateral_batch
 
-    import torch
-
-    batch = [(torch.zeros(3, 380, 380), torch.zeros(3, 380, 380), torch.zeros(8), 12.5)]
+    # Distinct per-sample content so a silent "keep only item 0" regression
+    # (the old cell-D path) would corrupt the stacked values, not just shapes.
+    batch = [
+        (
+            torch.full((3, 8, 8), float(i)),
+            torch.full((3, 8, 8), float(i) + 100.0),
+            torch.full((8,), float(i) + 200.0),
+            float(i),  # cpu_ms, must be dropped
+        )
+        for i in range(bsize)
+    ]
     out = _collate_bilateral_batch(batch)
-    assert out[0].shape == (1, 3, 380, 380)
-    assert out[1].shape == (1, 3, 380, 380)
-    assert out[2].shape == (1, 8)
+    assert len(out) == 3, "collate must return a 3-tuple (left, right, labels)"
+    left, right, labels = out
+    assert left.shape == (bsize, 3, 8, 8)
+    assert right.shape == (bsize, 3, 8, 8)
+    assert labels.shape == (bsize, 8)
+    # Order and content preserved per sample (not collapsed to item 0).
+    for i in range(bsize):
+        assert torch.all(left[i] == float(i))
+        assert torch.all(right[i] == float(i) + 100.0)
+        assert torch.all(labels[i] == float(i) + 200.0)
 
 
 # ---------------------------------------------------------------------------
