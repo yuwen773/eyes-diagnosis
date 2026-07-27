@@ -1,0 +1,4 @@
+package com.csust.eyediagnosis.workflow.explanation;
+import com.csust.eyediagnosis.workflow.risk.*;
+/** Calls the bounded model only after final risk has allowed explanation generation. */
+public final class ExplanationDraftAction { private final ExplanationInvocationCoordinator coordinator; public ExplanationDraftAction(ExplanationInvocationCoordinator coordinator){this.coordinator=coordinator;} public ExplanationGenerationOutcome execute(ClinicalRiskFinalResult risk, ExplanationDraftRequest request,String graph,String action){ if(risk.disposition()!=PublicationRiskDisposition.AUTO_PUBLICATION_ELIGIBLE&&risk.disposition()!=PublicationRiskDisposition.FINAL_REVIEW_REQUIRED) return new ExplanationGenerationOutcome(ExplanationGenerationOutcome.Status.WITHHELD,null,"EXPLANATION_NOT_ELIGIBLE"); return coordinator.getOrGenerate(request,graph,action); } }

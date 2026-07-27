@@ -1,0 +1,4 @@
+package com.csust.eyediagnosis.workflow.graph.runtime;
+import com.csust.eyediagnosis.workflow.explanation.*; import com.csust.eyediagnosis.workflow.persistence.entity.ExplanationSnapshotEntity; import com.csust.eyediagnosis.workflow.risk.ClinicalRiskFinalResult; import java.util.List;
+/** Immutable snapshot insert plus already-computed validation and publication decision. */
+public record ExplanationSnapshotDelta(ExplanationSnapshotEntity snapshot,ExplanationClaimValidationResult validation,ClinicalRiskFinalResult risk,ExplanationPublicationDecision decision,List<NodeExecutionCompletion> nodeExecutions) implements SegmentBusinessDelta { public ExplanationSnapshotDelta { if(snapshot==null||validation==null||risk==null||decision==null)throw new IllegalArgumentException("explanation delta is incomplete"); nodeExecutions=nodeExecutions==null?List.of():List.copyOf(nodeExecutions); } }

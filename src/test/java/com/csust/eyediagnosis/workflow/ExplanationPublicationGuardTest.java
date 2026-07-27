@@ -4,6 +4,9 @@ import com.csust.eyediagnosis.workflow.domain.ExplanationPublicationStatus;
 import com.csust.eyediagnosis.workflow.domain.WorkflowStatus;
 import com.csust.eyediagnosis.workflow.exception.InvalidExplanationTransitionException;
 import com.csust.eyediagnosis.workflow.exception.InvalidWorkflowInvariantException;
+import com.csust.eyediagnosis.workflow.explanation.ExplanationClaimValidationResult;
+import com.csust.eyediagnosis.workflow.explanation.ExplanationValidationStatus;
+import com.csust.eyediagnosis.workflow.persistence.entity.ExplanationSnapshotEntity;
 import com.csust.eyediagnosis.workflow.policy.ExplanationPublicationGuard;
 import org.junit.jupiter.api.Test;
 
@@ -65,5 +68,14 @@ class ExplanationPublicationGuardTest {
         assertThrows(InvalidWorkflowInvariantException.class,
                 () -> guard.validateTerminalInvariant(WorkflowStatus.COMPLETED_LIMITED,
                         ExplanationPublicationStatus.PUBLISHED, true, true));
+    }
+
+    @Test
+    void rejectsDirectPublicationOfAnUnvalidatedDraftSnapshot() {
+        ExplanationSnapshotEntity draft = new ExplanationSnapshotEntity();
+        draft.setPublicationStatus(ExplanationPublicationStatus.DRAFT.name());
+        assertThrows(InvalidExplanationTransitionException.class,
+                () -> guard.requirePublishable(draft, new ExplanationClaimValidationResult(
+                        ExplanationValidationStatus.VALIDATED, java.util.List.of(), "validator-v1")));
     }
 }

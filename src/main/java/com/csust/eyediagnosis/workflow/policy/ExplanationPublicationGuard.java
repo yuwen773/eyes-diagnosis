@@ -4,6 +4,9 @@ import com.csust.eyediagnosis.workflow.domain.ExplanationPublicationStatus;
 import com.csust.eyediagnosis.workflow.domain.WorkflowStatus;
 import com.csust.eyediagnosis.workflow.exception.InvalidExplanationTransitionException;
 import com.csust.eyediagnosis.workflow.exception.InvalidWorkflowInvariantException;
+import com.csust.eyediagnosis.workflow.explanation.ExplanationClaimValidationResult;
+import com.csust.eyediagnosis.workflow.explanation.ExplanationValidationStatus;
+import com.csust.eyediagnosis.workflow.persistence.entity.ExplanationSnapshotEntity;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -24,6 +27,20 @@ public final class ExplanationPublicationGuard {
             throw new InvalidExplanationTransitionException("Explanation transition is not allowed: "
                     + current + " -> " + target);
         }
+    }
+
+    /** A snapshot may publish only from persisted VALIDATED status backed by a VALIDATED claim validation. */
+    public void requirePublishable(ExplanationSnapshotEntity snapshot,
+                                   ExplanationClaimValidationResult validation) {
+        Objects.requireNonNull(snapshot, "explanation snapshot must not be null");
+        Objects.requireNonNull(validation, "claim validation result must not be null");
+        if (validation.status() != ExplanationValidationStatus.VALIDATED) {
+            throw new InvalidExplanationTransitionException(
+                    "Explanation cannot publish without a VALIDATED claim validation result");
+        }
+        ExplanationPublicationStatus current =
+                ExplanationPublicationStatus.valueOf(snapshot.getPublicationStatus());
+        requireTransitionAllowed(current, ExplanationPublicationStatus.PUBLISHED);
     }
 
     public void validateTerminalInvariant(WorkflowStatus workflowStatus,
@@ -48,7 +65,8 @@ public final class ExplanationPublicationGuard {
     private static Map<ExplanationPublicationStatus, Set<ExplanationPublicationStatus>> allowedTransitions() {
         Map<ExplanationPublicationStatus, Set<ExplanationPublicationStatus>> transitions =
                 new EnumMap<>(ExplanationPublicationStatus.class);
-        transitions.put(ExplanationPublicationStatus.NONE, EnumSet.of(ExplanationPublicationStatus.DRAFT));
+        transitions.put(ExplanationPublicationStatus.NONE, EnumSet.of(ExplanationPublicationStatus.DRAFT,
+                ExplanationPublicationStatus.WITHHELD));
         transitions.put(ExplanationPublicationStatus.DRAFT, EnumSet.of(ExplanationPublicationStatus.VALIDATED,
                 ExplanationPublicationStatus.REJECTED, ExplanationPublicationStatus.WITHHELD));
         transitions.put(ExplanationPublicationStatus.VALIDATED, EnumSet.of(ExplanationPublicationStatus.WITHHELD,

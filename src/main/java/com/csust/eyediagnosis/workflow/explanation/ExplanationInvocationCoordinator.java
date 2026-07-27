@@ -12,6 +12,8 @@ import java.util.UUID;
 /** Reserves a revision before the model call; any uncertain existing reservation fails closed. */
 public final class ExplanationInvocationCoordinator {
     private static final String NODE_CODE = "EXPLANATION_DRAFT";
+    private static final int RESULT_POLL_ATTEMPTS = 25;
+    private static final long RESULT_POLL_MILLIS = 20L;
     private final ExplanationSnapshotRepository snapshots;
     private final NodeExecutionRepository executions;
     private final ExplanationModelClient model;
@@ -28,16 +30,16 @@ public final class ExplanationInvocationCoordinator {
     }
     private ExplanationGenerationOutcome generateAfterReservation(ExplanationDraftRequest request, String graphDefinitionVersion, String actionVersion) {
         String key = request.workflowId() + "|" + graphDefinitionVersion + "|" + actionVersion + "|" + NODE_CODE + "|" + request.explanationRevision();
-        if (executions.findByIdempotencyKey(key).isPresent()) return withheld();
+        if (executions.findByIdempotencyKey(key).isPresent()) return awaitAcceptedSnapshot(request);
         WorkflowNodeExecutionEntity reservation = reservation(request, key);
-        try { if (executions.insertIfAbsent(reservation) != 1) return withheld(); }
-        catch (DuplicateKeyException exception) { return withheld(); }
+        try { if (executions.insertIfAbsent(reservation) != 1) return awaitAcceptedSnapshot(request); }
+        catch (DuplicateKeyException exception) { return awaitAcceptedSnapshot(request); }
         try {
             ExplanationDraft draft = model.generate(new ExplanationModelRequest(request.prediction(), request.citations(), request.explanationPolicyVersion(), request.promptVersion())).draft();
             ExplanationSnapshotEntity snapshot = ExplanationSnapshotFactory.entity(request.workflowId(), request.explanationRevision(), draft, null, request.citations(), mapper);
             if (snapshots.insert(snapshot) != 1) throw new IllegalStateException("snapshot was not inserted");
             reservation.setStatus("COMPLETED"); reservation.setOutputDigest(ExplanationSnapshotFactory.digest(snapshot.getContentSnapshot()));
-            reservation.setResultReference(snapshot.getExplanationSnapshotId()); reservation.setCompletedAt(LocalDateTime.now());
+            reservation.setResultReference(snapshot.getExplanationSnapshotId()); reservation.setCompletedAt(LocalDateTime.now()); reservation.setUpdatedAt(LocalDateTime.now());
             if (executions.complete(reservation) != 1) throw new IllegalStateException("reservation was not completed");
             return new ExplanationGenerationOutcome(ExplanationGenerationOutcome.Status.GENERATED, snapshot, null);
         } catch (RuntimeException exception) { return withheld(); }
@@ -46,6 +48,15 @@ public final class ExplanationInvocationCoordinator {
         WorkflowNodeExecutionEntity entity = new WorkflowNodeExecutionEntity(); entity.setNodeExecutionId(UUID.randomUUID().toString());
         entity.setWorkflowId(request.workflowId()); entity.setExecutionEpoch(request.inferenceEpoch()); entity.setSegmentCode("FINAL_RISK_EXPLANATION");
         entity.setNodeCode(NODE_CODE); entity.setIdempotencyKey(key); entity.setStatus("RESERVED"); entity.setStartedAt(LocalDateTime.now()); return entity;
+    }
+    private ExplanationGenerationOutcome awaitAcceptedSnapshot(ExplanationDraftRequest request) {
+        for (int attempt = 0; attempt < RESULT_POLL_ATTEMPTS; attempt++) {
+            var snapshot = snapshots.findByWorkflowIdAndRevision(request.workflowId(), request.explanationRevision());
+            if (snapshot.isPresent()) return new ExplanationGenerationOutcome(ExplanationGenerationOutcome.Status.EXISTING, snapshot.get(), null);
+            try { Thread.sleep(RESULT_POLL_MILLIS); }
+            catch (InterruptedException exception) { Thread.currentThread().interrupt(); break; }
+        }
+        return withheld();
     }
     private static ExplanationGenerationOutcome withheld() { return new ExplanationGenerationOutcome(ExplanationGenerationOutcome.Status.WITHHELD, null, ExplanationGenerationException.Code.EXPLANATION_GENERATION_OUTCOME_UNKNOWN.name()); }
 }

@@ -15,6 +15,7 @@ import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepos
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowJobRepository;
 import com.csust.eyediagnosis.workflow.policy.ExplanationPublicationGuard;
 import com.csust.eyediagnosis.workflow.policy.WorkflowLifecycleGuard;
+import com.csust.eyediagnosis.workflow.graph.registry.GraphDefinitionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,15 +33,28 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
     private final SegmentCommitFailpoint failpoint;
     private final WorkflowLifecycleGuard lifecycleGuard = new WorkflowLifecycleGuard();
     private final ExplanationPublicationGuard publicationGuard = new ExplanationPublicationGuard();
+    private final FinalReviewHandoffGuard finalReviewHandoffGuard = new FinalReviewHandoffGuard();
+    private final SegmentTransitionConsistencyGuard transitionConsistencyGuard;
 
     @Autowired
     public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
                                                 WorkflowJobRepository jobRepository,
                                                 WorkflowEventRepository eventRepository,
                                                 WorkflowJobCreationService jobCreationService,
+                                                SegmentBusinessDeltaDispatcher deltaDispatcher,
+                                                GraphDefinitionRegistry definitions,
+                                                GraphSegmentBoundaryResolver boundaries) {
+        this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher,
+                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard(definitions, boundaries));
+    }
+
+    public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
+                                                WorkflowJobRepository jobRepository,
+                                                WorkflowEventRepository eventRepository,
+                                                WorkflowJobCreationService jobCreationService,
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher) {
         this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher,
-                new NoOpSegmentCommitFailpoint());
+                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard());
     }
 
     public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
@@ -49,17 +63,31 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
                                                 WorkflowJobCreationService jobCreationService,
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher,
                                                 SegmentCommitFailpoint failpoint) {
+        this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher, failpoint,
+                new SegmentTransitionConsistencyGuard());
+    }
+
+    private DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
+                                                WorkflowJobRepository jobRepository,
+                                                WorkflowEventRepository eventRepository,
+                                                WorkflowJobCreationService jobCreationService,
+                                                SegmentBusinessDeltaDispatcher deltaDispatcher,
+                                                SegmentCommitFailpoint failpoint,
+                                                SegmentTransitionConsistencyGuard transitionConsistencyGuard) {
         this.workflowRepository = workflowRepository;
         this.jobRepository = jobRepository;
         this.eventRepository = eventRepository;
         this.jobCreationService = jobCreationService;
         this.deltaDispatcher = deltaDispatcher;
         this.failpoint = failpoint;
+        this.transitionConsistencyGuard = transitionConsistencyGuard;
     }
 
     @Override
     @Transactional
     public SegmentCommitResult commit(GraphSegmentExecutionRequest request, SegmentExecutionResult result) {
+        transitionConsistencyGuard.requireConsistent(result);
+        finalReviewHandoffGuard.requireAllowed(result);
         if (!request.workflowId().equals(result.workflowId()) || !request.graphBinding().equals(result.graphBinding())
                 || request.segmentCode() != result.executedSegment()) {
             throw new SegmentCommitFailureException("Execution result does not belong to its commit request");
@@ -122,6 +150,11 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
         if (currentPublication != plan.publicationStatus()) {
             publicationGuard.requireTransitionAllowed(currentPublication, plan.publicationStatus());
         }
+        boolean validatedSnapshot = plan.businessDelta() instanceof ExplanationSnapshotDelta delta
+                && delta.validation().status() == com.csust.eyediagnosis.workflow.explanation.ExplanationValidationStatus.VALIDATED;
+        boolean publishedSnapshot = validatedSnapshot && plan.businessDelta() instanceof ExplanationSnapshotDelta delta
+                && delta.decision() == com.csust.eyediagnosis.workflow.explanation.ExplanationPublicationDecision.PUBLISH;
+        publicationGuard.validateTerminalInvariant(plan.targetWorkflowStatus(), plan.publicationStatus(), validatedSnapshot, publishedSnapshot);
     }
 
     private void appendEvent(GraphSegmentExecutionRequest request, SegmentBusinessCommitPlan plan) {
