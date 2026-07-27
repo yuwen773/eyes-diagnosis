@@ -1,6 +1,7 @@
 package com.csust.eyediagnosis.workflow.graph.runtime;
 
 import com.csust.eyediagnosis.workflow.domain.ExplanationPublicationStatus;
+import com.csust.eyediagnosis.workflow.domain.ReviewType;
 import com.csust.eyediagnosis.workflow.domain.WorkflowJobType;
 import com.csust.eyediagnosis.workflow.domain.WorkflowJobStatus;
 import com.csust.eyediagnosis.workflow.domain.WorkflowStatus;
@@ -15,12 +16,14 @@ import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepos
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowJobRepository;
 import com.csust.eyediagnosis.workflow.policy.ExplanationPublicationGuard;
 import com.csust.eyediagnosis.workflow.policy.WorkflowLifecycleGuard;
+import com.csust.eyediagnosis.workflow.review.HumanReviewHandoff;
 import com.csust.eyediagnosis.workflow.graph.registry.GraphDefinitionRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,8 +36,8 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
     private final SegmentCommitFailpoint failpoint;
     private final WorkflowLifecycleGuard lifecycleGuard = new WorkflowLifecycleGuard();
     private final ExplanationPublicationGuard publicationGuard = new ExplanationPublicationGuard();
-    private final FinalReviewHandoffGuard finalReviewHandoffGuard = new FinalReviewHandoffGuard();
     private final SegmentTransitionConsistencyGuard transitionConsistencyGuard;
+    private final HumanReviewHandoff reviewHandoff;
 
     @Autowired
     public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
@@ -43,9 +46,10 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
                                                 WorkflowJobCreationService jobCreationService,
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher,
                                                 GraphDefinitionRegistry definitions,
-                                                GraphSegmentBoundaryResolver boundaries) {
+                                                GraphSegmentBoundaryResolver boundaries,
+                                                HumanReviewHandoff reviewHandoff) {
         this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher,
-                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard(definitions, boundaries));
+                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard(definitions, boundaries), reviewHandoff);
     }
 
     public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
@@ -54,7 +58,7 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
                                                 WorkflowJobCreationService jobCreationService,
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher) {
         this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher,
-                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard());
+                new NoOpSegmentCommitFailpoint(), new SegmentTransitionConsistencyGuard(), rejectingHandoff());
     }
 
     public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
@@ -64,7 +68,18 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher,
                                                 SegmentCommitFailpoint failpoint) {
         this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher, failpoint,
-                new SegmentTransitionConsistencyGuard());
+                new SegmentTransitionConsistencyGuard(), rejectingHandoff());
+    }
+
+    public DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
+                                                WorkflowJobRepository jobRepository,
+                                                WorkflowEventRepository eventRepository,
+                                                WorkflowJobCreationService jobCreationService,
+                                                SegmentBusinessDeltaDispatcher deltaDispatcher,
+                                                SegmentCommitFailpoint failpoint,
+                                                HumanReviewHandoff reviewHandoff) {
+        this(workflowRepository, jobRepository, eventRepository, jobCreationService, deltaDispatcher, failpoint,
+                new SegmentTransitionConsistencyGuard(), reviewHandoff);
     }
 
     private DefaultGraphSegmentCommitCoordinator(DiagnosisWorkflowRepository workflowRepository,
@@ -73,7 +88,8 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
                                                 WorkflowJobCreationService jobCreationService,
                                                 SegmentBusinessDeltaDispatcher deltaDispatcher,
                                                 SegmentCommitFailpoint failpoint,
-                                                SegmentTransitionConsistencyGuard transitionConsistencyGuard) {
+                                                SegmentTransitionConsistencyGuard transitionConsistencyGuard,
+                                                HumanReviewHandoff reviewHandoff) {
         this.workflowRepository = workflowRepository;
         this.jobRepository = jobRepository;
         this.eventRepository = eventRepository;
@@ -81,13 +97,20 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
         this.deltaDispatcher = deltaDispatcher;
         this.failpoint = failpoint;
         this.transitionConsistencyGuard = transitionConsistencyGuard;
+        this.reviewHandoff = reviewHandoff;
+    }
+
+    /** Test-only default: a coordinator wired without review support must never cross a human boundary. */
+    private static HumanReviewHandoff rejectingHandoff() {
+        return (workflowId, reviewType, recoveryToken) -> {
+            throw new SegmentCommitFailureException("HUMAN_REVIEW_HANDOFF_REQUIRED");
+        };
     }
 
     @Override
     @Transactional
     public SegmentCommitResult commit(GraphSegmentExecutionRequest request, SegmentExecutionResult result) {
         transitionConsistencyGuard.requireConsistent(result);
-        finalReviewHandoffGuard.requireAllowed(result);
         if (!request.workflowId().equals(result.workflowId()) || !request.graphBinding().equals(result.graphBinding())
                 || request.segmentCode() != result.executedSegment()) {
             throw new SegmentCommitFailureException("Execution result does not belong to its commit request");
@@ -175,6 +198,12 @@ public class DefaultGraphSegmentCommitCoordinator implements GraphSegmentCommitC
 
     private String createResumeJobIfNeeded(GraphSegmentExecutionRequest request, SegmentExecutionResult result, int maxAttempts) {
         if (result.disposition() == GraphRuntimeDisposition.COMPLETED) {
+            return null;
+        }
+        Optional<ReviewType> reviewType = HumanReviewHandoff.reviewTypeFor(result.nextSegment());
+        if (reviewType.isPresent()) {
+            // Human boundary: hand off to a review task; the resume job is created only by the accepted decision.
+            reviewHandoff.createHandoffTask(request.workflowId(), reviewType.get(), result.recoveryToken());
             return null;
         }
         JobCreationResult creation = jobCreationService.createIfAbsent(new NewWorkflowJob(request.workflowId(),

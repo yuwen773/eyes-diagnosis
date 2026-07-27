@@ -11,7 +11,6 @@ import com.csust.eyediagnosis.workflow.graph.runtime.DefaultSegmentBusinessDelta
 import com.csust.eyediagnosis.workflow.graph.runtime.EmptySegmentInput;
 import com.csust.eyediagnosis.workflow.graph.runtime.ExplanationSnapshotDelta;
 import com.csust.eyediagnosis.workflow.graph.runtime.ExplanationSnapshotDeltaWriter;
-import com.csust.eyediagnosis.workflow.graph.runtime.FinalReviewHandoffGuard;
 import com.csust.eyediagnosis.workflow.graph.runtime.GraphRecoveryToken;
 import com.csust.eyediagnosis.workflow.graph.runtime.GraphRuntimeDisposition;
 import com.csust.eyediagnosis.workflow.graph.runtime.NodeExecutionCompletion;
@@ -30,13 +29,16 @@ import com.csust.eyediagnosis.workflow.job.WorkflowJobCreationService;
 import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEventEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.ExplanationSnapshotEntity;
+import com.csust.eyediagnosis.workflow.persistence.entity.HumanReviewTaskEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.WorkflowJobEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.WorkflowNodeExecutionEntity;
 import com.csust.eyediagnosis.workflow.persistence.repository.DiagnosisWorkflowRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.ExplanationSnapshotRepository;
+import com.csust.eyediagnosis.workflow.persistence.repository.HumanReviewTaskRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.NodeExecutionRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowJobRepository;
+import com.csust.eyediagnosis.workflow.review.DefaultHumanReviewHandoff;
 import com.csust.eyediagnosis.workflow.risk.ClinicalRiskFinalResult;
 import com.csust.eyediagnosis.workflow.risk.PublicationRiskDisposition;
 import org.flywaydb.core.Flyway;
@@ -254,20 +256,25 @@ class ExplanationGovernanceMysqlIT {
     }
 
     @Test
-    void finalReviewCannotBeCommittedByTheGenericCoordinator() {
+    void finalReviewInterruptionCreatesReviewTaskWithoutResumeJob() {
         insertFixture(3, "VALIDATED", "token", 1, true, true);
         CommitHarness harness = harness(() -> { });
         SegmentExecutionResult interrupted = new SegmentExecutionResult("wf", SegmentCode.FINAL_RISK_EXPLANATION,
                 GraphRuntimeDisposition.INTERRUPTED, "finalClinicalReview", SegmentCode.FINAL_CLINICAL_REVIEW_RESUME,
                 new GraphRecoveryToken("thread", "checkpoint"), binding(), plan(WorkflowStatus.WAITING_HUMAN_REVIEW,
-                ExplanationPublicationStatus.VALIDATED, publishedDelta()));
+                ExplanationPublicationStatus.VALIDATED, finalReviewDelta()));
 
-        SegmentCommitFailureException error = assertThrows(SegmentCommitFailureException.class,
-                () -> transaction.executeWithoutResult(ignored -> harness.coordinator.commit(request(3, "token", 1), interrupted)));
+        transaction.executeWithoutResult(ignored -> harness.coordinator.commit(request(3, "token", 1), interrupted));
 
-        assertEquals(FinalReviewHandoffGuard.ERROR_CODE, error.getMessage());
-        assertUnchanged(3, "RUNNING", "LEASED", 0, 0);
-        assertEquals(0L, count("SELECT COUNT(*) FROM t_human_review_task"));
+        assertEquals("WAITING_HUMAN_REVIEW", text("SELECT status FROM t_diagnosis_workflow WHERE workflowId='wf'"));
+        assertEquals(4L, count("SELECT workflowVersion FROM t_diagnosis_workflow WHERE workflowId='wf'"));
+        assertEquals(1L, count("SELECT COUNT(*) FROM t_human_review_task"));
+        assertEquals("OPEN", text("SELECT status FROM t_human_review_task WHERE workflowId='wf'"));
+        assertEquals("FINAL_CLINICAL_REVIEW", text("SELECT reviewType FROM t_human_review_task WHERE workflowId='wf'"));
+        assertEquals(1L, count("SELECT reviewRound FROM t_human_review_task WHERE workflowId='wf'"));
+        assertEquals("thread", text("SELECT graphThreadId FROM t_human_review_task WHERE workflowId='wf'"));
+        assertEquals("checkpoint", text("SELECT graphCheckpointId FROM t_human_review_task WHERE workflowId='wf'"));
+        assertSucceededWithoutResume();
     }
 
     private static Stream<org.junit.jupiter.params.provider.Arguments> limitedPlans() {
@@ -308,8 +315,12 @@ class ExplanationGovernanceMysqlIT {
         });
         WorkflowJobCreationService creation = job -> createResume(job);
         ExplanationSnapshotDeltaWriter writer = new ExplanationSnapshotDeltaWriter(snapshots, nodes);
+        HumanReviewTaskRepository reviewTasks = mock(HumanReviewTaskRepository.class);
+        when(reviewTasks.findActiveByWorkflowAndType(anyString(), anyString()))
+                .thenAnswer(invocation -> findReviewTask(invocation.getArgument(0), invocation.getArgument(1)));
+        when(reviewTasks.insert(any(HumanReviewTaskEntity.class))).thenAnswer(invocation -> insertReviewTask(invocation.getArgument(0)));
         return new CommitHarness(new DefaultGraphSegmentCommitCoordinator(workflows, jobs, events, creation,
-                new DefaultSegmentBusinessDeltaDispatcher(List.of(writer)), failpoint));
+                new DefaultSegmentBusinessDeltaDispatcher(List.of(writer)), failpoint, new DefaultHumanReviewHandoff(reviewTasks)));
     }
 
     private void insertFixture(long version, String publication, String token, long leaseVersion, boolean liveLease, boolean reservedNode) {
@@ -339,6 +350,10 @@ class ExplanationGovernanceMysqlIT {
         return delta(ExplanationValidationStatus.REJECTED, ExplanationPublicationDecision.COMPLETE_LIMITED, "DRAFT");
     }
 
+    private ExplanationSnapshotDelta finalReviewDelta() {
+        return delta(ExplanationValidationStatus.VALIDATED, ExplanationPublicationDecision.FINAL_REVIEW_REQUIRED, "VALIDATED");
+    }
+
     private ExplanationSnapshotDelta delta(ExplanationValidationStatus validationStatus, ExplanationPublicationDecision decision, String snapshotStatus) {
         ExplanationSnapshotEntity snapshot = new ExplanationSnapshotEntity();
         snapshot.setExplanationSnapshotId(UUID.randomUUID().toString()); snapshot.setWorkflowId("wf"); snapshot.setRevision(1L); snapshot.setPublicationStatus(snapshotStatus);
@@ -365,6 +380,18 @@ class ExplanationGovernanceMysqlIT {
         String id = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO t_workflow_job(jobId,workflowId,jobType,segmentCode,executionEpoch,status,attempt,maxAttempts,availableAt,leaseVersion,graphThreadId,graphCheckpointId) VALUES(?,?,?,?,?,'READY',0,?,NOW(6),0,?,?)", id, job.workflowId(), job.jobType().name(), job.segmentCode().name(), job.executionEpoch(), job.maxAttempts(), job.recoveryToken().threadId(), job.recoveryToken().checkpointId());
         return new JobCreationResult(JobCreationResult.Status.CREATED, id);
+    }
+
+    private Optional<HumanReviewTaskEntity> findReviewTask(String workflowId, String reviewType) {
+        List<HumanReviewTaskEntity> rows = jdbc.query("SELECT * FROM t_human_review_task WHERE workflowId=? AND reviewType=? ORDER BY reviewRound DESC LIMIT 1", (rs, row) -> {
+            HumanReviewTaskEntity task = new HumanReviewTaskEntity();
+            task.setReviewTaskId(rs.getString("reviewTaskId")); task.setWorkflowId(rs.getString("workflowId")); task.setReviewType(rs.getString("reviewType")); task.setReviewRound(rs.getInt("reviewRound")); task.setStatus(rs.getString("status")); task.setTaskVersion(rs.getLong("taskVersion")); task.setGraphThreadId(rs.getString("graphThreadId")); task.setGraphCheckpointId(rs.getString("graphCheckpointId")); return task;
+        }, workflowId, reviewType);
+        return rows.stream().findFirst();
+    }
+
+    private int insertReviewTask(HumanReviewTaskEntity task) {
+        return jdbc.update("INSERT INTO t_human_review_task(reviewTaskId,workflowId,reviewType,reviewRound,status,taskVersion,graphThreadId,graphCheckpointId,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,?,?)", task.getReviewTaskId(), task.getWorkflowId(), task.getReviewType(), task.getReviewRound(), task.getStatus(), task.getTaskVersion(), task.getGraphThreadId(), task.getGraphCheckpointId(), task.getCreatedAt(), task.getUpdatedAt());
     }
 
     private DiagnosisWorkflowEntity workflow() {
