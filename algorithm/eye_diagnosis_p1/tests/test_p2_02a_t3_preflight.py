@@ -14,7 +14,7 @@ frozen-loader-compatible values.
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-import pytest
+from p1.stability.cli import LABEL_COLUMNS
 from p1.stability.preflight import run_preflight, PreflightResult
 
 
@@ -57,8 +57,7 @@ def _write_frozen_fixtures(manifest: Path, split: Path, fold: Path) -> None:
     import pyarrow.parquet as pq
     # 5 Development patients, one per fold 0..4 (expected_folds=5, no Test).
     pids = [f"p{i}" for i in range(5)]
-    label_cols = {c: [0, 0, 0, 0, 0] for c in
-                 ["label_N","label_D","label_G","label_C","label_A","label_H","label_M","label_O"]}
+    label_cols = {c: [0, 0, 0, 0, 0] for c in LABEL_COLUMNS}
     table = pa.table({
         "patient_id": pids,
         "left_image_relpath": [f"l{i}" for i in range(5)],

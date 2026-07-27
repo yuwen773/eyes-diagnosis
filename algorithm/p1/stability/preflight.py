@@ -50,9 +50,11 @@ def run_preflight(
     checks: list[CheckResult] = []
 
     # 1. GPU availability (hard gate; no CPU fallback).
-    gpu_ok = bool(adapter.cuda_is_available()) and adapter.cuda_device_count() >= 1
+    cuda_avail = bool(adapter.cuda_is_available())
+    cuda_n = int(adapter.cuda_device_count())
+    gpu_ok = cuda_avail and cuda_n >= 1
     checks.append(CheckResult("gpu", gpu_ok,
-                              f"cuda_available={adapter.cuda_is_available()} devices={adapter.cuda_device_count()}"))
+                              f"cuda_available={cuda_avail} devices={cuda_n}"))
 
     # 2. VRAM floor (hard gate; no auto batch shrink).
     vram_ok = False
@@ -86,14 +88,18 @@ def run_preflight(
 
 def _check_frozen_inputs(protocol_path, manifest_path, split_path, fold_path) -> tuple[bool, str]:
     try:
-        from p1.stability.protocol import load_p202a_protocol
+        from p1.stability.protocol import P202AProtocolError, load_p202a_protocol
         from p1.training.frozen_inputs import (
-            load_split_assignment, load_fold_assignment, validate_frozen_training_inputs,
+            FrozenInputError,
+            load_fold_assignment,
+            load_split_assignment,
+            validate_frozen_training_inputs,
         )
         # Read the manifest with pyarrow directly (pyarrow is in
         # requirements-p1.txt and the GPU env eye-p1-bench). Using
         # pandas would force a second heavyweight dep that the
         # watchdog CI job does not install.
+        import pyarrow as _pa
         import pyarrow.parquet as _pq
         manifest_pids = {
             str(v) for v in _pq.read_table(Path(manifest_path)).column("patient_id").to_pylist()
@@ -103,7 +109,7 @@ def _check_frozen_inputs(protocol_path, manifest_path, split_path, fold_path) ->
         fold = load_fold_assignment(Path(fold_path), expected_folds=5)
         validate_frozen_training_inputs(manifest_pids, split, fold, expected_folds=5)
         return True, "protocol+manifest+split+fold validated"
-    except Exception as e:  # P202AProtocolError / FrozenInputError / IO
+    except (P202AProtocolError, FrozenInputError, OSError, _pa.ArrowException) as e:
         return False, f"{type(e).__name__}: {e}"
 
 

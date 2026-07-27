@@ -37,9 +37,10 @@ class T3EnvAdapter(Protocol):
 def capture_environment(adapter: T3EnvAdapter, *, now: str, git_commit: Optional[str]) -> dict:
     """Read-only environment fingerprint. Never raises for missing GPU."""
     available = bool(adapter.cuda_is_available())
+    n = int(adapter.cuda_device_count())
     free_mb = total_mb = 0
     device_name = ""
-    if available and adapter.cuda_device_count() >= 1:
+    if available and n >= 1:
         free_b, total_b = adapter.cuda_mem_get_info(0)
         free_mb, total_mb = free_b // (1024**2), total_b // (1024**2)
         device_name = adapter.device_name(0)
@@ -48,7 +49,7 @@ def capture_environment(adapter: T3EnvAdapter, *, now: str, git_commit: Optional
         "timestamp": now,
         "git_commit": git_commit,
         "cuda_available": available,
-        "device_count": int(adapter.cuda_device_count()),
+        "device_count": n,
         "device_name": device_name,
         "vram_free_mb": int(free_mb),
         "vram_total_mb": int(total_mb),

@@ -1,9 +1,9 @@
-"""P2-02A T3 classification + T4 gate + atomic report write.
+"""P2-02A T3 matrix orchestration, classification, T4 gate, and report writing.
 
-``run_matrix`` is added in a follow-up commit (Task 4) along with
-``MatrixConfig`` / ``MatrixReport``; this module ships the
-classification half first so unit tests can pin the gate logic
-independently of the orchestration.
+``classify`` consumes the frozen T2 ``_watchdog_summary.json`` and emits
+the T3-local ``t4_gate``. ``run_matrix`` wraps ``watchdog_cli.main``
+in-process; preflight failures short-circuit before any subprocess
+runs.
 """
 from __future__ import annotations
 
@@ -12,13 +12,18 @@ import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
+from p1.stability import watchdog_cli
+from p1.stability.environment import T3EnvAdapter, capture_environment
 from p1.stability.matrix import expand_matrix
+from p1.stability.preflight import PreflightResult, run_preflight
 from p1.stability.schema import CellVerdict
 
 T4_AUTHORIZED = "T4_AUTHORIZED"
 T4_BLOCKED = "T4_BLOCKED"
 MISSING = "MISSING"
+T3_REPORT_SCHEMA = "p2-02a-t3-v1"
 _PASS = CellVerdict.PASS.value
 
 
@@ -28,6 +33,34 @@ class ClassifyResult:
     t4_gate: str
     blocking_cells: list[str]
     diagnostic: str
+
+
+@dataclass
+class MatrixConfig:
+    protocol_path: Path
+    manifest_path: Path
+    split_path: Path
+    fold_path: Path
+    image_root: Path
+    out_dir: Path
+    vram_floor_mb: int
+    weights_id: str
+    heartbeat_timeout: float
+    process_timeout: float
+    now: str
+    git_commit: Optional[str] = None
+    child: Optional[Path] = None
+
+
+@dataclass
+class MatrixReport:
+    schema_version: str
+    ok: bool
+    exit_code: int
+    t4_gate: str
+    report_path: Path
+    preflight: PreflightResult
+    environment: dict
 
 
 def classify(summary: dict) -> ClassifyResult:
@@ -61,56 +94,14 @@ def _diagnostic(verdicts: dict[str, str], blocking: list[str]) -> str:
 def _write_json_atomic(path: Path, payload: dict) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    tmp_path = Path(tmp_name)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-        os.replace(tmp, path)
+        os.replace(tmp_path, path)
     finally:
-        if os.path.exists(tmp):
-            os.remove(tmp)
-
-
-# ---------------------------------------------------------------------------
-# run_matrix orchestration (Task 4) — wraps the frozen T2 watchdog_cli
-# in-process. Preflight failures short-circuit before the matrix runs.
-# ---------------------------------------------------------------------------
-from dataclasses import dataclass as _dataclass
-from typing import Optional as _Optional
-
-from p1.stability.environment import T3EnvAdapter, capture_environment
-from p1.stability.preflight import run_preflight, PreflightResult
-from p1.stability import watchdog_cli
-
-T3_REPORT_SCHEMA = "p2-02a-t3-v1"
-
-
-@_dataclass
-class MatrixConfig:
-    protocol_path: Path
-    manifest_path: Path
-    split_path: Path
-    fold_path: Path
-    image_root: Path
-    out_dir: Path
-    vram_floor_mb: int
-    weights_id: str
-    heartbeat_timeout: float
-    process_timeout: float
-    now: str
-    git_commit: _Optional[str] = None
-    child: _Optional[Path] = None
-
-
-@_dataclass
-class MatrixReport:
-    schema_version: str
-    ok: bool
-    exit_code: int
-    t4_gate: str
-    report_path: Path
-    preflight: PreflightResult
-    environment: dict
+        tmp_path.unlink(missing_ok=True)
 
 
 def _preflight_dict(pf: PreflightResult) -> dict:

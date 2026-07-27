@@ -6,7 +6,6 @@ that have no subprocess dependency: argparser defaults and the
 ``args -> MatrixConfig`` mapping.
 """
 from __future__ import annotations
-from pathlib import Path
 from p1.stability.matrix_cli import _build_argparser, _config_from_args
 
 

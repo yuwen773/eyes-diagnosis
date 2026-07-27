@@ -56,17 +56,17 @@ def _all_pass_child(path: Path) -> None:
 def _frozen_fixtures(tmp_path: Path):
     import pyarrow as pa
     import pyarrow.parquet as pq
+    from p1.stability.cli import LABEL_COLUMNS
     from p1.stability.protocol import default_p202a_protocol, dump_p202a_protocol
     (tmp_path / "img").mkdir()
     proto = tmp_path / "protocol.json"; dump_p202a_protocol(default_p202a_protocol(), proto)
     manifest = tmp_path / "m.parquet"; split = tmp_path / "s.csv"; fold = tmp_path / "f.csv"
-    cols = ["label_N","label_D","label_G","label_C","label_A","label_H","label_M","label_O"]
     pids = [f"p{i}" for i in range(5)]
     table = pa.table({
         "patient_id": pids,
         "left_image_relpath": [f"l{i}" for i in range(5)],
         "right_image_relpath": [f"r{i}" for i in range(5)],
-        **{c: [0, 0, 0, 0, 0] for c in cols},
+        **{c: [0, 0, 0, 0, 0] for c in LABEL_COLUMNS},
     })
     pq.write_table(table, manifest)
     split.write_text(
