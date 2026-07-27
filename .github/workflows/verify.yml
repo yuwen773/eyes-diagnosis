@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install pytest
+      - run: python -m pip install pyarrow pytest
       - run: >-
           python -m pytest
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py
