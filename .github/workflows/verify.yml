@@ -47,6 +47,7 @@ jobs:
           python -m pytest
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py
+          eye_diagnosis_p1/tests/test_p2_02a_t3_integration.py
           -q
 
   backend-compile:
