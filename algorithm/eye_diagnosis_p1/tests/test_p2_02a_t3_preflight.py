@@ -53,15 +53,19 @@ def _kwargs(tmp_path: Path, adapter) -> dict:
 
 
 def _write_frozen_fixtures(manifest: Path, split: Path, fold: Path) -> None:
-    import pandas as pd
+    import pyarrow as pa
+    import pyarrow.parquet as pq
     # 5 Development patients, one per fold 0..4 (expected_folds=5, no Test).
     pids = [f"p{i}" for i in range(5)]
-    pd.DataFrame({"patient_id": pids,
-                  "left_image_relpath": [f"l{i}" for i in range(5)],
-                  "right_image_relpath": [f"r{i}" for i in range(5)],
-                  **{c: [0, 0, 0, 0, 0] for c in
-                     ["label_N","label_D","label_G","label_C","label_A","label_H","label_M","label_O"]},
-                  }).to_parquet(manifest)
+    label_cols = {c: [0, 0, 0, 0, 0] for c in
+                 ["label_N","label_D","label_G","label_C","label_A","label_H","label_M","label_O"]}
+    table = pa.table({
+        "patient_id": pids,
+        "left_image_relpath": [f"l{i}" for i in range(5)],
+        "right_image_relpath": [f"r{i}" for i in range(5)],
+        **label_cols,
+    })
+    pq.write_table(table, manifest)
     split.write_text(
         "patient_id,split\n" + "\n".join(f"{p},dev" for p in pids) + "\n",
         encoding="utf-8",

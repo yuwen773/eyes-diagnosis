@@ -90,9 +90,15 @@ def _check_frozen_inputs(protocol_path, manifest_path, split_path, fold_path) ->
         from p1.training.frozen_inputs import (
             load_split_assignment, load_fold_assignment, validate_frozen_training_inputs,
         )
-        import pandas as pd
+        # Read the manifest with pyarrow directly (pyarrow is in
+        # requirements-p1.txt and the GPU env eye-p1-bench). Using
+        # pandas would force a second heavyweight dep that the
+        # watchdog CI job does not install.
+        import pyarrow.parquet as _pq
+        manifest_pids = {
+            str(v) for v in _pq.read_table(Path(manifest_path)).column("patient_id").to_pylist()
+        }
         load_p202a_protocol(Path(protocol_path))
-        manifest_pids = set(pd.read_parquet(manifest_path)["patient_id"].astype(str).tolist())
         split = load_split_assignment(Path(split_path))
         fold = load_fold_assignment(Path(fold_path), expected_folds=5)
         validate_frozen_training_inputs(manifest_pids, split, fold, expected_folds=5)
