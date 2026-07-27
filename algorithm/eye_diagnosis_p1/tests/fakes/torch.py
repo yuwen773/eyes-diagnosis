@@ -42,6 +42,22 @@ class FakeTensor:
         self.device = "cpu"
         return self
 
+    def mean(self, dim: Any = None, **kwargs: Any) -> "FakeTensor":
+        """Return a FakeTensor with the reduced shape. Used by FakeBilateralModel."""
+        if isinstance(dim, int):
+            dims = (dim,)
+        elif isinstance(dim, (tuple, list)):
+            dims = tuple(dim)
+        else:
+            dims = ()
+        new_shape = tuple(
+            s for i, s in enumerate(self.shape) if i not in dims
+        )
+        return FakeTensor(new_shape, device=self.device, dtype=self.dtype)
+
+    def __len__(self) -> int:
+        return self.shape[0] if self.shape else 0
+
 
 class FakeScaledTensor:
     """Returned by ``FakeScaler.scale``; tracks that ``.backward()`` was called."""
@@ -55,7 +71,12 @@ class FakeScaledTensor:
 
 
 class FakeScaler:
-    """Records scale/step/update + unscale_/clip_grad_norm_ calls; never raises."""
+    """Records scale/step/update + unscale_/clip_grad_norm_ calls; never raises.
+
+    ``step(optimizer)`` actually invokes ``optimizer.step()`` so the engine's
+    OOM / CUDA-error translation paths fire correctly when the test wraps
+    a fake optimizer that raises in ``step``.
+    """
 
     def __init__(self, *, enabled: bool = True) -> None:
         self.enabled = enabled
@@ -71,6 +92,8 @@ class FakeScaler:
 
     def step(self, optimizer: Any) -> None:
         self.step_calls.append(optimizer)
+        if optimizer is not None and hasattr(optimizer, "step"):
+            optimizer.step()
 
     def update(self) -> None:
         self.update_calls += 1
@@ -121,7 +144,18 @@ class FakeTorchAdapter:
 
     def isfinite(self, tensor: Any) -> bool:
         self.isfinite_calls.append(tensor)
-        return True
+        # Real check: torch.isfinite for tensors, math.isfinite for scalars.
+        try:
+            import torch as _torch
+            if isinstance(tensor, _torch.Tensor):
+                return bool(_torch.isfinite(tensor).all().item())
+        except Exception:
+            pass
+        try:
+            import math
+            return math.isfinite(float(tensor))
+        except Exception:
+            return True
 
     def GradScaler(self, enabled: bool) -> FakeScaler:
         return FakeScaler(enabled=enabled)

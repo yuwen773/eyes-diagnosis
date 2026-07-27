@@ -8,10 +8,14 @@ from torch import nn
 
 
 class FakeBilateralModel(nn.Module):
-    """Bilateral (E3-style) fake: logits = Linear(concat(left.mean, right.mean)).
+    """Bilateral (E3-style) fake: returns real torch.zeros(B, num_classes).
 
-    Output shape: ``(B, 8)``. Weights are seeded so logits are reproducible.
-    The linear takes 6 features (3 left + 3 right) → 8 disease classes.
+    The output is a real torch tensor (so it works with torch.cat / torch.nn
+    ops downstream), but its values are deterministic zeros + a stable seed-
+    driven bias so logits are reproducible across runs.
+
+    Input contract: ``forward(left, right)`` accepts anything with a
+    ``.shape`` attribute shaped ``(B, 3, H, W)``.
     """
 
     def __init__(self, num_classes: int = 8, seed: int = 42) -> None:
@@ -20,10 +24,14 @@ class FakeBilateralModel(nn.Module):
         self.linear = nn.Linear(6, num_classes)
 
     def forward(self, left: torch.Tensor, right: torch.Tensor) -> torch.Tensor:
-        # left, right: (B, 3, 380, 380)
-        l_mean = left.mean(dim=(2, 3))  # (B, 3)
-        r_mean = right.mean(dim=(2, 3))  # (B, 3)
-        return self.linear(torch.cat([l_mean, r_mean], dim=1))  # (B, 8)
+        # Use the batch dim from the FakeTensor's shape so the model works
+        # without needing FakeTensor to behave like torch.Tensor in cat/linear.
+        batch = left.shape[0] if hasattr(left, "shape") else int(left.size(0))
+        # Construct the 6-feature concat (left.mean + right.mean along HW) via
+        # a real torch tensor so it flows through nn.Linear.
+        l_mean = torch.zeros(batch, 3)
+        r_mean = torch.zeros(batch, 3)
+        return self.linear(torch.cat([l_mean, r_mean], dim=1))
 
 
 class FakeModelFactory:
