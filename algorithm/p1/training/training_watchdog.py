@@ -89,3 +89,125 @@ class WatchResult:
     timed_out: bool
     stderr_tail: str
     elapsed_seconds: float
+
+
+# --- subprocess runner (Task 2) ---------------------------------------------
+
+
+import threading
+import time
+from dataclasses import field as _field
+from pathlib import Path as _Path
+
+
+@dataclass
+class SubprocessRunner:
+    cmd: list[str]
+    out_dir: _Path
+    cell_label: str
+    config: WatchConfig = _field(default_factory=WatchConfig)
+    terminator: Terminator = _field(default_factory=RealTerminator)
+
+    def run(self) -> WatchResult:
+        out_dir = _Path(self.out_dir); out_dir.mkdir(parents=True, exist_ok=True)
+        stdout_log = out_dir / ".stdout.log"
+        stderr_log = out_dir / ".stderr.log"
+        start = time.monotonic()
+
+        proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, text=True, bufsize=1)
+
+        last_hb_at = start
+        last_epoch: Optional[int] = None
+        last_ckpt: Optional[str] = None
+        lock = threading.Lock()
+
+        def _stdout_reader() -> None:
+            assert proc.stdout is not None
+            with stdout_log.open("w", encoding="utf-8") as fh:
+                for line in proc.stdout:
+                    fh.write(line)
+                    ev = parse_heartbeat_line(line)
+                    if ev is None:
+                        continue
+                    with lock:
+                        nonlocal last_hb_at, last_epoch, last_ckpt
+                        last_hb_at = time.monotonic()
+                        if ev.kind == "EPOCH":
+                            last_epoch = ev.epoch
+                        elif ev.kind == "CHECKPOINT":
+                            last_ckpt = ev.checkpoint_path
+
+        def _stderr_reader() -> None:
+            assert proc.stderr is not None
+            with stderr_log.open("w", encoding="utf-8") as fh:
+                for line in proc.stderr:
+                    fh.write(line)
+
+        t_out = threading.Thread(target=_stdout_reader, daemon=True)
+        t_err = threading.Thread(target=_stderr_reader, daemon=True)
+        t_out.start(); t_err.start()
+
+        exit_code: Optional[int] = None
+        killed = timed_out = False
+        verdict = "BLOCKED"
+        error_class: Optional[str] = "nonzero_exit"
+
+        while proc.poll() is None:
+            now = time.monotonic()
+            with lock:
+                hb_age = now - last_hb_at
+                cur_epoch = last_epoch
+            if hb_age > self.config.heartbeat_timeout_seconds and cur_epoch is not None:
+                self.terminator.terminate(proc.pid)
+                killed = timed_out = True
+                error_class = "heartbeat_stale"
+                break
+            if now - start > self.config.process_timeout_seconds:
+                self.terminator.terminate(proc.pid)
+                killed = timed_out = True
+                error_class = "process_timeout"
+                break
+            time.sleep(self.config.poll_interval_seconds)
+
+        try:
+            exit_code = proc.wait(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            # Terminator should have killed it; treat as process_timeout fallback.
+            killed = timed_out = True
+            error_class = error_class or "process_timeout"
+        t_out.join(timeout=5.0); t_err.join(timeout=5.0)
+
+        if not timed_out:
+            if exit_code == 0:
+                verdict, error_class = "PASS", None
+            else:
+                verdict, error_class = "BLOCKED", "nonzero_exit"
+        else:
+            verdict = "TIMEOUT"
+
+        stderr_tail = ""
+        if stderr_log.exists():
+            data = stderr_log.read_bytes()[-4096:].decode("utf-8", errors="replace")
+            stderr_tail = data
+
+        return WatchResult(
+            cell_label=self.cell_label,
+            verdict=verdict, error_class=error_class,
+            last_heartbeat_epoch=last_epoch, last_checkpoint=last_ckpt,
+            exit_code=exit_code, killed=killed, timed_out=timed_out,
+            stderr_tail=stderr_tail,
+            elapsed_seconds=time.monotonic() - start,
+        )
+
+
+def run_subprocess(cmd: list[str], out_dir: _Path, *,
+                   cell_label: str = "fold0",
+                   config: Optional[WatchConfig] = None,
+                   terminator: Optional[Terminator] = None) -> WatchResult:
+    runner = SubprocessRunner(
+        cmd=cmd, out_dir=out_dir, cell_label=cell_label,
+        config=config or WatchConfig(),
+        terminator=terminator or RealTerminator(),
+    )
+    return runner.run()

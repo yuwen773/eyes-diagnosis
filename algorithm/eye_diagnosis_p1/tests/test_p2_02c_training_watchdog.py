@@ -7,6 +7,7 @@ protocol, RealTerminator, WatchResult.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -71,3 +72,156 @@ def test_real_terminator_terminate_does_not_raise_on_unknown_pid() -> None:
     # exits; the runner relies on terminate() being total.
     from p1.training.training_watchdog import RealTerminator
     RealTerminator().terminate(2**30)  # likely-not-a-pid
+
+
+# --- runner tests (Task 2) -------------------------------------------------
+
+
+class _RecordingTerminator:
+    """Test Terminator that records calls and never actually kills."""
+
+    def __init__(self) -> None:
+        self.calls: list[int] = []
+
+    def terminate(self, pid: int) -> None:
+        self.calls.append(pid)
+
+
+def _run_child(script: str, *, out_dir: Path,
+               config: "WatchConfig | None" = None) -> "WatchResult":
+    """Spawn `python -u -c <script>` with the runner and return the result."""
+    from p1.training.training_watchdog import (
+        RealTerminator, SubprocessRunner, WatchConfig,
+    )
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", "-c", script],
+        out_dir=out_dir,
+        cell_label="fold0",
+        config=config or WatchConfig(),
+        terminator=RealTerminator(),
+    )
+    return runner.run()
+
+
+def test_subprocess_runner_exit_zero_returns_pass(tmp_path: Path) -> None:
+    from p1.training.training_watchdog import WatchResult
+    out = tmp_path / "out"; out.mkdir()
+    result = _run_child("print('HEARTBEAT EPOCH 0 START'); print('done')", out_dir=out)
+    assert result.verdict == "PASS"
+    assert result.error_class is None
+    assert result.exit_code == 0
+    assert result.killed is False
+    assert result.timed_out is False
+    assert result.last_heartbeat_epoch == 0
+    assert (out / ".stdout.log").exists()
+    assert (out / ".stderr.log").exists()
+
+
+def test_subprocess_runner_exit_nonzero_returns_blocked(tmp_path: Path) -> None:
+    out = tmp_path / "out"; out.mkdir()
+    result = _run_child("import sys; sys.exit(7)", out_dir=out)
+    assert result.verdict == "BLOCKED"
+    assert result.error_class == "nonzero_exit"
+    assert result.exit_code == 7
+    assert result.killed is False
+    assert result.timed_out is False
+
+
+def test_subprocess_runner_heartbeat_stale_returns_timeout(tmp_path: Path) -> None:
+    """Child emits one EPOCH START then sleeps past heartbeat_timeout → TIMEOUT."""
+    from p1.training.training_watchdog import (
+        RealTerminator, SubprocessRunner, WatchConfig,
+    )
+    out = tmp_path / "out"; out.mkdir()
+    cfg = WatchConfig(process_timeout_seconds=30.0,
+                      heartbeat_timeout_seconds=0.5,
+                      poll_interval_seconds=0.05)
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", "-c",
+             "print('HEARTBEAT EPOCH 0 START'); import time; time.sleep(5)"],
+        out_dir=out, cell_label="fold0", config=cfg,
+        terminator=RealTerminator(),
+    )
+    result = runner.run()
+    assert result.verdict == "TIMEOUT"
+    assert result.error_class == "heartbeat_stale"
+    assert result.killed is True
+    assert result.timed_out is True
+    assert result.last_heartbeat_epoch == 0
+
+
+def test_subprocess_runner_process_timeout_returns_timeout(tmp_path: Path) -> None:
+    """Child never emits a heartbeat → process_timeout, not heartbeat_stale."""
+    from p1.training.training_watchdog import (
+        RealTerminator, SubprocessRunner, WatchConfig,
+    )
+    out = tmp_path / "out"; out.mkdir()
+    cfg = WatchConfig(process_timeout_seconds=1.5,
+                      heartbeat_timeout_seconds=10.0,  # never trips
+                      poll_interval_seconds=0.05)
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", "-c", "import time; time.sleep(10)"],
+        out_dir=out, cell_label="fold0", config=cfg,
+        terminator=RealTerminator(),
+    )
+    result = runner.run()
+    assert result.verdict == "TIMEOUT"
+    assert result.error_class == "process_timeout"
+    assert result.killed is True
+    assert result.last_heartbeat_epoch is None  # no EPOCH was ever seen
+
+
+def test_subprocess_runner_records_last_checkpoint(tmp_path: Path) -> None:
+    out = tmp_path / "out"; out.mkdir()
+    script = (
+        "print('HEARTBEAT EPOCH 0 START')\n"
+        "print('HEARTBEAT CHECKPOINT_SAVED fold_0/best_checkpoint.pth')\n"
+        "print('done')\n"
+    )
+    result = _run_child(script, out_dir=out)
+    assert result.verdict == "PASS"
+    assert result.last_checkpoint == "fold_0/best_checkpoint.pth"
+
+
+def test_subprocess_runner_stderr_tail_is_last_4kb(tmp_path: Path) -> None:
+    """stderr_tail is the last 4 KB of .stderr.log (not the whole file)."""
+    out = tmp_path / "out"; out.mkdir()
+    big = "x" * 8192 + "TAIL_MARKER"
+    result = _run_child(
+        f"import sys; sys.stderr.write({big!r}); sys.stderr.flush()",
+        out_dir=out,
+    )
+    assert result.verdict == "PASS"
+    assert "TAIL_MARKER" in result.stderr_tail
+    # Tail is capped at 4 KB.
+    assert len(result.stderr_tail.encode("utf-8")) <= 4096
+
+
+def test_subprocess_runner_uses_injected_terminator(tmp_path: Path) -> None:
+    """If the heartbeat times out, the injected Terminator is invoked."""
+    from p1.training.training_watchdog import (
+        SubprocessRunner, WatchConfig,
+    )
+    out = tmp_path / "out"; out.mkdir()
+    term = _RecordingTerminator()
+    cfg = WatchConfig(process_timeout_seconds=30.0,
+                      heartbeat_timeout_seconds=0.5,
+                      poll_interval_seconds=0.05)
+    runner = SubprocessRunner(
+        cmd=[sys.executable, "-u", "-c",
+             "print('HEARTBEAT EPOCH 0 START'); import time; time.sleep(5)"],
+        out_dir=out, cell_label="fold0", config=cfg, terminator=term,
+    )
+    result = runner.run()
+    assert result.verdict == "TIMEOUT"
+    assert len(term.calls) == 1
+
+
+def test_run_subprocess_helper_uses_defaults(tmp_path: Path) -> None:
+    from p1.training.training_watchdog import run_subprocess
+    out = tmp_path / "out"; out.mkdir()
+    result = run_subprocess(
+        [sys.executable, "-u", "-c", "print('done')"],
+        out_dir=out, cell_label="fold0",
+    )
+    assert result.verdict == "PASS"
