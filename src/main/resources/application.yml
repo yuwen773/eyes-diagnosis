@@ -52,6 +52,19 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
+# PR-12.1 observability: Prometheus scrape endpoint at /api/actuator/prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
 logging:
   level:
     org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug

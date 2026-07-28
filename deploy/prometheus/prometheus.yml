@@ -1,0 +1,16 @@
+# PR-12.4 Prometheus 抓取配置
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'eye-diagnosis-backend'
+    metrics_path: /api/actuator/prometheus
+    static_configs:
+      - targets: ['backend:8081']
+        labels:
+          service: eye-diagnosis
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

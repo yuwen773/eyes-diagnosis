@@ -1,5 +1,38 @@
-version: '3.8'
+# PR-12.4 全栈部署编排：mysql / redis / chroma / backend / frontend / prometheus / grafana
+# 使用方式：
+#   1. mvn -DskipTests package          # 先在宿主机构建后端 jar
+#   2. docker compose up -d --build     # 启动全栈（backend 默认 demo profile）
+# 环境隔离：backend 通过 SPRING_PROFILES_ACTIVE 控制（demo/prod），禁止加载 test 配置。
 services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-yuwen123.}
+      MYSQL_DATABASE: diagnosis
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-yuwen123.}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   chroma:
     image: ghcr.io/chroma-core/chroma:1.0.0
     ports:
@@ -9,5 +42,70 @@ services:
     volumes:
       - chroma-data:/chroma/chroma
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${BACKEND_PROFILE:-demo}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-yuwen123.}
+      REDIS_HOST: redis
+      CHROMA_HOST: http://chroma
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      COS_SECRET_ID: ${COS_SECRET_ID:-}
+      COS_SECRET_KEY: ${COS_SECRET_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/api/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
+  mysql-data:
+  redis-data:
   chroma-data:
+  prometheus-data:
+  grafana-data:

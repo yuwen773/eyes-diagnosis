@@ -80,6 +80,15 @@ const router = createRouter({
           },
         },
         {
+          path: 'workflow/dashboard',
+          name: '诊断运营看板',
+          component: () => import('@/pages/workflow/WorkflowDashboardPage.vue'),
+          meta: {
+            access: ACCESS_ENUM.USER,
+            hideInMenu: true,
+          },
+        },
+        {
           path: 'doctor/reviews',
           name: '审核工作台',
           component: () => import('@/pages/doctor/ReviewListPage.vue'),

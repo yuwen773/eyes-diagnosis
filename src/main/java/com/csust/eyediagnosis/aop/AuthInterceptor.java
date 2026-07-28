@@ -57,10 +57,24 @@ public class AuthInterceptor {
         if(userRole == null){
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        //要求必须要有管理员权限才能通过，否则拒绝
-        if(UserRole.ADMIN.equals(mustRoleEnum) && !UserRole.ADMIN.equals(userRole)){
+        // PR-12.3 权限矩阵：
+        //   mustRole=admin   -> 仅管理员
+        //   mustRole=doctor  -> 仅医生（人工复核提交/认领是医疗行为，管理员不可代签）
+        //   mustRole=auditor -> 审计员或管理员（审计视图）
+        //   mustRole=user    -> 任意已登录角色
+        if (!allowed(mustRoleEnum, userRole)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         return joinPoint.proceed();
+    }
+
+    /** PR-12.3 role decision matrix. */
+    public static boolean allowed(UserRole mustRole, UserRole actual) {
+        return switch (mustRole) {
+            case ADMIN -> actual == UserRole.ADMIN;
+            case DOCTOR -> actual == UserRole.DOCTOR;
+            case AUDITOR -> actual == UserRole.AUDITOR || actual == UserRole.ADMIN;
+            case USER -> true;
+        };
     }
 }

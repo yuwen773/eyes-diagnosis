@@ -1,0 +1,13 @@
+{
+  "case": "demo-case-3-ood",
+  "title": "OOD 拒识",
+  "owner": "demo_patient",
+  "workflowStatus": "REJECTED",
+  "currentSegmentCode": "INTAKE_INFERENCE_QUALITY",
+  "explanationPublicationStatus": "WITHHELD",
+  "predictionExposureStatus": "WITHHELD_BY_OOD",
+  "stopReasonCode": "OOD_DETECTED",
+  "limitationReasonCode": "INPUT_OUT_OF_DISTRIBUTION",
+  "question": "演示案例3：输入图像非眼底照片，系统安全拒识",
+  "narrative": "患者上传的图像不是眼底照片（分布外输入）→ INTAKE_INFERENCE_QUALITY 段的 OOD 检测触发安全策略 → 工作流终止为 REJECTED，预测被 WITHHELD_BY_OOD 扣留 → 患者端仅显示友好的拒识提示，不暴露任何模型输出。这是医疗安全的核心演示点。"
+}

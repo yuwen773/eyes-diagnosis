@@ -50,19 +50,35 @@ public class WorkflowCommandService {
     private final GraphDefinitionRegistry graphDefinitionRegistry;
     private final WorkflowLifecycleGuard lifecycleGuard;
     private final ObjectMapper objectMapper;
+    private final com.csust.eyediagnosis.workflow.observability.WorkflowMetrics metrics;
 
+    /** Legacy wiring without metrics; kept so existing callers/tests remain source-compatible. */
     public WorkflowCommandService(DiagnosisWorkflowRepository workflowRepository,
                                   WorkflowEventRepository eventRepository,
                                   WorkflowJobCreationService jobCreationService,
                                   GraphDefinitionRegistry graphDefinitionRegistry,
                                   WorkflowLifecycleGuard lifecycleGuard,
                                   ObjectMapper objectMapper) {
+        this(workflowRepository, eventRepository, jobCreationService, graphDefinitionRegistry,
+                lifecycleGuard, objectMapper, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public WorkflowCommandService(DiagnosisWorkflowRepository workflowRepository,
+                                  WorkflowEventRepository eventRepository,
+                                  WorkflowJobCreationService jobCreationService,
+                                  GraphDefinitionRegistry graphDefinitionRegistry,
+                                  WorkflowLifecycleGuard lifecycleGuard,
+                                  ObjectMapper objectMapper,
+                                  @org.springframework.beans.factory.annotation.Autowired(required = false)
+                                  com.csust.eyediagnosis.workflow.observability.WorkflowMetrics metrics) {
         this.workflowRepository = workflowRepository;
         this.eventRepository = eventRepository;
         this.jobCreationService = jobCreationService;
         this.graphDefinitionRegistry = graphDefinitionRegistry;
         this.lifecycleGuard = lifecycleGuard;
         this.objectMapper = objectMapper;
+        this.metrics = metrics;
     }
 
     /**
@@ -117,6 +133,9 @@ public class WorkflowCommandService {
         }
 
         appendCreatedEvent(workflowId, loginUser, request);
+        if (metrics != null) {
+            metrics.workflowCreated();
+        }
         WorkflowCreateResult result = new WorkflowCreateResult();
         result.setWorkflowId(workflowId);
         result.setStatus(WorkflowStatus.QUEUED.name());

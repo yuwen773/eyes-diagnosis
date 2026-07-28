@@ -36,14 +36,14 @@ public class ReviewController {
     private UserService userService;
 
     @GetMapping("/tasks")
-    @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
+    @AuthCheck(mustRole = AuthConstant.DOCTOR_ROLE)
     public BaseResponse<List<ReviewTaskSummaryVO>> listTasks(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(reviewApiService.listOpenTasks(loginUser));
     }
 
     @PostMapping("/tasks/{taskId}/claim")
-    @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
+    @AuthCheck(mustRole = AuthConstant.DOCTOR_ROLE)
     public BaseResponse<?> claim(@PathVariable String taskId, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         reviewApiService.claimTask(taskId, loginUser);
@@ -51,7 +51,7 @@ public class ReviewController {
     }
 
     @PostMapping("/tasks/{taskId}/submit")
-    @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
+    @AuthCheck(mustRole = AuthConstant.DOCTOR_ROLE)
     public BaseResponse<ReviewSubmissionVO> submit(@PathVariable String taskId,
                                                    @RequestBody SubmitReviewDecisionRequest body,
                                                    HttpServletRequest request) {

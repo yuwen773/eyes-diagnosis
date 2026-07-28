@@ -1,0 +1,16 @@
+{
+  "case": "demo-case-2-review",
+  "title": "人工复核",
+  "owner": "demo_patient",
+  "workflowStatus": "WAITING_HUMAN_REVIEW",
+  "currentSegmentCode": "FINAL_CLINICAL_REVIEW_RESUME",
+  "explanationPublicationStatus": "VALIDATED",
+  "predictionExposureStatus": "NOT_AVAILABLE",
+  "reviewTask": {
+    "reviewType": "FINAL_CLINICAL_REVIEW",
+    "status": "OPEN",
+    "claimableBy": "demo_doctor"
+  },
+  "question": "演示案例2：AI 置信度处于临界区间，转人工复核",
+  "narrative": "AI 推理完成但触发临床复核策略 → 工作流暂停在 WAITING_HUMAN_REVIEW → 生成 OPEN 的 FINAL_CLINICAL_REVIEW 任务 → demo_doctor 在审核工作台 claim 并 submit 决策后，工作流按 Review Decision Matrix 继续推进。复核前患者端不暴露任何预测。"
+}

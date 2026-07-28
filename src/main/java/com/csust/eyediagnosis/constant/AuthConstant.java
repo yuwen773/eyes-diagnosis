@@ -17,4 +17,12 @@ public class AuthConstant {
      * 管理员角色
      */
     public static final String ADMIN_ROLE = "admin";
+    /**
+     * 医生角色（PR-12.3：提交/认领人工复核仅限医生）
+     */
+    public static final String DOCTOR_ROLE = "doctor";
+    /**
+     * 审计角色（PR-12.3：审计视图允许审计员与管理员）
+     */
+    public static final String AUDITOR_ROLE = "auditor";
 }

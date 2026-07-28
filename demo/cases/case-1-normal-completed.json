@@ -1,0 +1,11 @@
+{
+  "case": "demo-case-1-normal",
+  "title": "正常完成",
+  "owner": "demo_patient",
+  "workflowStatus": "COMPLETED",
+  "currentSegmentCode": "FINAL_RISK_EXPLANATION",
+  "explanationPublicationStatus": "PUBLISHED",
+  "predictionExposureStatus": "AVAILABLE",
+  "question": "演示案例1：眼底图像清晰，AI 分析正常完成",
+  "narrative": "患者上传清晰眼底照片 → INTAKE_INFERENCE_QUALITY 段完成推理与质量校验 → EVIDENCE_RETRIEVAL_VALIDATION 段完成证据检索与验证 → FINAL_RISK_EXPLANATION 段发布解释快照 → 工作流 COMPLETED，患者可查看完整诊断解读。"
+}

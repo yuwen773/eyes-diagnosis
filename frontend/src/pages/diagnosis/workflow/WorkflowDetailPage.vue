@@ -19,6 +19,7 @@ import {
   type WorkflowStreamHandle,
 } from '@/api/workflow'
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline.vue'
+import AgentExecutionTimeline from '@/components/workflow/AgentExecutionTimeline.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -150,6 +151,12 @@ onUnmounted(() => {
 
       <template v-else-if="view">
         <WorkflowTimeline :status="view.status" :progress="view.progress" :events="events" />
+
+        <AgentExecutionTimeline
+          :status="view.status"
+          :progress="view.progress"
+          :events="events"
+        />
 
         <p v-if="view.resultAvailability?.doctorReviewRequired" class="wf-detail__review-hint" data-testid="review-hint">
           当前结果正在等待医生复核，完成后将第一时间通知您。
