@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 from typing import Sequence
 
@@ -23,13 +24,16 @@ from p1.training.frozen_inputs import (  # noqa: F401  (monkey-patch seam)
     load_split_assignment,
 )
 from p1.training.orchestrator import run_formal_experiment  # noqa: F401  (monkey-patch seam)
-from p1.training.protocol import load_protocol  # noqa: F401  (monkey-patch seam)
 from p1.training.receipts import ExperimentReceipt
 from p1.stability.cli import (  # noqa: F401  (monkey-patch seam)
     build_real_dataloader_factory,
     build_real_model_factory,
     build_real_torch_adapter,
     make_real_optimizer_factory,
+)
+from p1.stability.protocol import (  # noqa: F401  (monkey-patch seam)
+    P202AProtocolError,
+    load_p202a_protocol,
 )
 
 
@@ -73,7 +77,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _build_argparser().parse_args(list(argv) if argv is not None else None)
 
     # All module-level imports so tests can monkey-patch them.
-    cfg = load_protocol(args.protocol)
+    try:
+        cfg = load_p202a_protocol(args.protocol)
+    except P202AProtocolError as e:
+        print(f"protocol error: {e}", file=sys.stderr)
+        return 2
     manifest_pdf = pd.read_parquet(args.manifest)
     split_df = load_split_assignment(args.split_assignment)
     fold_df = load_fold_assignment(args.fold_assignment, expected_folds=5)
