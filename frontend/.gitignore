@@ -30,3 +30,8 @@ coverage
 *.tsbuildinfo
 /dist/
 /.omc/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/

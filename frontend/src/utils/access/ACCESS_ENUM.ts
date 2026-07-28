@@ -4,6 +4,7 @@
 const ACCESS_ENUM = {
   NOT_LOGIN: "notLogin",
   USER: "user",
+  DOCTOR: "doctor",
   ADMIN: "admin",
 };
 

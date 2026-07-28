@@ -6,6 +6,8 @@ import {
   MedicineBoxOutlined,
   RobotOutlined,
   ReadOutlined,
+  ExperimentOutlined,
+  AuditOutlined,
 } from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/user'
@@ -43,6 +45,8 @@ const iconMap: Record<string, Component> = {
   MedicineBoxOutlined,
   RobotOutlined,
   ReadOutlined,
+  ExperimentOutlined,
+  AuditOutlined,
 }
 
 const menuToRouteItem = (item: any) => {

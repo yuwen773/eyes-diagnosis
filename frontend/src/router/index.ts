@@ -51,6 +51,54 @@ const router = createRouter({
           },
         },
         {
+          path: 'diagnosis/create',
+          name: '智能诊断工作流',
+          component: () => import('@/pages/diagnosis/workflow/WorkflowCreatePage.vue'),
+          meta: {
+            icon: 'ExperimentOutlined',
+            access: ACCESS_ENUM.USER,
+          },
+        },
+        {
+          path: 'diagnosis/:id',
+          name: '诊断进度',
+          component: () => import('@/pages/diagnosis/workflow/WorkflowDetailPage.vue'),
+          props: true,
+          meta: {
+            access: ACCESS_ENUM.USER,
+            hideInMenu: true,
+          },
+        },
+        {
+          path: 'diagnosis/:id/result',
+          name: '诊断结果',
+          component: () => import('@/pages/diagnosis/workflow/WorkflowResultPage.vue'),
+          props: true,
+          meta: {
+            access: ACCESS_ENUM.USER,
+            hideInMenu: true,
+          },
+        },
+        {
+          path: 'doctor/reviews',
+          name: '审核工作台',
+          component: () => import('@/pages/doctor/ReviewListPage.vue'),
+          meta: {
+            icon: 'AuditOutlined',
+            access: ACCESS_ENUM.DOCTOR,
+          },
+        },
+        {
+          path: 'doctor/reviews/:id',
+          name: '审核详情',
+          component: () => import('@/pages/doctor/ReviewDetailPage.vue'),
+          props: true,
+          meta: {
+            access: ACCESS_ENUM.DOCTOR,
+            hideInMenu: true,
+          },
+        },
+        {
           path: 'news',
           name: '前沿新闻',
           component: () => import('@/pages/news/NewsPage.vue'),

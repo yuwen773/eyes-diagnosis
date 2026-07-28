@@ -20,6 +20,12 @@ const checkAccess = (loginUser:any,needAccess = ACCESS_ENUM.NOT_LOGIN)=>{
       return false
     }
   }
+  //需要医生权限（管理员同样放行）
+  if(needAccess === ACCESS_ENUM.DOCTOR){
+    if(loginUserAccess !== ACCESS_ENUM.DOCTOR && loginUserAccess !== ACCESS_ENUM.ADMIN){
+      return false
+    }
+  }
   //需要管理员权限
   if(needAccess === ACCESS_ENUM.ADMIN){
     //如果不为管理员
