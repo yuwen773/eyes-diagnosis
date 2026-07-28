@@ -116,6 +116,7 @@ def run_formal_fold(
     seed: int = 42,
     max_epochs: int | None = None,
     patience: int | None = None,
+    emit_heartbeat: bool = False,
 ) -> FoldReceipt:
     """Run a single formal fold end-to-end. Always returns a ``FoldReceipt``."""
     fold_dir = out_dir / f"fold_{fold}"
@@ -206,6 +207,8 @@ def run_formal_fold(
 
     epoch = 0  # default for receipt total_epochs_run if loop never enters
     for epoch in range(max_epochs_run):
+        if emit_heartbeat:
+            print(f"HEARTBEAT EPOCH {epoch} START", flush=True)
         try:
             train_stats = train_one_epoch(
                 torch_adapter=torch_adapter, model=model, loader=train_loader,
@@ -224,6 +227,8 @@ def run_formal_fold(
             error_message = str(exc); error_epoch = epoch
             error_batch = getattr(exc, "batch_idx", None)
             break
+        if emit_heartbeat:
+            print(f"HEARTBEAT EPOCH {epoch} PASS", flush=True)
 
         scheduler.step(val_stats.macro_auprc)
         is_best = val_stats.macro_auprc > best_metric
@@ -231,6 +236,7 @@ def run_formal_fold(
             best_metric = val_stats.macro_auprc
             best_epoch = epoch
             try:
+                ckpt_path = fold_dir / "best_checkpoint.pth"
                 save_checkpoint(
                     model.state_dict(),
                     {
@@ -240,8 +246,10 @@ def run_formal_fold(
                         "best_metric_name": "validation_macro_auprc",
                         "config_hash": cfg_hash, "saved_at": _now_iso(),
                     },
-                    fold_dir / "best_checkpoint.pth",
+                    ckpt_path,
                 )
+                if emit_heartbeat:
+                    print(f"HEARTBEAT CHECKPOINT_SAVED {ckpt_path}", flush=True)
             except CheckpointError as exc:
                 status = "BLOCKED"; error_class = "checkpoint_io"
                 error_message = str(exc); error_epoch = epoch

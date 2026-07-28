@@ -143,3 +143,134 @@ def test_cli_formal_no_protocol_error_attribute_left() -> None:
     assert hasattr(cli_formal, "load_p202a_protocol"), (
         "cli_formal must expose load_p202a_protocol after the swap."
     )
+
+
+# --- heartbeat tests (Task 5) ----------------------------------------------
+
+
+def _make_pass_receipt(folds):
+    from p1.training.receipts import ExperimentReceipt
+    return ExperimentReceipt(
+        experiment="E3", seed=42, folds_requested=list(folds),
+        per_fold=[], overall_status="PASS",
+    )
+
+
+def _capture_cli_formal_stdout(monkeypatch, argv: list[str]) -> int:
+    """Run cli_formal.main(argv) with everything monkey-patched; return rc."""
+    from p1.training import cli_formal
+    _patch_loaders_and_adapters(monkeypatch, cli_formal)
+    monkeypatch.setattr(
+        cli_formal, "run_formal_experiment",
+        lambda **kw: _make_pass_receipt(kw.get("folds", [0])),
+    )
+    return cli_formal.main(argv)
+
+
+def test_cli_formal_default_emits_no_heartbeat_lines(monkeypatch, capsys) -> None:
+    argv = _argv(["--fold", "0"])  # no --emit-heartbeat
+    rc = _capture_cli_formal_stdout(monkeypatch, argv)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "HEARTBEAT" not in out, (
+        f"default mode must not emit heartbeats; got: {out!r}"
+    )
+
+
+def test_cli_formal_with_emit_heartbeat_flag(monkeypatch) -> None:
+    """With --emit-heartbeat, cli_formal should propagate the flag down to
+    formal_fold_runner.run_formal_fold via the orchestrator."""
+    from p1.training import cli_formal, orchestrator
+    _patch_loaders_and_adapters(monkeypatch, cli_formal)
+    captured: dict = {}
+    def _capture_run_formal_fold(**kw):
+        captured["emit_heartbeat"] = kw.get("emit_heartbeat", False)
+        # Synthesize a single FoldReceipt and write the 9 artifacts so the
+        # orchestrator-level runner has something to enumerate.
+        from p1.training.receipts import FoldReceipt
+        out_root = kw["out_dir"]
+        out_root.mkdir(parents=True, exist_ok=True)
+        fold_dir = out_root / "fold_0"; fold_dir.mkdir(parents=True, exist_ok=True)
+        r = FoldReceipt(status="PASS", best_epoch=0, best_metric=0.5,
+                        fold=0, started_at="t0", finished_at="t1",
+                        duration_s=0.0, config_hash="c", frozen_inputs={})
+        from p1.training.formal_fold_runner import _atomic_write_json
+        _atomic_write_json(fold_dir / "fold_receipt.json", r.to_dict())
+        return r
+    # Patch the symbol that orchestrator imported:
+    monkeypatch.setattr(orchestrator.formal_fold_runner, "run_formal_fold",
+                        _capture_run_formal_fold)
+    monkeypatch.setattr(
+        cli_formal, "run_formal_experiment",
+        lambda **kw: orchestrator.run_formal_experiment(**kw),
+    )
+
+    rc = cli_formal.main(_argv(["--fold", "0", "--emit-heartbeat"]))
+    assert rc in (0, 1, 2)
+    assert captured.get("emit_heartbeat") is True, (
+        "cli_formal must forward --emit-heartbeat to run_formal_fold via "
+        "orchestrator.run_formal_experiment; orchestrator must forward to "
+        "formal_fold_runner.run_formal_fold."
+    )
+
+
+def test_run_formal_fold_emits_heartbeats_in_order(tmp_path, monkeypatch, capsys) -> None:
+    """Direct unit test of formal_fold_runner.run_formal_fold emission.
+
+    We mock train_one_epoch / evaluate / save_checkpoint / the OOF writer
+    to produce a tiny 1-epoch loop, and assert stdout contains exactly:
+      HEARTBEAT EPOCH 0 START
+      HEARTBEAT EPOCH 0 PASS
+      HEARTBEAT CHECKPOINT_SAVED <path>
+    in that order.
+    """
+    from p1.training import formal_fold_runner as ffr
+    from p1.training.engine import EpochStats, ValStats
+    from eye_diagnosis_p1.tests.fakes import FakeModelFactory
+
+    monkeypatch.setattr(ffr, "train_one_epoch",
+                        lambda **kw: EpochStats(loss=0.1, num_batches=1,
+                                                num_samples=2, gpu_step_ms=1.0))
+    monkeypatch.setattr(ffr, "evaluate",
+                        lambda **kw: ValStats(loss=0.2, macro_auprc=0.5,
+                                              num_batches=1, num_samples=2))
+    monkeypatch.setattr(ffr, "save_checkpoint", lambda state_dict, metadata, path: None)
+    monkeypatch.setattr(ffr, "_atomic_write_json", lambda *a, **kw: None)
+    monkeypatch.setattr(ffr, "_atomic_write_csv", lambda *a, **kw: None)
+    monkeypatch.setattr(ffr, "compute_full_metrics",
+                        lambda y_true, y_proba, threshold: {"macro_auprc": 0.5})
+
+    # Add cfg fields that run_formal_fold reads unconditionally.
+    cfg = {
+        "schema_version": "p2-02a-v1",
+        "learning_rate": 1e-4,
+        "weight_decay": 1e-4,
+        "scheduler_factor": 0.5,
+        "scheduler_patience": 2,
+        "early_stopping_patience": 1,
+        "max_epochs": 1,
+        "patient_batch": 2,
+        "amp": True,
+        "threshold_policy": "fixed_0.5",
+    }
+
+    receipt = ffr.run_formal_fold(
+        out_dir=tmp_path, manifest_pids={1, 2, 3, 4},
+        split_df=_pd.DataFrame({"patient_id": [1, 2]}),
+        fold_df=_pd.DataFrame({"patient_id": [1, 2], "fold": [0, 0]}),
+        cfg=cfg,
+        torch_adapter=object(),
+        model_factory=FakeModelFactory(seed=42),
+        data_factory=lambda **kw: object(),
+        fold=0, experiment="E3", seed=42, max_epochs=1, patience=1,
+        emit_heartbeat=True,
+    )
+
+    out = capsys.readouterr().out
+    e0_start = out.index("HEARTBEAT EPOCH 0 START")
+    e0_pass = out.index("HEARTBEAT EPOCH 0 PASS")
+    ckpt = out.index("HEARTBEAT CHECKPOINT_SAVED")
+    assert e0_start < e0_pass < ckpt, (
+        f"heartbeat order violated: start={e0_start}, pass={e0_pass}, "
+        f"ckpt={ckpt}; full stdout={out!r}"
+    )

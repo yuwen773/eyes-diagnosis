@@ -42,7 +42,7 @@ def test_cli_formal_smoke_runs_end_to_end(
     _FAKE_PROTOCOL_LOADER = FakeProtocolLoader(override={"patient_batch": 2})
 
     # Artifact loaders
-    monkeypatch.setattr(cli_formal, "load_protocol", lambda p: _FAKE_PROTOCOL_LOADER.load())
+    monkeypatch.setattr(cli_formal, "load_p202a_protocol", lambda p: _FAKE_PROTOCOL_LOADER.load())
     monkeypatch.setattr(
         cli_formal.pd, "read_parquet",
         lambda p: _pd.DataFrame({"patient_id": [1, 2, 3, 4]}),

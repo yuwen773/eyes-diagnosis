@@ -61,6 +61,9 @@ def _build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--fold-assignment", type=Path,
                    default=Path("artifacts") / "p1_v1" / "fold_assignment_v1.csv")
     p.add_argument("--image-root", type=Path, required=True)
+    p.add_argument("--emit-heartbeat", action="store_true", default=False,
+                   help="Emit HEARTBEAT EPOCH/CHECKPOINT lines to stdout for "
+                        "the fold0_smoke subprocess watchdog (P2-02C).")
     return p
 
 
@@ -115,6 +118,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         seed=args.seed,
         max_epochs=args.max_epochs,
         patience=args.patience,
+        emit_heartbeat=args.emit_heartbeat,
     )
     return _exit_code_for(receipt)
 
