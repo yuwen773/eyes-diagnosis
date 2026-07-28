@@ -19,6 +19,19 @@ docker compose up -d --build
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3001 (admin/admin) |
 | 指标端点 | http://localhost:8081/api/actuator/prometheus |
+| MySQL | localhost:3307（宿主机端口可用 `MYSQL_HOST_PORT` 覆盖） |
+
+> 端口冲突：若宿主机 3307 已被本机 MySQL 占用，用
+> `MYSQL_HOST_PORT=3308 docker compose up -d` 更换宿主机映射端口（容器内仍是 3306，不影响 backend）。
+
+## 数据库初始化说明
+
+- Flyway（V1–V14）负责工作流/审计等演进表；
+- `t_user` 等 8 张早期存量表不在 Flyway 链内，由 `deploy/mysql/init/01_legacy_schema.sql`
+  在 **mysql 数据卷首次初始化时** 自动建表（docker-entrypoint-initdb.d 机制）；
+- 若复用了旧数据卷导致缺表，可手动补一次：
+  `docker exec -i <mysql容器> mysql -uroot -p<密码> diagnosis < deploy/mysql/init/01_legacy_schema.sql`，
+  然后 `docker compose restart backend` 重跑种子。
 
 ## 演示账号
 
