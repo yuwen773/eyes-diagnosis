@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+from p1.training._atomic_io import atomic_write_text
 from p1.training.checkpoint import (
     CheckpointError,
     load_checkpoint,
@@ -56,37 +57,29 @@ class PreflightError(RuntimeError):
 # --- atomic helpers --------------------------------------------------------
 
 
+# Single source of truth for engine-exception → receipt error_class mapping.
+_EXC_TO_ERROR_CLASS: dict[type, str] = {
+    NanLossError: "nan_loss",
+    CudaOomError: "cuda_oom",
+    CudaRuntimeError: "cuda_runtime",
+    CheckpointError: "checkpoint_io",
+}
+
+
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
-    """Write JSON payload atomically (tmp + os.replace)."""
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    try:
-        tmp.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            if tmp.exists():
-                tmp.unlink()
-        except OSError:
-            pass
-        raise
+    """Write JSON payload atomically."""
+    payload_str = json.dumps(payload, indent=2, default=str)
+    def _write(tmp: Path) -> None:
+        tmp.write_text(payload_str, encoding="utf-8")
+    atomic_write_text(path, _write)
 
 
 def _atomic_write_csv(path: Path, header: list[str], rows: list[list[Any]]) -> None:
-    """Write CSV atomically (tmp + os.replace)."""
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    try:
+    """Write CSV atomically."""
+    def _write(tmp: Path) -> None:
         with tmp.open("w", newline="", encoding="utf-8") as fh:
-            w = csv.writer(fh)
-            w.writerow(header)
-            w.writerows(rows)
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            if tmp.exists():
-                tmp.unlink()
-        except OSError:
-            pass
-        raise
+            csv.writer(fh).writerows([header, *rows])
+    atomic_write_text(path, _write)
 
 
 def append_jsonl(path: Path, row: dict[str, Any]) -> None:
@@ -225,21 +218,11 @@ def run_formal_fold(
                 criterion=criterion, device="cuda",
                 threshold=float(cfg["threshold_policy"].split("_")[1]),
             )
-        except NanLossError as exc:
-            status = "BLOCKED"; error_class = "nan_loss"
-            error_message = str(exc); error_epoch = epoch; error_batch = exc.batch_idx
-            break
-        except CudaOomError as exc:
-            status = "BLOCKED"; error_class = "cuda_oom"
-            error_message = str(exc); error_epoch = epoch; error_batch = exc.batch_idx
-            break
-        except CudaRuntimeError as exc:
-            status = "BLOCKED"; error_class = "cuda_runtime"
-            error_message = str(exc); error_epoch = epoch; error_batch = exc.batch_idx
-            break
-        except CheckpointError as exc:
-            status = "BLOCKED"; error_class = "checkpoint_io"
+        except tuple(_EXC_TO_ERROR_CLASS) as exc:
+            status = "BLOCKED"
+            error_class = _EXC_TO_ERROR_CLASS[type(exc)]
             error_message = str(exc); error_epoch = epoch
+            error_batch = getattr(exc, "batch_idx", None)
             break
 
         scheduler.step(val_stats.macro_auprc)
@@ -367,7 +350,7 @@ def run_formal_fold(
         config_hash=cfg_hash,
         checkpoint_sha256=receipt_checkpoint_sha256,
         error_class=error_class,
-        error_message=(error_message or "")[:1024] if error_message else None,
+        error_message=(error_message or "")[:1024] or None,
         error_epoch=error_epoch,
         error_batch=error_batch,
         frozen_inputs={

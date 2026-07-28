@@ -60,16 +60,16 @@ def test_atomic_write_no_tmp_left_on_success(tmp_path: Path) -> None:
 
 def test_atomic_write_no_tmp_left_on_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """If the rename step fails, no .tmp file is left behind."""
-    from p1.training import checkpoint as ckpt
+    from p1.training import _atomic_io
 
     model = _TinyModel()
     target = tmp_path / "best.pth"
 
-    # Force os.replace to raise so we hit the cleanup branch.
+    # Force the rename step to raise so we hit the cleanup branch.
     def _raise_replace(*_a: object, **_k: object) -> None:
         raise OSError("simulated rename failure")
 
-    monkeypatch.setattr(ckpt.os, "replace", _raise_replace)
+    monkeypatch.setattr(_atomic_io.os, "replace", _raise_replace)
 
     with pytest.raises(CheckpointError):
         save_checkpoint(model.state_dict(), {"epoch": 0}, target)

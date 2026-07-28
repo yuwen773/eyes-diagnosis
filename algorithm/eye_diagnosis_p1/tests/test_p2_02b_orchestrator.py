@@ -10,6 +10,7 @@ from eye_diagnosis_p1.tests.fakes import (
     FakeDataLoaderFactory,
     FakeFoldAssignmentLoader,
     FakeModelFactory,
+    FakeProtocolLoader,
     FakeTorchAdapter,
 )
 
@@ -21,18 +22,7 @@ def _runner_deps(**kw: Any) -> dict[str, Any]:
         "data_factory": FakeDataLoaderFactory(batch_size=2, num_batches=3, num_classes=8),
         "experiment": "E3", "seed": 42, "max_epochs": 2,
         "patience": 5,
-        "cfg": {
-            "schema_version": "p2-02a-v1",
-            "optimizer": "AdamW", "learning_rate": 0.0001, "weight_decay": 0.0001,
-            "max_epochs": 20, "early_stopping_patience": 5,
-            "checkpoint_selector": "validation_macro_auprc",
-            "loss": "bce_with_logits", "patient_batch": 8,
-            "gradient_accumulation": 1, "amp": True, "gradient_clip_norm": 1.0,
-            "scheduler": "reduce_on_plateau",
-            "scheduler_metric": "validation_macro_auprc",
-            "scheduler_factor": 0.5, "scheduler_patience": 2,
-            "threshold_policy": "fixed_0.5",
-        },
+        "cfg": FakeProtocolLoader(override={"patient_batch": 8}).load(),
     }
     base.update(kw)
     return base

@@ -18,13 +18,13 @@ unscaled gradients which produces wrong results.
 """
 from __future__ import annotations
 
-import math
-import sys
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
 import torch
+from sklearn.metrics import average_precision_score
 
 from p1.benchmark.compute import is_oom_error
 
@@ -132,20 +132,24 @@ def _stack_left_right(batch: Any) -> tuple[Any, Any, Any]:
 
 def _to_device(t: Any, device: str) -> Any:
     """Move a tensor (real or FakeTensor) to ``device``."""
-    if hasattr(t, "to"):
-        return t.to(device)
-    return t
+    return t.to(device) if hasattr(t, "to") else t
 
 
-def _isfinite(torch_adapter: Any, value: Any) -> bool:
-    """Adapter-aware isfinite. Falls back to math.isfinite on plain Python numbers."""
-    if hasattr(torch_adapter, "isfinite"):
-        try:
-            return bool(torch_adapter.isfinite(value))
-        except Exception:
-            pass
-    import math
-    return math.isfinite(float(value))
+def _translate_cuda_exception(exc: Exception, op: str, batch_idx: int) -> None:
+    """Translate CUDA-flavored exceptions to ``CudaOomError``/``CudaRuntimeError``.
+
+    Re-raises the appropriate engine exception; re-raises ``exc`` unchanged
+    when it is neither an OOM nor a CUDA-flavored ``RuntimeError``.
+    """
+    if is_oom_error(exc):
+        raise CudaOomError(op=op, epoch=0, batch_idx=batch_idx, original=exc) from exc
+    if isinstance(exc, RuntimeError) and (
+        "cuda" in str(exc).lower()
+        or "cublas" in str(exc).lower()
+        or "cudnn" in str(exc).lower()
+    ):
+        raise CudaRuntimeError(op=op, epoch=0, batch_idx=batch_idx, original=exc) from exc
+    raise exc
 
 
 # --- public entry points -----------------------------------------------------
@@ -178,35 +182,18 @@ def train_one_epoch(
 
         optimizer.zero_grad(set_to_none=True)
 
-        autocast_ctx = None
-        if amp:
-            autocast_ctx = torch_adapter.autocast(
-                device_type="cuda", enabled=True
-            )
-            autocast_ctx.__enter__()
-        try:
-            logits = model(left, right)
-            loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
-        except Exception as exc:
-            if is_oom_error(exc):
-                raise CudaOomError(
-                    op="forward", epoch=0, batch_idx=batch_idx, original=exc,
-                ) from exc
-            if isinstance(exc, RuntimeError) and (
-                "cuda" in str(exc).lower()
-                or "cublas" in str(exc).lower()
-                or "cudnn" in str(exc).lower()
-            ):
-                raise CudaRuntimeError(
-                    op="forward", epoch=0, batch_idx=batch_idx, original=exc,
-                ) from exc
-            raise
-        finally:
-            if autocast_ctx is not None:
-                autocast_ctx.__exit__(*sys.exc_info())
+        with torch_adapter.autocast(device_type="cuda", enabled=amp) if amp else _nullctx():
+            try:
+                logits = model(left, right)
+                loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
+            except Exception as exc:
+                _translate_cuda_exception(exc, "forward", batch_idx)
 
         # NaN check BEFORE backward — a NaN loss would poison gradients.
-        if not _isfinite(torch_adapter, getattr(loss, "item", lambda: loss)()):
+        # ``torch_adapter.isfinite`` itself owns the tensor-vs-scalar branch
+        # so a single per-batch call suffices (saves one .item() GPU sync).
+        loss_scalar = loss.item() if hasattr(loss, "item") else float(loss)
+        if not torch_adapter.isfinite(loss_scalar):
             raise NanLossError(epoch=0, batch_idx=batch_idx)
 
         t0 = time.perf_counter()
@@ -227,24 +214,11 @@ def train_one_epoch(
             scaler.step(optimizer)
             scaler.update()
         except Exception as exc:
-            if is_oom_error(exc):
-                raise CudaOomError(
-                    op="backward", epoch=0, batch_idx=batch_idx, original=exc,
-                ) from exc
-            if isinstance(exc, RuntimeError) and (
-                "cuda" in str(exc).lower()
-                or "cublas" in str(exc).lower()
-                or "cudnn" in str(exc).lower()
-            ):
-                raise CudaRuntimeError(
-                    op="backward", epoch=0, batch_idx=batch_idx, original=exc,
-                ) from exc
-            raise
+            _translate_cuda_exception(exc, "backward", batch_idx)
         torch_adapter.cuda_synchronize()
         t_total += time.perf_counter() - t0
 
-        loss_val = float(loss.item()) if hasattr(loss, "item") else float(loss)
-        total_loss += loss_val
+        total_loss += float(loss_scalar)
         num_batches += 1
 
     gpu_step_ms = (t_total / num_batches * 1000.0) if num_batches else 0.0
@@ -272,9 +246,6 @@ def evaluate(
     set is computed once in post-loop by ``compute_full_metrics`` from the
     saved probs/labels.
     """
-    import numpy as np
-    from sklearn.metrics import average_precision_score
-
     total_loss = 0.0
     num_batches = 0
     num_samples = 0
@@ -290,63 +261,31 @@ def evaluate(
             labels = _to_device(labels, device)
             num_samples += int(getattr(labels, "shape", [1])[0])
 
-            autocast_ctx = None
-            if torch_adapter is not None:
-                autocast_ctx = torch_adapter.autocast(
-                    device_type="cuda", enabled=True
-                )
-                autocast_ctx.__enter__()
-            try:
-                logits = model(left, right)
-                loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
-                probs = _sigmoid(logits)
-                probs_cpu = probs.detach().cpu() if hasattr(probs, "detach") else probs
-            except Exception as exc:
-                if is_oom_error(exc):
-                    raise CudaOomError(
-                        op="evaluate_forward", epoch=0, batch_idx=0, original=exc,
-                    ) from exc
-                if isinstance(exc, RuntimeError) and (
-                    "cuda" in str(exc).lower()
-                    or "cublas" in str(exc).lower()
-                    or "cudnn" in str(exc).lower()
-                ):
-                    raise CudaRuntimeError(
-                        op="evaluate_forward", epoch=0, batch_idx=0, original=exc,
-                    ) from exc
-                raise
-            finally:
-                if autocast_ctx is not None:
-                    autocast_ctx.__exit__(*sys.exc_info())
+            with torch_adapter.autocast(device_type="cuda", enabled=True) if torch_adapter else _nullctx():
+                try:
+                    logits = model(left, right)
+                    loss = criterion(logits, labels.float() if hasattr(labels, "float") else labels)
+                    probs = torch.sigmoid(logits)
+                    probs_cpu = probs.detach().cpu() if hasattr(probs, "detach") else probs
+                except Exception as exc:
+                    _translate_cuda_exception(exc, "evaluate_forward", 0)
 
-            loss_val = float(loss.item()) if hasattr(loss, "item") else float(loss)
-            total_loss += loss_val
+            loss_scalar = loss.item() if hasattr(loss, "item") else float(loss)
+            total_loss += float(loss_scalar)
             num_batches += 1
-            if hasattr(probs_cpu, "tolist"):
-                all_probs.extend(probs_cpu.tolist())
-            else:
-                # FakeTensor — synthesize a probs list of zeros matching labels shape
-                shape = getattr(probs_cpu, "shape", (1, 1))
-                cols = shape[-1] if shape else 1
-                all_probs.extend([[0.0] * cols for _ in range(shape[0] if shape else 1)])
-            if hasattr(labels, "detach"):
-                all_labels.extend(labels.detach().cpu().tolist())
-            else:
-                shape = getattr(labels, "shape", (1, 1))
-                cols = shape[-1] if shape else 1
-                all_labels.extend([[0.0] * cols for _ in range(shape[0] if shape else 1)])
+            all_probs.extend(probs_cpu.tolist() if hasattr(probs_cpu, "tolist") else probs_cpu)
+            all_labels.extend(labels.detach().cpu().tolist() if hasattr(labels, "detach") else labels)
 
     y_true = np.asarray(all_labels, dtype=np.float64)
     y_proba = np.asarray(all_probs, dtype=np.float64)
+    cols = (
+        [0] if y_true.ndim == 1
+        else (list(range(y_true.shape[1])) if y_true.size else [])
+    )
     ap_values: list[float] = []
-    ndim = y_true.ndim
-    if ndim == 1:
-        cols = [0]
-    else:
-        cols = list(range(y_true.shape[1])) if y_true.size else []
     for c in cols:
-        col_true = y_true if ndim == 1 else y_true[:, c]
-        col_proba = y_proba if ndim == 1 else y_proba[:, c]
+        col_true = y_true if y_true.ndim == 1 else y_true[:, c]
+        col_proba = y_proba if y_true.ndim == 1 else y_proba[:, c]
         if col_true.sum() == 0:
             continue
         ap_values.append(float(average_precision_score(col_true, col_proba)))
@@ -362,13 +301,14 @@ def evaluate(
     )
 
 
-def _sigmoid(x: Any) -> Any:
-    """torch.sigmoid if torch is real; otherwise returns x (FakeTensor)."""
-    try:
-        import torch as _torch
-        return _torch.sigmoid(x)
-    except Exception:
-        return x
+class _nullctx:
+    """Context manager that does nothing — used for ``with ... if cond else _nullctx():``."""
+
+    def __enter__(self) -> None:
+        return None
+
+    def __exit__(self, *exc: Any) -> None:
+        return None
 
 
 __all__ = [

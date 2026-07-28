@@ -35,14 +35,5 @@ class FakeFoldAssignmentLoader:
         self._df = _build_split()
 
     def load(self) -> pd.DataFrame:
-        return self._df.copy()
-
-    def fold_pids(self, fold: int, split: str) -> set[int]:
-        return set(
-            self._df[(self._df["fold"] == fold) & (self._df["split"] == split)][
-                "patient_id"
-            ].tolist()
-        )
-
-    def expected_folds(self) -> int:
-        return 5
+        # Returned df is intentionally not copied — callers must not mutate.
+        return self._df

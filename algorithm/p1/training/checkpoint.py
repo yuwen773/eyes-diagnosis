@@ -14,44 +14,17 @@ from __future__ import annotations
 
 import hashlib
 import io
-import os
 import pickle
 from pathlib import Path
 from typing import Any
 
 import torch
 
+from p1.training._atomic_io import atomic_write_text
+
 
 class CheckpointError(IOError):
     """Raised when a checkpoint write/read fails (disk full, permission, etc.)."""
-
-
-def _atomic_write_bytes(path: Path, data: bytes) -> None:
-    """Write ``data`` to ``path`` atomically (tmp + ``os.replace``).
-
-    On success the ``.tmp`` file is gone and ``path`` exists with the
-    exact bytes written. On any exception, ``.tmp`` is removed and
-    ``path`` is untouched.
-    """
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    try:
-        tmp.write_bytes(data)
-        os.replace(tmp, path)
-    except Exception:
-        # Clean up the tmp file if it exists.
-        try:
-            if tmp.exists():
-                tmp.unlink()
-        except OSError:
-            pass
-        raise
-
-
-def _atomic_write_torch(path: Path, payload: dict[str, Any]) -> None:
-    """Serialize ``payload`` to bytes and write atomically."""
-    buf = io.BytesIO()
-    torch.save(payload, buf)
-    _atomic_write_bytes(path, buf.getvalue())
 
 
 def save_checkpoint(
@@ -65,9 +38,11 @@ def save_checkpoint(
     so ``load_checkpoint`` recovers both. Raises ``CheckpointError`` on
     any I/O failure.
     """
+    payload = {"__meta__": dict(metadata), **state_dict}
+    buf = io.BytesIO()
     try:
-        payload = {"__meta__": dict(metadata), **state_dict}
-        _atomic_write_torch(Path(path), payload)
+        torch.save(payload, buf)
+        atomic_write_text(Path(path), lambda tmp: tmp.write_bytes(buf.getvalue()))
     except (IOError, OSError) as exc:
         raise CheckpointError(f"save_checkpoint failed: path={path}, exc={exc!r}") from exc
 

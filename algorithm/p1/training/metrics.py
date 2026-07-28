@@ -114,44 +114,46 @@ def compute_full_metrics(
 
     ap_values: list[float] = []
     auc_values: list[float] = []
+    col_sums = y_true.sum(axis=0)
     for c in range(num_classes):
-        col_true = y_true[:, c]
-        col_proba = y_proba[:, c]
-        n_pos = int(col_true.sum())
+        n_pos = int(col_sums[c])
         if n_pos == 0:
             skipped.append(c)
             continue
+        col_true = y_true[:, c]
+        col_proba = y_proba[:, c]
         ap = float(average_precision_score(col_true, col_proba))
         per_class_auprc[c] = ap
         ap_values.append(ap)
-        n_neg = int(n - n_pos)
-        if n_neg > 0:
+        if (n - n_pos) > 0:
             auc = float(roc_auc_score(col_true, col_proba))
             per_class_auroc[c] = auc
             auc_values.append(auc)
 
     y_pred = (y_proba >= threshold).astype(np.int64)
-    per_class_precision: list[float] = [
+    per_class_precision = [
         float(precision_score(y_true[:, c], y_pred[:, c], zero_division=0))
         for c in range(num_classes)
     ]
-    per_class_recall: list[float] = [
+    per_class_recall = [
         float(recall_score(y_true[:, c], y_pred[:, c], zero_division=0))
         for c in range(num_classes)
     ]
-    per_class_f1: list[float] = [
+    per_class_f1 = [
         float(f1_score(y_true[:, c], y_pred[:, c], zero_division=0))
         for c in range(num_classes)
     ]
-    per_class_support_pos = [int(y_true[:, c].sum()) for c in range(num_classes)]
-    per_class_support_neg = [int(n - y_true[:, c].sum()) for c in range(num_classes)]
+    per_class_support_pos = col_sums.tolist()
+    per_class_support_neg = [int(n - s) for s in col_sums]
 
     macro_auprc = float(np.mean(ap_values)) if ap_values else 0.0
     macro_auroc = float(np.mean(auc_values)) if auc_values else 0.0
-    micro_auprc = float(average_precision_score(y_true.ravel(), y_proba.ravel()))
-    micro_auroc = float(roc_auc_score(y_true.ravel(), y_proba.ravel()))
+    y_true_flat = y_true.ravel()
+    y_proba_flat = y_proba.ravel()
+    micro_auprc = float(average_precision_score(y_true_flat, y_proba_flat))
+    micro_auroc = float(roc_auc_score(y_true_flat, y_proba_flat))
     macro_f1 = float(np.mean(per_class_f1))
-    micro_f1 = float(f1_score(y_true.ravel(), y_pred.ravel(), zero_division=0))
+    micro_f1 = float(f1_score(y_true_flat, y_pred.ravel(), zero_division=0))
 
     return MetricsDict(
         num_samples=n,

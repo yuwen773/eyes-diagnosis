@@ -14,6 +14,7 @@ from eye_diagnosis_p1.tests.fakes import (
     FakeFoldAssignmentLoader,
     FakeManifestLoader,
     FakeModelFactory,
+    FakeProtocolLoader,
     FakeTorchAdapter,
 )
 
@@ -31,25 +32,14 @@ def _build_runner_deps(
     max_epochs: int | None = None,
     patience: int | None = None,
 ) -> dict[str, Any]:
+    cfg = FakeProtocolLoader(override={"patient_batch": patient_batch}).load()
     return {
         "torch_adapter": FakeTorchAdapter(),
         "model_factory": FakeModelFactory(seed=seed),
         "data_factory": FakeDataLoaderFactory(
             batch_size=patient_batch, num_batches=num_batches, num_classes=8,
         ),
-        "cfg": {
-            "schema_version": "p2-02a-v1",
-            "optimizer": "AdamW", "learning_rate": 0.0001, "weight_decay": 0.0001,
-            "max_epochs": 20, "early_stopping_patience": 5,
-            "checkpoint_selector": "validation_macro_auprc",
-            "loss": "bce_with_logits",
-            "patient_batch": patient_batch, "gradient_accumulation": 1,
-            "amp": True, "gradient_clip_norm": 1.0,
-            "scheduler": "reduce_on_plateau",
-            "scheduler_metric": "validation_macro_auprc",
-            "scheduler_factor": 0.5, "scheduler_patience": 2,
-            "threshold_policy": "fixed_0.5",
-        },
+        "cfg": cfg,
         "experiment": experiment,
         "fold": fold,
         "seed": seed,
@@ -211,15 +201,16 @@ def test_run_formal_fold_checkpoint_io_failure_blocks(tmp_path: Path) -> None:
 
     deps = _build_runner_deps(epochs_to_run=2)
 
-    def _raise(*_a: Any, **_k: Any) -> None:
-        raise OSError("disk full")
+    # Patch the atomic_write_text reference *inside* the checkpoint module
+    # so ``save_checkpoint``'s already-bound name sees the failing version.
+    real_atomic = ckpt_mod.atomic_write_text
 
-    # Patch the lower-level _atomic_write_torch so save_checkpoint's own
-    # try/except can wrap the OSError into CheckpointError. Patching
-    # save_checkpoint directly would bypass the wrapping and the runner
-    # wouldn't see a CheckpointError to catch.
-    original_aio = ckpt_mod._atomic_write_torch
-    ckpt_mod._atomic_write_torch = _raise  # type: ignore[assignment]
+    def _raising_atomic(path: Path, write_fn: Any) -> None:
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        write_fn(tmp)  # write succeeds
+        raise OSError("disk full")  # rename step fails
+
+    ckpt_mod.atomic_write_text = _raising_atomic  # type: ignore[assignment]
     try:
         receipt = run_formal_fold(
             out_dir=tmp_path,
@@ -229,7 +220,7 @@ def test_run_formal_fold_checkpoint_io_failure_blocks(tmp_path: Path) -> None:
             **deps,
         )
     finally:
-        ckpt_mod._atomic_write_torch = original_aio  # type: ignore[assignment]
+        ckpt_mod.atomic_write_text = real_atomic  # type: ignore[assignment]
 
     assert receipt.status == "BLOCKED"
     assert receipt.error_class == "checkpoint_io"

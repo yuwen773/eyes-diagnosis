@@ -36,22 +36,13 @@ def test_cli_formal_smoke_runs_end_to_end(
     from eye_diagnosis_p1.tests.fakes import (
         FakeDataLoaderFactory,
         FakeModelFactory,
+        FakeProtocolLoader,
         FakeTorchAdapter,
     )
+    _FAKE_PROTOCOL_LOADER = FakeProtocolLoader(override={"patient_batch": 2})
 
     # Artifact loaders
-    monkeypatch.setattr(cli_formal, "load_protocol", lambda p: {
-        "schema_version": "p2-02a-v1", "optimizer": "AdamW",
-        "learning_rate": 0.0001, "weight_decay": 0.0001,
-        "max_epochs": 20, "early_stopping_patience": 5,
-        "checkpoint_selector": "validation_macro_auprc",
-        "loss": "bce_with_logits", "patient_batch": 2,
-        "gradient_accumulation": 1, "amp": True, "gradient_clip_norm": 1.0,
-        "scheduler": "reduce_on_plateau",
-        "scheduler_metric": "validation_macro_auprc",
-        "scheduler_factor": 0.5, "scheduler_patience": 2,
-        "threshold_policy": "fixed_0.5",
-    })
+    monkeypatch.setattr(cli_formal, "load_protocol", lambda p: _FAKE_PROTOCOL_LOADER.load())
     monkeypatch.setattr(
         cli_formal.pd, "read_parquet",
         lambda p: _pd.DataFrame({"patient_id": [1, 2, 3, 4]}),

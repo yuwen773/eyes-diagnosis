@@ -9,14 +9,21 @@ P2-02B calls with ``folds=[0]``; P2-03 will pass ``folds=[0,1,2,3,4]``.
 """
 from __future__ import annotations
 
-import p1.training.formal_fold_runner as _ffr
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-from p1.training.formal_fold_runner import _atomic_write_json
+import p1.training.formal_fold_runner as formal_fold_runner
+from p1.training._atomic_io import atomic_write_text
 from p1.training.receipts import ExperimentReceipt
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """Thin wrapper so tests can monkey-patch this module's writer."""
+    import json
+    payload_str = json.dumps(payload, indent=2, default=str)
+    atomic_write_text(path, lambda tmp: tmp.write_text(payload_str, encoding="utf-8"))
 
 
 def run_formal_experiment(
@@ -41,7 +48,7 @@ def run_formal_experiment(
     for fold in folds:
         # Use module-attribute lookup so tests can monkey-patch
         # ``formal_fold_runner.run_formal_fold`` and have it propagate.
-        r = _ffr.run_formal_fold(
+        r = formal_fold_runner.run_formal_fold(
             out_dir=out_root,
             manifest_pids=manifest_pids,
             split_df=split_df,

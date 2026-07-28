@@ -13,7 +13,10 @@ P2-02B test suite under ``eye_diagnosis_p1/tests/test_p2_02b_*.py``.
 from __future__ import annotations
 
 import contextlib
+import math
 from typing import Any
+
+import torch
 
 
 class FakeTensor:
@@ -144,17 +147,11 @@ class FakeTorchAdapter:
 
     def isfinite(self, tensor: Any) -> bool:
         self.isfinite_calls.append(tensor)
-        # Real check: torch.isfinite for tensors, math.isfinite for scalars.
+        if isinstance(tensor, torch.Tensor):
+            return bool(torch.isfinite(tensor).all().item())
         try:
-            import torch as _torch
-            if isinstance(tensor, _torch.Tensor):
-                return bool(_torch.isfinite(tensor).all().item())
-        except Exception:
-            pass
-        try:
-            import math
             return math.isfinite(float(tensor))
-        except Exception:
+        except (TypeError, ValueError):
             return True
 
     def GradScaler(self, enabled: bool) -> FakeScaler:

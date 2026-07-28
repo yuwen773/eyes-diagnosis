@@ -18,14 +18,14 @@ from typing import Sequence
 
 import pandas as pd
 
-from p1.training.frozen_inputs import (
+from p1.training.frozen_inputs import (  # noqa: F401  (monkey-patch seam)
     load_fold_assignment,
     load_split_assignment,
 )
-from p1.training.orchestrator import run_formal_experiment
-from p1.training.protocol import load_protocol
+from p1.training.orchestrator import run_formal_experiment  # noqa: F401  (monkey-patch seam)
+from p1.training.protocol import load_protocol  # noqa: F401  (monkey-patch seam)
 from p1.training.receipts import ExperimentReceipt
-from p1.stability.cli import (
+from p1.stability.cli import (  # noqa: F401  (monkey-patch seam)
     build_real_dataloader_factory,
     build_real_model_factory,
     build_real_torch_adapter,
@@ -117,17 +117,3 @@ if __name__ == "__main__":
 
 
 __all__ = ["main", "_build_argparser", "_exit_code_for"]
-
-
-# Suppress linter complaints about re-imports via monkey-patch.
-_ = (
-    load_protocol,
-    load_split_assignment,
-    load_fold_assignment,
-    pd,
-    build_real_torch_adapter,
-    build_real_model_factory,
-    build_real_dataloader_factory,
-    make_real_optimizer_factory,
-    run_formal_experiment,
-)

@@ -38,7 +38,5 @@ class FakeManifestLoader:
         self._df = _build_manifest()
 
     def load(self) -> pd.DataFrame:
-        return self._df.copy()
-
-    def patient_ids(self) -> set[int]:
-        return set(self._df["patient_id"].unique().tolist())
+        # Returned df is intentionally not copied — callers must not mutate.
+        return self._df

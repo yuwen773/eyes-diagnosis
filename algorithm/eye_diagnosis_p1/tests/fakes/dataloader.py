@@ -62,9 +62,6 @@ class _FakeDataLoader:
         if self._remaining <= 0:
             raise StopIteration
         self._remaining -= 1
-        # Use the current batch index as part of the seed so each batch has
-        # deterministic but distinct values; useful for metric variation.
-        seed = self._seed + (self._remaining if False else 0)
         g = torch.Generator().manual_seed(self._seed)
         left = torch.randn(
             self._batch_size, 3, 380, 380, generator=g
@@ -95,13 +92,11 @@ class FakeDataLoaderFactory:
         batch_size: int = 2,
         num_batches: int = 3,
         num_classes: int = 8,
-        image_size: int = 380,
         seed: int = 42,
     ) -> None:
         self._batch_size = batch_size
         self._num_batches = num_batches
         self._num_classes = num_classes
-        self._image_size = image_size
         self._seed = seed
         self.build_calls: list[dict[str, Any]] = []
 
@@ -110,21 +105,20 @@ class FakeDataLoaderFactory:
         *,
         dataset: Any = None,
         batch_size: int | None = None,
-        num_workers: int = 0,
-        pin_memory: bool = False,
         split: str | None = None,
         fold: int | None = None,
+        **_ignored: Any,
     ) -> _FakeDataLoader:
+        """Construct a loader. Per-call ``batch_size`` overrides the default.
+
+        ``dataset`` / ``split`` / ``fold`` are recorded for inspection but
+        do not change loader content (the fakes are fold-agnostic).
+        ``num_workers`` / ``pin_memory`` are accepted to mirror the real
+        factory signature but ignored.
+        """
         bs = batch_size if batch_size is not None else self._batch_size
         self.build_calls.append(
-            {
-                "dataset": dataset,
-                "batch_size": bs,
-                "num_workers": num_workers,
-                "pin_memory": pin_memory,
-                "split": split,
-                "fold": fold,
-            }
+            {"dataset": dataset, "batch_size": bs, "split": split, "fold": fold}
         )
         return _FakeDataLoader(
             batch_size=bs,
