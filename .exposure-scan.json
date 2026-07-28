@@ -1,0 +1,102 @@
+{
+  "description": "RELEASE-001 最终安全扫描静态门禁：拦截生产代码中 PR-12 冻结清单禁止新增的标识符。本文件为纯新增配置，不修改任何业务代码。",
+  "roots": [
+    "src/main/java",
+    "frontend/src"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ],
+  "forbidden": [
+    {
+      "id": "nextNode",
+      "pattern": "\\bnextNode\\b",
+      "roots": ["src/main/java"],
+      "severity": "error",
+      "reason": "PR-12 冻结：禁止在 Graph Runtime 之外新增路由/提交语义标识符（nextNode/nextSegment/routeCondition/internal.Edge 仅允许存在于冻结核心）。"
+    },
+    {
+      "id": "nextSegment",
+      "pattern": "\\bnextSegment\\b",
+      "roots": ["src/main/java"],
+      "severity": "error",
+      "reason": "PR-12 冻结：同上，禁止新增段跳转标识符。"
+    },
+    {
+      "id": "routeCondition",
+      "pattern": "\\brouteCondition\\b",
+      "roots": ["src/main/java"],
+      "severity": "error",
+      "reason": "PR-12 冻结：禁止新增路由条件标识符。"
+    },
+    {
+      "id": "internalEdge",
+      "pattern": "internal\\.Edge",
+      "roots": ["src/main/java"],
+      "severity": "error",
+      "reason": "PR-12 冻结：禁止新增内部 Edge 标识符。"
+    },
+    {
+      "id": "rawPrediction",
+      "pattern": "\\brawPrediction\\b",
+      "roots": ["frontend/src"],
+      "severity": "error",
+      "reason": "PR-12 冻结：前端禁止直接暴露模型原始预测字段。"
+    },
+    {
+      "id": "topK",
+      "pattern": "\\btopK\\b",
+      "roots": ["frontend/src"],
+      "severity": "error",
+      "reason": "PR-12 冻结：前端禁止暴露 topK 字段（后端检索参数为合法标识符，不在本规则范围）。"
+    },
+    {
+      "id": "modelScore",
+      "pattern": "\\bmodelScore\\b",
+      "roots": ["frontend/src"],
+      "severity": "error",
+      "reason": "PR-12 冻结：前端禁止暴露模型分数字段。"
+    },
+    {
+      "id": "abstainReason",
+      "pattern": "\\babstainReason\\b",
+      "roots": ["frontend/src"],
+      "severity": "error",
+      "reason": "RELEASE-001 F1 存量前端字段：渲染已患者安全化，待更名为 rejectHint；新文件禁止新增该标识符（后端实体/VO 字段为合法契约，不在本规则范围；存量前端文件已在 exceptions 中豁免）。"
+    }
+  ],
+  "exceptions": [
+    {
+      "path": "src/main/java/com/csust/eyediagnosis/workflow/graph/runtime/",
+      "ids": ["nextNode", "nextSegment", "routeCondition", "internalEdge"],
+      "reason": "冻结 Graph Runtime 存量核心。PR-12 零新增，允许存量标识符存在。"
+    },
+    {
+      "path": "src/main/java/com/csust/eyediagnosis/workflow/review/HumanReviewHandoff.java",
+      "ids": ["nextSegment"],
+      "reason": "冻结人工复核交接存量（nextSegment 用于段推进语义）。"
+    },
+    {
+      "path": "frontend/src/api/typings.d.ts",
+      "ids": ["abstainReason"],
+      "reason": "存量类型定义 F1，待更名 rejectHint。"
+    },
+    {
+      "path": "frontend/src/components/diagnosis/DiagnosisResult.vue",
+      "ids": ["abstainReason"],
+      "reason": "存量组件 F1，待更名 rejectHint。"
+    },
+    {
+      "path": "frontend/src/components/user/DiagnosisReportDetail.vue",
+      "ids": ["abstainReason"],
+      "reason": "存量组件 F1，待更名 rejectHint。"
+    }
+  ]
+}

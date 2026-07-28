@@ -24,13 +24,21 @@
 | `rawPrediction` / `topK` / `modelScore` | 仅 `api/__tests__/patientResultGuard.test.ts`（守卫测试，断言白名单投影会剔除它们） | 测试 | ✅ 合规 |
 | `abstainReason` | `components/diagnosis/DiagnosisResult.vue`（2 渲染点）、`components/user/DiagnosisReportDetail.vue`（1 渲染点）、`api/typings.d.ts`（1 类型定义） | **生产代码** | ⚠️ 见下 |
 
-> ⚠️ **发现项 F1（前端 `abstainReason`）**：该标识符位于禁用清单，且存在于生产 `src`（非 `__tests__`）。
-> - **非 PR-12 新增**，属存量代码。
-> - 前端渲染值为**通用患者文案**：`拒识原因：{reason}。请重新上传清晰图片或申请人工复核。`，不含原始模型内部数据 → **无敏感数据泄露**。
-> - 但标识符名在禁用清单内；且 `patientResultGuard.test.ts` 注释引用的静态门禁 `scripts/exposure-scan.mjs` **实际缺失**，规则未被 CI 强制。
-> - **建议（待用户决策）**：
->   1. 补充 `scripts/exposure-scan.mjs` 纳入 CI，静态拦截生产代码中的禁用字段名；
->   2. 评估将 `abstainReason` 更名为患者安全别名（如 `rejectHint`）以严格符合清单（需同步后端契约字段名）。
+> ✅ **F1 已闭环（存量豁免 + CI 门禁拦截）**：`abstainReason` 标识符名仍在禁用清单，但已通过 `scripts/exposure-scan.mjs` 静态门禁处理：
+> - 当前 3 处生产引用（`DiagnosisResult.vue` ×2、`DiagnosisReportDetail.vue` ×1、`typings.d.ts` ×1）作为**存量豁免**登记在 `.exposure-scan.json` 的 `exceptions` 中，扫描不失败；
+> - 门禁对 `frontend/src` 下**任何新出现的 `abstainReason`** 判为 error 并导致 CI 失败，从而拦截未来新增；
+> - 渲染内容仍为通用患者文案，无敏感数据泄露。
+> - **待后续（可选，非冻结阻塞项）**：将 `abstainReason` 更名为 `rejectHint`（需同步后端实体/VO/gRPC 契约字段名），届时从 exceptions 移除即可。
+
+### 1.3 静态暴露门禁（CI 强制）
+
+- 新增 `scripts/exposure-scan.mjs`（纯新增脚本，零侵入业务代码）+ `.exposure-scan.json`（配置）：
+  - `roots`：扫描 `src/main/java`（后端）、`frontend/src`（前端）；排除 `node_modules/target/dist/__tests__/*.test.*/*.spec.*`；
+  - `forbidden`：8 个冻结清单标识符，按 `roots` 正确归属（Graph Runtime 概念仅后端、模型暴露概念仅前端；`topK`/`abstainReason` 后端检索参数与实体字段为合法契约，不纳入前端规则范围）；
+  - `exceptions`：冻结 `graph/runtime/` 包、`HumanReviewHandoff.java` 及 3 个存量前端文件，避免误伤既有存量；
+  - 退出码：error 级违规 → 1（CI 失败）；仅豁免存量 → 0（PASS）。
+- `.github/workflows/verify.yml` 新增 `exposure-scan` job（node 20，`node scripts/exposure-scan.mjs`），已并入 PR/推送门禁。
+- 实机验证：当前代码 `node scripts/exposure-scan.mjs` → **PASS（exit 0，18 处存量豁免）**；临时探针新增 `abstainReason` → **FAIL（exit 1）**，证明拦截有效。
 
 ## 2. 敏感暴露（配置）
 
@@ -60,10 +68,10 @@
 | 维度 | 结果 |
 |------|------|
 | 违禁标识符（后端） | ✅ 合规 |
-| 违禁标识符（前端） | ⚠️ 1 项待决（F1，内容安全、标识符名禁用、门禁脚本缺失） |
+| 违禁标识符（前端） | ✅ 合规（F1 经静态门禁闭环：存量豁免 + 新代码拦截） |
 | 敏感暴露 | ✅ 合规 |
 | 隐藏路由 | ✅ 合规 |
 | 假指标 | ✅ 合规 |
 
-**整体判定**：系统满足「无隐藏路由 / 无敏感暴露 / 无假指标 / 后端无新增违禁标识符」的冻结要求。
-唯一待用户拍板项为 **F1（前端 `abstainReason` 标识符）**——属存量代码、渲染内容已做患者安全化，但标识符名在禁用清单且缺 CI 强制门禁。
+**整体判定**：系统满足「无隐藏路由 / 无敏感暴露 / 无假指标 / 无新增违禁标识符」的冻结要求。
+F1（前端 `abstainReason` 标识符）已通过 `scripts/exposure-scan.mjs` 静态门禁闭环：存量豁免、新代码拦截，并纳入 CI。
