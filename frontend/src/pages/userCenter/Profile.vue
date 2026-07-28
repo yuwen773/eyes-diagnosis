@@ -76,7 +76,7 @@
           <span class="info-value">{{ dayjs(Number(loginUser.createTime)).format('YYYY-MM-DD') }}</span>
         </a-descriptions-item>
         <a-descriptions-item label="角色">
-          <a-tag :color="loginUser.userRole === 'admin' ? '#1890ff' : '#52c41a'" class="role-tag">
+          <a-tag :color="loginUser.userRole === 'admin' ? '#c96442' : '#52c41a'" class="role-tag">
             <template #icon>
               <SafetyCertificateOutlined v-if="loginUser.userRole === 'admin'" />
               <UserOutlined v-else />

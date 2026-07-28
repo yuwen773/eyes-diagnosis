@@ -272,17 +272,17 @@ const items = ref<MenuProps['items']>(originItems.value)
 :deep(.ant-menu-horizontal > .ant-menu-submenu::after) {
   height: 2px !important;
   bottom: 0 !important;
-  border-color: oklch(0.6 0.1 30) !important;
+  border-color: var(--claude-brand) !important;
   transition: border-color 0.25s ease !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item-selected::after) {
-  border-color: oklch(0.6 0.1 30) !important;
+  border-color: var(--claude-brand) !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item:hover::after),
 :deep(.ant-menu-horizontal > .ant-menu-submenu:hover::after) {
-  border-color: oklch(0.6 0.12 35) !important;
+  border-color: var(--claude-brand-dark) !important;
 }
 
 /* ─── Actions ─── */
@@ -313,7 +313,7 @@ const items = ref<MenuProps['items']>(originItems.value)
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 1px;
-  color: oklch(0.55 0.08 30);
+  color: var(--claude-brand);
   background: oklch(0.96 0.005 80);
   border-radius: 100px;
   text-decoration: none;
@@ -322,7 +322,7 @@ const items = ref<MenuProps['items']>(originItems.value)
 }
 
 .login-link:hover {
-  background: oklch(0.6 0.1 30);
+  background: var(--claude-brand);
   color: oklch(0.98 0.005 80);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px oklch(0.45 0.08 30 / 0.3);

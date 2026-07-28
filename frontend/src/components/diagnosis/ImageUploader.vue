@@ -344,7 +344,7 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--claude-brand), oklch(0.75 0.08 30));
+  background: linear-gradient(90deg, var(--claude-brand), var(--claude-brand-light));
   border-radius: 100px;
   transition: width 0.15s ease-out;
 }

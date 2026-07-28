@@ -563,15 +563,6 @@ const groupedHistories = computed(() => {
   50% { opacity: 0.8; }
 }
 
-[data-theme="aurora"] .pulse-dot,
-[data-theme="aurora"] .pupil {
-  filter: drop-shadow(0 0 3px rgba(34, 104, 245, 0.6));
-}
-
-[data-theme="pop"] .pulse-dot,
-[data-theme="pop"] .pupil {
-  filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.6));
-}
 
 .brand-name {
   font-family: var(--claude-font-serif);
@@ -603,13 +594,6 @@ const groupedHistories = computed(() => {
   color: var(--claude-text-secondary);
 }
 
-[data-theme="aurora"] .collapse-btn:hover {
-  color: rgba(34, 104, 245, 0.7);
-}
-
-[data-theme="pop"] .collapse-btn:hover {
-  color: rgba(168, 85, 247, 0.7);
-}
 
 /* New Chat Button */
 .new-chat-btn {
@@ -641,13 +625,6 @@ const groupedHistories = computed(() => {
   border-radius: inherit;
 }
 
-[data-theme="aurora"] .new-chat-btn::before {
-  background: linear-gradient(135deg, rgba(34, 104, 245, 0.06) 0%, rgba(110, 53, 235, 0.03) 100%);
-}
-
-[data-theme="pop"] .new-chat-btn::before {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(236, 72, 153, 0.03) 100%);
-}
 
 .new-chat-btn:hover {
   border-color: var(--claude-brand);
@@ -663,13 +640,6 @@ const groupedHistories = computed(() => {
   transform: translateY(0) scale(0.98);
 }
 
-[data-theme="aurora"] .new-chat-btn:hover {
-  box-shadow: 0 0 0 1px rgba(34, 104, 245, 0.15), 0 2px 8px rgba(34, 104, 245, 0.08);
-}
-
-[data-theme="pop"] .new-chat-btn:hover {
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.12), 0 2px 8px rgba(168, 85, 247, 0.06);
-}
 
 .new-chat-btn svg,
 .new-chat-btn span {
@@ -819,13 +789,6 @@ const groupedHistories = computed(() => {
   color: var(--claude-brand);
 }
 
-[data-theme="aurora"] .history-item.active {
-  box-shadow: inset 0 0 0 1px rgba(34, 104, 245, 0.08);
-}
-
-[data-theme="pop"] .history-item.active {
-  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.06);
-}
 
 .history-item.selected {
   background: var(--claude-bg-elevated);
