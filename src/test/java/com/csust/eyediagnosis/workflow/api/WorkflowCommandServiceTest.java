@@ -18,6 +18,7 @@ import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEntit
 import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEventEntity;
 import com.csust.eyediagnosis.workflow.persistence.repository.DiagnosisWorkflowRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepository;
+import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowStateMutator;
 import com.csust.eyediagnosis.workflow.policy.WorkflowLifecycleGuard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,9 +64,9 @@ class WorkflowCommandServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        commandService = new WorkflowCommandService(workflowRepository, eventRepository,
-                jobCreationService, graphDefinitionRegistry, new WorkflowLifecycleGuard(),
-                new ObjectMapper());
+        WorkflowStateMutator stateMutator = new WorkflowStateMutator(workflowRepository, eventRepository);
+        commandService = new WorkflowCommandService(workflowRepository, jobCreationService,
+                graphDefinitionRegistry, new WorkflowLifecycleGuard(), new ObjectMapper(), stateMutator, null);
     }
 
     private User user(long id) {
@@ -89,6 +90,10 @@ class WorkflowCommandServiceTest {
         when(workflowRepository.findByOwnerAndIdempotencyKey(1L, "img-1")).thenReturn(Optional.empty());
         when(graphDefinitionRegistry.listSupported())
                 .thenReturn(List.of(new GraphDefinitionDescriptor("v1", "hash1", "a1")));
+        DiagnosisWorkflowEntity created = new DiagnosisWorkflowEntity();
+        created.setExplanationPublicationStatus("NONE");
+        created.setPredictionExposureStatus("NOT_AVAILABLE");
+        when(workflowRepository.findByWorkflowId(anyString())).thenReturn(Optional.of(created));
         when(jobCreationService.createIfAbsent(any(NewWorkflowJob.class)))
                 .thenReturn(new JobCreationResult(JobCreationResult.Status.CREATED, "job-1"));
         when(workflowRepository.updateStateIfVersionMatches(anyString(), eq(0L),

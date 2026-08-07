@@ -19,6 +19,7 @@ import com.csust.eyediagnosis.workflow.persistence.repository.DiagnosisWorkflowR
 import com.csust.eyediagnosis.workflow.persistence.repository.HumanReviewTaskRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.InferenceEnvelopeRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepository;
+import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowStateMutator;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -40,8 +41,9 @@ class DefaultHumanReviewTaskServiceTest {
     private final InferenceEnvelopeRepository envelopeRepository = mock(InferenceEnvelopeRepository.class);
     private final WorkflowEventRepository eventRepository = mock(WorkflowEventRepository.class);
     private final WorkflowJobCreationService jobCreationService = mock(WorkflowJobCreationService.class);
+    private final WorkflowStateMutator workflowStateMutator = new WorkflowStateMutator(workflowRepository, eventRepository);
     private final DefaultHumanReviewTaskService service = new DefaultHumanReviewTaskService(
-            taskRepository, workflowRepository, envelopeRepository, eventRepository, jobCreationService);
+            taskRepository, workflowRepository, envelopeRepository, jobCreationService, workflowStateMutator);
 
     // ---- claim ----
 

@@ -10,18 +10,17 @@ import com.csust.eyediagnosis.workflow.job.JobCreationResult;
 import com.csust.eyediagnosis.workflow.job.NewWorkflowJob;
 import com.csust.eyediagnosis.workflow.job.WorkflowJobCreationService;
 import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEntity;
-import com.csust.eyediagnosis.workflow.persistence.entity.DiagnosisWorkflowEventEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.HumanReviewTaskEntity;
 import com.csust.eyediagnosis.workflow.persistence.entity.InferenceEnvelopeEntity;
 import com.csust.eyediagnosis.workflow.persistence.repository.DiagnosisWorkflowRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.HumanReviewTaskRepository;
 import com.csust.eyediagnosis.workflow.persistence.repository.InferenceEnvelopeRepository;
-import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowEventRepository;
+import com.csust.eyediagnosis.workflow.contract.RecordEventCommand;
+import com.csust.eyediagnosis.workflow.contract.WorkflowEventBuilder;
+import com.csust.eyediagnosis.workflow.persistence.repository.WorkflowStateMutator;
 import com.csust.eyediagnosis.workflow.policy.ReviewDecisionCompatibilityGuard;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 /** Runs the review-decision transaction from PLAN-001 §4.4; it never executes the graph. */
 @Service
@@ -33,7 +32,7 @@ public class DefaultHumanReviewTaskService implements HumanReviewTaskService {
     private final HumanReviewTaskRepository taskRepository;
     private final DiagnosisWorkflowRepository workflowRepository;
     private final InferenceEnvelopeRepository envelopeRepository;
-    private final WorkflowEventRepository eventRepository;
+    private final WorkflowStateMutator workflowStateMutator;
     private final WorkflowJobCreationService jobCreationService;
     private final ReviewAuthorizationGuard authorizationGuard = new ReviewAuthorizationGuard();
     private final ReviewDecisionCompatibilityGuard compatibilityGuard = new ReviewDecisionCompatibilityGuard();
@@ -41,12 +40,12 @@ public class DefaultHumanReviewTaskService implements HumanReviewTaskService {
     public DefaultHumanReviewTaskService(HumanReviewTaskRepository taskRepository,
                                          DiagnosisWorkflowRepository workflowRepository,
                                          InferenceEnvelopeRepository envelopeRepository,
-                                         WorkflowEventRepository eventRepository,
-                                         WorkflowJobCreationService jobCreationService) {
+                                         WorkflowJobCreationService jobCreationService,
+                                         WorkflowStateMutator workflowStateMutator) {
         this.taskRepository = taskRepository;
         this.workflowRepository = workflowRepository;
         this.envelopeRepository = envelopeRepository;
-        this.eventRepository = eventRepository;
+        this.workflowStateMutator = workflowStateMutator;
         this.jobCreationService = jobCreationService;
     }
 
@@ -92,10 +91,8 @@ public class DefaultHumanReviewTaskService implements HumanReviewTaskService {
             throw new ReviewTaskConflictException("Review decision submission lost a concurrent update");
         }
         SegmentCode resumeSegment = HumanReviewHandoff.resumeSegmentFor(reviewType);
-        if (workflowRepository.updateStateIfVersionMatches(workflow.getWorkflowId(), command.expectedWorkflowVersion(),
-                WorkflowStatus.WAITING_HUMAN_REVIEW.name(), WorkflowStatus.RUNNING.name(), resumeSegment.name(),
-                workflow.getExplanationPublicationStatus(), workflow.getPredictionExposureStatus(),
-                workflow.getStopReasonCode(), workflow.getLimitationReasonCode()) != 1) {
+        if (workflowStateMutator.transitionStatus(workflow.getWorkflowId(), command.expectedWorkflowVersion(),
+                WorkflowStatus.WAITING_HUMAN_REVIEW, WorkflowStatus.RUNNING, resumeSegment.name()) != 1) {
             throw new ReviewTaskConflictException("Workflow version conflict");
         }
         String resumeJobId = createResumeJob(workflow, task, resumeSegment);
@@ -146,19 +143,11 @@ public class DefaultHumanReviewTaskService implements HumanReviewTaskService {
 
     private void appendDecisionEvent(SubmitReviewDecisionCommand command, DiagnosisWorkflowEntity workflow,
                                      SegmentCode resumeSegment) {
-        DiagnosisWorkflowEventEntity event = new DiagnosisWorkflowEventEntity();
-        event.setEventId(UUID.randomUUID().toString());
-        event.setWorkflowId(workflow.getWorkflowId());
-        event.setEventSequence(command.expectedWorkflowVersion() + 1);
-        event.setEventType(DECISION_EVENT_TYPE);
-        event.setActorType(DOCTOR_ACTOR_TYPE);
-        event.setActorId(String.valueOf(command.reviewer().reviewerUserId()));
-        event.setWorkflowVersion(command.expectedWorkflowVersion() + 1);
-        event.setSegmentCode(resumeSegment.name());
-        event.setReasonCode(command.reasonCode().name());
-        event.setPayloadSnapshot("{\"reviewTaskId\":\"" + command.reviewTaskId() + "\",\"decisionCode\":\""
-                + decisionCode(command) + "\"}");
-        eventRepository.append(event);
+        RecordEventCommand cmd = WorkflowEventBuilder.decisionEvent(workflow.getWorkflowId(),
+                command.reviewTaskId(), decisionCode(command),
+                String.valueOf(command.reviewer().reviewerUserId()),
+                command.expectedWorkflowVersion(), resumeSegment.name(), command.reasonCode().name());
+        workflowStateMutator.recordEvent(cmd);
     }
 
     private static String decisionCode(SubmitReviewDecisionCommand command) {
