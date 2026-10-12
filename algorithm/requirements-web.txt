@@ -1,0 +1,46 @@
+# Web layer (FastAPI) dependencies -- kept separate from requirements.txt so the
+# `python-web` CI job can install without pulling torch.
+#
+# torch / numpy are NOT listed here on purpose: they stay in requirements.txt.
+# The web layer only needs them once inference is moved in-process (Phase 2.2);
+# importing the app must work without them so CI can run an import smoke test
+# on machines with no GPU and no model weights.
+#
+# Pillow IS needed (web/files.py reads image dimensions in place of Tencent
+# CI's ImageInfo), but it is imported lazily inside the function so app
+# construction never requires it.
+
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+sqlalchemy>=2.0
+pymysql>=1.1
+cryptography>=43.0
+redis>=5.2
+cos-python-sdk-v5>=1.9
+chromadb>=0.5
+Pillow>=10.0
+
+# multipart/form-data parsing for the upload endpoints. FastAPI raises at
+# *route construction* time without it, so this is required for create_app()
+# to build at all -- it is not optional.
+python-multipart>=0.0.9
+
+# Phase 2.1 (user domain password handling) -- BCrypt parity with
+# security/PasswordService.java
+bcrypt>=4.2
+
+# Phase 2.1 (auth forwarding to Java) and Phase 2.2 (COS upload)
+httpx>=0.27
+
+# Phase 2.4 (knowledge domain, Chroma write side). Imports are inside functions
+# (web/extract.py, web/vectorstore.py) so the app still builds without them --
+# but a deployment that serves /knowledge/upload needs them, which is why they
+# are listed rather than left to requirements.txt.
+#
+# pypdf / python-docx replace Apache Tika's format matrix. Neither reads the
+# legacy binary .doc format; `resolve_file_type` still accepts the extension
+# (matching Java's allow-list) and the ETL rejects it with an actionable
+# message. See finding J-16.
+pypdf>=4.0
+python-docx>=1.1

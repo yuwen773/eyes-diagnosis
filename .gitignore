@@ -40,6 +40,18 @@ build/
 .vscode/
 /.claude/
 /.omc/
+# Runtime state can also land in a *nested* .omc/ when a tool resolves its
+# project root to a subdirectory -- it has appeared inside src/main/java/,
+# where it pollutes the Java source tree. Ignored recursively, except
+# .omc/skills/ which is the intentional committable exception.
+**/.omc/state/
+**/.omc/logs/
+**/.omc/plans/
+**/.omc/research/
+**/.omc/artifacts/
+**/.omc/handoffs/
+**/.omc/ultragoal/
+**/.omc/notepad.md
 /.worktrees/
 /.agents/
 .git-rewrite/
@@ -57,6 +69,13 @@ frontend/src/assets/.omc/
 __pycache__/
 *.pyc
 *.pyo
+.venv*/
+.pytest_cache/
+.mypy_cache/
+.env
+.env.*
+!.env.example
+/.scratch/baseline-runtime/
 /.zread/
 .zread/
 

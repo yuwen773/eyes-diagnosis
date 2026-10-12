@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-10-12T13:43:15.621337+00:00",
+  "environment": "isolated real services; synthetic account; no real model acceptance",
+  "http_history_total": "1",
+  "frontend_history_total": "1",
+  "legacy_frontend_invalid_date_observed": true,
+  "checks": [
+    "anonymous_java_probe",
+    "java_login_and_probe",
+    "python_authenticated_query_and_pagination",
+    "real_java_python_id_and_date_contract_match",
+    "missing_weights_fail_closed_no_record",
+    "java_logout_old_cookie_revoked_in_java_and_python",
+    "original_frontend_login_and_python_history_query"
+  ]
+}

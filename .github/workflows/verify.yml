@@ -24,6 +24,64 @@ jobs:
       - run: python generate_proto.py
       - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -m "not slow" -q
 
+  python-web:
+    # The Python rewrite of the five non-Agent business domains.
+    #
+    # Installs the combined Web/test lock, not requirements.txt: no
+    # torch, no GPU, so this job stays fast. That constraint is itself under
+    # test -- `web/config.py` and `web/inference.py` must stay importable
+    # without torch, and two tests in the suite assert it (a subprocess import
+    # probe plus an AST scan of the module scope). If someone adds a
+    # top-level `import torch`, this job fails rather than the deployment.
+    #
+    # No MySQL, Redis or Chroma service containers: every test here is either
+    # pure logic, runs against in-memory SQLite, or parses source files. The
+    # Real Java session + frontend validation is the opt-in baseline runner
+    # documented in docs/fastapi-baseline.md; it is not claimed by this job.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: algorithm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: algorithm/requirements-web.lock
+      - run: python -m pip install -r requirements-web.lock
+      - run: python -m pytest web/tests -q
+
+  web-contracts:
+    # The cross-service contract surface, checked against the Java sources
+    # rather than against hardcoded expectations.
+    #
+    # These tests parse the Java enums, VOs, controllers and Nginx config to
+    # assert the two stacks still agree. They need no Python deps beyond
+    # pytest plus what `web` imports, so they run as a separate quick job --
+    # and they are the ones that fail when *Java* changes without the Python
+    # side following, which is exactly the drift this migration is exposed to.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: algorithm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: algorithm/requirements-web.lock
+      - run: python -m pip install -r requirements-web.lock
+      - run: >-
+          python -m pytest
+          web/tests/test_foundation.py
+          web/tests/test_contracts.py
+          web/tests/test_diagnosis_constants.py
+          web/tests/test_entity_vo.py
+          web/tests/test_nginx_routing.py
+          -q
+
   watchdog:
     # Dedicated job for the P2-02A T2 subprocess watchdog suite. These
     # tests spawn real subprocesses and exercise POSIX process-group

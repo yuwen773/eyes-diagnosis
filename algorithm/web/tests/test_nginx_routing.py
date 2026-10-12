@@ -1,0 +1,299 @@
+"""Nginx routing table vs. the routes each backend actually serves.
+
+``deploy/nginx.conf`` is a list of hand-written rules that has to agree with two
+independent route registries: Java's controllers and Python's routers. Nothing
+enforces that agreement at runtime. A path Python serves but Nginx never routes
+to it is a 404 the moment the config is loaded, and a path Nginx routes to Java
+that Java does not serve is the same failure in the other direction.
+
+These tests read the config and both registries and check the three-way match.
+They are static -- no nginx binary, no running services -- which is what makes
+them runnable in the ``python-web`` CI job.
+
+``nginx -t`` still has to be run during deployment for syntax. This file is
+about semantics.
+"""
+
+import re
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+ALGORITHM_ROOT = REPO_ROOT / "algorithm"
+sys.path.insert(0, str(ALGORITHM_ROOT))
+
+from web.app import API_PREFIX, create_app  # noqa: E402
+
+NGINX_CONF = REPO_ROOT / "deploy" / "nginx.conf"
+SNIPPET = REPO_ROOT / "deploy" / "snippets" / "eye-proxy-headers.conf"
+CONTROLLER_DIR = REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller"
+
+#: The three paths Java keeps because Spring Session owns them. Python cannot
+#: read the JDK-serialized Redis payload (web/auth.py).
+SESSION_PATHS = {"/api/user/login", "/api/user/logout", "/api/user/get/login"}
+
+
+# ---------------------------------------------------------------------------
+# Parsing
+# ---------------------------------------------------------------------------
+def _blocks(conf: str) -> list[tuple[str, str, str]]:
+    """``(kind, pattern, body)`` for every location block.
+
+    A hand-rolled scanner rather than a regex: location bodies contain nested
+    braces (the ``/assets/`` block), and a non-greedy regex would stop at the
+    first ``}``.
+    """
+    blocks = []
+    for match in re.finditer(r"location\s+(=|\^~)?\s*([^\s{]+)\s*\{", conf):
+        modifier, pattern = match.group(1) or "", match.group(2)
+        depth = 1
+        index = match.end()
+        while index < len(conf) and depth:
+            if conf[index] == "{":
+                depth += 1
+            elif conf[index] == "}":
+                depth -= 1
+            index += 1
+        blocks.append((modifier, pattern, conf[match.end():index]))
+    return blocks
+
+
+@pytest.fixture(scope="module")
+def conf() -> str:
+    return NGINX_CONF.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def blocks(conf):
+    return _blocks(conf)
+
+
+def _upstream(body: str) -> str | None:
+    match = re.search(r"proxy_pass\s+http://(\w+)", body)
+    return match.group(1) if match else None
+
+
+# ---------------------------------------------------------------------------
+# Structure
+# ---------------------------------------------------------------------------
+def test_the_snippet_is_included_by_every_proxy_block(blocks):
+    """A location that skips the shared headers loses `Host`, which Spring
+    Session uses to derive the cookie domain. The session cookie then stops
+    being accepted and every authenticated request 401s."""
+    proxying = [(mod, pat, body) for mod, pat, body in blocks if _upstream(body)]
+    assert proxying, "no proxy locations found -- did the parser break?"
+    for _mod, pattern, body in proxying:
+        assert "eye-proxy-headers.conf" in body, pattern
+
+
+def test_only_the_two_expected_upstreams_are_used(blocks):
+    targets = {_upstream(body) for _m, _p, body in blocks if _upstream(body)}
+    assert targets <= {"eye_java", "eye_python"}
+
+
+def test_snippet_sets_the_headers_spring_session_needs():
+    text = SNIPPET.read_text(encoding="utf-8")
+    assert "proxy_set_header Host              $host;" in text
+    assert "proxy_set_header X-Forwarded-Proto $scheme;" in text
+
+
+# ---------------------------------------------------------------------------
+# The routing table itself
+# ---------------------------------------------------------------------------
+def test_session_endpoints_are_exact_matches_to_java(blocks):
+    """``=`` and not a prefix. As a prefix, ``/api/user/logout`` would also
+    capture anything under it, and -- more importantly -- a future
+    ``/api/user/loginSomething`` would silently route to Java."""
+    java = {
+        pattern: body for modifier, pattern, body in blocks
+        if modifier == "=" and _upstream(body) == "eye_java"
+    }
+    assert SESSION_PATHS <= set(java), SESSION_PATHS - set(java)
+
+
+def test_agent_prefix_routes_to_java(blocks):
+    agent = [
+        body for _m, pattern, body in blocks
+        if pattern == "/api/agent/" and _upstream(body) == "eye_java"
+    ]
+    assert agent, "the Agent subsystem must stay on Java"
+
+
+def test_sse_location_is_longer_than_the_agent_prefix(blocks):
+    """Nginx picks the longest prefix match, so the SSE block only wins if its
+    pattern is strictly longer than ``/api/agent/``. Equal-length or shorter and
+    the stream silently loses ``proxy_buffering off``."""
+    patterns = [p for _m, p, _b in blocks if p.startswith("/api/agent/")]
+    assert "/api/agent/chat/stream" in patterns
+    assert len("/api/agent/chat/stream") > len("/api/agent/")
+
+
+def test_sse_disables_buffering(blocks):
+    """The hard requirement. Buffered, a token stream is flushed as one response
+    when the model finishes -- the chat appears to hang, then dumps everything
+    at once."""
+    body = next(
+        b for _m, p, b in blocks if p == "/api/agent/chat/stream"
+    )
+    assert "proxy_buffering off;" in body
+    assert "proxy_cache off;" in body
+    assert "proxy_set_header Connection \"\";" in SNIPPET.read_text(encoding="utf-8")
+    # The default 60s read timeout would cut an answer off mid-sentence.
+    assert "proxy_read_timeout 3600s;" in body
+
+
+def test_everything_else_under_api_goes_to_python(blocks):
+    root = [
+        (pattern, _upstream(body)) for _m, pattern, body in blocks
+        if pattern == "/api/" and _upstream(body)
+    ]
+    assert root == [("/api/", "eye_python")]
+
+
+def test_body_size_limit_matches_spring(conf):
+    """``spring.servlet.multipart.max-file-size: 10MB``. Nginx's default 1m
+    would reject a 2 MB diagnosis image with its own 413 before either backend
+    runs -- and that body is not the JSON envelope the frontend expects."""
+    assert "client_max_body_size 10m;" in conf
+    yml = (REPO_ROOT / "src/main/resources/application.yml").read_text(encoding="utf-8")
+    assert "max-file-size: 10MB" in yml
+
+
+def test_the_listener_port_is_the_one_java_used(conf):
+    """8081, so the frontend's baseURL and the hardcoded value in
+    ``useAgentStream.ts`` keep working with no change."""
+    assert "listen 8081;" in conf
+    assert "server 127.0.0.1:8082;" in conf   # separate from the Nginx listener
+    assert "server 127.0.0.1:8080;" in conf   # the Python upstream
+
+
+def test_delete_bodies_are_not_buffered_away(conf):
+    """``DELETE /api/knowledge/delete`` carries ``{"id": ...}``.
+
+    nginx forwards request bodies for every method as long as nothing disables
+    it, so the assertion is the absence of the directives that would:
+    ``proxy_pass_request_body off`` drops it, and a ``proxy_set_body`` rewrite
+    would replace it.
+    """
+    assert "proxy_pass_request_body off" not in conf
+    assert "proxy_set_body" not in conf
+
+
+# ---------------------------------------------------------------------------
+# Config vs. the real registries -- the three-way match
+# ---------------------------------------------------------------------------
+def _python_paths() -> set[str]:
+    spec = create_app().openapi()
+    return set(spec["paths"])
+
+
+def _java_paths() -> set[str]:
+    """Every mapping in every controller, prefixed with the context path and the
+    controller's own ``@RequestMapping``."""
+    found = set()
+    for path in CONTROLLER_DIR.glob("*.java"):
+        source = path.read_text(encoding="utf-8")
+        # Skip the Agent controllers -- Nginx sends the whole /api/agent/ tree
+        # to Java wholesale, so individual paths there are not enumerated.
+        base = re.search(r'@RequestMapping\("([^"]*)"\)', source)
+        base = base.group(1) if base else ""
+        for sub in re.findall(
+            r'@(?:Post|Get|Put|Delete)Mapping(?:\(\s*(?:value\s*=\s*)?"([^"]*)"\s*\))?', source
+        ):
+            if sub.startswith("http"):
+                continue
+            found.add(f"/api{base}{sub}")
+    return found
+
+
+def test_no_python_route_falls_outside_the_routed_prefixes():
+    """A Python route that Nginx does not route to Python is unreachable.
+
+    Every Python router is mounted under ``/api`` and the catch-all is
+    ``location /api/``, so this asserts the mount prefix has not drifted.
+    """
+    unrouted = {p for p in _python_paths() if not p.startswith(f"{API_PREFIX}/")}
+    assert unrouted == set(), unrouted
+
+
+def test_no_python_route_shadows_a_session_path():
+    """If Python ever gains one of these, which backend answers depends on
+    Nginx's match rules rather than on the code -- and the Java session would
+    stop being authoritative."""
+    assert _python_paths() & SESSION_PATHS == set()
+
+
+def test_no_python_route_is_under_the_agent_prefix():
+    """The whole Agent subsystem stays on Java, one line unchanged. A Python
+    route under ``/api/agent/`` would be shadowed by the Java location and
+    never reached."""
+    shadowed = {p for p in _python_paths() if p.startswith("/api/agent/")}
+    assert shadowed == set(), shadowed
+
+
+def test_every_non_agent_java_route_is_covered_by_its_intended_backend(blocks):
+    """The completeness check.
+
+    For each Java controller mapping outside ``/api/agent/``, decide from the
+    config which backend Nginx would pick, and assert it is the one that is
+    supposed to own it -- Java for the three session paths, Python for
+    everything else. This is what catches "domain migrated but the location
+    still points at Java".
+    """
+    java = _java_paths()
+    assert java, "no Java mappings parsed -- did the parser break?"
+
+    misrouted = {}
+    for path in sorted(java - {"/api"}):
+        if path.startswith("/api/agent/"):
+            continue
+        target = _route(path, blocks)
+        expected = "eye_java" if path in SESSION_PATHS else "eye_python"
+        if target != expected:
+            misrouted[path] = (target, expected)
+    assert misrouted == {}, misrouted
+
+
+def _route(path: str, blocks) -> str | None:
+    """Which upstream nginx would pick, following its match order:
+
+    1. ``=`` exact
+    2. longest prefix
+    """
+    for modifier, pattern, body in blocks:
+        if modifier == "=" and pattern == path:
+            return _upstream(body)
+    best, best_len = None, -1
+    for modifier, pattern, body in blocks:
+        if modifier == "=":
+            continue
+        if pattern.endswith("/") and path.startswith(pattern) and len(pattern) > best_len:
+            best, best_len = _upstream(body), len(pattern)
+    return best
+
+
+def test_the_route_resolver_agrees_with_nginx_on_the_known_cases(blocks):
+    """Guards the helper above. If ``_route`` were wrong, the completeness test
+    would pass against a wrong config."""
+    assert _route("/api/user/login", blocks) == "eye_java"
+    assert _route("/api/user/logout", blocks) == "eye_java"
+    assert _route("/api/user/get/login", blocks) == "eye_java"
+    assert _route("/api/agent/chat/stream", blocks) == "eye_java"
+    assert _route("/api/agent/session/list", blocks) == "eye_java"
+    # The prefix match is on "/api/user/" + something, not on "/api/user".
+    assert _route("/api/user/list/page/vo", blocks) == "eye_python"
+    assert _route("/api/diagnosis/diagnosis", blocks) == "eye_python"
+    assert _route("/api/knowledge/delete", blocks) == "eye_python"
+    assert _route("/api/mcp-server", blocks) == "eye_python"
+
+
+def test_the_three_session_paths_are_the_only_java_user_routes(blocks):
+    """``/api/user/diagnosis/reexamine`` is a Python route that lives under the
+    ``/api/user/`` prefix. It must not be confused with the three exact-match
+    session paths above it."""
+    assert _route("/api/user/diagnosis/reexamine", blocks) == "eye_python"
+    assert _route("/api/user/diagnosis/reexamine", blocks) != _route(
+        "/api/user/logout", blocks
+    )
