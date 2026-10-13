@@ -34,6 +34,7 @@ from web.knowledge import (  # noqa: E402
     CHUNK_OVERLAP,
     CHUNK_SIZE,
     MIN_PARAGRAPH_LENGTH,
+    DocumentParseError,
     UnsupportedFormat,
     build_chunks,
     build_metadata,
@@ -341,16 +342,15 @@ def test_parse_returns_empty_for_blank_content(monkeypatch):
     assert parse(b"", "txt") == []
 
 
-def test_parse_returns_empty_rather_than_raising_on_a_broken_file(monkeypatch):
-    """Java's ``DocumentParser.parse`` catches everything and returns an empty
-    list, which the ETL turns into "文档内容为空" (status=2). A raising parser
-    would abort an entire batch upload instead of failing one file."""
+def test_parse_reports_broken_file_separately_from_empty_content(monkeypatch):
+    """Issue 07: a parse error must not masquerade as valid empty content."""
 
     def _boom(data, file_type):
         raise ValueError("corrupt")
 
     monkeypatch.setattr("web.knowledge._extract", _boom)
-    assert parse(b"", "pdf") == []
+    with pytest.raises(DocumentParseError, match="文档解析失败"):
+        parse(b"", "pdf")
 
 
 def test_unsupported_format_propagates_instead_of_looking_like_a_parse_error():

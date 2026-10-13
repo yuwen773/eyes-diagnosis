@@ -59,7 +59,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 #: ``KnowledgeBaseServiceImpl.ALLOWED_TYPES`` -- note ``doc`` is the legacy
-#: binary Word format, see :func:`_extract` for what Python can do with it.
+#: binary Word format, handled by the pinned local Tika CLI.
 ALLOWED_TYPES = frozenset({"pdf", "doc", "docx", "txt", "md", "markdown"})
 
 #: ``eye-diagnosis.rag.chunk-size`` / ``chunk-overlap`` (``TextChunkerService``).
@@ -151,23 +151,19 @@ def content_hash(text: str) -> str:
 # Extraction
 # ---------------------------------------------------------------------------
 class UnsupportedFormat(ValueError):
-    """Raised for a file type Python cannot extract.
+    """Raised for a file type without an extractor, distinct from corrupt input."""
 
-    Distinct from a parse failure on purpose: a parse failure is transient
-    (status=2, retryable), an unsupported format never will be. Collapsing the
-    two would report "文档内容为空" for every ``.doc``, which reads like a bug
-    in the document rather than a missing capability.
-    """
+
+class DocumentParseError(ValueError):
+    """Unreadable input, distinct from a valid document with no text."""
 
 
 def _extract(data: bytes, file_type: str) -> str:
     """Text from raw bytes.
 
     Java delegates the whole matrix to Apache Tika, which sniffs content and
-    pulls in POI/pdfbox. Python uses a narrow reader per type. ``.doc`` (legacy
-    binary Word) has no pure-Python reader and Tika is not available here, so it
-    raises :class:`UnsupportedFormat` -- see the narrowing note in the module
-    docstring of the router.
+    pulls in POI/pdfbox. Python uses a narrow reader per type, with the pinned
+    local Tika CLI for binary Word.
 
     Every backend is imported inside the branch: none of them may appear at
     module scope.
@@ -186,34 +182,39 @@ def _extract(data: bytes, file_type: str) -> str:
         # is the pragmatic match and is what every real document here uses.
         return data.decode("utf-8", errors="replace")
     if file_type == "doc":
-        raise UnsupportedFormat(
-            "暂不支持 .doc 旧版二进制格式，请转换为 .docx 后重新上传"
-        )
+        from web.doc_parser import extract_doc
+
+        return extract_doc(data)
     raise UnsupportedFormat(f"未实现的文件类型: {file_type}")
 
 
 def parse(data: bytes, file_type: str) -> list[str]:
     """``DocumentParser.parse`` -- split into paragraphs.
 
-    Java catches every exception and returns an empty list, which
-    ``processDocument`` then reports as "文档内容为空" (status=2). Reproduced:
-    an unreadable file must not abort a batch upload.
+    Issue 07 separates parse errors from valid empty text. The upload route
+    catches errors per file, so an unreadable file does not abort the batch.
+    DOCX retains short blocks so cells and headers cannot be filtered out.
 
     The fallback matters: when no paragraph is longer than
     :data:`MIN_PARAGRAPH_LENGTH`, Java returns the **whole** content as a
-    single paragraph rather than nothing, so a short-but-valid document is not
-    rejected.
+    single paragraph rather than nothing. This legacy rule remains for the
+    other formats; the character-window chunker is unchanged for all formats.
     """
     try:
         content = _extract(data, file_type)
     except UnsupportedFormat:
         raise
-    except Exception:  # noqa: BLE001 - mirrors DocumentParser's catch-all
+    except Exception as exc:  # noqa: BLE001 - report parse errors per uploaded file
         logger.exception("document extraction failed")
-        return []
+        raise DocumentParseError(f"文档解析失败：{exc}") from exc
 
     if not has_text(content):
         return []
+
+    # Word's short cells and headers are meaningful content. Keep every nonblank
+    # DOCX block; the legacy plain-text/PDF filter and chunker remain unchanged.
+    if file_type == "docx":
+        return [java_trim(para) for para in _PARAGRAPH_SPLIT.split(content) if has_text(para)]
 
     paragraphs = [
         trimmed

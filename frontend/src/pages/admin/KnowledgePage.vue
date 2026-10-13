@@ -160,6 +160,9 @@ const submitBatchUpload = async () => {
     const res = await uploadDocument(pendingFiles.value)
     if (res.code === 0 && res.data.length > 0) {
       message.success(`${res.data.length} 个文件上传成功，正在处理中...`)
+      if (res.msg !== 'ok') {
+        message.warning(res.msg, 8)
+      }
       // 将上传的文件加入处理队列（初始为处理中状态）
       pendingFiles.value.forEach((file) => {
         processingFiles.value.push({ name: file.name, status: 0 })

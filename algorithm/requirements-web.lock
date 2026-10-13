@@ -187,6 +187,8 @@ numpy==2.5.4 ; python_full_version >= '3.12'
     #   onnxruntime
 oauthlib==4.0.0
     # via requests-oauthlib
+olefile==0.47
+    # via -r requirements-web.txt
 onnxruntime==1.31.0
     # via chromadb
 opentelemetry-api==1.45.1

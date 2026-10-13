@@ -38,12 +38,11 @@ httpx>=0.27
 # but a deployment that serves /knowledge/upload needs them, which is why they
 # are listed rather than left to requirements.txt.
 #
-# pypdf / python-docx replace Apache Tika's format matrix. Neither reads the
-# legacy binary .doc format; `resolve_file_type` still accepts the extension
-# (matching Java's allow-list) and the ETL rejects it with an actionable
-# message. See finding J-16.
+# Binary .doc uses the pinned local Tika CLI (python -m web.doc_parser) and Java
+# 21. olefile validates the Word container before invoking the parser.
 pypdf>=4.0
-python-docx>=1.1
+python-docx>=1.2
+olefile==0.47
 
 # Durable upload graph; verified on the Python 3.11 web baseline.
 langgraph==1.2.12

@@ -1,10 +1,7 @@
 """Document text extractors.
 
-Java routes every format through Apache Tika, which sniffs the bytes and
-dispatches to POI/pdfbox internally. That dependency is not available here, so
-each supported format gets a narrow reader. All of them are imported **inside**
-their function -- ``pypdf`` and ``python-docx`` are absent from the default
-interpreter, and importing this module must not require them.
+PDF and DOCX use lazy Python readers; binary DOC uses the local Tika CLI in
+``web.doc_parser``. Importing this module requires no parser dependencies.
 
 Format support, against ``KnowledgeBaseServiceImpl.ALLOWED_TYPES``:
 
@@ -16,17 +13,10 @@ type        supported   note
 ``txt``     yes         UTF-8 with replacement
 ``md``      yes         same
 ``markdown`` yes        same
-``doc``     **no**      legacy binary Word; no pure-Python reader.
-                      ``pypdf``/``python-docx`` cannot open it, and
-                      ``olefile``/``antiword`` would be a new dependency
-                      plus an external binary. Raises
-                      :class:`web.knowledge.UnsupportedFormat`.
+``doc``     yes         pinned Apache Tika CLI + Java 21; see web.doc_parser
 ==========  ==========  ==================================================
 
-The ``.doc`` gap is a real narrowing of what the API accepts and is recorded
-in ``docs/rewrite-findings.md``. It fails loudly with an actionable message
-rather than returning empty text, which would surface as the misleading
-"文档内容为空".
+Issue 07 closes the historical J-16 format gap; see docs/document-formats.md.
 """
 
 import io
@@ -53,14 +43,45 @@ def extract_pdf(data: bytes) -> str:
 
 
 def extract_docx(data: bytes) -> str:
-    """Text from a ``.docx`` via ``python-docx``.
+    """Body in document order, including nested tables and active headers/footers.
 
-    Paragraphs are joined with a blank line. Tika additionally surfaces tables
-    and headers/footers; ``python-docx``'s ``document.paragraphs`` does not.
-    Documents that put their content in a table will therefore extract as empty
-    here but not under Tika. Recorded as part of the same narrowing as ``.doc``.
+    A table is one paragraph block so the legacy 20-character paragraph filter
+    cannot discard individual short cells. Merged cells and shared header/footer
+    parts are emitted once. Images, field instructions and comments are excluded.
     """
     import docx  # python-docx
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
+    def blocks(container):
+        texts = []
+        for item in container.iter_inner_content():
+            if isinstance(item, Paragraph):
+                texts.append(item.text)
+            elif isinstance(item, Table):
+                seen = set()
+                rows = []
+                for row in item.rows:
+                    cells = []
+                    for cell in row.cells:
+                        if cell._tc not in seen:
+                            seen.add(cell._tc)
+                            cells.append("\n".join(blocks(cell)))
+                    rows.append("\t".join(cells))
+                texts.append("\n".join(rows))
+        return texts
 
     document = docx.Document(io.BytesIO(data))
-    return "\n\n".join(paragraph.text for paragraph in document.paragraphs)
+    texts = blocks(document)
+    seen_parts = set()
+    for section in document.sections:
+        stories = [section.header, section.footer]
+        if section.different_first_page_header_footer:
+            stories.extend([section.first_page_header, section.first_page_footer])
+        if document.settings.odd_and_even_pages_header_footer:
+            stories.extend([section.even_page_header, section.even_page_footer])
+        for story in stories:
+            if not story.is_linked_to_previous and story.part.partname not in seen_parts:
+                seen_parts.add(story.part.partname)
+                texts.extend(blocks(story))
+    return "\n\n".join(texts)

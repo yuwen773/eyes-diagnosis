@@ -6,7 +6,8 @@ stacks meet: see the cross-language contract table in ``web/knowledge.py``.
 
 Three behaviours worth knowing:
 
-* **The ETL is asynchronous.** ``processDocument`` is ``@Async``; ``/upload``
+* **Indexing is asynchronous.** Issue 07 validates/extracts before storage so
+  parse and empty-file failures reach the caller. ``/upload``
   returns document ids while ``status`` is still 0 (processing), then flips to
   1 (completed) or 2 (failed). The frontend polls ``/list/page``. Reproduced with
   a FastAPI background task, which runs after the response is sent -- and with
@@ -14,8 +15,8 @@ Three behaviours worth knowing:
 * **Failures are per-file, not per-request.** One bad file in a batch is
   collected into ``failedFiles``; the request only fails if *every* file failed
   (``OPERATION_ERROR`` with the concatenated reasons). A partial success returns
-  HTTP 200 with the ids that worked and no mention of the rest -- the failures
-  are logged, not returned.
+  HTTP 200 with the ids that worked. Issue 07 also reports rejected files in
+  ``msg`` without changing the list-of-ids data contract.
 * **Delete cleans up in an order that tolerates partial failure**: vectors, then
   COS object, then the row. Each step's exception is caught and logged, so a
   Chroma outage still deletes the database row -- at the cost of leaving
@@ -38,11 +39,13 @@ from fastapi import (
 )
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from web.auth import LoginUser, require_role
 from web.constant import DEFAULT_ROLE
 from web.deps import db_session, get_config, get_db
 from web.knowledge import (
+    DocumentParseError,
     UnsupportedFormat,
     build_chunks,
     chunk_ids,
@@ -94,10 +97,8 @@ async def upload_documents(
     project, which uses ``file``. Binding ``file`` here would silently accept
     nothing.
 
-    Returns the ids that were stored. A file skipped as a duplicate or with an
-    unsupported extension is *not* in the list and *not* reported -- Java logs
-    it and returns the successes. Reproduced, because the frontend only reads
-    ``data`` as a list of ids and would break on an error object.
+    Returns the ids that were stored. Per-file failures are in ``msg``; the
+    ``data`` list remains compatible with the frontend client.
     """
     if not files:
         raise BizError(ErrorCode.PARAMS_ERROR, NO_FILES_SELECTED)
@@ -106,7 +107,7 @@ async def upload_documents(
     now = datetime.now()
     created: list[int] = []
     failures: list[str] = []
-    pending: list[tuple[int, bytes, str, str]] = []
+    pending: list[tuple[int, str, str, str]] = []
 
     for upload in files:
         filename = upload.filename
@@ -122,6 +123,16 @@ async def upload_documents(
         if _already_uploaded(owner_id, content_hash):
             failures.append(f"{filename}（文档已存在）")
             continue
+
+        try:
+            paragraphs = await run_in_threadpool(parse, data, file_type)
+        except (DocumentParseError, UnsupportedFormat) as exc:
+            failures.append(f"{filename}（{exc}）")
+            continue
+        if not paragraphs:
+            failures.append(f"{filename}（文档内容为空）")
+            continue
+        raw_text = merge_paragraphs(paragraphs)
 
         stored_name = f"{uuid.uuid4()}_{filename}"
         try:
@@ -158,22 +169,25 @@ async def upload_documents(
             session.close()
 
         created.append(document.id)
-        pending.append((document.id, data, file_type, document.title))
+        pending.append((document.id, raw_text, file_type, document.title))
 
     if not created and failures:
         raise BizError(
             ErrorCode.OPERATION_ERROR, ALL_FILES_FAILED_PREFIX + ", ".join(failures)
         )
     if failures:
-        # Java logs this and says nothing to the client.
+        # Preserve successes; the response also carries per-file reasons.
         logger.warning("knowledge upload partially failed: %s", failures)
 
     # ETL after the response, each document with its own session.
-    for doc_id, data, file_type, doc_title in pending:
-        background_tasks.add_task(process_document, doc_id, data, file_type, doc_title)
+    for doc_id, raw_text, file_type, doc_title in pending:
+        background_tasks.add_task(process_document, doc_id, raw_text, file_type, doc_title)
 
     # `List<Long>` -- Jackson's ToStringSerializer applies inside the list too.
-    return BaseResponse.success([str(doc_id) for doc_id in created])
+    response = BaseResponse.success([str(doc_id) for doc_id in created])
+    if failures:
+        response.msg = "部分文件上传失败: " + ", ".join(failures)
+    return response
 
 
 def _already_uploaded(owner_id: int, content_hash: str) -> bool:
@@ -213,10 +227,10 @@ def _put_object(key: str, data: bytes) -> None:
     qcloud_cos.COSClient(client).put_object(Bucket=config.cos_bucket, Key=key, Body=data)
 
 
-def process_document(doc_id: int, data: bytes, file_type: str, title: str) -> None:
-    """``DocumentProcessingService.processDocument`` -- extract, chunk, embed, load.
+def process_document(doc_id: int, raw_text: str, file_type: str, title: str) -> None:
+    """``DocumentProcessingService.processDocument`` -- chunk, embed, load.
 
-    Synchronous here and run as a background task. Java uses ``@Async`` on a
+    Text was validated before upload. Synchronous here and run as a background task. Java uses ``@Async`` on a
     dedicated executor; a FastAPI background task runs on the event loop's
     threadpool after the response, which has the same observable property: the
     upload already returned.
@@ -228,11 +242,6 @@ def process_document(doc_id: int, data: bytes, file_type: str, title: str) -> No
     from web.vectorstore import ChromaWriter, DashScopeEmbedder, VectorStoreUnavailable
 
     try:
-        paragraphs = parse(data, file_type)
-        if not paragraphs:
-            raise ValueError("文档内容为空")
-        raw_text = merge_paragraphs(paragraphs)
-
         session = db_session()
         try:
             document = session.get(KnowledgeDocument, doc_id)
@@ -266,7 +275,7 @@ def process_document(doc_id: int, data: bytes, file_type: str, title: str) -> No
         vectors = _run_async(embedder.embed([payload.text for payload in payloads]))
 
         writer = ChromaWriter(config)
-        _run_async(writer.add(payloads, vectors))
+        writer.add(payloads, vectors)
     except (VectorStoreUnavailable, UnsupportedFormat):
         logger.exception("[ETL] vector stage failed: docId=%s", doc_id)
         _mark(doc_id, STATUS_FAILED)
@@ -420,7 +429,7 @@ def _delete_vectors(doc_id: int, chunk_count: int) -> None:
 
     try:
         writer = ChromaWriter(get_config())
-        _run_async(writer.delete(chunk_ids(doc_id, chunk_count)))
+        writer.delete(chunk_ids(doc_id, chunk_count))
     except Exception:  # noqa: BLE001 - including VectorStoreUnavailable
         logger.warning("vector delete failed, continuing: docId=%s", doc_id, exc_info=True)
 

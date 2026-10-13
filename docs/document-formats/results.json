@@ -1,0 +1,9 @@
+{
+  "boundary": "Original Vue + real HTTP/ETL/Tika, controlled auth/SQLite/COS/embedding/Chroma read adapter",
+  "checks": {
+    "ui_upload_to_controlled_retrieval": "PASS",
+    "ui_parse_failure_reason": "PASS",
+    "ui_empty_document_reason": "PASS",
+    "ui_partial_failure_warning": "PASS"
+  }
+}
