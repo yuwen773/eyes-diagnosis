@@ -32,7 +32,7 @@ def authorize(task: ReviewTask, workflow: Workflow, user: LoginUser) -> None:
         raise HTTPException(403, "任务已由其他医生领取")
 
 
-def load_task(db: Session, task_id: str, user: LoginUser, *, lock: bool = False):
+def load_task(db: Session, task_id: str, user: LoginUser):
     task = db.get(ReviewTask, task_id)
     if task is None:
         raise HTTPException(404, "复核任务不存在")
@@ -40,9 +40,10 @@ def load_task(db: Session, task_id: str, user: LoginUser, *, lock: bool = False)
     workflow = db.scalar(select(Workflow).where(Workflow.workflow_id == task.workflow_id)
                          .with_for_update().execution_options(populate_existing=True))
     assert workflow is not None
-    if lock:
-        task = db.scalar(select(ReviewTask).where(ReviewTask.task_id == task_id)
-                         .with_for_update().execution_options(populate_existing=True))
+    # Refresh on reads too: a claim may commit while this request waits on the
+    # workflow lock. Never authorize images/details from the earlier snapshot.
+    task = db.scalar(select(ReviewTask).where(ReviewTask.task_id == task_id)
+                     .with_for_update().execution_options(populate_existing=True))
     assert task is not None
     authorize(task, workflow, user)
     return task, workflow
@@ -121,7 +122,7 @@ def image(taskId: str, user: LoginUser = Depends(review_doctor), db: Session = D
 @router.post("/{taskId}/claim", response_model=BaseResponse[ReviewSummary])
 def claim(taskId: str, body: ReviewVersions, user: LoginUser = Depends(review_doctor),
           db: Session = Depends(get_db)) -> dict:
-    task, workflow = load_task(db, taskId, user, lock=True)
+    task, workflow = load_task(db, taskId, user)
     check_current(task, workflow, body, db)
     if task.status != "OPEN":
         raise HTTPException(409, "任务已领取，请刷新")
@@ -139,7 +140,7 @@ def claim(taskId: str, body: ReviewVersions, user: LoginUser = Depends(review_do
 @router.post("/{taskId}/submit", response_model=BaseResponse[ReviewSummary])
 def submit(taskId: str, body: QualityDecision, user: LoginUser = Depends(review_doctor),
            db: Session = Depends(get_db)) -> dict:
-    task, workflow = load_task(db, taskId, user, lock=True)
+    task, workflow = load_task(db, taskId, user)
     if body.reasonCode != {"APPROVE_CONTINUE": "QUALITY_APPROVED",
                            "REJECT_RESUBMIT": "QUALITY_REJECTED"}[body.decisionCode]:
         raise HTTPException(422, "决定与理由不兼容")

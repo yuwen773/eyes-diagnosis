@@ -49,6 +49,7 @@ export function useQualityReviews() {
   async function act(decision?: QualityDecision) {
     if (!detail.value || busy.value) return
     const task = detail.value
+    const current = generation
     busy.value = true
     error.value = ''
     const versions = { expectedTaskVersion: task.taskVersion, expectedWorkflowVersion: task.workflowVersion }
@@ -56,13 +57,13 @@ export function useQualityReviews() {
       if (decision) await submitQualityReview(task.reviewTaskId, { ...versions, decisionCode: decision,
         reasonCode: decision === 'APPROVE_CONTINUE' ? 'QUALITY_APPROVED' : 'QUALITY_REJECTED' })
       else await claimQualityReview(task.reviewTaskId, versions)
-      if (!disposed) await refresh()
+      if (!disposed && current === generation) await refresh()
     } catch (cause) {
-      if (disposed) return
+      if (disposed || current !== generation) return
       detail.value = null
       error.value = failureMessage(cause)
     } finally {
-      if (!disposed) busy.value = false
+      if (!disposed && current === generation) busy.value = false
     }
   }
 

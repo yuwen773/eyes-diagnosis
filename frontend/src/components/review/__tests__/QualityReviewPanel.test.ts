@@ -70,4 +70,23 @@ describe('doctor quality review page', () => {
     expect(wrapper.find('button[data-action="claim"]').exists()).toBe(false)
     wrapper.unmount()
   })
+
+  it('keeps the new task visible when a previous task action fails after navigation', async () => {
+    route.query = { task: 'quality-1' }
+    let rejectClaim: (reason: unknown) => void = () => {}
+    vi.mocked(api.claimQualityReview).mockImplementation(() => new Promise((_, reject) => { rejectClaim = reject }))
+    const wrapper = mount(QualityReviewPanel)
+    await flushPromises()
+    await wrapper.get('button[data-action="claim"]').trigger('click')
+    vi.mocked(api.getQualityReview).mockResolvedValue({ ...detail, reviewTaskId: 'quality-2',
+      question: '第二份图片', allowedDecisions: [...detail.allowedDecisions] })
+    route.query = { task: 'quality-2' }
+    await flushPromises()
+    expect(wrapper.text()).toContain('第二份图片')
+    rejectClaim({ response: { status: 409, data: { msg: '先前任务冲突' } } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('第二份图片')
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
 })
