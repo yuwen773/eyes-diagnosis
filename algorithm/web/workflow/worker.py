@@ -17,6 +17,7 @@ from sqlalchemy import DateTime, and_, func, literal_column, or_, select
 from web.workflow.checkpoint import MysqlCheckpointSaver, checkpoint_config
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION, build_graph
 from web.workflow.inference import InferenceEnvelope, InferenceExecutionError, WorkflowInference
+from web.evidence import EvidenceRetriever, validate_evidence
 from web.workflow.models import (
     PYTHON_SEGMENT_CODE, InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent,
 )
@@ -150,7 +151,8 @@ class Worker:
         pending_envelopes: list[InferenceEnvelope] = []
         graph = build_graph(saver, claim.image_bytes, inference=self.inference,
                             committed_envelope=claim.envelope, pending_envelopes=pending_envelopes,
-                            inference_epoch=claim.inference_epoch, quality_decision=claim.quality_decision)
+                            inference_epoch=claim.inference_epoch, quality_decision=claim.quality_decision,
+                            evidence=EvidenceRetriever(self.sessions, self.inference.config))
         config = checkpoint_config(claim.workflow_id, "", claim.checkpoint_id or "")
         try:
             if claim.checkpoint_id and saver.get_tuple(config) is None:
@@ -178,6 +180,9 @@ class Worker:
                 checkpoint_id = snapshot.config["configurable"]["checkpoint_id"]
                 upload.checkpoint_id = checkpoint_id
                 upload.completed_nodes = json.dumps(snapshot.values["completed"])
+                if "evidence" in snapshot.values:
+                    upload.evidence_snapshot = json.dumps(validate_evidence(db, snapshot.values["evidence"]),
+                                                          ensure_ascii=False)
                 workflow.status = snapshot.values["status"]
                 workflow.stop_reason = snapshot.values["reason"]
                 workflow.exposure_status = snapshot.values.get("exposure_status", "HIDDEN")

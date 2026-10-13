@@ -42,6 +42,7 @@ class UploadInput(Base):
     image_bytes: Mapped[bytes] = mapped_column("imageBytes", LargeBinary)
     checkpoint_id: Mapped[str | None] = mapped_column("graphCheckpointId", String(128))
     completed_nodes: Mapped[str] = mapped_column("completedNodes", Text, default="[]")
+    evidence_snapshot: Mapped[str | None] = mapped_column("evidenceSnapshot", Text)
 
 
 class InferenceEnvelopeRow(Base):

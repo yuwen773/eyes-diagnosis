@@ -57,7 +57,7 @@ def main():
         tasks = doctor.get(f"{API}/reviews/tasks").json()["data"]
         indexed = {task["workflowId"]: task for task in tasks}
         for workflow_id, decision, label, terminal, filename in [
-            (workflow_ids[0], "APPROVE_CONTINUE", "允许复用原推理包继续", "FAILED", "approved"),
+            (workflow_ids[0], "APPROVE_CONTINUE", "允许复用原推理包继续", "COMPLETED_LIMITED", "approved"),
             (workflow_ids[1], "REJECT_RESUBMIT", "要求用户重新上传图片", "REJECTED", "rejected"),
         ]:
             task = indexed[workflow_id]

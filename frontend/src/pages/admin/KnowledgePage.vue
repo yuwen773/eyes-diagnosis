@@ -43,6 +43,8 @@
       </div>
     </section>
 
+    <KnowledgeGovernanceEditor v-if="reviewing" :key="reviewing.id" :document="reviewing"
+      @saved="reviewSaved" @cancel="reviewing = null" />
     <!-- 文件列表 -->
     <a-card title="文件列表">
       <a-table
@@ -69,6 +71,12 @@
           <template v-else-if="column.dataIndex === 'status'">
             <a-badge :status="getStatusType(record.status)" :text="getStatusText(record.status)" />
           </template>
+          <template v-else-if="column.dataIndex === 'visibility'">
+            {{ visibilityLabels[record.visibility] ?? '私人资料' }}
+          </template>
+          <template v-else-if="column.dataIndex === 'reviewStatus'">
+            {{ reviewLabels[record.reviewStatus] ?? '待审核' }}
+          </template>
           <template v-else-if="column.dataIndex === 'createTime'">
             {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
           </template>
@@ -77,7 +85,9 @@
             <span v-else class="text-gray-400">-</span>
           </template>
           <template v-else-if="column.key === 'action'">
+            <a-button type="link" size="small" @click="reviewing = record">审核属性</a-button>
             <a-popconfirm
+              v-if="String(record.userId) === String(loginUserStore.loginUser.id)"
               title="确定删除该文件？删除后知识库中的相关内容也将被移除。"
               @confirm="doDelete(record.id)"
             >
@@ -91,18 +101,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, watch } from 'vue'
+import KnowledgeGovernanceEditor from '@/components/admin/KnowledgeGovernanceEditor.vue'
+import { useLoginUserStore } from '@/stores/user'
 import { message } from 'ant-design-vue'
 import { InboxOutlined, FileTextOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {
   uploadDocument,
-  listKnowledgePage,
+  listReferenceDocuments,
   deleteKnowledge,
   type KnowledgeDocument,
 } from '@/api/knowledgeController'
 
 const loading = ref(false)
+const loginUserStore = useLoginUserStore()
+const visibilityLabels: Record<string, string> = { PRIVATE_USER: '私人资料', CURATED_PUBLIC: '公共参考资料', QUARANTINED: '隔离资料' }
+const reviewLabels: Record<string, string> = { PENDING: '待审核', APPROVED: '审核通过', REJECTED: '审核拒绝', WITHDRAWN: '已撤回' }
+const reviewing = shallowRef<KnowledgeDocument | null>(null)
 const uploading = ref(false)
 const fileList = ref<KnowledgeDocument[]>([])
 const pendingFiles = ref<File[]>([])
@@ -123,14 +139,16 @@ const columns = [
   { title: '大小', dataIndex: 'fileSize', width: 100 },
   { title: '分块数', dataIndex: 'chunkCount', width: 80 },
   { title: '状态', dataIndex: 'status', width: 100 },
+  { title: '可见范围', dataIndex: 'visibility', width: 150 },
+  { title: '审核状态', dataIndex: 'reviewStatus', width: 110 },
   { title: '上传时间', dataIndex: 'createTime', width: 170 },
-  { title: '操作', key: 'action', width: 80 },
+  { title: '操作', key: 'action', width: 150 },
 ]
 
 const loadList = async () => {
   loading.value = true
   try {
-    const res = await listKnowledgePage(pagination.value.current, pagination.value.pageSize)
+    const res = await listReferenceDocuments(pagination.value.current, pagination.value.pageSize)
     if (res.code === 0 && res.data) {
       fileList.value = res.data.records
       pagination.value.total = res.data.total
@@ -140,6 +158,12 @@ const loadList = async () => {
   } finally {
     loading.value = false
   }
+}
+
+function reviewSaved() {
+  reviewing.value = null
+  message.success('审核属性已保存')
+  loadList()
 }
 
 const handleTableChange = (pag: any) => {

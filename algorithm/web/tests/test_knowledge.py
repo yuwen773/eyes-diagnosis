@@ -96,11 +96,14 @@ def _python_knowledge_paths() -> set[str]:
 
 def test_all_three_knowledge_endpoints_are_migrated():
     assert len(_java_knowledge_paths()) == 3
-    assert _java_knowledge_paths() == _python_knowledge_paths()
+    assert _java_knowledge_paths() <= _python_knowledge_paths()
 
 
-def test_python_serves_no_endpoint_java_does_not():
-    assert _python_knowledge_paths() - _java_knowledge_paths() == set()
+def test_only_issue08_authorized_knowledge_endpoints_extend_java():
+    assert _python_knowledge_paths() - _java_knowledge_paths() == {
+        "/knowledge/admin/catalog", "/knowledge/admin/documents",
+        "/knowledge/admin/documents/{document_id}", "/knowledge/search",
+    }
 
 
 def test_delete_uses_the_delete_verb_with_a_body():
@@ -140,7 +143,7 @@ def test_admin_is_not_required():
         for dependant in route.dependant.dependencies:
             call = dependant.call
             if getattr(call, "func", call) is require_role:
-                assert call.args[0] == "user", route.path
+                assert call.args[0] == ("admin" if "/admin/" in route.path else "user"), route.path
 
 
 # ---------------------------------------------------------------------------
@@ -624,7 +627,8 @@ def test_vo_id_and_file_size_are_strings_but_status_is_a_number():
     row = KnowledgeDocument(
         id=5, user_id=1, title="t", file_name="a.pdf", file_url="uuid_a.pdf",
         file_size=2048, file_type="pdf", content_hash="ab" * 32, chunk_count=3,
-        status=1, create_time=datetime(2026, 1, 1, 0, 0, 0),
+        status=1, visibility="PRIVATE_USER", review_status="PENDING", governance_version=0,
+        create_time=datetime(2026, 1, 1, 0, 0, 0),
         update_time=datetime(2026, 1, 2, 0, 0, 0), is_delete=0,
     )
     dumped = VO.model_validate(row, from_attributes=True).model_dump(mode="json")
@@ -642,6 +646,8 @@ def test_vo_returns_the_raw_entity_not_a_desensitised_view():
     assert set(KnowledgeDocumentVO.model_fields) == {
         "id", "userId", "title", "fileName", "fileUrl", "fileSize", "fileType",
         "contentHash", "chunkCount", "status", "createTime", "updateTime", "isDelete",
+        "visibility", "reviewStatus", "diseaseCodes", "topicCodes", "governanceVersion",
+        "reviewedBy", "reviewedAt",
     }
 
 

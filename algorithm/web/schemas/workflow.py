@@ -21,6 +21,22 @@ class QualityReviewView(BaseModel):
     reasonCode: str | None
 
 
+class EvidenceCitationView(BaseModel):
+    citationId: str
+    documentId: str
+    sourceRevision: int
+    title: str
+    source: str
+    quotedTextDigest: str
+
+
+class EvidenceView(BaseModel):
+    status: Literal["SUFFICIENT", "INSUFFICIENT"]
+    reasonCode: str | None
+    attempts: int
+    citations: list[EvidenceCitationView]
+
+
 class WorkflowStatusView(BaseModel):
     workflowId: str
     status: Literal["CREATED", "QUEUED", "RUNNING", "WAITING_HUMAN_REVIEW", "COMPLETED",
@@ -32,5 +48,6 @@ class WorkflowStatusView(BaseModel):
     stopReasonCode: str | None
     qualityGate: Literal["PASS", "REJECT", "REVIEW"] | None = None
     qualityReview: QualityReviewView | None = None
+    evidence: EvidenceView | None = None
     resultAvailability: ResultAvailability
     result: None = None

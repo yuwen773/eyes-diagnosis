@@ -17,13 +17,13 @@ mvn -f deploy/workflow-migrations/pom.xml flyway:migrate
 ```
 
 The pinned standalone Flyway Maven plugin 12.4.0 uses the existing V1–V9 and
-bootstrap callback, unchanged release V10–V14, and additive V15–V18. There is one
+bootstrap callback, unchanged release V10–V14, and additive V15–V19. There is one
 `flyway_schema_history`, with `baselineVersion=0` matching the existing Java
 configuration. There is no Alembic history or custom history writer.
 
 V10–V14 are byte-for-byte copies from release commit
 `5ac742f0db30ded1c87462211a535012d952e4bb`. Keep those files and all earlier
-migrations immutable. Reserve subsequent global versions after V18; do not
+migrations immutable. Reserve subsequent global versions after V19; do not
 reuse version numbers between Java and Python deployment assets. V17 is reserved
 for Python session chat (apply before routing Agent traffic to Python). Do not repair
 checksum failures automatically. See the existing release history policy for
@@ -60,3 +60,10 @@ retain the additive tables and task data. Do not run `clean`, drop tables, or
 rewind history. The original Java session application was actually started on
 the V15 acceptance schema. A complete production cutover/rollback rehearsal
 belongs to issue 20, not this upgrade smoke check.
+
+V19 adds controlled reference visibility/review/codes/version/actor fields and the
+task evidence snapshot. Old documents default to PRIVATE_USER + PENDING with no
+controlled codes; none are promoted automatically. Apply before issue08 API and
+Worker deployment. Real MySQL V19 migration and Java interoperability remain
+unverified; controlled SQLite/API/browser tests do not cover those gates. See
+`docs/controlled-reference-evidence.md`. Rollback retains the additive columns.

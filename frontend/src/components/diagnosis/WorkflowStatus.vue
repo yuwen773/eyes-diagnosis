@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { WorkflowView, WorkflowStatus } from '@/api/workflowController'
+import WorkflowEvidence from './WorkflowEvidence.vue'
 
 const props = defineProps<{ workflow: WorkflowView }>()
 const labels: Record<WorkflowStatus, string> = {
@@ -19,6 +20,7 @@ const reason = computed(() => ({
   QUALITY_REJECTED: '图片质量未通过，请重新上传清晰、光照均匀的眼底图片。',
   QUALITY_REVIEW_REQUIRED: '图片质量待复核。当前任务已暂停，不会自动重新分析，等待医生领取并作出质量决定。',
   EXPLANATION_NOT_AVAILABLE: '图片质量已通过，解释发布能力尚未接入，当前任务不提供诊断结果。',
+  EVIDENCE_INSUFFICIENT: '已完成受控参考资料检索，证据不足，当前任务不提供完整解释。',
   OOD: '图片超出模型适用范围，本次不提供疾病判断。建议咨询专业医生。',
   LOW_CONFIDENCE: '模型无法可靠判断，本次不提供疾病判断。建议咨询专业医生。',
   MODEL_POLICY_REJECTED: '本次分析未满足模型可靠性要求，不提供疾病判断。建议咨询专业医生。',
@@ -33,6 +35,7 @@ const nodeLabels: Record<string, string> = {
   inference: '图像分析', imageQuality: '图片质量判断',
   qualityReview: '医生质量决定处理',
   visionExposure: '分析可靠性检查', explanationUnavailable: '解释发布检查',
+  evidenceRetrieval: '已审核参考资料检索', evidenceRewrite: '受控查询改写', evidenceValidation: '参考来源校验',
 }
 const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ? '' : props.workflow.qualityGate ? ({
   PASS: '图片质量已通过', REJECT: '图片质量未通过', REVIEW: '图片质量待复核',
@@ -50,6 +53,7 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
     </p>
     <p v-else-if="workflow.qualityReview?.status === 'CLAIMED'" class="status-reason">医生已领取质量复核任务，请等待复核决定。</p>
     <p v-if="reason" class="status-reason">{{ reason }}</p>
+    <WorkflowEvidence v-if="workflow.evidence" :evidence="workflow.evidence" />
     <ul v-if="workflow.progress.completed.length" class="completed-nodes">
       <li v-for="node in workflow.progress.completed" :key="node">{{ nodeLabels[node] ?? node }} · 已完成</li>
     </ul>

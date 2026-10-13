@@ -1,7 +1,7 @@
 import myAxios from '../request'
 
 export interface KnowledgeDocument {
-  id: number
+  id: string | number
   userId: number
   title: string
   fileName: string
@@ -12,6 +12,36 @@ export interface KnowledgeDocument {
   status: number // 0=处理中, 1=已完成, 2=失败
   createTime: string
   updateTime: string
+  visibility?: 'CURATED_PUBLIC' | 'PRIVATE_USER' | 'QUARANTINED'
+  reviewStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN'
+  diseaseCodes?: string[]
+  topicCodes?: string[]
+  governanceVersion?: number
+}
+
+export interface GovernanceInput {
+  visibility: NonNullable<KnowledgeDocument['visibility']>
+  reviewStatus: NonNullable<KnowledgeDocument['reviewStatus']>
+  diseaseCodes: string[]
+  topicCodes: string[]
+  expectedVersion: number
+  confirmed: true
+}
+
+export async function getEvidenceCatalog(): Promise<{ diseaseCodes: Record<string, string>; topicCodes: Record<string, string> }> {
+  const response = await myAxios.get('/knowledge/admin/catalog')
+  if (response.data.code !== 0) throw new Error(response.data.msg)
+  return response.data.data
+}
+
+export async function updateKnowledgeGovernance(id: string | number, body: GovernanceInput) {
+  const response = await myAxios.patch<BaseResponse<KnowledgeDocument>>(`/knowledge/admin/documents/${encodeURIComponent(id)}`, body)
+  return response.data
+}
+
+export async function listReferenceDocuments(current: number, pageSize: number): Promise<BaseResponse<KnowledgePageResult>> {
+  const response = await myAxios.post('/knowledge/admin/documents', { current, pageSize })
+  return response.data
 }
 
 export interface KnowledgePageResult {

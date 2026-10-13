@@ -306,7 +306,7 @@ def test_endpoint_set_matches_java_exactly():
                 and path not in SESSION_PATHS and path != "/api"}
 
     served = {(verb, path) for path, operations in create_app().openapi()["paths"].items()
-              for verb in operations if verb in {"get", "post", "put", "delete"}}
+              for verb in operations if verb in {"get", "post", "put", "patch", "delete"}}
     assert expected - served == set(), f"not migrated: {sorted(expected - served)}"
     # Issue 02 adds these independent async endpoints, preserving the exact
     # legacy surface. New endpoints are exercised through HTTP in test_workflow.
@@ -323,7 +323,11 @@ def test_endpoint_set_matches_java_exactly():
         ("put", "/api/agent/sessions/{session_id}/title"), ("put", "/api/agent/sessions/{session_id}/pin"),
         ("post", "/api/agent/sessions/{session_id}/generate-title"),
         ("post", "/api/agent/image/upload"), ("post", "/api/agent/image/upload/delete")}
-    assert served - expected == new_workflows | chat_contracts, f"unexpected new surface: {sorted(served - expected)}"
+    evidence_contracts = {("get", "/api/knowledge/admin/catalog"),
+        ("post", "/api/knowledge/admin/documents"),
+        ("patch", "/api/knowledge/admin/documents/{document_id}"),
+        ("post", "/api/knowledge/search")}
+    assert served - expected == new_workflows | chat_contracts | evidence_contracts, f"unexpected new surface: {sorted(served - expected)}"
 
 
 def test_public_endpoints_need_no_session(anonymous_client):

@@ -35,13 +35,14 @@ from fastapi import (
     Depends,
     File,
     Form,
+    HTTPException,
     UploadFile,
 )
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from web.auth import LoginUser, require_role
+from web.auth import ADMIN_ROLE, LoginUser, require_role
 from web.constant import DEFAULT_ROLE
 from web.deps import db_session, get_config, get_db
 from web.knowledge import (
@@ -60,6 +61,8 @@ from web.schemas.knowledge import (
     DeleteRequest,
     KnowledgeDocumentVO,
     KnowledgePageQuery,
+    GovernanceUpdate,
+    PrivateSearchRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,6 +82,61 @@ STATUS_COMPLETED = 1
 STATUS_FAILED = 2
 
 require_user = partial(require_role, DEFAULT_ROLE)
+require_admin = partial(require_role, ADMIN_ROLE)
+
+
+@router.get("/admin/catalog", summary="参考资料受控编码目录")
+def evidence_catalog(user: LoginUser = Depends(require_admin)):
+    from web.evidence import DISEASE_TERMS, TOPIC_TERMS
+
+    return BaseResponse.success({"diseaseCodes": DISEASE_TERMS, "topicCodes": TOPIC_TERMS})
+
+
+@router.post("/admin/documents", summary="管理员查询参考资料")
+def admin_documents(body: KnowledgePageQuery, db: Session = Depends(get_db),
+                    user: LoginUser = Depends(require_admin)):
+    query = select(KnowledgeDocument).where(KnowledgeDocument.is_delete == 0)
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    rows = db.scalars(query.order_by(KnowledgeDocument.create_time.desc()).limit(body.pageSize)
+                      .offset((body.current - 1) * body.pageSize)).all()
+    return BaseResponse.success(PageResult.of([
+        KnowledgeDocumentVO.model_validate(row, from_attributes=True) for row in rows
+    ], total or 0, body.pageSize, body.current))
+
+
+@router.post("/search", summary="只检索本人授权资料，独立于正式诊断证据")
+def search_private_documents(body: PrivateSearchRequest, db: Session = Depends(get_db),
+                             user: LoginUser = Depends(require_user)):
+    from web.evidence import private_search
+    from web.vectorstore import VectorStoreUnavailable
+
+    try:
+        return BaseResponse.success(private_search(db, get_config(), int(user.id), body.query))
+    except VectorStoreUnavailable as exc:
+        raise BizError(ErrorCode.OPERATION_ERROR, "私人资料检索暂不可用") from exc
+
+
+@router.patch("/admin/documents/{document_id}", summary="确认参考资料审核与受控元数据")
+def govern_document(document_id: int, body: GovernanceUpdate, db: Session = Depends(get_db),
+                    user: LoginUser = Depends(require_admin)):
+    document = db.scalar(select(KnowledgeDocument).where(
+        KnowledgeDocument.id == document_id, KnowledgeDocument.is_delete == 0).with_for_update())
+    if document is None:
+        raise HTTPException(404, "资料不存在")
+    if document.governance_version != body.expectedVersion:
+        raise HTTPException(409, "资料已更新，请刷新后重新确认")
+    if body.reviewStatus == "APPROVED" and (document.status != STATUS_COMPLETED or
+            not body.diseaseCodes or not body.topicCodes):
+        raise HTTPException(422, "审核通过需要已完成索引且具有疾病和主题编码")
+    document.visibility = body.visibility
+    document.review_status = body.reviewStatus
+    document.disease_codes = body.diseaseCodes
+    document.topic_codes = body.topicCodes
+    document.governance_version += 1
+    document.reviewed_by = int(user.id)
+    document.reviewed_at = document.update_time = datetime.now()
+    db.flush()
+    return BaseResponse.success(KnowledgeDocumentVO.model_validate(document, from_attributes=True))
 
 
 # ---------------------------------------------------------------------------

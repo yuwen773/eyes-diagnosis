@@ -81,6 +81,8 @@ def knowledge_row() -> KnowledgeDocument:
         id=44, user_id=11, title="指南", file_name="guide.pdf",
         file_url="uuid_guide.pdf", file_size=2048, file_type="pdf",
         content_hash="ab" * 32, chunk_count=3, status=1,
+        visibility="PRIVATE_USER", review_status="PENDING", governance_version=0,
+        disease_codes=[], topic_codes=[],
         create_time=STAMP, update_time=STAMP, is_delete=0,
     )
 

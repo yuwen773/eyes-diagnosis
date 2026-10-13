@@ -11,7 +11,7 @@ formatter for both types.
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Integer, String
+from sqlalchemy import BigInteger, DateTime, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from web.db import Base
@@ -35,3 +35,10 @@ class KnowledgeDocument(Base):
     create_time: Mapped[datetime] = mapped_column("createTime", DateTime, nullable=False)
     update_time: Mapped[datetime] = mapped_column("updateTime", DateTime, nullable=False)
     is_delete: Mapped[int] = mapped_column("isDelete", Integer, nullable=False, default=0)
+    visibility: Mapped[str] = mapped_column(String(32), default="PRIVATE_USER")
+    review_status: Mapped[str] = mapped_column("reviewStatus", String(32), default="PENDING")
+    disease_codes: Mapped[list[str] | None] = mapped_column("diseaseCodes", JSON)
+    topic_codes: Mapped[list[str] | None] = mapped_column("topicCodes", JSON)
+    governance_version: Mapped[int] = mapped_column("governanceVersion", Integer, default=0)
+    reviewed_by: Mapped[int | None] = mapped_column("reviewedBy", BigInteger)
+    reviewed_at: Mapped[datetime | None] = mapped_column("reviewedAt", DateTime)

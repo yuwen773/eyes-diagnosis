@@ -16,7 +16,9 @@ Wire types:
 * ``status`` and ``isDelete`` are ``Integer`` -> JSON **number**.
 """
 
-from pydantic import BaseModel, ConfigDict
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from web.constant import DESC
 from web.response import DateTimeStr, EntityVO, LongStr
@@ -73,3 +75,40 @@ class KnowledgeDocumentVO(EntityVO):
     createTime: DateTimeStr | None = None
     updateTime: DateTimeStr | None = None
     isDelete: int = 0
+    visibility: Literal["CURATED_PUBLIC", "PRIVATE_USER", "QUARANTINED"] = "PRIVATE_USER"
+    reviewStatus: Literal["PENDING", "APPROVED", "REJECTED", "WITHDRAWN"] = "PENDING"
+    diseaseCodes: list[str] = Field(default_factory=list)
+    topicCodes: list[str] = Field(default_factory=list)
+    governanceVersion: int = 0
+    reviewedBy: LongStr | None = None
+    reviewedAt: DateTimeStr | None = None
+
+    @field_validator("diseaseCodes", "topicCodes", mode="before")
+    @classmethod
+    def legacy_codes(cls, value):
+        return value or []
+
+
+class GovernanceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    visibility: Literal["CURATED_PUBLIC", "PRIVATE_USER", "QUARANTINED"]
+    reviewStatus: Literal["PENDING", "APPROVED", "REJECTED", "WITHDRAWN"]
+    diseaseCodes: list[str] = Field(max_length=6)
+    topicCodes: list[str] = Field(max_length=6)
+    expectedVersion: int = Field(ge=0)
+    confirmed: Literal[True]
+
+    @field_validator("diseaseCodes", "topicCodes")
+    @classmethod
+    def controlled_codes(cls, value, info):
+        from web.evidence import DISEASE_TERMS, TOPIC_TERMS
+
+        catalog = DISEASE_TERMS if info.field_name == "diseaseCodes" else TOPIC_TERMS
+        if any(code not in catalog for code in value):
+            raise ValueError("未知受控编码")
+        return sorted(set(value))
+
+
+class PrivateSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)

@@ -4,15 +4,16 @@ import hashlib
 import io
 import json
 import warnings
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from PIL import Image, UnidentifiedImageError
 
 from web.workflow.inference import InferenceEnvelope, WorkflowInference
+from web.evidence import EvidenceRetriever
 
-GRAPH_VERSION = "upload-quality-review-v3"
-ACTION_VERSION = "upload-quality-review-v3"
+GRAPH_VERSION = "upload-controlled-evidence-v4"
+ACTION_VERSION = "upload-controlled-evidence-v4"
 
 
 class UploadState(TypedDict):
@@ -24,13 +25,15 @@ class UploadState(TypedDict):
     envelope_id: str
     exposure_status: str
     waiting_review: bool
+    evidence: dict[str, Any]
 
 
 def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 inference: WorkflowInference | None = None,
                 committed_envelope: InferenceEnvelope | None = None,
                 pending_envelopes: list[InferenceEnvelope] | None = None,
-                inference_epoch: int = 0, quality_decision: str | None = None):
+                inference_epoch: int = 0, quality_decision: str | None = None,
+                evidence: EvidenceRetriever | None = None):
     def validate_image(state: UploadState) -> dict:
         try:
             with warnings.catch_warnings():
@@ -105,6 +108,26 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
         return {"status": "FAILED", "reason": "EXPLANATION_NOT_AVAILABLE",
                 "completed": [*state["completed"], "explanationUnavailable"]}
 
+    def retrieve_evidence(state: UploadState) -> dict:
+        envelope = shared_envelope(state)
+        assert evidence is not None and envelope.prediction_snapshot
+        disease = json.loads(envelope.prediction_snapshot)["diseaseCode"]
+        return {"evidence": evidence.retrieve(disease),
+                "completed": [*state["completed"], "evidenceRetrieval"]}
+
+    def rewrite_evidence(state: UploadState) -> dict:
+        assert evidence is not None and state["evidence"]["attempts"] == 1
+        return {"evidence": evidence.retrieve(state["evidence"]["diseaseCode"], rewritten=True),
+                "completed": [*state["completed"], "evidenceRewrite"]}
+
+    def validate_sources(state: UploadState) -> dict:
+        assert evidence is not None
+        batch = evidence.validate(state["evidence"])
+        sufficient = batch["status"] == "SUFFICIENT"
+        return {"evidence": batch, "status": "RUNNING" if sufficient else "COMPLETED_LIMITED",
+                "reason": None if sufficient else "EVIDENCE_INSUFFICIENT",
+                "completed": [*state["completed"], "evidenceValidation"]}
+
     graph = StateGraph(UploadState)
     graph.add_node("validateImage", validate_image)
     graph.add_node("inference", infer)
@@ -112,6 +135,9 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     graph.add_node("qualityReview", quality_review)
     graph.add_node("visionExposure", vision_exposure)
     graph.add_node("explanationUnavailable", explanation_unavailable)
+    graph.add_node("evidenceRetrieval", retrieve_evidence)
+    graph.add_node("evidenceRewrite", rewrite_evidence)
+    graph.add_node("evidenceValidation", validate_sources)
     graph.add_edge(START, "validateImage")
     graph.add_conditional_edges("validateImage", lambda state: state["status"] == "REJECTED",
                                 {True: END, False: "inference"})
@@ -123,11 +149,17 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     graph.add_conditional_edges("qualityReview", lambda state: state["status"] == "RUNNING",
                                 {True: "visionExposure", False: END})
     graph.add_conditional_edges("visionExposure", lambda state: state["status"] == "RUNNING",
+                                {True: "evidenceRetrieval", False: END})
+    graph.add_conditional_edges("evidenceRetrieval", lambda state: state["evidence"]["status"] == "SUFFICIENT",
+                                {True: "evidenceValidation", False: "evidenceRewrite"})
+    graph.add_edge("evidenceRewrite", "evidenceValidation")
+    graph.add_conditional_edges("evidenceValidation", lambda state: state["status"] == "RUNNING",
                                 {True: "explanationUnavailable", False: END})
     graph.add_edge("explanationUnavailable", END)
     return graph.compile(checkpointer=checkpointer,
                          interrupt_after=["validateImage", "inference", "imageQuality",
-                                          "qualityReview", "visionExposure", "explanationUnavailable"])
+                                          "qualityReview", "visionExposure", "evidenceRetrieval",
+                                          "evidenceRewrite", "evidenceValidation", "explanationUnavailable"])
 
 
 # Node semantics are versioned by ACTION_VERSION; topology is hashed as well.

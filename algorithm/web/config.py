@@ -63,7 +63,7 @@ class WebConfig:
         cors_allowed_origins: list[str] | None = None,
         # Remaining CORS knobs are fixed by CorsConfig.java:28-32, not
         # configurable there either -- same defaults apply here.
-        cors_allowed_methods: tuple[str, ...] = ("GET", "POST", "PUT", "DELETE", "OPTIONS"),
+        cors_allowed_methods: tuple[str, ...] = ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"),
         cors_allowed_headers: tuple[str, ...] = (
             "Content-Type",
             "X-Requested-With",

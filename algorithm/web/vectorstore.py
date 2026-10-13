@@ -138,6 +138,12 @@ class ChromaWriter:
         self._client = None
         self._collection = None
 
+    def query(self, vectors: list[list[float]], document_ids: list[int]) -> dict:
+        """Search only the document ids authorized by the MySQL evidence gateway."""
+        return self._connect().query(query_embeddings=vectors,
+            where={"documentId": {"$in": document_ids}}, n_results=5,
+            include=["documents", "metadatas", "distances"])
+
     def _connect(self):
         if self._collection is not None:
             return self._collection

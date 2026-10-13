@@ -3,6 +3,14 @@ import request from '@/request'
 export type WorkflowStatus = 'CREATED' | 'QUEUED' | 'RUNNING' | 'WAITING_HUMAN_REVIEW'
   | 'COMPLETED' | 'COMPLETED_LIMITED' | 'REJECTED' | 'CANCELLED' | 'FAILED'
 
+export interface WorkflowEvidenceView {
+  status: 'SUFFICIENT' | 'INSUFFICIENT'
+  reasonCode: string | null
+  attempts: number
+  citations: { citationId: string; documentId: string; sourceRevision: number;
+    title: string; source: string; quotedTextDigest: string }[]
+}
+
 export interface WorkflowView {
   workflowId: string
   status: WorkflowStatus
@@ -16,6 +24,7 @@ export interface WorkflowView {
     decisionCode: 'APPROVE_CONTINUE' | 'REJECT_RESUBMIT' | null; reasonCode: string | null } | null
   resultAvailability: { patientVisible: boolean; doctorReviewRequired: boolean }
   result: null
+  evidence?: WorkflowEvidenceView | null
 }
 
 interface WorkflowResponse { code: number; msg: string; data: WorkflowView }

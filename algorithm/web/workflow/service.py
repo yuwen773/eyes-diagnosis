@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from web.files import MAX_PICTURE_BYTES
+from web.evidence import evidence_view
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
 from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
 
@@ -28,6 +29,7 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
         "qualityGate": inference.quality_outcome if inference and "imageQuality" in completed else None,
         "qualityReview": {"status": review.status, "decisionCode": review.decision,
                           "reasonCode": review.reason} if review else None,
+        "evidence": evidence_view(db, json.loads(upload.evidence_snapshot)) if upload.evidence_snapshot else None,
         "resultAvailability": {"patientVisible": False,
                                "doctorReviewRequired": workflow.status == "WAITING_HUMAN_REVIEW"},
         "result": None,
