@@ -388,21 +388,23 @@ def test_orm_maps_only_migrating_domains():
         "t_workflow_upload_input",
         "t_python_graph_checkpoint",
         "t_python_graph_write",
+        "t_agent_session",
+        "t_agent_message",
+        "t_upload_task",
+        "t_python_chat_run",
+        "t_python_chat_attachment",
+        "t_python_chat_audit",
     }
 
 
-def test_agent_tables_are_not_mapped():
-    """The positive form of the test above: naming the tables that must stay
-    absent, so a future import that pulls one in fails loudly."""
+def test_unmigrated_legacy_chat_tables_are_not_mapped():
+    """Issue 05 migrates Agent history and reads old uploads, not the unused chat domain."""
     from web.db import Base
     import web.models  # noqa: F401
 
     agent_tables = {
-        "t_agent_session",
-        "t_agent_message",
         "t_chat_session",
         "t_chat_history",
-        "t_upload_task",
     }
     assert agent_tables.isdisjoint(Base.metadata.tables)
 

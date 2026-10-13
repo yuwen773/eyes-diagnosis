@@ -98,10 +98,13 @@ Java 仍能读取原会话/文本表，但原 Java 页面不能恢复新增附�
   通过，15 项 HTTP 用例通过、0 skipped。见 [数据库证据](chat/issue05-mysql-results.json)。
 - Chromium/原 Vue/实际 HTTP/SSE：7 项通过、无 pageerror，含独立后端进程重启、
   附件刷新恢复与停止生成。见 [页面证据](chat/issue05-ui-results.json) 及同目录截图。
-- 本票 9 个 Python 模块 mypy 通过；前端流终止回归 3 项通过。
+- 最终 Python Web 全量 **483 passed，0 skipped**；9 个 Python 模块 mypy 通过。
+- 前端全量 **25 passed**（含 3 项本票流终止回归），Vue 类型检查与生产构建通过。
 - COS 接线回归实际构造锁定 SDK 的 CosS3Client，仅替换 put_object/delete_object 远端操作；
   该通过结果不代表真实 COS 上传验收。
-- 最终全量回归与双轴审查在收尾提交中记录；此处不将此前测试数字冒充本轮结果。
+- 双轴独立审查完成：Standards 无遗留；Spec 两项发现经失败回归复现后修正并复审关闭。
+  详见 [审查记录](chat/issue05-review.md)。最终全量回归亦更新了仍禁止 Agent 表迁移的两条旧断言；
+  未放宽原业务行为断言，未迁移的旧 chat 表仍显式排除。
 - Java 身份、DashScope、COS 在上述测试中为替身。真实 Java V17 启动/登出重放、真实
   模型回答与 COS、实际 Nginx 切流/回退未验收；MySQL 测试不替代这些边界。
 - 这些证据仅完成工单 05 的相关部分，不代表 AC-01–22 或完整 Python Agent 迁移验收。
