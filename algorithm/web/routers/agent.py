@@ -5,9 +5,9 @@ import json
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -15,12 +15,30 @@ from sqlalchemy.orm import Session
 from web.auth import LoginUser
 from web.chat.attachments import AttachmentStore, attachment_store
 from web.chat.model import stream_reply
-from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, LegacyUpload
+from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow, LegacyUpload
 from web.deps import get_db, login_user
 from web.response import BaseResponse, BizError, ErrorCode, _java_date_string
 from web.files import read_image_metadata
+from web.workflow.models import UploadInput
+from web.workflow.service import create_or_get, owned_workflow, workflow_view
 
 router = APIRouter(prefix="/agent", tags=["agent"])
+
+
+class DiagnosisRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    workflowId: str | None = Field(default=None, min_length=1, max_length=64)
+    imageUrl: str | None = Field(default=None, min_length=1, max_length=512)
+    idempotencyKey: str | None = Field(default=None, min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+    @model_validator(mode="after")
+    def one_operation(self):
+        if self.workflowId is not None:
+            if self.imageUrl is not None or self.idempotencyKey is not None:
+                raise ValueError("继续任务不能同时创建新任务")
+        elif self.imageUrl is None or self.idempotencyKey is None:
+            raise ValueError("创建任务需要附件和幂等键")
+        return self
 
 
 class ChatRequest(BaseModel):
@@ -29,6 +47,7 @@ class ChatRequest(BaseModel):
     imageUrls: list[str] = Field(default_factory=list, max_length=8)
     enabledMcpServers: list[str] | None = None
     disableMcpDefault: bool | None = None
+    diagnosis: DiagnosisRequest | None = None
 
     @field_validator("threadId", mode="before")
     @classmethod
@@ -115,7 +134,7 @@ def owned_attachment(db: Session, url: str, user_id: int, request: Request) -> C
 @router.post("/chat/stream")
 async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends(get_db),
                       user: LoginUser = Depends(login_user)):
-    if not body.message.strip() and not body.imageUrls:
+    if not body.message.strip() and not body.imageUrls and body.diagnosis is None:
         raise BizError(ErrorCode.PARAMS_ERROR, "消息不能为空")
     if body.enabledMcpServers:
         raise BizError(ErrorCode.OPERATION_ERROR, "MCP 工具迁移尚未启用")
@@ -127,12 +146,20 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             db.flush()
         except IntegrityError:
             db.rollback()
-            row = owner(db, body.threadId, user.id)
+            row = db.scalar(select(ChatSession).where(ChatSession.session_id == body.threadId).with_for_update())
+            owner(db, body.threadId, user.id)
     else:
         owner(db, body.threadId, user.id)
+    assert row is not None
     recover_expired(db, body.threadId)
     if db.scalar(select(ChatRun.id).where(ChatRun.active_session_id == body.threadId)):
         raise BizError(ErrorCode.OPERATION_ERROR, "本会话仍在回答，请稍后重试")
+    if body.diagnosis is not None:
+        try:
+            return diagnostic_stream(body, row, request, db, user)
+        except HTTPException as exc:
+            code = ErrorCode.NO_AUTH_ERROR if exc.status_code == 403 else ErrorCode.OPERATION_ERROR
+            raise BizError(code, str(exc.detail)) from None
     attachments = []
     for url in set(body.imageUrls):
         attachment = owned_attachment(db, url, user.id, request)
@@ -160,7 +187,7 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
         raise BizError(ErrorCode.OPERATION_ERROR, "本会话仍在回答，请稍后重试") from None
     context = [{"role": "system", "content": (
         "你是眼科辅助系统的普通聊天助手。只使用当前会话提供的事实；不要导入其他会话的症状。"
-        "普通问答不启动诊断。图片分析请引导用户使用受控诊断上传入口。"
+        "普通问答不启动诊断。图片分析请引导用户选择聊天中的受控图片诊断选项或上传入口。"
         "不得声称已运行诊断、已保存正式诊断、已复核或已执行任何业务操作。")},
         *history, {"role": "user", "content": model_content(body.message, body.imageUrls)}]
 
@@ -203,6 +230,40 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
         "Cache-Control": "no-cache", "X-Accel-Buffering": "no", "X-Session-Id": body.threadId})
 
 
+def diagnostic_stream(body: ChatRequest, row: ChatSession, request: Request, db: Session, user: LoginUser):
+    action = body.diagnosis
+    assert action is not None
+    if body.imageUrls or len(body.message) > 4000:
+        raise HTTPException(422, "诊断操作请使用单个附件，说明不超过4000字")
+    attachment = None
+    if action.workflowId is not None:
+        workflow = owned_workflow(db, action.workflowId, int(user.id))
+    else:
+        assert action.imageUrl is not None and action.idempotencyKey is not None
+        attachment = owned_attachment(db, action.imageUrl, user.id, request)
+        if attachment.session_id is not None and attachment.session_id != body.threadId:
+            raise BizError(ErrorCode.NO_AUTH_ERROR, "无权使用该附件")
+        if attachment.image_bytes is None:
+            raise HTTPException(409, "旧附件没有持久图片输入，请重新上传后诊断")
+        workflow = create_or_get(db, int(user.id), attachment.image_bytes, action.idempotencyKey, body.message)
+    binding = db.get(ChatWorkflow, (body.threadId, workflow.workflow_id))
+    if binding is None:
+        saved = save_message(db, row, "USER", body.message or "查看图片诊断任务")
+        saved.sub_type = "workflow"
+        if attachment is not None and attachment.message_id is None:
+            attachment.session_id = body.threadId
+            attachment.message_id = saved.id
+        db.add(ChatWorkflow(session_id=body.threadId, workflow_id=workflow.workflow_id,
+                            message_id=saved.id, attachment_id=attachment.id if attachment else None))
+    db.commit()
+    upload = db.get(UploadInput, workflow.workflow_id)
+    assert upload is not None
+    payload = {"sessionId": body.threadId, "workflow": workflow_view(workflow, upload, db)}
+    return StreamingResponse(iter([sse(payload, "workflow"), sse("", "done")]),
+        media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+                                               "X-Session-Id": body.threadId})
+
+
 @router.get("/history/{thread_id}")
 def history(thread_id: str, beforeId: int | None = None, limit: int = 40,
             db: Session = Depends(get_db), user: LoginUser = Depends(login_user)):
@@ -216,7 +277,14 @@ def history(thread_id: str, beforeId: int | None = None, limit: int = 40,
     more = len(rows) > limit
     rows = list(reversed(rows[:limit]))
     runs = list(db.scalars(select(ChatRun).where(ChatRun.session_id == thread_id).order_by(ChatRun.created_time)))
-    return BaseResponse.success({"messages": [{"id": str(m.id), "role": m.role,
+    workflows = []
+    for binding in db.scalars(select(ChatWorkflow).where(ChatWorkflow.session_id == thread_id)
+                             .order_by(ChatWorkflow.created_time, ChatWorkflow.workflow_id)):
+        workflow = owned_workflow(db, binding.workflow_id, int(user.id))
+        upload = db.get(UploadInput, binding.workflow_id)
+        assert upload is not None
+        workflows.append(workflow_view(workflow, upload, db))
+    return BaseResponse.success({"workflows": workflows, "messages": [{"id": str(m.id), "role": m.role,
         "subType": m.sub_type, "content": m.content, "isSummary": bool(m.is_summary),
         "createdTime": _java_date_string(m.created_time), "imageUrls": message_images(db, m.id)} for m in rows],
         "hasMore": more, "nextCursor": str(rows[0].id) if more else None,
@@ -348,7 +416,7 @@ async def upload_image(file: UploadFile, db: Session = Depends(get_db), user: Lo
         url = await store.put(data, "image.png" if kind == "png" else "image.jpg", user.id)
     except Exception:
         raise BizError(ErrorCode.SYSTEM_ERROR, "图片上传失败") from None
-    db.add(ChatAttachment(id=str(uuid4()), user_id=user.id, url=url))
+    db.add(ChatAttachment(id=str(uuid4()), user_id=user.id, url=url, image_bytes=data))
     return BaseResponse.success(url)
 
 

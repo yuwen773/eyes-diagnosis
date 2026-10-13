@@ -394,6 +394,7 @@ def test_orm_maps_only_migrating_domains():
         "t_python_chat_run",
         "t_python_chat_attachment",
         "t_python_chat_audit",
+        "t_python_chat_workflow",
     }
 
 

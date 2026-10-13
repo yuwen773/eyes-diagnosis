@@ -40,6 +40,7 @@ async function start() {
     </form>
     <p v-if="validationError || error" class="error-message" role="alert">{{ validationError || error }}</p>
     <WorkflowStatus v-if="workflow" :workflow="workflow" />
+    <RouterLink v-if="workflow" :to="{ path: '/agent', query: { workflow: workflow.workflowId } }">在聊天中继续此任务</RouterLink>
     <button v-if="workflow || error" type="button" class="refresh-button" @click="refresh">刷新状态</button>
   </div>
 </template>

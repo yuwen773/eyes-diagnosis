@@ -68,6 +68,17 @@ class ChatAttachment(Base):
     message_id: Mapped[int | None] = mapped_column("messageId", BigInteger)
     created_time: Mapped[datetime] = mapped_column("createdTime", DateTime, default=datetime.now)
     is_delete: Mapped[int] = mapped_column("isDelete", Integer, default=0)
+    image_bytes: Mapped[bytes | None] = mapped_column("imageBytes", LargeBinary)
+
+
+class ChatWorkflow(Base):
+    __tablename__ = "t_python_chat_workflow"
+
+    session_id: Mapped[str] = mapped_column("sessionId", String(64), primary_key=True)
+    workflow_id: Mapped[str] = mapped_column("workflowId", String(64), primary_key=True)
+    message_id: Mapped[int] = mapped_column("messageId", BigInteger)
+    attachment_id: Mapped[str | None] = mapped_column("attachmentId", String(36))
+    created_time: Mapped[datetime] = mapped_column("createdTime", DateTime, default=datetime.now)
 
 
 class ChatAudit(Base):

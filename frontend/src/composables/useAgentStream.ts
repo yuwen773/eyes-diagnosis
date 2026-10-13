@@ -1,6 +1,8 @@
 import { ref, onUnmounted } from 'vue'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { deleteAgentImage } from '@/api/agentController'
+import type { DiagnosisAction } from '@/api/agentController'
+import type { WorkflowView } from '@/api/workflowController'
 
 export interface MessageDTO {
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
@@ -29,6 +31,8 @@ export interface StreamMessage {
 
 export interface StreamSendOptions {
   urls?: string[]
+  diagnosis?: DiagnosisAction
+  onWorkflow?: (workflow: WorkflowView) => void
 }
 
 export function useAgentStream() {
@@ -104,6 +108,7 @@ export function useAgentStream() {
     const body = JSON.stringify({
       message,
       imageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+      diagnosis: options.diagnosis,
       threadId
     })
 
@@ -127,6 +132,12 @@ export function useAgentStream() {
           if (event.event === 'error') throw new Error(event.data || '回答未完成')
           if (event.event === 'done') {
             completed = true
+            return
+          }
+          if (event.event === 'workflow') {
+            const payload: { sessionId: string; workflow: WorkflowView } = JSON.parse(event.data)
+            if (payload.sessionId !== threadId || !payload.workflow?.workflowId) throw new Error('任务关联响应不匹配')
+            options.onWorkflow?.(payload.workflow)
             return
           }
           if (!event.data) return
@@ -235,7 +246,7 @@ export function useAgentStream() {
         abortController = null
       }
       // 发送失败时清理已上传的图片
-      if (!completed && uploadedUrls.length > 0) {
+      if (!completed && !options.diagnosis && uploadedUrls.length > 0) {
         for (const url of uploadedUrls) {
           deleteAgentImage(url).catch(() => {})
         }

@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-13",
+  "schema": "eye_chat_issue06_20261013_f1a49ab5",
+  "mysqlVersion": "8.0.26",
+  "migration": "V1-V18 migrate and validate passed",
+  "httpTests": "5 passed",
+  "scope": "Real isolated MySQL; synthetic Java identity, COS and model; no real diagnosis"
+}

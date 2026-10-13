@@ -77,8 +77,10 @@
 
         <!-- 底部区域：输入框 -->
         <div class="bottom-area">
+          <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" @bind="bindWorkflow" />
+          <button v-if="diagnosis.pending.value && !streaming" type="button" class="retry-diagnosis" @click="retryDiagnosis">重试诊断提交（同一请求）</button>
           <AgentChatInput
-            :loading="streaming"
+            :loading="streaming || preparing"
             @send="handleSend"
             @stop="abort"
           />
@@ -106,13 +108,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import AgentChatLayout from '@/components/agent/AgentChatLayout.vue'
 import type { HistoryItem } from '@/components/agent/LeftSidebar.vue'
 import LeftSidebar from '@/components/agent/LeftSidebar.vue'
 import AgentMessageList from '@/components/agent/AgentMessageList.vue'
 import AgentChatInput from '@/components/agent/AgentChatInput.vue'
+import ChatWorkflowPanel from '@/components/agent/ChatWorkflowPanel.vue'
+import type { WorkflowView } from '@/api/workflowController'
+import { useChatDiagnosis } from '@/composables/useChatDiagnosis'
 import AgentResourcePanel from '@/components/agent/AgentResourcePanel.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
@@ -145,6 +151,14 @@ const resourcePanelVisible = ref(false)
 const panelImages = ref<ImageResource[]>([])
 const panelLinks = ref<LinkResource[]>([])
 const historyLoading = ref(false)
+let historyGeneration = 0
+let disposed = false
+onUnmounted(() => { disposed = true; historyGeneration++ })
+const preparing = ref(false)
+const workflows = ref<WorkflowView[]>([])
+const route = useRoute()
+const router = useRouter()
+const diagnosis = useChatDiagnosis()
 
 // Sessions
 const sessions = ref<SessionVO[]>([])
@@ -167,12 +181,20 @@ const histories = computed<HistoryItem[]>(() =>
 )
 
 const loadHistoryMessages = async (sessionId: string) => {
+  if (disposed) return false
+  const current = ++historyGeneration
   historyLoading.value = true
   try {
     const res = await getChatHistory(sessionId, undefined, 100)
+    if (current !== historyGeneration || threadId.value !== sessionId) return false
     if (res.code !== 0) throw new Error(res.msg)
     const data = res?.data
     if (!data?.messages) return false
+    workflows.value = data.workflows || []
+    if (!route.query.workflow && workflows.value.length) {
+      await router.replace({ query: { ...route.query, workflow: workflows.value.at(-1)!.workflowId } })
+    }
+    if (current !== historyGeneration || threadId.value !== sessionId) return false
 
     messages.value = data.messages
       .flatMap((m): StreamMessage[] => {
@@ -208,21 +230,27 @@ const loadHistoryMessages = async (sessionId: string) => {
       })
     return true
   } catch (e) {
+    if (current !== historyGeneration) return false
     console.warn('加载历史消息失败:', e)
     message.warning('历史消息加载失败')
     return false
   } finally {
-    historyLoading.value = false
+    if (current === historyGeneration) historyLoading.value = false
   }
 }
 
 onMounted(async () => {
-  const savedThreadId = loadThreadId()
+  const savedThreadId = loadThreadId() || diagnosis.pending.value?.threadId || ''
+  if (savedThreadId) threadId.value = savedThreadId
+  const initialThreadId = threadId.value
   await loadSessions()
+  if (disposed || threadId.value !== initialThreadId) return
   const restored = savedThreadId ? await loadHistoryMessages(savedThreadId) : false
-  currentThreadId.value = restored ? savedThreadId : ''
-  threadId.value = restored ? savedThreadId : generateThreadId()
-  if (!restored) saveThreadId('')
+  if (disposed || threadId.value !== initialThreadId) return
+  const pendingThread = diagnosis.pending.value?.threadId === savedThreadId
+  currentThreadId.value = restored || pendingThread ? savedThreadId : ''
+  threadId.value = restored || pendingThread ? savedThreadId : generateThreadId()
+  if (!restored && !pendingThread) saveThreadId('')
 })
 
 // Agent stream
@@ -240,11 +268,20 @@ const uploader = useAgentUpload()
 const totalResourceCount = computed(() => panelImages.value.length + panelLinks.value.length)
 
 // Handlers
-const handleSend = async (text: string, files: File[] = []) => {
-  if ((!text.trim() && files.length === 0) || streaming.value || historyLoading.value) return
+const handleSend = async (text: string, files: File[] = [], diagnostic = false) => {
+  if ((!text.trim() && files.length === 0) || streaming.value || historyLoading.value || preparing.value) return
+  if (diagnostic && (files.length !== 1 || text.length > 4000)) {
+    message.warning('受控诊断请选择一张图片，说明不超过4000字。')
+    return
+  }
+  if (diagnostic && diagnosis.pending.value) {
+    message.warning('上次诊断提交结果待确认，请先重试同一请求。')
+    return
+  }
   const sendingThreadId = threadId.value
 
   let imageUrls: string[] = []
+  preparing.value = true
   try {
     if (files.length > 0) {
       const result = await uploader.uploadFiles(files)
@@ -252,6 +289,16 @@ const handleSend = async (text: string, files: File[] = []) => {
     }
   } catch (e) {
     message.error('图片上传失败，无法发送消息')
+    return
+  } finally {
+    preparing.value = false
+  }
+
+  if (diagnostic) {
+    diagnosis.prepare(sendingThreadId, text, imageUrls[0])
+    saveThreadId(sendingThreadId)
+    currentThreadId.value = sendingThreadId
+    await retryDiagnosis()
     return
   }
 
@@ -287,19 +334,75 @@ const handleSend = async (text: string, files: File[] = []) => {
   }
 }
 
+const showWorkflow = (workflow: WorkflowView) => {
+  if (disposed) return
+  workflows.value = [...workflows.value.filter(w => w.workflowId !== workflow.workflowId), workflow]
+  void router.replace({ query: { ...route.query, workflow: workflow.workflowId } })
+}
+
+const retryDiagnosis = async () => {
+  const pending = diagnosis.pending.value
+  if (!pending || streaming.value || preparing.value) return
+  if (pending.threadId !== threadId.value) {
+    historyGeneration++
+    historyLoading.value = false
+    resetStream()
+    workflows.value = []
+    threadId.value = pending.threadId
+    currentThreadId.value = pending.threadId
+    saveThreadId(pending.threadId)
+    await router.replace({ query: {} })
+  }
+  try {
+    await sendMessage(pending.message, pending.threadId, {
+      diagnosis: { imageUrl: pending.imageUrl, idempotencyKey: pending.idempotencyKey }, onWorkflow: showWorkflow,
+    })
+    if (disposed || threadId.value !== pending.threadId) return
+    uploader.commitSuccess([pending.imageUrl])
+    diagnosis.clear()
+    await loadHistoryMessages(pending.threadId)
+    await loadSessions()
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '提交结果待确认，请重试同一请求。')
+  }
+}
+
+const bindWorkflow = async (workflowId: string) => {
+  const sendingThreadId = threadId.value
+  try {
+    await sendMessage('', sendingThreadId, { diagnosis: { workflowId }, onWorkflow: showWorkflow })
+    if (disposed || threadId.value !== sendingThreadId) return
+    saveThreadId(sendingThreadId)
+    currentThreadId.value = sendingThreadId
+    await loadHistoryMessages(sendingThreadId)
+    await loadSessions()
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '任务关联失败')
+  }
+}
+
 const handleNewChat = () => {
+  if (preparing.value) return
+  historyGeneration++
+  historyLoading.value = false
   saveThreadId('')
   currentThreadId.value = ''
   threadId.value = generateThreadId()
   resetStream()
+  workflows.value = []
+  void router.replace({ query: {} })
   resourcePanelVisible.value = false
 }
 
 const handleSelectHistory = async (id: string) => {
+  if (preparing.value) return
+  historyGeneration++
   currentThreadId.value = id
   threadId.value = id
   saveThreadId(id)
   resetStream()
+  workflows.value = []
+  await router.replace({ query: {} })
   await loadHistoryMessages(id)
 }
 
@@ -438,4 +541,5 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
   border-top: 1px solid var(--claude-border-cream);
   background: var(--claude-bg-card);
 }
+.retry-diagnosis { margin: .5rem 1.25rem; padding: .4rem .75rem; border: 1px solid var(--claude-border-warm); border-radius: 8px; background: var(--claude-bg-elevated); color: var(--claude-text-primary); cursor: pointer; }
 </style>

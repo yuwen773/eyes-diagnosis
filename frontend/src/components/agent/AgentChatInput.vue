@@ -94,6 +94,7 @@
 
     <!-- Hint -->
     <div class="input-hint">
+      <label><input v-model="diagnostic" type="checkbox" :disabled="loading" /> 受控图片诊断（单张）</label>
       <span class="disclaimer">内容由AI生成，仅供参考</span>
     </div>
 
@@ -121,11 +122,12 @@ withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  (e: 'send', text: string, files: File[]): void
+  (e: 'send', text: string, files: File[], diagnostic: boolean): void
   (e: 'stop'): void
 }>()
 
 const inputText = ref('')
+const diagnostic = ref(false)
 const isFocused = ref(false)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -207,7 +209,7 @@ const handleFileSelect = (e: Event) => {
 const handleSend = () => {
   if (!canSend.value) return
   const files = attachments.value.map(a => a.file)
-  emit('send', inputText.value.trim(), files)
+  emit('send', inputText.value.trim(), files, diagnostic.value)
   inputText.value = ''
   attachments.value.forEach(a => { if (a.previewUrl) URL.revokeObjectURL(a.previewUrl) })
   attachments.value = []

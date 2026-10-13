@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-13",
+  "checks": [
+    "chat-and-upload-share-one-idempotent-operation",
+    "page-switch-and-refresh-show-same-server-failure",
+    "backend-process-restart-and-reads-do-not-rerun-inference",
+    "upload-created-task-binds-to-chat-without-duplicate",
+    "lost-ack-reload-retries-identical-request-once",
+    "pending-request-isolated-by-login-user",
+    "unreceived-command-can-recover-after-new-chat-and-reload",
+    "stale-history-cannot-attach-another-conversations-task",
+    "ordinary-chat-kept-separate-and-no-formal-diagnosis-saved"
+  ],
+  "pageErrors": [],
+  "scope": "Original Vue, real HTTP/SSE/Worker, disposable SQLite; synthetic identity/COS/model; no real diagnosis"
+}

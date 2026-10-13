@@ -1,4 +1,7 @@
 import { API_BASE_URL } from '../config/env'
+import type { WorkflowView } from './workflowController'
+
+export type DiagnosisAction = { imageUrl: string; idempotencyKey: string } | { workflowId: string }
 
 export interface AgentChatRequest {
   message: string
@@ -6,6 +9,7 @@ export interface AgentChatRequest {
   imageUrls?: string[]
   enabledMcpServers?: string[]
   disableMcpDefault?: boolean
+  diagnosis?: DiagnosisAction
 }
 
 export interface MessageVO {
@@ -19,6 +23,7 @@ export interface MessageVO {
 }
 
 export interface ChatHistoryVO {
+  workflows?: WorkflowView[]
   messages: MessageVO[]
   hasMore: boolean
   nextCursor: string | null

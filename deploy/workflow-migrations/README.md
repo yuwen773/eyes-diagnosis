@@ -17,13 +17,13 @@ mvn -f deploy/workflow-migrations/pom.xml flyway:migrate
 ```
 
 The pinned standalone Flyway Maven plugin 12.4.0 uses the existing V1–V9 and
-bootstrap callback, unchanged release V10–V14, and additive V15–V17. There is one
+bootstrap callback, unchanged release V10–V14, and additive V15–V18. There is one
 `flyway_schema_history`, with `baselineVersion=0` matching the existing Java
 configuration. There is no Alembic history or custom history writer.
 
 V10–V14 are byte-for-byte copies from release commit
 `5ac742f0db30ded1c87462211a535012d952e4bb`. Keep those files and all earlier
-migrations immutable. Reserve subsequent global versions after V17; do not
+migrations immutable. Reserve subsequent global versions after V18; do not
 reuse version numbers between Java and Python deployment assets. V17 is reserved
 for Python session chat (apply before routing Agent traffic to Python). Do not repair
 checksum failures automatically. See the existing release history policy for
@@ -36,6 +36,13 @@ checkpoint blobs. Chat API restart reads history from MySQL. An abandoned stream
 is marked interrupted on the next session read/send after its 130-second deadline;
 it is never resumed as a successful model response. This is separate from the
 durable diagnostic worker. See `docs/chat-session-memory.md` for cutover limits.
+
+V18 adds the session/Workflow association and bounded original image bytes for new
+chat uploads. Apply it before deploying issue06 API code; API startup does no DDL.
+Chat and upload share the same Workflow creation digest/key and Worker. Pre-V18
+attachments with no original bytes must be re-uploaded for diagnostic creation;
+ordinary legacy attachment chat stays compatible. Rollback retains these columns
+and bindings. See `docs/chat-workflow-binding.md` for contracts and verification.
 
 V15 stores bounded original upload bytes in MySQL (2 MiB per input), the
 committed graph token, serialized checkpoints and pending writes. No image bytes
