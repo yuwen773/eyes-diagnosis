@@ -3,13 +3,14 @@
 import asyncio
 import io
 import json
+import os
 import sys
 from pathlib import Path
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Integer, MetaData, create_engine
+from sqlalchemy import Integer, MetaData, create_engine, update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -75,6 +76,9 @@ def evidence_api(monkeypatch):
             allowed = where["documentId"]["$in"]
             selected = [(key, text, meta) for key, (text, meta) in chunks.items()
                         if meta["documentId"] in allowed][:n_results]
+            hook = getattr(app.state, "before_chroma_result", None)
+            if hook:
+                hook()
             return {"ids": [[key for key, _, _ in selected]],
                     "documents": [[text for _, text, _ in selected]],
                     "metadatas": [[meta for _, _, meta in selected]],
@@ -297,3 +301,57 @@ def test_revocation_between_retrieval_and_validation_stops_at_evidence_gate(evid
     assert view["stopReasonCode"] == "EVIDENCE_INSUFFICIENT"
     assert view["evidence"]["citations"] == []
     assert not Worker(sessions, inference=adapter).run_once()
+
+
+@pytest.mark.parametrize("change", [{"review_status": "WITHDRAWN"}, {"visibility": "QUARANTINED"},
+                                    {"is_delete": 1}])
+def test_private_search_denies_revocation_committed_during_vector_query(evidence_api, change):
+    from web.models.knowledge import KnowledgeDocument
+
+    client, sessions, _, _ = evidence_api
+    doc_id = upload(client)
+
+    def revoke():
+        with sessions.begin() as db:
+            db.execute(update(KnowledgeDocument).where(KnowledgeDocument.id == int(doc_id)).values(**change))
+
+    client.app.state.before_chroma_result = revoke
+    response = client.post("/api/knowledge/search", json={"query": "glaucoma"}).json()
+    assert response["code"] == 0 and response["data"] == []
+
+
+@pytest.mark.skipif(not os.getenv("EVIDENCE_MYSQL_TEST_URL"), reason="isolated real MySQL URL not supplied")
+def test_private_revocation_with_two_mysql_repeatable_read_connections(evidence_api, monkeypatch):
+    """Opt-in only: existing disposable schema eye_evidence_test_*; no production DDL."""
+    from sqlalchemy.engine import make_url
+    from web.models.knowledge import KnowledgeDocument
+
+    url = make_url(os.environ["EVIDENCE_MYSQL_TEST_URL"])
+    assert url.get_backend_name() == "mysql" and (url.database or "").startswith("eye_evidence_test_")
+    engine = create_engine(url, isolation_level="REPEATABLE READ")
+    KnowledgeDocument.__table__.create(engine, checkfirst=True)
+    sessions = sessionmaker(engine, expire_on_commit=False)
+    client = evidence_api[0]
+
+    def database():
+        with sessions() as db:
+            yield db
+            db.commit()
+
+    client.app.dependency_overrides[get_db] = database
+    monkeypatch.setattr(knowledge, "db_session", sessions)
+    doc_id = upload(client)
+
+    def revoke():
+        with sessions.begin() as db:
+            db.execute(update(KnowledgeDocument).where(KnowledgeDocument.id == int(doc_id))
+                       .values(review_status="WITHDRAWN"))
+
+    client.app.state.before_chroma_result = revoke
+    try:
+        response = client.post("/api/knowledge/search", json={"query": "glaucoma"}).json()
+        assert response["code"] == 0 and response["data"] == []
+    finally:
+        with sessions.begin() as db:
+            db.execute(KnowledgeDocument.__table__.delete().where(KnowledgeDocument.id == int(doc_id)))
+        engine.dispose()

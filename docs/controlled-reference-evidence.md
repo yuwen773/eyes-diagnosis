@@ -68,8 +68,30 @@ Java 身份、COS、embedding、Chroma、模型结果为受控替身。
   页面错误为 0。截图/JSON 在 `.scratch/python-agent-migration/evidence/issue08/`。
 - 执行 Python Web 全套、前端全套、mypy、Vue 类型检查、生产构建、uv pip check。
 
-2026-10-13 受控结果：Python Web 513 passed；前端 29 passed；mypy 12 个目标文件通过；
+2026-10-13 受控结果：Python Web 516 passed / 1 skipped；前端 29 passed；mypy 12 个目标文件通过；
 Vue 类型检查与生产构建通过；uv pip check 验证 127 个包兼容。构建保留既有大 chunk 提示。
+
+### Standards 审查
+
+首次发现 1 项：私人检索的二次授权仅清除 ORM 缓存，在 MySQL REPEATABLE READ 下可能读取
+旧快照。已改为 SELECT FOR UPDATE 当前读并刷新实体；正式证据校验同步采用此语义。
+复审无剩余发现，也无值得单列的 baseline smell。
+
+### Spec 审查
+
+首次发现 1 项：同一旧快照问题可能让已撤回私人资料继续返回。修正后复审无剩余发现。
+两个审查轴分别关闭问题；没有把受控通过升级为真实服务通过。
+
+新增三种检索期间撤回/隔离/删除的 API 回归通过。真实 MySQL 双连接 REPEATABLE READ
+测试为上述 1 skipped；仅在明确设置 EVIDENCE_MYSQL_TEST_URL 且 schema 名以
+eye_evidence_test_ 开头的隔离库运行：
+
+```powershell
+pwsh.exe -NoLogo -NoProfile -Command '& .venv-baseline/Scripts/python.exe -m pytest web/tests/test_controlled_evidence.py -k two_mysql -q'
+```
+
+URL 从本地秘密配置传入，不写进文档。该可选测试在隔离库创建知识表并清理自己插入的行，
+不替代 V19 Flyway 升级测试；真实 MySQL 并发结果当前仍未验证。
 
 真实 MySQL V19 升级、Redis/Chroma、Java 会话、embedding/模型权重、临床目录、部署回退
 未由以上结果证明。未对业务数据库执行审核或资料发布。V19 必须先在隔离真实环境验证；

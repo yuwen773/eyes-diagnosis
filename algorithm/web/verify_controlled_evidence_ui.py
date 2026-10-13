@@ -51,6 +51,9 @@ def main():
         review.get_by_label("审核状态", exact=True).select_option("WITHDRAWN")
         review.get_by_label("确认审核变更", exact=True).check()
         review.screenshot(path=str(output / "issue08-review-confirmation.png"), full_page=True)
+        review.evaluate("document.documentElement.setAttribute('data-theme', 'dark')")
+        review.screenshot(path=str(output / "issue08-review-dark.png"), full_page=True)
+        review.evaluate("document.documentElement.setAttribute('data-theme', 'light')")
         review.get_by_role("button", name="确认保存审核变更").click()
         expect(review.get_by_text("审核属性已保存", exact=True)).to_be_visible()
         page.goto(FRONTEND + "/diagnosis?workflow=" + ids["sufficient"])
@@ -66,7 +69,8 @@ def main():
               "sourceTraceable": True, "refreshRestored": True, "rewriteLimited": True,
               "adminConfirmedWithdrawal": True, "revokedReferenceHidden": True,
               "patientDeniedAdmin": True, "pageErrors": errors}
-    (output / "issue08-ui-results.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    (output / "issue08-ui-results.json").write_bytes(
+        (json.dumps(result, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     print(json.dumps(result, ensure_ascii=False))
 
 

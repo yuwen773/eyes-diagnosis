@@ -28,4 +28,3 @@
 ## 实施与证据
 
 实现与验证边界见 docs/controlled-reference-evidence.md。新增 V19 必须先升级再部署。受控 API/浏览器结果不代表真实基础设施、真实模型或临床验收通过。
-

@@ -81,9 +81,11 @@ def private_search(db, config, owner: int, query: str) -> list[dict]:
     if not documents:
         return []
     results = query_chunks(config, query, sorted(documents))
-    # Re-read authorization after the remote query; never trust vector ownership alone.
-    db.expire_all()
-    documents = {key: row for key in documents if (row := db.get(KnowledgeDocument, key)) and permitted(row)}
+    # A locking current read sees revocations under MySQL REPEATABLE READ;
+    # expire_all + get would still read the request's old transaction snapshot.
+    current = db.scalars(select(KnowledgeDocument).where(KnowledgeDocument.id.in_(documents))
+                         .with_for_update().execution_options(populate_existing=True)).all()
+    documents = {row.id: row for row in current if permitted(row)}
     return citations_from_results(results, documents)
 
 
@@ -126,8 +128,11 @@ class EvidenceRetriever:
 def validate_evidence(db, batch: dict[str, Any]) -> dict[str, Any]:
     """MySQL is authoritative even for stale vectors and persisted task snapshots."""
     accepted = []
+    ids = [int(citation["documentId"]) for citation in batch["citations"]]
+    documents = {row.id: row for row in db.scalars(select(KnowledgeDocument).where(
+        KnowledgeDocument.id.in_(ids)).with_for_update().execution_options(populate_existing=True)).all()} if ids else {}
     for citation in batch["citations"]:
-        row = db.get(KnowledgeDocument, int(citation["documentId"]))
+        row = documents.get(int(citation["documentId"]))
         if (row and eligible(row, batch["diseaseCode"], batch["topicCode"]) and
                 row.governance_version == citation["sourceRevision"] and row.file_url == citation["source"] and
                 hashlib.sha256(citation["quotedText"].encode()).hexdigest() == citation["quotedTextDigest"]):
