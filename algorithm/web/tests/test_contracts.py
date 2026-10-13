@@ -317,7 +317,13 @@ def test_endpoint_set_matches_java_exactly():
                      ("get", "/api/reviews/tasks/{taskId}/image"),
                      ("post", "/api/reviews/tasks/{taskId}/claim"),
                      ("post", "/api/reviews/tasks/{taskId}/submit")}
-    assert served - expected == new_workflows, f"unexpected new surface: {sorted(served - expected)}"
+    chat_contracts = {("post", "/api/agent/chat/stream"), ("get", "/api/agent/sessions"),
+        ("get", "/api/agent/history/{thread_id}"), ("get", "/api/agent/history/{session_id}/export"),
+        ("delete", "/api/agent/sessions/batch"), ("delete", "/api/agent/sessions/{session_id}"),
+        ("put", "/api/agent/sessions/{session_id}/title"), ("put", "/api/agent/sessions/{session_id}/pin"),
+        ("post", "/api/agent/sessions/{session_id}/generate-title"),
+        ("post", "/api/agent/image/upload"), ("post", "/api/agent/image/upload/delete")}
+    assert served - expected == new_workflows | chat_contracts, f"unexpected new surface: {sorted(served - expected)}"
 
 
 def test_public_endpoints_need_no_session(anonymous_client):

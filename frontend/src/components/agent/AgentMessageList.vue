@@ -117,6 +117,7 @@
         <div class="msg-animate">
           <UserMessage v-if="msg.type === 'user'" :content="msg.content" :time="msg.time" :images="msg.images" />
           <ReasoningMessage v-else-if="msg.type === 'reasoning'" :content="msg.content" />
+          <p v-else-if="msg.type === 'error'" class="stream-error" role="alert">{{ msg.content }}</p>
           <AssistantMessage
   v-else-if="msg.type === 'assistant'"
   :content="msg.content"
@@ -173,7 +174,7 @@ import type { ToolCallArg } from '@/composables/useAgentStream'
 import type { ResourceData } from './types'
 
 interface Message {
-  type: 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading'
+  type: 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading' | 'error'
   content: string
   toolName?: string
   toolCalls?: ToolCallArg[]
@@ -277,6 +278,12 @@ watch(() => props.loading, (val) => {
 </script>
 
 <style scoped>
+.stream-error {
+  color: var(--claude-text-secondary);
+  padding: 12px 16px;
+  border-left: 3px solid var(--claude-brand);
+}
+
 .agent-message-list {
   flex: 1;
   min-height: 0;

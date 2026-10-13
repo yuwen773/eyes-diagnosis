@@ -113,12 +113,12 @@ def test_session_endpoints_are_exact_matches_to_java(blocks):
     assert SESSION_PATHS <= set(java), SESSION_PATHS - set(java)
 
 
-def test_agent_prefix_routes_to_java(blocks):
+def test_agent_prefix_routes_to_python(blocks):
     agent = [
         body for _m, pattern, body in blocks
-        if pattern == "/api/agent/" and _upstream(body) == "eye_java"
+        if pattern == "/api/agent/" and _upstream(body) == "eye_python"
     ]
-    assert agent, "the Agent subsystem must stay on Java"
+    assert agent, "session chat must reach Python after V17"
 
 
 def test_sse_location_is_longer_than_the_agent_prefix(blocks):
@@ -225,12 +225,10 @@ def test_no_python_route_shadows_a_session_path():
     assert _python_paths() & SESSION_PATHS == set()
 
 
-def test_no_python_route_is_under_the_agent_prefix():
-    """The whole Agent subsystem stays on Java, one line unchanged. A Python
-    route under ``/api/agent/`` would be shadowed by the Java location and
-    never reached."""
-    shadowed = {p for p in _python_paths() if p.startswith("/api/agent/")}
-    assert shadowed == set(), shadowed
+def test_python_agent_routes_reach_python(blocks):
+    paths = {p for p in _python_paths() if p.startswith("/api/agent/")}
+    assert paths
+    assert all(_route(p, blocks) == "eye_python" for p in paths)
 
 
 def test_every_non_agent_java_route_is_covered_by_its_intended_backend(blocks):
@@ -280,8 +278,8 @@ def test_the_route_resolver_agrees_with_nginx_on_the_known_cases(blocks):
     assert _route("/api/user/login", blocks) == "eye_java"
     assert _route("/api/user/logout", blocks) == "eye_java"
     assert _route("/api/user/get/login", blocks) == "eye_java"
-    assert _route("/api/agent/chat/stream", blocks) == "eye_java"
-    assert _route("/api/agent/session/list", blocks) == "eye_java"
+    assert _route("/api/agent/chat/stream", blocks) == "eye_python"
+    assert _route("/api/agent/sessions", blocks) == "eye_python"
     # The prefix match is on "/api/user/" + something, not on "/api/user".
     assert _route("/api/user/list/page/vo", blocks) == "eye_python"
     assert _route("/api/diagnosis/diagnosis", blocks) == "eye_python"

@@ -9,18 +9,20 @@ export interface AgentChatRequest {
 }
 
 export interface MessageVO {
-  id: number
+  id: string
   role: string
   subType: string
   content: string
   isSummary: boolean
   createdTime: string
+  imageUrls?: string[]
 }
 
 export interface ChatHistoryVO {
   messages: MessageVO[]
   hasMore: boolean
-  nextCursor: number | null
+  nextCursor: string | null
+  executions?: { id: string; messageId: string; status: string; errorCode: string | null }[]
 }
 
 export interface SessionVO {
@@ -53,7 +55,7 @@ export const chatStream = (request: AgentChatRequest) => {
   })
 }
 
-export const getChatHistory = (threadId: string, beforeId?: number, limit = 40): Promise<BaseResponse<ChatHistoryVO>> => {
+export const getChatHistory = (threadId: string, beforeId?: string, limit = 40): Promise<BaseResponse<ChatHistoryVO>> => {
   let url = `${BASE_URL}/agent/history/${threadId}?limit=${limit}`
   if (beforeId) {
     url += `&beforeId=${beforeId}`

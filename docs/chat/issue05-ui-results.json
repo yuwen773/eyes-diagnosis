@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-13",
+  "checks": [
+    "two-turn-context-in-original-page",
+    "history-after-backend-process-restart",
+    "other-session-excluded",
+    "model-error-and-failed-history",
+    "attachment-through-original-input-and-reload",
+    "client-stop-persists-interrupted-without-success",
+    "cross-user-history-denied"
+  ],
+  "pageErrors": [],
+  "scope": "Local Chromium/Vue/FastAPI/SSE and backend process restart; SQLite and Java/model/COS doubles"
+}

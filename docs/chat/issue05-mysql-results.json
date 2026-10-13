@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-13",
+  "database": "eye_chat_issue05_20261013",
+  "mysqlVersion": "8.0.26",
+  "migrationVersions": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17"
+  ],
+  "flywayMigrateAndValidate": "passed",
+  "chatHttpTests": {
+    "passed": 14,
+    "skipped": 0
+  },
+  "scope": "Real MySQL and Flyway; Java/model/COS doubles, not live provider or full Java startup acceptance"
+}

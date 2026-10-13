@@ -14,7 +14,7 @@ export interface ToolCallArg {
   args: Record<string, any>
 }
 
-export type StreamMessageType = 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading'
+export type StreamMessageType = 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading' | 'error'
 
 export interface StreamMessage {
   type: StreamMessageType
@@ -37,6 +37,7 @@ export function useAgentStream() {
   const images = ref<{ url: string; title?: string }[]>([])
   const links = ref<{ url: string; title: string; snippet: string; domain: string }[]>([])
   let abortController: AbortController | null = null
+  let generation = 0
 
   const extractResources = (content: string) => {
     if (!content) return
@@ -73,12 +74,19 @@ export function useAgentStream() {
   }
 
   const reset = () => {
+    generation++
+    abortController?.abort()
+    abortController = null
+    isStreaming.value = false
     messages.value = []
     images.value = []
     links.value = []
   }
 
   const sendMessage = async (message: string, threadId: string, options: StreamSendOptions = {}) => {
+    const activeGeneration = ++generation
+    const firstResponseIndex = messages.value.length
+    let completed = false
     isStreaming.value = true
     abortController = new AbortController()
 
@@ -109,11 +117,18 @@ export function useAgentStream() {
         openWhenHidden: true,
 
         async onopen(response) {
-          if (response.ok) return
-          throw new Error('Failed to open connection')
+          if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) return
+          const body = await response.json().catch(() => null)
+          throw new Error(body?.msg || '无法建立回答连接')
         },
 
         onmessage(event) {
+          if (activeGeneration !== generation) return
+          if (event.event === 'error') throw new Error(event.data || '回答未完成')
+          if (event.event === 'done') {
+            completed = true
+            return
+          }
           if (!event.data) return
 
           try {
@@ -188,6 +203,8 @@ export function useAgentStream() {
         },
 
         onclose() {
+          if (activeGeneration !== generation) return
+          if (!completed) throw new Error('回答连接已中断，请重试')
           // Extract resources from final accumulated assistant content
           if (lastAssistantContent) {
             extractResources(streamContent)
@@ -198,18 +215,27 @@ export function useAgentStream() {
         },
 
         onerror(err) {
-          console.error('SSE error:', err)
+          if (activeGeneration !== generation) throw err
           if (assistantMsgIndex !== -1) {
             updateMessage(assistantMsgIndex, { isLoading: false })
           }
           throw err
         },
       })
+      if (activeGeneration === generation && !completed) throw new Error('回答已停止，未生成完整回答')
+    } catch (error) {
+      if (activeGeneration === generation) {
+        messages.value.splice(firstResponseIndex)
+        pushMessage({ type: 'error', content: error instanceof Error ? error.message : '回答未完成', node: 'agent' })
+      }
+      throw error
     } finally {
-      isStreaming.value = false
-      abortController = null
+      if (activeGeneration === generation) {
+        isStreaming.value = false
+        abortController = null
+      }
       // 发送失败时清理已上传的图片
-      if (uploadedUrls.length > 0) {
+      if (!completed && uploadedUrls.length > 0) {
         for (const url of uploadedUrls) {
           deleteAgentImage(url).catch(() => {})
         }

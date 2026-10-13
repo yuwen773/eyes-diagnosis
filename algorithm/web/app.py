@@ -49,6 +49,7 @@ _DOMAIN_ROUTER_PATHS: tuple[str, ...] = (
     "web.routers.mcp_server",  # Phase 2.5
     "web.routers.workflow",  # Durable async upload (separate from legacy diagnosis).
     "web.routers.review",  # Doctor quality review, separate from user approval.
+    "web.routers.agent",  # Current-session chat; no diagnostic/business tools.
 )
 
 
@@ -111,10 +112,12 @@ def create_app(config: WebConfig | None = None) -> FastAPI:
             timeout=httpx.Timeout(5.0),
             follow_redirects=False,
         )
+        application.state.chat_client = httpx.AsyncClient(follow_redirects=False)
         application.state.inference_engine = _build_inference_engine(resolved)
         try:
             yield
         finally:
+            await application.state.chat_client.aclose()
             await application.state.java_client.aclose()
             await application.state.redis.aclose()
             dispose_engine()

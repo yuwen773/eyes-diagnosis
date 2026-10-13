@@ -117,7 +117,7 @@ import AgentResourcePanel from '@/components/agent/AgentResourcePanel.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import SettingsModal from '@/components/agent/settings/SettingsModal.vue'
 import type { ResourceData, ImageResource, LinkResource } from '@/components/agent/types'
-import { useAgentStream, type StreamMessageType } from '@/composables/useAgentStream'
+import { useAgentStream, type StreamMessage, type StreamMessageType } from '@/composables/useAgentStream'
 import { useAgentUpload } from '@/composables/useAgentUpload'
 import { getChatHistory, getSessions, generateTitle, type SessionVO } from '@/api/agentController'
 import '@/assets/agent-theme.css'
@@ -170,11 +170,12 @@ const loadHistoryMessages = async (sessionId: string) => {
   historyLoading.value = true
   try {
     const res = await getChatHistory(sessionId, undefined, 100)
+    if (res.code !== 0) throw new Error(res.msg)
     const data = res?.data
-    if (!data?.messages) return
+    if (!data?.messages) return false
 
     messages.value = data.messages
-      .map((m: any) => {
+      .flatMap((m): StreamMessage[] => {
         let type: StreamMessageType
         if (m.role === 'USER') {
           type = 'user'
@@ -186,20 +187,30 @@ const loadHistoryMessages = async (sessionId: string) => {
             default: type = 'assistant'
           }
         }
-        return {
+        const restored: StreamMessage = {
           type,
           content: m.content,
           toolName: (m.subType === 'tool-call' || m.subType === 'tool-result') ? m.content.split(':')[0] || '工具' : undefined,
           node: 'agent',
           isLoading: false,
+          images: m.imageUrls,
           time: m.createdTime
             ? new Date(m.createdTime).toLocaleTimeString(DATE_LOCALE, TIME_OPTIONS)
             : '',
         }
+        const execution = data.executions?.find(run => run.messageId === m.id)
+        if (execution && execution.status !== 'COMPLETED') {
+          return [restored, { type: 'error', node: 'agent', content: execution.status === 'RUNNING'
+            ? '上次回答尚未完成，请稍后刷新查看状态。'
+            : '上次回答未完成，可以重新提问。' }]
+        }
+        return [restored]
       })
+    return true
   } catch (e) {
     console.warn('加载历史消息失败:', e)
     message.warning('历史消息加载失败')
+    return false
   } finally {
     historyLoading.value = false
   }
@@ -207,12 +218,11 @@ const loadHistoryMessages = async (sessionId: string) => {
 
 onMounted(async () => {
   const savedThreadId = loadThreadId()
-  await Promise.all([
-    loadSessions(),
-    savedThreadId ? loadHistoryMessages(savedThreadId) : Promise.resolve(),
-  ])
-  currentThreadId.value = savedThreadId
-  threadId.value = savedThreadId
+  await loadSessions()
+  const restored = savedThreadId ? await loadHistoryMessages(savedThreadId) : false
+  currentThreadId.value = restored ? savedThreadId : ''
+  threadId.value = restored ? savedThreadId : generateThreadId()
+  if (!restored) saveThreadId('')
 })
 
 // Agent stream
@@ -231,7 +241,8 @@ const totalResourceCount = computed(() => panelImages.value.length + panelLinks.
 
 // Handlers
 const handleSend = async (text: string, files: File[] = []) => {
-  if ((!text.trim() && files.length === 0) || streaming.value) return
+  if ((!text.trim() && files.length === 0) || streaming.value || historyLoading.value) return
+  const sendingThreadId = threadId.value
 
   let imageUrls: string[] = []
   try {
@@ -253,10 +264,12 @@ const handleSend = async (text: string, files: File[] = []) => {
   })
 
   try {
-    await sendMessage(text, threadId.value, { urls: imageUrls })
+    await sendMessage(text, sendingThreadId, { urls: imageUrls })
     uploader.commitSuccess(imageUrls)
-    saveThreadId(threadId.value)
-    currentThreadId.value = threadId.value
+    if (threadId.value !== sendingThreadId) return
+    saveThreadId(sendingThreadId)
+    currentThreadId.value = sendingThreadId
+    await loadSessions()
 
     // 如果是第一条消息，触发 AI 生成标题
     if (currentThreadId.value && messages.value.length === 0) {
@@ -266,7 +279,11 @@ const handleSend = async (text: string, files: File[] = []) => {
     }
   } catch (error) {
     uploader.commitFailure(imageUrls)
-    message.error('消息发送失败，可能是网络连接不稳定，请检查网络后重试')
+    if (threadId.value !== sendingThreadId) return
+    saveThreadId(sendingThreadId)
+    currentThreadId.value = sendingThreadId
+    await loadSessions()
+    message.error(error instanceof Error ? error.message : '回答未完成，请重试')
   }
 }
 
