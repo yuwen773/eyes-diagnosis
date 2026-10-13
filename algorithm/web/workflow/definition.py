@@ -11,8 +11,8 @@ from PIL import Image, UnidentifiedImageError
 
 from web.workflow.inference import InferenceEnvelope, WorkflowInference
 
-GRAPH_VERSION = "upload-inference-v2"
-ACTION_VERSION = "upload-inference-v2"
+GRAPH_VERSION = "upload-quality-review-v3"
+ACTION_VERSION = "upload-quality-review-v3"
 
 
 class UploadState(TypedDict):
@@ -23,13 +23,14 @@ class UploadState(TypedDict):
     media_type: str
     envelope_id: str
     exposure_status: str
+    waiting_review: bool
 
 
 def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 inference: WorkflowInference | None = None,
                 committed_envelope: InferenceEnvelope | None = None,
                 pending_envelopes: list[InferenceEnvelope] | None = None,
-                inference_epoch: int = 0):
+                inference_epoch: int = 0, quality_decision: str | None = None):
     def validate_image(state: UploadState) -> dict:
         try:
             with warnings.catch_warnings():
@@ -77,7 +78,19 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 "reason": {"PASS": None, "REJECT": "QUALITY_REJECTED",
                            "REVIEW": "QUALITY_REVIEW_REQUIRED"}[decision],
                 "exposure_status": "HIDDEN" if decision == "PASS" else "WITHHELD_BY_QUALITY_GATE",
+                "waiting_review": decision == "REVIEW",
                 "completed": [*state["completed"], "imageQuality"]}
+
+    def quality_review(state: UploadState) -> dict:
+        envelope = shared_envelope(state)
+        if envelope.quality_outcome != "REVIEW" or quality_decision not in {
+                "APPROVE_CONTINUE", "REJECT_RESUBMIT"}:
+            raise ValueError("quality review requires a bound doctor decision")
+        approved = quality_decision == "APPROVE_CONTINUE"
+        return {"status": "RUNNING" if approved else "REJECTED",
+                "reason": None if approved else "QUALITY_REJECTED",
+                "waiting_review": False,
+                "completed": [*state["completed"], "qualityReview"]}
 
     def vision_exposure(state: UploadState) -> dict:
         envelope = shared_envelope(state)
@@ -96,6 +109,7 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     graph.add_node("validateImage", validate_image)
     graph.add_node("inference", infer)
     graph.add_node("imageQuality", image_quality)
+    graph.add_node("qualityReview", quality_review)
     graph.add_node("visionExposure", vision_exposure)
     graph.add_node("explanationUnavailable", explanation_unavailable)
     graph.add_edge(START, "validateImage")
@@ -103,14 +117,17 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                                 {True: END, False: "inference"})
     graph.add_conditional_edges("inference", lambda state: state["status"] == "FAILED",
                                 {True: END, False: "imageQuality"})
-    graph.add_conditional_edges("imageQuality", lambda state: state["status"] == "RUNNING",
+    graph.add_conditional_edges("imageQuality", lambda state: state["status"],
+                                {"RUNNING": "visionExposure", "REJECTED": END,
+                                 "WAITING_HUMAN_REVIEW": "qualityReview"})
+    graph.add_conditional_edges("qualityReview", lambda state: state["status"] == "RUNNING",
                                 {True: "visionExposure", False: END})
     graph.add_conditional_edges("visionExposure", lambda state: state["status"] == "RUNNING",
                                 {True: "explanationUnavailable", False: END})
     graph.add_edge("explanationUnavailable", END)
     return graph.compile(checkpointer=checkpointer,
                          interrupt_after=["validateImage", "inference", "imageQuality",
-                                          "visionExposure", "explanationUnavailable"])
+                                          "qualityReview", "visionExposure", "explanationUnavailable"])
 
 
 # Node semantics are versioned by ACTION_VERSION; topology is hashed as well.

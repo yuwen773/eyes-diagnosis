@@ -17,13 +17,13 @@ mvn -f deploy/workflow-migrations/pom.xml flyway:migrate
 ```
 
 The pinned standalone Flyway Maven plugin 12.4.0 uses the existing V1–V9 and
-bootstrap callback, unchanged release V10–V14, and additive V15. There is one
+bootstrap callback, unchanged release V10–V14, and additive V15–V16. There is one
 `flyway_schema_history`, with `baselineVersion=0` matching the existing Java
 configuration. There is no Alembic history or custom history writer.
 
 V10–V14 are byte-for-byte copies from release commit
 `5ac742f0db30ded1c87462211a535012d952e4bb`. Keep those files and all earlier
-migrations immutable. Reserve subsequent global versions after V15; do not
+migrations immutable. Reserve subsequent global versions after V16; do not
 reuse version numbers between Java and Python deployment assets. Do not repair
 checksum failures automatically. See the existing release history policy for
 an existing V8 checksum disagreement.
@@ -32,6 +32,12 @@ V15 stores bounded original upload bytes in MySQL (2 MiB per input), the
 committed graph token, serialized checkpoints and pending writes. No image bytes
 are included in graph state, logs or API responses. This is the minimal durable
 input store, so API and Worker need no shared local upload directory or COS call.
+
+V16 binds each new Python quality review task to its workflow version, immutable
+inference envelope and graph/action versions. Existing release review rows retain
+NULL bindings; they are not silently adopted by the Python runtime. Apply V16
+before starting this API/Worker. Its real MySQL upgrade and Java startup validation
+have not been run for issue 04; earlier V15 acceptance does not cover V16.
 
 Rollback here means stopping the Python Worker and reverting upload routing/UI;
 retain the additive tables and task data. Do not run `clean`, drop tables, or

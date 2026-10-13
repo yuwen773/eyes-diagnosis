@@ -15,7 +15,7 @@ from web.files import MAX_PICTURE_BYTES
 from web.response import BaseResponse
 from web.schemas.workflow import WorkflowStatusView
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
-from web.workflow.models import InferenceEnvelopeRow, Job, UploadInput, Workflow, WorkflowEvent
+from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
 
 router = APIRouter(prefix="/diagnosis/workflows", tags=["workflows"])
 
@@ -29,6 +29,8 @@ async def workflow_user(user: LoginUser | None = Depends(get_login_user)) -> Log
 def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
     completed = json.loads(upload.completed_nodes)
     inference = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
+    review = db.scalar(select(ReviewTask).where(ReviewTask.workflow_id == workflow.workflow_id,
+                                               ReviewTask.review_type == "IMAGE_QUALITY_GATE"))
     return {
         "workflowId": workflow.workflow_id, "status": workflow.status,
         "workflowVersion": str(workflow.version), "segment": workflow.segment,
@@ -36,13 +38,15 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
         "progress": {"current": workflow.segment, "completed": completed},
         "stopReasonCode": workflow.stop_reason,
         "qualityGate": inference.quality_outcome if inference and "imageQuality" in completed else None,
+        "qualityReview": {"status": review.status, "decisionCode": review.decision,
+                          "reasonCode": review.reason} if review else None,
         "resultAvailability": {"patientVisible": False,
                                "doctorReviewRequired": workflow.status == "WAITING_HUMAN_REVIEW"},
         "result": None,
     }
 
 
-def envelope(data: dict) -> dict:
+def envelope(data: dict | list) -> dict:
     return {"code": 0, "msg": "ok", "data": data}
 
 

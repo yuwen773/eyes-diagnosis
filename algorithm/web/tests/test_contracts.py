@@ -311,7 +311,12 @@ def test_endpoint_set_matches_java_exactly():
     # Issue 02 adds these independent async endpoints, preserving the exact
     # legacy surface. New endpoints are exercised through HTTP in test_workflow.
     new_workflows = {("post", "/api/diagnosis/workflows"),
-                     ("get", "/api/diagnosis/workflows/{workflowId}")}
+                     ("get", "/api/diagnosis/workflows/{workflowId}"),
+                     ("get", "/api/reviews/tasks"),
+                     ("get", "/api/reviews/tasks/{taskId}"),
+                     ("get", "/api/reviews/tasks/{taskId}/image"),
+                     ("post", "/api/reviews/tasks/{taskId}/claim"),
+                     ("post", "/api/reviews/tasks/{taskId}/submit")}
     assert served - expected == new_workflows, f"unexpected new surface: {sorted(served - expected)}"
 
 

@@ -17,7 +17,7 @@ const reason = computed(() => ({
   INFERENCE_FAILED: '图像分析失败，重试后仍未生成诊断结果。请稍后重试或联系管理员。',
   INFERENCE_ENVELOPE_UNAVAILABLE: '已提交的分析结果暂时无法读取，请联系管理员。',
   QUALITY_REJECTED: '图片质量未通过，请重新上传清晰、光照均匀的眼底图片。',
-  QUALITY_REVIEW_REQUIRED: '图片质量待复核。当前任务已暂停，不会自动重新分析。医生复核操作将在后续开放。',
+  QUALITY_REVIEW_REQUIRED: '图片质量待复核。当前任务已暂停，不会自动重新分析，等待医生领取并作出质量决定。',
   EXPLANATION_NOT_AVAILABLE: '图片质量已通过，解释发布能力尚未接入，当前任务不提供诊断结果。',
   OOD: '图片超出模型适用范围，本次不提供疾病判断。建议咨询专业医生。',
   LOW_CONFIDENCE: '模型无法可靠判断，本次不提供疾病判断。建议咨询专业医生。',
@@ -31,9 +31,10 @@ const reason = computed(() => ({
 const nodeLabels: Record<string, string> = {
   validateImage: '图片输入验证', diagnosisUnavailable: '诊断能力检查',
   inference: '图像分析', imageQuality: '图片质量判断',
+  qualityReview: '医生质量决定处理',
   visionExposure: '分析可靠性检查', explanationUnavailable: '解释发布检查',
 }
-const qualityLabel = computed(() => props.workflow.qualityGate ? ({
+const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ? '' : props.workflow.qualityGate ? ({
   PASS: '图片质量已通过', REJECT: '图片质量未通过', REVIEW: '图片质量待复核',
 }[props.workflow.qualityGate]) : '')
 </script>
@@ -43,6 +44,11 @@ const qualityLabel = computed(() => props.workflow.qualityGate ? ({
     <h3 class="status-title">{{ labels[workflow.status] }}</h3>
     <p class="task-id">任务标识：<code>{{ workflow.workflowId }}</code></p>
     <p v-if="qualityLabel" class="status-reason">{{ qualityLabel }}</p>
+    <p v-if="workflow.qualityReview?.decisionCode" class="status-reason">
+      {{ workflow.qualityReview.decisionCode === 'APPROVE_CONTINUE' ? '医生质量复核：已允许复用原推理包继续。' : '医生质量复核：请重新上传清晰、光照均匀的图片。' }}
+      此决定不确认疾病预测，也不代表您已授权保存正式诊断。
+    </p>
+    <p v-else-if="workflow.qualityReview?.status === 'CLAIMED'" class="status-reason">医生已领取质量复核任务，请等待复核决定。</p>
     <p v-if="reason" class="status-reason">{{ reason }}</p>
     <ul v-if="workflow.progress.completed.length" class="completed-nodes">
       <li v-for="node in workflow.progress.completed" :key="node">{{ nodeLabels[node] ?? node }} · 已完成</li>

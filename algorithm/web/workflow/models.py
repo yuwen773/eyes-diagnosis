@@ -115,6 +115,33 @@ class WorkflowEvent(Base):
     occurred_at: Mapped[datetime] = mapped_column("occurredAt", DateTime, default=func.now())
 
 
+class ReviewTask(Base):
+    __tablename__ = "t_human_review_task"
+    __table_args__ = (UniqueConstraint("workflowId", "reviewType", "reviewRound"),)
+
+    task_id: Mapped[str] = mapped_column("reviewTaskId", String(64), primary_key=True)
+    workflow_id: Mapped[str] = mapped_column("workflowId", String(64))
+    review_type: Mapped[str] = mapped_column("reviewType", String(48))
+    review_round: Mapped[int] = mapped_column("reviewRound", Integer, default=1)
+    status: Mapped[str] = mapped_column(String(32), default="OPEN")
+    assigned_doctor_id: Mapped[int | None] = mapped_column("assignedDoctorId", BigInteger)
+    submitted_doctor_id: Mapped[int | None] = mapped_column("submittedDoctorId", BigInteger)
+    decision: Mapped[str | None] = mapped_column("decisionCode", String(64))
+    reason: Mapped[str | None] = mapped_column("decisionReasonCode", String(64))
+    version: Mapped[int] = mapped_column("taskVersion", BigInteger, default=0)
+    workflow_version: Mapped[int] = mapped_column("workflowVersion", BigInteger)
+    envelope_id: Mapped[str] = mapped_column("inferenceEnvelopeId", String(64))
+    graph_version: Mapped[str] = mapped_column("graphDefinitionVersion", String(64))
+    graph_hash: Mapped[str] = mapped_column("graphDefinitionHash", String(128))
+    action_version: Mapped[str] = mapped_column("actionVersion", String(64))
+    thread_id: Mapped[str] = mapped_column("graphThreadId", String(128))
+    checkpoint_id: Mapped[str] = mapped_column("graphCheckpointId", String(128))
+    created_at: Mapped[datetime] = mapped_column("createdAt", DateTime, default=func.now())
+    claimed_at: Mapped[datetime | None] = mapped_column("claimedAt", DateTime)
+    submitted_at: Mapped[datetime | None] = mapped_column("submittedAt", DateTime)
+    updated_at: Mapped[datetime] = mapped_column("updatedAt", DateTime, default=func.now())
+
+
 class GraphCheckpoint(Base):
     __tablename__ = "t_python_graph_checkpoint"
 

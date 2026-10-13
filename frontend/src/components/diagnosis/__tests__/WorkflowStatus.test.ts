@@ -7,7 +7,7 @@ const base: WorkflowView = {
   workflowId: 'quality-task', status: 'RUNNING', workflowVersion: '4',
   graphDefinitionVersion: 'upload-inference-v2', segment: 'imageQuality',
   progress: { current: 'imageQuality', completed: ['validateImage', 'inference', 'imageQuality'] },
-  stopReasonCode: null, qualityGate: null,
+  stopReasonCode: null, qualityGate: null, qualityReview: null,
   resultAvailability: { patientVisible: false, doctorReviewRequired: false }, result: null,
 }
 

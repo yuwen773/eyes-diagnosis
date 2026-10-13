@@ -18,7 +18,7 @@ from web.workflow.checkpoint import MysqlCheckpointSaver, checkpoint_config
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION, build_graph
 from web.workflow.inference import InferenceEnvelope, InferenceExecutionError, WorkflowInference
 from web.workflow.models import (
-    PYTHON_SEGMENT_CODE, InferenceEnvelopeRow, Job, UploadInput, Workflow, WorkflowEvent,
+    PYTHON_SEGMENT_CODE, InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ class Claim:
     inference_epoch: int
     envelope: InferenceEnvelope | None
     envelope_missing: bool
+    quality_decision: str | None
 
 
 def database_now(db) -> datetime:
@@ -88,6 +89,14 @@ class Worker:
             workflow.updated_at = now
             append_event(db, workflow, self.worker_id, now)
             row = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
+            review = db.scalar(select(ReviewTask).where(
+                ReviewTask.workflow_id == workflow.workflow_id,
+                ReviewTask.review_type == "IMAGE_QUALITY_GATE", ReviewTask.status == "SUBMITTED",
+                ReviewTask.envelope_id == workflow.inference_envelope_id,
+                ReviewTask.graph_version == workflow.graph_version,
+                ReviewTask.graph_hash == workflow.graph_hash,
+                ReviewTask.action_version == workflow.action_version,
+            ))
             return Claim(job.job_id, workflow.workflow_id, job.lease_token,
                          job.lease_version, workflow.version, upload.checkpoint_id,
                          upload.image_bytes,
@@ -95,7 +104,8 @@ class Worker:
                          (GRAPH_VERSION, GRAPH_HASH, ACTION_VERSION), exhausted,
                          workflow.inference_epoch,
                          InferenceEnvelope.model_validate(row) if row else None,
-                         bool(workflow.inference_envelope_id and row is None))
+                         bool(workflow.inference_envelope_id and row is None),
+                         review.decision if review else None)
 
     def _owned_rows(self, db, claim: Claim):
         job = db.scalar(select(Job).where(Job.job_id == claim.job_id).with_for_update())
@@ -140,7 +150,7 @@ class Worker:
         pending_envelopes: list[InferenceEnvelope] = []
         graph = build_graph(saver, claim.image_bytes, inference=self.inference,
                             committed_envelope=claim.envelope, pending_envelopes=pending_envelopes,
-                            inference_epoch=claim.inference_epoch)
+                            inference_epoch=claim.inference_epoch, quality_decision=claim.quality_decision)
         config = checkpoint_config(claim.workflow_id, "", claim.checkpoint_id or "")
         try:
             if claim.checkpoint_id and saver.get_tuple(config) is None:
@@ -176,7 +186,18 @@ class Worker:
                 workflow.updated_at = now
                 job.status, job.lease_until, job.updated_at = "COMPLETED", None, now
                 job.checkpoint_id = checkpoint_id
-                if snapshot.next:
+                if snapshot.values.get("waiting_review"):
+                    existing = db.scalar(select(ReviewTask).where(
+                        ReviewTask.workflow_id == claim.workflow_id,
+                        ReviewTask.review_type == "IMAGE_QUALITY_GATE", ReviewTask.review_round == 1))
+                    if existing is None:
+                        db.add(ReviewTask(task_id=uuid4().hex, workflow_id=claim.workflow_id,
+                            review_type="IMAGE_QUALITY_GATE", workflow_version=workflow.version,
+                            envelope_id=workflow.inference_envelope_id,
+                            graph_version=workflow.graph_version, graph_hash=workflow.graph_hash,
+                            action_version=workflow.action_version, thread_id=claim.workflow_id,
+                            checkpoint_id=checkpoint_id, created_at=now, updated_at=now))
+                elif snapshot.next:
                     db.add(Job(job_id=uuid4().hex, workflow_id=claim.workflow_id,
                                job_type="RESUME", epoch=job.epoch + 1,
                                thread_id=claim.workflow_id, checkpoint_id=checkpoint_id,

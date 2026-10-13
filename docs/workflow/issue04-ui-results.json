@@ -1,0 +1,25 @@
+{
+  "dependencies": "SQLite + Java transport double + controlled inference; real HTTP/Vue/Worker/Chromium",
+  "checks": [
+    {
+      "decision": "APPROVE_CONTINUE",
+      "patientStatus": "FAILED",
+      "refreshRestored": true,
+      "userDeniedReviewPage": true
+    },
+    {
+      "decision": "REJECT_RESUBMIT",
+      "patientStatus": "REJECTED",
+      "refreshRestored": true,
+      "userDeniedReviewPage": true
+    },
+    {
+      "staleClaimRejected": true,
+      "refreshRecoversClaimedTask": true
+    },
+    {
+      "anonymousRedirectedToLogin": true
+    }
+  ],
+  "pageErrors": []
+}
