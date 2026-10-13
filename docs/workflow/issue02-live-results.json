@@ -1,0 +1,75 @@
+{
+  "evidenceType": "real_mysql_java_http_ui_synthetic_input_no_model",
+  "checks": [
+    "http_202",
+    "owner_scoped_idempotency",
+    "cross_user_forbidden",
+    "key_payload_conflict",
+    "queued_task_survives_web_restart",
+    "idempotent_response_consistent_during_worker_commit",
+    "graph_segment_survives_web_and_worker_rebuild",
+    "explicit_unavailable_no_formal_record",
+    "real_upload_page_creates_server_task",
+    "page_refresh_restores_original_task",
+    "upload_page_task_survives_web_and_browser_rebuild"
+  ],
+  "snapshots": [
+    {
+      "workflowId": "82a28473720e420188705663c2e8ebc8",
+      "status": "QUEUED",
+      "workflowVersion": "0",
+      "segment": null,
+      "graphDefinitionVersion": "upload-minimal-v1",
+      "progress": {
+        "current": null,
+        "completed": []
+      },
+      "stopReasonCode": null,
+      "resultAvailability": {
+        "patientVisible": false,
+        "doctorReviewRequired": false
+      },
+      "result": null
+    },
+    {
+      "workflowId": "82a28473720e420188705663c2e8ebc8",
+      "status": "RUNNING",
+      "workflowVersion": "2",
+      "segment": "diagnosisUnavailable",
+      "graphDefinitionVersion": "upload-minimal-v1",
+      "progress": {
+        "current": "diagnosisUnavailable",
+        "completed": [
+          "validateImage"
+        ]
+      },
+      "stopReasonCode": null,
+      "resultAvailability": {
+        "patientVisible": false,
+        "doctorReviewRequired": false
+      },
+      "result": null
+    },
+    {
+      "workflowId": "82a28473720e420188705663c2e8ebc8",
+      "status": "FAILED",
+      "workflowVersion": "4",
+      "segment": "diagnosisUnavailable",
+      "graphDefinitionVersion": "upload-minimal-v1",
+      "progress": {
+        "current": "diagnosisUnavailable",
+        "completed": [
+          "validateImage",
+          "diagnosisUnavailable"
+        ]
+      },
+      "stopReasonCode": "DIAGNOSIS_NOT_AVAILABLE",
+      "resultAvailability": {
+        "patientVisible": false,
+        "doctorReviewRequired": false
+      },
+      "result": null
+    }
+  ],
+  "uiWorkflowId": "3b0e54c1f74e48fe909df6a9ff2e5b81"
+}

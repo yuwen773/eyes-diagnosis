@@ -76,6 +76,7 @@ __pycache__/
 .env.*
 !.env.example
 /.scratch/baseline-runtime/
+/.scratch/workflow-runtime/
 /.zread/
 .zread/
 

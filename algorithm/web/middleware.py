@@ -77,7 +77,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         detail = first.get("msg", "参数校验失败")
         message = f"{field}: {detail}" if field else detail
         return JSONResponse(
-            status_code=200,
+            status_code=422 if _is_workflow_request(_request) else 200,
             content=BaseResponse.error(ErrorCode.PARAMS_ERROR, message).model_dump(mode="json"),
         )
 
@@ -92,6 +92,10 @@ def register_exception_handlers(app: FastAPI) -> None:
         error branch treats these as transport failures, which is what a
         genuinely missing route should be.
         """
+        if _is_workflow_request(_request):
+            detail = exc.detail
+            content = detail if isinstance(detail, dict) else {"msg": str(detail)}
+            return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
         if exc.status_code == 404:
             return JSONResponse(status_code=404, content={"detail": "Not Found"})
         return JSONResponse(
@@ -111,8 +115,13 @@ def register_exception_handlers(app: FastAPI) -> None:
         surfaces ``msg`` directly in toast text, so the distinction is visible.
         """
         return JSONResponse(
-            status_code=200,
+            status_code=500 if _is_workflow_request(_request) else 200,
             content=BaseResponse.error(ErrorCode.SYSTEM_ERROR, "系统错误").model_dump(
                 mode="json"
             ),
         )
+
+
+def _is_workflow_request(request: Request) -> bool:
+    path = request.url.path
+    return path == "/api/diagnosis/workflows" or path.startswith("/api/diagnosis/workflows/")

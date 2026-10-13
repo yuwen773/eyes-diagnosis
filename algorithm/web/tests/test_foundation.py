@@ -362,7 +362,7 @@ def test_orm_column_names_are_camel_case():
 
 
 def test_orm_maps_only_migrating_domains():
-    """Agent tables stay on Java and must not be mapped here.
+    """Legacy domains plus issue 02's durable workflow are mapped here.
 
     ``t_inference_cache`` belongs to the *diagnosis* domain despite its earlier
     misfiling as an Agent table -- it is written only by
@@ -380,6 +380,12 @@ def test_orm_maps_only_migrating_domains():
         "t_attachment",
         "t_knowledge_document",
         "t_mcp_server",
+        "t_diagnosis_workflow",
+        "t_diagnosis_workflow_event",
+        "t_workflow_job",
+        "t_workflow_upload_input",
+        "t_python_graph_checkpoint",
+        "t_python_graph_write",
     }
 
 

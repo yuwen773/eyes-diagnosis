@@ -1,13 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { EyeOutlined, HeartOutlined, RocketOutlined, BellOutlined, DatabaseOutlined, StarOutlined, DownOutlined } from '@ant-design/icons-vue'
-import ImageUploader from '@/components/diagnosis/ImageUploader.vue'
-import DiagnosisResult from '@/components/diagnosis/DiagnosisResult.vue'
-import { useDiagnosisStore } from '@/stores/diagnosis'
-
-const diagnosisStore = useDiagnosisStore()
-const { setAnalyzing } = diagnosisStore
-void setAnalyzing
+import WorkflowUploader from '@/components/diagnosis/WorkflowUploader.vue'
 
 const featuresExpanded = ref(false)
 
@@ -20,16 +14,6 @@ const features = [
   { title: '专业建议', description: '提供专业的眼科健康建议和治疗方案参考', icon: StarOutlined }
 ]
 
-const diagnosisPicture = ref<API.DiagnosisUploadDTO>()
-
-const onSuccess = (newDiagnosisPicture: API.DiagnosisUploadDTO) => {
-  diagnosisPicture.value = newDiagnosisPicture
-}
-
-const closeModal = () => {
-  diagnosisStore.closeResultModal()
-}
-
 const toggleFeatures = () => {
   featuresExpanded.value = !featuresExpanded.value
 }
@@ -40,14 +24,14 @@ const toggleFeatures = () => {
     <header class="hero-header">
       <span class="hero-badge">AI 驱动</span>
       <h1 class="hero-title">眼科智能诊断</h1>
-      <p class="hero-subtitle">上传眼底照片，获取基于深度学习的高精度分析报告</p>
+      <p class="hero-subtitle">上传眼底照片，创建可持续追踪的分析任务</p>
       <p class="hero-note" aria-label="说明">本服务仅供参考，不能替代专业医生诊断</p>
     </header>
 
     <section class="upload-zone">
       <div class="upload-glow" aria-hidden="true" />
       <div class="upload-inner">
-        <ImageUploader :picture="diagnosisPicture" :onSuccess="onSuccess" />
+        <WorkflowUploader />
       </div>
     </section>
 
@@ -76,15 +60,6 @@ const toggleFeatures = () => {
       </div>
     </section>
 
-    <a-modal
-      v-model:open="diagnosisStore.resultModalVisible"
-      title="诊断结果"
-      width="80%"
-      :footer="null"
-      :afterClose="closeModal"
-    >
-      <DiagnosisResult />
-    </a-modal>
   </div>
 </template>
 

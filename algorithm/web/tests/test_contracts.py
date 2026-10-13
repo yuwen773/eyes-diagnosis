@@ -308,7 +308,11 @@ def test_endpoint_set_matches_java_exactly():
     served = {(verb, path) for path, operations in create_app().openapi()["paths"].items()
               for verb in operations if verb in {"get", "post", "put", "delete"}}
     assert expected - served == set(), f"not migrated: {sorted(expected - served)}"
-    assert served - expected == set(), f"served but not in Java: {sorted(served - expected)}"
+    # Issue 02 adds these independent async endpoints, preserving the exact
+    # legacy surface. New endpoints are exercised through HTTP in test_workflow.
+    new_workflows = {("post", "/api/diagnosis/workflows"),
+                     ("get", "/api/diagnosis/workflows/{workflowId}")}
+    assert served - expected == new_workflows, f"unexpected new surface: {sorted(served - expected)}"
 
 
 def test_public_endpoints_need_no_session(anonymous_client):

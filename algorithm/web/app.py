@@ -47,6 +47,7 @@ _DOMAIN_ROUTER_PATHS: tuple[str, ...] = (
     "web.routers.news",       # Phase 2.3
     "web.routers.knowledge",  # Phase 2.4
     "web.routers.mcp_server",  # Phase 2.5
+    "web.routers.workflow",  # Durable async upload (separate from legacy diagnosis).
 )
 
 

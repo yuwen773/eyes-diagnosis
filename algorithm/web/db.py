@@ -50,9 +50,9 @@ explicitly via :func:`not_deleted`. Note the Java field is ``isDelete`` in the
 entity but ``is_delete`` in the Python attribute -- the *column* stays
 ``isDelete``.
 
-Agent-owned tables (``t_agent_session``, ``t_agent_message``, ``t_chat_session``,
-``t_chat_history``, ``t_upload_task``) are deliberately NOT modelled here: they
-belong to the Agent subsystem, which stays on Java.
+Legacy Agent tables (``t_agent_session``, ``t_agent_message``, ``t_chat_session``,
+``t_chat_history``, ``t_upload_task``) are not migrated by issue 02. Its new
+durable upload tables live in ``web.workflow.models``; chat migrates later.
 
 ``t_inference_cache`` is **not** in that list, contrary to an earlier draft of
 this comment. It is written only by ``DiagnosisServiceImpl.java:183,198`` via

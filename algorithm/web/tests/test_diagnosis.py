@@ -198,14 +198,17 @@ def test_all_eight_diagnosis_endpoints_are_migrated():
     assert _java_diagnosis_paths() - _python_diagnosis_paths() == set()
 
 
-def test_python_serves_no_endpoint_java_does_not():
-    """A typo'd path would 404 forever, in both directions."""
-    assert _python_diagnosis_paths() - _java_diagnosis_paths() == set()
+_ASYNC_WORKFLOW_PATHS = {"/diagnosis/workflows", "/diagnosis/workflows/{workflowId}"}
+
+
+def test_python_adds_only_approved_async_workflow_endpoints():
+    """Issue 02 explicitly adds two routes; all legacy paths still match Java."""
+    assert _python_diagnosis_paths() - _java_diagnosis_paths() == _ASYNC_WORKFLOW_PATHS
 
 
 def test_router_declares_exactly_the_migrated_endpoints():
     declared = {route.path for route in router.routes}
-    assert declared == _python_diagnosis_paths()
+    assert declared == _python_diagnosis_paths() - _ASYNC_WORKFLOW_PATHS
 
 
 def _route(suffix: str):
