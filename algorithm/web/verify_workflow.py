@@ -149,8 +149,8 @@ def main() -> None:
             assert envelope(client.get(path))["workflowVersion"] == running["workflowVersion"]
             worker_segment(args.output_dir)
             final = envelope(client.get(path))
-            assert (final["status"], final["stopReasonCode"]) == ("FAILED", "DIAGNOSIS_NOT_AVAILABLE")
-            assert final["progress"]["completed"] == ["validateImage", "diagnosisUnavailable"]
+            assert (final["status"], final["stopReasonCode"]) == ("FAILED", "MODEL_UNAVAILABLE")
+            assert final["progress"]["completed"] == ["validateImage", "inference"]
             assert final["result"] is None
             assert envelope(client.post("diagnosis/list/page/my", json={}))["total"] == before
             checks.extend(["graph_segment_survives_web_and_worker_rebuild", "explicit_unavailable_no_formal_record"])
@@ -178,10 +178,10 @@ def main() -> None:
                     page.screenshot(path=str(args.output_dir / "queued.png"), full_page=True)
                     worker_segment(args.output_dir)
                     worker_segment(args.output_dir)
-                    page.get_by_text("图片验证已完成，诊断能力尚未接入，当前任务不提供诊断结果。", exact=True).wait_for(timeout=15000)
+                    page.get_by_text("模型当前不可用，未生成诊断结果。请联系管理员检查模型权重与配置。", exact=True).wait_for(timeout=15000)
                     page.reload(wait_until="networkidle")
                     page.get_by_text(ui_created["workflowId"], exact=True).wait_for()
-                    page.get_by_text("图片验证已完成，诊断能力尚未接入，当前任务不提供诊断结果。", exact=True).wait_for()
+                    page.get_by_text("模型当前不可用，未生成诊断结果。请联系管理员检查模型权重与配置。", exact=True).wait_for()
                     page.screenshot(path=str(args.output_dir / "restored.png"), full_page=True)
                     checks.extend(["real_upload_page_creates_server_task", "page_refresh_restores_original_task"])
                 finally:
@@ -200,7 +200,7 @@ def main() -> None:
                     page.goto(args.frontend_url + "/diagnosis?workflow=" + ui_created["workflowId"])
                     page.wait_for_load_state("networkidle")
                     page.get_by_text(ui_created["workflowId"], exact=True).wait_for()
-                    page.get_by_text("图片验证已完成，诊断能力尚未接入，当前任务不提供诊断结果。", exact=True).wait_for()
+                    page.get_by_text("模型当前不可用，未生成诊断结果。请联系管理员检查模型权重与配置。", exact=True).wait_for()
                     page.screenshot(path=str(args.output_dir / "restored.png"), full_page=True)
                     checks.append("upload_page_task_survives_web_and_browser_rebuild")
                 finally:

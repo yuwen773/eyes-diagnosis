@@ -44,6 +44,36 @@ class UploadInput(Base):
     completed_nodes: Mapped[str] = mapped_column("completedNodes", Text, default="[]")
 
 
+class InferenceEnvelopeRow(Base):
+    """V11 immutable snapshot. Writers insert; committed epochs are never updated."""
+
+    __tablename__ = "t_inference_envelope"
+    __table_args__ = (UniqueConstraint("workflowId", "inferenceEpoch"),)
+
+    envelope_id: Mapped[str] = mapped_column("inferenceEnvelopeId", String(64), primary_key=True)
+    workflow_id: Mapped[str] = mapped_column("workflowId", String(64))
+    inference_epoch: Mapped[int] = mapped_column("inferenceEpoch", BigInteger)
+    image_reference: Mapped[str] = mapped_column("imageObjectReference", String(512))
+    input_digest: Mapped[str] = mapped_column("inputDigest", String(128))
+    media_type: Mapped[str] = mapped_column("detectedMediaType", String(128))
+    quality_outcome: Mapped[str] = mapped_column("qualityOutcome", String(32))
+    quality_score: Mapped[int] = mapped_column("qualityScore", Integer)
+    quality_reasons: Mapped[str] = mapped_column("qualityReasonCodesSnapshot", Text)
+    outcome: Mapped[str] = mapped_column("inferenceOutcomeType", String(32))
+    prediction_snapshot: Mapped[str | None] = mapped_column("predictionSnapshot", Text)
+    confidence_snapshot: Mapped[str | None] = mapped_column("confidenceSnapshot", Text)
+    abstention_reason: Mapped[str | None] = mapped_column("safetyAbstentionReasonCode", String(64))
+    failure_code: Mapped[str | None] = mapped_column("technicalFailureCode", String(64))
+    ood_snapshot: Mapped[str] = mapped_column("oodSnapshot", Text)
+    calibration_snapshot: Mapped[str] = mapped_column("calibrationSnapshot", Text)
+    model_version: Mapped[str] = mapped_column("modelVersion", String(128))
+    model_fingerprint: Mapped[str] = mapped_column("modelWeightFingerprint", String(128))
+    preprocess_version: Mapped[str] = mapped_column("preprocessVersion", String(128))
+    policy_version: Mapped[str] = mapped_column("inferencePolicyVersion", String(128))
+    inferred_at: Mapped[datetime] = mapped_column("inferredAt", DateTime)
+    created_at: Mapped[datetime] = mapped_column("createdAt", DateTime, default=func.now())
+
+
 class Job(Base):
     __tablename__ = "t_workflow_job"
     __table_args__ = (UniqueConstraint("workflowId", "executionEpoch", "segmentCode", "jobType"),)

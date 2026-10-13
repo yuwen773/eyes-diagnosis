@@ -16,7 +16,10 @@ from sqlalchemy import DateTime, and_, func, literal_column, or_, select
 
 from web.workflow.checkpoint import MysqlCheckpointSaver, checkpoint_config
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION, build_graph
-from web.workflow.models import PYTHON_SEGMENT_CODE, Job, UploadInput, Workflow, WorkflowEvent
+from web.workflow.inference import InferenceEnvelope, InferenceExecutionError, WorkflowInference
+from web.workflow.models import (
+    PYTHON_SEGMENT_CODE, InferenceEnvelopeRow, Job, UploadInput, Workflow, WorkflowEvent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,9 @@ class Claim:
     image_bytes: bytes
     compatible: bool
     exhausted: bool
+    inference_epoch: int
+    envelope: InferenceEnvelope | None
+    envelope_missing: bool
 
 
 def database_now(db) -> datetime:
@@ -49,10 +55,14 @@ def append_event(db, workflow: Workflow, actor_id: str, now: datetime) -> None:
 
 
 class Worker:
-    def __init__(self, sessions, *, lease_seconds: int = 30):
+    def __init__(self, sessions, *, lease_seconds: int = 30,
+                 inference: WorkflowInference | None = None):
+        from web.config import WebConfig
+
         self.sessions = sessions
         self.lease_seconds = lease_seconds
         self.worker_id = uuid4().hex
+        self.inference = inference if inference is not None else WorkflowInference(WebConfig.from_env())
 
     def claim(self) -> Claim | None:
         with self.sessions.begin() as db:
@@ -77,11 +87,15 @@ class Worker:
             workflow.version += 1
             workflow.updated_at = now
             append_event(db, workflow, self.worker_id, now)
+            row = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
             return Claim(job.job_id, workflow.workflow_id, job.lease_token,
                          job.lease_version, workflow.version, upload.checkpoint_id,
                          upload.image_bytes,
                          (workflow.graph_version, workflow.graph_hash, workflow.action_version) ==
-                         (GRAPH_VERSION, GRAPH_HASH, ACTION_VERSION), exhausted)
+                         (GRAPH_VERSION, GRAPH_HASH, ACTION_VERSION), exhausted,
+                         workflow.inference_epoch,
+                         InferenceEnvelope.model_validate(row) if row else None,
+                         bool(workflow.inference_envelope_id and row is None))
 
     def _owned_rows(self, db, claim: Claim):
         job = db.scalar(select(Job).where(Job.job_id == claim.job_id).with_for_update())
@@ -119,8 +133,14 @@ class Worker:
             self._failure(claim, "GRAPH_VERSION_INCOMPATIBLE" if not claim.compatible
                           else "RETRY_EXHAUSTED", permanent=True)
             return True
+        if claim.envelope_missing:
+            self._failure(claim, "INFERENCE_ENVELOPE_UNAVAILABLE", permanent=True)
+            return True
         saver = MysqlCheckpointSaver(self.sessions)
-        graph = build_graph(saver, claim.image_bytes)
+        pending_envelopes: list[InferenceEnvelope] = []
+        graph = build_graph(saver, claim.image_bytes, inference=self.inference,
+                            committed_envelope=claim.envelope, pending_envelopes=pending_envelopes,
+                            inference_epoch=claim.inference_epoch)
         config = checkpoint_config(claim.workflow_id, "", claim.checkpoint_id or "")
         try:
             if claim.checkpoint_id and saver.get_tuple(config) is None:
@@ -140,11 +160,17 @@ class Worker:
                 upload = db.get(UploadInput, claim.workflow_id)
                 assert upload is not None
                 saver.flush(db)
+                for result in pending_envelopes:
+                    # The job fence and workflow lock protect this insert and the
+                    # checkpoint in the same transaction. Never merge/update epochs.
+                    db.add(InferenceEnvelopeRow(**result.model_dump()))
+                    workflow.inference_envelope_id = result.envelope_id
                 checkpoint_id = snapshot.config["configurable"]["checkpoint_id"]
                 upload.checkpoint_id = checkpoint_id
                 upload.completed_nodes = json.dumps(snapshot.values["completed"])
                 workflow.status = snapshot.values["status"]
                 workflow.stop_reason = snapshot.values["reason"]
+                workflow.exposure_status = snapshot.values.get("exposure_status", "HIDDEN")
                 workflow.segment = snapshot.next[0] if snapshot.next else snapshot.values["completed"][-1]
                 workflow.version += 1
                 workflow.updated_at = now
@@ -157,6 +183,9 @@ class Worker:
                                available_at=now, created_at=now, updated_at=now))
                 append_event(db, workflow, self.worker_id, now)
             logger.info("workflow=%s segment committed", claim.workflow_id)
+        except InferenceExecutionError:
+            logger.warning("workflow=%s inference failed", claim.workflow_id)
+            self._failure(claim, "INFERENCE_FAILED")
         except Exception:
             logger.error("workflow=%s segment failed", claim.workflow_id, exc_info=True)
             self._failure(claim, "EXECUTION_FAILED")

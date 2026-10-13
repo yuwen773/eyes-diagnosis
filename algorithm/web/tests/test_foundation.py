@@ -362,7 +362,7 @@ def test_orm_column_names_are_camel_case():
 
 
 def test_orm_maps_only_migrating_domains():
-    """Legacy domains plus issue 02's durable workflow are mapped here.
+    """Legacy domains plus durable workflow and inference epochs are mapped here.
 
     ``t_inference_cache`` belongs to the *diagnosis* domain despite its earlier
     misfiling as an Agent table -- it is written only by
@@ -375,6 +375,7 @@ def test_orm_maps_only_migrating_domains():
         "t_user",
         "t_diagnosis",
         "t_inference_cache",
+        "t_inference_envelope",
         "t_news",
         "t_paragraph",
         "t_attachment",

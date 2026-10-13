@@ -1,0 +1,11 @@
+{
+  "evidenceType": "real_chromium_vue_mock_http_no_model_no_real_services",
+  "checks": [
+    "quality-pass",
+    "quality-reject",
+    "quality-review",
+    "model-unavailable",
+    "technical-failure"
+  ],
+  "pageErrors": []
+}

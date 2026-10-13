@@ -15,7 +15,7 @@ from web.files import MAX_PICTURE_BYTES
 from web.response import BaseResponse
 from web.schemas.workflow import WorkflowStatusView
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
-from web.workflow.models import Job, UploadInput, Workflow, WorkflowEvent
+from web.workflow.models import InferenceEnvelopeRow, Job, UploadInput, Workflow, WorkflowEvent
 
 router = APIRouter(prefix="/diagnosis/workflows", tags=["workflows"])
 
@@ -26,14 +26,18 @@ async def workflow_user(user: LoginUser | None = Depends(get_login_user)) -> Log
     return user
 
 
-def workflow_view(workflow: Workflow, upload: UploadInput) -> dict:
+def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
+    completed = json.loads(upload.completed_nodes)
+    inference = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
     return {
         "workflowId": workflow.workflow_id, "status": workflow.status,
         "workflowVersion": str(workflow.version), "segment": workflow.segment,
         "graphDefinitionVersion": workflow.graph_version,
-        "progress": {"current": workflow.segment, "completed": json.loads(upload.completed_nodes)},
+        "progress": {"current": workflow.segment, "completed": completed},
         "stopReasonCode": workflow.stop_reason,
-        "resultAvailability": {"patientVisible": False, "doctorReviewRequired": False},
+        "qualityGate": inference.quality_outcome if inference and "imageQuality" in completed else None,
+        "resultAvailability": {"patientVisible": False,
+                               "doctorReviewRequired": workflow.status == "WAITING_HUMAN_REVIEW"},
         "result": None,
     }
 
@@ -67,7 +71,7 @@ async def create_workflow(
         assert upload is not None
         if upload.request_digest != digest:
             raise HTTPException(409, "幂等键已用于不同内容，请为新任务使用新键")
-        return envelope(workflow_view(existing, upload))
+        return envelope(workflow_view(existing, upload, db))
 
     existing = db.scalar(query)
     if existing:
@@ -94,7 +98,7 @@ async def create_workflow(
         return existing_response(existing)
     # Acknowledgement must follow the durable commit, not response teardown.
     db.commit()
-    return envelope(workflow_view(workflow, upload))
+    return envelope(workflow_view(workflow, upload, db))
 
 
 @router.get("/{workflowId}", response_model=BaseResponse[WorkflowStatusView])
@@ -107,4 +111,4 @@ def get_workflow(workflowId: str, user: LoginUser = Depends(workflow_user),
         raise HTTPException(403, "无权查看此任务")
     upload = db.get(UploadInput, workflowId)
     assert upload is not None
-    return envelope(workflow_view(workflow, upload))
+    return envelope(workflow_view(workflow, upload, db))

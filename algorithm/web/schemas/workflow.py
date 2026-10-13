@@ -12,7 +12,7 @@ class WorkflowProgress(BaseModel):
 
 class ResultAvailability(BaseModel):
     patientVisible: Literal[False] = False
-    doctorReviewRequired: Literal[False] = False
+    doctorReviewRequired: bool = False
 
 
 class WorkflowStatusView(BaseModel):
@@ -24,5 +24,6 @@ class WorkflowStatusView(BaseModel):
     graphDefinitionVersion: str
     progress: WorkflowProgress
     stopReasonCode: str | None
+    qualityGate: Literal["PASS", "REJECT", "REVIEW"] | None = None
     resultAvailability: ResultAvailability
     result: None = None

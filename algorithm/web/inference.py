@@ -345,7 +345,7 @@ class InferenceEngine:
                 for label, probability in top_predictions[:3]
             ],
             rejected=abstain.rejected,
-            abstain_reason=abstain.reason,
+            abstain_reason=abstain.reason.value if abstain.reason else "",
             quality_score=quality.score,
             quality_reasons=",".join(quality.reasons),
             # OOD is hardcoded off -- see the module docstring.
@@ -399,7 +399,7 @@ class InferenceEngine:
     def _decide_abstain(self, quality_reasons: list[str], top1: float, top2: float):
         """``grpc_server.py:118-129`` condensed.
 
-        Returns ``(rejected, reason_string, requires_review)``. The abstain
+        Returns the shared ``AbstainDecision``. The abstain
         thresholds are compared against **0-1** values, unlike the percent
         values in the response -- see the module docstring.
         """
@@ -414,7 +414,7 @@ class InferenceEngine:
             top1_prob=top1,
             top2_prob=top2,
         )
-        return decision.rejected, decision.reason.value if decision.reason else "", decision.requires_review
+        return decision
 
     @staticmethod
     def _write_temp_file(image_bytes: bytes, content_type: str | None) -> str:

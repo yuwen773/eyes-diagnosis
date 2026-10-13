@@ -11,6 +11,7 @@ export interface WorkflowView {
   segment: string | null
   progress: { current: string | null; completed: string[] }
   stopReasonCode: string | null
+  qualityGate: 'PASS' | 'REJECT' | 'REVIEW' | null
   resultAvailability: { patientVisible: boolean; doctorReviewRequired: boolean }
   result: null
 }

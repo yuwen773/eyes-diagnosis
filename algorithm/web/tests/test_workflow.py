@@ -61,8 +61,8 @@ def workflow_api(tmp_path):
     engine.dispose()
 
 
-def create_upload(client, key="upload-1", content=None):
-    return client.post("/api/diagnosis/workflows", data={"idempotencyKey": key},
+def create_upload(client, key="upload-1", content=None, question=""):
+    return client.post("/api/diagnosis/workflows", data={"idempotencyKey": key, "question": question},
                        files={"file": ("fundus.png", content or picture_bytes(), "image/png")})
 
 
@@ -96,8 +96,8 @@ def test_registered_worker_validates_input_then_reports_unavailable_without_diag
     assert Worker(sessions).run_once()
     status = client.get(f"/api/diagnosis/workflows/{workflow_id}").json()["data"]
     assert status["status"] == "FAILED"
-    assert status["stopReasonCode"] == "DIAGNOSIS_NOT_AVAILABLE"
-    assert status["progress"]["completed"] == ["validateImage", "diagnosisUnavailable"]
+    assert status["stopReasonCode"] == "MODEL_UNAVAILABLE"
+    assert status["progress"]["completed"] == ["validateImage", "inference"]
     assert status["result"] is None
     assert status["resultAvailability"]["patientVisible"] is False
     assert client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"] == "0"
@@ -142,7 +142,7 @@ engine.dispose()
         assert result.returncode == 0, result.stderr
         status = client.get(f"/api/diagnosis/workflows/{workflow_id}").json()["data"]
         assert status["status"] == expected
-    assert status["progress"]["completed"] == ["validateImage", "diagnosisUnavailable"]
+    assert status["progress"]["completed"] == ["validateImage", "inference"]
 
 
 def test_new_api_rejects_anonymous_and_malformed_requests_with_real_http_status(workflow_api):
