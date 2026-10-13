@@ -38,7 +38,7 @@ Long ID/历史游标是 JSON 字符串，日期沿用 Java Date 的既有格式�
 ## 记忆、身份与持久化
 
 `t_agent_session` / `t_agent_message` 继续作为历史来源。每轮调用模型前，读取**该会话**的
-USER 与成功 ASSISTANT/text 消息，按顺序真实装入模型请求，然后追加本轮用户输入。
+USER 与成功 ASSISTANT 的 text/旧 NULL 子类型消息，按顺序真实装入模型请求，然后追加本轮用户输入。
 未复制其他会话或历史诊断，也不把摘要、工具输出、Java checkpoint blob 当作新病例事实。
 既有 Java 文本历史可继续使用；不会反序列化 Java checkpoint。
 
@@ -92,13 +92,15 @@ Java 仍能读取原会话/文本表，但原 Java 页面不能恢复新增附�
 
 ## 验证证据与限制
 
-- 聊天 HTTP/SSE：14 项通过，含可控模型两轮上下文、重建应用、既有 Java 行、权限、
+- 聊天 HTTP/SSE：15 项通过，含可控模型两轮上下文、重建应用、既有 Java NULL 子类型行、权限、
   附件、模型失败、审计与同会话并发；SQLite 和真实 MySQL 分别执行。
 - 独立 MySQL 8.0.26：`eye_chat_issue05_20261013` 的 Flyway V1–V17 migrate/validate
-  通过，14 项 HTTP 用例通过、0 skipped。见 [数据库证据](chat/issue05-mysql-results.json)。
+  通过，15 项 HTTP 用例通过、0 skipped。见 [数据库证据](chat/issue05-mysql-results.json)。
 - Chromium/原 Vue/实际 HTTP/SSE：7 项通过、无 pageerror，含独立后端进程重启、
   附件刷新恢复与停止生成。见 [页面证据](chat/issue05-ui-results.json) 及同目录截图。
 - 本票 9 个 Python 模块 mypy 通过；前端流终止回归 3 项通过。
+- COS 接线回归实际构造锁定 SDK 的 CosS3Client，仅替换 put_object/delete_object 远端操作；
+  该通过结果不代表真实 COS 上传验收。
 - 最终全量回归与双轴审查在收尾提交中记录；此处不将此前测试数字冒充本轮结果。
 - Java 身份、DashScope、COS 在上述测试中为替身。真实 Java V17 启动/登出重放、真实
   模型回答与 COS、实际 Nginx 切流/回退未验收；MySQL 测试不替代这些边界。

@@ -144,7 +144,7 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             raise BizError(ErrorCode.PARAMS_ERROR, "附件已经发送，请勿重复附加")
         attachments.append(attachment)
     history = [{"role": m.role.lower(), "content": model_content(m.content, message_images(db, m.id))}
-               for m in messages(db, body.threadId) if m.sub_type == "text" and m.role in {"USER", "ASSISTANT"}]
+               for m in messages(db, body.threadId) if m.sub_type in {None, "text"} and m.role in {"USER", "ASSISTANT"}]
     saved = save_message(db, row, "USER", body.message)
     for attachment in attachments:
         attachment.session_id = body.threadId

@@ -36,7 +36,7 @@ class ChatMessage(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, default=id_generator.next_id)
     session_id: Mapped[str] = mapped_column("sessionId", String(64), index=True)
     role: Mapped[str] = mapped_column(String(20))
-    sub_type: Mapped[str] = mapped_column("subType", String(30), default="text")
+    sub_type: Mapped[str | None] = mapped_column("subType", String(30), default="text")
     content: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column("tokenCount", Integer, default=0)
     is_summary: Mapped[int] = mapped_column("isSummary", Integer, default=0)

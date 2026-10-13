@@ -9,7 +9,7 @@ from pathlib import Path
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
@@ -261,11 +261,15 @@ def test_server_allocates_thread_id_for_missing_or_blank_legacy_requests(chat_ap
 
 
 def test_existing_java_history_and_uploaded_objects_are_adopted_without_checkpoint_deserialization(chat_api):
-    from web.chat.models import ChatMessage, ChatSession, LegacyUpload
+    from web.chat.models import ChatSession, LegacyUpload
 
     def seed(db):
         db.add(ChatSession(session_id="java-history", user_id=7, message_count=1, checkpoint_data=b"java-serialized-not-python"))
-        db.add(ChatMessage(id=9007199254740993, session_id="java-history", role="USER", content="暗号是橙子"))
+        # Java saveUserMessage writes SQL NULL, not the Python model's default 'text'.
+        db.execute(text("INSERT INTO t_agent_message "
+            "(id, sessionId, role, subType, content, tokenCount, isSummary, createdTime) "
+            "VALUES (9007199254740993, 'java-history', 'USER', NULL, :content, 0, 0, CURRENT_TIMESTAMP)"),
+            {"content": "暗号是橙子"})
         db.add(LegacyUpload(id=1, task_id="java-upload", user_id=7, object_key="agent-chat/7/old.png", status=2))
 
     build, calls = chat_api
@@ -290,3 +294,26 @@ def test_batch_delete_is_atomic_and_title_generation_does_not_pollute_memory(cha
     assert client.request("DELETE", "/api/agent/sessions/batch", json={"sessionIds": ["alice", "bob"]}).json()["code"] == 40101
     assert client.get("/api/agent/history/alice").json()["code"] == 0
     assert client.request("DELETE", "/api/agent/sessions/batch", json={"sessionIds": ["alice"]}).json()["data"] == 1
+
+
+def test_real_installed_cos_sdk_is_wired_through_upload_and_unbound_cleanup(chat_api, monkeypatch):
+    import qcloud_cos
+    from web.tests.test_workflow import picture_bytes
+
+    uploaded, deleted = [], []
+    monkeypatch.setattr(qcloud_cos.CosS3Client, "put_object", lambda self, **kwargs: uploaded.append(kwargs))
+    monkeypatch.setattr(qcloud_cos.CosS3Client, "delete_object", lambda self, **kwargs: deleted.append(kwargs))
+    build, _ = chat_api
+    client = build()
+    config = client.app.state.config
+    config.cos_region, config.cos_bucket = "ap-shanghai", "fixture-000"
+    config.cos_secret_id, config.cos_secret_key = "fixture-id", "fixture-key"
+    config.cos_host = "https://fixture.invalid"
+    response = client.post("/api/agent/image/upload", files={"file": ("image.png", picture_bytes(), "image/png")}).json()
+    assert response["code"] == 0
+    url = response["data"]
+    assert url.startswith("https://fixture.invalid/agent-chat/7/")
+    assert uploaded[0]["Body"] == picture_bytes()
+    assert client.post("/api/agent/image/upload/delete", json={"url": url}).json()["data"] is True
+    assert deleted[0]["Key"] == uploaded[0]["Key"]
+    assert chat(client, "deleted-image", "不可再次使用", imageUrls=[url]).json()["code"] == 40101

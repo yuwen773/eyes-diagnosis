@@ -24,7 +24,7 @@
   ],
   "flywayMigrateAndValidate": "passed",
   "chatHttpTests": {
-    "passed": 14,
+    "passed": 15,
     "skipped": 0
   },
   "scope": "Real MySQL and Flyway; Java/model/COS doubles, not live provider or full Java startup acceptance"

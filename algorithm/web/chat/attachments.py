@@ -22,7 +22,7 @@ class CosAttachmentStore:
     def client(self):
         import qcloud_cos
 
-        return qcloud_cos.COSClient(qcloud_cos.CosConfig(Region=self.config.cos_region,
+        return qcloud_cos.CosS3Client(qcloud_cos.CosConfig(Region=self.config.cos_region,
             SecretId=self.config.cos_secret_id, SecretKey=self.config.cos_secret_key))
 
     async def put(self, data: bytes, name: str, user_id: int) -> str:

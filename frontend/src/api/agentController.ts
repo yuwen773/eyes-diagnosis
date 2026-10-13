@@ -11,7 +11,7 @@ export interface AgentChatRequest {
 export interface MessageVO {
   id: string
   role: string
-  subType: string
+  subType: string | null
   content: string
   isSummary: boolean
   createdTime: string
