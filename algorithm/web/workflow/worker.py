@@ -42,6 +42,7 @@ class Claim:
     envelope: InferenceEnvelope | None
     envelope_missing: bool
     quality_decision: str | None
+    final_decision: str | None
 
 
 def database_now(db) -> datetime:
@@ -107,6 +108,14 @@ class Worker:
                 ReviewTask.graph_hash == workflow.graph_hash,
                 ReviewTask.action_version == workflow.action_version,
             ))
+            final_review = db.scalar(select(ReviewTask).where(
+                ReviewTask.workflow_id == workflow.workflow_id,
+                ReviewTask.review_type == "FINAL_CLINICAL_REVIEW", ReviewTask.status == "SUBMITTED",
+                ReviewTask.envelope_id == workflow.inference_envelope_id,
+                ReviewTask.graph_version == workflow.graph_version,
+                ReviewTask.graph_hash == workflow.graph_hash,
+                ReviewTask.action_version == workflow.action_version,
+            ))
             return Claim(job.job_id, workflow.workflow_id, job.lease_token,
                          job.lease_version, workflow.version, upload.checkpoint_id,
                          upload.image_bytes,
@@ -115,7 +124,8 @@ class Worker:
                          workflow.inference_epoch,
                          InferenceEnvelope.model_validate(row) if row else None,
                          bool(workflow.inference_envelope_id and row is None),
-                         review.decision if review else None)
+                         review.decision if review else None,
+                         final_review.decision if final_review else None)
 
     def _owned_rows(self, db, claim: Claim):
         job = db.scalar(select(Job).where(Job.job_id == claim.job_id).with_for_update())
@@ -161,6 +171,7 @@ class Worker:
         graph = build_graph(saver, claim.image_bytes, inference=self.inference,
                             committed_envelope=claim.envelope, pending_envelopes=pending_envelopes,
                             inference_epoch=claim.inference_epoch, quality_decision=claim.quality_decision,
+                            final_decision=claim.final_decision,
                             evidence=EvidenceRetriever(self.sessions, self.inference.config),
                             explanation_model=ExplanationModel(self.inference.config))
         config = checkpoint_config(claim.workflow_id, "", claim.checkpoint_id or "")

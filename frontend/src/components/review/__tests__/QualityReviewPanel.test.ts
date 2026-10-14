@@ -26,6 +26,37 @@ beforeEach(() => {
 })
 
 describe('doctor quality review page', () => {
+  it.each([
+    ['VALID_PREDICTION', ['CONFIRM_AI_ASSESSMENT', 'CORRECT_AI_ASSESSMENT', 'INCONCLUSIVE']],
+    ['SAFETY_ABSTENTION', ['CONFIRM_ABSTENTION', 'PROVIDE_INDEPENDENT_REVIEW', 'INCONCLUSIVE']],
+  ] as const)('renders the final %s matrix and submits the frozen explanation version', async (outcome, decisions) => {
+    route.query = { task: 'clinical-1' }
+    const clinical: api.ReviewDetail = { ...detail, reviewTaskId: 'clinical-1',
+      reviewType: 'FINAL_CLINICAL_REVIEW', status: 'CLAIMED', taskVersion: '1',
+      inferenceOutcome: outcome, allowedDecisions: [...decisions],
+      modelAssessment: outcome === 'VALID_PREDICTION' ? { diseaseCode: 'glaucoma', calibratedProbability: 91 } : null,
+      explanation: { snapshotId: outcome === 'VALID_PREDICTION' ? 'snapshot-1' : null,
+        revision: outcome === 'VALID_PREDICTION' ? '1' : null, publicationStatus: outcome === 'VALID_PREDICTION' ? 'VALIDATED' : 'NONE',
+        content: null } }
+    vi.mocked(api.listQualityReviews).mockResolvedValue([clinical])
+    vi.mocked(api.getQualityReview).mockResolvedValue(clinical)
+    const wrapper = mount(QualityReviewPanel)
+    await flushPromises()
+    expect(wrapper.text()).toContain('最终临床复核')
+    expect(wrapper.find('input[value="APPROVE_CONTINUE"]').exists()).toBe(false)
+    expect(wrapper.findAll('input[type="radio"]').map(input => input.attributes('value'))).toEqual([...decisions])
+    await wrapper.get('input[value="INCONCLUSIVE"]').setValue()
+    vi.mocked(api.getQualityReview).mockResolvedValue({ ...clinical, status: 'SUBMITTED', allowedDecisions: [], decisionCode: 'INCONCLUSIVE' })
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(api.submitQualityReview).toHaveBeenCalledWith('clinical-1', {
+      expectedTaskVersion: '1', expectedWorkflowVersion: '6', expectedExplanationSnapshotId: clinical.explanation?.snapshotId,
+      expectedExplanationRevision: clinical.explanation?.revision, decisionCode: 'INCONCLUSIVE', reasonCode: 'INCONCLUSIVE' })
+    expect(wrapper.text()).toContain('不代表患者已授权保存')
+    expect(wrapper.find('form').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('claims a task then submits only a quality decision with current versions', async () => {
     const wrapper = mount(QualityReviewPanel)
     await flushPromises()

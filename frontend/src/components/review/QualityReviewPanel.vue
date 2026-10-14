@@ -2,13 +2,14 @@
 import { useQualityReviews } from '@/composables/useQualityReviews'
 import ReviewTaskList from './ReviewTaskList.vue'
 import QualityReviewDetail from './QualityReviewDetail.vue'
+import FinalClinicalReviewDetail from './FinalClinicalReviewDetail.vue'
 const { tasks, detail, busy, error, select, refresh, act } = useQualityReviews()
 </script>
 
 <template>
   <main class="quality-review" :aria-busy="busy">
-    <h1 class="review-title">医生质量复核</h1>
-    <p class="review-note">这是医生复核，不是用户保存授权。允许继续不等于确认疾病预测，也不会自动保存正式诊断记录。</p>
+    <h1 class="review-title">医生复核</h1>
+    <p class="review-note">这是医生复核，不是用户保存授权。图像质量与最终临床复核分别处理；医生决定不会自动保存正式诊断记录。</p>
     <button type="button" class="refresh" :disabled="busy" @click="refresh">{{ busy ? '正在加载…' : '刷新复核任务' }}</button>
     <p v-if="error" class="review-error" role="alert">{{ error }}</p>
     <section v-if="detail?.supplementaryNotes?.length" aria-label="用户补充说明">
@@ -17,8 +18,9 @@ const { tasks, detail, busy, error, select, refresh, act } = useQualityReviews()
     </section>
     <div class="review-columns">
       <ReviewTaskList :tasks="tasks" :selected-id="detail?.reviewTaskId" :busy="busy" @select="select" />
-      <QualityReviewDetail v-if="detail" :key="detail.reviewTaskId" :task="detail" :busy="busy" @claim="act()" @submit="act" />
-      <p v-else-if="!error && !busy">请选择一个质量复核任务查看图片与来源。</p>
+      <FinalClinicalReviewDetail v-if="detail?.reviewType === 'FINAL_CLINICAL_REVIEW'" :key="detail.reviewTaskId" :task="detail" :busy="busy" @claim="act()" @submit="act" />
+      <QualityReviewDetail v-else-if="detail" :key="detail.reviewTaskId" :task="detail" :busy="busy" @claim="act()" @submit="act" />
+      <p v-else-if="!error && !busy">请选择质量或最终临床复核任务查看图片与来源。</p>
     </div>
     <p class="review-note">列表最多显示 100 项待处理任务；处理后刷新可继续查看其余任务。</p>
   </main>

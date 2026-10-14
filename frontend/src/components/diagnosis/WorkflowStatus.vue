@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import type { WorkflowView, WorkflowStatus } from '@/api/workflowController'
 import WorkflowEvidence from './WorkflowEvidence.vue'
 import WorkflowExplanation from './WorkflowExplanation.vue'
+import { decisionLabels } from '@/components/review/decisions'
+import ReviewAudit from '@/components/review/ReviewAudit.vue'
 
 const props = defineProps<{ workflow: WorkflowView }>()
 const labels: Record<WorkflowStatus, string> = {
@@ -28,6 +30,10 @@ const reason = computed(() => ({
   EXPLANATION_WITHHELD: '解释未满足发布条件，本次不展示解释正文。',
   SOURCE_CHANGED_DURING_PUBLICATION: '参考资料状态发生变化，正在重新检查发布条件。',
   FINAL_CLINICAL_REVIEW_REQUIRED: '本次分析需要医生最终临床复核，任务已暂停。复核完成前不展示解释，也不会自动保存正式诊断。',
+  AI_ASSESSMENT_CORRECTED: '医生已纠正 AI 评估，原 AI 解释已扣留。请咨询眼科医生。',
+  INCONCLUSIVE: '医生无法判断，本次仅提供受限结果。请咨询眼科医生。',
+  ABSTENTION_CONFIRMED: '医生已确认安全拒绝，本次不提供疾病判断。',
+  INDEPENDENT_REVIEW_PROVIDED: '医生已提供独立复核，本次保留受限结果，不发布 AI 疾病判断。',
   OOD: '图片超出模型适用范围，本次不提供疾病判断。建议咨询专业医生。',
   LOW_CONFIDENCE: '模型无法可靠判断，本次不提供疾病判断。建议咨询专业医生。',
   MODEL_POLICY_REJECTED: '本次分析未满足模型可靠性要求，不提供疾病判断。建议咨询专业医生。',
@@ -45,6 +51,7 @@ const nodeLabels: Record<string, string> = {
   evidenceRetrieval: '已审核参考资料检索', evidenceRewrite: '受控查询改写', evidenceValidation: '参考来源校验',
   clinicalRiskPrecheck: '风险初筛', clinicalRiskFinal: '最终风险判断', explanationDraft: '解释准备',
   explanationClaimValidation: '解释声明校验', explanationPublication: '解释发布检查',
+  finalClinicalReview: '医生最终临床决定处理',
 }
 const published = computed(() => props.workflow.status === 'COMPLETED'
   && props.workflow.explanation?.publicationStatus === 'PUBLISHED'
@@ -65,7 +72,12 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
       此决定不确认疾病预测，也不代表您已授权保存正式诊断。
     </p>
     <p v-else-if="workflow.qualityReview?.status === 'CLAIMED'" class="status-reason">医生已领取质量复核任务，请等待复核决定。</p>
+    <p v-if="workflow.finalReview?.decisionCode" class="status-reason">
+      医生最终临床复核：{{ decisionLabels[workflow.finalReview.decisionCode] }}。此决定不代表您已授权保存正式诊断。
+    </p>
+    <p v-else-if="workflow.finalReview?.status === 'CLAIMED'" class="status-reason">医生已领取最终临床复核任务，请等待复核决定。</p>
     <p v-if="reason" class="status-reason">{{ reason }}</p>
+    <ReviewAudit :entries="workflow.finalReview?.audit ?? []" />
     <WorkflowExplanation v-if="published && workflow.result" :explanation="workflow.result" />
     <WorkflowEvidence v-else-if="workflow.evidence" :evidence="workflow.evidence" />
     <ul v-if="workflow.progress.completed.length" class="completed-nodes">

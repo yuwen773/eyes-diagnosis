@@ -1,0 +1,56 @@
+{
+  "boundary": "Actual Vue/Chromium/FastAPI HTTP/LangGraph/SQL persistence; controlled SQLite, Java, Chroma, embeddings and models",
+  "matrix": [
+    {
+      "mode": "valid",
+      "decision": "CONFIRM_AI_ASSESSMENT",
+      "status": "COMPLETED",
+      "publication": "PUBLISHED",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    },
+    {
+      "mode": "valid",
+      "decision": "CORRECT_AI_ASSESSMENT",
+      "status": "COMPLETED_LIMITED",
+      "publication": "WITHHELD",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    },
+    {
+      "mode": "valid",
+      "decision": "INCONCLUSIVE",
+      "status": "COMPLETED_LIMITED",
+      "publication": "WITHHELD",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    },
+    {
+      "mode": "abstention",
+      "decision": "CONFIRM_ABSTENTION",
+      "status": "COMPLETED_LIMITED",
+      "publication": "NONE",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    },
+    {
+      "mode": "abstention",
+      "decision": "PROVIDE_INDEPENDENT_REVIEW",
+      "status": "COMPLETED_LIMITED",
+      "publication": "NONE",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    },
+    {
+      "mode": "abstention",
+      "decision": "INCONCLUSIVE",
+      "status": "COMPLETED_LIMITED",
+      "publication": "NONE",
+      "replayOnce": true,
+      "envelopeUnchanged": true
+    }
+  ],
+  "conflict": true,
+  "reload": true,
+  "pageErrors": []
+}

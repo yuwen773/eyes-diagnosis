@@ -2,7 +2,8 @@
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from web.schemas.review import ReviewAuditEntry
 
 
 class WorkflowProgress(BaseModel):
@@ -19,6 +20,14 @@ class QualityReviewView(BaseModel):
     status: Literal["OPEN", "CLAIMED", "SUBMITTED"]
     decisionCode: Literal["APPROVE_CONTINUE", "REJECT_RESUBMIT"] | None
     reasonCode: str | None
+
+
+class FinalReviewView(BaseModel):
+    status: Literal["OPEN", "CLAIMED", "SUBMITTED"]
+    decisionCode: Literal["CONFIRM_AI_ASSESSMENT", "CORRECT_AI_ASSESSMENT", "INCONCLUSIVE",
+                          "CONFIRM_ABSTENTION", "PROVIDE_INDEPENDENT_REVIEW"] | None
+    reasonCode: str | None
+    audit: list[ReviewAuditEntry] = Field(default_factory=list)
 
 
 class EvidenceCitationView(BaseModel):
@@ -85,6 +94,7 @@ class WorkflowStatusView(BaseModel):
     stopReasonCode: str | None
     qualityGate: Literal["PASS", "REJECT", "REVIEW"] | None = None
     qualityReview: QualityReviewView | None = None
+    finalReview: FinalReviewView | None = None
     evidence: EvidenceView | None = None
     explanation: ExplanationView
     resultAvailability: ResultAvailability

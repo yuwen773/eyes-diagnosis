@@ -14,6 +14,7 @@ from web.evidence import evidence_view
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
 from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
 from web.workflow.explanation import patient_explanation
+from web.workflow.review import review_audit
 
 
 def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
@@ -23,6 +24,8 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
     inference = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
     review = db.scalar(select(ReviewTask).where(ReviewTask.workflow_id == workflow.workflow_id,
                                                ReviewTask.review_type == "IMAGE_QUALITY_GATE"))
+    final_review = db.scalar(select(ReviewTask).where(ReviewTask.workflow_id == workflow.workflow_id,
+                                                     ReviewTask.review_type == "FINAL_CLINICAL_REVIEW"))
     evidence = json.loads(upload.evidence_snapshot) if upload.evidence_snapshot else None
     explanation, result = patient_explanation(db, workflow, evidence)
     return {
@@ -34,6 +37,8 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
         "qualityGate": inference.quality_outcome if inference and "imageQuality" in completed else None,
         "qualityReview": {"status": review.status, "decisionCode": review.decision,
                           "reasonCode": review.reason} if review else None,
+        "finalReview": {"status": final_review.status, "decisionCode": final_review.decision,
+                        "reasonCode": final_review.reason, "audit": review_audit(db, workflow.workflow_id)} if final_review else None,
         "evidence": evidence_view(db, evidence) if evidence else None,
         "explanation": explanation,
         "resultAvailability": {"patientVisible": result is not None,

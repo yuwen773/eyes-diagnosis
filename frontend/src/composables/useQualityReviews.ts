@@ -1,7 +1,8 @@
 import { onScopeDispose, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { claimQualityReview, getQualityReview, listQualityReviews, submitQualityReview,
-  type QualityDecision, type ReviewDetail, type ReviewSummary } from '@/api/reviewController'
+  type ReviewDecision, type ReviewDetail, type ReviewSummary, type ReviewVersions } from '@/api/reviewController'
+import { decisionReasons } from '@/components/review/decisions'
 
 export function useQualityReviews() {
   const route = useRoute()
@@ -46,16 +47,20 @@ export function useQualityReviews() {
     if (!busy.value) await router.replace({ query: { ...route.query, task: id } })
   }
 
-  async function act(decision?: QualityDecision) {
+  async function act(decision?: ReviewDecision) {
     if (!detail.value || busy.value) return
     const task = detail.value
     const current = generation
     busy.value = true
     error.value = ''
-    const versions = { expectedTaskVersion: task.taskVersion, expectedWorkflowVersion: task.workflowVersion }
+    const versions: ReviewVersions = { expectedTaskVersion: task.taskVersion, expectedWorkflowVersion: task.workflowVersion }
+    if (task.reviewType === 'FINAL_CLINICAL_REVIEW') {
+      versions.expectedExplanationSnapshotId = task.explanation?.snapshotId ?? null
+      versions.expectedExplanationRevision = task.explanation?.revision ?? null
+    }
     try {
       if (decision) await submitQualityReview(task.reviewTaskId, { ...versions, decisionCode: decision,
-        reasonCode: decision === 'APPROVE_CONTINUE' ? 'QUALITY_APPROVED' : 'QUALITY_REJECTED' })
+        reasonCode: decisionReasons[decision] })
       else await claimQualityReview(task.reviewTaskId, versions)
       if (!disposed && current === generation) await refresh()
     } catch (cause) {

@@ -1,4 +1,4 @@
-"""Versioned doctor-only quality decisions; routing remains in LangGraph."""
+"""Versioned doctor-only quality and final decisions; routing remains in LangGraph."""
 
 import json
 from uuid import uuid4
@@ -12,22 +12,26 @@ from web.chat.supplement import doctor_notes
 from web.deps import get_db
 from web.response import BaseResponse
 from web.routers.workflow import envelope, workflow_user
-from web.schemas.review import QualityDecision, ReviewDetail, ReviewSummary, ReviewVersions
+from web.schemas.review import ReviewSubmission, ReviewDetail, ReviewSummary, ReviewVersions
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
-from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
+from web.workflow.models import (ExplanationSnapshot, GraphCheckpoint, InferenceEnvelopeRow, Job,
+    ReviewTask, UploadInput, Workflow, WorkflowEvent)
+from web.workflow.checkpoint import MysqlCheckpointSaver
+from web.workflow.review import allowed_decisions, DECISION_REASONS, review_audit
 from web.workflow.worker import database_now
+from web.evidence import validate_evidence
 
-router = APIRouter(prefix="/reviews/tasks", tags=["doctor-quality-review"])
+router = APIRouter(prefix="/reviews/tasks", tags=["doctor-review"])
 
 
 def review_doctor(user: LoginUser = Depends(workflow_user)) -> LoginUser:
     if user.userRole != "doctor":
-        raise HTTPException(403, "仅医生可执行质量复核")
+        raise HTTPException(403, "仅医生可执行复核")
     return user
 
 
 def authorize(task: ReviewTask, workflow: Workflow, user: LoginUser) -> None:
-    if task.review_type != "IMAGE_QUALITY_GATE" or workflow.owner_user_id == int(user.id):
+    if task.review_type not in {"IMAGE_QUALITY_GATE", "FINAL_CLINICAL_REVIEW"} or workflow.owner_user_id == int(user.id):
         raise HTTPException(403, "无权复核此任务，禁止审核自己的病例")
     if task.assigned_doctor_id is not None and task.assigned_doctor_id != int(user.id):
         raise HTTPException(403, "任务已由其他医生领取")
@@ -63,7 +67,8 @@ def check_current(task: ReviewTask, workflow: Workflow, body: ReviewVersions, db
     if (task.version != int(body.expectedTaskVersion) or
             task.workflow_version != int(body.expectedWorkflowVersion) or
             workflow.version != task.workflow_version or workflow.status != "WAITING_HUMAN_REVIEW" or
-            workflow.stop_reason != "QUALITY_REVIEW_REQUIRED" or
+            workflow.stop_reason != ("QUALITY_REVIEW_REQUIRED" if task.review_type == "IMAGE_QUALITY_GATE"
+                                     else "FINAL_CLINICAL_REVIEW_REQUIRED") or
             (workflow.graph_version, workflow.graph_hash, workflow.action_version) !=
             (GRAPH_VERSION, GRAPH_HASH, ACTION_VERSION) or
             (task.graph_version, task.graph_hash, task.action_version) !=
@@ -71,6 +76,43 @@ def check_current(task: ReviewTask, workflow: Workflow, body: ReviewVersions, db
             task.envelope_id != workflow.inference_envelope_id or upload is None or
             task.checkpoint_id != upload.checkpoint_id):
         raise HTTPException(409, "复核任务、工作流或图版本已变化，请刷新后重试")
+    check_explanation_version(task, body, db)
+    row = db.get(InferenceEnvelopeRow, task.envelope_id)
+    if row is None or row.workflow_id != task.workflow_id or not allowed_decisions(task.review_type, row.outcome):
+        raise HTTPException(409, "推理情形不允许人工复核")
+    if task.review_type == "FINAL_CLINICAL_REVIEW":
+        snapshot = bound_explanation(task, db)
+        if row.outcome == "VALID_PREDICTION" and snapshot["publicationStatus"] != "VALIDATED":
+            raise HTTPException(409, "待复核解释不再处于已校验状态")
+
+
+def bound_explanation(task: ReviewTask, db: Session) -> dict:
+    """Read the exact snapshot bound to the review checkpoint, including on replay."""
+    checkpoint = db.get(GraphCheckpoint, (task.thread_id, "", task.checkpoint_id))
+    if checkpoint is None:
+        raise HTTPException(409, "复核恢复信息不可用")
+    values = MysqlCheckpointSaver(None).serde.loads_typed((checkpoint.value_type, checkpoint.value))["channel_values"]
+    frozen = values.get("explanation")
+    if frozen is None:
+        return {"snapshotId": None, "revision": None, "publicationStatus": "NONE", "content": None}
+    row = db.scalar(select(ExplanationSnapshot).where(
+        ExplanationSnapshot.snapshot_id == frozen["snapshotId"]).with_for_update().execution_options(populate_existing=True))
+    if (row is None or row.workflow_id != task.workflow_id or row.revision != frozen["revision"] or
+            json.loads(row.content) != frozen["content"] or
+            frozen["status"] != "VALIDATED" or row.validation is None or
+            json.loads(row.validation) != frozen["validation"] or
+            frozen["content"]["inferenceEnvelopeId"] != task.envelope_id):
+        raise HTTPException(409, "复核解释快照已变化或不可用")
+    return {"snapshotId": row.snapshot_id, "revision": str(row.revision),
+            "publicationStatus": row.publication_status, "content": json.loads(row.content)}
+
+
+def check_explanation_version(task: ReviewTask, body: ReviewVersions, db: Session) -> None:
+    if task.review_type == "FINAL_CLINICAL_REVIEW":
+        snapshot = bound_explanation(task, db)
+        if (body.expectedExplanationSnapshotId != snapshot["snapshotId"] or
+                body.expectedExplanationRevision != snapshot["revision"]):
+            raise HTTPException(409, "解释版本已变化，请刷新后复核")
 
 
 def audit(db: Session, task: ReviewTask, workflow: Workflow, user: LoginUser, action: str, now) -> None:
@@ -78,13 +120,15 @@ def audit(db: Session, task: ReviewTask, workflow: Workflow, user: LoginUser, ac
         sequence=workflow.version + 1, event_type=action, actor_type="DOCTOR", actor_id=str(user.id),
         version=workflow.version, segment=workflow.segment, reason=task.reason, occurred_at=now,
         payload=json.dumps({"reviewTaskId": task.task_id, "taskVersion": str(task.version),
-                            "decisionCode": task.decision, "inferenceEnvelopeId": task.envelope_id})))
+                            "decisionCode": task.decision, "inferenceEnvelopeId": task.envelope_id,
+                            "explanation": {k: v for k, v in bound_explanation(task, db).items() if k != "content"}
+                            if task.review_type == "FINAL_CLINICAL_REVIEW" else None})))
 
 
 @router.get("", response_model=BaseResponse[list[ReviewSummary]])
 def list_tasks(user: LoginUser = Depends(review_doctor), db: Session = Depends(get_db)) -> dict:
     tasks = db.scalars(select(ReviewTask).join(Workflow, Workflow.workflow_id == ReviewTask.workflow_id)
-        .where(ReviewTask.review_type == "IMAGE_QUALITY_GATE",
+        .where(ReviewTask.review_type.in_(["IMAGE_QUALITY_GATE", "FINAL_CLINICAL_REVIEW"]),
                ReviewTask.status.in_(["OPEN", "CLAIMED"]), Workflow.owner_user_id != int(user.id),
                ReviewTask.graph_version == GRAPH_VERSION, ReviewTask.graph_hash == GRAPH_HASH,
                ReviewTask.action_version == ACTION_VERSION,
@@ -99,15 +143,24 @@ def detail(taskId: str, user: LoginUser = Depends(review_doctor), db: Session = 
     row = db.get(InferenceEnvelopeRow, task.envelope_id)
     if row is None or row.workflow_id != task.workflow_id:
         raise HTTPException(409, "原推理结果包不可用")
+    upload = db.get(UploadInput, task.workflow_id)
+    final = task.review_type == "FINAL_CLINICAL_REVIEW"
     return envelope({**summary(task), "question": workflow.question or "",
         "supplementaryNotes": doctor_notes(db, task.workflow_id),
-        "allowedDecisions": ["APPROVE_CONTINUE", "REJECT_RESUBMIT"] if task.status != "SUBMITTED" else [],
+        "allowedDecisions": allowed_decisions(task.review_type, row.outcome) if task.status != "SUBMITTED" else [],
         "inferenceEnvelopeId": row.envelope_id, "inferenceEpoch": str(row.inference_epoch),
         "inputDigest": row.input_digest, "qualityOutcome": row.quality_outcome,
         "qualityScore": row.quality_score, "qualityReasons": json.loads(row.quality_reasons),
         "modelVersion": row.model_version, "modelWeightFingerprint": row.model_fingerprint,
         "preprocessVersion": row.preprocess_version, "inferencePolicyVersion": row.policy_version,
-        "graphDefinitionVersion": task.graph_version})
+        "graphDefinitionVersion": task.graph_version, "inferenceOutcome": row.outcome,
+        "abstentionReason": row.abstention_reason if final else None,
+        "modelAssessment": json.loads(row.prediction_snapshot) if final and row.prediction_snapshot else None,
+        "evidence": validate_evidence(db, json.loads(upload.evidence_snapshot))
+                    if final and upload and upload.evidence_snapshot else None,
+        "audit": review_audit(db, task.workflow_id) if final else [],
+        "explanation": bound_explanation(task, db) if final else {
+            "snapshotId": None, "revision": None, "publicationStatus": "NONE", "content": None}})
 
 
 @router.get("/{taskId}/image")
@@ -134,20 +187,25 @@ def claim(taskId: str, body: ReviewVersions, user: LoginUser = Depends(review_do
     workflow.version += 1
     task.workflow_version = workflow.version
     task.updated_at = workflow.updated_at = now
-    audit(db, task, workflow, user, "QUALITY_REVIEW_CLAIMED", now)
+    audit(db, task, workflow, user,
+          "QUALITY_REVIEW_CLAIMED" if task.review_type == "IMAGE_QUALITY_GATE" else "FINAL_REVIEW_CLAIMED", now)
     db.commit()
     return envelope(summary(task))
 
 
 @router.post("/{taskId}/submit", response_model=BaseResponse[ReviewSummary])
-def submit(taskId: str, body: QualityDecision, user: LoginUser = Depends(review_doctor),
+def submit(taskId: str, body: ReviewSubmission, user: LoginUser = Depends(review_doctor),
            db: Session = Depends(get_db)) -> dict:
     task, workflow = load_task(db, taskId, user)
-    if body.reasonCode != {"APPROVE_CONTINUE": "QUALITY_APPROVED",
-                           "REJECT_RESUBMIT": "QUALITY_REJECTED"}[body.decisionCode]:
+    row = db.get(InferenceEnvelopeRow, task.envelope_id)
+    if row is None or row.workflow_id != task.workflow_id:
+        raise HTTPException(409, "原推理结果包不可用")
+    if (body.decisionCode not in allowed_decisions(task.review_type, row.outcome) or
+            body.reasonCode != DECISION_REASONS[body.decisionCode]):
         raise HTTPException(422, "决定与理由不兼容")
     # An exact replay is a receipt, even after the worker advances the workflow.
     if task.status == "SUBMITTED":
+        check_explanation_version(task, body, db)
         if (task.submitted_doctor_id == int(user.id) and task.decision == body.decisionCode and
                 task.reason == body.reasonCode and task.version == int(body.expectedTaskVersion) + 1 and
                 task.workflow_version == int(body.expectedWorkflowVersion)):
@@ -168,6 +226,7 @@ def submit(taskId: str, body: QualityDecision, user: LoginUser = Depends(review_
     db.add(Job(job_id=uuid4().hex, workflow_id=workflow.workflow_id, job_type="RESUME",
                epoch=last_job.epoch + 1, thread_id=task.thread_id, checkpoint_id=task.checkpoint_id,
                available_at=now, created_at=now, updated_at=now))
-    audit(db, task, workflow, user, "QUALITY_REVIEW_SUBMITTED", now)
+    audit(db, task, workflow, user,
+          "QUALITY_REVIEW_SUBMITTED" if task.review_type == "IMAGE_QUALITY_GATE" else "FINAL_REVIEW_SUBMITTED", now)
     db.commit()
     return envelope(summary(task))

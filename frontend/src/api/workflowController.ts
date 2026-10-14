@@ -22,6 +22,9 @@ export interface WorkflowView {
   qualityGate: 'PASS' | 'REJECT' | 'REVIEW' | null
   qualityReview: { status: 'OPEN' | 'CLAIMED' | 'SUBMITTED';
     decisionCode: 'APPROVE_CONTINUE' | 'REJECT_RESUBMIT' | null; reasonCode: string | null } | null
+  finalReview?: { status: 'OPEN' | 'CLAIMED' | 'SUBMITTED';
+    decisionCode: import('./reviewController').FinalDecision | null; reasonCode: string | null;
+    audit?: import('./reviewController').ReviewAuditEntry[] } | null
   resultAvailability: { patientVisible: boolean; doctorReviewRequired: boolean }
   explanation?: { publicationStatus: 'NONE' | 'DRAFT' | 'VALIDATED' | 'PUBLISHED' | 'REJECTED' | 'WITHHELD';
     snapshotId: string | null; revision: string | null; validationStatus: 'VALIDATED' | 'REJECTED' | null }

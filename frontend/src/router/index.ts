@@ -52,7 +52,7 @@ const router = createRouter({
         },
         {
           path: 'doctor/reviews',
-          name: '医生质量复核',
+          name: '医生复核',
           component: () => import('@/pages/doctor/QualityReviewPage.vue'),
           meta: { icon: 'MedicineBoxOutlined', access: ACCESS_ENUM.DOCTOR },
         },

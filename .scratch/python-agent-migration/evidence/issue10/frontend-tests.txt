@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/frontend
+
+
+ Test Files  10 passed (10)
+      Tests  36 passed (36)
+   Start at  21:43:10
+   Duration  5.02s (transform 4.67s, setup 0ms, import 9.95s, tests 498ms, environment 30.80s)
+

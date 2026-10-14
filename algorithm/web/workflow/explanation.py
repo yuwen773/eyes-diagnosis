@@ -152,15 +152,16 @@ def validate_claims(explanation: dict, batch: dict) -> dict:
         "reason": "EXPLANATION_CLAIMS_REJECTED" if issues else None}
 
 
-def publication_decision(explanation: dict, batch: dict, risk: dict) -> dict:
+def publication_decision(explanation: dict, batch: dict, risk: dict, *, review_confirmed: bool = False) -> dict:
     if (explanation["status"] != "VALIDATED" or
             explanation["validation"]["status"] != "VALIDATED"):
         return {**explanation, "status": "REJECTED", "reason": "EXPLANATION_CLAIMS_REJECTED"}
     if batch["status"] != "SUFFICIENT" or batch["citations"] != explanation["content"]["citations"]:
         return {**explanation, "status": "WITHHELD", "reason": "EXPLANATION_SOURCE_CHANGED"}
-    if risk["disposition"] == "FINAL_REVIEW_REQUIRED":
+    if risk["disposition"] == "FINAL_REVIEW_REQUIRED" and not review_confirmed:
         return {**explanation, "reason": "FINAL_CLINICAL_REVIEW_REQUIRED"}
-    if risk["disposition"] != "AUTO_PUBLICATION_ELIGIBLE":
+    if risk["disposition"] != "AUTO_PUBLICATION_ELIGIBLE" and not (
+            risk["disposition"] == "FINAL_REVIEW_REQUIRED" and review_confirmed):
         return {**explanation, "status": "WITHHELD", "reason": "EXPLANATION_WITHHELD"}
     return {**explanation, "status": "PUBLISHED", "reason": None}
 

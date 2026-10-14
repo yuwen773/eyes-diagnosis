@@ -10,13 +10,14 @@ from langgraph.graph import END, START, StateGraph
 from PIL import Image, UnidentifiedImageError
 
 from web.workflow.inference import InferenceEnvelope, WorkflowInference
+from web.workflow.review import allowed_decisions, DECISION_REASONS
 from web.evidence import EvidenceRetriever
 from web.workflow.explanation import (
     ExplanationModel, make_draft, publication_decision, risk_assessment, validate_claims,
 )
 
-GRAPH_VERSION = "upload-validated-explanation-v5"
-ACTION_VERSION = "upload-validated-explanation-v5"
+GRAPH_VERSION = "upload-final-clinical-review-v6"
+ACTION_VERSION = "upload-final-clinical-review-v6"
 
 
 class UploadState(TypedDict):
@@ -39,6 +40,7 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 committed_envelope: InferenceEnvelope | None = None,
                 pending_envelopes: list[InferenceEnvelope] | None = None,
                 inference_epoch: int = 0, quality_decision: str | None = None,
+                final_decision: str | None = None,
                 evidence: EvidenceRetriever | None = None,
                 explanation_model: ExplanationModel | None = None):
     def validate_image(state: UploadState) -> dict:
@@ -105,8 +107,10 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     def vision_exposure(state: UploadState) -> dict:
         envelope = shared_envelope(state)
         abstained = envelope.outcome == "SAFETY_ABSTENTION"
-        return {"status": "COMPLETED_LIMITED" if abstained else "RUNNING",
-                "reason": envelope.abstention_reason,
+        waiting = abstained and json.loads(envelope.confidence_snapshot or "{}").get("requiresReview", False)
+        return {"status": "WAITING_HUMAN_REVIEW" if waiting else "COMPLETED_LIMITED" if abstained else "RUNNING",
+                "reason": "FINAL_CLINICAL_REVIEW_REQUIRED" if waiting else envelope.abstention_reason,
+                "waiting_review": waiting, "review_type": "FINAL_CLINICAL_REVIEW" if waiting else "",
                 "exposure_status": ("WITHHELD_BY_OOD" if envelope.abstention_reason == "OOD"
                                     else "WITHHELD_BY_ABSTENTION") if abstained else "AVAILABLE",
                 "completed": [*state["completed"], "visionExposure"]}
@@ -177,6 +181,28 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 "waiting_review": waiting, "review_type": "FINAL_CLINICAL_REVIEW" if waiting else "",
                 "completed": [*state["completed"], "explanationPublication"]}
 
+    def final_review(state: UploadState) -> dict:
+        envelope = shared_envelope(state)
+        if final_decision not in allowed_decisions("FINAL_CLINICAL_REVIEW", envelope.outcome):
+            raise ValueError("final review requires a compatible bound doctor decision")
+        explanation = state.get("explanation", {"status": "NONE"})
+        reason = DECISION_REASONS[final_decision]
+        updates = {}
+        if final_decision == "CONFIRM_AI_ASSESSMENT":
+            assert evidence is not None
+            batch = evidence.validate(state["evidence"])
+            # Doctor approval only releases this frozen, validated snapshot.
+            # Source validation remains mandatory; no new retrieval or drafting.
+            explanation = publication_decision(explanation, batch, state["risk"], review_confirmed=True)
+            updates["evidence"] = batch
+            reason = explanation["reason"]
+        elif explanation["status"] == "VALIDATED":
+            explanation = {**explanation, "status": "WITHHELD", "reason": reason}
+        return {**updates, "explanation": explanation, "reason": reason,
+                "status": "COMPLETED" if explanation["status"] == "PUBLISHED" else "COMPLETED_LIMITED",
+                "waiting_review": False,
+                "completed": [*state["completed"], "finalClinicalReview"]}
+
     graph = StateGraph(UploadState)
     graph.add_node("validateImage", validate_image)
     graph.add_node("inference", infer)
@@ -188,6 +214,7 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     graph.add_node("explanationDraft", draft_explanation)
     graph.add_node("explanationClaimValidation", validate_explanation)
     graph.add_node("explanationPublication", publication)
+    graph.add_node("finalClinicalReview", final_review)
     graph.add_node("evidenceRetrieval", retrieve_evidence)
     graph.add_node("evidenceRewrite", rewrite_evidence)
     graph.add_node("evidenceValidation", validate_sources)
@@ -201,8 +228,9 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                                  "WAITING_HUMAN_REVIEW": "qualityReview"})
     graph.add_conditional_edges("qualityReview", lambda state: state["status"] == "RUNNING",
                                 {True: "visionExposure", False: END})
-    graph.add_conditional_edges("visionExposure", lambda state: state["status"] == "RUNNING",
-                                {True: "clinicalRiskPrecheck", False: END})
+    graph.add_conditional_edges("visionExposure", lambda state: state["status"],
+                                {"RUNNING": "clinicalRiskPrecheck", "COMPLETED_LIMITED": END,
+                                 "WAITING_HUMAN_REVIEW": "finalClinicalReview"})
     graph.add_conditional_edges("clinicalRiskPrecheck",
                                 lambda state: state["risk"]["disposition"] == "PROCEED_TO_EVIDENCE",
                                 {True: "evidenceRetrieval", False: END})
@@ -217,12 +245,14 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                                 {True: "explanationClaimValidation", False: END})
     graph.add_conditional_edges("explanationClaimValidation", lambda state: state["status"] == "RUNNING",
                                 {True: "explanationPublication", False: END})
-    graph.add_edge("explanationPublication", END)
+    graph.add_conditional_edges("explanationPublication", lambda state: state["waiting_review"],
+                                {True: "finalClinicalReview", False: END})
+    graph.add_edge("finalClinicalReview", END)
     return graph.compile(checkpointer=checkpointer,
                          interrupt_after=["validateImage", "inference", "imageQuality",
                                           "qualityReview", "visionExposure", "clinicalRiskPrecheck", "evidenceRetrieval",
                                           "evidenceRewrite", "evidenceValidation", "clinicalRiskFinal", "explanationDraft",
-                                          "explanationClaimValidation", "explanationPublication"])
+                                          "explanationClaimValidation", "explanationPublication", "finalClinicalReview"])
 
 
 # Node semantics are versioned by ACTION_VERSION; topology is hashed as well.
