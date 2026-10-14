@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from web.auth import LoginUser
+from web.chat.supplement import doctor_notes
 from web.deps import get_db
 from web.response import BaseResponse
 from web.routers.workflow import envelope, workflow_user
@@ -99,6 +100,7 @@ def detail(taskId: str, user: LoginUser = Depends(review_doctor), db: Session = 
     if row is None or row.workflow_id != task.workflow_id:
         raise HTTPException(409, "原推理结果包不可用")
     return envelope({**summary(task), "question": workflow.question or "",
+        "supplementaryNotes": doctor_notes(db, task.workflow_id),
         "allowedDecisions": ["APPROVE_CONTINUE", "REJECT_RESUBMIT"] if task.status != "SUBMITTED" else [],
         "inferenceEnvelopeId": row.envelope_id, "inferenceEpoch": str(row.inference_epoch),
         "inputDigest": row.input_digest, "qualityOutcome": row.quality_outcome,

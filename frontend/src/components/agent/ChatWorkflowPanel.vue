@@ -5,8 +5,8 @@ import WorkflowStatus from '@/components/diagnosis/WorkflowStatus.vue'
 import { useUploadWorkflow } from '@/composables/useUploadWorkflow'
 import type { WorkflowView } from '@/api/workflowController'
 
-const props = defineProps<{ workflows: WorkflowView[]; loading: boolean }>()
-const emit = defineEmits<{ bind: [workflowId: string] }>()
+const props = defineProps<{ workflows: WorkflowView[]; loading: boolean; waiting?: boolean }>()
+const emit = defineEmits<{ bind: [workflowId: string]; supplement: [workflowId: string] }>()
 const route = useRoute()
 const router = useRouter()
 const { workflow, error, refresh } = useUploadWorkflow()
@@ -28,6 +28,7 @@ const linked = computed(() => props.workflows.some(w => w.workflowId === workflo
     <div class="task-actions">
       <button type="button" @click="refresh">刷新状态</button>
       <button v-if="workflow && !linked" type="button" :disabled="loading" @click="emit('bind', workflow.workflowId)">关联到当前对话</button>
+      <button v-if="workflow && linked" type="button" :disabled="loading || waiting" @click="emit('supplement', workflow.workflowId)">补充本次说明</button>
       <RouterLink v-if="workflow" :to="{ path: '/diagnosis', query: { workflow: workflow.workflowId } }">在诊断页查看同一任务</RouterLink>
     </div>
   </section>

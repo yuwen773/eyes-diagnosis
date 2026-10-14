@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config/env'
 import type { WorkflowView } from './workflowController'
+import type { SupplementRequest, SupplementView } from './supplementController'
 
 export type DiagnosisAction = { imageUrl: string; idempotencyKey: string } | { workflowId: string }
 
@@ -10,6 +11,7 @@ export interface AgentChatRequest {
   enabledMcpServers?: string[]
   disableMcpDefault?: boolean
   diagnosis?: DiagnosisAction
+  supplement?: SupplementRequest
 }
 
 export interface MessageVO {
@@ -23,6 +25,7 @@ export interface MessageVO {
 }
 
 export interface ChatHistoryVO {
+  supplements?: SupplementView[]
   workflows?: WorkflowView[]
   messages: MessageVO[]
   hasMore: boolean

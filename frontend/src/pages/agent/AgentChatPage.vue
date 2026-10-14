@@ -77,7 +77,8 @@
 
         <!-- 底部区域：输入框 -->
         <div class="bottom-area">
-          <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" @bind="bindWorkflow" />
+          <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" :waiting="supplements.some(wait => wait.status === 'WAITING')" @bind="bindWorkflow" @supplement="requestSupplement" />
+          <ChatSupplementPanel :requests="supplements" :loading="streaming || historyLoading" @answered="refreshSupplements" @refresh="refreshSupplements" />
           <button v-if="diagnosis.pending.value && !streaming" type="button" class="retry-diagnosis" @click="retryDiagnosis">重试诊断提交（同一请求）</button>
           <AgentChatInput
             :loading="streaming || preparing"
@@ -117,6 +118,8 @@ import LeftSidebar from '@/components/agent/LeftSidebar.vue'
 import AgentMessageList from '@/components/agent/AgentMessageList.vue'
 import AgentChatInput from '@/components/agent/AgentChatInput.vue'
 import ChatWorkflowPanel from '@/components/agent/ChatWorkflowPanel.vue'
+import ChatSupplementPanel from '@/components/agent/ChatSupplementPanel.vue'
+import type { SupplementView } from '@/api/supplementController'
 import type { WorkflowView } from '@/api/workflowController'
 import { useChatDiagnosis } from '@/composables/useChatDiagnosis'
 import AgentResourcePanel from '@/components/agent/AgentResourcePanel.vue'
@@ -156,6 +159,7 @@ let disposed = false
 onUnmounted(() => { disposed = true; historyGeneration++ })
 const preparing = ref(false)
 const workflows = ref<WorkflowView[]>([])
+const supplements = ref<SupplementView[]>([])
 const route = useRoute()
 const router = useRouter()
 const diagnosis = useChatDiagnosis()
@@ -191,6 +195,7 @@ const loadHistoryMessages = async (sessionId: string) => {
     const data = res?.data
     if (!data?.messages) return false
     workflows.value = data.workflows || []
+    supplements.value = data.supplements || []
     if (!route.query.workflow && workflows.value.length) {
       await router.replace({ query: { ...route.query, workflow: workflows.value.at(-1)!.workflowId } })
     }
@@ -348,6 +353,7 @@ const retryDiagnosis = async () => {
     historyLoading.value = false
     resetStream()
     workflows.value = []
+    supplements.value = []
     threadId.value = pending.threadId
     currentThreadId.value = pending.threadId
     saveThreadId(pending.threadId)
@@ -381,6 +387,30 @@ const bindWorkflow = async (workflowId: string) => {
   }
 }
 
+const refreshSupplements = async () => {
+  await loadHistoryMessages(threadId.value)
+  await loadSessions()
+}
+
+const requestSupplement = async (workflowId: string) => {
+  if (streaming.value || historyLoading.value) return
+  const sendingThreadId = threadId.value
+  try {
+    await sendMessage('补充本次说明', sendingThreadId, {
+      supplement: { workflowId, idempotencyKey: crypto.randomUUID() },
+      onSupplement: wait => {
+        if (!disposed && threadId.value === sendingThreadId) {
+          supplements.value = [...supplements.value.filter(item => item.requestId !== wait.requestId), wait]
+        }
+      },
+    })
+  } catch (cause) {
+    message.error(cause instanceof Error ? cause.message : '补充请求未完成，请刷新查看')
+  } finally {
+    if (!disposed && threadId.value === sendingThreadId) await refreshSupplements()
+  }
+}
+
 const handleNewChat = () => {
   if (preparing.value) return
   historyGeneration++
@@ -390,6 +420,7 @@ const handleNewChat = () => {
   threadId.value = generateThreadId()
   resetStream()
   workflows.value = []
+  supplements.value = []
   void router.replace({ query: {} })
   resourcePanelVisible.value = false
 }
@@ -402,6 +433,7 @@ const handleSelectHistory = async (id: string) => {
   saveThreadId(id)
   resetStream()
   workflows.value = []
+  supplements.value = []
   await router.replace({ query: {} })
   await loadHistoryMessages(id)
 }

@@ -16,6 +16,7 @@ export interface ReviewSummary {
 }
 export interface ReviewDetail extends ReviewSummary {
   question: string
+  supplementaryNotes?: string[]
   allowedDecisions: QualityDecision[]
   inferenceEnvelopeId: string
   inferenceEpoch: string

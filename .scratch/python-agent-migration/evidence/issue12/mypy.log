@@ -1,0 +1,2 @@
+web\routers\agent.py:198: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+Success: no issues found in 6 source files

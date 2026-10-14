@@ -16,6 +16,9 @@ from web.auth import LoginUser
 from web.chat.attachments import AttachmentStore, attachment_store
 from web.chat.model import stream_reply
 from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow, LegacyUpload
+from web.chat.session import owner, save_message
+from web.chat import supplement
+from web.schemas.supplement import SupplementReply, SupplementRequest, SupplementView
 from web.deps import get_db, login_user
 from web.response import BaseResponse, BizError, ErrorCode, _java_date_string
 from web.files import read_image_metadata
@@ -48,6 +51,13 @@ class ChatRequest(BaseModel):
     enabledMcpServers: list[str] | None = None
     disableMcpDefault: bool | None = None
     diagnosis: DiagnosisRequest | None = None
+    supplement: SupplementRequest | None = None
+
+    @model_validator(mode="after")
+    def separate_interactions(self):
+        if self.supplement is not None and (self.diagnosis is not None or self.imageUrls):
+            raise ValueError("补充说明不能同时创建诊断或发送附件")
+        return self
 
     @field_validator("threadId", mode="before")
     @classmethod
@@ -55,26 +65,9 @@ class ChatRequest(BaseModel):
         return value if isinstance(value, str) and value.strip() else str(uuid4())
 
 
-def owner(db: Session, session_id: str, user_id: int) -> ChatSession:
-    row = db.scalar(select(ChatSession).where(ChatSession.session_id == session_id))
-    if row is None or row.user_id != user_id or row.is_delete:
-        raise BizError(ErrorCode.NO_AUTH_ERROR)
-    return row
-
-
 def messages(db: Session, session_id: str) -> list[ChatMessage]:
     return list(db.scalars(select(ChatMessage).where(ChatMessage.session_id == session_id)
                            .order_by(ChatMessage.id)))
-
-
-def save_message(db: Session, row: ChatSession, role: str, content: str) -> ChatMessage:
-    message = ChatMessage(session_id=row.session_id, role=role, content=content)
-    db.add(message)
-    row.message_count += 1
-    row.last_message = content[:500]
-    row.updated_time = datetime.now()
-    db.flush()
-    return message
 
 
 def audit(db: Session, run: ChatRun, event: str) -> None:
@@ -134,7 +127,7 @@ def owned_attachment(db: Session, url: str, user_id: int, request: Request) -> C
 @router.post("/chat/stream")
 async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends(get_db),
                       user: LoginUser = Depends(login_user)):
-    if not body.message.strip() and not body.imageUrls and body.diagnosis is None:
+    if not body.message.strip() and not body.imageUrls and body.diagnosis is None and body.supplement is None:
         raise BizError(ErrorCode.PARAMS_ERROR, "消息不能为空")
     if body.enabledMcpServers:
         raise BizError(ErrorCode.OPERATION_ERROR, "MCP 工具迁移尚未启用")
@@ -154,6 +147,16 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
     recover_expired(db, body.threadId)
     if db.scalar(select(ChatRun.id).where(ChatRun.active_session_id == body.threadId)):
         raise BizError(ErrorCode.OPERATION_ERROR, "本会话仍在回答，请稍后重试")
+    if body.supplement is not None:
+        if len(body.message) > 4000:
+            raise BizError(ErrorCode.PARAMS_ERROR, "补充请求说明不超过4000字")
+        wait = supplement.request_wait(db, row, body.supplement.workflowId,
+                                       body.supplement.idempotencyKey, body.message)
+        payload = supplement.view(wait)
+        db.commit()
+        return StreamingResponse(iter([sse(payload, "supplement"), sse("", "done")]),
+            media_type="text/event-stream", headers={"Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no", "X-Session-Id": body.threadId})
     if body.diagnosis is not None:
         try:
             return diagnostic_stream(body, row, request, db, user)
@@ -284,7 +287,8 @@ def history(thread_id: str, beforeId: int | None = None, limit: int = 40,
         upload = db.get(UploadInput, binding.workflow_id)
         assert upload is not None
         workflows.append(workflow_view(workflow, upload, db))
-    return BaseResponse.success({"workflows": workflows, "messages": [{"id": str(m.id), "role": m.role,
+    return BaseResponse.success({"workflows": workflows, "supplements": supplement.history(db, thread_id),
+        "messages": [{"id": str(m.id), "role": m.role,
         "subType": m.sub_type, "content": m.content, "isSummary": bool(m.is_summary),
         "createdTime": _java_date_string(m.created_time), "imageUrls": message_images(db, m.id)} for m in rows],
         "hasMore": more, "nextCursor": str(rows[0].id) if more else None,
@@ -292,6 +296,36 @@ def history(thread_id: str, beforeId: int | None = None, limit: int = 40,
                         "messageId": str(r.message_id), "auditEvents": list(db.scalars(
                             select(ChatAudit.event).where(ChatAudit.run_id == r.id).order_by(ChatAudit.id)))}
                        for r in runs]})
+
+
+@router.get("/supplements/{request_id}", response_model=BaseResponse[SupplementView])
+def get_supplement(request_id: str, db: Session = Depends(get_db), user: LoginUser = Depends(login_user)):
+    wait = db.get(supplement.Supplement, request_id)
+    if wait is None or wait.user_id != user.id:
+        raise BizError(ErrorCode.NO_AUTH_ERROR)
+    owner(db, wait.session_id, user.id)
+    return BaseResponse.success(supplement.view(wait))
+
+
+@router.post("/supplements/{request_id}/reply", response_model=BaseResponse[SupplementView])
+def reply_supplement(request_id: str, body: SupplementReply, db: Session = Depends(get_db),
+                     user: LoginUser = Depends(login_user)):
+    session = db.scalar(select(ChatSession).where(ChatSession.session_id == body.sessionId)
+                        .with_for_update().execution_options(populate_existing=True))
+    owner(db, body.sessionId, user.id)
+    wait = db.scalar(select(supplement.Supplement).where(supplement.Supplement.request_id == request_id)
+                     .with_for_update().execution_options(populate_existing=True))
+    if (wait is None or wait.user_id != user.id or wait.session_id != body.sessionId or
+            wait.workflow_id != body.workflowId or db.get(ChatWorkflow, (body.sessionId, body.workflowId)) is None):
+        raise BizError(ErrorCode.NO_AUTH_ERROR)
+    recover_expired(db, body.sessionId)
+    if db.scalar(select(ChatRun.id).where(ChatRun.active_session_id == body.sessionId)):
+        raise BizError(ErrorCode.OPERATION_ERROR, "本会话仍在回答，请稍后重试")
+    assert session is not None
+    answered = supplement.resume(db, session, wait, int(body.expectedVersion), body.text)
+    payload = supplement.view(answered)
+    db.commit()
+    return BaseResponse.success(payload)
 
 
 @router.get("/sessions")

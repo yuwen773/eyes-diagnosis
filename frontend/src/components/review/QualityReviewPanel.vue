@@ -11,6 +11,10 @@ const { tasks, detail, busy, error, select, refresh, act } = useQualityReviews()
     <p class="review-note">这是医生复核，不是用户保存授权。允许继续不等于确认疾病预测，也不会自动保存正式诊断记录。</p>
     <button type="button" class="refresh" :disabled="busy" @click="refresh">{{ busy ? '正在加载…' : '刷新复核任务' }}</button>
     <p v-if="error" class="review-error" role="alert">{{ error }}</p>
+    <section v-if="detail?.supplementaryNotes?.length" aria-label="用户补充说明">
+      <h2>用户补充说明</h2>
+      <p v-for="(note, index) in detail.supplementaryNotes" :key="index" class="supplement-note">{{ note }}</p>
+    </section>
     <div class="review-columns">
       <ReviewTaskList :tasks="tasks" :selected-id="detail?.reviewTaskId" :busy="busy" @select="select" />
       <QualityReviewDetail v-if="detail" :key="detail.reviewTaskId" :task="detail" :busy="busy" @claim="act()" @submit="act" />
@@ -27,5 +31,6 @@ const { tasks, detail, busy, error, select, refresh, act } = useQualityReviews()
 .review-columns { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 2rem; margin-top: 1.5rem; }
 .refresh { padding: .5rem 1rem; border: 1px solid var(--claude-border, #d9d0c6); border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .review-error { color: var(--claude-error, #aa382d); }
+.supplement-note { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
 @media (max-width: 700px) { .review-columns { grid-template-columns: 1fr; } }
 </style>

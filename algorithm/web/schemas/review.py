@@ -30,6 +30,7 @@ class ReviewSummary(BaseModel):
 
 class ReviewDetail(ReviewSummary):
     question: str
+    supplementaryNotes: list[str] = Field(default_factory=list)
     allowedDecisions: list[Literal["APPROVE_CONTINUE", "REJECT_RESUBMIT"]]
     inferenceEnvelopeId: str
     inferenceEpoch: str

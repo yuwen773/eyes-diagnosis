@@ -67,3 +67,12 @@ controlled codes; none are promoted automatically. Apply before issue08 API and
 Worker deployment. Real MySQL V19 migration and Java interoperability remain
 unverified; controlled SQLite/API/browser tests do not cover those gates. See
 `docs/controlled-reference-evidence.md`. Rollback retains the additive columns.
+
+## V21: chat supplement interrupt/resume
+
+V21 adds `t_python_chat_supplement`. Interaction waits reuse the durable graph
+checkpoint/write tables and commit checkpoints, messages and reply receipts
+atomically. Clinical workflow statuses, doctor decisions and save consent are
+unchanged. Apply V21 before enabling the supplement entry point. Rollback retains
+the additive table and checkpoints. Real MySQL migration/concurrency and deployment
+remain separate gates; see `docs/chat-supplement-resume.md`.

@@ -322,6 +322,8 @@ def test_endpoint_set_matches_java_exactly():
         ("delete", "/api/agent/sessions/batch"), ("delete", "/api/agent/sessions/{session_id}"),
         ("put", "/api/agent/sessions/{session_id}/title"), ("put", "/api/agent/sessions/{session_id}/pin"),
         ("post", "/api/agent/sessions/{session_id}/generate-title"),
+        ("get", "/api/agent/supplements/{request_id}"),
+        ("post", "/api/agent/supplements/{request_id}/reply"),
         ("post", "/api/agent/image/upload"), ("post", "/api/agent/image/upload/delete")}
     evidence_contracts = {("get", "/api/knowledge/admin/catalog"),
         ("post", "/api/knowledge/admin/documents"),

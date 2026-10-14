@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-14",
+  "checks": [
+    "chat-sse-creates-correlated-wait-with-desktop-mobile-dark-reply-entry",
+    "backend-process-restart-restores-same-wait-without-original-input-loop",
+    "lost-reply-receipt-retries-idempotently-and-refresh-restores-answer",
+    "answer-enters-session-chat-without-formal-save-or-cross-session-wait"
+  ],
+  "pageErrors": [],
+  "scope": "Original Vue + HTTP/SSE + durable SQLite + process restart; synthetic identity/model/COS; no real MySQL/model acceptance"
+}

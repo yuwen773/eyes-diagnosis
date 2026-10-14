@@ -3,6 +3,7 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { deleteAgentImage } from '@/api/agentController'
 import type { DiagnosisAction } from '@/api/agentController'
 import type { WorkflowView } from '@/api/workflowController'
+import type { SupplementRequest, SupplementView } from '@/api/supplementController'
 
 export interface MessageDTO {
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
@@ -32,7 +33,9 @@ export interface StreamMessage {
 export interface StreamSendOptions {
   urls?: string[]
   diagnosis?: DiagnosisAction
+  supplement?: SupplementRequest
   onWorkflow?: (workflow: WorkflowView) => void
+  onSupplement?: (wait: SupplementView) => void
 }
 
 export function useAgentStream() {
@@ -109,6 +112,7 @@ export function useAgentStream() {
       message,
       imageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
       diagnosis: options.diagnosis,
+      supplement: options.supplement,
       threadId
     })
 
@@ -138,6 +142,14 @@ export function useAgentStream() {
             const payload: { sessionId: string; workflow: WorkflowView } = JSON.parse(event.data)
             if (payload.sessionId !== threadId || !payload.workflow?.workflowId) throw new Error('任务关联响应不匹配')
             options.onWorkflow?.(payload.workflow)
+            return
+          }
+          if (event.event === 'supplement') {
+            const wait: SupplementView = JSON.parse(event.data)
+            if (wait.sessionId !== threadId || !wait.requestId || wait.workflowId !== options.supplement?.workflowId) {
+              throw new Error('补充请求关联响应不匹配')
+            }
+            options.onSupplement?.(wait)
             return
           }
           if (!event.data) return
