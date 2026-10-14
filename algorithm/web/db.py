@@ -180,7 +180,8 @@ def init_engine(config: WebConfig) -> None:
         # MySQL DATETIME has no timezone. Returning naive datetimes keeps them
         # identical to what Java reads; converting to UTC-aware would shift
         # every timestamp in the database.
-        connect_args={"init_command": "SET time_zone = '+08:00'"},
+        connect_args={"init_command": "SET time_zone = '+08:00'",
+                      "connect_timeout": 5, "read_timeout": 10, "write_timeout": 10},
         future=True,
     )
     _SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)

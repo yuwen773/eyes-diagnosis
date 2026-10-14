@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from web.auth import LoginUser
 from web.chat.attachments import AttachmentStore, attachment_store
 from web.chat.model import stream_reply
+from web.chat.history import query_history
 from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow, LegacyUpload
 from web.chat.session import owner, save_message
 from web.chat import supplement
@@ -191,14 +192,31 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
     context = [{"role": "system", "content": (
         "你是眼科辅助系统的普通聊天助手。只使用当前会话提供的事实；不要导入其他会话的症状。"
         "普通问答不启动诊断。图片分析请引导用户选择聊天中的受控图片诊断选项或上传入口。"
-        "不得声称已运行诊断、已保存正式诊断、已复核或已执行任何业务操作。")},
+        "不得声称已运行诊断、已保存正式诊断、已复核或已执行任何业务操作。"
+        "用户按需查询本人已保存的既往诊断时，调用 query_diagnosis_history，只读结果由系统直接展示。"
+        "不得猜测历史记录；历史症状、结论不是本次事实，不能写入本次任务或要求无必要的保存确认。")},
         *history, {"role": "user", "content": model_content(body.message, body.imageUrls)}]
 
     async def generate():
         chunks: list[str] = []
+        history_queried = False
+        history_bind = db.get_bind()
+
+        async def read_history(arguments: str) -> str:
+            nonlocal history_queried
+            history_queried = True
+
+            def read() -> str:
+                # A cancelled stream must never share its session with the reader thread.
+                with Session(bind=history_bind) as history_db:
+                    return query_history(history_db, user.id, arguments)
+
+            return await asyncio.to_thread(read)
+
         try:
             async with asyncio.timeout(120):
-                async for delta in stream_reply(request.app.state.chat_client, request.app.state.config, context):
+                async for delta in stream_reply(request.app.state.chat_client, request.app.state.config, context,
+                                               history_tool=read_history):
                     chunks.append(delta)
                     if sum(map(len, chunks)) > 32000:
                         raise RuntimeError("CHAT_RESPONSE_TOO_LARGE")
@@ -210,7 +228,10 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             row = owner(db, body.threadId, user.id)
             if run.status != "RUNNING" or run.deadline < datetime.now():
                 raise RuntimeError("CHAT_STREAM_INTERRUPTED")
-            save_message(db, row, "ASSISTANT", "".join(chunks))
+            saved_reply = save_message(db, row, "ASSISTANT", "".join(chunks))
+            if history_queried:
+                # Display/export the source, but don't promote it into ordinary case memory.
+                saved_reply.sub_type = "diagnosis_history"
             finish(db, run, "COMPLETED")
             db.commit()
             yield sse("", "done")

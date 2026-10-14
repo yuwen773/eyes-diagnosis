@@ -82,7 +82,7 @@ class WebConfig:
         dashscope_api_key: str | None = None,
         dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode",
         embedding_model: str = "text-embedding-v3",
-        chat_model: str = "qwen-vl-plus",
+        chat_model: str = "qwen3-vl-plus",
         cos_secret_id: str | None = None,
         cos_secret_key: str | None = None,
         cos_region: str = "",
@@ -258,7 +258,7 @@ class WebConfig:
                 "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode"
             ),
             embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-v3"),
-            chat_model=os.getenv("CHAT_MODEL", "qwen-vl-plus"),
+            chat_model=os.getenv("CHAT_MODEL", "qwen3-vl-plus"),
             cos_secret_id=os.getenv("COS_SECRET_ID") or None,
             cos_secret_key=os.getenv("COS_SECRET_KEY") or None,
             cos_region=os.getenv("COS_REGION", ""),
