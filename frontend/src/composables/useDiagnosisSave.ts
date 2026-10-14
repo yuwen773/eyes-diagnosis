@@ -2,7 +2,8 @@ import { computed, onScopeDispose, shallowRef, watch, type Ref } from 'vue'
 import type { WorkflowView } from '@/api/workflowController'
 import { decideDiagnosisSave, getSaveConfirmation, requestDiagnosisSave, type SaveConfirmation } from '@/api/diagnosisSaveController'
 
-export function useDiagnosisSave(workflow: Readonly<Ref<WorkflowView>>) {
+export function useDiagnosisSave(workflow: Readonly<Ref<WorkflowView>>,
+  serverConfirmation?: Readonly<Ref<SaveConfirmation | null | undefined>>) {
   const confirmation = shallowRef<SaveConfirmation | null>(null)
   const busy = shallowRef(false)
   const loaded = shallowRef(false)
@@ -67,6 +68,12 @@ export function useDiagnosisSave(workflow: Readonly<Ref<WorkflowView>>) {
     requestKey = undefined
     void refresh()
   }, { immediate: true })
+  if (serverConfirmation) watch(serverConfirmation, row => {
+    if (row !== undefined && !busy.value) {
+      confirmation.value = row
+      loaded.value = true
+    }
+  })
   onScopeDispose(() => { disposed = true; generation++; controller?.abort() })
   return { confirmation, busy, loaded, error, canPrepare, refresh, act }
 }

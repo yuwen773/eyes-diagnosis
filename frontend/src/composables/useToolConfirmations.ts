@@ -6,16 +6,23 @@ export function useToolConfirmations(sessionId: Ref<string>, streaming: Ref<bool
   const busy = shallowRef(false)
   const error = shallowRef('')
   let generation = 0
+  let reads = 0
 
   async function refresh() {
     const id = sessionId.value
     const current = ++generation
     if (!id) { rows.value = []; return }
+    reads++
     try {
       const updated = await getToolConfirmations(id)
       if (current === generation) { rows.value = updated; error.value = '' }
     } catch (cause) {
-      if (current === generation) error.value = cause instanceof Error ? cause.message : '无法读取确认状态'
+      if (current === generation) {
+        rows.value = []
+        error.value = cause instanceof Error ? cause.message : '无法读取确认状态'
+      }
+    } finally {
+      reads--
     }
   }
 
@@ -42,6 +49,7 @@ export function useToolConfirmations(sessionId: Ref<string>, streaming: Ref<bool
 
   watch(sessionId, () => { rows.value = []; busy.value = false; error.value = ''; void refresh() }, { immediate: true })
   watch(streaming, value => { if (!value) void refresh() })
-  onUnmounted(() => { generation++ })
+  const timer = setInterval(() => { if (!reads && !busy.value && !streaming.value) void refresh() }, 1500)
+  onUnmounted(() => { generation++; clearInterval(timer) })
   return { rows, busy, error, refresh, decide }
 }

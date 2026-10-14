@@ -1,0 +1,122 @@
+................................F....................................... [ 10%]
+s.FF.................................................................... [ 20%]
+........................................................................ [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+...................................s.................................    [100%]
+================================== FAILURES ===================================
+___________________ test_endpoint_set_matches_java_exactly ____________________
+
+    def test_endpoint_set_matches_java_exactly():
+        """The reconciliation, as a permanent assertion.
+
+        Java's controllers and Python's routers are two independent registries, and
+        nothing at runtime keeps them aligned. A path migrated in code but never
+        counted here is a 404 the moment Nginx loads, and a path served by both is
+        ambiguous routing.
+
+        Path *placeholder* names are compared too. They are not part of a URL -- the
+        generated client interpolates the value itself -- but ``npm run openapi``
+        regenerates the TS signatures from this spec, so a snake_case placeholder
+        would rename the generated ``deleteMcpServer(mcpServerCode)`` parameter for
+        no benefit.
+        """
+        import pathlib
+        import re
+
+        java = set()
+        controllers = pathlib.Path(
+            REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller"
+        )
+        for path in controllers.glob("*.java"):
+            source = path.read_text(encoding="utf-8")
+            base = re.search(r'@RequestMapping\("([^"]*)"\)', source)
+            base = base.group(1) if base else ""
+            for verb, sub in re.findall(
+                r'@(Post|Get|Put|Delete)Mapping(?:\(\s*(?:value\s*=\s*)?"([^"]*)"\s*\))?', source
+            ):
+                java.add((verb.lower(), f"/api{base}{sub}"))
+
+        expected = {(verb, path) for verb, path in java
+                    if not path.startswith("/api/agent")
+                    and path not in SESSION_PATHS and path != "/api"}
+
+        served = {(verb, path) for path, operations in create_app().openapi()["paths"].items()
+                  for verb in operations if verb in {"get", "post", "put", "patch", "delete"}}
+        assert expected - served == set(), f"not migrated: {sorted(expected - served)}"
+        # Issue 02 adds these independent async endpoints, preserving the exact
+        # legacy surface. New endpoints are exercised through HTTP in test_workflow.
+        new_workflows = {("post", "/api/diagnosis/workflows"),
+                         ("get", "/api/diagnosis/workflows/{workflowId}"),
+                         ("get", "/api/diagnosis/workflows/{workflowId}/image"),
+                         ("get", "/api/diagnosis/workflows/{workflowId}/save-confirmation"),
+                         ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmation"),
+                         ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/approve"),
+                         ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/reject"),
+                         ("get", "/api/reviews/tasks"),
+                         ("get", "/api/reviews/tasks/{taskId}"),
+                         ("get", "/api/reviews/tasks/{taskId}/image"),
+                         ("post", "/api/reviews/tasks/{taskId}/claim"),
+                         ("post", "/api/reviews/tasks/{taskId}/submit")}
+        chat_contracts = {("post", "/api/agent/chat/stream"), ("get", "/api/agent/sessions"),
+            ("get", "/api/agent/history/{thread_id}"), ("get", "/api/agent/history/{session_id}/export"),
+            ("delete", "/api/agent/sessions/batch"), ("delete", "/api/agent/sessions/{session_id}"),
+            ("put", "/api/agent/sessions/{session_id}/title"), ("put", "/api/agent/sessions/{session_id}/pin"),
+            ("post", "/api/agent/sessions/{session_id}/generate-title"),
+            ("get", "/api/agent/supplements/{request_id}"),
+            ("post", "/api/agent/supplements/{request_id}/reply"),
+            ("get", "/api/agent/profile"), ("get", "/api/agent/tool-confirmations"),
+            ("post", "/api/agent/tool-confirmations/{confirmation_id}/{action}"),
+            ("post", "/api/agent/image/upload"), ("post", "/api/agent/image/upload/delete")}
+        evidence_contracts = {("get", "/api/knowledge/admin/catalog"),
+            ("post", "/api/knowledge/admin/documents"),
+            ("patch", "/api/knowledge/admin/documents/{document_id}"),
+            ("post", "/api/knowledge/search")}
+>       assert served - expected == new_workflows | chat_contracts | evidence_contracts, f"unexpected new surface: {sorted(served - expected)}"
+E       AssertionError: unexpected new surface: [('delete', '/api/agent/sessions/batch'), ('delete', '/api/agent/sessions/{session_id}'), ('get', '/api/agent/history/{session_id}/export'), ('get', '/api/agent/history/{thread_id}'), ('get', '/api/agent/profile'), ('get', '/api/agent/sessions'), ('get', '/api/agent/supplements/{request_id}'), ('get', '/api/agent/tool-confirmations'), ('get', '/api/diagnosis/workflows/{workflowId}'), ('get', '/api/diagnosis/workflows/{workflowId}/events'), ('get', '/api/diagnosis/workflows/{workflowId}/image'), ('get', '/api/diagnosis/workflows/{workflowId}/save-confirmation'), ('get', '/api/knowledge/admin/catalog'), ('get', '/api/reviews/tasks'), ('get', '/api/reviews/tasks/{taskId}'), ('get', '/api/reviews/tasks/{taskId}/image'), ('patch', '/api/knowledge/admin/documents/{document_id}'), ('post', '/api/agent/chat/stream'), ('post', '/api/agent/image/upload'), ('post', '/api/agent/image/upload/delete'), ('post', '/api/agent/sessions/{session_id}/generate-title'), ('post', '/api/agent/supplements/{request_id}/reply'), ('post', '/api/agent/tool-confirmations/{confirmation_id}/{action}'), ('post', '/api/diagnosis/workflows'), ('post', '/api/diagnosis/workflows/{workflowId}/save-confirmation'), ('post', '/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/approve'), ('post', '/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/reject'), ('post', '/api/knowledge/admin/documents'), ('post', '/api/knowledge/search'), ('post', '/api/reviews/tasks/{taskId}/claim'), ('post', '/api/reviews/tasks/{taskId}/submit'), ('put', '/api/agent/sessions/{session_id}/pin'), ('put', '/api/agent/sessions/{session_id}/title')]
+E       assert {('delete', '...ssions'), ...} == {('delete', '...ssions'), ...}
+E
+E         Extra items in the left set:
+E         ('get', '/api/diagnosis/workflows/{workflowId}/events')
+E         Use -v to get more diff
+
+web\tests\test_contracts.py:339: AssertionError
+___________ test_python_adds_only_approved_async_workflow_endpoints ___________
+
+    def test_python_adds_only_approved_async_workflow_endpoints():
+        """Async workflow and issue11 consent routes; legacy paths still match Java."""
+>       assert _python_diagnosis_paths() - _java_diagnosis_paths() == _ASYNC_WORKFLOW_PATHS
+E       AssertionError: assert {'/diagnosis/...approve', ...} == {'/diagnosis/...onId}/reject'}
+E
+E         Extra items in the left set:
+E         '/diagnosis/workflows/{workflowId}/events'
+E         Use -v to get more diff
+
+web\tests\test_diagnosis.py:209: AssertionError
+_____________ test_router_declares_exactly_the_migrated_endpoints _____________
+
+    def test_router_declares_exactly_the_migrated_endpoints():
+        declared = {route.path for route in router.routes}
+>       assert declared == _python_diagnosis_paths() - _ASYNC_WORKFLOW_PATHS
+E       AssertionError: assert {'/diagnosis/...o/cache', ...} == {'/diagnosis/...o/cache', ...}
+E
+E         Extra items in the right set:
+E         '/diagnosis/workflows/{workflowId}/events'
+E         Use -v to get more diff
+
+web\tests\test_diagnosis.py:214: AssertionError
+============================== warnings summary ===============================
+web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED web/tests/test_contracts.py::test_endpoint_set_matches_java_exactly - ...
+FAILED web/tests/test_diagnosis.py::test_python_adds_only_approved_async_workflow_endpoints
+FAILED web/tests/test_diagnosis.py::test_router_declares_exactly_the_migrated_endpoints
+3 failed, 712 passed, 2 skipped, 1 warning in 443.96s (0:07:23)

@@ -6,6 +6,8 @@ import type { WorkflowView } from '@/api/workflowController'
 import type { SupplementRequest, SupplementView } from '@/api/supplementController'
 
 export interface MessageDTO {
+  sessionId?: string
+  runId?: string
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
   content?: string
   toolCalls?: any[]
@@ -20,6 +22,8 @@ export interface ToolCallArg {
 export type StreamMessageType = 'user' | 'assistant' | 'reasoning' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'interrupt' | 'loading' | 'error'
 
 export interface StreamMessage {
+  sessionId?: string
+  runId?: string
   type: StreamMessageType
   content: string
   node: string
@@ -152,10 +156,22 @@ export function useAgentStream() {
             options.onSupplement?.(wait)
             return
           }
+          if (event.event === 'tool') {
+            const tool: { sessionId: string; runId: string; tool?: string; status: string } = JSON.parse(event.data)
+            if (tool.sessionId !== threadId) throw new Error('会话响应不匹配')
+            pushMessage({ type: tool.status === 'STARTED' ? 'tool-request' : 'tool-response',
+              content: tool.status === 'STARTED' ? '工具正在处理' : tool.status === 'SUCCEEDED' ? '工具处理完成' : '工具处理未完成',
+              node: 'agent', toolName: tool.tool, sessionId: tool.sessionId, runId: tool.runId,
+              toolCalls: tool.status === 'STARTED' ? [{ name: tool.tool || '工具', args: {} }] : undefined })
+            return
+          }
           if (!event.data) return
 
+          const correlated: MessageDTO = JSON.parse(event.data)
+          if (correlated.sessionId && correlated.sessionId !== threadId) throw new Error('会话响应不匹配')
+
           try {
-            const raw: MessageDTO = JSON.parse(event.data)
+            const raw = correlated
             const msgDto: MessageDTO = { ...raw, messageType: raw.messageType?.toLowerCase() as MessageDTO['messageType'] }
 
             switch (msgDto.messageType) {
@@ -165,7 +181,8 @@ export function useAgentStream() {
                 lastAssistantContent = msgDto.content || ''
                 if (assistantMsgIndex === -1) {
                   assistantMsgIndex = messages.value.length
-                  pushMessage({ type: 'assistant', content: streamContent, node: 'agent', isLoading: true })
+                  pushMessage({ type: 'assistant', content: streamContent, node: 'agent', isLoading: true,
+                    sessionId: raw.sessionId, runId: raw.runId })
                 } else {
                   updateMessage(assistantMsgIndex, { content: streamContent })
                 }

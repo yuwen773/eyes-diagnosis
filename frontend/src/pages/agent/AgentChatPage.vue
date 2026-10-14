@@ -77,8 +77,9 @@
 
         <!-- 底部区域：输入框 -->
         <div class="bottom-area">
+          <p v-if="historyError" role="alert">{{ historyError }}</p>
           <ChatToolConfirmation :session-id="currentThreadId" :loading="streaming || historyLoading" />
-          <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" :waiting="supplements.some(wait => wait.status === 'WAITING')" @bind="bindWorkflow" @supplement="requestSupplement" />
+          <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" :waiting="supplements.some(wait => wait.status === 'WAITING')" @bind="bindWorkflow" @supplement="requestSupplement" @state="restoreWorkflowState" @unavailable="recoverChat" />
           <ChatSupplementPanel :requests="supplements" :loading="streaming || historyLoading" @answered="refreshSupplements" @refresh="refreshSupplements" />
           <button v-if="diagnosis.pending.value && !streaming" type="button" class="retry-diagnosis" @click="retryDiagnosis">重试诊断提交（同一请求）</button>
           <AgentChatInput
@@ -122,7 +123,7 @@ import ChatWorkflowPanel from '@/components/agent/ChatWorkflowPanel.vue'
 import ChatSupplementPanel from '@/components/agent/ChatSupplementPanel.vue'
 import ChatToolConfirmation from '@/components/agent/ChatToolConfirmation.vue'
 import type { SupplementView } from '@/api/supplementController'
-import type { WorkflowView } from '@/api/workflowController'
+import type { WorkflowView, WorkflowSnapshot } from '@/api/workflowController'
 import { useChatDiagnosis } from '@/composables/useChatDiagnosis'
 import AgentResourcePanel from '@/components/agent/AgentResourcePanel.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
@@ -156,9 +157,16 @@ const resourcePanelVisible = ref(false)
 const panelImages = ref<ImageResource[]>([])
 const panelLinks = ref<LinkResource[]>([])
 const historyLoading = ref(false)
+const historyError = ref('')
+let recoveryTimer: ReturnType<typeof setTimeout> | undefined
 let historyGeneration = 0
 let disposed = false
-onUnmounted(() => { disposed = true; historyGeneration++ })
+onUnmounted(() => {
+  disposed = true
+  historyGeneration++
+  clearTimeout(recoveryTimer)
+  window.removeEventListener('online', recoverChat)
+})
 const preparing = ref(false)
 const workflows = ref<WorkflowView[]>([])
 const supplements = ref<SupplementView[]>([])
@@ -188,12 +196,22 @@ const histories = computed<HistoryItem[]>(() =>
 
 const loadHistoryMessages = async (sessionId: string) => {
   if (disposed) return false
+  clearTimeout(recoveryTimer)
   const current = ++historyGeneration
   historyLoading.value = true
   try {
     const res = await getChatHistory(sessionId, undefined, 100)
     if (current !== historyGeneration || threadId.value !== sessionId) return false
-    if (res.code !== 0) throw new Error(res.msg)
+    if (res.code !== 0) {
+      if ([40100, 40101].includes(res.code)) {
+        messages.value = []
+        workflows.value = []
+        supplements.value = []
+        historyError.value = '当前无法访问此会话，请检查登录状态。'
+        return false
+      }
+      throw new Error(res.msg)
+    }
     const data = res?.data
     if (!data?.messages) return false
     workflows.value = data.workflows || []
@@ -235,18 +253,27 @@ const loadHistoryMessages = async (sessionId: string) => {
         }
         return [restored]
       })
+    historyError.value = ''
+    if (data.executions?.some(run => run.status === 'RUNNING')) {
+      recoveryTimer = setTimeout(() => { if (!streaming.value) void loadHistoryMessages(sessionId) }, 1500)
+    }
     return true
   } catch (e) {
     if (current !== historyGeneration) return false
-    console.warn('加载历史消息失败:', e)
-    message.warning('历史消息加载失败')
+    historyError.value = '聊天连接已中断，正在重新连接；不会重新发送您的消息。'
+    recoveryTimer = setTimeout(() => { if (!streaming.value) void loadHistoryMessages(sessionId) }, 1500)
     return false
   } finally {
     if (current === historyGeneration) historyLoading.value = false
   }
 }
 
+function recoverChat() {
+  if (!disposed && !streaming.value && currentThreadId.value) void loadHistoryMessages(currentThreadId.value)
+}
+
 onMounted(async () => {
+  window.addEventListener('online', recoverChat)
   const savedThreadId = loadThreadId() || diagnosis.pending.value?.threadId || ''
   if (savedThreadId) threadId.value = savedThreadId
   const initialThreadId = threadId.value
@@ -255,9 +282,8 @@ onMounted(async () => {
   const restored = savedThreadId ? await loadHistoryMessages(savedThreadId) : false
   if (disposed || threadId.value !== initialThreadId) return
   const pendingThread = diagnosis.pending.value?.threadId === savedThreadId
-  currentThreadId.value = restored || pendingThread ? savedThreadId : ''
-  threadId.value = restored || pendingThread ? savedThreadId : generateThreadId()
-  if (!restored && !pendingThread) saveThreadId('')
+  currentThreadId.value = restored || pendingThread || savedThreadId ? savedThreadId : ''
+  threadId.value = restored || pendingThread || savedThreadId ? savedThreadId : generateThreadId()
 })
 
 // Agent stream
@@ -318,6 +344,8 @@ const handleSend = async (text: string, files: File[] = [], diagnostic = false) 
   })
 
   try {
+    saveThreadId(sendingThreadId)
+    currentThreadId.value = sendingThreadId
     await sendMessage(text, sendingThreadId, { urls: imageUrls })
     uploader.commitSuccess(imageUrls)
     if (threadId.value !== sendingThreadId) return
@@ -338,6 +366,7 @@ const handleSend = async (text: string, files: File[] = [], diagnostic = false) 
     currentThreadId.value = sendingThreadId
     await loadSessions()
     message.error(error instanceof Error ? error.message : '回答未完成，请重试')
+    await loadHistoryMessages(sendingThreadId)
   }
 }
 
@@ -345,6 +374,12 @@ const showWorkflow = (workflow: WorkflowView) => {
   if (disposed) return
   workflows.value = [...workflows.value.filter(w => w.workflowId !== workflow.workflowId), workflow]
   void router.replace({ query: { ...route.query, workflow: workflow.workflowId } })
+}
+
+const restoreWorkflowState = (state: WorkflowSnapshot) => {
+  if (disposed) return
+  const waits = state.supplements.filter(wait => wait.sessionId === threadId.value)
+  supplements.value = [...supplements.value.filter(wait => wait.workflowId !== state.workflow.workflowId), ...waits]
 }
 
 const retryDiagnosis = async () => {
@@ -416,6 +451,8 @@ const requestSupplement = async (workflowId: string) => {
 const handleNewChat = () => {
   if (preparing.value) return
   historyGeneration++
+  clearTimeout(recoveryTimer)
+  historyError.value = ''
   historyLoading.value = false
   saveThreadId('')
   currentThreadId.value = ''
@@ -430,6 +467,8 @@ const handleNewChat = () => {
 const handleSelectHistory = async (id: string) => {
   if (preparing.value) return
   historyGeneration++
+  clearTimeout(recoveryTimer)
+  historyError.value = ''
   currentThreadId.value = id
   threadId.value = id
   saveThreadId(id)

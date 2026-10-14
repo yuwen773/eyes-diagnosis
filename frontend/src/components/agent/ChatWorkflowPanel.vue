@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import WorkflowStatus from '@/components/diagnosis/WorkflowStatus.vue'
 import { useUploadWorkflow } from '@/composables/useUploadWorkflow'
-import type { WorkflowView } from '@/api/workflowController'
+import type { WorkflowView, WorkflowSnapshot } from '@/api/workflowController'
 
 const props = defineProps<{ workflows: WorkflowView[]; loading: boolean; waiting?: boolean }>()
-const emit = defineEmits<{ bind: [workflowId: string]; supplement: [workflowId: string] }>()
+const emit = defineEmits<{ bind: [workflowId: string]; supplement: [workflowId: string]; state: [snapshot: WorkflowSnapshot]; unavailable: [] }>()
 const route = useRoute()
 const router = useRouter()
-const { workflow, error, refresh } = useUploadWorkflow()
+const { workflow, snapshot, error, refresh } = useUploadWorkflow()
 const linked = computed(() => props.workflows.some(w => w.workflowId === workflow.value?.workflowId))
+watch(snapshot, value => { if (value) emit('state', value) })
+watch(error, value => { if (value && !workflow.value) emit('unavailable') })
 </script>
 
 <template>
@@ -24,7 +26,7 @@ const linked = computed(() => props.workflows.some(w => w.workflowId === workflo
       </select>
     </label>
     <p v-if="error" role="alert">{{ error }}</p>
-    <WorkflowStatus v-if="workflow" :workflow="workflow" />
+    <WorkflowStatus v-if="workflow" :workflow="workflow" :snapshot="snapshot" />
     <div class="task-actions">
       <button type="button" @click="refresh">刷新状态</button>
       <button v-if="workflow && !linked" type="button" :disabled="loading" @click="emit('bind', workflow.workflowId)">关联到当前对话</button>

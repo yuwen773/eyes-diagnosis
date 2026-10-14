@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
+from sqlalchemy import select
 
 from web.auth import LoginUser, get_login_user
 from web.deps import get_db
@@ -18,6 +19,9 @@ from web.workflow.models import UploadInput
 from web.workflow.models import Workflow
 from web.workflow.confirmation_models import SavedWorkflowDiagnosis
 from web.models.diagnosis import Diagnosis
+from web.chat.supplement import Supplement, view as supplement_view
+from web.schemas.supplement import SupplementView
+from web.events import sse
 from web.workflow.service import create_or_get, owned_workflow, workflow_view
 
 router = APIRouter(prefix="/diagnosis/workflows", tags=["workflows"])
@@ -79,6 +83,32 @@ def workflow_image(workflowId: str, user: LoginUser = Depends(workflow_user),
     except UnidentifiedImageError:
         raise HTTPException(404, "有效图片不存在") from None
     return Response(upload.image_bytes, media_type=media_type, headers={"Cache-Control": "private, no-store"})
+
+
+@router.get("/{workflowId}/events")
+def workflow_events(workflowId: str, user: LoginUser = Depends(workflow_user),
+                    db: Session = Depends(get_db)) -> StreamingResponse:
+    """One authoritative snapshot per GET; done ends transport, not the task.
+
+    Clients renew this bounded stream, including after terminal workflow states:
+    consent and supplementary interactions can still change. Each renewal checks
+    Java identity and ownership; no transaction or identity cache spans renewals.
+    """
+    workflow = locked_workflow(db, workflowId, int(user.id))
+    upload = db.get(UploadInput, workflowId)
+    assert upload is not None
+    state = WorkflowStatusView.model_validate(workflow_view(workflow, upload, db)).model_dump()
+    waits = [SupplementView.model_validate(supplement_view(row)).model_dump()
+             for row in db.scalars(select(Supplement).where(Supplement.workflow_id == workflowId,
+                 Supplement.user_id == int(user.id)).order_by(Supplement.created_at, Supplement.request_id))]
+    confirmation = current_confirmation(db, workflowId)
+    consent = SaveConfirmationView.model_validate(confirmation_view(db, confirmation)).model_dump() if confirmation else None
+    payload = {"workflow": state, "supplements": waits, "saveConfirmation": consent}
+    # Commit any publication revocation/confirmation expiry before acknowledging it.
+    db.commit()
+    return StreamingResponse(iter([sse(payload, "state"), sse("", "done")]),
+        media_type="text/event-stream", headers={"Cache-Control": "private, no-store",
+                                               "X-Accel-Buffering": "no"})
 
 
 @router.get("/{workflowId}/save-confirmation", response_model=BaseResponse[SaveConfirmationView | None])

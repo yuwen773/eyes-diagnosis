@@ -12,11 +12,15 @@ const queued = {
   resultAvailability: { patientVisible: false, doctorReviewRequired: false }, result: null,
 }
 
+const stateResponse = (workflow: typeof queued) => ({ data: 'event: state\ndata: '
+  + JSON.stringify({ workflow, supplements: [], saveConfirmation: null }) + '\n\nevent: done\ndata: ""\n\n' })
+
 describe('upload page durable tasks', () => {
   afterEach(() => { vi.clearAllMocks(); vi.useRealTimers() })
 
   it('submits one task and restores its server state after the page is rebuilt', async () => {
-    vi.mocked(request).mockResolvedValue({ data: { code: 0, data: queued } })
+    vi.mocked(request).mockImplementation(async (url) => String(url).endsWith('/events')
+      ? stateResponse(queued) : { data: { code: 0, data: queued } })
     const router = createRouter({ history: createMemoryHistory(), routes: [
       { path: '/diagnosis', component: WorkflowUploader },
     ] })
@@ -36,15 +40,33 @@ describe('upload page durable tasks', () => {
     expect((submits[0][1]?.data as FormData).get('idempotencyKey')).toBeTruthy()
     wrapper.unmount()
 
-    vi.mocked(request).mockResolvedValue({ data: { code: 0, data: {
+    vi.mocked(request).mockResolvedValue(stateResponse({
       ...queued, status: 'FAILED', stopReasonCode: 'DIAGNOSIS_NOT_AVAILABLE',
       progress: { current: 'diagnosisUnavailable', completed: ['validateImage', 'diagnosisUnavailable'] },
-    } } })
+    }))
     const restored = mount(WorkflowUploader, { global: { plugins: [router] } })
     await flushPromises()
     expect(restored.text()).toContain('诊断能力尚未接入')
     expect(restored.text()).toContain('durable-1')
     expect(vi.mocked(request).mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(1)
     restored.unmount()
+  })
+
+  it('recovers automatically after a disconnected read without posting a new task', async () => {
+    vi.useFakeTimers()
+    vi.mocked(request).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(stateResponse(queued))
+    const router = createRouter({ history: createMemoryHistory(), routes: [
+      { path: '/diagnosis', component: WorkflowUploader },
+    ] })
+    await router.push('/diagnosis?workflow=durable-1')
+    const wrapper = mount(WorkflowUploader, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(wrapper.get('[role=alert]').text()).toContain('重新连接')
+    await vi.advanceTimersByTimeAsync(1500)
+    await flushPromises()
+    expect(wrapper.text()).toContain('等待处理')
+    expect(wrapper.find('[role=alert]').exists()).toBe(false)
+    expect(vi.mocked(request).mock.calls.every(([, options]) => options?.method === 'GET')).toBe(true)
+    wrapper.unmount()
   })
 })

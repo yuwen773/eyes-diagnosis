@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { WorkflowView, WorkflowStatus } from '@/api/workflowController'
+import type { WorkflowView, WorkflowStatus, WorkflowSnapshot } from '@/api/workflowController'
 import WorkflowEvidence from './WorkflowEvidence.vue'
 import WorkflowExplanation from './WorkflowExplanation.vue'
 import WorkflowSave from './WorkflowSave.vue'
 import { decisionLabels } from '@/components/review/decisions'
 import ReviewAudit from '@/components/review/ReviewAudit.vue'
 
-const props = defineProps<{ workflow: WorkflowView }>()
+const props = defineProps<{ workflow: WorkflowView; snapshot?: WorkflowSnapshot | null }>()
 const labels: Record<WorkflowStatus, string> = {
   CREATED: '任务已创建', QUEUED: '等待处理', RUNNING: '正在处理',
   WAITING_HUMAN_REVIEW: '等待医生复核', COMPLETED: '处理完成',
@@ -44,16 +44,6 @@ const reason = computed(() => ({
   EXECUTION_FAILED: '任务执行失败，请稍后重试或联系管理员。',
   RETRY_EXHAUSTED: '任务多次执行未成功，请联系管理员。',
 }[props.workflow.stopReasonCode ?? ''] ?? ''))
-const nodeLabels: Record<string, string> = {
-  validateImage: '图片输入验证', diagnosisUnavailable: '诊断能力检查',
-  inference: '图像分析', imageQuality: '图片质量判断',
-  qualityReview: '医生质量决定处理',
-  visionExposure: '分析可靠性检查', explanationUnavailable: '解释发布检查',
-  evidenceRetrieval: '已审核参考资料检索', evidenceRewrite: '受控查询改写', evidenceValidation: '参考来源校验',
-  clinicalRiskPrecheck: '风险初筛', clinicalRiskFinal: '最终风险判断', explanationDraft: '解释准备',
-  explanationClaimValidation: '解释声明校验', explanationPublication: '解释发布检查',
-  finalClinicalReview: '医生最终临床决定处理',
-}
 const published = computed(() => props.workflow.status === 'COMPLETED'
   && props.workflow.explanation?.publicationStatus === 'PUBLISHED'
   && props.workflow.explanation.validationStatus === 'VALIDATED'
@@ -67,6 +57,7 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
   <section class="workflow-status" aria-live="polite" aria-label="任务状态">
     <h3 class="status-title">{{ labels[workflow.status] }}</h3>
     <p class="task-id">任务标识：<code>{{ workflow.workflowId }}</code></p>
+    <p v-if="snapshot?.supplements.some(wait => wait.status === 'WAITING')" role="status">等待您补充说明，请在原聊天中回复。此交互与医生复核分别进行。</p>
     <p v-if="qualityLabel" class="status-reason">{{ qualityLabel }}</p>
     <p v-if="workflow.qualityReview?.decisionCode" class="status-reason">
       {{ workflow.qualityReview.decisionCode === 'APPROVE_CONTINUE' ? '医生质量复核：已允许复用原推理包继续。' : '医生质量复核：请重新上传清晰、光照均匀的图片。' }}
@@ -81,10 +72,7 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
     <ReviewAudit :entries="workflow.finalReview?.audit ?? []" />
     <WorkflowExplanation v-if="published && workflow.result" :explanation="workflow.result" />
     <WorkflowEvidence v-else-if="workflow.evidence" :evidence="workflow.evidence" />
-    <WorkflowSave v-if="['COMPLETED', 'COMPLETED_LIMITED', 'WAITING_HUMAN_REVIEW'].includes(workflow.status)" :key="workflow.workflowId" :workflow="workflow" />
-    <ul v-if="workflow.progress.completed.length" class="completed-nodes">
-      <li v-for="node in workflow.progress.completed" :key="node">{{ nodeLabels[node] ?? node }} · 已完成</li>
-    </ul>
+    <WorkflowSave v-if="['COMPLETED', 'COMPLETED_LIMITED', 'WAITING_HUMAN_REVIEW'].includes(workflow.status)" :key="workflow.workflowId" :workflow="workflow" :server-confirmation="snapshot?.saveConfirmation" />
     <p class="status-note">刷新页面后可继续查询本任务。<template v-if="['REJECTED', 'FAILED', 'CANCELLED'].includes(workflow.status)">正式诊断记录尚未保存。</template><template v-else>保存状态见正式诊断保存区。</template></p>
   </section>
 </template>
@@ -94,6 +82,5 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
 .status-title { margin: 0 0 .75rem; color: var(--claude-text-primary); font-size: 1.1rem; }
 .task-id { overflow-wrap: anywhere; font-size: .85rem; }
 .status-reason { line-height: 1.7; }
-.completed-nodes { padding-left: 1.25rem; line-height: 1.8; }
 .status-note { margin-bottom: 0; color: var(--claude-text-secondary); font-size: .85rem; }
 </style>

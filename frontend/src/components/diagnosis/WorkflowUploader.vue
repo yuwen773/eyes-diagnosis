@@ -3,7 +3,7 @@ import { computed, shallowRef } from 'vue'
 import WorkflowStatus from '@/components/diagnosis/WorkflowStatus.vue'
 import { useUploadWorkflow } from '@/composables/useUploadWorkflow'
 
-const { workflow, submitting, error, terminal, submit, refresh } = useUploadWorkflow()
+const { workflow, snapshot, submitting, error, terminal, submit, refresh } = useUploadWorkflow()
 const file = shallowRef<File | null>(null)
 const validationError = shallowRef('')
 const idempotencyKey = shallowRef('')
@@ -39,7 +39,7 @@ async function start() {
       </button>
     </form>
     <p v-if="validationError || error" class="error-message" role="alert">{{ validationError || error }}</p>
-    <WorkflowStatus v-if="workflow" :workflow="workflow" />
+    <WorkflowStatus v-if="workflow" :workflow="workflow" :snapshot="snapshot" />
     <RouterLink v-if="workflow" :to="{ path: '/agent', query: { workflow: workflow.workflowId } }">在聊天中继续此任务</RouterLink>
     <button v-if="workflow || error" type="button" class="refresh-button" @click="refresh">刷新状态</button>
   </div>

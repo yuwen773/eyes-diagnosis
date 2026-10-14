@@ -1,11 +1,12 @@
 import { computed, onScopeDispose, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createUploadWorkflow, getUploadWorkflow, type WorkflowView } from '@/api/workflowController'
+import { createUploadWorkflow, getWorkflowSnapshot, type WorkflowView, type WorkflowSnapshot } from '@/api/workflowController'
 
 export function useUploadWorkflow() {
   const route = useRoute()
   const router = useRouter()
   const workflow = shallowRef<WorkflowView | null>(null)
+  const snapshot = shallowRef<WorkflowSnapshot | null>(null)
   const submitting = shallowRef(false)
   const error = shallowRef('')
   const terminal = computed(() => workflow.value !== null &&
@@ -28,16 +29,23 @@ export function useUploadWorkflow() {
     const current = generation
     controller = new AbortController()
     try {
-      const value = await getUploadWorkflow(workflowId, controller.signal)
+      const value = await getWorkflowSnapshot(workflowId, controller.signal)
       if (current !== generation) return
-      workflow.value = value
+      snapshot.value = value
+      workflow.value = value.workflow
       error.value = ''
-      if (!terminal.value) timer = setTimeout(refresh, 1500)
+      timer = setTimeout(refresh, 1500)
     } catch (cause) {
       if (current !== generation) return
       const failure = cause as { response?: { status: number; data?: { msg?: string } } }
-      if ([401, 403, 404].includes(failure.response?.status ?? 0)) workflow.value = null
-      error.value = failure.response?.data?.msg ?? '暂时无法查询任务，请点击刷新状态。'
+      if ([401, 403, 404].includes(failure.response?.status ?? 0)) {
+        workflow.value = null
+        snapshot.value = null
+        error.value = '当前无法访问此任务，请检查登录状态。'
+      } else {
+        error.value = '连接已中断，正在重新连接；当前显示上次确认的状态。'
+        timer = setTimeout(refresh, 1500)
+      }
     }
   }
 
@@ -58,7 +66,7 @@ export function useUploadWorkflow() {
     }
   }
 
-  watch(() => route.query.workflow, () => { workflow.value = null; void refresh() }, { immediate: true })
+  watch(() => route.query.workflow, () => { workflow.value = null; snapshot.value = null; void refresh() }, { immediate: true })
   onScopeDispose(() => { disposed = true; stopPolling() })
-  return { workflow, submitting, error, terminal, submit, refresh }
+  return { workflow, snapshot, submitting, error, terminal, submit, refresh }
 }

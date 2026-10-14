@@ -56,4 +56,23 @@ describe('chat stream terminal contract', () => {
     await expect(stream.sendMessage('问题', 'thread')).rejects.toThrow('连接已中断')
     wrapper.unmount()
   })
+
+  it('shows correlated tool progress and rejects another sessions tokens', async () => {
+    vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {
+      options!.onmessage!({ event: 'tool', data: JSON.stringify({ sessionId: 'thread', runId: 'run',
+        tool: 'history', status: 'STARTED' }), id: '' })
+      options!.onmessage!({ event: 'done', data: '', id: '' })
+      options!.onclose!()
+    })
+    const { stream, wrapper } = setup()
+    await stream.sendMessage('问题', 'thread')
+    expect(stream.messages.value[0]).toMatchObject({ type: 'tool-request', sessionId: 'thread', runId: 'run' })
+    vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {
+      options!.onmessage!({ event: '', data: JSON.stringify({ messageType: 'assistant', content: '其他用户',
+        sessionId: 'other', runId: 'other-run' }), id: '' })
+    })
+    await expect(stream.sendMessage('问题', 'thread')).rejects.toThrow('会话响应不匹配')
+    expect(stream.messages.value.some(m => m.content.includes('其他用户'))).toBe(false)
+    wrapper.unmount()
+  })
 })

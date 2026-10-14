@@ -4,9 +4,11 @@ import { diagnosisImageUrl } from '@/utils/diagnosisImageUrl'
 import type { WorkflowView } from '@/api/workflowController'
 import { useDiagnosisSave } from '@/composables/useDiagnosisSave'
 import WorkflowExplanation from './WorkflowExplanation.vue'
+import type { SaveConfirmation } from '@/api/diagnosisSaveController'
 
-const props = defineProps<{ workflow: WorkflowView }>()
-const { confirmation, busy, loaded, error, canPrepare, refresh, act } = useDiagnosisSave(toRef(props, 'workflow'))
+const props = defineProps<{ workflow: WorkflowView; serverConfirmation?: SaveConfirmation | null }>()
+const { confirmation, busy, loaded, error, canPrepare, refresh, act } = useDiagnosisSave(
+  toRef(props, 'workflow'), toRef(props, 'serverConfirmation'))
 const imageUrl = computed(() => confirmation.value
   ? diagnosisImageUrl(confirmation.value.content.imageUrl) : '')
 const states = { PENDING: '等待您确认保存', APPROVED: '正式诊断记录已保存', REJECTED: '您已拒绝保存，未建立正式记录',

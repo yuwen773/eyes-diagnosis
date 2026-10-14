@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-14",
+  "checks": [
+    "snapshot-done-does-not-complete-task-on-either-page",
+    "offline-reconnect-restores-review-and-supplement-without-exposing-prediction",
+    "clinical-approval-is-not-save-and-lost-save-receipt-recovers-on-both-pages-exactly-once",
+    "lost-chat-receipt-and-refresh-recover-persisted-answer-with-one-model-call",
+    "real-error-sse-and-refresh-never-present-partial-answer-as-success",
+    "theme-mobile-ownership-and-expired-identity-with-no-extra-inference-or-writes"
+  ],
+  "proof": {
+    "inferenceCalls": 1,
+    "explanationCalls": 1,
+    "chatCalls": 2,
+    "formalRecords": 1
+  },
+  "pageErrors": [],
+  "scope": "Real Vue/Chromium/HTTP/SSE/Worker; SQLite and controlled Java/model/Chroma/embedding. Not real-service or clinical acceptance."
+}

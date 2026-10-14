@@ -25,6 +25,7 @@ from web.schemas.supplement import SupplementReply, SupplementRequest, Supplemen
 from web.deps import get_db, login_user
 from web.response import BaseResponse, BizError, ErrorCode, _java_date_string
 from web.files import read_image_metadata
+from web.events import sse
 from web.workflow.models import UploadInput
 from web.workflow.service import create_or_get, owned_workflow, workflow_view
 
@@ -90,11 +91,6 @@ def recover_expired(db: Session, session_id: str) -> None:
                                                ChatRun.deadline < datetime.now()).with_for_update()):
         finish(db, run, "INTERRUPTED", "CHAT_STREAM_INTERRUPTED")
     db.flush()
-
-
-def sse(data: object, event: str | None = None) -> str:
-    prefix = f"event: {event}\n" if event else ""
-    return prefix + "data: " + json.dumps(data, ensure_ascii=False) + "\n\n"
 
 
 def message_images(db: Session, message_id: int) -> list[str]:
@@ -240,12 +236,13 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
                 async for delta in stream_reply(request.app.state.chat_client, request.app.state.config, context,
                         history_tool=read_history, tools=[*access.tools, tool_writes.PROFILE_TOOL], invoke_tool=call_mcp):
                     if isinstance(delta, dict):
-                        yield sse(delta, "tool")
+                        yield sse({**delta, "sessionId": body.threadId, "runId": run.id}, "tool")
                     else:
                         chunks.append(delta)
                         if sum(map(len, chunks)) > 32000:
                             raise RuntimeError("CHAT_RESPONSE_TOO_LARGE")
-                        yield sse({"messageType": "assistant", "content": delta})
+                        yield sse({"messageType": "assistant", "content": delta,
+                                   "sessionId": body.threadId, "runId": run.id})
             if not "".join(chunks).strip():
                 raise RuntimeError("CHAT_MODEL_EMPTY")
             # Re-read after the external call; no transaction is held across it.
@@ -276,7 +273,8 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
                 finish(db, run, "FAILED", str(exc) if isinstance(exc, ToolError) else "CHAT_MODEL_FAILED")
                 db.commit()
             if isinstance(exc, ToolError):
-                yield sse({"status": "FAILED", "code": str(exc)}, "tool")
+                yield sse({"status": "FAILED", "code": str(exc),
+                           "sessionId": body.threadId, "runId": run.id}, "tool")
             yield sse("回答未完成，请稍后重试", "error")
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={
