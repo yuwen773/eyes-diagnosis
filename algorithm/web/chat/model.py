@@ -2,15 +2,19 @@
 
 import json
 from collections.abc import AsyncIterator, Awaitable, Callable
+from typing import Any
 
 import httpx
 
 from web.config import WebConfig
 from web.chat.history import HISTORY_TOOL
+from web.chat.mcp import ToolError
 
 
 async def stream_reply(client: httpx.AsyncClient, config: WebConfig,
-                       messages: list[dict], *, history_tool: Callable[[str], Awaitable[str]] | None = None) -> AsyncIterator[str]:
+                       messages: list[dict], *, history_tool: Callable[[str], Awaitable[str]] | None = None,
+                       tools: list[dict] | None = None,
+                       invoke_tool: Callable[[str, str], Awaitable[str]] | None = None) -> AsyncIterator:
     if not config.dashscope_api_key:
         raise RuntimeError("CHAT_MODEL_UNAVAILABLE")
     base = config.dashscope_base_url.rstrip("/")
@@ -20,9 +24,11 @@ async def stream_reply(client: httpx.AsyncClient, config: WebConfig,
     completed = False
     tool_name = tool_arguments = tool_id = ""
     tool_seen = text_seen = False
-    payload = {"model": config.chat_model, "messages": messages, "stream": True, "max_tokens": 2048}
+    payload: dict[str, Any] = {"model": config.chat_model, "messages": messages, "stream": True, "max_tokens": 2048}
     if history_tool is not None:
         payload["tools"] = [HISTORY_TOOL]
+    if tools:
+        payload.setdefault("tools", []).extend(tools)
     async with client.stream("POST", base + "/chat/completions", headers={
         "Authorization": f"Bearer {config.dashscope_api_key}",
     }, json=payload, timeout=60) as response:
@@ -39,7 +45,9 @@ async def stream_reply(client: httpx.AsyncClient, config: WebConfig,
             for choice in event.get("choices", []):
                 delta = choice.get("delta", {})
                 for call in delta.get("tool_calls") or []:
-                    if (history_tool is None or call.get("index") != 0 or text_seen or
+                    if tools and call.get("index") != 0:
+                        raise ToolError("MCP_CALL_BUDGET_EXCEEDED")
+                    if ((history_tool is None and invoke_tool is None) or call.get("index") != 0 or text_seen or
                             call.get("type", "function") != "function"):
                         raise RuntimeError("CHAT_TOOL_INVALID")
                     tool_seen = True
@@ -61,6 +69,13 @@ async def stream_reply(client: httpx.AsyncClient, config: WebConfig,
                         assert history_tool is not None
                         # A single read-only tool, rendered by the server: no model-generated records.
                         yield await history_tool(tool_arguments)
+                    elif reason == "tool_calls" and tool_seen and tool_id and invoke_tool is not None:
+                        if tool_name not in {t["function"]["name"] for t in tools or []}:
+                            raise ToolError("MCP_TOOL_DENIED")
+                        yield {"tool": tool_name, "status": "STARTED"}
+                        result = await invoke_tool(tool_name, tool_arguments)
+                        yield {"tool": tool_name, "status": "SUCCEEDED"}
+                        yield result
                     elif reason != "stop" or tool_seen:
                         raise RuntimeError("CHAT_MODEL_INCOMPLETE")
                     completed = True

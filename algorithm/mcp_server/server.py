@@ -1,6 +1,7 @@
 import logging
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from mcp_server.config import MCPConfig
 from mcp_server.tools import diagnose, load_model
@@ -13,12 +14,12 @@ mcp = FastMCP(
 )
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False))
 async def eye_disease_diagnosis(image_input: str) -> str:
     """对眼科眼底图像进行AI疾病诊断。
 
-    接收眼底图像（支持本地文件路径、HTTP/HTTPS URL、Base64编码），返回疾病预测结果，
-    包括预测标签、概率、可靠性评分、疾病描述和Top3预测。
+    接收眼底图像（支持本地文件路径、HTTP/HTTPS URL、Base64编码），复用质量、校准、
+    拒绝与模型来源校验管线。仅返回未发布分析的状态与来源，不展示预测或保存正式诊断。
 
     Args:
         image_input: 图片输入，支持以下格式：
@@ -27,8 +28,7 @@ async def eye_disease_diagnosis(image_input: str) -> str:
             - Base64编码字符串: iVBORw0KGgo...
 
     Returns:
-        JSON格式的诊断结果，包含 predicted_label、predicted_label_cn、probability、
-        reliability_score、description 和 top_predictions 字段。
+        JSON格式的未发布分析状态、质量门和模型来源。患者可见预测必须通过诊断工作流。
     """
     return await diagnose(image_input)
 
@@ -43,9 +43,11 @@ def main():
 
     logger.info(f"Starting MCP server on {config.host}:{config.port}")
     load_model(config)
-    logger.info("Model loaded, server ready")
+    logger.info("Shared inference adapter configured; weights verified on first use")
 
-    mcp.run(transport="streamable-http", host=config.host, port=config.port)
+    mcp.settings.host = config.host
+    mcp.settings.port = config.port
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

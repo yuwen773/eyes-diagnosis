@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from web.auth import LoginUser
 from web.chat.attachments import AttachmentStore, attachment_store
 from web.chat.model import stream_reply
+from web.chat.mcp import McpTools, ToolError, select_servers
 from web.chat.history import query_history
 from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow, LegacyUpload
 from web.chat.session import owner, save_message
@@ -49,7 +50,7 @@ class ChatRequest(BaseModel):
     message: str = Field(max_length=16000)
     threadId: str = Field(default_factory=lambda: str(uuid4()), min_length=1, max_length=64)
     imageUrls: list[str] = Field(default_factory=list, max_length=8)
-    enabledMcpServers: list[str] | None = None
+    enabledMcpServers: list[str] | None = Field(default=None, max_length=8)
     disableMcpDefault: bool | None = None
     diagnosis: DiagnosisRequest | None = None
     supplement: SupplementRequest | None = None
@@ -130,8 +131,8 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
                       user: LoginUser = Depends(login_user)):
     if not body.message.strip() and not body.imageUrls and body.diagnosis is None and body.supplement is None:
         raise BizError(ErrorCode.PARAMS_ERROR, "消息不能为空")
-    if body.enabledMcpServers:
-        raise BizError(ErrorCode.OPERATION_ERROR, "MCP 工具迁移尚未启用")
+    servers = (select_servers(db, user.id, body.enabledMcpServers, body.disableMcpDefault, request.app.state.config)
+               if body.diagnosis is None and body.supplement is None else [])
     row = db.scalar(select(ChatSession).where(ChatSession.session_id == body.threadId).with_for_update())
     if row is None:
         row = ChatSession(session_id=body.threadId, user_id=user.id, title=body.message[:50] or "图片会话")
@@ -200,6 +201,7 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
     async def generate():
         chunks: list[str] = []
         history_queried = False
+        mcp_queried = False
         history_bind = db.get_bind()
 
         async def read_history(arguments: str) -> str:
@@ -214,13 +216,25 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             return await asyncio.to_thread(read)
 
         try:
-            async with asyncio.timeout(120):
+            access = McpTools(history_bind, user.id, servers, request.app.state.config,
+                              session_id=body.threadId,
+                              transport=getattr(request.app.state, "mcp_transport", None))
+
+            async def call_mcp(name: str, arguments: str) -> str:
+                nonlocal mcp_queried
+                mcp_queried = True
+                return await access.call(name, arguments)
+
+            async with asyncio.timeout(120), access.connect():
                 async for delta in stream_reply(request.app.state.chat_client, request.app.state.config, context,
-                                               history_tool=read_history):
-                    chunks.append(delta)
-                    if sum(map(len, chunks)) > 32000:
-                        raise RuntimeError("CHAT_RESPONSE_TOO_LARGE")
-                    yield sse({"messageType": "assistant", "content": delta})
+                        history_tool=read_history, tools=access.tools, invoke_tool=call_mcp if access.tools else None):
+                    if isinstance(delta, dict):
+                        yield sse(delta, "tool")
+                    else:
+                        chunks.append(delta)
+                        if sum(map(len, chunks)) > 32000:
+                            raise RuntimeError("CHAT_RESPONSE_TOO_LARGE")
+                        yield sse({"messageType": "assistant", "content": delta})
             if not "".join(chunks).strip():
                 raise RuntimeError("CHAT_MODEL_EMPTY")
             # Re-read after the external call; no transaction is held across it.
@@ -232,6 +246,8 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             if history_queried:
                 # Display/export the source, but don't promote it into ordinary case memory.
                 saved_reply.sub_type = "diagnosis_history"
+            elif mcp_queried:
+                saved_reply.sub_type = "mcp_tool"
             finish(db, run, "COMPLETED")
             db.commit()
             yield sse("", "done")
@@ -242,12 +258,14 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
                 finish(db, run, "INTERRUPTED", "CHAT_STREAM_INTERRUPTED")
                 db.commit()
             raise
-        except Exception:
+        except Exception as exc:
             db.rollback()
             db.refresh(run)
             if run.status == "RUNNING":
-                finish(db, run, "FAILED", "CHAT_MODEL_FAILED")
+                finish(db, run, "FAILED", str(exc) if isinstance(exc, ToolError) else "CHAT_MODEL_FAILED")
                 db.commit()
+            if isinstance(exc, ToolError):
+                yield sse({"status": "FAILED", "code": str(exc)}, "tool")
             yield sse("回答未完成，请稍后重试", "error")
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={

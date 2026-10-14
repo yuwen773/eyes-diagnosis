@@ -47,3 +47,7 @@ olefile==0.47
 # Durable upload graph; verified on the Python 3.11 web baseline.
 langgraph==1.2.12
 langgraph-checkpoint==4.3.0
+
+# MCP client/server shared by chat and the inference adapter.
+mcp==1.26.0
+jsonschema==4.26.0

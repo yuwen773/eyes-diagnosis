@@ -1,5 +1,4 @@
 import os
-import torch
 
 
 class MCPConfig:
@@ -19,7 +18,13 @@ class MCPConfig:
         self.port = port
         self.model_path = model_path
         self.model_arch = model_arch
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        if device is None:
+            try:
+                import torch
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+            except ImportError:
+                device = "cpu"
+        self.device = device
         self.num_classes = num_classes
         self.log_level = log_level
 
@@ -31,10 +36,14 @@ class MCPConfig:
 
     @classmethod
     def from_env(cls) -> "MCPConfig":
+        weights = os.getenv("MODEL_WEIGHTS_PATH")
+        legacy_weights = os.getenv("MODEL_PATH")
+        if weights and legacy_weights and weights != legacy_weights:
+            raise ValueError("MODEL_PATH_CONFLICT")
         return cls(
             host=os.getenv("MCP_HOST", "0.0.0.0"),
             port=int(os.getenv("MCP_PORT", "8000")),
-            model_path=os.getenv("MODEL_PATH") or None,
+            model_path=weights or legacy_weights or None,
             model_arch=os.getenv("MODEL_ARCH", "efficientnet_b4"),
             device=os.getenv("DEVICE") or None,
             num_classes=int(os.getenv("NUM_CLASSES", "8")),

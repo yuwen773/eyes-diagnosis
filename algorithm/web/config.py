@@ -137,6 +137,9 @@ class WebConfig:
         #: fail-closed behaviour: an outbound connection to an address a user
         #: chose is exactly what an allow-list exists to prevent.
         mcp_allowed_origins: str = "",
+        # Operator-approved read-only pairs: serverCode/toolName, comma separated.
+        # Remote annotations and model output cannot grant this permission.
+        mcp_readonly_tools: str = "",
     ):
         self.host = host
         if not isinstance(port, int) or port < 1 or port > 65535:
@@ -190,6 +193,7 @@ class WebConfig:
         self.quality_gate_mode = quality_gate_mode
         self.inference_cache_enabled = inference_cache_enabled
         self.mcp_allowed_origins = mcp_allowed_origins
+        self.mcp_readonly_tools = mcp_readonly_tools
 
     @property
     def redis_url(self) -> str:
@@ -282,4 +286,5 @@ class WebConfig:
             inference_cache_enabled=os.getenv("INFERENCE_CACHE_ENABLED", "true").lower()
             not in ("0", "false", "no", "off"),
             mcp_allowed_origins=os.getenv("MCP_ALLOWED_ORIGINS", ""),
+            mcp_readonly_tools=os.getenv("MCP_READONLY_TOOLS", ""),
         )
