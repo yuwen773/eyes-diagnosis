@@ -1,0 +1,14 @@
+{
+  "boundary": "SQLite + controlled Java/model/COS/Chroma; actual HTTP/Worker/Vue/Chromium",
+  "previewDoesNotSave": true,
+  "rejectedDoesNotSave": true,
+  "expiredDoesNotSave": true,
+  "crossUserBlocked": true,
+  "approvedExactlyOnce": true,
+  "refreshRestored": true,
+  "clinicalReviewCannotBeBypassed": true,
+  "formalRecords": 1,
+  "savePanelOverflow": false,
+  "pageErrors": [],
+  "workflowId": "064a468dfbc5464f97d3a396b779b817"
+}

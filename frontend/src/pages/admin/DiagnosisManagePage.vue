@@ -31,7 +31,7 @@
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex === 'diagnosisImage'">
           <a-image
-            :src="record.url"
+            :src="diagnosisImageUrl(record.url)"
             :width="60"
             class="rounded"
           />
@@ -94,7 +94,7 @@
       <template v-if="currentRecord">
         <div v-if="currentRecord.url" class="mb-6 text-center">
           <a-image
-            :src="currentRecord.url"
+            :src="diagnosisImageUrl(currentRecord.url)"
             class="rounded"
             style="max-width: 100%; max-height: 300px;"
           />
@@ -156,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { diagnosisImageUrl } from '@/utils/diagnosisImageUrl'
 import { computed, onMounted, reactive, ref } from 'vue'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'

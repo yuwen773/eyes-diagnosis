@@ -17,13 +17,13 @@ mvn -f deploy/workflow-migrations/pom.xml flyway:migrate
 ```
 
 The pinned standalone Flyway Maven plugin 12.4.0 uses the existing V1–V9 and
-bootstrap callback, unchanged release V10–V14, and additive V15–V19. There is one
+bootstrap callback, unchanged release V10–V14, and additive V15–V20. There is one
 `flyway_schema_history`, with `baselineVersion=0` matching the existing Java
 configuration. There is no Alembic history or custom history writer.
 
 V10–V14 are byte-for-byte copies from release commit
 `5ac742f0db30ded1c87462211a535012d952e4bb`. Keep those files and all earlier
-migrations immutable. Reserve subsequent global versions after V19; do not
+migrations immutable. Reserve subsequent global versions after V20; do not
 reuse version numbers between Java and Python deployment assets. V17 is reserved
 for Python session chat (apply before routing Agent traffic to Python). Do not repair
 checksum failures automatically. See the existing release history policy for
@@ -67,6 +67,15 @@ controlled codes; none are promoted automatically. Apply before issue08 API and
 Worker deployment. Real MySQL V19 migration and Java interoperability remain
 unverified; controlled SQLite/API/browser tests do not cover those gates. See
 `docs/controlled-reference-evidence.md`. Rollback retains the additive columns.
+
+V20 adds user diagnosis-save confirmations and one receipt per workflow. Apply
+before issue11 API/UI deployment; API and Worker never run DDL. Approval writes
+the receipt, consent and `t_diagnosis` row in one transaction. Original image
+bytes remain in `t_workflow_upload_input`; retain them while any saved diagnosis
+references the workflow image URL. Full approved explanation/citations remain in
+the frozen confirmation snapshot. Rollback retains these rows and disables new
+save routes/UI. Real MySQL V20 migration, Java startup and deployment/rollback
+remain separate validation gates. See `docs/diagnosis-save-confirmation.md`.
 
 ## V21: chat supplement interrupt/resume
 

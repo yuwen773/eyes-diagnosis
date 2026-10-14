@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { WorkflowView, WorkflowStatus } from '@/api/workflowController'
 import WorkflowEvidence from './WorkflowEvidence.vue'
 import WorkflowExplanation from './WorkflowExplanation.vue'
+import WorkflowSave from './WorkflowSave.vue'
 import { decisionLabels } from '@/components/review/decisions'
 import ReviewAudit from '@/components/review/ReviewAudit.vue'
 
@@ -80,10 +81,11 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
     <ReviewAudit :entries="workflow.finalReview?.audit ?? []" />
     <WorkflowExplanation v-if="published && workflow.result" :explanation="workflow.result" />
     <WorkflowEvidence v-else-if="workflow.evidence" :evidence="workflow.evidence" />
+    <WorkflowSave v-if="['COMPLETED', 'COMPLETED_LIMITED', 'WAITING_HUMAN_REVIEW'].includes(workflow.status)" :key="workflow.workflowId" :workflow="workflow" />
     <ul v-if="workflow.progress.completed.length" class="completed-nodes">
       <li v-for="node in workflow.progress.completed" :key="node">{{ nodeLabels[node] ?? node }} · 已完成</li>
     </ul>
-    <p class="status-note">刷新页面后可继续查询本任务。正式诊断记录尚未保存。</p>
+    <p class="status-note">刷新页面后可继续查询本任务。<template v-if="['REJECTED', 'FAILED', 'CANCELLED'].includes(workflow.status)">正式诊断记录尚未保存。</template><template v-else>保存状态见正式诊断保存区。</template></p>
   </section>
 </template>
 

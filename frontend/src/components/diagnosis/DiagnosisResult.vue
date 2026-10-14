@@ -81,7 +81,7 @@
             <div class="image-container">
               <a-image
                 class="diagnosis-image"
-                :src="diagnosisResult?.url"
+                :src="diagnosisImageUrl(diagnosisResult?.url)"
                 :preview="false"
               />
             </div>
@@ -233,6 +233,7 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { diagnosisImageUrl } from '@/utils/diagnosisImageUrl'
 import { computed } from 'vue'
 import {
   CheckCircleOutlined,

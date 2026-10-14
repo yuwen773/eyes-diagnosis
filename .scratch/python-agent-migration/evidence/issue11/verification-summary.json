@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-13",
+  "worktree": "worktree-py-rewrite",
+  "boundary": "Controlled SQLite and Java/model/COS/embedding/Chroma doubles; actual HTTP routes, worker, Vue and headless Chromium",
+  "pythonWeb": { "passed": 572, "skipped": 1, "skipReason": "No isolated MySQL integration URL" },
+  "finalConfirmationTests": { "passed": 13, "includes": ["fresh API processes", "concurrent approval processes", "transaction rollback and retry"] },
+  "frontendTests": { "passed": 42, "files": 11 },
+  "vueTypeCheck": "passed",
+  "productionBuild": "passed with existing large chunk notices",
+  "mypyWorkflowScope": { "passed": true, "sourceFiles": 14 },
+  "browserResult": "issue11-ui-results.json",
+  "javaSourceAndBuildChanged": false,
+  "realMySQLV20Migration": "not run",
+  "realServicesAndModelAcceptance": "not run",
+  "deploymentAndRollback": "not run"
+}

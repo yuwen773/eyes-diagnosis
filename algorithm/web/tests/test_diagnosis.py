@@ -198,11 +198,14 @@ def test_all_eight_diagnosis_endpoints_are_migrated():
     assert _java_diagnosis_paths() - _python_diagnosis_paths() == set()
 
 
-_ASYNC_WORKFLOW_PATHS = {"/diagnosis/workflows", "/diagnosis/workflows/{workflowId}"}
+_ASYNC_WORKFLOW_PATHS = {"/diagnosis/workflows", "/diagnosis/workflows/{workflowId}",
+    "/diagnosis/workflows/{workflowId}/image", "/diagnosis/workflows/{workflowId}/save-confirmation",
+    "/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/approve",
+    "/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/reject"}
 
 
 def test_python_adds_only_approved_async_workflow_endpoints():
-    """Issue 02 explicitly adds two routes; all legacy paths still match Java."""
+    """Async workflow and issue11 consent routes; legacy paths still match Java."""
     assert _python_diagnosis_paths() - _java_diagnosis_paths() == _ASYNC_WORKFLOW_PATHS
 
 

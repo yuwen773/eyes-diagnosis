@@ -73,7 +73,7 @@
             <!-- 诊断图像 -->
             <template v-if="column.dataIndex === 'diagnosisImage'">
               <div class="image-cell">
-                <a-image :src="record.url" :width="64" :height="64" class="diagnosis-thumb" :preview="true" />
+                <a-image :src="diagnosisImageUrl(record.url)" :width="64" :height="64" class="diagnosis-thumb" :preview="true" />
               </div>
             </template>
 
@@ -165,6 +165,7 @@ import {
   LoadingOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
+import { diagnosisImageUrl } from '@/utils/diagnosisImageUrl'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 dayjs.extend(relativeTime)

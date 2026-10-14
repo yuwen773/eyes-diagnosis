@@ -377,6 +377,8 @@ def test_orm_maps_only_migrating_domains():
         "t_inference_cache",
         "t_inference_envelope",
         "t_explanation_snapshot",
+        "t_diagnosis_save_confirmation",
+        "t_saved_workflow_diagnosis",
         "t_human_review_task",
         "t_news",
         "t_paragraph",

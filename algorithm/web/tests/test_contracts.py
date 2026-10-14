@@ -312,6 +312,11 @@ def test_endpoint_set_matches_java_exactly():
     # legacy surface. New endpoints are exercised through HTTP in test_workflow.
     new_workflows = {("post", "/api/diagnosis/workflows"),
                      ("get", "/api/diagnosis/workflows/{workflowId}"),
+                     ("get", "/api/diagnosis/workflows/{workflowId}/image"),
+                     ("get", "/api/diagnosis/workflows/{workflowId}/save-confirmation"),
+                     ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmation"),
+                     ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/approve"),
+                     ("post", "/api/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/reject"),
                      ("get", "/api/reviews/tasks"),
                      ("get", "/api/reviews/tasks/{taskId}"),
                      ("get", "/api/reviews/tasks/{taskId}/image"),
