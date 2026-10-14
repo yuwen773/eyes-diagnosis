@@ -23,8 +23,21 @@ export interface WorkflowView {
   qualityReview: { status: 'OPEN' | 'CLAIMED' | 'SUBMITTED';
     decisionCode: 'APPROVE_CONTINUE' | 'REJECT_RESUBMIT' | null; reasonCode: string | null } | null
   resultAvailability: { patientVisible: boolean; doctorReviewRequired: boolean }
-  result: null
+  explanation?: { publicationStatus: 'NONE' | 'DRAFT' | 'VALIDATED' | 'PUBLISHED' | 'REJECTED' | 'WITHHELD';
+    snapshotId: string | null; revision: string | null; validationStatus: 'VALIDATED' | 'REJECTED' | null }
+  result: PublishedExplanation | null
   evidence?: WorkflowEvidenceView | null
+}
+
+export interface PublishedExplanation {
+  snapshotId: string
+  revision: string
+  modelAssessment: { diseaseCode: string; calibratedProbability: number; modelVersion: string;
+    modelWeightFingerprint: string; inferencePolicyVersion: string; calibrationStatus: string }
+  generalInformation: { claimId: string; type: string; text: string; citationIds: string[] }[]
+  citations: (WorkflowEvidenceView['citations'][number] & { quotedText: string })[]
+  riskNotice: string
+  limitation: string
 }
 
 interface WorkflowResponse { code: number; msg: string; data: WorkflowView }

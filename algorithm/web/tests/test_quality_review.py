@@ -74,7 +74,7 @@ def test_doctor_approval_resumes_original_inference_once_after_restart(workflow_
     assert client.post(f"/api/reviews/tasks/{task_id}/submit", json=decision).status_code == 200
     # Fresh worker and graph instances must continue the recorded segment.
     unavailable = ControlledEngine(RuntimeError("must reuse original inference"))
-    for _ in range(5):
+    for _ in range(6):
         assert Worker(sessions, inference=WorkflowInference(WebConfig(), engine=unavailable)).run_once()
     assert not Worker(sessions).run_once()
     doctor(client, "alice")
@@ -82,7 +82,7 @@ def test_doctor_approval_resumes_original_inference_once_after_restart(workflow_
     assert view["qualityReview"]["decisionCode"] == "APPROVE_CONTINUE"
     assert view["stopReasonCode"] == "EVIDENCE_INSUFFICIENT"
     assert view["progress"]["completed"] == ["validateImage", "inference", "imageQuality",
-                                               "qualityReview", "visionExposure", "evidenceRetrieval",
+                                               "qualityReview", "visionExposure", "clinicalRiskPrecheck", "evidenceRetrieval",
                                                "evidenceRewrite", "evidenceValidation"]
     assert view["result"] is None
     assert engine.calls == 1 and unavailable.calls == 0

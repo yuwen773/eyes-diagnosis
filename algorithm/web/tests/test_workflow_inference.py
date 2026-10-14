@@ -59,12 +59,12 @@ def test_quality_pass_and_vision_resume_share_committed_inference(workflow_api):
     # Rebuilding the worker with an unavailable model must reuse the durable envelope.
     unavailable = ControlledEngine(RuntimeError("must not run again"))
     resumed = WorkflowInference(WebConfig(), engine=unavailable)
-    for _ in range(5):
+    for _ in range(6):
         assert Worker(sessions, inference=resumed).run_once()
     status = query(client, workflow_id)
     assert status["qualityGate"] == "PASS"
     assert status["progress"]["completed"] == [
-        "validateImage", "inference", "imageQuality", "visionExposure", "evidenceRetrieval",
+        "validateImage", "inference", "imageQuality", "visionExposure", "clinicalRiskPrecheck", "evidenceRetrieval",
         "evidenceRewrite", "evidenceValidation"]
     assert (status["status"], status["stopReasonCode"]) == ("COMPLETED_LIMITED", "EVIDENCE_INSUFFICIENT")
     assert unavailable.calls == 0
@@ -259,7 +259,7 @@ def test_existing_registry_calibration_quality_and_abstain_pipeline_is_used(
         content = output.getvalue()
     workflow_id = create_upload(client, content=content).json()["data"]["workflowId"]
     worker = Worker(sessions, inference=WorkflowInference(config, engine=ControlledModelEngine(config)))
-    for _ in range(7 if low_confidence else 3):
+    for _ in range(8 if low_confidence else 3):
         assert worker.run_once()
     view = query(client, workflow_id)
     assert (view["status"], view["stopReasonCode"]) == (expected, reason)

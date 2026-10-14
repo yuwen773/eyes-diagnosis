@@ -1,0 +1,19 @@
+{
+  "boundary": "Actual upload/HTTP/LangGraph/durable checkpoint saver/Vue/Chromium; SQLite and controlled external services/models",
+  "published": true,
+  "insufficient": true,
+  "claimsRejected": true,
+  "finalReviewWaiting": true,
+  "refreshRestored": true,
+  "revokedExplanationWithheld": true,
+  "explanationOverflow": false,
+  "existingHeaderOverflow": true,
+  "darkTextContrast": 15.81,
+  "workflows": {
+    "published": "096dbb731dd74394a43b02d90dd91f89",
+    "insufficient": "fed54778768d4ba29f586106e1f44cc1",
+    "rejected": "401d8371223c48819c89e5ceebfa5eba",
+    "clinical": "980c3e3f56304afaae336ffeda0f4721"
+  },
+  "pageErrors": []
+}

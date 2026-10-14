@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-13",
+  "timezone": "Asia/Shanghai",
+  "worktree": "D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite",
+  "branch": "worktree-py-rewrite",
+  "baselineCommit": "15d29698974f24ec327cd4e3727a8d22610d7d72",
+  "boundary": "Controlled engineering verification; SQLite and synthetic Java/COS/embedding/Chroma/inference/explanation services",
+  "pythonWeb": { "passed": 541, "skipped": 1, "failed": 0 },
+  "issue09Http": { "passed": 25, "failed": 0 },
+  "frontendUnit": { "passed": 34, "failed": 0 },
+  "mypy": { "passed": true, "sourceFiles": 10 },
+  "vueTypecheck": { "passed": true },
+  "frontendProductionBuild": { "passed": true, "existingLargeChunkWarning": true },
+  "dependencyCheck": { "passed": true, "packages": 127 },
+  "legacyJavaCompile": { "exitCode": 0, "jdk": "Corretto 21.0.7", "testsRun": false },
+  "javaSourceAndRootPomStatus": "unchanged",
+  "gitDiffCheck": { "passed": true },
+  "browser": { "passed": true, "pageErrors": 0, "darkTextContrast": 15.81, "results": "issue09-ui-results.json" },
+  "knownExistingUiIssue": "Global navigation overflows at 390px; new explanation/status sections do not overflow",
+  "selfReview": { "standards": "No remaining actionable finding in issue09 scope", "spec": "Ticket criteria satisfied within controlled boundary" },
+  "notVerified": ["real MySQL and Flyway", "Redis", "Chroma", "real Java sessions", "real model weights", "real explanation model", "clinical acceptance", "deployment and rollback"],
+  "skippedTest": "Issue08 real MySQL two-connection validation requires an explicitly configured isolated database"
+}

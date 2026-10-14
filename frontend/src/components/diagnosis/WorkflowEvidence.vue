@@ -21,7 +21,7 @@ defineProps<{ evidence: WorkflowEvidenceView }>()
         <details><summary>引用内容校验标识</summary><code>{{ citation.quotedTextDigest }}</code></details>
       </li>
     </ul>
-    <p class="reference-note">参考资料仅支持一般性说明，不证明本人的疾病或概率。解释尚未发布。</p>
+    <p class="reference-note">参考资料仅支持一般性说明，不证明本人的疾病或概率。</p>
   </section>
 </template>
 

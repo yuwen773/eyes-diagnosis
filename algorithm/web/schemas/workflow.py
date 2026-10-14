@@ -11,7 +11,7 @@ class WorkflowProgress(BaseModel):
 
 
 class ResultAvailability(BaseModel):
-    patientVisible: Literal[False] = False
+    patientVisible: bool = False
     doctorReviewRequired: bool = False
 
 
@@ -37,6 +37,43 @@ class EvidenceView(BaseModel):
     citations: list[EvidenceCitationView]
 
 
+class ExplanationView(BaseModel):
+    publicationStatus: Literal["NONE", "DRAFT", "VALIDATED", "PUBLISHED", "REJECTED", "WITHHELD"]
+    snapshotId: str | None
+    revision: str | None
+    validationStatus: Literal["VALIDATED", "REJECTED"] | None
+
+
+class PublishedCitation(EvidenceCitationView):
+    quotedText: str
+
+
+class PublishedClaim(BaseModel):
+    claimId: str
+    type: Literal["GENERAL_DISEASE_INFORMATION", "GENERAL_RISK_CONTEXT", "GENERAL_FOLLOW_UP_GUIDANCE"]
+    text: str
+    citationIds: list[str]
+
+
+class ModelAssessment(BaseModel):
+    diseaseCode: str
+    calibratedProbability: float
+    modelVersion: str
+    modelWeightFingerprint: str
+    inferencePolicyVersion: str
+    calibrationStatus: str
+
+
+class PublishedExplanation(BaseModel):
+    snapshotId: str
+    revision: str
+    modelAssessment: ModelAssessment
+    generalInformation: list[PublishedClaim]
+    citations: list[PublishedCitation]
+    riskNotice: str
+    limitation: str
+
+
 class WorkflowStatusView(BaseModel):
     workflowId: str
     status: Literal["CREATED", "QUEUED", "RUNNING", "WAITING_HUMAN_REVIEW", "COMPLETED",
@@ -49,5 +86,6 @@ class WorkflowStatusView(BaseModel):
     qualityGate: Literal["PASS", "REJECT", "REVIEW"] | None = None
     qualityReview: QualityReviewView | None = None
     evidence: EvidenceView | None = None
+    explanation: ExplanationView
     resultAvailability: ResultAvailability
-    result: None = None
+    result: PublishedExplanation | None = None

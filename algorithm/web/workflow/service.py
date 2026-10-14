@@ -13,13 +13,18 @@ from web.files import MAX_PICTURE_BYTES
 from web.evidence import evidence_view
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
 from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
+from web.workflow.explanation import patient_explanation
 
 
 def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
+    db.refresh(workflow, with_for_update=True)
+    db.refresh(upload, with_for_update=True)
     completed = json.loads(upload.completed_nodes)
     inference = db.get(InferenceEnvelopeRow, workflow.inference_envelope_id) if workflow.inference_envelope_id else None
     review = db.scalar(select(ReviewTask).where(ReviewTask.workflow_id == workflow.workflow_id,
                                                ReviewTask.review_type == "IMAGE_QUALITY_GATE"))
+    evidence = json.loads(upload.evidence_snapshot) if upload.evidence_snapshot else None
+    explanation, result = patient_explanation(db, workflow, evidence)
     return {
         "workflowId": workflow.workflow_id, "status": workflow.status,
         "workflowVersion": str(workflow.version), "segment": workflow.segment,
@@ -29,10 +34,11 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
         "qualityGate": inference.quality_outcome if inference and "imageQuality" in completed else None,
         "qualityReview": {"status": review.status, "decisionCode": review.decision,
                           "reasonCode": review.reason} if review else None,
-        "evidence": evidence_view(db, json.loads(upload.evidence_snapshot)) if upload.evidence_snapshot else None,
-        "resultAvailability": {"patientVisible": False,
+        "evidence": evidence_view(db, evidence) if evidence else None,
+        "explanation": explanation,
+        "resultAvailability": {"patientVisible": result is not None,
                                "doctorReviewRequired": workflow.status == "WAITING_HUMAN_REVIEW"},
-        "result": None,
+        "result": result,
     }
 
 

@@ -65,6 +65,20 @@ def evidence_api(monkeypatch):
     app.state.java_client = real_client(base_url="http://java/api/", transport=httpx.MockTransport(java))
     monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: real_client(
         transport=httpx.MockTransport(embedding), **kw))
+    real_sync_client = httpx.Client
+
+    def explanation(request):
+        handler = getattr(app.state, "explanation_transport", None)
+        if handler:
+            return handler(request)
+        sources = json.loads(json.loads(request.content)["messages"][1]["content"])
+        draft = {"claims": [{"claimId": "general-1", "type": "GENERAL_DISEASE_INFORMATION",
+            "text": sources[0]["quotedText"], "citationIds": [sources[0]["citationId"]]}]}
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps(draft, ensure_ascii=False)}}]})
+
+    monkeypatch.setattr(httpx, "Client", lambda **kw: real_sync_client(
+        transport=httpx.MockTransport(explanation), **kw))
 
     class Collection:
         def upsert(self, ids, documents, embeddings, metadatas):
@@ -181,7 +195,7 @@ def test_task_uses_only_approved_matching_public_sources_and_tracks_revocation(e
     assert citation["citationId"] == f"doc_{allowed}_chunk_0"
     assert citation["title"] == "guide.txt" and citation["source"]
     assert len(citation["quotedTextDigest"]) == 64
-    assert view["result"] is None and view["resultAvailability"]["patientVisible"] is False
+    assert view["status"] == "COMPLETED" and view["resultAvailability"]["patientVisible"] is True
     assert "evidenceRetrieval" in view["progress"]["completed"]
     assert all(where == {"documentId": {"$in": [int(allowed)]}} for where in searches)
     assert all(c["documentId"] != private for c in evidence["citations"])
@@ -289,7 +303,7 @@ def test_revocation_between_retrieval_and_validation_stops_at_evidence_gate(evid
     client.cookies.set("SESSION", "alice")
     task_id = create_upload(client).json()["data"]["workflowId"]
     adapter = WorkflowInference(WebConfig(dashscope_api_key="controlled-key"), engine=ControlledEngine(prediction()))
-    for _ in range(5):
+    for _ in range(6):
         assert Worker(sessions, inference=adapter).run_once()
     view = client.get(f"/api/diagnosis/workflows/{task_id}").json()["data"]
     assert view["evidence"]["status"] == "SUFFICIENT"

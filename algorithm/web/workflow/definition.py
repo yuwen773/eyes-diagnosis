@@ -11,9 +11,12 @@ from PIL import Image, UnidentifiedImageError
 
 from web.workflow.inference import InferenceEnvelope, WorkflowInference
 from web.evidence import EvidenceRetriever
+from web.workflow.explanation import (
+    ExplanationModel, make_draft, publication_decision, risk_assessment, validate_claims,
+)
 
-GRAPH_VERSION = "upload-controlled-evidence-v4"
-ACTION_VERSION = "upload-controlled-evidence-v4"
+GRAPH_VERSION = "upload-validated-explanation-v5"
+ACTION_VERSION = "upload-validated-explanation-v5"
 
 
 class UploadState(TypedDict):
@@ -26,6 +29,9 @@ class UploadState(TypedDict):
     exposure_status: str
     waiting_review: bool
     evidence: dict[str, Any]
+    risk: dict[str, Any]
+    explanation: dict[str, Any]
+    review_type: str
 
 
 def build_graph(checkpointer, image_bytes: bytes = b"", *,
@@ -33,7 +39,8 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 committed_envelope: InferenceEnvelope | None = None,
                 pending_envelopes: list[InferenceEnvelope] | None = None,
                 inference_epoch: int = 0, quality_decision: str | None = None,
-                evidence: EvidenceRetriever | None = None):
+                evidence: EvidenceRetriever | None = None,
+                explanation_model: ExplanationModel | None = None):
     def validate_image(state: UploadState) -> dict:
         try:
             with warnings.catch_warnings():
@@ -104,9 +111,9 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                                     else "WITHHELD_BY_ABSTENTION") if abstained else "AVAILABLE",
                 "completed": [*state["completed"], "visionExposure"]}
 
-    def explanation_unavailable(state: UploadState) -> dict:
-        return {"status": "FAILED", "reason": "EXPLANATION_NOT_AVAILABLE",
-                "completed": [*state["completed"], "explanationUnavailable"]}
+    def risk_precheck(state: UploadState) -> dict:
+        risk = risk_assessment(shared_envelope(state), state["exposure_status"])
+        return {"risk": risk, "completed": [*state["completed"], "clinicalRiskPrecheck"]}
 
     def retrieve_evidence(state: UploadState) -> dict:
         envelope = shared_envelope(state)
@@ -128,13 +135,59 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
                 "reason": None if sufficient else "EVIDENCE_INSUFFICIENT",
                 "completed": [*state["completed"], "evidenceValidation"]}
 
+    def risk_final(state: UploadState) -> dict:
+        assert evidence is not None
+        batch = evidence.validate(state["evidence"])
+        risk = risk_assessment(shared_envelope(state), state["exposure_status"], evidence=batch)
+        eligible = risk["disposition"] in {"AUTO_PUBLICATION_ELIGIBLE", "FINAL_REVIEW_REQUIRED"}
+        return {"evidence": batch, "risk": risk,
+                "status": "RUNNING" if eligible else "COMPLETED_LIMITED",
+                "reason": None if eligible else "EVIDENCE_INSUFFICIENT",
+                "completed": [*state["completed"], "clinicalRiskFinal"]}
+
+    def draft_explanation(state: UploadState) -> dict:
+        assert evidence is not None and explanation_model is not None
+        batch = evidence.validate(state["evidence"])
+        if batch["status"] != "SUFFICIENT":
+            explanation = {"status": "NONE", "reason": "EXPLANATION_SOURCE_CHANGED"}
+        else:
+            explanation = make_draft(explanation_model, shared_envelope(state), batch, state["risk"])
+        return {"explanation": explanation, "evidence": batch,
+                "status": "RUNNING" if explanation["status"] == "DRAFT" else "COMPLETED_LIMITED",
+                "reason": explanation["reason"],
+                "completed": [*state["completed"], "explanationDraft"]}
+
+    def validate_explanation(state: UploadState) -> dict:
+        assert evidence is not None
+        batch = evidence.validate(state["evidence"])
+        explanation = validate_claims(state["explanation"], batch)
+        return {"explanation": explanation, "evidence": batch,
+                "status": "RUNNING" if explanation["status"] == "VALIDATED" else "COMPLETED_LIMITED",
+                "reason": explanation["reason"],
+                "completed": [*state["completed"], "explanationClaimValidation"]}
+
+    def publication(state: UploadState) -> dict:
+        assert evidence is not None
+        batch = evidence.validate(state["evidence"])
+        explanation = publication_decision(state["explanation"], batch, state["risk"])
+        waiting = explanation["reason"] == "FINAL_CLINICAL_REVIEW_REQUIRED"
+        return {"explanation": explanation, "evidence": batch, "reason": explanation["reason"],
+                "status": "WAITING_HUMAN_REVIEW" if waiting else (
+                    "COMPLETED" if explanation["status"] == "PUBLISHED" else "COMPLETED_LIMITED"),
+                "waiting_review": waiting, "review_type": "FINAL_CLINICAL_REVIEW" if waiting else "",
+                "completed": [*state["completed"], "explanationPublication"]}
+
     graph = StateGraph(UploadState)
     graph.add_node("validateImage", validate_image)
     graph.add_node("inference", infer)
     graph.add_node("imageQuality", image_quality)
     graph.add_node("qualityReview", quality_review)
     graph.add_node("visionExposure", vision_exposure)
-    graph.add_node("explanationUnavailable", explanation_unavailable)
+    graph.add_node("clinicalRiskPrecheck", risk_precheck)
+    graph.add_node("clinicalRiskFinal", risk_final)
+    graph.add_node("explanationDraft", draft_explanation)
+    graph.add_node("explanationClaimValidation", validate_explanation)
+    graph.add_node("explanationPublication", publication)
     graph.add_node("evidenceRetrieval", retrieve_evidence)
     graph.add_node("evidenceRewrite", rewrite_evidence)
     graph.add_node("evidenceValidation", validate_sources)
@@ -149,17 +202,27 @@ def build_graph(checkpointer, image_bytes: bytes = b"", *,
     graph.add_conditional_edges("qualityReview", lambda state: state["status"] == "RUNNING",
                                 {True: "visionExposure", False: END})
     graph.add_conditional_edges("visionExposure", lambda state: state["status"] == "RUNNING",
+                                {True: "clinicalRiskPrecheck", False: END})
+    graph.add_conditional_edges("clinicalRiskPrecheck",
+                                lambda state: state["risk"]["disposition"] == "PROCEED_TO_EVIDENCE",
                                 {True: "evidenceRetrieval", False: END})
     graph.add_conditional_edges("evidenceRetrieval", lambda state: state["evidence"]["status"] == "SUFFICIENT",
                                 {True: "evidenceValidation", False: "evidenceRewrite"})
     graph.add_edge("evidenceRewrite", "evidenceValidation")
     graph.add_conditional_edges("evidenceValidation", lambda state: state["status"] == "RUNNING",
-                                {True: "explanationUnavailable", False: END})
-    graph.add_edge("explanationUnavailable", END)
+                                {True: "clinicalRiskFinal", False: END})
+    graph.add_conditional_edges("clinicalRiskFinal", lambda state: state["status"] == "RUNNING",
+                                {True: "explanationDraft", False: END})
+    graph.add_conditional_edges("explanationDraft", lambda state: state["status"] == "RUNNING",
+                                {True: "explanationClaimValidation", False: END})
+    graph.add_conditional_edges("explanationClaimValidation", lambda state: state["status"] == "RUNNING",
+                                {True: "explanationPublication", False: END})
+    graph.add_edge("explanationPublication", END)
     return graph.compile(checkpointer=checkpointer,
                          interrupt_after=["validateImage", "inference", "imageQuality",
-                                          "qualityReview", "visionExposure", "evidenceRetrieval",
-                                          "evidenceRewrite", "evidenceValidation", "explanationUnavailable"])
+                                          "qualityReview", "visionExposure", "clinicalRiskPrecheck", "evidenceRetrieval",
+                                          "evidenceRewrite", "evidenceValidation", "clinicalRiskFinal", "explanationDraft",
+                                          "explanationClaimValidation", "explanationPublication"])
 
 
 # Node semantics are versioned by ACTION_VERSION; topology is hashed as well.

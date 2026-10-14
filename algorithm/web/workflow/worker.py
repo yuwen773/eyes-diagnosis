@@ -19,6 +19,7 @@ from web.workflow.checkpoint import MysqlCheckpointSaver, checkpoint_config
 from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION, build_graph
 from web.workflow.inference import InferenceEnvelope, InferenceExecutionError, WorkflowInference
 from web.evidence import EvidenceRetriever, validate_evidence
+from web.workflow.explanation import ExplanationModel, PublicationSourceChanged, save_snapshot
 from web.workflow.models import (
     PYTHON_SEGMENT_CODE, InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent,
 )
@@ -160,7 +161,8 @@ class Worker:
         graph = build_graph(saver, claim.image_bytes, inference=self.inference,
                             committed_envelope=claim.envelope, pending_envelopes=pending_envelopes,
                             inference_epoch=claim.inference_epoch, quality_decision=claim.quality_decision,
-                            evidence=EvidenceRetriever(self.sessions, self.inference.config))
+                            evidence=EvidenceRetriever(self.sessions, self.inference.config),
+                            explanation_model=ExplanationModel(self.inference.config))
         config = checkpoint_config(claim.workflow_id, "", claim.checkpoint_id or "")
         try:
             if claim.checkpoint_id and saver.get_tuple(config) is None:
@@ -194,6 +196,8 @@ class Worker:
                 workflow.status = snapshot.values["status"]
                 workflow.stop_reason = snapshot.values["reason"]
                 workflow.exposure_status = snapshot.values.get("exposure_status", "HIDDEN")
+                if "explanation" in snapshot.values:
+                    save_snapshot(db, workflow, snapshot.values["explanation"], now)
                 workflow.segment = snapshot.next[0] if snapshot.next else snapshot.values["completed"][-1]
                 workflow.version += 1
                 workflow.updated_at = now
@@ -201,12 +205,13 @@ class Worker:
                 # Keep the job's input continuation immutable. Its output token
                 # belongs to UploadInput/the next Job, so redelivery is stale.
                 if snapshot.values.get("waiting_review"):
+                    review_type = snapshot.values.get("review_type") or "IMAGE_QUALITY_GATE"
                     existing = db.scalar(select(ReviewTask).where(
                         ReviewTask.workflow_id == claim.workflow_id,
-                        ReviewTask.review_type == "IMAGE_QUALITY_GATE", ReviewTask.review_round == 1))
+                        ReviewTask.review_type == review_type, ReviewTask.review_round == 1))
                     if existing is None:
                         db.add(ReviewTask(task_id=uuid4().hex, workflow_id=claim.workflow_id,
-                            review_type="IMAGE_QUALITY_GATE", workflow_version=workflow.version,
+                            review_type=review_type, workflow_version=workflow.version,
                             envelope_id=workflow.inference_envelope_id,
                             graph_version=workflow.graph_version, graph_hash=workflow.graph_hash,
                             action_version=workflow.action_version, thread_id=claim.workflow_id,
@@ -218,6 +223,8 @@ class Worker:
                                available_at=now, created_at=now, updated_at=now))
                 append_event(db, workflow, self.worker_id, now)
             logger.info("workflow=%s segment committed", claim.workflow_id)
+        except PublicationSourceChanged:
+            self._failure(claim, "SOURCE_CHANGED_DURING_PUBLICATION")
         except InferenceExecutionError:
             logger.warning("workflow=%s inference failed", claim.workflow_id)
             self._failure(claim, "INFERENCE_FAILED")

@@ -143,6 +143,26 @@ class ReviewTask(Base):
     updated_at: Mapped[datetime] = mapped_column("updatedAt", DateTime, default=func.now())
 
 
+class ExplanationSnapshot(Base):
+    """Release V12 revision: immutable content, guarded publication transitions."""
+
+    __tablename__ = "t_explanation_snapshot"
+    __table_args__ = (UniqueConstraint("workflowId", "revision"),)
+
+    snapshot_id: Mapped[str] = mapped_column("explanationSnapshotId", String(64), primary_key=True)
+    workflow_id: Mapped[str] = mapped_column("workflowId", String(64))
+    revision: Mapped[int] = mapped_column(BigInteger)
+    publication_status: Mapped[str] = mapped_column("publicationStatus", String(32))
+    content: Mapped[str] = mapped_column("contentSnapshot", Text)
+    validation: Mapped[str | None] = mapped_column("claimValidationResult", Text)
+    citation_digest: Mapped[str | None] = mapped_column("citationSetDigest", String(128))
+    limitation_code: Mapped[str | None] = mapped_column("limitationTextCode", String(64))
+    withheld_reason: Mapped[str | None] = mapped_column("withheldReasonCode", String(64))
+    created_at: Mapped[datetime] = mapped_column("createdAt", DateTime, default=func.now())
+    validated_at: Mapped[datetime | None] = mapped_column("validatedAt", DateTime)
+    published_at: Mapped[datetime | None] = mapped_column("publishedAt", DateTime)
+
+
 class GraphCheckpoint(Base):
     __tablename__ = "t_python_graph_checkpoint"
 
