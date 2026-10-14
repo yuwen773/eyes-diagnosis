@@ -1,0 +1,16 @@
+[INFO] Scanning for projects...
+[INFO]
+[INFO] -------------< com.csust.eyediagnosis:workflow-migrations >-------------
+[INFO] Building workflow-migrations 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- flyway:12.4.0:validate (default-cli) @ workflow-migrations ---
+[INFO] Database: jdbc:mysql://127.0.0.1:3307/eye_worker_issue16_f4ba630651f444c9a8df6776615ec19a?serverTimezone=Asia/Shanghai (MySQL 8.0)
+[INFO] Successfully validated 23 migrations (execution time 00:00.038s)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.985 s
+[INFO] Finished at: 2026-10-14T13:17:08+08:00
+[INFO] ------------------------------------------------------------------------

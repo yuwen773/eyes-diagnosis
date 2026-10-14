@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import uuid4
 
+import httpx
 from sqlalchemy import DateTime, and_, func, literal_column, or_, select
 
 from web.workflow.checkpoint import MysqlCheckpointSaver, checkpoint_config
@@ -79,6 +80,13 @@ class Worker:
                 Workflow.workflow_id == job.workflow_id).with_for_update())
             upload = db.get(UploadInput, job.workflow_id)
             assert workflow is not None and upload is not None
+            # A delivery is not permission to reopen a terminal/review wait or
+            # replay a segment whose continuation has already been committed.
+            now = database_now(db)
+            if (workflow.status not in {"QUEUED", "RUNNING"} or
+                    job.checkpoint_id != upload.checkpoint_id):
+                job.status, job.lease_until, job.updated_at = "COMPLETED", None, now
+                return None
             exhausted = job.attempt >= job.max_attempts
             job.attempt += 1
             job.status, job.lease_owner, job.lease_token = "RUNNING", self.worker_id, uuid4().hex
@@ -190,7 +198,8 @@ class Worker:
                 workflow.version += 1
                 workflow.updated_at = now
                 job.status, job.lease_until, job.updated_at = "COMPLETED", None, now
-                job.checkpoint_id = checkpoint_id
+                # Keep the job's input continuation immutable. Its output token
+                # belongs to UploadInput/the next Job, so redelivery is stale.
                 if snapshot.values.get("waiting_review"):
                     existing = db.scalar(select(ReviewTask).where(
                         ReviewTask.workflow_id == claim.workflow_id,
@@ -212,6 +221,10 @@ class Worker:
         except InferenceExecutionError:
             logger.warning("workflow=%s inference failed", claim.workflow_id)
             self._failure(claim, "INFERENCE_FAILED")
+        except httpx.HTTPError:
+            # Provider response details must not be exposed in API views/logs.
+            logger.warning("workflow=%s external call failed", claim.workflow_id)
+            self._failure(claim, "EXECUTION_FAILED")
         except Exception:
             logger.error("workflow=%s segment failed", claim.workflow_id, exc_info=True)
             self._failure(claim, "EXECUTION_FAILED")

@@ -117,7 +117,9 @@ class EvidenceRetriever:
             batch["citations"] = citations_from_results(results, documents)
         except Exception:
             logger.warning("controlled evidence retrieval unavailable", exc_info=True)
-            batch["reasonCode"] = "RETRIEVAL_UNAVAILABLE"
+            # An unavailable tool is a technical execution failure. Let the
+            # Worker retry; empty successful retrieval remains insufficient.
+            raise
         return self.validate(batch)
 
     def validate(self, batch: dict[str, Any]) -> dict[str, Any]:

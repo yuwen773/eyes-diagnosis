@@ -1,0 +1,20 @@
+--- a/algorithm/web/workflow/explanation.py
++++ b/algorithm/web/workflow/explanation.py
+@@ -71 +71 @@
+-                    if len(data) > 65536 or time.monotonic() > deadline:
++                    if len(data) > 65536:
+@@ -72,0 +73,2 @@
++                    if time.monotonic() > deadline:
++                        raise httpx.ReadTimeout("EXPLANATION_DEADLINE_EXCEEDED")
+@@ -99 +101,6 @@
+-    except (httpx.HTTPError, RuntimeError, ValueError, KeyError, IndexError, TypeError, AttributeError):
++    except (httpx.HTTPError, RuntimeError, ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
++        if (isinstance(exc, httpx.RequestError) or
++                isinstance(exc, httpx.HTTPStatusError) and
++                (exc.response.status_code == 429 or exc.response.status_code >= 500)):
++            # Retry transient provider failures from the last durable node.
++            raise
+--- a/algorithm/web/tests/test_validated_explanation.py
++++ b/algorithm/web/tests/test_validated_explanation.py
+@@ -192 +191,0 @@
+-    httpx.Response(503, text="private provider error"),

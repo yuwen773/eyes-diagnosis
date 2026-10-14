@@ -1,0 +1,14 @@
+{
+  "baseCommit": "da82b3629dbda31c64a0a6c25ec60433c29c68e6",
+  "scope": "Integrated dirty migration worktree; not standalone HEAD",
+  "sha256": {
+    "algorithm/web/workflow/worker.py": "81b9873b7e6509dcd9e870380732e65a94656dbd2ea9f2a2747f486a3396519d",
+    "algorithm/web/workflow/definition.py": "afec6d5106c1eb54601e5e6bf4240cca66afba9fdd9bc5424e0c7ec558a21431",
+    "algorithm/web/workflow/explanation.py": "d7e0084afa97e40ccae5ed138b3621525dbfa6377af59301f8aaecb0bf3e0725",
+    "algorithm/web/evidence.py": "c8f4db1a2c4183a1a04a38eeedc42a72faa7ed67db7b717dd006dbeceb855f78",
+    "algorithm/web/tests/test_worker_concurrency.py": "e25456dbeb706f2c2fc0cddd24f4d271a31fb4ffa130cae4376dd7164931d99a",
+    "algorithm/web/tests/test_worker_explanation_failure.py": "8f42d0d4d7e92273b6fe92bee40bb2310ce0dd6d31f76631426382fab1346d35",
+    "algorithm/web/tests/worker_concurrency_process.py": "f15d4c1f641f26b1fef6f1f4e09db921187fa4c203d3cbeebd461ccb065cd6a0",
+    "algorithm/web/verify_worker_concurrency.py": "397f70e7e7bac976ed4ed1be791f698f231bb5be9ba883ab014b4b73228acee0"
+  }
+}

@@ -198,7 +198,8 @@ def test_replayed_inference_segment_cannot_replace_its_committed_epoch(workflow_
         upload = db.get(UploadInput, workflow_id)
         upload.checkpoint_id = validation_token
         db.scalar(select(Job).where(Job.workflow_id == workflow_id, Job.status == "READY")).status = "COMPLETED"
-        db.add(Job(job_id=uuid4().hex, workflow_id=workflow_id, job_type="RESUME", epoch=99))
+        db.add(Job(job_id=uuid4().hex, workflow_id=workflow_id, job_type="RESUME", epoch=99,
+                   checkpoint_id=validation_token))
     engine.result = prediction(predicted_label="normal")
     assert worker.run_once()
     with sessions() as db:
