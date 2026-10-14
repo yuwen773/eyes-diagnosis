@@ -189,7 +189,6 @@ def test_insufficient_sources_never_invoke_explanation_model(explanation_api):
 
 
 @pytest.mark.parametrize("response", [
-    httpx.Response(503, text="private provider error"),
     httpx.Response(200, json={"choices": [{"finish_reason": "length", "message": {"content": "partial"}}]}),
     httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "{}", "tool_calls": [{"name": "publish"}]}}]}),
     httpx.Response(200, text="x" * 65537),

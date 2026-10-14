@@ -68,8 +68,10 @@ class ExplanationModel:
                 data = bytearray()
                 for chunk in response.iter_bytes():
                     data.extend(chunk)
-                    if len(data) > 65536 or time.monotonic() > deadline:
+                    if len(data) > 65536:
                         raise ValueError("EXPLANATION_RESPONSE_TOO_LARGE")
+                    if time.monotonic() > deadline:
+                        raise httpx.ReadTimeout("EXPLANATION_DEADLINE_EXCEEDED")
         choice = json.loads(data)["choices"][0]
         if choice["finish_reason"] != "stop" or choice["message"].get("tool_calls"):
             raise ValueError("EXPLANATION_RESPONSE_INCOMPLETE")
@@ -96,7 +98,12 @@ def risk_assessment(envelope, exposure: str, *, evidence: dict | None = None) ->
 def make_draft(model: ExplanationModel, envelope, batch: dict, risk: dict) -> dict:
     try:
         raw = model.generate(batch)
-    except (httpx.HTTPError, RuntimeError, ValueError, KeyError, IndexError, TypeError, AttributeError):
+    except (httpx.HTTPError, RuntimeError, ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
+        if (isinstance(exc, httpx.RequestError) or
+                isinstance(exc, httpx.HTTPStatusError) and
+                (exc.response.status_code == 429 or exc.response.status_code >= 500)):
+            # Retry transient provider failures from the last durable node.
+            raise
         # Provider details and unparsed responses never enter patient views/logs.
         return {"status": "NONE", "reason": "EXPLANATION_MODEL_UNAVAILABLE"}
     return {"snapshotId": uuid4().hex, "revision": 1, "status": "DRAFT",
