@@ -93,7 +93,9 @@ def get_save_confirmation(workflowId: str, user: LoginUser = Depends(workflow_us
 def create_save_confirmation(workflowId: str, body: SaveRequest,
                              user: LoginUser = Depends(workflow_user), db: Session = Depends(get_db)) -> dict:
     try:
-        return envelope(request_save(db, workflowId, int(user.id), body))
+        data = request_save(db, workflowId, int(user.id), body)
+        db.commit()
+        return envelope(data)
     except IntegrityError:
         db.rollback()
         raise HTTPException(409, "确认请求已变化或幂等键已占用，请刷新保存状态") from None
@@ -103,11 +105,17 @@ def create_save_confirmation(workflowId: str, body: SaveRequest,
              response_model=BaseResponse[SaveConfirmationView])
 def approve_save(workflowId: str, confirmationId: str, body: SaveDecision,
                  user: LoginUser = Depends(workflow_user), db: Session = Depends(get_db)) -> dict:
-    return envelope(decide_save(db, workflowId, confirmationId, int(user.id), body, True))
+    data = decide_save(db, workflowId, confirmationId, int(user.id), body, True)
+    # A successful HTTP response must acknowledge a durable consent + receipt.
+    # Request dependency cleanup can run after the response has been sent.
+    db.commit()
+    return envelope(data)
 
 
 @router.post("/{workflowId}/save-confirmations/{confirmationId}/reject",
              response_model=BaseResponse[SaveConfirmationView])
 def reject_save(workflowId: str, confirmationId: str, body: SaveDecision,
                 user: LoginUser = Depends(workflow_user), db: Session = Depends(get_db)) -> dict:
-    return envelope(decide_save(db, workflowId, confirmationId, int(user.id), body, False))
+    data = decide_save(db, workflowId, confirmationId, int(user.id), body, False)
+    db.commit()
+    return envelope(data)

@@ -49,9 +49,10 @@ class MysqlCheckpointSaver(BaseCheckpointSaver):
                 staged = [r for r in self.checkpoints.values()
                           if r.thread_id == thread and r.namespace == namespace]
                 if staged:
-                    latest = max(staged, key=lambda r: r.checkpoint_id)
-                    if row is None or latest.checkpoint_id > row.checkpoint_id:
-                        row = latest
+                    # This invocation started at the business row's token.
+                    # Its staged continuation wins over unrelated DB branches,
+                    # even if an abandoned checkpoint sorts newer by ID.
+                    row = max(staged, key=lambda r: r.checkpoint_id)
             if row is None:
                 return None
             pending = list(db.scalars(select(GraphWrite).where(

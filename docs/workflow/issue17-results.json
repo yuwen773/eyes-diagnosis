@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-14T09:01:47.075167+00:00",
+  "schema": "eye_human_wait_issue17_093290e3b858437f957c9d7c05f66ee8",
+  "mysqlVersion": "8.0.26",
+  "suite": "human-wait-restart",
+  "scope": "Real MySQL and child processes; synthetic Java identity/model/retrieval/explanation; no clinical acceptance",
+  "commands": {
+    "flyway-migrate": {
+      "exitCode": 0
+    },
+    "flyway-validate": {
+      "exitCode": 0
+    },
+    "mysql-tests": {
+      "exitCode": 0,
+      "passed": 12
+    },
+    "full-suite-java21": {
+      "exitCode": 0,
+      "passed": 711,
+      "skipped": 2
+    },
+    "mypy": {
+      "exitCode": 0,
+      "checkedFiles": 5,
+      "checkUntypedDefs": true
+    }
+  },
+  "completedAt": "2026-10-14T09:16:49.895774+00:00",
+  "standardsFindings": 0,
+  "specFindings": 0,
+  "evidence": {
+    "mysql": ".scratch/python-agent-migration/evidence/issue17/mysql-verified-final.log",
+    "fullSuite": ".scratch/python-agent-migration/evidence/issue17/full-suite-java21.log",
+    "cases": ".scratch/python-agent-migration/evidence/issue17/verified-final/cases"
+  }
+}
