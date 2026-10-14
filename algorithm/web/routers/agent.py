@@ -20,6 +20,7 @@ from web.chat.history import query_history
 from web.chat.models import ChatAttachment, ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow, LegacyUpload
 from web.chat.session import owner, save_message
 from web.chat import supplement
+from web.chat import tool_writes
 from web.schemas.supplement import SupplementReply, SupplementRequest, SupplementView
 from web.deps import get_db, login_user
 from web.response import BaseResponse, BizError, ErrorCode, _java_date_string
@@ -223,11 +224,21 @@ async def chat_stream(body: ChatRequest, request: Request, db: Session = Depends
             async def call_mcp(name: str, arguments: str) -> str:
                 nonlocal mcp_queried
                 mcp_queried = True
-                return await access.call(name, arguments)
+                if name == "propose_profile_update":
+                    source = None
+                elif access.is_write(name):
+                    source = access.validate_write(name, arguments)
+                else:
+                    return await access.call(name, arguments)
+                # An LLM tool call creates only a consent intent, never the effect.
+                with Session(bind=history_bind) as consent_db:
+                    tool_writes.propose(consent_db, user, body.threadId, run.id, arguments, source)
+                    consent_db.commit()
+                return "待用户确认，尚未修改资料。请查看聊天中的变更预览，批准或拒绝本次修改。"
 
             async with asyncio.timeout(120), access.connect():
                 async for delta in stream_reply(request.app.state.chat_client, request.app.state.config, context,
-                        history_tool=read_history, tools=access.tools, invoke_tool=call_mcp if access.tools else None):
+                        history_tool=read_history, tools=[*access.tools, tool_writes.PROFILE_TOOL], invoke_tool=call_mcp):
                     if isinstance(delta, dict):
                         yield sse(delta, "tool")
                     else:

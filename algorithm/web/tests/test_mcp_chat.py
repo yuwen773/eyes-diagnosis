@@ -256,7 +256,8 @@ def test_tool_reply_is_displayed_but_not_promoted_to_next_round_facts(mcp_chat):
     client.app.state.chat_client = httpx.AsyncClient(transport=httpx.MockTransport(plain))
     assert "event: done" in chat(client, "memory", "本次症状", disableMcpDefault=True).text
     assert "controlled reference" not in json.dumps(calls[-1])
-    assert len(calls[-1]["tools"]) == 1  # Only the server-owned history query remains.
+    assert {tool["function"]["name"] for tool in calls[-1]["tools"]} == {
+        "query_diagnosis_history", "propose_profile_update"}
 
 
 def test_remote_schema_reference_cannot_bypass_connection_policy(mcp_chat, monkeypatch):

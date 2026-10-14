@@ -140,6 +140,7 @@ class WebConfig:
         # Operator-approved read-only pairs: serverCode/toolName, comma separated.
         # Remote annotations and model output cannot grant this permission.
         mcp_readonly_tools: str = "",
+        mcp_profile_tools: str = "",
     ):
         self.host = host
         if not isinstance(port, int) or port < 1 or port > 65535:
@@ -194,6 +195,7 @@ class WebConfig:
         self.inference_cache_enabled = inference_cache_enabled
         self.mcp_allowed_origins = mcp_allowed_origins
         self.mcp_readonly_tools = mcp_readonly_tools
+        self.mcp_profile_tools = mcp_profile_tools
 
     @property
     def redis_url(self) -> str:
@@ -287,4 +289,5 @@ class WebConfig:
             not in ("0", "false", "no", "off"),
             mcp_allowed_origins=os.getenv("MCP_ALLOWED_ORIGINS", ""),
             mcp_readonly_tools=os.getenv("MCP_READONLY_TOOLS", ""),
+            mcp_profile_tools=os.getenv("MCP_PROFILE_TOOLS", ""),
         )

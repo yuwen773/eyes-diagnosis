@@ -77,6 +77,7 @@
 
         <!-- 底部区域：输入框 -->
         <div class="bottom-area">
+          <ChatToolConfirmation :session-id="currentThreadId" :loading="streaming || historyLoading" />
           <ChatWorkflowPanel :workflows="workflows" :loading="streaming || historyLoading" :waiting="supplements.some(wait => wait.status === 'WAITING')" @bind="bindWorkflow" @supplement="requestSupplement" />
           <ChatSupplementPanel :requests="supplements" :loading="streaming || historyLoading" @answered="refreshSupplements" @refresh="refreshSupplements" />
           <button v-if="diagnosis.pending.value && !streaming" type="button" class="retry-diagnosis" @click="retryDiagnosis">重试诊断提交（同一请求）</button>
@@ -119,6 +120,7 @@ import AgentMessageList from '@/components/agent/AgentMessageList.vue'
 import AgentChatInput from '@/components/agent/AgentChatInput.vue'
 import ChatWorkflowPanel from '@/components/agent/ChatWorkflowPanel.vue'
 import ChatSupplementPanel from '@/components/agent/ChatSupplementPanel.vue'
+import ChatToolConfirmation from '@/components/agent/ChatToolConfirmation.vue'
 import type { SupplementView } from '@/api/supplementController'
 import type { WorkflowView } from '@/api/workflowController'
 import { useChatDiagnosis } from '@/composables/useChatDiagnosis'

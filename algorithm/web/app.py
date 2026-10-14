@@ -50,6 +50,7 @@ _DOMAIN_ROUTER_PATHS: tuple[str, ...] = (
     "web.routers.workflow",  # Durable async upload (separate from legacy diagnosis).
     "web.routers.review",  # Doctor quality review, separate from user approval.
     "web.routers.agent",  # Current-session chat; no diagnostic/business tools.
+    "web.routers.tool_confirmation",  # Explicit user consent for chat business writes.
 )
 
 

@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "pending-restored-after-refresh",
+    "reject-no-profile-effect",
+    "expiry-displayed-no-profile-effect",
+    "approve-profile-effect",
+    "replay-receipt",
+    "cross-user-denied"
+  ],
+  "pageErrors": [],
+  "profile": "眼科学生"
+}

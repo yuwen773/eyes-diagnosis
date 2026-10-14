@@ -324,6 +324,8 @@ def test_endpoint_set_matches_java_exactly():
         ("post", "/api/agent/sessions/{session_id}/generate-title"),
         ("get", "/api/agent/supplements/{request_id}"),
         ("post", "/api/agent/supplements/{request_id}/reply"),
+        ("get", "/api/agent/profile"), ("get", "/api/agent/tool-confirmations"),
+        ("post", "/api/agent/tool-confirmations/{confirmation_id}/{action}"),
         ("post", "/api/agent/image/upload"), ("post", "/api/agent/image/upload/delete")}
     evidence_contracts = {("get", "/api/knowledge/admin/catalog"),
         ("post", "/api/knowledge/admin/documents"),

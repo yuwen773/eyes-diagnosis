@@ -139,8 +139,10 @@ class McpTools:
                         if listing.nextCursor or len(listing.tools) > 32:
                             raise ToolError("MCP_DISCOVERY_BUDGET_EXCEEDED")
                         approved = {item.strip() for item in self.config.mcp_readonly_tools.split(",")}
+                        writes = {item.strip() for item in self.config.mcp_profile_tools.split(",")}
                         for tool in listing.tools:
-                            if (f"{server.code}/{tool.name}" not in approved or
+                            registered_write = (tool.name == "update_my_profile" and f"{server.code}/{tool.name}" in writes)
+                            if not registered_write and (tool.name == "update_my_profile" or f"{server.code}/{tool.name}" not in approved or
                                     (tool.annotations is not None and tool.annotations.readOnlyHint is False)):
                                 continue
                             for schema in (tool.inputSchema, tool.outputSchema):
@@ -160,12 +162,40 @@ class McpTools:
                 raise tool_failure(exc, "MCP_DISCOVERY_FAILED") from None
             yield self
 
+    def is_write(self, name: str) -> bool:
+        if name not in self.calls:
+            return False
+        server, _, tool = self.calls[name]
+        return tool.name == "update_my_profile" and f"{server.code}/{tool.name}" in {
+            item.strip() for item in self.config.mcp_profile_tools.split(",")}
+
+    def write_source(self, name: str) -> dict:
+        if not self.is_write(name):
+            raise ToolError("MCP_TOOL_DENIED")
+        server, _, tool = self.calls[name]
+        self.revalidate(server)
+        return {"kind": "mcp", "alias": name, "serverCode": server.code, "name": tool.name,
+            "version": hashlib.sha256((json.dumps(vars(server), sort_keys=True) + json.dumps(tool.model_dump(mode="json"),
+                sort_keys=True)).encode()).hexdigest()}
+
+    def validate_write(self, name: str, raw: str) -> dict:
+        source = self.write_source(name)
+        try:
+            Draft202012Validator(self.calls[name][2].inputSchema, registry=Registry()).validate(json.loads(raw))
+        except Exception:
+            raise ToolError("MCP_ARGUMENTS_INVALID") from None
+        return source
+
     async def call(self, name: str, raw: str) -> str:
         if self.used:
             raise ToolError("MCP_CALL_BUDGET_EXCEEDED")
         self.used = True
         if name not in self.calls:
             raise ToolError("MCP_TOOL_DENIED")
+        # A registered business tool never falls back to the read-only path,
+        # including when write permission is revoked after discovery.
+        if self.calls[name][2].name == "update_my_profile":
+            raise ToolError("MCP_CONFIRMATION_REQUIRED")
         server, session, tool = self.calls[name]
         try:
             self.revalidate(server)
