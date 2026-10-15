@@ -23,6 +23,7 @@ from web.deps import get_db
 from web.routers import knowledge
 from web.tests.test_workflow import create_upload
 from web.tests.test_workflow_inference import ControlledEngine, prediction
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 @pytest.fixture
@@ -43,14 +44,9 @@ def evidence_api(monkeypatch):
             yield db
             db.commit()
 
-    def java(request):
-        identity = {"SESSION=alice": (7, "user"), "SESSION=bob": (8, "user"),
-                    "SESSION=admin": (9, "admin")}.get(request.headers.get("cookie"))
-        return httpx.Response(200, json={"code": 0 if identity else 40100, "data": {
-            "id": str(identity[0]), "userAccount": "fixture", "userRole": identity[1]
-        } if identity else None})
 
     app.dependency_overrides[get_db] = database
+    auth = install_sessions(app, engine)
     monkeypatch.setattr(knowledge, "db_session", sessions)
     monkeypatch.setattr(knowledge, "_put_object", lambda *args: None)
     monkeypatch.setattr(knowledge, "_delete_object", lambda *args: None)
@@ -62,7 +58,6 @@ def evidence_api(monkeypatch):
             {"index": i, "embedding": [1., 0., 0.]} for i in range(len(payload["input"]))]})
 
     real_client = httpx.AsyncClient
-    app.state.java_client = real_client(base_url="http://java/api/", transport=httpx.MockTransport(java))
     monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: real_client(
         transport=httpx.MockTransport(embedding), **kw))
     real_sync_client = httpx.Client
@@ -110,10 +105,9 @@ def evidence_api(monkeypatch):
     import chromadb
     monkeypatch.setattr(chromadb, "HttpClient", lambda **kw: Chroma())
     client = TestClient(app)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     yield client, sessions, chunks, searches
     client.close()
-    asyncio.run(app.state.java_client.aclose())
     engine.dispose()
 
 
@@ -136,7 +130,7 @@ def test_upload_defaults_private_pending_and_admin_changes_are_confirmed_version
     row = client.post("/api/knowledge/list/page", json={}).json()["data"]["records"][0]
     assert (row["visibility"], row["reviewStatus"], row["diseaseCodes"]) == ("PRIVATE_USER", "PENDING", [])
     assert govern(client, doc_id).json()["code"] == 40101
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, confirmed=False).status_code == 422
     assert govern(client, doc_id, diseaseCodes=["invented"]).status_code == 422
     updated = govern(client, doc_id).json()
@@ -145,7 +139,7 @@ def test_upload_defaults_private_pending_and_admin_changes_are_confirmed_version
     assert govern(client, doc_id).status_code == 409
     listed = client.post("/api/knowledge/admin/documents", json={}).json()["data"]["records"]
     assert listed[0]["reviewedBy"] == "9"
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.post("/api/knowledge/list/page", json={}).json()["data"]["records"] == []
 
 
@@ -178,14 +172,14 @@ def test_task_uses_only_approved_matching_public_sources_and_tracks_revocation(e
     denied = []
     for i in range(6):
         denied.append(upload(client, f"denied-{i}.txt", f"Glaucoma reference {i} with different access or metadata settings."))
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, allowed).json()["code"] == 0
     settings = [dict(visibility="QUARANTINED"), dict(reviewStatus="PENDING"),
                 dict(reviewStatus="WITHDRAWN"), dict(diseaseCodes=["myopia"]),
                 dict(topicCodes=["FOLLOW_UP_GUIDANCE"]), dict(reviewStatus="REJECTED")]
     for doc_id, change in zip(denied, settings):
         assert govern(client, doc_id, **change).json()["code"] == 0
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     view = finish_workflow(client, sessions)
     evidence = view["evidence"]
     assert evidence["status"] == "SUFFICIENT"
@@ -199,22 +193,22 @@ def test_task_uses_only_approved_matching_public_sources_and_tracks_revocation(e
     assert "evidenceRetrieval" in view["progress"]["completed"]
     assert all(where == {"documentId": {"$in": [int(allowed)]}} for where in searches)
     assert all(c["documentId"] != private for c in evidence["citations"])
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, allowed, reviewStatus="WITHDRAWN", expectedVersion=1).json()["code"] == 0
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     refreshed = client.get(f'/api/diagnosis/workflows/{view["workflowId"]}').json()["data"]["evidence"]
     assert refreshed["status"] == "INSUFFICIENT" and refreshed["citations"] == []
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert client.get(f'/api/diagnosis/workflows/{view["workflowId"]}').status_code == 403
 
 
 def test_insufficient_evidence_rewrites_once_and_never_widens_scope(evidence_api):
     client, sessions, chunks, searches = evidence_api
     doc_id = upload(client)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id).json()["code"] == 0
     chunks.clear()  # Indexed DB row with unavailable vectors is not evidence.
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = finish_workflow(client, sessions)
     assert (view["status"], view["stopReasonCode"]) == ("COMPLETED_LIMITED", "EVIDENCE_INSUFFICIENT")
     assert view["evidence"]["attempts"] == 2
@@ -229,17 +223,17 @@ def test_private_search_remains_owner_scoped_and_excludes_quarantine_and_withdra
     own = upload(client)
     quarantined = upload(client, "isolated.txt", "Quarantined glaucoma document with patient details and enough text.")
     withdrawn = upload(client, "withdrawn.txt", "Withdrawn glaucoma document with patient details and enough text.")
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, quarantined, visibility="QUARANTINED")
     govern(client, withdrawn, visibility="PRIVATE_USER", reviewStatus="WITHDRAWN")
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     other = upload(client, "bob.txt", "Other user's private glaucoma document with personal examination details.")
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     response = client.post("/api/knowledge/search", json={"query": "glaucoma", "userId": 8,
                                                         "visibility": "CURATED_PUBLIC"}).json()
     assert response["code"] == 0
     assert [item["documentId"] for item in response["data"]] == [own]
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert [item["documentId"] for item in client.post("/api/knowledge/search", json={"query": "glaucoma"}).json()["data"]] == [other]
 
 
@@ -260,9 +254,9 @@ def test_pdf_reference_is_indexed_reviewed_and_retrieved(evidence_api):
     writer.write(output)
     response = client.post("/api/knowledge/upload", files={"files": ("guide.pdf", output.getvalue(), "application/pdf")}).json()
     assert response["code"] == 0
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, response["data"][0])
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = finish_workflow(client, sessions)
     assert view["evidence"]["status"] == "SUFFICIENT"
     assert view["evidence"]["citations"][0]["title"] == "guide.pdf"
@@ -273,11 +267,11 @@ def test_pdf_reference_is_indexed_reviewed_and_retrieved(evidence_api):
 def test_vector_metadata_cannot_override_mysql_governance(evidence_api, field, value):
     client, sessions, chunks, _ = evidence_api
     doc_id = upload(client)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, doc_id)
     for _, metadata in chunks.values():
         metadata[field] = value
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = finish_workflow(client, sessions)
     assert view["evidence"]["status"] == "INSUFFICIENT"
     assert view["evidence"]["citations"] == []
@@ -298,18 +292,18 @@ def test_revocation_between_retrieval_and_validation_stops_at_evidence_gate(evid
 
     client, sessions, _, _ = evidence_api
     doc_id = upload(client)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, doc_id)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     task_id = create_upload(client).json()["data"]["workflowId"]
     adapter = WorkflowInference(WebConfig(dashscope_api_key="controlled-key"), engine=ControlledEngine(prediction()))
     for _ in range(6):
         assert Worker(sessions, inference=adapter).run_once()
     view = client.get(f"/api/diagnosis/workflows/{task_id}").json()["data"]
     assert view["evidence"]["status"] == "SUFFICIENT"
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert Worker(sessions, inference=adapter).run_once()
     view = client.get(f"/api/diagnosis/workflows/{task_id}").json()["data"]
     assert view["stopReasonCode"] == "EVIDENCE_INSUFFICIENT"

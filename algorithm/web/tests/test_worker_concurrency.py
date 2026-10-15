@@ -36,6 +36,7 @@ from web.workflow.models import (
     UploadInput, Workflow, WorkflowEvent,
 )
 from web.workflow.worker import Worker, database_now
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 @pytest.fixture
@@ -66,17 +67,13 @@ def worker_api(tmp_path):
             yield db
             db.commit()
 
-    def java(request):
-        return httpx.Response(200, json={"code": 0, "data": {
-            "id": "7", "userRole": "user", "userAccount": "worker-fixture"}})
 
     app.dependency_overrides[get_db] = database
-    app.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(java))
+    auth = install_sessions(app, engine)
     client = TestClient(app)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     yield client, sessions
     client.close()
-    asyncio.run(app.state.java_client.aclose())
     engine.dispose()
 
 

@@ -4,6 +4,9 @@ import pytest
 import uvicorn
 
 from web.tests.test_document_upload import controlled_pipeline
+from web.models.user import User
+from web.deps import get_db
+from web.tests.session_fixtures import Identity, install_sessions
 
 
 def main():
@@ -12,12 +15,14 @@ def main():
             client, _, _, _, _, collection = state
             app = client.app
 
-            @app.get("/api/user/get/login")
-            def login():
-                return {"code": 0, "msg": "ok", "data": {
-                    "id": "7", "userAccount": "fixture", "userName": "格式验证账号",
-                    "userRole": "admin",
-                }}
+            provider = app.dependency_overrides[get_db]()
+            database = next(provider)
+            engine = database.get_bind()
+            provider.close()
+            User.__table__.create(engine)
+            install_sessions(app, engine, who={
+                "alice": Identity(7, "fixture", "admin", "格式验证账号"),
+            })
 
             @app.get("/_test/search")
             def search():

@@ -1,5 +1,7 @@
 # Issue 01 — FastAPI 现有业务兼容基线
 
+> 历史基线：本文原测试数、Java 会话与启动步骤保留 2026-10-12 身份，已于完整迁移工单 02 取代。当前三个会话端点均在 Python，默认 EYE_SESSION / eye:py:session:；每请求重查 t_user，Redis 故障失败关闭。当前启动与验证见 [Python 登录鉴权](python-session-auth-evidence.md)，无需 Java 身份服务。
+
 日期：2026-10-12，Asia/Shanghai。范围仅为 issue 01、AC-15 的现有业务部分及 AC-19 的会话/启动部分，不表示 Python Agent、真实模型、知识库迁移或整个 spec 已验收。
 
 工作位置：`.claude/worktrees/py-rewrite`，分支 `worktree-py-rewrite`。开始版本为 `d74784ea0030f2d778ad3f2d4c402244650b5913`。本基线提交包含原来尚未保存的 `algorithm/web`、部署配置、依赖及迁移裁定；源 spec、OMC 运行状态和无关工作树改动不纳入提交。定位交付版本：`git log -1 --format=%H -- docs/fastapi-baseline.md`。

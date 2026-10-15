@@ -108,23 +108,18 @@ def create_app(config: WebConfig | None = None) -> FastAPI:
         application.state.redis = Redis.from_url(
             resolved.redis_url, decode_responses=True, protocol=2
         )
-        application.state.java_client = httpx.AsyncClient(
-            base_url=resolved.java_base_url,
-            timeout=httpx.Timeout(5.0),
-            follow_redirects=False,
-        )
         application.state.chat_client = httpx.AsyncClient(follow_redirects=False)
         application.state.inference_engine = _build_inference_engine(resolved)
         try:
             yield
         finally:
             await application.state.chat_client.aclose()
-            await application.state.java_client.aclose()
             await application.state.redis.aclose()
             dispose_engine()
 
     application = FastAPI(
         title="Eye Diagnosis Web API",
+        openapi_url="/api/openapi.json",
         version="1.0.0",
         description=(
             "Python rewrite of the non-Agent domains. Contract notes live in "

@@ -21,7 +21,6 @@ from importlib import import_module
 from pathlib import Path
 
 import pytest
-import httpx
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -33,6 +32,7 @@ sys.path.insert(0, str(ALGORITHM_ROOT))
 
 from web.app import create_app  # noqa: E402
 from web.auth import LoginUser, current_user, require_role  # noqa: E402
+from web.config import WebConfig  # noqa: E402
 from web.db import Base  # noqa: E402
 from web.deps import get_db  # noqa: E402
 from web.models.diagnosis import Diagnosis  # noqa: E402
@@ -41,6 +41,7 @@ from web.models.mcp_server import McpServer  # noqa: E402
 from web.models.news import News  # noqa: E402
 from web.models.user import User  # noqa: E402
 from web.response import DATE_FORMAT, ErrorCode  # noqa: E402
+from web.tests.session_fixtures import MemorySessionStore  # noqa: E402
 
 STAMP = datetime(2026, 3, 4, 5, 6, 7)
 
@@ -50,7 +51,10 @@ ADMIN = LoginUser(
     userAvatar="https://a.png", userProfile="p",
 )
 
-#: Java keeps these because Spring Session owns login/logout/session.
+#: The three endpoints Python took over in ticket 02. They are ordinary
+#: migrated routes now, so they are no longer excluded from the endpoint-set
+#: reconciliation below -- that exclusion used to encode "Java still owns the
+#: session", which is no longer true.
 SESSION_PATHS = {"/api/user/login", "/api/user/logout", "/api/user/get/login"}
 
 
@@ -236,11 +240,19 @@ def test_no_cookie_reports_40100(anonymous_client):
     assert response.json()["code"] == ErrorCode.NOT_LOGIN_ERROR.value == 40100
 
 
-def test_a_cookie_with_unreachable_java_reports_system_error_not_40100(engine):
+def test_a_cookie_with_unreachable_redis_reports_system_error_not_40100(engine):
     """An unavailable session authority fails closed with the error envelope.
 
-    Use a controlled HTTP failure so running local services cannot change this
-    test. Positive login caching was removed by issue 01 to respect logout.
+    The authority is Redis since ticket 02 -- there is no Java hop left to be
+    unreachable. The behaviour under test is unchanged from when it was: a
+    session cookie that *might* be valid, checked against a store that cannot
+    answer, must not be reported as "not signed in". ``40100`` would send the
+    user to the login page for what is in fact a server-side outage, and the
+    only safe answer is to say nothing about identity at all.
+
+    Uses ``MemorySessionStore.offline`` rather than a real outage so a running
+    local Redis cannot change the result. Positive login caching was removed by
+    issue 01 to respect logout.
     """
     app = create_app()
     session = sessionmaker(bind=engine, future=True)()
@@ -249,21 +261,16 @@ def test_a_cookie_with_unreachable_java_reports_system_error_not_40100(engine):
         yield session
 
     app.dependency_overrides[get_db] = _db
-    def unavailable(request):
-        raise httpx.ConnectError("controlled Java outage", request=request)
 
     with TestClient(app, raise_server_exceptions=False) as raw:
-        # Lifespan creates the production client; replace only the external
-        # transport for this one request.
-        import asyncio
-        asyncio.run(app.state.java_client.aclose())
-        app.state.java_client = httpx.AsyncClient(
-            base_url="http://java/api/", transport=httpx.MockTransport(unavailable)
-        )
+        # The lifespan installs the real Redis client; swap in a store that
+        # raises from every call, which is the only thing this test needs.
+        app.state.redis = MemorySessionStore()
+        app.state.redis.offline = True
         response = raw.post(
             "/api/user/list/page/vo",
             json={},
-            headers={"Cookie": "JSESSIONID=not-a-real-session"},
+            headers={"Cookie": f"{WebConfig().session_cookie_name}=not-a-real-session"},
         )
     session.close()
 
@@ -302,12 +309,17 @@ def test_endpoint_set_matches_java_exactly():
             java.add((verb.lower(), f"/api{base}{sub}"))
 
     expected = {(verb, path) for verb, path in java
-                if not path.startswith("/api/agent")
-                and path not in SESSION_PATHS and path != "/api"}
+                if not path.startswith("/api/agent") and path != "/api"}
 
     served = {(verb, path) for path, operations in create_app().openapi()["paths"].items()
               for verb in operations if verb in {"get", "post", "put", "patch", "delete"}}
     assert expected - served == set(), f"not migrated: {sorted(expected - served)}"
+    # The three session paths were excluded from `expected` while Java owned the
+    # session. Pinning them positively here means dropping that exclusion is a
+    # checked change rather than a silent one.
+    assert SESSION_PATHS <= {path for _verb, path in served}, sorted(
+        SESSION_PATHS - {path for _verb, path in served}
+    )
     # Issue 02 adds these independent async endpoints, preserving the exact
     # legacy surface. New endpoints are exercised through HTTP in test_workflow.
     new_workflows = {("post", "/api/diagnosis/workflows"),

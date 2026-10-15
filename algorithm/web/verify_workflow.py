@@ -1,6 +1,6 @@
-"""Opt-in issue 02 acceptance against isolated MySQL + real Java sessions.
+"""Historical workflow issue 02 acceptance, using Python sessions after session ticket 02.
 
-Start Java, Redis, Nginx and Vite as documented first. This runner owns only its
+Start Redis, Nginx and Vite as documented first. This runner owns only its
 Web/Worker/browser processes; it restarts them and leaves the test DB intact.
 Images are synthetic engineering inputs, never model or clinical evidence.
 """
@@ -99,14 +99,15 @@ def main() -> None:
     picture = io.BytesIO()
     Image.new("RGB", (64, 64), "red").save(picture, format="PNG")
     data = picture.getvalue()
-    results: dict = {"evidenceType": "real_mysql_java_http_ui_synthetic_input_no_model",
+    results: dict = {"evidenceType": "real_mysql_python_session_http_ui_synthetic_input_no_model",
                      "checks": [], "snapshots": []}
     checks = results["checks"]
     with httpx.Client(base_url=args.api_url + "/", timeout=20) as client, \
             httpx.Client(base_url=args.api_url + "/", timeout=20) as other:
-        envelope(client.post("user/login", json=credentials))
-        envelope(other.post("user/login", json=other_credentials))
         with web_process(args.output_dir):
+            envelope(client.post("user/login", json=credentials))
+            envelope(other.post("user/login", json=other_credentials))
+            assert "EYE_SESSION" in client.cookies and "EYE_SESSION" in other.cookies
             before = envelope(client.post("diagnosis/list/page/my", json={}))["total"]
             key = uuid4().hex
             files = {"file": ("synthetic.png", data, "image/png")}

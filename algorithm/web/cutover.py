@@ -1,4 +1,13 @@
-"""Render a standalone Nginx configuration; never reload or deploy it implicitly."""
+"""Render a standalone Nginx configuration; never reload or deploy it implicitly.
+
+This reproduces the **ticket-20 maintenance-window rehearsal** (the
+``/api/diagnosis/workflows`` durable-upload cutover), not ticket 02's. Ticket 02
+changed what the rendered config should say about session paths -- they are no
+longer pinned to Java -- but it added no new rehearsal of its own: the
+acceptance criteria for moving the session authority are exercised by
+``web/verify_session_identity.py`` against real MySQL/Redis, while this module
+still exists so the older rehearsal keeps reproducing exactly as it did.
+"""
 
 import argparse
 from pathlib import Path
@@ -34,8 +43,12 @@ def render(*, business: str, agent: str, workflows: str, listen_port: int,
         {('proxy_buffering off; proxy_cache off; gzip off; proxy_read_timeout 3600s;') if stream else ''}
     }}""")
 
-    for path in ("login", "logout", "get/login"):
-        location("= /api/user/" + path, "java")
+    # Session paths used to be pinned to Java by exact-match locations, because
+    # Spring Session's Redis payload was unreadable from Python. Python owns the
+    # session namespace now (ticket 02), so they are not special-cased at all:
+    # they ride whatever `business` is set to. During a rollback -- business=java
+    # -- that means they go back to Java alongside every other user endpoint,
+    # which is what a pre-Python-slot deployment expects.
     # New graph tasks are never handed to a legacy Java executor.
     location("= /api/diagnosis/workflows", "python",
              'if ($request_method = POST) { return 503; }' if workflows != "active" else "")

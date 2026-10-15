@@ -16,6 +16,8 @@ from pathlib import Path
 import httpx
 from playwright.sync_api import expect, sync_playwright
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:18805"
 FRONTEND = "http://127.0.0.1:15175"
 
@@ -55,10 +57,10 @@ def main():
         args.output_dir / "fixture.log").open("w", encoding="utf-8") as log:
         process = start_backend(directory, log)
         try:
-            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={"SESSION": "alice"}) as api:
+            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "alice"}) as api:
                 browser = playwright.chromium.launch(headless=True)
                 context = browser.new_context(viewport={"width": 1360, "height": 1000})
-                context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
                 page = context.new_page()
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(FRONTEND + "/agent")
@@ -134,7 +136,7 @@ def main():
                 assert [m["role"] for m in state["messages"]] == ["USER"]
                 checks.append("client-stop-persists-interrupted-without-success")
 
-                forbidden = httpx.get(API + f"/api/agent/history/{session_id}", cookies={"SESSION": "bob"}).json()
+                forbidden = httpx.get(API + f"/api/agent/history/{session_id}", cookies={SESSION_COOKIE_NAME: "bob"}).json()
                 assert forbidden["code"] == 40101
                 checks.append("cross-user-history-denied")
                 requests = [json.loads(line) for line in (Path(directory) / "model-requests.jsonl").read_text(encoding="utf-8").splitlines()]

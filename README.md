@@ -4,6 +4,16 @@
 
 ![功能模块总览](docs/assets/readme/features-overview.png)
 
+## Python 迁移状态（2026-10-15）
+
+| 范围 | 当前交付 | 证据 |
+|---|---|---|
+| 工单 01 | Python 数据库初始化与支持的旧库承接 | [数据保全](docs/python-database-handoff-evidence.md) |
+| 工单 02 | Python/Redis 登录态、HTTP/SSE 鉴权、Vue/OpenAPI 接线 | [身份验证](docs/python-session-auth-evidence.md) |
+| 工单 03–08 | 后续工单，尚不表示全项目去 JVM 或生产切流通过 | [.scratch/python-project-migration](.scratch/python-project-migration/ticket-breakdown.md) |
+
+Python 启动使用 algorithm/web；OpenAPI 来源 `/api/openapi.json`。下方 Java 架构与启动说明保留旧项目参考身份，Java 资产待工单 08 受控移除。
+
 ## ✨ 功能特性
 
 - 🩺 **图像诊断**：上传眼底图像（`JPG / PNG / JPEG`），AI 自动识别 8 种眼科疾病 —— 正常、AMD、白内障、糖尿病视网膜病变、青光眼、高血压视网膜病变、近视、其他

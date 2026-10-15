@@ -137,3 +137,15 @@ npm run preview       # 预览生产构建
 - **Ant Design Vue 4**：全局引入，自定义主题（陶土色 `#c96442` 为主色调）
 - **设计令牌**：`src/assets/claude-tokens.css` 定义 CSS 自定义属性
 - **设计系统**：`src/styles/design-system/` 包含变量、重置、组件样式
+
+## Python 登录态与 OpenAPI（完整迁移工单 02）
+
+前端继续使用现有登录/退出/失效引导，Axios 的 withCredentials 携带 HttpOnly EYE_SESSION。
+三个会话端点和受保护 HTTP/SSE 均在 Python；旧 Spring Cookie 不复用。
+启动 Python :8080 后运行 `npm run openapi`，来源为 `/api/openapi.json`；隔离端口可用 OPENAPI_SCHEMA_URL 覆盖。
+生成器先写临时目录，保留 knowledge/mcp/workflow/review/supplement/toolConfirmation 六个手写适配器。
+`openapi/overrides.ts` 保留现有上传和复诊函数签名；`src/api/compatibility.d.ts` 保留对应参数类型。
+生成时恢复旧 TypeScript 的可选字段、数字 Long 声明、UserEdit 的已忽略字段与 chunkCount；
+真实 HTTP Long 仍是字符串。这些兼容声明不是服务端校验规则，后续 UI 类型修正另列。
+Python-only 控制器是新生成文件，现有页面仍调用六个适配器。生成器不覆盖它们，前端调用点无需改动。
+参见 [验证记录](../docs/python-session-auth-evidence.md)。

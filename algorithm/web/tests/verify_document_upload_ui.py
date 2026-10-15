@@ -7,6 +7,7 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 from web.tests.test_document_upload import FIXTURES, table_document
+from web.tests.session_fixtures import SESSION_COOKIE_NAME
 
 
 def screenshot(page, path):
@@ -31,6 +32,8 @@ def main():
         browser = playwright.chromium.launch(headless=True)
         try:
             page = browser.new_page(viewport={"width": 1440, "height": 1000})
+            page.context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice",
+                                      "url": "http://127.0.0.1:15180"}])
             page.goto("http://127.0.0.1:15181/")
             page.wait_for_load_state("networkidle")
             page.get_by_text("格式验证账号", exact=False).first.wait_for(state="attached")

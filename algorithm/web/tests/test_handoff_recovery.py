@@ -20,6 +20,7 @@ from web.tests.test_final_clinical_review import final_versions
 from web.tests.test_save_confirmation import path, requested, act
 from web.tests.test_supplement import request_supplement, supplement_event, reply
 from web.tests.test_chat_workflow import send
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 
 @dataclass
@@ -67,7 +68,7 @@ def test_four_human_waits_resume_after_database_handoff(handoff_case, kind):
         case.worker(kind if kind in {"quality", "final"} else "pass")
         before = view(client, workflow_id)
         if kind in {"quality", "final"}:
-            client.cookies.set("SESSION", "doctor")
+            client.cookies.set(SESSION_COOKIE_NAME, "doctor")
             task = next(row for row in client.get("/api/reviews/tasks").json()["data"]
                         if row["workflowId"] == workflow_id)
             wait_url = f"/api/reviews/tasks/{task['reviewTaskId']}"

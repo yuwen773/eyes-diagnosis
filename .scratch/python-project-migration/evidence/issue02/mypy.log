@@ -1,0 +1,11 @@
+web\routers\news.py:146: error: Need type annotation for "rows"  [var-annotated]
+web\routers\news.py:242: error: "Result[*tuple[Any, ...]]" has no attribute "rowcount"  [attr-defined]
+web\routers\news.py:315: error: Incompatible types in assignment (expression has type "str | None", target has type "str")  [assignment]
+web\routers\news.py:317: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+web\routers\news.py:319: error: "Result[*tuple[Any, ...]]" has no attribute "rowcount"  [attr-defined]
+web\routers\news.py:363: error: Argument 1 to "int" has incompatible type "int | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+web\routers\diagnosis.py:425: error: Need type annotation for "rows"  [var-annotated]
+web\routers\mcp_server.py:209: error: Incompatible types in assignment (expression has type "str | None", variable has type "SQLCoreOperations[str] | str")  [assignment]
+web\routers\mcp_server.py:290: error: Name "mcp_server_code" is not defined  [name-defined]
+web\routers\user.py:433: error: Need type annotation for "rows"  [var-annotated]
+Found 10 errors in 4 files (checked 5 source files)

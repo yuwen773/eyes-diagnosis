@@ -17,6 +17,8 @@ from web.tests.test_final_clinical_review import final_versions
 from web.tests.test_save_confirmation import requested, decision
 from web.verify_chat_workflow_ui import ready
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:15281"
 UI = "http://127.0.0.1:15282"
 
@@ -56,10 +58,10 @@ def main():
                 "--host", "127.0.0.1", "--port", "15282", "--strictPort"], cwd=frontend,
                 env=env, stdout=log, stderr=log, creationflags=flags)
             ready(vite, UI)
-            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={"SESSION": "alice"}) as api:
+            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "alice"}) as api:
                 browser = playwright.chromium.launch(headless=True)
                 context = browser.new_context(viewport={"width": 1360, "height": 1100})
-                context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
                 task = api.post("/api/diagnosis/workflows", data={"idempotencyKey": "issue18"},
                     files={"file": ("fundus.png", picture_bytes(), "image/png")}).json()["data"]["workflowId"]
                 bound = api.post("/api/agent/chat/stream", json={"threadId": "reconnect", "message": "原诊断任务",
@@ -100,7 +102,7 @@ def main():
                 diagnosis.screenshot(path=str(output / "review-reconnected.png"), full_page=True)
                 checks.append("offline-reconnect-restores-review-and-supplement-without-exposing-prediction")
 
-                with httpx.Client(base_url=API, cookies={"SESSION": "doctor"}) as doctor:
+                with httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "doctor"}) as doctor:
                     review = next(row for row in doctor.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == task)
                     path = "/api/reviews/tasks/" + review["reviewTaskId"]
                     detail = doctor.get(path).json()["data"]
@@ -172,7 +174,7 @@ def main():
                 diagnosis.set_viewport_size({"width": 390, "height": 844})
                 assert diagnosis.get_by_role("region", name="任务状态", exact=True).evaluate("el => el.scrollWidth <= el.clientWidth")
                 diagnosis.screenshot(path=str(output / "mobile.png"), full_page=True)
-                with httpx.Client(base_url=API, cookies={"SESSION": "bob"}) as bob:
+                with httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "bob"}) as bob:
                     assert bob.get(f"/api/diagnosis/workflows/{task}/events").status_code == 403
                     assert bob.get("/api/agent/history/reconnect").json()["code"] == 40101
                 assert "event: supplement" in api.post("/api/agent/chat/stream", json={"threadId": "reconnect",

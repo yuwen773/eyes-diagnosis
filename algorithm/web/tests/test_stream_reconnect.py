@@ -7,6 +7,7 @@ from web.tests.test_chat_workflow import workflow_api, send
 from web.tests.test_workflow import create_upload
 from web.tests.test_controlled_evidence import evidence_api
 from web.tests.test_validated_explanation import explanation_api
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 
 def snapshot(client, task):
@@ -51,7 +52,7 @@ def test_event_snapshot_requires_current_identity_and_task_ownership(workflow_ap
     client, _ = workflow_api
     task = create_upload(client).json()["data"]["workflowId"]
     snapshot(client, task)
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     response = client.get(f"/api/diagnosis/workflows/{task}/events")
     assert response.status_code == 403 and "text/event-stream" not in response.headers["content-type"]
     client.cookies.clear()

@@ -32,10 +32,9 @@ async def lifespan(application):
     async with fixture.lifespan(application):
         generator = application.dependency_overrides[get_db]()
         db = next(generator)
-        if db.get(User, 7) is None:
-            db.add(User(id=7, user_account="fixture", user_password="unused", user_name="测试用户",
-                user_profile="旧简介", user_role="user", edit_time=datetime(2026, 1, 1),
-                create_time=datetime(2026, 1, 1), update_time=datetime(2026, 1, 1)))
+        user = db.get(User, 7)  # The session fixture now creates the identity row.
+        if user.user_profile is None:
+            user.user_profile = "旧简介"
             db.commit()
         generator.close()
         await application.state.chat_client.aclose()

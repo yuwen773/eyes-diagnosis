@@ -1,6 +1,6 @@
 # 工单 20：部署、分项切流与回退
 
-本手册针对 `py-rewrite` 的 Java 会话 + Python 业务/Agent 架构。只在隔离环境执行本票
+本手册复现历史工单 20 的分项切流演练，已按完整迁移工单 02 更新为 Python 会话 + Python 业务/Agent。历史演练结果不等于更新后的演练通过；完整回退须由新工单 07 重新验收。只在隔离环境执行本票
 演练；生产发布需另行授权。工单 19 的真实 embedding、旧 Java Long 用户检索仍阻塞，
 所以本票的工程演练通过也不能解除生产切流或完整迁移验收门槛。
 
@@ -9,14 +9,13 @@
 | 服务 | 本机端口 | 归属 |
 |---|---|---|
 | Nginx | 127.0.0.1:8081 | 浏览器唯一入口，静态前端、业务与 Agent 分别切流 |
-| Java 21 | 127.0.0.1:8082 | login、get/login、logout，回退时旧业务/Agent |
+| Java 21 | 127.0.0.1:8082 | 历史比较/旧业务与 Agent 回退目标；不再提供 Python 登录态 |
 | Python 3.11 API | 127.0.0.1:8080 | 业务、工作流、复核、用户确认、聊天 |
 | Python Worker | 无监听端口 | `python-graph` 分段任务的唯一执行器类型 |
 | MySQL / Redis / Chroma | 3307 / 6379 / 8000 | 同一业务库 / Redis DB 8 / diagnosis-knowledge |
 
-端口可在隔离演练中独立选择；生成器拒绝三个 HTTP 服务端口重叠。Python 的
-`JAVA_BASE_URL` 必须指向 Java **直接地址** `http://127.0.0.1:8082/api`，不能指向
-Nginx、Python 或公共域名，否则鉴权会回环。生产网络入口、TLS 和反向代理的部署
+端口可在隔离演练中独立选择；生成器拒绝三个 HTTP 服务端口重叠。Python 不需要
+`JAVA_BASE_URL`；三个会话端点始终走 Python。生产网络入口、TLS 和反向代理的部署
 由运维另行配置；生成器默认只监听 loopback。
 
 启动顺序：MySQL/Redis/Chroma → 单独执行 Flyway → Java → Python API → Worker →
@@ -58,7 +57,9 @@ Nginx、MySQL、Redis、Chroma 版本、源码/前端摘要和镜像或二进制
 |---|---|
 | MYSQL_HOST/PORT/DATABASE/USER/PASSWORD | spring.datasource.url/username/password，同一 MySQL schema |
 | REDIS_HOST/PORT/DB/PASSWORD，DB=8 | spring.session.store-type=redis、spring.data.redis.* 相同 |
-| JAVA_BASE_URL=http://127.0.0.1:8082/api | server.address=127.0.0.1，server.port=8082，context-path=/api |
+| SESSION_COOKIE_NAME=EYE_SESSION；SESSION_REDIS_PREFIX=eye:py:session: | 与 Spring 会话空间隔离，不共享登录 Cookie |
+| SESSION_TTL_SECONDS=1800；SESSION_COOKIE_MAX_AGE=2592000 | Python Redis TTL 与浏览器 Cookie 生存期独立 |
+| SESSION_COOKIE_HTTPONLY=true；SESSION_COOKIE_SAMESITE=lax；SESSION_COOKIE_SECURE=true（HTTPS） | 本地 HTTP 的 Secure 为 false；生产必须显式配置 |
 | CHROMA_HOST=http://127.0.0.1，CHROMA_PORT=8000 | spring.ai.vectorstore.chroma.client.host/port |
 | CHROMA_COLLECTION=diagnosis-knowledge | spring.ai.vectorstore.chroma.collection-name 相同 |
 | CHROMA_TENANT/CHROMA_DATABASE | Java tenant-name/database-name 相同 |
@@ -72,8 +73,9 @@ Java 使用外置配置文件，例如命令行 `--spring.profiles.active=cutove
 `local,dev`。外置配置必须包含上表以及原服务所需 OpenAI/DashScope/COS 配置。
 禁止把验收专用 `Issue19Probe` 当生产入口。构建原 Java：`mvn -DskipTests package`，
 启动产物时显式传 `--server.port=8082 --server.address=127.0.0.1`。
-Spring Session 保持原 cookie 名称/Path=/api 和 Redis namespace/序列化；Python 逐请求
-向 Java 转发 `SESSION`/`JSESSIONID`，不解析 Redis 登录态、不缓存成功身份。
+Python 使用 HttpOnly、Path=/ 的 EYE_SESSION；Redis 仅存 userId，每请求重查账号与角色。
+Spring Session 保持历史空间，旧 Cookie 不授予 Python 身份。业务回退到 Java 时必须独立重新登录，
+不能把 Python Cookie 交给 Java；该跨身份域回退仍需工单 07 重演。
 
 隔离手工启动基础服务时，先使用本机服务管理器启动已配置的 MySQL 8，并验证
 目标 schema 和账号可连接。Redis 与 Chroma 各用独立终端运行（生产需交由服务管理器
@@ -147,7 +149,7 @@ $proxyRuntime=(Resolve-Path .scratch/cutover).Path.Replace('\','/') + '/'
 
 | 阶段 | --business | --agent | --workflows | 验证后才能进入下一阶段 |
 |---|---|---|---|---|
-| 基线 | java | java | pause | Nginx 三个会话端点、注销失效、旧业务查询 |
+| 历史业务基线 | java | java | pause | 三个会话端点已固定走 Python；Java 业务需独立身份，待工单 07 重验 |
 | 业务切流 | python | java | pause | 用户/新闻/文档/历史兼容；无新 Python 工作流 |
 | Agent 切流 | python | python | drain | 既有聊天历史、待确认、补充与复核可读 |
 | 放行 | python | python | active | Worker 归属、真实服务 gate、浏览器核心路径 |
@@ -172,7 +174,7 @@ $proxyRuntime=(Resolve-Path .scratch/cutover).Path.Replace('\','/') + '/'
 两种策略都把 `/api/diagnosis/workflows`、`/api/reviews/tasks` 留给 Python。
 Agent 回 Java 后，原 Python 会话可经 `/api/python-recovery/sessions`、
 `/api/python-recovery/history/<sessionId>`、`/api/python-recovery/supplements/<requestId>`
-查询；仍用 Java cookie 鉴权。恢复命名空间拒绝新聊天、附件写入和会话变更。
+查询；仍用 Python EYE_SESSION 鉴权。恢复命名空间拒绝新聊天、附件写入和会话变更。
 drain 时补充回复/工具批准使用对应恢复路径；这不改变原所有权、版本或确认要求。
 pause 时这些写请求也被拒绝。旧 Java 无法继续 Python 会话/图；运维须告知用户原
 任务暂停并保留原 ID，不向旧端自动重放消息或批准。
@@ -182,7 +184,7 @@ pause 时这些写请求也被拒绝。旧 Java 无法继续 Python 会话/图�
 接续，fencing 防止旧结果提交。不要清空运行中记录或人工等待来“解除卡住”。
 查询接口可能做既有发布依据重校验或过期聊天恢复；查询策略不意味着数据库绝对零写入。
 
-恢复：校正环境/依赖 → 独立 Flyway validate → Java 会话验证 → 启动同版本 Python
+恢复：校正环境/依赖 → 独立 Python migration inspect → Python 会话验证 → 启动同版本 Python
 API → 对照任务/待确认/复核/补充与 receipt → 确认旧执行器停止 → 启动指定 Python
 Worker → drain 路由验证 → active 放行。不得自动批准等待项、重跑已冻结推理或回滚
 已有正式记录。对照必须检查状态、版本、checkpoint 关联、确认摘要和正式记录数量。

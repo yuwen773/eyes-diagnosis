@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Python migration: session ticket 02 (2026-10-15)
+
+Python owns `/api/user/login`, `/api/user/logout` and `/api/user/get/login`. Protected HTTP/SSE resolves `EYE_SESSION` through `eye:py:session:{sid}` in Redis and re-reads `t_user` on each request. Spring cookies grant no Python identity. No Java identity callback or `JAVA_BASE_URL` is needed. OpenAPI is `/api/openapi.json`; run `npm run openapi` against Python. Java assets remain until ticket 08; the Java architecture below is a retained reference. See [docs/python-session-auth-evidence.md](docs/python-session-auth-evidence.md).
+
 ## Project Overview
 
 Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.

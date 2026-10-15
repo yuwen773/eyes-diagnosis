@@ -21,6 +21,7 @@ from web.config import WebConfig
 from web.db import Base
 from web.deps import get_db
 from web.tests.test_workflow import create_upload, picture_bytes
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 @pytest.fixture
@@ -48,18 +49,13 @@ def workflow_api(tmp_path):
             yield db
             db.commit()
 
-    def java(request):
-        identity = {"SESSION=alice": "7", "SESSION=bob": "8"}.get(request.headers.get("cookie"))
-        return httpx.Response(200, json={"code": 0 if identity else 40100,
-            "data": {"id": identity, "userRole": "user", "userAccount": "fixture"} if identity else None})
 
     app.dependency_overrides[get_db] = database
-    app.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(java))
+    auth = install_sessions(app, engine)
     client = TestClient(app)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     yield client, sessions
     client.close()
-    asyncio.run(app.state.java_client.aclose())
     engine.dispose()
 
 
@@ -117,9 +113,9 @@ def test_upload_can_be_continued_in_chat_and_restores_server_failure_after_rebui
     assert Worker(sessions).run_once()
     app = create_app(WebConfig())
     app.dependency_overrides.update(client.app.dependency_overrides)
-    app.state.java_client = client.app.state.java_client
+    install_sessions(app)
     rebuilt = TestClient(app)
-    rebuilt.cookies.set("SESSION", "alice")
+    rebuilt.cookies.set(SESSION_COOKIE_NAME, "alice")
     try:
         state = rebuilt.get("/api/agent/history/shared").json()["data"]["workflows"][0]
         assert state == rebuilt.get(f"/api/diagnosis/workflows/{workflow_id}").json()["data"]
@@ -137,11 +133,11 @@ def test_workflow_binding_enforces_session_task_and_attachment_ownership(workflo
     client, _ = workflow_api
     url = upload_attachment(client)
     workflow_id = workflow_event(send(client, imageUrl=url, idempotencyKey="owned"))["workflow"]["workflowId"]
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert send(client, workflowId=workflow_id).json()["code"] == 40101
     assert send(client, thread="bob", workflowId=workflow_id).json()["code"] == 40101
     assert send(client, thread="bob", imageUrl=url, idempotencyKey="stolen").json()["code"] == 40101
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert send(client, thread="another", imageUrl=url, idempotencyKey="wrong-session").json()["code"] == 40101
     assert send(client, thread="forged", imageUrl="http://127.0.0.1/private", idempotencyKey="forged").json()["code"] == 40101
     assert client.delete("/api/agent/sessions/shared").json()["data"] is True

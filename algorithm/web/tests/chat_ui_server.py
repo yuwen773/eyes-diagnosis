@@ -1,4 +1,4 @@
-"""Loopback-only browser fixture. Synthetic Java/model/COS, persistent file SQLite.
+"""Loopback-only browser fixture. Synthetic sessions/model/COS, persistent file SQLite.
 
 Never deploy: the verifier sets CHAT_UI_DIRECTORY to its disposable directory.
 """
@@ -11,7 +11,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import httpx
-from fastapi import Request
 from fastapi.responses import Response
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -21,18 +20,11 @@ from web.chat.attachments import attachment_store
 from web.config import WebConfig
 from web.db import Base
 from web.deps import get_db
+from web.tests.session_fixtures import install_sessions
 
 DIRECTORY = Path(os.environ["CHAT_UI_DIRECTORY"])
 app = create_app(WebConfig(dashscope_api_key="controlled-fixture-only",
                           cors_allowed_origins=["http://127.0.0.1:15175"]))
-
-
-def java(request):
-    cookie = request.headers.get("cookie", "")
-    identity = {"SESSION=alice": "7", "SESSION=bob": "8"}.get(cookie)
-    return httpx.Response(200, json={"code": 0 if identity else 40100, "msg": "ok", "data": {
-        "id": identity, "userAccount": "fixture", "userName": "测试用户", "userRole": "user",
-    } if identity else None})
 
 
 class SlowStream(httpx.AsyncByteStream):
@@ -76,12 +68,6 @@ def image(key: str):
     return Response((DIRECTORY / key).read_bytes(), media_type="image/png")
 
 
-@app.get("/api/user/get/login")
-async def login_probe(request: Request):
-    return (await app.state.java_client.get("/user/get/login",
-        headers={"Cookie": request.headers.get("cookie", "")})).json()
-
-
 @asynccontextmanager
 async def lifespan(application):
     engine = create_engine(f"sqlite:///{DIRECTORY / 'chat.db'}")
@@ -95,12 +81,11 @@ async def lifespan(application):
 
     application.dependency_overrides[get_db] = database
     application.dependency_overrides[attachment_store] = lambda: FixtureStorage()
-    application.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(java))
+    install_sessions(application, engine)
     application.state.chat_client = httpx.AsyncClient(transport=httpx.MockTransport(model))
     try:
         yield
     finally:
-        await application.state.java_client.aclose()
         await application.state.chat_client.aclose()
         engine.dispose()
 

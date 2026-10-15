@@ -40,7 +40,7 @@ Workflow 绑定的已提交 token，无需原进程的内存。图版本、拓�
 | `POST /api/diagnosis/workflows` | multipart `file`、`idempotencyKey`；可选 `question` | 202，`{code:0,msg:"ok",data:WorkflowStatusView}` | 401 未登录；409 同键不同内容；413 空/过大输入；422 参数错误；500 技术错误 |
 | `GET /api/diagnosis/workflows/{workflowId}` | 路径任务标识 | 200，相同任务状态视图 | 401 未登录；403 非本人；404 不存在；500 技术错误 |
 
-身份仍经 Java 会话服务逐请求验证。不同用户的幂等键空间独立，客户端不能
+身份已于完整迁移工单 02 改为 Python EYE_SESSION → Redis → 当前 t_user 逐请求验证（原 Java 鉴权描述已取代）。不同用户的幂等键空间独立，客户端不能
 指定 owner、角色或下一节点。幂等摘要绑定图片字节和问题文本，同键不同内容
 明确冲突。新接口使用真实 HTTP 错误码，旧业务接口 HTTP-200 错误封装不变。
 
@@ -69,7 +69,7 @@ V15 增加 Python 输入与恢复表。Web 启动不自动建表。
 ```powershell
 # PowerShell 7；从迁移 worktree 的 algorithm 目录执行。
 uv pip sync --python .venv-baseline/Scripts/python.exe requirements-web.lock
-# 设置 MYSQL_*、JAVA_BASE_URL、REDIS_* 和 CORS_ALLOWED_ORIGINS 等本地配置。
+# 设置 MYSQL_*、SESSION_*、REDIS_* 和 CORS_ALLOWED_ORIGINS 等本地配置。
 & .venv-baseline/Scripts/python.exe -m uvicorn web.app:app --host 127.0.0.1 --port 8080
 # 另开受监督的进程运行 Worker，退出/部署后由监督器重新启动：
 & .venv-baseline/Scripts/python.exe -m web.workflow.worker
@@ -77,8 +77,8 @@ uv pip sync --python .venv-baseline/Scripts/python.exe requirements-web.lock
 & .venv-baseline/Scripts/python.exe -m web.workflow.worker --once
 ```
 
-Java 三个会话端点继续由 Nginx 转发到 8082，新接口随现有 diagnosis 路由转发
-Python 8080，Nginx 前门 8081。Agent 聊天路由不在本票切流。
+完整迁移工单 02 后，三个会话端点及 diagnosis 路由均转发 Python 8080，Nginx 前门 8081。
+本文原上传工单的证据保留历史身份；当前身份验证见 [Python 登录鉴权](python-session-auth-evidence.md)。
 Python Worker 仅领取 `python-graph` 通用分段任务，保留旧队列给其原执行器。
 生产只启用预期的任务执行器，避免旧 Java Worker 和 Python Worker 同时领取
 共享任务队列；整套部署编排与回退仍由工单 20 交付。

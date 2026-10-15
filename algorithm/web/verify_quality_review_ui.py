@@ -14,6 +14,8 @@ from playwright.sync_api import expect, sync_playwright
 
 from web.tests.test_workflow import picture_bytes
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:18804/api"
 FRONTEND = "http://127.0.0.1:15174"
 
@@ -35,8 +37,8 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     checks = []
     page_errors = []
-    with httpx.Client(cookies={"SESSION": "alice"}) as owner, httpx.Client(
-            cookies={"SESSION": "doctor"}) as doctor, sync_playwright() as playwright:
+    with httpx.Client(cookies={SESSION_COOKIE_NAME: "alice"}) as owner, httpx.Client(
+            cookies={SESSION_COOKIE_NAME: "doctor"}) as doctor, sync_playwright() as playwright:
         workflow_ids = []
         for _ in range(3):
             response = owner.post(f"{API}/diagnosis/workflows", data={"idempotencyKey": uuid4().hex,
@@ -47,7 +49,7 @@ def main():
             workflow_ids.append(workflow_id)
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1360, "height": 1000})
-        context.add_cookies([{"name": "SESSION", "value": "doctor", "url": "http://127.0.0.1"}])
+        context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "doctor", "url": "http://127.0.0.1"}])
         page = context.new_page()
         page.on("pageerror", lambda error: page_errors.append(str(error)))
         page.goto(FRONTEND + "/doctor/reviews")
@@ -76,7 +78,7 @@ def main():
             view = wait_for_status(owner, workflow_id, terminal)
             assert view["qualityReview"]["decisionCode"] == decision
             patient = browser.new_context(viewport={"width": 1200, "height": 1000})
-            patient.add_cookies([{"name": "SESSION", "value": "alice", "url": "http://127.0.0.1"}])
+            patient.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": "http://127.0.0.1"}])
             patient_page = patient.new_page()
             patient_page.on("pageerror", lambda error: page_errors.append(str(error)))
             patient_page.goto(FRONTEND + f"/diagnosis?workflow={workflow_id}")

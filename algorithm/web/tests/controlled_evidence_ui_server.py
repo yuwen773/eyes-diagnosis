@@ -2,9 +2,9 @@
 
 import pytest
 import uvicorn
-from fastapi import Request
 
 from web.tests.test_controlled_evidence import evidence_api, finish_workflow, govern, upload
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 
 def main():
@@ -12,18 +12,12 @@ def main():
     fixture = evidence_api.__wrapped__(patch)
     client, sessions, _, _ = next(fixture)
     doc_id = upload(client)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     govern(client, doc_id)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     sufficient = finish_workflow(client, sessions)["workflowId"]
     insufficient = finish_workflow(client, sessions, key="insufficient-ui", label="other")["workflowId"]
     app = client.app
-
-    @app.get("/api/user/get/login")
-    async def session_probe(request: Request):
-        response = await app.state.java_client.get("/user/get/login",
-            headers={"Cookie": request.headers.get("cookie", "")})
-        return response.json()
 
     @app.get("/__fixture")
     def fixture_ids():

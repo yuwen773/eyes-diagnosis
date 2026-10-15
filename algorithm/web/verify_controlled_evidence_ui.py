@@ -11,6 +11,8 @@ from pathlib import Path
 import httpx
 from playwright.sync_api import expect, sync_playwright
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:15281"
 FRONTEND = "http://127.0.0.1:15282"
 
@@ -25,7 +27,7 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         patient = browser.new_context(viewport={"width": 1360, "height": 1000})
-        patient.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+        patient.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
         page = patient.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(FRONTEND + "/diagnosis?workflow=" + ids["sufficient"])
@@ -41,7 +43,7 @@ def main():
         page.screenshot(path=str(output / "issue08-insufficient.png"), full_page=True)
 
         admin = browser.new_context(viewport={"width": 1440, "height": 1100})
-        admin.add_cookies([{"name": "SESSION", "value": "admin", "url": API}])
+        admin.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "admin", "url": API}])
         review = admin.new_page()
         review.on("pageerror", lambda error: errors.append(str(error)))
         review.goto(FRONTEND + "/admin/knowledge")

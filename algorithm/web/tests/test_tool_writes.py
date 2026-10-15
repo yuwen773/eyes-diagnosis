@@ -14,9 +14,15 @@ from web.tests.test_chat import chat, chat_api
 from web.tests.test_history_retrieval import tool_stream
 from web.tests.test_mcp_chat import CODE, mcp_chat
 from web.deps import get_db
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 def seed_user(db):
+    existing = db.get(User, 7)
+    if existing is not None:
+        existing.user_profile = "旧简介"
+        existing.edit_time = datetime(2026, 1, 1)
+        return
     db.add(User(id=7, user_account="alice", user_password="unused", user_name="Alice",
         user_profile="旧简介", user_role="user", edit_time=datetime(2026, 1, 1),
         create_time=datetime(2026, 1, 1), update_time=datetime(2026, 1, 1)))
@@ -61,9 +67,9 @@ def test_unapproved_or_changed_operations_never_modify_profile(chat_api, scenari
         assert decide(client, row, "reject").json()["data"]["status"] == "REJECTED"
         response = decide(client, row)
     elif scenario == "cross-user":
-        client.cookies.set("SESSION", "bob")
+        client.cookies.set(SESSION_COOKIE_NAME, "bob")
         response = decide(client, row)
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
     elif scenario in {"expire", "role"}:
         from web.chat.tool_writes import ToolConfirmation
         generator = client.app.dependency_overrides[get_db]()
@@ -206,9 +212,11 @@ from sqlalchemy.orm import sessionmaker
 from web.app import create_app
 from web.config import WebConfig
 from web.deps import get_db
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions
 app = create_app(WebConfig())
 engine = create_engine("sqlite:///" + sys.argv[1])
 factory = sessionmaker(engine, expire_on_commit=False)
+install_sessions(app, engine)
 mode = sys.argv[3]
 marker = Path(sys.argv[1] + ".pending-read")
 committed = Path(sys.argv[1] + ".committed")
@@ -229,11 +237,9 @@ def database():
         yield db
         db.commit()
 app.dependency_overrides[get_db] = database
-app.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(
-    lambda request: httpx.Response(200, json={"code": 0, "data": {"id": "7", "userAccount": "fixture", "userRole": "user"}})))
 row = json.loads(sys.argv[2])
 client = TestClient(app)
-client.cookies.set("SESSION", "alice")
+client.cookies.set(SESSION_COOKIE_NAME, "alice")
 response = client.post("/api/agent/tool-confirmations/" + row["confirmationId"] + "/approve", json={
     "idempotencyKey": row["idempotencyKey"], "expectedContentDigest": row["contentDigest"]})
 print(json.dumps(response.json()))

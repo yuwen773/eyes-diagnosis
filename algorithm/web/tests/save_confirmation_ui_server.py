@@ -5,7 +5,6 @@ from datetime import timedelta
 
 import pytest
 import uvicorn
-from fastapi import Request
 from sqlalchemy import func, select
 
 from web.models.diagnosis import Diagnosis
@@ -21,12 +20,6 @@ def main():
     client, sessions, *_ = explanation_api.__wrapped__(evidence)
     app = client.app
     app.state.clinical = False
-
-    @app.get("/api/user/get/login")
-    async def session_probe(request: Request):
-        response = await app.state.java_client.get("/user/get/login",
-            headers={"Cookie": request.headers.get("cookie", "")})
-        return response.json()
 
     @app.post("/__fixture/clinical/{enabled}")
     def clinical(enabled: bool):

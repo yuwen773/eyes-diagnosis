@@ -11,6 +11,7 @@ from web.app import create_app
 from web.config import WebConfig
 
 from web.tests.test_chat_workflow import workflow_api, upload_attachment, send, workflow_event
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 def request_supplement(client, workflow_id, key="supplement-1", thread="shared"):
@@ -71,9 +72,9 @@ def test_wait_and_completed_reply_survive_application_rebuild(workflow_api):
     wait = supplement_event(request_supplement(client, workflow_id))
     app = create_app(WebConfig())
     app.dependency_overrides.update(client.app.dependency_overrides)
-    app.state.java_client = client.app.state.java_client
+    install_sessions(app)
     rebuilt = TestClient(app)
-    rebuilt.cookies.set("SESSION", "alice")
+    rebuilt.cookies.set(SESSION_COOKIE_NAME, "alice")
     try:
         assert rebuilt.get(f"/api/agent/supplements/{wait['requestId']}").json()["data"] == wait
         assert rebuilt.get("/api/agent/history/shared").json()["data"]["supplements"] == [wait]
@@ -101,12 +102,12 @@ def test_identity_version_and_bound_session_are_checked_before_resume(workflow_a
     assert reply(client, {**wait, "sessionId": "other"}).json()["code"] == 40101
     assert request_supplement(client, workflow_id, key="different").json()["code"] == 50001
     assert request_supplement(client, workflow_id, key="unbound", thread="another").json()["code"] == 40101
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.get(f"/api/agent/supplements/{wait['requestId']}").json()["code"] == 40101
     assert reply(client, wait).json()["code"] == 40101
     client.cookies.clear()
     assert reply(client, wait).json()["code"] == 40100
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert client.get(f"/api/agent/supplements/{wait['requestId']}").json()["data"] == wait
     assert reply(client, wait).json()["code"] == 0
     assert reply(client, wait, text="不同内容").json()["code"] == 50001

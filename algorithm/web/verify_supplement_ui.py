@@ -16,6 +16,8 @@ from playwright.sync_api import expect, sync_playwright
 from web.tests.test_workflow import picture_bytes
 from web.verify_chat_workflow_ui import ready, stop
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:18805"
 UI = "http://127.0.0.1:15175"
 
@@ -53,10 +55,10 @@ def main():
                 "--host", "127.0.0.1", "--port", "15175", "--strictPort"], cwd=frontend,
                 env=env, stdout=log, stderr=log, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             ready(vite, UI)
-            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={"SESSION": "alice"}) as api:
+            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "alice"}) as api:
                 browser = playwright.chromium.launch(headless=True)
                 context = browser.new_context(viewport={"width": 1360, "height": 1100})
-                context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
                 page = context.new_page()
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 attachment = api.post("/api/agent/image/upload", files={"file": ("fundus.png", picture_bytes(), "image/png")}).json()["data"]

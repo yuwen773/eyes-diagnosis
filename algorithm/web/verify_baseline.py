@@ -23,33 +23,26 @@ def envelope(response, code=0):
 
 
 def verify(args):
-    for url in (args.api_url, args.frontend_url, args.java_api_url):
+    for url in (args.api_url, args.frontend_url):
         assert urlparse(url).hostname in {"localhost", "127.0.0.1"}, "local baseline only"
     credentials = json.loads(args.login_file.read_text(encoding="utf-8"))
     checks = []
     with httpx.Client(base_url=args.api_url + "/", timeout=20) as client:
         envelope(client.get("user/get/login"), 40100)
-        checks.append("anonymous_java_probe")
+        checks.append("anonymous_python_probe")
         envelope(client.post("user/login", json=credentials))
         envelope(client.get("user/get/login"))
-        checks.append("java_login_and_probe")
+        checks.append("python_login_and_probe")
         cookies = dict(client.cookies)
-        assert "SESSION" in cookies or "JSESSIONID" in cookies, "session cookie missing"
+        assert "EYE_SESSION" in cookies, "Python session cookie missing"
         page = envelope(client.post("diagnosis/list/page/my", json={"pageSize": 3}))
         page_total = page["total"]
         assert set(page) >= {"records", "total", "size", "current", "pages"}
         assert page["size"] == "3"
         assert all(isinstance(page[k], str) for k in ("total", "size", "current", "pages"))
         checks.append("python_authenticated_query_and_pagination")
-        java_page = envelope(client.post(
-            args.java_api_url + "/diagnosis/list/page/my", json={"pageSize": 3}
-        ))
-        for key in ("total", "size", "current", "pages"):
-            assert java_page[key] == page[key], f"Java/Python pagination differs: {key}"
-        assert [(r["id"], r["createTime"]) for r in java_page["records"]] == [
-            (r["id"], r["createTime"]) for r in page["records"]
-        ], "Java/Python ID/date wire values differ"
-        checks.append("real_java_python_id_and_date_contract_match")
+        assert all(isinstance(row["id"], str) for row in page["records"])
+        checks.append("python_long_and_pagination_contract")
         if args.missing_weights:
             before = page["total"]
             envelope(client.post("diagnosis/diagnosis", files={
@@ -60,11 +53,11 @@ def verify(args):
             checks.append("missing_weights_fail_closed_no_record")
         envelope(client.post("user/logout"))
         # Replay the original cookie, rather than only relying on the browser
-        # deleting it. Java logout must revoke Python's next request as well.
+        # deleting it. Python logout must revoke the server-side session.
         with httpx.Client(base_url=args.api_url + "/", cookies=cookies, timeout=20) as replay:
             envelope(replay.get("user/get/login"), 40100)
             envelope(replay.post("diagnosis/list/page/my", json={}), 40100)
-        checks.append("java_logout_old_cookie_revoked_in_java_and_python")
+        checks.append("python_logout_old_cookie_revoked")
 
     from playwright.sync_api import sync_playwright
 
@@ -112,7 +105,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-url", default="http://localhost:8081/api")
     parser.add_argument("--frontend-url", default="http://localhost:5173")
-    parser.add_argument("--java-api-url", default="http://localhost:8082/api")
     parser.add_argument("--login-file", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--missing-weights", action="store_true",

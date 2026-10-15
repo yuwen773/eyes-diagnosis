@@ -21,6 +21,8 @@ from playwright.sync_api import expect, sync_playwright
 
 from web.tests.test_workflow import picture_bytes
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:18805"
 UI = "http://127.0.0.1:15175"
 
@@ -82,10 +84,10 @@ def main():
                 "--host", "127.0.0.1", "--port", "15175", "--strictPort"], cwd=frontend,
                 env=env, stdout=log, stderr=log, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             ready(vite, UI)
-            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={"SESSION": "alice"}) as api:
+            with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "alice"}) as api:
                 browser = playwright.chromium.launch(headless=True)
                 context = browser.new_context(viewport={"width": 1360, "height": 1000})
-                context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
                 page = context.new_page()
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 requests = []
@@ -186,11 +188,11 @@ def main():
                 page.get_by_role("button", name="发送", exact=True).click()
                 expect(page.get_by_role("button", name="重试诊断提交（同一请求）")).to_be_visible()
                 unsent_request = requests[-1]
-                context.add_cookies([{"name": "SESSION", "value": "bob", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "bob", "url": API}])
                 page.reload()
                 page.wait_for_load_state("networkidle")
                 expect(page.get_by_role("button", name="重试诊断提交（同一请求）")).to_have_count(0)
-                context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+                context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
                 page.reload()
                 expect(page.get_by_role("button", name="重试诊断提交（同一请求）")).to_be_visible()
                 checks.append("pending-request-isolated-by-login-user")

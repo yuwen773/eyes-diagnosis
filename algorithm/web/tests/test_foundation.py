@@ -16,13 +16,17 @@ from pathlib import Path
 import pytest
 from fastapi import APIRouter, Depends
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from web.app import API_PREFIX, create_app  # noqa: E402
 from web.auth import ADMIN_ROLE, DEFAULT_ROLE, LoginUser, require_role  # noqa: E402
 from web.config import WebConfig  # noqa: E402
-from web.db import MP_TWEPOCH, SnowflakeIdGenerator  # noqa: E402
+from web.db import MP_TWEPOCH, Base, SnowflakeIdGenerator  # noqa: E402
+from web.deps import get_db  # noqa: E402
 from web.response import (  # noqa: E402
     BaseResponse,
     BizError,
@@ -31,6 +35,7 @@ from web.response import (  # noqa: E402
     LongStr,
     PageResult,
 )
+from web.tests.session_fixtures import Identity, install_sessions  # noqa: E402
 
 #: FastAPI dependencies bind the role via partial; `require_role` keeps the
 #: required role outside the request's query parameters.
@@ -209,52 +214,31 @@ def test_page_pages_computation_is_ceil_and_zero_safe():
 # --------------------------------------------------------------------------
 # Auth semantics (aop/AuthInterceptor.java)
 # --------------------------------------------------------------------------
-class _FakeRedis:
-    def __init__(self):
-        self.store: dict[str, str] = {}
-
-    async def get(self, key):
-        return self.store.get(key)
-
-    async def setex(self, key, ttl, value):
-        self.store[key] = value
-
-    async def delete(self, key):
-        self.store.pop(key, None)
-
-
 def _app_for_auth(role: str | None) -> TestClient:
-    """Client whose Java probe reports the given role (None = anonymous)."""
+    """Client signed in as a ``t_user`` row carrying ``role`` (``None`` = anonymous).
+
+    The role reaches the guard through a real row and a real session rather
+    than through a stubbed probe, because that is how it reaches the guard now.
+    ``superuser`` below is the case that matters: ``require_role`` has to reject
+    a role it does not know, and that decision is only meaningful if the role
+    arrives as data rather than as a parameter a stub could intercept.
+    """
     app = create_app(WebConfig())
-    app.state.redis = _FakeRedis()
-    # get_login_user short-circuits on a missing JSESSIONID, so every
-    # signed-in case has to actually present the cookie. Its value is opaque
-    # to Python -- that is the whole premise of the forwarding design.
+    engine = create_engine("sqlite://", poolclass=StaticPool,
+                           connect_args={"check_same_thread": False})
+    Base.metadata.create_all(engine)
 
-    class _Resp:
-        def __init__(self, body, status_code=200):
-            self._body = body
-            self.status_code = status_code
+    def database():
+        with Session(engine) as session:
+            yield session
 
-        def json(self):
-            return self._body
+    app.dependency_overrides[get_db] = database
 
-    class _JavaClient:
-        async def get(self, path, headers=None):
-            if role is None:
-                return _Resp({"code": 40100, "msg": "未登录", "data": None})
-            return _Resp(
-                {
-                    "code": 0,
-                    "msg": "ok",
-                    "data": {"id": "1754000000000000001", "userAccount": "u", "userRole": role},
-                }
-            )
-
-        async def aclose(self):
-            return None
-
-    app.state.java_client = _JavaClient()
+    if role is None:
+        sessions = install_sessions(app, engine, who={})
+    else:
+        identity = Identity(1754000000000000001, "u", role)
+        sessions = install_sessions(app, engine, who={"caller": identity})
 
     router = APIRouter()
 
@@ -269,7 +253,7 @@ def _app_for_auth(role: str | None) -> TestClient:
     app.include_router(router, prefix=API_PREFIX)
     client = TestClient(app, raise_server_exceptions=False)
     if role is not None:
-        client.cookies.set("JSESSIONID", "test-session-id")
+        sessions.authenticate(client, "caller")
     return client
 
 

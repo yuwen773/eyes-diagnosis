@@ -5,9 +5,9 @@ from pathlib import Path
 import tempfile
 
 import httpx
+from httpx import AsyncClient
 import pytest
 import uvicorn
-from fastapi import Request
 from sqlalchemy import create_engine, func, select
 
 from web.models.diagnosis import Diagnosis
@@ -43,12 +43,7 @@ def main():
         return httpx.Response(200, text='data: {"choices":[{"delta":{"content":"已持久化的完整回答"}}]}\n\n'
             'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
 
-    app.state.chat_client = type(app.state.java_client)(transport=httpx.MockTransport(chat))
-
-    @app.get("/api/user/get/login")
-    async def login(request: Request):
-        return (await app.state.java_client.get("/user/get/login",
-            headers={"Cookie": request.headers.get("cookie", "")})).json()
+    app.state.chat_client = AsyncClient(transport=httpx.MockTransport(chat))
 
     @app.post("/__fixture/run")
     def advance():

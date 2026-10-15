@@ -34,7 +34,7 @@ from web.constant import (  # noqa: E402
     PASSWORD_IS_SHORT,
 )
 from web.routers.user import router  # noqa: E402
-from web.auth import require_role  # noqa: E402
+from web.auth import current_user, get_login_user, require_role  # noqa: E402
 from web.response import BizError  # noqa: E402
 from web.routers.user import register  # noqa: E402
 from web.schemas.user import (  # noqa: E402
@@ -45,8 +45,9 @@ from web.schemas.user import (  # noqa: E402
 )
 from web.security import LEGACY_SALT, encode, verify  # noqa: E402
 
-#: The three endpoints Java keeps. Login/logout own the Spring Session; Python
-#: cannot read it (JDK-serialized Redis payload).
+#: The three session endpoints. Python has owned them since ticket 02: Java's
+#: Spring Session Redis payload is JDK-serialized, and Python now keeps its own
+#: session namespace instead of forwarding to ``GET /user/get/login``.
 SESSION_ENDPOINTS = {"/user/login", "/user/get/login", "/user/logout"}
 
 USER_CONTROLLER = (
@@ -67,12 +68,12 @@ def _python_user_paths() -> set[str]:
 # ---------------------------------------------------------------------------
 # Structural: endpoint parity
 # ---------------------------------------------------------------------------
-def test_every_non_session_user_endpoint_is_migrated():
+def test_every_user_endpoint_is_migrated():
     java = _java_user_paths()
     python = _python_user_paths()
-    assert java - python - SESSION_ENDPOINTS == set(), (
+    assert java - python == set(), (
         "endpoints present in UserController but not served by Python: "
-        f"{sorted(java - python - SESSION_ENDPOINTS)}"
+        f"{sorted(java - python)}"
     )
 
 
@@ -81,9 +82,11 @@ def test_python_serves_no_endpoint_java_does_not():
     assert _python_user_paths() - _java_user_paths() == set()
 
 
-def test_session_endpoints_stay_on_java():
-    """If login ever lands in Python, every authenticated route breaks."""
-    assert SESSION_ENDPOINTS.isdisjoint(_python_user_paths())
+def test_all_fourteen_user_endpoints_are_python():
+    """The user domain is fully migrated: 11 CRUD endpoints plus the three
+    session endpoints Python took over in ticket 02."""
+    assert _python_user_paths() == _java_user_paths()
+    assert len(SESSION_ENDPOINTS & _python_user_paths()) == 3
 
 
 def test_router_declares_exactly_the_migrated_endpoints():
@@ -100,17 +103,25 @@ def _route(suffix: str):
     return next(r for r in router.routes if r.path.endswith(suffix))
 
 
+#: The dependencies that make a route require an authenticated caller.
+#:
+#: ``require_role`` is the role check. ``get_login_user``/``current_user`` are
+#: the session check, which is all ``/user/logout`` and ``/user/get/login``
+#: have: a session endpoint has no role to ask for, but "no role" is not the
+#: same as "no authentication".
+_AUTH_CALLS = (require_role, get_login_user, current_user)
+
+
 def _auth_dependencies(route) -> list:
-    """The route's dependencies that resolve to :func:`require_role`.
+    """The route's dependencies that make it require an authenticated caller.
 
     ``require_admin``/``any_user`` are ``functools.partial`` objects, so the
-    underlying function is ``partial.func``; ``get_db`` is not one.
+    underlying function is ``partial.func``; ``get_db`` is not in the set.
     """
     found = []
     for dependant in route.dependant.dependencies:
         call = dependant.call
-        target = getattr(call, "func", call)
-        if target is require_role:
+        if getattr(call, "func", call) in _AUTH_CALLS:
             found.append(call)
     return found
 
@@ -142,11 +153,23 @@ def test_admin_only_routes_all_declare_a_role_dependency():
         assert len(_auth_dependencies(_route(suffix))) == 1, suffix
 
 
-def test_every_user_route_except_register_is_authenticated():
+def test_every_user_route_except_register_and_login_is_authenticated():
     """Completeness check -- a new endpoint added without a Depends would
-    otherwise be exposed anonymously with no test failing."""
+    otherwise be exposed anonymously with no test failing.
+
+    ``/register`` and ``/login`` are the two public endpoints, in Java as much
+    as here: a user has to be able to create an account and to sign in before
+    there is a session to check. They are matched on the *full* path, not a
+    suffix -- ``endswith("/login")`` would also exempt ``/get/login``, which is
+    the endpoint whose whole job is to answer "is anyone signed in".
+
+    ``/logout`` and ``/get/login`` are *not* exempt: they are covered by
+    ``_auth_dependencies`` through ``get_login_user``, which is how they decide
+    whether to answer or to report ``NOT_LOGIN_ERROR``.
+    """
+    public = {"/user/register", "/user/login"}
     for route in router.routes:
-        if route.path.endswith("/register"):
+        if route.path in public:
             continue
         assert _auth_dependencies(route), route.path
 

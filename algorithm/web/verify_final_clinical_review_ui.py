@@ -9,6 +9,8 @@ from playwright.sync_api import expect, sync_playwright
 
 from web.tests.test_workflow import picture_bytes
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:15381"
 FRONTEND = "http://127.0.0.1:15382"
 
@@ -31,8 +33,8 @@ def main():
         browser = p.chromium.launch(headless=True)
         patient = browser.new_context(viewport={"width": 1360, "height": 1100})
         doctor = browser.new_context(viewport={"width": 1360, "height": 1100})
-        patient.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
-        doctor.add_cookies([{"name": "SESSION", "value": "doctor", "url": API}])
+        patient.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
+        doctor.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "doctor", "url": API}])
         page, review = patient.new_page(), doctor.new_page()
         for view in (page, review):
             view.on("pageerror", lambda error: errors.append(str(error)))
@@ -48,7 +50,7 @@ def main():
             task = created.value.json()["data"]["workflowId"]
             expect(page.get_by_role("heading", name="等待医生复核", exact=True)).to_be_visible()
             before = httpx.get(API + "/__fixture/proof").json()
-            listed = httpx.get(API + "/api/reviews/tasks", cookies={"SESSION": "doctor"}).json()["data"]
+            listed = httpx.get(API + "/api/reviews/tasks", cookies={SESSION_COOKIE_NAME: "doctor"}).json()["data"]
             item = next(row for row in listed if row["workflowId"] == task)
             task_url = API + "/api/reviews/tasks/" + item["reviewTaskId"]
             review.goto(FRONTEND + "/doctor/reviews?task=" + item["reviewTaskId"])
@@ -60,7 +62,7 @@ def main():
             expect(review.get_by_role("button", name="提交最终临床决定", exact=True)).to_be_visible()
             allowed = ["CONFIRM_AI_ASSESSMENT", "CORRECT_AI_ASSESSMENT", "INCONCLUSIVE"] if mode == "valid" else ["CONFIRM_ABSTENTION", "PROVIDE_INDEPENDENT_REVIEW", "INCONCLUSIVE"]
             assert review.locator('input[name="clinical-decision"]').evaluate_all("els => els.map(el => el.value)") == allowed
-            detail = httpx.get(task_url, cookies={"SESSION": "doctor"}).json()["data"]
+            detail = httpx.get(task_url, cookies={SESSION_COOKIE_NAME: "doctor"}).json()["data"]
             payload = {"expectedTaskVersion": detail["taskVersion"], "expectedWorkflowVersion": detail["workflowVersion"],
                 "expectedExplanationSnapshotId": detail["explanation"]["snapshotId"],
                 "expectedExplanationRevision": detail["explanation"]["revision"]}
@@ -91,13 +93,13 @@ def main():
             submitted_body = submitted.value.request.post_data_json
             receipt = submitted.value.json()
             expect(review.get_by_text("此决定不能覆盖", exact=False)).to_be_visible()
-            assert httpx.post(task_url + "/submit", json=submitted_body, cookies={"SESSION": "doctor"}).json() == receipt
+            assert httpx.post(task_url + "/submit", json=submitted_body, cookies={SESSION_COOKIE_NAME: "doctor"}).json() == receipt
             page.reload()
             expect(page.get_by_role("heading", name="处理完成" if status == "COMPLETED" else "处理完成，结果受限", exact=True)).to_be_visible()
             expect(page.get_by_text("医生最终临床复核：", exact=False)).to_contain_text(label)
             expect(page.get_by_text("正式诊断记录尚未保存", exact=False)).to_be_visible()
             expect(page.get_by_role("heading", name="模型评估", exact=True)).to_have_count(1 if publication == "PUBLISHED" else 0)
-            current = httpx.get(API + "/api/diagnosis/workflows/" + task, cookies={"SESSION": "alice"}).json()["data"]
+            current = httpx.get(API + "/api/diagnosis/workflows/" + task, cookies={SESSION_COOKIE_NAME: "alice"}).json()["data"]
             assert current["status"] == status and current["explanation"]["publicationStatus"] == publication
             expected_events = ["FINAL_REVIEW_CLAIMED", "FINAL_REVIEW_SUBMITTED"] + (
                 ["EXPLANATION_PUBLISHED" if publication == "PUBLISHED" else "EXPLANATION_WITHHELD"] if mode == "valid" else [])

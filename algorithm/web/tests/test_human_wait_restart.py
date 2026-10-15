@@ -38,6 +38,7 @@ from web.workflow.models import (
     ExplanationSnapshot, GraphCheckpoint, GraphWrite, InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent,
 )
 from web.workflow.confirmation_models import SaveConfirmation, SavedWorkflowDiagnosis
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 from web.chat.supplement import Supplement
 from web.chat.models import ChatAudit, ChatMessage, ChatRun, ChatSession, ChatWorkflow
 from web.workflow.checkpoint import MysqlCheckpointSaver
@@ -105,7 +106,7 @@ class RestartCase:
         self.evidence["apiPids"].append(process.pid)
         try:
             with httpx.Client(base_url=f"http://127.0.0.1:{self.port}", timeout=20,
-                              cookies={"SESSION": identity}) as client:
+                              cookies={SESSION_COOKIE_NAME: identity}) as client:
                 deadline = time.monotonic() + 20
                 while True:
                     assert process.poll() is None, "API exited; inspect child log"
@@ -201,7 +202,7 @@ def test_doctor_wait_claim_and_submitted_decision_survive_process_restart(restar
         case.worker(kind)
         before = view(client, workflow_id)
         assert before["stopReasonCode"] == ("QUALITY_REVIEW_REQUIRED" if kind == "quality" else "FINAL_CLINICAL_REVIEW_REQUIRED")
-        client.cookies.set("SESSION", "doctor")
+        client.cookies.set(SESSION_COOKIE_NAME, "doctor")
         task = next(row for row in client.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == workflow_id)
         review_path = f"/api/reviews/tasks/{task['reviewTaskId']}"
         original = client.get(review_path).json()["data"]
@@ -228,7 +229,7 @@ def test_doctor_wait_claim_and_submitted_decision_survive_process_restart(restar
         assert client.post(review_path + "/submit", json={**payload, "expectedTaskVersion": "99"}).status_code == 409
         case.worker()
         assert case.effects(workflow_id) == stable
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
         after = view(client, workflow_id)
         assert after["progress"]["completed"].count("inference") == 1
         assert after["progress"]["completed"].count("qualityReview" if kind == "quality" else "finalClinicalReview") == 1
@@ -269,9 +270,9 @@ def test_save_confirmation_survives_restart_without_duplicate_or_expired_save(re
             return
         assert client.get(path(workflow_id)).json()["data"] == confirmation
         assert case.effects(workflow_id) == effects
-        client.cookies.set("SESSION", "bob")
+        client.cookies.set(SESSION_COOKIE_NAME, "bob")
         assert act(client, confirmation).status_code == 403
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
         assert act(client, confirmation, expectedWorkflowVersion="0").status_code == 409
         approved = act(client, confirmation, action)
         assert approved.status_code == 200, approved.text
@@ -298,7 +299,7 @@ def test_incompatible_or_missing_continuation_fails_visibly_after_restart(restar
     with case.api() as client:
         workflow_id = start(client)
         case.worker("quality")
-        client.cookies.set("SESSION", "doctor")
+        client.cookies.set(SESSION_COOKIE_NAME, "doctor")
         task = next(row for row in client.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == workflow_id)
         review_path = f"/api/reviews/tasks/{task['reviewTaskId']}"
         assert client.post(review_path + "/claim", json=versions(task)).status_code == 200
@@ -359,9 +360,9 @@ def test_supplement_wait_and_answer_survive_restart_without_replaying_clinical_w
         assert client.get(f"/api/agent/supplements/{wait['requestId']}").json()["data"] == wait
         assert client.get(f"/api/agent/history/{thread}").json()["data"]["supplements"] == [wait]
         assert reply(client, wait, version="9").json()["code"] == 50001
-        client.cookies.set("SESSION", "bob")
+        client.cookies.set(SESSION_COOKIE_NAME, "bob")
         assert reply(client, wait).json()["code"] == 40101
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
         answered = reply(client, wait).json()["data"]
         assert answered["status"] == "ANSWERED" and answered["version"] == "1"
     with case.api() as client:
@@ -387,7 +388,7 @@ def test_unreferenced_newer_checkpoint_cannot_override_accepted_quality_decision
     with case.api() as client:
         workflow_id = start(client)
         case.worker("quality")
-        client.cookies.set("SESSION", "doctor")
+        client.cookies.set(SESSION_COOKIE_NAME, "doctor")
         task = next(row for row in client.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == workflow_id)
         review_path = f"/api/reviews/tasks/{task['reviewTaskId']}"
         assert client.post(review_path + "/claim", json=versions(task)).status_code == 200

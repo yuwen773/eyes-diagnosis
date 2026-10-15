@@ -75,7 +75,7 @@ from web.schemas.diagnosis import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/diagnosis", tags=["diagnosis"])
+router = APIRouter(prefix="/diagnosis", tags=["diagnosisController"])
 
 #: ``DiagnosisController.java:98`` -- ``String.format("public/%s", userId)``.
 #: The same prefix avatars use, so both land in one per-user folder.
@@ -437,7 +437,7 @@ def _query_page(db: Session, query: DiagnosisQueryDTO, user_id: int) -> PageResu
 # ---------------------------------------------------------------------------
 # POST /diagnosis/upload -- any signed-in user
 # ---------------------------------------------------------------------------
-@router.post("/upload", summary="诊断图片上传")
+@router.post("/upload", summary="诊断图片上传", operation_id="uploadPicture", response_model=BaseResponse[DiagnosisManageVO])
 async def upload_picture_endpoint(
     request: Request,
     file: UploadFile = File(...),
@@ -479,7 +479,7 @@ async def upload_picture_endpoint(
 # ---------------------------------------------------------------------------
 # POST /diagnosis/list/page/{vo,vo/cache,my} -- any signed-in user
 # ---------------------------------------------------------------------------
-@router.post("/list/page/vo", summary="获取分页诊断列表")
+@router.post("/list/page/vo", summary="获取分页诊断列表", operation_id="listDiagnosisVoByPage", response_model=BaseResponse[PageResult[DiagnosisManageVO]])
 def list_diagnosis_vo(
     body: DiagnosisQueryDTO,
     db: Session = Depends(get_db),
@@ -494,7 +494,7 @@ def list_diagnosis_vo(
     return BaseResponse.success(_query_page(db, body, int(user.id)))
 
 
-@router.post("/list/page/vo/cache", summary="获取分页诊断列表（缓存版本）")
+@router.post("/list/page/vo/cache", summary="获取分页诊断列表（缓存版本）", operation_id="listDiagnosisVoByPageWithCache", response_model=BaseResponse[PageResult[DiagnosisManageVO]])
 async def list_diagnosis_vo_cached(
     request: Request,
     body: DiagnosisQueryDTO,
@@ -524,7 +524,7 @@ async def list_diagnosis_vo_cached(
     return BaseResponse.success(page)
 
 
-@router.post("/list/page/my", summary="获取我的诊断列表")
+@router.post("/list/page/my", summary="获取我的诊断列表", operation_id="listMyDiagnosisVoByPage", response_model=BaseResponse[PageResult[DiagnosisManageVO]])
 def list_my_diagnosis_vo(
     body: DiagnosisQueryDTO,
     db: Session = Depends(get_db),
@@ -545,7 +545,7 @@ def list_my_diagnosis_vo(
 # ---------------------------------------------------------------------------
 # POST /diagnosis/delete/{id} -- admin
 # ---------------------------------------------------------------------------
-@router.post("/delete/{id}", summary="删除诊断记录")
+@router.post("/delete/{id}", summary="删除诊断记录", operation_id="deleteDiagnosis", response_model=BaseResponse[bool])
 def delete_diagnosis(
     id: int,
     db: Session = Depends(get_db),
@@ -569,7 +569,7 @@ def delete_diagnosis(
 # ---------------------------------------------------------------------------
 # POST /diagnosis/diagnosis -- any signed-in user
 # ---------------------------------------------------------------------------
-@router.post("/diagnosis", summary="进行 AI 诊断")
+@router.post("/diagnosis", summary="进行 AI 诊断", operation_id="doDiagnosis", response_model=BaseResponse[DiagnosisResultVO])
 async def do_diagnosis(
     request: Request,
     file: UploadFile = File(...),
@@ -695,7 +695,7 @@ def _diagnose_via_engine(request: Request, data: bytes, content_type: str | None
 # ---------------------------------------------------------------------------
 # GET /diagnosis/get/{id} -- any signed-in user
 # ---------------------------------------------------------------------------
-@router.get("/get/{id}", summary="获取诊断结果")
+@router.get("/get/{id}", summary="获取诊断结果", operation_id="getDiagnosisResultVO", response_model=BaseResponse[DiagnosisResultVO])
 def get_diagnosis_result(
     id: int,
     db: Session = Depends(get_db),
@@ -721,7 +721,7 @@ def get_diagnosis_result(
 # ---------------------------------------------------------------------------
 # POST /diagnosis/update -- admin, human review
 # ---------------------------------------------------------------------------
-@router.post("/update", summary="人工复诊")
+@router.post("/update", summary="人工复诊", operation_id="updateDiagnosisResult", response_model=BaseResponse[bool])
 def update_diagnosis_result(
     body: DiagnosisResultDTO,
     db: Session = Depends(get_db),

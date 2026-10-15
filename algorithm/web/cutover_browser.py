@@ -25,6 +25,8 @@ def verify_browser(proxy, password: str, runtime: Path, worker, report: dict) ->
             (captures / "login-response.txt").write_text(
                 str(login.value.status) + " " + login.value.headers.get("content-type", "") + "\n" + login.value.text(), encoding="utf-8")
             assert login.value.json()["code"] == 0
+            assert any(cookie["name"] == "EYE_SESSION" and cookie["httpOnly"]
+                for cookie in page.context.cookies())
             page.wait_for_url(origin + "/")
             page.screenshot(path=str(captures / "login.png"))
             page.goto(origin + "/diagnosis", wait_until="networkidle")

@@ -21,20 +21,45 @@ from web.config import WebConfig
 from web.workflow.inference import WorkflowInference
 from web.workflow.models import ExplanationSnapshot, InferenceEnvelopeRow, WorkflowEvent
 from web.workflow.worker import Worker
+from web.tests.session_fixtures import (  # noqa: E402
+    SESSION_COOKIE_NAME,
+    Identity,
+    install_sessions,
+)
 
 REASONS = {"CONFIRM_AI_ASSESSMENT": "AI_ASSESSMENT_CONFIRMED",
     "CORRECT_AI_ASSESSMENT": "AI_ASSESSMENT_CORRECTED", "INCONCLUSIVE": "INCONCLUSIVE",
     "CONFIRM_ABSTENTION": "ABSTENTION_CONFIRMED", "PROVIDE_INDEPENDENT_REVIEW": "INDEPENDENT_REVIEW_PROVIDED"}
 
 
+#: The doctor-review matrix. Two things are deliberate:
+#:
+#: ``alice`` (id 7) carries the **doctor** role, because ``self-doctor`` in the
+#: tests below is the same user id and is expected to be refused *as the owner*
+#: -- ``review.py#authorize`` raises 403 on ``owner_user_id == user.id``. If
+#: alice were an ordinary user she would be refused by the role check instead,
+#: and the ownership guard would have no test at all.
+#:
+#: ``other-doctor`` (id 11) exists to prove a second doctor is refused because
+#: the task was already claimed, not because of who they are.
+FINAL_IDENTITIES = {
+    "alice": Identity(7, "alice", "doctor", "Alice"),
+    "bob": Identity(8, "bob", "user", "Bob"),
+    "admin": Identity(9, "admin", "admin", "Admin"),
+    "doctor": Identity(10, "doctor", "doctor", "Doctor"),
+    "other-doctor": Identity(11, "other-doctor", "doctor", "Other Doctor"),
+    # Same row as alice: the refusal has to come from ownership, not the role.
+    "self-doctor": Identity(7, "alice", "doctor", "Alice"),
+}
+
+
 def identities(client):
-    def java(request):
-        identity = {"SESSION=alice": (7, "user"), "SESSION=bob": (8, "user"),
-            "SESSION=doctor": (10, "doctor"), "SESSION=other-doctor": (11, "doctor"),
-            "SESSION=self-doctor": (7, "doctor"), "SESSION=admin": (9, "admin")}.get(request.headers.get("cookie"))
-        return httpx.Response(200, json={"code": 0 if identity else 40100, "data": {
-            "id": str(identity[0]), "userAccount": "fixture", "userRole": identity[1]} if identity else None})
-    client.app.state.java_client._transport = httpx.MockTransport(java)
+    """Install the matrix on the app behind ``client``.
+
+    Re-installing rather than mutating is what lets a rebuilt app pick the same
+    identities up, which ``test_final_wait_survives_app_restart...`` needs.
+    """
+    return install_sessions(client.app, who=FINAL_IDENTITIES)
 
 
 def run(sessions, adapter):
@@ -53,7 +78,7 @@ def prepare(explanation_api, abstained=False):
     adapter = WorkflowInference(WebConfig(dashscope_api_key="controlled-key"), engine=engine)
     run(sessions, adapter)
     assert read(client, task)["status"] == "WAITING_HUMAN_REVIEW"
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     listed = client.get("/api/reviews/tasks").json()["data"]
     review = next(row for row in listed if row["workflowId"] == task)
     path = f'/api/reviews/tasks/{review["reviewTaskId"]}'
@@ -100,7 +125,7 @@ def test_matrix_replay_and_resume_preserve_ai_and_do_not_save(explanation_api, a
     assert client.get(path).json()["data"]["allowedDecisions"] == []
     assert engine.calls == 1 and unavailable.calls == 0
     assert len(model["requests"]) == (0 if abstained else 1)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = read(client, task)
     published = decision == "CONFIRM_AI_ASSESSMENT"
     assert view["status"] == ("COMPLETED" if published else "COMPLETED_LIMITED")
@@ -138,20 +163,20 @@ def test_incompatible_decision_matrix_is_rejected(explanation_api, abstained, de
 def test_permissions_claim_conflict_versions_and_forbidden_fields(explanation_api):
     client, _, _, _, task, path, detail, *_ = prepare(explanation_api)
     for name, status in [("alice", 403), ("bob", 403), ("admin", 403), ("self-doctor", 403), ("missing", 401)]:
-        client.cookies.set("SESSION", name)
+        client.cookies.set(SESSION_COOKIE_NAME, name)
         assert client.get(path).status_code == status
         assert client.get(path + "/image").status_code == status
         assert client.post(path + "/claim", json=final_versions(detail)).status_code == status
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     body = {**final_versions(detail), "decisionCode": "CONFIRM_AI_ASSESSMENT", "reasonCode": "AI_ASSESSMENT_CONFIRMED"}
     assert client.post(path + "/submit", json=body).status_code == 409
     claimed = claim(client, path, detail)
     assert client.post(path + "/claim", json=final_versions(detail)).status_code == 409
-    client.cookies.set("SESSION", "other-doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "other-doctor")
     assert client.get(path).status_code == 403
     assert client.get(path + "/image").status_code == 403
     assert client.post(path + "/submit", json=body).status_code == 403
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     body.update(final_versions(claimed))
     for change, status in [({"expectedTaskVersion": "0"}, 409), ({"expectedWorkflowVersion": "0"}, 409),
         ({"expectedExplanationRevision": "99"}, 409), ({"expectedExplanationSnapshotId": "other"}, 409),
@@ -160,20 +185,20 @@ def test_permissions_claim_conflict_versions_and_forbidden_fields(explanation_ap
         assert client.post(path + "/submit", json={**body, **change}).status_code == status
     assert client.post(path + "/submit", json=body).status_code == 200
     assert client.post(path + "/submit", json={**body, "expectedExplanationRevision": "99"}).status_code == 409
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.get(f"/api/diagnosis/workflows/{task}").status_code == 403
 
 
 def test_approval_cannot_publish_revoked_sources_or_restart_retrieval(explanation_api):
     client, sessions, doc_id, model, task, path, detail, _, adapter = prepare(explanation_api)
     detail = claim(client, path, detail)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1).json()["code"] == 0
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     body = {**final_versions(detail), "decisionCode": "CONFIRM_AI_ASSESSMENT", "reasonCode": "AI_ASSESSMENT_CONFIRMED"}
     assert client.post(path + "/submit", json=body).status_code == 200
     run(sessions, adapter)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = read(client, task)
     assert view["status"] == "COMPLETED_LIMITED" and view["result"] is None
     assert view["explanation"]["publicationStatus"] == "WITHHELD"
@@ -190,13 +215,14 @@ def test_final_wait_survives_app_restart_and_independent_worker_process(workflow
     original = read(client, task_id)
     app = create_app(WebConfig())
     app.dependency_overrides[get_db] = client.app.dependency_overrides[get_db]
-    app.state.java_client = httpx.AsyncClient(base_url="http://java/api/",
-        transport=client.app.state.java_client._transport)
+    # A fresh process starts with an empty session store, so the restarted app
+    # is given the same identities -- not just the same database.
+    install_sessions(app, who=FINAL_IDENTITIES)
     restarted = TestClient(app)
     try:
-        restarted.cookies.set("SESSION", "alice")
+        restarted.cookies.set(SESSION_COOKIE_NAME, "alice")
         assert read(restarted, task_id) == original
-        restarted.cookies.set("SESSION", "doctor")
+        restarted.cookies.set(SESSION_COOKIE_NAME, "doctor")
         task = restarted.get("/api/reviews/tasks").json()["data"][0]
         path = f'/api/reviews/tasks/{task["reviewTaskId"]}'
         detail = claim(restarted, path, restarted.get(path).json()["data"])
@@ -217,13 +243,12 @@ engine.dispose()
             capture_output=True, text=True, timeout=30, cwd=Path(__file__).resolve().parents[2])
         assert result.returncode == 0, result.stderr
         assert restarted.post(path + "/submit", json=body).status_code == 200
-        restarted.cookies.set("SESSION", "alice")
+        restarted.cookies.set(SESSION_COOKIE_NAME, "alice")
         assert read(restarted, task_id)["status"] == "COMPLETED_LIMITED"
         assert read(restarted, task_id)["finalReview"]["decisionCode"] == "CONFIRM_ABSTENTION"
         assert engine.calls == 1
     finally:
         restarted.close()
-        asyncio.run(app.state.java_client.aclose())
 
 
 @pytest.mark.parametrize("field,value", [("revision", 99), ("content", "{}"),
@@ -243,7 +268,7 @@ def test_quality_and_final_reviews_remain_independent_on_same_case(explanation_a
     engine = ControlledEngine(prediction(requires_review=True, quality_reasons="blur"))
     adapter = WorkflowInference(WebConfig(dashscope_api_key="controlled-key"), engine=engine)
     run(sessions, adapter)
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     task = client.get("/api/reviews/tasks").json()["data"][0]
     assert task["reviewType"] == "IMAGE_QUALITY_GATE"
     path = f'/api/reviews/tasks/{task["reviewTaskId"]}'
@@ -258,7 +283,7 @@ def test_quality_and_final_reviews_remain_independent_on_same_case(explanation_a
     assert client.post(path + "/submit", json={**final_versions(detail), "decisionCode": "CORRECT_AI_ASSESSMENT",
         "reasonCode": "AI_ASSESSMENT_CORRECTED"}).status_code == 200
     run(sessions, adapter)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     view = read(client, task_id)
     assert view["qualityReview"]["decisionCode"] == "APPROVE_CONTINUE"
     assert view["finalReview"]["decisionCode"] == "CORRECT_AI_ASSESSMENT"

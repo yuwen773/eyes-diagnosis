@@ -9,6 +9,8 @@ from playwright.sync_api import expect, sync_playwright
 
 from web.tests.test_workflow import picture_bytes
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:15281"
 FRONTEND = "http://127.0.0.1:15282"
 
@@ -23,7 +25,7 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         patient = browser.new_context(viewport={"width": 1360, "height": 1100})
-        patient.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+        patient.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
         page = patient.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
         for mode, title, status, publication in [
@@ -42,7 +44,7 @@ def main():
                 page.get_by_role("button", name="创建分析任务", exact=True).click()
             task = created.value.json()["data"]["workflowId"]
             expect(page.get_by_role("heading", name=title, exact=True)).to_be_visible()
-            current = httpx.get(API + "/api/diagnosis/workflows/" + task, cookies={"SESSION": "alice"}).json()["data"]
+            current = httpx.get(API + "/api/diagnosis/workflows/" + task, cookies={SESSION_COOKIE_NAME: "alice"}).json()["data"]
             assert current["status"] == status and current["explanation"]["publicationStatus"] == publication
             if mode == "published":
                 expect(page.get_by_role("heading", name="模型评估", exact=True)).to_be_visible()

@@ -1,4 +1,4 @@
-"""Local issue06 UI fixture: real HTTP/graph/SQLite, synthetic Java/model/COS."""
+"""Local issue06 UI fixture: real HTTP/graph/SQLite, synthetic sessions/model/COS."""
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

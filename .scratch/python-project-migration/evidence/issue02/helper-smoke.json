@@ -1,0 +1,46 @@
+{
+  "checks": [
+    {
+      "helper": "chat_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "quality_review_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "document_upload_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "controlled_evidence_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "final_clinical_review_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "save_confirmation_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "validated_explanation_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "reconnect_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "tool_writes_ui_server",
+      "status": "PASS"
+    },
+    {
+      "helper": "workflow_binding_ui_server",
+      "status": "PASS"
+    }
+  ],
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\session-helper-f9e9dffeb94e41b0a637a705f41f3d7b",
+  "scope": "startup and anonymous/authenticated Python identity probes; not full historical UI scenarios"
+}

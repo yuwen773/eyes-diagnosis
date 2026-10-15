@@ -19,6 +19,7 @@ from web.app import create_app
 from web.config import WebConfig
 from web.db import Base
 from web.deps import get_db
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 @pytest.fixture
@@ -31,10 +32,6 @@ def chat_api(tmp_path):
     calls = []
     clients = []
 
-    def java(request):
-        identity = {"SESSION=alice": "7", "SESSION=bob": "8"}.get(request.headers.get("cookie"))
-        return httpx.Response(200, json={"code": 0 if identity else 40100,
-            "data": {"id": identity, "userRole": "user", "userAccount": "fixture"} if identity else None})
 
     def model(request):
         body = json.loads(request.content)
@@ -60,10 +57,10 @@ def chat_api(tmp_path):
                 db.commit()
 
         app.dependency_overrides[get_db] = database
-        app.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(java))
+        auth = install_sessions(app, engine)
         app.state.chat_client = httpx.AsyncClient(transport=httpx.MockTransport(transport))
         client = TestClient(app)
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
         clients.append(client)
         return client
 
@@ -77,7 +74,6 @@ def chat_api(tmp_path):
     yield build, calls
     for client in clients:
         client.close()
-        asyncio.run(client.app.state.java_client.aclose())
         asyncio.run(client.app.state.chat_client.aclose())
     engine.dispose()
 
@@ -115,7 +111,7 @@ def test_session_management_and_every_history_operation_enforce_ownership(chat_a
     assert client.put("/api/agent/sessions/owned/pin", json={"pinned": True}).json()["data"] is True
     exported = client.get("/api/agent/history/owned/export?format=json").json()["data"]
     assert json.loads(exported)["title"] == "新标题"
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     for method, url, body in [
         ("GET", "/api/agent/history/owned", None),
         ("GET", "/api/agent/history/owned/export", None),
@@ -130,7 +126,7 @@ def test_session_management_and_every_history_operation_enforce_ownership(chat_a
     assert client.get("/api/agent/sessions").json()["data"] == []
     client.cookies.clear()
     assert chat(client, "anonymous", "问题").json()["code"] == 40100
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert client.delete("/api/agent/sessions/owned").json()["data"] is True
     assert chat(client, "owned", "不能复活已删除会话").json()["code"] == 40101
 
@@ -182,10 +178,10 @@ def test_uploaded_attachment_is_bound_to_owner_and_session_and_survives_reload(c
         files={"file": ("test.png", picture_bytes(), "image/png")}).json()
     assert uploaded["code"] == 0
     url = uploaded["data"]
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert chat(client, "theft", "图片", imageUrls=[url]).json()["code"] == 40101
     assert client.post("/api/agent/image/upload/delete", json={"url": url}).json()["code"] == 40101
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert "event: done" in chat(client, "images", "附件测试", imageUrls=[url]).text
     assert url in json.dumps(calls[-1], ensure_ascii=False)
     assert chat(client, "another", "不能带入另一个会话", imageUrls=[url]).json()["code"] == 40101
@@ -238,7 +234,7 @@ def test_simultaneous_send_cannot_interleave_same_session_history(chat_api):
 
         client = build(delayed)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=client.app),
-                base_url="http://fixture", cookies={"SESSION": "alice"}) as api:
+                base_url="http://fixture", cookies={SESSION_COOKIE_NAME: "alice"}) as api:
             sending = asyncio.create_task(api.post("/api/agent/chat/stream", json={"threadId": "busy", "message": "首轮"}))
             await asyncio.wait_for(entered.wait(), 5)
             second = await api.post("/api/agent/chat/stream", json={"threadId": "busy", "message": "并发轮"})
@@ -288,9 +284,9 @@ def test_batch_delete_is_atomic_and_title_generation_does_not_pollute_memory(cha
     chat(client, "alice", "第一轮")
     assert client.post("/api/agent/sessions/alice/generate-title", json={"firstMessage": "题目"}).json()["data"] is True
     assert len(client.get("/api/agent/history/alice").json()["data"]["messages"]) == 2
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     chat(client, "bob", "第二轮")
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert client.request("DELETE", "/api/agent/sessions/batch", json={"sessionIds": ["alice", "bob"]}).json()["code"] == 40101
     assert client.get("/api/agent/history/alice").json()["code"] == 0
     assert client.request("DELETE", "/api/agent/sessions/batch", json={"sessionIds": ["alice"]}).json()["data"] == 1

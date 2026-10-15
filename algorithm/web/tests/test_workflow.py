@@ -20,6 +20,7 @@ from web.app import create_app
 from web.config import WebConfig
 from web.db import Base
 from web.deps import get_db
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 def picture_bytes():
@@ -40,24 +41,13 @@ def workflow_api(tmp_path):
             yield session
             session.commit()
 
-    def java(request):
-        cookie = request.headers.get("cookie")
-        user_id = {"SESSION=alice": "7", "SESSION=bob": "8"}.get(cookie)
-        return httpx.Response(200, json={
-            "code": 0 if user_id else 40100,
-            "data": {"id": user_id, "userAccount": "test", "userRole": "user"}
-            if user_id else None,
-        })
 
     app.dependency_overrides[get_db] = database
-    app.state.java_client = httpx.AsyncClient(
-        base_url="http://java/api/", transport=httpx.MockTransport(java)
-    )
+    auth = install_sessions(app, engine)
     client = TestClient(app, raise_server_exceptions=True)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     yield client, sessions
     client.close()
-    asyncio.run(app.state.java_client.aclose())
     engine.dispose()
 
 
@@ -77,7 +67,7 @@ def test_upload_is_accepted_once_and_only_readable_by_its_owner(workflow_api):
     status = client.get(f"/api/diagnosis/workflows/{workflow_id}")
     assert status.status_code == 200
     assert status.json()["data"]["result"] is None
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.get(f"/api/diagnosis/workflows/{workflow_id}").status_code == 403
     assert create_upload(client).json()["data"]["workflowId"] != workflow_id
 

@@ -1,17 +1,22 @@
-"""Issue 01: HTTP compatibility with a controlled Java session authority.
+"""HTTP compatibility of the endpoints Python now owns, including the session.
 
-These are ASGI tests with SQLite and an HTTP transport stub, not live Java,
-Redis, COS or model acceptance.
+These are ASGI tests with SQLite and an in-memory Redis, not live Java, Redis,
+COS or model acceptance.
+
+Before ticket 02 this file asserted that a *Java* session cookie authorized a
+Python business query. That guarantee is gone -- Python issues and validates its
+own session -- so the two session-shaped tests here are rewritten around the new
+authority: a Spring cookie grants nothing, and a session revoked on the server
+stops working on the very next request. Everything about the error envelope is
+unchanged.
 """
 
 import sys
-import asyncio
 from pathlib import Path
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -21,61 +26,65 @@ from web.app import create_app
 from web.config import WebConfig
 from web.db import Base
 from web.deps import get_db
+from web.models.user import User
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions
 
 
 @pytest.fixture
 def bridge():
-    authority = {"active": True, "cookies": [], "role": "admin"}
-
-    def java(request):
-        assert request.url.path == "/api/user/get/login"
-        cookie = request.headers.get("cookie", "")
-        authority["cookies"].append(cookie)
-        valid = authority["active"] and cookie in {
-            "SESSION=baseline-session", "JSESSIONID=baseline-session"
-        }
-        return httpx.Response(200, json={
-            "code": 0 if valid else 40100,
-            "msg": "ok" if valid else "未登录",
-            "data": {"id": "7", "userAccount": "baseline", "userRole": authority["role"]}
-            if valid else None,
-        })
-
-    app = create_app(WebConfig())
+    """An app with a seeded ``t_user``, a session store, and a row editor."""
     engine = create_engine("sqlite://", poolclass=StaticPool,
                            connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
+
+    app = create_app(WebConfig())
 
     def database():
         with Session(engine) as session:
             yield session
 
     app.dependency_overrides[get_db] = database
-    app.state.java_client = httpx.AsyncClient(
-        base_url="http://java/api/", transport=httpx.MockTransport(java)
-    )
+    sessions = install_sessions(app, engine)
+
+    def edit_user(user_id: int, **changes):
+        """Change a row behind the app's back, as an operator or a concurrent
+        request would. The session has to notice on the next call."""
+        with Session(engine) as db:
+            db.execute(update(User).where(User.id == user_id).values(**changes))
+            db.commit()
+
     client = TestClient(app, raise_server_exceptions=False)
-    yield client, authority
+    yield client, sessions, edit_user
     client.close()
-    asyncio.run(app.state.java_client.aclose())
     engine.dispose()
 
 
-def test_spring_session_cookie_authorizes_a_business_query(bridge):
-    client, authority = bridge
-    client.cookies.set("SESSION", "baseline-session")
+def test_a_python_session_cookie_authorizes_a_business_query(bridge):
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "admin")
     response = client.post("/api/user/list/page/vo", json={})
     assert response.status_code == 200
     assert response.json()["code"] == 0
-    assert authority["cookies"] == ["SESSION=baseline-session"]
 
 
-def test_java_logout_revokes_the_next_business_request_even_with_old_cookie(bridge):
-    client, authority = bridge
-    client.cookies.set("JSESSIONID", "baseline-session")
+def test_a_spring_cookie_authorizes_nothing(bridge):
+    """The old session authority must not confer login eligibility here."""
+    client, _, _ = bridge
+    for name in ("SESSION", "JSESSIONID"):
+        client.cookies.set(name, "baseline-session")
+        response = client.post("/api/user/list/page/vo", json={})
+        assert response.status_code == 200
+        assert response.json()["code"] == 40100
+
+
+def test_revoking_the_session_stops_the_next_request_even_with_the_old_cookie(bridge):
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "admin")
+    stale = client.cookies.get(SESSION_COOKIE_NAME)
     assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 0
-    # External Java authority invalidates login; replay the old browser cookie.
-    authority["active"] = False
+
+    sessions.store.expire_now(sessions.key(stale))
+
     response = client.post("/api/user/list/page/vo", json={})
     assert response.status_code == 200
     assert response.json()["code"] == 40100
@@ -84,8 +93,8 @@ def test_java_logout_revokes_the_next_business_request_even_with_old_cookie(brid
 def test_missing_weights_reject_sync_diagnosis_without_creating_a_record(bridge):
     from web.inference import InferenceEngine, InferenceUnavailable
 
-    client, _ = bridge
-    client.cookies.set("SESSION", "baseline-session")
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "alice")
     engine = InferenceEngine(WebConfig(model_weights_path=""))
     with pytest.raises(InferenceUnavailable, match="MODEL_WEIGHTS_PATH"):
         engine.load()
@@ -101,25 +110,57 @@ def test_missing_weights_reject_sync_diagnosis_without_creating_a_record(bridge)
 
 
 def test_session_cookie_is_not_shared_between_callers(bridge):
-    client, _ = bridge
-    client.cookies.set("SESSION", "baseline-session")
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "admin")
     assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 0
-    client.cookies.set("SESSION", "another-session")
+    client.cookies.set(SESSION_COOKIE_NAME, "another-session")
     assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 40100
 
 
 def test_regular_user_can_query_history_but_cannot_list_users(bridge):
-    client, authority = bridge
-    authority["role"] = "user"
-    client.cookies.set("SESSION", "baseline-session")
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "alice")
     assert client.post("/api/diagnosis/list/page/my", json={}).json()["code"] == 0
     assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 40101
 
 
+def test_promoting_a_user_takes_effect_on_their_live_session(bridge):
+    """No re-login needed: the row is re-read per request, as in Java."""
+    client, sessions, edit_user = bridge
+    sessions.authenticate(client, "alice")
+    assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 40101
+
+    edit_user(7, user_role="admin")
+
+    assert client.post("/api/user/list/page/vo", json={}).json()["code"] == 0
+    assert client.get("/api/user/get/login").json()["data"]["userRole"] == "admin"
+
+
+def test_deleting_an_account_ends_its_live_session(bridge):
+    client, sessions, edit_user = bridge
+    sessions.authenticate(client, "alice")
+    assert client.post("/api/diagnosis/list/page/my", json={}).json()["code"] == 0
+
+    edit_user(7, is_delete=1)
+
+    assert client.post("/api/diagnosis/list/page/my", json={}).json()["code"] == 40100
+
+
 @pytest.mark.parametrize("role", ["user", "unknown"])
 def test_browser_cannot_override_the_required_admin_role(bridge, role):
-    client, authority = bridge
-    authority["role"] = "user"
-    client.cookies.set("SESSION", "baseline-session")
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "alice")
     response = client.post("/api/user/list/page/vo", params={"must_role": role}, json={})
     assert response.json()["code"] == 40101
+
+
+def test_an_unreachable_session_authority_is_a_server_error_not_a_pass(bridge):
+    """Fails closed. ``40100`` would send the frontend to the login page, and
+    ``0`` would hand out another user's data."""
+    client, sessions, _ = bridge
+    sessions.authenticate(client, "admin")
+    sessions.store.offline = True
+
+    body = client.post("/api/user/list/page/vo", json={}).json()
+    assert body["code"] == 50000
+    assert body["data"] is None

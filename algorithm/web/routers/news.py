@@ -50,7 +50,7 @@ from web.schemas.news import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/news", tags=["news"])
+router = APIRouter(prefix="/news", tags=["newsController"])
 
 #: ``NewsController.java:140`` -- inline images in the article body.
 ATTACHMENT_PREFIX = "news/{user_id}"
@@ -158,7 +158,7 @@ def _query_page(db: Session, query: NewsQueryDTO) -> PageResult[NewsVO]:
 # ---------------------------------------------------------------------------
 # POST /news/list/page/vo -- public
 # ---------------------------------------------------------------------------
-@router.post("/list/page/vo", summary="获取分页新闻列表")
+@router.post("/list/page/vo", summary="获取分页新闻列表", operation_id="listNewsVoByPage", response_model=BaseResponse[PageResult[NewsVO]])
 def list_news_vo(
     body: NewsQueryDTO,
     db: Session = Depends(get_db),
@@ -167,7 +167,7 @@ def list_news_vo(
     return BaseResponse.success(_query_page(db, body))
 
 
-@router.post("/list/page/vo/cache", summary="获取分页新闻列表（缓存版）")
+@router.post("/list/page/vo/cache", summary="获取分页新闻列表（缓存版）", operation_id="listNewsVoByPageWithCache", response_model=BaseResponse[PageResult[NewsVO]])
 async def list_news_vo_cached(
     request: Request,
     body: NewsQueryDTO,
@@ -199,7 +199,7 @@ async def list_news_vo_cached(
 # ---------------------------------------------------------------------------
 # GET /news/get/{id} -- public
 # ---------------------------------------------------------------------------
-@router.get("/get/{id}", summary="获取新闻详情")
+@router.get("/get/{id}", summary="获取新闻详情", operation_id="getNewsVO", response_model=BaseResponse[NewsVO])
 def get_news_vo(
     id: int,
     db: Session = Depends(get_db),
@@ -221,7 +221,7 @@ def get_news_vo(
 # ---------------------------------------------------------------------------
 # POST /news/delete/{id} -- admin
 # ---------------------------------------------------------------------------
-@router.post("/delete/{id}", summary="删除新闻")
+@router.post("/delete/{id}", summary="删除新闻", operation_id="deleteNews", response_model=BaseResponse[bool])
 def delete_news(
     id: int,
     db: Session = Depends(get_db),
@@ -249,7 +249,7 @@ def delete_news(
 # ---------------------------------------------------------------------------
 # POST /news/uploadAttachment -- admin
 # ---------------------------------------------------------------------------
-@router.post("/uploadAttachment", summary="上传新闻图片")
+@router.post("/uploadAttachment", summary="上传新闻图片", operation_id="uploadAttachment", response_model=BaseResponse[str])
 async def upload_attachment(
     file: UploadFile = File(...),
     _admin: LoginUser = Depends(require_admin),
@@ -271,7 +271,7 @@ async def upload_attachment(
 # ---------------------------------------------------------------------------
 # POST /news/edit -- admin
 # ---------------------------------------------------------------------------
-@router.post("/edit", summary="修改新闻")
+@router.post("/edit", summary="修改新闻", operation_id="updateNews", response_model=BaseResponse[bool])
 def update_news(
     body: NewsUpdateDTO,
     db: Session = Depends(get_db),
@@ -328,7 +328,7 @@ def update_news(
 # ---------------------------------------------------------------------------
 # POST /news/uploadCover -- admin
 # ---------------------------------------------------------------------------
-@router.post("/uploadCover", summary="上传新闻图片封面")
+@router.post("/uploadCover", summary="上传新闻图片封面", operation_id="uploadCoverImage", response_model=BaseResponse[str])
 async def upload_cover(
     body: Annotated[NewsUploadDTO, Form()],
     file: UploadFile = File(...),

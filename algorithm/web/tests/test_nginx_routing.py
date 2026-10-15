@@ -30,8 +30,11 @@ NGINX_CONF = REPO_ROOT / "deploy" / "nginx.conf"
 SNIPPET = REPO_ROOT / "deploy" / "snippets" / "eye-proxy-headers.conf"
 CONTROLLER_DIR = REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller"
 
-#: The three paths Java keeps because Spring Session owns them. Python cannot
-#: read the JDK-serialized Redis payload (web/auth.py).
+#: The three paths Python took over in ticket 02. They used to be pinned to
+#: Java with ``=`` locations, because Spring Session's Redis payload is
+#: JDK-serialized and Python could not read it. Python now keeps its own
+#: session namespace, so these ride the ``/api/`` catch-all like every other
+#: migrated path.
 SESSION_PATHS = {"/api/user/login", "/api/user/logout", "/api/user/get/login"}
 
 
@@ -102,15 +105,34 @@ def test_snippet_sets_the_headers_spring_session_needs():
 # ---------------------------------------------------------------------------
 # The routing table itself
 # ---------------------------------------------------------------------------
-def test_session_endpoints_are_exact_matches_to_java(blocks):
-    """``=`` and not a prefix. As a prefix, ``/api/user/logout`` would also
-    capture anything under it, and -- more importantly -- a future
-    ``/api/user/loginSomething`` would silently route to Java."""
-    java = {
-        pattern: body for modifier, pattern, body in blocks
+def test_no_location_pins_a_session_path_to_java(blocks):
+    """The regression guard for ticket 02.
+
+    While Java owned the session these three were ``=`` exact matches above the
+    catch-all, because ``/api/user/loginSomething`` had to keep going to Java's
+    controller. Python owns them now, so any surviving ``location = ...`` block
+    pointing at ``eye_java`` is a leftover: it would shadow the ``/api/``
+    catch-all and hand the login to a backend that is no longer authoritative
+    for it -- the browser would get a ``SESSION`` cookie back while every other
+    endpoint answers from Python's ``EYE_SESSION`` namespace.
+    """
+    to_java = {
+        pattern for modifier, pattern, body in blocks
         if modifier == "=" and _upstream(body) == "eye_java"
     }
-    assert SESSION_PATHS <= set(java), SESSION_PATHS - set(java)
+    assert SESSION_PATHS & to_java == set(), SESSION_PATHS & to_java
+    assert _route("/api/user/login", blocks) == "eye_python"
+
+
+def test_a_stray_user_path_under_a_session_prefix_would_reach_python(blocks):
+    """The other half of why the exact matches were removed.
+
+    With ``location = /api/user/login`` gone, ``/api/user/loginSomething`` is
+    just an unmigrated path that falls through to ``/api/`` -- it 404s from
+    Python instead of silently reaching Java. A shadow rule would have made
+    that invisible.
+    """
+    assert _route("/api/user/loginSomething", blocks) == "eye_python"
 
 
 def test_agent_prefix_routes_to_python(blocks):
@@ -218,11 +240,20 @@ def test_no_python_route_falls_outside_the_routed_prefixes():
     assert unrouted == set(), unrouted
 
 
-def test_no_python_route_shadows_a_session_path():
-    """If Python ever gains one of these, which backend answers depends on
-    Nginx's match rules rather than on the code -- and the Java session would
-    stop being authoritative."""
-    assert _python_paths() & SESSION_PATHS == set()
+def test_python_serves_all_three_session_paths(blocks):
+    """The inverse of the old shadowing test.
+
+    When Java owned the session, a Python route on one of these paths was a bug:
+    which backend answered would depend on Nginx's match rules rather than on
+    the code. Now Python is the owner, so the same path on both sides is the
+    expected state -- but only because ``nginx.conf`` agrees, which is what the
+    routing assertion here checks. Both halves are asserted together on purpose:
+    "Python has the route" and "the route reaches Python" can drift apart, and
+    either drift is a login page that silently stops working.
+    """
+    assert _python_paths() & SESSION_PATHS == SESSION_PATHS
+    for path in SESSION_PATHS:
+        assert _route(path, blocks) == "eye_python", path
 
 
 def test_python_agent_routes_reach_python(blocks):
@@ -236,9 +267,13 @@ def test_every_non_agent_java_route_is_covered_by_its_intended_backend(blocks):
 
     For each Java controller mapping outside ``/api/agent/``, decide from the
     config which backend Nginx would pick, and assert it is the one that is
-    supposed to own it -- Java for the three session paths, Python for
-    everything else. This is what catches "domain migrated but the location
-    still points at Java".
+    supposed to own it. Since ticket 02 that is Python for *all* of them,
+    including the session paths -- Java's own ``UserController`` still declares
+    them, because ticket 08 is what removes Java, so their presence in
+    ``_java_paths()`` is expected and is not evidence they should route there.
+
+    This is what catches "domain migrated but the location still points at
+    Java".
     """
     java = _java_paths()
     assert java, "no Java mappings parsed -- did the parser break?"
@@ -248,9 +283,8 @@ def test_every_non_agent_java_route_is_covered_by_its_intended_backend(blocks):
         if path.startswith("/api/agent/"):
             continue
         target = _route(path, blocks)
-        expected = "eye_java" if path in SESSION_PATHS else "eye_python"
-        if target != expected:
-            misrouted[path] = (target, expected)
+        if target != "eye_python":
+            misrouted[path] = (target, "eye_python")
     assert misrouted == {}, misrouted
 
 
@@ -275,9 +309,9 @@ def _route(path: str, blocks) -> str | None:
 def test_the_route_resolver_agrees_with_nginx_on_the_known_cases(blocks):
     """Guards the helper above. If ``_route`` were wrong, the completeness test
     would pass against a wrong config."""
-    assert _route("/api/user/login", blocks) == "eye_java"
-    assert _route("/api/user/logout", blocks) == "eye_java"
-    assert _route("/api/user/get/login", blocks) == "eye_java"
+    assert _route("/api/user/login", blocks) == "eye_python"
+    assert _route("/api/user/logout", blocks) == "eye_python"
+    assert _route("/api/user/get/login", blocks) == "eye_python"
     assert _route("/api/agent/chat/stream", blocks) == "eye_python"
     assert _route("/api/agent/sessions", blocks) == "eye_python"
     # The prefix match is on "/api/user/" + something, not on "/api/user".
@@ -287,11 +321,17 @@ def test_the_route_resolver_agrees_with_nginx_on_the_known_cases(blocks):
     assert _route("/api/mcp-server", blocks) == "eye_python"
 
 
-def test_the_three_session_paths_are_the_only_java_user_routes(blocks):
-    """``/api/user/diagnosis/reexamine`` is a Python route that lives under the
-    ``/api/user/`` prefix. It must not be confused with the three exact-match
-    session paths above it."""
-    assert _route("/api/user/diagnosis/reexamine", blocks) == "eye_python"
-    assert _route("/api/user/diagnosis/reexamine", blocks) != _route(
-        "/api/user/logout", blocks
-    )
+def test_no_user_path_is_routed_to_java_at_all(blocks):
+    """The three session paths used to be the only Java-routed ``/api/user/*``
+    entries, distinguished by ``=`` exact matches sitting above the catch-all.
+    With those gone, every user path resolves the same way -- which is what
+    makes the next migrated domain safe to add.
+
+    ``/api/user/diagnosis/reexamine`` is here because it is the Python route
+    most easily mistaken for one of the old exact matches: it lives under the
+    same ``/api/user/`` prefix.
+    """
+    user_paths = {p for p in _java_paths() if p.startswith("/api/user/")}
+    assert user_paths, "no /user mappings parsed -- did the parser break?"
+    for path in sorted(user_paths):
+        assert _route(path, blocks) == "eye_python", path

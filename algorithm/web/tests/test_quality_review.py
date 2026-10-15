@@ -18,25 +18,39 @@ from web.workflow.models import InferenceEnvelopeRow
 from web.workflow.worker import Worker
 from web.app import create_app
 from web.deps import get_db
+from web.tests.session_fixtures import (  # noqa: E402
+    SESSION_COOKIE_NAME,
+    Identity,
+    install_sessions,
+)
+
+
+#: Quality-review identities. ``alice`` (id 7) is the workflow owner and is
+#: given the **doctor** role, so ``self-doctor`` -- the same row -- is refused
+#: by ``review.py#authorize`` for owning the case rather than by its role.
+#:
+#: The Java-backed stub could hand the same id two different roles at once;
+#: a real ``t_user`` row cannot, and pretending otherwise would test the stub
+#: rather than the guard. ``bob`` (an ordinary, non-owner user) is what proves
+#: the role check still refuses non-doctors.
+QUALITY_IDENTITIES = {
+    "alice": Identity(7, "alice", "doctor", "Alice"),
+    "self-doctor": Identity(7, "alice", "doctor", "Alice"),
+    "bob": Identity(8, "bob", "user", "Bob"),
+    "doctor": Identity(9, "doctor", "doctor", "Doctor"),
+    "other-doctor": Identity(10, "other-doctor", "doctor", "Other Doctor"),
+    "admin": Identity(11, "admin", "admin", "Admin"),
+}
 
 
 def doctor(client, name="doctor"):
-    client.cookies.set("SESSION", name)
+    client.cookies.set(SESSION_COOKIE_NAME, name)
 
 
 def prepare(workflow_api, result=None):
     client, sessions = workflow_api
+    install_sessions(client.app, who=QUALITY_IDENTITIES)
 
-    def java(request):
-        name = request.headers["cookie"].split("=")[-1]
-        identity = {"alice": (7, "user"), "bob": (8, "user"),
-                    "doctor": (9, "doctor"), "other-doctor": (10, "doctor"),
-                    "self-doctor": (7, "doctor"), "admin": (11, "admin")}.get(name)
-        return httpx.Response(200, json={"code": 0 if identity else 40100, "data": {
-            "id": str(identity[0]), "userAccount": name, "userRole": identity[1],
-        } if identity else None})
-
-    client.app.state.java_client._transport = httpx.MockTransport(java)
     engine = ControlledEngine(result or prediction(quality_reasons="blur", quality_score=40))
     worker = Worker(sessions, inference=WorkflowInference(WebConfig(), engine=engine))
     workflow_id = create_upload(client, question="本次眼底图片").json()["data"]["workflowId"]
@@ -112,7 +126,7 @@ def test_doctor_rejection_requests_reupload_without_vision_or_reinference(workfl
 
 
 @pytest.mark.parametrize("identity,status", [("alice", 403), ("admin", 403), ("self-doctor", 403),
-                                             ("expired", 401)])
+                                             ("bob", 403), ("expired", 401)])
 def test_review_requires_doctor_and_forbids_own_case(workflow_api, identity, status):
     client, _, _, _ = prepare(workflow_api)
     task = client.get("/api/reviews/tasks").json()["data"][0]
@@ -124,8 +138,12 @@ def test_review_requires_doctor_and_forbids_own_case(workflow_api, identity, sta
     assert client.post(path + "/submit", json={**versions(task), "decisionCode": "APPROVE_CONTINUE",
                                               "reasonCode": "QUALITY_APPROVED"}).status_code == status
     listed = client.get("/api/reviews/tasks")
-    assert listed.status_code == (200 if identity == "self-doctor" else status)
-    if identity == "self-doctor":
+    # Listing has no ownership check, so it answers for any doctor -- including
+    # the owner, for whom it returns an empty list because the owner is excluded
+    # from `list_tasks`. Non-doctors still get the same error as before.
+    is_doctor = identity in ("alice", "self-doctor")
+    assert listed.status_code == (200 if is_doctor else status)
+    if is_doctor:
         assert listed.json()["data"] == []
 
 
@@ -209,8 +227,7 @@ def test_waiting_review_survives_new_app_and_separate_worker_process(workflow_ap
     client, sessions, _, workflow_id = prepare(workflow_api)
     app = create_app(WebConfig())
     app.dependency_overrides[get_db] = client.app.dependency_overrides[get_db]
-    app.state.java_client = httpx.AsyncClient(base_url="http://java/api/",
-        transport=client.app.state.java_client._transport)
+    install_sessions(app, who=QUALITY_IDENTITIES)
     restarted = TestClient(app)
     try:
         doctor(restarted)
@@ -247,7 +264,6 @@ engine.dispose()
         assert query(restarted, workflow_id)["status"] == "REJECTED"
     finally:
         restarted.close()
-        asyncio.run(app.state.java_client.aclose())
 
 
 def test_quality_approval_cannot_bypass_original_ood_abstention(workflow_api):

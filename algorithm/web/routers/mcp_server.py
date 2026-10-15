@@ -61,7 +61,7 @@ from web.schemas.mcp_server import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/mcp-server", tags=["mcp-server"])
+router = APIRouter(prefix="/mcp-server", tags=["mcpController"])
 
 #: ``IdGenerator.idStr`` -- ``UUID.randomUUID().toString().replace("-", "")``,
 #: a 32-char lowercase hex string. Reproduced with ``uuid4().hex``.
@@ -142,7 +142,7 @@ def _validate(deploy_config: str | None, name: str | None) -> dict:
 # ---------------------------------------------------------------------------
 # POST /mcp-server
 # ---------------------------------------------------------------------------
-@router.post("", summary="新增 MCP 服务器")
+@router.post("", summary="新增 MCP 服务器", operation_id="createMcpServer")
 def create_mcp_server(
     body: McpServerDetail,
     db: Session = Depends(get_db),
@@ -182,7 +182,7 @@ def create_mcp_server(
 # ---------------------------------------------------------------------------
 # PUT /mcp-server
 # ---------------------------------------------------------------------------
-@router.put("", summary="修改 MCP 服务器")
+@router.put("", summary="修改 MCP 服务器", operation_id="updateMcpServer")
 async def update_mcp_server(
     request: Request,
     body: McpServerDetail,
@@ -234,7 +234,7 @@ async def _invalidate_tool_cache(request, row: McpServer) -> None:
 # ---------------------------------------------------------------------------
 # DELETE /mcp-server/{code}
 # ---------------------------------------------------------------------------
-@router.delete("/{mcpServerCode}", summary="删除 MCP 服务器")
+@router.delete("/{mcpServerCode}", summary="删除 MCP 服务器", operation_id="deleteMcpServer")
 async def delete_mcp_server(
     request: Request,
     mcpServerCode: str,
@@ -263,7 +263,7 @@ async def delete_mcp_server(
 # ---------------------------------------------------------------------------
 # GET /mcp-server/{code}
 # ---------------------------------------------------------------------------
-@router.get("/{mcpServerCode}", summary="获取 MCP 服务器详情")
+@router.get("/{mcpServerCode}", summary="获取 MCP 服务器详情", operation_id="getMcpServer")
 def get_mcp_server(
     mcpServerCode: str,
     needTools: bool = Query(default=False),
@@ -300,7 +300,7 @@ def get_mcp_server(
 # ---------------------------------------------------------------------------
 # GET /mcp-server  -- note: `size`, not `pageSize`
 # ---------------------------------------------------------------------------
-@router.get("", summary="分页查询 MCP 服务器")
+@router.get("", summary="分页查询 MCP 服务器", operation_id="listMcpServers")
 def list_mcp_servers(
     name: str | None = Query(default=None),
     current: int = Query(default=1),

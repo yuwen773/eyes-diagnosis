@@ -1,0 +1,30 @@
+{
+  "timestampUtc": "2026-10-15T13:23:58.638292+00:00",
+  "status": "PASS",
+  "infrastructure": "PASS",
+  "browser": "PASS",
+  "javaStarted": false,
+  "realModel": "NOT_RUN",
+  "clinical": "NOT_RUN",
+  "checks": [
+    "anonymous-and-spring-cookies-denied-http-and-sse",
+    "bcrypt-login-rotation-cookie-and-independent-redis-namespace",
+    "legacy-md5-password-upgraded-over-tcp",
+    "original-stable-long-ids-history-news-and-second-user-isolation",
+    "logout-and-cookie-replay-denied",
+    "logical-delete-and-role-change-revalidated-each-request",
+    "real-redis-ttl-expiry-denied-http-and-sse",
+    "original-vue-login-history-logout-and-expiry-guidance",
+    "stopped-redis-fails-closed-on-login-http-and-sse"
+  ],
+  "schema": "eye_session_issue02_683031917ead4901b5d71174f7220fb1",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_session_issue02_683031917ead4901b5d71174f7220fb1",
+  "mysqlVersion": "8.0.26",
+  "migration": {
+    "differences": [],
+    "pythonVersion": 1,
+    "sourceVersion": "empty",
+    "status": "APPLIED"
+  },
+  "redisVersion": "3.2.100"
+}

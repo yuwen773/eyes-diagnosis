@@ -7,6 +7,8 @@ from pathlib import Path
 import httpx
 from playwright.sync_api import expect, sync_playwright
 
+SESSION_COOKIE_NAME = "EYE_SESSION"
+
 API = "http://127.0.0.1:15285"
 FRONTEND = "http://127.0.0.1:15286"
 
@@ -17,10 +19,10 @@ def main():
     output = parser.parse_args().output_dir
     output.mkdir(parents=True, exist_ok=True)
     errors, checks = [], []
-    with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={"SESSION": "alice"}) as api:
+    with sync_playwright() as playwright, httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "alice"}) as api:
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context(viewport={"width": 1360, "height": 1000})
-        context.add_cookies([{"name": "SESSION", "value": "alice", "url": API}])
+        context.add_cookies([{"name": SESSION_COOKIE_NAME, "value": "alice", "url": API}])
         page = context.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(FRONTEND + "/agent")
@@ -68,7 +70,7 @@ def main():
         body = {"idempotencyKey": row["idempotencyKey"], "expectedContentDigest": row["contentDigest"]}
         receipt = api.post(f'/api/agent/tool-confirmations/{row["confirmationId"]}/approve', json=body).json()
         assert receipt["data"]["status"] == "APPROVED"
-        with httpx.Client(base_url=API, cookies={"SESSION": "bob"}) as other:
+        with httpx.Client(base_url=API, cookies={SESSION_COOKIE_NAME: "bob"}) as other:
             assert other.post(f'/api/agent/tool-confirmations/{row["confirmationId"]}/approve', json=body).json().get("code", -1) != 0
         checks.extend(["approve-profile-effect", "replay-receipt", "cross-user-denied"])
         page.reload()

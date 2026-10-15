@@ -21,6 +21,19 @@ class UserRegisterDTO(BaseModel):
     checkPassword: str
 
 
+class UserLoginDTO(BaseModel):
+    """``model/dto/user/UserLoginDTO.java``.
+
+    ``extra="ignore"`` so a login body that happens to carry extra keys still
+    authenticates, matching Java's bean binding.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    userAccount: str | None = None
+    userPassword: str | None = None
+
+
 class UserAddDTO(BaseModel):
     """``UserAddDTO.java`` -- admin-created user.
 

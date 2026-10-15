@@ -14,6 +14,7 @@ from web.tests.test_workflow_inference import ControlledEngine, prediction
 from web.workflow.inference import WorkflowInference
 from web.workflow.worker import Worker
 from web.workflow.models import Job, ReviewTask, UploadInput, Workflow
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 REFERENCE = "青光眼是一类可能影响视神经的眼病，需要眼科检查评估。"
 
@@ -22,9 +23,9 @@ REFERENCE = "青光眼是一类可能影响视神经的眼病，需要眼科检�
 def explanation_api(evidence_api):
     client, sessions, *_ = evidence_api
     doc_id = upload(client, text=REFERENCE)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     model = {"reply": {"claims": [{"claimId": "general-1", "type": "GENERAL_DISEASE_INFORMATION",
         "text": REFERENCE, "citationIds": [f"doc_{doc_id}_chunk_0"]}]}, "requests": []}
 
@@ -85,7 +86,7 @@ def test_upload_publishes_only_validated_traceable_explanation(explanation_api):
     assert "忽略规则" not in str(model["requests"])
     assert "tools" not in model["requests"][0]
     assert client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"] == "0"
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.get(f"/api/diagnosis/workflows/{task}").status_code == 403
 
 
@@ -145,9 +146,9 @@ def test_revoked_source_withholds_validated_snapshot_before_publication(explanat
             break
     else:
         pytest.fail("validated explanation was never persisted")
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     drain(sessions)
     view = read(client, task)
     assert (view["status"], view["stopReasonCode"]) == ("COMPLETED_LIMITED", "EXPLANATION_SOURCE_CHANGED")
@@ -160,26 +161,26 @@ def test_post_publication_revocation_is_persistently_withheld(explanation_api):
     task = start(client)
     drain(sessions)
     assert read(client, task)["status"] == "COMPLETED"
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     hidden = read(client, task)
     assert hidden["explanation"]["publicationStatus"] == "WITHHELD"
     assert hidden["status"] == "COMPLETED_LIMITED"
     assert hidden["result"] is None
     # Re-approving a document cannot resurrect a withheld revision.
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, expectedVersion=2).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert read(client, task)["result"] is None
     assert read(client, task)["explanation"]["publicationStatus"] == "WITHHELD"
 
 
 def test_insufficient_sources_never_invoke_explanation_model(explanation_api):
     client, sessions, doc_id, model = explanation_api
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, doc_id, visibility="QUARANTINED", expectedVersion=1).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     task = start(client)
     drain(sessions)
     view = read(client, task)
@@ -222,10 +223,10 @@ def test_malformed_drafts_are_rejected_not_relabelled_as_validated(explanation_a
 def test_even_exact_source_excerpts_cannot_authorize_prohibited_claims(explanation_api, text):
     client, sessions, original, model = explanation_api
     doc_id = upload(client, "unsafe-source.txt", text=text)
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert govern(client, original, visibility="QUARANTINED", expectedVersion=1).json()["code"] == 0
     assert govern(client, doc_id).json()["code"] == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     model["reply"]["claims"][0].update(text=text, citationIds=[f"doc_{doc_id}_chunk_0"])
     task = start(client)
     drain(sessions)
@@ -253,9 +254,9 @@ def test_source_changed_after_graph_decision_is_caught_by_commit_fence(explanati
             fired.append(True)
             # External governance HTTP commits after the graph read ends and
             # before the worker's atomic checkpoint/publication transaction.
-            client.cookies.set("SESSION", "admin")
+            client.cookies.set(SESSION_COOKIE_NAME, "admin")
             assert govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1).json()["code"] == 0
-            client.cookies.set("SESSION", "alice")
+            client.cookies.set(SESSION_COOKIE_NAME, "alice")
 
     event.listen(sessions.class_, "do_orm_execute", mark_source_read)
     event.listen(sessions.class_, "after_transaction_end", revoke_after_read)

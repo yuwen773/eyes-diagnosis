@@ -1,0 +1,43 @@
+{
+  "status": "PASS_WITH_EXISTING_LIMITATIONS",
+  "ticket": "02-python-session-auth",
+  "baselineCommit": "eb766deb9056cdb17023395cd6eda26926e7ff7e",
+  "web": {
+    "passed": 778,
+    "skipped": 28,
+    "warnings": 1,
+    "log": "web-tests-final.log"
+  },
+  "frontend": {
+    "build": "PASS",
+    "testFiles": 12,
+    "tests": 47,
+    "openapiRegeneration": "PASS - identical SHA-256"
+  },
+  "infrastructure": {
+    "status": "PASS",
+    "mysql": "8.0.26",
+    "redis": "3.2.100",
+    "javaStarted": false,
+    "browser": "PASS",
+    "networkMocks": false
+  },
+  "helperStartupIdentityProbes": 10,
+  "mypy": {
+    "coreModules": 7,
+    "core": "PASS",
+    "existingRouterErrors": 10,
+    "baselineConfirmed": true
+  },
+  "review": {
+    "Standards": "CLOSED - no remaining actionable finding",
+    "Spec": "CLOSED - no remaining actionable finding"
+  },
+  "javaSourceAndPom": "UNCHANGED",
+  "productionCutover": "NOT_RUN",
+  "businessDatabaseUpgrade": "NOT_RUN",
+  "realModel": "NOT_RUN",
+  "clinical": "NOT_RUN",
+  "Linux": "NOT_RUN",
+  "historicalFullRehearsals": "NOT_RUN - scripts updated, compile checked; helper probes separate"
+}

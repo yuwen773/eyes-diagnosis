@@ -188,7 +188,7 @@ def execute(args, target, report):
         MYSQL_USER=target.username or "", MYSQL_PASSWORD=target.password or "", REDIS_HOST="127.0.0.1", REDIS_PORT=str(redis_port),
         REDIS_DB="8", REDIS_PASSWORD="", CHROMA_HOST="http://127.0.0.1", CHROMA_PORT=str(chroma_port),
         CHROMA_COLLECTION="diagnosis-knowledge", CHROMA_TENANT="default_tenant", CHROMA_DATABASE="default_database",
-        JAVA_BASE_URL=f"http://127.0.0.1:{java_port}/api", DASHSCOPE_BASE_URL=f"http://127.0.0.1:{provider_port}/v1",
+        DASHSCOPE_BASE_URL=f"http://127.0.0.1:{provider_port}/v1",
         REAL_SERVICES_TRACE=str(runtime / "calls.jsonl"), REAL_SERVICES_OBJECTS=str(runtime / "objects"),
         REAL_SERVICES_EMBEDDING="real" if real_embedding else "controlled", MODEL_WEIGHTS_PATH="", MODEL_WEIGHTS_SHA256="",
         EMBEDDING_MODEL="text-embedding-v3", COS_HOST="https://issue19.invalid", MCP_ALLOWED_ORIGINS="",
@@ -263,35 +263,45 @@ def execute(args, target, report):
             clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{front_port}", timeout=60))
                        for account in ("alice", "bob", "doctor", "admin")}
             for account, client in clients.items():
-                login_url = "/api/user/login" if proxy else f"http://127.0.0.1:{java_port}/api/user/login"
+                login_url = f"http://127.0.0.1:{api_port}/api/user/login"
                 envelope(client.post(login_url, json={"userAccount": "issue19_" + account, "userPassword": password}))
-                assert "SESSION" in client.cookies or "JSESSIONID" in client.cookies
-            assert redis_client.keys("spring:session:sessions:*")
+                assert "EYE_SESSION" in client.cookies
+            assert redis_client.keys("eye:py:session:*")
+            assert not redis_client.keys("spring:session:sessions:*")
+            report["checks"].append("python-session-namespace-without-spring-session-writes")
+            # Java remains a separate historical compatibility oracle. Its
+            # cookies never supply identity to the Python application.
+            legacy = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{java_port}", timeout=60))
+                      for account in clients}
+            for account, client in legacy.items():
+                envelope(client.post("/api/user/login", json={"userAccount": "issue19_" + account, "userPassword": password}))
             if proxy:
                 proxy.switch("python", "java", "pause")
                 envelope(clients["alice"].get("/api/user/get/login"))
                 envelope(clients["alice"].post("/api/news/list/page/vo", json={}))
                 proxy.switch("python", "python", "active")
-            verify_http(clients, java_port, engine, collection, worker, report, proxy=proxy)
+            verify_http(clients, java_port, engine, collection, worker, report, proxy=proxy, legacy_clients=legacy)
             if proxy:
                 proxy.verify_agent_rollback(clients["alice"], report)
                 from web.cutover_browser import verify_browser
 
                 verify_browser(proxy, password, runtime, worker, report)
                 report["gates"]["cutover"] = gate("PASS", "Isolated real Nginx/MySQL/Java/API/Worker; controlled models; pending save/reviews preserved; browser exercised")
-            # Revoke a real Redis-backed Java session and replay the old cookie.
+            # Revoke the Python Redis session and replay the old cookie.
             alice = clients["alice"]
             old_cookies = dict(alice.cookies)
-            envelope(alice.post("/api/user/logout" if proxy else f"http://127.0.0.1:{java_port}/api/user/logout"))
+            envelope(alice.post("/api/user/logout"))
             alice.cookies.update(old_cookies)
-            envelope(alice.get(f"http://127.0.0.1:{java_port}/api/user/get/login"), code=40100)
+            envelope(alice.get("/api/user/get/login"), code=40100)
             envelope(alice.post("/api/diagnosis/list/page/my", json={}), code=40100)
             assert alice.get("/api/diagnosis/workflows/unknown/events").status_code == 401
-            report["checks"].append("java-logout-old-cookie-revoked-in-python-and-sse")
+            report["checks"].append("python-logout-old-cookie-revoked-in-python-and-sse")
             for account, client in clients.items():
                 if account == "alice":
                     continue  # Already revoked; old-cookie replay is intentional.
-                envelope(client.post(f"http://127.0.0.1:{java_port}/api/user/logout"))
+                envelope(client.post("/api/user/logout"))
+            for client in legacy.values():
+                envelope(client.post("/api/user/logout"))
         assert java_child.poll() is None
         calls = [json.loads(line) for line in (runtime / "calls.jsonl").read_text().splitlines()]
         report["adapterCalls"] = {kind: sum(c["kind"] == kind for c in calls) for kind in sorted({c["kind"] for c in calls})}
@@ -363,7 +373,7 @@ def envelope(response, *, code=0, status=200):
     return body["data"]
 
 
-def verify_http(clients, java_port, engine, collection, worker, report, *, proxy=None):
+def verify_http(clients, java_port, engine, collection, worker, report, *, proxy=None, legacy_clients):
     import io
     from docx import Document
     from PIL import Image
@@ -381,7 +391,7 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     assert all(isinstance(users[k], str) for k in ("total", "size", "current", "pages"))
     assert "userPassword" not in json.dumps(users)
     assert envelope(admin.get("/api/user/get", params={"id": "9007199254740993"}))["id"] == "9007199254740993"
-    check("real-java-auth-and-user-role-long-pagination-contracts")
+    check("real-python-auth-and-user-role-long-pagination-contracts")
     for endpoint in ("list/page/vo", "list/page/vo/cache", "list/page/my"):
         assert envelope(alice.post("/api/diagnosis/" + endpoint, json={"userId": "9007199254740994"}))["total"] == "0"
     envelope(alice.post("/api/diagnosis/diagnosis", files={"file": ("x.png", b"invalid", "image/png")}), code=50000)
@@ -392,11 +402,11 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         page = envelope(alice.post("/api/news/" + endpoint, json={"pageSize": 3}))
         assert page["records"][0]["id"] == news_id and page["total"] == "1"
     py_news = envelope(alice.get("/api/news/get/" + news_id))
-    java_news = envelope(alice.get(java_url + "/news/get/" + news_id))
+    java_news = envelope(legacy_clients["alice"].get(java_url + "/news/get/" + news_id))
     assert py_news == java_news
     body = {"id": news_id, "title": "Issue19", "content": "Synthetic news for compatibility regression only.", "status": 1}
     py_noop = admin.post("/api/news/edit", json=body)
-    java_noop = admin.post(java_url + "/news/edit", json=body)
+    java_noop = legacy_clients["admin"].post(java_url + "/news/edit", json=body)
     assert py_noop.status_code == java_noop.status_code == 200
     assert py_noop.json()["code"] == java_noop.json()["code"]
     with engine.begin() as db:
@@ -440,7 +450,7 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     vectors = collection.get(ids=[f'doc_{public["id"]}_chunk_0', f'doc_{legacy["id"]}_chunk_0'], include=["documents", "metadatas"])
     assert len(vectors["ids"]) == 2 and reference in vectors["documents"]
     assert all(type(m["ownerUserId"]) is int for m in vectors["metadatas"])
-    java_result = alice.get(java_url + "/issue19/search", params={"query": reference})
+    java_result = legacy_clients["alice"].get(java_url + "/issue19/search", params={"query": reference})
     assert java_result.status_code == 200
     if reference in java_result.text:
         assert "Bob private sentinel" not in java_result.text
@@ -452,7 +462,7 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         assert 'NumberFormatException: For input string: "9007199254740993"' in log.read_text(encoding="utf-8", errors="replace")
         report["gates"]["legacyJavaReader"] = gate("BLOCKED",
             "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved")
-    bob_result = bob.get(java_url + "/issue19/search", params={"query": "Bob private sentinel glaucoma reference."})
+    bob_result = legacy_clients["bob"].get(java_url + "/issue19/search", params={"query": "Bob private sentinel glaucoma reference."})
     assert bob_result.status_code == 200 and "Bob private sentinel" in bob_result.text
     assert reference not in bob_result.text
     check("doc-and-table-docx-http-indexing-real-chroma-private-scope-and-legacy-java-reader")
@@ -516,7 +526,7 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     assert approved["status"] == "APPROVED"
     assert envelope(alice.post(approve_url, json=decision)) == approved
     history = envelope(alice.post("/api/diagnosis/list/page/my", json={"pageSize": 3}))
-    java_history = envelope(alice.post(java_url + "/diagnosis/list/page/my", json={"pageSize": 3}))
+    java_history = envelope(legacy_clients["alice"].post(java_url + "/diagnosis/list/page/my", json={"pageSize": 3}))
     assert history["total"] == java_history["total"] == "1"
     for key in ("id", "createTime"):
         assert history["records"][0][key] == java_history["records"][0][key]

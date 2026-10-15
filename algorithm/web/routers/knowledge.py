@@ -67,7 +67,7 @@ from web.schemas.knowledge import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+router = APIRouter(prefix="/knowledge", tags=["knowledgeController"])
 
 #: ``KnowledgeBaseServiceImpl:101`` -- raised when the whole batch fails.
 ALL_FILES_FAILED_PREFIX = "全部文件上传失败: "
@@ -85,14 +85,14 @@ require_user = partial(require_role, DEFAULT_ROLE)
 require_admin = partial(require_role, ADMIN_ROLE)
 
 
-@router.get("/admin/catalog", summary="参考资料受控编码目录")
+@router.get("/admin/catalog", summary="参考资料受控编码目录", operation_id="getEvidenceCatalog")
 def evidence_catalog(user: LoginUser = Depends(require_admin)):
     from web.evidence import DISEASE_TERMS, TOPIC_TERMS
 
     return BaseResponse.success({"diseaseCodes": DISEASE_TERMS, "topicCodes": TOPIC_TERMS})
 
 
-@router.post("/admin/documents", summary="管理员查询参考资料")
+@router.post("/admin/documents", summary="管理员查询参考资料", operation_id="listReferenceDocuments")
 def admin_documents(body: KnowledgePageQuery, db: Session = Depends(get_db),
                     user: LoginUser = Depends(require_admin)):
     query = select(KnowledgeDocument).where(KnowledgeDocument.is_delete == 0)
@@ -104,7 +104,7 @@ def admin_documents(body: KnowledgePageQuery, db: Session = Depends(get_db),
     ], total or 0, body.pageSize, body.current))
 
 
-@router.post("/search", summary="只检索本人授权资料，独立于正式诊断证据")
+@router.post("/search", summary="只检索本人授权资料，独立于正式诊断证据", operation_id="searchPrivateDocuments")
 def search_private_documents(body: PrivateSearchRequest, db: Session = Depends(get_db),
                              user: LoginUser = Depends(require_user)):
     from web.evidence import private_search
@@ -116,7 +116,7 @@ def search_private_documents(body: PrivateSearchRequest, db: Session = Depends(g
         raise BizError(ErrorCode.OPERATION_ERROR, "私人资料检索暂不可用") from exc
 
 
-@router.patch("/admin/documents/{document_id}", summary="确认参考资料审核与受控元数据")
+@router.patch("/admin/documents/{document_id}", summary="确认参考资料审核与受控元数据", operation_id="updateKnowledgeGovernance")
 def govern_document(document_id: int, body: GovernanceUpdate, db: Session = Depends(get_db),
                     user: LoginUser = Depends(require_admin)):
     document = db.scalar(select(KnowledgeDocument).where(
@@ -142,7 +142,7 @@ def govern_document(document_id: int, body: GovernanceUpdate, db: Session = Depe
 # ---------------------------------------------------------------------------
 # POST /knowledge/upload
 # ---------------------------------------------------------------------------
-@router.post("/upload", summary="上传知识库文档")
+@router.post("/upload", summary="上传知识库文档", operation_id="uploadDocument")
 async def upload_documents(
     background_tasks: BackgroundTasks,
     files: Annotated[list[UploadFile], File(...)],
@@ -390,7 +390,7 @@ def _mark(doc_id: int, status: int, chunk_count: int | None = None) -> None:
 # ---------------------------------------------------------------------------
 # POST /knowledge/list/page
 # ---------------------------------------------------------------------------
-@router.post("/list/page", summary="分页查询我的知识库文档")
+@router.post("/list/page", summary="分页查询我的知识库文档", operation_id="listKnowledgePage")
 def list_documents(
     body: KnowledgePageQuery,
     db: Session = Depends(get_db),
@@ -426,7 +426,7 @@ def list_documents(
 # ---------------------------------------------------------------------------
 # DELETE /knowledge/delete
 # ---------------------------------------------------------------------------
-@router.delete("/delete", summary="删除知识库文档")
+@router.delete("/delete", summary="删除知识库文档", operation_id="deleteKnowledge")
 def delete_document(
     body: DeleteRequest,
     db: Session = Depends(get_db),

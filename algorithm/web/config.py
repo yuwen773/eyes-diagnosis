@@ -11,6 +11,7 @@ each field so the two stacks stay diffable.
 """
 
 import os
+from typing import Literal, cast
 from urllib.parse import quote_plus
 
 # Port allocation (see docs/migration-decisions.md):
@@ -44,22 +45,50 @@ class WebConfig:
         self,
         host: str = "127.0.0.1",
         port: int = DEFAULT_WEB_PORT,
-        # Java backend -- the authority for session/login. Python forwards
-        # JSESSIONID to it rather than parsing Spring Session's Redis payload
-        # (JdkSerializationRedisSerializer -- unparseable from Python).
-        java_base_url: str = "http://127.0.0.1:8082/api",
-        # MySQL -- shared with Java. camelCase column names are preserved
-        # because the project sets map-underscore-to-camel-case: false.
+        # MySQL -- camelCase column names are preserved because the project
+        # sets map-underscore-to-camel-case: false.
         mysql_host: str = "127.0.0.1",
         mysql_port: int = 3306,
         mysql_database: str = "diagnosis",
         mysql_user: str = "eyeuser",
         mysql_password: str = "",
-        # Redis -- list-page caches. Login identity is revalidated with Java.
+        # Redis -- list-page caches **and** the session store.
         redis_host: str = "127.0.0.1",
         redis_port: int = 6379,
         redis_db: int = 8,
         redis_password: str | None = None,
+        # --- Sessions (ticket 02) -----------------------------------------
+        #
+        # Python owns login state from here; there is no Java session authority
+        # left to forward to. Defaults reproduce what the browser actually saw
+        # under Spring, so switching ownership is not a user-visible change:
+        #
+        #   cookie name    Spring's was "SESSION" (or "JSESSIONID" where the
+        #                  servlet name was configured). A *different* name is
+        #                  the point: a browser still holding a Java cookie
+        #                  presents a name this service never reads and is
+        #                  therefore anonymous, which is the required
+        #                  "old cookies confer no login eligibility".
+        #   max_age        application.yml:6-8 sets 2592000 (30 days).
+        #   ttl            Spring Session's own default, because the project
+        #                  never sets `spring.session.timeout` -- so sessions
+        #                  really did expire server-side after 30 minutes
+        #                  behind that 30-day cookie. Both are kept, so a
+        #                  session still ends when it used to.
+        session_cookie_name: str = "EYE_SESSION",
+        session_cookie_max_age: int = 2592000,
+        session_ttl_seconds: int = 1800,
+        session_redis_prefix: str = "eye:py:session:",
+        #: Servlet containers mark the session cookie HttpOnly by default and
+        #: send no SameSite attribute; browsers then apply SameSite=Lax.
+        #: Both are stated explicitly here so nothing depends on a framework
+        #: default that a dependency upgrade could change underneath us.
+        session_cookie_httponly: bool = True,
+        session_cookie_samesite: str = "lax",
+        #: False for local http development. A deployment served over HTTPS
+        #: must set SESSION_COOKIE_SECURE=true, or the cookie crosses the
+        #: network in the clear and the browser may drop it on http.
+        session_cookie_secure: bool = False,
         cors_allowed_origins: list[str] | None = None,
         # Remaining CORS knobs are fixed by CorsConfig.java:28-32, not
         # configurable there either -- same defaults apply here.
@@ -146,7 +175,6 @@ class WebConfig:
         if not isinstance(port, int) or port < 1 or port > 65535:
             raise ValueError(f"port must be an integer between 1 and 65535, got {port!r}")
         self.port = port
-        self.java_base_url = java_base_url.rstrip("/")
         self.mysql_host = mysql_host
         self.mysql_port = mysql_port
         self.mysql_database = mysql_database
@@ -156,6 +184,36 @@ class WebConfig:
         self.redis_port = redis_port
         self.redis_db = redis_db
         self.redis_password = redis_password
+        if not session_cookie_name.strip():
+            raise ValueError("session_cookie_name must not be blank")
+        self.session_cookie_name = session_cookie_name.strip()
+        if session_cookie_max_age < 0:
+            raise ValueError(
+                f"session_cookie_max_age must not be negative, got {session_cookie_max_age!r}"
+            )
+        self.session_cookie_max_age = session_cookie_max_age
+        if session_ttl_seconds < 1:
+            raise ValueError(
+                f"session_ttl_seconds must be positive, got {session_ttl_seconds!r}"
+            )
+        self.session_ttl_seconds = session_ttl_seconds
+        if not session_redis_prefix.strip():
+            raise ValueError("session_redis_prefix must not be blank")
+        self.session_redis_prefix = session_redis_prefix
+        self.session_cookie_httponly = session_cookie_httponly
+        samesite = session_cookie_samesite.strip().lower()
+        if samesite not in {"lax", "strict", "none"}:
+            raise ValueError(
+                "session_cookie_samesite must be one of lax/strict/none, "
+                f"got {session_cookie_samesite!r}"
+            )
+        # SameSite=None is meaningless without Secure, and browsers reject the
+        # pair outright -- so reject it at startup rather than shipping a
+        # session cookie the browser silently refuses to store.
+        if samesite == "none" and not session_cookie_secure:
+            raise ValueError("session_cookie_samesite=none requires session_cookie_secure=true")
+        self.session_cookie_samesite = cast(Literal["lax", "strict", "none"], samesite)
+        self.session_cookie_secure = session_cookie_secure
         self.cors_allowed_origins = cors_allowed_origins or []
         if "*" in self.cors_allowed_origins:
             raise ValueError(
@@ -225,9 +283,11 @@ class WebConfig:
         # Secrets are redacted so this is safe to log at startup.
         return (
             f"WebConfig(host={self.host!r}, port={self.port}, "
-            f"java_base_url={self.java_base_url!r}, "
             f"mysql={self.mysql_host}:{self.mysql_port}/{self.mysql_database}, "
             f"redis={self.redis_host}:{self.redis_port}/{self.redis_db}, "
+            f"session_cookie={self.session_cookie_name!r}, "
+            f"session_ttl_seconds={self.session_ttl_seconds}, "
+            f"session_cookie_secure={self.session_cookie_secure}, "
             f"cors_allowed_origins={self.cors_allowed_origins!r}, "
             f"cors_max_age={self.cors_max_age}, "
             f"chroma_collection={self.chroma_collection!r}, "
@@ -243,7 +303,6 @@ class WebConfig:
         return cls(
             host=os.getenv("WEB_HOST", "127.0.0.1"),
             port=int(os.getenv("WEB_PORT", str(DEFAULT_WEB_PORT))),
-            java_base_url=os.getenv("JAVA_BASE_URL", "http://127.0.0.1:8082/api"),
             mysql_host=os.getenv("MYSQL_HOST", "127.0.0.1"),
             mysql_port=int(os.getenv("MYSQL_PORT", "3306")),
             mysql_database=os.getenv("MYSQL_DATABASE", "diagnosis"),
@@ -253,6 +312,15 @@ class WebConfig:
             redis_port=int(os.getenv("REDIS_PORT", "6379")),
             redis_db=int(os.getenv("REDIS_DB", "8")),
             redis_password=os.getenv("REDIS_PASSWORD") or None,
+            session_cookie_name=os.getenv("SESSION_COOKIE_NAME", "EYE_SESSION"),
+            session_cookie_max_age=int(os.getenv("SESSION_COOKIE_MAX_AGE", "2592000")),
+            session_ttl_seconds=int(os.getenv("SESSION_TTL_SECONDS", "1800")),
+            session_redis_prefix=os.getenv("SESSION_REDIS_PREFIX", "eye:py:session:"),
+            session_cookie_httponly=os.getenv("SESSION_COOKIE_HTTPONLY", "true").lower()
+            not in ("0", "false", "no", "off"),
+            session_cookie_samesite=os.getenv("SESSION_COOKIE_SAMESITE", "lax"),
+            session_cookie_secure=os.getenv("SESSION_COOKIE_SECURE", "false").lower()
+            in ("1", "true", "yes", "on"),
             cors_allowed_origins=_split_origins(os.getenv("CORS_ALLOWED_ORIGINS", "")),
             chroma_host=os.getenv("CHROMA_HOST", "http://127.0.0.1"),
             chroma_port=int(os.getenv("CHROMA_PORT", "8000")),

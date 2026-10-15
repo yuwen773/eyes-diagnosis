@@ -6,10 +6,10 @@ from typing import Literal
 
 import pytest
 import uvicorn
-from fastapi import Request
 
 from web.tests.test_controlled_evidence import evidence_api, govern
 from web.tests.test_validated_explanation import drain, explanation_api
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 
 def main():
@@ -22,12 +22,6 @@ def main():
     valid_reply = copy.deepcopy(model["reply"])
     app = client.app
     app.state.mode = "published"
-
-    @app.get("/api/user/get/login")
-    async def session_probe(request: Request):
-        response = await app.state.java_client.get("/user/get/login",
-            headers={"Cookie": request.headers.get("cookie", "")})
-        return response.json()
 
     @app.post("/__fixture/mode/{mode}")
     def set_mode(mode: Literal["published", "insufficient", "rejected", "clinical"]):
@@ -42,9 +36,9 @@ def main():
 
     @app.post("/__fixture/withdraw")
     def withdraw():
-        client.cookies.set("SESSION", "admin")
+        client.cookies.set(SESSION_COOKIE_NAME, "admin")
         response = govern(client, doc_id, reviewStatus="WITHDRAWN", expectedVersion=1)
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
         return response.json()
 
     async def fixture_app(scope, receive, send):

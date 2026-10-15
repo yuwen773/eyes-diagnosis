@@ -1,3 +1,5 @@
+> 当前登录态：完整迁移工单 02 使用 Python/Redis 独立会话，匿名业务错误仍为 HTTP 200/code 40100；工作流保持 HTTP 401/403/500。旧 Spring Cookie 不复用。
+
 # Phase 0 裁定记录
 
 > 2026-10-12 issue 01 更新：会话必须逐请求向 Java 验证，取消 Python 正身份缓存；默认转发 Spring Session 的 `SESSION`，兼容部署中的 `JSESSIONID`。前门 Nginx 8081、Java 8082、Python 8080。FastAPI 角色通过位置参数固定绑定，不能暴露为 `must_role` query 参数。详见 `docs/fastapi-baseline.md`；本文下方早期 TTL/端口描述仅保留为历史裁定。
@@ -71,6 +73,8 @@ simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
 ---
 
 ## 裁定 4：`session.store-type: redis` + 登录态权威在 Java
+
+> 已于完整 Python 项目迁移工单 02 取代。下方原裁定保留历史身份；当前 Python 自建独立 Redis 登录态，见 [Python 登录鉴权](python-session-auth-evidence.md)。
 
 **证据**：`application-server.example.yml:12-14` 与 `application-dev.yml:12-14` 均设 `store-type: redis`。
 项目从未配置 `RedisSerializer`（`git log --all -S"RedisSerializer"` 无任何提交），Spring Session 3.5 默认 `JdkSerializationRedisSerializer`。
@@ -179,7 +183,7 @@ simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
 
 ---
 
-## Phase 2.1 交付状态（user 领域）
+## Phase 2.1 历史交付状态（user 领域；会话归属已于工单 02 取代）
 
 `UserController.java` 的 **14 个端点已全部裁定归属**：3 个留 Java（`login` / `logout` / `get/login`），11 个由 Python 承接。
 
@@ -194,13 +198,13 @@ simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
 
 `src/` 与 `pom.xml` 零改动，这是"不污染原代码环境"的机器可验证判据。
 
-### 端点归属表
+### 当前端点归属表（完整迁移工单 02 后）
 
 | 端点 | 归属 | 契约要点 |
 |---|---|---|
-| `POST /user/login` | **Java** | 权威，Nginx `=` 精确匹配 |
-| `POST /user/logout` | **Java** | 权威 |
-| `GET /user/get/login` | **Java** | 权威；Python 每个需鉴权请求转发至此（30s Redis 缓存） |
+| `POST /user/login` | **Python** | 原密码校验；轮换 EYE_SESSION |
+| `POST /user/logout` | **Python** | 撤销 Redis key 并清 Cookie |
+| `GET /user/get/login` | **Python** | 每请求读取 Redis 和当前 t_user；不缓存身份/角色 |
 | `POST /user/register` | Python | 唯一免鉴权端点；返回**字符串** id |
 | `POST /user/add` | Python | admin |
 | `GET /user/get` | Python | admin；**裁定 11**：脱敏 |

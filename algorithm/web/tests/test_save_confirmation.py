@@ -14,6 +14,7 @@ from web.tests.test_controlled_evidence import evidence_api, govern
 from web.tests.test_validated_explanation import explanation_api, start, read, drain
 from web.workflow.confirmation_models import SaveConfirmation, SavedWorkflowDiagnosis
 from web.workflow.models import ExplanationSnapshot, ReviewTask, Workflow, UploadInput
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions  # noqa: E402
 
 
 def path(task):
@@ -79,7 +80,7 @@ def test_preview_is_not_save_and_approval_saves_exactly_once(explanation_api):
         assert json.loads(db.get(SaveConfirmation, row["confirmationId"]).content) == row["content"]
     assert read(client, task)["workflowVersion"] == view["workflowVersion"]
     assert client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"] == "1"
-    client.cookies.set("SESSION", "admin")
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
     assert client.get(row["content"]["imageUrl"]).status_code == 200
     assert client.get(path(task)).status_code == 403
     assert client.get(f"/api/diagnosis/workflows/{task}").status_code == 403
@@ -118,9 +119,9 @@ def test_changed_versions_content_and_gates_never_save(explanation_api, change):
         elif change == "operation":
             db.get(SaveConfirmation, row["confirmationId"]).operation = "OTHER"
     if change == "source":
-        client.cookies.set("SESSION", "admin")
+        client.cookies.set(SESSION_COOKIE_NAME, "admin")
         assert govern(client, explanation_api[2], reviewStatus="WITHDRAWN", expectedVersion=1).status_code == 200
-        client.cookies.set("SESSION", "alice")
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert act(client, row).status_code == 409 and count(sessions) == 0
     if change != "operation":
         with sessions() as db:
@@ -130,13 +131,13 @@ def test_changed_versions_content_and_gates_never_save(explanation_api, change):
 def test_permissions_payload_tampering_and_wrong_resource(explanation_api):
     client, sessions, task, view, row = prepare(explanation_api)
     for identity, status in [("bob", 403), ("admin", 403), ("missing", 401)]:
-        client.cookies.set("SESSION", identity)
+        client.cookies.set(SESSION_COOKIE_NAME, identity)
         assert client.get(path(task)).status_code == status
         assert client.post(path(task), json=requested(view)).status_code == status
         assert act(client, row).status_code == status
         assert act(client, row, "reject").status_code == status
         assert client.get(row["content"]["imageUrl"]).status_code == status
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     for changes in [{"idempotencyKey": "other"}, {"expectedContentDigest": "a" * 64},
                     {"expectedWorkflowVersion": "0"}]:
         assert act(client, row, **changes).status_code == 409
@@ -150,16 +151,16 @@ def test_permissions_payload_tampering_and_wrong_resource(explanation_api):
 def test_waiting_doctor_cannot_be_saved_and_doctor_is_not_user_consent(explanation_api):
     from web.tests.test_final_clinical_review import prepare as clinical_prepare, claim, final_versions, run
     client, sessions, _, _, task, review_path, detail, _, adapter = clinical_prepare(explanation_api)
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     pending = read(client, task)
     assert client.post(path(task), json=requested(pending)).status_code == 409
-    client.cookies.set("SESSION", "doctor")
+    client.cookies.set(SESSION_COOKIE_NAME, "doctor")
     claimed = claim(client, review_path, detail)
     assert client.post(review_path + "/submit", json={**final_versions(claimed),
         "decisionCode": "CONFIRM_AI_ASSESSMENT", "reasonCode": "AI_ASSESSMENT_CONFIRMED"}).status_code == 200
     run(sessions, adapter)
     assert count(sessions) == 0
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     assert client.get(path(task)).json()["data"] is None
     row = client.post(path(task), json=requested(read(client, task))).json()["data"]
     assert act(client, row).status_code == 200 and count(sessions) == 1
@@ -195,15 +196,16 @@ def approval_process(filename, row):
     # A fresh interpreter constructs the API and reads pending consent from disk.
     script = '''
 import json, sys
-import httpx
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from web.app import create_app
 from web.config import WebConfig
 from web.deps import get_db
+from web.tests.session_fixtures import SESSION_COOKIE_NAME, install_sessions
 app = create_app(WebConfig())
-sessions = sessionmaker(create_engine("sqlite:///" + sys.argv[1]), expire_on_commit=False)
+engine = create_engine("sqlite:///" + sys.argv[1])
+sessions = sessionmaker(engine, expire_on_commit=False)
 def database():
     with sessions() as db:
         try:
@@ -213,11 +215,10 @@ def database():
             db.rollback()
             raise
 app.dependency_overrides[get_db] = database
-app.state.java_client = httpx.AsyncClient(base_url="http://java/api/", transport=httpx.MockTransport(
-    lambda request: httpx.Response(200, json={"code": 0, "data": {"id": "7", "userAccount": "fixture", "userRole": "user"}})))
+auth = install_sessions(app, engine)
 row = json.loads(sys.argv[2])
 client = TestClient(app)
-client.cookies.set("SESSION", "alice")
+client.cookies.set(SESSION_COOKIE_NAME, "alice")
 before = client.get("/api/diagnosis/workflows/" + row["workflowId"] + "/save-confirmation").json()["data"]
 response = client.post("/api/diagnosis/workflows/" + row["workflowId"] + "/save-confirmations/" + row["confirmationId"] + "/approve", json={
     "idempotencyKey": row["idempotencyKey"], "expectedContentDigest": row["contentDigest"],

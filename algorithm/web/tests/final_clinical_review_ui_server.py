@@ -5,7 +5,6 @@ from typing import Literal
 
 import pytest
 import uvicorn
-from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
@@ -30,12 +29,6 @@ def main():
     app.state.mode = "valid"
     engine = ControlledEngine(prediction(requires_review=True))
     adapter = WorkflowInference(WebConfig(dashscope_api_key="controlled-key"), engine=engine)
-
-    @app.get("/api/user/get/login")
-    async def session_probe(request: Request):
-        response = await app.state.java_client.get("/user/get/login",
-            headers={"Cookie": request.headers.get("cookie", "")})
-        return response.json()
 
     @app.post("/__fixture/mode/{mode}")
     def mode(mode: Literal["valid", "abstention", "quality"]):

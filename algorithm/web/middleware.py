@@ -62,7 +62,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(BizError)
     async def _biz_error(_request: Request, exc: BizError) -> JSONResponse:
         return JSONResponse(
-            status_code=200,
+            status_code=500 if _is_workflow_request(_request) and exc.code == ErrorCode.SYSTEM_ERROR else 200,
             content=BaseResponse.error(exc.code, exc.message).model_dump(mode="json"),
         )
 

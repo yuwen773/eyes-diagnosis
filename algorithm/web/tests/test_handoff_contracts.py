@@ -8,6 +8,7 @@ from web.models.news import News
 from web.tests.test_contracts import engine, client, _seed  # noqa: F401 - pytest fixtures
 from web.tests.test_chat_workflow import workflow_api  # noqa: F401
 from web.tests.test_workflow import create_upload
+from web.tests.session_fixtures import SESSION_COOKIE_NAME  # noqa: E402
 
 CONTRACT = json.loads((ASSETS / "contracts.json").read_text(encoding="utf-8"))
 
@@ -31,13 +32,13 @@ def test_frozen_legacy_envelope_long_page_and_date_contract(client, _seed):
 def test_frozen_login_expiry_and_workflow_transport_are_separate(workflow_api):
     client, _ = workflow_api
     legacy, workflow = CONTRACT["loginExpired"], CONTRACT["workflow"]
-    client.cookies.set("SESSION", "expired")
+    client.cookies.set(SESSION_COOKIE_NAME, "expired")
     response = client.post("/api/diagnosis/list/page/my", json={})
     assert response.status_code == legacy["httpStatus"]
     assert response.json()["code"] == legacy["code"]
     response = create_upload(client)
     assert response.status_code == workflow["unauthenticated"]
-    client.cookies.set("SESSION", "alice")
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
     accepted = create_upload(client)
     assert accepted.status_code == workflow["accepted"]
     row = accepted.json()["data"]
@@ -48,5 +49,5 @@ def test_frozen_login_expiry_and_workflow_transport_are_separate(workflow_api):
     assert response.headers["content-type"].startswith(CONTRACT["sse"]["contentType"])
     events = [line.removeprefix("event: ") for line in response.text.splitlines() if line.startswith("event: ")]
     assert events == CONTRACT["sse"]["workflowSnapshotEvents"]
-    client.cookies.set("SESSION", "bob")
+    client.cookies.set(SESSION_COOKIE_NAME, "bob")
     assert client.get(f"/api/diagnosis/workflows/{row['workflowId']}").status_code == workflow["forbidden"]
