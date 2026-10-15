@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-15",
+  "timezone": "Asia/Shanghai",
+  "fixedPoint": "a57e6fb50a12e16e59b2e245435070a952258fb9",
+  "branch": "worktree-py-rewrite",
+  "environment": {
+    "os": "Windows",
+    "python": "3.11.17",
+    "mysql": "8.0.26",
+    "lowerCaseTableNames": 1
+  },
+  "supportedStarts": [
+    "empty utf8mb4_unicode_ci schema",
+    "complete frozen V9 profile",
+    "complete frozen V22 profile"
+  ],
+  "results": {
+    "handoff": {
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 28,
+      "seconds": 305.436,
+      "report": ".scratch/python-project-migration/evidence/issue01/handoff-final.xml",
+      "reportSha256": "7beabb07c0338398ae7ebae3bf92eb69667fa0397dd0004b37b86eb180424d39",
+      "skipReasons": {},
+      "cases": [
+        "test_frozen_baseline_is_checkable_without_database_or_jvm",
+        "test_changed_sql_bytes_are_reported_without_rebaselining",
+        "test_connection_errors_never_expose_secrets",
+        "test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[empty]",
+        "test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[9]",
+        "test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[22]",
+        "test_unknown_legacy_states_are_rejected_before_any_write[v8-V8_CHECKSUM]",
+        "test_unknown_legacy_states_are_rejected_before_any_write[checksum-LEGACY_CHECKSUM]",
+        "test_unknown_legacy_states_are_rejected_before_any_write[failed-FAILED_LEGACY_HISTORY]",
+        "test_unknown_legacy_states_are_rejected_before_any_write[unknown-UNKNOWN_LEGACY_HISTORY]",
+        "test_unknown_legacy_states_are_rejected_before_any_write[schema-SCHEMA]",
+        "test_independent_increment_runs_once_without_changing_legacy_history",
+        "test_failed_nontransactional_ddl_is_not_replayed_or_marked_success",
+        "test_concurrent_upgrader_cannot_write",
+        "test_empty_python_history_is_an_interrupted_registration",
+        "test_unknown_schema_objects_are_not_treated_as_an_empty_database",
+        "test_applied_handoff_still_rejects_changed_original_history",
+        "test_interrupted_baseline_cannot_register_success_or_replay",
+        "test_stock_api_public_business_read_works_without_jvm[empty]",
+        "test_stock_api_public_business_read_works_without_jvm[9]",
+        "test_stock_api_public_business_read_works_without_jvm[22]",
+        "test_frozen_legacy_envelope_long_page_and_date_contract",
+        "test_frozen_login_expiry_and_workflow_transport_are_separate",
+        "test_four_human_waits_resume_after_database_handoff[quality]",
+        "test_four_human_waits_resume_after_database_handoff[final]",
+        "test_four_human_waits_resume_after_database_handoff[save]",
+        "test_four_human_waits_resume_after_database_handoff[supplement]",
+        "test_recovery_export_and_action_tokens_match_frozen_baseline"
+      ]
+    },
+    "fullWeb": {
+      "tests": 750,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 24,
+      "passed": 726,
+      "seconds": 614.91,
+      "report": ".scratch/python-project-migration/evidence/issue01/full-web-results.xml",
+      "reportSha256": "a43fcfef87796869f27ffdcf1469457cc682d520252451e617e526e78c319327",
+      "skipReasons": {
+        "isolated real MySQL URL not supplied": 1,
+        "Opt-in isolated real MySQL acceptance": 18,
+        "Opt-in isolated real MySQL handoff/restart acceptance": 4,
+        "SKIP LOCKED requires real MySQL": 1
+      }
+    }
+  },
+  "baseline": {
+    "status": "BASELINE_OK",
+    "assets": 30,
+    "legacyMigrations": 22,
+    "baselineChecksum": "8b22a2e88c817a88c00c58e5ab08b0e3e0baa2074c3d25136935f75b62db2e19",
+    "rawOriginalBytesUnchanged": true
+  },
+  "typecheck": {
+    "status": "PASS",
+    "files": 4,
+    "command": "python -m mypy web/migrations --follow-imports=silent --disable-error-code=import-untyped"
+  },
+  "review": {
+    "Standards": {
+      "findings": 2,
+      "resolved": 2,
+      "open": 0
+    },
+    "Spec": {
+      "findings": 1,
+      "resolved": 1,
+      "open": 0
+    }
+  },
+  "layers": {
+    "noJvmMigrationAndPublicHttp": "PASS - child PATH empty and JAVA_HOME unavailable",
+    "realMysqlAndProcessRecovery": "PASS - isolated synthetic datasets",
+    "caseSensitiveGuard": "CONTROLLED_PASS - reviewer database-boundary reproduction",
+    "fullWebRegression": "PASS - legacy suite retains JDK21/Tika requirements",
+    "linux": "NOT_RUN",
+    "realPythonRedisIdentity": "NOT_RUN - ticket02",
+    "realModelsAndVendors": "NOT_VERIFIED",
+    "clinical": "NOT_VERIFIED",
+    "productionUpgradeCutover": "NOT_RUN"
+  }
+}

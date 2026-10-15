@@ -1,0 +1,48 @@
+{
+  "legacyBusiness": {
+    "httpStatus": 200,
+    "envelopeKeys": [
+      "code",
+      "data",
+      "msg"
+    ],
+    "code": 0,
+    "msg": "ok",
+    "news": {
+      "id": "9007199254740993",
+      "publishTime": "2026-03-03 21:06:07"
+    },
+    "pagination": {
+      "total": "1",
+      "size": "10",
+      "current": "1",
+      "pages": "1"
+    },
+    "dateNote": "Frozen legacy UTC serialization of naive local 2026-03-04 05:06:07. Existing behavior retained; date correction is outside ticket 01."
+  },
+  "loginExpired": {
+    "httpStatus": 200,
+    "code": 40100
+  },
+  "workflow": {
+    "accepted": 202,
+    "unauthenticated": 401,
+    "forbidden": 403,
+    "conflict": 409,
+    "initialStatus": "QUEUED"
+  },
+  "sse": {
+    "contentType": "text/event-stream",
+    "workflowSnapshotEvents": [
+      "state",
+      "done"
+    ],
+    "chatTerminalEvent": "done",
+    "chatMessageEvents": [
+      "message",
+      "supplement",
+      "workflow"
+    ]
+  },
+  "safety": "Synthetic public contract only; no personal data, credentials, password hashes or vendor responses."
+}

@@ -1,0 +1,366 @@
+{
+  "format": 1,
+  "baselineCommit": "a57e6fb50a12e16e59b2e245435070a952258fb9",
+  "files": [
+    {
+      "asset": "legacy/schema.sql",
+      "source": "src/main/resources/db/schema.sql",
+      "sha256": "d2e4adbb1583e55748e72472b89fef317924722203f47d07722992490081b730",
+      "bytes": 13172,
+      "sourceBlobSha256": "5618b31cf3b3ea0d9f31828dd3ea415fc1dfb6f1a90f5c1ba3b9ffd1f39fd769"
+    },
+    {
+      "asset": "legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql",
+      "source": "src/main/resources/db/callback/beforeMigrate__bootstrap_legacy_flyway_schema.sql",
+      "sha256": "979382199f49fa27cd606078736807ec7d4d78c5b41eac99395c00a91a69c880",
+      "bytes": 1432,
+      "sourceBlobSha256": "8a9df9cf7032fdd58baa8c6cba973fbdba9894848da0d623c77e23423bd33df9"
+    },
+    {
+      "asset": "legacy/V1__baseline_rename_mcp_user_id.sql",
+      "source": "src/main/resources/db/migration/V1__baseline_rename_mcp_user_id.sql",
+      "sha256": "d0344b8109a80ae0476ed3d6958229e407cf1576d50bd42ff8309ade989c2d6d",
+      "bytes": 972,
+      "sourceBlobSha256": "0b417caa76ae25c737fa3a03c20fa5e2fc8783ce6795e139d2d7b7891048e1e8"
+    },
+    {
+      "asset": "legacy/V2__split_inference_cache.sql",
+      "source": "src/main/resources/db/migration/V2__split_inference_cache.sql",
+      "sha256": "ec0699932e9aa261dd31294b0438fe7efd8c42eb3727a6e34f0ac7b5d75ec987",
+      "bytes": 541,
+      "sourceBlobSha256": "601ba665628ec59aaa471a43f022cac85f68d831d5ffb35cd3ae820081a932aa"
+    },
+    {
+      "asset": "legacy/V3__upload_state_machine.sql",
+      "source": "src/main/resources/db/migration/V3__upload_state_machine.sql",
+      "sha256": "7d8f61f2c2584de515527ab981122b514a919de8b124086509f72d2ae1b9189e",
+      "bytes": 516,
+      "sourceBlobSha256": "57b20cd5a722e08017b887f8e2cb4a40a4e6db8b0b99a411d60860625025443e"
+    },
+    {
+      "asset": "legacy/V4__agent_message_outbox.sql",
+      "source": "src/main/resources/db/migration/V4__agent_message_outbox.sql",
+      "sha256": "a892dfda12c8e0260146896b79a91c130c54bd55f145304aeb1ee1b9e001b88d",
+      "bytes": 931,
+      "sourceBlobSha256": "1e38f146df0915af09bc91fdfa93573788a0a7241cc4576046846dc321066bbf"
+    },
+    {
+      "asset": "legacy/V5__medical_reliability.sql",
+      "source": "src/main/resources/db/migration/V5__medical_reliability.sql",
+      "sha256": "f797b4d2ced55ebdcc1661d57f9bd57cd7c3160987fc7f480831631348a0abcc",
+      "bytes": 1019,
+      "sourceBlobSha256": "368f97174d79e19dc0cd29514ba94a0a5aec8362da299c7c225c70cf3ee28943"
+    },
+    {
+      "asset": "legacy/V6__align_mcp_entity_columns.sql",
+      "source": "src/main/resources/db/migration/V6__align_mcp_entity_columns.sql",
+      "sha256": "49526fa11623640a4472d6a6517551ff0c18bbe343f5a6bd390a8870c7b1962b",
+      "bytes": 247,
+      "sourceBlobSha256": "6352146ae00739a91d7aa731ce558b34ac66a231832e7996a1d09528d05210bf"
+    },
+    {
+      "asset": "legacy/V7__complete_inference_cache_safety_fields.sql",
+      "source": "src/main/resources/db/migration/V7__complete_inference_cache_safety_fields.sql",
+      "sha256": "d4a215fc79f6cf29331d9fe92c5edf23a16cafefe643c8a455a85932ca0f2b45",
+      "bytes": 839,
+      "sourceBlobSha256": "cdd7117076b2aeb0f7075854586fd0fbe207f7d3583c129175376886a95ce9db"
+    },
+    {
+      "asset": "legacy/V8__add_mcp_server_description.sql",
+      "source": "src/main/resources/db/migration/V8__add_mcp_server_description.sql",
+      "sha256": "ff535251feb193b31151224e93f65fc50e521486a60b17f04758101dd95ea010",
+      "bytes": 577,
+      "sourceBlobSha256": "2356fd5a31029a2681308005c7a5987054d9ddcc72cd86f7faa8b0fb4ce6b017"
+    },
+    {
+      "asset": "legacy/V9__version_inference_safety_policy.sql",
+      "source": "src/main/resources/db/migration/V9__version_inference_safety_policy.sql",
+      "sha256": "933f58aea99a49101e786e3cac34a469af6cf085b18f714b4eed09737b9ed8ce",
+      "bytes": 1410,
+      "sourceBlobSha256": "63ccf1b70a3c89c0f70b6371ce3d7561037d38ba7d4ce4726b7445e981f7fe62"
+    },
+    {
+      "asset": "legacy/V10__create_diagnosis_workflow_core.sql",
+      "source": "deploy/workflow-migrations/sql/V10__create_diagnosis_workflow_core.sql",
+      "sha256": "3540c75ad64f30c40593408808a22078183443022ac71cb93be17e1d9905bd92",
+      "bytes": 1989,
+      "sourceBlobSha256": "3540c75ad64f30c40593408808a22078183443022ac71cb93be17e1d9905bd92"
+    },
+    {
+      "asset": "legacy/V11__create_workflow_execution_tables.sql",
+      "source": "deploy/workflow-migrations/sql/V11__create_workflow_execution_tables.sql",
+      "sha256": "f22241308259f8e0d5036ca411ea3e3dcc00c460f6efd2172551966133eef1c1",
+      "bytes": 3071,
+      "sourceBlobSha256": "f22241308259f8e0d5036ca411ea3e3dcc00c460f6efd2172551966133eef1c1"
+    },
+    {
+      "asset": "legacy/V12__create_workflow_result_and_review_tables.sql",
+      "source": "deploy/workflow-migrations/sql/V12__create_workflow_result_and_review_tables.sql",
+      "sha256": "0c313783526e1c31e7892f025034a2ce19e11452e1fc629de838ff9cce2e4fd5",
+      "bytes": 2423,
+      "sourceBlobSha256": "0c313783526e1c31e7892f025034a2ce19e11452e1fc629de838ff9cce2e4fd5"
+    },
+    {
+      "asset": "legacy/V13__align_workflow_job_claim_queue.sql",
+      "source": "deploy/workflow-migrations/sql/V13__align_workflow_job_claim_queue.sql",
+      "sha256": "aeb07cdeac30c284d5948c257a2982ab4a1c538d84c54bfe71b971e5565ba8d8",
+      "bytes": 360,
+      "sourceBlobSha256": "aeb07cdeac30c284d5948c257a2982ab4a1c538d84c54bfe71b971e5565ba8d8"
+    },
+    {
+      "asset": "legacy/V14__create_workflow_audit_event.sql",
+      "source": "deploy/workflow-migrations/sql/V14__create_workflow_audit_event.sql",
+      "sha256": "35bcffb7cd90e4899b5a63fdadb473297e33077fd65c6d33d682b471c3270697",
+      "bytes": 754,
+      "sourceBlobSha256": "35bcffb7cd90e4899b5a63fdadb473297e33077fd65c6d33d682b471c3270697"
+    },
+    {
+      "asset": "legacy/V15__python_durable_upload.sql",
+      "source": "deploy/workflow-migrations/sql/V15__python_durable_upload.sql",
+      "sha256": "bab75c567817ae5e6291b1f360ec6fc5371dbc8aabd87c8b022efb559329d631",
+      "bytes": 1399,
+      "sourceBlobSha256": "bab75c567817ae5e6291b1f360ec6fc5371dbc8aabd87c8b022efb559329d631"
+    },
+    {
+      "asset": "legacy/V16__bind_quality_review_context.sql",
+      "source": "deploy/workflow-migrations/sql/V16__bind_quality_review_context.sql",
+      "sha256": "68a168ee2adb6525cdeb3c66ca723964eb9ddc02592532f158ec3d655f803078",
+      "bytes": 344,
+      "sourceBlobSha256": "68a168ee2adb6525cdeb3c66ca723964eb9ddc02592532f158ec3d655f803078"
+    },
+    {
+      "asset": "legacy/V17__python_session_chat.sql",
+      "source": "deploy/workflow-migrations/sql/V17__python_session_chat.sql",
+      "sha256": "2f24f88b3a25d8394f8c1f4f96ef9b0b1c5cad274dab549682e902c934517d3e",
+      "bytes": 2119,
+      "sourceBlobSha256": "2f24f88b3a25d8394f8c1f4f96ef9b0b1c5cad274dab549682e902c934517d3e"
+    },
+    {
+      "asset": "legacy/V18__chat_workflow_binding.sql",
+      "source": "deploy/workflow-migrations/sql/V18__chat_workflow_binding.sql",
+      "sha256": "ce45c126cb9e2d3014403dd53d76fcb1b487b8d2779a8893678f64c2ee3cd9d7",
+      "bytes": 528,
+      "sourceBlobSha256": "ce45c126cb9e2d3014403dd53d76fcb1b487b8d2779a8893678f64c2ee3cd9d7"
+    },
+    {
+      "asset": "legacy/V19__controlled_reference_evidence.sql",
+      "source": "deploy/workflow-migrations/sql/V19__controlled_reference_evidence.sql",
+      "sha256": "be94d42a718026228072eeb9f5ac7ba3b5a2e9255001d04d8f50dd24b2d4918b",
+      "bytes": 539,
+      "sourceBlobSha256": "be94d42a718026228072eeb9f5ac7ba3b5a2e9255001d04d8f50dd24b2d4918b"
+    },
+    {
+      "asset": "legacy/V20__diagnosis_save_confirmation.sql",
+      "source": "deploy/workflow-migrations/sql/V20__diagnosis_save_confirmation.sql",
+      "sha256": "c886b425db8a6fc64e7e8503b3a5370946b35ac47d8e7f116eda7d2512edc814",
+      "bytes": 1240,
+      "sourceBlobSha256": "c886b425db8a6fc64e7e8503b3a5370946b35ac47d8e7f116eda7d2512edc814"
+    },
+    {
+      "asset": "legacy/V21__chat_supplement.sql",
+      "source": "deploy/workflow-migrations/sql/V21__chat_supplement.sql",
+      "sha256": "49d9de5d7e84b27da26d0ff666232320a1c87bff33a4560b7466f521af0d43c2",
+      "bytes": 877,
+      "sourceBlobSha256": "49d9de5d7e84b27da26d0ff666232320a1c87bff33a4560b7466f521af0d43c2"
+    },
+    {
+      "asset": "legacy/V22__agent_tool_confirmation.sql",
+      "source": "deploy/workflow-migrations/sql/V22__agent_tool_confirmation.sql",
+      "sha256": "6a034e67e19c461e72a83ff6a8431195c2887c4524fb446e16da6f911f308d3d",
+      "bytes": 654,
+      "sourceBlobSha256": "6a034e67e19c461e72a83ff6a8431195c2887c4524fb446e16da6f911f308d3d"
+    },
+    {
+      "asset": "business-bootstrap.sql",
+      "sha256": "e5c648eba1badc4295b2effd0ec5b7ec683336eed66fd5e7a908852d61a3847d"
+    },
+    {
+      "asset": "schema-v9.json",
+      "sha256": "2eb0d638593dc0c5db379448f6f07bf4dc6ecec9c29d2a235e87efde3ad69098"
+    },
+    {
+      "asset": "schema-v22.json",
+      "sha256": "59d0f1f95fff07945523093df79cf3a1ce70f6bfe8061f8e57ddace15ad4f147"
+    },
+    {
+      "asset": "contracts.json",
+      "sha256": "c9e7d8ab95e367908cf3bbb37990ce51fb020b643e9c6c1059c9f9c73660353c"
+    },
+    {
+      "asset": "recovery-samples.json",
+      "sha256": "5b145de9eccf119420cf7c53307471b9ad38f873e77eaa3654ef4ddaac121e1e"
+    },
+    {
+      "asset": "dependency-inventory.json",
+      "sha256": "20fa53f9e804de954f6df3a8d41a2aca0dbeccf8a569633ec92702da025e8593"
+    }
+  ],
+  "legacy": [
+    {
+      "version": 1,
+      "asset": "legacy/V1__baseline_rename_mcp_user_id.sql",
+      "script": "V1__baseline_rename_mcp_user_id.sql",
+      "checksum": -1938901121
+    },
+    {
+      "version": 2,
+      "asset": "legacy/V2__split_inference_cache.sql",
+      "script": "V2__split_inference_cache.sql",
+      "checksum": 89166078
+    },
+    {
+      "version": 3,
+      "asset": "legacy/V3__upload_state_machine.sql",
+      "script": "V3__upload_state_machine.sql",
+      "checksum": -1184219973
+    },
+    {
+      "version": 4,
+      "asset": "legacy/V4__agent_message_outbox.sql",
+      "script": "V4__agent_message_outbox.sql",
+      "checksum": -1228034441
+    },
+    {
+      "version": 5,
+      "asset": "legacy/V5__medical_reliability.sql",
+      "script": "V5__medical_reliability.sql",
+      "checksum": -687087092
+    },
+    {
+      "version": 6,
+      "asset": "legacy/V6__align_mcp_entity_columns.sql",
+      "script": "V6__align_mcp_entity_columns.sql",
+      "checksum": 1016808924
+    },
+    {
+      "version": 7,
+      "asset": "legacy/V7__complete_inference_cache_safety_fields.sql",
+      "script": "V7__complete_inference_cache_safety_fields.sql",
+      "checksum": -852110071
+    },
+    {
+      "version": 8,
+      "asset": "legacy/V8__add_mcp_server_description.sql",
+      "script": "V8__add_mcp_server_description.sql",
+      "checksum": 676496046
+    },
+    {
+      "version": 9,
+      "asset": "legacy/V9__version_inference_safety_policy.sql",
+      "script": "V9__version_inference_safety_policy.sql",
+      "checksum": -1998422346
+    },
+    {
+      "version": 10,
+      "asset": "legacy/V10__create_diagnosis_workflow_core.sql",
+      "script": "V10__create_diagnosis_workflow_core.sql",
+      "checksum": -1599223369
+    },
+    {
+      "version": 11,
+      "asset": "legacy/V11__create_workflow_execution_tables.sql",
+      "script": "V11__create_workflow_execution_tables.sql",
+      "checksum": 390070045
+    },
+    {
+      "version": 12,
+      "asset": "legacy/V12__create_workflow_result_and_review_tables.sql",
+      "script": "V12__create_workflow_result_and_review_tables.sql",
+      "checksum": 1533546059
+    },
+    {
+      "version": 13,
+      "asset": "legacy/V13__align_workflow_job_claim_queue.sql",
+      "script": "V13__align_workflow_job_claim_queue.sql",
+      "checksum": -1159180543
+    },
+    {
+      "version": 14,
+      "asset": "legacy/V14__create_workflow_audit_event.sql",
+      "script": "V14__create_workflow_audit_event.sql",
+      "checksum": 2143137036
+    },
+    {
+      "version": 15,
+      "asset": "legacy/V15__python_durable_upload.sql",
+      "script": "V15__python_durable_upload.sql",
+      "checksum": 1010651538
+    },
+    {
+      "version": 16,
+      "asset": "legacy/V16__bind_quality_review_context.sql",
+      "script": "V16__bind_quality_review_context.sql",
+      "checksum": 466125710
+    },
+    {
+      "version": 17,
+      "asset": "legacy/V17__python_session_chat.sql",
+      "script": "V17__python_session_chat.sql",
+      "checksum": 849190034
+    },
+    {
+      "version": 18,
+      "asset": "legacy/V18__chat_workflow_binding.sql",
+      "script": "V18__chat_workflow_binding.sql",
+      "checksum": 2061816343
+    },
+    {
+      "version": 19,
+      "asset": "legacy/V19__controlled_reference_evidence.sql",
+      "script": "V19__controlled_reference_evidence.sql",
+      "checksum": 2102299474
+    },
+    {
+      "version": 20,
+      "asset": "legacy/V20__diagnosis_save_confirmation.sql",
+      "script": "V20__diagnosis_save_confirmation.sql",
+      "checksum": 694176870
+    },
+    {
+      "version": 21,
+      "asset": "legacy/V21__chat_supplement.sql",
+      "script": "V21__chat_supplement.sql",
+      "checksum": -610248104
+    },
+    {
+      "version": 22,
+      "asset": "legacy/V22__agent_tool_confirmation.sql",
+      "script": "V22__agent_tool_confirmation.sql",
+      "checksum": 418383291
+    }
+  ],
+  "increments": [],
+  "baselineChecksum": "8b22a2e88c817a88c00c58e5ab08b0e3e0baa2074c3d25136935f75b62db2e19",
+  "baselineFiles": [
+    "legacy/schema.sql",
+    "legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql",
+    "legacy/V1__baseline_rename_mcp_user_id.sql",
+    "legacy/V2__split_inference_cache.sql",
+    "legacy/V3__upload_state_machine.sql",
+    "legacy/V4__agent_message_outbox.sql",
+    "legacy/V5__medical_reliability.sql",
+    "legacy/V6__align_mcp_entity_columns.sql",
+    "legacy/V7__complete_inference_cache_safety_fields.sql",
+    "legacy/V8__add_mcp_server_description.sql",
+    "legacy/V9__version_inference_safety_policy.sql",
+    "legacy/V10__create_diagnosis_workflow_core.sql",
+    "legacy/V11__create_workflow_execution_tables.sql",
+    "legacy/V12__create_workflow_result_and_review_tables.sql",
+    "legacy/V13__align_workflow_job_claim_queue.sql",
+    "legacy/V14__create_workflow_audit_event.sql",
+    "legacy/V15__python_durable_upload.sql",
+    "legacy/V16__bind_quality_review_context.sql",
+    "legacy/V17__python_session_chat.sql",
+    "legacy/V18__chat_workflow_binding.sql",
+    "legacy/V19__controlled_reference_evidence.sql",
+    "legacy/V20__diagnosis_save_confirmation.sql",
+    "legacy/V21__chat_supplement.sql",
+    "legacy/V22__agent_tool_confirmation.sql",
+    "business-bootstrap.sql",
+    "schema-v9.json",
+    "schema-v22.json",
+    "contracts.json",
+    "recovery-samples.json",
+    "dependency-inventory.json"
+  ]
+}

@@ -1,0 +1,1000 @@
+{
+  "atCommit": "a57e6fb50a12e16e59b2e245435070a952258fb9",
+  "scope": "Active CI, web runtime/tests/acceptance, deploy, current README/guidance. Historical evidence is not an active runtime dependency. Line numbers are baseline locations, not instructions to remove assets in ticket 01.",
+  "files": [
+    {
+      "path": ".github/workflows/python-real-services.yml",
+      "dependencies": {
+        "Maven/Flyway": [
+          10
+        ],
+        "Java/JVM": [
+          53
+        ]
+      }
+    },
+    {
+      "path": ".github/workflows/verify.yml",
+      "dependencies": {
+        "Java/JVM": [
+          52,
+          119,
+          160,
+          191
+        ],
+        "Maven/Flyway": [
+          124,
+          166,
+          168,
+          186,
+          187,
+          188,
+          196
+        ]
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "dependencies": {
+        "Java/JVM": [
+          12
+        ],
+        "Maven/Flyway": [
+          18,
+          19,
+          20
+        ],
+        "source-reading/schema": [
+          64
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/app.py",
+      "dependencies": {
+        "Java/JVM": [
+          111,
+          112,
+          122
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/auth.py",
+      "dependencies": {
+        "Java/JVM": [
+          13,
+          25,
+          34,
+          63,
+          67,
+          99
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/config.py",
+      "dependencies": {
+        "source-reading/schema": [
+          9,
+          112
+        ],
+        "Java/JVM": [
+          50,
+          64,
+          74,
+          149,
+          228,
+          246
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/constant.py",
+      "dependencies": {
+        "Java/JVM": [
+          8,
+          22,
+          26,
+          30,
+          39,
+          55,
+          57,
+          63,
+          81,
+          85,
+          100,
+          153,
+          155
+        ],
+        "Maven/Flyway": [
+          32
+        ],
+        "source-reading/schema": [
+          32
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/db.py",
+      "dependencies": {
+        "Maven/Flyway": [
+          5,
+          7
+        ],
+        "source-reading/schema": [
+          5,
+          13,
+          46
+        ],
+        "Java/JVM": [
+          58
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/doc_parser.py",
+      "dependencies": {
+        "Tika": [
+          1,
+          9,
+          10,
+          14,
+          27,
+          50,
+          51,
+          54,
+          55,
+          58
+        ],
+        "Java/JVM": [
+          30,
+          31,
+          42
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/extract.py",
+      "dependencies": {
+        "Tika": [
+          3,
+          16,
+          31,
+          33
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/files.py",
+      "dependencies": {
+        "Java/JVM": [
+          1,
+          51
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/knowledge.py",
+      "dependencies": {
+        "Java/JVM": [
+          5,
+          6,
+          7,
+          9,
+          32,
+          238
+        ],
+        "Tika": [
+          62,
+          164,
+          166,
+          180
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/middleware.py",
+      "dependencies": {
+        "Java/JVM": [
+          41,
+          113
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/diagnosis.py",
+      "dependencies": {
+        "Java/JVM": [
+          3,
+          9
+        ],
+        "source-reading/schema": [
+          14,
+          36
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/inference_cache.py",
+      "dependencies": {
+        "Java/JVM": [
+          10
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/knowledge.py",
+      "dependencies": {
+        "Java/JVM": [
+          3
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/mcp_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          3
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/news.py",
+      "dependencies": {
+        "Java/JVM": [
+          3
+        ],
+        "source-reading/schema": [
+          4
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/models/user.py",
+      "dependencies": {
+        "Java/JVM": [
+          3
+        ],
+        "source-reading/schema": [
+          3
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/response.py",
+      "dependencies": {
+        "Java/JVM": [
+          6,
+          7,
+          8,
+          15,
+          23,
+          45,
+          77
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/routers/diagnosis.py",
+      "dependencies": {
+        "Java/JVM": [
+          1,
+          80,
+          84,
+          93,
+          95
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/routers/knowledge.py",
+      "dependencies": {
+        "Java/JVM": [
+          1,
+          79
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/routers/mcp_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          1
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/routers/news.py",
+      "dependencies": {
+        "Java/JVM": [
+          1,
+          5,
+          13,
+          55,
+          57,
+          60,
+          67,
+          210,
+          232
+        ],
+        "source-reading/schema": [
+          236,
+          346
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/routers/user.py",
+      "dependencies": {
+        "Java/JVM": [
+          1,
+          60,
+          67,
+          139
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/schemas/diagnosis.py",
+      "dependencies": {
+        "Java/JVM": [
+          6,
+          34,
+          47,
+          75,
+          89,
+          106,
+          112,
+          134
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/schemas/knowledge.py",
+      "dependencies": {
+        "Java/JVM": [
+          28,
+          41,
+          58
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/schemas/mcp_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          19
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/schemas/news.py",
+      "dependencies": {
+        "Java/JVM": [
+          13,
+          24,
+          45,
+          70,
+          79,
+          101,
+          127
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/schemas/user.py",
+      "dependencies": {
+        "Java/JVM": [
+          15,
+          25,
+          27,
+          42,
+          54,
+          68,
+          84,
+          94,
+          109,
+          119
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/security.py",
+      "dependencies": {
+        "Java/JVM": [
+          1
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/chat_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          81,
+          98,
+          103
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/controlled_evidence_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          24
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/final_clinical_review_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          36
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/human_wait_process.py",
+      "dependencies": {
+        "Java/JVM": [
+          65
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/quality_review_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          49,
+          67,
+          83
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/reconnect_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          46,
+          50
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/save_confirmation_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          27
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_baseline.py",
+      "dependencies": {
+        "Java/JVM": [
+          54,
+          60
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_chat.py",
+      "dependencies": {
+        "Java/JVM": [
+          63,
+          80
+        ],
+        "Maven/Flyway": [
+          71
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_chat_workflow.py",
+      "dependencies": {
+        "Maven/Flyway": [
+          32
+        ],
+        "Java/JVM": [
+          57,
+          62,
+          120
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_contracts.py",
+      "dependencies": {
+        "Java/JVM": [
+          259,
+          260,
+          293,
+          295
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_controlled_evidence.py",
+      "dependencies": {
+        "Java/JVM": [
+          65,
+          116
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_diagnosis.py",
+      "dependencies": {
+        "Java/JVM": [
+          5,
+          77,
+          270,
+          297,
+          813
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_diagnosis_constants.py",
+      "dependencies": {
+        "Java/JVM": [
+          20,
+          43,
+          49,
+          58,
+          63,
+          87,
+          100,
+          109,
+          120,
+          141
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_diagnosis_models.py",
+      "dependencies": {
+        "source-reading/schema": [
+          20,
+          31,
+          40,
+          143,
+          144,
+          145,
+          149
+        ],
+        "Java/JVM": [
+          21
+        ],
+        "Maven/Flyway": [
+          143,
+          144,
+          149
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_final_clinical_review.py",
+      "dependencies": {
+        "Java/JVM": [
+          37,
+          193,
+          194,
+          226
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_foundation.py",
+      "dependencies": {
+        "Java/JVM": [
+          40,
+          69,
+          105,
+          147,
+          210,
+          257,
+          302
+        ],
+        "source-reading/schema": [
+          349
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_history_retrieval.py",
+      "dependencies": {
+        "Java/JVM": [
+          71,
+          77
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_human_wait_restart.py",
+      "dependencies": {
+        "Maven/Flyway": [
+          53
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_inference_config.py",
+      "dependencies": {
+        "source-reading/schema": [
+          61
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_knowledge.py",
+      "dependencies": {
+        "Java/JVM": [
+          60,
+          63,
+          66,
+          68,
+          70,
+          73,
+          76,
+          122,
+          201,
+          327,
+          430
+        ],
+        "source-reading/schema": [
+          211,
+          213,
+          229
+        ],
+        "Tika": [
+          384
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_mcp_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          60,
+          64,
+          67,
+          463,
+          465,
+          501
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_news.py",
+      "dependencies": {
+        "Java/JVM": [
+          52,
+          55,
+          167,
+          211,
+          244,
+          249,
+          519,
+          522,
+          546,
+          548
+        ],
+        "source-reading/schema": [
+          534,
+          544
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_nginx_routing.py",
+      "dependencies": {
+        "Java/JVM": [
+          31,
+          196
+        ],
+        "source-reading/schema": [
+          160
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_quality_review.py",
+      "dependencies": {
+        "Java/JVM": [
+          39,
+          212,
+          213,
+          250
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_save_confirmation.py",
+      "dependencies": {
+        "Java/JVM": [
+          216
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_supplement.py",
+      "dependencies": {
+        "Java/JVM": [
+          74
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_tool_writes.py",
+      "dependencies": {
+        "Java/JVM": [
+          232
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_user.py",
+      "dependencies": {
+        "Java/JVM": [
+          10,
+          53,
+          158,
+          171
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_worker_concurrency.py",
+      "dependencies": {
+        "Maven/Flyway": [
+          1,
+          49,
+          58
+        ],
+        "Java/JVM": [
+          74,
+          79
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/test_workflow.py",
+      "dependencies": {
+        "Java/JVM": [
+          53,
+          60
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/validated_explanation_ui_server.py",
+      "dependencies": {
+        "Java/JVM": [
+          28
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/tests/verify_document_upload_ui.py",
+      "dependencies": {
+        "Tika": [
+          85
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/vectorstore.py",
+      "dependencies": {
+        "Java/JVM": [
+          9
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/verify_real_services.py",
+      "dependencies": {
+        "Java/JVM": [
+          87,
+          88,
+          90,
+          92,
+          93,
+          104,
+          106,
+          166,
+          185
+        ],
+        "Maven/Flyway": [
+          94,
+          106,
+          158,
+          159,
+          161,
+          194,
+          195,
+          246
+        ],
+        "source-reading/schema": [
+          148
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/verify_worker_concurrency.py",
+      "dependencies": {
+        "Maven/Flyway": [
+          1,
+          42,
+          56,
+          59,
+          60,
+          69,
+          70
+        ],
+        "source-reading/schema": [
+          43,
+          44
+        ],
+        "Java/JVM": [
+          54
+        ]
+      }
+    },
+    {
+      "path": "algorithm/web/verify_workflow.py",
+      "dependencies": {
+        "Tika": [
+          197
+        ]
+      }
+    },
+    {
+      "path": "deploy/workflow-migrations/pom.xml",
+      "dependencies": {
+        "Maven/Flyway": [
+          12,
+          13,
+          16,
+          17,
+          18,
+          31,
+          32
+        ],
+        "source-reading/schema": [
+          20,
+          21
+        ]
+      }
+    },
+    {
+      "path": "deploy/workflow-migrations/README.md",
+      "dependencies": {
+        "Maven/Flyway": [
+          1,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          19,
+          21
+        ],
+        "Java/JVM": [
+          8,
+          9
+        ]
+      }
+    },
+    {
+      "path": "docs/fastapi-baseline.md",
+      "dependencies": {
+        "Maven/Flyway": [
+          47,
+          54,
+          56,
+          57,
+          76
+        ],
+        "source-reading/schema": [
+          54,
+          56
+        ],
+        "Java/JVM": [
+          57,
+          58
+        ]
+      }
+    },
+    {
+      "path": "docs/flyway-migration-history-plan.md",
+      "dependencies": {
+        "Maven/Flyway": [
+          1,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "path": "docs/migration-decisions.md",
+      "dependencies": {
+        "Java/JVM": [
+          19,
+          29,
+          45,
+          46,
+          57,
+          102,
+          104,
+          116,
+          136,
+          146,
+          172,
+          184,
+          291,
+          292,
+          293,
+          294,
+          328,
+          352,
+          360,
+          377,
+          378,
+          544
+        ],
+        "Maven/Flyway": [
+          191,
+          195,
+          404,
+          414,
+          428,
+          588
+        ],
+        "source-reading/schema": [
+          299,
+          340,
+          404,
+          414,
+          491,
+          546,
+          615
+        ]
+      }
+    },
+    {
+      "path": "pom.xml",
+      "dependencies": {
+        "Maven/Flyway": [
+          83,
+          84,
+          87,
+          88
+        ],
+        "Tika": [
+          191,
+          193,
+          194,
+          198,
+          199
+        ]
+      }
+    },
+    {
+      "path": "README.md",
+      "dependencies": {
+        "source-reading/schema": [
+          59,
+          165
+        ],
+        "Maven/Flyway": [
+          66,
+          67,
+          103,
+          206
+        ]
+      }
+    }
+  ]
+}

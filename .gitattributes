@@ -8,3 +8,7 @@
 *.parquet -text
 *.json -text
 algorithm/eye_diagnosis_p1/tests/fixtures/** -text
+
+# Database handoff evidence preserves captured bytes, including CRLF.
+deploy/python-migrations/legacy/** -text
+deploy/python-migrations/*.sql -text

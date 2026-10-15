@@ -1,0 +1,535 @@
+{
+  "diagnosisGraph": {
+    "version": "upload-final-clinical-review-v6",
+    "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+    "actionVersion": "upload-final-clinical-review-v6",
+    "export": {
+      "nodes": [
+        {
+          "id": "__start__",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "__start__"
+          }
+        },
+        {
+          "id": "validateImage",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "validateImage"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "inference",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "inference"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "imageQuality",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "imageQuality"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "qualityReview",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "qualityReview"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "visionExposure",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "visionExposure"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "clinicalRiskPrecheck",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "clinicalRiskPrecheck"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "clinicalRiskFinal",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "clinicalRiskFinal"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "explanationDraft",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "explanationDraft"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "explanationClaimValidation",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "explanationClaimValidation"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "explanationPublication",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "explanationPublication"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "finalClinicalReview",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "finalClinicalReview"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "evidenceRetrieval",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "evidenceRetrieval"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "evidenceRewrite",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "evidenceRewrite"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "evidenceValidation",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "evidenceValidation"
+          },
+          "metadata": {
+            "__interrupt": "after"
+          }
+        },
+        {
+          "id": "__end__"
+        }
+      ],
+      "edges": [
+        {
+          "source": "__start__",
+          "target": "validateImage"
+        },
+        {
+          "source": "clinicalRiskFinal",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "clinicalRiskFinal",
+          "target": "explanationDraft",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "clinicalRiskPrecheck",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "clinicalRiskPrecheck",
+          "target": "evidenceRetrieval",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "evidenceRetrieval",
+          "target": "evidenceRewrite",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "evidenceRetrieval",
+          "target": "evidenceValidation",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "evidenceRewrite",
+          "target": "evidenceValidation"
+        },
+        {
+          "source": "evidenceValidation",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "evidenceValidation",
+          "target": "clinicalRiskFinal",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "explanationClaimValidation",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "explanationClaimValidation",
+          "target": "explanationPublication",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "explanationDraft",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "explanationDraft",
+          "target": "explanationClaimValidation",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "explanationPublication",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "explanationPublication",
+          "target": "finalClinicalReview",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "imageQuality",
+          "target": "__end__",
+          "data": "REJECTED",
+          "conditional": true
+        },
+        {
+          "source": "imageQuality",
+          "target": "qualityReview",
+          "data": "WAITING_HUMAN_REVIEW",
+          "conditional": true
+        },
+        {
+          "source": "imageQuality",
+          "target": "visionExposure",
+          "data": "RUNNING",
+          "conditional": true
+        },
+        {
+          "source": "inference",
+          "target": "__end__",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "inference",
+          "target": "imageQuality",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "qualityReview",
+          "target": "__end__",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "qualityReview",
+          "target": "visionExposure",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "validateImage",
+          "target": "__end__",
+          "data": "True",
+          "conditional": true
+        },
+        {
+          "source": "validateImage",
+          "target": "inference",
+          "data": "False",
+          "conditional": true
+        },
+        {
+          "source": "visionExposure",
+          "target": "__end__",
+          "data": "COMPLETED_LIMITED",
+          "conditional": true
+        },
+        {
+          "source": "visionExposure",
+          "target": "clinicalRiskPrecheck",
+          "data": "RUNNING",
+          "conditional": true
+        },
+        {
+          "source": "visionExposure",
+          "target": "finalClinicalReview",
+          "data": "WAITING_HUMAN_REVIEW",
+          "conditional": true
+        },
+        {
+          "source": "finalClinicalReview",
+          "target": "__end__"
+        }
+      ]
+    }
+  },
+  "chatSupplementGraph": {
+    "version": "chat-supplement-v1",
+    "export": {
+      "nodes": [
+        {
+          "id": "__start__",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "__start__"
+          }
+        },
+        {
+          "id": "waitForDescription",
+          "type": "runnable",
+          "data": {
+            "id": [
+              "langgraph",
+              "_internal",
+              "_runnable",
+              "RunnableCallable"
+            ],
+            "name": "waitForDescription"
+          }
+        },
+        {
+          "id": "__end__"
+        }
+      ],
+      "edges": [
+        {
+          "source": "__start__",
+          "target": "waitForDescription"
+        },
+        {
+          "source": "waitForDescription",
+          "target": "__end__"
+        }
+      ]
+    }
+  },
+  "dataClasses": [
+    {
+      "name": "traditional-saved",
+      "stableId": "9007199254740995",
+      "owner": "9007199254740993",
+      "invariants": [
+        "AI provenance remains frozen",
+        "doctor review stays independent",
+        "no guessed workflow link"
+      ]
+    },
+    {
+      "name": "python-incomplete",
+      "stableId": "synthetic-python-workflow",
+      "owner": "7",
+      "invariants": [
+        "input bytes and digest",
+        "checkpoint ID and pending writes",
+        "graph/action token",
+        "approval version and audit remain unchanged"
+      ]
+    },
+    {
+      "name": "java-incomplete",
+      "stableId": "synthetic-java-task",
+      "owner": "8",
+      "invariants": [
+        "preserve raw legacy state",
+        "no deserialize/resume",
+        "read-only history",
+        "rebuild requires new explicit consent; no inherited review or save approval"
+      ]
+    }
+  ],
+  "waitClasses": [
+    {
+      "name": "doctor-quality",
+      "fixture": "quality",
+      "owner": "7",
+      "doctor": "10",
+      "authorization": "doctor decision never saves diagnosis"
+    },
+    {
+      "name": "doctor-final",
+      "fixture": "final",
+      "owner": "7",
+      "doctor": "10",
+      "authorization": "final doctor review never supplies user save consent"
+    },
+    {
+      "name": "save-confirmation",
+      "fixture": "approve/reject/expired",
+      "owner": "7",
+      "authorization": "only current unexpired explicitly approved snapshot can save once"
+    },
+    {
+      "name": "chat-supplement",
+      "fixture": "supplement",
+      "owner": "7",
+      "authorization": "independent graph version; reply cannot authorize clinical writes"
+    }
+  ],
+  "restoreConstraints": [
+    "Exported topology plus action version determines diagnosis hash; paths are not compatibility evidence.",
+    "Checkpoint bytes and pending writes must be preserved exactly; graph changes require explicit compatibility policy.",
+    "Chat supplement has its own graphVersion check, independent of diagnosis.",
+    "Synthetic external identity/model/retrieval; real MySQL and API/Worker processes verified separately."
+  ]
+}
