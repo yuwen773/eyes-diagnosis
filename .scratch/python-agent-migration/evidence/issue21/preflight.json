@@ -1,0 +1,237 @@
+{
+  "timestampUtc": "2026-10-15T08:11:01.673196+00:00",
+  "sourceCommit": "f7cd13de6f5d627c8c0cf1b8db072243d7f3ffbe",
+  "worktree": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite",
+  "status": "BLOCKED",
+  "scope": "local model prerequisites; no real model or clinical execution",
+  "python": "3.11.17",
+  "modelConfig": {
+    "model_weights_path": "",
+    "model_weights_sha256": "",
+    "model_registry_path": "checkpoints/registry.json",
+    "model_calibration_path": "configs/calibration/efficientnet_b4_temperature.json",
+    "model_version": "efficientnet-b4@1.0.0",
+    "preprocess_version": "v1",
+    "inference_policy_version": "medical-safety-v3-quality-observe"
+  },
+  "materials": {
+    "registry": {
+      "path": "checkpoints\\registry.json",
+      "exists": true,
+      "sha256": "dcaf1c84d363c3467803f851e4f86f97cdb245e7816c04211cd9e3c1016107d9",
+      "payload": {
+        "model_version": "efficientnet-b4@1.0.0",
+        "training_data_version": "frozen_validation_manifest.json",
+        "preprocess_version": "v1",
+        "allow_sha256": []
+      }
+    },
+    "calibration": {
+      "path": "configs\\calibration\\efficientnet_b4_temperature.json",
+      "exists": true,
+      "sha256": "31cdc4da9b0530553cf63dc60da600239f2f9ba606899fa7360aea8a25938fad",
+      "payload": {
+        "model_version": "efficientnet-b4@1.0.0",
+        "temperature": 1.0,
+        "status": "NOT_CALIBRATED",
+        "trained_on": "frozen_validation_manifest.json"
+      }
+    }
+  },
+  "runtimePackages": {
+    "torch": null,
+    "torchvision": null,
+    "numpy": "2.4.6",
+    "Pillow": "12.3.0"
+  },
+  "providerEnvironmentPresent": {
+    "DASHSCOPE_API_KEY": false,
+    "COS_SECRET_ID": false,
+    "COS_SECRET_KEY": false
+  },
+  "providerEnvironmentScope": "current process only; private files and external secret stores not inspected",
+  "artifactInventory": [
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\checkpoints",
+      "fileCount": 1,
+      "extensionCounts": {
+        ".json": 1
+      },
+      "weightCandidates": [],
+      "files": [
+        "checkpoints\\registry.json"
+      ]
+    },
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\configs",
+      "fileCount": 1,
+      "extensionCounts": {
+        ".json": 1
+      },
+      "weightCandidates": [],
+      "files": [
+        "configs\\calibration\\efficientnet_b4_temperature.json"
+      ]
+    },
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\datasets",
+      "fileCount": 1,
+      "extensionCounts": {
+        ".json": 1
+      },
+      "weightCandidates": [],
+      "files": [
+        "datasets\\frozen_validation_manifest.example.json"
+      ]
+    },
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\algorithm\\checkpoints",
+      "fileCount": 1,
+      "extensionCounts": {
+        ".json": 1
+      },
+      "weightCandidates": [],
+      "files": [
+        "checkpoints\\registry.json"
+      ]
+    },
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\algorithm\\configs",
+      "fileCount": 1,
+      "extensionCounts": {
+        ".json": 1
+      },
+      "weightCandidates": [],
+      "files": [
+        "configs\\calibration\\efficientnet_b4_temperature.json"
+      ]
+    },
+    {
+      "directory": "D:\\Work\\code\\eye-diagnosis\\algorithm\\datasets",
+      "fileCount": 12549,
+      "extensionCounts": {
+        "": 1,
+        ".docx": 1,
+        ".ds_store": 1,
+        ".jpg": 12542,
+        ".json": 1,
+        ".xlsx": 3
+      },
+      "weightCandidates": []
+    }
+  ],
+  "engineLoad": {
+    "status": "BLOCKED",
+    "reason": "MODEL_WEIGHTS_PATH is required; model weights are not configured",
+    "exceptionType": "InferenceUnavailable"
+  },
+  "preservation": {
+    "javaAndPomDiffFromStart": "",
+    "specDiffFromStart": ""
+  },
+  "priorEvidence": {
+    "issue19": {
+      "resultPath": ".scratch\\python-agent-migration\\evidence\\issue19\\final\\results.json",
+      "resultSha256": "197edd9f7ecb23020d31b4a4d546c52133ba091bb5c2b3735868e96fa1f8bb61",
+      "timestampUtc": "2026-10-14T11:33:21.265953+00:00",
+      "status": "BLOCKED",
+      "gates": {
+        "infrastructure": {
+          "status": "PASS",
+          "detail": "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22"
+        },
+        "realEmbedding": {
+          "status": "BLOCKED",
+          "detail": "Real DashScope preflight returned HTTP 401; controlled vectors only"
+        },
+        "realClassifier": {
+          "status": "NOT_VERIFIED",
+          "detail": "Deterministic classifier only; no model weight acceptance"
+        },
+        "realLLM": {
+          "status": "NOT_VERIFIED",
+          "detail": "Deterministic chat/explanation only"
+        },
+        "realCOS": {
+          "status": "NOT_VERIFIED",
+          "detail": "Local file adapter only"
+        },
+        "clinical": {
+          "status": "NOT_VERIFIED",
+          "detail": "Synthetic accounts and documents; no clinical acceptance"
+        },
+        "legacyJavaReader": {
+          "status": "BLOCKED",
+          "detail": "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved"
+        },
+        "orchestration": {
+          "status": "PASS",
+          "detail": "Production API/MySQL/Worker/graph with deterministic classification and LLM"
+        },
+        "mysqlSemantics": {
+          "status": "PASS",
+          "detail": "Real MySQL subprocess competition, leases, fencing, version conflicts and durable restart suites"
+        }
+      },
+      "sourceManifestFileCount": 290,
+      "sourceManifestMismatches": [
+        "algorithm/web/tests/test_nginx_routing.py",
+        "algorithm/web/tests/test_real_services_runner.py",
+        "algorithm/web/verify_real_services.py"
+      ],
+      "rerunThisTicket": false
+    },
+    "issue20": {
+      "resultPath": ".scratch\\python-agent-migration\\evidence\\issue20\\local\\results.json",
+      "resultSha256": "bcab0739e1c1af696f4ae20b6aab7461667b69c8081ad0d17db853122a709371",
+      "timestampUtc": "2026-10-15T07:53:51.405637+00:00",
+      "status": "BLOCKED",
+      "gates": {
+        "infrastructure": {
+          "status": "PASS",
+          "detail": "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22"
+        },
+        "realEmbedding": {
+          "status": "BLOCKED",
+          "detail": "DASHSCOPE_API_KEY missing or controlled mode requested; controlled vectors only"
+        },
+        "realClassifier": {
+          "status": "NOT_VERIFIED",
+          "detail": "Deterministic classifier only; no model weight acceptance"
+        },
+        "realLLM": {
+          "status": "NOT_VERIFIED",
+          "detail": "Deterministic chat/explanation only"
+        },
+        "realCOS": {
+          "status": "NOT_VERIFIED",
+          "detail": "Local file adapter only"
+        },
+        "clinical": {
+          "status": "NOT_VERIFIED",
+          "detail": "Synthetic accounts and documents; no clinical acceptance"
+        },
+        "cutover": {
+          "status": "PASS",
+          "detail": "Isolated real Nginx/MySQL/Java/API/Worker; controlled models; pending save/reviews preserved; browser exercised"
+        },
+        "legacyJavaReader": {
+          "status": "BLOCKED",
+          "detail": "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved"
+        },
+        "orchestration": {
+          "status": "PASS",
+          "detail": "Production API/MySQL/Worker/graph with deterministic classification and LLM"
+        },
+        "mysqlSemantics": {
+          "status": "PASS",
+          "detail": "Real MySQL subprocess competition, leases, fencing, version conflicts and durable restart suites"
+        }
+      },
+      "sourceManifestFileCount": 504,
+      "sourceManifestMismatches": [],
+      "rerunThisTicket": false
+    }
+  },
+  "sampleAvailability": "Image files exist in main checkout datasets; no acceptance case selection, labels, provenance or usage approval verified; not executed"
+}

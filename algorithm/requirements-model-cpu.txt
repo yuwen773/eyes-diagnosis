@@ -1,0 +1,8 @@
+# Windows x64 / Python 3.11 acceptance environment; no CUDA claim.
+-r requirements-web.lock
+torch==2.14.1+cpu
+torchvision==0.29.1+cpu
+pandas==3.0.6
+matplotlib==3.11.2
+scikit-learn==1.9.1
+seaborn==0.13.2

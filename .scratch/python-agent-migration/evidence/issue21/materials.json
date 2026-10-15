@@ -1,0 +1,227 @@
+{
+  "files": [
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\models\\efficientnet_b4_20250330_211341\\best_acc_eye_disease_model.pth",
+      "bytes": 74648175,
+      "sha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\models\\efficientnet_b4_20250330_211341\\best_eye_disease_model.pth",
+      "bytes": 74648175,
+      "sha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\models\\efficientnet_b4_20250330_211341\\training_summary.json",
+      "bytes": 339,
+      "sha256": "36ff5755d7b32bbb6de294c1cad30ee556f0344d246516a835ee487f3a71c520"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\models\\efficientnet_b4_20250330_211341\\training_curves.png",
+      "bytes": 49353,
+      "sha256": "1cf1140390c68a953da598e333f5fd34352085f530b1c0e002439007974ba214"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\artifacts\\p1_v1\\split_summary_v1.json",
+      "bytes": 3488,
+      "sha256": "50a36376b7dfc3261bae74d92ce6503adce2078b46fcdb9b788876eea00d0891"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\artifacts\\p1_v1\\patient_manifest_v1.parquet",
+      "bytes": 66472,
+      "sha256": "aab4831ca7d293a109520a2b6dab56483376559f000490ed12e61b82320ac90d"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\artifacts\\p1_v1\\split_assignment_v1.csv",
+      "bytes": 28197,
+      "sha256": "8effe740a26caf369868076bf4d4b5b4c8cdab75826caa159628f902f7362c94"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\artifacts\\p1_v1\\fold_assignment_v1.csv",
+      "bytes": 18702,
+      "sha256": "989d5dc95d8cfd31f715cd25dacd8cfffd2acd34a721eeb038aac04f37aa8a59"
+    },
+    {
+      "path": "D:\\Work\\code\\eye-diagnosis\\algorithm\\artifacts\\p1_v1\\_SUPERSEDED.md",
+      "bytes": 2284,
+      "sha256": "ea77b65d898a1891c0836916df3dad1a4f386977e63bacfc980553dc8e53f2e8"
+    }
+  ],
+  "trainingSummary": {
+    "model": "efficientnet_b4",
+    "batch_size": 12,
+    "epochs": 25,
+    "learning_rate": 0.0005,
+    "use_full_data": false,
+    "sample_ratio": 0.5,
+    "freeze_feature_extraction": false,
+    "test_accuracy": 0.6342123056118999,
+    "best_model_path": "models/efficientnet_b4_20250330_211341/best_eye_disease_model.pth"
+  },
+  "frozenSplitSummary": {
+    "seed": 42,
+    "test_frac": 0.15,
+    "n_patients_total": 2885,
+    "test_count": 433,
+    "dev_count": 2452,
+    "class_order": [
+      "N",
+      "D",
+      "G",
+      "C",
+      "A",
+      "H",
+      "M",
+      "O"
+    ],
+    "per_split": {
+      "test": {
+        "n_patients": 433,
+        "label_counts": {
+          "N": 169,
+          "D": 79,
+          "G": 32,
+          "C": 32,
+          "A": 24,
+          "H": 12,
+          "M": 26,
+          "O": 143
+        },
+        "label_rates": {
+          "N": 0.3903002309468822,
+          "D": 0.18244803695150116,
+          "G": 0.07390300230946882,
+          "C": 0.07390300230946882,
+          "A": 0.05542725173210162,
+          "H": 0.02771362586605081,
+          "M": 0.06004618937644342,
+          "O": 0.3302540415704388
+        },
+        "multilabel_patients": 79,
+        "age_min": 1,
+        "age_max": 91,
+        "age_mean": 57.3094688221709,
+        "age_median": 59.0,
+        "sex_distribution": {
+          "Male": 235,
+          "Female": 198
+        }
+      },
+      "dev": {
+        "n_patients": 2452,
+        "label_counts": {
+          "N": 967,
+          "D": 446,
+          "G": 183,
+          "C": 179,
+          "A": 137,
+          "H": 65,
+          "M": 148,
+          "O": 821
+        },
+        "label_rates": {
+          "N": 0.3943719412724307,
+          "D": 0.18189233278955955,
+          "G": 0.07463295269168026,
+          "C": 0.07300163132137032,
+          "A": 0.05587275693311582,
+          "H": 0.026508972267536703,
+          "M": 0.06035889070146819,
+          "O": 0.33482871125611746
+        },
+        "multilabel_patients": 471,
+        "age_min": 1,
+        "age_max": 89,
+        "age_mean": 58.75570962479608,
+        "age_median": 60.0,
+        "sex_distribution": {
+          "Male": 1291,
+          "Female": 1161
+        }
+      }
+    },
+    "label_cooccurrence": {
+      "label_N": {
+        "label_N": 1136,
+        "label_D": 0,
+        "label_G": 0,
+        "label_C": 0,
+        "label_A": 0,
+        "label_H": 0,
+        "label_M": 0,
+        "label_O": 0
+      },
+      "label_D": {
+        "label_N": 0,
+        "label_D": 525,
+        "label_G": 32,
+        "label_C": 38,
+        "label_A": 14,
+        "label_H": 25,
+        "label_M": 19,
+        "label_O": 290
+      },
+      "label_G": {
+        "label_N": 0,
+        "label_D": 32,
+        "label_G": 215,
+        "label_C": 3,
+        "label_A": 11,
+        "label_H": 8,
+        "label_M": 7,
+        "label_O": 49
+      },
+      "label_C": {
+        "label_N": 0,
+        "label_D": 38,
+        "label_G": 3,
+        "label_C": 211,
+        "label_A": 0,
+        "label_H": 2,
+        "label_M": 0,
+        "label_O": 30
+      },
+      "label_A": {
+        "label_N": 0,
+        "label_D": 14,
+        "label_G": 11,
+        "label_C": 0,
+        "label_A": 161,
+        "label_H": 3,
+        "label_M": 3,
+        "label_O": 16
+      },
+      "label_H": {
+        "label_N": 0,
+        "label_D": 25,
+        "label_G": 8,
+        "label_C": 2,
+        "label_A": 3,
+        "label_H": 77,
+        "label_M": 0,
+        "label_O": 12
+      },
+      "label_M": {
+        "label_N": 0,
+        "label_D": 19,
+        "label_G": 7,
+        "label_C": 0,
+        "label_A": 3,
+        "label_H": 0,
+        "label_M": 174,
+        "label_O": 44
+      },
+      "label_O": {
+        "label_N": 0,
+        "label_D": 290,
+        "label_G": 49,
+        "label_C": 30,
+        "label_A": 16,
+        "label_H": 12,
+        "label_M": 44,
+        "label_O": 964
+      }
+    },
+    "manifest_sha256": "f84182150b8d580f76f1368f5561ad34b2bc536cdad629eef4b0e340a8dd5fc2"
+  },
+  "provenanceLimit": "Historical checkpoint and later frozen split are separate artifacts; no evidence binds this 2025 checkpoint to the repaired 2026 split or 5-fold OOF. Registry training_data_version is a preexisting identifier, not verified training lineage."
+}

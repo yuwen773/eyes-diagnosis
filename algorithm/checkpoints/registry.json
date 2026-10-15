@@ -2,5 +2,7 @@
   "model_version": "efficientnet-b4@1.0.0",
   "training_data_version": "frozen_validation_manifest.json",
   "preprocess_version": "v1",
-  "allow_sha256": []
+  "allow_sha256": [
+    "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+  ]
 }

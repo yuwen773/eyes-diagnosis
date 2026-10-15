@@ -1,0 +1,198 @@
+{
+  "sourceCommit": "f7cd13de6f5d627c8c0cf1b8db072243d7f3ffbe",
+  "web": {
+    "tests": 755,
+    "passed": 727,
+    "skipped": 28,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 661.643,
+    "skipReasons": {
+      "isolated real MySQL URL not supplied": 1,
+      "CUTOVER_NGINX required for real proxy tests": 4,
+      "Opt-in isolated real MySQL acceptance": 18,
+      "Opt-in isolated real MySQL handoff/restart acceptance": 4,
+      "SKIP LOCKED requires real MySQL": 1
+    },
+    "skippedTests": [
+      {
+        "test": "web.tests.test_controlled_evidence::test_private_revocation_with_two_mysql_repeatable_read_connections",
+        "reason": "isolated real MySQL URL not supplied"
+      },
+      {
+        "test": "web.tests.test_cutover_proxy::test_independent_routes_retain_python_state_and_cookie[java-java-pause]",
+        "reason": "CUTOVER_NGINX required for real proxy tests"
+      },
+      {
+        "test": "web.tests.test_cutover_proxy::test_independent_routes_retain_python_state_and_cookie[python-java-pause]",
+        "reason": "CUTOVER_NGINX required for real proxy tests"
+      },
+      {
+        "test": "web.tests.test_cutover_proxy::test_independent_routes_retain_python_state_and_cookie[python-python-active]",
+        "reason": "CUTOVER_NGINX required for real proxy tests"
+      },
+      {
+        "test": "web.tests.test_cutover_proxy::test_independent_routes_retain_python_state_and_cookie[java-python-drain]",
+        "reason": "CUTOVER_NGINX required for real proxy tests"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[empty]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[9]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[22]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_legacy_states_are_rejected_before_any_write[v8-V8_CHECKSUM]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_legacy_states_are_rejected_before_any_write[checksum-LEGACY_CHECKSUM]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_legacy_states_are_rejected_before_any_write[failed-FAILED_LEGACY_HISTORY]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_legacy_states_are_rejected_before_any_write[unknown-UNKNOWN_LEGACY_HISTORY]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_legacy_states_are_rejected_before_any_write[schema-SCHEMA]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_independent_increment_runs_once_without_changing_legacy_history",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_failed_nontransactional_ddl_is_not_replayed_or_marked_success",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_concurrent_upgrader_cannot_write",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_empty_python_history_is_an_interrupted_registration",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_unknown_schema_objects_are_not_treated_as_an_empty_database",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_applied_handoff_still_rejects_changed_original_history",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_interrupted_baseline_cannot_register_success_or_replay",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_stock_api_public_business_read_works_without_jvm[empty]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_stock_api_public_business_read_works_without_jvm[9]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_database_handoff::test_stock_api_public_business_read_works_without_jvm[22]",
+        "reason": "Opt-in isolated real MySQL acceptance"
+      },
+      {
+        "test": "web.tests.test_handoff_recovery::test_four_human_waits_resume_after_database_handoff[quality]",
+        "reason": "Opt-in isolated real MySQL handoff/restart acceptance"
+      },
+      {
+        "test": "web.tests.test_handoff_recovery::test_four_human_waits_resume_after_database_handoff[final]",
+        "reason": "Opt-in isolated real MySQL handoff/restart acceptance"
+      },
+      {
+        "test": "web.tests.test_handoff_recovery::test_four_human_waits_resume_after_database_handoff[save]",
+        "reason": "Opt-in isolated real MySQL handoff/restart acceptance"
+      },
+      {
+        "test": "web.tests.test_handoff_recovery::test_four_human_waits_resume_after_database_handoff[supplement]",
+        "reason": "Opt-in isolated real MySQL handoff/restart acceptance"
+      },
+      {
+        "test": "web.tests.test_worker_concurrency::test_mysql_claim_skips_locked_job_and_advances_other_task",
+        "reason": "SKIP LOCKED requires real MySQL"
+      }
+    ]
+  },
+  "frontend": {
+    "files": 12,
+    "passed": 47,
+    "typecheck": "PASS",
+    "build": "PASS; existing chunk-size warnings"
+  },
+  "mypy": {
+    "deploymentFiles": 4,
+    "modelEvidenceScript": 2,
+    "status": "PASS; check-untyped-defs"
+  },
+  "dependencies": {
+    "web": 133,
+    "modelCPU": 158,
+    "status": "PASS; uv pip check"
+  },
+  "targetedModelRegression": {
+    "passed": 59,
+    "status": "PASS; after registry allow-list update"
+  },
+  "realModel": {
+    "scope": "original strict load and five images through production inference boundary",
+    "result": "model-smoke.json",
+    "status": "PASS",
+    "endToEnd": "NOT_VERIFIED",
+    "workflowSmoke": {
+      "status": "PASS",
+      "result": "model-workflow.json",
+      "scope": "HTTP/Worker/production graph; real weights/images; SQLite and Java identity doubles",
+      "workflows": 5,
+      "stop": "WAITING_HUMAN_REVIEW",
+      "formalDiagnosisCount": 0,
+      "realParticipantActions": false
+    }
+  },
+  "realInfrastructure": {
+    "rerunThisTicket": false,
+    "evidence": "../issue20/local/results.json"
+  },
+  "overall": "BLOCKED",
+  "notVerified": [
+    "real-embedding",
+    "real-LLM",
+    "real-COS",
+    "real-model-full-workflow",
+    "real-user-and-doctor-actions",
+    "clinical",
+    "production-hot-reload",
+    "real-legacy-executor-handoff"
+  ],
+  "modelLock": {
+    "path": "algorithm/requirements-model-cpu.lock",
+    "hashPinned": true,
+    "platform": "Windows x64 / Python 3.11 / CPU",
+    "sync": "PASS; require-hashes"
+  },
+  "review": {
+    "standardsFindings": 0,
+    "specImplementationFindings": 0,
+    "specAcceptanceGaps": 3
+  },
+  "verificationCLIFailureProtection": {
+    "scripts": 2,
+    "negativeExit": 1,
+    "oldPassReplacedBy": "NOT_VERIFIED"
+  }
+}

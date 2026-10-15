@@ -271,7 +271,7 @@ def test_registry_rejection_is_wrapped_as_inference_unavailable():
         weights = _Path(handle.name)
         weights.write_bytes(b"x" * 128)
 
-    # The checked-in registry has an empty allow_sha256, so this must reject.
+    # Arbitrary bytes are not an approved checkpoint, so this must reject.
     engine = InferenceEngine(
         WebConfig(
             model_weights_path=str(weights),

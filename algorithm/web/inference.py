@@ -239,11 +239,10 @@ class InferenceEngine:
     def _resolve_provenance(weights_path: Path, digest: str, config: WebConfig):
         """``ModelRegistry.resolve_current`` -- fail-closed on both counts.
 
-        Note the registry's allow-list is currently empty
-        (``checkpoints/registry.json``), so even once weights exist the
-        registry check rejects them until a training run populates
-        ``allow_sha256``. That is correct behaviour, not a gap in the port --
-        see ruling 12 / the R6 note in docs/migration-decisions.md.
+        The registry's allow-list (``checkpoints/registry.json``) pins approved
+        checkpoint digests. A present but unregistered artifact remains
+        unavailable; registration does not establish calibration or clinical
+        validation. See ruling 12 / the R6 note in docs/migration-decisions.md.
         """
         from eye_diagnosis.registry import ModelRegistry
 

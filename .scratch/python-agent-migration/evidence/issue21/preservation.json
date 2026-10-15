@@ -1,0 +1,7 @@
+{
+  "baseline": "f7cd13de6f5d627c8c0cf1b8db072243d7f3ffbe",
+  "javaPomSpecUnchanged": true,
+  "mainCheckoutRegistrySha256": "38035046be93c08ff7154ee4c2514bb91a32bcc637767fb7c857282cec26e993",
+  "sourcesAndArtifactsHashed": 523,
+  "excluded": "unrelated preexisting changes, raw images and SQLite fixture data; no production deployment"
+}

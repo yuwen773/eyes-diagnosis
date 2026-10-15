@@ -1,0 +1,182 @@
+{
+  "specSha256": "2c2a75053e31e3e3c10700344e60a0c405af8af600eaad41b571c8b29c5d61af",
+  "overall": "BLOCKED",
+  "criteria": [
+    {
+      "ac": "AC-01",
+      "criterion": "聊天和上传分别发起任务，均经同一工作流服务；同幂等请求只返回同一任务，页面查询不触发新推理。",
+      "controlledRegressionFiles": "`test_workflow.py`, `test_chat_workflow.py`",
+      "priorEvidence": "E20 上传/图；[聊天绑定 UI](chat-workflow-binding.md)",
+      "remainingAcceptance": "真实模型经聊天与上传共享原任务、幂等与只读查询演示",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-02",
+      "criterion": "无登录、跨用户会话、跨用户任务、跨用户审批和越权工具调用均被拒绝；不能靠传入 userId 扩权。",
+      "controlledRegressionFiles": "`test_chat.py`, `test_quality_review.py`, `test_save_confirmation.py`, `test_mcp_chat.py`, `test_history_retrieval.py`",
+      "priorEvidence": "E20 Java 身份、用户权限、审批冲突",
+      "remainingAcceptance": "真实模型流程的跨用户/越权复验",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-03",
+      "criterion": "当前会话第二轮能使用已提供信息；另一会话的症状不自动进入本次病例，历史查询显示可追溯来源。",
+      "controlledRegressionFiles": "`test_chat.py`, `test_history_retrieval.py`",
+      "priorEvidence": "E20 历史工具；[会话 UI](chat-session-memory.md)",
+      "remainingAcceptance": "真实 LLM 两轮与跨会话事实隔离；历史查询 UI 未验",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-04",
+      "criterion": "图片通过、拒绝与需质量复核分别走正确路径；质量和影像节点共享同一已提交推理包。",
+      "controlledRegressionFiles": "`test_workflow_inference.py`, `test_quality_review.py`",
+      "priorEvidence": "E20 质量复核；[质量 UI](quality-review-workflow.md)；真实模型五图进入原图质量复核等待",
+      "remainingAcceptance": "PASS/REJECT 两类真实样本路径及共享推理包的完整真实服务流程",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-05",
+      "criterion": "缺权重、来源校验失败或推理异常不产生成功诊断；技术失败不伪装成安全拒绝或医生复核。",
+      "controlledRegressionFiles": "`test_inference.py`, `test_workflow_inference.py`, `test_worker_explanation_failure.py`, `test_mcp_image.py`",
+      "priorEvidence": "E20 缺模型旧同步失败保护；模型 SHA 实测",
+      "remainingAcceptance": "工程失败保护有覆盖；不由此推导真实诊断成功",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-06",
+      "criterion": "检索仅使用允许的可见性、审核状态和受控元数据；不足时至多改写一次，范围不扩大。",
+      "controlledRegressionFiles": "`test_controlled_evidence.py`",
+      "priorEvidence": "E20 元数据/范围/撤回；[受控资料](controlled-reference-evidence.md)",
+      "remainingAcceptance": "真实 embedding 的受控范围召回与一次改写",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-07",
+      "criterion": "来源不合格、声明校验拒绝和解释扣留均不会发布草稿；COMPLETED 与 COMPLETED_LIMITED 符合解释不变量。",
+      "controlledRegressionFiles": "`test_validated_explanation.py`, `test_final_clinical_review.py`",
+      "priorEvidence": "E20 来源撤回/受控解释；[解释 UI](validated-explanation-workflow.md)",
+      "remainingAcceptance": "真实 LLM 来源/声明门及真实模型合法发布终态",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-08",
+      "criterion": "补充输入中断真实等待用户；再次提交后恢复同一交互与任务，不重复处理原输入直至循环耗尽。",
+      "controlledRegressionFiles": "`test_supplement.py`, `test_human_wait_restart.py`",
+      "priorEvidence": "E20 补充等待；[补充 UI](chat-supplement-resume.md)",
+      "remainingAcceptance": "真实用户补充、相同交互与任务恢复演示",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-09",
+      "criterion": "用户批准前不执行拟保存操作，拒绝后仍无写入；批准合法且内容版本匹配后只保存一次。",
+      "controlledRegressionFiles": "`test_save_confirmation.py`, `test_tool_writes.py`",
+      "priorEvidence": "E20 本人批准一次保存；[保存 UI](diagnosis-save-confirmation.md)",
+      "remainingAcceptance": "真实模型结果的真实用户拒绝/批准保存",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-10",
+      "criterion": "重复确认、过期批准、修改内容后批准、跨用户批准和恢复后重放均不会导致非法或重复写入。",
+      "controlledRegressionFiles": "`test_save_confirmation.py`, `test_tool_writes.py`, `test_human_wait_restart.py`",
+      "priorEvidence": "E20 版本冲突/重放；保存 UI",
+      "remainingAcceptance": "真实模型完整流程的内容变化、重启后授权重放",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-11",
+      "criterion": "两类医生复核执行各自的决策矩阵；自审、未领取、过期版本和不兼容决策被拒绝；用户确认不能替代复核。",
+      "controlledRegressionFiles": "`test_quality_review.py`, `test_final_clinical_review.py`",
+      "priorEvidence": "E20 真实 Java 医生角色；[最终复核 UI](final-clinical-review-workflow.md)",
+      "remainingAcceptance": "真实模型触发两类复核矩阵、真实医生参与",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-12",
+      "criterion": "服务在任务执行中、等待用户确认和等待医生复核时分别重启；恢复后状态一致、审批仍有效且已完成结果不重复提交。",
+      "controlledRegressionFiles": "`test_workflow.py`, `test_human_wait_restart.py`",
+      "priorEvidence": "E20 真实 MySQL 重启与四类等待保全",
+      "remainingAcceptance": "真实模型在执行中/人工等待时重启的完整演示",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-13",
+      "criterion": "模拟重复任务、租约失效、两个执行者竞争及重试耗尽；过期执行者不能提交，新任务恢复不复制业务路由。",
+      "controlledRegressionFiles": "`test_worker_concurrency.py`",
+      "priorEvidence": "E20 MySQL 竞争、租约、fencing、版本与重试",
+      "remainingAcceptance": "历史基础设施工程证据具备；本票 skip 不算新实测",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-14",
+      "criterion": "实际 SSE 可展示响应和任务事件；断连重连后可从服务端恢复状态，正常结束与错误不会留下虚假的完成界面。",
+      "controlledRegressionFiles": "`test_stream_reconnect.py`, `test_chat.py`",
+      "priorEvidence": "E20 TCP SSE；[断网重连 UI](stream-reconnect.md)",
+      "remainingAcceptance": "真实模型/LLM 下的断流、刷新恢复",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-15",
+      "criterion": "原业务与 Agent 接口契约回归覆盖 HTTP/SSE 真实响应、分页、字段类型、Long/日期格式、权限及旧同步诊断行为。",
+      "controlledRegressionFiles": "`test_contracts.py`, `test_user.py`, `test_news.py`, `test_knowledge.py`, `test_diagnosis.py`, `test_chat.py`, `test_mcp_server.py`",
+      "priorEvidence": "E20 Java/Python Long/日期/分页/注销对照",
+      "remainingAcceptance": "旧同步诊断真实模型成功路径、完整真实依赖契约",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-16",
+      "criterion": "使用真实 .doc 和包含有效表格内容的 .docx，经上传、抽取、入库、embedding 和检索得到有效内容；明确区分空文档与解析失败。",
+      "controlledRegressionFiles": "`test_document_upload.py`, `test_knowledge.py`",
+      "priorEvidence": "E20 二进制 DOC、表格 DOCX 上传；[格式 UI](document-formats.md)",
+      "remainingAcceptance": "真实 embedding 检索与有效语义内容",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-17",
+      "criterion": "真实 MySQL 验证事务、版本冲突、租约与受影响行数语义；不能用 SQLite 通过替代这些验证。",
+      "controlledRegressionFiles": "`test_worker_concurrency.py`, `test_human_wait_restart.py`",
+      "priorEvidence": "E20 真实 MySQL 事务/行数/租约/冲突",
+      "remainingAcceptance": "历史工程实测有据；本票未重新运行 MySQL 专属套件",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-18",
+      "criterion": "真实 Chroma 与 embedding 验证写入、检索、访问范围和引用；过渡阶段额外验证旧 Java 读端兼容。",
+      "controlledRegressionFiles": "`test_controlled_evidence.py`, `test_document_upload.py`",
+      "priorEvidence": "E20 真实 Chroma、受控向量、引用与范围",
+      "remainingAcceptance": "真实 embedding；旧 Java 大 ID 读端仍阻塞",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-19",
+      "criterion": "真实 Java 会话服务验证登录、登出、鉴权转发和失效；数据库升级后 Java 仍能启动，Nginx 无端口冲突或代理回环。",
+      "controlledRegressionFiles": "`test_baseline.py`, `test_nginx_routing.py`, `test_cutover_proxy.py`",
+      "priorEvidence": "E20 原 Java/Redis 会话、Flyway V22、Nginx 与浏览器",
+      "remainingAcceptance": "历史隔离实测有据；未变更 Java 会话归属或放行生产",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-20",
+      "criterion": "从文档可复现启动、健康检查、逐项切流和回退；回退不遗失已创建任务或审批，也不让两套服务同时执行同一任务。",
+      "controlledRegressionFiles": "`test_cutover_proxy.py`, `test_real_services_runner.py`",
+      "priorEvidence": "E20 独立切流/暂停/排空/等待快照；[部署手册](deploy-cutover-rollback.md)",
+      "remainingAcceptance": "完整真实模型运行环境、真实旧执行器交接与生产热切流",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-21",
+      "criterion": "前端端到端覆盖上传、聊天绑定任务、拒绝/批准保存、补充说明、医生复核和刷新恢复；必要改动通过类型检查与构建。",
+      "controlledRegressionFiles": "`test_stream_reconnect.py`, `test_save_confirmation.py`, `test_supplement.py`, `test_final_clinical_review.py`；Vue 组件全量",
+      "priorEvidence": "E20 无网络 mock 的 Chromium 登录/上传/刷新/聊天；其余 UI 文档明确受控",
+      "remainingAcceptance": "一套完整真实模型、真实参与者的核心分支前端端到端",
+      "finalStatus": "NOT_CLOSED"
+    },
+    {
+      "ac": "AC-22",
+      "criterion": "实现具有生产可调用的图注册、任务执行器和完整任务终态；只有单元测试中的图能够运行不算通过。",
+      "controlledRegressionFiles": "`test_foundation.py`, `test_workflow.py`, `test_worker_concurrency.py`",
+      "priorEvidence": "E20 生产注册图、独立 Worker、checkpoint 与合法终态",
+      "remainingAcceptance": "真实权重经生产 HTTP→MySQL→Worker→证据/解释/必要复核到终态",
+      "finalStatus": "NOT_CLOSED"
+    }
+  ]
+}

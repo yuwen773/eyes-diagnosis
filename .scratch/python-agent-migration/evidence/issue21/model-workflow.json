@@ -1,0 +1,222 @@
+{
+  "timestampUtc": "2026-10-15T08:32:01.764726+00:00",
+  "status": "PASS",
+  "finalAcceptance": "BLOCKED",
+  "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531",
+  "scope": "real weights/images, original HTTP/Worker/graph; SQLite and Java identity doubles",
+  "realUserActions": false,
+  "realDoctorActions": false,
+  "samples": [
+    {
+      "file": "1_left.jpg",
+      "workflowId": "e38748dde79241aa977dd133ec54da40",
+      "idempotentUpload": true,
+      "crossUserStatus": 403,
+      "newWorkerDoesNotConsumeWait": true,
+      "view": {
+        "workflowId": "e38748dde79241aa977dd133ec54da40",
+        "status": "WAITING_HUMAN_REVIEW",
+        "workflowVersion": "6",
+        "segment": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "progress": {
+          "current": "qualityReview",
+          "completed": [
+            "validateImage",
+            "inference",
+            "imageQuality"
+          ]
+        },
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "qualityGate": "REVIEW",
+        "qualityReview": {
+          "status": "OPEN",
+          "decisionCode": null,
+          "reasonCode": null
+        },
+        "finalReview": null,
+        "evidence": null,
+        "explanation": {
+          "publicationStatus": "NONE",
+          "snapshotId": null,
+          "revision": null,
+          "validationStatus": null
+        },
+        "resultAvailability": {
+          "patientVisible": false,
+          "doctorReviewRequired": true
+        },
+        "result": null
+      }
+    },
+    {
+      "file": "0_left.jpg",
+      "workflowId": "f6e2dee0e43d40d790ddad2b70c9bcb6",
+      "idempotentUpload": true,
+      "crossUserStatus": 403,
+      "newWorkerDoesNotConsumeWait": true,
+      "view": {
+        "workflowId": "f6e2dee0e43d40d790ddad2b70c9bcb6",
+        "status": "WAITING_HUMAN_REVIEW",
+        "workflowVersion": "6",
+        "segment": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "progress": {
+          "current": "qualityReview",
+          "completed": [
+            "validateImage",
+            "inference",
+            "imageQuality"
+          ]
+        },
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "qualityGate": "REVIEW",
+        "qualityReview": {
+          "status": "OPEN",
+          "decisionCode": null,
+          "reasonCode": null
+        },
+        "finalReview": null,
+        "evidence": null,
+        "explanation": {
+          "publicationStatus": "NONE",
+          "snapshotId": null,
+          "revision": null,
+          "validationStatus": null
+        },
+        "resultAvailability": {
+          "patientVisible": false,
+          "doctorReviewRequired": true
+        },
+        "result": null
+      }
+    },
+    {
+      "file": "2_left.jpg",
+      "workflowId": "61a74026621949698762c1089912136a",
+      "idempotentUpload": true,
+      "crossUserStatus": 403,
+      "newWorkerDoesNotConsumeWait": true,
+      "view": {
+        "workflowId": "61a74026621949698762c1089912136a",
+        "status": "WAITING_HUMAN_REVIEW",
+        "workflowVersion": "6",
+        "segment": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "progress": {
+          "current": "qualityReview",
+          "completed": [
+            "validateImage",
+            "inference",
+            "imageQuality"
+          ]
+        },
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "qualityGate": "REVIEW",
+        "qualityReview": {
+          "status": "OPEN",
+          "decisionCode": null,
+          "reasonCode": null
+        },
+        "finalReview": null,
+        "evidence": null,
+        "explanation": {
+          "publicationStatus": "NONE",
+          "snapshotId": null,
+          "revision": null,
+          "validationStatus": null
+        },
+        "resultAvailability": {
+          "patientVisible": false,
+          "doctorReviewRequired": true
+        },
+        "result": null
+      }
+    },
+    {
+      "file": "13_left.jpg",
+      "workflowId": "15ca651b955b42869900ca72949df68c",
+      "idempotentUpload": true,
+      "crossUserStatus": 403,
+      "newWorkerDoesNotConsumeWait": true,
+      "view": {
+        "workflowId": "15ca651b955b42869900ca72949df68c",
+        "status": "WAITING_HUMAN_REVIEW",
+        "workflowVersion": "6",
+        "segment": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "progress": {
+          "current": "qualityReview",
+          "completed": [
+            "validateImage",
+            "inference",
+            "imageQuality"
+          ]
+        },
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "qualityGate": "REVIEW",
+        "qualityReview": {
+          "status": "OPEN",
+          "decisionCode": null,
+          "reasonCode": null
+        },
+        "finalReview": null,
+        "evidence": null,
+        "explanation": {
+          "publicationStatus": "NONE",
+          "snapshotId": null,
+          "revision": null,
+          "validationStatus": null
+        },
+        "resultAvailability": {
+          "patientVisible": false,
+          "doctorReviewRequired": true
+        },
+        "result": null
+      }
+    },
+    {
+      "file": "30_left.jpg",
+      "workflowId": "e065dd04aede41c29e5f162b8e90ee70",
+      "idempotentUpload": true,
+      "crossUserStatus": 403,
+      "newWorkerDoesNotConsumeWait": true,
+      "view": {
+        "workflowId": "e065dd04aede41c29e5f162b8e90ee70",
+        "status": "WAITING_HUMAN_REVIEW",
+        "workflowVersion": "6",
+        "segment": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "progress": {
+          "current": "qualityReview",
+          "completed": [
+            "validateImage",
+            "inference",
+            "imageQuality"
+          ]
+        },
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "qualityGate": "REVIEW",
+        "qualityReview": {
+          "status": "OPEN",
+          "decisionCode": null,
+          "reasonCode": null
+        },
+        "finalReview": null,
+        "evidence": null,
+        "explanation": {
+          "publicationStatus": "NONE",
+          "snapshotId": null,
+          "revision": null,
+          "validationStatus": null
+        },
+        "resultAvailability": {
+          "patientVisible": false,
+          "doctorReviewRequired": true
+        },
+        "result": null
+      }
+    }
+  ],
+  "formalDiagnosisCount": 0
+}
