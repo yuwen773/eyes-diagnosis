@@ -1,6 +1,7 @@
 import { ref, onUnmounted } from 'vue'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { deleteAgentImage } from '@/api/agentController'
+import { API_BASE_URL } from '@/config/env'
 import type { DiagnosisAction } from '@/api/agentController'
 import type { WorkflowView } from '@/api/workflowController'
 import type { SupplementRequest, SupplementView } from '@/api/supplementController'
@@ -101,8 +102,9 @@ export function useAgentStream() {
     isStreaming.value = true
     abortController = new AbortController()
 
-    const baseUrl = import.meta.env.VITE_APP_API_BASE_URL || 'http://localhost:8081'
-    const url = `${baseUrl}/api/agent/chat/stream`
+    const baseUrl = import.meta.env.VITE_APP_API_BASE_URL
+      ? `${import.meta.env.VITE_APP_API_BASE_URL}/api` : API_BASE_URL
+    const url = `${baseUrl.replace(/\/$/, '')}/agent/chat/stream`
 
     let assistantMsgIndex = -1
     let reasoningMsgIndex = -1

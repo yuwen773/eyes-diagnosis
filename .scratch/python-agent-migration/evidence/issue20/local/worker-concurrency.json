@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-15T07:56:16.275823+00:00",
+  "schema": "eye_worker_issue16_5a63599e75324f95b6634010e6d02111",
+  "mysqlVersion": "8.0.26",
+  "suite": "worker-concurrency",
+  "scope": "Real MySQL and child processes; synthetic Java identity/model/retrieval/explanation; no clinical acceptance",
+  "commands": {
+    "flyway-migrate": {
+      "exitCode": 0
+    },
+    "flyway-validate": {
+      "exitCode": 0
+    },
+    "mysql-tests": {
+      "exitCode": 0
+    }
+  }
+}

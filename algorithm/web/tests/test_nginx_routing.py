@@ -95,7 +95,7 @@ def test_only_the_two_expected_upstreams_are_used(blocks):
 
 def test_snippet_sets_the_headers_spring_session_needs():
     text = SNIPPET.read_text(encoding="utf-8")
-    assert "proxy_set_header Host              $host;" in text
+    assert "proxy_set_header Host              $http_host;" in text
     assert "proxy_set_header X-Forwarded-Proto $scheme;" in text
 
 

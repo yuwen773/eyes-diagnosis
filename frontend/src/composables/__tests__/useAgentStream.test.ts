@@ -18,7 +18,22 @@ function setup() {
 const delta = { event: '', data: JSON.stringify({ messageType: 'assistant', content: '半句回答' }), id: '' }
 
 describe('chat stream terminal contract', () => {
-  afterEach(() => vi.resetAllMocks())
+  afterEach(() => { vi.resetAllMocks(); vi.unstubAllEnvs() })
+
+  it('uses the configured API origin for SSE behind Nginx', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '/api')
+    vi.stubEnv('VITE_APP_API_BASE_URL', '')
+    vi.resetModules()
+    const { useAgentStream: configuredStream } = await import('@/composables/useAgentStream')
+    vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {
+      options!.onmessage!({ event: 'done', data: '', id: '' })
+    })
+    let stream!: ReturnType<typeof configuredStream>
+    const wrapper = mount(defineComponent({ setup() { stream = configuredStream(); return () => null } }))
+    await stream.sendMessage('问题', 'thread')
+    expect(fetchEventSource).toHaveBeenCalledWith('/api/agent/chat/stream', expect.any(Object))
+    wrapper.unmount()
+  })
 
   it('rejects an error event and never presents partial output as completed', async () => {
     vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {

@@ -1,0 +1,14 @@
+# Types needed by the Vite distribution. Unknown types use application/octet-stream.
+types {
+    text/html html;
+    text/css css;
+    application/javascript js mjs;
+    application/json json map;
+    image/svg+xml svg;
+    image/png png;
+    image/jpeg jpg jpeg;
+    image/webp webp;
+    image/x-icon ico;
+    font/woff woff;
+    font/woff2 woff2;
+}

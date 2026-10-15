@@ -1,0 +1,43 @@
+{
+  "baseline": "cba53519098d6942626eda060883a2bb4f009db5",
+  "sourceManifestMatchesCurrentFiles": true,
+  "web": {
+    "passed": 731,
+    "skipped": 24,
+    "failures": 0,
+    "seconds": 544.077
+  },
+  "frontend": {
+    "files": 12,
+    "passed": 47
+  },
+  "frontendBuild": "PASS; VITE_API_BASE_URL=/api; existing chunk-size warnings",
+  "mypy": "PASS; 4 files with check-untyped-defs",
+  "dependencies": "PASS; uv pip check; 133 installed packages",
+  "realMySQL": {
+    "worker-concurrency": 14,
+    "human-wait-restart": 12
+  },
+  "nginx": {
+    "version": "1.28.0",
+    "sha256": "53530836391897ea218d8040acdd467cd4832efab597e534d7c670e0e6c94b3c"
+  },
+  "python": "3.11.17",
+  "dependencyLockSha256": "e0c63f7068c8ce15dbd896c296e799f0632dc06469a4083be7dd3dbbcf0a5758",
+  "cutover": "PASS; isolated real infrastructure; controlled external model/COS adapters",
+  "overall": "BLOCKED; issue19 real embedding and legacy Java Long reader",
+  "review": {
+    "standards": 0,
+    "spec": 0
+  },
+  "notVerified": [
+    "real-model",
+    "real-LLM",
+    "real-COS",
+    "real-embedding",
+    "clinical",
+    "production-hot-reload",
+    "real-legacy-executor-handoff"
+  ],
+  "javaSourcesAndOriginalPom": "UNCHANGED"
+}

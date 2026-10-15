@@ -1,0 +1,181 @@
+{
+  "timestampUtc": "2026-10-15T07:53:51.405637+00:00",
+  "status": "BLOCKED",
+  "checks": [
+    "flyway-migrate",
+    "flyway-validate",
+    "java-compile",
+    "java-probe-compile",
+    "real-java-auth-and-user-role-long-pagination-contracts",
+    "legacy-synchronous-diagnosis-fails-closed-without-model",
+    "real-mysql-noop-affected-rows-and-java-news-date-contract",
+    "doc-and-table-docx-http-indexing-real-chroma-private-scope-and-legacy-java-reader",
+    "governance-role-and-real-mysql-version-conflict",
+    "worker-pass-fa493e",
+    "worker-pass-1de960",
+    "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+    "user-consent-only-save-conflict-and-replay-exactly-once-java-python-history-parity",
+    "worker-quality-673512",
+    "worker-pass-14cb9b",
+    "worker-final-be1473",
+    "worker-pass-671e48",
+    "real-java-doctor-quality-and-final-review-versions-without-implicit-save",
+    "worker-pass-9a97dc",
+    "worker-pass-2c59df",
+    "invalid-and-insufficient-terminal-paths-and-source-revocation",
+    "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+    "supplement-wait-survives-rollback-drain-reply-replays-without-clinical-write",
+    "nginx-independent-business-agent-routes-pause-drain-and-python-history-recovery",
+    "worker-pass-940b20",
+    "java-logout-old-cookie-revoked-in-python-and-sse",
+    "worker-concurrency",
+    "human-wait-restart"
+  ],
+  "gates": {
+    "infrastructure": {
+      "status": "PASS",
+      "detail": "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22"
+    },
+    "realEmbedding": {
+      "status": "BLOCKED",
+      "detail": "DASHSCOPE_API_KEY missing or controlled mode requested; controlled vectors only"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Deterministic classifier only; no model weight acceptance"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Deterministic chat/explanation only"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Local file adapter only"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Synthetic accounts and documents; no clinical acceptance"
+    },
+    "cutover": {
+      "status": "PASS",
+      "detail": "Isolated real Nginx/MySQL/Java/API/Worker; controlled models; pending save/reviews preserved; browser exercised"
+    },
+    "legacyJavaReader": {
+      "status": "BLOCKED",
+      "detail": "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved"
+    },
+    "orchestration": {
+      "status": "PASS",
+      "detail": "Production API/MySQL/Worker/graph with deterministic classification and LLM"
+    },
+    "mysqlSemantics": {
+      "status": "PASS",
+      "detail": "Real MySQL subprocess competition, leases, fencing, version conflicts and durable restart suites"
+    }
+  },
+  "schema": "eye_real_services_issue19_cc28ab5b8535413c8ef78d0bff8e78c3",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_real_services_issue19_cc28ab5b8535413c8ef78d0bff8e78c3",
+  "sourceCommit": "cba53519098d6942626eda060883a2bb4f009db5",
+  "embeddingMode": "controlled",
+  "mysqlVersion": "8.0.26",
+  "stage": "human-wait-restart",
+  "processes": [
+    {
+      "role": "redis",
+      "pid": 39212
+    },
+    {
+      "role": "chroma",
+      "pid": 44072
+    },
+    {
+      "role": "provider",
+      "pid": 53612
+    },
+    {
+      "role": "java",
+      "pid": 39412
+    },
+    {
+      "role": "api",
+      "pid": 39704
+    }
+  ],
+  "redisVersion": "3.2.100",
+  "chromaVersion": "1.0.0",
+  "chromaPackageVersion": "1.5.9",
+  "affectedRows": {
+    "sqlalchemyNoopRowcount": 1,
+    "pythonNoopCode": 0,
+    "javaNoopCode": 0
+  },
+  "graph": {
+    "version": "upload-final-clinical-review-v6",
+    "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+    "actionVersion": "upload-final-clinical-review-v6",
+    "completedNodes": [
+      "validateImage",
+      "inference",
+      "imageQuality",
+      "visionExposure",
+      "clinicalRiskPrecheck",
+      "evidenceRetrieval",
+      "evidenceValidation",
+      "clinicalRiskFinal",
+      "explanationDraft",
+      "explanationClaimValidation",
+      "explanationPublication"
+    ]
+  },
+  "cutoverWaits": [
+    {
+      "kind": "save",
+      "beforeSha256": "c2ccd456c76a8909596db51bfbc1ada769e9471e28e7e4db122a4fe22a4ba45a",
+      "afterSha256": "c2ccd456c76a8909596db51bfbc1ada769e9471e28e7e4db122a4fe22a4ba45a",
+      "pauseWriteStatus": 503
+    },
+    {
+      "kind": "review",
+      "beforeSha256": "689fecf6b8e091cb92e43f04a23f081a0f6237318fc6cba5d411b2b2a9a6a750",
+      "afterSha256": "689fecf6b8e091cb92e43f04a23f081a0f6237318fc6cba5d411b2b2a9a6a750",
+      "pauseWriteStatus": 503
+    },
+    {
+      "kind": "review",
+      "beforeSha256": "9447794a766325ab93b1427b8771826296820abebd90e9f543ca84bdb192301f",
+      "afterSha256": "9447794a766325ab93b1427b8771826296820abebd90e9f543ca84bdb192301f",
+      "pauseWriteStatus": 503
+    },
+    {
+      "kind": "supplement",
+      "beforeSha256": "245be503d127c500cabcc3e77af8bc8aca3636f99df79f8ccf3b57bca08557b4",
+      "afterSha256": "245be503d127c500cabcc3e77af8bc8aca3636f99df79f8ccf3b57bca08557b4",
+      "pauseWriteStatus": 503
+    }
+  ],
+  "terminalStates": {
+    "publishedThenRevoked": "COMPLETED_LIMITED",
+    "qualityReview": "COMPLETED_LIMITED",
+    "finalReview": "COMPLETED_LIMITED",
+    "invalid": "REJECTED",
+    "insufficient": "COMPLETED_LIMITED"
+  },
+  "browser": {
+    "status": "PASS",
+    "engine": "headless Chromium",
+    "networkMocks": false,
+    "checks": [
+      "login",
+      "upload-202",
+      "workflow-reload",
+      "chat-sse-done"
+    ],
+    "workflowId": "7d893706ea3243e592e305b2cae8ed81"
+  },
+  "adapterCalls": {
+    "chat": 4,
+    "controlledEmbedding": 7,
+    "explanation": 3,
+    "inference": 5
+  }
+}

@@ -43,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--embedding-mode", choices=["real", "controlled"], default="real")
+    parser.add_argument("--cutover-nginx", help="Opt in to isolated Nginx cutover/rollback rehearsal (absolute binary path)")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report: dict[str, Any] = {"timestampUtc": datetime.now(timezone.utc).isoformat(), "status": "BLOCKED",
@@ -82,6 +83,8 @@ def execute(args, target, report):
     chroma = shutil.which("chroma", path=str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""))
     if not redis or not Path(redis).is_file() or not chroma:
         raise Blocked("redis-server and the locked Python chroma CLI are required; set REAL_SERVICES_REDIS_SERVER")
+    if args.cutover_nginx and (not Path(args.cutover_nginx).is_file() or not (ROOT / "frontend/dist/index.html").is_file()):
+        raise Blocked("Cutover requires an existing Nginx binary and built frontend/dist")
     env = os.environ.copy()
     if os.name == "nt":
         env["JAVA_HOME"] = r"C:\Users\yuwen\.jdks\corretto-21.0.7"
@@ -104,6 +107,9 @@ def execute(args, target, report):
                *(ROOT / "src/main/java").rglob("*.java"),
                *(ROOT / "deploy/workflow-migrations").rglob("*.sql"),
                ROOT / "pom.xml", ROOT / "deploy/real-services/Issue19Probe.java"]
+    if args.cutover_nginx:
+        sources.extend([ROOT / "deploy/mime.types", ROOT / "deploy/snippets/eye-proxy-headers.conf",
+            ROOT / "frontend/src/composables/useAgentStream.ts", *(ROOT / "frontend/dist").rglob("*.*")])
     manifest = {file.relative_to(ROOT).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest() for file in sorted(sources)}
     (args.output_dir / "source-sha256.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     real_embedding = args.embedding_mode == "real" and bool(env.get("DASHSCOPE_API_KEY"))
@@ -223,6 +229,7 @@ def execute(args, target, report):
     def worker(mode="pass"):
         run("worker-" + mode + "-" + uuid4().hex[:6], [sys.executable, "-m", "web.tests.real_services_process", "worker", "--mode", mode], ROOT / "algorithm")
 
+    proxy = None
     try:
         start("redis", [redis, "--bind", "127.0.0.1", "--port", redis_port, "--save", "", "--appendonly", "no", "--dir", runtime])
         start("chroma", [chroma, "run", "--host", "127.0.0.1", "--port", chroma_port, "--path", runtime / "chroma"],
@@ -244,18 +251,38 @@ def execute(args, target, report):
         start("api", [sys.executable, "-m", "web.tests.real_services_process", "api", "--port", api_port],
             url=f"http://127.0.0.1:{api_port}/health")
         report["gates"]["infrastructure"] = gate("PASS", "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22")
+        front_port = api_port
+        if args.cutover_nginx:
+            from web.cutover_rehearsal import Proxy
+
+            proxy = Proxy(args.cutover_nginx, runtime, java_port, api_port)
+            proxy.switch("java", "java", "pause")
+            front_port = proxy.port
+            report["gates"]["cutover"] = gate("BLOCKED", "Nginx rehearsal not yet completed")
         with ExitStack() as stack:
-            clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{api_port}", timeout=60))
+            clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{front_port}", timeout=60))
                        for account in ("alice", "bob", "doctor", "admin")}
             for account, client in clients.items():
-                envelope(client.post(f"http://127.0.0.1:{java_port}/api/user/login", json={"userAccount": "issue19_" + account, "userPassword": password}))
+                login_url = "/api/user/login" if proxy else f"http://127.0.0.1:{java_port}/api/user/login"
+                envelope(client.post(login_url, json={"userAccount": "issue19_" + account, "userPassword": password}))
                 assert "SESSION" in client.cookies or "JSESSIONID" in client.cookies
             assert redis_client.keys("spring:session:sessions:*")
-            verify_http(clients, java_port, engine, collection, worker, report)
+            if proxy:
+                proxy.switch("python", "java", "pause")
+                envelope(clients["alice"].get("/api/user/get/login"))
+                envelope(clients["alice"].post("/api/news/list/page/vo", json={}))
+                proxy.switch("python", "python", "active")
+            verify_http(clients, java_port, engine, collection, worker, report, proxy=proxy)
+            if proxy:
+                proxy.verify_agent_rollback(clients["alice"], report)
+                from web.cutover_browser import verify_browser
+
+                verify_browser(proxy, password, runtime, worker, report)
+                report["gates"]["cutover"] = gate("PASS", "Isolated real Nginx/MySQL/Java/API/Worker; controlled models; pending save/reviews preserved; browser exercised")
             # Revoke a real Redis-backed Java session and replay the old cookie.
             alice = clients["alice"]
             old_cookies = dict(alice.cookies)
-            envelope(alice.post(f"http://127.0.0.1:{java_port}/api/user/logout"))
+            envelope(alice.post("/api/user/logout" if proxy else f"http://127.0.0.1:{java_port}/api/user/logout"))
             alice.cookies.update(old_cookies)
             envelope(alice.get(f"http://127.0.0.1:{java_port}/api/user/get/login"), code=40100)
             envelope(alice.post("/api/diagnosis/list/page/my", json={}), code=40100)
@@ -268,14 +295,16 @@ def execute(args, target, report):
         assert java_child.poll() is None
         calls = [json.loads(line) for line in (runtime / "calls.jsonl").read_text().splitlines()]
         report["adapterCalls"] = {kind: sum(c["kind"] == kind for c in calls) for kind in sorted({c["kind"] for c in calls})}
-        assert report["adapterCalls"]["inference"] == 4
+        assert report["adapterCalls"]["inference"] == (5 if proxy else 4)
         assert report["adapterCalls"]["explanation"] == 3
-        assert report["adapterCalls"]["chat"] == 3
+        assert report["adapterCalls"]["chat"] == (4 if proxy else 3)
         if real_embedding:
             assert report["adapterCalls"].get("realEmbedding", 0) > 0
             report["gates"]["realEmbedding"] = gate("PASS", "Real DashScope upload/query plus unchanged Java native embedder and Chroma reader")
         report["gates"]["orchestration"] = gate("PASS", "Production API/MySQL/Worker/graph with deterministic classification and LLM")
     finally:
+        if proxy:
+            proxy.close()
         for child, log in reversed(children):
             stop_child(child)
             log.close()
@@ -334,7 +363,7 @@ def envelope(response, *, code=0, status=200):
     return body["data"]
 
 
-def verify_http(clients, java_port, engine, collection, worker, report):
+def verify_http(clients, java_port, engine, collection, worker, report, *, proxy=None):
     import io
     from docx import Document
     from PIL import Image
@@ -474,6 +503,8 @@ def verify_http(clients, java_port, engine, collection, worker, report):
         "expectedExplanationRevision": view["explanation"]["revision"]}
     confirmation = envelope(alice.post(save_url, json=save_request))
     assert confirmation["status"] == "PENDING"
+    if proxy:
+        proxy.preserve_wait(alice, save_url, report)
     assert envelope(alice.post("/api/diagnosis/list/page/my", json={}))["total"] == "0"
     approve_url = f'/api/diagnosis/workflows/{task}/save-confirmations/{confirmation["confirmationId"]}/approve'
     decision = {"idempotencyKey": confirmation["idempotencyKey"], "expectedContentDigest": confirmation["contentDigest"],
@@ -501,6 +532,8 @@ def verify_http(clients, java_port, engine, collection, worker, report):
         row = next(r for r in tasks if r["workflowId"] == reviewed)
         url = "/api/reviews/tasks/" + row["reviewTaskId"]
         detail = envelope(doctor.get(url))
+        if proxy:
+            proxy.preserve_wait(doctor, url, report)
 
         def versions(detail):
             result = {"expectedTaskVersion": detail["taskVersion"], "expectedWorkflowVersion": detail["workflowVersion"]}
@@ -551,6 +584,8 @@ def verify_http(clients, java_port, engine, collection, worker, report):
     sessions = envelope(alice.get("/api/agent/sessions"))
     assert len(sessions) == 3
     check("legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql")
+    if proxy:
+        proxy.verify_supplement(alice, task, report)
 
 
 if __name__ == "__main__":
