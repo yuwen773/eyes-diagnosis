@@ -1,0 +1,136 @@
+{
+  "timestampUtc": "2026-10-15T03:27:32.573427+00:00",
+  "status": "BLOCKED",
+  "checks": [
+    "flyway-migrate",
+    "flyway-validate",
+    "java-compile",
+    "java-probe-compile",
+    "real-java-auth-and-user-role-long-pagination-contracts",
+    "legacy-synchronous-diagnosis-fails-closed-without-model",
+    "real-mysql-noop-affected-rows-and-java-news-date-contract",
+    "doc-and-table-docx-http-indexing-real-chroma-private-scope-and-legacy-java-reader",
+    "governance-role-and-real-mysql-version-conflict",
+    "worker-pass-2f09de",
+    "worker-pass-02ef5c",
+    "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+    "user-consent-only-save-conflict-and-replay-exactly-once-java-python-history-parity",
+    "worker-quality-a2d6d9",
+    "worker-pass-8e20c5",
+    "worker-final-192d8e",
+    "worker-pass-7b730e",
+    "real-java-doctor-quality-and-final-review-versions-without-implicit-save",
+    "worker-pass-4ea43a",
+    "worker-pass-ed0533",
+    "invalid-and-insufficient-terminal-paths-and-source-revocation",
+    "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+    "java-logout-old-cookie-revoked-in-python-and-sse",
+    "worker-concurrency",
+    "human-wait-restart"
+  ],
+  "gates": {
+    "infrastructure": {
+      "status": "PASS",
+      "detail": "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22"
+    },
+    "realEmbedding": {
+      "status": "BLOCKED",
+      "detail": "DASHSCOPE_API_KEY missing or controlled mode requested; controlled vectors only"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Deterministic classifier only; no model weight acceptance"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Deterministic chat/explanation only"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Local file adapter only"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Synthetic accounts and documents; no clinical acceptance"
+    },
+    "legacyJavaReader": {
+      "status": "BLOCKED",
+      "detail": "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved"
+    },
+    "orchestration": {
+      "status": "PASS",
+      "detail": "Production API/MySQL/Worker/graph with deterministic classification and LLM"
+    },
+    "mysqlSemantics": {
+      "status": "PASS",
+      "detail": "Real MySQL subprocess competition, leases, fencing, version conflicts and durable restart suites"
+    }
+  },
+  "schema": "eye_real_services_issue19_665cdef36961469ab2f8408fad2e36dc",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_real_services_issue19_665cdef36961469ab2f8408fad2e36dc",
+  "sourceCommit": "bfaa01acd45e5346e4e374d9255a4afb5e91ad45",
+  "embeddingMode": "controlled",
+  "mysqlVersion": "8.0.26",
+  "stage": "human-wait-restart",
+  "processes": [
+    {
+      "role": "redis",
+      "pid": 46272
+    },
+    {
+      "role": "chroma",
+      "pid": 45844
+    },
+    {
+      "role": "provider",
+      "pid": 43012
+    },
+    {
+      "role": "java",
+      "pid": 37864
+    },
+    {
+      "role": "api",
+      "pid": 27456
+    }
+  ],
+  "redisVersion": "3.2.100",
+  "chromaVersion": "1.0.0",
+  "chromaPackageVersion": "1.5.9",
+  "affectedRows": {
+    "sqlalchemyNoopRowcount": 1,
+    "pythonNoopCode": 0,
+    "javaNoopCode": 0
+  },
+  "graph": {
+    "version": "upload-final-clinical-review-v6",
+    "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+    "actionVersion": "upload-final-clinical-review-v6",
+    "completedNodes": [
+      "validateImage",
+      "inference",
+      "imageQuality",
+      "visionExposure",
+      "clinicalRiskPrecheck",
+      "evidenceRetrieval",
+      "evidenceValidation",
+      "clinicalRiskFinal",
+      "explanationDraft",
+      "explanationClaimValidation",
+      "explanationPublication"
+    ]
+  },
+  "terminalStates": {
+    "publishedThenRevoked": "COMPLETED_LIMITED",
+    "qualityReview": "COMPLETED_LIMITED",
+    "finalReview": "COMPLETED_LIMITED",
+    "invalid": "REJECTED",
+    "insufficient": "COMPLETED_LIMITED"
+  },
+  "adapterCalls": {
+    "chat": 3,
+    "controlledEmbedding": 7,
+    "explanation": 3,
+    "inference": 4
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "reviewedOn": "2026-10-15",
+  "worktree": "py-rewrite",
+  "baseCommit": "bfaa01acd45e5346e4e374d9255a4afb5e91ad45",
+  "webSuite": {
+    "command": "python -m pytest web/tests -q",
+    "javaHome": "C:/Users/yuwen/.jdks/corretto-21.0.7",
+    "passed": 720,
+    "skipped": 2,
+    "failed": 0,
+    "warnings": 1,
+    "seconds": 476.12,
+    "scope": "Controlled boundary regression, including real Chroma connection IO; not full real-service or real-model acceptance"
+  },
+  "realMysql": {
+    "workerConcurrency": {"passed": 14, "failed": 0},
+    "humanWaitRestart": {"passed": 12, "failed": 0},
+    "scope": "Fresh Flyway schemas, real MySQL and subprocesses; external adapters are controlled"
+  },
+  "ciEquivalentEmptyKey": {
+    "exitCode": 2,
+    "infrastructure": "PASS",
+    "orchestration": "PASS",
+    "mysqlSemantics": "PASS",
+    "overall": "BLOCKED",
+    "githubHostedJob": "NOT_EXECUTED"
+  },
+  "mypy": {"files": 4, "checkUntypedDefs": true, "status": "PASS"},
+  "dependencyCheck": {"packages": 133, "status": "PASS"},
+  "review": {"standardsInitial": 1, "standardsOpen": 0, "specOpen": 0},
+  "blockers": [
+    "DashScope real embedding preflight returned HTTP 401; user accepted keeping this gate blocked",
+    "Unchanged legacy Java Spring AI filter parser raises NumberFormatException for Long owner 9007199254740993"
+  ],
+  "notVerified": ["realClassifier", "realLLM", "realCOS", "clinical", "nginxCutover", "deploymentRollback"]
+}

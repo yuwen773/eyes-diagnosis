@@ -34,10 +34,10 @@ jobs:
     # probe plus an AST scan of the module scope). If someone adds a
     # top-level `import torch`, this job fails rather than the deployment.
     #
-    # No MySQL, Redis or Chroma service containers: every test here is either
-    # pure logic, runs against in-memory SQLite, or parses source files. The
-    # Real Java session + frontend validation is the opt-in baseline runner
-    # documented in docs/fastapi-baseline.md; it is not claimed by this job.
+    # No database service containers: most tests use SQLite or source contracts.
+    # The Chroma connection regression starts its own short-lived real server.
+    # MySQL/Redis/Java acceptance is separate in python-real-services.yml;
+    # this job does not claim that acceptance or real model verification.
     runs-on: ubuntu-latest
     defaults:
       run:

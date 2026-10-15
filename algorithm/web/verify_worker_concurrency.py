@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 from uuid import uuid4
@@ -48,9 +49,13 @@ def main():
     finally:
         admin.dispose()
     env = os.environ.copy()
-    java = Path(r"C:\Users\yuwen\.jdks\corretto-21.0.7")
-    env["JAVA_HOME"] = str(java)
-    env["PATH"] = str(java / "bin") + os.pathsep + env.get("PATH", "")
+    if os.name == "nt":
+        java = Path(r"C:\Users\yuwen\.jdks\corretto-21.0.7")
+        env["JAVA_HOME"] = str(java)
+        env["PATH"] = str(java / "bin") + os.pathsep + env.get("PATH", "")
+    maven = shutil.which("mvn", path=env.get("PATH"))
+    if not maven:
+        raise RuntimeError("Maven is required")
     env.update(FLYWAY_URL=f"jdbc:mysql://{target.host}:{target.port or 3306}/{schema}?serverTimezone=Asia/Shanghai",
                FLYWAY_USER=target.username or "", FLYWAY_PASSWORD=target.password or "")
     results = {"at": datetime.now(timezone.utc).isoformat(), "schema": schema, "mysqlVersion": version,
@@ -61,8 +66,8 @@ def main():
         sources = {str(file.relative_to(root)).replace("\\", "/"): hashlib.sha256(file.read_bytes()).hexdigest()
                    for file in (root / "algorithm/web").rglob("*.py")}
         (output / "source-sha256.json").write_text(json.dumps(sources, indent=2), encoding="utf-8")
-    commands = [("flyway-migrate", ["mvn.cmd", "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:migrate"], root),
-                ("flyway-validate", ["mvn.cmd", "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:validate"], root)]
+    commands = [("flyway-migrate", [maven, "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:migrate"], root),
+                ("flyway-validate", [maven, "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:validate"], root)]
     env["WORKER_TEST_MYSQL_URL"] = target.set(database=schema).render_as_string(hide_password=False)
     if human_wait:
         env["HUMAN_WAIT_TEST_MYSQL_URL"] = env.pop("WORKER_TEST_MYSQL_URL")

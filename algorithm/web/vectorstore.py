@@ -27,6 +27,7 @@ here leaves orphaned vectors that no delete can ever reach.
 
 import logging
 from typing import Any, Sequence
+from urllib.parse import urlsplit
 
 from web.knowledge import ChunkPayload
 
@@ -132,6 +133,11 @@ class ChromaWriter:
     def __init__(self, config):
         self._host = config.chroma_host
         self._port = config.chroma_port
+        # Chroma treats a URL host as complete and ignores its separate port.
+        if "://" in self._host:
+            address = urlsplit(self._host)
+            if address.port is None:
+                self._host = address._replace(netloc=f"{address.netloc}:{self._port}").geturl()
         self._collection_name = config.chroma_collection
         self._tenant = config.chroma_tenant
         self._database = config.chroma_database
