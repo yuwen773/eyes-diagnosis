@@ -1,0 +1,1423 @@
+{
+  "status": "PASS_WITH_LIMITATIONS",
+  "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket07-7e2fd8a0d61c4c9495bc2cc04e2dbee5",
+  "schema": "eye_human_wait_issue17_3c637b44c0a948e18bcaae750c50c016",
+  "checks": [
+    "admissions-closed-active-lease-finished-new-claims-stopped",
+    "pure-python-readonly-login-data-four-waits-legacy-view-failure-real-legacy-rollback",
+    "postwrite-failure-stop-writes-reject-legacy-preserve-new-record-and-audit",
+    "python-forward-repair-four-waits-resumed-once-no-implicit-doctor-save",
+    "mysql-restore-to-new-schema-chroma-restart-object-backup-preserved"
+  ],
+  "production": "NOT_RUN",
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "artifacts": {
+    "legacyJarSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+    "legacySourceSha256": "da72b6e929cbdf33a2fa8ce94ecac47da2d1cc1fd66b3b8dbb2d3ac77409213f",
+    "pythonArchiveSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9"
+  },
+  "references": {
+    "documentId": "238587439843502",
+    "ownerUserId": "7",
+    "sourceUrl": "https://fixture.invalid/238587439843502.txt",
+    "object": "238587439843502.txt",
+    "objectSha256": "f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3",
+    "collection": "diagnosis-knowledge",
+    "chunkId": "doc_238587439843502_chunk_0",
+    "embeddingDimensions": 1024,
+    "workflowInputs": {
+      "caf751cfb12c46aaa20afa40300a1e92": "t_workflow_upload_input.imageBytes",
+      "65e40b3118ce46c18e823dc0b777d0a2": "t_workflow_upload_input.imageBytes",
+      "61a7bf6be6de415a8f763d39e9c9d348": "t_workflow_upload_input.imageBytes",
+      "a036b5936ec34cbb86e33959f9ee7560": "t_workflow_upload_input.imageBytes"
+    }
+  },
+  "drainedLease": {
+    "workflowId": "b81ef58bddd94d7484f0090dfa590e5c",
+    "leaseVersion": 1,
+    "tokenRecordedPrivately": true
+  },
+  "beforeCutover": {
+    "flyway_schema_history": {
+      "columns": [
+        "installed_rank",
+        "version",
+        "description",
+        "type",
+        "script",
+        "checksum",
+        "installed_by",
+        "installed_on",
+        "execution_time",
+        "success"
+      ],
+      "count": 22,
+      "sha256": "445b4fffb8b5d82f5f2efefd89dbcaf76ae83709ab39bed7dc3094e37ea9db11"
+    },
+    "t_agent_message": {
+      "columns": [
+        "id",
+        "sessionId",
+        "role",
+        "subType",
+        "content",
+        "tokenCount",
+        "isSummary",
+        "createdTime"
+      ],
+      "count": 6,
+      "sha256": "7616b72b217c7183f0e336614d37edea6a88215495e48a5f1a609b082fcae256"
+    },
+    "t_agent_message_outbox": {
+      "columns": [
+        "id",
+        "sessionId",
+        "userId",
+        "role",
+        "subType",
+        "content",
+        "status",
+        "retryCount",
+        "lastError",
+        "createdTime",
+        "deliveredTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_agent_session": {
+      "columns": [
+        "id",
+        "sessionId",
+        "userId",
+        "title",
+        "modelName",
+        "status",
+        "lastMessage",
+        "messageCount",
+        "summaryContent",
+        "summaryAt",
+        "checkpointData",
+        "createdTime",
+        "updatedTime",
+        "expiredTime",
+        "isDelete",
+        "pinned",
+        "pinTime"
+      ],
+      "count": 4,
+      "sha256": "a774bf3ceeed61e5454c76e2f5e25eb41aaff355360928600b7785abe8add8d0"
+    },
+    "t_agent_tool_confirmation": {
+      "columns": [
+        "confirmationId",
+        "ownerUserId",
+        "sessionId",
+        "idempotencyKey",
+        "contentSnapshot",
+        "contentDigest",
+        "status",
+        "createdAt",
+        "expiresAt",
+        "decidedAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_attachment": {
+      "columns": [
+        "id",
+        "newsId",
+        "url",
+        "order",
+        "description"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_chat_history": {
+      "columns": [
+        "id",
+        "message",
+        "messageType",
+        "sessionId",
+        "userId",
+        "createTime",
+        "updateTime",
+        "isDelete"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_chatsession": {
+      "columns": [
+        "id",
+        "title",
+        "userId",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis": {
+      "columns": [
+        "id",
+        "url",
+        "userId",
+        "result",
+        "confidence",
+        "probability",
+        "recommendations",
+        "details",
+        "severity",
+        "reexamineStatus",
+        "picSize",
+        "picWidth",
+        "picHeight",
+        "picScale",
+        "picFormat",
+        "createTime",
+        "isDelete",
+        "aiRejected",
+        "abstainReason",
+        "modelVersion",
+        "weightSha256",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "calibrationStatus",
+        "calibratedProbability",
+        "qualityScore",
+        "qualityReasons",
+        "oodStatus",
+        "oodScore",
+        "humanReviewStatus",
+        "humanReviewerId",
+        "humanReviewedAt",
+        "humanReviewNote",
+        "humanResult",
+        "humanSeverity",
+        "humanRecommendations"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis_audit": {
+      "columns": [
+        "id",
+        "diagnosisId",
+        "actorId",
+        "actorRole",
+        "action",
+        "payload",
+        "createdTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis_citation": {
+      "columns": [
+        "citationId",
+        "workflowId",
+        "retrievalEpoch",
+        "sourceDocumentId",
+        "sourceRevision",
+        "visibilitySnapshot",
+        "reviewStatusSnapshot",
+        "diseaseCodesSnapshot",
+        "topicCodesSnapshot",
+        "quotedSpan",
+        "quotedSpanDigest",
+        "retrievedAt",
+        "withdrawnAt",
+        "createdAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis_save_confirmation": {
+      "columns": [
+        "confirmationId",
+        "ownerUserId",
+        "workflowId",
+        "operationType",
+        "idempotencyKey",
+        "workflowVersion",
+        "requestVersion",
+        "contentSnapshot",
+        "contentDigest",
+        "status",
+        "createdAt",
+        "expiresAt",
+        "decidedAt"
+      ],
+      "count": 1,
+      "sha256": "fd71fd01973c2bf21038c496cf88dbd7de9270ce2a4ddae886093f00dd5951aa"
+    },
+    "t_diagnosis_workflow": {
+      "columns": [
+        "workflowId",
+        "ownerUserId",
+        "creationIdempotencyKey",
+        "status",
+        "currentSegmentCode",
+        "graphDefinitionVersion",
+        "graphDefinitionHash",
+        "actionVersion",
+        "workflowVersion",
+        "inferenceEpoch",
+        "inferenceEnvelopeId",
+        "explanationPublicationStatus",
+        "predictionExposureStatus",
+        "stopReasonCode",
+        "limitationReasonCode",
+        "questionText",
+        "createdAt",
+        "updatedAt"
+      ],
+      "count": 6,
+      "sha256": "e486a083ffe7400b552748f500964fdb3bae25c1b3350d68f2ecbb4a4fe97a56"
+    },
+    "t_diagnosis_workflow_event": {
+      "columns": [
+        "eventId",
+        "workflowId",
+        "eventSequence",
+        "eventType",
+        "actorType",
+        "actorId",
+        "workflowVersion",
+        "segmentCode",
+        "reasonCode",
+        "payloadSnapshot",
+        "occurredAt"
+      ],
+      "count": 86,
+      "sha256": "1a878b5f0084296233d58bce3e79dae4442f37a3e43deda2025bc7109ee91c5c"
+    },
+    "t_explanation_snapshot": {
+      "columns": [
+        "explanationSnapshotId",
+        "workflowId",
+        "revision",
+        "publicationStatus",
+        "contentSnapshot",
+        "claimValidationResult",
+        "citationSetDigest",
+        "limitationTextCode",
+        "withheldReasonCode",
+        "createdAt",
+        "validatedAt",
+        "publishedAt"
+      ],
+      "count": 3,
+      "sha256": "f8357648a1fa773177fdecefb56ef613643c683759d4b91077a04191a4070160"
+    },
+    "t_human_review_task": {
+      "columns": [
+        "reviewTaskId",
+        "workflowId",
+        "reviewType",
+        "reviewRound",
+        "status",
+        "assignedDoctorId",
+        "submittedDoctorId",
+        "decisionCode",
+        "decisionReasonCode",
+        "taskVersion",
+        "graphThreadId",
+        "graphCheckpointId",
+        "createdAt",
+        "claimedAt",
+        "submittedAt",
+        "cancelledAt",
+        "updatedAt",
+        "workflowVersion",
+        "inferenceEnvelopeId",
+        "graphDefinitionVersion",
+        "graphDefinitionHash",
+        "actionVersion"
+      ],
+      "count": 2,
+      "sha256": "feeac4fedc285c9086de0a69cd08e102b3987878ebbc65857401c5434b8f03ea"
+    },
+    "t_inference_cache": {
+      "columns": [
+        "id",
+        "imageHash",
+        "modelVersion",
+        "weightSha256",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "predictedLabel",
+        "probability",
+        "calibratedProbability",
+        "calibrationStatus",
+        "description",
+        "reliabilityScore",
+        "topPredictions",
+        "qualityScore",
+        "qualityReasons",
+        "isOod",
+        "oodScore",
+        "oodStatus",
+        "rejected",
+        "abstainReason",
+        "requiresReview",
+        "createTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_inference_envelope": {
+      "columns": [
+        "inferenceEnvelopeId",
+        "workflowId",
+        "inferenceEpoch",
+        "imageObjectReference",
+        "inputDigest",
+        "detectedMediaType",
+        "qualityOutcome",
+        "qualityScore",
+        "qualityReasonCodesSnapshot",
+        "inferenceOutcomeType",
+        "predictionSnapshot",
+        "confidenceSnapshot",
+        "safetyAbstentionReasonCode",
+        "technicalFailureCode",
+        "oodSnapshot",
+        "calibrationSnapshot",
+        "modelVersion",
+        "modelWeightFingerprint",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "inferredAt",
+        "createdAt"
+      ],
+      "count": 5,
+      "sha256": "ffd065fbf60151aa65564329bae36346e03fd71c6ced7ca9efee5c3c7203ff35"
+    },
+    "t_knowledge_document": {
+      "columns": [
+        "id",
+        "userId",
+        "title",
+        "fileName",
+        "fileUrl",
+        "fileSize",
+        "fileType",
+        "chunkCount",
+        "contentHash",
+        "status",
+        "createTime",
+        "updateTime",
+        "isDelete",
+        "visibility",
+        "reviewStatus",
+        "diseaseCodes",
+        "topicCodes",
+        "governanceVersion",
+        "reviewedBy",
+        "reviewedAt"
+      ],
+      "count": 1,
+      "sha256": "9ece5d60917f64b882c2f10c09a696bb8c1376f128d3303fecd67c207c124d78"
+    },
+    "t_mcp_server": {
+      "columns": [
+        "id",
+        "userId",
+        "mcpServerCode",
+        "name",
+        "description",
+        "installType",
+        "host",
+        "deployConfig",
+        "status",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_news": {
+      "columns": [
+        "id",
+        "title",
+        "userId",
+        "content",
+        "summary",
+        "coverImg",
+        "status",
+        "publishTime",
+        "editTime"
+      ],
+      "count": 1,
+      "sha256": "2a4651ba8834a365a0050c61bb63e9529192847097cae95405ba9e6d980263ca"
+    },
+    "t_paragraph": {
+      "columns": [
+        "id",
+        "newsId",
+        "content"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_attachment": {
+      "columns": [
+        "id",
+        "userId",
+        "url",
+        "sessionId",
+        "messageId",
+        "createdTime",
+        "isDelete",
+        "imageBytes"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_audit": {
+      "columns": [
+        "id",
+        "runId",
+        "sessionId",
+        "userId",
+        "event",
+        "createdTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_run": {
+      "columns": [
+        "id",
+        "sessionId",
+        "activeSessionId",
+        "userId",
+        "messageId",
+        "status",
+        "errorCode",
+        "createdTime",
+        "deadline",
+        "finishedTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_supplement": {
+      "columns": [
+        "requestId",
+        "sessionId",
+        "activeSessionId",
+        "workflowId",
+        "userId",
+        "idempotencyKey",
+        "originalMessage",
+        "status",
+        "waitVersion",
+        "answer",
+        "graphVersion",
+        "checkpointId",
+        "createdAt",
+        "answeredAt"
+      ],
+      "count": 1,
+      "sha256": "ef1a845bb2ae8907b40e7e5d9e8f4b9ed7d7518be3b3c697e18fb83dad41f1b7"
+    },
+    "t_python_chat_workflow": {
+      "columns": [
+        "sessionId",
+        "workflowId",
+        "messageId",
+        "attachmentId",
+        "createdTime"
+      ],
+      "count": 4,
+      "sha256": "22188779ae09f49754dec67aa910fcd47ef59d8115734bbeb65bd5962a23f7a3"
+    },
+    "t_python_graph_checkpoint": {
+      "columns": [
+        "threadId",
+        "checkpointNamespace",
+        "checkpointId",
+        "parentCheckpointId",
+        "valueType",
+        "checkpointValue",
+        "metadataJson"
+      ],
+      "count": 83,
+      "sha256": "2c15a74037d8982345cd8177408ef941751fc59bd40f632d55be5f0ce77a3aa9"
+    },
+    "t_python_graph_write": {
+      "columns": [
+        "threadId",
+        "checkpointNamespace",
+        "checkpointId",
+        "taskId",
+        "writeIndex",
+        "channel",
+        "valueType",
+        "writeValue"
+      ],
+      "count": 237,
+      "sha256": "08178ce092b34e6fb484a140ddc70d3f6a155460dc9d12d55a86e2299779979c"
+    },
+    "t_saved_workflow_diagnosis": {
+      "columns": [
+        "workflowId",
+        "diagnosisId",
+        "confirmationId"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_upload_task": {
+      "columns": [
+        "id",
+        "taskId",
+        "userId",
+        "objectKey",
+        "status",
+        "retryCount",
+        "lastError",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_user": {
+      "columns": [
+        "id",
+        "userAccount",
+        "userPassword",
+        "userName",
+        "userAvatar",
+        "userProfile",
+        "userRole",
+        "editTime",
+        "createTime",
+        "updateTime",
+        "isDelete"
+      ],
+      "count": 3,
+      "sha256": "47669f554ea19bbe7207abafb5df3172dec5db1d06e7fee595c4038b1f0ce073"
+    },
+    "t_workflow_audit_event": {
+      "columns": [
+        "auditEventId",
+        "workflowId",
+        "eventType",
+        "actorType",
+        "actorId",
+        "segmentCode",
+        "traceId",
+        "payloadSnapshot",
+        "occurredAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_workflow_job": {
+      "columns": [
+        "jobId",
+        "workflowId",
+        "jobType",
+        "segmentCode",
+        "executionEpoch",
+        "status",
+        "attempt",
+        "maxAttempts",
+        "availableAt",
+        "leaseOwner",
+        "leaseToken",
+        "leaseVersion",
+        "leaseUntil",
+        "graphThreadId",
+        "graphCheckpointId",
+        "lastErrorCode",
+        "createdAt",
+        "updatedAt",
+        "claimableAt"
+      ],
+      "count": 40,
+      "sha256": "966e7324379456b3d158e9bc9e88b15b413130a3b47f5f122e7e4407d31755c5"
+    },
+    "t_workflow_node_execution": {
+      "columns": [
+        "nodeExecutionId",
+        "workflowId",
+        "executionEpoch",
+        "segmentCode",
+        "nodeCode",
+        "idempotencyKey",
+        "status",
+        "inputDigest",
+        "outputDigest",
+        "resultReference",
+        "errorCode",
+        "startedAt",
+        "completedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_workflow_upload_input": {
+      "columns": [
+        "workflowId",
+        "requestDigest",
+        "imageBytes",
+        "graphCheckpointId",
+        "completedNodes",
+        "evidenceSnapshot"
+      ],
+      "count": 5,
+      "sha256": "33a258b33eaa08b8dce03587e29c2c7e3fabbdfb1b621570d03e93d2621d8f0d"
+    }
+  },
+  "mysqlBackup": {
+    "file": "mysql.sql",
+    "sha256": "15a734c0b5b3bae7957034947e3221833971374af446dc55239b27a00c031890",
+    "restoreSchema": "eye_pyhandoff_28ddf133a8424b6c8fe5a93751dda8d6"
+  },
+  "backupFiles": {
+    "dump.rdb": "765fad621a3063f21a6c0f52482a326fe3c3d4adb88bcf47154d8df279630677",
+    "mysql.sql": "15a734c0b5b3bae7957034947e3221833971374af446dc55239b27a00c031890",
+    "chroma/chroma.sqlite3": "755c9dc1897eaebb734e3eaf7fb80bce2e65eb5043943bd0b6714b84eb521096",
+    "chroma/8ef90359-a7e3-4c66-8857-82203b3ad41f/data_level0.bin": "2a690e042102aad54b9205cbcb107734b014af725455cf0732c5860bf1516409",
+    "chroma/8ef90359-a7e3-4c66-8857-82203b3ad41f/header.bin": "bf12d4486518c7addf488cb4854526902c78e91951990e1e2f4e055cec814e5d",
+    "chroma/8ef90359-a7e3-4c66-8857-82203b3ad41f/length.bin": "7facd06d733a3617b6d51c15d599d9ea8f479f22ee459785c31b66bff9ff97dd",
+    "chroma/8ef90359-a7e3-4c66-8857-82203b3ad41f/link_lists.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "objects/238587439843502.txt": "f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3",
+    "objects/input.png": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c"
+  },
+  "prewriteMaintenanceWindowSeconds": 24.968,
+  "secondMaintenanceWindowSeconds": 8.969,
+  "firstWritePauseSeconds": 34.578,
+  "afterReopen": {
+    "flyway_schema_history": {
+      "columns": [
+        "installed_rank",
+        "version",
+        "description",
+        "type",
+        "script",
+        "checksum",
+        "installed_by",
+        "installed_on",
+        "execution_time",
+        "success"
+      ],
+      "count": 22,
+      "sha256": "445b4fffb8b5d82f5f2efefd89dbcaf76ae83709ab39bed7dc3094e37ea9db11"
+    },
+    "t_agent_message": {
+      "columns": [
+        "id",
+        "sessionId",
+        "role",
+        "subType",
+        "content",
+        "tokenCount",
+        "isSummary",
+        "createdTime"
+      ],
+      "count": 8,
+      "sha256": "448e7fe45c14fe97a4d13ff1b587dbbbf5ae69b8682215157f23c540367899b7"
+    },
+    "t_agent_message_outbox": {
+      "columns": [
+        "id",
+        "sessionId",
+        "userId",
+        "role",
+        "subType",
+        "content",
+        "status",
+        "retryCount",
+        "lastError",
+        "createdTime",
+        "deliveredTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_agent_session": {
+      "columns": [
+        "id",
+        "sessionId",
+        "userId",
+        "title",
+        "modelName",
+        "status",
+        "lastMessage",
+        "messageCount",
+        "summaryContent",
+        "summaryAt",
+        "checkpointData",
+        "createdTime",
+        "updatedTime",
+        "expiredTime",
+        "isDelete",
+        "pinned",
+        "pinTime"
+      ],
+      "count": 4,
+      "sha256": "e7c483419d38778c57efb2cee0869e357faf7246f69480687cd35c785e01acd5"
+    },
+    "t_agent_tool_confirmation": {
+      "columns": [
+        "confirmationId",
+        "ownerUserId",
+        "sessionId",
+        "idempotencyKey",
+        "contentSnapshot",
+        "contentDigest",
+        "status",
+        "createdAt",
+        "expiresAt",
+        "decidedAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_attachment": {
+      "columns": [
+        "id",
+        "newsId",
+        "url",
+        "order",
+        "description"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_chat_history": {
+      "columns": [
+        "id",
+        "message",
+        "messageType",
+        "sessionId",
+        "userId",
+        "createTime",
+        "updateTime",
+        "isDelete"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_chatsession": {
+      "columns": [
+        "id",
+        "title",
+        "userId",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis": {
+      "columns": [
+        "id",
+        "url",
+        "userId",
+        "result",
+        "confidence",
+        "probability",
+        "recommendations",
+        "details",
+        "severity",
+        "reexamineStatus",
+        "picSize",
+        "picWidth",
+        "picHeight",
+        "picScale",
+        "picFormat",
+        "createTime",
+        "isDelete",
+        "aiRejected",
+        "abstainReason",
+        "modelVersion",
+        "weightSha256",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "calibrationStatus",
+        "calibratedProbability",
+        "qualityScore",
+        "qualityReasons",
+        "oodStatus",
+        "oodScore",
+        "humanReviewStatus",
+        "humanReviewerId",
+        "humanReviewedAt",
+        "humanReviewNote",
+        "humanResult",
+        "humanSeverity",
+        "humanRecommendations"
+      ],
+      "count": 1,
+      "sha256": "21b752fedcf2ade86f69fe495b9a7f74e88aa0bcbf9c6d73649fbcc897b041b3"
+    },
+    "t_diagnosis_audit": {
+      "columns": [
+        "id",
+        "diagnosisId",
+        "actorId",
+        "actorRole",
+        "action",
+        "payload",
+        "createdTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis_citation": {
+      "columns": [
+        "citationId",
+        "workflowId",
+        "retrievalEpoch",
+        "sourceDocumentId",
+        "sourceRevision",
+        "visibilitySnapshot",
+        "reviewStatusSnapshot",
+        "diseaseCodesSnapshot",
+        "topicCodesSnapshot",
+        "quotedSpan",
+        "quotedSpanDigest",
+        "retrievedAt",
+        "withdrawnAt",
+        "createdAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_diagnosis_save_confirmation": {
+      "columns": [
+        "confirmationId",
+        "ownerUserId",
+        "workflowId",
+        "operationType",
+        "idempotencyKey",
+        "workflowVersion",
+        "requestVersion",
+        "contentSnapshot",
+        "contentDigest",
+        "status",
+        "createdAt",
+        "expiresAt",
+        "decidedAt"
+      ],
+      "count": 1,
+      "sha256": "3d7ddf73e912c623f2d7d80d15021e5e63b91f3fa98f8aed3978bfbfc88f1837"
+    },
+    "t_diagnosis_workflow": {
+      "columns": [
+        "workflowId",
+        "ownerUserId",
+        "creationIdempotencyKey",
+        "status",
+        "currentSegmentCode",
+        "graphDefinitionVersion",
+        "graphDefinitionHash",
+        "actionVersion",
+        "workflowVersion",
+        "inferenceEpoch",
+        "inferenceEnvelopeId",
+        "explanationPublicationStatus",
+        "predictionExposureStatus",
+        "stopReasonCode",
+        "limitationReasonCode",
+        "questionText",
+        "createdAt",
+        "updatedAt"
+      ],
+      "count": 7,
+      "sha256": "9161222fd4df33a2dcb966bf8c94146bf3d5ced4f17192a53679601f2167e1ca"
+    },
+    "t_diagnosis_workflow_event": {
+      "columns": [
+        "eventId",
+        "workflowId",
+        "eventSequence",
+        "eventType",
+        "actorType",
+        "actorId",
+        "workflowVersion",
+        "segmentCode",
+        "reasonCode",
+        "payloadSnapshot",
+        "occurredAt"
+      ],
+      "count": 91,
+      "sha256": "5628e74988fee1f35f776e03aa0e15169bd258315f107d0f53c3aad54bf3cf48"
+    },
+    "t_explanation_snapshot": {
+      "columns": [
+        "explanationSnapshotId",
+        "workflowId",
+        "revision",
+        "publicationStatus",
+        "contentSnapshot",
+        "claimValidationResult",
+        "citationSetDigest",
+        "limitationTextCode",
+        "withheldReasonCode",
+        "createdAt",
+        "validatedAt",
+        "publishedAt"
+      ],
+      "count": 3,
+      "sha256": "f8357648a1fa773177fdecefb56ef613643c683759d4b91077a04191a4070160"
+    },
+    "t_human_review_task": {
+      "columns": [
+        "reviewTaskId",
+        "workflowId",
+        "reviewType",
+        "reviewRound",
+        "status",
+        "assignedDoctorId",
+        "submittedDoctorId",
+        "decisionCode",
+        "decisionReasonCode",
+        "taskVersion",
+        "graphThreadId",
+        "graphCheckpointId",
+        "createdAt",
+        "claimedAt",
+        "submittedAt",
+        "cancelledAt",
+        "updatedAt",
+        "workflowVersion",
+        "inferenceEnvelopeId",
+        "graphDefinitionVersion",
+        "graphDefinitionHash",
+        "actionVersion"
+      ],
+      "count": 2,
+      "sha256": "58717d4794d53a6ddedaf4860837def9f62dafaeae297a8ae0f44f7b4aa59a05"
+    },
+    "t_inference_cache": {
+      "columns": [
+        "id",
+        "imageHash",
+        "modelVersion",
+        "weightSha256",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "predictedLabel",
+        "probability",
+        "calibratedProbability",
+        "calibrationStatus",
+        "description",
+        "reliabilityScore",
+        "topPredictions",
+        "qualityScore",
+        "qualityReasons",
+        "isOod",
+        "oodScore",
+        "oodStatus",
+        "rejected",
+        "abstainReason",
+        "requiresReview",
+        "createTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_inference_envelope": {
+      "columns": [
+        "inferenceEnvelopeId",
+        "workflowId",
+        "inferenceEpoch",
+        "imageObjectReference",
+        "inputDigest",
+        "detectedMediaType",
+        "qualityOutcome",
+        "qualityScore",
+        "qualityReasonCodesSnapshot",
+        "inferenceOutcomeType",
+        "predictionSnapshot",
+        "confidenceSnapshot",
+        "safetyAbstentionReasonCode",
+        "technicalFailureCode",
+        "oodSnapshot",
+        "calibrationSnapshot",
+        "modelVersion",
+        "modelWeightFingerprint",
+        "preprocessVersion",
+        "inferencePolicyVersion",
+        "inferredAt",
+        "createdAt"
+      ],
+      "count": 5,
+      "sha256": "ffd065fbf60151aa65564329bae36346e03fd71c6ced7ca9efee5c3c7203ff35"
+    },
+    "t_knowledge_document": {
+      "columns": [
+        "id",
+        "userId",
+        "title",
+        "fileName",
+        "fileUrl",
+        "fileSize",
+        "fileType",
+        "chunkCount",
+        "contentHash",
+        "status",
+        "createTime",
+        "updateTime",
+        "isDelete",
+        "visibility",
+        "reviewStatus",
+        "diseaseCodes",
+        "topicCodes",
+        "governanceVersion",
+        "reviewedBy",
+        "reviewedAt"
+      ],
+      "count": 1,
+      "sha256": "9ece5d60917f64b882c2f10c09a696bb8c1376f128d3303fecd67c207c124d78"
+    },
+    "t_mcp_server": {
+      "columns": [
+        "id",
+        "userId",
+        "mcpServerCode",
+        "name",
+        "description",
+        "installType",
+        "host",
+        "deployConfig",
+        "status",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_news": {
+      "columns": [
+        "id",
+        "title",
+        "userId",
+        "content",
+        "summary",
+        "coverImg",
+        "status",
+        "publishTime",
+        "editTime"
+      ],
+      "count": 1,
+      "sha256": "2a4651ba8834a365a0050c61bb63e9529192847097cae95405ba9e6d980263ca"
+    },
+    "t_paragraph": {
+      "columns": [
+        "id",
+        "newsId",
+        "content"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_attachment": {
+      "columns": [
+        "id",
+        "userId",
+        "url",
+        "sessionId",
+        "messageId",
+        "createdTime",
+        "isDelete",
+        "imageBytes"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_audit": {
+      "columns": [
+        "id",
+        "runId",
+        "sessionId",
+        "userId",
+        "event",
+        "createdTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_run": {
+      "columns": [
+        "id",
+        "sessionId",
+        "activeSessionId",
+        "userId",
+        "messageId",
+        "status",
+        "errorCode",
+        "createdTime",
+        "deadline",
+        "finishedTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_python_chat_supplement": {
+      "columns": [
+        "requestId",
+        "sessionId",
+        "activeSessionId",
+        "workflowId",
+        "userId",
+        "idempotencyKey",
+        "originalMessage",
+        "status",
+        "waitVersion",
+        "answer",
+        "graphVersion",
+        "checkpointId",
+        "createdAt",
+        "answeredAt"
+      ],
+      "count": 1,
+      "sha256": "a92eb252893be50d7f24872213dd7bdaa9658173641614f191b6bea017d8fee3"
+    },
+    "t_python_chat_workflow": {
+      "columns": [
+        "sessionId",
+        "workflowId",
+        "messageId",
+        "attachmentId",
+        "createdTime"
+      ],
+      "count": 4,
+      "sha256": "22188779ae09f49754dec67aa910fcd47ef59d8115734bbeb65bd5962a23f7a3"
+    },
+    "t_python_graph_checkpoint": {
+      "columns": [
+        "threadId",
+        "checkpointNamespace",
+        "checkpointId",
+        "parentCheckpointId",
+        "valueType",
+        "checkpointValue",
+        "metadataJson"
+      ],
+      "count": 84,
+      "sha256": "ff4ff8c092f2d26007bc6a1ba0b26476dd86d3591f438d7d79e4a5f063bcaf59"
+    },
+    "t_python_graph_write": {
+      "columns": [
+        "threadId",
+        "checkpointNamespace",
+        "checkpointId",
+        "taskId",
+        "writeIndex",
+        "channel",
+        "valueType",
+        "writeValue"
+      ],
+      "count": 240,
+      "sha256": "3f1d92e5242110ac4726a512d54ad96c71c649545c38ac8f9a7c90890c9e57ed"
+    },
+    "t_saved_workflow_diagnosis": {
+      "columns": [
+        "workflowId",
+        "diagnosisId",
+        "confirmationId"
+      ],
+      "count": 1,
+      "sha256": "e89ec28a2683ef66f7a35f3323506e1b4222bf9f3e415e840fb91a9a19ab6b93"
+    },
+    "t_upload_task": {
+      "columns": [
+        "id",
+        "taskId",
+        "userId",
+        "objectKey",
+        "status",
+        "retryCount",
+        "lastError",
+        "createTime",
+        "updateTime"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_user": {
+      "columns": [
+        "id",
+        "userAccount",
+        "userPassword",
+        "userName",
+        "userAvatar",
+        "userProfile",
+        "userRole",
+        "editTime",
+        "createTime",
+        "updateTime",
+        "isDelete"
+      ],
+      "count": 3,
+      "sha256": "47669f554ea19bbe7207abafb5df3172dec5db1d06e7fee595c4038b1f0ce073"
+    },
+    "t_workflow_audit_event": {
+      "columns": [
+        "auditEventId",
+        "workflowId",
+        "eventType",
+        "actorType",
+        "actorId",
+        "segmentCode",
+        "traceId",
+        "payloadSnapshot",
+        "occurredAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_workflow_job": {
+      "columns": [
+        "jobId",
+        "workflowId",
+        "jobType",
+        "segmentCode",
+        "executionEpoch",
+        "status",
+        "attempt",
+        "maxAttempts",
+        "availableAt",
+        "leaseOwner",
+        "leaseToken",
+        "leaseVersion",
+        "leaseUntil",
+        "graphThreadId",
+        "graphCheckpointId",
+        "lastErrorCode",
+        "createdAt",
+        "updatedAt",
+        "claimableAt"
+      ],
+      "count": 43,
+      "sha256": "de565fe47b5cd782842358d3b3dcaf8c5da9da1026af225fccf9411790918d81"
+    },
+    "t_workflow_node_execution": {
+      "columns": [
+        "nodeExecutionId",
+        "workflowId",
+        "executionEpoch",
+        "segmentCode",
+        "nodeCode",
+        "idempotencyKey",
+        "status",
+        "inputDigest",
+        "outputDigest",
+        "resultReference",
+        "errorCode",
+        "startedAt",
+        "completedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "t_workflow_upload_input": {
+      "columns": [
+        "workflowId",
+        "requestDigest",
+        "imageBytes",
+        "graphCheckpointId",
+        "completedNodes",
+        "evidenceSnapshot"
+      ],
+      "count": 6,
+      "sha256": "01d34c53a4e3a3284f854229a22eee8fc288156b1775e62709f32b5572932a5a"
+    }
+  },
+  "postwriteRepairSeconds": 19.985,
+  "elapsedSeconds": 102.985,
+  "waitKinds": [
+    "quality",
+    "final",
+    "save",
+    "supplement"
+  ],
+  "newWorkflowId": "3335f20a14db4c41b8f5aaec5468812f",
+  "gatewayLedger": {
+    "pythonWritesOpened": true,
+    "transitions": [
+      {
+        "route": "legacy",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:50:56.551639+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:12.237121+00:00"
+      },
+      {
+        "route": "legacy",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:19.110797+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:26.303899+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "active",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:29.696124+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:33.119515+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:40.055437+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "active",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:51:42.011003+00:00"
+      }
+    ]
+  }
+}

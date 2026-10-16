@@ -1,0 +1,129 @@
+{
+  "ticket": "07-cutover-recovery-rehearsal",
+  "status": "PASS_WITH_LIMITATIONS",
+  "ticketStatus": "ready-for-human",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "branch": "worktree-py-rewrite",
+  "baselineCommit": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "acceptanceCriteriaCompleted": 4,
+  "scope": "Windows isolated first-cutover engineering; synthetic data and controlled provider adapters",
+  "prerequisite": {
+    "ticket": "06",
+    "ticketStatus": "ready-for-human",
+    "criteria": "8/8 supported engineering scope",
+    "evidence": "../issue06/verification-summary.json",
+    "linuxChecksReusedNotRerun": true
+  },
+  "windowsFullWeb": {
+    "tests": 847,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 44,
+    "passed": 803,
+    "seconds": 868.304,
+    "evidence": "full-windows/web.xml"
+  },
+  "nginxAdmission": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 5,
+    "seconds": 8.653,
+    "evidence": "admission-final.xml"
+  },
+  "firstCutover": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1,
+    "seconds": 112.96,
+    "evidence": "rehearsal-final.xml"
+  },
+  "timings": {
+    "firstWritePauseSeconds": 34.578,
+    "prewriteMaintenanceWindowSeconds": 24.968,
+    "secondMaintenanceWindowSeconds": 8.969,
+    "postwriteRepairSeconds": 19.985,
+    "elapsedSeconds": 102.985
+  },
+  "checks": [
+    "admissions-closed-active-lease-finished-new-claims-stopped",
+    "pure-python-readonly-login-data-four-waits-legacy-view-failure-real-legacy-rollback",
+    "postwrite-failure-stop-writes-reject-legacy-preserve-new-record-and-audit",
+    "python-forward-repair-four-waits-resumed-once-no-implicit-doctor-save",
+    "mysql-restore-to-new-schema-chroma-restart-object-backup-preserved"
+  ],
+  "artifacts": {
+    "legacyJarSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+    "legacySourceSha256": "da72b6e929cbdf33a2fa8ce94ecac47da2d1cc1fd66b3b8dbb2d3ac77409213f",
+    "pythonArchiveSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9"
+  },
+  "legacyReference": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "legacyBuild": "offline historical JDK21/Maven build of fixed Git archive; no source edits",
+  "pythonExecution": "fixed source archive selected through WAIT_RECOVERY_SOURCE, unavailable JAVA_HOME/empty PATH",
+  "privateRuntime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket07-7e2fd8a0d61c4c9495bc2cc04e2dbee5",
+  "schema": "eye_human_wait_issue17_3c637b44c0a948e18bcaae750c50c016",
+  "mysqlBackup": {
+    "file": "mysql.sql",
+    "sha256": "15a734c0b5b3bae7957034947e3221833971374af446dc55239b27a00c031890",
+    "restoreSchema": "eye_pyhandoff_28ddf133a8424b6c8fe5a93751dda8d6"
+  },
+  "references": {
+    "documentId": "238587439843502",
+    "ownerUserId": "7",
+    "sourceUrl": "https://fixture.invalid/238587439843502.txt",
+    "object": "238587439843502.txt",
+    "objectSha256": "f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3",
+    "collection": "diagnosis-knowledge",
+    "chunkId": "doc_238587439843502_chunk_0",
+    "embeddingDimensions": 1024,
+    "workflowInputs": {
+      "caf751cfb12c46aaa20afa40300a1e92": "t_workflow_upload_input.imageBytes",
+      "65e40b3118ce46c18e823dc0b777d0a2": "t_workflow_upload_input.imageBytes",
+      "61a7bf6be6de415a8f763d39e9c9d348": "t_workflow_upload_input.imageBytes",
+      "a036b5936ec34cbb86e33959f9ee7560": "t_workflow_upload_input.imageBytes"
+    }
+  },
+  "mypy": {
+    "status": "PASS",
+    "newFiles": 3,
+    "sharedVerifierFiles": 6,
+    "evidence": "mypy-final.log"
+  },
+  "dependencies": {
+    "status": "PASS",
+    "packages": 134,
+    "evidence": "full-web.log"
+  },
+  "frozenBaseline": {
+    "status": "BASELINE_OK",
+    "differences": [],
+    "legacyMigrations": 22
+  },
+  "review": {
+    "standardsRemaining": 0,
+    "specRemaining": 0,
+    "evidence": "review.md"
+  },
+  "acceptanceBoundaries": {
+    "productionUpgradeOrCutover": "NOT_RUN",
+    "linuxCutoverRehearsal": "NOT_RUN",
+    "hostedCI": "NOT_RUN_NO_PUSH",
+    "realEmbedding": "NOT_VERIFIED_THIS_TICKET; historical HTTP401 evidence unchanged",
+    "realClassifier": "NOT_VERIFIED",
+    "realLLM": "NOT_VERIFIED",
+    "realCOS": "NOT_VERIFIED",
+    "clinical": "NOT_VERIFIED",
+    "faultType": "API process termination; fixed Python artifact restart, no claim for arbitrary code/schema faults",
+    "oldTicket19Evidence": "UNCHANGED",
+    "javaAndFrozenSQL": "RETAINED_UNCHANGED",
+    "historyTags": "NOT_CREATED",
+    "ticket08": "NOT_STARTED",
+    "push": false,
+    "dockerOrWSLSettings": "UNCHANGED"
+  },
+  "postReviewCleanup": "Removed two unused test imports; final targeted Nginx and 3-file mypy passed"
+}

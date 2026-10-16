@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="73.099" timestamp="2026-10-16T22:35:32.943682+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_cutover_rehearsal" name="test_first_cutover_prewrite_rollback_and_postwrite_forward_repair" time="68.507"><failure message="AttributeError: 'str' object has no attribute 'decode'">algorithm\web\tests\test_cutover_rehearsal.py:291: in test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+    redis_runtime = Path(configuration["dir"].decode())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'str' object has no attribute 'decode'</failure></testcase></testsuite></testsuites>

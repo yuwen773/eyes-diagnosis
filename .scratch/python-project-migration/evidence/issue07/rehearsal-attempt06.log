@@ -1,0 +1,16 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ test_first_cutover_prewrite_rollback_and_postwrite_forward_repair ______
+algorithm\web\tests\test_cutover_rehearsal.py:273: in test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+    with child([os.environ["CUTOVER_JAVA"], "-jar", str(legacy_jar)], directory, "legacy-before",
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+algorithm\web\tests\test_cutover_rehearsal.py:69: in child
+    wait_http(process, health)
+algorithm\web\verify_real_services.py:223: in wait_http
+    raise Blocked("Service process exited during startup; inspect private runtime log")
+E   web.verify_real_services.Blocked: Service process exited during startup; inspect private runtime log
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_cutover_rehearsal.py::test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+1 failed in 62.77s (0:01:02)

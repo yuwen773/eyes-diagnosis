@@ -1,0 +1,16 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ test_first_cutover_prewrite_rollback_and_postwrite_forward_repair ______
+algorithm\web\tests\test_cutover_rehearsal.py:300: in test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+    try:
+         
+algorithm\web\tests\test_cutover_rehearsal.py:140: in mysql_backup
+    env = {**os.environ, "MYSQL_PWD": target.password or ""}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm\web\tests\test_cutover_rehearsal.py:140: in <genexpr>
+    env = {**os.environ, "MYSQL_PWD": target.password or ""}
+                       ^^^^^^^^^^^^^
+E   TypeError: tuple indices must be integers or slices, not str
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_cutover_rehearsal.py::test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+1 failed in 63.84s (0:01:03)

@@ -1,0 +1,1205 @@
+{
+  "kind": "quality",
+  "baselineCommit": "cf31e88f28fb00ae3cfd8cc6a1534076363b7de3",
+  "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+  "wait": {
+    "reviewTaskId": "6c8651e57d5d4dce90a0a1b76a2bc576",
+    "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null,
+    "question": "",
+    "supplementaryNotes": [],
+    "allowedDecisions": [
+      "APPROVE_CONTINUE",
+      "REJECT_RESUBMIT"
+    ],
+    "inferenceEnvelopeId": "191f685b9d5140b88ef02c9b5d4a4db2",
+    "inferenceEpoch": "0",
+    "inputDigest": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c",
+    "qualityOutcome": "REVIEW",
+    "qualityScore": 40,
+    "qualityReasons": [
+      "blur"
+    ],
+    "modelVersion": "efficientnet-b4@1.0.0",
+    "modelWeightFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "preprocessVersion": "v1",
+    "inferencePolicyVersion": "medical-safety-v3-quality-observe",
+    "graphDefinitionVersion": "upload-final-clinical-review-v6",
+    "inferenceOutcome": "VALID_PREDICTION",
+    "abstentionReason": null,
+    "modelAssessment": null,
+    "evidence": null,
+    "explanation": {
+      "snapshotId": null,
+      "revision": null,
+      "publicationStatus": "NONE",
+      "content": null
+    },
+    "audit": []
+  },
+  "graph": {
+    "diagnosisGraph": {
+      "version": "upload-final-clinical-review-v6",
+      "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+      "actionVersion": "upload-final-clinical-review-v6",
+      "export": {
+        "nodes": [
+          {
+            "id": "__start__",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "__start__"
+            }
+          },
+          {
+            "id": "validateImage",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "validateImage"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "inference",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "inference"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "imageQuality",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "imageQuality"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "qualityReview",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "qualityReview"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "visionExposure",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "visionExposure"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "clinicalRiskPrecheck",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "clinicalRiskPrecheck"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "clinicalRiskFinal",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "clinicalRiskFinal"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "explanationDraft",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "explanationDraft"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "explanationClaimValidation",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "explanationClaimValidation"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "explanationPublication",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "explanationPublication"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "finalClinicalReview",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "finalClinicalReview"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "evidenceRetrieval",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "evidenceRetrieval"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "evidenceRewrite",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "evidenceRewrite"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "evidenceValidation",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "evidenceValidation"
+            },
+            "metadata": {
+              "__interrupt": "after"
+            }
+          },
+          {
+            "id": "__end__"
+          }
+        ],
+        "edges": [
+          {
+            "source": "__start__",
+            "target": "validateImage"
+          },
+          {
+            "source": "clinicalRiskFinal",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "clinicalRiskFinal",
+            "target": "explanationDraft",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "clinicalRiskPrecheck",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "clinicalRiskPrecheck",
+            "target": "evidenceRetrieval",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "evidenceRetrieval",
+            "target": "evidenceRewrite",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "evidenceRetrieval",
+            "target": "evidenceValidation",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "evidenceRewrite",
+            "target": "evidenceValidation"
+          },
+          {
+            "source": "evidenceValidation",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "evidenceValidation",
+            "target": "clinicalRiskFinal",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "explanationClaimValidation",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "explanationClaimValidation",
+            "target": "explanationPublication",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "explanationDraft",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "explanationDraft",
+            "target": "explanationClaimValidation",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "explanationPublication",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "explanationPublication",
+            "target": "finalClinicalReview",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "imageQuality",
+            "target": "__end__",
+            "data": "REJECTED",
+            "conditional": true
+          },
+          {
+            "source": "imageQuality",
+            "target": "qualityReview",
+            "data": "WAITING_HUMAN_REVIEW",
+            "conditional": true
+          },
+          {
+            "source": "imageQuality",
+            "target": "visionExposure",
+            "data": "RUNNING",
+            "conditional": true
+          },
+          {
+            "source": "inference",
+            "target": "__end__",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "inference",
+            "target": "imageQuality",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "qualityReview",
+            "target": "__end__",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "qualityReview",
+            "target": "visionExposure",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "validateImage",
+            "target": "__end__",
+            "data": "True",
+            "conditional": true
+          },
+          {
+            "source": "validateImage",
+            "target": "inference",
+            "data": "False",
+            "conditional": true
+          },
+          {
+            "source": "visionExposure",
+            "target": "__end__",
+            "data": "COMPLETED_LIMITED",
+            "conditional": true
+          },
+          {
+            "source": "visionExposure",
+            "target": "clinicalRiskPrecheck",
+            "data": "RUNNING",
+            "conditional": true
+          },
+          {
+            "source": "visionExposure",
+            "target": "finalClinicalReview",
+            "data": "WAITING_HUMAN_REVIEW",
+            "conditional": true
+          },
+          {
+            "source": "finalClinicalReview",
+            "target": "__end__"
+          }
+        ]
+      }
+    },
+    "chatSupplementGraph": {
+      "version": "chat-supplement-v1",
+      "export": {
+        "nodes": [
+          {
+            "id": "__start__",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "__start__"
+            }
+          },
+          {
+            "id": "waitForDescription",
+            "type": "runnable",
+            "data": {
+              "id": [
+                "langgraph",
+                "_internal",
+                "_runnable",
+                "RunnableCallable"
+              ],
+              "name": "waitForDescription"
+            }
+          },
+          {
+            "id": "__end__"
+          }
+        ],
+        "edges": [
+          {
+            "source": "__start__",
+            "target": "waitForDescription"
+          },
+          {
+            "source": "waitForDescription",
+            "target": "__end__"
+          }
+        ]
+      }
+    },
+    "dataClasses": [
+      {
+        "name": "traditional-saved",
+        "stableId": "9007199254740995",
+        "owner": "9007199254740993",
+        "invariants": [
+          "AI provenance remains frozen",
+          "doctor review stays independent",
+          "no guessed workflow link"
+        ]
+      },
+      {
+        "name": "python-incomplete",
+        "stableId": "synthetic-python-workflow",
+        "owner": "7",
+        "invariants": [
+          "input bytes and digest",
+          "checkpoint ID and pending writes",
+          "graph/action token",
+          "approval version and audit remain unchanged"
+        ]
+      },
+      {
+        "name": "java-incomplete",
+        "stableId": "synthetic-java-task",
+        "owner": "8",
+        "invariants": [
+          "preserve raw legacy state",
+          "no deserialize/resume",
+          "read-only history",
+          "rebuild requires new explicit consent; no inherited review or save approval"
+        ]
+      }
+    ],
+    "waitClasses": [
+      {
+        "name": "doctor-quality",
+        "fixture": "quality",
+        "owner": "7",
+        "doctor": "10",
+        "authorization": "doctor decision never saves diagnosis"
+      },
+      {
+        "name": "doctor-final",
+        "fixture": "final",
+        "owner": "7",
+        "doctor": "10",
+        "authorization": "final doctor review never supplies user save consent"
+      },
+      {
+        "name": "save-confirmation",
+        "fixture": "approve/reject/expired",
+        "owner": "7",
+        "authorization": "only current unexpired explicitly approved snapshot can save once"
+      },
+      {
+        "name": "chat-supplement",
+        "fixture": "supplement",
+        "owner": "7",
+        "authorization": "independent graph version; reply cannot authorize clinical writes"
+      }
+    ],
+    "restoreConstraints": [
+      "Exported topology plus action version determines diagnosis hash; paths are not compatibility evidence.",
+      "Checkpoint bytes and pending writes must be preserved exactly; graph changes require explicit compatibility policy.",
+      "Chat supplement has its own graphVersion check, independent of diagnosis.",
+      "Synthetic external identity/model/retrieval; real MySQL and API/Worker processes verified separately."
+    ]
+  },
+  "rows": {
+    "t_diagnosis_workflow": [
+      {
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "ownerUserId": 7,
+        "creationIdempotencyKey": "8afe59045423487eb6e8746eb4dcf8fa",
+        "status": "WAITING_HUMAN_REVIEW",
+        "currentSegmentCode": "qualityReview",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "graphDefinitionHash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+        "actionVersion": "upload-final-clinical-review-v6",
+        "workflowVersion": 6,
+        "inferenceEpoch": 0,
+        "inferenceEnvelopeId": "191f685b9d5140b88ef02c9b5d4a4db2",
+        "explanationPublicationStatus": "NONE",
+        "predictionExposureStatus": "WITHHELD_BY_QUALITY_GATE",
+        "stopReasonCode": "QUALITY_REVIEW_REQUIRED",
+        "limitationReasonCode": null,
+        "questionText": "",
+        "createdAt": "2026-10-16 22:42:02",
+        "updatedAt": "2026-10-16 22:42:07.099043"
+      }
+    ],
+    "t_workflow_upload_input": [
+      {
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "requestDigest": "f6b17b2c4f01e45708baf7a61298b1a0ff84bd7e13cc08f2a9bc5350067614df",
+        "imageBytes": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAANUlEQVR4nO3QsQ0AMAzDsLT//9yeoCkbeYAN6LzZdZf3x0GSKEmUJEoSJYmSREmiJFGSaMoHo8QBPwYSAhsAAAAASUVORK5CYII=",
+          "sha256": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c"
+        },
+        "graphCheckpointId": "1f1c96fc-2bd8-6bdb-8005-0b04185bfcda",
+        "completedNodes": "[\"validateImage\", \"inference\", \"imageQuality\"]",
+        "evidenceSnapshot": null
+      }
+    ],
+    "t_python_graph_checkpoint": [
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "parentCheckpointId": "",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNi45Mzk2NDYrMDA6MDCiaWTZJDFmMWM5NmZjLTJhNWQtNjNmMC1iZmZmLTdhMGY3ZmJiODgzZK5jaGFubmVsX3ZhbHVlc4GpX19zdGFydF9fhKt3b3JrZmxvd19pZNkgMmE1MjU5MGI2OGEwNDdjOWFkMGQ3ZGViOGM0YThhNTamc3RhdHVzp1JVTk5JTkemcmVhc29uwKljb21wbGV0ZWSQsGNoYW5uZWxfdmVyc2lvbnOBqV9fc3RhcnRfXwGtdmVyc2lvbnNfc2VlboGpX19pbnB1dF9fgLB1cGRhdGVkX2NoYW5uZWxzkalfX3N0YXJ0X18=",
+          "sha256": "0d73c8696deb2cf6d2f3612c787900f9662f04421718cb81802f5dcec09ddedf"
+        },
+        "metadataJson": "{\"source\": \"input\", \"step\": -1, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "parentCheckpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNi45NDI5ODgrMDA6MDCiaWTZJDFmMWM5NmZjLTJhNjUtNjY3OC04MDAwLTE3MjAzNTIwZDI1M65jaGFubmVsX3ZhbHVlc4Wrd29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c6dSVU5OSU5HpnJlYXNvbsCpY29tcGxldGVkkLdicmFuY2g6dG86dmFsaWRhdGVJbWFnZcCwY2hhbm5lbF92ZXJzaW9uc4apX19zdGFydF9fAqt3b3JrZmxvd19pZAKmc3RhdHVzAqZyZWFzb24CqWNvbXBsZXRlZAK3YnJhbmNoOnRvOnZhbGlkYXRlSW1hZ2UCrXZlcnNpb25zX3NlZW6CqV9faW5wdXRfX4CpX19zdGFydF9fgalfX3N0YXJ0X18BsHVwZGF0ZWRfY2hhbm5lbHOVt2JyYW5jaDp0bzp2YWxpZGF0ZUltYWdlqWNvbXBsZXRlZKZyZWFzb26mc3RhdHVzq3dvcmtmbG93X2lk",
+          "sha256": "c0cfab0beb8780e5e3dc6aee83f79d1b65ecff3feddec416e66c6ee312a89f09"
+        },
+        "metadataJson": "{\"source\": \"loop\", \"step\": 0, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a9e-6793-8001-45ef6672aad3",
+        "parentCheckpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNi45NjYzNjMrMDA6MDCiaWTZJDFmMWM5NmZjLTJhOWUtNjc5My04MDAxLTQ1ZWY2NjcyYWFkM65jaGFubmVsX3ZhbHVlc4ard29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c6dSVU5OSU5HpnJlYXNvbsCpY29tcGxldGVkka12YWxpZGF0ZUltYWdlqm1lZGlhX3R5cGWpaW1hZ2UvcG5ns2JyYW5jaDp0bzppbmZlcmVuY2XAsGNoYW5uZWxfdmVyc2lvbnOIqV9fc3RhcnRfXwKrd29ya2Zsb3dfaWQCpnN0YXR1cwOmcmVhc29uA6ljb21wbGV0ZWQDt2JyYW5jaDp0bzp2YWxpZGF0ZUltYWdlA6ptZWRpYV90eXBlA7NicmFuY2g6dG86aW5mZXJlbmNlA612ZXJzaW9uc19zZWVug6lfX2lucHV0X1+AqV9fc3RhcnRfX4GpX19zdGFydF9fAa12YWxpZGF0ZUltYWdlgbdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQKwdXBkYXRlZF9jaGFubmVsc5WzYnJhbmNoOnRvOmluZmVyZW5jZaljb21wbGV0ZWSqbWVkaWFfdHlwZaZyZWFzb26mc3RhdHVz",
+          "sha256": "558f8c2d6bcd61ea0f62e072c1f4d97b82d3d9070b1aca4daf5969febc2289c7"
+        },
+        "metadataJson": "{\"source\": \"loop\", \"step\": 1, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "parentCheckpointId": "1f1c96fc-2a9e-6793-8001-45ef6672aad3",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNy4wMzc3NzErMDA6MDCiaWTZJDFmMWM5NmZjLTJiNGMtNmNmNy04MDAyLTg3OWFhY2MxNzFlM65jaGFubmVsX3ZhbHVlc4ard29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c6dSVU5OSU5HpnJlYXNvbsCpY29tcGxldGVkka12YWxpZGF0ZUltYWdlqm1lZGlhX3R5cGWpaW1hZ2UvcG5ns2JyYW5jaDp0bzppbmZlcmVuY2XAsGNoYW5uZWxfdmVyc2lvbnOIqV9fc3RhcnRfXwKrd29ya2Zsb3dfaWQCpnN0YXR1cwOmcmVhc29uA6ljb21wbGV0ZWQDt2JyYW5jaDp0bzp2YWxpZGF0ZUltYWdlA6ptZWRpYV90eXBlA7NicmFuY2g6dG86aW5mZXJlbmNlA612ZXJzaW9uc19zZWVuhKlfX2lucHV0X1+AqV9fc3RhcnRfX4GpX19zdGFydF9fAa12YWxpZGF0ZUltYWdlgbdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQKtX19pbnRlcnJ1cHRfX4ird29ya2Zsb3dfaWQCpnN0YXR1cwOmcmVhc29uA6ljb21wbGV0ZWQDqm1lZGlhX3R5cGUDqV9fc3RhcnRfXwK3YnJhbmNoOnRvOnZhbGlkYXRlSW1hZ2UDs2JyYW5jaDp0bzppbmZlcmVuY2UDsHVwZGF0ZWRfY2hhbm5lbHPA",
+          "sha256": "e04832aa0e787e24911394c96c221294811fce84701431ce79ef9ed5335aa9e7"
+        },
+        "metadataJson": "{\"source\": \"fork\", \"step\": 2, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b52-63f4-8003-c995a0df23b5",
+        "parentCheckpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNy4wMzk5OTgrMDA6MDCiaWTZJDFmMWM5NmZjLTJiNTItNjNmNC04MDAzLWM5OTVhMGRmMjNiNa5jaGFubmVsX3ZhbHVlc4ird29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c6dSVU5OSU5HpnJlYXNvbsCpY29tcGxldGVkkq12YWxpZGF0ZUltYWdlqWluZmVyZW5jZaptZWRpYV90eXBlqWltYWdlL3BuZ6tlbnZlbG9wZV9pZNkgMTkxZjY4NWI5ZDUxNDBiODhlZjAyYzliNWQ0YTRkYjKvZXhwb3N1cmVfc3RhdHVzpkhJRERFTrZicmFuY2g6dG86aW1hZ2VRdWFsaXR5wLBjaGFubmVsX3ZlcnNpb25zi6lfX3N0YXJ0X18Cq3dvcmtmbG93X2lkAqZzdGF0dXMEpnJlYXNvbgSpY29tcGxldGVkBLdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQOqbWVkaWFfdHlwZQOzYnJhbmNoOnRvOmluZmVyZW5jZQSrZW52ZWxvcGVfaWQEr2V4cG9zdXJlX3N0YXR1cwS2YnJhbmNoOnRvOmltYWdlUXVhbGl0eQStdmVyc2lvbnNfc2VlboWpX19pbnB1dF9fgKlfX3N0YXJ0X1+BqV9fc3RhcnRfXwGtdmFsaWRhdGVJbWFnZYG3YnJhbmNoOnRvOnZhbGlkYXRlSW1hZ2UCrV9faW50ZXJydXB0X1+Iq3dvcmtmbG93X2lkAqZzdGF0dXMDpnJlYXNvbgOpY29tcGxldGVkA6ptZWRpYV90eXBlA6lfX3N0YXJ0X18Ct2JyYW5jaDp0bzp2YWxpZGF0ZUltYWdlA7NicmFuY2g6dG86aW5mZXJlbmNlA6lpbmZlcmVuY2WBs2JyYW5jaDp0bzppbmZlcmVuY2UDsHVwZGF0ZWRfY2hhbm5lbHOWtmJyYW5jaDp0bzppbWFnZVF1YWxpdHmpY29tcGxldGVkq2VudmVsb3BlX2lkr2V4cG9zdXJlX3N0YXR1c6ZyZWFzb26mc3RhdHVz",
+          "sha256": "98040c4f590af6b1e4464a0d98d39b4df84c52111fbaab334d180cc07bfe6119"
+        },
+        "metadataJson": "{\"source\": \"loop\", \"step\": 3, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "parentCheckpointId": "1f1c96fc-2b52-63f4-8003-c995a0df23b5",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNy4wOTQwODcrMDA6MDCiaWTZJDFmMWM5NmZjLTJiZDYtNjRjOC04MDA0LWEwZDk1OTJiZTFmMa5jaGFubmVsX3ZhbHVlc4ird29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c6dSVU5OSU5HpnJlYXNvbsCpY29tcGxldGVkkq12YWxpZGF0ZUltYWdlqWluZmVyZW5jZaptZWRpYV90eXBlqWltYWdlL3BuZ6tlbnZlbG9wZV9pZNkgMTkxZjY4NWI5ZDUxNDBiODhlZjAyYzliNWQ0YTRkYjKvZXhwb3N1cmVfc3RhdHVzpkhJRERFTrZicmFuY2g6dG86aW1hZ2VRdWFsaXR5wLBjaGFubmVsX3ZlcnNpb25zi6lfX3N0YXJ0X18Cq3dvcmtmbG93X2lkAqZzdGF0dXMEpnJlYXNvbgSpY29tcGxldGVkBLdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQOqbWVkaWFfdHlwZQOzYnJhbmNoOnRvOmluZmVyZW5jZQSrZW52ZWxvcGVfaWQEr2V4cG9zdXJlX3N0YXR1cwS2YnJhbmNoOnRvOmltYWdlUXVhbGl0eQStdmVyc2lvbnNfc2VlboWpX19pbnB1dF9fgKlfX3N0YXJ0X1+BqV9fc3RhcnRfXwGtdmFsaWRhdGVJbWFnZYG3YnJhbmNoOnRvOnZhbGlkYXRlSW1hZ2UCrV9faW50ZXJydXB0X1+Lq3dvcmtmbG93X2lkAqZzdGF0dXMEpnJlYXNvbgSpY29tcGxldGVkBKptZWRpYV90eXBlA6lfX3N0YXJ0X18Ct2JyYW5jaDp0bzp2YWxpZGF0ZUltYWdlA7NicmFuY2g6dG86aW5mZXJlbmNlBKtlbnZlbG9wZV9pZASvZXhwb3N1cmVfc3RhdHVzBLZicmFuY2g6dG86aW1hZ2VRdWFsaXR5BKlpbmZlcmVuY2WBs2JyYW5jaDp0bzppbmZlcmVuY2UDsHVwZGF0ZWRfY2hhbm5lbHPA",
+          "sha256": "ae91da4f04a71e26dfa1de33fdc7af84bc0e9226253be37f3c5412fc5c6788b1"
+        },
+        "metadataJson": "{\"source\": \"fork\", \"step\": 4, \"parents\": {}}"
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd8-6bdb-8005-0b04185bfcda",
+        "parentCheckpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "valueType": "msgpack",
+        "checkpointValue": {
+          "base64": "h6F2BKJ0c9kgMjAyNi0xMC0xNlQxNDo0MjowNy4wOTUwODcrMDA6MDCiaWTZJDFmMWM5NmZjLTJiZDgtNmJkYi04MDA1LTBiMDQxODViZmNkYa5jaGFubmVsX3ZhbHVlc4mrd29ya2Zsb3dfaWTZIDJhNTI1OTBiNjhhMDQ3YzlhZDBkN2RlYjhjNGE4YTU2pnN0YXR1c7RXQUlUSU5HX0hVTUFOX1JFVklFV6ZyZWFzb263UVVBTElUWV9SRVZJRVdfUkVRVUlSRUSpY29tcGxldGVkk612YWxpZGF0ZUltYWdlqWluZmVyZW5jZaxpbWFnZVF1YWxpdHmqbWVkaWFfdHlwZalpbWFnZS9wbmerZW52ZWxvcGVfaWTZIDE5MWY2ODViOWQ1MTQwYjg4ZWYwMmM5YjVkNGE0ZGIyr2V4cG9zdXJlX3N0YXR1c7hXSVRISEVMRF9CWV9RVUFMSVRZX0dBVEWud2FpdGluZ19yZXZpZXfDt2JyYW5jaDp0bzpxdWFsaXR5UmV2aWV3wLBjaGFubmVsX3ZlcnNpb25zjalfX3N0YXJ0X18Cq3dvcmtmbG93X2lkAqZzdGF0dXMFpnJlYXNvbgWpY29tcGxldGVkBbdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQOqbWVkaWFfdHlwZQOzYnJhbmNoOnRvOmluZmVyZW5jZQSrZW52ZWxvcGVfaWQEr2V4cG9zdXJlX3N0YXR1cwW2YnJhbmNoOnRvOmltYWdlUXVhbGl0eQWud2FpdGluZ19yZXZpZXcFt2JyYW5jaDp0bzpxdWFsaXR5UmV2aWV3Ba12ZXJzaW9uc19zZWVuhqlfX2lucHV0X1+AqV9fc3RhcnRfX4GpX19zdGFydF9fAa12YWxpZGF0ZUltYWdlgbdicmFuY2g6dG86dmFsaWRhdGVJbWFnZQKtX19pbnRlcnJ1cHRfX4urd29ya2Zsb3dfaWQCpnN0YXR1cwSmcmVhc29uBKljb21wbGV0ZWQEqm1lZGlhX3R5cGUDqV9fc3RhcnRfXwK3YnJhbmNoOnRvOnZhbGlkYXRlSW1hZ2UDs2JyYW5jaDp0bzppbmZlcmVuY2UEq2VudmVsb3BlX2lkBK9leHBvc3VyZV9zdGF0dXMEtmJyYW5jaDp0bzppbWFnZVF1YWxpdHkEqWluZmVyZW5jZYGzYnJhbmNoOnRvOmluZmVyZW5jZQOsaW1hZ2VRdWFsaXR5gbZicmFuY2g6dG86aW1hZ2VRdWFsaXR5BLB1cGRhdGVkX2NoYW5uZWxzlrdicmFuY2g6dG86cXVhbGl0eVJldmlld6ljb21wbGV0ZWSvZXhwb3N1cmVfc3RhdHVzpnJlYXNvbqZzdGF0dXOud2FpdGluZ19yZXZpZXc=",
+          "sha256": "d4c0894b0ba1ed940723aff79c0d793b9b501c240ac6ef43980a0be90fad297a"
+        },
+        "metadataJson": "{\"source\": \"loop\", \"step\": 5, \"parents\": {}}"
+      }
+    ],
+    "t_python_graph_write": [
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "taskId": "cf356f3f-4c5d-15f2-b986-009759273ab4",
+        "writeIndex": 0,
+        "channel": "workflow_id",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "2SAyYTUyNTkwYjY4YTA0N2M5YWQwZDdkZWI4YzRhOGE1Ng==",
+          "sha256": "366d4fbc3fe98d8af58cdd3b8667c2dd02bfea39dd270ca6891a50a26ed3198d"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "taskId": "cf356f3f-4c5d-15f2-b986-009759273ab4",
+        "writeIndex": 1,
+        "channel": "status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "p1JVTk5JTkc=",
+          "sha256": "075b1d3518dfccd3293df15a59cdc6d745f85efc98f6542e98741a0fd3ecb643"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "taskId": "cf356f3f-4c5d-15f2-b986-009759273ab4",
+        "writeIndex": 2,
+        "channel": "reason",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "taskId": "cf356f3f-4c5d-15f2-b986-009759273ab4",
+        "writeIndex": 3,
+        "channel": "completed",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "kA==",
+          "sha256": "9e076ceaf246b6003d9c2680a2b4cf0bffd069805902b0b5edeebf49039fe4bd"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a5d-63f0-bfff-7a0f7fbb883d",
+        "taskId": "cf356f3f-4c5d-15f2-b986-009759273ab4",
+        "writeIndex": 4,
+        "channel": "branch:to:validateImage",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "taskId": "93be46eb-0978-f683-cd20-233ec153bf4c",
+        "writeIndex": 0,
+        "channel": "status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "p1JVTk5JTkc=",
+          "sha256": "075b1d3518dfccd3293df15a59cdc6d745f85efc98f6542e98741a0fd3ecb643"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "taskId": "93be46eb-0978-f683-cd20-233ec153bf4c",
+        "writeIndex": 1,
+        "channel": "reason",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "taskId": "93be46eb-0978-f683-cd20-233ec153bf4c",
+        "writeIndex": 2,
+        "channel": "completed",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "ka12YWxpZGF0ZUltYWdl",
+          "sha256": "9b77297f15efd92e540cf5c299bbafd566ee6368943dd5f5fdb448ad7b087e5e"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "taskId": "93be46eb-0978-f683-cd20-233ec153bf4c",
+        "writeIndex": 3,
+        "channel": "media_type",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "qWltYWdlL3BuZw==",
+          "sha256": "0b898bf2789b20dbaf46c3b1faf2e0f5a2a2e4a9c1088cd82b8810807c9b1e3c"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2a65-6678-8000-17203520d253",
+        "taskId": "93be46eb-0978-f683-cd20-233ec153bf4c",
+        "writeIndex": 4,
+        "channel": "branch:to:inference",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 0,
+        "channel": "envelope_id",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "2SAxOTFmNjg1YjlkNTE0MGI4OGVmMDJjOWI1ZDRhNGRiMg==",
+          "sha256": "545c5db963256b612adbe65150fa5dcaf0729e07a356d46995e2231444b9bae2"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 1,
+        "channel": "status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "p1JVTk5JTkc=",
+          "sha256": "075b1d3518dfccd3293df15a59cdc6d745f85efc98f6542e98741a0fd3ecb643"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 2,
+        "channel": "reason",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 3,
+        "channel": "completed",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "kq12YWxpZGF0ZUltYWdlqWluZmVyZW5jZQ==",
+          "sha256": "fd7e7aed77ec3031c05db6f56c0d87ef4fd7e87eb9ff4d425d48cea98aa8ba7b"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 4,
+        "channel": "exposure_status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "pkhJRERFTg==",
+          "sha256": "f98d1c9d316a3e70024857efc1d1c97e7e81246019bd2429248a7839db8d1bb9"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2b4c-6cf7-8002-879aacc171e3",
+        "taskId": "29b10d1e-d655-a853-0fbd-510599f659c6",
+        "writeIndex": 5,
+        "channel": "branch:to:imageQuality",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 0,
+        "channel": "status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "tFdBSVRJTkdfSFVNQU5fUkVWSUVX",
+          "sha256": "a7d5434445df56b39c579dee7c2c3fdbf2349357413634b9b4f14c021c1373fc"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 1,
+        "channel": "reason",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "t1FVQUxJVFlfUkVWSUVXX1JFUVVJUkVE",
+          "sha256": "956df394f5fc0c58361d6999f5db3a08ecee2ecde46a40b4c8fd7d0f8e891301"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 2,
+        "channel": "exposure_status",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "uFdJVEhIRUxEX0JZX1FVQUxJVFlfR0FURQ==",
+          "sha256": "cb189c735b3b8c746ec34a65cc051cbffbfc32a97d2293f8edd3ba41d18c9bbb"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 3,
+        "channel": "waiting_review",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "ww==",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 4,
+        "channel": "completed",
+        "valueType": "msgpack",
+        "writeValue": {
+          "base64": "k612YWxpZGF0ZUltYWdlqWluZmVyZW5jZaxpbWFnZVF1YWxpdHk=",
+          "sha256": "a6215acef1c0421878b6b021d0c6e35f16a1be929260a4c4d4eabf1a6dc538fe"
+        }
+      },
+      {
+        "threadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "checkpointNamespace": "",
+        "checkpointId": "1f1c96fc-2bd6-64c8-8004-a0d9592be1f1",
+        "taskId": "4c35a9cd-a941-0b7c-279e-f3ff3b95296e",
+        "writeIndex": 5,
+        "channel": "branch:to:qualityReview",
+        "valueType": "null",
+        "writeValue": {
+          "base64": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    ],
+    "t_human_review_task": [
+      {
+        "reviewTaskId": "6c8651e57d5d4dce90a0a1b76a2bc576",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "reviewType": "IMAGE_QUALITY_GATE",
+        "reviewRound": 1,
+        "status": "OPEN",
+        "assignedDoctorId": null,
+        "submittedDoctorId": null,
+        "decisionCode": null,
+        "decisionReasonCode": null,
+        "taskVersion": 0,
+        "graphThreadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "graphCheckpointId": "1f1c96fc-2bd8-6bdb-8005-0b04185bfcda",
+        "createdAt": "2026-10-16 22:42:07.099043",
+        "claimedAt": null,
+        "submittedAt": null,
+        "cancelledAt": null,
+        "updatedAt": "2026-10-16 22:42:07.099043",
+        "workflowVersion": 6,
+        "inferenceEnvelopeId": "191f685b9d5140b88ef02c9b5d4a4db2",
+        "graphDefinitionVersion": "upload-final-clinical-review-v6",
+        "graphDefinitionHash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+        "actionVersion": "upload-final-clinical-review-v6"
+      }
+    ],
+    "t_inference_envelope": [
+      {
+        "inferenceEnvelopeId": "191f685b9d5140b88ef02c9b5d4a4db2",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "inferenceEpoch": 0,
+        "imageObjectReference": "mysql-upload:2a52590b68a047c9ad0d7deb8c4a8a56",
+        "inputDigest": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c",
+        "detectedMediaType": "image/png",
+        "qualityOutcome": "REVIEW",
+        "qualityScore": 40,
+        "qualityReasonCodesSnapshot": "[\"blur\"]",
+        "inferenceOutcomeType": "VALID_PREDICTION",
+        "predictionSnapshot": "{\"calibratedProbability\": 91.0, \"diseaseCode\": \"glaucoma\"}",
+        "confidenceSnapshot": "{\"probability\": 91.0, \"reliabilityScore\": 91, \"requiresReview\": false, \"topPredictions\": [{\"label\": \"glaucoma\", \"probability\": 91.0}]}",
+        "safetyAbstentionReasonCode": null,
+        "technicalFailureCode": null,
+        "oodSnapshot": "{\"outOfDistribution\": false, \"score\": 0.0, \"status\": \"NOT_EVALUATED\"}",
+        "calibrationSnapshot": "{\"probability\": 91.0, \"status\": \"CALIBRATED\"}",
+        "modelVersion": "efficientnet-b4@1.0.0",
+        "modelWeightFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "preprocessVersion": "v1",
+        "inferencePolicyVersion": "medical-safety-v3-quality-observe",
+        "inferredAt": "2026-10-16 14:42:07.038986",
+        "createdAt": "2026-10-16 22:42:07"
+      }
+    ],
+    "t_diagnosis_save_confirmation": [],
+    "t_python_chat_supplement": [],
+    "t_workflow_job": [
+      {
+        "jobId": "4fd33bf7967240cfb3ab0a8b5ad8316d",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "jobType": "START",
+        "segmentCode": "python-graph",
+        "executionEpoch": 0,
+        "status": "COMPLETED",
+        "attempt": 1,
+        "maxAttempts": 3,
+        "availableAt": "2026-10-16 22:42:02",
+        "leaseOwner": "b315d7e3efba45cbacfd905b7a26541a",
+        "leaseToken": "38234cafd0bd4c9d96f0d27115ab02aa",
+        "leaseVersion": 1,
+        "leaseUntil": null,
+        "graphThreadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "graphCheckpointId": null,
+        "lastErrorCode": null,
+        "createdAt": "2026-10-16 22:42:02",
+        "updatedAt": "2026-10-16 22:42:06.982888",
+        "claimableAt": null
+      },
+      {
+        "jobId": "87107df3abb1428d829a56dfc164627a",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "jobType": "RESUME",
+        "segmentCode": "python-graph",
+        "executionEpoch": 2,
+        "status": "COMPLETED",
+        "attempt": 1,
+        "maxAttempts": 3,
+        "availableAt": "2026-10-16 22:42:07.044370",
+        "leaseOwner": "30bf04f4e1984fd2a4b67aba4548a503",
+        "leaseToken": "50dd30ceb8fc40bea4e94d48fde601d9",
+        "leaseVersion": 1,
+        "leaseUntil": null,
+        "graphThreadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "graphCheckpointId": "1f1c96fc-2b52-63f4-8003-c995a0df23b5",
+        "lastErrorCode": null,
+        "createdAt": "2026-10-16 22:42:07.044370",
+        "updatedAt": "2026-10-16 22:42:07.099043",
+        "claimableAt": null
+      },
+      {
+        "jobId": "cbf563539bdb4f728b30866b4dd8cbde",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "jobType": "RESUME",
+        "segmentCode": "python-graph",
+        "executionEpoch": 1,
+        "status": "COMPLETED",
+        "attempt": 1,
+        "maxAttempts": 3,
+        "availableAt": "2026-10-16 22:42:06.982888",
+        "leaseOwner": "f56c7a2d6fb04fd091150bbd375521c7",
+        "leaseToken": "adc46863eee64613ab26627c807fb85b",
+        "leaseVersion": 1,
+        "leaseUntil": null,
+        "graphThreadId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "graphCheckpointId": "1f1c96fc-2a9e-6793-8001-45ef6672aad3",
+        "lastErrorCode": null,
+        "createdAt": "2026-10-16 22:42:06.982888",
+        "updatedAt": "2026-10-16 22:42:07.044370",
+        "claimableAt": null
+      }
+    ],
+    "t_diagnosis_workflow_event": [
+      {
+        "eventId": "2bf192a39bde44e3af024bf0d0193144",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 3,
+        "eventType": "RUNNING",
+        "actorType": "WORKER",
+        "actorId": "b315d7e3efba45cbacfd905b7a26541a",
+        "workflowVersion": 2,
+        "segmentCode": "inference",
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:06.982888"
+      },
+      {
+        "eventId": "43153038ece341b887f1616d6e6aeaeb",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 2,
+        "eventType": "RUNNING",
+        "actorType": "WORKER",
+        "actorId": "b315d7e3efba45cbacfd905b7a26541a",
+        "workflowVersion": 1,
+        "segmentCode": null,
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:06.879604"
+      },
+      {
+        "eventId": "5d3149d30067462aad7d260c467a9bac",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 4,
+        "eventType": "RUNNING",
+        "actorType": "WORKER",
+        "actorId": "f56c7a2d6fb04fd091150bbd375521c7",
+        "workflowVersion": 3,
+        "segmentCode": "inference",
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:07.016226"
+      },
+      {
+        "eventId": "6290be7bfad340d1aca075f3d136ef8d",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 6,
+        "eventType": "RUNNING",
+        "actorType": "WORKER",
+        "actorId": "30bf04f4e1984fd2a4b67aba4548a503",
+        "workflowVersion": 5,
+        "segmentCode": "imageQuality",
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:07.071180"
+      },
+      {
+        "eventId": "65051bc889244c1e84aca256474807fe",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 1,
+        "eventType": "QUEUED",
+        "actorType": "USER",
+        "actorId": "7",
+        "workflowVersion": 0,
+        "segmentCode": null,
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:02"
+      },
+      {
+        "eventId": "68898105170e458a85e1809f79a1152f",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 5,
+        "eventType": "RUNNING",
+        "actorType": "WORKER",
+        "actorId": "f56c7a2d6fb04fd091150bbd375521c7",
+        "workflowVersion": 4,
+        "segmentCode": "imageQuality",
+        "reasonCode": null,
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:07.044370"
+      },
+      {
+        "eventId": "cfecb46b7cac4f9ba2f5e5c5d03a43c1",
+        "workflowId": "2a52590b68a047c9ad0d7deb8c4a8a56",
+        "eventSequence": 7,
+        "eventType": "WAITING_HUMAN_REVIEW",
+        "actorType": "WORKER",
+        "actorId": "30bf04f4e1984fd2a4b67aba4548a503",
+        "workflowVersion": 6,
+        "segmentCode": "qualityReview",
+        "reasonCode": "QUALITY_REVIEW_REQUIRED",
+        "payloadSnapshot": null,
+        "occurredAt": "2026-10-16 22:42:07.099043"
+      }
+    ],
+    "t_explanation_snapshot": []
+  }
+}

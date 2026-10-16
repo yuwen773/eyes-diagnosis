@@ -1,0 +1,26 @@
+algorithm\web\tests\test_cutover_rehearsal.py:139: error: List item 8 has incompatible type "str | None"; expected "str | bytes | PathLike[str] | PathLike[bytes]"  [list-item]
+algorithm\web\tests\test_cutover_rehearsal.py:201: error: Need type annotation for "report"  [var-annotated]
+algorithm\web\tests\test_cutover_rehearsal.py:219: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "list[Any] | str | None")  [assignment]
+algorithm\web\tests\test_cutover_rehearsal.py:248: error: Argument "embeddings" to "add" of "Collection" has incompatible type "list[list[float]]"; expected "ndarray[tuple[Any, ...], dtype[signedinteger[_32Bit] | floating[_32Bit]]] | list[ndarray[tuple[Any, ...], dtype[signedinteger[_32Bit] | floating[_32Bit]]]] | Sequence[float] | Sequence[int] | list[Sequence[float] | Sequence[int]] | None"  [arg-type]
+algorithm\web\tests\test_cutover_rehearsal.py:270: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "list[Any] | str | None")  [assignment]
+algorithm\web\tests\test_cutover_rehearsal.py:280: error: Item "str" of "list[Any] | str | None" has no attribute "append"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:280: error: Item "None" of "list[Any] | str | None" has no attribute "append"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:286: error: Item "str" of "str | None" has no attribute "decode"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:286: error: Item "None" of "str | None" has no attribute "decode"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:286: error: Invalid index type "bytes" for "dict[str | None, str | None]"; expected type "str | None"  [index]
+algorithm\web\tests\test_cutover_rehearsal.py:290: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "list[Any] | str | None")  [assignment]
+algorithm\web\tests\test_cutover_rehearsal.py:320: error: Incompatible types in assignment (expression has type "float", target has type "list[Any] | str | None")  [assignment]
+algorithm\web\tests\test_cutover_rehearsal.py:321: error: Item "str" of "list[Any] | str | None" has no attribute "append"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:321: error: Item "None" of "list[Any] | str | None" has no attribute "append"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:384: error: Item "bool" of "bool | Any" has no attribute "all"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:386: error: Item "str" of "list[Any] | str | None" has no attribute "extend"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:386: error: Item "None" of "list[Any] | str | None" has no attribute "extend"  [union-attr]
+algorithm\web\tests\test_cutover_rehearsal.py:389: error: Incompatible types in assignment (expression has type "float", target has type "list[Any] | str | None")  [assignment]
+algorithm\web\tests\test_cutover_rehearsal.py:390: error: No overload variant of "update" of "MutableMapping" matches argument types "str", "float", "list[Any]", "Any", "Any"  [call-overload]
+algorithm\web\tests\test_cutover_rehearsal.py:390: note: Possible overload variants:
+algorithm\web\tests\test_cutover_rehearsal.py:390: note:     def update(self, SupportsKeysAndGetItem[str, list[Any] | str | None], /) -> None
+algorithm\web\tests\test_cutover_rehearsal.py:390: note:     def update(self, SupportsKeysAndGetItem[str, list[Any] | str | None], /, **kwargs: list[Any] | str | None) -> None
+algorithm\web\tests\test_cutover_rehearsal.py:390: note:     def update(self, Iterable[tuple[str, list[Any] | str | None]], /) -> None
+algorithm\web\tests\test_cutover_rehearsal.py:390: note:     def update(self, Iterable[tuple[str, list[Any] | str | None]], /, **kwargs: list[Any] | str | None) -> None
+algorithm\web\tests\test_cutover_rehearsal.py:390: note:     def update(self, **kwargs: list[Any] | str | None) -> None
+Found 19 errors in 1 file (checked 2 source files)

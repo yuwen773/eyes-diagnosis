@@ -1,0 +1,120 @@
+{
+  "status": "PASS_WITH_LIMITATIONS",
+  "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket07-18522938609d4ca6afd79f9688092ff1",
+  "schema": "eye_human_wait_issue17_6074660a49f14edabc9d8658ce497a0e",
+  "checks": [
+    "admissions-closed-active-lease-finished-new-claims-stopped",
+    "pure-python-readonly-login-data-four-waits-legacy-view-failure-real-legacy-rollback",
+    "postwrite-failure-stop-writes-reject-legacy-preserve-new-record-and-audit",
+    "python-forward-repair-four-waits-resumed-once-no-implicit-doctor-save",
+    "mysql-restore-to-new-schema-chroma-restart-object-backup-preserved"
+  ],
+  "production": "NOT_RUN",
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "artifacts": {
+    "legacyJarSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+    "legacySourceSha256": "da72b6e929cbdf33a2fa8ce94ecac47da2d1cc1fd66b3b8dbb2d3ac77409213f",
+    "pythonArchiveSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9"
+  },
+  "drainedLease": {
+    "workflowId": "872698f9c2d8466a8b50b45fb7e8f0b1",
+    "leaseVersion": 1,
+    "tokenRecordedPrivately": true
+  },
+  "mysqlBackup": {
+    "file": "mysql.sql",
+    "sha256": "9f08ceef1d94511c909344510bfedc9cd5ff7edc05bce0a942ab7bf52942e081",
+    "restoreSchema": "eye_pyhandoff_d0ab5b3e10b945f0b6484a05d071834c"
+  },
+  "backupFiles": {
+    "dump.rdb": "a09b2eb88e2e3c426c89478b6e85373d628ab72cc44dba68b523c5850d5566db",
+    "mysql.sql": "9f08ceef1d94511c909344510bfedc9cd5ff7edc05bce0a942ab7bf52942e081",
+    "chroma/chroma.sqlite3": "ba2f01db5d60d60d7b7ca3ba6b3dbdd2188eaad36b8b37bfe4dc63a6b06cad98",
+    "chroma/3c782699-6ff5-4afd-88b5-eaea8da6f401/data_level0.bin": "2e0c1fed5008737c46bf8309df2bd1d84af5cf72bd3ccca417c78d5405f08b71",
+    "chroma/3c782699-6ff5-4afd-88b5-eaea8da6f401/header.bin": "bf12d4486518c7addf488cb4854526902c78e91951990e1e2f4e055cec814e5d",
+    "chroma/3c782699-6ff5-4afd-88b5-eaea8da6f401/length.bin": "04e0ee0dfad79e1e65acfa0cc9b7a8ca7324073039fbf23baaea5da9388aa4af",
+    "chroma/3c782699-6ff5-4afd-88b5-eaea8da6f401/link_lists.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "objects/input.png": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c"
+  },
+  "prewriteRollbackSeconds": 15.828,
+  "postwriteRepairSeconds": 20.203,
+  "elapsedSeconds": 102.469,
+  "waitKinds": [
+    "quality",
+    "final",
+    "save",
+    "supplement"
+  ],
+  "newWorkflowId": "f4f024279cef4830929ea2c05930987b",
+  "gatewayLedger": {
+    "pythonWritesOpened": true,
+    "transitions": [
+      {
+        "route": "legacy",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:39:29.063042+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:39:44.299654+00:00"
+      },
+      {
+        "route": "legacy",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:39:50.693195+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:39:56.715399+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "active",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:40:00.061072+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:40:03.442576+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "readonly",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:40:10.579231+00:00"
+      },
+      {
+        "route": "python",
+        "policy": "active",
+        "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+        "artifactSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9",
+        "reason": "isolated acceptance",
+        "atUtc": "2026-10-16T14:40:12.588371+00:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="62.754" timestamp="2026-10-16T22:47:11.811754+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_cutover_rehearsal" name="test_first_cutover_prewrite_rollback_and_postwrite_forward_repair" time="58.333"><failure message="web.verify_real_services.Blocked: Service process exited during startup; inspect private runtime log">algorithm\web\tests\test_cutover_rehearsal.py:273: in test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+    with child([os.environ["CUTOVER_JAVA"], "-jar", str(legacy_jar)], directory, "legacy-before",
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+algorithm\web\tests\test_cutover_rehearsal.py:69: in child
+    wait_http(process, health)
+algorithm\web\verify_real_services.py:223: in wait_http
+    raise Blocked("Service process exited during startup; inspect private runtime log")
+E   web.verify_real_services.Blocked: Service process exited during startup; inspect private runtime log</failure></testcase></testsuite></testsuites>

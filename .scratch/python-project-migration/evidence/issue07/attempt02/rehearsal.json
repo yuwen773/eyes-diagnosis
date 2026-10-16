@@ -1,0 +1,27 @@
+{
+  "status": "FAIL",
+  "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket07-e1a0ee2811ac48e39059a78d3c0930e7",
+  "schema": "eye_human_wait_issue17_30bac0a841da4d3b97d81c7c53905970",
+  "checks": [
+    "admissions-closed-active-lease-finished-new-claims-stopped"
+  ],
+  "production": "NOT_RUN",
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "artifacts": {
+    "legacyJarSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+    "legacySourceSha256": "da72b6e929cbdf33a2fa8ce94ecac47da2d1cc1fd66b3b8dbb2d3ac77409213f",
+    "pythonArchiveSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9"
+  },
+  "drainedLease": {
+    "workflowId": "d35d4b5c346640c6a7bf9f0e6278d48e",
+    "leaseVersion": 1,
+    "tokenRecordedPrivately": true
+  },
+  "mysqlBackup": {
+    "file": "mysql.sql",
+    "sha256": "afaaa9235aa10feace940f9735a1766f2d29757c3c320db1cb763e4f8cd1918c",
+    "restoreSchema": "eye_pyhandoff_cf19bbe919a94dffbdd81b83198a7aee"
+  }
+}

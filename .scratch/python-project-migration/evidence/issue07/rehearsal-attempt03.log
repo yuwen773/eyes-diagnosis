@@ -1,0 +1,10 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ test_first_cutover_prewrite_rollback_and_postwrite_forward_repair ______
+algorithm\web\tests\test_cutover_rehearsal.py:291: in test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+    redis_runtime = Path(configuration["dir"].decode())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'str' object has no attribute 'decode'
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_cutover_rehearsal.py::test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+1 failed in 73.14s (0:01:13)

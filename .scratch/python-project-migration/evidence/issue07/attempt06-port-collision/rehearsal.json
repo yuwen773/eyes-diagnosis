@@ -1,0 +1,31 @@
+{
+  "status": "FAIL",
+  "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket07-cab136a3bcc14c438f5bd2b559e85fd4",
+  "schema": "eye_human_wait_issue17_b2d179df0a6e418d8603db5b4191f758",
+  "checks": [],
+  "production": "NOT_RUN",
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "artifacts": {
+    "legacyJarSha256": "b5bb3d603b7328678e971df2315e19d72bc33ec34df801cbb52c74f502d779db",
+    "legacySourceSha256": "da72b6e929cbdf33a2fa8ce94ecac47da2d1cc1fd66b3b8dbb2d3ac77409213f",
+    "pythonArchiveSha256": "906c3c7a8e66da6ec90fcb9f7dc0cc3e6e28f87ec52edcec46684fe5e59ac4f9"
+  },
+  "references": {
+    "documentId": "55834456045102",
+    "ownerUserId": "7",
+    "sourceUrl": "https://fixture.invalid/55834456045102.txt",
+    "object": "55834456045102.txt",
+    "objectSha256": "f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3",
+    "collection": "diagnosis-knowledge",
+    "chunkId": "doc_55834456045102_chunk_0",
+    "embeddingDimensions": 1024,
+    "workflowInputs": {
+      "08ccd12a1d04462b9d9e0b1ecda0623c": "t_workflow_upload_input.imageBytes",
+      "e0d20468adda439ca15ee79f185ec78a": "t_workflow_upload_input.imageBytes",
+      "23c4d5f10b9146fb8cde79c96b31a4e6": "t_workflow_upload_input.imageBytes",
+      "b7ba4cb549b245679bed2742673c547a": "t_workflow_upload_input.imageBytes"
+    }
+  }
+}

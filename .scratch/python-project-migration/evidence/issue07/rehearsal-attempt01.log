@@ -1,0 +1,27 @@
+E                                                                        [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of test_first_cutover_prewrite_rollback_and_postwrite_forward_repair _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:926: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+algorithm\web\tests\test_python_wait_recovery.py:104: in recovery_case
+    url, schema = isolated_database(os.environ["HANDOFF_TEST_MYSQL_ADMIN_URL"],
+algorithm\web\tests\handoff_fixtures.py:23: in isolated_database
+    with pymysql.connect(host=url.host, port=url.port or 3306, user=url.username,
+.venv\Lib\site-packages\pymysql\connections.py:373: in __init__
+    self.connect()
+.venv\Lib\site-packages\pymysql\connections.py:702: in connect
+    self._request_authentication()
+.venv\Lib\site-packages\pymysql\connections.py:1010: in _request_authentication
+    auth_packet = self._read_packet()
+                  ^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pymysql\connections.py:810: in _read_packet
+    packet.raise_for_error()
+.venv\Lib\site-packages\pymysql\protocol.py:219: in raise_for_error
+    err.raise_mysql_exception(self._data)
+.venv\Lib\site-packages\pymysql\err.py:154: in raise_mysql_exception
+    raise errorclass(errno, errval, sqlstate=sqlstate)
+E   pymysql.err.OperationalError: (1045, "Access denied for user 'root'@'localhost' (using password: YES)")
+=========================== short test summary info ===========================
+ERROR algorithm/web/tests/test_cutover_rehearsal.py::test_first_cutover_prewrite_rollback_and_postwrite_forward_repair
+1 error in 6.59s

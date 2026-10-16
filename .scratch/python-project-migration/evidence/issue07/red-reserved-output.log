@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_invalid_ports_and_concurrent_generation_preserve_installed_configuration _
+algorithm\web\tests\test_maintenance.py:50: in test_invalid_ports_and_concurrent_generation_preserve_installed_configuration
+    assert subprocess.run(args, capture_output=True).returncode != 0
+E   AssertionError: assert 0 != 0
+E    +  where 0 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '--reason', 'isolated acceptance'], returncode=0, stdout=b'', stderr=b'').returncode
+E    +    where CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '--reason', 'isolated acceptance'], returncode=0, stdout=b'', stderr=b'') = <function run at 0x000001A1459B1120>(['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'web.maintenance',...\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-967\\test_invalid_ports_and_concurr0\\maintenance.json', '--route', ...], capture_output=True)
+E    +      where <function run at 0x000001A1459B1120> = subprocess.run
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_maintenance.py::test_invalid_ports_and_concurrent_generation_preserve_installed_configuration
+1 failed in 2.70s

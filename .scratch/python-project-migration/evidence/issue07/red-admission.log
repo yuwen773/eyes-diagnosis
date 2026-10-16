@@ -1,0 +1,21 @@
+Fsss                                                                     [100%]
+================================== FAILURES ===================================
+____ test_first_python_write_boundary_permanently_rejects_legacy_rollback _____
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-956/test_first_python_write_bounda0')
+
+    def test_first_python_write_boundary_permanently_rejects_legacy_rollback(tmp_path):
+        ports = (28081, 28082, 28080)
+        for route, policy in [("legacy", "readonly"), ("python", "readonly"),
+                              ("legacy", "readonly"), ("python", "active"), ("python", "readonly")]:
+            result = subprocess.run(command(tmp_path, route, policy, ports), capture_output=True, text=True)
+>           assert result.returncode == 0, result.stderr
+E           AssertionError: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Scripts\python.exe: No module named web.maintenance
+E             
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-...k\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe: No module named web.maintenance\n').returncode
+
+algorithm\web\tests\test_maintenance.py:30: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_maintenance.py::test_first_python_write_boundary_permanently_rejects_legacy_rollback
+1 failed, 3 skipped in 6.81s
