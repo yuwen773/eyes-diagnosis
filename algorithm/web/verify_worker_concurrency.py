@@ -1,4 +1,4 @@
-"""Opt-in isolated MySQL/Flyway acceptance for issues 16 and 17.
+"""Opt-in isolated MySQL acceptance with Python migrations.
 
 Set WORKER_TEST_MYSQL_ADMIN_URL using local credentials, then run with the web
 baseline Python. Creates a new test schema; never drops or migrates business DBs.
@@ -10,8 +10,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import re
-import shutil
 import subprocess
 import sys
 from uuid import uuid4
@@ -38,36 +36,21 @@ def main():
         with admin.connect() as db:
             version: str = db.exec_driver_sql("SELECT VERSION()").scalar_one()
             db.exec_driver_sql(f"CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-            db.exec_driver_sql(f"USE `{schema}`")
-            # V19 evolves this pre-Flyway table. Use only its original CREATE,
-            # never schema.sql's USE diagnosis, ALTER or DROP statements.
-            ddl = (root / "src/main/resources/db/schema.sql").read_text(encoding="utf-8")
-            for name in ["t_knowledge_document", *(["t_user"] if human_wait else [])]:
-                table = re.search(rf"CREATE TABLE IF NOT EXISTS {name}\s*\(.*?;", ddl, re.S)
-                assert table is not None
-                db.exec_driver_sql(table.group())
     finally:
         admin.dispose()
     env = os.environ.copy()
-    if os.name == "nt":
-        java = Path(r"C:\Users\yuwen\.jdks\corretto-21.0.7")
-        env["JAVA_HOME"] = str(java)
-        env["PATH"] = str(java / "bin") + os.pathsep + env.get("PATH", "")
-    maven = shutil.which("mvn", path=env.get("PATH"))
-    if not maven:
-        raise RuntimeError("Maven is required")
-    env.update(FLYWAY_URL=f"jdbc:mysql://{target.host}:{target.port or 3306}/{schema}?serverTimezone=Asia/Shanghai",
-               FLYWAY_USER=target.username or "", FLYWAY_PASSWORD=target.password or "")
+    env.pop("JAVA_HOME", None)
+    env["MIGRATION_MYSQL_URL"] = target.set(database=schema).render_as_string(hide_password=False)
     results = {"at": datetime.now(timezone.utc).isoformat(), "schema": schema, "mysqlVersion": version,
                "suite": args.suite,
-               "scope": "Real MySQL and child processes; synthetic Java identity/model/retrieval/explanation; no clinical acceptance",
+               "scope": "Real MySQL and child processes; controlled identity/model/retrieval/explanation; no clinical acceptance",
                "commands": {}}
     if human_wait:
         sources = {str(file.relative_to(root)).replace("\\", "/"): hashlib.sha256(file.read_bytes()).hexdigest()
                    for file in (root / "algorithm/web").rglob("*.py")}
         (output / "source-sha256.json").write_text(json.dumps(sources, indent=2), encoding="utf-8")
-    commands = [("flyway-migrate", [maven, "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:migrate"], root),
-                ("flyway-validate", [maven, "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:validate"], root)]
+    commands = [("python-upgrade", [sys.executable, "-m", "web.migrations", "upgrade"], root / "algorithm"),
+                ("python-inspect", [sys.executable, "-m", "web.migrations", "inspect"], root / "algorithm")]
     env["WORKER_TEST_MYSQL_URL"] = target.set(database=schema).render_as_string(hide_password=False)
     if human_wait:
         env["HUMAN_WAIT_TEST_MYSQL_URL"] = env.pop("WORKER_TEST_MYSQL_URL")

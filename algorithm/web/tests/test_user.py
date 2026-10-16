@@ -13,8 +13,9 @@ endpoint that is silently missing or mounted under the wrong method would only
 surface as a 404 in a browser.
 """
 
+from web.tests.frozen_contract import domain_paths
+
 import hashlib
-import re
 import sys
 from pathlib import Path
 
@@ -50,14 +51,10 @@ from web.security import LEGACY_SALT, encode, verify  # noqa: E402
 #: session namespace instead of forwarding to ``GET /user/get/login``.
 SESSION_ENDPOINTS = {"/user/login", "/user/get/login", "/user/logout"}
 
-USER_CONTROLLER = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller/UserController.java"
-)
 
 
-def _java_user_paths() -> set[str]:
-    source = USER_CONTROLLER.read_text(encoding="utf-8")
-    return {"/user" + m for m in re.findall(r'@(?:Post|Get)Mapping\("([^"]+)"\)', source)}
+def _java_user_paths():
+    return domain_paths("user")
 
 
 def _python_user_paths() -> set[str]:

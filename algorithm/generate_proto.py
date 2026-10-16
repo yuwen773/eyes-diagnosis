@@ -1,4 +1,4 @@
-"""Generate ignored Python protobuf bindings from the canonical Java schema."""
+"""Generate ignored Python protobuf bindings from the standalone wire contract."""
 
 from pathlib import Path
 
@@ -7,7 +7,7 @@ from grpc_tools import protoc
 
 def main() -> None:
     directory = Path(__file__).resolve().parent
-    proto = directory.parent / "src" / "main" / "proto" / "diagnosis.proto"
+    proto = directory.parent / "contracts" / "diagnosis.proto"
     result = protoc.main([
         "grpc_tools.protoc",
         f"-I{proto.parent}",

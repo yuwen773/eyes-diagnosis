@@ -1,0 +1,33 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______________ test_stalled_readiness_does_not_block_liveness ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000015B68E7EB10>
+
+    @pytest.mark.asyncio
+    async def test_stalled_readiness_does_not_block_liveness(monkeypatch):
+        from web import delivery
+        started, release = threading.Event(), threading.Event()
+    
+        @contextmanager
+        def connection():
+            started.set()
+            assert release.wait(5)
+            yield SimpleNamespace(execute=lambda statement: None)
+    
+        monkeypatch.setattr(delivery, "create_engine", lambda *a, **k:
+                            SimpleNamespace(connect=connection, dispose=lambda: None))
+        app = create_app(WebConfig(redis_port=1))
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+            waiting = asyncio.create_task(client.get("/ready"))
+            try:
+                assert await asyncio.to_thread(started.wait, 2)
+>               assert not waiting.done()
+E               AssertionError: assert not True
+E                +  where True = <built-in method done of _asyncio.Task object at 0x0000015B68E47400>()
+E                +    where <built-in method done of _asyncio.Task object at 0x0000015B68E47400> = <Task finished name='Task-2' coro=<AsyncClient.get() done, defined at D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\httpx\_client.py:1751> result=<Response [50... Unavailable]>>.done
+
+algorithm\web\tests\test_delivery.py:83: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_delivery.py::test_stalled_readiness_does_not_block_liveness
+1 failed, 3 deselected in 9.44s

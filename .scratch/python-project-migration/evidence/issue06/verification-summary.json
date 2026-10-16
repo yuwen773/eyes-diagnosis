@@ -1,0 +1,353 @@
+{
+  "ticket": "06-python-project-deploy-ci",
+  "status": "PASS_WITH_LIMITATIONS",
+  "ticketStatus": "ready-for-human",
+  "acceptanceCriteriaCompleted": 8,
+  "baselineCommit": "7efdc8c328ad2100a1a68d6b74e98375aea90b44",
+  "branch": "worktree-py-rewrite",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "windowsFullWeb": {
+    "tests": 841,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 40,
+    "passed": 801,
+    "seconds": 1436.459,
+    "junit": "windows-final/web.xml",
+    "status": "PASS"
+  },
+  "linuxFullWeb": {
+    "tests": 841,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 40,
+    "passed": 801,
+    "seconds": 893.808,
+    "junit": "linux-final/web.xml",
+    "status": "PASS"
+  },
+  "windowsTargetedFinal": {
+    "tests": 37,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 37,
+    "seconds": 33.595,
+    "junit": "targeted-final.xml",
+    "status": "PASS"
+  },
+  "linuxTargetedFinal": {
+    "tests": 37,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 37,
+    "seconds": 33.793,
+    "junit": "linux-targeted-final.xml",
+    "status": "PASS"
+  },
+  "linuxFailureFilesRecheck": {
+    "tests": 28,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 28,
+    "seconds": 334.981,
+    "junit": "linux-failure-recheck.xml",
+    "status": "PASS"
+  },
+  "windowsHandoff": {
+    "tests": 21,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 21,
+    "seconds": 224.616,
+    "junit": "windows-accepted-real/handoff.xml",
+    "status": "PASS"
+  },
+  "linuxHandoff": {
+    "tests": 21,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 21,
+    "seconds": 282.436,
+    "junit": "linux-real-accepted/handoff.xml",
+    "status": "PASS"
+  },
+  "linuxAlgorithms": {
+    "tests": 307,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "passed": 306,
+    "seconds": 325.131,
+    "junit": "algorithms.xml",
+    "status": "PASS",
+    "deselected": 16
+  },
+  "linuxWatchdog": {
+    "tests": 28,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 28,
+    "seconds": 27.238,
+    "junit": "watchdog.xml",
+    "status": "PASS",
+    "containerInit": true
+  },
+  "contractsAfterImportCleanup": {
+    "tests": 199,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 199,
+    "seconds": 13.933,
+    "junit": "contracts-final.xml",
+    "status": "PASS"
+  },
+  "browserWaitRecovery": {
+    "tests": 4,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "passed": 4,
+    "seconds": 381.181,
+    "junit": "browser-final.xml",
+    "status": "PASS"
+  },
+  "frontend": {
+    "status": "PASS",
+    "testFiles": 13,
+    "passed": 49,
+    "log": "frontend.log",
+    "checks": [
+      "local-python-openapi-generation",
+      "unchanged-generated-client",
+      "vue-typecheck",
+      "production-build",
+      "vitest"
+    ]
+  },
+  "mypy": {
+    "status": "PASS",
+    "modules": 6,
+    "log": "mypy-final.log"
+  },
+  "windowsDelivery": {
+    "status": "PASS",
+    "schema": "eye_windows_delivery06_c6887d663c3147b9a8b6d99ce32827e6",
+    "python": "3.11.14",
+    "workflowId": "f33fdab157ff4d3c87a7c2fee02c08f3",
+    "checks": [
+      "install-pinned-python",
+      "pwsh-api-worker-start-status-stop",
+      "real-mysql-redis-readiness",
+      "real-python-login",
+      "stock-worker-durable-task"
+    ]
+  },
+  "composeDelivery": {
+    "status": "PASS",
+    "project": "eye-compose06-eb321881b972",
+    "checks": [
+      "stock-compose-healthy",
+      "python-migration",
+      "original-password-login-large-id",
+      "retained-data-read",
+      "stock-worker-durable-task",
+      "api-worker-restart-preserves-data-and-session",
+      "proxy-rediscovers-api-address",
+      "no-jvm",
+      "nginx-vue-browser-login"
+    ],
+    "providers": "NOT_VERIFIED",
+    "clinical": "NOT_VERIFIED",
+    "mysqlVersion": "8.0.26",
+    "apiAddressChanged": true,
+    "schema": "eye_compose_issue06_df04553cd30948eaa8e38872bb62580a",
+    "workflowId": "55a47ee434f0483d8b7e9141b0d4b878",
+    "frontend": "http://127.0.0.1:57634",
+    "result": "compose-accepted/results.json",
+    "screenshot": "compose-accepted/compose-login.png"
+  },
+  "realInfrastructure": {
+    "windows": {
+      "result": "windows-accepted-real/services/results.json",
+      "schema": "eye_python_issue06_2af97bdea0b84e31866f4ab0ccb3790f",
+      "checks": [
+        "real-python-auth-and-user-role-long-pagination-contracts",
+        "legacy-synchronous-diagnosis-fails-closed-without-model",
+        "real-mysql-noop-and-frozen-news-date-contract",
+        "doc-docx-real-chroma-large-id-private-scope",
+        "governance-role-and-real-mysql-version-conflict",
+        "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+        "user-consent-save-conflict-and-replay-exactly-once",
+        "real-python-doctor-quality-and-final-review-versions-without-implicit-save",
+        "invalid-and-insufficient-terminal-paths-and-source-revocation",
+        "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+        "real-redis-logout-cookie-replay-and-sse-revocation"
+      ],
+      "gates": {
+        "infrastructure": {
+          "status": "PASS",
+          "detail": "Python migration, real MySQL/Redis/Chroma, independent API/Worker"
+        },
+        "orchestration": {
+          "status": "PASS",
+          "detail": "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM"
+        },
+        "mysqlSemantics": {
+          "status": "PASS",
+          "detail": "Real MySQL leases/fencing/transactions/concurrency and cross-process human wait recovery"
+        },
+        "realEmbedding": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realClassifier": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realLLM": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realCOS": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "clinical": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        }
+      }
+    },
+    "linux": {
+      "result": "linux-real-accepted/services/results.json",
+      "schema": "eye_python_issue06_e50de3f809dd4d64923db88493603e8c",
+      "checks": [
+        "real-python-auth-and-user-role-long-pagination-contracts",
+        "legacy-synchronous-diagnosis-fails-closed-without-model",
+        "real-mysql-noop-and-frozen-news-date-contract",
+        "doc-docx-real-chroma-large-id-private-scope",
+        "governance-role-and-real-mysql-version-conflict",
+        "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+        "user-consent-save-conflict-and-replay-exactly-once",
+        "real-python-doctor-quality-and-final-review-versions-without-implicit-save",
+        "invalid-and-insufficient-terminal-paths-and-source-revocation",
+        "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+        "real-redis-logout-cookie-replay-and-sse-revocation"
+      ],
+      "gates": {
+        "infrastructure": {
+          "status": "PASS",
+          "detail": "Python migration, real MySQL/Redis/Chroma, independent API/Worker"
+        },
+        "orchestration": {
+          "status": "PASS",
+          "detail": "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM"
+        },
+        "mysqlSemantics": {
+          "status": "PASS",
+          "detail": "Real MySQL leases/fencing/transactions/concurrency and cross-process human wait recovery"
+        },
+        "realEmbedding": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realClassifier": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realLLM": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "realCOS": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        },
+        "clinical": {
+          "status": "NOT_VERIFIED",
+          "detail": "Separate acceptance boundary"
+        }
+      },
+      "retainedRuntimeVolume": "eye-linux-real06-runtime",
+      "retainedMysqlVolume": "eye-ci-mysql06-final"
+    },
+    "mysqlVersion": "8.0.26",
+    "chromaVersion": "1.0.0",
+    "controlledBoundaries": [
+      "classifier",
+      "embedding",
+      "LLM",
+      "COS"
+    ]
+  },
+  "cpuPackage": {
+    "status": "PASS",
+    "python": "3.11.14",
+    "torch": "2.14.1+cpu",
+    "torchCuda": null,
+    "checks": [
+      "hash-locked-linux-cpu-install",
+      "import-eye-disease-model",
+      "EyeDiseaseModel-pretrained-False-constructor",
+      "standalone-python-protobuf-generation",
+      "no-java-or-mvn"
+    ],
+    "scope": "Engineering and controlled fixtures only; no real weights or clinical classification"
+  },
+  "review": {
+    "standardsRemaining": 0,
+    "specRemaining": 0,
+    "evidence": "review.md"
+  },
+  "firstLinuxFull": {
+    "passed": 799,
+    "failures": 2,
+    "skipped": 40,
+    "log": "linux-web.log",
+    "causes": [
+      "API child did not answer before 20-second startup deadline",
+      "strict Snowflake clock-backwards rejection: 402ms"
+    ]
+  },
+  "environmentClockObservation": {
+    "evidence": "linux-final-clock.json",
+    "productionGuardChanged": false,
+    "hostClockChanged": false,
+    "wslClockRemainsIntermittentlyUnstable": true
+  },
+  "finalDeliveryFixes": {
+    "nginx": "Forced API address reuse reproduces 502; Docker DNS rediscovery passes stock Compose",
+    "testConnection": "Expected model failure explicitly closes its connection before subsequent read-only assertion",
+    "protobuf": "Independent byte-identical contract replaces Java-tree generation input",
+    "validationAfterFullWeb": [
+      "targeted-final.xml",
+      "linux-targeted-final.xml",
+      "mypy-final.log",
+      "linux-real-accepted/services/results.json",
+      "algorithms.xml",
+      "compose-accepted/results.json"
+    ],
+    "nonfunctionalCleanup": "Removed only orphan imports and obsolete Java parser wrappers; 199 contract tests passed"
+  },
+  "acceptanceBoundaries": {
+    "hostedGithubCI": "NOT_RUN_NO_PUSH",
+    "realEmbedding": "NOT_VERIFIED",
+    "realLLM": "NOT_VERIFIED",
+    "realClassifier": "NOT_VERIFIED",
+    "realCOS": "NOT_VERIFIED",
+    "clinical": "NOT_VERIFIED",
+    "productionUpgradeOrCutover": "NOT_RUN",
+    "oldTicket19Evidence": "UNCHANGED",
+    "ubuntuIntegrationProxyError": "NOT_REPAIRED_OR_CLAIMED_RESOLVED",
+    "nextTickets": "NOT_STARTED",
+    "push": false
+  }
+}

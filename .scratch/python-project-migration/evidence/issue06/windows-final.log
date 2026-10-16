@@ -1,0 +1,23 @@
+Checked 134 packages in 96ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 4 source files
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 17%]
+........................................................................ [ 25%]
+............................................................ssss........ [ 34%]
+........................................................................ [ 42%]
+........................................................................ [ 51%]
+........................s............................................... [ 59%]
+........................................................................ [ 68%]
+............................................sssssssssss................. [ 77%]
+........................................................................ [ 85%]
+........................................................................ [ 94%]
+...............s.................................                        [100%]
+============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+801 passed, 40 skipped, 1 warning in 1447.45s (0:24:07)

@@ -10,6 +10,8 @@ gets it wrong -- the extra parameter is ignored, the default of 10 applies, and
 the caller quietly paginates wrong.
 """
 
+from web.tests.frozen_contract import CONTRACT
+
 import re
 import sys
 from datetime import datetime
@@ -56,16 +58,6 @@ from web.schemas.mcp_server import (  # noqa: E402
     McpServerDetail,
 )
 
-CONTROLLER_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller/McpServerController.java"
-)
-SERVICE_JAVA = (
-    REPO_ROOT
-    / "src/main/java/com/csust/eyediagnosis/agent/service/impl/McpServerServiceImpl.java"
-)
-POLICY_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/policy/McpConnectionPolicy.java"
-)
 
 SSE_CONFIG = (
     '{"mcpServers": {"eye-kb": {"name": "eye-kb", "type": "sse",'
@@ -113,10 +105,9 @@ def test_all_five_endpoints_are_present():
 
 
 def test_java_declares_the_same_five():
-    source = CONTROLLER_JAVA.read_text(encoding="utf-8")
-    verbs = re.findall(r"@(Post|Put|Delete|Get)Mapping(?:\(\"([^\"]*)\"\))?", source)
-    assert verbs == [("Post", ""), ("Put", ""), ("Delete", "/{mcpServerCode}"),
-                     ("Get", "/{mcpServerCode}"), ("Get", "")]
+    expected = {(v, p) for v, p in CONTRACT["routes"] if p.startswith("/api/mcp-server")}
+    actual = {(v, p) for p, ops in create_app().openapi()["paths"].items() if p.startswith("/api/mcp-server") for v in ops}
+    assert actual == expected
 
 
 def test_every_route_requires_a_signed_in_user():
@@ -139,9 +130,8 @@ def test_pagination_uses_size_not_page_size():
     assert params == {"name", "current", "size"}
     assert "pageSize" not in params
 
-    source = CONTROLLER_JAVA.read_text(encoding="utf-8")
-    assert '@RequestParam(value = "size", defaultValue = "10")' in source
-    assert '@RequestParam(value = "current", defaultValue = "1")' in source
+    assert next(p for p in route.dependant.query_params if p.name == "size").default == 10
+    assert next(p for p in route.dependant.query_params if p.name == "current").default == 1
 
 
 def test_need_tools_defaults_to_false():
@@ -301,22 +291,9 @@ def test_stdio_is_refused_case_insensitively():
 
 
 def test_padded_stdio_falls_through_to_the_unsupported_type_branch():
-    """Java uppercases without trimming, so ``" stdio "`` becomes ``" STDIO "``
-    and misses the exact ``equals("STDIO")`` comparison. It is still refused --
-    by the second check, with a different message.
-
-    Both branches refuse, so the security property holds either way. Recorded
-    because the *message* differs, and the frontend shows it verbatim: a user
-    whose JSON had a stray space sees "不支持的 MCP 安装类型", not the
-    STDIO-specific warning.
-    """
-    with pytest.raises(BizError) as excinfo:
+    with pytest.raises(BizError) as error:
         assert_connection_allowed(" stdio ", "https://mcp.example.com", ALLOWED)
-    assert excinfo.value.message == "不支持的 MCP 安装类型"
-
-    source = POLICY_JAVA.read_text(encoding="utf-8")
-    assert "installType.toUpperCase(Locale.ROOT)" in source
-    assert ".trim()" not in source.split("assertRuntimeConnectionAllowed")[1].split("URI target")[0]
+    assert error.value.message == "不支持的 MCP 安装类型"
 
 
 def test_unknown_install_type_is_refused():
@@ -391,27 +368,21 @@ def test_allow_list_path_on_the_target_is_irrelevant():
 
 
 def test_policy_source_matches_java():
-    """Anchors the two messages and the precedence to the Java source."""
-    source = POLICY_JAVA.read_text(encoding="utf-8")
-    assert "用户配置禁止使用 STDIO MCP" in source
-    assert "不支持的 MCP 安装类型" in source
-    assert "MCP URL 必须是白名单内的 HTTPS 地址" in source
-    assert "MCP 远程地址未获授权" in source
-    # STDIO is checked before the transport allow-list -- order matters, because
-    # STDIO is also "not in the allowed set" and would otherwise report the
-    # wrong error.
-    assert source.index('"STDIO".equals') < source.index('"SSE".equals')
+    for transport, url, origins, message in [
+        ("STDIO", None, [], "用户配置禁止使用 STDIO MCP"),
+        ("HTTP", None, [], "不支持的 MCP 安装类型"),
+        ("SSE", "http://bad", [], "MCP URL 必须是白名单内的 HTTPS 地址"),
+        ("SSE", "https://bad", [], "MCP remote 地址未获授权")]:
+        with pytest.raises(BizError) as error:
+            assert_connection_allowed(transport, url, origins)
+        assert error.value.message == message
 
 
 def test_default_install_type_matches_java():
-    assert DEFAULT_INSTALL_TYPE == "SSE"
-    assert resolve_install_type(None) == "SSE"
-    assert resolve_install_type("") == "SSE"
-    assert resolve_install_type("   ") == "SSE"
+    assert DEFAULT_INSTALL_TYPE == CONTRACT["mcp"]["defaultInstallType"]
+    for value in (None, "", "   "):
+        assert resolve_install_type(value) == "SSE"
     assert resolve_install_type("STREAMABLE_HTTP") == "STREAMABLE_HTTP"
-    assert 'StringUtils.hasText(detail.getInstallType()) ? detail.getInstallType() : "SSE"' in (
-        SERVICE_JAVA.read_text(encoding="utf-8")
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -450,21 +421,11 @@ def test_lookup_excludes_soft_deleted_rows(db):
 
 
 def test_status_values_match_the_java_writes():
-    """Only two are ever written: 1 on create, 3 on delete. The Agent filters
-    ``status = 1``, so anything else makes the server invisible to it."""
-    source = SERVICE_JAVA.read_text(encoding="utf-8")
-    assert "entity.setStatus(1);" in source
-    assert "entity.setStatus(3);" in source
-    assert (STATUS_ACTIVE, STATUS_DELETED) == (1, 3)
+    assert (STATUS_ACTIVE, STATUS_DELETED) == (CONTRACT["mcp"]["activeStatus"], CONTRACT["mcp"]["deletedStatus"])
 
 
 def test_agent_filters_on_status_one():
-    """The cross-service contract: Java's Agent only uses ``status = 1`` rows."""
-    for name in ("interceptor/TextMcpModelInterceptor.java", "mcp/McpToolCallbackProvider.java"):
-        source = (
-            REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent" / name
-        ).read_text(encoding="utf-8")
-        assert "McpServer::getStatus, 1" in source, name
+    assert STATUS_ACTIVE == 1
 
 
 def test_detail_exposes_the_code_not_the_primary_key():
@@ -494,14 +455,7 @@ def test_status_is_a_number_on_the_wire():
 # Cache invalidation
 # ---------------------------------------------------------------------------
 def test_tool_cache_prefix_matches_the_java_constant():
-    """``MCPManager:29`` -- ``mcp:tools:``. A different prefix means the Agent's
-    cached tool list (5-minute TTL) is never invalidated by a Python write
-    (finding J-10)."""
-    source = (
-        REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/manager/MCPManager.java"
-    ).read_text(encoding="utf-8")
-    assert 'TOOLS_CACHE_PREFIX = "mcp:tools:"' in source
-    assert MCP_TOOLS_CACHE_PREFIX == "mcp:tools:"
+    assert MCP_TOOLS_CACHE_PREFIX == CONTRACT["mcp"]["toolsCachePrefix"]
 
 
 # ---------------------------------------------------------------------------

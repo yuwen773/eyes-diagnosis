@@ -2,10 +2,9 @@
 
 Schema ownership
 ----------------
-Flyway remains the sole authority for DDL (``src/main/resources/db/migration/``,
-V1-V9). This module never issues DDL -- it only reads and writes rows in the
-schema Flyway already created. Alembic is deliberately absent: adding a second
-migration authority for the same database is how schemas drift.
+``python -m web.migrations`` owns explicit initialization and upgrades using
+the independently frozen ``deploy/python-migrations`` assets. API and Worker
+startup never issue DDL. Existing Flyway history remains immutable audit data.
 
 Column naming
 -------------

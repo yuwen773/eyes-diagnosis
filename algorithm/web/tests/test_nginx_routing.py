@@ -1,18 +1,10 @@
-"""Nginx routing table vs. the routes each backend actually serves.
+"""Historical mixed-deployment routing against frozen and Python registries.
 
-``deploy/nginx.conf`` is a list of hand-written rules that has to agree with two
-independent route registries: Java's controllers and Python's routers. Nothing
-enforces that agreement at runtime. A path Python serves but Nginx never routes
-to it is a 404 the moment the config is loaded, and a path Nginx routes to Java
-that Java does not serve is the same failure in the other direction.
-
-These tests read the config and both registries and check the three-way match.
-They are static -- no nginx binary, no running services -- which is what makes
-them runnable in the ``python-web`` CI job.
-
-``nginx -t`` still has to be run during deployment for syntax. This file is
-about semantics.
+No Java source tree is read. The new Python Compose proxy is separately checked
+through the real address-change and browser delivery smoke.
 """
+
+from web.tests.frozen_contract import CONTRACT
 
 import re
 import sys
@@ -28,7 +20,6 @@ from web.app import API_PREFIX, create_app  # noqa: E402
 
 NGINX_CONF = REPO_ROOT / "deploy" / "nginx.conf"
 SNIPPET = REPO_ROOT / "deploy" / "snippets" / "eye-proxy-headers.conf"
-CONTROLLER_DIR = REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller"
 
 #: The three paths Python took over in ticket 02. They used to be pinned to
 #: Java with ``=`` locations, because Spring Session's Redis payload is
@@ -175,12 +166,8 @@ def test_everything_else_under_api_goes_to_python(blocks):
 
 
 def test_body_size_limit_matches_spring(conf):
-    """``spring.servlet.multipart.max-file-size: 10MB``. Nginx's default 1m
-    would reject a 2 MB diagnosis image with its own 413 before either backend
-    runs -- and that body is not the JSON envelope the frontend expects."""
     assert "client_max_body_size 10m;" in conf
-    yml = (REPO_ROOT / "src/main/resources/application.yml").read_text(encoding="utf-8")
-    assert "max-file-size: 10MB" in yml
+    assert CONTRACT["config"]["maxUploadBytes"] == 10 * 1024 * 1024
 
 
 def test_the_listener_port_is_the_one_java_used(conf):
@@ -211,23 +198,8 @@ def _python_paths() -> set[str]:
     return set(spec["paths"])
 
 
-def _java_paths() -> set[str]:
-    """Every mapping in every controller, prefixed with the context path and the
-    controller's own ``@RequestMapping``."""
-    found = set()
-    for path in CONTROLLER_DIR.glob("*.java"):
-        source = path.read_text(encoding="utf-8")
-        # Skip the Agent controllers -- Nginx sends the whole /api/agent/ tree
-        # to Java wholesale, so individual paths there are not enumerated.
-        base = re.search(r'@RequestMapping\("([^"]*)"\)', source)
-        base = base.group(1) if base else ""
-        for sub in re.findall(
-            r'@(?:Post|Get|Put|Delete)Mapping(?:\(\s*(?:value\s*=\s*)?"([^"]*)"\s*\))?', source
-        ):
-            if sub.startswith("http"):
-                continue
-            found.add(f"/api{base}{sub}")
-    return found
+def _java_paths():
+    return {p for _, p in CONTRACT["routes"]}
 
 
 def test_no_python_route_falls_outside_the_routed_prefixes():

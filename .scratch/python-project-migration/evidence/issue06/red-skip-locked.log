@@ -1,0 +1,110 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_mysql_claim_skips_locked_job_and_advances_other_task __________
+
+worker_api = (<starlette.testclient.TestClient object at 0x000001C353C81990>, sessionmaker(class_='Session', bind=Engine(mysql+pymy...root:***@127.0.0.1:3307/eye_worker_issue16_cd8fd9d06db94bbb9f68018a5e59de88), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-948/test_mysql_claim_skips_locked_0')
+
+    def test_mysql_claim_skips_locked_job_and_advances_other_task(worker_api, tmp_path):
+        client, sessions = worker_api
+        if sessions.kw["bind"].dialect.name != "mysql":
+            pytest.skip("SKIP LOCKED requires real MySQL")
+        locked_id = upload(client)
+        other_id = upload(client)
+        with sessions.begin() as db:
+            db.scalar(select(Job).where(Job.workflow_id == locked_id).with_for_update())
+            with executor(sessions, tmp_path, "skip-locked") as (process, _):
+>               process.wait(timeout=20)
+
+algorithm\web\tests\test_worker_concurrency.py:350: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+timeout = 20
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on Windows."""
+        if timeout is None:
+            timeout_millis = _winapi.INFINITE
+        elif timeout <= 0:
+            timeout_millis = 0
+        else:
+            timeout_millis = int(timeout * 1000)
+        if self.returncode is None:
+            # API note: Returns immediately if timeout_millis == 0.
+            result = _winapi.WaitForSingleObject(self._handle,
+                                                 timeout_millis)
+            if result == _winapi.WAIT_TIMEOUT:
+>               raise TimeoutExpired(self.args, timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'web.tests.worker_concurrency_process', '--mode', 'normal', '--lease-seconds', '30']' timed out after 20 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py:1593: TimeoutExpired
+
+During handling of the above exception, another exception occurred:
+
+worker_api = (<starlette.testclient.TestClient object at 0x000001C353C81990>, sessionmaker(class_='Session', bind=Engine(mysql+pymy...root:***@127.0.0.1:3307/eye_worker_issue16_cd8fd9d06db94bbb9f68018a5e59de88), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-948/test_mysql_claim_skips_locked_0')
+
+    def test_mysql_claim_skips_locked_job_and_advances_other_task(worker_api, tmp_path):
+        client, sessions = worker_api
+        if sessions.kw["bind"].dialect.name != "mysql":
+            pytest.skip("SKIP LOCKED requires real MySQL")
+        locked_id = upload(client)
+        other_id = upload(client)
+        with sessions.begin() as db:
+            db.scalar(select(Job).where(Job.workflow_id == locked_id).with_for_update())
+>           with executor(sessions, tmp_path, "skip-locked") as (process, _):
+
+algorithm\web\tests\test_worker_concurrency.py:349: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\contextlib.py:158: in __exit__
+    self.gen.throw(typ, value, traceback)
+algorithm\web\tests\test_worker_concurrency.py:139: in executor
+    output, error = process.communicate(timeout=20)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+input = None, endtime = 223434.671, orig_timeout = 20
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'web.tests.worker_concurrency_process', '--mode', 'normal', '--lease-seconds', '30']' timed out after 20 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_worker_concurrency.py::test_mysql_claim_skips_locked_job_and_advances_other_task
+1 failed, 13 deselected in 46.95s

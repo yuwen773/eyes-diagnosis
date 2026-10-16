@@ -1,0 +1,6 @@
+include algorithm/requirements-web.lock
+recursive-include deploy/python-migrations *.json *.sql
+prune algorithm/web/tests
+prune algorithm/eye_diagnosis/tests
+prune algorithm/mcp_server/tests
+global-exclude __pycache__ *.pyc

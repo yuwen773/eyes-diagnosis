@@ -1,0 +1,60 @@
+........................F...                                             [100%]
+=================================== FAILURES ===================================
+_____________ test_posix_group_kill_hits_whole_tree_but_not_pytest _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_posix_group_kill_hits_who0')
+
+    @_POSIX_ONLY
+    def test_posix_group_kill_hits_whole_tree_but_not_pytest(tmp_path: Path) -> None:
+        """RealTerminator kills the child *and* its grandchild (same new
+        group) while pytest — in a different group — survives to run the
+        assertions."""
+        child = tmp_path / "child.py"
+        body = '''
+            import os, sys, time, subprocess
+            from pathlib import Path
+            out = Path(sys.argv[1])
+            gc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
+            (out / "ids.txt").write_text(
+                f"{os.getpid()} {os.getpgid(0)} {gc.pid}\\n", encoding="utf-8")
+            print("STAGE forward START", flush=True)
+            time.sleep(120)
+            '''
+        _write_raw_child(child, body)
+        cell_dir = tmp_path / "out"
+        cell_dir.mkdir()
+        runner = SubprocessRunner(
+            cmd=[sys.executable, "-u", str(child), str(cell_dir)],
+            out_dir=cell_dir,
+            cell_label="A",
+            config=_fast_config(
+                heartbeat_timeout_seconds=0.5,
+                terminate_grace_seconds=1.0,
+                kill_grace_seconds=2.0,
+            ),
+            terminator=RealTerminator(),
+        )
+        result = runner.run()
+        pid, pgid, gc_pid = (int(x) for x in (cell_dir / "ids.txt").read_text().split())
+        # pytest survived (we are executing) and the child had its own group.
+        assert pgid == pid
+        assert pgid != os.getpgid(0)
+        assert result.exit_code is not None
+        # The grandchild (same group) was also killed.
+        deadline = time.monotonic() + 5.0
+        grandchild_alive = True
+        while time.monotonic() < deadline:
+            try:
+                os.kill(gc_pid, 0)
+                time.sleep(0.1)
+            except ProcessLookupError:
+                grandchild_alive = False
+                break
+>       assert grandchild_alive is False, "grandchild survived the process-group kill"
+E       AssertionError: grandchild survived the process-group kill
+E       assert True is False
+
+eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py:557: AssertionError
+=========================== short test summary info ============================
+FAILED eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py::test_posix_group_kill_hits_whole_tree_but_not_pytest
+1 failed, 27 passed in 33.94s

@@ -1,214 +1,148 @@
 name: verify
-
 on:
   pull_request:
   push:
     branches: [master]
-
+permissions:
+  contents: read
 jobs:
-  python:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: algorithm
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: |
-            algorithm/requirements.txt
-            algorithm/requirements-p1.txt
-      - run: python -m pip install -r requirements.txt -r requirements-p1.txt pytest
-      - run: python generate_proto.py
-      - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -m "not slow" -q
-
   python-web:
-    # The Python rewrite of the five non-Agent business domains.
-    #
-    # Installs the combined Web/test lock, not requirements.txt: no
-    # torch, no GPU, so this job stays fast. That constraint is itself under
-    # test -- `web/config.py` and `web/inference.py` must stay importable
-    # without torch, and two tests in the suite assert it (a subprocess import
-    # probe plus an AST scan of the module scope). If someone adds a
-    # top-level `import torch`, this job fails rather than the deployment.
-    #
-    # No database service containers: most tests use SQLite or source contracts.
-    # The Chroma connection regression starts its own short-lived real server.
-    # MySQL/Redis/Java acceptance is separate in python-real-services.yml;
-    # this job does not claim that acceptance or real model verification.
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: algorithm
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: algorithm/requirements-web.lock
-      - uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: '21'
-      - run: python -m pip install -r requirements-web.lock
-      - name: Install pinned non-JVM DOC converter
+      - run: docker build --target web -f deploy/python/Dockerfile -t eye-python:ticket06 .
+      - run: docker build -f deploy/python/Verify.Dockerfile -t eye-verify:ticket06 .
+      - name: Dependency, wheel, contracts, typecheck and full Web regression
         run: |
-          curl --fail --location --retry 3 https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz -o "$RUNNER_TEMP/libreoffice-doc.tar.gz"
-          python -m web.doc_tool --archive "$RUNNER_TEMP/libreoffice-doc.tar.gz"
-      - run: python -m pytest web/tests -q
-
-  web-contracts:
-    # The cross-service contract surface, checked against the Java sources
-    # rather than against hardcoded expectations.
-    #
-    # These tests parse the Java enums, VOs, controllers and Nginx config to
-    # assert the two stacks still agree. They need no Python deps beyond
-    # pytest plus what `web` imports, so they run as a separate quick job --
-    # and they are the ones that fail when *Java* changes without the Python
-    # side following, which is exactly the drift this migration is exposed to.
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: algorithm
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+          mkdir -p .scratch/python-project-migration/evidence/issue06/ci
+          docker run --rm -v "$PWD/.scratch/python-project-migration/evidence/issue06/ci:/evidence" \
+            eye-verify:ticket06 python scripts/verify.py web --output-dir /evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: algorithm/requirements-web.lock
-      - run: python -m pip install -r requirements-web.lock
-      - run: >-
-          python -m pytest
-          web/tests/test_foundation.py
-          web/tests/test_contracts.py
-          web/tests/test_diagnosis_constants.py
-          web/tests/test_entity_vo.py
-          web/tests/test_nginx_routing.py
-          -q
-
-  watchdog:
-    # Dedicated job for the P2-02A T2 subprocess watchdog suite. These
-    # tests spawn real subprocesses and exercise POSIX process-group
-    # isolation + kill/reap, so they must run on Linux (they skip on
-    # Windows). They are marked `slow` and therefore excluded from the
-    # `python` job above; this job runs them in full. The watchdog module
-    # and its deps (schema, matrix) are pure stdlib, so only pytest is
-    # installed here — no torch, no proto codegen.
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: algorithm
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python -m pip install pytest
-      - run: >-
-          python -m pytest
-          eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py
-          eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py
-          -q
-
-  backend-compile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: '21'
-          cache: maven
-      - run: mvn clean package -DskipTests
-
-  backend-unit:
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: diagnosis_ci
-          MYSQL_USER: eyeuser
-          MYSQL_PASSWORD: ci-password
-          MYSQL_ROOT_PASSWORD: root-password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot-password"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-      chroma:
-        image: ghcr.io/chroma-core/chroma:1.0.0
-        ports:
-          - 8000:8000
-    env:
-      SPRING_PROFILES_ACTIVE: ci
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: '21'
-          cache: maven
-      - run: timeout 60 bash -c 'until curl -fsS http://localhost:8000/api/v2/heartbeat; do sleep 2; done'
-      - run: mvn test
-
-  flyway-mysql:
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: diagnosis_ci
-          MYSQL_USER: eyeuser
-          MYSQL_PASSWORD: ci-password
-          MYSQL_ROOT_PASSWORD: root-password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot-password"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-    env:
-      FLYWAY_TEST_URL: jdbc:mysql://127.0.0.1:3306/diagnosis_ci?serverTimezone=UTC
-      FLYWAY_TEST_USERNAME: eyeuser
-      FLYWAY_TEST_PASSWORD: ci-password
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: corretto
-          java-version: '21'
-          cache: maven
-      - run: mvn -Dtest=FlywayMySqlIntegrationTest test
-
+          name: python-web-regression
+          path: .scratch/python-project-migration/evidence/issue06/ci/web.xml
   frontend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.0'
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.14.0'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - run: uv pip install --system -r algorithm/requirements-web.lock
+      - run: uv pip install --system --no-deps -e .
       - run: npm ci
-      - run: npm run build
+        working-directory: frontend
+      - run: python scripts/verify.py frontend
+      - run: git diff --exit-code -- frontend/src/api
+      - run: docker build -f deploy/python/Frontend.Dockerfile -t eye-frontend:ticket06 .
+  cpu-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.0'
+      - run: uv pip install --system -r algorithm/requirements-web.lock
+      - run: uv pip install --system --no-deps -e .
+      - run: docker build --target cpu -f deploy/python/Dockerfile -t eye-python-cpu:ticket06 .
+      - run: >-
+          docker run --rm eye-python-cpu:ticket06 python -c
+          "import shutil, torch; from eye_disease_model import EyeDiseaseModel;
+          assert not shutil.which('java') and torch.version.cuda is None;
+          EyeDiseaseModel(pretrained=False)"
+      - run: docker build -f deploy/python/Frontend.Dockerfile -t eye-frontend:ticket06 .
+      - run: python -m playwright install --with-deps chromium
+      - run: python scripts/smoke_compose.py --output-dir .scratch/python-project-migration/evidence/issue06/ci-compose
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compose-delivery
+          path: |
+            .scratch/python-project-migration/evidence/issue06/ci-compose/results.json
+            .scratch/python-project-migration/evidence/issue06/ci-compose/compose-login.png
+  algorithms:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: algorithm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.0'
+      - run: uv pip install --system --require-hashes --torch-backend cpu -r requirements-model-linux.lock
+      - run: python generate_proto.py
+      - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -m "not slow" -q
+  browser-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0.26
+        env:
+          MYSQL_ROOT_PASSWORD: isolated-ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pisolated-ci --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      HANDOFF_TEST_MYSQL_ADMIN_URL: mysql+pymysql://root:isolated-ci@127.0.0.1:3306
+      WAIT_RECOVERY_REDIS_SERVER: /usr/bin/redis-server
+      WAIT_RECOVERY_BROWSER: '1'
+      HUMAN_WAIT_EVIDENCE_DIR: /tmp/eye-browser-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.13.0'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: sudo apt-get update && sudo apt-get install -y redis-server
+      - run: uv pip install --system -r algorithm/requirements-web.lock
+      - run: uv pip install --system --no-deps -e .
+      - run: python -m playwright install --with-deps chromium
+      - run: npm ci
+        working-directory: frontend
+      - run: python -m pytest algorithm/web/tests/test_python_wait_recovery.py -k frozen_wait_upgrade_real_login_and_process_restart -q
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-wait-recovery
+          path: /tmp/eye-browser-evidence/*.png
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.14'
+      - run: python -m pip install pytest==9.1.1
+      - run: python -m pytest algorithm/eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py algorithm/eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py -q

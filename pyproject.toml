@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools==80.9.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eye-diagnosis"
+version = "1.0.0"
+description = "Python API, durable worker and eye diagnosis algorithms"
+requires-python = ">=3.11,<3.12"
+dynamic = ["dependencies"]
+
+[project.scripts]
+eye-api = "web.delivery:api"
+eye-worker = "web.workflow.worker:main"
+eye-migrate = "web.migrations.__main__:main"
+eye-health = "web.delivery:health"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["algorithm/requirements-web.lock"]}
+
+[tool.setuptools]
+py-modules = ["eye_disease_model"]
+package-dir = {"" = "algorithm"}
+
+[tool.setuptools.packages.find]
+where = ["algorithm"]
+include = ["web*", "eye_diagnosis*", "mcp_server*"]
+exclude = ["*.tests", "*.tests.*"]
+
+[tool.setuptools.data-files]
+"share/eye-diagnosis/python-migrations" = ["deploy/python-migrations/*.json", "deploy/python-migrations/*.sql"]
+"share/eye-diagnosis/python-migrations/legacy" = ["deploy/python-migrations/legacy/*.sql"]
+
+[tool.pytest.ini_options]
+pythonpath = ["algorithm"]
+testpaths = ["algorithm/web/tests"]
+asyncio_mode = "auto"

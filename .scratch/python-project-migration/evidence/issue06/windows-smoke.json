@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "schema": "eye_windows_delivery06_c6887d663c3147b9a8b6d99ce32827e6",
+  "python": "3.11.14",
+  "workflowId": "f33fdab157ff4d3c87a7c2fee02c08f3",
+  "checks": [
+    "install-pinned-python",
+    "pwsh-api-worker-start-status-stop",
+    "real-mysql-redis-readiness",
+    "real-python-login",
+    "stock-worker-durable-task"
+  ]
+}

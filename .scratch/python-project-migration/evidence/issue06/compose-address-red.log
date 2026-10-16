@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\smoke_compose.py", line 142, in main
+    after = envelope(client.get("/api/diagnosis/workflows/" + task))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\verify_real_services.py", line 235, in envelope
+    assert response.status_code == status, f"HTTP {response.status_code}, expected {status}"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: HTTP 502, expected 200
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\smoke_compose.py", line 195, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\smoke_compose.py", line 145, in main
+    assert time.monotonic() < deadline
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

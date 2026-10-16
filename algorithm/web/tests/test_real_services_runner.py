@@ -1,4 +1,4 @@
-"""Issue 19 acceptance CLI: unavailable services never become a green result."""
+"""Python delivery acceptance CLI: unavailable services never become green."""
 
 import json
 import os
@@ -21,7 +21,7 @@ def test_missing_or_unsafe_infrastructure_is_reported_as_blocked(tmp_path, url):
     assert result.returncode == 2, result.stdout + result.stderr
     report = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
     assert report["status"] == "BLOCKED"
-    assert report["gates"]["realEmbedding"]["status"] == "BLOCKED"
+    assert report["gates"]["realEmbedding"]["status"] == "NOT_VERIFIED"
     assert report["gates"]["infrastructure"]["status"] == "BLOCKED"
     assert report["gates"]["realClassifier"]["status"] == "NOT_VERIFIED"
     assert report["checks"] == []

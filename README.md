@@ -4,15 +4,38 @@
 
 ![功能模块总览](docs/assets/readme/features-overview.png)
 
-## Python 迁移状态（2026-10-15）
+## 当前 Python 工程（2026-10-16）
 
 | 范围 | 当前交付 | 证据 |
 |---|---|---|
 | 工单 01 | Python 数据库初始化与支持的旧库承接 | [数据保全](docs/python-database-handoff-evidence.md) |
 | 工单 02 | Python/Redis 登录态、HTTP/SSE 鉴权、Vue/OpenAPI 接线 | [身份验证](docs/python-session-auth-evidence.md) |
-| 工单 03–08 | 后续工单，尚不表示全项目去 JVM 或生产切流通过 | [.scratch/python-project-migration](.scratch/python-project-migration/ticket-breakdown.md) |
+| 工单 03–05 | 非 JVM 文档、旧任务重建及现有等待恢复 | [.scratch/python-project-migration](.scratch/python-project-migration/README.md) |
+| 工单 06 | 根目录 Python、Windows 脚本、Linux Compose、无 JVM CI | [当前运行与验收指引](docs/python-delivery.md) |
+| 工单 07–08 | 切换演练和 Java 资产退出，尚未开始 | [工单索引](.scratch/python-project-migration/README.md) |
 
-Python 启动使用 algorithm/web；OpenAPI 来源 `/api/openapi.json`。下方 Java 架构与启动说明保留旧项目参考身份，Java 资产待工单 08 受控移除。
+在根目录运行，当前开发、测试及部署不需要 Java/Maven/Flyway/Tika：
+
+```powershell
+pwsh.exe -NoLogo -NoProfile -File scripts/dev.ps1 install
+pwsh.exe -NoLogo -NoProfile -File scripts/dev.ps1 start -EnvFile .env
+pwsh.exe -NoLogo -NoProfile -File scripts/dev.ps1 status
+pwsh.exe -NoLogo -NoProfile -File scripts/dev.ps1 stop
+& .venv/Scripts/python.exe scripts/verify.py web
+& .venv/Scripts/python.exe scripts/verify.py frontend
+```
+
+配置样例为 `deploy/python/.env.example`；先填写隔离目标连接和安装 DOC 工具。
+Linux 使用 `docker compose -f deploy/python/compose.yml build` 和 `up -d`，API/Worker
+分别运行，通过 Nginx/Vue 同源访问。数据库升级为独立显式步骤；启动不自动建表或清空数据。
+OpenAPI 来源 `/api/openapi.json`，用户用原账号密码重新登录，详情见
+[Python 交付指引](docs/python-delivery.md)。工程、基础设施、供应商/模型和临床分层验收，
+工单 06 结果不表示已生产切流。
+
+## 以下为原 Java 项目参考（历史）
+
+下方架构、Java 依赖与命令保留历史身份，不是当前 Python 运行指引。原 Java 资产待
+工单 08 受控移除，不在本票删除。
 
 ## ✨ 功能特性
 

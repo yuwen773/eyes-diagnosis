@@ -1,5 +1,9 @@
 # 工单 19：真实服务与兼容回归
 
+> 历史验收记录。以下 Java/Flyway 命令、CI 与结果保留工单 19 当时的身份，不再是
+> 当前运行入口。工单 06 的纯 Python 入口与独立分层结果见
+> [Python 工程与交付](python-delivery.md)。本票不改写下列 embedding/Java 大 ID 阻塞。
+
 入口：`algorithm/web/verify_real_services.py`。仅在迁移工作树运行，必须指定本地 MySQL
 管理员 URL，且 URL 不包含数据库名。每次创建随机 `eye_real_services_issue19_*` 库，
 用原始表 DDL 引导，再由现有独立 Flyway 工程升级 V1–V22；不修改 Java 源码、原 pom

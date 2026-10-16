@@ -1,0 +1,49 @@
+syntax = "proto3";
+package diagnosis;
+
+option java_package = "com.csust.eyediagnosis.grpc";
+option java_outer_classname = "DiagnosisProto";
+
+message DiagnosisRequest {
+  bytes image_data = 1;
+  string image_format = 2;
+}
+
+message DiseasePrediction {
+  string label = 1;
+  double probability = 2;
+}
+
+enum OodStatus {
+  OOD_STATUS_UNSPECIFIED = 0;
+  NOT_EVALUATED = 1;
+  IN_DISTRIBUTION = 2;
+  OUT_OF_DISTRIBUTION = 3;
+  EVALUATION_FAILED = 4;
+}
+
+message DiagnosisResponse {
+  string predicted_label = 1;
+  double probability = 2;
+  int32 reliability_score = 3;
+  string description = 4;
+  repeated DiseasePrediction top_predictions = 5;
+  bool rejected = 6;
+  string abstain_reason = 7;
+  int32 quality_score = 8;
+  bool is_ood = 9;
+  string model_version = 10;
+  string weight_sha256 = 11;
+  bool requires_review = 12;
+  string quality_reasons = 13;
+  double calibrated_probability = 14;
+  double ood_score = 15;
+  string preprocess_version = 16;
+  OodStatus ood_status = 17;
+  string calibration_status = 18;
+  string inference_policy_version = 19;
+}
+
+service DiagnosisService {
+  rpc Diagnose(DiagnosisRequest) returns (DiagnosisResponse);
+}

@@ -1,0 +1,62 @@
+STANDALONE_PROTO_GENERATION_OK
+......................................s................................. [ 23%]
+........................................................................ [ 46%]
+........................................................................ [ 70%]
+.......F................................................................ [ 93%]
+...................                                                      [100%]
+=================================== FAILURES ===================================
+____________________ test_run_fold_fails_closed_on_low_vram ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_run_fold_fails_closed_on_0')
+fake_inputs = {'root_dir': PosixPath('/tmp/pytest-of-root/pytest-0/test_run_fold_fails_closed_on_0'), 'image_paths': {'p000': {'left...003': array([0, 0, 0, 0, 0, 0, 0, 0], dtype=int8), ...}, 'pids': ['p000', 'p001', 'p002', 'p003', 'p004', 'p005', ...]}
+
+    def test_run_fold_fails_closed_on_low_vram(tmp_path: Path, fake_inputs: dict) -> None:
+        pids = fake_inputs["pids"]
+        train, val = pids[4:], pids[:4]
+        out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
+        out_dir.mkdir(parents=True)
+        fake_low = lambda device=None: (1024 * 1024 * 1024, 8188 * 1024 * 1024)  # 1 GB free
+        runner = build_run_fold_with_mock_mem(mem_get_info=fake_low)
+        with pytest.raises(Exception) as ei:
+            runner(
+                experiment="E3",
+                fold_id=0,
+                train_patient_ids=train,
+                val_patient_ids=val,
+                image_paths=fake_inputs["image_paths"],
+                labels=fake_inputs["labels"],
+                root_dir=fake_inputs["root_dir"],
+                protocol=default_protocol(),
+                out_dir=out_dir,
+                _download=False,
+            )
+        # Either InsufficientVram or TrainingError wrapping it is acceptable.
+        # On a Linux runner with no NVIDIA driver, ``torch.cuda.is_available``
+        # itself raises ``RuntimeError("Found no NVIDIA driver...")`` before the
+        # VRAM probe runs; that path is also acceptable since the fold fails
+        # closed (no training step, no receipt).
+        msg = str(ei.value).lower()
+>       assert (
+            "vram" in msg
+            or "insufficient" in msg
+            or "nvidia driver" in msg
+        )
+E       AssertionError: assert ('vram' in 'torch not compiled with cuda enabled' or 'insufficient' in 'torch not compiled with cuda enabled' or 'nvidia driver' in 'torch not compiled with cuda enabled')
+
+eye_diagnosis_p1/tests/test_training_fold_runner.py:212: AssertionError
+=============================== warnings summary ===============================
+eye_diagnosis/tests/test_metrics.py::test_handles_missing_class
+eye_diagnosis/tests/test_metrics.py::test_handles_missing_class
+  /usr/local/lib/python3.11/site-packages/sklearn/metrics/_ranking.py:469: UndefinedMetricWarning: Only one class is present in y_true. ROC AUC score is not defined in that case.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED eye_diagnosis_p1/tests/test_training_fold_runner.py::test_run_fold_fails_closed_on_low_vram
+1 failed, 305 passed, 1 skipped, 16 deselected, 2 warnings in 530.96s (0:08:50)
+Traceback (most recent call last):
+  File "/workspace/run_algorithms.py", line 5, in <module>
+    subprocess.run([sys.executable, '-m', 'pytest', 'eye_diagnosis/tests', 'tests', 'eye_diagnosis_p1/tests',
+  File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/bin/python', '-m', 'pytest', 'eye_diagnosis/tests', 'tests', 'eye_diagnosis_p1/tests', '-m', 'not slow', '-q', '--junitxml=/evidence/algorithms.xml']' returned non-zero exit status 1.

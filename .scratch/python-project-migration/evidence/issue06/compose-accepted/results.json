@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "project": "eye-compose06-eb321881b972",
+  "checks": [
+    "stock-compose-healthy",
+    "python-migration",
+    "original-password-login-large-id",
+    "retained-data-read",
+    "stock-worker-durable-task",
+    "api-worker-restart-preserves-data-and-session",
+    "proxy-rediscovers-api-address",
+    "no-jvm",
+    "nginx-vue-browser-login"
+  ],
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "mysqlVersion": "8.0.26",
+  "apiAddressChanged": true,
+  "schema": "eye_compose_issue06_df04553cd30948eaa8e38872bb62580a",
+  "workflowId": "55a47ee434f0483d8b7e9141b0d4b878",
+  "frontend": "http://127.0.0.1:57634"
+}

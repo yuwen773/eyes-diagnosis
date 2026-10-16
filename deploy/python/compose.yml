@@ -1,0 +1,29 @@
+name: eye-python
+services:
+  api:
+    image: eye-python-cpu:ticket06
+    build:
+      context: ../..
+      dockerfile: deploy/python/Dockerfile
+      target: cpu
+    env_file: ${EYE_ENV_FILE:-.env}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["${EYE_MODEL_DIR:-./models}:/models:ro"]
+    restart: unless-stopped
+  worker:
+    image: eye-python-cpu:ticket06
+    command: ["eye-worker"]
+    env_file: ${EYE_ENV_FILE:-.env}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["${EYE_MODEL_DIR:-./models}:/models:ro"]
+    restart: unless-stopped
+  frontend:
+    image: eye-frontend:ticket06
+    build:
+      context: ../..
+      dockerfile: deploy/python/Frontend.Dockerfile
+    ports: ["127.0.0.1:${EYE_HTTP_PORT:-8081}:80"]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped

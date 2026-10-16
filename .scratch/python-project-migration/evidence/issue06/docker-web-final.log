@@ -1,0 +1,599 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 2.95kB 0.1s done
+#1 DONE 0.4s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#2 DONE 0.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 975B done
+#3 DONE 0.1s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#5 DONE 0.0s
+
+#6 [build  1/12] FROM docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#6 resolve docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d 0.1s done
+#6 DONE 0.1s
+
+#4 [internal] load build context
+#4 transferring context: 98.51kB 0.1s done
+#4 DONE 0.2s
+
+#7 [document-tool 2/6] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 libglib2.0-0 libx11-xcb1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#7 CACHED
+
+#8 [document-tool 3/6] COPY algorithm/web/doc_tool.py /tmp/doc_tool.py
+#8 CACHED
+
+#9 [build  4/12] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#9 CACHED
+
+#10 [build  5/12] RUN python -m pip install --no-cache-dir setuptools==80.9.0 wheel==0.45.1 build==1.2.2.post1 uv==0.13.0
+#10 CACHED
+
+#11 [build  2/12] WORKDIR /build
+#11 CACHED
+
+#12 [build  3/12] COPY pyproject.toml MANIFEST.in ./
+#12 CACHED
+
+#13 [build  6/12] RUN --mount=type=cache,target=/root/.cache/uv uv pip install --prefix /install -r algorithm/requirements-web.lock
+#13 CACHED
+
+#14 [build  7/12] COPY algorithm/web algorithm/web
+#14 DONE 0.9s
+
+#5 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#5 ...
+
+#15 [build  8/12] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#15 DONE 0.3s
+
+#16 [build  9/12] COPY algorithm/mcp_server algorithm/mcp_server
+#16 DONE 0.2s
+
+#5 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#5 ...
+
+#17 [build 10/12] COPY algorithm/eye_disease_model.py algorithm/eye_disease_model.py
+#17 DONE 0.2s
+
+#18 [build 11/12] COPY deploy/python-migrations deploy/python-migrations
+#18 DONE 0.3s
+
+#5 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#5 ...
+
+#19 [build 12/12] RUN python -m build --wheel --no-isolation --outdir /wheels
+#19 3.416 * Getting build dependencies for wheel...
+#19 4.222 running egg_info
+#19 4.223 creating algorithm/eye_diagnosis.egg-info
+#19 4.226 writing algorithm/eye_diagnosis.egg-info/PKG-INFO
+#19 4.229 writing dependency_links to algorithm/eye_diagnosis.egg-info/dependency_links.txt
+#19 4.230 writing entry points to algorithm/eye_diagnosis.egg-info/entry_points.txt
+#19 4.233 writing requirements to algorithm/eye_diagnosis.egg-info/requires.txt
+#19 4.233 writing top-level names to algorithm/eye_diagnosis.egg-info/top_level.txt
+#19 4.235 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#19 4.279 reading manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#19 4.279 reading manifest template 'MANIFEST.in'
+#19 4.282 no previously-included directories found matching 'algorithm/web/tests'
+#19 4.282 no previously-included directories found matching 'algorithm/eye_diagnosis/tests'
+#19 4.283 no previously-included directories found matching 'algorithm/mcp_server/tests'
+#19 4.283 warning: no previously-included files matching '__pycache__' found anywhere in distribution
+#19 4.283 warning: no previously-included files matching '*.pyc' found anywhere in distribution
+#19 4.284 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#19 4.346 * Building wheel...
+#19 4.494 running bdist_wheel
+#19 4.499 running build
+#19 4.499 running build_py
+#19 4.502 creating build/lib
+#19 4.507 copying algorithm/eye_disease_model.py -> build/lib
+#19 4.508 creating build/lib/mcp_server
+#19 4.509 copying algorithm/mcp_server/image_handler.py -> build/lib/mcp_server
+#19 4.509 copying algorithm/mcp_server/config.py -> build/lib/mcp_server
+#19 4.510 copying algorithm/mcp_server/__init__.py -> build/lib/mcp_server
+#19 4.510 copying algorithm/mcp_server/server.py -> build/lib/mcp_server
+#19 4.511 copying algorithm/mcp_server/tools.py -> build/lib/mcp_server
+#19 4.512 creating build/lib/eye_diagnosis
+#19 4.513 copying algorithm/eye_diagnosis/abstain.py -> build/lib/eye_diagnosis
+#19 4.513 copying algorithm/eye_diagnosis/quality.py -> build/lib/eye_diagnosis
+#19 4.513 copying algorithm/eye_diagnosis/registry.py -> build/lib/eye_diagnosis
+#19 4.514 copying algorithm/eye_diagnosis/__init__.py -> build/lib/eye_diagnosis
+#19 4.514 copying algorithm/eye_diagnosis/calibration.py -> build/lib/eye_diagnosis
+#19 4.515 copying algorithm/eye_diagnosis/ood.py -> build/lib/eye_diagnosis
+#19 4.515 copying algorithm/eye_diagnosis/frozen_eval.py -> build/lib/eye_diagnosis
+#19 4.515 copying algorithm/eye_diagnosis/metrics.py -> build/lib/eye_diagnosis
+#19 4.516 creating build/lib/web
+#19 4.516 copying algorithm/web/constant.py -> build/lib/web
+#19 4.517 copying algorithm/web/verify_quality_review_ui.py -> build/lib/web
+#19 4.517 copying algorithm/web/events.py -> build/lib/web
+#19 4.517 copying algorithm/web/verify_stream_reconnect_ui.py -> build/lib/web
+#19 4.518 copying algorithm/web/security.py -> build/lib/web
+#19 4.518 copying algorithm/web/vectorstore.py -> build/lib/web
+#19 4.519 copying algorithm/web/extract.py -> build/lib/web
+#19 4.519 copying algorithm/web/evidence.py -> build/lib/web
+#19 4.519 copying algorithm/web/verify_worker_concurrency.py -> build/lib/web
+#19 4.520 copying algorithm/web/config.py -> build/lib/web
+#19 4.520 copying algorithm/web/files.py -> build/lib/web
+#19 4.521 copying algorithm/web/verify_legacy_workflow_ui.py -> build/lib/web
+#19 4.521 copying algorithm/web/verify_final_clinical_review_ui.py -> build/lib/web
+#19 4.522 copying algorithm/web/__init__.py -> build/lib/web
+#19 4.522 copying algorithm/web/verify_validated_explanation_ui.py -> build/lib/web
+#19 4.523 copying algorithm/web/app.py -> build/lib/web
+#19 4.523 copying algorithm/web/delivery.py -> build/lib/web
+#19 4.523 copying algorithm/web/verify_workflow.py -> build/lib/web
+#19 4.524 copying algorithm/web/mcp_image.py -> build/lib/web
+#19 4.524 copying algorithm/web/auth.py -> build/lib/web
+#19 4.525 copying algorithm/web/cutover_browser.py -> build/lib/web
+#19 4.525 copying algorithm/web/verify_real_services.py -> build/lib/web
+#19 4.525 copying algorithm/web/verify_document_knowledge.py -> build/lib/web
+#19 4.526 copying algorithm/web/middleware.py -> build/lib/web
+#19 4.526 copying algorithm/web/database.py -> build/lib/web
+#19 4.527 copying algorithm/web/mcp_config.py -> build/lib/web
+#19 4.527 copying algorithm/web/session.py -> build/lib/web
+#19 4.528 copying algorithm/web/db.py -> build/lib/web
+#19 4.528 copying algorithm/web/response.py -> build/lib/web
+#19 4.528 copying algorithm/web/verify_controlled_evidence_ui.py -> build/lib/web
+#19 4.529 copying algorithm/web/verify_chat_workflow_ui.py -> build/lib/web
+#19 4.529 copying algorithm/web/verify_save_confirmation_ui.py -> build/lib/web
+#19 4.530 copying algorithm/web/verify_baseline.py -> build/lib/web
+#19 4.530 copying algorithm/web/doc_tool.py -> build/lib/web
+#19 4.530 copying algorithm/web/verify_session_identity.py -> build/lib/web
+#19 4.531 copying algorithm/web/verify_chat_ui.py -> build/lib/web
+#19 4.531 copying algorithm/web/cutover.py -> build/lib/web
+#19 4.531 copying algorithm/web/verify_tool_writes_ui.py -> build/lib/web
+#19 4.531 copying algorithm/web/doc_parser.py -> build/lib/web
+#19 4.532 copying algorithm/web/verify_supplement_ui.py -> build/lib/web
+#19 4.533 copying algorithm/web/knowledge.py -> build/lib/web
+#19 4.533 copying algorithm/web/deps.py -> build/lib/web
+#19 4.533 copying algorithm/web/cutover_rehearsal.py -> build/lib/web
+#19 4.534 copying algorithm/web/inference.py -> build/lib/web
+#19 4.535 creating build/lib/web/models
+#19 4.536 copying algorithm/web/models/mcp_server.py -> build/lib/web/models
+#19 4.536 copying algorithm/web/models/diagnosis.py -> build/lib/web/models
+#19 4.536 copying algorithm/web/models/user.py -> build/lib/web/models
+#19 4.536 copying algorithm/web/models/__init__.py -> build/lib/web/models
+#19 4.537 copying algorithm/web/models/inference_cache.py -> build/lib/web/models
+#19 4.537 copying algorithm/web/models/news.py -> build/lib/web/models
+#19 4.537 copying algorithm/web/models/knowledge.py -> build/lib/web/models
+#19 4.538 creating build/lib/web/workflow
+#19 4.539 copying algorithm/web/workflow/confirmation.py -> build/lib/web/workflow
+#19 4.539 copying algorithm/web/workflow/service.py -> build/lib/web/workflow
+#19 4.539 copying algorithm/web/workflow/explanation.py -> build/lib/web/workflow
+#19 4.539 copying algorithm/web/workflow/__init__.py -> build/lib/web/workflow
+#19 4.540 copying algorithm/web/workflow/legacy.py -> build/lib/web/workflow
+#19 4.540 copying algorithm/web/workflow/checkpoint.py -> build/lib/web/workflow
+#19 4.540 copying algorithm/web/workflow/definition.py -> build/lib/web/workflow
+#19 4.540 copying algorithm/web/workflow/worker.py -> build/lib/web/workflow
+#19 4.541 copying algorithm/web/workflow/confirmation_models.py -> build/lib/web/workflow
+#19 4.541 copying algorithm/web/workflow/models.py -> build/lib/web/workflow
+#19 4.542 copying algorithm/web/workflow/review.py -> build/lib/web/workflow
+#19 4.543 copying algorithm/web/workflow/inference.py -> build/lib/web/workflow
+#19 4.544 creating build/lib/web/migrations
+#19 4.544 copying algorithm/web/migrations/baseline.py -> build/lib/web/migrations
+#19 4.545 copying algorithm/web/migrations/__init__.py -> build/lib/web/migrations
+#19 4.546 copying algorithm/web/migrations/__main__.py -> build/lib/web/migrations
+#19 4.546 copying algorithm/web/migrations/runner.py -> build/lib/web/migrations
+#19 4.546 creating build/lib/web/chat
+#19 4.547 copying algorithm/web/chat/model.py -> build/lib/web/chat
+#19 4.548 copying algorithm/web/chat/__init__.py -> build/lib/web/chat
+#19 4.548 copying algorithm/web/chat/attachments.py -> build/lib/web/chat
+#19 4.548 copying algorithm/web/chat/history.py -> build/lib/web/chat
+#19 4.548 copying algorithm/web/chat/session.py -> build/lib/web/chat
+#19 4.549 copying algorithm/web/chat/mcp.py -> build/lib/web/chat
+#19 4.549 copying algorithm/web/chat/tool_writes.py -> build/lib/web/chat
+#19 4.549 copying algorithm/web/chat/supplement.py -> build/lib/web/chat
+#19 4.549 copying algorithm/web/chat/models.py -> build/lib/web/chat
+#19 4.550 creating build/lib/web/schemas
+#19 4.551 copying algorithm/web/schemas/mcp_server.py -> build/lib/web/schemas
+#19 4.551 copying algorithm/web/schemas/confirmation.py -> build/lib/web/schemas
+#19 4.552 copying algorithm/web/schemas/diagnosis.py -> build/lib/web/schemas
+#19 4.553 copying algorithm/web/schemas/user.py -> build/lib/web/schemas
+#19 4.553 copying algorithm/web/schemas/__init__.py -> build/lib/web/schemas
+#19 4.554 copying algorithm/web/schemas/legacy.py -> build/lib/web/schemas
+#19 4.554 copying algorithm/web/schemas/workflow.py -> build/lib/web/schemas
+#19 4.555 copying algorithm/web/schemas/supplement.py -> build/lib/web/schemas
+#19 4.555 copying algorithm/web/schemas/news.py -> build/lib/web/schemas
+#19 4.556 copying algorithm/web/schemas/knowledge.py -> build/lib/web/schemas
+#19 4.556 copying algorithm/web/schemas/review.py -> build/lib/web/schemas
+#19 4.557 creating build/lib/web/routers
+#19 4.557 copying algorithm/web/routers/mcp_server.py -> build/lib/web/routers
+#19 4.557 copying algorithm/web/routers/diagnosis.py -> build/lib/web/routers
+#19 4.558 copying algorithm/web/routers/user.py -> build/lib/web/routers
+#19 4.558 copying algorithm/web/routers/__init__.py -> build/lib/web/routers
+#19 4.558 copying algorithm/web/routers/legacy.py -> build/lib/web/routers
+#19 4.559 copying algorithm/web/routers/agent.py -> build/lib/web/routers
+#19 4.559 copying algorithm/web/routers/workflow.py -> build/lib/web/routers
+#19 4.560 copying algorithm/web/routers/tool_confirmation.py -> build/lib/web/routers
+#19 4.562 copying algorithm/web/routers/news.py -> build/lib/web/routers
+#19 4.563 copying algorithm/web/routers/knowledge.py -> build/lib/web/routers
+#19 4.563 copying algorithm/web/routers/review.py -> build/lib/web/routers
+#19 4.563 running egg_info
+#19 4.564 writing algorithm/eye_diagnosis.egg-info/PKG-INFO
+#19 4.567 writing dependency_links to algorithm/eye_diagnosis.egg-info/dependency_links.txt
+#19 4.567 writing entry points to algorithm/eye_diagnosis.egg-info/entry_points.txt
+#19 4.571 writing requirements to algorithm/eye_diagnosis.egg-info/requires.txt
+#19 4.571 writing top-level names to algorithm/eye_diagnosis.egg-info/top_level.txt
+#19 4.575 reading manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#19 4.576 reading manifest template 'MANIFEST.in'
+#19 4.578 no previously-included directories found matching 'algorithm/web/tests'
+#19 4.578 no previously-included directories found matching 'algorithm/eye_diagnosis/tests'
+#19 4.578 no previously-included directories found matching 'algorithm/mcp_server/tests'
+#19 4.579 warning: no previously-included files matching '__pycache__' found anywhere in distribution
+#19 4.579 warning: no previously-included files matching '*.pyc' found anywhere in distribution
+#19 4.581 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#19 4.585 installing to build/bdist.linux-x86_64/wheel
+#19 4.585 running install
+#19 4.588 running install_lib
+#19 4.590 creating build/bdist.linux-x86_64/wheel
+#19 4.593 creating build/bdist.linux-x86_64/wheel/mcp_server
+#19 4.595 copying build/lib/mcp_server/image_handler.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#19 4.595 copying build/lib/mcp_server/config.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#19 4.595 copying build/lib/mcp_server/__init__.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#19 4.595 copying build/lib/mcp_server/server.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#19 4.595 copying build/lib/mcp_server/tools.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#19 4.596 creating build/bdist.linux-x86_64/wheel/web
+#19 4.598 copying build/lib/web/constant.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.598 copying build/lib/web/verify_quality_review_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.599 creating build/bdist.linux-x86_64/wheel/web/models
+#19 4.600 copying build/lib/web/models/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.601 copying build/lib/web/models/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.601 copying build/lib/web/models/user.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.601 copying build/lib/web/models/__init__.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.601 copying build/lib/web/models/inference_cache.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.601 copying build/lib/web/models/news.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.602 copying build/lib/web/models/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/models
+#19 4.602 copying build/lib/web/events.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.602 copying build/lib/web/verify_stream_reconnect_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.602 copying build/lib/web/security.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.602 copying build/lib/web/vectorstore.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.604 copying build/lib/web/extract.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.604 copying build/lib/web/evidence.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.605 copying build/lib/web/verify_worker_concurrency.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.605 creating build/bdist.linux-x86_64/wheel/web/workflow
+#19 4.606 copying build/lib/web/workflow/confirmation.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.606 copying build/lib/web/workflow/service.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.612 copying build/lib/web/workflow/explanation.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.612 copying build/lib/web/workflow/__init__.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.613 copying build/lib/web/workflow/legacy.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.613 copying build/lib/web/workflow/checkpoint.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.613 copying build/lib/web/workflow/definition.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.614 copying build/lib/web/workflow/worker.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.615 copying build/lib/web/workflow/confirmation_models.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.617 copying build/lib/web/workflow/models.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.618 copying build/lib/web/workflow/review.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.618 copying build/lib/web/workflow/inference.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#19 4.619 creating build/bdist.linux-x86_64/wheel/web/migrations
+#19 4.619 copying build/lib/web/migrations/baseline.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#19 4.619 copying build/lib/web/migrations/__init__.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#19 4.620 copying build/lib/web/migrations/__main__.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#19 4.621 copying build/lib/web/migrations/runner.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#19 4.622 creating build/bdist.linux-x86_64/wheel/web/chat
+#19 4.624 copying build/lib/web/chat/model.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.625 copying build/lib/web/chat/__init__.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.625 copying build/lib/web/chat/attachments.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.625 copying build/lib/web/chat/history.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.625 copying build/lib/web/chat/session.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.626 copying build/lib/web/chat/mcp.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.626 copying build/lib/web/chat/tool_writes.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.626 copying build/lib/web/chat/supplement.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.626 copying build/lib/web/chat/models.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#19 4.627 copying build/lib/web/config.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.627 copying build/lib/web/files.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.627 copying build/lib/web/verify_legacy_workflow_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.627 copying build/lib/web/verify_final_clinical_review_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.628 copying build/lib/web/__init__.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.629 copying build/lib/web/verify_validated_explanation_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.629 copying build/lib/web/app.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.629 creating build/bdist.linux-x86_64/wheel/web/schemas
+#19 4.630 copying build/lib/web/schemas/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.630 copying build/lib/web/schemas/confirmation.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.631 copying build/lib/web/schemas/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.631 copying build/lib/web/schemas/user.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.631 copying build/lib/web/schemas/__init__.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.632 copying build/lib/web/schemas/legacy.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.632 copying build/lib/web/schemas/workflow.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.632 copying build/lib/web/schemas/supplement.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.632 copying build/lib/web/schemas/news.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.633 copying build/lib/web/schemas/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.633 copying build/lib/web/schemas/review.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#19 4.633 copying build/lib/web/delivery.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.634 copying build/lib/web/verify_workflow.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.634 copying build/lib/web/mcp_image.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.634 copying build/lib/web/auth.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.635 copying build/lib/web/cutover_browser.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.635 copying build/lib/web/verify_real_services.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.635 copying build/lib/web/verify_document_knowledge.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.636 copying build/lib/web/middleware.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.636 copying build/lib/web/database.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.636 copying build/lib/web/mcp_config.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.636 copying build/lib/web/session.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.637 copying build/lib/web/db.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.637 copying build/lib/web/response.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.638 copying build/lib/web/verify_controlled_evidence_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.638 copying build/lib/web/verify_chat_workflow_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.638 copying build/lib/web/verify_save_confirmation_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.638 copying build/lib/web/verify_baseline.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.639 copying build/lib/web/doc_tool.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.639 creating build/bdist.linux-x86_64/wheel/web/routers
+#19 4.640 copying build/lib/web/routers/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.640 copying build/lib/web/routers/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.640 copying build/lib/web/routers/user.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.641 copying build/lib/web/routers/__init__.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.641 copying build/lib/web/routers/legacy.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.641 copying build/lib/web/routers/agent.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.642 copying build/lib/web/routers/workflow.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.642 copying build/lib/web/routers/tool_confirmation.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.642 copying build/lib/web/routers/news.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.643 copying build/lib/web/routers/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.644 copying build/lib/web/routers/review.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#19 4.644 copying build/lib/web/verify_session_identity.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.645 copying build/lib/web/verify_chat_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.645 copying build/lib/web/cutover.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.645 copying build/lib/web/verify_tool_writes_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.646 copying build/lib/web/doc_parser.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.646 copying build/lib/web/verify_supplement_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.646 copying build/lib/web/knowledge.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.647 copying build/lib/web/deps.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.647 copying build/lib/web/cutover_rehearsal.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.647 copying build/lib/web/inference.py -> build/bdist.linux-x86_64/wheel/./web
+#19 4.648 creating build/bdist.linux-x86_64/wheel/eye_diagnosis
+#19 4.649 copying build/lib/eye_diagnosis/abstain.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.649 copying build/lib/eye_diagnosis/quality.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.649 copying build/lib/eye_diagnosis/registry.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.650 copying build/lib/eye_diagnosis/__init__.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.651 copying build/lib/eye_diagnosis/calibration.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.651 copying build/lib/eye_diagnosis/ood.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.652 copying build/lib/eye_diagnosis/frozen_eval.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.652 copying build/lib/eye_diagnosis/metrics.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#19 4.653 copying build/lib/eye_disease_model.py -> build/bdist.linux-x86_64/wheel/.
+#19 4.653 running install_data
+#19 4.656 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data
+#19 4.657 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.660 copying deploy/python-migrations/contracts.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.661 copying deploy/python-migrations/dependency-inventory.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.661 copying deploy/python-migrations/manifest.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.661 copying deploy/python-migrations/recovery-samples.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.661 copying deploy/python-migrations/schema-v22.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.662 copying deploy/python-migrations/schema-v9.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.662 copying deploy/python-migrations/business-bootstrap.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#19 4.662 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.663 copying deploy/python-migrations/legacy/V10__create_diagnosis_workflow_core.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.663 copying deploy/python-migrations/legacy/V11__create_workflow_execution_tables.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.664 copying deploy/python-migrations/legacy/V12__create_workflow_result_and_review_tables.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.664 copying deploy/python-migrations/legacy/V13__align_workflow_job_claim_queue.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.664 copying deploy/python-migrations/legacy/V14__create_workflow_audit_event.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.665 copying deploy/python-migrations/legacy/V15__python_durable_upload.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.665 copying deploy/python-migrations/legacy/V16__bind_quality_review_context.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.665 copying deploy/python-migrations/legacy/V17__python_session_chat.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.666 copying deploy/python-migrations/legacy/V18__chat_workflow_binding.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.666 copying deploy/python-migrations/legacy/V19__controlled_reference_evidence.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.666 copying deploy/python-migrations/legacy/V1__baseline_rename_mcp_user_id.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.666 copying deploy/python-migrations/legacy/V20__diagnosis_save_confirmation.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.667 copying deploy/python-migrations/legacy/V21__chat_supplement.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.667 copying deploy/python-migrations/legacy/V22__agent_tool_confirmation.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.667 copying deploy/python-migrations/legacy/V2__split_inference_cache.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.668 copying deploy/python-migrations/legacy/V3__upload_state_machine.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.668 copying deploy/python-migrations/legacy/V4__agent_message_outbox.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.668 copying deploy/python-migrations/legacy/V5__medical_reliability.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.669 copying deploy/python-migrations/legacy/V6__align_mcp_entity_columns.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.670 copying deploy/python-migrations/legacy/V7__complete_inference_cache_safety_fields.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.670 copying deploy/python-migrations/legacy/V8__add_mcp_server_description.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.670 copying deploy/python-migrations/legacy/V9__version_inference_safety_policy.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.671 copying deploy/python-migrations/legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.671 copying deploy/python-migrations/legacy/schema.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#19 4.672 running install_egg_info
+#19 4.673 Copying algorithm/eye_diagnosis.egg-info to build/bdist.linux-x86_64/wheel/./eye_diagnosis-1.0.0-py3.11.egg-info
+#19 4.677 running install_scripts
+#19 4.680 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.dist-info/WHEEL
+#19 4.680 creating '/wheels/.tmp-gwdx1eno/eye_diagnosis-1.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+#19 4.681 adding 'eye_disease_model.py'
+#19 4.681 adding 'eye_diagnosis/__init__.py'
+#19 4.682 adding 'eye_diagnosis/abstain.py'
+#19 4.682 adding 'eye_diagnosis/calibration.py'
+#19 4.682 adding 'eye_diagnosis/frozen_eval.py'
+#19 4.682 adding 'eye_diagnosis/metrics.py'
+#19 4.683 adding 'eye_diagnosis/ood.py'
+#19 4.683 adding 'eye_diagnosis/quality.py'
+#19 4.683 adding 'eye_diagnosis/registry.py'
+#19 4.684 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/business-bootstrap.sql'
+#19 4.684 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/contracts.json'
+#19 4.684 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/dependency-inventory.json'
+#19 4.685 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/manifest.json'
+#19 4.685 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/recovery-samples.json'
+#19 4.686 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/schema-v22.json'
+#19 4.686 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/schema-v9.json'
+#19 4.686 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V10__create_diagnosis_workflow_core.sql'
+#19 4.686 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V11__create_workflow_execution_tables.sql'
+#19 4.687 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V12__create_workflow_result_and_review_tables.sql'
+#19 4.687 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V13__align_workflow_job_claim_queue.sql'
+#19 4.687 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V14__create_workflow_audit_event.sql'
+#19 4.687 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V15__python_durable_upload.sql'
+#19 4.687 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V16__bind_quality_review_context.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V17__python_session_chat.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V18__chat_workflow_binding.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V19__controlled_reference_evidence.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V1__baseline_rename_mcp_user_id.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V20__diagnosis_save_confirmation.sql'
+#19 4.688 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V21__chat_supplement.sql'
+#19 4.689 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V22__agent_tool_confirmation.sql'
+#19 4.689 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V2__split_inference_cache.sql'
+#19 4.689 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V3__upload_state_machine.sql'
+#19 4.689 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V4__agent_message_outbox.sql'
+#19 4.689 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V5__medical_reliability.sql'
+#19 4.690 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V6__align_mcp_entity_columns.sql'
+#19 4.690 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V7__complete_inference_cache_safety_fields.sql'
+#19 4.690 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V8__add_mcp_server_description.sql'
+#19 4.690 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V9__version_inference_safety_policy.sql'
+#19 4.690 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql'
+#19 4.691 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/schema.sql'
+#19 4.691 adding 'mcp_server/__init__.py'
+#19 4.691 adding 'mcp_server/config.py'
+#19 4.692 adding 'mcp_server/image_handler.py'
+#19 4.692 adding 'mcp_server/server.py'
+#19 4.692 adding 'mcp_server/tools.py'
+#19 4.692 adding 'web/__init__.py'
+#19 4.693 adding 'web/app.py'
+#19 4.693 adding 'web/auth.py'
+#19 4.694 adding 'web/config.py'
+#19 4.694 adding 'web/constant.py'
+#19 4.694 adding 'web/cutover.py'
+#19 4.695 adding 'web/cutover_browser.py'
+#19 4.695 adding 'web/cutover_rehearsal.py'
+#19 4.695 adding 'web/database.py'
+#19 4.695 adding 'web/db.py'
+#19 4.696 adding 'web/delivery.py'
+#19 4.696 adding 'web/deps.py'
+#19 4.696 adding 'web/doc_parser.py'
+#19 4.696 adding 'web/doc_tool.py'
+#19 4.696 adding 'web/events.py'
+#19 4.697 adding 'web/evidence.py'
+#19 4.697 adding 'web/extract.py'
+#19 4.697 adding 'web/files.py'
+#19 4.698 adding 'web/inference.py'
+#19 4.699 adding 'web/knowledge.py'
+#19 4.700 adding 'web/mcp_config.py'
+#19 4.700 adding 'web/mcp_image.py'
+#19 4.701 adding 'web/middleware.py'
+#19 4.701 adding 'web/response.py'
+#19 4.701 adding 'web/security.py'
+#19 4.702 adding 'web/session.py'
+#19 4.702 adding 'web/vectorstore.py'
+#19 4.702 adding 'web/verify_baseline.py'
+#19 4.703 adding 'web/verify_chat_ui.py'
+#19 4.703 adding 'web/verify_chat_workflow_ui.py'
+#19 4.703 adding 'web/verify_controlled_evidence_ui.py'
+#19 4.704 adding 'web/verify_document_knowledge.py'
+#19 4.704 adding 'web/verify_final_clinical_review_ui.py'
+#19 4.704 adding 'web/verify_legacy_workflow_ui.py'
+#19 4.705 adding 'web/verify_quality_review_ui.py'
+#19 4.705 adding 'web/verify_real_services.py'
+#19 4.706 adding 'web/verify_save_confirmation_ui.py'
+#19 4.706 adding 'web/verify_session_identity.py'
+#19 4.707 adding 'web/verify_stream_reconnect_ui.py'
+#19 4.707 adding 'web/verify_supplement_ui.py'
+#19 4.707 adding 'web/verify_tool_writes_ui.py'
+#19 4.708 adding 'web/verify_validated_explanation_ui.py'
+#19 4.708 adding 'web/verify_worker_concurrency.py'
+#19 4.708 adding 'web/verify_workflow.py'
+#19 4.709 adding 'web/chat/__init__.py'
+#19 4.709 adding 'web/chat/attachments.py'
+#19 4.709 adding 'web/chat/history.py'
+#19 4.709 adding 'web/chat/mcp.py'
+#19 4.710 adding 'web/chat/model.py'
+#19 4.710 adding 'web/chat/models.py'
+#19 4.710 adding 'web/chat/session.py'
+#19 4.710 adding 'web/chat/supplement.py'
+#19 4.711 adding 'web/chat/tool_writes.py'
+#19 4.711 adding 'web/migrations/__init__.py'
+#19 4.711 adding 'web/migrations/__main__.py'
+#19 4.711 adding 'web/migrations/baseline.py'
+#19 4.712 adding 'web/migrations/runner.py'
+#19 4.712 adding 'web/models/__init__.py'
+#19 4.712 adding 'web/models/diagnosis.py'
+#19 4.713 adding 'web/models/inference_cache.py'
+#19 4.713 adding 'web/models/knowledge.py'
+#19 4.713 adding 'web/models/mcp_server.py'
+#19 4.713 adding 'web/models/news.py'
+#19 4.714 adding 'web/models/user.py'
+#19 4.714 adding 'web/routers/__init__.py'
+#19 4.714 adding 'web/routers/agent.py'
+#19 4.716 adding 'web/routers/diagnosis.py'
+#19 4.716 adding 'web/routers/knowledge.py'
+#19 4.716 adding 'web/routers/legacy.py'
+#19 4.717 adding 'web/routers/mcp_server.py'
+#19 4.717 adding 'web/routers/news.py'
+#19 4.718 adding 'web/routers/review.py'
+#19 4.718 adding 'web/routers/tool_confirmation.py'
+#19 4.719 adding 'web/routers/user.py'
+#19 4.719 adding 'web/routers/workflow.py'
+#19 4.719 adding 'web/schemas/__init__.py'
+#19 4.719 adding 'web/schemas/confirmation.py'
+#19 4.720 adding 'web/schemas/diagnosis.py'
+#19 4.720 adding 'web/schemas/knowledge.py'
+#19 4.720 adding 'web/schemas/legacy.py'
+#19 4.721 adding 'web/schemas/mcp_server.py'
+#19 4.721 adding 'web/schemas/news.py'
+#19 4.721 adding 'web/schemas/review.py'
+#19 4.721 adding 'web/schemas/supplement.py'
+#19 4.721 adding 'web/schemas/user.py'
+#19 4.722 adding 'web/schemas/workflow.py'
+#19 4.722 adding 'web/workflow/__init__.py'
+#19 4.722 adding 'web/workflow/checkpoint.py'
+#19 4.723 adding 'web/workflow/confirmation.py'
+#19 4.723 adding 'web/workflow/confirmation_models.py'
+#19 4.723 adding 'web/workflow/definition.py'
+#19 4.724 adding 'web/workflow/explanation.py'
+#19 4.724 adding 'web/workflow/inference.py'
+#19 4.724 adding 'web/workflow/legacy.py'
+#19 4.724 adding 'web/workflow/models.py'
+#19 4.725 adding 'web/workflow/review.py'
+#19 4.725 adding 'web/workflow/service.py'
+#19 4.725 adding 'web/workflow/worker.py'
+#19 4.725 adding 'eye_diagnosis-1.0.0.dist-info/METADATA'
+#19 4.726 adding 'eye_diagnosis-1.0.0.dist-info/WHEEL'
+#19 4.726 adding 'eye_diagnosis-1.0.0.dist-info/entry_points.txt'
+#19 4.726 adding 'eye_diagnosis-1.0.0.dist-info/top_level.txt'
+#19 4.727 adding 'eye_diagnosis-1.0.0.dist-info/RECORD'
+#19 4.727 removing build/bdist.linux-x86_64/wheel
+#19 4.757 Successfully built eye_diagnosis-1.0.0-py3-none-any.whl
+#19 DONE 4.8s
+
+#5 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#5 DONE 94.1s
+
+#20 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#20 DONE 1.2s
+
+#21 [document-tool 5/6] RUN python /tmp/doc_tool.py --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     || (find /opt/eye-doc -name soffice.bin -exec ldd {} ; | grep 'not found'; exit 1)
+#21 17.25 LibreOffice 26.2.6.3 8221e31b3ac356a1623c672912a3d2b492f7e3d1
+#21 DONE 20.7s
+
+#22 [document-tool 6/6] RUN rm /tmp/libreoffice.tar.gz /tmp/doc_tool.py
+#22 DONE 4.7s
+
+#23 [web 1/6] COPY --from=build /install /usr/local
+#23 DONE 47.5s
+
+#24 [web 2/6] RUN python -m pip check
+#24 5.968 No broken requirements found.
+#24 DONE 6.1s
+
+#25 [web 3/6] COPY --from=build /wheels /wheels
+#25 DONE 0.3s
+
+#26 [web 4/6] RUN python -m pip install --no-deps --no-cache-dir /wheels/*.whl && rm -rf /wheels
+#26 2.139 Processing /wheels/eye_diagnosis-1.0.0-py3-none-any.whl
+#26 2.160 Installing collected packages: eye-diagnosis
+#26 2.481 Successfully installed eye-diagnosis-1.0.0
+#26 2.481 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#26 5.829 
+#26 5.829 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#26 5.829 [notice] To update, run: pip install --upgrade pip
+#26 DONE 8.0s
+
+#27 [web 5/6] RUN useradd --create-home --uid 10001 eye && mkdir /app && chown eye:eye /app
+#27 DONE 0.8s
+
+#28 [web 6/6] WORKDIR /app
+#28 DONE 0.2s
+
+#29 exporting to image
+#29 exporting layers
+#29 exporting layers 61.8s done
+#29 exporting manifest sha256:557374fdf0b0f4124c58a7236e3d07b6d084e6a50c1c0c0a6853739f869c9d7f 0.1s done
+#29 exporting config sha256:9bec760268dc3b2c683f42aff62514b0802e3a0457dab0fb1e70650c710244ba 0.1s done
+#29 exporting attestation manifest sha256:c727666893ed568b3303d134ffb26fccfabf4bd6b5f941567217403a0bdffdbd
+#29 exporting attestation manifest sha256:c727666893ed568b3303d134ffb26fccfabf4bd6b5f941567217403a0bdffdbd 0.1s done
+#29 exporting manifest list sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6 0.1s done
+#29 naming to docker.io/library/eye-python:ticket06 0.1s done
+#29 unpacking to docker.io/library/eye-python:ticket06
+#29 unpacking to docker.io/library/eye-python:ticket06 67.3s done
+#29 DONE 129.8s

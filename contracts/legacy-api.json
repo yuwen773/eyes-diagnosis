@@ -1,0 +1,363 @@
+{
+  "baselineCommit": "7efdc8c",
+  "routes": [
+    [
+      "delete",
+      "/api/knowledge/delete"
+    ],
+    [
+      "delete",
+      "/api/mcp-server/{mcpServerCode}"
+    ],
+    [
+      "get",
+      "/api/diagnosis/get/{id}"
+    ],
+    [
+      "get",
+      "/api/mcp-server"
+    ],
+    [
+      "get",
+      "/api/mcp-server/{mcpServerCode}"
+    ],
+    [
+      "get",
+      "/api/news/get/{id}"
+    ],
+    [
+      "get",
+      "/api/user/get"
+    ],
+    [
+      "get",
+      "/api/user/get/login"
+    ],
+    [
+      "get",
+      "/api/user/get/vo"
+    ],
+    [
+      "post",
+      "/api/diagnosis/delete/{id}"
+    ],
+    [
+      "post",
+      "/api/diagnosis/diagnosis"
+    ],
+    [
+      "post",
+      "/api/diagnosis/list/page/my"
+    ],
+    [
+      "post",
+      "/api/diagnosis/list/page/vo"
+    ],
+    [
+      "post",
+      "/api/diagnosis/list/page/vo/cache"
+    ],
+    [
+      "post",
+      "/api/diagnosis/update"
+    ],
+    [
+      "post",
+      "/api/diagnosis/upload"
+    ],
+    [
+      "post",
+      "/api/knowledge/list/page"
+    ],
+    [
+      "post",
+      "/api/knowledge/upload"
+    ],
+    [
+      "post",
+      "/api/mcp-server"
+    ],
+    [
+      "post",
+      "/api/news/delete/{id}"
+    ],
+    [
+      "post",
+      "/api/news/edit"
+    ],
+    [
+      "post",
+      "/api/news/list/page/vo"
+    ],
+    [
+      "post",
+      "/api/news/list/page/vo/cache"
+    ],
+    [
+      "post",
+      "/api/news/uploadAttachment"
+    ],
+    [
+      "post",
+      "/api/news/uploadCover"
+    ],
+    [
+      "post",
+      "/api/user/add"
+    ],
+    [
+      "post",
+      "/api/user/delete/{id}"
+    ],
+    [
+      "post",
+      "/api/user/diagnosis/reexamine"
+    ],
+    [
+      "post",
+      "/api/user/list/page/vo"
+    ],
+    [
+      "post",
+      "/api/user/list/page/vo/cache"
+    ],
+    [
+      "post",
+      "/api/user/login"
+    ],
+    [
+      "post",
+      "/api/user/logout"
+    ],
+    [
+      "post",
+      "/api/user/register"
+    ],
+    [
+      "post",
+      "/api/user/update"
+    ],
+    [
+      "post",
+      "/api/user/update/userCenter"
+    ],
+    [
+      "post",
+      "/api/user/upload/avatar"
+    ],
+    [
+      "put",
+      "/api/mcp-server"
+    ]
+  ],
+  "diagnosisResultFields": [
+    "abstainReason",
+    "aiRejected",
+    "calibratedProbability",
+    "calibrationStatus",
+    "confidence",
+    "createTime",
+    "details",
+    "disclaimer",
+    "humanRecommendations",
+    "humanResult",
+    "humanReviewNote",
+    "humanReviewStatus",
+    "humanSeverity",
+    "id",
+    "inferencePolicyVersion",
+    "modelVersion",
+    "oodScore",
+    "oodStatus",
+    "otherDisease",
+    "preprocessVersion",
+    "probability",
+    "qualityReasons",
+    "qualityScore",
+    "recommendations",
+    "requiresReview",
+    "result",
+    "severity",
+    "url",
+    "weightSha256"
+  ],
+  "diagnosis": {
+    "categories": {
+      "normal": "正常",
+      "amd": "年龄相关性黄斑变性",
+      "cataract": "白内障",
+      "diabetes": "糖尿病",
+      "glaucoma": "青光眼",
+      "hypertension": "高血压",
+      "myopia": "近视",
+      "other": "其他"
+    },
+    "recommendations": {
+      "normal": "正常",
+      "amd": "抗VEGF药物注射治疗，如雷珠单抗、艾伐仑单抗等\n定期眼科检查，监测病情变化\n合理饮食，补充含抗氧化剂的食物（如深绿色蔬菜、橙色水果）\n戒烟，控制血压和血脂\n佩戴防蓝光眼镜，减少蓝光伤害",
+      "cataract": "早期可通过更换眼镜度数缓解症状\n中晚期主要采用手术治疗，包括超声乳化白内障吸除术和人工晶体植入\n术后需按医嘱使用抗生素和激素眼药水\n避免强光照射，必要时佩戴太阳镜\n控制血糖，避免糖尿病加速白内障发展",
+      "diabetes": "严格控制血糖、血压和血脂\n定期进行眼底检查，早期发现视网膜病变\n激光光凝治疗，控制视网膜新生血管\n抗VEGF药物玻璃体内注射\n严重增殖期可能需要玻璃体视网膜手术",
+      "glaucoma": "药物治疗：降眼压滴眼液（如β受体阻滞剂、前列腺素类药物）\n激光治疗：选择性激光小梁成形术(SLT)或激光周边虹膜切除术\n手术治疗：小梁切除术、青光眼引流管植入术等\n避免剧烈运动和情绪波动，保持规律生活作息\n长期定期随访，监测眼压变化",
+      "hypertension": "严格控制血压，按时服用降压药物\n低盐低脂饮食，控制体重\n戒烟限酒，规律运动\n定期眼科检查，监测视网膜血管变化\n严重视网膜病变可能需要激光光凝治疗",
+      "myopia": "科学验光，正确佩戴眼镜或隐形眼镜\n低度近视儿童可考虑角膜塑形镜或阿托品滴眼液控制近视发展\n使用电子设备时注意休息（20-20-20法则：每20分钟远眺20英尺外物体20秒）\n保持充足光线，正确阅读姿势\n高度近视需定期检查眼底，监测视网膜变性风险",
+      "other": "其他"
+    }
+  },
+  "config": {
+    "maxUploadBytes": 10485760,
+    "listenerPort": 8081,
+    "chromaCollection": "diagnosis-knowledge",
+    "embeddingModel": "text-embedding-v3"
+  },
+  "mcp": {
+    "defaultInstallType": "SSE",
+    "activeStatus": 1,
+    "deletedStatus": 3,
+    "toolsCachePrefix": "mcp:tools:"
+  },
+  "sources": {
+    "src/main/java/com/csust/eyediagnosis/agent/config/AgentConstants.java": "f7964a642f150d02963bfeb7e8982f6ce6d164702a3a1da9c2e16cf9bd493d57",
+    "src/main/java/com/csust/eyediagnosis/agent/config/AgentExecutorConfig.java": "6d90843e82d81f3669b06f2d9ecf170d79f4e86214e8269c6b3ea9fd7d09643f",
+    "src/main/java/com/csust/eyediagnosis/agent/config/VectorStoreConfig.java": "84a3ec937e401fafcddff565be29a4b7db021a53f917a66500ae3509520e6697",
+    "src/main/java/com/csust/eyediagnosis/agent/controller/AgentImageUploadController.java": "222b7d6f47368889c2020cd5a62a7d0f455e31d93dcb04de446473ded13e4234",
+    "src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java": "2699916b98248009947914da53055f613d0526242d4e2336f43a5309419ab65a",
+    "src/main/java/com/csust/eyediagnosis/agent/exception/McpOverloadException.java": "5a90652c575103cd98df7b5c192a64fad63a056bc3505b7afc089dfef8ecec3d",
+    "src/main/java/com/csust/eyediagnosis/agent/exception/McpTimeoutException.java": "8358a7a968648a85a3d31b0dafe99769431882c07eed6a31fe1e3b6267c2d6da",
+    "src/main/java/com/csust/eyediagnosis/agent/interceptor/TextMcpModelInterceptor.java": "038a72ac3f13c842456d4352d98211ec6184e002651e401efd0f181d267a210d",
+    "src/main/java/com/csust/eyediagnosis/agent/manager/MCPManager.java": "99f78db46a6ac1005bf93c873a4f21663934a7762e137f5f542289c5d6e5f965",
+    "src/main/java/com/csust/eyediagnosis/agent/mcp/McpToolCallback.java": "c4029f5fefc05674b1d2653a1a5d08c07e11704a8b437d97e1a6ace3d0413c5c",
+    "src/main/java/com/csust/eyediagnosis/agent/mcp/McpToolCallbackProvider.java": "2915c9a2b3e3d28b2408beb765effcdaa6413fd4ec4967404c712de1c886b51a",
+    "src/main/java/com/csust/eyediagnosis/agent/model/EyeAnalysisResult.java": "d73130926d0124b0decec8928aa3801e752a87d2032d24131e34f9836f0c25d2",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxDispatcher.java": "30cc9ea147f6e958783575ded292b9d32cb5d60180a0fe06e06cf2bdb4c0c091",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxEntity.java": "81fedff4a417e2f35136f913dc3fe18e43a1fa1a82d19674186d2dc1be7c5ef5",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxService.java": "d134241029ce8a1a8a1bc35a4d7413ea3104a00b000b59864427d81514e1761c",
+    "src/main/java/com/csust/eyediagnosis/agent/policy/McpConnectionPolicy.java": "6b44055f25adfcdf7219440faedf446e1a15bcc45275fb856fd5f76609158fd7",
+    "src/main/java/com/csust/eyediagnosis/agent/queue/AgentQueueConfig.java": "fb7312c5d6ec19c78b742f32fa10c1efdf9acf274f29d211d371090cae5831fa",
+    "src/main/java/com/csust/eyediagnosis/agent/queue/SessionMessageQueue.java": "2d49b48f9746fe338c0035398562b36bfee08fd7fc2791c58d570ced39fac537",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/Bm25Segmenter.java": "859c89b3b03abf78c2ab3e9afa237b29c4da64c32ac62e097946614140be57f7",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/DocumentParser.java": "f08e0cb8aaa3184f3d33b5b91cca2a89a1c283f25c1f467f690fae3b9ea0e95a",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/TextChunkerService.java": "e57a0eb7e27cfd8b441bd109f023acd81c8d19f48c91bdb6036d8706c219270a",
+    "src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java": "e5655185ced9df0eeb80059d60706b69f4f836670d79c094852504557f5e8ae3",
+    "src/main/java/com/csust/eyediagnosis/agent/service/ChatHistoryService.java": "a20ff2542f064a2b9d1a78b22f5ffc62195db1fa37729d6402c0ca112d932d6c",
+    "src/main/java/com/csust/eyediagnosis/agent/service/impl/McpServerServiceImpl.java": "3481709511430002bf923df81997c2cc562d1e194bbcd8f22d9da8d64a3892f8",
+    "src/main/java/com/csust/eyediagnosis/agent/service/McpServerService.java": "fe6cd94f5e455331799db3a7e2d71801035a683dfbc53416c4066ec372bf6473",
+    "src/main/java/com/csust/eyediagnosis/agent/service/TitleGenerationService.java": "f0239622a43c6677d12f21a4e0b466ef63c4bad74590b50c971211c6d60aeaa6",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/DocumentSearchTool.java": "6fa99bf78a56dd653b3c580ff83ce391dbb29e5673028885721ec46fdd0a1a91",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/EyeImageAnalyzerTool.java": "1771083627560ea9a3a04a93db15ed4ecc8aeaac5e27b9bcc74f4ed00eb71d1e",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/UserBoundDocumentSearchTool.java": "36445f1dcb5c3fc4864c10cdcf64d71f39404fbfc81dc321993cc136a2e04666",
+    "src/main/java/com/csust/eyediagnosis/annotation/AuthCheck.java": "038cef97b75c55983d5b61cef4112d4285d75c003b2c2c55595562503a9674a7",
+    "src/main/java/com/csust/eyediagnosis/aop/AuthInterceptor.java": "174797c66d65cba4bb11e6356fd3c0a4cebc13f0267ad06e87c0edc38f1741cc",
+    "src/main/java/com/csust/eyediagnosis/common/BaseResponse.java": "ff6dd78e3c7ac1544535d00c92a561f45620c4efa5aac0b79f92500ac039360f",
+    "src/main/java/com/csust/eyediagnosis/common/DeleteRequest.java": "8e0c9e0732241c1e2b3845a5d0be31b8cb3e80dc260ac599df3ab42166be0351",
+    "src/main/java/com/csust/eyediagnosis/common/PageRequest.java": "e0b2c2045d49711fb0fc361b0c9d4ba35eaed43f83defdff973f3550e476e6e9",
+    "src/main/java/com/csust/eyediagnosis/common/ResultUtils.java": "552f01d0c9a9cee8c4184018a2fcd0c50c01618c707714e7061df94afbca13eb",
+    "src/main/java/com/csust/eyediagnosis/config/AsyncConfig.java": "580f6f1ae53665fc3ef58256d057b1ab2b72d7636c7116c438a6da9fdfda5e6a",
+    "src/main/java/com/csust/eyediagnosis/config/CorsConfig.java": "fd53f6e4175caac22b4aae1115f7a83ce2718df2f4e359b10f7898503d988141",
+    "src/main/java/com/csust/eyediagnosis/config/CosClientConfig.java": "a9ff3b570915ffd8729119446c7f8944c063e25f45fc85a3710244e1061805a2",
+    "src/main/java/com/csust/eyediagnosis/config/GrpcConfig.java": "97cd05ee22bbcf5846138347e45b2850752e314777838ac06df7e6424cde2afe",
+    "src/main/java/com/csust/eyediagnosis/config/JsonConfig.java": "fd251b5db119cebe81ce6a8ffd97a1e9eccfaed1f26cdfe2d38137052d94dcd8",
+    "src/main/java/com/csust/eyediagnosis/config/MybatisPlusConfig.java": "7b0746e1b2fadb5306572d83256fdda11abc3ea954fbb366e8cfc31c2ffdc173",
+    "src/main/java/com/csust/eyediagnosis/constant/AuthConstant.java": "157e5508baff1720cee027703d7d5dfb49da02a69ca0cff509636b5173c1b469",
+    "src/main/java/com/csust/eyediagnosis/constant/DiagnosisCategoryEnum.java": "0edb8e44db7919b4a8a73674f25b16e3654e4a549a6593d070c4bcf0ee9de406",
+    "src/main/java/com/csust/eyediagnosis/constant/DiagnosisRecommendationEnum.java": "4aec906a44411709cf82f388d13e435972224c1393e35d9774df7b93cc47e758",
+    "src/main/java/com/csust/eyediagnosis/constant/ExceptionConstant.java": "1f90c022ce4f702fcdbe8be75cab9d81d543031a429f5b3ba33f268adb237b26",
+    "src/main/java/com/csust/eyediagnosis/constant/FileConstant.java": "98e1e40d28c2b908f901aec31c0a6d62fb7776ec01012538a22f63165436c998",
+    "src/main/java/com/csust/eyediagnosis/constant/HumanReviewStatus.java": "17ec24611362971a0aa0349008b673198f47bdcda6d13991f4e309196a1f9cda",
+    "src/main/java/com/csust/eyediagnosis/constant/OrderConstant.java": "acb779c2d94c0895313e427a47bd602bb4ab7b436bebfdc9a88bce1ed6008b9a",
+    "src/main/java/com/csust/eyediagnosis/constant/ReexamineConstant.java": "3e379a3613b505f5e5154658edfba542355da11fa2ab1227ebd7a30197e35dd0",
+    "src/main/java/com/csust/eyediagnosis/constant/StatusConstant.java": "a261df15268f96706ebb82c11667d74c247c0187e478ca66e34dd4302766171d",
+    "src/main/java/com/csust/eyediagnosis/constant/UserConstant.java": "d1d3abcd980944e1036ec104c2eaaa1f84d5156cadca837e41b5935e15ee5628",
+    "src/main/java/com/csust/eyediagnosis/controller/AgentController.java": "2ce62f0c185db0d2a8fc23d3101b2e285c98d45f98b785f8d04585585efdb960",
+    "src/main/java/com/csust/eyediagnosis/controller/DiagnosisController.java": "660ecdbc1c64773cb69200494cb52c2b57e7b5ac46dcf425b782a19e2154f64b",
+    "src/main/java/com/csust/eyediagnosis/controller/KnowledgeBaseController.java": "3be1532101136cd994a5d0a114aadcf7c54608bdf9e56536e5a82e641d9d89b0",
+    "src/main/java/com/csust/eyediagnosis/controller/McpServerController.java": "21420b7e2b877d821de08b2f706a90c49e7c59085aa6ab3fb823ac1d2397e4a8",
+    "src/main/java/com/csust/eyediagnosis/controller/NewsController.java": "bf9aaa75b1d5444071d7f111affcd8551f665d85ddd308aa785b8cff6c803b00",
+    "src/main/java/com/csust/eyediagnosis/controller/UserController.java": "1516d19c1a135620e97ae5e3e81fe036321eb3d3d446717215f15b06d0918c40",
+    "src/main/java/com/csust/eyediagnosis/exception/BusinessException.java": "cdb3def23ea41c6a4bf4a9b537853be839d9f7b1c4295f0c54cfa8c397c027c4",
+    "src/main/java/com/csust/eyediagnosis/exception/ErrorCode.java": "8f4640a7a33d4ea123fffa8d81da34e44cd07b48a894a163bc33dedffd31876a",
+    "src/main/java/com/csust/eyediagnosis/exception/GlobalExceptionHandler.java": "52777a7ba6a62f12110da86b4d364c8b862db7674a8a2b5374ebd8d5f0fad7d9",
+    "src/main/java/com/csust/eyediagnosis/exception/ThrowUtils.java": "7096ceae33f8b43e3e66c50f53575e88925ed2b4b4b99ac5ce5091b1c42af2e8",
+    "src/main/java/com/csust/eyediagnosis/EyeDiagnosisApplication.java": "8eda1cb8330c6a714fc9d2978b37ee343aa6e7aa8b90b275d3ca9d31c371c661",
+    "src/main/java/com/csust/eyediagnosis/grpc/DiagnosisGrpcClient.java": "41b51ab1a4e4c7ff5139c6d78c4927ccfd0e446766211ab4b7f0ec4cf13c6ee2",
+    "src/main/java/com/csust/eyediagnosis/manager/CosManager.java": "41f7b1ec872fab0bc90845d81a2f5182d776e398689c2313f258f2ce530c9301",
+    "src/main/java/com/csust/eyediagnosis/manager/FileManager.java": "502c5b399706cbfcf8bce8d510fade383d0d8ede5489ab628784dc47bff65203",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentMessageMapper.java": "739094410d12c5587c85b84b8d2c897a8d47060452b7dea96a886bb2ba99e2bf",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentMessageOutboxMapper.java": "06b728eec0c220dbfbb02efa682e1570aef93b1e74e7756b410a7c6e88ddd75e",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentSessionMapper.java": "b007e8be4243f011e110b5cbdac80ee5c15c9193b2a4b6e45ad45b7c2cfc5126",
+    "src/main/java/com/csust/eyediagnosis/mapper/DiagnosisMapper.java": "14042f43529014a503f03edf1af18e4273dc51fdac58347eef832d4c236b24ff",
+    "src/main/java/com/csust/eyediagnosis/mapper/InferenceCacheMapper.java": "9650361209493e6d1717163fbbf88ddc7d3d852fb0f32aafe9ac86b8a44079da",
+    "src/main/java/com/csust/eyediagnosis/mapper/KnowledgeDocumentMapper.java": "f5f4aaeea044e9bc4ed1595d4d3eff8c30e76786784699e043ad2a397de7d487",
+    "src/main/java/com/csust/eyediagnosis/mapper/McpServerMapper.java": "ba8047960eb2a165d7d5d939ee4f92d4efae7fa12247925abecd42729bf191d1",
+    "src/main/java/com/csust/eyediagnosis/mapper/NewsMapper.java": "2e490dc0279247ba268a5254c5ce339c434d428875821e53101d4ee45a7f9489",
+    "src/main/java/com/csust/eyediagnosis/mapper/UploadTaskMapper.java": "8e3dba2aaa718fdfd1b554dab538d452d6eaa06450362e77b8f8bdb6150e2dc0",
+    "src/main/java/com/csust/eyediagnosis/mapper/UserMapper.java": "be6c09a35ad19934e7a2a15be7770240a9cfdec2ca8acaf3d22ac61acced73f9",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/AgentChatRequest.java": "76955b6c68d13f9bcd021a721ca7082ff86c1de03fba616161fa47d1de70f0ff",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/ChatHistoryVO.java": "40566914b0e209c77007e37e6c250414dda86931bbf2d67dd2ae3d4643e6da4d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageDTO.java": "20ccc2c937a880ee0d52db5878a0311cd8e538696d60e82168e9d7ba526dadbd",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageType.java": "8f01e2a0ca419aeee8b66f49b5cfb675a5de804048fe3af6cc35886985557efa",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageVO.java": "efd38690715a457643ec217517f3e1a7ac92ee81e3db3f7cf9bc0e104b6ec6e5",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/SessionVO.java": "3a25598a7e4b97bb58c0e2575bcdbf7709ee85f187d17512c3246d5fc655e70d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/chat/ChatHistoryQueryRequest.java": "c91a68d70cb3be4f8d72986d853860386bf1781bea0843c07d0fb650ccf48b8b",
+    "src/main/java/com/csust/eyediagnosis/model/dto/chat/ChatSessionAddRequest.java": "b43b07ea2caeef76415e93c973003c9536dd4425c87f6bd0fb58a04e4373b8f8",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisDTO.java": "d7f1977ed1d3da29d695b743fcbbd5f7520c86cc2a4b133d25537fbbeafa986a",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisQueryDTO.java": "9812f2aa328bc17defc5cd386c36ea00a95a85ed7fb3ebed280b8764249efc3f",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisReexamineDTO.java": "406eb80c171bc74f973f7f28d54f6c6bc1fd9cc911b67bea453ac69d0a6c0f01",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisResultDTO.java": "0fcddbcdffa7c9060d9295c43c222fa518004e091bbf1a3e24eab625be87dbed",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisUploadDTO.java": "5c68391b4a8ce21cdba72a222665bff2442bc6518dab406495b2efa3b647ae73",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/RediagnosisDTO.java": "5bede31ce6bb72e9b7fc686f4ef499a51555af6fd75275afe65e797ea012cefd",
+    "src/main/java/com/csust/eyediagnosis/model/dto/file/UploadPictureDetail.java": "85cca31b009ace08198d8bcd2ac2cd6f8843d409aec1659438f4eaf6148a4d05",
+    "src/main/java/com/csust/eyediagnosis/model/dto/knowledge/KnowledgeUploadRequest.java": "98eb62c307d53a0c1c121019384e619eac7573a197d9b6e022130b07bf79816a",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/InputSchema.java": "8d89b1650a66fb4d3cd95e17c7dbe11b88b2e7f3dd787cc72bc4993668bed10f",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerCallToolRequest.java": "dfcf6c016783e75620b9aabdfeedaeadc60fc2525fb63cbfde4c9c80cc43fc9c",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerCallToolResponse.java": "917be496b0a3820c37338d696407c7aa16980cddf37ae467a1212b6bec45b1cc",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerDeployConfig.java": "e3c4522d77ef29ec1d9b9cccad8276eeab87b6cf72412dfc813f34ea578e4407",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerDetail.java": "5b1bc64047fd96624cf0b897d04b105ef916a376d1c4920726543351ff5105c4",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpTool.java": "83f739482476eda44dac33443cb19a12284bab373f20b32c4e8d9649789cb798",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsQueryDTO.java": "47853cd3e7c8be55dd62136d04b76ee1303f1e4731fbe5cd56d2f3faa441d42e",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsUpdateDTO.java": "860e8a50d6eedb2306e94adc2f213f6fdd4d15810400fd91bf3c9fff598e0dd1",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsUploadDTO.java": "66cc0e9d601178c31c4cd95565db7743feea058e0f21c04800083d8cc50764d5",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserAddDTO.java": "c97ae0771863d4a9a62b2799d299c8ed1c3a5bdc63b584f1b2a0ac2f7c687899",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserEditDTO.java": "ff830ff609a998caf27ddbec72ced65d84784b52ffe7e3ba01f9f9a11d39093d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserLoginDTO.java": "b2073b87e68870396f12ac25eeb3a40975e1d55048f4df5951b5119cb6126529",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserQueryDTO.java": "1237d2afd866888823b3046b00ca3a17a014ed6955dd45dd840817dde15ce645",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserRegisterDTO.java": "33b7bf136fe7ade2f2693421400d8a97b64565a10037bf299c8a72f29a2fe313",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserUpdateDTO.java": "aa2b896f253e86291309bf62dfa10ba50c001b5219672450acfb67a1351b78ee",
+    "src/main/java/com/csust/eyediagnosis/model/entity/AgentMessage.java": "0660ab27b78c127288857bd71970bf9867482bf565e70b77f7a19678f82cc3b7",
+    "src/main/java/com/csust/eyediagnosis/model/entity/AgentSession.java": "4f36f9b29b175b60b6d71704083dbeba56e81501a63ee9105352c7a96d7faac3",
+    "src/main/java/com/csust/eyediagnosis/model/entity/Attachment.java": "745c33eece9bd74429865bad7bbcdd2446c638ad6c9366a9412f14544ce16edb",
+    "src/main/java/com/csust/eyediagnosis/model/entity/ChatHistory.java": "e3c2f39f8d3e179593db74700823e02d99a54f62dfdd90ec5e3b42a586b2db05",
+    "src/main/java/com/csust/eyediagnosis/model/entity/Chatsession.java": "30a0fdc2d371e2d11593549069e01318f7b48823e45ac294efbcbd7ff4d58e3b",
+    "src/main/java/com/csust/eyediagnosis/model/entity/Diagnosis.java": "9278e2c10ee8c7e00475406d58d8bb03cc4ac4635cdf1b48f4b6c54beab370c2",
+    "src/main/java/com/csust/eyediagnosis/model/entity/InferenceCache.java": "00e77b6edb1a9ea225ef15ef08713a842074e0405ab1f30e1d5b3bdb0071b574",
+    "src/main/java/com/csust/eyediagnosis/model/entity/KnowledgeDocument.java": "f47aa233c94c926c0a0bc61cc9b17c4c1313737cc4da7af417f182b90ec366bc",
+    "src/main/java/com/csust/eyediagnosis/model/entity/McpServer.java": "ec756244528d0c23d4374e2dda9e6d3da8f1ad02c9fe97106a7a203df25a3bed",
+    "src/main/java/com/csust/eyediagnosis/model/entity/News.java": "d0007f979b3b771ee64531d8896bbbdb1d4e7ed41dc723075ae7a35cf3104422",
+    "src/main/java/com/csust/eyediagnosis/model/entity/UploadTask.java": "4556205ca512173b5efa53fcb0b725f89cf9e7fd387bc1e1af3420870c8648d6",
+    "src/main/java/com/csust/eyediagnosis/model/entity/User.java": "20575bd850b4d1398425b816b79e076a31c5f3d3d96553d736e65c6bfe1e741b",
+    "src/main/java/com/csust/eyediagnosis/model/enums/UserRole.java": "fa73bd60d9f0d6cf6f6bda79b7f9999e76e33b90b17cca3db33a0d6ba5f9c763",
+    "src/main/java/com/csust/eyediagnosis/model/vo/chat/ChatMessageVO.java": "16acf9b58d28f49c1a7fea6b5809b8307b7b4b40ae1d8d9dd452d8349be3abaa",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisManageVO.java": "edca78ee7f00ef43ce558751d4019cc65d5a349b9c2a641631014ecc393565c1",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisResultVO.java": "5c56d5c40d1bad4d3f45a21b541b2d4c9cdcbd2d40db24db295c99572456d8c1",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisVO.java": "87c0a409e51815ca76d0fa40193b7e3a22a4e544c800c665a25bd266dc57c9a4",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/Disease.java": "8a8688bba88be30e2347e88fb39b158431adedf066e991f4b436c15e3afc8aa7",
+    "src/main/java/com/csust/eyediagnosis/model/vo/news/NewsVO.java": "438c38f3ad5ea789a6582d52ee3e3a00d747398791cfd096f3e5bdb628d14f5d",
+    "src/main/java/com/csust/eyediagnosis/model/vo/user/LoginUserVO.java": "932d11b71cc1d99bc8a5f42188252bc42261dc478679a6e11701c972bda447c9",
+    "src/main/java/com/csust/eyediagnosis/model/vo/user/UserVO.java": "035f8d42d38aae43fd90666e6bf24ff198fda5c6a81872c2a8fd987b4f3ec633",
+    "src/main/java/com/csust/eyediagnosis/security/PasswordService.java": "4833ce8df0d96b977727a6b68594fa4fe2a3425c97f859d16e24b08a174fa49f",
+    "src/main/java/com/csust/eyediagnosis/service/DiagnosisService.java": "9d048b5b726fcbded70904604d4ed6ab85a7a348d5ed801d08217be7bdca3f69",
+    "src/main/java/com/csust/eyediagnosis/service/impl/DiagnosisServiceImpl.java": "cdd92aaf52ed4177b6e3c49e8cd6839c8303bde259c1efe534b4b87febc40c5a",
+    "src/main/java/com/csust/eyediagnosis/service/impl/DocumentProcessingService.java": "ee3d0c6a18c0520316e97a8d51fd1341de2a5a5737933943d573db32664a2e20",
+    "src/main/java/com/csust/eyediagnosis/service/impl/KnowledgeBaseServiceImpl.java": "25621fe01097acff9f403c6f0f7fd907a9fce98e3363a73272df5be861feef8c",
+    "src/main/java/com/csust/eyediagnosis/service/impl/NewsServiceImpl.java": "2af9d538f3473e18be6b311e38e9d23a45e8cb4ffdaf5accce50597a8d92291d",
+    "src/main/java/com/csust/eyediagnosis/service/impl/UserServiceImpl.java": "1cb4cd05cc04e96cc502682bb39960ce0a7a2a516f3ccae063299d74914b4274",
+    "src/main/java/com/csust/eyediagnosis/service/KnowledgeBaseService.java": "c9c1ca3116466423f5b648ca44fe30889f2b9d887272533289239aa698709c24",
+    "src/main/java/com/csust/eyediagnosis/service/NewsService.java": "4e6003ed1bbaa15cc4e4c4518c547081a81f36bdf80730f59e6b3f7ded91bdf5",
+    "src/main/java/com/csust/eyediagnosis/service/UserService.java": "f245e678500edcec3a7c2b15be513eed29ccf9ab14cb343c9f3bfc5811875faa",
+    "src/main/java/com/csust/eyediagnosis/upload/state/IllegalStateTransitionException.java": "2bafe9b73d21a5f6776498b0266b48dadfedd4d86ebd577b2ff339cd4a2f36fb",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadCompensationService.java": "ad90b06c3f0ee7e3e82774e30a8508768eb9378b3cac0524980ca4dd6488d904",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadStateMachine.java": "649a099a97f800eaefb29c189f9c0af563486fad9a999bfe01816c48f212b376",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadStatus.java": "2b2ca0be837828481ae33afb021763b0b65e19e431bf0b047246f71d435c14ab",
+    "src/main/java/com/csust/eyediagnosis/utils/IdGenerator.java": "214ceecd9553fa6052a16448e2390718edd165a9054fa57b3e15f34e9fd467e9",
+    "src/main/java/com/csust/eyediagnosis/utils/JsonUtils.java": "ebc350a133b1408e4916319c73d74de458ce15c473e32d14ec6dea498ddecea5"
+  }
+}

@@ -30,6 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 ALGORITHM_ROOT = REPO_ROOT / "algorithm"
 sys.path.insert(0, str(ALGORITHM_ROOT))
 
+from web.tests.frozen_contract import CONTRACT
 from web.app import create_app  # noqa: E402
 from web.auth import LoginUser, current_user, require_role  # noqa: E402
 from web.config import WebConfig  # noqa: E402
@@ -292,24 +293,7 @@ def test_endpoint_set_matches_java_exactly():
     would rename the generated ``deleteMcpServer(mcpServerCode)`` parameter for
     no benefit.
     """
-    import pathlib
-    import re
-
-    java = set()
-    controllers = pathlib.Path(
-        REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller"
-    )
-    for path in controllers.glob("*.java"):
-        source = path.read_text(encoding="utf-8")
-        base = re.search(r'@RequestMapping\("([^"]*)"\)', source)
-        base = base.group(1) if base else ""
-        for verb, sub in re.findall(
-            r'@(Post|Get|Put|Delete)Mapping(?:\(\s*(?:value\s*=\s*)?"([^"]*)"\s*\))?', source
-        ):
-            java.add((verb.lower(), f"/api{base}{sub}"))
-
-    expected = {(verb, path) for verb, path in java
-                if not path.startswith("/api/agent") and path != "/api"}
+    expected = {tuple(route) for route in CONTRACT["routes"]}
 
     served = {(verb, path) for path, operations in create_app().openapi()["paths"].items()
               for verb in operations if verb in {"get", "post", "put", "patch", "delete"}}

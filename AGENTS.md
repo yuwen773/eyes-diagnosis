@@ -2,6 +2,19 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
+## Current Python delivery: ticket 06 (2026-10-16)
+
+Use root `pyproject.toml`, `.python-version` and `algorithm/requirements-web.lock`.
+Windows commands use PowerShell 7 (`pwsh.exe`), with `scripts/dev.ps1 install|start|status|stop`.
+API and Worker are independent; `scripts/verify.py web|frontend|infrastructure` is
+the shared local/CI verification entry. Linux deployment uses `deploy/python/compose.yml`.
+See [docs/python-delivery.md](docs/python-delivery.md) for configuration, explicit
+Python migrations, health checks and acceptance boundaries. Current validation
+does not install or execute JVM/Maven/Flyway/Tika. Contracts use `contracts/legacy-api.json`
+and frozen `deploy/python-migrations` assets, never Java source/config reads.
+Retain historical Java assets until ticket 08; the architecture/build instructions
+below describe that retained implementation, not the current delivery entry.
+
 ## Python migration: session ticket 02 (2026-10-15)
 
 Python owns `/api/user/login`, `/api/user/logout` and `/api/user/get/login`. Protected HTTP/SSE resolves `EYE_SESSION` through `eye:py:session:{sid}` in Redis and re-reads `t_user` on each request. Spring cookies grant no Python identity. No Java identity callback or `JAVA_BASE_URL` is needed. OpenAPI is `/api/openapi.json`; run `npm run openapi` against Python. Java assets remain until ticket 08; the Java architecture below is a retained reference. See [docs/python-session-auth-evidence.md](docs/python-session-auth-evidence.md).

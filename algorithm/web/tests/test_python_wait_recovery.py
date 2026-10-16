@@ -58,13 +58,23 @@ def recovery_runtime(tmp_path_factory):
     binary = os.getenv("WAIT_RECOVERY_REDIS_SERVER")
     if not os.getenv("HANDOFF_TEST_MYSQL_ADMIN_URL") or not binary:
         pytest.skip("Opt-in ticket05 isolated real MySQL/Redis acceptance")
+    if os.getenv("HUMAN_WAIT_EVIDENCE_DIR"):
+        Path(os.environ["HUMAN_WAIT_EVIDENCE_DIR"]).mkdir(parents=True, exist_ok=True)
     directory = tmp_path_factory.mktemp("python-wait-release")
     archive = directory / "baseline.zip"
     subprocess.run(["git", "archive", "--format=zip", "--output", str(archive), BASELINE,
-                    "algorithm", "deploy", "src", "pom.xml"], cwd=ROOT, check=True, timeout=60)
+                    "algorithm", "deploy"], cwd=ROOT, check=True, timeout=60)
     source = directory / "baseline"
     with zipfile.ZipFile(archive) as frozen:
         frozen.extractall(source)
+    # The frozen release's old baseline checker expects audit source slots.
+    # Materialize only its immutable SQL assets; no active Java tree is read.
+    assets = source / "deploy/python-migrations"
+    for entry in json.loads((assets / "manifest.json").read_text(encoding="utf-8"))["files"]:
+        if entry.get("source"):
+            audit_file = source / entry["source"]
+            audit_file.parent.mkdir(parents=True, exist_ok=True)
+            audit_file.write_bytes((assets / entry["asset"]).read_bytes())
     port = free_port()
     with (directory / "redis.log").open("wb") as log:
         child = subprocess.Popen([binary, "--bind", "127.0.0.1", "--port", str(port),

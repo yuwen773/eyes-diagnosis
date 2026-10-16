@@ -143,6 +143,16 @@ def create_app(config: WebConfig | None = None) -> FastAPI:
         unauthenticated -- Nginx uses it to decide whether to route here."""
         return {"status": "up"}
 
+    @application.get("/ready", include_in_schema=False)
+    async def ready():
+        from fastapi.responses import JSONResponse
+        from web.delivery import readiness
+
+        try:
+            return await readiness(resolved)
+        except Exception:
+            return JSONResponse({"status": "unavailable"}, status_code=503)
+
     return application
 
 

@@ -1,18 +1,16 @@
-"""Issue 19 isolated real-service acceptance; exit 0 PASS, 1 FAIL, 2 BLOCKED.
+"""Ticket06: isolated real MySQL/Redis/Chroma, Python API/Worker acceptance.
 
-Requires REAL_SERVICES_MYSQL_ADMIN_URL (local MySQL, no database component).
-Owns a fresh schema and child processes; never falls back to SQLite.
+Creates only random local schemas; retains evidence and data. Providers are
+separate gates. Historical issue19 results are never overwritten.
 """
 
 import argparse
 import asyncio
 from contextlib import ExitStack
 from datetime import datetime, timezone
-import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import secrets
 import shutil
 import socket
@@ -26,7 +24,6 @@ from uuid import uuid4
 import httpx
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import OperationalError
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -42,290 +39,158 @@ def gate(status, detail):
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--embedding-mode", choices=["real", "controlled"], default="real")
-    parser.add_argument("--cutover-nginx", help="Opt in to isolated Nginx cutover/rollback rehearsal (absolute binary path)")
+    parser.add_argument("--embedding-mode", choices=["real", "controlled"], default="controlled")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    report: dict[str, Any] = {"timestampUtc": datetime.now(timezone.utc).isoformat(), "status": "BLOCKED",
-        "checks": [], "gates": {
-            "infrastructure": gate("BLOCKED", "Real MySQL/Redis/Chroma/Java not exercised"),
-            "realEmbedding": gate("BLOCKED", "Real embedding has not been exercised"),
-            "realClassifier": gate("NOT_VERIFIED", "Deterministic classifier only; no model weight acceptance"),
-            "realLLM": gate("NOT_VERIFIED", "Deterministic chat/explanation only"),
-            "realCOS": gate("NOT_VERIFIED", "Local file adapter only"),
-            "clinical": gate("NOT_VERIFIED", "Synthetic accounts and documents; no clinical acceptance")}}
+    report: dict[str, Any] = {"ticket": "06", "timestampUtc": datetime.now(timezone.utc).isoformat(), "status": "BLOCKED",
+              "checks": [], "gates": {name: gate("NOT_VERIFIED", "Separate acceptance boundary") for name in
+              ["infrastructure", "orchestration", "mysqlSemantics", "realEmbedding", "realClassifier", "realLLM", "realCOS", "clinical"]}}
+    for name in ("infrastructure", "orchestration", "mysqlSemantics"):
+        report["gates"][name] = gate("BLOCKED", "Required infrastructure verification has not completed")
     try:
         value = os.getenv("REAL_SERVICES_MYSQL_ADMIN_URL")
         if not value:
             raise Blocked("REAL_SERVICES_MYSQL_ADMIN_URL is required")
         target = make_url(value)
-        if (target.drivername != "mysql+pymysql" or target.database or
-                target.host not in {"127.0.0.1", "localhost"}):
-            raise Blocked("Use local mysql+pymysql admin URL without a database; a new schema is mandatory")
+        if target.drivername != "mysql+pymysql" or target.database or target.host not in {"127.0.0.1", "localhost"}:
+            raise Blocked("Use a local MySQL admin URL without a database")
         execute(args, target, report)
-        report["status"] = "PASS" if all(report["gates"][name]["status"] == "PASS"
-            for name in ("realEmbedding", "legacyJavaReader")) else "BLOCKED"
+        report["status"] = "PASS_WITH_LIMITATIONS"
     except Blocked as exc:
         report["reason"] = str(exc)
     except Exception as exc:
-        # Do not serialize exception text: SQL/HTTP errors may contain secrets.
         report["status"] = "FAIL"
-        report["reason"] = f"{type(exc).__name__}; inspect the private runtime logs"
-        report["errorLocation"] = [{"file": Path(frame.filename).name, "line": frame.lineno}
-                                   for frame in traceback.extract_tb(exc.__traceback__)]
+        report["reason"] = type(exc).__name__ + "; inspect private runtime logs"
+        report["errorLocation"] = [{"file": Path(f.filename).name, "line": f.lineno} for f in traceback.extract_tb(exc.__traceback__)]
     (args.output_dir / "results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
-    return {"PASS": 0, "FAIL": 1, "BLOCKED": 2}[report["status"]]
+    return {"PASS_WITH_LIMITATIONS": 0, "FAIL": 1, "BLOCKED": 2}[report["status"]]
 
 
 def execute(args, target, report):
     redis = os.getenv("REAL_SERVICES_REDIS_SERVER") or shutil.which("redis-server")
-    chroma = shutil.which("chroma", path=str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""))
-    if not redis or not Path(redis).is_file() or not chroma:
-        raise Blocked("redis-server and the locked Python chroma CLI are required; set REAL_SERVICES_REDIS_SERVER")
-    if args.cutover_nginx and (not Path(args.cutover_nginx).is_file() or not (ROOT / "frontend/dist/index.html").is_file()):
-        raise Blocked("Cutover requires an existing Nginx binary and built frontend/dist")
+    if not redis or not Path(redis).is_file():
+        raise Blocked("Set REAL_SERVICES_REDIS_SERVER to an installed Redis executable")
     env = os.environ.copy()
+    env.pop("JAVA_HOME", None)
     if os.name == "nt":
-        env["JAVA_HOME"] = r"C:\Users\yuwen\.jdks\corretto-21.0.7"
-    java_home = Path(env.get("JAVA_HOME", ""))
-    suffix = ".exe" if os.name == "nt" else ""
-    java, javac = java_home / "bin" / ("java" + suffix), java_home / "bin" / ("javac" + suffix)
-    if not java.is_file() or not javac.is_file():
-        raise Blocked("JDK 21 JAVA_HOME is required")
-    env["PATH"] = str(java_home / "bin") + os.pathsep + env.get("PATH", "")
-    maven = shutil.which("mvn", path=env["PATH"])
-    if not maven:
-        raise Blocked("Maven is required")
-    schema = "eye_real_services_issue19_" + uuid4().hex
+        env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + str(Path(os.environ["SystemRoot"]) / "System32")
+    schema = "eye_python_issue06_" + uuid4().hex
     runtime = ROOT / ".scratch/baseline-runtime" / schema
     runtime.mkdir(parents=True)
-    report["schema"] = schema
-    report["runtime"] = str(runtime)
-    report["sourceCommit"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    sources = [*(ROOT / "algorithm/web").rglob("*.py"),
-               *(ROOT / "src/main/java").rglob("*.java"),
-               *(ROOT / "deploy/workflow-migrations").rglob("*.sql"),
-               ROOT / "pom.xml", ROOT / "deploy/real-services/Issue19Probe.java"]
-    if args.cutover_nginx:
-        sources.extend([ROOT / "deploy/mime.types", ROOT / "deploy/snippets/eye-proxy-headers.conf",
-            ROOT / "frontend/src/composables/useAgentStream.ts", *(ROOT / "frontend/dist").rglob("*.*")])
-    manifest = {file.relative_to(ROOT).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest() for file in sorted(sources)}
-    (args.output_dir / "source-sha256.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    real_embedding = args.embedding_mode == "real" and bool(env.get("DASHSCOPE_API_KEY"))
-    report["embeddingMode"] = "real" if real_embedding else "controlled"
-    if not real_embedding:
-        report["gates"]["realEmbedding"] = gate("BLOCKED", "DASHSCOPE_API_KEY missing or controlled mode requested; controlled vectors only")
-    else:
-        from web.vectorstore import DashScopeEmbedder, VectorStoreUnavailable
+    report.update(schema=schema, runtime=str(runtime))
+    admin = create_engine(target)
+    with admin.begin() as db:
+        report["mysqlVersion"] = db.exec_driver_sql("SELECT VERSION()").scalar_one()
+        db.exec_driver_sql(f"CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    admin.dispose()
+    env["MIGRATION_MYSQL_URL"] = target.set(database=schema).render_as_string(hide_password=False)
 
-        async def probe_embedding():
-            async with httpx.AsyncClient(timeout=30) as client:
-                return await DashScopeEmbedder(env["DASHSCOPE_API_KEY"],
-                    env.get("REAL_SERVICES_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
-                    "text-embedding-v3", client=client).embed(["glaucoma overview"])
-
-        try:
-            vectors = asyncio.run(probe_embedding())
-            assert len(vectors[0]) > 0
-        except (httpx.HTTPError, VectorStoreUnavailable) as exc:
-            real_embedding = False
-            report["embeddingMode"] = "controlled"
-            detail = "Real provider unavailable; controlled vectors only"
-            if "HTTP 401" in str(exc):
-                detail = "Real DashScope preflight returned HTTP 401; controlled vectors only"
-            report["gates"]["realEmbedding"] = gate("BLOCKED", detail)
-
-    def run(name, command, cwd=ROOT, command_env=None, timeout=240):
-        report["stage"] = name
-        result = subprocess.run([str(c) for c in command], cwd=cwd, env=command_env or env,
-            capture_output=True, timeout=timeout)
+    def run(name, command, child_env=env, timeout=360):
+        result = subprocess.run([str(c) for c in command], cwd=ROOT / "algorithm", env=child_env,
+                                capture_output=True, timeout=timeout)
         (runtime / (name + ".log")).write_bytes(result.stdout + result.stderr)
-        assert result.returncode == 0, f"{name} failed; inspect private log"
-        report["checks"].append(name)
-        print(name + ": PASS", flush=True)
+        assert result.returncode == 0, name + " failed; inspect private logs"
 
-    admin = create_engine(target, isolation_level="AUTOCOMMIT", connect_args={"connect_timeout": 5})
-    try:
-        with admin.connect() as db:
-            report["mysqlVersion"] = db.exec_driver_sql("SELECT VERSION()").scalar_one()
-            db.exec_driver_sql(f"CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-            db.exec_driver_sql(f"USE `{schema}`")
-            ddl = (ROOT / "src/main/resources/db/schema.sql").read_text(encoding="utf-8")
-            for name in ("t_user", "t_news", "t_knowledge_document"):
-                match = re.search(rf"CREATE TABLE IF NOT EXISTS {name}\s*\(.*?;", ddl, re.S)
-                assert match is not None
-                db.exec_driver_sql(match.group())
-    except OperationalError as exc:
-        raise Blocked("Local MySQL is unavailable or admin credentials were rejected") from exc
-    finally:
-        admin.dispose()
-    db_url = target.set(database=schema)
-    env.update(FLYWAY_URL=f"jdbc:mysql://{target.host}:{target.port or 3306}/{schema}?serverTimezone=Asia/Shanghai",
-               FLYWAY_USER=target.username or "", FLYWAY_PASSWORD=target.password or "")
-    for action in ("migrate", "validate"):
-        run("flyway-" + action, [maven, "-B", "-f", "deploy/workflow-migrations/pom.xml", "flyway:" + action])
-    run("java-compile", [maven, "-B", "-DskipTests", "compile", "dependency:build-classpath",
-        "-Dmdep.outputFile=" + str(runtime / "classpath.txt")])
-    classpath = str(ROOT / "target/classes") + os.pathsep + (runtime / "classpath.txt").read_text().strip()
-    run("java-probe-compile", [javac, "-encoding", "UTF-8", "-cp", classpath, "-d", runtime,
-        ROOT / "deploy/real-services/Issue19Probe.java"])
-    engine = create_engine(db_url, connect_args={"init_command": "SET time_zone = '+08:00'"})
+    run("python-upgrade", [sys.executable, "-m", "web.migrations", "upgrade"])
+    run("python-inspect", [sys.executable, "-m", "web.migrations", "inspect"])
+    engine = create_engine(target.set(database=schema))
     password = secrets.token_urlsafe(24)
-    import bcrypt
-
+    from web.security import encode
     with engine.begin() as db:
         for i, (account, role) in enumerate((("alice", "user"), ("bob", "user"), ("doctor", "doctor"), ("admin", "admin"))):
             db.execute(text("INSERT INTO t_user(id,userAccount,userPassword,userName,userRole) VALUES (:id,:account,:password,:name,:role)"),
-                {"id": 8 if account == "bob" else 9007199254740993 + i,
-                 "password": bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
-                 "name": "Issue19 " + account, "role": role, "account": "issue19_" + account})
+                {"id": 8 if account == "bob" else 9007199254740993 + i, "account": "issue19_" + account,
+                 "password": encode(password), "name": "Acceptance " + account, "role": role})
         db.execute(text("INSERT INTO t_news(id,title,userId,content,summary,coverImg,status,publishTime) VALUES "
             "(9007199254741000,'Issue19',9007199254740996,:content,:summary,'https://issue19.invalid/cover.png',1,'2026-01-02 10:00:00')"),
             {"content": "Synthetic news for compatibility regression only.", "summary": "Synthetic news for compatibility"})
-    redis_port, chroma_port, java_port, api_port, provider_port = [free_port() for _ in range(5)]
-    env.update(MYSQL_HOST=target.host or "127.0.0.1", MYSQL_PORT=str(target.port or 3306), MYSQL_DATABASE=schema,
+    real_embedding = False
+    if args.embedding_mode == "real":
+        key = os.getenv("DASHSCOPE_API_KEY", "").strip()
+        if key:
+            try:
+                from web.vectorstore import DashScopeEmbedder
+                asyncio.run(DashScopeEmbedder(key, os.getenv("REAL_SERVICES_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+                                              "text-embedding-v3").embed(["acceptance preflight"]))
+                real_embedding = True
+            except Exception:
+                report["gates"]["realEmbedding"] = gate("BLOCKED", "Provider preflight failed; controlled vectors used")
+        else:
+            report["gates"]["realEmbedding"] = gate("BLOCKED", "Missing credentials; controlled vectors used")
+    redis_port, chroma_port, api_port, provider_port = [free_port() for _ in range(4)]
+    env.update(MYSQL_HOST=target.host, MYSQL_PORT=str(target.port or 3306), MYSQL_DATABASE=schema,
         MYSQL_USER=target.username or "", MYSQL_PASSWORD=target.password or "", REDIS_HOST="127.0.0.1", REDIS_PORT=str(redis_port),
-        REDIS_DB="8", REDIS_PASSWORD="", CHROMA_HOST="http://127.0.0.1", CHROMA_PORT=str(chroma_port),
+        REDIS_DB="8", REDIS_PASSWORD="", CHROMA_HOST="127.0.0.1", CHROMA_PORT=str(chroma_port),
         CHROMA_COLLECTION="diagnosis-knowledge", CHROMA_TENANT="default_tenant", CHROMA_DATABASE="default_database",
-        DASHSCOPE_BASE_URL=f"http://127.0.0.1:{provider_port}/v1",
-        REAL_SERVICES_TRACE=str(runtime / "calls.jsonl"), REAL_SERVICES_OBJECTS=str(runtime / "objects"),
-        REAL_SERVICES_EMBEDDING="real" if real_embedding else "controlled", MODEL_WEIGHTS_PATH="", MODEL_WEIGHTS_SHA256="",
-        EMBEDDING_MODEL="text-embedding-v3", COS_HOST="https://issue19.invalid", MCP_ALLOWED_ORIGINS="",
-        CORS_ALLOWED_ORIGINS="", CHAT_MODEL="issue19-controlled", QUALITY_GATE_MODE="observe")
-    # Retain the genuine key only for embedding; no real chat/classification is called.
+        DASHSCOPE_BASE_URL=f"http://127.0.0.1:{provider_port}/v1", REAL_SERVICES_TRACE=str(runtime / "calls.jsonl"),
+        REAL_SERVICES_OBJECTS=str(runtime / "objects"), REAL_SERVICES_EMBEDDING="real" if real_embedding else "controlled",
+        MODEL_WEIGHTS_PATH="", MODEL_WEIGHTS_SHA256="", EMBEDDING_MODEL="text-embedding-v3", COS_HOST="https://issue19.invalid",
+        MCP_ALLOWED_ORIGINS="", CORS_ALLOWED_ORIGINS="", CHAT_MODEL="qwen3-vl-plus", QUALITY_GATE_MODE="observe",
+        SESSION_COOKIE_NAME="EYE_SESSION", SESSION_COOKIE_SECURE="false", SESSION_REDIS_PREFIX="eye:py:session:")
     if not real_embedding:
-        env["DASHSCOPE_API_KEY"] = "issue19-controlled"
-    spring = {"server.address": "127.0.0.1", "server.port": java_port, "spring.profiles.active": "issue19",
-        "spring.datasource.url": env["FLYWAY_URL"], "spring.datasource.username": target.username,
-        "spring.datasource.password": target.password, "spring.flyway.schemas": schema,
-        "spring.session.store-type": "redis", "spring.data.redis.host": "127.0.0.1",
-        "spring.data.redis.port": redis_port, "spring.data.redis.database": 8,
-        "spring.ai.openai.api-key": "issue19-unused", "spring.ai.dashscope.api-key": env["DASHSCOPE_API_KEY"],
-        "spring.ai.dashscope.embedding.options.model": "text-embedding-v3",
-        "spring.ai.vectorstore.chroma.client.host": "http://127.0.0.1", "spring.ai.vectorstore.chroma.client.port": chroma_port,
-        "spring.ai.vectorstore.chroma.collection-name": "diagnosis-knowledge",
-        "spring.ai.vectorstore.chroma.tenant-name": "default_tenant", "spring.ai.vectorstore.chroma.database-name": "default_database",
-        "cos.client.host": "https://issue19.invalid", "cos.client.secretId": "issue19-unused",
-        "cos.client.secretKey": "issue19-unused", "cos.client.region": "ap-guangzhou", "cos.client.bucket": "issue19-unused",
-        "spring.jackson.date-format": "yyyy-MM-dd HH:mm:ss", "spring.jackson.serialization.write-dates-as-timestamps": False,
-        "eye-diagnosis.rag.rerank.enabled": False, "eye-diagnosis.rag.hybrid-search.enabled": False,
-        "eye-diagnosis.rag.search.similarity-threshold": 0.0,
-        "issue19.controlled-embedding": not real_embedding,
-        "logging.level.org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor": "OFF"}
-    java_env = {**env, "SPRING_APPLICATION_JSON": json.dumps(spring)}
-    children = []
+        env["DASHSCOPE_API_KEY"] = "controlled-acceptance"
+    with ExitStack() as stack:
+        stack.callback(engine.dispose)
 
-    def start(name, command, child_env=env, url=None):
-        log = (runtime / (name + ".log")).open("wb")
-        child = subprocess.Popen([str(c) for c in command], cwd=ROOT / "algorithm", env=child_env,
-            stdout=log, stderr=log, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
-        children.append((child, log))
-        report.setdefault("processes", []).append({"role": name, "pid": child.pid})
-        if url:
-            wait_http(child, url)
-        return child
+        def start(name, command, url=None):
+            log = stack.enter_context((runtime / (name + "-" + uuid4().hex[:6] + ".log")).open("wb"))
+            child = subprocess.Popen([str(c) for c in command], cwd=ROOT / "algorithm", env=env,
+                                     stdout=log, stderr=log, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            stack.callback(stop_child, child)
+            report.setdefault("processes", []).append({"role": name, "pid": child.pid})
+            if url:
+                wait_http(child, url)
+            return child
 
-    def worker(mode="pass"):
-        run("worker-" + mode + "-" + uuid4().hex[:6], [sys.executable, "-m", "web.tests.real_services_process", "worker", "--mode", mode], ROOT / "algorithm")
-
-    proxy = None
-    try:
         start("redis", [redis, "--bind", "127.0.0.1", "--port", redis_port, "--save", "", "--appendonly", "no", "--dir", runtime])
-        start("chroma", [chroma, "run", "--host", "127.0.0.1", "--port", chroma_port, "--path", runtime / "chroma"],
-            url=f"http://127.0.0.1:{chroma_port}/api/v2/heartbeat")
+        start("chroma", [sys.executable, "-c", "from chromadb.cli.cli import app; app()", "run", "--host", "127.0.0.1", "--port", chroma_port,
+                         "--path", runtime / "chroma"], f"http://127.0.0.1:{chroma_port}/api/v2/heartbeat")
         import chromadb
         from redis import Redis
-
         store = chromadb.HttpClient(host="127.0.0.1", port=chroma_port)
         collection = store.get_or_create_collection("diagnosis-knowledge")
         redis_client = Redis(host="127.0.0.1", port=redis_port, db=8, protocol=2)
+        stack.callback(redis_client.close)
         assert redis_client.ping()
         report["redisVersion"] = redis_client.info()["redis_version"]
         report["chromaVersion"] = store.get_version()
-        report["chromaPackageVersion"] = chromadb.__version__
         start("provider", [sys.executable, "-m", "web.tests.real_services_process", "provider", "--port", provider_port],
-            url=f"http://127.0.0.1:{provider_port}/health")
-        java_child = start("java", [java, "-Xmx512m", "-cp", str(runtime) + os.pathsep + classpath, "Issue19Probe"], java_env,
-            f"http://127.0.0.1:{java_port}/api/user/get/login")
-        start("api", [sys.executable, "-m", "web.tests.real_services_process", "api", "--port", api_port],
-            url=f"http://127.0.0.1:{api_port}/health")
-        report["gates"]["infrastructure"] = gate("PASS", "Fresh Flyway MySQL schema; real Redis, Chroma and Java startup after V22")
-        front_port = api_port
-        if args.cutover_nginx:
-            from web.cutover_rehearsal import Proxy
+              f"http://127.0.0.1:{provider_port}/health")
+        api_command = [sys.executable, "-m", "web.tests.real_services_process", "api", "--port", api_port]
+        api_child = start("api", api_command, f"http://127.0.0.1:{api_port}/ready")
 
-            proxy = Proxy(args.cutover_nginx, runtime, java_port, api_port)
-            proxy.switch("java", "java", "pause")
-            front_port = proxy.port
-            report["gates"]["cutover"] = gate("BLOCKED", "Nginx rehearsal not yet completed")
-        with ExitStack() as stack:
-            clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{front_port}", timeout=60))
-                       for account in ("alice", "bob", "doctor", "admin")}
-            for account, client in clients.items():
-                login_url = f"http://127.0.0.1:{api_port}/api/user/login"
-                envelope(client.post(login_url, json={"userAccount": "issue19_" + account, "userPassword": password}))
-                assert "EYE_SESSION" in client.cookies
-            assert redis_client.keys("eye:py:session:*")
-            assert not redis_client.keys("spring:session:sessions:*")
-            report["checks"].append("python-session-namespace-without-spring-session-writes")
-            # Java remains a separate historical compatibility oracle. Its
-            # cookies never supply identity to the Python application.
-            legacy = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{java_port}", timeout=60))
-                      for account in clients}
-            for account, client in legacy.items():
-                envelope(client.post("/api/user/login", json={"userAccount": "issue19_" + account, "userPassword": password}))
-            if proxy:
-                proxy.switch("python", "java", "pause")
-                envelope(clients["alice"].get("/api/user/get/login"))
-                envelope(clients["alice"].post("/api/news/list/page/vo", json={}))
-                proxy.switch("python", "python", "active")
-            verify_http(clients, java_port, engine, collection, worker, report, proxy=proxy, legacy_clients=legacy)
-            if proxy:
-                proxy.verify_agent_rollback(clients["alice"], report)
-                from web.cutover_browser import verify_browser
+        def restart_api():
+            nonlocal api_child
+            stop_child(api_child)
+            api_child = start("api-restart", api_command, f"http://127.0.0.1:{api_port}/ready")
 
-                verify_browser(proxy, password, runtime, worker, report)
-                report["gates"]["cutover"] = gate("PASS", "Isolated real Nginx/MySQL/Java/API/Worker; controlled models; pending save/reviews preserved; browser exercised")
-            # Revoke the Python Redis session and replay the old cookie.
-            alice = clients["alice"]
-            old_cookies = dict(alice.cookies)
-            envelope(alice.post("/api/user/logout"))
-            alice.cookies.update(old_cookies)
-            envelope(alice.get("/api/user/get/login"), code=40100)
-            envelope(alice.post("/api/diagnosis/list/page/my", json={}), code=40100)
-            assert alice.get("/api/diagnosis/workflows/unknown/events").status_code == 401
-            report["checks"].append("python-logout-old-cookie-revoked-in-python-and-sse")
-            for account, client in clients.items():
-                if account == "alice":
-                    continue  # Already revoked; old-cookie replay is intentional.
-                envelope(client.post("/api/user/logout"))
-            for client in legacy.values():
-                envelope(client.post("/api/user/logout"))
-        assert java_child.poll() is None
-        calls = [json.loads(line) for line in (runtime / "calls.jsonl").read_text().splitlines()]
-        report["adapterCalls"] = {kind: sum(c["kind"] == kind for c in calls) for kind in sorted({c["kind"] for c in calls})}
-        assert report["adapterCalls"]["inference"] == (5 if proxy else 4)
-        assert report["adapterCalls"]["explanation"] == 3
-        assert report["adapterCalls"]["chat"] == (4 if proxy else 3)
+        def worker(mode="pass"):
+            run("worker-" + mode + "-" + uuid4().hex[:6],
+                [sys.executable, "-m", "web.tests.real_services_process", "worker", "--mode", mode])
+
+        clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{api_port}", timeout=150, trust_env=False))
+                   for account in ("alice", "bob", "doctor", "admin")}
+        for account, client in clients.items():
+            envelope(client.post("/api/user/login", json={"userAccount": "issue19_" + account, "userPassword": password}))
+            assert "EYE_SESSION" in client.cookies
+        assert redis_client.keys("eye:py:session:*") and not redis_client.keys("spring:session:sessions:*")
+        report["gates"]["infrastructure"] = gate("PASS", "Python migration, real MySQL/Redis/Chroma, independent API/Worker")
+        verify_http(clients, engine, collection, worker, report, restart_api)
+        alice = clients["alice"]
+        old = dict(alice.cookies)
+        envelope(alice.post("/api/user/logout"))
+        alice.cookies.update(old)
+        envelope(alice.get("/api/user/get/login"), code=40100)
+        assert alice.get("/api/diagnosis/workflows/unknown/events").status_code == 401
+        report["checks"].append("real-redis-logout-cookie-replay-and-sse-revocation")
+        report["gates"]["orchestration"] = gate("PASS", "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM")
         if real_embedding:
-            assert report["adapterCalls"].get("realEmbedding", 0) > 0
-            report["gates"]["realEmbedding"] = gate("PASS", "Real DashScope upload/query plus unchanged Java native embedder and Chroma reader")
-        report["gates"]["orchestration"] = gate("PASS", "Production API/MySQL/Worker/graph with deterministic classification and LLM")
-    finally:
-        if proxy:
-            proxy.close()
-        for child, log in reversed(children):
-            stop_child(child)
-            log.close()
-        engine.dispose()
-    # Reuse the opt-in subprocess suites for transaction/lease/fencing/restart coverage.
-    # Each creates its own fresh, guarded schema and labels its external adapters.
+            report["gates"]["realEmbedding"] = gate("PASS", "Real provider upload/query and Python large-ID owner filtering")
     for suite in ("worker-concurrency", "human-wait-restart"):
-        run(suite, [sys.executable, "-m", "web.verify_worker_concurrency", "--suite", suite,
-            "--output-dir", runtime / suite], ROOT / "algorithm",
-            {**env, "WORKER_TEST_MYSQL_ADMIN_URL": target.render_as_string(hide_password=False)}, timeout=360)
-    report["gates"]["mysqlSemantics"] = gate("PASS", "Real MySQL subprocess competition, leases, fencing, version conflicts and durable restart suites")
+        run(suite, [sys.executable, "-m", "web.verify_worker_concurrency", "--suite", suite, "--output-dir", runtime / suite],
+            {**env, "WORKER_TEST_MYSQL_ADMIN_URL": target.render_as_string(hide_password=False)}, timeout=600)
+    report["gates"]["mysqlSemantics"] = gate("PASS", "Real MySQL leases/fencing/transactions/concurrency and cross-process human wait recovery")
 
 
 def free_port():
@@ -373,14 +238,13 @@ def envelope(response, *, code=0, status=200):
     return body["data"]
 
 
-def verify_http(clients, java_port, engine, collection, worker, report, *, proxy=None, legacy_clients):
+def verify_http(clients, engine, collection, worker, report, restart_api):
     import io
     from docx import Document
     from PIL import Image
     from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
 
     alice, bob, doctor, admin = [clients[name] for name in ("alice", "bob", "doctor", "admin")]
-    java_url = f"http://127.0.0.1:{java_port}/api"
     check = report["checks"].append
     with httpx.Client(base_url=str(alice.base_url)) as anonymous:
         envelope(anonymous.post("/api/diagnosis/list/page/my", json={}), code=40100)
@@ -394,7 +258,10 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     check("real-python-auth-and-user-role-long-pagination-contracts")
     for endpoint in ("list/page/vo", "list/page/vo/cache", "list/page/my"):
         assert envelope(alice.post("/api/diagnosis/" + endpoint, json={"userId": "9007199254740994"}))["total"] == "0"
-    envelope(alice.post("/api/diagnosis/diagnosis", files={"file": ("x.png", b"invalid", "image/png")}), code=50000)
+    # The deliberate unhandled model failure makes Uvicorn close the connection
+    # after returning the frozen error envelope. Do not race reuse of that socket.
+    envelope(alice.post("/api/diagnosis/diagnosis", headers={"Connection": "close"},
+                        files={"file": ("x.png", b"invalid", "image/png")}), code=50000)
     assert envelope(alice.post("/api/diagnosis/list/page/my", json={}))["total"] == "0"
     check("legacy-synchronous-diagnosis-fails-closed-without-model")
     news_id = "9007199254741000"
@@ -402,18 +269,13 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         page = envelope(alice.post("/api/news/" + endpoint, json={"pageSize": 3}))
         assert page["records"][0]["id"] == news_id and page["total"] == "1"
     py_news = envelope(alice.get("/api/news/get/" + news_id))
-    java_news = envelope(legacy_clients["alice"].get(java_url + "/news/get/" + news_id))
-    assert py_news == java_news
+    assert py_news["id"] == news_id and py_news["publishTime"] == "2026-01-02 02:00:00"
     body = {"id": news_id, "title": "Issue19", "content": "Synthetic news for compatibility regression only.", "status": 1}
-    py_noop = admin.post("/api/news/edit", json=body)
-    java_noop = legacy_clients["admin"].post(java_url + "/news/edit", json=body)
-    assert py_noop.status_code == java_noop.status_code == 200
-    assert py_noop.json()["code"] == java_noop.json()["code"]
+    envelope(admin.post("/api/news/edit", json=body))
     with engine.begin() as db:
         affected = db.execute(text("UPDATE t_news SET title=title WHERE id=:id"), {"id": int(news_id)}).rowcount
-    report["affectedRows"] = {"sqlalchemyNoopRowcount": affected,
-        "pythonNoopCode": py_noop.json()["code"], "javaNoopCode": java_noop.json()["code"]}
-    check("real-mysql-noop-affected-rows-and-java-news-date-contract")
+    report["affectedRows"] = {"sqlalchemyNoopRowcount": affected}
+    check("real-mysql-noop-and-frozen-news-date-contract")
 
     def table_doc(text_value):
         document = Document()
@@ -450,22 +312,9 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     vectors = collection.get(ids=[f'doc_{public["id"]}_chunk_0', f'doc_{legacy["id"]}_chunk_0'], include=["documents", "metadatas"])
     assert len(vectors["ids"]) == 2 and reference in vectors["documents"]
     assert all(type(m["ownerUserId"]) is int for m in vectors["metadatas"])
-    java_result = legacy_clients["alice"].get(java_url + "/issue19/search", params={"query": reference})
-    assert java_result.status_code == 200
-    if reference in java_result.text:
-        assert "Bob private sentinel" not in java_result.text
-        report["gates"]["legacyJavaReader"] = gate("PASS", "Unchanged reader retrieved Python vectors for a Long owner ID")
-    else:
-        # Preserve the legacy bug boundary: Spring AI parses numeric filter literals
-        # as int32. Do not patch original Java sources or silently reduce all IDs.
-        log = Path(report["runtime"]) / "java.log"
-        assert 'NumberFormatException: For input string: "9007199254740993"' in log.read_text(encoding="utf-8", errors="replace")
-        report["gates"]["legacyJavaReader"] = gate("BLOCKED",
-            "Original Spring AI filter parser rejects Long owner 9007199254740993 with NumberFormatException; Java sources preserved")
-    bob_result = legacy_clients["bob"].get(java_url + "/issue19/search", params={"query": "Bob private sentinel glaucoma reference."})
-    assert bob_result.status_code == 200 and "Bob private sentinel" in bob_result.text
-    assert reference not in bob_result.text
-    check("doc-and-table-docx-http-indexing-real-chroma-private-scope-and-legacy-java-reader")
+    bob_citations = envelope(bob.post("/api/knowledge/search", json={"query": reference}))
+    assert public["id"] not in {c["documentId"] for c in bob_citations}
+    check("doc-docx-real-chroma-large-id-private-scope")
     governance = {"visibility": "CURATED_PUBLIC", "reviewStatus": "APPROVED", "diseaseCodes": ["glaucoma"],
         "topicCodes": ["DISEASE_OVERVIEW"], "expectedVersion": 0, "confirmed": True}
     govern_url = "/api/knowledge/admin/documents/" + public["id"]
@@ -513,8 +362,8 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         "expectedExplanationRevision": view["explanation"]["revision"]}
     confirmation = envelope(alice.post(save_url, json=save_request))
     assert confirmation["status"] == "PENDING"
-    if proxy:
-        proxy.preserve_wait(alice, save_url, report)
+    restart_api()
+    assert envelope(alice.get(save_url)) == confirmation
     assert envelope(alice.post("/api/diagnosis/list/page/my", json={}))["total"] == "0"
     approve_url = f'/api/diagnosis/workflows/{task}/save-confirmations/{confirmation["confirmationId"]}/approve'
     decision = {"idempotencyKey": confirmation["idempotencyKey"], "expectedContentDigest": confirmation["contentDigest"],
@@ -526,12 +375,10 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     assert approved["status"] == "APPROVED"
     assert envelope(alice.post(approve_url, json=decision)) == approved
     history = envelope(alice.post("/api/diagnosis/list/page/my", json={"pageSize": 3}))
-    java_history = envelope(legacy_clients["alice"].post(java_url + "/diagnosis/list/page/my", json={"pageSize": 3}))
-    assert history["total"] == java_history["total"] == "1"
-    for key in ("id", "createTime"):
-        assert history["records"][0][key] == java_history["records"][0][key]
+    assert history["total"] == "1"
+    assert isinstance(history["records"][0]["id"], str)
     assert envelope(bob.post("/api/diagnosis/list/page/my", json={"userId": "9007199254740993"}))["total"] == "0"
-    check("user-consent-only-save-conflict-and-replay-exactly-once-java-python-history-parity")
+    check("user-consent-save-conflict-and-replay-exactly-once")
 
     def review(mode):
         reviewed = start(mode)
@@ -542,8 +389,8 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         row = next(r for r in tasks if r["workflowId"] == reviewed)
         url = "/api/reviews/tasks/" + row["reviewTaskId"]
         detail = envelope(doctor.get(url))
-        if proxy:
-            proxy.preserve_wait(doctor, url, report)
+        restart_api()
+        assert envelope(doctor.get(url)) == detail
 
         def versions(detail):
             result = {"expectedTaskVersion": detail["taskVersion"], "expectedWorkflowVersion": detail["workflowVersion"]}
@@ -566,7 +413,7 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
         return reviewed
 
     quality, final = review("quality"), review("final")
-    check("real-java-doctor-quality-and-final-review-versions-without-implicit-save")
+    check("real-python-doctor-quality-and-final-review-versions-without-implicit-save")
     invalid = start("invalid", b"invalid-image")
     worker()
     assert (state(invalid)["status"], state(invalid)["stopReasonCode"]) == ("REJECTED", "INVALID_IMAGE")
@@ -594,9 +441,8 @@ def verify_http(clients, java_port, engine, collection, worker, report, *, proxy
     sessions = envelope(alice.get("/api/agent/sessions"))
     assert len(sessions) == 3
     check("legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql")
-    if proxy:
-        proxy.verify_supplement(alice, task, report)
+
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

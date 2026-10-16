@@ -1,0 +1,57 @@
+{
+  "eye-python:ticket06": {
+    "Id": "sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6",
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Created": "2026-10-16T09:42:00.990054186Z",
+    "healthcheck": {
+      "Test": [
+        "CMD",
+        "eye-health"
+      ],
+      "Interval": 15000000000,
+      "Timeout": 10000000000,
+      "Retries": 4
+    }
+  },
+  "eye-python-cpu:ticket06": {
+    "Id": "sha256:057137374abaebeffe68958b2f5ad3579061f558acfc74b101e225605878df2f",
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Created": "2026-10-16T09:59:49.190147263Z",
+    "healthcheck": {
+      "Test": [
+        "CMD",
+        "eye-health"
+      ],
+      "Interval": 15000000000,
+      "Timeout": 10000000000,
+      "Retries": 4
+    }
+  },
+  "eye-verify:ticket06": {
+    "Id": "sha256:6670ee77190cadf41fc2c753e68b5e0068fc86446d42ca9b0a2622d530d42051",
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Created": "2026-10-16T13:46:00.448458046Z",
+    "healthcheck": {
+      "Test": [
+        "NONE"
+      ]
+    }
+  },
+  "eye-frontend:ticket06": {
+    "Id": "sha256:b9de1c9d9220a797580d20f8fcf9614a49e546a4308f1bb76cfa9da666fa874f",
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Created": "2026-10-16T13:35:13.564271755Z",
+    "healthcheck": {
+      "Test": [
+        "CMD-SHELL",
+        "wget -q -O /dev/null http://127.0.0.1/health || exit 1"
+      ],
+      "Interval": 15000000000,
+      "Timeout": 5000000000
+    }
+  }
+}

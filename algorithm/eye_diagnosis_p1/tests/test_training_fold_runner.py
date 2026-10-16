@@ -16,10 +16,10 @@ from p1.benchmark.model import BACKBONE_SPECS
 from p1.training.fold_runner import (
     FoldReceipt,
     TrainingError,
-    build_run_fold_with_mock_mem,
     run_fold,
 )
 from p1.training.oof import OOF_COLUMNS
+from p1.training.preflight import InsufficientVram
 from p1.training.protocol import default_protocol
 
 _IMAGENET = "EfficientNet_B4_Weights.IMAGENET1K_V1"
@@ -189,9 +189,8 @@ def test_run_fold_fails_closed_on_low_vram(tmp_path: Path, fake_inputs: dict) ->
     out_dir = tmp_path / "artifacts" / "E3" / "fold_0"
     out_dir.mkdir(parents=True)
     fake_low = lambda device=None: (1024 * 1024 * 1024, 8188 * 1024 * 1024)  # 1 GB free
-    runner = build_run_fold_with_mock_mem(mem_get_info=fake_low)
-    with pytest.raises(Exception) as ei:
-        runner(
+    with pytest.raises(InsufficientVram, match="1024 MB available"):
+        run_fold(
             experiment="E3",
             fold_id=0,
             train_patient_ids=train,
@@ -201,19 +200,11 @@ def test_run_fold_fails_closed_on_low_vram(tmp_path: Path, fake_inputs: dict) ->
             root_dir=fake_inputs["root_dir"],
             protocol=default_protocol(),
             out_dir=out_dir,
+            _mem_get_info=fake_low,
             _download=False,
         )
-    # Either InsufficientVram or TrainingError wrapping it is acceptable.
-    # On a Linux runner with no NVIDIA driver, ``torch.cuda.is_available``
-    # itself raises ``RuntimeError("Found no NVIDIA driver...")`` before the
-    # VRAM probe runs; that path is also acceptable since the fold fails
-    # closed (no training step, no receipt).
-    msg = str(ei.value).lower()
-    assert (
-        "vram" in msg
-        or "insufficient" in msg
-        or "nvidia driver" in msg
-    )
+    assert not (out_dir / "fold_0_receipt.json").exists()
+    assert not (out_dir / "oof.csv").exists()
 
 
 def test_run_fold_optimizer_never_steps_on_val_patients(

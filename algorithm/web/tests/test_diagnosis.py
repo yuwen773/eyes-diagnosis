@@ -2,7 +2,7 @@
 
 Three groups:
 
-* **Structural** -- endpoint parity against ``DiagnosisController.java``,
+* **Structural** -- endpoint parity against the frozen DiagnosisController contract,
   auth dependencies, and the wire shape of both VOs. These need no database and
   are what the ``python-web`` CI job actually runs.
 * **Desensitization / projection** -- ``objToVo`` + ``clearAiConclusion`` and
@@ -17,8 +17,9 @@ mode they guard -- a rejected image rendered with a confident label -- is
 silent and clinically serious.
 """
 
+from web.tests.frozen_contract import CONTRACT, domain_paths
+
 import json
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -73,9 +74,6 @@ from web.schemas.diagnosis import (  # noqa: E402
     requires_review,
 )
 
-DIAGNOSIS_CONTROLLER = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller/DiagnosisController.java"
-)
 
 
 # ---------------------------------------------------------------------------
@@ -176,9 +174,8 @@ def _inference(**overrides) -> InferenceResult:
 # ---------------------------------------------------------------------------
 # Structural: endpoint parity
 # ---------------------------------------------------------------------------
-def _java_diagnosis_paths() -> set[str]:
-    source = DIAGNOSIS_CONTROLLER.read_text(encoding="utf-8")
-    return {"/diagnosis" + p for p in re.findall(r'@(?:Post|Get)Mapping\("([^"]+)"\)', source)}
+def _java_diagnosis_paths():
+    return domain_paths("diagnosis")
 
 
 def _python_diagnosis_paths() -> set[str]:
@@ -801,21 +798,7 @@ def test_do_diagnosis_delegates_to_the_engine():
 # Views are constructed, never inherited
 # ---------------------------------------------------------------------------
 def test_vo_field_sets_match_the_java_classes():
-    """Both VOs are ``@Data``; a dropped field is a dropped JSON key the
-    frontend reads."""
-    manage = {
-        "id", "url", "username", "result", "confidence", "severity",
-        "reexamineStatus", "createTime", "status", "aiRejected",
-        "abstainReason", "requiresReview",
-    }
-    assert set(DiagnosisManageVO.model_fields) == manage
-
-    java_result_vo = (
-        REPO_ROOT
-        / "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisResultVO.java"
-    ).read_text(encoding="utf-8")
-    declared = set(re.findall(r"private\s+[\w<>,. ]+\s+(\w+);", java_result_vo))
-    declared -= {"serialVersionUID"}
-    assert set(DiagnosisResultVO.model_fields) == declared, declared ^ set(
-        DiagnosisResultVO.model_fields
-    )
+    assert set(DiagnosisManageVO.model_fields) == {
+        "id", "url", "username", "result", "confidence", "severity", "reexamineStatus",
+        "createTime", "status", "aiRejected", "abstainReason", "requiresReview"}
+    assert set(DiagnosisResultVO.model_fields) == set(CONTRACT["diagnosisResultFields"])

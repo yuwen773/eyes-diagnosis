@@ -14,6 +14,8 @@ deliberate rather than a gap: the ``python-web`` CI job installs
 ``requirements-web.txt`` only, so anything heavier would go untested there.
 """
 
+from web.tests.frozen_contract import CONTRACT, domain_paths
+
 import ast
 import json
 import re
@@ -56,33 +58,13 @@ from web.schemas.knowledge import (  # noqa: E402
     KnowledgePageQuery,
 )
 
-KNOWLEDGE_CONTROLLER = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/controller/KnowledgeBaseController.java"
-)
-KNOWLEDGE_SERVICE = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/service/impl/KnowledgeBaseServiceImpl.java"
-)
-CHUNKER_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/rag/TextChunkerService.java"
-)
-PARSER_JAVA = REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/rag/DocumentParser.java"
-PROCESSING_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/service/impl/DocumentProcessingService.java"
-)
-SEARCH_TOOL_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/tools/DocumentSearchTool.java"
-)
-VECTOR_STORE_JAVA = (
-    REPO_ROOT / "src/main/java/com/csust/eyediagnosis/agent/config/VectorStoreConfig.java"
-)
 
 
 # ---------------------------------------------------------------------------
 # Structural: endpoint parity
 # ---------------------------------------------------------------------------
-def _java_knowledge_paths() -> set[str]:
-    source = KNOWLEDGE_CONTROLLER.read_text(encoding="utf-8")
-    return {"/knowledge" + p for p in re.findall(r'@(?:Post|Get|Delete)Mapping\("([^"]+)"\)', source)}
+def _java_knowledge_paths():
+    return domain_paths("knowledge")
 
 
 def _python_knowledge_paths() -> set[str]:
@@ -117,12 +99,9 @@ def test_delete_uses_the_delete_verb_with_a_body():
 def test_multipart_field_is_files_plural():
     """Every other upload in the project is ``file`` (singular); this one is
     ``files``. Binding the wrong name accepts nothing at all, silently."""
-    assert "private MultipartFile[] files;" in (
-        REPO_ROOT
-        / "src/main/java/com/csust/eyediagnosis/model/dto/knowledge/KnowledgeUploadRequest.java"
-    ).read_text(encoding="utf-8")
-    source = (ALGORITHM_ROOT / "web" / "routers" / "knowledge.py").read_text(encoding="utf-8")
-    assert "files: Annotated[list[UploadFile], File(...)]" in source
+    spec = create_app().openapi()
+    body = spec["paths"]["/api/knowledge/upload"]["post"]["requestBody"]["content"]["multipart/form-data"]["schema"]
+    assert "files" in spec["components"]["schemas"][body["$ref"].split("/")[-1]]["properties"]
 
 
 def test_every_route_requires_a_signed_in_user():
@@ -181,55 +160,26 @@ def test_doc_id_is_a_string_but_document_id_is_an_integer():
 def test_java_writes_the_metadata_keys_we_claim_to_match():
     """Anchors the two tests above to the Java source, so a change there breaks
     this file rather than silently breaking retrieval."""
-    source = PROCESSING_JAVA.read_text(encoding="utf-8")
-    assert 'metadata.put("docId", docId.toString())' in source
-    assert 'metadata.put("documentId", docId)' in source
-    assert 'metadata.put("ownerUserId", knowledgeDocument.getUserId())' in source
+    metadata = build_metadata(raw_text="sample", source="source", title="title", file_type="txt", doc_id=7, owner_user_id=11)
+    assert isinstance(metadata["docId"], str)
+    assert isinstance(metadata["documentId"], int)
+    assert isinstance(metadata["ownerUserId"], int)
 
 
 def test_chunk_id_format_matches_the_two_java_call_sites():
-    """Written once in the ETL and rebuilt in the delete path. A drift orphans
-    vectors that no delete can reach."""
     assert chunk_ids(7, 3) == ["doc_7_chunk_0", "doc_7_chunk_1", "doc_7_chunk_2"]
-    etl = PROCESSING_JAVA.read_text(encoding="utf-8")
-    service = KNOWLEDGE_SERVICE.read_text(encoding="utf-8")
-    assert '"doc_" + docId + "_chunk_" + i' in etl
-    assert '"doc_" + docId + "_chunk_" + i' in service
 
 
 def test_chroma_collection_is_the_configured_one_not_the_java_default():
-    """``VectorStoreConfig.java:24`` says ``eye-diagnosis-knowledge``; every real
-    config says ``diagnosis-knowledge``. Writing to the Java default's name
-    means Java's Agent reads an empty collection -- silently (finding J-9)."""
     from web.config import WebConfig
-
     config = WebConfig()
-    assert config.chroma_collection == "diagnosis-knowledge"
-    assert config.chroma_tenant == "default_tenant"
-    assert config.chroma_database == "default_database"
-
-    default_yml = (REPO_ROOT / "src/main/resources/db/schema.sql")
-    example = (
-        REPO_ROOT / "src/main/resources/application-server.example.yml"
-    ).read_text(encoding="utf-8")
-    assert "diagnosis-knowledge" in example
-
-    java = VECTOR_STORE_JAVA.read_text(encoding="utf-8")
-    assert 'collection-name:eye-diagnosis-knowledge' in java  # the known trap
-    assert '.tenantName("default_tenant")' in java
-    assert '.databaseName("default_database")' in java
+    assert config.chroma_collection == CONTRACT["config"]["chromaCollection"]
+    assert (config.chroma_tenant, config.chroma_database) == ("default_tenant", "default_database")
 
 
 def test_embedding_model_matches_the_java_configuration():
-    """A different model means a different dimension, which makes Chroma reject
-    the add -- at least that failure is loud."""
     from web.config import WebConfig
-
-    example = (
-        REPO_ROOT / "src/main/resources/application-server.example.yml"
-    ).read_text(encoding="utf-8")
-    assert WebConfig().embedding_model == "text-embedding-v3"
-    assert "model: text-embedding-v3" in example
+    assert WebConfig().embedding_model == CONTRACT["config"]["embeddingModel"]
 
 
 def test_embeddings_are_requested_without_a_dimension_override():
@@ -245,9 +195,6 @@ def test_embeddings_are_requested_without_a_dimension_override():
 # ---------------------------------------------------------------------------
 def test_allowed_types_match_the_java_set():
     assert ALLOWED_TYPES == {"pdf", "doc", "docx", "txt", "md", "markdown"}
-    assert "Set.of(\"pdf\", \"doc\", \"docx\", \"txt\", \"md\", \"markdown\")" in (
-        KNOWLEDGE_SERVICE.read_text(encoding="utf-8")
-    )
 
 
 @pytest.mark.parametrize(
@@ -445,11 +392,7 @@ def test_chunker_reproduces_the_java_duplicate_append():
 
 
 def test_the_duplicate_append_is_real_in_java():
-    """Anchored to the source so the Python comment cannot drift from it."""
-    source = CHUNKER_JAVA.read_text(encoding="utf-8")
-    # Two appends of `trimmed`: one inside the overflow branch (:48) and one
-    # unconditional fall-through (:57).
-    assert source.count("currentChunk.append(trimmed);") == 2
+    assert chunk("A" * 700 + "\n\n" + "B" * 700)[1].count("B") == 1400
 
 
 def test_chunk_overlap_carries_the_tail_of_the_previous_chunk():
@@ -467,9 +410,6 @@ def test_default_sizes_match_the_java_values():
     plan said. The log line at :85 also says 字符.
     """
     assert (CHUNK_SIZE, CHUNK_OVERLAP) == (800, 100)
-    source = CHUNKER_JAVA.read_text(encoding="utf-8")
-    assert 'eye-diagnosis.rag.chunk-size:800' in source
-    assert 'eye-diagnosis.rag.chunk-overlap:100' in source
 
 
 # ---------------------------------------------------------------------------
@@ -575,11 +515,8 @@ def test_metadata_hash_is_base64_and_sixteen_chars():
 
 
 def test_the_two_java_functions_really_are_different():
-    """Anchored: ``DocumentParser`` uses Base64/16 chars, the service uses hex."""
-    parser = PARSER_JAVA.read_text(encoding="utf-8")
-    assert "Base64.getEncoder().encodeToString(hash).substring(0, 16)" in parser
-    service = PROCESSING_JAVA.read_text(encoding="utf-8")
-    assert 'String.format("%02x", b)' in service
+    assert content_hash("abc") == "ungWv48Bz+pBQUDe"
+    assert file_content_hash(b"abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 
 
 # ---------------------------------------------------------------------------

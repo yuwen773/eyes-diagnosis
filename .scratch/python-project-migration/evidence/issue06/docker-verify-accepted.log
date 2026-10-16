@@ -1,0 +1,92 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Verify.Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 1.12kB 0.1s done
+#1 DONE 0.3s
+
+#2 [internal] load metadata for docker.io/library/eye-python:ticket06
+#2 DONE 0.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 975B 0.0s done
+#3 DONE 0.1s
+
+#4 [internal] load build context
+#4 ...
+
+#5 [ 1/19] FROM docker.io/library/eye-python:ticket06@sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6
+#5 resolve docker.io/library/eye-python:ticket06@sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6 0.1s done
+#5 DONE 0.2s
+
+#4 [internal] load build context
+#4 transferring context: 1.82MB 0.5s done
+#4 DONE 0.5s
+
+#6 [ 8/19] COPY algorithm/mcp_server algorithm/mcp_server
+#6 CACHED
+
+#7 [13/19] COPY deploy/python-migrations deploy/python-migrations
+#7 CACHED
+
+#8 [16/19] COPY deploy/snippets deploy/snippets
+#8 CACHED
+
+#9 [ 2/19] RUN apt-get update && apt-get install -y --no-install-recommends redis-server     && rm -rf /var/lib/apt/lists/*     && python -m pip install --no-cache-dir uv==0.13.0
+#9 CACHED
+
+#10 [ 4/19] COPY pyproject.toml MANIFEST.in ./
+#10 CACHED
+
+#11 [ 9/19] COPY algorithm/eye_disease_model.py algorithm/eye_disease_model.py
+#11 CACHED
+
+#12 [14/19] COPY deploy/nginx.conf deploy/nginx.conf
+#12 CACHED
+
+#13 [ 5/19] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#13 CACHED
+
+#14 [12/19] COPY algorithm/configs algorithm/configs
+#14 CACHED
+
+#15 [ 3/19] WORKDIR /workspace
+#15 CACHED
+
+#16 [ 7/19] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#16 CACHED
+
+#17 [ 6/19] COPY algorithm/web algorithm/web
+#17 CACHED
+
+#18 [11/19] COPY algorithm/checkpoints/registry.json algorithm/checkpoints/registry.json
+#18 CACHED
+
+#19 [15/19] COPY deploy/mime.types deploy/mime.types
+#19 CACHED
+
+#20 [10/19] COPY algorithm/grpc_server.py algorithm/grpc_server.py
+#20 CACHED
+
+#21 [17/19] COPY contracts contracts
+#21 CACHED
+
+#22 [18/19] COPY scripts scripts
+#22 DONE 0.3s
+
+#23 [19/19] COPY frontend/src frontend/src
+#23 DONE 1.5s
+
+#24 exporting to image
+#24 exporting layers
+#24 exporting layers 0.9s done
+#24 exporting manifest sha256:ce39361d2a7e6c1b17a7b28d9256af51a46bf89ab4c0889c38db88da06f17372 0.1s done
+#24 exporting config sha256:407921ea074f98a7fbad5766bdc728536e81743d0a86bdd2bddf93fa6e6d26d2 0.1s done
+#24 exporting attestation manifest sha256:f3d84a3ecdf8b79d40f15bb3d8a563e0b73b1069c3826de4ba937a41ad3a47ad
+#24 exporting attestation manifest sha256:f3d84a3ecdf8b79d40f15bb3d8a563e0b73b1069c3826de4ba937a41ad3a47ad 0.2s done
+#24 exporting manifest list sha256:6670ee77190cadf41fc2c753e68b5e0068fc86446d42ca9b0a2622d530d42051
+#24 exporting manifest list sha256:6670ee77190cadf41fc2c753e68b5e0068fc86446d42ca9b0a2622d530d42051 0.1s done
+#24 naming to docker.io/library/eye-verify:ticket06 0.0s done
+#24 unpacking to docker.io/library/eye-verify:ticket06
+#24 unpacking to docker.io/library/eye-verify:ticket06 0.5s done
+#24 DONE 2.1s

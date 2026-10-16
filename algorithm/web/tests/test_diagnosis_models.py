@@ -17,8 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 ALGORITHM_ROOT = REPO_ROOT / "algorithm"
 sys.path.insert(0, str(ALGORITHM_ROOT))
 
-SCHEMA_SQL = REPO_ROOT / "src/main/resources/db/schema.sql"
-JAVA_ROOT = REPO_ROOT / "src/main/java/com/csust/eyediagnosis"
+SCHEMA_SQL = REPO_ROOT / "deploy/python-migrations/legacy/schema.sql"
 
 from web.models import Diagnosis, InferenceCache  # noqa: E402
 from web.models.inference_cache import CACHE_KEY_COLUMNS  # noqa: E402
@@ -146,7 +145,7 @@ def test_diagnosis_reexamine_status_default_is_one():
     """
     bootstrap = (
         REPO_ROOT
-        / "src/main/resources/db/callback/beforeMigrate__bootstrap_legacy_flyway_schema.sql"
+        / "deploy/python-migrations/legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql"
     ).read_text(encoding="utf-8")
     assert re.search(r"reexamineStatus\s+INT\s+NOT NULL DEFAULT 1", bootstrap)
     # The ORM layer must not silently diverge: the column is NOT NULL, so a

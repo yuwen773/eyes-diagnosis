@@ -1,0 +1,14 @@
+STANDALONE_PROTO_GENERATION_OK
+......................................s................................. [ 23%]
+........................................................................ [ 46%]
+........................................................................ [ 70%]
+........................................................................ [ 93%]
+...................                                                      [100%]
+=============================== warnings summary ===============================
+eye_diagnosis/tests/test_metrics.py::test_handles_missing_class
+eye_diagnosis/tests/test_metrics.py::test_handles_missing_class
+  /usr/local/lib/python3.11/site-packages/sklearn/metrics/_ranking.py:469: UndefinedMetricWarning: Only one class is present in y_true. ROC AUC score is not defined in that case.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+306 passed, 1 skipped, 16 deselected, 2 warnings in 325.30s (0:05:25)

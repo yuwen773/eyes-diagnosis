@@ -1,6 +1,6 @@
-"""Task HTTP / real Worker seams; MySQL mode requires a Flyway test schema.
+"""Task HTTP / real Worker seams; MySQL mode uses Python-migrated test schemas.
 
-Java identity and algorithm results are synthetic. SQLite is regression coverage,
+Identity and algorithm results are controlled. SQLite is regression coverage,
 never evidence for MySQL locking, leases or fencing.
 """
 
@@ -345,7 +345,10 @@ def test_mysql_claim_skips_locked_job_and_advances_other_task(worker_api, tmp_pa
     locked_id = upload(client)
     other_id = upload(client)
     with sessions.begin() as db:
-        db.scalar(select(Job).where(Job.workflow_id == locked_id).with_for_update())
+        job_id = db.scalar(select(Job.job_id).where(Job.workflow_id == locked_id))
+        # Lock exactly one primary record. A workflow-prefix lookup also takes
+        # next-key gap locks, blocking the other task's continuation INSERT.
+        db.scalar(select(Job).where(Job.job_id == job_id).with_for_update())
         with executor(sessions, tmp_path, "skip-locked") as (process, _):
             process.wait(timeout=20)
         assert query(client, other_id)["progress"]["completed"] == ["validateImage"]

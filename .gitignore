@@ -77,6 +77,11 @@ __pycache__/
 .env.*
 !.env.example
 /.scratch/baseline-runtime/
+/.runtime/
+/dist/
+/build/
+/deploy/python/models/
+*.egg-info/
 /.scratch/workflow-runtime/
 /.zread/
 .zread/
