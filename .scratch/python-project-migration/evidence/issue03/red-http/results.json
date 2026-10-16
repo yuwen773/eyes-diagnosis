@@ -1,0 +1,28 @@
+{
+  "timestampUtc": "2026-10-15T14:08:28.869850+00:00",
+  "status": "FAIL",
+  "embedding": "CONTROLLED",
+  "realEmbedding": "BLOCKED (historical HTTP 401; not rerun)",
+  "cos": "CONTROLLED",
+  "clinical": "NOT_VERIFIED",
+  "javaStarted": false,
+  "schema": "eye_doc_issue03_9a3aeae84e6e46b38cbf52c609ed25a2",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_doc_issue03_9a3aeae84e6e46b38cbf52c609ed25a2",
+  "mysqlVersion": "8.0.26",
+  "redisVersion": "3.2.100",
+  "error": "AssertionError",
+  "locations": [
+    {
+      "file": "verify_document_knowledge.py",
+      "line": 181
+    },
+    {
+      "file": "verify_document_knowledge.py",
+      "line": 129
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 372
+    }
+  ]
+}

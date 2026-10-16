@@ -148,6 +148,18 @@ def test_binary_word_upload_is_retrievable(pipeline):
     assert "This is a simple file created with Word 97-SR2." in result["documents"][0][0]
 
 
+def test_binary_word_upload_preserves_short_cells_and_stories(pipeline):
+    client, _, _, _, _, collection = pipeline
+    response = client.post("/api/knowledge/upload", files={"files": (
+        "chinese-stories.doc", (FIXTURES / "chinese-stories.doc").read_bytes())}).json()
+    assert response["code"] == 0, response
+    result = collection.query(query_embeddings=[[1.0, 0.0, 0.0]],
+                              where={"ownerUserId": 7}, n_results=20)
+    text = "\n".join(result["documents"][0])
+    for marker in ("中文眼底检查正文", "合并单元格", "眼底随访", "嵌套复查", "文档页眉", "文档页脚"):
+        assert marker in text, text
+
+
 @pytest.mark.parametrize("name,data,reason", [
     ("broken.docx", b"broken ZIP", "文档解析失败"),
     ("broken.doc", bytes.fromhex("d0cf11e0a1b11ae1") + b"broken OLE", "文档解析失败"),

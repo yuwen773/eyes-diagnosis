@@ -1,0 +1,59 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__ test_transient_filesystem_lock_does_not_turn_extracted_text_into_failure ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001BB20696E50>
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-900/test_transient_filesystem_lock0')
+
+    def test_transient_filesystem_lock_does_not_turn_extracted_text_into_failure(monkeypatch, tmp_path):
+        from docx import Document
+    
+        document = Document()
+        document.add_paragraph("Known conversion output after a transient filesystem lock.")
+        output = io.BytesIO()
+        document.save(output)
+        launch, remove = subprocess.Popen, shutil.rmtree
+        locked = []
+    
+        def converter(command, **kwargs):
+            Path(command[-1]).with_suffix(".docx").write_bytes(output.getvalue())
+            return launch([sys.executable, "-c", "pass"], **kwargs)
+    
+        def temporarily_locked(path, *args, **kwargs):
+            if not locked:
+                locked.append(path)
+                raise PermissionError("temporary filesystem handle")
+            return remove(path, *args, **kwargs)
+    
+        monkeypatch.setattr(subprocess, "Popen", converter)
+        monkeypatch.setattr(shutil, "rmtree", temporarily_locked)
+        monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+>       assert "Known conversion output" in extract_doc((FIXTURES / "simple.doc").read_bytes())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+web\tests\test_no_jvm_doc.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+web\doc_parser.py:49: in extract_doc
+    with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:943: in __exit__
+    self.cleanup()
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:947: in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:929: in _rmtree
+    _shutil.rmtree(name, onerror=onerror)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-900\\test_transient_filesystem_lock0\\eye-doc-kyz7yd9f'
+args = ()
+kwargs = {'onerror': <function TemporaryDirectory._rmtree.<locals>.onerror at 0x000001BB219EA200>}
+
+    def temporarily_locked(path, *args, **kwargs):
+        if not locked:
+            locked.append(path)
+>           raise PermissionError("temporary filesystem handle")
+E           PermissionError: temporary filesystem handle
+
+web\tests\test_no_jvm_doc.py:73: PermissionError
+=========================== short test summary info ===========================
+FAILED web/tests/test_no_jvm_doc.py::test_transient_filesystem_lock_does_not_turn_extracted_text_into_failure
+1 failed, 7 deselected in 2.59s

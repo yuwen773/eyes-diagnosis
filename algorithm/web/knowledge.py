@@ -59,7 +59,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 #: ``KnowledgeBaseServiceImpl.ALLOWED_TYPES`` -- note ``doc`` is the legacy
-#: binary Word format, handled by the pinned local Tika CLI.
+#: binary Word format, handled by the pinned non-JVM local converter.
 ALLOWED_TYPES = frozenset({"pdf", "doc", "docx", "txt", "md", "markdown"})
 
 #: ``eye-diagnosis.rag.chunk-size`` / ``chunk-overlap`` (``TextChunkerService``).
@@ -163,7 +163,7 @@ def _extract(data: bytes, file_type: str) -> str:
 
     Java delegates the whole matrix to Apache Tika, which sniffs content and
     pulls in POI/pdfbox. Python uses a narrow reader per type, with the pinned
-    local Tika CLI for binary Word.
+    local non-JVM converter for binary Word.
 
     Every backend is imported inside the branch: none of them may appear at
     module scope.
@@ -193,7 +193,7 @@ def parse(data: bytes, file_type: str) -> list[str]:
 
     Issue 07 separates parse errors from valid empty text. The upload route
     catches errors per file, so an unreadable file does not abort the batch.
-    DOCX retains short blocks so cells and headers cannot be filtered out.
+    Word retains short blocks so cells and headers cannot be filtered out.
 
     The fallback matters: when no paragraph is longer than
     :data:`MIN_PARAGRAPH_LENGTH`, Java returns the **whole** content as a
@@ -212,8 +212,8 @@ def parse(data: bytes, file_type: str) -> list[str]:
         return []
 
     # Word's short cells and headers are meaningful content. Keep every nonblank
-    # DOCX block; the legacy plain-text/PDF filter and chunker remain unchanged.
-    if file_type == "docx":
+    # Word block; the legacy plain-text/PDF filter and chunker remain unchanged.
+    if file_type in {"doc", "docx"}:
         return [java_trim(para) for para in _PARAGRAPH_SPLIT.split(content) if has_text(para)]
 
     paragraphs = [

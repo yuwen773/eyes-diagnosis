@@ -1,0 +1,268 @@
+{
+  "ticket": "03-no-jvm-document-knowledge",
+  "status": "PASS_WITH_LIMITATIONS",
+  "ticketStatus": "ready-for-human",
+  "acceptanceCriteriaCompleted": 8,
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "baselineCommit": "9dc9529e68c0f0e0a9a325f367ec712078b4de07",
+  "branch": "worktree-py-rewrite",
+  "closeout": {
+    "implementationChanged": false,
+    "fullSuiteRerun": false,
+    "checksRerun": [
+      "mypy (6 modules)",
+      "uv pip check (133 packages)"
+    ],
+    "priorResultsSource": "eye-diagnosis-ticket03-handoff-20261016-1038.md and raw logs"
+  },
+  "sourceDigestBasis": "SHA256 of final Git index blob bytes; text uses Git canonical line endings",
+  "sourceManifest": "source-sha256.json",
+  "fixturesManifest": "fixtures.json",
+  "fixturesVerified": 5,
+  "tool": {
+    "name": "LibreOffice",
+    "version": "26.2.6.3",
+    "build": "8221e31b3ac356a1623c672912a3d2b492f7e3d1",
+    "windowsArchiveSha256": "f9877032fd908beb9c0ddf06df4af5c2e85f419c42e14876c4cce5aae5fb2660",
+    "linuxArchiveSha256": "fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc",
+    "toolGate": {
+      "Windows": "5 PASS",
+      "Linux": "5 PASS"
+    },
+    "javaHomeRemoved": true,
+    "javaOnPathDuringVerification": false,
+    "requestTimeDownload": false,
+    "licenseAndDistribution": "docs/no-jvm-document-knowledge.md"
+  },
+  "windowsFullWeb": {
+    "status": "PASS",
+    "tests": 815,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 28,
+    "passed": 787,
+    "failedTests": [],
+    "warnings": 1,
+    "seconds": 707.77,
+    "log": "windows-full-final.log",
+    "junit": "windows-final.xml"
+  },
+  "linuxFocusedFinal": {
+    "status": "PASS",
+    "passed": 104,
+    "skipped": 1,
+    "seconds": 32.31,
+    "log": "focused-linux-final.log",
+    "scope": "DOC/DOCX HTTP, knowledge/permissions, local real Chroma, final cleanup fix; controlled identity/SQLite"
+  },
+  "linuxFullWeb": {
+    "status": "FAIL",
+    "tests": 814,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 28,
+    "passed": 781,
+    "failedTests": [
+      "web.tests.test_history_retrieval::test_chat_default_uses_a_model_with_documented_tool_support",
+      "web.tests.test_mcp_transports::test_chat_discovers_and_invokes_over_real_https_mcp[STREAMABLE_HTTP]",
+      "web.tests.test_quality_review::test_waiting_review_survives_new_app_and_separate_worker_process",
+      "web.tests.test_supplement::test_description_is_available_to_chat_and_doctor_without_changing_clinical_route",
+      "web.tests.test_tool_writes::test_failed_profile_write_rolls_back_consent_and_can_retry"
+    ],
+    "warnings": 1,
+    "seconds": 785.16,
+    "log": "full-linux-web.log",
+    "junit": "linux-web-results.xml",
+    "timing": "Before final cleanup fix; focused final pass does not replace full gate",
+    "followup": "Later engineering ticket must resolve or recheck model/HTTPS MCP/workflow/clock failures; observed Snowflake clock rollback 1097ms"
+  },
+  "frontend": {
+    "build": "PASS",
+    "typeCheck": "PASS (vue-tsc)",
+    "tests": 47,
+    "testFiles": 12,
+    "buildLog": "frontend-build-final.log",
+    "testLog": "frontend-tests-final.log",
+    "browser": "NOT_RERUN"
+  },
+  "mypy": {
+    "status": "PASS",
+    "modules": 6,
+    "log": "mypy-final.log",
+    "scope": [
+      "web/doc_parser.py",
+      "web/doc_tool.py",
+      "web/extract.py",
+      "web/knowledge.py",
+      "web/verify_document_knowledge.py",
+      "web/tests/document_knowledge_process.py"
+    ]
+  },
+  "dependencies": {
+    "status": "PASS",
+    "packages": 133,
+    "log": "dependency-check-final.log"
+  },
+  "windowsRealInfrastructure": {
+    "status": "PASS",
+    "mysql": "8.0.26",
+    "redis": "3.2.100",
+    "chroma": "real TCP",
+    "javaStarted": false,
+    "embedding": "CONTROLLED",
+    "cos": "CONTROLLED",
+    "results": "windows-infrastructure/results.json",
+    "checks": [
+      "python-login-and-anonymous-denial",
+      "binary-doc-chinese-tables-header-footer-upload-and-citations",
+      "real-chroma-chunks-and-integer-metadata",
+      "large-owner-id-cross-user-denial",
+      "corrupt-empty-encrypted-inputs-no-index",
+      "original-document-vector-and-dimension-preserved"
+    ],
+    "chunkCount": 3,
+    "embeddingDimension": 1024,
+    "collection": "diagnosis-knowledge"
+  },
+  "review": {
+    "Standards": {
+      "findings": 0
+    },
+    "Spec": {
+      "findings": 0
+    },
+    "source": "Handoff records completed parallel read-only reviews, including final timeout/cleanup fixes",
+    "rerunAtCloseout": false,
+    "record": "review.md"
+  },
+  "acceptanceEvidence": {
+    "1": [
+      "install-windows.log",
+      "install-linux-tool.log",
+      "linux-gate.json",
+      "docs/no-jvm-document-knowledge.md"
+    ],
+    "2": [
+      "fixtures.json",
+      "samples-windows.log",
+      "samples-linux.log",
+      "upstream-windows.log"
+    ],
+    "3": [
+      "red-cleanup.log",
+      "green-cleanup.log",
+      "windows-final.xml",
+      "focused-linux-final.log"
+    ],
+    "4": [
+      "red-parser.log",
+      "green-parser.log",
+      "red-http/results.json",
+      "samples-windows.log",
+      "samples-linux.log"
+    ],
+    "5": [
+      "windows-infrastructure/results.json",
+      "source-sha256.json"
+    ],
+    "6": [
+      "red-short-stories.log",
+      "windows-final.xml",
+      "focused-linux-final.log"
+    ],
+    "7": [
+      "windows-infrastructure/results.json"
+    ],
+    "8": [
+      "windows-full-final.log",
+      "focused-linux-final.log",
+      "windows-infrastructure/results.json"
+    ]
+  },
+  "failureHistory": {
+    "earlyWindowsFull": {
+      "status": "FAIL",
+      "tests": 814,
+      "failures": 5,
+      "errors": 0,
+      "skipped": 28,
+      "passed": 781,
+      "failedTests": [
+        "web.tests.test_document_upload::test_valid_empty_word_is_distinct_from_parse_failure[empty.doc]",
+        "web.tests.test_human_wait_restart::test_incompatible_supplement_graph_preserves_wait_and_reports_conflict",
+        "web.tests.test_no_jvm_doc::test_upstream_word_header_and_footer_keep_unicode_encoding",
+        "web.tests.test_worker_concurrency::test_stale_execution_discards_all_staged_effects[workflow_version]",
+        "web.tests.test_worker_concurrency::test_model_timeout_exhausts_retries_as_failed_not_review"
+      ],
+      "log": "full-web-suite.log",
+      "junit": "web-results.xml"
+    },
+    "windowsTicketFixes": [
+      "Conversion timeout 60 -> 120 seconds",
+      "Bounded temporary-file cleanup retry"
+    ],
+    "baselineWorkflowRechecks": {
+      "passed": 3,
+      "baseline": "9dc9529e68c0f0e0a9a325f367ec712078b4de07",
+      "log": "baseline-regressions.log",
+      "junit": "baseline-regressions.xml"
+    },
+    "redGreen": [
+      "red-parser.log",
+      "green-parser.log",
+      "red-http/results.json",
+      "red-short-stories.log",
+      "red-cleanup.log",
+      "green-cleanup.log"
+    ],
+    "rechecks": [
+      "empty-http-recheck.log",
+      "windows-failure-rechecks.log"
+    ]
+  },
+  "javaSourceAndPom": "UNCHANGED",
+  "javaRetirement": "NOT_RUN",
+  "realEmbedding": "BLOCKED - historical HTTP 401; NOT_RERUN",
+  "realSemanticRetrieval": "NOT_VERIFIED",
+  "realCos": "NOT_VERIFIED",
+  "realModelAndProviders": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "linuxFullDeployment": "NOT_VERIFIED",
+  "hostedCI": "NOT_RUN",
+  "businessDatabaseUpgrade": "NOT_RUN",
+  "productionCutover": "NOT_RUN",
+  "push": "NOT_RUN",
+  "laterTicketsStarted": false,
+  "retainedArtifacts": [
+    "fixtures.json",
+    "linux-gate.json",
+    "red-http/results.json",
+    "windows-infrastructure/results.json",
+    "baseline-regressions.log",
+    "baseline-regressions.xml",
+    "empty-http-recheck.log",
+    "focused-linux-final.log",
+    "frontend-build-final.log",
+    "frontend-tests-final.log",
+    "full-linux-web.log",
+    "full-web-suite.log",
+    "green-cleanup.log",
+    "green-parser.log",
+    "install-linux-tool.log",
+    "install-windows.log",
+    "linux-web-results.xml",
+    "mypy-final.log",
+    "dependency-check-final.log",
+    "red-cleanup.log",
+    "red-parser.log",
+    "red-short-stories.log",
+    "samples-linux.log",
+    "samples-windows.log",
+    "upstream-windows.log",
+    "web-results.xml",
+    "windows-failure-rechecks.log",
+    "windows-final.xml",
+    "windows-full-final.log"
+  ]
+}

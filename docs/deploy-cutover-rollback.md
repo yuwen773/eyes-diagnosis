@@ -46,8 +46,10 @@ Pop-Location
 `requirements.txt` 的宽松版本范围宣称可复现模型发布。缺权重的旧同步诊断失败保护
 不等于分类能力通过。
 
-`.doc` 需要 Java 21 和 `web.doc_parser` 安装的固定 Apache Tika 3.3.2，安装时校验
-内置 SHA512；运行时不下载。离线部署提前提供同摘要 JAR，可设 `TIKA_APP_JAR`。
+`.doc` 使用固定 LibreOffice 26.2.6.3，无 JVM。提前提供官方 Windows MSI 或 Linux DEB
+归档，通过 `python -m web.doc_tool --archive <本地归档>` 校验内置 SHA256 并隔离解压；
+自定义安装位置用 `DOC_TOOL_HOME`。运行时不下载，Tika/JAR 不再是 DOC 路径依赖。
+安装、许可证与双环境证据见 [文档工具交付](no-jvm-document-knowledge.md)。
 `.docx`、PDF、文本依赖已在 Web 锁文件内。验证清单保留 Python/pip freeze、JDK、
 Nginx、MySQL、Redis、Chroma 版本、源码/前端摘要和镜像或二进制摘要。
 

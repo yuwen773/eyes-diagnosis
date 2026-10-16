@@ -1,6 +1,6 @@
 """Document text extractors.
 
-PDF and DOCX use lazy Python readers; binary DOC uses the local Tika CLI in
+PDF and DOCX use lazy Python readers; binary DOC uses local LibreOffice in
 ``web.doc_parser``. Importing this module requires no parser dependencies.
 
 Format support, against ``KnowledgeBaseServiceImpl.ALLOWED_TYPES``:
@@ -13,7 +13,7 @@ type        supported   note
 ``txt``     yes         UTF-8 with replacement
 ``md``      yes         same
 ``markdown`` yes        same
-``doc``     yes         pinned Apache Tika CLI + Java 21; see web.doc_parser
+``doc``     yes         pinned non-JVM converter; see web.doc_parser
 ==========  ==========  ==================================================
 
 Issue 07 closes the historical J-16 format gap; see docs/document-formats.md.

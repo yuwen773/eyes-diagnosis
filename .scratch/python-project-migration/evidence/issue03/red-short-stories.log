@@ -1,0 +1,39 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_binary_word_upload_preserves_short_cells_and_stories __________
+
+pipeline = (<starlette.testclient.TestClient object at 0x000001642749A9D0>, {'245aac2b-382b-49be-9b10-c65012d015e7_chinese-storie...tting.']}], [7], <web.tests.test_document_upload.controlled_pipeline.<locals>.Collection object at 0x0000016408E8C350>)
+
+    def test_binary_word_upload_preserves_short_cells_and_stories(pipeline):
+        client, _, _, _, _, collection = pipeline
+        response = client.post("/api/knowledge/upload", files={"files": (
+            "chinese-stories.doc", (FIXTURES / "chinese-stories.doc").read_bytes())}).json()
+        assert response["code"] == 0, response
+        result = collection.query(query_embeddings=[[1.0, 0.0, 0.0]],
+                                  where={"ownerUserId": 7}, n_results=20)
+        text = "\n".join(result["documents"][0])
+        for marker in ("�����۵׼������", "�ϲ���Ԫ��", "�۵����", "Ƕ�׸���", "�ĵ�ҳü", "�ĵ�ҳ��"):
+>           assert marker in text, text
+E           AssertionError: �����۵׼�����ģ����Ǻϳɵı������ĵ������������ϣ��������ٴ��жϡ�
+E             �����۵׼�����ģ����Ǻϳɵı������ĵ������������ϣ��������ٴ��жϡ�
+E             
+E             Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting.
+E             
+E             Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting.
+E           assert '�ϲ���Ԫ��' in '�����۵׼�����ģ����Ǻϳɵı������ĵ������������ϣ��������ٴ��жϡ�\n�����۵׼�����ģ����Ǻϳɵı������ĵ������������ϣ��������ٴ��жϡ�\n\nRetinal examination synthetic reference wit...ext to exercise chunk splitting. Retinal examination synthetic reference with enough text to exercise chunk splitting.'
+
+web\tests\test_document_upload.py:160: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  web.app:app.py:87 inference engine not loaded; POST /diagnosis/diagnosis will fail closed until the weights are configured
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\app.py", line 85, in _build_inference_engine
+    engine.load()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\inference.py", line 193, in load
+    weights_path = self._resolve_weights_path(config.model_weights_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\inference.py", line 230, in _resolve_weights_path
+    raise InferenceUnavailable(
+web.inference.InferenceUnavailable: MODEL_WEIGHTS_PATH is required; model weights are not configured
+=========================== short test summary info ===========================
+FAILED web/tests/test_document_upload.py::test_binary_word_upload_preserves_short_cells_and_stories
+1 failed, 13 deselected in 51.46s

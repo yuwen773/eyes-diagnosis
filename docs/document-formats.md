@@ -1,5 +1,8 @@
 # 工单 07：Word 上传与检索兼容
 
+> 历史记录（旧 Agent 迁移工单 07）。当前 DOC 安装与运行已由完整项目迁移工单 03 替换，
+> 请使用 [无 JVM 文档解析与知识库](no-jvm-document-knowledge.md)。下文 Tika/JDK 命令只保留历史身份。
+
 2026-10-13，工作树 `py-rewrite`，开始版本 `87121426f77ef1f1dd923a38341feb0dd73bc00d`。
 仅覆盖 AC-16 和 AC-18 的工程可控部分。真实 MySQL、COS、Java 登录态、Chroma、
 DashScope embedding、Java 读端联通仍由工单 19 复核。

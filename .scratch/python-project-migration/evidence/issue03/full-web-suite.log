@@ -1,0 +1,483 @@
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 17%]
+.............................................................F.......... [ 26%]
+........................................................ssss............ [ 35%]
+..............................F......................................... [ 44%]
+........................................................................ [ 53%]
+........................................................................ [ 61%]
+........................................................................ [ 70%]
+..........................F............................................. [ 79%]
+........................................................................ [ 88%]
+.......................................................FF...s........... [ 97%]
+......................                                                   [100%]
+================================== FAILURES ===================================
+_______ test_valid_empty_word_is_distinct_from_parse_failure[empty.doc] _______
+
+pipeline = (<starlette.testclient.TestClient object at 0x0000025679A93CD0>, {}, {}, [], [7], <web.tests.test_document_upload.controlled_pipeline.<locals>.Collection object at 0x0000025679B50B50>)
+name = 'empty.doc'
+
+    @pytest.mark.parametrize("name", ["blank.docx", "empty.doc"])
+    def test_valid_empty_word_is_distinct_from_parse_failure(pipeline, name):
+        from docx import Document
+    
+        if name.endswith("docx"):
+            buffer = io.BytesIO()
+            Document().save(buffer)
+            data = buffer.getvalue()
+        else:
+            data = (FIXTURES / name).read_bytes()
+        response = pipeline[0].post("/api/knowledge/upload", files={"files": (name, data)}).json()
+        assert response["code"] != 0
+>       assert "�ĵ�����Ϊ��" in response["msg"] and "����ʧ��" not in response["msg"]
+E       AssertionError: assert ('�ĵ�����Ϊ��' in 'ȫ���ļ��ϴ�ʧ��: empty.doc���ĵ�����ʧ�ܣ�.doc ������ʱ��')
+
+web\tests\test_document_upload.py:240: AssertionError
+----------------------------- Captured log setup ------------------------------
+WARNING  web.app:app.py:87 inference engine not loaded; POST /diagnosis/diagnosis will fail closed until the weights are configured
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\app.py", line 85, in _build_inference_engine
+    engine.load()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\inference.py", line 193, in load
+    weights_path = self._resolve_weights_path(config.model_weights_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\inference.py", line 230, in _resolve_weights_path
+    raise InferenceUnavailable(
+web.inference.InferenceUnavailable: MODEL_WEIGHTS_PATH is required; model weights are not configured
+------------------------------ Captured log call ------------------------------
+ERROR    web.knowledge:knowledge.py:208 document extraction failed
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\doc_parser.py", line 83, in extract_doc
+    process.wait(timeout=TIMEOUT_SECONDS)
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 1593, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.tools\\libreoffice-26.2.6\\program\\soffice.com', '-env:UserInstallation=file:///C:/Users/yuwen/AppData/Local/Temp/eye-doc-m0jbvjdk/profile', '-env:URE_OVERRIDE_JAVA_JFW_USER_DATA=file:///C:/Users/yuwen/AppData/Local/Temp/eye-doc-m0jbvjdk/java-disabled.xml', '--headless', '--nologo', '--nodefault', '--norestore', '--convert-to', 'docx:Office Open XML Text', '--outdir', 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-m0jbvjdk', 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-m0jbvjdk\\input.doc']' timed out after 60 seconds
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\knowledge.py", line 204, in parse
+    content = _extract(data, file_type)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\knowledge.py", line 187, in _extract
+    return extract_doc(data)
+           ^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\doc_parser.py", line 92, in extract_doc
+    raise RuntimeError(".doc ������ʱ") from exc
+RuntimeError: .doc ������ʱ
+___ test_incompatible_supplement_graph_preserves_wait_and_reports_conflict ____
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x000002567D2B15D0>
+
+    def test_incompatible_supplement_graph_preserves_wait_and_reports_conflict(restart_case):
+        case = restart_case
+        thread = uuid4().hex
+>       with case.api() as client:
+
+web\tests\test_human_wait_restart.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\contextlib.py:144: in __exit__
+    next(self.gen)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <web.tests.test_human_wait_restart.RestartCase object at 0x000002567D2B15D0>
+identity = 'alice'
+
+    @contextmanager
+    def api(self, identity="alice"):
+        log = (self.directory / f"api-{len(self.evidence['apiPids'])}.log").open("w", encoding="utf-8")
+        process = subprocess.Popen([sys.executable, "-m", "web.tests.human_wait_process", "api", "--port", str(self.port)],
+            env=self.env, cwd=Path(__file__).resolve().parents[2], stdout=log, stderr=log)
+        self.evidence["apiPids"].append(process.pid)
+        try:
+            with httpx.Client(base_url=f"http://127.0.0.1:{self.port}", timeout=20,
+                              cookies={SESSION_COOKIE_NAME: identity}) as client:
+                deadline = time.monotonic() + 20
+                while True:
+                    assert process.poll() is None, "API exited; inspect child log"
+                    try:
+                        if client.get("/health").status_code == 200:
+                            break
+                    except httpx.TransportError:
+                        pass
+                    assert time.monotonic() < deadline, "API startup timed out"
+                    time.sleep(.05)
+                yield client
+        finally:
+            # Terminate only this child. Windows TerminateProcess demonstrates
+            # recovery without relying on application shutdown hooks.
+            stop_child(process)
+            log.close()
+            with socket.socket() as probe:
+                probe.settimeout(1)
+>               assert probe.connect_ex(("127.0.0.1", self.port)) != 0, "Old API still serves after process termination"
+E               AssertionError: Old API still serves after process termination
+E               assert 0 != 0
+E                +  where 0 = <built-in method connect_ex of socket object at 0x000002567709EC80>(('127.0.0.1', 51696))
+E                +    where <built-in method connect_ex of socket object at 0x000002567709EC80> = <socket.socket fd=5812, family=2, type=1, proto=0, laddr=('127.0.0.1', 55610), raddr=('127.0.0.1', 51696)>.connect_ex
+
+web\tests\test_human_wait_restart.py:128: AssertionError
+_________ test_upstream_word_header_and_footer_keep_unicode_encoding __________
+
+data = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00>\x00\x03\x00\xfe\xf...00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    
+    def extract_doc(data: bytes) -> str:
+        """Validate Word 97�C2003, convert locally, reuse the DOCX story extractor."""
+        import olefile  # type: ignore[import-untyped]
+    
+        from web.extract import extract_docx
+    
+        if len(data) > MAX_INPUT_BYTES:
+            raise ValueError("�ɰ� Word �ĵ����� 20 MiB ����")
+        with olefile.OleFileIO(io.BytesIO(data)) as document:
+            if not document.exists("WordDocument"):
+                raise ValueError("���Ǿɰ� Word �������ĵ�")
+            header = document.openstream("WordDocument").read(32)
+            if len(header) != 32 or header[:2] != b"\xec\xa5":
+                raise ValueError("Word �ĵ�ͷ�𻵻�����֧�ֵ� Word 97�C2003 ��ʽ")
+            flags = int.from_bytes(header[10:12], "little")
+            if flags & 0x8100:
+                raise ValueError("��֧�ּ��ܵľɰ� Word �ĵ�")
+            if not document.exists("1Table" if flags & 0x200 else "0Table"):
+                raise ValueError("Word �ĵ�������")
+        home = Path(os.getenv("DOC_TOOL_HOME") or DEFAULT_HOME).resolve()
+        program = executable(home)
+        try:
+            stamp = json.loads((home / "eye-doc-tool.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f".doc ������δ���飬�벿��̶� LibreOffice {VERSION}") from exc
+        platform = "windows" if os.name == "nt" else "linux"
+        if (not isinstance(stamp, dict) or not program.is_file() or stamp.get("version") != BUILD or
+                stamp.get("archiveSha256") != SHA256[platform] or stamp.get("platform") != platform):
+            raise RuntimeError(f".doc ������δ��װ���벿��̶� LibreOffice {VERSION}")
+        with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+            work = Path(directory)
+            profile = work / "profile"
+            profile.mkdir()
+            # Disable macros, external link updates and Java even on a host with a JRE.
+            (profile / "user").mkdir()
+            (work / "java-disabled.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<java xmlns="http://openoffice.org/2004/java/framework/1.0">'
+                '<enabled>false</enabled></java>', encoding="utf-8")
+            (profile / "user/registrymodifications.xcu").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<oor:items xmlns:oor="http://openoffice.org/2001/registry">'
+                '<item oor:path="/org.openoffice.Office.Common/Security/Scripting">'
+                '<prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>'
+                '<item oor:path="/org.openoffice.Office.Writer/Content/Update">'
+                '<prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item>'
+                '</oor:items>', encoding="utf-8")
+            (work / "input.doc").write_bytes(data)
+            command = [str(program), f"-env:UserInstallation={profile.as_uri()}",
+                f"-env:URE_OVERRIDE_JAVA_JFW_USER_DATA={(work / 'java-disabled.xml').as_uri()}",
+                "--headless", "--nologo", "--nodefault", "--norestore",
+                "--convert-to", "docx:Office Open XML Text", "--outdir", str(work), str(work / "input.doc")]
+            env = os.environ.copy()
+            env.pop("JAVA_HOME", None)
+            env["JRE_HOME"] = str(work / "no-jre")
+            if os.name != "nt":
+                env["SAL_USE_VCLPLUGIN"] = "svp"
+            try:
+                process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, cwd=work, env=env, start_new_session=os.name != "nt",
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except OSError as exc:
+                raise RuntimeError("�޷��������� .doc ������") from exc
+>           try:
+                ^
+
+web\doc_parser.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+timeout = 60
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on Windows."""
+        if timeout is None:
+            timeout_millis = _winapi.INFINITE
+        elif timeout <= 0:
+            timeout_millis = 0
+        else:
+            timeout_millis = int(timeout * 1000)
+        if self.returncode is None:
+            # API note: Returns immediately if timeout_millis == 0.
+            result = _winapi.WaitForSingleObject(self._handle,
+                                                 timeout_millis)
+            if result == _winapi.WAIT_TIMEOUT:
+>               raise TimeoutExpired(self.args, timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.tools\\libreoffice-26.2.6\\program\\soffice.com', '-env:UserInstallation=file:///C:/Users/yuwen/AppData/Local/Temp/eye-doc-29uvlzs0/profile', '-env:URE_OVERRIDE_JAVA_JFW_USER_DATA=file:///C:/Users/yuwen/AppData/Local/Temp/eye-doc-29uvlzs0/java-disabled.xml', '--headless', '--nologo', '--nodefault', '--norestore', '--convert-to', 'docx:Office Open XML Text', '--outdir', 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0', 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0\\input.doc']' timed out after 60 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1593: TimeoutExpired
+
+The above exception was the direct cause of the following exception:
+
+data = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00>\x00\x03\x00\xfe\xf...00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    
+    def extract_doc(data: bytes) -> str:
+        """Validate Word 97�C2003, convert locally, reuse the DOCX story extractor."""
+        import olefile  # type: ignore[import-untyped]
+    
+        from web.extract import extract_docx
+    
+        if len(data) > MAX_INPUT_BYTES:
+            raise ValueError("�ɰ� Word �ĵ����� 20 MiB ����")
+        with olefile.OleFileIO(io.BytesIO(data)) as document:
+            if not document.exists("WordDocument"):
+                raise ValueError("���Ǿɰ� Word �������ĵ�")
+            header = document.openstream("WordDocument").read(32)
+            if len(header) != 32 or header[:2] != b"\xec\xa5":
+                raise ValueError("Word �ĵ�ͷ�𻵻�����֧�ֵ� Word 97�C2003 ��ʽ")
+            flags = int.from_bytes(header[10:12], "little")
+            if flags & 0x8100:
+                raise ValueError("��֧�ּ��ܵľɰ� Word �ĵ�")
+            if not document.exists("1Table" if flags & 0x200 else "0Table"):
+                raise ValueError("Word �ĵ�������")
+        home = Path(os.getenv("DOC_TOOL_HOME") or DEFAULT_HOME).resolve()
+        program = executable(home)
+        try:
+            stamp = json.loads((home / "eye-doc-tool.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f".doc ������δ���飬�벿��̶� LibreOffice {VERSION}") from exc
+        platform = "windows" if os.name == "nt" else "linux"
+        if (not isinstance(stamp, dict) or not program.is_file() or stamp.get("version") != BUILD or
+                stamp.get("archiveSha256") != SHA256[platform] or stamp.get("platform") != platform):
+            raise RuntimeError(f".doc ������δ��װ���벿��̶� LibreOffice {VERSION}")
+        with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+            work = Path(directory)
+            profile = work / "profile"
+            profile.mkdir()
+            # Disable macros, external link updates and Java even on a host with a JRE.
+            (profile / "user").mkdir()
+            (work / "java-disabled.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<java xmlns="http://openoffice.org/2004/java/framework/1.0">'
+                '<enabled>false</enabled></java>', encoding="utf-8")
+            (profile / "user/registrymodifications.xcu").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<oor:items xmlns:oor="http://openoffice.org/2001/registry">'
+                '<item oor:path="/org.openoffice.Office.Common/Security/Scripting">'
+                '<prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>'
+                '<item oor:path="/org.openoffice.Office.Writer/Content/Update">'
+                '<prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item>'
+                '</oor:items>', encoding="utf-8")
+            (work / "input.doc").write_bytes(data)
+            command = [str(program), f"-env:UserInstallation={profile.as_uri()}",
+                f"-env:URE_OVERRIDE_JAVA_JFW_USER_DATA={(work / 'java-disabled.xml').as_uri()}",
+                "--headless", "--nologo", "--nodefault", "--norestore",
+                "--convert-to", "docx:Office Open XML Text", "--outdir", str(work), str(work / "input.doc")]
+            env = os.environ.copy()
+            env.pop("JAVA_HOME", None)
+            env["JRE_HOME"] = str(work / "no-jre")
+            if os.name != "nt":
+                env["SAL_USE_VCLPLUGIN"] = "svp"
+            try:
+                process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, cwd=work, env=env, start_new_session=os.name != "nt",
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except OSError as exc:
+                raise RuntimeError("�޷��������� .doc ������") from exc
+            try:
+                process.wait(timeout=TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired as exc:
+                if os.name == "nt":
+                    subprocess.run(["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10,
+                        creationflags=subprocess.CREATE_NO_WINDOW)
+                else:
+                    os.killpg(process.pid, signal.SIGKILL)  # type: ignore[attr-defined]
+>               process.wait(timeout=10)
+E               RuntimeError: .doc ������ʱ
+
+web\doc_parser.py:92: RuntimeError
+
+During handling of the above exception, another exception occurred:
+
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0\\profile\\user\\extensions\\bundled'
+onerror = <function TemporaryDirectory._rmtree.<locals>.onerror at 0x000002567FEFDBC0>
+
+    def _rmtree_unsafe(path, onerror):
+        try:
+            with os.scandir(path) as scandir_it:
+                entries = list(scandir_it)
+        except OSError:
+            onerror(os.scandir, path, sys.exc_info())
+            entries = []
+        for entry in entries:
+            fullname = entry.path
+            if _rmtree_isdir(entry):
+                try:
+                    if entry.is_symlink():
+                        # This can only happen if someone replaces
+                        # a directory with a symlink after the call to
+                        # os.scandir or entry.is_dir above.
+                        raise OSError("Cannot call rmtree on a symbolic link")
+                except OSError:
+                    onerror(os.path.islink, fullname, sys.exc_info())
+                    continue
+                _rmtree_unsafe(fullname, onerror)
+            else:
+                try:
+>                   os.unlink(fullname)
+E                   PermissionError: [WinError 32] ��һ����������ʹ�ô��ļ��������޷����ʡ�: 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0\\profile\\user\\extensions\\bundled\\extensions.pmap'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:632: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+    def test_upstream_word_header_and_footer_keep_unicode_encoding():
+        # Expected strings come from Apache POI REL_5_4_1 TestHeaderStories.
+>       text = extract_doc((FIXTURES / "HeaderFooterUnicode.doc").read_bytes())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+web\tests\test_no_jvm_doc.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+web\doc_parser.py:48: in extract_doc
+    raise RuntimeError(f".doc ������δ��װ���벿��̶� LibreOffice {VERSION}")
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:943: in __exit__
+    self.cleanup()
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:947: in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:929: in _rmtree
+    _shutil.rmtree(name, onerror=onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:787: in rmtree
+    return _rmtree_unsafe(path, onerror)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:629: in _rmtree_unsafe
+    _rmtree_unsafe(fullname, onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:629: in _rmtree_unsafe
+    _rmtree_unsafe(fullname, onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:629: in _rmtree_unsafe
+    _rmtree_unsafe(fullname, onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:629: in _rmtree_unsafe
+    _rmtree_unsafe(fullname, onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:634: in _rmtree_unsafe
+    onerror(os.unlink, fullname, sys.exc_info())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+func = <built-in function unlink>
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0\\profile\\user\\extensions\\bundled\\extensions.pmap'
+exc_info = (<class 'PermissionError'>, PermissionError(13, '��һ����������ʹ�ô��ļ��������޷����ʡ�'), <traceback object at 0x000002567FD85FC0>)
+
+    def onerror(func, path, exc_info):
+        if issubclass(exc_info[0], PermissionError):
+            if repeated and path == name:
+                if ignore_errors:
+                    return
+                raise
+    
+            try:
+                if path != name:
+                    _resetperms(_os.path.dirname(path))
+                _resetperms(path)
+    
+                try:
+>                   _os.unlink(path)
+E                   PermissionError: [WinError 32] ��һ����������ʹ�ô��ļ��������޷����ʡ�: 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\eye-doc-29uvlzs0\\profile\\user\\extensions\\bundled\\extensions.pmap'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:893: PermissionError
+_____ test_stale_execution_discards_all_staged_effects[workflow_version] ______
+
+worker_api = (<starlette.testclient.TestClient object at 0x0000025607518D10>, sessionmaker(class_='Session', bind=Engine(sqlite:///...Cpytest-of-yuwen%5Cpytest-897%5Ctest_stale_execution_discards_3%5Cworker.db), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-897/test_stale_execution_discards_3')
+fault = 'workflow_version'
+
+    @pytest.mark.parametrize("fault", ["lease", "token", "lease_version", "workflow_version"])
+    def test_stale_execution_discards_all_staged_effects(worker_api, tmp_path, fault):
+        client, sessions = worker_api
+        workflow_id = prepare_inference(worker_api)
+        before = effects(sessions, workflow_id)
+>       with executor(sessions, tmp_path, "stale", gated=True):
+
+web\tests\test_worker_concurrency.py:221: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+sessions = sessionmaker(class_='Session', bind=Engine(sqlite:///C%3A%5CUsers%5Cyuwen%5CAppData%5CLocal%5CTemp%5Cpytest-of-yuwen%5Cpytest-897%5Ctest_stale_execution_discards_3%5Cworker.db), autoflush=False, expire_on_commit=False)
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-897/test_stale_execution_discards_3')
+name = 'stale', mode = 'normal', gated = True, lease = 30, crash = False
+
+    @contextmanager
+    def executor(sessions, tmp_path, name, *, mode="normal", gated=False, lease=30, crash=False):
+        gate = tmp_path / name
+        env = os.environ.copy()
+        env["WORKER_TEST_DATABASE_URL"] = sessions.kw["bind"].url.render_as_string(hide_password=False)
+        args = [sys.executable, "-m", "web.tests.worker_concurrency_process", "--mode", mode,
+                "--lease-seconds", str(lease)]
+        if gated:
+            args.extend(["--gate", str(gate)])
+        process = subprocess.Popen(args, env=env, cwd=Path(__file__).resolve().parents[2],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            if gated:
+                deadline = time.monotonic() + 20
+                while not gate.with_suffix(".started").exists():
+                    if process.poll() is not None or time.monotonic() >= deadline:
+>                       raise AssertionError("Worker did not reach controlled adapter")
+E                       AssertionError: Worker did not reach controlled adapter
+
+web\tests\test_worker_concurrency.py:133: AssertionError
+__________ test_model_timeout_exhausts_retries_as_failed_not_review ___________
+
+worker_api = (<starlette.testclient.TestClient object at 0x000002567C00C6D0>, sessionmaker(class_='Session', bind=Engine(sqlite:///...Cpytest-of-yuwen%5Cpytest-897%5Ctest_model_timeout_exhausts_re0%5Cworker.db), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-897/test_model_timeout_exhausts_re0')
+
+    def test_model_timeout_exhausts_retries_as_failed_not_review(worker_api, tmp_path):
+        client, sessions = worker_api
+        workflow_id = prepare_inference(worker_api)
+        for expected in ["QUEUED", "QUEUED", "FAILED"]:
+            with executor(sessions, tmp_path, uuid4().hex, mode="timeout") as (process, _):
+>               process.wait(timeout=20)
+
+web\tests\test_worker_concurrency.py:251: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 0 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+timeout = 20
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on Windows."""
+        if timeout is None:
+            timeout_millis = _winapi.INFINITE
+        elif timeout <= 0:
+            timeout_millis = 0
+        else:
+            timeout_millis = int(timeout * 1000)
+        if self.returncode is None:
+            # API note: Returns immediately if timeout_millis == 0.
+            result = _winapi.WaitForSingleObject(self._handle,
+                                                 timeout_millis)
+            if result == _winapi.WAIT_TIMEOUT:
+>               raise TimeoutExpired(self.args, timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe', '-m', 'web.tests.worker_concurrency_process', '--mode', 'timeout', '--lease-seconds', '30']' timed out after 20 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1593: TimeoutExpired
+============================== warnings summary ===============================
+web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED web/tests/test_document_upload.py::test_valid_empty_word_is_distinct_from_parse_failure[empty.doc]
+FAILED web/tests/test_human_wait_restart.py::test_incompatible_supplement_graph_preserves_wait_and_reports_conflict
+FAILED web/tests/test_no_jvm_doc.py::test_upstream_word_header_and_footer_keep_unicode_encoding
+FAILED web/tests/test_worker_concurrency.py::test_stale_execution_discards_all_staged_effects[workflow_version]
+FAILED web/tests/test_worker_concurrency.py::test_model_timeout_exhausts_retries_as_failed_not_review
+5 failed, 781 passed, 28 skipped, 1 warning in 1451.97s (0:24:11)

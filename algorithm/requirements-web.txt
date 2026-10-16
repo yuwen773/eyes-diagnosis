@@ -38,8 +38,8 @@ httpx>=0.27
 # but a deployment that serves /knowledge/upload needs them, which is why they
 # are listed rather than left to requirements.txt.
 #
-# Binary .doc uses the pinned local Tika CLI (python -m web.doc_parser) and Java
-# 21. olefile validates the Word container before invoking the parser.
+# Binary .doc uses pinned local LibreOffice (python -m web.doc_tool --archive
+# <verified local package>). olefile validates the Word container first; no JVM.
 pypdf>=4.0
 python-docx>=1.2
 olefile==0.47

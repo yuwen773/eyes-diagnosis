@@ -66,6 +66,8 @@ export const uploadDocument = (files: File[], title?: string): Promise<BaseRespo
   }
   return myAxios.post('/knowledge/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    // Parsing is sequential; allow the bounded Windows DOC conversion per file.
+    timeout: files.length * 150000 + 30000,
   }).then((res: any) => res.data)
 }
 

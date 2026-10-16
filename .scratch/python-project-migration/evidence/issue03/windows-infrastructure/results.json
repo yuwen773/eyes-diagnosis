@@ -1,0 +1,24 @@
+{
+  "timestampUtc": "2026-10-15T14:12:08.983918+00:00",
+  "status": "PASS",
+  "embedding": "CONTROLLED",
+  "realEmbedding": "BLOCKED (historical HTTP 401; not rerun)",
+  "cos": "CONTROLLED",
+  "clinical": "NOT_VERIFIED",
+  "javaStarted": false,
+  "schema": "eye_doc_issue03_21af1d786d5f449ea2881e997d82a5f6",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_doc_issue03_21af1d786d5f449ea2881e997d82a5f6",
+  "mysqlVersion": "8.0.26",
+  "redisVersion": "3.2.100",
+  "chunkCount": 3,
+  "embeddingDimension": 1024,
+  "collection": "diagnosis-knowledge",
+  "checks": [
+    "python-login-and-anonymous-denial",
+    "binary-doc-chinese-tables-header-footer-upload-and-citations",
+    "real-chroma-chunks-and-integer-metadata",
+    "large-owner-id-cross-user-denial",
+    "corrupt-empty-encrypted-inputs-no-index",
+    "original-document-vector-and-dimension-preserved"
+  ]
+}

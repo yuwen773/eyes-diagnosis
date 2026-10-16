@@ -1,0 +1,15 @@
+{
+  ".github/workflows/python-real-services.yml": "825405f47375af707edfa39bbff8d5c9dcb937462f634bacd19226f01682358e",
+  ".github/workflows/verify.yml": "0f7355683f48a4d9c5c95296d649d4e201443aece078842b6b25288d9d2c5961",
+  "algorithm/requirements-web.txt": "70e0be73e50d35c00f0980230cf486a3b42ab9e4bbacf05cd10c8c0b91a02bd3",
+  "algorithm/web/doc_parser.py": "995254e46d27e0f89aada348d13ed234923f78a65e5a4a4c09fea5d00a716835",
+  "algorithm/web/doc_tool.py": "3f45e86896736c31d9b123b37701cdbffab8ec53a0a83e7c2aaae5d783dd00f4",
+  "algorithm/web/extract.py": "321185e77dfec589a9a14ad309fa0175f999a2cf3940e0d3177f6293d070a874",
+  "algorithm/web/knowledge.py": "a3256b39aa1c017a22064c33f24ae6c97e7217f47fffd686379c63374210d843",
+  "algorithm/web/verify_document_knowledge.py": "7d6df5fdd2b207d56653d6513cc568ab0133339c74edd1ccb5ffd9e706d3edae",
+  "algorithm/web/tests/document_knowledge_process.py": "103f458f49584d19fe37e05c347a870d74db885c335911d24ccff8297c76080d",
+  "algorithm/web/tests/make_doc_fixture.py": "317f8082bd1891c39b7aac929166dc7382918287dbbd34e4e0df9c1e4133de63",
+  "algorithm/web/tests/test_document_upload.py": "ba61e60dd75093e845baaf9bf25bb60e6d42b84eeffa51f3bb8a9faf5929e266",
+  "algorithm/web/tests/test_no_jvm_doc.py": "5d080df397c378a4f3dc44e3ab5232a2afc1c4926eac3b8549c0015f83bd21dd",
+  "frontend/src/api/knowledgeController.ts": "6f4d33cd1e60bcb2041581ac4c1eccd155992f4fffc6b821938d989c2f9fde3e"
+}

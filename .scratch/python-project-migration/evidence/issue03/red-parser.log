@@ -1,0 +1,16 @@
+
+=================================== ERRORS ====================================
+________________ ERROR collecting web/tests/test_no_jvm_doc.py ________________
+ImportError while importing test module 'D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\tests\test_no_jvm_doc.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web\tests\test_no_jvm_doc.py:5: in <module>
+    from web.doc_conversion import extract_doc
+E   ModuleNotFoundError: No module named 'web.doc_conversion'
+=========================== short test summary info ===========================
+ERROR web/tests/test_no_jvm_doc.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.62s
