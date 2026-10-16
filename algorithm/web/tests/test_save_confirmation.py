@@ -52,6 +52,19 @@ def count(sessions):
         return db.scalar(select(func.count()).select_from(Diagnosis))
 
 
+@pytest.mark.parametrize("token", ["graph_version", "graph_hash", "action_version"])
+def test_incompatible_graph_cannot_consume_pending_save_authorization(explanation_api, token):
+    client, sessions, task, view, row = prepare(explanation_api)
+    with sessions.begin() as db:
+        setattr(db.get(Workflow, task), token, "incompatible-release")
+    response = act(client, row)
+    assert response.status_code == 409, response.text
+    assert "图版本" in response.text
+    assert client.get(path(task)).json()["data"] == row
+    assert client.post(path(task), json=requested(view, "new-release")).status_code == 409
+    assert client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"] == "0"
+
+
 def test_preview_is_not_save_and_approval_saves_exactly_once(explanation_api):
     client, sessions, task, view, row = prepare(explanation_api)
     assert row["status"] == "PENDING" and count(sessions) == 0

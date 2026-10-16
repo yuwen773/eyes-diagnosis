@@ -1,0 +1,13 @@
+F
+================================== FAILURES ===================================
+______ test_frozen_wait_upgrade_real_login_and_process_restart[quality] _______
+web\tests\test_python_wait_recovery.py:229: in test_frozen_wait_upgrade_real_login_and_process_restart
+    assert client.get(f"/api/diagnosis/workflows/{workflow_id}").status_code == 403
+E   AssertionError: assert 200 == 403
+E    +  where 200 = <Response [200 OK]>.status_code
+E    +    where <Response [200 OK]> = get('/api/diagnosis/workflows/f5deeb898e844c7b8df356bc4bcbbf04')
+E    +      where get = <httpx.Client object at 0x00000146767B5F90>.get
+=========================== short test summary info ===========================
+FAILED web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 48.37s

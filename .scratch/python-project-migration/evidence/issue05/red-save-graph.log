@@ -1,0 +1,58 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_ test_incompatible_graph_cannot_consume_pending_save_authorization[graph_version] _
+
+explanation_api = (<starlette.testclient.TestClient object at 0x000001E36B865C10>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+token = 'graph_version'
+
+    @pytest.mark.parametrize("token", ["graph_version", "graph_hash", "action_version"])
+    def test_incompatible_graph_cannot_consume_pending_save_authorization(explanation_api, token):
+        client, sessions, task, view, row = prepare(explanation_api)
+        with sessions.begin() as db:
+            setattr(db.get(Workflow, task), token, "incompatible-release")
+        response = act(client, row)
+>       assert response.status_code == 409, response.text
+E       AssertionError: {"code":0,"msg":"ok","data":{"confirmationId":"c206643d5b8f410399f5d987c94dd8bf","workflowId":"cc9d7eba313d4e7d81f0a6b2caf652f0","operationType":"SAVE_DIAGNOSIS","status":"APPROVED","idempotencyKey":"save-1","workflowVersion":"24","contentDigest":"08ba19f45c45aa11d7632e87ef3e0b7b09e6e47b057f249e284f308a200d81a7","content":{"imageUrl":"/api/diagnosis/workflows/cc9d7eba313d4e7d81f0a6b2caf652f0/image","imageDigest":"68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c","result":"glaucoma","calibratedProbability":91.0,"severity":"NOT_ASSESSED","details":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","explanation":{"snapshotId":"0c5b77869c584d31b3e3371ac55a7f12","revision":"1","modelAssessment":{"diseaseCode":"glaucoma","calibratedProbability":91.0,"modelVersion":"efficientnet-b4@1.0.0","modelWeightFingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","inferencePolicyVersion":"medical-safety-v3-quality-observe","calibrationStatus":"CALIBRATED"},"generalInformation":[{"claimId":"general-1","type":"GENERAL_DISEASE_INFORMATION","text":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������","citationIds":["doc_1_chunk_0"]}],"citations":[{"citationId":"doc_1_chunk_0","documentId":"1","sourceRevision":1,"title":"guide.txt","source":"ca886ddb-b5cc-42a4-ba17-a5e62a6a06f7_guide.txt","quotedTextDigest":"f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3","quotedText":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������"}],"riskNotice":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","limitation":"��ϵͳ���ڸ��������ʾ���о����������רҵҽ����ϡ���ʽ��ϼ�¼���ɱ�������ȷ�ϱ��档"},"finalReviewTaskId":null},"expiresAt":"2026-10-16T08:17:33+00:00","diagnosisId":"2111001083869396994"}}
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+algorithm\web\tests\test_save_confirmation.py:61: AssertionError
+_ test_incompatible_graph_cannot_consume_pending_save_authorization[graph_hash] _
+
+explanation_api = (<starlette.testclient.TestClient object at 0x000001E36D29C6D0>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+token = 'graph_hash'
+
+    @pytest.mark.parametrize("token", ["graph_version", "graph_hash", "action_version"])
+    def test_incompatible_graph_cannot_consume_pending_save_authorization(explanation_api, token):
+        client, sessions, task, view, row = prepare(explanation_api)
+        with sessions.begin() as db:
+            setattr(db.get(Workflow, task), token, "incompatible-release")
+        response = act(client, row)
+>       assert response.status_code == 409, response.text
+E       AssertionError: {"code":0,"msg":"ok","data":{"confirmationId":"ffde9cd44fcb4689b44944242326c477","workflowId":"d526dedd1b76483da5147b0ba7e96fd9","operationType":"SAVE_DIAGNOSIS","status":"APPROVED","idempotencyKey":"save-1","workflowVersion":"24","contentDigest":"e1167e93c6eac7952140a3d357bf7a8b8e445666b1a0ec531260637093678ed1","content":{"imageUrl":"/api/diagnosis/workflows/d526dedd1b76483da5147b0ba7e96fd9/image","imageDigest":"68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c","result":"glaucoma","calibratedProbability":91.0,"severity":"NOT_ASSESSED","details":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","explanation":{"snapshotId":"ebb4349a81294cffb8a4b01f881f7b8a","revision":"1","modelAssessment":{"diseaseCode":"glaucoma","calibratedProbability":91.0,"modelVersion":"efficientnet-b4@1.0.0","modelWeightFingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","inferencePolicyVersion":"medical-safety-v3-quality-observe","calibrationStatus":"CALIBRATED"},"generalInformation":[{"claimId":"general-1","type":"GENERAL_DISEASE_INFORMATION","text":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������","citationIds":["doc_1_chunk_0"]}],"citations":[{"citationId":"doc_1_chunk_0","documentId":"1","sourceRevision":1,"title":"guide.txt","source":"0c8a02f1-535a-426a-b302-56d8aebaf71a_guide.txt","quotedTextDigest":"f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3","quotedText":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������"}],"riskNotice":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","limitation":"��ϵͳ���ڸ��������ʾ���о����������רҵҽ����ϡ���ʽ��ϼ�¼���ɱ�������ȷ�ϱ��档"},"finalReviewTaskId":null},"expiresAt":"2026-10-16T08:17:34+00:00","diagnosisId":"2111001089053556738"}}
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+algorithm\web\tests\test_save_confirmation.py:61: AssertionError
+_ test_incompatible_graph_cannot_consume_pending_save_authorization[action_version] _
+
+explanation_api = (<starlette.testclient.TestClient object at 0x000001E36D59E950>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+token = 'action_version'
+
+    @pytest.mark.parametrize("token", ["graph_version", "graph_hash", "action_version"])
+    def test_incompatible_graph_cannot_consume_pending_save_authorization(explanation_api, token):
+        client, sessions, task, view, row = prepare(explanation_api)
+        with sessions.begin() as db:
+            setattr(db.get(Workflow, task), token, "incompatible-release")
+        response = act(client, row)
+>       assert response.status_code == 409, response.text
+E       AssertionError: {"code":0,"msg":"ok","data":{"confirmationId":"6483327886f64a30879a5b260caaedbb","workflowId":"4ff27327f22a459189dc74277dfc70ba","operationType":"SAVE_DIAGNOSIS","status":"APPROVED","idempotencyKey":"save-1","workflowVersion":"24","contentDigest":"60b8d3adc1e5f063b88bb70c0ccdc93dd520e5472e555b7825579618cf6c21c9","content":{"imageUrl":"/api/diagnosis/workflows/4ff27327f22a459189dc74277dfc70ba/image","imageDigest":"68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c","result":"glaucoma","calibratedProbability":91.0,"severity":"NOT_ASSESSED","details":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","explanation":{"snapshotId":"81fe1e91188b4028b00d122d3470927c","revision":"1","modelAssessment":{"diseaseCode":"glaucoma","calibratedProbability":91.0,"modelVersion":"efficientnet-b4@1.0.0","modelWeightFingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","inferencePolicyVersion":"medical-safety-v3-quality-observe","calibrationStatus":"CALIBRATED"},"generalInformation":[{"claimId":"general-1","type":"GENERAL_DISEASE_INFORMATION","text":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������","citationIds":["doc_1_chunk_0"]}],"citations":[{"citationId":"doc_1_chunk_0","documentId":"1","sourceRevision":1,"title":"guide.txt","source":"eb753cf2-4cba-4339-85b6-d77139845fa6_guide.txt","quotedTextDigest":"f453003134c53e37992f4b29a52e150db72bd3d26313a399eed42d3f1937f5d3","quotedText":"�������һ�����Ӱ�����񾭵��۲�����Ҫ�ۿƼ��������"}],"riskNotice":"����ģ������������ȷ�һ��ο����ϲ�֤�����˵ļ������������ʻ����������ԣ�����ѯ�ۿ�ҽ����","limitation":"��ϵͳ���ڸ��������ʾ���о����������רҵҽ����ϡ���ʽ��ϼ�¼���ɱ�������ȷ�ϱ��档"},"finalReviewTaskId":null},"expiresAt":"2026-10-16T08:17:35+00:00","diagnosisId":"2111001090576089089"}}
+E       assert 200 == 409
+E        +  where 200 = <Response [200 OK]>.status_code
+
+algorithm\web\tests\test_save_confirmation.py:61: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_save_confirmation.py::test_incompatible_graph_cannot_consume_pending_save_authorization[graph_version]
+FAILED algorithm/web/tests/test_save_confirmation.py::test_incompatible_graph_cannot_consume_pending_save_authorization[graph_hash]
+FAILED algorithm/web/tests/test_save_confirmation.py::test_incompatible_graph_cannot_consume_pending_save_authorization[action_version]
+3 failed, 13 deselected in 6.56s

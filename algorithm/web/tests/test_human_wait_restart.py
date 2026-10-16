@@ -96,6 +96,11 @@ class RestartCase:
         self.evidence = {"database": sessions.kw["bind"].dialect.name, "apiPids": [], "workerPids": [], "snapshots": []}
         self.used_ports = set()
 
+    def command(self, role, *args):
+        script = self.env.get("HUMAN_WAIT_PROCESS_SCRIPT")
+        entry = [script] if script else ["-m", "web.tests.human_wait_process"]
+        return [sys.executable, *entry, role, *args]
+
     @contextmanager
     def api(self, identity="alice"):
         # Recovery is asserted against durable data/cookies. Avoid reusing a
@@ -108,7 +113,7 @@ class RestartCase:
                 self.used_ports.add(self.port)
                 break
         log = (self.directory / f"api-{len(self.evidence['apiPids'])}.log").open("w", encoding="utf-8")
-        process = subprocess.Popen([sys.executable, "-m", "web.tests.human_wait_process", "api", "--port", str(self.port)],
+        process = subprocess.Popen(self.command("api", "--port", str(self.port)),
             env=self.env, cwd=Path(__file__).resolve().parents[2], stdout=log, stderr=log)
         self.evidence["apiPids"].append(process.pid)
         try:
@@ -140,7 +145,7 @@ class RestartCase:
                 time.sleep(.05)
 
     def worker(self, mode="no-inference"):
-        process = subprocess.Popen([sys.executable, "-m", "web.tests.human_wait_process", "worker", "--mode", mode],
+        process = subprocess.Popen(self.command("worker", "--mode", mode),
             env=self.env, cwd=Path(__file__).resolve().parents[2], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.evidence["workerPids"].append(process.pid)
         try:

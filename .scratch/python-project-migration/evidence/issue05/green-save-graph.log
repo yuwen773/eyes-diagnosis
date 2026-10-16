@@ -1,0 +1,67 @@
+..............FF                                                         [100%]
+================================== FAILURES ===================================
+________ test_pending_and_approved_consent_survive_fresh_api_processes ________
+
+explanation_api = (<starlette.testclient.TestClient object at 0x000001C437BA5950>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-929/test_pending_and_approved_cons0')
+
+    def test_pending_and_approved_consent_survive_fresh_api_processes(explanation_api, tmp_path):
+        _, sessions, _, _, row = prepare(explanation_api)
+        filename = tmp_path / "consent.db"
+        durable = copy_database(sessions, filename)
+>       first = result(approval_process(filename, row))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+algorithm\web\tests\test_save_confirmation.py:255: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+process = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+
+    def result(process):
+        stdout, stderr = process.communicate(timeout=45)
+>       assert process.returncode == 0, stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 6, in <module>
+E         ModuleNotFoundError: No module named 'web'
+E         
+E       assert 1 == 0
+E        +  where 1 = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>.returncode
+
+algorithm\web\tests\test_save_confirmation.py:247: AssertionError
+_________ test_concurrent_api_processes_cannot_duplicate_formal_save __________
+
+explanation_api = (<starlette.testclient.TestClient object at 0x000001C438278F50>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-929/test_concurrent_api_processes_0')
+
+    def test_concurrent_api_processes_cannot_duplicate_formal_save(explanation_api, tmp_path):
+        _, sessions, _, _, row = prepare(explanation_api)
+        filename = tmp_path / "concurrent.db"
+        durable = copy_database(sessions, filename)
+        processes = [approval_process(filename, row) for _ in range(2)]
+>       responses = [result(process) for process in processes]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+algorithm\web\tests\test_save_confirmation.py:269: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+algorithm\web\tests\test_save_confirmation.py:269: in <listcomp>
+    responses = [result(process) for process in processes]
+                 ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+process = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+
+    def result(process):
+        stdout, stderr = process.communicate(timeout=45)
+>       assert process.returncode == 0, stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 6, in <module>
+E         ModuleNotFoundError: No module named 'web'
+E         
+E       assert 1 == 0
+E        +  where 1 = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>.returncode
+
+algorithm\web\tests\test_save_confirmation.py:247: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_save_confirmation.py::test_pending_and_approved_consent_survive_fresh_api_processes
+FAILED algorithm/web/tests/test_save_confirmation.py::test_concurrent_api_processes_cannot_duplicate_formal_save
+2 failed, 14 passed in 11.22s

@@ -23,6 +23,15 @@ def canonical(content: dict) -> str:
     return json.dumps(content, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def require_current_graph(workflow: Workflow) -> None:
+    # Import lazily: the graph's publication nodes also use confirmation helpers.
+    from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
+
+    if (workflow.graph_version, workflow.graph_hash, workflow.action_version) != (
+            GRAPH_VERSION, GRAPH_HASH, ACTION_VERSION):
+        raise HTTPException(409, "工作流图版本不兼容，保留原保存确认，请使用兼容版本恢复")
+
+
 def locked_workflow(db: Session, workflow_id: str, user_id: int) -> Workflow:
     workflow = db.scalar(select(Workflow).where(Workflow.workflow_id == workflow_id)
                          .with_for_update().execution_options(populate_existing=True))
@@ -108,6 +117,7 @@ def request_save(db: Session, workflow_id: str, user_id: int, body: SaveRequest)
         approved = db.get(SaveConfirmation, saved.confirmation_id)
         assert approved is not None
         return confirmation_view(db, approved)
+    require_current_graph(workflow)
     content = candidate(db, workflow)
     if content is None:
         db.commit()  # Persist a source revocation detected by patient_explanation.
@@ -147,6 +157,8 @@ def decide_save(db: Session, workflow_id: str, confirmation_id: str, user_id: in
             row.content_digest != body.expectedContentDigest or
             str(row.workflow_version) != body.expectedWorkflowVersion):
         raise HTTPException(409, "确认内容或版本不匹配，请刷新")
+    if row.status == "PENDING":
+        require_current_graph(workflow)
     view = confirmation_view(db, row)
     target = "APPROVED" if approve else "REJECTED"
     if row.status == target:

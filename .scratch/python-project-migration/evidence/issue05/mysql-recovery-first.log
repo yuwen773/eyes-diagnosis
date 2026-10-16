@@ -1,0 +1,38 @@
+F
+================================== FAILURES ===================================
+______ test_frozen_wait_upgrade_real_login_and_process_restart[quality] _______
+web\tests\test_python_wait_recovery.py:181: in test_frozen_wait_upgrade_real_login_and_process_restart
+    with signed_api(case, "doctor" if kind in {"quality", "final"} else "alice") as client:
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web\tests\test_python_wait_recovery.py:131: in sample
+    file = case.directory / f"before-{kind}.json"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web\tests\test_python_wait_recovery.py:131: in <dictcomp>
+    file = case.directory / f"before-{kind}.json"
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web\migrations\runner.py:55: in query
+    cursor.execute(sql, args)
+.venv-baseline\Lib\site-packages\pymysql\cursors.py:170: in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\pymysql\cursors.py:335: in _query
+    conn.query(q)
+.venv-baseline\Lib\site-packages\pymysql\connections.py:581: in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\pymysql\connections.py:857: in _read_query_result
+    result.read()
+.venv-baseline\Lib\site-packages\pymysql\connections.py:1290: in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\pymysql\connections.py:810: in _read_packet
+    packet.raise_for_error()
+.venv-baseline\Lib\site-packages\pymysql\protocol.py:219: in raise_for_error
+    err.raise_mysql_exception(self._data)
+.venv-baseline\Lib\site-packages\pymysql\err.py:154: in raise_mysql_exception
+    raise errorclass(errno, errval, sqlstate=sqlstate)
+E   pymysql.err.ProgrammingError: (1146, "Table 'eye_human_wait_issue17_917a189c005247da87baf6c2ebd99300.t_python_workflow' doesn't exist")
+=========================== short test summary info ===========================
+FAILED web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 21.80s

@@ -1,0 +1,373 @@
+{
+  "database": "mysql",
+  "apiPids": [
+    50792,
+    22428
+  ],
+  "workerPids": [
+    62504,
+    53864
+  ],
+  "snapshots": [
+    {
+      "workflowId": "235ef52db2da45cdbcb699cae1c76715",
+      "inference": [
+        {
+          "envelope_id": "865cffc0164f4e9b950605705a01cd35",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "inference_epoch": "0",
+          "image_reference": "mysql-upload:235ef52db2da45cdbcb699cae1c76715",
+          "input_digest": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c",
+          "media_type": "image/png",
+          "quality_outcome": "REVIEW",
+          "quality_score": "40",
+          "quality_reasons": "[\"blur\"]",
+          "outcome": "VALID_PREDICTION",
+          "prediction_snapshot": "{\"calibratedProbability\": 91.0, \"diseaseCode\": \"glaucoma\"}",
+          "confidence_snapshot": "{\"probability\": 91.0, \"reliabilityScore\": 91, \"requiresReview\": false, \"topPredictions\": [{\"label\": \"glaucoma\", \"probability\": 91.0}]}",
+          "abstention_reason": "None",
+          "failure_code": "None",
+          "ood_snapshot": "{\"outOfDistribution\": false, \"score\": 0.0, \"status\": \"NOT_EVALUATED\"}",
+          "calibration_snapshot": "{\"probability\": 91.0, \"status\": \"CALIBRATED\"}",
+          "model_version": "efficientnet-b4@1.0.0",
+          "model_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "preprocess_version": "v1",
+          "policy_version": "medical-safety-v3-quality-observe",
+          "inferred_at": "2026-10-16 08:10:04.882358",
+          "created_at": "2026-10-16 16:10:04"
+        }
+      ],
+      "explanations": [],
+      "reviews": [
+        {
+          "task_id": "f48d206ff97b4c8496b9783d62026bce",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "review_type": "IMAGE_QUALITY_GATE",
+          "review_round": "1",
+          "status": "OPEN",
+          "assigned_doctor_id": "None",
+          "submitted_doctor_id": "None",
+          "decision": "None",
+          "reason": "None",
+          "version": "0",
+          "workflow_version": "6",
+          "envelope_id": "865cffc0164f4e9b950605705a01cd35",
+          "graph_version": "upload-final-clinical-review-v6",
+          "graph_hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+          "action_version": "upload-final-clinical-review-v6",
+          "thread_id": "235ef52db2da45cdbcb699cae1c76715",
+          "checkpoint_id": "1f1c938f-e770-6976-8005-21b1718925a8",
+          "created_at": "2026-10-16 16:10:04.983745",
+          "claimed_at": "None",
+          "submitted_at": "None",
+          "updated_at": "2026-10-16 16:10:04.983745"
+        }
+      ],
+      "events": [
+        {
+          "event_id": "1995b934aba7415081202a6dcab414ac",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "1",
+          "event_type": "QUEUED",
+          "actor_type": "USER",
+          "actor_id": "7",
+          "version": "0",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:09:59"
+        },
+        {
+          "event_id": "0d76c9efb1e3482ca1c4bf14a37ed1c3",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "2",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "39df86440f8d406baf1a4d0698838110",
+          "version": "1",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.637023"
+        },
+        {
+          "event_id": "3ba11d5750404816a072fffc962160ad",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "3",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "39df86440f8d406baf1a4d0698838110",
+          "version": "2",
+          "segment": "inference",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.755578"
+        },
+        {
+          "event_id": "0cd23368cd20464e86d7f92f20e092c9",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "4",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "accb71e0c4c745b2bc310cf46d38543d",
+          "version": "3",
+          "segment": "inference",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.810070"
+        },
+        {
+          "event_id": "5f3d5e3a55794d5d9d48adf398a4fbb5",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "5",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "accb71e0c4c745b2bc310cf46d38543d",
+          "version": "4",
+          "segment": "imageQuality",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.889587"
+        },
+        {
+          "event_id": "479ca2832259401693cdb90c44e89517",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "6",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "73b96142098441cb8f3944c170a97df8",
+          "version": "5",
+          "segment": "imageQuality",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.945069"
+        },
+        {
+          "event_id": "997b9d71502948af8a8ab186240c3ecd",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "7",
+          "event_type": "WAITING_HUMAN_REVIEW",
+          "actor_type": "WORKER",
+          "actor_id": "73b96142098441cb8f3944c170a97df8",
+          "version": "6",
+          "segment": "qualityReview",
+          "reason": "QUALITY_REVIEW_REQUIRED",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.983745"
+        }
+      ],
+      "supplements": [
+        {
+          "request_id": "9f178a6e-86d6-4ae3-b471-e61f1fd4484f",
+          "session_id": "fault",
+          "active_session_id": "fault",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "user_id": "7",
+          "idempotency_key": "supplement-1",
+          "original_message": "\u8865\u5145\u672c\u6b21\u8bf4\u660e",
+          "status": "WAITING",
+          "version": "0",
+          "answer": "None",
+          "graph_version": "incompatible",
+          "checkpoint_id": "1f1c938f-ee20-6e33-8000-f34710efe358",
+          "created_at": "2026-10-16 16:10:06",
+          "answered_at": "None"
+        }
+      ],
+      "confirmations": [],
+      "receipts": [],
+      "diagnoses": [],
+      "workflowVersion": "6",
+      "status": "WAITING_HUMAN_REVIEW",
+      "stopReason": "QUALITY_REVIEW_REQUIRED",
+      "graphVersion": "upload-final-clinical-review-v6",
+      "checkpointId": "1f1c938f-e770-6976-8005-21b1718925a8"
+    },
+    {
+      "workflowId": "235ef52db2da45cdbcb699cae1c76715",
+      "inference": [
+        {
+          "envelope_id": "865cffc0164f4e9b950605705a01cd35",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "inference_epoch": "0",
+          "image_reference": "mysql-upload:235ef52db2da45cdbcb699cae1c76715",
+          "input_digest": "68eb562430b8508f014985a342ffc9f43e30a0f13577658c86260df838785d6c",
+          "media_type": "image/png",
+          "quality_outcome": "REVIEW",
+          "quality_score": "40",
+          "quality_reasons": "[\"blur\"]",
+          "outcome": "VALID_PREDICTION",
+          "prediction_snapshot": "{\"calibratedProbability\": 91.0, \"diseaseCode\": \"glaucoma\"}",
+          "confidence_snapshot": "{\"probability\": 91.0, \"reliabilityScore\": 91, \"requiresReview\": false, \"topPredictions\": [{\"label\": \"glaucoma\", \"probability\": 91.0}]}",
+          "abstention_reason": "None",
+          "failure_code": "None",
+          "ood_snapshot": "{\"outOfDistribution\": false, \"score\": 0.0, \"status\": \"NOT_EVALUATED\"}",
+          "calibration_snapshot": "{\"probability\": 91.0, \"status\": \"CALIBRATED\"}",
+          "model_version": "efficientnet-b4@1.0.0",
+          "model_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "preprocess_version": "v1",
+          "policy_version": "medical-safety-v3-quality-observe",
+          "inferred_at": "2026-10-16 08:10:04.882358",
+          "created_at": "2026-10-16 16:10:04"
+        }
+      ],
+      "explanations": [],
+      "reviews": [
+        {
+          "task_id": "f48d206ff97b4c8496b9783d62026bce",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "review_type": "IMAGE_QUALITY_GATE",
+          "review_round": "1",
+          "status": "OPEN",
+          "assigned_doctor_id": "None",
+          "submitted_doctor_id": "None",
+          "decision": "None",
+          "reason": "None",
+          "version": "0",
+          "workflow_version": "6",
+          "envelope_id": "865cffc0164f4e9b950605705a01cd35",
+          "graph_version": "upload-final-clinical-review-v6",
+          "graph_hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+          "action_version": "upload-final-clinical-review-v6",
+          "thread_id": "235ef52db2da45cdbcb699cae1c76715",
+          "checkpoint_id": "1f1c938f-e770-6976-8005-21b1718925a8",
+          "created_at": "2026-10-16 16:10:04.983745",
+          "claimed_at": "None",
+          "submitted_at": "None",
+          "updated_at": "2026-10-16 16:10:04.983745"
+        }
+      ],
+      "events": [
+        {
+          "event_id": "1995b934aba7415081202a6dcab414ac",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "1",
+          "event_type": "QUEUED",
+          "actor_type": "USER",
+          "actor_id": "7",
+          "version": "0",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:09:59"
+        },
+        {
+          "event_id": "0d76c9efb1e3482ca1c4bf14a37ed1c3",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "2",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "39df86440f8d406baf1a4d0698838110",
+          "version": "1",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.637023"
+        },
+        {
+          "event_id": "3ba11d5750404816a072fffc962160ad",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "3",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "39df86440f8d406baf1a4d0698838110",
+          "version": "2",
+          "segment": "inference",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.755578"
+        },
+        {
+          "event_id": "0cd23368cd20464e86d7f92f20e092c9",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "4",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "accb71e0c4c745b2bc310cf46d38543d",
+          "version": "3",
+          "segment": "inference",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.810070"
+        },
+        {
+          "event_id": "5f3d5e3a55794d5d9d48adf398a4fbb5",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "5",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "accb71e0c4c745b2bc310cf46d38543d",
+          "version": "4",
+          "segment": "imageQuality",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.889587"
+        },
+        {
+          "event_id": "479ca2832259401693cdb90c44e89517",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "6",
+          "event_type": "RUNNING",
+          "actor_type": "WORKER",
+          "actor_id": "73b96142098441cb8f3944c170a97df8",
+          "version": "5",
+          "segment": "imageQuality",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.945069"
+        },
+        {
+          "event_id": "997b9d71502948af8a8ab186240c3ecd",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "sequence": "7",
+          "event_type": "WAITING_HUMAN_REVIEW",
+          "actor_type": "WORKER",
+          "actor_id": "73b96142098441cb8f3944c170a97df8",
+          "version": "6",
+          "segment": "qualityReview",
+          "reason": "QUALITY_REVIEW_REQUIRED",
+          "payload": "None",
+          "occurred_at": "2026-10-16 16:10:04.983745"
+        }
+      ],
+      "supplements": [
+        {
+          "request_id": "9f178a6e-86d6-4ae3-b471-e61f1fd4484f",
+          "session_id": "fault",
+          "active_session_id": "fault",
+          "workflow_id": "235ef52db2da45cdbcb699cae1c76715",
+          "user_id": "7",
+          "idempotency_key": "supplement-1",
+          "original_message": "\u8865\u5145\u672c\u6b21\u8bf4\u660e",
+          "status": "WAITING",
+          "version": "0",
+          "answer": "None",
+          "graph_version": "incompatible",
+          "checkpoint_id": "1f1c938f-ee20-6e33-8000-f34710efe358",
+          "created_at": "2026-10-16 16:10:06",
+          "answered_at": "None"
+        }
+      ],
+      "confirmations": [],
+      "receipts": [],
+      "diagnoses": [],
+      "workflowVersion": "6",
+      "status": "WAITING_HUMAN_REVIEW",
+      "stopReason": "QUALITY_REVIEW_REQUIRED",
+      "graphVersion": "upload-final-clinical-review-v6",
+      "checkpointId": "1f1c938f-e770-6976-8005-21b1718925a8"
+    }
+  ],
+  "baselineCommit": "cf31e88f28fb00ae3cfd8cc6a1534076363b7de3",
+  "schema": "eye_human_wait_issue17_76faf3dae7604f6ebc2e004b4523399c",
+  "identity": "real Cookie/Redis/t_user",
+  "upgrade": {
+    "differences": [],
+    "pythonVersion": 1,
+    "sourceVersion": 22,
+    "status": "APPLIED"
+  },
+  "calls": [
+    "inference"
+  ]
+}

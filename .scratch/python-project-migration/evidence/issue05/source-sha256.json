@@ -1,0 +1,11 @@
+{
+  ".scratch/python-project-migration/README.md": "c349639f01a3da0c8dc3e16f2c6e11938f98825abd40f1cc2d0710aa6ceaa0f8",
+  ".scratch/python-project-migration/issues/05-python-wait-recovery.md": "b2dc5248a1ef63961d7e45d08d735438fbe18b80666c4eb70887125e1bd301c4",
+  "algorithm/web/tests/test_human_wait_restart.py": "43b023af4e7c6be25341fa473b339e9f7a4b61327158686db8ec00cb9818e35c",
+  "algorithm/web/tests/test_python_wait_recovery.py": "e385fffcbd5de22ff89a75576a08746e621d672ae483733a5a294abd5e588aa6",
+  "algorithm/web/tests/test_save_confirmation.py": "9ec871d269f46609676c579d90cc174f05e518aa8d62d7a012de5c9305b57229",
+  "algorithm/web/tests/wait_recovery_browser.py": "38b02440fd56802d3e40e9846c12b37858a475fa8149484b1e15e8c751417b8f",
+  "algorithm/web/tests/wait_recovery_process.py": "300ab7ae857e90ad4f02a303ac529607207ad246ff19b5bd781bb648de40365d",
+  "algorithm/web/workflow/confirmation.py": "447e29ee8047357d24e9e4bca72af969e9435a11a006b55b393bed427f465267",
+  "docs/python-wait-recovery.md": "e7f651c1c77866f99dac15e6c11535c152dd309073b7647c424b7b11c10fca17"
+}

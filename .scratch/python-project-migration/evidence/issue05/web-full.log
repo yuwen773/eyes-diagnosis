@@ -1,0 +1,19 @@
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 17%]
+........................................................................ [ 25%]
+........................................................ssss............ [ 34%]
+........................................................................ [ 43%]
+........................................................................ [ 51%]
+....................s................................................... [ 60%]
+........................................................................ [ 68%]
+........................................sssssssssss..................... [ 77%]
+........................................................................ [ 86%]
+........................................................................ [ 94%]
+...........s.................................                            [100%]
+============================== warnings summary ===============================
+web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+797 passed, 40 skipped, 1 warning in 961.18s (0:16:01)

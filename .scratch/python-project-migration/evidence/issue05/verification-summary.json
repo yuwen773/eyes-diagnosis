@@ -1,0 +1,236 @@
+{
+  "ticket": "05-python-wait-recovery",
+  "status": "PASS_WITH_LIMITATIONS",
+  "ticketStatus": "ready-for-human",
+  "acceptanceCriteriaCompleted": 4,
+  "baselineCommit": "cf31e88f28fb00ae3cfd8cc6a1534076363b7de3",
+  "branch": "worktree-py-rewrite",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "windowsFullWeb": {
+    "tests": 837,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 40,
+    "passed": 797,
+    "seconds": 961.123,
+    "junit": "web-full.xml",
+    "status": "PASS",
+    "log": "web-full.log",
+    "warnings": 1,
+    "environment": "Existing legacy contract/history tests still use repository-required JDK; no whole-project no-JVM claim"
+  },
+  "focusedWindows": {
+    "tests": 99,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 5,
+    "passed": 94,
+    "seconds": 467.977,
+    "junit": "focused.xml",
+    "status": "PASS",
+    "log": "focused.log"
+  },
+  "realInfrastructure": {
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 11,
+    "seconds": 538.538,
+    "junit": "mysql-recovery-final.xml",
+    "status": "PASS",
+    "log": "mysql-recovery-final.log",
+    "scope": "Isolated MySQL, owned real Redis, TCP production routes/Worker, frozen-release upgrade, original Vue Chromium refresh",
+    "externalAdapters": "Synthetic classification, retrieval and explanation; not real provider/model/clinical evidence",
+    "waits": [
+      {
+        "kind": "quality",
+        "status": "PASS",
+        "evidence": "test_frozen_wait_upgrade_real_0.json",
+        "sample": {
+          "file": "test_frozen_wait_upgrade_real_0-before-quality.json",
+          "sha256": "6b31e4866c54c275e0ee7b701e5b52f5267602299eed3937a5c2b96856def49d"
+        },
+        "schema": "eye_human_wait_issue17_9350de28efb94d09ac175959bcc0ad90",
+        "apiProcesses": 4,
+        "workerProcesses": 4,
+        "inferenceCalls": 1,
+        "explanationCalls": 1,
+        "browser": {
+          "status": "PASS",
+          "kind": "quality",
+          "pageErrors": [],
+          "workflowCreatePosts": 0,
+          "screenshot": "test_frozen_wait_upgrade_real_0-quality-refresh.png",
+          "refreshes": 1
+        },
+        "concurrentApprovals": 0
+      },
+      {
+        "kind": "final",
+        "status": "PASS",
+        "evidence": "test_frozen_wait_upgrade_real_1.json",
+        "sample": {
+          "file": "test_frozen_wait_upgrade_real_1-before-final.json",
+          "sha256": "0a74a939c72665e6eb69e876269b6b5dfeac677df9358bcd33d83d43365c98c3"
+        },
+        "schema": "eye_human_wait_issue17_d619721e73264ddb940ce6e2ea0e6f3b",
+        "apiProcesses": 4,
+        "workerProcesses": 4,
+        "inferenceCalls": 1,
+        "explanationCalls": 1,
+        "browser": {
+          "status": "PASS",
+          "kind": "final",
+          "pageErrors": [],
+          "workflowCreatePosts": 0,
+          "screenshot": "test_frozen_wait_upgrade_real_1-final-refresh.png",
+          "refreshes": 1
+        },
+        "concurrentApprovals": 0
+      },
+      {
+        "kind": "save",
+        "status": "PASS",
+        "evidence": "test_frozen_wait_upgrade_real_2.json",
+        "sample": {
+          "file": "test_frozen_wait_upgrade_real_2-before-save.json",
+          "sha256": "957724367483dc26c05bde0766c4acb03a2784d879210dac6700ef1c6cec1d91"
+        },
+        "schema": "eye_human_wait_issue17_1bd4519f7d9b4eb493d0764ba42977bd",
+        "apiProcesses": 4,
+        "workerProcesses": 3,
+        "inferenceCalls": 1,
+        "explanationCalls": 1,
+        "browser": {
+          "status": "PASS",
+          "kind": "save",
+          "pageErrors": [],
+          "workflowCreatePosts": 0,
+          "screenshot": "test_frozen_wait_upgrade_real_2-save-refresh.png",
+          "refreshes": 1
+        },
+        "concurrentApprovals": 6
+      },
+      {
+        "kind": "supplement",
+        "status": "PASS",
+        "evidence": "test_frozen_wait_upgrade_real_3.json",
+        "sample": {
+          "file": "test_frozen_wait_upgrade_real_3-before-supplement.json",
+          "sha256": "f446770c8023a7ad0f3d0d7136204c74ea014f89ce9fbb74f296b885215cb083"
+        },
+        "schema": "eye_human_wait_issue17_6390688b45bc44448054b31442f44da3",
+        "apiProcesses": 4,
+        "workerProcesses": 3,
+        "inferenceCalls": 1,
+        "explanationCalls": 1,
+        "browser": {
+          "status": "PASS",
+          "kind": "supplement",
+          "pageErrors": [],
+          "workflowCreatePosts": 0,
+          "screenshot": "test_frozen_wait_upgrade_real_3-supplement-refresh.png",
+          "refreshes": 1
+        },
+        "concurrentApprovals": 0
+      }
+    ],
+    "fencing": [
+      {
+        "evidence": "test_mysql_resumed_wait_lease_0.json",
+        "jobId": "4f448a7739c6465c9db33cf7b58a38e4",
+        "oldLeaseVersion": 1,
+        "replacementLeaseVersion": 2,
+        "tokenRotated": true,
+        "databaseTime": "2026-10-16T16:11:36.721330",
+        "lockNowait": "PASS",
+        "killed": false
+      },
+      {
+        "evidence": "test_mysql_resumed_wait_lease_1.json",
+        "jobId": "b85e92764bc5492496594b514160840e",
+        "oldLeaseVersion": 1,
+        "replacementLeaseVersion": 2,
+        "tokenRotated": true,
+        "databaseTime": "2026-10-16T16:12:27.270920",
+        "lockNowait": "PASS",
+        "killed": true
+      }
+    ],
+    "noJvmEnvironmentScope": "Frozen/current API and main recovery Worker only; extra fault executors inherit test parent environment"
+  },
+  "priorInfrastructureRun": {
+    "passed": 11,
+    "seconds": 436.73,
+    "log": "mysql-ui-recovery.log"
+  },
+  "frontend": {
+    "build": "PASS",
+    "passed": 49,
+    "testFiles": 13,
+    "buildLog": "frontend-build.log",
+    "testLog": "frontend-tests.log"
+  },
+  "mypy": {
+    "status": "PASS",
+    "files": 6,
+    "log": "mypy.log"
+  },
+  "dependencies": {
+    "status": "PASS",
+    "packages": 133,
+    "log": "dependencies.log"
+  },
+  "frozenBaseline": {
+    "status": "BASELINE_OK",
+    "log": "baseline-check.json"
+  },
+  "tdd": {
+    "red": "red-save-graph.log",
+    "redFailures": 3,
+    "green": "green-save-graph-final.log",
+    "greenPassed": 16
+  },
+  "verificationSetupCorrections": [
+    {
+      "log": "green-save-graph.log",
+      "cause": "Two subprocess tests launched from repository root could not import web",
+      "fix": "Run pytest from algorithm; final 16 passed"
+    },
+    {
+      "log": "mysql-recovery-first.log",
+      "cause": "New snapshot harness initially used incorrect SQL table names",
+      "fix": "Use actual frozen table names; final 11 passed"
+    },
+    {
+      "log": "mysql-recovery-second.log",
+      "cause": "Synthetic bob account shorter than existing login minimum; test initially failed to assert login",
+      "fix": "Use bob-user and assert login response plus t_user identity; final 11 passed"
+    }
+  ],
+  "review": {
+    "Standards": {
+      "totalFindings": 1,
+      "resolved": 1,
+      "remainingFindings": 0
+    },
+    "Spec": {
+      "findings": 0
+    },
+    "report": "review.md"
+  },
+  "sourceDigestBasis": "SHA256 of final staged Git blob bytes; evidence excluded",
+  "sourceManifest": "source-sha256.json",
+  "notVerified": [
+    "Production database upgrade or cutover",
+    "Real model/provider, real semantic retrieval or clinical acceptance",
+    "Physical desktop",
+    "Linux full suite/deployment; prior ticket03 Linux failures remain a later gate",
+    "Same-port API restart; each owned API process uses a fresh temporary port",
+    "Whole-project no-JVM final delivery"
+  ],
+  "noPush": true,
+  "otherTicketsStarted": false
+}
