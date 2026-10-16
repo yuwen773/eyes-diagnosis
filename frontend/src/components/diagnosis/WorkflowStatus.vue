@@ -57,6 +57,10 @@ const qualityLabel = computed(() => props.workflow.qualityReview?.decisionCode ?
   <section class="workflow-status" aria-live="polite" aria-label="任务状态">
     <h3 class="status-title">{{ labels[workflow.status] }}</h3>
     <p class="task-id">任务标识：<code>{{ workflow.workflowId }}</code></p>
+    <p v-if="workflow.legacySource" class="status-reason">
+      本任务为独立重建的 Python 工作流，旧批准不会转移。
+      <RouterLink :to="{ path: '/diagnosis/legacy', query: { source: workflow.legacySource.sourceType, task: workflow.legacySource.taskId } }">查看旧任务 {{ workflow.legacySource.taskId }}</RouterLink>
+    </p>
     <p v-if="snapshot?.supplements.some(wait => wait.status === 'WAITING')" role="status">等待您补充说明，请在原聊天中回复。此交互与医生复核分别进行。</p>
     <p v-if="qualityLabel" class="status-reason">{{ qualityLabel }}</p>
     <p v-if="workflow.qualityReview?.decisionCode" class="status-reason">

@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 from web.schemas.review import ReviewAuditEntry
+from web.schemas.legacy import LegacyRebuildSource
 
 
 class WorkflowProgress(BaseModel):
@@ -85,6 +86,7 @@ class PublishedExplanation(BaseModel):
 
 class WorkflowStatusView(BaseModel):
     workflowId: str
+    legacySource: LegacyRebuildSource | None = None
     status: Literal["CREATED", "QUEUED", "RUNNING", "WAITING_HUMAN_REVIEW", "COMPLETED",
                     "COMPLETED_LIMITED", "REJECTED", "CANCELLED", "FAILED"]
     workflowVersion: str

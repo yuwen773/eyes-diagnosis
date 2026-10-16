@@ -94,12 +94,19 @@ class RestartCase:
     def __init__(self, sessions, env, directory):
         self.sessions, self.env, self.directory = sessions, env, directory
         self.evidence = {"database": sessions.kw["bind"].dialect.name, "apiPids": [], "workerPids": [], "snapshots": []}
-        with socket.socket() as listener:
-            listener.bind(("127.0.0.1", 0))
-            self.port = listener.getsockname()[1]
+        self.used_ports = set()
 
     @contextmanager
     def api(self, identity="alice"):
+        # Recovery is asserted against durable data/cookies. Avoid reusing a
+        # just-terminated Windows listener's transiently unavailable port.
+        while True:
+            with socket.socket() as listener:
+                listener.bind(("127.0.0.1", 0))
+                self.port = listener.getsockname()[1]
+            if self.port not in self.used_ports:
+                self.used_ports.add(self.port)
+                break
         log = (self.directory / f"api-{len(self.evidence['apiPids'])}.log").open("w", encoding="utf-8")
         process = subprocess.Popen([sys.executable, "-m", "web.tests.human_wait_process", "api", "--port", str(self.port)],
             env=self.env, cwd=Path(__file__).resolve().parents[2], stdout=log, stderr=log)
@@ -123,9 +130,14 @@ class RestartCase:
             # recovery without relying on application shutdown hooks.
             stop_child(process)
             log.close()
-            with socket.socket() as probe:
-                probe.settimeout(1)
-                assert probe.connect_ex(("127.0.0.1", self.port)) != 0, "Old API still serves after process termination"
+            deadline = time.monotonic() + 5
+            while True:
+                assert time.monotonic() < deadline, "Old API still serves after process termination"
+                with socket.socket() as probe:
+                    probe.settimeout(.2)
+                    if probe.connect_ex(("127.0.0.1", self.port)) != 0:
+                        break
+                time.sleep(.05)
 
     def worker(self, mode="no-inference"):
         process = subprocess.Popen([sys.executable, "-m", "web.tests.human_wait_process", "worker", "--mode", mode],

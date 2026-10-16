@@ -323,6 +323,9 @@ def test_endpoint_set_matches_java_exactly():
     # Issue 02 adds these independent async endpoints, preserving the exact
     # legacy surface. New endpoints are exercised through HTTP in test_workflow.
     new_workflows = {("post", "/api/diagnosis/workflows"),
+                     ("get", "/api/diagnosis/legacy-tasks"),
+                     ("get", "/api/diagnosis/legacy-tasks/{sourceType}/{taskId}"),
+                     ("post", "/api/diagnosis/legacy-tasks/{sourceType}/{taskId}/rebuild"),
                      ("get", "/api/diagnosis/workflows/{workflowId}/events"),
                      ("get", "/api/diagnosis/workflows/{workflowId}"),
                      ("get", "/api/diagnosis/workflows/{workflowId}/image"),

@@ -8,6 +8,7 @@ import { join } from 'node:path'
 const adapters = new Set([
   'knowledgeController.ts', 'mcpController.ts', 'workflowController.ts',
   'reviewController.ts', 'supplementController.ts', 'toolConfirmationController.ts',
+  'legacyTaskController.ts',
 ])
 const apiDir = new URL('./src/api/', import.meta.url)
 const overrides = await readFile(new URL('./openapi/overrides.ts', import.meta.url), 'utf8')

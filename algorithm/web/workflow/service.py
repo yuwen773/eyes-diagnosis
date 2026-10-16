@@ -15,6 +15,7 @@ from web.workflow.definition import ACTION_VERSION, GRAPH_HASH, GRAPH_VERSION
 from web.workflow.models import InferenceEnvelopeRow, Job, ReviewTask, UploadInput, Workflow, WorkflowEvent
 from web.workflow.explanation import patient_explanation
 from web.workflow.review import review_audit
+from web.workflow.legacy import rebuild_source, require_python_input
 
 
 def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
@@ -30,6 +31,7 @@ def workflow_view(workflow: Workflow, upload: UploadInput, db: Session) -> dict:
     explanation, result = patient_explanation(db, workflow, evidence)
     return {
         "workflowId": workflow.workflow_id, "status": workflow.status,
+        "legacySource": rebuild_source(db, workflow.workflow_id),
         "workflowVersion": str(workflow.version), "segment": workflow.segment,
         "graphDefinitionVersion": workflow.graph_version,
         "progress": {"current": workflow.segment, "completed": completed},
@@ -53,6 +55,7 @@ def owned_workflow(db: Session, workflow_id: str, user_id: int) -> Workflow:
         raise HTTPException(404, "任务不存在")
     if workflow.owner_user_id != user_id:
         raise HTTPException(403, "无权查看此任务")
+    require_python_input(db, workflow_id)
     return workflow
 
 

@@ -30,6 +30,22 @@ declare namespace API {
     data?: DiagnosisResultVO
   }
 
+  type BaseResponseLegacyTaskPage = {
+    /** Code */
+    code?: number
+    /** Msg */
+    msg?: string
+    data?: LegacyTaskPage
+  }
+
+  type BaseResponseLegacyTaskView = {
+    /** Code */
+    code?: number
+    /** Msg */
+    msg?: string
+    data?: LegacyTaskView
+  }
+
   type BaseResponselistReviewSummary = {
     /** Code */
     code?: number
@@ -165,6 +181,17 @@ declare namespace API {
   type BodyDoDiagnosis = {
     /** File */
     file?: string
+  }
+
+  type BodyRebuildLegacyTaskApiDiagnosisLegacyTasks_sourceType_TaskId_rebuildPost = {
+    /** Confirmed */
+    confirmed?: boolean
+    /** File */
+    file?: string
+    /** Idempotencykey */
+    idempotencyKey?: string
+    /** Question */
+    question?: string
   }
 
   type BodyUploadAttachment = {
@@ -487,6 +514,11 @@ declare namespace API {
     id: number
   }
 
+  type getLegacyTaskApiDiagnosisLegacyTasksSourceTypeTaskIdGetParams = {
+    sourceType: string
+    taskId: string
+  }
+
   type getMcpServerParams = {
     mcpServerCode: string
     needTools?: boolean
@@ -555,6 +587,54 @@ declare namespace API {
     sortField?: string
     /** Sortorder */
     sortOrder?: string
+  }
+
+  type LegacyRebuildSource = {
+    /** Taskid */
+    taskId?: string
+    /** Sourcetype */
+    sourceType?: 'workflow' | 'upload'
+    /** Createdat */
+    createdAt?: string
+    /** Status */
+    status?: string
+    /** Sourceversion */
+    sourceVersion?: string
+    /** Confirmedby */
+    confirmedBy?: string
+    /** Confirmedat */
+    confirmedAt?: string
+  }
+
+  type LegacyTaskPage = {
+    /** Records */
+    records?: LegacyTaskView[]
+    /** Total */
+    total?: number
+  }
+
+  type LegacyTaskView = {
+    /** Taskid */
+    taskId?: string
+    /** Sourcetype */
+    sourceType?: 'workflow' | 'upload'
+    /** Status */
+    status?: string
+    /** Createdat */
+    createdAt?: string
+    /** Updatedat */
+    updatedAt?: string
+    /** Sourceversion */
+    sourceVersion?: string
+    /** Question */
+    question?: string
+    /** Requiresupload */
+    requiresUpload?: boolean
+  }
+
+  type listLegacyTasksApiDiagnosisLegacyTasksGetParams = {
+    current?: number
+    pageSize?: number
   }
 
   type listMcpServersParams = {
@@ -764,6 +844,11 @@ declare namespace API {
     decisionCode?: 'APPROVE_CONTINUE' | 'REJECT_RESUBMIT'
     /** Reasoncode */
     reasonCode?: string
+  }
+
+  type rebuildLegacyTaskApiDiagnosisLegacyTasksSourceTypeTaskIdRebuildPostParams = {
+    sourceType: string
+    taskId: string
   }
 
   type rejectSaveApiDiagnosisWorkflowsWorkflowIdSaveConfirmationsConfirmationIdRejectPostParams = {
@@ -1206,6 +1291,7 @@ declare namespace API {
   type WorkflowStatusView = {
     /** Workflowid */
     workflowId?: string
+    legacySource?: LegacyRebuildSource
     /** Status */
     status?:
       | 'CREATED'

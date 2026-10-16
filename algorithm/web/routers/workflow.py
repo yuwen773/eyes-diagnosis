@@ -23,6 +23,7 @@ from web.chat.supplement import Supplement, view as supplement_view
 from web.schemas.supplement import SupplementView
 from web.events import sse
 from web.workflow.service import create_or_get, owned_workflow, workflow_view
+from web.workflow.legacy import require_python_input
 
 router = APIRouter(prefix="/diagnosis/workflows", tags=["workflows"])
 
@@ -73,8 +74,7 @@ def workflow_image(workflowId: str, user: LoginUser = Depends(workflow_user),
         diagnosis = db.get(Diagnosis, receipt.diagnosis_id) if receipt else None
         if user.userRole != "admin" or diagnosis is None or diagnosis.is_delete != 0:
             raise HTTPException(403, "无权查看此图片")
-    upload = db.get(UploadInput, workflow.workflow_id)
-    assert upload is not None
+    upload = require_python_input(db, workflow.workflow_id)
     import io
     from PIL import Image, UnidentifiedImageError
     try:
@@ -97,7 +97,7 @@ def workflow_events(workflowId: str, user: LoginUser = Depends(workflow_user),
     workflow = locked_workflow(db, workflowId, int(user.id))
     upload = db.get(UploadInput, workflowId)
     assert upload is not None
-    state = WorkflowStatusView.model_validate(workflow_view(workflow, upload, db)).model_dump()
+    state = WorkflowStatusView.model_validate(workflow_view(workflow, upload, db)).model_dump(mode="json")
     waits = [SupplementView.model_validate(supplement_view(row)).model_dump()
              for row in db.scalars(select(Supplement).where(Supplement.workflow_id == workflowId,
                  Supplement.user_id == int(user.id)).order_by(Supplement.created_at, Supplement.request_id))]

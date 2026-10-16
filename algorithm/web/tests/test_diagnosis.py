@@ -199,6 +199,8 @@ def test_all_eight_diagnosis_endpoints_are_migrated():
 
 
 _ASYNC_WORKFLOW_PATHS = {"/diagnosis/workflows", "/diagnosis/workflows/{workflowId}",
+    "/diagnosis/legacy-tasks", "/diagnosis/legacy-tasks/{sourceType}/{taskId}",
+    "/diagnosis/legacy-tasks/{sourceType}/{taskId}/rebuild",
     "/diagnosis/workflows/{workflowId}/events",
     "/diagnosis/workflows/{workflowId}/image", "/diagnosis/workflows/{workflowId}/save-confirmation",
     "/diagnosis/workflows/{workflowId}/save-confirmations/{confirmationId}/approve",

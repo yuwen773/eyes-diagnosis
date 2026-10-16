@@ -1,0 +1,125 @@
+{
+  "ticket": "04-legacy-workflow-rebuild",
+  "status": "PASS_WITH_LIMITATIONS",
+  "baselineCommit": "ea21964d7ea87a6019a6345665d29cc383733c85",
+  "branch": "worktree-py-rewrite",
+  "date": "2026-10-16",
+  "timezone": "Asia/Shanghai",
+  "focusedWindows": {
+    "passed": 20,
+    "log": "focused-final.log"
+  },
+  "legacyWindows": {
+    "passed": 7,
+    "log": "legacy-final.log"
+  },
+  "contracts": {
+    "passed": 91,
+    "log": "contracts.log"
+  },
+  "linuxFocused": {
+    "status": "PASS",
+    "tests": 15,
+    "passed": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 57.052,
+    "junit": "linux-verified.xml",
+    "log": "linux-verified.log",
+    "fullSuiteRun": false
+  },
+  "mysql": {
+    "status": "PASS",
+    "scope": "isolated frozen V22 then Python upgrade; synthetic session/model/retrieval; real TCP API and Worker",
+    "concurrentRequests": 6,
+    "createdWorkflows": 1,
+    "startJobs": 1,
+    "inferenceExecutions": 1,
+    "apiRestarts": 1,
+    "log": "mysql-verified.log",
+    "evidence": "test_real_mysql_concurrent_reb0.json"
+  },
+  "browser": {
+    "status": "PASS",
+    "checks": [
+      "list-detail-refresh-read-only-no-command",
+      "fresh-image-and-checkbox-required-one-create",
+      "worker-progress-refresh-no-duplicate-no-formal-save-original-unchanged",
+      "acknowledged-link-restored-explicit-new-operation-requires-new-image-and-confirmation",
+      "v3-upload-task-details",
+      "cross-owner-details-cleared"
+    ],
+    "pageErrors": [],
+    "scope": "original Vue/TCP/Worker; synthetic identity/model-unavailable; SQLite"
+  },
+  "frontend": {
+    "build": "PASS",
+    "testsPassed": 49,
+    "testFiles": 13,
+    "buildLog": "frontend-build-final.log",
+    "testLog": "frontend-tests-final.log"
+  },
+  "mypy": {
+    "files": 5,
+    "status": "PASS",
+    "log": "mypy.log"
+  },
+  "dependencies": {
+    "packages": 133,
+    "status": "PASS",
+    "log": "dependencies-final.log"
+  },
+  "frozenBaseline": "BASELINE_OK",
+  "review": {
+    "Standards": {
+      "initialFindings": 1,
+      "remainingFindings": 0
+    },
+    "Spec": {
+      "findings": 0
+    },
+    "report": "review.md"
+  },
+  "notVerified": [
+    "production database upgrade or cutover",
+    "real model/provider or clinical acceptance",
+    "physical desktop",
+    "Linux full suite/deployment",
+    "real Redis identity in ticket04 fixture; covered separately by ticket02",
+    "same-port API restart in the isolated process fixture"
+  ],
+  "noPush": true,
+  "otherTicketsStarted": false,
+  "ticketStatus": "ready-for-human",
+  "acceptanceCriteriaCompleted": 8,
+  "windowsFullWeb": {
+    "status": "PASS",
+    "tests": 823,
+    "passed": 794,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 29,
+    "seconds": 1140.247,
+    "warnings": 1,
+    "log": "full-web-verified.log",
+    "junit": "web-verified.xml"
+  },
+  "windowsPriorFull": {
+    "status": "FAIL",
+    "tests": 823,
+    "passed": 791,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 29,
+    "seconds": 1215.276,
+    "log": "full-web-final.log",
+    "junit": "web-final.xml",
+    "cause": "two immediate API port-close assertions; one API restart bind Errno13",
+    "fix": "bounded owned-process port-close wait and fresh fixture port per API restart",
+    "combinedRecheckPassed": 3,
+    "recheckLog": "process-lifecycle-recheck.log"
+  },
+  "sourceDigestBasis": "SHA256 of final staged Git blob bytes; evidence excluded",
+  "sourceManifest": "source-sha256.json"
+}

@@ -20,6 +20,7 @@ from web.workflow.checkpoint import MysqlCheckpointSaver
 from web.workflow.review import allowed_decisions, DECISION_REASONS, review_audit
 from web.workflow.worker import database_now
 from web.evidence import validate_evidence
+from web.workflow.legacy import require_python_input
 
 router = APIRouter(prefix="/reviews/tasks", tags=["doctor-review"])
 
@@ -45,6 +46,7 @@ def load_task(db: Session, task_id: str, user: LoginUser):
     workflow = db.scalar(select(Workflow).where(Workflow.workflow_id == task.workflow_id)
                          .with_for_update().execution_options(populate_existing=True))
     assert workflow is not None
+    require_python_input(db, workflow.workflow_id)
     # Refresh on reads too: a claim may commit while this request waits on the
     # workflow lock. Never authorize images/details from the earlier snapshot.
     task = db.scalar(select(ReviewTask).where(ReviewTask.task_id == task_id)

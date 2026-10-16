@@ -16,6 +16,7 @@ from web.schemas.confirmation import SaveDecision, SaveRequest
 from web.workflow.confirmation_models import SaveConfirmation, SavedWorkflowDiagnosis
 from web.workflow.explanation import patient_explanation
 from web.workflow.models import InferenceEnvelopeRow, ReviewTask, UploadInput, Workflow
+from web.workflow.legacy import require_python_input
 
 
 def canonical(content: dict) -> str:
@@ -29,6 +30,7 @@ def locked_workflow(db: Session, workflow_id: str, user_id: int) -> Workflow:
         raise HTTPException(404, "任务不存在")
     if workflow.owner_user_id != user_id:
         raise HTTPException(403, "无权保存此任务")
+    require_python_input(db, workflow_id)
     return workflow
 
 

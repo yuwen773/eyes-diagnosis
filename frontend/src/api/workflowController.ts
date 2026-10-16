@@ -21,6 +21,8 @@ export interface WorkflowEvidenceView {
 
 export interface WorkflowView {
   workflowId: string
+  legacySource?: { taskId: string; sourceType: 'workflow' | 'upload'; createdAt: string | null;
+    status: string; sourceVersion: string | null; confirmedBy: string; confirmedAt: string } | null
   status: WorkflowStatus
   workflowVersion: string
   graphDefinitionVersion: string

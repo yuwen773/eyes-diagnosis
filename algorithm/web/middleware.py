@@ -125,5 +125,6 @@ def register_exception_handlers(app: FastAPI) -> None:
 def _is_workflow_request(request: Request) -> bool:
     path = request.url.path
     return (path == "/api/diagnosis/workflows" or path.startswith("/api/diagnosis/workflows/")
+            or path == "/api/diagnosis/legacy-tasks" or path.startswith("/api/diagnosis/legacy-tasks/")
             or path.startswith("/api/knowledge/admin/")
             or path == "/api/reviews/tasks" or path.startswith("/api/reviews/tasks/"))

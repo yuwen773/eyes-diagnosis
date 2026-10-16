@@ -1,0 +1,5 @@
+
+> diagnosis-frontend@0.0.0 openapi
+> node openapi.config.js
+
+[openAPI]: ✅ 成功生成 service 文件

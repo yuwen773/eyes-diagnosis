@@ -51,6 +51,12 @@ const router = createRouter({
           },
         },
         {
+          path: 'diagnosis/legacy',
+          name: '旧版任务',
+          component: () => import('@/pages/diagnosis/LegacyTasksPage.vue'),
+          meta: { icon: 'MedicineBoxOutlined', access: ACCESS_ENUM.USER },
+        },
+        {
           path: 'doctor/reviews',
           name: '医生复核',
           component: () => import('@/pages/doctor/QualityReviewPage.vue'),
