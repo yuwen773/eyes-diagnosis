@@ -1,0 +1,143 @@
+......FFFF.                                                              [100%]
+================================== FAILURES ===================================
+_ test_delivery_scan_rejects_jvm_and_removed_source_dependencies[deploy/python/Dockerfile-RUN apt-get install -y openjdk-21-jre\n] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-980/test_delivery_scan_rejects_jvm6')
+name = 'deploy/python/Dockerfile'
+content = 'RUN apt-get install -y openjdk-21-jre\n'
+
+    @pytest.mark.parametrize("name,content", [
+        ("src/main/java/Example.java", "class Example {}"),
+        ("pom.xml", "<project/>"),
+        (".github/workflows/build.yml", "steps:\n  - uses: actions/setup-java@v4\n"),
+        ("scripts/start.ps1", "& java.exe -jar app.jar\n"),
+        ("algorithm/requirements-web.lock", "tika==3.1.0\n"),
+        ("algorithm/web/example.py", "Path('src/main/resources/schema.sql').read_text()\n"),
+        ("deploy/python/Dockerfile", "RUN apt-get install -y openjdk-21-jre\n"),
+        ("README.md", "```sh\nmvn package\n```\n"),
+        ("frontend/package.json", '{"scripts":{"start":"java -jar backend.jar"}}'),
+        ("algorithm/web/example.py", "import os\nos.getenv('JAVA_BASE_URL')\n"),
+    ])
+    def test_delivery_scan_rejects_jvm_and_removed_source_dependencies(tmp_path, name, content):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        result = subprocess.run([sys.executable, str(SCANNER), "--root", str(tmp_path)],
+                                capture_output=True, text=True)
+>       assert result.returncode == 1, result.stdout + result.stderr
+E       AssertionError: {
+E           "status": "PASS",
+E           "findings": []
+E         }
+E         
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', 'D...80\\test_delivery_scan_rejects_jvm6'], returncode=0, stdout='{\n  "status": "PASS",\n  "findings": []\n}\n', stderr='').returncode
+
+algorithm\web\tests\test_retirement.py:30: AssertionError
+_ test_delivery_scan_rejects_jvm_and_removed_source_dependencies[README.md-```sh\nmvn package\n```\n] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-980/test_delivery_scan_rejects_jvm7')
+name = 'README.md', content = '```sh\nmvn package\n```\n'
+
+    @pytest.mark.parametrize("name,content", [
+        ("src/main/java/Example.java", "class Example {}"),
+        ("pom.xml", "<project/>"),
+        (".github/workflows/build.yml", "steps:\n  - uses: actions/setup-java@v4\n"),
+        ("scripts/start.ps1", "& java.exe -jar app.jar\n"),
+        ("algorithm/requirements-web.lock", "tika==3.1.0\n"),
+        ("algorithm/web/example.py", "Path('src/main/resources/schema.sql').read_text()\n"),
+        ("deploy/python/Dockerfile", "RUN apt-get install -y openjdk-21-jre\n"),
+        ("README.md", "```sh\nmvn package\n```\n"),
+        ("frontend/package.json", '{"scripts":{"start":"java -jar backend.jar"}}'),
+        ("algorithm/web/example.py", "import os\nos.getenv('JAVA_BASE_URL')\n"),
+    ])
+    def test_delivery_scan_rejects_jvm_and_removed_source_dependencies(tmp_path, name, content):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        result = subprocess.run([sys.executable, str(SCANNER), "--root", str(tmp_path)],
+                                capture_output=True, text=True)
+>       assert result.returncode == 1, result.stdout + result.stderr
+E       AssertionError: {
+E           "status": "PASS",
+E           "findings": []
+E         }
+E         
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', 'D...80\\test_delivery_scan_rejects_jvm7'], returncode=0, stdout='{\n  "status": "PASS",\n  "findings": []\n}\n', stderr='').returncode
+
+algorithm\web\tests\test_retirement.py:30: AssertionError
+_ test_delivery_scan_rejects_jvm_and_removed_source_dependencies[frontend/package.json-{"scripts":{"start":"java -jar backend.jar"}}] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-980/test_delivery_scan_rejects_jvm8')
+name = 'frontend/package.json'
+content = '{"scripts":{"start":"java -jar backend.jar"}}'
+
+    @pytest.mark.parametrize("name,content", [
+        ("src/main/java/Example.java", "class Example {}"),
+        ("pom.xml", "<project/>"),
+        (".github/workflows/build.yml", "steps:\n  - uses: actions/setup-java@v4\n"),
+        ("scripts/start.ps1", "& java.exe -jar app.jar\n"),
+        ("algorithm/requirements-web.lock", "tika==3.1.0\n"),
+        ("algorithm/web/example.py", "Path('src/main/resources/schema.sql').read_text()\n"),
+        ("deploy/python/Dockerfile", "RUN apt-get install -y openjdk-21-jre\n"),
+        ("README.md", "```sh\nmvn package\n```\n"),
+        ("frontend/package.json", '{"scripts":{"start":"java -jar backend.jar"}}'),
+        ("algorithm/web/example.py", "import os\nos.getenv('JAVA_BASE_URL')\n"),
+    ])
+    def test_delivery_scan_rejects_jvm_and_removed_source_dependencies(tmp_path, name, content):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        result = subprocess.run([sys.executable, str(SCANNER), "--root", str(tmp_path)],
+                                capture_output=True, text=True)
+>       assert result.returncode == 1, result.stdout + result.stderr
+E       AssertionError: {
+E           "status": "PASS",
+E           "findings": []
+E         }
+E         
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', 'D...80\\test_delivery_scan_rejects_jvm8'], returncode=0, stdout='{\n  "status": "PASS",\n  "findings": []\n}\n', stderr='').returncode
+
+algorithm\web\tests\test_retirement.py:30: AssertionError
+_ test_delivery_scan_rejects_jvm_and_removed_source_dependencies[algorithm/web/example.py-import os\nos.getenv('JAVA_BASE_URL')\n] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-980/test_delivery_scan_rejects_jvm9')
+name = 'algorithm/web/example.py'
+content = "import os\nos.getenv('JAVA_BASE_URL')\n"
+
+    @pytest.mark.parametrize("name,content", [
+        ("src/main/java/Example.java", "class Example {}"),
+        ("pom.xml", "<project/>"),
+        (".github/workflows/build.yml", "steps:\n  - uses: actions/setup-java@v4\n"),
+        ("scripts/start.ps1", "& java.exe -jar app.jar\n"),
+        ("algorithm/requirements-web.lock", "tika==3.1.0\n"),
+        ("algorithm/web/example.py", "Path('src/main/resources/schema.sql').read_text()\n"),
+        ("deploy/python/Dockerfile", "RUN apt-get install -y openjdk-21-jre\n"),
+        ("README.md", "```sh\nmvn package\n```\n"),
+        ("frontend/package.json", '{"scripts":{"start":"java -jar backend.jar"}}'),
+        ("algorithm/web/example.py", "import os\nos.getenv('JAVA_BASE_URL')\n"),
+    ])
+    def test_delivery_scan_rejects_jvm_and_removed_source_dependencies(tmp_path, name, content):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        result = subprocess.run([sys.executable, str(SCANNER), "--root", str(tmp_path)],
+                                capture_output=True, text=True)
+>       assert result.returncode == 1, result.stdout + result.stderr
+E       AssertionError: {
+E           "status": "PASS",
+E           "findings": []
+E         }
+E         
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', 'D...80\\test_delivery_scan_rejects_jvm9'], returncode=0, stdout='{\n  "status": "PASS",\n  "findings": []\n}\n', stderr='').returncode
+
+algorithm\web\tests\test_retirement.py:30: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_retirement.py::test_delivery_scan_rejects_jvm_and_removed_source_dependencies[deploy/python/Dockerfile-RUN apt-get install -y openjdk-21-jre\n]
+FAILED algorithm/web/tests/test_retirement.py::test_delivery_scan_rejects_jvm_and_removed_source_dependencies[README.md-```sh\nmvn package\n```\n]
+FAILED algorithm/web/tests/test_retirement.py::test_delivery_scan_rejects_jvm_and_removed_source_dependencies[frontend/package.json-{"scripts":{"start":"java -jar backend.jar"}}]
+FAILED algorithm/web/tests/test_retirement.py::test_delivery_scan_rejects_jvm_and_removed_source_dependencies[algorithm/web/example.py-import os\nos.getenv('JAVA_BASE_URL')\n]
+4 failed, 7 passed in 3.22s

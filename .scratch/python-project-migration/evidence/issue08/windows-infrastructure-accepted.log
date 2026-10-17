@@ -1,0 +1,121 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+{
+  "ticket": "06",
+  "timestampUtc": "2026-10-17T04:09:45.844738+00:00",
+  "status": "PASS_WITH_LIMITATIONS",
+  "checks": [
+    "real-python-auth-and-user-role-long-pagination-contracts",
+    "legacy-synchronous-diagnosis-fails-closed-without-model",
+    "real-mysql-noop-and-frozen-news-date-contract",
+    "doc-docx-real-chroma-large-id-private-scope",
+    "governance-role-and-real-mysql-version-conflict",
+    "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+    "user-consent-save-conflict-and-replay-exactly-once",
+    "real-python-doctor-quality-and-final-review-versions-without-implicit-save",
+    "invalid-and-insufficient-terminal-paths-and-source-revocation",
+    "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+    "real-redis-logout-cookie-replay-and-sse-revocation"
+  ],
+  "gates": {
+    "infrastructure": {
+      "status": "PASS",
+      "detail": "Python migration, real MySQL/Redis/Chroma, independent API/Worker"
+    },
+    "orchestration": {
+      "status": "PASS",
+      "detail": "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM"
+    },
+    "mysqlSemantics": {
+      "status": "PASS",
+      "detail": "Real MySQL leases/fencing/transactions/concurrency and cross-process human wait recovery"
+    },
+    "realEmbedding": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    }
+  },
+  "schema": "eye_python_issue06_42e35e5ec7b7442c9dc6d121fa1d09cd",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_python_issue06_42e35e5ec7b7442c9dc6d121fa1d09cd",
+  "mysqlVersion": "8.0.26",
+  "processes": [
+    {
+      "role": "redis",
+      "pid": 68448
+    },
+    {
+      "role": "chroma",
+      "pid": 34256
+    },
+    {
+      "role": "provider",
+      "pid": 17744
+    },
+    {
+      "role": "api",
+      "pid": 34036
+    },
+    {
+      "role": "api-restart",
+      "pid": 42464
+    },
+    {
+      "role": "api-restart",
+      "pid": 12604
+    },
+    {
+      "role": "api-restart",
+      "pid": 37916
+    }
+  ],
+  "redisVersion": "3.2.100",
+  "chromaVersion": "1.0.0",
+  "affectedRows": {
+    "sqlalchemyNoopRowcount": 1
+  },
+  "graph": {
+    "version": "upload-final-clinical-review-v6",
+    "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+    "actionVersion": "upload-final-clinical-review-v6",
+    "completedNodes": [
+      "validateImage",
+      "inference",
+      "imageQuality",
+      "visionExposure",
+      "clinicalRiskPrecheck",
+      "evidenceRetrieval",
+      "evidenceValidation",
+      "clinicalRiskFinal",
+      "explanationDraft",
+      "explanationClaimValidation",
+      "explanationPublication"
+    ]
+  },
+  "terminalStates": {
+    "publishedThenRevoked": "COMPLETED_LIMITED",
+    "qualityReview": "COMPLETED_LIMITED",
+    "finalReview": "COMPLETED_LIMITED",
+    "invalid": "REJECTED",
+    "insufficient": "COMPLETED_LIMITED"
+  }
+}
+.....................                                                    [100%]
+21 passed in 172.81s (0:02:52)

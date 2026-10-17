@@ -3,7 +3,8 @@
 当前入口是根目录 `pyproject.toml`、`.python-version` 和
 `algorithm/requirements-web.lock`。Python 3.11，保持 `web.*`、`eye_diagnosis.*`
 等模块名与持久化图兼容。开发、测试、初始化、升级及 API/Worker 运行不需要 JVM。
-Java 原资产保留至工单 08；本文不授权业务库升级或生产切流。
+工单 08 已将 Java 原资产留存在本地历史标签并移除活跃入口；本文不授权业务库升级或生产切流。
+最终验证边界见 [Java 退出验收](python-retirement.md)。
 
 ## Windows / PowerShell 7
 

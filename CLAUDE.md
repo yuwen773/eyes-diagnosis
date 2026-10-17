@@ -1,3 +1,13 @@
+# Current delivery (ticket 08, 2026-10-17)
+
+Use the current Python instructions in [AGENTS.md](AGENTS.md),
+[README.md](README.md) and [Python delivery](docs/python-delivery.md).
+The entire retained text below is historical, including local contributor notes.
+Its architecture, build commands and Java-retention constraints are superseded by
+approved complete migration tickets 01–08; do not execute it as current guidance.
+
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

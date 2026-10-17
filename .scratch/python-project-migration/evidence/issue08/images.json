@@ -1,0 +1,26 @@
+{
+  "eye-python:ticket06": {
+    "Id": "sha256:5df618445293ba7591bc52c89546fdf24a41ccecf9afa9ce78188f39aee7033e",
+    "Os": "linux",
+    "Architecture": "amd64",
+    "Created": "2026-10-17T03:36:17.092494092Z"
+  },
+  "eye-python-cpu:ticket06": {
+    "Id": "sha256:6e00943ddbed15006889d992b0c8b7747ab388bd4a9da77065ac22e7f134c85c",
+    "Os": "linux",
+    "Architecture": "amd64",
+    "Created": "2026-10-17T03:38:04.354837781Z"
+  },
+  "eye-verify:ticket08": {
+    "Id": "sha256:83606418c34b76d84a661ab9f23bc1f5a9ef8927bfeba2d4f7837424ee7b2bf3",
+    "Os": "linux",
+    "Architecture": "amd64",
+    "Created": "2026-10-17T03:36:47.778121439Z"
+  },
+  "eye-frontend:ticket06": {
+    "Id": "sha256:a3050bb51dc7196b3b6c7852cd51f06680d2116e477ba1dbfde4059ed9c764a7",
+    "Os": "linux",
+    "Architecture": "amd64",
+    "Created": "2026-10-16T13:35:13.564271755Z"
+  }
+}

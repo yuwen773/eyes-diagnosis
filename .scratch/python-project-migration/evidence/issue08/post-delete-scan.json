@@ -1,0 +1,145 @@
+{
+  "status": "FAIL",
+  "findings": [
+    {
+      "path": "algorithm/web/app.py",
+      "line": 9,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/knowledge.py",
+      "line": 164,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/mcp_config.py",
+      "line": 48,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/mcp_config.py",
+      "line": 79,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/mcp_config.py",
+      "line": 123,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/mcp_config.py",
+      "line": 177,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/middleware.py",
+      "line": 16,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/models/diagnosis.py",
+      "line": 17,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/models/mcp_server.py",
+      "line": 8,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/diagnosis.py",
+      "line": 299,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/mcp_server.py",
+      "line": 18,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/news.py",
+      "line": 80,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/user.py",
+      "line": 207,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/user.py",
+      "line": 210,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/user.py",
+      "line": 515,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/routers/workflow.py",
+      "line": 95,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/schemas/diagnosis.py",
+      "line": 194,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/schemas/news.py",
+      "line": 108,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/security.py",
+      "line": 17,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_diagnosis.py",
+      "line": 192,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_inference.py",
+      "line": 169,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_knowledge.py",
+      "line": 187,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_nginx_routing.py",
+      "line": 250,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_retirement.py",
+      "line": 15,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_user.py",
+      "line": 69,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "algorithm/web/tests/test_user.py",
+      "line": 222,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "scripts/verify_retirement.py",
+      "line": 17,
+      "reason": "active-retired-dependency"
+    },
+    {
+      "path": "scripts/verify_retirement.py",
+      "line": 22,
+      "reason": "active-retired-dependency"
+    }
+  ]
+}

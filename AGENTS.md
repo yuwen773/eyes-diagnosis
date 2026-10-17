@@ -1,98 +1,33 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+## Current delivery (ticket 08, 2026-10-17)
 
-## Current Python delivery: ticket 06 (2026-10-16)
+The backend, Agent and durable Worker run in Python 3.11; the UI remains Vue 3.
+Use root `pyproject.toml`, `.python-version`, `algorithm/requirements-web.lock`.
+On Windows use PowerShell 7 (`pwsh.exe -NoLogo -NoProfile`), never Windows PowerShell.
+Run `scripts/dev.ps1 install|start|status|stop`; it owns only registered process trees.
+Run `python scripts/verify.py web|frontend|infrastructure` for local and CI checks.
+The entry first scans active delivery dependencies with `scripts/verify_retirement.py`.
+Linux delivery uses `deploy/python/compose.yml`; API and Worker stay independent.
+See `docs/python-delivery.md` and `docs/python-retirement.md`.
 
-Use root `pyproject.toml`, `.python-version` and `algorithm/requirements-web.lock`.
-Windows commands use PowerShell 7 (`pwsh.exe`), with `scripts/dev.ps1 install|start|status|stop`.
-API and Worker are independent; `scripts/verify.py web|frontend|infrastructure` is
-the shared local/CI verification entry. Linux deployment uses `deploy/python/compose.yml`.
-See [docs/python-delivery.md](docs/python-delivery.md) for configuration, explicit
-Python migrations, health checks and acceptance boundaries. Current validation
-does not install or execute JVM/Maven/Flyway/Tika. Contracts use `contracts/legacy-api.json`
-and frozen `deploy/python-migrations` assets, never Java source/config reads.
-Retain historical Java assets until ticket 08; the architecture/build instructions
-below describe that retained implementation, not the current delivery entry.
+Do not operate production business databases or push without explicit authorization.
+Migrations are explicit: `python -m web.migrations baseline-check|inspect|upgrade`.
+API/Worker startup never migrates. Frozen SQL lives in `deploy/python-migrations`;
+never rewrite it or replay unknown histories. Columns remain camelCase.
+Contracts come from `contracts/legacy-api.json`, not archived source files.
+Auth uses revocable `EYE_SESSION` / Redis and fresh user-role checks for HTTP/SSE.
+Long IDs serialize as strings; handled compatibility errors use `code/msg/data`.
+Doctor review, immutable AI provenance and user save authorization remain separate.
+Four human waits survive upgrades/restarts; legacy tasks require explicit rebuild.
+DOC uses pinned local LibreOffice; DOCX uses Python. Tools do not download on requests.
 
-## Python migration: session ticket 02 (2026-10-15)
-
-Python owns `/api/user/login`, `/api/user/logout` and `/api/user/get/login`. Protected HTTP/SSE resolves `EYE_SESSION` through `eye:py:session:{sid}` in Redis and re-reads `t_user` on each request. Spring cookies grant no Python identity. No Java identity callback or `JAVA_BASE_URL` is needed. OpenAPI is `/api/openapi.json`; run `npm run openapi` against Python. Java assets remain until ticket 08; the Java architecture below is a retained reference. See [docs/python-session-auth-evidence.md](docs/python-session-auth-evidence.md).
-
-## Project Overview
-
-Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
-Base package: `com.csust.eyediagnosis`
-
-## Java 21 Runtime
-
-Use the installed JDK 21 at `C:\Users\yuwen\.jdks\corretto-21.0.7` for all Maven and Java validation. Before running Maven in a new shell, set `JAVA_HOME` to this path and prepend `$env:JAVA_HOME\bin` to `Path`; do not rely on the host's default Java launcher.
-
-## Build & Run
-
-```bash
-# Backend
-mvn clean package                    # Build (includes protobuf codegen)
-mvn spring-boot:run                  # Dev server :8081, context-path /api
-mvn test -Dtest=ClassName#method     # Run single test
-
-# Frontend (in frontend/)
-npm run dev                          # Dev server :5173
-npm run build                        # Type-check + build
-npm run openapi                      # Generate API client from OpenAPI spec
-
-# Algorithm (in algorithm/)
-pip install -r requirements.txt
-python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
-python grpc_server.py                # gRPC server :50051
-
-docker-compose up -d                 # ChromaDB vector store :8000
-```
-
-## Architecture
-
-**Backend**: Controller → Service → Mapper (MyBatis Plus). `BaseResponse<T>{code:0, data, msg}` unified response. Auth: Spring Session + Redis, `@AuthCheck(mustRole=...)` AOP. MyBatis Plus `map-underscore-to-camel-case: false`.
-
-**Agent System** (`agent/`): Core AI chatbot on Spring AI + Spring AI Alibaba.
-- `DiagnosisAgent` — `ReactAgent` with streaming `Flux<MessageDTO>`, SSE endpoint `/api/agent/chat/stream`
-- `tools/EyeImageAnalyzerTool` — DashScope Qwen-VL-Plus vision analysis (`@Tool`)
-- `tools/DocumentSearchTool` — ChromaDB RAG retrieval (`@Tool`)
-- `manager/MCPManager` — MCP client factory (STDIO/SSE/Streamable HTTP), tool discovery cached in Redis 5min
-- `interceptor/TextMcpModelInterceptor` — MCP server resolution priority: session override → user enabled → disabled
-- `rag/` — Document parsing + 512-word chunking → ChromaDB via DashScope embeddings
-
-**gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
-
-**Frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. Agent chat uses `@microsoft/fetch-event-source` for SSE.
-
-## API Endpoints
-
-| Controller | Path | Purpose |
-|------------|------|---------|
-| UserController | `/api/user/*` | Auth, CRUD |
-| DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
-| AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| McpServerController | `/api/mcp/*` | MCP server CRUD |
-| KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
-| NewsController | `/api/news/*` | News CRUD |
-
-## Database (MySQL `diagnosis`)
-
-Schema: `src/main/resources/db/schema.sql`. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
-
-**命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
-
-## External Services
-
-MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embeddings + vision) | Tencent COS (file storage) | Python gRPC (image classification)
-
-## Key Patterns
-
-- **Agent streaming**: `DiagnosisAgent.stream()` → SSE events (ASSISTANT/REASONING/TOOL_REQUEST/TOOL_CONFIRM), terminal `event: "done"`
-- **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
-- **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
-- **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
-- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
+Java sources/builds/probes were retired after checking ticket 07 and the frozen SQL.
+The local tag `archive/java-before-python-retirement-2026-10-17` retains the complete
+pre-removal tree. `docs/history/java/` and earlier ticket evidence are historical,
+not current run instructions. Never delete private runtimes, datasets, weights,
+ignored build artifacts or another contributor's edits to make checks pass.
+Engineering, real infrastructure, providers/models and clinical gates are distinct.
 
 ## Design Context
 

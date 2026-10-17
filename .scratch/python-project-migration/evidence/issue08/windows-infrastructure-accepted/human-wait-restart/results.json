@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-17T04:13:20.232306+00:00",
+  "schema": "eye_human_wait_issue17_2fa4e675b85f49cdb75317805a9fd91c",
+  "mysqlVersion": "8.0.26",
+  "suite": "human-wait-restart",
+  "scope": "Real MySQL and child processes; controlled identity/model/retrieval/explanation; no clinical acceptance",
+  "commands": {
+    "python-upgrade": {
+      "exitCode": 0
+    },
+    "python-inspect": {
+      "exitCode": 0
+    },
+    "mysql-tests": {
+      "exitCode": 0
+    }
+  }
+}

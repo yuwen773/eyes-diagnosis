@@ -1,0 +1,141 @@
+{
+  "ticket": "06",
+  "timestampUtc": "2026-10-17T03:38:01.513080+00:00",
+  "status": "FAIL",
+  "checks": [],
+  "gates": {
+    "infrastructure": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "orchestration": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "mysqlSemantics": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "realEmbedding": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    }
+  },
+  "schema": "eye_python_issue06_e09b290cfcff4d4baaa6588cc5189b3c",
+  "runtime": "/workspace/.scratch/baseline-runtime/eye_python_issue06_e09b290cfcff4d4baaa6588cc5189b3c",
+  "reason": "OperationalError; inspect private runtime logs",
+  "errorLocation": [
+    {
+      "file": "verify_real_services.py",
+      "line": 57
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 83
+    },
+    {
+      "file": "contextlib.py",
+      "line": 137
+    },
+    {
+      "file": "base.py",
+      "line": 3227
+    },
+    {
+      "file": "base.py",
+      "line": 3263
+    },
+    {
+      "file": "base.py",
+      "line": 151
+    },
+    {
+      "file": "base.py",
+      "line": 2420
+    },
+    {
+      "file": "base.py",
+      "line": 149
+    },
+    {
+      "file": "base.py",
+      "line": 3287
+    },
+    {
+      "file": "base.py",
+      "line": 445
+    },
+    {
+      "file": "base.py",
+      "line": 1303
+    },
+    {
+      "file": "base.py",
+      "line": 709
+    },
+    {
+      "file": "impl.py",
+      "line": 176
+    },
+    {
+      "file": "langhelpers.py",
+      "line": 166
+    },
+    {
+      "file": "impl.py",
+      "line": 174
+    },
+    {
+      "file": "base.py",
+      "line": 386
+    },
+    {
+      "file": "base.py",
+      "line": 671
+    },
+    {
+      "file": "base.py",
+      "line": 906
+    },
+    {
+      "file": "langhelpers.py",
+      "line": 166
+    },
+    {
+      "file": "base.py",
+      "line": 902
+    },
+    {
+      "file": "create.py",
+      "line": 645
+    },
+    {
+      "file": "default.py",
+      "line": 869
+    },
+    {
+      "file": "connections.py",
+      "line": 373
+    },
+    {
+      "file": "connections.py",
+      "line": 744
+    }
+  ]
+}

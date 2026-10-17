@@ -1,0 +1,7 @@
+{
+  "java": null,
+  "mvn": null,
+  "jvmDirectory": false,
+  "torch": "2.14.1+cpu",
+  "torchCuda": null
+}

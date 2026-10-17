@@ -1,0 +1,163 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.95kB 0.0s done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.03kB 0.0s done
+#3 DONE 0.1s
+
+#4 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 420.41kB 0.1s done
+#5 DONE 0.2s
+
+#6 [build  1/12] FROM docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#6 resolve docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d 0.1s done
+#6 DONE 0.2s
+
+#7 [web 5/6] RUN useradd --create-home --uid 10001 eye && mkdir /app && chown eye:eye /app
+#7 CACHED
+
+#8 [document-tool 6/6] RUN rm /tmp/libreoffice.tar.gz /tmp/doc_tool.py
+#8 CACHED
+
+#9 [build 11/12] COPY deploy/python-migrations deploy/python-migrations
+#9 CACHED
+
+#10 [build  9/12] COPY algorithm/mcp_server algorithm/mcp_server
+#10 CACHED
+
+#11 [build 12/12] RUN python -m build --wheel --no-isolation --outdir /wheels
+#11 CACHED
+
+#12 [web 3/6] COPY --from=build /wheels /wheels
+#12 CACHED
+
+#13 [build  4/12] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#13 CACHED
+
+#14 [build 10/12] COPY algorithm/eye_disease_model.py algorithm/eye_disease_model.py
+#14 CACHED
+
+#15 [build  6/12] RUN --mount=type=cache,target=/root/.cache/uv uv pip install --prefix /install -r algorithm/requirements-web.lock
+#15 CACHED
+
+#16 [document-tool 2/6] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 libglib2.0-0 libx11-xcb1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#16 CACHED
+
+#17 [build  3/12] COPY pyproject.toml MANIFEST.in ./
+#17 CACHED
+
+#18 [build  2/12] WORKDIR /build
+#18 CACHED
+
+#19 [web 2/6] RUN python -m pip check
+#19 CACHED
+
+#20 [document-tool 5/6] RUN python /tmp/doc_tool.py --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     || (find /opt/eye-doc -name soffice.bin -exec ldd {} ; | grep 'not found'; exit 1)
+#20 CACHED
+
+#21 [document-tool 4/6] ADD --checksum=sha256:fd0e8f8f2408dd2e5b90286e60f3f97cf566ba441cd48cfc5bcc68067303e0bc     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     /tmp/libreoffice.tar.gz
+#21 CACHED
+
+#22 [document-tool 3/6] COPY algorithm/web/doc_tool.py /tmp/doc_tool.py
+#22 CACHED
+
+#23 [build  5/12] RUN python -m pip install --no-cache-dir setuptools==80.9.0 wheel==0.45.1 build==1.2.2.post1 uv==0.13.0
+#23 CACHED
+
+#24 [build  7/12] COPY algorithm/web algorithm/web
+#24 CACHED
+
+#25 [web 4/6] RUN python -m pip install --no-deps --no-cache-dir /wheels/*.whl && rm -rf /wheels
+#25 CACHED
+
+#26 [build  8/12] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#26 CACHED
+
+#27 [web 1/6] COPY --from=build /install /usr/local
+#27 CACHED
+
+#28 [web 6/6] WORKDIR /app
+#28 CACHED
+
+#29 [cpu 1/4] COPY algorithm/requirements-model-linux.lock /tmp/model-linux.lock
+#29 DONE 0.2s
+
+#30 [cpu 2/4] RUN --mount=type=cache,target=/root/.cache/uv     python -m pip install --no-cache-dir uv==0.13.0     && uv pip install --system --require-hashes --torch-backend cpu -r /tmp/model-linux.lock     && python -m pip check && rm /tmp/model-linux.lock
+#30 4.038 Collecting uv==0.13.0
+#30 4.613   Downloading uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+#30 4.765 Downloading uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (17.9 MB)
+#30 6.223    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.9/17.9 MB 16.1 MB/s eta 0:00:00
+#30 7.125 Installing collected packages: uv
+#30 7.481 Successfully installed uv-0.13.0
+#30 7.481 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#30 7.340 
+#30 7.340 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#30 7.340 [notice] To update, run: pip install --upgrade pip
+#30 7.797 Using Python 3.11.14 environment at: /usr/local
+#30 10.15 Resolved 161 packages in 2.32s
+#30 10.30 Prepared 2 packages in 112ms
+#30 10.52 Uninstalled 1 package in 217ms
+#30 10.53 warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+#30 10.53          If the cache and target directories are on different filesystems, hardlinking may not be supported.
+#30 10.53          If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+#30 53.28 Installed 28 packages in 45.25s
+#30 53.28  + async-timeout==5.0.1
+#30 53.28  + cloudpickle==3.1.2
+#30 53.28  + contourpy==1.3.3
+#30 53.28  + cycler==0.12.1
+#30 53.28  + et-xmlfile==2.0.0
+#30 53.28  + fonttools==4.67.0
+#30 53.28  + grpcio-tools==1.84.0
+#30 53.28  + iterative-stratification==0.1.9
+#30 53.28  + jinja2==3.1.6
+#30 53.28  + joblib==1.6.0
+#30 53.28  + kiwisolver==1.5.1
+#30 53.28  + markupsafe==3.0.4
+#30 53.28  + matplotlib==3.11.2
+#30 53.28  + mpmath==1.3.0
+#30 53.28  + narwhals==2.27.1
+#30 53.28  + networkx==3.6.1
+#30 53.28  + openpyxl==3.1.5
+#30 53.28  + pandas==3.0.6
+#30 53.28  + pyarrow==26.0.0
+#30 53.28  + pyparsing==3.3.3
+#30 53.28  + scikit-learn==1.9.1
+#30 53.28  + scipy==1.17.1
+#30 53.28  + seaborn==0.13.2
+#30 53.28  - setuptools==79.0.1
+#30 53.28  + setuptools==84.0.0
+#30 53.28  + sympy==1.14.0
+#30 53.28  + threadpoolctl==3.7.0
+#30 53.28  + torch==2.14.1+cpu
+#30 53.28  + torchvision==0.29.1+cpu
+#30 60.49 No broken requirements found.
+#30 DONE 62.4s
+
+#31 [cpu 3/4] COPY algorithm/checkpoints/registry.json /opt/eye-model/registry.json
+#31 DONE 2.1s
+
+#32 [cpu 4/4] COPY algorithm/configs/calibration/efficientnet_b4_temperature.json /opt/eye-model/efficientnet_b4_temperature.json
+#32 DONE 0.2s
+
+#33 exporting to image
+#33 exporting layers
+#33 exporting layers 89.6s done
+#33 exporting manifest sha256:b640c0220ee84825c2ef9ed1f47f1e1d661edd77ebf31915e31952b3e1324784 0.1s done
+#33 exporting config sha256:adb5af3cb5a5a8cdad9b6b40164db606bb12368d638b66be1ffbaad02796ced2 0.1s done
+#33 exporting attestation manifest sha256:0ca1097d9a3a7083647375cabf9da4b23b6f6fff3ae6e10da4cc1cf14e52bc5c
+#33 exporting attestation manifest sha256:0ca1097d9a3a7083647375cabf9da4b23b6f6fff3ae6e10da4cc1cf14e52bc5c 0.3s done
+#33 exporting manifest list sha256:6e00943ddbed15006889d992b0c8b7747ab388bd4a9da77065ac22e7f134c85c
+#33 exporting manifest list sha256:6e00943ddbed15006889d992b0c8b7747ab388bd4a9da77065ac22e7f134c85c 0.3s done
+#33 naming to docker.io/library/eye-python-cpu:ticket06 0.1s done
+#33 unpacking to docker.io/library/eye-python-cpu:ticket06
+#33 unpacking to docker.io/library/eye-python-cpu:ticket06 105.1s done
+#33 DONE 196.0s

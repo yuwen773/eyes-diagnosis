@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "schema": "eye_windows_delivery08_410dbf47f25749d496b976de793a8b0e",
+  "python": "3.11.14",
+  "workflowId": "e68080fd259f4e909d4fb0faab7889bc",
+  "checks": [
+    "install-pinned-python",
+    "pwsh-api-worker-start-status-stop",
+    "real-mysql-redis-readiness",
+    "real-python-login",
+    "stock-worker-durable-task"
+  ],
+  "source": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\ticket08-windows-8c7a7620524f4e2cac79f8496244a462\\source",
+  "noJavaSource": true,
+  "originalRuntimeUntouched": true
+}

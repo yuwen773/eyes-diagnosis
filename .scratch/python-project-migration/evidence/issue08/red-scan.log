@@ -1,0 +1,32 @@
+F
+================================== FAILURES ===================================
+_ test_delivery_scan_rejects_jvm_and_removed_source_dependencies[src/main/java/Example.java-class Example {}] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-973/test_delivery_scan_rejects_jvm0')
+name = 'src/main/java/Example.java', content = 'class Example {}'
+
+    @pytest.mark.parametrize("name,content", [
+        ("src/main/java/Example.java", "class Example {}"),
+        ("pom.xml", "<project/>"),
+        (".github/workflows/build.yml", "steps:\n  - uses: actions/setup-java@v4\n"),
+        ("scripts/start.ps1", "& java.exe -jar app.jar\n"),
+        ("algorithm/requirements-web.lock", "tika==3.1.0\n"),
+        ("algorithm/web/example.py", "Path('src/main/resources/schema.sql').read_text()\n"),
+    ])
+    def test_delivery_scan_rejects_jvm_and_removed_source_dependencies(tmp_path, name, content):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        result = subprocess.run([sys.executable, str(SCANNER), "--root", str(tmp_path)],
+                                capture_output=True, text=True)
+>       assert result.returncode == 1, result.stdout + result.stderr
+E       AssertionError: C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\python.exe: can't open file 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\verify_retirement.py': [Errno 2] No such file or directory
+E         
+E       assert 2 == 1
+E        +  where 2 = CompletedProcess(args=['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', 'D...osis\\\\.claude\\\\worktrees\\\\py-rewrite\\\\scripts\\\\verify_retirement.py': [Errno 2] No such file or directory\n").returncode
+
+algorithm\web\tests\test_retirement.py:26: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_retirement.py::test_delivery_scan_rejects_jvm_and_removed_source_dependencies[src/main/java/Example.java-class Example {}]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 2.11s

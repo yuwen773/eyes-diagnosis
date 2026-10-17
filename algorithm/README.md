@@ -8,7 +8,7 @@
 |------|------|
 | PyTorch | 深度学习框架 |
 | EfficientNet-B4 | 主分类模型（也支持 ResNet50、DenseNet121、ViT 等） |
-| gRPC + Protobuf | 与 Java 后端通信 |
+| gRPC + Protobuf | 独立 Python gRPC 协议兼容 |
 | MCP (Model Context Protocol) | 供 AI Agent 调用的工具服务 |
 
 ## 疾病分类
@@ -34,7 +34,7 @@ algorithm/
 ├── train_model.py             # 模型训练脚本
 ├── evaluate_model.py          # 模型评估脚本
 ├── prepare_data.py            # 数据集准备（CSV 分割）
-├── generate_proto.py          # 从后端唯一 Proto 源生成 Python 绑定
+├── generate_proto.py          # 从 contracts/diagnosis.proto 生成 Python 绑定
 ├── diagnosis_pb2.py           # 自动生成的 Protobuf 代码
 ├── diagnosis_pb2_grpc.py      # 自动生成的 gRPC 存根
 ├── requirements.txt           # Python 依赖

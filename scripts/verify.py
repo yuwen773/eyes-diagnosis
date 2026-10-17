@@ -21,13 +21,14 @@ def main():
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".scratch/python-project-migration/evidence/issue06/ci")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    run([sys.executable, "scripts/verify_retirement.py"])
     if args.suite == "web":
         run(["uv", "pip", "check", "--python", sys.executable])
         run([sys.executable, "-m", "web.migrations", "baseline-check"])
         run([sys.executable, "-m", "mypy", "--follow-imports=silent", "--ignore-missing-imports", "--check-untyped-defs",
              "algorithm/web/delivery.py", "algorithm/web/migrations/baseline.py",
              "algorithm/web/verify_real_services.py", "algorithm/web/verify_worker_concurrency.py",
-             "scripts/verify.py", "scripts/smoke_compose.py"])
+             "scripts/verify.py", "scripts/smoke_compose.py", "scripts/verify_retirement.py"])
         run([sys.executable, "-m", "pytest", "algorithm/web/tests", "-q", "--junitxml=" + str(args.output_dir / "web.xml")])
     elif args.suite == "infrastructure":
         run([sys.executable, "-m", "web.verify_real_services", "--output-dir", str(args.output_dir / "services")])

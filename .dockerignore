@@ -1,6 +1,11 @@
 *
 !pyproject.toml
 !MANIFEST.in
+!README.md
+!AGENTS.md
+!docs
+docs/*
+!docs/python-delivery.md
 !algorithm
 algorithm/*
 !algorithm/requirements-web.lock

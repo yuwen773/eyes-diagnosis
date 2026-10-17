@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends redis-server \
     && python -m pip install --no-cache-dir uv==0.13.0
 WORKDIR /workspace
 COPY pyproject.toml MANIFEST.in ./
+COPY README.md AGENTS.md ./
+COPY docs/python-delivery.md docs/python-delivery.md
+COPY deploy/python/Dockerfile deploy/python/Verify.Dockerfile deploy/python/Frontend.Dockerfile deploy/python/
 COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
 COPY algorithm/web algorithm/web
 COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
@@ -20,6 +23,7 @@ COPY deploy/snippets deploy/snippets
 COPY contracts contracts
 COPY scripts scripts
 COPY frontend/src frontend/src
+COPY frontend/package.json frontend/package.json
 ENV PYTHONPATH=/workspace/algorithm DOC_TOOL_HOME=/opt/eye-doc
 HEALTHCHECK NONE
 CMD ["python", "scripts/verify.py", "web"]

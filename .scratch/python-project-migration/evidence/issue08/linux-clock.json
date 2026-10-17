@@ -1,0 +1,19 @@
+{
+  "seconds": 30,
+  "samples": 568,
+  "negativeWallStepNs": -2816487648,
+  "maximumWallMonotonicDifferenceNs": 2867979106,
+  "anomalies": [
+    {
+      "wallStepNs": 606888642,
+      "monotonicStepNs": 51295741,
+      "differenceNs": 555592901
+    },
+    {
+      "wallStepNs": -2816487648,
+      "monotonicStepNs": 51491458,
+      "differenceNs": -2867979106
+    }
+  ],
+  "clockChanged": false
+}

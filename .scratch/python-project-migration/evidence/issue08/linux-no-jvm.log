@@ -1,0 +1,9 @@
+使用设备: cpu
+使用efficientnet_b4模型
+{
+  "java": null,
+  "mvn": null,
+  "jvmDirectory": false,
+  "torch": "2.14.1+cpu",
+  "torchCuda": null
+}

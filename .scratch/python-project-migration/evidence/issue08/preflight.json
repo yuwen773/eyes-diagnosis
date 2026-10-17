@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "commit": "3eff16390721b4d8b5a36b6623d2bb0981b8a441",
+  "issue07DigestsChecked": 80,
+  "suites": {
+    "full-windows/web.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "44",
+      "tests": "847",
+      "time": "868.304",
+      "timestamp": "2026-10-16T22:43:41.859963+08:00",
+      "hostname": "Sail"
+    },
+    "admission-final.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "5",
+      "time": "8.653",
+      "timestamp": "2026-10-16T23:04:38.460114+08:00",
+      "hostname": "Sail"
+    },
+    "rehearsal-final.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "112.960",
+      "timestamp": "2026-10-16T22:50:01.336836+08:00",
+      "hostname": "Sail"
+    }
+  },
+  "sqlAssetsChecked": 24,
+  "plannedTrackedDeletions": 203,
+  "productionDatabase": "NOT_ACCESSED",
+  "historyTag": "archive/java-before-python-retirement-2026-10-17",
+  "historyTagCommit": "3eff16390721b4d8b5a36b6623d2bb0981b8a441"
+}

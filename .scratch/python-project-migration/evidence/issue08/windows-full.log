@@ -1,0 +1,165 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+Checked 134 packages in 23ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 6 source files
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 16%]
+........................................................................ [ 25%]
+............................................................ssss........ [ 33%]
+........................................................................ [ 42%]
+........................................................................ [ 50%]
+........................s..sss.......................................... [ 59%]
+........................................................................ [ 67%]
+.................................................sssssssssss............ [ 75%]
+........................................................................ [ 84%]
+........................................................................ [ 92%]
+.................F........Fs.................................            [100%]
+================================== FAILURES ===================================
+__ test_expired_executor_cannot_overwrite_replacement_or_retry_it[glaucoma] ___
+
+worker_api = (<starlette.testclient.TestClient object at 0x0000021AF1ACAFD0>, sessionmaker(class_='Session', bind=Engine(sqlite:///...Cpytest-of-yuwen%5Cpytest-976%5Ctest_expired_executor_cannot_o0%5Cworker.db), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-976/test_expired_executor_cannot_o0')
+stale_mode = 'glaucoma'
+
+    @pytest.mark.parametrize("stale_mode", ["glaucoma", "timeout"])
+    def test_expired_executor_cannot_overwrite_replacement_or_retry_it(worker_api, tmp_path, stale_mode):
+        client, sessions = worker_api
+        workflow_id = prepare_inference(worker_api)
+>       with executor(sessions, tmp_path, "expired", gated=True, mode=stale_mode):
+
+algorithm\web\tests\test_worker_concurrency.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+sessions = sessionmaker(class_='Session', bind=Engine(sqlite:///C%3A%5CUsers%5Cyuwen%5CAppData%5CLocal%5CTemp%5Cpytest-of-yuwen%5Cpytest-976%5Ctest_expired_executor_cannot_o0%5Cworker.db), autoflush=False, expire_on_commit=False)
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-976/test_expired_executor_cannot_o0')
+name = 'expired', mode = 'glaucoma', gated = True, lease = 30, crash = False
+
+    @contextmanager
+    def executor(sessions, tmp_path, name, *, mode="normal", gated=False, lease=30, crash=False):
+        gate = tmp_path / name
+        env = os.environ.copy()
+        env["WORKER_TEST_DATABASE_URL"] = sessions.kw["bind"].url.render_as_string(hide_password=False)
+        args = [sys.executable, "-m", "web.tests.worker_concurrency_process", "--mode", mode,
+                "--lease-seconds", str(lease)]
+        if gated:
+            args.extend(["--gate", str(gate)])
+        process = subprocess.Popen(args, env=env, cwd=Path(__file__).resolve().parents[2],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            if gated:
+                deadline = time.monotonic() + 20
+                while not gate.with_suffix(".started").exists():
+                    if process.poll() is not None or time.monotonic() >= deadline:
+>                       raise AssertionError("Worker did not reach controlled adapter")
+E                       AssertionError: Worker did not reach controlled adapter
+
+algorithm\web\tests\test_worker_concurrency.py:133: AssertionError
+_ test_worker_process_crashes_exhaust_budget_without_replaying_completed_nodes _
+
+sessions = sessionmaker(class_='Session', bind=Engine(sqlite:///C%3A%5CUsers%5Cyuwen%5CAppData%5CLocal%5CTemp%5Cpytest-of-yuwen%5Cpytest-976%5Ctest_worker_process_crashes_ex0%5Cworker.db), autoflush=False, expire_on_commit=False)
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-976/test_worker_process_crashes_ex0')
+name = 'crash-2', mode = 'normal', gated = True, lease = 30, crash = True
+
+    @contextmanager
+    def executor(sessions, tmp_path, name, *, mode="normal", gated=False, lease=30, crash=False):
+        gate = tmp_path / name
+        env = os.environ.copy()
+        env["WORKER_TEST_DATABASE_URL"] = sessions.kw["bind"].url.render_as_string(hide_password=False)
+        args = [sys.executable, "-m", "web.tests.worker_concurrency_process", "--mode", mode,
+                "--lease-seconds", str(lease)]
+        if gated:
+            args.extend(["--gate", str(gate)])
+        process = subprocess.Popen(args, env=env, cwd=Path(__file__).resolve().parents[2],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            if gated:
+                deadline = time.monotonic() + 20
+                while not gate.with_suffix(".started").exists():
+                    if process.poll() is not None or time.monotonic() >= deadline:
+>                       raise AssertionError("Worker did not reach controlled adapter")
+E                       AssertionError: Worker did not reach controlled adapter
+
+algorithm\web\tests\test_worker_concurrency.py:133: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+worker_api = (<starlette.testclient.TestClient object at 0x0000021ABF777190>, sessionmaker(class_='Session', bind=Engine(sqlite:///...Cpytest-of-yuwen%5Cpytest-976%5Ctest_worker_process_crashes_ex0%5Cworker.db), autoflush=False, expire_on_commit=False))
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-976/test_worker_process_crashes_ex0')
+
+    def test_worker_process_crashes_exhaust_budget_without_replaying_completed_nodes(worker_api, tmp_path):
+        client, sessions = worker_api
+        workflow_id = prepare_inference(worker_api)
+        for attempt in range(1, 4):
+>           with executor(sessions, tmp_path, f"crash-{attempt}", gated=True, crash=True) as (process, _):
+
+algorithm\web\tests\test_worker_concurrency.py:324: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+sessions = sessionmaker(class_='Session', bind=Engine(sqlite:///C%3A%5CUsers%5Cyuwen%5CAppData%5CLocal%5CTemp%5Cpytest-of-yuwen%5Cpytest-976%5Ctest_worker_process_crashes_ex0%5Cworker.db), autoflush=False, expire_on_commit=False)
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-976/test_worker_process_crashes_ex0')
+name = 'crash-2', mode = 'normal', gated = True, lease = 30, crash = True
+
+    @contextmanager
+    def executor(sessions, tmp_path, name, *, mode="normal", gated=False, lease=30, crash=False):
+        gate = tmp_path / name
+        env = os.environ.copy()
+        env["WORKER_TEST_DATABASE_URL"] = sessions.kw["bind"].url.render_as_string(hide_password=False)
+        args = [sys.executable, "-m", "web.tests.worker_concurrency_process", "--mode", mode,
+                "--lease-seconds", str(lease)]
+        if gated:
+            args.extend(["--gate", str(gate)])
+        process = subprocess.Popen(args, env=env, cwd=Path(__file__).resolve().parents[2],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            if gated:
+                deadline = time.monotonic() + 20
+                while not gate.with_suffix(".started").exists():
+                    if process.poll() is not None or time.monotonic() >= deadline:
+                        raise AssertionError("Worker did not reach controlled adapter")
+                    time.sleep(.02)
+            yield process, gate
+        finally:
+            gate.with_suffix(".release").touch()
+            try:
+                output, error = process.communicate(timeout=20)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise
+>           assert (process.returncode != 0 if crash else process.returncode == 0), error
+E           AssertionError: 
+E           assert False
+
+algorithm\web\tests\test_worker_concurrency.py:144: AssertionError
+============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_worker_concurrency.py::test_expired_executor_cannot_overwrite_replacement_or_retry_it[glaucoma]
+FAILED algorithm/web/tests/test_worker_concurrency.py::test_worker_process_crashes_exhaust_budget_without_replaying_completed_nodes
+2 failed, 808 passed, 43 skipped, 1 warning in 1661.84s (0:27:41)
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 52, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 32, in main
+    run([sys.executable, "-m", "pytest", "algorithm/web/tests", "-q", "--junitxml=" + str(args.output_dir / "web.xml")])
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'algorithm/web/tests', '-q', '--junitxml=.scratch\\python-project-migration\\evidence\\issue08\\windows-full\\web.xml']' returned non-zero exit status 1.

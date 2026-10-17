@@ -1,0 +1,88 @@
+.........F...F                                                           [100%]
+=================================== FAILURES ===================================
+___________ test_model_timeout_exhausts_retries_as_failed_not_review ___________
+
+worker_api = (<starlette.testclient.TestClient object at 0x7fc999b1fe10>, sessionmaker(class_='Session', bind=Engine(mysql+pymysql://root:***@127.0.0.1:3306/eye_worker_issue16_129c76c1698446f086345a6df5526e41), autoflush=False, expire_on_commit=False))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_model_timeout_exhausts_re0')
+
+    def test_model_timeout_exhausts_retries_as_failed_not_review(worker_api, tmp_path):
+        client, sessions = worker_api
+        workflow_id = prepare_inference(worker_api)
+        for expected in ["QUEUED", "QUEUED", "FAILED"]:
+            with executor(sessions, tmp_path, uuid4().hex, mode="timeout") as (process, _):
+                process.wait(timeout=20)
+            view = query(client, workflow_id)
+            assert view["status"] == expected
+            assert view["result"] is None and view["qualityGate"] is None
+            assert not view["resultAvailability"]["doctorReviewRequired"]
+            with sessions.begin() as db:
+                job = db.scalar(select(Job).where(Job.workflow_id == workflow_id, Job.epoch == 1))
+                if expected != "FAILED":
+                    assert job.status == "RETRY_WAIT"
+>                   assert job.available_at > database_now(db)
+E                   assert datetime.datetime(2026, 10, 17, 11, 47, 6, 378113) > datetime.datetime(2026, 10, 17, 11, 47, 6, 810254)
+E                    +  where datetime.datetime(2026, 10, 17, 11, 47, 6, 378113) = <web.workflow.models.Job object at 0x7fc993729c50>.available_at
+E                    +  and   datetime.datetime(2026, 10, 17, 11, 47, 6, 810254) = database_now(<sqlalchemy.orm.session.Session object at 0x7fc993b1c450>)
+
+web/tests/test_worker_concurrency.py:260: AssertionError
+__________ test_mysql_claim_skips_locked_job_and_advances_other_task ___________
+
+worker_api = (<starlette.testclient.TestClient object at 0x7fc99aaefd50>, sessionmaker(class_='Session', bind=Engine(mysql+pymysql://root:***@127.0.0.1:3306/eye_worker_issue16_129c76c1698446f086345a6df5526e41), autoflush=False, expire_on_commit=False))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_mysql_claim_skips_locked_0')
+
+    def test_mysql_claim_skips_locked_job_and_advances_other_task(worker_api, tmp_path):
+        client, sessions = worker_api
+        if sessions.kw["bind"].dialect.name != "mysql":
+            pytest.skip("SKIP LOCKED requires real MySQL")
+        locked_id = upload(client)
+        other_id = upload(client)
+        with sessions.begin() as db:
+            job_id = db.scalar(select(Job.job_id).where(Job.workflow_id == locked_id))
+            # Lock exactly one primary record. A workflow-prefix lookup also takes
+            # next-key gap locks, blocking the other task's continuation INSERT.
+            db.scalar(select(Job).where(Job.job_id == job_id).with_for_update())
+            with executor(sessions, tmp_path, "skip-locked") as (process, _):
+>               process.wait(timeout=20)
+
+web/tests/test_worker_concurrency.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: 0 args: ['/usr/local/bin/python', '-m', 'web.tests.worke...>
+timeout = 20
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on POSIX."""
+        if self.returncode is not None:
+            return self.returncode
+    
+        if timeout is not None:
+            endtime = _time() + timeout
+            # Enter a busy loop if we have a timeout.  This busy loop was
+            # cribbed from Lib/threading.py in Thread.wait() at r71065.
+            delay = 0.0005 # 500 us -> initial delay of 1 ms
+            while True:
+                if self._waitpid_lock.acquire(False):
+                    try:
+                        if self.returncode is not None:
+                            break  # Another thread waited.
+                        (pid, sts) = self._try_wait(os.WNOHANG)
+                        assert pid == self.pid or pid == 0
+                        if pid == self.pid:
+                            self._handle_exitstatus(sts)
+                            break
+                    finally:
+                        self._waitpid_lock.release()
+                remaining = self._remaining_time(endtime)
+                if remaining <= 0:
+>                   raise TimeoutExpired(self.args, timeout)
+E                   subprocess.TimeoutExpired: Command '['/usr/local/bin/python', '-m', 'web.tests.worker_concurrency_process', '--mode', 'normal', '--lease-seconds', '30']' timed out after 20 seconds
+
+/usr/local/lib/python3.11/subprocess.py:2045: TimeoutExpired
+=========================== short test summary info ============================
+FAILED web/tests/test_worker_concurrency.py::test_model_timeout_exhausts_retries_as_failed_not_review
+FAILED web/tests/test_worker_concurrency.py::test_mysql_claim_skips_locked_job_and_advances_other_task
+2 failed, 12 passed in 335.59s (0:05:35)
