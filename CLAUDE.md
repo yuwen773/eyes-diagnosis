@@ -39,6 +39,10 @@ pip install -r requirements.txt
 python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
 python grpc_server.py                # gRPC server :50051
 
+# Python web layer (in algorithm/web/) -- the rewritten non-Agent domains
+pip install -r requirements-web.txt  # no torch; the app boots without weights
+uvicorn web.app:app --port 8080      # 34 endpoints, see docs/migration-decisions.md
+
 docker-compose up -d                 # ChromaDB vector store :8000
 ```
 
@@ -55,6 +59,14 @@ docker-compose up -d                 # ChromaDB vector store :8000
 - `rag/` — Document parsing + 512-word chunking → ChromaDB via DashScope embeddings
 
 **gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
+
+**Python web layer** (`algorithm/web/`): a FastAPI rewrite of the five non-Agent domains — **34 endpoints** (user 11, diagnosis 8, news 7, knowledge 3, mcp-server 5). Runs on `:8080`, behind `deploy/nginx.conf` on `:8081`.
+
+- The **Agent subsystem stays on Java, unchanged**. So do `POST /user/login`, `POST /user/logout` and `GET /user/get/login` — Spring Session's Redis payload is JDK-serialized and unreadable from Python, so Java owns the session and Python forwards `JSESSIONID` to it.
+- **Inference is in-process** (`web/inference.py`), replacing the gRPC hop.
+- **Chroma write side moved to Python, read side stayed on Java** — collection `diagnosis-knowledge`, tenant/database `default_tenant`/`default_database`, DashScope `text-embedding-v3`, `ownerUserId` metadata must be an **integer**, chunk ids `doc_{docId}_chunk_{i}`.
+- **Three contracts are easy to break silently**: `Long` fields serialise as JSON **strings**, dates as `"yyyy-MM-dd HH:mm:ss"`, and every handled error is **HTTP 200** with a `code` in the body.
+- **Before changing anything here**, read `docs/migration-decisions.md` (why each Java quirk is reproduced) and `docs/rewrite-findings.md` (defects found but deliberately *not* fixed — changing them changes production behaviour and needs a matching Java release).
 
 **Frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. Agent chat uses `@microsoft/fetch-event-source` for SSE.
 
@@ -86,6 +98,26 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
 - **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
+
+## Verification
+
+```bash
+# Git Bash 里 mvn 会报 Launcher ClassNotFoundException，必须用 cmd //c
+cmd //c "mvn -o -q compile -DskipTests"        # Java baseline, must stay exit 0
+cd algorithm && python -m pytest web/tests -q  # 405 passed / 5 skipped
+```
+
+The Java tree is this rewrite's control group: `git status --porcelain -- src pom.xml`
+must print nothing. If a Python-side change ever needs a Java edit to compile, the
+"don't pollute the existing codebase" constraint has been broken.
+
+Two things no unit test can cover, both in `docs/rewrite-findings.md`:
+
+1. **Chroma cross-language retrieval** (J-12) — upload a document through Python, then ask
+   the Java Agent something only that document answers. A mismatch returns *empty, with no
+   error anywhere*.
+2. **The inference path** — blocked on B-1. The repository has no weights, so
+   `/diagnosis/diagnosis` failing closed is the correct current behaviour.
 
 ## Design Context
 
