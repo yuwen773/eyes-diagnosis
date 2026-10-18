@@ -1,0 +1,183 @@
+{
+  "status": "PASS",
+  "registered": [
+    {
+      "ProcessId": 15792,
+      "ParentProcessId": 64840,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m pytest algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python] algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python -q --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-d0b71bcf --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\auto-accept-20261018\\skipped-replay\\nginx.xml",
+      "CreationDate": "2026-10-18T15:57:20.119074+08:00"
+    },
+    {
+      "ProcessId": 65220,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain0/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:22.170043+08:00"
+    },
+    {
+      "ProcessId": 64840,
+      "ParentProcessId": 61844,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m pytest algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python] algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python -q --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-d0b71bcf --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\auto-accept-20261018\\skipped-replay\\nginx.xml",
+      "CreationDate": "2026-10-18T15:57:20.074936+08:00"
+    },
+    {
+      "ProcessId": 52908,
+      "ParentProcessId": 64840,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:20.092746+08:00"
+    },
+    {
+      "ProcessId": 39652,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain1/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain1/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:24.654089+08:00"
+    },
+    {
+      "ProcessId": 39780,
+      "ParentProcessId": 15792,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 39652 /T /F",
+      "CreationDate": "2026-10-18T15:57:25.329279+08:00"
+    },
+    {
+      "ProcessId": 20840,
+      "ParentProcessId": 39652,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain1/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain1/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:24.776523+08:00"
+    },
+    {
+      "ProcessId": 61804,
+      "ParentProcessId": 20840,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:24.868752+08:00"
+    },
+    {
+      "ProcessId": 28960,
+      "ParentProcessId": 37912,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:26.803775+08:00"
+    },
+    {
+      "ProcessId": 39724,
+      "ParentProcessId": 15792,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 24924 /T /F",
+      "CreationDate": "2026-10-18T15:57:27.241484+08:00"
+    },
+    {
+      "ProcessId": 37912,
+      "ParentProcessId": 24924,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain2/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain2/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:26.710075+08:00"
+    },
+    {
+      "ProcessId": 24924,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain2/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain2/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:26.591141+08:00"
+    },
+    {
+      "ProcessId": 60884,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain3/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain3/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:29.132407+08:00"
+    },
+    {
+      "ProcessId": 66460,
+      "ParentProcessId": 60884,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain3/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_independent_routes_retain3/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:29.250869+08:00"
+    },
+    {
+      "ProcessId": 57124,
+      "ParentProcessId": 66460,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:29.340105+08:00"
+    },
+    {
+      "ProcessId": 31300,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine0/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:31.15539+08:00"
+    },
+    {
+      "ProcessId": 47792,
+      "ParentProcessId": 46136,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:31.375691+08:00"
+    },
+    {
+      "ProcessId": 46136,
+      "ParentProcessId": 31300,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine0/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:31.279155+08:00"
+    },
+    {
+      "ProcessId": 6088,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine1/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine1/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:33.121401+08:00"
+    },
+    {
+      "ProcessId": 46416,
+      "ParentProcessId": 16572,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T15:57:33.347826+08:00"
+    },
+    {
+      "ProcessId": 16572,
+      "ParentProcessId": 6088,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine1/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/sw18-d0b71bcf/test_maintenance_blocks_busine1/nginx.conf",
+      "CreationDate": "2026-10-18T15:57:33.253894+08:00"
+    },
+    {
+      "ProcessId": 14864,
+      "ParentProcessId": 15792,
+      "Name": "nginx.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T15:57:35.458873+08:00"
+    }
+  ],
+  "orphanPidsStopped": [],
+  "survivingRecordedProcesses": []
+}

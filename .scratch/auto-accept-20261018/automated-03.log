@@ -1,0 +1,48 @@
+{
+  "status": "BLOCKED",
+  "schema": "eye_final_1eed7bc4cb3c45d8a4b6fabfe6f2f69b",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    },
+    "realWaitRestart": {
+      "status": "PASS",
+      "tasks": 5
+    },
+    "humanUI": {
+      "status": "BLOCKED",
+      "reason": "Actual patient/doctor UI actions and independent evidence are required"
+    },
+    "structuredExplanation": {
+      "status": "PASS",
+      "claims": 1,
+      "referenceSha256": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f",
+      "source": "20261018T081453Z-providers-656072\\provider-checks.json"
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "original_1_left_jpg: reused prior same-run proof; human progress retained",
+    "original_0_left_jpg: reused prior same-run proof; human progress retained",
+    "original_2_left_jpg: reused prior same-run proof; human progress retained",
+    "original_13_left_jpg: reused prior same-run proof; human progress retained",
+    "original_30_left_jpg: reused prior same-run proof; human progress retained"
+  ],
+  "cleanup": {
+    "status": "PASS"
+  },
+  "phase": "automated",
+  "runId": "20261018T-windows-02",
+  "attempt": "20261018T082510Z-automated-c606d3",
+  "budget": {
+    "llm": {
+      "used": 2,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 28,
+      "limit": 500
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "checks": {
+    "embedding": {
+      "status": "PASS",
+      "dimensions": 1024,
+      "inputTexts": 1
+    },
+    "streamingChat": {
+      "status": "PASS",
+      "contentSeen": true,
+      "doneSeen": true
+    },
+    "structuredExplanation": {
+      "status": "PASS",
+      "claims": 1,
+      "referenceSha256": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f"
+    }
+  },
+  "scope": "real embedding, streaming chat and production structured explanation adapter",
+  "phase": "providers",
+  "runId": "20261018T-windows-02",
+  "attempt": "20261018T081453Z-providers-656072",
+  "budget": {
+    "llm": {
+      "used": 2,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 1,
+      "limit": 500
+    }
+  }
+}

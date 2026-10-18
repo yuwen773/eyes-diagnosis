@@ -1,0 +1,21 @@
+INFO:     Started server process [54668]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57151 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54539 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54540 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54542 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54539 - "POST /api/user/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54539 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54539 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "POST /api/diagnosis/list/page/my HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "GET /api/diagnosis/workflows/eadc9985e9cb49c19592f4765a0e9699 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "GET /api/diagnosis/workflows/1301455837884e939645bb86bbbd873c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "GET /api/diagnosis/workflows/c256f151da994d5fa2b9c29b8619eb45 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "GET /api/diagnosis/workflows/98821c263d164bdab6dac6f0d9c0482f HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54536 - "GET /api/diagnosis/workflows/4feb2b833b254dbca0ccc318bf99392a HTTP/1.1" 200 OK

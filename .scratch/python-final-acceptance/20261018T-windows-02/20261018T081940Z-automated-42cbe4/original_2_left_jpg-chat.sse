@@ -1,0 +1,6 @@
+event: workflow
+data: {"sessionId": "f7b0ce5e424f4a57a31b91fc02b45037", "workflow": {"workflowId": "c256f151da994d5fa2b9c29b8619eb45", "status": "WAITING_HUMAN_REVIEW", "legacySource": null, "workflowVersion": "6", "segment": "qualityReview", "graphDefinitionVersion": "upload-final-clinical-review-v6", "progress": {"current": "qualityReview", "completed": ["validateImage", "inference", "imageQuality"]}, "stopReasonCode": "QUALITY_REVIEW_REQUIRED", "qualityGate": "REVIEW", "qualityReview": {"status": "OPEN", "decisionCode": null, "reasonCode": null}, "finalReview": null, "evidence": null, "explanation": {"publicationStatus": "NONE", "snapshotId": null, "revision": null, "validationStatus": null}, "resultAvailability": {"patientVisible": false, "doctorReviewRequired": true}, "result": null}}
+
+event: done
+data: ""
+

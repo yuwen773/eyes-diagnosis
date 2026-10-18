@@ -1,0 +1,25 @@
+[
+  {
+    "role": "nginx",
+    "pid": 42616,
+    "identity": null,
+    "command": [
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain]",
+      "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy]",
+      "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python]",
+      "algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python",
+      "-q",
+      "--tb=short",
+      "--basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-33c99979",
+      "--junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\auto-accept-20261018\\skipped-replay\\nginx.xml"
+    ],
+    "log": "nginx-3aa415.log",
+    "cleanup": "PENDING"
+  }
+]

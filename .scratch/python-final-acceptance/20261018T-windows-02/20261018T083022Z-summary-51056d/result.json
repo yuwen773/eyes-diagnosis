@@ -1,0 +1,25 @@
+{
+  "status": "BLOCKED",
+  "summary": ".scratch\\python-final-acceptance\\20261018T-windows-02\\20261018T083022Z-summary-51056d\\report.md",
+  "blockers": [
+    "Actual patient and doctor UI actions and separate approve/refuse-save evidence are not complete",
+    "Image deidentification confirmation pending for external supplementary sample upload",
+    "Reference governance is pending actual review; no automatic APPROVED flag",
+    "Governance success-response visibility and durability remain unverified",
+    "Final Windows Web regression has not passed",
+    "Owned runtime cleanup is not complete"
+  ],
+  "budget": {
+    "llm": {
+      "used": 2,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 28,
+      "limit": 500
+    }
+  },
+  "phase": "summary",
+  "runId": "20261018T-windows-02",
+  "attempt": "20261018T083022Z-summary-51056d"
+}

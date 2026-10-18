@@ -31,9 +31,10 @@ def save(path, value):
 def processes():
     command = ("Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,"
                "ExecutablePath,CommandLine,CreationDate | ConvertTo-Json -Compress")
-    result = subprocess.check_output(["pwsh.exe", "-NoLogo", "-NoProfile", "-Command", command],
-                                     text=True, encoding="utf-8")
-    return {int(row["ProcessId"]): row for row in json.loads(result)}
+    # Unrelated local processes may carry non-UTF8 bytes in their command line.
+    # Decode leniently: a single foreign byte must not abort process ownership.
+    result = subprocess.check_output(["pwsh.exe", "-NoLogo", "-NoProfile", "-Command", command])
+    return {int(row["ProcessId"]): row for row in json.loads(result.decode("utf-8", errors="replace"))}
 
 
 class Owned:
@@ -323,7 +324,16 @@ def execute(run, attempt, config, budget, *, manual_seconds=0):
             save(attempt / "review-tasks.json", envelope(doctor.get("/api/reviews/tasks")))
             save(attempt / "formal-records.json", envelope(patient.post("/api/diagnosis/list/page/my", json={})))
             report["gates"]["humanUI"] = {"status": "BLOCKED", "reason": "Actual patient/doctor UI actions and independent evidence are required"}
-            report["gates"]["structuredExplanation"] = {"status": "BLOCKED", "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"}
+            # Report this run's real provider preflight instead of a stale fixed verdict.
+            checks_path = run / "provider-checks.json"
+            prior = sorted(run.glob("*-providers-*/provider-checks.json"))
+            source = checks_path if checks_path.exists() else (prior[-1] if prior else None)
+            if source is not None:
+                structured = json.loads(source.read_text(encoding="utf-8")).get("structuredExplanation", {})
+                report["gates"]["structuredExplanation"] = {**structured, "source": str(source.relative_to(run))}
+            else:
+                report["gates"]["structuredExplanation"] = {"status": "NOT_RUN",
+                                                            "reason": "No provider preflight in this run"}
     except Exception as exc:
         report["errorType"] = type(exc).__name__
         import traceback

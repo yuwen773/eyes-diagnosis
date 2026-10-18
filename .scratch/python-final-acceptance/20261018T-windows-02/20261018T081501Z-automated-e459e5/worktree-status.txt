@@ -1,0 +1,3 @@
+?? .scratch/auto-accept-20261018-web.log
+?? .scratch/auto-accept-20261018/
+?? .scratch/python-final-acceptance/20261018T-windows-02/

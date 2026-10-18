@@ -1,0 +1,256 @@
+{
+  "status": "PASS",
+  "timestampUtc": "2026-10-18T08:30:14.458591+00:00",
+  "originalSkipped": 43,
+  "passed": 43,
+  "failed": 0,
+  "remainingSkipped": 0,
+  "scope": "Native Windows Nginx 1.28.0, MySQL 8.0.26 (127.0.0.1:3307) and Redis 3.2.100; synthetic backends/models/decisions; not human acceptance",
+  "firstAttempts": {
+    "nginx": {
+      "passed": 0,
+      "failed": 0,
+      "note": "single attempt; a runner-side UTF-8 decode defect aborted attempt 1 before any test executed, see ../auto-accept-20261018/skipped-replay-attempt1-unicode-error/"
+    },
+    "mysql": {
+      "passed": 0,
+      "failed": 0,
+      "note": "same aborted attempt 1; no test executed"
+    }
+  },
+  "changes": [
+    "scripts/acceptance_runtime.py processes(): decode PowerShell output leniently so a foreign non-UTF8 command line cannot abort ownership"
+  ],
+  "unchangedProductSources": true,
+  "changedWebSource": [],
+  "businessTablesUnchanged": true,
+  "formalRecords": 0,
+  "cleanup": "PASS",
+  "manualAcceptance": "DEFERRED",
+  "overallAcceptance": "BLOCKED",
+  "browserOption": "NOT_RUN",
+  "baselineFullSuite": {
+    "passed": 829,
+    "skipped": 43,
+    "evidence": "../windows-web/web.xml"
+  },
+  "executionNote": "Baseline full suite (829 passed / 43 skipped) and this replay are separate executions; they are not merged into one full-suite number",
+  "cases": [
+    {
+      "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python]",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python",
+      "phase": "nginx",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_controlled_evidence.py::test_private_revocation_with_two_mysql_repeatable_read_connections",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[empty]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[9]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[22]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[v8-V8_CHECKSUM]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[checksum-LEGACY_CHECKSUM]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[failed-FAILED_LEGACY_HISTORY]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[unknown-UNKNOWN_LEGACY_HISTORY]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[schema-SCHEMA]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_independent_increment_runs_once_without_changing_legacy_history",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_failed_nontransactional_ddl_is_not_replayed_or_marked_success",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_concurrent_upgrader_cannot_write",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_empty_python_history_is_an_interrupted_registration",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_schema_objects_are_not_treated_as_an_empty_database",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_applied_handoff_still_rejects_changed_original_history",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_interrupted_baseline_cannot_register_success_or_replay",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[empty]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[9]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[22]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[quality]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[final]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[save]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[supplement]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_legacy_workflow_mysql.py::test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor]",
+      "phase": "mysql",
+      "status": "PASS"
+    },
+    {
+      "nodeid": "algorithm/web/tests/test_worker_concurrency.py::test_mysql_claim_skips_locked_job_and_advances_other_task",
+      "phase": "mysql",
+      "status": "PASS"
+    }
+  ],
+  "runner": ".scratch/auto-accept-20261018/run_skipped.py"
+}

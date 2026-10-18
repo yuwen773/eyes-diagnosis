@@ -1,0 +1,17 @@
+{
+  "embedding": {
+    "status": "PASS",
+    "dimensions": 1024,
+    "inputTexts": 1
+  },
+  "streamingChat": {
+    "status": "PASS",
+    "contentSeen": true,
+    "doneSeen": true
+  },
+  "structuredExplanation": {
+    "status": "PASS",
+    "claims": 1,
+    "referenceSha256": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f"
+  }
+}

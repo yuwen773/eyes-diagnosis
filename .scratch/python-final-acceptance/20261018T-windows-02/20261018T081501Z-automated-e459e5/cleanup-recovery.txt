@@ -1,0 +1,7 @@
+PASS: attempt aborted before starting any child test process; its only registered child was an owned Redis (PID 51436, port 56010, dir .scratch/python-final-acceptance/20261018T-windows-02/runtime/redis) left PENDING because the process-inventory decode raised.
+
+Recovery performed 2026-10-18:
+- Re-read the live process table and matched PID 51436 on exact ExecutablePath, CommandLine and CreationDate; identity matched the recorded entry.
+- taskkill /PID 51436 /T /F succeeded (child PID 57688 and PID 51436 terminated).
+- Re-checked afterwards: no surviving process with that CreationDate; ports 8080 and 5173 free.
+- No product source, database or evidence file was modified by this recovery.

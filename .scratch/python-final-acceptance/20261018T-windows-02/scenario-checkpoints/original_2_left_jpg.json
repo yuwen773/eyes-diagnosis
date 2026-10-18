@@ -1,0 +1,8 @@
+{
+  "attempt": "20261018T081940Z-automated-42cbe4",
+  "workflowId": "c256f151da994d5fa2b9c29b8619eb45",
+  "sessionId": "f7b0ce5e424f4a57a31b91fc02b45037",
+  "status": "PASS",
+  "sourceSha256": "0ab6484c85904291c6d5d0c99a11f3b0cddc8cae91b9f8919b8534e8c9202ace",
+  "workflowStatus": "WAITING_HUMAN_REVIEW"
+}

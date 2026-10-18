@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\auto-accept-20261018\run_skipped.py", line 89, in main
+    child = owned.start(phase, [sys.executable, "-m", "pytest", *selected, "-q", "--tb=short",
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\acceptance_runtime.py", line 71, in start
+    current = processes()
+              ^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\acceptance_runtime.py", line 34, in processes
+    result = subprocess.check_output(["pwsh.exe", "-NoLogo", "-NoProfile", "-Command", command],
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 1196, in communicate
+    stdout = self.stdout.read()
+             ^^^^^^^^^^^^^^^^^^
+  File "<frozen codecs>", line 322, in decode
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa1 in position 164752: invalid start byte
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\auto-accept-20261018\run_skipped.py", line 148, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\auto-accept-20261018\run_skipped.py", line 139, in main
+    owned.close()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\acceptance_runtime.py", line 119, in close
+    raise RuntimeError("Cleanup failed: " + ", ".join(errors))
+RuntimeError: Cleanup failed: UnicodeDecodeError

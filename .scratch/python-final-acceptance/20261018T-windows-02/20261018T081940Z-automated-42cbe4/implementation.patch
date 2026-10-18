@@ -1,0 +1,18 @@
+diff --git a/scripts/acceptance_runtime.py b/scripts/acceptance_runtime.py
+index 6acba5a..fc1a3c0 100644
+--- a/scripts/acceptance_runtime.py
++++ b/scripts/acceptance_runtime.py
+@@ -31,9 +31,10 @@ def save(path, value):
+ def processes():
+     command = ("Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,"
+                "ExecutablePath,CommandLine,CreationDate | ConvertTo-Json -Compress")
+-    result = subprocess.check_output(["pwsh.exe", "-NoLogo", "-NoProfile", "-Command", command],
+-                                     text=True, encoding="utf-8")
+-    return {int(row["ProcessId"]): row for row in json.loads(result)}
++    # Unrelated local processes may carry non-UTF8 bytes in their command line.
++    # Decode leniently: a single foreign byte must not abort process ownership.
++    result = subprocess.check_output(["pwsh.exe", "-NoLogo", "-NoProfile", "-Command", command])
++    return {int(row["ProcessId"]): row for row in json.loads(result.decode("utf-8", errors="replace"))}
+ 
+ 
+ class Owned:

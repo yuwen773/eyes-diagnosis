@@ -1,0 +1,42 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_1eed7bc4cb3c45d8a4b6fabfe6f2f69b",
+  "gates": {},
+  "checks": [],
+  "mysqlVersion": "8.0.26",
+  "errorType": "UnicodeDecodeError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 244
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 71
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 34
+    },
+    {
+      "file": "subprocess.py",
+      "line": 466
+    },
+    {
+      "file": "subprocess.py",
+      "line": 550
+    },
+    {
+      "file": "subprocess.py",
+      "line": 1196
+    },
+    {
+      "file": "<frozen codecs>",
+      "line": 322
+    }
+  ],
+  "cleanup": {
+    "status": "FAIL",
+    "errorType": "RuntimeError"
+  }
+}

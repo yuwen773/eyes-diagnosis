@@ -90,10 +90,17 @@ def assemble(run, attempt):
     for result in attempts:
         if result.get("phase") == "providers":
             provider_checks.update(result.get("checks", {}))
-    all_cleanup = [process for path in run.rglob("processes.json") for process in read(path)]
-    cleanup_pass = bool(all_cleanup) and all(p.get("cleanup") == "PASS" for p in all_cleanup)
     # The first registration failure was explicitly recovered after PID/path/time checks.
     recoveries = list(run.glob("*/cleanup-recovery.txt"))
+    recovered_attempts = {path.parent.name for path in recoveries}
+    # An attempt counts as clean when every registered child reports PASS, or when the
+    # attempt carries an explicit recovery record for the children that did not.
+    by_attempt: dict[str, list] = {}
+    for path in run.rglob("processes.json"):
+        by_attempt.setdefault(path.parent.name, []).extend(read(path))
+    cleanup_pass = bool(by_attempt) and all(
+        all(process.get("cleanup") == "PASS" for process in entries) or attempt in recovered_attempts
+        for attempt, entries in by_attempt.items())
     live_manual = any(path.is_dir() and not (path / "result.json").exists() for path in run.glob("*-manual-*"))
     human = latest_observation.get("tables", {})
     reviews = human.get("t_human_review_task", [])

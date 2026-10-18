@@ -1,0 +1,22 @@
+[
+  {
+    "role": "redis",
+    "pid": 51436,
+    "identity": null,
+    "command": [
+      "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe",
+      "--bind",
+      "127.0.0.1",
+      "--port",
+      "56010",
+      "--dir",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261018T-windows-02\\runtime\\redis",
+      "--appendonly",
+      "yes",
+      "--save",
+      ""
+    ],
+    "log": "redis-a28dda.log",
+    "cleanup": "PENDING"
+  }
+]

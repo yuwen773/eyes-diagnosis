@@ -1,0 +1,12 @@
+{
+  "nginx": {
+    "exitCode": 0,
+    "selectedCases": 7,
+    "xml": "nginx.xml"
+  },
+  "mysql": {
+    "exitCode": 0,
+    "selectedCases": 36,
+    "xml": "mysql.xml"
+  }
+}
