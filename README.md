@@ -13,7 +13,9 @@
 | 工单 03–05 | 非 JVM 文档、旧任务重建及现有等待恢复 | [.scratch/python-project-migration](.scratch/python-project-migration/README.md) |
 | 工单 06 | 根目录 Python、Windows 脚本、Linux Compose、无 JVM CI | [当前运行与验收指引](docs/python-delivery.md) |
 | 工单 07 | 隔离切换与故障恢复演练 | [演练证据](docs/python-cutover-rehearsal.md) |
-| 工单 08 | 历史标签及 Java 退出已实施；Linux 最终门禁未完成 | [最终验收](docs/python-retirement.md) |
+| 工单 08 | 历史保全、Java 退出与工程收尾完成；待人工复核 | [最终验收](docs/python-retirement.md) |
+
+完整进度、已完成能力和剩余真实模型/发布边界见 [工作树进度](docs/python-worktree-progress.md)。
 
 在根目录运行，当前开发、测试及部署不需要 Java/Maven/Flyway/Tika：
 

@@ -2,8 +2,8 @@
 
 范围：`py-rewrite` / `worktree-py-rewrite`，2026-10-17（Asia/Shanghai）。
 
-**状态：PARTIAL，工单 08 尚未整体验收完成。** 历史保全及受控 Java 退出已实施；
-Linux 全量/真实基础设施最终门禁未闭环。用户明确要求保持 Docker 停止，后续须另行恢复验收。
+**状态：PASS_WITH_LIMITATIONS，工单 08 的 4/4 工程判据完成，ready-for-human。**
+历史保全、受控 Java 退出与工程收尾完成；用户要求不再继续 Linux 验收，已有结果附条件保留。
 工程、真实基础设施、真实供应商/模型及临床分别报告；没有执行生产业务库升级、
 生产切流或 push。
 
@@ -47,8 +47,12 @@ Linux 仍使用 `deploy/python/Dockerfile`、`Verify.Dockerfile`、前端镜像�
 已完成镜像构建、CPU 工程检查、306 项算法回归和 Compose/Vue 验收；
 Linux 首轮 Web 在失败后受控终止，真实基础设施门禁也有失败，不能记为通过。
 30 秒只读观测捕获约 2.8 秒回拨；生产时钟保护、业务租约和恢复断言没有修改。
-Docker 随后正常停止，用户确认是主动关闭并要求暂不再启动；没有重启共享 WSL、
-调整系统时钟或操作其中其他数据库服务。本地等价 CI 不代表托管 CI。结果与未执行项见
+Docker 初轮随后停止；该限制后来由用户明确允许启动 Docker 的新授权解除。
+本次原环境全量为 808/6/43；经用户允许临时停止 Ubuntu 时间同步后，相同实现和测试
+全量 814/43、真实 MySQL/Redis/Chroma 三个工程 gates 与数据库承接 21 项均通过。
+结束后时间同步已恢复原 active/enabled；未永久禁用服务或修改配置，不把默认 WSL
+回拨问题记为修复。用户随后要求不再继续 Linux 验收，未重启已不可用的 Docker 引擎。
+本地等价 CI 不代表托管 CI。结果与未执行项见
 [机器汇总](../.scratch/python-project-migration/evidence/issue08/verification-summary.json)和
 [证据索引](../.scratch/python-project-migration/evidence/issue08/README.md)。
 
