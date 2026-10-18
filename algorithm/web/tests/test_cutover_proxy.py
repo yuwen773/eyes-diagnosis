@@ -68,9 +68,11 @@ def proxy(tmp_path):
 ])
 def test_independent_routes_retain_python_state_and_cookie(proxy, business, agent, policy):
     with proxy("--business", business, "--agent", agent, "--workflows", policy) as client:
-        assert client.post("/api/user/login").text.startswith("java ")
+        assert client.post("/api/user/login").text.startswith(business + " ")
+        assert client.get("/api/user/get/login").text.startswith(business + " ")
         assert client.get("/api/user/get/login").text.endswith("SESSION=synthetic")
         assert client.get("/api/user/get/login").headers["X-Seen-Host"] == client.base_url.netloc.decode()
+        assert client.post("/api/user/logout").text.startswith(business + " ")
         assert client.post("/api/news/list/page/vo").text.startswith(business + " ")
         stream = client.post("/api/agent/chat/stream")
         if agent == "python" and policy != "active":

@@ -118,7 +118,7 @@ class RestartCase:
         self.evidence["apiPids"].append(process.pid)
         try:
             with httpx.Client(base_url=f"http://127.0.0.1:{self.port}", timeout=20,
-                              cookies={SESSION_COOKIE_NAME: identity}) as client:
+                              cookies={SESSION_COOKIE_NAME: identity}, trust_env=False) as client:
                 deadline = time.monotonic() + 20
                 while True:
                     assert process.poll() is None, "API exited; inspect child log"

@@ -135,7 +135,9 @@ def govern_document(document_id: int, body: GovernanceUpdate, db: Session = Depe
     document.governance_version += 1
     document.reviewed_by = int(user.id)
     document.reviewed_at = document.update_time = datetime.now()
-    db.flush()
+    # Dependency cleanup runs after response delivery; approval must be durable
+    # before acknowledging it to readers in other requests/processes.
+    db.commit()
     return BaseResponse.success(KnowledgeDocumentVO.model_validate(document, from_attributes=True))
 
 
@@ -282,7 +284,7 @@ def _put_object(key: str, data: bytes) -> None:
     client = qcloud_cos.CosConfig(
         Region=config.cos_region, SecretId=config.cos_secret_id, SecretKey=config.cos_secret_key
     )
-    qcloud_cos.COSClient(client).put_object(Bucket=config.cos_bucket, Key=key, Body=data)
+    qcloud_cos.CosS3Client(client).put_object(Bucket=config.cos_bucket, Key=key, Body=data)
 
 
 def process_document(doc_id: int, raw_text: str, file_type: str, title: str) -> None:
@@ -499,4 +501,4 @@ def _delete_object(key: str) -> None:
     client = qcloud_cos.CosConfig(
         Region=config.cos_region, SecretId=config.cos_secret_id, SecretKey=config.cos_secret_key
     )
-    qcloud_cos.COSClient(client).delete_object(Bucket=config.cos_bucket, Key=key)
+    qcloud_cos.CosS3Client(client).delete_object(Bucket=config.cos_bucket, Key=key)

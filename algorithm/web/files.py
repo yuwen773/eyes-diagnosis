@@ -140,7 +140,7 @@ async def upload_picture(data: bytes, original_filename: str | None, prefix: str
         client = qcloud_cos.CosConfig(
             Region=config.cos_region, SecretId=config.cos_secret_id, SecretKey=config.cos_secret_key
         )
-        cos = qcloud_cos.COSClient(client)
+        cos = qcloud_cos.CosS3Client(client)
         cos.put_object(
             Bucket=config.cos_bucket,
             Key=upload_path.lstrip("/"),

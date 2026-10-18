@@ -49,6 +49,80 @@ def start(client, **kwargs):
     return response.json()["data"]["workflowId"]
 
 
+def test_explanation_json_mode_satisfies_provider_message_contract(explanation_api):
+    client, sessions, _, model = explanation_api
+
+    def enforce_provider_contract():
+        payload = model["requests"][-1]
+        if (payload.get("response_format") == {"type": "json_object"} and
+                not any("json" in message["content"].lower() for message in payload["messages"])):
+            model["response"] = httpx.Response(400, json={"error": {
+                "code": "invalid_parameter_error", "message": "messages must contain the word json"}})
+
+    model["before_response"] = enforce_provider_contract
+    task = start(client)
+    drain(sessions)
+    view = read(client, task)
+    assert view["status"] == "COMPLETED"
+    assert view["explanation"]["publicationStatus"] == "PUBLISHED"
+
+
+def test_structured_explanation_uses_non_thinking_provider_mode(explanation_api):
+    client, sessions, _, model = explanation_api
+
+    def provider_with_slow_thinking():
+        if model["requests"][-1].get("enable_thinking", True):
+            raise httpx.ReadTimeout("thinking exceeds the bounded explanation deadline")
+
+    model["before_response"] = provider_with_slow_thinking
+    task = start(client)
+    drain(sessions)
+    view = read(client, task)
+    assert view["status"] == "COMPLETED"
+    assert view["explanation"]["publicationStatus"] == "PUBLISHED"
+    assert len(model["requests"]) == 1
+
+
+@pytest.mark.parametrize("model_output", ["selected", "numeric", "rewritten"])
+def test_myopia_reference_selection_preserves_safety_and_source(explanation_api, model_output):
+    client, sessions, original, model = explanation_api
+    numeric = "病理性近视是指眼轴过度延长（>26.5mm）导致的眼底退行性改变。"
+    safe = "- **病理性近视**：出现典型眼底退行性改变"
+    reference = numeric + "\n\n## 定义与分类\n\n### 眼轴分类\n- **高度近视**：-6.0D以上\n" + safe
+    doc_id = upload(client, "myopia.txt", text=reference)
+    client.cookies.set(SESSION_COOKIE_NAME, "admin")
+    assert govern(client, original, visibility="QUARANTINED", expectedVersion=1).json()["code"] == 0
+    assert govern(client, doc_id, diseaseCodes=["myopia"]).json()["code"] == 0
+    client.cookies.set(SESSION_COOKIE_NAME, "alice")
+    original_citation = client.post("/api/knowledge/search", json={"query": "病理性近视"}).json()["data"][0]
+
+    def extract_first_supplied_statement():
+        source = json.loads(model["requests"][-1]["messages"][1]["content"])[0]
+        text = source["quotedText"]
+        excerpt = text.split("。", 1)[0] + "。" if "。" in text else text
+        if model_output == "numeric":
+            excerpt = numeric
+        elif model_output == "rewritten":
+            excerpt = numeric.replace("（>26.5mm）", "")
+        model["reply"]["claims"][0].update(text=excerpt, citationIds=[source["citationId"]])
+
+    model["before_response"] = extract_first_supplied_statement
+    task = start(client)
+    drain(sessions, predicted_label="myopia", top_predictions=[{"label": "myopia", "probability": 91.0}])
+    view = read(client, task)
+    if model_output != "selected":
+        assert view["status"] == "COMPLETED_LIMITED"
+        assert view["stopReasonCode"] == "EXPLANATION_CLAIMS_REJECTED"
+        assert view["result"] is None
+        return
+    assert view["status"] == "COMPLETED"
+    assert view["result"]["generalInformation"][0]["text"] == safe
+    assert view["result"]["citations"][0]["quotedText"] == original_citation["quotedText"]
+    assert view["result"]["citations"][0]["quotedTextDigest"] == original_citation["quotedTextDigest"]
+    assert view["result"]["citations"][0]["citationId"] == f"doc_{doc_id}_chunk_0"
+    assert len(model["requests"]) == 1
+
+
 def read(client, workflow_id):
     response = client.get(f"/api/diagnosis/workflows/{workflow_id}")
     assert response.status_code == 200
