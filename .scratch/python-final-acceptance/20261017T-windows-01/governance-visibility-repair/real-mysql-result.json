@@ -1,0 +1,142 @@
+{
+  "status": "PASS",
+  "schema": "eye_pyhandoff_f81a5e373b4b41cf86d8a4c39edc99e3",
+  "checks": [
+    {
+      "documentId": "1",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "2",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "3",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "4",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "5",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "6",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "7",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "8",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "9",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "10",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "11",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "12",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "13",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "14",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "15",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "16",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "17",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "18",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "19",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    },
+    {
+      "documentId": "20",
+      "version": 1,
+      "immediateIndependentRead": "PASS",
+      "polling": false
+    }
+  ],
+  "providerRequests": 0,
+  "scope": "Real MySQL/Redis and original API, synthetic fixtures; no human acceptance",
+  "staleVersionConflict": "PASS",
+  "durableAfterApiRestart": "PASS",
+  "cleanup": "PASS",
+  "participantBusinessTablesUnchanged": [
+    "t_diagnosis_workflow",
+    "t_inference_envelope",
+    "t_human_review_task",
+    "t_diagnosis_save_confirmation",
+    "t_saved_workflow_diagnosis",
+    "t_diagnosis_workflow_event",
+    "t_explanation_snapshot",
+    "t_diagnosis"
+  ],
+  "sourceSha256": "b3eec458382879e5993d75ca63bd365f58cef7321b998db196b6c60fb99142c8"
+}

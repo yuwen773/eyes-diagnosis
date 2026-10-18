@@ -1,0 +1,90 @@
+[
+  {
+    "OBJECT_NAME": "t_python_graph_write",
+    "INDEX_NAME": null,
+    "LOCK_TYPE": "TABLE",
+    "LOCK_MODE": "IX",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": null
+  },
+  {
+    "OBJECT_NAME": "t_python_graph_checkpoint",
+    "INDEX_NAME": null,
+    "LOCK_TYPE": "TABLE",
+    "LOCK_MODE": "IX",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": null
+  },
+  {
+    "OBJECT_NAME": "t_diagnosis_workflow",
+    "INDEX_NAME": null,
+    "LOCK_TYPE": "TABLE",
+    "LOCK_MODE": "IX",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": null
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": null,
+    "LOCK_TYPE": "TABLE",
+    "LOCK_MODE": "IX",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": null
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": "PRIMARY",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X,REC_NOT_GAP",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": "'61cf9375b22745f1ae9fbc284804d288'"
+  },
+  {
+    "OBJECT_NAME": "t_diagnosis_workflow",
+    "INDEX_NAME": "PRIMARY",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X,REC_NOT_GAP",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": "'f9ea84c7214d4175a743ccb0fd598a1e'"
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": "uk_workflow_job_business",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X,GAP,INSERT_INTENTION",
+    "LOCK_STATUS": "WAITING",
+    "LOCK_DATA": "'fa553df9d338471e97137576f6d10ec0', 0, 'python-graph', 'START', '34568dc756054d38990ef6a1d2e60bd7'"
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": null,
+    "LOCK_TYPE": "TABLE",
+    "LOCK_MODE": "IX",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": null
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": "uk_workflow_job_business",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": "supremum pseudo-record"
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": "uk_workflow_job_business",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": "'fa553df9d338471e97137576f6d10ec0', 0, 'python-graph', 'START', '34568dc756054d38990ef6a1d2e60bd7'"
+  },
+  {
+    "OBJECT_NAME": "t_workflow_job",
+    "INDEX_NAME": "PRIMARY",
+    "LOCK_TYPE": "RECORD",
+    "LOCK_MODE": "X,REC_NOT_GAP",
+    "LOCK_STATUS": "GRANTED",
+    "LOCK_DATA": "'34568dc756054d38990ef6a1d2e60bd7'"
+  }
+]

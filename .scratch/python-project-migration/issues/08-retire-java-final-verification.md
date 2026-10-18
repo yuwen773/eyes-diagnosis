@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 — 维护窗口切换与故障恢复演练。
 
-**Status:** in-progress
+**Status:** ready-for-human
 
 **内部实施顺序:** 先核验历史与删除清单，再删除，最后重验；退出门槛独立保留，不能因前面合并工单而提前删除 Java。
 
@@ -12,7 +12,7 @@
 
 - [x] 核验 Git 标签可定位含完整 Java 与旧构建的历史，所需 SQL 已按原字节保全；不通过删除资源或旧证据“修好”测试。
 - [x] 按活跃依赖清单移除 Java 源码、Maven/Java 构建配置与探针、Tika/JVM 安装执行残留；当前指引无 Java 操作，历史文档与旧证据仍可识别。
-- [ ] 删除后重新执行适用工程、依赖扫描、Windows 工具/开发入口及干净 Linux 无 JVM 构建/CI/真实基础设施门禁，证明测试不读取已移除源文件。
+- [x] 删除后重新执行适用工程、依赖扫描、Windows 工具/开发入口及干净 Linux 无 JVM 构建/CI/真实基础设施门禁，证明测试不读取已移除源文件。（工程范围；Linux 临时时间同步停服条件单列。）
 - [x] 原数据、四类等待恢复、旧任务视图与关联重建无损，最终报告区分“去 Java 工程完成”、未执行的生产切换与真实供应商/模型/临床阻塞；不清理业务库、运行文件或他人修改。
 
 **Verification:** 删除后的依赖扫描、Windows 开发/工具、Linux 构建/CI/真实基础设施及数据恢复验证；不默认 push 或部署。
@@ -23,7 +23,7 @@
 
 **Worktree:** `D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite`，分支 `worktree-py-rewrite`。
 
-**Verification status:** PARTIAL — 历史保全和受控 Java 移除已实施；3/4 判据完成。Linux 最终全量/真实基础设施未闭环，用户明确要求保持 Docker 停止，整票不标记 PASS。
+**Verification status:** PASS_WITH_LIMITATIONS — 4/4 工程判据完成，待人工复核。Windows 证据按未变更实现复核；新增 Linux 全量 814/43、真实服务工程 gates 和数据库承接 21 通过。Linux 验证临时停止 Ubuntu 时间同步且结束恢复，不代表默认 WSL 环境已修复；用户要求不再继续 Linux 验收。
 
 ## 实施与验收（2026-10-17）
 
@@ -41,6 +41,14 @@ Windows 最终真实基础设施主链通过：11 项 HTTP/身份/文档/工作�
 
 最终 Windows 串行结果和机器计数登记于 [汇总](../evidence/issue08/verification-summary.json)。
 [删除与保全清单](../evidence/issue08/deletion-plan.json)；[证据索引](../evidence/issue08/README.md)；[当前指引](../../../docs/python-retirement.md)。
+
+## 本次收尾
+
+用户允许启动 Docker，并进一步允许临时停止 Ubuntu `systemd-timesyncd`、结束恢复。原环境全量 808 通过、6 失败、43 跳过；5 项直接报 ID 回拨，1 项 Worker 领取失败。原结果完整保留，不改生产保护或测试断言。
+
+同实现/同测试在临时时间同步停服条件下 Web 全量 814 通过、43 跳过、1 条既有警告；隔离真实 MySQL/Redis/Chroma 的 infrastructure、orchestration、mysqlSemantics 均 PASS，数据库承接 21/21。共同入口退出 0，时间同步已恢复原 active/enabled 状态。细分并发日志仍保留在本次运行卷，未在引擎关闭后重新启动 Docker 导出；不额外声称主机已有这些细分日志。
+
+用户随后要求不再验收 Linux，后续不追加该项操作；已有结果作为附环境条件的工程证据保留。最终机器汇总、旧 PARTIAL 快照与恢复记录见 [收尾索引](../evidence/issue08/closeout-20261017/README.md)。旧工单 19/20/21 的阻塞不因此关闭；生产、真实供应商/模型和临床仍独立。
 
 ## Constraints
 

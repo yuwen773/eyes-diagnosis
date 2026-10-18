@@ -1,0 +1,5 @@
+scripts\acceptance_runtime.py:53: error: Item "None" of "IO[bytes] | None" has no attribute "readline"  [union-attr]
+scripts\acceptance_runtime.py:60: error: Item "None" of "IO[bytes] | None" has no attribute "close"  [union-attr]
+scripts\accept_python_migration.py:112: error: Need type annotation for "paths" (hint: "paths: list[<type>] = ...")  [var-annotated]
+scripts\accept_python_migration.py:213: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+Found 4 errors in 2 files (checked 5 source files)

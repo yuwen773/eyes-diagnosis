@@ -1,0 +1,29 @@
+INFO:     Started server process [55984]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57696 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57274 - "GET /api/diagnosis/workflows/dad94b0f755f421f84cbb708f56bb898 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57274 - "GET /api/diagnosis/workflows/de9914df4fce49edb303a491e82905f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57274 - "GET /api/diagnosis/workflows/44ded32cd0744622a10ee98db08b78eb HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57274 - "GET /api/diagnosis/workflows/8e89a7a43d27410a9ece5887b51d8133 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57274 - "GET /api/diagnosis/workflows/bb1f593106254d23be967c4d0424deb1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53701 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53701 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64881 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64881 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50650 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50650 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55967 - "OPTIONS /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61118 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61118 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62505 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61807 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61807 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60297 - "GET /api/diagnosis/legacy-tasks?current=1&pageSize=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60297 - "GET /api/diagnosis/legacy-tasks?current=1&pageSize=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60297 - "GET /api/diagnosis/legacy-tasks?current=1&pageSize=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56114 - "GET /api/reviews/tasks HTTP/1.1" 401 Unauthorized

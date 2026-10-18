@@ -1,0 +1,4 @@
+python-upgrade: passed
+python-inspect: passed
+mysql-tests: passed
+Evidence: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-final-acceptance\20261017T-windows-01\controlled-worker-concurrency

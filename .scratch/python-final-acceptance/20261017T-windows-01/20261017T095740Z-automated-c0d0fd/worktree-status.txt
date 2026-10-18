@@ -1,0 +1,168 @@
+ M .scratch/python-project-migration/README.md
+ M .scratch/python-project-migration/evidence/issue08/README.md
+ M .scratch/python-project-migration/evidence/issue08/review.md
+ M .scratch/python-project-migration/evidence/issue08/summarize.py
+ M .scratch/python-project-migration/evidence/issue08/verification-summary.json
+ M .scratch/python-project-migration/issues/08-retire-java-final-verification.md
+ M CLAUDE.md
+ M README.md
+ M algorithm/web/files.py
+ M algorithm/web/routers/knowledge.py
+ M algorithm/web/tests/test_validated_explanation.py
+ M algorithm/web/workflow/explanation.py
+ M docs/python-retirement.md
+ D frontend/.omc/project-memory.json
+ D frontend/.omc/state/agent-replay-0f6f28a4-853e-42d0-9686-5bdd8fa42551.jsonl
+ D frontend/.omc/state/checkpoints/checkpoint-2026-04-23T08-04-05-645Z.json
+ D frontend/.omc/state/hud-stdin-cache.json
+ D frontend/.omc/state/last-tool-error.json
+ D frontend/.omc/state/sessions/0f6f28a4-853e-42d0-9686-5bdd8fa42551/hud-state.json
+ D frontend/.omc/state/subagent-tracking.json
+?? .scratch/python-agent-migration/evidence/issue10/api.log
+?? .scratch/python-agent-migration/evidence/issue10/frontend.log
+?? .scratch/python-agent-migration/evidence/issue11/api.log
+?? .scratch/python-agent-migration/evidence/issue11/frontend.log
+?? .scratch/python-agent-migration/evidence/issue15/api.log
+?? .scratch/python-agent-migration/evidence/issue15/chat.db
+?? .scratch/python-agent-migration/evidence/issue15/fixture-230b36d500f7453db67378b51aeaa8a3/
+?? .scratch/python-agent-migration/evidence/issue15/fixture-56793853bbb4460db7be219403cead3f/
+?? .scratch/python-agent-migration/evidence/issue15/frontend.log
+?? .scratch/python-agent-migration/evidence/issue15/preexisting-status.txt
+?? .scratch/python-agent-migration/evidence/issue15/preexisting.patch
+?? .scratch/python-agent-migration/evidence/issue15/test_foundation.before.py
+?? .scratch/python-agent-migration/evidence/issue16/explanation.before.py
+?? .scratch/python-agent-migration/evidence/issue16/flyway-migrate.log
+?? .scratch/python-agent-migration/evidence/issue16/flyway-validate.log
+?? .scratch/python-agent-migration/evidence/issue16/full-suite-final.log
+?? .scratch/python-agent-migration/evidence/issue16/full-suite.log
+?? .scratch/python-agent-migration/evidence/issue16/increment.patch
+?? .scratch/python-agent-migration/evidence/issue16/mysql-tests.log
+?? .scratch/python-agent-migration/evidence/issue16/mysql.json
+?? .scratch/python-agent-migration/evidence/issue16/preexisting-status.txt
+?? .scratch/python-agent-migration/evidence/issue16/preexisting.patch
+?? .scratch/python-agent-migration/evidence/issue16/test_validated_explanation.before.py
+?? .scratch/python-agent-migration/evidence/issue16/test_workflow_inference.before.py
+?? .scratch/python-agent-migration/evidence/issue16/worker.before.py
+?? .scratch/python-agent-migration/evidence/issue17/
+?? .scratch/python-agent-migration/evidence/issue21/frontend-build.log
+?? .scratch/python-agent-migration/evidence/issue21/model-install.log
+?? .scratch/python-agent-migration/evidence/issue21/model-lock-sync.log
+?? .scratch/python-agent-migration/evidence/issue21/model-lock.log
+?? .scratch/python-agent-migration/evidence/issue21/model-smoke.log
+?? .scratch/python-agent-migration/evidence/issue21/model-workflow.log
+?? .scratch/python-agent-migration/evidence/issue21/mypy.log
+?? .scratch/python-agent-migration/evidence/issue21/web-tests.log
+?? .scratch/python-final-acceptance/
+?? .scratch/python-project-migration/evidence/issue01/commit-message.txt
+?? .scratch/python-project-migration/evidence/issue01/full-web-suite.log
+?? .scratch/python-project-migration/evidence/issue01/handoff-results.xml
+?? .scratch/python-project-migration/evidence/issue03/bootstrap-linux.log
+?? .scratch/python-project-migration/evidence/issue03/bootstrap_linux.py
+?? .scratch/python-project-migration/evidence/issue03/collected-tests.log
+?? .scratch/python-project-migration/evidence/issue03/focused-linux.log
+?? .scratch/python-project-migration/evidence/issue03/focused-windows.log
+?? .scratch/python-project-migration/evidence/issue03/frontend-build.log
+?? .scratch/python-project-migration/evidence/issue03/frontend-tests.log
+?? .scratch/python-project-migration/evidence/issue03/green-timeout.log
+?? .scratch/python-project-migration/evidence/issue03/infrastructure.log
+?? .scratch/python-project-migration/evidence/issue03/install-linux-python.log
+?? .scratch/python-project-migration/evidence/issue03/linux-evidence-recheck.log
+?? .scratch/python-project-migration/evidence/issue03/mypy.log
+?? .scratch/python-project-migration/evidence/issue03/probe_tool.py
+?? .scratch/python-project-migration/evidence/issue03/red-http.log
+?? .scratch/python-project-migration/evidence/issue03/red-timeout.log
+?? .scratch/python-project-migration/evidence/issue03/run_linux_gate.py
+?? .scratch/python-project-migration/evidence/issue04/api.log
+?? .scratch/python-project-migration/evidence/issue04/collected.txt
+?? .scratch/python-project-migration/evidence/issue04/commit-message.txt
+?? .scratch/python-project-migration/evidence/issue04/dependencies.log
+?? .scratch/python-project-migration/evidence/issue04/frontend-build.log
+?? .scratch/python-project-migration/evidence/issue04/frontend-tests.log
+?? .scratch/python-project-migration/evidence/issue04/frontend.log
+?? .scratch/python-project-migration/evidence/issue04/full-web.log
+?? .scratch/python-project-migration/evidence/issue04/linux-focused.log
+?? .scratch/python-project-migration/evidence/issue04/linux-focused.xml
+?? .scratch/python-project-migration/evidence/issue04/mysql-concurrency.log
+?? .scratch/python-project-migration/evidence/issue04/mysql-final.log
+?? .scratch/python-project-migration/evidence/issue04/mysql-green.log
+?? .scratch/python-project-migration/evidence/issue04/mysql.log
+?? .scratch/python-project-migration/evidence/issue04/recheck-reject.log
+?? .scratch/python-project-migration/evidence/issue04/recheck-supplement.log
+?? .scratch/python-project-migration/evidence/issue04/ui.log
+?? .scratch/python-project-migration/evidence/issue06/algorithms-red.xml
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_0-before-quality.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_0.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_1-before-final.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_1.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_2-before-save.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_2.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_3-before-supplement.json
+?? .scratch/python-project-migration/evidence/issue06/browser-final/test_frozen_wait_upgrade_real_3.json
+?? .scratch/python-project-migration/evidence/issue06/browser-quality.log
+?? .scratch/python-project-migration/evidence/issue06/browser-quality.xml
+?? .scratch/python-project-migration/evidence/issue06/browser.log
+?? .scratch/python-project-migration/evidence/issue06/browser.xml
+?? .scratch/python-project-migration/evidence/issue06/browser/
+?? .scratch/python-project-migration/evidence/issue06/compose-accepted.log
+?? .scratch/python-project-migration/evidence/issue06/compose-diagnose.log
+?? .scratch/python-project-migration/evidence/issue06/compose-diagnose/
+?? .scratch/python-project-migration/evidence/issue06/compose-final.log
+?? .scratch/python-project-migration/evidence/issue06/compose-final/
+?? .scratch/python-project-migration/evidence/issue06/compose.log
+?? .scratch/python-project-migration/evidence/issue06/compose/
+?? .scratch/python-project-migration/evidence/issue06/contracts-recheck.log
+?? .scratch/python-project-migration/evidence/issue06/contracts.log
+?? .scratch/python-project-migration/evidence/issue06/docker-build-recheck.log
+?? .scratch/python-project-migration/evidence/issue06/docker-build-uv.log
+?? .scratch/python-project-migration/evidence/issue06/docker-build.log
+?? .scratch/python-project-migration/evidence/issue06/docker-doc-tool.log
+?? .scratch/python-project-migration/evidence/issue06/docker-frontend-final.log
+?? .scratch/python-project-migration/evidence/issue06/docker-frontend.log
+?? .scratch/python-project-migration/evidence/issue06/docker-verify-current.log
+?? .scratch/python-project-migration/evidence/issue06/docker-verify-final.log
+?? .scratch/python-project-migration/evidence/issue06/docker-verify-last.log
+?? .scratch/python-project-migration/evidence/issue06/docker-verify.log
+?? .scratch/python-project-migration/evidence/issue06/find_redis.py
+?? .scratch/python-project-migration/evidence/issue06/green-proto.log
+?? .scratch/python-project-migration/evidence/issue06/green-runner.log
+?? .scratch/python-project-migration/evidence/issue06/inspect_locks.py
+?? .scratch/python-project-migration/evidence/issue06/linux-real-recheck.log
+?? .scratch/python-project-migration/evidence/issue06/linux-real-recheck/
+?? .scratch/python-project-migration/evidence/issue06/linux-real.log
+?? .scratch/python-project-migration/evidence/issue06/linux-real/
+?? .scratch/python-project-migration/evidence/issue06/migrate_contracts.py
+?? .scratch/python-project-migration/evidence/issue06/model-linux-lock.log
+?? .scratch/python-project-migration/evidence/issue06/mypy.log
+?? .scratch/python-project-migration/evidence/issue06/rewrite_verifier.py
+?? .scratch/python-project-migration/evidence/issue06/skip-locked-locks.json
+?? .scratch/python-project-migration/evidence/issue06/smoke_windows.py
+?? .scratch/python-project-migration/evidence/issue06/verifier_head.txt
+?? .scratch/python-project-migration/evidence/issue06/windows-concurrency-recheck.log
+?? .scratch/python-project-migration/evidence/issue06/windows-concurrency-recheck/
+?? .scratch/python-project-migration/evidence/issue06/windows-final-real.log
+?? .scratch/python-project-migration/evidence/issue06/windows-final-real/
+?? .scratch/python-project-migration/evidence/issue06/windows-infrastructure.log
+?? .scratch/python-project-migration/evidence/issue06/windows-infrastructure/
+?? .scratch/python-project-migration/evidence/issue06/windows-real.log
+?? .scratch/python-project-migration/evidence/issue06/windows-real/
+?? .scratch/python-project-migration/evidence/issue06/windows-smoke.log
+?? .scratch/python-project-migration/evidence/issue06/windows-web.log
+?? .scratch/python-project-migration/evidence/issue06/windows-web/
+?? .scratch/python-project-migration/evidence/issue08/claude-index.txt
+?? .scratch/python-project-migration/evidence/issue08/closeout-20261017/
+?? .scratch/python-project-migration/evidence/issue08/commit-message.txt
+?? .scratch/python-project-migration/evidence/issue08/preexisting-status.txt
+?? .scratch/python-project-migration/evidence/issue08/preexisting.patch
+?? .scratch/python-project-migration/evidence/issue08/source-diff-check.txt
+?? .scratch/python-project-migration/spec.md
+?? .scratch/python-project-migration/ticket-breakdown.md
+?? CONTEXT.md
+?? algorithm/web/tests/test_acceptance_budget.py
+?? algorithm/web/tests/test_cos_upload_sdk.py
+?? docs/adr/
+?? docs/plans/2026-10-15-complete-python-migration-design.md
+?? docs/plans/2026-10-17-python-final-acceptance-plan.md
+?? docs/python-worktree-progress.md
+?? scripts/accept_python_migration.py
+?? scripts/acceptance_provider.py
+?? scripts/acceptance_runtime.py

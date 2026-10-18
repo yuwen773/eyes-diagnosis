@@ -1,0 +1,13 @@
+
+> diagnosis-frontend@0.0.0 test
+> vitest --run
+
+
+ RUN  v4.1.10 D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/frontend
+
+
+ Test Files  13 passed (13)
+      Tests  49 passed (49)
+   Start at  12:26:29
+   Duration  10.29s (transform 5.98s, setup 0ms, import 17.29s, tests 888ms, environment 47.69s)
+

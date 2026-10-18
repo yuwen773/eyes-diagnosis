@@ -1,0 +1,17 @@
+{
+  "status": "FAIL",
+  "errorType": "KeyError",
+  "phase": "summary",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T114059Z-summary-cbc68e",
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  }
+}

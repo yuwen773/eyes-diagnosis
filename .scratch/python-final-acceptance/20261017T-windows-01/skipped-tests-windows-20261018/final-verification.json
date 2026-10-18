@@ -1,0 +1,44 @@
+{
+  "requestedReplay": "PASS",
+  "originalSkipped": 43,
+  "passed": 43,
+  "failed": 0,
+  "remainingSkipped": 0,
+  "cleanup": "PASS",
+  "businessTablesUnchanged": true,
+  "formalRecords": 0,
+  "manualAcceptance": "DEFERRED",
+  "overallAcceptance": "BLOCKED",
+  "newProviderRequests": 0,
+  "budget": {
+    "llm": {
+      "used": 20,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "baselineFullSuite": {
+    "passed": 829,
+    "skipped": 43,
+    "evidence": "../windows-web-governance/web.xml"
+  },
+  "executionNote": "Baseline and replay are separate runs; this is not a fresh single full-suite run",
+  "retainedIsolatedSchemas": 37,
+  "audit": {
+    "secretScan": "PASS",
+    "filesScanned": 1519,
+    "findings": [],
+    "unrelatedTrackedChangesPreserved": true,
+    "unexpectedChangedPaths": [],
+    "registeredProcessEntriesChecked": 342,
+    "survivingRegisteredProcesses": 0
+  },
+  "summaryEvidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261018T041355Z-summary-686137\\report.md",
+  "sourceSha256": {
+    "algorithm/web/tests/test_cutover_proxy.py": "5c0f3abbe4d2d945c3fb4962f3a053daa3b93ff9e184bea00b490227cdf6e6d6",
+    "scripts/acceptance_report.py": "69c3576aba04bd5bc224e462e46d8489d72d9c28984edb32c4c4953cecb34080"
+  }
+}

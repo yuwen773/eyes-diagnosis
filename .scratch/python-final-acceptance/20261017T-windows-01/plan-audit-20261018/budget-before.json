@@ -1,0 +1,10 @@
+{
+  "llm": {
+    "used": 20,
+    "limit": 50
+  },
+  "embedding": {
+    "used": 43,
+    "limit": 500
+  }
+}

@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___ test_approval_is_visible_to_independent_read_when_success_body_is_sent ____
+algorithm\web\tests\test_knowledge_durability.py:69: in test_approval_is_visible_to_independent_read_when_success_body_is_sent
+    assert (observed[0]["governanceVersion"], observed[0]["reviewStatus"],
+E   AssertionError: assert (0, 'PENDING'...ATE_USER', []) == (1, 'APPROVED...', ['myopia'])
+E     
+E     At index 0 diff: 0 != 1
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_knowledge_durability.py::test_approval_is_visible_to_independent_read_when_success_body_is_sent
+1 failed in 5.05s

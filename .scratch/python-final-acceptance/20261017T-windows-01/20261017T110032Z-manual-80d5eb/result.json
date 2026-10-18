@@ -1,0 +1,46 @@
+{
+  "status": "BLOCKED",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    },
+    "realWaitRestart": {
+      "status": "PASS",
+      "tasks": 5
+    },
+    "humanUI": {
+      "status": "BLOCKED",
+      "reason": "Actual patient/doctor UI actions and independent evidence are required"
+    },
+    "structuredExplanation": {
+      "status": "BLOCKED",
+      "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "original_1_left_jpg: reused prior same-run proof; human progress retained",
+    "original_0_left_jpg: reused prior same-run proof; human progress retained",
+    "original_2_left_jpg: reused prior same-run proof; human progress retained",
+    "original_13_left_jpg: reused prior same-run proof; human progress retained",
+    "original_30_left_jpg: reused prior same-run proof; human progress retained"
+  ],
+  "cleanup": {
+    "status": "PASS"
+  },
+  "phase": "manual",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T110032Z-manual-80d5eb",
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  }
+}

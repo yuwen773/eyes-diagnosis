@@ -1,0 +1,35 @@
+{
+  "database": "mysql",
+  "apiPids": [
+    7976,
+    42576
+  ],
+  "workerPids": [],
+  "snapshots": [
+    {
+      "workflowId": "2eb3fc6359de4384909cfb6826abd752",
+      "inference": [],
+      "explanations": [],
+      "reviews": [],
+      "events": [
+        {
+          "event_id": "bc39b86000844999a2fea8a24a37e09f",
+          "workflow_id": "2eb3fc6359de4384909cfb6826abd752",
+          "sequence": "1",
+          "event_type": "QUEUED",
+          "actor_type": "USER",
+          "actor_id": "7",
+          "version": "0",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-14 16:56:49"
+        }
+      ],
+      "confirmations": [],
+      "receipts": [],
+      "workflowVersion": "0",
+      "checkpointId": null
+    }
+  ]
+}

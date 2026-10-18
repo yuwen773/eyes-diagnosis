@@ -1,0 +1,28 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "original_1_left_jpg"
+  ],
+  "errorType": "AssertionError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 272
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 445
+    }
+  ],
+  "cleanup": {
+    "status": "PASS"
+  }
+}

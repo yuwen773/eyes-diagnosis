@@ -1,0 +1,217 @@
+[
+  {
+    "nodeid": "algorithm/web/tests/test_controlled_evidence.py::test_private_revocation_with_two_mysql_repeatable_read_connections",
+    "reason": "isolated real MySQL URL not supplied",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause]",
+    "reason": "CUTOVER_NGINX required for real proxy tests",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause]",
+    "reason": "CUTOVER_NGINX required for real proxy tests",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active]",
+    "reason": "CUTOVER_NGINX required for real proxy tests",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain]",
+    "reason": "CUTOVER_NGINX required for real proxy tests",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[empty]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[9]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_mysql_handoff_and_repeat_preserve_legacy_history_and_data[22]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[v8-V8_CHECKSUM]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[checksum-LEGACY_CHECKSUM]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[failed-FAILED_LEGACY_HISTORY]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[unknown-UNKNOWN_LEGACY_HISTORY]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_legacy_states_are_rejected_before_any_write[schema-SCHEMA]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_independent_increment_runs_once_without_changing_legacy_history",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_failed_nontransactional_ddl_is_not_replayed_or_marked_success",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_concurrent_upgrader_cannot_write",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_empty_python_history_is_an_interrupted_registration",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_unknown_schema_objects_are_not_treated_as_an_empty_database",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_applied_handoff_still_rejects_changed_original_history",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_interrupted_baseline_cannot_register_success_or_replay",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[empty]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[9]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_database_handoff.py::test_stock_api_public_business_read_works_without_jvm[22]",
+    "reason": "Opt-in isolated real MySQL acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[quality]",
+    "reason": "Opt-in isolated real MySQL handoff/restart acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[final]",
+    "reason": "Opt-in isolated real MySQL handoff/restart acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[save]",
+    "reason": "Opt-in isolated real MySQL handoff/restart acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_handoff_recovery.py::test_four_human_waits_resume_after_database_handoff[supplement]",
+    "reason": "Opt-in isolated real MySQL handoff/restart acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_legacy_workflow_mysql.py::test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart",
+    "reason": "Opt-in isolated local MySQL legacy acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy]",
+    "reason": "CUTOVER_NGINX required for real Nginx admission checks",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python]",
+    "reason": "CUTOVER_NGINX required for real Nginx admission checks",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python",
+    "reason": "CUTOVER_NGINX required for real Nginx admission checks",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor]",
+    "reason": "Opt-in ticket05 isolated real MySQL/Redis acceptance",
+    "originalStatus": "SKIPPED"
+  },
+  {
+    "nodeid": "algorithm/web/tests/test_worker_concurrency.py::test_mysql_claim_skips_locked_job_and_advances_other_task",
+    "reason": "SKIP LOCKED requires real MySQL",
+    "originalStatus": "SKIPPED"
+  }
+]

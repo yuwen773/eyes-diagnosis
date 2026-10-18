@@ -1,0 +1,126 @@
+{
+  "ticket": "06",
+  "timestampUtc": "2026-10-16T13:30:41.936743+00:00",
+  "status": "FAIL",
+  "checks": [
+    "real-python-auth-and-user-role-long-pagination-contracts"
+  ],
+  "gates": {
+    "infrastructure": {
+      "status": "PASS",
+      "detail": "Python migration, real MySQL/Redis/Chroma, independent API/Worker"
+    },
+    "orchestration": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "mysqlSemantics": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "realEmbedding": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    }
+  },
+  "schema": "eye_python_issue06_100c0b40464245c89e7870677f5ed030",
+  "runtime": "/workspace/.scratch/baseline-runtime/eye_python_issue06_100c0b40464245c89e7870677f5ed030",
+  "mysqlVersion": "8.0.26",
+  "processes": [
+    {
+      "role": "redis",
+      "pid": 19
+    },
+    {
+      "role": "chroma",
+      "pid": 20
+    },
+    {
+      "role": "provider",
+      "pid": 76
+    },
+    {
+      "role": "api",
+      "pid": 82
+    }
+  ],
+  "redisVersion": "7.0.15",
+  "chromaVersion": "1.0.0",
+  "reason": "ReadError; inspect private runtime logs",
+  "errorLocation": [
+    {
+      "file": "verify_real_services.py",
+      "line": 58
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 180
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 263
+    },
+    {
+      "file": "_client.py",
+      "line": 1144
+    },
+    {
+      "file": "_client.py",
+      "line": 825
+    },
+    {
+      "file": "_client.py",
+      "line": 914
+    },
+    {
+      "file": "_client.py",
+      "line": 942
+    },
+    {
+      "file": "_client.py",
+      "line": 979
+    },
+    {
+      "file": "_client.py",
+      "line": 1014
+    },
+    {
+      "file": "default.py",
+      "line": 249
+    },
+    {
+      "file": "contextlib.py",
+      "line": 158
+    },
+    {
+      "file": "default.py",
+      "line": 118
+    }
+  ]
+}
+Traceback (most recent call last):
+  File "/workspace/scripts/verify.py", line 51, in <module>
+    main()
+  File "/workspace/scripts/verify.py", line 33, in main
+    run([sys.executable, "-m", "web.verify_real_services", "--output-dir", str(args.output_dir / "services")])
+  File "/workspace/scripts/verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/bin/python', '-m', 'web.verify_real_services', '--output-dir', '/evidence/linux-real-recheck/services']' returned non-zero exit status 1.

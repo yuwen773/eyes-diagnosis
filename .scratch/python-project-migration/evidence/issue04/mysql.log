@@ -1,0 +1,27 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart _
+
+legacy_mysql_case = <web.tests.test_human_wait_restart.RestartCase object at 0x0000012E31F7D290>
+
+    def test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart(legacy_mysql_case):
+        case = legacy_mysql_case
+        with case.sessions.begin() as db:
+            db.add(Workflow(workflow_id="java-wait", owner_user_id=7, idempotency_key="java-key",
+                            status="WAITING_HUMAN_REVIEW", graph_version="java-release",
+                            graph_hash="old-hash", action_version="old-action"))
+            db.add(Job(job_id="old-job", workflow_id="java-wait", job_type="RESUME", segment_code="java"))
+        with case.api() as client:
+            original = client.get("/api/diagnosis/legacy-tasks/workflow/java-wait").json()["data"]
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                responses = list(pool.map(lambda _: rebuild(client), range(6)))
+>           assert [response.status_code for response in responses] == [202] * 6
+E           assert [500, 500, 500, 500, 500, 500] == [202, 202, 202, 202, 202, 202]
+E             
+E             At index 0 diff: 500 != 202
+E             Use -v to get more diff
+
+web\tests\test_legacy_workflow_mysql.py:39: AssertionError
+=========================== short test summary info ===========================
+FAILED web/tests/test_legacy_workflow_mysql.py::test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart
+1 failed in 24.61s

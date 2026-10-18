@@ -1,0 +1,29 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_structured_explanation_uses_non_thinking_provider_mode _________
+
+explanation_api = (<starlette.testclient.TestClient object at 0x00000175021D9910>, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+
+    def test_structured_explanation_uses_non_thinking_provider_mode(explanation_api):
+        client, sessions, _, model = explanation_api
+    
+        def provider_with_slow_thinking():
+            if model["requests"][-1].get("enable_thinking", True):
+                raise httpx.ReadTimeout("thinking exceeds the bounded explanation deadline")
+    
+        model["before_response"] = provider_with_slow_thinking
+        task = start(client)
+        drain(sessions)
+        view = read(client, task)
+>       assert view["status"] == "COMPLETED"
+E       AssertionError: assert 'QUEUED' == 'COMPLETED'
+E         
+E         - COMPLETED
+E         + QUEUED
+
+algorithm\web\tests\test_validated_explanation.py:81: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  web.workflow.worker:worker.py:244 workflow=59d3b35b58e543c8b2280c2b206f9608 external call failed
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_validated_explanation.py::test_structured_explanation_uses_non_thinking_provider_mode
+1 failed in 4.12s

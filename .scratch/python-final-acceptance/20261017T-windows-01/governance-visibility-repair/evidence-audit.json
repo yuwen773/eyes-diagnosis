@@ -1,0 +1,7 @@
+{
+  "secretScan": "PASS",
+  "filesScanned": 465,
+  "findings": [],
+  "unrelatedTrackedChangesPreserved": true,
+  "unexpectedChangedPaths": []
+}

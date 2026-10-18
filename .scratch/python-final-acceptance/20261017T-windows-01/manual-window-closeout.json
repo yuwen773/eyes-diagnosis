@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "ownedProcessesStopped": 7,
+  "businessTablesUnchanged": [
+    "t_diagnosis_workflow",
+    "t_inference_envelope",
+    "t_human_review_task",
+    "t_diagnosis_save_confirmation",
+    "t_saved_workflow_diagnosis",
+    "t_diagnosis_workflow_event",
+    "t_explanation_snapshot",
+    "t_diagnosis"
+  ],
+  "formalRecords": 0,
+  "remainingManualAcceptance": "NOT_EXECUTED",
+  "providerRequestsAdded": 0
+}

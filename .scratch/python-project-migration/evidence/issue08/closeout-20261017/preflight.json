@@ -1,0 +1,49 @@
+{
+  "atUtc": "2026-10-17T04:36:31.872828+00:00",
+  "head": "63931d7bd321b126eb3ee2111af5693e9fce1014",
+  "status": "PASS",
+  "scope": "History, frozen SQL and unchanged implementation audit; not Linux acceptance",
+  "historyTag": "archive/java-before-python-retirement-2026-10-17",
+  "removedFilesChecked": 203,
+  "sqlAssetsChecked": 24,
+  "implementationMatchesCommittedEvidence": true,
+  "reusedJUnit": {
+    "windows-full-final/web.xml": {
+      "tests": 857,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 43,
+      "passed": 814
+    },
+    "scanner-final.xml": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 11
+    },
+    "waits.xml": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 12
+    },
+    "linux-algorithms.xml": {
+      "tests": 307,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 306
+    },
+    "windows-infrastructure-accepted/handoff.xml": {
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 21
+    }
+  },
+  "dockerStartAuthorization": "PENDING",
+  "productionOrPush": false
+}

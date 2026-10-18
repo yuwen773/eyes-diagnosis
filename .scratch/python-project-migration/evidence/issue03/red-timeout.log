@@ -1,0 +1,355 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+________ test_converter_timeout_reaps_process_and_cleans_private_files ________
+
+data = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00>\x00\x03\x00\xfe\xf...00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    def extract_doc(data: bytes) -> str:
+        """Validate Word 97�C2003, convert locally, reuse the DOCX story extractor."""
+        import olefile  # type: ignore[import-untyped]
+    
+        from web.extract import extract_docx
+    
+        if len(data) > MAX_INPUT_BYTES:
+            raise ValueError("�ɰ� Word �ĵ����� 20 MiB ����")
+        with olefile.OleFileIO(io.BytesIO(data)) as document:
+            if not document.exists("WordDocument"):
+                raise ValueError("���Ǿɰ� Word �������ĵ�")
+            header = document.openstream("WordDocument").read(32)
+            if len(header) != 32 or header[:2] != b"\xec\xa5":
+                raise ValueError("Word �ĵ�ͷ�𻵻�����֧�ֵ� Word 97�C2003 ��ʽ")
+            flags = int.from_bytes(header[10:12], "little")
+            if flags & 0x8100:
+                raise ValueError("��֧�ּ��ܵľɰ� Word �ĵ�")
+            if not document.exists("1Table" if flags & 0x200 else "0Table"):
+                raise ValueError("Word �ĵ�������")
+        home = Path(os.getenv("DOC_TOOL_HOME") or DEFAULT_HOME).resolve()
+        program = executable(home)
+        try:
+            stamp = json.loads((home / "eye-doc-tool.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f".doc ������δ���飬�벿��̶� LibreOffice {VERSION}") from exc
+        platform = "windows" if os.name == "nt" else "linux"
+        if (not program.is_file() or stamp.get("version") != BUILD or
+                stamp.get("archiveSha256") != SHA256[platform] or stamp.get("platform") != platform):
+            raise RuntimeError(f".doc ������δ��װ���벿��̶� LibreOffice {VERSION}")
+        with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+            work = Path(directory)
+            profile = work / "profile"
+            profile.mkdir()
+            # Disable macros, external link updates and Java even on a host with a JRE.
+            (profile / "user").mkdir()
+            (work / "java-disabled.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<java xmlns="http://openoffice.org/2004/java/framework/1.0">'
+                '<enabled>false</enabled></java>', encoding="utf-8")
+            (profile / "user/registrymodifications.xcu").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<oor:items xmlns:oor="http://openoffice.org/2001/registry">'
+                '<item oor:path="/org.openoffice.Office.Common/Security/Scripting">'
+                '<prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>'
+                '<item oor:path="/org.openoffice.Office.Writer/Content/Update">'
+                '<prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item>'
+                '</oor:items>', encoding="utf-8")
+            (work / "input.doc").write_bytes(data)
+            command = [str(program), f"-env:UserInstallation={profile.as_uri()}",
+                f"-env:URE_OVERRIDE_JAVA_JFW_USER_DATA={(work / 'java-disabled.xml').as_uri()}",
+                "--headless", "--nologo", "--nodefault", "--norestore",
+                "--convert-to", "docx:Office Open XML Text", "--outdir", str(work), str(work / "input.doc")]
+            env = os.environ.copy()
+            env.pop("JAVA_HOME", None)
+            env["JRE_HOME"] = str(work / "no-jre")
+            if os.name != "nt":
+                env["SAL_USE_VCLPLUGIN"] = "svp"
+            try:
+                process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, cwd=work, env=env, start_new_session=os.name != "nt",
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except OSError as exc:
+                raise RuntimeError("�޷��������� .doc ������") from exc
+            try:
+>               process.wait(timeout=TIMEOUT_SECONDS)
+
+web\doc_conversion.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: None args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\wor...>
+timeout = 0.2
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on Windows."""
+        if timeout is None:
+            timeout_millis = _winapi.INFINITE
+        elif timeout <= 0:
+            timeout_millis = 0
+        else:
+            timeout_millis = int(timeout * 1000)
+        if self.returncode is None:
+            # API note: Returns immediately if timeout_millis == 0.
+            result = _winapi.WaitForSingleObject(self._handle,
+                                                 timeout_millis)
+            if result == _winapi.WAIT_TIMEOUT:
+>               raise TimeoutExpired(self.args, timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe', '-c', 'import time; time.sleep(60)']' timed out after 0.2 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1593: TimeoutExpired
+
+During handling of the above exception, another exception occurred:
+
+data = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00>\x00\x03\x00\xfe\xf...00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    def extract_doc(data: bytes) -> str:
+        """Validate Word 97�C2003, convert locally, reuse the DOCX story extractor."""
+        import olefile  # type: ignore[import-untyped]
+    
+        from web.extract import extract_docx
+    
+        if len(data) > MAX_INPUT_BYTES:
+            raise ValueError("�ɰ� Word �ĵ����� 20 MiB ����")
+        with olefile.OleFileIO(io.BytesIO(data)) as document:
+            if not document.exists("WordDocument"):
+                raise ValueError("���Ǿɰ� Word �������ĵ�")
+            header = document.openstream("WordDocument").read(32)
+            if len(header) != 32 or header[:2] != b"\xec\xa5":
+                raise ValueError("Word �ĵ�ͷ�𻵻�����֧�ֵ� Word 97�C2003 ��ʽ")
+            flags = int.from_bytes(header[10:12], "little")
+            if flags & 0x8100:
+                raise ValueError("��֧�ּ��ܵľɰ� Word �ĵ�")
+            if not document.exists("1Table" if flags & 0x200 else "0Table"):
+                raise ValueError("Word �ĵ�������")
+        home = Path(os.getenv("DOC_TOOL_HOME") or DEFAULT_HOME).resolve()
+        program = executable(home)
+        try:
+            stamp = json.loads((home / "eye-doc-tool.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f".doc ������δ���飬�벿��̶� LibreOffice {VERSION}") from exc
+        platform = "windows" if os.name == "nt" else "linux"
+        if (not program.is_file() or stamp.get("version") != BUILD or
+                stamp.get("archiveSha256") != SHA256[platform] or stamp.get("platform") != platform):
+            raise RuntimeError(f".doc ������δ��װ���벿��̶� LibreOffice {VERSION}")
+        with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+            work = Path(directory)
+            profile = work / "profile"
+            profile.mkdir()
+            # Disable macros, external link updates and Java even on a host with a JRE.
+            (profile / "user").mkdir()
+            (work / "java-disabled.xml").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<java xmlns="http://openoffice.org/2004/java/framework/1.0">'
+                '<enabled>false</enabled></java>', encoding="utf-8")
+            (profile / "user/registrymodifications.xcu").write_text(
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<oor:items xmlns:oor="http://openoffice.org/2001/registry">'
+                '<item oor:path="/org.openoffice.Office.Common/Security/Scripting">'
+                '<prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item>'
+                '<item oor:path="/org.openoffice.Office.Writer/Content/Update">'
+                '<prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item>'
+                '</oor:items>', encoding="utf-8")
+            (work / "input.doc").write_bytes(data)
+            command = [str(program), f"-env:UserInstallation={profile.as_uri()}",
+                f"-env:URE_OVERRIDE_JAVA_JFW_USER_DATA={(work / 'java-disabled.xml').as_uri()}",
+                "--headless", "--nologo", "--nodefault", "--norestore",
+                "--convert-to", "docx:Office Open XML Text", "--outdir", str(work), str(work / "input.doc")]
+            env = os.environ.copy()
+            env.pop("JAVA_HOME", None)
+            env["JRE_HOME"] = str(work / "no-jre")
+            if os.name != "nt":
+                env["SAL_USE_VCLPLUGIN"] = "svp"
+            try:
+                process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, cwd=work, env=env, start_new_session=os.name != "nt",
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except OSError as exc:
+                raise RuntimeError("�޷��������� .doc ������") from exc
+            try:
+                process.wait(timeout=TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired as exc:
+                if os.name == "nt":
+>                   subprocess.run(["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10,
+                        creationflags=subprocess.CREATE_NO_WINDOW)
+
+web\doc_conversion.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1228: in communicate
+    sts = self.wait(timeout=self._remaining_time(endtime))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1264: in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['D:\\Work\\code\\eye-diagnosis\\.claude\\worktr...>
+timeout = 10.0
+
+    def _wait(self, timeout):
+        """Internal implementation of wait() on Windows."""
+        if timeout is None:
+            timeout_millis = _winapi.INFINITE
+        elif timeout <= 0:
+            timeout_millis = 0
+        else:
+            timeout_millis = int(timeout * 1000)
+        if self.returncode is None:
+            # API note: Returns immediately if timeout_millis == 0.
+            result = _winapi.WaitForSingleObject(self._handle,
+                                                 timeout_millis)
+            if result == _winapi.WAIT_TIMEOUT:
+>               raise TimeoutExpired(self.args, timeout)
+E               subprocess.TimeoutExpired: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe', '-c', 'import time; time.sleep(60)']' timed out after 10.0 seconds
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1593: TimeoutExpired
+
+During handling of the above exception, another exception occurred:
+
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+onerror = <function TemporaryDirectory._rmtree.<locals>.onerror at 0x000001EFBBD87740>
+
+    def _rmtree_unsafe(path, onerror):
+        try:
+            with os.scandir(path) as scandir_it:
+                entries = list(scandir_it)
+        except OSError:
+            onerror(os.scandir, path, sys.exc_info())
+            entries = []
+        for entry in entries:
+            fullname = entry.path
+            if _rmtree_isdir(entry):
+                try:
+                    if entry.is_symlink():
+                        # This can only happen if someone replaces
+                        # a directory with a symlink after the call to
+                        # os.scandir or entry.is_dir above.
+                        raise OSError("Cannot call rmtree on a symbolic link")
+                except OSError:
+                    onerror(os.path.islink, fullname, sys.exc_info())
+                    continue
+                _rmtree_unsafe(fullname, onerror)
+            else:
+                try:
+                    os.unlink(fullname)
+                except OSError:
+                    onerror(os.unlink, fullname, sys.exc_info())
+        try:
+>           os.rmdir(path)
+E           PermissionError: [WinError 32] ��һ����������ʹ�ô��ļ��������޷����ʡ�: 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:636: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+func = <built-in function rmdir>
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+exc_info = (<class 'PermissionError'>, PermissionError(13, '��һ����������ʹ�ô��ļ��������޷����ʡ�'), <traceback object at 0x000001EFBBDCE2C0>)
+
+    def onerror(func, path, exc_info):
+        if issubclass(exc_info[0], PermissionError):
+            if repeated and path == name:
+                if ignore_errors:
+                    return
+                raise
+    
+            try:
+                if path != name:
+                    _resetperms(_os.path.dirname(path))
+                _resetperms(path)
+    
+                try:
+>                   _os.unlink(path)
+E                   PermissionError: [WinError 5] �ܾ����ʡ�: 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:893: PermissionError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EFBBD8BD90>
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-892/test_converter_timeout_reaps_p0')
+
+    def test_converter_timeout_reaps_process_and_cleans_private_files(monkeypatch, tmp_path):
+        # Substitute the external converter at the OS boundary with a real sleeper.
+        # The application still owns process termination and temporary files.
+        import web.doc_conversion as converter
+    
+        launch = subprocess.Popen
+        children = []
+    
+        def sleeping_converter(command, **kwargs):
+            child = launch([sys.executable, "-c", "import time; time.sleep(60)"], **kwargs)
+            children.append(child)
+            return child
+    
+        monkeypatch.setattr(subprocess, "Popen", sleeping_converter)
+        monkeypatch.setattr(converter, "TIMEOUT_SECONDS", .2)
+        monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+        with pytest.raises(RuntimeError, match="��ʱ"):
+>           extract_doc((FIXTURES / "simple.doc").read_bytes())
+
+web\tests\test_no_jvm_doc.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+web\doc_conversion.py:48: in extract_doc
+    with tempfile.TemporaryDirectory(prefix="eye-doc-") as directory:
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:943: in __exit__
+    self.cleanup()
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:947: in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:929: in _rmtree
+    _shutil.rmtree(name, onerror=onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:787: in rmtree
+    return _rmtree_unsafe(path, onerror)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:638: in _rmtree_unsafe
+    onerror(os.rmdir, path, sys.exc_info())
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:919: in onerror
+    cls._rmtree(path, ignore_errors=ignore_errors,
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:929: in _rmtree
+    _shutil.rmtree(name, onerror=onerror)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:787: in rmtree
+    return _rmtree_unsafe(path, onerror)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:638: in _rmtree_unsafe
+    onerror(os.rmdir, path, sys.exc_info())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+onerror = <function TemporaryDirectory._rmtree.<locals>.onerror at 0x000001EFBBD87920>
+
+    def _rmtree_unsafe(path, onerror):
+        try:
+            with os.scandir(path) as scandir_it:
+                entries = list(scandir_it)
+        except OSError:
+            onerror(os.scandir, path, sys.exc_info())
+            entries = []
+        for entry in entries:
+            fullname = entry.path
+            if _rmtree_isdir(entry):
+                try:
+                    if entry.is_symlink():
+                        # This can only happen if someone replaces
+                        # a directory with a symlink after the call to
+                        # os.scandir or entry.is_dir above.
+                        raise OSError("Cannot call rmtree on a symbolic link")
+                except OSError:
+                    onerror(os.path.islink, fullname, sys.exc_info())
+                    continue
+                _rmtree_unsafe(fullname, onerror)
+            else:
+                try:
+                    os.unlink(fullname)
+                except OSError:
+                    onerror(os.unlink, fullname, sys.exc_info())
+        try:
+>           os.rmdir(path)
+E           PermissionError: [WinError 32] ��һ����������ʹ�ô��ļ��������޷����ʡ�: 'C:\\Users\\yuwen\\AppData\\Local\\Temp\\pytest-of-yuwen\\pytest-892\\test_converter_timeout_reaps_p0\\eye-doc-vvx6pr3k'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\shutil.py:636: PermissionError
+=========================== short test summary info ===========================
+FAILED web/tests/test_no_jvm_doc.py::test_converter_timeout_reaps_process_and_cleans_private_files
+1 failed, 4 deselected in 11.42s

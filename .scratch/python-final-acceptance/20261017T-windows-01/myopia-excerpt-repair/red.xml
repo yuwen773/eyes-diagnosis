@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.579" timestamp="2026-10-17T20:33:47.382777+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_validated_explanation" name="test_myopia_overview_extracts_safe_original_entry_from_quantitative_context" time="1.159"><failure message="AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'&#10;  &#10;  - COMPLETED&#10;  + COMPLETED_LIMITED">explanation_api = (&lt;starlette.testclient.TestClient object at 0x00000277352A4910&gt;, sessionmaker(class_='Session', bind=Engine(sqlite://)...k_0']}]}, 'requests': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 512, 'enable_thinking': False, ...}]})
+
+    def test_myopia_overview_extracts_safe_original_entry_from_quantitative_context(explanation_api):
+        client, sessions, original, model = explanation_api
+        numeric = "病理性近视是指眼轴过度延长（&gt;26.5mm）导致的眼底退行性改变。"
+        safe = "- **病理性近视**：出现典型眼底退行性改变"
+        reference = numeric + "\n\n## 定义与分类\n\n### 眼轴分类\n- **高度近视**：-6.0D以上\n" + safe
+        doc_id = upload(client, "myopia.txt", text=reference)
+        client.cookies.set(SESSION_COOKIE_NAME, "admin")
+        assert govern(client, original, visibility="QUARANTINED", expectedVersion=1).json()["code"] == 0
+        assert govern(client, doc_id, diseaseCodes=["myopia"]).json()["code"] == 0
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
+    
+        def extract_first_supplied_statement():
+            source = json.loads(model["requests"][-1]["messages"][1]["content"])[0]
+            text = source["quotedText"]
+            excerpt = text.split("。", 1)[0] + "。" if "。" in text else text
+            model["reply"]["claims"][0].update(text=excerpt, citationIds=[source["citationId"]])
+    
+        model["before_response"] = extract_first_supplied_statement
+        task = start(client)
+        drain(sessions, predicted_label="myopia", top_predictions=[{"label": "myopia", "probability": 91.0}])
+        view = read(client, task)
+&gt;       assert view["status"] == "COMPLETED"
+E       AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'
+E         
+E         - COMPLETED
+E         + COMPLETED_LIMITED
+
+algorithm\web\tests\test_validated_explanation.py:107: AssertionError</failure></testcase></testsuite></testsuites>

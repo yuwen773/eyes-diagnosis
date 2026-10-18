@@ -1,0 +1,11 @@
+Using Python 3.11.17 environment at: .venv-model-acceptance
+Resolved 158 packages in 1.04s
+Downloading hf-xet (3.6MiB)
+ Downloaded hf-xet
+Prepared 2 packages in 8.85s
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 2 packages in 92ms
+ + async-timeout==5.0.1
+ + hf-xet==1.7.0

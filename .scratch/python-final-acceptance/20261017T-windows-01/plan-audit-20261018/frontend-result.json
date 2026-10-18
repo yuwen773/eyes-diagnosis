@@ -1,0 +1,7 @@
+{
+  "buildLog": "frontend-build.log",
+  "buildExit": 0,
+  "testLog": "frontend-test.log",
+  "scope": "Fresh frontend typecheck/build and tests during plan re-audit",
+  "testExit": 0
+}

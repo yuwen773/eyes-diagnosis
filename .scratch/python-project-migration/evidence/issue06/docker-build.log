@@ -1,0 +1,1605 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 1.64kB 0.1s done
+#1 DONE 0.6s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.14-slim-bookworm
+#2 DONE 7.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 613B 0.0s done
+#3 DONE 0.1s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [build  1/10] FROM docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#5 resolve docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d 0.1s done
+#5 ...
+
+#4 [internal] load build context
+#4 transferring context: 936.34kB 0.3s done
+#4 DONE 0.5s
+
+#5 [build  1/10] FROM docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#5 sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 0B / 3.52MB 0.2s
+#5 sha256:bb97a7af197171e22da5f49bb0438bcf85be410ef8d48d967d1adf18cb633e5c 0B / 249B 0.2s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 0B / 15.93MB 0.2s
+#5 sha256:bb97a7af197171e22da5f49bb0438bcf85be410ef8d48d967d1adf18cb633e5c 249B / 249B 2.1s done
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 1.05MB / 15.93MB 3.2s
+#5 sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 1.05MB / 3.52MB 3.8s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 2.10MB / 15.93MB 3.9s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 4.19MB / 15.93MB 4.1s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 5.24MB / 15.93MB 4.2s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 6.29MB / 15.93MB 4.4s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 8.39MB / 15.93MB 4.8s
+#5 sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 2.10MB / 3.52MB 5.1s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 11.53MB / 15.93MB 5.0s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 13.63MB / 15.93MB 5.1s
+#5 sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 15.93MB / 15.93MB 5.3s done
+#5 sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 3.15MB / 3.52MB 6.6s
+#5 sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 3.52MB / 3.52MB 6.7s done
+#5 extracting sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653
+#5 extracting sha256:0ca4ca8e967fc50bfed3e6bc1475579b5b3d1b72b17330364f0b8bb59ee23653 0.6s done
+#5 DONE 7.8s
+
+#5 [build  1/10] FROM docker.io/library/python:3.11.14-slim-bookworm@sha256:65a93d69fa75478d554f4ad27c85c1e69fa184956261b4301ebaf6dbb0a3543d
+#5 extracting sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6
+#5 extracting sha256:4afda7e4a7673cf65d863abdb88d853796bf7fac06fabcd56f37de493f6b65e6 1.3s done
+#5 extracting sha256:bb97a7af197171e22da5f49bb0438bcf85be410ef8d48d967d1adf18cb633e5c
+#5 extracting sha256:bb97a7af197171e22da5f49bb0438bcf85be410ef8d48d967d1adf18cb633e5c 0.1s done
+#5 DONE 9.2s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 ...
+
+#7 [build  2/10] WORKDIR /build
+#7 DONE 0.5s
+
+#8 [build  3/10] COPY pyproject.toml MANIFEST.in ./
+#8 DONE 0.3s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 ...
+
+#9 [build  4/10] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#9 DONE 0.3s
+
+#10 [build  5/10] RUN python -m pip install --no-cache-dir setuptools==80.9.0 wheel==0.45.1 build==1.2.2.post1
+#10 ...
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 7.845 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#6 8.987 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#6 9.895 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#6 ...
+
+#10 [build  5/10] RUN python -m pip install --no-cache-dir setuptools==80.9.0 wheel==0.45.1 build==1.2.2.post1
+#10 9.095 Collecting setuptools==80.9.0
+#10 12.13   Downloading setuptools-80.9.0-py3-none-any.whl.metadata (6.6 kB)
+#10 12.16 Requirement already satisfied: wheel==0.45.1 in /usr/local/lib/python3.11/site-packages (0.45.1)
+#10 12.45 Collecting build==1.2.2.post1
+#10 12.68   Downloading build-1.2.2.post1-py3-none-any.whl.metadata (6.5 kB)
+#10 13.32 Collecting packaging>=19.1 (from build==1.2.2.post1)
+#10 13.55   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#10 14.11 Collecting pyproject_hooks (from build==1.2.2.post1)
+#10 14.33   Downloading pyproject_hooks-1.3.3-py3-none-any.whl.metadata (1.3 kB)
+#10 14.59 Downloading setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+#10 18.47    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 323.2 kB/s eta 0:00:00
+#10 18.72 Downloading build-1.2.2.post1-py3-none-any.whl (22 kB)
+#10 19.00 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#10 19.21    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 623.3 kB/s eta 0:00:00
+#10 19.46 Downloading pyproject_hooks-1.3.3-py3-none-any.whl (10 kB)
+#10 19.90 Installing collected packages: setuptools, pyproject_hooks, packaging, build
+#10 19.90   Attempting uninstall: setuptools
+#10 19.90     Found existing installation: setuptools 79.0.1
+#10 20.29     Uninstalling setuptools-79.0.1:
+#10 21.06       Successfully uninstalled setuptools-79.0.1
+#10 ...
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 15.56 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#6 19.19 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#6 21.12 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [353 kB]
+#6 21.18 Fetched 9392 kB in 16s (586 kB/s)
+#6 21.18 Reading package lists...
+#6 21.80 Reading package lists...
+#6 22.21 Building dependency tree...
+#6 22.33 Reading state information...
+#6 22.45 The following additional packages will be installed:
+#6 22.45   fontconfig-config fonts-dejavu-core libavahi-client3 libavahi-common-data
+#6 22.45   libavahi-common3 libbrotli1 libbsd0 libcurl4 libexpat1 libglvnd0 libice6
+#6 22.45   libicu72 libldap-2.5-0 libnghttp2-14 libnspr4 libopengl0 libpixman-1-0
+#6 22.45   libpng16-16 libpsl5 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1
+#6 22.45   libx11-6 libx11-data libxau6 libxcb-render0 libxcb-shm0 libxcb1 libxdmcp6
+#6 22.45   libxml2 x11-common
+#6 22.46 Suggested packages:
+#6 22.46   fonts-noto-cjk-extra cups-common
+#6 22.46 Recommended packages:
+#6 22.46   dbus libldap-common publicsuffix libsasl2-modules
+#6 22.65 The following NEW packages will be installed:
+#6 22.65   curl fontconfig-config fonts-dejavu-core fonts-noto-cjk libavahi-client3
+#6 22.65   libavahi-common-data libavahi-common3 libbrotli1 libbsd0 libcairo2 libcups2
+#6 22.65   libcurl4 libdbus-1-3 libexpat1 libfontconfig1 libfreetype6 libglu1-mesa
+#6 22.65   libglvnd0 libice6 libicu72 libldap-2.5-0 libnghttp2-14 libnspr4 libnss3
+#6 22.65   libopengl0 libpixman-1-0 libpng16-16 libpsl5 librtmp1 libsasl2-2
+#6 22.65   libsasl2-modules-db libsm6 libssh2-1 libx11-6 libx11-data libxau6
+#6 22.65   libxcb-render0 libxcb-shm0 libxcb1 libxdmcp6 libxext6 libxinerama1 libxml2
+#6 22.65   libxrender1 libxslt1.1 x11-common
+#6 22.65 The following packages will be upgraded:
+#6 22.65   ca-certificates
+#6 ...
+
+#10 [build  5/10] RUN python -m pip install --no-cache-dir setuptools==80.9.0 wheel==0.45.1 build==1.2.2.post1
+#10 22.02 Successfully installed build-1.2.2.post1 packaging-26.3 pyproject_hooks-1.3.3 setuptools-80.9.0
+#10 22.03 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#10 23.70 
+#10 23.70 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#10 23.70 [notice] To update, run: pip install --upgrade pip
+#10 DONE 24.2s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 ...
+
+#11 [build  6/10] COPY algorithm/web algorithm/web
+#11 DONE 0.4s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 25.83 1 upgraded, 46 newly installed, 0 to remove and 21 not upgraded.
+#6 25.83 Need to get 76.7 MB of archives.
+#6 25.83 After this operation, 158 MB of additional disk space will be used.
+#6 25.83 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u1 [162 kB]
+#6 ...
+
+#12 [build  7/10] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#12 DONE 0.3s
+
+#13 [build  8/10] COPY algorithm/mcp_server algorithm/mcp_server
+#13 DONE 0.2s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 ...
+
+#14 [build  9/10] COPY deploy/python-migrations deploy/python-migrations
+#14 DONE 0.2s
+
+#15 [build 10/10] RUN python -m build --wheel --no-isolation --outdir /wheels
+#15 1.164 * Getting build dependencies for wheel...
+#15 1.521 running egg_info
+#15 1.522 creating algorithm/eye_diagnosis.egg-info
+#15 1.523 writing algorithm/eye_diagnosis.egg-info/PKG-INFO
+#15 1.526 writing dependency_links to algorithm/eye_diagnosis.egg-info/dependency_links.txt
+#15 1.527 writing entry points to algorithm/eye_diagnosis.egg-info/entry_points.txt
+#15 1.530 writing requirements to algorithm/eye_diagnosis.egg-info/requires.txt
+#15 1.530 writing top-level names to algorithm/eye_diagnosis.egg-info/top_level.txt
+#15 1.530 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#15 1.545 reading manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#15 1.545 reading manifest template 'MANIFEST.in'
+#15 1.547 no previously-included directories found matching 'algorithm/web/tests'
+#15 1.547 no previously-included directories found matching 'algorithm/eye_diagnosis/tests'
+#15 1.547 no previously-included directories found matching 'algorithm/mcp_server/tests'
+#15 1.547 warning: no previously-included files matching '__pycache__' found anywhere in distribution
+#15 1.548 warning: no previously-included files matching '*.pyc' found anywhere in distribution
+#15 1.549 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#15 1.611 * Building wheel...
+#15 1.804 running bdist_wheel
+#15 1.809 running build
+#15 1.809 running build_py
+#15 1.810 creating build/lib/mcp_server
+#15 1.813 copying algorithm/mcp_server/image_handler.py -> build/lib/mcp_server
+#15 1.814 copying algorithm/mcp_server/config.py -> build/lib/mcp_server
+#15 1.814 copying algorithm/mcp_server/__init__.py -> build/lib/mcp_server
+#15 1.815 copying algorithm/mcp_server/server.py -> build/lib/mcp_server
+#15 1.816 copying algorithm/mcp_server/tools.py -> build/lib/mcp_server
+#15 1.816 creating build/lib/eye_diagnosis
+#15 1.817 copying algorithm/eye_diagnosis/abstain.py -> build/lib/eye_diagnosis
+#15 1.817 copying algorithm/eye_diagnosis/quality.py -> build/lib/eye_diagnosis
+#15 1.817 copying algorithm/eye_diagnosis/registry.py -> build/lib/eye_diagnosis
+#15 1.818 copying algorithm/eye_diagnosis/__init__.py -> build/lib/eye_diagnosis
+#15 1.818 copying algorithm/eye_diagnosis/calibration.py -> build/lib/eye_diagnosis
+#15 1.818 copying algorithm/eye_diagnosis/ood.py -> build/lib/eye_diagnosis
+#15 1.819 copying algorithm/eye_diagnosis/frozen_eval.py -> build/lib/eye_diagnosis
+#15 1.819 copying algorithm/eye_diagnosis/metrics.py -> build/lib/eye_diagnosis
+#15 1.821 creating build/lib/web
+#15 1.821 copying algorithm/web/constant.py -> build/lib/web
+#15 1.822 copying algorithm/web/verify_quality_review_ui.py -> build/lib/web
+#15 1.822 copying algorithm/web/events.py -> build/lib/web
+#15 1.822 copying algorithm/web/verify_stream_reconnect_ui.py -> build/lib/web
+#15 1.823 copying algorithm/web/security.py -> build/lib/web
+#15 1.823 copying algorithm/web/vectorstore.py -> build/lib/web
+#15 1.823 copying algorithm/web/extract.py -> build/lib/web
+#15 1.824 copying algorithm/web/evidence.py -> build/lib/web
+#15 1.824 copying algorithm/web/verify_worker_concurrency.py -> build/lib/web
+#15 1.824 copying algorithm/web/config.py -> build/lib/web
+#15 1.825 copying algorithm/web/files.py -> build/lib/web
+#15 1.825 copying algorithm/web/verify_legacy_workflow_ui.py -> build/lib/web
+#15 1.826 copying algorithm/web/verify_final_clinical_review_ui.py -> build/lib/web
+#15 1.826 copying algorithm/web/__init__.py -> build/lib/web
+#15 1.827 copying algorithm/web/verify_validated_explanation_ui.py -> build/lib/web
+#15 1.827 copying algorithm/web/app.py -> build/lib/web
+#15 1.827 copying algorithm/web/delivery.py -> build/lib/web
+#15 1.828 copying algorithm/web/verify_workflow.py -> build/lib/web
+#15 1.829 copying algorithm/web/mcp_image.py -> build/lib/web
+#15 1.829 copying algorithm/web/auth.py -> build/lib/web
+#15 1.829 copying algorithm/web/cutover_browser.py -> build/lib/web
+#15 1.831 copying algorithm/web/verify_real_services.py -> build/lib/web
+#15 1.831 copying algorithm/web/verify_document_knowledge.py -> build/lib/web
+#15 1.831 copying algorithm/web/middleware.py -> build/lib/web
+#15 1.832 copying algorithm/web/database.py -> build/lib/web
+#15 1.832 copying algorithm/web/mcp_config.py -> build/lib/web
+#15 1.832 copying algorithm/web/session.py -> build/lib/web
+#15 1.833 copying algorithm/web/db.py -> build/lib/web
+#15 1.833 copying algorithm/web/response.py -> build/lib/web
+#15 1.833 copying algorithm/web/verify_controlled_evidence_ui.py -> build/lib/web
+#15 1.833 copying algorithm/web/verify_chat_workflow_ui.py -> build/lib/web
+#15 1.834 copying algorithm/web/verify_save_confirmation_ui.py -> build/lib/web
+#15 1.834 copying algorithm/web/verify_baseline.py -> build/lib/web
+#15 1.834 copying algorithm/web/doc_tool.py -> build/lib/web
+#15 1.834 copying algorithm/web/verify_session_identity.py -> build/lib/web
+#15 1.835 copying algorithm/web/verify_chat_ui.py -> build/lib/web
+#15 1.835 copying algorithm/web/cutover.py -> build/lib/web
+#15 1.835 copying algorithm/web/verify_tool_writes_ui.py -> build/lib/web
+#15 1.836 copying algorithm/web/doc_parser.py -> build/lib/web
+#15 1.836 copying algorithm/web/verify_supplement_ui.py -> build/lib/web
+#15 1.836 copying algorithm/web/knowledge.py -> build/lib/web
+#15 1.837 copying algorithm/web/deps.py -> build/lib/web
+#15 1.837 copying algorithm/web/cutover_rehearsal.py -> build/lib/web
+#15 1.838 copying algorithm/web/inference.py -> build/lib/web
+#15 1.838 creating build/lib/web/models
+#15 1.839 copying algorithm/web/models/mcp_server.py -> build/lib/web/models
+#15 1.839 copying algorithm/web/models/diagnosis.py -> build/lib/web/models
+#15 1.839 copying algorithm/web/models/user.py -> build/lib/web/models
+#15 1.840 copying algorithm/web/models/__init__.py -> build/lib/web/models
+#15 1.840 copying algorithm/web/models/inference_cache.py -> build/lib/web/models
+#15 1.840 copying algorithm/web/models/news.py -> build/lib/web/models
+#15 1.841 copying algorithm/web/models/knowledge.py -> build/lib/web/models
+#15 1.841 creating build/lib/web/workflow
+#15 1.842 copying algorithm/web/workflow/confirmation.py -> build/lib/web/workflow
+#15 1.843 copying algorithm/web/workflow/service.py -> build/lib/web/workflow
+#15 1.844 copying algorithm/web/workflow/explanation.py -> build/lib/web/workflow
+#15 1.844 copying algorithm/web/workflow/__init__.py -> build/lib/web/workflow
+#15 1.844 copying algorithm/web/workflow/legacy.py -> build/lib/web/workflow
+#15 1.845 copying algorithm/web/workflow/checkpoint.py -> build/lib/web/workflow
+#15 1.845 copying algorithm/web/workflow/definition.py -> build/lib/web/workflow
+#15 1.845 copying algorithm/web/workflow/worker.py -> build/lib/web/workflow
+#15 1.846 copying algorithm/web/workflow/confirmation_models.py -> build/lib/web/workflow
+#15 1.846 copying algorithm/web/workflow/models.py -> build/lib/web/workflow
+#15 1.847 copying algorithm/web/workflow/review.py -> build/lib/web/workflow
+#15 1.847 copying algorithm/web/workflow/inference.py -> build/lib/web/workflow
+#15 1.848 creating build/lib/web/migrations
+#15 1.849 copying algorithm/web/migrations/baseline.py -> build/lib/web/migrations
+#15 1.849 copying algorithm/web/migrations/__init__.py -> build/lib/web/migrations
+#15 1.850 copying algorithm/web/migrations/__main__.py -> build/lib/web/migrations
+#15 1.850 copying algorithm/web/migrations/runner.py -> build/lib/web/migrations
+#15 1.851 creating build/lib/web/chat
+#15 1.852 copying algorithm/web/chat/model.py -> build/lib/web/chat
+#15 1.852 copying algorithm/web/chat/__init__.py -> build/lib/web/chat
+#15 1.853 copying algorithm/web/chat/attachments.py -> build/lib/web/chat
+#15 1.853 copying algorithm/web/chat/history.py -> build/lib/web/chat
+#15 1.853 copying algorithm/web/chat/session.py -> build/lib/web/chat
+#15 1.854 copying algorithm/web/chat/mcp.py -> build/lib/web/chat
+#15 1.855 copying algorithm/web/chat/tool_writes.py -> build/lib/web/chat
+#15 1.855 copying algorithm/web/chat/supplement.py -> build/lib/web/chat
+#15 1.855 copying algorithm/web/chat/models.py -> build/lib/web/chat
+#15 1.856 creating build/lib/web/schemas
+#15 1.857 copying algorithm/web/schemas/mcp_server.py -> build/lib/web/schemas
+#15 1.858 copying algorithm/web/schemas/confirmation.py -> build/lib/web/schemas
+#15 1.859 copying algorithm/web/schemas/diagnosis.py -> build/lib/web/schemas
+#15 1.859 copying algorithm/web/schemas/user.py -> build/lib/web/schemas
+#15 1.860 copying algorithm/web/schemas/__init__.py -> build/lib/web/schemas
+#15 1.860 copying algorithm/web/schemas/legacy.py -> build/lib/web/schemas
+#15 1.860 copying algorithm/web/schemas/workflow.py -> build/lib/web/schemas
+#15 1.861 copying algorithm/web/schemas/supplement.py -> build/lib/web/schemas
+#15 1.862 copying algorithm/web/schemas/news.py -> build/lib/web/schemas
+#15 1.862 copying algorithm/web/schemas/knowledge.py -> build/lib/web/schemas
+#15 1.863 copying algorithm/web/schemas/review.py -> build/lib/web/schemas
+#15 1.863 creating build/lib/web/routers
+#15 1.865 copying algorithm/web/routers/mcp_server.py -> build/lib/web/routers
+#15 1.865 copying algorithm/web/routers/diagnosis.py -> build/lib/web/routers
+#15 1.866 copying algorithm/web/routers/user.py -> build/lib/web/routers
+#15 1.866 copying algorithm/web/routers/__init__.py -> build/lib/web/routers
+#15 1.867 copying algorithm/web/routers/legacy.py -> build/lib/web/routers
+#15 1.867 copying algorithm/web/routers/agent.py -> build/lib/web/routers
+#15 1.867 copying algorithm/web/routers/workflow.py -> build/lib/web/routers
+#15 1.868 copying algorithm/web/routers/tool_confirmation.py -> build/lib/web/routers
+#15 1.868 copying algorithm/web/routers/news.py -> build/lib/web/routers
+#15 1.868 copying algorithm/web/routers/knowledge.py -> build/lib/web/routers
+#15 1.869 copying algorithm/web/routers/review.py -> build/lib/web/routers
+#15 1.869 running egg_info
+#15 1.871 writing algorithm/eye_diagnosis.egg-info/PKG-INFO
+#15 1.875 writing dependency_links to algorithm/eye_diagnosis.egg-info/dependency_links.txt
+#15 1.876 writing entry points to algorithm/eye_diagnosis.egg-info/entry_points.txt
+#15 1.879 writing requirements to algorithm/eye_diagnosis.egg-info/requires.txt
+#15 1.879 writing top-level names to algorithm/eye_diagnosis.egg-info/top_level.txt
+#15 1.884 reading manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#15 1.885 reading manifest template 'MANIFEST.in'
+#15 1.887 no previously-included directories found matching 'algorithm/web/tests'
+#15 1.887 no previously-included directories found matching 'algorithm/eye_diagnosis/tests'
+#15 1.887 no previously-included directories found matching 'algorithm/mcp_server/tests'
+#15 1.887 warning: no previously-included files matching '__pycache__' found anywhere in distribution
+#15 1.888 warning: no previously-included files matching '*.pyc' found anywhere in distribution
+#15 1.890 writing manifest file 'algorithm/eye_diagnosis.egg-info/SOURCES.txt'
+#15 1.895 installing to build/bdist.linux-x86_64/wheel
+#15 1.895 running install
+#15 1.899 running install_lib
+#15 1.900 creating build/bdist.linux-x86_64/wheel
+#15 1.902 creating build/bdist.linux-x86_64/wheel/mcp_server
+#15 1.902 copying build/lib/mcp_server/image_handler.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#15 1.903 copying build/lib/mcp_server/config.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#15 1.903 copying build/lib/mcp_server/__init__.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#15 1.903 copying build/lib/mcp_server/server.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#15 1.904 copying build/lib/mcp_server/tools.py -> build/bdist.linux-x86_64/wheel/./mcp_server
+#15 1.904 creating build/bdist.linux-x86_64/wheel/web
+#15 1.905 copying build/lib/web/constant.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.905 copying build/lib/web/verify_quality_review_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.906 creating build/bdist.linux-x86_64/wheel/web/models
+#15 1.906 copying build/lib/web/models/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.907 copying build/lib/web/models/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.907 copying build/lib/web/models/user.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.908 copying build/lib/web/models/__init__.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.908 copying build/lib/web/models/inference_cache.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.908 copying build/lib/web/models/news.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.909 copying build/lib/web/models/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/models
+#15 1.909 copying build/lib/web/events.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.909 copying build/lib/web/verify_stream_reconnect_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.910 copying build/lib/web/security.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.910 copying build/lib/web/vectorstore.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.911 copying build/lib/web/extract.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.911 copying build/lib/web/evidence.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.911 copying build/lib/web/verify_worker_concurrency.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.912 creating build/bdist.linux-x86_64/wheel/web/workflow
+#15 1.913 copying build/lib/web/workflow/confirmation.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.913 copying build/lib/web/workflow/service.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.914 copying build/lib/web/workflow/explanation.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.915 copying build/lib/web/workflow/__init__.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.916 copying build/lib/web/workflow/legacy.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.916 copying build/lib/web/workflow/checkpoint.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.916 copying build/lib/web/workflow/definition.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.917 copying build/lib/web/workflow/worker.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.917 copying build/lib/web/workflow/confirmation_models.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.918 copying build/lib/web/workflow/models.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.918 copying build/lib/web/workflow/review.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.918 copying build/lib/web/workflow/inference.py -> build/bdist.linux-x86_64/wheel/./web/workflow
+#15 1.919 creating build/bdist.linux-x86_64/wheel/web/migrations
+#15 1.920 copying build/lib/web/migrations/baseline.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#15 1.920 copying build/lib/web/migrations/__init__.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#15 1.920 copying build/lib/web/migrations/__main__.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#15 1.920 copying build/lib/web/migrations/runner.py -> build/bdist.linux-x86_64/wheel/./web/migrations
+#15 1.921 creating build/bdist.linux-x86_64/wheel/web/chat
+#15 1.922 copying build/lib/web/chat/model.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.923 copying build/lib/web/chat/__init__.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.923 copying build/lib/web/chat/attachments.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.923 copying build/lib/web/chat/history.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.924 copying build/lib/web/chat/session.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.924 copying build/lib/web/chat/mcp.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.925 copying build/lib/web/chat/tool_writes.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.925 copying build/lib/web/chat/supplement.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.925 copying build/lib/web/chat/models.py -> build/bdist.linux-x86_64/wheel/./web/chat
+#15 1.926 copying build/lib/web/config.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.926 copying build/lib/web/files.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.926 copying build/lib/web/verify_legacy_workflow_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.927 copying build/lib/web/verify_final_clinical_review_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.928 copying build/lib/web/__init__.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.928 copying build/lib/web/verify_validated_explanation_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.928 copying build/lib/web/app.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.929 creating build/bdist.linux-x86_64/wheel/web/schemas
+#15 1.929 copying build/lib/web/schemas/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.930 copying build/lib/web/schemas/confirmation.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.930 copying build/lib/web/schemas/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.930 copying build/lib/web/schemas/user.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.930 copying build/lib/web/schemas/__init__.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.931 copying build/lib/web/schemas/legacy.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.931 copying build/lib/web/schemas/workflow.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.931 copying build/lib/web/schemas/supplement.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.932 copying build/lib/web/schemas/news.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.932 copying build/lib/web/schemas/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.933 copying build/lib/web/schemas/review.py -> build/bdist.linux-x86_64/wheel/./web/schemas
+#15 1.933 copying build/lib/web/delivery.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.933 copying build/lib/web/verify_workflow.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.934 copying build/lib/web/mcp_image.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.934 copying build/lib/web/auth.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.935 copying build/lib/web/cutover_browser.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.936 copying build/lib/web/verify_real_services.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.936 copying build/lib/web/verify_document_knowledge.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.937 copying build/lib/web/middleware.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.937 copying build/lib/web/database.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.938 copying build/lib/web/mcp_config.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.938 copying build/lib/web/session.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.938 copying build/lib/web/db.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.939 copying build/lib/web/response.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.939 copying build/lib/web/verify_controlled_evidence_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.940 copying build/lib/web/verify_chat_workflow_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.940 copying build/lib/web/verify_save_confirmation_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.940 copying build/lib/web/verify_baseline.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.942 copying build/lib/web/doc_tool.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.943 creating build/bdist.linux-x86_64/wheel/web/routers
+#15 1.943 copying build/lib/web/routers/mcp_server.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.946 copying build/lib/web/routers/diagnosis.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.947 copying build/lib/web/routers/user.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.947 copying build/lib/web/routers/__init__.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.947 copying build/lib/web/routers/legacy.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.948 copying build/lib/web/routers/agent.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.949 copying build/lib/web/routers/workflow.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.949 copying build/lib/web/routers/tool_confirmation.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.949 copying build/lib/web/routers/news.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.950 copying build/lib/web/routers/knowledge.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.950 copying build/lib/web/routers/review.py -> build/bdist.linux-x86_64/wheel/./web/routers
+#15 1.951 copying build/lib/web/verify_session_identity.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.951 copying build/lib/web/verify_chat_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.952 copying build/lib/web/cutover.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.952 copying build/lib/web/verify_tool_writes_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.953 copying build/lib/web/doc_parser.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.954 copying build/lib/web/verify_supplement_ui.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.954 copying build/lib/web/knowledge.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.954 copying build/lib/web/deps.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.956 copying build/lib/web/cutover_rehearsal.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.956 copying build/lib/web/inference.py -> build/bdist.linux-x86_64/wheel/./web
+#15 1.956 creating build/bdist.linux-x86_64/wheel/eye_diagnosis
+#15 1.958 copying build/lib/eye_diagnosis/abstain.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.958 copying build/lib/eye_diagnosis/quality.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.959 copying build/lib/eye_diagnosis/registry.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.960 copying build/lib/eye_diagnosis/__init__.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.961 copying build/lib/eye_diagnosis/calibration.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.961 copying build/lib/eye_diagnosis/ood.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.962 copying build/lib/eye_diagnosis/frozen_eval.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.962 copying build/lib/eye_diagnosis/metrics.py -> build/bdist.linux-x86_64/wheel/./eye_diagnosis
+#15 1.963 running install_data
+#15 1.966 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data
+#15 1.968 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.970 copying deploy/python-migrations/contracts.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.971 copying deploy/python-migrations/dependency-inventory.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.971 copying deploy/python-migrations/manifest.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.972 copying deploy/python-migrations/recovery-samples.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.973 copying deploy/python-migrations/schema-v22.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.973 copying deploy/python-migrations/schema-v9.json -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.974 copying deploy/python-migrations/business-bootstrap.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations
+#15 1.974 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.976 copying deploy/python-migrations/legacy/V10__create_diagnosis_workflow_core.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.976 copying deploy/python-migrations/legacy/V11__create_workflow_execution_tables.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.976 copying deploy/python-migrations/legacy/V12__create_workflow_result_and_review_tables.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.978 copying deploy/python-migrations/legacy/V13__align_workflow_job_claim_queue.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.978 copying deploy/python-migrations/legacy/V14__create_workflow_audit_event.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.979 copying deploy/python-migrations/legacy/V15__python_durable_upload.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.979 copying deploy/python-migrations/legacy/V16__bind_quality_review_context.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.979 copying deploy/python-migrations/legacy/V17__python_session_chat.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.980 copying deploy/python-migrations/legacy/V18__chat_workflow_binding.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.980 copying deploy/python-migrations/legacy/V19__controlled_reference_evidence.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.980 copying deploy/python-migrations/legacy/V1__baseline_rename_mcp_user_id.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.981 copying deploy/python-migrations/legacy/V20__diagnosis_save_confirmation.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.981 copying deploy/python-migrations/legacy/V21__chat_supplement.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.981 copying deploy/python-migrations/legacy/V22__agent_tool_confirmation.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.982 copying deploy/python-migrations/legacy/V2__split_inference_cache.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.983 copying deploy/python-migrations/legacy/V3__upload_state_machine.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.983 copying deploy/python-migrations/legacy/V4__agent_message_outbox.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.984 copying deploy/python-migrations/legacy/V5__medical_reliability.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.984 copying deploy/python-migrations/legacy/V6__align_mcp_entity_columns.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.985 copying deploy/python-migrations/legacy/V7__complete_inference_cache_safety_fields.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.985 copying deploy/python-migrations/legacy/V8__add_mcp_server_description.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.986 copying deploy/python-migrations/legacy/V9__version_inference_safety_policy.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.987 copying deploy/python-migrations/legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.988 copying deploy/python-migrations/legacy/schema.sql -> build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy
+#15 1.988 running install_egg_info
+#15 1.990 Copying algorithm/eye_diagnosis.egg-info to build/bdist.linux-x86_64/wheel/./eye_diagnosis-1.0.0-py3.11.egg-info
+#15 1.993 running install_scripts
+#15 1.995 creating build/bdist.linux-x86_64/wheel/eye_diagnosis-1.0.0.dist-info/WHEEL
+#15 1.996 creating '/wheels/.tmp-19_6av42/eye_diagnosis-1.0.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+#15 1.997 adding 'eye_diagnosis/__init__.py'
+#15 1.997 adding 'eye_diagnosis/abstain.py'
+#15 1.997 adding 'eye_diagnosis/calibration.py'
+#15 1.998 adding 'eye_diagnosis/frozen_eval.py'
+#15 1.998 adding 'eye_diagnosis/metrics.py'
+#15 1.998 adding 'eye_diagnosis/ood.py'
+#15 1.999 adding 'eye_diagnosis/quality.py'
+#15 1.999 adding 'eye_diagnosis/registry.py'
+#15 2.001 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/business-bootstrap.sql'
+#15 2.002 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/contracts.json'
+#15 2.002 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/dependency-inventory.json'
+#15 2.003 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/manifest.json'
+#15 2.003 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/recovery-samples.json'
+#15 2.004 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/schema-v22.json'
+#15 2.005 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/schema-v9.json'
+#15 2.006 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V10__create_diagnosis_workflow_core.sql'
+#15 2.006 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V11__create_workflow_execution_tables.sql'
+#15 2.007 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V12__create_workflow_result_and_review_tables.sql'
+#15 2.007 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V13__align_workflow_job_claim_queue.sql'
+#15 2.007 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V14__create_workflow_audit_event.sql'
+#15 2.008 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V15__python_durable_upload.sql'
+#15 2.008 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V16__bind_quality_review_context.sql'
+#15 2.008 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V17__python_session_chat.sql'
+#15 2.009 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V18__chat_workflow_binding.sql'
+#15 2.009 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V19__controlled_reference_evidence.sql'
+#15 2.009 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V1__baseline_rename_mcp_user_id.sql'
+#15 2.009 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V20__diagnosis_save_confirmation.sql'
+#15 2.009 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V21__chat_supplement.sql'
+#15 2.010 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V22__agent_tool_confirmation.sql'
+#15 2.010 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V2__split_inference_cache.sql'
+#15 2.010 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V3__upload_state_machine.sql'
+#15 2.010 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V4__agent_message_outbox.sql'
+#15 2.011 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V5__medical_reliability.sql'
+#15 2.011 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V6__align_mcp_entity_columns.sql'
+#15 2.011 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V7__complete_inference_cache_safety_fields.sql'
+#15 2.012 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V8__add_mcp_server_description.sql'
+#15 2.012 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/V9__version_inference_safety_policy.sql'
+#15 2.012 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/beforeMigrate__bootstrap_legacy_flyway_schema.sql'
+#15 2.012 adding 'eye_diagnosis-1.0.0.data/data/share/eye-diagnosis/python-migrations/legacy/schema.sql'
+#15 2.013 adding 'mcp_server/__init__.py'
+#15 2.013 adding 'mcp_server/config.py'
+#15 2.014 adding 'mcp_server/image_handler.py'
+#15 2.014 adding 'mcp_server/server.py'
+#15 2.014 adding 'mcp_server/tools.py'
+#15 2.015 adding 'web/__init__.py'
+#15 2.015 adding 'web/app.py'
+#15 2.016 adding 'web/auth.py'
+#15 2.016 adding 'web/config.py'
+#15 2.017 adding 'web/constant.py'
+#15 2.017 adding 'web/cutover.py'
+#15 2.017 adding 'web/cutover_browser.py'
+#15 2.018 adding 'web/cutover_rehearsal.py'
+#15 2.018 adding 'web/database.py'
+#15 2.019 adding 'web/db.py'
+#15 2.019 adding 'web/delivery.py'
+#15 2.019 adding 'web/deps.py'
+#15 2.020 adding 'web/doc_parser.py'
+#15 2.020 adding 'web/doc_tool.py'
+#15 2.020 adding 'web/events.py'
+#15 2.021 adding 'web/evidence.py'
+#15 2.022 adding 'web/extract.py'
+#15 2.022 adding 'web/files.py'
+#15 2.023 adding 'web/inference.py'
+#15 2.024 adding 'web/knowledge.py'
+#15 2.024 adding 'web/mcp_config.py'
+#15 2.025 adding 'web/mcp_image.py'
+#15 2.025 adding 'web/middleware.py'
+#15 2.026 adding 'web/response.py'
+#15 2.026 adding 'web/security.py'
+#15 2.027 adding 'web/session.py'
+#15 2.027 adding 'web/vectorstore.py'
+#15 2.028 adding 'web/verify_baseline.py'
+#15 2.028 adding 'web/verify_chat_ui.py'
+#15 2.029 adding 'web/verify_chat_workflow_ui.py'
+#15 2.029 adding 'web/verify_controlled_evidence_ui.py'
+#15 2.030 adding 'web/verify_document_knowledge.py'
+#15 2.031 adding 'web/verify_final_clinical_review_ui.py'
+#15 2.031 adding 'web/verify_legacy_workflow_ui.py'
+#15 2.031 adding 'web/verify_quality_review_ui.py'
+#15 2.033 adding 'web/verify_real_services.py'
+#15 2.033 adding 'web/verify_save_confirmation_ui.py'
+#15 2.034 adding 'web/verify_session_identity.py'
+#15 2.035 adding 'web/verify_stream_reconnect_ui.py'
+#15 2.035 adding 'web/verify_supplement_ui.py'
+#15 2.035 adding 'web/verify_tool_writes_ui.py'
+#15 2.036 adding 'web/verify_validated_explanation_ui.py'
+#15 2.036 adding 'web/verify_worker_concurrency.py'
+#15 2.037 adding 'web/verify_workflow.py'
+#15 2.037 adding 'web/chat/__init__.py'
+#15 2.038 adding 'web/chat/attachments.py'
+#15 2.038 adding 'web/chat/history.py'
+#15 2.039 adding 'web/chat/mcp.py'
+#15 2.039 adding 'web/chat/model.py'
+#15 2.040 adding 'web/chat/models.py'
+#15 2.040 adding 'web/chat/session.py'
+#15 2.041 adding 'web/chat/supplement.py'
+#15 2.042 adding 'web/chat/tool_writes.py'
+#15 2.042 adding 'web/migrations/__init__.py'
+#15 2.043 adding 'web/migrations/__main__.py'
+#15 2.043 adding 'web/migrations/baseline.py'
+#15 2.044 adding 'web/migrations/runner.py'
+#15 2.045 adding 'web/models/__init__.py'
+#15 2.045 adding 'web/models/diagnosis.py'
+#15 2.046 adding 'web/models/inference_cache.py'
+#15 2.046 adding 'web/models/knowledge.py'
+#15 2.047 adding 'web/models/mcp_server.py'
+#15 2.047 adding 'web/models/news.py'
+#15 2.047 adding 'web/models/user.py'
+#15 2.048 adding 'web/routers/__init__.py'
+#15 2.049 adding 'web/routers/agent.py'
+#15 2.050 adding 'web/routers/diagnosis.py'
+#15 2.051 adding 'web/routers/knowledge.py'
+#15 2.051 adding 'web/routers/legacy.py'
+#15 2.052 adding 'web/routers/mcp_server.py'
+#15 2.053 adding 'web/routers/news.py'
+#15 2.053 adding 'web/routers/review.py'
+#15 2.054 adding 'web/routers/tool_confirmation.py'
+#15 2.055 adding 'web/routers/user.py'
+#15 2.055 adding 'web/routers/workflow.py'
+#15 2.055 adding 'web/schemas/__init__.py'
+#15 2.056 adding 'web/schemas/confirmation.py'
+#15 2.056 adding 'web/schemas/diagnosis.py'
+#15 2.057 adding 'web/schemas/knowledge.py'
+#15 2.057 adding 'web/schemas/legacy.py'
+#15 2.058 adding 'web/schemas/mcp_server.py'
+#15 2.059 adding 'web/schemas/news.py'
+#15 2.059 adding 'web/schemas/review.py'
+#15 2.059 adding 'web/schemas/supplement.py'
+#15 2.060 adding 'web/schemas/user.py'
+#15 2.060 adding 'web/schemas/workflow.py'
+#15 2.061 adding 'web/workflow/__init__.py'
+#15 2.061 adding 'web/workflow/checkpoint.py'
+#15 2.062 adding 'web/workflow/confirmation.py'
+#15 2.063 adding 'web/workflow/confirmation_models.py'
+#15 2.064 adding 'web/workflow/definition.py'
+#15 2.065 adding 'web/workflow/explanation.py'
+#15 2.065 adding 'web/workflow/inference.py'
+#15 2.066 adding 'web/workflow/legacy.py'
+#15 2.066 adding 'web/workflow/models.py'
+#15 2.067 adding 'web/workflow/review.py'
+#15 2.067 adding 'web/workflow/service.py'
+#15 2.068 adding 'web/workflow/worker.py'
+#15 2.068 adding 'eye_diagnosis-1.0.0.dist-info/METADATA'
+#15 2.068 adding 'eye_diagnosis-1.0.0.dist-info/WHEEL'
+#15 2.069 adding 'eye_diagnosis-1.0.0.dist-info/entry_points.txt'
+#15 2.069 adding 'eye_diagnosis-1.0.0.dist-info/top_level.txt'
+#15 2.070 adding 'eye_diagnosis-1.0.0.dist-info/RECORD'
+#15 2.071 removing build/bdist.linux-x86_64/wheel
+#15 2.121 Successfully built eye_diagnosis-1.0.0-py3-none-any.whl
+#15 DONE 2.2s
+
+#6 [stage-1 2/7] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl libxinerama1 libxrender1 libxext6 libsm6 libcairo2 libcups2     libdbus-1-3 libfontconfig1 libfreetype6 libglu1-mesa libnss3 libxslt1.1 fonts-noto-cjk     && rm -rf /var/lib/apt/lists/*
+#6 28.13 Get:2 http://deb.debian.org/debian bookworm/main amd64 libbrotli1 amd64 1.0.9-2+b6 [275 kB]
+#6 28.92 Get:3 http://deb.debian.org/debian bookworm/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10 [20.3 kB]
+#6 29.82 Get:4 http://deb.debian.org/debian bookworm/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10 [59.7 kB]
+#6 31.32 Get:5 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#6 33.41 Get:6 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
+#6 34.45 Get:7 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
+#6 35.43 Get:8 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
+#6 37.29 Get:9 http://deb.debian.org/debian-security bookworm-security/main amd64 libssh2-1 amd64 1.10.0-3+deb12u1 [176 kB]
+#6 39.56 Get:10 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+#6 41.90 Get:11 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+#6 45.23 Get:12 http://deb.debian.org/debian bookworm/main amd64 fonts-dejavu-core all 2.37-6 [1068 kB]
+#6 47.77 Get:13 http://deb.debian.org/debian bookworm/main amd64 fontconfig-config amd64 2.14.1-4 [315 kB]
+#6 107.8 Ign:14 http://deb.debian.org/debian bookworm/main amd64 fonts-noto-cjk all 1:20220127+repack1-1
+#6 109.9 Get:15 http://deb.debian.org/debian bookworm/main amd64 libavahi-common-data amd64 0.8-10+deb12u1 [107 kB]
+#6 110.9 Get:16 http://deb.debian.org/debian bookworm/main amd64 libavahi-common3 amd64 0.8-10+deb12u1 [42.1 kB]
+#6 114.5 Get:17 http://deb.debian.org/debian bookworm/main amd64 libdbus-1-3 amd64 1.14.10-1~deb12u1 [201 kB]
+#6 116.0 Get:18 http://deb.debian.org/debian bookworm/main amd64 libavahi-client3 amd64 0.8-10+deb12u1 [45.8 kB]
+#6 117.9 Get:19 http://deb.debian.org/debian bookworm/main amd64 libbsd0 amd64 0.11.7-2 [117 kB]
+#6 120.0 Get:20 http://deb.debian.org/debian-security bookworm-security/main amd64 libexpat1 amd64 2.5.0-1+deb12u4 [106 kB]
+#6 122.0 Get:21 http://deb.debian.org/debian-security bookworm-security/main amd64 libpng16-16 amd64 1.6.39-2+deb12u6 [277 kB]
+#6 124.4 Get:22 http://deb.debian.org/debian bookworm/main amd64 libfreetype6 amd64 2.12.1+dfsg-5+deb12u4 [398 kB]
+#6 126.9 Get:23 http://deb.debian.org/debian bookworm/main amd64 libfontconfig1 amd64 2.14.1-4 [386 kB]
+#6 129.0 Get:24 http://deb.debian.org/debian bookworm/main amd64 libpixman-1-0 amd64 0.42.2-1 [546 kB]
+#6 130.5 Get:25 http://deb.debian.org/debian bookworm/main amd64 libxau6 amd64 1:1.0.9-1 [19.7 kB]
+#6 131.3 Get:26 http://deb.debian.org/debian bookworm/main amd64 libxdmcp6 amd64 1:1.1.2-3 [26.3 kB]
+#6 133.0 Get:27 http://deb.debian.org/debian bookworm/main amd64 libxcb1 amd64 1.15-1 [144 kB]
+#6 136.1 Get:28 http://deb.debian.org/debian bookworm/main amd64 libx11-data all 2:1.8.4-2+deb12u2 [292 kB]
+#6 140.0 Get:29 http://deb.debian.org/debian bookworm/main amd64 libx11-6 amd64 2:1.8.4-2+deb12u2 [760 kB]
+#6 142.0 Get:30 http://deb.debian.org/debian bookworm/main amd64 libxcb-render0 amd64 1.15-1 [115 kB]
+#6 143.1 Get:31 http://deb.debian.org/debian bookworm/main amd64 libxcb-shm0 amd64 1.15-1 [105 kB]
+#6 144.0 Get:32 http://deb.debian.org/debian bookworm/main amd64 libxext6 amd64 2:1.3.4-1+b1 [52.9 kB]
+#6 145.1 Get:33 http://deb.debian.org/debian bookworm/main amd64 libxrender1 amd64 1:0.9.10-1.1 [33.2 kB]
+#6 148.3 Get:34 http://deb.debian.org/debian bookworm/main amd64 libcairo2 amd64 1.16.0-7 [575 kB]
+#6 150.7 Get:35 http://deb.debian.org/debian bookworm/main amd64 libcups2 amd64 2.4.2-3+deb12u9 [245 kB]
+#6 151.8 Get:36 http://deb.debian.org/debian bookworm/main amd64 libglvnd0 amd64 1.6.0-1 [51.8 kB]
+#6 153.8 Get:37 http://deb.debian.org/debian bookworm/main amd64 libopengl0 amd64 1.6.0-1 [30.6 kB]
+#6 155.6 Get:38 http://deb.debian.org/debian bookworm/main amd64 libglu1-mesa amd64 9.0.2-1.1 [178 kB]
+#6 159.3 Get:39 http://deb.debian.org/debian bookworm/main amd64 x11-common all 1:7.7+23 [252 kB]
+#6 160.3 Get:40 http://deb.debian.org/debian bookworm/main amd64 libice6 amd64 2:1.0.10-1 [58.5 kB]
+#6 168.6 Get:41 http://deb.debian.org/debian bookworm/main amd64 libicu72 amd64 72.1-3+deb12u1 [9376 kB]
+#6 173.4 Get:42 http://deb.debian.org/debian bookworm/main amd64 libnspr4 amd64 2:4.35-1 [113 kB]
+#6 178.4 Get:43 http://deb.debian.org/debian-security bookworm-security/main amd64 libnss3 amd64 2:3.87.1-1+deb12u4 [1331 kB]
+#6 179.4 Get:44 http://deb.debian.org/debian bookworm/main amd64 libsm6 amd64 2:1.2.3-1 [35.1 kB]
+#6 182.5 Get:45 http://deb.debian.org/debian bookworm/main amd64 libxinerama1 amd64 2:1.1.4-3 [17.8 kB]
+#6 185.6 Get:46 http://deb.debian.org/debian bookworm/main amd64 libxml2 amd64 2.9.14+dfsg-1.3~deb12u6 [689 kB]
+#6 187.2 Get:47 http://deb.debian.org/debian bookworm/main amd64 libxslt1.1 amd64 1.1.35-1+deb12u4 [232 kB]
+#6 246.1 Ign:14 http://deb.debian.org/debian bookworm/main amd64 fonts-noto-cjk all 1:20220127+repack1-1
+#6 260.4 Get:14 http://deb.debian.org/debian bookworm/main amd64 fonts-noto-cjk all 1:20220127+repack1-1 [56.5 MB]
+#6 275.7 debconf: delaying package configuration, since apt-utils is not installed
+#6 275.4 Fetched 76.7 MB in 4min 11s (306 kB/s)
+#6 275.7 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 6695 files and directories currently installed.)
+#6 275.9 Preparing to unpack .../00-ca-certificates_20250419~deb12u1_all.deb ...
+#6 276.0 Unpacking ca-certificates (20250419~deb12u1) over (20230311+deb12u1) ...
+#6 278.3 Selecting previously unselected package libbrotli1:amd64.
+#6 278.3 Preparing to unpack .../01-libbrotli1_1.0.9-2+b6_amd64.deb ...
+#6 278.4 Unpacking libbrotli1:amd64 (1.0.9-2+b6) ...
+#6 278.7 Selecting previously unselected package libsasl2-modules-db:amd64.
+#6 278.7 Preparing to unpack .../02-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+#6 278.7 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#6 278.9 Selecting previously unselected package libsasl2-2:amd64.
+#6 278.9 Preparing to unpack .../03-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+#6 279.0 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#6 279.2 Selecting previously unselected package libldap-2.5-0:amd64.
+#6 279.2 Preparing to unpack .../04-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#6 279.2 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#6 279.4 Selecting previously unselected package libnghttp2-14:amd64.
+#6 279.4 Preparing to unpack .../05-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+#6 279.4 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#6 279.7 Selecting previously unselected package libpsl5:amd64.
+#6 279.7 Preparing to unpack .../06-libpsl5_0.21.2-1_amd64.deb ...
+#6 279.7 Unpacking libpsl5:amd64 (0.21.2-1) ...
+#6 279.9 Selecting previously unselected package librtmp1:amd64.
+#6 279.9 Preparing to unpack .../07-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+#6 279.9 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#6 280.1 Selecting previously unselected package libssh2-1:amd64.
+#6 280.1 Preparing to unpack .../08-libssh2-1_1.10.0-3+deb12u1_amd64.deb ...
+#6 280.1 Unpacking libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#6 280.4 Selecting previously unselected package libcurl4:amd64.
+#6 280.4 Preparing to unpack .../09-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+#6 280.4 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#6 280.7 Selecting previously unselected package curl.
+#6 280.7 Preparing to unpack .../10-curl_7.88.1-10+deb12u15_amd64.deb ...
+#6 280.7 Unpacking curl (7.88.1-10+deb12u15) ...
+#6 280.9 Selecting previously unselected package fonts-dejavu-core.
+#6 280.9 Preparing to unpack .../11-fonts-dejavu-core_2.37-6_all.deb ...
+#6 280.9 Unpacking fonts-dejavu-core (2.37-6) ...
+#6 281.4 Selecting previously unselected package fontconfig-config.
+#6 281.4 Preparing to unpack .../12-fontconfig-config_2.14.1-4_amd64.deb ...
+#6 281.9 Unpacking fontconfig-config (2.14.1-4) ...
+#6 282.9 Selecting previously unselected package fonts-noto-cjk.
+#6 282.9 Preparing to unpack .../13-fonts-noto-cjk_1%3a20220127+repack1-1_all.deb ...
+#6 283.0 Unpacking fonts-noto-cjk (1:20220127+repack1-1) ...
+#6 284.7 Selecting previously unselected package libavahi-common-data:amd64.
+#6 284.7 Preparing to unpack .../14-libavahi-common-data_0.8-10+deb12u1_amd64.deb ...
+#6 284.8 Unpacking libavahi-common-data:amd64 (0.8-10+deb12u1) ...
+#6 285.0 Selecting previously unselected package libavahi-common3:amd64.
+#6 285.0 Preparing to unpack .../15-libavahi-common3_0.8-10+deb12u1_amd64.deb ...
+#6 285.0 Unpacking libavahi-common3:amd64 (0.8-10+deb12u1) ...
+#6 285.2 Selecting previously unselected package libdbus-1-3:amd64.
+#6 285.2 Preparing to unpack .../16-libdbus-1-3_1.14.10-1~deb12u1_amd64.deb ...
+#6 285.2 Unpacking libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+#6 285.5 Selecting previously unselected package libavahi-client3:amd64.
+#6 285.5 Preparing to unpack .../17-libavahi-client3_0.8-10+deb12u1_amd64.deb ...
+#6 285.6 Unpacking libavahi-client3:amd64 (0.8-10+deb12u1) ...
+#6 285.8 Selecting previously unselected package libbsd0:amd64.
+#6 285.8 Preparing to unpack .../18-libbsd0_0.11.7-2_amd64.deb ...
+#6 285.8 Unpacking libbsd0:amd64 (0.11.7-2) ...
+#6 286.0 Selecting previously unselected package libexpat1:amd64.
+#6 286.0 Preparing to unpack .../19-libexpat1_2.5.0-1+deb12u4_amd64.deb ...
+#6 286.1 Unpacking libexpat1:amd64 (2.5.0-1+deb12u4) ...
+#6 286.3 Selecting previously unselected package libpng16-16:amd64.
+#6 286.3 Preparing to unpack .../20-libpng16-16_1.6.39-2+deb12u6_amd64.deb ...
+#6 286.3 Unpacking libpng16-16:amd64 (1.6.39-2+deb12u6) ...
+#6 286.5 Selecting previously unselected package libfreetype6:amd64.
+#6 286.5 Preparing to unpack .../21-libfreetype6_2.12.1+dfsg-5+deb12u4_amd64.deb ...
+#6 286.5 Unpacking libfreetype6:amd64 (2.12.1+dfsg-5+deb12u4) ...
+#6 286.8 Selecting previously unselected package libfontconfig1:amd64.
+#6 286.8 Preparing to unpack .../22-libfontconfig1_2.14.1-4_amd64.deb ...
+#6 286.8 Unpacking libfontconfig1:amd64 (2.14.1-4) ...
+#6 287.0 Selecting previously unselected package libpixman-1-0:amd64.
+#6 287.0 Preparing to unpack .../23-libpixman-1-0_0.42.2-1_amd64.deb ...
+#6 287.0 Unpacking libpixman-1-0:amd64 (0.42.2-1) ...
+#6 287.3 Selecting previously unselected package libxau6:amd64.
+#6 287.3 Preparing to unpack .../24-libxau6_1%3a1.0.9-1_amd64.deb ...
+#6 287.4 Unpacking libxau6:amd64 (1:1.0.9-1) ...
+#6 287.6 Selecting previously unselected package libxdmcp6:amd64.
+#6 287.6 Preparing to unpack .../25-libxdmcp6_1%3a1.1.2-3_amd64.deb ...
+#6 287.6 Unpacking libxdmcp6:amd64 (1:1.1.2-3) ...
+#6 287.9 Selecting previously unselected package libxcb1:amd64.
+#6 287.9 Preparing to unpack .../26-libxcb1_1.15-1_amd64.deb ...
+#6 287.9 Unpacking libxcb1:amd64 (1.15-1) ...
+#6 288.1 Selecting previously unselected package libx11-data.
+#6 288.1 Preparing to unpack .../27-libx11-data_2%3a1.8.4-2+deb12u2_all.deb ...
+#6 288.1 Unpacking libx11-data (2:1.8.4-2+deb12u2) ...
+#6 289.2 Selecting previously unselected package libx11-6:amd64.
+#6 289.3 Preparing to unpack .../28-libx11-6_2%3a1.8.4-2+deb12u2_amd64.deb ...
+#6 289.3 Unpacking libx11-6:amd64 (2:1.8.4-2+deb12u2) ...
+#6 289.6 Selecting previously unselected package libxcb-render0:amd64.
+#6 289.6 Preparing to unpack .../29-libxcb-render0_1.15-1_amd64.deb ...
+#6 289.6 Unpacking libxcb-render0:amd64 (1.15-1) ...
+#6 290.0 Selecting previously unselected package libxcb-shm0:amd64.
+#6 290.0 Preparing to unpack .../30-libxcb-shm0_1.15-1_amd64.deb ...
+#6 290.0 Unpacking libxcb-shm0:amd64 (1.15-1) ...
+#6 290.2 Selecting previously unselected package libxext6:amd64.
+#6 290.2 Preparing to unpack .../31-libxext6_2%3a1.3.4-1+b1_amd64.deb ...
+#6 290.2 Unpacking libxext6:amd64 (2:1.3.4-1+b1) ...
+#6 290.4 Selecting previously unselected package libxrender1:amd64.
+#6 290.4 Preparing to unpack .../32-libxrender1_1%3a0.9.10-1.1_amd64.deb ...
+#6 290.5 Unpacking libxrender1:amd64 (1:0.9.10-1.1) ...
+#6 290.8 Selecting previously unselected package libcairo2:amd64.
+#6 290.8 Preparing to unpack .../33-libcairo2_1.16.0-7_amd64.deb ...
+#6 290.8 Unpacking libcairo2:amd64 (1.16.0-7) ...
+#6 291.2 Selecting previously unselected package libcups2:amd64.
+#6 291.2 Preparing to unpack .../34-libcups2_2.4.2-3+deb12u9_amd64.deb ...
+#6 291.2 Unpacking libcups2:amd64 (2.4.2-3+deb12u9) ...
+#6 291.6 Selecting previously unselected package libglvnd0:amd64.
+#6 291.6 Preparing to unpack .../35-libglvnd0_1.6.0-1_amd64.deb ...
+#6 291.6 Unpacking libglvnd0:amd64 (1.6.0-1) ...
+#6 291.9 Selecting previously unselected package libopengl0:amd64.
+#6 291.9 Preparing to unpack .../36-libopengl0_1.6.0-1_amd64.deb ...
+#6 291.9 Unpacking libopengl0:amd64 (1.6.0-1) ...
+#6 292.1 Selecting previously unselected package libglu1-mesa:amd64.
+#6 292.1 Preparing to unpack .../37-libglu1-mesa_9.0.2-1.1_amd64.deb ...
+#6 292.2 Unpacking libglu1-mesa:amd64 (9.0.2-1.1) ...
+#6 292.4 Selecting previously unselected package x11-common.
+#6 292.4 Preparing to unpack .../38-x11-common_1%3a7.7+23_all.deb ...
+#6 292.4 Unpacking x11-common (1:7.7+23) ...
+#6 292.7 Selecting previously unselected package libice6:amd64.
+#6 292.7 Preparing to unpack .../39-libice6_2%3a1.0.10-1_amd64.deb ...
+#6 292.8 Unpacking libice6:amd64 (2:1.0.10-1) ...
+#6 293.1 Selecting previously unselected package libicu72:amd64.
+#6 293.1 Preparing to unpack .../40-libicu72_72.1-3+deb12u1_amd64.deb ...
+#6 293.1 Unpacking libicu72:amd64 (72.1-3+deb12u1) ...
+#6 295.5 Selecting previously unselected package libnspr4:amd64.
+#6 295.5 Preparing to unpack .../41-libnspr4_2%3a4.35-1_amd64.deb ...
+#6 295.5 Unpacking libnspr4:amd64 (2:4.35-1) ...
+#6 295.7 Selecting previously unselected package libnss3:amd64.
+#6 295.7 Preparing to unpack .../42-libnss3_2%3a3.87.1-1+deb12u4_amd64.deb ...
+#6 295.7 Unpacking libnss3:amd64 (2:3.87.1-1+deb12u4) ...
+#6 296.1 Selecting previously unselected package libsm6:amd64.
+#6 296.1 Preparing to unpack .../43-libsm6_2%3a1.2.3-1_amd64.deb ...
+#6 296.2 Unpacking libsm6:amd64 (2:1.2.3-1) ...
+#6 296.3 Selecting previously unselected package libxinerama1:amd64.
+#6 296.3 Preparing to unpack .../44-libxinerama1_2%3a1.1.4-3_amd64.deb ...
+#6 296.4 Unpacking libxinerama1:amd64 (2:1.1.4-3) ...
+#6 296.5 Selecting previously unselected package libxml2:amd64.
+#6 296.5 Preparing to unpack .../45-libxml2_2.9.14+dfsg-1.3~deb12u6_amd64.deb ...
+#6 296.6 Unpacking libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#6 296.9 Selecting previously unselected package libxslt1.1:amd64.
+#6 296.9 Preparing to unpack .../46-libxslt1.1_1.1.35-1+deb12u4_amd64.deb ...
+#6 296.9 Unpacking libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#6 297.2 Setting up libexpat1:amd64 (2.5.0-1+deb12u4) ...
+#6 297.3 Setting up libpixman-1-0:amd64 (0.42.2-1) ...
+#6 297.3 Setting up libxau6:amd64 (1:1.0.9-1) ...
+#6 297.4 Setting up libpsl5:amd64 (0.21.2-1) ...
+#6 297.5 Setting up libicu72:amd64 (72.1-3+deb12u1) ...
+#6 297.5 Setting up libglvnd0:amd64 (1.6.0-1) ...
+#6 297.6 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
+#6 297.7 Setting up fonts-noto-cjk (1:20220127+repack1-1) ...
+#6 297.9 Setting up x11-common (1:7.7+23) ...
+#6 298.9 debconf: unable to initialize frontend: Dialog
+#6 298.9 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 298.9 debconf: falling back to frontend: Readline
+#6 298.9 debconf: unable to initialize frontend: Readline
+#6 298.9 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#6 298.9 debconf: falling back to frontend: Teletype
+#6 299.1 invoke-rc.d: could not determine current runlevel
+#6 299.2 invoke-rc.d: policy-rc.d denied execution of restart.
+#6 299.2 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#6 299.4 Setting up libopengl0:amd64 (1.6.0-1) ...
+#6 299.5 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+#6 299.6 Setting up ca-certificates (20250419~deb12u1) ...
+#6 299.8 debconf: unable to initialize frontend: Dialog
+#6 299.8 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 299.8 debconf: falling back to frontend: Readline
+#6 299.8 debconf: unable to initialize frontend: Readline
+#6 299.8 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#6 299.8 debconf: falling back to frontend: Teletype
+#6 306.3 Updating certificates in /etc/ssl/certs...
+#6 309.6 rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL
+#6 309.6 21 added, 13 removed; done.
+#6 309.9 Setting up libx11-data (2:1.8.4-2+deb12u2) ...
+#6 310.0 Setting up libnspr4:amd64 (2:4.35-1) ...
+#6 310.1 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#6 310.2 Setting up libavahi-common-data:amd64 (0.8-10+deb12u1) ...
+#6 310.3 Setting up libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+#6 310.4 Setting up libpng16-16:amd64 (1.6.39-2+deb12u6) ...
+#6 310.5 Setting up fonts-dejavu-core (2.37-6) ...
+#6 310.9 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+#6 311.0 Setting up libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#6 311.1 Setting up libglu1-mesa:amd64 (9.0.2-1.1) ...
+#6 311.1 Setting up libbsd0:amd64 (0.11.7-2) ...
+#6 311.2 Setting up libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#6 311.3 Setting up libice6:amd64 (2:1.0.10-1) ...
+#6 311.4 Setting up libxdmcp6:amd64 (1:1.1.2-3) ...
+#6 311.5 Setting up libxcb1:amd64 (1.15-1) ...
+#6 311.6 Setting up libxcb-render0:amd64 (1.15-1) ...
+#6 311.7 Setting up fontconfig-config (2.14.1-4) ...
+#6 311.9 debconf: unable to initialize frontend: Dialog
+#6 311.9 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#6 311.9 debconf: falling back to frontend: Readline
+#6 311.9 debconf: unable to initialize frontend: Readline
+#6 311.9 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
+#6 311.9 debconf: falling back to frontend: Teletype
+#6 312.3 Setting up libavahi-common3:amd64 (0.8-10+deb12u1) ...
+#6 312.3 Setting up libnss3:amd64 (2:3.87.1-1+deb12u4) ...
+#6 312.4 Setting up libxcb-shm0:amd64 (1.15-1) ...
+#6 312.5 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#6 312.5 Setting up libfreetype6:amd64 (2.12.1+dfsg-5+deb12u4) ...
+#6 312.6 Setting up libxslt1.1:amd64 (1.1.35-1+deb12u4) ...
+#6 312.7 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#6 312.7 Setting up libx11-6:amd64 (2:1.8.4-2+deb12u2) ...
+#6 312.8 Setting up curl (7.88.1-10+deb12u15) ...
+#6 312.8 Setting up libfontconfig1:amd64 (2.14.1-4) ...
+#6 312.9 Setting up libsm6:amd64 (2:1.2.3-1) ...
+#6 313.0 Setting up libavahi-client3:amd64 (0.8-10+deb12u1) ...
+#6 313.0 Setting up libxrender1:amd64 (1:0.9.10-1.1) ...
+#6 313.1 Setting up libxext6:amd64 (2:1.3.4-1+b1) ...
+#6 313.2 Setting up libcairo2:amd64 (1.16.0-7) ...
+#6 313.2 Setting up libxinerama1:amd64 (2:1.1.4-3) ...
+#6 313.3 Setting up libcups2:amd64 (2.4.2-3+deb12u9) ...
+#6 313.3 Processing triggers for libc-bin (2.36-9+deb12u13) ...
+#6 313.8 Processing triggers for ca-certificates (20250419~deb12u1) ...
+#6 313.8 Updating certificates in /etc/ssl/certs...
+#6 314.7 0 added, 0 removed; done.
+#6 314.7 Running hooks in /etc/ca-certificates/update.d...
+#6 314.7 done.
+#6 DONE 316.6s
+
+#16 [stage-1 3/7] COPY --from=build /wheels /wheels
+#16 DONE 0.6s
+
+#17 [stage-1 4/7] RUN python -m pip install --no-cache-dir /wheels/*.whl && python -m pip check && rm -rf /wheels
+#17 9.292 Processing /wheels/eye_diagnosis-1.0.0-py3-none-any.whl
+#17 12.85 Collecting aiohappyeyeballs==2.7.1 (from eye-diagnosis==1.0.0)
+#17 14.26   Downloading aiohappyeyeballs-2.7.1-py3-none-any.whl.metadata (5.9 kB)
+#17 16.49 Collecting aiohttp==3.14.5 (from eye-diagnosis==1.0.0)
+#17 16.74   Downloading aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.3 kB)
+#17 17.30 Collecting aiohttp-retry==2.9.1 (from eye-diagnosis==1.0.0)
+#17 17.54   Downloading aiohttp_retry-2.9.1-py3-none-any.whl.metadata (8.8 kB)
+#17 17.79 Collecting aiosignal==1.4.0 (from eye-diagnosis==1.0.0)
+#17 18.02   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#17 18.26 Collecting annotated-doc==0.0.5 (from eye-diagnosis==1.0.0)
+#17 18.49   Downloading annotated_doc-0.0.5-py3-none-any.whl.metadata (6.5 kB)
+#17 18.76 Collecting annotated-types==0.8.0 (from eye-diagnosis==1.0.0)
+#17 19.00   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#17 20.26 Collecting anyio==4.15.1 (from eye-diagnosis==1.0.0)
+#17 20.48   Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+#17 21.01 Collecting attrs==26.1.0 (from eye-diagnosis==1.0.0)
+#17 21.24   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+#17 21.54 Collecting bcrypt==5.0.0 (from eye-diagnosis==1.0.0)
+#17 21.79   Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl.metadata (10 kB)
+#17 22.05 Collecting build==1.6.1 (from eye-diagnosis==1.0.0)
+#17 22.28   Downloading build-1.6.1-py3-none-any.whl.metadata (5.6 kB)
+#17 22.54 Collecting certifi==2026.7.22 (from eye-diagnosis==1.0.0)
+#17 22.77   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+#17 23.65 Collecting cffi==2.1.1 (from eye-diagnosis==1.0.0)
+#17 23.89   Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+#17 27.58 Collecting charset-normalizer==3.5.2 (from eye-diagnosis==1.0.0)
+#17 27.81   Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+#17 27.90      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.4/46.4 kB 595.7 kB/s eta 0:00:00
+#17 28.70 Collecting chromadb==1.5.9 (from eye-diagnosis==1.0.0)
+#17 28.95   Downloading chromadb-1.5.9-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.0 kB)
+#17 29.33 Collecting click==8.5.0 (from eye-diagnosis==1.0.0)
+#17 29.56   Downloading click-8.5.0-py3-none-any.whl.metadata (2.6 kB)
+#17 30.28 Collecting cos-python-sdk-v5==1.9.44 (from eye-diagnosis==1.0.0)
+#17 30.51   Downloading cos_python_sdk_v5-1.9.44-py3-none-any.whl.metadata (1.5 kB)
+#17 31.89 Collecting crcmod==1.7 (from eye-diagnosis==1.0.0)
+#17 32.11   Downloading crcmod-1.7.tar.gz (89 kB)
+#17 32.37      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 89.7/89.7 kB 352.6 kB/s eta 0:00:00
+#17 32.52   Preparing metadata (setup.py): started
+#17 35.83   Preparing metadata (setup.py): finished with status 'done'
+#17 41.78 Collecting cryptography==50.0.2 (from eye-diagnosis==1.0.0)
+#17 42.09   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.4 kB)
+#17 42.36 Collecting distro==1.9.0 (from eye-diagnosis==1.0.0)
+#17 42.58   Downloading distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+#17 42.92 Collecting durationpy==0.11 (from eye-diagnosis==1.0.0)
+#17 43.17   Downloading durationpy-0.11-py3-none-any.whl.metadata (474 bytes)
+#17 44.18 Collecting fastapi==0.143.0 (from eye-diagnosis==1.0.0)
+#17 44.59   Downloading fastapi-0.143.0-py3-none-any.whl.metadata (26 kB)
+#17 45.19 Collecting filelock==4.1.1 (from eye-diagnosis==1.0.0)
+#17 45.43   Downloading filelock-4.1.1-py3-none-any.whl.metadata (2.0 kB)
+#17 45.81 Collecting flatbuffers==25.12.19 (from eye-diagnosis==1.0.0)
+#17 45.81   Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+#17 46.83 Collecting frozenlist==1.8.0 (from eye-diagnosis==1.0.0)
+#17 47.14   Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+#17 47.11 Collecting fsspec==2026.9.0 (from eye-diagnosis==1.0.0)
+#17 47.35   Downloading fsspec-2026.9.0-py3-none-any.whl.metadata (10 kB)
+#17 47.72 Collecting googleapis-common-protos==1.75.5 (from eye-diagnosis==1.0.0)
+#17 47.96   Downloading googleapis_common_protos-1.75.5-py3-none-any.whl.metadata (8.5 kB)
+#17 50.19 Collecting greenlet==3.5.6 (from eye-diagnosis==1.0.0)
+#17 50.42   Downloading greenlet-3.5.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+#17 61.04 Collecting grpcio==1.84.0 (from eye-diagnosis==1.0.0)
+#17 61.29   Downloading grpcio-1.84.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.8 kB)
+#17 61.66 Collecting h11==0.16.0 (from eye-diagnosis==1.0.0)
+#17 62.13   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#17 62.71 Collecting hf-xet==1.7.0 (from eye-diagnosis==1.0.0)
+#17 63.31   Downloading hf_xet-1.7.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+#17 63.62 Collecting httpcore==1.0.9 (from eye-diagnosis==1.0.0)
+#17 63.95   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#17 64.33 Collecting httpcore2==2.13.1 (from eye-diagnosis==1.0.0)
+#17 64.57   Downloading httpcore2-2.13.1-py3-none-any.whl.metadata (26 kB)
+#17 65.85 Collecting httptools==0.9.0 (from eye-diagnosis==1.0.0)
+#17 66.46   Downloading httptools-0.9.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+#17 66.98 Collecting httpx==0.28.1 (from eye-diagnosis==1.0.0)
+#17 67.24   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#17 67.60 Collecting httpx-sse==0.4.3 (from eye-diagnosis==1.0.0)
+#17 67.85   Downloading httpx_sse-0.4.3-py3-none-any.whl.metadata (9.7 kB)
+#17 68.44 Collecting httpx2==2.13.1 (from eye-diagnosis==1.0.0)
+#17 68.69   Downloading httpx2-2.13.1-py3-none-any.whl.metadata (9.8 kB)
+#17 69.46 Collecting huggingface-hub==2.2.0 (from eye-diagnosis==1.0.0)
+#17 69.69   Downloading huggingface_hub-2.2.0-py3-none-any.whl.metadata (16 kB)
+#17 70.24 Collecting idna==3.20 (from eye-diagnosis==1.0.0)
+#17 70.47   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#17 70.95 Collecting importlib-resources==7.1.0 (from eye-diagnosis==1.0.0)
+#17 71.28   Downloading importlib_resources-7.1.0-py3-none-any.whl.metadata (4.0 kB)
+#17 71.55 Collecting iniconfig==2.3.1 (from eye-diagnosis==1.0.0)
+#17 72.07   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+#17 72.59 Collecting jsonpatch==1.35 (from eye-diagnosis==1.0.0)
+#17 72.93   Downloading jsonpatch-1.35-py3-none-any.whl.metadata (3.7 kB)
+#17 73.93 Collecting jsonpointer==3.2.1 (from eye-diagnosis==1.0.0)
+#17 74.17   Downloading jsonpointer-3.2.1-py3-none-any.whl.metadata (2.6 kB)
+#17 74.78 Collecting jsonschema==4.26.0 (from eye-diagnosis==1.0.0)
+#17 75.02   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+#17 78.05 Collecting jsonschema-specifications==2025.9.1 (from eye-diagnosis==1.0.0)
+#17 78.32   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+#17 79.32 Collecting kubernetes==37.0.1 (from eye-diagnosis==1.0.0)
+#17 79.54   Downloading kubernetes-37.0.1-py2.py3-none-any.whl.metadata (1.9 kB)
+#17 80.41 Collecting langchain-core==1.6.10 (from eye-diagnosis==1.0.0)
+#17 80.70   Downloading langchain_core-1.6.10-py3-none-any.whl.metadata (4.8 kB)
+#17 81.71 Collecting langchain-protocol==0.0.19 (from eye-diagnosis==1.0.0)
+#17 81.93   Downloading langchain_protocol-0.0.19-py3-none-any.whl.metadata (2.4 kB)
+#17 82.66 Collecting langgraph==1.2.12 (from eye-diagnosis==1.0.0)
+#17 82.90   Downloading langgraph-1.2.12-py3-none-any.whl.metadata (4.9 kB)
+#17 83.71 Collecting langgraph-checkpoint==4.3.0 (from eye-diagnosis==1.0.0)
+#17 83.95   Downloading langgraph_checkpoint-4.3.0-py3-none-any.whl.metadata (6.7 kB)
+#17 84.88 Collecting langgraph-prebuilt==1.1.0 (from eye-diagnosis==1.0.0)
+#17 85.11   Downloading langgraph_prebuilt-1.1.0-py3-none-any.whl.metadata (5.2 kB)
+#17 86.27 Collecting langgraph-sdk==0.4.7 (from eye-diagnosis==1.0.0)
+#17 86.51   Downloading langgraph_sdk-0.4.7-py3-none-any.whl.metadata (5.1 kB)
+#17 88.06 Collecting langsmith==0.14.8 (from eye-diagnosis==1.0.0)
+#17 88.30   Downloading langsmith-0.14.8-py3-none-any.whl.metadata (22 kB)
+#17 92.12 Collecting librt==0.16.0 (from eye-diagnosis==1.0.0)
+#17 92.38   Downloading librt-0.16.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+#17 95.50 Collecting lxml==6.1.3 (from eye-diagnosis==1.0.0)
+#17 95.73   Downloading lxml-6.1.3-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (3.3 kB)
+#17 96.32 Collecting markdown-it-py==4.2.0 (from eye-diagnosis==1.0.0)
+#17 96.57   Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+#17 97.47 Collecting mcp==1.26.0 (from eye-diagnosis==1.0.0)
+#17 97.72   Downloading mcp-1.26.0-py3-none-any.whl.metadata (89 kB)
+#17 103.4      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 89.5/89.5 kB 17.3 kB/s eta 0:00:00
+#17 104.0 Collecting mdurl==0.1.2 (from eye-diagnosis==1.0.0)
+#17 104.2   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+#17 105.1 Collecting mmh3==5.3.1 (from eye-diagnosis==1.0.0)
+#17 105.4   Downloading mmh3-5.3.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (13 kB)
+#17 107.1 Collecting multidict==7.1.0 (from eye-diagnosis==1.0.0)
+#17 107.3   Downloading multidict-7.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.2 kB)
+#17 108.9 Collecting mypy==1.20.2 (from eye-diagnosis==1.0.0)
+#17 109.1   Downloading mypy-1.20.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#17 109.4 Collecting mypy-extensions==1.1.0 (from eye-diagnosis==1.0.0)
+#17 109.7   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+#17 111.6 Collecting numpy==2.4.6 (from eye-diagnosis==1.0.0)
+#17 111.9   Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+#17 115.4 Collecting oauthlib==4.0.0 (from eye-diagnosis==1.0.0)
+#17 115.6   Downloading oauthlib-4.0.0-py3-none-any.whl.metadata (8.6 kB)
+#17 116.2 Collecting olefile==0.47 (from eye-diagnosis==1.0.0)
+#17 116.5   Downloading olefile-0.47-py2.py3-none-any.whl.metadata (9.7 kB)
+#17 117.7 Collecting onnxruntime==1.31.0 (from eye-diagnosis==1.0.0)
+#17 117.9   Downloading onnxruntime-1.31.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (5.7 kB)
+#17 118.7 Collecting opentelemetry-api==1.45.1 (from eye-diagnosis==1.0.0)
+#17 119.0   Downloading opentelemetry_api-1.45.1-py3-none-any.whl.metadata (1.4 kB)
+#17 119.3 Collecting opentelemetry-exporter-otlp-common==0.66b1 (from eye-diagnosis==1.0.0)
+#17 119.5   Downloading opentelemetry_exporter_otlp_common-0.66b1-py3-none-any.whl.metadata (1.9 kB)
+#17 120.1 Collecting opentelemetry-exporter-otlp-proto-common==1.45.1 (from eye-diagnosis==1.0.0)
+#17 120.4   Downloading opentelemetry_exporter_otlp_proto_common-1.45.1-py3-none-any.whl.metadata (1.8 kB)
+#17 121.4 Collecting opentelemetry-exporter-otlp-proto-grpc==1.45.1 (from eye-diagnosis==1.0.0)
+#17 121.7   Downloading opentelemetry_exporter_otlp_proto_grpc-1.45.1-py3-none-any.whl.metadata (2.6 kB)
+#17 122.2 Collecting opentelemetry-proto==1.45.1 (from eye-diagnosis==1.0.0)
+#17 122.4   Downloading opentelemetry_proto-1.45.1-py3-none-any.whl.metadata (2.3 kB)
+#17 122.9 Collecting opentelemetry-sdk==1.45.1 (from eye-diagnosis==1.0.0)
+#17 123.1   Downloading opentelemetry_sdk-1.45.1-py3-none-any.whl.metadata (1.6 kB)
+#17 123.5 Collecting opentelemetry-semantic-conventions==0.66b1 (from eye-diagnosis==1.0.0)
+#17 123.7   Downloading opentelemetry_semantic_conventions-0.66b1-py3-none-any.whl.metadata (2.4 kB)
+#17 125.4 Collecting orjson==3.13.0 (from eye-diagnosis==1.0.0)
+#17 125.6   Downloading orjson-3.13.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (42 kB)
+#17 127.3      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.2/42.2 kB 54.7 kB/s eta 0:00:00
+#17 128.1 Collecting ormsgpack==1.12.2 (from eye-diagnosis==1.0.0)
+#17 128.3   Downloading ormsgpack-1.12.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.2 kB)
+#17 128.7 Collecting overrides==7.7.0 (from eye-diagnosis==1.0.0)
+#17 128.9   Downloading overrides-7.7.0-py3-none-any.whl.metadata (5.8 kB)
+#17 129.6 Collecting packaging==26.3 (from eye-diagnosis==1.0.0)
+#17 129.9   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#17 130.2 Collecting pathspec==1.1.1 (from eye-diagnosis==1.0.0)
+#17 130.5   Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+#17 132.4 Collecting pillow==12.3.0 (from eye-diagnosis==1.0.0)
+#17 132.7   Downloading pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+#17 133.7 Collecting playwright==1.58.0 (from eye-diagnosis==1.0.0)
+#17 134.0   Downloading playwright-1.58.0-py3-none-manylinux1_x86_64.whl.metadata (3.5 kB)
+#17 134.4 Collecting pluggy==1.6.0 (from eye-diagnosis==1.0.0)
+#17 134.6   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+#17 135.4 Collecting propcache==0.5.4 (from eye-diagnosis==1.0.0)
+#17 135.7   Downloading propcache-0.5.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (25 kB)
+#17 140.3 Collecting protobuf==7.36.2 (from eye-diagnosis==1.0.0)
+#17 140.6   Downloading protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+#17 141.5 Collecting pybase64==1.5.1 (from eye-diagnosis==1.0.0)
+#17 141.8   Downloading pybase64-1.5.1-cp311-cp311-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl.metadata (11 kB)
+#17 142.3 Collecting pycparser==3.11 (from eye-diagnosis==1.0.0)
+#17 142.5   Downloading pycparser-3.11-py3-none-any.whl.metadata (8.2 kB)
+#17 143.3 Collecting pycryptodome==3.24.1 (from eye-diagnosis==1.0.0)
+#17 143.5   Downloading pycryptodome-3.24.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.4 kB)
+#17 144.6 Collecting pydantic==2.14.1 (from eye-diagnosis==1.0.0)
+#17 144.8   Downloading pydantic-2.14.1-py3-none-any.whl.metadata (133 kB)
+#17 147.0      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 133.0/133.0 kB 72.2 kB/s eta 0:00:00
+#17 150.7 Collecting pydantic-core==2.50.1 (from eye-diagnosis==1.0.0)
+#17 151.0   Downloading pydantic_core-2.50.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.5 kB)
+#17 151.3 Collecting pydantic-settings==2.15.0 (from eye-diagnosis==1.0.0)
+#17 151.5   Downloading pydantic_settings-2.15.0-py3-none-any.whl.metadata (3.9 kB)
+#17 152.1 Collecting pyee==13.0.1 (from eye-diagnosis==1.0.0)
+#17 152.3   Downloading pyee-13.0.1-py3-none-any.whl.metadata (3.0 kB)
+#17 152.9 Collecting pygments==2.21.0 (from eye-diagnosis==1.0.0)
+#17 153.2   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+#17 153.7 Collecting pyjwt==2.15.1 (from eye-diagnosis==1.0.0)
+#17 154.0   Downloading pyjwt-2.15.1-py3-none-any.whl.metadata (3.5 kB)
+#17 154.3 Collecting pymysql==1.2.3 (from eye-diagnosis==1.0.0)
+#17 154.5   Downloading pymysql-1.2.3-py3-none-any.whl.metadata (4.2 kB)
+#17 154.9 Collecting pypdf==6.20.0 (from eye-diagnosis==1.0.0)
+#17 155.1   Downloading pypdf-6.20.0-py3-none-any.whl.metadata (7.6 kB)
+#17 155.5 Collecting pypika==0.51.1 (from eye-diagnosis==1.0.0)
+#17 155.7   Downloading pypika-0.51.1-py2.py3-none-any.whl.metadata (51 kB)
+#17 156.2      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 52.0/52.0 kB 123.3 kB/s eta 0:00:00
+#17 156.5 Collecting pyproject-hooks==1.3.3 (from eye-diagnosis==1.0.0)
+#17 156.7   Downloading pyproject_hooks-1.3.3-py3-none-any.whl.metadata (1.3 kB)
+#17 157.1 Collecting pytest==9.1.1 (from eye-diagnosis==1.0.0)
+#17 157.3   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+#17 158.6 Collecting pytest-asyncio==1.4.0 (from eye-diagnosis==1.0.0)
+#17 158.9   Downloading pytest_asyncio-1.4.0-py3-none-any.whl.metadata (4.1 kB)
+#17 161.1 Collecting python-dateutil==2.9.0.post0 (from eye-diagnosis==1.0.0)
+#17 161.3   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+#17 162.7 Collecting python-docx==1.2.0 (from eye-diagnosis==1.0.0)
+#17 162.9   Downloading python_docx-1.2.0-py3-none-any.whl.metadata (2.0 kB)
+#17 164.7 Collecting python-dotenv==1.2.4 (from eye-diagnosis==1.0.0)
+#17 164.9   Downloading python_dotenv-1.2.4-py3-none-any.whl.metadata (29 kB)
+#17 166.4 Collecting python-multipart==0.0.32 (from eye-diagnosis==1.0.0)
+#17 166.6   Downloading python_multipart-0.0.32-py3-none-any.whl.metadata (2.1 kB)
+#17 170.1 Collecting pyyaml==6.0.3 (from eye-diagnosis==1.0.0)
+#17 170.4   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#17 170.8 Collecting redis==8.1.0 (from eye-diagnosis==1.0.0)
+#17 171.0   Downloading redis-8.1.0-py3-none-any.whl.metadata (16 kB)
+#17 172.0 Collecting referencing==0.37.0 (from eye-diagnosis==1.0.0)
+#17 172.3   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+#17 173.1 Collecting requests==2.34.2 (from eye-diagnosis==1.0.0)
+#17 173.4   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#17 173.8 Collecting requests-oauthlib==2.0.0 (from eye-diagnosis==1.0.0)
+#17 174.0   Downloading requests_oauthlib-2.0.0-py2.py3-none-any.whl.metadata (11 kB)
+#17 174.4 Collecting requests-toolbelt==1.0.0 (from eye-diagnosis==1.0.0)
+#17 174.7   Downloading requests_toolbelt-1.0.0-py2.py3-none-any.whl.metadata (14 kB)
+#17 176.2 Collecting rich==15.0.0 (from eye-diagnosis==1.0.0)
+#17 176.4   Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+#17 184.8 Collecting rpds-py==2026.9.1 (from eye-diagnosis==1.0.0)
+#17 185.1   Downloading rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+#17 185.5 Collecting shellingham==1.5.4 (from eye-diagnosis==1.0.0)
+#17 185.8   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+#17 186.1 Collecting six==1.17.0 (from eye-diagnosis==1.0.0)
+#17 186.3   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+#17 186.6 Collecting sniffio==1.3.1 (from eye-diagnosis==1.0.0)
+#17 186.9   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#17 190.4 Collecting sqlalchemy==2.1.4 (from eye-diagnosis==1.0.0)
+#17 191.0   Downloading sqlalchemy-2.1.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.7 kB)
+#17 191.4 Collecting sse-starlette==3.5.0 (from eye-diagnosis==1.0.0)
+#17 192.1   Downloading sse_starlette-3.5.0-py3-none-any.whl.metadata (15 kB)
+#17 193.0 Collecting starlette==1.7.0 (from eye-diagnosis==1.0.0)
+#17 193.2   Downloading starlette-1.7.0-py3-none-any.whl.metadata (6.6 kB)
+#17 194.0 Collecting tenacity==9.2.1 (from eye-diagnosis==1.0.0)
+#17 194.3   Downloading tenacity-9.2.1-py3-none-any.whl.metadata (1.4 kB)
+#17 195.9 Collecting tokenizers==0.23.3 (from eye-diagnosis==1.0.0)
+#17 196.2   Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.8 kB)
+#17 197.0 Collecting tqdm==4.70.1 (from eye-diagnosis==1.0.0)
+#17 197.2   Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+#17 198.8      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.4/57.4 kB 26.8 kB/s eta 0:00:00
+#17 199.2 Collecting truststore==0.10.4 (from eye-diagnosis==1.0.0)
+#17 199.5   Downloading truststore-0.10.4-py3-none-any.whl.metadata (4.4 kB)
+#17 200.0 Collecting typer==0.27.3 (from eye-diagnosis==1.0.0)
+#17 200.2   Downloading typer-0.27.3-py3-none-any.whl.metadata (16 kB)
+#17 201.4 Collecting typing-extensions==4.16.0 (from eye-diagnosis==1.0.0)
+#17 201.7   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#17 202.5 Collecting typing-inspection==0.4.4 (from eye-diagnosis==1.0.0)
+#17 202.8   Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+#17 203.2 Collecting urllib3==2.8.0 (from eye-diagnosis==1.0.0)
+#17 203.5   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+#17 204.7 Collecting uuid-utils==0.17.1 (from eye-diagnosis==1.0.0)
+#17 205.0   Downloading uuid_utils-0.17.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.4 kB)
+#17 205.6 Collecting uvicorn==0.54.0 (from eye-diagnosis==1.0.0)
+#17 205.8   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+#17 238.2 Collecting uvloop==0.23.0 (from eye-diagnosis==1.0.0)
+#17 238.5   Downloading uvloop-0.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.1 kB)
+#17 240.2 Collecting watchfiles==1.3.0 (from eye-diagnosis==1.0.0)
+#17 240.6   Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#17 241.2 Collecting websocket-client==1.9.2 (from eye-diagnosis==1.0.0)
+#17 241.4   Downloading websocket_client-1.9.2-py3-none-any.whl.metadata (8.3 kB)
+#17 243.1 Collecting websockets==16.1.1 (from eye-diagnosis==1.0.0)
+#17 243.4   Downloading websockets-16.1.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+#17 244.1 Collecting xmltodict==1.0.4 (from eye-diagnosis==1.0.0)
+#17 244.7   Downloading xmltodict-1.0.4-py3-none-any.whl.metadata (14 kB)
+#17 246.8 Collecting xxhash==4.0.1 (from eye-diagnosis==1.0.0)
+#17 247.0   Downloading xxhash-4.0.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (17 kB)
+#17 251.2 Collecting yarl==1.25.1 (from eye-diagnosis==1.0.0)
+#17 251.5   Downloading yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (111 kB)
+#17 253.9      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 111.6/111.6 kB 51.2 kB/s eta 0:00:00
+#17 255.0 Collecting zstandard==0.25.0 (from eye-diagnosis==1.0.0)
+#17 255.3   Downloading zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+#17 261.6 Downloading aiohappyeyeballs-2.7.1-py3-none-any.whl (15 kB)
+#17 262.2 Downloading aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.9 MB)
+#17 275.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 151.4 kB/s eta 0:00:00
+#17 275.6 Downloading aiohttp_retry-2.9.1-py3-none-any.whl (10.0 kB)
+#17 275.8 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#17 276.1 Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+#17 276.4 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#17 276.7 Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+#17 277.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.1/132.1 kB 207.4 kB/s eta 0:00:00
+#17 277.5 Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#17 277.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.5/67.5 kB 369.5 kB/s eta 0:00:00
+#17 278.0 Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (278 kB)
+#17 279.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 278.2/278.2 kB 225.2 kB/s eta 0:00:00
+#17 279.7 Downloading build-1.6.1-py3-none-any.whl (31 kB)
+#17 280.1 Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+#17 280.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 137.0/137.0 kB 364.2 kB/s eta 0:00:00
+#17 280.7 Downloading cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (217 kB)
+#17 281.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 217.8/217.8 kB 606.6 kB/s eta 0:00:00
+#17 281.6 Downloading charset_normalizer-3.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (269 kB)
+#17 282.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 270.0/270.0 kB 561.8 kB/s eta 0:00:00
+#17 282.6 Downloading chromadb-1.5.9-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23.3 MB)
+#17 310.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 23.3/23.3 MB 1.4 MB/s eta 0:00:00
+#17 311.4 Downloading click-8.5.0-py3-none-any.whl (125 kB)
+#17 311.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 125.3/125.3 kB 66.2 MB/s eta 0:00:00
+#17 311.8 Downloading cos_python_sdk_v5-1.9.44-py3-none-any.whl (99 kB)
+#17 311.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 99.1/99.1 kB 3.3 MB/s eta 0:00:00
+#17 312.1 Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#17 314.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 1.9 MB/s eta 0:00:00
+#17 315.2 Downloading distro-1.9.0-py3-none-any.whl (20 kB)
+#17 315.2 Downloading durationpy-0.11-py3-none-any.whl (4.1 kB)
+#17 315.4 Downloading fastapi-0.143.0-py3-none-any.whl (144 kB)
+#17 315.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 144.7/144.7 kB 7.4 MB/s eta 0:00:00
+#17 315.8 Downloading filelock-4.1.1-py3-none-any.whl (132 kB)
+#17 316.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.5/132.5 kB 5.0 MB/s eta 0:00:00
+#17 315.6 Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+#17 315.8 Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+#17 316.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 231.1/231.1 kB 1.3 MB/s eta 0:00:00
+#17 316.6 Downloading fsspec-2026.9.0-py3-none-any.whl (221 kB)
+#17 316.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 221.7/221.7 kB 2.1 MB/s eta 0:00:00
+#17 317.1 Downloading googleapis_common_protos-1.75.5-py3-none-any.whl (307 kB)
+#17 317.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 307.7/307.7 kB 2.2 MB/s eta 0:00:00
+#17 317.5 Downloading greenlet-3.5.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (624 kB)
+#17 318.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 624.4/624.4 kB 3.9 MB/s eta 0:00:00
+#17 318.2 Downloading grpcio-1.84.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (7.2 MB)
+#17 324.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.2/7.2 MB 1.8 MB/s eta 0:00:00
+#17 324.3 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#17 324.6 Downloading hf_xet-1.7.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.2 MB)
+#17 326.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB 2.1 MB/s eta 0:00:00
+#17 327.0 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#17 327.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.8/78.8 kB 27.9 MB/s eta 0:00:00
+#17 327.3 Downloading httpcore2-2.13.1-py3-none-any.whl (83 kB)
+#17 327.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 83.4/83.4 kB 347.1 kB/s eta 0:00:00
+#17 328.2 Downloading httptools-0.9.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (499 kB)
+#17 328.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 499.1/499.1 kB 2.5 MB/s eta 0:00:00
+#17 328.6 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#17 329.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.5/73.5 kB 184.4 kB/s eta 0:00:00
+#17 329.2 Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+#17 329.6 Downloading httpx2-2.13.1-py3-none-any.whl (95 kB)
+#17 329.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 95.6/95.6 kB 398.4 kB/s eta 0:00:00
+#17 330.1 Downloading huggingface_hub-2.2.0-py3-none-any.whl (839 kB)
+#17 330.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 839.9/839.9 kB 1.3 MB/s eta 0:00:00
+#17 331.0 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#17 331.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 12.2 MB/s eta 0:00:00
+#17 331.6 Downloading importlib_resources-7.1.0-py3-none-any.whl (37 kB)
+#17 331.8 Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+#17 332.4 Downloading jsonpatch-1.35-py3-none-any.whl (17 kB)
+#17 333.0 Downloading jsonpointer-3.2.1-py3-none-any.whl (8.3 kB)
+#17 333.2 Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+#17 333.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.6/90.6 kB 4.2 MB/s eta 0:00:00
+#17 333.5 Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+#17 333.8 Downloading kubernetes-37.0.1-py2.py3-none-any.whl (7.5 MB)
+#17 336.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.5/7.5 MB 2.6 MB/s eta 0:00:00
+#17 337.1 Downloading langchain_core-1.6.10-py3-none-any.whl (573 kB)
+#17 337.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 573.3/573.3 kB 1.3 MB/s eta 0:00:00
+#17 337.9 Downloading langchain_protocol-0.0.19-py3-none-any.whl (7.3 kB)
+#17 338.1 Downloading langgraph-1.2.12-py3-none-any.whl (250 kB)
+#17 338.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 250.2/250.2 kB 1.6 MB/s eta 0:00:00
+#17 338.5 Downloading langgraph_checkpoint-4.3.0-py3-none-any.whl (58 kB)
+#17 339.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 58.1/58.1 kB 8.5 MB/s eta 0:00:00
+#17 339.4 Downloading langgraph_prebuilt-1.1.0-py3-none-any.whl (41 kB)
+#17 339.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 41.0/41.0 kB 187.5 MB/s eta 0:00:00
+#17 339.6 Downloading langgraph_sdk-0.4.7-py3-none-any.whl (162 kB)
+#17 339.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 162.4/162.4 kB 4.8 MB/s eta 0:00:00
+#17 340.0 Downloading langsmith-0.14.8-py3-none-any.whl (862 kB)
+#17 340.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 862.4/862.4 kB 1.4 MB/s eta 0:00:00
+#17 340.8 Downloading librt-0.16.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (515 kB)
+#17 341.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 516.0/516.0 kB 3.0 MB/s eta 0:00:00
+#17 341.3 Downloading lxml-6.1.3-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (5.2 MB)
+#17 343.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 2.9 MB/s eta 0:00:00
+#17 343.3 Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+#17 343.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 91.7/91.7 kB 24.0 MB/s eta 0:00:00
+#17 343.6 Downloading mcp-1.26.0-py3-none-any.whl (233 kB)
+#17 344.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 233.6/233.6 kB 1.0 MB/s eta 0:00:00
+#17 344.3 Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#17 344.6 Downloading mmh3-5.3.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (102 kB)
+#17 344.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 102.9/102.9 kB 155.2 MB/s eta 0:00:00
+#17 344.8 Downloading multidict-7.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (480 kB)
+#17 345.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 480.4/480.4 kB 1.6 MB/s eta 0:00:00
+#17 345.6 Downloading mypy-1.20.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (14.6 MB)
+#17 371.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.6/14.6 MB 815.0 kB/s eta 0:00:00
+#17 371.3 Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+#17 371.6 Downloading numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+#17 384.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 1.4 MB/s eta 0:00:00
+#17 384.4 Downloading oauthlib-4.0.0-py3-none-any.whl (159 kB)
+#17 384.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 159.7/159.7 kB 1.3 MB/s eta 0:00:00
+#17 385.0 Downloading olefile-0.47-py2.py3-none-any.whl (114 kB)
+#17 385.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 114.6/114.6 kB 1.6 MB/s eta 0:00:00
+#17 385.4 Downloading onnxruntime-1.31.0-cp311-cp311-manylinux_2_28_x86_64.whl (23.8 MB)
+#17 398.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 23.8/23.8 MB 2.5 MB/s eta 0:00:00
+#17 398.8 Downloading opentelemetry_api-1.45.1-py3-none-any.whl (60 kB)
+#17 399.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.3/60.3 kB 192.2 kB/s eta 0:00:00
+#17 399.3 Downloading opentelemetry_exporter_otlp_common-0.66b1-py3-none-any.whl (12 kB)
+#17 399.6 Downloading opentelemetry_exporter_otlp_proto_common-1.45.1-py3-none-any.whl (15 kB)
+#17 399.9 Downloading opentelemetry_exporter_otlp_proto_grpc-1.45.1-py3-none-any.whl (19 kB)
+#17 400.1 Downloading opentelemetry_proto-1.45.1-py3-none-any.whl (72 kB)
+#17 400.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 72.5/72.5 kB 20.4 MB/s eta 0:00:00
+#17 400.4 Downloading opentelemetry_sdk-1.45.1-py3-none-any.whl (140 kB)
+#17 400.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 140.1/140.1 kB 395.7 kB/s eta 0:00:00
+#17 401.0 Downloading opentelemetry_semantic_conventions-0.66b1-py3-none-any.whl (206 kB)
+#17 401.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 206.3/206.3 kB 568.4 kB/s eta 0:00:00
+#17 401.6 Downloading orjson-3.13.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (130 kB)
+#17 403.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.5/130.5 kB 68.0 kB/s eta 0:00:00
+#17 404.0 Downloading ormsgpack-1.12.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (212 kB)
+#17 405.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 212.4/212.4 kB 97.3 kB/s eta 0:00:00
+#17 405.9 Downloading overrides-7.7.0-py3-none-any.whl (17 kB)
+#17 406.3 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#17 407.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 114.4 kB/s eta 0:00:00
+#17 408.1 Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+#17 408.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 57.3/57.3 kB 429.6 kB/s eta 0:00:00
+#17 408.5 Downloading pillow-12.3.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.9 MB)
+#17 426.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.9/6.9 MB 378.7 kB/s eta 0:00:00
+#17 427.3 Downloading playwright-1.58.0-py3-none-manylinux1_x86_64.whl (46.2 MB)
+#17 458.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.2/46.2 MB 3.0 MB/s eta 0:00:00
+#17 459.1 Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+#17 459.4 Downloading propcache-0.5.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (235 kB)
+#17 459.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 235.4/235.4 kB 38.8 MB/s eta 0:00:00
+#17 459.8 Downloading protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl (343 kB)
+#17 460.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.2/343.2 kB 9.6 MB/s eta 0:00:00
+#17 460.5 Downloading pybase64-1.5.1-cp311-cp311-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl (94 kB)
+#17 460.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 94.2/94.2 kB 782.0 kB/s eta 0:00:00
+#17 460.8 Downloading pycparser-3.11-py3-none-any.whl (51 kB)
+#17 460.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 51.2/51.2 kB 99.5 MB/s eta 0:00:00
+#17 461.2 Downloading pycryptodome-3.24.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#17 461.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 3.4 MB/s eta 0:00:00
+#17 462.0 Downloading pydantic-2.14.1-py3-none-any.whl (488 kB)
+#17 462.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 488.1/488.1 kB 11.5 MB/s eta 0:00:00
+#17 462.5 Downloading pydantic_core-2.50.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+#17 463.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 2.0 MB/s eta 0:00:00
+#17 463.6 Downloading pydantic_settings-2.15.0-py3-none-any.whl (69 kB)
+#17 463.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.4/69.4 kB 2.6 MB/s eta 0:00:00
+#17 464.0 Downloading pyee-13.0.1-py3-none-any.whl (15 kB)
+#17 464.3 Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+#17 464.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 5.1 MB/s eta 0:00:00
+#17 465.0 Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#17 465.6 Downloading pymysql-1.2.3-py3-none-any.whl (46 kB)
+#17 465.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 46.7/46.7 kB 6.2 MB/s eta 0:00:00
+#17 465.8 Downloading pypdf-6.20.0-py3-none-any.whl (401 kB)
+#17 466.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 401.7/401.7 kB 4.1 MB/s eta 0:00:00
+#17 466.5 Downloading pypika-0.51.1-py2.py3-none-any.whl (60 kB)
+#17 466.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.6/60.6 kB 4.1 MB/s eta 0:00:00
+#17 466.7 Downloading pyproject_hooks-1.3.3-py3-none-any.whl (10 kB)
+#17 467.1 Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+#17 467.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 386.5/386.5 kB 2.1 MB/s eta 0:00:00
+#17 467.5 Downloading pytest_asyncio-1.4.0-py3-none-any.whl (16 kB)
+#17 468.2 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#17 468.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 229.9/229.9 kB 431.9 kB/s eta 0:00:00
+#17 469.0 Downloading python_docx-1.2.0-py3-none-any.whl (252 kB)
+#17 469.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 253.0/253.0 kB 418.6 kB/s eta 0:00:00
+#17 469.9 Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+#17 470.2 Downloading python_multipart-0.0.32-py3-none-any.whl (30 kB)
+#17 470.4 Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+#17 471.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 829.3 kB/s eta 0:00:00
+#17 471.7 Downloading redis-8.1.0-py3-none-any.whl (560 kB)
+#17 472.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 560.6/560.6 kB 2.4 MB/s eta 0:00:00
+#17 472.5 Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+#17 473.0 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#17 473.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.1/73.1 kB 1.1 MB/s eta 0:00:00
+#17 473.5 Downloading requests_oauthlib-2.0.0-py2.py3-none-any.whl (24 kB)
+#17 473.7 Downloading requests_toolbelt-1.0.0-py2.py3-none-any.whl (54 kB)
+#17 473.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 54.5/54.5 kB 362.3 kB/s eta 0:00:00
+#17 474.2 Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+#17 474.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.7/310.7 kB 2.3 MB/s eta 0:00:00
+#17 474.9 Downloading rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (375 kB)
+#17 475.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 375.4/375.4 kB 628.8 kB/s eta 0:00:00
+#17 475.7 Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+#17 475.9 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#17 476.9 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#17 477.2 Downloading sqlalchemy-2.1.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.7 MB)
+#17 481.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 1.1 MB/s eta 0:00:00
+#17 481.7 Downloading sse_starlette-3.5.0-py3-none-any.whl (17 kB)
+#17 481.9 Downloading starlette-1.7.0-py3-none-any.whl (78 kB)
+#17 482.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 79.0/79.0 kB 36.1 MB/s eta 0:00:00
+#17 482.5 Downloading tenacity-9.2.1-py3-none-any.whl (32 kB)
+#17 482.7 Downloading tokenizers-0.23.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.4 MB)
+#17 484.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 1.9 MB/s eta 0:00:00
+#17 485.1 Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+#17 485.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 80.2/80.2 kB 224.9 kB/s eta 0:00:00
+#17 485.7 Downloading truststore-0.10.4-py3-none-any.whl (18 kB)
+#17 486.0 Downloading typer-0.27.3-py3-none-any.whl (123 kB)
+#17 486.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 123.3/123.3 kB 329.1 kB/s eta 0:00:00
+#17 486.6 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#17 486.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 1.1 MB/s eta 0:00:00
+#17 486.8 Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+#17 487.1 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#17 487.4    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 135.7/135.7 kB 453.5 kB/s eta 0:00:00
+#17 487.6 Downloading uuid_utils-0.17.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (327 kB)
+#17 491.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 328.0/328.0 kB 101.5 kB/s eta 0:00:00
+#17 491.3 Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+#17 491.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 87.4/87.4 kB 133.5 kB/s eta 0:00:00
+#17 491.4 Downloading uvloop-0.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.0 MB)
+#17 503.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 325.9 kB/s eta 0:00:00
+#17 503.9 Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (458 kB)
+#17 504.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 458.4/458.4 kB 577.4 kB/s eta 0:00:00
+#17 504.9 Downloading websocket_client-1.9.2-py3-none-any.whl (95 kB)
+#17 505.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 95.8/95.8 kB 661.5 kB/s eta 0:00:00
+#17 505.5 Downloading websockets-16.1.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (186 kB)
+#17 506.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 186.9/186.9 kB 322.4 kB/s eta 0:00:00
+#17 506.3 Downloading xmltodict-1.0.4-py3-none-any.whl (13 kB)
+#17 506.6 Downloading xxhash-4.0.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (261 kB)
+#17 507.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 261.0/261.0 kB 1.3 MB/s eta 0:00:00
+#17 507.4 Downloading yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (117 kB)
+#17 507.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 117.7/117.7 kB 236.0 kB/s eta 0:00:00
+#17 508.1 Downloading zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+#17 515.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.6/5.6 MB 744.1 kB/s eta 0:00:00
+#17 519.3 Building wheels for collected packages: crcmod
+#17 519.4   Building wheel for crcmod (setup.py): started
+#17 520.4   Building wheel for crcmod (setup.py): finished with status 'done'
+#17 520.4   Created wheel for crcmod: filename=crcmod-1.7-py3-none-any.whl size=18911 sha256=b60938f6940390173816e98c4220b7b78b0d89af0d26a92a475c73201bea15db
+#17 520.4   Stored in directory: /tmp/pip-ephem-wheel-cache-pjayujo0/wheels/23/94/7a/8cb7d14597e6395ce969933f01aed9ea8fa5f5b4d4c8a61e99
+#17 520.5 Successfully built crcmod
+#17 522.0 Installing collected packages: pypika, flatbuffers, durationpy, crcmod, zstandard, xxhash, xmltodict, websockets, websocket-client, uvloop, uuid-utils, urllib3, typing-extensions, truststore, tqdm, tenacity, sniffio, six, shellingham, rpds-py, redis, pyyaml, python-multipart, python-dotenv, pyproject-hooks, pypdf, pymysql, pyjwt, pygments, pycryptodome, pycparser, pybase64, protobuf, propcache, pluggy, pillow, pathspec, packaging, overrides, ormsgpack, orjson, olefile, oauthlib, numpy, mypy-extensions, multidict, mmh3, mdurl, lxml, librt, jsonpointer, iniconfig, importlib-resources, idna, httpx-sse, httptools, hf-xet, h11, greenlet, fsspec, frozenlist, filelock, distro, click, charset-normalizer, certifi, bcrypt, attrs, annotated-types, annotated-doc, aiohappyeyeballs, yarl, uvicorn, typing-inspection, sqlalchemy, requests, referencing, python-docx, python-dateutil, pytest, pyee, pydantic-core, opentelemetry-proto, opentelemetry-api, onnxruntime, mypy, markdown-it-py, langchain-protocol, jsonpatch, httpcore2, httpcore, grpcio, googleapis-common-protos, cffi, build, anyio, aiosignal, watchfiles, starlette, rich, requests-toolbelt, requests-oauthlib, pytest-asyncio, pydantic, playwright, opentelemetry-semantic-conventions, opentelemetry-exporter-otlp-proto-common, jsonschema-specifications, httpx2, httpx, cryptography, cos-python-sdk-v5, aiohttp, typer, sse-starlette, pydantic-settings, opentelemetry-sdk, langsmith, jsonschema, huggingface-hub, fastapi, aiohttp-retry, tokenizers, opentelemetry-exporter-otlp-common, mcp, langchain-core, kubernetes, opentelemetry-exporter-otlp-proto-grpc, langgraph-sdk, langgraph-checkpoint, langgraph-prebuilt, chromadb, langgraph, eye-diagnosis
+#17 573.3 Successfully installed aiohappyeyeballs-2.7.1 aiohttp-3.14.5 aiohttp-retry-2.9.1 aiosignal-1.4.0 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 attrs-26.1.0 bcrypt-5.0.0 build-1.6.1 certifi-2026.7.22 cffi-2.1.1 charset-normalizer-3.5.2 chromadb-1.5.9 click-8.5.0 cos-python-sdk-v5-1.9.44 crcmod-1.7 cryptography-50.0.2 distro-1.9.0 durationpy-0.11 eye-diagnosis-1.0.0 fastapi-0.143.0 filelock-4.1.1 flatbuffers-25.12.19 frozenlist-1.8.0 fsspec-2026.9.0 googleapis-common-protos-1.75.5 greenlet-3.5.6 grpcio-1.84.0 h11-0.16.0 hf-xet-1.7.0 httpcore-1.0.9 httpcore2-2.13.1 httptools-0.9.0 httpx-0.28.1 httpx-sse-0.4.3 httpx2-2.13.1 huggingface-hub-2.2.0 idna-3.20 importlib-resources-7.1.0 iniconfig-2.3.1 jsonpatch-1.35 jsonpointer-3.2.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 kubernetes-37.0.1 langchain-core-1.6.10 langchain-protocol-0.0.19 langgraph-1.2.12 langgraph-checkpoint-4.3.0 langgraph-prebuilt-1.1.0 langgraph-sdk-0.4.7 langsmith-0.14.8 librt-0.16.0 lxml-6.1.3 markdown-it-py-4.2.0 mcp-1.26.0 mdurl-0.1.2 mmh3-5.3.1 multidict-7.1.0 mypy-1.20.2 mypy-extensions-1.1.0 numpy-2.4.6 oauthlib-4.0.0 olefile-0.47 onnxruntime-1.31.0 opentelemetry-api-1.45.1 opentelemetry-exporter-otlp-common-0.66b1 opentelemetry-exporter-otlp-proto-common-1.45.1 opentelemetry-exporter-otlp-proto-grpc-1.45.1 opentelemetry-proto-1.45.1 opentelemetry-sdk-1.45.1 opentelemetry-semantic-conventions-0.66b1 orjson-3.13.0 ormsgpack-1.12.2 overrides-7.7.0 packaging-26.3 pathspec-1.1.1 pillow-12.3.0 playwright-1.58.0 pluggy-1.6.0 propcache-0.5.4 protobuf-7.36.2 pybase64-1.5.1 pycparser-3.11 pycryptodome-3.24.1 pydantic-2.14.1 pydantic-core-2.50.1 pydantic-settings-2.15.0 pyee-13.0.1 pygments-2.21.0 pyjwt-2.15.1 pymysql-1.2.3 pypdf-6.20.0 pypika-0.51.1 pyproject-hooks-1.3.3 pytest-9.1.1 pytest-asyncio-1.4.0 python-dateutil-2.9.0.post0 python-docx-1.2.0 python-dotenv-1.2.4 python-multipart-0.0.32 pyyaml-6.0.3 redis-8.1.0 referencing-0.37.0 requests-2.34.2 requests-oauthlib-2.0.0 requests-toolbelt-1.0.0 rich-15.0.0 rpds-py-2026.9.1 shellingham-1.5.4 six-1.17.0 sniffio-1.3.1 sqlalchemy-2.1.4 sse-starlette-3.5.0 starlette-1.7.0 tenacity-9.2.1 tokenizers-0.23.3 tqdm-4.70.1 truststore-0.10.4 typer-0.27.3 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 uuid-utils-0.17.1 uvicorn-0.54.0 uvloop-0.23.0 watchfiles-1.3.0 websocket-client-1.9.2 websockets-16.1.1 xmltodict-1.0.4 xxhash-4.0.1 yarl-1.25.1 zstandard-0.25.0
+#17 573.3 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#17 575.5 
+#17 575.5 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#17 575.5 [notice] To update, run: pip install --upgrade pip
+#17 594.1 No broken requirements found.
+#17 DONE 600.6s
+
+#18 [stage-1 5/7] RUN curl --fail --location --retry 3     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     -o /tmp/libreoffice.tar.gz     && python -m web.doc_tool --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     && rm /tmp/libreoffice.tar.gz
+#18 8.195   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+#18 8.195                                  Dload  Upload   Total   Spent    Left  Speed
+#18 8.195 
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0
+100   429  100   429    0     0    153      0  0:00:02  0:00:02 --:--:--   153
+#18 12.25 
+  0     0    0     0    0     0      0      0 --:--:--  0:00:04 --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:04 --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:05 --:--:--     0
+  0  207M    0 16090    0     0   2549      0 23:40:43  0:00:06 23:40:37  7144
+  0  207M    0  143k    0     0  19891      0  3:02:03  0:00:07  3:01:56 44060
+  0  207M    0  591k    0     0  73201      0  0:49:28  0:00:08  0:49:20  140k
+  0  207M    0 1519k    0     0   163k      0  0:21:34  0:00:09  0:21:25  315k
+  1  207M    1 2431k    0     0   235k      0  0:15:01  0:00:10  0:14:51  500k
+  2  207M    2 4431k    0     0   391k      0  0:09:01  0:00:11  0:08:50  881k
+  2  207M    2 5167k    0     0   418k      0  0:08:27  0:00:12  0:08:15 1012k
+  2  207M    2 5791k    0     0   436k      0  0:08:06  0:00:13  0:07:53 1040k
+  4  207M    4 8623k    0     0   603k      0  0:05:51  0:00:14  0:05:37 1419k
+  5  207M    5 11.1M    0     0   746k      0  0:04:44  0:00:15  0:04:29 1815k
+  6  207M    6 13.9M    0     0   874k      0  0:04:02  0:00:16  0:03:46 1973k
+  8  207M    8 17.1M    0     0  1006k      0  0:03:30  0:00:17  0:03:13 2438k
+  9  207M    9 18.9M    0     0  1046k      0  0:03:22  0:00:18  0:03:04 2589k
+ 10  207M   10 21.4M    0     0  1137k      0  0:03:06  0:00:19  0:02:47 2660k
+ 11  207M   11 23.9M    0     0  1209k      0  0:02:55  0:00:20  0:02:35 2619k
+ 12  207M   12 25.9M    0     0  1245k      0  0:02:50  0:00:21  0:02:29 2444k
+ 13  207M   13 27.9M    0     0  1281k      0  0:02:45  0:00:22  0:02:23 2265k
+ 14  207M   14 30.1M    0     0  1325k      0  0:02:40  0:00:23  0:02:17 2403k
+ 15  207M   15 33.0M    0     0  1388k      0  0:02:32  0:00:24  0:02:08 2334k
+ 16  207M   16 34.6M    0     0  1402k      0  0:02:31  0:00:25  0:02:06 2185k
+ 18  207M   18 38.2M    0     0  1468k      0  0:02:24  0:00:26  0:01:58 2359k
+ 18  207M   18 39.3M    0     0  1476k      0  0:02:23  0:00:27  0:01:56 2353k
+ 20  207M   20 41.7M    0     0  1505k      0  0:02:20  0:00:28  0:01:52 2333k
+ 21  207M   21 43.8M    0     0  1530k      0  0:02:18  0:00:29  0:01:49 2230k
+ 22  207M   22 46.7M    0     0  1576k      0  0:02:14  0:00:30  0:01:44 2449k
+ 23  207M   23 48.7M    0     0  1595k      0  0:02:12  0:00:31  0:01:41 2333k
+ 24  207M   24 50.9M    0     0  1617k      0  0:02:11  0:00:32  0:01:39 2387k
+ 25  207M   25 52.8M    0     0  1621k      0  0:02:10  0:00:33  0:01:37 2284k
+ 26  207M   26 55.8M    0     0  1669k      0  0:02:07  0:00:34  0:01:33 2498k
+ 27  207M   27 57.8M    0     0  1673k      0  0:02:06  0:00:35  0:01:31 2252k
+ 28  207M   28 59.7M    0     0  1687k      0  0:02:05  0:00:36  0:01:29 2261k
+ 29  207M   29 61.9M    0     0  1701k      0  0:02:04  0:00:37  0:01:27 2240k
+ 31  207M   31 64.4M    0     0  1714k      0  0:02:03  0:00:38  0:01:25 2310k
+ 31  207M   31 66.1M    0     0  1721k      0  0:02:03  0:00:39  0:01:24 2076k
+ 32  207M   32 68.3M    0     0  1735k      0  0:02:02  0:00:40  0:01:22 2183k
+ 34  207M   34 70.8M    0     0  1757k      0  0:02:00  0:00:41  0:01:19 2269k
+ 35  207M   35 73.1M    0     0  1763k      0  0:02:00  0:00:42  0:01:18 2209k
+ 36  207M   36 75.1M    0     0  1777k      0  0:01:59  0:00:43  0:01:16 2292k
+ 37  207M   37 77.4M    0     0  1791k      0  0:01:58  0:00:44  0:01:14 2338k
+ 38  207M   38 80.1M    0     0  1803k      0  0:01:57  0:00:45  0:01:12 2331k
+ 39  207M   39 82.2M    0     0  1816k      0  0:01:56  0:00:46  0:01:10 2292k
+ 40  207M   40 83.7M    0     0  1807k      0  0:01:57  0:00:47  0:01:10 2183k
+ 41  207M   41 84.9M    0     0  1802k      0  0:01:57  0:00:48  0:01:09 2014k
+ 42  207M   42 87.9M    0     0  1817k      0  0:01:56  0:00:49  0:01:07 2043k
+ 43  207M   43 90.1M    0     0  1834k      0  0:01:55  0:00:50  0:01:05 2127k
+ 44  207M   44 91.7M    0     0  1827k      0  0:01:56  0:00:51  0:01:05 1932k
+ 45  207M   45 94.0M    0     0  1842k      0  0:01:55  0:00:52  0:01:03 2184k
+ 46  207M   46 96.9M    0     0  1857k      0  0:01:54  0:00:53  0:01:01 2376k
+ 47  207M   47 98.8M    0     0  1864k      0  0:01:53  0:00:54  0:00:59 2350k
+ 48  207M   48  101M    0     0  1872k      0  0:01:53  0:00:55  0:00:58 2260k
+ 50  207M   50  103M    0     0  1880k      0  0:01:52  0:00:56  0:00:56 2407k
+ 50  207M   50  105M    0     0  1878k      0  0:01:52  0:00:57  0:00:55 2241k
+ 51  207M   51  107M    0     0  1885k      0  0:01:52  0:00:58  0:00:54 2184k
+ 53  207M   53  110M    0     0  1910k      0  0:01:51  0:00:59  0:00:52 2414k
+ 54  207M   54  112M    0     0  1906k      0  0:01:51  0:01:00  0:00:51 2280k
+ 55  207M   55  114M    0     0  1913k      0  0:01:50  0:01:01  0:00:49 2301k
+ 56  207M   56  117M    0     0  1927k      0  0:01:50  0:01:02  0:00:48 2514k
+ 57  207M   57  119M    0     0  1922k      0  0:01:50  0:01:03  0:00:47 2352k
+ 58  207M   58  120M    0     0  1918k      0  0:01:50  0:01:04  0:00:46 2010k
+ 59  207M   59  123M    0     0  1937k      0  0:01:49  0:01:05  0:00:44 2308k
+ 60  207M   60  125M    0     0  1926k      0  0:01:50  0:01:06  0:00:44 2090k
+ 61  207M   61  126M    0     0  1917k      0  0:01:50  0:01:07  0:00:43 1806k
+ 61  207M   61  126M    0     0  1902k      0  0:01:51  0:01:08  0:00:43 1645k
+ 62  207M   62  129M    0     0  1917k      0  0:01:50  0:01:09  0:00:41 1900k
+ 63  207M   63  131M    0     0  1907k      0  0:01:51  0:01:10  0:00:41 1529k
+ 64  207M   64  132M    0     0  1910k      0  0:01:51  0:01:11  0:00:40 1677k
+ 65  207M   65  135M    0     0  1916k      0  0:01:50  0:01:12  0:00:38 1891k
+ 66  207M   66  136M    0     0  1907k      0  0:01:51  0:01:13  0:00:38 1970k
+ 66  207M   66  138M    0     0  1909k      0  0:01:51  0:01:14  0:00:37 1802k
+ 67  207M   67  140M    0     0  1911k      0  0:01:50  0:01:15  0:00:35 1967k
+ 68  207M   68  142M    0     0  1911k      0  0:01:51  0:01:16  0:00:35 1923k
+ 69  207M   69  144M    0     0  1912k      0  0:01:50  0:01:17  0:00:33 1856k
+ 70  207M   70  146M    0     0  1914k      0  0:01:50  0:01:18  0:00:32 2009k
+ 71  207M   71  148M    0     0  1918k      0  0:01:50  0:01:19  0:00:31 2048k
+ 72  207M   72  150M    0     0  1912k      0  0:01:50  0:01:20  0:00:30 1927k
+ 73  207M   73  151M    0     0  1907k      0  0:01:51  0:01:21  0:00:30 1863k
+ 74  207M   74  153M    0     0  1916k      0  0:01:50  0:01:22  0:00:28 1983k
+ 75  207M   75  156M    0     0  1914k      0  0:01:50  0:01:23  0:00:27 1914k
+ 75  207M   75  157M    0     0  1912k      0  0:01:50  0:01:24  0:00:26 1820k
+ 76  207M   76  159M    0     0  1913k      0  0:01:50  0:01:25  0:00:25 1933k
+ 78  207M   78  161M    0     0  1919k      0  0:01:50  0:01:26  0:00:24 2120k
+ 78  207M   78  163M    0     0  1913k      0  0:01:50  0:01:27  0:00:23 1876k
+ 79  207M   79  165M    0     0  1914k      0  0:01:50  0:01:28  0:00:22 1915k
+ 80  207M   80  167M    0     0  1914k      0  0:01:50  0:01:29  0:00:21 1949k
+ 81  207M   81  169M    0     0  1916k      0  0:01:50  0:01:30  0:00:20 1950k
+ 82  207M   82  170M    0     0  1917k      0  0:01:50  0:01:31  0:00:19 1876k
+ 83  207M   83  172M    0     0  1912k      0  0:01:50  0:01:32  0:00:18 1890k
+ 84  207M   84  175M    0     0  1917k      0  0:01:50  0:01:33  0:00:17 1978k
+ 85  207M   85  176M    0     0  1914k      0  0:01:50  0:01:34  0:00:16 1916k
+ 85  207M   85  178M    0     0  1911k      0  0:01:51  0:01:35  0:00:16 1818k
+ 87  207M   87  180M    0     0  1921k      0  0:01:50  0:01:36  0:00:14 1989k
+ 88  207M   88  182M    0     0  1918k      0  0:01:50  0:01:37  0:00:13 2015k
+ 88  207M   88  184M    0     0  1920k      0  0:01:50  0:01:38  0:00:12 1979k
+ 89  207M   89  186M    0     0  1922k      0  0:01:50  0:01:39  0:00:11 2067k
+ 90  207M   90  188M    0     0  1920k      0  0:01:50  0:01:40  0:00:10 2091k
+ 91  207M   91  190M    0     0  1921k      0  0:01:50  0:01:41  0:00:09 1937k
+ 92  207M   92  191M    0     0  1916k      0  0:01:50  0:01:42  0:00:08 1877k
+ 93  207M   93  193M    0     0  1913k      0  0:01:50  0:01:43  0:00:07 1785k
+ 94  207M   94  195M    0     0  1912k      0  0:01:50  0:01:44  0:00:06 1713k
+ 94  207M   94  196M    0     0  1911k      0  0:01:50  0:01:45  0:00:05 1731k
+ 96  207M   96  199M    0     0  1918k      0  0:01:50  0:01:46  0:00:04 1842k
+ 97  207M   97  202M    0     0  1925k      0  0:01:50  0:01:47  0:00:03 2104k
+ 98  207M   98  204M    0     0  1930k      0  0:01:49  0:01:48  0:00:01 2286k
+ 99  207M   99  206M    0     0  1932k      0  0:01:49  0:01:49 --:--:-- 2387k
+100  207M  100  207M    0     0  1931k      0  0:01:49  0:01:49 --:--:-- 2370k
+#18 137.2 Traceback (most recent call last):
+#18 137.2   File "<frozen runpy>", line 198, in _run_module_as_main
+#18 137.2   File "<frozen runpy>", line 88, in _run_code
+#18 137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 65, in <module>
+#18 137.2     main()
+#18 137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 61, in main
+#18 137.2     install(args.archive, args.home)
+#18 137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 46, in install
+#18 137.2     result = subprocess.run([str(program), "--version"], check=True, capture_output=True,
+#18 137.2              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#18 137.2   File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+#18 137.2     raise CalledProcessError(retcode, process.args,
+#18 137.2 subprocess.CalledProcessError: Command '['/opt/eye-doc/opt/libreoffice26.2/program/soffice', '--version']' returned non-zero exit status 127.
+#18 ERROR: process "/bin/sh -c curl --fail --location --retry 3     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     -o /tmp/libreoffice.tar.gz     && python -m web.doc_tool --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     && rm /tmp/libreoffice.tar.gz" did not complete successfully: exit code: 1
+------
+ > [stage-1 5/7] RUN curl --fail --location --retry 3     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     -o /tmp/libreoffice.tar.gz     && python -m web.doc_tool --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     && rm /tmp/libreoffice.tar.gz:
+137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 65, in <module>
+137.2     main()
+137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 61, in main
+137.2     install(args.archive, args.home)
+137.2   File "/usr/local/lib/python3.11/site-packages/web/doc_tool.py", line 46, in install
+137.2     result = subprocess.run([str(program), "--version"], check=True, capture_output=True,
+137.2              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+137.2   File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+137.2     raise CalledProcessError(retcode, process.args,
+137.2 subprocess.CalledProcessError: Command '['/opt/eye-doc/opt/libreoffice26.2/program/soffice', '--version']' returned non-zero exit status 127.
+------
+Dockerfile:20
+--------------------
+  19 |     RUN python -m pip install --no-cache-dir /wheels/*.whl && python -m pip check && rm -rf /wheels
+  20 | >>> RUN curl --fail --location --retry 3 \
+  21 | >>>     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz \
+  22 | >>>     -o /tmp/libreoffice.tar.gz \
+  23 | >>>     && python -m web.doc_tool --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc \
+  24 | >>>     && rm /tmp/libreoffice.tar.gz
+  25 |     ENV DOC_TOOL_HOME=/opt/eye-doc WEB_HOST=0.0.0.0 WEB_PORT=8080
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c curl --fail --location --retry 3     https://download.documentfoundation.org/libreoffice/stable/26.2.6/deb/x86_64/LibreOffice_26.2.6_Linux_x86-64_deb.tar.gz     -o /tmp/libreoffice.tar.gz     && python -m web.doc_tool --archive /tmp/libreoffice.tar.gz --home /opt/eye-doc     && rm /tmp/libreoffice.tar.gz" did not complete successfully: exit code: 1

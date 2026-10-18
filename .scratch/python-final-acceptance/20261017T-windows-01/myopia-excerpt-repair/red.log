@@ -1,0 +1,37 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_myopia_overview_extracts_safe_original_entry_from_quantitative_context _
+
+explanation_api = (<starlette.testclient.TestClient object at 0x00000277352A4910>, sessionmaker(class_='Session', bind=Engine(sqlite://)...k_0']}]}, 'requests': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 512, 'enable_thinking': False, ...}]})
+
+    def test_myopia_overview_extracts_safe_original_entry_from_quantitative_context(explanation_api):
+        client, sessions, original, model = explanation_api
+        numeric = "�����Խ�����ָ��������ӳ���>26.5mm�����µ��۵������Ըı䡣"
+        safe = "- **�����Խ���**�����ֵ����۵������Ըı�"
+        reference = numeric + "\n\n## ���������\n\n### �������\n- **�߶Ƚ���**��-6.0D����\n" + safe
+        doc_id = upload(client, "myopia.txt", text=reference)
+        client.cookies.set(SESSION_COOKIE_NAME, "admin")
+        assert govern(client, original, visibility="QUARANTINED", expectedVersion=1).json()["code"] == 0
+        assert govern(client, doc_id, diseaseCodes=["myopia"]).json()["code"] == 0
+        client.cookies.set(SESSION_COOKIE_NAME, "alice")
+    
+        def extract_first_supplied_statement():
+            source = json.loads(model["requests"][-1]["messages"][1]["content"])[0]
+            text = source["quotedText"]
+            excerpt = text.split("��", 1)[0] + "��" if "��" in text else text
+            model["reply"]["claims"][0].update(text=excerpt, citationIds=[source["citationId"]])
+    
+        model["before_response"] = extract_first_supplied_statement
+        task = start(client)
+        drain(sessions, predicted_label="myopia", top_predictions=[{"label": "myopia", "probability": 91.0}])
+        view = read(client, task)
+>       assert view["status"] == "COMPLETED"
+E       AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'
+E         
+E         - COMPLETED
+E         + COMPLETED_LIMITED
+
+algorithm\web\tests\test_validated_explanation.py:107: AssertionError
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_validated_explanation.py::test_myopia_overview_extracts_safe_original_entry_from_quantitative_context
+1 failed in 4.58s

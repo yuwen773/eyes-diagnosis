@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "selectedCases": 4,
+  "tempPath": ".scratch\\sw18-ab5d225e",
+  "cleanup": "PASS",
+  "testSourceSha256": "4a82e650c26c8ba33a119bacc23813c61a3031dbe256f98dc4396a0e7c0728bb",
+  "scope": "Short temp path only; real local MySQL/Redis; synthetic model and decisions; headless browser option enabled; synthetic data and decisions only"
+}

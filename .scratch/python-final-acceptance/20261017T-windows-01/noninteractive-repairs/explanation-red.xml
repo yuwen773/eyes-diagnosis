@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.116" timestamp="2026-10-17T20:02:51.593197+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_validated_explanation" name="test_structured_explanation_uses_non_thinking_provider_mode" time="1.305"><failure message="AssertionError: assert 'QUEUED' == 'COMPLETED'&#10;  &#10;  - COMPLETED&#10;  + QUEUED">explanation_api = (&lt;starlette.testclient.TestClient object at 0x00000175021D9910&gt;, sessionmaker(class_='Session', bind=Engine(sqlite://)...': [{'model': 'qwen3-vl-plus', 'stream': False, 'max_tokens': 2048, 'response_format': {'type': 'json_object'}, ...}]})
+
+    def test_structured_explanation_uses_non_thinking_provider_mode(explanation_api):
+        client, sessions, _, model = explanation_api
+    
+        def provider_with_slow_thinking():
+            if model["requests"][-1].get("enable_thinking", True):
+                raise httpx.ReadTimeout("thinking exceeds the bounded explanation deadline")
+    
+        model["before_response"] = provider_with_slow_thinking
+        task = start(client)
+        drain(sessions)
+        view = read(client, task)
+&gt;       assert view["status"] == "COMPLETED"
+E       AssertionError: assert 'QUEUED' == 'COMPLETED'
+E         
+E         - COMPLETED
+E         + QUEUED
+
+algorithm\web\tests\test_validated_explanation.py:81: AssertionError</failure></testcase></testsuite></testsuites>

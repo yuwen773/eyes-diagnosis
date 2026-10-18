@@ -1,0 +1,146 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -> typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+>           yield
+
+.venv-baseline\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv-baseline\Lib\site-packages\httpx\_transports\default.py:250: in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpcore\_sync\connection_pool.py:256: in handle_request
+    raise exc from None
+.venv-baseline\Lib\site-packages\httpcore\_sync\connection_pool.py:236: in handle_request
+    response = connection.handle_request(
+.venv-baseline\Lib\site-packages\httpcore\_sync\http_proxy.py:206: in handle_request
+    return self._connection.handle_request(proxy_request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpcore\_sync\connection.py:103: in handle_request
+    return self._connection.handle_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpcore\_sync\http11.py:136: in handle_request
+    raise exc
+.venv-baseline\Lib\site-packages\httpcore\_sync\http11.py:106: in handle_request
+    ) = self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpcore\_sync\http11.py:177: in _receive_response_headers
+    event = self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpcore\_sync\http11.py:217: in _receive_event
+    data = self._network_stream.read(
+.venv-baseline\Lib\site-packages\httpcore\_backends\sync.py:126: in read
+    with map_exceptions(exc_map):
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\contextlib.py:158: in __exit__
+    self.gen.throw(typ, value, traceback)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+map = {<class 'TimeoutError'>: <class 'httpcore.ReadTimeout'>, <class 'OSError'>: <class 'httpcore.ReadError'>}
+
+    @contextlib.contextmanager
+    def map_exceptions(map: ExceptionMapping) -> typing.Iterator[None]:
+        try:
+            yield
+        except Exception as exc:  # noqa: PIE786
+            for from_exc, to_exc in map.items():
+                if isinstance(exc, from_exc):
+>                   raise to_exc(exc) from exc
+E                   httpcore.ReadTimeout: timed out
+
+.venv-baseline\Lib\site-packages\httpcore\_exceptions.py:14: ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+legacy_mysql_case = <web.tests.test_human_wait_restart.RestartCase object at 0x000001816F7E5F50>
+
+    def test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart(legacy_mysql_case):
+        case = legacy_mysql_case
+        with case.sessions.begin() as db:
+            db.add(Workflow(workflow_id="java-wait", owner_user_id=7, idempotency_key="java-key",
+                            status="WAITING_HUMAN_REVIEW", graph_version="java-release",
+                            graph_hash="old-hash", action_version="old-action"))
+            db.add(Job(job_id="old-job", workflow_id="java-wait", job_type="RESUME", segment_code="java"))
+        with case.api() as client:
+            original = client.get("/api/diagnosis/legacy-tasks/workflow/java-wait").json()["data"]
+            with ThreadPoolExecutor(max_workers=6) as pool:
+>               responses = list(pool.map(lambda _: rebuild(client), range(6)))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+web\tests\test_legacy_workflow_mysql.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:619: in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:317: in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+web\tests\test_legacy_workflow_mysql.py:38: in <lambda>
+    responses = list(pool.map(lambda _: rebuild(client), range(6)))
+                                        ^^^^^^^^^^^^^^^
+web\tests\test_legacy_workflow.py:75: in rebuild
+    return client.post(f"/api/diagnosis/legacy-tasks/workflow/{task}/rebuild",
+.venv-baseline\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+.venv-baseline\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv-baseline\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv-baseline\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-baseline\Lib\site-packages\httpx\_transports\default.py:249: in handle_request
+    with map_httpcore_exceptions():
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\contextlib.py:158: in __exit__
+    self.gen.throw(typ, value, traceback)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -> typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+>           raise mapped_exc(message) from exc
+E           httpx.ReadTimeout: timed out
+
+.venv-baseline\Lib\site-packages\httpx\_transports\default.py:118: ReadTimeout
+=========================== short test summary info ===========================
+FAILED web/tests/test_legacy_workflow_mysql.py::test_real_mysql_concurrent_rebuild_retries_commit_one_job_and_survive_restart
+1 failed in 57.85s

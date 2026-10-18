@@ -1,0 +1,11 @@
+data: {"messageType": "assistant", "content": "EYE_CHECK", "sessionId": "audit-d5ea3370d6754a51a6ff151ff530eb11", "runId": "d97f6b3e-20a2-4f33-b9dd-3e9a98203d7b"}
+
+data: {"messageType": "assistant", "content": "_effee0f", "sessionId": "audit-d5ea3370d6754a51a6ff151ff530eb11", "runId": "d97f6b3e-20a2-4f33-b9dd-3e9a98203d7b"}
+
+data: {"messageType": "assistant", "content": "775", "sessionId": "audit-d5ea3370d6754a51a6ff151ff530eb11", "runId": "d97f6b3e-20a2-4f33-b9dd-3e9a98203d7b"}
+
+data: {"messageType": "assistant", "content": "0b", "sessionId": "audit-d5ea3370d6754a51a6ff151ff530eb11", "runId": "d97f6b3e-20a2-4f33-b9dd-3e9a98203d7b"}
+
+event: done
+data: ""
+

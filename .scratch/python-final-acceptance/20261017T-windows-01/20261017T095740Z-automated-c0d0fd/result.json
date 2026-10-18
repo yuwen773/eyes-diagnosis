@@ -1,0 +1,51 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {},
+  "checks": [],
+  "mysqlVersion": "8.0.26",
+  "errorType": "UnicodeDecodeError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 233
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 64
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 34
+    },
+    {
+      "file": "subprocess.py",
+      "line": 466
+    },
+    {
+      "file": "subprocess.py",
+      "line": 550
+    },
+    {
+      "file": "subprocess.py",
+      "line": 1196
+    }
+  ],
+  "cleanup": {
+    "status": "FAIL",
+    "errorType": "RuntimeError"
+  },
+  "phase": "automated",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095740Z-automated-c0d0fd",
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 2,
+      "limit": 500
+    }
+  }
+}

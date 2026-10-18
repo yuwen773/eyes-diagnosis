@@ -1,0 +1,1 @@
+{"status": "PASS", "checks": ["list-detail-refresh-read-only-no-command", "fresh-image-and-checkbox-required-one-create", "worker-progress-refresh-no-duplicate-no-formal-save-original-unchanged", "v3-upload-task-details", "cross-owner-details-cleared"], "pageErrors": [], "scope": "original Vue/TCP/Worker; synthetic identity/model-unavailable; SQLite"}

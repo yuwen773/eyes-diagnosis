@@ -1,0 +1,60 @@
+INFO:     Started server process [30244]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60552 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56587 - "GET /api/diagnosis/workflows/dad94b0f755f421f84cbb708f56bb898 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56587 - "GET /api/diagnosis/workflows/de9914df4fce49edb303a491e82905f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56587 - "GET /api/diagnosis/workflows/44ded32cd0744622a10ee98db08b78eb HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56587 - "GET /api/diagnosis/workflows/8e89a7a43d27410a9ece5887b51d8133 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56587 - "GET /api/diagnosis/workflows/bb1f593106254d23be967c4d0424deb1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60677 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "PUT /api/agent/sessions/b8c67bc64ad443b681cdb291309c5503/title HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "PUT /api/agent/sessions/67c1f55f7c9a4c399c4a2c9c4de226ef/title HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "PUT /api/agent/sessions/637e2f8efe034fa6a3252357ac5deab6/title HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "PUT /api/agent/sessions/cf9003229b444732b61bde6bcc642929/title HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "PUT /api/agent/sessions/927267b3498f4010904e328d8799c3fc/title HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "POST /api/knowledge/search HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "POST /api/knowledge/search HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53262 - "POST /api/user/upload/avatar HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52412 - "OPTIONS /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55395 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60102 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60102 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63037 - "OPTIONS /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51853 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54062 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50114 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54062 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54062 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/dac1718c5dda4e56894eb06dd79261a2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/dac1718c5dda4e56894eb06dd79261a2/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/cc67ed1b089b44c9ab3395e62ca6eba1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/cc67ed1b089b44c9ab3395e62ca6eba1/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61909 - "OPTIONS /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9/claim HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "POST /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9/claim HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61909 - "OPTIONS /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9/submit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "POST /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9/submit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57861 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57133 - "GET /api/reviews/tasks/34a6e6d87d3e472abf3b5981917acea9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55086 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52105 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52105 - "GET /api/reviews/tasks/af7f46fad48b451b82994fd07cbce95a/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56665 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56667 - "POST /api/diagnosis/list/page/my HTTP/1.1" 200 OK

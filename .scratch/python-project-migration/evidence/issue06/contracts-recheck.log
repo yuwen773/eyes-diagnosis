@@ -1,0 +1,12 @@
+........F............................................................... [ 42%]
+........................................................................ [ 85%]
+........................                                                 [100%]
+================================== FAILURES ===================================
+____________ test_java_writes_the_metadata_keys_we_claim_to_match _____________
+algorithm\web\tests\test_knowledge.py:163: in test_java_writes_the_metadata_keys_we_claim_to_match
+    metadata = build_metadata(7, 11, "source")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: build_metadata() takes 0 positional arguments but 3 were given
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_knowledge.py::test_java_writes_the_metadata_keys_we_claim_to_match
+1 failed, 167 passed in 11.41s

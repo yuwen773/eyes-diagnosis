@@ -1,0 +1,8 @@
+{
+  "status": "DEFERRED",
+  "participantStatement": "人工验收先搁置，你继续处理结构化解释超时和全量测试失败，把不需要我操作的部分完成。",
+  "date": "2026-10-17",
+  "scope": "Only manual acceptance is deferred; noninteractive repairs remain authorized",
+  "decisionsDelegated": false,
+  "priorEvidence": "manual-participation.json"
+}

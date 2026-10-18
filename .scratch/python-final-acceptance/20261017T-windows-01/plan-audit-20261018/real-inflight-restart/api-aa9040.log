@@ -1,0 +1,11 @@
+INFO:     Started server process [38868]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:63427 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63430 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63430 - "POST /api/diagnosis/workflows HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:60738 - "GET /api/diagnosis/workflows/0d71dea9af764214ab93e25135614a06 HTTP/1.1" 200 OK

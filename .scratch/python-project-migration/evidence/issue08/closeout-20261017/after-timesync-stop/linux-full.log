@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+Using Python 3.11.14 environment at: /usr/local
+Checked 138 packages in 175ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 7 source files
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 16%]
+........................................................................ [ 25%]
+............................................................ssss........ [ 33%]
+........................................................................ [ 42%]
+........................................................................ [ 50%]
+........................s..sss.......................................... [ 58%]
+........................................................................ [ 67%]
+.................................................sssssssssss............ [ 75%]
+........................................................................ [ 84%]
+........................................................................ [ 92%]
+...............................s.................................        [100%]
+=============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  /usr/local/lib/python3.11/site-packages/pydantic_settings/sources/utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+814 passed, 43 skipped, 1 warning in 482.22s (0:08:02)

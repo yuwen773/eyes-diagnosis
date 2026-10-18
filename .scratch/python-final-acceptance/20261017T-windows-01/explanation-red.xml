@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="7.617" timestamp="2026-10-17T17:53:42.581338+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_validated_explanation" name="test_explanation_json_mode_satisfies_provider_message_contract" time="1.963"><failure message="AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'&#10;  &#10;  - COMPLETED&#10;  + COMPLETED_LIMITED">algorithm\web\tests\test_validated_explanation.py:66: in test_explanation_json_mode_satisfies_provider_message_contract
+    assert view["status"] == "COMPLETED"
+E   AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'
+E     
+E     - COMPLETED
+E     + COMPLETED_LIMITED</failure></testcase></testsuite></testsuites>

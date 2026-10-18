@@ -1,0 +1,52 @@
+{
+  "status": "FAIL",
+  "scope": "Real ordinary chat plus read-only original Vue; no human acceptance",
+  "checks": {
+    "patientReadonlyRefresh": "PASS"
+  },
+  "budgetBefore": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "errorType": "AssertionError",
+  "errorLocation": [
+    {
+      "file": "readonly_ui.py",
+      "line": 120
+    },
+    {
+      "file": "_generated.py",
+      "line": 20523
+    },
+    {
+      "file": "_sync_base.py",
+      "line": 115
+    },
+    {
+      "file": "_assertions.py",
+      "line": 765
+    },
+    {
+      "file": "_assertions.py",
+      "line": 85
+    }
+  ],
+  "businessTablesUnchanged": true,
+  "cleanup": "PASS",
+  "budgetAfter": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  }
+}

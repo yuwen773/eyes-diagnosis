@@ -1,0 +1,24 @@
+{
+  "status": "BLOCKED",
+  "summary": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261017T115203Z-summary-884224\\report.md",
+  "blockers": [
+    "Production structured explanation adapter timed out after JSON-mode prompt repair",
+    "Actual patient and doctor UI actions and separate approve/refuse-save evidence are not complete",
+    "Image deidentification confirmation pending for external supplementary sample upload",
+    "Remaining human acceptance not executed: participant declined further manual actions",
+    "Final Windows Web regression has not passed"
+  ],
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  },
+  "phase": "summary",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T115203Z-summary-884224"
+}

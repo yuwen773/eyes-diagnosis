@@ -1,0 +1,54 @@
+.....................................................F.................. [ 23%]
+.......................................................F................ [ 46%]
+.......................F..........................F...................F. [ 69%]
+................................F......F................................ [ 92%]
+......................                                                   [100%]
+================================== FAILURES ===================================
+_______________ test_upload_prefixes_are_news_and_cover_scoped ________________
+algorithm\web\tests\test_news.py:465: in test_upload_prefixes_are_news_and_cover_scoped
+    assert 'f"news/{' in source and 'f"cover/{' in source
+E   assert ('f"news/{' in '"""``/news`` routes -- all 7 endpoints in ``NewsController.java``.\n\nFour things in this domain are worth knowing be... cover_img=detail.url, edit_time=datetime.now())\n    )\n    db.flush()\n    return BaseResponse.success(detail.url)\n')
+____________ test_java_writes_the_metadata_keys_we_claim_to_match _____________
+algorithm\web\tests\test_knowledge.py:166: in test_java_writes_the_metadata_keys_we_claim_to_match
+    source = PROCESSING_JAVA.read_text(encoding="utf-8")
+             ^^^^^^^^^^^^^^^
+E   NameError: name 'PROCESSING_JAVA' is not defined
+__________________ test_default_sizes_match_the_java_values ___________________
+algorithm\web\tests\test_knowledge.py:416: in test_default_sizes_match_the_java_values
+    source = CHUNKER_JAVA.read_text(encoding="utf-8")
+             ^^^^^^^^^^^^
+E   NameError: name 'CHUNKER_JAVA' is not defined
+_________________ test_human_review_guard_messages_match_java _________________
+algorithm\web\tests\test_diagnosis_constants.py:106: in test_human_review_guard_messages_match_java
+    assert C.ONLY_ADMIN_CAN_REVIEW == "������Ա�ɽ����˹�����"
+E   AssertionError: assert '������Ա��д���˹������ֶ�' == '������Ա�ɽ����˹�����'
+E     
+E     - ������Ա�ɽ����˹�����
+E     ?      ^^
+E     + ������Ա��д���˹������ֶ�
+E     ?      ^^    ++
+___________________ test_pagination_uses_size_not_page_size ___________________
+algorithm\web\tests\test_mcp_server.py:133: in test_pagination_uses_size_not_page_size
+    source = CONTROLLER_JAVA.read_text(encoding="utf-8")
+             ^^^^^^^^^^^^^^^
+E   NameError: name 'CONTROLLER_JAVA' is not defined
+_______________________ test_policy_source_matches_java _______________________
+algorithm\web\tests\test_mcp_server.py:379: in test_policy_source_matches_java
+    assert error.value.message == message
+E   AssertionError: assert 'MCP remote ��ַδ����Ȩ' == 'MCP Զ�̵�ַδ����Ȩ'
+E     
+E     - MCP Զ�̵�ַδ����Ȩ
+E     + MCP remote ��ַδ����Ȩ
+______________________ test_agent_filters_on_status_one _______________________
+algorithm\web\tests\test_mcp_server.py:429: in test_agent_filters_on_status_one
+    from web.chat.mcp_registry import resolve_servers
+E   ModuleNotFoundError: No module named 'web.chat.mcp_registry'
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_news.py::test_upload_prefixes_are_news_and_cover_scoped
+FAILED algorithm/web/tests/test_knowledge.py::test_java_writes_the_metadata_keys_we_claim_to_match
+FAILED algorithm/web/tests/test_knowledge.py::test_default_sizes_match_the_java_values
+FAILED algorithm/web/tests/test_diagnosis_constants.py::test_human_review_guard_messages_match_java
+FAILED algorithm/web/tests/test_mcp_server.py::test_pagination_uses_size_not_page_size
+FAILED algorithm/web/tests/test_mcp_server.py::test_policy_source_matches_java
+FAILED algorithm/web/tests/test_mcp_server.py::test_agent_filters_on_status_one
+7 failed, 303 passed in 33.34s

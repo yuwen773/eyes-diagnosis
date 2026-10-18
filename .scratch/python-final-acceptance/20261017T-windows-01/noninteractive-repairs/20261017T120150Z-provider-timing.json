@@ -1,0 +1,40 @@
+{
+  "diagnosticOnly": true,
+  "requestSource": "Unmodified ExplanationModel.generate request bytes",
+  "transportReadTimeoutSeconds": 120,
+  "chunks": [
+    {
+      "bytes": 11497,
+      "seconds": 50.375
+    }
+  ],
+  "httpStatus": 200,
+  "headersSeconds": 50.375,
+  "requestId": "chatcmpl-4d835d1e-bda4-95a6-bdc0-ee068a8e1d1b",
+  "usage": {
+    "completion_tokens": 2719,
+    "completion_tokens_details": {
+      "reasoning_tokens": 1811,
+      "text_tokens": 2719
+    },
+    "prompt_tokens": 592,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "text_tokens": 592
+    },
+    "total_tokens": 3311
+  },
+  "finishReason": "stop",
+  "errorType": "ValidationError",
+  "totalSeconds": 50.39,
+  "budget": {
+    "llm": {
+      "used": 7,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  }
+}

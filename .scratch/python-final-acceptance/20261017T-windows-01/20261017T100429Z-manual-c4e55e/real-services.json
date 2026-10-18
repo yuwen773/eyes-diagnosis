@@ -1,0 +1,33 @@
+{
+  "status": "BLOCKED",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    },
+    "realWaitRestart": {
+      "status": "PASS",
+      "tasks": 5
+    },
+    "humanUI": {
+      "status": "BLOCKED",
+      "reason": "Actual patient/doctor UI actions and independent evidence are required"
+    },
+    "structuredExplanation": {
+      "status": "BLOCKED",
+      "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "original_1_left_jpg",
+    "original_0_left_jpg",
+    "original_2_left_jpg",
+    "original_13_left_jpg",
+    "original_30_left_jpg"
+  ],
+  "cleanup": {
+    "status": "PASS"
+  }
+}

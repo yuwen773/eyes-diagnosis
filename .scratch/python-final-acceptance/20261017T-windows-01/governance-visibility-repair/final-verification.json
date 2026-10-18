@@ -1,0 +1,69 @@
+{
+  "requestedRepair": "PASS",
+  "windowsVerificationExitCode": 0,
+  "windowsWeb": {
+    "status": "PASS",
+    "passed": 829,
+    "failed": 0,
+    "skipped": 43,
+    "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\windows-web-governance\\web.xml"
+  },
+  "focused": {
+    "status": "PASS",
+    "passed": 21,
+    "failed": 0,
+    "skipped": 1,
+    "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\governance-visibility-repair\\focused.xml"
+  },
+  "realMySQLImmediateReadCases": 20,
+  "realMySQLRestartDurability": "PASS",
+  "governanceVisibility": {
+    "status": "PASS",
+    "regression": {
+      "status": "PASS",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 1,
+      "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\governance-visibility-repair\\focused.xml"
+    },
+    "evidence": "governance-visibility-repair\\real-mysql-result.json",
+    "scope": "Immediate read and restart durability with synthetic governance fixtures; not human acceptance"
+  },
+  "businessTablesUnchanged": true,
+  "formalRecords": 0,
+  "manualAcceptance": "DEFERRED",
+  "overallAcceptance": "BLOCKED",
+  "cleanup": {
+    "status": "PASS",
+    "processManifests": 13,
+    "explicitRegistrationRecovery": [
+      "20261017T095740Z-automated-c0d0fd\\cleanup-recovery.txt"
+    ]
+  },
+  "ownedProbeProcessEntriesStopped": 3,
+  "newProviderRequests": 0,
+  "budget": {
+    "llm": {
+      "used": 20,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "frontend": "UNCHANGED; prior 49 tests and build evidence retained, not rerun",
+  "audit": {
+    "secretScan": "PASS",
+    "filesScanned": 465,
+    "findings": [],
+    "unrelatedTrackedChangesPreserved": true,
+    "unexpectedChangedPaths": []
+  },
+  "summaryEvidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261017T150331Z-summary-25e56b\\report.md",
+  "sourceSha256": {
+    "algorithm/web/routers/knowledge.py": "b3eec458382879e5993d75ca63bd365f58cef7321b998db196b6c60fb99142c8",
+    "algorithm/web/tests/test_knowledge_durability.py": "0e915969cf3407b414904fe31161239312b28aa0271aaf47e9e3becd9481acd9",
+    "scripts/acceptance_report.py": "b8084c7d6127caa0e4486a886c3d523e97fa4e0afe8e7c57d5f63a7c749a982e"
+  }
+}

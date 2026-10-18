@@ -1,0 +1,26 @@
+--- a/algorithm/web/workflow/worker.py
++++ b/algorithm/web/workflow/worker.py
+@@ -83,2 +83,9 @@
+             assert workflow is not None and upload is not None
++            # A delivery is not permission to reopen a terminal/review wait or
++            # replay a segment whose continuation has already been committed.
++            now = database_now(db)
++            if (workflow.status not in {"QUEUED", "RUNNING"} or
++                    job.checkpoint_id != upload.checkpoint_id):
++                job.status, job.lease_until, job.updated_at = "COMPLETED", None, now
++                return None
+             exhausted = job.attempt >= job.max_attempts
+@@ -207,3 +214,4 @@
+                 job.status, job.lease_until, job.updated_at = "COMPLETED", None, now
+-                job.checkpoint_id = checkpoint_id
++                # Keep the job's input continuation immutable. Its output token
++                # belongs to UploadInput/the next Job, so redelivery is stale.
+                 if snapshot.values.get("waiting_review"):
+--- a/algorithm/web/tests/test_workflow_inference.py
++++ b/algorithm/web/tests/test_workflow_inference.py
+@@ -200,3 +200,4 @@
+         db.scalar(select(Job).where(Job.workflow_id == workflow_id, Job.status == "READY")).status = "COMPLETED"
+-        db.add(Job(job_id=uuid4().hex, workflow_id=workflow_id, job_type="RESUME", epoch=99))
++        db.add(Job(job_id=uuid4().hex, workflow_id=workflow_id, job_type="RESUME", epoch=99,
++                   checkpoint_id=validation_token))
+     engine.result = prediction(predicted_label="normal")

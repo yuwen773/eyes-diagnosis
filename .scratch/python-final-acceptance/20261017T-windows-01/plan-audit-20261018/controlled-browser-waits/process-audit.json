@@ -1,0 +1,934 @@
+{
+  "status": "PASS",
+  "registered": [
+    {
+      "ProcessId": 51544,
+      "ParentProcessId": 63660,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:17:48.141489+08:00"
+    },
+    {
+      "ProcessId": 63660,
+      "ParentProcessId": 15116,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m pytest algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] -vv --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-ab5d225e --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\plan-audit-20261018\\controlled-browser-waits\\recovery.xml",
+      "CreationDate": "2026-10-18T12:17:48.121055+08:00"
+    },
+    {
+      "ProcessId": 32448,
+      "ParentProcessId": 63660,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m pytest algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] -vv --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-ab5d225e --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\plan-audit-20261018\\controlled-browser-waits\\recovery.xml",
+      "CreationDate": "2026-10-18T12:17:48.17994+08:00"
+    },
+    {
+      "ProcessId": 31328,
+      "ParentProcessId": 32448,
+      "Name": "git.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:17:53.423634+08:00"
+    },
+    {
+      "ProcessId": 39060,
+      "ParentProcessId": 31328,
+      "Name": "git.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:17:53.450091+08:00"
+    },
+    {
+      "ProcessId": 65632,
+      "ParentProcessId": 32448,
+      "Name": "redis-server.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe",
+      "CommandLine": "D:/Work/Backend/Redis-x64-3.2.100/redis-server.exe --bind 127.0.0.1 --port 61133 --save \"\" --appendonly no --dir D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-ab5d225e\\python-wait-release0",
+      "CreationDate": "2026-10-18T12:17:54.378166+08:00"
+    },
+    {
+      "ProcessId": 2248,
+      "ParentProcessId": 65632,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:17:54.405839+08:00"
+    },
+    {
+      "ProcessId": 58608,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57817",
+      "CreationDate": "2026-10-18T12:17:59.231784+08:00"
+    },
+    {
+      "ProcessId": 64348,
+      "ParentProcessId": 58608,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57817",
+      "CreationDate": "2026-10-18T12:17:59.268128+08:00"
+    },
+    {
+      "ProcessId": 15620,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:18:03.53671+08:00"
+    },
+    {
+      "ProcessId": 10408,
+      "ParentProcessId": 15620,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:18:03.559699+08:00"
+    },
+    {
+      "ProcessId": 63748,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:18:09.213217+08:00"
+    },
+    {
+      "ProcessId": 50676,
+      "ParentProcessId": 63748,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:18:09.242489+08:00"
+    },
+    {
+      "ProcessId": 20736,
+      "ParentProcessId": 59212,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57474",
+      "CreationDate": "2026-10-18T12:18:12.272226+08:00"
+    },
+    {
+      "ProcessId": 59212,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57474",
+      "CreationDate": "2026-10-18T12:18:12.240841+08:00"
+    },
+    {
+      "ProcessId": 52548,
+      "ParentProcessId": 64552,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:16.404944+08:00"
+    },
+    {
+      "ProcessId": 64552,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:16.384431+08:00"
+    },
+    {
+      "ProcessId": 31424,
+      "ParentProcessId": 38492,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:18:21.552737+08:00"
+    },
+    {
+      "ProcessId": 38492,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\SoftWare\\nodejs\\node.EXE",
+      "CommandLine": "D:\\SoftWare\\nodejs\\node.EXE D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js --host 127.0.0.1 --port 57816 --strictPort",
+      "CreationDate": "2026-10-18T12:18:21.403484+08:00"
+    },
+    {
+      "ProcessId": 21992,
+      "ParentProcessId": 38492,
+      "Name": "esbuild.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe --service=0.21.5 --ping",
+      "CreationDate": "2026-10-18T12:18:21.891769+08:00"
+    },
+    {
+      "ProcessId": 37768,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\package\\cli.js run-driver",
+      "CreationDate": "2026-10-18T12:18:23.82208+08:00"
+    },
+    {
+      "ProcessId": 50184,
+      "ParentProcessId": 51996,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=renderer --headless=old --no-sandbox --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --video-capture-use-gpu-memory-buffer --lang=zh-CN --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1791920991931872 --launch-time-ticks=376114193948 --field-trial-handle=1500,i,17817491069644576752,3674773946339335461,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708990060038890 --enable-logging=handle --log-file=2736 --mojo-platform-channel-handle=2732 /prefetch:1",
+      "CreationDate": "2026-10-18T12:18:26.129575+08:00"
+    },
+    {
+      "ProcessId": 51996,
+      "ParentProcessId": 37768,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=C:\\Users\\yuwen\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-so6WAy --remote-debugging-pipe --no-startup-window",
+      "CreationDate": "2026-10-18T12:18:25.566704+08:00"
+    },
+    {
+      "ProcessId": 1180,
+      "ParentProcessId": 51996,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=zh-CN --service-sandbox-type=none --no-sandbox --use-angle=swiftshader-webgl --use-gl=angle --mute-audio --headless=old --field-trial-handle=1500,i,17817491069644576752,3674773946339335461,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708989122997041 --enable-logging=handle --log-file=1772 --mojo-platform-channel-handle=1768 /prefetch:11",
+      "CreationDate": "2026-10-18T12:18:25.922406+08:00"
+    },
+    {
+      "ProcessId": 13152,
+      "ParentProcessId": 51996,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=gpu-process --no-sandbox --disable-breakpad --headless --use-angle=swiftshader-webgl --enable-unsafe-swiftshader --gpu-preferences=SAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --use-gl=angle --field-trial-handle=1500,i,17817491069644576752,3674773946339335461,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708988185955192 --enable-logging=handle --log-file=1528 --mojo-platform-channel-handle=1484 /prefetch:2",
+      "CreationDate": "2026-10-18T12:18:25.82966+08:00"
+    },
+    {
+      "ProcessId": 48160,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 38492 /T /F",
+      "CreationDate": "2026-10-18T12:18:28.915368+08:00"
+    },
+    {
+      "ProcessId": 57872,
+      "ParentProcessId": 50584,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 51025",
+      "CreationDate": "2026-10-18T12:18:30.905301+08:00"
+    },
+    {
+      "ProcessId": 50584,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 51025",
+      "CreationDate": "2026-10-18T12:18:30.880714+08:00"
+    },
+    {
+      "ProcessId": 36844,
+      "ParentProcessId": 47412,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:34.46202+08:00"
+    },
+    {
+      "ProcessId": 47412,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:34.442687+08:00"
+    },
+    {
+      "ProcessId": 27904,
+      "ParentProcessId": 61616,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:38.766665+08:00"
+    },
+    {
+      "ProcessId": 61616,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:18:38.735785+08:00"
+    },
+    {
+      "ProcessId": 11344,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 50584 /T /F",
+      "CreationDate": "2026-10-18T12:18:42.209567+08:00"
+    },
+    {
+      "ProcessId": 54932,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52453",
+      "CreationDate": "2026-10-18T12:18:43.202157+08:00"
+    },
+    {
+      "ProcessId": 58712,
+      "ParentProcessId": 54932,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52453",
+      "CreationDate": "2026-10-18T12:18:43.227907+08:00"
+    },
+    {
+      "ProcessId": 11296,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64665",
+      "CreationDate": "2026-10-18T12:18:51.935158+08:00"
+    },
+    {
+      "ProcessId": 63048,
+      "ParentProcessId": 11296,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64665",
+      "CreationDate": "2026-10-18T12:18:51.971762+08:00"
+    },
+    {
+      "ProcessId": 3280,
+      "ParentProcessId": 37608,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode final",
+      "CreationDate": "2026-10-18T12:18:56.751915+08:00"
+    },
+    {
+      "ProcessId": 37608,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode final",
+      "CreationDate": "2026-10-18T12:18:56.726564+08:00"
+    },
+    {
+      "ProcessId": 67532,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:19:01.821821+08:00"
+    },
+    {
+      "ProcessId": 64928,
+      "ParentProcessId": 64560,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:19:03.139239+08:00"
+    },
+    {
+      "ProcessId": 64560,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:19:03.116728+08:00"
+    },
+    {
+      "ProcessId": 54468,
+      "ParentProcessId": 67672,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 61886",
+      "CreationDate": "2026-10-18T12:19:05.572255+08:00"
+    },
+    {
+      "ProcessId": 67672,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 61886",
+      "CreationDate": "2026-10-18T12:19:05.547543+08:00"
+    },
+    {
+      "ProcessId": 57104,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:09.126244+08:00"
+    },
+    {
+      "ProcessId": 52312,
+      "ParentProcessId": 57104,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:09.14802+08:00"
+    },
+    {
+      "ProcessId": 54312,
+      "ParentProcessId": 44404,
+      "Name": "esbuild.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe --service=0.21.5 --ping",
+      "CreationDate": "2026-10-18T12:19:13.151434+08:00"
+    },
+    {
+      "ProcessId": 33384,
+      "ParentProcessId": 44404,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:19:12.918006+08:00"
+    },
+    {
+      "ProcessId": 44404,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\SoftWare\\nodejs\\node.EXE",
+      "CommandLine": "D:\\SoftWare\\nodejs\\node.EXE D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js --host 127.0.0.1 --port 64664 --strictPort",
+      "CreationDate": "2026-10-18T12:19:12.825713+08:00"
+    },
+    {
+      "ProcessId": 54284,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\package\\cli.js run-driver",
+      "CreationDate": "2026-10-18T12:19:14.072152+08:00"
+    },
+    {
+      "ProcessId": 10320,
+      "ParentProcessId": 54284,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=C:\\Users\\yuwen\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-LhbrwF --remote-debugging-pipe --no-startup-window",
+      "CreationDate": "2026-10-18T12:19:14.656933+08:00"
+    },
+    {
+      "ProcessId": 47620,
+      "ParentProcessId": 10320,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=zh-CN --service-sandbox-type=none --no-sandbox --use-angle=swiftshader-webgl --use-gl=angle --mute-audio --headless=old --field-trial-handle=1540,i,647062330345839083,3944182697555429584,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708989122997041 --enable-logging=handle --log-file=1760 --mojo-platform-channel-handle=1756 /prefetch:11",
+      "CreationDate": "2026-10-18T12:19:16.456669+08:00"
+    },
+    {
+      "ProcessId": 58788,
+      "ParentProcessId": 10320,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=renderer --headless=old --no-sandbox --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --video-capture-use-gpu-memory-buffer --lang=zh-CN --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1791920991931872 --launch-time-ticks=376165040387 --field-trial-handle=1540,i,647062330345839083,3944182697555429584,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708990060038890 --enable-logging=handle --log-file=2760 --mojo-platform-channel-handle=2756 /prefetch:1",
+      "CreationDate": "2026-10-18T12:19:16.976581+08:00"
+    },
+    {
+      "ProcessId": 60332,
+      "ParentProcessId": 10320,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=gpu-process --no-sandbox --disable-breakpad --headless --use-angle=swiftshader-webgl --enable-unsafe-swiftshader --gpu-preferences=SAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --use-gl=angle --field-trial-handle=1540,i,647062330345839083,3944182697555429584,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708988185955192 --enable-logging=handle --log-file=1568 --mojo-platform-channel-handle=1532 /prefetch:2",
+      "CreationDate": "2026-10-18T12:19:16.232372+08:00"
+    },
+    {
+      "ProcessId": 27212,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:19:21.409321+08:00"
+    },
+    {
+      "ProcessId": 50828,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55394",
+      "CreationDate": "2026-10-18T12:19:22.513616+08:00"
+    },
+    {
+      "ProcessId": 6052,
+      "ParentProcessId": 50828,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55394",
+      "CreationDate": "2026-10-18T12:19:22.544499+08:00"
+    },
+    {
+      "ProcessId": 47216,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:25.562523+08:00"
+    },
+    {
+      "ProcessId": 32112,
+      "ParentProcessId": 47216,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:25.585569+08:00"
+    },
+    {
+      "ProcessId": 48284,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:28.987866+08:00"
+    },
+    {
+      "ProcessId": 55124,
+      "ParentProcessId": 48284,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:29.009177+08:00"
+    },
+    {
+      "ProcessId": 39888,
+      "ParentProcessId": 52444,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 56367",
+      "CreationDate": "2026-10-18T12:19:33.105516+08:00"
+    },
+    {
+      "ProcessId": 52444,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 56367",
+      "CreationDate": "2026-10-18T12:19:33.078877+08:00"
+    },
+    {
+      "ProcessId": 23620,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 52444 /T /F",
+      "CreationDate": "2026-10-18T12:19:36.3872+08:00"
+    },
+    {
+      "ProcessId": 48444,
+      "ParentProcessId": 67480,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57152",
+      "CreationDate": "2026-10-18T12:19:41.026937+08:00"
+    },
+    {
+      "ProcessId": 67480,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57152",
+      "CreationDate": "2026-10-18T12:19:41.003436+08:00"
+    },
+    {
+      "ProcessId": 22332,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:19:44.677596+08:00"
+    },
+    {
+      "ProcessId": 33252,
+      "ParentProcessId": 22332,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:19:44.70282+08:00"
+    },
+    {
+      "ProcessId": 61004,
+      "ParentProcessId": 15756,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:19:50.237919+08:00"
+    },
+    {
+      "ProcessId": 15756,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:19:50.208826+08:00"
+    },
+    {
+      "ProcessId": 54352,
+      "ParentProcessId": 62904,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64960",
+      "CreationDate": "2026-10-18T12:19:52.882646+08:00"
+    },
+    {
+      "ProcessId": 62904,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64960",
+      "CreationDate": "2026-10-18T12:19:52.860123+08:00"
+    },
+    {
+      "ProcessId": 48412,
+      "ParentProcessId": 19364,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:55.958346+08:00"
+    },
+    {
+      "ProcessId": 19364,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:19:55.936055+08:00"
+    },
+    {
+      "ProcessId": 65940,
+      "ParentProcessId": 16284,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:19:59.89439+08:00"
+    },
+    {
+      "ProcessId": 16284,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\SoftWare\\nodejs\\node.EXE",
+      "CommandLine": "D:\\SoftWare\\nodejs\\node.EXE D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js --host 127.0.0.1 --port 57151 --strictPort",
+      "CreationDate": "2026-10-18T12:19:59.81767+08:00"
+    },
+    {
+      "ProcessId": 48064,
+      "ParentProcessId": 16284,
+      "Name": "esbuild.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe --service=0.21.5 --ping",
+      "CreationDate": "2026-10-18T12:20:00.12849+08:00"
+    },
+    {
+      "ProcessId": 56948,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\package\\cli.js run-driver",
+      "CreationDate": "2026-10-18T12:20:01.032125+08:00"
+    },
+    {
+      "ProcessId": 376,
+      "ParentProcessId": 56948,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": null,
+      "CommandLine": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=C:\\Users\\yuwen\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-r87tFc --remote-debugging-pipe --no-startup-window",
+      "CreationDate": "2026-10-18T12:20:02.304913+08:00"
+    },
+    {
+      "ProcessId": 27164,
+      "ParentProcessId": 376,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": null,
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=renderer --headless=old --no-sandbox --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --video-capture-use-gpu-memory-buffer --lang=zh-CN --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1791920991931872 --launch-time-ticks=376212544729 --field-trial-handle=1500,i,14849860761976243100,7075456911802269862,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708990060038890 --enable-logging=handle --log-file=2752 --mojo-platform-channel-handle=2748 /prefetch:1",
+      "CreationDate": "2026-10-18T12:20:04.481408+08:00"
+    },
+    {
+      "ProcessId": 37692,
+      "ParentProcessId": 376,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=gpu-process --no-sandbox --disable-breakpad --headless --use-angle=swiftshader-webgl --enable-unsafe-swiftshader --gpu-preferences=SAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --use-gl=angle --field-trial-handle=1500,i,14849860761976243100,7075456911802269862,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708988185955192 --enable-logging=handle --log-file=1548 --mojo-platform-channel-handle=1496 /prefetch:2",
+      "CreationDate": "2026-10-18T12:20:03.743151+08:00"
+    },
+    {
+      "ProcessId": 56976,
+      "ParentProcessId": 376,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=zh-CN --service-sandbox-type=none --no-sandbox --use-angle=swiftshader-webgl --use-gl=angle --mute-audio --headless=old --field-trial-handle=1500,i,14849860761976243100,7075456911802269862,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708989122997041 --enable-logging=handle --log-file=1808 --mojo-platform-channel-handle=1804 /prefetch:11",
+      "CreationDate": "2026-10-18T12:20:03.995128+08:00"
+    },
+    {
+      "ProcessId": 49756,
+      "ParentProcessId": 67984,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57498",
+      "CreationDate": "2026-10-18T12:20:10.839017+08:00"
+    },
+    {
+      "ProcessId": 67984,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57498",
+      "CreationDate": "2026-10-18T12:20:10.807768+08:00"
+    },
+    {
+      "ProcessId": 18448,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:20:15.466465+08:00"
+    },
+    {
+      "ProcessId": 3440,
+      "ParentProcessId": 18448,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:20:15.489141+08:00"
+    },
+    {
+      "ProcessId": 17748,
+      "ParentProcessId": 52912,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59351",
+      "CreationDate": "2026-10-18T12:20:20.106091+08:00"
+    },
+    {
+      "ProcessId": 52912,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59351",
+      "CreationDate": "2026-10-18T12:20:20.081317+08:00"
+    },
+    {
+      "ProcessId": 66524,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 52912 /T /F",
+      "CreationDate": "2026-10-18T12:20:23.941334+08:00"
+    },
+    {
+      "ProcessId": 57236,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63128",
+      "CreationDate": "2026-10-18T12:20:28.554204+08:00"
+    },
+    {
+      "ProcessId": 55728,
+      "ParentProcessId": 57236,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63128",
+      "CreationDate": "2026-10-18T12:20:28.576419+08:00"
+    },
+    {
+      "ProcessId": 64564,
+      "ParentProcessId": 32628,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:20:31.691057+08:00"
+    },
+    {
+      "ProcessId": 32628,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:20:31.659388+08:00"
+    },
+    {
+      "ProcessId": 24936,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 57236 /T /F",
+      "CreationDate": "2026-10-18T12:20:36.599805+08:00"
+    },
+    {
+      "ProcessId": 18644,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:20:38.050264+08:00"
+    },
+    {
+      "ProcessId": 28400,
+      "ParentProcessId": 18644,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:20:38.072215+08:00"
+    },
+    {
+      "ProcessId": 14036,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52442",
+      "CreationDate": "2026-10-18T12:20:40.83876+08:00"
+    },
+    {
+      "ProcessId": 51748,
+      "ParentProcessId": 14036,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52442",
+      "CreationDate": "2026-10-18T12:20:40.884214+08:00"
+    },
+    {
+      "ProcessId": 21092,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:20:44.46328+08:00"
+    },
+    {
+      "ProcessId": 66220,
+      "ParentProcessId": 21092,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:20:44.487057+08:00"
+    },
+    {
+      "ProcessId": 16688,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\SoftWare\\nodejs\\node.EXE",
+      "CommandLine": "D:\\SoftWare\\nodejs\\node.EXE D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js --host 127.0.0.1 --port 63127 --strictPort",
+      "CreationDate": "2026-10-18T12:20:48.383991+08:00"
+    },
+    {
+      "ProcessId": 5440,
+      "ParentProcessId": 32448,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\node.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Lib\\site-packages\\playwright\\driver\\package\\cli.js run-driver",
+      "CreationDate": "2026-10-18T12:20:49.774287+08:00"
+    },
+    {
+      "ProcessId": 35476,
+      "ParentProcessId": 16688,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:20:48.494902+08:00"
+    },
+    {
+      "ProcessId": 66736,
+      "ParentProcessId": 16688,
+      "Name": "esbuild.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe --service=0.21.5 --ping",
+      "CreationDate": "2026-10-18T12:20:48.904304+08:00"
+    },
+    {
+      "ProcessId": 24924,
+      "ParentProcessId": 64112,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=zh-CN --service-sandbox-type=none --no-sandbox --use-angle=swiftshader-webgl --use-gl=angle --mute-audio --headless=old --field-trial-handle=1512,i,15498346502939900976,9924231933097522367,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708989122997041 --enable-logging=handle --log-file=1760 --mojo-platform-channel-handle=1692 /prefetch:11",
+      "CreationDate": "2026-10-18T12:20:52.404346+08:00"
+    },
+    {
+      "ProcessId": 64112,
+      "ParentProcessId": 5440,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=C:\\Users\\yuwen\\AppData\\Local\\Temp\\playwright_chromiumdev_profile-JSBr9s --remote-debugging-pipe --no-startup-window",
+      "CreationDate": "2026-10-18T12:20:51.18911+08:00"
+    },
+    {
+      "ProcessId": 30584,
+      "ParentProcessId": 64112,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=renderer --headless=old --no-sandbox --disable-back-forward-cache --disable-background-timer-throttling --disable-breakpad --enable-automation --force-color-profile=srgb --remote-debugging-pipe --allow-pre-commit-input --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --video-capture-use-gpu-memory-buffer --lang=zh-CN --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=4 --time-ticks-at-unix-epoch=-1791920991931872 --launch-time-ticks=376260974590 --field-trial-handle=1512,i,15498346502939900976,9924231933097522367,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708990060038890 --enable-logging=handle --log-file=2708 --mojo-platform-channel-handle=2704 /prefetch:1",
+      "CreationDate": "2026-10-18T12:20:52.910617+08:00"
+    },
+    {
+      "ProcessId": 51108,
+      "ParentProcessId": 64112,
+      "Name": "chrome-headless-shell.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1208\\chrome-headless-shell-win64\\chrome-headless-shell.exe\" --type=gpu-process --no-sandbox --disable-breakpad --headless --use-angle=swiftshader-webgl --enable-unsafe-swiftshader --gpu-preferences=SAAAAAAAAADgAAAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --use-gl=angle --field-trial-handle=1512,i,15498346502939900976,9924231933097522367,262144 --enable-features=CDPScreenshotNewSurface --disable-features=AutoDeElevate,AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,OptimizationHints,PaintHolding,RenderDocument,ThirdPartyStoragePartitioning,Translate --variations-seed-version --trace-process-track-uuid=3190708988185955192 --enable-logging=handle --log-file=1544 --mojo-platform-channel-handle=1504 /prefetch:2",
+      "CreationDate": "2026-10-18T12:20:52.113164+08:00"
+    },
+    {
+      "ProcessId": 3384,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:20:57.286291+08:00"
+    },
+    {
+      "ProcessId": 11080,
+      "ParentProcessId": 10924,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60889",
+      "CreationDate": "2026-10-18T12:20:59.188757+08:00"
+    },
+    {
+      "ProcessId": 10924,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60889",
+      "CreationDate": "2026-10-18T12:20:59.165215+08:00"
+    },
+    {
+      "ProcessId": 45828,
+      "ParentProcessId": 56164,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:21:03.653514+08:00"
+    },
+    {
+      "ProcessId": 56164,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:21:03.607625+08:00"
+    },
+    {
+      "ProcessId": 52244,
+      "ParentProcessId": 32448,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64701",
+      "CreationDate": "2026-10-18T12:21:08.187585+08:00"
+    },
+    {
+      "ProcessId": 49724,
+      "ParentProcessId": 52244,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64701",
+      "CreationDate": "2026-10-18T12:21:08.214008+08:00"
+    },
+    {
+      "ProcessId": 45252,
+      "ParentProcessId": 32448,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 65632 /T /F",
+      "CreationDate": "2026-10-18T12:21:12.520303+08:00"
+    }
+  ],
+  "survivingRecordedProcesses": []
+}

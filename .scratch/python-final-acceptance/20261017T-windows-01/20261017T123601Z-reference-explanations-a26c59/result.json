@@ -1,0 +1,137 @@
+{
+  "status": "FAIL",
+  "checks": [
+    {
+      "sample": "1_left.jpg",
+      "disease": "normal",
+      "status": "PASS",
+      "elapsedSeconds": 2.328,
+      "explanationStatus": "VALIDATED",
+      "validation": {
+        "status": "VALIDATED",
+        "issues": [],
+        "policyVersion": "extractive-claim-validator-v1"
+      },
+      "citations": [
+        {
+          "citationId": "doc_2_chunk_0",
+          "documentId": "2",
+          "sourceRevision": 1,
+          "quotedTextDigest": "c12a2e29764586d815eb0c983c5c647f0ac8c18b92f362ce32b9be13ebbbfc03"
+        }
+      ],
+      "claimDiagnostics": [
+        {
+          "citationIds": [
+            "doc_2_chunk_0"
+          ],
+          "textLength": 23,
+          "exactSourceExcerpt": true
+        }
+      ]
+    },
+    {
+      "sample": "0_left.jpg",
+      "disease": "cataract",
+      "status": "PASS",
+      "elapsedSeconds": 1.656,
+      "explanationStatus": "VALIDATED",
+      "validation": {
+        "status": "VALIDATED",
+        "issues": [],
+        "policyVersion": "extractive-claim-validator-v1"
+      },
+      "citations": [
+        {
+          "citationId": "doc_4_chunk_0",
+          "documentId": "4",
+          "sourceRevision": 1,
+          "quotedTextDigest": "a9fca2e55a8b4109e01ae17f54a91ff2b3f5c08a1377aaa4004e78eaf24a738a"
+        },
+        {
+          "citationId": "doc_4_chunk_1",
+          "documentId": "4",
+          "sourceRevision": 1,
+          "quotedTextDigest": "d85f643474fad1b85f4d4475abb7c67cccc8a43d61fc9ac44fa06060b7177929"
+        },
+        {
+          "citationId": "doc_4_chunk_2",
+          "documentId": "4",
+          "sourceRevision": 1,
+          "quotedTextDigest": "e4cd70acb2cdf79f42dea8aa5a268ba69d8e86be9ea40445b43aaf610f208974"
+        }
+      ],
+      "claimDiagnostics": [
+        {
+          "citationIds": [
+            "doc_4_chunk_0"
+          ],
+          "textLength": 31,
+          "exactSourceExcerpt": true
+        }
+      ]
+    },
+    {
+      "sample": "13_left.jpg",
+      "disease": "myopia",
+      "status": "FAIL",
+      "elapsedSeconds": 1.516,
+      "explanationStatus": "REJECTED",
+      "validation": {
+        "status": "REJECTED",
+        "issues": [
+          "UNSUPPORTED_SOURCE_CLAIM"
+        ],
+        "policyVersion": "extractive-claim-validator-v1"
+      },
+      "citations": [
+        {
+          "citationId": "doc_8_chunk_0",
+          "documentId": "8",
+          "sourceRevision": 1,
+          "quotedTextDigest": "ce21de41dbc53128e0a235bd7435473cdff15bb0559191ddb8e17bde4368cb72"
+        },
+        {
+          "citationId": "doc_8_chunk_3",
+          "documentId": "8",
+          "sourceRevision": 1,
+          "quotedTextDigest": "7ba33abfbf5eafa01f84962299936c284e8f0b025904f6413a7742c24141df6b"
+        },
+        {
+          "citationId": "doc_8_chunk_2",
+          "documentId": "8",
+          "sourceRevision": 1,
+          "quotedTextDigest": "ae0f17f9e1c4a13feabe50ef925e05df584bdf3b82b46a8d37428ad3926ba664"
+        },
+        {
+          "citationId": "doc_8_chunk_1",
+          "documentId": "8",
+          "sourceRevision": 1,
+          "quotedTextDigest": "6f28e6829d96a2c5504b29289d00f52b2fcfa306386ddeb9ce6e9ef18f79c6d3"
+        }
+      ],
+      "claimDiagnostics": [
+        {
+          "citationIds": [
+            "doc_8_chunk_0"
+          ],
+          "textLength": 17,
+          "exactSourceExcerpt": false
+        }
+      ]
+    }
+  ],
+  "scope": "Real MySQL/Chroma/embedding/ExplanationModel and claim validation; no graph resume, publication or human decisions",
+  "cleanup": "PASS",
+  "businessTablesUnchanged": true,
+  "budget": {
+    "llm": {
+      "used": 17,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 40,
+      "limit": 500
+    }
+  }
+}

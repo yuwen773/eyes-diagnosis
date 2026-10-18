@@ -1,0 +1,26 @@
+{
+  "id": "4",
+  "userId": "9007199254740993",
+  "title": "03-cataract.md",
+  "fileName": "03-cataract.md",
+  "fileUrl": "b6eb30a8-af52-47dd-b4dc-557bfbd78b41_03-cataract.md",
+  "fileSize": "4490",
+  "fileType": "md",
+  "contentHash": "2aa7211a8c4d4d1e5b0ddf43a870ec0769097bf2c2090fd5882e49fe9d5e1852",
+  "chunkCount": 3,
+  "status": 1,
+  "createTime": "2026-10-17 18:01:05",
+  "updateTime": "2026-10-17 19:38:40",
+  "isDelete": 0,
+  "visibility": "CURATED_PUBLIC",
+  "reviewStatus": "APPROVED",
+  "diseaseCodes": [
+    "cataract"
+  ],
+  "topicCodes": [
+    "DISEASE_OVERVIEW"
+  ],
+  "governanceVersion": 1,
+  "reviewedBy": "9007199254740996",
+  "reviewedAt": "2026-10-17 19:38:40"
+}

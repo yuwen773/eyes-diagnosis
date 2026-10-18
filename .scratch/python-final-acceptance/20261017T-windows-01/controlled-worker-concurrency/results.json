@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-17T10:14:53.370403+00:00",
+  "schema": "eye_worker_issue16_49070b9fa2104a549472babcee9708e2",
+  "mysqlVersion": "8.0.26",
+  "suite": "worker-concurrency",
+  "scope": "Real MySQL and child processes; controlled identity/model/retrieval/explanation; no clinical acceptance",
+  "commands": {
+    "python-upgrade": {
+      "exitCode": 0
+    },
+    "python-inspect": {
+      "exitCode": 0
+    },
+    "mysql-tests": {
+      "exitCode": 0
+    }
+  }
+}

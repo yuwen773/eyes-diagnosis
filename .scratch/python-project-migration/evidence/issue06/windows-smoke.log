@@ -1,0 +1,110 @@
+{"differences": [], "pythonVersion": 1, "sourceVersion": "empty", "status": "APPLIED"}
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1946, in _exec_single_context
+    self.dialect.do_execute(
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 1192, in do_execute
+    cursor.execute(statement, parameters)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\cursors.py", line 170, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\cursors.py", line 335, in _query
+    conn.query(q)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 581, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 857, in _read_query_result
+    result.read()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 1290, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 810, in _read_packet
+    packet.raise_for_error()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\err.py", line 154, in raise_mysql_exception
+    raise errorclass(errno, errval, sqlstate=sqlstate)
+pymysql.err.IntegrityError: (1048, "Column 'editTime' cannot be null")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-project-migration\evidence\issue06\smoke_windows.py", line 34, in <module>
+    db.commit()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2095, in commit
+    trans.commit(_to_root=True)
+  File "<sqlalchemy generated _go() wrapper for sqlalchemy.orm.session.SessionTransaction.commit>", line 2, in commit
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1330, in commit
+    self._prepare_impl()
+  File "<sqlalchemy generated _go() wrapper for sqlalchemy.orm.session.SessionTransaction._prepare_impl>", line 2, in _prepare_impl
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1304, in _prepare_impl
+    self.session.flush()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4536, in flush
+    self._flush(objects)
+  File "<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>", line 2, in _flush
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\util\deprecations.py", line 281, in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4679, in _flush
+    with util.safe_reraise():
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 166, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4640, in _flush
+    flush_context.execute()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 467, in execute
+    rec.execute(self)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 643, in execute
+    util.preloaded.orm_persistence._save_obj(
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 92, in _save_obj
+    _emit_insert_statements(
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1052, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1451, in execute
+    return meth(
+           ^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 533, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1671, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1825, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1965, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2335, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1946, in _exec_single_context
+    self.dialect.do_execute(
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 1192, in do_execute
+    cursor.execute(statement, parameters)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\cursors.py", line 170, in execute
+    result = self._query(query)
+             ^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\cursors.py", line 335, in _query
+    conn.query(q)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 581, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 857, in _read_query_result
+    result.read()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 1290, in read
+    first_packet = self.connection._read_packet()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\connections.py", line 810, in _read_packet
+    packet.raise_for_error()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pymysql\err.py", line 154, in raise_mysql_exception
+    raise errorclass(errno, errval, sqlstate=sqlstate)
+sqlalchemy.exc.IntegrityError: (pymysql.err.IntegrityError) (1048, "Column 'editTime' cannot be null")
+[SQL: INSERT INTO t_user (id, `userAccount`, `userPassword`, `userName`, `userAvatar`, `userProfile`, `userRole`, `editTime`, `createTime`, `updateTime`, `isDelete`) VALUES (%(id)s, %(userAccount)s, %(userPassword)s, %(userName)s, %(userAvatar)s, %(userProfile)s, %(userRole)s, %(editTime)s, %(createTime)s, %(updateTime)s, %(isDelete)s)]
+[parameters: {'id': 9007199254740993, 'userAccount': 'windows_alice', 'userPassword': '$2b$12$4OFjRkJn8kEGDWd5cVqxK./HYRaHK/Th3DUUr8XnjPag61QuIb66y', 'userName': 'Windows ����', 'userAvatar': None, 'userProfile': None, 'userRole': 'user', 'editTime': None, 'createTime': None, 'updateTime': None, 'isDelete': 0}]
+(Background on this error at: https://sqlalche.me/e/21/gkpj)

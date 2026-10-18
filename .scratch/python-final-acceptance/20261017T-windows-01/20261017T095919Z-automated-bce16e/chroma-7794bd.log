@@ -1,0 +1,298 @@
+
+
+                [38;5;069m(((((((((    [38;5;203m((((([38;5;220m####
+             [38;5;069m((((((((((((([38;5;203m((((((((([38;5;220m#########
+           [38;5;069m((((((((((((([38;5;203m((((((((((([38;5;220m###########
+         [38;5;069m(((((((((((((([38;5;203m(((((((((((([38;5;220m############
+        [38;5;069m((((((((((((([38;5;203m(((((((((((((([38;5;220m#############
+        [38;5;069m((((((((((((([38;5;203m(((((((((((((([38;5;220m#############
+         [38;5;069m(((((((((((([38;5;203m((((((((((((([38;5;220m##############
+         [38;5;069m(((((((((((([38;5;203m(((((((((((([38;5;220m##############
+           [38;5;069m(((((((((([38;5;203m((((((((((([38;5;220m#############
+             [38;5;069m(((((((([38;5;203m(((((((([38;5;220m##############
+                [38;5;069m((((([38;5;203m((((    [38;5;220m#########[0m
+
+Saving data to: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-final-acceptance\20261017T-windows-01\runtime\chroma
+Connect to Chroma at: http://localhost:60860
+Getting started guide: https://docs.trychroma.com/docs/overview/getting-started
+
+☁️ To deploy your DB - try Chroma Cloud!
+- Sign up: https://trychroma.com/signup
+- Copy your data to Cloud: chroma copy --to-cloud --all
+
+  [2m2026-10-17T09:59:28.114948Z[0m [32m INFO[0m  [32mGlobal tracing subscriber set[0m
+    [2;3mat[0m rust\tracing\src\init_tracer.rs:370
+
+  [2m2026-10-17T09:59:28.193397Z[0m [32m INFO[0m  [32mFrontend server listening on address, [1;32maddr[0m[32m: 127.0.0.1:60860[0m
+    [2;3mat[0m rust\frontend\src\server.rs:416
+
+  [2m2026-10-17T10:01:07.102692Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.103826Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.104850Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.106838Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.143332Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.143340Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.143332Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.144332Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.159238Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.161009Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.161308Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.163835Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.206201Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.216915Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.226767Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.227270Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.231969Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 1[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.232529Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.233566Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 3[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.233597Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.234217Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 2[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.234248Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.235838Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.236908Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.237650Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.323932Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.328170Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 3[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.328202Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.330714Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.361228Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.374721Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.377609Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 1[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.377684Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.379131Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 3[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.379171Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.380811Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.459730Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.465584Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.487187Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.498915Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.504550Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.508594Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.509718Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 3[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.509772Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.514995Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.534614Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.535279Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 4[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.535310Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.600283Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:07.603378Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:07.606939Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:07.612626Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.613566Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 1[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:07.613594Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:08.007248Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant[0m
+    [2;3mat[0m rust\frontend\src\server.rs:757
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant, [1mhttp.route[0m: "/api/v2/tenants/{tenant_name}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant_name}"
+
+  [2m2026-10-17T10:01:08.010873Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1015
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: GET, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "GET /api/v2/tenants/{tenant}/databases/{database}"
+
+  [2m2026-10-17T10:01:08.022919Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database[0m
+    [2;3mat[0m rust\frontend\src\server.rs:1315
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections"
+
+  [2m2026-10-17T10:01:08.032097Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:08.033596Z[0m [32m INFO[0m  [1;32mtenant_name[0m[32m: default_tenant, [1;32mdatabase_name[0m[32m: default_database, [1;32mcollection_id[0m[32m: cdc4bd5b-9297-4ac2-a80b-3783bb6e8314, [1;32mnum_ids[0m[32m: 5[0m
+    [2;3mat[0m rust\frontend\src\server.rs:2323
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+
+  [2m2026-10-17T10:01:08.033640Z[0m [32m INFO[0m  [32mCache miss for collection cdc4bd5b-9297-4ac2-a80b-3783bb6e8314[0m
+    [2;3mat[0m rust\frontend\src\get_collection_with_segments_provider.rs:182
+    [2;3min[0m [1mcollection_upsert[0m
+    [2;3min[0m [1mHTTP request[0m [2;3mwith[0m [1mhttp.method[0m: POST, [1mhttp.uri[0m: /api/v2/tenants/default_tenant/databases/default_database/collections/cdc4bd5b-9297-4ac2-a80b-3783bb6e8314/upsert, [1mhttp.route[0m: "/api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert", [1mhttp.version[0m: HTTP/1.1, [1mhttp.host[0m: 127.0.0.1:60860, [1mhttp.user_agent[0m: Chroma Python Client v1.5.9 (https://github.com/chroma-core/chroma), [1motel.name[0m: "POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/upsert"
+

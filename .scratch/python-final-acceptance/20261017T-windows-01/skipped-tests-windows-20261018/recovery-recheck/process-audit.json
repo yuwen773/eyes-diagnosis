@@ -1,0 +1,1382 @@
+{
+  "status": "PASS",
+  "registered": [
+    {
+      "ProcessId": 65592,
+      "ParentProcessId": 56556,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:05:42.774405+08:00"
+    },
+    {
+      "ProcessId": 47968,
+      "ParentProcessId": 56556,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m pytest algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement] algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor] algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor] -vv --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3 --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\recovery-recheck\\recovery.xml",
+      "CreationDate": "2026-10-18T12:05:42.801383+08:00"
+    },
+    {
+      "ProcessId": 56556,
+      "ParentProcessId": 47644,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m pytest algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version] algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement] algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor] algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor] -vv --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3 --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\recovery-recheck\\recovery.xml",
+      "CreationDate": "2026-10-18T12:05:42.756059+08:00"
+    },
+    {
+      "ProcessId": 32848,
+      "ParentProcessId": 47968,
+      "Name": "redis-server.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe",
+      "CommandLine": "D:/Work/Backend/Redis-x64-3.2.100/redis-server.exe --bind 127.0.0.1 --port 57405 --save \"\" --appendonly no --dir D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3\\python-wait-release0",
+      "CreationDate": "2026-10-18T12:05:48.808089+08:00"
+    },
+    {
+      "ProcessId": 49912,
+      "ParentProcessId": 32848,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:05:49.229862+08:00"
+    },
+    {
+      "ProcessId": 61320,
+      "ParentProcessId": 61196,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59319",
+      "CreationDate": "2026-10-18T12:05:53.079617+08:00"
+    },
+    {
+      "ProcessId": 61196,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59319",
+      "CreationDate": "2026-10-18T12:05:53.047475+08:00"
+    },
+    {
+      "ProcessId": 15328,
+      "ParentProcessId": 13236,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:05:58.069593+08:00"
+    },
+    {
+      "ProcessId": 13236,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:05:58.038191+08:00"
+    },
+    {
+      "ProcessId": 11844,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:06:05.02901+08:00"
+    },
+    {
+      "ProcessId": 42448,
+      "ParentProcessId": 11844,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:06:05.054701+08:00"
+    },
+    {
+      "ProcessId": 55972,
+      "ParentProcessId": 67984,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53278",
+      "CreationDate": "2026-10-18T12:06:07.872605+08:00"
+    },
+    {
+      "ProcessId": 67984,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53278",
+      "CreationDate": "2026-10-18T12:06:07.839359+08:00"
+    },
+    {
+      "ProcessId": 55872,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:11.418265+08:00"
+    },
+    {
+      "ProcessId": 32052,
+      "ParentProcessId": 55872,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:11.443216+08:00"
+    },
+    {
+      "ProcessId": 14476,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52685",
+      "CreationDate": "2026-10-18T12:06:17.637845+08:00"
+    },
+    {
+      "ProcessId": 43340,
+      "ParentProcessId": 14476,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52685",
+      "CreationDate": "2026-10-18T12:06:17.682249+08:00"
+    },
+    {
+      "ProcessId": 42888,
+      "ParentProcessId": 13220,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:26.468492+08:00"
+    },
+    {
+      "ProcessId": 13220,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:26.271319+08:00"
+    },
+    {
+      "ProcessId": 4904,
+      "ParentProcessId": 33332,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:35.117942+08:00"
+    },
+    {
+      "ProcessId": 33332,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:06:35.067547+08:00"
+    },
+    {
+      "ProcessId": 30396,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 14476 /T /F",
+      "CreationDate": "2026-10-18T12:06:42.96408+08:00"
+    },
+    {
+      "ProcessId": 41432,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57285",
+      "CreationDate": "2026-10-18T12:06:45.180913+08:00"
+    },
+    {
+      "ProcessId": 57064,
+      "ParentProcessId": 41432,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57285",
+      "CreationDate": "2026-10-18T12:06:45.236438+08:00"
+    },
+    {
+      "ProcessId": 65948,
+      "ParentProcessId": 61624,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53581",
+      "CreationDate": "2026-10-18T12:06:53.17497+08:00"
+    },
+    {
+      "ProcessId": 61624,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53581",
+      "CreationDate": "2026-10-18T12:06:53.123057+08:00"
+    },
+    {
+      "ProcessId": 39888,
+      "ParentProcessId": 56428,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode final",
+      "CreationDate": "2026-10-18T12:06:56.801334+08:00"
+    },
+    {
+      "ProcessId": 56428,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode final",
+      "CreationDate": "2026-10-18T12:06:56.774275+08:00"
+    },
+    {
+      "ProcessId": 15780,
+      "ParentProcessId": 48556,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:07:02.581672+08:00"
+    },
+    {
+      "ProcessId": 48556,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:07:02.558331+08:00"
+    },
+    {
+      "ProcessId": 7232,
+      "ParentProcessId": 43512,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64568",
+      "CreationDate": "2026-10-18T12:07:04.94917+08:00"
+    },
+    {
+      "ProcessId": 43512,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64568",
+      "CreationDate": "2026-10-18T12:07:04.924325+08:00"
+    },
+    {
+      "ProcessId": 65156,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:07.962525+08:00"
+    },
+    {
+      "ProcessId": 43144,
+      "ParentProcessId": 65156,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:07.989438+08:00"
+    },
+    {
+      "ProcessId": 36456,
+      "ParentProcessId": 27004,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 58375",
+      "CreationDate": "2026-10-18T12:07:12.702581+08:00"
+    },
+    {
+      "ProcessId": 27004,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 58375",
+      "CreationDate": "2026-10-18T12:07:12.680122+08:00"
+    },
+    {
+      "ProcessId": 45060,
+      "ParentProcessId": 34952,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:15.722182+08:00"
+    },
+    {
+      "ProcessId": 34952,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:15.701575+08:00"
+    },
+    {
+      "ProcessId": 54932,
+      "ParentProcessId": 33748,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:19.028309+08:00"
+    },
+    {
+      "ProcessId": 33748,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:18.999252+08:00"
+    },
+    {
+      "ProcessId": 59448,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59957",
+      "CreationDate": "2026-10-18T12:07:23.314657+08:00"
+    },
+    {
+      "ProcessId": 2120,
+      "ParentProcessId": 59448,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59957",
+      "CreationDate": "2026-10-18T12:07:23.340182+08:00"
+    },
+    {
+      "ProcessId": 50136,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 59448 /T /F",
+      "CreationDate": "2026-10-18T12:07:26.601935+08:00"
+    },
+    {
+      "ProcessId": 62864,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57182",
+      "CreationDate": "2026-10-18T12:07:30.016933+08:00"
+    },
+    {
+      "ProcessId": 34656,
+      "ParentProcessId": 62864,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 57182",
+      "CreationDate": "2026-10-18T12:07:30.036785+08:00"
+    },
+    {
+      "ProcessId": 45852,
+      "ParentProcessId": 47916,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:07:33.102581+08:00"
+    },
+    {
+      "ProcessId": 47916,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:07:33.07866+08:00"
+    },
+    {
+      "ProcessId": 61260,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:07:38.263026+08:00"
+    },
+    {
+      "ProcessId": 61276,
+      "ParentProcessId": 61260,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:07:38.285939+08:00"
+    },
+    {
+      "ProcessId": 64684,
+      "ParentProcessId": 19040,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55730",
+      "CreationDate": "2026-10-18T12:07:40.721823+08:00"
+    },
+    {
+      "ProcessId": 19040,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55730",
+      "CreationDate": "2026-10-18T12:07:40.688764+08:00"
+    },
+    {
+      "ProcessId": 33028,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:44.354792+08:00"
+    },
+    {
+      "ProcessId": 43328,
+      "ParentProcessId": 33028,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:44.419198+08:00"
+    },
+    {
+      "ProcessId": 56584,
+      "ParentProcessId": 55532,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54177",
+      "CreationDate": "2026-10-18T12:07:49.126084+08:00"
+    },
+    {
+      "ProcessId": 55532,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54177",
+      "CreationDate": "2026-10-18T12:07:49.102474+08:00"
+    },
+    {
+      "ProcessId": 47368,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:53.081689+08:00"
+    },
+    {
+      "ProcessId": 22304,
+      "ParentProcessId": 47368,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:07:53.110162+08:00"
+    },
+    {
+      "ProcessId": 46112,
+      "ParentProcessId": 54476,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53949",
+      "CreationDate": "2026-10-18T12:07:57.618326+08:00"
+    },
+    {
+      "ProcessId": 54476,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53949",
+      "CreationDate": "2026-10-18T12:07:57.593254+08:00"
+    },
+    {
+      "ProcessId": 932,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 54476 /T /F",
+      "CreationDate": "2026-10-18T12:08:01.463712+08:00"
+    },
+    {
+      "ProcessId": 15432,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55115",
+      "CreationDate": "2026-10-18T12:08:05.333264+08:00"
+    },
+    {
+      "ProcessId": 1268,
+      "ParentProcessId": 15432,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55115",
+      "CreationDate": "2026-10-18T12:08:05.35722+08:00"
+    },
+    {
+      "ProcessId": 67992,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:08:08.388748+08:00"
+    },
+    {
+      "ProcessId": 52780,
+      "ParentProcessId": 67992,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:08:08.409772+08:00"
+    },
+    {
+      "ProcessId": 10140,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:08:13.509602+08:00"
+    },
+    {
+      "ProcessId": 40372,
+      "ParentProcessId": 10140,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:08:13.531388+08:00"
+    },
+    {
+      "ProcessId": 9144,
+      "ParentProcessId": 67268,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 61209",
+      "CreationDate": "2026-10-18T12:08:16.485694+08:00"
+    },
+    {
+      "ProcessId": 67268,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 61209",
+      "CreationDate": "2026-10-18T12:08:16.42177+08:00"
+    },
+    {
+      "ProcessId": 68432,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:08:21.018491+08:00"
+    },
+    {
+      "ProcessId": 54376,
+      "ParentProcessId": 68432,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:08:21.051997+08:00"
+    },
+    {
+      "ProcessId": 57012,
+      "ParentProcessId": 19040,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T12:08:24.449424+08:00"
+    },
+    {
+      "ProcessId": 4060,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 67268 /T /F",
+      "CreationDate": "2026-10-18T12:08:25.422527+08:00"
+    },
+    {
+      "ProcessId": 7340,
+      "ParentProcessId": 35820,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60306",
+      "CreationDate": "2026-10-18T12:08:26.769764+08:00"
+    },
+    {
+      "ProcessId": 35820,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60306",
+      "CreationDate": "2026-10-18T12:08:26.700068+08:00"
+    },
+    {
+      "ProcessId": 10520,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:08:30.635301+08:00"
+    },
+    {
+      "ProcessId": 65752,
+      "ParentProcessId": 10520,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:08:30.660068+08:00"
+    },
+    {
+      "ProcessId": 33872,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54281",
+      "CreationDate": "2026-10-18T12:08:35.188588+08:00"
+    },
+    {
+      "ProcessId": 53704,
+      "ParentProcessId": 33872,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54281",
+      "CreationDate": "2026-10-18T12:08:35.212479+08:00"
+    },
+    {
+      "ProcessId": 38724,
+      "ParentProcessId": 58452,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 49311",
+      "CreationDate": "2026-10-18T12:08:42.384037+08:00"
+    },
+    {
+      "ProcessId": 58452,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 49311",
+      "CreationDate": "2026-10-18T12:08:42.363547+08:00"
+    },
+    {
+      "ProcessId": 58044,
+      "ParentProcessId": 60876,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:08:46.079294+08:00"
+    },
+    {
+      "ProcessId": 60876,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode pass",
+      "CreationDate": "2026-10-18T12:08:46.043886+08:00"
+    },
+    {
+      "ProcessId": 21264,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:08:51.455512+08:00"
+    },
+    {
+      "ProcessId": 63328,
+      "ParentProcessId": 21264,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:08:51.481527+08:00"
+    },
+    {
+      "ProcessId": 50316,
+      "ParentProcessId": 68552,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59417",
+      "CreationDate": "2026-10-18T12:08:53.795148+08:00"
+    },
+    {
+      "ProcessId": 68552,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 59417",
+      "CreationDate": "2026-10-18T12:08:53.777529+08:00"
+    },
+    {
+      "ProcessId": 58980,
+      "ParentProcessId": 32368,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54592",
+      "CreationDate": "2026-10-18T12:09:00.018039+08:00"
+    },
+    {
+      "ProcessId": 32368,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 54592",
+      "CreationDate": "2026-10-18T12:08:59.986487+08:00"
+    },
+    {
+      "ProcessId": 19736,
+      "ParentProcessId": 56820,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:03.103315+08:00"
+    },
+    {
+      "ProcessId": 56820,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:03.079295+08:00"
+    },
+    {
+      "ProcessId": 61064,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:07.575786+08:00"
+    },
+    {
+      "ProcessId": 38872,
+      "ParentProcessId": 61064,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:07.600861+08:00"
+    },
+    {
+      "ProcessId": 18944,
+      "ParentProcessId": 63748,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64999",
+      "CreationDate": "2026-10-18T12:09:10.588963+08:00"
+    },
+    {
+      "ProcessId": 63748,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 64999",
+      "CreationDate": "2026-10-18T12:09:10.569298+08:00"
+    },
+    {
+      "ProcessId": 38288,
+      "ParentProcessId": 60380,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:09:13.66505+08:00"
+    },
+    {
+      "ProcessId": 60380,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:09:13.645606+08:00"
+    },
+    {
+      "ProcessId": 14676,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 58474",
+      "CreationDate": "2026-10-18T12:09:20.152527+08:00"
+    },
+    {
+      "ProcessId": 45816,
+      "ParentProcessId": 14676,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 58474",
+      "CreationDate": "2026-10-18T12:09:20.183928+08:00"
+    },
+    {
+      "ProcessId": 29208,
+      "ParentProcessId": 64744,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:23.267829+08:00"
+    },
+    {
+      "ProcessId": 64744,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:23.228153+08:00"
+    },
+    {
+      "ProcessId": 67140,
+      "ParentProcessId": 10976,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:27.859468+08:00"
+    },
+    {
+      "ProcessId": 10976,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:27.830732+08:00"
+    },
+    {
+      "ProcessId": 41764,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53268",
+      "CreationDate": "2026-10-18T12:09:30.617734+08:00"
+    },
+    {
+      "ProcessId": 34404,
+      "ParentProcessId": 41764,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 53268",
+      "CreationDate": "2026-10-18T12:09:30.64327+08:00"
+    },
+    {
+      "ProcessId": 27176,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:09:33.675124+08:00"
+    },
+    {
+      "ProcessId": 55260,
+      "ParentProcessId": 27176,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:09:33.699987+08:00"
+    },
+    {
+      "ProcessId": 55712,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 41764 /T /F",
+      "CreationDate": "2026-10-18T12:09:36.904986+08:00"
+    },
+    {
+      "ProcessId": 27148,
+      "ParentProcessId": 57672,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55557",
+      "CreationDate": "2026-10-18T12:09:40.314202+08:00"
+    },
+    {
+      "ProcessId": 57672,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 55557",
+      "CreationDate": "2026-10-18T12:09:40.290822+08:00"
+    },
+    {
+      "ProcessId": 14496,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:43.841952+08:00"
+    },
+    {
+      "ProcessId": 39924,
+      "ParentProcessId": 14496,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:09:43.900307+08:00"
+    },
+    {
+      "ProcessId": 67352,
+      "ParentProcessId": 3064,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:49.946503+08:00"
+    },
+    {
+      "ProcessId": 3064,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:09:49.920625+08:00"
+    },
+    {
+      "ProcessId": 15116,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50900",
+      "CreationDate": "2026-10-18T12:09:55.147328+08:00"
+    },
+    {
+      "ProcessId": 30676,
+      "ParentProcessId": 15116,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50900",
+      "CreationDate": "2026-10-18T12:09:55.20692+08:00"
+    },
+    {
+      "ProcessId": 57444,
+      "ParentProcessId": 3064,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:10:01.493816+08:00"
+    },
+    {
+      "ProcessId": 55772,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:10:06.62777+08:00"
+    },
+    {
+      "ProcessId": 38252,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60052",
+      "CreationDate": "2026-10-18T12:10:11.544907+08:00"
+    },
+    {
+      "ProcessId": 40336,
+      "ParentProcessId": 38252,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 60052",
+      "CreationDate": "2026-10-18T12:10:11.572138+08:00"
+    },
+    {
+      "ProcessId": 18060,
+      "ParentProcessId": 756,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:10:17.387998+08:00"
+    },
+    {
+      "ProcessId": 756,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:10:17.33935+08:00"
+    },
+    {
+      "ProcessId": 52524,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 38252 /T /F",
+      "CreationDate": "2026-10-18T12:10:23.90486+08:00"
+    },
+    {
+      "ProcessId": 56344,
+      "ParentProcessId": 40036,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:10:25.45418+08:00"
+    },
+    {
+      "ProcessId": 40036,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:10:25.425218+08:00"
+    },
+    {
+      "ProcessId": 52548,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63801",
+      "CreationDate": "2026-10-18T12:10:29.693442+08:00"
+    },
+    {
+      "ProcessId": 60280,
+      "ParentProcessId": 52548,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63801",
+      "CreationDate": "2026-10-18T12:10:29.723519+08:00"
+    },
+    {
+      "ProcessId": 35992,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:10:36.751851+08:00"
+    },
+    {
+      "ProcessId": 66440,
+      "ParentProcessId": 35992,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:10:36.922824+08:00"
+    },
+    {
+      "ProcessId": 45160,
+      "ParentProcessId": 42728,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 49379",
+      "CreationDate": "2026-10-18T12:10:57.642279+08:00"
+    },
+    {
+      "ProcessId": 42728,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 49379",
+      "CreationDate": "2026-10-18T12:10:57.5963+08:00"
+    },
+    {
+      "ProcessId": 68112,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:11:02.887487+08:00"
+    },
+    {
+      "ProcessId": 58592,
+      "ParentProcessId": 68112,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:11:02.911198+08:00"
+    },
+    {
+      "ProcessId": 49868,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:11:06.671931+08:00"
+    },
+    {
+      "ProcessId": 16244,
+      "ParentProcessId": 39320,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:11:07.843317+08:00"
+    },
+    {
+      "ProcessId": 39320,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:11:07.820412+08:00"
+    },
+    {
+      "ProcessId": 57992,
+      "ParentProcessId": 53552,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50314",
+      "CreationDate": "2026-10-18T12:11:10.479859+08:00"
+    },
+    {
+      "ProcessId": 53552,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50314",
+      "CreationDate": "2026-10-18T12:11:10.455096+08:00"
+    },
+    {
+      "ProcessId": 43128,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:14.963329+08:00"
+    },
+    {
+      "ProcessId": 44368,
+      "ParentProcessId": 43128,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:14.985282+08:00"
+    },
+    {
+      "ProcessId": 61200,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:18.710706+08:00"
+    },
+    {
+      "ProcessId": 61396,
+      "ParentProcessId": 61200,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:18.736801+08:00"
+    },
+    {
+      "ProcessId": 66100,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:24.034164+08:00"
+    },
+    {
+      "ProcessId": 55964,
+      "ParentProcessId": 66100,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:11:24.061154+08:00"
+    },
+    {
+      "ProcessId": 24192,
+      "ParentProcessId": 48836,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50514",
+      "CreationDate": "2026-10-18T12:11:28.557624+08:00"
+    },
+    {
+      "ProcessId": 48836,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 50514",
+      "CreationDate": "2026-10-18T12:11:28.520769+08:00"
+    },
+    {
+      "ProcessId": 63024,
+      "ParentProcessId": 42380,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode retrieval-empty --lease-seconds 30 --gate D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3\\test_mysql_resumed_wait_lease_0\\abandoned",
+      "CreationDate": "2026-10-18T12:11:32.288174+08:00"
+    },
+    {
+      "ProcessId": 42380,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode retrieval-empty --lease-seconds 30 --gate D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3\\test_mysql_resumed_wait_lease_0\\abandoned",
+      "CreationDate": "2026-10-18T12:11:32.263376+08:00"
+    },
+    {
+      "ProcessId": 6164,
+      "ParentProcessId": 67648,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:11:36.050955+08:00"
+    },
+    {
+      "ProcessId": 67648,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:11:36.012584+08:00"
+    },
+    {
+      "ProcessId": 39540,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:11:41.551368+08:00"
+    },
+    {
+      "ProcessId": 37608,
+      "ParentProcessId": 29604,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63785",
+      "CreationDate": "2026-10-18T12:11:46.107371+08:00"
+    },
+    {
+      "ProcessId": 29604,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 63785",
+      "CreationDate": "2026-10-18T12:11:46.048281+08:00"
+    },
+    {
+      "ProcessId": 34380,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:11:56.220911+08:00"
+    },
+    {
+      "ProcessId": 66172,
+      "ParentProcessId": 34380,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode quality",
+      "CreationDate": "2026-10-18T12:11:56.442141+08:00"
+    },
+    {
+      "ProcessId": 51764,
+      "ParentProcessId": 6052,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:12:02.469427+08:00"
+    },
+    {
+      "ProcessId": 6052,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.migrations upgrade",
+      "CreationDate": "2026-10-18T12:12:02.441247+08:00"
+    },
+    {
+      "ProcessId": 54340,
+      "ParentProcessId": 63404,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 65110",
+      "CreationDate": "2026-10-18T12:12:05.121074+08:00"
+    },
+    {
+      "ProcessId": 63404,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 65110",
+      "CreationDate": "2026-10-18T12:12:05.084364+08:00"
+    },
+    {
+      "ProcessId": 61468,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:09.699435+08:00"
+    },
+    {
+      "ProcessId": 60844,
+      "ParentProcessId": 61468,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:09.724796+08:00"
+    },
+    {
+      "ProcessId": 59408,
+      "ParentProcessId": 58556,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:13.744499+08:00"
+    },
+    {
+      "ProcessId": 58556,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:13.718861+08:00"
+    },
+    {
+      "ProcessId": 37208,
+      "ParentProcessId": 10204,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:17.659336+08:00"
+    },
+    {
+      "ProcessId": 10204,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode normal --lease-seconds 30",
+      "CreationDate": "2026-10-18T12:12:17.629529+08:00"
+    },
+    {
+      "ProcessId": 59288,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52538",
+      "CreationDate": "2026-10-18T12:12:21.320423+08:00"
+    },
+    {
+      "ProcessId": 8168,
+      "ParentProcessId": 59288,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py api --port 52538",
+      "CreationDate": "2026-10-18T12:12:21.352153+08:00"
+    },
+    {
+      "ProcessId": 50248,
+      "ParentProcessId": 19136,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m web.tests.worker_concurrency_process --mode retrieval-empty --lease-seconds 30 --gate D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3\\test_mysql_resumed_wait_lease_1\\abandoned",
+      "CreationDate": "2026-10-18T12:12:25.212094+08:00"
+    },
+    {
+      "ProcessId": 19136,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m web.tests.worker_concurrency_process --mode retrieval-empty --lease-seconds 30 --gate D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\sw18-13d7f0d3\\test_mysql_resumed_wait_lease_1\\abandoned",
+      "CreationDate": "2026-10-18T12:12:25.18318+08:00"
+    },
+    {
+      "ProcessId": 61584,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:12:28.527152+08:00"
+    },
+    {
+      "ProcessId": 66220,
+      "ParentProcessId": 47968,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:12:29.55089+08:00"
+    },
+    {
+      "ProcessId": 58252,
+      "ParentProcessId": 66220,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\web\\tests\\wait_recovery_process.py worker --mode no-inference",
+      "CreationDate": "2026-10-18T12:12:29.596154+08:00"
+    },
+    {
+      "ProcessId": 64192,
+      "ParentProcessId": 47968,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T12:12:34.452195+08:00"
+    }
+  ],
+  "survivingRecordedProcesses": []
+}

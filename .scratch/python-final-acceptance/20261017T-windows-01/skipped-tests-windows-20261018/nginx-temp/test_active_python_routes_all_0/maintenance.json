@@ -1,0 +1,13 @@
+{
+  "pythonWritesOpened": true,
+  "transitions": [
+    {
+      "route": "python",
+      "policy": "active",
+      "release": "5733cf33823257e8be2aa1ad2c3fd13e7b5754f0",
+      "artifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "reason": "isolated acceptance",
+      "atUtc": "2026-10-18T03:58:38.127731+00:00"
+    }
+  ]
+}

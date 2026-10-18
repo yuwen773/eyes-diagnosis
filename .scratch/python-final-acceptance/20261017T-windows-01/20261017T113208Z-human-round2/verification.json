@@ -1,0 +1,62 @@
+{
+  "workflowId": "dad94b0f755f421f84cbb708f56bb898",
+  "sample": "1_left.jpg",
+  "observation": "20261017T112918-observation.json",
+  "qualityReview": {
+    "status": "PASS",
+    "task": {
+      "reviewTaskId": "af7f46fad48b451b82994fd07cbce95a",
+      "workflowId": "dad94b0f755f421f84cbb708f56bb898",
+      "reviewType": "IMAGE_QUALITY_GATE",
+      "reviewRound": 1,
+      "status": "SUBMITTED",
+      "assignedDoctorId": 9007199254740995,
+      "submittedDoctorId": 9007199254740995,
+      "decisionCode": "APPROVE_CONTINUE",
+      "decisionReasonCode": "QUALITY_APPROVED",
+      "taskVersion": 2,
+      "graphThreadId": "dad94b0f755f421f84cbb708f56bb898",
+      "graphCheckpointId": "1f1ca11e-2745-66fd-8005-3eb146685257",
+      "createdAt": "2026-10-17 18:02:38.777571",
+      "claimedAt": "2026-10-17 19:28:26.359954",
+      "submittedAt": "2026-10-17 19:28:28.992118",
+      "cancelledAt": null,
+      "updatedAt": "2026-10-17 19:28:28.992118",
+      "workflowVersion": 7,
+      "inferenceEnvelopeId": "52be539a84b245ceb371b5fb49c5ad49",
+      "graphDefinitionVersion": "upload-final-clinical-review-v6",
+      "graphDefinitionHash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+      "actionVersion": "upload-final-clinical-review-v6"
+    }
+  },
+  "patientTaskReadback": {
+    "status": "PASS",
+    "workflowStatus": "COMPLETED_LIMITED",
+    "reason": "EVIDENCE_INSUFFICIENT"
+  },
+  "manualRefresh": {
+    "status": "PASS",
+    "basis": "Participant explicitly confirmed F5 and reopening the same conversation before screenshot"
+  },
+  "noImplicitSave": {
+    "status": "PASS",
+    "formalRecordsForThisWorkflow": 0
+  },
+  "inferenceEnvelopeId": "52be539a84b245ceb371b5fb49c5ad49",
+  "screenshots": [
+    {
+      "file": "doctor.png",
+      "sha256": "2fb83bfc9ff06a5bbc8b6b16a80114aaccf898e1f1a36089b322c56c6df6b989",
+      "source": "participant attachment; original bytes preserved"
+    },
+    {
+      "file": "patient-after-refresh.png",
+      "sha256": "93d3ef55e01d3121debe41feae6df7a4755c659dcd536c1c6abe116aad410479",
+      "source": "participant attachment; original bytes preserved"
+    }
+  ],
+  "limitations": [
+    "Quality approval is not final clinical review or save authorization",
+    "Full acceptance remains blocked; explanation and approve/refuse-save scenarios incomplete"
+  ]
+}

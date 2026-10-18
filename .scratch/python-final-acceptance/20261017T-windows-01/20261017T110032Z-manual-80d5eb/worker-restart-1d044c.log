@@ -1,0 +1,13 @@
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=dad94b0f755f421f84cbb708f56bb898 segment committed
+INFO:web.workflow.worker:workflow=ddd7005b6b53453998bb34c3364d255f segment committed
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:web.inference:Model loaded from D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth (version=efficientnet-b4@1.0.0, calibration=NOT_CALIBRATED)
+INFO:web.workflow.worker:workflow=ddd7005b6b53453998bb34c3364d255f segment committed
+INFO:web.workflow.worker:workflow=ddd7005b6b53453998bb34c3364d255f segment committed

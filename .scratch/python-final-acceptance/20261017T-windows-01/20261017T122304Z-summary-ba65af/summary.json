@@ -1,0 +1,850 @@
+{
+  "runId": "20261017T-windows-01",
+  "generatedUtc": "2026-10-17T12:23:04.698491+00:00",
+  "status": "BLOCKED",
+  "scope": "Windows pure Python migration and agreed real business chain",
+  "budget": {
+    "llm": {
+      "used": 14,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 37,
+      "limit": 500
+    }
+  },
+  "providers": {
+    "embedding": {
+      "status": "PASS",
+      "dimensions": 1024,
+      "inputTexts": 1
+    },
+    "streamingChat": {
+      "status": "PASS",
+      "contentSeen": true,
+      "doneSeen": true
+    },
+    "structuredExplanation": {
+      "status": "PASS",
+      "claims": 1,
+      "referenceSha256": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f"
+    }
+  },
+  "windowsWeb": {
+    "status": "PASS",
+    "passed": 824,
+    "failed": 0,
+    "skipped": 43,
+    "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\windows-web-repaired\\web.xml"
+  },
+  "frontend": {
+    "testExit": 0,
+    "buildLog": "noninteractive-repairs/frontend-build.log",
+    "buildExit": 0,
+    "testLog": "noninteractive-repairs/frontend-test.log",
+    "scope": "Fresh verification after explanation and restart-harness repairs"
+  },
+  "realServiceAttempts": [
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {},
+      "checks": [],
+      "mysqlVersion": "8.0.26",
+      "errorType": "UnicodeDecodeError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 233
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 64
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 34
+        },
+        {
+          "file": "subprocess.py",
+          "line": 466
+        },
+        {
+          "file": "subprocess.py",
+          "line": 550
+        },
+        {
+          "file": "subprocess.py",
+          "line": 1196
+        }
+      ],
+      "cleanup": {
+        "status": "FAIL",
+        "errorType": "RuntimeError"
+      }
+    },
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {},
+      "checks": [],
+      "errorType": "RuntimeError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 243
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 73
+        }
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "cos-picture"
+      ],
+      "errorType": "RuntimeError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 263
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 374
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 144
+        }
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        },
+        "realWaitRestart": {
+          "status": "PASS",
+          "tasks": 5
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "knowledge-upload-search",
+        "original_1_left_jpg",
+        "original_0_left_jpg",
+        "original_2_left_jpg",
+        "original_13_left_jpg",
+        "original_30_left_jpg"
+      ],
+      "errorType": "HTTPContractError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 298
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 144
+        }
+      ],
+      "httpContract": {
+        "httpStatus": 404,
+        "code": null,
+        "path": "/api/doctor/reviews"
+      },
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "BLOCKED",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        },
+        "realWaitRestart": {
+          "status": "PASS",
+          "tasks": 5
+        },
+        "humanUI": {
+          "status": "BLOCKED",
+          "reason": "Actual patient/doctor UI actions and independent evidence are required"
+        },
+        "structuredExplanation": {
+          "status": "BLOCKED",
+          "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "original_1_left_jpg",
+        "original_0_left_jpg",
+        "original_2_left_jpg",
+        "original_13_left_jpg",
+        "original_30_left_jpg"
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "original_1_left_jpg"
+      ],
+      "errorType": "AssertionError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 272
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 445
+        }
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "FAIL",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        },
+        "realWaitRestart": {
+          "status": "PASS",
+          "tasks": 5
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "original_1_left_jpg: reused prior same-run proof; human progress retained",
+        "original_0_left_jpg: reused prior same-run proof; human progress retained",
+        "original_2_left_jpg: reused prior same-run proof; human progress retained",
+        "original_13_left_jpg: reused prior same-run proof; human progress retained",
+        "original_30_left_jpg: reused prior same-run proof; human progress retained"
+      ],
+      "errorType": "HTTPContractError",
+      "errorLocation": [
+        {
+          "file": "acceptance_runtime.py",
+          "line": 314
+        },
+        {
+          "file": "acceptance_runtime.py",
+          "line": 146
+        }
+      ],
+      "httpContract": {
+        "httpStatus": 401,
+        "code": 40100,
+        "path": "/api/reviews/tasks"
+      },
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "BLOCKED",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        },
+        "realWaitRestart": {
+          "status": "PASS",
+          "tasks": 5
+        },
+        "humanUI": {
+          "status": "BLOCKED",
+          "reason": "Actual patient/doctor UI actions and independent evidence are required"
+        },
+        "structuredExplanation": {
+          "status": "BLOCKED",
+          "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "original_1_left_jpg: reused prior same-run proof; human progress retained",
+        "original_0_left_jpg: reused prior same-run proof; human progress retained",
+        "original_2_left_jpg: reused prior same-run proof; human progress retained",
+        "original_13_left_jpg: reused prior same-run proof; human progress retained",
+        "original_30_left_jpg: reused prior same-run proof; human progress retained"
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    },
+    {
+      "status": "BLOCKED",
+      "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+      "gates": {
+        "realInfrastructure": {
+          "status": "PASS",
+          "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+        },
+        "realWaitRestart": {
+          "status": "PASS",
+          "tasks": 5
+        },
+        "humanUI": {
+          "status": "BLOCKED",
+          "reason": "Actual patient/doctor UI actions and independent evidence are required"
+        },
+        "structuredExplanation": {
+          "status": "BLOCKED",
+          "reason": "Production adapter read timeout after JSON prompt repair; no additional retry"
+        }
+      },
+      "checks": [
+        "real-redis-logout-cookie-replay-invalid",
+        "original_1_left_jpg: reused prior same-run proof; human progress retained",
+        "original_0_left_jpg: reused prior same-run proof; human progress retained",
+        "original_2_left_jpg: reused prior same-run proof; human progress retained",
+        "original_13_left_jpg: reused prior same-run proof; human progress retained",
+        "original_30_left_jpg: reused prior same-run proof; human progress retained"
+      ],
+      "cleanup": {
+        "status": "PASS"
+      }
+    }
+  ],
+  "previousWindowsWeb": {
+    "status": "FAIL",
+    "passed": 821,
+    "failed": 1,
+    "skipped": 43,
+    "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\windows-web-final\\web.xml"
+  },
+  "realReferenceExplanations": {
+    "status": "FAIL",
+    "checks": [
+      {
+        "sample": "1_left.jpg",
+        "disease": "normal",
+        "status": "PASS",
+        "elapsedSeconds": 2.953,
+        "explanationStatus": "VALIDATED",
+        "validation": {
+          "status": "VALIDATED",
+          "issues": [],
+          "policyVersion": "extractive-claim-validator-v1"
+        },
+        "citations": [
+          {
+            "citationId": "doc_2_chunk_0",
+            "documentId": "2",
+            "sourceRevision": 1,
+            "quotedTextDigest": "c12a2e29764586d815eb0c983c5c647f0ac8c18b92f362ce32b9be13ebbbfc03"
+          }
+        ],
+        "claimDiagnostics": [
+          {
+            "citationIds": [
+              "doc_2_chunk_0"
+            ],
+            "textLength": 50,
+            "exactSourceExcerpt": true
+          }
+        ]
+      },
+      {
+        "sample": "0_left.jpg",
+        "disease": "cataract",
+        "status": "PASS",
+        "elapsedSeconds": 2.203,
+        "explanationStatus": "VALIDATED",
+        "validation": {
+          "status": "VALIDATED",
+          "issues": [],
+          "policyVersion": "extractive-claim-validator-v1"
+        },
+        "citations": [
+          {
+            "citationId": "doc_4_chunk_0",
+            "documentId": "4",
+            "sourceRevision": 1,
+            "quotedTextDigest": "a9fca2e55a8b4109e01ae17f54a91ff2b3f5c08a1377aaa4004e78eaf24a738a"
+          },
+          {
+            "citationId": "doc_4_chunk_1",
+            "documentId": "4",
+            "sourceRevision": 1,
+            "quotedTextDigest": "d85f643474fad1b85f4d4475abb7c67cccc8a43d61fc9ac44fa06060b7177929"
+          },
+          {
+            "citationId": "doc_4_chunk_2",
+            "documentId": "4",
+            "sourceRevision": 1,
+            "quotedTextDigest": "e4cd70acb2cdf79f42dea8aa5a268ba69d8e86be9ea40445b43aaf610f208974"
+          }
+        ],
+        "claimDiagnostics": [
+          {
+            "citationIds": [
+              "doc_4_chunk_0"
+            ],
+            "textLength": 79,
+            "exactSourceExcerpt": true
+          }
+        ]
+      },
+      {
+        "sample": "13_left.jpg",
+        "disease": "myopia",
+        "status": "FAIL",
+        "elapsedSeconds": 2.828,
+        "explanationStatus": "REJECTED",
+        "validation": {
+          "status": "REJECTED",
+          "issues": [
+            "UNSUPPORTED_NUMERIC_CLAIM"
+          ],
+          "policyVersion": "extractive-claim-validator-v1"
+        },
+        "citations": [
+          {
+            "citationId": "doc_8_chunk_0",
+            "documentId": "8",
+            "sourceRevision": 1,
+            "quotedTextDigest": "ce21de41dbc53128e0a235bd7435473cdff15bb0559191ddb8e17bde4368cb72"
+          },
+          {
+            "citationId": "doc_8_chunk_3",
+            "documentId": "8",
+            "sourceRevision": 1,
+            "quotedTextDigest": "7ba33abfbf5eafa01f84962299936c284e8f0b025904f6413a7742c24141df6b"
+          },
+          {
+            "citationId": "doc_8_chunk_2",
+            "documentId": "8",
+            "sourceRevision": 1,
+            "quotedTextDigest": "ae0f17f9e1c4a13feabe50ef925e05df584bdf3b82b46a8d37428ad3926ba664"
+          },
+          {
+            "citationId": "doc_8_chunk_1",
+            "documentId": "8",
+            "sourceRevision": 1,
+            "quotedTextDigest": "6f28e6829d96a2c5504b29289d00f52b2fcfa306386ddeb9ce6e9ef18f79c6d3"
+          }
+        ],
+        "claimDiagnostics": [
+          {
+            "citationIds": [
+              "doc_8_chunk_0"
+            ],
+            "textLength": 110,
+            "exactSourceExcerpt": true
+          }
+        ]
+      }
+    ],
+    "scope": "Real MySQL/Chroma/embedding/ExplanationModel and claim validation; no graph resume, publication or human decisions",
+    "cleanup": "PASS",
+    "businessTablesUnchanged": true,
+    "budget": {
+      "llm": {
+        "used": 14,
+        "limit": 50
+      },
+      "embedding": {
+        "used": 37,
+        "limit": 500
+      }
+    }
+  },
+  "realReferenceExplanationEvidence": "20261017T120802Z-reference-explanations-58285e\\result.json",
+  "controlledMySQLConcurrency": {
+    "at": "2026-10-17T10:14:53.370403+00:00",
+    "schema": "eye_worker_issue16_49070b9fa2104a549472babcee9708e2",
+    "mysqlVersion": "8.0.26",
+    "suite": "worker-concurrency",
+    "scope": "Real MySQL and child processes; controlled identity/model/retrieval/explanation; no clinical acceptance",
+    "commands": {
+      "python-upgrade": {
+        "exitCode": 0
+      },
+      "python-inspect": {
+        "exitCode": 0
+      },
+      "mysql-tests": {
+        "exitCode": 0
+      }
+    }
+  },
+  "modelResults": [
+    {
+      "sample": "1_left.jpg",
+      "workflowId": "dad94b0f755f421f84cbb708f56bb898",
+      "referenceLabels": [
+        "normal"
+      ],
+      "observedTop1": "normal",
+      "uncalibratedSoftmaxPercent": 45.427924394607544,
+      "quality": "REVIEW",
+      "referenceMismatch": false,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "52be539a84b245ceb371b5fb49c5ad49",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "sample": "2_left.jpg",
+      "workflowId": "44ded32cd0744622a10ee98db08b78eb",
+      "referenceLabels": [
+        "diabetes",
+        "other"
+      ],
+      "observedTop1": "normal",
+      "uncalibratedSoftmaxPercent": 36.67117357254028,
+      "quality": "REVIEW",
+      "referenceMismatch": true,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "6532e6462230498298232e9cebb2aa95",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "sample": "13_left.jpg",
+      "workflowId": "8e89a7a43d27410a9ece5887b51d8133",
+      "referenceLabels": [
+        "myopia"
+      ],
+      "observedTop1": "myopia",
+      "uncalibratedSoftmaxPercent": 63.67649435997009,
+      "quality": "REVIEW",
+      "referenceMismatch": false,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "6b99f16bcb834a3eb0b1dd95124a2c79",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "sample": "30_left.jpg",
+      "workflowId": "bb1f593106254d23be967c4d0424deb1",
+      "referenceLabels": [
+        "glaucoma",
+        "other"
+      ],
+      "observedTop1": "normal",
+      "uncalibratedSoftmaxPercent": 38.686490058898926,
+      "quality": "REVIEW",
+      "referenceMismatch": true,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "7af25a97b8e044339043afebe0c102cd",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    },
+    {
+      "sample": "0_left.jpg",
+      "workflowId": "de9914df4fce49edb303a491e82905f8",
+      "referenceLabels": [
+        "cataract"
+      ],
+      "observedTop1": "cataract",
+      "uncalibratedSoftmaxPercent": 87.67194747924805,
+      "quality": "REVIEW",
+      "referenceMismatch": false,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "ebe5473a19a74b3d9619ccb92f9029be",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    }
+  ],
+  "additionalModelResults": [
+    {
+      "sample": "0_left.jpg",
+      "workflowId": "ddd7005b6b53453998bb34c3364d255f",
+      "referenceLabels": [
+        "cataract"
+      ],
+      "observedTop1": "cataract",
+      "uncalibratedSoftmaxPercent": 87.67194747924805,
+      "quality": "REVIEW",
+      "referenceMismatch": false,
+      "calibration": "NOT_CALIBRATED",
+      "envelopeId": "022d9849f4124cdf9d3d55b1013f03b3",
+      "weightSha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531"
+    }
+  ],
+  "clinicalAccuracy": "OUT_OF_SCOPE",
+  "modelCalibration": "NOT_CALIBRATED",
+  "manualWindow": "ENDED",
+  "human": {
+    "submittedReviews": 2,
+    "saveConfirmations": 0,
+    "formalRecords": 0,
+    "remainingParticipation": {
+      "status": "DEFERRED",
+      "participantStatement": "人工验收先搁置，你继续处理结构化解释超时和全量测试失败，把不需要我操作的部分完成。",
+      "date": "2026-10-17",
+      "scope": "Only manual acceptance is deferred; noninteractive repairs remain authorized",
+      "decisionsDelegated": false,
+      "priorEvidence": "manual-participation.json"
+    },
+    "status": "BLOCKED",
+    "evidence": "20261017T122303-observation.json"
+  },
+  "cleanup": {
+    "status": "PASS",
+    "processManifests": 10,
+    "explicitRegistrationRecovery": [
+      "20261017T095740Z-automated-c0d0fd\\cleanup-recovery.txt"
+    ]
+  },
+  "exclusions": [
+    "Linux",
+    "Docker/WSL",
+    "clinical effectiveness",
+    "production cutover",
+    "merge/push"
+  ],
+  "acceptanceCriteria": [
+    {
+      "id": "AC-01",
+      "original": "聊天和上传分别发起任务，均经同一工作流服务；同幂等请求只返回同一任务，页面查询不触发新推理。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-02",
+      "original": "无登录、跨用户会话、跨用户任务、跨用户审批和越权工具调用均被拒绝；不能靠传入 userId 扩权。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-03",
+      "original": "当前会话第二轮能使用已提供信息；另一会话的症状不自动进入本次病例，历史查询显示可追溯来源。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-04",
+      "original": "图片通过、拒绝与需质量复核分别走正确路径；质量和影像节点共享同一已提交推理包。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-05",
+      "original": "缺权重、来源校验失败或推理异常不产生成功诊断；技术失败不伪装成安全拒绝或医生复核。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "controlled failure regressions; real strict weight loading",
+      "status": "PASS",
+      "source": "windows-web-repaired/web.xml",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-06",
+      "original": "检索仅使用允许的可见性、审核状态和受控元数据；不足时至多改写一次，范围不扩大。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-07",
+      "original": "来源不合格、声明校验拒绝和解释扣留均不会发布草稿；COMPLETED 与 COMPLETED_LIMITED 符合解释不变量。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-08",
+      "original": "补充输入中断真实等待用户；再次提交后恢复同一交互与任务，不重复处理原输入直至循环耗尽。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-09",
+      "original": "用户批准前不执行拟保存操作，拒绝后仍无写入；批准合法且内容版本匹配后只保存一次。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-10",
+      "original": "重复确认、过期批准、修改内容后批准、跨用户批准和恢复后重放均不会导致非法或重复写入。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-11",
+      "original": "两类医生复核执行各自的决策矩阵；自审、未领取、过期版本和不兼容决策被拒绝；用户确认不能替代复核。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-12",
+      "original": "服务在任务执行中、等待用户确认和等待医生复核时分别重启；恢复后状态一致、审批仍有效且已完成结果不重复提交。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-13",
+      "original": "模拟重复任务、租约失效、两个执行者竞争及重试耗尽；过期执行者不能提交，新任务恢复不复制业务路由。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real isolated MySQL with controlled model/identity and fault branches",
+      "status": "PASS",
+      "source": "controlled-worker-concurrency/results.json",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-14",
+      "original": "实际 SSE 可展示响应和任务事件；断连重连后可从服务端恢复状态，正常结束与错误不会留下虚假的完成界面。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-15",
+      "original": "原业务与 Agent 接口契约回归覆盖 HTTP/SSE 真实响应、分页、字段类型、Long/日期格式、权限及旧同步诊断行为。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "controlled HTTP contract regressions plus real login/ID/upload seams",
+      "status": "PASS",
+      "source": "windows-web-repaired/web.xml",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-16",
+      "original": "使用真实 .doc 和包含有效表格内容的 .docx，经上传、抽取、入库、embedding 和检索得到有效内容；明确区分空文档与解析失败。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real COS/embedding/Chroma DOC and DOCX; controlled invalid/empty files",
+      "status": "PASS",
+      "source": "*-extra-http.json; windows-web-repaired/web.xml",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-17",
+      "original": "真实 MySQL 验证事务、版本冲突、租约与受影响行数语义；不能用 SQLite 通过替代这些验证。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real MySQL lease/fencing/version/transaction regression, controlled model",
+      "status": "PASS",
+      "source": "controlled-worker-concurrency/results.json",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-18",
+      "original": "真实 Chroma 与 embedding 验证写入、检索、访问范围和引用；过渡阶段额外验证旧 Java 读端兼容。",
+      "currentBoundary": "ADR 0001 and 2026-10-17 plan supersede JVM requirements; Windows direct API/CORS scope, no production release",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-19",
+      "original": "真实 Java 会话服务验证登录、登出、鉴权转发和失效；数据库升级后 Java 仍能启动，Nginx 无端口冲突或代理回环。",
+      "currentBoundary": "ADR 0001 and 2026-10-17 plan supersede JVM requirements; Windows direct API/CORS scope, no production release",
+      "evidenceType": "Python Cookie/Redis replacement; old Java results remain historical",
+      "status": "PASS",
+      "source": "*/real-services.json",
+      "limitation": "Result limited to the listed evidence layer; no clinical or production claim"
+    },
+    {
+      "id": "AC-20",
+      "original": "从文档可复现启动、健康检查、逐项切流和回退；回退不遗失已创建任务或审批，也不让两套服务同时执行同一任务。",
+      "currentBoundary": "ADR 0001 and 2026-10-17 plan supersede JVM requirements; Windows direct API/CORS scope, no production release",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-21",
+      "original": "前端端到端覆盖上传、聊天绑定任务、拒绝/批准保存、补充说明、医生复核和刷新恢复；必要改动通过类型检查与构建。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    },
+    {
+      "id": "AC-22",
+      "original": "实现具有生产可调用的图注册、任务执行器和完整任务终态；只有单元测试中的图能够运行不算通过。",
+      "currentBoundary": "Original business requirement; rare/abnormal branches use separately labelled controlled regression",
+      "evidenceType": "real partial HTTP/model evidence + controlled regression; human closure pending",
+      "status": "BLOCKED",
+      "source": "*/real-services.json; *-observation.json; windows-web-repaired/web.xml",
+      "limitation": "Real structured explanation, actual human decisions, or full scenario closure remains unproven"
+    }
+  ],
+  "referenceGovernance": {
+    "status": "PASS",
+    "evidence": "20261017T114123Z-save-preparation-66923b\\reference-governance-readback.json",
+    "approvedDocumentIds": [
+      "2",
+      "4",
+      "8"
+    ],
+    "scope": "Participant-confirmed review recorded through admin API; not human admin UI evidence"
+  },
+  "blockers": [
+    "Actual patient and doctor UI actions and separate approve/refuse-save evidence are not complete",
+    "Image deidentification confirmation pending for external supplementary sample upload",
+    "Real reference explanation remains correctly withheld by claim policy: myopia",
+    "Remaining human acceptance deferred at participant request"
+  ]
+}

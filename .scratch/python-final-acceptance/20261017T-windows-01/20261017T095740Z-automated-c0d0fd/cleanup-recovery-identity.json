@@ -1,0 +1,7 @@
+{
+  "ProcessId": 8712,
+  "Name": "redis-server.exe",
+  "ExecutablePath": "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe",
+  "CommandLine": "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe --bind 127.0.0.1 --port 60859 --dir D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\redis --appendonly yes --save \"\"",
+  "CreationDate": "2026-10-17T17:57:56.038806+08:00"
+}

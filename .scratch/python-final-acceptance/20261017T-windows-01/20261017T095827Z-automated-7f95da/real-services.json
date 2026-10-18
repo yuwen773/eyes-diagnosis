@@ -1,0 +1,20 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {},
+  "checks": [],
+  "errorType": "RuntimeError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 243
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 73
+    }
+  ],
+  "cleanup": {
+    "status": "PASS"
+  }
+}

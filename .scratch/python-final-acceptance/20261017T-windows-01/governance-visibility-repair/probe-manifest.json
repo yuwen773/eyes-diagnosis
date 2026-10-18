@@ -1,0 +1,8 @@
+{
+  "schema": "eye_pyhandoff_f81a5e373b4b41cf86d8a4c39edc99e3",
+  "scope": "Synthetic governance fixtures; never participant-approved documents",
+  "apiEntry": "scripts/run_service.py api",
+  "apiPort": 8080,
+  "providerRequests": 0,
+  "retainedSchema": true
+}

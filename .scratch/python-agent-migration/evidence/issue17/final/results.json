@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-14T08:57:45.758707+00:00",
+  "schema": "eye_human_wait_issue17_c7a60434c762473f941554c817194cb6",
+  "mysqlVersion": "8.0.26",
+  "suite": "human-wait-restart",
+  "scope": "Real MySQL and child processes; synthetic Java identity/model/retrieval/explanation; no clinical acceptance",
+  "commands": {
+    "flyway-migrate": {
+      "exitCode": 0
+    },
+    "flyway-validate": {
+      "exitCode": 0
+    },
+    "mysql-tests": {
+      "exitCode": 1
+    }
+  }
+}

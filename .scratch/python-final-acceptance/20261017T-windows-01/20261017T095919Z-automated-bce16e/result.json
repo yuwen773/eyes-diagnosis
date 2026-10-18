@@ -1,0 +1,45 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "cos-picture"
+  ],
+  "errorType": "RuntimeError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 263
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 374
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 144
+    }
+  ],
+  "cleanup": {
+    "status": "PASS"
+  },
+  "phase": "automated",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095919Z-automated-bce16e",
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 28,
+      "limit": 500
+    }
+  }
+}

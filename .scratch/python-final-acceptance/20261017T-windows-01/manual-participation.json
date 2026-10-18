@@ -1,0 +1,10 @@
+{
+  "status": "NOT_EXECUTED",
+  "reason": "Participant declined further manual acceptance actions",
+  "participantStatement": "我不想做",
+  "date": "2026-10-17",
+  "scope": "Remaining patient/doctor UI actions and approve/refuse-save scenarios",
+  "completedEvidenceRetained": "Two submitted quality reviews and manually confirmed refresh recovery remain valid",
+  "decisionsDelegated": false,
+  "nextAction": "No further manual action requested in this run; preserve original waits and data"
+}

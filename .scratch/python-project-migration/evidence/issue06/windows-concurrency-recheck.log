@@ -1,0 +1,4 @@
+python-upgrade: passed
+python-inspect: passed
+mysql-tests: passed
+Evidence: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-project-migration\evidence\issue06\windows-concurrency-recheck

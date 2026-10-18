@@ -1,0 +1,26 @@
+{
+  "atUtc": "2026-10-17T04:48:58.986433+00:00",
+  "prefix": "eye-closeout08-8a29422252",
+  "head": "63931d7bd321b126eb3ee2111af5693e9fce1014",
+  "status": "FAIL",
+  "phases": {
+    "build": {
+      "exitCode": 0,
+      "seconds": 9.11
+    },
+    "image": {
+      "exitCode": 0,
+      "seconds": 0.296
+    },
+    "clock": {
+      "exitCode": 0,
+      "seconds": 30.125
+    },
+    "linux-full": {
+      "exitCode": 1,
+      "seconds": 532.813
+    }
+  },
+  "productionOrPush": false,
+  "error": "RuntimeError: linux-full failed; see phase log"
+}

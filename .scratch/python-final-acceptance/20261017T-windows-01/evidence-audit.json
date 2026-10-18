@@ -1,0 +1,8 @@
+{
+  "secretScan": "PASS",
+  "filesScanned": 434,
+  "findings": [],
+  "preexistingTrackedDiffs": "PASS",
+  "changedPreexistingDiffs": [],
+  "privateRuntime": "Excluded from public artifacts and Git; retained on this machine"
+}

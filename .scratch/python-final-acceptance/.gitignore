@@ -1,0 +1,10 @@
+# Local retained databases, vectors, session state and fixture passwords.
+*/runtime/
+*/run.lock
+# Provider call counter (local, contains live usage state).
+*.sqlite3
+# Disposable test databases and short-path copies of the frozen release ZIP.
+*.db
+mysql-temp/
+# pytest basetemp directories created by the acceptance probes.
+/sw18-*/

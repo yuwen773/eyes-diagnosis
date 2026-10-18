@@ -1,0 +1,9 @@
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+{
+  "status": "PASS",
+  "finalAcceptance": "BLOCKED",
+  "workflows": 5,
+  "formalDiagnosisCount": 0
+}

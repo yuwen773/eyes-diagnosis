@@ -1,0 +1,8 @@
+
+> diagnosis-frontend@0.0.0 dev
+> vite --host 127.0.0.1 --port 15382 --strictPort
+
+
+  VITE v5.4.18  ready in 584 ms
+
+  ➜  Local:   http://127.0.0.1:15382/

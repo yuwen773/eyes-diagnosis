@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+Using Python 3.11.17 environment at: algorithm\.venv-baseline
+Checked 134 packages in 25ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 7 source files
+........................................................................ [  8%]
+.........s....ssss....ssssssssssssssssss................................ [ 16%]
+........................................................................ [ 24%]
+...................................................................ssss. [ 33%]
+........................................................................ [ 41%]
+........................................................................ [ 49%]
+................................s..sss.................................. [ 57%]
+........................................................................ [ 66%]
+.........................................................sssssssssss.... [ 74%]
+........................................................................ [ 82%]
+........................................................................ [ 91%]
+............................................s........................... [ 99%]
+......                                                                   [100%]
+============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+827 passed, 43 skipped, 1 warning in 756.74s (0:12:36)

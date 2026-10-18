@@ -1,0 +1,191 @@
+"""Ticket06: isolated real MySQL/Redis/Chroma, Python API/Worker acceptance.
+
+Creates only random local schemas; retains evidence and data. Providers are
+separate gates. Historical issue19 results are never overwritten.
+"""
+
+import argparse
+import asyncio
+from contextlib import ExitStack
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import shutil
+import socket
+import subprocess
+import sys
+import time
+import traceback
+from uuid import uuid4
+
+import httpx
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+class Blocked(RuntimeError):
+    pass
+
+
+def gate(status, detail):
+    return {"status": status, "detail": detail}
+
+
+def main():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--embedding-mode", choices=["real", "controlled"], default="controlled")
+    args = parser.parse_args()
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    report = {"ticket": "06", "timestampUtc": datetime.now(timezone.utc).isoformat(), "status": "BLOCKED",
+              "checks": [], "gates": {name: gate("NOT_VERIFIED", "Separate acceptance boundary") for name in
+              ["infrastructure", "orchestration", "mysqlSemantics", "realEmbedding", "realClassifier", "realLLM", "realCOS", "clinical"]}}
+    try:
+        value = os.getenv("REAL_SERVICES_MYSQL_ADMIN_URL")
+        if not value:
+            raise Blocked("REAL_SERVICES_MYSQL_ADMIN_URL is required")
+        target = make_url(value)
+        if target.drivername != "mysql+pymysql" or target.database or target.host not in {"127.0.0.1", "localhost"}:
+            raise Blocked("Use a local MySQL admin URL without a database")
+        execute(args, target, report)
+        report["status"] = "PASS_WITH_LIMITATIONS"
+    except Blocked as exc:
+        report["reason"] = str(exc)
+    except Exception as exc:
+        report["status"] = "FAIL"
+        report["reason"] = type(exc).__name__ + "; inspect private runtime logs"
+        report["errorLocation"] = [{"file": Path(f.filename).name, "line": f.lineno} for f in traceback.extract_tb(exc.__traceback__)]
+    (args.output_dir / "results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
+    return {"PASS_WITH_LIMITATIONS": 0, "FAIL": 1, "BLOCKED": 2}[report["status"]]
+
+
+def execute(args, target, report):
+    redis = os.getenv("REAL_SERVICES_REDIS_SERVER") or shutil.which("redis-server")
+    if not redis or not Path(redis).is_file():
+        raise Blocked("Set REAL_SERVICES_REDIS_SERVER to an installed Redis executable")
+    env = os.environ.copy()
+    env.pop("JAVA_HOME", None)
+    if os.name == "nt":
+        env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + str(Path(os.environ["SystemRoot"]) / "System32")
+    schema = "eye_python_issue06_" + uuid4().hex
+    runtime = ROOT / ".scratch/baseline-runtime" / schema
+    runtime.mkdir(parents=True)
+    report.update(schema=schema, runtime=str(runtime))
+    admin = create_engine(target)
+    with admin.begin() as db:
+        report["mysqlVersion"] = db.exec_driver_sql("SELECT VERSION()").scalar_one()
+        db.exec_driver_sql(f"CREATE DATABASE `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    admin.dispose()
+    env["MIGRATION_MYSQL_URL"] = target.set(database=schema).render_as_string(hide_password=False)
+
+    def run(name, command, child_env=env, timeout=360):
+        result = subprocess.run([str(c) for c in command], cwd=ROOT / "algorithm", env=child_env,
+                                capture_output=True, timeout=timeout)
+        (runtime / (name + ".log")).write_bytes(result.stdout + result.stderr)
+        assert result.returncode == 0, name + " failed; inspect private logs"
+
+    run("python-upgrade", [sys.executable, "-m", "web.migrations", "upgrade"])
+    run("python-inspect", [sys.executable, "-m", "web.migrations", "inspect"])
+    engine = create_engine(target.set(database=schema))
+    password = secrets.token_urlsafe(24)
+    from web.security import encode
+    with engine.begin() as db:
+        for i, (account, role) in enumerate((("alice", "user"), ("bob", "user"), ("doctor", "doctor"), ("admin", "admin"))):
+            db.execute(text("INSERT INTO t_user(id,userAccount,userPassword,userName,userRole) VALUES (:id,:account,:password,:name,:role)"),
+                {"id": 8 if account == "bob" else 9007199254740993 + i, "account": "issue19_" + account,
+                 "password": encode(password), "name": "Acceptance " + account, "role": role})
+        db.execute(text("INSERT INTO t_news(id,title,userId,content,summary,coverImg,status,publishTime) VALUES "
+            "(9007199254741000,'Issue19',9007199254740996,:content,:summary,'https://issue19.invalid/cover.png',1,'2026-01-02 10:00:00')"),
+            {"content": "Synthetic news for compatibility regression only.", "summary": "Synthetic news for compatibility"})
+    real_embedding = False
+    if args.embedding_mode == "real":
+        key = os.getenv("DASHSCOPE_API_KEY", "").strip()
+        if key:
+            try:
+                from web.vectorstore import DashScopeEmbedder
+                asyncio.run(DashScopeEmbedder(key, os.getenv("REAL_SERVICES_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+                                              "text-embedding-v3").embed(["acceptance preflight"]))
+                real_embedding = True
+            except Exception:
+                report["gates"]["realEmbedding"] = gate("BLOCKED", "Provider preflight failed; controlled vectors used")
+        else:
+            report["gates"]["realEmbedding"] = gate("BLOCKED", "Missing credentials; controlled vectors used")
+    redis_port, chroma_port, api_port, provider_port = [free_port() for _ in range(4)]
+    env.update(MYSQL_HOST=target.host, MYSQL_PORT=str(target.port or 3306), MYSQL_DATABASE=schema,
+        MYSQL_USER=target.username or "", MYSQL_PASSWORD=target.password or "", REDIS_HOST="127.0.0.1", REDIS_PORT=str(redis_port),
+        REDIS_DB="8", REDIS_PASSWORD="", CHROMA_HOST="127.0.0.1", CHROMA_PORT=str(chroma_port),
+        CHROMA_COLLECTION="diagnosis-knowledge", CHROMA_TENANT="default_tenant", CHROMA_DATABASE="default_database",
+        DASHSCOPE_BASE_URL=f"http://127.0.0.1:{provider_port}/v1", REAL_SERVICES_TRACE=str(runtime / "calls.jsonl"),
+        REAL_SERVICES_OBJECTS=str(runtime / "objects"), REAL_SERVICES_EMBEDDING="real" if real_embedding else "controlled",
+        MODEL_WEIGHTS_PATH="", MODEL_WEIGHTS_SHA256="", EMBEDDING_MODEL="text-embedding-v3", COS_HOST="https://issue19.invalid",
+        MCP_ALLOWED_ORIGINS="", CORS_ALLOWED_ORIGINS="", CHAT_MODEL="qwen3-vl-plus", QUALITY_GATE_MODE="observe",
+        SESSION_COOKIE_NAME="EYE_SESSION", SESSION_COOKIE_SECURE="false", SESSION_REDIS_PREFIX="eye:py:session:")
+    if not real_embedding:
+        env["DASHSCOPE_API_KEY"] = "controlled-acceptance"
+    with ExitStack() as stack:
+        stack.callback(engine.dispose)
+
+        def start(name, command, url=None):
+            log = stack.enter_context((runtime / (name + "-" + uuid4().hex[:6] + ".log")).open("wb"))
+            child = subprocess.Popen([str(c) for c in command], cwd=ROOT / "algorithm", env=env,
+                                     stdout=log, stderr=log, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            stack.callback(stop_child, child)
+            report.setdefault("processes", []).append({"role": name, "pid": child.pid})
+            if url:
+                wait_http(child, url)
+            return child
+
+        start("redis", [redis, "--bind", "127.0.0.1", "--port", redis_port, "--save", "", "--appendonly", "no", "--dir", runtime])
+        start("chroma", [sys.executable, "-c", "from chromadb.cli.cli import app; app()", "run", "--host", "127.0.0.1", "--port", chroma_port,
+                         "--path", runtime / "chroma"], f"http://127.0.0.1:{chroma_port}/api/v2/heartbeat")
+        import chromadb
+        from redis import Redis
+        store = chromadb.HttpClient(host="127.0.0.1", port=chroma_port)
+        collection = store.get_or_create_collection("diagnosis-knowledge")
+        redis_client = Redis(host="127.0.0.1", port=redis_port, db=8, protocol=2)
+        stack.callback(redis_client.close)
+        assert redis_client.ping()
+        report["redisVersion"] = redis_client.info()["redis_version"]
+        report["chromaVersion"] = store.get_version()
+        start("provider", [sys.executable, "-m", "web.tests.real_services_process", "provider", "--port", provider_port],
+              f"http://127.0.0.1:{provider_port}/health")
+        api_command = [sys.executable, "-m", "web.tests.real_services_process", "api", "--port", api_port]
+        api_child = start("api", api_command, f"http://127.0.0.1:{api_port}/ready")
+
+        def restart_api():
+            nonlocal api_child
+            stop_child(api_child)
+            api_child = start("api-restart", api_command, f"http://127.0.0.1:{api_port}/ready")
+
+        def worker(mode="pass"):
+            run("worker-" + mode + "-" + uuid4().hex[:6],
+                [sys.executable, "-m", "web.tests.real_services_process", "worker", "--mode", mode])
+
+        clients = {account: stack.enter_context(httpx.Client(base_url=f"http://127.0.0.1:{api_port}", timeout=150, trust_env=False))
+                   for account in ("alice", "bob", "doctor", "admin")}
+        for account, client in clients.items():
+            envelope(client.post("/api/user/login", json={"userAccount": "issue19_" + account, "userPassword": password}))
+            assert "EYE_SESSION" in client.cookies
+        assert redis_client.keys("eye:py:session:*") and not redis_client.keys("spring:session:sessions:*")
+        report["gates"]["infrastructure"] = gate("PASS", "Python migration, real MySQL/Redis/Chroma, independent API/Worker")
+        verify_http(clients, engine, collection, worker, report, restart_api)
+        alice = clients["alice"]
+        old = dict(alice.cookies)
+        envelope(alice.post("/api/user/logout"))
+        alice.cookies.update(old)
+        envelope(alice.get("/api/user/get/login"), code=40100)
+        assert alice.get("/api/diagnosis/workflows/unknown/events").status_code == 401
+        report["checks"].append("real-redis-logout-cookie-replay-and-sse-revocation")
+        report["gates"]["orchestration"] = gate("PASS", "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM")
+        if real_embedding:
+            report["gates"]["realEmbedding"] = gate("PASS", "Real provider upload/query and Python large-ID owner filtering")
+    for suite in ("worker-concurrency", "human-wait-restart"):
+        run(suite, [sys.executable, "-m", "web.verify_worker_concurrency", "--suite", suite, "--output-dir", runtime / suite],
+            {**env, "WORKER_TEST_MYSQL_ADMIN_URL": target.render_as_string(hide_password=False)}, timeout=600)
+    report["gates"]["mysqlSemantics"] = gate("PASS", "Real MySQL leases/fencing/transactions/concurrency and cross-process human wait recovery")

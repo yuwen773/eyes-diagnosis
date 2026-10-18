@@ -1,0 +1,20 @@
+INFO:     Started server process [48488]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53313 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53326 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53329 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51197 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "GET /api/reviews/tasks/2b475ca46ba945b19a9b5f8a9d37f365/image HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56652 - "GET /api/agent/tool-confirmations?sessionId=b8c67bc64ad443b681cdb291309c5503 HTTP/1.1" 200 OK

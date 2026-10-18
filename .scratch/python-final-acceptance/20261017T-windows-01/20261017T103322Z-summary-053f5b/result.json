@@ -1,0 +1,25 @@
+{
+  "status": "BLOCKED",
+  "summary": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261017T103322Z-summary-053f5b\\report.md",
+  "blockers": [
+    "Production structured explanation adapter timed out after JSON-mode prompt repair",
+    "Actual patient and doctor UI actions and separate approve/refuse-save evidence are not complete",
+    "Reference governance is pending actual review; no automatic APPROVED flag",
+    "Image deidentification confirmation pending for external supplementary sample upload",
+    "Final Windows Web regression has not passed",
+    "Owned runtime cleanup is not complete"
+  ],
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  },
+  "phase": "summary",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T103322Z-summary-053f5b"
+}

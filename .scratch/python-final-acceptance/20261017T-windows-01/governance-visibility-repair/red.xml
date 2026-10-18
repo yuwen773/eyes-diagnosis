@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.782" timestamp="2026-10-17T22:42:40.702055+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_knowledge_durability" name="test_approval_is_visible_to_independent_read_when_success_body_is_sent" time="0.549"><failure message="AssertionError: assert (0, 'PENDING'...ATE_USER', []) == (1, 'APPROVED...', ['myopia'])&#10;  &#10;  At index 0 diff: 0 != 1&#10;  Use -v to get more diff">algorithm\web\tests\test_knowledge_durability.py:69: in test_approval_is_visible_to_independent_read_when_success_body_is_sent
+    assert (observed[0]["governanceVersion"], observed[0]["reviewStatus"],
+E   AssertionError: assert (0, 'PENDING'...ATE_USER', []) == (1, 'APPROVED...', ['myopia'])
+E     
+E     At index 0 diff: 0 != 1
+E     Use -v to get more diff</failure></testcase></testsuite></testsuites>

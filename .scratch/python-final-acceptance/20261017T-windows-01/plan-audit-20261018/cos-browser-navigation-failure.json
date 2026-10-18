@@ -1,0 +1,6 @@
+{
+  "status": "FAIL",
+  "scope": "top-level navigation only",
+  "error": "Page.goto: Download is starting",
+  "interpretation": "Does not establish embedded image behavior; next probe uses the app image-element boundary"
+}

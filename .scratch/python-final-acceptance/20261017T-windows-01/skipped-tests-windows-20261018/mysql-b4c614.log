@@ -1,0 +1,114 @@
+........................EEEEEEEEEEE.                                     [100%]
+=================================== ERRORS ====================================
+_ ERROR at setup of test_frozen_wait_upgrade_real_login_and_process_restart[quality] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_frozen_wait_upgrade_real_login_and_process_restart[final] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_frozen_wait_upgrade_real_login_and_process_restart[save] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_frozen_wait_upgrade_real_login_and_process_restart[supplement] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_expired_save_survives_upgrade_without_formal_record __
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_incompatible_wait_is_preserved_across_upgrade[graph_version] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_incompatible_wait_is_preserved_across_upgrade[graph_hash] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_incompatible_wait_is_preserved_across_upgrade[action_version] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_incompatible_wait_is_preserved_across_upgrade[supplement] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+_ ERROR at setup of test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor] _
+algorithm\web\tests\test_python_wait_recovery.py:69: in recovery_runtime
+    frozen.extractall(source)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1741: in extractall
+    self._extract_member(zipinfo, path, pwd)
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\zipfile.py:1803: in _extract_member
+    open(targetpath, "wb") as target:
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\mysql-temp\\python-wait-release0\\baseline\\deploy\\python-migrations\\legacy\\V12__create_workflow_result_and_review_tables.sql'
+=========================== short test summary info ===========================
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor]
+ERROR algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor]
+25 passed, 11 errors in 293.17s (0:04:53)

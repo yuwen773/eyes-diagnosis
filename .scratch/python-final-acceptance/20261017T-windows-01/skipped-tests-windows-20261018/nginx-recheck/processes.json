@@ -1,0 +1,32 @@
+[
+  {
+    "role": "nginx",
+    "pid": 48952,
+    "identity": {
+      "ProcessId": 48952,
+      "ParentProcessId": 18648,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m pytest algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python] algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python -q --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-recheck\\temp --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-recheck\\nginx.xml",
+      "CreationDate": "2026-10-18T11:59:30.797925+08:00"
+    },
+    "command": [
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active]",
+      "algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain]",
+      "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy]",
+      "algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python]",
+      "algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python",
+      "-q",
+      "--tb=short",
+      "--basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-recheck\\temp",
+      "--junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-recheck\\nginx.xml"
+    ],
+    "log": "nginx-5b3b0e.log",
+    "cleanup": "PASS"
+  }
+]

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="4" time="212.940" timestamp="2026-10-16T17:13:06.814735+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_python_wait_recovery" name="test_frozen_wait_upgrade_real_login_and_process_restart[quality]" time="19.166"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-project-migration\\evidence\\issue06\\browser\\test_frozen_wait_upgrade_real_0-before-quality.json'">recovery_case = (&lt;web.tests.test_human_wait_restart.RestartCase object at 0x000001D64841C250&gt;, 'mysql+pymysql://root:yuwen123@127.0.0.1:3307/eye_human_wait_issue17_1c8da254186f4603883ff6f94b7d7945')
+kind = 'quality'
+
+    @pytest.mark.parametrize("kind", ["quality", "final", "save", "supplement"])
+    def test_frozen_wait_upgrade_real_login_and_process_restart(recovery_case, kind):
+        case, url = recovery_case
+        thread = "recovery-" + uuid4().hex
+        with signed_api(case) as client:
+            workflow_id = start(client)
+            case.worker(kind if kind in {"quality", "final"} else "pass")
+            original = view(client, workflow_id)
+            assert "event: done" in send(client, thread=thread, workflowId=workflow_id).text
+            if kind == "save":
+                wait = client.post(path(workflow_id), json=requested(original)).json()["data"]
+            elif kind == "supplement":
+                wait = supplement_event(request_supplement(client, workflow_id, thread=thread))
+            else:
+                login(client, "doctor")
+                task = next(row for row in client.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == workflow_id)
+                wait_url = f"/api/reviews/tasks/{task['reviewTaskId']}"
+                wait = client.get(wait_url).json()["data"]
+&gt;           sample(case, url, kind, workflow_id, wait)
+
+algorithm\web\tests\test_python_wait_recovery.py:191: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+algorithm\web\tests\test_python_wait_recovery.py:150: in sample
+    shutil.copyfile(file, destination)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+src = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-941/test_frozen_wait_upgrade_real_0/before-quality.json')
+dst = WindowsPath('D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-project-migration/evidence/issue06/browser/test_frozen_wait_upgrade_real_0-before-quality.json')
+follow_symlinks = True
+
+    def copyfile(src, dst, *, follow_symlinks=True):
+        """Copy data from src to dst in the most efficient way possible.
+    
+        If follow_symlinks is not set and src is a symbolic link, a new
+        symlink will be created instead of copying the file it points to.
+    
+        """
+        sys.audit("shutil.copyfile", src, dst)
+    
+        if _samefile(src, dst):
+            raise SameFileError("{!r} and {!r} are the same file".format(src, dst))
+    
+        file_size = 0
+        for i, fn in enumerate([src, dst]):
+            try:
+                st = _stat(fn)
+            except OSError:
+                # File most likely does not exist
+                pass
+            else:
+                # XXX What about other special files? (sockets, devices...)
+                if stat.S_ISFIFO(st.st_mode):
+                    fn = fn.path if isinstance(fn, os.DirEntry) else fn
+                    raise SpecialFileError("`%s` is a named pipe" % fn)
+                if _WINDOWS and i == 0:
+                    file_size = st.st_size
+    
+        if not follow_symlinks and _islink(src):
+            os.symlink(os.readlink(src), dst)
+        else:
+            with open(src, 'rb') as fsrc:
+                try:
+&gt;                   with open(dst, 'wb') as fdst:
+                         ^^^^^^^^^^^^^^^
+E                   FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-project-migration\\evidence\\issue06\\browser\\test_frozen_wait_upgrade_real_0-before-quality.json'
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\shutil.py:258: FileNotFoundError</failure></testcase><testcase classname="algorithm.web.tests.test_python_wait_recovery" name="test_frozen_wait_upgrade_real_login_and_process_restart[final]" time="72.072" /><testcase classname="algorithm.web.tests.test_python_wait_recovery" name="test_frozen_wait_upgrade_real_login_and_process_restart[save]" time="55.120" /><testcase classname="algorithm.web.tests.test_python_wait_recovery" name="test_frozen_wait_upgrade_real_login_and_process_restart[supplement]" time="62.273" /></testsuite></testsuites>

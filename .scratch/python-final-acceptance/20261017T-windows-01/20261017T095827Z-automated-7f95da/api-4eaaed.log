@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\run_service.py", line 6, in <module>
+    from web.delivery import api
+ModuleNotFoundError: No module named 'web'

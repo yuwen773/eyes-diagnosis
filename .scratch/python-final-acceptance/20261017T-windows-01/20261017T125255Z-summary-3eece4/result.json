@@ -1,0 +1,22 @@
+{
+  "status": "BLOCKED",
+  "summary": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261017T125255Z-summary-3eece4\\report.md",
+  "blockers": [
+    "Actual patient and doctor UI actions and separate approve/refuse-save evidence are not complete",
+    "Image deidentification confirmation pending for external supplementary sample upload",
+    "Remaining human acceptance deferred at participant request"
+  ],
+  "budget": {
+    "llm": {
+      "used": 20,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "phase": "summary",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T125255Z-summary-3eece4"
+}

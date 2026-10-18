@@ -1,0 +1,3 @@
+{"phase": "nginx", "exitCode": 1, "selectedCases": 7, "xml": "nginx.xml"}
+{"phase": "mysql", "exitCode": 1, "selectedCases": 36, "xml": "mysql.xml"}
+Replay batches completed; inspect XML for per-case results

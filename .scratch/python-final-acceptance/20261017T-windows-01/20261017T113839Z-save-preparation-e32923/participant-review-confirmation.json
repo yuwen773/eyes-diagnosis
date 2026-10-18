@@ -1,0 +1,6 @@
+{
+  "source": "User message in this conversation on 2026-10-17",
+  "statement": "三份参考资料都已审核通过，继续准备后续保存验收，告诉我患者和医生接下来分别怎么操作。",
+  "scope": "reference-review-proposal.md IDs 2,4,8; isolated acceptance schema only",
+  "execution": "Administrator API records participant-confirmed review; not a human admin UI acceptance claim"
+}

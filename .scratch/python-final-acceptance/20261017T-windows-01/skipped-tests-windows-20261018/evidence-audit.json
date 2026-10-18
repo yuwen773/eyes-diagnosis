@@ -1,0 +1,9 @@
+{
+  "secretScan": "PASS",
+  "filesScanned": 1519,
+  "findings": [],
+  "unrelatedTrackedChangesPreserved": true,
+  "unexpectedChangedPaths": [],
+  "registeredProcessEntriesChecked": 342,
+  "survivingRegisteredProcesses": 0
+}

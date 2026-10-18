@@ -1,0 +1,100 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Verify.Dockerfile
+#1 transferring dockerfile: 1.36kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/eye-python:ticket06
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.03kB done
+#3 DONE 0.0s
+
+#4 [ 1/23] FROM docker.io/library/eye-python:ticket06@sha256:5df618445293ba7591bc52c89546fdf24a41ccecf9afa9ce78188f39aee7033e
+#4 resolve docker.io/library/eye-python:ticket06@sha256:5df618445293ba7591bc52c89546fdf24a41ccecf9afa9ce78188f39aee7033e 0.1s done
+#4 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 1.85MB 0.2s done
+#5 DONE 0.2s
+
+#6 [ 2/23] RUN apt-get update && apt-get install -y --no-install-recommends redis-server     && rm -rf /var/lib/apt/lists/*     && python -m pip install --no-cache-dir uv==0.13.0
+#6 CACHED
+
+#7 [ 3/23] WORKDIR /workspace
+#7 CACHED
+
+#8 [ 4/23] COPY pyproject.toml MANIFEST.in ./
+#8 CACHED
+
+#9 [ 5/23] COPY README.md AGENTS.md ./
+#9 DONE 0.1s
+
+#10 [ 6/23] COPY docs/python-delivery.md docs/python-delivery.md
+#10 DONE 0.1s
+
+#11 [ 7/23] COPY deploy/python/Dockerfile deploy/python/Verify.Dockerfile deploy/python/Frontend.Dockerfile deploy/python/
+#11 DONE 0.1s
+
+#12 [ 8/23] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#12 DONE 0.1s
+
+#13 [ 9/23] COPY algorithm/web algorithm/web
+#13 DONE 0.2s
+
+#14 [10/23] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#14 DONE 0.1s
+
+#15 [11/23] COPY algorithm/mcp_server algorithm/mcp_server
+#15 DONE 0.1s
+
+#16 [12/23] COPY algorithm/eye_disease_model.py algorithm/eye_disease_model.py
+#16 DONE 0.1s
+
+#17 [13/23] COPY algorithm/grpc_server.py algorithm/grpc_server.py
+#17 DONE 0.1s
+
+#18 [14/23] COPY algorithm/checkpoints/registry.json algorithm/checkpoints/registry.json
+#18 DONE 0.1s
+
+#19 [15/23] COPY algorithm/configs algorithm/configs
+#19 DONE 0.1s
+
+#20 [16/23] COPY deploy/python-migrations deploy/python-migrations
+#20 DONE 0.1s
+
+#21 [17/23] COPY deploy/nginx.conf deploy/nginx.conf
+#21 DONE 0.1s
+
+#22 [18/23] COPY deploy/mime.types deploy/mime.types
+#22 DONE 0.1s
+
+#23 [19/23] COPY deploy/snippets deploy/snippets
+#23 DONE 0.1s
+
+#24 [20/23] COPY contracts contracts
+#24 DONE 0.1s
+
+#25 [21/23] COPY scripts scripts
+#25 DONE 0.2s
+
+#26 [22/23] COPY frontend/src frontend/src
+#26 DONE 0.3s
+
+#27 [23/23] COPY frontend/package.json frontend/package.json
+#27 DONE 0.1s
+
+#28 exporting to image
+#28 exporting layers
+#28 exporting layers 5.7s done
+#28 exporting manifest sha256:1196700b8ca9cae464f83809782c8044bd4a2f4f487a532fbdbb4b6cd3bffe5e 0.0s done
+#28 exporting config sha256:9abc648ca90f9e8b62c9219fd46583f3cdeda697a3a26e9958811c80316a4c13 0.0s done
+#28 exporting attestation manifest sha256:50208d4e60fd1787cffb4d43eca060c8be044f0fe6bf71a357d539e04de4d6d9
+#28 exporting attestation manifest sha256:50208d4e60fd1787cffb4d43eca060c8be044f0fe6bf71a357d539e04de4d6d9 0.1s done
+#28 exporting manifest list sha256:af3612bd4407918f4b55c76ab4bb792e810cddf5e0e8779ea8a5070ad1890f4f
+#28 exporting manifest list sha256:af3612bd4407918f4b55c76ab4bb792e810cddf5e0e8779ea8a5070ad1890f4f 0.1s done
+#28 naming to docker.io/library/eye-verify:closeout08 done
+#28 unpacking to docker.io/library/eye-verify:closeout08
+#28 unpacking to docker.io/library/eye-verify:closeout08 0.8s done
+#28 DONE 6.9s

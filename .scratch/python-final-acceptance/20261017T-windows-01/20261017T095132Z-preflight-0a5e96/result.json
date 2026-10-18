@@ -1,0 +1,17 @@
+{
+  "status": "FAIL",
+  "errorType": "ModuleNotFoundError",
+  "phase": "preflight",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095132Z-preflight-0a5e96",
+  "budget": {
+    "llm": {
+      "used": 0,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 0,
+      "limit": 500
+    }
+  }
+}

@@ -1,0 +1,525 @@
+{
+  "status": "PASS",
+  "generatedUtc": "2026-10-18T04:35:24.873701+00:00",
+  "automaticItemsRemaining": [],
+  "overallAcceptance": "BLOCKED",
+  "manualAcceptance": "DEFERRED",
+  "formalRecords": 0,
+  "businessTablesUnchanged": true,
+  "controlledBrowserCases": 4,
+  "frontendTests": 49,
+  "newLLMRequests": 3,
+  "budget": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "planItems": [
+    {
+      "id": "2.1",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "COS SDK 接线修复与公开上传回归",
+      "evidence": [
+        "cos-green.xml",
+        "governance-visibility-repair/final-verification.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "2.2",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "原 API/Worker、独立服务、持久清单与身份核对清理",
+      "evidence": [
+        "plan-audit-20261018/real-inflight-restart/result.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "2.3",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "真实供应商预检及浏览器读取已登记 COS 探针",
+      "evidence": [
+        "20261017T120326Z-providers-25d849/result.json",
+        "plan-audit-20261018/cos-browser.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "2.4",
+      "status": "BLOCKED",
+      "automatedStatus": "PASS",
+      "scope": "权重、未校准状态与五图不匹配保留；三张补充样本已本机推理",
+      "evidence": [
+        "20261017T101145-supplementary-offline.json"
+      ],
+      "remainingDependency": "补充样本去标识及外发范围尚未确认"
+    },
+    {
+      "id": "3.1",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "当前源码快照、依赖/版本与既有证据差异已绑定；不称干净机器验收",
+      "evidence": [
+        "plan-audit-20261018/source-sha256.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.2.1",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "真实 Python Cookie/Redis 登录隔离及原接口回归",
+      "evidence": [
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.2.2",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "真实 DOC/DOCX 的 COS/embedding/Chroma 与三份已审核参考资料检索解释；分层记录",
+      "evidence": [
+        "20261017T100907-extra-http.json",
+        "20261017T123739Z-reference-explanations-a68a9d/result.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.2.3",
+      "status": "BLOCKED",
+      "automatedStatus": "PASS",
+      "scope": "真实原图进入生产图；自动部分到质量等待，既有两项合法受限终态保留",
+      "evidence": [
+        "plan-audit-20261018/real-inflight-restart/result.json"
+      ],
+      "remainingDependency": "质量/最终复核后的完整真实解释发布和保存需人工继续；禁止代批"
+    },
+    {
+      "id": "3.2.4",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "真实同键/聊天绑定与原推理来源；重复保存等用受控回归",
+      "evidence": [
+        "plan-audit-20261018/real-inflight-restart/result.json",
+        "windows-web-governance/web.xml"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.2.5",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "执行中真实模型恢复、真实现有等待恢复、四类合成等待恢复",
+      "evidence": [
+        "plan-audit-20261018/real-inflight-restart/result.json",
+        "plan-audit-20261018/controlled-browser-waits/recovery.xml"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.2.6",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "真实 SSE 断连/重连、真实患者与医生只读 F5、四类合成等待浏览器刷新",
+      "evidence": [
+        "plan-audit-20261018/real-inflight-restart/reconnected.sse",
+        "plan-audit-20261018/doctor-readonly-refresh/result.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "3.3",
+      "status": "BLOCKED",
+      "automatedStatus": "PASS",
+      "scope": "实际参与者 UI 验收继续搁置，旧两份质量决定与 F5 确认保留",
+      "evidence": [
+        "manual-participation-deferred.json"
+      ],
+      "remainingDependency": "患者/医生操作、补充说明、自然最终复核、独立拒绝/批准保存及继续"
+    },
+    {
+      "id": "3.4",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "受控罕见分支及 Windows 原 43 项环境门禁；前端重新构建与 49 项",
+      "evidence": [
+        "skipped-tests-windows-20261018/replay-summary.json",
+        "plan-audit-20261018/frontend-result.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "4",
+      "status": "PASS",
+      "automatedStatus": "PASS",
+      "scope": "预算共享累计、过程失败保留、数据保留与临时进程清理",
+      "evidence": [
+        "plan-audit-20261018/completion.json"
+      ],
+      "remainingDependency": null
+    },
+    {
+      "id": "5",
+      "status": "BLOCKED",
+      "automatedStatus": "PASS",
+      "scope": "计划/22 个 AC 自动子项已逐条归档；不提前关闭第 21 票",
+      "evidence": [
+        "plan-audit-20261018/completion.json"
+      ],
+      "remainingDependency": "正式验收依赖 3.3 和外发范围确认"
+    }
+  ],
+  "acEvidence": [
+    {
+      "id": "AC-01",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_chat_workflow",
+        "test_workflow"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-02",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_session",
+        "test_contracts",
+        "test_tool_writes"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-03",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_chat",
+        "test_history_retrieval"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-04",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_workflow_inference",
+        "test_quality_review"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-05",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_inference",
+        "test_worker_explanation_failure"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-06",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_controlled_evidence"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-07",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_validated_explanation",
+        "test_worker_explanation_failure"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-08",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_supplement"
+      ],
+      "criterionStatus": "BLOCKED",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "实际参与者补充说明与继续"
+    },
+    {
+      "id": "AC-09",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_save_confirmation"
+      ],
+      "criterionStatus": "BLOCKED",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "实际拒绝保存与批准保存两条独立任务"
+    },
+    {
+      "id": "AC-10",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_save_confirmation",
+        "test_tool_writes"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-11",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_quality_review",
+        "test_final_clinical_review"
+      ],
+      "criterionStatus": "BLOCKED",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "实际医生复核与自然触发的最终复核"
+    },
+    {
+      "id": "AC-12",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_human_wait_restart",
+        "test_handoff_recovery",
+        "test_python_wait_recovery"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-13",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_worker_concurrency"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-14",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_stream_reconnect",
+        "test_chat_workflow"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-15",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_contracts",
+        "test_handoff_contracts"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-16",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_document_upload",
+        "test_knowledge"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-17",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_database_handoff",
+        "test_worker_concurrency"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-18",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_controlled_evidence"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-19",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_session",
+        "test_cutover_proxy",
+        "test_maintenance"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-20",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_maintenance",
+        "test_handoff_recovery"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    },
+    {
+      "id": "AC-21",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_handoff_contracts"
+      ],
+      "criterionStatus": "BLOCKED",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "实际患者/医生完整 UI 实操，包含重启后的原等待继续"
+    },
+    {
+      "id": "AC-22",
+      "automatedStatus": "PASS",
+      "automatedModules": [
+        "test_workflow",
+        "test_workflow_inference"
+      ],
+      "criterionStatus": "PASS",
+      "evidence": [
+        "windows-web-governance/web.xml",
+        "skipped-tests-windows-20261018/replay-summary.json"
+      ],
+      "scope": "Controlled branch regressions plus the separately recorded real-service/model/browser evidence; not actual human decisions",
+      "remainingDependency": "本项技术检查已完成；实际操作者的完整链路由 AC-08/09/11/21 保留，不据此宣称临床或生产通过"
+    }
+  ],
+  "newEvidence": {
+    "cosBrowser": "cos-browser.json",
+    "realChat": "real-chat-readonly-ui-03/result.json",
+    "patientReadOnly": "readonly-ui-recheck/result.json",
+    "doctorReadOnly": "doctor-readonly-refresh/result.json",
+    "realInflightRestart": "real-inflight-restart/result.json",
+    "controlledBrowser": "controlled-browser-waits/recovery.xml",
+    "frontend": "frontend-result.json"
+  },
+  "limitations": [
+    "Automatic subitems do not close actual human acceptance criteria",
+    "No forced doctor approval, save authorization or original-task requeue",
+    "No physical-once model-call claim; only committed-envelope uniqueness",
+    "No Linux, production cutover, clean-machine, calibration or clinical-effectiveness acceptance"
+  ]
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="12.682" timestamp="2026-10-17T17:48:04.522557+08:00" hostname="Sail"><testcase classname="algorithm.web.tests.test_cos_upload_sdk" name="test_picture_upload_uses_installed_sdk_and_preserves_response[False]" time="0.823"><failure message="AssertionError: HTTP upload did not reach the installed SDK transport&#10;assert []">algorithm\web\tests\test_cos_upload_sdk.py:74: in test_picture_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []</failure></testcase><testcase classname="algorithm.web.tests.test_cos_upload_sdk" name="test_picture_upload_uses_installed_sdk_and_preserves_response[True]" time="0.023"><failure message="AssertionError: HTTP upload did not reach the installed SDK transport&#10;assert []">algorithm\web\tests\test_cos_upload_sdk.py:74: in test_picture_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []</failure></testcase><testcase classname="algorithm.web.tests.test_cos_upload_sdk" name="test_knowledge_upload_uses_installed_sdk_and_preserves_response[False]" time="0.059"><failure message="AssertionError: HTTP upload did not reach the installed SDK transport&#10;assert []">algorithm\web\tests\test_cos_upload_sdk.py:91: in test_knowledge_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []</failure></testcase><testcase classname="algorithm.web.tests.test_cos_upload_sdk" name="test_knowledge_upload_uses_installed_sdk_and_preserves_response[True]" time="0.033"><failure message="AssertionError: HTTP upload did not reach the installed SDK transport&#10;assert []">algorithm\web\tests\test_cos_upload_sdk.py:91: in test_knowledge_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []</failure></testcase></testsuite></testsuites>

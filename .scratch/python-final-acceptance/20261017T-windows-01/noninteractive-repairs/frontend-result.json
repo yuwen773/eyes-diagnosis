@@ -1,0 +1,7 @@
+{
+  "testExit": 0,
+  "buildLog": "noninteractive-repairs/frontend-build.log",
+  "buildExit": 0,
+  "testLog": "noninteractive-repairs/frontend-test.log",
+  "scope": "Fresh verification after explanation and restart-harness repairs"
+}

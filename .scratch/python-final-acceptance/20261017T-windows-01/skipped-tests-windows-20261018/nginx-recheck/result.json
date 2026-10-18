@@ -1,0 +1,6 @@
+{
+  "exitCode": 0,
+  "selectedCases": 7,
+  "cleanup": "PASS",
+  "scope": "Native Windows Nginx; Python labelled synthetic backends; no JVM or production cutover"
+}

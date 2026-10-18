@@ -1,0 +1,183 @@
+{
+  "status": "PASS",
+  "registered": [
+    {
+      "ProcessId": 38528,
+      "ParentProcessId": 22092,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T11:58:17.874295+08:00"
+    },
+    {
+      "ProcessId": 14128,
+      "ParentProcessId": 22092,
+      "Name": "python.exe",
+      "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+      "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -m pytest algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python] algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python -q --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-temp --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx.xml",
+      "CreationDate": "2026-10-18T11:58:17.908279+08:00"
+    },
+    {
+      "ProcessId": 22092,
+      "ParentProcessId": 20808,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe -m pytest algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-java-pause] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[python-python-active] algorithm/web/tests/test_cutover_proxy.py::test_independent_routes_retain_python_state_and_cookie[java-python-drain] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[legacy] algorithm/web/tests/test_maintenance.py::test_maintenance_blocks_business_and_workflow_writes_but_allows_login_and_reads[python] algorithm/web/tests/test_maintenance.py::test_active_python_routes_all_business_and_identity_to_python -q --tb=short --basetemp=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx-temp --junitxml=D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\skipped-tests-windows-20261018\\nginx.xml",
+      "CreationDate": "2026-10-18T11:58:17.846333+08:00"
+    },
+    {
+      "ProcessId": 19340,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain0/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:23.037515+08:00"
+    },
+    {
+      "ProcessId": 26640,
+      "ParentProcessId": 19340,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain0/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:23.181467+08:00"
+    },
+    {
+      "ProcessId": 64648,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain1/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain1/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:24.961166+08:00"
+    },
+    {
+      "ProcessId": 52520,
+      "ParentProcessId": 33804,
+      "Name": "conhost.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:25.217486+08:00"
+    },
+    {
+      "ProcessId": 33804,
+      "ParentProcessId": 64648,
+      "Name": "nginx.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:25.109989+08:00"
+    },
+    {
+      "ProcessId": 2524,
+      "ParentProcessId": 14128,
+      "Name": "taskkill.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:26.15144+08:00"
+    },
+    {
+      "ProcessId": 8164,
+      "ParentProcessId": 14128,
+      "Name": "taskkill.exe",
+      "ExecutablePath": "C:\\WINDOWS\\SYSTEM32\\taskkill.exe",
+      "CommandLine": "taskkill /PID 55992 /T /F",
+      "CreationDate": "2026-10-18T11:58:28.128328+08:00"
+    },
+    {
+      "ProcessId": 31320,
+      "ParentProcessId": 55992,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain2/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain2/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:27.598496+08:00"
+    },
+    {
+      "ProcessId": 37612,
+      "ParentProcessId": 31320,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T11:58:27.706662+08:00"
+    },
+    {
+      "ProcessId": 55992,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain2/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain2/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:27.473914+08:00"
+    },
+    {
+      "ProcessId": 13888,
+      "ParentProcessId": 49096,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T11:58:30.316702+08:00"
+    },
+    {
+      "ProcessId": 49096,
+      "ParentProcessId": 67984,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain3/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain3/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:30.21614+08:00"
+    },
+    {
+      "ProcessId": 67984,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain3/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_independent_routes_retain3/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:30.051674+08:00"
+    },
+    {
+      "ProcessId": 47940,
+      "ParentProcessId": 12688,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_maintenance_blocks_busine0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_maintenance_blocks_busine0/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:32.333803+08:00"
+    },
+    {
+      "ProcessId": 12688,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\nginx-1.28.0\\nginx-1.28.0\\nginx.exe",
+      "CommandLine": "D:/Work/Backend/nginx-1.28.0/nginx-1.28.0/nginx.exe -p D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_maintenance_blocks_busine0/ -c D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite/.scratch/python-final-acceptance/20261017T-windows-01/skipped-tests-windows-20261018/nginx-temp/test_maintenance_blocks_busine0/nginx.conf",
+      "CreationDate": "2026-10-18T11:58:32.168618+08:00"
+    },
+    {
+      "ProcessId": 56556,
+      "ParentProcessId": 47940,
+      "Name": "conhost.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+      "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+      "CreationDate": "2026-10-18T11:58:32.43419+08:00"
+    },
+    {
+      "ProcessId": 13764,
+      "ParentProcessId": 9056,
+      "Name": "python.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:34.901214+08:00"
+    },
+    {
+      "ProcessId": 9056,
+      "ParentProcessId": 14128,
+      "Name": "python.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:34.831591+08:00"
+    },
+    {
+      "ProcessId": 47456,
+      "ParentProcessId": 14128,
+      "Name": "nginx.exe",
+      "ExecutablePath": null,
+      "CommandLine": null,
+      "CreationDate": "2026-10-18T11:58:38.15297+08:00"
+    }
+  ],
+  "orphanPidsStopped": [],
+  "survivingRecordedProcesses": []
+}

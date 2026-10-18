@@ -1,0 +1,46 @@
+[
+  {
+    "role": "chroma-reference-check",
+    "pid": 37504,
+    "identity": {
+      "ProcessId": 37504,
+      "ParentProcessId": 66140,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe -c \"from chromadb.cli.cli import app; app()\" run --host 127.0.0.1 --port 60860 --path D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\chroma",
+      "CreationDate": "2026-10-17T20:07:03.915464+08:00"
+    },
+    "command": [
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "-c",
+      "from chromadb.cli.cli import app; app()",
+      "run",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "60860",
+      "--path",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\chroma"
+    ],
+    "log": "chroma-reference-check-e5c40b.log",
+    "cleanup": "PASS",
+    "descendantsAtStop": [
+      {
+        "ProcessId": 5044,
+        "ParentProcessId": 37504,
+        "Name": "python.exe",
+        "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+        "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  -c \"from chromadb.cli.cli import app; app()\" run --host 127.0.0.1 --port 60860 --path D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\chroma",
+        "CreationDate": "2026-10-17T20:07:03.955451+08:00"
+      },
+      {
+        "ProcessId": 35792,
+        "ParentProcessId": 37504,
+        "Name": "conhost.exe",
+        "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+        "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+        "CreationDate": "2026-10-17T20:07:03.931468+08:00"
+      }
+    ]
+  }
+]

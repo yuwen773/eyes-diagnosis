@@ -1,0 +1,34 @@
+{
+  "status": "BLOCKED",
+  "checks": {
+    "embedding": {
+      "status": "PASS",
+      "dimensions": 1024,
+      "inputTexts": 1
+    },
+    "streamingChat": {
+      "status": "PASS",
+      "contentSeen": true,
+      "doneSeen": true
+    },
+    "structuredExplanation": {
+      "status": "BLOCKED",
+      "errorType": "HTTPStatusError",
+      "httpStatus": 400
+    }
+  },
+  "scope": "real embedding, streaming chat and production structured explanation adapter",
+  "phase": "providers",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095225Z-providers-1937b5",
+  "budget": {
+    "llm": {
+      "used": 4,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 2,
+      "limit": 500
+    }
+  }
+}

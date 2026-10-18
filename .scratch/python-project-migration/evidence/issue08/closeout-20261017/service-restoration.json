@@ -1,0 +1,15 @@
+{
+  "atUtc": "2026-10-17T04:58:33.485881+00:00",
+  "authorization": "User explicitly allowed temporary stop and restoration",
+  "initialActive": "active",
+  "initialEnabled": "enabled",
+  "configurationChanged": false,
+  "databaseRestarted": false,
+  "duringActive": "inactive",
+  "verificationExitCode": 0,
+  "restoreExitCode": 0,
+  "finalActive": "active",
+  "finalEnabled": "enabled",
+  "restored": true,
+  "finishedAtUtc": "2026-10-17T05:19:03.282623+00:00"
+}

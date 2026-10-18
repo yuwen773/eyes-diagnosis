@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "attempt": "20261017T100151Z-automated-2d73f8",
+  "documents": {
+    "simple.doc": "1",
+    "01-normal.md": "2",
+    "02-amd.md": "3",
+    "03-cataract.md": "4",
+    "04-diabetes.md": "5",
+    "05-glaucoma.md": "6",
+    "06-hypertension.md": "7",
+    "07-myopia.md": "8",
+    "08-other.md": "9",
+    "acceptance-format-table.docx": "10"
+  },
+  "evidence": "private-search.json",
+  "governance": "PRIVATE_USER/PENDING; no automated clinical approval"
+}

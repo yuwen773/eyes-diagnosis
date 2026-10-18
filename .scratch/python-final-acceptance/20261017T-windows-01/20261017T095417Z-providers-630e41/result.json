@@ -1,0 +1,22 @@
+{
+  "status": "BLOCKED",
+  "checks": {
+    "structuredExplanation": {
+      "status": "BLOCKED",
+      "errorType": "ReadTimeout"
+    }
+  },
+  "phase": "providers",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095417Z-providers-630e41",
+  "budget": {
+    "llm": {
+      "used": 6,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 2,
+      "limit": 500
+    }
+  }
+}

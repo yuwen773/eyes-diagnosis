@@ -1,0 +1,154 @@
+..FFF.....F.                                                             [100%]
+================================== FAILURES ===================================
+_ test_save_confirmation_survives_restart_without_duplicate_or_expired_save[approve] _
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x00000208E87875D0>
+action = 'approve'
+
+    @pytest.mark.parametrize("action", ["approve", "reject", "expired"])
+    def test_save_confirmation_survives_restart_without_duplicate_or_expired_save(restart_case, action):
+        case = restart_case
+        expired = action == "expired"
+        with case.api() as client:
+            workflow_id = start(client)
+            case.worker("pass")
+            before = view(client, workflow_id)
+            response = client.post(path(workflow_id), json=requested(before, uuid4().hex))
+            assert response.status_code == 200, response.text
+            confirmation = response.json()["data"]
+            assert confirmation["status"] == "PENDING"
+            effects = case.effects(workflow_id)
+            total = client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"]
+            if expired:
+                with case.sessions.begin() as db:
+                    db.get(SaveConfirmation, confirmation["confirmationId"]).expires_at -= timedelta(hours=1)
+        with case.api() as client:
+            assert view(client, workflow_id) == before
+            if expired:
+                assert act(client, confirmation).status_code == 409
+                assert client.get(path(workflow_id)).json()["data"]["status"] == "EXPIRED"
+                assert client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"] == total
+                assert not case.effects(workflow_id)["receipts"]
+                return
+            assert client.get(path(workflow_id)).json()["data"] == confirmation
+            assert case.effects(workflow_id) == effects
+            client.cookies.set("SESSION", "bob")
+            assert act(client, confirmation).status_code == 403
+            client.cookies.set("SESSION", "alice")
+            assert act(client, confirmation, expectedWorkflowVersion="0").status_code == 409
+            approved = act(client, confirmation, action)
+            assert approved.status_code == 200, approved.text
+            assert approved.json()["data"]["status"] == ("APPROVED" if action == "approve" else "REJECTED")
+        with case.api() as client:
+            assert act(client, confirmation, action).json() == approved.json()
+            if action == "reject":
+                assert act(client, confirmation).status_code == 409
+            stable = case.effects(workflow_id)
+            case.worker()
+            assert case.effects(workflow_id) == stable
+            assert stable["inference"] == effects["inference"]
+            assert stable["explanations"] == effects["explanations"]
+            assert len(stable["receipts"]) == (1 if action == "approve" else 0)
+>           assert int(client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"]) == int(total) + (1 if action == "approve" else 0)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+web\tests\test_human_wait_restart.py:264: TypeError
+_ test_save_confirmation_survives_restart_without_duplicate_or_expired_save[reject] _
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x00000208E9C6D3D0>
+action = 'reject'
+
+    @pytest.mark.parametrize("action", ["approve", "reject", "expired"])
+    def test_save_confirmation_survives_restart_without_duplicate_or_expired_save(restart_case, action):
+        case = restart_case
+        expired = action == "expired"
+        with case.api() as client:
+            workflow_id = start(client)
+            case.worker("pass")
+            before = view(client, workflow_id)
+            response = client.post(path(workflow_id), json=requested(before, uuid4().hex))
+            assert response.status_code == 200, response.text
+            confirmation = response.json()["data"]
+            assert confirmation["status"] == "PENDING"
+            effects = case.effects(workflow_id)
+>           total = client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+web\tests\test_human_wait_restart.py:233: TypeError
+_ test_save_confirmation_survives_restart_without_duplicate_or_expired_save[expired] _
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x00000208E9F0D550>
+action = 'expired'
+
+    @pytest.mark.parametrize("action", ["approve", "reject", "expired"])
+    def test_save_confirmation_survives_restart_without_duplicate_or_expired_save(restart_case, action):
+        case = restart_case
+        expired = action == "expired"
+        with case.api() as client:
+            workflow_id = start(client)
+            case.worker("pass")
+            before = view(client, workflow_id)
+            response = client.post(path(workflow_id), json=requested(before, uuid4().hex))
+            assert response.status_code == 200, response.text
+            confirmation = response.json()["data"]
+            assert confirmation["status"] == "PENDING"
+            effects = case.effects(workflow_id)
+>           total = client.post("/api/diagnosis/list/page/my", json={}).json()["data"]["total"]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+web\tests\test_human_wait_restart.py:233: TypeError
+_ test_supplement_wait_and_answer_survive_restart_without_replaying_clinical_work _
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x00000208EA0AFDD0>
+
+            response = reply(client, wait).json()
+            assert response["code"] == 50001 and "版本已变化" in response["msg"]
+            assert client.get(f"/api/agent/supplements/{wait['requestId']}").json()["data"] == wait
+            history = client.get(f"/api/agent/history/{thread}").json()["data"]
+            assert history["supplements"] == [wait]
+            assert not any(row["content"] == "左眼的图片，请医生查看" for row in history["messages"])
+            case.effects(workflow_id)
+        assert not case.calls()
+    
+    
+    def test_supplement_wait_and_answer_survive_restart_without_replaying_clinical_work(restart_case):
+        case = restart_case
+        thread = uuid4().hex
+        with case.api() as client:
+            workflow_id = start(client)
+            case.worker("quality")
+            assert "event: done" in send(client, thread=thread, workflowId=workflow_id).text
+            wait = supplement_event(request_supplement(client, workflow_id, thread=thread))
+            before = view(client, workflow_id)
+            effects = case.effects(workflow_id)
+        with case.api() as client:
+            assert client.get(f"/api/agent/supplements/{wait['requestId']}").json()["data"] == wait
+            assert client.get(f"/api/agent/history/{thread}").json()["data"]["supplements"] == [wait]
+            assert reply(client, wait, version="9").json()["code"] == 50001
+            client.cookies.set("SESSION", "bob")
+            assert reply(client, wait).json()["code"] == 40101
+            client.cookies.set("SESSION", "alice")
+            answered = reply(client, wait).json()["data"]
+            assert answered["status"] == "ANSWERED" and answered["version"] == "1"
+        with case.api() as client:
+            assert reply(client, wait).json()["data"] == answered
+            assert reply(client, wait, text="different answer").json()["code"] == 50001
+            history = client.get(f"/api/agent/history/{thread}").json()["data"]
+            assert history["supplements"] == [answered]
+>           assert [row["content"] for row in history["messages"]].count(answered["answer"]) == 1
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert ['inference', 'inference'] == ['inference']
+E             
+E             Left contains one more item: 'inference'
+E             Use -v to get more diff
+
+web\tests\test_human_wait_restart.py:357: AssertionError
+=========================== short test summary info ===========================
+FAILED web/tests/test_human_wait_restart.py::test_save_confirmation_survives_restart_without_duplicate_or_expired_save[approve]
+FAILED web/tests/test_human_wait_restart.py::test_save_confirmation_survives_restart_without_duplicate_or_expired_save[reject]
+FAILED web/tests/test_human_wait_restart.py::test_save_confirmation_survives_restart_without_duplicate_or_expired_save[expired]
+FAILED web/tests/test_human_wait_restart.py::test_supplement_wait_and_answer_survive_restart_without_replaying_clinical_work
+4 failed, 8 passed in 198.68s (0:03:18)

@@ -1,0 +1,23 @@
+{
+  "status": "BLOCKED",
+  "checks": {
+    "structuredExplanation": {
+      "status": "BLOCKED",
+      "errorType": "HTTPStatusError",
+      "httpStatus": 400
+    }
+  },
+  "phase": "providers",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095312Z-providers-f1af8b",
+  "budget": {
+    "llm": {
+      "used": 5,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 2,
+      "limit": 500
+    }
+  }
+}

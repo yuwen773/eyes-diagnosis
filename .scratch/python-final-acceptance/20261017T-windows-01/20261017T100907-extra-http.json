@@ -1,0 +1,122 @@
+{
+  "scope": "real HTTP; no artificial identity/provider responses",
+  "checks": {
+    "binaryDOC": {
+      "status": "PASS",
+      "result": [
+        {
+          "citationId": "doc_1_chunk_0",
+          "documentId": "1",
+          "sourceRevision": 0,
+          "title": "simple.doc",
+          "source": "127a7f2a-eb18-49bc-81b8-e06f9aab0329_simple.doc",
+          "quotedText": "This is a simple file created with Word 97-SR2.",
+          "quotedTextDigest": "a727b36ed55790b7e8a710b16156a1243159a8767e846f8c87b7e80f7b03f218"
+        },
+        {
+          "citationId": "doc_10_chunk_0",
+          "documentId": "10",
+          "sourceRevision": 0,
+          "title": "acceptance-format-table.docx",
+          "source": "dbdfb55a-104e-4ed2-9a30-8c192a6a2058_acceptance-format-table.docx",
+          "quotedText": "眼底随访\t每年复查\nOphthalmic table evidence: schedule a retinal follow-up examination.\t定期检查",
+          "quotedTextDigest": "92f8753a5d86d46c98beda152f24283609c3b17869387905f59ff48321e4ae50"
+        },
+        {
+          "citationId": "doc_9_chunk_3",
+          "documentId": "9",
+          "sourceRevision": 0,
+          "title": "08-other.md",
+          "source": "de6f5ae5-1dea-4779-8de1-7d5fd06c39af_08-other.md",
+          "quotedText": "-|---------|\n| DR | 微血管瘤基础上的出血 |\n| RVO | 沿静脉分布，范围局限 |\n| 高血压视网膜病变 | 后极部火焰状出血 |\n| NVG | 新生血管破裂，玻璃体积血 |\n\n### 黄斑水肿鉴别\n| 疾病 | 病因 |\n|------|------|\n| DME | 糖尿病 |\n| 视网膜静脉阻塞 | 静脉回流障碍 |\n| CSC | 脉络膜渗漏 |\n| 葡萄膜炎 | 炎症 |\n\n### 黄斑水肿鉴别\n| 疾病 | 病因 |\n|------|------|\n| DME | 糖尿病 |\n| 视网膜静脉阻塞 | 静脉回流障碍 |\n| CSC | 脉络膜渗漏 |\n| 葡萄膜炎 | 炎症 |\n\n### 视乳头水肿鉴别\n| 疾病 | 特点 |\n|------|------|\n| 颅内高压 | 双侧、进展性 |\n| 视神经炎 | 单侧多见、眼球转动痛 |\n| AION | 动脉硬化相关 |\n| 葡萄膜炎 | 前房/玻璃体炎症 |\n\n1. **视力、验光**：评估矫正视力\n2. **眼压**：排除青光眼\n3. **裂隙灯检查**：眼前节评估\n4. **散瞳眼底检查**：发现病变\n5. **眼底照相**：记录病变\n6. **OCT**：评估黄斑、视神经结构\n7. **FFA**：显示血管渗漏、无灌注区\n8. **OCTA**：无创血管成像\n9. **视野检查**：评估视功能\n10. **全身检查**：血糖、血压、免疫指标等",
+          "quotedTextDigest": "72c183226745e8363bfe3b891207787445a2f5b78afa7eaf40e60a88b1b453d4"
+        },
+        {
+          "citationId": "doc_5_chunk_1",
+          "documentId": "5",
+          "sourceRevision": 0,
+          "title": "04-diabetes.md",
+          "source": "673ebd84-2737-497a-8916-50e6fbfd08c0_04-diabetes.md",
+          "quotedText": "\"4-2-1\"原则**\n\n**特征性改变**\n- 新生血管形成（NVE）：出现在视网膜表面\n- 新生血管性青光眼（NVG）：新生血管长入前房角\n- 纤维血管膜形成\n- 玻璃体出血\n- 牵拉性视网膜脱离\n\n- **定义**：黄斑区视网膜增厚或硬性渗出累及黄斑中心500μm区域\n- **分类**：\n  - 弥漫性黄斑水肿：毛细血管渗漏广泛累及黄斑\n  - 囊样黄斑水肿：呈花瓣状囊腔改变\n  - 缺血性黄斑病变：黄斑毛细血管无灌注\n\n- **定义**：黄斑区视网膜增厚或硬性渗出累及黄斑中心500μm区域\n- **分类**：\n  - 弥漫性黄斑水肿：毛细血管渗漏广泛累及黄斑\n  - 囊样黄斑水肿：呈花瓣状囊腔改变\n  - 缺血性黄斑病变：黄斑毛细血管无灌注\n\n### 眼底检查\n1. **彩色眼底照相**：记录病变范围和程度\n2. **荧光素眼底血管造影（FFA）**：\n   - 显示无灌注区范围\n   - 评估新生血管活动性\n   - 指导激光治疗部位\n3. **光学相干断层扫描（OCT）**：\n   - 定量测量黄斑厚度\n   - 评估黄斑水肿类型\n   - 监测治疗反应\n\n### 筛查标准\n- 1型糖尿病：确诊后5年内开始筛查\n- 2型糖尿病：确诊时即进行首次筛查\n- 妊娠糖尿病：妊娠前或妊娠早期筛查\n\n### 全身管理\n- **严格控制血糖**：HbA1c<7%\n- **控制血压**：<140/90mmHg\n- **调节血脂**：他汀类药物\n- **改善微循环**\n\n**激光治疗**\n- **全视网膜光凝（PRP）**：适用于高危PDR\n- **黄斑格栅样光凝**：适用于弥漫性DME\n- 作用机制：破坏缺氧视网膜，降低VEGF表达",
+          "quotedTextDigest": "fa94268f17acfe3ad102296d65f9609d685d7c6a0b0c33f7b2076febef5cb718"
+        },
+        {
+          "citationId": "doc_3_chunk_1",
+          "documentId": "3",
+          "sourceRevision": 0,
+          "title": "02-amd.md",
+          "source": "64887e8e-1b2b-412d-9495-0a17cfaf33a5_02-amd.md",
+          "quotedText": "**Amsler表**：检测中心视野缺损和视物变形\n\n- 年龄≥50岁\n- 吸烟史（吸烟者患病风险增加2-4倍）\n- 有AMD家族史\n- 长期暴露于强紫外线环境\n- 高脂饮食、肥胖\n- 心血管疾病患者\n\n### 干性AMD\n- **营养补充**：AREDS2配方（维生素C、维生素E、叶黄素、玉米黄质、锌、铜）\n- **生活方式**：戒烟、控制血压、健康饮食、多摄入深色蔬菜和鱼类\n- **监测随访**：定期Amsler表自测、OCT监测\n\n### 干性AMD\n- **营养补充**：AREDS2配方（维生素C、维生素E、叶黄素、玉米黄质、锌、铜）\n- **生活方式**：戒烟、控制血压、健康饮食、多摄入深色蔬菜和鱼类\n- **监测随访**：定期Amsler表自测、OCT监测\n\n### 湿性AMD\n- **抗VEGF治疗**（一线治疗）：\n  - 雷珠单抗（Ranibizumab）\n  - 阿柏西普（Aflibercept）\n  - 贝伐单抗（Bevacizumab）\n  - 康柏西普（Conbercept）\n- **治疗方案**：初始每月注射一次，连续3个月，后根据病情延长间隔\n- **光动力疗法（PDT）**：适用于特定类型患者\n\n1. **戒烟**：最重要的可控危险因素\n2. **紫外线防护**：佩戴防紫外线太阳镜\n3. **健康饮食**：多摄入深绿色蔬菜、鱼类、坚果\n4. **控制体重和 血压**\n5. **定期眼科检查**\n6. **Amsler表自测**：每日测试，发现异常及时就诊",
+          "quotedTextDigest": "2e1f1648baf427d76567c25ca97740d0e982efb4df4ab8f3eff768d598464e14"
+        }
+      ],
+      "scope": "format fixture, not clinical evidence"
+    },
+    "tableDOCX": {
+      "status": "PASS",
+      "result": [
+        {
+          "citationId": "doc_10_chunk_0",
+          "documentId": "10",
+          "sourceRevision": 0,
+          "title": "acceptance-format-table.docx",
+          "source": "dbdfb55a-104e-4ed2-9a30-8c192a6a2058_acceptance-format-table.docx",
+          "quotedText": "眼底随访\t每年复查\nOphthalmic table evidence: schedule a retinal follow-up examination.\t定期检查",
+          "quotedTextDigest": "92f8753a5d86d46c98beda152f24283609c3b17869387905f59ff48321e4ae50"
+        },
+        {
+          "citationId": "doc_9_chunk_3",
+          "documentId": "9",
+          "sourceRevision": 0,
+          "title": "08-other.md",
+          "source": "de6f5ae5-1dea-4779-8de1-7d5fd06c39af_08-other.md",
+          "quotedText": "-|---------|\n| DR | 微血管瘤基础上的出血 |\n| RVO | 沿静脉分布，范围局限 |\n| 高血压视网膜病变 | 后极部火焰状出血 |\n| NVG | 新生血管破裂，玻璃体积血 |\n\n### 黄斑水肿鉴别\n| 疾病 | 病因 |\n|------|------|\n| DME | 糖尿病 |\n| 视网膜静脉阻塞 | 静脉回流障碍 |\n| CSC | 脉络膜渗漏 |\n| 葡萄膜炎 | 炎症 |\n\n### 黄斑水肿鉴别\n| 疾病 | 病因 |\n|------|------|\n| DME | 糖尿病 |\n| 视网膜静脉阻塞 | 静脉回流障碍 |\n| CSC | 脉络膜渗漏 |\n| 葡萄膜炎 | 炎症 |\n\n### 视乳头水肿鉴别\n| 疾病 | 特点 |\n|------|------|\n| 颅内高压 | 双侧、进展性 |\n| 视神经炎 | 单侧多见、眼球转动痛 |\n| AION | 动脉硬化相关 |\n| 葡萄膜炎 | 前房/玻璃体炎症 |\n\n1. **视力、验光**：评估矫正视力\n2. **眼压**：排除青光眼\n3. **裂隙灯检查**：眼前节评估\n4. **散瞳眼底检查**：发现病变\n5. **眼底照相**：记录病变\n6. **OCT**：评估黄斑、视神经结构\n7. **FFA**：显示血管渗漏、无灌注区\n8. **OCTA**：无创血管成像\n9. **视野检查**：评估视功能\n10. **全身检查**：血糖、血压、免疫指标等",
+          "quotedTextDigest": "72c183226745e8363bfe3b891207787445a2f5b78afa7eaf40e60a88b1b453d4"
+        },
+        {
+          "citationId": "doc_5_chunk_1",
+          "documentId": "5",
+          "sourceRevision": 0,
+          "title": "04-diabetes.md",
+          "source": "673ebd84-2737-497a-8916-50e6fbfd08c0_04-diabetes.md",
+          "quotedText": "\"4-2-1\"原则**\n\n**特征性改变**\n- 新生血管形成（NVE）：出现在视网膜表面\n- 新生血管性青光眼（NVG）：新生血管长入前房角\n- 纤维血管膜形成\n- 玻璃体出血\n- 牵拉性视网膜脱离\n\n- **定义**：黄斑区视网膜增厚或硬性渗出累及黄斑中心500μm区域\n- **分类**：\n  - 弥漫性黄斑水肿：毛细血管渗漏广泛累及黄斑\n  - 囊样黄斑水肿：呈花瓣状囊腔改变\n  - 缺血性黄斑病变：黄斑毛细血管无灌注\n\n- **定义**：黄斑区视网膜增厚或硬性渗出累及黄斑中心500μm区域\n- **分类**：\n  - 弥漫性黄斑水肿：毛细血管渗漏广泛累及黄斑\n  - 囊样黄斑水肿：呈花瓣状囊腔改变\n  - 缺血性黄斑病变：黄斑毛细血管无灌注\n\n### 眼底检查\n1. **彩色眼底照相**：记录病变范围和程度\n2. **荧光素眼底血管造影（FFA）**：\n   - 显示无灌注区范围\n   - 评估新生血管活动性\n   - 指导激光治疗部位\n3. **光学相干断层扫描（OCT）**：\n   - 定量测量黄斑厚度\n   - 评估黄斑水肿类型\n   - 监测治疗反应\n\n### 筛查标准\n- 1型糖尿病：确诊后5年内开始筛查\n- 2型糖尿病：确诊时即进行首次筛查\n- 妊娠糖尿病：妊娠前或妊娠早期筛查\n\n### 全身管理\n- **严格控制血糖**：HbA1c<7%\n- **控制血压**：<140/90mmHg\n- **调节血脂**：他汀类药物\n- **改善微循环**\n\n**激光治疗**\n- **全视网膜光凝（PRP）**：适用于高危PDR\n- **黄斑格栅样光凝**：适用于弥漫性DME\n- 作用机制：破坏缺氧视网膜，降低VEGF表达",
+          "quotedTextDigest": "fa94268f17acfe3ad102296d65f9609d685d7c6a0b0c33f7b2076febef5cb718"
+        },
+        {
+          "citationId": "doc_9_chunk_4",
+          "documentId": "9",
+          "sourceRevision": 0,
+          "title": "08-other.md",
+          "source": "de6f5ae5-1dea-4779-8de1-7d5fd06c39af_08-other.md",
+          "quotedText": "CT**：评估黄斑、视神经结构\n7. **FFA**：显示血管渗漏、无灌注区\n8. **OCTA**：无创血管成像\n9. **视野检查**：评估视功能\n10. **全身检查**：血糖、血压、免疫指标等\n\n1. **突然视力下降**：特别是无痛性的\n2. **眼前漂浮物突然增多**：可能提示视网膜裂孔\n3. **闪光感**：可能提示玻璃体牵引或视网膜裂孔\n4. **幕状或窗帘样黑影遮挡**：可能为视网膜脱离前兆\n5. **视物变形**：可能为黄斑病变\n6. **夜盲进行性加重**：可能为视网膜病变\n7. **视野缺损**：可能为青光眼或视神经疾病\n8. **眼红、眼痛、畏光**：可能为葡萄膜炎或角膜疾病\n\n1. **突然视力下降**：特别是无痛性的\n2. **眼前漂浮物突然增多**：可能提示视网膜裂孔\n3. **闪光感**：可能提示玻璃体牵引或视网膜裂孔\n4. **幕状或窗帘样黑影遮挡**：可能为视网膜脱离前兆\n5. **视物变形**：可能为黄斑病变\n6. **夜盲进行性加重**：可能为视网膜病变\n7. **视野缺损**：可能为青光眼或视神经疾病\n8. **眼红、眼痛、畏光**：可能为葡萄膜炎或角膜疾病",
+          "quotedTextDigest": "f448d2594df3316185142bb54d229202feaa85a9d3015a144f30993b161ffa8b"
+        },
+        {
+          "citationId": "doc_7_chunk_1",
+          "documentId": "7",
+          "sourceRevision": 0,
+          "title": "06-hypertension.md",
+          "source": "4cd9919b-cb43-4a78-843f-3cc8efae6750_06-hypertension.md",
+          "quotedText": "网膜脱离\n- 症状：显著视力下降，可伴头痛、恶心\n\n### 眼底检查特征\n1. **动脉改变**\n   - 血管变窄、迂曲\n   - 血管壁改变：铜丝样、银丝样动脉\n   - 动静脉交叉改变：交叉压迹\n\n2. **视网膜改变**\n   - 出血：火焰状、点状、视网膜前出血\n   - 棉绒斑：边界模糊的灰白色斑块\n   - 硬性渗出：边界清晰的黄白色小点\n   - 水肿：视网膜雾样肿胀\n\n2. **视网膜改变**\n   - 出血：火焰状、点状、视网膜前出血\n   - 棉绒斑：边界模糊的灰白色斑块\n   - 硬性渗出：边界清晰的黄白色小点\n   - 水肿：视网膜雾样肿胀\n\n3. **视乳头改变**\n   - 视乳头水肿\n   - 边界模糊\n\n### 辅助检查\n- **OCT**：评估视网膜层间水肿、神经纤维层厚度\n- **FFA**：显示血管渗漏、无灌注区\n- **全身评估**：血压监测、心肾功能检查\n\n| 疾病 | 特点 |\n|------|------|\n| 糖尿病视网膜病变 | 微血管瘤、渗出更弥漫，无交叉压迫征 |\n| 视网膜静脉阻塞 | 沿静脉分布的出血，静脉迂曲扩张 |\n| 视神经炎 | 视乳头充血肿胀，视力下降明显 |\n| 颅内高压 | 双侧视乳头水肿，无动脉硬化表现 |\n\n### 糖尿病合并高血压\n- DR和HRP可同时存在\n- 鉴别诊断需综合考虑\n- 两者协同加重视网膜血管损害\n\n### 心脑血管疾病\n- 高血压视网膜病变程度与心脑血管事件风险正相关\n- 眼底血管评估可预测心血管死亡率\n- 视网膜微血管损害可反映脑部微血管状态",
+          "quotedTextDigest": "e330fb80fda302602afc750b66f646bdf685adfb50bb3a0231e34d2cd6635d30"
+        }
+      ],
+      "scope": "format fixture, not clinical evidence"
+    },
+    "installedSDKPictureUpload": {
+      "status": "PASS",
+      "url": "https://yuwen-diagnosis-1325795131.cos.ap-guangzhou.myqcloud.com//public/9007199254740993/20261017_6022768040250165.png"
+    },
+    "returnedPictureURLRead": {
+      "status": "PASS",
+      "httpStatus": 200
+    }
+  },
+  "objects": [
+    {
+      "url": "https://yuwen-diagnosis-1325795131.cos.ap-guangzhou.myqcloud.com//public/9007199254740993/20261017_6022768040250165.png",
+      "key": "public/9007199254740993/20261017_6022768040250165.png",
+      "kind": "retained-synthetic-sdk-picture-probe"
+    }
+  ]
+}

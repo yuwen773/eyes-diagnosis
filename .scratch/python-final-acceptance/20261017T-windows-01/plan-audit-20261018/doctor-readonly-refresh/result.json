@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "scope": "Real ordinary chat plus read-only original Vue; no human acceptance",
+  "checks": {
+    "doctorReadonlyRefresh": "PASS"
+  },
+  "budgetBefore": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "businessTablesUnchanged": true,
+  "cleanup": "PASS",
+  "budgetAfter": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  }
+}

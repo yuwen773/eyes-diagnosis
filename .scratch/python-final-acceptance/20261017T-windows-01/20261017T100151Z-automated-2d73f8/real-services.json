@@ -1,0 +1,42 @@
+{
+  "status": "FAIL",
+  "schema": "eye_final_6d0e65d48d844123b59559297b83b797",
+  "gates": {
+    "realInfrastructure": {
+      "status": "PASS",
+      "detail": "Original API/Worker entries; isolated MySQL, Redis, Chroma; Python login and large IDs"
+    },
+    "realWaitRestart": {
+      "status": "PASS",
+      "tasks": 5
+    }
+  },
+  "checks": [
+    "real-redis-logout-cookie-replay-invalid",
+    "knowledge-upload-search",
+    "original_1_left_jpg",
+    "original_0_left_jpg",
+    "original_2_left_jpg",
+    "original_13_left_jpg",
+    "original_30_left_jpg"
+  ],
+  "errorType": "HTTPContractError",
+  "errorLocation": [
+    {
+      "file": "acceptance_runtime.py",
+      "line": 298
+    },
+    {
+      "file": "acceptance_runtime.py",
+      "line": 144
+    }
+  ],
+  "httpContract": {
+    "httpStatus": 404,
+    "code": null,
+    "path": "/api/doctor/reviews"
+  },
+  "cleanup": {
+    "status": "PASS"
+  }
+}

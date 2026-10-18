@@ -1,0 +1,7 @@
+{
+  "structuredExplanation": {
+    "status": "BLOCKED",
+    "errorType": "HTTPStatusError",
+    "httpStatus": 400
+  }
+}

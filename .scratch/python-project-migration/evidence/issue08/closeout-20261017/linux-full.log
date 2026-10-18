@@ -1,0 +1,1246 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+Using Python 3.11.14 environment at: /usr/local
+Checked 138 packages in 185ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 7 source files
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 16%]
+........................................................................ [ 25%]
+............................................................ssss........ [ 33%]
+.......................FF............................................... [ 42%]
+........................................................................ [ 50%]
+........................s..sss.................FF....................... [ 58%]
+........................................................................ [ 67%]
+.................................................sssssssssss.....F...... [ 75%]
+........................................................................ [ 84%]
+.............................F.......................................... [ 92%]
+...............................s.................................        [100%]
+=================================== FAILURES ===================================
+_______ test_query_does_not_enqueue_diagnostic_work_or_request_approval ________
+
+self = <sqlalchemy.engine.base.Connection object at 0x74bf02b7e690>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x74bf012bb590>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf0165ef50>
+parameters = [{'title': '请查询我已保存的历史诊断', 'userId': 7, 'sessionId': 'history', 'checkpointData': None, ...}]
+execution_options = immutabledict({'compiled_cache': <sqlalchemy.util._collections.LRUCache object at 0x74bf3f4413a0>})
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf0165ef50>, [{'title': '请查询我已保存的历史诊断', 'userId': 7, 'sessionId': 'history', 'checkpointData': None, ...}], <sqlalchemy.sql.dml.Insert object at 0x74bf44c47a10>, [])
+kw = {'cache_hit': <CacheStats.CACHE_MISS: 1>, 'param_dict': None}
+
+    def _execute_context(
+        self,
+        dialect: Dialect,
+        constructor: Callable[..., ExecutionContext],
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+        execution_options: _ExecuteOptions,
+        *args: Any,
+        **kw: Any,
+    ) -> CursorResult[Unpack[TupleAny]]:
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`_engine.CursorResult`."""
+    
+        if execution_options:
+            yp = execution_options.get("yield_per", None)
+            if yp:
+                execution_options = execution_options.union(
+                    {"stream_results": True, "max_row_buffer": yp}
+                )
+        try:
+            conn = self._dbapi_connection
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(
+                dialect, self, conn, execution_options, *args, **kw
+            )
+
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   RuntimeError: clock moved backwards by 2244ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+
+algorithm/web/db.py:121: RuntimeError
+
+The above exception was the direct cause of the following exception:
+
+history_api = (<starlette.testclient.TestClient object at 0x74bf01572190>, sessionmaker(class_='Session', bind=Engine(sqlite:////tmp...history.db), autoflush=True, expire_on_commit=False), [], [<function history_api.<locals>.<lambda> at 0x74bf01ee1ee0>])
+
+    def test_query_does_not_enqueue_diagnostic_work_or_request_approval(history_api):
+        from web.workflow.worker import Worker
+    
+        client, sessions, _, _ = history_api
+>       response = ask(client)
+                   ^^^^^^^^^^^
+
+algorithm/web/tests/test_history_retrieval.py:273: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+algorithm/web/tests/test_history_retrieval.py:78: in ask
+    return client.post("/api/agent/chat/stream", json={"threadId": "history", "message": message, **extra})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1204: in post
+    return self.request(
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:463: in request
+    return super().request(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:797: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:980: in send
+    response = self._send_handling_auth(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1008: in _send_handling_auth
+    response = self._send_handling_redirects(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1043: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1076: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:360: in handle_request
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:357: in handle_request
+    portal.call(self.app, scope, receive, send)
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:1216: in __call__
+    await super().__call__(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:91: in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:149: in simple_response
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/routing.py:676: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2786: in app
+    await route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1817: in handle
+    await self.original_router.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2869: in handle
+    await included_router._handle_selected(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1843: in _handle_selected
+    await original_route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1308: in handle
+    await effective_context.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:165: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:151: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:727: in app
+    raw_response = await run_endpoint_function(
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:360: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/routers/agent.py:138: in chat_stream
+    db.flush()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4536: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4679: in _flush
+    with util.safe_reraise():
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4640: in _flush
+    flush_context.execute()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:467: in execute
+    rec.execute(self)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:92: in _save_obj
+    _emit_insert_statements(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1451: in execute
+    return meth(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1671: in _execute_clauseelement
+    ret = self._execute_context(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1800: in _execute_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2335: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: in _execute_context
+    context = constructor(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   sqlalchemy.exc.StatementError: (builtins.RuntimeError) clock moved backwards by 2244ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+E                   [SQL: INSERT INTO t_agent_session (id, "sessionId", "userId", title, "modelName", status, "lastMessage", "messageCount", "summaryContent", "summaryAt", "checkpointData", "createdTime", "updatedTime", "expiredTime", "isDelete", pinned, "pinTime") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E                   [parameters: [{'title': '请查询我已保存的历史诊断', 'userId': 7, 'sessionId': 'history', 'checkpointData': None, 'pinTime': None, 'modelName': None, 'expiredTime': None, 'summaryAt': None, 'summaryContent': None}]]
+
+algorithm/web/db.py:121: StatementError
+________ test_slow_history_database_does_not_block_other_http_requests _________
+
+self = <sqlalchemy.engine.base.Connection object at 0x74bf01043f10>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x74bf01179110>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf010f9190>
+parameters = [{'title': '查询本人历史诊断', 'userId': 7, 'sessionId': 'slow-history', 'checkpointData': None, ...}]
+execution_options = immutabledict({'compiled_cache': <sqlalchemy.util._collections.LRUCache object at 0x74bf3f4413a0>})
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf010f9190>, [{'title': '查询本人历史诊断', 'userId': 7, 'sessionId': 'slow-history', 'checkpointData': None, ...}], <sqlalchemy.sql.dml.Insert object at 0x74bf44c47a10>, [])
+kw = {'cache_hit': <CacheStats.CACHE_MISS: 1>, 'param_dict': None}
+
+    def _execute_context(
+        self,
+        dialect: Dialect,
+        constructor: Callable[..., ExecutionContext],
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+        execution_options: _ExecuteOptions,
+        *args: Any,
+        **kw: Any,
+    ) -> CursorResult[Unpack[TupleAny]]:
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`_engine.CursorResult`."""
+    
+        if execution_options:
+            yp = execution_options.get("yield_per", None)
+            if yp:
+                execution_options = execution_options.union(
+                    {"stream_results": True, "max_row_buffer": yp}
+                )
+        try:
+            conn = self._dbapi_connection
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(
+                dialect, self, conn, execution_options, *args, **kw
+            )
+
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   RuntimeError: clock moved backwards by 142ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+
+algorithm/web/db.py:121: RuntimeError
+
+The above exception was the direct cause of the following exception:
+
+history_api = (<starlette.testclient.TestClient object at 0x74bf01358210>, sessionmaker(class_='Session', bind=Engine(sqlite:////tmp...history.db), autoflush=True, expire_on_commit=False), [], [<function history_api.<locals>.<lambda> at 0x74bf01a965c0>])
+
+    def test_slow_history_database_does_not_block_other_http_requests(history_api):
+        client, sessions, _, _ = history_api
+        engine = sessions.kw["bind"]
+        read_started = []
+    
+        def slow_read(connection, cursor, statement, parameters, context, executemany):
+            if statement.lstrip().upper().startswith("SELECT") and "t_diagnosis" in statement:
+                read_started.append(time.monotonic())
+                time.sleep(.5)
+    
+        async def exercise():
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=client.app),
+                    base_url="http://fixture", cookies={SESSION_COOKIE_NAME: "alice"}) as api:
+                querying = asyncio.create_task(api.post("/api/agent/chat/stream", json={
+                    "threadId": "slow-history", "message": "查询本人历史诊断"}))
+                try:
+                    deadline = time.monotonic() + 5
+                    while not read_started and time.monotonic() < deadline:
+                        await asyncio.sleep(.005)
+                    assert read_started
+                    health = await api.get("/health")
+                    assert health.status_code == 200
+                    assert time.monotonic() - read_started[0] < .3
+                finally:
+                    response = await querying
+                assert "event: done" in response.text and "青光眼" in answer(response)
+    
+        event.listen(engine, "before_cursor_execute", slow_read)
+        try:
+>           asyncio.run(exercise())
+
+algorithm/web/tests/test_history_retrieval.py:308: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/asyncio/runners.py:190: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/asyncio/base_events.py:654: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+algorithm/web/tests/test_history_retrieval.py:303: in exercise
+    response = await querying
+               ^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1859: in post
+    return await self.request(
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1629: in send
+    response = await self._send_handling_auth(
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx/_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx/_transports/asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:1216: in __call__
+    await super().__call__(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:91: in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:149: in simple_response
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/routing.py:676: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2786: in app
+    await route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1817: in handle
+    await self.original_router.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2869: in handle
+    await included_router._handle_selected(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1843: in _handle_selected
+    await original_route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1308: in handle
+    await effective_context.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:165: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:151: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:727: in app
+    raw_response = await run_endpoint_function(
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:360: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/routers/agent.py:138: in chat_stream
+    db.flush()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4536: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4679: in _flush
+    with util.safe_reraise():
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4640: in _flush
+    flush_context.execute()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:467: in execute
+    rec.execute(self)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:92: in _save_obj
+    _emit_insert_statements(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1451: in execute
+    return meth(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1671: in _execute_clauseelement
+    ret = self._execute_context(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1800: in _execute_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2335: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: in _execute_context
+    context = constructor(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   sqlalchemy.exc.StatementError: (builtins.RuntimeError) clock moved backwards by 142ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+E                   [SQL: INSERT INTO t_agent_session (id, "sessionId", "userId", title, "modelName", status, "lastMessage", "messageCount", "summaryContent", "summaryAt", "checkpointData", "createdTime", "updatedTime", "expiredTime", "isDelete", pinned, "pinTime") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E                   [parameters: [{'title': '查询本人历史诊断', 'userId': 7, 'sessionId': 'slow-history', 'checkpointData': None, 'pinTime': None, 'modelName': None, 'expiredTime': None, 'summaryAt': None, 'summaryContent': None}]]
+
+algorithm/web/db.py:121: StatementError
+_ test_model_cannot_forge_identity_scope_or_publication[{"userId":8,"query":"x"}] _
+
+self = <sqlalchemy.engine.base.Connection object at 0x74bf007675d0>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x74bf0090aa50>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf00757f90>
+parameters = [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, ...}]
+execution_options = immutabledict({'compiled_cache': <sqlalchemy.util._collections.LRUCache object at 0x74bf3f4413a0>})
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf00757f90>, [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, ...}], <sqlalchemy.sql.dml.Insert object at 0x74bf44c47a10>, [])
+kw = {'cache_hit': <CacheStats.CACHE_MISS: 1>, 'param_dict': None}
+
+    def _execute_context(
+        self,
+        dialect: Dialect,
+        constructor: Callable[..., ExecutionContext],
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+        execution_options: _ExecuteOptions,
+        *args: Any,
+        **kw: Any,
+    ) -> CursorResult[Unpack[TupleAny]]:
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`_engine.CursorResult`."""
+    
+        if execution_options:
+            yp = execution_options.get("yield_per", None)
+            if yp:
+                execution_options = execution_options.union(
+                    {"stream_results": True, "max_row_buffer": yp}
+                )
+        try:
+            conn = self._dbapi_connection
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(
+                dialect, self, conn, execution_options, *args, **kw
+            )
+
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   RuntimeError: clock moved backwards by 2273ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+
+algorithm/web/db.py:121: RuntimeError
+
+The above exception was the direct cause of the following exception:
+
+mcp_chat = (<starlette.testclient.TestClient object at 0x74befec721d0>, [], ['mcp_e7be8847c96103591ec65d32f1f9d886'], [], {'error': False, 'timeout': False, 'discovery_error': False, 'image': False, ...})
+arguments = '{"userId":8,"query":"x"}'
+
+    @pytest.mark.parametrize("arguments", ['{"userId":8,"query":"x"}', '{"query":3}', '[]', '{',
+        '{"query":"x","confirmed":true}', '{"query":"x","workflowId":"foreign"}'])
+    def test_model_cannot_forge_identity_scope_or_publication(mcp_chat, arguments):
+        client, _, selected, requests, _ = mcp_chat
+        client.app.state.chat_client = httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: tool_stream(arguments, name=selected[0])))
+>       response = chat(client, "forged", "伪造权限")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+algorithm/web/tests/test_mcp_chat.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+algorithm/web/tests/test_chat.py:82: in chat
+    return client.post("/api/agent/chat/stream", json={"threadId": thread, "message": message, **extra})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1204: in post
+    return self.request(
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:463: in request
+    return super().request(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:797: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:980: in send
+    response = self._send_handling_auth(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1008: in _send_handling_auth
+    response = self._send_handling_redirects(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1043: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1076: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:360: in handle_request
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:357: in handle_request
+    portal.call(self.app, scope, receive, send)
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:1216: in __call__
+    await super().__call__(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:91: in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:149: in simple_response
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/routing.py:676: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2786: in app
+    await route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1817: in handle
+    await self.original_router.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2869: in handle
+    await included_router._handle_selected(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1843: in _handle_selected
+    await original_route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1308: in handle
+    await effective_context.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:165: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:151: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:727: in app
+    raw_response = await run_endpoint_function(
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:360: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/routers/agent.py:138: in chat_stream
+    db.flush()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4536: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4679: in _flush
+    with util.safe_reraise():
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4640: in _flush
+    flush_context.execute()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:467: in execute
+    rec.execute(self)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:92: in _save_obj
+    _emit_insert_statements(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1451: in execute
+    return meth(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1671: in _execute_clauseelement
+    ret = self._execute_context(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1800: in _execute_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2335: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: in _execute_context
+    context = constructor(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   sqlalchemy.exc.StatementError: (builtins.RuntimeError) clock moved backwards by 2273ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+E                   [SQL: INSERT INTO t_agent_session (id, "sessionId", "userId", title, "modelName", status, "lastMessage", "messageCount", "summaryContent", "summaryAt", "checkpointData", "createdTime", "updatedTime", "expiredTime", "isDelete", pinned, "pinTime") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E                   [parameters: [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, 'pinTime': None, 'modelName': None, 'expiredTime': None, 'summaryAt': None, 'summaryContent': None}]]
+
+algorithm/web/db.py:121: StatementError
+______ test_model_cannot_forge_identity_scope_or_publication[{"query":3}] ______
+
+self = <sqlalchemy.engine.base.Connection object at 0x74bf000b15d0>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x74bf02989a90>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf0203e790>
+parameters = [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, ...}]
+execution_options = immutabledict({'compiled_cache': <sqlalchemy.util._collections.LRUCache object at 0x74bf3f4413a0>})
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74bf0203e790>, [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, ...}], <sqlalchemy.sql.dml.Insert object at 0x74bf44c47a10>, [])
+kw = {'cache_hit': <CacheStats.CACHE_MISS: 1>, 'param_dict': None}
+
+    def _execute_context(
+        self,
+        dialect: Dialect,
+        constructor: Callable[..., ExecutionContext],
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+        execution_options: _ExecuteOptions,
+        *args: Any,
+        **kw: Any,
+    ) -> CursorResult[Unpack[TupleAny]]:
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`_engine.CursorResult`."""
+    
+        if execution_options:
+            yp = execution_options.get("yield_per", None)
+            if yp:
+                execution_options = execution_options.union(
+                    {"stream_results": True, "max_row_buffer": yp}
+                )
+        try:
+            conn = self._dbapi_connection
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(
+                dialect, self, conn, execution_options, *args, **kw
+            )
+
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   RuntimeError: clock moved backwards by 293ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+
+algorithm/web/db.py:121: RuntimeError
+
+The above exception was the direct cause of the following exception:
+
+mcp_chat = (<starlette.testclient.TestClient object at 0x74beffbcbe10>, [], ['mcp_e7be8847c96103591ec65d32f1f9d886'], [], {'error': False, 'timeout': False, 'discovery_error': False, 'image': False, ...})
+arguments = '{"query":3}'
+
+    @pytest.mark.parametrize("arguments", ['{"userId":8,"query":"x"}', '{"query":3}', '[]', '{',
+        '{"query":"x","confirmed":true}', '{"query":"x","workflowId":"foreign"}'])
+    def test_model_cannot_forge_identity_scope_or_publication(mcp_chat, arguments):
+        client, _, selected, requests, _ = mcp_chat
+        client.app.state.chat_client = httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: tool_stream(arguments, name=selected[0])))
+>       response = chat(client, "forged", "伪造权限")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+algorithm/web/tests/test_mcp_chat.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+algorithm/web/tests/test_chat.py:82: in chat
+    return client.post("/api/agent/chat/stream", json={"threadId": thread, "message": message, **extra})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1204: in post
+    return self.request(
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:463: in request
+    return super().request(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:797: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:980: in send
+    response = self._send_handling_auth(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1008: in _send_handling_auth
+    response = self._send_handling_redirects(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1043: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1076: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:360: in handle_request
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:357: in handle_request
+    portal.call(self.app, scope, receive, send)
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:1216: in __call__
+    await super().__call__(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:91: in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:149: in simple_response
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/routing.py:676: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2786: in app
+    await route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1817: in handle
+    await self.original_router.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2869: in handle
+    await included_router._handle_selected(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1843: in _handle_selected
+    await original_route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1308: in handle
+    await effective_context.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:165: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:151: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:727: in app
+    raw_response = await run_endpoint_function(
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:360: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/routers/agent.py:138: in chat_stream
+    db.flush()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4536: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4679: in _flush
+    with util.safe_reraise():
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4640: in _flush
+    flush_context.execute()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:467: in execute
+    rec.execute(self)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:92: in _save_obj
+    _emit_insert_statements(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1451: in execute
+    return meth(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1671: in _execute_clauseelement
+    ret = self._execute_context(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1800: in _execute_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2335: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: in _execute_context
+    context = constructor(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   sqlalchemy.exc.StatementError: (builtins.RuntimeError) clock moved backwards by 293ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+E                   [SQL: INSERT INTO t_agent_session (id, "sessionId", "userId", title, "modelName", status, "lastMessage", "messageCount", "summaryContent", "summaryAt", "checkpointData", "createdTime", "updatedTime", "expiredTime", "isDelete", pinned, "pinTime") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E                   [parameters: [{'title': '伪造权限', 'userId': 7, 'sessionId': 'forged', 'checkpointData': None, 'pinTime': None, 'modelName': None, 'expiredTime': None, 'summaryAt': None, 'summaryContent': None}]]
+
+algorithm/web/db.py:121: StatementError
+__________ test_review_requires_doctor_and_forbids_own_case[bob-403] ___________
+
+workflow_api = (<starlette.testclient.TestClient object at 0x74beff56f850>, sessionmaker(class_='Session', bind=Engine(sqlite:////tmp/pytest-of-root/pytest-0/test_review_requires_doctor_an3/workflow.db), autoflush=True, expire_on_commit=False))
+identity = 'bob', status = 403
+
+    @pytest.mark.parametrize("identity,status", [("alice", 403), ("admin", 403), ("self-doctor", 403),
+                                                 ("bob", 403), ("expired", 401)])
+    def test_review_requires_doctor_and_forbids_own_case(workflow_api, identity, status):
+>       client, _, _, _ = prepare(workflow_api)
+                          ^^^^^^^^^^^^^^^^^^^^^
+
+algorithm/web/tests/test_quality_review.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+workflow_api = (<starlette.testclient.TestClient object at 0x74beff56f850>, sessionmaker(class_='Session', bind=Engine(sqlite:////tmp/pytest-of-root/pytest-0/test_review_requires_doctor_an3/workflow.db), autoflush=True, expire_on_commit=False))
+result = None
+
+    def prepare(workflow_api, result=None):
+        client, sessions = workflow_api
+        install_sessions(client.app, who=QUALITY_IDENTITIES)
+    
+        engine = ControlledEngine(result or prediction(quality_reasons="blur", quality_score=40))
+        worker = Worker(sessions, inference=WorkflowInference(WebConfig(), engine=engine))
+        workflow_id = create_upload(client, question="本次眼底图片").json()["data"]["workflowId"]
+        for _ in range(3):
+>           assert worker.run_once()
+E           assert False
+E            +  where False = run_once()
+E            +    where run_once = <web.workflow.worker.Worker object at 0x74bf003ad9d0>.run_once
+
+algorithm/web/tests/test_quality_review.py:58: AssertionError
+______ test_unapproved_or_changed_operations_never_modify_profile[reject] ______
+
+self = <sqlalchemy.engine.base.Connection object at 0x74befbd65910>
+dialect = <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite object at 0x74befc278d90>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.sqlite.base.SQLiteExecutionContext'>>
+statement = <sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74befbd76c50>
+parameters = [{'title': '把我的简介改为眼科学生', 'userId': 7, 'sessionId': 'profile', 'checkpointData': None, ...}]
+execution_options = immutabledict({'compiled_cache': <sqlalchemy.util._collections.LRUCache object at 0x74bf3f4413a0>})
+args = (<sqlalchemy.dialects.sqlite.base.SQLiteCompiler object at 0x74befbd76c50>, [{'title': '把我的简介改为眼科学生', 'userId': 7, 'sessionId': 'profile', 'checkpointData': None, ...}], <sqlalchemy.sql.dml.Insert object at 0x74bf44c47a10>, [])
+kw = {'cache_hit': <CacheStats.CACHE_MISS: 1>, 'param_dict': None}
+
+    def _execute_context(
+        self,
+        dialect: Dialect,
+        constructor: Callable[..., ExecutionContext],
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+        execution_options: _ExecuteOptions,
+        *args: Any,
+        **kw: Any,
+    ) -> CursorResult[Unpack[TupleAny]]:
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`_engine.CursorResult`."""
+    
+        if execution_options:
+            yp = execution_options.get("yield_per", None)
+            if yp:
+                execution_options = execution_options.union(
+                    {"stream_results": True, "max_row_buffer": yp}
+                )
+        try:
+            conn = self._dbapi_connection
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+>           context = constructor(
+                dialect, self, conn, execution_options, *args, **kw
+            )
+
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   RuntimeError: clock moved backwards by 1901ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+
+algorithm/web/db.py:121: RuntimeError
+
+The above exception was the direct cause of the following exception:
+
+chat_api = (<function chat_api.<locals>.build at 0x74befbf4a980>, [])
+scenario = 'reject'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74befc365f10>
+
+    @pytest.mark.parametrize("scenario", ["reject", "expire", "cross-user", "digest", "key", "parameters", "role", "adapter"])
+    def test_unapproved_or_changed_operations_never_modify_profile(chat_api, scenario, monkeypatch):
+        build, _ = chat_api
+        client = build(lambda request: tool_stream('{"userProfile":"眼科学生"}', name="propose_profile_update"), seed=seed_user)
+>       row = pending(client)
+              ^^^^^^^^^^^^^^^
+
+algorithm/web/tests/test_tool_writes.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+algorithm/web/tests/test_tool_writes.py:32: in pending
+    response = chat(client, thread, "把我的简介改为眼科学生")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/tests/test_chat.py:82: in chat
+    return client.post("/api/agent/chat/stream", json={"threadId": thread, "message": message, **extra})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1204: in post
+    return self.request(
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:463: in request
+    return super().request(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:797: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:980: in send
+    response = self._send_handling_auth(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1008: in _send_handling_auth
+    response = self._send_handling_redirects(
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1043: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/httpx2/_client.py:1076: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:360: in handle_request
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/testclient.py:357: in handle_request
+    portal.call(self.app, scope, receive, send)
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:340: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/local/lib/python3.11/site-packages/anyio/from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/applications.py:1216: in __call__
+    await super().__call__(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:91: in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py:149: in simple_response
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/routing.py:676: in __call__
+    await self.middleware_stack(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2786: in app
+    await route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1817: in handle
+    await self.original_router.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:2869: in handle
+    await included_router._handle_selected(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1843: in _handle_selected
+    await original_route.handle(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:1308: in handle
+    await effective_context.app(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:165: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:151: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:727: in app
+    raw_response = await run_endpoint_function(
+/usr/local/lib/python3.11/site-packages/fastapi/routing.py:360: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+algorithm/web/routers/agent.py:138: in chat_stream
+    db.flush()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4536: in flush
+    self._flush(objects)
+<sqlalchemy generated warned() wrapper for sqlalchemy.orm.session.Session._flush>:2: in _flush
+    return target(fn, self, objects=objects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py:281: in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4679: in _flush
+    with util.safe_reraise():
+/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:166: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py:4640: in _flush
+    flush_context.execute()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:467: in execute
+    rec.execute(self)
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py:643: in execute
+    util.preloaded.orm_persistence._save_obj(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:92: in _save_obj
+    _emit_insert_statements(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1237: in _emit_insert_statements
+    result = connection.execute(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1451: in execute
+    return meth(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:533: in _execute_on_connection
+    return connection._execute_clauseelement(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1671: in _execute_clauseelement
+    ret = self._execute_context(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1800: in _execute_context
+    self._handle_dbapi_exception(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2335: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1794: in _execute_context
+    context = constructor(
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:1695: in _init_compiled
+    self._process_execute_defaults()
+/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py:2633: in _process_execute_defaults
+    param[param_key] = arg(self)
+                       ^^^^^^^^^
+/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py:4302: in <lambda>
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+                                          ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <web.db.SnowflakeIdGenerator object at 0x74bf484ad350>
+
+    def next_id(self) -> int:
+        with self._lock:
+            timestamp = self._now()
+    
+            if timestamp < self._last_timestamp:
+                offset = self._last_timestamp - timestamp
+                if offset > 5:
+>                   raise RuntimeError(
+                        f"clock moved backwards by {offset}ms; refusing to generate an id "
+                        f"(matches MyBatis Plus Sequence's 5ms tolerance)"
+                    )
+E                   sqlalchemy.exc.StatementError: (builtins.RuntimeError) clock moved backwards by 1901ms; refusing to generate an id (matches MyBatis Plus Sequence's 5ms tolerance)
+E                   [SQL: INSERT INTO t_agent_session (id, "sessionId", "userId", title, "modelName", status, "lastMessage", "messageCount", "summaryContent", "summaryAt", "checkpointData", "createdTime", "updatedTime", "expiredTime", "isDelete", pinned, "pinTime") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+E                   [parameters: [{'title': '把我的简介改为眼科学生', 'userId': 7, 'sessionId': 'profile', 'checkpointData': None, 'pinTime': None, 'modelName': None, 'expiredTime': None, 'summaryAt': None, 'summaryContent': None}]]
+
+algorithm/web/db.py:121: StatementError
+=============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  /usr/local/lib/python3.11/site-packages/pydantic_settings/sources/utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED algorithm/web/tests/test_history_retrieval.py::test_query_does_not_enqueue_diagnostic_work_or_request_approval
+FAILED algorithm/web/tests/test_history_retrieval.py::test_slow_history_database_does_not_block_other_http_requests
+FAILED algorithm/web/tests/test_mcp_chat.py::test_model_cannot_forge_identity_scope_or_publication[{"userId":8,"query":"x"}]
+FAILED algorithm/web/tests/test_mcp_chat.py::test_model_cannot_forge_identity_scope_or_publication[{"query":3}]
+FAILED algorithm/web/tests/test_quality_review.py::test_review_requires_doctor_and_forbids_own_case[bob-403]
+FAILED algorithm/web/tests/test_tool_writes.py::test_unapproved_or_changed_operations_never_modify_profile[reject]
+6 failed, 808 passed, 43 skipped, 1 warning in 543.69s (0:09:03)
+Traceback (most recent call last):
+  File "/workspace/scripts/verify.py", line 52, in <module>
+    main()
+  File "/workspace/scripts/verify.py", line 32, in main
+    run([sys.executable, "-m", "pytest", "algorithm/web/tests", "-q", "--junitxml=" + str(args.output_dir / "web.xml")])
+  File "/workspace/scripts/verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "/usr/local/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/local/bin/python', '-m', 'pytest', 'algorithm/web/tests', '-q', '--junitxml=/evidence/linux-full/web.xml']' returned non-zero exit status 1.

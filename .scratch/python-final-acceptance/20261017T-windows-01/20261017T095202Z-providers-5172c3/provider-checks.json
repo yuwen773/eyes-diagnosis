@@ -1,0 +1,16 @@
+{
+  "embedding": {
+    "status": "PASS",
+    "dimensions": 1024,
+    "inputTexts": 1
+  },
+  "streamingChat": {
+    "status": "PASS",
+    "contentSeen": true,
+    "doneSeen": true
+  },
+  "structuredExplanation": {
+    "status": "BLOCKED",
+    "errorType": "HTTPStatusError"
+  }
+}

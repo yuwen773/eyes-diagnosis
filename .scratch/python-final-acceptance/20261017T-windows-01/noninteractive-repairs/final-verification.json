@@ -1,0 +1,42 @@
+{
+  "requestedRepairs": {
+    "structuredExplanationTimeout": "PASS",
+    "fullWindowsWebFailure": "PASS"
+  },
+  "windowsWeb": {
+    "status": "PASS",
+    "passed": 824,
+    "failed": 0,
+    "skipped": 43,
+    "evidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\windows-web-repaired\\web.xml"
+  },
+  "frontend": {
+    "testExit": 0,
+    "buildLog": "noninteractive-repairs/frontend-build.log",
+    "buildExit": 0,
+    "testLog": "noninteractive-repairs/frontend-test.log",
+    "scope": "Fresh verification after explanation and restart-harness repairs"
+  },
+  "businessTablesUnchanged": true,
+  "formalRecords": 0,
+  "cleanup": {
+    "status": "PASS",
+    "processManifests": 10,
+    "explicitRegistrationRecovery": [
+      "20261017T095740Z-automated-c0d0fd\\cleanup-recovery.txt"
+    ]
+  },
+  "manualAcceptance": "DEFERRED",
+  "remainingReferenceLimitation": "myopia / UNSUPPORTED_NUMERIC_CLAIM",
+  "overallAcceptance": "BLOCKED",
+  "budget": {
+    "llm": {
+      "used": 14,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 37,
+      "limit": 500
+    }
+  }
+}

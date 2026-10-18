@@ -1,0 +1,1 @@
+{"status": "PASS", "schema": "eye_pyhandoff_f81a5e373b4b41cf86d8a4c39edc99e3", "providerRequests": 0, "scope": "Real MySQL/Redis and original API, synthetic fixtures; no human acceptance", "staleVersionConflict": "PASS", "durableAfterApiRestart": "PASS", "cleanup": "PASS", "sourceSha256": "b3eec458382879e5993d75ca63bd365f58cef7321b998db196b6c60fb99142c8"}

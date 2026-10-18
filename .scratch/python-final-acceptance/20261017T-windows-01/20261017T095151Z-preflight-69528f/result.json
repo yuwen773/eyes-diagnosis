@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scope": "local materials, credential format, ports and source snapshot only",
+  "phase": "preflight",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T095151Z-preflight-69528f",
+  "budget": {
+    "llm": {
+      "used": 0,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 0,
+      "limit": 500
+    }
+  }
+}

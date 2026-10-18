@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "checks": {
+    "structuredExplanation": {
+      "status": "PASS",
+      "claims": 1,
+      "referenceSha256": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f"
+    }
+  },
+  "phase": "providers",
+  "runId": "20261017T-windows-01",
+  "attempt": "20261017T120326Z-providers-25d849",
+  "budget": {
+    "llm": {
+      "used": 8,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 31,
+      "limit": 500
+    }
+  }
+}

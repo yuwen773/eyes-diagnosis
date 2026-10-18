@@ -1,0 +1,11 @@
+{
+  "secretScan": "PASS",
+  "filesScanned": 1610,
+  "findings": [],
+  "unrelatedTrackedChangesPreserved": true,
+  "changedSourceFiles": [
+    "scripts/acceptance_report.py"
+  ],
+  "ownedServiceEntriesStopped": 19,
+  "survivingRegisteredServices": 0
+}

@@ -1,0 +1,151 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Frontend.Dockerfile
+#1 transferring dockerfile:
+#1 transferring dockerfile: 445B 0.2s done
+#1 DONE 0.5s
+
+#2 [internal] load metadata for docker.io/library/nginx:1.27.4-alpine
+#2 DONE 6.3s
+
+#3 [internal] load metadata for docker.io/library/node:22.14.0-alpine
+#3 DONE 7.3s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 1.07kB 0.0s done
+#4 DONE 0.1s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 resolve docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591 0.2s done
+#6 DONE 1.9s
+
+#5 [internal] load build context
+#5 transferring context: 2.51MB 4.7s
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 9.44MB / 15.38MB 7.1s
+#6 sha256:ab3286a7346303a31b69a5189f63f1414cc1de44e397088dcd07edb322df1fe9 1.21kB / 1.21kB 1.7s done
+#6 sha256:6d79cc6084d434876ce0f038c675d20532f28e476283a29e7e63bc0bf13a4ed6 1.40kB / 1.40kB 1.3s done
+#6 sha256:984583bcf083fa6900b5e7834795a9a57a9b4dfe7448d5350474f5d309625ece 955B / 955B 1.1s done
+#6 sha256:8d27c072a58f81ecf2425172ac0e5b25010ff2d014f89de35b90104e462568eb 402B / 402B 1.1s done
+#6 sha256:43f2ec460bdf5babee56d7e13b060b308f42cbf2103f6665c349f0b98dac8962 627B / 627B 1.1s done
+#6 sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2 0B / 1.79MB 2.0s
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 11.53MB / 15.38MB 7.5s
+#6 sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2 1.05MB / 1.79MB 2.9s
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 12.58MB / 15.38MB 8.1s
+#6 sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2 1.79MB / 1.79MB 3.2s
+#6 ...
+
+#7 [build 1/6] FROM docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#7 resolve docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944 0.2s done
+#7 sha256:9d0e0719fbe047cc0770ba9ed1cb150a4ee9bc8a55480eeb8a84a736c8037dbc 1.26MB / 1.26MB 3.6s done
+#7 sha256:6f063dbd7a5db7835273c913fc420b1082dcda3b5972d75d7478b619da284053 446B / 446B 2.4s done
+#7 sha256:cb2bde55f71f84688f9eb7197e0f69aa7c4457499bdf39f34989ab16455c3369 31.46MB / 50.34MB 9.2s
+#7 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 13.63MB / 15.38MB 8.7s
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 14.68MB / 15.38MB 8.9s
+#6 sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 15.38MB / 15.38MB 13.2s done
+#6 sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2 1.79MB / 1.79MB 8.1s done
+#6 DONE 15.2s
+
+#5 [internal] load build context
+#5 transferring context: 63.45MB 15.3s
+#5 ...
+
+#7 [build 1/6] FROM docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#7 sha256:cb2bde55f71f84688f9eb7197e0f69aa7c4457499bdf39f34989ab16455c3369 50.34MB / 50.34MB 14.0s done
+#7 DONE 15.2s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 extracting sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2
+#6 extracting sha256:ccc35e35d420d6dd115290f1074afc6ad1c474b6f94897434e6befd33be781d2 1.2s done
+#6 extracting sha256:43f2ec460bdf5babee56d7e13b060b308f42cbf2103f6665c349f0b98dac8962 0.1s done
+#6 DONE 16.5s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 extracting sha256:984583bcf083fa6900b5e7834795a9a57a9b4dfe7448d5350474f5d309625ece 0.1s done
+#6 DONE 16.6s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 extracting sha256:8d27c072a58f81ecf2425172ac0e5b25010ff2d014f89de35b90104e462568eb 0.2s done
+#6 DONE 16.8s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 extracting sha256:ab3286a7346303a31b69a5189f63f1414cc1de44e397088dcd07edb322df1fe9 0.2s done
+#6 extracting sha256:6d79cc6084d434876ce0f038c675d20532f28e476283a29e7e63bc0bf13a4ed6 0.1s done
+#6 DONE 17.1s
+
+#5 [internal] load build context
+#5 ...
+
+#6 [stage-1 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#6 extracting sha256:0c7e4c092ab716c95e1a8840943549b4ac5e6c5d1a1cc74496528e1b03e1e67a 1.6s done
+#6 DONE 18.7s
+
+#5 [internal] load build context
+#5 ...
+
+#7 [build 1/6] FROM docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#7 extracting sha256:cb2bde55f71f84688f9eb7197e0f69aa7c4457499bdf39f34989ab16455c3369 4.3s done
+#7 DONE 19.5s
+
+#5 [internal] load build context
+#5 ...
+
+#7 [build 1/6] FROM docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#7 extracting sha256:9d0e0719fbe047cc0770ba9ed1cb150a4ee9bc8a55480eeb8a84a736c8037dbc 0.1s done
+#7 DONE 19.6s
+
+#5 [internal] load build context
+#5 ...
+
+#7 [build 1/6] FROM docker.io/library/node:22.14.0-alpine@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#7 extracting sha256:6f063dbd7a5db7835273c913fc420b1082dcda3b5972d75d7478b619da284053 0.1s done
+#7 DONE 19.8s
+
+#5 [internal] load build context
+#5 transferring context: 65.33MB 20.4s
+#5 ...
+
+#8 [build 2/6] WORKDIR /frontend
+#8 DONE 0.7s
+
+#5 [internal] load build context
+#5 transferring context: 68.24MB 25.4s
+#5 transferring context: 70.96MB 30.5s
+#5 transferring context: 158.32MB 35.6s
+#5 transferring context: 239.01MB 40.6s
+#5 transferring context: 275.97MB 45.7s
+#5 transferring context: 349.05MB 52.1s
+#5 transferring context: 413.03MB 57.7s
+#5 transferring context: 484.83MB 62.8s
+#5 transferring context: 577.35MB 67.9s
+#5 transferring context: 577.35MB 67.9s done
+#5 DONE 68.4s
+
+#9 [build 3/6] COPY frontend/package.json frontend/package-lock.json ./
+#9 DONE 2.9s
+
+#10 [build 4/6] RUN npm ci
+#10 32.12 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+#10 33.77 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#10 34.02 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+ERROR: failed to build: failed to receive status: rpc error: code = Unavailable desc = error reading from server: EOF

@@ -1,0 +1,7 @@
+{
+  "buildLog": "myopia-excerpt-repair/frontend-build.log",
+  "testExit": 0,
+  "scope": "Fresh checks after myopia source-excerpt selection",
+  "buildExit": 0,
+  "testLog": "myopia-excerpt-repair/frontend-test.log"
+}

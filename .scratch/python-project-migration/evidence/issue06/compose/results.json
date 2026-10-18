@@ -1,0 +1,9 @@
+{
+  "status": "FAIL",
+  "project": "eye-compose06-15149b805bd1",
+  "checks": [],
+  "providers": "NOT_VERIFIED",
+  "clinical": "NOT_VERIFIED",
+  "mysqlVersion": "8.0.26",
+  "reason": "IntegrityError; inspect private runtime logs"
+}

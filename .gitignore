@@ -107,3 +107,6 @@ algorithm/*_pb2_grpc.py
 # P1 本地原始数据与患者级派生产物：禁止提交
 /algorithm/datasets/DataSet/**
 /algorithm/artifacts/**
+
+# 验收运行产生的 pytest 临时目录（短路径 basetemp）
+/.scratch/sw18-*/

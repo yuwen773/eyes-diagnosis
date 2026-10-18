@@ -1,0 +1,98 @@
+{
+  "status": "FAIL",
+  "scope": "Real ordinary chat plus read-only original Vue; no human acceptance",
+  "checks": {},
+  "budgetBefore": {
+    "llm": {
+      "used": 20,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "errorType": "OperationalError",
+  "errorLocation": [
+    {
+      "file": "real_chat_and_readonly_ui.py",
+      "line": 61
+    },
+    {
+      "file": "base.py",
+      "line": 1451
+    },
+    {
+      "file": "elements.py",
+      "line": 533
+    },
+    {
+      "file": "base.py",
+      "line": 1671
+    },
+    {
+      "file": "base.py",
+      "line": 1825
+    },
+    {
+      "file": "base.py",
+      "line": 1965
+    },
+    {
+      "file": "base.py",
+      "line": 2335
+    },
+    {
+      "file": "base.py",
+      "line": 1946
+    },
+    {
+      "file": "default.py",
+      "line": 1192
+    },
+    {
+      "file": "cursors.py",
+      "line": 170
+    },
+    {
+      "file": "cursors.py",
+      "line": 335
+    },
+    {
+      "file": "connections.py",
+      "line": 581
+    },
+    {
+      "file": "connections.py",
+      "line": 857
+    },
+    {
+      "file": "connections.py",
+      "line": 1290
+    },
+    {
+      "file": "connections.py",
+      "line": 810
+    },
+    {
+      "file": "protocol.py",
+      "line": 219
+    },
+    {
+      "file": "err.py",
+      "line": 154
+    }
+  ],
+  "businessTablesUnchanged": true,
+  "cleanup": "PASS",
+  "budgetAfter": {
+    "llm": {
+      "used": 20,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  }
+}

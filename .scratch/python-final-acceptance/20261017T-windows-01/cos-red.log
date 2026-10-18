@@ -1,0 +1,60 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+____ test_picture_upload_uses_installed_sdk_and_preserves_response[False] _____
+algorithm\web\tests\test_cos_upload_sdk.py:74: in test_picture_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []
+------------------------------ Captured log call ------------------------------
+ERROR    web.files:files.py:152 COS upload failed for /public/7/20261017_5573092887692143.png
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\files.py", line 143, in upload_picture
+    cos = qcloud_cos.COSClient(client)
+          ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'qcloud_cos' has no attribute 'COSClient'
+_____ test_picture_upload_uses_installed_sdk_and_preserves_response[True] _____
+algorithm\web\tests\test_cos_upload_sdk.py:74: in test_picture_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []
+------------------------------ Captured log call ------------------------------
+ERROR    web.files:files.py:152 COS upload failed for /public/7/20261017_4170072762668594.png
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\files.py", line 143, in upload_picture
+    cos = qcloud_cos.COSClient(client)
+          ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'qcloud_cos' has no attribute 'COSClient'
+___ test_knowledge_upload_uses_installed_sdk_and_preserves_response[False] ____
+algorithm\web\tests\test_cos_upload_sdk.py:91: in test_knowledge_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []
+------------------------------ Captured log call ------------------------------
+ERROR    web.routers.knowledge:knowledge.py:199 knowledge upload failed: reference.txt
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\routers\knowledge.py", line 197, in upload_documents
+    _put_object(stored_name, data)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\routers\knowledge.py", line 285, in _put_object
+    qcloud_cos.COSClient(client).put_object(Bucket=config.cos_bucket, Key=key, Body=data)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'qcloud_cos' has no attribute 'COSClient'
+____ test_knowledge_upload_uses_installed_sdk_and_preserves_response[True] ____
+algorithm\web\tests\test_cos_upload_sdk.py:91: in test_knowledge_upload_uses_installed_sdk_and_preserves_response
+    assert sent, "HTTP upload did not reach the installed SDK transport"
+E   AssertionError: HTTP upload did not reach the installed SDK transport
+E   assert []
+------------------------------ Captured log call ------------------------------
+ERROR    web.routers.knowledge:knowledge.py:199 knowledge upload failed: reference.txt
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\routers\knowledge.py", line 197, in upload_documents
+    _put_object(stored_name, data)
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\web\routers\knowledge.py", line 285, in _put_object
+    qcloud_cos.COSClient(client).put_object(Bucket=config.cos_bucket, Key=key, Body=data)
+    ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'qcloud_cos' has no attribute 'COSClient'
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_cos_upload_sdk.py::test_picture_upload_uses_installed_sdk_and_preserves_response[False]
+FAILED algorithm/web/tests/test_cos_upload_sdk.py::test_picture_upload_uses_installed_sdk_and_preserves_response[True]
+FAILED algorithm/web/tests/test_cos_upload_sdk.py::test_knowledge_upload_uses_installed_sdk_and_preserves_response[False]
+FAILED algorithm/web/tests/test_cos_upload_sdk.py::test_knowledge_upload_uses_installed_sdk_and_preserves_response[True]
+4 failed in 12.68s

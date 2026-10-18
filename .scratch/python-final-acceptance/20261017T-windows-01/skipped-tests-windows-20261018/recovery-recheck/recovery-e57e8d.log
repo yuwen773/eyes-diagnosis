@@ -1,0 +1,23 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.17, pytest-9.1.1, pluggy-1.6.0 -- D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.14.8, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 11 items
+
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] PASSED [  9%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] PASSED [ 18%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] PASSED [ 27%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] PASSED [ 36%]
+algorithm/web/tests/test_python_wait_recovery.py::test_expired_save_survives_upgrade_without_formal_record PASSED [ 45%]
+algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_version] PASSED [ 54%]
+algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[graph_hash] PASSED [ 63%]
+algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[action_version] PASSED [ 72%]
+algorithm/web/tests/test_python_wait_recovery.py::test_incompatible_wait_is_preserved_across_upgrade[supplement] PASSED [ 81%]
+algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[stale-executor] PASSED [ 90%]
+algorithm/web/tests/test_python_wait_recovery.py::test_mysql_resumed_wait_lease_fences_abandoned_worker[killed-executor] PASSED [100%]
+
+- generated xml file: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-final-acceptance\20261017T-windows-01\skipped-tests-windows-20261018\recovery-recheck\recovery.xml -
+======================= 11 passed in 410.64s (0:06:50) ========================

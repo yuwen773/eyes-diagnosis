@@ -1,0 +1,8 @@
+{
+  "chatThreads": {
+    "context": "audit-1230595a77f94fa493171cb0ffe19823",
+    "separate": "audit-cc2bafc9a9c84a13a94f180454ce5b65"
+  },
+  "maxLLMRequests": 3,
+  "source": "New synthetic nonmedical messages only; original diagnostic tasks read-only"
+}

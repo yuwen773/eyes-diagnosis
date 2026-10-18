@@ -1,0 +1,12 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_explanation_json_mode_satisfies_provider_message_contract ________
+algorithm\web\tests\test_validated_explanation.py:66: in test_explanation_json_mode_satisfies_provider_message_contract
+    assert view["status"] == "COMPLETED"
+E   AssertionError: assert 'COMPLETED_LIMITED' == 'COMPLETED'
+E     
+E     - COMPLETED
+E     + COMPLETED_LIMITED
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_validated_explanation.py::test_explanation_json_mode_satisfies_provider_message_contract
+1 failed, 24 deselected in 7.62s

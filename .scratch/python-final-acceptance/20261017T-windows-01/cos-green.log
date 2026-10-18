@@ -1,0 +1,10 @@
+F...                                                                     [100%]
+================================== FAILURES ===================================
+____ test_picture_upload_uses_installed_sdk_and_preserves_response[False] _____
+algorithm\web\tests\test_cos_upload_sdk.py:82: in test_picture_upload_uses_installed_sdk_and_preserves_response
+    assert response["data"]["picWidth"] == 8
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'picWidth'
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_cos_upload_sdk.py::test_picture_upload_uses_installed_sdk_and_preserves_response[False]
+1 failed, 3 passed in 4.95s

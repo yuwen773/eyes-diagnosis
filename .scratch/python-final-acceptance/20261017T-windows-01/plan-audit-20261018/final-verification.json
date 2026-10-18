@@ -1,0 +1,52 @@
+{
+  "requestedAudit": "PASS",
+  "automaticItemsRemaining": [],
+  "currentTechnicalACPassed": 18,
+  "actualParticipantACBlocked": [
+    "AC-08",
+    "AC-09",
+    "AC-11",
+    "AC-21"
+  ],
+  "controlledBrowserCases": 4,
+  "realCOSBrowser": "PASS",
+  "realChatContextAcrossRestart": "PASS",
+  "realChatSessionIsolation": "PASS",
+  "realInflightRestart": "PASS",
+  "actualPatientDoctorReadonlyRefresh": "PASS",
+  "frontendTests": 49,
+  "frontendBuildAndTypecheck": "PASS",
+  "applicationSourcesUnchanged": true,
+  "businessTablesUnchanged": true,
+  "formalRecords": 0,
+  "manualAcceptance": "DEFERRED",
+  "overallAcceptance": "BLOCKED",
+  "budget": {
+    "llm": {
+      "used": 23,
+      "limit": 50
+    },
+    "embedding": {
+      "used": 43,
+      "limit": 500
+    }
+  },
+  "newLLMRequests": 3,
+  "remainingDependencies": [
+    "Actual participant actions and dependent real publication/save closure",
+    "Supplementary sample deidentification and external-sharing scope"
+  ],
+  "cleanup": "PASS",
+  "audit": {
+    "secretScan": "PASS",
+    "filesScanned": 1610,
+    "findings": [],
+    "unrelatedTrackedChangesPreserved": true,
+    "changedSourceFiles": [
+      "scripts/acceptance_report.py"
+    ],
+    "ownedServiceEntriesStopped": 19,
+    "survivingRegisteredServices": 0
+  },
+  "summaryEvidence": ".scratch\\python-final-acceptance\\20261017T-windows-01\\20261018T043706Z-summary-60afeb\\report.md"
+}

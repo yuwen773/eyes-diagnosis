@@ -1,0 +1,13 @@
+feat(db): 添加 Python 数据库承接与保全基线
+
+冻结旧 SQL 原字节、独立契约和人工等待恢复样本，提供纯 Python 升级 CLI。
+支持隔离 MySQL 8 的空库、完整 V9/V22 承接，拒绝漂移、失败和中断重放。
+
+验证：专项 28 passed；完整 Web 726 passed / 24 skipped；mypy 通过。
+Standards/Spec 复核问题均已修复，工单 01 更新为 ready-for-human。
+
+Constraint: Preserve original Java, SQL, Flyway history and unrelated user changes
+Confidence: high
+Scope-risk: moderate
+Not-tested: Linux, real Python Redis identity, providers, clinical use and production cutover
+Co-Authored-By: Codex <noreply@openai.com>

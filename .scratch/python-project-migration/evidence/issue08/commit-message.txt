@@ -1,0 +1,10 @@
+refactor(migration): 移除 Java 活跃资产并保留验收边界
+
+核验工单07、历史标签和冻结SQL后受控移除Java；保留旧证据与他人修改。
+Windows全量814通过、真实基础设施与承接通过；Linux最终门禁按用户要求延期。
+
+Constraint: 不操作生产业务库，不 push，不清理原运行文件
+Directive: 工单08保持PARTIAL 3/4，Docker按用户要求保持停止
+Confidence: high
+Scope-risk: moderate
+Not-tested: Linux最终全量与真实基础设施未闭环；托管CI、真实供应商模型、临床及生产未验收

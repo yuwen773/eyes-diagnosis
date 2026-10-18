@@ -1,0 +1,154 @@
+[
+  {
+    "role": "redis",
+    "pid": 62188,
+    "identity": {
+      "ProcessId": 62188,
+      "ParentProcessId": 28172,
+      "Name": "redis-server.exe",
+      "ExecutablePath": "D:\\Work\\Backend\\Redis-x64-3.2.100\\redis-server.exe",
+      "CommandLine": "D:/Work/Backend/Redis-x64-3.2.100/redis-server.exe --bind 127.0.0.1 --port 60859 --dir D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\redis --appendonly yes --save \"\"",
+      "CreationDate": "2026-10-18T12:26:40.842563+08:00"
+    },
+    "command": [
+      "D:/Work/Backend/Redis-x64-3.2.100/redis-server.exe",
+      "--bind",
+      "127.0.0.1",
+      "--port",
+      "60859",
+      "--dir",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\python-final-acceptance\\20261017T-windows-01\\runtime\\redis",
+      "--appendonly",
+      "yes",
+      "--save",
+      ""
+    ],
+    "log": "redis-c730c1.log",
+    "cleanup": "PASS",
+    "descendantsAtStop": [
+      {
+        "ProcessId": 31728,
+        "ParentProcessId": 62188,
+        "Name": "conhost.exe",
+        "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+        "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+        "CreationDate": "2026-10-18T12:26:40.874767+08:00"
+      }
+    ]
+  },
+  {
+    "role": "api",
+    "pid": 3928,
+    "identity": {
+      "ProcessId": 3928,
+      "ParentProcessId": 28172,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py api",
+      "CreationDate": "2026-10-18T12:26:41.921968+08:00"
+    },
+    "command": [
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py",
+      "api"
+    ],
+    "log": "api-fb6d33.log",
+    "cleanup": "PASS",
+    "descendantsAtStop": [
+      {
+        "ProcessId": 48192,
+        "ParentProcessId": 3928,
+        "Name": "conhost.exe",
+        "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+        "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+        "CreationDate": "2026-10-18T12:26:41.947192+08:00"
+      },
+      {
+        "ProcessId": 45664,
+        "ParentProcessId": 3928,
+        "Name": "python.exe",
+        "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+        "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py api",
+        "CreationDate": "2026-10-18T12:26:41.999673+08:00"
+      }
+    ]
+  },
+  {
+    "role": "idle-worker",
+    "pid": 60464,
+    "identity": {
+      "ProcessId": 60464,
+      "ParentProcessId": 28172,
+      "Name": "python.exe",
+      "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py worker",
+      "CreationDate": "2026-10-18T12:26:59.394935+08:00"
+    },
+    "command": [
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-model-acceptance\\Scripts\\python.exe",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py",
+      "worker"
+    ],
+    "log": "idle-worker-3dfe3b.log",
+    "cleanup": "PASS",
+    "descendantsAtStop": [
+      {
+        "ProcessId": 31244,
+        "ParentProcessId": 60464,
+        "Name": "python.exe",
+        "ExecutablePath": "C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe",
+        "CommandLine": "\"C:\\Users\\yuwen\\AppData\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\python.exe\"  D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\scripts\\run_service.py worker",
+        "CreationDate": "2026-10-18T12:26:59.455096+08:00"
+      },
+      {
+        "ProcessId": 41920,
+        "ParentProcessId": 60464,
+        "Name": "conhost.exe",
+        "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+        "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+        "CreationDate": "2026-10-18T12:26:59.425321+08:00"
+      }
+    ]
+  },
+  {
+    "role": "readonly-frontend",
+    "pid": 65308,
+    "identity": {
+      "ProcessId": 65308,
+      "ParentProcessId": 28172,
+      "Name": "node.exe",
+      "ExecutablePath": "D:\\SoftWare\\nodejs\\node.EXE",
+      "CommandLine": "D:\\SoftWare\\nodejs\\node.EXE D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js --host 127.0.0.1 --port 5173 --strictPort",
+      "CreationDate": "2026-10-18T12:27:03.230569+08:00"
+    },
+    "command": [
+      "D:\\SoftWare\\nodejs\\node.EXE",
+      "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\vite\\bin\\vite.js",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "5173",
+      "--strictPort"
+    ],
+    "log": "readonly-frontend-10d24b.log",
+    "cleanup": "PASS",
+    "descendantsAtStop": [
+      {
+        "ProcessId": 53720,
+        "ParentProcessId": 65308,
+        "Name": "conhost.exe",
+        "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe",
+        "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4",
+        "CreationDate": "2026-10-18T12:27:03.279181+08:00"
+      },
+      {
+        "ProcessId": 58408,
+        "ParentProcessId": 65308,
+        "Name": "esbuild.exe",
+        "ExecutablePath": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+        "CommandLine": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\frontend\\node_modules\\@esbuild\\win32-x64\\esbuild.exe --service=0.21.5 --ping",
+        "CreationDate": "2026-10-18T12:27:03.489314+08:00"
+      }
+    ]
+  }
+]

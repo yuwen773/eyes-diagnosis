@@ -1,0 +1,166 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Verify.Dockerfile
+#1 transferring dockerfile: 37B 0.0s
+#1 transferring dockerfile: 1.07kB 0.1s done
+#1 DONE 0.2s
+
+#2 [internal] load metadata for docker.io/library/eye-python:ticket06
+#2 DONE 0.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 975B 0.0s done
+#3 DONE 0.1s
+
+#4 [internal] load build context
+#4 transferring context: 76.91kB 0.1s done
+#4 DONE 0.1s
+
+#5 [ 1/18] FROM docker.io/library/eye-python:ticket06@sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6
+#5 resolve docker.io/library/eye-python:ticket06@sha256:f20a618c69ca112230b948f48d5ecc1efbcae0016858aaaa6e2abb5e682ebdc6 0.1s done
+#5 DONE 0.5s
+
+#6 [ 2/18] RUN apt-get update && apt-get install -y --no-install-recommends redis-server     && rm -rf /var/lib/apt/lists/*     && python -m pip install --no-cache-dir uv==0.13.0
+#6 5.533 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#6 6.510 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#6 8.483 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#6 23.85 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#6 26.31 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#6 30.45 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [353 kB]
+#6 30.72 Fetched 9392 kB in 29s (322 kB/s)
+#6 30.72 Reading package lists...
+#6 32.31 Reading package lists...
+#6 32.98 Building dependency tree...
+#6 33.10 Reading state information...
+#6 33.22 The following additional packages will be installed:
+#6 33.22   libatomic1 libjemalloc2 liblzf1 redis-tools
+#6 33.22 Suggested packages:
+#6 33.22   ruby-redis
+#6 33.43 The following NEW packages will be installed:
+#6 33.43   libatomic1 libjemalloc2 liblzf1 redis-server redis-tools
+#6 34.56 0 upgraded, 5 newly installed, 0 to remove and 21 not upgraded.
+#6 34.56 Need to get 1360 kB of archives.
+#6 34.56 After this operation, 7143 kB of additional disk space will be used.
+#6 34.56 Get:1 http://deb.debian.org/debian bookworm/main amd64 libatomic1 amd64 12.2.0-14+deb12u1 [9376 B]
+#6 36.82 Get:2 http://deb.debian.org/debian bookworm/main amd64 libjemalloc2 amd64 5.3.0-1 [275 kB]
+#6 37.87 Get:3 http://deb.debian.org/debian bookworm/main amd64 liblzf1 amd64 3.6-3 [10.2 kB]
+#6 42.62 Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 redis-tools amd64 5:7.0.15-1~deb12u10 [992 kB]
+#6 44.13 Get:5 http://deb.debian.org/debian-security bookworm-security/main amd64 redis-server amd64 5:7.0.15-1~deb12u10 [73.9 kB]
+#6 45.25 debconf: delaying package configuration, since apt-utils is not installed
+#6 45.35 Fetched 1360 kB in 11s (127 kB/s)
+#6 45.54 Selecting previously unselected package libatomic1:amd64.
+#6 45.54 (Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 7540 files and directories currently installed.)
+#6 45.85 Preparing to unpack .../libatomic1_12.2.0-14+deb12u1_amd64.deb ...
+#6 45.91 Unpacking libatomic1:amd64 (12.2.0-14+deb12u1) ...
+#6 46.15 Selecting previously unselected package libjemalloc2:amd64.
+#6 46.15 Preparing to unpack .../libjemalloc2_5.3.0-1_amd64.deb ...
+#6 46.17 Unpacking libjemalloc2:amd64 (5.3.0-1) ...
+#6 46.36 Selecting previously unselected package liblzf1:amd64.
+#6 46.36 Preparing to unpack .../liblzf1_3.6-3_amd64.deb ...
+#6 46.38 Unpacking liblzf1:amd64 (3.6-3) ...
+#6 46.51 Selecting previously unselected package redis-tools.
+#6 46.51 Preparing to unpack .../redis-tools_5%3a7.0.15-1~deb12u10_amd64.deb ...
+#6 46.53 Unpacking redis-tools (5:7.0.15-1~deb12u10) ...
+#6 46.89 Selecting previously unselected package redis-server.
+#6 46.89 Preparing to unpack .../redis-server_5%3a7.0.15-1~deb12u10_amd64.deb ...
+#6 46.94 Unpacking redis-server (5:7.0.15-1~deb12u10) ...
+#6 47.08 Setting up libjemalloc2:amd64 (5.3.0-1) ...
+#6 47.13 Setting up liblzf1:amd64 (3.6-3) ...
+#6 47.19 Setting up libatomic1:amd64 (12.2.0-14+deb12u1) ...
+#6 47.24 Setting up redis-tools (5:7.0.15-1~deb12u10) ...
+#6 47.79 Setting up redis-server (5:7.0.15-1~deb12u10) ...
+#6 48.03 invoke-rc.d: could not determine current runlevel
+#6 48.05 invoke-rc.d: policy-rc.d denied execution of start.
+#6 48.21 Processing triggers for libc-bin (2.36-9+deb12u13) ...
+#6 58.81 Collecting uv==0.13.0
+#6 60.38   Downloading uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+#6 60.67 Downloading uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (17.9 MB)
+#6 69.69    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.9/17.9 MB 3.4 MB/s eta 0:00:00
+#6 70.81 Installing collected packages: uv
+#6 71.64 Successfully installed uv-0.13.0
+#6 71.64 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#6 73.07 
+#6 73.07 [notice] A new release of pip is available: 24.0 -> 26.2.1
+#6 73.07 [notice] To update, run: pip install --upgrade pip
+#6 DONE 73.6s
+
+#7 [ 3/18] WORKDIR /workspace
+#7 DONE 0.2s
+
+#8 [ 4/18] COPY pyproject.toml MANIFEST.in ./
+#8 DONE 0.2s
+
+#9 [ 5/18] COPY algorithm/requirements-web.lock algorithm/requirements-web.lock
+#9 DONE 0.2s
+
+#10 [ 6/18] COPY algorithm/web algorithm/web
+#10 DONE 0.3s
+
+#11 [ 7/18] COPY algorithm/eye_diagnosis algorithm/eye_diagnosis
+#11 DONE 0.2s
+
+#12 [ 8/18] COPY algorithm/mcp_server algorithm/mcp_server
+#12 DONE 0.2s
+
+#13 [ 9/18] COPY algorithm/eye_disease_model.py algorithm/eye_disease_model.py
+#13 DONE 0.2s
+
+#14 [10/18] COPY algorithm/grpc_server.py algorithm/grpc_server.py
+#14 DONE 0.2s
+
+#15 [11/18] COPY algorithm/checkpoints/registry.json algorithm/checkpoints/registry.json
+#15 DONE 0.2s
+
+#16 [12/18] COPY algorithm/configs algorithm/configs
+#16 DONE 0.2s
+
+#17 [13/18] COPY deploy/python-migrations deploy/python-migrations
+#17 DONE 0.2s
+
+#18 [14/18] COPY deploy/nginx.conf deploy/nginx.conf
+#18 DONE 0.2s
+
+#19 [15/18] COPY deploy/mime.types deploy/mime.types
+#19 DONE 0.3s
+
+#20 [16/18] COPY deploy/snippets deploy/snippets
+#20 DONE 0.3s
+
+#21 [17/18] COPY contracts contracts
+#21 DONE 0.2s
+
+#22 [18/18] COPY scripts scripts
+#22 DONE 0.2s
+
+#23 exporting to image
+#23 exporting layers
+#23 exporting layers 4.7s done
+#23 exporting manifest sha256:01c4cad5e42fd273e951bd1afb96103fec398e5e62101aaad455c3d0d96acaf6 0.1s done
+#23 exporting config sha256:307dfa292ef4689c43445ab01cbe2b02b998d79dc727a5e585da0f7f32aa6da8 0.1s done
+#23 exporting attestation manifest sha256:f28c7a4a4e6713a9fdea1bc2cc61a351a94ae1cac319fa2f2d50380019f171f2 0.1s done
+#23 exporting manifest list sha256:b1a12ebdb641a2c0638627e70870ecb3b56a3bd6b16bf8ceef841f6e2f5583d9 0.1s done
+#23 naming to docker.io/library/eye-verify:ticket06 0.0s done
+#23 unpacking to docker.io/library/eye-verify:ticket06
+#23 unpacking to docker.io/library/eye-verify:ticket06 1.7s done
+#23 DONE 6.9s

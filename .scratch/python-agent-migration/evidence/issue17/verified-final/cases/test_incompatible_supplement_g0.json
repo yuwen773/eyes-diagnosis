@@ -1,0 +1,58 @@
+{
+  "database": "mysql",
+  "apiPids": [
+    45892,
+    10780
+  ],
+  "workerPids": [],
+  "snapshots": [
+    {
+      "workflowId": "a8478af9a1714962bad6b828f965b2ca",
+      "inference": [],
+      "explanations": [],
+      "reviews": [],
+      "events": [
+        {
+          "event_id": "42330e836c8c4dd69df1932f1759f36e",
+          "workflow_id": "a8478af9a1714962bad6b828f965b2ca",
+          "sequence": "1",
+          "event_type": "QUEUED",
+          "actor_type": "USER",
+          "actor_id": "7",
+          "version": "0",
+          "segment": "None",
+          "reason": "None",
+          "payload": "None",
+          "occurred_at": "2026-10-14 17:10:15"
+        }
+      ],
+      "supplements": [
+        {
+          "request_id": "ab9d2c50-9364-45ae-bbb4-1755e9e50237",
+          "session_id": "9b4738be113e4105b272a3539dce9fb2",
+          "active_session_id": "9b4738be113e4105b272a3539dce9fb2",
+          "workflow_id": "a8478af9a1714962bad6b828f965b2ca",
+          "user_id": "7",
+          "idempotency_key": "supplement-1",
+          "original_message": "\u8865\u5145\u672c\u6b21\u8bf4\u660e",
+          "status": "WAITING",
+          "version": "0",
+          "answer": "None",
+          "graph_version": "incompatible",
+          "checkpoint_id": "1f1c7af1-1d3e-6ba9-8000-92f4277ffd7a",
+          "created_at": "2026-10-14 17:10:16",
+          "answered_at": "None"
+        }
+      ],
+      "confirmations": [],
+      "receipts": [],
+      "diagnoses": [],
+      "workflowVersion": "0",
+      "status": "QUEUED",
+      "stopReason": null,
+      "graphVersion": "upload-final-clinical-review-v6",
+      "checkpointId": null
+    }
+  ],
+  "calls": []
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "reviewTaskId": "af7f46fad48b451b82994fd07cbce95a",
+    "workflowId": "dad94b0f755f421f84cbb708f56bb898",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  },
+  {
+    "reviewTaskId": "2b475ca46ba945b19a9b5f8a9d37f365",
+    "workflowId": "44ded32cd0744622a10ee98db08b78eb",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  },
+  {
+    "reviewTaskId": "dac1718c5dda4e56894eb06dd79261a2",
+    "workflowId": "8e89a7a43d27410a9ece5887b51d8133",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  },
+  {
+    "reviewTaskId": "cc67ed1b089b44c9ab3395e62ca6eba1",
+    "workflowId": "bb1f593106254d23be967c4d0424deb1",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "ticket": "06",
+  "timestampUtc": "2026-10-16T08:55:02.886670+00:00",
+  "status": "BLOCKED",
+  "checks": [],
+  "gates": {
+    "infrastructure": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "orchestration": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "mysqlSemantics": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realEmbedding": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    }
+  },
+  "reason": "Set REAL_SERVICES_REDIS_SERVER to an installed Redis executable"
+}

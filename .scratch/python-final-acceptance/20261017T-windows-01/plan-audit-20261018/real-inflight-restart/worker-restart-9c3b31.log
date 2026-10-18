@@ -1,0 +1,6 @@
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:web.inference:Model loaded from D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth (version=efficientnet-b4@1.0.0, calibration=NOT_CALIBRATED)
+INFO:web.workflow.worker:workflow=0d71dea9af764214ab93e25135614a06 segment committed
+INFO:web.workflow.worker:workflow=0d71dea9af764214ab93e25135614a06 segment committed

@@ -1,0 +1,140 @@
+{
+  "ticket": "06",
+  "timestampUtc": "2026-10-16T09:33:11.893323+00:00",
+  "status": "FAIL",
+  "checks": [
+    "real-python-auth-and-user-role-long-pagination-contracts",
+    "legacy-synchronous-diagnosis-fails-closed-without-model",
+    "real-mysql-noop-and-frozen-news-date-contract",
+    "doc-docx-real-chroma-large-id-private-scope",
+    "governance-role-and-real-mysql-version-conflict",
+    "production-registered-graph-worker-checkpoint-citations-and-sse-readback",
+    "user-consent-save-conflict-and-replay-exactly-once",
+    "real-python-doctor-quality-and-final-review-versions-without-implicit-save",
+    "invalid-and-insufficient-terminal-paths-and-source-revocation",
+    "legacy-agent-sse-success-error-and-readonly-history-with-real-auth-and-mysql",
+    "real-redis-logout-cookie-replay-and-sse-revocation"
+  ],
+  "gates": {
+    "infrastructure": {
+      "status": "PASS",
+      "detail": "Python migration, real MySQL/Redis/Chroma, independent API/Worker"
+    },
+    "orchestration": {
+      "status": "PASS",
+      "detail": "Production graph, durable restart, human waits, exactly-once explicit save; controlled model/COS/LLM"
+    },
+    "mysqlSemantics": {
+      "status": "BLOCKED",
+      "detail": "Required infrastructure verification has not completed"
+    },
+    "realEmbedding": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realClassifier": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realLLM": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "realCOS": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    },
+    "clinical": {
+      "status": "NOT_VERIFIED",
+      "detail": "Separate acceptance boundary"
+    }
+  },
+  "schema": "eye_python_issue06_9f8a80ae08ef424f93c2a612c4870534",
+  "runtime": "D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.scratch\\baseline-runtime\\eye_python_issue06_9f8a80ae08ef424f93c2a612c4870534",
+  "mysqlVersion": "8.0.26",
+  "processes": [
+    {
+      "role": "redis",
+      "pid": 68056
+    },
+    {
+      "role": "chroma",
+      "pid": 62288
+    },
+    {
+      "role": "provider",
+      "pid": 63844
+    },
+    {
+      "role": "api",
+      "pid": 60740
+    },
+    {
+      "role": "api-restart",
+      "pid": 54828
+    },
+    {
+      "role": "api-restart",
+      "pid": 49028
+    },
+    {
+      "role": "api-restart",
+      "pid": 45440
+    }
+  ],
+  "redisVersion": "3.2.100",
+  "chromaVersion": "1.0.0",
+  "affectedRows": {
+    "sqlalchemyNoopRowcount": 1
+  },
+  "graph": {
+    "version": "upload-final-clinical-review-v6",
+    "hash": "91e85f7473552e4531c4727b95d5764e0b802be3ee441f69731eee5dfd4aace6",
+    "actionVersion": "upload-final-clinical-review-v6",
+    "completedNodes": [
+      "validateImage",
+      "inference",
+      "imageQuality",
+      "visionExposure",
+      "clinicalRiskPrecheck",
+      "evidenceRetrieval",
+      "evidenceValidation",
+      "clinicalRiskFinal",
+      "explanationDraft",
+      "explanationClaimValidation",
+      "explanationPublication"
+    ]
+  },
+  "terminalStates": {
+    "publishedThenRevoked": "COMPLETED_LIMITED",
+    "qualityReview": "COMPLETED_LIMITED",
+    "finalReview": "COMPLETED_LIMITED",
+    "invalid": "REJECTED",
+    "insufficient": "COMPLETED_LIMITED"
+  },
+  "reason": "AssertionError; inspect private runtime logs",
+  "errorLocation": [
+    {
+      "file": "verify_real_services.py",
+      "line": 58
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 192
+    },
+    {
+      "file": "verify_real_services.py",
+      "line": 94
+    }
+  ]
+}
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 50, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 32, in main
+    run([sys.executable, "-m", "web.verify_real_services", "--output-dir", str(args.output_dir / "services")])
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'web.verify_real_services', '--output-dir', '.scratch\\python-project-migration\\evidence\\issue06\\windows-final-real\\services']' returned non-zero exit status 1.

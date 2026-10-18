@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "findings": []
+}
+Using Python 3.11.17 environment at: algorithm\.venv-baseline
+Checked 134 packages in 22ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 7 source files
+........................................................................ [  8%]
+.........s....ssss....ssssssssssssssssss................................ [ 16%]
+........................................................................ [ 24%]
+...................................................................ssss. [ 33%]
+................................F....................................... [ 41%]
+........................................................................ [ 49%]
+...............................s..sss................................... [ 58%]
+........................................................................ [ 66%]
+........................................................sssssssssss..... [ 74%]
+........................................................................ [ 83%]
+........................................................................ [ 91%]
+.......................................s................................ [ 99%]
+.                                                                        [100%]
+================================== FAILURES ===================================
+_ test_doctor_wait_claim_and_submitted_decision_survive_process_restart[quality] _
+
+restart_case = <web.tests.test_human_wait_restart.RestartCase object at 0x00000160B5279990>
+kind = 'quality'
+
+    @pytest.mark.parametrize("kind", ["quality", "final"])
+    def test_doctor_wait_claim_and_submitted_decision_survive_process_restart(restart_case, kind):
+        case = restart_case
+        with case.api() as client:
+            workflow_id = start(client)
+            case.worker(kind)
+            before = view(client, workflow_id)
+            assert before["stopReasonCode"] == ("QUALITY_REVIEW_REQUIRED" if kind == "quality" else "FINAL_CLINICAL_REVIEW_REQUIRED")
+            client.cookies.set(SESSION_COOKIE_NAME, "doctor")
+            task = next(row for row in client.get("/api/reviews/tasks").json()["data"] if row["workflowId"] == workflow_id)
+            review_path = f"/api/reviews/tasks/{task['reviewTaskId']}"
+            original = client.get(review_path).json()["data"]
+            effects = case.effects(workflow_id)
+        with case.api("doctor") as client:
+            assert client.get(review_path).json()["data"] == original
+            assert case.effects(workflow_id) == effects
+            body = versions(original) if kind == "quality" else final_versions(original)
+            assert client.post(review_path + "/claim", json=body).status_code == 200
+            claimed = client.get(review_path).json()["data"]
+        with case.api("doctor") as client:
+            assert client.get(review_path).json()["data"] == claimed
+            assert client.post(review_path + "/claim", json=body).status_code == 409
+            payload = {**(versions(claimed) if kind == "quality" else final_versions(claimed)),
+                       "decisionCode": "APPROVE_CONTINUE" if kind == "quality" else "CONFIRM_AI_ASSESSMENT",
+                       "reasonCode": "QUALITY_APPROVED" if kind == "quality" else "AI_ASSESSMENT_CONFIRMED"}
+            submitted = client.post(review_path + "/submit", json=payload)
+            assert submitted.status_code == 200, submitted.text
+        with case.api("doctor") as client:
+            assert client.post(review_path + "/submit", json=payload).json() == submitted.json()
+            case.worker()
+            stable = case.effects(workflow_id)
+>           assert client.post(review_path + "/submit", json=payload).json() == submitted.json()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+algorithm\web\tests\test_human_wait_restart.py:245: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+algorithm\.venv-baseline\Lib\site-packages\httpx\_models.py:832: in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\json\decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.decoder.JSONDecoder object at 0x0000016085F82B90>, s = '', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\json\decoder.py:355: JSONDecodeError
+============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_human_wait_restart.py::test_doctor_wait_claim_and_submitted_decision_survive_process_restart[quality]
+1 failed, 821 passed, 43 skipped, 1 warning in 886.53s (0:14:46)
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 52, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 32, in main
+    run([sys.executable, "-m", "pytest", "algorithm/web/tests", "-q", "--junitxml=" + str(args.output_dir / "web.xml")])
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\algorithm\\.venv-baseline\\Scripts\\python.exe', '-m', 'pytest', 'algorithm/web/tests', '-q', '--junitxml=.scratch\\python-final-acceptance\\20261017T-windows-01\\windows-web-final\\web.xml']' returned non-zero exit status 1.

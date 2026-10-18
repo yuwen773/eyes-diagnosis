@@ -1,0 +1,40 @@
+{
+  "atUtc": "2026-10-17T04:58:34.572682+00:00",
+  "prefix": "eye-closeout08-4afebf9137",
+  "head": "63931d7bd321b126eb3ee2111af5693e9fce1014",
+  "status": "PASS_WITH_LIMITATIONS",
+  "phases": {
+    "build": {
+      "exitCode": 0,
+      "seconds": 3.657
+    },
+    "image": {
+      "exitCode": 0,
+      "seconds": 0.265
+    },
+    "clock": {
+      "exitCode": 0,
+      "seconds": 29.219
+    },
+    "linux-full": {
+      "exitCode": 0,
+      "seconds": 510.469
+    },
+    "mysql-start": {
+      "exitCode": 0,
+      "seconds": 0.688
+    },
+    "linux-infrastructure": {
+      "exitCode": 0,
+      "seconds": 660.156
+    },
+    "mysql-stop": {
+      "exitCode": 0,
+      "seconds": 4.938
+    }
+  },
+  "productionOrPush": false,
+  "mysqlContainer": "eye-closeout08-4afebf9137-mysql",
+  "mysqlVolume": "eye-closeout08-4afebf9137-mysql-data",
+  "runtimeVolume": "eye-closeout08-4afebf9137-runtime"
+}

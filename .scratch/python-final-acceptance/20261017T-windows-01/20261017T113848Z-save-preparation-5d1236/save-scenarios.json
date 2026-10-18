@@ -1,0 +1,15 @@
+{
+  "approve": {
+    "workflowId": "8e89a7a43d27410a9ece5887b51d8133",
+    "sessionId": "cf9003229b444732b61bde6bcc642929",
+    "fileName": "13_left.jpg",
+    "title": "保存验收 B（批准）13_left.jpg"
+  },
+  "refuse": {
+    "workflowId": "ddd7005b6b53453998bb34c3364d255f",
+    "sessionId": "412153dda15540649c9591ebcdb89ee6",
+    "fileName": "0_left.jpg",
+    "title": "保存验收 A（拒绝）0_left.jpg",
+    "sourceSha256": "2337f72cf71c81c0f370c688d765452ff857b3a4329c5778a38ffb55fafa7829"
+  }
+}

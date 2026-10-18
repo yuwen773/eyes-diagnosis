@@ -1,0 +1,135 @@
+{
+  "selection": "Right-eye pairs of original 0, 1, 2; fixed before inference, not selected for outcomes",
+  "source": "training directory; correlated samples, not an independent test set",
+  "externalTransmission": false,
+  "deidentification": "Pending human confirmation before any image upload",
+  "calibration": "NOT_CALIBRATED",
+  "samples": [
+    {
+      "name": "0_right.jpg",
+      "sha256": "3c05f247565faf852c39ad6cf262976e52982824e6ba5398e2512f4280f76743",
+      "width": 2304,
+      "height": 1728,
+      "exifFieldCount": 0,
+      "result": {
+        "predicted_label": "normal",
+        "probability": 47.177714109420776,
+        "reliability_score": 47,
+        "description": "正常眼底图像，未发现明显异常。视网膜血管走行正常，视盘边界清晰，黄斑区结构正常。",
+        "top_predictions": [
+          {
+            "label": "normal",
+            "probability": 47.177714109420776
+          },
+          {
+            "label": "diabetes",
+            "probability": 18.773600459098816
+          },
+          {
+            "label": "other",
+            "probability": 10.90812236070633
+          }
+        ],
+        "rejected": false,
+        "abstain_reason": "LOW_CONFIDENCE",
+        "quality_score": 50,
+        "quality_reasons": "brightness,fundus_coverage",
+        "is_ood": false,
+        "ood_score": 0.0,
+        "ood_status": "NOT_EVALUATED",
+        "requires_review": true,
+        "calibrated_probability": 0.0,
+        "calibration_status": "NOT_CALIBRATED",
+        "model_version": "efficientnet-b4@1.0.0",
+        "weight_sha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531",
+        "preprocess_version": "v1",
+        "inference_policy_version": "medical-safety-v3-quality-observe"
+      },
+      "referenceLabels": null
+    },
+    {
+      "name": "1_right.jpg",
+      "sha256": "82bda5ca3321132eb2a06d063c135b20a980d43a32978f7a17efc564572b0865",
+      "width": 3456,
+      "height": 2304,
+      "exifFieldCount": 0,
+      "result": {
+        "predicted_label": "normal",
+        "probability": 44.4229930639267,
+        "reliability_score": 44,
+        "description": "正常眼底图像，未发现明显异常。视网膜血管走行正常，视盘边界清晰，黄斑区结构正常。",
+        "top_predictions": [
+          {
+            "label": "normal",
+            "probability": 44.4229930639267
+          },
+          {
+            "label": "diabetes",
+            "probability": 32.22258985042572
+          },
+          {
+            "label": "other",
+            "probability": 8.972392231225967
+          }
+        ],
+        "rejected": false,
+        "abstain_reason": "LOW_CONFIDENCE",
+        "quality_score": 75,
+        "quality_reasons": "fundus_coverage",
+        "is_ood": false,
+        "ood_score": 0.0,
+        "ood_status": "NOT_EVALUATED",
+        "requires_review": true,
+        "calibrated_probability": 0.0,
+        "calibration_status": "NOT_CALIBRATED",
+        "model_version": "efficientnet-b4@1.0.0",
+        "weight_sha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531",
+        "preprocess_version": "v1",
+        "inference_policy_version": "medical-safety-v3-quality-observe"
+      },
+      "referenceLabels": null
+    },
+    {
+      "name": "2_right.jpg",
+      "sha256": "486e5d2e941a8165d94d872050f06998e97e8052403bcebe699bbefad73e717d",
+      "width": 2048,
+      "height": 1536,
+      "exifFieldCount": 0,
+      "result": {
+        "predicted_label": "normal",
+        "probability": 49.685871601104736,
+        "reliability_score": 50,
+        "description": "正常眼底图像，未发现明显异常。视网膜血管走行正常，视盘边界清晰，黄斑区结构正常。",
+        "top_predictions": [
+          {
+            "label": "normal",
+            "probability": 49.685871601104736
+          },
+          {
+            "label": "diabetes",
+            "probability": 18.939755856990814
+          },
+          {
+            "label": "other",
+            "probability": 10.188164561986923
+          }
+        ],
+        "rejected": false,
+        "abstain_reason": "LOW_CONFIDENCE",
+        "quality_score": 50,
+        "quality_reasons": "brightness,fundus_coverage",
+        "is_ood": false,
+        "ood_score": 0.0,
+        "ood_status": "NOT_EVALUATED",
+        "requires_review": true,
+        "calibrated_probability": 0.0,
+        "calibration_status": "NOT_CALIBRATED",
+        "model_version": "efficientnet-b4@1.0.0",
+        "weight_sha256": "64b433f5187f7a7d6ea08c20fb159695dc0731df7b2b22fd10aa7bb853662531",
+        "preprocess_version": "v1",
+        "inference_policy_version": "medical-safety-v3-quality-observe"
+      },
+      "referenceLabels": null
+    }
+  ]
+}

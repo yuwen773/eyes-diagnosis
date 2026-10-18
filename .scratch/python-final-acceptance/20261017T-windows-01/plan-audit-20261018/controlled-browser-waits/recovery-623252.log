@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.17, pytest-9.1.1, pluggy-1.6.0 -- D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\algorithm\.venv-baseline\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.14.8, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[quality] PASSED [ 25%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[final] PASSED [ 50%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[save] PASSED [ 75%]
+algorithm/web/tests/test_python_wait_recovery.py::test_frozen_wait_upgrade_real_login_and_process_restart[supplement] PASSED [100%]
+
+- generated xml file: D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.scratch\python-final-acceptance\20261017T-windows-01\plan-audit-20261018\controlled-browser-waits\recovery.xml -
+======================== 4 passed in 203.19s (0:03:23) ========================

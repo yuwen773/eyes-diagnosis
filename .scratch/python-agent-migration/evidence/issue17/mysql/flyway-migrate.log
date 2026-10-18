@@ -1,0 +1,47 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------< com.csust.eyediagnosis:workflow-migrations >-------------
+[INFO] Building workflow-migrations 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- flyway:12.4.0:migrate (default-cli) @ workflow-migrations ---
+[INFO] Database: jdbc:mysql://127.0.0.1:3307/eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5?serverTimezone=Asia/Shanghai (MySQL 8.0)
+[INFO] Schema history table `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5`.`flyway_schema_history` does not exist yet
+[INFO] Successfully validated 22 migrations (execution time 00:00.041s)
+[INFO] Creating Schema History table `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5`.`flyway_schema_history` with baseline ...
+[INFO] Successfully baselined schema with version: 0
+[INFO] Executing SQL callback: beforeMigrate - bootstrap legacy flyway schema
+[INFO] Current version of schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5`: 0
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "1 - baseline rename mcp user id"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "2 - split inference cache"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "3 - upload state machine"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "4 - agent message outbox"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "5 - medical reliability"
+[WARNING] DB: Integer display width is deprecated and will be removed in a future release. (SQL State: HY000 - Error Code: 1681)
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "6 - align mcp entity columns"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "7 - complete inference cache safety fields"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "8 - add mcp server description"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "9 - version inference safety policy"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "10 - create diagnosis workflow core"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "11 - create workflow execution tables"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "12 - create workflow result and review tables"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "13 - align workflow job claim queue"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "14 - create workflow audit event"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "15 - python durable upload"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "16 - bind quality review context"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "17 - python session chat"
+[WARNING] DB: Integer display width is deprecated and will be removed in a future release. (SQL State: HY000 - Error Code: 1681)
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "18 - chat workflow binding"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "19 - controlled reference evidence"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "20 - diagnosis save confirmation"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "21 - chat supplement"
+[INFO] Migrating schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5` to version "22 - agent tool confirmation"
+[INFO] Successfully applied 22 migrations to schema `eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5`, now at version v22 (execution time 00:02.326s)
+[INFO] Database: jdbc:mysql://127.0.0.1:3307/eye_human_wait_issue17_aff20227ada54a0aa2a41b68060951f5?serverTimezone=Asia/Shanghai (MySQL 8.0)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.582 s
+[INFO] Finished at: 2026-10-14T16:54:09+08:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,110 @@
+Checked 134 packages in 24ms
+All installed packages are compatible
+{"differences": [], "legacyMigrations": 22, "status": "BASELINE_OK"}
+Success: no issues found in 4 source files
+........................................................................ [  8%]
+......sssss....ssssssssssssssssss....................................... [ 17%]
+........................................................................ [ 25%]
+..........................................................ssss.......... [ 34%]
+........................................................................ [ 42%]
+........................................................................ [ 51%]
+......................s................................................. [ 60%]
+........................................................................ [ 68%]
+..........................................sssssssssss................... [ 77%]
+..FFF................................................................... [ 85%]
+........................................................................ [ 94%]
+.............s.................................                          [100%]
+================================== FAILURES ===================================
+_____ test_missing_or_unsafe_infrastructure_is_reported_as_blocked[None] ______
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-940/test_missing_or_unsafe_infrast0')
+url = None
+
+    @pytest.mark.parametrize("url", [None, "sqlite:///pretend.db", "mysql+pymysql://root:private-test-password@remote/diagnosis"])
+    def test_missing_or_unsafe_infrastructure_is_reported_as_blocked(tmp_path, url):
+        env = {k: v for k, v in os.environ.items() if not k.startswith("REAL_SERVICES_")}
+        env.pop("DASHSCOPE_API_KEY", None)
+        if url:
+            env["REAL_SERVICES_MYSQL_ADMIN_URL"] = url
+        result = subprocess.run([sys.executable, "-m", "web.verify_real_services",
+            "--output-dir", str(tmp_path)], cwd=Path(__file__).resolve().parents[2],
+            env=env, capture_output=True, text=True, timeout=20)
+        assert result.returncode == 2, result.stdout + result.stderr
+        report = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
+        assert report["status"] == "BLOCKED"
+>       assert report["gates"]["realEmbedding"]["status"] == "BLOCKED"
+E       AssertionError: assert 'NOT_VERIFIED' == 'BLOCKED'
+E         
+E         - BLOCKED
+E         + NOT_VERIFIED
+
+algorithm\web\tests\test_real_services_runner.py:24: AssertionError
+_ test_missing_or_unsafe_infrastructure_is_reported_as_blocked[sqlite:///pretend.db] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-940/test_missing_or_unsafe_infrast1')
+url = 'sqlite:///pretend.db'
+
+    @pytest.mark.parametrize("url", [None, "sqlite:///pretend.db", "mysql+pymysql://root:private-test-password@remote/diagnosis"])
+    def test_missing_or_unsafe_infrastructure_is_reported_as_blocked(tmp_path, url):
+        env = {k: v for k, v in os.environ.items() if not k.startswith("REAL_SERVICES_")}
+        env.pop("DASHSCOPE_API_KEY", None)
+        if url:
+            env["REAL_SERVICES_MYSQL_ADMIN_URL"] = url
+        result = subprocess.run([sys.executable, "-m", "web.verify_real_services",
+            "--output-dir", str(tmp_path)], cwd=Path(__file__).resolve().parents[2],
+            env=env, capture_output=True, text=True, timeout=20)
+        assert result.returncode == 2, result.stdout + result.stderr
+        report = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
+        assert report["status"] == "BLOCKED"
+>       assert report["gates"]["realEmbedding"]["status"] == "BLOCKED"
+E       AssertionError: assert 'NOT_VERIFIED' == 'BLOCKED'
+E         
+E         - BLOCKED
+E         + NOT_VERIFIED
+
+algorithm\web\tests\test_real_services_runner.py:24: AssertionError
+_ test_missing_or_unsafe_infrastructure_is_reported_as_blocked[mysql+pymysql://root:private-test-password@remote/diagnosis] _
+
+tmp_path = WindowsPath('C:/Users/yuwen/AppData/Local/Temp/pytest-of-yuwen/pytest-940/test_missing_or_unsafe_infrast2')
+url = 'mysql+pymysql://root:private-test-password@remote/diagnosis'
+
+    @pytest.mark.parametrize("url", [None, "sqlite:///pretend.db", "mysql+pymysql://root:private-test-password@remote/diagnosis"])
+    def test_missing_or_unsafe_infrastructure_is_reported_as_blocked(tmp_path, url):
+        env = {k: v for k, v in os.environ.items() if not k.startswith("REAL_SERVICES_")}
+        env.pop("DASHSCOPE_API_KEY", None)
+        if url:
+            env["REAL_SERVICES_MYSQL_ADMIN_URL"] = url
+        result = subprocess.run([sys.executable, "-m", "web.verify_real_services",
+            "--output-dir", str(tmp_path)], cwd=Path(__file__).resolve().parents[2],
+            env=env, capture_output=True, text=True, timeout=20)
+        assert result.returncode == 2, result.stdout + result.stderr
+        report = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
+        assert report["status"] == "BLOCKED"
+>       assert report["gates"]["realEmbedding"]["status"] == "BLOCKED"
+E       AssertionError: assert 'NOT_VERIFIED' == 'BLOCKED'
+E         
+E         - BLOCKED
+E         + NOT_VERIFIED
+
+algorithm\web\tests\test_real_services_runner.py:24: AssertionError
+============================== warnings summary ===============================
+algorithm/web/tests/test_mcp_image.py::test_mcp_image_tool_uses_workflow_provenance_without_releasing_prediction
+  D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\.venv\Lib\site-packages\pydantic_settings\sources\utils.py:47: IncompleteFieldDefinitionWarning: Field 'lifespan' has an incomplete definition: its annotation contains an unresolved forward reference, so settings sources may fail to correctly resolve its value. Call `model_rebuild()` on the model where the field is defined, once all the referenced types are defined.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED algorithm/web/tests/test_real_services_runner.py::test_missing_or_unsafe_infrastructure_is_reported_as_blocked[None]
+FAILED algorithm/web/tests/test_real_services_runner.py::test_missing_or_unsafe_infrastructure_is_reported_as_blocked[sqlite:///pretend.db]
+FAILED algorithm/web/tests/test_real_services_runner.py::test_missing_or_unsafe_infrastructure_is_reported_as_blocked[mysql+pymysql://root:private-test-password@remote/diagnosis]
+3 failed, 796 passed, 40 skipped, 1 warning in 1020.78s (0:17:00)
+Traceback (most recent call last):
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 50, in <module>
+    main()
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 30, in main
+    run([sys.executable, "-m", "pytest", "algorithm/web/tests", "-q", "--junitxml=" + str(args.output_dir / "web.xml")])
+  File "D:\Work\code\eye-diagnosis\.claude\worktrees\py-rewrite\scripts\verify.py", line 15, in run
+    subprocess.run(command, cwd=cwd, env=env, check=True)
+  File "C:\Users\yuwen\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['D:\\Work\\code\\eye-diagnosis\\.claude\\worktrees\\py-rewrite\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'algorithm/web/tests', '-q', '--junitxml=.scratch\\python-project-migration\\evidence\\issue06\\windows-web\\web.xml']' returned non-zero exit status 1.

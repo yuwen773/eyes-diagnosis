@@ -1,0 +1,24 @@
+[
+  {
+    "reviewTaskId": "dac1718c5dda4e56894eb06dd79261a2",
+    "workflowId": "8e89a7a43d27410a9ece5887b51d8133",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  },
+  {
+    "reviewTaskId": "b364ba1b506d42e0b698575bc61f832c",
+    "workflowId": "ddd7005b6b53453998bb34c3364d255f",
+    "reviewType": "IMAGE_QUALITY_GATE",
+    "status": "OPEN",
+    "taskVersion": "0",
+    "workflowVersion": "6",
+    "assignedDoctorId": null,
+    "decisionCode": null,
+    "reasonCode": null
+  }
+]

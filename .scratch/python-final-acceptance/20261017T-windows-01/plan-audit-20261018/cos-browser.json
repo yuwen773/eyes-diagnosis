@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "scope": "Native headless Chromium; previously registered synthetic white COS probe only",
+  "sourceEvidence": "20261017T100907-extra-http.json",
+  "httpStatus": 200,
+  "contentType": "image/png",
+  "contentDisposition": "attachment",
+  "boundary": "embedded img element",
+  "naturalDimensions": {
+    "width": 32,
+    "height": 24
+  },
+  "contentSha256": "3caaff312f21229b33ca99f7b639efaf6196a808395e3108bdde1d2a82ac521b",
+  "newObjects": 0,
+  "screenshot": "cos-browser.png"
+}

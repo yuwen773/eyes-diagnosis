@@ -1,0 +1,5 @@
+data: {"messageType": "assistant", "content": "收到", "sessionId": "audit-d5ea3370d6754a51a6ff151ff530eb11", "runId": "2930c58f-64d2-4d92-9ff5-02df250db181"}
+
+event: done
+data: ""
+

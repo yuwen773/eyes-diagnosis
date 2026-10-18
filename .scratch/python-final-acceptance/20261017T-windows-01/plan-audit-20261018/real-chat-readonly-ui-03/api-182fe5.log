@@ -1,0 +1,15 @@
+INFO:     Started server process [36552]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64334 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58004 - "GET /api/diagnosis/workflows/dad94b0f755f421f84cbb708f56bb898/events HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58484 - "OPTIONS /api/agent/history/b8c67bc64ad443b681cdb291309c5503?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58004 - "GET /api/agent/history/b8c67bc64ad443b681cdb291309c5503?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58004 - "GET /api/agent/tool-confirmations?sessionId=b8c67bc64ad443b681cdb291309c5503 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55491 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55493 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55491 - "POST /api/agent/chat/stream HTTP/1.1" 200 OK

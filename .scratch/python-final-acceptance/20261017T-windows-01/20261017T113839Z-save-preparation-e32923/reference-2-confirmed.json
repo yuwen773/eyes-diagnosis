@@ -1,0 +1,26 @@
+{
+  "id": "2",
+  "userId": "9007199254740993",
+  "title": "01-normal.md",
+  "fileName": "01-normal.md",
+  "fileUrl": "22a498db-3804-43b6-8460-d564c4b5098a_01-normal.md",
+  "fileSize": "1680",
+  "fileType": "md",
+  "contentHash": "0a8fbbb041255889816aebb1f45c1b19885cb5784c0efa1219744b20313fe24f",
+  "chunkCount": 1,
+  "status": 1,
+  "createTime": "2026-10-17 18:01:04",
+  "updateTime": "2026-10-17 19:38:40",
+  "isDelete": 0,
+  "visibility": "CURATED_PUBLIC",
+  "reviewStatus": "APPROVED",
+  "diseaseCodes": [
+    "normal"
+  ],
+  "topicCodes": [
+    "DISEASE_OVERVIEW"
+  ],
+  "governanceVersion": 1,
+  "reviewedBy": "9007199254740996",
+  "reviewedAt": "2026-10-17 19:38:40"
+}

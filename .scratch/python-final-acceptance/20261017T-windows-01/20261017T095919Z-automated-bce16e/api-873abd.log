@@ -1,0 +1,30 @@
+INFO:     Started server process [66856]
+INFO:     Waiting for application startup.
+使用设备: cpu
+使用efficientnet_b4模型
+从 D:\Work\code\eye-diagnosis\algorithm\models\efficientnet_b4_20250330_211341\best_acc_eye_disease_model.pth 加载模型
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52404 - "GET /ready HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52436 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52437 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52438 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52436 - "POST /api/user/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52436 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52436 - "POST /api/user/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/agent/image/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/list/page HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/list/page HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/knowledge/list/page HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "POST /api/knowledge/list/page HTTP/1.1" 200 OK

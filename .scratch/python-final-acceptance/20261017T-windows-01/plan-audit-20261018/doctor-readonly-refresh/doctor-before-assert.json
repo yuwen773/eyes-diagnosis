@@ -1,0 +1,6 @@
+{
+  "url": "http://127.0.0.1:5173/doctor/reviews?task=2b475ca46ba945b19a9b5f8a9d37f365",
+  "body": "EyeSight\n智能眼科诊断\n旧版任务\n医生复核\n主页\n疾病诊断\n前沿新闻\nEye智诊\nA\nAcceptance doctor\n医生复核\n\n这是医生复核，不是用户保存授权。图像质量与最终临床复核分别处理；医生决定不会自动保存正式诊断记录。\n\n刷新复核任务\n待处理任务\n待领取 · 图像质量\n44ded32cd0744622a10ee98db08b78eb\n待领取 · 图像质量\n8e89a7a43d27410a9ece5887b51d8133\n待领取 · 图像质量\nbb1f593106254d23be967c4d0424deb1\n待领取 · 图像质量\nddd7005b6b53453998bb34c3364d255f\n图像质量复核\n\n本次说明：用户未填写说明\n\n质量评分\n50\n质量问题\nbrightness、fundus_coverage\n原推理包\n6532e6462230498298232e9cebb2aa95 · epoch 0\n模型版本\nefficientnet-b4@1.0.0\n推理策略\nmedical-safety-v3-quality-observe\n查看来源与版本\n领取质量复核\n\n列表最多显示 100 项待处理任务；处理后刷新可继续查看其余任务。\n\nEyeSight\nSMART EYE DIAGNOSIS\n\n让每一双眼睛都被温柔以待\n\n探索\n首页\n开始诊断\n资讯中心\n账户\n个人中心\n诊断历史\n通知中心\n关于\n关于作者\nGitHub\n系统运行正常\nv1.0.0\n© 2026 YuWen",
+  "blocked": [],
+  "errors": []
+}

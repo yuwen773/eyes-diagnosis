@@ -1,0 +1,41 @@
+INFO:     Started server process [39168]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:15285 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54940 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54005 - "OPTIONS /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54005 - "OPTIONS /api/agent/chat/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "POST /api/agent/chat/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54005 - "OPTIONS /api/agent/history/cc20f0c2-dbc0-4487-a90c-f2f5e932cd92?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/history/cc20f0c2-dbc0-4487-a90c-f2f5e932cd92?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54005 - "OPTIONS /api/agent/tool-confirmations/186bb517ac8749298278adc0e1807317/reject HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "POST /api/agent/tool-confirmations/186bb517ac8749298278adc0e1807317/reject HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "POST /api/agent/chat/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "POST /fixture/expire/1ca6db8ddb0b435a900eee28ad43f289 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "POST /api/agent/chat/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52054 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54005 - "OPTIONS /api/agent/tool-confirmations/3f11b07bbfbc49369871f9ec2a81666d/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "POST /api/agent/tool-confirmations/3f11b07bbfbc49369871f9ec2a81666d/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "POST /api/agent/tool-confirmations/3f11b07bbfbc49369871f9ec2a81666d/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64595 - "POST /api/agent/tool-confirmations/3f11b07bbfbc49369871f9ec2a81666d/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/user/get/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/sessions?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/history/cc20f0c2-dbc0-4487-a90c-f2f5e932cd92?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54940 - "GET /api/agent/tool-confirmations?sessionId=cc20f0c2-dbc0-4487-a90c-f2f5e932cd92 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52115 - "GET /api/agent/profile HTTP/1.1" 200 OK

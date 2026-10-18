@@ -13,7 +13,7 @@
 - `mypy.log`：本票扫描/共同入口类型检查。
 
 `preexisting.patch`、运行配置、连接凭据与原始数据库/对象/向量备份不纳入公开提交。
-原工单证据不覆盖、不删除。双轴复审见 `review.md`，剩余问题各 0。最终机器汇总为 `PARTIAL`；Linux 最终全量与真实基础设施未完成，不能以已通过的镜像/Compose/算法项目替代。
+原工单失败证据不覆盖、不删除。双轴复审见 `review.md`，剩余问题各 0。当前机器汇总为 `PASS_WITH_LIMITATIONS`、4/4 工程范围；原 PARTIAL 快照、原环境失败和附时间同步条件的最终通过结果分别保留于 [本次收尾](closeout-20261017/README.md)。
 
 ## 分层结果与历史失败
 
@@ -31,7 +31,7 @@
 - `linux-full/`：首轮在失败后受控 SIGINT 终止，293 通过、3 失败、27 跳过，不是全量 PASS。失败包括 445ms 时钟回拨保护、就绪探针时限、人工等待断言；`linux-diagnosis.xml` 只代表相关文件 5 项单独复验通过。
 - `linux-infrastructure/`：首次 MySQL 尚未就绪；`linux-infrastructure-final/`：Worker 两项执行时限失败，不记 PASS。
 
-用户在 11:57 停止 Docker，并明确要求暂不再启动；当前 Linux 最终全量/真实基础设施验收留待后续恢复。已留存三类失效 socket 的备份名称；Docker/WSL 配置和数据未重置，其他数据库服务未操作。
+初轮用户在 11:57 停止 Docker 并要求暂不再启动，所以下列旧结果当时为 PARTIAL。该限制随后由明确授权解除；本次新增 Web 814/43、真实基础设施 gates 与承接 21 通过，临时停止的 Ubuntu 时间同步已恢复 active/enabled。用户之后要求不再继续 Linux 验收，不追加运行。失效 socket 已备份，Docker/WSL 配置和数据未重置。
 
 `preexisting.patch`、`preexisting-status.txt`、`claude-index.txt` 是本地私有操作辅助文件，不提交。已存在的旧票证据、SQL、运行目录、业务数据和他人修改不清理。
 
