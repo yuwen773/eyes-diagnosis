@@ -110,3 +110,9 @@ algorithm/*_pb2_grpc.py
 
 # 验收运行产生的 pytest 临时目录（短路径 basetemp）
 /.scratch/sw18-*/
+
+# 验收本地私有操作辅助文件（记录执行前的他人改动，不提交）
+**/preexisting.patch
+**/preexisting-status.txt
+**/preexisting-tracked.json
+/.scratch/python-project-migration/evidence/issue08/claude-index.txt
