@@ -22,6 +22,12 @@ jobs:
             algorithm/requirements-p1.txt
       - run: python -m pip install -r requirements.txt -r requirements-p1.txt pytest
       - run: python generate_proto.py
+      - name: Frozen evaluation CLI entry point
+        run: python -m eye_diagnosis.frozen_eval --help
+      - name: Frozen evaluation CLI smoke run
+        # 权重与冻结 manifest 属于真实数据，不入库，因此 CI 只验证 CLI 入口与
+        # "产物缺失即跳过"的路径；完整评估在部署环境用 --weights/--manifest 触发。
+        run: python -m eye_diagnosis.frozen_eval --manifest datasets/frozen_validation_manifest.json
       - run: python -m pytest eye_diagnosis/tests tests eye_diagnosis_p1/tests -m "not slow" -q
 
   watchdog:
@@ -131,6 +137,7 @@ jobs:
           java-version: '21'
           cache: maven
       - run: mvn -Dtest=FlywayMySqlIntegrationTest test
+      - run: mvn -Dtest=UploadTaskMapperMySqlIntegrationTest test
 
   frontend:
     runs-on: ubuntu-latest

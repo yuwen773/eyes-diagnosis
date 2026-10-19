@@ -188,6 +188,22 @@ python evaluate_model.py --model_path models/best_acc_eye_disease_model.pth --te
 
 输出：混淆矩阵、ROC 曲线、分类分布图。
 
+### 冻结验证集评估（CLI）
+
+在冻结验证集上评估指定权重的逐类别指标，并记录模型溯源（版本 + 权重 SHA-256）：
+
+```bash
+python -m eye_diagnosis.frozen_eval \
+  --weights checkpoints/model.pth \
+  --manifest datasets/frozen_validation_manifest.json \
+  --output artifacts/frozen_metrics.csv
+```
+
+- `--manifest` 省略时依次取环境变量 `FROZEN_VAL_MANIFEST`、默认路径 `datasets/frozen_validation_manifest.json`
+- 权重或 manifest 缺失时打印 `SKIP` 并以 0 退出（便于 CI 无条件调用）；加 `--require-artifacts` 则以 2 退出
+- 校验失败（manifest 格式非法、样本 ID 重复、样本不来自冻结的 `val` 划分、权重未登记在 `checkpoints/registry.json`）一律以 1 退出
+- `--require-manifest-not-newer` 额外要求 manifest 的修改时间不晚于权重的修改时间（冻结集必须早于模型训练）
+
 ## 可靠性评分
 
 根据 Top-1 和 Top-2 概率差值计算：

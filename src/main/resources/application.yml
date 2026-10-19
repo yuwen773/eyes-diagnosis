@@ -81,6 +81,15 @@ eye-diagnosis:
     # enable the legacy dispatcher or it can replay pre-existing Outbox rows.
     outbox:
       enabled: false
+  # 上传补偿对账：清理 COS 上没有任务行登记的孤儿图片。
+  # 该任务会真实删除对象存储中的文件，默认关闭，需显式开启。
+  upload:
+    compensation:
+      enabled: false
+      interval-ms: 3600000
+      initial-delay-ms: 600000
+      # 宽限期：最近 N 分钟内被修改的对象不参与清理，避免误删正在上传的图片
+      min-age-minutes: 30
   inference:
     hash-algorithm: SHA-256
     model-version: efficientnet-b4@1.0.0
@@ -94,6 +103,11 @@ eye-diagnosis:
   rag:
     chunk-size: 800
     chunk-overlap: 100
+    # 内置眼科知识语料（classpath:rag/*.md）播种：开启后启动时切分并写入 ChromaDB。
+    # 播种需要调用嵌入模型（产生费用），默认关闭。
+    corpus:
+      seed-enabled: false
+      resource-pattern: classpath*:rag/*.md
     search:
       top-k: 20
       final-top-k: 5

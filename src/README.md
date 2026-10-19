@@ -70,6 +70,26 @@ src/main/java/com/csust/eyediagnosis/
 
 文档处理流水线：上传 → DocumentParser 解析（PDF/MD/DOCX/TXT）→ TextChunkerService 分块（512 词，64 词重叠）→ DashScope 嵌入 → ChromaDB 存储。
 
+**内置语料播种**：`src/main/resources/rag/*.md` 里的眼科基础知识由 `BuiltinCorpusSeeder` 在启动时切分并写入 ChromaDB，打上 `ownerUserId = 0` 的公共标记。检索过滤为 `ownerUserId == 当前用户 || ownerUserId == 0`，因此内置语料对所有用户可见，用户私有文档仍然隔离。播种需要调用嵌入模型（产生费用），默认关闭：
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--eye-diagnosis.rag.corpus.seed-enabled=true
+```
+
+### 上传补偿
+
+Agent 对话图片的 COS 对象与 `t_upload_task` 任务行是两次独立写入，进程在"对象写成功、任务行未落库"之间崩溃会留下孤儿对象。`UploadCompensationScheduler` 周期性地按 owner 前缀对账，删除没有有效任务登记的孤儿对象；同时跳过仍在宽限期（`min-age-minutes`，默认 30 分钟）内被修改的对象，避免误删正在上传的图片。该任务会真实删除对象存储中的文件，默认关闭：
+
+```yaml
+eye-diagnosis:
+  upload:
+    compensation:
+      enabled: true
+      interval-ms: 3600000
+      initial-delay-ms: 600000
+      min-age-minutes: 30
+```
+
 ### gRPC 诊断
 
 通过 Protobuf 定义 `DiagnosisService`，Java 后端作为客户端调用 Python 算法服务进行图像分类。
@@ -89,7 +109,7 @@ src/main/java/com/csust/eyediagnosis/
 | `application-local.yml` | 本地密钥配置（gitignored，需自行创建） |
 | `application-server.example.yml` | 服务器部署配置模板（复制为 `application-server.yml`） |
 | `db/migration/V*.sql` | Flyway 迁移脚本（schema 权威来源，启动时自动执行） |
-| `db/schema.sql` | 历史手工建表脚本，**不参与 Flyway**，仅作早期结构参考 |
+| `db/callback/*.sql` | Flyway 回调：新库所需的基线建表 |
 
 ## 构建与运行
 

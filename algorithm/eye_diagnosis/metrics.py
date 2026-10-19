@@ -30,7 +30,7 @@ def per_class_metrics(probs: np.ndarray, labels: np.ndarray) -> pd.DataFrame:
         f1 = float(f1_score(labels == label, preds == label, zero_division=0))
         support = int((labels == label).sum())
         try:
-            auroc = float(roc_auc_score((labels == label).astype(int), probs[:, idx]))
+            auroc = float(roc_auc_score((labels == label).astype(int), probs[:, label]))
         except ValueError:
             auroc = float("nan")
         rows.append(
