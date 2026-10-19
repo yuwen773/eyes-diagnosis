@@ -87,9 +87,9 @@ src/main/java/com/csust/eyediagnosis/
 | `application.yml` | 主配置（端口 8081、上下文 /api、会话 30 天） |
 | `application-dev.yml` | 开发环境（MySQL、Redis 连接） |
 | `application-local.yml` | 本地密钥配置（gitignored，需自行创建） |
-| `application-pro.yml` | 生产环境（占位） |
-| `db/schema.sql` | 数据库建表脚本 |
-| `prompt/diagnosis-system-prompt.txt` | Agent 系统 Prompt |
+| `application-server.example.yml` | 服务器部署配置模板（复制为 `application-server.yml`） |
+| `db/migration/V*.sql` | Flyway 迁移脚本（schema 权威来源，启动时自动执行） |
+| `db/schema.sql` | 历史手工建表脚本，**不参与 Flyway**，仅作早期结构参考 |
 
 ## 构建与运行
 
