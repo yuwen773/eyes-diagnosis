@@ -133,7 +133,7 @@ const isEmptyArgs = (args: Record<string, any>) => {
   gap: 7px;
   padding: 7px 12px;
   border-bottom: 1px solid var(--claude-border-subtle);
-  background: oklch(0.72 0.09 30 / 0.06);
+  background: oklch(0.6 0.05 175 / 0.06);
 }
 
 .tool-icon {

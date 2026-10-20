@@ -397,7 +397,7 @@ const handleDownloadImage = (url: string) => { window.open(url, '_blank') }
 .toggle-right-btn.active {
   color: var(--claude-brand);
   border-color: var(--claude-brand);
-  background: oklch(0.72 0.09 30 / 0.06);
+  background: oklch(0.6 0.05 175 / 0.06);
 }
 
 .resource-badge {

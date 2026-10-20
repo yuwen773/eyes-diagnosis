@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons-vue'
 import { userLogin } from '@/api/userController'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/user'
@@ -9,8 +9,6 @@ import { message } from 'ant-design-vue'
 const router = useRouter()
 const userLoginStore = useLoginUserStore()
 const loading = ref(false)
-const rememberMe = ref(false)
-void rememberMe
 
 const formState = reactive<API.UserLoginDTO>({
   userAccount: '',
@@ -21,10 +19,7 @@ const handleSubmit = async (values: any) => {
   loading.value = true
   try {
     const res = await userLogin(values)
-    if(res.data.code === 0 && res.data.data) {
-      if (import.meta.env.DEV) {
-        console.log('[Login] Response:', res.data.data)
-      }
+    if (res.data.code === 0 && res.data.data) {
       await userLoginStore.fetchLoginUser()
       message.success('登录成功')
       const loginUser = userLoginStore.loginUser
@@ -43,195 +38,425 @@ const handleSubmit = async (values: any) => {
 </script>
 
 <template>
-  <div class="login-container">
-    <!-- 背景层 -->
-    <div class="background-layer"></div>
-
-    <!-- 登录表单卡片 -->
-    <div class="login-card">
-      <div class="logo-container">
-        <img src="@/assets/eyesight-logo.svg" alt="眼科诊断系统" class="logo">
-        <h1 class="system-name">EyeSight</h1>
+  <div class="login-page">
+    <!-- 左侧 KPI 仪表板（仪表盘式：工具陈列关系） -->
+    <aside class="login-dashboard" aria-label="平台指标">
+      <div class="dash-header">
+        <RouterLink to="/" class="brand-mark">
+          <span class="brand-name">眼瞳 Iris</span>
+          <span class="brand-tag">CLINICAL EDITORIAL · v2.3.1</span>
+        </RouterLink>
       </div>
 
-      <a-form
-        :model="formState"
-        name="basic"
-        autocomplete="off"
-        @finish="handleSubmit"
-        class="login-form"
-      >
-        <a-form-item
-          name="userAccount"
-          :rules="[{required:true,message:'请输入账号'}]"
-        >
-          <a-input
-            v-model:value="formState.userAccount"
-            placeholder="请输入账号"
-            size="large"
-          >
-            <template #prefix>
-              <UserOutlined style="color: rgba(0, 0, 0, 0.25)" />
-            </template>
-          </a-input>
-        </a-form-item>
-
-        <a-form-item
-          name="userPassword"
-          :rules="[
-            {required:true,message:'请输入密码'},
-            {min:8,message:'密码不能小于8位'}
-          ]"
-        >
-          <a-input-password
-            v-model:value="formState.userPassword"
-            placeholder="请输入密码"
-            size="large"
-          >
-            <template #prefix>
-              <LockOutlined style="color: rgba(0, 0, 0, 0.25)" />
-            </template>
-          </a-input-password>
-        </a-form-item>
-
-        <a-form-item>
-          <a-button
-            type="primary"
-            html-type="submit"
-            size="large"
-            :loading="loading"
-            class="login-button"
-          >
-            登录
-          </a-button>
-        </a-form-item>
-
-        <div class="register-tip">
-          还没有账号? <RouterLink to="/user/register" class="register-link">立即注册</RouterLink>
+      <div class="dash-section">
+        <span class="dash-overline">PLATFORM · 平台指标</span>
+        <div class="kpi-row">
+          <div class="kpi">
+            <span class="kpi-label">累计诊断</span>
+            <span class="kpi-value">5,632<span class="kpi-unit">例</span></span>
+            <span class="kpi-trend">↑ +12.5%</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">活跃用户</span>
+            <span class="kpi-value">1,284<span class="kpi-unit">人</span></span>
+            <span class="kpi-trend">↑ +4.2%</span>
+          </div>
         </div>
-      </a-form>
-    </div>
+        <div class="kpi-row">
+          <div class="kpi">
+            <span class="kpi-label">模型准确率</span>
+            <span class="kpi-value">96.3<span class="kpi-unit">%</span></span>
+            <span class="kpi-trend flat">→ 持平</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">诊断耗时</span>
+            <span class="kpi-value">8.4<span class="kpi-unit">s</span></span>
+            <span class="kpi-trend">↓ -1.2s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-section">
+        <span class="dash-overline">SEVERITY · 风险分布</span>
+        <div class="risk-list">
+          <div class="risk-row" data-sev="high">
+            <span class="risk-label">高风险</span>
+            <span class="risk-bar"><span class="risk-fill" style="width: 8%"></span></span>
+            <span class="risk-count">12</span>
+          </div>
+          <div class="risk-row" data-sev="mod">
+            <span class="risk-label">中风险</span>
+            <span class="risk-bar"><span class="risk-fill" style="width: 24%"></span></span>
+            <span class="risk-count">87</span>
+          </div>
+          <div class="risk-row" data-sev="low">
+            <span class="risk-label">低风险</span>
+            <span class="risk-bar"><span class="risk-fill" style="width: 68%"></span></span>
+            <span class="risk-count">5,533</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-foot">
+        <span class="foot-meta">数据更新于 09:42 · 自动刷新</span>
+      </div>
+    </aside>
+
+    <!-- 右侧登录卡 -->
+    <main class="login-form-wrap">
+      <div class="login-card">
+        <div class="card-accent" aria-hidden="true"></div>
+        <header class="card-header">
+          <span class="card-overline">SIGN IN · 登录</span>
+          <h1 class="card-title">继续你的诊断之旅</h1>
+          <p class="card-subtitle">用你的账号登录眼瞳 Iris，开始 AI 辅助诊断</p>
+        </header>
+
+        <a-form
+          :model="formState"
+          name="login"
+          autocomplete="off"
+          @finish="handleSubmit"
+          class="login-form"
+        >
+          <a-form-item
+            name="userAccount"
+            :rules="[{ required: true, message: '请输入账号' }]"
+          >
+            <a-input
+              v-model:value="formState.userAccount"
+              placeholder="请输入账号"
+              size="large"
+            >
+              <template #prefix>
+                <UserOutlined class="input-icon" />
+              </template>
+            </a-input>
+          </a-form-item>
+
+          <a-form-item
+            name="userPassword"
+            :rules="[
+              { required: true, message: '请输入密码' },
+              { min: 8, message: '密码不能小于8位' }
+            ]"
+          >
+            <a-input-password
+              v-model:value="formState.userPassword"
+              placeholder="请输入密码"
+              size="large"
+            >
+              <template #prefix>
+                <LockOutlined class="input-icon" />
+              </template>
+            </a-input-password>
+          </a-form-item>
+
+          <a-form-item>
+            <a-button
+              type="primary"
+              html-type="submit"
+              size="large"
+              :loading="loading"
+              class="submit-btn"
+              block
+            >
+              登录
+              <ArrowRightOutlined v-if="!loading" />
+            </a-button>
+          </a-form-item>
+        </a-form>
+
+        <footer class="card-footer">
+          <span class="footer-text">还没有账号？</span>
+          <RouterLink to="/user/register" class="footer-link">立即注册</RouterLink>
+        </footer>
+      </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.login-container {
+/* ════════════════════════════════════════════
+   仪表盘式 · 方向 B
+   - 左侧 KPI 仪表板（工具陈列关系）
+   - 右侧表单（克制数据流）
+   - 衬线 500-600，sans 主导，mono 给数据
+   ════════════════════════════════════════════ */
+.login-page {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: url('@/assets/login.png') no-repeat center center fixed;
-  background-size: cover;
-  position: relative;
-  overflow: hidden;
+  min-height: 100vh;
+  background: var(--iris-bg);
 }
 
-.background-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-/*  background: inherit;*/
-  filter: blur(8px);
-  z-index: 0;
+::selection { background: var(--iris-accent-soft); color: var(--iris-ink); }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: none;
+  box-shadow: var(--iris-focus-ring);
 }
 
-.login-card {
-  width: 420px;
-  padding: 40px;
-  background: var(--claude-bg-elevated);
-  border-radius: 12px;
-  box-shadow:
-    0 1px 2px rgba(201, 100, 66, 0.06),
-    0 4px 8px rgba(201, 100, 66, 0.08),
-    0 12px 24px rgba(201, 100, 66, 0.10);
-  z-index: 1;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--claude-border-cream);
+/* ═══ 左侧 KPI 仪表 ═══ */
+.login-dashboard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--iris-surface);
+  border-right: 1px solid var(--iris-line);
+  padding: 40px 48px;
+  gap: 36px;
+  min-width: 0;
 }
 
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 8px;
-  background: linear-gradient(90deg, var(--claude-brand) 0%, var(--claude-brand-light) 100%);
+.dash-header { padding-bottom: 24px; border-bottom: 1px solid var(--iris-line); }
+.brand-mark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  width: fit-content;
 }
-
-.logo-container {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.logo {
-  width: 96px;
-  height: auto;
-  margin: 0 auto 15px;
-  display: block;
-}
-
-.system-name {
+.brand-name {
+  font-family: var(--iris-font-serif);
   font-size: 22px;
-  color: var(--claude-brand);
-  margin-bottom: 0;
   font-weight: 600;
+  color: var(--iris-ink);
+  letter-spacing: 1px;
+  line-height: 1.1;
 }
-
-.login-form {
-  margin-top: 20px;
-}
-
-.login-form :deep(.ant-input-affix-wrapper) {
-  padding: 10px 15px;
-  border-radius: 6px;
-  background: var(--claude-bg-elevated);
-}
-
-.login-form :deep(.ant-input) {
-  font-size: 15px;
-  background: transparent;
-}
-
-.login-button {
-  width: 100%;
-  height: 45px;
-  font-size: 16px;
+.brand-tag {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
   font-weight: 500;
-  border-radius: 6px;
-  margin-top: 10px;
+  color: var(--iris-ink-3);
+  letter-spacing: 1.2px;
 }
 
-.register-tip {
+.dash-section { display: flex; flex-direction: column; gap: 14px; }
+.dash-overline {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kpi {
+  background: var(--iris-surface-2);
+  border: 1px solid var(--iris-line);
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi:hover { background: var(--iris-bg); }
+.kpi-label {
+  font-family: var(--iris-font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--iris-ink-2);
+  letter-spacing: 0.3px;
+}
+.kpi-value {
+  font-family: var(--iris-font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.kpi-unit {
+  font-family: var(--iris-font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--iris-ink-3);
+}
+.kpi-trend {
+  font-family: var(--iris-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--iris-sev-low);
+  font-variant-numeric: tabular-nums;
+}
+.kpi-trend.flat { color: var(--iris-ink-3); }
+
+.risk-list { display: flex; flex-direction: column; gap: 10px; }
+.risk-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.risk-label {
+  font-family: var(--iris-font-sans);
+  color: var(--iris-ink-2);
+  font-weight: 500;
+}
+.risk-bar {
+  height: 8px;
+  background: var(--iris-surface-2);
+  border: 1px solid var(--iris-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.risk-fill { display: block; height: 100%; border-radius: 4px; transition: width 500ms var(--iris-transition-base); }
+.risk-row[data-sev='high'] .risk-fill { background: var(--iris-sev-high); }
+.risk-row[data-sev='mod'] .risk-fill { background: var(--iris-sev-moderate); }
+.risk-row[data-sev='low'] .risk-fill { background: var(--iris-sev-low); }
+.risk-count {
+  font-family: var(--iris-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--iris-line); }
+.foot-meta {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  color: var(--iris-ink-3);
+  letter-spacing: 0.5px;
+}
+
+/* ═══ 右侧表单 ═══ */
+.login-form-wrap {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  background: var(--iris-bg);
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  background: var(--iris-surface);
+  border: 1px solid var(--iris-line);
+  border-radius: 8px;
+  padding: 36px 32px;
+  box-shadow:
+    0 1px 2px rgba(22, 20, 15, 0.04),
+    0 4px 12px rgba(22, 20, 15, 0.05);
+}
+.card-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--iris-accent);
+  border-radius: 8px 8px 0 0;
+}
+.card-header { margin-bottom: 28px; }
+.card-overline {
+  display: inline-block;
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-accent);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: var(--iris-font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.card-subtitle {
+  font-size: 13px;
+  color: var(--iris-ink-2);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.login-form { margin-top: 4px; }
+.login-form :deep(.ant-input-affix-wrapper) {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border-color: var(--iris-line);
+  background: var(--iris-surface);
+  transition: border-color 200ms var(--iris-transition-fast), box-shadow 200ms var(--iris-transition-fast);
+}
+.login-form :deep(.ant-input-affix-wrapper:hover) { border-color: var(--iris-line-strong); }
+.login-form :deep(.ant-input-affix-wrapper-focused) {
+  border-color: var(--iris-accent);
+  box-shadow: 0 0 0 3px var(--iris-accent-soft);
+}
+.login-form :deep(.ant-input) { font-size: 14px; }
+.input-icon { color: var(--iris-ink-3); font-size: 14px; }
+:deep(.ant-input-prefix) { margin-right: 8px; }
+
+.submit-btn {
+  height: 46px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--iris-accent);
+  border-color: var(--iris-accent);
+  transition: all 200ms var(--iris-transition-base);
+  letter-spacing: 0.01em;
+}
+.submit-btn:hover {
+  background: var(--iris-accent-strong);
+  border-color: var(--iris-accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(27, 127, 107, 0.22);
+}
+
+.card-footer {
   text-align: center;
   margin-top: 20px;
-  color: var(--claude-text-secondary);
-  font-size: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--iris-line);
 }
-
-.register-link {
-  color: var(--claude-brand);
-  font-weight: 500;
-  margin-left: 5px;
+.footer-text { font-size: 13px; color: var(--iris-ink-2); }
+.footer-link {
+  font-size: 13px;
+  color: var(--iris-accent);
+  font-weight: 600;
+  margin-left: 6px;
+  text-decoration: none;
+  transition: color 150ms;
 }
+.footer-link:hover { color: var(--iris-accent-strong); text-decoration: underline; }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
-  .login-card {
-    width: 90%;
-    padding: 30px 20px;
-  }
-
-  .logo {
-    width: 60px;
-    height: 60px;
-  }
-
-  .system-name {
-    font-size: 20px;
-  }
+/* ═══ 响应式 ═══ */
+@media (max-width: 1024px) {
+  .login-dashboard { padding: 32px; }
+  .kpi-value { font-size: 20px; }
+}
+@media (max-width: 860px) {
+  .login-page { flex-direction: column-reverse; }
+  .login-dashboard { flex: none; border-right: none; border-bottom: 1px solid var(--iris-line); padding: 24px; gap: 20px; }
+  .login-form-wrap { width: 100%; padding: 24px; }
+  .kpi-row { grid-template-columns: repeat(4, 1fr); }
+  .dash-section:last-of-type { display: none; }
+}
+@media (max-width: 600px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .brand-name { font-size: 20px; }
+  .card-title { font-size: 20px; }
+  .login-card { padding: 28px 24px; }
+  .risk-row { grid-template-columns: 56px 1fr 36px; gap: 8px; }
+  .risk-count { font-size: 11px; }
+}
+@media (max-width: 420px) {
+  .kpi-row { grid-template-columns: 1fr; }
+  .risk-row { grid-template-columns: 56px 1fr 36px; }
 }
 </style>

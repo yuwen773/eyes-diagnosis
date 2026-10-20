@@ -492,7 +492,7 @@ const handleSubmit = async () => {
 
 .json-hint {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--color-olive-gray, #5e5d59);
+  color: var(--iris-ink-2, #6f6a5e);
   margin: 0 0 var(--space-2, 0.5rem) 0;
   line-height: 1.4;
 }
@@ -504,7 +504,7 @@ const handleSubmit = async () => {
 }
 
 .json-error {
-  color: var(--color-error, #b53333);
+  color: var(--iris-error, #b53333);
   font-size: var(--text-xs, 0.75rem);
   margin-top: var(--space-2, 0.5rem);
   font-weight: 500;
@@ -516,7 +516,7 @@ const handleSubmit = async () => {
 
 .timeout-hint {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--color-stone-gray, #87867f);
+  color: var(--iris-ink-3, #9a9587);
   margin-left: var(--space-2, 0.5rem);
 }
 
@@ -532,7 +532,7 @@ const handleSubmit = async () => {
 .mcp-server-form :deep(.ant-form-item-label > label) {
   font-size: var(--text-sm, 0.875rem);
   font-weight: 500;
-  color: var(--color-near-black, #141413);
+  color: var(--iris-ink, #16140f);
 }
 
 .mcp-server-form :deep(.ant-input),
@@ -547,7 +547,7 @@ const handleSubmit = async () => {
 .mcp-server-form :deep(.ant-input-focused),
 .mcp-server-form :deep(.ant-input-number:focus),
 .mcp-server-form :deep(.ant-select-focused .ant-select-selector) {
-  border-color: var(--color-terracotta, #c96442);
-  box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.1);
+  border-color: var(--iris-accent);
+  box-shadow: 0 0 0 2px rgba(27, 127, 107, 0.12);
 }
 </style>

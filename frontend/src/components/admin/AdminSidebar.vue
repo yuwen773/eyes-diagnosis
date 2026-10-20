@@ -134,16 +134,16 @@ const goHome = () => {
 <style scoped>
 .admin-sider {
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a1a18 0%, #141413 100%);
-  border-right: 1px solid rgba(201, 100, 66, 0.15);
+  background: linear-gradient(180deg, #16140f 0%, #0d0c09 100%);
+  border-right: 1px solid rgba(27, 127, 107, 0.18);
   display: flex;
   flex-direction: column;
 }
 
-/* 顶部赤陶色装饰条 */
+/* 顶部青绿装饰条 */
 .sider-accent {
   height: 4px;
-  background: linear-gradient(90deg, var(--claude-brand) 0%, var(--claude-brand-light) 100%);
+  background: linear-gradient(90deg, var(--iris-accent) 0%, var(--iris-accent-strong) 100%);
 }
 
 /* Logo 区域 */
@@ -217,25 +217,14 @@ const goHome = () => {
 
 .sidebar-menu :deep(.ant-menu-item:hover) {
   color: #f5f4ed;
-  background: rgba(201, 100, 66, 0.12);
+  background: rgba(27, 127, 107, 0.14);
 }
 
 .sidebar-menu :deep(.ant-menu-item-selected) {
   color: #f5f4ed;
-  background: linear-gradient(90deg, rgba(201, 100, 66, 0.25) 0%, rgba(201, 100, 66, 0.15) 100%);
+  background: rgba(27, 127, 107, 0.22);
+  border: 1px solid rgba(27, 127, 107, 0.5);
   font-weight: 500;
-}
-
-.sidebar-menu :deep(.ant-menu-item-selected::before) {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 24px;
-  background: var(--claude-brand);
-  border-radius: 0 3px 3px 0;
 }
 
 .sidebar-menu :deep(.ant-menu-item .anticon) {
@@ -270,7 +259,7 @@ const goHome = () => {
 .footer-dot {
   width: 6px;
   height: 6px;
-  background: var(--claude-brand);
+  background: var(--iris-accent);
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
 }

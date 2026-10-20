@@ -331,7 +331,7 @@ const copyContent = async () => {
 .markdown-body :deep(blockquote) {
   margin: 0.5rem 0;
   padding: 0.75rem 1rem;
-  background: oklch(0.72 0.09 30 / 0.06);
+  background: oklch(0.6 0.05 175 / 0.06);
   color: var(--claude-text-secondary);
 }
 
@@ -418,7 +418,7 @@ const copyContent = async () => {
 }
 
 .markdown-body :deep(.copy-btn:hover) {
-  box-shadow: 0 4px 16px oklch(0.72 0.09 30 / 0.5) !important;
+  box-shadow: 0 4px 16px oklch(0.6 0.05 175 / 0.5) !important;
 }
 
 .markdown-body :deep(.copy-btn.copied) {
@@ -628,12 +628,12 @@ const copyContent = async () => {
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 8px oklch(0.72 0.09 30 / 0.25);
+  box-shadow: 0 2px 8px oklch(0.6 0.05 175 / 0.25);
 }
 
 .markdown-body :deep(.drawio-open-btn:hover) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px oklch(0.72 0.09 30 / 0.35);
+  box-shadow: 0 4px 12px oklch(0.6 0.05 175 / 0.35);
 }
 
 .typing-cursor {

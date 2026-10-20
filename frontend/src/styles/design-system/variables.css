@@ -1,154 +1,200 @@
 /**
- * Design System CSS Variables
- * Based on DESIGN.md - Warm-toned palette with terracotta accents
+ * 眼瞳 Iris · 医疗编辑风（Clinical Editorial）— 单一令牌真源
+ * ============================================================
+ * 本文件即 DESIGN.md 所称设计令牌的落地实现（canonical single source of truth）。
+ * 结构分两层：
+ *   1) --iris-*        规范令牌（新系统，唯一真源，新增代码一律用它）
+ *   2) --color-* / --claude-*  旧别名，全部重映射到 --iris-*，保证存量组件零改动即可整体换肤
+ *
+ * 维护规则：改色只改 --iris-* 一层；禁止在组件里再造第三套色值。
+ * 同步要求：App.vue 的 antd ConfigProvider token 与本文件 --iris-* 必须保持同值（见 App.vue 注释）。
  */
 
 :root {
-  /* === Color Palette === */
+  /* ====================================================
+     1. 规范令牌（Clinical Editorial · 锁定值，见 DESIGN.md §2/§3/§4）
+     ==================================================== */
 
-  /* Primary Background Colors */
-  --color-parchment: #f5f4ed;       /* Main background */
-  --color-ivory: #faf9f5;           /* Card/elevated surfaces */
-  --color-border-cream: #f0eee6;    /* Borders and dividers */
+  /* 品牌 / 强调 */
+  --iris-accent: #1b7f6b;          /* 药用青绿：主 CTA / 强调 / 选中 */
+  --iris-accent-strong: #155f51;   /* hover / 按下 */
+  --iris-accent-soft: #dcefe8;     /* 浅色洗底：徽章 / 选中底 / 图高亮 */
+  --iris-on-accent: #ffffff;       /* 强调色上的文字 */
 
-  /* Text Colors */
-  --color-near-black: #141413;      /* Primary text */
-  --color-olive-gray: #5e5d59;      /* Secondary text */
-  --color-stone-gray: #87867f;      /* Muted/placeholder text */
+  /* 表面 / 背景（暖瓷系） */
+  --iris-bg: #f6f4ef;              /* 页面主背景（暖瓷白） */
+  --iris-surface: #ffffff;         /* 卡片 / 面板 */
+  --iris-surface-2: #fbfaf6;       /* 次级抬升 / 嵌入容器 */
+  --iris-line: #e6e2d8;            /* 发丝分隔线 / 卡片描边 */
+  --iris-line-strong: #d9d4c6;     /* 强调分隔线 */
 
-  /* Accent Colors */
-  --color-terracotta: #c96442;      /* Primary accent */
-  --color-dark-surface: #30302e;    /* Dark surfaces */
-  --color-error-crimson: #b53333;   /* Error states */
-  --color-focus-blue: #3898ec;      /* Focus rings (unique cold tone) */
+  /* 墨色 / 文字（暖近黑） */
+  --iris-ink: #16140f;             /* 主文字 / 标题 */
+  --iris-ink-2: #6f6a5e;           /* 次要正文 */
+  --iris-ink-3: #9a9587;           /* 三级 / 注释 / 元数据 */
 
-  /* === Typography === */
-  --font-heading: Georgia, 'Times New Roman', serif;
-  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  /* 严重度语义色（与品牌解耦，独立维护） */
+  --iris-sev-low: #2f9e6e;
+  --iris-sev-low-soft: #dff0e7;
+  --iris-sev-moderate: #b37708;
+  --iris-sev-moderate-soft: #f3e6c8;
+  --iris-sev-high: #c0392b;
+  --iris-sev-high-soft: #f6dcd8;
 
-  /* Font Sizes */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.25rem;    /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
+  /* 功能态 */
+  --iris-error: #b53333;           /* 错误（深暖红） */
+  --iris-focus: #1b7f6b;           /* 焦点环（青绿，替代冷蓝） */
+  --iris-info: #4a6b8a;            /* 中性信息（低饱和，少用） */
 
-  /* Line Heights */
+  /* 字体 */
+  --iris-font-serif: Georgia, 'Times New Roman', 'Songti SC', 'SimSun', serif;
+  --iris-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --iris-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Courier New', monospace;
+
+  /* 圆角 */
+  --iris-radius-sm: 6px;
+  --iris-radius: 8px;
+  --iris-radius-lg: 12px;
+
+  /* 阴影 / 深度（极淡暖黑，基于 ink） */
+  --iris-shadow-sm: 0 1px 2px rgba(22, 20, 15, 0.05);
+  --iris-shadow-md: 0 4px 6px rgba(22, 20, 15, 0.06), 0 1px 3px rgba(22, 20, 15, 0.05);
+  --iris-shadow-lg: 0 10px 15px rgba(22, 20, 15, 0.07), 0 4px 6px rgba(22, 20, 15, 0.05);
+  --iris-focus-ring: 0 0 0 3px var(--iris-accent-soft), 0 0 0 1px var(--iris-focus);
+
+  /* 过渡 */
+  --iris-transition-fast: 150ms cubic-bezier(.23, 1, .32, 1);
+  --iris-transition-base: 220ms cubic-bezier(.23, 1, .32, 1);
+  --iris-transition-slow: 320ms cubic-bezier(.23, 1, .32, 1);
+
+  /* ====================================================
+     2. 旧别名重映射（→ --iris-*，存量组件零改动换肤）
+     ==================================================== */
+
+  /* 基础色板 */
+  --color-parchment: var(--iris-bg);
+  --color-ivory: var(--iris-surface);
+  --color-border-cream: var(--iris-line);
+  --color-near-black: var(--iris-ink);
+  --color-olive-gray: var(--iris-ink-2);
+  --color-stone-gray: var(--iris-ink-3);
+  --color-terracotta: var(--iris-accent);
+  --color-dark-surface: var(--iris-ink);
+  --color-error-crimson: var(--iris-error);
+  --color-focus-blue: var(--iris-focus);   /* 令牌名保留，值已为青绿 */
+
+  /* 字体 */
+  --font-heading: var(--iris-font-serif);
+  --font-body: var(--iris-font-sans);
+
+  /* 字号 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* 行高 */
   --leading-tight: 1.25;
   --leading-normal: 1.5;
   --leading-relaxed: 1.75;
 
-  /* === Spacing === */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
+  /* 间距 */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
 
-  /* === Border Radius === */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* 圆角 */
+  --radius-sm: var(--iris-radius-sm);
+  --radius-md: var(--iris-radius);
+  --radius-lg: var(--iris-radius-lg);
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* === Shadows === */
-  --shadow-sm: 0 1px 2px rgba(20, 20, 19, 0.05);
-  --shadow-md: 0 4px 6px rgba(20, 20, 19, 0.07), 0 1px 3px rgba(20, 20, 19, 0.05);
-  --shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.08), 0 4px 6px rgba(20, 20, 19, 0.05);
-  --shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.1), 0 8px 10px rgba(20, 20, 19, 0.04);
+  /* 阴影 */
+  --shadow-sm: var(--iris-shadow-sm);
+  --shadow-md: var(--iris-shadow-md);
+  --shadow-lg: var(--iris-shadow-lg);
+  --shadow-xl: 0 20px 25px rgba(22, 20, 15, 0.08), 0 8px 10px rgba(22, 20, 15, 0.04);
+  --focus-ring: var(--iris-focus-ring);
 
-  /* Focus Ring (using box-shadow for ring effect) */
-  --focus-ring: 0 0 0 2px var(--color-ivory), 0 0 0 4px var(--color-focus-blue);
+  /* 过渡 */
+  --transition-fast: var(--iris-transition-fast);
+  --transition-base: var(--iris-transition-base);
+  --transition-slow: var(--iris-transition-slow);
 
-  /* === Transitions === */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 350ms ease;
-
-/* === Z-Index Scale === */
+  /* 层级 */
   --z-dropdown: 100;
   --z-sticky: 200;
   --z-modal: 300;
   --z-tooltip: 400;
   --z-toast: 500;
 
-  /* === Claude Design System Tokens (migrated from claude-tokens.css) === */
+  /* ---- claude-* 别名（全部 → iris） ---- */
+  --claude-brand: var(--iris-accent);
+  --claude-brand-light: #4ba693;
+  --claude-brand-dark: var(--iris-accent-strong);
 
-  /* Brand Colors */
-  --claude-brand: var(--color-terracotta);
-  --claude-brand-light: #d97757;
-  --claude-brand-dark: #a34f2f;
+  --claude-text-primary: var(--iris-ink);
+  --claude-text-secondary: var(--iris-ink-2);
+  --claude-text-tertiary: var(--iris-ink-3);
+  --claude-text-inverse: var(--iris-surface-2);
+  --claude-text-on-brand: var(--iris-on-accent);
 
-  /* Text Colors */
-  --claude-text-primary: var(--color-near-black);
-  --claude-text-secondary: var(--color-olive-gray);
-  --claude-text-tertiary: var(--color-stone-gray);
-  --claude-text-inverse: #faf9f5;
-  --claude-text-on-brand: #ffffff;
+  --claude-error: var(--iris-error);
+  --claude-success: var(--iris-sev-low);
+  --claude-warning: var(--iris-sev-moderate);
+  --claude-focus: var(--iris-focus);
 
-  /* Semantic States */
-  --claude-error: var(--color-error-crimson);
-  --claude-success: #52c41a;
-  --claude-warning: #faad14;
-  --claude-focus: var(--color-focus-blue);
+  --claude-border-cream: var(--iris-line);
+  --claude-border-warm: var(--iris-line-strong);
+  --claude-border-dark: var(--iris-ink);
 
-  /* Borders */
-  --claude-border-cream: var(--color-border-cream);
-  --claude-border-warm: #e8e6dc;
-  --claude-border-dark: var(--color-dark-surface);
+  --claude-ring-warm: var(--iris-line-strong);
+  --claude-ring-subtle: var(--iris-line);
+  --claude-ring-deep: #c9c3b2;
 
-  /* Rings */
-  --claude-ring-warm: #d1cfc5;
-  --claude-ring-subtle: #e8e6dc;
-  --claude-ring-deep: #c2c0b6;
+  --claude-bg-page: var(--iris-bg);
+  --claude-bg-card: var(--iris-surface);
+  --claude-bg-elevated: var(--iris-surface);
+  --claude-bg-dark: var(--iris-ink);
+  --claude-bg-deep: #0d0c09;
 
-  /* Background Colors */
-  --claude-bg-page: var(--color-parchment);
-  --claude-bg-card: var(--color-ivory);
-  --claude-bg-elevated: #ffffff;
-  --claude-bg-dark: var(--color-dark-surface);
-  --claude-bg-deep: #141413;
+  --claude-font-serif: var(--iris-font-serif);
+  --claude-font-sans: var(--iris-font-sans);
+  --claude-font-mono: var(--iris-font-mono);
+  --font-display: var(--iris-font-serif);
 
-  /* Typography */
-  --claude-font-serif: var(--font-heading);
-  --claude-font-sans: var(--font-body);
-  --claude-font-mono: Courier New, monospace;
-  --font-display: var(--claude-font-serif);
-
-  /* Shadows */
   --claude-shadow-sm: var(--shadow-sm);
   --claude-shadow-md: var(--shadow-md);
   --claude-shadow-lg: var(--shadow-lg);
-  --claude-shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.1), 0 8px 10px rgba(20, 20, 19, 0.04);
+  --claude-shadow-xl: var(--shadow-xl);
 
-  /* Transitions */
   --claude-transition-fast: var(--transition-fast);
   --claude-transition-base: var(--transition-base);
   --claude-transition-slow: var(--transition-slow);
 
-  /* Z-Index (aliases) */
   --claude-z-dropdown: var(--z-dropdown);
   --claude-z-sticky: var(--z-sticky);
   --claude-z-modal: var(--z-modal);
   --claude-z-tooltip: var(--z-tooltip);
 
-  /* Border Radius */
-  --claude-radius-sm: 6px;
-  --claude-radius-md: 8px;
-  --claude-radius-lg: 12px;
+  --claude-radius-sm: var(--iris-radius-sm);
+  --claude-radius-md: var(--iris-radius);
+  --claude-radius-lg: var(--iris-radius-lg);
   --claude-radius-xl: 16px;
   --claude-radius-2xl: 24px;
 
-  /* Spacing */
   --claude-space-1: 0.25rem;
   --claude-space-2: 0.5rem;
   --claude-space-3: 0.75rem;
@@ -161,53 +207,57 @@
   --claude-space-16: 4rem;
   --claude-space-20: 5rem;
 
-  /* Severity Tokens */
-  --severity-low-color: #3a7c20;
-  --severity-low-bg: rgba(82, 196, 26, 0.08);
-  --severity-low-badge-bg: rgba(82, 196, 26, 0.12);
-  --severity-low-badge-color: #3a7c20;
-  --severity-medium-color: var(--claude-brand);
-  --severity-medium-bg: rgba(201, 100, 66, 0.06);
-  --severity-medium-badge-bg: rgba(201, 100, 66, 0.10);
-  --severity-medium-badge-color: var(--claude-brand);
-  --severity-high-color: var(--claude-brand-dark);
-  --severity-high-bg: rgba(163, 79, 47, 0.08);
-  --severity-high-badge-bg: rgba(163, 79, 47, 0.12);
-  --severity-high-badge-color: var(--claude-brand-dark);
+  /* ---- 严重度（与品牌解耦，用语义色） ---- */
+  --severity-low-color: var(--iris-sev-low);
+  --severity-low-bg: rgba(47, 158, 110, 0.10);
+  --severity-low-badge-bg: rgba(47, 158, 110, 0.14);
+  --severity-low-badge-color: var(--iris-sev-low);
 
-  /* Semantic Color Aliases */
-  --color-primary-50: #fdf2ef;
-  --color-primary-100: #fbe6de;
-  --color-primary-200: #f7cdbd;
-  --color-primary-300: #f0b496;
-  --color-primary-400: #e69466;
-  --color-primary-500: var(--claude-brand);
-  --color-primary-600: var(--claude-brand-dark);
-  --color-primary-700: #8a4325;
-  --color-primary-800: #6b331c;
-  --color-primary-900: #4d2414;
+  --severity-medium-color: var(--iris-sev-moderate);
+  --severity-medium-bg: rgba(179, 119, 8, 0.10);
+  --severity-medium-badge-bg: rgba(179, 119, 8, 0.14);
+  --severity-medium-badge-color: var(--iris-sev-moderate);
+
+  --severity-high-color: var(--iris-sev-high);
+  --severity-high-bg: rgba(192, 57, 43, 0.10);
+  --severity-high-badge-bg: rgba(192, 57, 43, 0.14);
+  --severity-high-badge-color: var(--iris-sev-high);
+
+  /* ---- 语义别名（主色阶 = 青绿 ramp；accent-cyan 保留，purple/pink 已删除） ---- */
+  --color-primary-50: #eef7f4;
+  --color-primary-100: var(--iris-accent-soft);
+  --color-primary-200: #bcdccf;
+  --color-primary-300: #93c6b3;
+  --color-primary-400: #5fae93;
+  --color-primary-500: var(--iris-accent);
+  --color-primary-600: var(--iris-accent-strong);
+  --color-primary-700: #11493f;
+  --color-primary-800: #0d382f;
+  --color-primary-900: #082720;
   --color-secondary-400: var(--claude-brand-light);
-  --color-secondary-500: #c06845;
-  --color-accent-purple: #8b5a7a;
-  --color-accent-pink: #c9647a;
+  --color-secondary-500: #2f9e83;
   --color-accent-cyan: #5a9ea0;
-  --color-bg-primary: var(--claude-bg-page);
-  --color-bg-secondary: var(--claude-bg-card);
-  --color-bg-tertiary: #f0eee6;
-  --color-bg-elevated: var(--claude-bg-elevated);
-  --color-bg-hover: #f7f5ef;
-  --color-bg-active: #f0ebe1;
-  --color-text-primary: var(--claude-text-primary);
-  --color-text-secondary: var(--claude-text-secondary);
-  --color-text-tertiary: var(--claude-text-tertiary);
-  --color-text-disabled: #b0aea5;
+
+  --color-bg-primary: var(--iris-bg);
+  --color-bg-secondary: var(--iris-surface);
+  --color-bg-tertiary: #efece4;
+  --color-bg-elevated: var(--iris-surface);
+  --color-bg-hover: #f0ede6;
+  --color-bg-active: #e9e5da;
+
+  --color-text-primary: var(--iris-ink);
+  --color-text-secondary: var(--iris-ink-2);
+  --color-text-tertiary: var(--iris-ink-3);
+  --color-text-disabled: #b9b4a6;
   --color-text-inverse: var(--claude-text-inverse);
-  --color-border-subtle: var(--claude-border-cream);
-  --color-border-default: var(--claude-border-warm);
-  --color-border-strong: #c2c0b6;
-  --color-border-accent: rgba(201, 100, 66, 0.4);
-  --color-success: var(--claude-success);
-  --color-warning: var(--claude-warning);
-  --color-error: var(--claude-error);
-  --color-info: var(--claude-brand);
+
+  --color-border-subtle: var(--iris-line);
+  --color-border-default: var(--iris-line-strong);
+  --color-border-strong: #c9c3b2;
+  --color-border-accent: rgba(27, 127, 107, 0.4);
+
+  --color-success: var(--iris-sev-low);
+  --color-warning: var(--iris-sev-moderate);
+  --color-error: var(--iris-error);
+  --color-info: var(--iris-info);
 }

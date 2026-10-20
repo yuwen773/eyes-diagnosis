@@ -30,17 +30,19 @@ const shortHash = computed(() =>
 
 <style scoped>
 .medical-disclaimer {
-  border-left: 4px solid #c96442;
-  background: #fff8f4;
+  border: 1px solid var(--iris-line);
+  border-top: 3px solid var(--iris-accent);
+  background: var(--iris-surface-2);
   padding: 12px 16px;
   margin: 12px 0;
   border-radius: 6px;
-  color: #5b3a2c;
+  color: var(--iris-ink-2);
 }
 .medical-disclaimer h3 {
   margin: 0 0 8px;
   font-size: 14px;
   font-weight: 600;
+  color: var(--iris-ink);
 }
 .provenance {
   display: grid;
@@ -48,7 +50,7 @@ const shortHash = computed(() =>
   gap: 4px 12px;
   margin: 8px 0 0;
   font-size: 12px;
-  color: #7a5642;
+  color: var(--iris-ink-3);
 }
 .provenance dt {
   font-weight: 500;

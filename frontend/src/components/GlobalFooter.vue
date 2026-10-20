@@ -82,13 +82,10 @@
     <!-- Bottom bar -->
     <div class="footer-bottom">
       <div class="footer-bottom-inner">
-        <div class="system-status">
-          <span class="status-dot"></span>
-          <span class="status-text">系统运行正常</span>
+        <div class="footer-info">
+          <span class="version-tag">v1.0.0 · 长沙理工大学 · 计算机科学与技术</span>
         </div>
         <div class="footer-meta">
-          <span class="version-tag">v1.0.0</span>
-          <span class="meta-sep"></span>
           <span class="copyright">© {{ currentYear }} YuWen</span>
         </div>
       </div>
@@ -115,7 +112,7 @@ const currentYear = new Date().getFullYear()
 /* ─── Footer container ─── */
 .global-footer {
   position: relative;
-  background: oklch(0.14 0.015 50);
+  background: oklch(0.14 0.01 175);
   color: oklch(0.85 0.005 80);
   overflow: hidden;
   padding: 0 !important;
@@ -126,7 +123,7 @@ const currentYear = new Date().getFullYear()
   position: relative;
   margin-top: -2px;
   line-height: 0;
-  color: var(--claude-bg-page, oklch(0.95 0.008 80));
+  color: var(--iris-bg, oklch(0.95 0.008 80));
 }
 
 .wave-svg {
@@ -142,12 +139,12 @@ const currentYear = new Date().getFullYear()
   background:
     radial-gradient(
       ellipse 50% 60% at 20% 40%,
-      oklch(0.55 0.08 30 / 0.06) 0%,
+      oklch(0.6 0.04 175 / 0.06) 0%,
       transparent 100%
     ),
     radial-gradient(
       ellipse 40% 50% at 80% 60%,
-      oklch(0.5 0.06 35 / 0.04) 0%,
+      oklch(0.6 0.04 175 / 0.04) 0%,
       transparent 100%
     );
   pointer-events: none;
@@ -188,12 +185,12 @@ const currentYear = new Date().getFullYear()
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  background: oklch(0.55 0.08 30 / 0.15);
+  background: oklch(0.6 0.04 175 / 0.15);
   transition: background 0.3s ease;
 }
 
 .footer-brand:hover .brand-mark {
-  background: oklch(0.55 0.08 30 / 0.25);
+  background: oklch(0.6 0.04 175 / 0.25);
 }
 
 .brand-logo {
@@ -210,7 +207,7 @@ const currentYear = new Date().getFullYear()
 }
 
 .brand-name {
-  font-family: var(--claude-font-serif);
+  font-family: var(--iris-font-serif);
   font-size: 22px;
   font-weight: 700;
   color: oklch(0.95 0.005 80);
@@ -219,23 +216,22 @@ const currentYear = new Date().getFullYear()
 }
 
 .brand-en {
-  font-family: var(--claude-font-sans);
+  font-family: var(--iris-font-sans);
   font-size: 10px;
-  color: oklch(0.5 0.015 60);
+  color: oklch(0.5 0.01 175);
   letter-spacing: 3.5px;
   text-transform: uppercase;
   font-weight: 500;
 }
 
 .brand-tagline {
-  font-family: var(--claude-font-serif);
+  font-family: var(--iris-font-serif);
   font-size: 17px;
   font-weight: 400;
-  color: oklch(0.6 0.03 50);
+  color: oklch(0.7 0.03 175);
   line-height: 1.7;
   margin: 0;
   max-width: 260px;
-  font-style: italic;
 }
 
 .brand-decoration {
@@ -250,8 +246,8 @@ const currentYear = new Date().getFullYear()
   height: 2px;
   background: linear-gradient(
     90deg,
-    oklch(0.6 0.1 30 / 0.5),
-    oklch(0.6 0.1 30 / 0.1)
+    oklch(0.6 0.04 175 / 0.5),
+    oklch(0.6 0.04 175 / 0.1)
   );
   border-radius: 1px;
 }
@@ -273,7 +269,7 @@ const currentYear = new Date().getFullYear()
 .nav-group-label {
   font-size: 11px;
   font-weight: 700;
-  color: oklch(0.45 0.02 55);
+  color: oklch(0.45 0.015 175);
   letter-spacing: 3px;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -285,14 +281,14 @@ const currentYear = new Date().getFullYear()
   gap: 10px;
   padding: 7px 0;
   font-size: 14px;
-  color: oklch(0.62 0.015 60);
+  color: oklch(0.62 0.01 175);
   text-decoration: none;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   width: fit-content;
 }
 
 .nav-link:hover {
-  color: oklch(0.7 0.08 35);
+  color: oklch(0.78 0.04 175);
   transform: translateX(6px);
 }
 
@@ -304,7 +300,7 @@ const currentYear = new Date().getFullYear()
 
 .nav-link:hover :deep(.anticon) {
   opacity: 1;
-  color: oklch(0.7 0.08 35);
+  color: oklch(0.78 0.04 175);
 }
 
 /* ─── Bottom bar ─── */
@@ -323,8 +319,8 @@ const currentYear = new Date().getFullYear()
   background: linear-gradient(
     90deg,
     transparent,
-    oklch(0.35 0.02 55 / 0.3) 20%,
-    oklch(0.35 0.02 55 / 0.3) 80%,
+    oklch(0.35 0.015 175 / 0.3) 20%,
+    oklch(0.35 0.015 175 / 0.3) 80%,
     transparent
   );
 }
@@ -338,30 +334,16 @@ const currentYear = new Date().getFullYear()
   justify-content: space-between;
 }
 
-.system-status {
+.footer-info {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: oklch(0.72 0.16 145);
-  box-shadow: 0 0 8px oklch(0.72 0.16 145 / 0.5);
-  animation: breathe 3s ease-in-out infinite;
-}
-
-@keyframes breathe {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.85); }
-}
-
-.status-text {
+.footer-info .version-tag {
+  font-family: var(--iris-font-mono);
   font-size: 12px;
-  color: oklch(0.5 0.015 55);
-  font-weight: 500;
+  color: oklch(0.5 0.015 175);
   letter-spacing: 0.3px;
 }
 
@@ -371,25 +353,9 @@ const currentYear = new Date().getFullYear()
   gap: 12px;
 }
 
-.version-tag {
-  font-family: var(--claude-font-mono);
-  font-size: 11px;
-  color: oklch(0.4 0.015 55);
-  padding: 3px 10px;
-  background: oklch(0.2 0.015 55 / 0.5);
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-}
-
-.meta-sep {
-  width: 1px;
-  height: 12px;
-  background: oklch(0.3 0.015 55 / 0.5);
-}
-
 .copyright {
   font-size: 12px;
-  color: oklch(0.4 0.015 55);
+  color: oklch(0.4 0.01 175);
   letter-spacing: 0.3px;
 }
 

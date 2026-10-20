@@ -59,7 +59,7 @@ const scrollToTop = () => {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  color: oklch(0.45 0.03 50);
+  color: oklch(0.45 0.02 175);
   background: oklch(0.98 0.005 80);
   border: 1px solid oklch(0.88 0.01 75);
   border-radius: 50%;
@@ -72,7 +72,7 @@ const scrollToTop = () => {
 }
 
 .scroll-to-top:hover {
-  color: oklch(0.55 0.1 30);
+  color: oklch(0.55 0.04 175);
   background: oklch(0.97 0.01 80);
   box-shadow: 0 4px 16px oklch(0.2 0.02 40 / 0.18);
   transform: translateY(-2px);

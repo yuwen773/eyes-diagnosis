@@ -180,8 +180,8 @@ const formatDate = (ts?: string | number) => {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.72 0.09 30 / 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 100%, oklch(0.72 0.09 30 / 0.05), transparent);
+    radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.6 0.05 175 / 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, oklch(0.6 0.05 175 / 0.05), transparent);
   pointer-events: none;
 }
 
@@ -280,7 +280,7 @@ const formatDate = (ts?: string | number) => {
 }
 
 .featured-image-placeholder {
-  background: linear-gradient(135deg, oklch(0.72 0.09 30 / 0.2), oklch(0.72 0.09 30 / 0.08));
+  background: linear-gradient(135deg, oklch(0.6 0.05 175 / 0.2), oklch(0.6 0.05 175 / 0.08));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -306,7 +306,7 @@ const formatDate = (ts?: string | number) => {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--claude-brand);
-  background: oklch(0.72 0.09 30 / 0.1);
+  background: oklch(0.6 0.05 175 / 0.1);
   border-radius: 999px;
   margin-bottom: 1rem;
 }
@@ -405,7 +405,7 @@ const formatDate = (ts?: string | number) => {
 .card-image-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, oklch(0.85 0.04 50), oklch(0.90 0.03 60));
+  background: linear-gradient(135deg, oklch(0.9 0.03 175), oklch(0.92 0.03 175));
   display: flex;
   align-items: center;
   justify-content: center;

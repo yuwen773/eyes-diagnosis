@@ -80,7 +80,8 @@ export function useAgentStream() {
 
   const sendMessage = async (message: string, threadId: string, options: StreamSendOptions = {}) => {
     isStreaming.value = true
-    abortController = new AbortController()
+    const controller = new AbortController()
+    abortController = controller
 
     const baseUrl = import.meta.env.VITE_APP_API_BASE_URL || 'http://localhost:8081'
     const url = `${baseUrl}/api/agent/chat/stream`
@@ -91,6 +92,7 @@ export function useAgentStream() {
     let lastAssistantContent = ''
 
     const uploadedUrls: string[] = options.urls ?? []
+    let completed = false
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     const body = JSON.stringify({
@@ -104,7 +106,7 @@ export function useAgentStream() {
         method: 'POST',
         headers,
         body,
-        signal: abortController.signal,
+        signal: controller.signal,
         credentials: 'include',
         openWhenHidden: true,
 
@@ -114,6 +116,13 @@ export function useAgentStream() {
         },
 
         onmessage(event) {
+          if (event.event === 'done') {
+            completed = true
+            return
+          }
+          if (event.event === 'error') {
+            throw new Error(event.data || 'Chat response failed')
+          }
           if (!event.data) return
 
           try {
@@ -188,6 +197,9 @@ export function useAgentStream() {
         },
 
         onclose() {
+          if (!completed) {
+            throw new Error('Chat response ended before completion')
+          }
           // Extract resources from final accumulated assistant content
           if (lastAssistantContent) {
             extractResources(streamContent)
@@ -198,6 +210,7 @@ export function useAgentStream() {
         },
 
         onerror(err) {
+          completed = false
           console.error('SSE error:', err)
           if (assistantMsgIndex !== -1) {
             updateMessage(assistantMsgIndex, { isLoading: false })
@@ -209,7 +222,7 @@ export function useAgentStream() {
       isStreaming.value = false
       abortController = null
       // 发送失败时清理已上传的图片
-      if (uploadedUrls.length > 0) {
+      if (!completed && uploadedUrls.length > 0) {
         for (const url of uploadedUrls) {
           deleteAgentImage(url).catch(() => {})
         }

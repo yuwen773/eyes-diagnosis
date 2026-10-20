@@ -27,11 +27,11 @@
         <div class="empty-illustration">
           <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="60" cy="60" r="56" fill="#f5f4ed" stroke="#e8e6dc" stroke-width="2"/>
-            <circle cx="60" cy="50" r="20" stroke="#c96442" stroke-width="2" fill="none"/>
-            <path d="M60 70 L60 85" stroke="#c96442" stroke-width="2" stroke-linecap="round"/>
-            <path d="M45 100 L75 100" stroke="#c96442" stroke-width="2" stroke-linecap="round"/>
-            <path d="M30 35 Q35 25 45 30" stroke="#d97757" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-            <path d="M90 35 Q85 25 75 30" stroke="#d97757" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <circle cx="60" cy="50" r="20" stroke="#1b7f6b" stroke-width="2" fill="none"/>
+            <path d="M60 70 L60 85" stroke="#1b7f6b" stroke-width="2" stroke-linecap="round"/>
+            <path d="M45 100 L75 100" stroke="#1b7f6b" stroke-width="2" stroke-linecap="round"/>
+            <path d="M30 35 Q35 25 45 30" stroke="#2f9e83" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <path d="M90 35 Q85 25 75 30" stroke="#2f9e83" stroke-width="1.5" stroke-linecap="round" fill="none"/>
             <circle cx="35" cy="55" r="4" fill="#f0b496" opacity="0.6"/>
             <circle cx="85" cy="55" r="4" fill="#f0b496" opacity="0.6"/>
           </svg>

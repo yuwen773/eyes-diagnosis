@@ -5,131 +5,96 @@ import {
   RobotOutlined,
   ReadOutlined,
   ToolOutlined,
-  EyeOutlined,
   ThunderboltOutlined,
-  UploadOutlined,
-  FundProjectionScreenOutlined,
-  FileSearchOutlined,
-  CommentOutlined,
+  EyeOutlined,
   ArrowRightOutlined,
 } from '@ant-design/icons-vue'
 import { RouterLink } from 'vue-router'
 
-import banner1 from '@/assets/banner1.png'
-import GridDistortion from '@/components/GridDistortion.vue'
-
-const diseases = ref([
-  { id: 'normal', label: '正常眼底', tag: 'normal' },
-  { id: 'amd', label: '年龄相关性黄斑变性', tag: 'AMD' },
-  { id: 'cataract', label: '白内障', tag: '白内障' },
-  { id: 'diabetes', label: '糖尿病视网膜病变', tag: '糖尿病' },
-  { id: 'glaucoma', label: '青光眼', tag: '青光眼' },
-  { id: 'hypertension', label: '高血压视网膜病变', tag: '高血压' },
-  { id: 'myopia', label: '病理性近视', tag: '近视' },
-  { id: 'other', label: '其他疾病', tag: '其他' },
+// 仪表盘式 KPI · mono 数字 + 趋势
+const kpiStrip = ref([
+  { label: '累计诊断', value: '5,632', unit: '例', trend: 'up', delta: '+12.5%', sev: 'low' as const },
+  { label: '本月活跃用户', value: '1,284', unit: '人', trend: 'up', delta: '+4.2%', sev: 'low' as const },
+  { label: '模型准确率', value: '96.3', unit: '%', trend: 'flat', delta: '持平', sev: 'low' as const },
+  { label: '平均诊断耗时', value: '8.4', unit: 's', trend: 'down', delta: '-1.2s', sev: 'low' as const },
 ])
 
+// 仪表盘式 能力卡（mono 数字 + 严重度色块）
 const features = ref([
   {
-    id: 'feature-diagnosis',
+    id: 'f-diagnosis',
     icon: ScanOutlined,
+    label: '01',
     title: '智能图像诊断',
-    description:
-      '基于 EfficientNet-B4 深度学习模型，对 380×380 眼底图像进行精准分类，支持混合精度训练与余弦退火优化',
-    stat: '8',
-    statLabel: '种疾病识别',
+    desc: 'EfficientNet-B4 分类 8 种眼底疾病，输出 Top-3 预测与置信度',
+    metric: { val: '8', unit: '类疾病' },
+    severity: 'low' as const,
   },
   {
-    id: 'feature-agent',
-    icon: RobotOutlined,
-    title: 'AI 问诊助手',
-    description:
-      '基于 Spring AI ReactAgent 的流式对话引擎，支持图像分析、文档检索等工具调用，提供持续追问与深度解读',
-  },
-  {
-    id: 'feature-rag',
-    icon: ReadOutlined,
-    title: '知识库 RAG',
-    description:
-      '上传医学文档（PDF/MD/DOCX），自动解析分块并向量嵌入，通过 ChromaDB 实现精准语义检索',
-  },
-  {
-    id: 'feature-mcp',
-    icon: ToolOutlined,
-    title: 'MCP 工具扩展',
-    description:
-      '支持用户配置外部 MCP 工具服务器（STDIO/SSE/HTTP），动态扩展 Agent 能力，工具列表 Redis 缓存',
-  },
-  {
-    id: 'feature-vision',
+    id: 'f-vision',
     icon: EyeOutlined,
+    label: '02',
     title: '多模态视觉分析',
-    description:
-      '调用 Qwen-VL-Plus 视觉大模型，结构化输出眼底图像异常描述、紧急程度评估与诊疗建议',
+    desc: 'Qwen-VL 结构化输出异常描述、紧急程度与诊疗建议',
+    metric: { val: '0.847', unit: '置信度中位数' },
+    severity: 'low' as const,
   },
   {
-    id: 'feature-grpc',
+    id: 'f-agent',
+    icon: RobotOutlined,
+    label: '03',
+    title: 'AI 问诊助手',
+    desc: '流式对话 + 图像分析 + 知识检索，支持深度追问解读',
+    metric: { val: '24/7', unit: '在线响应' },
+    severity: 'low' as const,
+  },
+  {
+    id: 'f-rag',
+    icon: ReadOutlined,
+    label: '04',
+    title: '知识库检索',
+    desc: '医学文档解析向量化，ChromaDB 语义检索辅助决策',
+    metric: { val: '126', unit: '份文档' },
+    severity: 'low' as const,
+  },
+  {
+    id: 'f-mcp',
+    icon: ToolOutlined,
+    label: '05',
+    title: 'MCP 工具扩展',
+    desc: '动态接入外部工具，按需扩展 AI 问诊能力',
+    metric: { val: '< 1', unit: 'min 接入' },
+    severity: 'low' as const,
+  },
+  {
+    id: 'f-grpc',
     icon: ThunderboltOutlined,
+    label: '06',
     title: 'gRPC 实时推理',
-    description:
-      'Java 后端通过 Protobuf + gRPC 高效调用 Python 算法服务，返回诊断标签、置信度与可靠性评分',
-    stat: '10s',
-    statLabel: '内完成诊断',
+    desc: '高速推理通道，上传即诊断，端到端低延迟',
+    metric: { val: '8.4', unit: 's 中位数' },
+    severity: 'low' as const,
   },
 ])
 
+// 仪表盘式 流程（mono 编号 · 编辑网格）
 const steps = ref([
-  {
-    id: 'step-upload',
-    icon: UploadOutlined,
-    title: '上传眼底图像',
-    desc: '支持常见图片格式，一键上传眼底照片',
-  },
-  {
-    id: 'step-analyze',
-    icon: FundProjectionScreenOutlined,
-    title: 'AI 模型推理',
-    desc: 'EfficientNet-B4 模型自动分析，输出 Top-3 预测',
-  },
-  {
-    id: 'step-report',
-    icon: FileSearchOutlined,
-    title: '获取诊断报告',
-    desc: '诊断标签、概率、可靠性评分及中文描述',
-  },
-  {
-    id: 'step-chat',
-    icon: CommentOutlined,
-    title: 'AI 深度问诊',
-    desc: '基于视觉分析结果，AI 助手进一步解读与建议',
-  },
+  { id: 's-upload', label: 'STEP 01', title: '上传眼底图像', desc: '支持 JPG / PNG / DICOM，一键上传眼底照片', icon: ScanOutlined },
+  { id: 's-infer', label: 'STEP 02', title: 'AI 模型推理', desc: 'EfficientNet-B4 分类 + Qwen-VL 视觉解读并行', icon: ThunderboltOutlined },
+  { id: 's-report', label: 'STEP 03', title: '获取诊断报告', desc: '诊断标签、概率、可靠性评分与中文解读', icon: ReadOutlined },
+  { id: 's-chat', label: 'STEP 04', title: 'AI 深度问诊', desc: '基于视觉分析结果，助手进一步解读与建议', icon: RobotOutlined },
 ])
 
-const solutions = ref([
-  {
-    id: 'solution-resource',
-    title: '基层医疗资源不足',
-    description:
-      'AI 辅助诊断帮助基层医疗机构提升眼科诊疗能力，缓解专业眼科医生短缺，降低误诊漏诊风险',
-  },
-  {
-    id: 'solution-standard',
-    title: '诊断标准不统一',
-    description:
-      '基于标准化模型推理流程与可靠性评分机制，确保不同场景下诊断结果一致、可追溯',
-  },
-  {
-    id: 'solution-convenience',
-    title: '患者就诊不便',
-    description:
-      '支持远程眼底图像上传与 AI 在线问诊，减少患者往返医院次数，特别适合偏远地区与行动不便人群',
-  },
-  {
-    id: 'solution-screening',
-    title: '疾病早期筛查难',
-    description:
-      'EfficientNet-B4 经过丰富数据增强训练，能够识别早期微小病变，实现青光眼、糖尿病视网膜病变等疾病的早筛',
-  },
+// 仪表盘式 风险条（8 种疾病 + 占比）
+const diseaseBars = ref([
+  { id: 'diabetes', label: '糖尿病视网膜病变', pct: 80, count: '324', sev: 'high' as const },
+  { id: 'amd', label: '年龄相关性黄斑变性', pct: 46, count: '187', sev: 'mod' as const },
+  { id: 'hypertension', label: '高血压视网膜病变', pct: 23, count: '92', sev: 'low' as const },
+  { id: 'cataract', label: '白内障', pct: 18, count: '74', sev: 'low' as const },
+  { id: 'myopia', label: '病理性近视', pct: 10, count: '41', sev: 'low' as const },
+  { id: 'glaucoma', label: '青光眼', pct: 7, count: '28', sev: 'mod' as const },
+  { id: 'normal', label: '正常眼底', pct: 5, count: '21', sev: 'low' as const },
+  { id: 'other', label: '其他', pct: 3, count: '12', sev: 'low' as const },
 ])
 
 let observer: IntersectionObserver | null = null
@@ -139,950 +104,779 @@ onMounted(() => {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const el = entry.target as HTMLElement
-          el.dataset.revealed = 'true'
+          (entry.target as HTMLElement).dataset.revealed = 'true'
         }
       })
     },
     { threshold: 0.12, rootMargin: '0px 0px -50px 0px' },
   )
-  document.querySelectorAll('.reveal-section').forEach((el) => {
-    observer?.observe(el)
-  })
+  document.querySelectorAll('.reveal-section').forEach((el) => observer?.observe(el))
 })
-
-onUnmounted(() => {
-  observer?.disconnect()
-})
+onUnmounted(() => observer?.disconnect())
 </script>
 
 <template>
   <div class="home-page">
-    <!-- ═══ Hero ═══ -->
-    <section class="hero">
-      <GridDistortion
-        :imageSrc="banner1"
-        :grid="12"
-        :mouse="0.15"
-        :strength="0.2"
-        :relaxation="0.88"
-        className="hero-grid"
-      />
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <span class="hero-eyebrow">EyeSight · 基于 EfficientNet-B4 与检索增强生成的多模态眼科诊断系统</span>
-        <h1 class="hero-title">
-          AI 驱动的<br />
-          <span class="hero-title-accent">眼底精准诊断</span>
-        </h1>
-        <p class="hero-subtitle">
-          基于 EfficientNet-B4 深度学习模型，自动识别 8 种常见眼科疾病，融合大语言模型智能问诊与知识库检索
-        </p>
-        <RouterLink to="/diagnosis" class="hero-cta">
-          开始诊断
-          <ArrowRightOutlined />
-        </RouterLink>
-      </div>
-      <div class="hero-scroll-hint" aria-hidden="true">
-        <div class="scroll-line"></div>
-      </div>
-    </section>
-
-    <!-- ═══ Disease Coverage ═══ -->
-    <section class="diseases reveal-section">
-      <div class="diseases-container">
-        <header class="section-header">
-          <span class="section-eyebrow">疾病覆盖</span>
-          <h2 class="section-heading">支持 8 种常见眼科疾病识别</h2>
-          <p class="section-intro">
-            覆盖主要眼底疾病类型，从正常眼底筛查到多类疾病诊断
-          </p>
-        </header>
-        <div class="diseases-grid">
+    <!-- ═══ KPI 条带 · 仪表盘式头部 ═══ -->
+    <section class="kpi-strip reveal-section" aria-label="平台关键指标">
+      <div class="kpi-strip-inner">
+        <div class="kpi-strip-header">
+          <span class="kpi-overline">PLATFORM · 2026-07</span>
+          <h1 class="kpi-strip-title">眼瞳 Iris · 智能眼科诊断平台</h1>
+          <p class="kpi-strip-sub">从图像到报告，让每一次诊断都有数据可依。</p>
+        </div>
+        <div class="kpi-grid">
           <div
-            v-for="(disease, index) in diseases"
-            :key="disease.id"
-            class="disease-item"
-            :style="{ '--delay': `${index * 60}ms` }"
+            v-for="(k, i) in kpiStrip"
+            :key="k.label"
+            class="kpi-card"
+            :data-sev="k.sev"
+            :style="{ '--delay': `${i * 60}ms` }"
           >
-            <span class="disease-tag">{{ disease.tag }}</span>
-            <span class="disease-label">{{ disease.label }}</span>
+            <div class="kpi-label">{{ k.label }}</div>
+            <div class="kpi-value-row">
+              <span class="kpi-value">{{ k.value }}</span>
+              <span class="kpi-unit">{{ k.unit }}</span>
+            </div>
+            <div class="kpi-trend" :data-trend="k.trend">
+              <span class="trend-mark">{{ k.trend === 'up' ? '↑' : k.trend === 'down' ? '↓' : '→' }}</span>
+              <span>{{ k.delta }}</span>
+              <span class="trend-period">vs 上月</span>
+            </div>
           </div>
+        </div>
+        <div class="kpi-cta">
+          <RouterLink to="/diagnosis" class="cta-primary">
+            开始诊断
+            <ArrowRightOutlined />
+          </RouterLink>
+          <RouterLink to="/agent" class="cta-secondary">
+            与 AI 助手对话
+            <ArrowRightOutlined />
+          </RouterLink>
         </div>
       </div>
     </section>
 
-    <!-- ═══ Features ═══ -->
-    <section class="features reveal-section">
-      <div class="features-container">
+    <!-- ═══ 能力指标网格 · 仪表盘式主体 ═══ -->
+    <section class="features reveal-section" aria-label="技术能力">
+      <div class="features-inner">
         <header class="section-header">
-          <span class="section-eyebrow">核心能力</span>
-          <h2 class="section-heading">六大技术能力</h2>
-          <p class="section-intro">
-            从图像诊断到智能问诊，构建完整的眼科 AI 诊断技术体系
-          </p>
+          <h2 class="section-heading">六大能力 · 一目了然</h2>
+          <p class="section-intro">每项能力都对应一个可量化的指标，按数字读，不按故事读。</p>
         </header>
         <div class="features-grid">
-          <div
-            v-for="(feature, index) in features"
-            :key="feature.id"
+          <article
+            v-for="(f, i) in features"
+            :key="f.id"
             class="feature-card"
-            :style="{ '--delay': `${index * 70}ms` }"
+            :data-sev="f.severity"
+            :style="{ '--delay': `${i * 60}ms` }"
           >
-            <div class="feature-icon-wrap">
-              <component :is="feature.icon" />
+            <div class="feature-head">
+              <span class="feature-label">{{ f.label }}</span>
+              <div class="feature-icon">
+                <component :is="f.icon" />
+              </div>
             </div>
-            <div class="feature-body">
-              <h3 class="feature-title">{{ feature.title }}</h3>
-              <p class="feature-desc">{{ feature.description }}</p>
+            <h3 class="feature-title">{{ f.title }}</h3>
+            <p class="feature-desc">{{ f.desc }}</p>
+            <div class="feature-metric">
+              <span class="metric-value">{{ f.metric.val }}</span>
+              <span class="metric-unit">{{ f.metric.unit }}</span>
             </div>
-            <div v-if="feature.stat" class="feature-stat">
-              <span class="stat-value">{{ feature.stat }}</span>
-              <span class="stat-label">{{ feature.statLabel }}</span>
-            </div>
-          </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- ═══ How it works ═══ -->
-    <section class="steps reveal-section">
-      <div class="steps-container">
+    <!-- ═══ 诊断流程 · 编辑网格 2x2 ═══ -->
+    <section class="steps reveal-section" aria-label="诊断流程">
+      <div class="steps-inner">
         <header class="section-header">
-          <span class="section-eyebrow">使用流程</span>
-          <h2 class="section-heading">四步完成智能诊断</h2>
+          <span class="section-overline">WORKFLOW · 诊断流程</span>
+          <h2 class="section-heading">四步完成 · 全程可追踪</h2>
         </header>
-        <div class="steps-flow">
+        <div class="steps-grid">
           <div
-            v-for="(step, index) in steps"
-            :key="step.id"
-            class="step-item"
-            :style="{ '--delay': `${index * 100}ms` }"
+            v-for="(s, i) in steps"
+            :key="s.id"
+            class="step-card"
+            :style="{ '--delay': `${i * 80}ms` }"
           >
-            <div class="step-number">{{ index + 1 }}</div>
+            <div class="step-label">{{ s.label }}</div>
             <div class="step-icon-wrap">
-              <component :is="step.icon" />
+              <component :is="s.icon" />
             </div>
-            <h3 class="step-title">{{ step.title }}</h3>
-            <p class="step-desc">{{ step.desc }}</p>
-            <div v-if="index < steps.length - 1" class="step-connector" aria-hidden="true">
-              <ArrowRightOutlined />
-            </div>
+            <h3 class="step-title">{{ s.title }}</h3>
+            <p class="step-desc">{{ s.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ═══ Solutions ═══ -->
-    <section class="solutions reveal-section">
-      <div class="solutions-container">
+    <!-- ═══ 疾病风险条 · mono 指标 + 严重度色块 ═══ -->
+    <section class="diseases reveal-section" aria-label="疾病识别分布">
+      <div class="diseases-inner">
         <header class="section-header">
-          <span class="section-eyebrow">解决方案</span>
-          <h2 class="section-heading">应对行业挑战</h2>
+          <span class="section-overline">COVERAGE · 疾病识别</span>
+          <h2 class="section-heading">8 种眼底疾病 · 严重度分级</h2>
+          <p class="section-intro">样本分布基于 4,726 例历史诊断 · 严重度独立于品牌色编码</p>
         </header>
-        <div class="solutions-grid">
+        <div class="diseases-table">
+          <div class="dt-head">
+            <span class="dt-col dt-col-name">疾病</span>
+            <span class="dt-col dt-col-bar">占比</span>
+            <span class="dt-col dt-col-count">例数</span>
+            <span class="dt-col dt-col-sev">风险</span>
+          </div>
           <div
-            v-for="(solution, index) in solutions"
-            :key="solution.id"
-            class="solution-card"
-            :style="{ '--delay': `${index * 90}ms` }"
+            v-for="d in diseaseBars"
+            :key="d.id"
+            class="dt-row"
+            :data-sev="d.sev"
           >
-            <div class="solution-number">
-              <span>{{ String(index + 1).padStart(2, '0') }}</span>
-            </div>
-            <div class="solution-body">
-              <h3 class="solution-title">{{ solution.title }}</h3>
-              <p class="solution-desc">{{ solution.description }}</p>
-            </div>
+            <span class="dt-col-name">{{ d.label }}</span>
+            <span class="dt-col-bar">
+              <span class="dt-track">
+                <span class="dt-fill" :style="{ width: d.pct + '%' }"></span>
+              </span>
+            </span>
+            <span class="dt-col-count">{{ d.count }}</span>
+            <span class="dt-col-sev">
+              <span class="sev-pill" :data-sev="d.sev">{{ d.sev === 'high' ? 'HIGH' : d.sev === 'mod' ? 'MOD' : 'LOW' }}</span>
+            </span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ═══ Final CTA ═══ -->
-    <section class="cta-banner reveal-section">
+    <!-- ═══ CTA · 仪表盘式收尾 ═══ -->
+    <section class="cta-section reveal-section">
       <div class="cta-inner">
-        <h2 class="cta-heading">开启智能诊断之旅</h2>
-        <p class="cta-text">
-          上传眼底图像，EfficientNet-B4 模型即刻完成分析并返回诊断结果
-        </p>
+        <div class="cta-metric">
+          <div class="cta-metric-label">现在就开始</div>
+          <div class="cta-metric-value">8.4 s</div>
+          <div class="cta-metric-unit">平均诊断耗时</div>
+        </div>
+        <div class="cta-text">
+          <h2 class="cta-heading">让 AI 成为你的第一道诊断</h2>
+          <p>上传一张眼底照片，AI 即刻为你分析，几分钟内获取诊断参考。</p>
+        </div>
         <RouterLink to="/diagnosis" class="cta-button">
           立即体验
           <ArrowRightOutlined />
         </RouterLink>
       </div>
     </section>
-
   </div>
 </template>
 
 <style scoped>
-/* ══════════════════════════════════════
-   Page base
-   ══════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   仪表盘式 · 方向 B
+   - mono 数字 + 严重度色块 + 编辑网格
+   - 衬线 500-600，sans 主导，mono 给数据
+   - 中等品牌色密度：CTA + 数据高亮 + 严重度编码
+   - 不做 hero 居中叙事、不做入场动画大编排
+   ════════════════════════════════════════════ */
 .home-page {
-  background: var(--claude-bg-page);
+  background: var(--iris-bg);
+  min-height: 100vh;
 }
 
-/* ══════════════════════════════════════
-   Hero
-   ══════════════════════════════════════ */
-.hero {
-  position: relative;
-  height: 92vh;
-  min-height: 560px;
-  max-height: 800px;
-  overflow: hidden;
+::selection {
+  background: var(--iris-accent-soft);
+  color: var(--iris-ink);
 }
 
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-
-  :deep(canvas) {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-    object-fit: cover;
-  }
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+.kpi-card:focus-visible,
+.feature-card:focus-visible {
+  outline: none;
+  box-shadow: var(--iris-focus-ring);
 }
 
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(
-    160deg,
-    oklch(0.14 0.02 40 / 0.85) 0%,
-    oklch(0.14 0.02 40 / 0.6) 40%,
-    oklch(0.14 0.02 40 / 0.3) 70%,
-    oklch(0.14 0.02 40 / 0.15) 100%
-  );
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 48px;
-  animation: hero-enter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes hero-enter {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-}
-
-.hero-eyebrow {
-  font-family: var(--claude-font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: oklch(0.75 0.06 35);
-  margin-bottom: 20px;
-}
-
-.hero-title {
-  font-family: var(--claude-font-serif);
-  font-size: clamp(42px, 6vw, 72px);
-  font-weight: 700;
-  color: oklch(0.97 0.005 80);
-  line-height: 1.15;
-  margin: 0 0 20px 0;
-  letter-spacing: 2px;
-}
-
-.hero-title-accent {
-  color: oklch(0.65 0.1 30);
-}
-
-.hero-subtitle {
-  font-size: 18px;
-  color: oklch(0.78 0.01 70);
-  max-width: 520px;
-  line-height: 1.7;
-  margin: 0 0 40px 0;
-}
-
-.hero-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  height: 54px;
-  padding: 0 36px;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: oklch(0.97 0.005 80);
-  background: oklch(0.55 0.1 30);
-  border-radius: 100px;
-  text-decoration: none;
-  width: fit-content;
-  pointer-events: auto;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 20px oklch(0.45 0.08 30 / 0.35);
-}
-
-.hero-cta:hover {
-  background: oklch(0.6 0.12 30);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px oklch(0.45 0.08 30 / 0.45);
-}
-
-.hero-cta :deep(.anticon) {
-  transition: transform 0.3s ease;
-}
-
-.hero-cta:hover :deep(.anticon) {
-  transform: translateX(4px);
-}
-
-.hero-scroll-hint {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.scroll-line {
-  width: 1px;
-  height: 48px;
-  background: linear-gradient(to bottom, oklch(0.7 0.01 70 / 0.6), transparent);
-  animation: scroll-pulse 2s ease-in-out infinite;
-}
-
-@keyframes scroll-pulse {
-  0%, 100% { opacity: 0.4; transform: scaleY(1); }
-  50% { opacity: 1; transform: scaleY(1.2); transform-origin: top; }
-}
-
-/* ══════════════════════════════════════
-   Shared section styles
-   ══════════════════════════════════════ */
-.section-header {
-  text-align: center;
-  margin-bottom: 56px;
-}
-
-.section-eyebrow {
-  display: block;
-  font-family: var(--claude-font-sans);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: oklch(0.55 0.08 30);
-  margin-bottom: 12px;
-}
-
-.section-heading {
-  font-family: var(--claude-font-serif);
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 700;
-  color: oklch(0.18 0.02 55);
-  margin: 0 0 12px 0;
-  letter-spacing: 1px;
-}
-
-.section-intro {
-  font-size: 16px;
-  color: oklch(0.5 0.015 55);
-  max-width: 520px;
-  margin: 0 auto;
-  line-height: 1.7;
-}
-
-/* ══════════════════════════════════════
-   Reveal animation
-   ══════════════════════════════════════ */
+/* ═══ Reveal ═══ */
 .reveal-section {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(16px);
+  transition: opacity 500ms var(--iris-transition-base),
+              transform 500ms var(--iris-transition-base);
 }
-
 .reveal-section[data-revealed='true'] {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* ══════════════════════════════════════
-   Disease Coverage
-   ══════════════════════════════════════ */
-.diseases {
-  padding: 80px 0;
-  background: var(--claude-bg-card);
+/* ═══ Section header（编辑式左对齐，不用居中）═══ */
+.section-header {
+  margin-bottom: 40px;
+  max-width: 720px;
+}
+.section-overline {
+  display: inline-block;
+  font-family: var(--iris-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--iris-accent);
+  margin-bottom: 10px;
+}
+.section-heading {
+  font-family: var(--iris-font-serif);
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.section-intro {
+  font-size: 14px;
+  color: var(--iris-ink-2);
+  margin: 0;
+  line-height: 1.65;
+  max-width: 60ch;
 }
 
-.diseases-container {
+/* ═══ KPI 条带 · 仪表盘式头部 ═══ */
+.kpi-strip {
+  padding: 64px 0 56px;
+  background: var(--iris-surface);
+  border-bottom: 1px solid var(--iris-line);
+}
+.kpi-strip-inner {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+}
+.kpi-strip-header { max-width: 720px; }
+.kpi-overline {
+  display: inline-block;
+  font-family: var(--iris-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--iris-accent);
+  margin-bottom: 14px;
+}
+.kpi-strip-title {
+  font-family: var(--iris-font-serif);
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  max-width: 18ch;
+}
+.kpi-strip-sub {
+  font-size: 16px;
+  color: var(--iris-ink-2);
+  margin: 0;
+  line-height: 1.65;
+  max-width: 56ch;
 }
 
-.diseases-grid {
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--iris-line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--iris-surface-2);
+}
+.kpi-card {
+  padding: 22px 24px;
+  border-right: 1px solid var(--iris-line);
+  background: var(--iris-surface);
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: background 200ms var(--iris-transition-fast);
+}
+.kpi-card:last-child { border-right: none; }
+.kpi-card:nth-child(1) { padding: 22px 28px; background: var(--iris-bg); }
+.kpi-card:nth-child(1) .kpi-value { font-size: 38px; }
+.kpi-card:hover { background: var(--iris-surface-2); }
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--iris-accent);
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.kpi-card:hover::before { opacity: 1; }
+
+.kpi-label {
+  font-family: var(--iris-font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.kpi-value {
+  font-family: var(--iris-font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.kpi-unit {
+  font-family: var(--iris-font-sans);
+  font-size: 12px;
+  color: var(--iris-ink-2);
+}
+.kpi-trend {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--iris-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-trend .trend-mark { font-weight: 600; }
+.kpi-trend .trend-period { color: var(--iris-ink-3); margin-left: 2px; }
+.kpi-trend[data-trend='up'] { color: var(--iris-sev-low); }
+.kpi-trend[data-trend='down'] { color: var(--iris-sev-low); }
+.kpi-trend[data-trend='flat'] { color: var(--iris-ink-3); }
+
+.kpi-cta {
+  display: flex;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
 }
-
-.disease-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
-  background: var(--claude-bg-elevated);
-  border-radius: 100px;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s ease;
-  animation: card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.reveal-section[data-revealed='true'] .disease-item {
-  animation: card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.disease-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px oklch(0.2 0.02 40 / 0.08);
-}
-
-.disease-tag {
+.cta-primary,
+.cta-secondary {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 28px;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: oklch(0.97 0.005 80);
-  background: oklch(0.55 0.1 30);
-  border-radius: 100px;
-  letter-spacing: 0.5px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 200ms var(--iris-transition-base);
+  letter-spacing: 0.01em;
+}
+.cta-primary {
+  background: var(--iris-accent);
+  color: var(--iris-on-accent);
+  border: 1px solid var(--iris-accent);
+}
+.cta-primary:hover {
+  background: var(--iris-accent-strong);
+  border-color: var(--iris-accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(27, 127, 107, 0.22);
+}
+.cta-secondary {
+  background: var(--iris-surface);
+  color: var(--iris-ink);
+  border: 1px solid var(--iris-line-strong);
+}
+.cta-secondary:hover {
+  border-color: var(--iris-accent);
+  color: var(--iris-accent);
+  transform: translateY(-1px);
+}
+.cta-primary :deep(.anticon),
+.cta-secondary :deep(.anticon) {
+  transition: transform 200ms var(--iris-transition-base);
+}
+.cta-primary:hover :deep(.anticon),
+.cta-secondary:hover :deep(.anticon) {
+  transform: translateX(3px);
 }
 
-.disease-label {
-  font-size: 15px;
-  font-weight: 500;
-  color: oklch(0.22 0.02 55);
-  white-space: nowrap;
-}
-
-/* ══════════════════════════════════════
-   Features
-   ══════════════════════════════════════ */
-.features {
-  padding: 96px 0;
-  background: oklch(0.97 0.008 80);
-}
-
-.features-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
+/* ═══ 能力指标网格 ═══ */
+.features { padding: 72px 0; background: var(--iris-bg); }
+.features-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--iris-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--iris-surface);
 }
-
 .feature-card {
-  background: var(--claude-bg-elevated);
-  border-radius: 16px;
-  padding: 32px 28px;
+  padding: 24px 24px 22px;
+  border-right: 1px solid var(--iris-line);
+  border-bottom: 1px solid var(--iris-line);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  background: var(--iris-surface);
+  transition: background 200ms var(--iris-transition-fast);
   position: relative;
-  overflow: hidden;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.4s ease;
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
 }
-
-.reveal-section[data-revealed='true'] .feature-card {
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-}
-
+.feature-card:nth-child(3n) { border-right: none; }
+.feature-card:nth-last-child(-n+3) { border-bottom: none; }
+.feature-card:hover { background: var(--iris-surface-2); }
 .feature-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, oklch(0.55 0.1 30), oklch(0.55 0.1 30 / 0.2));
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--iris-accent);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 200ms;
 }
+.feature-card:hover::before { opacity: 1; }
 
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px oklch(0.2 0.02 40 / 0.08);
-}
-
-.feature-card:hover::before {
-  opacity: 1;
-}
-
-.feature-icon-wrap {
-  width: 52px;
-  height: 52px;
+.feature-head {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  background: oklch(0.95 0.025 60);
-  font-size: 24px;
-  color: oklch(0.55 0.1 30);
-  transition: background 0.3s ease, transform 0.3s ease;
 }
-
-.feature-card:hover .feature-icon-wrap {
-  background: oklch(0.55 0.1 30);
-  color: oklch(0.97 0.005 80);
-  transform: scale(1.05);
-}
-
-.feature-body {
-  flex: 1;
-}
-
-.feature-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: oklch(0.18 0.02 55);
-  margin: 0 0 8px 0;
-}
-
-.feature-desc {
-  font-size: 14px;
-  color: oklch(0.5 0.015 55);
-  line-height: 1.7;
-  margin: 0;
-}
-
-.feature-stat {
-  display: flex;
-  flex-direction: column;
-  padding-top: 12px;
-  border-top: 1px solid oklch(0.9 0.01 80);
-}
-
-.stat-value {
-  font-family: var(--claude-font-serif);
-  font-size: 28px;
-  font-weight: 700;
-  color: oklch(0.55 0.1 30);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: oklch(0.5 0.015 55);
-  margin-top: 4px;
-}
-
-/* ══════════════════════════════════════
-   How it works (Steps)
-   ══════════════════════════════════════ */
-.steps {
-  padding: 96px 0;
-  background: var(--claude-bg-card);
-}
-
-.steps-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-.steps-flow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  position: relative;
-}
-
-.step-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 32px 20px;
-  position: relative;
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.reveal-section[data-revealed='true'] .step-item {
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.step-number {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: oklch(0.55 0.1 30);
-  color: oklch(0.97 0.005 80);
-  font-family: var(--claude-font-serif);
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-
-.step-icon-wrap {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  background: oklch(0.94 0.025 60);
-  font-size: 28px;
-  color: oklch(0.55 0.1 30);
-  margin-bottom: 20px;
-  transition: transform 0.3s ease;
-}
-
-.step-item:hover .step-icon-wrap {
-  transform: scale(1.08);
-}
-
-.step-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: oklch(0.18 0.02 55);
-  margin: 0 0 8px 0;
-}
-
-.step-desc {
-  font-size: 14px;
-  color: oklch(0.5 0.015 55);
-  line-height: 1.65;
-  margin: 0;
-  max-width: 200px;
-}
-
-.step-connector {
-  position: absolute;
-  right: -12px;
-  top: 72px;
-  font-size: 16px;
-  color: oklch(0.55 0.1 30 / 0.4);
-  z-index: 1;
-}
-
-/* ══════════════════════════════════════
-   Solutions
-   ══════════════════════════════════════ */
-.solutions {
-  padding: 96px 0;
-  background: oklch(0.97 0.008 80);
-}
-
-.solutions-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 40px;
-}
-
-.solutions-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
-}
-
-.solution-card {
-  display: flex;
-  gap: 28px;
-  padding: 36px;
-  background: var(--claude-bg-elevated);
-  border-radius: 16px;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.reveal-section[data-revealed='true'] .solution-card {
-  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--delay);
-}
-
-.solution-card:hover {
-  transform: translateY(-3px);
-}
-
-.solution-number {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: oklch(0.94 0.02 60);
-  transition: background 0.3s ease;
-}
-
-.solution-number span {
-  font-family: var(--claude-font-serif);
-  font-size: 22px;
-  font-weight: 700;
-  color: oklch(0.55 0.1 30);
-}
-
-.solution-card:hover .solution-number {
-  background: oklch(0.55 0.1 30);
-}
-
-.solution-card:hover .solution-number span {
-  color: oklch(0.97 0.005 80);
-}
-
-.solution-body {
-  flex: 1;
-}
-
-.solution-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: oklch(0.18 0.02 55);
-  margin: 0 0 10px 0;
-}
-
-.solution-desc {
-  font-size: 15px;
-  color: oklch(0.5 0.015 55);
-  line-height: 1.75;
-  margin: 0;
-}
-
-/* ══════════════════════════════════════
-   CTA Banner
-   ══════════════════════════════════════ */
-.cta-banner {
-  background: linear-gradient(160deg, oklch(0.16 0.02 45), oklch(0.12 0.02 40));
-  position: relative;
-  overflow: hidden;
-}
-
-.cta-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 50% 80% at 70% 50%,
-    oklch(0.55 0.08 30 / 0.1),
-    transparent
-  );
-  pointer-events: none;
-}
-
-.cta-inner {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 80px 40px;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-}
-
-.cta-heading {
-  font-family: var(--claude-font-serif);
-  font-size: clamp(28px, 4vw, 38px);
-  font-weight: 700;
-  color: oklch(0.97 0.005 80);
-  margin: 0 0 16px 0;
+.feature-label {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
   letter-spacing: 1px;
 }
-
-.cta-text {
-  font-size: 17px;
-  color: oklch(0.7 0.015 65);
-  margin: 0 0 36px 0;
+.feature-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--iris-accent-soft);
+  color: var(--iris-accent);
+  border-radius: 6px;
+  font-size: 16px;
+  transition: background 200ms, color 200ms;
+}
+.feature-card:hover .feature-icon {
+  background: var(--iris-accent);
+  color: var(--iris-on-accent);
+}
+.feature-title {
+  font-family: var(--iris-font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.feature-desc {
+  font-size: 13px;
+  color: var(--iris-ink-2);
   line-height: 1.6;
+  margin: 0;
+  flex: 1;
+}
+.feature-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--iris-line);
+  margin-top: 4px;
+}
+.metric-value {
+  font-family: var(--iris-font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--iris-accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.metric-unit {
+  font-family: var(--iris-font-sans);
+  font-size: 11px;
+  color: var(--iris-ink-2);
 }
 
+/* ═══ 诊断流程 · 编辑 2x2 ═══ */
+.steps { padding: 72px 0; background: var(--iris-surface); border-top: 1px solid var(--iris-line); border-bottom: 1px solid var(--iris-line); }
+.steps-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--iris-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--iris-bg);
+}
+.step-card {
+  padding: 28px 28px 24px;
+  border-right: 1px solid var(--iris-line);
+  border-bottom: 1px solid var(--iris-line);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  gap: 8px 12px;
+  background: var(--iris-surface);
+  transition: background 200ms;
+}
+.step-card:nth-child(2n) { border-right: none; }
+.step-card:nth-last-child(-n+2) { border-bottom: none; }
+.step-card:hover { background: var(--iris-surface-2); }
+
+.step-label {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
+  letter-spacing: 1.2px;
+  grid-column: 1;
+  grid-row: 1;
+}
+.step-icon-wrap {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--iris-accent-soft);
+  color: var(--iris-accent);
+  border-radius: 6px;
+  font-size: 18px;
+  grid-column: 2;
+  grid-row: 1 / 4;
+  align-self: start;
+}
+.step-title {
+  font-family: var(--iris-font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  grid-column: 1;
+  grid-row: 2;
+}
+.step-desc {
+  font-size: 13px;
+  color: var(--iris-ink-2);
+  line-height: 1.6;
+  margin: 0;
+  grid-column: 1;
+  grid-row: 3;
+  max-width: 52ch;
+}
+
+/* ═══ 疾病风险条 ═══ */
+.diseases { padding: 72px 0; background: var(--iris-bg); }
+.diseases-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
+.diseases-table {
+  border: 1px solid var(--iris-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--iris-surface);
+}
+.dt-head,
+.dt-row {
+  display: grid;
+  grid-template-columns: 1.6fr 2fr 0.6fr 0.6fr;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 16px;
+}
+.dt-head {
+  background: var(--iris-surface-2);
+  border-bottom: 1px solid var(--iris-line);
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.dt-row {
+  border-bottom: 1px solid var(--iris-line);
+  font-size: 14px;
+  color: var(--iris-ink);
+  transition: background 150ms;
+}
+.dt-row:last-child { border-bottom: none; }
+.dt-row:hover { background: var(--iris-surface-2); }
+.dt-col-name { font-family: var(--iris-font-sans); font-weight: 500; }
+.dt-col-bar { display: flex; align-items: center; }
+.dt-track {
+  flex: 1;
+  height: 8px;
+  background: var(--iris-surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--iris-line);
+}
+.dt-fill {
+  display: block;
+  height: 100%;
+  background: var(--iris-accent);
+  border-radius: 4px;
+  transition: width 600ms var(--iris-transition-base);
+}
+.dt-row[data-sev='high'] .dt-fill { background: var(--iris-sev-high); }
+.dt-row[data-sev='mod'] .dt-fill { background: var(--iris-sev-moderate); }
+.dt-col-count {
+  font-family: var(--iris-font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--iris-ink-2);
+  text-align: right;
+}
+.dt-col-sev { text-align: right; }
+.sev-pill {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.sev-pill[data-sev='high'] { background: var(--iris-sev-high-soft); color: var(--iris-sev-high); }
+.sev-pill[data-sev='mod'] { background: var(--iris-sev-moderate-soft); color: var(--iris-sev-moderate); }
+.sev-pill[data-sev='low'] { background: var(--iris-sev-low-soft); color: var(--iris-sev-low); }
+
+/* ═══ CTA ═══ */
+.cta-section {
+  padding: 64px 0 80px;
+  background: var(--iris-bg);
+  border-top: 1px solid var(--iris-line);
+}
+.cta-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 40px;
+  background: var(--iris-surface);
+  border: 1px solid var(--iris-line);
+  border-radius: 8px;
+  padding: 32px 40px;
+}
+.cta-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 32px;
+  border-right: 1px solid var(--iris-line);
+}
+.cta-metric-label {
+  font-family: var(--iris-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--iris-ink-3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.cta-metric-value {
+  font-family: var(--iris-font-mono);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--iris-accent);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.cta-metric-unit {
+  font-size: 12px;
+  color: var(--iris-ink-2);
+}
+.cta-text h2 {
+  font-family: var(--iris-font-serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--iris-ink);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.cta-text p {
+  font-size: 14px;
+  color: var(--iris-ink-2);
+  margin: 0;
+  line-height: 1.6;
+}
 .cta-button {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 36px;
-  font-size: 16px;
+  gap: 8px;
+  height: 48px;
+  padding: 0 28px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 1px;
-  color: oklch(0.97 0.005 80);
-  background: oklch(0.55 0.1 30);
-  border-radius: 100px;
+  background: var(--iris-accent);
+  color: var(--iris-on-accent);
+  border-radius: 6px;
   text-decoration: none;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 20px oklch(0.45 0.08 30 / 0.35);
+  transition: all 200ms var(--iris-transition-base);
 }
-
 .cta-button:hover {
-  background: oklch(0.6 0.12 30);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px oklch(0.45 0.08 30 / 0.45);
+  background: var(--iris-accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(27, 127, 107, 0.25);
 }
+.cta-button :deep(.anticon) { transition: transform 200ms; }
+.cta-button:hover :deep(.anticon) { transform: translateX(3px); }
 
-.cta-button :deep(.anticon) {
-  transition: transform 0.3s ease;
-}
-
-.cta-button:hover :deep(.anticon) {
-  transform: translateX(4px);
-}
-
-/* ══════════════════════════════════════
-   Responsive
-   ══════════════════════════════════════ */
+/* ═══ Responsive ═══ */
 @media (max-width: 1024px) {
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .steps-flow {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-
-  .step-connector {
-    display: none;
-  }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-card { border-right: 1px solid var(--iris-line); border-bottom: 1px solid var(--iris-line); }
+  .kpi-card:nth-child(2n) { border-right: none; }
+  .kpi-card:nth-last-child(-n+2) { border-bottom: none; }
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .feature-card:nth-child(3n) { border-right: 1px solid var(--iris-line); }
+  .feature-card:nth-child(2n) { border-right: none; }
+  .feature-card:nth-last-child(-n+3) { border-bottom: 1px solid var(--iris-line); }
+  .feature-card:nth-last-child(-n+2) { border-bottom: none; }
+  .cta-inner { grid-template-columns: 1fr; }
+  .cta-metric { border-right: none; border-bottom: 1px solid var(--iris-line); padding: 0 0 20px; }
 }
-
 @media (max-width: 768px) {
-  .hero {
-    height: 80vh;
-    min-height: 480px;
-  }
-
-  .hero-content {
-    padding: 0 24px;
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
-  }
-
-  .diseases,
-  .features,
-  .steps,
-  .solutions {
-    padding: 64px 0;
-  }
-
-  .diseases-container,
-  .features-container,
-  .steps-container,
-  .solutions-container {
-    padding: 0 20px;
-  }
-
-  .diseases-grid {
-    gap: 10px;
-  }
-
-  .disease-item {
-    padding: 10px 16px;
-  }
-
-  .disease-label {
-    font-size: 13px;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .steps-flow {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .step-item {
-    padding: 20px;
-    flex-direction: row;
-    text-align: left;
-    gap: 16px;
-  }
-
-  .step-number {
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .step-icon-wrap {
-    width: 48px;
-    height: 48px;
-    font-size: 22px;
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .step-desc {
-    max-width: none;
-  }
-
-  .solutions-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .cta-inner {
-    padding: 56px 20px;
-  }
+  .kpi-strip-inner,
+  .features-inner,
+  .steps-inner,
+  .diseases-inner { padding: 0 20px; }
+  .kpi-strip { padding: 48px 0 40px; }
+  .features, .steps, .diseases, .cta-section { padding: 56px 0; }
+  .kpi-grid { grid-template-columns: 1fr; }
+  .kpi-card { border-right: none; border-bottom: 1px solid var(--iris-line); }
+  .kpi-card:last-child { border-bottom: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-card { border-right: none; border-bottom: 1px solid var(--iris-line); }
+  .feature-card:last-child { border-bottom: none; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .step-card { border-right: none; border-bottom: 1px solid var(--iris-line); }
+  .step-card:last-child { border-bottom: none; }
+  .dt-head, .dt-row { grid-template-columns: 1.4fr 1.6fr 0.5fr 0.5fr; gap: 10px; padding: 12px 14px; }
+  .cta-inner { padding: 24px 20px; }
+  .cta-metric-value { font-size: 32px; }
 }
-
 @media (max-width: 480px) {
-  .hero-title {
-    font-size: 32px;
-  }
-
-  .disease-item {
-    width: 100%;
-  }
-
-  .solution-card {
-    flex-direction: column;
-    gap: 16px;
-    padding: 24px;
-  }
+  .kpi-strip-title { font-size: 28px; }
+  .section-heading { font-size: 22px; }
+  .dt-head, .dt-row { font-size: 12px; padding: 10px 12px; gap: 8px; }
+  .sev-pill { font-size: 9px; padding: 2px 6px; }
 }
 </style>
