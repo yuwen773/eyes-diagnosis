@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import { deleteAgentImage } from '@/api/agentController'
+import { releaseAgentImage } from '@/composables/agentImageOwnership'
 
 export interface MessageDTO {
   messageType: 'user' | 'assistant' | 'tool-request' | 'tool-response' | 'mcp-confirm' | 'tool-confirm' | 'reasoning'
@@ -221,10 +221,11 @@ export function useAgentStream() {
     } finally {
       isStreaming.value = false
       abortController = null
-      // 发送失败时清理已上传的图片
+      // 发送失败时释放已上传的图片：与上传层共享同一份所有权账本，
+      // 已经被成功消息引用的对象不会被这里误删。
       if (!completed && uploadedUrls.length > 0) {
         for (const url of uploadedUrls) {
-          deleteAgentImage(url).catch(() => {})
+          releaseAgentImage(url)
         }
       }
     }
