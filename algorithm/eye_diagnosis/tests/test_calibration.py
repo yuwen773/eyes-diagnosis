@@ -1,6 +1,4 @@
-import json
 import numpy as np
-from pathlib import Path
 
 from eye_diagnosis.calibration import (
     TemperatureScaler,
@@ -35,8 +33,10 @@ def test_ece_low_for_perfect_calibration():
     assert ece < 0.3
 
 
-def test_config_file_roundtrip(tmp_path: Path):
-    cfg = tmp_path / "t.json"
-    cfg.write_text(json.dumps({"temperature": 1.5}))
-    payload = json.loads(cfg.read_text())
-    assert payload["temperature"] == 1.5
+def test_apply_temperature_scales_logits_without_changing_input():
+    logits = np.array([[3.0, -1.5], [0.0, 6.0]])
+
+    scaled = apply_temperature(logits, 1.5)
+
+    np.testing.assert_allclose(scaled, [[2.0, -1.0], [0.0, 4.0]])
+    np.testing.assert_array_equal(logits, [[3.0, -1.5], [0.0, 6.0]])
