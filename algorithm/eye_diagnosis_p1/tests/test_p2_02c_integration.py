@@ -97,10 +97,25 @@ fsm.run_subprocess = _passthrough_run_subprocess
 
 # Patch preflight + protocol loader + adapter seam.
 fsm.load_p202a_protocol = lambda p: {"schema_version": "p2-02a-v1"}
-fsm.build_real_torch_adapter = lambda: object()
+
+class _FakeAdapter:
+    # capture_environment reads these; a bare object() would raise.
+    def cuda_is_available(self): return False
+    def cuda_device_count(self): return 0
+    def cuda_mem_get_info(self, index): return (0, 0)
+    def device_name(self, index): return "fake"
+    def versions_dict(self):
+        return {"torch": "stub", "cuda": "", "cudnn": "", "driver": ""}
+
+fsm.build_real_torch_adapter = lambda: _FakeAdapter()
+
 class _PfOK:
     ok = True
-fsm.run_preflight = lambda cfg, adapter: _PfOK()
+    reason = None
+    checks = []
+
+# Mirror the real keyword-only signature so a mismatch cannot hide here.
+fsm.run_preflight = lambda **kwargs: _PfOK()
 
 rc = fsm.main([
     "--protocol", "/tmp/protocol.json",
