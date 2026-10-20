@@ -15,17 +15,10 @@ from eye_diagnosis_p1.tests.fakes import (
     FakeTorchAdapter,
 )
 
-@pytest.fixture(autouse=True)
-def _pretend_cuda(monkeypatch):
-    """The epoch loop requires CUDA; CI runners have no GPU.
-
-    ``run_formal_fold`` refuses to start without a device, so the probe is
-    stubbed here. See test_p2_02b_formal_fold_runner.py for the rationale.
-    """
-    import torch
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(torch.cuda, "manual_seed_all", lambda *a, **k: None)
-
+# Every test here reaches the real ``run_formal_fold`` for at least one fold
+# (the blocked-fold test stubs only fold 0), and that drives the P2-02B epoch
+# loop: it probes ``torch.cuda.is_available()``, refuses to start without a
+# device, and calls ``manual_seed_all`` / ``GradScaler("cuda")``.
 
 
 def _runner_deps(**kw: Any) -> dict[str, Any]:
@@ -41,6 +34,7 @@ def _runner_deps(**kw: Any) -> dict[str, Any]:
     return base
 
 
+@pytest.mark.gpu
 def test_orchestrator_single_fold_overall_status_pass(tmp_path: Path) -> None:
     from p1.training.orchestrator import run_formal_experiment
 
@@ -58,6 +52,7 @@ def test_orchestrator_single_fold_overall_status_pass(tmp_path: Path) -> None:
     assert e.per_fold[0].fold == 0
 
 
+@pytest.mark.gpu
 def test_orchestrator_writes_per_fold_artifacts(tmp_path: Path) -> None:
     from p1.training.orchestrator import run_formal_experiment
 
@@ -75,6 +70,7 @@ def test_orchestrator_writes_per_fold_artifacts(tmp_path: Path) -> None:
     assert e.per_fold[0].status == "PASS"
 
 
+@pytest.mark.gpu
 def test_orchestrator_continues_after_blocked_fold(tmp_path: Path) -> None:
     """folds=[0,1] with fold 0 BLOCKED → all folds still ran."""
     from p1.training import formal_fold_runner as fr

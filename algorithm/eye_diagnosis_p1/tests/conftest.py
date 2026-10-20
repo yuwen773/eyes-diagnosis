@@ -10,6 +10,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
+
 
 def pytest_addoption(parser) -> None:
     parser.addoption(
@@ -33,3 +35,30 @@ def pytest_configure(config) -> None:
         "slow: marks tests as slow (deselect with -m 'not slow'); "
         "currently used by the watchdog subprocess suite which takes ~62s locally",
     )
+    config.addinivalue_line(
+        "markers",
+        "gpu: requires a CUDA device; skipped where torch.cuda.is_available() is False",
+    )
+
+
+def pytest_collection_modifyitems(config, items) -> None:
+    """Skip ``@pytest.mark.gpu`` tests when no CUDA device is present.
+
+    The P2-02B epoch loop drives real torch tensors and calls
+    ``torch.cuda.manual_seed_all`` / ``GradScaler``, so it cannot run on a
+    CPU-only runner. Skipping is honest: these tests are unverified there,
+    not passing.
+    """
+    try:
+        import torch
+    except ImportError:
+        have_cuda = False
+    else:
+        have_cuda = bool(torch.cuda.is_available())
+
+    if have_cuda:
+        return
+    skip = pytest.mark.skip(reason="requires a CUDA device")
+    for item in items:
+        if "gpu" in item.keywords:
+            item.add_marker(skip)

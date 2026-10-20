@@ -1,12 +1,15 @@
 """CI smoke for the P2-02B end-to-end flow.
 
-Uses fake torch adapter (no GPU work) so it runs on any host (CPU or GPU).
 Verifies:
     * cli_formal.main(argv) returns 0
     * fold_0/ contains all 9 expected files
     * fold_receipt.status == 'PASS'
     * best_checkpoint.sha256 matches re-computed hash
     * wall-clock < 60s
+
+Despite the fake data loaders and model, ``run_formal_fold`` probes
+``torch.cuda.is_available()`` and the epoch loop calls ``GradScaler("cuda")``,
+so this needs a real GPU. See conftest.py's ``gpu`` marker.
 """
 from __future__ import annotations
 
@@ -17,6 +20,12 @@ from pathlib import Path
 
 import pandas as _pd
 import pytest
+
+pytestmark = pytest.mark.gpu
+
+# Five dev patients, one per fold — the shape the frozen-input validator
+# requires (every fold non-empty, no Test patient in the fold artifact).
+_PATIENT_IDS = (1, 2, 3, 4, 5)
 
 
 @pytest.fixture(scope="module")
@@ -45,18 +54,21 @@ def test_cli_formal_smoke_runs_end_to_end(
     monkeypatch.setattr(cli_formal, "load_p202a_protocol", lambda p: _FAKE_PROTOCOL_LOADER.load())
     monkeypatch.setattr(
         cli_formal.pd, "read_parquet",
-        lambda p: _pd.DataFrame({"patient_id": [1, 2, 3, 4]}),
+        lambda p: _pd.DataFrame({"patient_id": list(_PATIENT_IDS)}),
     )
+    # The split artifact holds dev/test only — train/val are derived per
+    # fold. The old "train"/"val" values here were rejected by the frozen
+    # input loader, so this smoke could never have reached the epoch loop.
     monkeypatch.setattr(
         cli_formal, "load_split_assignment",
         lambda p: _pd.DataFrame({
-            "patient_id": [1, 2, 3, 4], "fold": [0, 0, 0, 0],
-            "split": ["train", "train", "val", "val"],
+            "patient_id": list(_PATIENT_IDS),
+            "split": ["dev"] * len(_PATIENT_IDS),
         }),
     )
     monkeypatch.setattr(
         cli_formal, "load_fold_assignment",
-        lambda p, expected_folds: {str(pid): 0 for pid in range(1, 5)},
+        lambda p, expected_folds: {str(pid): pid - 1 for pid in _PATIENT_IDS},
     )
 
     # Real-adapter builders → fakes. build_real_model_factory itself

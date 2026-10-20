@@ -57,6 +57,7 @@ jobs:
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py
           eye_diagnosis_p1/tests/test_p2_02a_t3_integration.py
           eye_diagnosis_p1/tests/test_p2_02c_training_watchdog.py
+          eye_diagnosis_p1/tests/test_gpu_marker_contract.py
           -q
 
   backend-compile:

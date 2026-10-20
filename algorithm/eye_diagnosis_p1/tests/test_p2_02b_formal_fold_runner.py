@@ -20,17 +20,12 @@ from eye_diagnosis_p1.tests.fakes import (
 )
 
 
-@pytest.fixture(autouse=True)
-def _pretend_cuda(monkeypatch):
-    """These tests drive the real epoch loop, which requires CUDA.
-
-    ``run_formal_fold`` refuses to start without a CUDA device — a CPU run
-    would still produce a receipt that looks valid. CI runners have no GPU,
-    so the device probes are stubbed here. This is the one place the test
-    suite asserts "this is a GPU run"; everything downstream uses the fakes.
-    """
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(torch.cuda, "manual_seed_all", lambda *a, **k: None)
+# Every test here drives the real P2-02B epoch loop: ``run_formal_fold`` probes
+# ``torch.cuda.is_available()`` and refuses to start without a device, and the
+# loop itself calls ``manual_seed_all`` / ``GradScaler("cuda")``. They need a
+# real GPU; the suite skips them where none is present (see conftest.py)
+# rather than faking a device and asserting behaviour that cannot occur.
+pytestmark = pytest.mark.gpu
 
 
 # --- helpers (also imported by tests/fakes indirectly via FakeModelFactory) --

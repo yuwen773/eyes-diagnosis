@@ -23,19 +23,6 @@ from eye_diagnosis_p1.tests.fakes import (
     FakeTorchAdapter,
 )
 
-@pytest.fixture(autouse=True)
-def _pretend_cuda(monkeypatch):
-    """The epoch loop requires CUDA; CI runners have no GPU.
-
-    ``run_formal_fold`` refuses to start without a device, so the probe is
-    stubbed here. See test_p2_02b_formal_fold_runner.py for the rationale.
-    """
-    import torch
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(torch.cuda, "manual_seed_all", lambda *a, **k: None)
-
-
-
 def _argv(extra: list[str] | None = None) -> list[str]:
     base = [
         "--experiment", "E3",
@@ -226,6 +213,7 @@ def test_cli_formal_with_emit_heartbeat_flag(monkeypatch) -> None:
     )
 
 
+@pytest.mark.gpu
 def test_run_formal_fold_emits_heartbeats_in_order(tmp_path, monkeypatch, capsys) -> None:
     """Direct unit test of formal_fold_runner.run_formal_fold emission.
 
@@ -235,6 +223,9 @@ def test_run_formal_fold_emits_heartbeats_in_order(tmp_path, monkeypatch, capsys
       HEARTBEAT EPOCH 0 PASS
       HEARTBEAT CHECKPOINT_SAVED <path>
     in that order.
+
+    Marked ``gpu``: ``run_formal_fold`` probes ``torch.cuda.is_available()``
+    and builds ``GradScaler("cuda")`` even when the epoch body is stubbed.
     """
     from p1.training import formal_fold_runner as ffr
     from p1.training.engine import EpochStats, ValStats
