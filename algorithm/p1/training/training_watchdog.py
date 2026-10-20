@@ -62,16 +62,32 @@ class RealTerminator:
 
     def terminate(self, pid: int) -> None:
         if sys.platform == "win32":
-            subprocess.run(
-                ["cmd", "/c", "taskkill", "/F", "/PID", str(pid), "/T"],
-                check=False, capture_output=True,
-            )
-        else:
-            import os, signal
             try:
-                os.killpg(os.getpgid(pid), signal.SIGTERM)
-            except ProcessLookupError:
+                subprocess.run(
+                    ["cmd", "/c", "taskkill", "/F", "/PID", str(pid), "/T"],
+                    check=False, capture_output=True,
+                )
+            except OSError:
                 pass
+            return
+        try:
+            self._signal_process_group(pid)
+        except ProcessLookupError:
+            # The group is already gone — the desired end state.
+            pass
+        except PermissionError:
+            # The pid exists but is not ours. Signalling it would be wrong,
+            # and terminate() is documented as total, so swallow it.
+            pass
+        except OSError:
+            # Anything else from getpgid/killpg (e.g. EINVAL on a bogus pid).
+            pass
+
+    @staticmethod
+    def _signal_process_group(pid: int) -> None:
+        """SIGTERM the pid's process group. POSIX only; may raise OSError."""
+        import os, signal
+        os.killpg(os.getpgid(pid), signal.SIGTERM)
 
 
 # --- result -----------------------------------------------------------------

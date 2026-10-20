@@ -67,11 +67,38 @@ def test_watch_config_is_frozen() -> None:
         cfg.process_timeout_seconds = 1.0  # type: ignore[misc]
 
 
-def test_real_terminator_terminate_does_not_raise_on_unknown_pid() -> None:
-    # RealTerminator must swallow ProcessLookupError / non-zero taskkill
-    # exits; the runner relies on terminate() being total.
+def test_real_terminator_terminate_does_not_raise_on_unknown_pid(
+    monkeypatch,
+) -> None:
+    """terminate() is total: every OS-level failure is swallowed.
+
+    This must not signal a real process. An earlier version called
+    ``terminate(2**30)`` directly, which on POSIX resolves to
+    ``os.killpg(os.getpgid(2**30), SIGTERM)`` — a live signal to whatever
+    group happens to own that pid. On a CI runner that can take down the
+    runner itself, which is exactly what happened: the pytest step was
+    cancelled twice at the same point. The failure modes are injected
+    instead of provoked.
+    """
+    import errno
     from p1.training.training_watchdog import RealTerminator
-    RealTerminator().terminate(2**30)  # likely-not-a-pid
+
+    terminator = RealTerminator()
+
+    for exc in (
+        ProcessLookupError(errno.ESRCH, "no such process"),
+        PermissionError(errno.EPERM, "not permitted"),
+        OSError(errno.EINVAL, "invalid argument"),
+    ):
+        def _boom(*_a, _exc=exc, **_k):
+            raise _exc
+
+        # Patch the seam, not os: os.getpgid does not exist on Windows.
+        monkeypatch.setattr(
+            RealTerminator, "_signal_process_group", staticmethod(_boom)
+        )
+        # Must not raise for any of them.
+        terminator.terminate(123456)
 
 
 # --- runner tests (Task 2) -------------------------------------------------
