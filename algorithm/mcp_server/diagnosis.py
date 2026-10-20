@@ -25,7 +25,8 @@ def calculate_reliability(all_probabilities: dict) -> int:
     sorted_probs = sorted(all_probabilities.values(), reverse=True)
     if len(sorted_probs) < 2:
         return 50
-    gap = sorted_probs[0] - sorted_probs[1]
+    # Ignore binary floating-point noise at the decimal score thresholds.
+    gap = round(sorted_probs[0] - sorted_probs[1], 12)
     if gap >= 0.5:
         return 95
     elif gap >= 0.3:
