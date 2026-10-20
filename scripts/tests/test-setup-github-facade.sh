@@ -34,3 +34,10 @@ test -f "$FIXTURE" || { echo "FAIL: fixture missing: $FIXTURE"; exit 1; }
 diff -q "$LICENSE" "$FIXTURE" >/dev/null || \
   { echo "FAIL: LICENSE content differs from fixture"; diff "$LICENSE" "$FIXTURE" | head -20; exit 1; }
 echo "PASS: test_license_content"
+
+# dry-run must not require live GitHub tools, credentials, or jq.
+mkdir -p "$TEST_TMP/empty-bin"
+output=$(PATH="$TEST_TMP/empty-bin" "$BASH" "$SCRIPT" --dry-run 2>&1) || \
+  { echo "FAIL: dry-run requires external tools"; echo "$output"; exit 1; }
+echo "$output" | grep -q "\[done\]" || { echo "FAIL: dry-run did not finish"; exit 1; }
+echo "PASS: test_dry_run_without_external_tools"

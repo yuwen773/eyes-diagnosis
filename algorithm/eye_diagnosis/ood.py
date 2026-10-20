@@ -31,11 +31,3 @@ class OODDetector:
         m = np.einsum("fi,ij,fj->f", diffs, self.covariance_inverse, diffs)
         score = float(np.min(m))
         return OodDecision(is_ood=score > self.threshold, score=score, threshold=self.threshold)
-
-
-_DEFAULT_MEANS = np.zeros((8, 4), dtype=np.float32)
-_DEFAULT_COV_INV = np.eye(4, dtype=np.float32)
-
-
-def build_default_detector(threshold: float = 8.0) -> OODDetector:
-    return OODDetector(_DEFAULT_MEANS, _DEFAULT_COV_INV, threshold=threshold)
