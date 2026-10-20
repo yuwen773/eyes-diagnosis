@@ -130,8 +130,17 @@ class SubprocessRunner:
         stderr_log = out_dir / ".stderr.log"
         start = time.monotonic()
 
-        proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, text=True, bufsize=1)
+        # The child MUST get its own session/process group. RealTerminator
+        # terminates via os.killpg(getpgid(pid)), which signals the whole
+        # group: without this flag the child shares our group and a timeout
+        # would SIGTERM the caller too. That is not hypothetical — CI exited
+        # with 143 (SIGTERM) when these tests first ran under the watchdog job.
+        proc = subprocess.Popen(
+            self.cmd, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, text=True, bufsize=1,
+            # start_new_session is POSIX-only; Windows uses taskkill /T.
+            **({"start_new_session": True} if sys.platform != "win32" else {}),
+        )
 
         last_hb_at = start
         last_epoch: Optional[int] = None
