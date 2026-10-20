@@ -7,6 +7,7 @@ import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.manager.CosManager;
 import com.csust.eyediagnosis.mapper.UploadTaskMapper;
 import com.csust.eyediagnosis.model.entity.UploadTask;
+import com.csust.eyediagnosis.upload.state.UploadCompensationService;
 import com.csust.eyediagnosis.upload.state.UploadStateMachine;
 import com.csust.eyediagnosis.upload.state.UploadStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -37,13 +38,16 @@ public class AgentImageUploadService {
     @Resource
     private UploadTaskMapper uploadTaskMapper;
 
+    @Resource
+    private UploadCompensationService uploadCompensationService;
+
     private static final long MAX_SIZE = 2 * 1024 * 1024;
 
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png"
     );
 
-    private static final String OBJECT_KEY_PREFIX = "agent-chat/";
+    private static final String OBJECT_KEY_PREFIX = UploadCompensationService.OBJECT_KEY_PREFIX;
 
     public String uploadImage(MultipartFile file, Long userId) {
         ThrowUtils.throwIf(userId == null, ErrorCode.NO_AUTH_ERROR, "用户未登录");
@@ -75,7 +79,7 @@ public class AgentImageUploadService {
             task.setTaskId(taskId);
             task.setUserId(userId);
             task.setObjectKey(objectKey);
-            task.setStatus(UploadStatus.PERSISTED.ordinal() + 1);
+            task.setStatus(UploadStatus.PERSISTED.getCode());
             task.setRetryCount(0);
             uploadTaskMapper.insertPending(task);
 
@@ -101,6 +105,8 @@ public class AgentImageUploadService {
         String ownerPrefix = OBJECT_KEY_PREFIX + userId + "/";
         ThrowUtils.throwIf(!objectKey.startsWith(ownerPrefix), ErrorCode.NO_AUTH_ERROR,
                 "无权删除他人图片");
+        // 先登记删除意图：即使下面的 COS 删除失败，补偿任务也会重试清理该对象
+        uploadCompensationService.markDeleted(objectKey, userId);
         if (!cosManager.objectExists(objectKey)) {
             return;
         }

@@ -17,7 +17,7 @@ export default defineComponent({
     const chartRef = ref<HTMLElement | null>(null);
     let chartInstance: echarts.ECharts | null = null;
 
-    const brandColors = ['#c96442', '#d97757', '#7a9e4a', '#5a7a8a', '#8b6b4a'];
+    const brandColors = ['#1b7f6b', '#2f9e83', '#b37708', '#c0392b', '#9a9587', '#6f6a5e'];
 
     const initChart = () => {
       if (!chartRef.value) return;
@@ -37,8 +37,8 @@ export default defineComponent({
           axisPointer: {
             type: 'shadow'
           },
-          backgroundColor: 'rgba(26, 26, 24, 0.95)',
-          borderColor: 'rgba(201, 100, 66, 0.3)',
+          backgroundColor: 'rgba(22, 20, 15, 0.95)',
+          borderColor: 'rgba(27, 127, 107, 0.3)',
           borderWidth: 1,
           textStyle: {
             color: '#f5f4ed',

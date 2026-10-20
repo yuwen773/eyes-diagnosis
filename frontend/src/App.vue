@@ -7,56 +7,58 @@
 <script setup lang="ts">
 // ant-design-vue theme tokens are configured via ConfigProvider
 
+// 医疗编辑风（Clinical Editorial）antd 主题令牌。
+// 同步要求：以下色值必须与 frontend/src/styles/design-system/variables.css 的 --iris-* 保持同值（单一真源）。
 const claudeTheme = {
   token: {
-    colorPrimary: '#c96442',
-    colorBgLayout: '#f5f4ed',
-    colorBgContainer: '#faf9f5',
+    colorPrimary: '#1b7f6b',
+    colorBgLayout: '#f6f4ef',
+    colorBgContainer: '#ffffff',
     colorBgElevated: '#ffffff',
-    colorText: '#141413',
-    colorTextSecondary: '#5e5d59',
-    colorTextTertiary: '#87867f',
-    colorBorder: '#f0eee6',
-    colorBorderSecondary: '#e8e6dc',
+    colorText: '#16140f',
+    colorTextSecondary: '#6f6a5e',
+    colorTextTertiary: '#9a9587',
+    colorBorder: '#e6e2d8',
+    colorBorderSecondary: '#d9d4c6',
     borderRadius: 8,
     borderRadiusLG: 12,
     borderRadiusSM: 6,
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif",
     colorError: '#b53333',
-    colorSuccess: '#52c41a',
-    colorWarning: '#faad14',
+    colorSuccess: '#2f9e6e',
+    colorWarning: '#b37708',
   },
   components: {
     Button: {
-      primaryShadow: '0 2px 4px rgba(20, 20, 19, 0.1)',
-      defaultBorderColor: '#e8e6dc',
-      colorPrimaryHover: '#d97757',
+      primaryShadow: '0 2px 4px rgba(22, 20, 15, 0.08)',
+      defaultBorderColor: '#d9d4c6',
+      colorPrimaryHover: '#155f51',
     },
     Card: {
-      colorBgContainer: '#faf9f5',
+      colorBgContainer: '#ffffff',
       borderRadiusLG: 12,
     },
     Menu: {
-      darkItemBg: '#30302e',
-      darkSubMenuItemBg: '#252523',
-      darkItemColor: '#faf9f5',
-      darkItemHoverColor: '#f5f4ed',
-      darkItemSelectedBg: 'rgba(201, 100, 66, 0.15)',
-      darkItemSelectedColor: '#d97757',
+      darkItemBg: '#16140f',
+      darkSubMenuItemBg: '#100f0b',
+      darkItemColor: '#fbfaf6',
+      darkItemHoverColor: '#f6f4ef',
+      darkItemSelectedBg: 'rgba(27, 127, 107, 0.22)',
+      darkItemSelectedColor: '#4ba693',
     },
     Table: {
-      colorBgContainer: '#faf9f5',
-      headerBg: '#f5f4ed',
-      borderColor: '#f0eee6',
-      rowHoverBg: '#faf9f5',
+      colorBgContainer: '#ffffff',
+      headerBg: '#f6f4ef',
+      borderColor: '#e6e2d8',
+      rowHoverBg: '#fbfaf6',
     },
     Input: {
       colorBgContainer: '#ffffff',
-      activeBorderColor: '#c96442',
-      hoverBorderColor: '#d97757',
+      activeBorderColor: '#1b7f6b',
+      hoverBorderColor: '#4ba693',
     },
     Modal: {
-      colorBgElevated: '#faf9f5',
+      colorBgElevated: '#ffffff',
       borderRadiusLG: 12,
     },
     Tag: {
@@ -64,7 +66,7 @@ const claudeTheme = {
     },
     Select: {
       colorBgContainer: '#ffffff',
-      colorBgElevated: '#faf9f5',
+      colorBgElevated: '#ffffff',
     },
   },
 }

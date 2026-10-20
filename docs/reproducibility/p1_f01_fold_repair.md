@@ -145,11 +145,13 @@ be cloned; it lives only on the host that ran the repair.
    cd algorithm
    pytest eye_diagnosis_p1/tests/test_p2_02a_stability_*.py \
           eye_diagnosis_p1/tests/test_manifest.py \
-          eye_diagnosis_p1/tests/test_training_freeze_folds.py \
-          eye_diagnosis_p1/tests/test_training_datasets.py -q
+          eye_diagnosis_p1/tests/test_training_freeze_folds.py -q
    ```
 
-   Expected: **99/99 pass** in under 30 s.
+   Expected: **94/94 pass** in under 30 s.
+   (`test_training_datasets.py` was removed together with
+   `p1/training/datasets.py`; the production path uses
+   `benchmark/cuda_runtime.BilateralEyeDataset`.)
 
 4. Read the incident evidence locally (only on a host that has the
    gitignored artifacts):

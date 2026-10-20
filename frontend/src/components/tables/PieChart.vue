@@ -17,16 +17,16 @@ export default defineComponent({
     const chartRef = ref<HTMLElement | null>(null);
     let chartInstance: echarts.ECharts | null = null;
 
-    // 品牌色系
+    // 医疗编辑风色系（与 --iris-* 一致：青绿强调 + 严重度语义色 + 中性）
     const brandColors = [
-      '#c96442', // 赤陶色
-      '#d97757', // 浅赤陶
-      '#7a9e4a', // 橄榄绿
-      '#b53333', // 深红
-      '#8b6b4a', // 棕褐
-      '#5a7a8a', // 蓝灰
-      '#9e7a5a', // 沙色
-      '#6b5a7a', // 紫灰
+      '#1b7f6b', // 药用青绿
+      '#2f9e83', // 浅青绿
+      '#b37708', // 琥珀（中风险）
+      '#c0392b', // 深红（高风险）
+      '#9a9587', // 石灰
+      '#6f6a5e', // 暖墨次级
+      '#5a9ea0', // 青蓝辅助
+      '#7a9e4a', // 橄榄中性
     ];
 
     // 计算总数
@@ -53,8 +53,8 @@ export default defineComponent({
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'item',
-          backgroundColor: 'rgba(26, 26, 24, 0.95)',
-          borderColor: 'rgba(201, 100, 66, 0.3)',
+          backgroundColor: 'rgba(22, 20, 15, 0.95)',
+          borderColor: 'rgba(27, 127, 107, 0.3)',
           borderWidth: 1,
           textStyle: {
             color: '#f5f4ed',
@@ -62,8 +62,8 @@ export default defineComponent({
           },
           formatter: (params: { name: string; value: number; percent: number }) => {
             return `<div style="font-weight: 600; margin-bottom: 4px;">${params.name}</div>
-                    <div>病例数: <span style="color: #c96442; font-weight: 600;">${params.value.toLocaleString()}</span></div>
-                    <div>占比: <span style="color: #c96442; font-weight: 600;">${params.percent}%</span></div>`;
+                    <div>病例数: <span style="color: #1b7f6b; font-weight: 600;">${params.value.toLocaleString()}</span></div>
+                    <div>占比: <span style="color: #1b7f6b; font-weight: 600;">${params.percent}%</span></div>`;
           }
         },
         // 图例放底部
@@ -143,7 +143,7 @@ export default defineComponent({
               scaleSize: 8,
               itemStyle: {
                 shadowBlur: 20,
-                shadowColor: 'rgba(201, 100, 66, 0.3)'
+                shadowColor: 'rgba(27, 127, 107, 0.3)'
               },
               label: {
                 fontWeight: 600,

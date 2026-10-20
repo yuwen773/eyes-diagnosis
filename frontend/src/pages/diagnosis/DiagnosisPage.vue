@@ -104,8 +104,8 @@ const toggleFeatures = () => {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.75 0.06 30 / 0.06), transparent),
-    var(--claude-bg-page);
+    radial-gradient(ellipse 80% 50% at 50% 0%, var(--iris-accent-soft), transparent),
+    var(--iris-bg);
   opacity: 0.93;
   z-index: 0;
   pointer-events: none;
@@ -126,19 +126,19 @@ const toggleFeatures = () => {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--claude-brand);
-  background: oklch(0.75 0.06 30 / 0.1);
-  border: 1px solid oklch(0.75 0.06 30 / 0.2);
+  color: var(--iris-accent);
+  background: var(--iris-accent-soft);
+  border: 1px solid var(--iris-accent-line);
   border-radius: 100px;
   padding: 0.3rem 0.9rem;
   margin-bottom: 1.25rem;
 }
 
 .hero-title {
-  font-family: var(--claude-font-serif);
+  font-family: var(--iris-font-serif);
   font-size: clamp(2.25rem, 5vw, 3.25rem);
   font-weight: 400;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   line-height: 1.1;
   margin: 0 0 0.75rem;
   letter-spacing: -0.02em;
@@ -146,7 +146,7 @@ const toggleFeatures = () => {
 
 .hero-subtitle {
   font-size: 1.0625rem;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   max-width: 32ch;
   margin: 0 auto;
   line-height: 1.65;
@@ -154,7 +154,7 @@ const toggleFeatures = () => {
 
 .hero-note {
   font-size: 0.75rem;
-  color: var(--claude-text-tertiary);
+  color: var(--iris-ink-3);
   margin: 1rem auto 0;
   max-width: 40ch;
   line-height: 1.5;
@@ -173,8 +173,8 @@ const toggleFeatures = () => {
 .upload-glow {
   position: absolute;
   inset: -1.5rem;
-  background: radial-gradient(ellipse at center, oklch(0.75 0.06 30 / 0.1), transparent 70%);
-  border-radius: var(--claude-radius-2xl);
+  background: radial-gradient(ellipse at center, var(--iris-accent-soft), transparent 70%);
+  border-radius: var(--iris-radius-2xl);
   pointer-events: none;
   animation: pulse-glow 5s ease-in-out infinite;
 }
@@ -186,12 +186,12 @@ const toggleFeatures = () => {
 
 .upload-inner {
   position: relative;
-  border-radius: var(--claude-radius-xl);
-  background: var(--claude-bg-elevated);
-  border: 1px solid oklch(0.75 0.04 30 / 0.15);
+  border-radius: var(--iris-radius-xl);
+  background: var(--iris-surface);
+  border: 1px solid var(--iris-line);
   box-shadow:
-    0 8px 32px oklch(0.75 0.03 30 / 0.1),
-    0 1px 3px rgba(20, 20, 19, 0.04);
+    0 8px 32px rgba(22, 20, 15, 0.08),
+    0 1px 3px rgba(22, 20, 15, 0.04);
   overflow: hidden;
 }
 
@@ -212,20 +212,20 @@ const toggleFeatures = () => {
   gap: 0.5rem;
   margin: 0 auto 2rem;
   background: transparent;
-  border: 1px solid var(--claude-border-cream);
+  border: 1px solid var(--iris-line);
   border-radius: 100px;
   padding: 0.625rem 1.25rem;
   cursor: pointer;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   font-size: 0.8125rem;
   font-family: inherit;
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .features-toggle:hover {
-  color: var(--claude-brand);
-  border-color: oklch(0.75 0.06 30 / 0.3);
-  background: oklch(0.75 0.06 30 / 0.05);
+  color: var(--iris-accent);
+  border-color: var(--iris-accent-line);
+  background: var(--iris-accent-soft);
 }
 
 .features-toggle-icon {
@@ -257,9 +257,9 @@ const toggleFeatures = () => {
   gap: 1rem;
   align-items: flex-start;
   padding: 1.5rem;
-  border-radius: var(--claude-radius-lg);
-  background: var(--claude-bg-elevated);
-  border: 1px solid var(--claude-border-cream);
+  border-radius: var(--iris-radius-lg);
+  background: var(--iris-surface);
+  border: 1px solid var(--iris-line);
   transition:
     transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
@@ -270,39 +270,40 @@ const toggleFeatures = () => {
 
 .feature-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px oklch(0.75 0.03 30 / 0.1);
-  border-color: oklch(0.75 0.05 30 / 0.2);
+  box-shadow: 0 12px 28px rgba(22, 20, 15, 0.08);
+  border-color: var(--iris-accent-line);
 }
 
 .feature-icon-wrap {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
-  border-radius: var(--claude-radius-md);
-  background: oklch(0.75 0.05 30 / 0.08);
+  border-radius: var(--iris-radius-md);
+  background: var(--iris-accent-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.125rem;
-  color: var(--claude-brand);
+  color: var(--iris-accent);
   transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .feature-item:hover .feature-icon-wrap {
-  background: oklch(0.75 0.06 30 / 0.15);
+  background: var(--iris-accent);
+  color: var(--iris-on-accent);
   transform: scale(1.06);
 }
 
 .feature-body h3 {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   margin: 0 0 0.375rem;
 }
 
 .feature-body p {
   font-size: 0.8125rem;
-  color: var(--claude-text-tertiary);
+  color: var(--iris-ink-3);
   line-height: 1.6;
   margin: 0;
 }

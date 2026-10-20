@@ -22,4 +22,17 @@ class UploadStateMachineTest {
             machine.transition("t1", UploadStatus.PERSISTED, UploadStatus.FAILED);
         });
     }
+
+    @Test
+    void canMarkPersistedTaskAsDeleted() {
+        UploadStateMachine machine = new UploadStateMachine();
+        assertDoesNotThrow(() -> machine.transition("t1", UploadStatus.PERSISTED, UploadStatus.DELETED));
+    }
+
+    @Test
+    void deletedIsTerminal() {
+        UploadStateMachine machine = new UploadStateMachine();
+        assertThrows(IllegalStateTransitionException.class,
+                () -> machine.transition("t1", UploadStatus.DELETED, UploadStatus.UPLOADING));
+    }
 }

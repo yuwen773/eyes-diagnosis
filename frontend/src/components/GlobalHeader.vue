@@ -106,7 +106,7 @@ const items = ref<MenuProps['items']>(originItems.value)
       </div>
     </div>
 
-    <!-- Terracotta accent — the signature moment -->
+    <!-- 青绿 accent — the signature moment -->
     <div class="header-accent" aria-hidden="true"></div>
   </header>
 </template>
@@ -116,11 +116,11 @@ const items = ref<MenuProps['items']>(originItems.value)
 .header-container {
   position: relative;
   background:
-    linear-gradient(180deg, oklch(0.22 0.012 55) 0%, oklch(0.18 0.015 50) 100%);
+    linear-gradient(180deg, oklch(0.2 0.01 175) 0%, oklch(0.16 0.01 175) 100%);
   box-shadow:
     0 4px 24px oklch(0.12 0.02 40 / 0.25),
-    0 1px 0 oklch(0.14 0.015 50);
-  z-index: var(--claude-z-sticky, 200);
+    0 1px 0 oklch(0.14 0.01 175);
+  z-index: 200;
   animation: header-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -138,7 +138,7 @@ const items = ref<MenuProps['items']>(originItems.value)
   background:
     radial-gradient(
       ellipse 60% 100% at 15% 50%,
-      oklch(0.55 0.08 30 / 0.07) 0%,
+      oklch(0.6 0.04 175 / 0.07) 0%,
       transparent 70%
     );
   pointer-events: none;
@@ -188,7 +188,7 @@ const items = ref<MenuProps['items']>(originItems.value)
   inset: -6px;
   background: radial-gradient(
     circle at center,
-    oklch(0.6 0.12 30 / 0.2) 0%,
+    oklch(0.6 0.04 175 / 0.2) 0%,
     transparent 70%
   );
   border-radius: 50%;
@@ -211,7 +211,7 @@ const items = ref<MenuProps['items']>(originItems.value)
 }
 
 .brand-name {
-  font-family: var(--claude-font-serif);
+  font-family: var(--iris-font-serif);
   font-size: 24px;
   font-weight: 700;
   color: oklch(0.97 0.005 80);
@@ -220,10 +220,10 @@ const items = ref<MenuProps['items']>(originItems.value)
 }
 
 .brand-tagline {
-  font-family: var(--claude-font-sans);
+  font-family: var(--iris-font-sans);
   font-size: 11px;
   font-weight: 400;
-  color: oklch(0.65 0.015 60);
+  color: oklch(0.65 0.01 175);
   letter-spacing: 4px;
 }
 
@@ -263,22 +263,22 @@ const items = ref<MenuProps['items']>(originItems.value)
   font-weight: 600 !important;
 }
 
-/* Terracotta underline indicator */
+/* 青绿 underline indicator */
 :deep(.ant-menu-horizontal > .ant-menu-item::after),
 :deep(.ant-menu-horizontal > .ant-menu-submenu::after) {
   height: 2px !important;
   bottom: 0 !important;
-  border-color: oklch(0.6 0.1 30) !important;
+  border-color: var(--iris-accent) !important;
   transition: border-color 0.25s ease !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item-selected::after) {
-  border-color: oklch(0.6 0.1 30) !important;
+  border-color: var(--iris-accent) !important;
 }
 
 :deep(.ant-menu-horizontal > .ant-menu-item:hover::after),
 :deep(.ant-menu-horizontal > .ant-menu-submenu:hover::after) {
-  border-color: oklch(0.6 0.12 35) !important;
+  border-color: var(--iris-accent-strong) !important;
 }
 
 /* ─── Actions ─── */
@@ -309,7 +309,7 @@ const items = ref<MenuProps['items']>(originItems.value)
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 1px;
-  color: oklch(0.55 0.08 30);
+  color: var(--iris-accent);
   background: oklch(0.96 0.005 80);
   border-radius: 100px;
   text-decoration: none;
@@ -318,13 +318,13 @@ const items = ref<MenuProps['items']>(originItems.value)
 }
 
 .login-link:hover {
-  background: oklch(0.6 0.1 30);
+  background: var(--iris-accent);
   color: oklch(0.98 0.005 80);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px oklch(0.45 0.08 30 / 0.3);
+  box-shadow: 0 4px 12px oklch(0.45 0.04 175 / 0.3);
 }
 
-/* ─── Terracotta accent line — hero moment ─── */
+/* ─── 青绿 accent line — signature moment ─── */
 .header-accent {
   position: absolute;
   bottom: 0;
@@ -334,9 +334,9 @@ const items = ref<MenuProps['items']>(originItems.value)
   background: linear-gradient(
     90deg,
     transparent 0%,
-    oklch(0.6 0.12 30 / 0.4) 15%,
-    oklch(0.6 0.12 30) 50%,
-    oklch(0.6 0.12 30 / 0.4) 85%,
+    oklch(0.6 0.04 175 / 0.4) 15%,
+    oklch(0.6 0.04 175) 50%,
+    oklch(0.6 0.04 175 / 0.4) 85%,
     transparent 100%
   );
   animation: accent-glow 3s ease-in-out infinite alternate;

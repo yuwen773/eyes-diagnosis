@@ -17,8 +17,8 @@
             <svg class="ev-svg" viewBox="0 0 240 200" fill="none">
               <defs>
                 <radialGradient id="evCoreGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#e8956a" />
-                  <stop offset="100%" stop-color="#d97757" />
+                  <stop offset="0%" stop-color="#2f9e83" />
+                  <stop offset="100%" stop-color="#1b7f6b" />
                 </radialGradient>
                 <filter id="evGlow">
                   <feGaussianBlur stdDeviation="5" result="blur" />
@@ -205,21 +205,21 @@ const quickHints = [
     title: '上传眼底图像',
     desc: '发送眼底图片，AI 辅助分析',
     action: '上传我的眼底OCT图像',
-    color: '#d97757',
+    color: '#1b7f6b',
   },
   {
     icon: 'text',
     title: '描述症状',
     desc: '用文字描述眼部不适',
     action: '我最近眼睛干涩、偶尔模糊是怎么回事',
-    color: '#8b5a7a',
+    color: '#b37708',
   },
   {
     icon: 'learn',
     title: '了解眼病',
     desc: '查询眼科疾病知识',
     action: '介绍一下白内障的症状和预防',
-    color: '#5a8b7a',
+    color: '#5a9ea0',
   },
 ]
 
@@ -353,7 +353,7 @@ watch(() => props.loading, (val) => {
   height: 320px;
   top: 5%;
   left: 15%;
-  background: radial-gradient(circle, oklch(0.72 0.09 30 / 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.6 0.05 175 / 0.3) 0%, transparent 70%);
 }
 
 .n2 {
@@ -361,7 +361,7 @@ watch(() => props.loading, (val) => {
   height: 250px;
   top: 40%;
   right: 10%;
-  background: radial-gradient(circle, oklch(0.55 0.07 320 / 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.6 0.04 175 / 0.2) 0%, transparent 70%);
   animation-delay: 3s;
 }
 
@@ -370,7 +370,7 @@ watch(() => props.loading, (val) => {
   height: 200px;
   bottom: 10%;
   left: 30%;
-  background: radial-gradient(circle, oklch(0.72 0.06 50 / 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, oklch(0.6 0.05 175 / 0.15) 0%, transparent 70%);
   animation-delay: 6s;
 }
 
@@ -422,7 +422,7 @@ watch(() => props.loading, (val) => {
 }
 
 .ev-eye {
-  stroke: #d97757;
+  stroke: #1b7f6b;
   stroke-width: 2;
   fill: none;
   opacity: 0.45;
@@ -430,7 +430,7 @@ watch(() => props.loading, (val) => {
 }
 
 .ev-iris-ring {
-  stroke: #d97757;
+  stroke: #1b7f6b;
   stroke-width: 1.2;
   fill: none;
   opacity: 0.5;
@@ -448,7 +448,7 @@ watch(() => props.loading, (val) => {
 }
 
 .ev-pulse {
-  stroke: #d97757;
+  stroke: #1b7f6b;
   stroke-width: 1;
   stroke-linecap: round;
   opacity: 0;
@@ -463,14 +463,14 @@ watch(() => props.loading, (val) => {
 }
 
 .ev-node {
-  fill: #d97757;
+  fill: #1b7f6b;
   opacity: 0;
   animation: evNodeAppear 3s ease-out infinite;
   animation-delay: var(--delay);
 }
 
 .ev-pupil {
-  fill: #d97757;
+  fill: #1b7f6b;
   opacity: 0.9;
   animation: evPupilBreath 2.5s ease-in-out infinite;
 }
@@ -482,7 +482,7 @@ watch(() => props.loading, (val) => {
 }
 
 .ev-particle {
-  fill: #e8956a;
+  fill: #2f9e83;
   opacity: 0;
   animation: evParticleFlow 3s ease-in-out infinite;
   animation-delay: var(--delay);
@@ -603,7 +603,7 @@ watch(() => props.loading, (val) => {
 .guide-card:hover {
   border-color: var(--accent, var(--claude-brand));
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px oklch(0.72 0.09 30 / 0.1);
+  box-shadow: 0 8px 24px oklch(0.6 0.05 175 / 0.1);
 }
 
 .guide-card:hover::before {
@@ -722,9 +722,9 @@ watch(() => props.loading, (val) => {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    oklch(0.72 0.09 30 / 0.04) 40%,
-    oklch(0.72 0.09 30 / 0.08) 50%,
-    oklch(0.72 0.09 30 / 0.04) 60%,
+    oklch(0.6 0.05 175 / 0.04) 40%,
+    oklch(0.6 0.05 175 / 0.08) 50%,
+    oklch(0.6 0.05 175 / 0.04) 60%,
     transparent 100%
   );
   animation: shimmer 2.8s ease-in-out infinite;
@@ -782,12 +782,12 @@ watch(() => props.loading, (val) => {
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  box-shadow: 0 4px 20px oklch(0.72 0.09 30 / 0.35);
+  box-shadow: 0 4px 20px oklch(0.6 0.05 175 / 0.35);
 }
 
 .scroll-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 28px oklch(0.72 0.09 30 / 0.4);
+  box-shadow: 0 8px 28px oklch(0.6 0.05 175 / 0.4);
 }
 
 .scroll-btn:hover .scroll-icon {
@@ -813,7 +813,7 @@ watch(() => props.loading, (val) => {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  border: 2px solid oklch(0.72 0.09 30 / 0.5);
+  border: 2px solid oklch(0.6 0.05 175 / 0.5);
   pointer-events: none;
   animation: scrollPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -850,7 +850,7 @@ watch(() => props.loading, (val) => {
   pointer-events: none;
   background: var(--claude-error);
   box-shadow: 0 0 0 2px var(--claude-bg-page),
-    0 2px 8px oklch(0.55 0.18 25 / 0.4);
+    0 2px 8px rgba(192, 57, 43, 0.4);
   animation: badgePop 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 

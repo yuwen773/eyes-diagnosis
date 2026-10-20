@@ -34,7 +34,7 @@
       />
       <div class="user-name">{{ loginUser.userName }}</div>
       <div class="user-role">
-        <a-tag :color="loginUser.userRole === 'admin' ? '#1890ff' : '#52c41a'" class="role-tag">
+        <a-tag :color="loginUser.userRole === 'admin' ? '#1b7f6b' : '#52c41a'" class="role-tag">
           <template #icon>
             <SafetyCertificateOutlined v-if="loginUser.userRole === 'admin'" />
             <UserOutlined v-else />

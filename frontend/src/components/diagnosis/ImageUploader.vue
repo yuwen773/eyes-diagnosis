@@ -292,16 +292,16 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
 }
 
 .image-uploader-card {
-  border-radius: var(--claude-radius-lg);
+  border-radius: var(--iris-radius-lg);
 }
 
 .upload-dragger {
-  border-radius: var(--claude-radius-md);
+  border-radius: var(--iris-radius-md);
   transition: all 0.3s ease;
 }
 
 .upload-dragger:hover {
-  border-color: var(--claude-brand);
+  border-color: var(--iris-accent);
 }
 
 .upload-placeholder {
@@ -337,22 +337,22 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
   width: 100%;
   max-width: 280px;
   height: 6px;
-  background: oklch(0.75 0.04 30 / 0.15);
+  background: var(--iris-accent-soft);
   border-radius: 100px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--claude-brand), oklch(0.75 0.08 30));
+  background: linear-gradient(90deg, var(--iris-accent), var(--iris-accent-strong));
   border-radius: 100px;
   transition: width 0.15s ease-out;
 }
 
 .progress-percentage {
   font-size: 0.75rem;
-  color: var(--claude-text-tertiary);
-  font-family: 'IBM Plex Mono', monospace;
+  color: var(--iris-ink-3);
+  font-family: var(--iris-font-mono);
 }
 
 .progress-error-actions {
@@ -361,11 +361,11 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
 
 .upload-quality-hint {
   font-size: 0.75rem;
-  color: var(--claude-text-tertiary);
+  color: var(--iris-ink-3);
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: oklch(0.75 0.04 30 / 0.06);
-  border-radius: var(--claude-radius-sm);
+  background: var(--iris-accent-soft);
+  border-radius: var(--iris-radius-sm);
 }
 
 /* ── 图片预览 ── */
@@ -382,17 +382,17 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
   height: auto;
   max-height: 300px;
   object-fit: contain;
-  border-radius: var(--claude-radius-md);
+  border-radius: var(--iris-radius-md);
 }
 
 .preview-overlay {
   position: absolute;
   inset: 0;
-  background: oklch(0 0 0 / 0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--claude-radius-md);
+  border-radius: var(--iris-radius-md);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -402,7 +402,7 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
 }
 
 .preview-hint {
-  color: var(--claude-text-inverse);
+  color: var(--iris-on-accent);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -415,12 +415,12 @@ watch(() => diagnosisStore.resultModalVisible, (isOpen) => {
 
 :deep(.ant-upload-drag-icon) {
   font-size: 3rem;
-  color: var(--claude-brand);
+  color: var(--iris-accent);
 }
 
 :deep(.ant-upload-text),
 :deep(.ant-upload-hint) {
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
 }
 
 @media (max-width: 768px) {

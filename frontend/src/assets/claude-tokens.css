@@ -4,32 +4,32 @@
  * This file contains only theme-specific overrides
  */
 
-/* Dark theme override */
+/* Dark theme override — 暖墨版（与医疗编辑风一致） */
 [data-theme="dark"],
 :root[data-theme="dark"] {
-  --claude-bg-page: #141413;
-  --claude-bg-card: #1a1a18;
-  --claude-bg-elevated: #222220;
-  --claude-bg-dark: #30302e;
-  --claude-bg-deep: #0a0a09;
+  --claude-bg-page: #0d0c09;
+  --claude-bg-card: #16140f;
+  --claude-bg-elevated: #1d1b15;
+  --claude-bg-dark: #16140f;
+  --claude-bg-deep: #060503;
 
-  --claude-text-primary: #f5f4ed;
-  --claude-text-secondary: #b0aea5;
-  --claude-text-tertiary: #87867f;
-  --claude-text-inverse: #141413;
+  --claude-text-primary: #f6f4ef;
+  --claude-text-secondary: #b9b4a6;
+  --claude-text-tertiary: #8a857a;
+  --claude-text-inverse: #0d0c09;
 
-  --claude-border-cream: #3d3d3a;
-  --claude-border-warm: #4d4c48;
+  --claude-border-cream: #34322a;
+  --claude-border-warm: #45423a;
 
 
   /* Semantic alias overrides for dark theme */
-  --color-bg-primary: #141413;
-  --color-bg-secondary: #1a1a18;
-  --color-bg-tertiary: #2a2a28;
-  --color-bg-elevated: #222220;
-  --color-text-primary: #f5f4ed;
-  --color-text-secondary: #b0aea5;
-  --color-text-tertiary: #87867f;
-  --color-border-subtle: #3d3d3a;
-  --color-border-default: #4d4c48;
+  --color-bg-primary: #0d0c09;
+  --color-bg-secondary: #16140f;
+  --color-bg-tertiary: #231f18;
+  --color-bg-elevated: #1d1b15;
+  --color-text-primary: #f6f4ef;
+  --color-text-secondary: #b9b4a6;
+  --color-text-tertiary: #8a857a;
+  --color-border-subtle: #34322a;
+  --color-border-default: #45423a;
 }

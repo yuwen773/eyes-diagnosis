@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.service;
 import com.csust.eyediagnosis.config.CosClientConfig;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.manager.CosManager;
+import com.csust.eyediagnosis.upload.state.UploadCompensationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +25,8 @@ class AgentImageUploadServiceTest {
     private CosManager cosManager;
     @Mock
     private CosClientConfig cosClientConfig;
+    @Mock
+    private UploadCompensationService uploadCompensationService;
     @InjectMocks
     private AgentImageUploadService service;
 
@@ -51,6 +54,16 @@ class AgentImageUploadServiceTest {
 
         verify(cosManager).objectExists("agent-chat/7/uuid.png");
         verify(cosManager).deleteObject("agent-chat/7/uuid.png");
+    }
+
+    @Test
+    void deleteRegistersDeletionIntentBeforeTouchingCos() {
+        when(cosClientConfig.getHost()).thenReturn("https://cos-host");
+        when(cosManager.objectExists(anyString())).thenReturn(true);
+
+        service.deleteImage("https://cos-host/agent-chat/7/uuid.png", 7L);
+
+        verify(uploadCompensationService).markDeleted("agent-chat/7/uuid.png", 7L);
     }
 
     @Test
