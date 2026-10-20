@@ -15,6 +15,18 @@ from eye_diagnosis_p1.tests.fakes import (
     FakeTorchAdapter,
 )
 
+@pytest.fixture(autouse=True)
+def _pretend_cuda(monkeypatch):
+    """The epoch loop requires CUDA; CI runners have no GPU.
+
+    ``run_formal_fold`` refuses to start without a device, so the probe is
+    stubbed here. See test_p2_02b_formal_fold_runner.py for the rationale.
+    """
+    import torch
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "manual_seed_all", lambda *a, **k: None)
+
+
 
 def _runner_deps(**kw: Any) -> dict[str, Any]:
     base: dict[str, Any] = {

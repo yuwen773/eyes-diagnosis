@@ -92,14 +92,6 @@ def _frozen_input_hashes(
     return hashes
 
 
-def _cuda_available(torch_adapter: Any) -> bool:
-    """Ask the injected adapter first; fall back to the real torch probe."""
-    probe = getattr(torch_adapter, "cuda_is_available", None)
-    if callable(probe):
-        return bool(probe())
-    return bool(torch.cuda.is_available())
-
-
 def _assert_loaders_disjoint(train_loader: Any, val_loader: Any) -> None:
     """Reject a run whose train and validation loaders share samples.
 
@@ -250,11 +242,13 @@ def run_formal_fold(
     # --- 0. preflight gates (fail-closed, spec §3.4 step 1) ---------------
     # No CUDA -> refuse before touching any artifact. Training on CPU would
     # produce a receipt that looks valid but was never a GPU run.
-    # The injected adapter is authoritative when present: it is the same
-    # seam the probe uses, and it lets tests express "this is a GPU run"
-    # without a physical device.
-    if not _cuda_available(torch_adapter):
-        raise PreflightError("no_cuda", "no CUDA device is available")
+    #
+    # This probes real torch, not the injected adapter, because the epoch
+    # loop below (manual_seed_all, GradScaler) also goes to real torch. A
+    # gate that trusts the adapter would wave through a run that then dies
+    # on the first device call — which is exactly what CI showed.
+    if not torch.cuda.is_available():
+        raise PreflightError("no_cuda", "torch.cuda.is_available() is False")
 
     # Frozen-input integrity: manifest / split / fold must agree. The
     # loaders already reject malformed files; this additionally enforces
