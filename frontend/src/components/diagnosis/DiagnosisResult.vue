@@ -333,22 +333,22 @@ const chartData = computed(() => {
 
 // 根据概率获取颜色（使用设计系统语义色）
 const getProbabilityColor = (probability: number) => {
-  if (probability > 70) return 'var(--claude-success)';
-  if (probability > 30) return 'var(--claude-warning)';
-  return 'var(--claude-error)';
+  if (probability > 70) return 'var(--iris-severity-low)';
+  if (probability > 30) return 'var(--iris-severity-mid)';
+  return 'var(--iris-severity-high)';
 };
 
 const getCalibrationStatusColor = (status: string) =>
-  status === 'CALIBRATED' ? 'blue' : 'default'
+  status === 'CALIBRATED' ? 'var(--iris-accent)' : 'default'
 
-// 根据严重程度获取颜色
+// 根据严重程度获取颜色（语义令牌，与品牌色解耦）
 const getSeverityColor = (severity: string) => {
   switch (severity) {
-    case 'normal': return 'green';
-    case 'mild': return 'orange';
-    case 'moderate': return 'gold';
-    case 'severe': return 'red';
-    default: return 'gray';
+    case 'normal': return 'var(--iris-severity-low)';
+    case 'mild': return 'var(--iris-severity-mid)';
+    case 'moderate': return 'var(--iris-severity-mid)';
+    case 'severe': return 'var(--iris-severity-high)';
+    default: return 'var(--iris-ink-3)';
   }
 };
 
@@ -376,9 +376,9 @@ const screenReaderSummary = computed(() => {
 .diagnosis-container {
   display: flex;
   flex-direction: column;
-  gap: var(--claude-space-4);
-  padding: var(--claude-space-5);
-  background-color: var(--claude-bg-page);
+  gap: var(--iris-space-4);
+  padding: var(--iris-space-5);
+  background-color: var(--iris-bg);
 }
 
 .medical-meta {
@@ -391,7 +391,7 @@ const screenReaderSummary = computed(() => {
 .action-bar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--claude-space-2);
+  margin-bottom: var(--iris-space-2);
 }
 
 /* 骨架屏特定样式 */
@@ -405,12 +405,12 @@ const screenReaderSummary = computed(() => {
 
 /* 添加动画效果使加载更自然 */
 .ant-skeleton {
-  padding: var(--claude-space-4);
+  padding: var(--iris-space-4);
 }
 
 .ant-skeleton-content .ant-skeleton-title {
   height: 24px;
-  margin-bottom: var(--claude-space-4);
+  margin-bottom: var(--iris-space-4);
 }
 
 .ant-skeleton-content .ant-skeleton-paragraph li {
@@ -422,13 +422,22 @@ const screenReaderSummary = computed(() => {
 .middle-section,
 .bottom-section {
   width: 100%;
-  border-radius: var(--claude-radius-md);
-  box-shadow: var(--claude-shadow-sm);
+  border-radius: var(--iris-radius-md);
+  box-shadow: var(--iris-shadow-sm);
+}
+
+/* 顶部诊断结果样式 */
+.top-section {
+  padding: var(--iris-space-4);
+}
+
+.middle-section {
+  padding: var(--iris-space-4);
 }
 
 /* 顶部诊断结果样式 */
 .main-diagnosis {
-  padding: var(--claude-space-4);
+  padding: var(--iris-space-4);
 }
 
 .diagnosis-header {
@@ -439,13 +448,13 @@ const screenReaderSummary = computed(() => {
 
 .header-icon {
   font-size: 1.5rem;
-  color: var(--claude-brand);
+  color: var(--iris-accent);
   margin-right: 12px;
 }
 
 .diagnosis-title {
   font-size: 1.375rem;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   margin: 0 12px 0 0;
   min-width: 0;
   flex: 1;
@@ -470,7 +479,7 @@ const screenReaderSummary = computed(() => {
 
 .confidence-label {
   font-weight: 500;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   flex-shrink: 0;
 }
 
@@ -481,14 +490,15 @@ const screenReaderSummary = computed(() => {
 
 .probability-value {
   font-weight: bold;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   width: 50px;
   text-align: right;
+  font-family: var(--iris-font-mono);
 }
 
 .section-title {
   font-size: 1.125rem;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -499,16 +509,16 @@ const screenReaderSummary = computed(() => {
 }
 
 .section-content {
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   line-height: 1.8;
   margin: 0;
 }
 
 /* 治疗建议样式 */
 .recommendation-list {
-  background-color: var(--claude-bg-card);
-  border-radius: var(--claude-radius-sm);
-  padding: var(--claude-space-4);
+  background-color: var(--iris-surface-2);
+  border-radius: var(--iris-radius-sm);
+  padding: var(--iris-space-4);
 }
 
 .recommendation-item {
@@ -520,8 +530,8 @@ const screenReaderSummary = computed(() => {
 .recommendation-number {
   width: 24px;
   height: 24px;
-  background-color: var(--claude-success);
-  color: var(--claude-text-inverse);
+  background-color: var(--iris-accent);
+  color: var(--iris-on-accent);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -533,26 +543,22 @@ const screenReaderSummary = computed(() => {
 .recommendation-text {
   flex-grow: 1;
   min-width: 0;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   line-height: 1.6;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 /* 中间部分样式 */
-.middle-section {
-  padding: var(--claude-space-4);
-}
-
 .other-diagnoses {
-  padding-right: var(--claude-space-4);
+  padding-right: var(--iris-space-4);
 }
 
 .vertical-bars {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: var(--claude-space-4);
+  margin-top: var(--iris-space-4);
 }
 
 .bar-container {
@@ -567,7 +573,7 @@ const screenReaderSummary = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   font-weight: 500;
 }
 
@@ -583,7 +589,7 @@ const screenReaderSummary = computed(() => {
 /* 底部可靠性样式 */
 .bottom-section {
   font-size: 1.125rem;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   margin-bottom: 12px;
   display: flex;
   align-items: flex-start;
@@ -598,7 +604,7 @@ const screenReaderSummary = computed(() => {
 
 .reliability-label {
   font-weight: 500;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   margin-right: 12px;
   display: flex;
   align-items: center;
@@ -612,19 +618,19 @@ const screenReaderSummary = computed(() => {
 }
 
 /* 严重程度颜色 */
-.severity-normal { color: var(--claude-success); }
-.severity-mild { color: var(--claude-warning); }
-.severity-moderate { color: var(--claude-warning); }
-.severity-severe { color: var(--claude-error); }
+.severity-normal { color: var(--iris-severity-low); }
+.severity-mild { color: var(--iris-severity-mid); }
+.severity-moderate { color: var(--iris-severity-mid); }
+.severity-severe { color: var(--iris-severity-high); }
 
 /* 图片列样式 */
 .image-col {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--claude-space-4);
-  background-color: var(--claude-bg-card);
-  border-radius: var(--claude-radius-md);
+  padding: var(--iris-space-4);
+  background-color: var(--iris-surface-2);
+  border-radius: var(--iris-radius-md);
 }
 
 .image-container {
@@ -634,15 +640,15 @@ const screenReaderSummary = computed(() => {
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  border-radius: var(--claude-radius-sm);
-  box-shadow: var(--claude-shadow-sm);
+  border-radius: var(--iris-radius-sm);
+  box-shadow: var(--iris-shadow-sm);
 }
 
 .diagnosis-image {
   max-width: 100%;
   max-height: 400px;
   object-fit: contain;
-  border-radius: var(--claude-radius-sm);
+  border-radius: var(--iris-radius-sm);
   transition: transform 0.3s;
 }
 
@@ -663,24 +669,25 @@ const screenReaderSummary = computed(() => {
   margin-top: 8px;
   margin-left: 0;
   padding: 12px;
-  border-radius: var(--claude-radius-sm);
+  border-radius: var(--iris-radius-sm);
+  background: var(--iris-surface-2);
 }
 
 /* 医疗免责声明样式 */
 .disclaimer-section {
-  background: linear-gradient(135deg, oklch(0.92 0.01 60), oklch(0.95 0.02 30));
-  border: 1px solid oklch(0.78 0.05 30 / 0.2);
+  background: var(--iris-surface-2);
+  border: 1px solid var(--iris-line);
 }
 
 .disclaimer-content {
   display: flex;
   align-items: flex-start;
-  gap: var(--claude-space-4);
+  gap: var(--iris-space-4);
 }
 
 .disclaimer-icon {
   font-size: 1.5rem;
-  color: var(--claude-brand);
+  color: var(--iris-accent);
   flex-shrink: 0;
   margin-top: 0.25rem;
 }
@@ -692,27 +699,27 @@ const screenReaderSummary = computed(() => {
 .disclaimer-title {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--claude-text-primary);
+  color: var(--iris-ink);
   margin: 0 0 0.375rem;
 }
 
 .disclaimer-body {
   font-size: 0.8125rem;
-  color: var(--claude-text-secondary);
+  color: var(--iris-ink-2);
   line-height: 1.65;
   margin: 0;
 }
 
 .doctor-consult {
-  margin-top: var(--claude-space-4);
+  margin-top: var(--iris-space-4);
   padding-top: 0.75rem;
-  border-top: 1px solid oklch(0.78 0.05 30 / 0.15);
+  border-top: 1px solid var(--iris-line);
   text-align: center;
 }
 
 .consult-text {
   font-size: 0.8125rem;
-  color: var(--claude-text-tertiary);
+  color: var(--iris-ink-3);
 }
 
 /* 屏幕阅读器专用（视觉隐藏但可读） */

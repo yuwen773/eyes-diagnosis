@@ -50,8 +50,8 @@ export default defineComponent({
 
     // Warm color palette
     const colors = {
-      primary: '#c96442',
-      secondary: '#d97757',
+      primary: '#1b7f6b',
+      secondary: '#2f9e83',
       background: '#faf9f5',
       text: '#5e5d59'
     };

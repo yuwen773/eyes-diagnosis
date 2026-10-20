@@ -240,7 +240,7 @@ const editableData = reactive<API.DiagnosisResultVO>({
   severity: '', probability: 0, details: '', recommendations: '', url: ''
 })
 
-// 严重程度：0=低(green), 1=中(brand), 2=高(deep terracotta)
+// 严重程度：0=低(green), 1=中(amber-iris-soft), 2=高(red)
 const severityLevel = computed(() => {
   const map: Record<string, string> = { '低': 'low', '中': 'medium', '高': 'high' }
   return map[props.report?.severity ?? ''] ?? 'medium'

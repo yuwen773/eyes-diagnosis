@@ -245,7 +245,7 @@ onUnmounted(() => {
 
 .agent-chat-input.focused .input-container {
   border-color: var(--claude-brand);
-  box-shadow: 0 0 0 3px oklch(0.72 0.09 30 / 0.12), var(--claude-shadow-md);
+  box-shadow: 0 0 0 3px oklch(0.6 0.05 175 / 0.12), var(--claude-shadow-md);
   transform: translateY(-1px);
 }
 
@@ -282,7 +282,7 @@ onUnmounted(() => {
 
 .img-preview:hover {
   border-color: var(--claude-brand);
-  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.15), var(--claude-shadow-md);
+  box-shadow: 0 0 0 2px oklch(0.6 0.05 175 / 0.15), var(--claude-shadow-md);
   transform: scale(1.05);
 }
 
@@ -379,7 +379,7 @@ onUnmounted(() => {
 }
 
 .attachment-card:has(.file-icon) .remove-badge:hover {
-  background: oklch(0.55 0.18 25 / 0.1);
+  background: rgba(192, 57, 43, 0.1);
   color: var(--claude-error);
 }
 
@@ -424,7 +424,7 @@ onUnmounted(() => {
 
 .attach-btn:hover {
   color: var(--claude-brand);
-  background: oklch(0.72 0.09 30 / 0.06);
+  background: oklch(0.6 0.05 175 / 0.06);
 }
 
 /* ============ Textarea ============ */
@@ -509,7 +509,7 @@ onUnmounted(() => {
 .send-btn {
   background: var(--claude-brand);
   color: white;
-  box-shadow: 0 2px 8px oklch(0.72 0.09 30 / 0.3);
+  box-shadow: 0 2px 8px oklch(0.6 0.05 175 / 0.3);
 }
 
 .send-btn:disabled {
@@ -522,20 +522,20 @@ onUnmounted(() => {
 
 .send-btn:not(:disabled):hover {
   transform: translateY(-1px) scale(1.08);
-  box-shadow: 0 4px 16px oklch(0.72 0.09 30 / 0.4);
+  box-shadow: 0 4px 16px oklch(0.6 0.05 175 / 0.4);
   filter: brightness(1.08);
 }
 
 .send-btn:not(:disabled):active {
   transform: scale(0.93);
-  box-shadow: 0 1px 4px oklch(0.72 0.09 30 / 0.2);
+  box-shadow: 0 1px 4px oklch(0.6 0.05 175 / 0.2);
 }
 
 /* -- Stop button -- */
 .stop-btn {
   background: var(--claude-error);
   color: white;
-  box-shadow: 0 2px 8px oklch(0.55 0.18 25 / 0.3);
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
   animation: stopPulse 1.5s ease-in-out infinite;
 }
 
@@ -550,8 +550,8 @@ onUnmounted(() => {
 }
 
 @keyframes stopPulse {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.18 25 / 0.3); }
-  50% { box-shadow: 0 0 0 6px oklch(0.55 0.18 25 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(192, 57, 43, 0); }
 }
 
 /* Button swap transition */
@@ -591,6 +591,6 @@ onUnmounted(() => {
 }
 
 .disclaimer {
-  font-style: italic;
+  font-weight: 500;
 }
 </style>

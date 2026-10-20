@@ -374,18 +374,18 @@ const getResultColor = (result: string | undefined): string => {
   if (result.includes('轻度')) return 'blue'
   if (result.includes('中度')) return 'orange'
   if (result.includes('重度')) return 'red'
-  return 'purple'
+  return 'default'
 }
 
-// 置信度颜色
+// 置信度颜色（与严重度语义色一致：绿 / 琥珀 / 红）
 const getConfidenceColor = (confidence: number | undefined): string => {
   const val = confidence ?? 0
-  if (val >= 80) return '#52c41a'
-  if (val >= 50) return '#faad14'
-  return '#ff4d4f'
+  if (val >= 80) return '#2f9e6e'
+  if (val >= 50) return '#b37708'
+  return '#c0392b'
 }
 
-// 严重程度颜色
+// 严重程度颜色（与严重度语义色一致）
 const getSeverityColor = (severity: string | undefined): string => {
   switch (severity) {
     case '低': return 'green'

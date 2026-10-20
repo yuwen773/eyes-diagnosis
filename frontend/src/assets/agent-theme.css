@@ -1,55 +1,16 @@
 /**
- * Agent 组件 CSS 变量 — 温暖赤陶品牌
- * 所有变量均从 claude-tokens.css 派生，保持品牌一致性
+ * Agent 组件 CSS 变量 — 医疗编辑风
+ * 颜色 / 文字 / 边框 / 状态 ID 全部继承 variables.css 的 --iris-* 规范令牌，
+ * 本文件仅保留 Agent 子系统专属的间距 / 圆角 / 过渡 / 阴影覆盖，避免三源漂移。
  */
 :root {
-  /* 主色 — 赤陶 */
-  --color-primary-50: #fdf2ef;
-  --color-primary-100: #fbe6de;
-  --color-primary-200: #f7cdbd;
-  --color-primary-300: #f0b496;
-  --color-primary-400: #e69466;
-  --color-primary-500: var(--claude-brand);
-  --color-primary-600: var(--claude-brand-dark);
-  --color-primary-700: #8a4325;
-  --color-primary-800: #6b331c;
-  --color-primary-900: #4d2414;
-
-  /* 次要色 — 珊瑚 */
-  --color-secondary-400: var(--claude-brand-light);
-  --color-secondary-500: #c06845;
-
-  /* 强调色 — 暖调 */
-  --color-accent-purple: #8b5a7a;
-  --color-accent-pink: #c9647a;
+  /* 保留 Agent 专属的强调青（ToolRequestMessage 等使用） */
   --color-accent-cyan: #5a9ea0;
 
-  /* 背景表面 */
-  --color-bg-primary: var(--claude-bg-page);
-  --color-bg-secondary: var(--claude-bg-card);
-  --color-bg-tertiary: #f0eee6;
-  --color-bg-elevated: var(--claude-bg-elevated);
-  --color-bg-hover: #f7f5ef;
-  --color-bg-active: #f0ebe1;
-
-  /* 文字 */
-  --color-text-primary: var(--claude-text-primary);
-  --color-text-secondary: var(--claude-text-secondary);
-  --color-text-tertiary: var(--claude-text-tertiary);
-  --color-text-disabled: #b0aea5;
-  --color-text-inverse: var(--claude-text-inverse);
-
-  /* 边框 */
-  --color-border-subtle: var(--claude-border-cream);
-  --color-border-default: var(--claude-border-warm);
-  --color-border-strong: #c2c0b6;
-  --color-border-accent: rgba(201, 100, 66, 0.4);
-
-  /* 状态色 */
-  --color-success: var(--claude-success);
-  --color-warning: var(--claude-warning);
-  --color-error: var(--claude-error);
-  --color-info: var(--claude-brand);
+  /* 背景表面（覆盖：Agent 页需要更明确的 hover/active 反馈） */
+  --color-bg-tertiary: #efece4;
+  --color-bg-hover: #f0ede6;
+  --color-bg-active: #e9e5da;
 
   /* 间距 */
   --space-1: 0.25rem;
@@ -59,18 +20,17 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
 
-  /* 圆角 */
+  /* 圆角（Agent 子系统用到 2xl） */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-2xl: 24px;
 
-  /* 阴影 */
-  --shadow-sm: var(--claude-shadow-sm);
-  --shadow-md: var(--claude-shadow-md);
-  --shadow-lg: var(--claude-shadow-lg);
-
+  /* 阴影（沿用规范令牌） */
+  --shadow-sm: var(--iris-shadow-sm);
+  --shadow-md: var(--iris-shadow-md);
+  --shadow-lg: var(--iris-shadow-lg);
 
   /* 字体 */
   --text-xs: 0.75rem;
@@ -78,8 +38,8 @@
   --text-base: 1rem;
   --text-lg: 1.125rem;
 
-  /* 过渡 */
-  --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  /* 过渡（克制） */
+  --transition-fast: var(--iris-transition-fast);
+  --transition-base: var(--iris-transition-base);
+  --transition-slow: var(--iris-transition-slow);
 }

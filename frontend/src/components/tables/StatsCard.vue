@@ -121,23 +121,23 @@ const trendColor = computed(() => isPositive.value ? 'var(--claude-success)' : '
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  background: oklch(from var(--claude-brand) l c h / 0.1);
-  color: var(--claude-brand);
+  background: var(--iris-accent-soft);
+  color: var(--iris-accent);
 }
 
 /* 变体颜色 */
 .stat-card--success .stat-icon-wrap {
-  background: oklch(from var(--claude-success) l c h / 0.1);
-  color: var(--claude-success);
+  background: var(--iris-sev-low-soft);
+  color: var(--iris-sev-low);
 }
 
 .stat-card--warning .stat-icon-wrap {
-  background: oklch(from var(--claude-warning) l c h / 0.1);
-  color: var(--claude-warning);
+  background: var(--iris-sev-moderate-soft);
+  color: var(--iris-sev-moderate);
 }
 
 .stat-card--error .stat-icon-wrap {
-  background: oklch(from var(--claude-error) l c h / 0.1);
-  color: var(--claude-error);
+  background: var(--iris-sev-high-soft);
+  color: var(--iris-sev-high);
 }
 </style>
