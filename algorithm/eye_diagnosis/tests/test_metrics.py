@@ -26,3 +26,17 @@ def test_handles_missing_class():
     metrics = per_class_metrics(probs, labels)
     nan_row = metrics[metrics["label"] == 1].iloc[0]
     assert np.isnan(nan_row["auroc"])
+
+
+def test_auroc_uses_class_probability_when_intermediate_class_is_absent():
+    labels = np.array([0, 2, 0, 2])
+    probs = np.array([
+        [0.80, 0.15, 0.05],
+        [0.10, 0.05, 0.85],
+        [0.75, 0.20, 0.05],
+        [0.20, 0.10, 0.70],
+    ])
+
+    metrics = per_class_metrics(probs, labels)
+
+    assert metrics.loc[metrics["label"] == 2, "auroc"].item() == 1.0

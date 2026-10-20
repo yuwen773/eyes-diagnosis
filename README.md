@@ -162,7 +162,7 @@ python run_mcp_server.py
 
 ![核心数据模型关系图](docs/assets/readme/database-er.png)
 
-MySQL 数据库名 `diagnosis`，建表脚本位于 `src/main/resources/db/schema.sql`。
+MySQL 数据库名 `diagnosis`，schema 以 `src/main/resources/db/migration/` 下的 Flyway 迁移脚本为唯一权威来源（新库基线表由 `src/main/resources/db/callback/` 提供），应用启动时自动执行；已应用的迁移脚本不得再修改。
 
 **以 `t_user` 为中心的 7 张核心表**（均为 `1:N` 一对多关系）：
 

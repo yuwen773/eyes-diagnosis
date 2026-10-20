@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.csust.eyediagnosis.upload.state.UploadStatus.COMPLETED;
+import static com.csust.eyediagnosis.upload.state.UploadStatus.DELETED;
 import static com.csust.eyediagnosis.upload.state.UploadStatus.FAILED;
 import static com.csust.eyediagnosis.upload.state.UploadStatus.PERSISTED;
 import static com.csust.eyediagnosis.upload.state.UploadStatus.UPLOADING;
@@ -15,9 +16,10 @@ public class UploadStateMachine {
 
     private static final Map<UploadStatus, Set<UploadStatus>> ALLOWED = Map.of(
             UPLOADING, Set.of(PERSISTED, FAILED),
-            PERSISTED, Set.of(COMPLETED, FAILED),
+            PERSISTED, Set.of(COMPLETED, FAILED, DELETED),
             FAILED, Set.of(UPLOADING),
-            COMPLETED, Set.of()
+            COMPLETED, Set.of(DELETED),
+            DELETED, Set.of()
     );
 
     public synchronized void transition(String taskId, UploadStatus from, UploadStatus to) {

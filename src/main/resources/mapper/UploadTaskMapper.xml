@@ -14,16 +14,43 @@
         <result column="updateTime" property="updateTime" />
     </resultMap>
 
+    <!--
+      有效对象 = 状态仍在保留集合内的任务。保留集合由调用方传入
+      （UploadStatus.activeCodes()：UPLOADING / PERSISTED / COMPLETED），
+      FAILED 与 DELETED 的对象可被补偿任务清理。
+      历史实现在这里硬编码 status IN (1, 3)，而实际落库的恒为 PERSISTED(2)，
+      导致 selectActiveKeys 恒返回空集、补偿任务会删掉用户全部图片；
+      因此状态集合改由 Java 侧传入，语义只在 UploadStatus 里维护一份。
+    -->
     <select id="selectActiveKeys" resultType="java.lang.String">
         SELECT objectKey
         FROM t_upload_task
         WHERE userId = #{userId}
-          AND status IN (1, 3)
+          AND status IN
+        <foreach item="status" collection="statuses" open="(" separator="," close=")">
+            #{status}
+        </foreach>
     </select>
 
     <insert id="insertPending" parameterType="com.csust.eyediagnosis.model.entity.UploadTask">
         INSERT INTO t_upload_task (taskId, userId, objectKey, status, retryCount, createTime, updateTime)
         VALUES (#{taskId}, #{userId}, #{objectKey}, #{status}, #{retryCount}, NOW(), NOW())
     </insert>
+
+    <select id="selectByObjectKey" resultMap="BaseResultMap">
+        SELECT id, taskId, userId, objectKey, status, retryCount, lastError, createTime, updateTime
+        FROM t_upload_task
+        WHERE userId = #{userId}
+          AND objectKey = #{objectKey}
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_upload_task
+        SET status = #{toStatus}, updateTime = NOW()
+        WHERE taskId = #{taskId}
+          AND status = #{fromStatus}
+    </update>
 
 </mapper>
