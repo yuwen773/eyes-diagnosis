@@ -118,6 +118,25 @@ def test_cli_rejects_samples_outside_the_frozen_split(tmp_path: Path, capsys):
     assert "frozen 'val' split" in capsys.readouterr().err
 
 
+def test_cli_rejects_samples_without_a_split_field(tmp_path: Path, capsys):
+    # 缺少 split 与 split="train" 同样危险：没有划分信息就无法证明样本来自
+    # 冻结的 val 集，静默接受会污染评估指标。
+    weights = _write_weights(tmp_path)
+    registry = _write_registry(tmp_path)
+    manifest = _write_manifest(tmp_path, [
+        {"path": "a.jpg", "label": 0},
+    ])
+
+    exit_code = main([
+        "--weights", str(weights),
+        "--manifest", str(manifest),
+        "--registry", str(registry),
+    ])
+
+    assert exit_code == EXIT_FAILED
+    assert "misses 'split'" in capsys.readouterr().err
+
+
 def test_cli_fails_when_weights_are_not_registered(tmp_path: Path, capsys):
     weights = _write_weights(tmp_path)
     registry = tmp_path / "registry.json"

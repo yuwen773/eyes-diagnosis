@@ -9,12 +9,15 @@
         --output artifacts/frozen_metrics.csv
 
 Manifest 路径默认取环境变量 ``FROZEN_VAL_MANIFEST``，其次是
-``datasets/frozen_validation_manifest.json``。权重或 manifest 缺失时，
-CLI 打印 ``SKIP`` 并以 0 退出，方便 CI 无条件调用；加 ``--require-artifacts``
-则在缺失时以 2 退出。
+``datasets/frozen_validation_manifest.json``。
 
-以下情况一律视为评估失败（非 0 退出）：manifest 缺失或格式非法、样本 ID 重复、
-样本不来自冻结的 val 划分、权重未登记在 registry 中。
+产物缺失分两种：
+
+* **权重或 manifest 文件不存在** —— 视为"本环境没有产物"，CLI 打印 ``SKIP``
+  并以 0 退出，方便 CI 无条件调用；加 ``--require-artifacts`` 则在缺失时以 2 退出。
+* **文件存在但内容非法** —— 视为评估失败，以 1 退出：manifest 格式非法、
+  样本 ID 重复、样本不来自冻结的 val 划分或缺少 ``split`` 字段、权重未登记在
+  registry 中。
 """
 
 from __future__ import annotations
@@ -64,8 +67,15 @@ def load_manifest(manifest_path: Path) -> List[Dict[str, Any]]:
         if sample_id in seen:
             raise RuntimeError(f"Duplicate sample id in manifest: {sample_id}")
         seen.add(sample_id)
-        split = item.get("split")
-        if split is not None and split != FROZEN_SPLIT:
+        # 缺少 split 不能放过：没有划分信息就无法证明样本来自冻结的 val 集，
+        # 静默接受会让混入的 train/test 样本污染评估指标。
+        if "split" not in item:
+            raise RuntimeError(
+                f"Manifest entry {sample_id} misses 'split'; every sample must declare "
+                f"split='{FROZEN_SPLIT}'"
+            )
+        split = item["split"]
+        if split != FROZEN_SPLIT:
             raise RuntimeError(
                 f"Manifest entry {sample_id} is not from the frozen '{FROZEN_SPLIT}' split: {split}"
             )

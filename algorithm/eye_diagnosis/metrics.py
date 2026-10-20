@@ -14,8 +14,22 @@ from sklearn.metrics import (
 
 
 def per_class_metrics(probs: np.ndarray, labels: np.ndarray) -> pd.DataFrame:
+    """逐类别计算 sensitivity / specificity / F1 / AUROC / support。
+
+    ``probs`` 的列是类别**稠密 id**：第 ``label`` 列就是类别 ``label`` 的概率。
+    这里刻意不做列到 label 的映射表——调用方必须保证列序与 label 取值一致，
+    否则 ``probs[:, label]`` 会静默取错列（或在 1 起始的 label 上 IndexError）。
+    """
     if probs.ndim != 2:
         raise ValueError("probs must be 2-D")
+    labels_array = np.asarray(labels)
+    observed = set(labels_array.tolist())
+    if observed and max(observed) >= probs.shape[1]:
+        raise ValueError(
+            f"labels exceed probability columns: max label {max(observed)} "
+            f"but probs has only {probs.shape[1]} columns; "
+            "probs columns must be dense class ids"
+        )
     preds = probs.argmax(axis=1)
     classes = sorted(set(labels.tolist()) | set(preds.tolist()))
     cm = confusion_matrix(labels, preds, labels=classes)

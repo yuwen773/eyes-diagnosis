@@ -200,8 +200,8 @@ python -m eye_diagnosis.frozen_eval \
 ```
 
 - `--manifest` 省略时依次取环境变量 `FROZEN_VAL_MANIFEST`、默认路径 `datasets/frozen_validation_manifest.json`
-- 权重或 manifest 缺失时打印 `SKIP` 并以 0 退出（便于 CI 无条件调用）；加 `--require-artifacts` 则以 2 退出
-- 校验失败（manifest 格式非法、样本 ID 重复、样本不来自冻结的 `val` 划分、权重未登记在 `checkpoints/registry.json`）一律以 1 退出
+- 权重或 manifest **文件不存在**时打印 `SKIP` 并以 0 退出（便于 CI 无条件调用）；加 `--require-artifacts` 则以 2 退出
+- 文件存在但**内容非法**（manifest 格式非法、样本 ID 重复、样本不来自冻结的 `val` 划分或缺少 `split` 字段、权重未登记在 `checkpoints/registry.json`）一律以 1 退出
 - `--require-manifest-not-newer` 额外要求 manifest 的修改时间不晚于权重的修改时间（冻结集必须早于模型训练）
 
 ## 可靠性评分

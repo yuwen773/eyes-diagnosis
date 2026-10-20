@@ -141,9 +141,11 @@ public class UploadCompensationService {
     }
 
     private boolean isWithinGracePeriod(Date lastModified, Instant deadline) {
+        // 拿不到 lastModified 时无法证明对象已过宽限期，按"仍在宽限期内"跳过。
+        // 宁可漏删（下次对账会重试），也不能删掉刚上传、还没落库的任务对象。
         if (lastModified == null) {
-            log.warn("对象缺少最后修改时间，按可清理处理");
-            return false;
+            log.warn("对象缺少最后修改时间，跳过本次清理以免误删");
+            return true;
         }
         return lastModified.toInstant().isAfter(deadline);
     }

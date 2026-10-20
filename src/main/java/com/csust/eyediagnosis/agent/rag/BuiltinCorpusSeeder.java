@@ -91,7 +91,7 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
             return 0;
         }
 
-        // 先写入再清理：分块 id 稳定，Chroma 写入即覆盖同名分块，
+        // 先写入再清理：分块 id 稳定，Chroma 侧走 upsert 覆盖同名分块，
         // 因此只需要删掉"语料变短后多出来的"旧分块。这样重播期间语料不会断档。
         Set<String> currentIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
         List<String> staleIds = findExistingBuiltinIds().stream()
@@ -118,6 +118,9 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
             return List.of();
         }
 
+        // docId 是知识库文档的稳定标识。用户文档用数据库主键的字符串形式，
+        // 内置语料没有数据库行，用 "builtin:<slug>" 作为同等语义的字符串 id；
+        // 不要再复用 ownerUserId 的哨兵值 0 当 documentId——那会让这个字段说谎。
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("source", BuiltinCorpus.CORPUS_TAG + ":" + slug);
         metadata.put("title", titleOf(text, slug));
@@ -125,17 +128,15 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
         metadata.put("timestamp", Instant.now().toString());
         metadata.put("corpus", BuiltinCorpus.CORPUS_TAG);
         metadata.put("docId", BuiltinCorpus.CORPUS_TAG + ":" + slug);
-        metadata.put("documentId", BuiltinCorpus.SYSTEM_OWNER_ID);
         metadata.put("ownerUserId", BuiltinCorpus.SYSTEM_OWNER_ID);
 
         List<Document> chunks = textChunkerService.chunk(text, metadata);
         List<Document> result = new ArrayList<>(chunks.size());
         for (int i = 0; i < chunks.size(); i++) {
-            // 分块 id 必须稳定：重复播种时靠它覆盖旧向量，而不是不断追加
+            // 分块 id 必须稳定：重复播种时靠它覆盖旧向量，而不是不断追加。
+            // 稳定 id 依赖 ChromaVectorStore.doAdd 走 upsert（同名即覆盖）。
             String chunkId = BuiltinCorpus.CORPUS_TAG + "_" + slug + "_chunk_" + i;
-            Map<String, Object> chunkMetadata = new HashMap<>(chunks.get(i).getMetadata());
-            chunkMetadata.put("ownerUserId", BuiltinCorpus.SYSTEM_OWNER_ID);
-            result.add(new Document(chunkId, chunks.get(i).getText(), chunkMetadata));
+            result.add(new Document(chunkId, chunks.get(i).getText(), chunks.get(i).getMetadata()));
         }
         return result;
     }
@@ -143,13 +144,15 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
     /**
      * 列出向量库里已有的内置语料分块 id。
      *
-     * <p>用于识别语料变短后多出来的旧分块——分块 id 稳定，Chroma 写入时即覆盖
-     * 同名分块，只有不再出现的 id 才需要删除。
+     * <p>用于识别语料变短后多出来的旧分块。注意 Chroma 没有按 metadata 全量列举的
+     * 向量库接口：这里的查询文本会被嵌入模型编码后做 ANN 检索，即使 topK 足够大、
+     * 相似度阈值降到 0，也只是近似"尽量找全"，不保证穷尽。因此清理是尽力而为——
+     * 漏掉的旧分块不会让检索出错，只是留在库里占位。
      */
     private List<String> findExistingBuiltinIds() {
         try {
             List<Document> existing = vectorStore.similaritySearch(SearchRequest.builder()
-                    .query("*")
+                    .query(BuiltinCorpus.CORPUS_TAG)
                     .topK(1000)
                     .similarityThreshold(0.0)
                     .filterExpression("corpus == '" + BuiltinCorpus.CORPUS_TAG + "'")

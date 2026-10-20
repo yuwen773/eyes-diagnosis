@@ -77,6 +77,20 @@ class UploadCompensationServiceTest {
     }
 
     @Test
+    void reconcileSkipsObjectsWithoutLastModifiedTime() {
+        // 拿不到 lastModified 就无法证明对象已过宽限期；此时必须按"仍在宽限期内"
+        // 跳过，否则刚上传、还没落库的任务对象会被当作孤儿删掉。
+        when(taskMapper.selectActiveKeys(eq(7L), anyList())).thenReturn(List.of());
+        when(cosManager.listObjects("agent-chat/7/")).thenReturn(
+                List.of(object("agent-chat/7/unknown.png", null)));
+
+        int removed = service.reconcileOwner(7L);
+
+        assertEquals(0, removed);
+        verify(cosManager, never()).deleteObject(any());
+    }
+
+    @Test
     void reconcileAllGroupsObjectsByOwner() {
         when(taskMapper.selectActiveKeys(eq(7L), anyList())).thenReturn(List.of("agent-chat/7/keep.png"));
         when(taskMapper.selectActiveKeys(eq(9L), anyList())).thenReturn(List.of());
