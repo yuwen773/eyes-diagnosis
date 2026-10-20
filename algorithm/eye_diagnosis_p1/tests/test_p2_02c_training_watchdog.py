@@ -11,6 +11,12 @@ import sys
 
 import pytest
 
+# These tests spawn real child processes and signal process groups. They
+# belong in the dedicated `watchdog` CI job (Linux, isolated), not in the
+# main `python` job: a leftover child there keeps pytest from exiting and
+# the whole job gets cancelled.
+pytestmark = pytest.mark.slow
+
 
 def test_parse_heartbeat_line_epoch_start() -> None:
     from p1.training.training_watchdog import HeartbeatEvent, parse_heartbeat_line

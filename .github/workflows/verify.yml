@@ -43,11 +43,16 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install pyarrow pytest
+      # The P2-02C files spawn real child interpreters and signal process
+      # groups. They are marked `slow`, so the main `python` job skips them;
+      # they run here instead. Without this wiring they would not run at all.
       - run: >-
           python -m pytest
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py
           eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py
           eye_diagnosis_p1/tests/test_p2_02a_t3_integration.py
+          eye_diagnosis_p1/tests/test_p2_02c_training_watchdog.py
+          eye_diagnosis_p1/tests/test_p2_02c_integration.py
           -q
 
   backend-compile:

@@ -28,6 +28,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+# Spawns a real child interpreter. Keep it out of the main `python` job,
+# where a leftover child prevents pytest from exiting.
+pytestmark = pytest.mark.slow
+
 
 _PY = sys.executable
 
