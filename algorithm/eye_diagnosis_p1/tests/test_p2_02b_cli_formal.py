@@ -85,6 +85,29 @@ def test_cli_main_returns_int(monkeypatch: pytest.MonkeyPatch) -> None:
     assert captured["folds"] == [0]
 
 
+def test_cli_main_defaults_to_fold_zero(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Spec: ``--fold`` is optional and defaults to ``[0]``."""
+    from p1.training import cli_formal
+
+    _patch_loaders_and_adapters(monkeypatch, cli_formal)
+
+    captured: dict[str, Any] = {}
+
+    def _fake_run(**kw: Any) -> Any:
+        captured.update(kw)
+        from p1.training.receipts import ExperimentReceipt
+        return ExperimentReceipt(
+            experiment="E3", seed=42,
+            folds_requested=[0], per_fold=[], overall_status="PASS",
+        )
+
+    monkeypatch.setattr(cli_formal, "run_formal_experiment", _fake_run)
+
+    rc = cli_formal.main(_argv())  # no --fold
+    assert rc in (0, 1, 2)
+    assert captured["folds"] == [0]
+
+
 def test_cli_main_returns_int_for_multi_fold(monkeypatch: pytest.MonkeyPatch) -> None:
     from p1.training import cli_formal
 

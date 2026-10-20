@@ -44,8 +44,9 @@ def _build_argparser() -> argparse.ArgumentParser:
                     "P2-02B itself does NOT run on the real GPU; "
                     "this entry point is for P2-02C and P2-03.",
     )
-    p.add_argument("--fold", type=int, action="append", required=True,
-                   help="Fold index; pass multiple times for multiple folds.")
+    p.add_argument("--fold", type=int, action="append", default=None,
+                   help="Fold index; pass multiple times for multiple folds "
+                        "(default: [0], per the P2-02B spec).")
     p.add_argument("--experiment", default="E3")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--out-dir", type=Path,
@@ -96,17 +97,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         device="cuda",
     )
     optimizer_factory = make_real_optimizer_factory()
+    folds = args.fold or [0]
     dl_factory = build_real_dataloader_factory(
         manifest_path=args.manifest,
         image_root=args.image_root,
-        fold=args.fold[0],  # for fold 0; full multi-fold uses orchestrator
+        fold=folds[0],  # the factory binds one fold; multi-fold goes via orchestrator
         target_size=380,
         fold_assignment_path=args.fold_assignment,
     )
 
     receipt = run_formal_experiment(
         out_root=args.out_dir,
-        folds=args.fold,
+        folds=folds,
         manifest_pids=set(manifest_pdf["patient_id"].tolist()),
         split_df=split_df,
         fold_df=fold_df,
