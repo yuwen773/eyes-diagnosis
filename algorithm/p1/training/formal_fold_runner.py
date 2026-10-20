@@ -38,6 +38,7 @@ from p1.training.engine import (
     evaluate,
     train_one_epoch,
 )
+from p1.training.frozen_inputs import FrozenInputError
 from p1.training.metrics import compute_full_metrics
 from p1.training.receipts import FoldReceipt
 
@@ -64,6 +65,122 @@ _EXC_TO_ERROR_CLASS: dict[type, str] = {
     CudaRuntimeError: "cuda_runtime",
     CheckpointError: "checkpoint_io",
 }
+
+
+def _frozen_input_hashes(
+    paths: dict[str, Path] | None,
+    manifest_pids: set,
+) -> dict[str, Any]:
+    """SHA256 of every frozen input, or an explicit ``null`` when unhashed.
+
+    ``null`` is honest: it says "this run did not record this input" and is
+    distinguishable from a real digest. A placeholder string such as
+    ``"skip-fixture"`` would instead look like evidence.
+    """
+    hashes: dict[str, Any] = {
+        "manifest_pids_sha256": _config_hash_of({"pids": sorted(map(str, manifest_pids))}),
+        "manifest_sha256": None,
+        "split_assignment_sha256": None,
+        "fold_assignment_sha256": None,
+        "image_root_sha256": None,
+    }
+    for key, path in (paths or {}).items():
+        if key not in hashes:
+            continue
+        p = Path(path)
+        hashes[key] = sha256_file(p) if p.is_file() else None
+    return hashes
+
+
+def _cuda_available(torch_adapter: Any) -> bool:
+    """Ask the injected adapter first; fall back to the real torch probe."""
+    probe = getattr(torch_adapter, "cuda_is_available", None)
+    if callable(probe):
+        return bool(probe())
+    return bool(torch.cuda.is_available())
+
+
+def _assert_loaders_disjoint(train_loader: Any, val_loader: Any) -> None:
+    """Reject a run whose train and validation loaders share samples.
+
+    Checks ``dataset`` when both loaders expose one. Fakes and some custom
+    factories do not, so the check is skipped rather than guessed at —
+    ``_validate_frozen_inputs`` still enforces the fold partition itself.
+    """
+    train_ds = getattr(train_loader, "dataset", None)
+    val_ds = getattr(val_loader, "dataset", None)
+    if train_ds is None or val_ds is None:
+        return
+    if train_ds is val_ds:
+        raise PreflightError(
+            "train_val_leak", "train and val loaders share the same dataset"
+        )
+    train_rows = getattr(train_ds, "rows", None)
+    val_rows = getattr(val_ds, "rows", None)
+    if isinstance(train_rows, list) and isinstance(val_rows, list):
+        overlap = {
+            r.get("patient_id") for r in train_rows if isinstance(r, dict)
+        } & {
+            r.get("patient_id") for r in val_rows if isinstance(r, dict)
+        }
+        if overlap:
+            raise PreflightError(
+                "train_val_leak",
+                f"{len(overlap)} patient(s) appear in both train and val",
+            )
+
+
+def _validate_frozen_inputs(
+    manifest_pids: set,
+    split_df: Any,
+    fold_df: Any,
+) -> None:
+    """Enforce the cross-artifact invariants before any epoch runs.
+
+    Accepts either the loader's dict form or a DataFrame, so callers do not
+    have to reshape what they already hold.
+    """
+    from p1.training.frozen_inputs import validate_frozen_training_inputs
+
+    split_map = _as_map(split_df, column="split")
+    fold_map = _as_map(fold_df, column="fold")
+    validate_frozen_training_inputs(
+        {str(p) for p in manifest_pids},
+        {str(k): str(v) for k, v in split_map.items()},
+        {str(k): int(v) for k, v in fold_map.items()},
+        expected_folds=5,
+    )
+
+
+def _as_map(value: Any, *, column: str | None = None) -> dict:
+    """Normalise a split/fold artifact to ``{patient_id: value}``.
+
+    ``column`` names the value column explicitly. It is required for
+    DataFrames: a split artifact has ``patient_id, split`` and a fold
+    artifact has ``patient_id, fold``, so inferring from the columns alone
+    would silently read a fold table as a split table (or vice versa).
+    """
+    if isinstance(value, dict):
+        return dict(value)
+    if hasattr(value, "columns"):
+        if "patient_id" not in value.columns:
+            raise ValueError("artifact DataFrame is missing 'patient_id'")
+        target = column
+        if target is None:
+            candidates = [c for c in ("split", "fold") if c in value.columns]
+            if len(candidates) != 1:
+                raise ValueError(
+                    f"cannot infer value column from {list(value.columns)}; "
+                    "pass column= explicitly"
+                )
+            target = candidates[0]
+        if target not in value.columns:
+            raise ValueError(
+                f"artifact DataFrame is missing {target!r}; "
+                f"columns are {list(value.columns)}"
+            )
+        return dict(zip(value["patient_id"].astype(str), value[target]))
+    raise TypeError(f"unsupported artifact type: {type(value)!r}")
 
 
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -117,6 +234,7 @@ def run_formal_fold(
     max_epochs: int | None = None,
     patience: int | None = None,
     emit_heartbeat: bool = False,
+    frozen_input_paths: dict[str, Path] | None = None,
 ) -> FoldReceipt:
     """Run a single formal fold end-to-end. Always returns a ``FoldReceipt``."""
     fold_dir = out_dir / f"fold_{fold}"
@@ -124,6 +242,32 @@ def run_formal_fold(
     started_at = _now_iso()
     t0 = time.perf_counter()
     cfg_hash = _config_hash_of(cfg)
+
+    # Integrity evidence for the receipt. Computed from the actual files so
+    # the receipt cannot claim inputs it did not consume.
+    frozen_input_hashes = _frozen_input_hashes(frozen_input_paths, manifest_pids)
+
+    # --- 0. preflight gates (fail-closed, spec §3.4 step 1) ---------------
+    # No CUDA -> refuse before touching any artifact. Training on CPU would
+    # produce a receipt that looks valid but was never a GPU run.
+    # The injected adapter is authoritative when present: it is the same
+    # seam the probe uses, and it lets tests express "this is a GPU run"
+    # without a physical device.
+    if not _cuda_available(torch_adapter):
+        raise PreflightError("no_cuda", "no CUDA device is available")
+
+    # Frozen-input integrity: manifest / split / fold must agree. The
+    # loaders already reject malformed files; this additionally enforces
+    # the cross-artifact invariants (no Test patient in folds, no patient
+    # dropped or invented).
+    try:
+        _validate_frozen_inputs(manifest_pids, split_df, fold_df)
+    except FrozenInputError as exc:
+        raise PreflightError("frozen_input_integrity", str(exc)) from exc
+    except (ValueError, TypeError) as exc:
+        # _as_map rejects malformed artifacts; surface them as a preflight
+        # failure instead of letting them masquerade as a training error.
+        raise PreflightError("frozen_input_integrity", str(exc)) from exc
 
     # --- 1. strict determinism flags ---------------------------------------
     torch.manual_seed(seed)
@@ -177,6 +321,9 @@ def run_formal_fold(
     criterion = torch.nn.BCEWithLogitsLoss()
     scaler = torch.amp.GradScaler("cuda", enabled=bool(cfg["amp"]))
 
+    # "train" and "val" are derived from the fold partition, not read from
+    # the split artifact (which only marks dev/test). val is this fold's
+    # patients; train is every other Development patient.
     train_loader = data_factory(
         dataset=None, batch_size=int(cfg["patient_batch"]),
         num_workers=2, pin_memory=True, split="train", fold=fold,
@@ -185,6 +332,10 @@ def run_formal_fold(
         dataset=None, batch_size=int(cfg["patient_batch"]),
         num_workers=2, pin_memory=True, split="val", fold=fold,
     )
+
+    # Fail closed on accidental leakage: if the two loaders resolve to the
+    # same patients the metrics are measured on training data.
+    _assert_loaders_disjoint(train_loader, val_loader)
 
     # --- 4. epoch loop ----------------------------------------------------
     best_metric = -float("inf")
@@ -300,10 +451,16 @@ def run_formal_fold(
             metrics_dict = metrics.to_dict()
             _atomic_write_json(fold_dir / "metrics.json", metrics_dict)
 
-            # OOF CSV (atomic). patient_id is a column from the split.
-            val_pids = sorted(set(split_df[
-                (split_df["fold"] == fold) & (split_df["split"] == "val")
-            ]["patient_id"].tolist()))
+            # OOF CSV (atomic). Patients assigned to this fold on the
+            # validation side. split_df may be the loader's dict form or a
+            # DataFrame, so normalise before indexing.
+            split_map = _as_map(split_df, column="split")
+            fold_map = _as_map(fold_df, column="fold")
+            val_pids = sorted(
+                pid for pid, assigned_fold in fold_map.items()
+                if int(assigned_fold) == int(fold)
+                and split_map.get(pid) == "val"
+            )
             oof_header = (
                 ["patient_id"]
                 + [f"true_label_{c}" for c in range(8)]
@@ -361,12 +518,7 @@ def run_formal_fold(
         error_message=(error_message or "")[:1024] or None,
         error_epoch=error_epoch,
         error_batch=error_batch,
-        frozen_inputs={
-            "manifest_pids_sha256": _config_hash_of({"pids": sorted(manifest_pids)}),
-            "split_assignment_sha256": "skip-fixture",
-            "fold_assignment_sha256": "skip-fixture",
-            "image_root_sha256": "skip-fixture",
-        },
+        frozen_inputs=frozen_input_hashes,
     )
     _atomic_write_json(fold_dir / "fold_receipt.json", receipt.to_dict())
     return receipt

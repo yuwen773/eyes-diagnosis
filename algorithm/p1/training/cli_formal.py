@@ -119,6 +119,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         max_epochs=args.max_epochs,
         patience=args.patience,
         emit_heartbeat=args.emit_heartbeat,
+        frozen_input_paths={
+            "manifest_sha256": args.manifest,
+            "split_assignment_sha256": args.split_assignment,
+            "fold_assignment_sha256": args.fold_assignment,
+        },
     )
     return _exit_code_for(receipt)
 

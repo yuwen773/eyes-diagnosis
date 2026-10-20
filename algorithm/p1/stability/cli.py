@@ -18,7 +18,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from p1.stability.matrix import expand_matrix
 from p1.stability.probe import (
@@ -103,6 +103,7 @@ def build_rows_for_fold(
     manifest_pdf: Any,
     fold: int,
     fold_assignment: dict[str, int],
+    split: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Filter the manifest to a single fold and reshape rows for BilateralEyeDataset.
 
@@ -110,11 +111,36 @@ def build_rows_for_fold(
     pre-built list of dicts with ``left_image_relpath``, ``right_image_relpath``,
     and an 8-element ``labels`` list. This pure function builds that list from
     the frozen patient manifest + fold assignment.
+
+    ``split`` selects a side of the fold partition:
+
+    * ``"val"`` — patients assigned to ``fold``
+    * ``"train"`` — Development patients assigned to any other fold
+    * ``None`` — every patient in ``fold`` (the T2/T3 probe's behaviour;
+      it only measures I/O and memory and never trains)
+
+    Note this is *not* the ``split_assignment`` artifact, which marks the
+    dev/test hold-out. Training callers must pass ``split``; otherwise both
+    loaders read identical rows and the reported metrics are measured on
+    data the model already saw.
     """
+    if split not in (None, "train", "val"):
+        raise ValueError(f"split must be 'train', 'val' or None; got {split!r}")
     rows: list[dict[str, Any]] = []
     for _, row in manifest_pdf.iterrows():
         pid = str(row["patient_id"])
-        if int(fold_assignment.get(pid, -1)) != int(fold):
+        # ``load_fold_assignment`` keys by the CSV's patient_id string, but
+        # callers may hand us int-keyed dicts. Try both rather than silently
+        # treating every patient as unassigned.
+        assigned = fold_assignment.get(pid, fold_assignment.get(row["patient_id"]))
+        if assigned is None:
+            continue
+        in_fold = int(assigned) == int(fold)
+        if split == "val" and not in_fold:
+            continue
+        if split == "train" and in_fold:
+            continue
+        if split is None and not in_fold:
             continue
         rows.append(
             {
@@ -152,12 +178,12 @@ class _RealDataLoaderFactory:
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
+        split: Optional[str] = None,
     ) -> Any:
         from p1.benchmark.cuda_runtime import BilateralEyeDataset
 
         from p1.training.frozen_inputs import load_fold_assignment
 
-        manifest_pdf = self._torch.zeros(0)  # placeholder; replaced below
         # Read the manifest and the fold via pandas (cheap, CPU-only).
         import pandas as pd
 
@@ -165,7 +191,9 @@ class _RealDataLoaderFactory:
         fold_map = load_fold_assignment(
             self.fold_assignment_path, expected_folds=5
         )
-        rows = build_rows_for_fold(manifest_pdf, self.fold, fold_map)
+        rows = build_rows_for_fold(
+            manifest_pdf, self.fold, fold_map, split=split,
+        )
         ds = BilateralEyeDataset(rows, self.image_root, self.target_size)
         return self._torch.utils.data.DataLoader(
             ds,

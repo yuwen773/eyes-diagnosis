@@ -9,6 +9,7 @@ import pytest
 from eye_diagnosis_p1.tests.fakes import (
     FakeDataLoaderFactory,
     FakeFoldAssignmentLoader,
+    FakeSplitAssignmentLoader,
     FakeModelFactory,
     FakeProtocolLoader,
     FakeTorchAdapter,
@@ -34,8 +35,8 @@ def test_orchestrator_single_fold_overall_status_pass(tmp_path: Path) -> None:
     e = run_formal_experiment(
         out_root=tmp_path,
         folds=[0],
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **_runner_deps(),
     )
@@ -51,8 +52,8 @@ def test_orchestrator_writes_per_fold_artifacts(tmp_path: Path) -> None:
     e = run_formal_experiment(
         out_root=tmp_path,
         folds=[0],
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **_runner_deps(),
     )
@@ -93,8 +94,8 @@ def test_orchestrator_continues_after_blocked_fold(tmp_path: Path) -> None:
         e = run_formal_experiment(
             out_root=tmp_path,
             folds=[0, 1, 2],
-            manifest_pids={1, 2, 3, 4},
-            split_df=FakeFoldAssignmentLoader().load(),
+            manifest_pids={1, 2, 3, 4, 5},
+            split_df=FakeSplitAssignmentLoader().load(),
             fold_df=FakeFoldAssignmentLoader().load(),
             **_runner_deps(),
         )

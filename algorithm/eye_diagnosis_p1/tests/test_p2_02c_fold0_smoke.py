@@ -15,19 +15,41 @@ import pytest
 
 
 class _FakePreflightResult:
-    def __init__(self, ok: bool, reason: str | None = None) -> None:
-        self.ok = ok; self.reason = reason
+    def __init__(self, ok: bool, reason: str | None = None,
+                 checks: list | None = None) -> None:
+        self.ok = ok; self.reason = reason; self.checks = checks or []
 
 
 class _FakePreflightFail:
-    ok = False; reason = "insufficient_vram"
+    ok = False; reason = "insufficient_vram"; checks = []
 
 
+class _FakeAdapter:
+    """Adapter double exposing the probes capture_environment reads."""
+
+    def cuda_is_available(self) -> bool:
+        return False
+
+    def cuda_device_count(self) -> int:
+        return 0
+
+    def cuda_mem_get_info(self, index: int):
+        return (0, 0)
+
+    def device_name(self, index: int) -> str:
+        return "fake"
+
+    def versions_dict(self) -> dict:
+        return {"torch": "stub", "cuda": "", "cudnn": "", "driver": ""}
+
+
+# The real signature is keyword-only with nine parameters. Stubs must mirror
+# it exactly, otherwise the tests pass while production raises TypeError.
 def _install_pass_preflight(monkeypatch, fold0_smoke) -> None:
-    monkeypatch.setattr(fold0_smoke, "build_real_torch_adapter", lambda: object())
+    monkeypatch.setattr(fold0_smoke, "build_real_torch_adapter", lambda: _FakeAdapter())
     monkeypatch.setattr(
         fold0_smoke, "run_preflight",
-        lambda cfg, adapter: _FakePreflightResult(ok=True),
+        lambda **kwargs: _FakePreflightResult(ok=True),
     )
     monkeypatch.setattr(
         fold0_smoke, "load_p202a_protocol",
@@ -36,10 +58,10 @@ def _install_pass_preflight(monkeypatch, fold0_smoke) -> None:
 
 
 def _install_fail_preflight(monkeypatch, fold0_smoke) -> None:
-    monkeypatch.setattr(fold0_smoke, "build_real_torch_adapter", lambda: object())
+    monkeypatch.setattr(fold0_smoke, "build_real_torch_adapter", lambda: _FakeAdapter())
     monkeypatch.setattr(
         fold0_smoke, "run_preflight",
-        lambda cfg, adapter: _FakePreflightFail(),
+        lambda **kwargs: _FakePreflightFail(),
     )
     monkeypatch.setattr(
         fold0_smoke, "load_p202a_protocol",

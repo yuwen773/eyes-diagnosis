@@ -14,7 +14,11 @@ from __future__ import annotations
 
 from .dataloader import FakeBilateralBatch, FakeDataLoaderFactory
 from .environment import FakeEnvironmentCapture
-from .fold_assignment import FakeFoldAssignmentLoader
+from .fold_assignment import (
+    FakeFoldAssignmentLoader,
+    FakeSplitAssignmentLoader,
+    fold_split,
+)
 from .manifest import FakeManifestLoader
 from .model import FakeBilateralModel, FakeModelFactory
 from .protocol import FakeProtocolLoader
@@ -38,6 +42,8 @@ __all__ = [
     "FakeProtocolLoader",
     "FakeScaler",
     "FakeScaledTensor",
+    "FakeSplitAssignmentLoader",
     "FakeTensor",
     "FakeTorchAdapter",
+    "fold_split",
 ]

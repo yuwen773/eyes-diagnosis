@@ -6,13 +6,16 @@ Exit codes: 0=PASS, 1=BLOCKED | TIMEOUT, 2=FAILED_PREFLIGHT.
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import logging
+import subprocess
 import sys
 from pathlib import Path
 from typing import Optional, Sequence
 
 from p1.stability.cli import build_real_torch_adapter  # noqa: F401  (monkey-patch seam)
+from p1.stability.environment import capture_environment  # noqa: F401  (monkey-patch seam)
 from p1.stability.preflight import run_preflight  # noqa: F401  (monkey-patch seam)
 from p1.stability.protocol import load_p202a_protocol  # noqa: F401  (monkey-patch seam)
 from p1.training._atomic_io import atomic_write_text
@@ -43,6 +46,10 @@ def _build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--process-timeout", type=float, default=300.0)
     p.add_argument("--heartbeat-timeout", type=float, default=90.0)
     p.add_argument("--poll-interval", type=float, default=0.1)
+    # Mirrors matrix_cli defaults: the same hard gate the T3 matrix applies.
+    p.add_argument("--vram-floor-mb", type=int, default=6000)
+    p.add_argument("--weights-id", type=str,
+                   default="EfficientNet_B4_Weights.IMAGENET1K_V1")
     return p
 
 
@@ -62,24 +69,72 @@ def _expected_artifacts() -> set[str]:
     }
 
 
+def _preflight_dict(pf) -> dict:
+    return {
+        "ok": pf.ok,
+        "reason": pf.reason,
+        "checks": [
+            {"name": c.name, "ok": c.ok, "detail": c.detail}
+            for c in getattr(pf, "checks", [])
+        ],
+    }
+
+
+def _git_commit() -> Optional[str]:
+    try:
+        out = subprocess.run(["git", "rev-parse", "HEAD"], check=False,
+                             capture_output=True, text=True)
+        return out.stdout.strip() or None
+    except OSError:
+        return None
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     logging.basicConfig(level=logging.INFO)
     args = _build_argparser().parse_args(list(argv) if argv is not None else None)
     out_dir = Path(args.out_dir); out_dir.mkdir(parents=True, exist_ok=True)
 
-    cfg = load_p202a_protocol(args.protocol)
+    # Protocol errors are preflight-style failures: report and exit 2 rather
+    # than letting the exception escape before any artifact is written.
+    try:
+        load_p202a_protocol(args.protocol)
+    except Exception as e:
+        print(f"protocol error: {e}", file=sys.stderr)
+        _atomic_write_json(out_dir / "fold0_smoke_report.json", {
+            "schema_version": "p2-02c-v1",
+            "verdict": "BLOCKED",
+            "error_class": "preflight",
+            "preflight": {"ok": False, "reason": f"protocol: {e}", "checks": []},
+        })
+        return 2
+
     adapter = build_real_torch_adapter()
-    pf = run_preflight(cfg, adapter)
+
+    # Spec §5: on preflight failure write preflight.json + environment.json
+    # alongside the report, so a blocked run still leaves reproducible evidence.
+    now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    _atomic_write_json(out_dir / "environment.json",
+                       capture_environment(adapter, now=now, git_commit=_git_commit()))
+
+    pf = run_preflight(
+        protocol_path=args.protocol,
+        manifest_path=args.manifest,
+        split_path=args.split_assignment,
+        fold_path=args.fold_assignment,
+        image_root=args.image_root,
+        out_dir=out_dir,
+        vram_floor_mb=args.vram_floor_mb,
+        weights_id=args.weights_id,
+        adapter=adapter,
+    )
+    _atomic_write_json(out_dir / "preflight.json", _preflight_dict(pf))
 
     if not pf.ok:
         _atomic_write_json(out_dir / "fold0_smoke_report.json", {
             "schema_version": "p2-02c-v1",
             "verdict": "BLOCKED",
             "error_class": "preflight",
-            "preflight": {
-                "ok": getattr(pf, "ok", False),
-                "reason": getattr(pf, "reason", None),
-            },
+            "preflight": _preflight_dict(pf),
         })
         return 2
 

@@ -42,6 +42,7 @@ def run_formal_experiment(
     max_epochs: int | None = None,
     patience: int | None = None,
     emit_heartbeat: bool = False,
+    frozen_input_paths: dict[str, Path] | None = None,
 ) -> ExperimentReceipt:
     """Run ``run_formal_fold`` for every fold in ``folds``; never short-circuit."""
     out_root.mkdir(parents=True, exist_ok=True)
@@ -64,6 +65,7 @@ def run_formal_experiment(
             max_epochs=max_epochs,
             patience=patience,
             emit_heartbeat=emit_heartbeat,
+            frozen_input_paths=frozen_input_paths,
         )
         per_fold.append(r)
 

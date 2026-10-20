@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Optional, Protocol
 
 from p1.stability.schema import STAGE_NAMES
 from p1.stability.stages import (
@@ -66,7 +66,11 @@ class TorchAdapter(Protocol):
 
 
 class DataLoaderFactory(Protocol):
-    """Builds a DataLoader (or a fake)."""
+    """Builds a DataLoader (or a fake).
+
+    ``split`` is optional so the T2/T3 probe keeps its fold-wide behaviour;
+    formal training passes ``"train"`` / ``"val"`` to get disjoint loaders.
+    """
 
     def __call__(
         self,
@@ -75,6 +79,7 @@ class DataLoaderFactory(Protocol):
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
+        split: Optional[str] = None,
     ) -> Any: ...
 
 

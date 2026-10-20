@@ -12,6 +12,7 @@ from torch import nn
 from eye_diagnosis_p1.tests.fakes import (
     FakeDataLoaderFactory,
     FakeFoldAssignmentLoader,
+    FakeSplitAssignmentLoader,
     FakeManifestLoader,
     FakeModelFactory,
     FakeProtocolLoader,
@@ -57,8 +58,8 @@ def test_run_formal_fold_writes_all_artifact_files(tmp_path: Path) -> None:
     deps = _build_runner_deps(epochs_to_run=2)
     receipt = run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -84,8 +85,8 @@ def test_run_formal_fold_no_tmp_files_after_success(tmp_path: Path) -> None:
     deps = _build_runner_deps(epochs_to_run=2)
     run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -99,8 +100,8 @@ def test_run_formal_fold_appends_jsonl_per_epoch(tmp_path: Path) -> None:
     deps = _build_runner_deps(epochs_to_run=3)
     run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -124,8 +125,8 @@ def test_run_formal_fold_sets_strict_determinism_flags(tmp_path: Path) -> None:
     deps = _build_runner_deps(epochs_to_run=1)
     run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -139,8 +140,8 @@ def test_run_formal_fold_writes_metrics_json_with_skipped_classes(tmp_path: Path
     deps = _build_runner_deps(epochs_to_run=2)
     run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -163,8 +164,8 @@ def test_run_formal_fold_nan_blocks_no_checkpoint(tmp_path: Path) -> None:
 
     receipt = run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -185,8 +186,8 @@ def test_run_formal_fold_oom_blocks(tmp_path: Path) -> None:
 
     receipt = run_formal_fold(
         out_dir=tmp_path,
-        manifest_pids={1, 2, 3, 4},
-        split_df=FakeFoldAssignmentLoader().load(),
+        manifest_pids={1, 2, 3, 4, 5},
+        split_df=FakeSplitAssignmentLoader().load(),
         fold_df=FakeFoldAssignmentLoader().load(),
         **deps,
     )
@@ -214,8 +215,8 @@ def test_run_formal_fold_checkpoint_io_failure_blocks(tmp_path: Path) -> None:
     try:
         receipt = run_formal_fold(
             out_dir=tmp_path,
-            manifest_pids={1, 2, 3, 4},
-            split_df=FakeFoldAssignmentLoader().load(),
+            manifest_pids={1, 2, 3, 4, 5},
+            split_df=FakeSplitAssignmentLoader().load(),
             fold_df=FakeFoldAssignmentLoader().load(),
             **deps,
         )
