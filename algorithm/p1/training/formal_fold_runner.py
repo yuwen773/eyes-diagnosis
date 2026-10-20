@@ -175,6 +175,22 @@ def _as_map(value: Any, *, column: str | None = None) -> dict:
     raise TypeError(f"unsupported artifact type: {type(value)!r}")
 
 
+def _validation_pids(split_df: Any, fold_df: Any, fold: int) -> list[str]:
+    """Patient ids on the validation side of ``fold``, sorted.
+
+    ``val`` is this fold's Development patients. The split artifact only
+    marks dev/test, so a patient must be ``dev`` *and* assigned to ``fold``.
+    Keys are normalised to ``str`` because the fold artifact may carry
+    ``int`` or ``str`` patient ids depending on the loader.
+    """
+    split_map = _as_map(split_df, column="split")
+    fold_map = _as_map(fold_df, column="fold")
+    return sorted(
+        str(pid) for pid, assigned_fold in fold_map.items()
+        if int(assigned_fold) == int(fold) and split_map.get(str(pid)) == "dev"
+    )
+
+
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     """Write JSON payload atomically."""
     payload_str = json.dumps(payload, indent=2, default=str)
@@ -205,6 +221,47 @@ def _config_hash_of(cfg: dict[str, Any]) -> str:
     """Stable hash of the protocol cfg dict (canonical JSON)."""
     canonical = json.dumps(cfg, sort_keys=True, default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _write_failed_preflight_receipt(
+    *,
+    fold_dir: Path,
+    fold: int,
+    experiment: str,
+    seed: int,
+    started_at: str,
+    t0: float,
+    cfg_hash: str,
+    frozen_inputs: dict[str, Any],
+    error_message: str,
+) -> FoldReceipt:
+    """Write the spec §3.5 FAILED_PREFLIGHT receipt and return it.
+
+    ``status='FAILED_PREFLIGHT'`` implies ``best_epoch=-1``,
+    ``best_metric=None`` and ``checkpoint_sha256=None`` — the fold never
+    entered the epoch loop, so there is no checkpoint to point at.
+    """
+    receipt = FoldReceipt(
+        schema_version="p2-02b-v1",
+        fold=fold,
+        experiment=experiment,
+        seed=seed,
+        status="FAILED_PREFLIGHT",
+        best_epoch=-1,
+        best_metric=None,
+        total_epochs_run=0,
+        early_stopped=False,
+        started_at=started_at,
+        finished_at=_now_iso(),
+        duration_s=time.perf_counter() - t0,
+        config_hash=cfg_hash,
+        checkpoint_sha256=None,
+        error_class="preflight",
+        error_message=(error_message or "")[:1024] or None,
+        frozen_inputs=frozen_inputs,
+    )
+    _atomic_write_json(fold_dir / "fold_receipt.json", receipt.to_dict())
+    return receipt
 
 
 # --- core entry point ------------------------------------------------------
@@ -240,28 +297,48 @@ def run_formal_fold(
     frozen_input_hashes = _frozen_input_hashes(frozen_input_paths, manifest_pids)
 
     # --- 0. preflight gates (fail-closed, spec §3.4 step 1) ---------------
-    # No CUDA -> refuse before touching any artifact. Training on CPU would
-    # produce a receipt that looks valid but was never a GPU run.
-    #
-    # This probes real torch, not the injected adapter, because the epoch
-    # loop below (manual_seed_all, GradScaler) also goes to real torch. A
-    # gate that trusts the adapter would wave through a run that then dies
-    # on the first device call — which is exactly what CI showed.
-    if not torch.cuda.is_available():
-        raise PreflightError("no_cuda", "torch.cuda.is_available() is False")
-
-    # Frozen-input integrity: manifest / split / fold must agree. The
-    # loaders already reject malformed files; this additionally enforces
-    # the cross-artifact invariants (no Test patient in folds, no patient
-    # dropped or invented).
+    # The gates are wrapped rather than raised out of the function: spec §6.2
+    # requires the fold to end with status='FAILED_PREFLIGHT' *and* leave a
+    # ``fold_receipt.json``. An escaping exception would crash the orchestrator
+    # on the first fold and leave no evidence behind.
     try:
+        # No CUDA -> refuse before touching any artifact. Training on CPU would
+        # produce a receipt that looks valid but was never a GPU run. This
+        # probes real torch, not the injected adapter, because the epoch loop
+        # below (manual_seed_all, GradScaler) also goes to real torch; a gate
+        # that trusted the adapter would wave through a run that then dies on
+        # the first device call — which is exactly what CI showed.
+        if not torch.cuda.is_available():
+            raise PreflightError("no_cuda", "torch.cuda.is_available() is False")
+
+        # Frozen-input integrity: manifest / split / fold must agree. The
+        # loaders already reject malformed files; this additionally enforces
+        # the cross-artifact invariants (no Test patient in folds, no patient
+        # dropped or invented).
         _validate_frozen_inputs(manifest_pids, split_df, fold_df)
+    except PreflightError as exc:
+        return _write_failed_preflight_receipt(
+            fold_dir=fold_dir, fold=fold, experiment=experiment, seed=seed,
+            started_at=started_at, t0=t0, cfg_hash=cfg_hash,
+            frozen_inputs=frozen_input_hashes,
+            error_message=f"{exc.reason}: {exc.detail}".rstrip(": "),
+        )
     except FrozenInputError as exc:
-        raise PreflightError("frozen_input_integrity", str(exc)) from exc
+        return _write_failed_preflight_receipt(
+            fold_dir=fold_dir, fold=fold, experiment=experiment, seed=seed,
+            started_at=started_at, t0=t0, cfg_hash=cfg_hash,
+            frozen_inputs=frozen_input_hashes,
+            error_message=f"frozen_input_integrity: {exc}",
+        )
     except (ValueError, TypeError) as exc:
         # _as_map rejects malformed artifacts; surface them as a preflight
         # failure instead of letting them masquerade as a training error.
-        raise PreflightError("frozen_input_integrity", str(exc)) from exc
+        return _write_failed_preflight_receipt(
+            fold_dir=fold_dir, fold=fold, experiment=experiment, seed=seed,
+            started_at=started_at, t0=t0, cfg_hash=cfg_hash,
+            frozen_inputs=frozen_input_hashes,
+            error_message=f"frozen_input_integrity: {exc}",
+        )
 
     # --- 1. strict determinism flags ---------------------------------------
     torch.manual_seed(seed)
@@ -448,13 +525,7 @@ def run_formal_fold(
             # OOF CSV (atomic). Patients assigned to this fold on the
             # validation side. split_df may be the loader's dict form or a
             # DataFrame, so normalise before indexing.
-            split_map = _as_map(split_df, column="split")
-            fold_map = _as_map(fold_df, column="fold")
-            val_pids = sorted(
-                pid for pid, assigned_fold in fold_map.items()
-                if int(assigned_fold) == int(fold)
-                and split_map.get(pid) == "val"
-            )
+            val_pids = _validation_pids(split_df, fold_df, fold)
             oof_header = (
                 ["patient_id"]
                 + [f"true_label_{c}" for c in range(8)]

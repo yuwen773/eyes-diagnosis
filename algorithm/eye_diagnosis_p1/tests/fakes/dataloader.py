@@ -126,3 +126,80 @@ class FakeDataLoaderFactory:
             num_classes=self._num_classes,
             seed=self._seed,
         )
+
+class FoldAwareDataLoaderFactory(FakeDataLoaderFactory):
+    """Fake factory whose loaders carry the patient ids of their split.
+
+    ``run_formal_fold`` zips the OOF rows with the loader's evaluation
+    output positionally, so a fake that ignores ``split``/``fold`` cannot
+    catch a fold mix-up. This factory puts the resolved patient ids on the
+    loader as ``patient_ids`` (and on its ``dataset.rows``), letting a test
+    assert that fold 0's validation rows are exactly fold 0's patients.
+    """
+
+    def __init__(
+        self,
+        *,
+        fold_assignment: dict[str, int] | None = None,
+        batch_size: int = 2,
+        num_batches: int = 1,
+        num_classes: int = 8,
+        seed: int = 42,
+    ) -> None:
+        super().__init__(
+            batch_size=batch_size, num_batches=num_batches,
+            num_classes=num_classes, seed=seed,
+        )
+        if fold_assignment is None:
+            fold_assignment = {
+                str(pid): pid - 1 for pid in (1, 2, 3, 4, 5)
+            }
+        self._fold_assignment = dict(fold_assignment)
+
+    def patient_ids_for(self, *, fold: int, split: str | None) -> list[int]:
+        """Mirror ``build_rows_for_fold``: val = this fold, train = the rest."""
+        in_fold = {int(pid) for pid, f in self._fold_assignment.items()
+                   if int(f) == int(fold)}
+        if split == "val":
+            return sorted(in_fold)
+        if split == "train":
+            return sorted({int(pid) for pid in self._fold_assignment} - in_fold)
+        return sorted(in_fold)
+
+    def __call__(
+        self,
+        *,
+        dataset: Any = None,
+        batch_size: int | None = None,
+        split: str | None = None,
+        fold: int | None = None,
+        **_ignored: Any,
+    ) -> "_FoldAwareDataLoader":
+        loader = super().__call__(
+            dataset=dataset, batch_size=batch_size, split=split, fold=fold,
+        )
+        # run_formal_fold always passes the fold it is running; defaulting to
+        # 0 here would silently reproduce the bug this fake exists to catch.
+        assert fold is not None, "formal training must pass fold= explicitly"
+        pids = self.patient_ids_for(fold=fold, split=split)
+        return _FoldAwareDataLoader(loader, pids)
+
+
+class _FoldAwareDataLoader:
+    """Delegates to ``_FakeDataLoader`` but exposes its patient ids."""
+
+    def __init__(self, inner: "_FakeDataLoader", patient_ids: list[int]) -> None:
+        self._inner = inner
+        self.patient_ids = patient_ids
+        self.dataset = _RowsDataset(patient_ids)
+
+    def __iter__(self):
+        return iter(self._inner)
+
+
+class _RowsDataset:
+    def __init__(self, patient_ids: list[int]) -> None:
+        self.rows = [{"patient_id": pid} for pid in patient_ids]
+
+    def __len__(self) -> int:
+        return len(self.rows)

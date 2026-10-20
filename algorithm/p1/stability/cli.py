@@ -179,6 +179,7 @@ class _RealDataLoaderFactory:
         num_workers: int,
         pin_memory: bool,
         split: Optional[str] = None,
+        fold: Optional[int] = None,
     ) -> Any:
         from p1.benchmark.cuda_runtime import BilateralEyeDataset
 
@@ -191,8 +192,14 @@ class _RealDataLoaderFactory:
         fold_map = load_fold_assignment(
             self.fold_assignment_path, expected_folds=5
         )
+        # An explicit ``fold`` wins over the one baked in at construction:
+        # the formal runner builds one factory and calls it per fold, so
+        # ignoring the argument would train every fold on fold 0's split.
         rows = build_rows_for_fold(
-            manifest_pdf, self.fold, fold_map, split=split,
+            manifest_pdf,
+            self.fold if fold is None else int(fold),
+            fold_map,
+            split=split,
         )
         ds = BilateralEyeDataset(rows, self.image_root, self.target_size)
         return self._torch.utils.data.DataLoader(

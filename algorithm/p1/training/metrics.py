@@ -42,6 +42,7 @@ class MetricsDict:
     per_class_auroc: list[float | None] = field(default_factory=list)
     per_class_precision: list[float] = field(default_factory=list)
     per_class_recall: list[float] = field(default_factory=list)
+    per_class_specificity: list[float] = field(default_factory=list)
     per_class_f1: list[float] = field(default_factory=list)
     per_class_support_pos: list[int] = field(default_factory=list)
     per_class_support_neg: list[int] = field(default_factory=list)
@@ -62,6 +63,7 @@ class MetricsDict:
             "per_class_auroc": list(self.per_class_auroc),
             "per_class_precision": list(self.per_class_precision),
             "per_class_recall": list(self.per_class_recall),
+            "per_class_specificity": list(self.per_class_specificity),
             "per_class_f1": list(self.per_class_f1),
             "per_class_support_pos": list(self.per_class_support_pos),
             "per_class_support_neg": list(self.per_class_support_neg),
@@ -84,6 +86,7 @@ class MetricsDict:
             per_class_auroc=list(d.get("per_class_auroc", [])),
             per_class_precision=list(d.get("per_class_precision", [])),
             per_class_recall=list(d.get("per_class_recall", [])),
+            per_class_specificity=list(d.get("per_class_specificity", [])),
             per_class_f1=list(d.get("per_class_f1", [])),
             per_class_support_pos=list(d.get("per_class_support_pos", [])),
             per_class_support_neg=list(d.get("per_class_support_neg", [])),
@@ -143,6 +146,14 @@ def compute_full_metrics(
         float(f1_score(y_true[:, c], y_pred[:, c], zero_division=0))
         for c in range(num_classes)
     ]
+    # specificity == 1 - fpr, computed directly rather than via sklearn's
+    # fpr so the identity in spec §3.2 holds exactly, not up to rounding.
+    per_class_specificity = []
+    for c in range(num_classes):
+        neg = y_true[:, c] == 0
+        n_neg = int(neg.sum())
+        fp = int((neg & (y_pred[:, c] == 1)).sum())
+        per_class_specificity.append(1.0 - fp / n_neg if n_neg else 0.0)
     per_class_support_pos = col_sums.tolist()
     per_class_support_neg = [int(n - s) for s in col_sums]
 
@@ -169,6 +180,7 @@ def compute_full_metrics(
         per_class_precision=per_class_precision,
         per_class_recall=per_class_recall,
         per_class_f1=per_class_f1,
+        per_class_specificity=per_class_specificity,
         per_class_support_pos=per_class_support_pos,
         per_class_support_neg=per_class_support_neg,
         skipped_classes=sorted(skipped),

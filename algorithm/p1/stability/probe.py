@@ -70,6 +70,8 @@ class DataLoaderFactory(Protocol):
 
     ``split`` is optional so the T2/T3 probe keeps its fold-wide behaviour;
     formal training passes ``"train"`` / ``"val"`` to get disjoint loaders.
+    ``fold`` likewise defaults to the factory's construction-time fold, so
+    one factory can serve every fold of an experiment.
     """
 
     def __call__(
@@ -80,6 +82,7 @@ class DataLoaderFactory(Protocol):
         num_workers: int,
         pin_memory: bool,
         split: Optional[str] = None,
+        fold: Optional[int] = None,
     ) -> Any: ...
 
 

@@ -12,7 +12,11 @@ relative imports).
 """
 from __future__ import annotations
 
-from .dataloader import FakeBilateralBatch, FakeDataLoaderFactory
+from .dataloader import (
+    FakeBilateralBatch,
+    FakeDataLoaderFactory,
+    FoldAwareDataLoaderFactory,
+)
 from .environment import FakeEnvironmentCapture
 from .fold_assignment import (
     FakeFoldAssignmentLoader,
@@ -45,5 +49,6 @@ __all__ = [
     "FakeSplitAssignmentLoader",
     "FakeTensor",
     "FakeTorchAdapter",
+    "FoldAwareDataLoaderFactory",
     "fold_split",
 ]
