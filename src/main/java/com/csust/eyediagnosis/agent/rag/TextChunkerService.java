@@ -39,9 +39,8 @@ public class TextChunkerService {
                         : currentChunk.toString();
                 currentChunk = new StringBuilder();
                 if (!overlapText.isEmpty()) {
-                    currentChunk.append(overlapText).append("\n\n");
+                    currentChunk.append(overlapText);
                 }
-                currentChunk.append(trimmed);
             }
 
             if (currentChunk.length() > 0) {

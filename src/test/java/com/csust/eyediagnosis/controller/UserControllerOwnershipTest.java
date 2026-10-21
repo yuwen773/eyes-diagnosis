@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import jakarta.servlet.http.HttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -46,7 +46,7 @@ class UserControllerOwnershipTest {
         when(userService.getLoginUser(any(HttpServletRequest.class))).thenReturn(loginUser);
         when(userService.updateOwnProfile(any(UserEditDTO.class), eq(loginUser))).thenReturn(true);
 
-        String body = "{\"userName\":\"safe-name\"}";
+        String body = "{\"userName\":\"safe-name\",\"id\":99,\"userRole\":\"admin\"}";
         mockMvc.perform(post("/user/update/userCenter")
                         .contentType("application/json")
                         .content(body))
@@ -57,7 +57,7 @@ class UserControllerOwnershipTest {
         UserEditDTO passedDto = captor.getValue();
         // Service receives only the editable fields; no id/userRole leakage
         assertEquals("safe-name", passedDto.getUserName());
-        // DTO type must not carry identity fields (class-level invariant)
-        assertNull(passedDto.getClass().getDeclaredFields().length == 0 ? null : null);
+        assertFalse(objectMapper.valueToTree(passedDto).has("id"));
+        assertFalse(objectMapper.valueToTree(passedDto).has("userRole"));
     }
 }

@@ -7,6 +7,10 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
 Base package: `com.csust.eyediagnosis`
 
+## MySQL
+
+本机数据库连接信息属于环境事实，不入库：见 `src/main/resources/application-dev.yml`（已 gitignore）与本地 `CLAUDE.local.md` / `~/.codex/AGENTS.md`。
+
 ## Java 21 Runtime
 
 Use the installed JDK 21 at `C:\Users\yuwen\.jdks\corretto-21.0.7` for all Maven and Java validation. Before running Maven in a new shell, set `JAVA_HOME` to this path and prepend `$env:JAVA_HOME\bin` to `Path`; do not rely on the host's default Java launcher.
@@ -61,7 +65,7 @@ docker-compose up -d                 # ChromaDB vector store :8000
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/schema.sql`. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 

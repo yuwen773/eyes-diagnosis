@@ -370,8 +370,8 @@ onMounted(() => {
 }
 
 .server-card.editing {
-  border-color: var(--claude-brand, #c96442);
-  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.1);
+  border-color: var(--iris-accent);
+  box-shadow: var(--iris-focus-ring);
   border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 }
 
@@ -422,7 +422,6 @@ onMounted(() => {
 
 .server-desc.no-desc {
   color: var(--color-stone-gray, #87867f);
-  font-style: italic;
 }
 
 .server-actions {
@@ -440,11 +439,11 @@ onMounted(() => {
 }
 
 .server-actions :deep(.ant-switch-checked) {
-  background: var(--color-success, #52c41a);
+  background: var(--iris-sev-low);
 }
 
 .server-edit-form {
-  border: 1px solid var(--claude-brand, #c96442);
+  border: 1px solid var(--iris-accent);
   border-top: none;
   border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
   padding: var(--space-6, 1.5rem);

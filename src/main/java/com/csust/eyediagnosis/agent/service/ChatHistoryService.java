@@ -225,28 +225,6 @@ public class ChatHistoryService {
         return sb.toString();
     }
 
-    private void ensureSessionExists(String sessionId, Long userId, String firstMessage) {
-        AgentSession existing = sessionMapper.selectBySessionId(sessionId);
-        if (existing != null) {
-            return;
-        }
-        try {
-            AgentSession session = new AgentSession();
-            session.setSessionId(sessionId);
-            session.setUserId(userId);
-            session.setTitle(truncate(firstMessage));
-            session.setStatus(1);
-            session.setMessageCount(0);
-            session.setLastMessage("");
-            session.setCreatedTime(new Date());
-            session.setUpdatedTime(new Date());
-            sessionMapper.insert(session);
-            log.info("自动创建 AgentSession, sessionId={}, userId={}", sessionId, userId);
-        } catch (DuplicateKeyException e) {
-            log.debug("Session 已存在（并发创建）, sessionId={}", sessionId);
-        }
-    }
-
     /**
      * 原子声明或校验会话所有权：
      * 1) 会话不存在 → 创建并绑定当前 userId；

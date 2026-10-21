@@ -375,8 +375,8 @@ onUnmounted(() => {
 }
 
 .toc-item.is-active .toc-marker {
-  background: var(--claude-brand);
-  box-shadow: 0 0 0 3px oklch(0.35 0.12 25 / 0.15);
+  background: var(--iris-accent);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.15);
 }
 
 .toc-text {

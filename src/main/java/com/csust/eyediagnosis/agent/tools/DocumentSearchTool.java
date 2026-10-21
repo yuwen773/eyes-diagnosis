@@ -4,8 +4,7 @@ import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -48,7 +47,6 @@ public class DocumentSearchTool {
     @Autowired(required = false)
     private RerankModel rerankModel;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Bm25Segmenter segmenter = new Bm25Segmenter();
 
     private final Map<Long, UserDocumentCache> documentCaches = new HashMap<>();
@@ -81,7 +79,7 @@ public class DocumentSearchTool {
                     .query(query)
                     .topK(searchTopK)
                     .similarityThreshold(similarityThreshold)
-                    .filterExpression("ownerUserId == " + currentUserId)
+                    .filterExpression(BuiltinCorpus.ownerFilter(currentUserId))
                     .build();
 
             List<Document> candidates;
@@ -106,14 +104,6 @@ public class DocumentSearchTool {
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
             return "知识库检索暂时不可用，请稍后重试。";
-        }
-    }
-
-    private String serialize(List<Document> docs) {
-        try {
-            return objectMapper.writeValueAsString(docs);
-        } catch (JsonProcessingException e) {
-            return "[]";
         }
     }
 
@@ -174,7 +164,8 @@ public class DocumentSearchTool {
                 List<Document> allDocs = vectorStore.similaritySearch(SearchRequest.builder()
                         .query("*")
                         .topK(1000)
-                        .filterExpression("ownerUserId == " + userId)
+                        .similarityThreshold(0.0)
+                        .filterExpression(BuiltinCorpus.ownerFilter(userId))
                         .build());
                 List<Document> documents = new ArrayList<>(allDocs);
                 documentCaches.put(userId, new UserDocumentCache(documents, System.currentTimeMillis()));

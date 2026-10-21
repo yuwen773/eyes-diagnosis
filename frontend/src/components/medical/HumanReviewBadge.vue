@@ -27,13 +27,13 @@ const label = computed(() => {
 const color = computed(() => {
   switch (props.status) {
     case 'REVIEWED':
-      return 'green'
+      return 'var(--iris-sev-low)'
     case 'AWAITING_REVIEW':
-      return 'gold'
+      return 'var(--iris-sev-moderate)'
     case 'OVERRIDDEN':
-      return 'purple'
+      return 'var(--iris-sev-high)'
     case 'AI_ONLY':
-      return 'blue'
+      return 'var(--iris-accent)'
     default:
       return 'default'
   }

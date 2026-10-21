@@ -98,8 +98,8 @@ const handleLogout = async () => {
 }
 
 .trigger:hover {
-  color: var(--claude-brand);
-  background: rgba(201, 100, 66, 0.08);
+  color: var(--iris-accent);
+  background: var(--iris-accent-soft);
 }
 
 .trigger:active {

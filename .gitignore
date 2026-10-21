@@ -82,3 +82,34 @@ algorithm/*_pb2_grpc.py
 # P1 本地原始数据与患者级派生产物：禁止提交
 /algorithm/datasets/DataSet/**
 /algorithm/artifacts/**
+
+# 本地密钥与环境变量：禁止提交
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# 本地个人记忆（Claude Code / 其它工具的 per-project 覆盖）
+CLAUDE.local.md
+
+# 工具运行时状态
+/.superpowers/
+/.workbuddy/
+/frontend/.omc/
+/design-previews/
+node_modules/
+
+# 非项目资料（专利/竞赛/文档附件）
+/docs/game/
+/docs/patent-response*/
+*.rar
+*.zip
+*.xlsx
+
+# Windows 下误生成的垃圾文件
+NUL
+/frontend/NUL
+
+# 一次性本地重构/修补脚本（不入库）
+/iris_refactor*.py
+/algorithm/_fix_decision2.py

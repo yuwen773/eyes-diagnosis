@@ -29,6 +29,23 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
 }
 
+/* Ant Design Vue 组件标题统一衬线，落实品牌「Georgia 标题」契约 */
+.ant-card-head-title,
+.ant-modal-title,
+.ant-modal-confirm-title,
+.ant-page-header-heading-title,
+.ant-descriptions-title,
+.ant-collapse-header,
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography h6 {
+  font-family: var(--claude-font-serif) !important;
+  font-weight: 600;
+}
+
 code, pre, kbd, samp {
   font-family: var(--claude-font-mono);
 }

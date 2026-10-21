@@ -97,6 +97,9 @@ public class AgentController {
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
+        if (limit <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "limit 必须大于0");
+        }
         if (!chatHistoryService.isSessionOwner(threadId, loginUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
@@ -111,6 +114,9 @@ public class AgentController {
         User loginUser = userService.getLoginUser(httpRequest);
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        if (limit <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "limit 必须大于0");
         }
         return ResultUtils.success(chatHistoryService.getUserSessions(loginUser.getId(), beforeId, Math.min(limit, 100)));
     }

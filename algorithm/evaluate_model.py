@@ -13,11 +13,11 @@ import argparse
 
 def load_model(model_path, device):
     """加载训练好的模型"""
-    model = EyeDiseaseModel()
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device)
-    model.eval()
-    return model
+    model = EyeDiseaseModel(pretrained=False)
+    model.device = device
+    model.model = model.model.to(device)
+    model.load_model(model_path)
+    return model.model
 
 def evaluate_model(model, test_loader, device):
     """评估模型性能"""
@@ -115,7 +115,7 @@ def main():
     
     # 准备数据
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((380, 380)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
@@ -146,4 +146,4 @@ def main():
     print('- class_distribution.png: 类别分布图')
 
 if __name__ == '__main__':
-    main() 
+    main()

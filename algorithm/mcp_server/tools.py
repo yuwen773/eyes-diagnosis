@@ -23,27 +23,27 @@ _DEFAULT_MODEL_PATHS = [
 
 def load_model(config: MCPConfig) -> None:
     global _model
+    _model = None
+    resolved_path = _resolve_model_path(config.model_path)
+    if resolved_path is None:
+        raise RuntimeError("Required model weights not found")
     logger.info(f"Loading model: arch={config.model_arch}, device={config.device}")
-    _model = EyeDiseaseModel(
+    model = EyeDiseaseModel(
         num_classes=config.num_classes,
         model_name=config.model_arch,
+        pretrained=False,
     )
-    _model.device = torch.device(config.device)
-    _model.model = _model.model.to(_model.device)
-
-    resolved_path = _resolve_model_path(config.model_path)
-    if resolved_path:
-        _model.load_model(resolved_path)
-        logger.info(f"Model weights loaded from {resolved_path}")
-    else:
-        logger.warning("No model weights found, using untrained model")
+    model.device = torch.device(config.device)
+    model.model = model.model.to(model.device)
+    model.load_model(resolved_path)
+    _model = model
+    logger.info(f"Model weights loaded from {resolved_path}")
 
 
 def _resolve_model_path(config_path: str | None) -> str | None:
-    if config_path and os.path.exists(config_path):
-        return config_path
-    for path in _DEFAULT_MODEL_PATHS:
-        if os.path.exists(path):
+    paths = [config_path] if config_path else _DEFAULT_MODEL_PATHS
+    for path in paths:
+        if os.path.isfile(path) and os.path.getsize(path) > 0:
             return path
     return None
 

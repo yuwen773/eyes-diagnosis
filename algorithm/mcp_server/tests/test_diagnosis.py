@@ -94,3 +94,13 @@ def test_reliability_gap_01():
     from mcp_server.diagnosis import calculate_reliability
     probs = {"a": 0.55, "b": 0.45, "c": 0.0}
     assert calculate_reliability(probs) == 65
+
+
+@pytest.mark.parametrize(
+    ("top", "second", "expected"),
+    [(0.6, 0.4, 75), (0.7, 0.2, 95), (0.599, 0.401, 65)],
+)
+def test_reliability_decimal_boundaries(top, second, expected):
+    from mcp_server.diagnosis import calculate_reliability
+
+    assert calculate_reliability({"a": top, "b": second}) == expected

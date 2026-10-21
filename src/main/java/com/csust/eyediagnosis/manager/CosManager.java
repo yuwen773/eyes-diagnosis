@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -90,10 +91,13 @@ public class CosManager {
     }
 
     /**
-     * 按前缀列举对象 key，用于补偿任务对账。
+     * 按前缀列举对象，用于补偿任务对账。
+     *
+     * <p>同时返回最后修改时间：补偿任务需要据此跳过"刚刚上传、任务行可能尚未落库"的对象，
+     * 避免把进行中的上传误判为孤儿。
      */
-    public List<String> listObjectsByPrefix(String prefix) {
-        List<String> keys = new ArrayList<>();
+    public List<CosObjectInfo> listObjects(String prefix) {
+        List<CosObjectInfo> objects = new ArrayList<>();
         ListObjectsRequest request = new ListObjectsRequest();
         request.setBucketName(cosClientConfig.getBucket());
         request.setPrefix(prefix);
@@ -101,10 +105,20 @@ public class CosManager {
         ObjectListing listing;
         do {
             listing = cosClient.listObjects(request);
-            listing.getObjectSummaries().forEach(s -> keys.add(s.getKey()));
+            listing.getObjectSummaries()
+                    .forEach(s -> objects.add(new CosObjectInfo(s.getKey(), s.getLastModified())));
             request.setMarker(listing.getNextMarker());
         } while (listing.isTruncated());
-        return keys;
+        return objects;
+    }
+
+    /**
+     * COS 对象摘要：key 与最后修改时间。
+     *
+     * @param key          对象 key
+     * @param lastModified 最后修改时间，COS 正常返回；为 {@code null} 表示未知
+     */
+    public record CosObjectInfo(String key, Date lastModified) {
     }
 
 }

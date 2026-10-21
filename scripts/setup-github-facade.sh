@@ -50,6 +50,9 @@ run_gh() {
 
 # --- 步骤 1: 前置检查 ---
 preflight() {
+  if $DRY_RUN; then
+    return 0
+  fi
   if ! $SKIP_GITHUB; then
     command -v gh >/dev/null 2>&1 || { echo "ERROR: gh not installed" >&2; exit 1; }
     gh auth status >/dev/null 2>&1 || { echo "ERROR: gh not logged in. Run: gh auth login" >&2; exit 1; }

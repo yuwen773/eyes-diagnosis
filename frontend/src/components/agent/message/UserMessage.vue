@@ -155,7 +155,7 @@ const displayTime = computed(() => {
 
 .img-thumb:hover {
   border-color: var(--claude-brand);
-  box-shadow: 0 0 0 2px oklch(0.72 0.09 30 / 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px oklch(0.6 0.05 175 / 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 
