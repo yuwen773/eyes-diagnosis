@@ -211,6 +211,10 @@ onMounted(async () => {
     loadSessions(),
     savedThreadId ? loadHistoryMessages(savedThreadId) : Promise.resolve(),
   ])
+  // 没有已保存的会话时保留初始化时生成的 threadId：
+  // 用空串覆盖会让首条消息以空 threadId 发出，后端随即另建一个会话，
+  // 前端却仍把消息挂在这个空 id 上，两边就此分叉。
+  if (!savedThreadId) return
   currentThreadId.value = savedThreadId
   threadId.value = savedThreadId
 })
@@ -232,6 +236,10 @@ const totalResourceCount = computed(() => panelImages.value.length + panelLinks.
 // Handlers
 const handleSend = async (text: string, files: File[] = []) => {
   if ((!text.trim() && files.length === 0) || streaming.value) return
+
+  // 必须在 pushMessage 之前判断：用户消息推入后 messages 已非空，
+  // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
+  const isFirstMessage = messages.value.length === 0
 
   let imageUrls: string[] = []
   try {
@@ -259,10 +267,12 @@ const handleSend = async (text: string, files: File[] = []) => {
     currentThreadId.value = threadId.value
 
     // 如果是第一条消息，触发 AI 生成标题
-    if (currentThreadId.value && messages.value.length === 0) {
-      generateTitle(currentThreadId.value, text).catch(e => {
-        console.warn('标题生成触发失败', e)
-      })
+    if (isFirstMessage) {
+      generateTitle(currentThreadId.value, text)
+        .then(() => loadSessions())
+        .catch(e => {
+          console.warn('标题生成触发失败', e)
+        })
     }
   } catch (error) {
     uploader.commitFailure(imageUrls)

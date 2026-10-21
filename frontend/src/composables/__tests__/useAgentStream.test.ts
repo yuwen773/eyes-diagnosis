@@ -4,7 +4,15 @@ import { useAgentStream } from '@/composables/useAgentStream'
 
 const wrappers: VueWrapper[] = []
 const transport = vi.fn<typeof fetch>()
-const imageUrl = 'https://cos/agent-chat/1/retained.png'
+
+// 所有权账本是模块级状态：每个用例用独立 URL，避免前一个用例的
+// "已删除"标记把后一个用例的清理路径挡掉。
+let seq = 0
+let imageUrl = ''
+const nextImageUrl = () => {
+  imageUrl = `https://cos/agent-chat/1/retained-${++seq}.png`
+  return imageUrl
+}
 
 function createStream() {
   let stream!: ReturnType<typeof useAgentStream>
@@ -21,6 +29,7 @@ describe('agent chat image lifecycle', () => {
   beforeEach(() => {
     transport.mockReset()
     vi.stubGlobal('fetch', transport)
+    nextImageUrl()
   })
 
   afterEach(() => {
@@ -100,6 +109,24 @@ describe('agent chat image lifecycle', () => {
     expect(transport.mock.calls[1]?.[0]).toMatch(/\/agent\/image\/upload\/delete$/)
     expect(JSON.parse(String(transport.mock.calls[1]?.[1]?.body))).toEqual({ url: imageUrl })
     expect(stream.isStreaming.value).toBe(false)
+  })
+
+  // 缺陷：之前的实现无条件删除失败请求携带的每个 URL。一旦页面已经把
+  // 同一张图挂在一条成功送达的消息上（并发去重会让不同消息共用 URL），
+  // 这条失败路径就会把那条消息的附件删掉。
+  it('does not delete an image already retained by a delivered message', async () => {
+    const { retainAgentImage } = await import('@/composables/agentImageOwnership')
+    retainAgentImage(imageUrl)
+
+    transport.mockResolvedValueOnce(new Response('Unavailable', { status: 503 }))
+    transport.mockResolvedValue(new Response(null))
+    const stream = createStream()
+
+    await expect(stream.sendMessage('Analyze', 'thread-1', { urls: [imageUrl] }))
+      .rejects.toThrow('Failed to open connection')
+
+    const calledUrls = transport.mock.calls.map(call => String(call[0]))
+    expect(calledUrls.some(u => u.endsWith('/agent/image/upload/delete'))).toBe(false)
   })
 
   it('rejects an unfinished response when the connection closes without done', async () => {
