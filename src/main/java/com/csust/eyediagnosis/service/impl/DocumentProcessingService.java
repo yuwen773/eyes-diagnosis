@@ -91,15 +91,21 @@ public class DocumentProcessingService {
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);
             log.info("[ETL-Transform] 文本分块完成: docId={}, chunk数量={}, 耗时={}ms", docId, chunks.size(), System.currentTimeMillis() - transformStart);
 
-            // 为每个 chunk 设置唯一 ID 并确保 metadata 包含 ownerUserId
+            // 为每个 chunk 设置唯一 ID 并确保 metadata 包含 ownerUserId。
+            // 这里构建新列表而不是原地 set()：chunk() 的返回值可能是不可变列表
+            // （List.of / stream().toList()），原地修改会抛 UnsupportedOperationException，
+            // 再被下面的 catch 吞成 error=null，整份文档静默处理失败。
+            List<Document> ownedChunks = new ArrayList<>(chunks.size());
             for (int i = 0; i < chunks.size(); i++) {
+                Document chunk = chunks.get(i);
                 String chunkId = "doc_" + docId + "_chunk_" + i;
-                Map<String, Object> chunkMetadata = new HashMap<>(chunks.get(i).getMetadata());
+                Map<String, Object> chunkMetadata = new HashMap<>(chunk.getMetadata());
                 chunkMetadata.put("ownerUserId", knowledgeDocument.getUserId());
                 chunkMetadata.put("documentId", docId);
-                chunks.set(i, new Document(chunkId, chunks.get(i).getText(), chunkMetadata));
-                log.debug("[ETL-Transform] Chunk[{}]: id={}, text长度={}", i, chunkId, chunks.get(i).getText().length());
+                ownedChunks.add(new Document(chunkId, chunk.getText(), chunkMetadata));
+                log.debug("[ETL-Transform] Chunk[{}]: id={}, text长度={}", i, chunkId, chunk.getText().length());
             }
+            chunks = ownedChunks;
 
             // ========== 3. Load ==========
             log.info("[ETL-Load] 开始存储到向量数据库: docId={}, chunk数量={}", docId, chunks.size());

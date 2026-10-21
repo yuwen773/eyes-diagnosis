@@ -2,90 +2,158 @@ package com.csust.eyediagnosis.service;
 
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
+import com.csust.eyediagnosis.grpc.DiagnosisGrpcClient;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
+import com.csust.eyediagnosis.manager.FileManager;
+import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
 import com.csust.eyediagnosis.mapper.DiagnosisMapper;
 import com.csust.eyediagnosis.mapper.InferenceCacheMapper;
+import com.csust.eyediagnosis.mapper.UserMapper;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class InferenceCacheTest {
 
-    @Test
-    void sameImageBytesShareCachedInferenceAcrossUsers() {
-        InferenceCacheMapper mapper = mock(InferenceCacheMapper.class);
-        when(mapper.findByHash(any(), any(), any(), any(), any()))
-                .thenReturn(buildCache("normal", 0.9, "desc"));
+    private static final String MODEL = "efficientnet-b4@1.0.0";
+    private static final String WEIGHT = "a".repeat(64);
+    private static final String PREPROCESS = "v1";
+    private static final String POLICY = "medical-safety-v2";
 
-        InferenceCache cached = mapper.findByHash("h", "v1", "weight", "p1", "medical-safety-v2");
-        assertEquals("normal", cached.getPredictedLabel());
-        assertEquals(0.9, cached.getProbability());
+    private DiagnosisServiceImpl service;
+    private InferenceCacheMapper cacheMapper;
+    private DiagnosisGrpcClient grpcClient;
+    private FileManager fileManager;
+    private DiagnosisMapper baseMapper;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        service = new DiagnosisServiceImpl();
+        cacheMapper = mock(InferenceCacheMapper.class);
+        grpcClient = mock(DiagnosisGrpcClient.class);
+        fileManager = mock(FileManager.class);
+
+        setField("inferenceCacheMapper", cacheMapper);
+        setField("diagnosisMapper", baseMapper);
+        setField("userMapper", mock(UserMapper.class));
+        setField("diagnosisGrpcClient", grpcClient);
+        setField("fileManager", fileManager);
+        setField("modelVersion", MODEL);
+        setField("preprocessVersion", PREPROCESS);
+        setField("modelWeightSha256", WEIGHT);
+        setField("inferencePolicyVersion", POLICY);
+
+        UploadPictureDetail detail = new UploadPictureDetail();
+        detail.setUrl("https://cdn/x.png");
+        when(fileManager.uploadPicture(any(), anyString())).thenReturn(detail);
+        // ServiceImpl.save() 通过 baseMapper 落库，而不是注入的 diagnosisMapper。
+        baseMapper = mock(DiagnosisMapper.class);
+        // save() 会把 id 回写到实体；模拟自增主键的行为。
+        when(baseMapper.insert(any(Diagnosis.class))).thenAnswer(inv -> {
+            Diagnosis d = inv.getArgument(0);
+            if (d.getId() == null) {
+                d.setId(1L);
+            }
+            return 1;
+        });
+        ReflectionTestUtils.setField(service, "baseMapper", baseMapper);
+    }
+
+    // --- 缓存命中的真实路径 ------------------------------------------------
+
+    @Test
+    void doDiagnosisServesCacheHitWithoutCallingGrpc() {
+        DiagnosisProto.DiagnosisResponse original = fullResponse("normal", 91.5);
+        when(cacheMapper.findByHash(anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(DiagnosisServiceImpl.toCacheEntity(
+                        "ignored", original, MODEL, WEIGHT, PREPROCESS, POLICY));
+
+        DiagnosisResultVO vo = service.doDiagnosis(imageFile(), user(7L));
+
+        // 命中缓存时绝不调用推理服务
+        verify(grpcClient, never()).diagnose(any(), any());
+        // 且返回的医疗安全字段与缓存行一致。这条响应是 AI 拒识的，
+        // 按设计不暴露结论（result 为 null），只透出拒识元数据。
+        assertNull(vo.getResult());
+        assertEquals(true, vo.getAiRejected());
+        assertEquals("QUALITY_FAIL", vo.getAbstainReason());
+        assertEquals(25, vo.getQualityScore());
     }
 
     @Test
-    void diagnosisRecordIsNeverBuiltFromCacheRow() {
-        // 推理缓存不包含 userId；Diagnosis 记录的 userId 必须由调用方传入，绝不引用缓存行。
-        DiagnosisMapper diagnosisMapper = mock(DiagnosisMapper.class);
-        when(diagnosisMapper.selectById(any())).thenReturn(null);
+    void doDiagnosisCacheHitStillWritesTheCallingUsersId() {
+        when(cacheMapper.findByHash(anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(DiagnosisServiceImpl.toCacheEntity(
+                        "ignored", fullResponse("normal", 91.5), MODEL, WEIGHT, PREPROCESS, POLICY));
 
-        Diagnosis diag = new Diagnosis();
-        diag.setUserId(7L);
-        diag.setResult("normal");
-        // 构造推理缓存行
-        InferenceCache cache = buildCache("normal", 0.9, "desc");
-        // Diagnosis 的 userId 必须是构造时显式赋值
-        assertEquals(7L, diag.getUserId());
-        // InferenceCache 上没有 userId 字段（编译期保证，无需反射）
+        service.doDiagnosis(imageFile(), user(42L));
+
+        ArgumentCaptor<Diagnosis> captor = ArgumentCaptor.forClass(Diagnosis.class);
+        verify(baseMapper).insert(captor.capture());
+        // 推理缓存不含 userId；诊断记录必须用调用者身份，不能复用缓存行的任何身份信息
+        assertEquals(42L, captor.getValue().getUserId());
     }
 
     @Test
-    void cacheHashUpgradeIsSha256() {
-        // 显式校验：算法常量切换到 SHA-256（覆盖原 MD5）
-        java.security.MessageDigest md;
-        try {
-            md = java.security.MessageDigest.getInstance("SHA-256");
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-        }
-        byte[] digest = md.digest(new byte[]{1, 2, 3});
-        assertEquals(64, org.apache.commons.codec.binary.Hex.encodeHexString(digest).length());
+    void doDiagnosisMissCallsGrpcAndUpsertsCache() {
+        when(cacheMapper.findByHash(anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(null);
+        DiagnosisProto.DiagnosisResponse fresh = fullResponse("normal", 91.5);
+        when(grpcClient.diagnose(any(), any())).thenReturn(fresh);
+
+        service.doDiagnosis(imageFile(), user(7L));
+
+        verify(grpcClient).diagnose(any(), any());
+        verify(cacheMapper).upsert(any(InferenceCache.class));
     }
 
     @Test
-    void cachedResponsePreservesEveryMedicalSafetyField() {
-        DiagnosisProto.DiagnosisResponse uncached = DiagnosisProto.DiagnosisResponse.newBuilder()
-                .setPredictedLabel("normal")
-                .setProbability(91.5)
-                .setCalibratedProbability(90.1)
-                .setCalibrationStatus("CALIBRATED")
-                .setReliabilityScore(90)
-                .setDescription("desc")
-                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
-                        .setLabel("normal").setProbability(91.5))
-                .setRejected(true)
-                .setAbstainReason("QUALITY_FAIL")
-                .setQualityScore(25)
-                .setQualityReasons("blur")
-                .setIsOod(true)
-                .setOodScore(12.3)
-                .setOodStatus(DiagnosisProto.OodStatus.OUT_OF_DISTRIBUTION)
-                .setModelVersion("efficientnet-b4@1.0.0")
-                .setWeightSha256("a".repeat(64))
-                .setPreprocessVersion("v1")
-                .setInferencePolicyVersion("medical-safety-v2")
-                .setRequiresReview(true)
-                .build();
+    void doDiagnosisSkipsCacheWhenDeploymentFingerprintIsIncomplete() throws Exception {
+        // 权重 SHA 缺失 -> isCacheEnabled 为 false -> 既不查缓存也不写缓存
+        setField("modelWeightSha256", "");
+
+        when(grpcClient.diagnose(any(), any())).thenReturn(fullResponse("normal", 91.5));
+
+        service.doDiagnosis(imageFile(), user(7L));
+
+        verify(cacheMapper, never()).findByHash(anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(cacheMapper, never()).upsert(any(InferenceCache.class));
+        verify(grpcClient).diagnose(any(), any());
+    }
+
+    // --- 纯函数契约 --------------------------------------------------------
+
+    @Test
+    void cacheRequiresOneCompleteNormalizedDeploymentFingerprint() {
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(MODEL, "", PREPROCESS, POLICY));
+        assertFalse(DiagnosisServiceImpl.isCacheEnabled(MODEL, "A".repeat(64), "", POLICY));
+        assertTrue(DiagnosisServiceImpl.isCacheEnabled(MODEL, "A".repeat(64), PREPROCESS, POLICY));
+        assertEquals(WEIGHT, DiagnosisServiceImpl.normalizeWeightSha256("A".repeat(64)));
+    }
+
+    @Test
+    void cacheRoundTripPreservesEveryMedicalSafetyField() {
+        DiagnosisProto.DiagnosisResponse uncached = fullResponse("normal", 91.5);
 
         InferenceCache cache = DiagnosisServiceImpl.toCacheEntity(
                 "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess", "fallback-policy");
@@ -94,45 +162,19 @@ class InferenceCacheTest {
     }
 
     @Test
-    void cacheRequiresOneCompleteNormalizedDeploymentFingerprint() {
-        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
-                "efficientnet-b4@1.0.0", "", "v1", "medical-safety-v2"));
-        assertFalse(DiagnosisServiceImpl.isCacheEnabled(
-                "efficientnet-b4@1.0.0", "A".repeat(64), "", "medical-safety-v2"));
-        assertTrue(DiagnosisServiceImpl.isCacheEnabled(
-                "efficientnet-b4@1.0.0", "A".repeat(64), "v1", "medical-safety-v2"));
-        assertEquals("a".repeat(64), DiagnosisServiceImpl.normalizeWeightSha256("A".repeat(64)));
-    }
-
-    @Test
     void rejectedResponseContainsNoAiConclusion() {
-        DiagnosisProto.DiagnosisResponse rejected = DiagnosisProto.DiagnosisResponse.newBuilder()
-                .setPredictedLabel("normal")
-                .setProbability(91.5)
-                .setReliabilityScore(92)
-                .setDescription("must not be public")
-                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
-                        .setLabel("normal").setProbability(91.5))
-                .setRejected(true)
-                .setAbstainReason("QUALITY_FAIL")
-                .setQualityScore(25)
-                .setModelVersion("efficientnet-b4@1.0.0")
-                .setWeightSha256("a".repeat(64))
-                .setRequiresReview(true)
-                .build();
-
-        DiagnosisResultVO response = DiagnosisServiceImpl.buildDiagnosisResult(rejected);
+        DiagnosisResultVO response = DiagnosisServiceImpl.buildDiagnosisResult(fullResponse("normal", 91.5));
 
         assertEquals(true, response.getAiRejected());
         assertEquals("QUALITY_FAIL", response.getAbstainReason());
         assertEquals(25, response.getQualityScore());
         assertEquals(true, response.getRequiresReview());
-        assertEquals(null, response.getResult());
-        assertEquals(null, response.getDetails());
-        assertEquals(null, response.getProbability());
-        assertEquals(null, response.getConfidence());
-        assertEquals(null, response.getRecommendations());
-        assertEquals(null, response.getOtherDisease());
+        assertNull(response.getResult());
+        assertNull(response.getDetails());
+        assertNull(response.getProbability());
+        assertNull(response.getConfidence());
+        assertNull(response.getRecommendations());
+        assertNull(response.getOtherDisease());
     }
 
     @Test
@@ -149,11 +191,11 @@ class InferenceCacheTest {
         DiagnosisResultVO response = DiagnosisResultVO.objToVo(diagnosis);
 
         assertEquals(true, response.getRequiresReview());
-        assertEquals(null, response.getResult());
-        assertEquals(null, response.getDetails());
-        assertEquals(null, response.getProbability());
-        assertEquals(null, response.getConfidence());
-        assertEquals(null, response.getRecommendations());
+        assertNull(response.getResult());
+        assertNull(response.getDetails());
+        assertNull(response.getProbability());
+        assertNull(response.getConfidence());
+        assertNull(response.getRecommendations());
     }
 
     @Test
@@ -168,29 +210,51 @@ class InferenceCacheTest {
         DiagnosisManageVO response = DiagnosisManageVO.objToVo(diagnosis);
 
         assertEquals(true, response.getRequiresReview());
-        assertEquals(null, response.getResult());
-        assertEquals(null, response.getConfidence());
-        assertEquals(null, response.getSeverity());
+        assertNull(response.getResult());
+        assertNull(response.getConfidence());
+        assertNull(response.getSeverity());
     }
 
-    private DiagnosisProto.DiagnosisResponse mockGrpc() {
-        DiagnosisProto.DiagnosisResponse resp = mock(DiagnosisProto.DiagnosisResponse.class);
-        when(resp.getPredictedLabel()).thenReturn("normal");
-        when(resp.getProbability()).thenReturn(0.9);
-        when(resp.getDescription()).thenReturn("desc");
-        when(resp.getReliabilityScore()).thenReturn(1);
-        return resp;
+    // --- helpers -----------------------------------------------------------
+
+    private static DiagnosisProto.DiagnosisResponse fullResponse(String label, double probability) {
+        return DiagnosisProto.DiagnosisResponse.newBuilder()
+                .setPredictedLabel(label)
+                .setProbability(probability)
+                .setCalibratedProbability(90.1)
+                .setCalibrationStatus("CALIBRATED")
+                .setReliabilityScore(90)
+                .setDescription("desc")
+                .addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
+                        .setLabel(label).setProbability(probability))
+                .setRejected(true)
+                .setAbstainReason("QUALITY_FAIL")
+                .setQualityScore(25)
+                .setQualityReasons("blur")
+                .setIsOod(true)
+                .setOodScore(12.3)
+                .setOodStatus(DiagnosisProto.OodStatus.OUT_OF_DISTRIBUTION)
+                .setModelVersion(MODEL)
+                .setWeightSha256(WEIGHT)
+                .setPreprocessVersion(PREPROCESS)
+                .setInferencePolicyVersion(POLICY)
+                .setRequiresReview(true)
+                .build();
     }
 
-    private InferenceCache buildCache(String label, double prob, String desc) {
-        InferenceCache c = new InferenceCache();
-        c.setImageHash("h");
-        c.setModelVersion("v1");
-        c.setPreprocessVersion("p1");
-        c.setPredictedLabel(label);
-        c.setProbability(prob);
-        c.setDescription(desc);
-        c.setReliabilityScore(1);
-        return c;
+    private static MockMultipartFile imageFile() {
+        return new MockMultipartFile("file", "eye.png", "image/png", new byte[]{1, 2, 3});
+    }
+
+    private static User user(Long id) {
+        User u = new User();
+        u.setId(id);
+        return u;
+    }
+
+    private void setField(String name, Object value) throws Exception {
+        var field = DiagnosisServiceImpl.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(service, value);
     }
 }
