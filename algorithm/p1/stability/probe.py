@@ -29,8 +29,9 @@ on both sides so the staged report can localise a silent hang.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Optional, Protocol
 
 from p1.stability.schema import STAGE_NAMES
 from p1.stability.stages import (
@@ -56,10 +57,22 @@ class TorchAdapter(Protocol):
     def GradScaler(self, enabled: bool) -> Any: ...
     def BCEWithLogitsLoss(self) -> Any: ...
     def float(self, tensor: Any) -> Any: ...
+    def autocast(
+        self,
+        device_type: str = "cuda",
+        dtype: Any = None,
+        enabled: bool = True,
+    ) -> Any: ...
 
 
 class DataLoaderFactory(Protocol):
-    """Builds a DataLoader (or a fake)."""
+    """Builds a DataLoader (or a fake).
+
+    ``split`` is optional so the T2/T3 probe keeps its fold-wide behaviour;
+    formal training passes ``"train"`` / ``"val"`` to get disjoint loaders.
+    ``fold`` likewise defaults to the factory's construction-time fold, so
+    one factory can serve every fold of an experiment.
+    """
 
     def __call__(
         self,
@@ -68,6 +81,8 @@ class DataLoaderFactory(Protocol):
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
+        split: Optional[str] = None,
+        fold: Optional[int] = None,
     ) -> Any: ...
 
 
@@ -110,6 +125,11 @@ class _StageRuntime:
     loss_fn: Any = None
     logits: Any = None
     loss: Any = None
+    # autocast_cm holds the open torch.autocast context manager across
+    # the forward and loss stages so one context wraps both, matching
+    # the benchmark pattern (p1.benchmark.cuda_runtime). _stage_forward
+    # opens it, _stage_loss closes it. None when amp=False.
+    autocast_cm: Any = None
 
 
 def _specs() -> list[StageSpec]:
@@ -289,21 +309,51 @@ def build_probe(
     def _stage_forward(spec: StageSpec, ctx: ProbeContext) -> None:
         rt = state["runtime"]
         torch.cuda_synchronize()
-        rt.logits = rt.model(rt.left, rt.right)
-        torch.cuda_synchronize()
-        if tuple(rt.logits.shape) != (patient_batch, num_classes):
-            raise AssertionError(
-                f"logits shape must be {(patient_batch, num_classes)}, "
-                f"got {tuple(rt.logits.shape)}"
-            )
+        # When amp=True, open a torch.autocast context (defaults to fp16
+        # via the adapter) that stays open across the loss stage. Without
+        # it, EfficientNet-B4 runs in fp32 and batch=8 OOMs on the 8 GB
+        # RTX 4060 (v2 T3 real-GPU run). The context is closed at the end
+        # of _stage_loss so a single autocast context wraps both model()
+        # and criterion() — matching the benchmark pattern
+        # (p1.benchmark.cuda_runtime).
+        try:
+            if amp:
+                rt.autocast_cm = torch.autocast(
+                    device_type="cuda", enabled=True
+                )
+                rt.autocast_cm.__enter__()
+            rt.logits = rt.model(rt.left, rt.right)
+            torch.cuda_synchronize()
+            if tuple(rt.logits.shape) != (patient_batch, num_classes):
+                raise AssertionError(
+                    f"logits shape must be {(patient_batch, num_classes)}, "
+                    f"got {tuple(rt.logits.shape)}"
+                )
+        except BaseException:
+            # Forward raised: pass the active exception to autocast's
+            # __exit__ (matching `with`-statement semantics) so torch's
+            # context cleanup sees the failure. The exception is then
+            # re-raised so the stage machine records the failure.
+            if rt.autocast_cm is not None:
+                rt.autocast_cm.__exit__(*sys.exc_info())
+                rt.autocast_cm = None
+            raise
 
     # -- 7. loss --------------------------------------------------------
     def _stage_loss(spec: StageSpec, ctx: ProbeContext) -> None:
         rt = state["runtime"]
-        labels_f = torch.float(rt.labels)
-        rt.loss = rt.loss_fn(rt.logits, labels_f)
-        if not torch.isfinite(rt.loss):
-            raise RuntimeError("loss is not finite (NaN or Inf)")
+        try:
+            labels_f = torch.float(rt.labels)
+            rt.loss = rt.loss_fn(rt.logits, labels_f)
+            if not torch.isfinite(rt.loss):
+                raise RuntimeError("loss is not finite (NaN or Inf)")
+        finally:
+            # Close the autocast context opened in _stage_forward. If
+            # loss raised, __exit__ sees the active exception; otherwise
+            # exc_info is (None, None, None) which signals success.
+            if rt.autocast_cm is not None:
+                rt.autocast_cm.__exit__(*sys.exc_info())
+                rt.autocast_cm = None
 
     # -- 8. backward ----------------------------------------------------
     def _stage_backward(spec: StageSpec, ctx: ProbeContext) -> None:

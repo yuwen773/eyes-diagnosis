@@ -25,6 +25,7 @@ first_conv_in_channels) is NOT a stage. It is carried on
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any, Callable, List
 
 import pytest
@@ -63,6 +64,10 @@ class FakeTensor:
         new = FakeTensor(self.shape, device=device, dtype=self.dtype)
         new._moved = True
         return new
+
+    def item(self) -> float:
+        # Return a dummy scalar for loss.item() calls.
+        return 0.5
 
 
 class FakeScaledTensor(FakeTensor):
@@ -112,6 +117,9 @@ class FakeModel:
         self.batch = batch
         self.num_classes = num_classes
         self.forward_calls: list[tuple[Any, Any]] = []
+
+    def train(self) -> "FakeModel":
+        return self
 
     def __call__(self, left: Any, right: Any) -> FakeTensor:
         self.forward_calls.append((left, right))
@@ -237,6 +245,18 @@ class FakeTorchAdapter:
     def float(self, tensor: Any) -> FakeTensor:
         # labels.float() — return a new tensor with same shape.
         return FakeTensor(tensor.shape, device=tensor.device, dtype="float32")
+
+    def autocast(
+        self,
+        device_type: str = "cuda",
+        dtype: Any = None,
+        enabled: bool = True,
+    ) -> Any:
+        # The probe opens autocast in _stage_forward and closes it in
+        # _stage_loss. Return a context manager that does nothing — the
+        # behaviour under autocast is exercised by the dedicated
+        # test_p2_02a_probe_autocast.py tests.
+        return contextlib.nullcontext()
 
 
 class FakeDataLoaderFactory:

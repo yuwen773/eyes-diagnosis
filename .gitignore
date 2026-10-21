@@ -40,6 +40,7 @@ build/
 .vscode/
 /.claude/
 /.omc/
+algorithm/.omc/
 /.worktrees/
 /.agents/
 .git-rewrite/
