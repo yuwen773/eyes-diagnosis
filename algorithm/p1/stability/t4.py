@@ -194,6 +194,7 @@ def run_t4_stability(
         # VRAM — track minimum free memory observed across all batches.
         # Peak usage ≈ total_gpu_memory − min_free_mb (approximation;
         # the TorchAdapter protocol doesn't expose max_memory_allocated).
+        free_mb: int | None = None
         try:
             free_bytes, _total_bytes = torch.cuda_mem_get_info(0)
             free_mb = int(free_bytes // (1024 * 1024))
@@ -209,7 +210,10 @@ def run_t4_stability(
                 "batch_idx": success,
                 "loss": float(loss.item()),
                 "gpu_step_ms": round(gpu_ms, 3),
-                "vram_free_mb": peak_vram_mb,
+                # This per-batch field used to echo ``peak_vram_mb``, which is
+                # initialised to 0 and never assigned — every row claimed 0 MB
+                # free. Report the free-memory reading this batch actually took.
+                "vram_free_mb": free_mb,
             }
         )
 

@@ -261,6 +261,31 @@ def test_t4_runs_100_batches_on_happy_path() -> None:
     # Every batch has the expected timing keys.
     for bt in report["batch_timings"]:
         assert set(bt.keys()) == {"batch_idx", "loss", "gpu_step_ms", "vram_free_mb"}
+    # The per-batch free-memory reading must be the adapter's actual value,
+    # not the never-assigned peak_vram_mb (which made every row claim 0 MB).
+    assert [bt["vram_free_mb"] for bt in report["batch_timings"]] == [8000] * 100
+
+
+def test_t4_vram_free_is_null_when_probe_fails() -> None:
+    """A failing mem_get_info must yield ``None``, not a stale or fake number."""
+    import p1.stability.t4 as t4
+
+    class _NoVramAdapter(AutocastRecordingAdapter):
+        def cuda_mem_get_info(self, index: int):
+            raise RuntimeError("driver query failed")
+
+    report = t4.run_t4_stability(
+        torch=_NoVramAdapter(),
+        dataloader_factory=MultiBatchDataLoaderFactory(n_batches=3),
+        model_factory=FakeModelFactory(batch=8),
+        optimizer_factory=lambda m: _FakeOptimizer(),  # noqa: E731
+        amp=True,
+        patient_batch=8,
+        num_workers=2,
+        pin_memory=True,
+        target_batches=3,
+    )
+    assert [bt["vram_free_mb"] for bt in report["batch_timings"]] == [None] * 3
 
 
 def test_t4_records_first_batch_and_percentiles() -> None:

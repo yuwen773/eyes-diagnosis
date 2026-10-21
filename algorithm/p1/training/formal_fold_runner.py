@@ -15,6 +15,7 @@ import datetime as _dt
 import hashlib
 import json
 import os
+import platform
 import random
 import time
 from pathlib import Path
@@ -358,7 +359,10 @@ def run_formal_fold(
     _atomic_write_json(env_path, {
         "schema_version": "p2-02b-v1",
         "timestamp": started_at,
-        "python_version": ".".join(map(str, torch.__version__.split("+")[0].split(".")[:3])),
+        # platform.python_version() is the interpreter; torch.__version__ is
+        # recorded separately one line down. These were the same value, so
+        # environment.json could not tell two Python versions apart.
+        "python_version": platform.python_version(),
         "torch_version": torch.__version__,
         "cuda_available": torch.cuda.is_available(),
         "conda_env": os.environ.get("CONDA_DEFAULT_ENV", "unknown"),
