@@ -12,3 +12,7 @@ algorithm/eye_diagnosis_p1/tests/fixtures/** -text
 # Database handoff evidence preserves captured bytes, including CRLF.
 deploy/python-migrations/legacy/** -text
 deploy/python-migrations/*.sql -text
+
+# Shell scripts must stay LF in the working copy on Windows too, otherwise the
+# shebang and every line break carry a stray CR and bash fails on them.
+*.sh text eol=lf
