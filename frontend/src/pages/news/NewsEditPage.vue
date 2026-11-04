@@ -112,7 +112,7 @@ const handleSave = async () => {
     if (res.data.code === 0 && res.data.data) {
       message.success('保存成功')
     }
-  } catch (error) {
+  } catch {
     message.error('保存失败')
   } finally {
     saving.value = false
@@ -135,7 +135,7 @@ const handlePublish = async () => {
         path: `/news/${Number(route.params.id)}`,
       })
     }
-  } catch (error) {
+  } catch {
     message.error('发布失败')
   } finally {
     publishing.value = false

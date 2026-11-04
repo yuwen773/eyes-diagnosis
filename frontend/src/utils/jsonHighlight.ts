@@ -31,7 +31,6 @@ export const syntaxHighlightJson = (obj: any, depth = 0): string => {
       const inner = syntaxHighlightJson(v, depth + 1)
       return `${nextIndent}${inner}`
     })
-    const prefix = depth === 0 ? '' : '\n' + nextIndent
     return `<span class="json-bracket">[</span>\n${items.join(',\n')}\n${indent}<span class="json-bracket">]</span>`
   }
   if (typeof obj === 'object') {

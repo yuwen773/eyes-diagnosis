@@ -247,7 +247,7 @@ const handleSend = async (text: string, files: File[] = []) => {
       const result = await uploader.uploadFiles(files)
       imageUrls = result.urls
     }
-  } catch (e) {
+  } catch {
     message.error('图片上传失败，无法发送消息')
     return
   }
@@ -274,7 +274,7 @@ const handleSend = async (text: string, files: File[] = []) => {
           console.warn('标题生成触发失败', e)
         })
     }
-  } catch (error) {
+  } catch {
     uploader.commitFailure(imageUrls)
     message.error('消息发送失败，可能是网络连接不稳定，请检查网络后重试')
   }

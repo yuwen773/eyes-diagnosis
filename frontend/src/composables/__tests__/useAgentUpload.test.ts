@@ -91,7 +91,6 @@ describe('useAgentUpload', () => {
   // 若直接删除，会连带删掉另一个批次正要发送的附件。
   it('does not delete a url still held by another concurrent batch', async () => {
     const shared = uniqueUrl()
-    let rejectB: (e: Error) => void = () => {}
     const fileA = png('same-a.png')
     const fileB = png('same-b.png')
 
