@@ -46,13 +46,14 @@
 1. 跨线改动的搬运方向由改动主题决定：算法/ML 改动两边都要落；Web 层与迁移只落在所属线。
 2. 一条线的合并请求不合并进另一条线。需要移植的改动单独做一次显式搬运，并写清来源提交。
 3. 两条线各自独立跑 CI。Java 线在 `master` 上跑；Python 线的 CI 随其分支上的
-   `.github/workflows/verify.yml` 与 `python-real-services.yml` 定义（后者的 `push` 触发器
-   只覆盖 `master`，Python 分支的推送本身不触发 CI，需开 PR 才跑）。
+   `.github/workflows/verify.yml` 与 `python-real-services.yml` 定义（`verify.yml` 的 `push`
+   触发器只覆盖 `master`，所以 Python 分支的推送本身不触发 CI，需开 PR 才跑；
+   `python-real-services.yml` 只在 PR 或手动触发时跑）。
 4. 生产切流是独立决策，不随分支分离自动发生。本次（2026-11-04）不切流。
 
 ## 当前状态
 
-- Java 线：正常推进，最近提交为 P2-02c 真实 GPU fold-0 验收。
+- Java 线：正常推进，2026-10-21 的 P2-02c 真实 GPU fold-0 验收已合入（`af33fa1`）。
 - Python 线：去 Java 迁移的工程验收已完成（工单 08 `PASS_WITH_LIMITATIONS` 4/4），
   但仍有 4 项真人验收阻塞未闭合（AC-08 补充说明、AC-09 拒绝/批准保存、AC-11 医生复核、
   AC-21 完整 UI 走查）。进度见 Python 线的 `docs/python-worktree-progress.md`
