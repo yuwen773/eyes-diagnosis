@@ -3,6 +3,8 @@
 2026-10-18 当前最终验收：计划自动子项已逐条复核并补齐，实际参与者操作与样本外发范围
 仍阻塞，第 21 票不关闭。最新详见文末及[计划复核证据](../.scratch/python-final-acceptance/20261017T-windows-01/plan-audit-20261018/README.md)；以下历史阶段结论保留。
 
+更新：2026-11-04（Asia/Shanghai）。工作树 `D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite`，分支 `feature/python-backend`（2026-11-04 由 `worktree-py-rewrite` 改名），最近提交 `be10014`。本分支已推送 origin，**不并入 master**——Java 后端线保留在 `master`，两条线不再互相合并，约定见 [docs/backend-split.md](backend-split.md)。未做生产切流。
+
 更新：2026-10-17（Asia/Shanghai）。工作树 `D:/Work/code/eye-diagnosis/.claude/worktrees/py-rewrite`，分支 `worktree-py-rewrite`，最近提交 `63931d7`。本轮收尾记录尚未提交，未合入 master、未推送或生产切流。
 
 **结论：Python 工程迁移已交付，完整去 Java 的 8 张工单均到 ready-for-human；真实模型/供应商与临床、生产发布仍单独待验收。** ready-for-human 表示本票支持范围交付待复核，不等于所有层次均验收完成。

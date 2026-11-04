@@ -1,5 +1,9 @@
 # AGENTS.md
 
+> **本分支是 Python 线。** 仓库里另有一条 Java 后端线（Spring Boot），在 `master` 分支，
+> 与本分支**不再互相合并**；共享目录各持一份，改动需人工搬运。约定见
+> [docs/backend-split.md](docs/backend-split.md)。
+
 ## Current delivery (ticket 08, 2026-10-17)
 
 The backend, Agent and durable Worker run in Python 3.11; the UI remains Vue 3.

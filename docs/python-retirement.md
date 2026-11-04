@@ -1,11 +1,13 @@
 # Java 退出与最终验收（工单 08）
 
-范围：`py-rewrite` / `worktree-py-rewrite`，2026-10-17（Asia/Shanghai）。
+范围：`py-rewrite` / `feature/python-backend`，2026-10-17（Asia/Shanghai）。
 
 **状态：PASS_WITH_LIMITATIONS，工单 08 的 4/4 工程判据完成，ready-for-human。**
 历史保全、受控 Java 退出与工程收尾完成；用户要求不再继续 Linux 验收，已有结果附条件保留。
 工程、真实基础设施、真实供应商/模型及临床分别报告；没有执行生产业务库升级、
-生产切流或 push。
+生产切流。**2026-11-04 补充：本分支已推送 origin（`feature/python-backend`），但未并入
+`master`，未切流生产**——Java 后端线留在 `master` 继续跑生产，见
+[docs/backend-split.md](backend-split.md)。
 
 ## 先保全，再移除
 
@@ -14,7 +16,7 @@ JUnit 结果已核验。历史失败和受控供应商边界保持原状。
 
 本地附注标签 `archive/java-before-python-retirement-2026-10-17` 固定到
 `3eff16390721b4d8b5a36b6623d2bb0981b8a441`，含完整 Java、旧构建、SQL 和工单 07
-证据。标签尚未推送。原 24 份 SQL 的捕获 SHA256/字节数和 Git blob 来源逐项一致；
+证据。标签已于 2026-11-04 推送 origin。原 24 份 SQL 的捕获 SHA256/字节数和 Git blob 来源逐项一致；
 `deploy/python-migrations` 与 `deploy/workflow-migrations/sql` 未改字节。
 
 按[精确删除清单](../.scratch/python-project-migration/evidence/issue08/deletion-plan.json)
