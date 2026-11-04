@@ -1,5 +1,9 @@
 # Current delivery (ticket 08, 2026-10-17)
 
+> **本分支是 Python 线。** 仓库里另有一条 Java 后端线（Spring Boot），在 `master` 分支，
+> 与本分支**不再互相合并**；`frontend/`、`algorithm/` 下的 ML 部分等共享目录各持一份，
+> 改动需人工搬运。约定见 [docs/backend-split.md](docs/backend-split.md)。
+
 Use the current Python instructions in [AGENTS.md](AGENTS.md),
 [README.md](README.md) and [Python delivery](docs/python-delivery.md).
 The entire retained text below is historical, including local contributor notes.
