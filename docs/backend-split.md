@@ -50,7 +50,7 @@
 
 ## 当前状态
 
-- Java 线：正常推进，最近提交为 P2-02c 真实 GPU fold-0 验收。
+- Java 线：正常推进，2026-10-21 的 P2-02c 真实 GPU fold-0 验收已合入（`af33fa1`）。
 - Python 线：去 Java 迁移的工程验收已完成（工单 08 `PASS_WITH_LIMITATIONS` 4/4），
   但仍有 4 项真人验收阻塞未闭合（AC-08 补充说明、AC-09 拒绝/批准保存、AC-11 医生复核、
   AC-21 完整 UI 走查）。见 `docs/python-worktree-progress.md` 与 `docs/python-retirement.md`。
