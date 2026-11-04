@@ -34,16 +34,28 @@ export function useDiagnosisExport() {
 
   const exportToPDF = (records: any[]) => {
     if (records.length === 0) return
+    // 导出的是独立文档，读不到页面里的 CSS 变量；这里从当前文档解析设计令牌再内联，
+    // 避免导出件与产品设计系统脱节。
+    const token = (name: string, fallback: string) => {
+      const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+      return value || fallback
+    }
+    const accent = token('--iris-accent', '#1b7f6b')
+    const accentStrong = token('--iris-accent-strong', '#155f51')
+    const ink = token('--iris-ink', '#16140f')
+    const ink2 = token('--iris-ink-2', '#6f6a5e')
+    const line = token('--iris-line', '#e6e2d8')
+    const surface2 = token('--iris-surface-2', '#fbfaf6')
     const printContent = `
     <html><head><meta charset="utf-8"><title>诊断记录</title><style>
       body { font-family: -apple-system, sans-serif; padding: 24px; }
-      h1 { text-align: center; color: #141413; margin-bottom: 8px; }
-      .subtitle { text-align: center; color: #87867f; margin-bottom: 24px; font-size: 13px; }
+      h1 { text-align: center; color: ${ink}; margin-bottom: 8px; }
+      .subtitle { text-align: center; color: ${ink2}; margin-bottom: 24px; font-size: 13px; }
       table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-      th, td { border: 1px solid #e8e6dc; padding: 10px 12px; text-align: left; }
-      th { background: #faf9f5; font-weight: 600; color: #141413; }
-      .header-row { background: #c96442; color: white; }
-      .header-row th { background: #c96442; color: white; border-color: #a34f2f; }
+      th, td { border: 1px solid ${line}; padding: 10px 12px; text-align: left; }
+      th { background: ${surface2}; font-weight: 600; color: ${ink}; }
+      .header-row { background: ${accent}; color: white; }
+      .header-row th { background: ${accent}; color: white; border-color: ${accentStrong}; }
     </style></head><body>
     <h1>眼科诊断记录</h1>
     <p class="subtitle">导出时间: ${dayjs().format('YYYY-MM-DD HH:mm:ss')}</p>

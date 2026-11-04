@@ -51,7 +51,6 @@ skills-lock.json
 *.pt
 *.pb
 /algorithm/models
-/DESIGN.md
 frontend/src/assets/.omc/
 
 ### Python ###
