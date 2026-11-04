@@ -4,6 +4,8 @@
 
 ![功能模块总览](docs/assets/readme/features-overview.png)
 
+> 本分支是 **Python 线**（`feature/python-backend`）。仓库里另有一条 **Java 后端线**（Spring Boot），在 `master` 分支，与本分支不再互相合并；两条线各自维护一份 `frontend/` 与算法代码。约定见 [docs/backend-split.md](docs/backend-split.md)。
+
 ## 当前 Python 工程（2026-10-17）
 
 | 范围 | 当前交付 | 证据 |
@@ -36,5 +38,6 @@ OpenAPI 来源 `/api/openapi.json`，用户用原账号密码重新登录，详�
 工单 06 结果不表示已生产切流。
 
 
-历史 Java 源码、构建和原说明可由本地标签 `archive/java-before-python-retirement-2026-10-17` 定位。
+历史 Java 源码、构建和原说明可由标签 `archive/java-before-python-retirement-2026-10-17`
+（`3eff163`，2026-11-04 已推送 origin）定位。
 [历史说明](docs/history/java/README.md)仅作档案；当前操作以本文及 Python 交付指引为准。
