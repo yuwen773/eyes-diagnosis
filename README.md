@@ -16,6 +16,8 @@
 
 ![系统架构图](docs/assets/readme/architecture-diagram.png)
 
+> 本 README 描述的是 **Java 线**（`master` 分支）。仓库里另有一条独立的 **Python 后端线**（FastAPI + worker），在 `feature/python-backend` 分支，与本分支不再互相合并；两条线各自维护一份 `frontend/` 与算法代码。约定见 [docs/backend-split.md](docs/backend-split.md)。
+
 **核心交互链路**：
 
 | 角色 | 技术栈 | 端口 |
