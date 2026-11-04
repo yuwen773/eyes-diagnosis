@@ -48,3 +48,22 @@ status: accepted
 - 旧 Java 未完成工作流不等同于传统已保存诊断记录，也不等同于现有 Python 工作流。当前工作流查询要求 Python UploadInput，复核入口要求当前图版本与 checkpoint 绑定，因此旧任务的查看与人工处理是待补齐能力，不能称为已支持。依据：`algorithm/web/routers/workflow.py`、`algorithm/web/routers/review.py`、`algorithm/web/tests/test_workflow.py`。
 - 当前 DOC fixture 只证明英文正文、空内容与非法文件行为；中文、合并/嵌套表格和页眉页脚的既有断言属于 DOCX。替换 DOC 解析器时需单独补充代表性 DOC 样本验证，不能借用 DOCX 结果。依据：`algorithm/web/tests/test_document_upload.py`。
 - 数据库共用 V1–V22 历史，包含 bootstrap callback 和非幂等 SQL，既有 V8 checksum 问题另有处理约束。替代工具不得无条件重放旧迁移或自动修复 checksum；需分别验证空库初始化和既有库承接。依据：`deploy/workflow-migrations/README.md`、`docs/flyway-migration-history-plan.md`。
+
+## 修订记录：改为 Java / Python 双线并行（2026-11-04）
+
+本 ADR 原定目标是"完整迁移到 Python"——最终从项目主目录移除 Java 源码和构建文件，
+收敛为一个无 Java 依赖的项目。该目标**暂缓执行**，改为两条后端线并行：
+
+- Java 线保留在 `master`（Spring Boot 3.5.6 / Java 21，`src/` + `pom.xml`），继续作为生产 RC 基线。
+- Python 线保留在 `feature/python-backend`（本分支），不并入 `master`，也不与 Java 线互相合并。
+- 标签 `archive/java-before-python-retirement-2026-10-17`（`3eff163`）继续固定去 Java 前的完整 Java 快照。
+
+本修订**不撤销**本 ADR 已完成的迁移工作与已取得的验收证据：去 Java 的删除动作已完成，
+工单 08 的工程判据仍为 4/4 `PASS_WITH_LIMITATIONS`。修订的是"最终收敛为单一 Python 项目"
+这一收尾步骤，以及"Java 源码永久保留于项目"的边界表述——Java 代码现在作为独立分支长期存在。
+
+本次修订**不授权**生产切流。Python 线仍有 4 项真人验收阻塞未闭合
+（AC-08 补充说明、AC-09 拒绝/批准保存、AC-11 医生复核、AC-21 完整 UI 走查），
+切流是后续独立决策。
+
+双线的具体约定见 `docs/backend-split.md`。
