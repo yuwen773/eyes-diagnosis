@@ -166,6 +166,8 @@ AI 溯源       —— 不可变的推理信封 / 解释快照 / 引用集合，
 
 **保存授权事务边界**（契约参考 Python `decide_save()`，`confirmation.py:147-205`）：**状态 CAS 成功 + 正式 `t_diagnosis` 插入 + 唯一 `SavedWorkflowDiagnosis` 回执写入，三者在同一事务原子提交**——原实现注释即契约："Consent, receipt and formal row succeed or roll back together"。前置校验三者缺一不可：确认行 `status == PENDING`、未过期（`expiresAt > now`）、`expectedContentDigest` 与 `expectedWorkflowVersion` 均与冻结值一致；CAS 以 `UPDATE … WHERE status='PENDING' AND expires_at > now` 兜底并发（Python 注释：CAS 也能在没有 `SELECT FOR UPDATE` 的数据库上隔离并发请求）。重复 approve **只回放已提交回执**——按 `workflow_id` 命中既有 `SavedWorkflowDiagnosis` 即直接返回原结果，绝不重跑写入。
 
+**批准前来源复验**：创建保存确认及最终批准时均重新检查已冻结引用的文档版本、治理版本、资格和片段摘要（ADR-7b）。最终批准事务须在状态 CAS 和正式记录写入前复验，且与管理员撤回操作通过治理行锁或等效版本栅栏串行化，避免复验后至提交前来源变化。来源失效时不插入正式记录或回执；同一事务将待决确认置 `INVALIDATED`、将解释置为受限或撤回并记录原因，先提交该失效状态再返回 409，避免抛错回滚撤回结果。不得重跑 LLM 或以新检索来源静默替换；已经提交的批准和回执按原结果幂等回放，不重新创建记录。
+
 ### 3.3 四类人工等待（可跨重启恢复）
 
 | # | 类型 | 谁 | 状态迁移 | 决策 | 恢复方式 |
@@ -302,9 +304,13 @@ Java 线对齐：创建返回 202 + `workflowId`，内部用 Spring 的异步执
 
 治理列对齐 V19（`V19__controlled_reference_evidence.sql`，`t_knowledge_document` 对应物）七列：`visibility`（默认 `PRIVATE_USER`）/ `reviewStatus`（默认 `PENDING`）/ `diseaseCodes` / `topicCodes` / `governanceVersion` / `reviewedBy` / `reviewedAt`。只有管理员治理审核通过（`reviewStatus=APPROVED`，§3.3）且未 `WITHDRAWN` 的行才进入 `evidenceRetrieval` 候选集；`governanceVersion` 变更即逐出。
 
+**临床证据准入谓词**（Python `evidence.py:eligible()`）：必须同时满足 `isDelete == 0`、`status == 1`、`visibility == CURATED_PUBLIC`、`reviewStatus == APPROVED`、请求疾病属于 `diseaseCodes` 且请求主题属于 `topicCodes`；缺失字段视为不合格。私人文档即使被错误标记为 APPROVED 也不得进入临床证据集合。私人用户知识检索按用户权限隔离，与跨用户的受控公共临床证据范围分离。
+
 Java 当前 `KnowledgeDocument` 尚无上述治理列，现有 `DocumentSearchTool` 按用户过滤并返回格式化字符串，不能证明临床证据资格。新增 **ControlledEvidenceRetriever**：以服务端绑定的工作流身份、疾病/主题及治理版本为输入，筛选管理员批准、可见且未撤回的文档版本，校验疾病与主题匹配、原文片段及摘要，返回文档 ID、版本、治理版本、片段、摘要、审核状态和检索时间的结构化引用。冻结引用集后，发布和医生确认时重读同一来源并复验审批、撤回、版本和片段摘要，缺失或不一致则 WITHHELD；不得悄然替换来源。底层向量检索、BM25、rerank 可复用，聊天 RAG 字符串不得作为资格证明。
 
 下游三个证据消费点——`evidenceValidation`、`explanationClaimValidation`、`explanationPublication`——必须使用**同一套可验证证据版本 + `citationSetDigest`**：发布（`explanationPublication`）时对引用来源**复验**，来源不再 APPROVED 或内容变更 → `WITHHELD` / `EXPLANATION_SOURCE_CHANGED`。对齐 `patient_explanation()` 的重验逻辑：复验对象是**冻结的引用来源本身**（`explanation.py:262`："Revalidate exactly the frozen sources, rather than accepting a replacement"），绝不接受替换来源。
+
+医生确认、创建保存确认和最终批准保存同样复验冻结文档版本、治理版本、完整准入谓词与引用片段摘要；仅凭文档 ID 存在不足以放行。最终批准的锁与失效处理见 §3.2。
 
 ---
 
@@ -327,7 +333,6 @@ flowchart TB
 
     subgraph CHATL["chat 链路（复用）"]
       DA["DiagnosisAgent / ReactAgent<br/>SSE 单流 + MCP 工具 + 用户工具确认"]
-      AGG["现有 DiagnosisAgent chat 流<br/>SSE 契约不变"]
     end
 
     subgraph ORCH["诊断工作流编排（新）"]
@@ -363,6 +368,7 @@ flowchart TB
       T1["DiagnosisGrpcClient（当前未接入 Agent）"]
       T2["EyeImageAnalyzerTool"]
       T3["DocumentSearchTool / UserBoundDocumentSearchTool"]
+      CER["ControlledEvidenceRetriever（新增）<br/>治理筛选 · 冻结引用复验"]
       T4["MCPManager + ToolCallbackProvider + Policy"]
       T5["t_diagnosis · t_diagnosis_audit · V5/V7/V9 字段"]
     end
@@ -379,7 +385,7 @@ flowchart TB
       DD[("t_diagnosis 正式记录（复用）")]
     end
 
-    CHAT --> AC --> DA --> AGG
+    CHAT --> AC --> DA
     WFUI --> WC & RC
     WC --> EX --> SG
     RC --> DR
@@ -388,7 +394,7 @@ flowchart TB
     SG --> NODES
     N02 --> T1
     N02 --> T2
-    N07 --> T3
+    N07 --> CER
     DA --> T4
     N14 --> T5
     SG --> DW & DE & DJ & DI & DR & DS
@@ -573,8 +579,10 @@ v2 原稿此表为 **11 个分组行**，其中三行以 `/` 合并了两张物�
 | 候选表 | 候选主键 / 字段 / 写入方 |
 |---|---|
 | `t_workflow_upload_input` | 主键 `workflowId`；创建服务写入 requestDigest、imageDigest、COS bucket/key/version、媒体类型；Worker 在业务事务、租约和版本保护下更新 graphCheckpointId、completedNodes、evidenceSnapshot。 |
-| `t_graph_checkpoint` | 候选标识、序列化数据及恢复元数据；主键、唯一性、读写与写入方由 PoC 确定。候选写入方为持租约 Worker 的协调提交事务。 |
+| `t_graph_checkpoint` | 候选标识、序列化数据及恢复元数据；主键、唯一性与读写协议由 PoC 确定。共享 Saver 的两个事务协调入口见下文。 |
 | `t_graph_pending_write` | 候选用途为框架已提交待处理输出；主键、唯一性、生命周期、写入方及是否需要单独表由 PoC 确定，不能预设 Python LangGraph 同构。 |
+
+**共享 Saver 的协调入口**：临床主图由持有效 Job 租约的 Worker 在 fencing、Workflow 版本检查及业务事务下提交 checkpoint 和段落结果；独立聊天补充图由经鉴权的聊天服务协调：创建等待时持有会话锁，在同一事务提交等待请求、checkpoint 和消息；恢复时持有会话/请求锁并以 `waitVersion` CAS，在同一事务提交恢复 checkpoint、回答和消息。聊天补充不需要临床 Job 租约，不得恢复临床主图。两个图使用不重叠的线程命名空间（补充图如 `supplement:<requestId>`），并绑定各自图版本；隔离 PoC 须验证两条协调路径，具体 Saver API 与表结构仍待验证。
 
 **两层摘要**：与 Python `service.py` 一致，`requestDigest = SHA-256(图片字节长度的 8 字节大端编码 || 图片字节 || question 的 UTF-8 字节)`，在同一 `ownerUserId + creationIdempotencyKey` 下用于检测不同请求，冲突返回 409；`imageDigest = SHA-256(imageBytes)`，对应信封 `inputDigest`，在读取、推理和恢复时核验图像与信封绑定。两者绝不互换；Java 应固定编码与跨语言样例。
 
@@ -703,6 +711,9 @@ P0 前置 PoC 使用锁定的 Graph 1.1.2.2、隔离数据库和临时表，不�
 | 医生重复提交、跨账号提交 | 幂等或明确拒绝，不能越权 |
 | 患者同时点击两次批准保存 | 只能生成一条正式记录和唯一回执 |
 | 解释草稿生成后引用资料被撤回 | 不能继续发布旧解释 |
+| 解释发布并创建保存确认后、批准前撤回引用 | 批准返回 409，确认失效和解释受限状态持久化；无新正式记录或回执；不重跑 LLM、不替换引用 |
+| 私人文档误标 APPROVED，或文档版本、治理版本、片段摘要变化 | 不得作为临床证据；复验失败并拒绝发布或保存 |
+| 独立聊天补充创建和恢复事务分别在提交前后崩溃 | checkpoint、等待请求/回答和消息原子一致；重复恢复按 waitVersion CAS 去重，不领取临床 Job |
 | 图升级后恢复旧任务 | 不兼容时明确拒绝，不自动重跑 |
 | 任一图节点中断后重启 | 恢复位置与业务状态一致（仅临床主图 interrupt_after 分段，见 §6.2） |
 | SSE 收到 `event: done` | 仅表示当前传输完成，不误判工作流完成 |
