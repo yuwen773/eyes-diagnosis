@@ -17,9 +17,10 @@ final class CoordinationStore {
     void initialize() throws SQLException {
         try (var s = connection.createStatement()) {
             s.execute("CREATE TABLE IF NOT EXISTS poc_workflow_v2 (id VARCHAR(36) PRIMARY KEY, status VARCHAR(32) NOT NULL, engine VARCHAR(16) NOT NULL, owner VARCHAR(32), token INT NOT NULL DEFAULT 0, expires BIGINT NOT NULL DEFAULT 0)");
-            s.execute("CREATE TABLE IF NOT EXISTS poc_task_v2 (workflowId VARCHAR(36) PRIMARY KEY, status VARCHAR(16) NOT NULL DEFAULT 'READY')");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_task_v2 (workflowId VARCHAR(36) PRIMARY KEY, status VARCHAR(16) NOT NULL DEFAULT 'READY', owner VARCHAR(32), token INT NOT NULL DEFAULT 0, expires BIGINT NOT NULL DEFAULT 0)");
             s.execute("CREATE TABLE IF NOT EXISTS poc_checkpoint_v2 (workflowId VARCHAR(36) PRIMARY KEY, version INT NOT NULL, payload LONGBLOB NOT NULL)");
             s.execute("CREATE TABLE IF NOT EXISTS poc_completion_v2 (workflowId VARCHAR(36) PRIMARY KEY)");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_saver_write (sequenceId BIGINT AUTO_INCREMENT PRIMARY KEY, workflowId VARCHAR(36) NOT NULL, version INT NOT NULL DEFAULT 1, selectedId VARCHAR(128), payload LONGBLOB NOT NULL)");
         }
     }
 
@@ -150,12 +151,30 @@ final class CoordinationStore {
 
     boolean completeGraph(String id, String owner, int token, long now, byte[] checkpoint,
                           boolean crashBeforeCommit, boolean crashAfterCommit, String nextStatus) throws SQLException {
+        return completeTransaction(id, owner, token, now, checkpoint, crashBeforeCommit, crashAfterCommit, nextStatus, java.util.List.of(), false);
+    }
+
+    boolean completeRecorded(String id, String owner, int token, long now,
+                             java.util.List<RecordingSaver.Write> writes, boolean rollback) throws SQLException {
+        return completeRecorded(id, owner, token, now, writes, rollback, false, false);
+    }
+
+    boolean completeRecorded(String id, String owner, int token, long now,
+                             java.util.List<RecordingSaver.Write> writes, boolean rollback,
+                             boolean crashBefore, boolean crashAfter) throws SQLException {
+        if (writes.isEmpty()) throw new IllegalArgumentException("Missing Saver writes");
+        return completeTransaction(id, owner, token, now, null, crashBefore, crashAfter, "WAITING_REVIEW", writes, rollback);
+    }
+
+    private boolean completeTransaction(String id, String owner, int token, long now, byte[] checkpoint,
+                          boolean crashBeforeCommit, boolean crashAfterCommit, String nextStatus,
+                          java.util.List<RecordingSaver.Write> writes, boolean rollback) throws SQLException {
         if (!"WAITING_REVIEW".equals(nextStatus)) throw new IllegalArgumentException("Unexpected transition");
         connection.setAutoCommit(false);
         try {
             try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status=? WHERE id=? AND status='READY' AND owner=? AND token=? AND expires>? AND engine=?")) {
                 s.setString(1, nextStatus); s.setString(2, id); s.setString(3, owner); s.setInt(4, token); s.setLong(5, now);
-                s.setString(6, checkpoint == null ? "DOMAIN" : "GRAPH");
+                s.setString(6, checkpoint == null && writes.isEmpty() ? "DOMAIN" : "GRAPH");
                 if (s.executeUpdate() == 0) { connection.rollback(); return false; }
             }
             try (var s = connection.prepareStatement("INSERT INTO poc_task_v2 (workflowId) VALUES (?)")) {
@@ -166,30 +185,12 @@ final class CoordinationStore {
                     s.setString(1, id); s.setBytes(2, checkpoint); s.executeUpdate();
                 }
             }
+            insertSaverWrites(id, writes);
+            if (rollback) { connection.rollback(); return false; }
             if (crashBeforeCommit) Runtime.getRuntime().halt(71);
             connection.commit();
             if (crashAfterCommit) Runtime.getRuntime().halt(72);
             return true;
-        } catch (SQLException e) {
-            connection.rollback(); throw e;
-        } finally { connection.setAutoCommit(true); }
-    }
-
-    boolean finish(String id) throws SQLException {
-        connection.setAutoCommit(false);
-        try {
-            try (var s = connection.prepareStatement("UPDATE poc_task_v2 SET status='DONE' WHERE workflowId=? AND status='READY'")) {
-                s.setString(1, id);
-                if (s.executeUpdate() == 0) { connection.rollback(); return false; }
-            }
-            try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status='COMPLETED' WHERE id=? AND status='WAITING_REVIEW'")) {
-                s.setString(1, id);
-                if (s.executeUpdate() != 1) throw new SQLException("Inconsistent workflow state");
-            }
-            try (var s = connection.prepareStatement("INSERT INTO poc_completion_v2 VALUES (?)")) {
-                s.setString(1, id); s.executeUpdate();
-            }
-            connection.commit(); return true;
         } catch (SQLException e) {
             connection.rollback(); throw e;
         } finally { connection.setAutoCommit(true); }
@@ -200,5 +201,89 @@ final class CoordinationStore {
             s.setString(1, id);
             try (var rows = s.executeQuery()) { rows.next(); return rows.getInt(1); }
         }
+    }
+
+    int claimRecovery(String id, String owner, long now) throws SQLException {
+        connection.setAutoCommit(false);
+        try {
+            try (var s = connection.prepareStatement("UPDATE poc_task_v2 SET owner=?, token=token+1, expires=? WHERE workflowId=? AND status='READY' AND (owner IS NULL OR expires<=?)")) {
+                s.setString(1, owner); s.setLong(2, now + 10); s.setString(3, id); s.setLong(4, now);
+                if (s.executeUpdate() == 0) { connection.rollback(); return 0; }
+            }
+            int token;
+            try (var s = connection.prepareStatement("SELECT token FROM poc_task_v2 WHERE workflowId=?")) {
+                s.setString(1, id);
+                try (var rows = s.executeQuery()) { rows.next(); token = rows.getInt(1); }
+            }
+            connection.commit();
+            return token;
+        } catch (SQLException e) {
+            connection.rollback(); throw e;
+        } finally { connection.setAutoCommit(true); }
+    }
+
+    boolean finishRecovery(String id, String owner, int token, long now, String nextStatus) throws SQLException {
+        return finishTransaction(id, owner, token, now, nextStatus, java.util.List.of(), false, false, false);
+    }
+
+    boolean finishRecorded(String id, String owner, int token, long now,
+                           java.util.List<RecordingSaver.Write> writes, boolean rollback) throws SQLException {
+        if (writes.isEmpty()) throw new IllegalArgumentException("Missing Saver writes");
+        return finishTransaction(id, owner, token, now, "COMPLETED", writes, rollback, false, false);
+    }
+
+    boolean finishWithFault(String id, String owner, int token, long now, String nextStatus,
+                            java.util.List<RecordingSaver.Write> writes, boolean before, boolean after) throws SQLException {
+        return finishTransaction(id, owner, token, now, nextStatus, writes, false, before, after);
+    }
+
+    private boolean finishTransaction(String id, String owner, int token, long now, String nextStatus,
+                                      java.util.List<RecordingSaver.Write> writes, boolean rollback,
+                                      boolean crashBefore, boolean crashAfter) throws SQLException {
+        if (!"COMPLETED".equals(nextStatus)) throw new IllegalArgumentException("Unexpected recovery state");
+        connection.setAutoCommit(false);
+        try {
+            try (var s = connection.prepareStatement("UPDATE poc_task_v2 SET status='DONE' WHERE workflowId=? AND status='READY' AND owner=? AND token=? AND expires>?")) {
+                s.setString(1, id); s.setString(2, owner); s.setInt(3, token); s.setLong(4, now);
+                if (s.executeUpdate() == 0) { connection.rollback(); return false; }
+            }
+            try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status=? WHERE id=? AND status='WAITING_REVIEW'")) {
+                s.setString(1, nextStatus); s.setString(2, id);
+                if (s.executeUpdate() != 1) throw new SQLException("Inconsistent workflow state");
+            }
+            try (var s = connection.prepareStatement("INSERT INTO poc_completion_v2 VALUES (?)")) {
+                s.setString(1, id); s.executeUpdate();
+            }
+            insertSaverWrites(id, writes);
+            if (rollback) { connection.rollback(); return false; }
+            if (crashBefore) Runtime.getRuntime().halt(71);
+            connection.commit();
+            if (crashAfter) Runtime.getRuntime().halt(72);
+            return true;
+        } catch (SQLException e) {
+            connection.rollback(); throw e;
+        } finally { connection.setAutoCommit(true); }
+    }
+
+    private void insertSaverWrites(String id, java.util.List<RecordingSaver.Write> writes) throws SQLException {
+        try (var s = connection.prepareStatement("INSERT INTO poc_saver_write (workflowId, selectedId, payload) VALUES (?, ?, ?)")) {
+            for (var write : writes) {
+                s.setString(1, id); s.setString(2, write.selectedId()); s.setBytes(3, write.payload()); s.executeUpdate();
+            }
+        }
+    }
+
+    java.util.List<RecordingSaver.Write> saverWrites(String id) throws SQLException {
+        var result = new java.util.ArrayList<RecordingSaver.Write>();
+        try (var s = connection.prepareStatement("SELECT version, selectedId, payload FROM poc_saver_write WHERE workflowId=? ORDER BY sequenceId")) {
+            s.setString(1, id);
+            try (var rows = s.executeQuery()) {
+                while (rows.next()) {
+                    if (rows.getInt(1) != 1) throw new IllegalStateException("Incompatible Saver version");
+                    result.add(new RecordingSaver.Write(rows.getString(2), rows.getBytes(3)));
+                }
+            }
+        }
+        return result;
     }
 }

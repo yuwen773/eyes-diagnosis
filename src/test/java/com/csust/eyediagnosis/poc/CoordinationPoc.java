@@ -5,6 +5,7 @@ import com.alibaba.cloud.ai.graph.CompileConfig;
 import com.alibaba.cloud.ai.graph.RunnableConfig;
 import com.alibaba.cloud.ai.graph.checkpoint.config.SaverConfig;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
+import com.alibaba.cloud.ai.graph.checkpoint.BaseCheckpointSaver;
 import com.alibaba.cloud.ai.graph.serializer.check_point.CheckPointSerializer;
 
 import java.io.ByteArrayInputStream;
@@ -12,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
+import java.util.List;
 
 import static com.alibaba.cloud.ai.graph.action.AsyncNodeAction.node_async;
 
@@ -19,6 +21,7 @@ import static com.alibaba.cloud.ai.graph.action.AsyncNodeAction.node_async;
 final class CoordinationPoc {
     enum Engine { DOMAIN, GRAPH }
     record PreparedGraph(String status, byte[] checkpoint) { }
+    record RecordedGraph(String status, List<RecordingSaver.Write> writes, List<String> calls) { }
 
     static String advance(Engine engine, String state) throws Exception {
         if (!"READY".equals(state)) {
@@ -32,6 +35,11 @@ final class CoordinationPoc {
 
     static String resumeSerializedGraph() throws Exception {
         return resumeCheckpoint(interruptedCheckpoint());
+    }
+
+    static String resumeDomain(String state) {
+        if (!"WAITING_REVIEW".equals(state)) throw new IllegalArgumentException("Unsupported state: " + state);
+        return "COMPLETED";
     }
 
     static byte[] interruptedCheckpoint() throws Exception {
@@ -60,10 +68,25 @@ final class CoordinationPoc {
         return (String) interruptibleGraph(restored).invoke(Map.of(), config.withResume()).orElseThrow().data().get("status");
     }
 
-    private static com.alibaba.cloud.ai.graph.CompiledGraph interruptibleGraph(MemorySaver saver) throws Exception {
+    static RecordedGraph recordInitialGraph(String threadId) throws Exception {
+        var saver = new RecordingSaver();
+        var config = RunnableConfig.builder().threadId(threadId).build();
+        var state = interruptibleGraph(saver).invoke(Map.of("status", "READY"), config).orElseThrow();
+        return new RecordedGraph((String) state.data().get("status"), saver.writes(), saver.calls());
+    }
+
+    static RecordedGraph recordResumeGraph(String threadId, List<RecordingSaver.Write> saved) throws Exception {
+        var saver = new RecordingSaver();
+        saver.restore(threadId, saved);
+        var config = RunnableConfig.builder().threadId(threadId).resume().build();
+        var state = interruptibleGraph(saver).invoke(Map.of(), config).orElseThrow();
+        return new RecordedGraph((String) state.data().get("status"), saver.writes(), saver.calls());
+    }
+
+    private static com.alibaba.cloud.ai.graph.CompiledGraph interruptibleGraph(BaseCheckpointSaver saver) throws Exception {
         StateGraph graph = new StateGraph();
         graph.addNode("prepare", node_async(s -> Map.of("status", "WAITING_REVIEW")));
-        graph.addNode("review", node_async(s -> Map.of("status", "WAITING_REVIEW")));
+        graph.addNode("review", node_async(s -> Map.of("status", "COMPLETED")));
         graph.addEdge(StateGraph.START, "prepare");
         graph.addEdge("prepare", "review");
         graph.addEdge("review", StateGraph.END);

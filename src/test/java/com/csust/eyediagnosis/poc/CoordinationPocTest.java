@@ -16,13 +16,19 @@ class CoordinationPocTest {
 
     @Test
     void interruptedGraphCheckpointCanBeSerializedAndResumed() throws Exception {
-        assertEquals("WAITING_REVIEW", CoordinationPoc.resumeSerializedGraph());
+        assertEquals("COMPLETED", CoordinationPoc.resumeSerializedGraph());
     }
 
     @Test
     void graphTransitionAndCheckpointComeFromTheSameInterruptedRun() throws Exception {
         var prepared = CoordinationPoc.prepareGraph();
         assertEquals("WAITING_REVIEW", prepared.status());
-        assertEquals(prepared.status(), CoordinationPoc.resumeCheckpoint(prepared.checkpoint()));
+        assertEquals("COMPLETED", CoordinationPoc.resumeCheckpoint(prepared.checkpoint()));
+    }
+
+    @Test
+    void domainRecoveryTransitionsOnlyFromWaitingReview() {
+        assertEquals("COMPLETED", CoordinationPoc.resumeDomain("WAITING_REVIEW"));
+        assertThrows(IllegalArgumentException.class, () -> CoordinationPoc.resumeDomain("READY"));
     }
 }

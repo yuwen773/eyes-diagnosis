@@ -10,7 +10,7 @@ final class CoordinationGraphWorker {
                 store.crashAfterCheckpointCommit(args[1], CoordinationPoc.interruptedCheckpoint());
                 throw new IllegalStateException("Expected process halt");
             }
-            if (!"WAITING_REVIEW".equals(CoordinationPoc.resumeCheckpoint(store.checkpoint(args[1], 1)))) {
+            if (!"COMPLETED".equals(CoordinationPoc.resumeCheckpoint(store.checkpoint(args[1], 1)))) {
                 throw new IllegalStateException("Unexpected recovered state");
             }
         }
