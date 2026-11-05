@@ -16,16 +16,32 @@ final class CoordinationStore {
 
     void initialize() throws SQLException {
         try (var s = connection.createStatement()) {
-            s.execute("CREATE TABLE IF NOT EXISTS poc_workflow_v2 (id VARCHAR(36) PRIMARY KEY, status VARCHAR(32) NOT NULL, owner VARCHAR(32), token INT NOT NULL DEFAULT 0, expires BIGINT NOT NULL DEFAULT 0)");
-            s.execute("CREATE TABLE IF NOT EXISTS poc_task_v2 (workflow_id VARCHAR(36) PRIMARY KEY)");
-            s.execute("CREATE TABLE IF NOT EXISTS poc_checkpoint_v2 (workflow_id VARCHAR(36) PRIMARY KEY, version INT NOT NULL, payload LONGBLOB NOT NULL)");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_workflow_v2 (id VARCHAR(36) PRIMARY KEY, status VARCHAR(32) NOT NULL, engine VARCHAR(16) NOT NULL, owner VARCHAR(32), token INT NOT NULL DEFAULT 0, expires BIGINT NOT NULL DEFAULT 0)");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_task_v2 (workflowId VARCHAR(36) PRIMARY KEY, status VARCHAR(16) NOT NULL DEFAULT 'READY')");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_checkpoint_v2 (workflowId VARCHAR(36) PRIMARY KEY, version INT NOT NULL, payload LONGBLOB NOT NULL)");
+            s.execute("CREATE TABLE IF NOT EXISTS poc_completion_v2 (workflowId VARCHAR(36) PRIMARY KEY)");
         }
     }
 
     void create(String id) throws SQLException {
-        try (var s = connection.prepareStatement("INSERT INTO poc_workflow_v2 (id, status) VALUES (?, 'READY')")) {
+        create(id, CoordinationPoc.Engine.DOMAIN);
+    }
+
+    void create(String id, CoordinationPoc.Engine engine) throws SQLException {
+        try (var s = connection.prepareStatement("INSERT INTO poc_workflow_v2 (id, status, engine) VALUES (?, 'READY', ?)")) {
             s.setString(1, id);
+            s.setString(2, engine.name());
             s.executeUpdate();
+        }
+    }
+
+    CoordinationPoc.Engine engine(String id) throws SQLException {
+        try (var s = connection.prepareStatement("SELECT engine FROM poc_workflow_v2 WHERE id=?")) {
+            s.setString(1, id);
+            try (var rows = s.executeQuery()) {
+                if (!rows.next()) throw new SQLException("Missing workflow");
+                return CoordinationPoc.Engine.valueOf(rows.getString(1));
+            }
         }
     }
 
@@ -38,6 +54,7 @@ final class CoordinationStore {
     }
 
     void advanceWithCheckpoint(String id, byte[] checkpoint, int version, boolean failBeforeCommit) throws SQLException {
+        if (engine(id) != CoordinationPoc.Engine.GRAPH) throw new IllegalStateException("Engine mismatch");
         advanceTransaction(id, failBeforeCommit, false, false, checkpoint, version);
     }
 
@@ -53,7 +70,7 @@ final class CoordinationStore {
                 s.setString(1, id);
                 if (s.executeUpdate() != 1) throw new SQLException("Unexpected workflow state");
             }
-            try (var s = connection.prepareStatement("INSERT INTO poc_task_v2 VALUES (?)")) {
+            try (var s = connection.prepareStatement("INSERT INTO poc_task_v2 (workflowId) VALUES (?)")) {
                 s.setString(1, id);
                 s.executeUpdate();
             }
@@ -75,7 +92,7 @@ final class CoordinationStore {
     }
 
     byte[] checkpoint(String id, int expectedVersion) throws SQLException {
-        try (var s = connection.prepareStatement("SELECT c.version, c.payload FROM poc_checkpoint_v2 c JOIN poc_workflow_v2 w ON w.id=c.workflow_id WHERE w.id=? AND w.status='WAITING_REVIEW'")) {
+        try (var s = connection.prepareStatement("SELECT c.version, c.payload FROM poc_checkpoint_v2 c JOIN poc_workflow_v2 w ON w.id=c.workflowId WHERE w.id=? AND w.status='WAITING_REVIEW'")) {
             s.setString(1, id);
             try (var rows = s.executeQuery()) {
                 if (!rows.next() || rows.getInt(1) != expectedVersion) throw new IllegalStateException("Incompatible or missing checkpoint");
@@ -95,7 +112,7 @@ final class CoordinationStore {
     }
 
     int nextTaskCount(String id) throws SQLException {
-        try (var s = connection.prepareStatement("SELECT count(*) FROM poc_task_v2 WHERE workflow_id=?")) {
+        try (var s = connection.prepareStatement("SELECT count(*) FROM poc_task_v2 WHERE workflowId=?")) {
             s.setString(1, id);
             try (var rows = s.executeQuery()) {
                 rows.next();
@@ -128,18 +145,20 @@ final class CoordinationStore {
     }
 
     boolean completeGraph(String id, String owner, int token, long now, byte[] checkpoint) throws SQLException {
-        return completeGraph(id, owner, token, now, checkpoint, false, false);
+        return completeGraph(id, owner, token, now, checkpoint, false, false, "WAITING_REVIEW");
     }
 
     boolean completeGraph(String id, String owner, int token, long now, byte[] checkpoint,
-                          boolean crashBeforeCommit, boolean crashAfterCommit) throws SQLException {
+                          boolean crashBeforeCommit, boolean crashAfterCommit, String nextStatus) throws SQLException {
+        if (!"WAITING_REVIEW".equals(nextStatus)) throw new IllegalArgumentException("Unexpected transition");
         connection.setAutoCommit(false);
         try {
-            try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status='WAITING_REVIEW' WHERE id=? AND status='READY' AND owner=? AND token=? AND expires>?")) {
-                s.setString(1, id); s.setString(2, owner); s.setInt(3, token); s.setLong(4, now);
+            try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status=? WHERE id=? AND status='READY' AND owner=? AND token=? AND expires>? AND engine=?")) {
+                s.setString(1, nextStatus); s.setString(2, id); s.setString(3, owner); s.setInt(4, token); s.setLong(5, now);
+                s.setString(6, checkpoint == null ? "DOMAIN" : "GRAPH");
                 if (s.executeUpdate() == 0) { connection.rollback(); return false; }
             }
-            try (var s = connection.prepareStatement("INSERT INTO poc_task_v2 VALUES (?)")) {
+            try (var s = connection.prepareStatement("INSERT INTO poc_task_v2 (workflowId) VALUES (?)")) {
                 s.setString(1, id); s.executeUpdate();
             }
             if (checkpoint != null) {
@@ -154,5 +173,32 @@ final class CoordinationStore {
         } catch (SQLException e) {
             connection.rollback(); throw e;
         } finally { connection.setAutoCommit(true); }
+    }
+
+    boolean finish(String id) throws SQLException {
+        connection.setAutoCommit(false);
+        try {
+            try (var s = connection.prepareStatement("UPDATE poc_task_v2 SET status='DONE' WHERE workflowId=? AND status='READY'")) {
+                s.setString(1, id);
+                if (s.executeUpdate() == 0) { connection.rollback(); return false; }
+            }
+            try (var s = connection.prepareStatement("UPDATE poc_workflow_v2 SET status='COMPLETED' WHERE id=? AND status='WAITING_REVIEW'")) {
+                s.setString(1, id);
+                if (s.executeUpdate() != 1) throw new SQLException("Inconsistent workflow state");
+            }
+            try (var s = connection.prepareStatement("INSERT INTO poc_completion_v2 VALUES (?)")) {
+                s.setString(1, id); s.executeUpdate();
+            }
+            connection.commit(); return true;
+        } catch (SQLException e) {
+            connection.rollback(); throw e;
+        } finally { connection.setAutoCommit(true); }
+    }
+
+    int completionCount(String id) throws SQLException {
+        try (var s = connection.prepareStatement("SELECT COUNT(*) FROM poc_completion_v2 WHERE workflowId=?")) {
+            s.setString(1, id);
+            try (var rows = s.executeQuery()) { rows.next(); return rows.getInt(1); }
+        }
     }
 }

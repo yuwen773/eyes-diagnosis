@@ -18,6 +18,7 @@ import static com.alibaba.cloud.ai.graph.action.AsyncNodeAction.node_async;
 /** Isolated experiment, not a clinical workflow or production scheduler. */
 final class CoordinationPoc {
     enum Engine { DOMAIN, GRAPH }
+    record PreparedGraph(String status, byte[] checkpoint) { }
 
     static String advance(Engine engine, String state) throws Exception {
         if (!"READY".equals(state)) {
@@ -26,11 +27,7 @@ final class CoordinationPoc {
         if (engine == Engine.DOMAIN) {
             return "WAITING_REVIEW";
         }
-        StateGraph graph = new StateGraph();
-        graph.addNode("review", node_async(s -> Map.of("status", "WAITING_REVIEW")));
-        graph.addEdge(StateGraph.START, "review");
-        graph.addEdge("review", StateGraph.END);
-        return (String) graph.compile().invoke(Map.of("status", state)).orElseThrow().data().get("status");
+        return prepareGraph().status();
     }
 
     static String resumeSerializedGraph() throws Exception {
@@ -38,6 +35,10 @@ final class CoordinationPoc {
     }
 
     static byte[] interruptedCheckpoint() throws Exception {
+        return prepareGraph().checkpoint();
+    }
+
+    static PreparedGraph prepareGraph() throws Exception {
         var saver = new MemorySaver();
         var config = RunnableConfig.builder().threadId("poc").build();
         var graph = interruptibleGraph(saver);
@@ -46,7 +47,7 @@ final class CoordinationPoc {
         var serializer = new CheckPointSerializer(StateGraph.DEFAULT_JACKSON_SERIALIZER);
         var bytes = new ByteArrayOutputStream();
         try (var out = new ObjectOutputStream(bytes)) { serializer.write(checkpoint, out); }
-        return bytes.toByteArray();
+        return new PreparedGraph((String) checkpoint.getState().get("status"), bytes.toByteArray());
     }
 
     static String resumeCheckpoint(byte[] bytes) throws Exception {
@@ -61,7 +62,7 @@ final class CoordinationPoc {
 
     private static com.alibaba.cloud.ai.graph.CompiledGraph interruptibleGraph(MemorySaver saver) throws Exception {
         StateGraph graph = new StateGraph();
-        graph.addNode("prepare", node_async(s -> Map.of("prepared", "yes")));
+        graph.addNode("prepare", node_async(s -> Map.of("status", "WAITING_REVIEW")));
         graph.addNode("review", node_async(s -> Map.of("status", "WAITING_REVIEW")));
         graph.addEdge(StateGraph.START, "prepare");
         graph.addEdge("prepare", "review");
