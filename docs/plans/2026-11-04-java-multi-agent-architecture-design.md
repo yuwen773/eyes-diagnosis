@@ -1,6 +1,6 @@
 # Java 版多智能体总体架构设计（对齐 Python 线业务流程）
 
-> **状态**：**v3 修订候选稿，待设计评审**。仅设计、未实施——本轮为文档修订，本文件是工作树中的唯一交付物，未修改任何现有文件、未写任何 Java 代码。
+> **状态**：**v3 定向修订候选稿，暂缓冻结，待复审**。本轮仅修订设计文档，未实施 Java 代码或数据库迁移；既有 PR 和历史计划记录的是上一轮交付状态。
 >
 > **修订来源**：由 v2 候选稿（非冻结版）修订而来，第一轮评审结论『方向认可、持久化与安全契约需补充、暂不全量开发』，第二轮评审『有条件通过、修正后执行』。
 >
@@ -46,7 +46,7 @@ Java 线现状 —— 单 ReactAgent + SSE 单流，缺工作流、缺人工门�
 | 设计评审通过 | 架构方案、接口契约、安全不变量、验证标准已明确 | 本文件所处（或追求）的层级 |
 | 工程实施验收通过 | 实际代码在真实 MySQL、Graph 运行时、跨进程恢复、并发故障注入下满足契约 | **未达成** |
 
-本文件是前者，不代表后者。特别注明：Spring AI Alibaba Graph `1.1.2.2` 的 Checkpoint/恢复/中断**最小可运行验证是后续 P2 实施门禁**——本轮未写任何 Java 代码，文档修订通过不等于框架运行时恢复能力已验收。
+本文件是前者，不代表后者。特别注明：Spring AI Alibaba Graph `1.1.2.2` 的 Checkpoint/恢复/中断**最小可运行验证是 P1 Saver DDL 冻结之前的 P0 前置门禁**——本轮未写任何 Java 代码，文档修订通过不等于框架运行时恢复能力已验收。
 
 ### 0.3 分支基线事实表
 
@@ -95,7 +95,7 @@ Java 线现状 —— 单 ReactAgent + SSE 单流，缺工作流、缺人工门�
 
 五个 Agent 中 4 个用 `ChatClient.prompt().system().user().call().content()` 同步调 LLM、prompt 内嵌 JSON schema、剥围栏后解析；`AuditAgent.java:14-15` 不调 LLM，但 `:60-68` 的 7 项检查全是硬编码 `"passed"`，`:87` 只回填 PHI 字段名**不做脱敏**。回环时 `rawInput` 从未改变（`ClinicalPipeline.java:60`），"补充信息"只是同一输入的 LLM 重跑。对外 `POST /api/v1/clinical/analyze` 同步返回整个 state，无 SSE、无会话。
 
-**可移植的通用骨架**：① 共享黑板 + 按节点分字段、单写入者；② 统一节点契约 `process(state) → state` + `currentAgent` 打点；③ 错误累积、节点不抛出、优雅降级；④ 布尔标志 + 有界计数器实现条件回环；⑤ 末端确定性非 LLM 审计节点；⑥「prompt 声明 schema → 剥离围栏 → 结构化解析」输出契约；⑦ 编排器/节点/状态/控制器四层分离。
+**可移植的通用骨架**：① 共享黑板 + 明确写入方与冲突规则；② 统一节点契约 `process(state) → state` + `currentAgent` 打点；③ 错误累积、节点不抛出、优雅降级；④ 布尔标志 + 有界计数器实现条件回环；⑤ 末端确定性非 LLM 审计节点；⑥「prompt 声明 schema → 剥离围栏 → 结构化解析」输出契约；⑦ 编排器/节点/状态/控制器四层分离。
 
 **不搬**：五个临床角色与 Prompt、ICD-10/DRG/DDI/FHIR/HIPAA、`needs_more_info` 语义、置信度阈值。参考项目的「置信度门控 + 人工复核」**只是文档概念**，Java 无 interrupt/HITL/审批门。
 
@@ -223,11 +223,25 @@ Python 线是**两条并行链路**：`routers/agent.py` 的流式 chat Agent（
 
 ### ADR-3 共享状态：`OverAllState` + 显式 KeyStrategy
 
-状态是 `Map<String,Object>`，key 用小驼峰字符串常量（与 DB 命名规范一致），JSON 友好类型。`REPLACE` 用于单写入者 key，`APPEND` 用于 `errors` / `trace`。**单写入者原则**：每个 key 只有一个节点负责写。
+状态是 JSON 友好的 `Map<String,Object>`，节点返回部分更新。**REPLACE 允许多个顺序节点阶段性覆盖同一 key**；同一执行阶段若并行写同一 key，必须先设计确定性的合并规则，否则禁止并行并在编译或测试时拒绝。Python 当前主图按条件路径顺序推进。
 
-**`completed` 与 APPEND/REPLACE 语义（二次评审 P0-1 + P1）**：Python 线节点输出 `[*state["completed"], node]`（`definition.py:73` 等）是**完整列表替换**，故 Java 侧 **completed 使用 REPLACE**——**不得把完整列表交给 `APPEND`**，否则恢复重放时已有节点会被重复累积。对应地，**APPEND 只接受增量**：节点输出只携带本次新增条目并带去重键（对齐 `t_graph_pending_write` 的 `taskId + writeIndex`，见 §9.1b），恢复重放时不得重复累积 `errors` / `trace`；`REPLACE` 用于单写入者 key（含 `completed`）。单写入者原则不变。
+下表写入方来自 Python `definition.py`；入口初始化与恢复装载另行提供初始值，Java 新增元数据由创建/恢复边界写入、节点只读。`completed` 是完整列表：`validateImage` 初始化，其余节点返回旧列表加自身，**REPLACE 而非 APPEND**。
 
-状态字段对齐 Python 线 `UploadState`（`definition.py:22-32`）：`workflowId` / `status` / `reason` / `completed` / `mediaType` / `envelopeId` / `exposureStatus` / `waitingReview` / `evidence` / `risk` / `explanation` / `reviewType`，另加 Java 侧 `userId` / `graphVersion` / `graphHash` / `actionVersion` / `workflowVersion` / `inferenceEpoch`。
+| key | 节点写入方 | 合并 |
+|---|---|---|
+| `workflowId` | 无，入口初始化 | REPLACE，只读 |
+| `status`, `reason` | `validateImage`, `inference`, `imageQuality`, `qualityReview`, `visionExposure`, `evidenceValidation`, `clinicalRiskFinal`, `explanationDraft`, `explanationClaimValidation`, `explanationPublication`, `finalClinicalReview` | REPLACE，按路径顺序 |
+| `completed` | 14 个主图节点均写 | REPLACE 完整列表 |
+| `mediaType` | `validateImage` | REPLACE |
+| `envelopeId` | `inference` | REPLACE |
+| `exposureStatus` | `inference`, `imageQuality`, `visionExposure` | REPLACE，按顺序 |
+| `waitingReview` | `imageQuality`, `qualityReview`, `visionExposure`, `explanationPublication`, `finalClinicalReview` | REPLACE，按顺序 |
+| `reviewType` | `visionExposure`, `explanationPublication` | REPLACE，按顺序 |
+| `evidence` | `evidenceRetrieval`, `evidenceRewrite`, `evidenceValidation`, `clinicalRiskFinal`, `explanationDraft`, `explanationClaimValidation`, `explanationPublication`, `finalClinicalReview`（条件写） | REPLACE，按路径顺序 |
+| `risk` | `clinicalRiskPrecheck`, `clinicalRiskFinal` | REPLACE，按顺序 |
+| `explanation` | `explanationDraft`, `explanationClaimValidation`, `explanationPublication`, `finalClinicalReview` | REPLACE，按顺序 |
+| `userId`, `graphVersion`, `graphHash`, `actionVersion`, `workflowVersion`, `inferenceEpoch` | Java 扩展：创建/恢复边界；节点只读 | REPLACE |
+| `errors`, `trace` | Java 扩展：各产生事件的节点 | APPEND 仅增量；以稳定业务事件 ID 独立去重，reducer 和技术写入主键本身不保证业务幂等 |
 
 ### ADR-4 持久化：业务表为真相，checkpoint 只管续跑，人工等待必须原子提交
 
@@ -244,9 +258,9 @@ Python 线是**两条并行链路**：`routers/agent.py` 的流式 chat Agent（
 
 **单事务边界（后续实现与 Task 3 的复用定义）**：checkpoint 与业务数据的原子性以**一个数据库事务**为界。边界内必须包含的全部写操作，以 Python 线 `worker.py:188-235` 为权威参照——`saver.flush(db)`（checkpoint 落库）、`InferenceEnvelopeRow` 插入、`workflow` 状态/版本/段落更新、`Job` 置 `COMPLETED`、`ReviewTask` 创建、下个 `RESUME Job` 创建、`append_event` 审计事件——全部在 `with self.sessions.begin() as db:` **同一事务**内提交，要么全成、要么全不落。Python 线 `checkpoint.py` 采用「段内暂存 + 栅栏式原子提交」：LangGraph 可能从后台线程发 checkpoint，故先在内存暂存本段写入，`flush` 由持有 job/workflow 锁、已校验 lease 与版本的业务事务调用（`checkpoint.py:104-113`）。Java 侧自定义 Saver 必须满足同一语义：**checkpoint 写入发生在持有聚合根锁的业务事务内，不单独提交**。
 
-**P2 实施门禁（本决策的验收前提）**：上述约束依赖 Spring AI Alibaba Graph `1.1.2.2` 的 Checkpoint / 恢复 / 中断 API 行为。必须针对**锁定的 `1.1.2.2` 版本**做最小可运行验证，不能只引用主分支框架文档；jar 类清单 + `mvn dependency:tree` 已证实相关类存在，但**不自动证明**自定义 `BaseCheckpointSaver` 能满足上述事务要求。该验证是后续 P2 的**实施门禁**：本轮为文档修订、未编写任何 Java 代码，故此处只写「必须验证」的契约与验收标准，不写「已验证」；本文档修订通过不代表框架运行时恢复能力已验收（对齐 §0.2 验收分层）。
+**P0 前置 PoC 门禁（本决策的验收前提）**：上述约束依赖 Spring AI Alibaba Graph `1.1.2.2` 的 Checkpoint / 恢复 / 中断 API 行为。必须针对**锁定的 `1.1.2.2` 版本**做最小可运行验证，不能只引用主分支框架文档；jar 类清单 + `mvn dependency:tree` 已证实相关类存在，但**不自动证明**自定义 `BaseCheckpointSaver` 能满足上述事务要求。该验证是正式 Saver DDL 冻结及迁移前的**实施门禁**：本轮为文档修订、未编写任何 Java 代码，故此处只写「必须验证」的契约与验收标准，不写「已验证」；本文档修订通过不代表框架运行时恢复能力已验收（对齐 §0.2 验收分层）。
 
-仍然**禁止** `MysqlSaver` 自动建表：绕过 Flyway 权威、破坏小驼峰列名与全局 `isDelete` 逻辑删除约定。
+仍然**禁止** `MysqlSaver` 自动建表：绕过 Flyway 权威、破坏 Flyway 管理与小驼峰列名约定。
 
 ### ADR-4b 异步执行器可靠性契约：租约、心跳续租、外部副作用幂等与恢复
 
@@ -257,10 +271,10 @@ Python 线是**两条并行链路**：`routers/agent.py` 的流式 chat Agent（
 **长耗时任务策略（二次评审 P0-3）。** 眼底图片推理、远程 LLM 调用、证据检索都可能超过租约时长，于是出现竞争序列：`T+0 Worker A 领取 → T+30 租约过期 → T+31 Worker B 重新领取 → T+40 A 返回但已失去提交资格`。Python 线 `_owned_rows()`（`worker.py:136-137`）用 `lease_token + lease_version + lease_until` 做 fencing——它**只能拒绝过期 Worker 的数据库提交，不能阻止外部推理/LLM/检索被调用两次**（A 在 T+30 前已经发出的外部调用无法被 fencing 撤回）。因此必须三件齐备：
 
 1. **可配置租约 + 心跳续租**——持有者周期性续期 `leaseUntil`，续租失败立即停止后续提交；**或**把 Job 切成有界任务，使单段执行时间有上界（对齐 `explanation.py:65-110` 的 15s 硬超时思路），任选其一或并用；
-2. **外部副作用幂等键**——推理按 `requestDigest`（对齐 Envelope 的 `inputDigest`）、LLM 调用按调用幂等键、证据检索按证据版本去重，使同一 Job 被两个 Worker 先后执行时外部系统侧也只生效一次；
+2. **分层幂等**——数据库通过稳定操作键、唯一约束和事务保证逻辑结果不重复；已提交响应可按绑定调用键和输入版本复用。推理绑定 imageDigest，LLM 调用键绑定模型、提示词和输入版本。仅当供应商明确支持且验证其幂等协议时才可声称供应商端去重；提交前崩溃或超时可能重复调用、计费或生成不同输出；
 3. **fencing 兜底**——所有持久化提交仍带 `leaseToken` / `leaseVersion` / `leaseUntil` 校验，过期持有者的写一律拒绝。
 
-并明确写明：**「`SKIP LOCKED` + 30s 租约不保证全过程 exactly-once」**（30s 指 Python 线默认租约值；租约改为可配置后，该结论对任意有限租约依然成立）。系统目标是 **at-least-once 执行 + 外部副作用幂等 + fencing 拒绝过期提交**，不是全程 exactly-once。
+并明确写明：**「`SKIP LOCKED` + 30s 租约不保证全过程 exactly-once」**。系统目标是 **at-least-once 执行 + 数据库逻辑幂等 + fencing 拒绝过期提交**；不保证供应商只执行一次。
 
 **领取时校验与失败分类。** Worker 领取 Job 时校验 `graphVersion` / `graphHash` / `actionVersion` 与 `envelopeId`，不兼容 → `FAILED/GRAPH_VERSION_INCOMPATIBLE`，**不自动重跑**（对齐 `worker.py:162-165`）。失败分类：可重试（网络/超时类）→ `RETRY_WAIT` + 指数退避，由 `attempt` / `maxAttempts` 界定上限；永久失败 → `FAILED` + `stopReasonCode`；每次尝试都以 `append_event` 记录（`actorType=WORKER`），不丢重试历史。
 
@@ -271,6 +285,8 @@ Python 线是**两条并行链路**：`routers/agent.py` 的流式 chat Agent（
 Python 线 `POST /diagnosis/workflows` 返回 **202 Accepted**（`routers/workflow.py:41`），前端 `useUploadWorkflow` 每 1.5s 轮询，`/events` 是**快照型 SSE**（一次 `event:state` + `event:done` 即断开，**`done` 不代表任务完成**）。
 
 Java 线对齐：创建返回 202 + `workflowId`，内部用 Spring 的异步执行 + 数据库状态驱动推进；**不**把 14 节点塞进现有 `/agent/chat/stream` 的同步 SSE 请求里。现有 SSE 端点保持 chat 专用、契约不变（正好避免破坏前端）。
+
+本诊断工作流范围不新增 `StreamAggregator`，也不重构现有 chat 链路；工作流节点身份只写独立执行及事件记录。任何后续 chat 内部重构须独立设计和验收。
 
 ### ADR-6 前端：保持 SSE 契约不变，新增工作流页面
 
@@ -285,6 +301,8 @@ Java 线对齐：创建返回 202 + `workflowId`，内部用 Spring 的异步执
 `UserBoundDocumentSearchTool` 只解决**按用户隔离检索**（ADR-7），它**不等于**一段内容是"经管理员批准、未撤回、可引用、版本仍有效"的临床证据。V19 迁移对存量的定性是原话：*"Existing documents are private and unreviewed; no automatic promotion."*——因此必须显式区分**普通用户知识库**（现有 RAG 上传链路的产出，私有且未经审核）与**受控临床参考资料**（可被 `evidenceRetrieval` 引用的证据），Java 线不得提供任何"自动晋升"路径。
 
 治理列对齐 V19（`V19__controlled_reference_evidence.sql`，`t_knowledge_document` 对应物）七列：`visibility`（默认 `PRIVATE_USER`）/ `reviewStatus`（默认 `PENDING`）/ `diseaseCodes` / `topicCodes` / `governanceVersion` / `reviewedBy` / `reviewedAt`。只有管理员治理审核通过（`reviewStatus=APPROVED`，§3.3）且未 `WITHDRAWN` 的行才进入 `evidenceRetrieval` 候选集；`governanceVersion` 变更即逐出。
+
+Java 当前 `KnowledgeDocument` 尚无上述治理列，现有 `DocumentSearchTool` 按用户过滤并返回格式化字符串，不能证明临床证据资格。新增 **ControlledEvidenceRetriever**：以服务端绑定的工作流身份、疾病/主题及治理版本为输入，筛选管理员批准、可见且未撤回的文档版本，校验疾病与主题匹配、原文片段及摘要，返回文档 ID、版本、治理版本、片段、摘要、审核状态和检索时间的结构化引用。冻结引用集后，发布和医生确认时重读同一来源并复验审批、撤回、版本和片段摘要，缺失或不一致则 WITHHELD；不得悄然替换来源。底层向量检索、BM25、rerank 可复用，聊天 RAG 字符串不得作为资格证明。
 
 下游三个证据消费点——`evidenceValidation`、`explanationClaimValidation`、`explanationPublication`——必须使用**同一套可验证证据版本 + `citationSetDigest`**：发布（`explanationPublication`）时对引用来源**复验**，来源不再 APPROVED 或内容变更 → `WITHHELD` / `EXPLANATION_SOURCE_CHANGED`。对齐 `patient_explanation()` 的重验逻辑：复验对象是**冻结的引用来源本身**（`explanation.py:262`："Revalidate exactly the frozen sources, rather than accepting a replacement"），绝不接受替换来源。
 
@@ -309,7 +327,7 @@ flowchart TB
 
     subgraph CHATL["chat 链路（复用）"]
       DA["DiagnosisAgent / ReactAgent<br/>SSE 单流 + MCP 工具 + 用户工具确认"]
-      AGG["StreamAggregator（新）<br/>单 done · node 身份落独立执行与审计记录"]
+      AGG["现有 DiagnosisAgent chat 流<br/>SSE 契约不变"]
     end
 
     subgraph ORCH["诊断工作流编排（新）"]
@@ -385,13 +403,13 @@ flowchart TB
 |---|---|---|---|
 | 接入 | `AgentController` | 复用 | chat SSE、鉴权、会话所有权 |
 | 接入 | `WorkflowController` / `ReviewController` | **新增** | 202 创建、状态查询、保存确认、医生复核 |
-| chat | `DiagnosisAgent` / `StreamAggregator` | 复用/新增 | SSE 单流、工具确认、node 身份落独立执行与审计记录 |
+| chat | `DiagnosisAgent` | 复用 | SSE 单流、工具确认、node 身份落独立执行与审计记录 |
 | 编排 | `EyeDiagnosisStateGraph` | **新增** | 14 节点、条件边、graph 三版本、`KeyStrategyFactory` |
 | 编排 | `OverAllState` / `RunnableConfig` | 复用框架 | 共享状态、`threadId` 作 checkpoint 键 |
-| 编排 | 异步执行器 + Checkpoint Saver | **新增** | 状态驱动推进、人工等待后恢复；租约 + 心跳续租 + 外部副作用幂等 + 单事务提交（见 ADR-4b） |
+| 编排 | 异步执行器 + Checkpoint Saver | **新增** | 状态驱动推进、人工等待后恢复；租约 + 心跳续租 + 数据库逻辑幂等 + 单事务提交（见 ADR-4b） |
 | 节点 | 14 个 `AsyncNodeAction` | **新增** | 见 §7 |
 | 能力 | 工具 / MCP / 历史 / 审计 | 复用 | 见 §2.2 |
-| 数据 | 新增表 17 张（核心业务 14 张 + 恢复存储 3 张，口径见 §9 总表）+ 复用 `t_diagnosis` | **新增** | 见 §9 / §9.1b |
+| 数据 | 候选新增 17 张表（核心业务 14 张 + 恢复存储 3 张）+ 复用 `t_diagnosis` | **待验证** | 恢复表结构及数量以 §9.1b PoC 为准 |
 
 ---
 
@@ -442,7 +460,7 @@ finalClinicalReview → END
 - `visionExposure`（`:107-116`）：`SAFETY_ABSTENTION` 且 `requiresReview` 才等医生；拒识但不需复核时 `COMPLETED_LIMITED` 且 `exposure_status = WITHHELD_BY_OOD / WITHHELD_BY_ABSTENTION`。
 - `finalClinicalReview`（`:184-204`）：`final_decision` 必须属于 `allowed_decisions()`；`CONFIRM_AI_ASSESSMENT` **只放行已冻结的、已校验的快照**，不重新检索/起草（`:191-197`）。
 - 图编译用 `interrupt_after` 覆盖几乎全部节点（`definition.py:252-256`）——Java 侧用 checkpoint + 人工等待状态实现等价语义。
-- `GRAPH_HASH = sha256(拓扑 JSON + ACTION_VERSION)`（`:258-261`），节点语义由 `ACTION_VERSION` 版本化。
+- Python 的 `GRAPH_HASH = sha256(拓扑 JSON + ACTION_VERSION)`（`:258-261`）。Java 定义独立、确定性的图描述、序列化、hash 和行为版本及测试样例，不能假定跨语言 hash 相等。恢复必须匹配运行时、序列化格式、图版本、hash 与行为版本；禁止跨语言恢复 checkpoint，旧任务须显式重建。
 
 ### 6.2 状态迁移驱动
 
@@ -472,7 +490,7 @@ finalClinicalReview → END
 | 4 | `qualityReview` | 医生① 决策落库，驱动续跑 | 否 | 新增 `ReviewTask` + 角色鉴权 |
 | 5 | `visionExposure` | 拒识/曝光状态（`AVAILABLE` / `WITHHELD_*`） | 否 | gRPC `rejected` / `abstainReason` / `oodStatus` |
 | 6 | `clinicalRiskPrecheck` | 5 种 `disposition` 首次判定 | 否 | `t_diagnosis` 的 severity / 策略版本字段 |
-| 7 | `evidenceRetrieval` | 按 `diseaseCode` 检索受控证据 | 否 | **受控证据检索**（ADR-7b）：`UserBoundDocumentSearchTool`（隔离）+ V19 治理列过滤，非普通 RAG |
+| 7 | `evidenceRetrieval` | 按 `diseaseCode` 检索受控证据 | 否 | 新增 `ControlledEvidenceRetriever`，治理筛选及结构化引用（ADR-7b） |
 | 8 | `evidenceRewrite` | 首次不足时改写重检（限 1 次） | 否 | 同上 |
 | 9 | `evidenceValidation` | 证据充分性与引用冻结 | 否 | **受控证据检索**（ADR-7b，同节点 7）+ `citationSetDigest` 引用冻结 |
 | 10 | `clinicalRiskFinal` | 结合证据的最终 `disposition` | 否 | 同上 |
@@ -511,37 +529,64 @@ v2 原稿此表为 **11 个分组行**，其中三行以 `/` 合并了两张物�
 | 表 | 关键字段 | 说明 |
 |---|---|---|
 | `t_diagnosis_workflow` | `workflowId` / `ownerUserId` / `creationIdempotencyKey` / `status` / `currentSegmentCode` / `graphDefinitionVersion,Hash` / `actionVersion` / `workflowVersion` / `inferenceEpoch` / `inferenceEnvelopeId` / `explanationPublicationStatus` / `predictionExposureStatus` / `stopReasonCode` / `questionText` | **聚合根 + 审计根**，幂等唯一键 |
-| `t_diagnosis_workflow_event` | `eventId` / `eventSequence` / `eventType` / `actorType` / `actorId` / `workflowVersion` / `reasonCode` / `payloadSnapshot` | append-only 审计时间线 |
-| `t_workflow_job` | 租约 / `attempt` / `maxAttempts` / `executionEpoch` / `threadId` / `checkpointId`（领取 / 租约 / 幂等字段清单以 ADR-4b 为准） | 异步 Job 领取、推进与重试 |
-| `t_workflow_node_execution` | 与 Job 共享 `executionEpoch` / `threadId` / `checkpointId` 字段族 | 节点级执行记录，与 Job 分表存储 |
+| `t_diagnosis_workflow_event` | `eventId` / `eventSequence` / `eventType` / `actorType` / `actorId` / `workflowVersion` / `reasonCode` / `payloadSnapshot` | append-only 工作流权威时间线 |
+| `t_workflow_job` | 租约 / `attempt` / `maxAttempts` / `executionEpoch` / `graphThreadId` / `graphCheckpointId`（领取 / 租约 / 幂等字段清单以 ADR-4b 为准） | 异步 Job 领取、推进与重试 |
+| `t_workflow_node_execution` | `nodeExecutionId` / `workflowId` / `executionEpoch` / `segmentCode` / `nodeCode` / `idempotencyKey` / `inputDigest` / `outputDigest` | 节点级执行记录；Python V11 不含 threadId / checkpointId |
 | `t_inference_envelope` | `inputDigest` / `quality*` / `outcome` / `predictionSnapshot` / `confidenceSnapshot` / `oodSnapshot` / `calibrationSnapshot` / `modelVersion` / `modelWeightFingerprint` / `policyVersion` | **不可变**，只插入不更新 |
-| `t_explanation_snapshot` | `revision` / `publicationStatus` / `contentSnapshot` | 冻结解释快照 |
-| `t_diagnosis_citation` | `citationSetDigest` / `validatedAt` / `publishedAt` | 解释引用集 |
+| `t_explanation_snapshot` | `revision` / `publicationStatus` / `contentSnapshot` / `citationSetDigest` / `validatedAt` / `publishedAt` | 冻结解释快照 |
+| `t_diagnosis_citation` | `retrievalEpoch` / `sourceDocumentId` / `sourceRevision` / `quotedSpan` / `quotedSpanDigest` / `withdrawnAt` | 冻结引用快照 |
 | `t_human_review_task` | `reviewType` / `reviewRound` / `status` / `decisionCode` / `assignedDoctorId` / `envelopeId` / graph 三版本 / `threadId` / `checkpointId` | 两类医生复核，绑定具体快照 |
 | `t_workflow_audit_event` | append-only | 独立审计（V14） |
 | `t_python_chat_workflow` → Java 命名 `t_agent_chat_workflow` | `sessionId` / `workflowId` / `messageId` / `attachmentId` | chat↔workflow **引用，非复制任务** |
 | `t_diagnosis_save_confirmation` | `contentDigest` / `idempotencyKey` / `expiresAt` / `status` | 患者保存授权（时效性同意） |
-| `t_saved_workflow_diagnosis` | `contentSnapshot` / `contentDigest` | 唯一保存回执，最终落 `t_diagnosis` |
+| `t_saved_workflow_diagnosis` | `workflowId` / `diagnosisId` / `confirmationId` | 唯一保存回执；内容与摘要属于保存确认表 |
 | `t_agent_tool_confirmation` | `confirmationId` / `ownerUserId` / `sessionId` / `contentDigest` / `expiresAt` | chat 工具写操作的用户同意 |
 | `t_python_chat_supplement` → `t_agent_chat_supplement` | `checkpointId` / `graphVersion` / `waitVersion` | 补充说明等待 |
 
 **关系**：`Workflow` 1:1 上传输入（`t_workflow_upload_input`，§9.1b）/ 当前 Envelope，1:N Job / Event / ReviewTask / ExplanationSnapshot；`SaveConfirmation → SavedWorkflowDiagnosis → t_diagnosis` 三段式；chat 只持有引用。
 
+**逐表主键、唯一性及写入责任**（以下是 Python V10–V22 的业务约束；Java 列名和事务由实施迁移复核，DDL 中未声明的关联不假定已有数据库外键）：
+
+| 表 | 主键；其他唯一键 | 写入方 |
+|---|---|---|
+| `t_diagnosis_workflow` | `workflowId`；`ownerUserId, creationIdempotencyKey` | 创建服务、持租约 Worker、人工操作事务，版本 CAS |
+| `t_diagnosis_workflow_event` | `eventId`；`workflowId, eventSequence` | 与状态变更同事务的业务服务追加 |
+| `t_workflow_job` | `jobId`；`workflowId, executionEpoch, segmentCode, jobType` | 创建/恢复服务及持租约 Worker |
+| `t_workflow_node_execution` | `nodeExecutionId`；`idempotencyKey` | 持租约 Worker |
+| `t_inference_envelope` | `inferenceEnvelopeId`；`workflowId, inferenceEpoch` | 持租约 Worker，只插入 |
+| `t_explanation_snapshot` | `explanationSnapshotId`；`workflowId, revision` | 持租约 Worker，冻结版本 |
+| `t_diagnosis_citation` | `citationId`；`workflowId, retrievalEpoch, sourceDocumentId, sourceRevision, quotedSpanDigest` | 受控检索/工作流事务 |
+| `t_human_review_task` | `reviewTaskId`；`workflowId, reviewType, reviewRound` | Worker 创建；经鉴权医生领取/决策，以版本 CAS |
+| `t_workflow_audit_event` | `auditEventId`；无业务唯一键 | 安全审计组件追加 |
+| `t_agent_chat_workflow` | `sessionId, workflowId`；无其他唯一键 | 经鉴权 chat 关联服务（Java 表名扩展） |
+| `t_diagnosis_save_confirmation` | `confirmationId`；`ownerUserId, idempotencyKey`；`workflowId, requestVersion` | 保存确认服务，患者本人鉴权及 CAS |
+| `t_saved_workflow_diagnosis` | `workflowId`；`diagnosisId`；`confirmationId` 分别唯一 | 保存确认批准事务，与正式记录同事务 |
+| `t_agent_tool_confirmation` | `confirmationId`；`ownerUserId, idempotencyKey` | chat 工具确认服务 |
+| `t_agent_chat_supplement` | `requestId`；`sessionId, idempotencyKey`；`activeSessionId`（非空时唯一） | 独立聊天补充服务，waitVersion CAS（Java 表名扩展） |
+
+**审计边界（Java 设计决策）**：`t_diagnosis_workflow_event` 是状态迁移、医生决策、保存授权及发布的权威时间线，必须记录 workflowVersion、操作者和事件序号，与业务变更同事务；`t_workflow_audit_event` 是安全和操作审计，记录访问、鉴权拒绝等，不是状态重建来源。默认不双写同一业务事件；确有合规审计副本时，增加稳定关联事件 ID（Java 设计扩展）并在同事务写入、去重与对账；不得异步无保障双写。查询状态历史以权威时间线为准，安全查询以审计表为准。
+
 ### 9.1b 持久化输入与恢复存储
 
-Python 线用三张独立表闭合持久化输入与恢复存储（V15 `deploy/workflow-migrations/sql/V15__python_durable_upload.sql`）：`t_workflow_upload_input` / `t_python_graph_checkpoint` / `t_python_graph_write`。**Java 线不照搬 `t_python_*` 表名与 MEDIUMBLOB 存储实现，但必须回答同样三个问题**，且本节每个表名都能被 §9 起首总表计数。按独立建表方案，本节新增 **3 张基础设施表**（`N=3`、合计 17 张，见 §9 总口径）：
+候选模型为 14 张核心表 + 3 张基础设施表 = 17 张；后两张恢复表的物理结构和是否需要单独 pending write 表须通过 §12 隔离 PoC，结论变化时重算表数。以下为 Java 设计扩展，不是 Python DDL 或 Graph 1.1.2.2 API 事实。
 
-1. **图片原始输入或不可变对象引用如何保存** → Java 表 `t_workflow_upload_input`（与 Python 线同名——承载同一领域概念，字段按 Java 小驼峰约定重定义）：`workflowId`（主键）/ `requestDigest` / 图片存储 / `graphCheckpointId` / `completedNodes` / `evidenceSnapshot`（V19 增补）。**写入后不可变**——禁止覆盖写、禁止同 `workflowId` 重传（幂等由聚合根 `creationIdempotencyKey` 承担）；恢复时用 `requestDigest` 绑定推理信封（对齐 Envelope `inputDigest`，ADR-4 第一层）。
-   - **图片存储取舍（MEDIUMBLOB vs COS 对象引用）**：Python 现状是 `imageBytes MEDIUMBLOB` 直接入库——图片与元数据同事务原子落库，但 InnoDB 行膨胀、缓冲池被大对象挤占、备份与复制流量放大。Java 线已有腾讯 COS 作为文件存储权威，推荐 **COS 不可变对象引用（bucket + objectKey）+ `imageDigest` 摘要入表**：落库行小、事务轻。不可变输入绑定语义通过**摘要校验**等价保留——推理与恢复前先校验 COS 对象字节摘要与 `imageDigest` 一致，不一致 → fail-closed（工作流进入安全终态，不允许自动续跑）。无论哪种方案，语义底线不变：**输入一经写入不可变，摘要绑定推理信封**。
-2. **Checkpoint 如何持久化** → Java 表 `t_graph_checkpoint`（不沿用 `t_python_*` 前缀）：`threadId` / `checkpointNamespace` / `checkpointId` / `parentCheckpointId` / `valueType` / `checkpointValue` / `metadataJson`。字段结构与 Python 线同构，因为 Spring AI Alibaba Graph 的 Saver 同样以 (threadId, namespace, checkpointId) 三元组寻址，且需要 `parentCheckpointId` 支持链式恢复、`checkpointNamespace` 支持子图隔离。**checkpoint 写入必须与业务行同事务**——事务边界以 ADR-4「单事务边界」为唯一权威：Saver 写入发生在持有聚合根锁的业务事务内，不单独提交；RedisSaver 仅限技术验证（ADR-4 第二层）。注意 `checkpointValue` 是图续跑用的技术状态，业务真相仍在 `t_diagnosis_workflow`（ADR-4 第一层），checkpoint 丢失只影响续跑、不反向覆盖业务状态。
-3. **未完成节点写入如何恢复（pending writes）** → Java 表 `t_graph_pending_write`：`threadId` / `checkpointNamespace` / `checkpointId` / `taskId` / `writeIndex` / `channel` / `valueType` / `writeValue`，主键 (threadId, checkpointNamespace, checkpointId, taskId, writeIndex)。节点已发出、但所属执行段尚未随单事务提交的通道写入落在本表；崩溃后据此**重放未完成节点的输出**再接续图执行。重放必须幂等：按主键 upsert、禁止重复累积；执行段确认提交后，对应任务的未决写入随该段 checkpoint 语义一并消费或清除，不得残留到下一段重放。
+| 候选表 | 候选主键 / 字段 / 写入方 |
+|---|---|
+| `t_workflow_upload_input` | 主键 `workflowId`；创建服务写入 requestDigest、imageDigest、COS bucket/key/version、媒体类型；Worker 在业务事务、租约和版本保护下更新 graphCheckpointId、completedNodes、evidenceSnapshot。 |
+| `t_graph_checkpoint` | 候选标识、序列化数据及恢复元数据；主键、唯一性、读写与写入方由 PoC 确定。候选写入方为持租约 Worker 的协调提交事务。 |
+| `t_graph_pending_write` | 候选用途为框架已提交待处理输出；主键、唯一性、生命周期、写入方及是否需要单独表由 PoC 确定，不能预设 Python LangGraph 同构。 |
 
-**表清单核算**：本节三张表独立建表 → `N=3`、合计 17 张，与 §9 总口径一致。若最终 Java DDL 决定 checkpoint 与未完成节点写入合表（按 `valueType` 区分），则 `N=2`、合计 16 张——必须**同时**回改本节与 §9 总表并写明理由，禁止只改一处。
+**两层摘要**：与 Python `service.py` 一致，`requestDigest = SHA-256(图片字节长度的 8 字节大端编码 || 图片字节 || question 的 UTF-8 字节)`，在同一 `ownerUserId + creationIdempotencyKey` 下用于检测不同请求，冲突返回 409；`imageDigest = SHA-256(imageBytes)`，对应信封 `inputDigest`，在读取、推理和恢复时核验图像与信封绑定。两者绝不互换；Java 应固定编码与跨语言样例。
+
+**列级不变量与 COS 生命周期**：输入字节或对象身份、对象版本、两个摘要和请求问题一经登记不得覆盖；checkpoint 指针、completedNodes、evidenceSnapshot 是受租约、事务及 workflowVersion 保护的可变进度。先上传唯一不可覆盖对象，获取版本 ID 或经验证的不可覆盖对象身份并计算摘要；再在 MySQL 事务登记引用、请求键和任务。MySQL 无法原子提交 COS 上传：登记失败或进程崩溃留下的未引用对象，经宽限期和引用复查后由受控回收任务清理；登记成功后按数据保留期与引用检查处理过期对象，不得删除仍被工作流、审计或法定保留引用的对象。读取指定版本并重算摘要；缺失、版本不符或摘要不符时 fail-closed，不推理、不发布、不自动替换。禁止把本地清理或 COS 回收当作数据库事务的一部分。
+
+**崩溃恢复**：Python Saver 在内存暂存，持有有效租约的业务事务才 flush；提交前进程崩溃则暂存丢失，从最后已提交恢复点重新执行，外部调用可能重复，数据库逻辑副作用须幂等。已提交 checkpoint 若包含待处理输出，按照 PoC 验证的 Saver 协议恢复并防止重复应用；不能假定内存暂存自动成为持久 pending writes。checkpoint 与业务版本、输入、租约或信封绑定不一致则 fail-closed，不凭孤立 checkpoint 自行推进。恢复表与业务行同事务只是目标契约，具体接口必须验证。
+
 
 ### 9.2 Java 线迁移规范
 
 - Java 线 master 当前只到 `V9__version_inference_safety_policy.sql`；`CLAUDE.md:64,66` 规定**已应用迁移不得修改，只能新增**；`application.yml:20-26` 的 `validate-on-migrate: true` 会让改动已应用迁移直接启动失败。
-- 列名必须**小驼峰**（`map-underscore-to-camel-case: false`），带 `isDelete`（全局 `logic-delete-field`）。
+- 列名必须**小驼峰**（`map-underscore-to-camel-case: false`），仅需逻辑删除的业务实体使用 `isDelete`；不可变信封、回执和 append-only 审计禁止业务删除，保留与归档另定；全局配置不要求每张表都有该列。
 - ⚠️ **版本号碰撞**：其他 worktree（`.worktrees/pr-12-hardening/`、`c1-workflow-state-mutator/`）可能已占用 V10–V14。落新迁移前必须跨分支核对 `db/migration/`，否则合并时撞版本号与校验和。
 - ⚠️ **不要把 Python 线 V10–V22 的编号直接搬过来**：Python 分支 `deploy/workflow-migrations/README.md:3-5` 明确 V10–V22 是**历史 SQL 原件、保持原字节**，当前入口是 `deploy/python-migrations` + 独立 `t_python_schema_history`；且文档要求"停用旧 Flyway 入口，不能两套升级器同时工作"（`README.md:36`）。Java 线应另起连续版本号并与两条线的历史编号协调。
 - **禁止** `MysqlSaver` 自动建表（绕过 Flyway、破坏命名约定）。
@@ -572,11 +617,11 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 
 **必须保留**：`mcp.remote.allowed-origins`（空=拒绝所有远程 MCP）、`app.cors.allowed-origins`（空=拒绝跨域凭据）、`McpConnectionPolicy` 的 HTTPS + Origin 校验、MCP `per-server-max:8` / `tool-timeout-seconds:30`。
 
-**模型统一**：`qwen3-vl-plus`（chat，`Python 分支 config.py:114` 默认值）、`qwen-vl-plus`（vision）、`text-embedding-v3`、`gte-rerank-v2`；解释草稿沿用 Python 线的 `chat_model`（默认 `qwen3-vl-plus`），若 Java 线要用 `qwen3.5-plus` 需作为**显式配置决策**而非默认。统一走 DashScope 兼容端点。不得引入 OpenAI 原生 starter。按节点的模型/温度/提示词外置到配置，取代 `DA:39-73` / `EyeImageAnalyzerTool:44-64` 的硬编码。
+**模型统一**：`qwen3-vl-plus`（chat，`Python 分支 config.py:114` 默认值）、`qwen-vl-plus`（vision）、`text-embedding-v3`、`gte-rerank-v2`；解释草稿沿用 Python 线的 `chat_model`（默认 `qwen3-vl-plus`），若 Java 线要用 `qwen3.5-plus` 需作为**显式配置决策**而非默认。统一走 DashScope 兼容端点。当前 pom 已有 `spring-ai-starter-model-openai`；本方案不再新增其他 OpenAI starter，也不改变现有依赖。按节点的模型/温度/提示词外置到配置，取代 `DA:39-73` / `EyeImageAnalyzerTool:44-64` 的硬编码。
 
 **成本**：图内只有 1 处 LLM 且有 512 token 上限、无回环，显著低于参考项目 4 个 LLM Agent + 2 次回环；主要成本来自 gRPC 推理与证据检索。需为图级调用数设上限，`trace` 记录每次调用的模型与 token 估算。
 
-**鉴权**：四类人工等待都要做角色校验；医生复核**禁自审**（`review.py:35`）；保存确认必须是患者本人（`confirmation.py:35-43`）；长流程保持 Spring Session 安全上下文存活。
+**鉴权**：四类人工等待都要做角色校验；医生复核**禁自审**（`review.py:35`）；保存确认必须是患者本人（`confirmation.py:35-43`）；创建时持久化经认证的 ownerUserId 和必要授权上下文；后台 Worker 使用受控服务身份按任务归属执行，不依赖浏览器 Session 存活。每次 HTTP 人工操作重新鉴权并检查当前角色和资源归属。
 
 ---
 
@@ -584,9 +629,9 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 
 | 阶段 | 内容 | 验收标志 |
 |---|---|---|
-| **P0 契约冻结** | 锁定 Python 基线、API、状态码、图版本、验收样例 | 样例与分支 SHA 固定 |
+| **P0 契约冻结** | 锁定 Python 基线、API、状态码、图版本、验收样例；隔离 Graph PoC | 样例和 SHA 固定；PoC 通过后才冻结 Saver DDL |
 | **P1 持久化与安全底座** | 数据库迁移、输入绑定、Job 租约、事务、审计、幂等 | 单事务提交 + 租约隔离可测 |
-| **P2 Graph 技术验证** | 14 节点拓扑、状态合并、Checkpoint、跨进程恢复 | 1.1.2.2 最小可运行验证通过 |
+| **P2 Graph 技术验证** | 在 P0 PoC 基础上完成 14 节点拓扑、状态合并、Checkpoint、跨进程恢复 | 完整实现及故障注入通过 |
 | **P3 确定性诊断链** | gRPC 推理、风险门控、受控证据、声明校验 | 各分支 `stopReasonCode` 对齐 |
 | **P4 人工等待与发布** | 医生复核、患者补充、冻结快照、发布状态机 | 四类人工交互按各自机制跨重启恢复 |
 | **P5 保存授权与溯源** | 摘要确认、过期、CAS、唯一回执、旧任务显式重建 | 未授权不写 `t_diagnosis` |
@@ -597,7 +642,7 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 - **P1 的持久化事务、租约与幂等是后续开发的基础，不是 P4 出现真实人工等待时才补的补丁。** 没有租约与事务底座，P2 的 Checkpoint 恢复与 P4 的跨重启语义都无从谈起。
 - **不可变快照、审计与防重放必须早于人工复核和发布能力**（v2 把溯源放在 P5、却让 P4 先做医生复核与发布，属于倒置）；P4 的冻结快照直接消费 P1（持久化底座：迁移、审计、幂等）与 P3（不可变信封）铺好的机制，P5 的「溯源」能力即依赖这些底座生效。
 
-另外注明：P2 的 Graph `1.1.2.2` 最小可运行验证即 §0.2 与 §6 所指的**实施门禁**——文档修订通过不等于框架运行时恢复能力已验收。
+P0 前置 PoC 使用锁定的 Graph 1.1.2.2、隔离数据库和临时表，不执行正式 Flyway：只读核对依赖及 Saver API；构造最小两节点图，验证状态覆盖、分段中断、序列化与跨进程恢复；在业务事务中测试 Saver 写入同提交/回滚、提交前后崩溃、租约失效和不一致 fail-closed，并记录真实读写协议及是否需要 pending writes。成功后才确定恢复表主键、结构及事务接口并冻结 P1 DDL；失败则修订设计并复审，不能先迁移。P2 扩展验证完整业务图。本轮未运行 PoC。
 
 **每一阶段都必须保持"chat SSE 契约不变 + 三权分离 + 未授权不写正式记录"**，这是兼容与合规底线。
 
@@ -612,14 +657,14 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 | R3 | chat 与 workflow 耦合 | `V18` 明确是引用而非复制任务；塞进 `t_agent_session` 会污染历史 | ADR-1 双层解耦 |
 | R4 | 无编排/状态机回归测试 | Java 线现有 26 个测试无 `DiagnosisAgent.stream()` / SSE / 编排测试 | P0 契约测试 + 每阶段节点级单测 + 分支覆盖 |
 | R5 | Flyway 版本碰撞 | 其他 worktree 可能已占 V10–V14；Python 线 V10–V22 也占号 | 跨分支核对后另起编号；不搬 Python 编号 |
-| R6 | schema 约定冲突 | `validate-on-migrate` + 小驼峰 + 全局 `isDelete`；`MysqlSaver` 自带 DDL 绕过 Flyway | 自定义 Saver + 符合约定的新表 |
+| R6 | schema 约定冲突 | `validate-on-migrate` + 小驼峰及按实体选择逻辑删除；`MysqlSaver` 自带 DDL 绕过 Flyway | 自定义 Saver + 符合约定的新表 |
 | R7 | 并发/可重放 | Python 线用 `SKIP LOCKED` 租约 + 乐观锁 + graph 三版本绑定；Java 线若简单实现会重放/覆盖医生决定 | 复用 `workflowVersion` CAS、envelope 绑定、幂等键、租约 |
 | R8 | SSE 语义误用 | `/events` 的 `done` 不代表任务完成；chat 的 `useAgentStream.ts:200` 强制 `done` | 两套端点分开，搬运时明确区分 |
 | R9 | LLM 越权 | `explanation.py:65-110` 的严格约束是安全设计；放开会产生确诊/治疗建议/prompt injection | 逐条照搬硬约束 + 10 类 `validate_claims` |
 | R10 | 前端契约漂移 | 后端 `tool-result` vs 前端 `tool-response` 已不一致；新增页面放大漂移 | P0 独立修 + 契约测试 |
 | R11 | 配置/凭据 | 工作树基线 `application.yml:121-122` 仍有主检出已删的 `rag.evaluation.enabled`；本地配置 gitignored 不继承 | 实施前 rebase 到目标分支并重新核对 |
 | R12 | 双升级器并存 | Python 文档要求停用旧 Flyway 入口，不能两套同时工作 | Java 线保持单一 Flyway，不与 Python 迁移器混用 |
-| R13 | 输入与 Checkpoint 跨存储不一致 | 图片/COS 对象引用、checkpoint（§9.1b `t_graph_checkpoint`）与 pending writes（`t_graph_pending_write`）若与业务行分属不同存储、不同事务，崩溃后会错误恢复或发布不一致结果——Python 线正是靠「`saver.flush(db)` 与业务行更新同一事务」（ADR-4 引 `worker.py:188-235`）消除这个窗口的 | 单 MySQL 事务（ADR-4 单事务边界：checkpoint 写入与业务行同事务提交）+ 不可变 `requestDigest` 绑定（ADR-4b）+ fail-closed |
+| R13 | 输入与 Checkpoint 跨存储不一致 | 图片/COS 对象引用、checkpoint（§9.1b `t_graph_checkpoint`）与 pending writes（`t_graph_pending_write`）若与业务行分属不同存储、不同事务，崩溃后会错误恢复或发布不一致结果——Python 线正是靠「`saver.flush(db)` 与业务行更新同一事务」（ADR-4 引 `worker.py:188-235`）消除这个窗口的 | MySQL 中 checkpoint 与业务行同事务 + COS 版本及 imageDigest 校验 + requestDigest 请求去重 + 缺失或不一致 fail-closed（§9.1b） |
 
 **临床验收边界（与风险登记并列的约束）**：`feature/python-backend` 分支可作**业务实现真源**（本文档通篇如此引用），但它**不是已获临床验证的黄金标准**。依据 `docs/backend-split.md`「当前状态」与 Python 线代码现状：
 
@@ -641,14 +686,19 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 6. **迁移验证**：**Flyway 从 V9 干净升级**——在 Java 线 V9 基线上执行新增迁移，`validate-on-migrate: true` 下 `migrate` 与 `validate` 均通过，已应用迁移零改动（§9.2）。
 7. **恢复测试**：四类人工等待各做一次"中断 → 重启 → 恢复"，确认 checkpoint 与业务行一致（③ 保存确认无图 checkpoint，以其唯一回执 `SavedWorkflowDiagnosis` 一致为准；④ 患者补充同样无主图 checkpoint，以其独立图 `chat-supplement-v1` 的 `waitVersion` CAS 与 `t_python_chat_supplement` 对应行一致为准，见 §3.3 三种恢复机制；对齐 `docs/human-wait-restart.md` 曾修过的两个真实缺陷）。
 8. **回归**：`mvn test`（81 tests / 0 errors 为基线）+ `mvn clean package -DskipTests`。
-9. **集成**：在本会话已就绪的环境（3306 `eyeuser`、Redis 6379、Chroma 8000、gRPC 50051）做真实冒烟；`contextLoads` 依赖这些外部服务。
+9. **集成**：在实施时确认可用且隔离的 MySQL、Redis、Chroma 和 gRPC 环境做真实冒烟；连接按当时 profile 配置，`contextLoads` 依赖外部服务。
 10. **门禁**：任何阶段若出现"必须改 chat SSE 契约才能跑"或"工作流完成即建档"，视为架构违规、回退。
 
 在上述常规验证之外，补充故障注入测试矩阵，逐项给出必须人为制造并证明的故障场景：
 
 | 场景 | 必须证明的性质 |
 |---|---|
-| Checkpoint 写入后进程崩溃 | 不会错误恢复或发布不一致的结果 |
+| 段内暂存后、事务提交前杀进程 | 无业务和 checkpoint 部分提交；从最后已提交点重跑，外部调用可重复但逻辑结果不重复 |
+| 事务提交成功后、响应或领取下一任务前杀进程 | 从已提交 checkpoint 和业务版本恢复，不重复应用已提交输出 |
+| 已提交 checkpoint 与业务版本人为不一致 | fail-closed，不凭孤立 checkpoint 推进或发布 |
+| A 租约过期，B 领取后 A 的外部调用返回 | A 被 fencing 拒绝提交，B 最多一次有效逻辑提交 |
+| LLM 调用成功但提交前崩溃，重跑再调用 | 允许供应商重复执行/计费；只发布一次有效结果，记录尝试 |
+| COS 引用已提交后对象丢失、版本变化或内容篡改 | 读取版本或摘要校验失败，fail-closed，无推理和发布 |
 | 两个 Worker 同时领取同一任务 | 最多一个有效提交 |
 | 医生重复提交、跨账号提交 | 幂等或明确拒绝，不能越权 |
 | 患者同时点击两次批准保存 | 只能生成一条正式记录和唯一回执 |
@@ -700,13 +750,13 @@ Python 线前端有、Java 线前端缺的（`docs/backend-split.md:30-49` 规�
 | v2（修订前） | v3（本版） |
 |---|---|
 | v2 候选稿，非冻结版 | **v3 修订候选稿**：文档头状态标注升级，记录两轮评审结论与评审保留的 3 个决定 |
-| 验收手段以 grep 断言为主，「设计评审通过」与「工程实施验收通过」未区分 | **验收分层**（§0.2）：两层结论不可混用；Graph `1.1.2.2` 最小可运行验证明确为 **P2 实施门禁**，本轮不写代码、不声称已验证 |
-| Redis/MySQL 双写一致性仅一句带过 | **ADR-4 原子性三层约束**：给出「checkpoint 已推进、业务仍停在前一段」的具体失败序列；承载真实人工等待前必须二选一（同事务自定义 Saver / fail-closed 恢复协议），并明确 P2 门禁定位 |
-| `@Async` 异步执行未论证可靠性 | **ADR-4b 执行器契约**：可配置租约 + 心跳续租 + 外部副作用幂等键 + fencing 兜底；目标是 at-least-once + 幂等，非全程 exactly-once |
+| 验收手段以 grep 断言为主，「设计评审通过」与「工程实施验收通过」未区分 | **验收分层**（§0.2）：两层结论不可混用；Graph `1.1.2.2` 最小可运行验证现为 **P0 前置门禁**，本轮不写代码、不声称已验证 |
+| Redis/MySQL 双写一致性仅一句带过 | **ADR-4 原子性三层约束**：给出「checkpoint 已推进、业务仍停在前一段」的失败序列；正式 Saver DDL 前须通过 P0 PoC，承载人工等待前实现同事务或明确 fail-closed 协议 |
+| `@Async` 异步执行未论证可靠性 | **ADR-4b 执行器契约**：可配置租约 + 心跳续租 + 数据库幂等、条件性供应商幂等及 fencing；目标是 at-least-once + 逻辑幂等，非全程 exactly-once |
 | 表数「11 个分组行」被误读为「11 类表」，且缺输入保存 / checkpoint / 未决节点写入三类承载 | **数据模型闭合**：§9.1 按物理表逐表拆分、新增 §9.1b 三类恢复存储；表数总口径统一为「14 核心 + N 基础设施」（独立建表 N=3、合计 17），任何增删必须回改 §9 总表重算 |
 | v2 曾设想把图节点身份写进 `t_agent_message.subType` | **subType 移除**：`VARCHAR(30)` 溢出属事实错误，且双层解耦下不应改造聊天消息结构——node 身份落独立执行与审计记录（§8），chat 消息表零改动 |
 | 检索工具与证据资格未区分 | **受控证据边界**（ADR-7b）：普通用户知识库 ≠ 受控临床参考资料，治理七列对齐 V19，无自动晋升，发布时复验冻结来源 |
-| P1–P5 顺序存在不变量倒置（溯源晚于人工复核与发布） | **P0–P6 重排**（§12）：持久化/安全底座提前至 P1，Graph `1.1.2.2` 最小可运行验证定位为 P2 门禁，不可变快照与审计早于人工复核和发布 |
+| P1–P5 顺序存在不变量倒置（溯源晚于人工复核与发布） | **P0–P6 重排**（§12）：持久化/安全底座提前至 P1，Graph `1.1.2.2` 最小可运行验证现为 P0 前置门禁，不可变快照与审计早于人工复核和发布 |
 | 四类人工等待共用一种恢复机制，两种 Graph 恢复方式被混淆 | **三种恢复机制**（§3.3）：医生复核走临床主图 Checkpoint + RESUME Job；患者补充走独立聊天图 `Command(resume)`、不触碰临床主图；保存确认走图外事务 CAS + 唯一回执；`completed` 明确为完整列表替换、Java 侧用 REPLACE（ADR-3） |
 | 风险登记 R1–R12；「与 Python 线对齐」未限定临床含义 | **R13 跨存储一致性** + **临床验收边界**（§13）：Python 线不是已获临床验证的黄金标准，4 项真人验收阻塞 + `NOT_CALIBRATED` / `NOT_EVALUATED`，语义对齐不得表述为临床有效 |
 | 验证策略缺故障注入 | **8 项故障注入测试矩阵**（§14）：每项给出必须人为制造的场景与必须证明的性质，依据分别落在 §2/§3/§4/§6 契约与 ADR-5/§10（SSE `done` 语义项） |
