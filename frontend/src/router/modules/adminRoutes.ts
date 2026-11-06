@@ -3,16 +3,6 @@ import ACCESS_ENUM from '@/utils/access/ACCESS_ENUM'
 
 const adminRoutes: RouteRecordRaw[] = [
   {
-    path: '/controlled-references',
-    component: () => import('@/layouts/BasicLayout.vue'),
-    children: [{
-      path: '',
-      name: '受控参考资料',
-      component: () => import('@/pages/admin/ControlledReferencesPage.vue'),
-      meta: { access: ACCESS_ENUM.EVIDENCE_MANAGER, icon: 'ReadOutlined' },
-    }],
-  },
-  {
     path: '/admin',
     name: 'adminLayout',
     component: () => import('@/layouts/AdminLayout.vue'),
