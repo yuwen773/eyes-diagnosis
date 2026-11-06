@@ -65,7 +65,7 @@ const originItems = computed(() => {
     .map(menuToRouteItem)
 })
 
-const items = ref<MenuProps['items']>(originItems.value)
+const items = computed<MenuProps['items']>(() => originItems.value)
 </script>
 
 <template>

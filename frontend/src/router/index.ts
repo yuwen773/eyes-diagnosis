@@ -51,6 +51,12 @@ const router = createRouter({
           },
         },
         {
+          path: 'diagnosis-tasks',
+          name: '眼底分析任务',
+          component: () => import('@/pages/diagnosis/DiagnosisTasksPage.vue'),
+          meta: { icon: 'MedicineBoxOutlined', access: ACCESS_ENUM.USER },
+        },
+        {
           path: 'news',
           name: '前沿新闻',
           component: () => import('@/pages/news/NewsPage.vue'),

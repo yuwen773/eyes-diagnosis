@@ -10,6 +10,9 @@ import ACCESS_ENUM from '@/utils/access/ACCESS_ENUM'
 const checkAccess = (loginUser:any,needAccess = ACCESS_ENUM.NOT_LOGIN)=>{
   //获取当前用户的权限如果没有loginUser 则代表未登录
   const loginUserAccess = loginUser?.userRole??ACCESS_ENUM.NOT_LOGIN
+  if (needAccess === ACCESS_ENUM.EVIDENCE_MANAGER) {
+    return loginUserAccess === ACCESS_ENUM.ADMIN || loginUserAccess === 'evidence_reviewer'
+  }
   if(needAccess === ACCESS_ENUM.NOT_LOGIN){
     return true
   }
