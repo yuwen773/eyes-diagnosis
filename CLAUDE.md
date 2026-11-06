@@ -11,6 +11,12 @@ Base package: `com.csust.eyediagnosis`
 > 分支，与本分支**不再互相合并**；`frontend/`、`algorithm/` 下的 ML 部分等共享目录各持一份，
 > 改动需人工搬运。约定见 `docs/backend-split.md`。
 
+诊断工作流的业务术语与授权边界（聊天会话 / 诊断工作流 / 正式记录、医生复核 / 患者保存授权）以 `CONTEXT.md` 为准：涉及这些概念或设计人工等待点时先读该文件。
+
+Worktree-isolated sessions 只接受单条、无运行时计算的 Bash 命令；跨分支只读用 `git show <branch>:<path>`，详见 `AGENTS.md` 的 Worktree shell guard。JDK 21 用 `JAVA_HOME="/c/Users/yuwen/.jdks/corretto-21.0.7"`（MSYS 形式）。
+
+派审查子代理前读 `docs/subagent-delegation.md`：明确完成判据、限定范围、等 harness 通知而非轮询；机械检查交给 `scripts/check_design_doc.py` 等脚本，子代理只判 judgement calls。
+
 ## Build & Run
 
 ```bash
@@ -54,14 +60,15 @@ docker-compose up -d                 # ChromaDB vector store :8000
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| DiagnosisTaskController | `/api/diagnosis-tasks/*` | Patient image task: submit, idempotent replay, safe status (see `docs/diagnosis-task.md`) |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| McpServerController | `/api/mcp/*` | MCP server CRUD |
+| McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
 | NewsController | `/api/news/*` | News CRUD |
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V10. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -79,35 +86,4 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 
 ## Design Context
 
-### Users
-混合用户群——眼科医生（临床检查）、医院管理员（记录管理/系统运维）、普通患者（AI 自助诊断）。三种角色技术熟练度和使用场景差异大，界面需根据角色调整复杂度。
-
-### Brand Personality
-**温暖、专业、关怀**。药用青绿主色 + 米色背景传递人文关怀，Georgia 衬线标题传达医疗专业性，柔和圆角和暖色阴影营造被温柔对待的感受。
-
-### Aesthetic Direction
-**医疗编辑风（Clinical Editorial）**，2026-07-28 由用户在四个预览方向中选定 A。浅色为主、暖墨深色为辅。设计真源是 `frontend/src/styles/design-system/variables.css`（令牌 `--iris-*`）；`frontend/src/assets/claude-tokens.css` 只放主题覆盖。
-
-### Design Rules（写前端必须遵守）
-- **品牌主色是药用青绿 `--iris-accent: #1b7f6b`**，不是旧的赤陶 `#c96442`。新代码直接用 `--iris-*`，不要写 `var(--claude-*)`——那是废弃别名。
-- **严重度语义色与品牌色解耦**：低/中/高风险用 `--iris-sev-low/moderate/high`，不跟随品牌色。
-- **所有数字用等宽字体** `--iris-font-mono`（JetBrains Mono）——置信度、病灶计数、时间戳。
-- **衬线标题用 `--iris-font-serif`（Georgia），weight 只允许 500–600，禁止 700+ 与斜体**；正文与控件用 `--iris-font-sans`。
-- **发丝线优先于厚重卡片阴影**，需要层级时才用极轻阴影。
-- **AI 装饰零容忍**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
-- 页面骨架用 sub-style B：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + `.dt-row` 表格行 + `.card-accent` 顶部条。
-
-### 参考实现
-`HomePage.vue`、`user/UserLoginPage.vue`、`user/UserRegisterPage.vue` 已按上述规则重写，可复用其原语（`.kpi-card`、`.dt-row`、`.section-overline`、`.card-accent`）。其余 17 个页面尚未按 B 风格重写，改到时以这三页为模板。
-
-### Priority Areas
-1. **诊断流程**：登录、首页、图片上传、诊断结果——用户最先接触的核心路径
-2. **用户中心**：个人中心、诊断历史、通知——高频使用功能
-3. **Agent 智能对话**：AI 对话、会话管理、资源面板——最复杂的交互界面
-
-### Design Principles
-1. **温度优先**：暖色调、柔和圆角、友善文案，让用户感到被关心
-2. **角色自适应**：医生看专业数据，患者看通俗解读，同一系统不同复杂度
-3. **克制之美**：青绿点缀而非铺满，每个视觉元素服务于信息或情感
-4. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
-5. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转
+前端视觉与交互规则的唯一真源是 `DESIGN.md`（含令牌值、字体、组件约定、Do/Don't 与 Agent 速查）。写 `.vue`、改样式、评审 UI 时读它。页面骨架用 sub-style B；已按 B 重写的三个页面是 `HomePage.vue`、`user/UserLoginPage.vue`、`user/UserRegisterPage.vue`，其余 17 页改到时以这三页为模板。

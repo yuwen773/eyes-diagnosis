@@ -6,6 +6,13 @@ on:
     branches: [master]
 
 jobs:
+  docs-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the architecture design document contract
+        run: python3 scripts/check_design_doc.py
+
   python:
     runs-on: ubuntu-latest
     defaults:
@@ -117,7 +124,55 @@ jobs:
           java-version: '21'
           cache: maven
       - run: timeout 60 bash -c 'until curl -fsS http://localhost:8000/api/v2/heartbeat; do sleep 2; done'
-      - run: mvn test
+      # A failing Maven run still has to leave reports for the skip gate, so
+      # capture the exit code instead of letting `mvn` short-circuit the step.
+      - name: Backend unit tests
+        run: |
+          set +e
+          mvn -B test
+          echo "$?" > /tmp/mvn-exit-code
+      - name: Require no silently skipped or dropped tests
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports backend-unit
+      - name: Fail the job if Maven failed
+        run: test "$(cat /tmp/mvn-exit-code)" -eq 0
+
+  issue17-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue17_test
+          MYSQL_USER: issue17
+          MYSQL_PASSWORD: issue17
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue17 -pissue17 issue17_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE17_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue17_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Verify report gates
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+      - name: Verify MySQL health check
+        env:
+          ISSUE17_MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: python3 -m unittest discover -s scripts/tests -p test_issue17_mysql_health.py
+      - name: Run patient task and recovery tests
+        run: mvn -B -Dtest=DiagnosisTaskApiTest,DiagnosisTaskRecoveryTest,CosDiagnosisTaskStorageTest test
+      - name: Require all patient task tests to run
+        run: python3 scripts/check_issue17_reports.py target/surefire-reports
 
   flyway-mysql:
     runs-on: ubuntu-latest
@@ -147,8 +202,11 @@ jobs:
           distribution: corretto
           java-version: '21'
           cache: maven
-      - run: mvn -Dtest=FlywayMySqlIntegrationTest test
-      - run: mvn -Dtest=UploadTaskMapperMySqlIntegrationTest test
+      # Run both suites in one Maven invocation: a second `-Dtest=` run
+      # replaces the Surefire reports of the first.
+      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest test
+      - name: Require both Flyway suites to run fully
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports flyway
 
   frontend:
     runs-on: ubuntu-latest
@@ -164,4 +222,5 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run test -- --run
+      - run: npm run lint:check
       - run: npm run build
