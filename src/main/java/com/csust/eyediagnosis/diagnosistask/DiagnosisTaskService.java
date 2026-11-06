@@ -100,7 +100,7 @@ public class DiagnosisTaskService {
 
     private String safeStatus(String status) {
         return switch (status) {
-            case "PENDING", "RUNNING" -> "PROCESSING";
+            case "PENDING", "RUNNING", "DRAFTING" -> "PROCESSING";
             case "WAITING_REVIEW" -> "WAITING_REVIEW";
             default -> "RESTRICTED";
         };

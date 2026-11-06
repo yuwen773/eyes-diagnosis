@@ -208,6 +208,40 @@ jobs:
       - name: Require every controlled reference case to run
         run: python3 scripts/check_surefire_skips.py target/surefire-reports issue18
 
+  issue19-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue19_test
+          MYSQL_USER: issue19
+          MYSQL_PASSWORD: issue19
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue19 -pissue19 issue19_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE19_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue19_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Verify report gates
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+      - name: Run four-agent draft, timeout and process recovery tests
+        run: mvn -B -Dtest=PatientDraftTest test
+      - name: Require every draft case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue19
+
   flyway-mysql:
     runs-on: ubuntu-latest
     services:

@@ -49,6 +49,7 @@ BACKEND_UNIT_CONTRACT = {
         P + "controlledreference.ControlledReferenceApiTest": {
             "env": "ISSUE18_TEST_URL", "cases": 13, "skipped": 13,
         },
+        P + "patientdraft.PatientDraftTest": {"env": "ISSUE19_TEST_URL", "cases": 26, "skipped": 26},
         P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
@@ -83,10 +84,17 @@ ISSUE18_CONTRACT = {
     "opt_in": {},
 }
 
+ISSUE19_CONTRACT = {
+    "scope": "named",
+    "expected": {P + "patientdraft.PatientDraftTest": 26},
+    "opt_in": {},
+}
+
 CONTRACTS = {
     "backend-unit": BACKEND_UNIT_CONTRACT,
     "issue17": ISSUE17_CONTRACT,
     "issue18": ISSUE18_CONTRACT,
+    "issue19": ISSUE19_CONTRACT,
     "flyway": FLYWAY_CONTRACT,
 }
 

@@ -22,6 +22,6 @@ class FlywayMySqlIntegrationTest {
 
         int expectedMigrations = flyway.info().all().length;
         assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
-        assertEquals("11", flyway.info().current().getVersion().toString());
+        assertEquals("12", flyway.info().current().getVersion().toString());
     }
 }
