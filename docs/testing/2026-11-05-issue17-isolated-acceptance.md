@@ -58,6 +58,8 @@
 
 ## CI 覆盖缺口与修复（已修复，GitHub 托管 CI 未运行）
 
+2026-11-06 补充：MySQL 健康检查已改为使用测试账号通过 TCP 查询目标数据库；新增回归检查覆盖正常连接、错误密码与不存在的数据库。以下是原先的验收记录；本次修订仍需 GitHub 托管 CI 验证。
+
 初轮验收发现：`.github/workflows/verify.yml` 的 `backend-unit`（`mvn test`）与
 `flyway-mysql` 作业都不设置 `ISSUE17_TEST_URL`，而 `DiagnosisTaskApiTest` /
 `DiagnosisTaskRecoveryTest` 用 `Assumptions.assumeTrue(url matches ...)` 做隔离门槛。
@@ -106,7 +108,7 @@ docker run -d --rm --name issue17-acceptance \
   -e MYSQL_RANDOM_ROOT_PASSWORD=yes -e MYSQL_DATABASE=issue17_test \
   -e MYSQL_USER=issue17 -e MYSQL_PASSWORD=issue17 \
   -p 127.0.0.1:33317:3306 mysql:8.0.36
-# 等 mysqladmin ping 通过后（约 4s）
+# 等待测试账号可通过 TCP 查询目标库后再继续
 export JAVA_HOME=/c/Users/yuwen/.jdks/corretto-21.0.7   # Git Bash 路径
 export PATH="$JAVA_HOME/bin:$PATH"
 export ISSUE17_TEST_URL="jdbc:mysql://127.0.0.1:33317/issue17_test"

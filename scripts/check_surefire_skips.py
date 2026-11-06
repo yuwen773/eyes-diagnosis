@@ -37,15 +37,16 @@ from xml.etree import ElementTree
 # Shared prefix for Java test class names.
 P = "com.csust.eyediagnosis."
 
-# Full `mvn test` with no opt-in environment variables set. Counts verified
-# against a real run (116 tests, 35 skipped) on 2026-11-06.
+# Full `mvn test` with no opt-in environment variables set. Case counts are
+# verified against a real local run; keep them in sync when tests are added.
 BACKEND_UNIT_CONTRACT = {
     "expected": {},
     "opt_in": {
         P + "agent.config.VectorStoreConfigTest": {"env": "RUN_CHROMA_INTEGRATION_TESTS", "cases": 1},
         P + "agent.rag.RAGEvaluationTest": {"env": "RUN_RAG_EVALUATION_TESTS", "cases": 2},
-        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 6, "skipped": 4},
+        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 7, "skipped": 4},
         P + "diagnosistask.DiagnosisTaskRecoveryTest": {"env": "ISSUE17_TEST_URL", "cases": 10, "skipped": 10},
+        P + "controlledreference.ControlledReferenceApiTest": {"env": "ISSUE18_TEST_URL", "cases": 9, "skipped": 9},
         P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
@@ -57,7 +58,7 @@ BACKEND_UNIT_CONTRACT = {
 ISSUE17_CONTRACT = {
     "scope": "named",
     "expected": {
-        P + "diagnosistask.DiagnosisTaskApiTest": 6,
+        P + "diagnosistask.DiagnosisTaskApiTest": 7,
         P + "diagnosistask.DiagnosisTaskRecoveryTest": 10,
         P + "diagnosistask.CosDiagnosisTaskStorageTest": 1,
     },

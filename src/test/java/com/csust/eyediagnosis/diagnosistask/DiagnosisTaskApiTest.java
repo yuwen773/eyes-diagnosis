@@ -86,6 +86,27 @@ class DiagnosisTaskApiTest {
         org.mockito.Mockito.verifyNoInteractions(tasks);
     }
     @Test
+    void truncatedJpegIsRejectedBeforeStorage() throws Exception {
+        var image = new java.awt.image.BufferedImage(10, 10, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var output = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "jpeg", output);
+        byte[] complete = output.toByteArray();
+        byte[] truncated = java.util.Arrays.copyOf(complete, complete.length - 2);
+        var storage = mock(DiagnosisTaskStorage.class);
+        var users = mock(UserService.class);
+        var user = new User(); user.setId(95L);
+        when(users.getLoginUser(any(HttpServletRequest.class))).thenReturn(user);
+        var mvc = MockMvcBuilders.standaloneSetup(new DiagnosisTaskController(
+                        new DiagnosisTaskService(mock(JdbcTemplate.class), storage), users))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+        mvc.perform(multipart("/diagnosis-tasks").file("file", truncated).param("idempotencyKey", "truncated-jpeg"))
+                .andExpect(jsonPath("$.code").value(40000));
+        org.mockito.Mockito.verifyNoInteractions(storage);
+        mvc.perform(multipart("/diagnosis-tasks").file("file", complete).param("idempotencyKey", "valid-jpeg"))
+                .andExpect(jsonPath("$.code").value(0));
+        org.mockito.Mockito.verify(storage).upload(any(), any(), any());
+    }
+    @Test
     void invalidImageIsRejectedAndMissingVersionCreatesRestrictedTask() throws Exception {
         String url = System.getenv("ISSUE17_TEST_URL");
         Assumptions.assumeTrue(url != null && url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/issue17_test"));

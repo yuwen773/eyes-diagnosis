@@ -39,12 +39,13 @@ class SurefireSkipGateTest(unittest.TestCase):
                 return check(self.directory, contract)
 
     def backend_reports(self):
-        """Reproduce the no-env `mvn test` run: 7 opt-in suites, 35 skips."""
+        """Reproduce the no-env `mvn test` run: 8 opt-in suites, 44 skips."""
         P = "com.csust.eyediagnosis."
         self.write(P + "agent.config.VectorStoreConfigTest", cases=1, skipped=1)
         self.write(P + "agent.rag.RAGEvaluationTest", cases=2, skipped=2)
-        self.write(P + "diagnosistask.DiagnosisTaskApiTest", cases=6, skipped=4)
+        self.write(P + "diagnosistask.DiagnosisTaskApiTest", cases=7, skipped=4)
         self.write(P + "diagnosistask.DiagnosisTaskRecoveryTest", cases=10, skipped=10)
+        self.write(P + "controlledreference.ControlledReferenceApiTest", cases=9, skipped=9)
         self.write(P + "migration.FlywayMySqlIntegrationTest", cases=1, skipped=1)
         self.write(P + "poc.CoordinationMySqlTest", cases=14, skipped=14)
         self.write(P + "upload.state.UploadTaskMapperMySqlIntegrationTest", cases=3, skipped=3)
@@ -80,7 +81,7 @@ class SurefireSkipGateTest(unittest.TestCase):
 
     def test_issue17_contract_requires_three_full_suites(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=6)
+        self.write(P + "DiagnosisTaskApiTest", cases=7)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(0, self.verdict(CONTRACTS["issue17"]))
@@ -90,7 +91,7 @@ class SurefireSkipGateTest(unittest.TestCase):
 
     def test_issue17_contract_rejects_dropped_case(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=5)
+        self.write(P + "DiagnosisTaskApiTest", cases=6)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(1, self.verdict(CONTRACTS["issue17"]))
@@ -106,7 +107,7 @@ class SurefireSkipGateTest(unittest.TestCase):
 
     def test_summary_zero_but_skipped_child_still_fails(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=6)
+        self.write(P + "DiagnosisTaskApiTest", cases=7)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         # A report can claim 0 skips while a testcase still carries <skipped>.
@@ -127,14 +128,14 @@ class SurefireSkipGateTest(unittest.TestCase):
     def test_failures_are_mavens_job_not_this_gate(self):
         # The workflow records Maven's exit code separately. A failed test
         # must not be double-reported as a skip-gate violation.
-        self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest", cases=6, failures=1)
+        self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest", cases=7, failures=1)
         self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskRecoveryTest", cases=10)
         self.write("com.csust.eyediagnosis.diagnosistask.CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(0, self.verdict(CONTRACTS["issue17"]))
 
     def test_named_scope_ignores_stale_reports(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=6)
+        self.write(P + "DiagnosisTaskApiTest", cases=7)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.write("com.csust.eyediagnosis.StaleOptInTest", cases=4, skipped=4)

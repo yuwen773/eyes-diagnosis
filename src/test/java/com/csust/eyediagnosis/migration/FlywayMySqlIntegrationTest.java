@@ -20,6 +20,8 @@ class FlywayMySqlIntegrationTest {
                 .locations("classpath:db/migration", "classpath:db/callback")
                 .load();
 
-        assertEquals(10, flyway.migrate().migrationsExecuted);
+        int expectedMigrations = flyway.info().all().length;
+        assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
+        assertEquals("11", flyway.info().current().getVersion().toString());
     }
 }

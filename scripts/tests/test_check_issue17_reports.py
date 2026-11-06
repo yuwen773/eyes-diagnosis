@@ -60,10 +60,9 @@ class Issue17ReportGateTest(unittest.TestCase):
         path = self.path("DiagnosisTaskApiTest")
         tree = ElementTree.parse(path)
         ElementTree.SubElement(tree.getroot(), "testcase", name="extra")
-        tree.getroot().set("tests", "7")
+        tree.getroot().set("tests", str(SUITES["DiagnosisTaskApiTest"] + 1))
         tree.write(path)
         self.assertEqual(1, self.verdict())
-
 
 if __name__ == "__main__":
     unittest.main()

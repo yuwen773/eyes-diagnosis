@@ -35,6 +35,9 @@ public class DiagnosisTaskService {
                 if (!readers.hasNext()) throw new IllegalArgumentException();
                 var reader = readers.next();
                 try {
+                    reader.addIIOReadWarningListener((source, warning) -> {
+                        throw new IllegalArgumentException("Image decoding warning");
+                    });
                     reader.setInput(stream, true, true);
                     format = reader.getFormatName().toLowerCase(java.util.Locale.ROOT);
                     if (!(format.equals("png") || format.equals("jpeg")) || reader.getWidth(0) <= 0
