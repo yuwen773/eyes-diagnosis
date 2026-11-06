@@ -7,7 +7,7 @@ from xml.etree import ElementTree
 
 
 SUITES = {
-    "DiagnosisTaskApiTest": 6,
+    "DiagnosisTaskApiTest": 7,
     "DiagnosisTaskRecoveryTest": 10,
     "CosDiagnosisTaskStorageTest": 1,
 }
