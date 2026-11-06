@@ -116,6 +116,24 @@ class SurefireSkipGateTest(unittest.TestCase):
             raw.replace('skipped="1"', 'skipped="0"'), encoding="utf-8")
         self.assertEqual(1, self.verdict(CONTRACTS["issue17"]))
 
+    def test_missing_optional_opt_in_suite_passes(self):
+        contract = {
+            "expected": {},
+            "opt_in": {
+                "example.InProgressTest": {"env": "ISSUE18_TEST_URL", "cases": 3, "optional": True},
+            },
+        }
+        self.write("example.SmokeTest", cases=1)
+        self.assertEqual(0, self.verdict(contract))
+
+    def test_missing_required_opt_in_suite_fails(self):
+        contract = {
+            "expected": {},
+            "opt_in": {"example.RequiredTest": {"env": "SOME_URL", "cases": 3}},
+        }
+        self.write("example.SmokeTest", cases=1)
+        self.assertEqual(1, self.verdict(contract))
+
     def test_custom_json_contract(self):
         self.write("example.SmokeTest", cases=2)
         contract = {"expected": {"example.SmokeTest": 2}, "opt_in": {}}

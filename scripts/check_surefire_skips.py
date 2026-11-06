@@ -46,7 +46,11 @@ BACKEND_UNIT_CONTRACT = {
         P + "agent.rag.RAGEvaluationTest": {"env": "RUN_RAG_EVALUATION_TESTS", "cases": 2},
         P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 7, "skipped": 4},
         P + "diagnosistask.DiagnosisTaskRecoveryTest": {"env": "ISSUE17_TEST_URL", "cases": 10, "skipped": 10},
-        P + "controlledreference.ControlledReferenceApiTest": {"env": "ISSUE18_TEST_URL", "cases": 9, "skipped": 9},
+        P + "controlledreference.ControlledReferenceApiTest": {
+            "env": "ISSUE18_TEST_URL", "cases": 9, "skipped": 9,
+            # Owned by a separate in-progress workstream; not yet on this branch.
+            "optional": True,
+        },
         P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
@@ -160,7 +164,10 @@ def check(report_dir, contract):
         unset_skipped = int(rule.get("skipped", cases))
         entry = reports.get(name)
         if entry is None:
-            errors.append(f"{name}: no Surefire report")
+            if rule.get("optional"):
+                print(f"note: {name} produced no report (optional opt-in suite)")
+            else:
+                errors.append(f"{name}: no Surefire report")
             continue
         _, root = entry
         c = counts(root)
