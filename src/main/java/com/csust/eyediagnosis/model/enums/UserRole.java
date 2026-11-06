@@ -6,7 +6,8 @@ import lombok.Getter;
 @Getter
 public enum UserRole {
     USER("用户","user"),
-    ADMIN("管理员","admin")
+    ADMIN("管理员","admin"),
+    EVIDENCE_REVIEWER("领域审核人员","evidence_reviewer")
      ;
 
 

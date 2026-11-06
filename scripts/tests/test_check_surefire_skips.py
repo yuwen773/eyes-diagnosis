@@ -45,7 +45,7 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.write(P + "agent.rag.RAGEvaluationTest", cases=2, skipped=2)
         self.write(P + "diagnosistask.DiagnosisTaskApiTest", cases=7, skipped=4)
         self.write(P + "diagnosistask.DiagnosisTaskRecoveryTest", cases=10, skipped=10)
-        self.write(P + "controlledreference.ControlledReferenceApiTest", cases=9, skipped=9)
+        self.write(P + "controlledreference.ControlledReferenceApiTest", cases=13, skipped=13)
         self.write(P + "migration.FlywayMySqlIntegrationTest", cases=1, skipped=1)
         self.write(P + "poc.CoordinationMySqlTest", cases=14, skipped=14)
         self.write(P + "upload.state.UploadTaskMapperMySqlIntegrationTest", cases=3, skipped=3)
