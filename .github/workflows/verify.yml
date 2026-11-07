@@ -12,6 +12,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify the architecture design document contract
         run: python3 scripts/check_design_doc.py
+      - name: Verify steering docs match migrations and controllers
+        run: python3 scripts/check_steering_docs.py
+      - name: Verify the gRPC probability scale contract
+        run: python3 scripts/check_probability_scale.py
+      - name: Verify the report gate unit tests
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
 
   python:
     runs-on: ubuntu-latest
