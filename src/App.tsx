@@ -1,20 +1,50 @@
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react"
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { SessionProvider } from "@/lib/session"
+import { LandingPage } from "@/pages/LandingPage"
+import { DiagnosisPage } from "@/pages/DiagnosisPage"
+import { AgentPage } from "@/pages/AgentPage"
+import { NewsPage } from "@/pages/NewsPage"
+import { ProfilePage } from "@/pages/ProfilePage"
+import { RecordsPage } from "@/pages/RecordsPage"
+import { LoginPage } from "@/pages/LoginPage"
+import { RegisterPage } from "@/pages/RegisterPage"
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+
+  useEffect(() => {
+    if (hash) {
+      const node = document.getElementById(hash.slice(1))
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "start" })
+        return
+      }
+    }
+    window.scrollTo({ top: 0 })
+  }, [pathname, hash])
+
+  return null
+}
 
 export function App() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
+    <BrowserRouter>
+      <SessionProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/diagnosis" element={<DiagnosisPage />} />
+          <Route path="/agent" element={<AgentPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/records" element={<RecordsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </SessionProvider>
+    </BrowserRouter>
   )
 }
 
