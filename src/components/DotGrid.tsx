@@ -14,16 +14,22 @@ const RADIUS = 1
 const PROXIMITY = 110
 const PUSH = 9
 const EASE = 0.16
-const BASE_ALPHA = 0.19
-const LIT_ALPHA = 0.4
+
+/** 两个色调：亮页上点墨色，暗页上点纸色。 */
+const TONES = {
+  ink: { base: 0.19, lit: 0.4, rgb: "20,23,26" },
+  paper: { base: 0.15, lit: 0.38, rgb: "244,245,241" },
+} as const
 
 /**
  * 点阵底：一张会回弹的测量板。
  * 指针靠近时点被推开，离开后自己归位；其余时候完全静止。
  * 不是特效层——它替代的就是原来那张静态工程纸网格。
  */
-export function DotGrid() {
+export function DotGrid({ tone = "ink" }: { tone?: keyof typeof TONES }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const toneRef = useRef(TONES[tone])
+  toneRef.current = TONES[tone]
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -79,6 +85,9 @@ export function DotGrid() {
 
       const px = pointer.x - originX
       const py = pointer.y - originY
+      const { base, lit, rgb } = toneRef.current
+      const baseStyle = `rgba(${rgb},${base})`
+      const litStyle = `rgba(${rgb},${lit})`
 
       for (const dot of dots) {
         let influence = 0
@@ -99,8 +108,7 @@ export function DotGrid() {
         dot.y += (dot.by - dot.y) * EASE
 
         const moved = Math.abs(dot.x - dot.bx) + Math.abs(dot.y - dot.by)
-        context.fillStyle =
-          moved > 0.15 ? `rgba(20,23,26,${LIT_ALPHA})` : `rgba(20,23,26,${BASE_ALPHA})`
+        context.fillStyle = moved > 0.15 ? litStyle : baseStyle
         context.fillRect(dot.x, dot.y, RADIUS * 2, RADIUS * 2)
       }
 

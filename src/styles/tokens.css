@@ -15,23 +15,30 @@
   --surface-2: #e9ebe6; /* 次级抬升 / 嵌入容器 */
   --surface-3: #dfe2dc;
 
-  /* ── 墨色 ──────────────────────────────────── */
-  --ink: #14171a;
-  --ink-2: #5c6367;
-  --ink-3: #8b9195;
+  /* ── 墨色 / 发丝线（纸面原语；上下文可反转 --ink/--line，纸面靠 --paper-* 钉回）── */
+  --paper-ink: #14171a;
+  --paper-ink-2: #5c6367;
+  --paper-ink-3: #8b9195;
+  --paper-line: rgba(20, 23, 26, 0.13);
+  --paper-line-strong: rgba(20, 23, 26, 0.34);
+  --ink: var(--paper-ink);
+  --ink-2: var(--paper-ink-2);
+  --ink-3: var(--paper-ink-3);
+  --line: var(--paper-line);
+  --line-strong: var(--paper-line-strong);
 
-  /* ── 发丝线 ────────────────────────────────── */
-  --line: rgba(20, 23, 26, 0.13);
-  --line-strong: rgba(20, 23, 26, 0.34);
-
-  /* ── 唯一的强调色：信号橙 ───────────────────── */
-  --signal: #d9541f;
+  /* ── 唯一的强调色：信号橙（纸面原语 + 上下文别名）── */
+  --paper-signal: #d9541f;
+  --signal: var(--paper-signal);
   --signal-soft: rgba(217, 84, 31, 0.1);
 
-  /* ── 风险语义（与强调色解耦）────────────────── */
-  --risk-normal: #2f7d55;
-  --risk-attention: #96690f;
-  --risk-critical: #a83226;
+  /* ── 风险语义（与强调色解耦；纸面原语 + 上下文别名）── */
+  --paper-risk-normal: #2f7d55;
+  --paper-risk-attention: #96690f;
+  --paper-risk-critical: #a83226;
+  --risk-normal: var(--paper-risk-normal);
+  --risk-attention: var(--paper-risk-attention);
+  --risk-critical: var(--paper-risk-critical);
   --risk-normal-lit: #58b183;
   --risk-attention-lit: #cf9a37;
   --risk-critical-lit: #d96153;
@@ -43,6 +50,11 @@
   --on-dark-3: #767d79;
   --dark-line: rgba(244, 245, 241, 0.16);
   --dark-line-strong: rgba(244, 245, 241, 0.34);
+  --dark-surface: #1d2220; /* 反相顶栏里的抬升面板（账号菜单 / 抽屉） */
+
+  /* ── 暗房（落地页 / 认证页共用底色）─────────── */
+  --night-bg: #0b0d0c;
+  --night-sky: linear-gradient(177deg, #0b0d0c 0%, #121615 48%, #090b0a 100%);
 
   /* ── 字体 ──────────────────────────────────── */
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong",
@@ -76,9 +88,20 @@
   color: var(--fg);
 }
 
-/* 上下文：抬升的纸面 */
+/* 上下文：抬升的纸面。
+   原始墨色/发丝线在这里钉回浅色值——否则嵌在 .is-night（已反转 --ink/--line）
+   里面时，纸面会继承暗房的纸色墨，变成白上加白。 */
 .is-sheet {
   --bg: var(--surface);
+  --ink: var(--paper-ink);
+  --ink-2: var(--paper-ink-2);
+  --ink-3: var(--paper-ink-3);
+  --line: var(--paper-line);
+  --line-strong: var(--paper-line-strong);
+  --signal: var(--paper-signal);
+  --risk-normal: var(--paper-risk-normal);
+  --risk-attention: var(--paper-risk-attention);
+  --risk-critical: var(--paper-risk-critical);
   --fg: var(--ink);
   --fg-2: var(--ink-2);
   --fg-3: var(--ink-3);
@@ -88,9 +111,10 @@
   color: var(--fg);
 }
 
-/* 上下文：反相带 */
-.is-dark {
-  --bg: var(--dark);
+/* 反相令牌：反相带、整页暗房、反相顶栏共用同一份映射，改一处即可。 */
+.is-dark,
+.is-night,
+.site-head.is-invert {
   --fg: var(--on-dark);
   --fg-2: var(--on-dark-2);
   --fg-3: var(--on-dark-3);
@@ -100,6 +124,32 @@
   --risk-normal: var(--risk-normal-lit);
   --risk-attention: var(--risk-attention-lit);
   --risk-critical: var(--risk-critical-lit);
+}
+
+/* 上下文：反相带 */
+.is-dark {
+  --bg: var(--dark);
   background: var(--bg);
   color: var(--fg);
+}
+
+/* 上下文：整页暗房（落地页）。
+   比 .is-dark 更进一步：把 --ink/--line 这些被旧样式写死的原始令牌一并反转，
+   深色页面上不需要逐条改写；--surface 保持纸白，判读记录在暗房里仍是纸。 */
+.is-night {
+  --bg: var(--night-bg);
+  --head-bg: var(--night-bg);
+  --ink: var(--on-dark);
+  --ink-2: var(--on-dark-2);
+  --ink-3: var(--on-dark-3);
+  --line: var(--dark-line);
+  --line-strong: var(--dark-line-strong);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* 反相顶栏里的抬升面板跟着翻深，别留白板（账号菜单 / 移动抽屉）。 */
+.site-head.is-invert {
+  --surface: var(--dark-surface);
+  --field: var(--dark-surface);
 }

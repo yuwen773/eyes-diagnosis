@@ -4,22 +4,33 @@ import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useRevealScan } from "@/lib/useInView"
 import { AgentConsole } from "@/components/AgentConsole"
-import { DotGrid } from "@/components/DotGrid"
 import { ElectricBorder } from "@/components/ElectricBorder"
 import { RecordSheet } from "@/components/RecordSheet"
 import { ScrollExpand } from "@/components/ScrollExpand"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
 import { SiteHeader } from "@/components/SiteHeader"
+import { StarBorder } from "@/components/StarBorder"
 import { TargetCursor } from "@/components/TargetCursor"
 
 const STRIP = [
   { label: "覆盖", value: "8 类眼底改变" },
   { label: "模型", value: "EfficientNet-B4" },
   { label: "质量门", value: "通过 / 拒识" },
-  { label: "复核", value: "医生签字" },
-  { label: "溯源", value: "权重 SHA-256" },
+  { label: "复核 · 溯源", value: "医生签字 · SHA-256" },
 ]
+
+/** 索引格右列的示例概率，与下方 SPECIMEN 同一套演示口径。 */
+const SPECIMEN_RATE: Record<string, string> = {
+  DR: "0.78",
+  AMD: "0.05",
+  CAT: "0.04",
+  GLA: "0.02",
+  HR: "0.07",
+  PM: "0.02",
+  N: "0.01",
+  OTH: "0.01",
+}
 
 /** 页脚章节索引。顶栏只放跨产品目的地，页面内的章节从这里进。 */
 const LANDING_SECTIONS = [
@@ -35,21 +46,25 @@ const STEPS = [
     code: "01",
     title: "上传",
     body: "照片在浏览器端先校验格式与体积，只接受 JPG 与 PNG，单张不超过 5 MB。",
+    readout: "JPG · PNG ≤ 5 MB",
   },
   {
     code: "02",
     title: "过质量门",
     body: "对比度、清晰度与视野完整性不达标时，系统直接拒识，不给出任何结论。",
+    readout: "GATE · 86 / 100",
   },
   {
     code: "03",
     title: "八类判读",
     body: "模型输出八类眼底改变的概率，主诊断与其余概率一并写入记录，不做取舍。",
+    readout: "SOFTMAX · 8 CLS",
   },
   {
     code: "04",
     title: "进入复核",
     body: "可疑病例进入医生复核队列，签字之后，这条记录才可被引用。",
+    readout: "SIGN-OFF · 待签字",
   },
 ]
 
@@ -155,7 +170,8 @@ export function LandingPage() {
   useRevealScan()
 
   return (
-    <div className="is-field">
+    // 整页暗房：顶栏全程反相，底色由 .is-night 的 --head-bg 令牌提供。
+    <div className="is-night night" data-head-invert="true">
       {/* 准星只属于落地页，别的地方用系统光标。 */}
       <TargetCursor
         targetSelector="a, button, [data-cursor]"
@@ -172,9 +188,14 @@ export function LandingPage() {
 
       <main>
         <div className="hero-stage">
-          <DotGrid />
-
           <section className="wrap hero">
+            {/* 仪器头版：一行 mono 元信息，发丝线切开 */}
+            <div className="hero__masthead num rise">
+              <span>IRIS · 眼底判读</span>
+              <span className="hero__masthead-mid">2026-11-07 · SPECIMEN</span>
+              <span>MODEL · EFFICIENTNET-B4</span>
+            </div>
+
             <div className="hero__copy">
               <div className="hero__eyebrow rise">
                 <span>01 — 眼底判读</span>
@@ -219,7 +240,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="hero__index rise" style={{ "--d": "520ms" } as CSSProperties}>
+            <aside className="hero__index rise" style={{ "--d": "520ms" } as CSSProperties}>
               <div className="index">
                 <div className="index__head">
                   <span className="overline">八类覆盖</span>
@@ -227,21 +248,20 @@ export function LandingPage() {
                 </div>
 
                 {CLASSES.map((item) => (
-                  <div className="index__row" key={item.code} data-cursor>
+                  <div className="index__row" key={item.code}>
                     <span className="index__code">{item.code}</span>
                     <span className="index__name">{item.name}</span>
+                    <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
                   </div>
                 ))}
               </div>
 
               <p className="small" style={{ marginTop: 14, maxWidth: "32em" }}>
-                其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
+                示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
               </p>
-            </div>
-          </section>
+            </aside>
 
-          <div className="wrap">
-            <div className="strip fade" style={{ "--d": "900ms" } as CSSProperties}>
+            <div className="strip rise" style={{ "--d": "900ms" } as CSSProperties}>
               {STRIP.map((cell) => (
                 <div className="strip__cell" key={cell.label}>
                   <div className="readout">
@@ -251,7 +271,7 @@ export function LandingPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
 
         <section className="plate" aria-label="眼底影像示例">
@@ -295,16 +315,22 @@ export function LandingPage() {
               <h2 className="h2">从一张照片，到一条可以复核的记录</h2>
             </div>
 
-            <div className="steps" style={{ marginTop: 44 }}>
+            <div className="ledger" style={{ marginTop: 44 }}>
               {STEPS.map((step, index) => (
                 <div
-                  className="step reveal"
+                  className="ledger__row reveal"
                   key={step.code}
                   style={{ "--d": `${index * 90}ms` } as CSSProperties}
+                  data-cursor
                 >
-                  <span className="step__code">{step.code}</span>
-                  <h3 className="step__title">{step.title}</h3>
-                  <p className="step__body">{step.body}</p>
+                  <span className="ledger__index num" aria-hidden="true">
+                    {step.code}
+                  </span>
+                  <div className="ledger__main">
+                    <h3 className="ledger__title">{step.title}</h3>
+                    <p className="ledger__body">{step.body}</p>
+                  </div>
+                  <span className="ledger__readout num">{step.readout}</span>
                 </div>
               ))}
             </div>
@@ -322,7 +348,7 @@ export function LandingPage() {
             </div>
 
             <div className="reveal" style={{ "--d": "120ms" } as CSSProperties}>
-              <RecordSheet result={SPECIMEN} recordId="IRIS-2026-1106-0042" specimen />
+              <RecordSheet result={SPECIMEN} recordId="IRIS-2026-1106-0042" specimen tone="night" />
             </div>
           </div>
         </section>
@@ -398,42 +424,76 @@ export function LandingPage() {
                   <p className="small">
                     Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。
                   </p>
-                  <Link
+                  <StarBorder
+                    as={Link}
                     to="/login?redirect=/diagnosis"
-                    className="link"
+                    className="star-cta"
                     data-cursor
                     data-cursor-label="登录"
+                    color="var(--signal)"
+                    backgroundColor="transparent"
+                    textColor="var(--fg)"
+                    duration={5}
+                    thickness={1}
+                    radius={0}
+                    glow={0.45}
+                    hover="lap"
+                    theme="dark"
                   >
                     登录后体验诊断 Agent
                     <span className="link__mark">→</span>
-                  </Link>
+                  </StarBorder>
                 </div>
               </aside>
             </div>
           </div>
         </section>
 
-        <section id="bounds" className="is-dark section" data-head-invert="true">
+        {/* 责任边界：暗房里的一块仪器面板，条款印在发丝线上。 */}
+        <section id="bounds" className="statute">
           <div className="wrap">
-            <div className="reveal">
-              <SectionHead code="05" kicker="责任边界" en="Responsibility" />
-              <h2 className="h2" style={{ maxWidth: "22em" }}>
-                当 AI 说「不确定」，界面必须把这句话说出口
-              </h2>
-            </div>
-
-            <div className="bounds" style={{ marginTop: 44 }}>
-              {BOUNDS.map((item, index) => (
-                <div
-                  className="bound reveal"
-                  key={item.code}
-                  style={{ "--d": `${index * 90}ms` } as CSSProperties}
-                >
-                  <span className="bound__code">{item.code}</span>
-                  <h3 className="bound__title">{item.title}</h3>
-                  <p className="bound__body">{item.body}</p>
+            <div className="statute__panel">
+              <div className="statute__grid">
+                <div className="statute__manifesto reveal">
+                  <p className="overline statute__overline">05 · 责任边界 / RESPONSIBILITY</p>
+                  <h2 className="display statute__title">
+                    当 AI 说「不确定」，
+                    <br />
+                    界面必须把这句话说出口
+                  </h2>
+                  <p className="lead statute__lead">
+                    辅助判读不是诊断。以下四条写进每一次输出，不接受例外。
+                  </p>
+                  <div className="statute__seal num" aria-hidden="true">
+                    IRIS · 辅助判读
+                    <br />
+                    NOT A DIAGNOSIS
+                  </div>
                 </div>
-              ))}
+
+                <ol className="statute__list">
+                  {BOUNDS.map((item, index) => (
+                    <li
+                      className="statute__item reveal"
+                      key={item.code}
+                      style={{ "--d": `${index * 90}ms` } as CSSProperties}
+                    >
+                      <span className="statute__code num">{item.code}</span>
+                      <div>
+                        <h3 className="statute__name">{item.title}</h3>
+                        <p className="statute__body">{item.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="statute__sign num" aria-hidden="true">
+                <span>医师签字 · SIGNATURE</span>
+                <span className="statute__rule" />
+                <span>日期 · DATE</span>
+                <span className="statute__rule" />
+              </div>
             </div>
           </div>
         </section>
@@ -441,25 +501,23 @@ export function LandingPage() {
         <section id="start" className="wrap pitch">
           <div className="reveal">
             <SectionHead code="06" kicker="开始" en="Start" />
-            <h2 className="h2">先读一张片子试试</h2>
+            <h2 className="pitch__title">先读一张片子试试</h2>
             <p className="lead" style={{ marginTop: 16 }}>
               不需要说明书——上传、等待、读记录，三步之内就能看见判断依据。
             </p>
           </div>
 
           <div className="pitch__aside reveal" style={{ "--d": "120ms" } as CSSProperties}>
-            <Link
-              to="/diagnosis"
-              className="btn"
-              data-cursor
-              data-cursor-label="开始判读"
-            >
-              上传眼底照片
-              <span className="btn__key">JPG · PNG</span>
-            </Link>
-            <p className="small">
-              继续即表示你已阅读并理解：本系统输出为 AI 辅助判读，不构成诊断结论。
-            </p>
+            {/* 登录页那块磨砂玻璃，搬到收尾当台面。 */}
+            <div className="pitch__glass auth__glass">
+              <Link to="/diagnosis" className="btn" data-cursor data-cursor-label="开始判读">
+                上传眼底照片
+                <span className="btn__key">JPG · PNG</span>
+              </Link>
+              <p className="small">
+                继续即表示你已阅读并理解：本系统输出为 AI 辅助判读，不构成诊断结论。
+              </p>
+            </div>
           </div>
         </section>
       </main>
@@ -467,6 +525,8 @@ export function LandingPage() {
       <div className="wrap">
         <SiteFooter sections={LANDING_SECTIONS} />
       </div>
+
+      <div className="night__grain" aria-hidden="true" />
     </div>
   )
 }

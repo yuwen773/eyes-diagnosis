@@ -23,13 +23,17 @@ type RecordSheetProps = {
   actions?: ReactNode
   /** 示例记录不展示操作区。 */
   specimen?: boolean
+  /** 本次判读的原始影像。有则作为证据栏出现在记录纸左侧。 */
+  imageSrc?: string
+  /** 皮肤：paper = 纸面（判读页，需 .is-sheet 钉回纸色）；night = 暗房仪器面板（落地页）。 */
+  tone?: "paper" | "night"
 }
 
 /**
  * 判读记录：整站唯一的报告呈现。
- * 纸面上下文（.is-sheet）下使用，暗室中不出现。
+ * paper 皮肤在纸面上下文（.is-sheet）使用；night 皮肤消费暗房反转令牌。
  */
-export function RecordSheet({ result, recordId, actions, specimen = false }: RecordSheetProps) {
+export function RecordSheet({ result, recordId, actions, specimen = false, imageSrc, tone = "paper" }: RecordSheetProps) {
   const rejected = Boolean(result.aiRejected)
   const rows = rankClasses(result)
   const confidence = normalizeConfidence(result.confidence ?? result.probability)
@@ -38,7 +42,7 @@ export function RecordSheet({ result, recordId, actions, specimen = false }: Rec
   const stampRisk = severityRisk(result.severity)
 
   return (
-    <article className="sheet is-sheet" data-cursor>
+    <article className={tone === "night" ? "sheet sheet--night" : "sheet is-sheet"} data-cursor>
       <header className="sheet__head">
         <span className="sheet__id">
           判读记录 · READING RECORD
@@ -69,6 +73,12 @@ export function RecordSheet({ result, recordId, actions, specimen = false }: Rec
       ) : (
         <>
           <div className="sheet__body">
+            {imageSrc ? (
+              <figure className="sheet__evidence">
+                <img src={imageSrc} alt="本次判读的眼底照片" />
+                <figcaption className="num">影像 · SOURCE</figcaption>
+              </figure>
+            ) : null}
             <div>
               <p className="overline sheet__verdict-kicker">
                 主诊断 · {classCode(result.result)}
