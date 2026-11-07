@@ -64,7 +64,9 @@ public final class DraftAgents {
             }
             String text = response.getResult().getOutput().getText();
             if (text == null || text.length() > 32_000) throw new IllegalArgumentException("Invalid output size");
-            return json.readValue(text, output);
+            T parsed = json.readValue(text, output);
+            if (parsed == null) throw new IllegalArgumentException("Null model output");
+            return parsed;
         }
     }
 

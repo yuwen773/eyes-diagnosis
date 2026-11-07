@@ -31,6 +31,24 @@
 
 双轴汇总：Standards 0 项未解决；Spec 0 项未解决。
 
+## 评审补修（2026-11-07）
+
+PR #19 合并后的代码评审发现 4 处真实缺陷，均已修复并在隔离 MySQL 8.0.26 上回归：
+
+| 问题 | 修复 | 回归证据 |
+|---|---|---|
+| 推理门禁把 Python gRPC 的 0–100 百分制概率当成 0–1，真实快照一律 `INVALID_INFERENCE` | `inference()` 量程改为 `[0,100]`，测试夹具同步改为 `70.0` | 27 例真库全绿 |
+| 补证守卫只检查 `extra.citations().isEmpty()`，重复引用仍冻结出逐字节相同的证据版本 2 并触发重写 | 改为 `combined.size() == frozen.citations().size()`，新增 `duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion` | 新增用例通过 |
+| `claim()` 在 `inference()` 校验前提交 RUNNING 记录并翻 `DRAFTING`，无效推理白烧运行记录 | 校验移入 claim 事务，无效时直接落 `RESTRICTED` 终态、不进入 `DRAFTING` | `changedSnapshotIdentityIsRejectedBeforeAnyProviderCall` 强化为断言 0 调用、无消息 |
+| `invoke()` 吞掉 `ExecutionException` 的 cause，provider 故障无法诊断 | 记录 cause 日志（停止原因不变） | 429 替身用例仍通过 |
+
+另补入后台 `--fix` 已应用但未计入本表的改动：null 列表元素显式校验、外层异常日志、下载文件名与 blob 释放时序、上传异常日志、`originalFile()` 单次查询、`CLAUDE.md` 迁移头 V10→V12。
+
+- 专项回归：`ISSUE19_TEST_URL` 指向一次性 `mysql:8.0.26:3308`，`mvn -B -Dtest=PatientDraftTest test` → **27 例，0 failures，0 errors，0 skipped**；`check_surefire_skips.py ... issue19` 门禁通过；用例计数契约 26→27 同步更新到脚本、Python 门禁单测（21 例通过）和 `docs/patient-draft.md`。
+- 全量后端：`mvn -B test` → 157 例，**1 error 为本地已知 `contextLoads` 必红**（`cosClient` 缺 `Access key`，与本次改动无关），其余 0 failures / 0 errors；48 skipped 为各 opt-in 套件按设计跳过。`#19` 专项 27 例在此运行中同样全绿且未跳过。
+- 前端：`npm run build` 通过（仅既有大 chunk 警告）；`ControlledReferencesPage.test.ts` 4/4 通过；`check_design_doc.py` 门禁通过。
+- 一次性验证容器 `issue19-verify` 用后即弃，未写入本机既有业务库。
+
 ## 使用与未覆盖范围
 
 - 使用说明、数据发送范围及预算见 `docs/patient-draft.md`。草稿调度器默认关闭，需在获授权环境设置 `eye-diagnosis.draft.enabled=true`。

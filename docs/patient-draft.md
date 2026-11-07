@@ -37,4 +37,4 @@
 
 使用 JDK 21，设置隔离的 `ISSUE19_TEST_URL=jdbc:mysql://127.0.0.1:<port>/issue19_test`（用户和密码均为测试专用 `issue19`），执行 `mvn -Dtest=PatientDraftTest test`，随后执行 `python scripts/check_surefire_skips.py target/surefire-reports issue19`。该数据库仅允许用于本套件的合成数据，会清空其本任务表。
 
-26 个测试包含真实隔离 MySQL、受控模型/时钟、患者 HTTP 投影、补证与重写上限、严格输出/引用校验、来源撤回、迟到输出、并发领取、独立 JVM 崩溃和提供方重试替身。没有数据库时显式跳过；专用 CI 门禁要求全部运行。工程测试不等同真实提供方、真实 Python、领域或临床验收。
+27 个测试包含真实隔离 MySQL、受控模型/时钟、患者 HTTP 投影、补证与重写上限、重复补证不产生相同证据版本、无效推理不启动生成、严格输出/引用校验、来源撤回、迟到输出、并发领取、独立 JVM 崩溃和提供方重试替身。没有数据库时显式跳过；专用 CI 门禁要求全部运行。工程测试不等同真实提供方、真实 Python、领域或临床验收。

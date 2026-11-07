@@ -35,6 +35,8 @@ class PatientDraftTest {
     private final List<Prompt> requests = new CopyOnWriteArrayList<>();
     private Function<Prompt, String> answer = this::validAnswer;
     private static final String EXCERPT = "Synthetic test reference: glaucoma follow-up requires an eye examination.";
+    // Distinct chunk with no "glaucoma" token, so only a different (supplement) query can add new evidence.
+    private static final String EXCERPT_SUPPLEMENT = "Synthetic addendum: monitoring interval is individualized by an ophthalmologist.";
 
     @BeforeEach
     void database() throws Exception {
@@ -58,7 +60,7 @@ class PatientDraftTest {
         jdbc.update("DELETE FROM t_controlled_reference");
         taskId = UUID.randomUUID().toString(); documentId = UUID.randomUUID().toString();
         var response = DiagnosisProto.DiagnosisResponse.newBuilder().setPredictedLabel("glaucoma")
-                .setProbability(0.7).setOodStatus(DiagnosisProto.OodStatus.IN_DISTRIBUTION)
+                .setProbability(70.0).setOodStatus(DiagnosisProto.OodStatus.IN_DISTRIBUTION)
                 .setModelVersion("synthetic-model").setPreprocessVersion("synthetic-preprocess")
                 .setCalibrationStatus("NOT_CALIBRATED").setQualityScore(80).build();
         String snapshot = json.writeValueAsString(Map.of("taskId", taskId, "userId", 42,
@@ -70,6 +72,8 @@ class PatientDraftTest {
                 documentId, "c".repeat(64), new byte[]{1});
         jdbc.update("INSERT INTO t_controlled_reference_chunk VALUES (?,0,?,?)", documentId, EXCERPT,
                 HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(EXCERPT.getBytes(StandardCharsets.UTF_8))));
+        jdbc.update("INSERT INTO t_controlled_reference_chunk VALUES (?,1,?,?)", documentId, EXCERPT_SUPPLEMENT,
+                HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(EXCERPT_SUPPLEMENT.getBytes(StandardCharsets.UTF_8))));
         model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenAnswer(inv -> {
             Prompt prompt = inv.getArgument(0); requests.add(prompt);
@@ -129,11 +133,19 @@ class PatientDraftTest {
         String role = prompt.getSystemMessage().getText().split("\\n")[0];
         return switch (role) {
             case "VISION" -> "{\"summary\":\"Model prediction requires review\",\"limitations\":[\"Not calibrated\"],\"reanalysisSuggestion\":\"RECAPTURE\"}";
-            case "EVIDENCE" -> "{\"query\":\"glaucoma\"}";
+            case "EVIDENCE" -> evidenceQuery(prompt);
             case "EXPLANATION" -> draft(1);
             case "CRITIC" -> "{\"action\":\"NONE\",\"objections\":[]}";
             default -> throw new AssertionError(role);
         };
+    }
+
+    /** A SUPPLEMENT round carries Critic feedback; query a different chunk so the evidence set can actually grow. */
+    private String evidenceQuery(Prompt prompt) {
+        boolean supplement;
+        try { supplement = json.readTree(prompt.getUserMessage().getText()).path("feedback").isObject(); }
+        catch (Exception e) { throw new AssertionError(e); }
+        return supplement ? "{\"query\":\"monitoring\"}" : "{\"query\":\"glaucoma\"}";
     }
 
     @Test
@@ -170,6 +182,28 @@ class PatientDraftTest {
         catch (Exception e) { throw new AssertionError(e); }
     }
 
+    @Test
+    void duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion() {
+        var criticCalls = new java.util.concurrent.atomic.AtomicInteger();
+        answer = prompt -> {
+            String role = prompt.getSystemMessage().getText().split("\\n")[0];
+            if (role.equals("CRITIC") && criticCalls.incrementAndGet() == 1) {
+                return "{\"action\":\"SUPPLEMENT\",\"objections\":[{\"target\":\"claim:RISK\",\"reason\":\"Need an additional source\"}]}";
+            }
+            // Both EVIDENCE rounds use the same query, so the second retrieval can only return the one frozen chunk.
+            if (role.equals("EVIDENCE")) return "{\"query\":\"glaucoma\"}";
+            return validAnswer(prompt);
+        };
+        try (var coordinator = coordinator()) {
+            coordinator.run(taskId);
+            var report = coordinator.inspect(taskId);
+            assertEquals("INSUFFICIENT_EVIDENCE", report.stopReason());
+            assertEquals(List.of(1), report.evidence().stream().map(PatientDraftCoordinator.Evidence::version).toList());
+            assertEquals(1, report.drafts().size(), "No rewrite against duplicate evidence");
+            assertEquals(5, report.calls());
+        }
+    }
+
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {"userId", "objectVersion", "imageDigest"})
     void changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String field) throws Exception {
@@ -179,7 +213,11 @@ class PatientDraftTest {
         jdbc.update("UPDATE t_diagnosis_task SET inferenceSnapshot=? WHERE taskId=?", json.writeValueAsString(root), taskId);
         try (var coordinator = coordinator()) {
             coordinator.run(taskId);
-            assertEquals("INVALID_INFERENCE", coordinator.inspect(taskId).stopReason());
+            var report = coordinator.inspect(taskId);
+            assertEquals("RESTRICTED", report.status());
+            assertEquals("INVALID_INFERENCE", report.stopReason());
+            assertEquals(0, report.calls(), "No generation or call budget may start");
+            assertTrue(report.messages().isEmpty(), "Invalid inference must never open a RUNNING run");
             assertTrue(requests.isEmpty());
         }
     }

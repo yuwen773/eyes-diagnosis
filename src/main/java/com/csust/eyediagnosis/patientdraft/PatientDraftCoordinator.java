@@ -7,6 +7,8 @@ import com.csust.eyediagnosis.patientdraft.DraftAgents.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,6 +27,7 @@ import java.util.function.Supplier;
 /** Internal application boundary, deliberately not exposed by a controller. Never publishes or saves diagnoses. */
 @Service
 public class PatientDraftCoordinator implements AutoCloseable {
+    private static final Logger log = LoggerFactory.getLogger(PatientDraftCoordinator.class);
     private static final Set<String> SECTIONS = Set.of("MAIN_FINDING", "RISK", "NEXT_STEP", "UNCERTAINTY", "DETAIL", "LIMITATION");
     private static final Set<String> LABELS = Set.of("normal", "amd", "cataract", "diabetes", "glaucoma", "hypertension", "myopia", "other");
     private static final String TOPIC = "PATIENT_EXPLANATION";
@@ -69,11 +72,11 @@ public class PatientDraftCoordinator implements AutoCloseable {
     }
 
     public void run(String requestedTaskId) {
-        Bound bound = claim(requestedTaskId);
-        if (bound == null) return;
-        String taskId = bound.taskId();
+        Claimed claimed = claim(requestedTaskId);
+        if (claimed == null) return;
+        String taskId = claimed.taskId();
         try {
-            Inference inference = inference(bound);
+            Inference inference = claimed.inference();
             String disease = inference.predictedLabel().toUpperCase(Locale.ROOT);
             Vision analysis = invoke(taskId, "VISION", inference, () -> vision.analyze(inference));
             validateVision(analysis);
@@ -97,7 +100,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
                     var combined = new LinkedHashMap<String, Citation>();
                     for (Citation citation : frozen.citations()) combined.put(citation.documentId() + ":" + citation.chunkIndex(), citation);
                     for (Citation citation : extra.citations()) combined.putIfAbsent(citation.documentId() + ":" + citation.chunkIndex(), citation);
-                    if (extra.citations().isEmpty()) throw new Stop("INSUFFICIENT_EVIDENCE");
+                    if (combined.size() == frozen.citations().size()) throw new Stop("INSUFFICIENT_EVIDENCE");
                     frozen = freeze(taskId, disease, 2, List.copyOf(combined.values()));
                 }
                 var rewriteContext = new ExplanationContext(inference, analysis, frozen, draft, review);
@@ -116,7 +119,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
             }));
         } catch (Stop e) { restrict(taskId, e.reason); }
         catch (ControlledEvidenceRetriever.EvidenceUnavailable e) { restrict(taskId, "SOURCE_INVALIDATED"); }
-        catch (Exception e) { restrict(taskId, "INVALID_OUTPUT"); }
+        catch (Exception e) { log.error("Patient draft run failed for an unexpected reason", e); restrict(taskId, "INVALID_OUTPUT"); }
     }
 
     /** Selects only unstarted work or expired, interrupted work; completed/restricted runs never replay calls. */
@@ -128,7 +131,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
         if (!candidates.isEmpty()) run(candidates.getFirst());
     }
 
-    private Bound claim(String requestedTaskId) {
+    private Claimed claim(String requestedTaskId) {
         return transactions.execute(tx -> {
             var tasks = jdbc.queryForList("SELECT * FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", requestedTaskId);
             if (tasks.size() != 1 || !Set.of("WAITING_REVIEW", "DRAFTING").contains(tasks.getFirst().get("status"))) return null;
@@ -143,25 +146,50 @@ public class PatientDraftCoordinator implements AutoCloseable {
                 return null;
             }
             String snapshot = Objects.toString(tasks.getFirst().get("inferenceSnapshot"), "");
-            String digest = digest(snapshot);
+            Bound bound = new Bound(taskId, tasks.getFirst(), snapshot, digest(snapshot));
+            Inference inference;
+            try {
+                inference = inference(bound);
+            } catch (Stop e) {
+                // Invalid inference never starts generation: commit a terminal audit row without entering DRAFTING.
+                return invalidInference(taskId, bound.digest(), e.reason);
+            } catch (Exception e) {
+                log.error("Patient draft inference snapshot could not be read", e);
+                return invalidInference(taskId, bound.digest(), "INVALID_INFERENCE");
+            }
             jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,status,startedAt,deadlineAt) VALUES (?,?,'RUNNING',?,?)",
-                    taskId, digest, now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
+                    taskId, bound.digest(), now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
             jdbc.update("UPDATE t_diagnosis_task SET status='DRAFTING',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
-            return new Bound(taskId, tasks.getFirst(), snapshot, digest);
+            return new Claimed(taskId, inference);
         });
     }
 
-    private record Bound(String taskId, Map<String, Object> task, String snapshot, String digest) {}
+    private Claimed invalidInference(String taskId, String digest, String reason) {
+        jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,status,stopReason,startedAt,deadlineAt) VALUES (?,?,'RESTRICTED',?,?,?)",
+                taskId, digest, reason, now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
+        jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
+        return null;
+    }
 
-    private Inference inference(Bound bound) throws Exception {
-        JsonNode root = json.readTree(bound.snapshot());
+    private record Bound(String taskId, Map<String, Object> task, String snapshot, String digest) {}
+    private record Claimed(String taskId, Inference inference) {}
+
+    private Inference inference(Bound bound) {
+        JsonNode root;
+        try { root = json.readTree(bound.snapshot()); }
+        catch (Exception e) { throw new Stop("INVALID_INFERENCE"); }
+        if (root == null) throw new Stop("INVALID_INFERENCE");
         for (String field : List.of("taskId", "userId", "objectKey", "objectVersion", "imageDigest", "imageFormat")) {
             if (!root.hasNonNull(field) || !root.get(field).asText().equals(Objects.toString(bound.task().get(field), ""))) throw new Stop("INVALID_INFERENCE");
         }
-        var response = DiagnosisProto.DiagnosisResponse.parseFrom(Base64.getDecoder().decode(root.path("responseProtobufBase64").asText()));
+        DiagnosisProto.DiagnosisResponse response;
+        try {
+            response = DiagnosisProto.DiagnosisResponse.parseFrom(Base64.getDecoder().decode(root.path("responseProtobufBase64").asText()));
+        } catch (Exception e) { throw new Stop("INVALID_INFERENCE"); }
+        // gRPC/Python emits probability as a 0-100 percentage (algorithm/grpc_server.py), matching DiagnosisResultVO.
         if (response.getRejected() || response.getIsOod() || response.getOodStatus() != DiagnosisProto.OodStatus.IN_DISTRIBUTION
                 || !LABELS.contains(response.getPredictedLabel()) || !Double.isFinite(response.getProbability())
-                || response.getProbability() < 0 || response.getProbability() > 1) throw new Stop("INVALID_INFERENCE");
+                || response.getProbability() < 0 || response.getProbability() > 100) throw new Stop("INVALID_INFERENCE");
         return new Inference(bound.digest(), response.getPredictedLabel(), response.getProbability(), response.getQualityScore(),
                 response.getQualityReasons(), response.getCalibrationStatus(), response.getModelVersion(), response.getPreprocessVersion());
     }
@@ -187,7 +215,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
             });
             return result;
         } catch (TimeoutException e) { throw new Stop("AGENT_TIMEOUT"); }
-        catch (ExecutionException e) { throw new Stop("INVALID_OUTPUT"); }
+        catch (ExecutionException e) { log.warn("Patient draft model call failed", e.getCause() != null ? e.getCause() : e); throw new Stop("INVALID_OUTPUT"); }
         catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new Stop("INTERRUPTED"); }
         finally { future.cancel(true); calls.purge(); }
     }
@@ -257,12 +285,16 @@ public class PatientDraftCoordinator implements AutoCloseable {
         if (draft.evidenceVersion() != frozen.version() || draft.claims() == null || draft.claims().size() > 30) throw new Stop("INVALID_OUTPUT");
         var ids = new HashSet<String>(); var sections = new HashSet<String>();
         for (Claim claim : draft.claims()) {
+            if (claim == null) throw new Stop("INVALID_OUTPUT");
             requireText(claim.id(), 64); requireText(claim.text(), 2000);
             if (!ids.add(claim.id()) || !SECTIONS.contains(claim.section()) || claim.references() == null || claim.references().isEmpty() || claim.references().size() > 5) throw new Stop("INVALID_OUTPUT");
             sections.add(claim.section());
             for (Reference ref : claim.references()) {
+                if (ref == null) throw new Stop("INVALID_OUTPUT");
                 requireText(ref.quote(), 2000);
                 if (ref.citationIndex() < 0 || ref.citationIndex() >= frozen.citations().size()
+                        || frozen.citations().get(ref.citationIndex()) == null
+                        || frozen.citations().get(ref.citationIndex()).excerpt() == null
                         || !frozen.citations().get(ref.citationIndex()).excerpt().contains(ref.quote())) throw new Stop("INVALID_CITATION");
             }
         }
@@ -275,6 +307,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
         draft.claims().forEach(claim -> targets.add("claim:" + claim.id()));
         for (int i = 0; i < frozen.citations().size(); i++) targets.add("evidence:" + i);
         for (Objection objection : review.objections()) {
+            if (objection == null) throw new Stop("INVALID_OUTPUT");
             requireText(objection.reason(), 2000);
             if (!targets.contains(objection.target())) throw new Stop("INVALID_OBJECTION");
         }
