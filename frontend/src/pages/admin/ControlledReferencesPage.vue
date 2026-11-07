@@ -110,8 +110,11 @@ async function download() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url; link.download = selected.value.reference.fileName
+    document.body.appendChild(link)
     link.click()
-    URL.revokeObjectURL(url)
+    link.remove()
+    // Browsers read the blob after click() returns; revoke on the next task so the download is not cancelled.
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
   } catch (reason) { showError(reason) }
 }
 </script>

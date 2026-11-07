@@ -79,6 +79,7 @@ public class ControlledReferenceService {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
+            log.error("受控资料解析或存储失败", e);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "资料解析或存储失败");
         } finally {
             if (temporary != null) {
@@ -105,10 +106,12 @@ public class ControlledReferenceService {
                 (rs, row) -> new Chunk(rs.getInt("chunkIndex"), rs.getString("excerpt"), rs.getString("excerptDigest")), id));
     }
 
-    public byte[] originalFile(User actor, String id) {
+    public OriginalFile originalFile(User actor, String id) {
         requireManager(actor);
-        reference(id);
-        return jdbc.queryForObject("SELECT fileContent FROM t_controlled_reference WHERE id=? AND isDelete=0", byte[].class, id);
+        var rows = jdbc.query("SELECT fileName,fileContent FROM t_controlled_reference WHERE id=? AND isDelete=0",
+                (rs, n) -> new OriginalFile(rs.getString(1), rs.getBytes(2)), id);
+        if (rows.isEmpty()) throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        return rows.getFirst();
     }
 
     public Reference govern(User actor, String id, Governance request) {
@@ -200,6 +203,7 @@ public class ControlledReferenceService {
             long governanceVersion, boolean isTest, String visibility, String reviewStatus, List<String> diseaseCodes,
             List<String> topicCodes, boolean enabled, long uploadedBy, Long reviewedBy, LocalDateTime reviewedAt, String reviewNote) {}
     public record Chunk(int chunkIndex, String excerpt, String excerptDigest) {}
+    public record OriginalFile(String fileName, byte[] fileContent) {}
     public record Detail(Reference reference, List<Chunk> chunks) {}
     public record ReferencePage(List<Reference> records, long total) {}
     public record Governance(long expectedGovernanceVersion, String reviewStatus, String visibility,

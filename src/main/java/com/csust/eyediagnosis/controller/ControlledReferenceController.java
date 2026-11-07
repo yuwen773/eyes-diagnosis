@@ -44,12 +44,15 @@ public class ControlledReferenceController {
     @GetMapping("/{id}/file")
     @AuthCheck
     public org.springframework.http.ResponseEntity<byte[]> file(@PathVariable String id, HttpServletRequest request) {
+        var original = references.originalFile(users.getLoginUser(request), id);
+        var disposition = org.springframework.http.ContentDisposition.attachment()
+                .filename(original.fileName(), java.nio.charset.StandardCharsets.UTF_8).build().toString();
         return org.springframework.http.ResponseEntity.ok()
                 .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=reference.bin")
+                .header("Content-Disposition", disposition)
                 .header("X-Content-Type-Options", "nosniff")
                 .header("Cache-Control", "no-store")
-                .body(references.originalFile(users.getLoginUser(request), id));
+                .body(original.fileContent());
     }
 
     @PostMapping("/{id}/governance")
