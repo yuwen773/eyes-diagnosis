@@ -5,14 +5,35 @@ import { MobileNav } from "./MobileNav"
 
 /** 跨产品的目的地。落地页自己的章节不在这里，章节链接放在页脚。 */
 export const NAV_LINKS = [
-  { to: "/diagnosis", label: "判读" },
-  { to: "/agent", label: "诊断 Agent" },
-  { to: "/news", label: "新闻资讯" },
+  { to: "/diagnosis", label: "判读", code: "01" },
+  { to: "/agent", label: "诊断 Agent", code: "02" },
+  { to: "/news", label: "新闻资讯", code: "03" },
 ]
 
+/**
+ * 铭牌：虹膜标记 + 中文品名 + 英文 mono 副标。
+ *
+ * 虹膜标记是一枚刻度环——落地页的准星、判读页的取景器都是同一套仪器语言，
+ * 品牌处也应该有一枚。环随 hover 转动，瞳孔是全站唯一强调色的落点之一。
+ */
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <span className="wordmark">
+      <span className="wordmark__iris" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+          {/* 刻度环：16 短刻 */}
+          <circle
+            className="wordmark__iris-ring"
+            cx="12"
+            cy="12"
+            r="10.5"
+            pathLength={64}
+            strokeDasharray="0.5 3.5"
+          />
+          {/* 瞳孔 */}
+          <circle cx="12" cy="12" r="3.2" fill="var(--signal)" stroke="none" />
+        </svg>
+      </span>
       <span className="wordmark__zh">眼瞳</span>
       {compact ? null : <span className="wordmark__en">IRIS · FUNDUS READING</span>}
     </span>
@@ -92,9 +113,14 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
 
+        <span className="site-head__sep" aria-hidden="true" />
+
         <nav className="nav" aria-label="主导航">
           {NAV_LINKS.map((item) => (
-            <NavLink key={item.to} to={item.to} className="nav__link">
+            <NavLink key={item.to} to={item.to} className="nav__link" data-cursor>
+              <span className="nav__code num" aria-hidden="true">
+                {item.code}
+              </span>
               {item.label}
             </NavLink>
           ))}

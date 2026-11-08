@@ -241,6 +241,34 @@ a {
   white-space: nowrap;
 }
 
+/* 虹膜标记：一枚刻度环 + 信号橙瞳孔。hover 时环转一圈，像对焦。 */
+.wordmark__iris {
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  color: var(--fg-2);
+  transition: color var(--fast);
+}
+
+.wordmark__iris svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wordmark__iris-ring {
+  transform-origin: 12px 12px;
+  transition: transform 900ms var(--ease);
+}
+
+a:hover .wordmark__iris {
+  color: var(--fg);
+}
+
+a:hover .wordmark__iris-ring {
+  transform: rotate(180deg);
+}
+
 .wordmark__zh {
   font-family: var(--font-serif);
   font-size: 20px;
@@ -255,6 +283,13 @@ a {
   color: var(--fg-3);
 }
 
+/* 品牌与导航之间的发丝竖线：顶栏也切成仪器段。 */
+.site-head__sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
 .nav {
   display: flex;
   align-items: center;
@@ -264,6 +299,9 @@ a {
 }
 
 .nav__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
   color: var(--fg-2);
   position: relative;
   padding-block: 4px;
@@ -273,9 +311,25 @@ a {
   transition: color var(--fast);
 }
 
+/* mono 序号：导航也带读数。当前页时序号亮信号橙。 */
+.nav__code {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  transition: color var(--fast);
+}
+
 .nav__link:hover,
 .nav__link[aria-current="page"] {
   color: var(--fg);
+}
+
+.nav__link:hover .nav__code {
+  color: var(--fg-2);
+}
+
+.nav__link[aria-current="page"] .nav__code {
+  color: var(--signal);
 }
 
 .nav__link[aria-current="page"]::after {
@@ -306,11 +360,27 @@ a {
   font-family: var(--font-sans);
   font-size: 12.5px;
   cursor: pointer;
-  transition: border-color var(--fast), color var(--fast);
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
 }
 
 .acct__trigger:hover {
   border-color: var(--fg);
+}
+
+/* 未登录的「登录」是一块实心片：顶栏里唯一填充的控件，去哪一目一目了然。 */
+a.acct__trigger--anon {
+  justify-content: center;
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+a.acct__trigger--anon:hover {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--bg);
 }
 
 .acct__caret {
@@ -484,6 +554,9 @@ a {
   .wordmark__en {
     display: none;
   }
+  .site-head__sep {
+    display: none;
+  }
   .nav,
   .acct {
     display: none;
@@ -494,23 +567,77 @@ a {
   }
 }
 
+/* 页脚按仪器铭牌端搭：大字铭牌行 → mono 规格行 → 章节索引 → 免责栏。
+   落地页包了一层 .wrap，这里不再管左右内边距。 */
 .site-foot {
-  border-top: 1px solid var(--line);
-  padding-block: 30px 44px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px;
-  align-items: start;
+  border-top: 1px solid var(--line-strong);
+  padding-block: 34px 30px;
 }
 
-.site-foot__meta {
+/* 铭牌行：品名放大一号，右端是回到顶部的文字链。 */
+.site-foot__masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.site-foot .wordmark__zh {
+  font-size: 24px;
+}
+
+.site-foot__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--fg-2);
+  transition: color var(--fast);
+}
+
+.site-foot__top:hover {
+  color: var(--fg);
+}
+
+.site-foot__top-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  font-size: 10px;
+  transition: border-color var(--fast), color var(--fast);
+}
+
+.site-foot__top:hover .site-foot__top-mark {
+  border-color: var(--fg);
+}
+
+/* 规格行：与 hero 底部读数条同一行 mono 语言。 */
+.site-foot__specs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
+  align-items: baseline;
+  gap: 8px 0;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
   color: var(--fg-3);
+}
+
+.site-foot__spec {
+  white-space: nowrap;
+}
+
+/* 规格之间用「 · 」分隔，不用间隙硬撑。 */
+.site-foot__spec + .site-foot__spec::before {
+  content: "·";
+  margin-inline: 14px;
+  color: var(--fg-3);
+  opacity: 0.55;
 }
 
 /* 页脚的章节索引：顶栏让给跨产品目的地后，页面内的章节从这里进。 */
@@ -518,10 +645,8 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px 18px;
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
+  gap: 10px 26px;
+  margin-top: 22px;
 }
 
 .site-foot__nav-label {
@@ -533,11 +658,20 @@ a {
 }
 
 .site-foot__nav-link {
-  font-size: 12.5px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
   color: var(--fg-2);
-  text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: color var(--fast), border-color var(--fast);
+}
+
+.site-foot__nav-code {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  transition: color var(--fast);
 }
 
 .site-foot__nav-link:hover {
@@ -545,21 +679,68 @@ a {
   border-bottom-color: var(--fg);
 }
 
+.site-foot__nav-link:hover .site-foot__nav-code {
+  color: var(--signal);
+}
+
+/* 免责栏：法定文本独立成段，右端盖一枚描边章。 */
+.site-foot__legal {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
 .site-foot__note {
-  max-width: 42ch;
-  font-size: 11.5px;
-  line-height: 1.75;
-  color: var(--fg-3);
-  text-align: right;
   margin: 0;
+  max-width: 58ch;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--fg-3);
+}
+
+.site-foot__note-mark {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+/* 斜盖的小章：与责任边界的 .statute__seal 同一枚语言，缩小版。 */
+.site-foot__stamp {
+  flex: none;
+  padding: 8px 12px;
+  border: 1.5px solid var(--signal);
+  color: var(--signal);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  line-height: 1.65;
+  text-align: center;
+  transform: rotate(-3deg);
+  opacity: 0.75;
+  user-select: none;
 }
 
 @media (max-width: 760px) {
   .site-foot {
-    grid-template-columns: 1fr;
+    padding-block: 28px 24px;
   }
-  .site-foot__note {
-    text-align: left;
+  .site-foot__masthead {
+    align-items: baseline;
+  }
+  .site-foot__legal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
+  }
+  .site-foot__stamp {
+    transform: rotate(-2deg);
   }
 }
 
