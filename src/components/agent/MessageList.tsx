@@ -105,7 +105,7 @@ export function MessageList({
   const empty = messages.length === 0 && !loading
 
   return (
-    <div className="console is-dark agent-console">
+    <div className="agent-console">
       <div className="console__head">
         <span className="console__title">DIAGNOSIS · AGENT</span>
         {streaming ? (

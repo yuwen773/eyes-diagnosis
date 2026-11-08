@@ -293,7 +293,7 @@ export function AgentPage() {
             />
           )}
 
-          <div className="agent-main">
+          <div className="agent-main is-dark">
             <div className="agent-main__bar">
               {status === "anon" && (
                 <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>

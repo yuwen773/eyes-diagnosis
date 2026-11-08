@@ -501,6 +501,16 @@
   min-height: 0;
 }
 
+/* 输入区坐在消息区同一块暗底反相带里——Vue 版输入胶囊贴着对话背景，
+   不再浮在浅色页面上。is-dark 放在 agent-main（含消息区+输入区）上。 */
+.agent-main.is-dark {
+  background: var(--dark);
+}
+
+.agent-main.is-dark .agent-input {
+  background: var(--dark);
+}
+
 .agent-msglist {
   overflow-y: auto;
 }
