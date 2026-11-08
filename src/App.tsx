@@ -18,6 +18,7 @@ import { AdminGate } from "@/components/admin/AdminGate"
 import { AdminLayout } from "@/components/admin/AdminLayout"
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
+import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -133,15 +134,7 @@ export function App() {
             />
             <Route
               path="news"
-              element={
-                <AdminPlaceholder
-                  code="08"
-                  kicker="系统管理 · 新闻管理"
-                  en="ADMIN · NEWS"
-                  title="新闻管理"
-                  body="新闻检索、发布与封面维护。这个界面正在装配。"
-                />
-              }
+              element={<AdminNewsPage />}
             />
             <Route
               path="diagnosis"
