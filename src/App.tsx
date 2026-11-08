@@ -16,6 +16,7 @@ import { RegisterPage } from "@/pages/RegisterPage"
 import { PlaceholderPage } from "@/components/PlaceholderPage"
 import { AdminGate } from "@/components/admin/AdminGate"
 import { AdminLayout } from "@/components/admin/AdminLayout"
+import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -123,15 +124,7 @@ export function App() {
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route
               path="dashboard"
-              element={
-                <AdminPlaceholder
-                  code="06"
-                  kicker="系统管理 · 仪表盘"
-                  en="ADMIN · DASHBOARD"
-                  title="仪表盘"
-                  body="诊断总量、用户规模、近七天趋势与疾病分布的汇总读数。这个界面正在装配。"
-                />
-              }
+              element={<AdminDashboardPage />}
             />
             <Route
               path="users"
