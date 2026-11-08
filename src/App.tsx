@@ -17,6 +17,7 @@ import { PlaceholderPage } from "@/components/PlaceholderPage"
 import { AdminGate } from "@/components/admin/AdminGate"
 import { AdminLayout } from "@/components/admin/AdminLayout"
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
+import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -128,15 +129,7 @@ export function App() {
             />
             <Route
               path="users"
-              element={
-                <AdminPlaceholder
-                  code="07"
-                  kicker="系统管理 · 用户管理"
-                  en="ADMIN · USERS"
-                  title="用户管理"
-                  body="账号检索、角色标签与删除守卫。这个界面正在装配。"
-                />
-              }
+              element={<AdminUsersPage />}
             />
             <Route
               path="news"

@@ -1110,3 +1110,129 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ==========================================================================
+   管理后台 · 用户管理段（Task 7）
+   --------------------------------------------------------------------------
+   与仪表盘同版式：页首章节头发丝线 → 工具条（检索表单，底部发丝线由
+   Toolbar 给出）→ 表格。只吃上下文令牌 --bg / --fg-* / --hr / --surface /
+   --signal，零写死色值；状态色一律由 .risk / .fault-note 自带的 --risk-* 语义
+   色承担，不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-users {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-users__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-users__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 检索表单：两个输入字段 + 查询 / 重置，窄屏自动换行。 */
+.admin-users__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-users__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.admin-users__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 沿用 news__input 的仪器形状，但高度对齐 .btn--sm（40px）。 */
+.admin-users__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-users__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-users__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-users__input:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.admin-users__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 头像：32px 圆形；无图时给一个同尺寸的中性占位，不撑破行高。 */
+.admin-users__avatar {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-users__avatar-fallback {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-users__table {
+  margin-top: 26px;
+}
+
+/* 删除失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-users__fault {
+  margin-top: 22px;
+}
+
+.admin-users__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-users__modal-account {
+  color: var(--fg);
+  font-weight: 600;
+}
