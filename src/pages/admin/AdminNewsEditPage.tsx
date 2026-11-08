@@ -65,7 +65,8 @@ function coverProblem(file: File): string | null {
  * 编辑模式保存有两条硬规矩：一是 newsContentValid 的 30 字守卫（后端
  * substring(0,30) 对短文会 500）；二是成功留在本页用页内成功条。
  * 封面仅编辑模式可传（uploadCover 需要已存在的 id）；成功把返回 url 写回表单，
- * 清除封面把 coverImage 置 undefined，保存时生效。
+ * 清除封面把 coverImage 置 undefined，保存时以空串显式上送（后端 NOT_NULL 策略
+ * 会丢 null，空串才会真正写入库），保存后生效。
  */
 export function AdminNewsEditPage(): ReactElement {
   const { id } = useParams()
@@ -150,7 +151,11 @@ export function AdminNewsEditPage(): ReactElement {
         title: form.title,
         content: form.content,
         status: form.status,
-        ...(form.coverImage ? { coverImage: form.coverImage } : {}),
+        // 无条件上送 coverImage：后端 MyBatis-Plus 默认 FieldStrategy.NOT_NULL，
+        // null 字段不进 UPDATE SET。清封面时若用 `...(coverImage ? {…} : {})` 丢键，
+        // DTO 反序列化成 null → 旧封面被保留，前端却提示「已清除」，静默 no-op。
+        // 用空串（非 null）显式写库，才能把「清除」与「不改」区分开。
+        coverImage: form.coverImage ?? "",
       })
       setSuccess("已保存")
     } catch (cause) {
@@ -189,6 +194,9 @@ export function AdminNewsEditPage(): ReactElement {
   }
 
   function clearCover() {
+    // 置 undefined 表示「清除意图」；保存时 onSubmit 把它序列化成空串上送
+    // （coverImage: form.coverImage ?? ""），空串非 null、能过后端 NOT_NULL
+    // 策略写进 UPDATE SET，真正把旧封面从库里抹掉。
     patch({ coverImage: undefined })
     setFormFault(null)
     setActionError(null)
