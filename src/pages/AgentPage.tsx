@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { Navigate } from "react-router-dom"
 import {
   ApiError,
   batchDeleteSessions,
@@ -267,19 +267,9 @@ export function AgentPage() {
   }
 
   if (status === "anon") {
-    return (
-      <div className="is-field">
-        <SiteHeader />
-        <main className="wrap">
-          <div className="notice">
-            Agent 对话需要登录。<Link to="/login?redirect=/agent">去登录</Link>
-          </div>
-        </main>
-        <div className="wrap">
-          <SiteFooter />
-        </div>
-      </div>
-    )
+    // 未登录直接送登录页，并记住来路——登录完回到 /agent。
+    // 不给「需要登录」的告示：那是死胡同，用户得自己找入口。
+    return <Navigate to="/login?redirect=/agent" replace />
   }
 
   return (

@@ -7,6 +7,12 @@ import { fetchEventSource } from "@microsoft/fetch-event-source"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api"
 
+/**
+ * 未登录事件。业务接口回 40100 时广播，由路由层跳登录页（带回跳地址）。
+ * 会话探测 getLoginUser 不广播——匿名访问是常态，不能把人一脚踢去登录。
+ */
+export const AUTH_EXPIRED_EVENT = "eye:auth-expired"
+
 export class ApiError extends Error {
   readonly code: number
 
@@ -23,7 +29,16 @@ type Envelope<T> = {
   msg?: string
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+type RequestOptions = {
+  /** 40100 不广播未登录事件（用于会话探测这类「匿名也是正常结果」的调用）。 */
+  silentAuth?: boolean
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  options: RequestOptions = {},
+): Promise<T> {
   const isForm = init.body instanceof FormData
   let response: Response
 
@@ -47,6 +62,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const payload = (await response.json()) as Envelope<T>
   if (payload.code !== 0) {
+    if (payload.code === 40100 && !options.silentAuth) {
+      window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT))
+    }
     throw new ApiError(payload.code ?? -1, payload.msg || "请求未完成")
   }
 
@@ -84,11 +102,13 @@ export function register(body: {
 }
 
 export function getLoginUser() {
-  return request<LoginUser>("/user/get/login", { method: "GET" })
+  // 匿名是正常结果，不触发跳登录
+  return request<LoginUser>("/user/get/login", { method: "GET" }, { silentAuth: true })
 }
 
 export function logout() {
-  return request<boolean>("/user/logout", { method: "POST" })
+  // 登出时可能本来就没登录，同样不触发跳登录
+  return request<boolean>("/user/logout", { method: "POST" }, { silentAuth: true })
 }
 
 /* ── 诊断 ─────────────────────────────────────────────── */

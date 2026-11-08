@@ -84,7 +84,7 @@ export function LoginPage() {
 
         <div className="form__foot">
           <span className="form__meta">
-            还没有账号？<Link to="/register">注册一个</Link>
+            还没有账号？<Link to={`/register?redirect=${encodeURIComponent(redirect)}`}>注册一个</Link>
           </span>
           <Link className="form__meta" to="/">
             返回首页

@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { AuthShell } from "@/components/AuthShell"
 import { ApiError, register } from "@/lib/api"
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  // 注册完要回到来路，登录页也得知道往哪送——redirect 一路带着
+  const redirect = params.get("redirect") || "/diagnosis"
 
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
@@ -36,7 +39,7 @@ export function RegisterPage() {
         userPassword: password,
         checkPassword: confirm,
       })
-      navigate("/login", { replace: true })
+      navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true })
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : "注册失败，请稍后重试")
     } finally {
@@ -110,7 +113,7 @@ export function RegisterPage() {
 
         <div className="form__foot">
           <span className="form__meta">
-            已有账号？<Link to="/login">直接登录</Link>
+            已有账号？<Link to={`/login?redirect=${encodeURIComponent(redirect)}`}>直接登录</Link>
           </span>
           <Link className="form__meta" to="/">
             返回首页
