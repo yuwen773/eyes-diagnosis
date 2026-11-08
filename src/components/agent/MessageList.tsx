@@ -115,15 +115,7 @@ export function MessageList({
         )}
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
-        {loading && (
-          <div className="agent-msg--user">
-            <div className="agent-msg__bubble-ai">
-              <span className="agent-msg__text" style={{ color: "var(--on-dark-3)" }}>
-                读取历史会话…
-              </span>
-            </div>
-          </div>
-        )}
+        {loading && <div className="agent-load">读取历史会话…</div>}
         {empty && <WelcomeScreen onSend={onSend} />}
         {messages.map((msg) => (
           <MessageRow key={msg.id} msg={msg} onPreviewImage={onPreviewImage} />
