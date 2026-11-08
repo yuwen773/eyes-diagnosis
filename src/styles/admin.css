@@ -322,3 +322,352 @@
     display: none;
   }
 }
+
+/* ==========================================================================
+   管理后台 · 交互原语（Task 4）
+   --------------------------------------------------------------------------
+   「白色仪器」：只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal，零写死色值。分隔一律 1px 发丝线，
+   需要层级时用极轻阴影或 --surface-2 抬升；信号橙只做结构性强调
+   （主按钮 / 当前态 / accent 竖线），不拿来标状态。等宽数字沿用 .num。
+   Modal / Drawer 遮罩直接复用全站 .scrim 词汇类，面板另起命名空间，
+   不与左侧导航 .drawer 冲突。
+   ========================================================================== */
+
+/* ── Toolbar：一行 flex，底部发丝线收口 ─────────────────── */
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--hr);
+}
+
+/* ── StatTile：小字标签 + 大号等宽读数 ───────────────────── */
+
+.admin-tile {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+/* 首块强调：左侧 2px 信号橙竖线，纯结构性，不表状态。 */
+.admin-tile--accent::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--signal);
+}
+
+.admin-tile__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-2);
+}
+
+.admin-tile__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.admin-tile__delta {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+/* ── DataTable：语义化表格 + 三态 + 受控分页 ─────────────── */
+
+.admin-dt {
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+.admin-dt__scroll {
+  overflow-x: auto;
+}
+
+.admin-dt__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* 表头：mono 小字、间距字、--fg-3；底部一条发丝线与表体分界。 */
+.admin-dt__head {
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--fg-3);
+  background: var(--surface);
+  border-bottom: 1px solid var(--hr);
+  white-space: nowrap;
+}
+
+.admin-dt__head-row {
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-dt__cell {
+  padding: 13px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg);
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.admin-dt__cell--right {
+  text-align: right;
+}
+
+.admin-dt__cell--center {
+  text-align: center;
+}
+
+/* 行间 1px --hr 发丝线；hover 用 --surface-2 轻抬，不加阴影。 */
+.admin-dt__row {
+  border-bottom: 1px solid var(--hr);
+  transition: background var(--fast);
+}
+
+.admin-dt__row:last-child {
+  border-bottom: 0;
+}
+
+.admin-dt__row:hover {
+  background: var(--surface-2);
+}
+
+/* 三态占一整行，不画表体之外的浮层。 */
+.admin-dt__state {
+  padding: 44px 16px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-dt__state--error {
+  color: var(--risk-critical);
+}
+
+/* 分页条：全部 mono，顶上一条发丝线与表体分界。 */
+.admin-dt__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--hr);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-2);
+}
+
+.admin-dt__pager-info {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.admin-dt__pager-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-dt__pager-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--hr);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast);
+}
+
+.admin-dt__pager-btn:hover:not(:disabled) {
+  border-color: var(--fg-2);
+}
+
+.admin-dt__pager-btn:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-dt__pager-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-3);
+}
+
+.admin-dt__pager-select {
+  padding: 6px 8px;
+  border: 1px solid var(--hr);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ── Modal：居中弹窗 ────────────────────────────────────── */
+
+.admin-modal {
+  position: fixed;
+  z-index: 80;
+  top: 50%;
+  left: 50%;
+  width: min(560px, calc(100vw - 40px));
+  max-height: min(720px, calc(100svh - 64px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--hr-strong);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--base), visibility 0s linear var(--base);
+}
+
+.admin-modal[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--base);
+}
+
+.admin-modal:focus {
+  outline: none;
+}
+
+.admin-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-modal__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.admin-modal__close,
+.admin-drawer__close {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.admin-modal__close:hover,
+.admin-drawer__close:hover {
+  color: var(--fg);
+}
+
+.admin-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.admin-modal__foot {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--hr);
+}
+
+/* ── Drawer：右侧滑入 ───────────────────────────────────── */
+
+.admin-drawer {
+  position: fixed;
+  z-index: 80;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 88vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--fg);
+  border-left: 1px solid var(--hr-strong);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--base), visibility 0s linear var(--base);
+}
+
+.admin-drawer[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--base);
+}
+
+.admin-drawer:focus {
+  outline: none;
+}
+
+.admin-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-drawer__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.admin-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
