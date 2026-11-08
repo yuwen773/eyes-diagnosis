@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
 import { Toolbar } from "@/components/admin/Toolbar"
-import { FaultNote, useFault } from "@/components/fault"
+import { FaultNote } from "@/components/fault"
 import {
   getNews,
   saveNews,
@@ -34,7 +34,8 @@ const STATUS_OPTIONS = [
 const MAX_COVER_BYTES = 5 * 1024 * 1024
 const COVER_ACCEPT = "image/jpeg,image/png"
 const SUMMARY_HINT = "正文至少 30 字（后端以正文前 30 字生成摘要）"
-const NEW_SUCCESS_HINT = "已创建，请在列表打开继续编辑封面"
+/** 新建模式降级引导文案：控制器裁定，对齐 Vue 版实际能力（见文件头注释）。 */
+const NEW_GUIDE = "后端暂不支持新建，请从列表选择一条新闻编辑"
 
 /** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（去感叹号改句号）。 */
 function coverProblem(file: File): string | null {
@@ -51,21 +52,24 @@ function coverProblem(file: File): string | null {
  * 新闻编辑（真实端点）。
  *
  * 路由 `/admin/news/:id/edit`，`id === "new"` 为新建。编辑模式挂载时 getNews(id)
- * 灌表单，加载/失败走页内三态；新建模式空表单、封面入口禁用并注明「保存后可上传封面」。
- * 取数沿用 requestSeq 递增序号挡过期响应（StrictMode 双挂载下只有最后一次写 view）。
+ * 灌表单，加载/失败走页内三态；取数沿用 requestSeq 递增序号挡过期响应（StrictMode
+ * 双挂载下只有最后一次写 view）。
  *
- * 保存有两条硬规矩：一是 newsContentValid 的 30 字守卫（后端 substring(0,30) 对短文
- * 会 500）；二是新建成功后后端只回 boolean、不回 id，不能猜 id 跳编辑页——按 brief
- * 逐字提示「已创建，请在列表打开继续编辑封面」并跳回列表，提示走全局 toaster 才不会
- * 随本页卸载而消失。编辑模式成功则留在本页用页内成功条。
+ * 新建模式是「降级引导」（控制器裁定，对齐 Vue 版实际能力）：后端
+ * NewsController.updateNews 对 id==null 直接抛 PARAMS_ERROR，且 Vue 版所谓「新建」
+ * 也只是文案——其路由 /news/edit/:id 恒带 id、handleSave 硬编码
+ * Number(route.params.id)，Vue 实际也没有能跑通的新建路径。因此保留
+ * /admin/news/new/edit 路由与空表单（标题 / 正文 / 预览仍可用于撰写草稿参考），
+ * 但保存按钮禁用并给出行内说明，不向后端发注定失败的请求。
  *
+ * 编辑模式保存有两条硬规矩：一是 newsContentValid 的 30 字守卫（后端
+ * substring(0,30) 对短文会 500）；二是成功留在本页用页内成功条。
  * 封面仅编辑模式可传（uploadCover 需要已存在的 id）；成功把返回 url 写回表单，
- * 由下一次「保存」把 coverImage 落库。清除封面把 coverImage 置 undefined，同理保存时生效。
+ * 清除封面把 coverImage 置 undefined，保存时生效。
  */
 export function AdminNewsEditPage(): ReactElement {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { push } = useFault()
 
   const isNew = id === "new" || !id
   const newsId = isNew ? null : id!
@@ -128,7 +132,8 @@ export function AdminNewsEditPage(): ReactElement {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    if (saving) return
+    // 新建模式保存按钮禁用 + 引导说明，这里再兜一道：绝不向后端发注定被拒的请求。
+    if (saving || isNew) return
     setFormFault(null)
     setActionError(null)
     setSuccess(null)
@@ -147,14 +152,7 @@ export function AdminNewsEditPage(): ReactElement {
         status: form.status,
         ...(form.coverImage ? { coverImage: form.coverImage } : {}),
       })
-      if (isNew) {
-        // 后端 saveOrUpdate 只回 boolean，拿不到新建 id——不能猜一个跳过去。
-        // 提示走全局 toaster，跳回列表后仍能看到。
-        push(infoFault(NEW_SUCCESS_HINT))
-        navigate("/admin/news")
-      } else {
-        setSuccess("已保存")
-      }
+      setSuccess("已保存")
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -270,12 +268,22 @@ export function AdminNewsEditPage(): ReactElement {
               </label>
 
               <div className="admin-newsedit__actions">
-                <button className="btn btn--sm" type="submit" disabled={saving}>
+                <button
+                  className="btn btn--sm"
+                  type="submit"
+                  disabled={saving || isNew}
+                  title={isNew ? NEW_GUIDE : undefined}
+                >
                   {saving ? "保存中…" : "保存"}
                 </button>
               </div>
             </div>
           </Toolbar>
+
+          {/* 新建模式降级引导：后端不支持新建，表单只供撰写草稿参考。 */}
+          {isNew ? (
+            <p className="admin-newsedit__guide num">{NEW_GUIDE}</p>
+          ) : null}
 
           {formFault ? (
             <FaultNote className="admin-newsedit__fault" fault={formFault} variant="field" />

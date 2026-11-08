@@ -2351,3 +2351,14 @@
     width: 100%;
   }
 }
+
+/* 新建模式降级引导：工具行下方一行 mono 说明，只吃语义令牌，不占信号橙。 */
+.admin-newsedit__guide {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--hr-strong);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-2);
+  background: var(--surface-2);
+}
