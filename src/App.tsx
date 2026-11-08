@@ -13,6 +13,39 @@ import { ProfilePage } from "@/pages/ProfilePage"
 import { RecordsPage } from "@/pages/RecordsPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { RegisterPage } from "@/pages/RegisterPage"
+import { PlaceholderPage } from "@/components/PlaceholderPage"
+import { AdminGate } from "@/components/admin/AdminGate"
+import { AdminLayout } from "@/components/admin/AdminLayout"
+
+/**
+ * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
+ * @/pages/admin/AdminXxxPage；占位期间路由与守卫仍可完整验收。
+ * code 顺延现有占位页（个人中心 06 / 诊断记录 07）。
+ */
+function AdminPlaceholder({
+  code,
+  kicker,
+  en,
+  title,
+  body,
+}: {
+  code: string
+  kicker: string
+  en: string
+  title: string
+  body: string
+}) {
+  return (
+    <PlaceholderPage
+      code={code}
+      kicker={kicker}
+      en={en}
+      title={title}
+      body={body}
+      detail="管理端页面按批装配中；后端管理接口已就绪。"
+    />
+  )
+}
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -78,6 +111,102 @@ export function App() {
           <Route path="/records" element={<RecordsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
+          <Route
+            path="/admin"
+            element={
+              <AdminGate>
+                <AdminLayout />
+              </AdminGate>
+            }
+          >
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route
+              path="dashboard"
+              element={
+                <AdminPlaceholder
+                  code="06"
+                  kicker="系统管理 · 仪表盘"
+                  en="ADMIN · DASHBOARD"
+                  title="仪表盘"
+                  body="诊断总量、用户规模、近七天趋势与疾病分布的汇总读数。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <AdminPlaceholder
+                  code="07"
+                  kicker="系统管理 · 用户管理"
+                  en="ADMIN · USERS"
+                  title="用户管理"
+                  body="账号检索、角色标签与删除守卫。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="news"
+              element={
+                <AdminPlaceholder
+                  code="08"
+                  kicker="系统管理 · 新闻管理"
+                  en="ADMIN · NEWS"
+                  title="新闻管理"
+                  body="新闻检索、发布与封面维护。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="diagnosis"
+              element={
+                <AdminPlaceholder
+                  code="09"
+                  kicker="系统管理 · 诊断管理"
+                  en="ADMIN · DIAGNOSIS"
+                  title="诊断管理"
+                  body="判读记录检索、详情抽屉与人工复核。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="knowledge"
+              element={
+                <AdminPlaceholder
+                  code="10"
+                  kicker="系统管理 · 知识库"
+                  en="ADMIN · KNOWLEDGE"
+                  title="知识库"
+                  body="文档上传、解析进度与分块状态。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="data-analysis"
+              element={
+                <AdminPlaceholder
+                  code="11"
+                  kicker="系统管理 · 数据分析"
+                  en="ADMIN · DATA ANALYSIS"
+                  title="数据分析"
+                  body="小倍数趋势、活跃度柱图与疾病分布排序。这个界面正在装配。"
+                />
+              }
+            />
+            <Route
+              path="news/:id/edit"
+              element={
+                <AdminPlaceholder
+                  code="12"
+                  kicker="系统管理 · 新闻编辑"
+                  en="ADMIN · NEWS EDIT"
+                  title="新闻编辑"
+                  body="新闻正文、发布状态与封面的编辑界面。这个界面正在装配。"
+                />
+              }
+            />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <FaultToaster />

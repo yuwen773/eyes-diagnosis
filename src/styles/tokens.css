@@ -77,6 +77,10 @@
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --fast: 140ms var(--ease);
   --base: 240ms var(--ease);
+
+  /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
+  --viz-accent: #d9541f;
+  --viz-mute: #8b9195;
 }
 
 /* 上下文：页面底 */
@@ -181,6 +185,9 @@ html.dark {
   --risk-normal: var(--risk-normal-lit);
   --risk-attention: var(--risk-attention-lit);
   --risk-critical: var(--risk-critical-lit);
+
+  --viz-accent: #d9591f;
+  --viz-mute: #767d79;
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，

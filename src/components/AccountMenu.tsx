@@ -74,6 +74,16 @@ export function AccountMenu() {
         data-open={open ? "true" : "false"}
         inert={!open}
       >
+        {user.userRole === "admin" ? (
+          <Link
+            role="menuitem"
+            className="acct__item"
+            to="/admin"
+            onClick={() => setOpen(false)}
+          >
+            系统管理
+          </Link>
+        ) : null}
         <Link
           role="menuitem"
           className="acct__item"
