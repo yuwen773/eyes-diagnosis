@@ -5,7 +5,7 @@ import hljs from "highlight.js"
 export const DIAGRAM_LANGUAGES = ["mermaid", "drawio", "plantuml"]
 
 // 创建 markdown-it 实例，启用 GFM
-const md: MarkdownIt = new MarkdownIt({
+const md = new MarkdownIt({
   html: false,
   linkify: true,
   typographer: true,

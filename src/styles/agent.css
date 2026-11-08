@@ -731,3 +731,88 @@
 .agent-session__rename:focus {
   outline: none;
 }
+
+/* ── agent: 页面布局 ───────────────────────────────────── */
+
+.agent-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 0;
+  height: calc(100vh - 220px);
+  min-height: 480px;
+  margin: 24px 0;
+  border: 1px solid var(--hr);
+  background: var(--bg);
+}
+
+.agent-layout:has(.agent-panel) {
+  grid-template-columns: 260px minmax(0, 1fr) 300px;
+}
+
+.agent-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.agent-main__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-notice {
+  margin: 10px 12px 0;
+}
+
+@media (max-width: 900px) {
+  .agent-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .agent-layout:has(.agent-panel) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agent-sessions {
+    max-height: 240px;
+  }
+
+  .agent-panel {
+    border-left: 0;
+    border-top: 1px solid var(--hr);
+  }
+}
+
+/* ── agent: 图片预览 ───────────────────────────────────── */
+
+.agent-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: zoom-out;
+}
+
+.agent-preview img {
+  max-width: min(86vw, 1100px);
+  max-height: 82vh;
+  object-fit: contain;
+}
+
+.agent-preview__open {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #fff;
+  text-decoration: none;
+}
