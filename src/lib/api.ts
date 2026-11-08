@@ -345,14 +345,18 @@ export async function streamChat(
         throw new ApiError(-1, event.data || "对话服务出错")
       }
       if (!event.data) return
+      let dto: AgentStreamDTO
       try {
-        const dto = JSON.parse(event.data) as AgentStreamDTO
-        dto.messageType = (dto.messageType ?? "").toLowerCase()
-        handlers.onEvent(dto)
+        dto = JSON.parse(event.data) as AgentStreamDTO
       } catch (e) {
         // 单片解析失败不中断整条流
         console.error("SSE 数据解析失败", e)
+        return
       }
+      dto.messageType = (dto.messageType ?? "").toLowerCase()
+      // 事件处理放在 try 外：handler 里的 setState updater 在渲染期才执行，
+      // 包进 try 只会把它的异常误报成「数据解析失败」。
+      handlers.onEvent(dto)
     },
 
     onclose() {

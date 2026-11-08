@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { CSSProperties, MouseEvent } from "react"
+import type { MouseEvent } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
 import { renderMarkdown } from "@/lib/markdown"
 
@@ -30,9 +30,6 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
     () => (msg.isLoading ? "" : renderMarkdown(msg.content)),
     [msg.isLoading, msg.content],
   )
-  const bodyStyle: CSSProperties | undefined = msg.isLoading
-    ? { "--caret-after": "" } as CSSProperties
-    : undefined
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     if (e.target instanceof Element) {
@@ -42,7 +39,7 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   }
 
   return (
-    <div className="trace agent-msg agent-msg--assistant" style={bodyStyle}>
+    <div className="trace agent-msg agent-msg--assistant">
       <div className="trace__role">AGENT</div>
       <div className="trace__content">
         {msg.isLoading ? (

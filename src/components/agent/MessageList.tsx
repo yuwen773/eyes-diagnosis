@@ -113,6 +113,14 @@ export function MessageList({
         )}
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
+        {loading && (
+          <div className="trace agent-msg">
+            <div className="trace__role">LOAD</div>
+            <div className="trace__content">
+              <span className="console__live agent-msg__live-inline">读取历史会话…</span>
+            </div>
+          </div>
+        )}
         {empty && <WelcomeScreen onSend={onSend} />}
         {messages.map((msg) => (
           <MessageRow key={msg.id} msg={msg} />
