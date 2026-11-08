@@ -5,6 +5,8 @@ import { ChatInput } from "@/components/agent/ChatInput"
 
 afterEach(() => {
   cleanup()
+  // 草稿存 sessionStorage——不清会把上一个用例打的字带进下一个用例
+  sessionStorage.clear()
 })
 
 function setup(streaming: boolean) {
@@ -18,7 +20,7 @@ function setup(streaming: boolean) {
       onStop={onStop}
     />,
   )
-  return { onSend, onStop, textarea: screen.getByPlaceholderText(/描述症状/) as HTMLTextAreaElement }
+  return { onSend, onStop, textarea: screen.getByPlaceholderText(/Enter 发送/) as HTMLTextAreaElement }
 }
 
 describe("ChatInput", () => {
@@ -52,7 +54,7 @@ describe("ChatInput", () => {
 
   it("流式期间显示的是停止按钮", () => {
     const { onStop } = setup(true)
-    fireEvent.click(screen.getByText("停止"))
+    fireEvent.click(screen.getByRole("button", { name: "停止生成" }))
     expect(onStop).toHaveBeenCalled()
   })
 })

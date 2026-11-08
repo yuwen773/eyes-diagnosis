@@ -331,6 +331,7 @@ export function AgentPage() {
               loading={historyLoading}
               streaming={isStreaming}
               onSend={(text) => void handleSend(text)}
+              onPreviewImage={(url) => setPreviewUrl(url)}
             />
 
             <ChatInput

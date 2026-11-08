@@ -25,6 +25,7 @@ export function ChatInput({
   const [text, setText] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [hint, setHint] = useState("")
+  const [focused, setFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -116,70 +117,82 @@ export function ChatInput({
 
   return (
     <div className="agent-input">
-      {attachments.length > 0 && (
-        <div className="agent-input__attachments">
-          {attachments.map((a) => (
-            <div className="agent-input__attachment" key={a.id}>
-              <img src={a.url} alt={a.name} />
-              <button
-                type="button"
-                className="agent-input__remove"
-                onClick={() => removeAttachment(a.id)}
-                aria-label={`移除 ${a.name}`}
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="agent-input__row">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="agent-input__file"
-          onChange={handleFilePick}
-        />
-        <button
-          type="button"
-          className="agent-input__attach"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
-          aria-label="添加图片"
-          title="添加图片"
-        >
-          ＋
-        </button>
-        <textarea
-          ref={textareaRef}
-          className="agent-input__textarea"
-          placeholder="描述症状、追问判读结果，或 Ctrl+V 粘贴图片…"
-          rows={1}
-          value={text}
-          disabled={disabled}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-        />
-        {streaming ? (
-          <button type="button" className="agent-input__stop" onClick={onStop}>
-            停止
-          </button>
-        ) : (
+      <div className={`agent-input__container${focused ? " is-focused" : ""}`}>
+        {attachments.length > 0 && (
+          <div className="agent-input__attachments">
+            {attachments.map((a) => (
+              <div className="agent-input__attachment" key={a.id}>
+                <img src={a.url} alt={a.name} />
+                <button
+                  type="button"
+                  className="agent-input__remove"
+                  onClick={() => removeAttachment(a.id)}
+                  aria-label={`移除 ${a.name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="agent-input__row">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="agent-input__file"
+            onChange={handleFilePick}
+          />
           <button
             type="button"
-            className="agent-input__send"
-            disabled={!canSend}
-            onClick={submit}
+            className="agent-input__attach"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            aria-label="添加图片"
+            title="添加图片"
           >
-            发送
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
           </button>
-        )}
+          <textarea
+            ref={textareaRef}
+            className="agent-input__textarea"
+            placeholder={text.length === 0 && attachments.length === 0 ? "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片" : ""}
+            rows={1}
+            value={text}
+            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+          />
+          {streaming ? (
+            <button type="button" className="agent-input__stop" onClick={onStop} aria-label="停止生成">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="4" y="4" width="16" height="16" rx="3" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="agent-input__send"
+              disabled={!canSend}
+              onClick={submit}
+              aria-label="发送"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
-      <div className="agent-input__hint num">
-        {hint || "ENTER 发送 · SHIFT+ENTER 换行"}
+      <div className="agent-input__hint">
+        {hint || "内容由AI生成，仅供参考"}
       </div>
     </div>
   )

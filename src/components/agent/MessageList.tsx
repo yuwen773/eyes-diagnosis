@@ -12,10 +12,10 @@ import { WelcomeScreen } from "./WelcomeScreen"
 /** 距底 80px 内视为贴底。 */
 const BOTTOM_EPSILON = 80
 
-function MessageRow({ msg }: { msg: StreamMessage }) {
+function MessageRow({ msg, onPreviewImage }: { msg: StreamMessage; onPreviewImage?: (url: string) => void }) {
   switch (msg.type) {
     case "user":
-      return <UserMessage msg={msg} />
+      return <UserMessage msg={msg} onPreviewImage={onPreviewImage} />
     case "assistant":
       return <AssistantMessage msg={msg} />
     case "reasoning":
@@ -43,11 +43,13 @@ export function MessageList({
   loading,
   streaming,
   onSend,
+  onPreviewImage,
 }: {
   messages: StreamMessage[]
   loading: boolean
   streaming: boolean
   onSend: (text: string) => void
+  onPreviewImage?: (url: string) => void
 }) {
   const listRef = useRef<HTMLDivElement>(null)
   const atBottomRef = useRef(true)
@@ -114,23 +116,25 @@ export function MessageList({
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
         {loading && (
-          <div className="trace agent-msg">
-            <div className="trace__role">LOAD</div>
-            <div className="trace__content">
-              <span className="console__live agent-msg__live-inline">读取历史会话…</span>
+          <div className="agent-msg--user">
+            <div className="agent-msg__bubble-ai">
+              <span className="agent-msg__text" style={{ color: "var(--on-dark-3)" }}>
+                读取历史会话…
+              </span>
             </div>
           </div>
         )}
         {empty && <WelcomeScreen onSend={onSend} />}
-        {/* welcome 类名由 WelcomeScreen 自带；此处不再包一层 */}
         {messages.map((msg) => (
-          <MessageRow key={msg.id} msg={msg} />
+          <MessageRow key={msg.id} msg={msg} onPreviewImage={onPreviewImage} />
         ))}
+        {/* 打字指示器：排版复刻 Vue 版 typing-pill（三条跳动竖条） */}
         {streaming && (
-          <div className="trace agent-msg">
-            <div className="trace__role">AGENT</div>
-            <div className="trace__content">
-              <span className="console__live agent-msg__live-inline">THINKING</span>
+          <div className="typing-row">
+            <div className="typing-pill" aria-label="正在输入">
+              <span className="typing-bar" />
+              <span className="typing-bar" />
+              <span className="typing-bar" />
             </div>
           </div>
         )}

@@ -3,9 +3,8 @@ import type { StreamMessage } from "@/lib/agentStream"
 import { renderMarkdown } from "@/lib/markdown"
 
 /**
- * 思考过程：原生 details 折叠，零 JS。
- * 折叠时不渲染 markdown——reasoning 也是逐 token 增长的，
- * 展开瞬间渲染一次即可。
+ * 思考过程：排版复刻 Vue 版 ReasoningMessage——「思考过程」标签 +
+ * 折叠时的前 50 字预览。仍用原生 details（零 JS），展开瞬间渲染一次 markdown。
  */
 export function ReasoningMessage({ msg }: { msg: StreamMessage }) {
   const [open, setOpen] = useState(false)
@@ -13,16 +12,30 @@ export function ReasoningMessage({ msg }: { msg: StreamMessage }) {
     () => (open ? renderMarkdown(msg.content) : ""),
     [open, msg.content],
   )
+  const preview = msg.content.length > 50 ? `${msg.content.slice(0, 50)}...` : msg.content
 
   return (
     <details
-      className="trace agent-msg agent-msg--reasoning"
+      className="agent-msg--reasoning"
       onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
     >
-      <summary className="trace__role">REASONING · 思考过程</summary>
-      <div className="trace__content">
+      <summary className="agent-toolcard__head" style={{ borderRadius: 10 }}>
+        <span className="agent-toolcard__tag" style={{ marginLeft: 0, opacity: 1 }}>
+          思考过程
+        </span>
+        {!open && preview && (
+          <span
+            className="agent-toolcard__name"
+            style={{ color: "var(--on-dark-3)", fontWeight: 400 }}
+          >
+            {preview}
+          </span>
+        )}
+      </summary>
+      <div className="agent-toolcard__body">
         <div
           className="markdown-body"
+          style={{ fontFamily: "var(--font-sans)", fontSize: 13 }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>

@@ -22,10 +22,31 @@ function resolveCopyText(target: Element): string | null {
   return code?.textContent ?? null
 }
 
-/** 助手消息：markdown 渲染 + 代码块复制（事件委托）。流式中尾追闪烁光标。 */
+/** 助手消息标头的眼睛图标：构图同 Vue 版（眼形 + 瞳孔 + 两侧节点），节点不做闪烁动画。 */
+function AgentEyeIcon() {
+  return (
+    <svg className="agent-msg__aiicon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2 12C2 12 6 5 12 5C18 5 22 12 22 12C22 12 18 19 12 19C6 19 2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        opacity="0.8"
+      />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <circle cx="6" cy="12" r="1" fill="currentColor" opacity="0.5" />
+      <circle cx="18" cy="12" r="1" fill="currentColor" opacity="0.5" />
+    </svg>
+  )
+}
+
+/**
+ * 助手消息：排版复刻 Vue 版 AssistantMessage——左对齐圆角气泡 +
+ * 「EyeSight」serif 标头（构图同 Vue 的眼睛图标，令牌换反相带）。
+ * 流式中正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次——
+ * 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
+ */
 export function AssistantMessage({ msg }: { msg: StreamMessage }) {
-  // 流式期间正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次——
-  // 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
+  // 流式期间正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次
   const html = useMemo(
     () => (msg.isLoading ? "" : renderMarkdown(msg.content)),
     [msg.isLoading, msg.content],
@@ -39,11 +60,14 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   }
 
   return (
-    <div className="trace agent-msg agent-msg--assistant">
-      <div className="trace__role">AGENT</div>
-      <div className="trace__content">
+    <div className="agent-msg--assistant">
+      <div className="agent-msg__bubble-ai">
+        <div className="agent-msg__aihead">
+          <AgentEyeIcon />
+          <span className="agent-msg__ainame">EyeSight</span>
+        </div>
         {msg.isLoading ? (
-          <div className="trace__text">
+          <div className="agent-msg__text">
             <span className="agent-msg__streaming">{msg.content}</span>
             <span className="caret-blink" aria-hidden="true" />
           </div>
@@ -54,7 +78,7 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
             dangerouslySetInnerHTML={{ __html: html }}
           />
         )}
-        {msg.time && <div className="trace__note num">{msg.time}</div>}
+        {msg.time && <div className="agent-msg__time num">{msg.time}</div>}
       </div>
     </div>
   )
