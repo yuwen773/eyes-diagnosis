@@ -1716,3 +1716,201 @@
 .admin-diagnosis__review-fault {
   margin-top: 0;
 }
+
+/* ==========================================================================
+   管理后台 · 知识库段（Task 10）
+   --------------------------------------------------------------------------
+   与用户 / 新闻 / 诊断管理同版式：章节头发丝线 → 工具条（隐藏 file input +
+   选择文件 / 开始上传 + 待传 chips）→ 处理中条 → 表格 → 页脚数据边界小字。
+   状态色一律由 .risk / .fault-note 自带的 --risk-* 语义色承担，不碰信号橙。
+   只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong / --surface / --surface-2 /
+   --signal / --font-* / --maxw / --gutter / --fast，零写死色值；双主题随
+   html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-knowledge {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-knowledge__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-knowledge__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 工具条内上传行：隐藏 input + 按钮 + 说明小字 + 靠右的上传动作。 */
+.admin-knowledge__upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 隐藏 file input：保留可聚焦 / 可程序触发，但不占位、不可见。 */
+.admin-knowledge__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-knowledge__hint {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__upload-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* 待传列表：占满整行的第二块，顶端发丝线与上传行分开。 */
+.admin-knowledge__pending {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-knowledge__pending-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 文件名 chip：纸面 + 发丝线，移除按钮贴右，不撑破窄屏。 */
+.admin-knowledge__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 6px 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.admin-knowledge__chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-knowledge__chip-remove {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: none;
+  color: var(--fg-3);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.admin-knowledge__chip-remove:hover {
+  color: var(--fg);
+}
+
+/* 删除 / 上传失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-knowledge__fault {
+  margin-top: 22px;
+}
+
+/* ── 处理中条 ─────────────────────────────────────────────── */
+
+.admin-knowledge__processing {
+  margin-top: 22px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+.admin-knowledge__processing-head {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__processing-list {
+  display: grid;
+  gap: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-knowledge__processing-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-knowledge__processing-name {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.admin-knowledge__table {
+  margin-top: 26px;
+}
+
+/* 页脚数据边界小字：mono + --fg-3，顶端发丝线与表体隔开。 */
+.admin-knowledge__footer {
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-knowledge__modal-name {
+  color: var(--fg);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

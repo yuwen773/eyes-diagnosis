@@ -20,6 +20,7 @@ import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
 import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
 import { AdminDiagnosisPage } from "@/pages/admin/AdminDiagnosisPage"
+import { AdminKnowledgePage } from "@/pages/admin/AdminKnowledgePage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -143,15 +144,7 @@ export function App() {
             />
             <Route
               path="knowledge"
-              element={
-                <AdminPlaceholder
-                  code="10"
-                  kicker="系统管理 · 知识库"
-                  en="ADMIN · KNOWLEDGE"
-                  title="知识库"
-                  body="文档上传、解析进度与分块状态。这个界面正在装配。"
-                />
-              }
+              element={<AdminKnowledgePage />}
             />
             <Route
               path="data-analysis"
