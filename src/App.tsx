@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
-import { SessionProvider } from "@/lib/session"
+import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { LandingPage } from "@/pages/LandingPage"
 import { DiagnosisPage } from "@/pages/DiagnosisPage"
@@ -31,15 +31,21 @@ function ScrollToTop() {
 }
 
 /**
- * 任何业务接口回 40100（未登录）时，把人送回登录页，并记住来路——
+ * 任何业务接口报未登录时，把人送回登录页，并记住来路——
  * 登录成功后直接回到刚才要去的页面，而不是把人丢回首页。
+ *
+ * 40100 一律跳；40101 只在「本来就没登录」时跳——已登录却撞上 40101
+ * 是访问了别人的会话，那是权限问题，不该把人送去登录页。
  */
-function AuthRedirect() {
+export function AuthRedirect() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { status } = useSession()
 
   useEffect(() => {
-    function onExpired() {
+    function onExpired(event: Event) {
+      const code = (event as CustomEvent<{ code?: number }>).detail?.code
+      if (code !== 40100 && !(code === 40101 && status === "anon")) return
       // 已经在登录/注册页就别再跳，否则会自己跟自己打转
       if (location.pathname === "/login" || location.pathname === "/register") return
       const back = `${location.pathname}${location.search}`
@@ -47,7 +53,7 @@ function AuthRedirect() {
     }
     window.addEventListener(AUTH_EXPIRED_EVENT, onExpired)
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
-  }, [navigate, location])
+  }, [navigate, location, status])
 
   return null
 }

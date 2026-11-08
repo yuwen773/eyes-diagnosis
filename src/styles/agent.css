@@ -799,6 +799,13 @@
   border-bottom: 1px solid var(--hr);
 }
 
+.agent-main__anon {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
 .agent-notice {
   margin: 10px 12px 0;
 }

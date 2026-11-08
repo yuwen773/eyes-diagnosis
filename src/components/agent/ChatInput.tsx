@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 import { filterImageFiles } from "@/lib/agentUpload"
+import { clearDraft, loadDraft, saveDraft } from "@/lib/agentDraft"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
@@ -26,6 +27,17 @@ export function ChatInput({
   const [hint, setHint] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 草稿：跳登录页来回一趟不丢字
+  useEffect(() => {
+    const restored = loadDraft()
+    if (restored) setText(restored)
+  }, [])
+
+  function updateText(next: string) {
+    setText(next)
+    saveDraft(next)
+  }
 
   // 自适应高度
   useEffect(() => {
@@ -54,9 +66,10 @@ export function ChatInput({
       return
     }
     onSend(trimmed, attachments.map((a) => a.file))
-    setText("")
+    updateText("")
     setAttachments([])
     setHint("")
+    clearDraft()
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -146,7 +159,7 @@ export function ChatInput({
           rows={1}
           value={text}
           disabled={disabled}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateText(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
         />

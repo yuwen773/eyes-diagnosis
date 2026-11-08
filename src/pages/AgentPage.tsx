@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Navigate } from "react-router-dom"
 import {
   ApiError,
   batchDeleteSessions,
@@ -266,12 +265,8 @@ export function AgentPage() {
     )
   }
 
-  if (status === "anon") {
-    // 未登录直接送登录页，并记住来路——登录完回到 /agent。
-    // 不给「需要登录」的告示：那是死胡同，用户得自己找入口。
-    return <Navigate to="/login?redirect=/agent" replace />
-  }
-
+  // 未登录不拦页面：先把界面给出来，等真的调 agent 接口拿到 40100/40101
+  // 再由路由层跳登录页（带回跳地址）。
   return (
     <div className="is-field">
       <SiteHeader />
@@ -300,6 +295,9 @@ export function AgentPage() {
 
           <div className="agent-main">
             <div className="agent-main__bar">
+              {status === "anon" && (
+                <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
+              )}
               {sessionsCollapsed && (
                 <>
                   <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSessionsCollapsed(false)}>

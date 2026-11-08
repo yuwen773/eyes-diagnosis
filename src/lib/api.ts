@@ -13,6 +13,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api"
  */
 export const AUTH_EXPIRED_EVENT = "eye:auth-expired"
 
+/** 事件负载：错误码。40100=未登录；40101=无权限（匿名访问会话时后端也用这个码）。 */
+export type AuthExpiredDetail = { code: number }
+
+function notifyAuthExpired(code: number) {
+  window.dispatchEvent(
+    new CustomEvent<AuthExpiredDetail>(AUTH_EXPIRED_EVENT, { detail: { code } }),
+  )
+}
+
 export class ApiError extends Error {
   readonly code: number
 
@@ -63,7 +72,7 @@ async function request<T>(
   const payload = (await response.json()) as Envelope<T>
   if (payload.code !== 0) {
     if (payload.code === 40100 && !options.silentAuth) {
-      window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT))
+      notifyAuthExpired(40100)
     }
     throw new ApiError(payload.code ?? -1, payload.msg || "请求未完成")
   }
@@ -352,8 +361,20 @@ export async function streamChat(
     openWhenHidden: true,
 
     async onopen(response) {
-      if (response.ok) return
-      throw new ApiError(response.status, `服务返回 ${response.status}`)
+      if (!response.ok) {
+        throw new ApiError(response.status, `服务返回 ${response.status}`)
+      }
+      // 匿名访问时后端抛 BusinessException(NO_AUTH_ERROR)，返回的是 200 + JSON 信封，
+      // 而不是 SSE 流——把它当流读会一直等到超时。识别出来并转成未登录事件。
+      const contentType = response.headers.get("content-type") ?? ""
+      if (contentType.includes("application/json")) {
+        const payload = (await response.json().catch(() => null)) as Envelope<unknown> | null
+        const code = payload?.code ?? -1
+        if (code === 40100 || code === 40101) {
+          notifyAuthExpired(code)
+        }
+        throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
+      }
     },
 
     onmessage(event) {
