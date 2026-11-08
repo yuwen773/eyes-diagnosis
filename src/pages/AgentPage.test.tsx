@@ -54,7 +54,7 @@ describe("AgentPage 未登录", () => {
     expect(screen.queryByText("登录页")).toBeNull()
   })
 
-  it("收起会话栏后布局切单列（不塌成 280px 窄条），恢复钮出现", () => {
+  it("收起会话栏后左栏折叠（常驻 DOM + 宽度动画），对话区不被压窄", () => {
     stubMatchMedia()
     render(
       <ThemeProvider>
@@ -69,13 +69,15 @@ describe("AgentPage 未登录", () => {
     fireEvent.click(screen.getByRole("button", { name: "收起会话栏" }))
 
     const layout = document.querySelector(".agent-layout")!
-    expect(layout.className).toContain("agent-layout--no-left")
-    expect(layout.className).not.toContain("agent-sessions")
-    expect(document.querySelector(".agent-sessions")).toBeNull()
+    expect(layout.className).toContain("is-left-collapsed")
+    // 会话栏常驻 DOM，只是折叠——移除会让中栏自动排进左列而塌成窄条
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-sessions")).toBeTruthy()
     // 左上角恢复钮组在
     expect(screen.getByRole("button", { name: "展开会话栏" })).toBeTruthy()
     // 再展开，侧栏回来
     fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
     expect(document.querySelector(".agent-sessions")).toBeTruthy()
   })
 })

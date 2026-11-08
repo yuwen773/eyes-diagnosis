@@ -507,7 +507,20 @@
    右侧让出浮动资源钮的位置，避免与计数重叠。 */
 .agent-console .console__head {
   border-bottom-color: var(--hr);
-  padding-right: 72px;
+}
+
+/* 头栏左右两组：左侧放折叠后的左栏操作钮，右侧放资源面板钮。
+   都走常规流，不浮在正文/提示条上——浮动会压住字。 */
+.console__head-left,
+.console__head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.console__head-left {
+  gap: 12px;
 }
 
 .agent-console .console__meta {
@@ -928,6 +941,8 @@
 .agent-panel {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  width: 340px;
   min-height: 0;
   border-left: 1px solid var(--hr);
   background: var(--bg);
@@ -1326,104 +1341,100 @@
   flex-direction: column;
 }
 
+/* 三栏用 flex（同 Vue 版 .agent-chat-layout）：
+   左栏常驻 DOM、收起靠宽度动画；用 grid + 从 DOM 摘掉侧栏会让
+   中栏自动排进左列而塌成窄条。 */
 .agent-layout {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 0;
+  position: relative;
+  display: flex;
   flex: 1;
   min-height: 0;
   background: var(--bg);
   border-top: 1px solid var(--hr);
 }
 
-.agent-layout:has(.agent-panel) {
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
+.agent-layout__left {
+  flex-shrink: 0;
+  width: 280px;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
-/* 会话栏收起后 SessionList 从 DOM 移除——不切列的话
-   agent-main 会被自动放进 280px 的第一列，中栏塌成窄条。 */
-.agent-layout--no-left {
-  grid-template-columns: minmax(0, 1fr);
+.agent-layout__left.is-collapsed {
+  width: 0;
+  opacity: 0;
 }
 
-.agent-layout--no-left:has(.agent-panel) {
-  grid-template-columns: minmax(0, 1fr) 340px;
+.agent-layout__left > .agent-sessions {
+  width: 280px;
+  height: 100%;
 }
 
 .agent-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  min-width: 0;
-}
-
-.agent-main__bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--hr);
 }
 
 .agent-main__anon {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--fg-3);
+  white-space: nowrap;
 }
 
-/* 折叠后的左栏恢复钮组（同 Vue 版 collapsed-actions） */
-.agent-main__restore {
+/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions）：跟在对话头栏左侧，不浮在正文上 */
+.agent-collapsed-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agent-collapsed-actions__btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: 1px solid var(--hr);
-  border-radius: 8px;
-  background: none;
+  border: 1px solid var(--hr-strong);
+  border-radius: 9px;
+  background: var(--surface);
   color: var(--fg-3);
   cursor: pointer;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
-.agent-main__restore:hover {
+.agent-collapsed-actions__btn:hover {
   color: var(--fg);
-  border-color: var(--hr-strong);
+  border-color: var(--fg-3);
 }
 
-.agent-main__restore--accent {
+.agent-collapsed-actions__btn.is-accent:hover {
   color: var(--signal);
-}
-
-.agent-main__restore--accent:hover {
   border-color: var(--signal);
 }
 
-/* 资源面板切换钮（同 Vue 版 toggle-right-btn：浮动图标钮 + 徽标） */
+/* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标，
+   收在对话头栏右侧，不浮在正文上） */
 .agent-main__resource-toggle {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 1px solid var(--hr-strong);
-  border-radius: 10px;
+  border-radius: 9px;
   background: var(--surface);
   color: var(--fg-3);
   cursor: pointer;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
-}
-
-/* 浮动定位统一收进类（AgentPage 不再写内联 style） */
-.agent-main__resource-toggle.is-floating {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  z-index: 20;
 }
 
 .agent-main__resource-toggle:hover {
@@ -1460,19 +1471,30 @@
 
 @media (max-width: 900px) {
   .agent-layout {
-    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
     overflow-y: auto;
   }
 
-  .agent-layout:has(.agent-panel) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .agent-sessions {
+  .agent-layout__left {
+    width: 100%;
     max-height: 240px;
   }
 
+  .agent-layout__left.is-collapsed {
+    width: 100%;
+    max-height: 0;
+  }
+
+  .agent-layout__left > .agent-sessions {
+    width: 100%;
+  }
+
+  .agent-main {
+    min-height: 70vh;
+  }
+
   .agent-panel {
+    width: 100%;
     border-left: 0;
     border-top: 1px solid var(--hr);
   }

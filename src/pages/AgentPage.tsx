@@ -269,8 +269,10 @@ export function AgentPage() {
       <SiteHeader />
 
       <main className="agent-viewport">
-        <div className={`agent-layout${sessionsCollapsed ? " agent-layout--no-left" : ""}`}>
-          {!sessionsCollapsed && (
+        <div className={`agent-layout${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
+          {/* 会话栏常驻 DOM（同 Vue 版 AgentChatLayout）：收起靠宽度动画，
+              从 DOM 摘掉会让中栏自动排进左列而塌成窄条。 */}
+          <div className={`agent-layout__left${sessionsCollapsed ? " is-collapsed" : ""}`}>
             <SessionList
               sessions={sessions}
               activeId={currentThreadId}
@@ -288,67 +290,9 @@ export function AgentPage() {
               onExport={handleExport}
               onCollapse={() => setSessionsCollapsed(true)}
             />
-          )}
+          </div>
 
-          <div className="agent-main" style={{ position: "relative" }}>
-            <button
-              type="button"
-              className={`agent-main__resource-toggle is-floating${panelOpen ? " is-active" : ""}`}
-              onClick={() => setPanelOpen((v) => !v)}
-              aria-expanded={panelOpen}
-              aria-label="资源面板"
-              title="资源面板"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              {resources.images.length + resources.links.length > 0 && (
-                <span className="agent-main__resource-badge num">
-                  {resources.images.length + resources.links.length}
-                </span>
-              )}
-            </button>
-            {sessionsCollapsed && (
-              <div
-                role="toolbar"
-                aria-label="侧边栏操作"
-                style={{ position: "absolute", top: 14, left: 20, zIndex: 20, display: "flex", gap: 8 }}
-              >
-                <button
-                  type="button"
-                  className="agent-main__restore"
-                  onClick={() => setSessionsCollapsed(false)}
-                  aria-label="展开会话栏"
-                  title="展开会话栏"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="agent-main__restore agent-main__restore--accent"
-                  onClick={handleNewChat}
-                  aria-label="新建对话"
-                  title="新建对话"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-              </div>
-            )}
-            {status === "anon" && (
-              <div className="agent-main__bar">
-                <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
-              </div>
-            )}
-
+          <div className={`agent-main${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
             {notice && (
               <div className="notice agent-notice" role="status">
                 {notice}
@@ -361,6 +305,65 @@ export function AgentPage() {
               streaming={isStreaming}
               onSend={(text) => void handleSend(text)}
               onPreviewImage={(url) => setPreviewUrl(url)}
+              headLeft={
+                <>
+                  {/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions） */}
+                  {sessionsCollapsed && (
+                    <div role="toolbar" aria-label="侧边栏操作" className="agent-collapsed-actions">
+                      <button
+                        type="button"
+                        className="agent-collapsed-actions__btn"
+                        onClick={() => setSessionsCollapsed(false)}
+                        aria-label="展开会话栏"
+                        title="展开会话栏"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                          <line x1="3" y1="12" x2="21" y2="12" />
+                          <line x1="3" y1="6" x2="21" y2="6" />
+                          <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className="agent-collapsed-actions__btn is-accent"
+                        onClick={handleNewChat}
+                        aria-label="新建对话"
+                        title="新建对话"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  {status === "anon" && (
+                    <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
+                  )}
+                </>
+              }
+              headRight={
+                /* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标） */
+                <button
+                  type="button"
+                  className={`agent-main__resource-toggle${panelOpen ? " is-active" : ""}`}
+                  onClick={() => setPanelOpen((v) => !v)}
+                  aria-expanded={panelOpen}
+                  aria-label="资源面板"
+                  title="资源面板"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  {resources.images.length + resources.links.length > 0 && (
+                    <span className="agent-main__resource-badge num">
+                      {resources.images.length + resources.links.length}
+                    </span>
+                  )}
+                </button>
+              }
             />
 
             <ChatInput

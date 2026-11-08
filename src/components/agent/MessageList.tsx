@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
 import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
@@ -44,12 +44,18 @@ export function MessageList({
   streaming,
   onSend,
   onPreviewImage,
+  headLeft,
+  headRight,
 }: {
   messages: StreamMessage[]
   loading: boolean
   streaming: boolean
   onSend: (text: string) => void
   onPreviewImage?: (url: string) => void
+  /** 头栏左侧插槽：折叠后的左栏操作钮组。 */
+  headLeft?: ReactNode
+  /** 头栏右侧插槽：资源面板切换钮。 */
+  headRight?: ReactNode
 }) {
   const listRef = useRef<HTMLDivElement>(null)
   const atBottomRef = useRef(true)
@@ -107,12 +113,18 @@ export function MessageList({
   return (
     <div className="agent-console">
       <div className="console__head">
-        <span className="console__title">DIAGNOSIS · AGENT</span>
-        {streaming ? (
-          <span className="console__live">LIVE</span>
-        ) : (
-          <span className="console__meta">{messages.length} MSG</span>
-        )}
+        <div className="console__head-left">
+          {headLeft}
+          <span className="console__title">DIAGNOSIS · AGENT</span>
+        </div>
+        <div className="console__head-right">
+          {streaming ? (
+            <span className="console__live">LIVE</span>
+          ) : (
+            <span className="console__meta">{messages.length} MSG</span>
+          )}
+          {headRight}
+        </div>
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
         {loading && <div className="agent-load">读取历史会话…</div>}
