@@ -1052,15 +1052,107 @@
 
 .agent-sessions__head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px 12px;
   border-bottom: 1px solid var(--hr);
+}
+
+/* 品牌行 + 收起钮（同 Vue 版 LeftSidebar brand） */
+.agent-sessions__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-sessions__brandname {
+  flex: 1;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.agent-sessions__collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.agent-sessions__collapse:hover {
+  background: var(--surface-2);
+  color: var(--fg-2);
 }
 
 .agent-sessions__actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 「选择」文字钮（同 Vue 版 multi-select-btn） */
+.agent-sessions__select {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  white-space: nowrap;
+}
+
+.agent-sessions__select:hover {
+  color: var(--fg-2);
+  background: var(--surface-2);
+}
+
+.agent-sessions__select.is-active {
+  color: var(--signal);
+}
+
+/* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边） */
+.agent-sessions__newchat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--hr-strong);
+  border-radius: 10px;
+  background: none;
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.agent-sessions__newchat:hover:not(:disabled) {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.agent-sessions__newchat:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
 }
 
 .agent-sessions__body {
@@ -1220,21 +1312,28 @@
   outline: none;
 }
 
-/* ── agent: 页面布局 ───────────────────────────────────── */
+/* ── agent: 页面布局（同 Vue 版：无页脚、无版心，三栏铺满顶栏以下视口）── */
+
+.agent-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
 .agent-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 0;
-  height: calc(100vh - 220px);
-  min-height: 480px;
-  margin: 24px 0;
-  border: 1px solid var(--hr);
+  flex: 1;
+  min-height: 0;
   background: var(--bg);
+  border-top: 1px solid var(--hr);
 }
 
 .agent-layout:has(.agent-panel) {
-  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  grid-template-columns: 280px minmax(0, 1fr) 340px;
 }
 
 .agent-main {
@@ -1259,6 +1358,80 @@
   color: var(--fg-3);
 }
 
+/* 折叠后的左栏恢复钮组（同 Vue 版 collapsed-actions） */
+.agent-main__restore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hr);
+  border-radius: 8px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.agent-main__restore:hover {
+  color: var(--fg);
+  border-color: var(--hr-strong);
+}
+
+.agent-main__restore--accent {
+  color: var(--signal);
+}
+
+.agent-main__restore--accent:hover {
+  border-color: var(--signal);
+}
+
+/* 资源面板切换钮（同 Vue 版 toggle-right-btn：浮动图标钮 + 徽标） */
+.agent-main__resource-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--hr-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.agent-main__resource-toggle:hover {
+  color: var(--fg);
+  border-color: var(--fg-3);
+}
+
+.agent-main__resource-toggle.is-active {
+  color: var(--signal);
+  border-color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.agent-main__resource-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--signal);
+  color: var(--paper-surface);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+
 .agent-notice {
   margin: 10px 12px 0;
 }
@@ -1266,7 +1439,7 @@
 @media (max-width: 900px) {
   .agent-layout {
     grid-template-columns: minmax(0, 1fr);
-    height: auto;
+    overflow-y: auto;
   }
 
   .agent-layout:has(.agent-panel) {

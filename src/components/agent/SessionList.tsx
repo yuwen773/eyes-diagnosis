@@ -188,13 +188,27 @@ export function SessionList({
   return (
     <aside className="agent-sessions">
       <div className="agent-sessions__head">
-        <span className="overline">会话</span>
+        <div className="agent-sessions__brand">
+          <span className="agent-sessions__brandname">会话</span>
+          <button
+            type="button"
+            className="agent-sessions__collapse"
+            onClick={onCollapse}
+            aria-label="收起会话栏"
+            title="收起会话栏"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        </div>
         <div className="agent-sessions__actions">
           {selectMode ? (
             <>
               <button
                 type="button"
-                className="link is-danger"
+                className="agent-sessions__select"
+                style={{ color: "var(--risk-critical)" }}
                 disabled={checked.size === 0 || busy}
                 onClick={() => {
                   if (window.confirm(`删除选中的 ${checked.size} 个会话？`)) {
@@ -208,7 +222,7 @@ export function SessionList({
               </button>
               <button
                 type="button"
-                className="link"
+                className="agent-sessions__select"
                 onClick={() => {
                   setSelectMode(false)
                   setChecked(new Set())
@@ -219,14 +233,24 @@ export function SessionList({
             </>
           ) : (
             <>
-              <button type="button" className="link" onClick={() => setSelectMode(true)}>
-                多选
+              <button
+                type="button"
+                className="agent-sessions__select"
+                onClick={() => setSelectMode(true)}
+              >
+                选择
               </button>
-              <button type="button" className="link" onClick={onNewChat} disabled={busy}>
-                新建
-              </button>
-              <button type="button" className="link" onClick={onCollapse} aria-label="收起会话栏">
-                收起
+              <button
+                type="button"
+                className="agent-sessions__newchat"
+                onClick={onNewChat}
+                disabled={busy}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>新对话</span>
               </button>
             </>
           )}

@@ -19,7 +19,6 @@ import { MessageList } from "@/components/agent/MessageList"
 import { ChatInput } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
-import { SiteFooter } from "@/components/SiteFooter"
 import { SiteHeader } from "@/components/SiteHeader"
 
 const THREAD_ID_KEY = "agent_current_thread_id"
@@ -253,25 +252,23 @@ export function AgentPage() {
     return (
       <div className="is-field">
         <SiteHeader />
-        <main className="wrap">
-          <p className="num" style={{ color: "var(--fg-3)" }}>
+        <main className="agent-viewport">
+          <p className="num" style={{ color: "var(--fg-3)", padding: 16 }}>
             LOADING…
           </p>
         </main>
-        <div className="wrap">
-          <SiteFooter />
-        </div>
       </div>
     )
   }
 
   // 未登录不拦页面：先把界面给出来，等真的调 agent 接口拿到 40100/40101
   // 再由路由层跳登录页（带回跳地址）。
+  // 同 Vue 版 BasicLayout：agent 页不出页脚、不进版心，三栏铺满顶栏以下视口。
   return (
     <div className="is-field">
       <SiteHeader />
 
-      <main className="wrap">
+      <main className="agent-viewport">
         <div className="agent-layout">
           {!sessionsCollapsed && (
             <SessionList
@@ -293,32 +290,65 @@ export function AgentPage() {
             />
           )}
 
-          <div className="agent-main">
-            <div className="agent-main__bar">
-              {status === "anon" && (
-                <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
+          <div className="agent-main" style={{ position: "relative" }}>
+            <button
+              type="button"
+              className={`agent-main__resource-toggle${panelOpen ? " is-active" : ""}`}
+              style={{ position: "absolute", top: 14, right: 20, zIndex: 20 }}
+              onClick={() => setPanelOpen((v) => !v)}
+              aria-expanded={panelOpen}
+              aria-label="资源面板"
+              title="资源面板"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              {resources.images.length + resources.links.length > 0 && (
+                <span className="agent-main__resource-badge num">
+                  {resources.images.length + resources.links.length}
+                </span>
               )}
-              {sessionsCollapsed && (
-                <>
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSessionsCollapsed(false)}>
-                    会话
-                  </button>
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={handleNewChat}>
-                    新建
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                style={{ marginLeft: "auto" }}
-                onClick={() => setPanelOpen((v) => !v)}
+            </button>
+            {sessionsCollapsed && (
+              <div
+                role="toolbar"
+                aria-label="侧边栏操作"
+                style={{ position: "absolute", top: 14, left: 20, zIndex: 20, display: "flex", gap: 8 }}
               >
-                资源{resources.images.length + resources.links.length > 0
-                  ? ` ${resources.images.length + resources.links.length}`
-                  : ""}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="agent-main__restore"
+                  onClick={() => setSessionsCollapsed(false)}
+                  aria-label="展开会话栏"
+                  title="展开会话栏"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="agent-main__restore agent-main__restore--accent"
+                  onClick={handleNewChat}
+                  aria-label="新建对话"
+                  title="新建对话"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            {status === "anon" && (
+              <div className="agent-main__bar">
+                <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
+              </div>
+            )}
 
             {notice && (
               <div className="notice agent-notice" role="status">
@@ -368,9 +398,6 @@ export function AgentPage() {
         </div>
       )}
 
-      <div className="wrap">
-        <SiteFooter />
-      </div>
     </div>
   )
 }
