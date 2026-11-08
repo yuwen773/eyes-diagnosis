@@ -1,0 +1,239 @@
+/* ============================================================
+   agent.css — Agent 对话页（/agent）
+   只消费上下文令牌（--fg/--fg-2/--fg-3/--hr/--signal 等），
+   双主题随 html.dark 自动成立。消息行沿用 app.css 的 .trace 骨架。
+   ============================================================ */
+
+/* ── agent: 消息行 ──────────────────────────────────────── */
+
+.agent-msg {
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-msg--user {
+  grid-template-columns: 66px minmax(0, 1fr);
+}
+
+.agent-msg--user__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+
+.agent-msg__imggrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.agent-msg__imggrid img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid var(--hr);
+}
+
+.agent-msg__imgmore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px dashed var(--hr-strong);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.agent-msg__streaming {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.caret-blink {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--signal);
+  animation: agent-caret 1s steps(2, start) infinite;
+}
+
+@keyframes agent-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-blink {
+    animation: none;
+  }
+}
+
+/* markdown 正文（app.css 无此节，补齐；只消费上下文令牌） */
+.markdown-body {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+.markdown-body p {
+  margin: 0 0 0.6em;
+}
+
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 0.6em;
+  padding-left: 1.4em;
+}
+
+.markdown-body li {
+  margin: 0.2em 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 15px;
+  margin: 1em 0 0.4em;
+}
+
+.markdown-body blockquote {
+  margin: 0.6em 0;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--hr-strong);
+  color: var(--fg-2);
+}
+
+.markdown-body a {
+  color: var(--signal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--hr);
+  padding: 1px 5px;
+}
+
+.markdown-body pre.code-block {
+  margin: 0.6em 0;
+  padding: 0;
+  background: var(--bg);
+  border: 1px solid var(--hr);
+  overflow: hidden;
+}
+
+.markdown-body pre.code-block .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--hr);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
+.markdown-body pre.code-block code {
+  display: block;
+  padding: 10px;
+  background: none;
+  border: 0;
+  overflow-x: auto;
+}
+
+.markdown-body .copy-btn {
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.markdown-body .copy-btn:hover {
+  color: var(--signal);
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 12.5px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--hr);
+  padding: 4px 10px;
+  text-align: left;
+}
+
+/* 折叠 */
+.agent-msg--reasoning summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.agent-msg--reasoning summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-msg--reasoning summary::after {
+  content: " ▸";
+  color: var(--fg-3);
+}
+
+.agent-msg--reasoning[open] summary::after {
+  content: " ▾";
+}
+
+.agent-msg__fold summary {
+  cursor: pointer;
+  color: var(--fg-2);
+}
+
+.agent-msg__foldbody {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hr);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 确认终点卡：--signal 左边条区别于工具卡 */
+.agent-msg--confirm {
+  border-left: 2px solid var(--signal);
+}
+
+.agent-msg__confirm-head {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal);
+  margin-bottom: 6px;
+}
+
+.agent-msg__confirm-detail {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 6px;
+}
