@@ -269,7 +269,7 @@ export function AgentPage() {
       <SiteHeader />
 
       <main className="agent-viewport">
-        <div className="agent-layout">
+        <div className={`agent-layout${sessionsCollapsed ? " agent-layout--no-left" : ""}`}>
           {!sessionsCollapsed && (
             <SessionList
               sessions={sessions}

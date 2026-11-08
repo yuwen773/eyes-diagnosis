@@ -1340,6 +1340,16 @@
   grid-template-columns: 280px minmax(0, 1fr) 340px;
 }
 
+/* 会话栏收起后 SessionList 从 DOM 移除——不切列的话
+   agent-main 会被自动放进 280px 的第一列，中栏塌成窄条。 */
+.agent-layout--no-left {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.agent-layout--no-left:has(.agent-panel) {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
 .agent-main {
   display: flex;
   flex-direction: column;
