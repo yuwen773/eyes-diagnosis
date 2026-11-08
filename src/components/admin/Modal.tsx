@@ -1,35 +1,39 @@
 import { useEffect, useRef, type ReactElement, type ReactNode } from "react"
 
 /**
- * 弹层滚动锁用引用计数，而不是「各存一份 prevOverflow」。
- * Task 9 的流程里 Drawer（详情）与 Modal（复核）会同时打开，简单的
- * save/restore 会让先关的那个把 body 提前解锁，或把 overflow 还原成
- * 另一个弹层写进去的 hidden。计数保证最后一层关闭时才还原。
+ * 打开的弹层栈。Task 9 的流程里 Drawer（详情）与 Modal（复核）会同时打开：
+ *   - 滚动锁用引用计数，最后一层关闭才还原 body overflow；
+ *   - Esc 只由栈顶弹层响应，否则一次 Esc 会把两层一起关掉；
+ *   - 焦点归还只在自己处于栈顶时执行，且归还目标必须仍在文档中
+ *     （背景元素可能已因下层弹层关闭而卸载 / inert）。
+ * 每项是一个稳定的 token（每次 open 生成），入栈顺序即开启顺序。
  */
-let openDialogCount = 0
+let dialogStack: symbol[] = []
 let savedBodyOverflow = ""
 
 function lockBodyScroll() {
-  if (openDialogCount === 0) {
+  if (dialogStack.length === 0) {
     savedBodyOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
   }
-  openDialogCount += 1
 }
 
 function unlockBodyScroll() {
-  openDialogCount = Math.max(0, openDialogCount - 1)
-  if (openDialogCount === 0) {
+  if (dialogStack.length === 0) {
     document.body.style.overflow = savedBodyOverflow
   }
+}
+
+function isTop(token: symbol): boolean {
+  return dialogStack[dialogStack.length - 1] === token
 }
 
 /**
  * Modal / Drawer 共用的受控弹层行为：
  *   - open 时把焦点移入面板（tabIndex=-1 的可聚焦容器），close 时归还给
  *     开启那一刻的 document.activeElement（触发元素）。
- *   - Esc 监听在 open 时挂、close 时卸。
- *   - body 滚动锁定与还原。
+ *   - Esc 监听在 open 时挂、close 时卸，且只有栈顶弹层响应 Esc。
+ *   - body 滚动锁定与还原（引用计数，支持叠层）。
  *
  * 焦点/滚动锁只在 open 切换时跑（不含 onClose），父级重渲染不会抢焦点；
  * Esc 监听单独挂，onClose 换身份只重挂监听，不动焦点。
@@ -37,25 +41,41 @@ function unlockBodyScroll() {
  */
 export function useAdminDialog(open: boolean, onClose: () => void) {
   const panelRef = useRef<HTMLDivElement | null>(null)
+  // 两个 effect 共用同一个「本次 open 会话」的 token：Esc 监听在事件发生时
+  // 读 tokenRef.current，不受 onClose 换身份导致 effect 重挂的影响。
+  const tokenRef = useRef<symbol | null>(null)
 
   useEffect(() => {
     if (!open) return
 
     // 先记录触发元素，再把焦点移入面板——顺序不能反。
     const trigger = document.activeElement as HTMLElement | null
+    const token = Symbol("admin-dialog")
+    tokenRef.current = token
     lockBodyScroll()
+    dialogStack = [...dialogStack, token]
     panelRef.current?.focus({ preventScroll: true })
 
     return () => {
+      // 只有自己处于栈顶时才归还焦点：下层弹层关掉时，不应把焦点从
+      // 仍打开的上层弹层里抢走，也不该落到已卸载 / inert 的元素上。
+      const wasTop = isTop(token)
+      dialogStack = dialogStack.filter((item) => item !== token)
       unlockBodyScroll()
-      trigger?.focus({ preventScroll: true })
+      tokenRef.current = null
+      if (wasTop && trigger && document.contains(trigger)) {
+        trigger.focus({ preventScroll: true })
+      }
     }
   }, [open])
 
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose()
+      // 叠层时只有栈顶弹层处理 Esc，避免一次按键关掉两层。
+      if (event.key === "Escape" && tokenRef.current && isTop(tokenRef.current)) {
+        onClose()
+      }
     }
     document.addEventListener("keydown", onKey)
     return () => document.removeEventListener("keydown", onKey)

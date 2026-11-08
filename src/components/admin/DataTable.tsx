@@ -59,9 +59,15 @@ export function DataTable<T>(props: {
     onPageChange,
   } = props
 
-  const isLoading = loading === true || rows === undefined
+  // error 优先于「rows === undefined 的隐式 loading」：自然接线
+  // rows={query.data} + error={describeError(...)} 下出错时 data 是
+  // undefined，若让隐式 loading 前置，错误文案将永远不可达。
+  const isLoading = loading === true || (rows === undefined && !error)
   const totalPages = Math.max(1, Math.ceil(page.total / page.pageSize))
   const current = Math.min(Math.max(1, page.current), totalPages)
+  // isLoading 的表达式让 TS 无法在后续分支里把 rows 收窄成 T[]，这里显式
+  // 归一化供「空态 / 数据行」消费；loading / error 判定仍用原始 rows。
+  const resolvedRows: T[] = rows ?? []
 
   let body: ReactNode
   if (isLoading) {
@@ -80,7 +86,7 @@ export function DataTable<T>(props: {
         </td>
       </tr>
     )
-  } else if (rows.length === 0) {
+  } else if (resolvedRows.length === 0) {
     body = (
       <tr className="admin-dt__state-row">
         <td className="admin-dt__state" colSpan={columns.length}>
@@ -89,7 +95,7 @@ export function DataTable<T>(props: {
       </tr>
     )
   } else {
-    body = rows.map((row) => (
+    body = resolvedRows.map((row) => (
       <tr key={rowKey(row)} className="admin-dt__row">
         {columns.map((column) => (
           <td
