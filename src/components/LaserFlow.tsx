@@ -258,7 +258,7 @@ void main() {
     fog += sideK * 2.2 * surfaceLit * (smoothstep(0.38, 0.72, cloud) - 0.35) * fogMask;
     float smoke = smoothstep(0.3, 0.75, cloud);
     fog += BEAM * 0.35 * exp(-adx / (22.0 * beamWidth)) * (0.35 + 0.9 * smoke) * fogMask * top * drop;
-    col += fog * fogAmount * (1.0 + 1.2 * lens) * mix(1.0, 0.45, uTheme);
+    col += fog * fogAmount * (1.0 + 1.2 * lens) * mix(1.0, 0.72, uTheme);
   }
 
   if (uRevealInfo.y > 0.001 && uLens.w > 0.002) {
@@ -317,14 +317,17 @@ void main() {
   col *= uAmount.x * (1.0 + uIntro.z * 0.9 * exp(-length(vec2(dx, h * 1.6)) / 70.0));
   col *= smoothstep(-0.75, 0.25, sd * uScale);
 
-  vec3 emit = 1.0 - exp(-col * mix(1.0, 0.6, uTheme));
+  vec3 emit = 1.0 - exp(-col * mix(1.0, 0.78, uTheme));
   float peak = max(emit.r, max(emit.g, emit.b));
   if (uTheme > 0.5) {
+    // 浅色页面：光不再靠白核显形（白核落在白纸上本来就看不见），
+    // 靠色度驱动 alpha —— 纸面上只留那道暖色晕。色度提得比暗色页更实，
+    // 否则在骨白底上会淡成一缕烟。
     float low = min(emit.r, min(emit.g, emit.b));
     float chroma = peak - low;
     vec3 hue = (emit - low) / max(chroma, 0.0001);
-    float alpha = clamp(pow(chroma, 1.35) * 1.3, 0.0, 1.0) * 0.9;
-    outColor = vec4((hue * 0.82 + 0.06) * alpha, alpha);
+    float alpha = clamp(pow(chroma, 0.9) * 1.55, 0.0, 1.0) * 0.95;
+    outColor = vec4((hue * 0.88 + 0.05) * alpha, alpha);
   } else {
     outColor = vec4(emit, peak);
   }

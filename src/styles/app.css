@@ -3103,6 +3103,13 @@ html:not(.dark) .auth__grain {
   mix-blend-mode: screen;
 }
 
+/* 浅色验光台：screen 在骨白底上会把光冲成白，光就看不见了。
+   换成 normal——着色器的 light 分支输出的是色相 + 色度驱动的 alpha，
+   落在纸面上只剩那道暖色辉光，白核本来就该看不见。 */
+html:not(.dark) .auth__beam {
+  mix-blend-mode: normal;
+}
+
 .auth__grid {
   position: relative;
   z-index: 2;
