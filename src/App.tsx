@@ -13,7 +13,6 @@ import { ProfilePage } from "@/pages/ProfilePage"
 import { RecordsPage } from "@/pages/RecordsPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { RegisterPage } from "@/pages/RegisterPage"
-import { PlaceholderPage } from "@/components/PlaceholderPage"
 import { AdminGate } from "@/components/admin/AdminGate"
 import { AdminLayout } from "@/components/admin/AdminLayout"
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
@@ -22,36 +21,7 @@ import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
 import { AdminDiagnosisPage } from "@/pages/admin/AdminDiagnosisPage"
 import { AdminKnowledgePage } from "@/pages/admin/AdminKnowledgePage"
 import { AdminDataAnalysisPage } from "@/pages/admin/AdminDataAnalysisPage"
-
-/**
- * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
- * @/pages/admin/AdminXxxPage；占位期间路由与守卫仍可完整验收。
- * code 顺延现有占位页（个人中心 06 / 诊断记录 07）。
- */
-function AdminPlaceholder({
-  code,
-  kicker,
-  en,
-  title,
-  body,
-}: {
-  code: string
-  kicker: string
-  en: string
-  title: string
-  body: string
-}) {
-  return (
-    <PlaceholderPage
-      code={code}
-      kicker={kicker}
-      en={en}
-      title={title}
-      body={body}
-      detail="管理端页面按批装配中；后端管理接口已就绪。"
-    />
-  )
-}
+import { AdminNewsEditPage } from "@/pages/admin/AdminNewsEditPage"
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -153,15 +123,7 @@ export function App() {
             />
             <Route
               path="news/:id/edit"
-              element={
-                <AdminPlaceholder
-                  code="12"
-                  kicker="系统管理 · 新闻编辑"
-                  en="ADMIN · NEWS EDIT"
-                  title="新闻编辑"
-                  body="新闻正文、发布状态与封面的编辑界面。这个界面正在装配。"
-                />
-              }
+              element={<AdminNewsEditPage />}
             />
           </Route>
 

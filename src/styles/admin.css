@@ -2029,3 +2029,325 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ==========================================================================
+   管理后台 · 新闻编辑段（Task 12）
+   --------------------------------------------------------------------------
+   与其他管理页同版式：页首章节头发丝线（右上「返回列表」）→ 工具行（编辑/预览
+   mono tab + 状态 select + 保存）→ 表单列（标题 / 封面 / 正文 textarea 或预览）。
+   正文 textarea 用 --font-sans（等宽不适用），min-height 420px；预览直接复用
+   .markdown-body（agent.css 已定义）的排版。封面缩略图与隐藏 file input 沿用
+   知识库页的仪器形状。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter / --fast，
+   零写死色值；状态色由 .fault-note 自带的 --risk-* 语义色承担，不碰信号橙。
+   双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-newsedit {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，返回按钮钉在右上，底端发丝线收口。 */
+.admin-newsedit__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-newsedit__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.admin-newsedit__back {
+  flex: none;
+}
+
+/* 加载 / 错误态：与表格三态同源，占整块而非浮层。 */
+.admin-newsedit__state {
+  margin: 0;
+  padding: 44px 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__fault {
+  margin-top: 18px;
+}
+
+.admin-newsedit__form {
+  display: grid;
+  gap: 0;
+}
+
+/* 工具行：tab 组靠左、状态 select 居中、保存按钮靠右，窄屏自动换行。 */
+.admin-newsedit__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-newsedit__tabs {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+}
+
+/* 沿用图 / 表切换的仪器按键形状：mono 小字、1px 发丝线，当前态抬一层 surface-2。 */
+.admin-newsedit__tab {
+  padding: 9px 14px;
+  border: 1px solid var(--hr-strong);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
+}
+
+.admin-newsedit__tab:hover {
+  border-color: var(--fg-2);
+  color: var(--fg);
+}
+
+.admin-newsedit__tab[aria-selected="true"] {
+  border-color: var(--fg-2);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.admin-newsedit__tab:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.admin-newsedit__status {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-newsedit__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__select {
+  height: 40px;
+  min-width: 140px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__select:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.admin-newsedit__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* 表单列：工具行下方统一给一道发丝线间距，字段间用定距栅格排开。 */
+.admin-newsedit__fields {
+  display: grid;
+  gap: 22px;
+  padding-top: 24px;
+}
+
+.admin-newsedit__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 沿用检索页输入的仪器形状，高度对齐 .btn--sm（40px）。 */
+.admin-newsedit__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: border-color var(--fast), background var(--fast);
+}
+
+.admin-newsedit__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-newsedit__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__input:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+/* 封面：缩略图 + 更换 / 清除 / 提示排成一行，窄屏自动换行。 */
+.admin-newsedit__cover {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-newsedit__cover-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-newsedit__cover-thumb {
+  display: block;
+  width: 160px;
+  height: 100px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-newsedit__cover-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 100px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-newsedit__cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 隐藏 file input：保留可聚焦 / 可程序触发，但不占位、不可见。 */
+.admin-newsedit__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-newsedit__cover-hint {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__cover-note {
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+
+/* 正文 / 预览：同一块容器，切 tab 只换内容，避免跳版。 */
+.admin-newsedit__editor {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-newsedit__field--body {
+  gap: 8px;
+}
+
+.admin-newsedit__textarea {
+  width: 100%;
+  min-height: 420px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.75;
+  resize: vertical;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__textarea::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-newsedit__textarea:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__textarea:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+/* 预览：纸面 + 发丝边框 + 最小高度对齐 textarea，正文排版交给 .markdown-body。 */
+.admin-newsedit__preview {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  overflow-wrap: anywhere;
+}
+
+/* 表单脚注：摘要守卫的常驻说明，mono + --fg-3，顶端发丝线。 */
+.admin-newsedit__footer {
+  margin: 26px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+@media (max-width: 640px) {
+  .admin-newsedit__actions {
+    margin-left: 0;
+  }
+
+  .admin-newsedit__cover-thumb,
+  .admin-newsedit__cover-empty {
+    width: 100%;
+  }
+}
