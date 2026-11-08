@@ -24,7 +24,12 @@ function resolveCopyText(target: Element): string | null {
 
 /** 助手消息：markdown 渲染 + 代码块复制（事件委托）。流式中尾追闪烁光标。 */
 export function AssistantMessage({ msg }: { msg: StreamMessage }) {
-  const html = useMemo(() => renderMarkdown(msg.content), [msg.content])
+  // 流式期间正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次——
+  // 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
+  const html = useMemo(
+    () => (msg.isLoading ? "" : renderMarkdown(msg.content)),
+    [msg.isLoading, msg.content],
+  )
   const bodyStyle: CSSProperties | undefined = msg.isLoading
     ? { "--caret-after": "" } as CSSProperties
     : undefined

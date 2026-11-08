@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
+import { filterImageFiles } from "@/lib/agentUpload"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
@@ -22,7 +23,9 @@ export function ChatInput({
 }) {
   const [text, setText] = useState("")
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [hint, setHint] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 自适应高度
   useEffect(() => {
@@ -45,9 +48,15 @@ export function ChatInput({
   function submit() {
     const trimmed = text.trim()
     if ((!trimmed && attachments.length === 0) || disabled) return
+    // 助手还在回复时不要把输入吞掉——保留文字并给出提示
+    if (streaming) {
+      setHint("助手正在回复，完成后即可发送")
+      return
+    }
     onSend(trimmed, attachments.map((a) => a.file))
     setText("")
     setAttachments([])
+    setHint("")
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -62,7 +71,24 @@ export function ChatInput({
     const pasted = Array.from(e.clipboardData.files)
     if (pasted.length === 0) return
     e.preventDefault()
-    setAttachments((prev) => addFiles(prev, pasted, (f) => URL.createObjectURL(f)))
+    const images = filterImageFiles(pasted)
+    if (images.length === 0) {
+      setHint("只支持图片，且单张不超过 10MB")
+      return
+    }
+    setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
+  }
+
+  function handleFilePick(e: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? [])
+    if (picked.length === 0) return
+    const images = filterImageFiles(picked)
+    if (images.length < picked.length) {
+      setHint("已忽略非图片或超过 10MB 的文件")
+    }
+    setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
+    // 允许再次选同一个文件
+    e.target.value = ""
   }
 
   function removeAttachment(id: string) {
@@ -95,6 +121,24 @@ export function ChatInput({
         </div>
       )}
       <div className="agent-input__row">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="agent-input__file"
+          onChange={handleFilePick}
+        />
+        <button
+          type="button"
+          className="agent-input__attach"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          aria-label="添加图片"
+          title="添加图片"
+        >
+          ＋
+        </button>
         <textarea
           ref={textareaRef}
           className="agent-input__textarea"
@@ -121,7 +165,9 @@ export function ChatInput({
           </button>
         )}
       </div>
-      <div className="agent-input__hint num">ENTER 发送 · SHIFT+ENTER 换行</div>
+      <div className="agent-input__hint num">
+        {hint || "ENTER 发送 · SHIFT+ENTER 换行"}
+      </div>
     </div>
   )
 }

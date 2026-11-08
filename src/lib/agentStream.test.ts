@@ -89,4 +89,31 @@ describe("mapHistoryMessage", () => {
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "mcp-confirm", content: "c" }).type).toBe("confirm")
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "text", content: "答" }).type).toBe("assistant")
   })
+
+  it("历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）", () => {
+    const m = mapHistoryMessage({
+      id: 2,
+      role: "ASSISTANT",
+      subType: "tool-call",
+      // 后端落库格式：工具名: 参数 JSON（DiagnosisAgent.java:168-173）
+      content: 'searchDocuments: {"query":"青光眼"}',
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(m.type).toBe("tool-request")
+    expect(m.toolName).toBe("searchDocuments")
+    expect(m.toolCalls?.[0]).toEqual({ name: "searchDocuments", args: { query: "青光眼" } })
+  })
+
+  it("历史 tool-call 参数不是合法 JSON 时保留原文", () => {
+    const m = mapHistoryMessage({
+      id: 3,
+      role: "ASSISTANT",
+      subType: "tool-call",
+      content: "broken: {not json",
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(m.toolCalls?.[0].args).toEqual({ _raw: "{not json" })
+  })
 })

@@ -173,15 +173,43 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
         type = "assistant"
     }
   }
+
+  // 历史里的工具调用落库格式是「工具名: 参数 JSON」（DiagnosisAgent.java:168-173），
+  // 不解析的话工具步骤只剩一行空白的 TOOL 标签。
+  if (type === "tool-request") {
+    const parsed = parseToolCallText(m.content)
+    return {
+      id: newId(),
+      type,
+      content: "",
+      toolName: parsed?.name,
+      toolCalls: parsed ? [parsed] : undefined,
+      time: m.createdTime ? formatTime(m.createdTime) : "",
+    }
+  }
+
   return {
     id: newId(),
     type,
     content: m.content,
-    toolName:
-      m.subType === "tool-call" || m.subType === "tool-result"
-        ? m.content.split(":")[0] || "工具"
-        : undefined,
+    // tool-result 在后端没有落库（saveToolResultMessage 无调用方），
+    // 保留分支只为兼容存量数据；内容是工具输出，从中切名字没有意义。
+    toolName: undefined,
     time: m.createdTime ? formatTime(m.createdTime) : "",
+  }
+}
+
+/** 「工具名: 参数 JSON」→ { name, args }；解析不出时返回 null。 */
+function parseToolCallText(content: string): ToolCallArg | null {
+  const sep = content.indexOf(":")
+  if (sep <= 0) return null
+  const name = content.slice(0, sep).trim()
+  const raw = content.slice(sep + 1).trim()
+  if (!name) return null
+  try {
+    return { name, args: JSON.parse(raw || "{}") as Record<string, unknown> }
+  } catch {
+    return { name, args: { _raw: raw } }
   }
 }
 
@@ -267,6 +295,10 @@ export function useAgentStream() {
   }, [])
 
   const reset = useCallback(() => {
+    // 切会话/新建会话必须先中断在途 SSE——否则旧回合的 token 会继续写进新会话
+    abortRef.current?.abort()
+    abortRef.current = null
+    setIsStreaming(false)
     setMessages([])
     setResources({ images: [], links: [] })
   }, [])

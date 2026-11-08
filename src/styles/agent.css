@@ -396,6 +396,33 @@
   gap: 10px;
 }
 
+.agent-input__file {
+  display: none;
+}
+
+.agent-input__attach {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--hr);
+  background: none;
+  color: var(--fg-2);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agent-input__attach:hover:not(:disabled) {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.agent-input__attach:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
 .agent-input__textarea {
   flex: 1;
   resize: none;

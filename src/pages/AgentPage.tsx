@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import {
   ApiError,
@@ -38,15 +38,24 @@ const saveThreadId = (id: string) => {
   else localStorage.removeItem(THREAD_ID_KEY)
 }
 
-/** Blob 下载导出的会话内容。 */
+/** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
+function safeFileName(name: string): string {
+  const cleaned = name.replace(/[\\/:*?"<>|]/g, "_").trim()
+  return cleaned || "会话"
+}
+
+/** Blob 下载：必须挂进 DOM 再点击，且 revoke 要等一拍，否则部分浏览器下载静默失败。 */
 function downloadText(content: string, filename: string, mime: string) {
   const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
   a.download = filename
+  a.style.display = "none"
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  document.body.removeChild(a)
+  window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 export function AgentPage() {
@@ -58,6 +67,10 @@ export function AgentPage() {
   const uploader = useAgentUpload()
 
   const [threadId, setThreadId] = useState(() => generateThreadId())
+  // 追踪当前会话：发送期间用户可能切会话，闭包里的 threadId 是旧值，
+  // 判断「是否还在这个会话」必须读 ref。
+  const threadIdRef = useRef(threadId)
+  threadIdRef.current = threadId
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
   const [sessionsCollapsed, setSessionsCollapsed] = useState(false)
@@ -112,6 +125,8 @@ export function AgentPage() {
       // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
       // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
       const isFirstMessage = messages.length === 0
+      // 本回合用的会话 id：发送过程中用户可能切了会话，收尾时只能写回这一个
+      const usedThreadId = threadId
 
       let imageUrls: string[] = []
       try {
@@ -133,15 +148,18 @@ export function AgentPage() {
       })
 
       try {
-        await send(text, threadId, imageUrls)
+        await send(text, usedThreadId, imageUrls)
         uploader.commitSuccess(imageUrls)
-        saveThreadId(threadId)
-        setCurrentThreadId(threadId)
+        // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
+        if (threadIdRef.current === usedThreadId) {
+          saveThreadId(usedThreadId)
+          setCurrentThreadId(usedThreadId)
+        }
         setNotice("")
 
         // 首条消息触发 AI 生成标题，完成后刷新列表
         if (isFirstMessage) {
-          void generateTitle(threadId, text)
+          void generateTitle(usedThreadId, text)
             .then(() => refreshSessions())
             .catch((e) => console.warn("标题生成触发失败", e))
         }
@@ -184,8 +202,10 @@ export function AgentPage() {
       try {
         await action()
         await refreshSessions()
+        return true
       } catch (e) {
         setNotice(describeError(e).text)
+        return false
       } finally {
         setBusy(false)
       }
@@ -195,8 +215,9 @@ export function AgentPage() {
 
   const handleDelete = useCallback(
     (id: string) => {
-      void afterSessionChange(() => deleteSession(id)).then(() => {
-        if (id === currentThreadId) handleNewChat()
+      void afterSessionChange(() => deleteSession(id)).then((ok) => {
+        // 删除失败时不清空当前对话——否则会话还在服务端，用户却以为删掉了
+        if (ok && id === currentThreadId) handleNewChat()
       })
     },
     [afterSessionChange, currentThreadId, handleNewChat],
@@ -204,19 +225,24 @@ export function AgentPage() {
 
   const handleBatchDelete = useCallback(
     (ids: string[]) => {
-      void afterSessionChange(() => batchDeleteSessions(ids)).then(() => {
-        if (ids.includes(currentThreadId)) handleNewChat()
+      void afterSessionChange(() => batchDeleteSessions(ids)).then((ok) => {
+        if (ok && ids.includes(currentThreadId)) handleNewChat()
       })
     },
     [afterSessionChange, currentThreadId, handleNewChat],
   )
 
   const handleExport = useCallback(
-    (id: string) => {
+    (id: string, format: "markdown" | "json") => {
       void afterSessionChange(async () => {
-        const md = await exportSession(id, "markdown")
+        const content = await exportSession(id, format)
         const session = sessions.find((s) => s.sessionId === id)
-        downloadText(md, `${session?.title || "会话"}.md`, "text/markdown")
+        const base = safeFileName(session?.title || "会话")
+        downloadText(
+          content,
+          `${base}.${format === "json" ? "json" : "md"}`,
+          format === "json" ? "application/json" : "text/markdown",
+        )
       })
     },
     [afterSessionChange, sessions],

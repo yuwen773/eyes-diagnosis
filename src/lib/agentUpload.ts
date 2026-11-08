@@ -7,6 +7,22 @@ import {
 
 const inFlight = new Map<string, Promise<string>>()
 
+/** 单张图片上限 10MB。 */
+export const MAX_IMAGE_SIZE = 10 * 1024 * 1024
+
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|heic|tiff?)$/i
+
+/**
+ * 只放行图片、且不超过大小上限。
+ * 部分浏览器剪贴板不给 MIME 类型，此时按扩展名兜底。
+ */
+export function filterImageFiles(files: File[]): File[] {
+  return files.filter((f) => {
+    const isImage = f.type.startsWith("image/") || (!f.type && IMAGE_EXT.test(f.name))
+    return isImage && f.size <= MAX_IMAGE_SIZE
+  })
+}
+
 export function useAgentUpload() {
   function fileKey(file: File): string {
     return `${file.name}:${file.size}:${file.lastModified}`

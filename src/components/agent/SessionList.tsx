@@ -59,7 +59,7 @@ export function SessionList({
   onDelete: (id: string) => void
   onBatchDelete: (ids: string[]) => void
   onTogglePin: (id: string, pinned: boolean) => void
-  onExport: (id: string) => void
+  onExport: (id: string, format: "markdown" | "json") => void
   onCollapse: () => void
 }) {
   const [selectMode, setSelectMode] = useState(false)
@@ -153,10 +153,19 @@ export function SessionList({
                   type="button"
                   onClick={() => {
                     setMenuId(null)
-                    onExport(s.sessionId)
+                    onExport(s.sessionId, "markdown")
                   }}
                 >
-                  导出
+                  导出 Markdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuId(null)
+                    onExport(s.sessionId, "json")
+                  }}
+                >
+                  导出 JSON
                 </button>
                 <button
                   type="button"
