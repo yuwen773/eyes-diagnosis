@@ -1914,3 +1914,118 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   管理后台 · 数据分析段（Task 11）
+   --------------------------------------------------------------------------
+   与仪表盘同版式：页首章节头发丝线 + 右上 mono 示例小标 → 4 列 KPI 条 →
+   工具条（时间范围 select，装饰性）→ 小倍数折线 3×2 → 疾病分布排序横条 →
+   按周活跃小倍数柱图 3 列。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter / --fast，
+   零写死色值；分隔一律 1px 发丝线，组件内部（StatTile / 图卡 / 小倍数格）
+   已自带边框，这里只负责栅格与章节间距。双主题随 html.dark 自动翻。
+   ========================================================================== */
+
+.admin-analysis {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，示例小标钉在右上，底端发丝线收口。 */
+.admin-analysis__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-analysis__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* 时间范围字段：沿用检索页的仪器形状（mono 小字标签 + 40px select）。 */
+.admin-analysis__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-analysis__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-analysis__select {
+  height: 40px;
+  min-width: 160px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-analysis__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-analysis__select:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+/* 章节：顶端发丝线与上一段分隔，小标题下接图表栅格。 */
+.admin-analysis__section {
+  margin-top: 40px;
+  padding-top: 26px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-analysis__title {
+  margin: 0 0 18px;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+/* 小倍数栅格：折线 3×2、柱图 3 列，格间 14px 由卡自身的边框勾线。 */
+.admin-analysis__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-analysis__grid--trend {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-analysis__grid--weekly {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 窄屏：小倍数折 2 列 / 1 列，避免 SVG 读数被压到裁字。 */
+@media (max-width: 900px) {
+  .admin-analysis__grid--trend,
+  .admin-analysis__grid--weekly {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-analysis__grid--trend,
+  .admin-analysis__grid--weekly {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

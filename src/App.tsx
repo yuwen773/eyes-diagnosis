@@ -21,6 +21,7 @@ import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
 import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
 import { AdminDiagnosisPage } from "@/pages/admin/AdminDiagnosisPage"
 import { AdminKnowledgePage } from "@/pages/admin/AdminKnowledgePage"
+import { AdminDataAnalysisPage } from "@/pages/admin/AdminDataAnalysisPage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -148,15 +149,7 @@ export function App() {
             />
             <Route
               path="data-analysis"
-              element={
-                <AdminPlaceholder
-                  code="11"
-                  kicker="系统管理 · 数据分析"
-                  en="ADMIN · DATA ANALYSIS"
-                  title="数据分析"
-                  body="小倍数趋势、活跃度柱图与疾病分布排序。这个界面正在装配。"
-                />
-              }
+              element={<AdminDataAnalysisPage />}
             />
             <Route
               path="news/:id/edit"
