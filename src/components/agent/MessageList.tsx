@@ -122,6 +122,7 @@ export function MessageList({
           </div>
         )}
         {empty && <WelcomeScreen onSend={onSend} />}
+        {/* welcome 类名由 WelcomeScreen 自带；此处不再包一层 */}
         {messages.map((msg) => (
           <MessageRow key={msg.id} msg={msg} />
         ))}

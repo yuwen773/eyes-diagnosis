@@ -1,84 +1,133 @@
 /**
- * 欢迎屏：白色仪器语言。
+ * 欢迎屏：排版一比一复刻 Vue 版 AgentMessageList 的 welcome 区
+ * （眼睛视觉 + 标题 + 描述 + 三张引导卡），主题令牌换成 web/ 这套。
  *
- * Vue 版靠粒子云雾动画撑场（违反本项目 AI 装饰零容忍），这里换成
- * 仪器级的线稿眼 + 能力读数当视觉锚点——安静，但有东西可看。
+ * 与 Vue 版的刻意差异（各有一条理由）：
+ * - 神经脉冲/粒子不做成动画：项目规则「AI 装饰零容忍」，保留构图做静态线稿。
+ * - 标题不用品牌色大字：web/ 的语言是 serif 标题 + 发丝线，不铺强调色。
  */
 const HINTS = [
   {
-    no: "01",
-    title: "解读眼底照片",
-    desc: "上传检查影像，逐项读出可疑迹象",
+    icon: "image" as const,
+    title: "上传眼底图像",
+    desc: "发送眼底图片，AI 辅助分析",
+    action: "上传我的眼底OCT图像",
     prompt: "帮我解读这张眼底照片",
   },
   {
-    no: "02",
-    title: "症状问诊",
-    desc: "描述不适，逐步收敛到可能的成因",
-    prompt: "最近眼睛容易疲劳、偶尔胀痛，可能是什么问题？",
+    icon: "text" as const,
+    title: "描述症状",
+    desc: "用文字描述眼部不适",
+    action: "我最近眼睛干涩、偶尔模糊是怎么回事",
+    prompt: "我最近眼睛干涩、偶尔模糊是怎么回事",
   },
   {
-    no: "03",
-    title: "知识问答",
-    desc: "检索知识库，回答眼科常识与护理问题",
-    prompt: "青光眼的早期症状有哪些？",
+    icon: "learn" as const,
+    title: "了解眼病",
+    desc: "查询眼科疾病知识",
+    action: "介绍一下白内障的症状和预防",
+    prompt: "介绍一下白内障的症状和预防",
   },
-] as const
+]
+
+function GuideIcon({ icon }: { icon: "image" | "text" | "learn" }) {
+  if (icon === "image") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    )
+  }
+  if (icon === "text") {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    )
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  )
+}
 
 export function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
   return (
-    <div className="agent-welcome">
-      <div className="agent-welcome__mark" aria-hidden="true">
-        <svg viewBox="0 0 240 120" fill="none">
-          {/* 外轮廓：眼睑线 */}
-          <path
-            d="M8 60 C 48 12, 192 12, 232 60 C 192 108, 48 108, 8 60 Z"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
-          {/* 虹膜与瞳孔 */}
-          <circle cx="120" cy="60" r="34" stroke="currentColor" strokeWidth="1.4" />
-          <circle cx="120" cy="60" r="14" fill="currentColor" />
-          {/* 十字标线：判读仪的对焦记号 */}
-          <line x1="120" y1="10" x2="120" y2="34" stroke="currentColor" strokeWidth="1" />
-          <line x1="120" y1="86" x2="120" y2="110" stroke="currentColor" strokeWidth="1" />
-          <line x1="70" y1="60" x2="94" y2="60" stroke="currentColor" strokeWidth="1" />
-          <line x1="146" y1="60" x2="170" y2="60" stroke="currentColor" strokeWidth="1" />
-          {/* 半球经线：眼底的纹理暗示 */}
-          <path d="M120 26 C 98 40, 98 80, 120 94" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
-          <path d="M120 26 C 142 40, 142 80, 120 94" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
-        </svg>
-      </div>
+    <div className="welcome">
+      {/* 主舞台：排版同 Vue 版 welcome-stage */}
+      <div className="welcome-stage">
+        {/* 眼睛视觉：同 Vue 版 eye-vision 构图；脉冲/粒子取静态（装饰零容忍） */}
+        <div className="eye-vision" aria-hidden="true">
+          <svg className="ev-svg" viewBox="0 0 240 200" fill="none">
+            {/* 外层神经网络连线（Vue 版是脉冲动画，此处静态） */}
+            <line x1="120" y1="100" x2="60" y2="50" className="ev-pulse" />
+            <line x1="120" y1="100" x2="180" y2="50" className="ev-pulse" />
+            <line x1="120" y1="100" x2="30" y2="100" className="ev-pulse" />
+            <line x1="120" y1="100" x2="210" y2="100" className="ev-pulse" />
+            <line x1="120" y1="100" x2="60" y2="150" className="ev-pulse" />
+            <line x1="120" y1="100" x2="180" y2="150" className="ev-pulse" />
+            <line x1="60" y1="50" x2="30" y2="100" className="ev-pulse ev-sub" />
+            <line x1="180" y1="50" x2="210" y2="100" className="ev-pulse ev-sub" />
+            <line x1="30" y1="100" x2="60" y2="150" className="ev-pulse ev-sub" />
+            <line x1="210" y1="100" x2="180" y2="150" className="ev-pulse ev-sub" />
 
-      <div className="agent-welcome__head">
-        <div className="agent-welcome__kicker overline">CONSULT · 在线问诊</div>
-        <h2 className="agent-welcome__title">眼科智能助手</h2>
-        <p className="agent-welcome__lede">
-          描述症状、上传检查照片，或直接提问。回答仅供参考，
-          涉及确诊与治疗请以医生意见为准。
-        </p>
-      </div>
+            {/* 神经节点 */}
+            <circle cx="60" cy="50" r="4" className="ev-node" />
+            <circle cx="180" cy="50" r="4" className="ev-node" />
+            <circle cx="30" cy="100" r="3.5" className="ev-node" />
+            <circle cx="210" cy="100" r="3.5" className="ev-node" />
+            <circle cx="60" cy="150" r="4" className="ev-node" />
+            <circle cx="180" cy="150" r="4" className="ev-node" />
+            <circle cx="120" cy="100" r="6" className="ev-core-node" />
 
-      <div className="agent-welcome__hints">
-        {HINTS.map((h) => (
-          <button
-            key={h.no}
-            type="button"
-            className="agent-welcome__hint"
-            onClick={() => onSend(h.prompt)}
-          >
-            <span className="agent-welcome__hintno num">{h.no}</span>
-            <span className="agent-welcome__hinttitle">{h.title}</span>
-            <span className="agent-welcome__hintdesc">{h.desc}</span>
-          </button>
-        ))}
-      </div>
+            {/* 眼睛轮廓 */}
+            <path
+              d="M20 100C20 100 60 50 120 50C180 50 220 100 220 100C220 100 180 150 120 150C60 150 20 100 20 100Z"
+              className="ev-eye"
+            />
+            {/* 眼睛内圈 */}
+            <circle cx="120" cy="100" r="28" className="ev-iris-ring" />
+            <circle cx="120" cy="100" r="20" className="ev-iris-ring ev-iris-inner" />
+            {/* 瞳孔内核 */}
+            <circle cx="120" cy="100" r="10" className="ev-pupil" />
+            <circle cx="124" cy="96" r="2.5" className="ev-light" />
+          </svg>
+        </div>
 
-      <div className="agent-welcome__capabilities num" aria-hidden="true">
-        <span>SSE · 流式回答</span>
-        <span>RAG · 知识库检索</span>
-        <span>VL · 影像读片</span>
-        <span>MCP · 工具扩展</span>
+        <div className="welcome-text">
+          <h2 className="welcome-title">眼瞳 · EyeSight</h2>
+          <p className="welcome-desc">上传眼底图片或描述症状，我来为您分析诊断</p>
+        </div>
+
+        <div className="welcome-hints">
+          {HINTS.map((h) => (
+            <button
+              key={h.title}
+              type="button"
+              className="guide-card"
+              onClick={() => onSend(h.prompt)}
+            >
+              <div className="guide-icon-wrap">
+                <GuideIcon icon={h.icon} />
+              </div>
+              <div className="guide-content">
+                <span className="guide-title">{h.title}</span>
+                <span className="guide-desc">{h.desc}</span>
+              </div>
+              <div className="guide-action">
+                <span className="guide-action-text">{h.action}</span>
+                <svg className="guide-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
