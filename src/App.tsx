@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { ThemeProvider } from "@/components/theme-provider"
 import { SessionProvider } from "@/lib/session"
 import { LandingPage } from "@/pages/LandingPage"
 import { DiagnosisPage } from "@/pages/DiagnosisPage"
@@ -30,7 +31,8 @@ function ScrollToTop() {
 export function App() {
   return (
     <BrowserRouter>
-      <SessionProvider>
+      <ThemeProvider>
+        <SessionProvider>
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -43,7 +45,8 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </SessionProvider>
+        </SessionProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

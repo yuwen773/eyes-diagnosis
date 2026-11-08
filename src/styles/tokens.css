@@ -15,6 +15,9 @@
   --surface-2: #e9ebe6; /* 次级抬升 / 嵌入容器 */
   --surface-3: #dfe2dc;
 
+  /* 纸面原语里冻结的纸白：记录纸在任何主题下都是这张纸。 */
+  --paper-surface: #ffffff;
+
   /* ── 墨色 / 发丝线（纸面原语；上下文可反转 --ink/--line，纸面靠 --paper-* 钉回）── */
   --paper-ink: #14171a;
   --paper-ink-2: #5c6367;
@@ -111,6 +114,9 @@
   color: var(--fg);
 }
 
+/* 浅主题下 --surface 就是纸白，钉回是同值幂等；暗主题下 html.dark .is-sheet
+   把它翻回纸白+深墨（见下），两条规则共同保证：记录纸永远长一张脸。 */
+
 /* 反相令牌：反相带、整页暗房、反相顶栏共用同一份映射，改一处即可。 */
 .is-dark,
 .is-night,
@@ -146,6 +152,62 @@
   --line-strong: var(--dark-line-strong);
   background: var(--bg);
   color: var(--fg);
+}
+
+/* ==========================================================================
+   根级双主题
+   ==========================================================================
+   主题切在 <html> 的 .dark 类上，翻的是「页面底色语境」这一层：
+   骨白工作台 ↔ 暗房。纸面原语 --paper-* 不参与——判读记录在任何主题下
+   都是那张纸。组件样式全部消费上下文令牌，翻转不需要逐条改写。
+   区块级的 .is-dark / .is-night 是「局部反相带」，与根主题正交：
+   浅主题下的落地页 hero 用它压出深色面板，互不干扰。 */
+
+html.dark {
+  --field: var(--night-bg);
+  --surface: #1d2220;
+  --surface-2: #242a27;
+  --surface-3: #2c332f;
+
+  --paper-ink: #f0f1ed;
+  --paper-ink-2: #a7aeaa;
+  --paper-ink-3: #767d79;
+  --paper-line: rgba(244, 245, 241, 0.14);
+  --paper-line-strong: rgba(244, 245, 241, 0.32);
+
+  --signal: #ef7a45;
+  --signal-soft: rgba(239, 122, 69, 0.12);
+
+  --risk-normal: var(--risk-normal-lit);
+  --risk-attention: var(--risk-attention-lit);
+  --risk-critical: var(--risk-critical-lit);
+}
+
+/* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，
+   让写死消费 --ink/--line 的旧样式（slot 表单、账目栏等）不用逐条改。 */
+html.dark {
+  --ink: var(--on-dark);
+  --ink-2: var(--on-dark-2);
+  --ink-3: var(--on-dark-3);
+  --line: var(--dark-line);
+  --line-strong: var(--dark-line-strong);
+
+  /* 暗主题下的纸面原语：纸仍是白的，纸上的墨是深色的。 */
+  --paper-ink-dark: #14171a;
+  --paper-ink-2-dark: #5c6367;
+  --paper-ink-3-dark: #8b9195;
+  --paper-line-dark: rgba(20, 23, 26, 0.13);
+  --paper-line-strong-dark: rgba(20, 23, 26, 0.34);
+}
+
+/* 纸面在暗主题下钉回纸白：判读记录仍是纸，墨色回到纸上的墨。 */
+html.dark .is-sheet {
+  --surface: var(--paper-surface);
+  --ink: var(--paper-ink-dark);
+  --ink-2: var(--paper-ink-2-dark);
+  --ink-3: var(--paper-ink-3-dark);
+  --line: var(--paper-line-dark);
+  --line-strong: var(--paper-line-strong-dark);
 }
 
 /* 反相顶栏里的抬升面板跟着翻深，别留白板（账号菜单 / 移动抽屉）。 */

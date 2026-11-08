@@ -2,6 +2,7 @@ import { useEffect, useRef, type RefObject } from "react"
 import { Link, NavLink, useLocation } from "react-router-dom"
 import { AccountMenu } from "./AccountMenu"
 import { MobileNav } from "./MobileNav"
+import { useTheme } from "./theme-provider"
 
 /** 跨产品的目的地。落地页自己的章节不在这里，章节链接放在页脚。 */
 export const NAV_LINKS = [
@@ -104,6 +105,7 @@ export function SiteHeader() {
   const headerRef = useRef<HTMLElement | null>(null)
   const location = useLocation()
   useHeadInvert(headerRef, location.pathname)
+  const { resolvedTheme, setTheme } = useTheme()
 
   return (
     <header ref={headerRef} className="site-head no-print" data-site-head>
@@ -125,6 +127,25 @@ export function SiteHeader() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          type="button"
+          className="theme-toggle"
+          data-cursor
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          aria-label={resolvedTheme === "dark" ? "切换到浅色主题" : "切换到暗色主题"}
+          title={resolvedTheme === "dark" ? "切换到浅色" : "切换到暗色"}
+        >
+          {/* 环上是一半描边一半实心：亮一半暗一半，当前侧实心。 */}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" strokeWidth="1" />
+            {resolvedTheme === "dark" ? (
+              <path d="M8 1.6 A6.4 6.4 0 0 1 8 14.4 Z" fill="currentColor" />
+            ) : (
+              <path d="M8 1.6 A6.4 6.4 0 0 0 8 14.4 Z" fill="currentColor" />
+            )}
+          </svg>
+        </button>
 
         <AccountMenu />
 

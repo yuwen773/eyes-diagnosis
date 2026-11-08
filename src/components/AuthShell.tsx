@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { LaserFlow } from "@/components/LaserFlow"
 import { Wordmark } from "@/components/SiteHeader"
+import { useTheme } from "@/components/theme-provider"
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
@@ -65,8 +66,11 @@ export function AuthShell({
     }
   }, [])
 
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === "dark"
+
   return (
-    <div className="auth is-dark" ref={stageRef}>
+    <div className={"auth " + (dark ? "is-dark" : "is-field auth--light")} ref={stageRef}>
       {wide ? (
         <div className="auth__beam" aria-hidden="true">
           <LaserFlow
@@ -90,7 +94,7 @@ export function AuthShell({
             revealRadius={210}
             revealOpacity={1}
             revealSize={620}
-            theme="dark"
+            theme={dark ? "dark" : "light"}
           />
         </div>
       ) : null}

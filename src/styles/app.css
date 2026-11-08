@@ -342,6 +342,38 @@ a:hover .wordmark__iris-ring {
   background: currentColor;
 }
 
+/* ── 主题切换：一枚半满的读数环，亮暗各占一半 ── */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  background: none;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast);
+}
+
+.theme-toggle:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  transition: transform var(--base);
+}
+
+.theme-toggle:hover svg {
+  transform: rotate(180deg);
+}
+
 /* ── 账号控件：登录时是一个描边按钮，登录后是悬浮下拉 ── */
 
 .acct {
@@ -561,9 +593,13 @@ a.acct__trigger--anon:hover {
   .acct {
     display: none;
   }
+  .theme-toggle {
+    margin-left: auto;
+    margin-right: 10px;
+  }
   .burger {
     display: inline-flex;
-    margin-left: auto;
+    margin-left: 0;
   }
 }
 
@@ -843,12 +879,17 @@ a.acct__trigger--anon:hover {
    ========================================================================== */
 
 /* 整页暗房：登录注册页的同一套氛围——刻度网格、虹膜环、胶片颗粒。
-   网格只在首屏最浓，往下淡出，避免六千像素的页面上糊一层格子。 */
+   网格只在首屏最浓，往下淡出，避免六千像素的页面上糊一层格子。
+   浅主题下同一套骨架翻成白色仪器台：网格换成墨色发丝线，颗粒收走。 */
 .night {
   position: relative;
   isolation: isolate;
   overflow-x: clip;
   background: var(--night-sky);
+}
+
+html:not(.dark) .night {
+  background: var(--bg);
 }
 
 .night::before {
@@ -865,7 +906,14 @@ a.acct__trigger--anon:hover {
   pointer-events: none;
 }
 
-/* 直接子级抬到网格之上；颗粒靠下面更高优先级的规则单独压回最上层。 */
+html:not(.dark) .night::before {
+  background-image:
+    linear-gradient(to right, rgba(20, 23, 26, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 23, 26, 0.08) 1px, transparent 1px);
+}
+
+/* 直接子级抬到网格之上；颗粒靠下面更高优先级的规则单独压回最上层。
+   浅主题下颗粒收走——纸面不需要胶片感。 */
 .night > main,
 .night > div {
   position: relative;
@@ -877,6 +925,10 @@ a.acct__trigger--anon:hover {
   inset: 0;
   z-index: 5;
   pointer-events: none;
+}
+
+html:not(.dark) .night > .night__grain {
+  display: none;
 }
 
 /* ── 暗房里的例外 ─────────────────────────────────────
@@ -901,6 +953,25 @@ a.acct__trigger--anon:hover {
   gap: 14px;
   justify-items: start;
   text-align: left;
+}
+
+/* 浅主题下的收尾玻璃：同一块磨砂，开灯版（参数与 .auth--light 里那块一致）。 */
+html:not(.dark) .pitch__glass.auth__glass {
+  border-color: rgba(20, 23, 26, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.78),
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.66)
+  );
+  box-shadow:
+    0 44px 90px -50px rgba(20, 23, 26, 0.5),
+    0 2px 12px rgba(20, 23, 26, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html:not(.dark) .pitch__glass.auth__glass::before {
+  background: linear-gradient(90deg, transparent, rgba(20, 23, 26, 0.4), transparent);
 }
 
 .pitch__glass .small {
@@ -2937,6 +3008,23 @@ a.acct__trigger--anon:hover {
     var(--night-sky);
 }
 
+/* 浅主题的验光台：同一间房开灯。底色翻骨白，氛围光收淡，网格翻墨色。 */
+.auth--light {
+  background:
+    radial-gradient(
+      44% 40% at 67% 42%,
+      rgba(217, 84, 31, 0.07),
+      transparent 72%
+    ),
+    radial-gradient(
+      118% 78% at 74% 10%,
+      rgba(217, 84, 31, 0.06),
+      transparent 56%
+    ),
+    radial-gradient(76% 60% at 14% 94%, rgba(86, 132, 140, 0.08), transparent 62%),
+    var(--field);
+}
+
 /* 校准网格：仪器背后那张方格纸。磨砂玻璃要糊的就是它。 */
 .auth::before {
   content: "";
@@ -2954,6 +3042,12 @@ a.acct__trigger--anon:hover {
   );
   mask-image: radial-gradient(122% 92% at 64% 44%, #000 4%, transparent 88%);
   pointer-events: none;
+}
+
+html:not(.dark) .auth::before {
+  background-image:
+    linear-gradient(to right, rgba(20, 23, 26, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 23, 26, 0.09) 1px, transparent 1px);
 }
 
 /* 虹膜：一圈圈同心环。玻璃要糊的就是它——糊过之后只剩柔和的环。 */
@@ -2983,7 +3077,7 @@ a.acct__trigger--anon:hover {
   mask-image: radial-gradient(circle, #000 18%, transparent 72%);
 }
 
-/* 胶片颗粒。登录页与暗房落地页共用。 */
+/* 胶片颗粒。登录页与暗房落地页共用；浅色台下收淡，纸面只需要一点肌理。 */
 .auth__grain,
 .night__grain {
   position: absolute;
@@ -2993,6 +3087,10 @@ a.acct__trigger--anon:hover {
   opacity: 0.28;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+
+html:not(.dark) .auth__grain {
+  opacity: 0.1;
 }
 
 /* 光层：画布压在玻璃之下，光落进磨砂面里、被糊开，
@@ -3035,11 +3133,36 @@ a.acct__trigger--anon:hover {
   gap: 16px;
 }
 
+/* auth 的 rgba 白都收进局部令牌：暗房与浅色验光台各出一套值。
+   标量写死的一档（0.07/0.1/0.13/0.16…）按用途归到强弱两档线上。 */
+.auth {
+  --auth-fg-3: rgba(255, 255, 255, 0.3);
+  --auth-fg-2: rgba(255, 255, 255, 0.46);
+  --auth-fg-mid: rgba(255, 255, 255, 0.4);
+  --auth-fg-strong: rgba(255, 255, 255, 0.6);
+  --auth-line: rgba(255, 255, 255, 0.13);
+  --auth-line-soft: rgba(255, 255, 255, 0.07);
+  --auth-head: rgba(255, 255, 255, 0.34);
+  --auth-status: rgba(255, 255, 255, 0.44);
+}
+
+/* 浅色验光台：同一批槽位换成墨色档。 */
+.auth--light {
+  --auth-fg-3: rgba(20, 23, 26, 0.4);
+  --auth-fg-2: rgba(20, 23, 26, 0.6);
+  --auth-fg-mid: rgba(20, 23, 26, 0.55);
+  --auth-fg-strong: rgba(20, 23, 26, 0.78);
+  --auth-line: rgba(20, 23, 26, 0.16);
+  --auth-line-soft: rgba(20, 23, 26, 0.09);
+  --auth-head: rgba(20, 23, 26, 0.45);
+  --auth-status: rgba(20, 23, 26, 0.55);
+}
+
 .auth__code {
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--auth-fg-3);
 }
 
 .auth__label-mid {
@@ -3057,13 +3180,17 @@ a.acct__trigger--anon:hover {
   color: var(--on-dark);
 }
 
+.auth--light .auth__statement {
+  color: var(--fg);
+}
+
 .auth__statement-en {
   margin: -4px 0 0;
   font-family: var(--font-display);
   font-size: clamp(17px, 1.45vw, 21px);
   line-height: 1.45;
   letter-spacing: 0.005em;
-  color: rgba(255, 255, 255, 0.46);
+  color: var(--auth-fg-2);
 }
 
 .auth__note {
@@ -3071,12 +3198,12 @@ a.acct__trigger--anon:hover {
   max-width: 34em;
   font-size: 12.5px;
   line-height: 1.8;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--auth-fg-mid);
 }
 
 .auth__ledger {
   display: grid;
-  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  border-top: 1px solid var(--auth-line);
 }
 
 .auth__ledger > div {
@@ -3084,16 +3211,16 @@ a.acct__trigger--anon:hover {
   justify-content: space-between;
   gap: 16px;
   padding-block: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.32);
+  color: var(--auth-fg-3);
 }
 
 .auth__ledger b {
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--auth-fg-strong);
   letter-spacing: 0.04em;
 }
 
@@ -3133,6 +3260,31 @@ a.acct__trigger--anon:hover {
     inset 0 -24px 40px -30px rgba(0, 0, 0, 0.9);
 }
 
+/* 浅色验光台的玻璃：底色翻成雾白，阴影收轻，高光翻墨。 */
+.auth--light .auth__glass {
+  border-color: rgba(20, 23, 26, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.78),
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.66)
+  );
+  box-shadow:
+    0 44px 90px -50px rgba(20, 23, 26, 0.5),
+    0 2px 12px rgba(20, 23, 26, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -24px 40px -30px rgba(20, 23, 26, 0.14);
+}
+
+.auth--light .auth__glass::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(20, 23, 26, 0.4),
+    transparent
+  );
+}
+
 /* 磨砂面的微观颗粒：真玻璃上那层被磨出来的粗。 */
 .auth__glass::after {
   content: "";
@@ -3169,19 +3321,19 @@ a.acct__trigger--anon:hover {
   gap: 16px;
   padding-bottom: 13px;
   margin-bottom: 22px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.34);
+  color: var(--auth-head);
 }
 
 .auth__status {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: rgba(255, 255, 255, 0.44);
+  color: var(--auth-status);
 }
 
 .auth__status i {
@@ -3194,7 +3346,7 @@ a.acct__trigger--anon:hover {
 }
 
 .auth .overline {
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--auth-head);
 }
 
 .auth__title {
@@ -3207,11 +3359,15 @@ a.acct__trigger--anon:hover {
   color: var(--on-dark);
 }
 
+.auth--light .auth__title {
+  color: var(--fg);
+}
+
 .auth__sub {
   margin: 10px 0 0;
   font-size: 12.5px;
   line-height: 1.75;
-  color: rgba(255, 255, 255, 0.46);
+  color: var(--auth-fg-2);
 }
 
 .auth__caption {
@@ -3222,7 +3378,7 @@ a.acct__trigger--anon:hover {
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--auth-fg-3);
 }
 
 .auth__caption::before {
@@ -3381,17 +3537,24 @@ a.acct__trigger--anon:hover {
 }
 
 .auth .field__label {
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--auth-head);
 }
 
 .auth .field__input {
   height: 48px;
   padding-inline: 14px;
   border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid var(--auth-line);
   background: rgba(255, 255, 255, 0.045);
   color: var(--on-dark);
   font-size: 13.5px;
+}
+
+/* 浅色验光台的玻璃控件：雾白底、墨色边，聚焦那道暖光不变。 */
+.auth--light .field__input {
+  border-color: rgba(20, 23, 26, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
 }
 
 .auth .field__input::placeholder {
@@ -3399,14 +3562,26 @@ a.acct__trigger--anon:hover {
   letter-spacing: 0.04em;
 }
 
+.auth--light .field__input::placeholder {
+  color: rgba(20, 23, 26, 0.34);
+}
+
 .auth .field__input:hover {
   border-color: rgba(255, 255, 255, 0.26);
+}
+
+.auth--light .field__input:hover {
+  border-color: rgba(20, 23, 26, 0.4);
 }
 
 .auth .field__input:focus {
   border-color: rgba(239, 122, 69, 0.8);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 0 3px rgba(239, 122, 69, 0.15);
+}
+
+.auth--light .field__input:focus {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .auth .field__input[aria-invalid="true"] {
@@ -3425,6 +3600,16 @@ a.acct__trigger--anon:hover {
   background: #ffffff;
 }
 
+/* 浅色台上的按钮翻成墨片：玻璃雾底上要压得住。 */
+.auth--light .btn {
+  background: var(--ink);
+  color: var(--field);
+}
+
+.auth--light .btn:hover {
+  background: color-mix(in srgb, var(--ink) 85%, var(--surface));
+}
+
 .auth .btn:disabled {
   opacity: 0.4;
 }
@@ -3437,17 +3622,26 @@ a.acct__trigger--anon:hover {
 }
 
 .auth .form__meta {
-  color: rgba(255, 255, 255, 0.36);
+  color: var(--auth-fg-mid);
 }
 
 .auth .form__meta a {
-  color: rgba(255, 255, 255, 0.68);
-  border-bottom-color: rgba(255, 255, 255, 0.24);
+  color: var(--auth-fg-strong);
+  border-bottom-color: var(--auth-line);
 }
 
 .auth .form__meta a:hover {
-  color: #ffffff;
-  border-bottom-color: rgba(255, 255, 255, 0.7);
+  color: var(--on-dark);
+  border-bottom-color: var(--auth-fg-strong);
+}
+
+.auth--light .form__meta a:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.auth--light .form__error {
+  color: #8a2f24;
 }
 
 /* ==========================================================================

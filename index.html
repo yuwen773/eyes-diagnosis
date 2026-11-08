@@ -10,6 +10,19 @@
       content="眼瞳 IRIS · 眼底影像判读。上传彩色眼底照片，获得八类常见眼底改变的判读、质量门与可追溯的判读记录。"
     />
     <title>眼瞳 IRIS · 眼底影像判读</title>
+    <script>
+      // 防闪烁：在样式表应用前先把主题类挂到 <html> 上，与 ThemeProvider 的 storageKey 一致。
+      (function () {
+        try {
+          var t = localStorage.getItem("theme")
+          var dark =
+            t === "dark" ||
+            (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+          if (dark) document.documentElement.classList.add("dark")
+          else document.documentElement.classList.add("light")
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

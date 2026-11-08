@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useRevealScan } from "@/lib/useInView"
+import { useTheme } from "@/components/theme-provider"
 import { AgentConsole } from "@/components/AgentConsole"
 import { ElectricBorder } from "@/components/ElectricBorder"
 import { RecordSheet } from "@/components/RecordSheet"
@@ -168,10 +169,17 @@ function Chars({
 
 export function LandingPage() {
   useRevealScan()
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === "dark"
 
   return (
-    // 整页暗房：顶栏全程反相，底色由 .is-night 的 --head-bg 令牌提供。
-    <div className="is-night night" data-head-invert="true">
+    // 整页语境随主题走：暗主题是暗房（顶栏全程反相），浅主题是白色仪器台。
+    // 浅主题下页面本身是亮的，顶栏反相只交给 ScrollExpand 的舞台标记——
+    // 黑画面盖过顶栏时它自己会打 data-head-invert。
+    <div
+      className={(dark ? "is-night " : "is-field ") + "night"}
+      data-head-invert={dark ? "true" : undefined}
+    >
       {/* 准星只属于落地页，别的地方用系统光标。 */}
       <TargetCursor
         targetSelector="a, button, [data-cursor]"
@@ -348,7 +356,12 @@ export function LandingPage() {
             </div>
 
             <div className="reveal" style={{ "--d": "120ms" } as CSSProperties}>
-              <RecordSheet result={SPECIMEN} recordId="IRIS-2026-1106-0042" specimen tone="night" />
+              <RecordSheet
+                result={SPECIMEN}
+                recordId="IRIS-2026-1106-0042"
+                specimen
+                tone={dark ? "night" : "paper"}
+              />
             </div>
           </div>
         </section>
@@ -380,9 +393,9 @@ export function LandingPage() {
                 style={{ "--d": "120ms" } as CSSProperties}
               >
                 <ElectricBorder
-                  color="#e2622b"
-                  glowColor="#d9541f"
-                  theme="dark"
+                  color={dark ? "#e2622b" : "#d9541f"}
+                  glowColor={dark ? "#d9541f" : "#d9541f"}
+                  theme={dark ? "dark" : "light"}
                   borderRadius={0}
                   thickness={1.1}
                   strands={3}
@@ -438,7 +451,7 @@ export function LandingPage() {
                     radius={0}
                     glow={0.45}
                     hover="lap"
-                    theme="dark"
+                    theme={dark ? "dark" : "light"}
                   >
                     登录后体验诊断 Agent
                     <span className="link__mark">→</span>
