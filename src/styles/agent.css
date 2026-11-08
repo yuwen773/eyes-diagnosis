@@ -131,6 +131,13 @@
   padding: 1px 5px;
 }
 
+/* 反相带里的代码块要抬升一层，否则底色与屏同色等于没有代码块 */
+.console .markdown-body code,
+.console .markdown-body pre.code-block {
+  background: var(--dark-surface);
+  border-color: var(--dark-line);
+}
+
 .markdown-body pre.code-block {
   margin: 0.6em 0;
   padding: 0;
@@ -244,6 +251,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
 }
 

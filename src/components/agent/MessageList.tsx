@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
+import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
 import { AssistantMessage } from "./messages/AssistantMessage"
 import { ReasoningMessage } from "./messages/ReasoningMessage"
@@ -31,8 +32,11 @@ function MessageRow({ msg }: { msg: StreamMessage }) {
 }
 
 /**
- * 消息列表：`.console` 暗底反相带包裹滚动区（与落地页演示屏同语）。
- * 贴底时跟随新消息与流式累加滚动；不贴底时显示未读悬浮按钮。
+ * 消息列表：`.console is-dark` 暗底反相带包裹滚动区（与落地页演示屏同语）。
+ * `is-dark` 是反相带的令牌映射开关——缺了它，正文会拿页面级的深墨令牌
+ * 压在深色屏上，亮色主题下直接看不见字。
+ *
+ * 贴底时跟随新消息与流式累加滚动；不贴底时显示未读悬浮按钮（只按新消息计数）。
  */
 export function MessageList({
   messages,
@@ -50,7 +54,11 @@ export function MessageList({
   const [unread, setUnread] = useState(0)
 
   const lastMsg = messages[messages.length - 1]
+  const lastMsgId = lastMsg?.id
+  const lastContent = lastMsg?.content
 
+  // 滚动容器始终是同一个元素（欢迎屏也渲染在它里面），
+  // 否则监听器会挂不上，用户上翻读历史时被强行拉回底部。
   useEffect(() => {
     const el = listRef.current
     if (!el) return
@@ -63,17 +71,26 @@ export function MessageList({
     return () => el.removeEventListener("scroll", onScroll)
   }, [])
 
-  // 新消息或流式累加时：贴底则跟随，否则计未读
+  // 新消息：贴底则跟随，否则计一条未读
   useEffect(() => {
     const el = listRef.current
-    if (!el) return
+    if (!el || messages.length === 0) return
     if (atBottomRef.current) {
       el.scrollTop = el.scrollHeight
-    } else if (lastMsg) {
-      setUnread((n) => n + 1)
+    } else {
+      setUnread((n) => computeUnread(n, { atBottom: false, isNewMessage: true, isContentGrowth: false }))
     }
-    // 依赖最后一条消息的内容：流式累加每片都触发
-  }, [messages.length, lastMsg?.content, lastMsg?.id])
+    // 只跟消息条数：内容增长在下面的 effect 里处理
+  }, [messages.length])
+
+  // 流式内容增长：贴底时跟随滚动，但不增加未读计数
+  useEffect(() => {
+    const el = listRef.current
+    if (!el || lastContent === undefined) return
+    if (atBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [lastContent, lastMsgId])
 
   function scrollToBottom() {
     const el = listRef.current
@@ -83,22 +100,10 @@ export function MessageList({
     el.scrollTop = el.scrollHeight
   }
 
-  if (messages.length === 0 && !loading) {
-    return (
-      <div className="console agent-console">
-        <div className="console__head">
-          <span className="console__title">DIAGNOSIS · AGENT</span>
-          <span className="console__meta">SSE · STREAM READY</span>
-        </div>
-        <div className="console__body">
-          <WelcomeScreen onSend={onSend} />
-        </div>
-      </div>
-    )
-  }
+  const empty = messages.length === 0 && !loading
 
   return (
-    <div className="console agent-console">
+    <div className="console is-dark agent-console">
       <div className="console__head">
         <span className="console__title">DIAGNOSIS · AGENT</span>
         {streaming ? (
@@ -108,6 +113,7 @@ export function MessageList({
         )}
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
+        {empty && <WelcomeScreen onSend={onSend} />}
         {messages.map((msg) => (
           <MessageRow key={msg.id} msg={msg} />
         ))}

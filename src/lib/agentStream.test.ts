@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { applyStreamEvent, mapHistoryMessage, type StreamMessage } from "./agentStream"
+import { applyStreamEvent, clearAllLoading, mapHistoryMessage, type StreamMessage } from "./agentStream"
 
 describe("applyStreamEvent", () => {
   it("assistant 首片 push isLoading，后续原地累加", () => {
@@ -42,6 +42,28 @@ describe("applyStreamEvent", () => {
     // assistant 重新累加
     msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "新回合" })
     expect(msgs[3].content).toBe("新回合")
+  })
+  it("tool-request 截断时把前一条 assistant 的 isLoading 置 false（不再永久闪烁）", () => {
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "我先查一下知识库" })
+    expect(msgs[0].isLoading).toBe(true)
+    msgs = applyStreamEvent(msgs, {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+    expect(msgs[0].isLoading).toBe(false)
+    // 下一段 assistant 另起一条
+    msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "结论如下" })
+    expect(msgs).toHaveLength(3)
+    expect(msgs[2].isLoading).toBe(true)
+  })
+  it("clearAllLoading 清掉所有流式中的 assistant", () => {
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "一" })
+    msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "二" })
+    const cleared = clearAllLoading(msgs)
+    expect(cleared.every((m) => !m.isLoading)).toBe(true)
   })
   it("tool-confirm/mcp-confirm 都映射为 confirm 信息卡", () => {
     let msgs: StreamMessage[] = []

@@ -51,6 +51,20 @@ function lastAppendableReasoning(msgs: StreamMessage[]): StreamMessage | undefin
   return last && last.type === "reasoning" && !last.isLoading ? last : undefined
 }
 
+/** 清掉所有流式中的 assistant（回合结束或被截断时调用）。 */
+export function clearAllLoading(msgs: StreamMessage[]): StreamMessage[] {
+  if (!msgs.some((m) => m.isLoading)) return msgs
+  return msgs.map((m) => (m.isLoading ? { ...m, isLoading: false } : m))
+}
+
+/**
+ * 工具/确认类事件会截断此前的累加回合——此时把还在流式中的 assistant
+ * 收尾（isLoading=false），否则它会永远带着闪烁光标、且按纯文本渲染。
+ */
+function truncate(msgs: StreamMessage[]): StreamMessage[] {
+  return clearAllLoading(msgs)
+}
+
 /** SSE 事件 → 消息数组的纯 reducer。工具/确认类事件截断此前的累加回合。 */
 export function applyStreamEvent(
   msgs: StreamMessage[],
@@ -86,7 +100,7 @@ export function applyStreamEvent(
     }
 
     case "tool-request": {
-      const out = [...msgs]
+      const out = truncate(msgs)
       for (const tc of dto.toolCalls ?? []) {
         const name = tc.name || "工具"
         let parsedArgs: Record<string, unknown> = {}
@@ -108,7 +122,7 @@ export function applyStreamEvent(
 
     case "tool-response":
       return [
-        ...msgs,
+        ...truncate(msgs),
         {
           id: newId(),
           type: "tool-response",
@@ -121,7 +135,7 @@ export function applyStreamEvent(
     // 与历史 mcp-confirm 事件名。两者都是图中断的终点卡。
     case "tool-confirm":
     case "mcp-confirm":
-      return [...msgs, { id: newId(), type: "confirm", content }]
+      return [...truncate(msgs), { id: newId(), type: "confirm", content }]
 
     default:
       return msgs
@@ -196,11 +210,7 @@ export function useAgentStream() {
       abortRef.current = controller
 
       const clearLoading = () => {
-        setMessages((prev) => {
-          const last = prev[prev.length - 1]
-          if (!last || !last.isLoading) return prev
-          return [...prev.slice(0, -1), { ...last, isLoading: false }]
-        })
+        setMessages((prev) => clearAllLoading(prev))
       }
 
       try {
@@ -231,6 +241,9 @@ export function useAgentStream() {
         clearLoading()
         throw e
       } finally {
+        // abort 时 fetch-event-source 直接 resolve，不触发 onDone/onError，
+        // 所以收尾必须放在 finally——否则被「停止」打断的回复永远带着光标。
+        clearLoading()
         setIsStreaming(false)
         abortRef.current = null
       }

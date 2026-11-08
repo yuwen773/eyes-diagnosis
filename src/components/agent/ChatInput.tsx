@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
+import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
@@ -20,8 +21,7 @@ export function ChatInput({
   onStop: () => void
 }) {
   const [text, setText] = useState("")
-  const [files, setFiles] = useState<File[]>([])
-  const [previews, setPreviews] = useState<string[]>([])
+  const [attachments, setAttachments] = useState<Attachment[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // 自适应高度
@@ -32,19 +32,22 @@ export function ChatInput({
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
 
-  // 附件预览 URL：变更时 revoke 旧的
+  // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
-    const urls = files.map((f) => URL.createObjectURL(f))
-    setPreviews(urls)
-    return () => urls.forEach((u) => URL.revokeObjectURL(u))
-  }, [files])
+    return () => {
+      setAttachments((prev) => {
+        prev.forEach((a) => URL.revokeObjectURL(a.url))
+        return []
+      })
+    }
+  }, [])
 
   function submit() {
     const trimmed = text.trim()
-    if ((!trimmed && files.length === 0) || disabled) return
-    onSend(trimmed, files)
+    if ((!trimmed && attachments.length === 0) || disabled) return
+    onSend(trimmed, attachments.map((a) => a.file))
     setText("")
-    setFiles([])
+    setAttachments([])
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -59,27 +62,31 @@ export function ChatInput({
     const pasted = Array.from(e.clipboardData.files)
     if (pasted.length === 0) return
     e.preventDefault()
-    setFiles((prev) => [...prev, ...pasted])
+    setAttachments((prev) => addFiles(prev, pasted, (f) => URL.createObjectURL(f)))
   }
 
-  function removeFile(index: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
+  function removeAttachment(id: string) {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id)
+      if (target) URL.revokeObjectURL(target.url)
+      return removeById(prev, id)
+    })
   }
 
-  const canSend = !disabled && (text.trim().length > 0 || files.length > 0)
+  const canSend = !disabled && (text.trim().length > 0 || attachments.length > 0)
 
   return (
     <div className="agent-input">
-      {files.length > 0 && (
+      {attachments.length > 0 && (
         <div className="agent-input__attachments">
-          {previews.map((url, i) => (
-            <div className="agent-input__attachment" key={`${files[i].name}-${i}`}>
-              <img src={url} alt={files[i].name} />
+          {attachments.map((a) => (
+            <div className="agent-input__attachment" key={a.id}>
+              <img src={a.url} alt={a.name} />
               <button
                 type="button"
                 className="agent-input__remove"
-                onClick={() => removeFile(i)}
-                aria-label={`移除 ${files[i].name}`}
+                onClick={() => removeAttachment(a.id)}
+                aria-label={`移除 ${a.name}`}
               >
                 ×
               </button>
