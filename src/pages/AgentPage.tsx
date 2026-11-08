@@ -293,8 +293,7 @@ export function AgentPage() {
           <div className="agent-main" style={{ position: "relative" }}>
             <button
               type="button"
-              className={`agent-main__resource-toggle${panelOpen ? " is-active" : ""}`}
-              style={{ position: "absolute", top: 14, right: 20, zIndex: 20 }}
+              className={`agent-main__resource-toggle is-floating${panelOpen ? " is-active" : ""}`}
               onClick={() => setPanelOpen((v) => !v)}
               aria-expanded={panelOpen}
               aria-label="资源面板"

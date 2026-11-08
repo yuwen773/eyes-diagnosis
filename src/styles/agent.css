@@ -503,9 +503,11 @@
 }
 
 /* 会话屏头部复用 app.css 的 .console__* 骨架（落地页反相带同款），
-   但这里在浅色上下文中，把写死的反相色拉回上下文令牌。 */
+   但这里在浅色上下文中，把写死的反相色拉回上下文令牌。
+   右侧让出浮动资源钮的位置，避免与计数重叠。 */
 .agent-console .console__head {
   border-bottom-color: var(--hr);
+  padding-right: 72px;
 }
 
 .agent-console .console__meta {
@@ -1314,8 +1316,10 @@
 
 /* ── agent: 页面布局（同 Vue 版：无页脚、无版心，三栏铺满顶栏以下视口）── */
 
+/* 高度必须硬约束（同 Vue 版 layoutStyle 的 100vh）：外层不是 flex 容器，
+   靠 flex:1 拿不到高度，输入区会跟在内容后面而非钉在底部。 */
 .agent-viewport {
-  flex: 1;
+  height: calc(100vh - var(--nav-h));
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -1402,6 +1406,14 @@
   color: var(--fg-3);
   cursor: pointer;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+/* 浮动定位统一收进类（AgentPage 不再写内联 style） */
+.agent-main__resource-toggle.is-floating {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 20;
 }
 
 .agent-main__resource-toggle:hover {
