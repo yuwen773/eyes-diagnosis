@@ -1359,3 +1359,360 @@
   color: var(--fg);
   font-weight: 600;
 }
+
+/* ==========================================================================
+   管理后台 · 诊断管理段（Task 9）
+   --------------------------------------------------------------------------
+   与用户 / 新闻管理同版式：章节头发丝线 → 工具条（疾病名模糊检索）→ 表格
+   → 页脚数据边界小字。另含详情 Drawer 的读数排版、复核 Modal 的表单。
+   缩略图 48px。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter，
+   零写死色值；状态色由 .risk / .fault-note 自带的 --risk-* 语义色承担，
+   不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-diagnosis {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-diagnosis__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-diagnosis__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 检索表单：单个疾病名输入 + 查询 / 重置，窄屏自动换行。 */
+.admin-diagnosis__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-diagnosis__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.admin-diagnosis__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 沿用 admin-users__input 的仪器形状，高度对齐 .btn--sm（40px）。 */
+.admin-diagnosis__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-diagnosis__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-diagnosis__input:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.admin-diagnosis__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 删除失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-diagnosis__fault {
+  margin-top: 22px;
+}
+
+.admin-diagnosis__table {
+  margin-top: 26px;
+}
+
+/* 页脚数据边界小字：mono + --fg-3，顶端发丝线与表体隔开。 */
+.admin-diagnosis__footer {
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+/* ── 表格单元格 ───────────────────────────────────────────── */
+
+/* 诊断图像缩略图：48px 定宽，object-fit 不拉伸，发丝线勾边。 */
+.admin-diagnosis__thumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+/* AI 拒识行：result 为空的「—」+ 拒识原因摘要（摘要不撑破列宽）。 */
+.admin-diagnosis__result-empty {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-diagnosis__abstain {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--fg-3);
+  overflow-wrap: anywhere;
+}
+
+/* 操作列：详情 / 删除两枚小按钮并排，撑满列宽不折行。 */
+.admin-diagnosis__row-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-diagnosis__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-diagnosis__modal-id {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ── 详情 Drawer：读数排版 ────────────────────────────────── */
+
+.admin-diagnosis__drawer-state {
+  margin: 0;
+  padding: 32px 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__drawer-fault {
+  margin-top: 8px;
+}
+
+/* 底部「人工复核」：发丝线顶边收口，按钮靠右。 */
+.admin-diagnosis__drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__detail {
+  display: grid;
+  gap: 22px;
+}
+
+.admin-diagnosis__detail-figure {
+  margin: 0;
+}
+
+.admin-diagnosis__detail-img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-diagnosis__detail-figure figcaption {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__detail-noimg {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+/* 读数表：label / value 两列，行间发丝线，值可换行不溢出。 */
+.admin-diagnosis__facts {
+  margin: 0;
+}
+
+.admin-diagnosis__fact {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.36fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-diagnosis__fact:first-child {
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__fact-label {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__fact-value {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.admin-diagnosis__section {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__section-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 建议分行：每行独立成条，与记录纸的「建议」同源。 */
+.admin-diagnosis__recos {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-diagnosis__recos li {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.admin-diagnosis__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── 复核 Modal：表单 ─────────────────────────────────────── */
+
+.admin-diagnosis__review {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-diagnosis__review-note {
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hr);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-diagnosis__review-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input,
+.admin-diagnosis__review-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color var(--fast);
+}
+
+.admin-diagnosis__review-input {
+  resize: vertical;
+}
+
+.admin-diagnosis__review-input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input:hover,
+.admin-diagnosis__review-select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input:focus,
+.admin-diagnosis__review-select:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.admin-diagnosis__review-hint {
+  margin: -8px 0 0;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-fault {
+  margin-top: 0;
+}

@@ -19,6 +19,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout"
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
 import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
+import { AdminDiagnosisPage } from "@/pages/admin/AdminDiagnosisPage"
 
 /**
  * Task 3 临时占位。Task 6-12 的页面组件落地后，把对应 element 逐个换成
@@ -138,15 +139,7 @@ export function App() {
             />
             <Route
               path="diagnosis"
-              element={
-                <AdminPlaceholder
-                  code="09"
-                  kicker="系统管理 · 诊断管理"
-                  en="ADMIN · DIAGNOSIS"
-                  title="诊断管理"
-                  body="判读记录检索、详情抽屉与人工复核。这个界面正在装配。"
-                />
-              }
+              element={<AdminDiagnosisPage />}
             />
             <Route
               path="knowledge"
