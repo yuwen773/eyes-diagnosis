@@ -25,7 +25,13 @@ import {
 } from "@/lib/adminApi"
 import { reviewView } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail, type DiagnosisResult } from "@/lib/api"
-import { severityLabel, formatTimestamp, fixed, recommendationLines } from "@/lib/domain"
+import {
+  severityLabel,
+  formatTimestamp,
+  fixed,
+  normalizeConfidence,
+  recommendationLines,
+} from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
@@ -45,11 +51,22 @@ type Params = { current: number; pageSize: number; result?: string }
 /** 加载 / 错误 / 数据三态的全部来源；不在各事件里散着维护布尔量。 */
 type View = { data: Page<AdminDiagnosis> | null; fault: ErrorDetail | null; loading: boolean }
 
-/** 0–1 概率 ×100 一位小数；undefined / NaN 走统一「—」占位，不补 %。 */
+/**
+ * 置信度 → 百分比读数（一位小数）。
+ *
+ * 后端置信度可能是 0–1 概率，也可能是 0–100 百分数（见 domain.ts 的
+ * normalizeConfidence 契约，rankClasses / RecordSheet 都先归一再用）。这里
+ * 先过 normalizeConfidence 归一到 0–1，再 ×100；若后端回 85（百分数形态）
+ * 也得 85.0% 而不是 8500.0%。列表列与 Drawer 详情（兜底链 confidence ??
+ * probability）共用本函数，两处量纲因此都对齐既有原语。
+ * 不另做数值转换（雪花 id 全程 string，页面里不出现任何 Number(...)）。
+ */
 function confidencePercent(value?: number): string {
-  // fixed() 已把 undefined / NaN 收敛成「—」，这里只负责 ×100 与补百分号，
-  // 不另做数值转换（雪花 id 全程 string，页面里不出现任何 Number(...)）。
-  const reading = fixed(value === undefined ? undefined : value * 100, 1)
+  // undefined / NaN → 「—」：normalizeConfidence 会把它们收成 0，先拦掉，
+  // 否则会误显示成「0.0%」。NaN 用自不等判定（value !== value），避免引入
+  // Number(...) 调用。
+  if (value === undefined || value !== value) return "—"
+  const reading = fixed(normalizeConfidence(value) * 100, 1)
   return reading === "—" ? "—" : `${reading}%`
 }
 
