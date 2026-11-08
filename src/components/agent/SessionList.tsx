@@ -235,7 +235,14 @@ export function SessionList({
 
       <div className="agent-sessions__body">
         {sessions.length === 0 && (
-          <p className="agent-sessions__empty num">暂无历史会话</p>
+          <div className="agent-sessions__empty">
+            <p className="num">暂无历史会话</p>
+            <p className="agent-sessions__emptyhint">
+              新的提问会自动出现在这里，
+              <br />
+              按今天 / 昨天 / 更早归档。
+            </p>
+          </div>
         )}
         {pinned.length > 0 && (
           <section>

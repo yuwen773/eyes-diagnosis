@@ -288,9 +288,30 @@
 .agent-welcome {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 56px 22px;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 100%;
+  padding: 40px 22px;
+  text-align: center;
+}
+
+.agent-welcome__mark {
+  width: 180px;
+  color: var(--on-dark-2);
+  margin-bottom: 22px;
+}
+
+.agent-welcome__mark svg {
+  display: block;
+  width: 100%;
+}
+
+.agent-welcome__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .agent-welcome__kicker {
@@ -319,26 +340,68 @@
 }
 
 .agent-welcome__hints {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  width: 100%;
+  max-width: 640px;
+  margin-top: 30px;
+  background: var(--dark-line-strong);
+  border: 1px solid var(--dark-line-strong);
 }
 
 .agent-welcome__hint {
-  padding: 9px 16px;
-  border: 1px solid var(--dark-line);
-  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 16px 14px;
+  border: 0;
+  background: var(--dark);
   font-family: var(--font-sans);
-  font-size: 12.5px;
-  color: var(--on-dark-2);
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s var(--ease);
 }
 
 .agent-welcome__hint:hover {
-  border-color: var(--signal);
+  background: var(--dark-surface);
+}
+
+.agent-welcome__hintno {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
   color: var(--signal);
+}
+
+.agent-welcome__hinttitle {
+  font-size: 13.5px;
+  color: var(--on-dark);
+}
+
+.agent-welcome__hintdesc {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--on-dark-3);
+}
+
+@media (max-width: 720px) {
+  .agent-welcome__hints {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.agent-welcome__capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-top: 26px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--on-dark-3);
 }
 
 /* ── agent: 输入区 ─────────────────────────────────────── */
@@ -629,11 +692,23 @@
 }
 
 .agent-sessions__empty {
-  padding: 20px 14px;
+  padding: 28px 14px;
+}
+
+.agent-sessions__empty .num {
+  margin: 0 0 8px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--fg-3);
+}
+
+.agent-sessions__emptyhint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--fg-3);
+  opacity: 0.8;
 }
 
 .agent-sessions__label {
