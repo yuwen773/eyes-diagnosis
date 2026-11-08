@@ -332,3 +332,234 @@
   border-color: var(--signal);
   color: var(--signal);
 }
+
+/* ── agent: 输入区 ─────────────────────────────────────── */
+
+.agent-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 10px;
+  border-top: 1px solid var(--hr);
+  background: var(--bg);
+}
+
+.agent-input__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agent-input__attachment {
+  position: relative;
+}
+
+.agent-input__attachment img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border: 1px solid var(--hr);
+  display: block;
+}
+
+.agent-input__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--hr-strong);
+  background: var(--bg);
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.agent-input__remove:hover {
+  color: var(--signal);
+  border-color: var(--signal);
+}
+
+.agent-input__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.agent-input__textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--hr);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.6;
+  padding: 9px 12px;
+  overflow-y: auto;
+}
+
+.agent-input__textarea:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.agent-input__textarea::placeholder {
+  color: var(--fg-3);
+}
+
+.agent-input__send,
+.agent-input__stop {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  border: 1px solid var(--signal);
+  background: none;
+  color: var(--signal);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.agent-input__send:disabled {
+  border-color: var(--hr);
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
+.agent-input__stop {
+  border-color: var(--fg-2);
+  color: var(--fg);
+}
+
+.agent-input__stop:hover {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.agent-input__hint {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+}
+
+/* ── agent: 资源面板 ───────────────────────────────────── */
+
+.agent-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--hr);
+  background: var(--bg);
+}
+
+.agent-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-panel__tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.agent-panel__tab {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.agent-panel__tab.is-active {
+  border-color: var(--hr-strong);
+  color: var(--signal);
+}
+
+.agent-panel__close {
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.agent-panel__close:hover {
+  color: var(--fg);
+}
+
+.agent-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.agent-panel__empty {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.agent-panel__imggrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.agent-panel__img {
+  padding: 0;
+  border: 1px solid var(--hr);
+  background: none;
+  cursor: zoom-in;
+}
+
+.agent-panel__img img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.agent-panel__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-panel__link a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hr);
+  color: inherit;
+  text-decoration: none;
+}
+
+.agent-panel__linktitle {
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+.agent-panel__link a:hover .agent-panel__linktitle {
+  color: var(--signal);
+}
+
+.agent-panel__linkdomain {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
