@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
+import { FaultProvider, FaultToaster } from "@/components/fault"
 import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { LandingPage } from "@/pages/LandingPage"
@@ -63,6 +64,8 @@ export function App() {
     <BrowserRouter>
       <ThemeProvider>
         <SessionProvider>
+        {/* 故障提示宿主：一处渲染，全站任何一次失败都从这儿浮出来。 */}
+        <FaultProvider>
         <ScrollToTop />
         <AuthRedirect />
         <Routes>
@@ -77,6 +80,8 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <FaultToaster />
+        </FaultProvider>
         </SessionProvider>
       </ThemeProvider>
     </BrowserRouter>

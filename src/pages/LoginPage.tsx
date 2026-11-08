@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { AuthShell } from "@/components/AuthShell"
-import { ApiError } from "@/lib/api"
+import { FaultNote } from "@/components/fault"
 import { useSession } from "@/lib/session"
+import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 
 export function LoginPage() {
   const { signIn } = useSession()
@@ -12,23 +13,34 @@ export function LoginPage() {
 
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  // 校验没过是「还没填对」，钉在出问题的那个框下面；
+  // 服务端拒绝是「这次没成」，摆在表单顶上。两种不要混。
+  const [fault, setFault] = useState<Fault | null>(null)
+  const [field, setField] = useState<"account" | "password" | null>(null)
   const [pending, setPending] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!account.trim() || !password) {
-      setError("请填写账号与密码")
+    if (!account.trim()) {
+      setFault(validationFault("请填写账号"))
+      setField("account")
+      return
+    }
+    if (!password) {
+      setFault(validationFault("请填写密码"))
+      setField("password")
       return
     }
 
     setPending(true)
-    setError("")
+    setFault(null)
+    setField(null)
     try {
       await signIn(account.trim(), password)
       navigate(redirect, { replace: true })
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : "登录失败，请稍后重试")
+      setFault(faultFromError(cause, { intent: "login" }))
+      setField(null)
     } finally {
       setPending(false)
     }
@@ -41,13 +53,9 @@ export function LoginPage() {
       sub="用已有账号登录。未登录时也可以先看一份示例记录。"
     >
       <form className="form" onSubmit={onSubmit} noValidate>
-        {error ? (
-          <p className="form__error" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {fault && !field ? <FaultNote fault={fault} /> : null}
 
-        <div className="field">
+        <div className="field" data-fault={field === "account" ? fault?.severity : undefined}>
           <label className="field__label" htmlFor="account">
             账号 · Account
           </label>
@@ -58,11 +66,12 @@ export function LoginPage() {
             value={account}
             onChange={(event) => setAccount(event.target.value)}
             placeholder="useraccount"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={field === "account" || undefined}
           />
+          {field === "account" && fault ? <FaultNote fault={fault} variant="field" /> : null}
         </div>
 
-        <div className="field">
+        <div className="field" data-fault={field === "password" ? fault?.severity : undefined}>
           <label className="field__label" htmlFor="password">
             密码 · Password
           </label>
@@ -74,8 +83,9 @@ export function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="••••••••"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={field === "password" || undefined}
           />
+          {field === "password" && fault ? <FaultNote fault={fault} variant="field" /> : null}
         </div>
 
         <button className="btn btn--block" type="submit" disabled={pending}>

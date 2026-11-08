@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { AuthShell } from "@/components/AuthShell"
-import { ApiError, register } from "@/lib/api"
+import { FaultNote } from "@/components/fault"
+import { register } from "@/lib/api"
+import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -12,27 +14,33 @@ export function RegisterPage() {
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
-  const [error, setError] = useState("")
+  // 校验没过钉在出问题的那个框下面，服务端拒绝摆在表单顶上。
+  const [fault, setFault] = useState<Fault | null>(null)
+  const [field, setField] = useState<"account" | "password" | "confirm" | null>(null)
   const [pending, setPending] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
 
     if (account.trim().length < 4) {
-      setError("账号至少 4 位")
+      setFault(validationFault("账号至少 4 位"))
+      setField("account")
       return
     }
     if (password.length < 8) {
-      setError("密码至少 8 位")
+      setFault(validationFault("密码至少 8 位"))
+      setField("password")
       return
     }
     if (password !== confirm) {
-      setError("两次输入的密码不一致")
+      setFault(validationFault("两次输入的密码不一致"))
+      setField("confirm")
       return
     }
 
     setPending(true)
-    setError("")
+    setFault(null)
+    setField(null)
     try {
       await register({
         userAccount: account.trim(),
@@ -41,7 +49,8 @@ export function RegisterPage() {
       })
       navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true })
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : "注册失败，请稍后重试")
+      setFault(faultFromError(cause, { intent: "register" }))
+      setField(null)
     } finally {
       setPending(false)
     }
@@ -54,13 +63,9 @@ export function RegisterPage() {
       sub="注册后，每次判读都会归档到你的账号下，随时可以回看记录。"
     >
       <form className="form" onSubmit={onSubmit} noValidate>
-        {error ? (
-          <p className="form__error" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {fault && !field ? <FaultNote fault={fault} /> : null}
 
-        <div className="field">
+        <div className="field" data-fault={field === "account" ? fault?.severity : undefined}>
           <label className="field__label" htmlFor="account">
             账号 · Account
           </label>
@@ -71,11 +76,12 @@ export function RegisterPage() {
             value={account}
             onChange={(event) => setAccount(event.target.value)}
             placeholder="至少 4 位，字母或数字"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={field === "account" || undefined}
           />
+          {field === "account" && fault ? <FaultNote fault={fault} variant="field" /> : null}
         </div>
 
-        <div className="field">
+        <div className="field" data-fault={field === "password" ? fault?.severity : undefined}>
           <label className="field__label" htmlFor="password">
             密码 · Password
           </label>
@@ -87,11 +93,12 @@ export function RegisterPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="至少 8 位"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={field === "password" || undefined}
           />
+          {field === "password" && fault ? <FaultNote fault={fault} variant="field" /> : null}
         </div>
 
-        <div className="field">
+        <div className="field" data-fault={field === "confirm" ? fault?.severity : undefined}>
           <label className="field__label" htmlFor="confirm">
             确认密码 · Confirm
           </label>
@@ -103,8 +110,9 @@ export function RegisterPage() {
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
             placeholder="再输入一次"
-            aria-invalid={Boolean(error) || undefined}
+            aria-invalid={field === "confirm" || undefined}
           />
+          {field === "confirm" && fault ? <FaultNote fault={fault} variant="field" /> : null}
         </div>
 
         <button className="btn btn--block" type="submit" disabled={pending}>

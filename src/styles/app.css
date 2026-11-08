@@ -3495,13 +3495,6 @@ html:not(.dark) .auth__beam {
   border-color: var(--risk-critical);
 }
 
-.field__error {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--risk-critical);
-}
 
 .form__foot {
   display: flex;
@@ -3526,15 +3519,6 @@ html:not(.dark) .auth__beam {
   color: var(--ink);
 }
 
-.form__error {
-  margin: 0;
-  padding: 11px 13px;
-  border: 1px solid color-mix(in srgb, var(--risk-critical) 38%, transparent);
-  background: color-mix(in srgb, var(--risk-critical) 6%, transparent);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-2);
-}
 
 /* ── 玻璃上的控件：底是半透的，边是发丝的，聚焦时亮一道暖色 ── */
 
@@ -3621,12 +3605,6 @@ html:not(.dark) .auth__beam {
   opacity: 0.4;
 }
 
-.auth .form__error {
-  border-radius: 11px;
-  border: 1px solid rgba(198, 76, 60, 0.45);
-  background: rgba(168, 50, 38, 0.16);
-  color: #f0c7c0;
-}
 
 .auth .form__meta {
   color: var(--auth-fg-mid);
@@ -3647,9 +3625,6 @@ html:not(.dark) .auth__beam {
   border-bottom-color: var(--ink);
 }
 
-.auth--light .form__error {
-  color: #8a2f24;
-}
 
 /* ==========================================================================
    打印：只留记录纸

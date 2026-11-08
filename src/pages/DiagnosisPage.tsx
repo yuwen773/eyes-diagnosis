@@ -1,8 +1,10 @@
 import { memo, useEffect, useRef, useState, type CSSProperties } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ApiError, runDiagnosis, type DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useSession } from "@/lib/session"
+import { FaultNote } from "@/components/fault"
+import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
@@ -90,12 +92,16 @@ const STAGE_EN: Record<Stage, string> = {
 
 export function DiagnosisPage() {
   const { status } = useSession()
+  const navigate = useNavigate()
 
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [stage, setStage] = useState<Stage>("empty")
-  const [error, setError] = useState("")
-  const [errorCode, setErrorCode] = useState<number | null>(null)
+  // 故障只有一份：要么是这张图没通过检查（贴槽位），
+  // 要么是这次判读没成（给重试）。
+  const [fault, setFault] = useState<Fault | null>(null)
+  const [faultScope, setFaultScope] = useState<"slot" | "run">("slot")
+  const [needsLogin, setNeedsLogin] = useState(false)
   const [result, setResult] = useState<DiagnosisResult | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -127,10 +133,13 @@ export function DiagnosisPage() {
     if (!next) return
     const problem = validate(next)
     if (problem) {
-      setError(problem)
+      setFault(validationFault(problem))
+      setFaultScope("slot")
+      setNeedsLogin(false)
       return
     }
-    setError("")
+    setFault(null)
+    setNeedsLogin(false)
     setResult(null)
     setFile(next)
     setStage("ready")
@@ -139,7 +148,8 @@ export function DiagnosisPage() {
   async function diagnose() {
     if (!file) return
     setStage("running")
-    setError("")
+    setFault(null)
+    setNeedsLogin(false)
     setResult(null)
     setElapsed(0)
     startedAt.current = Date.now()
@@ -152,8 +162,14 @@ export function DiagnosisPage() {
       setStage("done")
     } catch (cause) {
       setStage("error")
-      setErrorCode(cause instanceof ApiError ? cause.code : null)
-      setError(cause instanceof ApiError ? cause.message : "判读请求失败，请稍后重试")
+      setFaultScope("run")
+      setNeedsLogin(cause instanceof ApiError && cause.code === 40100)
+      setFault(
+        faultFromError(cause, {
+          intent: "load",
+          action: { label: "重试", run: () => void diagnose() },
+        }),
+      )
     }
   }
 
@@ -161,11 +177,13 @@ export function DiagnosisPage() {
     setFile(null)
     setResult(null)
     setStage("empty")
-    setError("")
+    setFault(null)
+    setNeedsLogin(false)
     if (inputRef.current) inputRef.current.value = ""
   }
 
-  const needsLogin = status === "anon" && errorCode === 40100
+  // 未登录时撞上 40100：路由层会送人去登录页，这里只把话说清楚。
+  const showLoginHint = needsLogin && status === "anon"
 
   if (result) {
     return (
@@ -239,7 +257,7 @@ export function DiagnosisPage() {
     })
   }
   if (stage === "error") {
-    log.push({ key: "fail", text: error || "请求失败", note: "FAIL", state: "fail" })
+    log.push({ key: "fail", text: fault?.title ?? "请求失败", note: "FAIL", state: "fail" })
   }
 
   return (
@@ -365,18 +383,27 @@ export function DiagnosisPage() {
               </p>
             ) : null}
 
-            {needsLogin ? (
-              <p className="form__error" style={{ marginTop: 16 }} role="alert">
-                判读需要登录。<Link to="/login?redirect=/diagnosis" style={{ textDecoration: "underline" }}>去登录</Link>
-              </p>
-            ) : error && stage === "error" ? (
-              <p className="form__error" style={{ marginTop: 16 }} role="alert">
-                {error}
-              </p>
-            ) : error ? (
-              <p className="field__error" style={{ marginTop: 12 }} role="alert">
-                {error}
-              </p>
+            {showLoginHint ? (
+              <div style={{ marginTop: 16 }}>
+                <FaultNote
+                  fault={{
+                    severity: "attention",
+                    kind: "auth",
+                    tag: "AUTH",
+                    title: "判读需要登录",
+                    detail: "登录后这张影像的判读结果会归档到你的账号下。",
+                    code: 40100,
+                  }}
+                  action={{
+                    label: "去登录",
+                    run: () => navigate("/login?redirect=/diagnosis"),
+                  }}
+                />
+              </div>
+            ) : fault ? (
+              <div style={{ marginTop: faultScope === "run" ? 16 : 12 }}>
+                <FaultNote fault={fault} variant={faultScope === "run" ? "block" : "field"} />
+              </div>
             ) : null}
           </section>
 

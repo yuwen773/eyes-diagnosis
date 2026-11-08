@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
-  ApiError,
   batchDeleteSessions,
   deleteSession,
-  describeError,
   exportSession,
   generateTitle,
   getChatHistory,
@@ -15,6 +13,8 @@ import {
 import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
 import { useAgentUpload } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
+import { faultFromError } from "@/lib/faults"
+import { useFault } from "@/components/fault"
 import { MessageList } from "@/components/agent/MessageList"
 import { ChatInput } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
@@ -77,8 +77,9 @@ export function AgentPage() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
-  const [notice, setNotice] = useState("")
   const [busy, setBusy] = useState(false)
+  // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
+  const { push: pushFault } = useFault()
 
   const refreshSessions = useCallback(async () => {
     try {
@@ -96,12 +97,12 @@ export function AgentPage() {
         const mapped = (data.messages ?? []).map(mapHistoryMessage)
         setMessages(mapped)
       } catch (e) {
-        setNotice(describeError(e).text)
+        pushFault(faultFromError(e, { intent: "load" }))
       } finally {
         setHistoryLoading(false)
       }
     },
-    [setMessages],
+    [setMessages, pushFault],
   )
 
   useEffect(() => {
@@ -134,8 +135,8 @@ export function AgentPage() {
           const result = await uploader.uploadFiles(files)
           imageUrls = result.urls
         }
-      } catch {
-        setNotice("图片上传失败，无法发送消息")
+      } catch (e) {
+        pushFault(faultFromError(e, { intent: "upload" }))
         return
       }
 
@@ -155,7 +156,6 @@ export function AgentPage() {
           saveThreadId(usedThreadId)
           setCurrentThreadId(usedThreadId)
         }
-        setNotice("")
 
         // 首条消息触发 AI 生成标题，完成后刷新列表
         if (isFirstMessage) {
@@ -165,14 +165,10 @@ export function AgentPage() {
         }
       } catch (e) {
         uploader.commitFailure(imageUrls)
-        setNotice(
-          e instanceof ApiError && e.code === -1
-            ? "连接中断，消息可能没有送达"
-            : "消息发送失败，请检查网络后重试",
-        )
+        pushFault(faultFromError(e, { intent: "send" }))
       }
     },
-    [isStreaming, messages.length, threadId, uploader, pushUser, send, refreshSessions],
+    [isStreaming, messages.length, threadId, uploader, pushUser, send, refreshSessions, pushFault],
   )
 
   const handleNewChat = useCallback(() => {
@@ -204,13 +200,13 @@ export function AgentPage() {
         await refreshSessions()
         return true
       } catch (e) {
-        setNotice(describeError(e).text)
+        pushFault(faultFromError(e, { intent: "load" }))
         return false
       } finally {
         setBusy(false)
       }
     },
-    [refreshSessions],
+    [refreshSessions, pushFault],
   )
 
   const handleDelete = useCallback(
@@ -293,12 +289,6 @@ export function AgentPage() {
           </div>
 
           <div className={`agent-main${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
-            {notice && (
-              <div className="notice agent-notice" role="status">
-                {notice}
-              </div>
-            )}
-
             <MessageList
               messages={messages}
               loading={historyLoading}

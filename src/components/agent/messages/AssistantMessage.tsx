@@ -2,13 +2,15 @@ import { useMemo } from "react"
 import type { MouseEvent } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
 import { renderMarkdown } from "@/lib/markdown"
+import { useFault } from "@/components/fault"
+import { infoFault } from "@/lib/faults"
 
-async function copyText(text: string) {
+async function copyText(text: string, onFail: (message: string) => void) {
   try {
     await navigator.clipboard.writeText(text)
   } catch {
     // 剪贴板不可用（非安全上下文等）——不静默，给一句提示
-    window.alert("复制失败，请手动选择文本复制")
+    onFail("复制失败，请手动选择文本复制")
   }
 }
 
@@ -46,6 +48,7 @@ function AgentEyeIcon() {
  * 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
  */
 export function AssistantMessage({ msg }: { msg: StreamMessage }) {
+  const { push } = useFault()
   // 流式期间正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次
   const html = useMemo(
     () => (msg.isLoading ? "" : renderMarkdown(msg.content)),
@@ -55,7 +58,7 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     if (e.target instanceof Element) {
       const text = resolveCopyText(e.target)
-      if (text) void copyText(text)
+      if (text) void copyText(text, (message) => push(infoFault(message)))
     }
   }
 

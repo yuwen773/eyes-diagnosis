@@ -1,0 +1,375 @@
+/* ============================================================
+   fault.css — 故障提示的统一样式
+
+   一套语法，三个尺度：
+     .fault-toast  瞬时读数（右上角浮条，操作反馈）
+     .fault-note   行内读数（表单/字段/局部）
+     .fault-panel  整块读数（整页取不到数）
+
+   配色只用风险语义色（红 / 琥珀 / 中性），不占信号橙——
+   橙色是品牌色，拿它表示故障会把「注意」和「这里是主按钮」混成一件事。
+   ============================================================ */
+
+.fault-tone-critical {
+  --fault-tone: var(--risk-critical);
+}
+
+.fault-tone-attention {
+  --fault-tone: var(--risk-attention);
+}
+
+.fault-tone-info {
+  --fault-tone: var(--fg-3);
+}
+
+/* ── 瞬时读数：右上角的一条仪器读数 ─────────────────────── */
+
+.fault-stack {
+  position: fixed;
+  /* 让开顶栏与对话头栏：浮条压住资源面板钮，谁也点不到。 */
+  top: calc(var(--nav-h) + 58px);
+  right: 16px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(384px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.fault-toast {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 13px 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+  border-left: 2px solid var(--fault-tone);
+  box-shadow: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
+  pointer-events: auto;
+  animation: fault-toast-in 260ms var(--ease);
+}
+
+.fault-toast:hover {
+  border-color: color-mix(in srgb, var(--fault-tone) 34%, var(--hr));
+}
+
+.fault-toast__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 22px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.fault-toast__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--fault-tone);
+}
+
+/* 状态灯：方块，不是圆点——仪表上的指示灯本来就是方的。 */
+.fault-toast__tag::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+}
+
+.fault-toast__code {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.fault-toast__title {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.fault-toast__detail {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--fg-2);
+}
+
+.fault-toast__action {
+  align-self: flex-start;
+  margin-top: 5px;
+  padding: 3px 11px;
+  border: 1px solid var(--hr-strong);
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color var(--fast), border-color var(--fast);
+}
+
+.fault-toast__action:hover {
+  color: var(--fault-tone);
+  border-color: var(--fault-tone);
+}
+
+.fault-toast__close {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.fault-toast__close:hover {
+  color: var(--fg);
+}
+
+.fault-toast[data-phase="out"] {
+  animation: fault-toast-out 180ms var(--ease) forwards;
+}
+
+@keyframes fault-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fault-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ── 行内读数：表单、字段、局部 ─────────────────────────── */
+
+.fault-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 30%, transparent);
+  border-left: 2px solid var(--fault-tone);
+  background: color-mix(in srgb, var(--fault-tone) 7%, transparent);
+}
+
+.fault-note__tag {
+  flex: none;
+  padding-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--fault-tone);
+}
+
+.fault-note__text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--fg-2);
+}
+
+.fault-note__title {
+  color: var(--fg);
+}
+
+.fault-note__detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--fg-3);
+}
+
+.fault-note__action {
+  flex: none;
+  align-self: center;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 40%, transparent);
+  border-radius: 7px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fault-tone);
+  cursor: pointer;
+  transition: background var(--fast);
+}
+
+.fault-note__action:hover {
+  background: color-mix(in srgb, var(--fault-tone) 12%, transparent);
+}
+
+/* 字段级：贴着输入框，不占一整块。 */
+.fault-note--field {
+  padding: 0;
+  border: 0;
+  border-left: 0;
+  background: none;
+}
+
+.fault-note--field .fault-note__tag {
+  display: none;
+}
+
+.fault-note--field .fault-note__text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fault-tone);
+}
+
+.fault-note--field .fault-note__detail {
+  display: inline;
+  margin-left: 6px;
+  color: var(--fg-3);
+}
+
+/* ── 整块读数：整页取不到数 ─────────────────────────────── */
+
+.fault-note--panel {
+  display: block;
+  padding: clamp(20px, 2.4vw, 30px);
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-left: 2px solid var(--fault-tone);
+}
+
+.fault-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.fault-panel__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--fault-tone);
+}
+
+.fault-panel__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hr);
+}
+
+.fault-panel__title {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.fault-panel__body {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--fg-2);
+}
+
+.fault-panel__foot {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hr);
+}
+
+.fault-panel__readout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.fault-panel__label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--fg-3);
+}
+
+.fault-panel__value {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg);
+}
+
+.fault-panel__action {
+  margin-left: auto;
+  padding: 5px 14px;
+  border: 1px solid var(--hr-strong);
+  border-radius: 9px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color var(--fast), border-color var(--fast);
+}
+
+.fault-panel__action:hover {
+  color: var(--fault-tone);
+  border-color: var(--fault-tone);
+}
+
+/* 出错的输入框描边跟着故障的严重度走：还没填对是琥珀，这次没成是红。
+   （默认那条 aria-invalid 描边是红的，校验类不该那么凶。） */
+.field[data-fault="attention"] .field__input[aria-invalid="true"] {
+  border-color: var(--risk-attention);
+}
+
+.field[data-fault="critical"] .field__input[aria-invalid="true"] {
+  border-color: var(--risk-critical);
+}
+
+/* ── 动效克制：系统设置里说了不要动，就不动 ─────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .fault-toast,
+  .fault-toast[data-phase="out"] {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .fault-stack {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
