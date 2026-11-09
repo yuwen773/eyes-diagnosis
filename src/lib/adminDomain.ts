@@ -4,6 +4,7 @@
  */
 
 import type { Risk } from "@/lib/domain"
+import { normalizeConfidence } from "@/lib/domain"
 import type { AdminDiagnosis, AdminUser } from "@/lib/adminApi"
 
 /** 复审状态 → 标签与风险档。优先级：aiRejected > requiresReview > reexamineStatus。 */
@@ -70,4 +71,20 @@ export function rankDistribution(rows: { name: string; value: number }[]): Ranke
 export function barLabelFits(barWidthPx: number, label: string): boolean {
   // 中文等宽近似 + 左右各 8px 内边距；宽度不够就让标签移到条外，避免文字被裁。
   return label.length * 12 + 16 <= barWidthPx
+}
+
+/**
+ * 置信度 → 百分比读数（一位小数）。
+ *
+ * 后端置信度可能是 0–1 概率，也可能是 0–100 百分数，先经 normalizeConfidence 归一
+ * 再 ×100，两种量纲都读得对。
+ *
+ * 「没有结论」与「结论是零」是两回事：undefined / null / NaN 一律显示「—」。
+ * AI 拒识的记录后端把置信度置空（null），若照 normalizeConfidence 收成 0 再显示，
+ * 页面会把一条拒识记录读成「0.0% 的诊断」——那是在说一条不存在的结论。
+ */
+export function confidencePercent(value?: number | null): string {
+  if (value === undefined || value === null || value !== value) return "—"
+  const reading = (normalizeConfidence(value) * 100).toFixed(1)
+  return reading === "—" ? "—" : `${reading}%`
 }

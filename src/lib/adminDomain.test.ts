@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { barLabelFits, canDeleteUser, newsContentValid, rankDistribution, reviewView } from "./adminDomain"
+import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, rankDistribution, reviewView } from "./adminDomain"
 
 describe("reviewView", () => {
   it("aiRejected 优先于一切", () => {
@@ -65,5 +65,21 @@ describe("barLabelFits", () => {
   })
   it("短名宽条放得下", () => {
     expect(barLabelFits(400, "正常")).toBe(true)
+  })
+})
+
+describe("confidencePercent", () => {
+  it("0–1 概率形态 → 百分比", () => {
+    expect(confidencePercent(0.87)).toBe("87.0%")
+  })
+  it("0–100 百分数形态 → 同一个读数", () => {
+    expect(confidencePercent(87)).toBe("87.0%")
+  })
+  it("null（AI 拒识，后端置空）→ 「—」，不是 0.0%", () => {
+    expect(confidencePercent(null)).toBe("—")
+  })
+  it("undefined / NaN → 「—」", () => {
+    expect(confidencePercent(undefined)).toBe("—")
+    expect(confidencePercent(NaN)).toBe("—")
   })
 })

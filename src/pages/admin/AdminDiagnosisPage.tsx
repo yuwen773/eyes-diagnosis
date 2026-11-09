@@ -23,13 +23,11 @@ import {
   type AdminDiagnosis,
   type Page,
 } from "@/lib/adminApi"
-import { reviewView } from "@/lib/adminDomain"
+import { reviewView, confidencePercent } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail, type DiagnosisResult } from "@/lib/api"
 import {
   severityLabel,
   formatTimestamp,
-  fixed,
-  normalizeConfidence,
   recommendationLines,
 } from "@/lib/domain"
 import { fault } from "@/lib/faults"
@@ -52,24 +50,9 @@ type Params = { current: number; pageSize: number; result?: string }
 type View = { data: Page<AdminDiagnosis> | null; fault: ErrorDetail | null; loading: boolean }
 
 /**
- * 置信度 → 百分比读数（一位小数）。
- *
- * 后端置信度可能是 0–1 概率，也可能是 0–100 百分数（见 domain.ts 的
- * normalizeConfidence 契约，rankClasses / RecordSheet 都先归一再用）。这里
- * 先过 normalizeConfidence 归一到 0–1，再 ×100；若后端回 85（百分数形态）
- * 也得 85.0% 而不是 8500.0%。列表列与 Drawer 详情（兜底链 confidence ??
- * probability）共用本函数，两处量纲因此都对齐既有原语。
- * 不另做数值转换（雪花 id 全程 string，页面里不出现任何 Number(...)）。
+ * 置信度 → 百分比读数（一位小数）——实现在 adminDomain 的纯函数层，
+ * 那里有回归用例锁住「没有结论 ≠ 0.0%」这条规则。
  */
-function confidencePercent(value?: number | null): string {
-  // undefined / null / NaN → 「—」：normalizeConfidence 会把它们收成 0，先拦掉，
-  // 否则会误显示成「0.0%」。AI 拒识的记录后端把置信度置空（null），读数是「没有
-  // 结论」而不是「结论为零」，两者在页面上必须分得开。NaN 用自不等判定
-  // （value !== value），避免引入 Number(...) 调用。
-  if (value === undefined || value === null || value !== value) return "—"
-  const reading = fixed(normalizeConfidence(value) * 100, 1)
-  return reading === "—" ? "—" : `${reading}%`
-}
 
 function truncate(value: string, limit: number): string {
   return value.length > limit ? `${value.slice(0, limit)}…` : value
