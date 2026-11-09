@@ -115,27 +115,40 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
                     .exists();
             ThrowUtils.throwIf(!exists,ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
         }
-        System.err.println(newsId);
         //上传图片
         //用户Id作为每个用户的图库前缀
         String uploadPrefix = String.format("cover/%s",loginUser.getId());
         UploadPictureDetail uploadPictureDetail = fileManager.uploadPicture(multipartFile, uploadPrefix);
-        //构造要入库的图片基本信息
-        News news = new News();
-        news.setTitle("");
-        news.setUserId(loginUser.getId());
-        news.setCoverImg(uploadPictureDetail.getUrl());
+        String coverUrl = uploadPictureDetail.getUrl();
 
-        //如果pictureId 不为空 => 更新，否则是新增
-        if(newsId != null){
-            //如果是更新，则补充 id和编辑时间
-            news.setId(newsId);
-            news.setEditTime(new Date());
+        boolean result;
+        if (newsId != null) {
+            // 更新：只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
+            // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
+            result = this.updateById(coverPatch(newsId, coverUrl, new Date()));
+        } else {
+            // 新增：保持原有插入语义（标题空串、作者为上传者、带封面），本票不动它。
+            News news = new News();
+            news.setTitle("");
+            news.setUserId(loginUser.getId());
+            news.setCoverImg(coverUrl);
+            result = this.saveOrUpdate(news);
         }
         //插入/更新
-        boolean result = this.saveOrUpdate(news);
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
-        return uploadPictureDetail.getUrl();
+        return coverUrl;
+    }
+
+    /**
+     * 构造封面更新用的窄 patch 实体：只带 id / coverImg / editTime，其余字段一律为 null。
+     * 供 {@link #uploadCoverImage} 的更新分支与单测使用，避免 saveOrUpdate 整体覆写新闻。
+     */
+    public static News coverPatch(Long newsId, String coverUrl, Date editTime) {
+        News news = new News();
+        news.setId(newsId);
+        news.setCoverImg(coverUrl);
+        news.setEditTime(editTime);
+        return news;
     }
 }
 
