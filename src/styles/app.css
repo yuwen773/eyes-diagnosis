@@ -241,32 +241,33 @@ a {
   white-space: nowrap;
 }
 
-/* 虹膜标记：一枚刻度环 + 信号橙瞳孔。hover 时环转一圈，像对焦。 */
+/* 品牌标：金属虹膜。两版一起挂在 DOM 里，靠 <html>.dark 换。
+   不用 filter: invert()——那会把金属高光翻成脏灰，星星的橙也会变色。 */
 .wordmark__iris {
   align-self: center;
-  width: 22px;
-  height: 22px;
-  color: var(--fg-2);
-  transition: color var(--fast);
+  display: block;
+  width: 30px;
+  height: 30px;
+  transition: transform var(--base);
 }
 
-.wordmark__iris svg {
+.wordmark__mark {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.wordmark__iris-ring {
-  transform-origin: 12px 12px;
-  transition: transform 900ms var(--ease);
+html.dark .wordmark__mark--light {
+  display: none;
 }
 
+html:not(.dark) .wordmark__mark--dark {
+  display: none;
+}
+
+/* hover 时轻轻推近，像凑近了看。 */
 a:hover .wordmark__iris {
-  color: var(--fg);
-}
-
-a:hover .wordmark__iris-ring {
-  transform: rotate(180deg);
+  transform: scale(1.08);
 }
 
 .wordmark__zh {

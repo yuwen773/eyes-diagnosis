@@ -14,26 +14,29 @@ export const NAV_LINKS = [
 /**
  * 铭牌：虹膜标记 + 中文品名 + 英文 mono 副标。
  *
- * 虹膜标记是一枚刻度环——落地页的准星、判读页的取景器都是同一套仪器语言，
- * 品牌处也应该有一枚。环随 hover 转动，瞳孔是全站唯一强调色的落点之一。
+ * 虹膜标记是金属虹膜标：两片错开的月牙夹一枚橙色星芒，读起来是一只眼睛。
+ * 浅色底用暗金属那版，深色底用亮金属那版——渐变在 SVG 里，
+ * 不用 CSS filter 反相（反相会把金属高光变成脏灰）。
+ * 两版一起挂在 DOM 里，靠 <html>.dark 切换，主题切换是即时的，也不会有闪烁。
  */
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <span className="wordmark">
       <span className="wordmark__iris" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-          {/* 刻度环：16 短刻 */}
-          <circle
-            className="wordmark__iris-ring"
-            cx="12"
-            cy="12"
-            r="10.5"
-            pathLength={64}
-            strokeDasharray="0.5 3.5"
-          />
-          {/* 瞳孔 */}
-          <circle cx="12" cy="12" r="3.2" fill="var(--signal)" stroke="none" />
-        </svg>
+        <img
+          className="wordmark__mark wordmark__mark--light"
+          src="/iris-mark-metallic-light.svg"
+          alt=""
+          width={30}
+          height={30}
+        />
+        <img
+          className="wordmark__mark wordmark__mark--dark"
+          src="/iris-mark-metallic-dark.svg"
+          alt=""
+          width={30}
+          height={30}
+        />
       </span>
       <span className="wordmark__zh">眼瞳</span>
       {compact ? null : <span className="wordmark__en">IRIS · FUNDUS READING</span>}

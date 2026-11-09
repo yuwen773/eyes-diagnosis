@@ -6,6 +6,48 @@
   position: relative;
   width: 100%;
   height: 100%;
+
+  /* 画面明暗决定三组颜色：画框底（letterbox 填色）、压暗层、叠加文字。
+     默认黑底片；亮底片那版在 [data-tone="light"] 里改写同一组变量。 */
+  --se-frame-bg: #000;
+  --se-ink: #fff;
+  --se-ink-2: rgba(255, 255, 255, 0.76);
+  --se-ink-3: rgba(255, 255, 255, 0.48);
+  --se-kicker: rgba(255, 255, 255, 0.62);
+  --se-scrim:
+    radial-gradient(
+      120% 95% at 0% 100%,
+      rgba(0, 0, 0, 0.85),
+      rgba(0, 0, 0, 0) 62%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.72),
+      rgba(0, 0, 0, 0.16) 46%,
+      rgba(0, 0, 0, 0.34)
+    );
+}
+
+/* 亮底片：画框底取画面自己的灰（letterbox 看不见），压暗层换成提亮层，
+   文字改墨色。左下角那块留白本来就干净，文字压上去更清楚。 */
+.scroll-expand[data-tone="light"] {
+  --se-frame-bg: #e4e2e1;
+  --se-ink: #14171a;
+  --se-ink-2: rgba(20, 23, 26, 0.72);
+  --se-ink-3: rgba(20, 23, 26, 0.52);
+  --se-kicker: rgba(20, 23, 26, 0.55);
+  --se-scrim:
+    radial-gradient(
+      120% 95% at 0% 100%,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.26) 46%,
+      rgba(255, 255, 255, 0.4)
+    );
 }
 
 .scroll-expand--scroller {
@@ -38,8 +80,8 @@
 .scroll-expand__frame {
   position: absolute;
   inset: 0;
-  /* 眼底片本来就是黑底圆，框底取同一个黑，letterbox 就看不见了。 */
-  background: #000;
+  /* 画框底跟画面同色，letterbox 就看不见了。 */
+  background: var(--se-frame-bg);
   clip-path: inset(29.5% 27% 29.5% 27% round 0);
   will-change: clip-path;
 }
@@ -60,19 +102,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* 说明文字压在左下角，所以那一角要压得更暗。 */
-  background:
-    radial-gradient(
-      120% 95% at 0% 100%,
-      rgba(0, 0, 0, 0.85),
-      rgba(0, 0, 0, 0) 62%
-    ),
-    linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.72),
-      rgba(0, 0, 0, 0.16) 46%,
-      rgba(0, 0, 0, 0.34)
-    );
+  /* 说明文字压在左下角，所以那一角要压得更暗（亮底片那版换成提亮）。 */
+  background: var(--se-scrim);
   opacity: 0;
 }
 
@@ -158,7 +189,7 @@
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--se-kicker);
 }
 
 .scroll-expand__caption-title {
@@ -167,7 +198,7 @@
   font-size: clamp(24px, 3vw, 40px);
   line-height: 1.24;
   letter-spacing: -0.02em;
-  color: #fff;
+  color: var(--se-ink);
   text-wrap: balance;
 }
 
@@ -175,7 +206,7 @@
   margin: 0;
   font-size: 14.5px;
   line-height: 1.75;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--se-ink-2);
 }
 
 .scroll-expand__caption-note {
@@ -183,5 +214,5 @@
   font-size: 10.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.48);
+  color: var(--se-ink-3);
 }

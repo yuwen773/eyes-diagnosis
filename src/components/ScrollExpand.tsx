@@ -40,6 +40,8 @@ export type ScrollExpandProps = {
   smoothing?: number
   /** 渐变压暗层的强度，保证叠加文字可读。 */
   overlayScrim?: number
+  /** 画面本身的明暗：dark = 黑底片，light = 亮底片。决定压暗层与叠加文字的颜色。 */
+  tone?: "dark" | "light"
   /** 用页面滚动驱动展开，而不是组件自己的滚动容器。 */
   useWindowScroll?: boolean
   /** 是否启用。 */
@@ -70,6 +72,7 @@ export function ScrollExpand({
   holdDistance = 0.35,
   smoothing = 0.1,
   overlayScrim = 0.45,
+  tone = "dark",
   useWindowScroll = false,
   enabled = true,
   children,
@@ -98,6 +101,7 @@ export function ScrollExpand({
     holdDistance,
     smoothing,
     overlayScrim,
+    tone,
     useWindowScroll,
     enabled,
   })
@@ -117,6 +121,7 @@ export function ScrollExpand({
       holdDistance,
       smoothing,
       overlayScrim,
+      tone,
       useWindowScroll,
       enabled,
     }
@@ -145,6 +150,7 @@ export function ScrollExpand({
     frame.style.clipPath = `inset(${iy}% ${ix}% ${iy}% ${ix}% round ${r}px)`
 
     // 黑画面上沿压到顶栏下沿时，给舞台打一个标记，顶栏据此反相。
+    // 只有黑底画面才需要：亮底片压上来时顶栏保持本色，反相了反而看不清。
     const stage = stageRef.current
     if (stage) {
       let head = headRef.current
@@ -155,7 +161,7 @@ export function ScrollExpand({
       const navH = head?.offsetHeight ?? 0
       const stageTop = stage.getBoundingClientRect().top
       const frameTop = stageTop + (iy / 100) * (stage.clientHeight || 1)
-      const invert = navH > 0 && frameTop <= navH
+      const invert = c.tone === "dark" && navH > 0 && frameTop <= navH
       const flag = String(invert)
       if (stage.dataset.headInvert !== flag) stage.dataset.headInvert = flag
     }
@@ -321,6 +327,7 @@ export function ScrollExpand({
     <div
       ref={rootRef}
       className={`scroll-expand ${useWindowScroll ? "" : "scroll-expand--scroller"} ${className}`.trim()}
+      data-tone={tone}
       style={style}
     >
       <div ref={trackRef} className="scroll-expand__track">

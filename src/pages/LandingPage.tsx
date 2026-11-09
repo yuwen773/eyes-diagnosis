@@ -282,13 +282,14 @@ export function LandingPage() {
           </section>
         </div>
 
-        <section className="plate" aria-label="眼底影像示例">
+        <section className="plate" aria-label="眼底影像示意">
           <ScrollExpand
-            src="/fundus-demo.jpg"
-            alt="示例彩色眼底照片：中央为黄斑区，鼻侧可见视盘与血管弓"
+            src={dark ? "/scroll-expand-dark.webp" : "/scroll-expand-light.webp"}
+            tone={dark ? "dark" : "light"}
+            alt="眼底示意渲染：虹膜与血管分布的示意画，非真实患者影像"
             title={
               <span className="scroll-expand__title-inner">
-                <span className="scroll-expand__title-kicker">SAMPLE · 眼底照片</span>
+                <span className="scroll-expand__title-kicker">RENDER · 眼底示意</span>
                 <span className="scroll-expand__title-main">模型的唯一输入</span>
               </span>
             }
@@ -301,17 +302,17 @@ export function LandingPage() {
             scrollDistance={0.9}
             holdDistance={0.22}
             smoothing={0.12}
-            overlayScrim={0.5}
+            overlayScrim={dark ? 0.5 : 0.85}
             useWindowScroll
           >
             <div className="scroll-expand__caption">
-              <span className="scroll-expand__caption-kicker">SPECIMEN · 示例影像</span>
-              <h2 className="scroll-expand__caption-title">一张眼底照片，八类改变</h2>
+              <span className="scroll-expand__caption-kicker">SPECIMEN · 影像示意</span>
+              <h2 className="scroll-expand__caption-title">输入只有一张图，输出八类概率</h2>
               <p className="scroll-expand__caption-body">
                 模型只读这一张图。清晰度、对比度与视野完整性先过质量门，
                 达标才给出判读；不达标就拒识。
               </p>
-              <span className="scroll-expand__caption-note">示例影像 · 非真实患者</span>
+              <span className="scroll-expand__caption-note">眼底示意渲染 · 非真实患者影像</span>
             </div>
           </ScrollExpand>
         </section>

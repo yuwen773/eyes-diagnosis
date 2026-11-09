@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-label="Iris optical brand symbol metallic dark theme">
+  <defs>
+    <!-- Multiple sharp and soft highlight bands create a metallic reflection, not a flat two-color fade. -->
+    <linearGradient id="iris-metal-top" x1="11" y1="14" x2="117" y2="87" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#65503F"/><stop offset="17%" stop-color="#FFF8EE"/><stop offset="37%" stop-color="#B3BBB8"/><stop offset="52%" stop-color="#1A1E21"/><stop offset="66%" stop-color="#D0CBC0"/><stop offset="83%" stop-color="#F5E2CB"/><stop offset="100%" stop-color="#664432"/></linearGradient>
+    <linearGradient id="iris-metal-bottom" x1="18" y1="90" x2="111" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#272C31"/><stop offset="14%" stop-color="#D5DADB"/><stop offset="28%" stop-color="#FFF6E9"/><stop offset="46%" stop-color="#7D8990"/><stop offset="68%" stop-color="#242A2D"/><stop offset="86%" stop-color="#DFC7AD"/><stop offset="100%" stop-color="#8D5532"/></linearGradient>
+    <linearGradient id="iris-star" x1="48" y1="48" x2="82" y2="82" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#FFF7D9"/><stop offset="35%" stop-color="#F7AE61"/><stop offset="78%" stop-color="#DB5B1B"/><stop offset="100%" stop-color="#FFF0BA"/></linearGradient>
+    <linearGradient id="iris-edge" x1="21" y1="23" x2="107" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF8E6" stop-opacity=".03"/>
+      <stop offset=".27" stop-color="#FFF8E6" stop-opacity=".38"/>
+      <stop offset=".41" stop-color="#FFF8E6" stop-opacity=".02"/>
+      <stop offset=".72" stop-color="#FFF8E6" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#FFF8E6" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="iris-warm" cx="0" cy="0" r="1" gradientTransform="translate(92 78) rotate(143) scale(63 49)" gradientUnits="userSpaceOnUse">
+       <stop stop-color="#ED813C" stop-opacity=".30"/><stop offset=".65" stop-color="#ED813C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <path d="M 16 64 C 18 35 39 15 68 15 C 89 15 105 27 111 44 C 92 31 72 29 55 37 C 36 46 25 63 23 79 C 17 75 15 70 16 64 Z" fill="url(#iris-metal-top)"/>
+    <path d="M 111 52 C 109 80 91 103 64 111 C 43 116 23 103 14 86 C 33 100 53 100 71 92 C 92 83 104 66 111 52 Z" fill="url(#iris-metal-bottom)"/>
+    <path d="M 16 64 C 18 35 39 15 68 15 C 89 15 105 27 111 44 C 92 31 72 29 55 37 C 36 46 25 63 23 79 C 17 75 15 70 16 64 Z" fill="url(#iris-warm)"/>
+    <path d="M 111 52 C 109 80 91 103 64 111 C 43 116 23 103 14 86 C 33 100 53 100 71 92 C 92 83 104 66 111 52 Z" fill="url(#iris-warm)"/>
+    <!-- Restrained edge glints preserve the source silhouette and work on transparent backgrounds. -->
+    <path d="M 20 57 C 25 35 45 18 68 18 C 84 18 96 25 103 34" stroke="url(#iris-edge)" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M 106 67 C 99 90 81 104 63 107 C 47 109 31 102 21 92" stroke="url(#iris-edge)" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M 63 45 C 66 56 70 60 83 63 C 70 66 66 70 63 83 C 60 70 56 66 43 63 C 56 60 60 56 63 45 Z" fill="url(#iris-star)"/>
+  </g>
+</svg>
