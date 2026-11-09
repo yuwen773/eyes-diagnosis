@@ -3,7 +3,7 @@
 > 本文件是前端重构的**唯一设计真源（Single Source of Truth）**。所有页面、组件、令牌、文案气质以本文件为准。
 > 方向：用户于 2026-07-28 在四轮预览后选定 **A · 医疗编辑风**。
 > 硬约束：后端 API 契约已冻结（Architecture Frozen），前端重构只换皮/换结构，**不改任何数据流与端点**。
-> 速查版规则同时写在项目根 `CLAUDE.md` / `AGENTS.md` 的 Design Rules 段；两者冲突时以本文件为准。
+> `CLAUDE.md` / `AGENTS.md` 的 Design Context 段只保留指向本文件的导航指针；规则以本文件为准。
 
 ---
 
