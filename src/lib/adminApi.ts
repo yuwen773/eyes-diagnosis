@@ -75,7 +75,32 @@ async function request<T>(
   return payload.data as T
 }
 
+/**
+ * 分页信封的计数字段线上是字符串：后端 JsonConfig 全局把 Long 序列化成 String，
+ * total / size / current / pages 回来都是 "13" 这种形态。这里统一转成 number，
+ * 让 Page<T> 的声明与运行时一致——分页算术（total / pageSize）不会踩到字符串。
+ */
+type RawPage<T> = {
+  records?: T[]
+  total?: number | string
+  size?: number | string
+  current?: number | string
+  pages?: number | string
+}
+
 export type Page<T> = { records?: T[]; total?: number; size?: number; current?: number; pages?: number }
+
+function toPage<T>(raw: RawPage<T>): Page<T> {
+  const num = (value?: number | string) =>
+    value === undefined || value === null ? undefined : Number(value)
+  return {
+    records: raw.records,
+    total: num(raw.total),
+    size: num(raw.size),
+    current: num(raw.current),
+    pages: num(raw.pages),
+  }
+}
 
 /* ── 用户管理 ─────────────────────────────────────────────── */
 
@@ -84,7 +109,7 @@ export type AdminUser = {
   userProfile?: string; userRole?: string; createTime?: string
 }
 export function listUsers(q: { current: number; pageSize: number; userAccount?: string; userName?: string }): Promise<Page<AdminUser>> {
-  return request<Page<AdminUser>>("/user/list/page/vo", { method: "POST", body: JSON.stringify(q) })
+  return request<RawPage<AdminUser>>("/user/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function deleteUser(id: string): Promise<boolean> {
   return request<boolean>(`/user/delete/${id}`, { method: "POST" })
@@ -97,7 +122,7 @@ export type AdminNews = {
   content?: string; coverImage?: string; publishTime?: string
 }
 export function listAdminNews(q: { current: number; pageSize: number; title?: string }): Promise<Page<AdminNews>> {
-  return request<Page<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) })
+  return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function deleteNews(id: string): Promise<boolean> {
   return request<boolean>(`/news/delete/${id}`, { method: "POST" })
@@ -148,12 +173,14 @@ export async function uploadNewsCover(id: string, file: File): Promise<string> {
 /* ── 诊断管理 ─────────────────────────────────────────────── */
 
 export type AdminDiagnosis = {
-  id: string; url?: string; username?: string; result?: string; confidence?: number
-  severity?: string; reexamineStatus?: number; createTime?: string
+  id: string; url?: string; username?: string; result?: string | null
+  /** AI 拒识的记录后端把置信度置空（null），不是 0——读数要显示「—」。 */
+  confidence?: number | null
+  severity?: string | null; reexamineStatus?: number; createTime?: string
   aiRejected?: boolean; abstainReason?: string; requiresReview?: boolean
 }
 export function listDiagnoses(q: { current: number; pageSize: number; result?: string; diagnosisTime?: string }): Promise<Page<AdminDiagnosis>> {
-  return request<Page<AdminDiagnosis>>("/diagnosis/list/page/vo", { method: "POST", body: JSON.stringify(q) })
+  return request<RawPage<AdminDiagnosis>>("/diagnosis/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function getDiagnosis(id: string): Promise<DiagnosisResult> {
   return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET" })
@@ -175,14 +202,15 @@ export type KnowledgeDoc = {
 }
 
 /** 后端 KnowledgeUploadRequest 收 MultipartFile[] files + 可选 title，字段名照 Vue 先例逐个 append。 */
-export function uploadKnowledge(files: File[], title?: string): Promise<number[]> {
+/** 线上返回的是 id 数组，JsonConfig 全局 Long→String，所以是 string[]。 */
+export function uploadKnowledge(files: File[], title?: string): Promise<string[]> {
   const form = new FormData()
   files.forEach((file) => form.append("files", file))
   if (title) form.append("title", title)
-  return request<number[]>("/knowledge/upload", { method: "POST", body: form })
+  return request<string[]>("/knowledge/upload", { method: "POST", body: form })
 }
 export function listKnowledge(current: number, pageSize: number): Promise<Page<KnowledgeDoc>> {
-  return request<Page<KnowledgeDoc>>("/knowledge/list/page", { method: "POST", body: JSON.stringify({ current, pageSize }) })
+  return request<RawPage<KnowledgeDoc>>("/knowledge/list/page", { method: "POST", body: JSON.stringify({ current, pageSize }) }).then(toPage)
 }
 /** DELETE 带 body，后端 DeleteRequest 收 {id}；不能塞进 query。 */
 export function deleteKnowledge(id: string): Promise<boolean> {

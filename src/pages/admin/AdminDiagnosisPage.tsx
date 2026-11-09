@@ -61,11 +61,12 @@ type View = { data: Page<AdminDiagnosis> | null; fault: ErrorDetail | null; load
  * probability）共用本函数，两处量纲因此都对齐既有原语。
  * 不另做数值转换（雪花 id 全程 string，页面里不出现任何 Number(...)）。
  */
-function confidencePercent(value?: number): string {
-  // undefined / NaN → 「—」：normalizeConfidence 会把它们收成 0，先拦掉，
-  // 否则会误显示成「0.0%」。NaN 用自不等判定（value !== value），避免引入
-  // Number(...) 调用。
-  if (value === undefined || value !== value) return "—"
+function confidencePercent(value?: number | null): string {
+  // undefined / null / NaN → 「—」：normalizeConfidence 会把它们收成 0，先拦掉，
+  // 否则会误显示成「0.0%」。AI 拒识的记录后端把置信度置空（null），读数是「没有
+  // 结论」而不是「结论为零」，两者在页面上必须分得开。NaN 用自不等判定
+  // （value !== value），避免引入 Number(...) 调用。
+  if (value === undefined || value === null || value !== value) return "—"
   const reading = fixed(normalizeConfidence(value) * 100, 1)
   return reading === "—" ? "—" : `${reading}%`
 }
