@@ -34,10 +34,10 @@
 
 - 新闻编辑页收进 `/admin` 命名空间（Vue 版是 `/news/edit/:id`），已获用户确认。
 - 守卫 `AdminGate` 三分支：
-  - **未登录** → 复用全站 `AuthRedirect`（`web/src/App.tsx` 的 AUTH_EXPIRED_EVENT 机制），跳登录页并记住来路；admin API 调用产生的 40100 自动走这条链路，无需重复实现。
-  - **已登录非 admin**（`user.userRole !== "admin"`）→ 自绘无权限说明页，说明该区域只对管理员开放，给回首页出口。
+  - **未登录** → 自绘无权限说明页，文案说明「需要管理员登录 / 你当前尚未登录」，并给「去登录 ↗」与「回首页」两个出口；登录后带 `redirect` 回到原路径。admin API 回 40100 时仍走全站 `AuthRedirect` 跳登录页。
+  - **已登录非 admin**（`user.userRole !== "admin"`）→ 同一张无权限说明页，文案换成「当前账号没有管理权限 / 你已登录，但当前账号不是管理员」，访问状态显示 `INSUFFICIENT ROLE`（未登录时为 `NOT AUTHENTICATED`）。
   - **admin** → 放行。
-- 入口：主站 `AccountMenu` 增加「系统管理」一项，**仅对 admin 显示**。
+- 入口：主站 `AccountMenu` 增加「系统管理」一项，**仅对 admin 显示**（普通用户的主站页头不出现该入口）。
 
 ## 3. 目录结构（`web/src/`）
 
@@ -182,9 +182,17 @@ styles/admin.css              # admin 区域样式，消费上下文令牌；在
 
 ## 7. 已知后端边界（开票，本次不动后端）
 
+> 下表前 4 条为设计阶段发现；第 5–7 条为 2026-11-09 真实后端联调（MySQL 8 + Redis +
+> ChromaDB + 真实 Spring Boot，headless Chrome 走真实 UI）**实测确认**的条目。
+
 1. **诊断管理页列得出的是「当前管理员自己的」诊断**，不是全站——`DiagnosisController.listDiagnosisVOByPage` 强制 `setUserId(登录人)`，wrapper 无条件 `eq userId`。全站诊断复核需后端补管理员专用入口。
 2. **知识库页列得出的是「当前管理员自己上传的」文档**——`KnowledgeBaseController.listPage` `eq userId`。
 3. 两页底部各一行小字说明数据边界（如「列出的是你名下的判读记录」）；Java 线开票记录（建议标题：`admin 诊断/知识库列表缺全站视角`）。
+4. **新闻没有可用的新建路径**——`/news/edit` 对 `id == null` 抛 PARAMS_ERROR；Vue 版「新建」同样不可用（`handleSave` 硬编码取路由 id）。编辑页 new 模式因此降级为「保存禁用 + 引导去列表编辑」。
+5. **`NewsVO` 不回显 `status`**——前端无从回传真实发布状态，编辑时不再发送该字段（后端 `NOT_NULL` 策略会跳过 null，库中现值保持），但也因此无法在界面上管理上下架。需 `NewsVO` 补 `status` 字段。
+6. **`/news/edit` 的 `coverImage` → `coverImg` 映射断裂**——`NewsUpdateDTO.coverImage` 与实体 `News.coverImg` 字段名不同，`BeanUtils.copyProperties` 按名拷贝不命中，封面经编辑通道**从未写入过**；清除封面同样静默无效（实测：发 `coverImage: ""` 后库中旧封面仍在）。需后端修字段名映射或加显式赋值。
+7. **`/news/uploadCover` 会清空新闻标题并改写作者**——`NewsServiceImpl.uploadCoverImage` 里 `news.setTitle("")` 且 `setUserId(登录人)`，随后 `saveOrUpdate` 整体落库：上传封面的瞬间，新闻标题被清空、作者变为上传者、头像变空（实测确认）。**这是本批最严重的一条**——管理端「上传封面」是常用操作，一上传就毁一条新闻。需后端改走只更新 `coverImg` 的窄更新路径。
+8. **`JsonConfig` 全局把 `Long` 序列化成 `String`**——分页计数（`total`/`size`/`current`/`pages`）、雪花 id、`fileSize` 线上都是字符串。前端已按 wire 真值对齐（分页计数在 `adminApi` 转 number，id 保持 string），但类型声明与运行时的差异要在后端改回时同步复查。
 
 ## 8. 移植修正清单（相对 Vue 版）
 
