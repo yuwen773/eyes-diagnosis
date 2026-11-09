@@ -151,16 +151,31 @@ public class NewsController {
         if (newsUpdateDTO == null || newsUpdateDTO.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        News news = new News();
+        // 唯一构造入口：封面 coverImage→coverImg 的显式映射在方法内完成
+        News news = buildNewsForEdit(newsUpdateDTO);
         //设置摘要
         String summary = newsUpdateDTO.getContent().substring(0,30);
-        BeanUtils.copyProperties(newsUpdateDTO, news);
-        //摘要
         news.setSummary(summary);
         //使用saveOrUpdate
         boolean result = newsService.saveOrUpdate(news);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 编辑通道的 DTO→实体构造入口。
+     * BeanUtils 按属性名拷贝 title/content/status/id 等同名字段；
+     * 封面字段名不一致（DTO: coverImage / 实体: coverImg），BeanUtils 拷不过去，需显式映射。
+     * coverImage 非 null（含空串）时写入 coverImg —— 空串会进 UPDATE SET = 清除封面；
+     * 为 null（字段缺席）时 coverImg 保持 null，MP 的 NOT_NULL 策略跳过 = 不动库中原封面。
+     */
+    static News buildNewsForEdit(NewsUpdateDTO dto) {
+        News news = new News();
+        BeanUtils.copyProperties(dto, news);
+        if (dto.getCoverImage() != null) {
+            news.setCoverImg(dto.getCoverImage());
+        }
+        return news;
     }
 
     @PostMapping("/uploadCover")
