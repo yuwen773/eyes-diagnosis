@@ -18,18 +18,11 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
 type View = { data: AdminNews | null; fault: ErrorDetail | null; loading: boolean }
 
-/** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。status 后端 VO 不回，
- *  编辑模式缺省按「草稿」处理，避免把已发布的新闻误存成草稿（见下方 status 兜底）。 */
-type Form = { title: string; content: string; status: number; coverImage?: string }
+/** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。NewsVO 不回显 status，
+ *  表单不再持有该字段，保存也不发送（见 onSubmit 注释）。 */
+type Form = { title: string; content: string; coverImage?: string }
 
-const EMPTY_FORM: Form = { title: "", content: "", status: 0 }
-
-/** 状态选项（0 草稿 / 1 已发布 / 2 下架）。 */
-const STATUS_OPTIONS = [
-  { value: 0, label: "草稿" },
-  { value: 1, label: "已发布" },
-  { value: 2, label: "下架" },
-] as const
+const EMPTY_FORM: Form = { title: "", content: "" }
 
 const MAX_COVER_BYTES = 5 * 1024 * 1024
 const COVER_ACCEPT = "image/jpeg,image/png"
@@ -37,13 +30,13 @@ const SUMMARY_HINT = "正文至少 30 字（后端以正文前 30 字生成摘�
 /** 新建模式降级引导文案：控制器裁定，对齐 Vue 版实际能力（见文件头注释）。 */
 const NEW_GUIDE = "后端暂不支持新建，请从列表选择一条新闻编辑"
 
-/** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（去感叹号改句号）。 */
+/** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
 function coverProblem(file: File): string | null {
   if (file.type !== "image/jpeg" && file.type !== "image/png") {
-    return "只能上传 JPG/PNG 格式的图片."
+    return "只能上传 JPG/PNG 格式的图片。"
   }
   if (file.size > MAX_COVER_BYTES) {
-    return "图片大小不能超过5MB."
+    return "图片大小不能超过 5MB。"
   }
   return null
 }
@@ -105,13 +98,9 @@ export function AdminNewsEditPage(): ReactElement {
     result.then(
       (data) => {
         if (seq !== requestSeq.current) return
-        // 后端 NewsVO 目前不带 status 字段，但部分部署/后续版本会回——读到就沿用，
-        // 读不到按草稿处理，避免把一条已发布的新闻静默改成草稿。
-        const status = (data as AdminNews & { status?: number }).status
         setForm({
           title: data.title ?? "",
           content: data.content ?? "",
-          status: typeof status === "number" ? status : 0,
           coverImage: data.coverImage ?? undefined,
         })
         setView({ data, fault: null, loading: false })
@@ -146,11 +135,13 @@ export function AdminNewsEditPage(): ReactElement {
 
     setSaving(true)
     try {
+      // NewsVO 不回显 status，前端不发送——后端需暴露 status 才能管理（开票 spec §7）。
+      // JSON 省略该字段 → 后端 DTO 的 status 为 null → MyBatis-Plus NOT_NULL 策略跳过
+      // UPDATE SET，库中现值保持；否则每次编辑都会把已发布新闻静默降成草稿。
       await saveNews({
         ...(newsId ? { id: newsId } : {}),
         title: form.title,
         content: form.content,
-        status: form.status,
         // 无条件上送 coverImage：后端 MyBatis-Plus 默认 FieldStrategy.NOT_NULL，
         // null 字段不进 UPDATE SET。清封面时若用 `...(coverImage ? {…} : {})` 丢键，
         // DTO 反序列化成 null → 旧封面被保留，前端却提示「已清除」，静默 no-op。
@@ -234,7 +225,7 @@ export function AdminNewsEditPage(): ReactElement {
         />
       ) : (
         <form className="admin-newsedit__form" onSubmit={onSubmit}>
-          {/* 工具行：编辑 / 预览 mono tab + 状态 select + 保存。预览切换只换下半区，
+          {/* 工具行：编辑 / 预览 mono tab + 保存。预览切换只换下半区，
               上半区标题与封面在两种视图下都常驻，避免切到预览就丢了字段入口。 */}
           <Toolbar>
             <div className="admin-newsedit__tools">
@@ -258,22 +249,6 @@ export function AdminNewsEditPage(): ReactElement {
                   预览
                 </button>
               </div>
-
-              <label className="admin-newsedit__status">
-                <span className="admin-newsedit__label">状态 · STATUS</span>
-                <select
-                  className="admin-newsedit__select"
-                  value={form.status}
-                  onChange={(event) => patch({ status: Number(event.target.value) })}
-                  aria-label="发布状态"
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
               <div className="admin-newsedit__actions">
                 <button
@@ -355,7 +330,6 @@ export function AdminNewsEditPage(): ReactElement {
                     type="button"
                     className="btn btn--ghost btn--sm"
                     disabled={isNew || uploading}
-                    title={isNew ? "保存后可上传封面" : undefined}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     {uploading ? "上传中…" : form.coverImage ? "更换封面" : "上传封面"}
@@ -373,9 +347,6 @@ export function AdminNewsEditPage(): ReactElement {
                   <span className="admin-newsedit__cover-hint num">
                     JPG / PNG · ≤5MB
                   </span>
-                  {isNew ? (
-                    <span className="admin-newsedit__cover-note">保存后可上传封面</span>
-                  ) : null}
                 </div>
               </div>
             </section>

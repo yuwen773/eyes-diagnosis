@@ -109,7 +109,7 @@ export function AdminDashboardPage(): ReactElement {
           columns={RECENT_COLUMNS}
           rows={RECENT_ROWS}
           rowKey={(row) => row.id}
-          page={{ current: 1, pageSize: 5, total: 5 }}
+          page={{ current: 1, pageSize: 10, total: 5 }}
           // mock 页固定单页，无翻页 / 每页条数交互，故空实现。
           onPageChange={() => {}}
         />

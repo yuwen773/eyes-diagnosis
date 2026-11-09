@@ -147,7 +147,9 @@ export function AdminDiagnosisPage(): ReactElement {
     const { seq, result } = fetchDiagnoses({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
     result.then(
       (data) => {
-        if (seq === requestSeq.current) setView({ data, fault: null, loading: false })
+        if (seq === requestSeq.current) {
+          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
+        }
       },
       (cause) => {
         if (seq === requestSeq.current) {
@@ -172,7 +174,9 @@ export function AdminDiagnosisPage(): ReactElement {
     const { seq, result } = fetchDiagnoses(toParams(nextPage, nextQuery))
     result.then(
       (data) => {
-        if (seq === requestSeq.current) setView({ data, fault: null, loading: false })
+        if (seq === requestSeq.current) {
+          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
+        }
       },
       (cause) => {
         if (seq === requestSeq.current) {

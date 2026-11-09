@@ -39,11 +39,12 @@ function statusView(status: number): { label: string; risk: Risk } {
 }
 
 /** 文件大小 B / KB / MB 格式化函数（brief 逐字）。数值列统一 mono。 */
-function formatFileSize(bytes?: number): string {
-  if (!bytes || bytes < 0) return "—"
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+function formatFileSize(bytes?: string): string {
+  const size = Number(bytes)
+  if (!size || size < 0 || !Number.isFinite(size)) return "—"
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
 /**
@@ -97,7 +98,7 @@ export function AdminKnowledgePage(): ReactElement {
       return next.length === prev.length ? prev : next
     })
     setHasProcessing(status0Names.size > 0)
-    setView({ data, fault: null, loading: false })
+    setView({ data: { ...data, records }, fault: null, loading: false })
   }, [])
 
   /** 失败：静默轮询不打断（保留上一帧数据与轮询开关，timer 继续），全量取数才报错。 */
@@ -166,6 +167,7 @@ export function AdminKnowledgePage(): ReactElement {
 
   /** 事件驱动的全量刷新：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
   function startLoad(current: number, pageSize: number) {
+    setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
     setView({ data: null, fault: null, loading: true })
     fireLoad(current, pageSize, false)
   }
@@ -231,7 +233,7 @@ export function AdminKnowledgePage(): ReactElement {
     setDeleting(true)
     setActionError(null)
     try {
-      await deleteKnowledge(target.id) // 本页 id 是 number 普通自增，直接传，不转雪花 string
+      await deleteKnowledge(target.id) // 后端 JsonConfig 全局 Long→String，id 线上为 string，直接传
       setDeleteTarget(null)
       startLoad(page.current, page.pageSize) // 成功后刷新当前页
     } catch (cause) {
@@ -389,7 +391,7 @@ export function AdminKnowledgePage(): ReactElement {
         <DataTable<KnowledgeDoc>
           columns={columns}
           rows={rows}
-          rowKey={(row) => String(row.id)}
+          rowKey={(row) => row.id}
           loading={view.loading}
           error={view.fault?.text ?? null}
           emptyText="暂无文档"

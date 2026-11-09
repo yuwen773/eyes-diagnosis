@@ -105,7 +105,7 @@ export function deleteNews(id: string): Promise<boolean> {
 export function getNews(id: string): Promise<AdminNews> {
   return request<AdminNews>(`/news/get/${id}`, { method: "GET" })
 }
-export function saveNews(body: { id?: string; title: string; content: string; status: number; coverImage?: string }): Promise<boolean> {
+export function saveNews(body: { id?: string; title: string; content: string; status?: number; coverImage?: string }): Promise<boolean> {
   return request<boolean>("/news/edit", { method: "POST", body: JSON.stringify(body) })
 }
 
@@ -167,9 +167,10 @@ export function deleteDiagnosis(id: string): Promise<boolean> {
 
 /* ── 知识库 ───────────────────────────────────────────────── */
 
+// 后端 JsonConfig 全局 Long→String，KnowledgeDoc 字段线上均为 string（含非雪花 id）。
 export type KnowledgeDoc = {
-  id: number; userId: number; title: string; fileName: string; fileUrl: string
-  fileSize: number; fileType: string; chunkCount: number
+  id: string; userId: string; title: string; fileName: string; fileUrl: string
+  fileSize: string; fileType: string; chunkCount: number
   status: number; createTime: string; updateTime: string
 }
 
@@ -184,6 +185,6 @@ export function listKnowledge(current: number, pageSize: number): Promise<Page<K
   return request<Page<KnowledgeDoc>>("/knowledge/list/page", { method: "POST", body: JSON.stringify({ current, pageSize }) })
 }
 /** DELETE 带 body，后端 DeleteRequest 收 {id}；不能塞进 query。 */
-export function deleteKnowledge(id: number): Promise<boolean> {
+export function deleteKnowledge(id: string): Promise<boolean> {
   return request<boolean>("/knowledge/delete", { method: "DELETE", body: JSON.stringify({ id }) })
 }

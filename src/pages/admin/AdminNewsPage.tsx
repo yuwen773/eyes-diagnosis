@@ -60,7 +60,9 @@ export function AdminNewsPage(): ReactElement {
     const { seq, result } = fetchNews({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
     result.then(
       (data) => {
-        if (seq === requestSeq.current) setView({ data, fault: null, loading: false })
+        if (seq === requestSeq.current) {
+          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
+        }
       },
       (cause) => {
         if (seq === requestSeq.current) {
@@ -80,11 +82,14 @@ export function AdminNewsPage(): ReactElement {
 
   /** 事件驱动的取数入口：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
   function startLoad(nextPage = page, nextQuery = query) {
+    setActionError(null) // 任何一次重新取数都清掉上一次删除失败的页内读数
     setView({ data: null, fault: null, loading: true })
     const { seq, result } = fetchNews(toParams(nextPage, nextQuery))
     result.then(
       (data) => {
-        if (seq === requestSeq.current) setView({ data, fault: null, loading: false })
+        if (seq === requestSeq.current) {
+          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
+        }
       },
       (cause) => {
         if (seq === requestSeq.current) {

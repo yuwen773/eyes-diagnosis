@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement, type ReactNode } from "react"
+import { useEffect, useRef, type ReactElement, type ReactNode, type RefObject } from "react"
 
 /**
  * 打开的弹层栈。Task 9 的流程里 Drawer（详情）与 Modal（复核）会同时打开：
@@ -37,9 +37,13 @@ function isTop(token: symbol): boolean {
  *
  * 焦点/滚动锁只在 open 切换时跑（不含 onClose），父级重渲染不会抢焦点；
  * Esc 监听单独挂，onClose 换身份只重挂监听，不动焦点。
- * 导出供 Drawer 复用，避免新建第六个文件。
+ * 导出供 Drawer 复用，避免新建第六个文件。返回 panelRef 与栈顶判定：遮罩点击时只有
+ * 栈顶弹层才响应（Drawer + Modal 叠开时点最上层遮罩不应连下层一起关），与 Esc 的栈守卫同源。
  */
-export function useAdminDialog(open: boolean, onClose: () => void) {
+export function useAdminDialog(open: boolean, onClose: () => void): {
+  panelRef: RefObject<HTMLDivElement | null>
+  isTop: () => boolean
+} {
   const panelRef = useRef<HTMLDivElement | null>(null)
   // 两个 effect 共用同一个「本次 open 会话」的 token：Esc 监听在事件发生时
   // 读 tokenRef.current，不受 onClose 换身份导致 effect 重挂的影响。
@@ -81,7 +85,11 @@ export function useAdminDialog(open: boolean, onClose: () => void) {
     return () => document.removeEventListener("keydown", onKey)
   }, [open, onClose])
 
-  return panelRef
+  // 栈顶判定在点击时实时读取 tokenRef.current：叠层时只有栈顶弹层的
+  // 遮罩 onClick 会真正 onClose，下层遮罩点击被忽略（与 Esc 栈守卫对齐）。
+  const checkTop = () => tokenRef.current !== null && isTop(tokenRef.current)
+
+  return { panelRef, isTop: checkTop }
 }
 
 /**
@@ -97,7 +105,7 @@ export function Modal(props: {
   footer?: ReactNode
 }): ReactElement {
   const { open, title, onClose, children, footer } = props
-  const panelRef = useAdminDialog(open, onClose)
+  const { panelRef, isTop } = useAdminDialog(open, onClose)
 
   return (
     <>
@@ -105,7 +113,9 @@ export function Modal(props: {
         className="scrim"
         data-open={open ? "true" : "false"}
         aria-hidden="true"
-        onClick={onClose}
+        onClick={() => {
+          if (isTop()) onClose()
+        }}
       />
 
       <div

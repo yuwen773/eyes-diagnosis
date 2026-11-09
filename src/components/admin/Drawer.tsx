@@ -14,7 +14,7 @@ export function Drawer(props: {
   children: ReactNode
 }): ReactElement {
   const { open, title, onClose, children } = props
-  const panelRef = useAdminDialog(open, onClose)
+  const { panelRef, isTop } = useAdminDialog(open, onClose)
 
   return (
     <>
@@ -22,7 +22,9 @@ export function Drawer(props: {
         className="scrim"
         data-open={open ? "true" : "false"}
         aria-hidden="true"
-        onClick={onClose}
+        onClick={() => {
+          if (isTop()) onClose()
+        }}
       />
 
       <div
