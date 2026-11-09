@@ -18,6 +18,33 @@ export function AccountMenu() {
   const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches
   const authed = status === "authed" && user
 
+  // 收起前留一点迟疑：从头像斜着划到菜单的路上会短暂离开 .acct，
+  // 立刻收会让菜单够不着（CSS 里那道 10px 的桥只挡住垂直方向）。
+  const closeTimer = useRef<number | null>(null)
+
+  const showMenu = () => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+    setOpen(true)
+  }
+
+  const hideMenuSoon = () => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current)
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null
+      setOpen(false)
+    }, 180)
+  }
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current)
+    },
+    [],
+  )
+
   // 点面板外收起。
   useEffect(() => {
     if (!open) return
@@ -44,8 +71,8 @@ export function AccountMenu() {
     <div
       ref={rootRef}
       className="acct"
-      onPointerEnter={canHover ? () => setOpen(true) : undefined}
-      onPointerLeave={canHover ? () => setOpen(false) : undefined}
+      onPointerEnter={canHover ? showMenu : undefined}
+      onPointerLeave={canHover ? hideMenuSoon : undefined}
       onKeyDown={(event) => {
         if (event.key === "Escape" && open) {
           setOpen(false)
