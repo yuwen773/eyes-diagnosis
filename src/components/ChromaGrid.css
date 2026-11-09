@@ -25,6 +25,9 @@
 }
 
 .chroma-grid-inner {
+  /* 列数走 CSS：调用方给的 --chroma-cols 是默认值，宽屏可以单独覆盖。
+     （--chroma-cols 是内联样式，压不住样式表，所以多包一层 --cols。） */
+  --cols: var(--chroma-cols, 3);
   display: grid;
   gap: var(--chroma-gap);
   grid-template-columns: repeat(
@@ -32,7 +35,7 @@
     minmax(
       min(
         100%,
-        max(var(--chroma-min), calc((100% - (var(--chroma-cols) - 1) * var(--chroma-gap)) / var(--chroma-cols)))
+        max(var(--chroma-min), calc((100% - (var(--cols) - 1) * var(--chroma-gap)) / var(--cols)))
       ),
       1fr
     )

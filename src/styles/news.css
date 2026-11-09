@@ -72,11 +72,12 @@
 /* 载入时的骨架：同样是一格格的空框，只是还没有内容。
    列宽公式照抄 ChromaGrid 的三列版，避免数据到了以后版面跳一下。 */
 .news__grid-skeleton {
+  --cols: 3;
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(
     auto-fill,
-    minmax(min(100%, max(250px, calc((100% - 2 * 16px) / 3))), 1fr)
+    minmax(min(100%, max(250px, calc((100% - (var(--cols) - 1) * 16px) / var(--cols)))), 1fr)
   );
 }
 
@@ -596,5 +597,40 @@
 
   .news-ledger__date {
     grid-column: 1 / -1;
+  }
+}
+
+/* ==========================================================================
+   超宽屏（≥2200px）· 资讯页
+   --------------------------------------------------------------------------
+   版心从 1240 放宽到 1760（见 tokens.css），这一段把多出来的横向空间
+   摊成多列，而不是把单张卡片拉长。
+   ========================================================================== */
+
+@media (min-width: 2200px) {
+  /* 资讯墙：一行放五格，而不是把三格撑大。 */
+  .news__grid .chroma-grid-inner,
+  .news__grid-skeleton {
+    --cols: 5;
+  }
+
+  /* 目录栏给宽一点，正文那张纸在余下的空间里居中——
+     纸有物理宽度，居中比贴着左边更像摊在台面上的一张纸。 */
+  .news-detail__body {
+    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  }
+
+  .news-paper {
+    margin-inline: auto;
+  }
+
+  /* 更多资讯：单列在宽屏上太稀，分两栏读起来才像一叠单据。 */
+  .news-ledger {
+    columns: 2;
+    column-gap: clamp(40px, 4vw, 88px);
+  }
+
+  .news-ledger__row {
+    break-inside: avoid;
   }
 }
