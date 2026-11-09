@@ -98,6 +98,13 @@ CLAUDE.local.md
 /frontend/.omc/
 /design-previews/
 node_modules/
+.npm-cache/
+
+# 独立 React 前端（web/）：自仓库，自带 remote（eyes-diagnosis-web），不入本仓库
+/web/
+
+# 真后端联调用的临时 CDP 脚本（一次性排查产物）
+/.tmp-e2e/
 
 # 非项目资料（专利/竞赛/文档附件）
 /docs/game/
