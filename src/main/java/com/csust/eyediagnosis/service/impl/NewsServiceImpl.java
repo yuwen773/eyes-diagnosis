@@ -76,6 +76,7 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
        if (CollUtil.isEmpty(newsList)){
            return new ArrayList<>();
        }
+       // 列表批量转换统一走 toNewsVO，保证 status 等字段不在批量路径上丢失
        return newsList.stream().map(this::getNewsVO).collect(Collectors.toList());
     }
 
@@ -85,19 +86,32 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
             return null;
         }
 
-        //获取当前新闻的作者
+        //获取当前新闻的作者（孤儿 userId 会查不到，兜底避免公开列表 NPE → 500）
         User user = userMapper.selectUserNameAndUserAvatarByUserId(news.getUserId());
-        //设置作者名和作者头像
-        String Username = user.getUserName();
-        String UserAvatar = user.getUserAvatar();
+        //设置作者名和作者头像；作者查不到时用「未知用户」+ null 头像兜底
+        String Username = user == null ? "未知用户" : user.getUserName();
+        String UserAvatar = user == null ? null : user.getUserAvatar();
 
-        NewsVO newsVO = new NewsVO();
-        BeanUtil.copyProperties(news,newsVO);
-
-        newsVO.setCoverImage(news.getCoverImg());
-        //设置作者
+        // 实体→VO 的字段拷贝（含 status）统一收拢到 toNewsVO
+        NewsVO newsVO = toNewsVO(news);
         newsVO.setAuthor(Username);
         newsVO.setAvatar(UserAvatar);
+        return newsVO;
+    }
+
+    /**
+     * 实体→VO 的唯一转换入口：承担原来的 {@code BeanUtil.copyProperties(news, newsVO)}，
+     * 并显式映射封面字段名差异（实体 coverImg → VO coverImage）。
+     * 列表批量转换（{@link #getNewsVOList}）与详情（{@link #getNewsVO}）都经由本方法，
+     * 因此新增字段（如 status）在两条读侧都能读到。包外单测可直接调用。
+     */
+    public static NewsVO toNewsVO(News news) {
+        if (news == null) {
+            return null;
+        }
+        NewsVO newsVO = new NewsVO();
+        BeanUtil.copyProperties(news, newsVO);
+        newsVO.setCoverImage(news.getCoverImg());
         return newsVO;
     }
     @Override
@@ -115,27 +129,45 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
                     .exists();
             ThrowUtils.throwIf(!exists,ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
         }
-        System.err.println(newsId);
         //上传图片
         //用户Id作为每个用户的图库前缀
         String uploadPrefix = String.format("cover/%s",loginUser.getId());
         UploadPictureDetail uploadPictureDetail = fileManager.uploadPicture(multipartFile, uploadPrefix);
-        //构造要入库的图片基本信息
-        News news = new News();
-        news.setTitle("");
-        news.setUserId(loginUser.getId());
-        news.setCoverImg(uploadPictureDetail.getUrl());
+        String coverUrl = uploadPictureDetail.getUrl();
 
-        //如果pictureId 不为空 => 更新，否则是新增
-        if(newsId != null){
-            //如果是更新，则补充 id和编辑时间
-            news.setId(newsId);
-            news.setEditTime(new Date());
+        boolean result;
+        if (newsId != null) {
+            // 更新：只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
+            // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
+            result = this.updateById(coverPatch(newsId, coverUrl, new Date()));
+        } else {
+            // 新增：保持原有插入语义（标题空串、作者为上传者、带封面），本票不动它。
+            News news = new News();
+            news.setTitle("");
+            news.setUserId(loginUser.getId());
+            news.setCoverImg(coverUrl);
+            result = this.saveOrUpdate(news);
         }
         //插入/更新
-        boolean result = this.saveOrUpdate(news);
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
-        return uploadPictureDetail.getUrl();
+        return coverUrl;
+    }
+
+    /**
+     * 构造封面更新用的窄 patch 实体：只带 id / coverImg / editTime，其余字段一律为 null。
+     * 供 {@link #uploadCoverImage} 的更新分支与单测使用，避免 saveOrUpdate 整体覆写新闻。
+     *
+     * <p>看护说明：本方法依赖 MP 默认 {@code NOT_NULL} 字段策略（null 字段不进 SET）。
+     * 若将来给 {@code News} 加 {@code @TableField(fill = ...)} 自动填充或改全局
+     * {@code update-strategy}，本方法「不覆盖其它列」的保证会失效——
+     * {@code NewsCoverUpdateTest} 的 assertNull 断言是第一道防线。
+     */
+    public static News coverPatch(Long newsId, String coverUrl, Date editTime) {
+        News news = new News();
+        news.setId(newsId);
+        news.setCoverImg(coverUrl);
+        news.setEditTime(editTime);
+        return news;
     }
 }
 

@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.controller;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HtmlUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
@@ -148,19 +149,100 @@ public class NewsController {
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO){
         //查看是否为空
-        if (newsUpdateDTO == null || newsUpdateDTO.getId() == null) {
+        if (newsUpdateDTO == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        News news = new News();
-        //设置摘要
-        String summary = newsUpdateDTO.getContent().substring(0,30);
-        BeanUtils.copyProperties(newsUpdateDTO, news);
-        //摘要
+        if (newsUpdateDTO.getId() == null) {
+            // 本系统不支持新建新闻，编辑页必须携带已存在的新闻 id
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持新建新闻，请指定新闻 id");
+        }
+        // 唯一构造入口：封面 coverImage→coverImg 的显式映射在方法内完成
+        News news = buildNewsForEdit(newsUpdateDTO);
+        //设置摘要：前置校验正文，非法正文返回业务错误码而非 500
+        String summary = buildSummary(newsUpdateDTO.getContent());
         news.setSummary(summary);
-        //使用saveOrUpdate
-        boolean result = newsService.saveOrUpdate(news);
+        // 只编辑不新建：saveOrUpdate 在「id 非空但库无记录」时会走 insert（MP 的
+        // insertOrUpdate 在 selectById(id)==null 时插入），管理员带伪造 id 就能插入一行
+        // userId/status 都为 null 的脏新闻，公开列表渲染时 getNewsVO 对 null 作者 NPE → 500。
+        // updateById 缺行影响 0 行 → false → 下面 OPERATION_ERROR 兜住；NOT_NULL 语义不变。
+        boolean result = newsService.updateById(news);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 由正文生成摘要（取「去除 HTML 标签后」的前 30 个可见字符）。
+     * 处理顺序：剥完整标签 → 去掉尾部半截标签残片 → 实体反转义 → 连续空白压成一个空格。
+     * 长度守卫按可见文本判定，非法正文统一抛 PARAMS_ERROR 业务异常并给出可读文案，
+     * 避免 null 触发 NPE、短正文触发 StringIndexOutOfBoundsException 而被抛成 500。
+     * 纯文本正文（无标签、无实体、无连续空白）处理后与原文逐字相同，摘要仍等于正文前 30 字。
+     *
+     * <p>前后端口径契约：长度守卫与剥标签都在后端完成，前端（{@code web/} 的
+     * {@code newsContentValid}、Vue 编辑页）不再需要按 HTML 长度猜测 30 字，
+     * 只需保证正文非空即可；不足 30 字由后端返回上述业务错误码。前端若要调整守卫另开改动。
+     * 包级可见静态方法，便于纯 JUnit 单测直接钉住校验契约。
+     */
+    static String buildSummary(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文不能为空");
+        }
+        String visible = toVisibleText(content);
+        if (visible.length() < 30) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文至少 30 字（按去除标签后的文字计）");
+        }
+        return visible.substring(0, 30);
+    }
+
+    /**
+     * 正文 → 可见文本：剥 HTML 标签、反转义实体、压缩空白。
+     *
+     * <p>cleanHtmlTag 只处理闭合的完整标签；若正文被截断在标签中间（如以 {@code <p}、
+     * {@code </di} 收尾），末尾会残留半截标签，这里单独去掉：从最后一个 {@code <} 起
+     * 若其后没有 {@code >} 且是字母起始的标签名，则视为未完成标签并截掉。用线性扫描而非
+     * 嵌套量词正则，避免回溯型 ReDoS，也不会把正文里的字面量 {@code 1 < 3}、{@code <3} 吞掉。
+     *
+     * <p>实体反转义放在剥标签之后：{@code &lt;p&gt;} 还原为字面的 {@code <p>} 文本，
+     * 不会被当作标签吃掉；正文里的 {@code &lt;3} 还原为 {@code <3} 也保持字面量。
+     */
+    private static String toVisibleText(String content) {
+        String text = HtmlUtil.cleanHtmlTag(content);
+        text = stripTrailingIncompleteTag(text);
+        text = HtmlUtil.unescape(text);
+        // 含 NBSP（&nbsp; 反转义产物，U+00A0）等空白：连续空白压成一个普通空格，并去掉首尾空白。
+        // Java 的 \s 默认不含 NBSP，故显式列入；单个线性量词，无回溯型 ReDoS 风险。
+        return text.replaceAll("[\\s\\u00A0]+", " ").trim();
+    }
+
+    /** 去掉收尾处未闭合的半截标签残片（{@code <p}、{@code </}、{@code <di} 等）。 */
+    private static String stripTrailingIncompleteTag(String text) {
+        int lastLt = text.lastIndexOf('<');
+        if (lastLt < 0 || text.indexOf('>', lastLt) >= 0) {
+            return text;
+        }
+        String tail = text.substring(lastLt);
+        // HTML 标签名必须以字母开头，故只认「< + 可选 / + 字母起始的标签名」；
+        // "<3"、"< 3" 这类字面量尖括号不匹配，避免被当成未闭合标签误删。
+        if (tail.matches("</?[A-Za-z][A-Za-z0-9]*")) {
+            return text.substring(0, lastLt);
+        }
+        return text;
+    }
+
+    /**
+     * 编辑通道的 DTO→实体构造入口。
+     * BeanUtils 按属性名拷贝 title/content/status/id 等同名字段；
+     * 封面字段名不一致（DTO: coverImage / 实体: coverImg），BeanUtils 拷不过去，需显式映射。
+     * coverImage 非 null（含空串）时写入 coverImg —— 空串会进 UPDATE SET = 清除封面；
+     * 为 null（字段缺席）时 coverImg 保持 null，MP 的 NOT_NULL 策略跳过 = 不动库中原封面。
+     * public 以便编辑通道的构造契约可被跨包单测（如 NewsStatusExposureTest）直接钉住。
+     */
+    public static News buildNewsForEdit(NewsUpdateDTO dto) {
+        News news = new News();
+        BeanUtils.copyProperties(dto, news);
+        if (dto.getCoverImage() != null) {
+            news.setCoverImg(dto.getCoverImage());
+        }
+        return news;
     }
 
     @PostMapping("/uploadCover")

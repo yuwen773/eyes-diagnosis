@@ -14,7 +14,7 @@
 | 后端根 | `src/` + `pom.xml` | `algorithm/web/` + `algorithm/mcp_server/` + `pyproject.toml` |
 | 数据库迁移 | Flyway `src/main/resources/db/migration/` | `deploy/python-migrations/`、`deploy/workflow-migrations/sql/` |
 | 部署 | `Dockerfile` + `deploy/`（Java 探针） | `deploy/python/`（Dockerfile + compose.yml + nginx） |
-| 契约 | `algorithm/diagnosis.proto` | `contracts/diagnosis.proto`（同一份 proto 的副本） |
+| 契约 | `src/main/proto/diagnosis.proto` | `contracts/diagnosis.proto`（同一份 proto 的副本） |
 | 生产 | 在跑（RC 基线） | 未切流 |
 
 分叉点是 `d74784e`（`feat(p2-02a): add subprocess watchdog for CUDA probe cells`，2026-10-18 之前）。
