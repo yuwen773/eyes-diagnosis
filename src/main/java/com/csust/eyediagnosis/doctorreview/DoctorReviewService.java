@@ -42,6 +42,7 @@ public class DoctorReviewService {
                          Materials materials, String status, String note, Long decidedBy, Instant decidedAt) {}
     public record Decision(Long expectedTaskVersion, Integer expectedDraftVersion, Integer expectedEvidenceVersion,
                            String expectedMaterialDigest, String decision, String note) {}
+    public record Approved(Materials materials, com.csust.eyediagnosis.patientdraft.DraftAgents.Draft draft, DiagnosisProto.DiagnosisResponse inference) {}
     private record Frozen(String taskId, long owner, long version, int draftVersion, int evidenceVersion, Materials materials) {}
 
     public Detail assign(User admin, String taskId, Long doctorId) {
@@ -120,6 +121,58 @@ public class DoctorReviewService {
         jdbc.update("UPDATE t_diagnosis_task SET status=?,version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?",
                 "REJECTED".equals(decision.decision()) ? "RESTRICTED" : "WAITING_REVIEW", review.taskId());
         return find(id);
+    }
+
+    /** Trusted patient projection boundary; every read independently revalidates the approved material. */
+    public Approved approvedForPatient(String taskId, long owner) {
+        var owned = jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? AND userId=?", taskId, owner);
+        if (owned.isEmpty()) throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        String canonicalId = (String) owned.getFirst().get("taskId");
+        var reviews = jdbc.query("SELECT * FROM t_doctor_review WHERE taskId=?", this::map, canonicalId);
+        if (reviews.isEmpty() || !"APPROVED".equals(reviews.getFirst().status())) return null;
+        Detail original = reviews.getFirst();
+        try {
+            return evidence.withValidatedEvidence(original.materials().diseaseCode(), "PATIENT_EXPLANATION", original.materials().evidence(), () -> {
+                lockTask(canonicalId);
+                Detail current = locked(original.reviewId());
+                Frozen frozen = freeze(canonicalId);
+                if (frozen.owner() != owner) throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+                if (!"APPROVED".equals(current.status()) || current.doctorId() == owner
+                        || !Objects.equals(current.decidedBy(), current.doctorId()) || current.decidedAt() == null
+                        || frozen.version() != current.taskVersion() + 1 || frozen.draftVersion() != current.draftVersion()
+                        || frozen.evidenceVersion() != current.evidenceVersion()
+                        || !digest(encode(frozen.materials())).equals(current.materialDigest())
+                        || !current.equals(original)) throw new ReviewConflict("批准材料已变化");
+                var task = jdbc.queryForList("SELECT * FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", canonicalId).getFirst();
+                JsonNode snapshot = tree((String) task.get("inferenceSnapshot"));
+                for (String field : List.of("taskId", "userId", "objectKey", "objectVersion", "imageDigest", "imageFormat"))
+                    if (!snapshot.hasNonNull(field) || !snapshot.get(field).asText().equals(Objects.toString(task.get(field), "")))
+                        throw new ReviewConflict("推理输入不符");
+                try {
+                    com.csust.eyediagnosis.patientdraft.DraftAgents.Draft draft;
+                    try {
+                        draft = json.treeToValue(frozen.materials().draft(), com.csust.eyediagnosis.patientdraft.DraftAgents.Draft.class);
+                        com.csust.eyediagnosis.patientdraft.PatientDraftCoordinator.validateDraft(draft,
+                                new com.csust.eyediagnosis.patientdraft.PatientDraftCoordinator.Evidence(frozen.evidenceVersion(), frozen.materials().evidence()));
+                    } catch (Exception invalidDraft) { throw new ReviewConflict("草稿未通过门禁"); }
+                    var response = DiagnosisProto.DiagnosisResponse.parseFrom(Base64.getDecoder().decode(snapshot.path("responseProtobufBase64").asText()));
+                    if (response.getRejected() || response.getIsOod() || "QUALITY_FAIL".equals(response.getAbstainReason())
+                            || response.getOodStatus() != DiagnosisProto.OodStatus.IN_DISTRIBUTION
+                            || !Set.of("normal", "amd", "cataract", "diabetes", "glaucoma", "hypertension", "myopia", "other").contains(response.getPredictedLabel())
+                            || !Double.isFinite(response.getProbability()) || response.getProbability() < 0 || response.getProbability() > 100)
+                        throw new ReviewConflict("推理未通过门禁");
+                    return new Approved(frozen.materials(), draft, response);
+                } catch (com.google.protobuf.InvalidProtocolBufferException | IllegalArgumentException invalid) {
+                    throw new ReviewConflict("推理快照无效");
+                }
+            });
+        } catch (ControlledEvidenceRetriever.EvidenceUnavailable | ReviewConflict invalid) {
+            transactions.executeWithoutResult(tx -> {
+                jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? AND userId=? FOR UPDATE", canonicalId, owner);
+                jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND userId=? AND BINARY status<>BINARY 'RESTRICTED'", canonicalId, owner);
+            });
+            return null;
+        }
     }
 
     private Detail invalidate(Detail review, String reason) {

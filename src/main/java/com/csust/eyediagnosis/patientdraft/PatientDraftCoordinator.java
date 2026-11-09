@@ -281,7 +281,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
         output.limitations().forEach(value -> requireText(value, 1000));
         if (!Set.of("NONE", "RECAPTURE", "REVIEW_QUALITY").contains(Objects.toString(output.reanalysisSuggestion(), ""))) throw new Stop("INVALID_OUTPUT");
     }
-    private void validateDraft(Draft draft, Evidence frozen) {
+    public static void validateDraft(Draft draft, Evidence frozen) {
         if (draft.evidenceVersion() != frozen.version() || draft.claims() == null || draft.claims().size() > 30) throw new Stop("INVALID_OUTPUT");
         var ids = new HashSet<String>(); var sections = new HashSet<String>();
         for (Claim claim : draft.claims()) {
