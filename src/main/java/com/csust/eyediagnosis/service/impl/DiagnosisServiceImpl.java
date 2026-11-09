@@ -172,10 +172,10 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     @Override
     public DiagnosisManageVO getDiagnosisManageVO(Diagnosis Diagnosis) {
         DiagnosisManageVO diagnosisManageVO = DiagnosisManageVO.objToVo(Diagnosis);
-        //获取当前诊断的用户
+        //获取当前诊断的用户（孤儿 userId 会查不到，兜底避免管理端列表 NPE → 500）
         User user = userMapper.selectUserNameAndUserAvatarByUserId(Diagnosis.getUserId());
-        //设置作者名
-        String Username = user.getUserName();
+        //设置作者名；作者查不到时用「未知用户」兜底
+        String Username = user == null ? "未知用户" : user.getUserName();
         diagnosisManageVO.setUsername(Username);
         return diagnosisManageVO;
     }

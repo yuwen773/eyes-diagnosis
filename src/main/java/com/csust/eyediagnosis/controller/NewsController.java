@@ -160,8 +160,11 @@ public class NewsController {
         //设置摘要：前置校验正文，非法正文返回业务错误码而非 500
         String summary = buildSummary(newsUpdateDTO.getContent());
         news.setSummary(summary);
-        //使用saveOrUpdate
-        boolean result = newsService.saveOrUpdate(news);
+        // 只编辑不新建：saveOrUpdate 在「id 非空但库无记录」时会走 insert（MP 的
+        // insertOrUpdate 在 selectById(id)==null 时插入），管理员带伪造 id 就能插入一行
+        // userId/status 都为 null 的脏新闻，公开列表渲染时 getNewsVO 对 null 作者 NPE → 500。
+        // updateById 缺行影响 0 行 → false → 下面 OPERATION_ERROR 兜住；NOT_NULL 语义不变。
+        boolean result = newsService.updateById(news);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }

@@ -86,11 +86,11 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
             return null;
         }
 
-        //获取当前新闻的作者
+        //获取当前新闻的作者（孤儿 userId 会查不到，兜底避免公开列表 NPE → 500）
         User user = userMapper.selectUserNameAndUserAvatarByUserId(news.getUserId());
-        //设置作者名和作者头像
-        String Username = user.getUserName();
-        String UserAvatar = user.getUserAvatar();
+        //设置作者名和作者头像；作者查不到时用「未知用户」+ null 头像兜底
+        String Username = user == null ? "未知用户" : user.getUserName();
+        String UserAvatar = user == null ? null : user.getUserAvatar();
 
         // 实体→VO 的字段拷贝（含 status）统一收拢到 toNewsVO
         NewsVO newsVO = toNewsVO(news);
@@ -156,6 +156,11 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
     /**
      * 构造封面更新用的窄 patch 实体：只带 id / coverImg / editTime，其余字段一律为 null。
      * 供 {@link #uploadCoverImage} 的更新分支与单测使用，避免 saveOrUpdate 整体覆写新闻。
+     *
+     * <p>看护说明：本方法依赖 MP 默认 {@code NOT_NULL} 字段策略（null 字段不进 SET）。
+     * 若将来给 {@code News} 加 {@code @TableField(fill = ...)} 自动填充或改全局
+     * {@code update-strategy}，本方法「不覆盖其它列」的保证会失效——
+     * {@code NewsCoverUpdateTest} 的 assertNull 断言是第一道防线。
      */
     public static News coverPatch(Long newsId, String coverUrl, Date editTime) {
         News news = new News();
