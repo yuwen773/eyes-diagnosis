@@ -250,6 +250,9 @@ jobs:
 
   flyway-mysql:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        run-order: [alphabetical, reversealphabetical]
     services:
       mysql:
         image: mysql:8.0
@@ -276,9 +279,12 @@ jobs:
           distribution: corretto
           java-version: '21'
           cache: maven
-      # Run both suites in one Maven invocation: a second `-Dtest=` run
-      # replaces the Surefire reports of the first.
-      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest test
+      - name: Allow disposable empty-schema migration checks
+        run: >-
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password
+          -e 'GRANT ALL PRIVILEGES ON `diagnosis_ci_empty_%`.* TO "eyeuser"@"%";'
+      # Each matrix job runs both suites together, so order dependence cannot hide.
+      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest -Dsurefire.runOrder=${{ matrix.run-order }} test
       - name: Require both Flyway suites to run fully
         run: python3 scripts/check_surefire_skips.py target/surefire-reports flyway
 

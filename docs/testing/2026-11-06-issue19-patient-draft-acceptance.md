@@ -56,3 +56,26 @@ PR #19 合并后的代码评审发现 4 处真实缺陷，均已修复并在隔�
 - 未执行真实 Python、真实模型、真实参考资料领域评估、浏览器或临床验收，也未部署。
 - CI 已增加 `issue19-mysql` 作业，尚未运行远端 GitHub Actions。
 - 只使用本任务创建的隔离依赖，没有向本机既有业务数据库写入数据。日志和报告为被忽略的本地产物，不纳入提交。
+
+## 迁移测试顺序隔离补修（2026-11-09）
+
+交付核对发现 `flyway-mysql` 的两个测试类共用 `diagnosis_ci`。上传 Mapper 测试先执行时已完成迁移，空库测试随后得到 `migrationsExecuted=0`，与“必须执行全部迁移”的断言冲突。修复前在隔离 MySQL 8.0.36 上指定 `-Dsurefire.runOrder=reversealphabetical`，4 项中 1 项失败，错误为 `expected: <12> but was: <0>`。
+
+空库测试现为每次执行创建独立的 `diagnosis_ci_empty_<UUID>` 数据库，并在 `finally` 中删除；上传 Mapper 仍使用其原有测试库。保留全部迁移数和 V12 断言，没有清空共享库或放宽断言。运行账号需在隔离测试实例上具备 `diagnosis_ci_empty_%` 数据库的建库、迁移和删除权限；CI 仅在该作业的一次性 MySQL 服务内授予此权限。CI 增加 `alphabetical` / `reversealphabetical` 两组矩阵，分别执行两套测试和零跳过门禁。
+
+修复基于本地提交 `d66c66f70579735cc87be3bb77e77f4047211409`，本节结果对应其工作区补丁，使用规定的 JDK 21：
+
+| 检查 | 本轮实际结果 |
+|---|---|
+| 反向顺序：`FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest` | 4 项通过，0 failures / errors / skipped；`flyway` 报告门禁通过 |
+| 正向顺序：上述两套测试与 `PatientDraftTest` 合跑 | 31 项通过，0 failures / errors / skipped；`flyway`、`issue19` 两个报告门禁通过 |
+| 数据库清理 | 两轮执行后均无遗留的 `diagnosis_ci_empty_%` 数据库 |
+| 设计、steering、概率量纲门禁 | 全部通过 |
+| Python 报告及文档门禁单测 | 31 项通过 |
+| 工作流 YAML | 解析通过，包含两组执行顺序 |
+
+日志和 XML 保存在被忽略的 `tmp/issue19-fix-20261109/`。修复前的失败证据位于 `tmp/issue19-audit-20261109/flyway-reverse-order.log`。
+
+此前同日核对在基线 `d66c66f` 上使用 CI profile 跑过全量后端：159 项，111 实际执行、48 按 opt-in 契约跳过，0 failures / errors，`contextLoads` 通过。本轮补丁后仅重跑上表相关套件，不将基线全量结果描述为补丁后的全量结果。
+
+截至本轮回填，修复仍为本地工作区补丁，#18/#19 实现及后续修复尚未同步远端，新增 CI 矩阵尚未在 GitHub Actions 执行。工单本地工程验收与远端交付状态分别记录；真实 Python、真实模型、领域、浏览器及临床验收仍未执行。
