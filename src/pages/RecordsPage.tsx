@@ -1,14 +1,372 @@
-import { PlaceholderPage } from "@/components/PlaceholderPage"
+import { useEffect, useMemo, useState } from "react"
+import {
+  describeError,
+  getMyDiagnosis,
+  listMyDiagnoses,
+  requestReexamine,
+  type DiagnosisManage,
+  type ErrorDetail,
+  type RecordPage,
+  type DiagnosisResult,
+} from "@/lib/api"
+import {
+  canRequestReexamine,
+  reexamineLabel,
+  summarizeRecords,
+} from "@/lib/records"
+import { classCode, fixed, formatTimestamp, severityLabel, severityRisk } from "@/lib/domain"
+import { faultFromError } from "@/lib/faults"
+import { useFault } from "@/components/fault"
+import { RecordSheet } from "@/components/RecordSheet"
+import { RiskTag } from "@/components/RiskTag"
+import { EmptyFrame } from "@/components/EmptyFrame"
+import { FaultPanel } from "@/components/FaultPanel"
+import { SectionHead } from "@/components/SectionHead"
+import { SiteFooter } from "@/components/SiteFooter"
+import { SiteHeader } from "@/components/SiteHeader"
+
+const PAGE_SIZE = 10
+
+type ListState = {
+  key: string
+  data: RecordPage<DiagnosisManage> | null
+  fault: ErrorDetail | null
+}
+
+type DetailState = {
+  id: string
+  result: DiagnosisResult | null
+  fault: ErrorDetail | null
+  /** 复诊申请提交成功后置 true，行内状态翻成「复审中」。 */
+  reexamined: boolean
+  submitting: boolean
+}
 
 export function RecordsPage() {
+  const [page, setPage] = useState(1)
+  const [reload, setReload] = useState(0)
+  const { push } = useFault()
+
+  const requestKey = `${page}|${reload}`
+  const [list, setList] = useState<ListState>({ key: "", data: null, fault: null })
+
+  useEffect(() => {
+    let alive = true
+
+    listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }).then(
+      (value) => {
+        if (alive) setList({ key: requestKey, data: value, fault: null })
+      },
+      (cause) => {
+        if (!alive) return
+        setList({ key: requestKey, data: null, fault: describeError(cause) })
+      },
+    )
+
+    return () => {
+      alive = false
+    }
+  }, [requestKey])
+
+  const loading = list.key !== requestKey
+  const fault = list.key === requestKey ? list.fault : null
+  const data = list.key === requestKey ? list.data : null
+  const records = useMemo(() => data?.records ?? [], [data])
+
+  const stats = useMemo(
+    () => summarizeRecords(records, data?.total ?? 0),
+    [records, data],
+  )
+
+  /** 展开的记录详情。同一时刻只开一条。 */
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<DetailState | null>(null)
+
+  // 展开态与分页联动：翻页就收起，别把上一页的记录纸带到下一页。
+  useEffect(() => {
+    setOpenId(null)
+    setDetail(null)
+  }, [requestKey])
+
+  useEffect(() => {
+    if (!openId) return
+    let alive = true
+
+    setDetail({ id: openId, result: null, fault: null, reexamined: false, submitting: false })
+    getMyDiagnosis(openId).then(
+      (value) => {
+        if (alive) setDetail((prev) => (prev?.id === openId ? { ...prev, result: value } : prev))
+      },
+      (cause) => {
+        if (!alive) return
+        setDetail((prev) =>
+          prev?.id === openId ? { ...prev, fault: describeError(cause) } : prev,
+        )
+      },
+    )
+
+    return () => {
+      alive = false
+    }
+  }, [openId])
+
+  async function submitReexamine(id: string) {
+    setDetail((prev) => (prev?.id === id ? { ...prev, submitting: true } : prev))
+    try {
+      await requestReexamine(id)
+      setDetail((prev) =>
+        prev?.id === id ? { ...prev, reexamined: true, submitting: false } : prev,
+      )
+      // 行内状态也要跟着翻：本地翻转，不再发一次列表请求。
+      setList((prev) => {
+        if (!prev.data) return prev
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            records: prev.data.records?.map((item) =>
+              item.id === id ? { ...item, reexamineStatus: 2 } : item,
+            ),
+          },
+        }
+      })
+    } catch (cause) {
+      setDetail((prev) => (prev?.id === id ? { ...prev, submitting: false } : prev))
+      push(faultFromError(cause, { intent: "generic", action: { label: "重试", run: () => void submitReexamine(id) } }))
+    }
+  }
+
+  function toggle(id: string) {
+    setOpenId((current) => (current === id ? null : id))
+  }
+
+  function retry() {
+    setReload((value) => value + 1)
+  }
+
+  function goPage(next: number) {
+    setPage(next)
+  }
+
+  const pages = Math.max(1, data?.pages ?? 1)
+
   return (
-    <PlaceholderPage
-      code="07"
-      kicker="诊断记录"
-      en="RECORDS · HISTORY"
-      title="诊断记录"
-      body="你名下所有的判读，每一条都保留模型版本与权重指纹。这个界面正在装配：按时间倒序分页，展开就是那张记录纸。"
-      detail="后端的个人判读分页与详情接口已经就绪；前端界面按批装配。"
-    />
+    <div className="is-field">
+      <SiteHeader />
+
+      <main className="wrap records">
+        <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
+
+        <div className="records__intro">
+          <p className="overline">Ledger · 判读台账</p>
+          <h1 className="display records__title">诊断记录</h1>
+          <p className="lead">
+            你名下所有的判读，每一条都保留模型版本与权重指纹。点开一条，展开就是那张记录纸。
+          </p>
+        </div>
+
+        <div className="strip records__strip">
+          <div className="strip__cell">
+            <div className="readout">
+              <span className="readout__label">判读总数 · TOTAL</span>
+              <span className="readout__value num">{stats.total}</span>
+            </div>
+          </div>
+          <div className="strip__cell">
+            <div className="readout">
+              <span className="readout__label">高风险 · SEVERE</span>
+              <span className="readout__value num">{stats.highRisk}</span>
+            </div>
+          </div>
+          <div className="strip__cell">
+            <div className="readout">
+              <span className="readout__label">待人工复核 · REVIEW</span>
+              <span className="readout__value num">{stats.awaitingReview}</span>
+            </div>
+          </div>
+          <div className="strip__cell">
+            <div className="readout">
+              <span className="readout__label">最近判读 · LAST</span>
+              <span className="readout__value readout__value--mono">
+                {stats.lastReadAt ? formatTimestamp(stats.lastReadAt) : "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {fault ? (
+          <FaultPanel
+            code={fault.code}
+            title="判读台账没有读出来"
+            body={fault.text}
+            endpoint="POST /diagnosis/list/page/my"
+            onRetry={retry}
+          />
+        ) : null}
+
+        {!fault && loading ? (
+          <div className="records__skeleton" aria-hidden="true">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div className="records__skeleton-row" key={index} />
+            ))}
+          </div>
+        ) : null}
+
+        {!fault && !loading && records.length === 0 ? (
+          <div className="records__empty">
+            <EmptyFrame label="暂无判读" />
+            <p className="records__empty-title">还没有属于你的判读</p>
+            <p className="records__empty-body">
+              上传一张眼底影像开始第一次判读，记录会按时间倒序落在这本台账里。
+            </p>
+            <a className="btn" href="/diagnosis">
+              去判读 <span className="btn__key">↗</span>
+            </a>
+          </div>
+        ) : null}
+
+        {!fault && !loading && records.length > 0 ? (
+          <>
+            <ul className="records__list">
+              {records.map((item, index) => (
+                <li key={item.id} className="records__item">
+                  <button
+                    type="button"
+                    className="records__row"
+                    data-cursor
+                    aria-expanded={openId === item.id}
+                    onClick={() => toggle(item.id)}
+                  >
+                    <span className="records__index num">
+                      {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
+                    </span>
+
+                    <span className="records__thumb" aria-hidden="true">
+                      {item.url ? (
+                        <img src={item.url} alt="" loading="lazy" />
+                      ) : (
+                        <span className="records__thumb-none num">无影像</span>
+                      )}
+                    </span>
+
+                    <span className="records__main">
+                      <span className="records__disease">
+                        {item.aiRejected ? "AI 拒识" : item.result || "未给出主诊断"}
+                        <span className="records__code num">{classCode(item.result ?? undefined)}</span>
+                      </span>
+                      <span className="records__meta">
+                        <span className="num">{formatTimestamp(item.createTime)}</span>
+                        <span>·</span>
+                        <span>{reexamineLabel(item.reexamineStatus)}</span>
+                        {item.requiresReview && !item.aiRejected ? (
+                          <>
+                            <span>·</span>
+                            <span>待人工复核</span>
+                          </>
+                        ) : null}
+                      </span>
+                    </span>
+
+                    <span className="records__readout">
+                      {item.aiRejected ? (
+                        <RiskTag risk="critical">拒识</RiskTag>
+                      ) : (
+                        <>
+                          <span className="readout__label">置信度</span>
+                          <span className="records__conf num">{fixed(item.confidence ?? undefined)}</span>
+                          <RiskTag risk={severityRisk(item.severity ?? undefined)}>
+                            {severityLabel(item.severity ?? undefined)}
+                          </RiskTag>
+                        </>
+                      )}
+                    </span>
+
+                    <span className="records__caret" aria-hidden="true">
+                      {openId === item.id ? "−" : "+"}
+                    </span>
+                  </button>
+
+                  {openId === item.id ? (
+                    <div className="records__detail">
+                      {detail?.id === item.id ? (
+                        detail.fault ? (
+                          <FaultPanel
+                            code={detail.fault.code}
+                            title="这条记录没有读出来"
+                            body={detail.fault.text}
+                            endpoint={`GET /diagnosis/get/${item.id}`}
+                            onRetry={() => toggle(item.id)}
+                          />
+                        ) : detail.result ? (
+                          <>
+                            <RecordSheet
+                              result={detail.result}
+                              recordId={`IRIS-${item.id}`}
+                              imageSrc={item.url ?? detail.result.url}
+                              tone="paper"
+                            />
+                            {canRequestReexamine(item) ? (
+                              <div className="records__actions">
+                                {detail.reexamined ? (
+                                  <span className="records__actions-done">
+                                    <RiskTag risk="attention">复审中</RiskTag>
+                                    申请已提交，等待医生安排复诊。
+                                  </span>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="btn"
+                                      disabled={detail.submitting}
+                                      onClick={() => void submitReexamine(item.id)}
+                                    >
+                                      {detail.submitting ? "提交中…" : "申请复诊"}
+                                      <span className="btn__key">↻</span>
+                                    </button>
+                                    <span className="records__actions-note">
+                                      提交后这条记录进入复诊队列，状态变为「复审中」。
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            ) : null}
+                          </>
+                        ) : (
+                          <div className="records__detail-loading num">读取中…</div>
+                        )
+                      ) : null}
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+
+            <div className="news__pager">
+              <button
+                type="button"
+                className="news__pager-step"
+                disabled={page <= 1}
+                onClick={() => goPage(page - 1)}
+              >
+                ← 上一页
+              </button>
+              <span className="news__pager-state num">
+                {page} / {pages} · 共 {stats.total} 条
+              </span>
+              <button
+                type="button"
+                className="news__pager-step"
+                disabled={page >= pages}
+                onClick={() => goPage(page + 1)}
+              >
+                下一页 →
+              </button>
+            </div>
+          </>
+        ) : null}
+      </main>
+
+      <SiteFooter />
+    </div>
   )
 }

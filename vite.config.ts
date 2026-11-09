@@ -18,6 +18,10 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8081",
         changeOrigin: true,
+        // 后端 CORS 是精确白名单（默认只有 5173）。dev server 换端口（5199 等）
+        // 时 Origin 会跟着变，把 Origin 改写成 target，代理后就是同源请求。
+        // 只影响 dev 代理，不影响生产构建。
+        headers: { Origin: "http://localhost:8081" },
       },
     },
   },

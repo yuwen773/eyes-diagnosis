@@ -325,6 +325,113 @@ export function deleteAgentImage(url: string) {
   })
 }
 
+/* ── 用户中心：资料 / 头像 / 我的判读记录 ───────────────── */
+
+export type UserVO = {
+  /** 后端 JsonConfig 全局 Long→String，id 线上是字符串。 */
+  id?: string | number
+  userAccount?: string
+  userName?: string
+  userAvatar?: string
+  userProfile?: string
+  userRole?: string
+  createTime?: string
+}
+
+/** 本人资料更新（/user/update/userCenter）。空字段后端按原值跳过。 */
+export function updateProfile(body: {
+  userName?: string
+  userProfile?: string
+}) {
+  return request<boolean>("/user/update/userCenter", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+/** 头像上传。返回最新 UserVO；调用方负责随后刷新会话同步全站头像。 */
+export function uploadAvatar(file: File) {
+  const form = new FormData()
+  form.append("file", file)
+  return request<UserVO>("/user/upload/avatar", { method: "POST", body: form })
+}
+
+/**
+ * 我的判读分页。行对象是 DiagnosisManageVO——列表接口不做详情级脱敏补全，
+ * 人工复核结论等完整字段要点开走 /diagnosis/get/{id}。
+ * AI 拒识的行 result/confidence/severity 是 null，不是 0。
+ */
+export type DiagnosisManage = {
+  /** 雪花 id，线上是字符串。 */
+  id: string
+  url?: string
+  username?: string
+  result?: string | null
+  confidence?: number | null
+  severity?: string | null
+  /** 1 未复审 / 2 复审中 / 3 已复审。 */
+  reexamineStatus?: number
+  createTime?: string
+  status?: string
+  aiRejected?: boolean
+  abstainReason?: string
+  requiresReview?: boolean
+}
+
+/**
+ * 分页信封。计数字段线上是字符串（后端全局 Long→String），
+ * 统一转回 number，分页算术才不会踩到 "13" 这种值。
+ */
+type RawPage<T> = {
+  records?: T[]
+  total?: number | string
+  size?: number | string
+  current?: number | string
+  pages?: number | string
+}
+
+export type RecordPage<T> = {
+  records?: T[]
+  total?: number
+  size?: number
+  current?: number
+  pages?: number
+}
+
+function toPage<T>(raw: RawPage<T>): RecordPage<T> {
+  const num = (value?: number | string) =>
+    value === undefined || value === null ? undefined : Number(value)
+  return {
+    records: raw.records,
+    total: num(raw.total),
+    size: num(raw.size),
+    current: num(raw.current),
+    pages: num(raw.pages),
+  }
+}
+
+export function listMyDiagnoses(
+  q: { current?: number; pageSize?: number; result?: string } = {},
+) {
+  return request<RawPage<DiagnosisManage>>("/diagnosis/list/page/my", {
+    method: "POST",
+    body: JSON.stringify({ current: 1, pageSize: 10, ...q }),
+  }).then(toPage)
+}
+
+/** 本人判读详情（后端做归属校验）。返回完整记录纸字段。 */
+export function getMyDiagnosis(id: string | number) {
+  return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET" })
+}
+
+/**
+ * 申请复诊。后端 DTO 无 @RequestBody，id 走 query；只允许本人记录，
+ * 提交后 reexamineStatus 置为 2（复审中）。
+ */
+export function requestReexamine(id: string | number) {
+  return request<boolean>(`/user/diagnosis/reexamine?id=${id}`, { method: "POST" })
+}
+
 /* ── Agent SSE 流 ──────────────────────────────────────── */
 
 /** 后端 MessageDTO 的流事件载荷。messageType 序列化自枚举，大小写不保证。 */
