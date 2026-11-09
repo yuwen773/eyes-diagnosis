@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.controller;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HtmlUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
@@ -170,19 +171,61 @@ public class NewsController {
     }
 
     /**
-     * 由正文生成摘要（取正文前 30 字）。
-     * 前置校验正文，避免 null 触发 NPE、短正文触发 StringIndexOutOfBoundsException 而被抛成 500；
-     * 不合法时统一抛 PARAMS_ERROR 业务异常并给出可读文案。
+     * 由正文生成摘要（取「去除 HTML 标签后」的前 30 个可见字符）。
+     * 处理顺序：剥完整标签 → 去掉尾部半截标签残片 → 实体反转义 → 连续空白压成一个空格。
+     * 长度守卫按可见文本判定，非法正文统一抛 PARAMS_ERROR 业务异常并给出可读文案，
+     * 避免 null 触发 NPE、短正文触发 StringIndexOutOfBoundsException 而被抛成 500。
+     * 纯文本正文（无标签、无实体、无连续空白）处理后与原文逐字相同，摘要仍等于正文前 30 字。
+     *
+     * <p>前后端口径契约：长度守卫与剥标签都在后端完成，前端（{@code web/} 的
+     * {@code newsContentValid}、Vue 编辑页）不再需要按 HTML 长度猜测 30 字，
+     * 只需保证正文非空即可；不足 30 字由后端返回上述业务错误码。前端若要调整守卫另开改动。
      * 包级可见静态方法，便于纯 JUnit 单测直接钉住校验契约。
      */
     static String buildSummary(String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文不能为空");
         }
-        if (content.length() < 30) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文至少 30 字（后端以正文前 30 字生成摘要）");
+        String visible = toVisibleText(content);
+        if (visible.length() < 30) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文至少 30 字（按去除标签后的文字计）");
         }
-        return content.substring(0, 30);
+        return visible.substring(0, 30);
+    }
+
+    /**
+     * 正文 → 可见文本：剥 HTML 标签、反转义实体、压缩空白。
+     *
+     * <p>cleanHtmlTag 只处理闭合的完整标签；若正文被截断在标签中间（如以 {@code <p}、
+     * {@code </di} 收尾），末尾会残留半截标签，这里单独去掉：从最后一个 {@code <} 起
+     * 若其后没有 {@code >} 且是字母起始的标签名，则视为未完成标签并截掉。用线性扫描而非
+     * 嵌套量词正则，避免回溯型 ReDoS，也不会把正文里的字面量 {@code 1 < 3}、{@code <3} 吞掉。
+     *
+     * <p>实体反转义放在剥标签之后：{@code &lt;p&gt;} 还原为字面的 {@code <p>} 文本，
+     * 不会被当作标签吃掉；正文里的 {@code &lt;3} 还原为 {@code <3} 也保持字面量。
+     */
+    private static String toVisibleText(String content) {
+        String text = HtmlUtil.cleanHtmlTag(content);
+        text = stripTrailingIncompleteTag(text);
+        text = HtmlUtil.unescape(text);
+        // 含 NBSP（&nbsp; 反转义产物，U+00A0）等空白：连续空白压成一个普通空格，并去掉首尾空白。
+        // Java 的 \s 默认不含 NBSP，故显式列入；单个线性量词，无回溯型 ReDoS 风险。
+        return text.replaceAll("[\\s\\u00A0]+", " ").trim();
+    }
+
+    /** 去掉收尾处未闭合的半截标签残片（{@code <p}、{@code </}、{@code <di} 等）。 */
+    private static String stripTrailingIncompleteTag(String text) {
+        int lastLt = text.lastIndexOf('<');
+        if (lastLt < 0 || text.indexOf('>', lastLt) >= 0) {
+            return text;
+        }
+        String tail = text.substring(lastLt);
+        // HTML 标签名必须以字母开头，故只认「< + 可选 / + 字母起始的标签名」；
+        // "<3"、"< 3" 这类字面量尖括号不匹配，避免被当成未闭合标签误删。
+        if (tail.matches("</?[A-Za-z][A-Za-z0-9]*")) {
+            return text.substring(0, lastLt);
+        }
+        return text;
     }
 
     /**
