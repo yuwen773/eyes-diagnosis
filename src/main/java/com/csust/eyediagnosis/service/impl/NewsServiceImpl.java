@@ -108,34 +108,49 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         if(newsUploadDTO !=null){
             newsId = newsUploadDTO.getId();
         }
-        //如果是更新图片，则应可以在数据库中查询到该图片
+        //如果是更新图片，则应可以在数据库中查询到该新闻
         if(newsId != null){
-            boolean exists = this.lambdaQuery()
-                    .eq(News::getId, newsId)
-                    .exists();
-            ThrowUtils.throwIf(!exists,ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
+            News existing = this.getById(newsId);
+            ThrowUtils.throwIf(existing == null, ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
         }
-        System.err.println(newsId);
         //上传图片
         //用户Id作为每个用户的图库前缀
         String uploadPrefix = String.format("cover/%s",loginUser.getId());
         UploadPictureDetail uploadPictureDetail = fileManager.uploadPicture(multipartFile, uploadPrefix);
-        //构造要入库的图片基本信息
-        News news = new News();
-        news.setTitle("");
-        news.setUserId(loginUser.getId());
-        news.setCoverImg(uploadPictureDetail.getUrl());
+        String coverUrl = uploadPictureDetail.getUrl();
 
-        //如果pictureId 不为空 => 更新，否则是新增
-        if(newsId != null){
-            //如果是更新，则补充 id和编辑时间
-            news.setId(newsId);
-            news.setEditTime(new Date());
+        boolean result;
+        if (newsId != null) {
+            // 更新：只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
+            // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
+            result = this.updateById(coverPatch(newsId, coverUrl));
+        } else {
+            // 新增：保持原有插入语义（标题空串、作者为上传者、带封面）。
+            News news = new News();
+            news.setTitle("");
+            news.setUserId(loginUser.getId());
+            news.setCoverImg(coverUrl);
+            result = this.save(news);
         }
-        //插入/更新
-        boolean result = this.saveOrUpdate(news);
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
-        return uploadPictureDetail.getUrl();
+        return coverUrl;
+    }
+
+    /**
+     * 构造封面更新用的窄 patch 实体：只带 id / coverImg / editTime，其余字段一律为 null。
+     * 仅供 {@link #uploadCoverImage} 的更新分支使用，避免整体覆写新闻。
+     *
+     * <p>看护说明：本方法依赖 MP 默认 {@code NOT_NULL} 字段策略（null 字段不进 SET）。
+     * 若将来给 {@code News} 加 {@code @TableField(fill = ...)} 自动填充或改全局
+     * {@code update-strategy}，本方法「不覆盖其它列」的保证会失效——
+     * {@code NewsCoverUpdateTest} 捕获 updateById 实体后的 assertNull 断言是第一道防线。
+     */
+    private static News coverPatch(Long newsId, String coverUrl) {
+        News news = new News();
+        news.setId(newsId);
+        news.setCoverImg(coverUrl);
+        news.setEditTime(new Date());
+        return news;
     }
 }
 
