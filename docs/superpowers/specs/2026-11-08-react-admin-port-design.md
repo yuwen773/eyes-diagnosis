@@ -182,8 +182,10 @@ styles/admin.css              # admin 区域样式，消费上下文令牌；在
 
 ## 7. 已知后端边界（开票，本次不动后端）
 
-> 下表前 4 条为设计阶段发现；第 5–7 条为 2026-11-09 真实后端联调（MySQL 8 + Redis +
+> 下表前 4 条为设计阶段发现；第 5–8 条为 2026-11-09 真实后端联调（MySQL 8 + Redis +
 > ChromaDB + 真实 Spring Boot，headless Chrome 走真实 UI）**实测确认**的条目。
+> 全部条目已开票：`#26` 上传封面清空标题（🔴）、`#27` 封面字段名映射断裂、
+> `#28` NewsVO 无 status、`#29` admin 列表缺全站视角、`#30` 无新闻新建路径。
 
 1. **诊断管理页列得出的是「当前管理员自己的」诊断**，不是全站——`DiagnosisController.listDiagnosisVOByPage` 强制 `setUserId(登录人)`，wrapper 无条件 `eq userId`。全站诊断复核需后端补管理员专用入口。
 2. **知识库页列得出的是「当前管理员自己上传的」文档**——`KnowledgeBaseController.listPage` `eq userId`。
