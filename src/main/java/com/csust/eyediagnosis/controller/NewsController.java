@@ -148,18 +148,38 @@ public class NewsController {
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO){
         //查看是否为空
-        if (newsUpdateDTO == null || newsUpdateDTO.getId() == null) {
+        if (newsUpdateDTO == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (newsUpdateDTO.getId() == null) {
+            // 本系统不支持新建新闻，编辑页必须携带已存在的新闻 id
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持新建新闻，请指定新闻 id");
         }
         // 唯一构造入口：封面 coverImage→coverImg 的显式映射在方法内完成
         News news = buildNewsForEdit(newsUpdateDTO);
-        //设置摘要
-        String summary = newsUpdateDTO.getContent().substring(0,30);
+        //设置摘要：前置校验正文，非法正文返回业务错误码而非 500
+        String summary = buildSummary(newsUpdateDTO.getContent());
         news.setSummary(summary);
         //使用saveOrUpdate
         boolean result = newsService.saveOrUpdate(news);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 由正文生成摘要（取正文前 30 字）。
+     * 前置校验正文，避免 null 触发 NPE、短正文触发 StringIndexOutOfBoundsException 而被抛成 500；
+     * 不合法时统一抛 PARAMS_ERROR 业务异常并给出可读文案。
+     * 包级可见静态方法，便于纯 JUnit 单测直接钉住校验契约。
+     */
+    static String buildSummary(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文不能为空");
+        }
+        if (content.length() < 30) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "正文至少 30 字（后端以正文前 30 字生成摘要）");
+        }
+        return content.substring(0, 30);
     }
 
     /**
