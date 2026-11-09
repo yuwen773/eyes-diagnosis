@@ -1,15 +1,135 @@
 // @vitest-environment jsdom
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { useLoginUserStore } from '@/stores/user'
 
 vi.mock('@/request', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 import request from '@/request'
 import DiagnosisTasksPage from '../DiagnosisTasksPage.vue'
 
+const approvedView = {
+  taskId: 'task-1', status: 'AVAILABLE', stage: 'RESULT', message: '已通过本次读取门禁', workNotes: [],
+  result: { claims: [{ id: 'finding', section: 'MAIN_FINDING', text: '已审核的合成主要信息', references: [] }], sources: [],
+    disclaimer: '模型预测并非确诊', modelVersion: 'synthetic-model', preprocessVersion: 'synthetic-preprocess', calibrationNotice: '模型概率不代表临床可靠性' },
+}
+
+function approvedResponses() {
+  vi.mocked(request.get).mockImplementation(async path => ({ data: { code: 0, data: path === '/diagnosis-tasks'
+    ? [{ taskId: 'task-1', status: 'WAITING_REVIEW' }]
+    : approvedView } }))
+}
+
 describe('patient diagnosis tasks', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    setActivePinia(createPinia())
+    useLoginUserStore().setLoginUser({ id: 42, userRole: 'user' })
     vi.mocked(request.get).mockResolvedValue({ data: { code: 0, data: [] } })
+  })
+
+  it('opens approved layered information and expands sources and uncertainty as plain text', async () => {
+    const result = {
+      claims: [
+        { id: 'finding', section: 'MAIN_FINDING', text: '已审核的合成主要信息', references: [{ citationIndex: 0, quote: '眼科检查' }] },
+        { id: 'uncertainty', section: 'UNCERTAINTY', text: '合成不确定性', references: [{ citationIndex: 0, quote: '眼科检查' }] },
+      ],
+      sources: [{ citationIndex: 0, title: '合成来源', source: 'javascript:alert(1)', excerpt: '<b>眼科检查</b>', documentVersion: 'c'.repeat(64), governanceVersion: '1' }],
+      disclaimer: '模型预测并非确诊', modelVersion: 'synthetic-model', preprocessVersion: 'synthetic-preprocess', calibrationNotice: '模型概率不代表临床可靠性',
+    }
+    vi.mocked(request.get).mockImplementation(async path => ({ data: { code: 0, data: path === '/diagnosis-tasks'
+      ? [{ taskId: 'task-1', status: 'WAITING_REVIEW' }]
+      : { taskId: 'task-1', status: 'AVAILABLE', stage: 'RESULT', message: '已通过本次读取门禁', workNotes: [], result, reasoning: 'secret-reasoning' } } }))
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('已审核的合成主要信息')
+    expect(wrapper.text()).toContain('模型预测并非确诊')
+    const details = wrapper.get('details')
+    expect(details.attributes('open')).toBeUndefined()
+    await details.get('summary').trigger('click')
+    expect(wrapper.text()).toContain('合成不确定性')
+    expect(wrapper.text()).toContain('合成来源')
+    expect(wrapper.html()).toContain('&lt;b&gt;眼科检查&lt;/b&gt;')
+    expect(wrapper.find('a[href^="javascript:"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('secret-reasoning')
+  })
+
+  it.each(['PROCESSING', 'WAITING_REVIEW', 'RESTRICTED', 'FUTURE'])('hides result fields when the server has not released them: %s', async status => {
+    vi.mocked(request.get).mockImplementation(async path => ({ data: { code: 0, data: path === '/diagnosis-tasks'
+      ? [{ taskId: 'task-1', status: 'WAITING_REVIEW' }]
+      : { ...approvedView, status, stage: status === 'FUTURE' ? 'secret-stage' : 'DOCTOR_REVIEW', message: '等待复核' } } }))
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+    expect(wrapper.text()).not.toContain('secret-stage')
+    expect(wrapper.find('details').exists()).toBe(false)
+  })
+
+  it('clears an open result immediately on refresh and keeps it closed if the request fails', async () => {
+    approvedResponses()
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('已审核的合成主要信息')
+    vi.mocked(request.get).mockRejectedValueOnce(new Error('network'))
+    await wrapper.findAll('button').find(button => button.text() === '刷新状态')!.trigger('click')
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+    await flushPromises()
+    expect(wrapper.text()).toContain('暂时无法获取任务')
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+  })
+
+  it('discards a late result after account changes and clears the selected file', async () => {
+    approvedResponses()
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    const input = wrapper.get('input[type=file]')
+    Object.defineProperty(input.element, 'files', { value: [new File(['image'], 'eye.png', { type: 'image/png' })] })
+    await input.trigger('change')
+    let finish!: (value: unknown) => void
+    vi.mocked(request.get).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    await wrapper.get('[data-action=open]').trigger('click')
+    vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: [] } })
+    useLoginUserStore().setLoginUser({ id: 99, userRole: 'user' })
+    await flushPromises()
+    finish({ data: { code: 0, data: approvedView } })
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+    expect(wrapper.find('[data-action=open]').exists()).toBe(false)
+    expect(wrapper.get('button[type=submit]').attributes('disabled')).toBeDefined()
+  })
+
+  it('keeps the newest selection when result requests finish out of order', async () => {
+    approvedResponses()
+    vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: [{ taskId: 'task-1', status: 'WAITING_REVIEW' }, { taskId: 'task-2', status: 'WAITING_REVIEW' }] } })
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    let finish!: (value: unknown) => void
+    vi.mocked(request.get).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    await wrapper.findAll('[data-action=open]')[0]!.trigger('click')
+    vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: { ...approvedView, taskId: 'task-2', status: 'WAITING_REVIEW', result: null, message: '等待第二项复核' } } })
+    await wrapper.findAll('[data-action=open]')[1]!.trigger('click')
+    await flushPromises()
+    finish({ data: { code: 0, data: approvedView } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('等待第二项复核')
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+  })
+
+  it('does not display a result belonging to a different task', async () => {
+    approvedResponses()
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: { ...approvedView, taskId: 'task-2' } } })
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('无法读取最新结果')
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
   })
 
   it('shows only safe states and hides unexpected response fields', async () => {
@@ -43,7 +163,7 @@ describe('patient diagnosis tasks', () => {
   })
 
   it('locks file selection while the request is in flight', async () => {
-    let finish!: (value: any) => void
+    let finish!: (value: unknown) => void
     vi.mocked(request.post).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
     const wrapper = mount(DiagnosisTasksPage)
     await flushPromises()
