@@ -54,6 +54,11 @@ public class NewsVO implements Serializable {
      */
     private Date publishTime;
 
+    /**
+     * 发布状态（0 草稿 / 1 已发布 / 2 下架），与实体 News.status 同名同型
+     */
+    private Integer status;
+
     private static final long serialVersionUID = 1L;
 
 }

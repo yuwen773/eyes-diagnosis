@@ -168,8 +168,9 @@ public class NewsController {
      * 封面字段名不一致（DTO: coverImage / 实体: coverImg），BeanUtils 拷不过去，需显式映射。
      * coverImage 非 null（含空串）时写入 coverImg —— 空串会进 UPDATE SET = 清除封面；
      * 为 null（字段缺席）时 coverImg 保持 null，MP 的 NOT_NULL 策略跳过 = 不动库中原封面。
+     * public 以便编辑通道的构造契约可被跨包单测（如 NewsStatusExposureTest）直接钉住。
      */
-    static News buildNewsForEdit(NewsUpdateDTO dto) {
+    public static News buildNewsForEdit(NewsUpdateDTO dto) {
         News news = new News();
         BeanUtils.copyProperties(dto, news);
         if (dto.getCoverImage() != null) {

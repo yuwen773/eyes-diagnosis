@@ -76,6 +76,7 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
        if (CollUtil.isEmpty(newsList)){
            return new ArrayList<>();
        }
+       // 列表批量转换统一走 toNewsVO，保证 status 等字段不在批量路径上丢失
        return newsList.stream().map(this::getNewsVO).collect(Collectors.toList());
     }
 
@@ -91,13 +92,26 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         String Username = user.getUserName();
         String UserAvatar = user.getUserAvatar();
 
-        NewsVO newsVO = new NewsVO();
-        BeanUtil.copyProperties(news,newsVO);
-
-        newsVO.setCoverImage(news.getCoverImg());
-        //设置作者
+        // 实体→VO 的字段拷贝（含 status）统一收拢到 toNewsVO
+        NewsVO newsVO = toNewsVO(news);
         newsVO.setAuthor(Username);
         newsVO.setAvatar(UserAvatar);
+        return newsVO;
+    }
+
+    /**
+     * 实体→VO 的唯一转换入口：承担原来的 {@code BeanUtil.copyProperties(news, newsVO)}，
+     * 并显式映射封面字段名差异（实体 coverImg → VO coverImage）。
+     * 列表批量转换（{@link #getNewsVOList}）与详情（{@link #getNewsVO}）都经由本方法，
+     * 因此新增字段（如 status）在两条读侧都能读到。包外单测可直接调用。
+     */
+    public static NewsVO toNewsVO(News news) {
+        if (news == null) {
+            return null;
+        }
+        NewsVO newsVO = new NewsVO();
+        BeanUtil.copyProperties(news, newsVO);
+        newsVO.setCoverImage(news.getCoverImg());
         return newsVO;
     }
     @Override
