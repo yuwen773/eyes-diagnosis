@@ -112,6 +112,26 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         return DiagnosisManageVO.objToVo(diagnosis);
     }
 
+    /**
+     * 判定登录用户是否具有「全站视角」：仅管理员可见所有用户的记录。
+     * 供控制器（诊断列表、知识库列表）共用，避免各处重复角色判定。
+     */
+    public static boolean seesAllRecords(User loginUser) {
+        return loginUser != null && AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+    }
+
+    /**
+     * 按登录用户角色收敛列表查询范围：
+     * 管理员（全站视角）不做任何覆盖，dto.userId 保持 null → 查询不加 userId 条件；
+     * 普通用户仍强制覆盖为本人 id，只能看到自己的数据。
+     */
+    public static void applyVisibilityScope(DiagnosisQueryDTO dto, User loginUser) {
+        if (seesAllRecords(loginUser)) {
+            return;
+        }
+        dto.setUserId(loginUser.getId());
+    }
+
     @Override
     public QueryWrapper<Diagnosis> getDiagnosisQueryWrapper(DiagnosisQueryDTO diagnosisQueryDTO) {
         if(diagnosisQueryDTO ==null){
@@ -119,7 +139,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         }
         //提取查询字段
         QueryWrapper<Diagnosis> queryWrapper = new QueryWrapper<>();
-        //用户的Id（必须由 Controller 在调用前覆盖为当前登录用户）
+        // 管理员全站视角下 userId 为 null：必须完全跳过该条件，不能生成 userId IS NULL
         Long userId = diagnosisQueryDTO.getUserId();
         //1. 疾病id
         Long id = diagnosisQueryDTO.getId();
@@ -131,10 +151,10 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         String sortOrder = diagnosisQueryDTO.getSortOrder();
 
 //        封装wrapper
-        queryWrapper.eq(ObjUtil.isNotNull(id),"userId", userId);
         queryWrapper.eq(ObjUtil.isNotNull(id),"id", id);
         queryWrapper.like(StrUtil.isNotBlank(result),"result", result);
         queryWrapper.orderBy(StrUtil.isNotBlank(sortField),sortOrder.equals(ASC),sortField);
+        // userId 为 null（管理员全站视角）时整条 eq 不加，其余用户才按本人过滤
         queryWrapper.eq(ObjUtil.isNotNull(userId),"userId", userId);
         //返回query
 
