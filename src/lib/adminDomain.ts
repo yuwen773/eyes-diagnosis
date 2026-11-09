@@ -34,8 +34,36 @@ export function reviewView(
   }
 }
 
-/** 用户删除守卫：目标是 admin 不给删（修正 Vue 版写反的守卫）。 */
-export function canDeleteUser(target?: AdminUser | null): boolean {
+/**
+ * 新闻发布状态 → 标签与风险档。后端 t_news.status 语义：0 草稿 / 1 已发布 / 2 下架。
+ *
+ * 缺省（字段缺席或非法值）一律读成「未知」而不是「草稿」：老数据里没写状态的
+ * 新闻不能凭空显示成草稿，让管理员以为它还没发出去。
+ */
+export function newsStatusView(status?: number | null): {
+  label: string
+  risk: Risk
+} {
+  switch (status) {
+    case 0:
+      return { label: "草稿", risk: "attention" }
+    case 1:
+      return { label: "已发布", risk: "normal" }
+    case 2:
+      return { label: "已下架", risk: "critical" }
+    default:
+      return { label: "未知", risk: "unknown" }
+  }
+}
+
+/** 新闻发布状态的可选项（编辑页下拉与列表标签同源，避免两处各写一套文案）。 */
+export const NEWS_STATUS_OPTIONS = [
+  { value: 0, label: "草稿" },
+  { value: 1, label: "已发布" },
+  { value: 2, label: "已下架" },
+] as const
+
+/** 用户删除守卫：目标是 admin 不给删（修正 Vue 版写反的守卫）。 */export function canDeleteUser(target?: AdminUser | null): boolean {
   // 目标缺失直接不给删：空白行或未选中就点删除，不该发出带空 id 的请求。
   // 只拦 admin；普通用户与角色字段缺失的旧数据放行，避免误伤可删记录。
   return target != null && target.userRole !== "admin"

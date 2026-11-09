@@ -2240,6 +2240,31 @@
   border-color: var(--signal);
 }
 
+/* 发布状态下拉：与标题输入同一条仪器外形（1px 发丝线 / 零圆角 / 40px 高）。 */
+.admin-newsedit__select {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__select:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
 /* 封面：缩略图 + 更换 / 清除 / 提示排成一行，窄屏自动换行。 */
 .admin-newsedit__cover {
   display: grid;

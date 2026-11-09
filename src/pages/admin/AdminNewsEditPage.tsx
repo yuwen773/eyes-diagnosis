@@ -10,7 +10,7 @@ import {
   uploadNewsCover,
   type AdminNews,
 } from "@/lib/adminApi"
-import { newsContentValid } from "@/lib/adminDomain"
+import { NEWS_STATUS_OPTIONS, newsContentValid } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderMarkdown } from "@/lib/markdown"
@@ -18,9 +18,10 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
 type View = { data: AdminNews | null; fault: ErrorDetail | null; loading: boolean }
 
-/** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。NewsVO 不回显 status，
- *  表单不再持有该字段，保存也不发送（见 onSubmit 注释）。 */
-type Form = { title: string; content: string; coverImage?: string }
+/** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。
+ *  status 缺省表示「后端没给」（老数据）——保存时省略该键，靠 MyBatis-Plus
+ *  NOT_NULL 策略保留库中现值，绝不凭空把已发布新闻写成草稿。 */
+type Form = { title: string; content: string; coverImage?: string; status?: number }
 
 const EMPTY_FORM: Form = { title: "", content: "" }
 
@@ -102,6 +103,7 @@ export function AdminNewsEditPage(): ReactElement {
           title: data.title ?? "",
           content: data.content ?? "",
           coverImage: data.coverImage ?? undefined,
+          status: data.status ?? undefined,
         })
         setView({ data, fault: null, loading: false })
       },
@@ -135,13 +137,14 @@ export function AdminNewsEditPage(): ReactElement {
 
     setSaving(true)
     try {
-      // NewsVO 不回显 status，前端不发送——后端需暴露 status 才能管理（开票 spec §7）。
-      // JSON 省略该字段 → 后端 DTO 的 status 为 null → MyBatis-Plus NOT_NULL 策略跳过
-      // UPDATE SET，库中现值保持；否则每次编辑都会把已发布新闻静默降成草稿。
+      // status 只在后端给过时才上送：键缺席 → DTO 的 status 为 null →
+      // MyBatis-Plus NOT_NULL 策略跳过 UPDATE SET，库中现值保持。老数据（NewsVO
+      // 没有 status）因此不会被一次编辑静默降成草稿；新数据则能真正改发布状态。
       await saveNews({
         ...(newsId ? { id: newsId } : {}),
         title: form.title,
         content: form.content,
+        ...(form.status === undefined ? {} : { status: form.status }),
         // 无条件上送 coverImage：后端 MyBatis-Plus 默认 FieldStrategy.NOT_NULL，
         // null 字段不进 UPDATE SET。清封面时若用 `...(coverImage ? {…} : {})` 丢键，
         // DTO 反序列化成 null → 旧封面被保留，前端却提示「已清除」，静默 no-op。
@@ -301,6 +304,34 @@ export function AdminNewsEditPage(): ReactElement {
                 placeholder="输入文章标题…"
                 aria-label="标题"
               />
+            </label>
+
+            <label className="admin-newsedit__field">
+              <span className="admin-newsedit__label">发布状态 · STATUS</span>
+              <select
+                className="admin-newsedit__select"
+                value={form.status ?? ""}
+                onChange={(event) =>
+                  patch({
+                    status:
+                      event.target.value === ""
+                        ? undefined
+                        : Number(event.target.value),
+                  })
+                }
+                disabled={isNew}
+                aria-label="发布状态"
+              >
+                {/* 后端没给状态时（老数据）留一条只读占位，保存仍省略该键。 */}
+                {form.status === undefined ? (
+                  <option value="">未知（保存时保持原值）</option>
+                ) : null}
+                {NEWS_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <section className="admin-newsedit__cover" aria-label="封面图片">

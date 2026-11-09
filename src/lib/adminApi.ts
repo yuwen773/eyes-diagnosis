@@ -120,6 +120,8 @@ export function deleteUser(id: string): Promise<boolean> {
 export type AdminNews = {
   id?: string; title?: string; author?: string; summary?: string
   content?: string; coverImage?: string; publishTime?: string
+  /** 发布状态：0 草稿 / 1 已发布 / 2 下架（NewsVO 自 2026-11-09 起暴露）。 */
+  status?: number | null
 }
 export function listAdminNews(q: { current: number; pageSize: number; title?: string }): Promise<Page<AdminNews>> {
   return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)

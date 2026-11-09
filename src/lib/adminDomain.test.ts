@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, rankDistribution, reviewView } from "./adminDomain"
+import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, newsStatusView, rankDistribution, reviewView } from "./adminDomain"
 
 describe("reviewView", () => {
   it("aiRejected 优先于一切", () => {
@@ -30,6 +30,19 @@ describe("canDeleteUser", () => {
   it("目标缺失 → 不给删", () => {
     expect(canDeleteUser(null)).toBe(false)
     expect(canDeleteUser(undefined)).toBe(false)
+  })
+})
+
+describe("newsStatusView", () => {
+  it("0/1/2 映射后端语义：草稿 / 已发布 / 已下架", () => {
+    expect(newsStatusView(0)).toEqual({ label: "草稿", risk: "attention" })
+    expect(newsStatusView(1)).toEqual({ label: "已发布", risk: "normal" })
+    expect(newsStatusView(2)).toEqual({ label: "已下架", risk: "critical" })
+  })
+  it("缺省读「未知」而不是「草稿」——老数据没写状态不能冒充草稿", () => {
+    expect(newsStatusView(undefined)).toEqual({ label: "未知", risk: "unknown" })
+    expect(newsStatusView(null)).toEqual({ label: "未知", risk: "unknown" })
+    expect(newsStatusView(9)).toEqual({ label: "未知", risk: "unknown" })
   })
 })
 

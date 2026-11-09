@@ -5,8 +5,10 @@ import { SectionHead } from "@/components/SectionHead"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
+import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import { deleteNews, listAdminNews, type AdminNews, type Page } from "@/lib/adminApi"
+import { newsStatusView } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { fault } from "@/lib/faults"
 
@@ -161,6 +163,16 @@ export function AdminNewsPage(): ReactElement {
     { key: "id", title: "ID", width: "176px", mono: true },
     { key: "title", title: "标题", width: "180px" },
     { key: "summary", title: "摘要", render: (row) => truncateSummary(row.summary) },
+    {
+      key: "status",
+      title: "状态",
+      width: "104px",
+      render: (row) => {
+        // status 由后端 NewsVO 暴露（0 草稿 / 1 已发布 / 2 下架）；缺省读「未知」。
+        const view = newsStatusView(row.status)
+        return <RiskTag risk={view.risk}>{view.label}</RiskTag>
+      },
+    },
     { key: "author", title: "作者", width: "120px" },
     { key: "publishTime", title: "发布时间", width: "180px", mono: true },
     {
