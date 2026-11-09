@@ -248,6 +248,37 @@ jobs:
       - name: Require every draft case to run
         run: python3 scripts/check_surefire_skips.py target/surefire-reports issue19
 
+  issue20-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: issue20_test
+          MYSQL_USER: issue20
+          MYSQL_PASSWORD: issue20
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue20 -pissue20 issue20_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE20_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue20_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run doctor authorization, frozen review and concurrent decision tests
+        run: mvn -B -Dtest=DoctorReviewApiTest test
+      - name: Require every review case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue20
+
   flyway-mysql:
     runs-on: ubuntu-latest
     strategy:

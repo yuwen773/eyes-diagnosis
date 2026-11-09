@@ -57,6 +57,12 @@ const router = createRouter({
           meta: { icon: 'MedicineBoxOutlined', access: ACCESS_ENUM.USER },
         },
         {
+          path: 'doctor-reviews',
+          name: '医生复核',
+          component: () => import('@/pages/doctor/DoctorReviewsPage.vue'),
+          meta: { icon: 'MedicineBoxOutlined', access: ACCESS_ENUM.DOCTOR_REVIEW },
+        },
+        {
           path: 'news',
           name: '前沿新闻',
           component: () => import('@/pages/news/NewsPage.vue'),
