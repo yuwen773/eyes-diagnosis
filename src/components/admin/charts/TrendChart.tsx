@@ -1,5 +1,7 @@
-import { useRef, useState } from "react"
+import { useState } from "react"
 import type { KeyboardEvent, ReactElement, ReactNode } from "react"
+import { TREND_VW_MIN, trendGeometry, trendLabelStep } from "./chartGeometry"
+import { useMeasuredWidth } from "./useMeasuredWidth"
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * 本文件除 TrendChart 外，还导出图表段共用件（ChartView / 数值格式 / 圆角柱路径）。
@@ -169,17 +171,10 @@ export function ChartView(props: {
 
 /* ── TrendChart 几何 ───────────────────────────────────────────────────────
  * viewBox 把 Y 轴刻度带（左 48）、X 轴标签带（下 32）、端点直标带（右 76）
- * 全部算进去，容器不裁轴；SVG width:100% + height:auto 由 viewBox 自适应宽度。
+ * 全部算进去，容器不裁轴。逻辑宽不再写死：等于容器实测宽（见 useMeasuredWidth），
+ * 缩放比恒为 1 → 轴文字保持设计字号，宽屏得到的是更长的横轴而不是更大的字。
+ * 几何计算见 chartGeometry.ts（纯函数，有单测钉住）。
  * ───────────────────────────────────────────────────────────────────────── */
-const VW = 640
-const VH = 240
-const PAD = { left: 48, right: 76, top: 18, bottom: 32 }
-const plotX0 = PAD.left
-const plotX1 = VW - PAD.right
-const plotY0 = PAD.top
-const plotY1 = VH - PAD.bottom
-const plotW = plotX1 - plotX0
-const plotH = plotY1 - plotY0
 const TIP_W = 128
 const TIP_H = 48
 
@@ -240,7 +235,9 @@ export function TrendChart(props: {
 }): ReactElement {
   const { points, ariaLabel } = props
   const [active, setActive] = useState<number | null>(null)
-  const figureRef = useRef<HTMLDivElement>(null)
+  const { ref: figureRef, width } = useMeasuredWidth<HTMLDivElement>(TREND_VW_MIN)
+  const { vw, vh, plotX0, plotX1, plotY0, plotY1, plotW, plotH } =
+    trendGeometry(width)
 
   const n = points.length
   const axis = computeYAxis(points.map((p) => p.value))
@@ -249,6 +246,12 @@ export function TrendChart(props: {
     n <= 1 ? plotX0 + plotW / 2 : plotX0 + (i * plotW) / (n - 1)
   const yAt = (v: number): number =>
     plotY1 - ((safe(v) - axis.min) / (axis.max - axis.min)) * plotH
+
+  // X 轴标签抽稀：图表现在按 1:1 渲染，窄容器里 7 个「周一…周日」会挤成一团。
+  // 按标签最小净距算出步长，隔一个画一个；末点标签永远保留（读者要看到最新一格）。
+  const labelStep = trendLabelStep(plotW, n)
+  const showLabel = (i: number): boolean =>
+    n <= 1 || i % labelStep === 0 || i === n - 1
 
   const coords = points.map((p, i) => ({ x: xAt(i), y: yAt(p.value) }))
   const linePath = coords
@@ -263,7 +266,7 @@ export function TrendChart(props: {
   const handlePointer = (clientX: number): void => {
     const box = figureRef.current?.getBoundingClientRect()
     if (!box || box.width === 0 || n === 0) return
-    const vx = ((clientX - box.left) / box.width) * VW
+    const vx = ((clientX - box.left) / box.width) * vw
     const index =
       n <= 1
         ? 0
@@ -308,7 +311,7 @@ export function TrendChart(props: {
     <div className="admin-viz__figure" ref={figureRef}>
       <svg
         className="admin-viz__svg"
-        viewBox={`0 0 ${VW} ${VH}`}
+        viewBox={`0 0 ${vw} ${vh}`}
         aria-hidden="true"
       >
         {/* Y 轴网格：1px 实线发丝（--hr），无虚线；刻度文字用文本令牌。 */}
@@ -341,18 +344,20 @@ export function TrendChart(props: {
           y1={plotY1}
           y2={plotY1}
         />
-        {coords.map((c, i) => (
-          <text
-            key={`${points[i].label}-${i}`}
-            className="admin-viz__axis-text"
-            x={c.x}
-            y={plotY1 + 17}
-            textAnchor="middle"
-            dominantBaseline="middle"
-          >
-            {points[i].label}
-          </text>
-        ))}
+        {coords.map((c, i) =>
+          showLabel(i) ? (
+            <text
+              key={`${points[i].label}-${i}`}
+              className="admin-viz__axis-text"
+              x={c.x}
+              y={plotY1 + 17}
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {points[i].label}
+            </text>
+          ) : null,
+        )}
 
         {/* 标记：同色 10% 面积淡填 + 2px round join/cap 折线 */}
         {areaPath ? <path className="admin-viz__area" d={areaPath} /> : null}

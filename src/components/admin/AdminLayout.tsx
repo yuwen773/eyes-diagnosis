@@ -13,8 +13,12 @@ export const ADMIN_NAV = [
 ] as const
 
 /**
- * 管理后台外壳：仪表梁 + 侧栏恒定深墨（设备背面），内容区交给子路由。
+ * 管理后台外壳：仪表梁 + 侧栏 + 内容区。
  * 主题切换直接复用全站 ThemeProvider 的 useTheme 与 SiteHeader 的半满读数环。
+ *
+ * 外壳跟随全站主题：梁与侧栏吃上下文令牌（--surface / --fg-* / --hr），
+ * 浅色主题下是纸白仪表面 + 墨色发丝线，暗色主题下整体翻成暗房——
+ * 外壳与内容区永远同主题，不再出现「深色外壳 + 浅色内容」的割裂。
  */
 export function AdminLayout() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -23,7 +27,7 @@ export function AdminLayout() {
 
   return (
     <div className="is-field admin-shell">
-      <header className="is-dark admin-beam">
+      <header className="admin-beam">
         <div className="admin-beam__inner">
           <Link to="/" className="admin-beam__back">
             <span className="admin-beam__back-mark" aria-hidden="true">
@@ -73,7 +77,7 @@ export function AdminLayout() {
         </div>
       </header>
 
-      <aside className="is-dark admin-side">
+      <aside className="admin-side">
         <nav className="admin-side__nav" aria-label="系统管理导航">
           {ADMIN_NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className="admin-side__link">

@@ -1,5 +1,14 @@
 import type { ReactElement } from "react"
 import type { Ranked } from "@/lib/adminDomain"
+import { useMeasuredWidth } from "./useMeasuredWidth"
+import {
+  RANK_BAR_H as RB_BAR_H,
+  RANK_MIN_W as RB_MIN_W,
+  RANK_PAD_Y as RB_PAD_Y,
+  RANK_ROW_H as RB_ROW_H,
+  RANK_TICKS as RB_TICKS,
+  rankedGeometry,
+} from "./chartGeometry"
 import {
   ChartView,
   formatVizNumber,
@@ -8,24 +17,12 @@ import {
 } from "./TrendChart"
 
 /* ── 排序横条几何：viewBox 把「名称带 / 刻度轨 / 数值+占比带」全部算进去，
- * 容器不裁轴；SVG width:100% + height:auto 由 viewBox 自适应宽度。
+ * 容器不裁轴。逻辑宽取容器实测宽（见 useMeasuredWidth）→ 缩放比恒为 1，
+ * 名称与数值带保持设计字号，刻度轨随容器变长；行高是逻辑单位，恒为 40px。
+ * 几何计算见 chartGeometry.ts（纯函数，有单测钉住）。
  * 刻度轨同构复刻 app.css 的 .scale__track / .scale__ticks 词汇（发丝轨 +
  * 无字刻度），另起 admin-viz__rank-* 命名空间，不污染全站判读页的尺子。
  * ───────────────────────────────────────────────────────────────────────── */
-const RB_W = 640
-const RB_ROW_H = 40
-const RB_PAD_Y = 12
-const RB_NAME_W = 168
-const RB_RIGHT_PAD = 16
-const RB_SHARE_W = 64
-const RB_BAR_H = 12
-const RB_TICKS = 5
-
-const rbTrackX0 = RB_NAME_W + 12
-const rbShareX = RB_W - RB_RIGHT_PAD
-const rbValueX = rbShareX - RB_SHARE_W - 16
-const rbTrackX1 = rbValueX - 16
-const rbTrackW = rbTrackX1 - rbTrackX0
 
 /**
  * 排序横条（疾病分布，饼图撤掉后的替代）：名称（--fg-2，恒在条外左侧）+
@@ -44,7 +41,13 @@ export function RankedBars(props: {
   ariaLabel: string
 }): ReactElement {
   const { rows, ariaLabel } = props
-  const height = RB_PAD_Y * 2 + Math.max(rows.length, 1) * RB_ROW_H
+  const { ref: figureRef, width } = useMeasuredWidth<HTMLDivElement>(RB_MIN_W)
+
+  // 逻辑宽 = 容器实测宽：名称带 / 数值带固定，刻度轨吃掉余量。
+  // 轨道末与数值列留 48px：数值是 4~5 位 mono 数字（约 32px 宽），
+  // 只留 16px 会被最长那根条顶到数字上（数值右对齐，文字往左探）。
+  const { height, trackX0: rbTrackX0, trackX1: rbTrackX1, trackW: rbTrackW, valueX: rbValueX, shareX: rbShareX } =
+    rankedGeometry(width, rows.length)
   const leading = Math.max(0, ...rows.map((row) => row.value))
   const readout = rows
     .map(
@@ -56,13 +59,14 @@ export function RankedBars(props: {
   const figure = (
     <div
       className="admin-viz__figure admin-viz__figure--static"
+      ref={figureRef}
       tabIndex={0}
       role="group"
       aria-label={`${ariaLabel}，按数值降序：${readout || "暂无数据"}`}
     >
       <svg
         className="admin-viz__svg"
-        viewBox={`0 0 ${RB_W} ${height}`}
+        viewBox={`0 0 ${width} ${height}`}
         aria-hidden="true"
       >
         {rows.map((row, i) => {

@@ -1,10 +1,13 @@
 import type { ReactElement } from "react"
 import { formatVizNumber, topRoundedBarPath } from "./TrendChart"
+import { MINI_MIN_W, miniGeometry } from "./chartGeometry"
+import { useMeasuredWidth } from "./useMeasuredWidth"
 
-/* ── 小倍数柱图几何：无轴（仅一条 1px 实线基线，无刻度/无轴标签）──────────── */
-const MB_W = 200
-const MB_H = 64
-const MB_PAD = 7
+/* ── 小倍数柱图几何：无轴（仅一条 1px 实线基线，无刻度/无轴标签）────────────
+ * 逻辑宽取容器实测宽（见 useMeasuredWidth）：缩放比恒为 1，柱宽保持 18px
+ * 设计尺寸，格子变宽时只是柱距变松；逻辑高随宽度走（64 → 120 封顶）。
+ * 几何计算见 chartGeometry.ts（纯函数，有单测钉住）。
+ * ───────────────────────────────────────────────────────────────────────── */
 const MB_BAR_W = 18 // ≤24px；数据端 4px 圆角，基线端方角
 
 /**
@@ -21,6 +24,8 @@ export function MiniBars(props: {
   bars: { label: string; value: number }[]
 }): ReactElement {
   const { title, bars } = props
+  const { ref: svgRef, width } = useMeasuredWidth<SVGSVGElement>(MINI_MIN_W)
+  const { w: MB_W, h: MB_H, pad: MB_PAD } = miniGeometry(width)
   const n = bars.length
   const values = bars.map((bar) => (Number.isFinite(bar.value) ? bar.value : 0))
   const max = Math.max(0, ...values)
@@ -43,6 +48,7 @@ export function MiniBars(props: {
       <span className="admin-viz__mini-title">{title}</span>
       <svg
         className="admin-viz__mini-svg"
+        ref={svgRef}
         viewBox={`0 0 ${MB_W} ${MB_H}`}
         aria-hidden="true"
       >

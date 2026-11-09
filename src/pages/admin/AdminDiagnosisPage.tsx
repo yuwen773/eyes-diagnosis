@@ -548,7 +548,7 @@ export function AdminDiagnosisPage(): ReactElement {
       </section>
 
       <p className="admin-diagnosis__footer num">
-        列出的是你名下的判读记录（后端数据边界，见设计文档 §7）
+        列出的是全站判读记录（管理员视角，后端按角色放行）
       </p>
 
       {/* 详情 Drawer：加载 / 错误态在 Drawer 内处理，底部常驻人工复核入口。 */}

@@ -1,10 +1,13 @@
 import type { ReactElement } from "react"
 import { formatVizNumber } from "./TrendChart"
+import { MINI_MIN_W, miniGeometry } from "./chartGeometry"
+import { useMeasuredWidth } from "./useMeasuredWidth"
 
-/* ── 小倍数折线几何：无轴，viewBox 自适应宽度 ────────────────────────────── */
-const MT_W = 200
-const MT_H = 64
-const MT_PAD = 7
+/* ── 小倍数折线几何：无轴，逻辑宽取容器实测宽（见 useMeasuredWidth）──────
+ * 缩放比恒为 1：格子变宽时折线跟着变长，线宽与端点圆点保持设计尺寸。
+ * 逻辑高随宽度走（64 → 120 封顶），免得小倍数被拉成扁带。
+ * 几何计算见 chartGeometry.ts（纯函数，有单测钉住）。
+ * ───────────────────────────────────────────────────────────────────────── */
 
 /**
  * 小倍数单元格（迷你折线）：标题（--fg-2 小字）+ 无轴折线（--viz-mute）+
@@ -19,6 +22,8 @@ export function MiniTrend(props: {
   points: number[]
 }): ReactElement {
   const { title, points } = props
+  const { ref: svgRef, width } = useMeasuredWidth<SVGSVGElement>(MINI_MIN_W)
+  const { w: MT_W, h: MT_H, pad: MT_PAD } = miniGeometry(width)
   const finite = points.filter((v) => Number.isFinite(v))
   const dmin = finite.length > 0 ? Math.min(...finite) : 0
   const dmax = finite.length > 0 ? Math.max(...finite) : 1
@@ -51,6 +56,7 @@ export function MiniTrend(props: {
       <span className="admin-viz__mini-title">{title}</span>
       <svg
         className="admin-viz__mini-svg"
+        ref={svgRef}
         viewBox={`0 0 ${MT_W} ${MT_H}`}
         aria-hidden="true"
       >
