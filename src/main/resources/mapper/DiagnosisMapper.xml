@@ -4,28 +4,60 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.csust.eyediagnosis.mapper.DiagnosisMapper">
 
+    <!--
+      诊断列清单：与 Diagnosis 实体逐字对齐。
+      曾只列 16 列、漏掉全部 V5/V9 医疗可靠性字段，成为过期的假权威。
+      目前没有任何 statement 引用它（MP 的 BaseMapper 走自动映射），
+      保留完整清单是为了让新增列时只有一处可查，而不是三处互相漂移。
+    -->
     <resultMap id="BaseResultMap" type="com.csust.eyediagnosis.model.entity.Diagnosis">
-            <id property="id" column="id" />
-            <result property="url" column="url" />
-            <result property="userId" column="userId" />
-            <result property="result" column="result" />
-            <result property="confidence" column="confidence" />
-            <result property="recommendations" column="recommendations" />
-            <result property="details" column="details" />
-            <result property="severity" column="severity" />
-            <result property="reexamineStatus" column="reexamineStatus" />
-            <result property="picSize" column="picSize" />
-            <result property="picWidth" column="picWidth" />
-            <result property="picHeight" column="picHeight" />
-            <result property="picScale" column="picScale" />
-            <result property="picFormat" column="picFormat" />
-            <result property="createTime" column="createTime" />
-            <result property="isDelete" column="isDelete" />
+        <id property="id" column="id" />
+        <result property="url" column="url" />
+        <result property="userId" column="userId" />
+        <result property="result" column="result" />
+        <result property="confidence" column="confidence" />
+        <result property="probability" column="probability" />
+        <result property="recommendations" column="recommendations" />
+        <result property="details" column="details" />
+        <result property="severity" column="severity" />
+        <result property="reexamineStatus" column="reexamineStatus" />
+        <result property="picSize" column="picSize" />
+        <result property="picWidth" column="picWidth" />
+        <result property="picHeight" column="picHeight" />
+        <result property="picScale" column="picScale" />
+        <result property="picFormat" column="picFormat" />
+        <result property="createTime" column="createTime" />
+        <result property="isDelete" column="isDelete" />
+        <result property="aiRejected" column="aiRejected" />
+        <result property="abstainReason" column="abstainReason" />
+        <result property="modelVersion" column="modelVersion" />
+        <result property="weightSha256" column="weightSha256" />
+        <result property="preprocessVersion" column="preprocessVersion" />
+        <result property="inferencePolicyVersion" column="inferencePolicyVersion" />
+        <result property="calibrationStatus" column="calibrationStatus" />
+        <result property="calibratedProbability" column="calibratedProbability" />
+        <result property="qualityScore" column="qualityScore" />
+        <result property="qualityReasons" column="qualityReasons" />
+        <result property="oodStatus" column="oodStatus" />
+        <result property="oodScore" column="oodScore" />
+        <result property="humanReviewStatus" column="humanReviewStatus" />
+        <result property="humanReviewerId" column="humanReviewerId" />
+        <result property="humanReviewedAt" column="humanReviewedAt" />
+        <result property="humanReviewNote" column="humanReviewNote" />
+        <result property="humanResult" column="humanResult" />
+        <result property="humanSeverity" column="humanSeverity" />
+        <result property="humanRecommendations" column="humanRecommendations" />
+        <result property="version" column="version" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,url,userId,result,confidence,recommendations,
+        id,url,userId,result,confidence,probability,recommendations,
         details,severity,reexamineStatus,picSize,picWidth,picHeight,
-        picScale,picFormat,createTime,isDelete
+        picScale,picFormat,createTime,isDelete,
+        aiRejected,abstainReason,modelVersion,weightSha256,preprocessVersion,
+        inferencePolicyVersion,calibrationStatus,calibratedProbability,
+        qualityScore,qualityReasons,oodStatus,oodScore,
+        humanReviewStatus,humanReviewerId,humanReviewedAt,humanReviewNote,
+        humanResult,humanSeverity,humanRecommendations,version
     </sql>
 </mapper>
