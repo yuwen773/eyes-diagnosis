@@ -110,6 +110,65 @@ describe("useAgentStream", () => {
     expect(screen.getByTestId("streaming").textContent).toBe("false")
   })
 
+  it("旧流收尾不清掉新流的停止句柄", async () => {
+    // 每次 send 的流各自可控：记录 handlers 与 signal，并允许单独收尾。
+    const streams: {
+      signal: AbortSignal
+      finish(): void
+    }[] = []
+    streamChatMock.mockImplementation((_body: unknown, _h: unknown, sig: AbortSignal) => {
+      let finish!: () => void
+      const promise = new Promise<void>((resolve) => {
+        finish = resolve
+      })
+      streams.push({ signal: sig, finish: () => act(() => finish()) })
+      return promise
+    })
+
+    let api!: ReturnType<typeof useAgentStream>
+    render(<Probe onReady={(a) => (api = a)} />)
+
+    await act(async () => {
+      void api.send("第一条", "thread-A")
+    })
+    await act(async () => {
+      void api.send("第二条", "thread-A")
+    })
+    expect(streams).toHaveLength(2)
+
+    // 旧流收尾：新流还在跑，不能把 isStreaming 抹掉、也不能清掉新流的句柄
+    await act(async () => {
+      streams[0].finish()
+    })
+    expect(screen.getByTestId("streaming").textContent).toBe("true")
+
+    await act(async () => {
+      api.abort()
+    })
+    expect(streams[1].signal.aborted).toBe(true)
+  })
+
+  it("切会话后旧流的事件不再写进消息表", async () => {
+    const stream = fakeStream()
+    let api!: ReturnType<typeof useAgentStream>
+    render(<Probe onReady={(a) => (api = a)} />)
+
+    await act(async () => {
+      void api.send("你好", "thread-A")
+    })
+    stream.emit({ messageType: "assistant", content: "旧流的内容" })
+    expect(api.messages.length).toBeGreaterThan(0)
+
+    act(() => {
+      api.reset()
+    })
+    expect(api.messages).toHaveLength(0)
+
+    // 旧流在 reset 之后才送来的事件——不能落进新会话的消息表。
+    stream.emit({ messageType: "assistant", content: "迟到的旧流内容" })
+    expect(api.messages).toHaveLength(0)
+  })
+
   it("工具调用后前一条 assistant 不再是流式态（不永久闪烁）", async () => {
     const stream = fakeStream()
     let api!: ReturnType<typeof useAgentStream>

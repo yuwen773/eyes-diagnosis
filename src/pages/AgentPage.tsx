@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   batchDeleteSessions,
   deleteSession,
@@ -11,8 +11,9 @@ import {
   type AgentSessionVO,
 } from "@/lib/api"
 import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
-import { useAgentUpload } from "@/lib/agentUpload"
+import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
+import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { MessageList } from "@/components/agent/MessageList"
@@ -21,7 +22,6 @@ import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
 import { SiteHeader } from "@/components/SiteHeader"
 
-const THREAD_ID_KEY = "agent_current_thread_id"
 const HISTORY_PAGE_SIZE = 100
 
 const generateThreadId = () =>
@@ -29,12 +29,11 @@ const generateThreadId = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
-const loadThreadId = () => localStorage.getItem(THREAD_ID_KEY) || ""
-
-const saveThreadId = (id: string) => {
-  if (id) localStorage.setItem(THREAD_ID_KEY, id)
-  else localStorage.removeItem(THREAD_ID_KEY)
-}
+/** 本地消息 id：非安全上下文（内网 http）没有 crypto.randomUUID。 */
+const generateLocalId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
 /** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
 function safeFileName(name: string): string {
@@ -57,20 +56,28 @@ function downloadText(content: string, filename: string, mime: string) {
 }
 
 export function AgentPage() {
-  const { status } = useSession()
+  const { status, user } = useSession()
 
   // 与 useAgentStream 的 messages 单一数据源：历史加载也走 setMessages
   const stream = useAgentStream()
   const { messages, isStreaming, resources, send, abort, pushUser, setMessages, reset } = stream
-  // useAgentUpload 每次调用返新对象——不固定住的话 handleSend 的 useCallback
-  // 依赖每渲染都变，等于没有 memo。
-  const uploader = useMemo(() => useAgentUpload(), [])
+  // 上传器每次创建返新对象——不固定住的话 handleSend 的 useCallback
+  // 依赖每渲染都变，等于没有 memo。用惰性 state 只建一次。
+  const [uploader] = useState(createAgentUploader)
 
   const [threadId, setThreadId] = useState(() => generateThreadId())
   // 追踪当前会话：发送期间用户可能切会话，闭包里的 threadId 是旧值，
-  // 判断「是否还在这个会话」必须读 ref。
+  // 判断「是否还在这个会话」必须读 ref。渲染期写 ref 在并发模式下不安全，
+  // 所以在 effect 里同步。
   const threadIdRef = useRef(threadId)
-  threadIdRef.current = threadId
+  useEffect(() => {
+    threadIdRef.current = threadId
+  }, [threadId])
+  // 历史响应的序号：切会话后，旧请求晚到也不能把内容写进新会话。
+  const historySeq = useRef(0)
+  // 当前登录身份的稳定键：登录/登出/换账号时要清掉上一个身份的会话态。
+  const userKey = user?.id ?? null
+  const lastUserKeyRef = useRef<number | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
   const [sessionsCollapsed, setSessionsCollapsed] = useState(false)
@@ -91,15 +98,17 @@ export function AgentPage() {
 
   const loadHistoryMessages = useCallback(
     async (id: string) => {
+      const seq = ++historySeq.current
       setHistoryLoading(true)
       try {
         const data = await getChatHistory(id, undefined, HISTORY_PAGE_SIZE)
-        const mapped = (data.messages ?? []).map(mapHistoryMessage)
-        setMessages(mapped)
+        // 晚到的旧会话历史不能覆盖当前会话——序号变了或人已经切走，直接丢弃。
+        if (seq !== historySeq.current || threadIdRef.current !== id) return
+        setMessages((data.messages ?? []).map(mapHistoryMessage))
       } catch (e) {
-        pushFault(faultFromError(e, { intent: "load" }))
+        if (seq === historySeq.current) pushFault(faultFromError(e, { intent: "load" }))
       } finally {
-        setHistoryLoading(false)
+        if (seq === historySeq.current) setHistoryLoading(false)
       }
     },
     [setMessages, pushFault],
@@ -107,7 +116,15 @@ export function AgentPage() {
 
   useEffect(() => {
     if (status !== "authed") return
-    const savedThreadId = loadThreadId()
+    // 登录身份变了（首次登录 / 换账号）：先清掉上一个身份的会话态，
+    // 再按新身份的 key 恢复；否则会拿别人的会话 id 去拉历史。
+    if (lastUserKeyRef.current !== userKey) {
+      lastUserKeyRef.current = userKey
+      setThreadId(generateThreadId())
+      setCurrentThreadId("")
+      reset()
+    }
+    const savedThreadId = loadThreadId(userKey)
     void refreshSessions()
     if (savedThreadId) {
       void loadHistoryMessages(savedThreadId)
@@ -117,11 +134,11 @@ export function AgentPage() {
       setCurrentThreadId(savedThreadId)
       setThreadId(savedThreadId)
     }
-  }, [status, refreshSessions, loadHistoryMessages])
+  }, [status, userKey, reset, refreshSessions, loadHistoryMessages])
 
   const handleSend = useCallback(
-    async (text: string, files: File[] = []) => {
-      if ((!text.trim() && files.length === 0) || isStreaming) return
+    async (text: string, files: File[] = []): Promise<boolean> => {
+      if ((!text.trim() && files.length === 0) || isStreaming) return false
 
       // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
       // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
@@ -137,11 +154,12 @@ export function AgentPage() {
         }
       } catch (e) {
         pushFault(faultFromError(e, { intent: "upload" }))
-        return
+        return false
       }
 
+      const localId = generateLocalId()
       pushUser({
-        id: crypto.randomUUID(),
+        id: localId,
         type: "user",
         content: text,
         time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
@@ -153,7 +171,7 @@ export function AgentPage() {
         uploader.commitSuccess(imageUrls)
         // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
         if (threadIdRef.current === usedThreadId) {
-          saveThreadId(usedThreadId)
+          saveThreadId(userKey, usedThreadId)
           setCurrentThreadId(usedThreadId)
         }
 
@@ -163,32 +181,36 @@ export function AgentPage() {
             .then(() => refreshSessions())
             .catch((e) => console.warn("标题生成触发失败", e))
         }
+        return true
       } catch (e) {
         uploader.commitFailure(imageUrls)
+        // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
+        setMessages((prev) => prev.filter((message) => message.id !== localId))
         pushFault(faultFromError(e, { intent: "send" }))
+        return false
       }
     },
-    [isStreaming, messages.length, threadId, uploader, pushUser, send, refreshSessions, pushFault],
+    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, refreshSessions, pushFault],
   )
 
   const handleNewChat = useCallback(() => {
-    saveThreadId("")
+    saveThreadId(userKey, "")
     setCurrentThreadId("")
     setThreadId(generateThreadId())
     reset()
     setPanelOpen(false)
-  }, [reset])
+  }, [reset, userKey])
 
   const handleSelectHistory = useCallback(
     async (id: string) => {
       setCurrentThreadId(id)
       setThreadId(id)
-      saveThreadId(id)
+      saveThreadId(userKey, id)
       reset()
       setPanelOpen(false)
       await loadHistoryMessages(id)
     },
-    [reset, loadHistoryMessages],
+    [reset, userKey, loadHistoryMessages],
   )
 
   /** 删除/置顶/重命名后刷新列表（Vue 版这里漏绑导致列表不刷新，勿复刻）。 */
@@ -359,7 +381,7 @@ export function AgentPage() {
             <ChatInput
               disabled={false}
               streaming={isStreaming}
-              onSend={(text, files) => void handleSend(text, files)}
+              onSend={handleSend}
               onStop={abort}
             />
           </div>
