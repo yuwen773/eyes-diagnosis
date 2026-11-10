@@ -34,11 +34,7 @@ public class PatientExplanationService {
         String taskId = (String) task.get("taskId");
         if (approved != null) {
             return new View(taskId, "AVAILABLE", "RESULT", "已通过医生复核及本次读取门禁。", List.of("分层解释已完成复核。"),
-                    new Result(approved.draft().claims(), java.util.stream.IntStream.range(0, approved.materials().evidence().size()).mapToObj(index -> {
-                        var citation = approved.materials().evidence().get(index);
-                        return new Source(index, citation.title(), citation.source(), citation.documentVersion(), citation.governanceVersion(), citation.excerpt());
-                    }).toList(), "模型预测并非确诊；请结合眼科医生的临床检查判断。", approved.inference().getModelVersion(),
-                            approved.inference().getPreprocessVersion(), "模型概率不代表临床可靠性；请结合下方不确定性和适用限制阅读。"));
+                    result(approved));
         }
         return switch ((String) task.get("status")) {
             case "PENDING" -> new View(taskId, "PROCESSING", "QUEUED", "任务已登记，等待图像分析。", List.of(), null);
@@ -47,6 +43,14 @@ public class PatientExplanationService {
             case "WAITING_REVIEW" -> waitingView(taskId);
             default -> new View(taskId, "RESTRICTED", "RESTRICTED", restrictedMessage(taskId), List.of(), null);
         };
+    }
+
+    public static Result result(DoctorReviewService.Approved approved) {
+        return new Result(approved.draft().claims(), java.util.stream.IntStream.range(0, approved.materials().evidence().size()).mapToObj(index -> {
+                        var citation = approved.materials().evidence().get(index);
+                        return new Source(index, citation.title(), citation.source(), citation.documentVersion(), citation.governanceVersion(), citation.excerpt());
+                    }).toList(), "模型预测并非确诊；请结合眼科医生的临床检查判断。", approved.inference().getModelVersion(),
+                            approved.inference().getPreprocessVersion(), "模型概率不代表临床可靠性；请结合下方不确定性和适用限制阅读。");
     }
 
     private View waitingView(String taskId) {

@@ -33,7 +33,7 @@ class FlywayMySqlIntegrationTest {
 
                 int expectedMigrations = flyway.info().all().length;
                 assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
-                assertEquals("13", flyway.info().current().getVersion().toString());
+                assertEquals("14", flyway.info().current().getVersion().toString());
             } finally {
                 statement.executeUpdate("DROP DATABASE `" + schema + "`");
             }

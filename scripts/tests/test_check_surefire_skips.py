@@ -49,6 +49,7 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.write(P + "patientdraft.PatientDraftTest", cases=27, skipped=27)
         self.write(P + "doctorreview.DoctorReviewApiTest", cases=36, skipped=36)
         self.write(P + "patientexplanation.PatientExplanationApiTest", cases=37, skipped=37)
+        self.write(P + "patientauthorization.PatientAuthorizationApiTest", cases=35, skipped=35)
         self.write(P + "migration.FlywayMySqlIntegrationTest", cases=1, skipped=1)
         self.write(P + "poc.CoordinationMySqlTest", cases=14, skipped=14)
         self.write(P + "upload.state.UploadTaskMapperMySqlIntegrationTest", cases=3, skipped=3)

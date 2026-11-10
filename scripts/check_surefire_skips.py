@@ -52,6 +52,7 @@ BACKEND_UNIT_CONTRACT = {
         P + "patientdraft.PatientDraftTest": {"env": "ISSUE19_TEST_URL", "cases": 27, "skipped": 27},
         P + "doctorreview.DoctorReviewApiTest": {"env": "ISSUE20_TEST_URL", "cases": 36, "skipped": 36},
         P + "patientexplanation.PatientExplanationApiTest": {"env": "ISSUE21_TEST_URL", "cases": 37, "skipped": 37},
+        P + "patientauthorization.PatientAuthorizationApiTest": {"env": "ISSUE22_TEST_URL", "cases": 35, "skipped": 35},
         P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
@@ -99,6 +100,7 @@ CONTRACTS = {
     "issue19": ISSUE19_CONTRACT,
     "issue20": {"scope": "named", "expected": {P + "doctorreview.DoctorReviewApiTest": 36}, "opt_in": {}},
     "issue21": {"scope": "named", "expected": {P + "patientexplanation.PatientExplanationApiTest": 37}, "opt_in": {}},
+    "issue22": {"scope": "named", "expected": {P + "patientauthorization.PatientAuthorizationApiTest": 35}, "opt_in": {}},
     "flyway": FLYWAY_CONTRACT,
 }
 
