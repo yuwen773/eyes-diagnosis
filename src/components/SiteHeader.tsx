@@ -12,7 +12,7 @@ export const NAV_LINKS = [
 ]
 
 /**
- * 铭牌：虹膜标记 + 中文品名 + 英文 mono 副标。
+ * 铭牌：虹膜标记 + 品名 + 英文 mono 副标。
  *
  * 虹膜标记是金属虹膜标：两片错开的月牙夹一枚橙色星芒，读起来是一只眼睛。
  * 浅色底用暗金属那版，深色底用亮金属那版——渐变在 SVG 里，
@@ -38,8 +38,8 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
           height={30}
         />
       </span>
-      <span className="wordmark__zh">眼瞳</span>
-      {compact ? null : <span className="wordmark__en">IRIS · FUNDUS READING</span>}
+      <span className="wordmark__zh">Iris</span>
+      {compact ? null : <span className="wordmark__en">FUNDUS READING</span>}
     </span>
   )
 }
@@ -114,7 +114,7 @@ export function SiteHeader() {
     <header ref={headerRef} className="site-head no-print" data-site-head>
       {/* 换路由就重挂：下拉与抽屉的状态自然回到初始。 */}
       <div className="wrap site-head__inner" key={location.pathname}>
-        <Link to="/" aria-label="眼瞳 IRIS 首页" className="site-head__brand">
+        <Link to="/" aria-label="Iris 首页" className="site-head__brand">
           <Wordmark />
         </Link>
 

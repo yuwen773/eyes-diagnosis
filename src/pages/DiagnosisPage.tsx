@@ -193,7 +193,7 @@ export function DiagnosisPage() {
         <div className="sheet-shell">
           <div className="wrap">
             <div className="no-print" style={{ marginBottom: 20 }}>
-              <SectionHead code="判读" kicker="Reading record" en="IRIS · B4" />
+              <SectionHead code="判读" kicker="Reading record" en="Iris · B4" />
             </div>
 
             <RecordSheet

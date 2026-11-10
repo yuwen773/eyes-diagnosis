@@ -50,7 +50,7 @@ describe("AgentPage 未登录", () => {
       </ThemeProvider>,
     )
     // 界面在，欢迎屏可见
-    expect(screen.getByText(/EyeSight/)).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "Iris" })).toBeTruthy()
     expect(screen.queryByText("登录页")).toBeNull()
   })
 

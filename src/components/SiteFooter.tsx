@@ -39,7 +39,7 @@ export function SiteFooter({ sections = [] }: { sections?: FooterSection[] }) {
         <span className="site-foot__spec">8 CLASSES</span>
         <span className="site-foot__spec">DIAGNOSIS AGENT · MCP</span>
         <span className="site-foot__spec">SHA-256 WEIGHTS</span>
-        <span className="site-foot__spec">© 2026 IRIS</span>
+        <span className="site-foot__spec">© 2026 Iris</span>
       </div>
 
       {sections.length > 0 ? (

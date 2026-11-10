@@ -223,7 +223,7 @@ export function LandingPage() {
           <section className="wrap hero">
             {/* 仪器头版：一行 mono 元信息，发丝线切开 */}
             <div className="hero__masthead num rise">
-              <span>IRIS · 眼底判读</span>
+              <span>Iris · 眼底判读</span>
               <span className="hero__masthead-mid">2026-11-07 · SPECIMEN</span>
               <span>MODEL · EFFICIENTNET-B4</span>
             </div>
@@ -459,7 +459,7 @@ export function LandingPage() {
                     辅助判读不是诊断。以下四条写进每一次输出，不接受例外。
                   </p>
                   <div className="statute__seal num" aria-hidden="true">
-                    IRIS · 辅助判读
+                    Iris · 辅助判读
                     <br />
                     NOT A DIAGNOSIS
                   </div>

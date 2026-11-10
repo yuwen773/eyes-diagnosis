@@ -99,7 +99,7 @@ export function WelcomeScreen({ onSend }: { onSend: (text: string) => void }) {
         </div>
 
         <div className="welcome-text">
-          <h2 className="welcome-title">眼瞳 · EyeSight</h2>
+          <h2 className="welcome-title">Iris</h2>
           <p className="welcome-desc">上传眼底图片或描述症状，我来为您分析诊断</p>
         </div>
 

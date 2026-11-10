@@ -39,7 +39,7 @@ export function AdminLayout() {
           <span className="admin-beam__sep" aria-hidden="true" />
 
           <span className="admin-beam__plate">
-            <span className="admin-beam__plate-zh">眼瞳 IRIS · 系统管理</span>
+            <span className="admin-beam__plate-zh">Iris · 系统管理</span>
             <span className="admin-beam__plate-en num">/ ADMINISTRATION</span>
           </span>
 
@@ -88,7 +88,7 @@ export function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="admin-side__foot num">IRIS · ADMINISTRATION / 系统管理</div>
+        <div className="admin-side__foot num">Iris · ADMINISTRATION / 系统管理</div>
       </aside>
 
       <main className="admin-main">

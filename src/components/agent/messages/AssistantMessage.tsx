@@ -43,7 +43,7 @@ function AgentEyeIcon() {
 
 /**
  * 助手消息：排版复刻 Vue 版 AssistantMessage——左对齐圆角气泡 +
- * 「EyeSight」serif 标头（构图同 Vue 的眼睛图标，令牌换反相带）。
+ * 「Iris」serif 标头（构图同 Vue 的眼睛图标，令牌换反相带）。
  * 流式中正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次——
  * 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
  */
@@ -67,7 +67,7 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
       <div className="agent-msg__bubble-ai">
         <div className="agent-msg__aihead">
           <AgentEyeIcon />
-          <span className="agent-msg__ainame">EyeSight</span>
+          <span className="agent-msg__ainame">Iris</span>
         </div>
         {msg.isLoading ? (
           <div className="agent-msg__text">

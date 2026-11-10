@@ -144,7 +144,7 @@ export function AuthShell({
           <div className="auth__stack">
             <div className="auth__glass" ref={glassRef} data-cursor="native">
               <div className="auth__glass-head">
-                <span>IRIS · AUTH GATE</span>
+                <span>Iris · AUTH GATE</span>
                 <span className="auth__status">
                   <i />
                   待机

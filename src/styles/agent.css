@@ -92,7 +92,7 @@
   font-weight: 600;
 }
 
-/* 助手消息：左对齐气泡 + EyeSight 头（排版同 Vue 版 AssistantMessage） */
+/* 助手消息：左对齐气泡 + Iris 头（排版同 Vue 版 AssistantMessage） */
 .agent-msg--assistant {
   display: flex;
   padding: 8px 16px;
