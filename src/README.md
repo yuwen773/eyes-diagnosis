@@ -1,4 +1,4 @@
-# Backend - 眼科智能诊断后端服务
+# Iris 后端 - 眼科智能诊断服务
 
 Spring Boot 3.5.6 + Java 21 后端服务，提供 REST API、AI Agent 对话、图像诊断、知识库管理等能力。
 

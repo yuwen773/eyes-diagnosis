@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
+Iris — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
 Base package: `com.csust.eyediagnosis`
 
 > **本分支是 Java 线。** 仓库里另有一条 Python 后端线（FastAPI），在 `feature/python-backend`

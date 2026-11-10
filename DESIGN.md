@@ -1,4 +1,4 @@
-# 眼瞳 Iris · 医疗编辑风（Clinical Editorial）设计系统
+# Iris · 医疗编辑风（Clinical Editorial）设计系统
 
 > 本文件是前端重构的**唯一设计真源（Single Source of Truth）**。所有页面、组件、令牌、文案气质以本文件为准。
 > 方向：用户于 2026-07-28 在四轮预览后选定 **A · 医疗编辑风**。

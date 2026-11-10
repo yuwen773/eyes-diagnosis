@@ -122,7 +122,7 @@ onUnmounted(() => observer?.disconnect())
       <div class="kpi-strip-inner">
         <div class="kpi-strip-header">
           <span class="kpi-overline">PLATFORM · 2026-07</span>
-          <h1 class="kpi-strip-title">眼瞳 Iris · 智能眼科诊断平台</h1>
+          <h1 class="kpi-strip-title">Iris · 智能眼科诊断平台</h1>
           <p class="kpi-strip-sub">从图像到报告，让每一次诊断都有数据可依。</p>
         </div>
         <div class="kpi-grid">
