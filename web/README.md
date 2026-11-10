@@ -18,7 +18,9 @@ npm run dev        # http://localhost:5173，代理 /api 到 :8081
 - `npm run lint` ESLint（CI 硬门）
 - `npm run test:e2e` 真实后端冒烟（手动跑，说明见 [`e2e/README.md`](e2e/README.md)）
 
-CI 在所有分支推送与所有 PR 上跑以上命令；`master` 要求 PR + CI 通过才能合入。
+本目录自 2026-11-10 起是主仓库 `eye-diagnosis` 的一部分（`web/`，由 git subtree 导入，
+原独立仓库 `eyes-diagnosis-web` 已归档）。CI 是仓库根 `.github/workflows/verify.yml` 里的
+`web` job，在 PR 与 master 推送时跑以上命令；`web/.github/` 下的工作流不会被执行。
 
 详细验收计划见
 `docs/superpowers/specs/2026-11-10-web-acceptance-remediation-design.md`。

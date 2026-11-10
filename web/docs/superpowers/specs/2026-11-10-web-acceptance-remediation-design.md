@@ -3,6 +3,8 @@
 - 日期：2026-11-10
 - 状态：待评审（设计已口头确认，本文为书面定稿）
 - 仓库：`yuwen773/eyes-diagnosis-web`（本目录 `web/`）
+  - **2026-11-10 后续变更**：本目录已由 `git subtree` 并入主仓库 `yuwen773/eyes-diagnosis`
+    的 `web/`，原独立仓库归档。本文其余内容为当时的历史记录。
 - 基线：`fix/p0-clinical-correctness` @ `5536d8a`（P0 临床正确性已修，尚未合入 `master`）
 - 范围：前端；后端只冻结契约不实现
 

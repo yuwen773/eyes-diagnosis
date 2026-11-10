@@ -165,3 +165,25 @@ jobs:
       - run: npm ci
       - run: npm run test -- --run
       - run: npm run build
+
+  web:
+    # 产品前端（React）。`web/` 从 2026-11-10 起由 git subtree 纳入本仓库，
+    # 原来的独立仓库 eyes-diagnosis-web 已归档；CI 只看仓库根的 .github/workflows，
+    # 所以 web/.github/ 下的工作流不会生效——门禁统一由这里承担。
+    # lint 自 B3 批次起是硬门，不再 continue-on-error。
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - run: npm run lint

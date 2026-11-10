@@ -121,6 +121,9 @@ git commit -m "ci(web): 添加 master 验证流水线与测试脚本"
 
 - [ ] **Step 8: 手动开分支保护（人工步骤，不假装完成）**
 
+> **2026-11-10 后续变更**：本目录已并入主仓库 `yuwen773/eyes-diagnosis` 的 `web/`，
+> 原独立仓库归档；此步在独立仓库上已执行过，以下命令仅作历史记录。
+
 GitHub → Settings → Branches → Add rule：`master`，勾选 “Require a pull request before merging” 与 “Require status checks to pass”，状态检查选 `verify`。若用 `gh`：
 
 ```bash
