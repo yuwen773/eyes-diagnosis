@@ -294,8 +294,8 @@ def main():
                                  "evaluator_sha256": digest(Path(__file__)), "created_at": datetime.now(timezone.utc).isoformat()},
                   "conditions": summaries, "rows": rows, "evidence": evidence}
         args.output.mkdir(parents=True, exist_ok=True)
-        (args.output / "results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        (args.output / "report.md").write_text(markdown(report), encoding="utf-8")
+        (args.output / "results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+        (args.output / "report.md").write_text(markdown(report), encoding="utf-8", newline="\n")
         print(f"SCRIPTED_REPLAY: {len(rows)} paired cells; reliability {evidence['java_mysql_http']['status']}; {args.output}")
         return int(evidence["java_mysql_http"]["status"] == "FAIL")
     except (OSError, ValueError, KeyError, TypeError, ElementTree.ParseError) as error:
