@@ -4,15 +4,14 @@ import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useRevealScan } from "@/lib/useInView"
 import { useTheme } from "@/components/theme-provider"
-import { AgentConsole } from "@/components/AgentConsole"
-import { ElectricBorder } from "@/components/ElectricBorder"
+import { AgentComposer } from "@/components/AgentComposer"
+import { AgentScreenDeck } from "@/components/AgentScreenDeck"
 import { GridScan } from "@/components/GridScan"
 import { RecordSheet } from "@/components/RecordSheet"
 import { ScrollExpand } from "@/components/ScrollExpand"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
 import { SiteHeader } from "@/components/SiteHeader"
-import { StarBorder } from "@/components/StarBorder"
 import { TargetCursor } from "@/components/TargetCursor"
 
 const STRIP = [
@@ -415,76 +414,32 @@ export function LandingPage() {
 
             <div className="agent-stage">
               <div
-                className="agent-stage__main reveal"
+                className="agent-stage__composer reveal"
                 style={{ "--d": "120ms" } as CSSProperties}
               >
-                <ElectricBorder
-                  color={dark ? "#e2622b" : "#d9541f"}
-                  glowColor={dark ? "#d9541f" : "#d9541f"}
-                  theme={dark ? "dark" : "light"}
-                  borderRadius={0}
-                  thickness={1.1}
-                  strands={3}
-                  speed={0.85}
-                  chaos={0.34}
-                  spread={0.28}
-                  glow={0.34}
-                  intensity={0.52}
-                  flicker={0.35}
-                  cursorRadius={140}
-                  style={{ width: "100%" }}
-                >
-                  <AgentConsole />
-                </ElectricBorder>
-                <p className="small agent-stage__caption">
-                  示例会话，非真实患者。工具调用、检索来源与回答均为演示数据。
-                </p>
+                <AgentComposer dark={dark} />
               </div>
 
-              <aside
-                className="agent-stage__rail reveal"
+              <div
+                className="agent-stage__deck reveal"
                 style={{ "--d": "220ms" } as CSSProperties}
               >
-                <p className="overline">它的工作方式 · HOW IT WORKS</p>
-
-                <ol className="agent-list">
-                  {AGENT_POINTS.map((item) => (
-                    <li className="agent-list__item" key={item.code}>
-                      <span className="agent-list__code">{item.code}</span>
-                      <div>
-                        <h3 className="agent-list__title">{item.title}</h3>
-                        <p className="agent-list__body">{item.body}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-
-                <div className="agent-aside">
-                  <p className="small">
-                    Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。
-                  </p>
-                  <StarBorder
-                    as={Link}
-                    to="/login?redirect=/diagnosis"
-                    className="star-cta"
-                    data-cursor
-                    data-cursor-label="登录"
-                    color="var(--signal)"
-                    backgroundColor="transparent"
-                    textColor="var(--fg)"
-                    duration={5}
-                    thickness={1}
-                    radius={0}
-                    glow={0.45}
-                    hover="lap"
-                    theme={dark ? "dark" : "light"}
-                  >
-                    登录后体验诊断 Agent
-                    <span className="link__mark">→</span>
-                  </StarBorder>
-                </div>
-              </aside>
+                <AgentScreenDeck dark={dark} />
+                <p className="small agent-stage__caption">
+                  示例界面，非真实患者。工具调用、检索来源与回答均为演示数据。
+                </p>
+              </div>
             </div>
+
+            <ol className="agent-points reveal">
+              {AGENT_POINTS.map((item) => (
+                <li className="agent-points__item" key={item.code}>
+                  <span className="agent-points__code num">{item.code}</span>
+                  <h3 className="agent-points__title">{item.title}</h3>
+                  <p className="agent-points__body">{item.body}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
