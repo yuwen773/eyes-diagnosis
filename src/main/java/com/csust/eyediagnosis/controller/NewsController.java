@@ -130,25 +130,27 @@ public class NewsController {
     }
 
     /**
-     * 公开资讯端点的「可选登录用户」。
+     * 公开资讯端点是否由管理员访问。
      *
      * <p>{@code UserService.getLoginUser} 对未登录访客抛 NOT_LOGIN_ERROR，
      * 但 /news/list/page/vo 与 /news/get/{id} 是公开端点，匿名访问必须能拿到
-     * 已发布文章。这里把「未登录」折成 null（= 非管理员），只有确认登录且
-     * 角色为管理员时才放宽可见范围。catch 只吞 NOT_LOGIN_ERROR，其它业务异常照抛。
+     * 已发布文章。这里把「未登录」折成 false，catch 只吞 NOT_LOGIN_ERROR，
+     * 其它业务异常照抛。
      */
-    private User optionalLoginUser(HttpServletRequest request) {
+    private boolean isAdmin(HttpServletRequest request) {
         if (request == null) {
-            return null;
+            return false;
         }
+        User loginUser;
         try {
-            return userService.getLoginUser(request);
+            loginUser = userService.getLoginUser(request);
         } catch (BusinessException exception) {
             if (ErrorCode.NOT_LOGIN_ERROR.getCode() == exception.getCode()) {
-                return null;
+                return false;
             }
             throw exception;
         }
+        return userService.isAdmin(loginUser);
     }
 
     /**
@@ -160,10 +162,7 @@ public class NewsController {
      * 不会把草稿串给匿名访客。
      */
     private void applyVisibilityScope(NewsQueryDTO dto, HttpServletRequest request) {
-        User loginUser = optionalLoginUser(request);
-        boolean admin = loginUser != null
-                && AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
-        dto.setVisibleOnly(!admin);
+        dto.setVisibleOnly(!isAdmin(request));
     }
 
     @GetMapping("/get/{id}")
@@ -173,10 +172,8 @@ public class NewsController {
         News news = newsService.getById(id);
         ThrowUtils.throwIf(news==null, ErrorCode.NOT_FOUND_ERROR);
         // 详情端点同样要挡住草稿/待审核/下架，否则列表过滤可被直接按 id 绕过
-        User loginUser = optionalLoginUser(request);
-        boolean admin = loginUser != null
-                && AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
-        ThrowUtils.throwIf(!admin && !Integer.valueOf(NewsStatus.PUBLIC_VISIBLE).equals(news.getStatus()),
+        ThrowUtils.throwIf(!isAdmin(request)
+                        && !Integer.valueOf(NewsStatus.PUBLIC_VISIBLE).equals(news.getStatus()),
                 ErrorCode.NOT_FOUND_ERROR);
         NewsVO newsVO = newsService.getNewsVO(news);
         return ResultUtils.success(newsVO);

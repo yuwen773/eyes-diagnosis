@@ -65,6 +65,7 @@ class NewsVisibilityScopeTest {
         user.setId(1L);
         user.setUserRole(role);
         when(userService.getLoginUser(request)).thenReturn(user);
+        when(userService.isAdmin(user)).thenReturn(AuthConstant.ADMIN_ROLE.equals(role));
     }
 
     private void notLoggedIn() {

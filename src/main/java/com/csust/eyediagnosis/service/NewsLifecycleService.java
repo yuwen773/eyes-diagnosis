@@ -1,5 +1,6 @@
 package com.csust.eyediagnosis.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.csust.eyediagnosis.constant.NewsStatus;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
@@ -8,31 +9,30 @@ import com.csust.eyediagnosis.mapper.NewsMapper;
 import com.csust.eyediagnosis.model.entity.News;
 import com.csust.eyediagnosis.model.entity.NewsAudit;
 import com.csust.eyediagnosis.model.entity.User;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.csust.eyediagnosis.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * 新闻发布生命周期的写入 module。
- *
- * <p>把「状态迁移校验 + 审核人/时间落盘 + 内容变更审计 + 软删留痕」收进
- * 一个事务。调用方只给出内容 patch（含可选目标状态）、操作者与审核意见，
- * 不必知道迁移表、审计表或时间戳口径。所有写都走 {@code newsMapper.updateById}（绝不回落到会
- * insert 的 saveOrUpdate），因此「只编辑不新建」的既有安全契约不变。
- *
- * <p>interface 只有两个方法；状态词汇、合法迁移、审核人/时间口径、审计格式
- * 都藏在 implementation 内，是 codebase-design 意义上的 deep module。
- */
+/** 新闻发布生命周期的写入 module：状态迁移、审核落盘、审计、软删都在一个事务内。 */
 @Service
 @RequiredArgsConstructor
 public class NewsLifecycleService {
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final Map<Integer, Set<Integer>> ALLOWED = Map.of(
+            NewsStatus.DRAFT, Set.of(NewsStatus.PENDING_REVIEW, NewsStatus.PUBLISHED),
+            NewsStatus.PENDING_REVIEW, Set.of(
+                    NewsStatus.PUBLISHED, NewsStatus.DRAFT, NewsStatus.OFFLINE),
+            NewsStatus.PUBLISHED, Set.of(NewsStatus.OFFLINE, NewsStatus.DRAFT),
+            NewsStatus.OFFLINE, Set.of(
+                    NewsStatus.PUBLISHED, NewsStatus.DRAFT, NewsStatus.PENDING_REVIEW)
+    );
 
     private final NewsMapper newsMapper;
     private final NewsAuditMapper newsAuditMapper;
@@ -44,16 +44,16 @@ public class NewsLifecycleService {
     @Transactional
     public boolean applyEdit(News patch, User actor, String note) {
         ThrowUtils.throwIf(patch == null || patch.getId() == null, ErrorCode.PARAMS_ERROR);
-        News current = newsMapper.selectById(patch.getId());
+        News current = selectStatus(patch.getId());
         if (current == null) {
             return false;
         }
         Integer from = current.getStatus();
         Integer to = patch.getStatus();
         if (to != null) {
-            ThrowUtils.throwIf(!NewsStatusTransition.isAllowed(from, to),
+            ThrowUtils.throwIf(!isAllowed(from, to),
                     ErrorCode.PARAMS_ERROR,
-                    "非法状态迁移: " + label(from) + " → " + NewsStatus.label(to));
+                    "非法状态迁移: " + NewsStatus.label(from) + " → " + NewsStatus.label(to));
             stampReview(patch, from, to, actor, note);
         }
         int rows = newsMapper.updateById(patch);
@@ -62,15 +62,33 @@ public class NewsLifecycleService {
         return rows > 0;
     }
 
-    /** 软删除：@TableLogic 把 removeById 变成 UPDATE isDelete=1，这里只留痕。 */
+    /** 软删除：@TableLogic 把 deleteById 变成 UPDATE isDelete=1，这里只留痕。 */
     @Transactional
     public boolean softDelete(Long newsId, User actor) {
-        News current = newsMapper.selectById(newsId);
+        News current = selectStatus(newsId);
         ThrowUtils.throwIf(current == null, ErrorCode.NOT_FOUND_ERROR);
         int rows = newsMapper.deleteById(newsId);
         audit(newsId, actor, "DELETE", current.getStatus(), null,
                 Map.of("deleted", true));
         return rows > 0;
+    }
+
+    /** 合法迁移表：DRAFT→PUBLISHED 是前端「发布」按钮的兼容通道，须保留。 */
+    private static boolean isAllowed(Integer from, Integer to) {
+        if (!NewsStatus.isValid(from) || !NewsStatus.isValid(to)) {
+            return false;
+        }
+        if (from.equals(to)) {
+            return true; // 幂等：编辑正文但状态未变
+        }
+        return ALLOWED.get(from).contains(to);
+    }
+
+    /** 只投影 status，避免把富文本正文拉进写路径。用字符串列避开 lambda 元数据缓存。 */
+    private News selectStatus(Long newsId) {
+        return newsMapper.selectOne(new QueryWrapper<News>()
+                .select("status")
+                .eq("id", newsId));
     }
 
     private static void stampReview(News patch, Integer from, Integer to, User actor, String note) {
@@ -93,7 +111,7 @@ public class NewsLifecycleService {
     }
 
     private void audit(Long newsId, User actor, String action,
-                       Integer fromStatus, Integer toStatus, Map<String, Object> payload) {
+                       Integer fromStatus, Integer toStatus, Object payload) {
         NewsAudit entry = new NewsAudit();
         entry.setNewsId(newsId);
         entry.setActorId(actorId(actor));
@@ -102,20 +120,12 @@ public class NewsLifecycleService {
         entry.setFromStatus(fromStatus == null ? null : NewsStatus.label(fromStatus));
         entry.setToStatus(toStatus == null ? null : NewsStatus.label(toStatus));
         entry.setCreatedTime(new Date());
-        try {
-            entry.setPayload(JSON.writeValueAsString(payload));
-        } catch (Exception exception) {
-            throw new IllegalStateException("Unable to serialize news audit payload", exception);
-        }
+        entry.setPayload(JsonUtils.toJson(payload));
         newsAuditMapper.insert(entry);
     }
 
     private static Long actorId(User actor) {
         return actor == null ? null : actor.getId();
-    }
-
-    private static String label(Integer status) {
-        return status == null ? "UNKNOWN" : NewsStatus.label(status);
     }
 
     private static String actionFor(Integer from, Integer to) {
@@ -130,18 +140,17 @@ public class NewsLifecycleService {
     }
 
     /** 字段级 diff 摘要：只记「哪些字段被改」，不复制富文本正文全文。 */
-    private static Map<String, Object> changedFields(News patch, String note) {
-        Map<String, Object> changed = new LinkedHashMap<>();
-        if (patch.getTitle() != null) changed.put("title", true);
-        if (patch.getContent() != null) changed.put("content", true);
-        if (patch.getSummary() != null) changed.put("summary", true);
-        if (patch.getCoverImg() != null) changed.put("coverImg", true);
-        if (patch.getStatus() != null) changed.put("status", true);
-        if (patch.getCategory() != null) changed.put("category", true);
-        if (patch.getSource() != null) changed.put("source", true);
-        if (patch.getFeatured() != null) changed.put("featured", true);
-        if (note != null) changed.put("note", true);
-        if (changed.isEmpty()) changed.put("none", true);
+    private static List<String> changedFields(News patch, String note) {
+        List<String> changed = new ArrayList<>();
+        if (patch.getTitle() != null) changed.add("title");
+        if (patch.getContent() != null) changed.add("content");
+        if (patch.getSummary() != null) changed.add("summary");
+        if (patch.getCoverImg() != null) changed.add("coverImg");
+        if (patch.getStatus() != null) changed.add("status");
+        if (patch.getCategory() != null) changed.add("category");
+        if (patch.getSource() != null) changed.add("source");
+        if (patch.getFeatured() != null) changed.add("featured");
+        if (note != null) changed.add("note");
         return changed;
     }
 }

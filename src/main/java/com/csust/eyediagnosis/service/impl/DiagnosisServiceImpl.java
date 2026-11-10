@@ -6,7 +6,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csust.eyediagnosis.constant.DiagnosisCategoryEnum;
 import com.csust.eyediagnosis.constant.DiagnosisRecommendationEnum;
 import com.csust.eyediagnosis.constant.ExceptionConstant;
@@ -34,6 +33,7 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisEvidence;
+import com.csust.eyediagnosis.utils.JsonUtils;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,8 +64,6 @@ import static com.csust.eyediagnosis.constant.OrderConstant.ASC;
 @Service
 public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis>
     implements DiagnosisService{
-
-    private static final ObjectMapper CACHE_JSON = new ObjectMapper();
 
     @Resource
     private FileManager fileManager;
@@ -210,17 +208,20 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                     preprocessVersion, inferencePolicyVersion)
                     : null;
             DiagnosisProto.DiagnosisResponse grpcResponse;
+            DiagnosisEvidence evidence;
             if (cached != null) {
                 grpcResponse = toProto(cached);
+                evidence = DiagnosisEvidence.from(grpcResponse, modelVersion, normalizedWeightSha256,
+                        preprocessVersion, inferencePolicyVersion);
             } else {
                 // 2. gRPC 调用 Python 推理
                 grpcResponse = diagnosisGrpcClient.diagnose(imageBytes, imageFormat);
+                evidence = DiagnosisEvidence.from(grpcResponse, modelVersion, normalizedWeightSha256,
+                        preprocessVersion, inferencePolicyVersion);
                 // 持久化推理缓存
                 if (cacheEnabled && responseMatchesConfiguredFingerprint(
                         grpcResponse, modelVersion, normalizedWeightSha256, preprocessVersion, inferencePolicyVersion)) {
-                    inferenceCacheMapper.upsert(DiagnosisEvidence.from(
-                            grpcResponse, modelVersion, normalizedWeightSha256,
-                            preprocessVersion, inferencePolicyVersion).newCache(imageHash));
+                    inferenceCacheMapper.upsert(evidence.newCache(imageHash));
                 } else {
                     log.warn("Skip inference cache because deployment and response fingerprints do not match");
                 }
@@ -237,7 +238,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
 
             // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
-            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse);
+            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse, evidence);
             vo.setUrl(imageUrl);
 
             // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
@@ -247,8 +248,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 diagnosis.setUrl(imageUrl);
             }
             // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
-            DiagnosisEvidence.from(grpcResponse, modelVersion, normalizedWeightSha256,
-                    preprocessVersion, inferencePolicyVersion).applyTo(diagnosis);
+            evidence.applyTo(diagnosis);
             this.save(diagnosis);
             vo.setId(diagnosis.getId());
 
@@ -299,16 +299,12 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     }
 
     private static String auditPayload(DiagnosisResultDTO dto) {
-        try {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("humanResult", dto.getHumanResult());
-            payload.put("humanSeverity", dto.getHumanSeverity());
-            payload.put("humanRecommendations", dto.getHumanRecommendations());
-            payload.put("humanReviewNote", dto.getHumanReviewNote());
-            return CACHE_JSON.writeValueAsString(payload);
-        } catch (Exception exception) {
-            throw new IllegalStateException("Unable to serialize diagnosis audit payload", exception);
-        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("humanResult", dto.getHumanResult());
+        payload.put("humanSeverity", dto.getHumanSeverity());
+        payload.put("humanRecommendations", dto.getHumanRecommendations());
+        payload.put("humanReviewNote", dto.getHumanReviewNote());
+        return JsonUtils.toJson(payload);
     }
 
     @Override
@@ -362,13 +358,6 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 && StrUtil.equals(response.getInferencePolicyVersion(), configuredPolicyVersion);
     }
 
-    public static InferenceCache toCacheEntity(String imageHash, DiagnosisProto.DiagnosisResponse resp,
-                                        String configuredModelVersion, String configuredWeightSha256,
-                                        String configuredPreprocessVersion, String configuredPolicyVersion) {
-        return DiagnosisEvidence.from(resp, configuredModelVersion, configuredWeightSha256,
-                configuredPreprocessVersion, configuredPolicyVersion).newCache(imageHash);
-    }
-
     public static DiagnosisProto.DiagnosisResponse toProto(InferenceCache cache) {
         DiagnosisProto.DiagnosisResponse.Builder builder = DiagnosisProto.DiagnosisResponse.newBuilder()
                 .setModelVersion(cache.getModelVersion())
@@ -390,7 +379,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 .setAbstainReason(cache.getAbstainReason() == null ? "" : cache.getAbstainReason())
                 .setRequiresReview(Boolean.TRUE.equals(cache.getRequiresReview()));
         try {
-            List<Map<String, Object>> topPredictions = CACHE_JSON.readValue(
+            List<Map<String, Object>> topPredictions = JsonUtils.fromJson(
                     cache.getTopPredictions(), new TypeReference<>() {});
             for (Map<String, Object> prediction : topPredictions) {
                 builder.addTopPredictions(DiagnosisProto.DiseasePrediction.newBuilder()
@@ -416,10 +405,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
      * 统一为 NOT_ASSESSED，不得通过概率或类别启发式伪造。
      */
     public static DiagnosisResultVO buildDiagnosisResult(DiagnosisProto.DiagnosisResponse grpcResponse) {
+        return buildDiagnosisResult(grpcResponse, DiagnosisEvidence.fromResponse(grpcResponse));
+    }
+
+    /** 生产路径：与落库、缓存共用同一份证据快照，避免重复归一化与 VO/记录漂移。 */
+    public static DiagnosisResultVO buildDiagnosisResult(DiagnosisProto.DiagnosisResponse grpcResponse,
+                                                        DiagnosisEvidence evidence) {
         DiagnosisResultVO vo = new DiagnosisResultVO();
         String predictedLabel = grpcResponse.getPredictedLabel();
         // 医疗安全证据统一由 DiagnosisEvidence 写入，不再逐字段复制
-        DiagnosisEvidence.fromResponse(grpcResponse).applyTo(vo);
+        evidence.applyTo(vo);
         vo.setCreateTime(now());
         if (grpcResponse.getRejected()) {
             return vo;

@@ -67,7 +67,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void missingRowReturnsFalseAndNeverInserts() {
-        when(newsMapper.selectById(1L)).thenReturn(null);
+        when(newsMapper.selectOne(any())).thenReturn(null);
 
         News patch = new News();
         patch.setId(1L);
@@ -80,7 +80,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void editWithoutStatusChangeUpdatesAndAudits() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PUBLISHED));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PUBLISHED));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
         News patch = new News();
@@ -107,7 +107,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void illegalTransitionIsRejectedBeforeAnyWrite() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PUBLISHED));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PUBLISHED));
 
         News patch = new News();
         patch.setId(1L);
@@ -122,7 +122,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void publishingStampsReviewerAndAuditAction() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PENDING_REVIEW));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PENDING_REVIEW));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
         assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PUBLISHED),
@@ -144,7 +144,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void submittingForReviewStampsSubmitter() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.DRAFT));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.DRAFT));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
         assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PENDING_REVIEW),
@@ -159,7 +159,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void offlineNoteBecomesOfflineReason() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PUBLISHED));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PUBLISHED));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
         assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.OFFLINE),
@@ -173,7 +173,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void softDeleteUsesLogicalDeleteAndLeavesAudit() {
-        when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PUBLISHED));
+        when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PUBLISHED));
         when(newsMapper.deleteById(1L)).thenReturn(1);
 
         assertTrue(lifecycle.softDelete(1L, admin));
@@ -186,7 +186,7 @@ class NewsLifecycleServiceTest {
 
     @Test
     void deletingMissingRowIsNotFound() {
-        when(newsMapper.selectById(1L)).thenReturn(null);
+        when(newsMapper.selectOne(any())).thenReturn(null);
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> lifecycle.softDelete(1L, admin));
         assertEquals(ErrorCode.NOT_FOUND_ERROR.getCode(), ex.getCode());

@@ -5,7 +5,7 @@ import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.csust.eyediagnosis.utils.JsonUtils;
 import cn.hutool.core.util.StrUtil;
 
 import java.util.Date;
@@ -18,9 +18,10 @@ import java.util.Map;
  *
  * <p>版本化的推理安全字段原本在三处各写一遍（{@code doDiagnosis} 的内联
  * {@code diagnosis.set*}、{@code buildDiagnosisResult} 的 VO 映射、
- * {@code toCacheEntity} 的缓存映射），列宽与取值口径会互相漂移。这里把
- * 「从 gRPC 响应读出证据」收成一处，对外只有三个 {@code applyTo} 与一个
- * {@code newCache}。
+ * 缓存映射），列宽与取值口径会互相漂移。这里把「从 gRPC 响应读出证据」
+ * 收成一处，对外只有三个 {@code applyTo} 与一个 {@code newCache}。
+ * {@code topPredictions} 的序列化只在 {@code newCache} 时需要，故留到
+ * 那一刻才算，VO / 记录路径不做这份无用功。
  *
  * <p>历史记录必须自带证据，不依赖可能过期或被覆盖的共享缓存（V9 约定），
  * 因此 {@link Diagnosis} 与 {@link InferenceCache} 都从同一个快照取值。
@@ -31,7 +32,6 @@ import java.util.Map;
  */
 public final class DiagnosisEvidence {
 
-    private static final ObjectMapper JSON = new ObjectMapper();
     private static final String CALIBRATED = "CALIBRATED";
 
     private final DiagnosisProto.DiagnosisResponse resp;
@@ -48,7 +48,6 @@ public final class DiagnosisEvidence {
     private final boolean rejected;
     private final String abstainReason;
     private final boolean requiresReview;
-    private final String topPredictionsJson;
 
     private DiagnosisEvidence(DiagnosisProto.DiagnosisResponse resp,
                               String configuredModelVersion,
@@ -72,7 +71,6 @@ public final class DiagnosisEvidence {
         this.rejected = resp.getRejected();
         this.abstainReason = resp.getAbstainReason();
         this.requiresReview = resp.getRequiresReview();
-        this.topPredictionsJson = serializeTopPredictions(resp);
     }
 
     /**
@@ -164,22 +162,18 @@ public final class DiagnosisEvidence {
         cache.setProbability(resp.getProbability());
         cache.setDescription(resp.getDescription());
         cache.setReliabilityScore(resp.getReliabilityScore());
-        cache.setTopPredictions(topPredictionsJson);
+        cache.setTopPredictions(serializeTopPredictions(resp));
         cache.setIsOod(resp.getIsOod());
         cache.setCreateTime(new Date());
         return cache;
     }
 
     private static String serializeTopPredictions(DiagnosisProto.DiagnosisResponse response) {
-        try {
-            List<Map<String, Object>> topPredictions = response.getTopPredictionsList().stream()
-                    .map(prediction -> Map.<String, Object>of(
-                            "label", prediction.getLabel(),
-                            "probability", prediction.getProbability()))
-                    .toList();
-            return JSON.writeValueAsString(topPredictions);
-        } catch (Exception exception) {
-            throw new IllegalStateException("Unable to serialize cached top predictions", exception);
-        }
+        List<Map<String, Object>> topPredictions = response.getTopPredictionsList().stream()
+                .map(prediction -> Map.<String, Object>of(
+                        "label", prediction.getLabel(),
+                        "probability", prediction.getProbability()))
+                .toList();
+        return JsonUtils.toJson(topPredictions);
     }
 }

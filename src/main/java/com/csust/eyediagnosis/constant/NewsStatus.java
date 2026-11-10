@@ -22,12 +22,16 @@ public interface NewsStatus {
     /** 公开端唯一可见的状态 */
     int PUBLIC_VISIBLE = PUBLISHED;
 
-    static boolean isValid(int status) {
-        return status == DRAFT || status == PUBLISHED
-                || status == OFFLINE || status == PENDING_REVIEW;
+    static boolean isValid(Integer status) {
+        return status != null && (status == DRAFT || status == PUBLISHED
+                || status == OFFLINE || status == PENDING_REVIEW);
     }
 
-    static String label(int status) {
+    /** null / 未知值统一返回 UNKNOWN，避免调用方各写一份兜底。 */
+    static String label(Integer status) {
+        if (status == null) {
+            return "UNKNOWN";
+        }
         return switch (status) {
             case DRAFT -> "DRAFT";
             case PUBLISHED -> "PUBLISHED";
