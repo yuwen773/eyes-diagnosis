@@ -38,7 +38,7 @@
     "pairing": "Every condition scores each identical case exactly once. Gold text, sources and safety expectations are shared.",
     "ablation": "One role actually omitted from reference workflow execution; without_explanation emits no draft. No production workflow bypass is added.",
     "baseline": "One synthetic SINGLE response per case, same input/gold/source availability and deterministic safety gates.",
-    "limits": "Fixture perturbations deliberately seed omissions, unsupported assertions and false quotes; effects are not empirical role contributions.",
+    "limits": "Fixture perturbations deliberately seed omissions and unsupported assertions; effects are not empirical role contributions. False-quote scoring is covered separately by CLI mutation tests.",
     "timing_cost": "Local scripted workflow and scoring are timed separately. Zero provider calls/USD. Real model latency, token use and pricing are NOT_RUN."
   },
   "cases": [
