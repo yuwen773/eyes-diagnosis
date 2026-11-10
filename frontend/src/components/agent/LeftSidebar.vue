@@ -24,7 +24,7 @@
             <circle cx="7.4" cy="8.9" r="0.8" class="pulse-dot pd-6" />
           </svg>
         </div>
-        <span class="brand-name">EyeSight</span>
+        <span class="brand-name">Iris</span>
         <button class="collapse-btn" @click="emit('collapse')" aria-label="收起侧边栏" title="收起侧边栏">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />

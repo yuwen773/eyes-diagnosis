@@ -8,7 +8,8 @@
 |---|---|
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
-| `design-system.md` | 写 `frontend/` 页面 / 组件 / 样式，或评审前端 diff |
+| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（白色仪器唯一设计真源） |
+| `design-system.md` | 仅 `frontend/`（Vue 历史线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |
 

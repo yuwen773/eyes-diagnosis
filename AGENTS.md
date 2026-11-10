@@ -1,7 +1,7 @@
 # AGENTS.md
 
 本仓库的项目指引以 [`CLAUDE.md`](CLAUDE.md) 为唯一真源：架构、API、数据库规范、
-Navigation、验证命令都读它，本文只补 Codex 侧的环境事实。改项目约定时只改真源。
+Navigation、验证命令、设计真源都读它，本文只补 Codex 侧的环境事实。改项目约定时只改真源。
 
 ## 本机环境（不入库）
 

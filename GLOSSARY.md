@@ -30,4 +30,6 @@
 
 ## 前端设计
 
-品牌令牌、双主题、页面骨架与参考实现见 `docs/design-system.md`。
+`web/`（React）是产品前端，唯一设计真源是仓库根 `DESIGN.md`（白色仪器 / 信号橙），
+令牌实现在 `web/src/styles/tokens.css`；`frontend/`（Vue）是历史线，仍用旧青绿 `--iris-*`，
+不再作为设计参考。详见 `DESIGN.md` 与 `docs/backend-split.md`。

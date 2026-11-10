@@ -67,7 +67,7 @@
             </svg>
           </div>
           <div class="welcome-text">
-            <h2 class="welcome-title">EyeSight</h2>
+            <h2 class="welcome-title">Iris</h2>
             <p class="welcome-desc">上传眼底图片或描述症状，我来为您分析诊断</p>
           </div>
           <div class="welcome-hints">

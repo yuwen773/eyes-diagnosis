@@ -150,10 +150,15 @@ public class ChatHistoryService {
     }
 
     public void updatePinStatus(String sessionId, Long userId, boolean pinned) {
-        if (!isSessionOwner(sessionId, userId)) {
+        AgentSession session = sessionMapper.selectBySessionId(sessionId);
+        if (session == null || !userId.equals(session.getUserId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        sessionMapper.updatePinStatus(sessionId, pinned ? 1 : 0, pinned ? new Date() : null);
+        // 置顶是元数据操作，不该改写「最近活动时间」：显式回写原值压掉 updatedTime
+        // 的 ON UPDATE CURRENT_TIMESTAMP。否则一置顶会话就被挪进「今天」分组，
+        // 取消置顶后也回不到它原本所在的日期分组。
+        sessionMapper.updatePinStatus(sessionId, pinned ? 1 : 0, pinned ? new Date() : null,
+                session.getUpdatedTime());
     }
 
     public void triggerTitleGeneration(String sessionId, Long userId, String firstMessage) {
@@ -252,6 +257,8 @@ public class ChatHistoryService {
     private SessionVO toSessionVO(AgentSession entity) {
         SessionVO sessionVO = new SessionVO();
         BeanUtils.copyProperties(entity, sessionVO);
+        // 实体的 pinned 是 0/1 的 Integer，VO 对前端是布尔；空值一律按未置顶处理
+        sessionVO.setIsPinned(entity.getPinned() != null && entity.getPinned() == 1);
         return sessionVO;
     }
 }

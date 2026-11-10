@@ -44,7 +44,7 @@ const handleSubmit = async (values: any) => {
     <aside class="register-dashboard" aria-label="平台指标">
       <div class="dash-header">
         <RouterLink to="/" class="brand-mark">
-          <span class="brand-name">眼瞳 Iris</span>
+          <span class="brand-name">Iris</span>
           <span class="brand-tag">CLINICAL EDITORIAL · v2.3.1</span>
         </RouterLink>
       </div>

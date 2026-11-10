@@ -87,7 +87,7 @@
     <div class="sider-footer" v-if="!collapsed">
       <div class="footer-brand">
         <span class="footer-dot"></span>
-        <span>Eye Diagnosis AI</span>
+        <span>Iris</span>
       </div>
     </div>
   </a-layout-sider>
