@@ -1,0 +1,2408 @@
+/* ==========================================================================
+   Iris · 管理后台外壳（设备背面）
+   ==========================================================================
+   仪表梁 + 侧栏 + 内容区同属一个主题：三者都吃上下文令牌（--surface /
+   --fg-* / --hr / --signal），随 html.dark 在「骨白工作台 / 暗房」之间整体
+   翻转——浅色主题下是纸白仪表面 + 墨色发丝线，暗色主题下整页翻成暗房，
+   不再出现「深色外壳 + 浅色内容」的割裂。
+   内容区的坐标轴文字等 SVG 内部尺寸由组件按容器实测宽重算（缩放比恒为 1），
+   与本文件的版心铺开配套：宽屏得到的是更长的绘图区，不是更大的字。
+   全文件不写死色值。
+   ========================================================================== */
+
+.admin-shell {
+  --admin-beam-h: 56px;
+  --admin-side-w: 232px;
+  /* 管理后台版心：跟着可用宽度铺开，1920px 封顶居中（2560 宽屏两侧各留
+     约 200px，其余给内容）；比全站 --maxw（1240px）宽，因为表格列需要
+     横向空间，而图表自身按容器重算几何、不受版心限制。 */
+  --admin-maxw: 1920px;
+  display: grid;
+  grid-template-columns: var(--admin-side-w) minmax(0, 1fr);
+  grid-template-rows: var(--admin-beam-h) 1fr;
+  min-height: 100svh;
+}
+
+/* ── 仪表梁 ────────────────────────────────────────────── */
+
+.admin-beam {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  background: var(--surface);
+  color: var(--fg);
+  border-bottom: 1px solid var(--hr);
+  position: relative;
+  z-index: 2;
+}
+
+.admin-beam__inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: var(--admin-beam-h);
+  padding-inline: var(--gutter);
+  /* 右组（用户名 / 主题钮）跟着内容版心的右缘走，不贴屏幕最右边：
+     内容列在侧栏之后居中，2560 宽时版心右缘离屏幕右边还有 244px，
+     不对齐就是一条肉眼可见的断线。 */
+  padding-right: max(
+    var(--gutter),
+    calc((100% - var(--admin-side-w) - var(--admin-maxw)) / 2 + var(--gutter))
+  );
+}
+
+.admin-beam__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 12.5px;
+  color: var(--fg-2);
+  transition: color var(--fast);
+}
+
+.admin-beam__back:hover {
+  color: var(--fg);
+}
+
+.admin-beam__back-mark {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* 品牌与铭牌之间的发丝竖线，把梁切成仪器段。 */
+.admin-beam__sep {
+  width: 1px;
+  height: 18px;
+  flex: none;
+  background: var(--hr-strong);
+}
+
+.admin-beam__plate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-beam__plate-zh {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.admin-beam__plate-en {
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+.admin-beam__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+  flex: none;
+}
+
+.admin-beam__user {
+  font-size: 12.5px;
+  color: var(--fg-2);
+}
+
+/* 复用全站 .theme-toggle 的形状与半满读数环；发丝线与墨色跟随上下文令牌。 */
+.admin-beam .theme-toggle {
+  border-color: var(--hr-strong);
+  color: var(--fg-2);
+}
+
+.admin-beam .theme-toggle:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+/* ── 侧栏 ──────────────────────────────────────────────── */
+
+.admin-side {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--fg);
+  border-right: 1px solid var(--hr);
+  position: relative;
+  z-index: 1;
+}
+
+.admin-side__nav {
+  display: flex;
+  flex-direction: column;
+  padding-top: 18px;
+}
+
+.admin-side__link {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 13px 22px 13px 24px;
+  border-top: 1px solid var(--hr);
+  color: var(--fg-2);
+  font-size: 13.5px;
+  transition: color var(--fast), background var(--fast);
+}
+
+.admin-side__link:last-child {
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-side__link:hover {
+  color: var(--fg);
+  background: var(--surface-2);
+}
+
+.admin-side__code {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+  transition: color var(--fast);
+}
+
+/* 当前项：NavLink 自动打 aria-current="page"，亮信号橙短竖线 + 加亮。 */
+.admin-side__link[aria-current="page"] {
+  color: var(--fg);
+}
+
+.admin-side__link[aria-current="page"] .admin-side__code {
+  color: var(--signal-text);
+}
+
+.admin-side__link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--signal);
+}
+
+.admin-side__foot {
+  margin-top: auto;
+  padding: 18px 24px 22px;
+  border-top: 1px solid var(--hr);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* ── 内容区 ────────────────────────────────────────────── */
+
+.admin-main {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ── 守卫：loading 占位 + 无权限说明页 ───────────────────── */
+
+.admin-gate,
+.admin-denied {
+  min-height: 100svh;
+}
+
+.admin-gate__inner,
+.admin-denied__inner {
+  padding-block: clamp(56px, 10vh, 120px);
+}
+
+.admin-gate__inner {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.admin-denied__eyebrow {
+  margin-top: 40px;
+}
+
+.admin-denied__title {
+  margin-top: 20px;
+  max-width: 16em;
+}
+
+.admin-denied__body {
+  margin-top: 18px;
+  max-width: 40em;
+}
+
+.admin-denied__status {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hr);
+  max-width: 260px;
+}
+
+.admin-denied__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  margin-top: 40px;
+}
+
+/* ── 窄屏：侧栏折成横向标签条 ───────────────────────────── */
+
+@media (max-width: 768px) {
+  .admin-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--admin-beam-h) auto 1fr;
+  }
+
+  .admin-beam {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-side {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .admin-main {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .admin-beam__inner {
+    gap: 12px;
+    padding-inline: 18px;
+  }
+
+  .admin-beam__sep,
+  .admin-beam__plate-en,
+  .admin-beam__user {
+    display: none;
+  }
+
+  .admin-beam__plate-zh {
+    font-size: 14px;
+  }
+
+  .admin-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--hr);
+  }
+
+  .admin-side__nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-top: 0;
+  }
+
+  .admin-side__link {
+    flex: none;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 0;
+    border-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .admin-side__link:last-child {
+    border-bottom: 0;
+  }
+
+  /* 横条上的当前项：竖线翻成贴底的一小段信号橙横线。 */
+  .admin-side__link[aria-current="page"]::before {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: 2px;
+  }
+
+  .admin-side__foot {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   管理后台 · 交互原语（Task 4）
+   --------------------------------------------------------------------------
+   「白色仪器」：只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal，零写死色值。分隔一律 1px 发丝线，
+   需要层级时用极轻阴影或 --surface-2 抬升；信号橙只做结构性强调
+   （主按钮 / 当前态 / accent 竖线），不拿来标状态。等宽数字沿用 .num。
+   Modal / Drawer 遮罩直接复用全站 .scrim 词汇类，面板另起命名空间，
+   不与左侧导航 .drawer 冲突。
+   ========================================================================== */
+
+/* ── Toolbar：一行 flex，底部发丝线收口 ─────────────────── */
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--hr);
+}
+
+/* ── StatTile：小字标签 + 大号等宽读数 ───────────────────── */
+
+.admin-tile {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+/* 首块强调：左侧 2px 信号橙竖线，纯结构性，不表状态。 */
+.admin-tile--accent::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--signal);
+}
+
+.admin-tile__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-2);
+}
+
+.admin-tile__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.admin-tile__delta {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+/* ── DataTable：语义化表格 + 三态 + 受控分页 ─────────────── */
+
+.admin-dt {
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+.admin-dt__scroll {
+  overflow-x: auto;
+}
+
+.admin-dt__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* 表头：mono 小字、间距字、--fg-3；底部一条发丝线与表体分界。 */
+.admin-dt__head {
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--fg-3);
+  background: var(--surface);
+  border-bottom: 1px solid var(--hr);
+  white-space: nowrap;
+}
+
+.admin-dt__head-row {
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-dt__cell {
+  padding: 13px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg);
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.admin-dt__cell--right {
+  text-align: right;
+}
+
+.admin-dt__cell--center {
+  text-align: center;
+}
+
+/* 行间 1px --hr 发丝线；hover 用 --surface-2 轻抬，不加阴影。 */
+.admin-dt__row {
+  border-bottom: 1px solid var(--hr);
+  transition: background var(--fast);
+}
+
+.admin-dt__row:last-child {
+  border-bottom: 0;
+}
+
+.admin-dt__row:hover {
+  background: var(--surface-2);
+}
+
+/* 三态占一整行，不画表体之外的浮层。 */
+.admin-dt__state {
+  padding: 44px 16px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-dt__state--error {
+  color: var(--risk-critical);
+}
+
+/* 分页条：全部 mono，顶上一条发丝线与表体分界。 */
+.admin-dt__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--hr);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-2);
+}
+
+.admin-dt__pager-info {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.admin-dt__pager-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-dt__pager-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--hr);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast);
+}
+
+.admin-dt__pager-btn:hover:not(:disabled) {
+  border-color: var(--fg-2);
+}
+
+.admin-dt__pager-btn:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-dt__pager-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg-3);
+}
+
+.admin-dt__pager-select {
+  padding: 6px 8px;
+  border: 1px solid var(--hr);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ── Modal：居中弹窗 ────────────────────────────────────── */
+
+.admin-modal {
+  position: fixed;
+  z-index: 80;
+  top: 50%;
+  left: 50%;
+  width: min(560px, calc(100vw - 40px));
+  max-height: min(720px, calc(100svh - 64px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--hr-strong);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--base), visibility 0s linear var(--base);
+}
+
+.admin-modal[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--base);
+}
+
+.admin-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-modal__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.admin-modal__close,
+.admin-drawer__close {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--fg-2);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.admin-modal__close:hover,
+.admin-drawer__close:hover {
+  color: var(--fg);
+}
+
+.admin-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.admin-modal__foot {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--hr);
+}
+
+/* ── Drawer：右侧滑入 ───────────────────────────────────── */
+
+.admin-drawer {
+  position: fixed;
+  z-index: 80;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 88vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--fg);
+  border-left: 1px solid var(--hr-strong);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--base), visibility 0s linear var(--base);
+}
+
+.admin-drawer[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--base);
+}
+
+.admin-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-drawer__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.admin-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+/* ==========================================================================
+   管理后台 · 图表段（Task 5）
+   --------------------------------------------------------------------------
+   手写 SVG，零图表库。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal 与图表令牌 --viz-accent / --viz-mute，
+   零写死色值（SVG fill/stroke 一律 var()）。网格/轴/基线一律 1px 实线发丝
+   （--hr / --hr-strong，禁虚线）；文字不穿数据色——轴刻度/数值/图例/读数表
+   全用 --fg/--fg-2/--fg-3，数据色只落在线/柱/点/条等标记上。
+   命中层与刻度轨用非缩放描边（vector-effect）保证缩放后仍是 1px / 2px。
+   所有 SVG 用 viewBox + width:100% / height:auto 自适应宽度，轴标签带算在
+   viewBox 内，容器不裁轴。双主题（html.dark）自动翻，无需逐条改写。
+   ========================================================================== */
+
+/* ── 图 / 表 切换外壳 ────────────────────────────────────── */
+
+.admin-viz {
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+.admin-viz__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-viz__title {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+}
+
+/* 沿用 DataTable 分页按钮的仪器按键形状：1px 发丝线、mono 小字。 */
+.admin-viz__toggle {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}
+
+.admin-viz__toggle-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--hr);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
+}
+
+.admin-viz__toggle-btn:hover {
+  border-color: var(--fg-2);
+  color: var(--fg);
+}
+
+.admin-viz__toggle-btn[aria-pressed="true"] {
+  border-color: var(--fg-2);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.admin-viz__toggle-btn:focus-visible,
+.admin-viz__hit:focus-visible,
+.admin-viz__figure--static:focus-visible,
+.admin-viz__mini:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.admin-viz__body {
+  padding: 16px;
+}
+
+.admin-viz__empty {
+  margin: 0;
+  padding: 44px 16px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+/* ── 读数表：tooltip 不是唯一读数通道（mono，label/value 两列 + 可选占比）── */
+
+.admin-viz__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-viz__th {
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--fg-3);
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-viz__th--right,
+.admin-viz__td--value,
+.admin-viz__td--extra {
+  text-align: right;
+}
+
+.admin-viz__tr {
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-viz__tr:last-child {
+  border-bottom: 0;
+}
+
+.admin-viz__td {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+.admin-viz__td--label {
+  font-weight: 500;
+  color: var(--fg-2);
+}
+
+.admin-viz__td--value {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.admin-viz__td--extra {
+  color: var(--fg-2);
+}
+
+/* ── 图形容器与自适应 SVG ────────────────────────────────── */
+
+.admin-viz__figure {
+  position: relative;
+  width: 100%;
+}
+
+.admin-viz__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* TrendChart 透明命中层：覆盖整图，按最近点取整（整列宽命中）。
+   tabIndex=0，focus + 方向键与 hover 同效；不铺任何可见底色。 */
+.admin-viz__hit {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+
+/* 键盘读数播报：视觉隐藏，仅供 aria-live。 */
+.admin-viz__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── SVG 标记：线 / 面积 / 网格 / 文字（颜色一律 var()）────── */
+
+/* 网格 / 轴 / 基线：1px 实线发丝，禁虚线；非缩放描边保真 1px。 */
+.admin-viz__rule,
+.admin-viz__rank-tick,
+.admin-viz__crosshair {
+  fill: none;
+  stroke-width: 1;
+  stroke-dasharray: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-viz__rule {
+  stroke: var(--hr);
+}
+
+.admin-viz__rank-tick {
+  stroke: var(--hr-strong);
+  opacity: 0.45;
+}
+
+.admin-viz__crosshair {
+  stroke: var(--fg-3);
+  opacity: 0.7;
+}
+
+.admin-viz__axis-text {
+  fill: var(--fg-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 折线：2px，round join/cap；面积：同色 10% 淡填。 */
+.admin-viz__line {
+  fill: none;
+  stroke: var(--viz-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-viz__area {
+  fill: var(--viz-accent);
+  fill-opacity: 0.1;
+  stroke: none;
+}
+
+/* 端点标记：≥8px（r=5）+ 2px surface 环；数据色只在圆点上。 */
+.admin-viz__dot {
+  fill: var(--viz-accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-viz__end-label {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* tooltip：纸面 + 发丝边框；label --fg-2，value --fg（强元素）。 */
+.admin-viz__tip-box {
+  fill: var(--surface);
+  stroke: var(--hr-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-viz__tip-label {
+  fill: var(--fg-2);
+  font-size: 11px;
+}
+
+.admin-viz__tip-value {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ── 排序横条（RankedBars）───────────────────────────────── */
+
+.admin-viz__figure--static {
+  cursor: default;
+}
+
+.admin-viz__rank-row .admin-viz__rank-fill {
+  fill: var(--viz-accent);
+  transition: fill-opacity var(--fast);
+}
+
+/* 悬停微亮：只作用标记，不承担读数职责（读数由「表」切换常驻提供）。 */
+.admin-viz__rank-row:hover .admin-viz__rank-fill {
+  fill-opacity: 0.82;
+}
+
+.admin-viz__rank-name {
+  fill: var(--fg-2);
+  font-size: 12.5px;
+}
+
+.admin-viz__rank-value {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-viz__rank-share {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+}
+
+/* ── 小倍数单元格（MiniTrend / MiniBars）─────────────────── */
+
+.admin-viz__mini {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+  transition: border-color var(--fast);
+}
+
+.admin-viz__mini:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-viz__mini-title {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-2);
+}
+
+.admin-viz__mini-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.admin-viz__mini-value {
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+/* 迷你折线：--viz-mute 去强调 + 末点 --viz-accent 标记。 */
+.admin-viz__mini-line {
+  fill: none;
+  stroke: var(--viz-mute);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-viz__mini-dot {
+  fill: var(--viz-accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* 迷你柱：单色 --viz-mute，最大值柱 --viz-accent。 */
+.admin-viz__mini-bar {
+  fill: var(--viz-mute);
+}
+
+.admin-viz__mini-bar--max {
+  fill: var(--viz-accent);
+}
+
+/* ==========================================================================
+   管理后台 · 仪表盘段（Task 6）
+   --------------------------------------------------------------------------
+   「白色仪器」版式：页首章节头 + 右上 mono 示例小标 → 4 列 KPI 条 →
+   趋势 / 分布两张图卡 → 最近记录表。分隔一律 1px 发丝线（--hr），
+   不做重卡片阴影；组件内部（StatTile / 图卡 / DataTable）已自带边框，
+   这里只负责栅格与章节间距。零写死色值，全部吃上下文令牌，随 html.dark 翻。
+   ========================================================================== */
+
+.admin-dashboard {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，示例小标钉在右上，底端发丝线收口。 */
+.admin-dashboard__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-dashboard__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* mono 小标：只做说明，不做装饰（无背景 / 无边框 / 无信号色）。 */
+.admin-sample {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+/* 示例数据的说明不能只靠右上角一个 10px 小标——那是给自己看的。
+   这一行是给可能截图、汇报、复制数字的人看的。 */
+.admin-sample-note {
+  margin: 0 0 22px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--fg-2);
+  max-width: 68ch;
+}
+
+/* KPI 条：4 列等宽，首块 accent 竖线由 StatTile 自身给出。 */
+.admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+
+/* 两张图卡：趋势略宽于分布（2:1），发丝线来自卡自身的边框。 */
+.admin-dashboard__charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 36px;
+}
+
+/* 最近记录：小标题 + 表格，顶端发丝线与上一章节分隔。 */
+.admin-dashboard__records {
+  margin-top: 40px;
+  padding-top: 26px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-dashboard__records-title {
+  margin: 0 0 18px;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+/* 窄屏：KPI 折 2 列，图卡折单列，避免 SVG 读数带被压到裁字。 */
+@media (max-width: 900px) {
+  .admin-dashboard__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   管理后台 · 用户管理段（Task 7）
+   --------------------------------------------------------------------------
+   与仪表盘同版式：页首章节头发丝线 → 工具条（检索表单，底部发丝线由
+   Toolbar 给出）→ 表格。只吃上下文令牌 --bg / --fg-* / --hr / --surface /
+   --signal，零写死色值；状态色一律由 .risk / .fault-note 自带的 --risk-* 语义
+   色承担，不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-users {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-users__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-users__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 检索表单：两个输入字段 + 查询 / 重置，窄屏自动换行。 */
+.admin-users__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-users__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.admin-users__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 沿用 news__input 的仪器形状，但高度对齐 .btn--sm（40px）。 */
+.admin-users__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-users__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-users__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-users__input:focus {
+  border-color: var(--signal);
+}
+
+.admin-users__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 头像：32px 圆形；无图时给一个同尺寸的中性占位，不撑破行高。 */
+.admin-users__avatar {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-users__avatar-fallback {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-users__table {
+  margin-top: 26px;
+}
+
+/* 删除失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-users__fault {
+  margin-top: 22px;
+}
+
+.admin-users__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-users__modal-account {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   管理后台 · 新闻管理段（Task 8）
+   --------------------------------------------------------------------------
+   与用户管理同版式：页首章节头发丝线（右上「新建」按钮）→ 工具条（标题
+   模糊检索表单）→ 表格。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --signal，零写死色值；状态色由 .fault-note 自带的 --risk-*
+   语义色承担，不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-news {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，「新建」按钮钉在右上，底端发丝线收口。 */
+.admin-news__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-news__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.admin-news__new {
+  flex: none;
+}
+
+/* 检索表单：单个标题输入字段 + 查询 / 重置，窄屏自动换行。 */
+.admin-news__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-news__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.admin-news__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 沿用 admin-users__input 的仪器形状，高度对齐 .btn--sm（40px）。 */
+.admin-news__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-news__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-news__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-news__input:focus {
+  border-color: var(--signal);
+}
+
+.admin-news__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 操作列：编辑 / 删除两枚小按钮并排，撑满列宽不折行。 */
+.admin-news__row-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-news__table {
+  margin-top: 26px;
+}
+
+/* 删除失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-news__fault {
+  margin-top: 22px;
+}
+
+.admin-news__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-news__modal-title {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   管理后台 · 诊断管理段（Task 9）
+   --------------------------------------------------------------------------
+   与用户 / 新闻管理同版式：章节头发丝线 → 工具条（疾病名模糊检索）→ 表格
+   → 页脚数据边界小字。另含详情 Drawer 的读数排版、复核 Modal 的表单。
+   缩略图 48px。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter，
+   零写死色值；状态色由 .risk / .fault-note 自带的 --risk-* 语义色承担，
+   不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-diagnosis {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-diagnosis__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-diagnosis__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 检索表单：单个疾病名输入 + 查询 / 重置，窄屏自动换行。 */
+.admin-diagnosis__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-diagnosis__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.admin-diagnosis__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 沿用 admin-users__input 的仪器形状，高度对齐 .btn--sm（40px）。 */
+.admin-diagnosis__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-diagnosis__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-diagnosis__input:focus {
+  border-color: var(--signal);
+}
+
+.admin-diagnosis__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 删除失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-diagnosis__fault {
+  margin-top: 22px;
+}
+
+.admin-diagnosis__table {
+  margin-top: 26px;
+}
+
+/* 页脚数据边界小字：mono + --fg-3，顶端发丝线与表体隔开。 */
+.admin-diagnosis__footer {
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+/* ── 表格单元格 ───────────────────────────────────────────── */
+
+/* 诊断图像缩略图：48px 定宽，object-fit 不拉伸，发丝线勾边。 */
+.admin-diagnosis__thumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+/* AI 拒识行：result 为空的「—」+ 拒识原因摘要（摘要不撑破列宽）。 */
+.admin-diagnosis__result-empty {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-diagnosis__abstain {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--fg-3);
+  overflow-wrap: anywhere;
+}
+
+/* 操作列：详情 / 删除两枚小按钮并排，撑满列宽不折行。 */
+.admin-diagnosis__row-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-diagnosis__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-diagnosis__modal-id {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ── 详情 Drawer：读数排版 ────────────────────────────────── */
+
+.admin-diagnosis__drawer-state {
+  margin: 0;
+  padding: 32px 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__drawer-fault {
+  margin-top: 8px;
+}
+
+/* 底部「人工复核」：发丝线顶边收口，按钮靠右。 */
+.admin-diagnosis__drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__detail {
+  display: grid;
+  gap: 22px;
+}
+
+.admin-diagnosis__detail-figure {
+  margin: 0;
+}
+
+.admin-diagnosis__detail-img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-diagnosis__detail-figure figcaption {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__detail-noimg {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+/* 读数表：label / value 两列，行间发丝线，值可换行不溢出。 */
+.admin-diagnosis__facts {
+  margin: 0;
+}
+
+.admin-diagnosis__fact {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.36fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-diagnosis__fact:first-child {
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__fact-label {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__fact-value {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.admin-diagnosis__section {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-diagnosis__section-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* 建议分行：每行独立成条，与记录纸的「建议」同源。 */
+.admin-diagnosis__recos {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-diagnosis__recos li {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.admin-diagnosis__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── 复核 Modal：表单 ─────────────────────────────────────── */
+
+.admin-diagnosis__review {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-diagnosis__review-note {
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hr);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-diagnosis__review-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input,
+.admin-diagnosis__review-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color var(--fast);
+}
+
+.admin-diagnosis__review-input {
+  resize: vertical;
+}
+
+.admin-diagnosis__review-input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input:hover,
+.admin-diagnosis__review-select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-diagnosis__review-input:focus,
+.admin-diagnosis__review-select:focus {
+  border-color: var(--signal);
+}
+
+.admin-diagnosis__review-hint {
+  margin: -8px 0 0;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.admin-diagnosis__review-fault {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   管理后台 · 知识库段（Task 10）
+   --------------------------------------------------------------------------
+   与用户 / 新闻 / 诊断管理同版式：章节头发丝线 → 工具条（隐藏 file input +
+   选择文件 / 开始上传 + 待传 chips）→ 处理中条 → 表格 → 页脚数据边界小字。
+   状态色一律由 .risk / .fault-note 自带的 --risk-* 语义色承担，不碰信号橙。
+   只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong / --surface / --surface-2 /
+   --signal / --font-* / --maxw / --gutter / --fast，零写死色值；双主题随
+   html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-knowledge {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
+.admin-knowledge__head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-knowledge__head .sec-head {
+  margin-bottom: 0;
+}
+
+/* 工具条内上传行：隐藏 input + 按钮 + 说明小字 + 靠右的上传动作。 */
+.admin-knowledge__upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 隐藏 file input：保留可聚焦 / 可程序触发，但不占位、不可见。 */
+.admin-knowledge__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-knowledge__hint {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__upload-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* 待传列表：占满整行的第二块，顶端发丝线与上传行分开。 */
+.admin-knowledge__pending {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-knowledge__pending-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 文件名 chip：纸面 + 发丝线，移除按钮贴右，不撑破窄屏。 */
+.admin-knowledge__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 6px 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.admin-knowledge__chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-knowledge__chip-remove {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: none;
+  color: var(--fg-3);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.admin-knowledge__chip-remove:hover {
+  color: var(--fg);
+}
+
+/* 删除 / 上传失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
+.admin-knowledge__fault {
+  margin-top: 22px;
+}
+
+/* ── 处理中条 ─────────────────────────────────────────────── */
+
+.admin-knowledge__processing {
+  margin-top: 22px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+}
+
+.admin-knowledge__processing-head {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__processing-list {
+  display: grid;
+  gap: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-knowledge__processing-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-knowledge__processing-name {
+  min-width: 0;
+  font-size: 13px;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.admin-knowledge__table {
+  margin-top: 26px;
+}
+
+/* 页脚数据边界小字：mono + --fg-3，顶端发丝线与表体隔开。 */
+.admin-knowledge__footer {
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__modal-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-knowledge__modal-name {
+  color: var(--fg);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   管理后台 · 数据分析段（Task 11）
+   --------------------------------------------------------------------------
+   与仪表盘同版式：页首章节头发丝线 + 右上 mono 示例小标 → 4 列 KPI 条 →
+   工具条（时间范围 select，装饰性）→ 小倍数折线 3×2 → 疾病分布排序横条 →
+   按周活跃小倍数柱图 3 列。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter / --fast，
+   零写死色值；分隔一律 1px 发丝线，组件内部（StatTile / 图卡 / 小倍数格）
+   已自带边框，这里只负责栅格与章节间距。双主题随 html.dark 自动翻。
+   ========================================================================== */
+
+.admin-analysis {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，示例小标钉在右上，底端发丝线收口。 */
+.admin-analysis__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-analysis__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* 时间范围字段：沿用检索页的仪器形状（mono 小字标签 + 40px select）。 */
+.admin-analysis__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-analysis__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-analysis__select {
+  height: 40px;
+  min-width: 160px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-analysis__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-analysis__select:focus {
+  border-color: var(--signal);
+}
+
+/* 章节：顶端发丝线与上一段分隔，小标题下接图表栅格。 */
+.admin-analysis__section {
+  margin-top: 40px;
+  padding-top: 26px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-analysis__title {
+  margin: 0 0 18px;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+/* 小倍数栅格：折线 3×2、柱图 3 列，格间 14px 由卡自身的边框勾线。
+   宽屏（≥1700px）折线改 6 列一行——小倍数就该小，六个病种并排成一条带，
+   比三张巨宽的卡更接近「小倍数」的本意。 */
+.admin-analysis__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-analysis__grid--trend {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-analysis__grid--weekly {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 1700px) {
+  .admin-analysis__grid--trend {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* 疾病分布（排序横条）：刻度轨是一条长尺，铺到 1920 会变成一条没有比例感的
+   长线；把整张图卡收在 1200px 内，右侧留白由版心承担而不是由尺子承担。 */
+.admin-analysis .admin-viz {
+  max-width: 1200px;
+}
+
+/* 窄屏：小倍数折 2 列 / 1 列，避免 SVG 读数被压到裁字。 */
+@media (max-width: 900px) {
+  .admin-analysis__grid--trend,
+  .admin-analysis__grid--weekly {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-analysis__grid--trend,
+  .admin-analysis__grid--weekly {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   管理后台 · 新闻编辑段（Task 12）
+   --------------------------------------------------------------------------
+   与其他管理页同版式：页首章节头发丝线（右上「返回列表」）→ 工具行（编辑/预览
+   mono tab + 状态 select + 保存）→ 表单列（标题 / 封面 / 正文 textarea 或预览）。
+   正文 textarea 用 --font-sans（等宽不适用），min-height 420px；预览直接复用
+   .markdown-body（agent.css 已定义）的排版。封面缩略图与隐藏 file input 沿用
+   知识库页的仪器形状。只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
+   --surface / --surface-2 / --signal / --font-* / --maxw / --gutter / --fast，
+   零写死色值；状态色由 .fault-note 自带的 --risk-* 语义色承担，不碰信号橙。
+   双主题随 html.dark 自动翻，无需逐条改写。
+   ========================================================================== */
+
+.admin-newsedit {
+  max-width: var(--admin-maxw);
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 48px) var(--gutter) clamp(56px, 8vh, 96px);
+}
+
+/* 页首：章节头占满剩余宽度，返回按钮钉在右上，底端发丝线收口。 */
+.admin-newsedit__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-newsedit__head .sec-head {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.admin-newsedit__back {
+  flex: none;
+}
+
+/* 加载 / 错误态：与表格三态同源，占整块而非浮层。 */
+.admin-newsedit__state {
+  margin: 0;
+  padding: 44px 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__fault {
+  margin-top: 18px;
+}
+
+.admin-newsedit__form {
+  display: grid;
+  gap: 0;
+}
+
+/* 工具行：tab 组靠左、状态 select 居中、保存按钮靠右，窄屏自动换行。 */
+.admin-newsedit__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-newsedit__tabs {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+}
+
+/* 沿用图 / 表切换的仪器按键形状：mono 小字、1px 发丝线，当前态抬一层 surface-2。 */
+.admin-newsedit__tab {
+  padding: 9px 14px;
+  border: 1px solid var(--hr-strong);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
+}
+
+.admin-newsedit__tab:hover {
+  border-color: var(--fg-2);
+  color: var(--fg);
+}
+
+.admin-newsedit__tab[aria-selected="true"] {
+  border-color: var(--fg-2);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.admin-newsedit__tab:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.admin-newsedit__status {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-newsedit__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__select {
+  height: 40px;
+  min-width: 140px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__select:focus {
+  border-color: var(--signal);
+}
+
+.admin-newsedit__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* 表单列：工具行下方统一给一道发丝线间距，字段间用定距栅格排开。 */
+.admin-newsedit__fields {
+  display: grid;
+  gap: 22px;
+  padding-top: 24px;
+}
+
+.admin-newsedit__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 沿用检索页输入的仪器形状，高度对齐 .btn--sm（40px）。 */
+.admin-newsedit__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: border-color var(--fast), background var(--fast);
+}
+
+.admin-newsedit__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-newsedit__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__input:focus {
+  border-color: var(--signal);
+}
+
+/* 发布状态下拉：与标题输入同一条仪器外形（1px 发丝线 / 零圆角 / 40px 高）。 */
+.admin-newsedit__select {
+  width: 100%;
+  max-width: 220px;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__select:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__select:focus {
+  border-color: var(--signal);
+}
+
+/* 封面：缩略图 + 更换 / 清除 / 提示排成一行，窄屏自动换行。 */
+.admin-newsedit__cover {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-newsedit__cover-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-newsedit__cover-thumb {
+  display: block;
+  width: 160px;
+  height: 100px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-newsedit__cover-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 100px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+}
+
+.admin-newsedit__cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* 隐藏 file input：保留可聚焦 / 可程序触发，但不占位、不可见。 */
+.admin-newsedit__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-newsedit__cover-hint {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__cover-note {
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+
+/* 正文 / 预览：同一块容器，切 tab 只换内容，避免跳版。 */
+.admin-newsedit__editor {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-newsedit__field--body {
+  gap: 8px;
+}
+
+.admin-newsedit__textarea {
+  width: 100%;
+  min-height: 420px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.75;
+  resize: vertical;
+  transition: border-color var(--fast);
+}
+
+.admin-newsedit__textarea::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-newsedit__textarea:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-newsedit__textarea:focus {
+  border-color: var(--signal);
+}
+
+/* 预览：纸面 + 发丝边框 + 最小高度对齐 textarea，正文排版交给 .markdown-body。 */
+.admin-newsedit__preview {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  overflow-wrap: anywhere;
+}
+
+/* 表单脚注：摘要守卫的常驻说明，mono + --fg-3，顶端发丝线。 */
+.admin-newsedit__footer {
+  margin: 26px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+@media (max-width: 640px) {
+  .admin-newsedit__actions {
+    margin-left: 0;
+  }
+
+  .admin-newsedit__cover-thumb,
+  .admin-newsedit__cover-empty {
+    width: 100%;
+  }
+}
+
+/* 新建模式降级引导：工具行下方一行 mono 说明，只吃语义令牌，不占信号橙。 */
+.admin-newsedit__guide {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--hr-strong);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--fg-2);
+  background: var(--surface-2);
+}

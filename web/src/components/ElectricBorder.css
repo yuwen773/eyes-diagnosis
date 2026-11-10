@@ -1,0 +1,18 @@
+/* 电流边框：画布比内容大一圈，电流的辉光才有地方散开。 */
+.electric-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.electric-border__canvas {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+}
+
+@media print {
+  .electric-border__canvas {
+    display: none;
+  }
+}

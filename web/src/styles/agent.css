@@ -1,0 +1,1540 @@
+/* ============================================================
+   agent.css — Agent 对话页（/agent）
+   只消费上下文令牌（--fg/--fg-2/--fg-3/--hr/--surface/--signal），
+   浅色为主、双主题随 html.dark 自动翻转。
+   排版参数一比一取自 Vue 版（气泡圆角/图片网格/胶囊输入区/打字 pill）。
+   ============================================================ */
+
+/* ── agent: 消息（排版一比一复刻 Vue 版气泡布局）── */
+
+/* 用户消息：右对齐气泡，图片网格挂在气泡下方 */
+.agent-msg--user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.agent-msg__bubble-user {
+  max-width: 70%;
+  padding: 10px 16px 8px;
+  background: var(--surface);
+  border: 1px solid var(--hr);
+  border-radius: 18px 18px 4px 18px;
+  word-break: break-word;
+}
+
+.agent-msg__text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg);
+  padding: 2px 0;
+}
+
+.agent-msg__time {
+  margin-top: 4px;
+  font-size: 11px;
+  text-align: right;
+  color: var(--fg-3);
+}
+
+.agent-msg__imggrid {
+  position: relative;
+  display: inline-grid;
+  gap: 4px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+}
+
+.agent-msg__imggrid.grid-1 {
+  grid-template-columns: 48px;
+}
+
+.agent-msg__imggrid.grid-2,
+.agent-msg__imggrid.grid-3,
+.agent-msg__imggrid.grid-4 {
+  grid-template-columns: 48px 48px;
+}
+
+.agent-msg__thumb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: none;
+  cursor: zoom-in;
+}
+
+.agent-msg__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.agent-msg__thumb:hover {
+  outline: 1px solid var(--signal);
+}
+
+.agent-msg__imgmore {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 助手消息：左对齐气泡 + Iris 头（排版同 Vue 版 AssistantMessage） */
+.agent-msg--assistant {
+  display: flex;
+  padding: 8px 16px;
+}
+
+.agent-msg__bubble-ai {
+  max-width: min(680px, 100%);
+  padding: 10px 16px;
+  border: 1px solid var(--hr);
+  border-radius: 18px 18px 18px 4px;
+  word-break: break-word;
+}
+
+.agent-msg__aihead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.agent-msg__aiicon {
+  color: var(--signal-text);
+  flex-shrink: 0;
+}
+
+.agent-msg__ainame {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--signal-text);
+}
+
+.agent-msg__bubble-ai .markdown-body {
+  font-size: 14px;
+  line-height: 1.6;
+  padding-left: 2px;
+}
+
+.agent-msg__streaming {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.caret-blink {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--signal);
+  animation: agent-caret 1s steps(2, start) infinite;
+}
+
+@keyframes agent-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-blink {
+    animation: none;
+  }
+}
+
+/* markdown 正文（app.css 无此节，补齐；只消费上下文令牌） */
+.markdown-body {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+
+.markdown-body p {
+  margin: 0 0 0.6em;
+}
+
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 0.6em;
+  padding-left: 1.4em;
+}
+
+.markdown-body li {
+  margin: 0.2em 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 15px;
+  margin: 1em 0 0.4em;
+}
+
+.markdown-body blockquote {
+  margin: 0.6em 0;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--hr-strong);
+  color: var(--fg-2);
+}
+
+.markdown-body a {
+  color: var(--signal-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--hr);
+  padding: 1px 5px;
+}
+
+/* 反相带里的代码块要抬升一层，否则底色与屏同色等于没有代码块 */
+.console .markdown-body code,
+.console .markdown-body pre.code-block {
+  background: var(--surface);
+  border-color: var(--hr);
+}
+
+.markdown-body pre.code-block {
+  margin: 0.6em 0;
+  padding: 0;
+  background: var(--bg);
+  border: 1px solid var(--hr);
+  overflow: hidden;
+}
+
+.markdown-body pre.code-block .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--hr);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
+.markdown-body pre.code-block code {
+  display: block;
+  padding: 10px;
+  background: none;
+  border: 0;
+  overflow-x: auto;
+}
+
+.markdown-body .copy-btn {
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.markdown-body .copy-btn:hover {
+  color: var(--signal-text);
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 12.5px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--hr);
+  padding: 4px 10px;
+  text-align: left;
+}
+
+/* 思考过程卡：复用工具卡的容器观感（Vue 版是抬一层的三级底，此处取反相带的线条层） */
+.agent-msg--reasoning {
+  max-width: min(400px, 100%);
+  margin: 4px 16px;
+  border: 1px solid var(--hr);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* 折叠 */
+.agent-msg--reasoning summary {
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 0;
+}
+
+.agent-msg--reasoning[open] .agent-toolcard__head,
+.agent-msg--reasoning[open] summary {
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-msg--reasoning summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 确认终点卡：--signal 左边条区别于工具卡 */
+.agent-msg--confirm {
+  max-width: min(400px, 100%);
+  margin: 4px 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--hr);
+  border-left: 2px solid var(--signal);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.agent-msg__confirm-head {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal-text);
+  margin-bottom: 6px;
+}
+
+.agent-msg__confirm-detail {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 6px;
+}
+
+.agent-msg--confirm .trace__text,
+.agent-msg--confirm .trace__note {
+  color: var(--fg);
+}
+
+.agent-msg--confirm .trace__note {
+  color: var(--fg-3);
+}
+
+/* ── 工具卡（排版复刻 Vue 版 ToolRequestMessage / ToolResponseMessage）── */
+
+.agent-toolcard {
+  max-width: min(400px, 100%);
+  margin: 4px 16px;
+  border: 1px solid var(--hr);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.agent-toolcard__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-toolcard__icon {
+  display: flex;
+  color: var(--signal-text);
+  flex-shrink: 0;
+}
+
+.agent-toolcard__name {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--signal-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-toolcard__tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+  opacity: 0.6;
+}
+
+.agent-toolcard__args {
+  padding: 8px 12px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.agent-toolcard__argrow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  row-gap: 1px;
+}
+
+.agent-toolcard__argkey {
+  color: var(--fg-2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.agent-toolcard__argsep {
+  margin: 0 2px;
+  color: var(--fg-3);
+}
+
+.agent-toolcard__argval {
+  flex: 1;
+  min-width: 0;
+  color: var(--fg);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.agent-toolcard__emptyargs {
+  color: var(--fg-3);
+}
+
+.agent-toolcard__body {
+  padding: 8px 12px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 打字指示器（排版复刻 Vue 版 typing-pill：三条跳动竖条）──
+   barPulse 是轻量反馈动画（回答「正在输入」这一状态），不属于装饰动画，保留；
+   prefers-reduced-motion 下退化为静态竖条。 */
+.typing-row {
+  padding: 16px 16px 16px 20px;
+}
+
+.typing-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 18px;
+  border: 1px solid var(--hr);
+  border-radius: 18px 18px 18px 4px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.typing-bar {
+  display: block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--signal);
+  opacity: 0.35;
+  animation: typing-bar-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.typing-bar:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-bar:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.typing-bar:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes typing-bar-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scaleY(1);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-bar {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ── agent: 会话屏容器与消息列表 ───────────────────────── */
+
+.agent-console {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 会话屏头部复用 app.css 的 .console__* 骨架（落地页反相带同款），
+   但这里在浅色上下文中，把写死的反相色拉回上下文令牌。
+   右侧让出浮动资源钮的位置，避免与计数重叠。 */
+.agent-console .console__head {
+  border-bottom-color: var(--hr);
+}
+
+/* 头栏左右两组：左侧放折叠后的左栏操作钮，右侧放资源面板钮。
+   都走常规流，不浮在正文/提示条上——浮动会压住字。 */
+.console__head-left,
+.console__head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.console__head-left {
+  gap: 12px;
+}
+
+.agent-console .console__meta {
+  color: var(--fg-3);
+}
+
+.agent-load {
+  padding: 16px 22px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.agent-msglist {
+  overflow-y: auto;
+}
+
+.agent-msg__live-inline {
+  animation: live-pulse 2.6s var(--ease) infinite;
+}
+
+.agent-msglist__unread {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 14px;
+  border: 1px solid var(--hr);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.agent-msglist__unread:hover {
+  border-color: var(--signal);
+  color: var(--signal-text);
+}
+
+/* ── agent: 欢迎屏（排版一比一复刻 Vue 版 welcome 区，令牌换本项目） ── */
+
+.welcome {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 28px 20px 36px;
+}
+
+.welcome-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eye-vision {
+  width: 160px;
+  height: 140px;
+  margin-bottom: 16px;
+  color: var(--signal-text);
+}
+
+.ev-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 神经网络线与节点：Vue 版是脉冲动画，此处静态（装饰零容忍） */
+.ev-pulse {
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.35;
+}
+
+.ev-pulse.ev-sub {
+  stroke-width: 0.8;
+  opacity: 0.22;
+}
+
+.ev-node {
+  fill: currentColor;
+  opacity: 0.45;
+}
+
+.ev-core-node {
+  fill: currentColor;
+}
+
+.ev-eye {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.ev-iris-ring {
+  stroke: currentColor;
+  stroke-width: 1.2;
+  opacity: 0.75;
+}
+
+.ev-iris-inner {
+  opacity: 0.5;
+}
+
+.ev-pupil {
+  fill: currentColor;
+}
+
+.ev-light {
+  /* 瞳孔高光：任何主题下都该是纸白，不跟随上下文墨色 */
+  fill: var(--paper-surface);
+}
+
+.welcome-text {
+  text-align: center;
+}
+
+.welcome-title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 32px;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.welcome-desc {
+  margin: 0;
+  max-width: 400px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+.welcome-hints {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 24px;
+  width: 100%;
+  max-width: 760px;
+}
+
+.guide-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 18px 16px;
+  border: 1px solid var(--hr);
+  background: var(--surface);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s var(--ease);
+}
+
+.guide-card:hover {
+  border-color: var(--signal);
+}
+
+.guide-card:hover .guide-arrow {
+  color: var(--signal-text);
+  transform: translateX(2px);
+}
+
+.guide-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--hr);
+  color: var(--signal-text);
+}
+
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.guide-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--fg);
+}
+
+.guide-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-3);
+}
+
+.guide-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hr);
+}
+
+.guide-action-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.guide-arrow {
+  flex-shrink: 0;
+  color: var(--fg-3);
+  transition: color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+@media (max-width: 720px) {
+  .welcome-hints {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── agent: 输入区（排版复刻 Vue 版 AgentChatInput：圆角胶囊容器）── */
+
+.agent-input {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 6px;
+}
+
+.agent-input__container {
+  border: 1px solid var(--hr);
+  border-radius: 20px;
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.3s var(--ease);
+}
+
+.agent-input__container.is-focused {
+  border-color: var(--signal);
+}
+
+/* 附件条（容器内第一行） */
+.agent-input__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px 4px;
+}
+
+.agent-input__attachment {
+  position: relative;
+}
+
+.agent-input__attachment img {
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--hr);
+  border-radius: 10px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+.agent-input__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agent-input__remove:hover {
+  background: var(--risk-critical);
+  border-color: var(--risk-critical);
+  color: #fff;
+}
+
+.agent-input__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 6px 8px 6px 6px;
+}
+
+.agent-input__file {
+  display: none;
+}
+
+.agent-input__attach {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.2s var(--ease);
+}
+
+.agent-input__attach:hover:not(:disabled) {
+  color: var(--signal-text);
+}
+
+.agent-input__attach:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.agent-input__textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: none;
+  overflow-y: auto;
+  min-height: 24px;
+}
+
+.agent-input__textarea::placeholder {
+  color: var(--fg-3);
+  opacity: 0.8;
+}
+
+.agent-input__send,
+.agent-input__stop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease);
+}
+
+.agent-input__send {
+  background: var(--signal);
+  color: #fff;
+}
+
+.agent-input__send:disabled {
+  background: var(--hr);
+  color: var(--fg-3);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agent-input__send:not(:disabled):hover {
+  transform: translateY(-1px) scale(1.05);
+}
+
+.agent-input__stop {
+  background: var(--risk-critical);
+  color: #fff;
+}
+
+.agent-input__stop:hover {
+  filter: brightness(1.15);
+}
+
+.agent-input__hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+  opacity: 0.6;
+}
+
+/* ── agent: 资源面板 ───────────────────────────────────── */
+
+.agent-panel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 340px;
+  min-height: 0;
+  border-left: 1px solid var(--hr);
+  background: var(--bg);
+}
+
+.agent-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-panel__tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.agent-panel__tab {
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.agent-panel__tab.is-active {
+  border-color: var(--hr-strong);
+  color: var(--signal-text);
+}
+
+.agent-panel__close {
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+
+.agent-panel__close:hover {
+  color: var(--fg);
+}
+
+.agent-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.agent-panel__empty {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.agent-panel__imggrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.agent-panel__img {
+  padding: 0;
+  border: 1px solid var(--hr);
+  background: none;
+  cursor: zoom-in;
+}
+
+.agent-panel__img img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.agent-panel__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-panel__link a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hr);
+  color: inherit;
+  text-decoration: none;
+}
+
+.agent-panel__linktitle {
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+.agent-panel__link a:hover .agent-panel__linktitle {
+  color: var(--signal-text);
+}
+
+.agent-panel__linkdomain {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+/* ── agent: 会话列表 ───────────────────────────────────── */
+
+.agent-sessions {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--hr);
+  background: var(--bg);
+}
+
+.agent-sessions__head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid var(--hr);
+}
+
+/* 品牌行 + 收起钮（同 Vue 版 LeftSidebar brand） */
+.agent-sessions__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-sessions__brandname {
+  flex: 1;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.agent-sessions__collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.agent-sessions__collapse:hover {
+  background: var(--surface-2);
+  color: var(--fg-2);
+}
+
+.agent-sessions__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 「选择」文字钮（同 Vue 版 multi-select-btn） */
+.agent-sessions__select {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  white-space: nowrap;
+}
+
+.agent-sessions__select:hover {
+  color: var(--fg-2);
+  background: var(--surface-2);
+}
+
+.agent-sessions__select.is-active {
+  color: var(--signal-text);
+}
+
+/* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边） */
+.agent-sessions__newchat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--hr-strong);
+  border-radius: 10px;
+  background: none;
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.agent-sessions__newchat:hover:not(:disabled) {
+  border-color: var(--signal);
+  color: var(--signal-text);
+  background: var(--signal-soft);
+}
+
+.agent-sessions__newchat:disabled {
+  color: var(--fg-3);
+  cursor: not-allowed;
+}
+
+.agent-sessions__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0 14px;
+}
+
+.agent-sessions__empty {
+  padding: 28px 14px;
+}
+
+.agent-sessions__empty .num {
+  margin: 0 0 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+.agent-sessions__emptyhint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--fg-3);
+  opacity: 0.8;
+}
+
+.agent-sessions__label {
+  padding: 10px 14px 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.agent-sessions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.agent-session {
+  position: relative;
+  border-bottom: 1px solid var(--hr);
+}
+
+.agent-session.is-active {
+  box-shadow: inset 2px 0 0 var(--signal);
+}
+
+.agent-session__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: calc(100% - 34px);
+  padding: 9px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-session__title {
+  font-size: 12.5px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-session.is-active .agent-session__title {
+  color: var(--signal-text);
+}
+
+.agent-session__meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+.agent-session__checkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.agent-session__menu-btn {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-3);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.agent-session__menu-btn:hover {
+  color: var(--fg);
+}
+
+.agent-session__menu {
+  position: absolute;
+  top: 32px;
+  right: 6px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 96px;
+  border: 1px solid var(--hr-strong);
+  background: var(--bg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.agent-session__menu button {
+  padding: 7px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--hr);
+  background: none;
+  font-size: 12px;
+  color: var(--fg-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-session__menu button:last-child {
+  border-bottom: 0;
+}
+
+.agent-session__menu button:hover {
+  color: var(--fg);
+  background: var(--bg);
+}
+
+.agent-session__menu button.is-danger {
+  color: var(--signal-text);
+}
+
+.agent-session__rename {
+  margin: 6px 14px;
+  padding: 5px 8px;
+  border: 1px solid var(--signal);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12.5px;
+}
+
+/* ── agent: 页面布局（同 Vue 版：无页脚、无版心，三栏铺满顶栏以下视口）── */
+
+/* 高度必须硬约束（同 Vue 版 layoutStyle 的 100vh）：外层不是 flex 容器，
+   靠 flex:1 拿不到高度，输入区会跟在内容后面而非钉在底部。 */
+.agent-viewport {
+  height: calc(100vh - var(--nav-h));
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 三栏用 flex（同 Vue 版 .agent-chat-layout）：
+   左栏常驻 DOM、收起靠宽度动画；用 grid + 从 DOM 摘掉侧栏会让
+   中栏自动排进左列而塌成窄条。 */
+.agent-layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--hr);
+}
+
+.agent-layout__left {
+  flex-shrink: 0;
+  width: 280px;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.agent-layout__left.is-collapsed {
+  width: 0;
+  opacity: 0;
+}
+
+.agent-layout__left > .agent-sessions {
+  width: 280px;
+  height: 100%;
+}
+
+.agent-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.agent-main__anon {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions）：跟在对话头栏左侧，不浮在正文上 */
+.agent-collapsed-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.agent-collapsed-actions__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--hr-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.agent-collapsed-actions__btn:hover {
+  color: var(--fg);
+  border-color: var(--fg-3);
+}
+
+.agent-collapsed-actions__btn.is-accent:hover {
+  color: var(--signal-text);
+  border-color: var(--signal);
+}
+
+/* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标，
+   收在对话头栏右侧，不浮在正文上） */
+.agent-main__resource-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--hr-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.agent-main__resource-toggle:hover {
+  color: var(--fg);
+  border-color: var(--fg-3);
+}
+
+.agent-main__resource-toggle.is-active {
+  color: var(--signal-text);
+  border-color: var(--signal);
+  background: var(--signal-soft);
+}
+
+.agent-main__resource-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--signal);
+  color: var(--paper-surface);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .agent-layout {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .agent-layout__left {
+    width: 100%;
+    max-height: 240px;
+  }
+
+  .agent-layout__left.is-collapsed {
+    width: 100%;
+    max-height: 0;
+  }
+
+  .agent-layout__left > .agent-sessions {
+    width: 100%;
+  }
+
+  .agent-main {
+    min-height: 70vh;
+  }
+
+  .agent-panel {
+    width: 100%;
+    border-left: 0;
+    border-top: 1px solid var(--hr);
+  }
+}
+
+/* ── agent: 图片预览 ───────────────────────────────────── */
+
+.agent-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: zoom-out;
+}
+
+.agent-preview img {
+  max-width: min(86vw, 1100px);
+  max-height: 82vh;
+  object-fit: contain;
+}
+
+.agent-preview__open {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* 键盘可达的关闭钮：右上角，与「原图 ↗」同用 mono 语言。 */
+.agent-preview__close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.agent-preview__close:hover,
+.agent-preview__close:focus-visible {
+  border-color: #fff;
+}
