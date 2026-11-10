@@ -3,6 +3,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import request from '@/request'
 import { useLoginUserStore } from '@/stores/user'
 import type { PatientExplanation } from '@/api/patientExplanation'
+import type { PatientAuthorization } from '@/api/patientAuthorization'
 import MedicalDisclaimer from '@/components/medical/MedicalDisclaimer.vue'
 
 type Task = { taskId: string; status: string }
@@ -15,6 +16,9 @@ const users = useLoginUserStore()
 const selectedId = ref('')
 const presentation = ref<PatientExplanation | null>(null)
 const reading = ref(false)
+const authorization = ref<PatientAuthorization | null>(null)
+const consent = ref(false)
+const saving = ref(false)
 let identityVersion = 0
 let listRequest = 0
 let detailRequest = 0
@@ -25,6 +29,7 @@ const detailClaims = computed(() => presentation.value?.result?.claims.filter(cl
 
 function closeDetails() {
   detailRequest++; selectedId.value = ''; presentation.value = null; reading.value = false
+  authorization.value = null; consent.value = false; saving.value = false
 }
 
 function stateText(status: string): string {
@@ -53,6 +58,7 @@ async function open(taskId: string) {
   const current = ++detailRequest
   const identity = identityVersion
   selectedId.value = taskId; presentation.value = null; reading.value = true; message.value = ''
+  authorization.value = null; consent.value = false; saving.value = false
   try {
     const response = await request.get(`/diagnosis-tasks/${encodeURIComponent(taskId)}/explanation`)
     if (identity !== identityVersion || current !== detailRequest) return
@@ -65,6 +71,53 @@ async function open(taskId: string) {
       presentation.value = null; message.value = '无法读取最新结果，请核对任务授权后重新打开。'
     }
   } finally { if (identity === identityVersion && current === detailRequest) reading.value = false }
+}
+
+async function prepareSave() {
+  if (!selectedId.value || saving.value) return
+  const taskId = selectedId.value
+  const current = detailRequest
+  const identity = identityVersion
+  authorization.value = null; consent.value = false; saving.value = true; message.value = ''
+  try {
+    const response = await request.get(`/diagnosis-tasks/${encodeURIComponent(taskId)}/save-authorization`)
+    if (current !== detailRequest || identity !== identityVersion) return
+    const value: PatientAuthorization = response.data.data
+    if (response.data.code !== 0 || !value || value.taskId !== taskId || !['OFFERED', 'APPROVED', 'RESTRICTED'].includes(value.status)) throw new Error()
+    if (value.status === 'OFFERED' && (!value.content?.explanation || !value.authorizationId || !value.contentDigest || !Number.isFinite(Date.parse(value.expiresAt)))) throw new Error()
+    authorization.value = value
+    if (value.status === 'OFFERED' && value.content) presentation.value = { taskId, status: 'AVAILABLE', stage: 'RESULT', message: '请阅读本次拟保存的辅助说明。', workNotes: [], result: value.content.explanation }
+    if (value.status === 'RESTRICTED') { presentation.value = null; message.value = '本次内容已受限，无法授权保存。' }
+  } catch {
+    if (current === detailRequest && identity === identityVersion) { presentation.value = null; message.value = '无法确认拟保存内容，请重新打开任务。' }
+  } finally { if (current === detailRequest && identity === identityVersion) saving.value = false }
+}
+
+async function approveSave() {
+  const offer = authorization.value
+  if (!offer || offer.status !== 'OFFERED' || !consent.value || saving.value) return
+  if (Date.parse(offer.expiresAt) <= Date.now()) {
+    authorization.value = null; consent.value = false; presentation.value = null; message.value = '授权内容已过期，请重新打开任务。'; return
+  }
+  const current = detailRequest
+  const identity = identityVersion
+  saving.value = true; message.value = ''
+  try {
+    const response = await request.post(`/diagnosis-tasks/${encodeURIComponent(offer.taskId)}/save-authorization/approve`, {
+      authorizationId: offer.authorizationId, expectedTaskVersion: offer.taskVersion, expectedDraftVersion: offer.draftVersion,
+      expectedEvidenceVersion: offer.evidenceVersion, expectedContentDigest: offer.contentDigest,
+    })
+    if (current !== detailRequest || identity !== identityVersion) return
+    const value: PatientAuthorization = response.data.data
+    if (response.data.code !== 0 || value?.taskId !== offer.taskId || value.authorizationId !== offer.authorizationId || value.status !== 'APPROVED'
+      || !value.receipt?.receiptId || value.receipt.taskId !== offer.taskId || value.receipt.contentDigest !== offer.contentDigest) throw new Error()
+    authorization.value = value; consent.value = false
+  } catch {
+    if (current === detailRequest && identity === identityVersion) {
+      authorization.value = null; consent.value = false; presentation.value = null
+      message.value = '保存未确认，请重新打开任务并查询保存状态与回执；重复批准不会创建重复记录。'
+    }
+  } finally { if (current === detailRequest && identity === identityVersion) saving.value = false }
 }
 
 function selectFile(event: Event) {
@@ -188,6 +241,24 @@ onUnmounted(() => { identityVersion++; listRequest++; detailRequest++ })
           <MedicalDisclaimer scope="review" :model-version="presentation.result.modelVersion" />
         </template>
       </template>
+      <section v-if="presentation?.status === 'AVAILABLE' || authorization?.receipt" class="save-authorization" aria-labelledby="save-heading">
+        <h3 id="save-heading">由你决定是否保存</h3>
+        <p class="intro">医生复核与保存授权相互独立。只有你明确同意后，才会创建正式记录；模型预测并非确诊。</p>
+        <button v-if="!authorization" type="button" :disabled="saving" data-action="prepare-save" @click="prepareSave">{{ saving ? '正在检查…' : '查看拟保存内容或查询回执' }}</button>
+        <template v-if="authorization?.status === 'OFFERED'">
+          <p class="intro">上方展示的是本次拟保存的完整辅助说明及来源，请阅读后决定。</p>
+          <p v-if="authorization.content">拟保存的模型预测：{{ authorization.content.modelPrediction }}；原始模型概率 <span class="numeric">{{ authorization.content.modelProbability }}%</span>。概率不代表临床可靠性，模型预测并非确诊。</p>
+          <p>本次授权有效期至 <time class="numeric">{{ new Date(authorization.expiresAt).toLocaleString() }}</time></p>
+          <label class="consent"><input v-model="consent" type="checkbox" :disabled="saving" />我已阅读本次内容，同意将其保存为我的正式诊断辅助记录。</label>
+          <button type="button" :disabled="!consent || saving" data-action="approve-save" @click="approveSave">{{ saving ? '正在保存…' : '同意并保存' }}</button>
+        </template>
+        <div v-if="authorization?.status === 'APPROVED' && authorization.receipt" role="status">
+          <p>已授权保存，可使用下方唯一回执核对本次记录。</p>
+          <p class="task-id">回执 {{ authorization.receipt.receiptId }}</p>
+          <p class="task-id">记录 {{ authorization.receipt.diagnosisId }} · 保存时间 {{ new Date(authorization.receipt.authorizedAt).toLocaleString() }}</p>
+        </div>
+      </section>
+      <button v-if="selectedId && presentation?.status !== 'AVAILABLE' && !authorization?.receipt && !reading" type="button" class="refresh" :disabled="saving" @click="prepareSave">查询保存状态与回执</button>
     </section>
   </main>
 </template>
@@ -231,5 +302,9 @@ button:focus-visible, summary:focus-visible { outline: 2px solid var(--iris-focu
 summary { cursor: pointer; color: var(--iris-accent); line-height: 1.6; }
 .source { padding: 10px 0; border-bottom: 1px solid var(--iris-line); }
 .source h4 { font-weight: 500; }
+.save-authorization { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--iris-line); }
+.save-authorization button { border-radius: var(--iris-radius); }
+.consent { display: flex; gap: 12px; align-items: start; line-height: 1.7; margin: 20px 0; }
+.consent input { margin-top: 6px; accent-color: var(--iris-accent); }
 @media (max-width: 700px) { .task-page { padding: 20px 18px 60px; } .kpi-strip { grid-template-columns: repeat(2, 1fr); } .kpi-card:nth-child(2) { border-right: 0; } .kpi-card:nth-child(-n+2) { border-bottom: 1px solid var(--iris-line); } .page-grid { grid-template-columns: 1fr; gap: 32px; } .dt-row { flex-wrap: wrap; } .dt-row > div { flex-basis: 100%; } .explanation { padding: 20px; } }
 </style>

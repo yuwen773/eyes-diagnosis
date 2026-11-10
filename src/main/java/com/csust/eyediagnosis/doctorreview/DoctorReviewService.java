@@ -125,6 +125,11 @@ public class DoctorReviewService {
 
     /** Trusted patient projection boundary; every read independently revalidates the approved material. */
     public Approved approvedForPatient(String taskId, long owner) {
+        return withApprovedForPatient(taskId, owner, (review, approved) -> approved);
+    }
+
+    /** Save consumers must write inside action so source and task locks span their commit. */
+    public <T> T withApprovedForPatient(String taskId, long owner, java.util.function.BiFunction<Detail, Approved, T> action) {
         var owned = jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? AND userId=?", taskId, owner);
         if (owned.isEmpty()) throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         String canonicalId = (String) owned.getFirst().get("taskId");
@@ -161,7 +166,7 @@ public class DoctorReviewService {
                             || !Set.of("normal", "amd", "cataract", "diabetes", "glaucoma", "hypertension", "myopia", "other").contains(response.getPredictedLabel())
                             || !Double.isFinite(response.getProbability()) || response.getProbability() < 0 || response.getProbability() > 100)
                         throw new ReviewConflict("推理未通过门禁");
-                    return new Approved(frozen.materials(), draft, response);
+                    return action.apply(current, new Approved(frozen.materials(), draft, response));
                 } catch (com.google.protobuf.InvalidProtocolBufferException | IllegalArgumentException invalid) {
                     throw new ReviewConflict("推理快照无效");
                 }
