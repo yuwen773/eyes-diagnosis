@@ -130,6 +130,15 @@ public class DoctorReviewService {
 
     /** Save consumers must write inside action so source and task locks span their commit. */
     public <T> T withApprovedForPatient(String taskId, long owner, java.util.function.BiFunction<Detail, Approved, T> action) {
+        return withApprovedForPatient(taskId, owner, action, true);
+    }
+
+    /** Follow-up reads revalidate under the same locks without changing publication or save state. */
+    public <T> T withApprovedForPatientReadOnly(String taskId, long owner, java.util.function.BiFunction<Detail, Approved, T> action) {
+        return withApprovedForPatient(taskId, owner, action, false);
+    }
+
+    private <T> T withApprovedForPatient(String taskId, long owner, java.util.function.BiFunction<Detail, Approved, T> action, boolean restrictInvalid) {
         var owned = jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? AND userId=?", taskId, owner);
         if (owned.isEmpty()) throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         String canonicalId = (String) owned.getFirst().get("taskId");
@@ -172,7 +181,7 @@ public class DoctorReviewService {
                 }
             });
         } catch (ControlledEvidenceRetriever.EvidenceUnavailable | ReviewConflict invalid) {
-            transactions.executeWithoutResult(tx -> {
+            if (restrictInvalid) transactions.executeWithoutResult(tx -> {
                 jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? AND userId=? FOR UPDATE", canonicalId, owner);
                 jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND userId=? AND BINARY status<>BINARY 'RESTRICTED'", canonicalId, owner);
             });

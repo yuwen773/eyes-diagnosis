@@ -28,6 +28,90 @@ describe('patient diagnosis tasks', () => {
     vi.mocked(request.get).mockResolvedValue({ data: { code: 0, data: [] } })
   })
 
+  it('asks about the selected published result and displays only cited plain text', async () => {
+    approvedResponses()
+    vi.mocked(request.post).mockResolvedValueOnce({ data: { code: 0, data: {
+      taskId: 'task-1', status: 'RELATED_INFORMATION', message: '仅列出已发布的相关说明',
+      claims: [{ id: 'next', section: 'NEXT_STEP', text: '<b>获准的下一步</b>', references: [{ citationIndex: 0, quote: '眼科检查' }] }],
+      sources: [{ citationIndex: 0, title: '合成受控来源', source: 'javascript:alert(1)', excerpt: '眼科检查', documentVersion: 'v1', governanceVersion: 1 }],
+    } } })
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    await wrapper.get('#follow-up-question').setValue('我下一步该做什么？')
+    await wrapper.get('[data-action=follow-up]').trigger('submit')
+    await flushPromises()
+    expect(request.post).toHaveBeenCalledWith('/diagnosis-tasks/task-1/follow-ups', { question: '我下一步该做什么？' })
+    expect(wrapper.text()).toContain('仅列出已发布的相关说明')
+    expect(wrapper.text()).toContain('合成受控来源')
+    expect(wrapper.html()).toContain('&lt;b&gt;获准的下一步&lt;/b&gt;')
+    expect(wrapper.find('a[href^="javascript:"]').exists()).toBe(false)
+    expect(wrapper.get('a[data-action=general-health]').attributes('href')).toBe('/agent')
+  })
+
+  it('shows an honest insufficient evidence response without displaying supplied clinical content', async () => {
+    approvedResponses()
+    vi.mocked(request.post).mockResolvedValueOnce({ data: { code: 0, data: {
+      taskId: 'task-1', status: 'INSUFFICIENT_EVIDENCE', message: '未找到合格依据',
+      claims: [{ id: 'unsafe', text: '不应展示的推测' }], sources: [{ title: '不应展示的来源' }],
+    } } })
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-action=follow-up] button').attributes('disabled')).toBeDefined()
+    await wrapper.get('#follow-up-question').setValue('未知问题')
+    await wrapper.get('[data-action=follow-up]').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('未找到合格依据')
+    expect(wrapper.text()).not.toContain('不应展示')
+    expect(wrapper.find('[data-action=approve-save]').exists()).toBe(false)
+  })
+
+  it.each(['RESTRICTED', 'FUTURE', 'wrong-task', 'network'])('closes old published content when a follow-up cannot be trusted: %s', async state => {
+    approvedResponses()
+    if (state === 'network') vi.mocked(request.post).mockRejectedValueOnce(new Error('network'))
+    else vi.mocked(request.post).mockResolvedValueOnce({ data: { code: 0, data: {
+      taskId: state === 'wrong-task' ? 'task-2' : 'task-1', status: state, message: '不可展示的原始响应', claims: [], sources: [],
+    } } })
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.get('[data-action=open]').trigger('click')
+    await flushPromises()
+    await wrapper.get('#follow-up-question').setValue('眼科检查')
+    await wrapper.get('[data-action=follow-up]').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('已关闭旧内容')
+    expect(wrapper.text()).not.toContain('已审核的合成主要信息')
+    expect(wrapper.text()).not.toContain('不可展示的原始响应')
+  })
+
+  it.each(['account', 'refresh', 'task'])('discards a late follow-up after changing %s', async change => {
+    approvedResponses()
+    vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: [
+      { taskId: 'task-1', status: 'WAITING_REVIEW' }, { taskId: 'task-2', status: 'WAITING_REVIEW' },
+    ] } })
+    const wrapper = mount(DiagnosisTasksPage)
+    await flushPromises()
+    await wrapper.findAll('[data-action=open]')[0]!.trigger('click')
+    await flushPromises()
+    let finish!: (value: unknown) => void
+    vi.mocked(request.post).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    await wrapper.get('#follow-up-question').setValue('眼科检查')
+    await wrapper.get('[data-action=follow-up]').trigger('submit')
+    if (change === 'account') useLoginUserStore().setLoginUser({ id: 99, userRole: 'user' })
+    else if (change === 'refresh') await wrapper.findAll('button').find(button => button.text() === '刷新状态')!.trigger('click')
+    else {
+      vi.mocked(request.get).mockResolvedValueOnce({ data: { code: 0, data: { ...approvedView, taskId: 'task-2' } } })
+      await wrapper.findAll('[data-action=open]')[1]!.trigger('click')
+    }
+    await flushPromises()
+    finish({ data: { code: 0, data: { taskId: 'task-1', status: 'RELATED_INFORMATION', message: '迟到的追问', claims: [], sources: [] } } })
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('迟到的追问')
+  })
+
   it('opens approved layered information and expands sources and uncertainty as plain text', async () => {
     const result = {
       claims: [
