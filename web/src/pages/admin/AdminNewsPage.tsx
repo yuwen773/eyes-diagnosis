@@ -168,7 +168,7 @@ export function AdminNewsPage(): ReactElement {
       title: "状态",
       width: "104px",
       render: (row) => {
-        // status 由后端 NewsVO 暴露（0 草稿 / 1 已发布 / 2 下架）；缺省读「未知」。
+        // status 由后端 NewsVO 暴露（0 草稿 / 3 待审核 / 1 已发布 / 2 下架）；缺省读「未知」。
         const view = newsStatusView(row.status)
         return <RiskTag risk={view.risk}>{view.label}</RiskTag>
       },

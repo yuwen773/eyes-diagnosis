@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, newsStatusView, rankDistribution, reviewView } from "./adminDomain"
+import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, newsStatusOptionsFor, newsStatusView, rankDistribution, reviewView } from "./adminDomain"
 
 describe("reviewView", () => {
   it("aiRejected 优先于一切", () => {
@@ -39,10 +39,29 @@ describe("newsStatusView", () => {
     expect(newsStatusView(1)).toEqual({ label: "已发布", risk: "normal" })
     expect(newsStatusView(2)).toEqual({ label: "已下架", risk: "critical" })
   })
+  it("3 是待审核（后端 PENDING_REVIEW），不能再读成未知", () => {
+    expect(newsStatusView(3)).toEqual({ label: "待审核", risk: "attention" })
+  })
   it("缺省读「未知」而不是「草稿」——老数据没写状态不能冒充草稿", () => {
     expect(newsStatusView(undefined)).toEqual({ label: "未知", risk: "unknown" })
     expect(newsStatusView(null)).toEqual({ label: "未知", risk: "unknown" })
     expect(newsStatusView(9)).toEqual({ label: "未知", risk: "unknown" })
+  })
+})
+
+describe("newsStatusOptionsFor", () => {
+  it("草稿可保持草稿、提交待审核或直接发布", () => {
+    expect(newsStatusOptionsFor(0).map((o) => o.value)).toEqual([0, 3, 1])
+  })
+  it("已发布只能下架或退回草稿，不能直接改回待审核", () => {
+    expect(newsStatusOptionsFor(1).map((o) => o.value)).toEqual([0, 1, 2])
+  })
+  it("待审核可发布、驳回草稿或下架", () => {
+    expect(newsStatusOptionsFor(3).map((o) => o.value)).toEqual([0, 3, 1, 2])
+  })
+  it("状态未知时返回全量，老数据仍可编辑", () => {
+    expect(newsStatusOptionsFor(undefined).map((o) => o.value)).toEqual([0, 3, 1, 2])
+    expect(newsStatusOptionsFor(9).map((o) => o.value)).toEqual([0, 3, 1, 2])
   })
 })
 
