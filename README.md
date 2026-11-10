@@ -23,7 +23,7 @@
 | 角色 | 技术栈 | 端口 |
 |------|--------|------|
 | **前端（产品）** | React 19 + TypeScript + Vite + Tailwind v4 —— 代码在 `web/` | `:5173` |
-| 前端（历史线） | Vue 3 + TypeScript + Vite + Ant Design Vue 4 + Tailwind CSS v4 —— 代码在 `frontend/` | `:5173` |
+| 前端（已弃用） | Vue 3 + TypeScript + Vite + Ant Design Vue 4 + Tailwind CSS v4 —— 代码在 `frontend/`（deprecated） | `:5173` |
 | Backend (Java) | Spring Boot 3.5.6 + Spring AI 1.1.2 + MyBatis Plus 3.5.12 | `:8081/api` |
 | Algorithm (Py) | PyTorch + EfficientNet-B4 + gRPC + MCP | `:50051` |
 
@@ -84,7 +84,10 @@ npm run dev            # 访问 http://localhost:5173，/api 代理到 :8081
 门禁：`npm run typecheck && npm run test && npm run build && npm run lint`
 （CI 里是根 `verify.yml` 的 `web` job；`web/.github/` 下的工作流不会被执行）。
 
-**Vue 历史线（仅作参考）**：
+**Vue 线（已弃用 / deprecated，仅作回溯参考）**：
+
+> `frontend/` 自 2026-11-10 起停止开发，不再是产品前端、也不作为设计参考。
+> 新功能与修复一律进 `web/`；保留与本文档是为了能回看旧实现。
 
 ```bash
 cd frontend
@@ -207,7 +210,7 @@ eye-diagnosis/
 ├── web/                    # React 产品前端（git subtree，原 eyes-diagnosis-web）
 │   ├── src/
 │   └── e2e/                # Playwright 冒烟（不进 CI，依赖真后端）
-├── frontend/               # Vue 3 前端（历史线）
+├── frontend/               # Vue 3 前端（已弃用 / deprecated）
 │   └── src/
 │       ├── pages/          # 页面组件
 │       ├── components/     # 通用组件

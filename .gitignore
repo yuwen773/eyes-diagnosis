@@ -95,13 +95,18 @@ CLAUDE.local.md
 # 工具运行时状态
 /.superpowers/
 /.workbuddy/
+/.pi/
 /frontend/.omc/
+/frontend/.impeccable/
 /design-previews/
 node_modules/
 .npm-cache/
 
-# React 前端（web/）已由 git subtree 纳入本仓库：
-# 内容真源仍是独立仓库 eyes-diagnosis-web，本仓库只在发布分支上保留一份快照。
+# CodeGraph 本地索引（由 `codegraph init` 生成，不入库）
+/.codegraph/
+
+# React 前端（web/）已由 git subtree 纳入本仓库，是产品前端的唯一真源；
+# 原独立仓库 eyes-diagnosis-web 已于 2026-11-10 归档。
 
 # 真后端联调用的临时 CDP 脚本（一次性排查产物）
 /.tmp-e2e/

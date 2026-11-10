@@ -5,7 +5,7 @@
 >
 > 2026-11-10 定版：本仓库有两条前端线，此前各跑一套品牌色且都自称合规。
 > 现统一为——**React 线 `web/` 是产品前端，信号橙 `#d9541f` 是品牌强调色**；
-> Vue 线 `frontend/` 是历史线，仍用旧的青绿 `--iris-*`，不再作为设计参考。
+> Vue 线 `frontend/` **已弃用（deprecated）**，仍用旧的青绿 `--iris-*`，不再作为设计参考。
 > 详见 §1。
 >
 > 硬约束：后端 API 契约已冻结（Architecture Frozen）。前端只换皮、换结构，
@@ -29,7 +29,7 @@
 
 | | `web/`（React） | `frontend/`（Vue） |
 |---|---|---|
-| 状态 | **产品前端**，本文件管辖 | 历史线，保留可运行 |
+| 状态 | **产品前端**，本文件管辖 | **已弃用（deprecated）**，保留可运行 |
 | 品牌强调色 | 信号橙 `#d9541f`（`--signal`） | 药用青绿 `#1b7f6b`（`--iris-accent`） |
 | 令牌命名 | `--paper-* / --ink-* / --signal / --risk-*` | `--iris-*` |
 | 令牌实现 | `web/src/styles/tokens.css` | `frontend/src/styles/design-system/variables.css` |
