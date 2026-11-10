@@ -125,7 +125,7 @@ public class NewsController {
     private String newsListCacheKey(String queryCondition) {
         String generation = stringRedisTemplate.opsForValue().get(NEWS_LIST_CACHE_GENERATION);
         String hashKey = DigestUtils.md5DigestAsHex(
-                (generation == null ? "0" : generation + ":" + queryCondition).getBytes());
+                ((generation == null ? "0" : generation) + ":" + queryCondition).getBytes());
         return NEWS_LIST_CACHE_PREFIX + hashKey;
     }
 
@@ -210,17 +210,13 @@ public class NewsController {
     }
 
     @PostMapping("/edit")
-    @Operation(summary ="修改新闻")
+    @Operation(summary ="创建或修改新闻")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO,
-                                            HttpServletRequest request){
+    public BaseResponse<Long> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO,
+                                         HttpServletRequest request){
         //查看是否为空
         if (newsUpdateDTO == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        if (newsUpdateDTO.getId() == null) {
-            // 本系统不支持新建新闻，编辑页必须携带已存在的新闻 id
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持新建新闻，请指定新闻 id");
         }
         // 唯一构造入口：封面 coverImage→coverImg 的显式映射在方法内完成
         News news = buildNewsForEdit(newsUpdateDTO);
@@ -228,15 +224,14 @@ public class NewsController {
         String summary = buildSummary(newsUpdateDTO.getContent());
         news.setSummary(summary);
         news.setEditTime(new java.util.Date());
-        // 生命周期 module 承担：状态迁移校验、审核人/时间、更新、审计留痕。
-        // 编辑页的「保存草稿 / 发布」按钮会一并送 status，因此状态迁移也经由此处；
-        // note（审核意见/下架原因）可选透传。module 内部只走 updateById，
-        // 缺行影响 0 行 → false，天然「只编辑不新建」。
-        boolean result = newsLifecycleService.applyEdit(
+        // 生命周期 module 承担：创建（id 为空）、状态迁移校验、审核人/时间、
+        // 更新、审计留痕。编辑页的「保存草稿 / 发布」按钮会一并送 status；
+        // note（审核意见/下架原因）可选透传。返回落库后的 id，供新增后回填路由。
+        Long newsId = newsLifecycleService.applyEdit(
                 news, userService.getLoginUser(request), newsUpdateDTO.getNote());
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(newsId == null, ErrorCode.OPERATION_ERROR);
         evictNewsListCache();
-        return ResultUtils.success(true);
+        return ResultUtils.success(newsId);
     }
 
     /**

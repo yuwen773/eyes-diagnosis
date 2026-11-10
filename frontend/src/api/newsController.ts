@@ -16,9 +16,9 @@ export async function deleteNews(
   })
 }
 
-/** 修改新闻 POST /news/edit */
+/** 创建或修改新闻 POST /news/edit */
 export async function updateNews(body: API.NewsUpdateDTO, options?: { [key: string]: any }) {
-  return request<API.BaseResponseBoolean>('/news/edit', {
+  return request<API.BaseResponseLong>('/news/edit', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

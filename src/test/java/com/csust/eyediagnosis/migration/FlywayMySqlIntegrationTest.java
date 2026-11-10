@@ -59,9 +59,9 @@ class FlywayMySqlIntegrationTest {
         }
 
         // ② 只验「表存在」不够：V15 的 t_news 对 content/publishTime/coverImg
-        // 有 NOT NULL 且无默认值，旧的无 id 上传分支会撞 1364。这里按真实写入路径
-        // 填满必填列，确认空库 migrate 后 news 可写；顺带读回 V17 新列的默认值，
-        // 验证存量语义（featured=0 / isDelete=0）真的落在库里。
+        // 有 NOT NULL 且无默认值。NewsLifecycleService 的创建分支必须填满这几列
+        // （空串/当前时间占位），这里按真实写入路径验一次，顺带读回 V17 新列的
+        // 默认值，确认存量语义（featured=0 / isDelete=0）真的落在库里。
         try (Connection connection = DriverManager.getConnection(url, user, password)) {
             connection.setCatalog(schema);
             try (PreparedStatement insert = connection.prepareStatement(

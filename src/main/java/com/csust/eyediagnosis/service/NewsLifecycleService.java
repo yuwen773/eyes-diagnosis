@@ -39,14 +39,18 @@ public class NewsLifecycleService {
 
     /**
      * 编辑通道：校验状态迁移、落审核人/时间、更新、写审计。
-     * 库中无此 id 时返回 false，由调用方兜成 OPERATION_ERROR。
+     * id 为空时创建草稿：这是「新增新闻」唯一的落库入口，填满 V15 的 NOT NULL 列
+     * 后插入，再写一条 CREATE 审计。返回落库后的新闻 id，供编辑页回填路由。
      */
     @Transactional
-    public boolean applyEdit(News patch, User actor, String note) {
-        ThrowUtils.throwIf(patch == null || patch.getId() == null, ErrorCode.PARAMS_ERROR);
+    public Long applyEdit(News patch, User actor, String note) {
+        ThrowUtils.throwIf(patch == null, ErrorCode.PARAMS_ERROR);
+        if (patch.getId() == null) {
+            return create(patch, actor, note);
+        }
         News current = selectStatus(patch.getId());
         if (current == null) {
-            return false;
+            return null;
         }
         Integer from = current.getStatus();
         Integer to = patch.getStatus();
@@ -59,7 +63,31 @@ public class NewsLifecycleService {
         int rows = newsMapper.updateById(patch);
         audit(patch.getId(), actor, to == null ? "EDIT" : actionFor(from, to),
                 from, to == null ? from : to, changedFields(patch, note));
-        return rows > 0;
+        return rows > 0 ? patch.getId() : null;
+    }
+
+    private Long create(News patch, User actor, String note) {
+        Integer to = patch.getStatus();
+        ThrowUtils.throwIf(to != null && !NewsStatus.isValid(to), ErrorCode.PARAMS_ERROR,
+                "非法初始状态: " + NewsStatus.label(to));
+        ThrowUtils.throwIf(to != null && to.intValue() != NewsStatus.DRAFT
+                        && to.intValue() != NewsStatus.PENDING_REVIEW,
+                ErrorCode.PARAMS_ERROR, "新建新闻只能存草稿或提交审核");
+        Date now = new Date();
+        patch.setStatus(to == null ? NewsStatus.DRAFT : to);
+        patch.setUserId(actorId(actor));
+        // V15 的 t_news 对 content / coverImg / publishTime 有 NOT NULL 约束。
+        // 前端首次保存可能还没填封面，用空串占位；publishTime 作为创建时间落库。
+        patch.setContent(patch.getContent() == null ? "" : patch.getContent());
+        patch.setCoverImg(patch.getCoverImg() == null ? "" : patch.getCoverImg());
+        patch.setTitle(patch.getTitle() == null ? "" : patch.getTitle());
+        patch.setPublishTime(now);
+        patch.setEditTime(now);
+        int rows = newsMapper.insert(patch);
+        ThrowUtils.throwIf(rows != 1, ErrorCode.OPERATION_ERROR);
+        audit(patch.getId(), actor, "CREATE", null, patch.getStatus(),
+                changedFields(patch, note));
+        return patch.getId();
     }
 
     /** 软删除：@TableLogic 把 deleteById 变成 UPDATE isDelete=1，这里只留痕。 */

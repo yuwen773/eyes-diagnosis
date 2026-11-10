@@ -17,20 +17,22 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 新闻生命周期写入 module 的契约：缺行不新建、非法迁移被挡、审核人/时间落盘、
- * 每次写都留审计、软删走逻辑删除。
+ * 新闻生命周期写入 module 的契约：缺行不新建、创建填满 NOT NULL 列、非法迁移被挡、
+ * 审核人/时间落盘、每次写都留审计、软删走逻辑删除。
  *
- * <p>测试缝就是 module 的 interface（三个方法），mapper 是内部 adapter。
- * 这正是「只编辑不新建」从控制器层移进来的那道防线。
+ * <p>测试缝就是 module 的 interface（applyEdit / softDelete），mapper 是内部 adapter。
+ * applyEdit 的 id 为空分支是「新增新闻」唯一落库入口，返回新 id 供编辑页回填路由。
  */
 class NewsLifecycleServiceTest {
 
@@ -66,14 +68,59 @@ class NewsLifecycleServiceTest {
     }
 
     @Test
-    void missingRowReturnsFalseAndNeverInserts() {
+    void createWithoutIdFillsNotNullColumnsAndAudits() {
+        // ASSIGN_ID 由 MP 在 insert 时回填；mock 里手动模拟这一步。
+        doAnswer(invocation -> {
+            News inserted = invocation.getArgument(0);
+            inserted.setId(99L);
+            return 1;
+        }).when(newsMapper).insert(any(News.class));
+
+        News patch = new News();
+        patch.setTitle("新资讯");
+        patch.setContent("正文");
+
+        assertEquals(Long.valueOf(99L), lifecycle.applyEdit(patch, admin, null));
+
+        ArgumentCaptor<News> inserted = ArgumentCaptor.forClass(News.class);
+        verify(newsMapper).insert(inserted.capture());
+        News row = inserted.getValue();
+        assertEquals("新资讯", row.getTitle());
+        assertEquals("正文", row.getContent());
+        assertEquals(Integer.valueOf(NewsStatus.DRAFT), row.getStatus());
+        assertEquals(Long.valueOf(7L), row.getUserId());
+        assertEquals("", row.getCoverImg());       // V15 NOT NULL 占位
+        assertNotNull(row.getPublishTime());      // V15 NOT NULL
+        assertNotNull(row.getEditTime());
+
+        NewsAudit audit = captureAudit();
+        assertEquals("CREATE", audit.getAction());
+        assertEquals("DRAFT", audit.getToStatus());
+        assertEquals(Long.valueOf(99L), audit.getNewsId());
+        verify(newsMapper, never()).selectOne(any());
+        verify(newsMapper, never()).updateById(any(News.class));
+    }
+
+    @Test
+    void createRejectsPublishingDirectly() {
+        News patch = new News();
+        patch.setStatus(NewsStatus.PUBLISHED);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> lifecycle.applyEdit(patch, admin, null));
+        assertEquals(ErrorCode.PARAMS_ERROR.getCode(), ex.getCode());
+        verify(newsMapper, never()).insert(any(News.class));
+    }
+
+    @Test
+    void missingRowReturnsNullAndNeverInserts() {
         when(newsMapper.selectOne(any())).thenReturn(null);
 
         News patch = new News();
         patch.setId(1L);
         patch.setTitle("标题");
 
-        assertFalse(lifecycle.applyEdit(patch, admin, null));
+        assertNull(lifecycle.applyEdit(patch, admin, null));
         verify(newsMapper, never()).updateById(any(News.class));
         verify(newsAuditMapper, never()).insert(any(NewsAudit.class));
     }
@@ -88,7 +135,7 @@ class NewsLifecycleServiceTest {
         patch.setTitle("新标题");
         patch.setContent("新正文");
 
-        assertTrue(lifecycle.applyEdit(patch, admin, null));
+        assertEquals(Long.valueOf(1L), lifecycle.applyEdit(patch, admin, null));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
         verify(newsMapper).updateById(written.capture());
@@ -125,7 +172,7 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PENDING_REVIEW));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PUBLISHED),
+        assertEquals(Long.valueOf(1L), lifecycle.applyEdit(patchWithStatus(NewsStatus.PUBLISHED),
                 admin, "内容核实无误"));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
@@ -147,7 +194,7 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.DRAFT));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PENDING_REVIEW),
+        assertEquals(Long.valueOf(1L), lifecycle.applyEdit(patchWithStatus(NewsStatus.PENDING_REVIEW),
                 admin, null));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
@@ -162,7 +209,7 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectOne(any())).thenReturn(existing(NewsStatus.PUBLISHED));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.OFFLINE),
+        assertEquals(Long.valueOf(1L), lifecycle.applyEdit(patchWithStatus(NewsStatus.OFFLINE),
                 admin, "数据过期，撤回"));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);

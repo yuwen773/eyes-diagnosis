@@ -17,7 +17,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Method;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,7 +49,7 @@ class NewsWritePathTest {
         @SuppressWarnings("unchecked")
         ValueOperations<String, String> valueOps = mock(ValueOperations.class);
         when(redis.opsForValue()).thenReturn(valueOps);
-        when(lifecycle.applyEdit(any(News.class), any(), any())).thenReturn(true);
+        when(lifecycle.applyEdit(any(News.class), any(), any())).thenReturn(123L);
 
         NewsController controller = new NewsController();
         ReflectionTestUtils.setField(controller, "newsLifecycleService", lifecycle);
@@ -66,6 +69,30 @@ class NewsWritePathTest {
         verify(lifecycle).applyEdit(patch.capture(), any(), note.capture());
         assertEquals(Integer.valueOf(3), patch.getValue().getStatus());
         assertEquals("请复核数据出处", note.getValue());
+    }
+
+    @Test
+    void cacheKeyKeepsQueryConditionWhenGenerationIsAbsent() throws Exception {
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        when(redis.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("diagnosis:newsListGeneration")).thenReturn(null);
+
+        NewsController controller = new NewsController();
+        ReflectionTestUtils.setField(controller, "stringRedisTemplate", redis);
+
+        Method keyMethod = NewsController.class.getDeclaredMethod(
+                "newsListCacheKey", String.class);
+        keyMethod.setAccessible(true);
+
+        String adminPage = (String) keyMethod.invoke(controller, "page=1&visibleOnly=false");
+        String publicPage = (String) keyMethod.invoke(controller, "page=2&visibleOnly=true");
+        assertNotEquals(adminPage, publicPage);
+        // 世代键出现后，同一 query 的 key 必须随世代变化。
+        when(valueOps.get("diagnosis:newsListGeneration")).thenReturn("2");
+        assertNotEquals(adminPage,
+                (String) keyMethod.invoke(controller, "page=1&visibleOnly=false"));
     }
 
     @Test

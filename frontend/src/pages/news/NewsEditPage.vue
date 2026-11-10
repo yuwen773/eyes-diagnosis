@@ -70,10 +70,17 @@ const beforeUpload = (file: File) => {
 
 const handleUpload = async ({ file }: { file: File }) => {
   const id = Number(route.params.id)
+  // 新增新闻还没有 id：先「保存草稿」创建记录并回填路由，再上传封面。
+  if (!route.params.id) {
+    message.warning('请先保存草稿，再上传封面')
+    saving.value = false
+    return
+  }
   const res = await uploadCoverImage({ newsUploadDTO: { id } }, {}, file)
   if (res.data.data && res.data.code === 0) {
     message.success('封面图片上传成功')
     previewImage.value = res.data.data
+    formState.coverImage = res.data.data
   } else {
     message.error('封面图片上传失败')
   }
@@ -99,19 +106,30 @@ const handleUploadImg = async (files: File[], callback: (urls: string[]) => void
   callback(urls)
 }
 
+const saveNews = async (status: 0 | 1) => {
+  const existingId = route.params.id ? Number(route.params.id) : undefined
+  const res = await updateNews({
+    ...(existingId !== undefined ? { id: existingId } : {}),
+    title: formState.title,
+    content: formState.content,
+    coverImage: formState.coverImage,
+    status,
+  })
+  if (res.data.code !== 0 || !res.data.data) {
+    throw new Error(res.data.msg || '保存失败')
+  }
+  // /news/edit 在 id 为空时创建记录并返回新 id；回填路由后后续保存、封面上传都带 id。
+  if (existingId === undefined) {
+    await router.replace({ path: `/news/edit/${res.data.data}` })
+  }
+  return res.data.data
+}
+
 const handleSave = async () => {
   saving.value = true
   try {
-    const res = await updateNews({
-      id: Number(route.params.id),
-      title: formState.title,
-      content: formState.content,
-      coverImage: formState.coverImage,
-      status: 0,
-    })
-    if (res.data.code === 0 && res.data.data) {
-      message.success('保存成功')
-    }
+    await saveNews(0)
+    message.success('保存成功')
   } catch {
     message.error('保存失败')
   } finally {
@@ -122,19 +140,11 @@ const handleSave = async () => {
 const handlePublish = async () => {
   publishing.value = true
   try {
-    const res = await updateNews({
-      id: Number(route.params.id),
-      title: formState.title,
-      content: formState.content,
-      coverImage: formState.coverImage,
-      status: 1,
+    const newsId = await saveNews(1)
+    message.success('发布成功')
+    router.push({
+      path: `/news/${newsId}`,
     })
-    if (res.data.code === 0 && res.data.data) {
-      message.success('发布成功')
-      router.push({
-        path: `/news/${Number(route.params.id)}`,
-      })
-    }
   } catch {
     message.error('发布失败')
   } finally {
