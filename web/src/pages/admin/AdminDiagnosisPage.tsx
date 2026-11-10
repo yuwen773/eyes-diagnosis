@@ -289,6 +289,8 @@ export function AdminDiagnosisPage(): ReactElement {
           />
           <FactRow label="严重程度" value={severityLabel(detail.severity)} />
           <FactRow label="模型版本" value={detail.modelVersion || "—"} mono />
+          <FactRow label="预处理版本" value={detail.preprocessVersion || "—"} mono />
+          <FactRow label="推理策略版本" value={detail.inferencePolicyVersion || "—"} mono />
         </dl>
 
         <section className="admin-diagnosis__section">

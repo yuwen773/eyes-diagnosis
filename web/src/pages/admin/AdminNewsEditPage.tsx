@@ -10,7 +10,7 @@ import {
   uploadNewsCover,
   type AdminNews,
 } from "@/lib/adminApi"
-import { NEWS_STATUS_OPTIONS, newsContentValid } from "@/lib/adminDomain"
+import { newsContentValid, newsStatusOptionsFor } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
@@ -21,16 +21,18 @@ type View = { data: AdminNews | null; fault: ErrorDetail | null; loading: boolea
 
 /** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。
  *  status 缺省表示「后端没给」（老数据）——保存时省略该键，靠 MyBatis-Plus
- *  NOT_NULL 策略保留库中现值，绝不凭空把已发布新闻写成草稿。 */
-type Form = { title: string; content: string; coverImage?: string; status?: number }
+ *  NOT_NULL 策略保留库中现值，绝不凭空把已发布新闻写成草稿。
+ *  note 是审核意见 / 下架原因；后端 NewsVO 只读暴露 offlineReason，编辑时回填。 */
+type Form = { title: string; content: string; coverImage?: string; status?: number; note?: string }
 
-const EMPTY_FORM: Form = { title: "", content: "" }
+/** 新建默认草稿：后端在 status 缺席时也落草稿，显式给出让下拉能显示当前值。 */
+const EMPTY_FORM: Form = { title: "", content: "", status: 0 }
 
 const MAX_COVER_BYTES = 5 * 1024 * 1024
 const COVER_ACCEPT = "image/jpeg,image/png"
 const SUMMARY_HINT = "正文至少 30 字（后端以正文前 30 字生成摘要）"
-/** 新建模式降级引导文案：控制器裁定，对齐 Vue 版实际能力（见文件头注释）。 */
-const NEW_GUIDE = "后端暂不支持新建，请从列表选择一条新闻编辑"
+/** 新建模式封面引导：uploadCover 需要已存在的 id，首次保存后才能上传。 */
+const NEW_COVER_HINT = "新建保存后会生成记录并进入编辑模式，之后可上传封面。"
 
 /** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
 function coverProblem(file: File): string | null {
@@ -50,18 +52,15 @@ function coverProblem(file: File): string | null {
  * 灌表单，加载/失败走页内三态；取数沿用 requestSeq 递增序号挡过期响应（StrictMode
  * 双挂载下只有最后一次写 view）。
  *
- * 新建模式是「降级引导」（控制器裁定，对齐 Vue 版实际能力）：后端
- * NewsController.updateNews 对 id==null 直接抛 PARAMS_ERROR，且 Vue 版所谓「新建」
- * 也只是文案——其路由 /news/edit/:id 恒带 id、handleSave 硬编码
- * Number(route.params.id)，Vue 实际也没有能跑通的新建路径。因此保留
- * /admin/news/new/edit 路由与空表单（标题 / 正文 / 预览仍可用于撰写草稿参考），
- * 但保存按钮禁用并给出行内说明，不向后端发注定失败的请求。
+ * 新建模式直接走 `POST /news/edit`：后端在 id 为空时创建记录并返回新 id
+ * （NewsLifecycleService.applyEdit → create）。保存成功后用 replace 跳到
+ * `/admin/news/:id/edit`，后续保存与封面上传都带 id；封面在拿到 id 前不可传。
  *
- * 编辑模式保存有两条硬规矩：一是 newsContentValid 的 30 字守卫（后端
- * substring(0,30) 对短文会 500）；二是成功留在本页用页内成功条。
- * 封面仅编辑模式可传（uploadCover 需要已存在的 id）；成功把返回 url 写回表单，
- * 清除封面把 coverImage 置 undefined，保存时以空串显式上送（后端 NOT_NULL 策略
- * 会丢 null，空串才会真正写入库），保存后生效。
+ * 保存有两条硬规矩：一是 newsContentValid 的 30 字守卫（后端按剥标签后的可见
+ * 文本判定，短文返回业务错误码）；二是成功留在本页用页内成功条。
+ * 状态下拉按后端合法迁移表收窄（newsStatusOptionsFor），并透传 note 作为
+ * 审核意见 / 下架原因。清除封面把 coverImage 置 undefined，保存时以空串显式上送
+ * （后端 NOT_NULL 策略会丢 null，空串才会真正写入库），保存后生效。
  */
 export function AdminNewsEditPage(): ReactElement {
   const { id } = useParams()
@@ -112,6 +111,7 @@ export function AdminNewsEditPage(): ReactElement {
           content: isHtml ? htmlToMarkdown(raw) : raw,
           coverImage: data.coverImage ?? undefined,
           status: data.status ?? undefined,
+          note: data.offlineReason ?? undefined,
         })
         setView({ data, fault: null, loading: false })
       },
@@ -133,8 +133,7 @@ export function AdminNewsEditPage(): ReactElement {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    // 新建模式保存按钮禁用 + 引导说明，这里再兜一道：绝不向后端发注定被拒的请求。
-    if (saving || isNew) return
+    if (saving) return
     setFormFault(null)
     setActionError(null)
     setSuccess(null)
@@ -152,18 +151,25 @@ export function AdminNewsEditPage(): ReactElement {
       // status 只在后端给过时才上送：键缺席 → DTO 的 status 为 null →
       // MyBatis-Plus NOT_NULL 策略跳过 UPDATE SET，库中现值保持。老数据（NewsVO
       // 没有 status）因此不会被一次编辑静默降成草稿；新数据则能真正改发布状态。
-      await saveNews({
+      const savedId = await saveNews({
         ...(newsId ? { id: newsId } : {}),
         title: form.title,
         content,
         ...(form.status === undefined ? {} : { status: form.status }),
+        ...(form.note?.trim() ? { note: form.note.trim() } : {}),
         // 无条件上送 coverImage：后端 MyBatis-Plus 默认 FieldStrategy.NOT_NULL，
         // null 字段不进 UPDATE SET。清封面时若用 `...(coverImage ? {…} : {})` 丢键，
         // DTO 反序列化成 null → 旧封面被保留，前端却提示「已清除」，静默 no-op。
         // 用空串（非 null）显式写库，才能把「清除」与「不改」区分开。
         coverImage: form.coverImage ?? "",
       })
-      setSuccess("已保存")
+      if (isNew) {
+        // 新建后回填路由：组件不卸载，下一次保存与封面上传都带 id。
+        navigate(`/admin/news/${savedId}/edit`, { replace: true })
+        setSuccess("已创建，可继续上传封面或修改")
+      } else {
+        setSuccess("已保存")
+      }
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -269,18 +275,17 @@ export function AdminNewsEditPage(): ReactElement {
                 <button
                   className="btn btn--sm"
                   type="submit"
-                  disabled={saving || isNew}
-                  title={isNew ? NEW_GUIDE : undefined}
+                  disabled={saving}
                 >
-                  {saving ? "保存中…" : "保存"}
+                  {saving ? "保存中…" : isNew ? "创建" : "保存"}
                 </button>
               </div>
             </div>
           </Toolbar>
 
-          {/* 新建模式降级引导：后端不支持新建，表单只供撰写草稿参考。 */}
+          {/* 新建模式：先落库拿 id，才能上传封面。 */}
           {isNew ? (
-            <p className="admin-newsedit__guide num">{NEW_GUIDE}</p>
+            <p className="admin-newsedit__guide num">{NEW_COVER_HINT}</p>
           ) : null}
 
           {legacyHtml ? (
@@ -337,19 +342,31 @@ export function AdminNewsEditPage(): ReactElement {
                         : Number(event.target.value),
                   })
                 }
-                disabled={isNew}
                 aria-label="发布状态"
               >
                 {/* 后端没给状态时（老数据）留一条只读占位，保存仍省略该键。 */}
                 {form.status === undefined ? (
                   <option value="">未知（保存时保持原值）</option>
                 ) : null}
-                {NEWS_STATUS_OPTIONS.map((option) => (
+                {newsStatusOptionsFor(form.status).map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label className="admin-newsedit__field">
+              <span className="admin-newsedit__label">审核意见 / 下架原因 · NOTE</span>
+              <input
+                className="admin-newsedit__input"
+                type="text"
+                value={form.note ?? ""}
+                maxLength={200}
+                onChange={(event) => patch({ note: event.target.value })}
+                placeholder="状态变更时写入审核留痕；下架时作为下架原因"
+                aria-label="审核意见或下架原因"
+              />
             </label>
 
             <section className="admin-newsedit__cover" aria-label="封面图片">

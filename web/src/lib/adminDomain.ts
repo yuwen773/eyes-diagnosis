@@ -34,7 +34,8 @@ export function reviewView(
 }
 
 /**
- * 新闻发布状态 → 标签与风险档。后端 t_news.status 语义：0 草稿 / 1 已发布 / 2 下架。
+ * 新闻发布状态 → 标签与风险档。后端 t_news.status 语义：
+ * 0 草稿 / 1 已发布 / 2 下架 / 3 待审核。
  *
  * 缺省（字段缺席或非法值）一律读成「未知」而不是「草稿」：老数据里没写状态的
  * 新闻不能凭空显示成草稿，让管理员以为它还没发出去。
@@ -50,6 +51,8 @@ export function newsStatusView(status?: number | null): {
       return { label: "已发布", risk: "normal" }
     case 2:
       return { label: "已下架", risk: "critical" }
+    case 3:
+      return { label: "待审核", risk: "attention" }
     default:
       return { label: "未知", risk: "unknown" }
   }
@@ -58,9 +61,38 @@ export function newsStatusView(status?: number | null): {
 /** 新闻发布状态的可选项（编辑页下拉与列表标签同源，避免两处各写一套文案）。 */
 export const NEWS_STATUS_OPTIONS = [
   { value: 0, label: "草稿" },
+  { value: 3, label: "待审核" },
   { value: 1, label: "已发布" },
   { value: 2, label: "已下架" },
 ] as const
+
+/**
+ * 后端 NewsLifecycleService 的合法状态迁移表，键为当前状态、值为可切换到的状态。
+ * 包含「切到自身」：编辑正文但不改状态时是幂等的，后端同样放行。
+ * 与后端不一致时后端会回「非法状态迁移」，前端提前收窄只是少发注定失败的请求。
+ */
+const NEWS_STATUS_TRANSITIONS: Record<number, readonly number[]> = {
+  0: [0, 3, 1],
+  3: [3, 1, 0, 2],
+  1: [1, 2, 0],
+  2: [2, 1, 0, 3],
+}
+
+/**
+ * 当前状态下可选择的发布状态。
+ * 老数据没有 status（null/undefined）时返回全量：保留原值仍是安全默认，
+ * 但若管理员主动改状态，由后端按「来源状态未知」拒绝并给出可读错误。
+ */
+export function newsStatusOptionsFor(
+  current?: number | null,
+): Array<{ value: number; label: string }> {
+  if (current == null || !(current in NEWS_STATUS_TRANSITIONS)) {
+    return NEWS_STATUS_OPTIONS.map((option) => ({ ...option }))
+  }
+  return NEWS_STATUS_OPTIONS.filter((option) =>
+    NEWS_STATUS_TRANSITIONS[current].includes(option.value),
+  ).map((option) => ({ ...option }))
+}
 
 /** 用户删除守卫：目标是 admin 不给删（修正 Vue 版写反的守卫）。 */export function canDeleteUser(target?: AdminUser | null): boolean {
   // 目标缺失直接不给删：空白行或未选中就点删除，不该发出带空 id 的请求。

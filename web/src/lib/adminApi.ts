@@ -120,8 +120,10 @@ export function deleteUser(id: string): Promise<boolean> {
 export type AdminNews = {
   id?: string; title?: string; author?: string; summary?: string
   content?: string; coverImage?: string; publishTime?: string
-  /** 发布状态：0 草稿 / 1 已发布 / 2 下架（NewsVO 自 2026-11-09 起暴露）。 */
+  /** 发布状态：0 草稿 / 3 待审核 / 1 已发布 / 2 下架（NewsVO 自 2026-11-09 起暴露）。 */
   status?: number | null
+  /** 下架原因（后端在状态转 2 且带 note 时写入；NewsVO 只读暴露）。 */
+  offlineReason?: string | null
 }
 export function listAdminNews(q: { current: number; pageSize: number; title?: string }): Promise<Page<AdminNews>> {
   return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
@@ -132,8 +134,13 @@ export function deleteNews(id: string): Promise<boolean> {
 export function getNews(id: string): Promise<AdminNews> {
   return request<AdminNews>(`/news/get/${id}`, { method: "GET" })
 }
-export function saveNews(body: { id?: string; title: string; content: string; status?: number; coverImage?: string }): Promise<boolean> {
-  return request<boolean>("/news/edit", { method: "POST", body: JSON.stringify(body) })
+/**
+ * 创建或编辑新闻。id 缺席即创建——后端返回落库后的 id（Long 全局序列化成 String），
+ * 调用方据此回填路由；编辑时返回同一个 id。
+ * note 是审核意见 / 下架原因，仅状态迁移时写入审核留痕。
+ */
+export function saveNews(body: { id?: string; title: string; content: string; status?: number; coverImage?: string; note?: string }): Promise<string> {
+  return request<string>("/news/edit", { method: "POST", body: JSON.stringify(body) })
 }
 
 /**
