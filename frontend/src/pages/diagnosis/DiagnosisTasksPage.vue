@@ -5,6 +5,7 @@ import { useLoginUserStore } from '@/stores/user'
 import type { PatientExplanation } from '@/api/patientExplanation'
 import type { PatientAuthorization } from '@/api/patientAuthorization'
 import MedicalDisclaimer from '@/components/medical/MedicalDisclaimer.vue'
+import PatientFollowUpPanel from '@/components/medical/PatientFollowUpPanel.vue'
 
 type Task = { taskId: string; status: string }
 const tasks = ref<Task[]>([])
@@ -30,6 +31,11 @@ const detailClaims = computed(() => presentation.value?.result?.claims.filter(cl
 function closeDetails() {
   detailRequest++; selectedId.value = ''; presentation.value = null; reading.value = false
   authorization.value = null; consent.value = false; saving.value = false
+}
+
+function restrictFollowUps() {
+  closeDetails()
+  message.value = '无法核对本次追问的最新权限或依据，已关闭旧内容。请重新打开任务。'
 }
 
 function stateText(status: string): string {
@@ -239,6 +245,7 @@ onUnmounted(() => { identityVersion++; listRequest++; detailRequest++ })
             <p class="task-id">模型 {{ presentation.result.modelVersion || '未提供' }} · 预处理 {{ presentation.result.preprocessVersion || '未提供' }}</p>
           </details>
           <MedicalDisclaimer scope="review" :model-version="presentation.result.modelVersion" />
+          <PatientFollowUpPanel :key="`${identityVersion}:${detailRequest}`" :task-id="selectedId" :disabled="saving" @restricted="restrictFollowUps" />
         </template>
       </template>
       <section v-if="presentation?.status === 'AVAILABLE' || authorization?.receipt" class="save-authorization" aria-labelledby="save-heading">

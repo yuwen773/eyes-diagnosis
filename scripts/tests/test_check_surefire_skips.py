@@ -50,6 +50,7 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.write(P + "doctorreview.DoctorReviewApiTest", cases=36, skipped=36)
         self.write(P + "patientexplanation.PatientExplanationApiTest", cases=37, skipped=37)
         self.write(P + "patientauthorization.PatientAuthorizationApiTest", cases=35, skipped=35)
+        self.write(P + "patientfollowup.PatientFollowUpApiTest", cases=37, skipped=37)
         self.write(P + "migration.FlywayMySqlIntegrationTest", cases=1, skipped=1)
         self.write(P + "poc.CoordinationMySqlTest", cases=14, skipped=14)
         self.write(P + "upload.state.UploadTaskMapperMySqlIntegrationTest", cases=3, skipped=3)
@@ -85,6 +86,17 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.assertEqual(1, self.verdict(CONTRACTS["issue20"]))
         self.write(name, cases=35)
         self.assertEqual(1, self.verdict(CONTRACTS["issue20"]))
+
+    def test_issue23_requires_all_cases_without_skips(self):
+        name = "com.csust.eyediagnosis.patientfollowup.PatientFollowUpApiTest"
+        self.write("example.UnrelatedTest", cases=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["issue23"]))
+        self.write(name, cases=37)
+        self.assertEqual(0, self.verdict(CONTRACTS["issue23"]))
+        self.write(name, cases=37, skipped=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["issue23"]))
+        self.write(name, cases=36)
+        self.assertEqual(1, self.verdict(CONTRACTS["issue23"]))
 
     def test_unexpected_skip_in_opt_in_suite_fails(self):
         self.backend_reports()
