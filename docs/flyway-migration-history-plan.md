@@ -67,9 +67,12 @@ Updated validation matrix for this branch:
 Validation matrix for this branch:
 
 1. Empty MySQL 8 database: callback + V1--V9 + V15 + V16 + V17 = 12 migrations,
-   `t_news_audit` present and all new `t_news` columns/indexes present
-   (`FlywayMySqlIntegrationTest`, verified 2026-11-10 against `news_p1p2_ci`
-   on 3307; temp schema dropped afterwards).
+   `t_news_audit` present and all new `t_news` columns/indexes present.
+   The gate also performs a real `INSERT INTO t_news` filling every NOT NULL
+   column and reads back V17 defaults (`featured=0`, `isDelete=0`,
+   `reviewNote=NULL`) — table-existence alone did not catch the historical
+   `content`/`publishTime` no-default gap. Verified 2026-11-10 against
+   `news_p1p2_ci` on 3307; temp schema dropped afterwards.
 2. Existing database at V16: every `ADD COLUMN` is nullable/defaulted and
    `CREATE TABLE IF NOT EXISTS` is a no-op when the audit table exists.
 3. Rollout: deploy the V17 migration before the new Java code writes to the

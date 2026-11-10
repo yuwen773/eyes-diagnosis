@@ -28,7 +28,7 @@ public class NewsAudit {
     /** 操作人角色 */
     private String actorRole;
 
-    /** 动作: EDIT / SUBMIT_REVIEW / APPROVE / REJECT / PUBLISH / OFFLINE / DELETE */
+    /** 动作: EDIT / SUBMIT_REVIEW / REJECT / PUBLISH / OFFLINE / DELETE */
     private String action;
 
     /** 变更前状态 */

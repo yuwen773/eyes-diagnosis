@@ -21,12 +21,12 @@ import java.util.Map;
  * 新闻发布生命周期的写入 module。
  *
  * <p>把「状态迁移校验 + 审核人/时间落盘 + 内容变更审计 + 软删留痕」收进
- * 一个事务。调用方只给出 id、目标状态与操作者，不必知道迁移表、审计表或
- * 时间戳口径。所有写都走 {@code newsMapper.updateById}（绝不回落到会
+ * 一个事务。调用方只给出内容 patch（含可选目标状态）、操作者与审核意见，
+ * 不必知道迁移表、审计表或时间戳口径。所有写都走 {@code newsMapper.updateById}（绝不回落到会
  * insert 的 saveOrUpdate），因此「只编辑不新建」的既有安全契约不变。
  *
- * <p>interface 只有三个方法；状态词汇、合法迁移、审计格式都藏在
- * implementation 内，是 codebase-design 意义上的 deep module。
+ * <p>interface 只有两个方法；状态词汇、合法迁移、审核人/时间口径、审计格式
+ * 都藏在 implementation 内，是 codebase-design 意义上的 deep module。
  */
 @Service
 @RequiredArgsConstructor
@@ -59,32 +59,6 @@ public class NewsLifecycleService {
         int rows = newsMapper.updateById(patch);
         audit(patch.getId(), actor, to == null ? "EDIT" : actionFor(from, to),
                 from, to == null ? from : to, changedFields(patch, note));
-        return rows > 0;
-    }
-
-    /**
-     * 审核通道：管理员把文章推到目标状态（含待审核、发布、驳回、下架）。
-     * note 兼作审核意见 / 下架原因。
-     */
-    @Transactional
-    public boolean applyTransition(Long newsId, Integer targetStatus, User actor, String note) {
-        ThrowUtils.throwIf(newsId == null || newsId <= 0 || targetStatus == null,
-                ErrorCode.PARAMS_ERROR);
-        News current = newsMapper.selectById(newsId);
-        ThrowUtils.throwIf(current == null, ErrorCode.NOT_FOUND_ERROR);
-        Integer from = current.getStatus();
-        ThrowUtils.throwIf(!NewsStatusTransition.isAllowed(from, targetStatus),
-                ErrorCode.PARAMS_ERROR,
-                "非法状态迁移: " + label(from) + " → " + NewsStatus.label(targetStatus));
-
-        News patch = new News();
-        patch.setId(newsId);
-        patch.setStatus(targetStatus);
-        patch.setEditTime(new Date());
-        stampReview(patch, from, targetStatus, actor, note);
-        int rows = newsMapper.updateById(patch);
-        audit(newsId, actor, actionFor(from, targetStatus), from, targetStatus,
-                Map.of("status", true, "note", note != null));
         return rows > 0;
     }
 

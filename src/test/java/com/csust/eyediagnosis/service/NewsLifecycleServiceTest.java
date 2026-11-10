@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.Date;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -52,6 +54,15 @@ class NewsLifecycleServiceTest {
         current.setId(1L);
         current.setStatus(status);
         return current;
+    }
+
+    /** 模拟 /news/edit 送来的 patch：id + 目标 status（+ 可选 note 由调用方透传）。 */
+    private News patchWithStatus(int targetStatus) {
+        News patch = new News();
+        patch.setId(1L);
+        patch.setStatus(targetStatus);
+        patch.setEditTime(new Date());
+        return patch;
     }
 
     @Test
@@ -114,7 +125,8 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PENDING_REVIEW));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyTransition(1L, NewsStatus.PUBLISHED, admin, "内容核实无误"));
+        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PUBLISHED),
+                admin, "内容核实无误"));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
         verify(newsMapper).updateById(written.capture());
@@ -135,7 +147,8 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.DRAFT));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyTransition(1L, NewsStatus.PENDING_REVIEW, admin, null));
+        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.PENDING_REVIEW),
+                admin, null));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
         verify(newsMapper).updateById(written.capture());
@@ -149,7 +162,8 @@ class NewsLifecycleServiceTest {
         when(newsMapper.selectById(1L)).thenReturn(existing(NewsStatus.PUBLISHED));
         when(newsMapper.updateById(any(News.class))).thenReturn(1);
 
-        assertTrue(lifecycle.applyTransition(1L, NewsStatus.OFFLINE, admin, "数据过期，撤回"));
+        assertTrue(lifecycle.applyEdit(patchWithStatus(NewsStatus.OFFLINE),
+                admin, "数据过期，撤回"));
 
         ArgumentCaptor<News> written = ArgumentCaptor.forClass(News.class);
         verify(newsMapper).updateById(written.capture());

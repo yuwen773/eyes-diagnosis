@@ -127,33 +127,24 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         if(newsUploadDTO !=null){
             newsId = newsUploadDTO.getId();
         }
-        //如果是更新图片，则应可以在数据库中查询到该图片
-        if(newsId != null){
-            boolean exists = this.lambdaQuery()
-                    .eq(News::getId, newsId)
-                    .exists();
-            ThrowUtils.throwIf(!exists,ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
-        }
-        //上传图片
-        //用户Id作为每个用户的图库前缀
+        // 本系统不支持「上传封面即新建新闻」：编辑页总带已存在的新闻 id。
+        // 旧的无 id 分支会给 content/publishTime/status 全 null 插一行脏数据
+        // （V15 的 t_news 对前两列有 NOT NULL 约束，直接报 1364），且绕过
+        // NewsLifecycleService 的审计与状态口径。缺 id 一律拒绝。
+        ThrowUtils.throwIf(newsId == null, ErrorCode.PARAMS_ERROR, "请指定新闻 id");
+        // 新闻必须已存在，避免给伪造 id 上传封面留下孤儿文件
+        boolean exists = this.lambdaQuery()
+                .eq(News::getId, newsId)
+                .exists();
+        ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
+        // 上传图片：用户 id 作为每个用户的图库前缀
         String uploadPrefix = String.format("cover/%s",loginUser.getId());
         UploadPictureDetail uploadPictureDetail = fileManager.uploadPicture(multipartFile, uploadPrefix);
         String coverUrl = uploadPictureDetail.getUrl();
 
-        boolean result;
-        if (newsId != null) {
-            // 更新：只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
-            // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
-            result = this.updateById(coverPatch(newsId, coverUrl, new Date()));
-        } else {
-            // 新增：保持原有插入语义（标题空串、作者为上传者、带封面），本票不动它。
-            News news = new News();
-            news.setTitle("");
-            news.setUserId(loginUser.getId());
-            news.setCoverImg(coverUrl);
-            result = this.saveOrUpdate(news);
-        }
-        //插入/更新
+        // 只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
+        // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
+        boolean result = this.updateById(coverPatch(newsId, coverUrl, new Date()));
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
         return coverUrl;
     }

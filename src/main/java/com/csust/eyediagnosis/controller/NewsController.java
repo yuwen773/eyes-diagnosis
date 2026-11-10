@@ -16,7 +16,6 @@ import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.manager.FileManager;
 import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
 import com.csust.eyediagnosis.model.dto.news.NewsQueryDTO;
-import com.csust.eyediagnosis.model.dto.news.NewsReviewDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUpdateDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUploadDTO;
 import com.csust.eyediagnosis.model.entity.News;
@@ -198,25 +197,6 @@ public class NewsController {
         return ResultUtils.success(result);
     }
 
-    /**
-     * 审核通道：把文章推到目标状态（3 待审核 / 1 发布 / 0 驳回 / 2 下架）。
-     * 与 /news/edit 分开，避免内容的「保存/发布」按钮隐式承担审核职责。
-     */
-    @PostMapping("/review")
-    @Operation(summary ="审核新闻状态迁移")
-    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> reviewNews(@RequestBody NewsReviewDTO reviewDTO,
-                                            HttpServletRequest request) {
-        ThrowUtils.throwIf(reviewDTO == null, ErrorCode.PARAMS_ERROR);
-        boolean result = newsLifecycleService.applyTransition(
-                reviewDTO.getId(), reviewDTO.getStatus(),
-                userService.getLoginUser(request), reviewDTO.getNote());
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        // 状态/内容变了，旧的列表缓存必须失效
-        evictNewsListCache();
-        return ResultUtils.success(true);
-    }
-
     @PostMapping("/uploadAttachment")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
     @Operation(summary ="上传新闻图片")//包括封面
@@ -252,8 +232,11 @@ public class NewsController {
         news.setSummary(summary);
         news.setEditTime(new java.util.Date());
         // 生命周期 module 承担：状态迁移校验、审核人/时间、更新、审计留痕。
-        // 它内部只走 updateById，缺行影响 0 行 → false，天然「只编辑不新建」。
-        boolean result = newsLifecycleService.applyEdit(news, userService.getLoginUser(request), null);
+        // 编辑页的「保存草稿 / 发布」按钮会一并送 status，因此状态迁移也经由此处；
+        // note（审核意见/下架原因）可选透传。module 内部只走 updateById，
+        // 缺行影响 0 行 → false，天然「只编辑不新建」。
+        boolean result = newsLifecycleService.applyEdit(
+                news, userService.getLoginUser(request), newsUpdateDTO.getNote());
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         evictNewsListCache();
         return ResultUtils.success(true);
@@ -320,6 +303,7 @@ public class NewsController {
     /**
      * 编辑通道的 DTO→实体构造入口。
      * BeanUtils 按属性名拷贝 title/content/status/id 等同名字段；
+     * DTO 的 note（审核意见）不是实体字段，BeanUtils 会忽略，由调用方单独透传。
      * 封面字段名不一致（DTO: coverImage / 实体: coverImg），BeanUtils 拷不过去，需显式映射。
      * coverImage 非 null（含空串）时写入 coverImg —— 空串会进 UPDATE SET = 清除封面；
      * 为 null（字段缺席）时 coverImg 保持 null，MP 的 NOT_NULL 策略跳过 = 不动库中原封面。
@@ -341,6 +325,8 @@ public class NewsController {
                                                  NewsUploadDTO newsUploadDTO, HttpServletRequest request){
         User loginUser = userService.getLoginUser(request);
         String ImageUrl = newsService.uploadCoverImage(multipartFile,newsUploadDTO,loginUser);
+        // 封面是列表 VO 的字段，改完必须让缓存版列表失效，否则旧封面会留到 TTL 到期
+        evictNewsListCache();
         return ResultUtils.success(ImageUrl);
     }
 }
