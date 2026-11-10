@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import {
   describeError,
   getMyDiagnosis,
@@ -219,9 +220,9 @@ export function RecordsPage() {
             <p className="records__empty-body">
               上传一张眼底影像开始第一次判读，记录会按时间倒序落在这本台账里。
             </p>
-            <a className="btn" href="/diagnosis">
+            <Link className="btn" to="/diagnosis">
               去判读 <span className="btn__key">↗</span>
-            </a>
+            </Link>
           </div>
         ) : null}
 
@@ -366,7 +367,9 @@ export function RecordsPage() {
         ) : null}
       </main>
 
-      <SiteFooter />
+      <div className="wrap">
+        <SiteFooter />
+      </div>
     </div>
   )
 }

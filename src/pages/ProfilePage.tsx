@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import {
   describeError,
   listMyDiagnoses,
@@ -154,12 +154,14 @@ export function ProfilePage() {
             <EmptyFrame label="未登录" />
             <p className="records__empty-title">登录后才能查看个人中心</p>
             <p className="records__empty-body">资料与判读统计都跟着账号走。</p>
-            <a className="btn" href="/login?redirect=%2Fprofile">
+            <Link className="btn" to="/login?redirect=%2Fprofile">
               去登录 <span className="btn__key">↗</span>
-            </a>
+            </Link>
           </div>
         </main>
-        <SiteFooter />
+        <div className="wrap">
+          <SiteFooter />
+        </div>
       </div>
     )
   }
@@ -314,7 +316,9 @@ export function ProfilePage() {
         </div>
       </main>
 
-      <SiteFooter />
+      <div className="wrap">
+        <SiteFooter />
+      </div>
     </div>
   )
 }
