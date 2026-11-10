@@ -22,7 +22,8 @@
 
 | 角色 | 技术栈 | 端口 |
 |------|--------|------|
-| Frontend | Vue 3 + TypeScript + Vite + Ant Design Vue 4 + Tailwind CSS v4 | `:5173` |
+| **前端（产品）** | React 19 + TypeScript + Vite + Tailwind v4 —— 代码在 `web/` | `:5173` |
+| 前端（历史线） | Vue 3 + TypeScript + Vite + Ant Design Vue 4 + Tailwind CSS v4 —— 代码在 `frontend/` | `:5173` |
 | Backend (Java) | Spring Boot 3.5.6 + Spring AI 1.1.2 + MyBatis Plus 3.5.12 | `:8081/api` |
 | Algorithm (Py) | PyTorch + EfficientNet-B4 + gRPC + MCP | `:50051` |
 
@@ -69,7 +70,21 @@ mvn clean package
 mvn spring-boot:run    # 访问 http://localhost:8081/api
 ```
 
-### 4️⃣ 启动 Vue 前端
+### 4️⃣ 启动前端
+
+**产品前端（React，推荐）**：
+
+```bash
+cd web
+npm install
+npm run dev            # 访问 http://localhost:5173，/api 代理到 :8081
+```
+
+`web/` 自 2026-11-10 起由 `git subtree` 纳入本仓库（原独立仓库 `eyes-diagnosis-web` 已归档）。
+门禁：`npm run typecheck && npm run test && npm run build && npm run lint`
+（CI 里是根 `verify.yml` 的 `web` job；`web/.github/` 下的工作流不会被执行）。
+
+**Vue 历史线（仅作参考）**：
 
 ```bash
 cd frontend
@@ -189,7 +204,10 @@ eye-diagnosis/
 │       ├── grpc/           # gRPC 客户端（调用 Python 算法服务）
 │       ├── config/         # Spring 配置类
 │       └── ...
-├── frontend/               # Vue 3 前端
+├── web/                    # React 产品前端（git subtree，原 eyes-diagnosis-web）
+│   ├── src/
+│   └── e2e/                # Playwright 冒烟（不进 CI，依赖真后端）
+├── frontend/               # Vue 3 前端（历史线）
 │   └── src/
 │       ├── pages/          # 页面组件
 │       ├── components/     # 通用组件
