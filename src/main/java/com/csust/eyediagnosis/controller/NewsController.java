@@ -9,17 +9,20 @@ import com.csust.eyediagnosis.annotation.AuthCheck;
 import com.csust.eyediagnosis.common.BaseResponse;
 import com.csust.eyediagnosis.common.ResultUtils;
 import com.csust.eyediagnosis.constant.AuthConstant;
+import com.csust.eyediagnosis.constant.NewsStatus;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.manager.FileManager;
 import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
 import com.csust.eyediagnosis.model.dto.news.NewsQueryDTO;
+import com.csust.eyediagnosis.model.dto.news.NewsReviewDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUpdateDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUploadDTO;
 import com.csust.eyediagnosis.model.entity.News;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.news.NewsVO;
+import com.csust.eyediagnosis.service.NewsLifecycleService;
 import com.csust.eyediagnosis.service.NewsService;
 import com.csust.eyediagnosis.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,6 +52,8 @@ public class NewsController {
     @Resource
     private NewsService newsService;
     @Resource
+    private NewsLifecycleService newsLifecycleService;
+    @Resource
     private UserService userService;
     @Resource
     private FileManager fileManager;
@@ -61,8 +66,10 @@ public class NewsController {
      */
     @PostMapping("/list/page/vo")
     @Operation(summary ="获取分页新闻列表")
-    public BaseResponse<Page<NewsVO>> listNewsVOByPage(@RequestBody NewsQueryDTO newsQueryDTO){
+    public BaseResponse<Page<NewsVO>> listNewsVOByPage(@RequestBody NewsQueryDTO newsQueryDTO,
+                                                        HttpServletRequest request){
         ThrowUtils.throwIf(newsQueryDTO==null, ErrorCode.PARAMS_ERROR);
+        applyVisibilityScope(newsQueryDTO, request);
         // 获取分页相关数据
         long current = newsQueryDTO.getCurrent();
         long pageSize = newsQueryDTO.getPageSize();
@@ -76,16 +83,17 @@ public class NewsController {
     }
     @PostMapping("/list/page/vo/cache")
     @Operation(summary ="获取分页新闻列表（缓存版）")
-    public BaseResponse<Page<NewsVO>> listNewsVOByPageWithCache(@RequestBody NewsQueryDTO newsQueryDTO){
+    public BaseResponse<Page<NewsVO>> listNewsVOByPageWithCache(@RequestBody NewsQueryDTO newsQueryDTO,
+                                                                HttpServletRequest request){
         ThrowUtils.throwIf(newsQueryDTO==null, ErrorCode.PARAMS_ERROR);
+        applyVisibilityScope(newsQueryDTO, request);
         // 获取分页相关数据
         long current = newsQueryDTO.getCurrent();
         long pageSize = newsQueryDTO.getPageSize();
 
-        //设置hashKey
+        //设置hashKey（含世代，写操作递增世代即可让旧 key 失效）
         String queryCondition = JSONUtil.toJsonStr(newsQueryDTO);
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String redisKey = String.format("diagnosis:listNewsVOByPage %s",hashKey);
+        String redisKey = newsListCacheKey(queryCondition);
         String cacheValue = stringRedisTemplate.opsForValue().get(redisKey);
         if(StrUtil.isNotBlank(cacheValue)){
             //缓存不为空
@@ -104,13 +112,74 @@ public class NewsController {
         stringRedisTemplate.opsForValue().set(redisKey,toCache,cacheExpireTime, TimeUnit.SECONDS);
         return ResultUtils.success(newsVOPage);
     }
+    private static final String NEWS_LIST_CACHE_PREFIX = "diagnosis:listNewsVOByPage ";
+    private static final String NEWS_LIST_CACHE_GENERATION = "diagnosis:newsListGeneration";
+
+    /**
+     * 列表缓存失效：递增一个世代计数器，让所有旧 key 自然过期。
+     * 不用 KEYS/SCAN 全表扫描——生产 Redis 上对大键空间做模式匹配有阻塞风险。
+     */
+    private void evictNewsListCache() {
+        stringRedisTemplate.opsForValue().increment(NEWS_LIST_CACHE_GENERATION);
+    }
+
+    private String newsListCacheKey(String queryCondition) {
+        String generation = stringRedisTemplate.opsForValue().get(NEWS_LIST_CACHE_GENERATION);
+        String hashKey = DigestUtils.md5DigestAsHex(
+                (generation == null ? "0" : generation + ":" + queryCondition).getBytes());
+        return NEWS_LIST_CACHE_PREFIX + hashKey;
+    }
+
+    /**
+     * 公开资讯端点的「可选登录用户」。
+     *
+     * <p>{@code UserService.getLoginUser} 对未登录访客抛 NOT_LOGIN_ERROR，
+     * 但 /news/list/page/vo 与 /news/get/{id} 是公开端点，匿名访问必须能拿到
+     * 已发布文章。这里把「未登录」折成 null（= 非管理员），只有确认登录且
+     * 角色为管理员时才放宽可见范围。catch 只吞 NOT_LOGIN_ERROR，其它业务异常照抛。
+     */
+    private User optionalLoginUser(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        try {
+            return userService.getLoginUser(request);
+        } catch (BusinessException exception) {
+            if (ErrorCode.NOT_LOGIN_ERROR.getCode() == exception.getCode()) {
+                return null;
+            }
+            throw exception;
+        }
+    }
+
+    /**
+     * 按登录用户角色收敛资讯列表的可见范围：
+     * 管理员看全部状态（草稿/待审核/下架都要能审核），其余访客只看已发布。
+     *
+     * <p>客户端传来的 visibleOnly 一律被覆盖，不能靠请求体提权。
+     * DTO 参与缓存 key 计算，因此管理员视角与公开视角的缓存天然隔离，
+     * 不会把草稿串给匿名访客。
+     */
+    private void applyVisibilityScope(NewsQueryDTO dto, HttpServletRequest request) {
+        User loginUser = optionalLoginUser(request);
+        boolean admin = loginUser != null
+                && AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+        dto.setVisibleOnly(!admin);
+    }
+
     @GetMapping("/get/{id}")
     @Operation(summary ="获取新闻详情")
-    public BaseResponse<NewsVO> getNewsVO(@PathVariable("id") Long id){
+    public BaseResponse<NewsVO> getNewsVO(@PathVariable("id") Long id, HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         News news = newsService.getById(id);
-        NewsVO newsVO = newsService.getNewsVO(news);
         ThrowUtils.throwIf(news==null, ErrorCode.NOT_FOUND_ERROR);
+        // 详情端点同样要挡住草稿/待审核/下架，否则列表过滤可被直接按 id 绕过
+        User loginUser = optionalLoginUser(request);
+        boolean admin = loginUser != null
+                && AuthConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+        ThrowUtils.throwIf(!admin && !Integer.valueOf(NewsStatus.PUBLIC_VISIBLE).equals(news.getStatus()),
+                ErrorCode.NOT_FOUND_ERROR);
+        NewsVO newsVO = newsService.getNewsVO(news);
         return ResultUtils.success(newsVO);
     }
 
@@ -120,13 +189,32 @@ public class NewsController {
      * @return  boolean
      */
     @PostMapping("/delete/{id}")
-    @Operation(summary ="删除新闻")
+    @Operation(summary ="删除新闻（逻辑删除并留痕）")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> deleteNews(@PathVariable("id") Long id){
+    public BaseResponse<Boolean> deleteNews(@PathVariable("id") Long id, HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
-        boolean result = newsService.removeById(id);
+        boolean result = newsLifecycleService.softDelete(id, userService.getLoginUser(request));
+        evictNewsListCache();
         return ResultUtils.success(result);
+    }
 
+    /**
+     * 审核通道：把文章推到目标状态（3 待审核 / 1 发布 / 0 驳回 / 2 下架）。
+     * 与 /news/edit 分开，避免内容的「保存/发布」按钮隐式承担审核职责。
+     */
+    @PostMapping("/review")
+    @Operation(summary ="审核新闻状态迁移")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> reviewNews(@RequestBody NewsReviewDTO reviewDTO,
+                                            HttpServletRequest request) {
+        ThrowUtils.throwIf(reviewDTO == null, ErrorCode.PARAMS_ERROR);
+        boolean result = newsLifecycleService.applyTransition(
+                reviewDTO.getId(), reviewDTO.getStatus(),
+                userService.getLoginUser(request), reviewDTO.getNote());
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 状态/内容变了，旧的列表缓存必须失效
+        evictNewsListCache();
+        return ResultUtils.success(true);
     }
 
     @PostMapping("/uploadAttachment")
@@ -147,7 +235,8 @@ public class NewsController {
     @PostMapping("/edit")
     @Operation(summary ="修改新闻")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO){
+    public BaseResponse<Boolean> updateNews(@RequestBody NewsUpdateDTO newsUpdateDTO,
+                                            HttpServletRequest request){
         //查看是否为空
         if (newsUpdateDTO == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -161,12 +250,12 @@ public class NewsController {
         //设置摘要：前置校验正文，非法正文返回业务错误码而非 500
         String summary = buildSummary(newsUpdateDTO.getContent());
         news.setSummary(summary);
-        // 只编辑不新建：saveOrUpdate 在「id 非空但库无记录」时会走 insert（MP 的
-        // insertOrUpdate 在 selectById(id)==null 时插入），管理员带伪造 id 就能插入一行
-        // userId/status 都为 null 的脏新闻，公开列表渲染时 getNewsVO 对 null 作者 NPE → 500。
-        // updateById 缺行影响 0 行 → false → 下面 OPERATION_ERROR 兜住；NOT_NULL 语义不变。
-        boolean result = newsService.updateById(news);
+        news.setEditTime(new java.util.Date());
+        // 生命周期 module 承担：状态迁移校验、审核人/时间、更新、审计留痕。
+        // 它内部只走 updateById，缺行影响 0 行 → false，天然「只编辑不新建」。
+        boolean result = newsLifecycleService.applyEdit(news, userService.getLoginUser(request), null);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        evictNewsListCache();
         return ResultUtils.success(true);
     }
 

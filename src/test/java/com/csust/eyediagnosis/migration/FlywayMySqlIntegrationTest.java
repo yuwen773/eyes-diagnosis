@@ -32,7 +32,8 @@ class FlywayMySqlIntegrationTest {
                 .locations("classpath:db/migration", "classpath:db/callback")
                 .load();
 
-        assertEquals(11, flyway.migrate().migrationsExecuted);
+        // V1–V9 + V15 + V16 + V17 = 12 个迁移（V10–V14 在其它分支上，未合入本线）
+        assertEquals(12, flyway.migrate().migrationsExecuted);
 
         // ① 空库 migrate 后必须拥有全部被实体使用的表，否则登录、资讯、
         // Agent 会话、知识库会在启动时无表可写。
@@ -51,7 +52,8 @@ class FlywayMySqlIntegrationTest {
 
         for (String expected : new String[]{
                 "t_user", "t_news", "t_agent_session", "t_knowledge_document",
-                "t_diagnosis", "t_agent_message", "t_mcp_server", "t_inference_cache"}) {
+                "t_diagnosis", "t_agent_message", "t_mcp_server", "t_inference_cache",
+                "t_news_audit"}) {
             assertTrue(tables.contains(expected), "missing table after migrate: " + expected);
         }
     }

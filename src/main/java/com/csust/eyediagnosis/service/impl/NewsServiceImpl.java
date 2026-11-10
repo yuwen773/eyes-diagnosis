@@ -66,6 +66,11 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         queryWrapper.eq(ObjUtil.isNotNull(newsId),"id", newsId);
         queryWrapper.like(StrUtil.isNotBlank(title),"title", title);
         queryWrapper.like(StrUtil.isNotBlank(summary),"summary", summary);
+        // 公开端只看已发布；管理员（visibleOnly=false）看全部状态以便审核。
+        // 默认值为 true，任何漏设 visibleOnly 的调用点都不会泄漏草稿/待审核文章。
+        if (newsQueryDTO.isVisibleOnly()) {
+            queryWrapper.eq("status", com.csust.eyediagnosis.constant.NewsStatus.PUBLIC_VISIBLE);
+        }
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals(ASC),sortField);
         //返回query
         return queryWrapper;

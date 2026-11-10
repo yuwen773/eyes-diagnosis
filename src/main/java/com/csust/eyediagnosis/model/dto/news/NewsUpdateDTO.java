@@ -45,5 +45,14 @@ public class NewsUpdateDTO implements Serializable {
      */
     private String coverImage;
 
+    /** 内容分类（可空，不传则不改） */
+    private String category;
+
+    /** 来源出处 */
+    private String source;
+
+    /** 是否精选：0-否 1-是 */
+    private Integer featured;
+
     private static final long serialVersionUID = 1L;
 }
