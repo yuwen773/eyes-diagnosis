@@ -1,7 +1,5 @@
 package com.csust.eyediagnosis.agent.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
@@ -13,13 +11,10 @@ import com.csust.eyediagnosis.model.dto.agent.MessageVO;
 import com.csust.eyediagnosis.model.dto.agent.SessionVO;
 import com.csust.eyediagnosis.model.entity.AgentMessage;
 import com.csust.eyediagnosis.model.entity.AgentSession;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,16 +32,18 @@ public class ChatHistoryService {
     private final AgentMessageMapper messageMapper;
     private final ObjectMapper objectMapper;
     private final SessionMessageQueue messageQueue;
-    private AgentConstants agentConstants;
+    private final ChatMessageWriter messageWriter;
     private TitleGenerationService titleGenerationService;
 
     @Autowired
     public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper,
-                              ObjectMapper objectMapper, SessionMessageQueue messageQueue) {
+                              ObjectMapper objectMapper, SessionMessageQueue messageQueue,
+                              ChatMessageWriter messageWriter) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.objectMapper = objectMapper;
         this.messageQueue = messageQueue;
+        this.messageWriter = messageWriter;
     }
 
     @Autowired
@@ -54,17 +51,9 @@ public class ChatHistoryService {
         this.titleGenerationService = titleGenerationService;
     }
 
-    @Resource
-    public void setAgentConstants(AgentConstants agentConstants) {
-        this.agentConstants = agentConstants;
-    }
-
     public void saveUserMessage(String sessionId, Long userId, String content) {
         messageQueue.submit(sessionId, () -> {
-            claimOrValidateSession(sessionId, userId, content);
-            AgentMessage message = buildMessage(sessionId, "USER", null, content);
-            messageMapper.insert(message);
-            sessionMapper.updateMessageCount(sessionId, truncate(content));
+            messageWriter.writeUserMessage(sessionId, userId, content);
 
             AgentSession session = sessionMapper.selectBySessionId(sessionId);
             if (session != null && session.getMessageCount() == 1) {
@@ -76,9 +65,7 @@ public class ChatHistoryService {
 
     public void saveAssistantMessage(String sessionId, Long userId, String content, String subType) {
         messageQueue.submit(sessionId, () -> {
-            AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
-            messageMapper.insert(message);
-            sessionMapper.updateMessageCount(sessionId, truncate(content));
+            messageWriter.writeAssistantMessage(sessionId, content, subType);
             return null;
         });
     }
@@ -226,40 +213,11 @@ public class ChatHistoryService {
     }
 
     /**
-     * 原子声明或校验会话所有权：
-     * 1) 会话不存在 → 创建并绑定当前 userId；
-     * 2) 会话存在但 owner 与 userId 不符 → 抛 NO_AUTH_ERROR；
-     * 3) 并发创建冲突时再次读取并校验 owner。
+     * 原子声明或校验会话所有权。事务边界在 {@link ChatMessageWriter} 上，
+     * 经独立 bean 调用（而非同 bean 自调用），Spring AOP 代理才会生效。
      */
-    @Transactional
     public AgentSession claimOrValidateSession(String sessionId, Long userId, String firstMessage) {
-        if (sessionId == null || userId == null) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "会话标识或用户为空");
-        }
-        AgentSession existing = sessionMapper.selectBySessionId(sessionId);
-        if (existing != null) {
-            ThrowUtils.throwIf(!userId.equals(existing.getUserId()),
-                    ErrorCode.NO_AUTH_ERROR, "无权限访问该会话");
-            return existing;
-        }
-        AgentSession created = new AgentSession();
-        created.setSessionId(sessionId);
-        created.setUserId(userId);
-        created.setTitle(truncate(firstMessage));
-        created.setStatus(1);
-        created.setMessageCount(0);
-        created.setLastMessage("");
-        created.setCreatedTime(new Date());
-        created.setUpdatedTime(new Date());
-        try {
-            sessionMapper.insert(created);
-            return created;
-        } catch (DuplicateKeyException exception) {
-            AgentSession raced = sessionMapper.selectBySessionId(sessionId);
-            ThrowUtils.throwIf(raced == null || !userId.equals(raced.getUserId()),
-                    ErrorCode.NO_AUTH_ERROR, "无权限访问该会话");
-            return raced;
-        }
+        return messageWriter.claimOrValidateSession(sessionId, userId, firstMessage);
     }
 
     /**
@@ -283,24 +241,6 @@ public class ChatHistoryService {
             .replace("`", "\\`")
             .replace(">", "\\>")
             .replace("-", "\\-");
-    }
-
-    private String truncate(String content) {
-        if (content == null) return "";
-        int maxLength = agentConstants.getHistoryTruncateLength();
-        int reserveLength = agentConstants.getHistoryTruncateReserve();
-        return content.length() > maxLength ? content.substring(0, reserveLength) + "..." : content;
-    }
-
-    private AgentMessage buildMessage(String sessionId, String role,
-                                       String subType, String content) {
-        AgentMessage message = new AgentMessage();
-        message.setSessionId(sessionId);
-        message.setRole(role);
-        message.setSubType(subType);
-        message.setContent(content);
-        message.setCreatedTime(new Date());
-        return message;
     }
 
     private MessageVO toMessageVO(AgentMessage entity) {

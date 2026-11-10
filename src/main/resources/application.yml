@@ -75,12 +75,10 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
 # 眼科图像分析配置
+# 事务性 Outbox 已退役：t_agent_message_outbox 与 t_agent_message 同库，
+# 没有跨系统边界可跨，且原有 dispatcher 会重放历史行。会话消息统一由
+# ChatMessageWriter 单事务直写 t_agent_message；表中历史行保留不清理。
 eye-diagnosis:
-  agent:
-    # Chat history uses the ordinary single-write persistence path. Do not
-    # enable the legacy dispatcher or it can replay pre-existing Outbox rows.
-    outbox:
-      enabled: false
   # 上传补偿对账：清理 COS 上没有任务行登记的孤儿图片。
   # 该任务会真实删除对象存储中的文件，默认关闭，需显式开启。
   upload:
