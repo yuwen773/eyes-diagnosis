@@ -14,6 +14,7 @@ import com.csust.eyediagnosis.model.entity.InferenceCache;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
+import com.csust.eyediagnosis.service.DiagnosisEvidence;
 import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,8 +86,8 @@ class InferenceCacheTest {
     void doDiagnosisServesCacheHitWithoutCallingGrpc() {
         DiagnosisProto.DiagnosisResponse original = fullResponse("normal", 91.5);
         when(cacheMapper.findByHash(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(DiagnosisServiceImpl.toCacheEntity(
-                        "ignored", original, MODEL, WEIGHT, PREPROCESS, POLICY));
+                .thenReturn(DiagnosisEvidence.from(
+                        original, MODEL, WEIGHT, PREPROCESS, POLICY).newCache("ignored"));
 
         DiagnosisResultVO vo = service.doDiagnosis(imageFile(), user(7L));
 
@@ -103,8 +104,9 @@ class InferenceCacheTest {
     @Test
     void doDiagnosisCacheHitStillWritesTheCallingUsersId() {
         when(cacheMapper.findByHash(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(DiagnosisServiceImpl.toCacheEntity(
-                        "ignored", fullResponse("normal", 91.5), MODEL, WEIGHT, PREPROCESS, POLICY));
+                .thenReturn(DiagnosisEvidence.from(
+                        fullResponse("normal", 91.5), MODEL, WEIGHT, PREPROCESS, POLICY)
+                        .newCache("ignored"));
 
         service.doDiagnosis(imageFile(), user(42L));
 
@@ -155,8 +157,9 @@ class InferenceCacheTest {
     void cacheRoundTripPreservesEveryMedicalSafetyField() {
         DiagnosisProto.DiagnosisResponse uncached = fullResponse("normal", 91.5);
 
-        InferenceCache cache = DiagnosisServiceImpl.toCacheEntity(
-                "hash", uncached, "fallback-model", "fallback-weight", "fallback-preprocess", "fallback-policy");
+        InferenceCache cache = DiagnosisEvidence.from(
+                uncached, "fallback-model", "fallback-weight", "fallback-preprocess", "fallback-policy")
+                .newCache("hash");
 
         assertEquals(uncached, DiagnosisServiceImpl.toProto(cache));
     }

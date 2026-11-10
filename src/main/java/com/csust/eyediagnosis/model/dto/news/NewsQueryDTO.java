@@ -36,5 +36,13 @@ public class NewsQueryDTO extends PageRequest implements Serializable {
      */
     private String userRole;
 
+    /**
+     * 是否只返回公开可见（status=1 已发布）的文章。
+     * 由控制器按登录用户角色设置：管理员 false（看全部状态），
+     * 普通用户/匿名访客 true。默认 true，保证任何漏设的调用点都安全。
+     * 参与缓存 key 计算，因此两种视角不会互相串号。
+     */
+    private boolean visibleOnly = true;
+
     private static final long serialVersionUID = 1L;
 }

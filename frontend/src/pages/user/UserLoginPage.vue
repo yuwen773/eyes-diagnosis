@@ -43,7 +43,7 @@ const handleSubmit = async (values: any) => {
     <aside class="login-dashboard" aria-label="平台指标">
       <div class="dash-header">
         <RouterLink to="/" class="brand-mark">
-          <span class="brand-name">眼瞳 Iris</span>
+          <span class="brand-name">Iris</span>
           <span class="brand-tag">CLINICAL EDITORIAL · v2.3.1</span>
         </RouterLink>
       </div>
@@ -109,7 +109,7 @@ const handleSubmit = async (values: any) => {
         <header class="card-header">
           <span class="card-overline">SIGN IN · 登录</span>
           <h1 class="card-title">继续你的诊断之旅</h1>
-          <p class="card-subtitle">用你的账号登录眼瞳 Iris，开始 AI 辅助诊断</p>
+          <p class="card-subtitle">用你的账号登录 Iris，开始 AI 辅助诊断</p>
         </header>
 
         <a-form

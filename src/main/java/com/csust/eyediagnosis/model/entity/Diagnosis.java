@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
 import lombok.Data;
 
 import java.util.Date;
@@ -62,7 +63,8 @@ public class Diagnosis {
      */
     private String severity;
     /**
-     * 复审状态 1, 未复审 2, 复审中 3, 已复审
+     * 复审状态（患者申请复诊）1 未复审 2 复审中 3 已复审。
+     * 与 humanReviewStatus（医生人工复核）是两个独立概念，不要合并。
      */
     private int reexamineStatus;
 
@@ -140,4 +142,11 @@ public class Diagnosis {
     private String humanSeverity;
     /** 人工建议 */
     private String humanRecommendations;
+
+    /**
+     * 乐观锁版本。V16 加入，防止并发人工复核的 read-modify-write 丢失更新。
+     * 由 {@code OptimisticLockerInnerInterceptor} 驱动。
+     */
+    @Version
+    private Long version;
 }

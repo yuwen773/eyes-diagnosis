@@ -16,10 +16,10 @@
       <div class="footer-brand-section">
         <RouterLink to="/" class="footer-brand">
           <div class="brand-mark">
-            <img src="../assets/eyesight-logo.svg" alt="EyeSight" class="brand-logo" />
+            <img src="../assets/eyesight-logo.svg" alt="Iris" class="brand-logo" />
           </div>
           <div class="brand-identity">
-            <span class="brand-name">EyeSight</span>
+            <span class="brand-name">Iris</span>
             <span class="brand-en">Smart Eye Diagnosis</span>
           </div>
         </RouterLink>
