@@ -152,6 +152,8 @@ export type DiagnosisResult = {
   requiresReview?: boolean
   qualityScore?: number
   qualityReasons?: string
+  preprocessVersion?: string
+  inferencePolicyVersion?: string
   calibratedProbability?: number
   calibrationStatus?: string
   oodStatus?: string
