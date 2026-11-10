@@ -84,9 +84,25 @@ export function AgentPage() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
+  const previewCloseRef = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false)
   // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
   const { push: pushFault } = useFault()
+
+  // 图片预览是一层模态：焦点移入关闭钮，Esc 关闭，关闭后归还给触发元素。
+  useEffect(() => {
+    if (!previewUrl) return
+    const trigger = document.activeElement as HTMLElement | null
+    previewCloseRef.current?.focus({ preventScroll: true })
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewUrl("")
+    }
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      if (trigger && document.contains(trigger)) trigger.focus({ preventScroll: true })
+    }
+  }, [previewUrl])
 
   const refreshSessions = useCallback(async () => {
     try {
@@ -99,6 +115,7 @@ export function AgentPage() {
   const loadHistoryMessages = useCallback(
     async (id: string) => {
       const seq = ++historySeq.current
+      // 加载态在发起请求的那一刻置位；调用方是事件处理器或初始化 effect。
       setHistoryLoading(true)
       try {
         const data = await getChatHistory(id, undefined, HISTORY_PAGE_SIZE)
@@ -125,6 +142,8 @@ export function AgentPage() {
       reset()
     }
     const savedThreadId = loadThreadId(userKey)
+    // refreshSessions 的首个操作是 await getSessions()，状态更新不在 effect 同步阶段。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshSessions()
     if (savedThreadId) {
       void loadHistoryMessages(savedThreadId)
@@ -190,7 +209,7 @@ export function AgentPage() {
         return false
       }
     },
-    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, refreshSessions, pushFault],
+    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, setMessages, refreshSessions, pushFault],
   )
 
   const handleNewChat = useCallback(() => {
@@ -398,7 +417,25 @@ export function AgentPage() {
       </main>
 
       {previewUrl && (
-        <div className="agent-preview" onClick={() => setPreviewUrl("")} role="dialog" aria-label="图片预览">
+        <div
+          className="agent-preview"
+          onClick={() => setPreviewUrl("")}
+          role="dialog"
+          aria-modal="true"
+          aria-label="图片预览"
+        >
+          <button
+            ref={previewCloseRef}
+            type="button"
+            className="agent-preview__close"
+            aria-label="关闭预览"
+            onClick={(e) => {
+              e.stopPropagation()
+              setPreviewUrl("")
+            }}
+          >
+            ✕
+          </button>
           <img src={previewUrl} alt="预览" onClick={(e) => e.stopPropagation()} />
           <a
             className="agent-preview__open num"

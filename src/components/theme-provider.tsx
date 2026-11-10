@@ -40,6 +40,36 @@ function getSystemTheme(): ResolvedTheme {
   return "light"
 }
 
+/** 事件是否来自 localStorage——存储被禁用时读 localStorage 本身也可能抛。 */
+function isLocalStorageEvent(event: StorageEvent): boolean {
+  try {
+    return event.storageArea === localStorage
+  } catch {
+    return true
+  }
+}
+
+/**
+ * 读/写 localStorage 都要兜住异常：无痕模式或禁用存储时，
+ * 访问 localStorage 本身就可能抛 SecurityError。
+ * 主题读不到只是回到默认，不该让整个应用白屏。
+ */
+function readStoredTheme(storageKey: string): string | null {
+  try {
+    return localStorage.getItem(storageKey)
+  } catch {
+    return null
+  }
+}
+
+function writeStoredTheme(storageKey: string, theme: Theme): void {
+  try {
+    localStorage.setItem(storageKey, theme)
+  } catch {
+    // 存不进去只影响下次打开时的默认主题
+  }
+}
+
 function disableTransitionsTemporarily() {
   const style = document.createElement("style")
   style.appendChild(
@@ -86,7 +116,7 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
+    const storedTheme = readStoredTheme(storageKey)
     if (isTheme(storedTheme)) {
       return storedTheme
     }
@@ -94,13 +124,15 @@ export function ThemeProvider({
     return defaultTheme
   })
 
-  const [resolvedTheme, setResolvedTheme] = React.useState<ResolvedTheme>(() =>
-    theme === "system" ? getSystemTheme() : theme
+  // 系统主题只在 system 模式下参与派生；订阅维护它，render 期不读媒体查询。
+  const [systemTheme, setSystemTheme] = React.useState<ResolvedTheme>(() =>
+    getSystemTheme()
   )
+  const resolvedTheme: ResolvedTheme = theme === "system" ? systemTheme : theme
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
-      localStorage.setItem(storageKey, nextTheme)
+      writeStoredTheme(storageKey, nextTheme)
       setThemeState(nextTheme)
     },
     [storageKey]
@@ -117,7 +149,6 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
-      setResolvedTheme(resolvedTheme)
 
       if (restoreTransitions) {
         restoreTransitions()
@@ -135,6 +166,7 @@ export function ThemeProvider({
 
     const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY)
     const handleChange = () => {
+      setSystemTheme(getSystemTheme())
       applyTheme("system")
     }
 
@@ -173,7 +205,7 @@ export function ThemeProvider({
                 ? "light"
                 : "dark"
 
-        localStorage.setItem(storageKey, nextTheme)
+        writeStoredTheme(storageKey, nextTheme)
         return nextTheme
       })
     }
@@ -187,7 +219,7 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.storageArea !== localStorage) {
+      if (!isLocalStorageEvent(event)) {
         return
       }
 
