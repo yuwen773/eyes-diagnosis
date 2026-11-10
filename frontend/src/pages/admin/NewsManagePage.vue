@@ -168,8 +168,9 @@ const doDelete = async (id: string) => {
 const router = useRouter()
 
 const editNews = async (id: string | null) => {
+  // 新增时不带 id：/news/edit 与 :id? 的可选参数配合，编辑页据此走创建分支。
   router.push({
-    path: `/news/edit/${id}`,
+    path: id === null ? '/news/edit' : `/news/edit/${id}`,
   })
 }
 

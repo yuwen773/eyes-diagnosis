@@ -102,9 +102,32 @@ class NewsLifecycleServiceTest {
     }
 
     @Test
-    void createRejectsPublishingDirectly() {
+    void createSupportsDirectPublishingFromEditPage() {
+        // 编辑页的「发布」按钮对新建文章也送 status=1，必须能一次落库。
+        doAnswer(invocation -> {
+            News inserted = invocation.getArgument(0);
+            inserted.setId(100L);
+            return 1;
+        }).when(newsMapper).insert(any(News.class));
+
         News patch = new News();
         patch.setStatus(NewsStatus.PUBLISHED);
+        patch.setTitle("新资讯");
+        patch.setContent("正文");
+
+        assertEquals(Long.valueOf(100L), lifecycle.applyEdit(patch, admin, null));
+
+        ArgumentCaptor<News> inserted = ArgumentCaptor.forClass(News.class);
+        verify(newsMapper).insert(inserted.capture());
+        assertEquals(Integer.valueOf(NewsStatus.PUBLISHED), inserted.getValue().getStatus());
+        assertEquals(Long.valueOf(7L), inserted.getValue().getReviewedById());
+        assertNotNull(inserted.getValue().getReviewedAt());
+    }
+
+    @Test
+    void createRejectsUnknownStatus() {
+        News patch = new News();
+        patch.setStatus(99);
 
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> lifecycle.applyEdit(patch, admin, null));

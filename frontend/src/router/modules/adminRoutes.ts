@@ -67,7 +67,7 @@ const adminRoutes: RouteRecordRaw[] = [
         },
       },
       {
-        path: '/news/edit/:id',
+        path: '/news/edit/:id?',
         name: '编辑新闻',
         component: () => import('@/pages/news/NewsEditPage.vue'),
         props: true,

@@ -70,12 +70,15 @@ public class NewsLifecycleService {
         Integer to = patch.getStatus();
         ThrowUtils.throwIf(to != null && !NewsStatus.isValid(to), ErrorCode.PARAMS_ERROR,
                 "非法初始状态: " + NewsStatus.label(to));
-        ThrowUtils.throwIf(to != null && to.intValue() != NewsStatus.DRAFT
-                        && to.intValue() != NewsStatus.PENDING_REVIEW,
-                ErrorCode.PARAMS_ERROR, "新建新闻只能存草稿或提交审核");
         Date now = new Date();
+        // 允许新建时直接发布：编辑页的「发布」按钮一直送 status=1，
+        // 与「保存草稿」共用 /news/edit 这个唯一入口。
         patch.setStatus(to == null ? NewsStatus.DRAFT : to);
         patch.setUserId(actorId(actor));
+        if (patch.getStatus().intValue() == NewsStatus.PUBLISHED) {
+            patch.setReviewedById(actorId(actor));
+            patch.setReviewedAt(now);
+        }
         // V15 的 t_news 对 content / coverImg / publishTime 有 NOT NULL 约束。
         // 前端首次保存可能还没填封面，用空串占位；publishTime 作为创建时间落库。
         patch.setContent(patch.getContent() == null ? "" : patch.getContent());

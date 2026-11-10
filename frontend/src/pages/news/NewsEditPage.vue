@@ -40,12 +40,22 @@ const previewImage = ref('')
 const saving = ref(false)
 const publishing = ref(false)
 
+const newsId = computed(() => {
+  const raw = route.params.id
+  // 兼容旧链接 /news/edit/null、/news/edit/undefined：一律视为新增。
+  if (raw === undefined || raw === null || raw === '' || raw === 'null' || raw === 'undefined') {
+    return undefined
+  }
+  const id = Number(raw)
+  return Number.isFinite(id) ? id : undefined
+})
+
 const pageTitle = computed(() => {
-  return route.params.id ? '编辑新闻' : '发布新闻'
+  return newsId.value !== undefined ? '编辑新闻' : '发布新闻'
 })
 
 const pageSubtitle = computed(() => {
-  return route.params.id ? '修改已发布的内容' : '撰写新的眼科资讯'
+  return newsId.value !== undefined ? '修改已发布的内容' : '撰写新的眼科资讯'
 })
 
 const clearImage = () => {
@@ -69,14 +79,13 @@ const beforeUpload = (file: File) => {
 }
 
 const handleUpload = async ({ file }: { file: File }) => {
-  const id = Number(route.params.id)
   // 新增新闻还没有 id：先「保存草稿」创建记录并回填路由，再上传封面。
-  if (!route.params.id) {
+  if (newsId.value === undefined) {
     message.warning('请先保存草稿，再上传封面')
     saving.value = false
     return
   }
-  const res = await uploadCoverImage({ newsUploadDTO: { id } }, {}, file)
+  const res = await uploadCoverImage({ newsUploadDTO: { id: newsId.value } }, {}, file)
   if (res.data.data && res.data.code === 0) {
     message.success('封面图片上传成功')
     previewImage.value = res.data.data
@@ -107,7 +116,7 @@ const handleUploadImg = async (files: File[], callback: (urls: string[]) => void
 }
 
 const saveNews = async (status: 0 | 1) => {
-  const existingId = route.params.id ? Number(route.params.id) : undefined
+  const existingId = newsId.value
   const res = await updateNews({
     ...(existingId !== undefined ? { id: existingId } : {}),
     title: formState.title,
@@ -140,10 +149,10 @@ const handleSave = async () => {
 const handlePublish = async () => {
   publishing.value = true
   try {
-    const newsId = await saveNews(1)
+    const publishedId = await saveNews(1)
     message.success('发布成功')
     router.push({
-      path: `/news/${newsId}`,
+      path: `/news/${publishedId}`,
     })
   } catch {
     message.error('发布失败')
@@ -153,25 +162,23 @@ const handlePublish = async () => {
 }
 
 const fetchNews = async () => {
-  if (!route.params.id) {
+  if (newsId.value === undefined) {
     return
   }
   const res = await getNewsVo({
-    id: Number(route.params.id),
+    id: newsId.value,
   })
   if (res.data.code === 0 && res.data.data) {
     news.value = res.data.data
     Object.assign(formState, news.value);
     previewImage.value = news.value.coverImage ?? '';
   } else {
-    if (route.params.id === null) {
-      message.error('获取新闻详情失败: ' + res.data.msg)
-    }
+    message.error('获取新闻详情失败: ' + res.data.msg)
   }
 }
 
 onMounted(() => {
-  if (!route.params.id) {
+  if (newsId.value === undefined) {
     return
   }
   fetchNews()
