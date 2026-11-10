@@ -1,6 +1,7 @@
 {
   "name": "diagnosis-frontend",
   "version": "0.0.0",
+  "description": "DEPRECATED — Vue 3 legacy frontend. The product frontend lives in ../web (React).",
   "private": true,
   "type": "module",
   "scripts": {

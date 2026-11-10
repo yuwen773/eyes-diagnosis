@@ -1,7 +1,9 @@
-# 前端设计系统（Clinical Editorial）
+# 前端设计系统（Clinical Editorial，已弃用）
 
-> 写 `frontend/` 页面、组件、样式，或评审前端 diff 时读本文。
-> 品牌令牌真源是 `frontend/src/styles/design-system/variables.css`（`--iris-*`）；
+> **已弃用（deprecated，2026-11-10 起）**：`frontend/`（Vue）已停止开发。
+> 产品前端与设计真源是根 `DESIGN.md` 与 `web/`（React）；本文仅保留为旧实现的历史参考，不再更新。
+>
+> 品牌令牌实现是 `frontend/src/styles/design-system/variables.css`（`--iris-*`）；
 > `frontend/src/assets/claude-tokens.css` 只放主题覆盖。
 
 ## Users
