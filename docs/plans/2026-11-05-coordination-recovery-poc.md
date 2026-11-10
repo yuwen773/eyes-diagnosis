@@ -28,3 +28,7 @@ docker stop $pocContainerId
 ```
 
 未设置 `COORDINATION_POC_URL` 时数据库用例跳过；必须检查测试报告中的 skipped 数，而不能把跳过视为通过。`CoordinationStore` 只允许名为 `coordination_poc` 的数据库，但调用方仍负责保证它是隔离实例。实验使用合成凭据和数据，不应连接共享或生产数据库。
+
+## 2026-11-10 证据核验补充
+
+[当前分支交付、实际 CI 例数与验收边界](../testing/2026-11-10-multi-agent-closeout-and-parent-acceptance.md#issue16)已集中归档；本节不改写上文历史运行结果。按用户确认，issue 仅补一条短评论，保留原正文和状态。

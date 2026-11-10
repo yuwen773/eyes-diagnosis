@@ -133,3 +133,7 @@ docker stop issue17-acceptance
 注意：`ISSUE17_TEST_URL` 只能是不带额外参数的 `jdbc:mysql://127.0.0.1:<port>/issue17_test`，
 带 `?useSSL=...` 等参数会被测试代码的隔离正则拒绝；本机默认 JDK 23 也不符合项目 Java 21 要求，
 必须显式设置上面的 `JAVA_HOME`。
+
+## 2026-11-10 证据核验补充
+
+[当前分支交付、实际 CI 例数与验收边界](2026-11-10-multi-agent-closeout-and-parent-acceptance.md#issue17)已集中归档；本节不改写上文历史运行结果。按用户确认，issue 仅补一条短评论，保留原正文和状态。
