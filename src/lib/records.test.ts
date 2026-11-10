@@ -1,7 +1,20 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest"
-import { canRequestReexamine, reexamineLabel, summarizeRecords } from "./records"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  canRequestReexamine,
+  loadMyStats,
+  reexamineLabel,
+  reexamineView,
+  statsLabels,
+  summarizeRecords,
+} from "./records"
+import { ApiError, getMyStats } from "./api"
 import type { DiagnosisManage } from "./api"
+
+vi.mock("./api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./api")>()
+  return { ...actual, getMyStats: vi.fn() }
+})
 
 function row(overrides: Partial<DiagnosisManage> = {}): DiagnosisManage {
   return {
@@ -76,5 +89,120 @@ describe("canRequestReexamine", () => {
 
   it("拒识记录没有可复核的结论，不给申请", () => {
     expect(canRequestReexamine(row({ aiRejected: true }))).toBe(false)
+  })
+})
+
+const mockedStats = vi.mocked(getMyStats)
+
+beforeEach(() => {
+  mockedStats.mockReset()
+})
+
+describe("reexamineView", () => {
+  it("复审中显示回执，重新打开也能看到", () => {
+    expect(reexamineView(row({ reexamineStatus: 2 }), false)).toBe("receipt")
+  })
+
+  it("提交成功后的乐观态优先显示回执", () => {
+    expect(reexamineView(row({ reexamineStatus: 2 }), true)).toBe("receipt")
+  })
+
+  it("未复审与已复审都显示可申请", () => {
+    expect(reexamineView(row({ reexamineStatus: 1 }), false)).toBe("request")
+    expect(reexamineView(row({ reexamineStatus: 3 }), false)).toBe("reviewed")
+  })
+
+  it("拒识或没有复审状态时不渲染整块", () => {
+    expect(reexamineView(row({ aiRejected: true }), false)).toBeNull()
+    expect(reexamineView(row({ reexamineStatus: undefined }), false)).toBeNull()
+  })
+})
+
+describe("loadMyStats", () => {
+  const serverStats = {
+    total: 128,
+    highRisk: 9,
+    awaitingReview: 12,
+    lastReadAt: "2026-11-08 14:32:10",
+  }
+
+  it("服务端聚合可用时用全量口径", async () => {
+    mockedStats.mockResolvedValueOnce(serverStats)
+    await expect(loadMyStats([row({ severity: "severe" })], 1)).resolves.toEqual({
+      stats: serverStats,
+      scope: "all",
+    })
+  })
+
+  it("接口未实现（404）时降级到当前页并标注 page", async () => {
+    mockedStats.mockRejectedValueOnce(new ApiError(404, "服务返回 404"))
+    const result = await loadMyStats([row({ severity: "severe" })], 37)
+    expect(result.scope).toBe("page")
+    expect(result.stats).toEqual({
+      total: 37,
+      highRisk: 1,
+      awaitingReview: 0,
+      lastReadAt: "2026-11-01 10:00:00",
+    })
+  })
+
+  it("网络错误同样降级，不向上抛", async () => {
+    mockedStats.mockRejectedValueOnce(new ApiError(-1, "网络不可用"))
+    await expect(loadMyStats([], 0)).resolves.toMatchObject({ scope: "page" })
+  })
+
+  it("服务端返回空对象时降级到本页口径（不冒充全量）", async () => {
+    mockedStats.mockResolvedValueOnce({} as never)
+    const result = await loadMyStats([row({ severity: "severe" })], 37)
+    expect(result.scope).toBe("page")
+    expect(result.stats.highRisk).toBe(1)
+  })
+
+  it("服务端返回 null 时降级到本页口径", async () => {
+    mockedStats.mockResolvedValueOnce(null as never)
+    const result = await loadMyStats([], 0)
+    expect(result.scope).toBe("page")
+    expect(result.stats.total).toBe(0)
+  })
+
+  it("字段缺一（缺 highRisk）时降级到本页口径", async () => {
+    mockedStats.mockResolvedValueOnce({
+      total: 128,
+      awaitingReview: 12,
+      lastReadAt: null,
+    } as never)
+    const result = await loadMyStats([], 0)
+    expect(result.scope).toBe("page")
+  })
+
+  it("数值字段不是有限数字时降级到本页口径", async () => {
+    mockedStats.mockResolvedValueOnce({
+      total: "128",
+      highRisk: 9,
+      awaitingReview: 12,
+      lastReadAt: null,
+    } as never)
+    const result = await loadMyStats([], 0)
+    expect(result.scope).toBe("page")
+  })
+})
+
+describe("statsLabels", () => {
+  it("全量口径不带「本页」", () => {
+    expect(statsLabels("all")).toEqual({
+      total: "判读总数 · TOTAL",
+      highRisk: "高风险 · SEVERE",
+      awaitingReview: "待人工复核 · REVIEW",
+      lastReadAt: "最近判读 · LAST",
+    })
+  })
+
+  it("本页口径必须写明「本页」", () => {
+    expect(statsLabels("page")).toEqual({
+      total: "判读总数 · TOTAL",
+      highRisk: "本页高风险 · SEVERE",
+      awaitingReview: "本页待人工复核 · REVIEW",
+      lastReadAt: "本页最近 · LAST",
+    })
   })
 })

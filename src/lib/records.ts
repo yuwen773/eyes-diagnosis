@@ -5,6 +5,7 @@
  * 前端算比后端再加聚合接口划算，且不用动后端契约。
  */
 
+import { getMyStats } from "./api"
 import type { DiagnosisManage } from "./api"
 
 export type RecordStats = {
@@ -45,6 +46,86 @@ export function summarizeRecords(
   }, null)
 
   return { total, highRisk, awaitingReview, lastReadAt }
+}
+
+/** 统计口径：all = 服务端全量聚合；page = 当前页本地汇总。 */
+export type StatsScope = "all" | "page"
+
+export type ScopedStats = {
+  stats: RecordStats
+  scope: StatsScope
+}
+
+/**
+ * 服务端聚合优先。任何失败（404 未实现、5xx、网络）都降级到当前页，
+ * 并把口径标成 page——页面据此写明「本页」，不会把一页的数字冒充全量。
+ *
+ * 200 但载荷不对（空对象、null、缺字段、类型不对）同样降级：
+ * 空 KPI 配「高风险」这种全量标签，比报错更糟。
+ */
+export async function loadMyStats(
+  records: DiagnosisManage[],
+  total: number,
+): Promise<ScopedStats> {
+  const fallback = (): ScopedStats => ({
+    stats: summarizeRecords(records, total),
+    scope: "page",
+  })
+  try {
+    const stats = await getMyStats()
+    if (!isStatsPayload(stats)) return fallback()
+    return { stats, scope: "all" }
+  } catch {
+    return fallback()
+  }
+}
+
+/** 聚合载荷的形状校验：四个字段齐全且类型正确。 */
+function isStatsPayload(value: unknown): value is RecordStats {
+  if (!value || typeof value !== "object") return false
+  const payload = value as Record<string, unknown>
+  const isCount = (n: unknown): n is number =>
+    typeof n === "number" && Number.isFinite(n) && n >= 0
+  return (
+    isCount(payload.total) &&
+    isCount(payload.highRisk) &&
+    isCount(payload.awaitingReview) &&
+    (payload.lastReadAt === null || typeof payload.lastReadAt === "string")
+  )
+}
+
+export function statsLabels(scope: StatsScope): {
+  total: string
+  highRisk: string
+  awaitingReview: string
+  lastReadAt: string
+} {
+  if (scope === "all") {
+    return {
+      total: "判读总数 · TOTAL",
+      highRisk: "高风险 · SEVERE",
+      awaitingReview: "待人工复核 · REVIEW",
+      lastReadAt: "最近判读 · LAST",
+    }
+  }
+  return {
+    total: "判读总数 · TOTAL",
+    highRisk: "本页高风险 · SEVERE",
+    awaitingReview: "本页待人工复核 · REVIEW",
+    lastReadAt: "本页最近 · LAST",
+  }
+}
+
+export type ReexamineView = "receipt" | "request" | "reviewed" | null
+
+/**
+ * 复诊区块的三态。只要记录非拒识且有复审状态就渲染——
+ * 重新打开一条「复审中」的记录也必须看到回执，不能整块消失。
+ */
+export function reexamineView(item: DiagnosisManage, reexamined: boolean): ReexamineView {
+  if (item.aiRejected || item.reexamineStatus == null) return null
+  if (reexamined || item.reexamineStatus === 2) return "receipt"
+  return item.reexamineStatus === 3 ? "reviewed" : "request"
 }
 
 /** 「已复审 / 复审完成」的记录允许再申请复诊——复审中的不重复提交。 */
