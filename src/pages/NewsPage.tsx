@@ -5,7 +5,7 @@ import { ChromaGrid, type ChromaItem } from "@/components/ChromaGrid"
 import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
-import { SiteFooter } from "@/components/SiteFooter"
+import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { SiteHeader } from "@/components/SiteHeader"
 
 const PAGE_SIZE = 9
@@ -243,9 +243,7 @@ export function NewsPage() {
         ) : null}
       </main>
 
-      <div className="wrap">
-        <SiteFooter />
-      </div>
+      <DisclaimerBar />
     </div>
   )
 }

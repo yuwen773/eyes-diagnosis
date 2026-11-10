@@ -1,0 +1,54 @@
+/**
+ * 底部免责条。
+ *
+ * 页脚去掉后，页面收尾只留一行话：一道发丝线、等宽标签、一句话、
+ * 右端一枚信号橙印章。宽度与版心一致（外层 .wrap）。
+ */
+
+.disclaimer-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 18px 28px;
+  flex-wrap: wrap;
+  padding-block: 22px 26px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.disclaimer-bar__mark {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+
+.disclaimer-bar__text {
+  margin: 0;
+  flex: 1 1 24em;
+  max-width: 46em;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+.disclaimer-bar__stamp {
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid var(--signal);
+  color: var(--signal);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  transform: rotate(-1.5deg);
+}
+
+@media (max-width: 760px) {
+  .disclaimer-bar {
+    gap: 12px;
+  }
+
+  .disclaimer-bar__stamp {
+    margin-left: 0;
+  }
+}

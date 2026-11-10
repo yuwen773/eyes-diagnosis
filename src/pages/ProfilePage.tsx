@@ -13,7 +13,7 @@ import { useFault } from "@/components/fault"
 import { useSession } from "@/lib/session"
 import { EmptyFrame } from "@/components/EmptyFrame"
 import { SectionHead } from "@/components/SectionHead"
-import { SiteFooter } from "@/components/SiteFooter"
+import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { SiteHeader } from "@/components/SiteHeader"
 
 const ROLE_LABEL: Record<string, string> = {
@@ -159,9 +159,7 @@ export function ProfilePage() {
             </Link>
           </div>
         </main>
-        <div className="wrap">
-          <SiteFooter />
-        </div>
+        <DisclaimerBar />
       </div>
     )
   }
@@ -316,9 +314,7 @@ export function ProfilePage() {
         </div>
       </main>
 
-      <div className="wrap">
-        <SiteFooter />
-      </div>
+      <DisclaimerBar />
     </div>
   )
 }

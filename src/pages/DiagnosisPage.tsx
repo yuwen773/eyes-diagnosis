@@ -7,7 +7,7 @@ import { FaultNote } from "@/components/fault"
 import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
-import { SiteFooter } from "@/components/SiteFooter"
+import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { SiteHeader } from "@/components/SiteHeader"
 
 type Stage = "empty" | "ready" | "running" | "done" | "error"
@@ -217,9 +217,7 @@ export function DiagnosisPage() {
           </div>
         </div>
 
-        <div className="wrap">
-          <SiteFooter />
-        </div>
+        <DisclaimerBar />
       </div>
     )
   }
@@ -452,9 +450,7 @@ export function DiagnosisPage() {
         </div>
       </main>
 
-      <div className="wrap">
-        <SiteFooter />
-      </div>
+      <DisclaimerBar />
     </div>
   )
 }
