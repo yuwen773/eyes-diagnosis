@@ -1,5 +1,11 @@
 # React 版管理后台移植实施计划
 
+> **历史快照（2026-11-10 更新）**：本计划写于后端还没有资讯生命周期建模之时，
+> 其中「新建新闻」相关的两处描述已被后端提交 `4a3f0ac` 推翻：`/news/edit` 在
+> `id` 为空时创建并返回新 id，下拉新增 `status=3 待审核`，并接受 `note`
+> （审核意见 / 下架原因）。具体做法见本计划 Task 2 / Task 9 的实现与
+> `web/src/pages/admin/AdminNewsEditPage.tsx`。其余步骤仍有效。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 把 Vue 版管理员前端（6 页 + 新闻编辑页）全量移植到 `web/` React 前端——独立仪表梁布局、AdminGate 三分支守卫、手写 SVG 图表、按真实 VO 字段修正的三处 Vue 版缺陷。

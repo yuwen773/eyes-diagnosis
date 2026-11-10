@@ -1,5 +1,9 @@
 # React 管理后台后端缺陷修复 Implementation Plan
 
+> **历史快照（2026-11-09）**：计划中的「本系统不实现新建路径」取舍已于 2026-11-10
+> 被资讯生命周期建模 `4a3f0ac` 推翻（`/news/edit` id 为空即创建，新增 `status=3`
+> 与 `note`）。其余缺陷均已按本计划修复并合入 `origin/master`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 修掉 2026-11-09 真实后端联调实测确认的 5 条 Java 后端缺陷（GitHub issue #26–#30），每条带回归测试。
