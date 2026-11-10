@@ -37,13 +37,29 @@ public class NewsUpdateDTO implements Serializable {
      * 新闻文中图片
      */
     /**
-     * 状态（0草稿/1已发布/2下架）
+     * 状态（0 草稿 / 1 已发布 / 2 下架 / 3 待审核），取值见 NewsStatus。
+     * 不传则不改状态；迁移合法性由 NewsLifecycleService 校验。
      */
     private Integer status;
     /**
      * 新闻封面
      */
     private String coverImage;
+
+    /** 内容分类（可空，不传则不改） */
+    private String category;
+
+    /** 来源出处 */
+    private String source;
+
+    /** 是否精选：0-否 1-是 */
+    private Integer featured;
+
+    /**
+     * 审核意见 / 驳回理由 / 下架原因。
+     * 仅当本次同时提交 status 且迁移到目标状态时生效；纯内容编辑传 null。
+     */
+    private String note;
 
     private static final long serialVersionUID = 1L;
 }

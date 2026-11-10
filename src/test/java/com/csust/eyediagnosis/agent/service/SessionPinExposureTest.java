@@ -1,5 +1,6 @@
 package com.csust.eyediagnosis.agent.service;
 
+import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.mapper.AgentMessageMapper;
 import com.csust.eyediagnosis.mapper.AgentSessionMapper;
@@ -43,9 +44,11 @@ class SessionPinExposureTest {
     private SessionMessageQueue sessionMessageQueue;
 
     private ChatHistoryService newService() {
+        ChatMessageWriter messageWriter = new ChatMessageWriter(
+                agentSessionMapper, agentMessageMapper, new AgentConstants());
         ChatHistoryService service = new ChatHistoryService(
                 agentSessionMapper, agentMessageMapper, new ObjectMapper(),
-                sessionMessageQueue);
+                sessionMessageQueue, messageWriter);
         service.setTitleGenerationService(titleGenerationService);
         return service;
     }

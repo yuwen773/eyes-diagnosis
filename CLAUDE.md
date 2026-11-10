@@ -11,26 +11,20 @@ Base package: `com.csust.eyediagnosis`
 > 分支，与本分支**不再互相合并**；`frontend/`、`algorithm/` 下的 ML 部分等共享目录各持一份，
 > 改动需人工搬运。约定见 `docs/backend-split.md`。
 
-## Build & Run
+## Navigation
 
-```bash
-# Backend
-mvn clean package                    # Build (includes protobuf codegen)
-mvn spring-boot:run                  # Dev server :8081, context-path /api
-mvn test -Dtest=ClassName#method     # Run single test
+- 领域命名、模块边界、易混术语 → `GLOSSARY.md`（架构评审与新增概念前读）。
+- 找设计 / 计划 / 验收 / 迁移文档 → `docs/README.md`（按主题分组的索引）。
+- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`。
+- 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
 
-# Frontend (in frontend/)
-npm run dev                          # Dev server :5173
-npm run build                        # Type-check + build
-npm run openapi                      # Generate API client from OpenAPI spec
+## Build & Verify
 
-# Algorithm (in algorithm/)
-pip install -r requirements.txt
-python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
-python grpc_server.py                # gRPC server :50051
+后端构建脚本看 `pom.xml`，前端脚本看 `frontend/package.json`，算法服务看 `algorithm/requirements.txt` 与 `run_mcp_server.py` / `grpc_server.py`；`docker-compose.yml` 起 ChromaDB :8000。
 
-docker-compose up -d                 # ChromaDB vector store :8000
-```
+**后端全量验证走 `scripts/verify.sh`**：它自带一次性 MySQL 8 + Redis、注入 `SPRING_PROFILES_ACTIVE=ci`、跑完整 `mvn test`（含 `contextLoads` 与两个 MySQL 集成门禁），结束自动清理容器。JDK 21 由脚本设为 `C:\Users\yuwen\.jdks\corretto-21.0.7`；手工跑 Maven 时用 `JAVA_HOME=<该路径> mvn ...`。
+
+Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local.md`（不入库，工作树不自动继承）；Codex 侧同一份在 `~/.codex/AGENTS.md`。
 
 ## Architecture
 
@@ -88,6 +82,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 ### Aesthetic Direction
 **白色仪器（The White Instrument）**。设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。
 两条前端线：`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）是历史线，仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
+写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`（品牌令牌、双主题、页面骨架、参考实现）。后端任务不需要读。
 
 ### Design Rules（写前端必须遵守）
 - **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。

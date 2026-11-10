@@ -30,9 +30,11 @@ class ChatHistoryServiceOwnershipTest {
 
     @Test
     void existingSessionOwnedByAnotherUserIsRejected() {
+        ChatMessageWriter messageWriter = new ChatMessageWriter(
+                agentSessionMapper, agentMessageMapper, new com.csust.eyediagnosis.agent.config.AgentConstants());
         ChatHistoryService service = new ChatHistoryService(
                 agentSessionMapper, agentMessageMapper, new ObjectMapper(),
-                sessionMessageQueue);
+                sessionMessageQueue, messageWriter);
         service.setTitleGenerationService(titleGenerationService);
 
         AgentSession existing = new AgentSession();
