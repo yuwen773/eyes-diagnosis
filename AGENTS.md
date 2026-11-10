@@ -91,22 +91,25 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 混合用户群——眼科医生（临床检查）、医院管理员（记录管理/系统运维）、普通患者（AI 自助诊断）。三种角色技术熟练度和使用场景差异大，界面需根据角色调整复杂度。
 
 ### Brand Personality
-**温暖、专业、关怀**。药用青绿主色 + 米色背景传递人文关怀，Georgia 衬线标题传达医疗专业性，柔和圆角和暖色阴影营造被温柔对待的感受。
+**冷静、精密、克制**。骨白工作台 + 信号橙作唯一强调 + 衬线标题 + 等宽读数，传达"这是一台可信的临床仪器"，而不是一个健康 App。温度靠文案与留白表达，不靠暖色调。
 
 ### Aesthetic Direction
-**医疗编辑风（Clinical Editorial）**，2026-07-28 由用户在四个预览方向中选定 A。浅色为主、暖墨深色为辅。设计真源是 `frontend/src/styles/design-system/variables.css`（令牌 `--iris-*`）；`frontend/src/assets/claude-tokens.css` 只放主题覆盖。
+**白色仪器（The White Instrument）**。设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。
+两条前端线：`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）是历史线，仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
 
 ### Design Rules（写前端必须遵守）
-- **品牌主色是药用青绿 `--iris-accent: #1b7f6b`**，不是旧的赤陶 `#c96442`。新代码直接用 `--iris-*`，不要写 `var(--claude-*)`——那是废弃别名。
-- **严重度语义色与品牌色解耦**：低/中/高风险用 `--iris-sev-low/moderate/high`，不跟随品牌色。
-- **所有数字用等宽字体** `--iris-font-mono`（JetBrains Mono）——置信度、病灶计数、时间戳。
-- **衬线标题用 `--iris-font-serif`（Georgia），weight 只允许 500–600，禁止 700+ 与斜体**；正文与控件用 `--iris-font-sans`。
-- **发丝线优先于厚重卡片阴影**，需要层级时才用极轻阴影。
+- **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。
+- **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
+- **所有数字用等宽字体** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、计数、时间戳、哈希。
+- **衬线标题用 `--font-serif`（Noto Serif SC 栈），weight 只允许 400**，禁止 700+ 与斜体；正文与控件用 `--font-sans`。
+- **圆角默认 0**（按钮、输入、卡片、表格），圆形用 50%，药丸 999px；不要堆圆角。
+- **发丝线优先于厚重卡片阴影**，需要层级时才用极淡的墨色阴影。
 - **AI 装饰零容忍**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
-- 页面骨架用 sub-style B：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + `.dt-row` 表格行 + `.card-accent` 顶部条。
+- **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
+- 页面骨架：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条。
 
 ### 参考实现
-`HomePage.vue`、`user/UserLoginPage.vue`、`user/UserRegisterPage.vue` 已按上述规则重写，可复用其原语（`.kpi-card`、`.dt-row`、`.section-overline`、`.card-accent`）。其余 17 个页面尚未按 B 风格重写，改到时以这三页为模板。
+`web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。Vue 版的 `HomePage.vue` 等三页仅作历史参考。
 
 ### Priority Areas
 1. **诊断流程**：登录、首页、图片上传、诊断结果——用户最先接触的核心路径
@@ -114,8 +117,8 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 3. **Agent 智能对话**：AI 对话、会话管理、资源面板——最复杂的交互界面
 
 ### Design Principles
-1. **温度优先**：暖色调、柔和圆角、友善文案，让用户感到被关心
+1. **克制 = 信任**：骨白与墨色为主，彩色只做语义，界面读起来像一份可信的判读报告
 2. **角色自适应**：医生看专业数据，患者看通俗解读，同一系统不同复杂度
-3. **克制之美**：青绿点缀而非铺满，每个视觉元素服务于信息或情感
+3. **橙只做语义**：信号橙标记"重点/当前"，铺满就失去意义
 4. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
 5. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转
