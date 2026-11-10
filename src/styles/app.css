@@ -180,7 +180,8 @@ a {
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  /* 章节名不是装饰，10.5px 下 fg-3 在浅色底上只有 2.9:1，抬到 fg-2。 */
+  color: var(--fg-2);
   white-space: nowrap;
 }
 
@@ -309,6 +310,8 @@ a:hover .wordmark__iris {
   background: none;
   border: 0;
   cursor: pointer;
+  /* 收窄到装不下时，宁可提前走汉堡菜单，也不要让「01 判读」断成两行。 */
+  white-space: nowrap;
   transition: color var(--fast);
 }
 
@@ -592,7 +595,9 @@ a.acct__trigger--anon:hover {
   scroll-margin-top: calc(var(--nav-h) + 12px);
 }
 
-@media (max-width: 760px) {
+/* 800 而不是 760：768 这类平板宽度下，品牌 + 三条导航 + 主题钮 + 登录
+   正好卡在装不下的边缘，会挤成每个字一行。提前交给汉堡菜单。 */
+@media (max-width: 800px) {
   .site-head__inner {
     gap: 14px;
   }
@@ -816,11 +821,17 @@ a.acct__trigger--anon:hover {
     background var(--fast),
     color var(--fast),
     border-color var(--fast),
-    opacity var(--fast);
+    opacity var(--fast),
+    transform var(--fast);
 }
 
 .btn:hover {
   background: color-mix(in srgb, var(--fg) 85%, var(--surface));
+}
+
+/* 按下去要有一点实感：像真的按在仪器上。 */
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn:disabled {
@@ -958,7 +969,8 @@ html:not(.dark) .night > .night__grain {
   background: #000;
 }
 
-/* 终章 CTA：登录页那块磨砂玻璃，搬到落地页收尾。宽度由 .auth__glass 提供。 */
+/* 终章 CTA：登录页那块磨砂玻璃，搬到落地页收尾。宽度由 .auth__glass 提供。
+   圆角归零：落地页从头到尾都是直角仪器面板，只有这一块是圆的会显得走错片场。 */
 .pitch__glass {
   max-width: 380px;
   padding: 26px 28px 24px;
@@ -966,6 +978,11 @@ html:not(.dark) .night > .night__grain {
   gap: 14px;
   justify-items: start;
   text-align: left;
+}
+
+/* .auth__glass 的 22px 圆角定义在文件后面，单类权重压不住，这里叠一个类。 */
+.pitch__glass.auth__glass {
+  border-radius: 0;
 }
 
 /* 浅主题下的收尾玻璃：同一块磨砂，开灯版（参数与 .auth--light 里那块一致）。 */
@@ -987,8 +1004,9 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   background: linear-gradient(90deg, transparent, rgba(20, 23, 26, 0.4), transparent);
 }
 
+/* 玻璃上的免责小字是收尾唯一的告知，44% 太淡，读不清。 */
 .pitch__glass .small {
-  color: color-mix(in srgb, var(--fg) 44%, transparent);
+  color: color-mix(in srgb, var(--fg) 62%, transparent);
 }
 
 /* ==========================================================================
@@ -1029,9 +1047,14 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   color: var(--fg-2);
 }
 
+.hero__masthead span:first-child {
+  color: var(--fg);
+}
+
 .hero__masthead-mid {
   margin-left: auto;
-  color: var(--fg-3);
+  /* fg-3 在 10.5px 下对比度不够，抬一档到 fg-2。 */
+  color: var(--fg-2);
 }
 
 .hero__masthead span:last-child {
@@ -1044,15 +1067,82 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding-block: clamp(40px, 5.5vh, 68px);
 }
 
+/* 索引板是房间里的一张纸：表格印在纸上，纸浮在扫描舱前面。
+   不做背景板的话，网格线会从字里穿过去，读数就废了。 */
 .hero__index {
   grid-column: 8 / 13;
-  align-self: stretch;
-  border-left: 1px solid var(--line);
-  padding-left: 28px;
-  padding-block: clamp(40px, 5.5vh, 68px);
+  align-self: end;
+  margin-bottom: clamp(40px, 5.5vh, 68px);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 20px 22px 22px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+}
+
+/* 扫描舱：整块首屏就是一间线框房间。
+   画在最底层，页面浮在上面——网格线压到很暗，只有那道读数光是亮的。 */
+.hero-stage__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 幕布：把文字底下那一块压暗，房间才敢亮。
+   左边罩住标题与按钮，下缘罩住读数条。
+   右边本来也有层纱——索引改成一张不透明的纸板之后，那层纱只剩压边的作用，
+   再压重就会把房间洗掉，所以撤到只剩边角。 */
+.hero-stage__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      48% 50% at 21% 52%,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 74%, transparent) 42%,
+      transparent 74%
+    ),
+    radial-gradient(
+      40% 46% at 80% 54%,
+      color-mix(in srgb, var(--bg) 26%, transparent) 0%,
+      transparent 72%
+    ),
+    linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 45%, transparent) 11%, transparent 26%),
+    /* 顶带要压住头版那行 mono：网格线正好会和它同高，露出来就像字被划了一道。 */
+    linear-gradient(
+      to bottom,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 72%, transparent) 7%,
+      color-mix(in srgb, var(--bg) 26%, transparent) 15%,
+      transparent 26%
+    );
+}
+
+/* 浅色页面：黑字压得住网格，幕布只留薄薄一层，
+   免得整块首屏被洗成一张白纸。 */
+.is-field .hero-stage__scrim {
+  background:
+    radial-gradient(
+      40% 42% at 19% 50%,
+      color-mix(in srgb, var(--bg) 84%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      36% 42% at 80% 52%,
+      color-mix(in srgb, var(--bg) 18%, transparent) 0%,
+      transparent 74%
+    ),
+    linear-gradient(to top, color-mix(in srgb, var(--bg) 72%, transparent) 0%, transparent 16%),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bg) 92%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 66%, transparent) 7%,
+      color-mix(in srgb, var(--bg) 24%, transparent) 15%,
+      transparent 26%
+    );
 }
 
 .hero__eyebrow {
@@ -1076,8 +1166,12 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   background: var(--line-strong);
 }
 
+/* 字号上限按「六字行必须放得进 6 栏」算：
+   版心 1160 − 11×24 = 896，一栏 74.7，文案栏 6 栏 = 568px。
+   6 字 × 字号 × (1 − 0.03 字距) ≤ 568 → 字号 ≤ 97。
+   取 92，留一截余量给不同字库的汉字宽度差。 */
 .hero__title {
-  font-size: clamp(44px, 7.5vw, 100px);
+  font-size: clamp(42px, 6.5vw, 92px);
   letter-spacing: -0.03em;
 }
 
@@ -1103,9 +1197,10 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   margin-top: 38px;
 }
 
-/* 八类索引板：静态读数行，右列示例概率 */
+/* 八类索引板：静态读数行，右列示例概率。
+   纸板自带外框，表内只留行间发丝线，不再画外圈，避免双线。 */
 .index {
-  border-top: 1px solid var(--line-strong);
+  border-top: 0;
 }
 
 .index__head {
@@ -1123,6 +1218,19 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: baseline;
   padding-block: 12.5px;
   border-top: 1px solid var(--line);
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+/* 读数行悬停：编号与概率点亮成信号色，像仪器上被点中的那一格。 */
+.index__row:hover {
+  border-top-color: var(--line-strong);
+}
+
+.index__row:hover .index__code,
+.index__row:hover .index__rate {
+  color: var(--signal);
 }
 
 .index__code {
@@ -1142,10 +1250,21 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .index__rate {
   font-size: 11px;
   color: var(--fg-3);
+  transition: color var(--fast);
+}
+
+/* 纸板上的小注是免责说明，不是装饰：fg-3 在 12.5px 下过不了对比度，抬到 fg-2。 */
+.index__note {
+  color: var(--fg-2);
+}
+
+/* 表头那行 10.5px 的 overline 同样太淡，和纸板上的其余字对齐一档。 */
+.index .overline {
+  color: var(--fg-2);
 }
 
 .index__row:last-child {
-  border-bottom: 1px solid var(--line-strong);
+  border-bottom: 0;
 }
 
 /* 读数条：仪器面板的底部整行 */
@@ -1238,11 +1357,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   .hero__copy {
     padding-block: 36px 0;
   }
+  /* 索引在窄屏上仍是一张完整的纸板：内外边距与边框一概不动，
+     只把上面的间距补回来，别让表头顶到上一块。 */
   .hero__index {
     margin-top: 40px;
-    border-left: 0;
-    padding-left: 0;
-    padding-block: 0;
+    margin-bottom: 0;
   }
   .strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1255,6 +1374,18 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
   .strip__cell:nth-child(n + 3) {
     border-top: 1px solid var(--line);
+  }
+}
+
+/* 手机上的索引板：9 字的病名在 18px 下会折成两行，
+   把编号列和格距收窄、字号降一档，「高血压性视网膜病变」才排得进一行。 */
+@media (max-width: 520px) {
+  .index__row {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 10px 12px;
+  }
+  .index__name {
+    font-size: 16px;
   }
 }
 
@@ -1793,9 +1924,16 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .statute__grid {
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
+  grid-template-columns: 1.12fr 1fr;
   gap: 64px;
-  align-items: start;
+  align-items: stretch;
+}
+
+/* 左栏拉成 flex 列：章盖子用 margin-top:auto 落到栏底，
+   把右栏条款拉高后空出来的那块补上。 */
+.statute__manifesto {
+  display: flex;
+  flex-direction: column;
 }
 
 .statute__overline {
@@ -1803,18 +1941,23 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   color: var(--fg-3);
 }
 
+/* 字号上限按「十二字行必须放得进左栏」算：
+   面板内宽 ≈ 1045 − 64 栏距 = 981，左栏 1.12fr ≈ 518px，
+   12 字 × 字号 × (1 − 0.025) ≤ 518 → 字号 ≤ 43。取 42。 */
 .statute__title {
-  font-size: clamp(28px, 3.4vw, 48px);
+  font-size: clamp(28px, 3.1vw, 42px);
 }
 
 .statute__lead {
   margin-top: 20px;
+  margin-bottom: 36px;
 }
 
 /* 一枚斜盖的章：辅助判读，不是诊断。 */
 .statute__seal {
   display: inline-block;
-  margin-top: 36px;
+  align-self: flex-start;
+  margin-top: auto;
   padding: 14px 18px;
   border: 2px solid var(--signal);
   color: var(--signal);

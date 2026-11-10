@@ -6,6 +6,7 @@ import { useRevealScan } from "@/lib/useInView"
 import { useTheme } from "@/components/theme-provider"
 import { AgentConsole } from "@/components/AgentConsole"
 import { ElectricBorder } from "@/components/ElectricBorder"
+import { GridScan } from "@/components/GridScan"
 import { RecordSheet } from "@/components/RecordSheet"
 import { ScrollExpand } from "@/components/ScrollExpand"
 import { SectionHead } from "@/components/SectionHead"
@@ -196,6 +197,30 @@ export function LandingPage() {
 
       <main>
         <div className="hero-stage">
+          {/* 扫描舱：整块首屏就是一间线框房间。
+              读数光一遍遍从远处扫过来，页面浮在这间屋子里——机器在通电，界面在读数。 */}
+          <div className="hero-stage__scan" aria-hidden="true">
+            {/* 白纸上的房间要更「有体积」：线条压深一档、角落阴影加重，
+                读数光收细收暗——纸面上经不起一团亮光。 */}
+            <GridScan
+              theme={dark ? "dark" : "light"}
+              cells={6}
+              depth={4}
+              depthFade={dark ? 0.5 : 0.4}
+              shading={dark ? 0.62 : 0.72}
+              reflection={0.34}
+              parallax={0.9}
+              scanDuration={2.8}
+              scanDelay={1.4}
+              scanWidth={dark ? 2 : 1.3}
+              trail={dark ? 0.62 : 0.38}
+              glow={dark ? 0.85 : 0.34}
+              linesColor={dark ? undefined : "#a9afa3"}
+              clickEffect="ping"
+            />
+          </div>
+          <div className="hero-stage__scrim" aria-hidden="true" />
+
           <section className="wrap hero">
             {/* 仪器头版：一行 mono 元信息，发丝线切开 */}
             <div className="hero__masthead num rise">
@@ -206,7 +231,7 @@ export function LandingPage() {
 
             <div className="hero__copy">
               <div className="hero__eyebrow rise">
-                <span>01 — 眼底判读</span>
+                <span>01 眼底判读</span>
               </div>
 
               <h1 className="display hero__title">
@@ -264,7 +289,7 @@ export function LandingPage() {
                 ))}
               </div>
 
-              <p className="small" style={{ marginTop: 14, maxWidth: "32em" }}>
+              <p className="small index__note" style={{ marginTop: 14, maxWidth: "32em" }}>
                 示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
               </p>
             </aside>

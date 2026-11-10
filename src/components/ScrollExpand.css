@@ -7,6 +7,10 @@
   width: 100%;
   height: 100%;
 
+  /* 光幕里的文字要贴回页面网格：版心居中之后的左边界 + 内边距，
+     和 .wrap 算出来的是同一个数。百分比取的是舞台宽度，不含滚动条。 */
+  --se-inset: calc(max(0px, (100% - var(--maxw)) / 2) + var(--gutter));
+
   /* 画面明暗决定三组颜色：画框底（letterbox 填色）、压暗层、叠加文字。
      默认黑底片；亮底片那版在 [data-tone="light"] 里改写同一组变量。 */
   --se-frame-bg: #000;
@@ -28,10 +32,10 @@
     );
 }
 
-/* 亮底片：画框底取画面自己的灰（letterbox 看不见），压暗层换成提亮层，
-   文字改墨色。左下角那块留白本来就干净，文字压上去更清楚。 */
+/* 亮底片：画框底取页面底色（letterbox 直接融进页面，不成一块灰板），
+   压暗层换成提亮层，文字改墨色。左下角那块留白本来就干净，文字压上去更清楚。 */
 .scroll-expand[data-tone="light"] {
-  --se-frame-bg: #e4e2e1;
+  --se-frame-bg: var(--field);
   --se-ink: #14171a;
   --se-ink-2: rgba(20, 23, 26, 0.72);
   --se-ink-3: rgba(20, 23, 26, 0.52);
@@ -116,7 +120,7 @@
   align-items: flex-start;
   justify-content: flex-end;
   text-align: left;
-  padding: clamp(24px, 4.5vw, 64px);
+  padding: clamp(24px, 4.5vw, 64px) var(--se-inset);
   opacity: 0;
   will-change: opacity, transform;
 }
@@ -128,7 +132,11 @@
   align-items: flex-start;
   justify-content: flex-start;
   margin: 0;
-  padding: clamp(24px, 4.5vw, 64px);
+  /* 舞台 sticky 在视口顶端，顶栏压在它上面：标题得让开一条顶栏的高度，
+     否则「模型的唯一输入」会被顶栏切掉半行。
+     左右贴回页面网格，和首屏头版那条 mono 对齐。 */
+  padding: calc(var(--nav-h) + clamp(16px, 2.6vw, 40px)) var(--se-inset)
+    clamp(24px, 4.5vw, 64px);
   will-change: opacity, transform;
   pointer-events: none;
 }
