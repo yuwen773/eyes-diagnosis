@@ -24,7 +24,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-/** Internal application boundary, deliberately not exposed by a controller. Never publishes or saves diagnoses. */
+/**
+ * Internal application boundary. Never publishes or saves diagnoses, and the only controller in front of it is
+ * the opt-in admin test entry ({@link PatientDraftTestService}), which starts the same run a poller would.
+ */
 @Service
 public class PatientDraftCoordinator implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(PatientDraftCoordinator.class);
@@ -41,8 +44,8 @@ public class PatientDraftCoordinator implements AutoCloseable {
     private final EvidenceAgent evidence;
     private final ExplanationAgent explanation;
     private final CriticAgent critic;
-    // Bounded queue also permits handoff while the preceding Future is finishing on its worker thread.
-    private final ThreadPoolExecutor calls = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1), r -> {
+    // Two provider slots and a bounded queue; orchestration never blocks a provider worker.
+    private final ThreadPoolExecutor calls = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2), r -> {
         var thread = new Thread(r, "patient-draft-model"); thread.setDaemon(true); return thread;
     });
 
@@ -54,9 +57,9 @@ public class PatientDraftCoordinator implements AutoCloseable {
         }
     }
     public record Evidence(int version, List<Citation> citations) {}
-    public record Message(int sequence, String role, String state, String output) {}
+    public record Message(int sequence, String role, String state, String output, java.time.Instant startedAt, java.time.Instant completedAt) {}
     public record Report(String status, String stopReason, int calls, int supplements, int rewrites,
-                         String inferenceDigest, List<Evidence> evidence, List<Draft> drafts, List<Message> messages) {}
+                         String inferenceDigest, List<Evidence> evidence, List<Draft> drafts, List<Message> messages, String workflowVersion) {}
 
     @Autowired
     public PatientDraftCoordinator(JdbcTemplate jdbc, ControlledEvidenceRetriever retriever, ChatModel model) {
@@ -75,51 +78,164 @@ public class PatientDraftCoordinator implements AutoCloseable {
         Claimed claimed = claim(requestedTaskId);
         if (claimed == null) return;
         String taskId = claimed.taskId();
-        try {
-            Inference inference = claimed.inference();
-            String disease = inference.predictedLabel().toUpperCase(Locale.ROOT);
-            Vision analysis = invoke(taskId, "VISION", inference, () -> vision.analyze(inference));
-            validateVision(analysis);
-            var searchContext = new EvidenceContext(inference, analysis, null);
-            Retrieved retrieved = invoke(taskId, "EVIDENCE", searchContext, () -> evidence.retrieve(searchContext, disease, TOPIC));
-            Evidence frozen = freeze(taskId, disease, 1, retrieved.citations());
-            var initialContext = new ExplanationContext(inference, analysis, frozen, null, null);
-            Draft draft = invoke(taskId, "EXPLANATION", initialContext, () -> explanation.explain(initialContext));
-            validateDraft(draft, frozen);
-            saveDraft(taskId, 1, draft);
-            var initialReview = new CriticContext(inference, analysis, frozen, draft);
-            Critique review = invoke(taskId, "CRITIC", initialReview, () -> critic.critique(initialReview));
-            validateCritique(review, draft, frozen);
-            if (!"NONE".equals(review.action())) {
-                boolean supplement = "SUPPLEMENT".equals(review.action());
-                reserveFeedback(taskId, supplement);
-                if (supplement) {
-                    retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> null);
-                    var feedbackContext = new EvidenceContext(inference, analysis, review);
-                    var extra = invoke(taskId, "EVIDENCE", feedbackContext, () -> evidence.retrieve(feedbackContext, disease, TOPIC));
-                    var combined = new LinkedHashMap<String, Citation>();
-                    for (Citation citation : frozen.citations()) combined.put(citation.documentId() + ":" + citation.chunkIndex(), citation);
-                    for (Citation citation : extra.citations()) combined.putIfAbsent(citation.documentId() + ":" + citation.chunkIndex(), citation);
-                    if (combined.size() == frozen.citations().size()) throw new Stop("INSUFFICIENT_EVIDENCE");
-                    frozen = freeze(taskId, disease, 2, List.copyOf(combined.values()));
-                }
-                var rewriteContext = new ExplanationContext(inference, analysis, frozen, draft, review);
-                draft = invoke(taskId, "EXPLANATION", rewriteContext, () -> explanation.explain(rewriteContext));
-                validateDraft(draft, frozen);
-                saveDraft(taskId, 2, draft);
-                var reviewContext = new CriticContext(inference, analysis, frozen, draft);
-                review = invoke(taskId, "CRITIC", reviewContext, () -> critic.critique(reviewContext));
-                validateCritique(review, draft, frozen);
-                if (!"NONE".equals(review.action())) throw new Stop("FEEDBACK_LIMIT");
-            }
-            retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> guarded(taskId, () -> {
-                jdbc.update("UPDATE t_patient_draft_run SET status='REVIEW_READY' WHERE taskId=?", taskId);
-                jdbc.update("UPDATE t_diagnosis_task SET status='WAITING_REVIEW',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND BINARY status=BINARY 'DRAFTING'", taskId);
-                return null;
-            }));
-        } catch (Stop e) { restrict(taskId, e.reason); }
+        var run = new AutonomousRun(taskId, claimed.inference(), claimed.deadline());
+        try { run.execute(); }
+        catch (Stop e) { restrict(taskId, e.reason); }
+        catch (DraftMailbox.Rejected e) { restrict(taskId, e.reason); }
         catch (ControlledEvidenceRetriever.EvidenceUnavailable e) { restrict(taskId, "SOURCE_INVALIDATED"); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); restrict(taskId, "INTERRUPTED"); }
         catch (Exception e) { log.error("Patient draft run failed for an unexpected reason", e); restrict(taskId, "INVALID_OUTPUT"); }
+        finally { run.cancel(); }
+    }
+
+    /** A task-local event loop: only validated, addressed messages make another role eligible to run. */
+    private final class AutonomousRun {
+        private final String taskId;
+        private final Inference inference;
+        private final String disease;
+        private final DraftMailbox mailbox;
+        private final java.time.Instant deadline;
+        private final List<Pending> active = new ArrayList<>();
+        private final BlockingQueue<Completed> completed = new ArrayBlockingQueue<>(8);
+        private Evidence frozen;
+        private Draft draft;
+        private Critique feedback;
+        private int draftVersion;
+        private boolean ready;
+
+        AutonomousRun(String taskId, Inference inference, java.time.Instant deadline) {
+            this.taskId = taskId; this.inference = inference;
+            this.deadline = deadline;
+            disease = inference.predictedLabel().toUpperCase(Locale.ROOT);
+            mailbox = new DraftMailbox(taskId, inference.snapshotDigest(), clock);
+        }
+
+        void execute() throws Exception {
+            launch("VISION", inference, List.of(), () -> vision.analyze(inference));
+            var context = new EvidenceContext(inference, null, null);
+            launch("EVIDENCE", context, List.of(), () -> evidence.retrieve(context, disease, TOPIC));
+            while (!ready) {
+                if (active.isEmpty()) throw new Stop("MESSAGE_CONFLICT");
+                long remaining = deadline.toEpochMilli() - clock.millis();
+                if (remaining <= 0) throw new Stop("TOTAL_TIMEOUT");
+                for (Pending call : active) {
+                    if (call.startedNanos != 0 && TimeUnit.NANOSECONDS.toMillis(
+                            (call.finishedNanos == 0 ? System.nanoTime() : call.finishedNanos) - call.startedNanos) >= budget.callMillis()) {
+                        throw new Stop("AGENT_TIMEOUT");
+                    }
+                }
+                Completed done = completed.poll(Math.min(remaining, 20), TimeUnit.MILLISECONDS);
+                if (done == null) continue;
+                active.remove(done.call());
+                if (done.failure() != null) {
+                    Throwable cause = done.failure();
+                    if (cause instanceof Stop stop) throw stop;
+                    if (cause instanceof ControlledEvidenceRetriever.EvidenceUnavailable unavailable) throw unavailable;
+                    throw new Stop(transportFailure(cause));
+                }
+                // Keep rejected provider output inspectable, but never send it to another role.
+                recordResult(taskId, done, List.of());
+                List<DraftMailbox.Envelope> outgoing = accept(done.call(), done.result());
+                recordResult(taskId, done, outgoing);
+                if (ready) {
+                    retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> guarded(taskId, () -> {
+                        jdbc.update("UPDATE t_patient_draft_run SET status='REVIEW_READY' WHERE taskId=?", taskId);
+                        jdbc.update("UPDATE t_diagnosis_task SET status='WAITING_REVIEW',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND BINARY status=BINARY 'DRAFTING'", taskId);
+                        return null;
+                    }));
+                } else schedule();
+            }
+        }
+
+        private void launch(String role, Object context, List<DraftMailbox.Envelope> inbox, Callable<?> action) {
+            if (active.stream().anyMatch(c -> c.role.equals(role))) throw new Stop("MESSAGE_CONFLICT");
+            active.add(start(taskId, role, context, inbox, action, completed));
+        }
+
+        private List<DraftMailbox.Envelope> accept(Pending call, Object result) {
+            var outgoing = new ArrayList<DraftMailbox.Envelope>();
+            String cause = call.inbox.isEmpty() ? null : call.inbox.getLast().messageId();
+            switch (call.role) {
+                case "VISION" -> {
+                    validateVision((Vision) result);
+                    for (String to : List.of("EVIDENCE", "EXPLANATION", "CRITIC"))
+                        outgoing.add(mailbox.send(call.sequence, call.role, to, "VISION_READY", cause, null, null, result));
+                }
+                case "EVIDENCE" -> {
+                    var retrieved = (Retrieved) result;
+                    List<Citation> citations = retrieved.citations();
+                    if (frozen != null) {
+                        var combined = new LinkedHashMap<String, Citation>();
+                        for (Citation c : frozen.citations()) combined.put(c.documentId() + ":" + c.chunkIndex(), c);
+                        for (Citation c : citations) combined.putIfAbsent(c.documentId() + ":" + c.chunkIndex(), c);
+                        if (combined.size() == frozen.citations().size()) throw new Stop("INSUFFICIENT_EVIDENCE");
+                        citations = List.copyOf(combined.values());
+                    }
+                    frozen = freeze(taskId, disease, frozen == null ? 1 : 2, citations);
+                    for (String to : List.of("EXPLANATION", "CRITIC"))
+                        outgoing.add(mailbox.send(call.sequence, call.role, to, "EVIDENCE_READY", cause, frozen.version(), null, frozen));
+                }
+                case "EXPLANATION" -> {
+                    draft = (Draft) result;
+                    validateDraft(draft, frozen);
+                    saveDraft(taskId, ++draftVersion, draft);
+                    outgoing.add(mailbox.send(call.sequence, call.role, "CRITIC", "DRAFT_READY", cause, frozen.version(), draftVersion, draft));
+                }
+                case "CRITIC" -> {
+                    var review = (Critique) result;
+                    validateCritique(review, draft, frozen);
+                    if ("NONE".equals(review.action())) {
+                        outgoing.add(mailbox.send(call.sequence, call.role, "GATE", "REVIEW_COMPLETED", cause, frozen.version(), draftVersion, review));
+                        ready = true;
+                    } else {
+                        boolean supplement = "SUPPLEMENT".equals(review.action());
+                        reserveFeedback(taskId, supplement);
+                        feedback = review;
+                        outgoing.add(mailbox.send(call.sequence, call.role, supplement ? "EVIDENCE" : "EXPLANATION",
+                                supplement ? "SUPPLEMENT_REQUESTED" : "REWRITE_REQUESTED", cause, frozen.version(), draftVersion, review));
+                    }
+                }
+                default -> throw new Stop("INVALID_MESSAGE_ROUTE");
+            }
+            return List.copyOf(outgoing);
+        }
+
+        private void schedule() {
+            var visionForEvidence = mailbox.latest("EVIDENCE", "VISION_READY");
+            var supplement = mailbox.latest("EVIDENCE", "SUPPLEMENT_REQUESTED");
+            if (mailbox.unread(supplement)) {
+                checkFeedback(supplement);
+                retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> null);
+                var context = new EvidenceContext(inference, (Vision) visionForEvidence.payload(), (Critique) supplement.payload());
+                launch("EVIDENCE", context, mailbox.consume(visionForEvidence, supplement), () -> evidence.retrieve(context, disease, TOPIC));
+                return;
+            }
+            var v = mailbox.latest("EXPLANATION", "VISION_READY");
+            var e = mailbox.latest("EXPLANATION", "EVIDENCE_READY");
+            var rewrite = mailbox.latest("EXPLANATION", "REWRITE_REQUESTED");
+            if (v != null && e != null && (draft == null || mailbox.unread(rewrite) || mailbox.unread(e))
+                    && active.stream().noneMatch(c -> c.role.equals("EXPLANATION"))) {
+                if (rewrite != null) checkFeedback(rewrite);
+                var context = new ExplanationContext(inference, (Vision) v.payload(), ExplanationEvidence.from((Evidence) e.payload()), draft, feedback);
+                launch("EXPLANATION", context, mailbox.consume(v, e, rewrite), () -> explanation.explain(context));
+                return;
+            }
+            var d = mailbox.latest("CRITIC", "DRAFT_READY");
+            if (mailbox.unread(d)) {
+                var cv = mailbox.latest("CRITIC", "VISION_READY");
+                var ce = mailbox.latest("CRITIC", "EVIDENCE_READY");
+                if (cv == null || ce == null || !Objects.equals(d.evidenceVersion(), ce.evidenceVersion())) throw new Stop("MESSAGE_CONFLICT");
+                var context = new CriticContext(inference, (Vision) cv.payload(), (Evidence) ce.payload(), (Draft) d.payload());
+                launch("CRITIC", context, mailbox.consume(cv, ce, d), () -> critic.critique(context));
+            }
+        }
+
+        private void checkFeedback(DraftMailbox.Envelope message) {
+            if (!Objects.equals(message.draftVersion(), draftVersion) || !Objects.equals(message.evidenceVersion(), frozen.version()))
+                throw new Stop("MESSAGE_CONFLICT");
+        }
+
+        void cancel() { active.forEach(c -> c.future.cancel(true)); calls.purge(); }
     }
 
     /** Selects only unstarted work or expired, interrupted work; completed/restricted runs never replay calls. */
@@ -157,22 +273,23 @@ public class PatientDraftCoordinator implements AutoCloseable {
                 log.error("Patient draft inference snapshot could not be read", e);
                 return invalidInference(taskId, bound.digest(), "INVALID_INFERENCE");
             }
-            jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,status,startedAt,deadlineAt) VALUES (?,?,'RUNNING',?,?)",
-                    taskId, bound.digest(), now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
+            var deadline = clock.instant().plusMillis(budget.totalMillis());
+            jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,workflowVersion,status,startedAt,deadlineAt) VALUES (?,?,?,'RUNNING',?,?)",
+                    taskId, bound.digest(), DraftMailbox.VERSION, now(), Timestamp.from(deadline));
             jdbc.update("UPDATE t_diagnosis_task SET status='DRAFTING',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
-            return new Claimed(taskId, inference);
+            return new Claimed(taskId, inference, deadline);
         });
     }
 
     private Claimed invalidInference(String taskId, String digest, String reason) {
-        jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,status,stopReason,startedAt,deadlineAt) VALUES (?,?,'RESTRICTED',?,?,?)",
-                taskId, digest, reason, now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
+        jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,workflowVersion,status,stopReason,startedAt,deadlineAt) VALUES (?,?,?,'RESTRICTED',?,?,?)",
+                taskId, digest, DraftMailbox.VERSION, reason, now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
         jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
         return null;
     }
 
     private record Bound(String taskId, Map<String, Object> task, String snapshot, String digest) {}
-    private record Claimed(String taskId, Inference inference) {}
+    private record Claimed(String taskId, Inference inference, java.time.Instant deadline) {}
 
     private Inference inference(Bound bound) {
         JsonNode root;
@@ -194,30 +311,99 @@ public class PatientDraftCoordinator implements AutoCloseable {
                 response.getQualityReasons(), response.getCalibrationStatus(), response.getModelVersion(), response.getPreprocessVersion());
     }
 
-    private <T> T invoke(String taskId, String role, Object context, Callable<T> action) throws Exception {
+    private static final class Pending {
+        final int sequence;
+        final String role;
+        final Object context;
+        final List<DraftMailbox.Envelope> inbox;
+        volatile long startedNanos;
+        volatile long finishedNanos;
+        volatile java.time.Instant finishedAt;
+        Future<?> future;
+        Pending(int sequence, String role, Object context, List<DraftMailbox.Envelope> inbox) {
+            this.sequence = sequence; this.role = role; this.context = context; this.inbox = inbox;
+        }
+    }
+    private record Completed(Pending call, Object result, Throwable failure) {}
+
+    private Pending start(String taskId, String role, Object context, List<DraftMailbox.Envelope> inbox,
+                          Callable<?> action, BlockingQueue<Completed> completed) {
         int sequence = guarded(taskId, () -> {
             int count = jdbc.queryForObject("SELECT callCount FROM t_patient_draft_run WHERE taskId=?", Integer.class, taskId);
             if (count >= budget.maxCalls()) throw new Stop("CALL_BUDGET");
             jdbc.update("UPDATE t_patient_draft_run SET callCount=callCount+1 WHERE taskId=?", taskId);
-            jdbc.update("INSERT INTO t_patient_draft_message (taskId,sequence,role,state,output) VALUES (?,?,?,'STARTED',?)", taskId, count + 1, role, encode(Map.of("context", context)));
+            jdbc.update("INSERT INTO t_patient_draft_message (taskId,sequence,role,state,output) VALUES (?,?,?,'STARTED',?)",
+                    taskId, count + 1, role, encode(Map.of("context", context, "collaboration", Map.of(
+                            "workflowVersion", DraftMailbox.VERSION, "inbox", inbox, "outgoing", List.of()))));
             return count + 1;
         });
-        Future<T> future;
-        try { future = calls.submit(action); }
-        catch (RejectedExecutionException e) { throw new Stop("MODEL_BUSY"); }
+        var pending = new Pending(sequence, role, context, inbox);
         try {
-            long remaining = jdbc.queryForObject("SELECT deadlineAt FROM t_patient_draft_run WHERE taskId=?", Timestamp.class, taskId).toInstant().toEpochMilli() - clock.millis();
-            if (remaining <= 0) throw new Stop("TOTAL_TIMEOUT");
-            T result = future.get(Math.min(remaining, budget.callMillis()), TimeUnit.MILLISECONDS);
-            guarded(taskId, () -> {
-                jdbc.update("UPDATE t_patient_draft_message SET state='COMPLETED',output=? WHERE taskId=? AND sequence=?", encode(Map.of("context", context, "result", result)), taskId, sequence);
-                return null;
+            pending.future = calls.submit(() -> {
+                Object result = null; Throwable failure = null;
+                try {
+                    guarded(taskId, () -> {
+                        jdbc.update("UPDATE t_patient_draft_message SET startedAt=? WHERE taskId=? AND sequence=?", now(), taskId, sequence);
+                        return null;
+                    });
+                    pending.startedNanos = System.nanoTime();
+                    result = action.call();
+                } catch (Throwable e) { failure = e; }
+                finally { pending.finishedNanos = System.nanoTime(); pending.finishedAt = clock.instant(); }
+                completed.offer(new Completed(pending, result, failure));
             });
-            return result;
-        } catch (TimeoutException e) { throw new Stop("AGENT_TIMEOUT"); }
-        catch (ExecutionException e) { log.warn("Patient draft model call failed", e.getCause() != null ? e.getCause() : e); throw new Stop("INVALID_OUTPUT"); }
-        catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new Stop("INTERRUPTED"); }
-        finally { future.cancel(true); calls.purge(); }
+        } catch (RejectedExecutionException e) { throw new Stop("MODEL_BUSY"); }
+        return pending;
+    }
+
+    private void recordResult(String taskId, Completed done, List<DraftMailbox.Envelope> outgoing) {
+        Pending call = done.call();
+        if (call.startedNanos != 0 && TimeUnit.NANOSECONDS.toMillis(call.finishedNanos - call.startedNanos) >= budget.callMillis())
+            throw new Stop("AGENT_TIMEOUT");
+        guarded(taskId, () -> {
+            jdbc.update("UPDATE t_patient_draft_message SET state='COMPLETED',output=?,completedAt=? WHERE taskId=? AND sequence=?",
+                    encode(Map.of("context", call.context, "result", done.result(), "collaboration", Map.of(
+                            "workflowVersion", DraftMailbox.VERSION, "inbox", call.inbox, "outgoing", outgoing))), Timestamp.from(call.finishedAt), taskId, call.sequence);
+            return null;
+        });
+    }
+
+    /**
+     * Separates provider/transport faults from unusable model output. Both arrive as a failed call, but only
+     * output faults are the model's contract to keep; credential, quota and network faults must be actionable
+     * from the recorded stop reason alone. Spring AI turns provider responses into
+     * {@code NonTransientAiException}/{@code TransientAiException}. Spring AI 1.1.2 formats the message as
+     * "HTTP 401 - {body}" (its retry autoconfiguration), while older/other adapters use "401 - {body}"; accept
+     * both, preferring the explicit {@code HTTP nnn} token. Clients that surface
+     * {@link org.springframework.web.client.RestClientResponseException} directly keep the status object.
+     */
+    private static final java.util.regex.Pattern HTTP_STATUS = java.util.regex.Pattern.compile("(?i)\\bHTTP\\s+(\\d{3})\\b");
+    private static final java.util.regex.Pattern BARE_STATUS = java.util.regex.Pattern.compile("^\\s*(\\d{3})\\s*-");
+
+    static String transportFailure(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            // Jackson parse failures are broken model output, not a transport fault; check them before IOException.
+            if (cause instanceof com.fasterxml.jackson.core.JsonProcessingException) return "INVALID_OUTPUT";
+            if (cause instanceof org.springframework.web.client.RestClientResponseException http) {
+                return providerStatusReason(http.getStatusCode().value());
+            }
+            if (cause instanceof org.springframework.ai.retry.NonTransientAiException
+                    || cause instanceof org.springframework.ai.retry.TransientAiException) {
+                String message = Objects.toString(cause.getMessage(), "");
+                var http = HTTP_STATUS.matcher(message);
+                if (http.find()) return providerStatusReason(Integer.parseInt(http.group(1)));
+                var bare = BARE_STATUS.matcher(message);
+                return bare.find() ? providerStatusReason(Integer.parseInt(bare.group(1))) : "PROVIDER_UNAVAILABLE";
+            }
+            if (cause instanceof java.io.IOException || cause instanceof TimeoutException) return "PROVIDER_UNAVAILABLE";
+        }
+        return "INVALID_OUTPUT";
+    }
+
+    private static String providerStatusReason(int status) {
+        if (status == 401 || status == 403) return "PROVIDER_AUTH";
+        if (status == 429) return "PROVIDER_RATE_LIMIT";
+        return "PROVIDER_UNAVAILABLE";
     }
 
     private Evidence freeze(String taskId, String disease, int version, List<Citation> citations) {
@@ -264,13 +450,21 @@ public class PatientDraftCoordinator implements AutoCloseable {
     private void restrict(String taskId, String reason) {
         transactions.executeWithoutResult(tx -> {
             jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", taskId);
+            // A run recovered after process death stopped at its deadline, not when a later process noticed it.
+            var stoppedAt = "INTERRUPTED_OR_TIMEOUT".equals(reason)
+                    ? jdbc.query("SELECT deadlineAt FROM t_patient_draft_run WHERE taskId=?", (rs, n) -> rs.getTimestamp(1), taskId)
+                            .stream().filter(Objects::nonNull).findFirst().orElse(now())
+                    : now();
             int changed = jdbc.update("UPDATE t_patient_draft_run SET status='RESTRICTED',stopReason=? WHERE taskId=? AND BINARY status=BINARY 'RUNNING'", reason, taskId);
             if (changed == 1) {
-                jdbc.update("UPDATE t_patient_draft_message SET state='STOPPED' WHERE taskId=? AND state='STARTED'", taskId);
+                jdbc.update("UPDATE t_patient_draft_message SET state='STOPPED',completedAt=? WHERE taskId=? AND state='STARTED'", stoppedAt, taskId);
                 jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND BINARY status=BINARY 'DRAFTING'", taskId);
             }
         });
     }
+
+    /** The six sections every accepted draft must cover, exposed for operator reporting. */
+    public static Set<String> requiredSections() { return SECTIONS; }
 
     static void requireText(String text, int max) {
         if (text == null || text.isBlank() || text.length() > max) throw new Stop("INVALID_OUTPUT");
@@ -322,11 +516,12 @@ public class PatientDraftCoordinator implements AutoCloseable {
                 (rs, n) -> new Evidence(rs.getInt(1), decode(rs.getString(2), new TypeReference<List<Citation>>() {})), taskId);
         var drafts = jdbc.query("SELECT draft FROM t_patient_draft_version WHERE taskId=? ORDER BY version",
                 (rs, n) -> decode(rs.getString(1), new TypeReference<Draft>() {}), taskId);
-        var messages = jdbc.query("SELECT sequence,role,state,output FROM t_patient_draft_message WHERE taskId=? ORDER BY sequence",
-                (rs, n) -> new Message(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4)), taskId);
+        var messages = jdbc.query("SELECT sequence,role,state,output,startedAt,completedAt FROM t_patient_draft_message WHERE taskId=? ORDER BY sequence",
+                (rs, n) -> new Message(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4),
+                        instant(rs.getTimestamp(5)), instant(rs.getTimestamp(6))), taskId);
         return new Report((String) run.get("status"), (String) run.get("stopReason"), ((Number) run.get("callCount")).intValue(),
                 ((Number) run.get("supplementCount")).intValue(), ((Number) run.get("rewriteCount")).intValue(),
-                (String) run.get("inferenceDigest"), evidenceVersions, drafts, messages);
+                (String) run.get("inferenceDigest"), evidenceVersions, drafts, messages, (String) run.get("workflowVersion"));
     }
     private String encode(Object value) {
         try { return json.writeValueAsString(value); } catch (Exception e) { throw new IllegalStateException(e); }
@@ -339,6 +534,10 @@ public class PatientDraftCoordinator implements AutoCloseable {
         catch (Exception e) { throw new IllegalStateException(e); }
     }
     private Timestamp now() { return Timestamp.from(clock.instant()); }
+    private static java.time.Instant instant(Timestamp value) { return value == null ? null : value.toInstant(); }
+
+    /** Read-only view of the approved call budget, for operator-facing reporting only. */
+    public Budget budget() { return budget; }
     private static final class Stop extends RuntimeException {
         final String reason;
         Stop(String reason) { this.reason = reason; }

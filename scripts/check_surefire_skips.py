@@ -44,17 +44,17 @@ BACKEND_UNIT_CONTRACT = {
     "opt_in": {
         P + "agent.config.VectorStoreConfigTest": {"env": "RUN_CHROMA_INTEGRATION_TESTS", "cases": 1},
         P + "agent.rag.RAGEvaluationTest": {"env": "RUN_RAG_EVALUATION_TESTS", "cases": 2},
-        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 7, "skipped": 4},
+        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 15, "skipped": 12},
         P + "diagnosistask.DiagnosisTaskRecoveryTest": {"env": "ISSUE17_TEST_URL", "cases": 10, "skipped": 10},
         P + "controlledreference.ControlledReferenceApiTest": {
             "env": "ISSUE18_TEST_URL", "cases": 13, "skipped": 13,
         },
-        P + "patientdraft.PatientDraftTest": {"env": "ISSUE19_TEST_URL", "cases": 27, "skipped": 27},
+        P + "patientdraft.PatientDraftTest": {"env": "ISSUE19_TEST_URL", "cases": 41, "skipped": 41},
         P + "doctorreview.DoctorReviewApiTest": {"env": "ISSUE20_TEST_URL", "cases": 36, "skipped": 36},
         P + "patientexplanation.PatientExplanationApiTest": {"env": "ISSUE21_TEST_URL", "cases": 37, "skipped": 37},
-        P + "patientauthorization.PatientAuthorizationApiTest": {"env": "ISSUE22_TEST_URL", "cases": 35, "skipped": 35},
+        P + "patientauthorization.PatientAuthorizationApiTest": {"env": "ISSUE22_TEST_URL", "cases": 37, "skipped": 37},
         P + "patientfollowup.PatientFollowUpApiTest": {"env": "ISSUE23_TEST_URL", "cases": 37, "skipped": 37},
-        P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
+        P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
     },
@@ -65,7 +65,7 @@ BACKEND_UNIT_CONTRACT = {
 ISSUE17_CONTRACT = {
     "scope": "named",
     "expected": {
-        P + "diagnosistask.DiagnosisTaskApiTest": 7,
+        P + "diagnosistask.DiagnosisTaskApiTest": 15,
         P + "diagnosistask.DiagnosisTaskRecoveryTest": 10,
         P + "diagnosistask.CosDiagnosisTaskStorageTest": 1,
     },
@@ -76,7 +76,7 @@ ISSUE17_CONTRACT = {
 FLYWAY_CONTRACT = {
     "scope": "named",
     "expected": {
-        P + "migration.FlywayMySqlIntegrationTest": 1,
+        P + "migration.FlywayMySqlIntegrationTest": 3,
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": 3,
     },
     "opt_in": {},
@@ -90,7 +90,7 @@ ISSUE18_CONTRACT = {
 
 ISSUE19_CONTRACT = {
     "scope": "named",
-    "expected": {P + "patientdraft.PatientDraftTest": 27},
+    "expected": {P + "patientdraft.PatientDraftTest": 41},
     "opt_in": {},
 }
 
@@ -101,7 +101,7 @@ CONTRACTS = {
     "issue19": ISSUE19_CONTRACT,
     "issue20": {"scope": "named", "expected": {P + "doctorreview.DoctorReviewApiTest": 36}, "opt_in": {}},
     "issue21": {"scope": "named", "expected": {P + "patientexplanation.PatientExplanationApiTest": 37}, "opt_in": {}},
-    "issue22": {"scope": "named", "expected": {P + "patientauthorization.PatientAuthorizationApiTest": 35}, "opt_in": {}},
+    "issue22": {"scope": "named", "expected": {P + "patientauthorization.PatientAuthorizationApiTest": 37}, "opt_in": {}},
     "issue23": {"scope": "named", "expected": {P + "patientfollowup.PatientFollowUpApiTest": 37}, "opt_in": {}},
     "flyway": FLYWAY_CONTRACT,
 }

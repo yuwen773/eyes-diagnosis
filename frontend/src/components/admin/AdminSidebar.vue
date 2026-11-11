@@ -68,6 +68,24 @@
           </template>
           <span>数据分析</span>
         </a-menu-item>
+        <a-menu-item key="/admin/draft-test">
+          <template #icon>
+            <ExperimentOutlined />
+          </template>
+          <span>四 Agent 试验台</span>
+        </a-menu-item>
+        <a-menu-item key="/admin/agent-collab">
+          <template #icon>
+            <TeamOutlined />
+          </template>
+          <span>四 Agent 协作效果</span>
+        </a-menu-item>
+        <a-menu-item key="/admin/agent-discussion">
+          <template #icon>
+            <AuditOutlined />
+          </template>
+          <span>四角色会诊议事录</span>
+        </a-menu-item>
       </a-menu>
 
       <div class="menu-divider"></div>
@@ -103,6 +121,9 @@ import {
   MedicineBoxOutlined,
   FolderOutlined,
   BarChartOutlined,
+  ExperimentOutlined,
+  TeamOutlined,
+  AuditOutlined,
   RollbackOutlined,
 } from '@ant-design/icons-vue'
 

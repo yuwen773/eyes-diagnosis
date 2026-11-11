@@ -11,7 +11,13 @@ public class PatientDraftCrashWorker {
         String url = System.getenv("ISSUE19_TEST_URL");
         if (url == null || !url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/issue19_test")) throw new IllegalArgumentException();
         var jdbc = new JdbcTemplate(new DriverManagerDataSource(url, "issue19", "issue19"));
-        ChatModel haltedProvider = prompt -> { Runtime.getRuntime().halt(23); return null; };
+        var entered = new java.util.concurrent.CountDownLatch(2);
+        ChatModel haltedProvider = prompt -> {
+            entered.countDown();
+            try { if (!entered.await(10, java.util.concurrent.TimeUnit.SECONDS)) throw new AssertionError("Both calls must be reserved"); }
+            catch (InterruptedException e) { throw new AssertionError(e); }
+            Runtime.getRuntime().halt(23); return null;
+        };
         new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), haltedProvider).run(args[0]);
         throw new AssertionError("The provider must have terminated this process");
     }

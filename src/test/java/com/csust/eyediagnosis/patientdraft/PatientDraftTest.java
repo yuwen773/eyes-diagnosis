@@ -51,6 +51,15 @@ class PatientDraftTest {
                 new ResourceDatabasePopulator(new ClassPathResource("db/migration/" + migration)).execute(ds);
             }
         }
+        // V16 alters an existing table, so it is keyed on its own column rather than on table existence.
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+                + "AND table_name='t_patient_draft_message' AND column_name='startedAt'", Integer.class) == 0) {
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V16__patient_draft_message_timing.sql")).execute(ds);
+        }
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+                + "AND table_name='t_patient_draft_run' AND column_name='workflowVersion'", Integer.class) == 0) {
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V17__autonomous_draft_workflow.sql")).execute(ds);
+        }
         jdbc.update("DELETE FROM t_patient_draft_message");
         jdbc.update("DELETE FROM t_patient_draft_version");
         jdbc.update("DELETE FROM t_patient_evidence_version");
@@ -87,6 +96,91 @@ class PatientDraftTest {
     }
 
     @Test
+    void visionAndEvidenceEnterTheProviderConcurrentlyBeforeEitherReturns() {
+        var entered = new java.util.concurrent.CountDownLatch(2);
+        answer = prompt -> {
+            String role = prompt.getSystemMessage().getText().split("\\n")[0];
+            if (Set.of("VISION", "EVIDENCE").contains(role)) {
+                entered.countDown();
+                try { assertTrue(entered.await(3, java.util.concurrent.TimeUnit.SECONDS), "Both independent roles must enter"); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new AssertionError(e); }
+            }
+            return validAnswer(prompt);
+        };
+        try (var coordinator = coordinator()) {
+            coordinator.run(taskId);
+            assertEquals("REVIEW_READY", coordinator.inspect(taskId).status());
+            assertEquals(0, entered.getCount());
+        }
+    }
+
+    @Test
+    void deliveredRoleMessagesBindActualInputsAndKeepSourceMetadataOutOfExplanation() throws Exception {
+        try (var coordinator = coordinator()) {
+            coordinator.run(taskId);
+            var report = coordinator.inspect(taskId);
+            assertEquals("AUTONOMOUS_V2", report.workflowVersion());
+            var first = json.readTree(report.messages().getFirst().output());
+            assertEquals("AUTONOMOUS_V2", first.path("collaboration").path("workflowVersion").asText());
+            assertEquals(3, first.path("collaboration").path("outgoing").size());
+            var explanation = json.readTree(report.messages().get(2).output());
+            assertEquals(2, explanation.path("collaboration").path("inbox").size());
+            assertEquals("VISION_READY", explanation.at("/collaboration/inbox/0/kind").asText());
+            assertEquals("EVIDENCE_READY", explanation.at("/collaboration/inbox/1/kind").asText());
+            assertEquals(taskId, explanation.at("/collaboration/inbox/0/taskId").asText());
+            assertEquals(report.inferenceDigest(), explanation.at("/collaboration/inbox/0/inferenceDigest").asText());
+            Prompt request = requests.stream().filter(p -> p.getSystemMessage().getText().startsWith("EXPLANATION\n")).findFirst().orElseThrow();
+            assertFalse(request.getUserMessage().getText().contains("synthetic.invalid"));
+            assertFalse(request.getUserMessage().getText().contains("Synthetic reference"));
+            assertTrue(request.getUserMessage().getText().contains(EXCERPT));
+        }
+    }
+
+    @Test
+    void evidenceFailureStopsWithoutWaitingForAnUncooperativeVisionPeer() throws Exception {
+        var both = new java.util.concurrent.CountDownLatch(2);
+        var release = new java.util.concurrent.CountDownLatch(1);
+        var finished = new java.util.concurrent.CountDownLatch(1);
+        answer = prompt -> {
+            both.countDown();
+            try { assertTrue(both.await(3, java.util.concurrent.TimeUnit.SECONDS)); }
+            catch (InterruptedException e) { throw new AssertionError(e); }
+            if (prompt.getSystemMessage().getText().startsWith("EVIDENCE\n")) throw new IllegalStateException(new java.io.IOException("synthetic failure"));
+            boolean waiting = true;
+            while (waiting) {
+                try { release.await(); waiting = false; }
+                catch (InterruptedException ignored) { /* provider ignores cancellation */ }
+            }
+            finished.countDown();
+            return validAnswer(prompt);
+        };
+        try (var coordinator = coordinator(); var runner = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            try {
+                runner.submit(() -> coordinator.run(taskId)).get(5, java.util.concurrent.TimeUnit.SECONDS);
+                var stopped = coordinator.inspect(taskId);
+                assertEquals("PROVIDER_UNAVAILABLE", stopped.stopReason());
+                assertEquals(2, stopped.calls());
+                release.countDown();
+                assertTrue(finished.await(3, java.util.concurrent.TimeUnit.SECONDS));
+                assertEquals(stopped, coordinator.inspect(taskId), "Late peer output cannot change any frozen report material");
+            } finally { release.countDown(); }
+        }
+    }
+
+    @Test
+    void concurrentInitialRolesCannotExceedASingleRemainingCall() {
+        try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model,
+                Clock.systemUTC(), new PatientDraftCoordinator.Budget(1, 90_000, 20_000))) {
+            coordinator.run(taskId);
+            var report = coordinator.inspect(taskId);
+            assertEquals("CALL_BUDGET", report.stopReason());
+            assertEquals(1, report.calls());
+            assertEquals(1, report.messages().size());
+            assertTrue(report.drafts().isEmpty());
+        }
+    }
+
+    @Test
     void fourIndependentAgentsProduceFrozenReviewableDraftWithoutPublishing() throws Exception {
         try (var coordinator = coordinator()) {
             coordinator.run(taskId);
@@ -101,6 +195,11 @@ class PatientDraftTest {
             assertEquals(1, report.drafts().getFirst().evidenceVersion());
             assertEquals(6, report.drafts().getFirst().claims().size());
             assertTrue(report.messages().getFirst().output().contains("RECAPTURE"));
+            for (var message : report.messages()) {
+                assertNotNull(message.startedAt(), message.role() + " startedAt");
+                assertNotNull(message.completedAt(), message.role() + " completedAt");
+                assertFalse(message.completedAt().isBefore(message.startedAt()), message.role() + " elapsed");
+            }
             var criticMessage = json.readTree(report.messages().get(3).output());
             assertEquals(1, criticMessage.path("context").path("evidence").path("version").asInt());
             assertEquals(json.valueToTree(report.drafts().getFirst()), criticMessage.path("context").path("draft"));
@@ -230,27 +329,96 @@ class PatientDraftTest {
         try (var coordinator = coordinator()) {
             coordinator.run(taskId);
             assertEquals("INVALID_OUTPUT", coordinator.inspect(taskId).stopReason());
-            assertEquals(1, coordinator.inspect(taskId).calls());
+            assertEquals(2, coordinator.inspect(taskId).calls());
+        }
+    }
+
+    /** Real Spring AI OpenAI transport against a stubbed endpoint, so status codes travel the production path. */
+    private record FailingProvider(PatientDraftCoordinator coordinator, org.springframework.test.web.client.MockRestServiceServer server) implements AutoCloseable {
+        public void close() { coordinator.close(); }
+    }
+
+    private FailingProvider providerResponding(org.springframework.http.HttpStatus status, String body) throws Exception {
+        var builder = org.springframework.web.client.RestClient.builder();
+        var server = org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).build();
+        var seenRoles = java.util.concurrent.ConcurrentHashMap.<String>newKeySet();
+        server.expect(org.springframework.test.web.client.ExpectedCount.between(1, 2), org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://synthetic.invalid/v1/chat/completions"))
+                .andExpect(request -> {
+                    var requestBody = json.readTree(((org.springframework.mock.http.client.MockClientHttpRequest) request).getBodyAsString());
+                    String role = requestBody.at("/messages/0/content").asText().split("\\n")[0];
+                    assertTrue(seenRoles.add(role), "Each role may send only one request, even on provider failure");
+                })
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withStatus(status)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON).body(body));
+        var api = org.springframework.ai.openai.api.OpenAiApi.builder().baseUrl("https://synthetic.invalid")
+                .apiKey("synthetic-unused-key").restClientBuilder(builder).build();
+        var provider = org.springframework.ai.openai.OpenAiChatModel.builder().openAiApi(api).build();
+        return new FailingProvider(new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), provider), server);
+    }
+
+    @Test
+    void providerRateLimitDoesNotTriggerHiddenTransportRetries() throws Exception {
+        try (var provider = providerResponding(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS,
+                "{\"error\":{\"message\":\"Synthetic test rate limit\",\"type\":\"rate_limit\"}}")) {
+            provider.coordinator().run(taskId);
+            assertEquals("PROVIDER_RATE_LIMIT", provider.coordinator().inspect(taskId).stopReason());
+            assertEquals(2, provider.coordinator().inspect(taskId).calls());
+            provider.server().verify();
         }
     }
 
     @Test
-    void providerRateLimitDoesNotTriggerHiddenTransportRetries() {
-        var builder = org.springframework.web.client.RestClient.builder();
-        var server = org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).build();
-        server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://synthetic.invalid/v1/chat/completions"))
-                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withStatus(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS)
-                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                        .body("{\"error\":{\"message\":\"Synthetic test rate limit\",\"type\":\"rate_limit\"}}"));
-        var api = org.springframework.ai.openai.api.OpenAiApi.builder().baseUrl("https://synthetic.invalid")
-                .apiKey("synthetic-unused-key").restClientBuilder(builder).build();
-        var provider = org.springframework.ai.openai.OpenAiChatModel.builder().openAiApi(api).build();
-        try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), provider)) {
-            coordinator.run(taskId);
-            assertEquals("INVALID_OUTPUT", coordinator.inspect(taskId).stopReason());
-            assertEquals(1, coordinator.inspect(taskId).calls());
-            server.verify();
+    void providerRejectionIsNotReportedAsModelOutputFault() throws Exception {
+        try (var provider = providerResponding(org.springframework.http.HttpStatus.UNAUTHORIZED,
+                "{\"error\":{\"message\":\"Invalid API-key provided\",\"code\":\"invalid_api_key\"}}")) {
+            provider.coordinator().run(taskId);
+            assertEquals("PROVIDER_AUTH", provider.coordinator().inspect(taskId).stopReason());
+            assertEquals(2, provider.coordinator().inspect(taskId).calls());
+            provider.server().verify();
         }
+    }
+
+    @Test
+    void providerOutageIsReportedAsProviderFault() throws Exception {
+        try (var provider = providerResponding(org.springframework.http.HttpStatus.BAD_GATEWAY,
+                "{\"error\":{\"message\":\"Synthetic upstream outage\"}}")) {
+            provider.coordinator().run(taskId);
+            assertEquals("PROVIDER_UNAVAILABLE", provider.coordinator().inspect(taskId).stopReason());
+            assertEquals(2, provider.coordinator().inspect(taskId).calls());
+            provider.server().verify();
+        }
+    }
+
+    @Test
+    void providerTransportIOExceptionIsReportedAsProviderFault() {
+        // A failed socket read is the provider's side of the contract, not unusable model output.
+        when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException(new java.io.IOException("synthetic socket reset")));
+        try (var coordinator = coordinator()) {
+            coordinator.run(taskId);
+            assertEquals("PROVIDER_UNAVAILABLE", coordinator.inspect(taskId).stopReason());
+            assertEquals(2, coordinator.inspect(taskId).calls());
+        }
+    }
+
+    @Test
+    void transportFailureSeparatesOutputFaultsFromProviderFaults() {
+        assertEquals("INVALID_OUTPUT", PatientDraftCoordinator.transportFailure(new IllegalArgumentException("Invalid model response")));
+        // Jackson failures are IOException subclasses: the ordering inside the classifier decides this one.
+        assertEquals("INVALID_OUTPUT", PatientDraftCoordinator.transportFailure(new com.fasterxml.jackson.core.JsonParseException(null, "synthetic")));
+        assertEquals("PROVIDER_UNAVAILABLE", PatientDraftCoordinator.transportFailure(new RuntimeException(new java.io.IOException("synthetic reset"))));
+        // Spring AI 1.1.2's retry autoconfiguration wraps HTTP failures with an "HTTP nnn - ..." message.
+        assertEquals("PROVIDER_AUTH", PatientDraftCoordinator.transportFailure(
+                new org.springframework.ai.retry.NonTransientAiException("HTTP 401 - No response body available")));
+        assertEquals("PROVIDER_RATE_LIMIT", PatientDraftCoordinator.transportFailure(
+                new org.springframework.ai.retry.TransientAiException("HTTP 429 - {\"code\":\"Throttling\"}")));
+        assertEquals("PROVIDER_UNAVAILABLE", PatientDraftCoordinator.transportFailure(
+                new org.springframework.ai.retry.NonTransientAiException("HTTP 502 - Bad Gateway")));
+        // Older adapters use the bare "nnn - ..." shape; keep recognizing it.
+        assertEquals("PROVIDER_AUTH", PatientDraftCoordinator.transportFailure(
+                new org.springframework.ai.retry.NonTransientAiException("403 - forbidden")));
+        // A provider exception without any status token is still a provider fault, not unusable output.
+        assertEquals("PROVIDER_UNAVAILABLE", PatientDraftCoordinator.transportFailure(
+                new org.springframework.ai.retry.NonTransientAiException("connection closed")));
     }
 
     @Test
@@ -395,7 +563,7 @@ class PatientDraftTest {
             try {
                 coordinator.run(taskId);
                 assertEquals("AGENT_TIMEOUT", coordinator.inspect(taskId).stopReason());
-                assertEquals(1, coordinator.inspect(taskId).calls());
+                assertEquals(2, coordinator.inspect(taskId).calls());
                 assertEquals("STOPPED", coordinator.inspect(taskId).messages().getFirst().state());
             } finally { release.countDown(); }
             assertTrue(finished.await(5, java.util.concurrent.TimeUnit.SECONDS));
@@ -419,7 +587,7 @@ class PatientDraftTest {
                 var report = restarted.inspect(taskId);
                 assertEquals("RESTRICTED", report.status());
                 assertEquals("INTERRUPTED_OR_TIMEOUT", report.stopReason());
-                assertEquals(1, report.calls());
+                assertEquals(2, report.calls());
                 assertEquals("STOPPED", report.messages().getFirst().state());
                 assertTrue(requests.isEmpty());
             }
@@ -444,7 +612,7 @@ class PatientDraftTest {
             try {
                 assertTrue(entered.await(10, java.util.concurrent.TimeUnit.SECONDS));
                 two.run(taskId.toUpperCase(Locale.ROOT));
-                assertEquals(1, requests.size());
+                assertTrue(requests.size() <= 2, "No second coordinator may add calls");
             } finally { release.countDown(); }
             running.get(10, java.util.concurrent.TimeUnit.SECONDS);
             assertEquals("REVIEW_READY", one.inspect(taskId).status());
@@ -490,5 +658,131 @@ class PatientDraftTest {
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/diagnosis-tasks/" + taskId))
                     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value(40400));
         } finally { release.countDown(); pool.shutdownNow(); }
+    }
+
+    @Test
+    void operatorTraceReportsRoleTimingCitationChecksAndSectionCoverage() {
+        try (var coordinator = coordinator(); var service = new PatientDraftTestService(jdbc, coordinator)) {
+            coordinator.run(taskId);
+            var trace = service.trace(taskId);
+            assertEquals("REVIEW_READY", trace.status());
+            assertEquals(List.of("VISION", "EVIDENCE", "EXPLANATION", "CRITIC"),
+                    trace.roles().stream().map(PatientDraftTestService.RoleRow::role).toList());
+            assertTrue(trace.roles().stream().allMatch(role -> role.completedAt() != null && role.elapsedMs() >= 0));
+            assertTrue(trace.elapsedMs() >= 0);
+            assertEquals("glaucoma", trace.predictedLabel());
+            assertEquals(1, trace.evidence().size());
+            var attempt = trace.attempts().getFirst();
+            assertTrue(attempt.saved());
+            assertTrue(attempt.allSectionsPresent());
+            assertTrue(attempt.missingSections().isEmpty());
+            assertEquals(6, attempt.claims().size());
+            assertTrue(attempt.claims().stream().flatMap(claim -> claim.references().stream())
+                    .allMatch(PatientDraftTestService.ReferenceCheck::matched));
+            assertEquals(8, trace.budget().maxCalls());
+            assertNotNull(trace.startedAt());
+        }
+    }
+
+    @Test
+    void operatorTraceShowsRejectedDraftAndTheReferenceThatFailed() {
+        answer = prompt -> prompt.getSystemMessage().getText().startsWith("EXPLANATION\n")
+                ? draft(1).replace("glaucoma follow-up", "nonexistent quote") : validAnswer(prompt);
+        try (var coordinator = coordinator(); var service = new PatientDraftTestService(jdbc, coordinator)) {
+            coordinator.run(taskId);
+            var trace = service.trace(taskId);
+            assertEquals("RESTRICTED", trace.status());
+            assertEquals("INVALID_CITATION", trace.stopReason());
+            var attempt = trace.attempts().getFirst();
+            // The rejected output stays readable even though no draft version was saved.
+            assertFalse(attempt.saved());
+            assertTrue(attempt.claims().stream().flatMap(claim -> claim.references().stream())
+                    .anyMatch(reference -> !reference.matched()));
+            assertTrue(trace.evidence().getFirst().citations().getFirst().excerpt().contains("glaucoma follow-up"));
+        }
+    }
+
+    @Test
+    void operatorEntryIsOptInAndAdminOnly() {
+        var conditional = com.csust.eyediagnosis.controller.PatientDraftTestController.class
+                .getAnnotation(org.springframework.boot.autoconfigure.condition.ConditionalOnProperty.class);
+        assertNotNull(conditional, "The test entry must not be registered by default");
+        assertEquals("eye-diagnosis.draft.test-entry.enabled", conditional.name()[0]);
+        for (var method : com.csust.eyediagnosis.controller.PatientDraftTestController.class.getDeclaredMethods()) {
+            boolean handler = method.isAnnotationPresent(org.springframework.web.bind.annotation.GetMapping.class)
+                    || method.isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class);
+            if (!handler) continue;
+            var auth = method.getAnnotation(com.csust.eyediagnosis.annotation.AuthCheck.class);
+            assertNotNull(auth, method.getName() + " must require a role");
+            assertEquals("admin", auth.mustRole(), method.getName() + " must stay admin-only");
+        }
+    }
+
+    @Test
+    void operatorEntrySerializesTraceWithoutRawInference() throws Exception {
+        try (var coordinator = coordinator(); var service = new PatientDraftTestService(jdbc, coordinator)) {
+            coordinator.run(taskId);
+            var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(
+                            new com.csust.eyediagnosis.controller.PatientDraftTestController(service))
+                    .setControllerAdvice(new com.csust.eyediagnosis.exception.GlobalExceptionHandler()).build();
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/patient-draft-test/tasks"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value(0))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data[0].taskId").value(taskId));
+            String body = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                            .get("/patient-draft-test/tasks/" + taskId))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.status").value("REVIEW_READY"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[0].role").value("VISION"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[0].elapsedMs").exists())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[0].context.predictedLabel").value("glaucoma"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[0].result.summary").exists())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[1].result.search.query").value("glaucoma"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[1].result.citations.length()").value(1))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.roles[3].result.action").value("NONE"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.budget.maxCalls").value(8))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.attempts[0].saved").value(true))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.evidence[0].citations[0].excerpt").exists())
+                    .andReturn().getResponse().getContentAsString();
+            assertFalse(body.contains("responseProtobufBase64"), "Raw inference must never reach the operator page");
+            assertFalse(body.contains("private-image"), "Object locations must never reach the operator page");
+            assertFalse(body.contains("userId"), "Patient identity must never reach the operator page");
+        }
+    }
+
+    @Test
+    void seededSyntheticTaskIsRunnableAndLabelledAsSynthetic() throws Exception {
+        try (var coordinator = coordinator(); var service = new PatientDraftTestService(jdbc, coordinator)) {
+            // Retrieval orders the fixture chunk and the seeded chunk by score; their tie order depends on random
+            // ids, so quote a token both excerpts contain instead of assuming index 0 is the fixture.
+            answer = prompt -> prompt.getSystemMessage().getText().startsWith("EXPLANATION\n")
+                    ? draft(1).replace("glaucoma follow-up", "glaucoma") : validAnswer(prompt);
+            String seeded = service.seed(42L, "glaucoma");
+            assertEquals("WAITING_REVIEW", service.trace(seeded).taskStatus());
+            assertEquals("glaucoma", service.trace(seeded).predictedLabel());
+            var source = jdbc.queryForObject("SELECT title FROM t_controlled_reference WHERE id=?",
+                    String.class, UUID.nameUUIDFromBytes("draft-test:glaucoma".getBytes(StandardCharsets.UTF_8)).toString());
+            assertTrue(source.contains("SYNTHETIC"), "Seeded evidence must never look like reviewed material");
+            assertTrue(service.tasks().stream().anyMatch(task -> task.taskId().equals(seeded) && task.runStatus() == null));
+            coordinator.run(seeded);
+            assertEquals("REVIEW_READY", coordinator.inspect(seeded).status());
+            assertThrows(com.csust.eyediagnosis.exception.BusinessException.class, () -> service.seed(42L, "not-a-label"));
+        }
+    }
+
+    @Test
+    void operatorTriggerStartsTheCoordinatorOnceAndReplayAddsNoCalls() throws Exception {
+        try (var coordinator = coordinator(); var service = new PatientDraftTestService(jdbc, coordinator)) {
+            assertNull(service.trace(taskId).status(), "No run exists before the operator triggers one");
+            service.trigger(taskId);
+            long deadline = System.currentTimeMillis() + 10_000;
+            while (System.currentTimeMillis() < deadline && !"REVIEW_READY".equals(service.trace(taskId).status())) {
+                Thread.sleep(20);
+            }
+            assertEquals("REVIEW_READY", service.trace(taskId).status());
+            assertEquals(4, coordinator.inspect(taskId).calls());
+            service.trigger(taskId);
+            Thread.sleep(200);
+            assertEquals(4, coordinator.inspect(taskId).calls());
+            assertEquals("REVIEW_READY", service.trace(taskId).status());
+        }
     }
 }

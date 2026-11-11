@@ -12,7 +12,7 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 import java.util.List;
 
-/** Four stateless agents with separate contexts; the shared transport has no history or tools. */
+/** Four roles with explicit task-local contexts; the shared transport has no implicit history or tools. */
 public final class DraftAgents {
     record Inference(String snapshotDigest, String predictedLabel, double probability, int qualityScore,
                      String qualityReasons, String calibrationStatus, String modelVersion, String preprocessVersion) {}
@@ -24,7 +24,14 @@ public final class DraftAgents {
     record Objection(String target, String reason) {}
     record Critique(String action, List<Objection> objections) {}
     record EvidenceContext(Inference inference, Vision vision, Critique feedback) {}
-    record ExplanationContext(Inference inference, Vision vision, PatientDraftCoordinator.Evidence evidence,
+    record Excerpt(int citationIndex, String excerpt) {}
+    record ExplanationEvidence(int version, List<Excerpt> citations) {
+        static ExplanationEvidence from(PatientDraftCoordinator.Evidence evidence) {
+            return new ExplanationEvidence(evidence.version(), java.util.stream.IntStream.range(0, evidence.citations().size())
+                    .mapToObj(i -> new Excerpt(i, evidence.citations().get(i).excerpt())).toList());
+        }
+    }
+    record ExplanationContext(Inference inference, Vision vision, ExplanationEvidence evidence,
                               Draft previousDraft, Critique feedback) {}
     record CriticContext(Inference inference, Vision vision, PatientDraftCoordinator.Evidence evidence, Draft draft) {}
     record Retrieved(Search search, List<Citation> citations) {}
@@ -89,6 +96,7 @@ public final class DraftAgents {
         Retrieved retrieve(EvidenceContext context, String disease, String topic) throws Exception {
             Search search = transport.ask("EVIDENCE", """
                     Produce a relevant search query for controlled references supporting patient explanation.
+                    Initial retrieval may run before Vision is ready; a null vision means no Vision analysis was received.
                     Server-bound disease/topic eligibility cannot be changed. No private RAG or external tools.
                     Schema: {"query":"nonempty search text"}
                     """, context, Search.class);
@@ -104,7 +112,9 @@ public final class DraftAgents {
             return transport.ask("EXPLANATION", """
                     Produce a layered patient explanation DRAFT requiring independent doctor review.
                     Use only the bound inference and frozen evidence, preserve limitations and uncertainty.
-                    Every claim needs a unique id, a citationIndex (zero-based) and an exact nonempty quote from that excerpt.
+                    Every claim needs a unique id, a citationIndex (zero-based) and an exact nonempty quote copied
+                    character-for-character from that citation's "excerpt" field. Titles and source labels are
+                    metadata and are not quotable; a quote from them is rejected.
                     Include all six sections: MAIN_FINDING, RISK, NEXT_STEP, UNCERTAINTY, DETAIL, LIMITATION.
                     No definitive diagnosis or prescribing. When rewriting, address the located objections.
                     Schema: {"evidenceVersion":1,"claims":[{"id":"c1","section":"MAIN_FINDING","text":"text",

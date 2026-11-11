@@ -75,7 +75,7 @@ class DoctorReviewApiTest {
         var citations = new ControlledEvidenceRetriever(jdbc).retrieve("GLAUCOMA", "PATIENT_EXPLANATION", "glaucoma");
         jdbc.update("INSERT INTO t_patient_evidence_version VALUES (?,1,?)", taskId, json.writeValueAsString(citations));
         jdbc.update("INSERT INTO t_patient_draft_version VALUES (?,1,1,?)", taskId, "{\"evidenceVersion\":1,\"claims\":[{\"id\":\"risk\",\"section\":\"RISK\",\"text\":\"Synthetic draft\",\"references\":[{\"citationIndex\":0,\"quote\":\"eye examination\"}]}]}");
-        jdbc.update("INSERT INTO t_patient_draft_message VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{},\"result\":{\"action\":\"REWRITE\",\"objections\":[{\"target\":\"claim:risk\",\"reason\":\"Synthetic objection\"}]}}");
+        jdbc.update("INSERT INTO t_patient_draft_message (taskId,sequence,role,state,output) VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{},\"result\":{\"action\":\"REWRITE\",\"objections\":[{\"target\":\"claim:risk\",\"reason\":\"Synthetic objection\"}]}}");
         actor.set(user(1, "admin"));
         var users = mock(UserService.class);
         when(users.getLoginUser(any())).thenAnswer(inv -> actor.get());

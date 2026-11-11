@@ -1,0 +1,115 @@
+{
+  "scenarios": 2,
+  "verified_four_role_completions": 1,
+  "physical_http_requests": 7,
+  "http_200": 7,
+  "prompt_tokens": 4364,
+  "completion_tokens": 1490,
+  "request_identity_or_object_location_detected": false,
+  "cases": [
+    {
+      "task_id": "abed3278-b030-42ff-bdb8-e9541d4d71e4",
+      "product_status": "RESTRICTED",
+      "stop_reason": "INVALID_CITATION",
+      "roles": [
+        "VISION",
+        "EVIDENCE",
+        "EXPLANATION"
+      ],
+      "checks": {
+        "same_bound_inference": true,
+        "reserved_calls_equal_saved_messages": true,
+        "replay_no_calls": true,
+        "replay_no_material_mutation": true,
+        "critic_received_frozen_draft_and_evidence": false,
+        "evidence_and_explanation_receive_vision_result": true,
+        "saved_draft_has_all_six_sections": false,
+        "saved_draft_quotes_match_frozen_evidence": false
+      },
+      "trace": [
+        {
+          "sequence": 1,
+          "role": "VISION",
+          "state": "COMPLETED",
+          "context_sha256": "670163e65b02308d3db6a27deb20863e5f4beff57a1956dddde0789be1ea8510",
+          "result_sha256": "5b8e3fd4f17229b5ece534037083671182c1ad1d953ea575c9a5d28af8c5e3ad"
+        },
+        {
+          "sequence": 2,
+          "role": "EVIDENCE",
+          "state": "COMPLETED",
+          "context_sha256": "097d01f8b928dc7a7c95ec5bffab0255550f7259e39cb9457afdb71d1d7f2fae",
+          "result_sha256": "73d485fae6aebf950b867af42dcd6f69834576f34c85bf93198a333c587e7e3b"
+        },
+        {
+          "sequence": 3,
+          "role": "EXPLANATION",
+          "state": "COMPLETED",
+          "context_sha256": "62701aa085f7018dc74759f6c6a2e23626fd1592323de5ff78540cf4342b7b45",
+          "result_sha256": "d60b7357dde0bffe21bb1b82a4e9b373e0d75b7d822112d3cb4c77eeb167398a"
+        }
+      ],
+      "saved_claim_count": 0,
+      "critic_actions": [],
+      "critic_evidence_difference_paths": [],
+      "verified_four_role_completion": false
+    },
+    {
+      "task_id": "aa36c409-a36b-4c41-9469-921f5dea8c52",
+      "product_status": "REVIEW_READY",
+      "stop_reason": null,
+      "roles": [
+        "VISION",
+        "EVIDENCE",
+        "EXPLANATION",
+        "CRITIC"
+      ],
+      "checks": {
+        "same_bound_inference": true,
+        "reserved_calls_equal_saved_messages": true,
+        "replay_no_calls": true,
+        "replay_no_material_mutation": true,
+        "critic_received_frozen_draft_and_evidence": true,
+        "evidence_and_explanation_receive_vision_result": true,
+        "saved_draft_has_all_six_sections": true,
+        "saved_draft_quotes_match_frozen_evidence": true
+      },
+      "trace": [
+        {
+          "sequence": 1,
+          "role": "VISION",
+          "state": "COMPLETED",
+          "context_sha256": "930aa994f4dc3e4654662f502dbc3f2c4bcf0a5d7d31d91cc7811e33191d725b",
+          "result_sha256": "067d95811acab910ccff898b54b6341ce6a023a600f1be625ef17f3c64cb7000"
+        },
+        {
+          "sequence": 2,
+          "role": "EVIDENCE",
+          "state": "COMPLETED",
+          "context_sha256": "37ab86297fb73faf396fd4ce6d0895d03ef81e68e1ec95ea9db239e67a0ba890",
+          "result_sha256": "980d690951ff6272d822a6863b9854b65668824bfda82117d6593d818b492f75"
+        },
+        {
+          "sequence": 3,
+          "role": "EXPLANATION",
+          "state": "COMPLETED",
+          "context_sha256": "1c0d25885f48dca152508a36e3f9a39d85c9603f59b65ad576808defd622eee2",
+          "result_sha256": "657b9c68be7dc7d065c7be18cc1369d07a201df10363f8bf77b2864894377c60"
+        },
+        {
+          "sequence": 4,
+          "role": "CRITIC",
+          "state": "COMPLETED",
+          "context_sha256": "b1ee4557cf7d771cbe93db7de34d0b3d14a7ea949185ee96c5bff12c93c518c5",
+          "result_sha256": "55e66ecd3d01a1273fbb09808da8eee2ede75daab36bd467de326c1eccc11212"
+        }
+      ],
+      "saved_claim_count": 6,
+      "critic_actions": [
+        "NONE"
+      ],
+      "critic_evidence_difference_paths": [],
+      "verified_four_role_completion": true
+    }
+  ]
+}

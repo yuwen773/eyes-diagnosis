@@ -1,0 +1,10 @@
+{
+  "thinking_explicitly_disabled" : true,
+  "model" : "qwen3.5-plus",
+  "completed_at" : "2026-11-10T13:11:22.883451100Z",
+  "budgets" : {
+    "max_total_ms" : 90000,
+    "max_call_ms" : 20000,
+    "max_calls_per_task" : 8
+  }
+}

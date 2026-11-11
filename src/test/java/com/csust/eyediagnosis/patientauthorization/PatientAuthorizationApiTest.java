@@ -54,7 +54,11 @@ class PatientAuthorizationApiTest {
         jdbc.update("DELETE FROM t_diagnosis");
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_user (id BIGINT PRIMARY KEY,userRole VARCHAR(32),isDelete INT DEFAULT 0)");
         for (String table : List.of("t_doctor_review", "t_patient_draft_message", "t_patient_draft_version", "t_patient_evidence_version", "t_patient_draft_run", "t_diagnosis_task", "t_controlled_reference_chunk", "t_controlled_reference", "t_user")) jdbc.update("DELETE FROM " + table);
-        jdbc.update("INSERT INTO t_user (id,userRole) VALUES (1,'admin'),(2,'doctor'),(3,'evidence_reviewer'),(42,'user'),(99,'user')");
+        if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='t_user' AND column_name='userAccount'", Integer.class) > 0) {
+            jdbc.update("INSERT INTO t_user (id,userAccount,userPassword,userRole) VALUES (1,'synthetic-admin','unused','admin'),(2,'synthetic-doctor','unused','doctor'),(3,'synthetic-reviewer','unused','evidence_reviewer'),(42,'synthetic-patient','unused','user'),(99,'synthetic-other','unused','user')");
+        } else {
+            jdbc.update("INSERT INTO t_user (id,userRole) VALUES (1,'admin'),(2,'doctor'),(3,'evidence_reviewer'),(42,'user'),(99,'user')");
+        }
         taskId = UUID.randomUUID().toString(); documentId = UUID.randomUUID().toString();
         inference = DiagnosisProto.DiagnosisResponse.newBuilder().setPredictedLabel("glaucoma").setProbability(70)
                 .setOodStatus(DiagnosisProto.OodStatus.IN_DISTRIBUTION).setQualityScore(80)
@@ -70,7 +74,7 @@ class PatientAuthorizationApiTest {
                 .map(section -> Map.of("id", section, "section", section, "text", "Approved synthetic " + section,
                         "references", List.of(Map.of("citationIndex", 0, "quote", "eye examination")))).toList();
         jdbc.update("INSERT INTO t_patient_draft_version VALUES (?,1,1,?)", taskId, json.writeValueAsString(Map.of("evidenceVersion", 1, "claims", claims)));
-        jdbc.update("INSERT INTO t_patient_draft_message VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{\"private\":\"raw-context\"},\"result\":{\"action\":\"NONE\",\"objections\":[]},\"reasoning\":\"raw-reasoning\"}");
+        jdbc.update("INSERT INTO t_patient_draft_message (taskId,sequence,role,state,output) VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{\"private\":\"raw-context\"},\"result\":{\"action\":\"NONE\",\"objections\":[]},\"reasoning\":\"raw-reasoning\"}");
         actor.set(user(42, "user"));
         var users = mock(UserService.class);
         when(users.getLoginUser(any())).thenAnswer(inv -> {
@@ -93,6 +97,48 @@ class PatientAuthorizationApiTest {
         jdbc.update("UPDATE t_diagnosis_task SET inferenceSnapshot=? WHERE taskId=?", json.writeValueAsString(Map.of("taskId", taskId, "userId", 42,
                 "objectKey", "private-object", "objectVersion", "v1", "imageDigest", "b".repeat(64), "imageFormat", "png",
                 "responseProtobufBase64", Base64.getEncoder().encodeToString(inference.build().toByteArray()))), taskId);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"unchanged", "changed-message"})
+    void autonomousMaterialsPassDoctorAndPatientGatesAndMessageTamperingRejectsSave(String change) throws Exception {
+        for (String table : List.of("t_patient_draft_message", "t_patient_draft_version", "t_patient_evidence_version", "t_patient_draft_run"))
+            jdbc.update("DELETE FROM " + table + " WHERE taskId=?", taskId);
+        org.springframework.ai.chat.model.ChatModel provider = prompt -> {
+            String role = prompt.getSystemMessage().getText().split("\\n")[0];
+            String output = switch (role) {
+                case "VISION" -> "{\"summary\":\"Synthetic model summary\",\"limitations\":[\"Not calibrated\"],\"reanalysisSuggestion\":\"NONE\"}";
+                case "EVIDENCE" -> "{\"query\":\"examination\"}";
+                case "EXPLANATION" -> {
+                    var claims = List.of("MAIN_FINDING", "RISK", "NEXT_STEP", "UNCERTAINTY", "DETAIL", "LIMITATION").stream()
+                            .map(section -> Map.of("id", section, "section", section, "text", "Synthetic explanation " + section,
+                                    "references", List.of(Map.of("citationIndex", 0, "quote", "eye examination")))).toList();
+                    try { yield json.writeValueAsString(Map.of("evidenceVersion", 1, "claims", claims)); }
+                    catch (Exception e) { throw new AssertionError(e); }
+                }
+                case "CRITIC" -> "{\"action\":\"NONE\",\"objections\":[]}";
+                default -> throw new AssertionError(role);
+            };
+            return new org.springframework.ai.chat.model.ChatResponse(List.of(new org.springframework.ai.chat.model.Generation(
+                    new org.springframework.ai.chat.messages.AssistantMessage(output))));
+        };
+        try (var coordinator = new com.csust.eyediagnosis.patientdraft.PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), provider)) {
+            coordinator.run(taskId);
+            assertEquals("REVIEW_READY", coordinator.inspect(taskId).status());
+        }
+        JsonNode reviewed = decide("APPROVED");
+        assertTrue(reviewed.toString().contains("AUTONOMOUS_V2"), "Doctor freezes the actual collaboration envelopes");
+        mvc.perform(get("/diagnosis-tasks/" + taskId + "/explanation"))
+                .andExpect(jsonPath("$.data.status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.data.result.collaboration").doesNotExist());
+        JsonNode offer = offer();
+        if (change.equals("unchanged")) assertEquals("APPROVED", approve(offer).path("status").asText());
+        else {
+            jdbc.update("UPDATE t_patient_draft_message SET output=JSON_SET(output,'$.collaboration.workflowVersion','TAMPERED') WHERE taskId=? AND sequence=1", taskId);
+            mvc.perform(post("/diagnosis-tasks/" + taskId + "/save-authorization/approve").contentType("application/json").content(approvalBody(offer)))
+                    .andExpect(status().isConflict());
+            assertEquals("RESTRICTED", offer().path("status").asText());
+        }
     }
 
     private JsonNode decide(String decision) throws Exception {

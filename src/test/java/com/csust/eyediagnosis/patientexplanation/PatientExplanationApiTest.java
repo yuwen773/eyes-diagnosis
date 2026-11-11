@@ -79,7 +79,7 @@ class PatientExplanationApiTest {
                 .map(section -> Map.of("id", section, "section", section, "text", "Approved synthetic " + section,
                         "references", List.of(Map.of("citationIndex", 0, "quote", "eye examination")))).toList();
         jdbc.update("INSERT INTO t_patient_draft_version VALUES (?,1,1,?)", taskId, json.writeValueAsString(Map.of("evidenceVersion", 1, "claims", claims)));
-        jdbc.update("INSERT INTO t_patient_draft_message VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{\"private\":\"raw-context\"},\"result\":{\"action\":\"NONE\",\"objections\":[]},\"reasoning\":\"raw-reasoning\"}");
+        jdbc.update("INSERT INTO t_patient_draft_message (taskId,sequence,role,state,output) VALUES (?,1,'CRITIC','COMPLETED',?)", taskId, "{\"context\":{\"private\":\"raw-context\"},\"result\":{\"action\":\"NONE\",\"objections\":[]},\"reasoning\":\"raw-reasoning\"}");
         actor.set(user(42, "user"));
         var users = mock(UserService.class);
         when(users.getLoginUser(any())).thenAnswer(inv -> {

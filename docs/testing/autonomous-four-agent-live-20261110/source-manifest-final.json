@@ -1,0 +1,31 @@
+{
+  "head": "74cf7d8246c6fb30ad58bd0497f8e08f94be749f",
+  "workingTree": "uncommitted; unrelated preexisting changes preserved",
+  "generatedAt": "2026-11-11T12:42:37.488139+08:00",
+  "sha256": {
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java": "63dd700155bef8ba71b2052e4a925df3949d17e78c6713a048fe09575b5e368f",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftAgents.java": "5c757b9f0c309a76921c3faccfa5d44067357facc0e36c96990f38a2af2cedec",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftMailbox.java": "9b636e05fee332849a647b65a09985f40c687f671329c2bc81aa96f3d2e9599a",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftTestService.java": "d1ea48e30b4963ae44a7ad72af5ad8c37171c5d8b67101b5a384c026407b677f",
+    "src/main/resources/db/migration/V17__autonomous_draft_workflow.sql": "45230708445b464df17b26ef2827e1fe15e43c322b34dc3402cce30e32ced445",
+    "frontend/src/api/patientDraftTest.ts": "b0f2796030db266bd6738e579109a43854f1cfb91df436ad6ed38016474d3d13",
+    "frontend/src/layouts/AdminLayout.vue": "29edab575daf1b8a55f1caaa7ea8e9862ecd99864f5ee9f83dd8e0dffebae0fa",
+    "frontend/src/pages/admin/AgentCollabPage.vue": "8c08b99a142864a9830d81063d470783d52cf3de6eb496abe324075e9c167599",
+    "frontend/src/pages/admin/DraftTestPage.vue": "2f5d6402972619713ab2aff4ff36b7d402ca1a9a41ef8d393a7934043a31f57d",
+    "frontend/src/pages/admin/agentCollab.ts": "c6ed592b38a03e8828ccd3bd81f6b16543b53b80db077029091fe92bcf054682",
+    "frontend/src/pages/admin/components/AutonomyCollabView.vue": "f1153331e741c4f55617da6e16fc77aa826d75f243f7e7f7b16879b66b82a235",
+    "frontend/src/pages/admin/components/LiveCollabView.vue": "f0a0782f578b716eb103fd595a7bc97524044b51a3402d7e6b618ba56757792a",
+    "frontend/src/pages/admin/components/AgentCollabChat.vue": "5ebc74fe46056c3f3e0e69885d9d53a0adf5c04d9c4fecd76d93810c5fa514e0",
+    "frontend/src/pages/admin/__tests__/AgentCollabPage.test.ts": "ec87bf99c78510a0e3546585789c168126ddca21da92caa10746fad07f2bbc87",
+    "scripts/check_surefire_skips.py": "2f7f6ce690b254410e2f778d7bed0a006f1457a98072ff0146fb2ed0eed8b5e2",
+    "scripts/tests/test_check_surefire_skips.py": "1dbe7874604e5c01718c28358f8fdb6ba096afbedbaa1de472212aaa01072d17",
+    "src/test/java/com/csust/eyediagnosis/patientdraft/PatientDraftTest.java": "7108933d4cbc83e4d850f4194dd6387ed7ac312987e6d03962ec7077d6bf5726",
+    "src/test/java/com/csust/eyediagnosis/patientdraft/PatientDraftCrashWorker.java": "20c6ccc398fe5c915f2e5c46ee01c0b65d7e64db3c3f6b7728de40b2d4359808",
+    "src/test/java/com/csust/eyediagnosis/migration/FlywayMySqlIntegrationTest.java": "f1fc0966acf243994a624ab8680577f50ff5d00eb6f449bbdf9c53652458c3e4",
+    "src/test/java/com/csust/eyediagnosis/doctorreview/DoctorReviewApiTest.java": "df8e1909dcfd29b1163718bad5d6dcc684eb4f9b550304cb89acba117cb44958",
+    "src/test/java/com/csust/eyediagnosis/patientexplanation/PatientExplanationApiTest.java": "af0a64fb8e42923473626c6a95a8a853c11e52626b4554b8bb7297aba7f9fd0e",
+    "src/test/java/com/csust/eyediagnosis/patientauthorization/PatientAuthorizationApiTest.java": "620b52c0b624f69637d035ce53ffdf070c4b5d123f595faa6a881c429665dee3",
+    "src/test/java/com/csust/eyediagnosis/patientfollowup/PatientFollowUpApiTest.java": "03a1a3560edc7aa875d1c912e4ac0361877845e604b52e1bdbe6338d5af0035f"
+  },
+  "realProviderEvidenceScope": "Live calls occurred on 2026-11-10 before final duplicate-route rejection hardening and frontend-only timestamp/theme fixes. No further paid calls were made. Final engineering tests cover delivered source."
+}
