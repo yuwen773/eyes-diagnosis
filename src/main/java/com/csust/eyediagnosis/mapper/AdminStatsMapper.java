@@ -36,6 +36,15 @@ public interface AdminStatsMapper {
     @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 AND createTime >= #{from}")
     long countDiagnosesSince(@Param("from") Date from);
 
+    /** 左闭右开区间：上一个等长窗口的判读数，用来算环比。 */
+    @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 "
+            + "AND createTime >= #{from} AND createTime < #{to}")
+    long countDiagnosesBetween(@Param("from") Date from, @Param("to") Date to);
+
+    @Select("SELECT COUNT(*) FROM t_user WHERE isDelete = 0 "
+            + "AND createTime >= #{from} AND createTime < #{to}")
+    long countUsersBetween(@Param("from") Date from, @Param("to") Date to);
+
     @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 AND createTime >= #{today}")
     long countDiagnosesToday(@Param("today") Date today);
 
@@ -45,6 +54,11 @@ public interface AdminStatsMapper {
     @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 AND createTime >= #{from} "
             + "AND humanReviewStatus = 'AWAITING_REVIEW'")
     long countAwaitingReviewSince(@Param("from") Date from);
+
+    /** 待复核积压：不限时间窗，管理端要清的是「现在还有多少」。 */
+    @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 "
+            + "AND humanReviewStatus = 'AWAITING_REVIEW'")
+    long countAwaitingReviewTotal();
 
     @Select("SELECT COUNT(*) FROM t_diagnosis WHERE isDelete = 0 AND createTime >= #{from} "
             + "AND humanReviewStatus IN ('REVIEWED', 'OVERRIDDEN')")
@@ -64,6 +78,17 @@ public interface AdminStatsMapper {
             + "WHERE isDelete = 0 AND createTime >= #{from} "
             + "GROUP BY humanReviewStatus ORDER BY `value` DESC")
     List<StatBucket> reviewDistributionSince(@Param("from") Date from);
+
+    /** 每日判读数（左闭右开区间，用于上一个等长窗口的环比）。 */
+    @Select("SELECT DATE_FORMAT(createTime, '%Y-%m-%d') AS day, COUNT(*) AS `value` FROM t_diagnosis "
+            + "WHERE isDelete = 0 AND createTime >= #{from} AND createTime < #{to} "
+            + "GROUP BY DATE_FORMAT(createTime, '%Y-%m-%d') ORDER BY day")
+    List<StatDayCount> diagnosisDailyBetween(@Param("from") Date from, @Param("to") Date to);
+
+    @Select("SELECT DATE_FORMAT(createTime, '%Y-%m-%d') AS day, COUNT(*) AS `value` FROM t_user "
+            + "WHERE isDelete = 0 AND createTime >= #{from} AND createTime < #{to} "
+            + "GROUP BY DATE_FORMAT(createTime, '%Y-%m-%d') ORDER BY day")
+    List<StatDayCount> userDailyBetween(@Param("from") Date from, @Param("to") Date to);
 
     @Select("SELECT DATE_FORMAT(createTime, '%Y-%m-%d') AS day, COUNT(*) AS `value` FROM t_diagnosis "
             + "WHERE isDelete = 0 AND createTime >= #{from} "
@@ -86,6 +111,10 @@ public interface AdminStatsMapper {
 
     @Select("SELECT COALESCE(SUM(chunkCount), 0) FROM t_knowledge_document WHERE isDelete = 0")
     long sumKnowledgeChunks();
+
+    /** 处理失败的文档数（status = 2）：管理端要能直接跳去处理。 */
+    @Select("SELECT COUNT(*) FROM t_knowledge_document WHERE isDelete = 0 AND status = 2")
+    long countKnowledgeFailed();
 
     @Select("SELECT status AS name, COUNT(*) AS `value` FROM t_knowledge_document "
             + "WHERE isDelete = 0 GROUP BY status ORDER BY `value` DESC")

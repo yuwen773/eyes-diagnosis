@@ -36,6 +36,8 @@ public class AdminOverviewVO implements Serializable {
     private long userTotal;
     /** 时间窗内新增用户 */
     private long userNew;
+    /** 上一个等长时间窗的新增用户数（环比用） */
+    private long previousUserNew;
     /** 管理员账号数 */
     private long userAdmin;
 
@@ -44,12 +46,21 @@ public class AdminOverviewVO implements Serializable {
     private long diagnosisTotal;
     /** 时间窗内判读数 */
     private long diagnosisInRange;
+    /** 上一个等长时间窗的判读数（环比用） */
+    private long previousDiagnosisInRange;
     /** 今日判读数 */
     private long diagnosisToday;
     /** AI 拒识数（时间窗内） */
     private long diagnosisAiRejected;
     /** 待人工复核数（时间窗内） */
     private long diagnosisAwaitingReview;
+    /**
+     * 待人工复核积压量（全站累计）。
+     *
+     * <p>与 {@code diagnosisAwaitingReview} 不同：那个是「窗口内新增的待复核」，
+     * 这个是「现在还有多少没处理」。管理端的首要动作是清积压，看的必须是后者。
+     */
+    private long diagnosisAwaitingReviewTotal;
     /** 已完成人工复核数（时间窗内） */
     private long diagnosisReviewed;
     /** 平均置信度（时间窗内，无结论的记录不参与平均；无样本时为 null） */
@@ -60,6 +71,8 @@ public class AdminOverviewVO implements Serializable {
     private long knowledgeTotal;
     /** 切片总数（全站累计） */
     private long knowledgeChunks;
+    /** 处理失败的文档数（全站累计，status = 2）——管理端要能直接去处理 */
+    private long knowledgeFailed;
     /** 按处理状态分布 */
     private List<StatBucket> knowledgeByStatus = new ArrayList<>();
 
@@ -74,6 +87,10 @@ public class AdminOverviewVO implements Serializable {
     private List<String> trendDays = new ArrayList<>();
     /** 每日判读数 */
     private List<StatDayCount> diagnosisTrend = new ArrayList<>();
+    /** 上一个等长时间窗的每日判读数（与 diagnosisTrend 按天对齐，环比用） */
+    private List<StatDayCount> previousDiagnosisTrend = new ArrayList<>();
+    /** 上一个等长时间窗的每日新增用户数（与 userTrend 按天对齐，环比用） */
+    private List<StatDayCount> previousUserTrend = new ArrayList<>();
     /** 每日新增用户数 */
     private List<StatDayCount> userTrend = new ArrayList<>();
     /** 病种分布（时间窗内） */

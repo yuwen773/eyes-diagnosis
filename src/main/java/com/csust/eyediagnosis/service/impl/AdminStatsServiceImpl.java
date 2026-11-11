@@ -46,21 +46,34 @@ public class AdminStatsServiceImpl implements AdminStatsService {
         vo.setRangeStart(startDay.format(DAY));
         vo.setRangeEnd(today.format(DAY));
 
+        // 上一个等长时间窗：用来算环比与画对比曲线。
+        // 当前窗是 [startDay, 今日]，上一窗是 [startDay - window, startDay)。
+        LocalDate prevStartDay = startDay.minusDays(window);
+        Date prevFrom = Date.from(prevStartDay.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        List<String> prevTrendDays = new ArrayList<>(window);
+        for (int i = 0; i < window; i++) {
+            prevTrendDays.add(prevStartDay.plusDays(i).format(DAY));
+        }
+
         vo.setUserTotal(adminStatsMapper.countUsers());
         vo.setUserNew(adminStatsMapper.countUsersSince(from));
         vo.setUserAdmin(adminStatsMapper.countAdmins());
+        vo.setPreviousUserNew(adminStatsMapper.countUsersBetween(prevFrom, from));
 
         vo.setDiagnosisTotal(adminStatsMapper.countDiagnoses());
         vo.setDiagnosisInRange(adminStatsMapper.countDiagnosesSince(from));
+        vo.setPreviousDiagnosisInRange(adminStatsMapper.countDiagnosesBetween(prevFrom, from));
         vo.setDiagnosisToday(adminStatsMapper.countDiagnosesToday(todayStart));
         vo.setDiagnosisAiRejected(adminStatsMapper.countAiRejectedSince(from));
         vo.setDiagnosisAwaitingReview(adminStatsMapper.countAwaitingReviewSince(from));
+        vo.setDiagnosisAwaitingReviewTotal(adminStatsMapper.countAwaitingReviewTotal());
         vo.setDiagnosisReviewed(adminStatsMapper.countReviewedSince(from));
         Double avg = adminStatsMapper.avgConfidenceSince(from);
         vo.setAvgConfidence(avg == null ? null : Math.round(avg * 10000d) / 10000d);
 
         vo.setKnowledgeTotal(adminStatsMapper.countKnowledgeDocs());
         vo.setKnowledgeChunks(adminStatsMapper.sumKnowledgeChunks());
+        vo.setKnowledgeFailed(adminStatsMapper.countKnowledgeFailed());
         vo.setKnowledgeByStatus(adminStatsMapper.knowledgeByStatus());
 
         vo.setNewsTotal(adminStatsMapper.countNews());
@@ -74,6 +87,11 @@ public class AdminStatsServiceImpl implements AdminStatsService {
 
         vo.setDiagnosisTrend(fillDays(trendDays, adminStatsMapper.diagnosisDailySince(from)));
         vo.setUserTrend(fillDays(trendDays, adminStatsMapper.userDailySince(from)));
+        // 上一窗的两条趋势也补齐并按天对齐：缺一天，对比曲线就会错位一天。
+        vo.setPreviousDiagnosisTrend(
+                fillDays(prevTrendDays, adminStatsMapper.diagnosisDailyBetween(prevFrom, from)));
+        vo.setPreviousUserTrend(
+                fillDays(prevTrendDays, adminStatsMapper.userDailyBetween(prevFrom, from)));
         vo.setDiagnosisDistribution(adminStatsMapper.diagnosisDistributionSince(from));
         vo.setReviewDistribution(adminStatsMapper.reviewDistributionSince(from));
         vo.setDiagnosisTrendByResult(adminStatsMapper.diagnosisDailyByResultSince(from));

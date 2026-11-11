@@ -6,9 +6,11 @@ import com.csust.eyediagnosis.model.vo.stats.StatDayCount;
 import com.csust.eyediagnosis.service.impl.AdminStatsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -95,5 +98,46 @@ class AdminStatsServiceTest {
         when(mapper.avgConfidenceSince(any())).thenReturn(0.87654321);
         // 取 doubleValue 再比：assertEquals(double, Double) 会因为装箱歧义编译不过
         assertEquals(0.8765, service.overview(30).getAvgConfidence().doubleValue(), 1e-9);
+    }
+
+    @Test
+    void 上一窗口与当前窗口首尾相接() {
+        service.overview(7);
+
+        ArgumentCaptor<Date> prevFrom = ArgumentCaptor.forClass(Date.class);
+        ArgumentCaptor<Date> prevTo = ArgumentCaptor.forClass(Date.class);
+        verify(mapper).countDiagnosesBetween(prevFrom.capture(), prevTo.capture());
+
+        ArgumentCaptor<Date> currentFrom = ArgumentCaptor.forClass(Date.class);
+        verify(mapper).countDiagnosesSince(currentFrom.capture());
+
+        // 上一窗的终点就是当前窗的起点：两段拼起来不留缝、不重叠
+        assertEquals(currentFrom.getValue(), prevTo.getValue(),
+                "上一窗口终点应等于当前窗口起点");
+        long spanMillis = prevTo.getValue().getTime() - prevFrom.getValue().getTime();
+        assertEquals(7L, spanMillis / 86_400_000L, "上一窗口长度应与当前窗口相同");
+    }
+
+    @Test
+    void 上一窗口的趋势也补齐空缺的天() {
+        when(mapper.diagnosisDailyBetween(any(), any()))
+                .thenReturn(List.of(new StatDayCount("2026-10-30", 2L)));
+
+        AdminOverviewVO vo = service.overview(7);
+
+        assertEquals(7, vo.getPreviousDiagnosisTrend().size());
+        assertEquals(7, vo.getPreviousUserTrend().size());
+        long nonZero = vo.getPreviousDiagnosisTrend().stream()
+                .filter(day -> day.getValue() > 0).count();
+        assertEquals(1, nonZero);
+    }
+
+    @Test
+    void 待复核积压是全站累计而不是窗口内新增() {
+        when(mapper.countAwaitingReviewTotal()).thenReturn(9L);
+
+        AdminOverviewVO vo = service.overview(30);
+
+        assertEquals(9L, vo.getDiagnosisAwaitingReviewTotal());
     }
 }
