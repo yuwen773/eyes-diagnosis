@@ -1,12 +1,12 @@
 import {
-  useCallback,
-  useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
   type ReactElement,
 } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
@@ -24,10 +24,8 @@ import {
   listKnowledge,
   updateKnowledgeTitle,
   uploadKnowledge,
-  type KnowledgeDetail,
   type KnowledgeDoc,
   type KnowledgeQuery,
-  type Page,
 } from "@/lib/adminApi"
 import {
   knowledgeStatusView,
@@ -35,15 +33,13 @@ import {
   KNOWLEDGE_STATUS_FILTER_OPTIONS,
 } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
 const POLL_MS = 3000
 const ACCEPT = ".pdf,.doc,.docx,.txt,.md,.markdown"
-
-/** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
-type View = { data: Page<KnowledgeDoc> | null; fault: ErrorDetail | null; loading: boolean }
 
 /** 已应用的筛选条件。 */
 type Query = {
@@ -102,26 +98,14 @@ export function AdminKnowledgePage(): ReactElement {
     startDate: "",
     endDate: "",
   })
-  // 最新筛选条件的镜像：轮询回调要拿到「当前这组条件」，但又不能让 fireLoad
-  // 依赖 query（那会让挂载 effect 随每次搜索重跑一遍，多发一次请求）。
-  const queryRef = useRef<Query>(query)
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
-  const requestSeq = useRef(0)
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  // 「处理中」队列：仅放本次会话新上传、且服务端仍标记 status===0 的文件名
-  // （Vue 版 processingFiles 语义）。轮询开关另用 hasProcessing 承接「列表存在
-  // status===0」，两者同源（都取自加载结果），但不混为一个布尔量。
-  const [processingNames, setProcessingNames] = useState<string[]>([])
-  const [hasProcessing, setHasProcessing] = useState(false)
-  // 轮询定时器句柄；防重入（已有 timer 不再起）+ 卸载清理都靠它。
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  // 轮询单飞：上一次轮询还没回就不发下一次，避免慢响应把请求堆叠起来。
-  const pollInFlightRef = useRef(false)
+  // 本次会话上传过的文件名：用于「处理中」条立即显示，列表回来后再按服务端状态收口。
+  const [uploadedNames, setUploadedNames] = useState<string[]>([])
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeDoc | null>(null)
@@ -132,10 +116,6 @@ export function AdminKnowledgePage(): ReactElement {
 
   // 预览抽屉：元信息 + 原文预览 + 切片清单
   const [previewTarget, setPreviewTarget] = useState<KnowledgeDoc | null>(null)
-  const [preview, setPreview] = useState<KnowledgeDetail | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [previewFault, setPreviewFault] = useState<ErrorDetail | null>(null)
-  const previewSeq = useRef(0)
 
   // 改名弹层
   const [renameTarget, setRenameTarget] = useState<KnowledgeDoc | null>(null)
@@ -143,121 +123,74 @@ export function AdminKnowledgePage(): ReactElement {
   const [renaming, setRenaming] = useState(false)
   const [renameError, setRenameError] = useState<ErrorDetail | null>(null)
 
-  /** 成功取数后的统一落盘：三态 + 处理中队列 + 轮询开关，全在 Promise 续体里。 */
-  const applyLoaded = useCallback((seq: number, data: Page<KnowledgeDoc>) => {
-    if (seq !== requestSeq.current) return
-    const records = data.records ?? []
-    const status0Names = new Set(
-      records.filter((doc) => doc.status === 0).map((doc) => doc.fileName),
-    )
-    // Vue watch 语义：队列只保留服务端仍在处理的文件名；内容不变时沿用 prev，
-    // 避免每 3 秒轮询都触发一次无谓重渲染。
-    setProcessingNames((prev) => {
-      const next = prev.filter((name) => status0Names.has(name))
-      return next.length === prev.length ? prev : next
-    })
-    setHasProcessing(status0Names.size > 0)
-    setView({ data: { ...data, records }, fault: null, loading: false })
-  }, [])
+  const queryClient = useQueryClient()
 
-  /** 失败：静默轮询不打断（保留上一帧数据与轮询开关，timer 继续），全量取数才报错。 */
-  const applyFailed = useCallback((seq: number, cause: unknown, silent: boolean) => {
-    if (seq !== requestSeq.current) return
-    if (silent) return
-    setView({ data: null, fault: describeError(cause), loading: false })
-  }, [])
-
-  /**
-   * 纯发请求：不在此同步写任何 state，全部交给续体（合规 react-hooks/set-state-in-effect）。
-   * 交互取数（首次挂载 / startLoad）递增 requestSeq 成为「最新权威请求」；静默轮询
-   * 只读取当前序号、不递增——这样一次失败的静默轮询不会占住赢家序号、把仍在飞行的
-   * 交互请求结果作废（背景拉取失败不该让页面卡在 loading）。轮询成功仅在没有更新的
-   * 交互请求插队时才提交（applyLoaded 的 seq 比对），保证「最新数据胜出」。
-   * 静默轮询另用 pollInFlightRef 单飞：上一次未回就跳过本次，避免慢响应堆叠、
-   * 更晚发起的轮询被更早的响应覆盖。
-   */
-  const fireLoad = useCallback(
-    (current: number, pageSize: number, silent: boolean, nextQuery?: Query) => {
-      if (silent && pollInFlightRef.current) return
-      if (silent) pollInFlightRef.current = true
-      const seq = silent ? requestSeq.current : ++requestSeq.current
-      const settle = () => {
-        if (silent) pollInFlightRef.current = false
-      }
-      const active = nextQuery ?? queryRef.current
-      const params: KnowledgeQuery = {
-        current,
-        pageSize,
-        ...(active.fileName ? { fileName: active.fileName } : {}),
-        ...(active.title ? { title: active.title } : {}),
-        ...(active.status ? { status: Number(active.status) } : {}),
-        ...(active.fileType ? { fileType: active.fileType } : {}),
-        ...(active.startDate ? { startDate: active.startDate } : {}),
-        ...(active.endDate ? { endDate: active.endDate } : {}),
-      }
-      listKnowledge(params).then(
-        (data) => {
-          settle()
-          applyLoaded(seq, data)
-        },
-        (cause) => {
-          settle()
-          applyFailed(seq, cause, silent)
-        },
-      )
-    },
-    [applyLoaded, applyFailed],
+  /** 已应用的筛选 + 分页：同时是查询键和请求体。 */
+  const { current, pageSize } = page
+  const params = useMemo<KnowledgeQuery>(
+    () => ({
+      current,
+      pageSize,
+      ...(query.fileName ? { fileName: query.fileName } : {}),
+      ...(query.title ? { title: query.title } : {}),
+      ...(query.status ? { status: Number(query.status) } : {}),
+      ...(query.fileType ? { fileType: query.fileType } : {}),
+      ...(query.startDate ? { startDate: query.startDate } : {}),
+      ...(query.endDate ? { endDate: query.endDate } : {}),
+    }),
+    [current, pageSize, query],
   )
 
-  // 首次挂载加载一次：初始 view 已是 loading=true，effect 里只发请求、不写 state。
-  useEffect(() => {
-    fireLoad(1, DEFAULT_PAGE_SIZE, false)
-  }, [fireLoad])
+  const listQuery = useQuery({
+    queryKey: queryKeys.admin.knowledge(params),
+    queryFn: () => listKnowledge(params),
+    // 列表里还有 status===0 的文档时 3 秒静默重拉；后台刷新不清空数据、
+    // 不把页面打回 loading，这就是原来自研轮询想达到的效果。
+    refetchInterval: (q) =>
+      (q.state.data?.records ?? []).some((doc) => doc.status === 0) ? POLL_MS : false,
+  })
+  const listData = listQuery.data
+  const listFault = listQuery.error ? describeError(listQuery.error) : null
 
   /**
-   * 轮询：列表存在 status===0 时 3 秒 setInterval 重拉；无则停；卸载清定时器；
-   * 防重入（已有 timer 不再起）。轮询用 silent 刷新——不置 loading、不清空 data，
-   * 因此 hasProcessing 在轮询期间保持稳定 true，单个 timer 不会被反复重挂。
+   * 「处理中」文件名：本次上传过、且服务端仍标记 status===0。
+   * 只认列表里真实存在的行：文档被翻到别的页或处理完成后，条目自然消失，
+   * 不会留下永远「处理中」的幽灵名。
    */
-  useEffect(() => {
-    if (!hasProcessing) return
-    if (pollTimerRef.current !== null) return
-    pollTimerRef.current = setInterval(() => {
-      fireLoad(page.current, page.pageSize, true)
-    }, POLL_MS)
-    return () => {
-      if (pollTimerRef.current !== null) {
-        clearInterval(pollTimerRef.current)
-        pollTimerRef.current = null
-      }
-      // 定时器停了就把单飞标记复位，避免下次重新起轮询时被上一次的残留挡住。
-      pollInFlightRef.current = false
-    }
-  }, [hasProcessing, page, fireLoad])
+  const processingNames = useMemo(() => {
+    const status = new Map((listData?.records ?? []).map((doc) => [doc.fileName, doc.status]))
+    return uploadedNames.filter((name) => status.get(name) === 0)
+  }, [uploadedNames, listData])
 
-  /** 事件驱动的全量刷新：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(current: number, pageSize: number, nextQuery: Query = query) {
-    setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
-    setView({ data: null, fault: null, loading: true })
-    fireLoad(current, pageSize, false, nextQuery)
-  }
+  const previewQuery = useQuery({
+    queryKey: queryKeys.admin.knowledgeDetail(previewTarget?.id ?? ""),
+    queryFn: () => getKnowledgeDetail(previewTarget!.id),
+    enabled: previewTarget !== null,
+  })
+  const preview = previewTarget ? previewQuery.data : undefined
+  const previewLoading = previewTarget !== null && previewQuery.isPending
+  const previewFault = previewQuery.error ? describeError(previewQuery.error) : null
+
+  /** 写操作成功后失效知识库域与统计域（失败文档数在仪表盘上）。 */
+  const refreshKnowledge = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.knowledgeAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+    ])
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
-    const nextQuery: Query = {
+    setActionError(null)
+    setQuery({
       fileName: fileNameDraft.trim(),
       title: titleDraft.trim(),
       status: statusDraft,
       fileType: fileTypeDraft,
       startDate: startDraft,
       endDate: endDraft,
-    }
-    const nextPage = { ...page, current: 1 }
-    queryRef.current = nextQuery
-    setQuery(nextQuery)
-    setPage(nextPage)
+    })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage.current, nextPage.pageSize, nextQuery)
   }
 
   function onReset() {
@@ -267,31 +200,21 @@ export function AdminKnowledgePage(): ReactElement {
     setFileTypeDraft("")
     setStartDraft("")
     setEndDraft("")
-    const nextQuery: Query = {
-      fileName: "",
-      title: "",
-      status: "",
-      fileType: "",
-      startDate: "",
-      endDate: "",
-    }
-    const nextPage = { ...page, current: 1 }
-    queryRef.current = nextQuery
-    setQuery(nextQuery)
-    setPage(nextPage)
+    setActionError(null)
+    setQuery({ fileName: "", title: "", status: "", fileType: "", startDate: "", endDate: "" })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage.current, nextPage.pageSize, nextQuery)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
-    const nextPage =
+    setActionError(null)
+    setPage(
       next.pageSize !== page.pageSize
         ? { current: 1, pageSize: next.pageSize }
-        : { current: next.current, pageSize: next.pageSize }
-    setPage(nextPage)
+        : { current: next.current, pageSize: next.pageSize },
+    )
     setSelectedIds([])
-    startLoad(nextPage.current, nextPage.pageSize)
   }
 
   function onPickFiles(event: ChangeEvent<HTMLInputElement>) {
@@ -313,14 +236,8 @@ export function AdminKnowledgePage(): ReactElement {
       await uploadKnowledge(files)
       // 清待传：只移除这次真正上传的 File 对象，上传期间新选择的文件仍留在待传列表。
       setPendingFiles((prev) => prev.filter((file) => !files.includes(file)))
-      // 新上传文件进「处理中」队列：页内处理中条立即显示文件名。
-      setProcessingNames((prev) => {
-        const next = new Set(prev)
-        files.forEach((file) => next.add(file.name))
-        return [...next]
-      })
-      setHasProcessing(true) // 立即起轮询（随后的列表刷新会再按服务端状态确认）
-      startLoad(page.current, page.pageSize) // 刷新列表
+      setUploadedNames((prev) => [...new Set([...prev, ...files.map((file) => file.name)])])
+      await refreshKnowledge()
     } catch (cause) {
       // 上传失败：FaultNote 页内读数 + 保留待传列表，用户可直接重试。
       setActionError(describeError(cause))
@@ -348,7 +265,8 @@ export function AdminKnowledgePage(): ReactElement {
       await deleteKnowledge(target.id) // 后端 JsonConfig 全局 Long→String，id 线上为 string，直接传
       setDeleteTarget(null)
       setSelectedIds((prev) => prev.filter((id) => id !== target.id))
-      startLoad(page.current, page.pageSize) // 成功后刷新当前页
+      setUploadedNames((prev) => prev.filter((name) => name !== target.fileName))
+      await refreshKnowledge()
     } catch (cause) {
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
       setActionError(describeError(cause))
@@ -373,7 +291,7 @@ export function AdminKnowledgePage(): ReactElement {
           : `批量删除：成功 ${succeeded} 份。`,
       )
       if (failed === 0) setSelectedIds([])
-      startLoad(page.current, page.pageSize)
+      await refreshKnowledge()
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -384,33 +302,11 @@ export function AdminKnowledgePage(): ReactElement {
   /* ── 预览（原文 + 切片） ───────────────────────────────── */
 
   function openPreview(row: KnowledgeDoc) {
-    const seq = ++previewSeq.current
     setPreviewTarget(row)
-    setPreview(null)
-    setPreviewFault(null)
-    setPreviewLoading(true)
-    getKnowledgeDetail(row.id).then(
-      (data) => {
-        if (seq === previewSeq.current) {
-          setPreview(data)
-          setPreviewLoading(false)
-        }
-      },
-      (cause) => {
-        if (seq === previewSeq.current) {
-          setPreviewFault(describeError(cause))
-          setPreviewLoading(false)
-        }
-      },
-    )
   }
 
   function closePreview() {
-    ++previewSeq.current
     setPreviewTarget(null)
-    setPreview(null)
-    setPreviewFault(null)
-    setPreviewLoading(false)
   }
 
   /* ── 改名 ───────────────────────────────────────────────── */
@@ -440,7 +336,7 @@ export function AdminKnowledgePage(): ReactElement {
       await updateKnowledgeTitle(renameTarget.id, title)
       setRenameTarget(null)
       setActionNote("已改名")
-      startLoad(page.current, page.pageSize)
+      await refreshKnowledge()
     } catch (cause) {
       setRenameError(describeError(cause))
     } finally {
@@ -514,8 +410,10 @@ export function AdminKnowledgePage(): ReactElement {
   ]
 
   // 三态同源：loading / error / 数据都从 view 读；加载与出错时 rows 都是 undefined。
-  const rows = view.data?.records
-  const total = view.data?.total ?? 0
+  const rows = listData?.records
+  const total = listData?.total ?? 0
+  // 静默轮询失败不该把已有列表换成错误页；只有一次数据都没拿到才报错。
+  const listError = listData === undefined ? (listFault?.text ?? null) : null
 
   return (
     <div className="admin-knowledge">
@@ -709,8 +607,8 @@ export function AdminKnowledgePage(): ReactElement {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          loading={view.loading}
-          error={view.fault?.text ?? null}
+          loading={listQuery.isPending}
+          error={listError}
           emptyText="暂无文档"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactElement } from "react"
+import { useRef, useState, type ChangeEvent, type FormEvent, type ReactElement } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
@@ -12,12 +13,10 @@ import {
 } from "@/lib/adminApi"
 import { newsContentValid, newsStatusOptionsFor } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
 import { htmlToMarkdown } from "@/lib/htmlToMarkdown"
-
-/** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
-type View = { data: AdminNews | null; fault: ErrorDetail | null; loading: boolean }
 
 /** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。
  *  status 缺省表示「后端没给」（老数据）——保存时省略该键，靠 MyBatis-Plus
@@ -64,63 +63,111 @@ function coverProblem(file: File): string | null {
  */
 export function AdminNewsEditPage(): ReactElement {
   const { id } = useParams()
-  const navigate = useNavigate()
-
   const isNew = id === "new" || !id
   const newsId = isNew ? null : id!
+  // 成功提示挂在加载层：新建保存后路由换成 /:id/edit，表单会重挂，提示不能跟着丢。
+  const [success, setSuccess] = useState<string | null>(null)
 
-  const [form, setForm] = useState<Form>(EMPTY_FORM)
-  /** 旧文章的原始 HTML；正文未改时原样提交，避免有损往返。 */
-  const [legacyHtml, setLegacyHtml] = useState<string | null>(null)
-  const [contentDirty, setContentDirty] = useState(false)
-  const [view, setView] = useState<View>({
-    data: null,
-    fault: null,
-    loading: !isNew,
+  const newsQuery = useQuery({
+    queryKey: queryKeys.admin.newsDetail(newsId ?? ""),
+    queryFn: () => getNews(newsId!),
+    enabled: !isNew,
   })
-  const requestSeq = useRef(0)
+  const newsFault = newsQuery.error ? describeError(newsQuery.error) : null
+
+  let body: ReactElement
+  if (!isNew && newsQuery.isPending) {
+    body = <p className="admin-newsedit__state">正在读取新闻…</p>
+  } else if (newsFault) {
+    body = (
+      <FaultNote
+        className="admin-newsedit__fault"
+        fault={fault({
+          severity: "attention",
+          kind: "client",
+          title: newsFault.text,
+          code: newsFault.code,
+        })}
+      />
+    )
+  } else {
+    // 表单用 key 重挂：初值只在挂载时读一次（新建保存后换成带 id 的路由），
+    // 不需要「数据回来再 setState 回填」的 effect。
+    body = (
+      <NewsEditor
+        key={newsId ?? "new"}
+        newsId={newsId}
+        initial={newsQuery.data ?? null}
+        success={success}
+        setSuccess={setSuccess}
+      />
+    )
+  }
+
+  return (
+    <div className="admin-newsedit">
+      <div className="admin-newsedit__head">
+        <SectionHead
+          code="03"
+          kicker={isNew ? "新闻管理 · 新建" : "新闻管理 · 编辑"}
+          en="ADMIN · NEWS EDIT"
+        />
+        <BackButton />
+      </div>
+      {body}
+    </div>
+  )
+}
+
+function BackButton(): ReactElement {
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      className="btn btn--ghost btn--sm admin-newsedit__back"
+      onClick={() => navigate("/admin/news")}
+    >
+      返回列表
+    </button>
+  )
+}
+
+function NewsEditor(props: {
+  newsId: string | null
+  initial: AdminNews | null
+  success: string | null
+  setSuccess: (message: string | null) => void
+}): ReactElement {
+  const { newsId, initial, success, setSuccess } = props
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const isNew = newsId === null
+
+  const [form, setForm] = useState<Form>(() => {
+    if (!initial) return EMPTY_FORM
+    const raw = initial.content ?? ""
+    const isHtml = /<[a-z][\s\S]*>/i.test(raw)
+    return {
+      title: initial.title ?? "",
+      content: isHtml ? htmlToMarkdown(raw) : raw,
+      coverImage: initial.coverImage ?? undefined,
+      status: initial.status ?? undefined,
+      note: initial.offlineReason ?? undefined,
+    }
+  })
+  /** 旧文章的原始 HTML；正文未改时原样提交，避免有损往返。 */
+  const [legacyHtml] = useState<string | null>(() => {
+    const raw = initial?.content ?? ""
+    return /<[a-z][\s\S]*>/i.test(raw) ? raw : null
+  })
+  const [contentDirty, setContentDirty] = useState(false)
 
   const [tab, setTab] = useState<"edit" | "preview">("edit")
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formFault, setFormFault] = useState<ReturnType<typeof validationFault> | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  /** 纯取数：不碰 state，只返回当前序号，供续体判断是否仍是最后一次请求。 */
-  const fetchNews = useCallback((targetId: string): { seq: number; result: Promise<AdminNews> } => {
-    const seq = ++requestSeq.current
-    return { seq, result: getNews(targetId) }
-  }, [])
-
-  // 首次挂载（仅编辑模式）加载一次：setState 全在 Promise 续体里，effect 体内不写 state，
-  // 符合 react-hooks/set-state-in-effect。新建模式不发请求、view 保持 loading=false。
-  useEffect(() => {
-    if (!newsId) return
-    const { seq, result } = fetchNews(newsId)
-    result.then(
-      (data) => {
-        if (seq !== requestSeq.current) return
-        const raw = data.content ?? ""
-        const isHtml = /<[a-z][\s\S]*>/i.test(raw)
-        setLegacyHtml(isHtml ? raw : null)
-        setContentDirty(false)
-        setForm({
-          title: data.title ?? "",
-          content: isHtml ? htmlToMarkdown(raw) : raw,
-          coverImage: data.coverImage ?? undefined,
-          status: data.status ?? undefined,
-          note: data.offlineReason ?? undefined,
-        })
-        setView({ data, fault: null, loading: false })
-      },
-      (cause) => {
-        if (seq !== requestSeq.current) return
-        setView({ data: null, fault: describeError(cause), loading: false })
-      },
-    )
-  }, [fetchNews, newsId])
 
   function patch(next: Partial<Form>) {
     setForm((prev) => ({ ...prev, ...next }))
@@ -163,10 +210,14 @@ export function AdminNewsEditPage(): ReactElement {
         // 用空串（非 null）显式写库，才能把「清除」与「不改」区分开。
         coverImage: form.coverImage ?? "",
       })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.newsAll }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+      ])
       if (isNew) {
-        // 新建后回填路由：组件不卸载，下一次保存与封面上传都带 id。
-        navigate(`/admin/news/${savedId}/edit`, { replace: true })
+        // 新建后回填路由：换成带 id 的编辑路由，下一次保存与封面上传都带 id。
         setSuccess("已创建，可继续上传封面或修改")
+        navigate(`/admin/news/${savedId}/edit`, { replace: true })
       } else {
         setSuccess("已保存")
       }
@@ -216,35 +267,6 @@ export function AdminNewsEditPage(): ReactElement {
   }
 
   return (
-    <div className="admin-newsedit">
-      <div className="admin-newsedit__head">
-        <SectionHead
-          code="03"
-          kicker={isNew ? "新闻管理 · 新建" : "新闻管理 · 编辑"}
-          en="ADMIN · NEWS EDIT"
-        />
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm admin-newsedit__back"
-          onClick={() => navigate("/admin/news")}
-        >
-          返回列表
-        </button>
-      </div>
-
-      {view.loading ? (
-        <p className="admin-newsedit__state">正在读取新闻…</p>
-      ) : view.fault ? (
-        <FaultNote
-          className="admin-newsedit__fault"
-          fault={fault({
-            severity: "attention",
-            kind: "client",
-            title: view.fault.text,
-            code: view.fault.code,
-          })}
-        />
-      ) : (
         <form className="admin-newsedit__form" onSubmit={onSubmit}>
           {/* 工具行：编辑 / 预览 mono tab + 保存。预览切换只换下半区，
               上半区标题与封面在两种视图下都常驻，避免切到预览就丢了字段入口。 */}
@@ -448,8 +470,6 @@ export function AdminNewsEditPage(): ReactElement {
 
           <p className="admin-newsedit__footer num">{SUMMARY_HINT}</p>
         </form>
-      )}
-    </div>
   )
 }
 

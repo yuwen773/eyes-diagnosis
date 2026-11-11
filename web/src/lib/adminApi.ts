@@ -66,7 +66,12 @@ export type AdminNews = {
   /** 下架原因（后端在状态转 2 且带 note 时写入；NewsVO 只读暴露）。 */
   offlineReason?: string | null
 }
-export function listAdminNews(q: { current: number; pageSize: number; title?: string; status?: number; category?: string; startDate?: string; endDate?: string }): Promise<Page<AdminNews>> {
+export type NewsQuery = {
+  current: number; pageSize: number
+  title?: string; status?: number; category?: string
+  startDate?: string; endDate?: string
+}
+export function listAdminNews(q: NewsQuery): Promise<Page<AdminNews>> {
   return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function deleteNews(id: string): Promise<boolean> {

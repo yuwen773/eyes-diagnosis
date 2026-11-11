@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ReactElement } from "react"
+import { useMemo, useState, type ReactElement } from "react"
 import { Link } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 
 import { SectionHead } from "@/components/SectionHead"
 import { StatTile } from "@/components/admin/StatTile"
@@ -9,7 +10,7 @@ import { WeekBars } from "@/components/admin/charts/WeekBars"
 import { ShareBar } from "@/components/admin/charts/ShareBar"
 import { RankedBars } from "@/components/admin/charts/RankedBars"
 import { FaultNote } from "@/components/fault"
-import { getAdminStats, type AdminStats } from "@/lib/adminApi"
+import { getAdminStats } from "@/lib/adminApi"
 import {
   formatStatNumber,
   formatStatPercent,
@@ -19,7 +20,8 @@ import {
   rankDistribution,
 } from "@/lib/adminDomain"
 import { changeLabel, sharedDomainMax, weekdayBreakdown } from "@/lib/chartData"
-import { describeError, type ErrorDetail } from "@/lib/api"
+import { describeError } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
 
 /** 时间窗选项（天）。 */
@@ -34,8 +36,6 @@ const MAX_DISEASE_SERIES = 6
 
 /** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
 const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
-
-type View = { data: AdminStats | null; fault: ErrorDetail | null }
 
 /**
  * 数据分析（真实统计）。
@@ -52,34 +52,25 @@ type View = { data: AdminStats | null; fault: ErrorDetail | null }
  */
 export function AdminDataAnalysisPage(): ReactElement {
   const [days, setDays] = useState<number>(30)
-  const [view, setView] = useState<View>({ data: null, fault: null })
-  const requestSeq = useRef(0)
 
-  useEffect(() => {
-    const seq = ++requestSeq.current
-    getAdminStats(days).then(
-      (data) => {
-        if (seq !== requestSeq.current) return
-        setView({ data, fault: null })
-      },
-      (cause) => {
-        if (seq !== requestSeq.current) return
-        setView({ data: null, fault: describeError(cause) })
-      },
-    )
-  }, [days])
+  const statsQuery = useQuery({
+    queryKey: queryKeys.admin.stats(days),
+    queryFn: () => getAdminStats(days),
+    // 切窗必须立刻失效：不同窗口是不同的查询键；gcTime 0 让离开的窗口马上被回收。
+    gcTime: 0,
+    staleTime: 0,
+  })
 
-  const stats = view.data
-  const statsLoading = view.data === null && view.fault === null
+  // 第二道守卫：后端回显的窗口天数与选中值不一致时，当作还没读到。
+  const stats = statsQuery.data?.days === days ? statsQuery.data : undefined
+  const statsFault = statsQuery.error ? describeError(statsQuery.error) : null
+  const statsLoading = !stats && !statsFault
 
   /**
-   * 切窗先让旧数据失效，再发新请求：否则请求在途时会出现
-   * 「按钮说 90 天、图里还是 30 天」的读数。
+   * 切窗就是切换查询键：旧窗口的数据立即不可见，页面显示占位。
    */
   const changeDays = (next: number) => {
-    if (next === days) return
-    setView({ data: null, fault: null })
-    setDays(next)
+    if (next !== days) setDays(next)
   }
 
   /**
@@ -166,14 +157,14 @@ export function AdminDataAnalysisPage(): ReactElement {
         ) : null}
       </div>
 
-      {view.fault ? (
+      {statsFault ? (
         <FaultNote
           className="admin-analysis__fault"
           fault={fault({
             severity: "attention",
             kind: "client",
-            title: view.fault.text,
-            code: view.fault.code,
+            title: statsFault.text,
+            code: statsFault.code,
           })}
         />
       ) : null}

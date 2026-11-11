@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactElement } from "react"
+import { useMemo, useState, type FormEvent, type ReactElement } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
@@ -15,10 +16,11 @@ import {
   listAdminNews,
   type AdminNews,
   type BatchResult,
-  type Page,
+  type NewsQuery,
 } from "@/lib/adminApi"
 import { newsStatusView, NEWS_STATUS_OPTIONS } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
@@ -26,9 +28,7 @@ const SUMMARY_LIMIT = 40
 
 /** 已应用的筛选条件。 */
 type Query = { title: string; status: string; startDate: string; endDate: string }
-type Params = { current: number; pageSize: number; title?: string; status?: number; startDate?: string; endDate?: string }
-/** 加载 / 错误 / 数据三态的全部来源；不在各事件里散着维护布尔量。 */
-type View = { data: Page<AdminNews> | null; fault: ErrorDetail | null; loading: boolean }
+type Params = NewsQuery
 
 /** 摘要截 40 字，超出补「…」；空值走表格统一的「—」占位。 */
 function truncateSummary(value?: string): string {
@@ -69,10 +69,6 @@ export function AdminNewsPage(): ReactElement {
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
-  // 递增序号挡住过期响应：并发 / StrictMode 双挂载下只有最后一次请求能写 view。
-  const requestSeq = useRef(0)
-
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminNews | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -80,73 +76,46 @@ export function AdminNewsPage(): ReactElement {
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
 
-  /** 纯取数：不碰 state，只返回当前序号，供续体判断是否仍是最后一次请求。 */
-  const fetchNews = useCallback((params: Params): { seq: number; result: Promise<Page<AdminNews>> } => {
-    const seq = ++requestSeq.current
-    return { seq, result: listAdminNews(params) }
-  }, [])
+  const queryClient = useQueryClient()
 
-  // 首次挂载加载一次：初始 view 已是 loading=true，effect 里只发请求、不写 state。
-  // setState 全在 Promise 续体（异步回调）里，符合 react-hooks/set-state-in-effect。
-  useEffect(() => {
-    const { seq, result } = fetchNews({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }, [fetchNews])
+  /** 已应用的筛选 + 分页：同时是查询键和请求体。 */
+  const { current, pageSize } = page
+  const params = useMemo<Params>(
+    () => ({
+      current,
+      pageSize,
+      ...(query.title ? { title: query.title } : {}),
+      ...(query.status ? { status: Number(query.status) } : {}),
+      ...(query.startDate ? { startDate: query.startDate } : {}),
+      ...(query.endDate ? { endDate: query.endDate } : {}),
+    }),
+    [current, pageSize, query],
+  )
 
-  function toParams(nextPage = page, nextQuery = query): Params {
-    return {
-      current: nextPage.current,
-      pageSize: nextPage.pageSize,
-      ...(nextQuery.title ? { title: nextQuery.title } : {}),
-      ...(nextQuery.status ? { status: Number(nextQuery.status) } : {}),
-      ...(nextQuery.startDate ? { startDate: nextQuery.startDate } : {}),
-      ...(nextQuery.endDate ? { endDate: nextQuery.endDate } : {}),
-    }
-  }
+  const listQuery = useQuery({
+    queryKey: queryKeys.admin.news(params),
+    queryFn: () => listAdminNews(params),
+  })
+  const listFault = listQuery.error ? describeError(listQuery.error) : null
 
-  /** 事件驱动的取数入口：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(nextPage = page, nextQuery = query) {
-    setActionError(null) // 任何一次重新取数都清掉上一次删除失败的页内读数
-    setView({ data: null, fault: null, loading: true })
-    const { seq, result } = fetchNews(toParams(nextPage, nextQuery))
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }
+  /** 写操作成功后失效资讯域与统计域（待审核数在仪表盘上）。 */
+  const refreshNews = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.newsAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+    ])
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
-    const nextQuery: Query = {
+    setActionError(null)
+    setQuery({
       title: titleDraft.trim(),
       status: statusDraft,
       startDate: startDraft,
       endDate: endDraft,
-    }
-    const nextPage = { ...page, current: 1 }
-    setQuery(nextQuery)
-    setPage(nextPage)
+    })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onReset() {
@@ -154,23 +123,21 @@ export function AdminNewsPage(): ReactElement {
     setStatusDraft("")
     setStartDraft("")
     setEndDraft("")
-    const nextQuery: Query = { title: "", status: "", startDate: "", endDate: "" }
-    const nextPage = { ...page, current: 1 }
-    setQuery(nextQuery)
-    setPage(nextPage)
+    setActionError(null)
+    setQuery({ title: "", status: "", startDate: "", endDate: "" })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
-    const nextPage =
+    setActionError(null)
+    setPage(
       next.pageSize !== page.pageSize
         ? { current: 1, pageSize: next.pageSize }
-        : { current: next.current, pageSize: next.pageSize }
-    setPage(nextPage)
+        : { current: next.current, pageSize: next.pageSize },
+    )
     setSelectedIds([])
-    startLoad(nextPage)
   }
 
   function openDelete(row: AdminNews) {
@@ -194,7 +161,7 @@ export function AdminNewsPage(): ReactElement {
       await deleteNews(id) // 雪花 id 全程保持 string，绝不转成数字
       setDeleteTarget(null)
       setSelectedIds((prev) => prev.filter((item) => item !== id))
-      startLoad() // 成功后刷新当前页（含 loading 态归位）
+      await refreshNews()
     } catch (cause) {
       const detail = describeError(cause)
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
@@ -223,7 +190,7 @@ export function AdminNewsPage(): ReactElement {
           : `${label}：成功 ${succeeded} 篇。`,
       )
       if (failed === 0) setSelectedIds([])
-      startLoad()
+      await refreshNews()
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -272,9 +239,9 @@ export function AdminNewsPage(): ReactElement {
     },
   ]
 
-  // 三态同源：loading / error / 数据都从 view 读；加载与出错时 rows 都是 undefined。
-  const rows = view.data?.records
-  const total = view.data?.total ?? 0
+  // 三态同源：loading / error / 数据都从同一个查询读；加载与出错时 rows 都是 undefined。
+  const rows = listQuery.data?.records
+  const total = listQuery.data?.total ?? 0
 
   return (
     <div className="admin-news">
@@ -395,8 +362,8 @@ export function AdminNewsPage(): ReactElement {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id ?? ""}
-          loading={view.loading}
-          error={view.fault?.text ?? null}
+          loading={listQuery.isPending}
+          error={listFault?.text ?? null}
           emptyText="暂无资讯"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}

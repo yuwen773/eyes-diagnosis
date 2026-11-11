@@ -1,12 +1,11 @@
 import {
-  useCallback,
-  useEffect,
-  useRef,
+  useMemo,
   useState,
   type FormEvent,
   type ReactElement,
   type ReactNode,
 } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
@@ -26,7 +25,6 @@ import {
   type AdminDiagnosis,
   type BatchResult,
   type DiagnosisQuery,
-  type Page,
 } from "@/lib/adminApi"
 import {
   reviewView,
@@ -36,7 +34,8 @@ import {
   humanReviewStatusLabel,
   type DiagnosisReviewFilter,
 } from "@/lib/adminDomain"
-import { describeError, type ErrorDetail, type DiagnosisResult } from "@/lib/api"
+import { describeError, type ErrorDetail } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import {
   severityLabel,
   formatTimestamp,
@@ -64,8 +63,6 @@ type Query = {
   endDate: string
 }
 type Params = DiagnosisQuery
-/** 加载 / 错误 / 数据三态的全部来源；不在各事件里散着维护布尔量。 */
-type View = { data: Page<AdminDiagnosis> | null; fault: ErrorDetail | null; loading: boolean }
 
 /**
  * 置信度 → 百分比读数（一位小数）——实现在 adminDomain 的纯函数层，
@@ -131,9 +128,6 @@ export function AdminDiagnosisPage(): ReactElement {
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
-  const requestSeq = useRef(0)
-
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminDiagnosis | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -142,10 +136,6 @@ export function AdminDiagnosisPage(): ReactElement {
   const [batchBusy, setBatchBusy] = useState(false)
 
   const [detailTarget, setDetailTarget] = useState<AdminDiagnosis | null>(null)
-  const [detail, setDetail] = useState<DiagnosisResult | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [detailFault, setDetailFault] = useState<ErrorDetail | null>(null)
-  const detailSeq = useRef(0)
 
   const [reviewOpen, setReviewOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -155,62 +145,46 @@ export function AdminDiagnosisPage(): ReactElement {
   const [humanRecommendations, setHumanRecommendations] = useState("")
   const [humanReviewNote, setHumanReviewNote] = useState("")
 
-  /** 纯取数：不碰 state，只返回当前序号，供续体判断是否仍是最后一次请求。 */
-  const fetchDiagnoses = useCallback(
-    (params: Params): { seq: number; result: Promise<Page<AdminDiagnosis>> } => {
-      const seq = ++requestSeq.current
-      return { seq, result: listDiagnoses(params) }
-    },
-    [],
+  const queryClient = useQueryClient()
+
+  /** 已应用的筛选 + 分页：同时是查询键和请求体，二者不可能不同步。 */
+  const { current, pageSize } = page
+  const params = useMemo<Params>(
+    () => ({
+      current,
+      pageSize,
+      ...(query.result ? { result: query.result } : {}),
+      ...diagnosisFilterParams(query.review),
+      ...(query.startDate ? { startDate: query.startDate } : {}),
+      ...(query.endDate ? { endDate: query.endDate } : {}),
+    }),
+    [current, pageSize, query],
   )
 
-  // 首次挂载加载一次：初始 view 已是 loading=true，effect 里只发请求、不写 state。
-  // setState 全在 Promise 续体（异步回调）里，符合 react-hooks/set-state-in-effect。
-  useEffect(() => {
-    const { seq, result } = fetchDiagnoses({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }, [fetchDiagnoses])
+  const listQuery = useQuery({
+    queryKey: queryKeys.admin.diagnosis(params),
+    queryFn: () => listDiagnoses(params),
+  })
+  const listFault = listQuery.error ? describeError(listQuery.error) : null
 
-  function toParams(nextPage = page, nextQuery = query): Params {
-    return {
-      current: nextPage.current,
-      pageSize: nextPage.pageSize,
-      ...(nextQuery.result ? { result: nextQuery.result } : {}),
-      ...diagnosisFilterParams(nextQuery.review),
-      ...(nextQuery.startDate ? { startDate: nextQuery.startDate } : {}),
-      ...(nextQuery.endDate ? { endDate: nextQuery.endDate } : {}),
-    }
-  }
+  const detailQuery = useQuery({
+    queryKey: queryKeys.admin.diagnosisDetail(detailTarget?.id ?? ""),
+    queryFn: () => getDiagnosis(detailTarget!.id),
+    enabled: detailTarget !== null,
+  })
+  const detail = detailTarget ? detailQuery.data : undefined
+  const detailLoading = detailTarget !== null && detailQuery.isPending
+  const detailFault = detailQuery.error ? describeError(detailQuery.error) : null
 
-  /** 事件驱动的取数入口：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(nextPage = page, nextQuery = query) {
-    setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
-    setView({ data: null, fault: null, loading: true })
-    const { seq, result } = fetchDiagnoses(toParams(nextPage, nextQuery))
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }
+  /**
+   * 写操作成功后失效诊断域与统计域：列表、详情、仪表盘统计都会自己重取，
+   * 不需要手工再发一次列表请求。
+   */
+  const refreshDiagnosis = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.diagnosisAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+    ])
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
@@ -220,11 +194,10 @@ export function AdminDiagnosisPage(): ReactElement {
       startDate: startDraft,
       endDate: endDraft,
     }
-    const nextPage = { ...page, current: 1 }
+    setActionError(null)
     setQuery(nextQuery)
-    setPage(nextPage)
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onReset() {
@@ -232,59 +205,35 @@ export function AdminDiagnosisPage(): ReactElement {
     setReviewDraft("")
     setStartDraft("")
     setEndDraft("")
-    const nextQuery: Query = { result: "", review: "", startDate: "", endDate: "" }
-    const nextPage = { ...page, current: 1 }
-    setQuery(nextQuery)
-    setPage(nextPage)
+    setActionError(null)
+    setQuery({ result: "", review: "", startDate: "", endDate: "" })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
-    const nextPage =
+    setActionError(null)
+    setPage(
       next.pageSize !== page.pageSize
         ? { current: 1, pageSize: next.pageSize }
-        : { current: next.current, pageSize: next.pageSize }
-    setPage(nextPage)
+        : { current: next.current, pageSize: next.pageSize },
+    )
     setSelectedIds([])
-    startLoad(nextPage)
   }
 
   /* ── 详情 Drawer ──────────────────────────────────────────── */
 
   function openDetail(row: AdminDiagnosis) {
-    const seq = ++detailSeq.current
     setActionError(null)
     setDetailTarget(row)
-    setDetail(null)
-    setDetailFault(null)
-    setDetailLoading(true)
     setReviewOpen(false)
     setReviewError(null)
-    getDiagnosis(row.id).then(
-      (data) => {
-        if (seq === detailSeq.current) {
-          setDetail(data)
-          setDetailLoading(false)
-        }
-      },
-      (cause) => {
-        if (seq === detailSeq.current) {
-          setDetailFault(describeError(cause))
-          setDetailLoading(false)
-        }
-      },
-    )
   }
 
-  /** 收起 Drawer 并作废仍在飞行的详情请求（快速开关时不让旧响应写回来）。 */
+  /** 收起 Drawer：详情的加载态由查询键管理，关掉即不再展示。 */
   function clearDetail() {
-    ++detailSeq.current
     setDetailTarget(null)
-    setDetail(null)
-    setDetailFault(null)
-    setDetailLoading(false)
   }
 
   function closeDetail() {
@@ -428,7 +377,7 @@ export function AdminDiagnosisPage(): ReactElement {
       setReviewOpen(false)
       setReviewError(null)
       setActionNote("已提交人工复核")
-      startLoad()
+      await refreshDiagnosis()
     } catch (cause) {
       // 失败：保持弹层不丢已填内容，按 describeError → fault → FaultNote 语法页内提示。
       setReviewError(describeError(cause))
@@ -458,7 +407,7 @@ export function AdminDiagnosisPage(): ReactElement {
       await deleteDiagnosis(target.id) // 雪花 id 全程保持 string，绝不转成数字
       setDeleteTarget(null)
       setSelectedIds((prev) => prev.filter((id) => id !== target.id))
-      startLoad() // 成功后刷新当前页（含 loading 态归位）
+      await refreshDiagnosis()
     } catch (cause) {
       const detail = describeError(cause)
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
@@ -484,7 +433,7 @@ export function AdminDiagnosisPage(): ReactElement {
           : `批量删除：成功 ${succeeded} 条。`,
       )
       if (failed === 0) setSelectedIds([])
-      startLoad()
+      await refreshDiagnosis()
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -592,9 +541,9 @@ export function AdminDiagnosisPage(): ReactElement {
     },
   ]
 
-  // 三态同源：loading / error / 数据都从 view 读；加载与出错时 rows 都是 undefined。
-  const rows = view.data?.records
-  const total = view.data?.total ?? 0
+  // 三态同源：loading / error / 数据都从同一个查询读；加载与出错时 rows 都是 undefined。
+  const rows = listQuery.data?.records
+  const total = listQuery.data?.total ?? 0
   const reviewResultEmpty = humanResult.trim().length === 0
 
   return (
@@ -693,8 +642,8 @@ export function AdminDiagnosisPage(): ReactElement {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          loading={view.loading}
-          error={view.fault?.text ?? null}
+          loading={listQuery.isPending}
+          error={listFault?.text ?? null}
           emptyText="暂无判读记录"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}

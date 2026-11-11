@@ -1,14 +1,11 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   describeError,
   getMyDiagnosis,
   listMyDiagnoses,
   requestReexamine,
-  type DiagnosisManage,
-  type ErrorDetail,
-  type RecordPage,
-  type DiagnosisResult,
 } from "@/lib/api"
 import {
   loadMyStats,
@@ -18,6 +15,7 @@ import {
   summarizeRecords,
   type ScopedStats,
 } from "@/lib/records"
+import { queryKeys } from "@/lib/queryKeys"
 import {
   classCode,
   confidencePercent,
@@ -37,129 +35,82 @@ import { SiteHeader } from "@/components/SiteHeader"
 
 const PAGE_SIZE = 10
 
-type ListState = {
-  key: string
-  data: RecordPage<DiagnosisManage> | null
-  fault: ErrorDetail | null
-}
-
-type DetailState = {
-  id: string
-  result: DiagnosisResult | null
-  fault: ErrorDetail | null
-  /** 复诊申请提交成功后置 true，行内状态翻成「复审中」。 */
-  reexamined: boolean
-  submitting: boolean
-}
-
 export function RecordsPage() {
   const [page, setPage] = useState(1)
-  const [reload, setReload] = useState(0)
   const { push } = useFault()
+  const queryClient = useQueryClient()
 
-  const requestKey = `${page}|${reload}`
-  const [list, setList] = useState<ListState>({ key: "", data: null, fault: null })
+  /**
+   * 列表：筛选 / 翻页就是换查询键，取数由 React Query 接管。
+   * page 1 / pageSize 10 与个人中心同键，两页共享缓存。
+   */
+  const listKey = queryKeys.records.mine({ current: page, pageSize: PAGE_SIZE })
+  const listQuery = useQuery({
+    queryKey: listKey,
+    queryFn: () => listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }),
+  })
 
-  useEffect(() => {
-    let alive = true
-
-    listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }).then(
-      (value) => {
-        if (alive) setList({ key: requestKey, data: value, fault: null })
-      },
-      (cause) => {
-        if (!alive) return
-        setList({ key: requestKey, data: null, fault: describeError(cause) })
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [requestKey, page])
-
-  const loading = list.key !== requestKey
-  const fault = list.key === requestKey ? list.fault : null
-  const data = list.key === requestKey ? list.data : null
+  const data = listQuery.data
   const records = useMemo(() => data?.records ?? [], [data])
-
-  const [scoped, setScoped] = useState<ScopedStats | null>(null)
+  // 首次加载与「失败后重试」都算加载态；重试期间先收起故障面板，回到骨架。
+  const loading = listQuery.isPending || (listQuery.isFetching && data === undefined)
+  // 后台重取失败时保留已有列表，只有拿不到数据才整块出故障面板。
+  const fault =
+    !loading && data === undefined && listQuery.error
+      ? describeError(listQuery.error)
+      : null
 
   // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页。
-  useEffect(() => {
-    if (list.key !== requestKey || !data) return
-    let alive = true
-    void loadMyStats(records, data.total ?? 0).then((value) => {
-      if (alive) setScoped(value)
-    })
-    return () => {
-      alive = false
-    }
-  }, [data, records, list.key, requestKey])
+  const statsQuery = useQuery({
+    queryKey: [...listKey, "stats"] as const,
+    queryFn: () => loadMyStats(records, data?.total ?? 0),
+    enabled: data !== undefined,
+  })
+  const scoped: ScopedStats | null = statsQuery.data ?? null
 
   const stats = scoped?.stats ?? summarizeRecords(records, data?.total ?? 0)
   const labels = statsLabels(scoped?.scope ?? "page")
 
   /** 展开的记录详情。同一时刻只开一条。 */
   const [openId, setOpenId] = useState<string | null>(null)
-  const [detail, setDetail] = useState<DetailState | null>(null)
-  const [detailKey, setDetailKey] = useState(0)
+  /** 本次会话里刚提交过复诊的记录 id：列表重取落地前先把行内状态翻成「复审中」。 */
+  const [reexaminedId, setReexaminedId] = useState<string | null>(null)
+  const [submittingId, setSubmittingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!openId) return
-    let alive = true
-
-    getMyDiagnosis(openId).then(
-      (value) => {
-        if (alive) setDetail((prev) => (prev?.id === openId ? { ...prev, result: value } : prev))
-      },
-      (cause) => {
-        if (!alive) return
-        setDetail((prev) =>
-          prev?.id === openId ? { ...prev, fault: describeError(cause) } : prev,
-        )
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [openId, detailKey])
+  const detailQuery = useQuery({
+    queryKey: ["records", "detail", openId] as const,
+    queryFn: () => getMyDiagnosis(openId as string),
+    enabled: openId !== null,
+  })
+  const detailLoading =
+    openId !== null &&
+    (detailQuery.isPending || (detailQuery.isFetching && detailQuery.data === undefined))
+  // 同理：后台重取失败时保留已读出的记录纸。
+  const detailFault =
+    !detailLoading && detailQuery.data === undefined && detailQuery.error
+      ? describeError(detailQuery.error)
+      : null
 
   async function submitReexamine(id: string) {
-    setDetail((prev) => (prev?.id === id ? { ...prev, submitting: true } : prev))
+    setSubmittingId(id)
     try {
       await requestReexamine(id)
-      setDetail((prev) =>
-        prev?.id === id ? { ...prev, reexamined: true, submitting: false } : prev,
-      )
-      // 行内状态也要跟着翻：本地翻转，不再发一次列表请求。
-      setList((prev) => {
-        if (!prev.data) return prev
-        return {
-          ...prev,
-          data: {
-            ...prev.data,
-            records: prev.data.records?.map((item) =>
-              item.id === id ? { ...item, reexamineStatus: 2 } : item,
-            ),
-          },
-        }
-      })
+      setReexaminedId(id)
+      // 行内状态跟着翻：列表重取后 reexamineStatus 变 2，无需手工改缓存。
+      void queryClient.invalidateQueries({ queryKey: listKey, exact: true })
     } catch (cause) {
-      setDetail((prev) => (prev?.id === id ? { ...prev, submitting: false } : prev))
       push(faultFromError(cause, { intent: "generic", action: { label: "重试", run: () => void submitReexamine(id) } }))
+    } finally {
+      setSubmittingId(null)
     }
   }
 
   function closeDetail() {
     setOpenId(null)
-    setDetail(null)
   }
 
   function openDetail(id: string) {
     setOpenId(id)
-    setDetail({ id, result: null, fault: null, reexamined: false, submitting: false })
   }
 
   function toggle(id: string) {
@@ -167,20 +118,13 @@ export function RecordsPage() {
     else openDetail(id)
   }
 
-  function retryDetail() {
-    setDetail((prev) => (prev ? { ...prev, result: null, fault: null } : prev))
-    setDetailKey((value) => value + 1)
-  }
-
   function retry() {
     closeDetail()
-    setScoped(null)
-    setReload((value) => value + 1)
+    void listQuery.refetch()
   }
 
   function goPage(next: number) {
     closeDetail()
-    setScoped(null)
     setPage(next)
   }
 
@@ -331,64 +275,62 @@ export function RecordsPage() {
 
                   {openId === item.id ? (
                     <div className="records__detail">
-                      {detail?.id === item.id ? (
-                        detail.fault ? (
-                          <FaultPanel
-                            code={detail.fault.code}
-                            title="这条记录没有读出来"
-                            body={detail.fault.text}
-                            endpoint={`GET /diagnosis/get/${item.id}`}
-                            onRetry={retryDetail}
+                      {detailLoading ? (
+                        <div className="records__detail-loading num">读取中…</div>
+                      ) : detailFault ? (
+                        <FaultPanel
+                          code={detailFault.code}
+                          title="这条记录没有读出来"
+                          body={detailFault.text}
+                          endpoint={`GET /diagnosis/get/${item.id}`}
+                          onRetry={() => void detailQuery.refetch()}
+                        />
+                      ) : detailQuery.data ? (
+                        <>
+                          <RecordSheet
+                            result={detailQuery.data}
+                            recordId={`IRIS-${item.id}`}
+                            imageSrc={item.url ?? detailQuery.data.url}
+                            tone="paper"
                           />
-                        ) : detail.result ? (
-                          <>
-                            <RecordSheet
-                              result={detail.result}
-                              recordId={`IRIS-${item.id}`}
-                              imageSrc={item.url ?? detail.result.url}
-                              tone="paper"
-                            />
-                            {(() => {
-                              const view = reexamineView(item, detail.reexamined)
-                              if (!view) return null
-                              if (view === "receipt") {
-                                return (
-                                  <div className="records__actions">
-                                    <span className="records__actions-done">
-                                      <RiskTag risk="attention">复审中</RiskTag>
-                                      申请已提交，等待医生安排复诊。
-                                    </span>
-                                  </div>
-                                )
-                              }
+                          {(() => {
+                            const view = reexamineView(item, reexaminedId === item.id)
+                            if (!view) return null
+                            if (view === "receipt") {
                               return (
                                 <div className="records__actions">
-                                  {view === "reviewed" ? (
-                                    <RiskTag risk="normal">已复审</RiskTag>
-                                  ) : null}
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    disabled={detail.submitting}
-                                    onClick={() => void submitReexamine(item.id)}
-                                  >
-                                    {detail.submitting
-                                      ? "提交中…"
-                                      : view === "reviewed"
-                                        ? "再次申请复诊"
-                                        : "申请复诊"}
-                                    <span className="btn__key">↻</span>
-                                  </button>
-                                  <span className="records__actions-note">
-                                    提交后这条记录进入复诊队列，状态变为「复审中」。
+                                  <span className="records__actions-done">
+                                    <RiskTag risk="attention">复审中</RiskTag>
+                                    申请已提交，等待医生安排复诊。
                                   </span>
                                 </div>
                               )
-                            })()}
-                          </>
-                        ) : (
-                          <div className="records__detail-loading num">读取中…</div>
-                        )
+                            }
+                            return (
+                              <div className="records__actions">
+                                {view === "reviewed" ? (
+                                  <RiskTag risk="normal">已复审</RiskTag>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  disabled={submittingId === item.id}
+                                  onClick={() => void submitReexamine(item.id)}
+                                >
+                                  {submittingId === item.id
+                                    ? "提交中…"
+                                    : view === "reviewed"
+                                      ? "再次申请复诊"
+                                      : "申请复诊"}
+                                  <span className="btn__key">↻</span>
+                                </button>
+                                <span className="records__actions-note">
+                                  提交后这条记录进入复诊队列，状态变为「复审中」。
+                                </span>
+                              </div>
+                            )
+                          })()}
+                        </>
                       ) : null}
                     </div>
                   ) : null}

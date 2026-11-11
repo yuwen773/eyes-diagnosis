@@ -1,11 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactElement,
-} from "react"
+import { useMemo, useState, type FormEvent, type ReactElement } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { SectionHead } from "@/components/SectionHead"
 import { DataTable, type Column } from "@/components/admin/DataTable"
@@ -22,7 +16,6 @@ import {
   updateUserRole,
   type AdminUser,
   type BatchResult,
-  type Page,
   type UserQuery,
 } from "@/lib/adminApi"
 import {
@@ -32,6 +25,7 @@ import {
   USER_ROLE_FILTER_OPTIONS,
 } from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
@@ -45,8 +39,6 @@ type Query = {
   endDate: string
 }
 type Params = UserQuery
-/** 加载 / 错误 / 数据三态的全部来源；不在各事件里散着维护布尔量。 */
-type View = { data: Page<AdminUser> | null; fault: ErrorDetail | null; loading: boolean }
 
 /** 新建 / 编辑表单的字段（角色是下拉，不给自由输入）。 */
 type UserForm = {
@@ -91,10 +83,6 @@ export function AdminUsersPage(): ReactElement {
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
-  // 递增序号挡住过期响应：并发 / StrictMode 双挂载下只有最后一次请求能写 view。
-  const requestSeq = useRef(0)
-
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -107,75 +95,48 @@ export function AdminUsersPage(): ReactElement {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<ErrorDetail | null>(null)
 
-  /** 纯取数：不碰 state，只返回当前序号，供续体判断是否仍是最后一次请求。 */
-  const fetchUsers = useCallback((params: Params): { seq: number; result: Promise<Page<AdminUser>> } => {
-    const seq = ++requestSeq.current
-    return { seq, result: listUsers(params) }
-  }, [])
+  const queryClient = useQueryClient()
 
-  // 首次挂载加载一次：初始 view 已是 loading=true，effect 里只发请求、不写 state。
-  // setState 全在 Promise 续体（异步回调）里，符合 react-hooks/set-state-in-effect。
-  useEffect(() => {
-    const { seq, result } = fetchUsers({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }, [fetchUsers])
+  /** 已应用的筛选 + 分页：同时是查询键和请求体。 */
+  const { current, pageSize } = page
+  const params = useMemo<Params>(
+    () => ({
+      current,
+      pageSize,
+      ...(query.userAccount ? { userAccount: query.userAccount } : {}),
+      ...(query.userName ? { userName: query.userName } : {}),
+      ...(query.userRole ? { userRole: query.userRole } : {}),
+      ...(query.startDate ? { startDate: query.startDate } : {}),
+      ...(query.endDate ? { endDate: query.endDate } : {}),
+    }),
+    [current, pageSize, query],
+  )
 
-  function toParams(nextPage = page, nextQuery = query): Params {
-    return {
-      current: nextPage.current,
-      pageSize: nextPage.pageSize,
-      ...(nextQuery.userAccount ? { userAccount: nextQuery.userAccount } : {}),
-      ...(nextQuery.userName ? { userName: nextQuery.userName } : {}),
-      ...(nextQuery.userRole ? { userRole: nextQuery.userRole } : {}),
-      ...(nextQuery.startDate ? { startDate: nextQuery.startDate } : {}),
-      ...(nextQuery.endDate ? { endDate: nextQuery.endDate } : {}),
-    }
-  }
+  const listQuery = useQuery({
+    queryKey: queryKeys.admin.users(params),
+    queryFn: () => listUsers(params),
+  })
+  const listFault = listQuery.error ? describeError(listQuery.error) : null
 
-  /** 事件驱动的取数入口：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(nextPage = page, nextQuery = query) {
-    setActionError(null) // 任何一次重新取数都清掉上一次删除失败的页内读数
-    setView({ data: null, fault: null, loading: true })
-    const { seq, result } = fetchUsers(toParams(nextPage, nextQuery))
-    result.then(
-      (data) => {
-        if (seq === requestSeq.current) {
-          setView({ data: { ...data, records: data.records ?? [] }, fault: null, loading: false })
-        }
-      },
-      (cause) => {
-        if (seq === requestSeq.current) {
-          setView({ data: null, fault: describeError(cause), loading: false })
-        }
-      },
-    )
-  }
+  /** 写操作成功后失效用户域与统计域（新增用户会改统计读数）。 */
+  const refreshUsers = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.usersAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+    ])
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
-    const nextQuery: Query = {
+    setActionError(null)
+    setQuery({
       userAccount: accountDraft.trim(),
       userName: nameDraft.trim(),
       userRole: roleDraft,
       startDate: startDraft,
       endDate: endDraft,
-    }
-    const nextPage = { ...page, current: 1 }
-    setQuery(nextQuery)
-    setPage(nextPage)
+    })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onReset() {
@@ -184,29 +145,21 @@ export function AdminUsersPage(): ReactElement {
     setRoleDraft("")
     setStartDraft("")
     setEndDraft("")
-    const nextQuery: Query = {
-      userAccount: "",
-      userName: "",
-      userRole: "",
-      startDate: "",
-      endDate: "",
-    }
-    const nextPage = { ...page, current: 1 }
-    setQuery(nextQuery)
-    setPage(nextPage)
+    setActionError(null)
+    setQuery({ userAccount: "", userName: "", userRole: "", startDate: "", endDate: "" })
+    setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
-    startLoad(nextPage, nextQuery)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
-    const nextPage =
+    setActionError(null)
+    setPage(
       next.pageSize !== page.pageSize
         ? { current: 1, pageSize: next.pageSize }
-        : { current: next.current, pageSize: next.pageSize }
-    setPage(nextPage)
+        : { current: next.current, pageSize: next.pageSize },
+    )
     setSelectedIds([])
-    startLoad(nextPage)
   }
 
   /* ── 单条：新建 / 编辑 / 删除 ─────────────────────────── */
@@ -264,7 +217,7 @@ export function AdminUsersPage(): ReactElement {
       })
       setCreateOpen(false)
       setActionNote("已新建用户")
-      startLoad()
+      await refreshUsers()
     } catch (cause) {
       setFormError(describeError(cause))
     } finally {
@@ -286,7 +239,7 @@ export function AdminUsersPage(): ReactElement {
       })
       setEditTarget(null)
       setActionNote("已保存修改")
-      startLoad()
+      await refreshUsers()
     } catch (cause) {
       setFormError(describeError(cause))
     } finally {
@@ -315,7 +268,7 @@ export function AdminUsersPage(): ReactElement {
       await deleteUser(target.id) // 雪花 id 全程保持 string，绝不转成数字
       setDeleteTarget(null)
       setSelectedIds((prev) => prev.filter((id) => id !== target.id))
-      startLoad() // 成功后刷新当前页（含 loading 态归位）
+      await refreshUsers()
     } catch (cause) {
       const detail = describeError(cause)
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
@@ -348,7 +301,7 @@ export function AdminUsersPage(): ReactElement {
           : `${label}：成功 ${succeeded} 条。`,
       )
       if (clearOnSuccess && failed === 0) setSelectedIds([])
-      startLoad()
+      await refreshUsers()
     } catch (cause) {
       setActionError(describeError(cause))
     } finally {
@@ -423,9 +376,9 @@ export function AdminUsersPage(): ReactElement {
     },
   ]
 
-  // 三态同源：loading / error / 数据都从 view 读；加载与出错时 rows 都是 undefined。
-  const rows = view.data?.records
-  const total = view.data?.total ?? 0
+  // 三态同源：loading / error / 数据都从同一个查询读；加载与出错时 rows 都是 undefined。
+  const rows = listQuery.data?.records
+  const total = listQuery.data?.total ?? 0
 
   return (
     <div className="admin-users">
@@ -556,8 +509,8 @@ export function AdminUsersPage(): ReactElement {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          loading={view.loading}
-          error={view.fault?.text ?? null}
+          loading={listQuery.isPending}
+          error={listFault?.text ?? null}
           emptyText="暂无用户"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}

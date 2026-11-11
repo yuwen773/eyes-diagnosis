@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { describeError, listNews, type ErrorDetail, type NewsItem, type NewsPage } from "@/lib/api"
+import { useMemo, useState, type FormEvent } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { describeError, listNews, type NewsItem } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { newsDate, newsExcerpt, newsOpening } from "@/lib/news"
 import { ChromaGrid, type ChromaItem } from "@/components/ChromaGrid"
 import { EmptyFrame } from "@/components/EmptyFrame"
@@ -37,41 +39,26 @@ export function NewsPage() {
   const [page, setPage] = useState(1)
   const [keyword, setKeyword] = useState("")
   const [query, setQuery] = useState("")
-  const [reload, setReload] = useState(0)
 
-  // 请求键变了就是在等新的一页。加载态从键推出来，不必在 effect 里同步改状态。
-  const requestKey = `${page}|${query}|${reload}`
-  const [result, setResult] = useState<{
-    key: string
-    data: NewsPage | null
-    fault: ErrorDetail | null
-  }>({ key: "", data: null, fault: null })
-
-  useEffect(() => {
-    let alive = true
-
-    listNews({
+  // 已应用的筛选 + 分页：同时是查询键和请求体。键一变就是另一页数据，
+  // 加载态由查询自己给出，不再需要 effect 里同步改状态。
+  const params = useMemo(
+    () => ({
       current: page,
       pageSize: PAGE_SIZE,
       ...(query ? { title: query } : {}),
-    }).then(
-      (value) => {
-        if (alive) setResult({ key: requestKey, data: value, fault: null })
-      },
-      (cause) => {
-        if (!alive) return
-        setResult({ key: requestKey, data: null, fault: describeError(cause) })
-      },
-    )
+    }),
+    [page, query],
+  )
 
-    return () => {
-      alive = false
-    }
-  }, [page, query, reload, requestKey])
+  const listQuery = useQuery({
+    queryKey: [...queryKeys.news.list(), params],
+    queryFn: () => listNews(params),
+  })
 
-  const loading = result.key !== requestKey
-  const fault = result.key === requestKey ? result.fault : null
-  const data = result.key === requestKey ? result.data : null
+  const loading = listQuery.isPending
+  const fault = listQuery.error ? describeError(listQuery.error) : null
+  const data = listQuery.data ?? null
 
   const records = useMemo(() => data?.records ?? [], [data])
   const total = data?.total ?? 0
@@ -184,7 +171,7 @@ export function NewsPage() {
             title="资讯没能读出来"
             body={fault.text}
             endpoint="POST /news/list/page/vo"
-            onRetry={() => setReload((value) => value + 1)}
+            onRetry={() => void listQuery.refetch()}
           />
         ) : records.length === 0 ? (
           <div className="news__empty">

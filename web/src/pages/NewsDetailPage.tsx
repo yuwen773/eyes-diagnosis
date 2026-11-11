@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
-import { describeError, getNews, listNews, type ErrorDetail, type NewsItem } from "@/lib/api"
+import { describeError, getNews, listNews } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { newsDate, newsPlainText, newsSections, newsWithAnchors, newsWordCount } from "@/lib/news"
 import { sanitizeNewsHtml } from "@/lib/sanitize"
 import { EmptyFrame } from "@/components/EmptyFrame"
@@ -12,54 +14,30 @@ import { SiteHeader } from "@/components/SiteHeader"
 export function NewsDetailPage() {
   const { id = "" } = useParams<{ id: string }>()
 
-  const [reload, setReload] = useState(0)
-  const [others, setOthers] = useState<NewsItem[]>([])
-
-  // 同上：加载态由请求键推出来，不在 effect 里同步改状态。
-  const requestKey = `${id}|${reload}`
-  const [result, setResult] = useState<{
-    key: string
-    item: NewsItem | null
-    fault: ErrorDetail | null
-  }>({ key: "", item: null, fault: null })
-
-  useEffect(() => {
-    let alive = true
-
-    getNews(id).then(
-      (value) => {
-        if (alive) setResult({ key: requestKey, item: value ?? null, fault: null })
-      },
-      (cause) => {
-        if (!alive) return
-        setResult({ key: requestKey, item: null, fault: describeError(cause) })
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [id, reload, requestKey])
-
-  const loading = result.key !== requestKey
-  const fault = result.key === requestKey ? result.fault : null
-  const item = result.key === requestKey ? result.item : null
+  // 正文：没有 id 就不发请求，页面直接落到「没有这条资讯」。
+  const detailQuery = useQuery({
+    queryKey: queryKeys.news.detail(id),
+    queryFn: () => getNews(id),
+    enabled: !!id,
+  })
 
   // 页尾的「更多资讯」：取最新几条，把当前这条排除掉。
-  useEffect(() => {
-    let alive = true
-    listNews({ current: 1, pageSize: 6 })
-      .then((value) => {
-        if (!alive) return
-        setOthers((value.records ?? []).filter((row) => String(row.id) !== String(id)).slice(0, 4))
-      })
-      .catch(() => {
-        if (alive) setOthers([])
-      })
-    return () => {
-      alive = false
-    }
-  }, [id])
+  const othersQuery = useQuery({
+    queryKey: [...queryKeys.news.list(), { current: 1, pageSize: 6 }],
+    queryFn: () => listNews({ current: 1, pageSize: 6 }),
+  })
+
+  const loading = detailQuery.isLoading
+  const fault = detailQuery.error ? describeError(detailQuery.error) : null
+  const item = detailQuery.data ?? null
+
+  const others = useMemo(
+    () =>
+      (othersQuery.data?.records ?? [])
+        .filter((row) => String(row.id) !== String(id))
+        .slice(0, 4),
+    [othersQuery.data, id],
+  )
 
   // 正文与导语。
   //
@@ -103,7 +81,7 @@ export function NewsDetailPage() {
             title="这条资讯没能读出来"
             body={fault.text}
             endpoint={`GET /news/get/${id}`}
-            onRetry={() => setReload((value) => value + 1)}
+            onRetry={() => void detailQuery.refetch()}
           />
         ) : !item ? (
           <div className="news__empty">

@@ -1,13 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import {
-  describeError,
-  listMyDiagnoses,
-  updateProfile,
-  uploadAvatar,
-  type ErrorDetail,
-} from "@/lib/api"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
 import { loadMyStats, statsLabels, type ScopedStats } from "@/lib/records"
+import { queryKeys } from "@/lib/queryKeys"
 import { faultFromError, infoFault, validationFault } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { useSession } from "@/lib/session"
@@ -32,34 +28,23 @@ export function ProfilePage() {
   const name = user?.userName || user?.userAccount || "账号"
 
   /* ── 判读统计（服务端全量优先，未上线时取最近一页） ───── */
-  const [statsKey, setStatsKey] = useState(0)
-  const [statsState, setStatsState] = useState<{
-    key: number
-    scoped: ScopedStats | null
-    fault: ErrorDetail | null
-  }>({ key: -1, scoped: null, fault: null })
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    if (!user) return
-    let alive = true
+  // 与判读记录页第 1 页同键：两页共享同一份列表缓存。
+  const sampleKey = queryKeys.records.mine({ current: 1, pageSize: PROFILE_SAMPLE })
+  const sampleQuery = useQuery({
+    queryKey: sampleKey,
+    queryFn: () => listMyDiagnoses({ current: 1, pageSize: PROFILE_SAMPLE }),
+    enabled: !!user,
+  })
+  const sample = sampleQuery.data
 
-    listMyDiagnoses({ current: 1, pageSize: PROFILE_SAMPLE }).then(
-      (value) =>
-        loadMyStats(value.records ?? [], value.total ?? 0).then((scoped) => {
-          if (!alive) return
-          setStatsState({ key: statsKey, scoped, fault: null })
-        }),
-      (cause) => {
-        if (!alive) return
-        // 统计读不出来不拦着资料编辑，页面降级成「—」并给一条浮条。
-        setStatsState((prev) => ({ ...prev, key: statsKey, fault: describeError(cause) }))
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [user, statsKey])
+  // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页样本。
+  const statsQuery = useQuery({
+    queryKey: [...sampleKey, "stats"] as const,
+    queryFn: () => loadMyStats(sample?.records ?? [], sample?.total ?? 0),
+    enabled: !!user && sample !== undefined,
+  })
 
   /* ── 资料编辑 ─────────────────────────────────────────── */
   const [nameDraft, setNameDraft] = useState("")
@@ -93,6 +78,7 @@ export function ProfilePage() {
         userProfile: profileDraft.trim() || undefined,
       })
       await refresh()
+      void queryClient.invalidateQueries({ queryKey: ["records"] })
       push(infoFault("资料已更新"))
     } catch (cause) {
       push(faultFromError(cause, { intent: "generic" }))
@@ -123,6 +109,7 @@ export function ProfilePage() {
     try {
       await uploadAvatar(file)
       await refresh()
+      void queryClient.invalidateQueries({ queryKey: ["records"] })
       push(infoFault("头像已更新"))
     } catch (cause) {
       push(faultFromError(cause, { intent: "upload" }))
@@ -131,9 +118,11 @@ export function ProfilePage() {
     }
   }
 
-  const statsLoading = statsState.key !== statsKey
-  const statsFault = statsState.key === statsKey ? statsState.fault : null
-  const scoped = statsState.key === statsKey ? statsState.scoped : null
+  // 统计读不出来不拦着资料编辑：页面降级成「—」并给一条浮条。
+  const statsFault = sampleQuery.error ? describeError(sampleQuery.error) : null
+  const statsLoading =
+    !statsFault && (sampleQuery.isPending || statsQuery.isPending)
+  const scoped: ScopedStats | null = statsQuery.data ?? null
   const stats = scoped?.stats ?? { total: 0, highRisk: 0 }
   const labels = statsLabels(scoped?.scope ?? "page")
   const highRiskLabel =
@@ -212,7 +201,7 @@ export function ProfilePage() {
         {statsFault ? (
           <div className="records__stats-note">
             判读统计这会儿没读出来（{statsFault.text}），
-            <button type="button" className="link" onClick={() => setStatsKey((v) => v + 1)}>
+            <button type="button" className="link" onClick={() => void sampleQuery.refetch()}>
               重试<span className="link__mark">↻</span>
             </button>
           </div>

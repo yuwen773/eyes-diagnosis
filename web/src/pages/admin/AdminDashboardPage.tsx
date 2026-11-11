@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ReactElement } from "react"
+import { useMemo, useState, type ReactElement } from "react"
 import { Link } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 
 import { SectionHead } from "@/components/SectionHead"
 import { StatTile } from "@/components/admin/StatTile"
@@ -8,13 +9,7 @@ import { ShareBar } from "@/components/admin/charts/ShareBar"
 import { RankedBars } from "@/components/admin/charts/RankedBars"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { FaultNote } from "@/components/fault"
-import {
-  getAdminStats,
-  listDiagnoses,
-  type AdminDiagnosis,
-  type AdminStats,
-  type Page,
-} from "@/lib/adminApi"
+import { getAdminStats, listDiagnoses, type AdminDiagnosis } from "@/lib/adminApi"
 import {
   confidencePercent,
   formatStatNumber,
@@ -23,7 +18,8 @@ import {
   rankDistribution,
 } from "@/lib/adminDomain"
 import { alignPreviousWindow, changeLabel } from "@/lib/chartData"
-import { describeError, type ErrorDetail } from "@/lib/api"
+import { describeError } from "@/lib/api"
+import { queryKeys } from "@/lib/queryKeys"
 import { formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
@@ -36,13 +32,6 @@ const RANGES = [
 
 /** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
 const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
-
-type View = { data: AdminStats | null; fault: ErrorDetail | null }
-/** 最近记录单独一套三态：统计先回、记录还在飞，不该被说成「暂无记录」。 */
-type RecentView = {
-  data: Page<AdminDiagnosis> | null
-  fault: ErrorDetail | null
-}
 
 /**
  * 仪表盘（真实统计 · 运营工作台）。
@@ -59,52 +48,31 @@ type RecentView = {
  */
 export function AdminDashboardPage(): ReactElement {
   const [days, setDays] = useState(30)
-  const [view, setView] = useState<View>({ data: null, fault: null })
-  const [recent, setRecent] = useState<RecentView>({ data: null, fault: null })
-  const requestSeq = useRef(0)
-  const recentSeq = useRef(0)
 
-  useEffect(() => {
-    const seq = ++requestSeq.current
-    getAdminStats(days).then(
-      (data) => {
-        if (seq !== requestSeq.current) return
-        setView({ data, fault: null })
-      },
-      (cause) => {
-        if (seq !== requestSeq.current) return
-        setView({ data: null, fault: describeError(cause) })
-      },
-    )
-  }, [days])
+  const statsQuery = useQuery({
+    queryKey: queryKeys.admin.stats(days),
+    queryFn: () => getAdminStats(days),
+    // 切窗必须立刻失效：不同窗口是不同的查询键；gcTime 0 让离开的窗口马上被回收。
+    gcTime: 0,
+    staleTime: 0,
+  })
+  const recentQuery = useQuery({
+    queryKey: queryKeys.admin.recentDiagnoses,
+    queryFn: () => listDiagnoses({ current: 1, pageSize: 5 }),
+  })
 
-  useEffect(() => {
-    const seq = ++recentSeq.current
-    listDiagnoses({ current: 1, pageSize: 5 }).then(
-      (data) => {
-        if (seq !== recentSeq.current) return
-        setRecent({ data, fault: null })
-      },
-      (cause) => {
-        if (seq !== recentSeq.current) return
-        setRecent({ data: null, fault: describeError(cause) })
-      },
-    )
-  }, [])
+  // 第二道守卫：后端回显的窗口天数与选中值不一致时，当作还没读到。
+  const stats = statsQuery.data?.days === days ? statsQuery.data : undefined
+  const statsFault = statsQuery.error ? describeError(statsQuery.error) : null
+  const statsLoading = !stats && !statsFault
 
-  const stats = view.data
-  const statsLoading = view.data === null && view.fault === null
-
-  /**
-   * 切窗先让旧数据失效，再发新请求：否则请求在途时会出现
-   * 「按钮说 90 天、图里还是 30 天」的读数。
-   */
   const changeDays = (next: number) => {
-    if (next === days) return
-    setView({ data: null, fault: null })
-    setDays(next)
+    if (next !== days) setDays(next)
   }
-  const recentLoading = recent.data === null && recent.fault === null
+
+  const recent = recentQuery.data
+  const recentFault = recentQuery.error ? describeError(recentQuery.error) : null
+  const recentLoading = recentQuery.isPending
 
   const trendRows = useMemo(
     () =>
@@ -143,7 +111,7 @@ export function AdminDashboardPage(): ReactElement {
   const read = (value: number | undefined): string =>
     stats ? formatStatNumber(value ?? 0) : "—"
 
-  const recentRows = recent.data?.records ?? []
+  const recentRows = recent?.records ?? []
 
   const recentColumns: Column<AdminDiagnosis>[] = [
     { key: "username", title: "用户", width: "140px" },
@@ -192,14 +160,14 @@ export function AdminDashboardPage(): ReactElement {
         ) : null}
       </div>
 
-      {view.fault ? (
+      {statsFault ? (
         <FaultNote
           className="admin-dashboard__fault"
           fault={fault({
             severity: "attention",
             kind: "client",
-            title: view.fault.text,
-            code: view.fault.code,
+            title: statsFault.text,
+            code: statsFault.code,
           })}
         />
       ) : null}
@@ -312,14 +280,14 @@ export function AdminDashboardPage(): ReactElement {
 
       <section className="admin-dashboard__records" aria-label="最近判读记录">
         <h2 className="admin-dashboard__records-title">最近判读记录</h2>
-        {recent.fault ? (
+        {recentFault ? (
           <FaultNote
             className="admin-dashboard__fault"
             fault={fault({
               severity: "attention",
               kind: "client",
-              title: `最近判读记录加载失败：${recent.fault.text}`,
-              code: recent.fault.code,
+              title: `最近判读记录加载失败：${recentFault.text}`,
+              code: recentFault.code,
             })}
           />
         ) : null}
@@ -329,7 +297,7 @@ export function AdminDashboardPage(): ReactElement {
           rowKey={(row) => row.id}
           loading={recentLoading}
           emptyText="暂无判读记录"
-          page={{ current: 1, pageSize: 5, total: recent.data?.total ?? 0 }}
+          page={{ current: 1, pageSize: 5, total: recent?.total ?? 0 }}
           onPageChange={() => {}}
           hidePager
         />

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ApiError } from "@/lib/api"
@@ -49,12 +50,18 @@ function stubMatchMedia() {
 
 function renderPage() {
   stubMatchMedia()
+  // 每个用例独立缓存，禁掉重试让 404 立刻落成降级口径。
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   render(
-    <ThemeProvider>
-      <MemoryRouter>
-        <RecordsPage />
-      </MemoryRouter>
-    </ThemeProvider>,
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <MemoryRouter>
+          <RecordsPage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>,
   )
 }
 
