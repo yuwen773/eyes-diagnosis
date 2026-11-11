@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react"
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react"
 import { Link } from "react-router-dom"
 import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
@@ -35,6 +35,7 @@ const SPECIMEN_RATE: Record<string, string> = {
 
 /** 页脚章节索引。顶栏只放跨产品目的地，页面内的章节从这里进。 */
 const LANDING_SECTIONS = [
+  { href: "#specimen", label: "样本局部" },
   { href: "#how", label: "判读流程" },
   { href: "#record", label: "判读记录" },
   { href: "#agent", label: "诊断 Agent" },
@@ -44,25 +45,21 @@ const LANDING_SECTIONS = [
 
 const STEPS = [
   {
-    code: "01",
     title: "上传",
     body: "照片在浏览器端先校验格式与体积，只接受 JPG 与 PNG，单张不超过 5 MB。",
     readout: "JPG · PNG ≤ 5 MB",
   },
   {
-    code: "02",
     title: "过质量门",
     body: "对比度、清晰度与视野完整性不达标时，系统直接拒识，不给出任何结论。",
     readout: "GATE · 86 / 100",
   },
   {
-    code: "03",
     title: "八类判读",
     body: "模型输出八类眼底改变的概率，判读结果与其余概率一并写入记录，不做取舍。",
     readout: "SOFTMAX · 8 CLS",
   },
   {
-    code: "04",
     title: "进入复核",
     body: "可疑病例进入人工复核队列，签字之后，这条记录才可被引用。",
     readout: "SIGN-OFF · 待签字",
@@ -92,24 +89,52 @@ const BOUNDS = [
   },
 ]
 
+/** 真实眼底样本的局部：把模型真正读到的解剖结构摊开给人看。
+ *  每张图带一枚标注点：悬停浮出读片结论，点击进灯箱看原尺寸。 */
+const SPECIMEN_DETAILS = [
+  {
+    src: "/fundus-detail-vessels.jpg",
+    title: "血管弓",
+    note: "走行与管径",
+    alt: "眼底照片局部：颞侧上血管弓与分支血管",
+    markLabel: "ARCADES",
+    reading: "颞侧上血管弓走行自然，管径均匀，未见白鞘与动静脉交叉压迹。",
+    mark: { x: 48, y: 36 },
+  },
+  {
+    src: "/fundus-detail-macula.jpg",
+    title: "黄斑",
+    note: "中心凹与渗出",
+    alt: "眼底照片局部：黄斑区与点状渗出",
+    markLabel: "MACULA",
+    reading: "中心凹反光可见，黄斑区散在点状渗出，边界尚清。",
+    mark: { x: 41, y: 50 },
+  },
+  {
+    src: "/fundus-detail-disc.jpg",
+    title: "视盘",
+    note: "边界与杯盘比",
+    alt: "眼底照片局部：视盘中央凹与血管出入处",
+    markLabel: "OPTIC DISC",
+    reading: "视盘边界清晰，盘沿完整，杯盘比约 0.3。",
+    mark: { x: 60, y: 62 },
+  },
+]
+
 const AGENT_POINTS = [
   {
-    code: "01",
     title: "多轮问诊",
     body: "症状、病史、影像和检查报告留在同一段上下文里，不必反复描述。",
   },
   {
-    code: "02",
     title: "工具可见",
     body: "影像分析与知识库检索逐条留下回执，答案后面能看见依据。",
   },
   {
-    code: "03",
     title: "会话留存",
     body: "会话与消息写入记录；下次回来，从上次停下的地方接着说。",
   },
   {
-    code: "04",
     title: "可扩展",
     body: "通过 MCP 接入额外的工具服务器，工具清单由后端发现，不在前端硬编码。",
   },
@@ -172,6 +197,39 @@ export function LandingPage() {
   const { resolvedTheme } = useTheme()
   const dark = resolvedTheme === "dark"
 
+  /* ── 样本局部灯箱 ─────────────────────────────────────── */
+  const lightboxRef = useRef<HTMLDialogElement | null>(null)
+  const [specimenOpen, setSpecimenOpen] = useState<number | null>(null)
+
+  const openSpecimen = (index: number) => setSpecimenOpen(index)
+  const closeSpecimen = () => lightboxRef.current?.close()
+  const stepSpecimen = (delta: number) =>
+    setSpecimenOpen((cur) =>
+      cur === null ? cur : (cur + delta + SPECIMEN_DETAILS.length) % SPECIMEN_DETAILS.length,
+    )
+
+  const onLightboxKeyDown = (event: ReactKeyboardEvent<HTMLDialogElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault()
+      stepSpecimen(-1)
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault()
+      stepSpecimen(1)
+    }
+  }
+
+  // 状态与原生 <dialog> 同步：showModal 自带焦点与 Esc；jsdom 里没有该方法时退化为普通 open。
+  useEffect(() => {
+    const dialog = lightboxRef.current
+    if (!dialog) return
+    if (specimenOpen !== null && !dialog.open) {
+      if (typeof dialog.showModal === "function") dialog.showModal()
+      else dialog.setAttribute("open", "")
+    } else if (specimenOpen === null && dialog.open) {
+      dialog.close()
+    }
+  }, [specimenOpen])
+
   return (
     // 整页语境随主题走：暗主题是暗房（顶栏全程反相），浅主题是白色仪器台。
     // 浅主题下页面本身是亮的，顶栏反相只交给 ScrollExpand 的舞台标记——
@@ -221,34 +279,27 @@ export function LandingPage() {
           <div className="hero-stage__scrim" aria-hidden="true" />
 
           <section className="wrap hero">
-            {/* 仪器头版：一行 mono 元信息，发丝线切开 */}
-            <div className="hero__masthead num rise">
-              <span>Iris · 眼底判读</span>
-              <span className="hero__masthead-mid">2026-11-07 · SPECIMEN</span>
-              <span>MODEL · EFFICIENTNET-B4</span>
-            </div>
+            {/* 仪器头版：一行元信息，发丝线切开；与标题同一句话里读完。 */}
+            <p className="hero__masthead rise">
+              <span>Iris 眼底判读 · 示例数据</span>
+              <span className="hero__masthead-mid">2026-11-07</span>
+              <span>模型 EfficientNet-B4</span>
+            </p>
 
             <div className="hero__copy">
-              <div className="hero__eyebrow rise">
-                <span>01 眼底判读</span>
-              </div>
-
               <h1 className="display hero__title">
                 <span className="line">
-                  <Chars text="读片" />
+                  <Chars text="读片是一件" />
                 </span>
                 <span className="line">
-                  <Chars text="是一件可以被" offset={2} />
-                </span>
-                <span className="line">
-                  <Chars text="复核" offset={8} marked />
-                  <Chars text="的事" offset={10} />
+                  <Chars text="可以" offset={5} />
+                  <Chars text="复核" offset={7} marked />
+                  <Chars text="的事" offset={9} />
                 </span>
               </h1>
 
               <p className="lead hero__lead rise" style={{ "--d": "640ms" } as CSSProperties}>
-                上传一张彩色眼底照片，模型给出八类常见眼底改变的判读。质量不足时主动拒识，
-                可疑病例转入人工复核队列——判读之后，还可以和诊断 Agent 接着聊。
+                Iris 是一台眼底影像判读仪器：上传一张彩色眼底照片，模型给出八类常见眼底改变的判读。质量不足时主动拒识，可疑病例转入人工复核队列。
               </p>
 
               <div className="hero__actions rise" style={{ "--d": "760ms" } as CSSProperties}>
@@ -323,8 +374,8 @@ export function LandingPage() {
             startRadius={6}
             endRadius={0}
             mediaZoom={1.04}
-            scrollDistance={0.9}
-            holdDistance={0.22}
+            scrollDistance={0.34}
+            holdDistance={0}
             smoothing={0.12}
             overlayScrim={dark ? 0.5 : 0.85}
             useWindowScroll
@@ -341,23 +392,127 @@ export function LandingPage() {
           </ScrollExpand>
         </section>
 
+        {/* 光幕之后立刻给出真实样本：示意图讲「输入」，这组局部讲模型读什么。 */}
+        <section className="section section--line specimen-details" id="specimen" aria-label="眼底样本局部">
+          <div className="wrap">
+            <div className="reveal">
+              <SectionHead code="02" title="模型读的是这些结构" note="以下为同一张示例眼底照片的局部，非真实患者" />
+            </div>
+            <div className="specimen-grid">
+              {SPECIMEN_DETAILS.map((item, index) => (
+                <figure
+                  className="specimen-grid__item reveal"
+                  key={item.src}
+                  style={{ "--d": `${index * 90}ms` } as CSSProperties}
+                >
+                  <button
+                    type="button"
+                    className="specimen-grid__open"
+                    onClick={() => openSpecimen(index)}
+                    aria-haspopup="dialog"
+                    aria-label={`放大查看${item.title}局部`}
+                  >
+                    <img src={item.src} alt={item.alt} loading="lazy" />
+                    <span
+                      className="specimen-grid__mark"
+                      style={{ "--x": `${item.mark.x}%`, "--y": `${item.mark.y}%` } as CSSProperties}
+                      aria-hidden="true"
+                    >
+                      <i />
+                    </span>
+                    <span className="specimen-grid__reading" aria-hidden="true">
+                      <span className="specimen-grid__reading-code num">{item.markLabel}</span>
+                      <span className="specimen-grid__reading-text">{item.reading}</span>
+                    </span>
+                  </button>
+                  <figcaption>
+                    <span className="specimen-grid__title">{item.title}</span>
+                    <span className="specimen-grid__note">{item.note}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+            <p className="specimen-hint num">悬停显示读片标注 · 点击查看原尺寸</p>
+          </div>
+
+          {/* 灯箱：原生 dialog 管焦点与 Esc，左右方向键换图。 */}
+          <dialog
+            ref={lightboxRef}
+            className="specimen-lightbox"
+            aria-labelledby="specimen-lightbox-title"
+            onClose={() => setSpecimenOpen(null)}
+            onKeyDown={onLightboxKeyDown}
+            onClick={(event) => {
+              if (event.target === lightboxRef.current) closeSpecimen()
+            }}
+          >
+            {specimenOpen !== null ? (
+              <div className="specimen-lightbox__frame">
+                <div className="specimen-lightbox__head">
+                  <span className="specimen-lightbox__index num">
+                    {String(specimenOpen + 1).padStart(2, "0")} / {String(SPECIMEN_DETAILS.length).padStart(2, "0")}
+                  </span>
+                  <h3 id="specimen-lightbox-title" className="specimen-lightbox__title">
+                    {SPECIMEN_DETAILS[specimenOpen].title}
+                  </h3>
+                  <button
+                    type="button"
+                    className="specimen-lightbox__close"
+                    onClick={closeSpecimen}
+                    aria-label="关闭大图"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="specimen-lightbox__stage">
+                  <img
+                    src={SPECIMEN_DETAILS[specimenOpen].src}
+                    alt={SPECIMEN_DETAILS[specimenOpen].alt}
+                  />
+                </div>
+                <div className="specimen-lightbox__foot">
+                  <p className="specimen-lightbox__reading">{SPECIMEN_DETAILS[specimenOpen].reading}</p>
+                  <div className="specimen-lightbox__nav">
+                    <button
+                      type="button"
+                      className="specimen-lightbox__step"
+                      onClick={() => stepSpecimen(-1)}
+                      aria-label="上一张"
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      className="specimen-lightbox__step"
+                      onClick={() => stepSpecimen(1)}
+                      aria-label="下一张"
+                    >
+                      →
+                    </button>
+                  </div>
+                  <span className="specimen-lightbox__note num">示例影像 · 非真实患者</span>
+                </div>
+              </div>
+            ) : null}
+          </dialog>
+        </section>
+
         <section id="how" className="section section--line">
           <div className="wrap">
             <div className="reveal">
-              <SectionHead code="02" kicker="判读流程" en="How a reading is made" />
-              <h2 className="h2">从一张照片，到一条可以复核的记录</h2>
+              <SectionHead code="03" title="判读流程" note="从一张照片，到一条可以复核的记录" />
             </div>
 
             <div className="ledger" style={{ marginTop: 44 }}>
               {STEPS.map((step, index) => (
                 <div
                   className="ledger__row reveal"
-                  key={step.code}
+                  key={step.title}
                   style={{ "--d": `${index * 90}ms` } as CSSProperties}
                   data-cursor
                 >
                   <span className="ledger__index num" aria-hidden="true">
-                    {step.code}
+                    {String(index + 1).padStart(2, "0")}
                   </span>
                   <div className="ledger__main">
                     <h3 className="ledger__title">{step.title}</h3>
@@ -373,8 +528,7 @@ export function LandingPage() {
         <section id="record" className="section section--line">
           <div className="wrap">
             <div className="reveal">
-              <SectionHead code="03" kicker="判读记录" en="Specimen record" />
-              <h2 className="h2">一份记录长这样</h2>
+              <SectionHead code="04" title="判读记录" note="一份记录长这样" />
               <p className="lead" style={{ marginTop: 16, marginBottom: 40 }}>
                 八类概率、质量门、复核状态与权重指纹，全部写在同一张纸上。下方为示例，非真实患者。
               </p>
@@ -394,8 +548,7 @@ export function LandingPage() {
         <section id="agent" className="section section--line agent-section">
           <div className="wrap">
             <div className="reveal">
-              <SectionHead code="04" kicker="诊断 Agent" en="Conversational review" />
-            </div>
+              </div>
 
             <div className="agent-intro">
               <h2 className="h2 reveal">
@@ -432,9 +585,11 @@ export function LandingPage() {
             </div>
 
             <ol className="agent-points reveal">
-              {AGENT_POINTS.map((item) => (
-                <li className="agent-points__item" key={item.code}>
-                  <span className="agent-points__code num">{item.code}</span>
+              {AGENT_POINTS.map((item, index) => (
+                <li className="agent-points__item" key={item.title}>
+                  <span className="agent-points__code num" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
                   <h3 className="agent-points__title">{item.title}</h3>
                   <p className="agent-points__body">{item.body}</p>
                 </li>
@@ -449,11 +604,8 @@ export function LandingPage() {
             <div className="statute__panel">
               <div className="statute__grid">
                 <div className="statute__manifesto reveal">
-                  <p className="overline statute__overline">05 · 责任边界 / RESPONSIBILITY</p>
                   <h2 className="display statute__title">
-                    当 AI 说「不确定」，
-                    <br />
-                    界面必须把这句话说出口
+                    当 AI 说不确定，界面要说出口
                   </h2>
                   <p className="lead statute__lead">
                     辅助判读不是诊断。以下四条写进每一次输出，不接受例外。
@@ -494,7 +646,6 @@ export function LandingPage() {
 
         <section id="start" className="wrap pitch">
           <div className="reveal">
-            <SectionHead code="06" kicker="开始" en="Start" />
             <h2 className="pitch__title">先读一张片子试试</h2>
             <p className="lead" style={{ marginTop: 16 }}>
               不需要说明书——上传、等待、读记录，三步之内就能看见判断依据。

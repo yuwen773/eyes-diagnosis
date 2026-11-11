@@ -172,9 +172,8 @@ export function ProfilePage() {
         <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
 
         <div className="records__intro">
-          <p className="overline">Account · 账号</p>
           <h1 className="display records__title">个人中心</h1>
-          <p className="lead">资料可改，头像可传，判读统计会从你的判读记录里实时汇总。</p>
+          <p className="lead">Account · 账号。资料可改，头像可传，判读统计会从你的判读记录里实时汇总。</p>
         </div>
 
         <div className="strip records__strip">
@@ -229,7 +228,7 @@ export function ProfilePage() {
           {/* ── 头像与账号铭牌 ─────────────────────────── */}
           <section className="profile__card">
             <div className="profile__card-head">
-              <span className="overline">头像 · AVATAR</span>
+              <span className="profile__card-title">头像 · AVATAR</span>
             </div>
 
             <div className="profile__avatar-row">
@@ -268,7 +267,7 @@ export function ProfilePage() {
           {/* ── 资料编辑 ───────────────────────────────── */}
           <section className="profile__card">
             <div className="profile__card-head">
-              <span className="overline">资料 · PROFILE</span>
+              <span className="profile__card-title">资料 · PROFILE</span>
             </div>
 
             <form className="profile__form" onSubmit={(event) => void saveProfile(event)}>

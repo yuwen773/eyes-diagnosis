@@ -37,7 +37,15 @@
   pointer-events: none;
 }
 
+/* 外层只管入场/退场，位移与皮肤都在 .fault-toast__card 上——
+   拖拽要改 transform，不能跟入场动画抢同一个属性。 */
 .fault-toast {
+  position: relative;
+  pointer-events: auto;
+  animation: fault-toast-in 260ms var(--ease);
+}
+
+.fault-toast__card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -47,11 +55,22 @@
   border: 1px solid var(--hr);
   border-left: 2px solid var(--fault-tone);
   box-shadow: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
-  pointer-events: auto;
-  animation: fault-toast-in 260ms var(--ease);
+  will-change: transform;
 }
 
-.fault-toast:hover {
+/* 可划的提示条给个抓手：光标与按压反馈说明它能被拖走。 */
+.fault-toast__card[data-swipeable="true"] {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.fault-toast__card[data-swipeable="true"][data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.fault-toast__card:hover {
   border-color: color-mix(in srgb, var(--fault-tone) 34%, var(--hr));
 }
 
@@ -271,7 +290,7 @@
 
 .fault-panel__tag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2em;
   color: var(--fault-tone);
@@ -363,6 +382,11 @@
   .fault-toast,
   .fault-toast[data-phase="out"] {
     animation: none;
+  }
+
+  /* 拖拽后的回弹与滑出也一并停掉（行内 transition 用 !important 才压得住）。 */
+  .fault-toast__card {
+    transition: none !important;
   }
 }
 

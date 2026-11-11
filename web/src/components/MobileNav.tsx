@@ -88,6 +88,7 @@ export function MobileNav() {
         role="dialog"
         aria-modal="true"
         aria-label="主导航"
+        aria-hidden={!open}
         data-open={open ? "true" : "false"}
         inert={!open}
         onKeyDown={trap}

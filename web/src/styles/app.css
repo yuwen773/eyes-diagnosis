@@ -77,8 +77,8 @@ a {
   margin: 0;
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(40px, 5.6vw, 84px);
-  line-height: 1.12;
+  font-size: clamp(40px, 6.2vw, 88px);
+  line-height: 1.08;
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
@@ -104,26 +104,29 @@ a {
 
 .lead {
   margin: 0;
-  font-size: 15.5px;
-  line-height: 1.78;
-  color: var(--fg-2);
-  max-width: 34em;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink);
+  max-width: 30em;
 }
 
 .small {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.7;
   color: var(--fg-3);
 }
 
 .overline {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  /* 眉线标签不再使用：章节信息并入标题与正文（见 DESIGN.md §12）。
+     保留类名只为兼容旧 markup 的排版尺寸；字号收到正文一档，
+     不再做微型大写 tracking（taste-skill micro-label 门禁）。 */
+  font-family: var(--font-sans);
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--fg-3);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg-2);
 }
 
 .num {
@@ -160,44 +163,37 @@ a {
 }
 
 .sec-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   margin-bottom: 22px;
+}
+
+/* 章节头是一行正文，不是压在标题上的眉线：
+   短码 + 章节名 + 这一节讲什么，都在同一行里读完。 */
+.sec-head__line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg-2);
 }
 
 .sec-head__code {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
+  color: var(--signal-text);
+}
+
+.sec-head__title {
+  font-weight: 500;
   color: var(--fg);
 }
 
-.sec-head__kicker {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  /* 章节名不是装饰，10.5px 下 fg-3 在浅色底上只有 2.9:1，抬到 fg-2。 */
+.sec-head__note {
   color: var(--fg-2);
-  white-space: nowrap;
-}
-
-.sec-head__rule {
-  flex: 1;
-  height: 1px;
-  background: var(--hr);
-}
-
-.sec-head__en {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--fg-3);
-  white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -279,7 +275,7 @@ a:hover .wordmark__iris {
 
 .wordmark__en {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--fg-3);
@@ -317,7 +313,7 @@ a:hover .wordmark__iris {
 
 /* mono 序号：导航也带读数。当前页时序号亮信号橙。 */
 .nav__code {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--fg-3);
   transition: color var(--fast);
@@ -420,7 +416,7 @@ a.acct__trigger--anon:hover {
 }
 
 .acct__caret {
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1;
   color: var(--fg-3);
 }
@@ -659,7 +655,7 @@ a.acct__trigger--anon:hover {
   width: 22px;
   height: 22px;
   border: 1px solid var(--line-strong);
-  font-size: 10px;
+  font-size: 11px;
   transition: border-color var(--fast), color var(--fast);
 }
 
@@ -677,7 +673,7 @@ a.acct__trigger--anon:hover {
   padding-top: 14px;
   border-top: 1px solid var(--line);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--fg-3);
 }
@@ -705,7 +701,7 @@ a.acct__trigger--anon:hover {
 
 .site-foot__nav-label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--fg-3);
@@ -722,7 +718,7 @@ a.acct__trigger--anon:hover {
 }
 
 .site-foot__nav-code {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--fg-3);
   transition: color var(--fast);
@@ -760,7 +756,7 @@ a.acct__trigger--anon:hover {
   display: block;
   margin-bottom: 6px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--fg-2);
@@ -772,7 +768,7 @@ a.acct__trigger--anon:hover {
   padding: 8px 12px;
   border: 1.5px solid var(--signal);
   color: var(--signal-text);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   line-height: 1.65;
   text-align: center;
@@ -841,7 +837,7 @@ a.acct__trigger--anon:hover {
 
 .btn__key {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   opacity: 0.5;
   padding-left: 12px;
@@ -961,7 +957,7 @@ html:not(.dark) .night > .night__grain {
 /* 判读记录仍是纸：暗房桌面上加一道落影，把纸压住（纸面皮肤专用；
    仪器面板皮肤 sheet--night 是暗的，不压影）。 */
 .is-night .sheet.is-sheet {
-  box-shadow: 0 44px 90px -46px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 /* 光幕的画框底从骨白换成纯黑，letterbox 融进暗房。 */
@@ -995,8 +991,7 @@ html:not(.dark) .pitch__glass.auth__glass {
     rgba(255, 255, 255, 0.66)
   );
   box-shadow:
-    0 44px 90px -50px rgba(20, 23, 26, 0.5),
-    0 2px 12px rgba(20, 23, 26, 0.08),
+    0 5px 12px rgba(20, 23, 26, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
@@ -1038,23 +1033,25 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   grid-column: 1 / -1;
   display: flex;
   align-items: baseline;
+  flex-wrap: nowrap;
   gap: 24px;
+  margin: 0;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--line-strong);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  color: var(--fg-2);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  white-space: nowrap;
 }
 
 .hero__masthead span:first-child {
   color: var(--fg);
+  font-weight: 500;
 }
 
 .hero__masthead-mid {
   margin-left: auto;
-  /* fg-3 在 10.5px 下对比度不够，抬一档到 fg-2。 */
-  color: var(--fg-2);
 }
 
 .hero__masthead span:last-child {
@@ -1171,7 +1168,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
    6 字 × 字号 × (1 − 0.03 字距) ≤ 568 → 字号 ≤ 97。
    取 92，留一截余量给不同字库的汉字宽度差。 */
 .hero__title {
-  font-size: clamp(42px, 6.5vw, 92px);
+  font-size: clamp(42px, 6.5vw, 88px);
   letter-spacing: -0.03em;
 }
 
@@ -1235,7 +1232,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .index__code {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
 }
@@ -1294,10 +1291,10 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .readout__label {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--fg-2);
 }
 
@@ -1342,13 +1339,19 @@ html:not(.dark) .pitch__glass.auth__glass::before {
     padding-top: 24px;
   }
   .hero__masthead {
-    flex-wrap: wrap;
-    gap: 6px 18px;
+    /* 窄屏一行挤不下三类元信息：日期是示例注记，收进「示例数据」标签里，
+       别让它换行掉到标题上方冒充眉线，也别挤出屏幕。
+       字号不降：降到 18px 以下这条头版行就会被当成标题眉线。 */
+    gap: 6px 14px;
+    font-size: 19px;
   }
   .hero__masthead-mid {
-    margin-left: 0;
-    order: 3;
-    flex-basis: 100%;
+    display: none;
+  }
+  .hero__masthead span:last-child {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .hero__copy,
   .hero__index {
@@ -1386,6 +1389,10 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
   .index__name {
     font-size: 16px;
+  }
+  /* 头版行在手机上只留品牌一句；型号在读数条里已经给出。 */
+  .hero__masthead span:last-child {
+    display: none;
   }
 }
 
@@ -1435,14 +1442,9 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding: 6px 0;
   background: var(--bg);
   text-align: center;
-  font-size: 38px;
-  letter-spacing: -0.02em;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   color: var(--fg-3);
-  transition: color var(--fast);
-}
-
-.ledger__row:hover .ledger__index {
-  color: var(--signal-text);
 }
 
 .ledger__title {
@@ -1477,13 +1479,17 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   border-color: var(--signal);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px)
+{
   .ledger::before {
     left: 35px;
   }
   .ledger__row {
     grid-template-columns: 70px minmax(0, 1fr);
     gap: 24px;
+    /* 窄屏上读数 chip 单独占一行，行距必须拉大：否则上一行的仪器读数
+       会贴在下一步标题上方，被误读成那一步的眉线标签。 */
+    padding-block: 44px;
   }
   .ledger__index {
     width: 70px;
@@ -1591,14 +1597,14 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .composer__eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-2);
 }
 
 .composer__state {
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -1658,7 +1664,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--ink-2);
   white-space: nowrap;
@@ -1701,7 +1707,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .composer__hint {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
 }
@@ -1753,7 +1759,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .deck__hint {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -1779,14 +1785,14 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .screen__kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
+  font-size: 13px;
+  letter-spacing: 0.04em;
   color: var(--swap-ink);
 }
 
 .screen__meta {
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--swap-ink);
   opacity: 0.4;
 }
@@ -1849,8 +1855,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .screen__foot {
   padding-top: 12px;
   border-top: 1px solid var(--swap-tile-edge);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--swap-ink);
   opacity: 0.42;
   white-space: nowrap;
@@ -1870,8 +1876,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .msg__role {
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--swap-ink);
   opacity: 0.4;
 }
@@ -1880,6 +1886,13 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   margin: 0;
   font-size: 15px;
   line-height: 1.7;
+}
+
+/* 消息里的附件名：行内读数，不是药丸标签（药丸会被当成标题眉线）。 */
+.msg__attach {
+  font-size: 12.5px;
+  color: var(--swap-ink);
+  opacity: 0.55;
 }
 
 .msg__note {
@@ -2024,9 +2037,9 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .agent-points__code {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
-  color: var(--signal-text);
+  color: var(--fg-3);
 }
 
 .agent-points__title {
@@ -2039,7 +2052,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .agent-points__body {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.72;
   color: var(--ink-2);
 }
@@ -2055,16 +2068,18 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .console__title {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg);
 }
 
 .console__meta {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--on-dark-3);
 }
 
@@ -2073,7 +2088,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--signal-text);
   white-space: nowrap;
@@ -2112,7 +2127,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .trace__role {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--on-dark-2);
   padding-top: 4px;
@@ -2287,7 +2302,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding-top: 4px;
   font-size: 11px;
   letter-spacing: 0.16em;
-  color: var(--signal-text);
+  color: var(--fg-3);
 }
 
 .statute__name {
@@ -2308,7 +2323,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: center;
   gap: 20px;
   margin-top: 56px;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--fg-3);
 }
@@ -2407,7 +2422,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .dial__unit {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-3);
@@ -2432,7 +2447,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .scale__code {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--fg-3);
 }
@@ -2504,7 +2519,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -2572,12 +2587,25 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
+  /* 减弱动效时页面必须是「完成的页面」：入场动画整体跳过，
+     而不是让 .rise/.reveal 停在不透明度为 0 的起始帧。 */
+  .reveal,
+  .rise,
+  .fade,
+  .draw {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
   }
   .hero__title .ch {
     animation: none;
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
   }
 }
 
@@ -2785,7 +2813,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .proc__code {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
 }
 
@@ -2824,8 +2852,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
@@ -2844,6 +2872,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .proc__state[data-state="running"]::before {
   background: var(--signal);
   animation: live-pulse 1.6s var(--ease) infinite;
+}
+
+/* 待机也活着：相位点慢速呼吸，仪器不是停着，是在等。 */
+.proc__state[data-state="empty"]::before {
+  animation: live-pulse 3.2s var(--ease) infinite;
 }
 
 .proc__state[data-state="error"] {
@@ -2893,10 +2926,48 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   flex-wrap: wrap;
   gap: 8px 22px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-3);
+}
+
+/* 右栏空台时的一行说明：示例影像在左侧取景槽里，别让右栏读成白屏。 */
+.specimen-note {
+  margin: 0 0 18px;
+  color: var(--fg-2);
+}
+
+/* 空取景槽里铺的示例眼底：取景框对着真片子，上传提示压在片上。 */
+.slot__specimen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.92;
+}
+
+.slot__specimen-note {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.slot[data-filled="false"] .slot__prompt {
+  /* 有示例片在槽里时，提示文字要压得住底：给一层暗角。 */
+  background: rgba(20, 23, 26, 0.42);
+  border-radius: 2px;
+}
+
+.slot[data-filled="false"] .slot__title,
+.slot[data-filled="false"] .slot__hint {
+  color: #fff;
 }
 
 @media (max-width: 900px) {
@@ -2956,6 +3027,19 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   pointer-events: none;
 }
 
+/* 空槽自检：刻度环绕中心慢转，像仪器通电后在扫一圈。
+   只动 transform，减弱动效时整页静止。 */
+.slot__ring {
+  transform-origin: 100px 100px;
+  animation: slot-sweep 14s linear infinite;
+}
+
+@keyframes slot-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .slot__reticle .slot__ring {
   transform-origin: 100px 100px;
 }
@@ -2985,10 +3069,13 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .slot__prompt {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 10px;
   justify-items: center;
   max-width: 24ch;
+  padding: 14px 16px;
 }
 
 .slot__prompt svg {
@@ -3003,7 +3090,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .slot__hint {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--fg-3);
@@ -3108,7 +3195,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .slot__meta {
   margin: 12px 0 0;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--fg-3);
   overflow: hidden;
@@ -3195,8 +3282,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .roster__code {
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--fg-3);
 }
 
@@ -3264,10 +3351,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .sheet__id {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
 }
 
 .sheet__body {
@@ -3302,8 +3390,16 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
 }
 
-.sheet__verdict-kicker {
-  margin: 0 0 12px;
+.sheet__verdict-prefix {
+  /* 临床来源与分类码跟结论同一行：不是装饰眉线，是一句可核对的判读口径。 */
+  display: inline-block;
+  margin-right: 0.6em;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-2);
+  vertical-align: 0.25em;
 }
 
 /* 证据栏：这次判读读的是哪张片子，钉在记录纸左侧。 */
@@ -3323,7 +3419,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .sheet__evidence figcaption {
   margin-top: 10px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--ink-3);
 }
@@ -3428,7 +3524,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .recos li::before {
   content: counter(reco, decimal-leading-zero);
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--ink-3);
   padding-top: 3px;
@@ -3452,7 +3548,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .recos__flag {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
   padding: 0 5px;
   color: var(--risk-critical);
@@ -3715,7 +3811,7 @@ html:not(.dark) .auth__beam {
 
 .auth__code {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--auth-fg-3);
 }
@@ -3768,7 +3864,7 @@ html:not(.dark) .auth__beam {
   padding-block: 10px;
   border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--auth-fg-3);
 }
@@ -3809,8 +3905,7 @@ html:not(.dark) .auth__beam {
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
   box-shadow:
-    0 44px 90px -44px rgba(0, 0, 0, 0.92),
-    0 2px 12px rgba(0, 0, 0, 0.34),
+    0 6px 14px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     inset 0 -24px 40px -30px rgba(0, 0, 0, 0.9);
 }
@@ -3825,8 +3920,7 @@ html:not(.dark) .auth__beam {
     rgba(255, 255, 255, 0.66)
   );
   box-shadow:
-    0 44px 90px -50px rgba(20, 23, 26, 0.5),
-    0 2px 12px rgba(20, 23, 26, 0.08),
+    0 5px 12px rgba(20, 23, 26, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -24px 40px -30px rgba(20, 23, 26, 0.14);
 }
@@ -3878,7 +3972,7 @@ html:not(.dark) .auth__beam {
   margin-bottom: 22px;
   border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--auth-head);
@@ -3931,7 +4025,7 @@ html:not(.dark) .auth__beam {
   align-items: center;
   gap: 9px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--auth-fg-3);
 }
@@ -4002,7 +4096,7 @@ html:not(.dark) .auth__beam {
 
 .field__label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-3);

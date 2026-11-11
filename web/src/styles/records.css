@@ -98,8 +98,8 @@
 }
 
 .records__thumb-none {
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
@@ -121,8 +121,8 @@
 
 .records__code {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
   border: 1px solid var(--line);
   padding: 1px 6px;
@@ -286,6 +286,13 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* 卡片小节标题：一句正文大小的说明，不是压在内容上的微型眉线。 */
+.profile__card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
 .profile__avatar-row {
   display: flex;
   align-items: flex-start;
@@ -342,8 +349,8 @@
 
 .profile__label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-2);
 }

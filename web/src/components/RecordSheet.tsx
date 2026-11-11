@@ -83,10 +83,14 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
               </figure>
             ) : null}
             <div>
-              <p className="overline sheet__verdict-kicker">
-                AI 判读结果 · {classCode(result.result)}
-              </p>
-              <h2 className="sheet__verdict">{result.result ?? "未给出判读结果"}</h2>
+              <h2 className="sheet__verdict">
+                {/* 判读源与分类码是结论的一部分，和病名同一个标题元素里读完，
+                    不再压一条微型眉线在标题上方。 */}
+                <span className="sheet__verdict-prefix">
+                  AI 判读结果 · {classCode(result.result)}
+                </span>
+                {result.result ?? "未给出判读结果"}
+              </h2>
               {result.details ? <p className="sheet__note">{result.details}</p> : null}
 
               <div className="sheet__facts">

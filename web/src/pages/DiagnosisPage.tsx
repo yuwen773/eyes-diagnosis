@@ -297,7 +297,13 @@ export function DiagnosisPage() {
           {STEP_DEFS.map((step, index) => {
             const state = stepStateOf(index)
             return (
-              <div className="proc__step" data-state={state} role="listitem" key={step.code}>
+              <div
+                className="proc__step rise"
+                style={{ "--d": `${index * 90}ms` } as CSSProperties}
+                data-state={state}
+                role="listitem"
+                key={step.code}
+              >
                 <span className="proc__code num">{step.code}</span>
                 <span className="proc__zh">{step.zh}</span>
                 <span className="proc__mark" aria-hidden="true">
@@ -313,12 +319,13 @@ export function DiagnosisPage() {
 
         <div className="diag">
           <section className="diag__left rise">
-            <p className="overline">Upload · 影像</p>
-            <h1 className="h2 diag__title" style={{ marginTop: 12, marginBottom: 10 }}>
-              上传一张彩色眼底照片
+            {/* 眉线删掉：来源信息并进标题一句，首屏先看见这句话。
+                与步骤条之间留足一行呼吸，别让「影像」那一步贴在标题上方。 */}
+            <h1 className="h2 diag__title" style={{ marginTop: 44 }}>
+              上传一张彩色眼底照片，单眼、清晰、光照均匀
             </h1>
             <p className="small" style={{ marginBottom: 24, maxWidth: "34em" }}>
-              单眼、清晰、光照均匀。系统会先过质量门，不合格的影像不会给出结论。
+              系统会先过质量门，不合格的影像不会给出结论。
             </p>
 
             <input
@@ -371,19 +378,29 @@ export function DiagnosisPage() {
                   ) : null}
                 </>
               ) : (
-                <span className="slot__prompt">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"
-                      stroke="currentColor"
-                      strokeWidth="1.25"
-                      strokeLinecap="square"
-                    />
-                    <path d="M4 15v4.5h16V15" stroke="currentColor" strokeWidth="1.25" />
-                  </svg>
-                  <span className="slot__title">{dragging ? "松手，放入影像" : "点击或拖入影像"}</span>
-                  <span className="slot__hint">JPG · PNG · ≤ 5 MB</span>
-                </span>
+                <>
+                  {/* 空槽里铺一张示例眼底：取景框对着真片子，
+                      比一个空框更能说明「要上传的是什么」。 */}
+                  <img
+                    className="slot__specimen"
+                    src="/fundus-demo.jpg"
+                    alt="示例眼底照片：视盘、血管弓与黄斑区"
+                  />
+                  <span className="slot__prompt">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"
+                        stroke="currentColor"
+                        strokeWidth="1.25"
+                        strokeLinecap="square"
+                      />
+                      <path d="M4 15v4.5h16V15" stroke="currentColor" strokeWidth="1.25" />
+                    </svg>
+                    <span className="slot__title">{dragging ? "松手，放入影像" : "点击或拖入影像"}</span>
+                    <span className="slot__hint">JPG · PNG · ≤ 5 MB</span>
+                  </span>
+                  <span className="slot__specimen-note num">示例影像 · 非真实患者</span>
+                </>
               )}
             </button>
 
@@ -438,6 +455,14 @@ export function DiagnosisPage() {
 
           <section className="diag__right rise" style={{ "--d": "90ms" } as CSSProperties}>
             <SectionHead code="判读" kicker="Readout" en="LIVE" />
+
+            {/* 没有上传时右栏不是白屏：示例影像已铺在左侧取景槽里，
+                这里用一行说明把示例与真实判读区分开。 */}
+            {!file ? (
+              <p className="specimen-note small">
+                左侧取景框里是示例眼底照片。上传后，这里会实时列出模型的判读日志。
+              </p>
+            ) : null}
 
             <ol className="journal" aria-live="polite">
               {log.length === 0 ? (

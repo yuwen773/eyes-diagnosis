@@ -30,6 +30,15 @@
   --line: var(--paper-line);
   --line-strong: var(--paper-line-strong);
 
+  /* 上下文别名的根级兜底：语境类（.is-field / .is-sheet / .is-dark）之外的
+     固定层组件（例如挂在 App 根部的故障浮条）也能拿到墨色与发丝线，
+     不会因为 var(--hr) 未定义而整条 border 声明失效。 */
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --fg-3: var(--ink-3);
+  --hr: var(--line);
+  --hr-strong: var(--line-strong);
+
   /* ── 唯一的强调色：信号橙（纸面原语 + 上下文别名）── */
   --paper-signal: #d9541f;
   --signal: var(--paper-signal);
@@ -103,6 +112,13 @@
   :root {
     --maxw: 1760px;
     --gutter: 56px;
+  }
+}
+
+/* 窄屏版心缩进收一档：正文仍留出呼吸，但不能贴到屏幕边缘。 */
+@media (max-width: 600px) {
+  :root {
+    --gutter: 24px;
   }
 }
 

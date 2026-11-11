@@ -122,6 +122,8 @@
   text-align: left;
   padding: clamp(24px, 4.5vw, 64px) var(--se-inset);
   opacity: 0;
+  /* 说明文字不是控件：别让它挡住画框里的照片，光标与命中测试都应落到媒体上。 */
+  pointer-events: none;
   will-change: opacity, transform;
 }
 
@@ -157,6 +159,15 @@
   letter-spacing: -0.02em;
   color: var(--ink);
   text-wrap: balance;
+  /* 减弱动效时展开已经跳过，标题始终停在完成的页面上；给它一块纸面底，
+     别让满幅照片把墨色标题吃掉。 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-expand__title-main {
+    background: var(--field);
+    padding: 4px 10px;
+  }
 }
 
 .scroll-expand__title-kicker {
@@ -215,11 +226,320 @@
   font-size: 14.5px;
   line-height: 1.75;
   color: var(--se-ink-2);
+  /* 满幅照片上读正文，要给一块稳定的白纸底，不靠半透明压暗层赌对比度。 */
+  background: var(--field);
+  padding: 10px 14px;
+}
+
+/* 真实眼底样本局部：三张同一张片子的裁切，按仪器读片顺序并排。 */
+.specimen-details {
+  padding-top: clamp(48px, 6vh, 76px);
+}
+
+.specimen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2.4vw, 32px);
+  margin-top: 28px;
+}
+
+.specimen-grid__item {
+  margin: 0;
+}
+
+.specimen-grid__item figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.specimen-grid__title {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.specimen-grid__note {
+  color: var(--fg-2);
+}
+
+/* 一张可放大的证据：图是按钮，悬停浮出读片标注，点击进灯箱。 */
+.specimen-grid__open {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.specimen-grid__open img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+  transition: filter var(--fast);
+}
+
+.specimen-grid__open:hover img,
+.specimen-grid__open:focus-visible img {
+  filter: brightness(1.07) contrast(1.02);
+}
+
+.specimen-grid__open:focus-visible {
+  outline: 1px solid var(--signal);
+  outline-offset: 3px;
+}
+
+/* 标注点：发丝圆环 + 信号橙圆点，读片卡上的定位标记。 */
+.specimen-grid__mark {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  pointer-events: none;
+  transition:
+    border-color var(--fast),
+    transform var(--fast);
+}
+
+.specimen-grid__mark i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+.specimen-grid__open:hover .specimen-grid__mark,
+.specimen-grid__open:focus-visible .specimen-grid__mark {
+  border-color: #fff;
+  transform: scale(1.15);
+}
+
+/* 悬停标注：读片结论贴画面下沿，暗底白字，不遮结构。 */
+.specimen-grid__reading {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(8, 10, 9, 0.84);
+  color: #f2f3ef;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--fast),
+    transform var(--fast);
+  pointer-events: none;
+}
+
+.specimen-grid__reading-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--signal-night, #ef7a45);
+}
+
+.specimen-grid__reading-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.specimen-grid__open:hover .specimen-grid__reading,
+.specimen-grid__open:focus-visible .specimen-grid__reading {
+  opacity: 1;
+  transform: none;
+}
+
+/* 触屏没有悬停：标注常驻。 */
+@media (hover: none) {
+  .specimen-grid__reading {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .specimen-grid__mark,
+  .specimen-grid__reading {
+    transition: none;
+    transform: none;
+  }
+}
+
+.specimen-hint {
+  margin: 16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+  text-align: right;
+}
+
+/* ── 样本局部灯箱 ─────────────────────────────────────── */
+
+.specimen-lightbox {
+  /* Tailwind 的 preflight 把所有元素的 margin 清零，dialog 的居中要自己补回来。 */
+  margin: auto;
+  inset: 0;
+  width: min(1040px, 92vw);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.specimen-lightbox::backdrop {
+  background: rgba(8, 10, 9, 0.86);
+}
+
+/* 打开灯箱时锁住背后的滚动。 */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.specimen-lightbox__frame {
+  display: grid;
+  /* 网格轨道的自动最小尺寸是图片的固有宽度（1200px），不放开就会把灯箱撑破。 */
+  min-width: 0;
+}
+
+.specimen-lightbox__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.specimen-lightbox__index {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.specimen-lightbox__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.specimen-lightbox__close {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--fg);
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.specimen-lightbox__close:hover {
+  border-color: var(--line-strong);
+}
+
+.specimen-lightbox__stage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.specimen-lightbox__stage img {
+  display: block;
+  max-width: 100%;
+  max-height: 68vh;
+  width: auto;
+  height: auto;
+}
+
+.specimen-lightbox__foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.specimen-lightbox__reading {
+  margin: 0;
+  flex: 1 1 320px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+.specimen-lightbox__nav {
+  display: flex;
+  gap: 8px;
+}
+
+.specimen-lightbox__step {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.specimen-lightbox__step:hover {
+  border-color: var(--signal);
+  color: var(--signal-text);
+}
+
+.specimen-lightbox__note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+@media (max-width: 760px) {
+  .specimen-lightbox__stage img {
+    max-height: 56vh;
+  }
+
+  .specimen-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .scroll-expand__caption-note {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--se-ink-3);

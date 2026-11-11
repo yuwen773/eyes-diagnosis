@@ -88,14 +88,15 @@ a.chroma-card:focus-visible {
   );
 }
 
-/* 强调色自卡片底部泛起。压得很低，只是让画面暖一点。 */
+/* 强调色从卡片底部铺一层极淡的平色。压得很低，只是让画面暖一点；
+   不用渐变：渐变在奖章级排版里读作廉价装饰，平色才是仪器语言。 */
 .chroma-wash {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: radial-gradient(130% 70% at 50% 100%, var(--chroma-accent), transparent 72%);
-  opacity: calc(var(--chroma-glow) * var(--chroma-power) * 0.45);
+  background: color-mix(in srgb, var(--chroma-accent) 7%, transparent);
+  opacity: calc(var(--chroma-glow) * var(--chroma-power));
 }
 
 .chroma-media {
@@ -174,7 +175,7 @@ a.chroma-card:focus-visible {
 
 .chroma-note {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: var(--chroma-muted);

@@ -173,7 +173,7 @@ const THEMES: Record<"dark" | "light", Record<string, string>> = {
     "--swap-tile-edge": "rgba(244, 245, 241, 0.14)",
     "--swap-tile-highlight": "rgba(255, 255, 255, 0.07)",
     "--swap-shadow":
-      "0 30px 60px -26px rgba(0, 0, 0, 0.85), 0 10px 24px -14px rgba(0, 0, 0, 0.6)",
+      "0 5px 12px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3)",
     "--swap-media-edge": "rgba(244, 245, 241, 0.08)",
     "--swap-ink": "#f0f1ed",
     "--swap-badge": "rgba(244, 245, 241, 0.07)",
@@ -184,7 +184,7 @@ const THEMES: Record<"dark" | "light", Record<string, string>> = {
     "--swap-tile-edge": "rgba(20, 23, 26, 0.12)",
     "--swap-tile-highlight": "rgba(255, 255, 255, 1)",
     "--swap-shadow":
-      "0 30px 60px -30px rgba(20, 23, 26, 0.3), 0 10px 24px -16px rgba(20, 23, 26, 0.16)",
+      "0 5px 12px rgba(20, 23, 26, 0.1), 0 2px 6px rgba(20, 23, 26, 0.08)",
     "--swap-media-edge": "rgba(20, 23, 26, 0.06)",
     "--swap-ink": "#14171a",
     "--swap-badge": "rgba(20, 23, 26, 0.05)",

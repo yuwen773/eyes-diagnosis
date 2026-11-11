@@ -90,6 +90,8 @@ export function ScrollExpand({
   const overlayRef = useRef<HTMLDivElement | null>(null)
   const scrimRef = useRef<HTMLDivElement | null>(null)
   const hintRef = useRef<HTMLDivElement | null>(null)
+  // 减弱动效时展开动画整体跳过；applyProgress 据此把标题留在完成的页面上。
+  const reducedRef = useRef(false)
 
   const propsRef = useRef({
     startWidth,
@@ -104,6 +106,7 @@ export function ScrollExpand({
     tone,
     useWindowScroll,
     enabled,
+    skipMotion: false,
   })
 
   // 最近一次应用的进度；图片加载完要按它重算一次缩放。
@@ -124,6 +127,7 @@ export function ScrollExpand({
       tone,
       useWindowScroll,
       enabled,
+      skipMotion: reducedRef.current,
     }
   })
 
@@ -187,13 +191,15 @@ export function ScrollExpand({
 
     if (titleRef.current) {
       // 照片压上来之前标题就让位，避免深色画面上出现深色字。
-      const out = smoothstep(0.05, 0.28, p)
+      // 减弱动效时展开是瞬时完成的，标题不再淡出（reduced page 就是完成页）。
+      const out = c.skipMotion ? 0 : smoothstep(0.05, 0.28, p)
       titleRef.current.style.opacity = `${1 - out}`
       titleRef.current.style.transform = `translate3d(0, ${-28 * out}px, 0) scale(${1 + 0.06 * out})`
     }
 
     if (hintRef.current) {
-      const gone = smoothstep(0, 0.12, p)
+      // 减弱动效下没有滚动展开，不该留一条「滚动展开」的假提示。
+      const gone = c.skipMotion ? 1 : smoothstep(0, 0.12, p)
       hintRef.current.style.opacity = `${1 - gone}`
       hintRef.current.style.transform = `translate3d(0, ${8 * gone}px, 0)`
     }
@@ -214,6 +220,8 @@ export function ScrollExpand({
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches
+    reducedRef.current = reduceMotion
+    propsRef.current.skipMotion = reduceMotion
 
     let raf = 0
     let current = 0

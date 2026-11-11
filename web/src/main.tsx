@@ -6,6 +6,7 @@ import "@fontsource/ibm-plex-mono/500.css"
 import "@fontsource/ibm-plex-mono/600.css"
 import "@fontsource/instrument-serif/400.css"
 
+import "./fonts-subset.css"
 import "./index.css"
 import App from "./App.tsx"
 

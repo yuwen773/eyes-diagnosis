@@ -115,7 +115,7 @@ export function MessageList({
       <div className="console__head">
         <div className="console__head-left">
           {headLeft}
-          <span className="console__title">DIAGNOSIS · AGENT</span>
+          <h1 className="console__title">DIAGNOSIS · AGENT</h1>
         </div>
         <div className="console__head-right">
           {streaming ? (

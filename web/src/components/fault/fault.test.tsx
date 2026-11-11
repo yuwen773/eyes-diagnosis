@@ -103,3 +103,95 @@ describe("FaultToaster", () => {
     expect(() => render(<Lonely />)).not.toThrow()
   })
 })
+
+/** jsdom 没实现 PointerEvent，手搓一个带坐标的原生事件。 */
+function pointer(type: string, y: number): Event {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperty(event, "clientY", { value: y })
+  Object.defineProperty(event, "button", { value: 0 })
+  Object.defineProperty(event, "pointerId", { value: 1 })
+  return event
+}
+
+describe("FaultToaster 的下滑关闭", () => {
+  function mountToaster() {
+    let push: ((f: ReturnType<typeof infoFault>) => void) | null = null
+    render(
+      <FaultProvider>
+        <Harness onPush={(p) => (push = p)} />
+        <FaultToaster />
+      </FaultProvider>,
+    )
+    return (f: ReturnType<typeof infoFault>) => act(() => push?.(f))
+  }
+
+  it("往下滑过阈值，这条读数就被收掉", () => {
+    vi.useFakeTimers()
+    const push = mountToaster()
+    push(infoFault("资料已更新"))
+    const card = document.querySelector(".fault-toast__card") as HTMLElement
+    expect(card).toBeTruthy()
+
+    act(() => {
+      card.dispatchEvent(pointer("pointerdown", 0))
+      card.dispatchEvent(pointer("pointermove", 90))
+      card.dispatchEvent(pointer("pointerup", 90))
+    })
+    act(() => {
+      vi.advanceTimersByTime(600)
+    })
+    expect(screen.queryByText("资料已更新")).toBeNull()
+  })
+
+  it("没滑够就弹回去，这条读数还在", () => {
+    vi.useFakeTimers()
+    const push = mountToaster()
+    push(infoFault("资料已更新"))
+    const card = document.querySelector(".fault-toast__card") as HTMLElement
+
+    act(() => {
+      card.dispatchEvent(pointer("pointerdown", 0))
+      card.dispatchEvent(pointer("pointermove", 20))
+      card.dispatchEvent(pointer("pointerup", 20))
+    })
+    act(() => {
+      vi.advanceTimersByTime(600)
+    })
+    expect(screen.queryByText("资料已更新")).toBeTruthy()
+  })
+
+  it("快甩一下也收掉", async () => {
+    const push = mountToaster()
+    push(infoFault("资料已更新"))
+    const card = document.querySelector(".fault-toast__card") as HTMLElement
+
+    await act(async () => {
+      card.dispatchEvent(pointer("pointerdown", 0))
+      await new Promise((r) => setTimeout(r, 20))
+      card.dispatchEvent(pointer("pointermove", 30))
+      card.dispatchEvent(pointer("pointerup", 30))
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 600))
+    })
+    expect(screen.queryByText("资料已更新")).toBeNull()
+  })
+
+  it("critical 不给划走：错误信息不能被一次手滑抹掉", () => {
+    vi.useFakeTimers()
+    const push = mountToaster()
+    push(faultFromError(new ApiError(500, "boom")))
+    const card = document.querySelector(".fault-toast__card") as HTMLElement
+    expect(card.dataset.swipeable).toBe("false")
+
+    act(() => {
+      card.dispatchEvent(pointer("pointerdown", 0))
+      card.dispatchEvent(pointer("pointermove", 120))
+      card.dispatchEvent(pointer("pointerup", 120))
+    })
+    act(() => {
+      vi.advanceTimersByTime(600)
+    })
+    expect(screen.queryByText("服务这会儿没有响应")).toBeTruthy()
+  })
+})
