@@ -81,7 +81,7 @@ describe("applyStreamEvent", () => {
 
 describe("mapHistoryMessage", () => {
   it("role/subType 映射表", () => {
-    const base = { id: 1, isSummary: false, createdTime: "2026-11-08 10:00:00" }
+    const base = { id: "1", isSummary: false, createdTime: "2026-11-08 10:00:00" }
     expect(mapHistoryMessage({ ...base, role: "USER", subType: "", content: "问" }).type).toBe("user")
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "reasoning", content: "想" }).type).toBe("reasoning")
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "tool-call", content: "t: {}" }).type).toBe("tool-request")
@@ -92,7 +92,7 @@ describe("mapHistoryMessage", () => {
 
   it("历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）", () => {
     const m = mapHistoryMessage({
-      id: 2,
+      id: "2",
       role: "ASSISTANT",
       subType: "tool-call",
       // 后端落库格式：工具名: 参数 JSON（DiagnosisAgent.java:168-173）
@@ -107,7 +107,7 @@ describe("mapHistoryMessage", () => {
 
   it("历史 tool-call 参数不是合法 JSON 时保留原文", () => {
     const m = mapHistoryMessage({
-      id: 3,
+      id: "3",
       role: "ASSISTANT",
       subType: "tool-call",
       content: "broken: {not json",

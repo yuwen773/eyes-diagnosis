@@ -4,86 +4,24 @@
  */
 
 import { fetchEventSource } from "@microsoft/fetch-event-source"
+import {
+  ApiError,
+  BASE_URL,
+  notifyAuthExpired,
+  request,
+  toPage,
+  type Envelope,
+  type RawPage,
+} from "./http"
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api"
-
-/**
- * 未登录事件。业务接口回 40100 时广播，由路由层跳登录页（带回跳地址）。
- * 会话探测 getLoginUser 不广播——匿名访问是常态，不能把人一脚踢去登录。
- */
-export const AUTH_EXPIRED_EVENT = "eye:auth-expired"
-
-/** 事件负载：错误码。40100=未登录；40101=无权限（匿名访问会话时后端也用这个码）。 */
-export type AuthExpiredDetail = { code: number }
-
-function notifyAuthExpired(code: number) {
-  window.dispatchEvent(
-    new CustomEvent<AuthExpiredDetail>(AUTH_EXPIRED_EVENT, { detail: { code } }),
-  )
-}
-
-export class ApiError extends Error {
-  readonly code: number
-
-  constructor(code: number, message: string) {
-    super(message)
-    this.name = "ApiError"
-    this.code = code
-  }
-}
-
-type Envelope<T> = {
-  code?: number
-  data?: T
-  msg?: string
-}
-
-type RequestOptions = {
-  /** 40100 不广播未登录事件（用于会话探测这类「匿名也是正常结果」的调用）。 */
-  silentAuth?: boolean
-}
-
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-  options: RequestOptions = {},
-): Promise<T> {
-  const isForm = init.body instanceof FormData
-  let response: Response
-
-  try {
-    response = await fetch(`${BASE_URL}${path}`, {
-      credentials: "include",
-      ...init,
-      headers: {
-        Accept: "application/json",
-        ...(isForm ? {} : { "Content-Type": "application/json" }),
-        ...init.headers,
-      },
-    })
-  } catch {
-    throw new ApiError(-1, "网络不可用，请检查连接后重试")
-  }
-
-  if (!response.ok) {
-    throw new ApiError(response.status, `服务返回 ${response.status}`)
-  }
-
-  const payload = (await response.json()) as Envelope<T>
-  if (payload.code !== 0) {
-    if (payload.code === 40100 && !options.silentAuth) {
-      notifyAuthExpired(40100)
-    }
-    throw new ApiError(payload.code ?? -1, payload.msg || "请求未完成")
-  }
-
-  return payload.data as T
-}
+export { ApiError, AUTH_EXPIRED_EVENT, type AuthExpiredDetail } from "./http"
+export type { Page as RecordPage } from "./http"
 
 /* ── 用户 ─────────────────────────────────────────────── */
 
 export type LoginUser = {
-  id?: number
+  /** 后端 JsonConfig 全局 Long→String，雪花 id 线上是字符串。 */
+  id?: string
   userAccount?: string
   userName?: string
   userAvatar?: string
@@ -104,7 +42,7 @@ export function register(body: {
   userPassword: string
   checkPassword: string
 }) {
-  return request<number>("/user/register", {
+  return request<string>("/user/register", {
     method: "POST",
     body: JSON.stringify(body),
   })
@@ -128,7 +66,8 @@ export type Disease = {
 }
 
 export type DiagnosisResult = {
-  id?: number
+  /** 雪花 id，线上是字符串。 */
+  id?: string
   url?: string
   result?: string
   probability?: number
@@ -161,7 +100,8 @@ export type DiagnosisResult = {
 }
 
 export type UploadedPicture = {
-  id?: number
+  /** 雪花 id，线上是字符串。 */
+  id?: string
   url?: string
   status?: string
 }
@@ -188,7 +128,7 @@ export function runDiagnosis(file: File) {
 
 export type NewsItem = {
   /** 后端把 Long 序列化成字符串（雪花 id 超出 JS 安全整数）。 */
-  id?: string | number
+  id: string
   title?: string
   author?: string
   avatar?: string | null
@@ -249,7 +189,8 @@ export type AgentSessionVO = {
 }
 
 export type HistoryMessageVO = {
-  id: number
+  /** 雪花 id，线上是字符串。 */
+  id: string
   role: string
   subType: string
   content: string
@@ -260,7 +201,7 @@ export type HistoryMessageVO = {
 export type ChatHistoryVO = {
   messages: HistoryMessageVO[]
   hasMore: boolean
-  nextCursor: number | null
+  nextCursor: string | null
 }
 
 export function getSessions(beforeId?: string, limit = 20) {
@@ -301,7 +242,7 @@ export function generateTitle(sessionId: string, firstMessage: string) {
   })
 }
 
-export function getChatHistory(threadId: string, beforeId?: number, limit = 40) {
+export function getChatHistory(threadId: string, beforeId?: string, limit = 40) {
   let path = `/agent/history/${threadId}?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
   return request<ChatHistoryVO>(path)
@@ -331,7 +272,7 @@ export function deleteAgentImage(url: string) {
 
 export type UserVO = {
   /** 后端 JsonConfig 全局 Long→String，id 线上是字符串。 */
-  id?: string | number
+  id?: string
   userAccount?: string
   userName?: string
   userAvatar?: string
@@ -380,38 +321,6 @@ export type DiagnosisManage = {
   requiresReview?: boolean
 }
 
-/**
- * 分页信封。计数字段线上是字符串（后端全局 Long→String），
- * 统一转回 number，分页算术才不会踩到 "13" 这种值。
- */
-type RawPage<T> = {
-  records?: T[]
-  total?: number | string
-  size?: number | string
-  current?: number | string
-  pages?: number | string
-}
-
-export type RecordPage<T> = {
-  records?: T[]
-  total?: number
-  size?: number
-  current?: number
-  pages?: number
-}
-
-function toPage<T>(raw: RawPage<T>): RecordPage<T> {
-  const num = (value?: number | string) =>
-    value === undefined || value === null ? undefined : Number(value)
-  return {
-    records: raw.records,
-    total: num(raw.total),
-    size: num(raw.size),
-    current: num(raw.current),
-    pages: num(raw.pages),
-  }
-}
-
 export function listMyDiagnoses(
   q: { current?: number; pageSize?: number; result?: string } = {},
 ) {
@@ -442,7 +351,7 @@ export function getMyDiagnosis(id: string | number) {
  * 申请复诊。后端 DTO 无 @RequestBody，id 走 query；只允许本人记录，
  * 提交后 reexamineStatus 置为 2（复审中）。
  */
-export function requestReexamine(id: string | number) {
+export function requestReexamine(id: string) {
   return request<boolean>(`/user/diagnosis/reexamine?id=${id}`, { method: "POST" })
 }
 

@@ -45,35 +45,58 @@ export function alignPreviousWindow(
 /** 周一 → 周日的标签，顺序即一周顺序。 */
 export const WEEKDAY_LABELS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] as const
 
+export type WeekdayBar = {
+  label: string
+  /** 该星期几在窗口内的合计。 */
+  total: number
+  /** 该星期几在窗口内出现了几天（30 天窗口里有的 5 天、有的 4 天）。 */
+  occurrences: number
+  /** 该星期几的日均 = 合计 ÷ 出现天数。 */
+  average: number
+}
+
 export type WeekdayBreakdown = {
-  bars: { label: string; value: number }[]
+  bars: WeekdayBar[]
   /** 窗口内合计（这才是「新增注册」的真读数） */
   total: number
-  /** 窗口内的日均（合计 ÷ 窗口天数，不是 ÷ 7） */
+  /** 窗口内的日均（合计 ÷ 窗口天数） */
   average: number
+  windowDays: number
 }
 
 /**
  * 日序列 → 按星期分桶。
  *
- * <p>读数口径：每一根柱是「窗口内所有这个星期几的合计」；合计 = 全部柱之和；
- * 日均 = 合计 ÷ 窗口天数。<b>不是</b> ÷ 7——30 天窗口里每根柱约含 4 个周一，
- * 拿合计 ÷ 7 得到的是「每个星期几格子的均值」，不是任何一天的平均。
+ * <p>读数口径：
+ * <ul>
+ *   <li>每根柱 = <b>该星期几的日均</b>（合计 ÷ 该星期几出现天数）；</li>
+ *   <li>合计 = 全部柱的合计之和；</li>
+ *   <li>窗口日均 = 合计 ÷ 窗口天数。</li>
+ * </ul>
  *
- * <p>「周日那一格的值」既不是合计也不是日均，那是另一个量。
+ * <p>不能拿「累计值」直接比星期几：30 天窗口里周一出现 5 次、周二只出现 4 次，
+ * 累计值会把「多出现一天」当成「周一更活跃」。必须先摊到每天，再比较。
  */
 export function weekdayBreakdown(trend: DayPoint[], windowDays: number): WeekdayBreakdown {
   const totals = new Array(7).fill(0) as number[]
+  const occurrences = new Array(7).fill(0) as number[]
   for (const row of trend) {
     const date = new Date(`${row.day}T00:00:00`)
     if (Number.isNaN(date.getTime())) continue
     // getDay(): 0=周日 → 转成 0=周一 … 6=周日
-    totals[(date.getDay() + 6) % 7] += row.value
+    const index = (date.getDay() + 6) % 7
+    totals[index] += row.value
+    occurrences[index] += 1
   }
-  const bars = WEEKDAY_LABELS.map((label, index) => ({ label, value: totals[index] }))
-  const total = bars.reduce((sum, bar) => sum + bar.value, 0)
+  const bars: WeekdayBar[] = WEEKDAY_LABELS.map((label, index) => ({
+    label,
+    total: totals[index],
+    occurrences: occurrences[index],
+    average: occurrences[index] > 0 ? totals[index] / occurrences[index] : 0,
+  }))
+  const total = bars.reduce((sum, bar) => sum + bar.total, 0)
   const days = Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 1
-  return { bars, total, average: total / days }
+  return { bars, total, average: total / days, windowDays: days }
 }
 
 /**

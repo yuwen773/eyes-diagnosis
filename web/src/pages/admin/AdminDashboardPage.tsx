@@ -94,6 +94,16 @@ export function AdminDashboardPage(): ReactElement {
 
   const stats = view.data
   const statsLoading = view.data === null && view.fault === null
+
+  /**
+   * 切窗先让旧数据失效，再发新请求：否则请求在途时会出现
+   * 「按钮说 90 天、图里还是 30 天」的读数。
+   */
+  const changeDays = (next: number) => {
+    if (next === days) return
+    setView({ data: null, fault: null })
+    setDays(next)
+  }
   const recentLoading = recent.data === null && recent.fault === null
 
   const trendRows = useMemo(
@@ -169,7 +179,7 @@ export function AdminDashboardPage(): ReactElement {
               type="button"
               className="admin-dashboard__range-btn"
               aria-pressed={days === range.value}
-              onClick={() => setDays(range.value)}
+              onClick={() => changeDays(range.value)}
             >
               {range.label}
             </button>

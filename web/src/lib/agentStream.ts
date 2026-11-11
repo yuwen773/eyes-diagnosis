@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react"
 import { streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
 import { extractResources, type AgentResources } from "./agentResources"
+import { newId } from "./id"
 
 export type StreamMsgType =
   | "user"
@@ -33,11 +34,6 @@ export type StreamMessage = {
   time?: string
   images?: string[]
 }
-
-const newId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
 /** assistant 是否可继续累加：最后一条就是它且仍在流式中。 */
 function lastAppendableAssistant(msgs: StreamMessage[]): StreamMessage | undefined {

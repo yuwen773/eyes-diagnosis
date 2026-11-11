@@ -14,6 +14,7 @@ import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
 import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
+import { newId } from "@/lib/id"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { MessageList } from "@/components/agent/MessageList"
@@ -23,17 +24,6 @@ import { ResourcePanel } from "@/components/agent/ResourcePanel"
 import { SiteHeader } from "@/components/SiteHeader"
 
 const HISTORY_PAGE_SIZE = 100
-
-const generateThreadId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
-
-/** 本地消息 id：非安全上下文（内网 http）没有 crypto.randomUUID。 */
-const generateLocalId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
 /** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
 function safeFileName(name: string): string {
@@ -65,7 +55,7 @@ export function AgentPage() {
   // 依赖每渲染都变，等于没有 memo。用惰性 state 只建一次。
   const [uploader] = useState(createAgentUploader)
 
-  const [threadId, setThreadId] = useState(() => generateThreadId())
+  const [threadId, setThreadId] = useState(() => newId())
   // 追踪当前会话：发送期间用户可能切会话，闭包里的 threadId 是旧值，
   // 判断「是否还在这个会话」必须读 ref。渲染期写 ref 在并发模式下不安全，
   // 所以在 effect 里同步。
@@ -77,7 +67,7 @@ export function AgentPage() {
   const historySeq = useRef(0)
   // 当前登录身份的稳定键：登录/登出/换账号时要清掉上一个身份的会话态。
   const userKey = user?.id ?? null
-  const lastUserKeyRef = useRef<number | null | undefined>(undefined)
+  const lastUserKeyRef = useRef<string | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
   const [sessionsCollapsed, setSessionsCollapsed] = useState(false)
@@ -137,7 +127,7 @@ export function AgentPage() {
     // 再按新身份的 key 恢复；否则会拿别人的会话 id 去拉历史。
     if (lastUserKeyRef.current !== userKey) {
       lastUserKeyRef.current = userKey
-      setThreadId(generateThreadId())
+      setThreadId(newId())
       setCurrentThreadId("")
       reset()
     }
@@ -176,7 +166,7 @@ export function AgentPage() {
         return false
       }
 
-      const localId = generateLocalId()
+      const localId = newId()
       pushUser({
         id: localId,
         type: "user",
@@ -215,7 +205,7 @@ export function AgentPage() {
   const handleNewChat = useCallback(() => {
     saveThreadId(userKey, "")
     setCurrentThreadId("")
-    setThreadId(generateThreadId())
+    setThreadId(newId())
     reset()
     setPanelOpen(false)
   }, [reset, userKey])

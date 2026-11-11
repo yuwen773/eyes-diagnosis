@@ -7,11 +7,11 @@
  */
 
 /** 存储 key：`agent_current_thread_id:<userId|anon>`。 */
-export function threadStorageKey(userId?: number | null): string {
+export function threadStorageKey(userId?: string | null): string {
   return `agent_current_thread_id:${userId ?? "anon"}`
 }
 
-export function loadThreadId(userId?: number | null): string {
+export function loadThreadId(userId?: string | null): string {
   try {
     return localStorage.getItem(threadStorageKey(userId)) || ""
   } catch {
@@ -19,7 +19,7 @@ export function loadThreadId(userId?: number | null): string {
   }
 }
 
-export function saveThreadId(userId: number | null | undefined, id: string): void {
+export function saveThreadId(userId: string | null | undefined, id: string): void {
   try {
     const key = threadStorageKey(userId)
     if (id) localStorage.setItem(key, id)

@@ -162,7 +162,7 @@ describe("AgentPage 未登录", () => {
     )
     const history = (content: string): ChatHistoryVO => ({
       messages: [
-        { id: 1, role: "ASSISTANT", subType: "", content, isSummary: false, createdTime: "2026-11-08 10:00:00" },
+        { id: "1", role: "ASSISTANT", subType: "", content, isSummary: false, createdTime: "2026-11-08 10:00:00" },
       ],
       hasMore: false,
       nextCursor: null,

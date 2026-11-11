@@ -55,32 +55,60 @@ describe("dayLabel", () => {
 })
 
 describe("weekdayBreakdown", () => {
-  it("合计是窗口内总量，日均按 7 天分摊", () => {
+  it("柱值是每个星期几的日均，不是窗口累计", () => {
     const trend = [
-      { day: "2026-11-09", value: 2 }, // 周一
+      { day: "2026-11-02", value: 2 }, // 周一
+      { day: "2026-11-09", value: 4 }, // 周一
       { day: "2026-11-10", value: 3 }, // 周二
-      { day: "2026-11-10", value: 1 }, // 同一天再计一次（防御性）
-    ]
-    const result = weekdayBreakdown(trend, 7)
-    expect(result.total).toBe(6)
-    expect(result.average).toBeCloseTo(6 / 7, 10)
-    expect(result.bars[0]).toEqual({ label: "周一", value: 2 })
-    expect(result.bars[1]).toEqual({ label: "周二", value: 4 })
-  })
-
-  it("日均按窗口天数摊，不是按 7 天摊", () => {
-    const trend = [
-      { day: "2026-11-02", value: 6 },
-      { day: "2026-11-09", value: 4 },
     ]
     const result = weekdayBreakdown(trend, 30)
-    expect(result.total).toBe(10)
-    expect(result.average).toBeCloseTo(10 / 30, 10)
+
+    expect(result.total).toBe(9)
+    expect(result.average).toBeCloseTo(9 / 30, 10)
+    expect(result.bars[0]).toEqual({
+      label: "周一",
+      total: 6,
+      occurrences: 2,
+      average: 3,
+    })
+    expect(result.bars[1]).toEqual({
+      label: "周二",
+      total: 3,
+      occurrences: 1,
+      average: 3,
+    })
+  })
+
+  it("出现次数不同时，累计值会误导，日均才是可比的", () => {
+    // 周一出现 2 次共 4 人，周二出现 1 次共 2 人：累计是 2:1，
+    // 但两天的活跃度完全一样（都是每天 2 人）。
+    const trend = [
+      { day: "2026-11-02", value: 2 },
+      { day: "2026-11-09", value: 2 },
+      { day: "2026-11-10", value: 2 },
+    ]
+    const result = weekdayBreakdown(trend, 30)
+
+    expect(result.bars[0].total).toBe(4)
+    expect(result.bars[1].total).toBe(2)
+    expect(result.bars[0].average).toBe(2)
+    expect(result.bars[1].average).toBe(2)
+  })
+
+  it("窗口里没出现过的星期几，日均是 0 而不是空", () => {
+    const result = weekdayBreakdown([{ day: "2026-11-09", value: 5 }], 7)
+    expect(result.bars[6]).toEqual({
+      label: "周日",
+      total: 0,
+      occurrences: 0,
+      average: 0,
+    })
   })
 
   it("非法日期不计入", () => {
     const result = weekdayBreakdown([{ day: "不是日期", value: 5 }], 30)
     expect(result.total).toBe(0)
+    expect(result.bars.every((bar) => bar.occurrences === 0)).toBe(true)
   })
 })
 

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react"
 import type { Fault, FaultSeverity } from "@/lib/faults"
+import { newId } from "@/lib/id"
 
 /**
  * 瞬时故障读数（右上角浮条）+ 全局投放口。
@@ -89,7 +90,7 @@ export function FaultProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const push = useCallback((fault: Fault) => {
-    const id = crypto.randomUUID()
+    const id = newId()
     const toast: Toast = { id, fault, phase: "in" }
     setToasts((prev) => [...prev, toast].slice(-MAX_TOASTS))
   }, [])

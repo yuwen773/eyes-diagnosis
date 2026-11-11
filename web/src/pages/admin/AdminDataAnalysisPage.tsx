@@ -73,6 +73,16 @@ export function AdminDataAnalysisPage(): ReactElement {
   const statsLoading = view.data === null && view.fault === null
 
   /**
+   * 切窗先让旧数据失效，再发新请求：否则请求在途时会出现
+   * 「按钮说 90 天、图里还是 30 天」的读数。
+   */
+  const changeDays = (next: number) => {
+    if (next === days) return
+    setView({ data: null, fault: null })
+    setDays(next)
+  }
+
+  /**
    * 病种日趋势：后端给的是「一天 + 病种 + 计数」的扁平行，这里按病种折成
    * 一条条与 trendDays 对齐的序列（缺的那天补 0——不补会把「周三没数据」
    * 画成和周二一样多）。
@@ -206,7 +216,7 @@ export function AdminDataAnalysisPage(): ReactElement {
           <select
             className="admin-analysis__select"
             value={String(days)}
-            onChange={(event) => setDays(Number(event.target.value))}
+            onChange={(event) => changeDays(Number(event.target.value))}
             aria-label="时间范围"
           >
             {RANGES.map((range) => (
@@ -258,7 +268,7 @@ export function AdminDataAnalysisPage(): ReactElement {
         <h2 className="admin-analysis__title">新增用户 · 按星期分布</h2>
         <WeekBars
           bars={weekly.bars}
-          title="新增注册 · 按星期"
+          title="新增注册 · 按星期（日均）"
           ariaLabel="新增用户按星期分布"
           total={weekly.total}
           average={weekly.average}

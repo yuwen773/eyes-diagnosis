@@ -9,6 +9,9 @@ export default defineConfig({
   // e2e 是 Playwright 的用例，别被 Vitest 收进来。
   test: {
     exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
+    // jsdom 缺 ResizeObserver / IntersectionObserver / matchMedia，
+    // Base UI 弹层与视口门控组件需要这些接口。
+    setupFiles: ["./src/test/setup.ts"],
   },
   resolve: {
     alias: {
