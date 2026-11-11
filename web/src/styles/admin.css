@@ -563,15 +563,14 @@
   color: var(--fg);
   border: 1px solid var(--hr-strong);
   transform: translate(-50%, -50%);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--base), visibility 0s linear var(--base);
+  opacity: 1;
+  transition: opacity var(--base);
 }
 
-.admin-modal[data-open="true"] {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity var(--base);
+/* Base UI 只在打开时挂载 Popup；进出场用 data-starting/ending-style。 */
+.admin-modal[data-starting-style],
+.admin-modal[data-ending-style] {
+  opacity: 0;
 }
 
 .admin-modal__head {
@@ -642,15 +641,13 @@
   background: var(--surface);
   color: var(--fg);
   border-left: 1px solid var(--hr-strong);
-  transform: translateX(100%);
-  visibility: hidden;
-  transition: transform var(--base), visibility 0s linear var(--base);
+  transform: none;
+  transition: transform var(--base);
 }
 
-.admin-drawer[data-open="true"] {
-  transform: none;
-  visibility: visible;
-  transition: transform var(--base);
+.admin-drawer[data-starting-style],
+.admin-drawer[data-ending-style] {
+  transform: translateX(100%);
 }
 
 .admin-drawer__head {

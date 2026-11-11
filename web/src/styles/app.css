@@ -421,43 +421,33 @@ a.acct__trigger--anon:hover {
   color: var(--fg-3);
 }
 
-/* 下拉是一块读数面板，不是圆角浮层。 */
+/* 下拉是一块读数面板，不是圆角浮层。
+   Base UI 只在打开时挂载 Popup，所以面板基态就是可见；
+   进出场交给 data-starting-style / data-ending-style。 */
+/* 定位由 Base UI Positioner 负责，面板不再自己 absolute + top/right。 */
+.acct__positioner {
+  z-index: 60;
+}
+
 .acct__menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
   min-width: 176px;
   padding-block: 6px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: 0 10px 26px rgba(20, 23, 26, 0.09);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition:
-    opacity var(--fast),
-    transform var(--fast),
-    visibility 0s linear var(--fast);
-}
-
-.acct__menu[data-open="true"] {
-  opacity: 1;
-  visibility: visible;
+  outline: none;
   transform: none;
   transition: opacity var(--fast), transform var(--fast);
 }
 
-/* 头像和菜单之间那条 10px 缝：补一块透明桥。
-   没有它，鼠标从头像往菜单走的路上会先掉出 .acct，
-   pointerleave 抢先一步把菜单收掉——菜单根本够不着。 */
-.acct__menu::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -10px;
-  height: 10px;
+.acct__menu[data-starting-style],
+.acct__menu[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-4px);
 }
+
+/* 头像与菜单之间的 10px 缝由 Positioner 的 sideOffset 留出，
+   hover 收起由 Base UI 的 closeDelay 兜底，不再需要透明桥。 */
 
 .acct__item {
   display: block;
@@ -515,10 +505,20 @@ a.acct__trigger--anon:hover {
   transition: opacity var(--base), visibility 0s linear var(--base);
 }
 
-.scrim[data-open="true"] {
+/* MobileNav 常驻遮罩用 data-open="true|false" 切换；
+   Base UI 的 Backdrop 只在打开时挂载，data-open 为空串。
+   两种写法都要命中，所以按「存在且不为 false」判断。 */
+.scrim[data-open]:not([data-open="false"]) {
   opacity: 1;
   visibility: visible;
   transition: opacity var(--base);
+}
+
+/* Base UI 退场期间 open 已为 false，但节点仍挂着；显式保持可见才能淡出。 */
+.scrim[data-starting-style],
+.scrim[data-ending-style] {
+  opacity: 0;
+  visibility: visible;
 }
 
 .drawer {
