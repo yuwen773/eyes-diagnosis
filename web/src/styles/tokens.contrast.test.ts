@@ -18,6 +18,10 @@ function contrast(a: string, b: string) {
 
 const css = readFileSync(new URL("./tokens.css", import.meta.url), "utf8")
 const value = (name: string) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(css)![1]
+// 暗主题覆盖写在 html.dark 块里，同名令牌取第一段 html.dark 之后的值。
+const darkCss = css.slice(css.indexOf("html.dark {"))
+const darkValue = (name: string) =>
+  new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(darkCss)![1]
 
 describe("正文三级色对比度", () => {
   it("浅底 paper-ink-3 ≥ 4.5", () => {
@@ -30,5 +34,28 @@ describe("正文三级色对比度", () => {
   it("橙色文字 ≥ 4.5", () => {
     expect(contrast(value("--paper-signal-text"), value("--field"))).toBeGreaterThanOrEqual(4.5)
     expect(contrast(value("--paper-signal-text"), value("--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("图表分类色板", () => {
+  const LIGHT = [1, 2, 3, 4, 5, 6].map((n) => value(`--viz-series-${n}`))
+  const DARK = [1, 2, 3, 4, 5, 6].map((n) => darkValue(`--viz-series-${n}`))
+
+  it("浅色底上每色 ≥ 3:1（图形元素可辨识下限）", () => {
+    for (const color of LIGHT) {
+      expect(contrast(color, value("--surface"))).toBeGreaterThanOrEqual(3)
+      expect(contrast(color, value("--field"))).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it("暗色底上每色 ≥ 3:1", () => {
+    for (const color of DARK) {
+      expect(contrast(color, "#1d2220")).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it("六色互不重复：颜色虽非唯一载体，但重复会直接抹掉系列区分", () => {
+    expect(new Set(LIGHT).size).toBe(LIGHT.length)
+    expect(new Set(DARK).size).toBe(DARK.length)
   })
 })

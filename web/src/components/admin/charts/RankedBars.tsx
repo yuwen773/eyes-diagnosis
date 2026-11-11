@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   LabelList,
   ResponsiveContainer,
   Tooltip,
@@ -18,6 +19,7 @@ import {
   VizTooltip,
   formatVizNumber,
   formatVizPercent,
+  vizSeriesColor,
 } from "./ChartFrame"
 
 /**
@@ -90,10 +92,12 @@ export function RankedBars(props: {
               <Bar
                 dataKey="value"
                 name={unit ?? "数量"}
-                fill={VIZ.accent}
                 radius={[0, 4, 4, 0]}
                 isAnimationActive={false}
               >
+                {rows.map((row, index) => (
+                  <Cell key={`${row.name}-${index}`} fill={vizSeriesColor(index)} />
+                ))}
                 <LabelList
                   dataKey="value"
                   position="right"

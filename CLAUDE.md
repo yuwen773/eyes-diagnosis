@@ -91,14 +91,17 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`（品牌令牌、双主题、页面骨架、参考实现）。后端任务不需要读。
 
 ### Design Rules（写前端必须遵守）
+- **三档表达强度**（DESIGN.md §2.1）：A 临床判读（`Diagnosis`/`Records`/`RecordSheet`）保持最严；B 管理/数据分析（`admin/`、图表、弹层）允许分类数据色、4–8px 浮层圆角与 ≤240ms 状态过渡；C 品牌/Agent 视觉层允许有界动效与品牌渐变。**安全、医学措辞、可访问性、统计口径、证据链不因档位放松**。
 - **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。
 - **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
+- **分类色只用于 B 档图表**：`--viz-series-1..6`（浅/暗两套），不得占用 `--signal` 或 `--risk-*`；用了分类色就必须同时有读数表/直标/图例/线型等第二通道。
 - **所有数字用等宽字体** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、计数、时间戳、哈希。
 - **衬线标题用 `--font-serif`（Noto Serif SC 栈），weight 只允许 400**，禁止 700+ 与斜体；正文与控件用 `--font-sans`。
-- **圆角默认 0**（按钮、输入、卡片、表格），圆形用 50%，药丸 999px；不要堆圆角。
-- **发丝线优先于厚重卡片阴影**，需要层级时才用极淡的墨色阴影。
-- **AI 装饰零容忍**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
+- **圆角只用令牌梯**：`--radius-none/sm/md/lg/circle/pill`（0 / 4 / 8 / 12 / 50% / 999px）；A 档主控件默认 0，B 档浮层 4–8px，C 档面板 8–12px。不再写像素自由值。
+- **发丝线优先于厚重卡片阴影**；浮层用 `--shadow-overlay`，模态/抽屉用 `--shadow-modal`，阴影一律基于墨色。
+- **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题；C 档动效必须有性能预算、离屏暂停与 `prefers-reduced-motion` 开关。
 - **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
+- **弹层统一走 Base UI**（`src/components/ui/dialog.tsx`）：Portal、焦点陷阱、inert、滚动锁、嵌套 Esc 栈不手写第二套；Portal 面板显式带 `.is-field` 等语境类。
 - 页面骨架：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条。
 
 ### 参考实现

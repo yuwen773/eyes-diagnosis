@@ -87,12 +87,37 @@
 
   /* ── 动效 ──────────────────────────────────── */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --fast: 140ms var(--ease);
-  --base: 240ms var(--ease);
+  --motion-fast: 140ms;
+  --motion-base: 240ms;
+  --motion-slow: 420ms;
+  --fast: var(--motion-fast) var(--ease);
+  --base: var(--motion-base) var(--ease);
+
+  /* ── 圆角梯（A 档临床默认 0；B 档浮层 2–8；C 档品牌面板 8–12）── */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ── 深度（一律墨色，不用纯黑）──────────────── */
+  --shadow-overlay: 0 10px 26px rgba(20, 23, 26, 0.09);
+  --shadow-modal: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
 
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
   --viz-mute: #8b9195;
+
+  /* ── 分类色板（B 档数据图表专用；不占用 --signal / --risk-*）──
+     浅色底对 #ffffff 对比度 4.45–5.48:1；红绿色弱下蓝/青/绿仍接近，
+     所以系列必须同时有直标、读数表或线型区分，颜色不是唯一载体。 */
+  --viz-series-1: #356f95;
+  --viz-series-2: #3f7d72;
+  --viz-series-3: #6a7f3f;
+  --viz-series-4: #7a5f8a;
+  --viz-series-5: #96694a;
+  --viz-series-6: #6f767b;
 }
 
 /* ==========================================================================
@@ -230,6 +255,14 @@ html.dark {
 
   --viz-accent: #d9591f;
   --viz-mute: #767d79;
+
+  /* 暗底提亮一档；对 #1d2220 的对比度 5.66–7.08:1。 */
+  --viz-series-1: #6fa8c9;
+  --viz-series-2: #6fb3a4;
+  --viz-series-3: #9fb46d;
+  --viz-series-4: #b094c0;
+  --viz-series-5: #c48d6c;
+  --viz-series-6: #9aa1a6;
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，

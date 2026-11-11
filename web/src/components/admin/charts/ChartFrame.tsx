@@ -20,6 +20,24 @@ export function formatVizPercent(share: number): string {
   return Number.isFinite(share) ? `${(share * 100).toFixed(1)}%` : "—"
 }
 
+/**
+ * 分类色板（B 档数据图表专用）。颜色不是唯一载体：每张图仍配读数表，
+ * 小倍数有标题与末值，占比条有图例与计数。
+ */
+export const VIZ_SERIES = [
+  "var(--viz-series-1)",
+  "var(--viz-series-2)",
+  "var(--viz-series-3)",
+  "var(--viz-series-4)",
+  "var(--viz-series-5)",
+  "var(--viz-series-6)",
+] as const
+
+/** 按序号取分类色；超出六类回绕。 */
+export function vizSeriesColor(index: number): string {
+  return VIZ_SERIES[((index % VIZ_SERIES.length) + VIZ_SERIES.length) % VIZ_SERIES.length]
+}
+
 /** 图表配色：全部引用 CSS 变量，深色主题自动跟随。 */
 export const VIZ = {
   /** 强调（信号橙）：只给「当前要处理的重点」用，不做大面积填充。 */

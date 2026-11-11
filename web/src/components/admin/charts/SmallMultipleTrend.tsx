@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts"
 
-import { VIZ, VizTooltip, formatVizNumber } from "./ChartFrame"
+import { VIZ, VizTooltip, formatVizNumber, vizSeriesColor } from "./ChartFrame"
 
 /**
  * 统一尺度的小倍数折线。
@@ -19,8 +19,10 @@ export function SmallMultipleTrend(props: {
   /** 与其它小倍数共用的 Y 上限 */
   domainMax: number
   labels?: string[]
+  /** 分类色序号：同一病种在分布图与趋势图里用同一种颜色。 */
+  colorIndex?: number
 }): ReactElement {
-  const { title, points, domainMax, labels } = props
+  const { title, points, domainMax, labels, colorIndex = 0 } = props
   const last = points.length > 0 ? points[points.length - 1] : undefined
   const peak = points.length > 0 ? Math.max(...points) : undefined
   const data = points.map((value, index) => ({
@@ -47,7 +49,7 @@ export function SmallMultipleTrend(props: {
               type="monotone"
               dataKey="value"
               name={title}
-              stroke={VIZ.mute}
+              stroke={vizSeriesColor(colorIndex)}
               strokeWidth={1.5}
               dot={false}
               activeDot={{ r: 3, fill: VIZ.accent }}

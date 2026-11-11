@@ -7,6 +7,7 @@ import {
   VizTooltip,
   formatVizNumber,
   formatVizPercent,
+  vizSeriesColor,
 } from "./ChartFrame"
 
 /**
@@ -16,11 +17,10 @@ import {
  * 横条要读者自己拿尺子比，分段条一眼看出「待复核占多大一块」。
  *
  * <p>颜色不是唯一信息载体：每一段都在下面的读数行里带文字标签 + 计数 + 占比。
- * 「待复核」用信号橙（当前要处理的重点），其余用去强调墨色 + 不同透明度分层。
+ * 「待复核」用信号橙（当前要处理的重点），其余取分类色板——不再用同一墨色
+ * 叠透明度，半透明段在暗底上会互相混成一种颜色。
  */
 export type ShareRow = { name: string; value: number; share: number }
-
-const SEGMENT_OPACITY = [1, 0.72, 0.5, 0.34, 0.22]
 
 export function ShareBar(props: {
   rows: ShareRow[]
@@ -44,10 +44,7 @@ export function ShareBar(props: {
     name: row.name,
     value: row.value,
     share: row.share,
-    fill: accentNames.includes(row.name) ? VIZ.accent : VIZ.mute,
-    opacity: accentNames.includes(row.name)
-      ? 1
-      : SEGMENT_OPACITY[Math.min(index, SEGMENT_OPACITY.length - 1)],
+    fill: accentNames.includes(row.name) ? VIZ.accent : vizSeriesColor(index),
   }))
 
   return (
@@ -87,7 +84,6 @@ export function ShareBar(props: {
                       name={segment.name}
                       stackId="share"
                       fill={segment.fill}
-                      fillOpacity={segment.opacity}
                       isAnimationActive={false}
                     />
                   ))}
@@ -97,13 +93,8 @@ export function ShareBar(props: {
                 {colors.map((segment) => (
                   <li className="admin-viz__legend-item" key={segment.key}>
                     <span
-                      className={
-                        "admin-viz__swatch " +
-                        (segment.fill === VIZ.accent
-                          ? "admin-viz__swatch--accent"
-                          : "admin-viz__swatch--mute")
-                      }
-                      style={{ opacity: segment.opacity }}
+                      className="admin-viz__swatch"
+                      style={{ background: segment.fill }}
                     />
                     <span className="admin-viz__legend-name">{segment.name}</span>
                     <span className="admin-viz__legend-value num">

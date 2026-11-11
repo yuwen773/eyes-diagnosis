@@ -4001,13 +4001,13 @@ html:not(.dark) .auth__beam {
   color: var(--auth-status);
 }
 
+/* 静态圆点 + 文字标签：不再用橙色光晕与无限呼吸。
+   「系统在线」由旁边那句状态文案说清楚，不靠动画。 */
 .auth__status i {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--signal);
-  box-shadow: 0 0 8px rgba(239, 122, 69, 0.8);
-  animation: live-pulse 2.6s var(--ease) infinite;
 }
 
 .auth .overline {

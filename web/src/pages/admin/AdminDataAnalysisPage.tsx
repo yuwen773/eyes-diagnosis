@@ -232,12 +232,13 @@ export function AdminDataAnalysisPage(): ReactElement {
           <p className="admin-analysis__empty num">窗口内没有可统计的判读记录。</p>
         ) : (
           <div className="admin-analysis__grid admin-analysis__grid--trend">
-            {diseaseSeries.map((series) => (
+            {diseaseSeries.map((series, index) => (
               <SmallMultipleTrend
                 key={series.name}
                 title={series.name}
                 points={series.points}
                 domainMax={domainMax}
+                colorIndex={index}
               />
             ))}
           </div>
