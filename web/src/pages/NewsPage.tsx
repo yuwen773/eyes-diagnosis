@@ -1,3 +1,5 @@
+import "@/styles/news.css"
+
 import { useMemo, useState, type FormEvent } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { describeError, listNews, type NewsItem } from "@/lib/api"

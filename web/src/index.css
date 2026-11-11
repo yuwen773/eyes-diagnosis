@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 @import "./styles/app.css";
-@import "./styles/news.css";
-@import "./styles/records.css";
 @import "./styles/disclaimer.css";
-@import "./styles/agent.css";
 @import "./styles/fault.css";
-@import "./styles/admin.css";
+
+/* admin / agent / news / records 由各自的路由模块自带：
+   没进后台的人不必下载管理端样式，首屏 CSS 也更小。 */

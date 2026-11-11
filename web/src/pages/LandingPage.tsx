@@ -1,18 +1,50 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react"
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react"
 import { Link } from "react-router-dom"
 import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
-import { useRevealScan } from "@/lib/useInView"
+import { useInView, useRevealScan } from "@/lib/useInView"
 import { useTheme } from "@/components/theme-provider"
-import { AgentComposer } from "@/components/AgentComposer"
-import { AgentScreenDeck } from "@/components/AgentScreenDeck"
-import { GridScan } from "@/components/GridScan"
 import { RecordSheet } from "@/components/RecordSheet"
-import { ScrollExpand } from "@/components/ScrollExpand"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
 import { SiteHeader } from "@/components/SiteHeader"
 import { TargetCursor } from "@/components/TargetCursor"
+
+// 重型视觉组件独立成块：首屏的扫描舱要立刻有，其余等进入视口再下载。
+const GridScan = lazy(() =>
+  import("@/components/GridScan").then((m) => ({ default: m.GridScan })),
+)
+const ScrollExpand = lazy(() =>
+  import("@/components/ScrollExpand").then((m) => ({ default: m.ScrollExpand })),
+)
+const AgentComposer = lazy(() =>
+  import("@/components/AgentComposer").then((m) => ({ default: m.AgentComposer })),
+)
+const AgentScreenDeck = lazy(() =>
+  import("@/components/AgentScreenDeck").then((m) => ({ default: m.AgentScreenDeck })),
+)
+
+/**
+ * 进入视口后再挂载子树（含其 chunk）。
+ * 未挂载时用 minHeight 撑住版面，避免滚动到该段时页面高度突然变化。
+ */
+function Deferred(props: { minHeight: string; children: ReactNode }) {
+  const [ref, inView] = useInView<HTMLDivElement>("360px 0px 360px 0px")
+  return (
+    <div ref={ref} style={inView ? undefined : { minHeight: props.minHeight }}>
+      {inView ? <Suspense fallback={null}>{props.children}</Suspense> : null}
+    </div>
+  )
+}
 
 const STRIP = [
   { label: "覆盖", value: "8 类眼底改变" },
@@ -259,6 +291,7 @@ export function LandingPage() {
           <div className="hero-stage__scan" aria-hidden="true">
             {/* 白纸上的房间要更「有体积」：线条压深一档、角落阴影加重，
                 读数光收细收暗——纸面上经不起一团亮光。 */}
+            <Suspense fallback={null}>
             <GridScan
               theme={dark ? "dark" : "light"}
               cells={6}
@@ -275,6 +308,7 @@ export function LandingPage() {
               linesColor={dark ? undefined : "#a9afa3"}
               clickEffect="ping"
             />
+            </Suspense>
           </div>
           <div className="hero-stage__scrim" aria-hidden="true" />
 
@@ -358,6 +392,7 @@ export function LandingPage() {
         </div>
 
         <section className="plate" aria-label="眼底影像示意">
+          <Deferred minHeight="100svh">
           <ScrollExpand
             src={dark ? "/scroll-expand-dark.webp" : "/scroll-expand-light.webp"}
             tone={dark ? "dark" : "light"}
@@ -390,6 +425,7 @@ export function LandingPage() {
               <span className="scroll-expand__caption-note">眼底示意渲染 · 非真实患者影像</span>
             </div>
           </ScrollExpand>
+          </Deferred>
         </section>
 
         {/* 光幕之后立刻给出真实样本：示意图讲「输入」，这组局部讲模型读什么。 */}
@@ -570,14 +606,18 @@ export function LandingPage() {
                 className="agent-stage__composer reveal"
                 style={{ "--d": "120ms" } as CSSProperties}
               >
-                <AgentComposer dark={dark} />
+                <Deferred minHeight="220px">
+                  <AgentComposer dark={dark} />
+                </Deferred>
               </div>
 
               <div
                 className="agent-stage__deck reveal"
                 style={{ "--d": "220ms" } as CSSProperties}
               >
-                <AgentScreenDeck dark={dark} />
+                <Deferred minHeight="360px">
+                  <AgentScreenDeck dark={dark} />
+                </Deferred>
                 <p className="small agent-stage__caption">
                   示例界面，非真实患者。工具调用、检索来源与回答均为演示数据。
                 </p>

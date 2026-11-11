@@ -1,27 +1,66 @@
-import { useEffect } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
 import { FaultProvider, FaultToaster } from "@/components/fault"
 import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
+import { PageSkeleton } from "@/components/PageSkeleton"
 import { LandingPage } from "@/pages/LandingPage"
-import { DiagnosisPage } from "@/pages/DiagnosisPage"
-import { AgentPage } from "@/pages/AgentPage"
-import { NewsPage } from "@/pages/NewsPage"
-import { NewsDetailPage } from "@/pages/NewsDetailPage"
-import { ProfilePage } from "@/pages/ProfilePage"
-import { RecordsPage } from "@/pages/RecordsPage"
-import { LoginPage } from "@/pages/LoginPage"
-import { RegisterPage } from "@/pages/RegisterPage"
-import { AdminGate } from "@/components/admin/AdminGate"
-import { AdminLayout } from "@/components/admin/AdminLayout"
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
-import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
-import { AdminNewsPage } from "@/pages/admin/AdminNewsPage"
-import { AdminDiagnosisPage } from "@/pages/admin/AdminDiagnosisPage"
-import { AdminKnowledgePage } from "@/pages/admin/AdminKnowledgePage"
-import { AdminDataAnalysisPage } from "@/pages/admin/AdminDataAnalysisPage"
-import { AdminNewsEditPage } from "@/pages/admin/AdminNewsEditPage"
+
+// 首页保持同步：它是第一屏，分包只会多一次往返。其余路由按需下载——
+// 管理端（含 Recharts）、Agent（含 CodeMirror 之外的视觉组件）与认证页
+// 各自成块，别让没进后台的人先付这份体积。
+const DiagnosisPage = lazy(() =>
+  import("@/pages/DiagnosisPage").then((m) => ({ default: m.DiagnosisPage })),
+)
+const AgentPage = lazy(() =>
+  import("@/pages/AgentPage").then((m) => ({ default: m.AgentPage })),
+)
+const NewsPage = lazy(() =>
+  import("@/pages/NewsPage").then((m) => ({ default: m.NewsPage })),
+)
+const NewsDetailPage = lazy(() =>
+  import("@/pages/NewsDetailPage").then((m) => ({ default: m.NewsDetailPage })),
+)
+const ProfilePage = lazy(() =>
+  import("@/pages/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+)
+const RecordsPage = lazy(() =>
+  import("@/pages/RecordsPage").then((m) => ({ default: m.RecordsPage })),
+)
+const LoginPage = lazy(() =>
+  import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+)
+const RegisterPage = lazy(() =>
+  import("@/pages/RegisterPage").then((m) => ({ default: m.RegisterPage })),
+)
+const AdminGate = lazy(() =>
+  import("@/components/admin/AdminGate").then((m) => ({ default: m.AdminGate })),
+)
+const AdminLayout = lazy(() =>
+  import("@/components/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })),
+)
+const AdminDashboardPage = lazy(() =>
+  import("@/pages/admin/AdminDashboardPage").then((m) => ({ default: m.AdminDashboardPage })),
+)
+const AdminUsersPage = lazy(() =>
+  import("@/pages/admin/AdminUsersPage").then((m) => ({ default: m.AdminUsersPage })),
+)
+const AdminNewsPage = lazy(() =>
+  import("@/pages/admin/AdminNewsPage").then((m) => ({ default: m.AdminNewsPage })),
+)
+const AdminDiagnosisPage = lazy(() =>
+  import("@/pages/admin/AdminDiagnosisPage").then((m) => ({ default: m.AdminDiagnosisPage })),
+)
+const AdminKnowledgePage = lazy(() =>
+  import("@/pages/admin/AdminKnowledgePage").then((m) => ({ default: m.AdminKnowledgePage })),
+)
+const AdminDataAnalysisPage = lazy(() =>
+  import("@/pages/admin/AdminDataAnalysisPage").then((m) => ({ default: m.AdminDataAnalysisPage })),
+)
+const AdminNewsEditPage = lazy(() =>
+  import("@/pages/admin/AdminNewsEditPage").then((m) => ({ default: m.AdminNewsEditPage })),
+)
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -77,6 +116,7 @@ export function App() {
         <FaultProvider>
         <ScrollToTop />
         <AuthRedirect />
+        <Suspense fallback={<PageSkeleton />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/diagnosis" element={<DiagnosisPage />} />
@@ -129,6 +169,7 @@ export function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
         <FaultToaster />
         </FaultProvider>
         </SessionProvider>

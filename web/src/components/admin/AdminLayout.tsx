@@ -1,3 +1,5 @@
+import "@/styles/admin.css"
+
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { useTheme } from "@/components/theme-provider"
 import { useSession } from "@/lib/session"
