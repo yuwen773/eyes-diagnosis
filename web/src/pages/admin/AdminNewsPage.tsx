@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactElement } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
 import { DataTable, type Column } from "@/components/admin/DataTable"
@@ -47,13 +47,26 @@ function truncateSummary(value?: string): string {
  */
 export function AdminNewsPage(): ReactElement {
   const navigate = useNavigate()
+  // 下钻入口：仪表盘的「资讯待审核」带 ?status=3 进来，直接落到待审核筛选上。
+  const [searchParams] = useSearchParams()
+  const initialStatus = ((): string => {
+    const value = searchParams.get("status")
+    return value !== null && NEWS_STATUS_OPTIONS.some((option) => String(option.value) === value)
+      ? value
+      : ""
+  })()
 
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [titleDraft, setTitleDraft] = useState("")
-  const [statusDraft, setStatusDraft] = useState("")
+  const [statusDraft, setStatusDraft] = useState(initialStatus)
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
-  const [query, setQuery] = useState<Query>({ title: "", status: "", startDate: "", endDate: "" })
+  const [query, setQuery] = useState<Query>({
+    title: "",
+    status: initialStatus,
+    startDate: "",
+    endDate: "",
+  })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
   const [view, setView] = useState<View>({ data: null, fault: null, loading: true })

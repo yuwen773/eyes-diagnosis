@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type ReactElement } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react"
+import { Link } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
 import { StatTile } from "@/components/admin/StatTile"
-import { TrendChart } from "@/components/admin/charts/TrendChart"
+import { TrendAreaChart } from "@/components/admin/charts/TrendAreaChart"
+import { ShareBar } from "@/components/admin/charts/ShareBar"
 import { RankedBars } from "@/components/admin/charts/RankedBars"
-import { DataTable } from "@/components/admin/DataTable"
-import type { Column } from "@/components/admin/DataTable"
+import { DataTable, type Column } from "@/components/admin/DataTable"
 import { FaultNote } from "@/components/fault"
 import {
   getAdminStats,
@@ -18,76 +19,128 @@ import {
   confidencePercent,
   formatStatNumber,
   formatStatPercent,
+  humanReviewStatusLabel,
   rankDistribution,
 } from "@/lib/adminDomain"
+import { alignPreviousWindow, changeLabel } from "@/lib/chartData"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
-/** 仪表盘读数的时间窗：近 30 天。 */
-const RANGE_DAYS = 30
-/** 趋势图取最近 7 天（30 天的折线挤在一张图里读不出日节律）。 */
-const TREND_DAYS = 7
+/** 统计时间窗：整页统一，KPI、趋势、分布都覆盖同一段时间。 */
+const RANGES = [
+  { value: 7, label: "7 天" },
+  { value: 30, label: "30 天" },
+  { value: 90, label: "90 天" },
+]
 
-type View = { data: AdminStats | null; fault: ErrorDetail | null; loading: boolean }
+/** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
+const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
 
-/** 日期 → 轴标签：只留月-日，轴上要的是「哪天」不是「哪年」。 */
-function dayLabel(day: string): string {
-  return day.length >= 10 ? day.slice(5) : day
+type View = { data: AdminStats | null; fault: ErrorDetail | null }
+/** 最近记录单独一套三态：统计先回、记录还在飞，不该被说成「暂无记录」。 */
+type RecentView = {
+  data: Page<AdminDiagnosis> | null
+  fault: ErrorDetail | null
 }
 
 /**
- * 仪表盘（真实统计）。
+ * 仪表盘（真实统计 · 运营工作台）。
  *
- * 数据来自 {@code GET /stats/admin/overview}：KPI 条、趋势、病种分布都是后端
- * 聚合出来的真实读数，不再是示例数据。页面上仍然标注统计口径（时间窗），
- * 让读数的人知道这些数字覆盖的是哪一段时间。
+ * <p>读数来自 {@code GET /stats/admin/overview}：KPI、趋势、分布都是后端聚合
+ * 出来的真实数据，不再是示例数据。
+ *
+ * <p>排序原则：先说「现在有什么要处理」，再说「系统产出了多少数据」。
+ * 待复核积压、AI 拒识、失败任务是动作项，排在最前面并直接给出下钻入口；
+ * 判读量与新增用户是背景读数。平均置信度只作为附注出现，并注明它不是准确率。
+ *
+ * <p>两组请求各自独立：统计与最近记录分别取、分别落地。加载态由「还没有数据
+ * 也没有错误」派生，不在 effect 里同步写 state。
  */
 export function AdminDashboardPage(): ReactElement {
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
+  const [days, setDays] = useState(30)
+  const [view, setView] = useState<View>({ data: null, fault: null })
+  const [recent, setRecent] = useState<RecentView>({ data: null, fault: null })
   const requestSeq = useRef(0)
+  const recentSeq = useRef(0)
 
-  const [recent, setRecent] = useState<Page<AdminDiagnosis> | null>(null)
-
-  /** 取一次总览 + 一次最近判读记录。两次请求互不依赖，各自落地。 */
-  const load = useCallback(() => {
+  useEffect(() => {
     const seq = ++requestSeq.current
-    setView((prev) => ({ data: prev.data, fault: null, loading: true }))
-    getAdminStats(RANGE_DAYS).then(
+    getAdminStats(days).then(
       (data) => {
         if (seq !== requestSeq.current) return
-        setView({ data, fault: null, loading: false })
+        setView({ data, fault: null })
       },
       (cause) => {
         if (seq !== requestSeq.current) return
-        setView({ data: null, fault: describeError(cause), loading: false })
+        setView({ data: null, fault: describeError(cause) })
       },
     )
+  }, [days])
+
+  useEffect(() => {
+    const seq = ++recentSeq.current
     listDiagnoses({ current: 1, pageSize: 5 }).then(
-      (data) => setRecent(data),
-      () => setRecent(null),
+      (data) => {
+        if (seq !== recentSeq.current) return
+        setRecent({ data, fault: null })
+      },
+      (cause) => {
+        if (seq !== recentSeq.current) return
+        setRecent({ data: null, fault: describeError(cause) })
+      },
     )
   }, [])
 
-  useEffect(() => {
-    load()
-  }, [load])
-
   const stats = view.data
-  const trendPoints = (stats?.diagnosisTrend ?? [])
-    .slice(-TREND_DAYS)
-    .map((row) => ({ label: dayLabel(row.day), value: row.value }))
+  const statsLoading = view.data === null && view.fault === null
+  const recentLoading = recent.data === null && recent.fault === null
+
+  const trendRows = useMemo(
+    () =>
+      alignPreviousWindow(
+        stats?.trendDays ?? [],
+        stats?.diagnosisTrend ?? [],
+        stats?.previousDiagnosisTrend ?? [],
+      ),
+    [stats],
+  )
+
   const distribution = rankDistribution(stats?.diagnosisDistribution ?? [])
 
-  const recentRows = recent?.records ?? []
+  const reviewDistribution = useMemo(
+    () =>
+      rankDistribution(
+        (stats?.reviewDistribution ?? []).map((row) => ({
+          name: humanReviewStatusLabel(row.name),
+          value: row.value,
+        })),
+      ),
+    [stats],
+  )
+
+  const newsPending = useMemo(() => {
+    const row = (stats?.newsByStatus ?? []).find((entry) => Number(entry.name) === 3)
+    return row ? row.value : 0
+  }, [stats])
+
+  const awaitingTotal = stats?.diagnosisAwaitingReviewTotal ?? 0
+  const aiRejected = stats?.diagnosisAiRejected ?? 0
+  const inRange = stats?.diagnosisInRange ?? 0
+  const rejectShare = inRange > 0 ? aiRejected / inRange : 0
+
+  /** 读数：统计还没回来时给破折号，不给 0——「还没读到」和「读到是零」是两件事。 */
+  const read = (value: number | undefined): string =>
+    stats ? formatStatNumber(value ?? 0) : "—"
+
+  const recentRows = recent.data?.records ?? []
 
   const recentColumns: Column<AdminDiagnosis>[] = [
     { key: "username", title: "用户", width: "140px" },
     {
       key: "result",
       title: "结果",
-      render: (row) =>
-        row.result ?? (row.aiRejected ? "AI 拒识" : "—"),
+      render: (row) => row.result ?? (row.aiRejected ? "AI 拒识" : "—"),
     },
     {
       key: "confidence",
@@ -109,6 +162,19 @@ export function AdminDashboardPage(): ReactElement {
     <div className="admin-dashboard">
       <div className="admin-dashboard__head">
         <SectionHead code="01" kicker="仪表盘" en="ADMIN · DASHBOARD" />
+        <div className="admin-dashboard__range" role="group" aria-label="统计时间窗">
+          {RANGES.map((range) => (
+            <button
+              key={range.value}
+              type="button"
+              className="admin-dashboard__range-btn"
+              aria-pressed={days === range.value}
+              onClick={() => setDays(range.value)}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
         {stats ? (
           <span className="admin-sample num">
             {stats.rangeStart} ~ {stats.rangeEnd} · 近 {stats.days} 天
@@ -128,44 +194,132 @@ export function AdminDashboardPage(): ReactElement {
         />
       ) : null}
 
+      {/* KPI：动作项在前（待复核 / 拒识），背景读数在后（判读量 / 新增用户）。 */}
       <section className="admin-kpis" aria-label="关键指标">
         <StatTile
-          label="判读总数"
-          value={stats ? formatStatNumber(stats.diagnosisTotal) : "—"}
-          delta={stats ? `窗口内 ${formatStatNumber(stats.diagnosisInRange)} 条` : undefined}
+          label="待人工复核"
+          value={read(stats?.diagnosisAwaitingReviewTotal)}
+          tone={awaitingTotal > 0 ? "attention" : "normal"}
+          toneLabel={awaitingTotal > 0 ? "待处理" : "已清空"}
+          delta={
+            stats ? `窗口内新增 ${formatStatNumber(stats.diagnosisAwaitingReview)} 条` : undefined
+          }
+          action={{ label: "去复核", to: "/admin/diagnosis?review=requiresReview" }}
           accent
         />
         <StatTile
-          label="用户总数"
-          value={stats ? formatStatNumber(stats.userTotal) : "—"}
-          delta={stats ? `窗口内新增 ${formatStatNumber(stats.userNew)}` : undefined}
+          label="AI 拒识"
+          value={read(stats?.diagnosisAiRejected)}
+          tone={aiRejected > 0 ? "attention" : "normal"}
+          toneLabel={aiRejected > 0 ? "无结论" : "无"}
+          delta={`占窗口内判读 ${formatStatPercent(rejectShare)}`}
+          action={{ label: "去查看", to: "/admin/diagnosis?review=aiRejected" }}
         />
         <StatTile
-          label="今日判读"
-          value={stats ? formatStatNumber(stats.diagnosisToday) : "—"}
-          delta={stats ? `待复核 ${formatStatNumber(stats.diagnosisAwaitingReview)}` : undefined}
+          label="窗口内判读"
+          value={read(stats?.diagnosisInRange)}
+          delta={
+            stats
+              ? changeLabel(stats.diagnosisInRange, stats.previousDiagnosisInRange)
+              : undefined
+          }
         />
         <StatTile
-          label="知识库文档"
-          value={stats ? formatStatNumber(stats.knowledgeTotal) : "—"}
-          delta={stats ? `切片 ${formatStatNumber(stats.knowledgeChunks)} 块` : undefined}
+          label="窗口内新增用户"
+          value={read(stats?.userNew)}
+          delta={
+            stats ? changeLabel(stats.userNew, stats.previousUserNew) : undefined
+          }
         />
+      </section>
+
+      {/* 待处理事项：每条直接给出「去哪儿处理」，不再让管理员自己找列表。 */}
+      <section className="admin-dashboard__actions" aria-label="待处理事项">
+        <h2 className="admin-dashboard__actions-title">待处理事项</h2>
+        <ul className="admin-dashboard__action-list">
+          <li className="admin-dashboard__action">
+            <span className="admin-dashboard__action-label">待人工复核</span>
+            <span className="admin-dashboard__action-value num">
+              {read(stats?.diagnosisAwaitingReviewTotal)}
+            </span>
+            <Link className="admin-dashboard__action-link" to="/admin/diagnosis?review=requiresReview">
+              去复核
+            </Link>
+          </li>
+          <li className="admin-dashboard__action">
+            <span className="admin-dashboard__action-label">AI 拒识记录</span>
+            <span className="admin-dashboard__action-value num">
+              {read(stats?.diagnosisAiRejected)}
+            </span>
+            <Link className="admin-dashboard__action-link" to="/admin/diagnosis?review=aiRejected">
+              去查看
+            </Link>
+          </li>
+          <li className="admin-dashboard__action">
+            <span className="admin-dashboard__action-label">知识库处理失败</span>
+            <span className="admin-dashboard__action-value num">
+              {read(stats?.knowledgeFailed)}
+            </span>
+            <Link className="admin-dashboard__action-link" to="/admin/knowledge?status=2">
+              去处理
+            </Link>
+          </li>
+          <li className="admin-dashboard__action">
+            <span className="admin-dashboard__action-label">资讯待审核</span>
+            <span className="admin-dashboard__action-value num">
+              {read(newsPending)}
+            </span>
+            <Link className="admin-dashboard__action-link" to="/admin/news?status=3">
+              去审核
+            </Link>
+          </li>
+        </ul>
       </section>
 
       <section className="admin-dashboard__charts" aria-label="趋势与分布">
-        <TrendChart points={trendPoints} ariaLabel={`判读趋势 · 近 ${TREND_DAYS} 天`} />
-        <RankedBars rows={distribution} ariaLabel="病种分布" />
+        {statsLoading ? (
+          <p className="admin-dashboard__loading num">统计载入中…</p>
+        ) : (
+          <TrendAreaChart
+            data={trendRows}
+            ariaLabel={`判读趋势 · 近 ${days} 天（含上一等长窗口对照）`}
+          />
+        )}
       </section>
 
-      <section className="admin-dashboard__records" aria-label="最近诊断记录">
-        <h2 className="admin-dashboard__records-title">最近诊断记录</h2>
+      <section className="admin-dashboard__split" aria-label="复核状态与病种分布">
+        {statsLoading ? null : (
+          <>
+            <ShareBar
+              rows={reviewDistribution}
+              ariaLabel="复核状态分布"
+              accentNames={[AWAITING_REVIEW_LABEL]}
+            />
+            <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" />
+          </>
+        )}
+      </section>
+
+      <section className="admin-dashboard__records" aria-label="最近判读记录">
+        <h2 className="admin-dashboard__records-title">最近判读记录</h2>
+        {recent.fault ? (
+          <FaultNote
+            className="admin-dashboard__fault"
+            fault={fault({
+              severity: "attention",
+              kind: "client",
+              title: `最近判读记录加载失败：${recent.fault.text}`,
+              code: recent.fault.code,
+            })}
+          />
+        ) : null}
         <DataTable<AdminDiagnosis>
           columns={recentColumns}
           rows={recentRows}
           rowKey={(row) => row.id}
-          loading={view.loading && recentRows.length === 0}
+          loading={recentLoading}
           emptyText="暂无判读记录"
-          page={{ current: 1, pageSize: 5, total: recent?.total ?? 0 }}
+          page={{ current: 1, pageSize: 5, total: recent.data?.total ?? 0 }}
           onPageChange={() => {}}
           hidePager
         />
@@ -173,9 +327,9 @@ export function AdminDashboardPage(): ReactElement {
 
       {stats ? (
         <p className="admin-dashboard__note num">
-          平均置信度 {formatStatPercent(stats.avgConfidence)} · 已复核{" "}
-          {formatStatNumber(stats.diagnosisReviewed)} 条 · AI 拒识{" "}
-          {formatStatNumber(stats.diagnosisAiRejected)} 条 · 资讯{" "}
+          平均置信度 {formatStatPercent(stats.avgConfidence)}（模型自评的置信度均值，
+          <b>不是诊断准确率</b>） · 已复核 {formatStatNumber(stats.diagnosisReviewed)} 条 ·
+          AI 拒识 {formatStatNumber(stats.diagnosisAiRejected)} 条 · 资讯{" "}
           {formatStatNumber(stats.newsTotal)} 篇
         </p>
       ) : null}

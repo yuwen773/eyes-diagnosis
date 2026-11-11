@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type ReactElement,
 } from "react"
+import { useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
 import { DataTable, type Column } from "@/components/admin/DataTable"
@@ -78,16 +79,25 @@ function formatFileSize(bytes?: string | number): string {
  * pollTimerRef 再挡一道重入，组件卸载走同一 cleanup 清定时器。
  */
 export function AdminKnowledgePage(): ReactElement {
+  // 下钻入口：仪表盘的「知识库处理失败」带 ?status=2 进来，直接落到失败筛选上。
+  // 只认合法的状态码，其余忽略。
+  const [searchParams] = useSearchParams()
+  const initialStatus = ((): string => {
+    const value = searchParams.get("status")
+    return value !== null && KNOWLEDGE_STATUS_FILTER_OPTIONS.some((o) => o.value === value)
+      ? value
+      : ""
+  })()
   const [fileNameDraft, setFileNameDraft] = useState("")
   const [titleDraft, setTitleDraft] = useState("")
-  const [statusDraft, setStatusDraft] = useState("")
+  const [statusDraft, setStatusDraft] = useState(initialStatus)
   const [fileTypeDraft, setFileTypeDraft] = useState("")
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
   const [query, setQuery] = useState<Query>({
     fileName: "",
     title: "",
-    status: "",
+    status: initialStatus,
     fileType: "",
     startDate: "",
     endDate: "",

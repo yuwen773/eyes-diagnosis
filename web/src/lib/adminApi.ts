@@ -327,16 +327,22 @@ export function getKnowledgeDetail(id: string): Promise<KnowledgeDetail> {
 /** 统计总览（仪表盘与数据分析共用同一份口径）。 */
 export type AdminStats = {
   days: number; rangeStart: string; rangeEnd: string
-  userTotal: number; userNew: number; userAdmin: number
-  diagnosisTotal: number; diagnosisInRange: number; diagnosisToday: number
+  userTotal: number; userNew: number; previousUserNew: number; userAdmin: number
+  diagnosisTotal: number; diagnosisInRange: number; previousDiagnosisInRange: number
+  diagnosisToday: number
   diagnosisAiRejected: number; diagnosisAwaitingReview: number; diagnosisReviewed: number
+  /** 待人工复核积压（全站累计）：现在还有多少没处理 */
+  diagnosisAwaitingReviewTotal: number
   /** 平均置信度（0–1）；无样本时为 null */
   avgConfidence: number | null
-  knowledgeTotal: number; knowledgeChunks: number
+  knowledgeTotal: number; knowledgeChunks: number; knowledgeFailed: number
   knowledgeByStatus: StatBucket[]
   newsTotal: number; newsByStatus: StatBucket[]
   trendDays: string[]
   diagnosisTrend: StatDayCount[]
+  /** 上一等长窗口的日序列（与 diagnosisTrend 按天对齐） */
+  previousDiagnosisTrend: StatDayCount[]
+  previousUserTrend: StatDayCount[]
   userTrend: StatDayCount[]
   diagnosisDistribution: StatBucket[]
   reviewDistribution: StatBucket[]
@@ -365,18 +371,26 @@ function num(value: unknown): number {
 
 type RawAdminStats = Omit<AdminStats, "userTotal" | "userNew" | "userAdmin" | "diagnosisTotal"
   | "diagnosisInRange" | "diagnosisToday" | "diagnosisAiRejected" | "diagnosisAwaitingReview"
-  | "diagnosisReviewed" | "knowledgeTotal" | "knowledgeChunks" | "newsTotal"
+  | "diagnosisReviewed" | "diagnosisAwaitingReviewTotal" | "knowledgeTotal" | "knowledgeChunks"
+  | "knowledgeFailed" | "newsTotal" | "previousUserNew" | "previousDiagnosisInRange"
   | "knowledgeByStatus" | "newsByStatus" | "diagnosisTrend" | "userTrend"
+  | "previousDiagnosisTrend" | "previousUserTrend"
   | "diagnosisDistribution" | "reviewDistribution" | "diagnosisTrendByResult"> & {
-  userTotal?: number | string; userNew?: number | string; userAdmin?: number | string
+  userTotal?: number | string; userNew?: number | string; previousUserNew?: number | string
+  userAdmin?: number | string
   diagnosisTotal?: number | string; diagnosisInRange?: number | string
+  previousDiagnosisInRange?: number | string
   diagnosisToday?: number | string; diagnosisAiRejected?: number | string
   diagnosisAwaitingReview?: number | string; diagnosisReviewed?: number | string
-  knowledgeTotal?: number | string; knowledgeChunks?: number | string; newsTotal?: number | string
+  diagnosisAwaitingReviewTotal?: number | string
+  knowledgeTotal?: number | string; knowledgeChunks?: number | string
+  knowledgeFailed?: number | string; newsTotal?: number | string
   knowledgeByStatus?: { name: string; value: number | string }[]
   newsByStatus?: { name: string; value: number | string }[]
   diagnosisTrend?: { day: string; value: number | string }[]
   userTrend?: { day: string; value: number | string }[]
+  previousDiagnosisTrend?: { day: string; value: number | string }[]
+  previousUserTrend?: { day: string; value: number | string }[]
   diagnosisDistribution?: { name: string; value: number | string }[]
   reviewDistribution?: { name: string; value: number | string }[]
   diagnosisTrendByResult?: { day: string; name: string; value: number | string }[]
@@ -393,22 +407,28 @@ function toStats(raw: RawAdminStats): AdminStats {
     rangeEnd: raw.rangeEnd ?? "",
     userTotal: num(raw.userTotal),
     userNew: num(raw.userNew),
+    previousUserNew: num(raw.previousUserNew),
     userAdmin: num(raw.userAdmin),
     diagnosisTotal: num(raw.diagnosisTotal),
     diagnosisInRange: num(raw.diagnosisInRange),
+    previousDiagnosisInRange: num(raw.previousDiagnosisInRange),
     diagnosisToday: num(raw.diagnosisToday),
     diagnosisAiRejected: num(raw.diagnosisAiRejected),
     diagnosisAwaitingReview: num(raw.diagnosisAwaitingReview),
     diagnosisReviewed: num(raw.diagnosisReviewed),
+    diagnosisAwaitingReviewTotal: num(raw.diagnosisAwaitingReviewTotal),
     avgConfidence: raw.avgConfidence == null ? null : num(raw.avgConfidence),
     knowledgeTotal: num(raw.knowledgeTotal),
     knowledgeChunks: num(raw.knowledgeChunks),
+    knowledgeFailed: num(raw.knowledgeFailed),
     knowledgeByStatus: buckets(raw.knowledgeByStatus),
     newsTotal: num(raw.newsTotal),
     newsByStatus: buckets(raw.newsByStatus),
     trendDays: raw.trendDays ?? [],
     diagnosisTrend: days(raw.diagnosisTrend),
     userTrend: days(raw.userTrend),
+    previousDiagnosisTrend: days(raw.previousDiagnosisTrend),
+    previousUserTrend: days(raw.previousUserTrend),
     diagnosisDistribution: buckets(raw.diagnosisDistribution),
     reviewDistribution: buckets(raw.reviewDistribution),
     diagnosisTrendByResult: (raw.diagnosisTrendByResult ?? []).map((row) => ({
