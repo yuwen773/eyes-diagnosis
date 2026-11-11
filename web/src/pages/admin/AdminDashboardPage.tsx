@@ -1,125 +1,184 @@
-import type { ReactElement } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react"
+
 import { SectionHead } from "@/components/SectionHead"
 import { StatTile } from "@/components/admin/StatTile"
 import { TrendChart } from "@/components/admin/charts/TrendChart"
 import { RankedBars } from "@/components/admin/charts/RankedBars"
 import { DataTable } from "@/components/admin/DataTable"
 import type { Column } from "@/components/admin/DataTable"
-import { rankDistribution } from "@/lib/adminDomain"
+import { FaultNote } from "@/components/fault"
+import {
+  getAdminStats,
+  listDiagnoses,
+  type AdminDiagnosis,
+  type AdminStats,
+  type Page,
+} from "@/lib/adminApi"
+import {
+  confidencePercent,
+  formatStatNumber,
+  formatStatPercent,
+  rankDistribution,
+} from "@/lib/adminDomain"
+import { describeError, type ErrorDetail } from "@/lib/api"
+import { formatTimestamp } from "@/lib/domain"
+import { fault } from "@/lib/faults"
 
-/* ── mock 数据：逐字照搬 spec §5.6 / Vue 版，病种换成模型八类 ────────── */
-const KPIS: {
-  label: string
-  value: string
-  delta?: string
-  accent?: boolean
-}[] = [
-  // 与「数据分析」页的同一指标同一个数：两个页面各写一个数，管理员会以为
-  // 其中一个是错的。同为示例数据，至少别自相矛盾。
-  { label: "总诊断数", value: "8,452", delta: "↑12.5%", accent: true },
-  { label: "用户总数", value: "1,284" },
-  { label: "今日新增", value: "47" },
-  { label: "知识库文件", value: "126" },
-]
+/** 仪表盘读数的时间窗：近 30 天。 */
+const RANGE_DAYS = 30
+/** 趋势图取最近 7 天（30 天的折线挤在一张图里读不出日节律）。 */
+const TREND_DAYS = 7
 
-/** 近 7 天诊断次数：周一 ~ 周日。 */
-const TREND_POINTS = [
-  { label: "周一", value: 62 },
-  { label: "周二", value: 78 },
-  { label: "周三", value: 53 },
-  { label: "周四", value: 91 },
-  { label: "周五", value: 84 },
-  { label: "周六", value: 47 },
-  { label: "周日", value: 65 },
-]
+type View = { data: AdminStats | null; fault: ErrorDetail | null; loading: boolean }
 
-const DISTRIBUTION = [
-  { name: "正常", value: 1048 },
-  { name: "白内障", value: 735 },
-  { name: "青光眼", value: 580 },
-  { name: "糖尿病视网膜病变", value: 484 },
-  { name: "AMD", value: 300 },
-  { name: "其他", value: 200 },
-]
-
-type RecentRow = {
-  id: string
-  user: string
-  result: string
-  confidence: number
-  time: string
+/** 日期 → 轴标签：只留月-日，轴上要的是「哪天」不是「哪年」。 */
+function dayLabel(day: string): string {
+  return day.length >= 10 ? day.slice(5) : day
 }
 
-const RECENT_ROWS: RecentRow[] = [
-  { id: "1", user: "张三", result: "正常", confidence: 0.95, time: "2026-04-23 14:32" },
-  { id: "2", user: "李四", result: "白内障", confidence: 0.87, time: "2026-04-23 13:18" },
-  { id: "3", user: "王五", result: "正常", confidence: 0.99, time: "2026-04-23 11:45" },
-  { id: "4", user: "赵六", result: "青光眼", confidence: 0.76, time: "2026-04-23 10:20" },
-  { id: "5", user: "孙七", result: "糖尿病视网膜病变", confidence: 0.82, time: "2026-04-23 09:05" },
-]
-
-const RECENT_COLUMNS: Column<RecentRow>[] = [
-  { key: "user", title: "用户" },
-  { key: "result", title: "结果" },
-  {
-    key: "confidence",
-    title: "置信度",
-    mono: true,
-    render: (row) => (
-      <span className="num">{(row.confidence * 100).toFixed(1)}%</span>
-    ),
-  },
-  { key: "time", title: "时间", mono: true },
-]
-
-/** 诊断分布读数：value 降序 + share 占比，RankedBars 直接消费。 */
-const RANKED_ROWS = rankDistribution(DISTRIBUTION)
-
 /**
- * 仪表盘（mock 页）。「白色仪器」：章节头发丝线、KPI 条、图 / 表卡、
- * 最近记录表，各段用发丝线分隔，不做重卡片阴影。全部数值为示例数据，
- * 右上角常驻 mono 小标「示例数据 · SAMPLE」。
+ * 仪表盘（真实统计）。
+ *
+ * 数据来自 {@code GET /stats/admin/overview}：KPI 条、趋势、病种分布都是后端
+ * 聚合出来的真实读数，不再是示例数据。页面上仍然标注统计口径（时间窗），
+ * 让读数的人知道这些数字覆盖的是哪一段时间。
  */
 export function AdminDashboardPage(): ReactElement {
+  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
+  const requestSeq = useRef(0)
+
+  const [recent, setRecent] = useState<Page<AdminDiagnosis> | null>(null)
+
+  /** 取一次总览 + 一次最近判读记录。两次请求互不依赖，各自落地。 */
+  const load = useCallback(() => {
+    const seq = ++requestSeq.current
+    setView((prev) => ({ data: prev.data, fault: null, loading: true }))
+    getAdminStats(RANGE_DAYS).then(
+      (data) => {
+        if (seq !== requestSeq.current) return
+        setView({ data, fault: null, loading: false })
+      },
+      (cause) => {
+        if (seq !== requestSeq.current) return
+        setView({ data: null, fault: describeError(cause), loading: false })
+      },
+    )
+    listDiagnoses({ current: 1, pageSize: 5 }).then(
+      (data) => setRecent(data),
+      () => setRecent(null),
+    )
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const stats = view.data
+  const trendPoints = (stats?.diagnosisTrend ?? [])
+    .slice(-TREND_DAYS)
+    .map((row) => ({ label: dayLabel(row.day), value: row.value }))
+  const distribution = rankDistribution(stats?.diagnosisDistribution ?? [])
+
+  const recentRows = recent?.records ?? []
+
+  const recentColumns: Column<AdminDiagnosis>[] = [
+    { key: "username", title: "用户", width: "140px" },
+    {
+      key: "result",
+      title: "结果",
+      render: (row) =>
+        row.result ?? (row.aiRejected ? "AI 拒识" : "—"),
+    },
+    {
+      key: "confidence",
+      title: "置信度",
+      width: "96px",
+      mono: true,
+      render: (row) => confidencePercent(row.confidence),
+    },
+    {
+      key: "createTime",
+      title: "时间",
+      width: "180px",
+      mono: true,
+      render: (row) => formatTimestamp(row.createTime),
+    },
+  ]
+
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard__head">
         <SectionHead code="01" kicker="仪表盘" en="ADMIN · DASHBOARD" />
-        <span className="admin-sample num">示例数据 · SAMPLE</span>
+        {stats ? (
+          <span className="admin-sample num">
+            {stats.rangeStart} ~ {stats.rangeEnd} · 近 {stats.days} 天
+          </span>
+        ) : null}
       </div>
 
-      <p className="admin-sample-note">
-        本页全部为示例数据，尚未接入后端统计接口。所列数字不代表实际业务量，不可用于汇报或对外引用。
-      </p>
+      {view.fault ? (
+        <FaultNote
+          className="admin-dashboard__fault"
+          fault={fault({
+            severity: "attention",
+            kind: "client",
+            title: view.fault.text,
+            code: view.fault.code,
+          })}
+        />
+      ) : null}
 
       <section className="admin-kpis" aria-label="关键指标">
-        {KPIS.map((kpi) => (
-          <StatTile
-            key={kpi.label}
-            label={kpi.label}
-            value={kpi.value}
-            delta={kpi.delta}
-            accent={kpi.accent}
-          />
-        ))}
+        <StatTile
+          label="判读总数"
+          value={stats ? formatStatNumber(stats.diagnosisTotal) : "—"}
+          delta={stats ? `窗口内 ${formatStatNumber(stats.diagnosisInRange)} 条` : undefined}
+          accent
+        />
+        <StatTile
+          label="用户总数"
+          value={stats ? formatStatNumber(stats.userTotal) : "—"}
+          delta={stats ? `窗口内新增 ${formatStatNumber(stats.userNew)}` : undefined}
+        />
+        <StatTile
+          label="今日判读"
+          value={stats ? formatStatNumber(stats.diagnosisToday) : "—"}
+          delta={stats ? `待复核 ${formatStatNumber(stats.diagnosisAwaitingReview)}` : undefined}
+        />
+        <StatTile
+          label="知识库文档"
+          value={stats ? formatStatNumber(stats.knowledgeTotal) : "—"}
+          delta={stats ? `切片 ${formatStatNumber(stats.knowledgeChunks)} 块` : undefined}
+        />
       </section>
 
       <section className="admin-dashboard__charts" aria-label="趋势与分布">
-        <TrendChart points={TREND_POINTS} ariaLabel="诊断趋势 · 近 7 天" />
-        <RankedBars rows={RANKED_ROWS} ariaLabel="疾病分布 · 6 类" />
+        <TrendChart points={trendPoints} ariaLabel={`判读趋势 · 近 ${TREND_DAYS} 天`} />
+        <RankedBars rows={distribution} ariaLabel="病种分布" />
       </section>
 
       <section className="admin-dashboard__records" aria-label="最近诊断记录">
         <h2 className="admin-dashboard__records-title">最近诊断记录</h2>
-        <DataTable<RecentRow>
-          columns={RECENT_COLUMNS}
-          rows={RECENT_ROWS}
+        <DataTable<AdminDiagnosis>
+          columns={recentColumns}
+          rows={recentRows}
           rowKey={(row) => row.id}
-          page={{ current: 1, pageSize: 10, total: 5 }}
-          // mock 页固定单页，无翻页 / 每页条数交互，故空实现。
+          loading={view.loading && recentRows.length === 0}
+          emptyText="暂无判读记录"
+          page={{ current: 1, pageSize: 5, total: recent?.total ?? 0 }}
           onPageChange={() => {}}
+          hidePager
         />
       </section>
+
+      {stats ? (
+        <p className="admin-dashboard__note num">
+          平均置信度 {formatStatPercent(stats.avgConfidence)} · 已复核{" "}
+          {formatStatNumber(stats.diagnosisReviewed)} 条 · AI 拒识{" "}
+          {formatStatNumber(stats.diagnosisAiRejected)} 条 · 资讯{" "}
+          {formatStatNumber(stats.newsTotal)} 篇
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -90,6 +90,17 @@ type RawPage<T> = {
 
 export type Page<T> = { records?: T[]; total?: number; size?: number; current?: number; pages?: number }
 
+/**
+ * 批量动作的回执：请求了几条、成了几条、败了几条、败的是哪些。
+ *
+ * 批量天然是「部分成功」形态，界面上要能把失败的条目如实报出来，
+ * 而不是只回一个 boolean。
+ */
+export type BatchResult = {
+  requested?: number; succeeded?: number; failed?: number
+  failedIds?: string[]; message?: string
+}
+
 function toPage<T>(raw: RawPage<T>): Page<T> {
   const num = (value?: number | string) =>
     value === undefined || value === null ? undefined : Number(value)
@@ -108,11 +119,32 @@ export type AdminUser = {
   id: string; userAccount?: string; userName?: string; userAvatar?: string
   userProfile?: string; userRole?: string; createTime?: string
 }
-export function listUsers(q: { current: number; pageSize: number; userAccount?: string; userName?: string }): Promise<Page<AdminUser>> {
+
+/** 用户列表的筛选条件（空串 / undefined 表示不限）。 */
+export type UserQuery = {
+  current: number; pageSize: number
+  userAccount?: string; userName?: string; userRole?: string
+  startDate?: string; endDate?: string
+}
+export function listUsers(q: UserQuery): Promise<Page<AdminUser>> {
   return request<RawPage<AdminUser>>("/user/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function deleteUser(id: string): Promise<boolean> {
   return request<boolean>(`/user/delete/${id}`, { method: "POST" })
+}
+/** 新建用户：账号必填、初始密码必填、角色限 user / ban / admin。返回落库后的 id。 */
+export function createUser(body: { userAccount: string; userPassword: string; userName?: string; userProfile?: string; userRole?: string }): Promise<string> {
+  return request<string>("/user/add", { method: "POST", body: JSON.stringify(body) })
+}
+/** 改用户资料（昵称 / 头像 / 简介 / 角色）。id 必填。 */
+export function updateUser(body: { id: string; userName?: string; userAvatar?: string; userProfile?: string; userRole?: string }): Promise<boolean> {
+  return request<boolean>("/user/update", { method: "POST", body: JSON.stringify(body) })
+}
+export function deleteUsers(ids: string[]): Promise<BatchResult> {
+  return request<BatchResult>("/user/delete/batch", { method: "POST", body: JSON.stringify({ ids }) })
+}
+export function updateUserRole(ids: string[], userRole: string): Promise<BatchResult> {
+  return request<BatchResult>("/user/update/role/batch", { method: "POST", body: JSON.stringify({ ids, userRole }) })
 }
 
 /* ── 新闻管理 ─────────────────────────────────────────────── */
@@ -125,11 +157,19 @@ export type AdminNews = {
   /** 下架原因（后端在状态转 2 且带 note 时写入；NewsVO 只读暴露）。 */
   offlineReason?: string | null
 }
-export function listAdminNews(q: { current: number; pageSize: number; title?: string }): Promise<Page<AdminNews>> {
+export function listAdminNews(q: { current: number; pageSize: number; title?: string; status?: number; category?: string; startDate?: string; endDate?: string }): Promise<Page<AdminNews>> {
   return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function deleteNews(id: string): Promise<boolean> {
   return request<boolean>(`/news/delete/${id}`, { method: "POST" })
+}
+/** 批量软删资讯：逐条执行，部分失败如实回执。 */
+export function deleteNewsBatch(ids: string[]): Promise<BatchResult> {
+  return request<BatchResult>("/news/delete/batch", { method: "POST", body: JSON.stringify({ ids }) })
+}
+/** 批量改发布状态：逐条按状态迁移表校验，非法迁移的那条不执行。 */
+export function changeNewsStatusBatch(ids: string[], status: number, note?: string): Promise<BatchResult> {
+  return request<BatchResult>("/news/status/batch", { method: "POST", body: JSON.stringify({ ids, status, note }) })
 }
 export function getNews(id: string): Promise<AdminNews> {
   return request<AdminNews>(`/news/get/${id}`, { method: "GET" })
@@ -188,7 +228,20 @@ export type AdminDiagnosis = {
   severity?: string | null; reexamineStatus?: number; createTime?: string
   aiRejected?: boolean; abstainReason?: string; requiresReview?: boolean
 }
-export function listDiagnoses(q: { current: number; pageSize: number; result?: string; diagnosisTime?: string }): Promise<Page<AdminDiagnosis>> {
+/** 诊断列表的筛选条件：疾病名 + 复核状态 + AI 拒识 + 判读时间区间。 */
+export type DiagnosisQuery = {
+  current: number; pageSize: number; result?: string
+  /** 复诊流程状态：1 未复审 / 2 复审中 / 3 已复审 */
+  reexamineStatus?: number
+  /** 人工复核状态：AWAITING_REVIEW / REVIEWED / OVERRIDDEN … */
+  humanReviewStatus?: string
+  /** 只看 AI 拒识的记录 */
+  aiRejected?: boolean
+  /** 只看需要人工复核的记录 */
+  requiresReview?: boolean
+  startDate?: string; endDate?: string
+}
+export function listDiagnoses(q: DiagnosisQuery): Promise<Page<AdminDiagnosis>> {
   return request<RawPage<AdminDiagnosis>>("/diagnosis/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 export function getDiagnosis(id: string): Promise<DiagnosisResult> {
@@ -200,6 +253,10 @@ export function submitReview(body: { id: string; humanResult: string; humanSever
 export function deleteDiagnosis(id: string): Promise<boolean> {
   return request<boolean>(`/diagnosis/delete/${id}`, { method: "POST" })
 }
+/** 批量删除判读记录：逐条执行，部分失败如实回执。 */
+export function deleteDiagnoses(ids: string[]): Promise<BatchResult> {
+  return request<BatchResult>("/diagnosis/delete/batch", { method: "POST", body: JSON.stringify({ ids }) })
+}
 
 /* ── 知识库 ───────────────────────────────────────────────── */
 
@@ -210,6 +267,33 @@ export type KnowledgeDoc = {
   status: number; createTime: string; updateTime: string
 }
 
+/** 知识库列表的筛选条件。 */
+export type KnowledgeQuery = {
+  current: number; pageSize: number
+  fileName?: string; title?: string; status?: number; fileType?: string
+  startDate?: string; endDate?: string
+}
+
+/** 一条切片：序号 + 正文 + 字符数。 */
+export type KnowledgeChunk = { index: number; text: string; chars: number }
+
+/** 文档详情：元信息 + 预览链接 + 切片清单。 */
+export type KnowledgeDetail = {
+  id: string; title: string; fileName: string; fileType: string
+  /** 后端 JsonConfig 全局 Long→String，fileSize 线上是字符串 */
+  fileSize: number | string; chunkCount: number; status: number; userId: string
+  createTime: string; updateTime: string
+  /** 限时签名链接（10 分钟有效） */
+  previewUrl?: string | null
+  /** 预览方式：pdf / text / none */
+  previewKind?: string | null
+  /** 纯文本直读内容（text 类文档） */
+  textPreview?: string | null
+  chunks: KnowledgeChunk[]
+  chunksReadable: boolean
+  chunksMessage?: string | null
+}
+
 /** 后端 KnowledgeUploadRequest 收 MultipartFile[] files + 可选 title，字段名照 Vue 先例逐个 append。 */
 /** 线上返回的是 id 数组，JsonConfig 全局 Long→String，所以是 string[]。 */
 export function uploadKnowledge(files: File[], title?: string): Promise<string[]> {
@@ -218,10 +302,119 @@ export function uploadKnowledge(files: File[], title?: string): Promise<string[]
   if (title) form.append("title", title)
   return request<string[]>("/knowledge/upload", { method: "POST", body: form })
 }
-export function listKnowledge(current: number, pageSize: number): Promise<Page<KnowledgeDoc>> {
-  return request<RawPage<KnowledgeDoc>>("/knowledge/list/page", { method: "POST", body: JSON.stringify({ current, pageSize }) }).then(toPage)
+export function listKnowledge(q: KnowledgeQuery): Promise<Page<KnowledgeDoc>> {
+  return request<RawPage<KnowledgeDoc>>("/knowledge/list/page", { method: "POST", body: JSON.stringify(q) }).then(toPage)
 }
 /** DELETE 带 body，后端 DeleteRequest 收 {id}；不能塞进 query。 */
 export function deleteKnowledge(id: string): Promise<boolean> {
   return request<boolean>("/knowledge/delete", { method: "DELETE", body: JSON.stringify({ id }) })
+}
+/** 批量删除知识文档：逐条鉴权与执行，部分失败如实回执。 */
+export function deleteKnowledgeBatch(ids: string[]): Promise<BatchResult> {
+  return request<BatchResult>("/knowledge/delete/batch", { method: "DELETE", body: JSON.stringify({ ids }) })
+}
+/** 改文档标题（只改人读的名字，不动文件本体与切片）。 */
+export function updateKnowledgeTitle(id: string, title: string): Promise<boolean> {
+  return request<boolean>("/knowledge/update", { method: "POST", body: JSON.stringify({ id, title }) })
+}
+/** 文档详情：元信息 + 限时预览链接 + 切片清单。 */
+export function getKnowledgeDetail(id: string): Promise<KnowledgeDetail> {
+  return request<KnowledgeDetail>(`/knowledge/get/${id}`, { method: "GET" })
+}
+
+/* ── 统计 ─────────────────────────────────────────────────── */
+
+/** 统计总览（仪表盘与数据分析共用同一份口径）。 */
+export type AdminStats = {
+  days: number; rangeStart: string; rangeEnd: string
+  userTotal: number; userNew: number; userAdmin: number
+  diagnosisTotal: number; diagnosisInRange: number; diagnosisToday: number
+  diagnosisAiRejected: number; diagnosisAwaitingReview: number; diagnosisReviewed: number
+  /** 平均置信度（0–1）；无样本时为 null */
+  avgConfidence: number | null
+  knowledgeTotal: number; knowledgeChunks: number
+  knowledgeByStatus: StatBucket[]
+  newsTotal: number; newsByStatus: StatBucket[]
+  trendDays: string[]
+  diagnosisTrend: StatDayCount[]
+  userTrend: StatDayCount[]
+  diagnosisDistribution: StatBucket[]
+  reviewDistribution: StatBucket[]
+  diagnosisTrendByResult: StatDayNameCount[]
+}
+export type StatBucket = { name: string; value: number }
+export type StatDayCount = { day: string; value: number }
+export type StatDayNameCount = { day: string; name: string; value: number }
+
+export function getAdminStats(days: number): Promise<AdminStats> {
+  return request<RawAdminStats>(`/stats/admin/overview?days=${days}`, { method: "GET" }).then(toStats)
+}
+
+/**
+ * 统计读数的数字归一。
+ *
+ * <p>后端 JsonConfig 全局把 Long / long 序列化成 String（为了雪花 id 不丢精度），
+ * 所以这里的计数全是 "1234" 这种字符串形态。若不归一，rankDistribution 里的
+ * `sum + row.value` 会变成字符串拼接（"0" + "12" = "012"），占比算出来是错的。
+ * 这里统一转成 number，null / 非法值按 0 处理。
+ */
+function num(value: unknown): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+type RawAdminStats = Omit<AdminStats, "userTotal" | "userNew" | "userAdmin" | "diagnosisTotal"
+  | "diagnosisInRange" | "diagnosisToday" | "diagnosisAiRejected" | "diagnosisAwaitingReview"
+  | "diagnosisReviewed" | "knowledgeTotal" | "knowledgeChunks" | "newsTotal"
+  | "knowledgeByStatus" | "newsByStatus" | "diagnosisTrend" | "userTrend"
+  | "diagnosisDistribution" | "reviewDistribution" | "diagnosisTrendByResult"> & {
+  userTotal?: number | string; userNew?: number | string; userAdmin?: number | string
+  diagnosisTotal?: number | string; diagnosisInRange?: number | string
+  diagnosisToday?: number | string; diagnosisAiRejected?: number | string
+  diagnosisAwaitingReview?: number | string; diagnosisReviewed?: number | string
+  knowledgeTotal?: number | string; knowledgeChunks?: number | string; newsTotal?: number | string
+  knowledgeByStatus?: { name: string; value: number | string }[]
+  newsByStatus?: { name: string; value: number | string }[]
+  diagnosisTrend?: { day: string; value: number | string }[]
+  userTrend?: { day: string; value: number | string }[]
+  diagnosisDistribution?: { name: string; value: number | string }[]
+  reviewDistribution?: { name: string; value: number | string }[]
+  diagnosisTrendByResult?: { day: string; name: string; value: number | string }[]
+}
+
+function toStats(raw: RawAdminStats): AdminStats {
+  const buckets = (rows?: { name: string; value: number | string }[]) =>
+    (rows ?? []).map((row) => ({ name: row.name, value: num(row.value) }))
+  const days = (rows?: { day: string; value: number | string }[]) =>
+    (rows ?? []).map((row) => ({ day: row.day, value: num(row.value) }))
+  return {
+    days: num(raw.days),
+    rangeStart: raw.rangeStart ?? "",
+    rangeEnd: raw.rangeEnd ?? "",
+    userTotal: num(raw.userTotal),
+    userNew: num(raw.userNew),
+    userAdmin: num(raw.userAdmin),
+    diagnosisTotal: num(raw.diagnosisTotal),
+    diagnosisInRange: num(raw.diagnosisInRange),
+    diagnosisToday: num(raw.diagnosisToday),
+    diagnosisAiRejected: num(raw.diagnosisAiRejected),
+    diagnosisAwaitingReview: num(raw.diagnosisAwaitingReview),
+    diagnosisReviewed: num(raw.diagnosisReviewed),
+    avgConfidence: raw.avgConfidence == null ? null : num(raw.avgConfidence),
+    knowledgeTotal: num(raw.knowledgeTotal),
+    knowledgeChunks: num(raw.knowledgeChunks),
+    knowledgeByStatus: buckets(raw.knowledgeByStatus),
+    newsTotal: num(raw.newsTotal),
+    newsByStatus: buckets(raw.newsByStatus),
+    trendDays: raw.trendDays ?? [],
+    diagnosisTrend: days(raw.diagnosisTrend),
+    userTrend: days(raw.userTrend),
+    diagnosisDistribution: buckets(raw.diagnosisDistribution),
+    reviewDistribution: buckets(raw.reviewDistribution),
+    diagnosisTrendByResult: (raw.diagnosisTrendByResult ?? []).map((row) => ({
+      day: row.day,
+      name: row.name,
+      value: num(row.value),
+    })),
+  }
 }

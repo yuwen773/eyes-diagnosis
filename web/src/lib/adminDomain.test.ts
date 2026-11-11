@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest"
-import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, newsStatusOptionsFor, newsStatusView, rankDistribution, reviewView } from "./adminDomain"
+import {
+  barLabelFits,
+  canDeleteUser,
+  confidencePercent,
+  diagnosisFilterParams,
+  formatStatNumber,
+  formatStatPercent,
+  humanReviewStatusLabel,
+  knowledgeStatusView,
+  newsContentValid,
+  newsStatusOptionsFor,
+  newsStatusView,
+  rankDistribution,
+  reviewView,
+  userRoleView,
+} from "./adminDomain"
 
 describe("reviewView", () => {
   it("aiRejected 优先于一切", () => {
@@ -113,5 +128,67 @@ describe("confidencePercent", () => {
   it("undefined / NaN → 「—」", () => {
     expect(confidencePercent(undefined)).toBe("—")
     expect(confidencePercent(NaN)).toBe("—")
+  })
+})
+
+describe("userRoleView", () => {
+  it("三档角色各归其位", () => {
+    expect(userRoleView("admin").label).toBe("管理员")
+    expect(userRoleView("user").label).toBe("普通用户")
+    expect(userRoleView("ban").label).toBe("已封禁")
+  })
+  it("未知角色不猜成「普通用户」", () => {
+    // 老数据里没写角色的账号，按「未标注」显示，而不是被显示成普通用户。
+    expect(userRoleView(undefined).label).toBe("未标注")
+    expect(userRoleView("").label).toBe("未标注")
+    expect(userRoleView("root").label).toBe("root")
+  })
+})
+
+describe("diagnosisFilterParams", () => {
+  it("空筛选 = 不限", () => {
+    expect(diagnosisFilterParams("")).toEqual({})
+  })
+  it("待人工复核 / AI 拒识 走各自的布尔列", () => {
+    expect(diagnosisFilterParams("requiresReview")).toEqual({ requiresReview: true })
+    expect(diagnosisFilterParams("aiRejected")).toEqual({ aiRejected: true })
+  })
+  it("已复审 / 复审中 / 未复审 走 reexamineStatus", () => {
+    expect(diagnosisFilterParams("reviewed")).toEqual({ reexamineStatus: 3 })
+    expect(diagnosisFilterParams("reviewing")).toEqual({ reexamineStatus: 2 })
+    expect(diagnosisFilterParams("notReviewed")).toEqual({ reexamineStatus: 1 })
+  })
+})
+
+describe("knowledgeStatusView", () => {
+  it("0 处理中 / 1 已完成 / 2 失败", () => {
+    expect(knowledgeStatusView(0).label).toBe("处理中")
+    expect(knowledgeStatusView(1).label).toBe("已完成")
+    expect(knowledgeStatusView(2).label).toBe("失败")
+  })
+  it("缺省读「未知」", () => {
+    expect(knowledgeStatusView(undefined).label).toBe("未知")
+  })
+})
+
+describe("humanReviewStatusLabel", () => {
+  it("代码翻成人话", () => {
+    expect(humanReviewStatusLabel("REVIEWED")).toBe("已复核")
+    expect(humanReviewStatusLabel("AWAITING_REVIEW")).toBe("拒识 / 低置信 · 待复核")
+    expect(humanReviewStatusLabel(null)).toBe("未记录")
+  })
+})
+
+describe("formatStatNumber / formatStatPercent", () => {
+  it("计数千分位", () => {
+    expect(formatStatNumber(8452)).toBe("8,452")
+    expect(formatStatNumber(0)).toBe("0")
+  })
+  it("非有限值给破折号", () => {
+    expect(formatStatNumber(NaN)).toBe("—")
+  })
+  it("比例 → 一位小数百分比", () => {
+    expect(formatStatPercent(0.874)).toBe("87.4%")
+    expect(formatStatPercent(null)).toBe("—")
   })
 })

@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.constant.DiagnosisCategoryEnum;
 import com.csust.eyediagnosis.constant.DiagnosisRecommendationEnum;
 import com.csust.eyediagnosis.constant.ExceptionConstant;
@@ -33,6 +34,7 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisEvidence;
+import com.csust.eyediagnosis.utils.DateRanges;
 import com.csust.eyediagnosis.utils.JsonUtils;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +49,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.date.DateTime.now;
@@ -136,6 +140,13 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         dto.setUserId(loginUser.getId());
     }
 
+    /**
+     * 列表排序字段白名单：排序字段来自请求体，直接拼进 ORDER BY 等于把 SQL 片段
+     * 交给客户端，这里只认这几个列名。
+     */
+    private static final Set<String> DIAGNOSIS_SORT_FIELDS = Set.of(
+            "id", "result", "confidence", "severity", "createTime");
+
     @Override
     public QueryWrapper<Diagnosis> getDiagnosisQueryWrapper(DiagnosisQueryDTO diagnosisQueryDTO) {
         if(diagnosisQueryDTO ==null){
@@ -157,7 +168,31 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 //        封装wrapper
         queryWrapper.eq(ObjUtil.isNotNull(id),"id", id);
         queryWrapper.like(StrUtil.isNotBlank(result),"result", result);
-        queryWrapper.orderBy(StrUtil.isNotBlank(sortField),sortOrder.equals(ASC),sortField);
+        // 复审 / 复核状态筛选：管理端要能分头挑「待人工复核的」「AI 拒识的」
+        queryWrapper.eq(ObjUtil.isNotNull(diagnosisQueryDTO.getReexamineStatus()),
+                "reexamineStatus", diagnosisQueryDTO.getReexamineStatus());
+        queryWrapper.eq(StrUtil.isNotBlank(diagnosisQueryDTO.getHumanReviewStatus()),
+                "humanReviewStatus", diagnosisQueryDTO.getHumanReviewStatus());
+        queryWrapper.eq(ObjUtil.isNotNull(diagnosisQueryDTO.getAiRejected()),
+                "aiRejected", diagnosisQueryDTO.getAiRejected());
+        // requiresReview 是计算出来的（humanReviewStatus=AWAITING_REVIEW），
+        // 不能直接落列，落成等值条件才是真查询。
+        if (Boolean.TRUE.equals(diagnosisQueryDTO.getRequiresReview())) {
+            queryWrapper.eq("humanReviewStatus", HumanReviewStatus.AWAITING_REVIEW);
+        }
+        // 判读时间区间
+        queryWrapper.ge(DateRanges.start(diagnosisQueryDTO.getStartDate()) != null, "createTime",
+                DateRanges.start(diagnosisQueryDTO.getStartDate()));
+        queryWrapper.le(DateRanges.end(diagnosisQueryDTO.getEndDate()) != null, "createTime",
+                DateRanges.end(diagnosisQueryDTO.getEndDate()));
+        // 排序字段走白名单；未指定时默认按判读时间倒序
+        String safeSortField = StrUtil.isNotBlank(sortField) && DIAGNOSIS_SORT_FIELDS.contains(sortField)
+                ? sortField : null;
+        if (safeSortField != null) {
+            queryWrapper.orderBy(true, ASC.equals(sortOrder), safeSortField);
+        } else {
+            queryWrapper.orderByDesc("createTime");
+        }
         // userId 为 null（管理员全站视角）时整条 eq 不加，其余用户才按本人过滤
         queryWrapper.eq(ObjUtil.isNotNull(userId),"userId", userId);
         //返回query
@@ -296,6 +331,39 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         audit.setPayload(auditPayload(dto));
         audit.setCreatedTime(new Date());
         diagnosisAuditMapper.insert(audit);
+    }
+
+    @Override
+    public BatchResultVO deleteDiagnoses(List<Long> diagnosisIds) {
+        List<Long> targets = new ArrayList<>();
+        if (diagnosisIds != null) {
+            for (Long id : diagnosisIds) {
+                if (id != null && id > 0 && !targets.contains(id)) {
+                    targets.add(id);
+                }
+            }
+        }
+        List<String> failedIds = new ArrayList<>();
+        List<String> reasons = new ArrayList<>();
+        int succeeded = 0;
+        for (Long id : targets) {
+            Diagnosis target = this.getById(id);
+            if (target == null) {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：记录不存在");
+                continue;
+            }
+            if (this.removeById(id)) {
+                succeeded++;
+            } else {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：删除失败");
+            }
+        }
+        String message = reasons.isEmpty()
+                ? "已删除 " + succeeded + " 条判读记录"
+                : String.join("；", reasons);
+        return new BatchResultVO(targets.size(), succeeded, failedIds, message);
     }
 
     private static String auditPayload(DiagnosisResultDTO dto) {

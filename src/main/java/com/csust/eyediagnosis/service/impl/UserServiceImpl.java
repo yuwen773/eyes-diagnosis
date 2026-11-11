@@ -6,6 +6,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.csust.eyediagnosis.common.BatchResultVO;
+import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.constant.UserConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
@@ -24,6 +26,7 @@ import com.csust.eyediagnosis.model.vo.user.LoginUserVO;
 import com.csust.eyediagnosis.model.vo.user.UserVO;
 import com.csust.eyediagnosis.security.PasswordService;
 import com.csust.eyediagnosis.service.UserService;
+import com.csust.eyediagnosis.utils.DateRanges;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -32,7 +35,9 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.csust.eyediagnosis.constant.FileConstant.PICTURE_FAIL_UPLOAD;
@@ -235,6 +240,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
     }
 
+    /**
+     * 列表排序字段白名单。
+     *
+     * <p>排序字段是从请求体里来的字符串，直接拼进 ORDER BY 等于把 SQL 片段
+     * 交给客户端。这里只认这五个列名，其余一律忽略（退化为默认排序）。
+     */
+    private static final Set<String> USER_SORT_FIELDS = Set.of(
+            "id", "userAccount", "userName", "userRole", "createTime");
+
     @Override
     public QueryWrapper<User> getUserQueryWrapper(UserQueryDTO userQueryDTO) {
         if(userQueryDTO == null) {
@@ -251,11 +265,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //构建query对象
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(ObjUtil.isNotNull(userId),"id",userId);
-//        queryWrapper.eq(StrUtil.isNotBlank(userRole),"userRole",userRole);
+        // 角色筛选：管理端要能一眼分开「管理员 / 普通用户 / 已封禁」，
+        // 这一条以前是被注释掉的，接口收了参数却从不生效。
+        queryWrapper.eq(StrUtil.isNotBlank(userRole),"userRole",userRole);
         queryWrapper.like(StrUtil.isNotBlank(userAccount),"userAccount",userAccount);
         queryWrapper.like(StrUtil.isNotBlank(userName),"userName",userName);
         queryWrapper.like(StrUtil.isNotBlank(userProfile),"userProfile",userProfile);
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals(ASC),sortField);
+        // 注册时间区间
+        queryWrapper.ge(DateRanges.start(userQueryDTO.getStartDate()) != null,"createTime",
+                DateRanges.start(userQueryDTO.getStartDate()));
+        queryWrapper.le(DateRanges.end(userQueryDTO.getEndDate()) != null,"createTime",
+                DateRanges.end(userQueryDTO.getEndDate()));
+        // 排序字段走白名单；未指定时默认按注册时间倒序（管理端最先看最新的人）
+        String safeSortField = StrUtil.isNotBlank(sortField) && USER_SORT_FIELDS.contains(sortField)
+                ? sortField : null;
+        if (safeSortField != null) {
+            queryWrapper.orderBy(true, ASC.equals(sortOrder), safeSortField);
+        } else {
+            queryWrapper.orderByDesc("createTime");
+        }
         //返回query
         return queryWrapper;
     }
@@ -329,6 +357,97 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public String encodePassword(String rawPassword) {
         return passwordService.encode(rawPassword);
+    }
+
+    /**
+     * 可由管理员直接指派给用户的角色。
+     *
+     * <p>{@code ban} 是封禁档：账号还在、不能登录，用来表达「先停用」而不是删除。
+     */
+    private static final Set<String> ASSIGNABLE_ROLES = Set.of("user", "ban", "admin");
+
+    @Override
+    public BatchResultVO deleteUsers(List<Long> userIds) {
+        List<Long> targets = normalizeIds(userIds);
+        List<String> failedIds = new ArrayList<>();
+        List<String> reasons = new ArrayList<>();
+        int succeeded = 0;
+        for (Long id : targets) {
+            User target = this.getById(id);
+            if (target == null) {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：用户不存在");
+                continue;
+            }
+            if (AuthConstant.ADMIN_ROLE.equals(target.getUserRole())) {
+                // 管理员账号不可删：删掉之后这套系统就没人能管了。
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：管理员账号不可删除");
+                continue;
+            }
+            if (this.removeById(id)) {
+                succeeded++;
+            } else {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：删除失败");
+            }
+        }
+        String message = reasons.isEmpty()
+                ? "已删除 " + succeeded + " 个用户"
+                : String.join("；", reasons);
+        return new BatchResultVO(targets.size(), succeeded, failedIds, message);
+    }
+
+    @Override
+    public BatchResultVO updateUserRole(List<Long> userIds, String userRole) {
+        ThrowUtils.throwIf(!ASSIGNABLE_ROLES.contains(userRole), ErrorCode.PARAMS_ERROR,
+                "角色只能是 user / ban / admin");
+        List<Long> targets = normalizeIds(userIds);
+        List<String> failedIds = new ArrayList<>();
+        List<String> reasons = new ArrayList<>();
+        int succeeded = 0;
+        for (Long id : targets) {
+            User target = this.getById(id);
+            if (target == null) {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：用户不存在");
+                continue;
+            }
+            if (AuthConstant.ADMIN_ROLE.equals(target.getUserRole())
+                    && !AuthConstant.ADMIN_ROLE.equals(userRole)) {
+                // 降级管理员要走单条复核通道，不在批量动作里顺手做掉。
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：管理员账号不可批量降级");
+                continue;
+            }
+            User patch = new User();
+            patch.setId(id);
+            patch.setUserRole(userRole);
+            if (this.updateById(patch)) {
+                succeeded++;
+            } else {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：角色更新失败");
+            }
+        }
+        String message = reasons.isEmpty()
+                ? "已更新 " + succeeded + " 个用户的角色"
+                : String.join("；", reasons);
+        return new BatchResultVO(targets.size(), succeeded, failedIds, message);
+    }
+
+    /** id 列表去重 + 去空。 */
+    private List<Long> normalizeIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> unique = new LinkedHashSet<>();
+        for (Long id : ids) {
+            if (id != null && id > 0) {
+                unique.add(id);
+            }
+        }
+        return new ArrayList<>(unique);
     }
 }
 

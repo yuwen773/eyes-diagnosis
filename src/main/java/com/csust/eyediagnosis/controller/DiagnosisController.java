@@ -5,6 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
 import com.csust.eyediagnosis.common.BaseResponse;
+import com.csust.eyediagnosis.common.BatchIdsRequest;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.common.ResultUtils;
 import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
@@ -148,6 +150,16 @@ public class DiagnosisController {
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         boolean result = diagnosisService.removeById(id);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量删除判读记录：逐条执行，部分失败如实回执。
+     */
+    @PostMapping("/delete/batch")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<BatchResultVO> deleteDiagnosisBatch(@RequestBody BatchIdsRequest batchRequest){
+        ThrowUtils.throwIf(batchRequest==null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(diagnosisService.deleteDiagnoses(batchRequest.getIds()));
     }
 
     @PostMapping("/diagnosis")

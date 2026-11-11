@@ -2406,3 +2406,351 @@
   color: var(--fg-2);
   background: var(--surface-2);
 }
+
+/* ==========================================================================
+   管理后台 · 批量动作 / 表单 / 预览（2026-11-11 增补）
+   --------------------------------------------------------------------------
+   这一段是给「管理端从只读列表升级成可操作台」配套的样式：批量动作条、
+   表单字段、知识文档预览（原文 + 切片清单）、以及各页的窄字段与提示行。
+
+   规则照旧：只吃上下文令牌（--surface / --fg-* / --hr / --signal …），
+   零写死色值；圆角保持 0；数字走 .num（等宽 + tabular-nums）；
+   双主题随 html.dark 自动翻转。
+   ========================================================================== */
+
+/* ── 批量动作条 ─────────────────────────────────────────── */
+
+.admin-batch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-left: 2px solid var(--signal);
+}
+
+.admin-batch__count {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  flex: none;
+}
+
+.admin-batch__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-batch__clear {
+  margin-left: auto;
+  flex: none;
+}
+
+/* ── 表单（弹层里的字段） ────────────────────────────────── */
+
+.admin-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-form__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-form__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-form__hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+.admin-form__fault {
+  margin-top: 2px;
+}
+
+/* ── 窄字段（下拉 / 日期） ──────────────────────────────── */
+
+.admin-users__field--narrow,
+.admin-news__field--narrow,
+.admin-diagnosis__field--narrow,
+.admin-knowledge__field--narrow {
+  flex: 0 1 168px;
+}
+
+/* ── 行内操作组 ─────────────────────────────────────────── */
+
+.admin-users__row-actions,
+.admin-diagnosis__row-actions,
+.admin-knowledge__row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── 操作回执（页内一行 mono 提示） ─────────────────────── */
+
+.admin-users__note,
+.admin-news__note,
+.admin-diagnosis__note,
+.admin-knowledge__note {
+  margin: 16px 0 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--fg-2);
+}
+
+/* ── 表格勾选列 ─────────────────────────────────────────── */
+
+.admin-dt__cell--pick,
+.admin-dt__head--pick {
+  width: 40px;
+  padding-inline: 10px;
+}
+
+.admin-dt__check {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--signal);
+  cursor: pointer;
+}
+
+.admin-dt__check:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ── 知识库：筛选表单 ───────────────────────────────────── */
+
+.admin-knowledge__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.admin-knowledge__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.admin-knowledge__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__input {
+  width: 100%;
+  height: 40px;
+  padding-inline: 12px;
+  background: var(--surface);
+  border: 1px solid var(--hr-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-knowledge__input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-knowledge__input:hover {
+  border-color: var(--fg-3);
+}
+
+.admin-knowledge__input:focus {
+  border-color: var(--signal);
+}
+
+.admin-knowledge__actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── 知识库：预览抽屉（原文 + 切片清单） ────────────────── */
+
+.admin-knowledge__preview {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-knowledge__preview-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.admin-knowledge__fact {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.admin-knowledge__fact dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__fact dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg);
+  word-break: break-all;
+}
+
+.admin-knowledge__preview-frame {
+  width: 100%;
+  height: 420px;
+  border: 1px solid var(--hr-strong);
+  background: var(--surface);
+}
+
+.admin-knowledge__preview-text {
+  max-height: 260px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-knowledge__preview-link {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--hr-strong);
+}
+
+.admin-knowledge__preview-link:hover {
+  color: var(--fg);
+  border-bottom-color: var(--signal);
+}
+
+.admin-knowledge__preview-state {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__preview-fault {
+  margin: 0;
+}
+
+.admin-knowledge__chunks {
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+}
+
+.admin-knowledge__chunks-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--fg);
+}
+
+.admin-knowledge__chunks-title .num {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__chunk-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-knowledge__chunk {
+  border: 1px solid var(--hr);
+  background: var(--surface);
+}
+
+.admin-knowledge__chunk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--hr);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--fg-3);
+}
+
+.admin-knowledge__chunk-text {
+  margin: 0;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 仪表盘 / 数据分析：读数故障与空态 ──────────────────── */
+
+.admin-dashboard__fault,
+.admin-analysis__fault {
+  margin-top: 20px;
+}
+
+.admin-dashboard__note {
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--hr);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.admin-analysis__empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--fg-3);
+}

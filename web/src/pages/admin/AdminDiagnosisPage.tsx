@@ -13,6 +13,7 @@ import { DataTable, type Column } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { Drawer } from "@/components/admin/Drawer"
+import { BatchBar } from "@/components/admin/BatchBar"
 import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import {
@@ -20,10 +21,20 @@ import {
   getDiagnosis,
   submitReview,
   deleteDiagnosis,
+  deleteDiagnoses,
   type AdminDiagnosis,
+  type BatchResult,
+  type DiagnosisQuery,
   type Page,
 } from "@/lib/adminApi"
-import { reviewView, confidencePercent } from "@/lib/adminDomain"
+import {
+  reviewView,
+  confidencePercent,
+  diagnosisFilterParams,
+  DIAGNOSIS_REVIEW_FILTER_OPTIONS,
+  humanReviewStatusLabel,
+  type DiagnosisReviewFilter,
+} from "@/lib/adminDomain"
 import { describeError, type ErrorDetail, type DiagnosisResult } from "@/lib/api"
 import {
   severityLabel,
@@ -44,8 +55,14 @@ const HUMAN_SEVERITY = [
   { value: "high", label: "高风险" },
 ] as const
 
-type Query = string
-type Params = { current: number; pageSize: number; result?: string }
+/** 已应用的筛选条件。 */
+type Query = {
+  result: string
+  review: DiagnosisReviewFilter
+  startDate: string
+  endDate: string
+}
+type Params = DiagnosisQuery
 /** 加载 / 错误 / 数据三态的全部来源；不在各事件里散着维护布尔量。 */
 type View = { data: Page<AdminDiagnosis> | null; fault: ErrorDetail | null; loading: boolean }
 
@@ -84,7 +101,7 @@ function FactRow({
  * requestSeq 递增序号挡过期响应；删除走确认 Modal + deleting 锁；
  * 失败收起弹层、改用 FaultNote 页内读数。
  *
- * 详情 Drawer 与复核 Modal 会同时打开（Task 4 的弹层栈专为此设计）：复核只收
+ * 详情 Drawer 与复核 Modal 会同时打开（弹层栈专为此设计）：复核只收
  * 四个 human* 字段，AI 判读字段界面上无任何输入。getDiagnosis 的加载 / 错误态
  * 在 Drawer 内自洽处理，另用 detailSeq 挡住快速开关时的过期响应。
  * 雪花 id 全程 string：列表 / 详情 / 复核 / 删除都不做 Number(id) 转换。
@@ -92,15 +109,26 @@ function FactRow({
 export function AdminDiagnosisPage(): ReactElement {
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [resultDraft, setResultDraft] = useState("")
-  const [query, setQuery] = useState<Query>("")
+  const [reviewDraft, setReviewDraft] = useState<DiagnosisReviewFilter>("")
+  const [startDraft, setStartDraft] = useState("")
+  const [endDraft, setEndDraft] = useState("")
+  const [query, setQuery] = useState<Query>({
+    result: "",
+    review: "",
+    startDate: "",
+    endDate: "",
+  })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
   const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
   const requestSeq = useRef(0)
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminDiagnosis | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
+  const [actionNote, setActionNote] = useState<string | null>(null)
+  const [batchBusy, setBatchBusy] = useState(false)
 
   const [detailTarget, setDetailTarget] = useState<AdminDiagnosis | null>(null)
   const [detail, setDetail] = useState<DiagnosisResult | null>(null)
@@ -147,13 +175,16 @@ export function AdminDiagnosisPage(): ReactElement {
     return {
       current: nextPage.current,
       pageSize: nextPage.pageSize,
-      ...(nextQuery ? { result: nextQuery } : {}),
+      ...(nextQuery.result ? { result: nextQuery.result } : {}),
+      ...diagnosisFilterParams(nextQuery.review),
+      ...(nextQuery.startDate ? { startDate: nextQuery.startDate } : {}),
+      ...(nextQuery.endDate ? { endDate: nextQuery.endDate } : {}),
     }
   }
 
   /** 事件驱动的取数入口：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
   function startLoad(nextPage = page, nextQuery = query) {
-    setActionError(null) // 任何一次重新取数都清掉上一次删除失败的页内读数
+    setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
     setView({ data: null, fault: null, loading: true })
     const { seq, result } = fetchDiagnoses(toParams(nextPage, nextQuery))
     result.then(
@@ -172,19 +203,29 @@ export function AdminDiagnosisPage(): ReactElement {
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
-    const nextQuery = resultDraft.trim()
+    const nextQuery: Query = {
+      result: resultDraft.trim(),
+      review: reviewDraft,
+      startDate: startDraft,
+      endDate: endDraft,
+    }
     const nextPage = { ...page, current: 1 }
     setQuery(nextQuery)
     setPage(nextPage)
+    setSelectedIds([])
     startLoad(nextPage, nextQuery)
   }
 
   function onReset() {
     setResultDraft("")
-    const nextQuery: Query = ""
+    setReviewDraft("")
+    setStartDraft("")
+    setEndDraft("")
+    const nextQuery: Query = { result: "", review: "", startDate: "", endDate: "" }
     const nextPage = { ...page, current: 1 }
     setQuery(nextQuery)
     setPage(nextPage)
+    setSelectedIds([])
     startLoad(nextPage, nextQuery)
   }
 
@@ -195,6 +236,7 @@ export function AdminDiagnosisPage(): ReactElement {
         ? { current: 1, pageSize: next.pageSize }
         : { current: next.current, pageSize: next.pageSize }
     setPage(nextPage)
+    setSelectedIds([])
     startLoad(nextPage)
   }
 
@@ -264,6 +306,11 @@ export function AdminDiagnosisPage(): ReactElement {
     }
     // 建议分行复用 domain 原语，与判读记录纸（RecordSheet）同源。
     const recos = recommendationLines(detail)
+    const hasHumanReview =
+      !!detail.humanResult ||
+      !!detail.humanReviewNote ||
+      !!detail.humanRecommendations ||
+      (!!detail.humanReviewStatus && detail.humanReviewStatus !== "PENDING_AI")
     return (
       <div className="admin-diagnosis__detail">
         {detail.url ? (
@@ -291,6 +338,10 @@ export function AdminDiagnosisPage(): ReactElement {
           <FactRow label="模型版本" value={detail.modelVersion || "—"} mono />
           <FactRow label="预处理版本" value={detail.preprocessVersion || "—"} mono />
           <FactRow label="推理策略版本" value={detail.inferencePolicyVersion || "—"} mono />
+          <FactRow
+            label="人工复核状态"
+            value={humanReviewStatusLabel(detail.humanReviewStatus)}
+          />
         </dl>
 
         <section className="admin-diagnosis__section">
@@ -313,10 +364,15 @@ export function AdminDiagnosisPage(): ReactElement {
           </section>
         ) : null}
 
-        {detail.humanReviewNote ? (
+        {hasHumanReview ? (
           <section className="admin-diagnosis__section">
-            <h3 className="admin-diagnosis__section-title">人工复核备注</h3>
-            <p className="admin-diagnosis__note">{detail.humanReviewNote}</p>
+            <h3 className="admin-diagnosis__section-title">人工复核记录 · HUMAN REVIEW</h3>
+            <dl className="admin-diagnosis__facts">
+              <FactRow label="人工结论" value={detail.humanResult || "—"} />
+              <FactRow label="人工严重程度" value={detail.humanSeverity || "—"} />
+              <FactRow label="人工建议" value={detail.humanRecommendations || "—"} />
+              <FactRow label="复核备注" value={detail.humanReviewNote || "—"} />
+            </dl>
           </section>
         ) : null}
       </div>
@@ -360,9 +416,10 @@ export function AdminDiagnosisPage(): ReactElement {
       clearDetail()
       setReviewOpen(false)
       setReviewError(null)
+      setActionNote("已提交人工复核")
       startLoad()
     } catch (cause) {
-      // 失败：保持弹层不丢已填内容，按 Task 7 的 describeError → fault → FaultNote 语法页内提示。
+      // 失败：保持弹层不丢已填内容，按 describeError → fault → FaultNote 语法页内提示。
       setReviewError(describeError(cause))
     } finally {
       setSubmitting(false)
@@ -389,6 +446,7 @@ export function AdminDiagnosisPage(): ReactElement {
     try {
       await deleteDiagnosis(target.id) // 雪花 id 全程保持 string，绝不转成数字
       setDeleteTarget(null)
+      setSelectedIds((prev) => prev.filter((id) => id !== target.id))
       startLoad() // 成功后刷新当前页（含 loading 态归位）
     } catch (cause) {
       const detail = describeError(cause)
@@ -396,6 +454,30 @@ export function AdminDiagnosisPage(): ReactElement {
       setActionError(detail)
     } finally {
       setDeleting(false)
+    }
+  }
+
+  /** 批量删除：逐条执行，部分失败如实回执。 */
+  async function runBatchDelete() {
+    if (batchBusy || selectedIds.length === 0) return
+    setBatchBusy(true)
+    setActionError(null)
+    setActionNote(null)
+    try {
+      const result: BatchResult = await deleteDiagnoses(selectedIds)
+      const succeeded = result.succeeded ?? 0
+      const failed = result.failed ?? 0
+      setActionNote(
+        failed > 0
+          ? `批量删除：成功 ${succeeded} 条，失败 ${failed} 条。${result.message ?? ""}`
+          : `批量删除：成功 ${succeeded} 条。`,
+      )
+      if (failed === 0) setSelectedIds([])
+      startLoad()
+    } catch (cause) {
+      setActionError(describeError(cause))
+    } finally {
+      setBatchBusy(false)
     }
   }
 
@@ -466,7 +548,7 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "action",
       title: "操作",
-      width: "140px",
+      width: "196px",
       render: (row) => (
         <div className="admin-diagnosis__row-actions">
           <button
@@ -475,6 +557,17 @@ export function AdminDiagnosisPage(): ReactElement {
             onClick={() => openDetail(row)}
           >
             详情
+          </button>
+          {/* 复核是这张表的主动作之一：不该藏在详情抽屉底部，得在行上直接点得到。 */}
+          <button
+            type="button"
+            className="btn btn--sm"
+            onClick={() => {
+              openDetail(row)
+              openReview()
+            }}
+          >
+            复核
           </button>
           <button
             type="button"
@@ -512,6 +605,41 @@ export function AdminDiagnosisPage(): ReactElement {
               aria-label="疾病名"
             />
           </label>
+          <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
+            <span className="admin-diagnosis__label">复核状态 · REVIEW</span>
+            <select
+              className="admin-diagnosis__input"
+              value={reviewDraft}
+              onChange={(event) => setReviewDraft(event.target.value as DiagnosisReviewFilter)}
+              aria-label="复核状态"
+            >
+              {DIAGNOSIS_REVIEW_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
+            <span className="admin-diagnosis__label">判读自 · FROM</span>
+            <input
+              className="admin-diagnosis__input"
+              type="date"
+              value={startDraft}
+              onChange={(event) => setStartDraft(event.target.value)}
+              aria-label="判读时间起"
+            />
+          </label>
+          <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
+            <span className="admin-diagnosis__label">判读至 · TO</span>
+            <input
+              className="admin-diagnosis__input"
+              type="date"
+              value={endDraft}
+              onChange={(event) => setEndDraft(event.target.value)}
+              aria-label="判读时间止"
+            />
+          </label>
           <div className="admin-diagnosis__actions">
             <button className="btn btn--sm" type="submit">
               查询
@@ -536,6 +664,19 @@ export function AdminDiagnosisPage(): ReactElement {
         />
       ) : null}
 
+      {actionNote ? <p className="admin-diagnosis__note num">{actionNote}</p> : null}
+
+      <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="判读记录批量操作">
+        <button
+          type="button"
+          className="btn btn--sm"
+          disabled={batchBusy}
+          onClick={runBatchDelete}
+        >
+          批量删除
+        </button>
+      </BatchBar>
+
       <section className="admin-diagnosis__table" aria-label="判读记录列表">
         <DataTable<AdminDiagnosis>
           columns={columns}
@@ -546,6 +687,9 @@ export function AdminDiagnosisPage(): ReactElement {
           emptyText="暂无判读记录"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
         />
       </section>
 

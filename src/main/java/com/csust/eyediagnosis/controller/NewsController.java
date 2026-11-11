@@ -7,6 +7,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
 import com.csust.eyediagnosis.common.BaseResponse;
+import com.csust.eyediagnosis.common.BatchIdsRequest;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.common.ResultUtils;
 import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.constant.NewsStatus;
@@ -15,6 +17,7 @@ import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.manager.FileManager;
 import com.csust.eyediagnosis.model.dto.file.UploadPictureDetail;
+import com.csust.eyediagnosis.model.dto.news.NewsBatchStatusDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsQueryDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUpdateDTO;
 import com.csust.eyediagnosis.model.dto.news.NewsUploadDTO;
@@ -190,6 +193,37 @@ public class NewsController {
     public BaseResponse<Boolean> deleteNews(@PathVariable("id") Long id, HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         boolean result = newsLifecycleService.softDelete(id, userService.getLoginUser(request));
+        evictNewsListCache();
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量删除资讯：逐条软删并留痕，部分失败如实回执。
+     */
+    @PostMapping("/delete/batch")
+    @Operation(summary ="批量删除资讯（逻辑删除并留痕）")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<BatchResultVO> deleteNewsBatch(@RequestBody BatchIdsRequest batchRequest,
+                                                       HttpServletRequest request){
+        ThrowUtils.throwIf(batchRequest==null, ErrorCode.PARAMS_ERROR);
+        BatchResultVO result = newsLifecycleService.softDeleteBatch(
+                batchRequest.getIds(), userService.getLoginUser(request));
+        evictNewsListCache();
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量改发布状态：逐条按状态迁移表校验，非法迁移的那条不执行。
+     */
+    @PostMapping("/status/batch")
+    @Operation(summary ="批量修改资讯发布状态")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<BatchResultVO> changeNewsStatusBatch(@RequestBody NewsBatchStatusDTO statusRequest,
+                                                             HttpServletRequest request){
+        ThrowUtils.throwIf(statusRequest==null, ErrorCode.PARAMS_ERROR);
+        BatchResultVO result = newsLifecycleService.changeStatusBatch(
+                statusRequest.getIds(), statusRequest.getStatus(), statusRequest.getNote(),
+                userService.getLoginUser(request));
         evictNewsListCache();
         return ResultUtils.success(result);
     }

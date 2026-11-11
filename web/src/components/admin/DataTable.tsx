@@ -37,6 +37,10 @@ function defaultCell<T>(row: T, key: string): ReactNode {
  * 三态优先级：loading（rows === undefined 也算 loading）> error > empty > 数据行。
  * 三态都占一整行（td colSpan=columns.length），不画表体之外的浮层。
  * 分页条数字全部 mono：第 X / Y 页 · 共 N 条 + 上一页/下一页 + 每页条数。
+ *
+ * 多选是可选能力（selectable）：勾选列只在开启时出现，选中态由调用方持有
+ * （受控），表格只负责画复选框并把变化报上去。不可选的行（如管理员账号）
+ * 由 isRowSelectable 逐行裁决。
  */
 export function DataTable<T>(props: {
   columns: Column<T>[]
@@ -47,6 +51,16 @@ export function DataTable<T>(props: {
   emptyText?: string
   page: { current: number; pageSize: number; total: number }
   onPageChange: (next: { current: number; pageSize: number }) => void
+  /** 开启多选列 */
+  selectable?: boolean
+  /** 已选中的行 key（受控） */
+  selectedKeys?: string[]
+  /** 选中集合变化 */
+  onSelectionChange?: (keys: string[]) => void
+  /** 某一行是否允许被勾选 */
+  isRowSelectable?: (row: T) => boolean
+  /** 不画分页条：表格只是列表的一小块（例如仪表盘的「最近几条」） */
+  hidePager?: boolean
 }): ReactElement {
   const {
     columns,
@@ -57,6 +71,11 @@ export function DataTable<T>(props: {
     emptyText = "暂无数据",
     page,
     onPageChange,
+    selectable = false,
+    selectedKeys = [],
+    onSelectionChange,
+    isRowSelectable,
+    hidePager = false,
   } = props
 
   // error 优先于「rows === undefined 的隐式 loading」：自然接线
@@ -69,11 +88,14 @@ export function DataTable<T>(props: {
   // 归一化供「空态 / 数据行」消费；loading / error 判定仍用原始 rows。
   const resolvedRows: T[] = rows ?? []
 
+  // 勾选列也算一列：状态行要跨过它，否则三态行会比表头窄一格。
+  const columnCount = columns.length + (selectable ? 1 : 0)
+
   let body: ReactNode
   if (isLoading) {
     body = (
       <tr className="admin-dt__state-row">
-        <td className="admin-dt__state" colSpan={columns.length}>
+        <td className="admin-dt__state" colSpan={columnCount}>
           读取中…
         </td>
       </tr>
@@ -81,7 +103,7 @@ export function DataTable<T>(props: {
   } else if (error) {
     body = (
       <tr className="admin-dt__state-row">
-        <td className="admin-dt__state admin-dt__state--error" colSpan={columns.length}>
+        <td className="admin-dt__state admin-dt__state--error" colSpan={columnCount}>
           {error}
         </td>
       </tr>
@@ -89,29 +111,66 @@ export function DataTable<T>(props: {
   } else if (resolvedRows.length === 0) {
     body = (
       <tr className="admin-dt__state-row">
-        <td className="admin-dt__state" colSpan={columns.length}>
+        <td className="admin-dt__state" colSpan={columnCount}>
           {emptyText}
         </td>
       </tr>
     )
   } else {
-    body = resolvedRows.map((row) => (
-      <tr key={rowKey(row)} className="admin-dt__row">
-        {columns.map((column) => (
-          <td
-            key={column.key}
-            className={
-              "admin-dt__cell" +
-              (column.mono ? " num" : "") +
-              (column.align ? ` admin-dt__cell--${column.align}` : "")
-            }
-          >
-            {column.render ? column.render(row) : defaultCell(row, column.key)}
-          </td>
-        ))}
-      </tr>
-    ))
+    body = resolvedRows.map((row) => {
+      const key = rowKey(row)
+      const selectableRow = selectable && (isRowSelectable ? isRowSelectable(row) : true)
+      const checked = selectedKeys.includes(key)
+      return (
+        <tr key={key} className="admin-dt__row">
+          {selectable ? (
+            <td className="admin-dt__cell admin-dt__cell--pick">
+              <input
+                type="checkbox"
+                className="admin-dt__check"
+                checked={checked}
+                disabled={!selectableRow}
+                onChange={() => {
+                  if (!onSelectionChange) return
+                  onSelectionChange(
+                    checked
+                      ? selectedKeys.filter((item) => item !== key)
+                      : [...selectedKeys, key],
+                  )
+                }}
+                aria-label={`选择该行 ${key}`}
+              />
+            </td>
+          ) : null}
+          {columns.map((column) => (
+            <td
+              key={column.key}
+              className={
+                "admin-dt__cell" +
+                (column.mono ? " num" : "") +
+                (column.align ? ` admin-dt__cell--${column.align}` : "")
+              }
+            >
+              {column.render ? column.render(row) : defaultCell(row, column.key)}
+            </td>
+          ))}
+        </tr>
+      )
+    })
   }
+
+  /**
+   * 全选 / 取消全选：只作用于「当前页里可选的行」。
+   * 不可选的行（例如管理员账号）不参与全选，否则会把不可操作的行塞进选中集。
+   */
+  const selectableKeys = selectable
+    ? (rows ?? [])
+        .filter((row) => (isRowSelectable ? isRowSelectable(row) : true))
+        .map((row) => rowKey(row))
+    : []
+  const allChecked =
+    selectableKeys.length > 0 && selectableKeys.every((key) => selectedKeys.includes(key))
+  const someChecked = selectableKeys.some((key) => selectedKeys.includes(key))
 
   const goPrev = () => {
     if (current > 1) onPageChange({ current: current - 1, pageSize: page.pageSize })
@@ -129,6 +188,25 @@ export function DataTable<T>(props: {
         <table className="admin-dt__table">
           <thead>
             <tr className="admin-dt__head-row">
+              {selectable ? (
+                <th scope="col" className="admin-dt__head admin-dt__head--pick">
+                  <input
+                    type="checkbox"
+                    className="admin-dt__check"
+                    checked={allChecked}
+                    ref={(node) => {
+                      // 半选态（部分选中）用 indeterminate 表达，不能只靠 checked。
+                      if (node) node.indeterminate = !allChecked && someChecked
+                    }}
+                    disabled={selectableKeys.length === 0}
+                    onChange={() => {
+                      if (!onSelectionChange) return
+                      onSelectionChange(allChecked ? [] : selectableKeys)
+                    }}
+                    aria-label="全选本页"
+                  />
+                </th>
+              ) : null}
               {columns.map((column) => (
                 <th
                   key={column.key}
@@ -148,6 +226,7 @@ export function DataTable<T>(props: {
         </table>
       </div>
 
+      {hidePager ? null : (
       <div className="admin-dt__pager num">
         <span className="admin-dt__pager-info">
           第 {current} / {totalPages} 页 · 共 {page.total} 条
@@ -184,6 +263,7 @@ export function DataTable<T>(props: {
           </label>
         </div>
       </div>
+      )}
     </div>
   )
 }

@@ -15,6 +15,10 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -56,6 +60,34 @@ public class CosManager {
     public COSObject getObject(String key) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(cosClientConfig.getBucket(), key);
         return cosClient.getObject(getObjectRequest);
+    }
+
+    /**
+     * 生成限时下载/预览链接。
+     *
+     * <p>对象存储里的 key 是私有的，浏览器不能直接拿着 key 取文件。管理端要预览
+     * 一份 PDF 或一份 Markdown，就得先换一条带签名、有有效期的 URL——签名过期后
+     * 链接自动作废，不会变成一把长期有效的万能钥匙。
+     *
+     * @param key        对象 key
+     * @param expiration 过期时刻
+     * @return 带签名的 URL 字符串
+     */
+    public String generatePresignedUrl(String key, Date expiration) {
+        return cosClient.generatePresignedUrl(cosClientConfig.getBucket(), key, expiration).toString();
+    }
+
+    /**
+     * 把对象下载到本地文件（管理端预览解析用）。
+     *
+     * @param key    对象 key
+     * @param target 目标文件
+     */
+    public void downloadToFile(String key, File target) throws IOException {
+        COSObject object = getObject(key);
+        try (InputStream in = object.getObjectContent()) {
+            Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**

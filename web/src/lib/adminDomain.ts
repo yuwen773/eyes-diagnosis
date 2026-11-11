@@ -143,3 +143,164 @@ export function barLabelFits(barWidthPx: number, label: string): boolean {
  * 页面会把一条拒识记录读成「0.0% 的诊断」——那是在说一条不存在的结论。
  */
 export { confidencePercent } from "@/lib/domain"
+
+/* ══════════════════════════════════════════════════════════════════════════
+   筛选与统计的纯函数层
+   --------------------------------------------------------------------------
+   这些映射被多个页面复用：表格里的状态标签、工具条里的下拉选项、统计图里
+   的中文口径，必须是同一份。写在一处，页面各处只消费，不再各写一套。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/** 用户角色 → 标签与风险档。只吃 --risk-* 语义色，与品牌信号橙解耦。 */
+export function userRoleView(role?: string | null): { label: string; risk: Risk } {
+  switch (role) {
+    case "admin":
+      return { label: "管理员", risk: "attention" }
+    case "ban":
+      return { label: "已封禁", risk: "critical" }
+    case "user":
+      return { label: "普通用户", risk: "normal" }
+    default:
+      // 未知角色不猜：老数据里没写角色的账号按「未标注」显示，
+      // 而不是被显示成「普通用户」。
+      return { label: role || "未标注", risk: "unknown" }
+  }
+}
+
+/** 角色筛选下拉（值即后端 userRole，空串 = 不限）。 */
+export const USER_ROLE_FILTER_OPTIONS = [
+  { value: "", label: "全部角色" },
+  { value: "user", label: "普通用户" },
+  { value: "admin", label: "管理员" },
+  { value: "ban", label: "已封禁" },
+] as const
+
+/** 可被指派的角色（新建 / 编辑 / 批量改角色都用这一份）。 */
+export const USER_ROLE_ASSIGN_OPTIONS = [
+  { value: "user", label: "普通用户" },
+  { value: "ban", label: "已封禁" },
+  { value: "admin", label: "管理员" },
+] as const
+
+/** 知识文档处理状态 → 标签与风险档。 */
+export function knowledgeStatusView(status?: number | null): { label: string; risk: Risk } {
+  switch (status) {
+    case 0:
+      return { label: "处理中", risk: "attention" }
+    case 1:
+      return { label: "已完成", risk: "normal" }
+    case 2:
+      return { label: "失败", risk: "critical" }
+    default:
+      return { label: "未知", risk: "unknown" }
+  }
+}
+
+/** 知识文档状态筛选下拉。 */
+export const KNOWLEDGE_STATUS_FILTER_OPTIONS = [
+  { value: "", label: "全部状态" },
+  { value: "0", label: "处理中" },
+  { value: "1", label: "已完成" },
+  { value: "2", label: "失败" },
+] as const
+
+/** 知识库支持的文件类型（与后端白名单一致）。 */
+export const KNOWLEDGE_FILE_TYPES = [
+  "pdf",
+  "doc",
+  "docx",
+  "txt",
+  "md",
+  "markdown",
+] as const
+
+/** 知识文档类型筛选下拉。 */
+export const KNOWLEDGE_FILE_TYPE_OPTIONS = [
+  { value: "", label: "全部类型" },
+  ...KNOWLEDGE_FILE_TYPES.map((value) => ({ value, label: value.toUpperCase() })),
+] as const
+
+/**
+ * 判读记录的复核状态筛选。
+ *
+ * 值是自造的语义键，落到后端参数时再翻译（见 diagnosisFilterParams）：
+ * 后端的 reexamineStatus 是复诊流程状态，humanReviewStatus 是医生复核状态，
+ * 两套语义混在一张表里，前端不直接暴露它们的数字。
+ */
+export type DiagnosisReviewFilter =
+  | ""
+  | "requiresReview"
+  | "aiRejected"
+  | "reviewed"
+  | "reviewing"
+  | "notReviewed"
+
+export const DIAGNOSIS_REVIEW_FILTER_OPTIONS: {
+  value: DiagnosisReviewFilter
+  label: string
+}[] = [
+  { value: "", label: "全部状态" },
+  { value: "requiresReview", label: "待人工复核" },
+  { value: "aiRejected", label: "AI 拒识" },
+  { value: "reviewed", label: "已复审" },
+  { value: "reviewing", label: "复审中" },
+  { value: "notReviewed", label: "未复审" },
+]
+
+/** 复核状态筛选 → 后端查询参数。空串返回空对象（不限）。 */
+export function diagnosisFilterParams(key: DiagnosisReviewFilter): {
+  reexamineStatus?: number
+  humanReviewStatus?: string
+  aiRejected?: boolean
+  requiresReview?: boolean
+} {
+  switch (key) {
+    case "requiresReview":
+      return { requiresReview: true }
+    case "aiRejected":
+      return { aiRejected: true }
+    case "reviewed":
+      return { reexamineStatus: 3 }
+    case "reviewing":
+      return { reexamineStatus: 2 }
+    case "notReviewed":
+      return { reexamineStatus: 1 }
+    default:
+      return {}
+  }
+}
+
+/**
+ * 人工复核状态（humanReviewStatus）→ 中文标签。
+ *
+ * 这列后端给的是代码（PENDING_AI / AI_ONLY / …），仪表盘与数据分析要显示
+ * 人话；映射写在这里，两页共用一份。
+ */
+export function humanReviewStatusLabel(status?: string | null): string {
+  switch (status) {
+    case "PENDING_AI":
+      return "待模型出结论"
+    case "AI_ONLY":
+      return "仅 AI 结论 · 待复核"
+    case "AWAITING_REVIEW":
+      return "拒识 / 低置信 · 待复核"
+    case "REVIEWED":
+      return "已复核"
+    case "OVERRIDDEN":
+      return "已推翻 AI 结论"
+    default:
+      return "未记录"
+  }
+}
+
+/** 计数读数：千分位 + 等宽字体（在 StatTile 里用）。 */
+export function formatStatNumber(value: number): string {
+  if (!Number.isFinite(value)) return "—"
+  return Math.round(value).toLocaleString("zh-CN")
+}
+
+/** 百分比读数（一位小数）。入参是 0–1 的比例。 */
+export function formatStatPercent(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—"
+  return `${(value * 100).toFixed(1)}%`
+}

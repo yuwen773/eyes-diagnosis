@@ -44,5 +44,25 @@ public class NewsQueryDTO extends PageRequest implements Serializable {
      */
     private boolean visibleOnly = true;
 
+    /**
+     * 发布状态筛选：0 草稿 / 1 已发布 / 2 下架 / 3 待审核；不传则不限。
+     */
+    private Integer status;
+
+    /**
+     * 内容分类（精确匹配）
+     */
+    private String category;
+
+    /**
+     * 发布时间下界（含当天），格式 yyyy-MM-dd
+     */
+    private String startDate;
+
+    /**
+     * 发布时间上界（含当天），格式 yyyy-MM-dd
+     */
+    private String endDate;
+
     private static final long serialVersionUID = 1L;
 }

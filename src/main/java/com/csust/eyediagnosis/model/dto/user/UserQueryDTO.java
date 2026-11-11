@@ -41,5 +41,15 @@ public class UserQueryDTO extends PageRequest implements Serializable {
      */
     private String userRole;
 
+    /**
+     * 注册时间下界（含当天），格式 yyyy-MM-dd
+     */
+    private String startDate;
+
+    /**
+     * 注册时间上界（含当天），格式 yyyy-MM-dd
+     */
+    private String endDate;
+
     private static final long serialVersionUID = 1L;
 }

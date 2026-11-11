@@ -1,20 +1,40 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactElement,
+} from "react"
 
 import { SectionHead } from "@/components/SectionHead"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
+import { Drawer } from "@/components/admin/Drawer"
+import { BatchBar } from "@/components/admin/BatchBar"
 import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import {
   deleteKnowledge,
+  deleteKnowledgeBatch,
+  getKnowledgeDetail,
   listKnowledge,
+  updateKnowledgeTitle,
   uploadKnowledge,
+  type KnowledgeDetail,
   type KnowledgeDoc,
+  type KnowledgeQuery,
   type Page,
 } from "@/lib/adminApi"
+import {
+  knowledgeStatusView,
+  KNOWLEDGE_FILE_TYPE_OPTIONS,
+  KNOWLEDGE_STATUS_FILTER_OPTIONS,
+} from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
-import { formatTimestamp, type Risk } from "@/lib/domain"
+import { formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
@@ -24,22 +44,18 @@ const ACCEPT = ".pdf,.doc,.docx,.txt,.md,.markdown"
 /** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
 type View = { data: Page<KnowledgeDoc> | null; fault: ErrorDetail | null; loading: boolean }
 
-/** 状态 → 风险档 + 文字。其他值走 .risk[data-risk="unknown"] 的 default 档。 */
-function statusView(status: number): { label: string; risk: Risk } {
-  switch (status) {
-    case 0:
-      return { label: "处理中", risk: "attention" }
-    case 1:
-      return { label: "已完成", risk: "normal" }
-    case 2:
-      return { label: "失败", risk: "critical" }
-    default:
-      return { label: "未知", risk: "unknown" }
-  }
+/** 已应用的筛选条件。 */
+type Query = {
+  fileName: string
+  title: string
+  status: string
+  fileType: string
+  startDate: string
+  endDate: string
 }
 
 /** 文件大小 B / KB / MB 格式化函数（brief 逐字）。数值列统一 mono。 */
-function formatFileSize(bytes?: string): string {
+function formatFileSize(bytes?: string | number): string {
   const size = Number(bytes)
   if (!size || size < 0 || !Number.isFinite(size)) return "—"
   if (size < 1024) return `${size} B`
@@ -48,7 +64,7 @@ function formatFileSize(bytes?: string): string {
 }
 
 /**
- * 知识库（真实端点：上传 / 轮询 / 删除）。
+ * 知识库（真实端点：上传 / 轮询 / 预览 / 删除 / 改名）。
  *
  * 取数逐字对齐 AdminUsersPage：requestSeq 递增序号挡过期响应，View 三态同源派生，
  * 首次挂载只用一个 useEffect 发一次请求；事件驱动 startLoad 在事件里同步置 loading。
@@ -62,6 +78,23 @@ function formatFileSize(bytes?: string): string {
  * pollTimerRef 再挡一道重入，组件卸载走同一 cleanup 清定时器。
  */
 export function AdminKnowledgePage(): ReactElement {
+  const [fileNameDraft, setFileNameDraft] = useState("")
+  const [titleDraft, setTitleDraft] = useState("")
+  const [statusDraft, setStatusDraft] = useState("")
+  const [fileTypeDraft, setFileTypeDraft] = useState("")
+  const [startDraft, setStartDraft] = useState("")
+  const [endDraft, setEndDraft] = useState("")
+  const [query, setQuery] = useState<Query>({
+    fileName: "",
+    title: "",
+    status: "",
+    fileType: "",
+    startDate: "",
+    endDate: "",
+  })
+  // 最新筛选条件的镜像：轮询回调要拿到「当前这组条件」，但又不能让 fireLoad
+  // 依赖 query（那会让挂载 effect 随每次搜索重跑一遍，多发一次请求）。
+  const queryRef = useRef<Query>(query)
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
   const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
   const requestSeq = useRef(0)
@@ -80,9 +113,25 @@ export function AdminKnowledgePage(): ReactElement {
   // 轮询单飞：上一次轮询还没回就不发下一次，避免慢响应把请求堆叠起来。
   const pollInFlightRef = useRef(false)
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeDoc | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
+  const [actionNote, setActionNote] = useState<string | null>(null)
+  const [batchBusy, setBatchBusy] = useState(false)
+
+  // 预览抽屉：元信息 + 原文预览 + 切片清单
+  const [previewTarget, setPreviewTarget] = useState<KnowledgeDoc | null>(null)
+  const [preview, setPreview] = useState<KnowledgeDetail | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewFault, setPreviewFault] = useState<ErrorDetail | null>(null)
+  const previewSeq = useRef(0)
+
+  // 改名弹层
+  const [renameTarget, setRenameTarget] = useState<KnowledgeDoc | null>(null)
+  const [renameTitle, setRenameTitle] = useState("")
+  const [renaming, setRenaming] = useState(false)
+  const [renameError, setRenameError] = useState<ErrorDetail | null>(null)
 
   /** 成功取数后的统一落盘：三态 + 处理中队列 + 轮询开关，全在 Promise 续体里。 */
   const applyLoaded = useCallback((seq: number, data: Page<KnowledgeDoc>) => {
@@ -118,14 +167,25 @@ export function AdminKnowledgePage(): ReactElement {
    * 更晚发起的轮询被更早的响应覆盖。
    */
   const fireLoad = useCallback(
-    (current: number, pageSize: number, silent: boolean) => {
+    (current: number, pageSize: number, silent: boolean, nextQuery?: Query) => {
       if (silent && pollInFlightRef.current) return
       if (silent) pollInFlightRef.current = true
       const seq = silent ? requestSeq.current : ++requestSeq.current
       const settle = () => {
         if (silent) pollInFlightRef.current = false
       }
-      listKnowledge(current, pageSize).then(
+      const active = nextQuery ?? queryRef.current
+      const params: KnowledgeQuery = {
+        current,
+        pageSize,
+        ...(active.fileName ? { fileName: active.fileName } : {}),
+        ...(active.title ? { title: active.title } : {}),
+        ...(active.status ? { status: Number(active.status) } : {}),
+        ...(active.fileType ? { fileType: active.fileType } : {}),
+        ...(active.startDate ? { startDate: active.startDate } : {}),
+        ...(active.endDate ? { endDate: active.endDate } : {}),
+      }
+      listKnowledge(params).then(
         (data) => {
           settle()
           applyLoaded(seq, data)
@@ -166,10 +226,51 @@ export function AdminKnowledgePage(): ReactElement {
   }, [hasProcessing, page, fireLoad])
 
   /** 事件驱动的全量刷新：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(current: number, pageSize: number) {
+  function startLoad(current: number, pageSize: number, nextQuery: Query = query) {
     setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
     setView({ data: null, fault: null, loading: true })
-    fireLoad(current, pageSize, false)
+    fireLoad(current, pageSize, false, nextQuery)
+  }
+
+  function onSearch(event: FormEvent) {
+    event.preventDefault()
+    const nextQuery: Query = {
+      fileName: fileNameDraft.trim(),
+      title: titleDraft.trim(),
+      status: statusDraft,
+      fileType: fileTypeDraft,
+      startDate: startDraft,
+      endDate: endDraft,
+    }
+    const nextPage = { ...page, current: 1 }
+    queryRef.current = nextQuery
+    setQuery(nextQuery)
+    setPage(nextPage)
+    setSelectedIds([])
+    startLoad(nextPage.current, nextPage.pageSize, nextQuery)
+  }
+
+  function onReset() {
+    setFileNameDraft("")
+    setTitleDraft("")
+    setStatusDraft("")
+    setFileTypeDraft("")
+    setStartDraft("")
+    setEndDraft("")
+    const nextQuery: Query = {
+      fileName: "",
+      title: "",
+      status: "",
+      fileType: "",
+      startDate: "",
+      endDate: "",
+    }
+    const nextPage = { ...page, current: 1 }
+    queryRef.current = nextQuery
+    setQuery(nextQuery)
+    setPage(nextPage)
+    setSelectedIds([])
+    startLoad(nextPage.current, nextPage.pageSize, nextQuery)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -179,6 +280,7 @@ export function AdminKnowledgePage(): ReactElement {
         ? { current: 1, pageSize: next.pageSize }
         : { current: next.current, pageSize: next.pageSize }
     setPage(nextPage)
+    setSelectedIds([])
     startLoad(nextPage.current, nextPage.pageSize)
   }
 
@@ -235,6 +337,7 @@ export function AdminKnowledgePage(): ReactElement {
     try {
       await deleteKnowledge(target.id) // 后端 JsonConfig 全局 Long→String，id 线上为 string，直接传
       setDeleteTarget(null)
+      setSelectedIds((prev) => prev.filter((id) => id !== target.id))
       startLoad(page.current, page.pageSize) // 成功后刷新当前页
     } catch (cause) {
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
@@ -244,8 +347,100 @@ export function AdminKnowledgePage(): ReactElement {
     }
   }
 
+  /** 批量删除：逐条鉴权与执行，部分失败如实回执。 */
+  async function runBatchDelete() {
+    if (batchBusy || selectedIds.length === 0) return
+    setBatchBusy(true)
+    setActionError(null)
+    setActionNote(null)
+    try {
+      const result = await deleteKnowledgeBatch(selectedIds)
+      const succeeded = result.succeeded ?? 0
+      const failed = result.failed ?? 0
+      setActionNote(
+        failed > 0
+          ? `批量删除：成功 ${succeeded} 份，失败 ${failed} 份。${result.message ?? ""}`
+          : `批量删除：成功 ${succeeded} 份。`,
+      )
+      if (failed === 0) setSelectedIds([])
+      startLoad(page.current, page.pageSize)
+    } catch (cause) {
+      setActionError(describeError(cause))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  /* ── 预览（原文 + 切片） ───────────────────────────────── */
+
+  function openPreview(row: KnowledgeDoc) {
+    const seq = ++previewSeq.current
+    setPreviewTarget(row)
+    setPreview(null)
+    setPreviewFault(null)
+    setPreviewLoading(true)
+    getKnowledgeDetail(row.id).then(
+      (data) => {
+        if (seq === previewSeq.current) {
+          setPreview(data)
+          setPreviewLoading(false)
+        }
+      },
+      (cause) => {
+        if (seq === previewSeq.current) {
+          setPreviewFault(describeError(cause))
+          setPreviewLoading(false)
+        }
+      },
+    )
+  }
+
+  function closePreview() {
+    ++previewSeq.current
+    setPreviewTarget(null)
+    setPreview(null)
+    setPreviewFault(null)
+    setPreviewLoading(false)
+  }
+
+  /* ── 改名 ───────────────────────────────────────────────── */
+
+  function openRename(row: KnowledgeDoc) {
+    setRenameTitle(row.title ?? row.fileName ?? "")
+    setRenameError(null)
+    setRenameTarget(row)
+  }
+
+  function closeRename() {
+    if (renaming) return
+    setRenameTarget(null)
+    setRenameError(null)
+  }
+
+  async function confirmRename() {
+    if (!renameTarget || renaming) return
+    const title = renameTitle.trim()
+    if (!title) {
+      setRenameError({ code: 40000, text: "标题不能为空" })
+      return
+    }
+    setRenaming(true)
+    setRenameError(null)
+    try {
+      await updateKnowledgeTitle(renameTarget.id, title)
+      setRenameTarget(null)
+      setActionNote("已改名")
+      startLoad(page.current, page.pageSize)
+    } catch (cause) {
+      setRenameError(describeError(cause))
+    } finally {
+      setRenaming(false)
+    }
+  }
+
   const columns: Column<KnowledgeDoc>[] = [
     { key: "fileName", title: "文件名" },
+    { key: "title", title: "标题", width: "180px" },
     {
       key: "fileType",
       title: "类型",
@@ -265,7 +460,7 @@ export function AdminKnowledgePage(): ReactElement {
       title: "状态",
       width: "112px",
       render: (row) => {
-        const v = statusView(row.status)
+        const v = knowledgeStatusView(row.status)
         return <RiskTag risk={v.risk}>{v.label}</RiskTag>
       },
     },
@@ -279,15 +474,31 @@ export function AdminKnowledgePage(): ReactElement {
     {
       key: "action",
       title: "操作",
-      width: "92px",
+      width: "196px",
       render: (row) => (
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={() => openDelete(row)}
-        >
-          删除
-        </button>
+        <div className="admin-knowledge__row-actions">
+          <button
+            type="button"
+            className="btn btn--sm"
+            onClick={() => openPreview(row)}
+          >
+            预览
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => openRename(row)}
+          >
+            改名
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => openDelete(row)}
+          >
+            删除
+          </button>
+        </div>
       ),
     },
   ]
@@ -303,6 +514,89 @@ export function AdminKnowledgePage(): ReactElement {
       </div>
 
       <Toolbar>
+        <form className="admin-knowledge__form" onSubmit={onSearch}>
+          <label className="admin-knowledge__field">
+            <span className="admin-knowledge__label">文件名 · FILE</span>
+            <input
+              className="admin-knowledge__input"
+              type="text"
+              value={fileNameDraft}
+              onChange={(event) => setFileNameDraft(event.target.value)}
+              placeholder="按文件名模糊检索…"
+              aria-label="文件名"
+            />
+          </label>
+          <label className="admin-knowledge__field">
+            <span className="admin-knowledge__label">标题 · TITLE</span>
+            <input
+              className="admin-knowledge__input"
+              type="text"
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              placeholder="按标题模糊检索…"
+              aria-label="标题"
+            />
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">状态 · STATUS</span>
+            <select
+              className="admin-knowledge__input"
+              value={statusDraft}
+              onChange={(event) => setStatusDraft(event.target.value)}
+              aria-label="处理状态"
+            >
+              {KNOWLEDGE_STATUS_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">类型 · TYPE</span>
+            <select
+              className="admin-knowledge__input"
+              value={fileTypeDraft}
+              onChange={(event) => setFileTypeDraft(event.target.value)}
+              aria-label="文件类型"
+            >
+              {KNOWLEDGE_FILE_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">上传自 · FROM</span>
+            <input
+              className="admin-knowledge__input"
+              type="date"
+              value={startDraft}
+              onChange={(event) => setStartDraft(event.target.value)}
+              aria-label="上传时间起"
+            />
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">上传至 · TO</span>
+            <input
+              className="admin-knowledge__input"
+              type="date"
+              value={endDraft}
+              onChange={(event) => setEndDraft(event.target.value)}
+              aria-label="上传时间止"
+            />
+          </label>
+          <div className="admin-knowledge__actions">
+            <button className="btn btn--sm" type="submit">
+              查询
+            </button>
+            <button className="btn btn--ghost btn--sm" type="button" onClick={onReset}>
+              重置
+            </button>
+          </div>
+        </form>
+
         <div className="admin-knowledge__upload-row">
           <input
             ref={fileInputRef}
@@ -370,6 +664,8 @@ export function AdminKnowledgePage(): ReactElement {
         />
       ) : null}
 
+      {actionNote ? <p className="admin-knowledge__note num">{actionNote}</p> : null}
+
       {/* 处理中条：显示本次会话新上传、服务端仍在处理的文件名；全部完成自动收起。 */}
       {processingNames.length > 0 ? (
         <section className="admin-knowledge__processing" aria-label="处理中文件">
@@ -387,6 +683,17 @@ export function AdminKnowledgePage(): ReactElement {
         </section>
       ) : null}
 
+      <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="知识文档批量操作">
+        <button
+          type="button"
+          className="btn btn--sm"
+          disabled={batchBusy}
+          onClick={runBatchDelete}
+        >
+          批量删除
+        </button>
+      </BatchBar>
+
       <section className="admin-knowledge__table" aria-label="知识文档列表">
         <DataTable<KnowledgeDoc>
           columns={columns}
@@ -397,12 +704,157 @@ export function AdminKnowledgePage(): ReactElement {
           emptyText="暂无文档"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
         />
       </section>
 
       <p className="admin-knowledge__footer num">
-        列出的是你名下上传的知识文档（后端数据边界，见设计文档 §7）
+        列出的是全站知识文档（管理员视角）；普通用户只看到自己上传的
       </p>
+
+      {/* 预览抽屉：原文 + 切片清单。切片是 RAG 真正检索的最小单位，
+          管理员要能看清「这份文档被切成了什么样子」。 */}
+      <Drawer open={previewTarget != null} title="文档预览" onClose={closePreview}>
+        {previewLoading ? (
+          <p className="admin-knowledge__preview-state">读取中…</p>
+        ) : previewFault ? (
+          <FaultNote
+            className="admin-knowledge__preview-fault"
+            fault={fault({
+              severity: "attention",
+              kind: "client",
+              title: previewFault.text,
+              code: previewFault.code,
+            })}
+          />
+        ) : preview ? (
+          <div className="admin-knowledge__preview">
+            <dl className="admin-knowledge__preview-facts">
+              <div className="admin-knowledge__fact">
+                <dt>文件名</dt>
+                <dd>{preview.fileName}</dd>
+              </div>
+              <div className="admin-knowledge__fact">
+                <dt>类型 / 大小</dt>
+                <dd className="num">
+                  {preview.fileType?.toUpperCase()} · {formatFileSize(preview.fileSize)}
+                </dd>
+              </div>
+              <div className="admin-knowledge__fact">
+                <dt>切片数</dt>
+                <dd className="num">{preview.chunkCount ?? 0}</dd>
+              </div>
+            </dl>
+
+            {preview.previewKind === "pdf" && preview.previewUrl ? (
+              <iframe
+                className="admin-knowledge__preview-frame"
+                src={preview.previewUrl}
+                title={`${preview.fileName} 原文预览`}
+              />
+            ) : null}
+
+            {preview.previewKind === "text" && preview.textPreview ? (
+              <pre className="admin-knowledge__preview-text">{preview.textPreview}</pre>
+            ) : null}
+
+            {preview.previewKind === "none" ? (
+              <p className="admin-knowledge__preview-state num">
+                该格式不能直接预览，请下载原文件查看；下方是它的切片清单。
+              </p>
+            ) : null}
+
+            {preview.previewUrl ? (
+              <a
+                className="admin-knowledge__preview-link"
+                href={preview.previewUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                在新窗口打开原文件 ↗
+              </a>
+            ) : null}
+
+            <section className="admin-knowledge__chunks">
+              <h3 className="admin-knowledge__chunks-title">
+                切片清单 · CHUNKS
+                <span className="num"> {preview.chunks?.length ?? 0} 块</span>
+              </h3>
+              {preview.chunksReadable === false ? (
+                <p className="admin-knowledge__preview-state">
+                  {preview.chunksMessage ?? "切片读取失败"}
+                </p>
+              ) : (preview.chunks?.length ?? 0) === 0 ? (
+                <p className="admin-knowledge__preview-state">该文档没有切片。</p>
+              ) : (
+                <ol className="admin-knowledge__chunk-list">
+                  {preview.chunks?.map((chunk) => (
+                    <li key={chunk.index} className="admin-knowledge__chunk">
+                      <div className="admin-knowledge__chunk-head num">
+                        <span>CHUNK {chunk.index}</span>
+                        <span>{chunk.chars} 字</span>
+                      </div>
+                      <p className="admin-knowledge__chunk-text">{chunk.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+        ) : (
+          <p className="admin-knowledge__preview-state">暂无详情</p>
+        )}
+      </Drawer>
+
+      {/* 改名弹层 */}
+      <Modal
+        open={renameTarget != null}
+        title="修改标题"
+        onClose={closeRename}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={closeRename}
+              disabled={renaming}
+            >
+              取消
+            </button>
+            <button type="button" className="btn btn--sm" onClick={confirmRename} disabled={renaming}>
+              {renaming ? "保存中…" : "保存"}
+            </button>
+          </>
+        }
+      >
+        <div className="admin-form">
+          <label className="admin-form__field">
+            <span className="admin-form__label">标题 · TITLE</span>
+            <input
+              className="admin-users__input"
+              value={renameTitle}
+              onChange={(event) => setRenameTitle(event.target.value)}
+              aria-label="标题"
+            />
+          </label>
+          <p className="admin-form__hint">
+            只改标题，不动文件本体；换文件请重新上传，旧的切片会被一并替换。
+          </p>
+          {renameError ? (
+            <FaultNote
+              className="admin-form__fault"
+              fault={fault({
+                severity: "attention",
+                kind: "client",
+                title: renameError.text,
+                code: renameError.code,
+              })}
+            />
+          ) : null}
+        </div>
+      </Modal>
 
       <Modal
         open={deleteTarget != null}
