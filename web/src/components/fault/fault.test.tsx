@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api"
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
+  vi.restoreAllMocks()
 })
 
 function Harness({ onPush }: { onPush: (push: (f: ReturnType<typeof infoFault>) => void) => void }) {
@@ -160,19 +161,24 @@ describe("FaultToaster 的下滑关闭", () => {
     expect(screen.queryByText("资料已更新")).toBeTruthy()
   })
 
-  it("快甩一下也收掉", async () => {
+  it("快甩一下也收掉", () => {
+    vi.useFakeTimers()
+    // 甩动判定依赖 performance.now 的实际间隔；并行跑测试时真实 sleep 会漂，
+    // 把时钟钉死成 20ms 才能稳定测到「距离 24+ 且速度 0.8px/ms 以上」。
+    let now = 0
+    vi.spyOn(performance, "now").mockImplementation(() => now)
     const push = mountToaster()
     push(infoFault("资料已更新"))
     const card = document.querySelector(".fault-toast__card") as HTMLElement
 
-    await act(async () => {
+    act(() => {
       card.dispatchEvent(pointer("pointerdown", 0))
-      await new Promise((r) => setTimeout(r, 20))
+      now = 20
       card.dispatchEvent(pointer("pointermove", 30))
       card.dispatchEvent(pointer("pointerup", 30))
     })
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 600))
+    act(() => {
+      vi.advanceTimersByTime(600)
     })
     expect(screen.queryByText("资料已更新")).toBeNull()
   })

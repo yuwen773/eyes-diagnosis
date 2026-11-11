@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent, type ReactElement } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { SectionHead } from "@/components/SectionHead"
-import { DataTable, type Column } from "@/components/admin/DataTable"
+import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { BatchBar } from "@/components/admin/BatchBar"
@@ -82,6 +82,8 @@ export function AdminUsersPage(): ReactElement {
     endDate: "",
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
+  // 服务端排序：字段必须落在后端白名单里。
+  const [sort, setSort] = useState<SortState>(null)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
@@ -108,8 +110,9 @@ export function AdminUsersPage(): ReactElement {
       ...(query.userRole ? { userRole: query.userRole } : {}),
       ...(query.startDate ? { startDate: query.startDate } : {}),
       ...(query.endDate ? { endDate: query.endDate } : {}),
+      ...(sort ? { sortField: sort.field, sortOrder: sort.order } : {}),
     }),
-    [current, pageSize, query],
+    [current, pageSize, query, sort],
   )
 
   const listQuery = useQuery({
@@ -149,6 +152,7 @@ export function AdminUsersPage(): ReactElement {
     setQuery({ userAccount: "", userName: "", userRole: "", startDate: "", endDate: "" })
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
+    setSort(null)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -310,9 +314,9 @@ export function AdminUsersPage(): ReactElement {
   }
 
   const columns: Column<AdminUser>[] = [
-    { key: "id", title: "ID", width: "176px", mono: true },
-    { key: "userAccount", title: "账号", width: "132px" },
-    { key: "userName", title: "用户名", width: "120px" },
+    { key: "id", title: "ID", width: "176px", mono: true, sortable: true },
+    { key: "userAccount", title: "账号", width: "132px", sortable: true },
+    { key: "userName", title: "用户名", width: "120px", sortable: true },
     {
       key: "userAvatar",
       title: "头像",
@@ -336,6 +340,7 @@ export function AdminUsersPage(): ReactElement {
       key: "userRole",
       title: "角色",
       width: "116px",
+      sortable: true,
       render: (row) => {
         const view = userRoleView(row.userRole)
         return (
@@ -345,7 +350,7 @@ export function AdminUsersPage(): ReactElement {
         )
       },
     },
-    { key: "createTime", title: "创建时间", width: "180px", mono: true },
+    { key: "createTime", title: "创建时间", width: "180px", mono: true, sortable: true },
     {
       key: "action",
       title: "操作",
@@ -514,6 +519,13 @@ export function AdminUsersPage(): ReactElement {
           emptyText="暂无用户"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          sort={sort}
+          onSortChange={(next) => {
+            setActionError(null)
+            setPage((prev) => ({ ...prev, current: 1 }))
+            setSelectedIds([])
+            setSort(next)
+          }}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

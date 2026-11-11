@@ -34,6 +34,9 @@ export type UserQuery = {
   current: number; pageSize: number
   userAccount?: string; userName?: string; userRole?: string
   startDate?: string; endDate?: string
+  /** 服务端排序：id / userAccount / userName / userRole / createTime。 */
+  sortField?: string
+  sortOrder?: "ascend" | "descend"
 }
 export function listUsers(q: UserQuery): Promise<Page<AdminUser>> {
   return request<RawPage<AdminUser>>("/user/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
@@ -70,6 +73,9 @@ export type NewsQuery = {
   current: number; pageSize: number
   title?: string; status?: number; category?: string
   startDate?: string; endDate?: string
+  /** 服务端排序：id / title / status / publishTime / editTime。 */
+  sortField?: string
+  sortOrder?: "ascend" | "descend"
 }
 export function listAdminNews(q: NewsQuery): Promise<Page<AdminNews>> {
   return request<RawPage<AdminNews>>("/news/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)
@@ -131,6 +137,9 @@ export type DiagnosisQuery = {
   /** 只看需要人工复核的记录 */
   requiresReview?: boolean
   startDate?: string; endDate?: string
+  /** 服务端排序：id / result / confidence / severity / createTime。 */
+  sortField?: string
+  sortOrder?: "ascend" | "descend"
 }
 export function listDiagnoses(q: DiagnosisQuery): Promise<Page<AdminDiagnosis>> {
   return request<RawPage<AdminDiagnosis>>("/diagnosis/list/page/vo", { method: "POST", body: JSON.stringify(q) }).then(toPage)

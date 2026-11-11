@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
-import { DataTable, type Column } from "@/components/admin/DataTable"
+import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { BatchBar } from "@/components/admin/BatchBar"
@@ -68,6 +68,8 @@ export function AdminNewsPage(): ReactElement {
     endDate: "",
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
+  // 服务端排序：字段必须落在后端白名单里。
+  const [sort, setSort] = useState<SortState>(null)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminNews | null>(null)
@@ -88,8 +90,9 @@ export function AdminNewsPage(): ReactElement {
       ...(query.status ? { status: Number(query.status) } : {}),
       ...(query.startDate ? { startDate: query.startDate } : {}),
       ...(query.endDate ? { endDate: query.endDate } : {}),
+      ...(sort ? { sortField: sort.field, sortOrder: sort.order } : {}),
     }),
-    [current, pageSize, query],
+    [current, pageSize, query, sort],
   )
 
   const listQuery = useQuery({
@@ -127,6 +130,7 @@ export function AdminNewsPage(): ReactElement {
     setQuery({ title: "", status: "", startDate: "", endDate: "" })
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
+    setSort(null)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -199,13 +203,14 @@ export function AdminNewsPage(): ReactElement {
   }
 
   const columns: Column<AdminNews>[] = [
-    { key: "id", title: "ID", width: "176px", mono: true },
-    { key: "title", title: "标题", width: "180px" },
+    { key: "id", title: "ID", width: "176px", mono: true, sortable: true },
+    { key: "title", title: "标题", width: "180px", sortable: true },
     { key: "summary", title: "摘要", render: (row) => truncateSummary(row.summary) },
     {
       key: "status",
       title: "状态",
       width: "104px",
+      sortable: true,
       render: (row) => {
         // status 由后端 NewsVO 暴露（0 草稿 / 3 待审核 / 1 已发布 / 2 下架）；缺省读「未知」。
         const view = newsStatusView(row.status)
@@ -213,7 +218,7 @@ export function AdminNewsPage(): ReactElement {
       },
     },
     { key: "author", title: "作者", width: "120px" },
-    { key: "publishTime", title: "发布时间", width: "180px", mono: true },
+    { key: "publishTime", title: "发布时间", width: "180px", mono: true, sortable: true },
     {
       key: "action",
       title: "操作",
@@ -367,6 +372,13 @@ export function AdminNewsPage(): ReactElement {
           emptyText="暂无资讯"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          sort={sort}
+          onSortChange={(next) => {
+            setActionError(null)
+            setPage((prev) => ({ ...prev, current: 1 }))
+            setSelectedIds([])
+            setSort(next)
+          }}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

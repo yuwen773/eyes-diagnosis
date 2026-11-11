@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
 
 import { SectionHead } from "@/components/SectionHead"
-import { DataTable, type Column } from "@/components/admin/DataTable"
+import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
 import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { Drawer } from "@/components/admin/Drawer"
@@ -127,6 +127,8 @@ export function AdminDiagnosisPage(): ReactElement {
     endDate: "",
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
+  // 服务端排序：不在当前页做二次排序，字段必须落在后端白名单里。
+  const [sort, setSort] = useState<SortState>(null)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminDiagnosis | null>(null)
@@ -157,8 +159,9 @@ export function AdminDiagnosisPage(): ReactElement {
       ...diagnosisFilterParams(query.review),
       ...(query.startDate ? { startDate: query.startDate } : {}),
       ...(query.endDate ? { endDate: query.endDate } : {}),
+      ...(sort ? { sortField: sort.field, sortOrder: sort.order } : {}),
     }),
-    [current, pageSize, query],
+    [current, pageSize, query, sort],
   )
 
   const listQuery = useQuery({
@@ -209,6 +212,7 @@ export function AdminDiagnosisPage(): ReactElement {
     setQuery({ result: "", review: "", startDate: "", endDate: "" })
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
+    setSort(null)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -442,7 +446,7 @@ export function AdminDiagnosisPage(): ReactElement {
   }
 
   const columns: Column<AdminDiagnosis>[] = [
-    { key: "id", title: "ID", width: "176px", mono: true },
+    { key: "id", title: "ID", width: "176px", mono: true, sortable: true },
     {
       key: "url",
       title: "诊断图像",
@@ -465,6 +469,7 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "result",
       title: "结果",
+      sortable: true,
       render: (row) =>
         row.result ? (
           row.result
@@ -485,6 +490,7 @@ export function AdminDiagnosisPage(): ReactElement {
       title: "置信度",
       width: "96px",
       mono: true,
+      sortable: true,
       render: (row) => confidencePercent(row.confidence),
     },
     {
@@ -503,6 +509,7 @@ export function AdminDiagnosisPage(): ReactElement {
       title: "时间",
       width: "160px",
       mono: true,
+      sortable: true,
       render: (row) => formatTimestamp(row.createTime),
     },
     {
@@ -647,6 +654,13 @@ export function AdminDiagnosisPage(): ReactElement {
           emptyText="暂无判读记录"
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          sort={sort}
+          onSortChange={(next) => {
+            setActionError(null)
+            setPage((prev) => ({ ...prev, current: 1 }))
+            setSelectedIds([])
+            setSort(next)
+          }}
           selectable
           selectedKeys={selectedIds}
           onSelectionChange={setSelectedIds}

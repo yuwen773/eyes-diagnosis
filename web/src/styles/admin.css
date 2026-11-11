@@ -440,6 +440,36 @@
   border-bottom: 1px solid var(--hr);
 }
 
+/* 表头排序按钮：继承表头的 mono/字距，只补一个方向读数。
+   服务端不支持的列不渲染按钮——看得见排序就必须排得对。 */
+.admin-dt__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.admin-dt__sort:hover {
+  color: var(--fg);
+}
+
+.admin-dt__sort-mark {
+  color: var(--fg-3);
+}
+
+[aria-sort="ascending"] .admin-dt__sort-mark,
+[aria-sort="descending"] .admin-dt__sort-mark {
+  color: var(--signal-text);
+}
+
 .admin-dt__cell {
   padding: 13px 16px;
   font-size: 13px;
