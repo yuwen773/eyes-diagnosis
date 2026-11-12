@@ -224,7 +224,7 @@ export function DiagnosisPage() {
           <div className="wrap">
             <header className="workbench-result__head no-print">
               <SectionHead code="判读" kicker="Reading record" en="EfficientNet-B4" />
-              <p className="small">结果可打印留档；换一张影像会开始新的判读。</p>
+              <p className="small">结果可打印留档；换一张影像会清空当前结果，重新选图后再开始判读。</p>
             </header>
 
             <RecordSheet
@@ -461,7 +461,9 @@ export function DiagnosisPage() {
             <div className="readout-head">
               <SectionHead code="判读" kicker="Readout" />
               <span className="readout-head__state num" data-state={stage}>
-                {stage === "running" ? "LIVE" : stage === "error" ? "FAIL" : "IDLE"}
+                {/* 与流程轨用同一套状态词（STANDBY / READY / READING / DONE / FAIL），
+                    同一页上不出现两套说法。 */}
+                {STAGE_EN[stage]}
               </span>
             </div>
 
