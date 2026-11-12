@@ -75,7 +75,9 @@ const STEPS = [
   {
     title: "过质量门",
     body: "对比度、清晰度与视野完整性不达标时，系统直接拒识，不给出任何结论。",
-    readout: "GATE · 86 / 100",
+    // 质量门只有「通过 / 拒识」两种真实结果；86 是示例记录里的读数，
+    // 不是平台阈值，不能挪到这里当指标（同 R2 页脚整改口径）。
+    readout: "GATE · PASS / REJECT",
   },
   {
     title: "八类判读",
@@ -288,7 +290,7 @@ export function LandingPage() {
         </section>
 
         {/* 光幕之后立刻给出真实样本：示意图讲「输入」，这组局部讲模型读什么。 */}
-        <section className="section section--line specimen-details" id="specimen" aria-label="眼底样本局部">
+        <section className="section section--line landing-section specimen-details" id="specimen" aria-label="眼底样本局部">
           <div className="wrap">
             <div className="reveal">
               <SectionHead code="02" title="模型读的是这些结构" note="以下为同一张示例眼底照片的局部，非真实患者" />
@@ -392,7 +394,7 @@ export function LandingPage() {
           </dialog>
         </section>
 
-        <section id="how" className="section section--line">
+        <section id="how" className="section section--line landing-section">
           <div className="wrap">
             <div className="reveal">
               <SectionHead code="03" title="判读流程" note="从一张照片，到一条可以复核的记录" />
@@ -400,50 +402,47 @@ export function LandingPage() {
 
             {/* 八类覆盖表：从首屏挪到这里。首屏改成光学台后，
                 这张「模型读什么」的表仍要留在正文里——它是产品事实，不是装饰。 */}
-            <div className="landing-classes reveal" style={{ marginTop: 40 }}>
-              <div className="index">
-                <div className="index__head">
-                  <span className="overline">八类覆盖</span>
-                  <span className="overline">08 CLASSES</span>
+            <div className="landing-how">
+              <div className="landing-how__classes reveal">
+                <div className="index">
+                  <div className="index__head">
+                    <span className="overline">八类覆盖</span>
+                    <span className="overline">08 CLASSES</span>
+                  </div>
+
+                  {CLASSES.map((item) => (
+                    <div className="index__row" key={item.code}>
+                      <span className="index__code">{item.code}</span>
+                      <span className="index__name">{item.name}</span>
+                      <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
+                    </div>
+                  ))}
                 </div>
 
-                {CLASSES.map((item) => (
-                  <div className="index__row" key={item.code}>
-                    <span className="index__code">{item.code}</span>
-                    <span className="index__name">{item.name}</span>
-                    <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
-                  </div>
-                ))}
+                <p className="small index__note">
+                  示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
+                </p>
               </div>
 
-              <p className="small index__note">
-                示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
-              </p>
-            </div>
-
-            <div className="ledger" style={{ marginTop: 44 }}>
-              {STEPS.map((step, index) => (
-                <div
-                  className="ledger__row reveal"
-                  key={step.title}
-                  style={{ "--d": `${index * 90}ms` } as CSSProperties}
-                  data-cursor
-                >
-                  <span className="ledger__index num" aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className="ledger__main">
-                    <h3 className="ledger__title">{step.title}</h3>
-                    <p className="ledger__body">{step.body}</p>
-                  </div>
-                  <span className="ledger__readout num">{step.readout}</span>
-                </div>
-              ))}
+              <ol className="landing-steps reveal" style={{ "--d": "90ms" } as CSSProperties}>
+                {STEPS.map((step, index) => (
+                  <li className="landing-step" key={step.title} data-cursor>
+                    <span className="landing-step__index num" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="landing-step__main">
+                      <h3 className="landing-step__title">{step.title}</h3>
+                      <p className="landing-step__body">{step.body}</p>
+                    </div>
+                    <span className="landing-step__readout num">{step.readout}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </section>
 
-        <section id="record" className="section section--line">
+        <section id="record" className="section section--line landing-section">
           <div className="wrap">
             <div className="reveal">
               <SectionHead code="04" title="判读记录" note="一份记录长这样" />
@@ -452,24 +451,31 @@ export function LandingPage() {
               </p>
             </div>
 
-            <div className="reveal" style={{ "--d": "120ms" } as CSSProperties}>
+            <div
+              className="landing-record reveal"
+              style={{ "--d": "120ms" } as CSSProperties}
+            >
               {/* 记录纸在任何主题下都是同一张白纸（纸面原语不参与主题翻转），
-                  文案里也写着「写在同一张纸上」；暗色页面下它正好是那块白色内容区。 */}
-              <RecordSheet
-                result={SPECIMEN}
-                recordId="IRIS-2026-1106-0042"
-                specimen
-                tone="paper"
-              />
+                  文案里也写着「写在同一张纸上」；暗色页面下它正好是那块白色内容区。
+                  品牌画框只负责「陈列」：纸面、风险色与证据链一条不改。 */}
+              <div className="landing-record__bar">
+                <span className="overline">记录纸 · RECORD SHEET</span>
+                <span className="num landing-record__stamp">AI 辅助判读 · 非真实患者</span>
+              </div>
+              <div className="landing-record__paper">
+                <RecordSheet
+                  result={SPECIMEN}
+                  recordId="IRIS-2026-1106-0042"
+                  specimen
+                  tone="paper"
+                />
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="agent" className="section section--line agent-section">
+        <section id="agent" className="section section--line landing-section agent-section">
           <div className="wrap">
-            <div className="reveal">
-              </div>
-
             <div className="agent-intro">
               <h2 className="h2 reveal">
                 判读之外，
@@ -508,14 +514,14 @@ export function LandingPage() {
               </div>
             </div>
 
-            <ol className="agent-points reveal">
+            <ol className="landing-agent__points reveal">
               {AGENT_POINTS.map((item, index) => (
-                <li className="agent-points__item" key={item.title}>
-                  <span className="agent-points__code num" aria-hidden="true">
+                <li className="landing-agent__point" key={item.title}>
+                  <span className="landing-agent__code num" aria-hidden="true">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="agent-points__title">{item.title}</h3>
-                  <p className="agent-points__body">{item.body}</p>
+                  <h3 className="landing-agent__title">{item.title}</h3>
+                  <p className="landing-agent__body">{item.body}</p>
                 </li>
               ))}
             </ol>
@@ -568,7 +574,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="start" className="wrap pitch">
+        <section id="start" className="wrap pitch landing-start">
           <div className="reveal">
             <h2 className="pitch__title">先读一张片子试试</h2>
             <p className="lead" style={{ marginTop: 16 }}>
