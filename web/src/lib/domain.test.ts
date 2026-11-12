@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest"
 import {
+  canonicalClassName,
+  classCode,
   confidenceBand,
   confidencePercent,
   isUrgentAdvice,
   normalizeConfidence,
+  rankClasses,
 } from "./domain"
 
 describe("normalizeConfidence", () => {
@@ -87,5 +90,104 @@ describe("isUrgentAdvice", () => {
     expect(isUrgentAdvice("建议定期复查")).toBe(false)
     expect(isUrgentAdvice("控制血糖与血压")).toBe(false)
     expect(isUrgentAdvice("视力下降")).toBe(false)
+  })
+})
+
+describe("canonicalClassName", () => {
+  it("算法侧的英文标签归到记录纸上的规范名", () => {
+    expect(canonicalClassName("diabetes")).toBe("糖尿病视网膜病变")
+    expect(canonicalClassName("hypertension")).toBe("高血压性视网膜病变")
+    expect(canonicalClassName("myopia")).toBe("病理性近视")
+    expect(canonicalClassName("glaucoma")).toBe("青光眼")
+  })
+
+  it("后端枚举的中文短名也归到同一类", () => {
+    expect(canonicalClassName("糖尿病")).toBe("糖尿病视网膜病变")
+    expect(canonicalClassName("近视")).toBe("病理性近视")
+  })
+
+  it("规范名原样返回", () => {
+    expect(canonicalClassName("白内障")).toBe("白内障")
+    expect(canonicalClassName("正常")).toBe("正常")
+  })
+
+  it("认不出的写法不猜——返回 null，由调用方按未知处理", () => {
+    expect(canonicalClassName("视网膜脱离")).toBeNull()
+    expect(canonicalClassName("")).toBeNull()
+    expect(canonicalClassName(undefined)).toBeNull()
+  })
+})
+
+describe("classCode", () => {
+  it("英文标签也能给出短码", () => {
+    expect(classCode("diabetes")).toBe("DR")
+    expect(classCode("glaucoma")).toBe("GLA")
+    expect(classCode("normal")).toBe("N")
+  })
+
+  it("后端短名也能给出短码", () => {
+    expect(classCode("糖尿病")).toBe("DR")
+  })
+
+  it("认不出的类别读作破折号，不给错短码", () => {
+    expect(classCode("视网膜脱离")).toBe("—")
+    expect(classCode(undefined)).toBe("—")
+  })
+})
+
+describe("rankClasses", () => {
+  it("真实响应形状：主诊断中文短名 + 英文候选，归一后不重复、不出英文行", () => {
+    const rows = rankClasses({
+      result: "糖尿病",
+      probability: 91.2,
+      confidence: 91.2,
+      otherDisease: [
+        { name: "diabetes", probability: 91.2 },
+        { name: "glaucoma", probability: 5.1 },
+        { name: "normal", probability: 2.3 },
+      ],
+    })
+    expect(rows.map((r) => r.name)).toEqual([
+      "糖尿病视网膜病变",
+      "青光眼",
+      "正常",
+    ])
+    expect(rows.map((r) => r.code)).toEqual(["DR", "GLA", "N"])
+  })
+
+  it("主诊断与 top-1 指同一类时只列一行", () => {
+    const rows = rankClasses({
+      result: "糖尿病视网膜病变",
+      probability: 91.2,
+      otherDisease: [{ name: "diabetes", probability: 91.2 }],
+    })
+    expect(rows).toHaveLength(1)
+    expect(rows[0].name).toBe("糖尿病视网膜病变")
+  })
+
+  it("按概率降序，top 标记落在最高的那一类", () => {
+    const rows = rankClasses({
+      result: "青光眼",
+      probability: 60,
+      otherDisease: [{ name: "normal", probability: 30 }],
+    })
+    expect(rows[0].name).toBe("青光眼")
+    expect(rows[0].top).toBe(true)
+    expect(rows[1].top).toBe(false)
+  })
+
+  it("认不出的候选保留原样，不丢信息", () => {
+    const rows = rankClasses({
+      result: "视网膜脱离",
+      probability: 70,
+      otherDisease: [{ name: "unknown_class", probability: 10 }],
+    })
+    expect(rows.map((r) => r.name)).toEqual(["视网膜脱离", "unknown_class"])
+    expect(rows[0].code).toBe("—")
+  })
+
+  it("没有结果就没有行", () => {
+    expect(rankClasses(undefined)).toEqual([])
+    expect(rankClasses({})).toEqual([])
   })
 })

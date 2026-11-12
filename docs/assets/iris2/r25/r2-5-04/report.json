@@ -1,0 +1,261 @@
+{
+  "errors": [],
+  "report": [
+    {
+      "theme": "light",
+      "state": "running",
+      "timer": "READING · B4\nT+ 00:00.9",
+      "stateText": "READING",
+      "railStateText": "READING"
+    },
+    {
+      "theme": "light",
+      "state": "done",
+      "verdict": "AI 判读结果 · DR糖尿病视网膜病变",
+      "classRows": 3,
+      "classNames": [
+        "糖尿病视网膜病变",
+        "青光眼",
+        "正常"
+      ],
+      "classCodes": [
+        "DR",
+        "GLA",
+        "N"
+      ]
+    },
+    {
+      "theme": "light",
+      "state": "rejected",
+      "verdict": "本次影像未形成判读结论",
+      "classRows": 0,
+      "classNames": [],
+      "classCodes": []
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "view": "keyboard",
+      "width": 1440,
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Iris 首页",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "01判读",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "02诊断 Agent",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "03新闻资讯",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "切换到暗色主题",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "无名▾",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "state": "running",
+      "timer": "READING · B4\nT+ 00:00.9",
+      "stateText": "READING",
+      "railStateText": "READING"
+    },
+    {
+      "theme": "dark",
+      "state": "done",
+      "verdict": "AI 判读结果 · DR糖尿病视网膜病变",
+      "classRows": 3,
+      "classNames": [
+        "糖尿病视网膜病变",
+        "青光眼",
+        "正常"
+      ],
+      "classCodes": [
+        "DR",
+        "GLA",
+        "N"
+      ]
+    },
+    {
+      "theme": "dark",
+      "state": "rejected",
+      "verdict": "本次影像未形成判读结论",
+      "classRows": 0,
+      "classNames": [],
+      "classCodes": []
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "state": "empty",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "state": "done",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "view": "keyboard",
+      "width": 1440,
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Iris 首页",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "01判读",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "02诊断 Agent",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "03新闻资讯",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "切换到浅色主题",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "无名▾",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        }
+      ]
+    }
+  ]
+}
