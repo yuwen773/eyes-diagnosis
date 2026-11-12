@@ -134,6 +134,40 @@
   --brand-soft: rgba(9, 43, 110, 0.08);
   --brand-shadow: 0 20px 54px rgba(51, 84, 143, 0.09);
 
+  /* ── 品牌材质 · 五种（DESIGN.md §2.1.1）─────────────────
+     「统一」不等于所有面板用同一个 blur：导航要稳、信息卡要透、
+     入口卡要轻、页脚要实。每种材质 = 底色 + 描边 + 内侧高光 + 模糊强度。
+     --brand-glass-optical-* 给 WebGL 渲染器与边缘高光用；其余四种由 CSS 消费。 */
+  --brand-glass-optical-tint: #2f6fc9;
+  --brand-glass-optical-edge: rgba(255, 255, 255, 0.66);
+
+  --brand-glass-frosted: rgba(255, 255, 255, 0.62);
+  --brand-glass-frosted-edge: rgba(255, 255, 255, 0.82);
+  --brand-glass-frosted-inner: rgba(255, 255, 255, 0.5);
+  --brand-glass-frosted-blur: 18px;
+
+  --brand-glass-layered: rgba(255, 255, 255, 0.7);
+  --brand-glass-layered-edge: rgba(255, 255, 255, 0.86);
+  --brand-glass-layered-inner: rgba(255, 255, 255, 0.58);
+  --brand-glass-layered-blur: 22px;
+
+  --brand-glass-soft: rgba(255, 255, 255, 0.55);
+  --brand-glass-soft-edge: rgba(22, 35, 58, 0.12);
+  --brand-glass-soft-inner: rgba(255, 255, 255, 0.4);
+  --brand-glass-soft-blur: 10px;
+
+  /* 不支持 backdrop-filter 时的静态替代：提高不透明度、保留描边与内侧高光。
+     不能让玻璃塌成一块灰，也不能让它变成完全透明的空气。 */
+  --brand-glass-fallback: rgba(252, 253, 255, 0.94);
+
+  /* 深海蓝实体品牌面：页脚与承载大量文字的区域，可读性优先于材质。 */
+  --brand-surface-deep: #0a1a33;
+  --brand-surface-deep-2: #102646;
+  --brand-deep-text: #eaf2ff;
+  --brand-deep-muted: #9fb3cf;
+  --brand-deep-line: rgba(190, 220, 255, 0.16);
+  --brand-deep-hairline: rgba(190, 220, 255, 0.26);
+
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
   --viz-mute: #8b9195;
@@ -325,6 +359,37 @@ html.dark {
   --brand-hairline: rgba(210, 231, 255, 0.25);
   --brand-soft: rgba(113, 159, 255, 0.12);
   --brand-shadow: 0 22px 58px rgba(0, 0, 0, 0.24);
+
+  /* 暗色材质：午夜蓝底 + 冰蓝边缘光。不是把浅色值调暗——
+     透明度的取法也不同：暗底上玻璃要更实一点，否则背后的光带会吃掉文字。 */
+  --brand-glass-optical-tint: #7cc4ff;
+  --brand-glass-optical-edge: rgba(196, 232, 255, 0.45);
+
+  --brand-glass-frosted: rgba(16, 34, 60, 0.78);
+  --brand-glass-frosted-edge: rgba(196, 222, 255, 0.26);
+  --brand-glass-frosted-inner: rgba(255, 255, 255, 0.07);
+  --brand-glass-frosted-blur: 20px;
+
+  /* 0.82 是「背后是光带最亮处」时的可读性下限：再透，次要文字就会
+     被经过的冰青高光吃掉（tokens.contrast.test.ts 有断言）。 */
+  --brand-glass-layered: rgba(19, 40, 70, 0.82);
+  --brand-glass-layered-edge: rgba(200, 228, 255, 0.28);
+  --brand-glass-layered-inner: rgba(255, 255, 255, 0.08);
+  --brand-glass-layered-blur: 24px;
+
+  --brand-glass-soft: rgba(17, 34, 58, 0.52);
+  --brand-glass-soft-edge: rgba(191, 220, 255, 0.18);
+  --brand-glass-soft-inner: rgba(255, 255, 255, 0.05);
+  --brand-glass-soft-blur: 12px;
+
+  --brand-glass-fallback: rgba(13, 29, 52, 0.94);
+
+  --brand-surface-deep: #071120;
+  --brand-surface-deep-2: #0d1c33;
+  --brand-deep-text: #eaf2ff;
+  --brand-deep-muted: #9fb3cf;
+  --brand-deep-line: rgba(190, 220, 255, 0.14);
+  --brand-deep-hairline: rgba(190, 220, 255, 0.24);
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，

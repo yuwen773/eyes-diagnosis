@@ -66,7 +66,7 @@ export function LandingHero(): ReactElement {
   return (
     <section className="landing-hero iris2" aria-label="Iris 2.0 首屏">
       <div className="landing-hero__shell">
-        <div className="landing-hero__badge">
+        <div className="landing-hero__badge brand-panel brand-panel--frosted">
           <span className="landing-hero__badge-tag num">IRIS 2.0 · OPTIC FLOW</span>
           <span className="landing-hero__badge-note">光带 × 细纤维 · 单渲染器</span>
           <button
@@ -118,7 +118,7 @@ export function LandingHero(): ReactElement {
               </Suspense>
             </div>
 
-            <BrandPanel variant="glass" as="aside" className="landing-hero__card">
+            <BrandPanel variant="layered" as="aside" className="landing-hero__card">
               <BrandKicker>INTELLIGENCE LAYER</BrandKicker>
               <h2 className="landing-hero__card-title">让协作过程，清晰可见。</h2>
               <ol className="landing-hero__steps">
@@ -140,7 +140,7 @@ export function LandingHero(): ReactElement {
         <ul className="landing-hero__entries">
           {ENTRIES.map((entry) => (
             <li key={entry.code}>
-              <Link className="landing-hero__entry" to={entry.to}>
+              <Link className="brand-panel brand-panel--soft landing-hero__entry" to={entry.to}>
                 <span className="landing-hero__entry-glyph" aria-hidden="true">
                   {entry.glyph}
                 </span>
