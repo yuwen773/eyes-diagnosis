@@ -9,7 +9,10 @@
 | `agent-worktree-conventions.md` | 在多个工作树里跑 git、杀 Windows 进程、清理临时验证产物 |
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
-| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（白色仪器唯一设计真源） |
+| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准） |
+| `design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` | 查 Iris 2.0 的视觉参考来源与取舍（A/B/F/G/H/I 代号定义、原始链接） |
+| `design/iris-2-rule-change-matrix.md` | 查旧「白色仪器」规则改成了什么、为什么改、落地到哪一步 |
+| `design/iris-2-implementation-roadmap.md` | 查首页 / 管理端 / 协作台各自的实施顺序、范围与验收门禁 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |

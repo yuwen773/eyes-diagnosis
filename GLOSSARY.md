@@ -30,6 +30,8 @@
 
 ## 前端设计
 
-`web/`（React）是产品前端，唯一设计真源是仓库根 `DESIGN.md`（白色仪器 / 信号橙），
-令牌实现在 `web/src/styles/tokens.css`；`frontend/`（Vue）**已弃用（deprecated）**，仍用旧青绿 `--iris-*`，
+`web/`（React）是产品前端，设计真源是仓库根 `DESIGN.md`
+（**Iris 2.0 · Adaptive Visual System**：Brand / Management / Intelligence / Clinical
+四种表达强度），令牌实现在 `web/src/styles/tokens.css`（已实现的事实，冲突时以它为准）；
+`frontend/`（Vue）**已弃用（deprecated）**，仍用旧青绿 `--iris-*`，
 不再作为设计参考。详见 `DESIGN.md` 与 `docs/backend-split.md`。
