@@ -69,24 +69,31 @@ export function NewsDetailPage() {
         </Link>
 
         {loading ? (
-          <div className="news-detail__loading" aria-hidden="true">
-            <span className="news-detail__skeleton-title" />
-            <span className="news-detail__skeleton-line" />
-            <span className="news-detail__skeleton-line" />
-            <span className="news-detail__skeleton-block" />
-          </div>
+          <>
+            {/* 载入态也有页面标题：同一路由的 h1 不随分支消失。 */}
+            <h1 className="sr-only">资讯详情</h1>
+            <div className="news-detail__loading" aria-hidden="true">
+              <span className="news-detail__skeleton-title" />
+              <span className="news-detail__skeleton-line" />
+              <span className="news-detail__skeleton-line" />
+              <span className="news-detail__skeleton-block" />
+            </div>
+          </>
         ) : fault ? (
-          <FaultPanel
-            code={fault.code}
-            title="这条资讯没能读出来"
-            body={fault.text}
-            endpoint={`GET /news/get/${id}`}
-            onRetry={() => void detailQuery.refetch()}
-          />
+          <>
+            <h1 className="sr-only">资讯详情</h1>
+            <FaultPanel
+              code={fault.code}
+              title="这条资讯没能读出来"
+              body={fault.text}
+              endpoint={`GET /news/get/${id}`}
+              onRetry={() => void detailQuery.refetch()}
+            />
+          </>
         ) : !item ? (
           <div className="news-empty">
             <p className="overline">No bulletin</p>
-            <p className="news-empty__title">没有这条资讯</p>
+            <h1 className="news-empty__title">没有这条资讯</h1>
             <p className="small">它可能已经下架，或者链接有误。</p>
             <Link className="news__clear" to="/news">
               回到资讯列表
@@ -97,8 +104,11 @@ export function NewsDetailPage() {
             <article className="news-article">
               <header className="news-article__head">
                 <p className="overline">
-                  发布于 {date}
-                  {time ? ` ${time}` : ""}
+                  发布于{" "}
+                  <span className="num">
+                    {date}
+                    {time ? ` ${time}` : ""}
+                  </span>
                 </p>
                 <h1 className="display news-article__title">{item.title}</h1>
                 {lead ? <p className="lead news-article__lead">{lead}</p> : null}
@@ -122,7 +132,8 @@ export function NewsDetailPage() {
                     className="news-article__img"
                     src={item.coverImage}
                     alt=""
-                    loading="lazy"
+                    loading="eager"
+                    fetchPriority="high"
                   />
                   <figcaption className="num">封面 · COVER</figcaption>
                 </figure>

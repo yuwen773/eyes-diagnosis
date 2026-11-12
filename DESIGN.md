@@ -123,7 +123,7 @@ Clinical 低指的是视觉干扰少，不是信息少。
 | `/records` | `RecordsPage` | **Clinical** | **KPI 读数条 + 台账** | `.is-field` | 全站唯一"KPI + 台账"的临床页 |
 | `/profile` | `ProfilePage` | **Clinical** | 资料区 + 读数卡 + 列表 | `.is-field` | 个人域：资料、判读统计、复诊申请；**不套四列 KPI 条** |
 | `/news` | `NewsPage` | **Brand** | 编辑式列表（头版 + 发丝线列表） | `.is-field .is-brand-page` | 对外资讯，用编辑排版，**不是数据仪表** |
-| `/news/:id` | `NewsDetailPage` | **Brand** | 文章页 + 返回入口 | `.is-field` | 长文排版优先，不做卡片拼贴 |
+| `/news/:id` | `NewsDetailPage` | **Brand** | 文章页 + 返回入口 | `.is-field .is-brand-page` | 长文排版优先，不做卡片拼贴 |
 | `/agent` | `AgentPage` | **Intelligence** | 会话流 + 资源面板 + 折叠侧栏 | `.is-field`（`agent-viewport`） | 当前是单会话对话；未来扩成四区工作台（§2.3） |
 | `/admin/dashboard` | `AdminDashboardPage` | **Management** | 侧栏 + 页头 + KPI 读数 + 图表 | `.is-field` | 概览页：**KPI 与图表优先**，台账只是其中一块 |
 | `/admin/data-analysis` | `AdminDataAnalysisPage` | **Management** | 侧栏 + 页头 + KPI 读数 + 图表矩阵 | `.is-field` | 分析页：**KPI 与图表优先**，本页没有台账 |

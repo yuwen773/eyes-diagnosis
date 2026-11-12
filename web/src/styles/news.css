@@ -63,8 +63,9 @@
   border-color: var(--brand-primary);
 }
 
+/* 焦点环不压掉：全局 1px currentColor 保留，这里只把底色描边与柔光补上
+   （DESIGN.md §3.5：模块不得写 outline: none）。 */
 .news__input:focus {
-  outline: none;
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent);
 }
@@ -84,6 +85,13 @@
 
 .news__submit:hover {
   background: color-mix(in srgb, var(--brand-primary) 86%, #000);
+}
+
+/* 实心钴蓝按钮上，全局 currentColor 焦点环是白字色——在浅色画布上几乎看不见。
+   这里提高特异度重画：用正文墨色，深浅主题都成立。 */
+.news__submit:focus-visible {
+  outline: 2px solid var(--brand-text);
+  outline-offset: 3px;
 }
 
 .news__clear {
@@ -728,5 +736,21 @@
 
   .news-paper {
     padding-inline: 18px;
+  }
+
+  /* 触控目标 ≥ 44×44（DESIGN.md §2.1.2）：翻页、目录、返回都按手指尺寸来。 */
+  .news__pager-step {
+    min-height: 44px;
+  }
+
+  .news-toc__list a {
+    min-height: 44px;
+    align-content: center;
+  }
+
+  .news-detail__back,
+  .news-lead__more {
+    min-height: 44px;
+    align-items: center;
   }
 }

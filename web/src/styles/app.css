@@ -1191,47 +1191,6 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   color: var(--fg-3);
 }
 
-/* 有话的那一格：照片的位置摆上正文开头的一段。 */
-.empty-frame--quote {
-  place-items: stretch;
-  align-content: center;
-  padding: clamp(20px, 2.4vw, 30px);
-}
-
-.empty-frame--quote .empty-frame__mark {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 20px;
-  border: 0;
-}
-
-.empty-frame--quote .empty-frame__mark i {
-  width: 8px;
-  height: 8px;
-}
-
-.empty-frame__quote {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: clamp(17px, 1.5vw, 21px);
-  line-height: 1.62;
-  letter-spacing: -0.01em;
-  color: var(--fg);
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.empty-frame__rule {
-  display: block;
-  width: 30px;
-  height: 1px;
-  margin-top: 16px;
-  background: var(--signal);
-}
-
 /* 故障面板：左一道故障色竖线，中间说清发生了什么，底下摆状态码与端点。 */
 .fault {
   margin-block: clamp(28px, 5vh, 56px);
@@ -1265,7 +1224,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .fault__title {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
+  /* 衬线标题只允许 400（DESIGN.md §3.3 / §4）。 */
+  font-weight: 400;
   font-size: clamp(21px, 2.2vw, 27px);
   line-height: 1.32;
   color: var(--fg);

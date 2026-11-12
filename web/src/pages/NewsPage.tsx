@@ -64,9 +64,10 @@ export function NewsPage() {
     const { date } = newsDate(item.publishTime)
     return !acc || date > acc ? date : acc
   }, "")
-  // 「更新至」只在第一页且未检索时成立：此时 records[0] 才是全站最新一条；
+  // 「更新至」只在第一页且有数据、未检索时成立：此时 records[0] 才是全站最新一条；
   // 翻页或检索后它只是当前结果集的日期，不能冒充站点更新时间。
-  const showLatest = page === 1 && !query
+  // 空库不写「更新至 —」——那是在报一个不存在的更新时间。
+  const showLatest = page === 1 && !query && records.length > 0
 
   function search(event: FormEvent) {
     event.preventDefault()
@@ -205,7 +206,8 @@ export function NewsPage() {
                       className="news-lead__img"
                       src={featured.coverImage}
                       alt=""
-                      loading="lazy"
+                      loading="eager"
+                      fetchPriority="high"
                     />
                   </figure>
                 ) : null}
