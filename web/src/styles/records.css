@@ -1,5 +1,5 @@
 /**
- * 用户端 · 诊断记录 + 个人中心
+ * 用户端 · 判读记录 + 个人中心
  *
  * 不发明新视觉：KPI 用全站 .strip/.readout，列表按台账语言搭
  * （发丝线 + 行号 + 缩略影像 + mono 读数），详情内嵌现成的记录纸。
@@ -230,8 +230,9 @@
 .records__pager-step {
   min-height: 44px;
   padding: 0 16px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃纸面。 */
+  border: 1px solid var(--line-strong);
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -247,7 +248,7 @@
 
 .records__pager-step:disabled {
   color: var(--fg-3);
-  background: var(--surface-2);
+  border-color: var(--line);
   cursor: not-allowed;
 }
 
@@ -407,6 +408,17 @@
   gap: 10px;
   font-size: 12px;
   color: var(--fg-2);
+}
+
+/* 置信度带口径标签（与台账同一读法），百分比不再悬空。 */
+.profile__recent-conf {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.profile__recent-conf .readout__label {
+  font-size: 11px;
 }
 
 .profile__recent-empty {
@@ -612,20 +624,16 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 390px) {
   .profile__stats {
+    /* 手机档读数卡允许 2×2（DESIGN.md §3.6 手机档例外，见 §8 断点口径）：
+       深窄屏上单列会把四张卡摊满两屏，读数对不上视线。 */
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .records__pager {
     flex-wrap: wrap;
     justify-content: center;
-  }
-}
-
-@media (max-width: 380px) {
-  .profile__stats {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

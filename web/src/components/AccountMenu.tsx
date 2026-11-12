@@ -8,7 +8,7 @@ import { useSession } from "@/lib/session"
  * 账号控件。
  *
  * 未登录时是一个「登录」按钮；登录后是一个下拉，装着系统管理、个人中心、
- * 诊断记录和退出登录。打开方式、键盘导航、焦点归还交给 Base UI Menu，
+ * 判读记录和退出登录。打开方式、键盘导航、焦点归还交给 Base UI Menu，
  * 这里只声明条目。
  */
 export function AccountMenu() {
@@ -55,7 +55,7 @@ export function AccountMenu() {
           个人中心
         </MenuLinkItem>
         <MenuLinkItem className="acct__item" closeOnClick render={<Link to="/records" />}>
-          诊断记录
+          判读记录
         </MenuLinkItem>
         <MenuItem
           className="acct__item"

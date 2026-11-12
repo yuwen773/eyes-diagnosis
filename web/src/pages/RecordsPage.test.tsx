@@ -115,7 +115,7 @@ describe("RecordsPage 身份闸门", () => {
 
     renderPage()
 
-    expect(await screen.findByText("登录后才能查看诊断记录")).toBeTruthy()
+    expect(await screen.findByText("登录后才能查看判读记录")).toBeTruthy()
     expect(listMyDiagnoses).not.toHaveBeenCalled()
   })
 })

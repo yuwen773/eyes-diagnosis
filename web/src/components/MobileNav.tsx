@@ -127,7 +127,7 @@ export function MobileNav() {
                 个人中心
               </Link>
               <Link to="/records" className="drawer__link" onClick={() => setOpen(false)}>
-                诊断记录
+                判读记录
               </Link>
               <button
                 type="button"

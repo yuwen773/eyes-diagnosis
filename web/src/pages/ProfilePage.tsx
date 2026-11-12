@@ -273,9 +273,27 @@ export function ProfilePage() {
               <span className="profile__card-title">最近判读 · RECENT</span>
             </div>
 
-            {recent.length === 0 ? (
+            {/* 错误 > 空 > 加载（DESIGN.md §3.11）：列表读失败就说读失败，
+                不能在故障之上盖一层「还没有判读记录」——那会把读不到
+                说成名下没有，误导的正是「有没有判过」这种判断。 */}
+            {statsFault && recent.length === 0 ? (
               <p className="profile__recent-empty">
-                {statsLoading ? "读取中…" : "还没有判读记录。"}
+                判读记录这会儿没读出来，稍后再来，或去
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => {
+                    void sampleQuery.refetch()
+                    void statsQuery.refetch()
+                  }}
+                >
+                  重试
+                </button>
+                。
+              </p>
+            ) : recent.length === 0 ? (
+              <p className="profile__recent-empty">
+                {sampleQuery.isPending ? "读取中…" : "还没有判读记录。"}
               </p>
             ) : (
               <ul className="profile__recent">
@@ -288,7 +306,10 @@ export function ProfilePage() {
                       <span className="num">{formatTimestamp(item.createTime)}</span>
                       {!item.aiRejected ? (
                         <>
-                          <span className="num">{confidencePercent(item.confidence)}</span>
+                          <span className="profile__recent-conf">
+                            <span className="readout__label">置信度</span>
+                            <span className="num">{confidencePercent(item.confidence)}</span>
+                          </span>
                           <RiskTag risk={severityRisk(item.severity ?? undefined)}>
                             {severityLabel(item.severity ?? undefined)}
                           </RiskTag>
