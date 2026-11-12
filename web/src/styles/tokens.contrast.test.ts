@@ -236,3 +236,28 @@ describe("品牌页脚 · 深海蓝实体面", () => {
     }
   })
 })
+
+describe("品牌页作用域 · .is-brand-page（R2-04）", () => {
+  const brandCss = readFileSync(new URL("./brand.css", import.meta.url), "utf8")
+
+  function block(source: string, selector: string) {
+    const start = source.indexOf(selector)
+    expect(start).toBeGreaterThanOrEqual(0)
+    const end = source.indexOf("}", start)
+    return source.slice(start, end)
+  }
+
+  it("只换画布与发丝线：不碰临床语义色、纸面原语与文字色令牌", () => {
+    const body = block(css, ".is-brand-page {")
+    expect(body).toContain("--field: var(--brand-canvas)")
+    expect(body).toContain("--line: var(--brand-line)")
+    for (const forbidden of ["--signal", "--risk-", "--paper-", "--ink", "--fg:"]) {
+      expect(body).not.toContain(forbidden)
+    }
+  })
+
+  it("品牌样式不写共享顶栏 .site-head（品牌变体只能改自己的类名）", () => {
+    expect(brandCss).not.toMatch(/(^|\n)\.site-head/)
+    expect(brandCss).not.toMatch(/\.site-head\s+\./)
+  })
+})

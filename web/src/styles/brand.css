@@ -761,9 +761,21 @@ html.dark .optic-flow__fiber-set--rim {
   z-index: 60;
   padding: 8px 0 6px;
   color: var(--brand-text);
-  /* 顶部一条从页面底色渐隐的幕：内容从它下面滚过时字标仍然清楚，
-     但不会被读成一条实体横栏。 */
-  background: linear-gradient(to bottom, var(--field) 0%, var(--field) 58%, transparent 100%);
+  /* 顶部一条页面底色的幕：内容从它下面滚过时字标仍然清楚。
+     幕分两半——顶栏自身高度内是实色（保证底部任何时刻都不透字），
+     下沿再挂一段渐隐（::after），所以过渡是软的、不是一条硬边。 */
+  background: var(--field);
+}
+
+.brand-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--field), transparent);
+  pointer-events: none;
 }
 
 .brand-head__inner {
@@ -907,7 +919,11 @@ html:not(.dark) .brand-head[data-invert="true"] {
   --brand-outline: var(--brand-deep-hairline);
   --brand-line: var(--brand-deep-line);
   color: var(--brand-deep-text);
-  background: linear-gradient(to bottom, #0a1a33 0%, #0a1a33 58%, transparent 100%);
+  background: var(--brand-surface-deep);
+}
+
+html:not(.dark) .brand-head[data-invert="true"]::after {
+  background: linear-gradient(to bottom, var(--brand-surface-deep), transparent);
 }
 
 html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
@@ -993,7 +1009,19 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
   color: var(--brand-deep-text);
   /* 与浅色主体之间用一根发丝线过渡，不做硬切。 */
   border-top: 1px solid var(--brand-deep-hairline);
-  box-shadow: 0 -1px 0 color-mix(in srgb, var(--brand-surface-deep) 40%, transparent);
+}
+
+/* 与页面上方的浅色主体之间加一段渐变：不是从亮色直接切到深海蓝，
+   而是让画布自己沉下去。 */
+.brand-foot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: clamp(56px, 7vw, 96px);
+  background: linear-gradient(to bottom, transparent, var(--brand-surface-deep));
+  pointer-events: none;
 }
 
 .brand-foot__inner {
@@ -1187,4 +1215,33 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
     align-items: flex-start;
     gap: 4px;
   }
+}
+
+/* ==========================================================================
+   整页品牌统一（R2-04）
+   --------------------------------------------------------------------------
+   品牌页作用域换的是画布与发丝线（见 tokens.css 的 .is-brand-page）。
+   剩下两处「旧语境遗留色」在这里逐条收口，不做整页滤镜：
+   ========================================================================== */
+
+/* 章节短码在品牌页上用钴蓝，不再借用临床的信号橙——
+   信号橙是「重点/当前」的临床语义，不该在这里当装饰色。 */
+.is-brand-page .sec-head__code {
+  color: var(--brand-primary);
+}
+
+/* 品牌页的收尾 CTA 是品牌主操作，不是临床主操作：
+   `.btn` 默认用墨色（Clinical 的规矩），这里在品牌页作用域内换成钴蓝。 */
+.is-brand-page .btn {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  border-color: var(--brand-primary);
+}
+
+.is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #ffffff);
+}
+
+html.dark .is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #000000);
 }

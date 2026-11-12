@@ -229,11 +229,12 @@ export function LandingPage() {
   }, [specimenOpen])
 
   return (
-    // 整页语境随主题走：暗主题是暗房（顶栏全程反相），浅主题是白色仪器台。
-    // 浅主题下页面本身是亮的，顶栏反相只交给 ScrollExpand 的舞台标记——
-    // 黑画面盖过顶栏时它自己会打 data-head-invert。
+    // 整页语境随主题走：暗主题是暗房（顶栏全程反相），浅主题是品牌银蓝画布。
+    // `.is-brand-page`（R2-04）只换画布与发丝线，文字与临床语义令牌不动——
+    // 上半页的钴蓝光学台和下半页的章节因此落在同一块底色上。
+    // 浅主题下顶栏反相只交给 ScrollExpand 的舞台标记。
     <div
-      className={(dark ? "is-night " : "is-field ") + "night"}
+      className={(dark ? "is-night " : "is-field ") + "night is-brand-page"}
       data-head-invert={dark ? "true" : undefined}
     >
       {/* 准星只属于落地页，别的地方用系统光标。 */}
@@ -456,11 +457,13 @@ export function LandingPage() {
             </div>
 
             <div className="reveal" style={{ "--d": "120ms" } as CSSProperties}>
+              {/* 记录纸在任何主题下都是同一张白纸（纸面原语不参与主题翻转），
+                  文案里也写着「写在同一张纸上」；暗色页面下它正好是那块白色内容区。 */}
               <RecordSheet
                 result={SPECIMEN}
                 recordId="IRIS-2026-1106-0042"
                 specimen
-                tone={dark ? "night" : "paper"}
+                tone="paper"
               />
             </div>
           </div>
