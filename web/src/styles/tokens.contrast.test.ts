@@ -240,6 +240,13 @@ describe("品牌页脚 · 深海蓝实体面", () => {
       expect(contrast(surface, darkValue("--brand-canvas"))).toBeGreaterThan(1)
     }
   })
+
+  it("深底信号橙：印章文字 ≥ 4.5，描边 ≥ 3", () => {
+    for (const surface of FOOTER.map(value)) {
+      expect(contrast(value("--brand-deep-signal-text"), surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(value("--brand-deep-signal"), surface)).toBeGreaterThanOrEqual(3)
+    }
+  })
 })
 
 describe("品牌页作用域 · .is-brand-page（R2-04）", () => {

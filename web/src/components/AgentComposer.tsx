@@ -53,8 +53,10 @@ export function AgentComposer({ dark }: { dark: boolean }) {
   return (
     <div className="composer">
       <ElectricBorder
-        color={dark ? "#e2622b" : "#d9541f"}
-        glowColor={dark ? "#e2622b" : "#d9541f"}
+        /* 首页是 Brand 场景：光标跟随的边框走钴蓝 / 冰蓝，
+           不再用信号橙——橙色只留给临床重点态（DESIGN §3.4）。 */
+        color={dark ? "#85b5ff" : "#4f86e8"}
+        glowColor={dark ? "#85b5ff" : "#4f86e8"}
         theme={dark ? "dark" : "light"}
         borderRadius={22}
         thickness={1.9}

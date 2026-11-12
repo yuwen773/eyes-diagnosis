@@ -20,7 +20,7 @@
 - 顶栏高度：品牌场景 70px（`--nav-h` 64px + 品牌内边距）；锚点落点留白 96.6px。
 - 390 / 768 / 1440 / 1920 均无横向滚动（`scrollWidth === innerWidth`）。
 - 整页高度：390 → 11225px，768 → 9509px，1440 → 8400px（Light/Dark 一致）。
-- 两轮截图与 `typecheck` / `lint` / `vitest`（301 passing）/ `vite build` 过程中 **0 console error**。
+- 两轮截图与 `typecheck` / `lint` / `vitest`（302 passing）/ `vite build` 过程中 **0 console error**。
 
 ## 读图注意
 

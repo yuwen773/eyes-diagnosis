@@ -1053,10 +1053,6 @@ html.dark .is-brand-page .btn:hover {
   padding-block: clamp(72px, 10vh, 128px);
 }
 
-.landing-section.section--line {
-  border-top-color: var(--brand-line);
-}
-
 .landing-section .sec-head {
   margin-bottom: clamp(26px, 4vh, 42px);
 }
@@ -1134,15 +1130,15 @@ html.dark .is-brand-page .btn:hover {
   align-items: start;
   padding: clamp(18px, 1.8vw, 24px) clamp(18px, 2vw, 26px);
   border: 1px solid var(--brand-line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--brand-glass);
   transition:
-    border-color 180ms ease,
-    transform 180ms ease;
+    border-color var(--fast),
+    transform var(--fast);
 }
 
 .landing-step:hover {
-  border-color: var(--brand-outline);
+  border-color: var(--brand-line-strong);
   transform: translateY(-1px);
 }
 
@@ -1211,7 +1207,8 @@ html.dark .is-brand-page .btn:hover {
 /* 画框只负责裁边：纸、墨、风险色仍由 RecordSheet 的纸面原语决定。 */
 .landing-record__paper {
   overflow: hidden;
-  border-radius: calc(var(--radius-xl) - 8px);
+  /* 纸面内衬取最小档：画框是 24px，纸自己几乎方角，符合记录纸的物理感。 */
+  border-radius: var(--radius-sm);
   background: var(--paper-surface);
 }
 
@@ -1232,7 +1229,7 @@ html.dark .is-brand-page .btn:hover {
   gap: 8px;
   padding: clamp(18px, 1.8vw, 24px);
   border: 1px solid var(--brand-line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--brand-surface);
 }
 
@@ -1259,17 +1256,14 @@ html.dark .is-brand-page .btn:hover {
 
 /* ── 责任边界：深海蓝实体面（与页脚同一套品牌深色）───────────── */
 
-/* 深色实体面不随主题翻转：正文/发丝线取品牌深底令牌；信号橙在这里
-   固定成提亮版（--signal-text 的浅色版在深底上读不出来），与页脚的
-   固定 --foot-accent 是同一类处理。 */
+/* 深色实体面不随主题翻转：正文/发丝线取品牌深底令牌；信号橙用深底的
+   固定提亮令牌（不改写 --signal 语义本身）。 */
 .is-brand-page .statute {
   --fg: var(--brand-deep-text);
   --fg-2: var(--brand-deep-muted);
   --fg-3: var(--brand-deep-muted);
   --hr: var(--brand-deep-hairline);
   --hr-strong: var(--brand-deep-hairline);
-  --signal: #ef7a45;
-  --signal-text: #ffa07a;
   --line: var(--brand-deep-hairline);
   --line-strong: var(--brand-deep-hairline);
   margin-top: clamp(24px, 4vh, 56px);
@@ -1283,6 +1277,11 @@ html.dark .is-brand-page .btn:hover {
   border-color: var(--brand-deep-hairline);
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, #ffffff 4%, transparent);
+}
+
+.is-brand-page .statute__seal {
+  border-color: var(--brand-deep-signal);
+  color: var(--brand-deep-signal-text);
 }
 
 .is-brand-page .statute__overline,
@@ -1323,21 +1322,19 @@ html.dark .is-brand-page .btn:hover {
   color: var(--brand-muted);
 }
 
-/* ── 断点 ─────────────────────────────────────────────────────── */
-
-@media (max-width: 1080px) {
-  .landing-agent__points {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
+/* ── 断点：只用 900 / 768 两档 ───────────────────────────────── */
 
 @media (max-width: 900px) {
   .landing-how {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .landing-agent__points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
   .landing-agent__points {
     grid-template-columns: minmax(0, 1fr);
   }
