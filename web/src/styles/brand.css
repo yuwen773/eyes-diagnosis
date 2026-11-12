@@ -1,0 +1,38 @@
+/*
+ * Iris 2.0 品牌层样式。
+ *
+ * 只在 .iris2 上下文里生效。颜色一律消费 --brand-* 令牌，
+ * 不引用 --field / --ink / --signal —— 品牌层与临床层互不串味。
+ */
+
+.brand-panel {
+  position: relative;
+  border: 1px solid var(--brand-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass);
+  box-shadow: var(--brand-shadow);
+  color: var(--brand-text);
+  /* 背景模糊是 GPU 合成，只给少量面板用；离屏面板不常驻。 */
+  backdrop-filter: blur(14px) saturate(120%);
+}
+
+.brand-panel--solid {
+  background: var(--brand-surface);
+  border-color: var(--brand-outline);
+  backdrop-filter: none;
+}
+
+.brand-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 暗底上的玻璃面需要更实的边，不然边缘会糊在背景里。 */
+html.dark .brand-panel {
+  border-color: var(--brand-outline);
+}
