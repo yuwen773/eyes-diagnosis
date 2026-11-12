@@ -506,6 +506,15 @@ html.dark .landing-hero__btn--primary {
   stroke-linecap: round;
 }
 
+/* 带体的两端必须在容器边界之前就消失。
+   容器的 overflow 裁剪会留下一条笔直的硬边（窄屏上尤其明显：
+   光带被切成一条水平断口），所以统一用一层径向遮罩把四周收掉。 */
+.optic-flow__fibers,
+.optic-flow__fallback {
+  -webkit-mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+}
+
 .optic-stop--sheath-far {
   stop-color: #9fc4ef;
   stop-opacity: 0;
