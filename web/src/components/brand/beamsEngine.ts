@@ -2,19 +2,21 @@
  * Beams 引擎（vendored）
  * ---------------------------------------------------------------------------
  * 来源：React Bits · https://github.com/DavidHDev/react-bits
- *       src/content/Backgrounds/Beams/Beams.jsx（main 分支，2026-11-12 取用）
- * 许可：MIT + Commons Clause v1.0（Copyright (c) 2026 David Haz）
- *       —— 可作为应用的一部分使用，需保留版权与许可声明；
- *          不可把组件本身当库再分发。本文件以「应用内 vendor」方式落地，
- *          随 Iris 前端一起分发，不单独提供。
+ *       src/content/Backgrounds/Beams/Beams.jsx
+ * 固定 commit：ed33ebe4acfe29e60fb759bcccc70a138ce2dcef（2026-11-08）
+ *       —— 上游没给这个组件打版本标签，只认 SHA；换 SHA 必须重做逐字比对。
+ * 许可：MIT + Commons Clause License Condition v1.0（Copyright (c) 2026 David Haz）
+ *       —— 允许作为应用/网站/产品的一部分使用（含商业用途）与修改；
+ *          不允许销售、再许可或再分发「组件本身」（单独、打包或以移植版形式）。
+ *          本文件以「应用内 vendor」方式落地，署名与许可原文见
+ *          web/src/components/brand/THIRD-PARTY-NOTICES.md。
  *
  * 改动范围：
  *   1. 去掉 React 组件外壳与自带 CSS，只保留着色器与 GL 辅助函数；
  *   2. 补 TypeScript 类型标注；
  *   3. 命名空间收敛为 beamsEngine 模块，不导出为通用组件库。
- * 其余逻辑（着色器、场渲染、合成、mipmap 泛光、颗粒）保持上游原样。
- *
- * 上游作者与许可原文见 web/src/components/brand/THIRD-PARTY-NOTICES.md。
+ * 三个着色器（顶点 / FIELD / COMPOSITE）与固定 commit 下的原文**逐字一致**，
+ * 比对结果记在 THIRD-PARTY-NOTICES.md 的「校验」一节。
  */
 
 export const QUAD_VERTEX = `#version 300 es

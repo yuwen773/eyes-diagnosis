@@ -57,6 +57,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [probeError, setProbeError] = useState<string | null>(null)
   /** 上一次确认的身份。null 表示这一轮还没确认过，不触发清缓存。 */
   const scopeRef = useRef<string | null>(null)
+  /**
+   * 身份操作的逻辑时钟。
+   *
+   * <p>`refresh()` 是一次网络往返，这期间用户完全可能已经登录、登出，或者会话被踢。
+   * 如果谁先返回谁说了算，一个在 A 名下发出的探测晚归时就会把 B 的身份改回去，
+   * 顺带把 B 的缓存按 A 的 scope 清掉。所以每次「会改身份」的操作都领一个序号：
+   * 只有序号仍然是最新的那一次，才有权落地。
+   */
+  const epochRef = useRef(0)
+  /** 探测请求自己的序号：并发发起的多次 refresh，只有最后一次算数。 */
+  const probeRef = useRef(0)
+
+  /**
+   * 开始一次会改身份的操作（登录 / 登出 / 会话失效），返回它的序号。
+   *
+   * <p>同时在途的会话探测当场作废——它描述的是变更**之前**的身份。
+   */
+  const beginIdentityChange = useCallback(() => {
+    const token = ++epochRef.current
+    probeRef.current += 1
+    return token
+  }, [])
 
   /**
    * 采用一个新的会话身份。
@@ -79,10 +101,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   )
 
   const refresh = useCallback(async () => {
+    const identity = epochRef.current
+    const probe = ++probeRef.current
+    /** 晚归的探测：期间身份变过，或者又发起了更新的探测 → 这次的结果作废。 */
+    const stale = () => identity !== epochRef.current || probe !== probeRef.current
+
     try {
       const current = await getLoginUser()
+      if (stale()) return
       adopt(current ?? null)
     } catch (error) {
+      if (stale()) return
       // 只有「未登录 / 无权限」才算匿名。5xx、网关返回的 HTML 错误页都不是——
       // 把它们读成匿名，等于网络抖一下就把人静默登出。
       if (error instanceof ApiError && (error.code === 40100 || error.code === 40101)) {
@@ -111,27 +140,38 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onExpired = (event: Event) => {
       const code = (event as CustomEvent<AuthExpiredDetail>).detail?.code
-      if (code === 40100) adopt(null)
+      if (code !== 40100) return
+      beginIdentityChange()
+      adopt(null)
     }
     window.addEventListener(AUTH_EXPIRED_EVENT, onExpired)
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
-  }, [adopt])
+  }, [adopt, beginIdentityChange])
 
   const signIn = useCallback(
     async (account: string, password: string) => {
+      const token = beginIdentityChange()
       const current = await loginApi({ userAccount: account, userPassword: password })
+      // 登录这一趟里又有人登录/登出/会话失效 → 这次的答案已经过期。
+      if (token !== epochRef.current) return
+      // 登录期间可能又发起了会话探测，它读到的是登录**之前**的身份；
+      // 再推一格，把这些探测一并作废，再落地新身份。
+      beginIdentityChange()
       adopt(current ?? null)
     },
-    [adopt],
+    [adopt, beginIdentityChange],
   )
 
   const signOut = useCallback(async () => {
+    const token = beginIdentityChange()
     // 先清本地：登出请求本身也要时间，不能让它成为旧账号数据继续可见的窗口。
     // 登出失败时不改登录态——服务端会话还在，谎称已退出反而更糟。
     resetPrivateQueries(queryClient)
     await logoutApi()
+    if (token !== epochRef.current) return
+    beginIdentityChange()
     adopt(null)
-  }, [adopt, queryClient])
+  }, [adopt, beginIdentityChange, queryClient])
 
   const value = useMemo(
     () => ({

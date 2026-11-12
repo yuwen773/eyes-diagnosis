@@ -48,6 +48,8 @@ export function OpticFlow(props: {
   }, [theme, paused])
 
   useEffect(() => {
+    // 已经降到静态画面：没有画布，也没有引擎要管。
+    if (fallback) return
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
@@ -65,10 +67,13 @@ export function OpticFlow(props: {
     }
     engineRef.current = engine
     return () => {
+      // 这里的 cleanup 会在三种情形下跑：路由离开、StrictMode 的假卸载、
+      // 以及降级切换（fallback 变 true）。dispose 只回收自己建的 GPU 资源，
+      // 不丢上下文——StrictMode 会立刻用同一张 canvas 再挂一次。
       engine.dispose()
       engineRef.current = null
     }
-  }, [])
+  }, [fallback])
 
   // 离屏暂停：纤维层的位移动画跟着可见性走。
   useEffect(() => {

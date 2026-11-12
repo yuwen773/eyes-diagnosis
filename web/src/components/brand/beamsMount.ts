@@ -65,6 +65,9 @@ export function mountBeams(options: {
     powerPreference: "high-performance",
   })
   if (!gl) return null
+  // 上一次 dispose 若是由「丢上下文」触发的，同一张 canvas 会带着一个死上下文回来。
+  // 这种情况别再往里塞着色器，直接让调用方走静态降级。
+  if (gl.isContextLost()) return null
 
   const floatTargets = !!gl.getExtension("EXT_color_buffer_float")
   const fieldProgram = link(gl, FIELD)
@@ -101,7 +104,13 @@ export function mountBeams(options: {
   }
 
   const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true })
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+  // 减少动效偏好要**跟着系统设置走**：用户中途打开「减少动态效果」时，
+  // 已经在跑的这一帧循环必须当场停住；关掉之后同样要能恢复。
+  const motionQuery =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)")
+      : null
+  let reduce = motionQuery?.matches ?? false
   const colorCache = new Map<string, number[]>()
   const toLinear = (value: string) => {
     const cached = colorCache.get(value)
@@ -132,6 +141,8 @@ export function mountBeams(options: {
   let raf = 0
   let last = 0
   let visible = true
+  /** dispose 之后一切异步回调都失效：RAF、指针、可见性都不许再把循环叫醒。 */
+  let disposed = false
 
   const render = () => {
     const s = getSettings()
@@ -200,7 +211,7 @@ export function mountBeams(options: {
 
   const frame = (now: number) => {
     raf = 0
-    if (!visible || document.hidden) return
+    if (disposed || !visible || document.hidden) return
     const s = getSettings()
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60
     last = now
@@ -235,7 +246,8 @@ export function mountBeams(options: {
   }
 
   const wake = () => {
-    if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame)
+    if (disposed || raf || !visible || document.hidden) return
+    raf = requestAnimationFrame(frame)
   }
 
   const resize = () => {
@@ -276,9 +288,22 @@ export function mountBeams(options: {
     wake()
   }
 
-  const handleContextLost = (event: Event) => {
-    // 上下文丢了就告诉外层切静态降级；不阻止默认行为，恢复由浏览器决定。
-    event.preventDefault()
+  /**
+   * 系统「减少动态效果」开关在运行中变化。
+   *
+   * <p>`last` 归零是为了让恢复后的一帧按 1/60 重新起算，不会因为停了一阵
+   * 而跳一大步；叫醒循环之后，frame() 自己会按新的 `reduce` 决定继续还是停。
+   */
+  const onMotionChange = () => {
+    reduce = motionQuery?.matches ?? false
+    last = 0
+    wake()
+  }
+
+  const handleContextLost = () => {
+    // 不调用 preventDefault：调用它等于向浏览器表示「我要负责恢复这个上下文」，
+    // 而我们切静态降级、不打算恢复——不拦默认行为，浏览器就会直接把 GPU 资源收回去。
+    if (disposed) return
     onContextLost?.()
   }
 
@@ -295,6 +320,7 @@ export function mountBeams(options: {
   window.addEventListener("pointermove", onPointerMove, { passive: true })
   document.documentElement.addEventListener("pointerleave", onPointerLeave)
   document.addEventListener("visibilitychange", onVisibility)
+  motionQuery?.addEventListener("change", onMotionChange)
   canvas.addEventListener("webglcontextlost", handleContextLost as EventListener)
   resize()
 
@@ -303,6 +329,7 @@ export function mountBeams(options: {
 
   return {
     wake: () => {
+      if (disposed) return
       const s = getSettings()
       if (s.quality !== lastQuality || s.dpr !== lastDpr) {
         lastQuality = s.quality
@@ -314,20 +341,27 @@ export function mountBeams(options: {
       wake()
     },
     dispose: () => {
+      if (disposed) return
+      disposed = true
       cancelAnimationFrame(raf)
+      raf = 0
       resizeObserver.disconnect()
       intersection.disconnect()
       window.removeEventListener("pointermove", onPointerMove)
       document.documentElement.removeEventListener("pointerleave", onPointerLeave)
       document.removeEventListener("visibilitychange", onVisibility)
+      motionQuery?.removeEventListener("change", onMotionChange)
       canvas.removeEventListener("webglcontextlost", handleContextLost as EventListener)
+      // 只回收自己建的 GPU 资源，**不**调 WEBGL_lose_context().loseContext()：
+      // 同一张 canvas 在 StrictMode 的「挂载→卸载→再挂载」里会被复用，
+      // 主动丢上下文会让第二次挂载拿到一个死上下文，首屏直接黑掉。
+      // 真正的释放交给浏览器在 canvas 被回收时处理。
       if (texture) gl.deleteTexture(texture)
       gl.deleteFramebuffer(framebuffer)
       gl.deleteProgram(fieldProgram.program)
       gl.deleteProgram(compositeProgram.program)
       gl.deleteBuffer(buffer)
       gl.deleteVertexArray(vao)
-      gl.getExtension("WEBGL_lose_context")?.loseContext()
     },
   }
 }

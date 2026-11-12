@@ -21,7 +21,7 @@ const A = { id: "A", userAccount: "a" }
 const B = { id: "B", userAccount: "b" }
 
 function Harness() {
-  const { status, scope, signIn, signOut } = useSession()
+  const { status, scope, signIn, signOut, refresh } = useSession()
   return (
     <div>
       <span data-testid="status">{status}</span>
@@ -32,8 +32,22 @@ function Harness() {
       <button type="button" onClick={() => void signOut()}>
         登出
       </button>
+      <button type="button" onClick={() => void refresh()}>
+        重新探测
+      </button>
     </div>
   )
+}
+
+/** 手动控制的 Promise：用来制造「请求在途时又发生了别的事」。 */
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
 }
 
 let client: QueryClient
@@ -152,5 +166,91 @@ describe("身份切换与缓存隔离", () => {
 
     expect(client.getQueryData(queryKeys.records.mine("A", { current: 1, pageSize: 10 }))).toBeUndefined()
     expect(client.getQueryData(queryKeys.admin.stats(30))).toBeUndefined()
+  })
+})
+
+describe("身份更新的时序", () => {
+  it("登录在途时，旧身份的探测晚归不会把身份改回去", async () => {
+    const probe = deferred<typeof A>()
+    vi.mocked(getLoginUser).mockReturnValueOnce(probe.promise)
+
+    renderSession()
+    // 挂载时的探测还挂着，先登录成 B。
+    expect(screen.getByTestId("status").textContent).toBe("loading")
+
+    screen.getByRole("button", { name: "登录 B" }).click()
+    await waitFor(() => expect(screen.getByTestId("scope").textContent).toBe("B"))
+
+    // 那次探测现在才带着 A 回来。
+    probe.resolve(A)
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("authed"))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(screen.getByTestId("scope").textContent).toBe("B")
+  })
+
+  it("登出之后，晚归的探测不会把人重新登回去", async () => {
+    renderSession()
+    await screen.findByText("authed")
+    seedCaches()
+
+    const probe = deferred<typeof A>()
+    vi.mocked(getLoginUser).mockReturnValueOnce(probe.promise)
+
+    screen.getByRole("button", { name: "重新探测" }).click()
+    screen.getByRole("button", { name: "登出" }).click()
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("anon"))
+
+    probe.resolve(A)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(screen.getByTestId("status").textContent).toBe("anon")
+    expect(screen.getByTestId("scope").textContent).toBe("anonymous")
+    expect(client.getQueryData(queryKeys.records.mine("A", { current: 1, pageSize: 10 }))).toBeUndefined()
+  })
+
+  it("登录期间发出的探测读到旧身份，登录完成后也不会被它覆盖", async () => {
+    renderSession()
+    await screen.findByText("authed")
+
+    // 登录挂起，期间又发了一次探测——它读到的是登录前的 A。
+    const loginResult = deferred<typeof B>()
+    vi.mocked(login).mockReturnValueOnce(loginResult.promise)
+    const probe = deferred<typeof A>()
+    vi.mocked(getLoginUser).mockReturnValueOnce(probe.promise)
+
+    screen.getByRole("button", { name: "登录 B" }).click()
+    screen.getByRole("button", { name: "重新探测" }).click()
+
+    loginResult.resolve(B)
+    await waitFor(() => expect(screen.getByTestId("scope").textContent).toBe("B"))
+
+    // 探测在登录落地之后才回来，身份必须还是 B。
+    probe.resolve(A)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(screen.getByTestId("scope").textContent).toBe("B")
+    expect(client.getQueryData(queryKeys.profile.user("A"))).toBeUndefined()
+  })
+
+  it("两次并发探测：先返回的旧结果不能压过后来发起的那次", async () => {
+    renderSession()
+    await screen.findByText("authed")
+
+    const first = deferred<typeof A>()
+    const second = deferred<typeof A>()
+    vi.mocked(getLoginUser).mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+
+    screen.getByRole("button", { name: "重新探测" }).click()
+    screen.getByRole("button", { name: "重新探测" }).click()
+
+    second.resolve(B)
+    await waitFor(() => expect(screen.getByTestId("scope").textContent).toBe("B"))
+
+    // 更早发起的那次现在才回来，带着 A。
+    first.resolve(A)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(screen.getByTestId("scope").textContent).toBe("B")
   })
 })
