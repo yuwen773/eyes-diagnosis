@@ -9,7 +9,7 @@
 | `{light,dark}-profile-{390,768,1440,1920}-fold.jpg` | 个人中心：读数卡 + 头像卡 + 最近判读 + 资料表单 |
 | `{light,dark}-profile-390-full.jpg` | 390 整页 |
 | `{light,dark}-profile-focus-1440.jpg` | 昵称输入框的键盘焦点态 |
-| `{light,dark}-profile-anon-1440.jpg` | 未登录态：只给登录入口，不发个人请求 |
+| `{light,dark}-profile-anon-1440.jpg` | 未登录态：只给登录入口（截图不含请求层证据，见下） |
 | `{light,dark}-records-{390,768,1440,1920}-fold.jpg` | 判读台账：KPI 读数条 + 台账行 + 自有翻页控件 |
 | `{light,dark}-records-390-full.jpg` | 390 整页 |
 | `{light,dark}-records-expanded-1440.jpg` | 展开一条：真实记录纸 + 复诊申请按钮 |
@@ -22,7 +22,15 @@
 - 390 / 768 / 1440 / 1920 均无横向滚动（`scrollWidth === innerWidth`）；采集 **0 console error**。
 - 台账数据来自本地开发库的临时账号（4 条判读，含 1 条 AI 拒识、1 条复审中），
   截图里的病名、置信度、模型版本、权重指纹都是数据库里的真实字段。
-- `typecheck` / `lint` / `vitest`（302 passed）/ `vite build` 全绿。
+- **证据覆盖范围**：截图验证的是布局、读数与未登录态的**可见行为**；「未登录不发个人请求」
+  由 `ProfilePage.tsx` 的 `enabled: authed && !!user` 查询门控与单测保证，不在本脚本的断言内。
+- `typecheck` / `lint` / `vitest`（42 files / 325 passed）/ `vite build` 全绿
+  （计数为审查整改后的基数，随 R2.5-05 合入从 302 增至 325）。
+
+## 未覆盖态（明示缺口）
+
+- 390 展开台账行、判读空态、复诊申请弹层三态没有单独截图（1440 已覆盖展开态，
+  空态由 ProfilePage / RecordsPage 单测覆盖）；补拍时在复跑命令的账号上清空判读记录即可。
 
 ## 本轮改了什么（截图可对照）
 
