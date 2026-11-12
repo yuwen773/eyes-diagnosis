@@ -14,11 +14,14 @@ const MAX_TEXTAREA_HEIGHT = 160
 export function ChatInput({
   disabled,
   streaming,
+  pickSignal = 0,
   onSend,
   onStop,
 }: {
   disabled: boolean
   streaming: boolean
+  /** 欢迎屏要点选图时递增；只在新信号到来时打开一次对话框。 */
+  pickSignal?: number
   onSend: (text: string, files: File[]) => Promise<boolean>
   onStop: () => void
 }) {
@@ -27,13 +30,27 @@ export function ChatInput({
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [hint, setHint] = useState("")
   const [focused, setFocused] = useState(false)
+  // 窄屏放不下整串快捷键说明，只留最必要的一条。
+  const [narrow, setNarrow] = useState(
+    () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 720px)").matches,
+  )
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const lastPickSignal = useRef(pickSignal)
 
   function updateText(next: string) {
     setText(next)
     saveDraft(next)
   }
+
+  // 跟系统一致：旋屏或拖窗口时实时换提示文案，不刷新页面。
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const mq = window.matchMedia("(max-width: 720px)")
+    const onChange = () => setNarrow(mq.matches)
+    mq.addEventListener("change", onChange)
+    return () => mq.removeEventListener("change", onChange)
+  }, [])
 
   // 自适应高度
   useEffect(() => {
@@ -42,6 +59,15 @@ export function ChatInput({
     el.style.height = "auto"
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
+
+  // 欢迎屏的「上传眼底图像」入口：点了就打开选图对话框。
+  // 信号相同不重复打开；用户点「取消」后也不会自己弹第二次。
+  useEffect(() => {
+    if (pickSignal === lastPickSignal.current) return
+    lastPickSignal.current = pickSignal
+    if (disabled) return
+    fileInputRef.current?.click()
+  }, [pickSignal, disabled])
 
   // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
@@ -104,6 +130,8 @@ export function ChatInput({
     setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
     // 允许再次选同一个文件
     e.target.value = ""
+    // 选完图把焦点交回输入框：欢迎屏来的用户下一步就是写一句话。
+    if (images.length > 0) textareaRef.current?.focus({ preventScroll: true })
   }
 
   function removeAttachment(id: string) {
@@ -160,7 +188,13 @@ export function ChatInput({
           <textarea
             ref={textareaRef}
             className="agent-input__textarea"
-            placeholder={text.length === 0 && attachments.length === 0 ? "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片" : ""}
+            placeholder={
+              text.length === 0 && attachments.length === 0
+                ? narrow
+                  ? "输入问题，Enter 发送"
+                  : "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片"
+                : ""
+            }
             rows={1}
             value={text}
             disabled={disabled}

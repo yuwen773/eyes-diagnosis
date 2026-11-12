@@ -76,8 +76,8 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
 - Tailwind v4 的 `.overline` 工具类给眉线多加一条上划线；
 - 断点未完全收敛（各页 `@media` 有 17 个不同取值），新代码只用根 `DESIGN.md` §3.6 五档；
 - 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），与新规范不一致；
-- **两套顶栏并存**（`BrandHeader` / `SiteHeader`）：R2.5-01 收敛为单一 `ProductHeader`；
-  在此之前，任何新页面都不要按其中一套另写第三套；
+- ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
+  `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
 - `--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` **只在 PR #52 里，尚未进入 `ui`**，
   合并前取不到；按本文档写品牌组件前必须先合并 PR #52；
 - **仍有 3 处 `outline: none`**：`CardSwap.css` 的装饰容器、

@@ -190,6 +190,16 @@ export function SessionList({
       <div className="agent-sessions__head">
         <div className="agent-sessions__brand">
           <span className="agent-sessions__brandname">会话</span>
+          {/* 「选择」是列表头的小动作，不跟主操作抢同一行按钮位。 */}
+          {!selectMode ? (
+            <button
+              type="button"
+              className="agent-sessions__select"
+              onClick={() => setSelectMode(true)}
+            >
+              选择
+            </button>
+          ) : null}
           <button
             type="button"
             className="agent-sessions__collapse"
@@ -232,27 +242,18 @@ export function SessionList({
               </button>
             </>
           ) : (
-            <>
-              <button
-                type="button"
-                className="agent-sessions__select"
-                onClick={() => setSelectMode(true)}
-              >
-                选择
-              </button>
-              <button
-                type="button"
-                className="agent-sessions__newchat"
-                onClick={onNewChat}
-                disabled={busy}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                <span>新对话</span>
-              </button>
-            </>
+            <button
+              type="button"
+              className="agent-sessions__newchat"
+              onClick={onNewChat}
+              disabled={busy}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>新对话</span>
+            </button>
           )}
         </div>
       </div>

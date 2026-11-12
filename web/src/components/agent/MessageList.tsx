@@ -44,6 +44,7 @@ export function MessageList({
   streaming,
   onSend,
   onPreviewImage,
+  onPickImage,
   headLeft,
   headRight,
 }: {
@@ -52,6 +53,8 @@ export function MessageList({
   streaming: boolean
   onSend: (text: string) => void
   onPreviewImage?: (url: string) => void
+  /** 欢迎屏「上传眼底图像」：打开输入区的选图对话框。 */
+  onPickImage: () => void
   /** 头栏左侧插槽：折叠后的左栏操作钮组。 */
   headLeft?: ReactNode
   /** 头栏右侧插槽：资源面板切换钮。 */
@@ -128,7 +131,7 @@ export function MessageList({
       </div>
       <div className="console__body agent-msglist" ref={listRef}>
         {loading && <div className="agent-load">读取历史会话…</div>}
-        {empty && <WelcomeScreen onSend={onSend} />}
+        {empty && <WelcomeScreen onSend={onSend} onPickImage={onPickImage} />}
         {messages.map((msg) => (
           <MessageRow key={msg.id} msg={msg} onPreviewImage={onPreviewImage} />
         ))}

@@ -27,6 +27,13 @@ import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const HISTORY_PAGE_SIZE = 100
 
+/** 与 agent.css 的窄屏断点一致：窄屏会话栏默认收起，首屏留给对话与输入区。 */
+const NARROW_QUERY = "(max-width: 900px)"
+
+function isNarrowViewport(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia(NARROW_QUERY).matches
+}
+
 /** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
 function safeFileName(name: string): string {
   const cleaned = name.replace(/[\\/:*?"<>|]/g, "_").trim()
@@ -72,12 +79,14 @@ export function AgentPage() {
   const lastUserKeyRef = useRef<string | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
-  const [sessionsCollapsed, setSessionsCollapsed] = useState(false)
+  const [sessionsCollapsed, setSessionsCollapsed] = useState(isNarrowViewport)
   const [panelOpen, setPanelOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
   const previewCloseRef = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false)
+  // 欢迎屏「上传眼底图像」→ 输入区选图：只递增一个信号，输入组件自己开对话框。
+  const [pickSignal, setPickSignal] = useState(0)
   // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
   const { push: pushFault } = useFault()
 
@@ -210,6 +219,8 @@ export function AgentPage() {
     setThreadId(newId())
     reset()
     setPanelOpen(false)
+    // 窄屏上会话栏是盖住对话的展开区：选完就收回去，别让用户再手动收一次。
+    if (isNarrowViewport()) setSessionsCollapsed(true)
   }, [reset, userKey])
 
   const handleSelectHistory = useCallback(
@@ -219,6 +230,7 @@ export function AgentPage() {
       saveThreadId(userKey, id)
       reset()
       setPanelOpen(false)
+      if (isNarrowViewport()) setSessionsCollapsed(true)
       await loadHistoryMessages(id)
     },
     [reset, userKey, loadHistoryMessages],
@@ -328,6 +340,7 @@ export function AgentPage() {
               streaming={isStreaming}
               onSend={(text) => void handleSend(text)}
               onPreviewImage={(url) => setPreviewUrl(url)}
+              onPickImage={() => setPickSignal((value) => value + 1)}
               headLeft={
                 <>
                   {/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions） */}
@@ -392,6 +405,7 @@ export function AgentPage() {
             <ChatInput
               disabled={false}
               streaming={isStreaming}
+              pickSignal={pickSignal}
               onSend={handleSend}
               onStop={abort}
             />
