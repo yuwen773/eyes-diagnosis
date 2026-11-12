@@ -2478,31 +2478,81 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 /* ==========================================================================
-   诊断页 · 暗室测量台
+   诊断页 · 临床影像工作区（R2.5-04）
+   --------------------------------------------------------------------------
+   骨架：页头（任务句 + 三步进度）→ 左侧上传台 + 右侧读数栏。
+   临床场景的规则不动：0 圆角、发丝线、墨色主 CTA、信号橙只标「当前」，
+   记录纸与风险语义由 RecordSheet 自己负责。
    ========================================================================== */
 
-/* 程序条：01 影像 → 02 判读 → 03 记录。左起描点，右端一枚相位读数。 */
+.workbench {
+  padding-top: clamp(26px, 4.2vh, 44px);
+}
+
+.workbench__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 18px clamp(28px, 5vw, 72px);
+  padding-bottom: clamp(20px, 3vh, 30px);
+}
+
+.workbench__intro {
+  max-width: 46em;
+}
+
+.workbench__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(25px, 2.5vw, 34px);
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+
+.workbench__lead {
+  margin: 10px 0 0;
+  max-width: 36em;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+/* 进度条：01 影像 → 02 判读 → 03 记录。贴在页头右侧，窄屏落到标题下方。 */
+.workbench__rail {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-bottom: 3px;
+}
+
 .proc {
   display: flex;
   align-items: stretch;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  margin-top: 24px;
+  margin: 0;
 }
 
 .proc__step {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 13px 22px 13px 0;
-  margin-right: 22px;
-  border-right: 1px solid var(--line);
+  gap: 8px;
+  padding: 4px 20px 4px 0;
+  margin-right: 20px;
+  border-right: 1px solid var(--hr);
   color: var(--fg-3);
   transition: color var(--base);
 }
 
 .proc__step:first-child {
   padding-left: 0;
+}
+
+.proc__step:last-of-type {
+  padding-right: 0;
+  margin-right: 0;
+  border-right: 0;
 }
 
 .proc__code {
@@ -2522,10 +2572,21 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   min-width: 1ch;
 }
 
-/* 激活态不抢戏，只把墨色给足；运转中交给右边那枚相位读数。 */
+/* 激活态不抢戏，只把墨色给足；「当前」这一步的编号用信号橙点一下，
+   运转中交给右端的相位读数。 */
 .proc__step[data-state="active"],
 .proc__step[data-state="run"] {
   color: var(--fg);
+}
+
+.proc__step[data-state="active"] .proc__code,
+.proc__step[data-state="active"] .proc__mark {
+  color: var(--signal-text);
+}
+
+.proc__step[data-state="run"] .proc__code,
+.proc__step[data-state="run"] .proc__mark {
+  color: var(--signal-text);
 }
 
 .proc__step[data-state="done"] {
@@ -2567,10 +2628,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   animation: live-pulse 1.6s var(--ease) infinite;
 }
 
-/* 待机也活着：相位点慢速呼吸，仪器不是停着，是在等。 */
-.proc__state[data-state="empty"]::before {
-  animation: live-pulse 3.2s var(--ease) infinite;
-}
+/* 待机不装活着：相位点只在真的判读中才呼吸（R2.5-04）。 */
 
 .proc__state[data-state="error"] {
   color: var(--risk-critical);
@@ -2589,32 +2647,54 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .diag {
-  min-height: calc(100svh - var(--nav-h));
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--hr);
 }
 
 .diag__left {
-  padding: 40px clamp(24px, 4vw, 56px) 56px 0;
-  border-right: 1px solid var(--line);
-}
-
-.diag__title {
-  font-size: clamp(26px, 2.4vw, 36px);
-  line-height: 1.25;
+  padding: clamp(26px, 3.4vw, 42px) clamp(24px, 4vw, 56px) clamp(40px, 6vh, 64px) 0;
+  border-right: 1px solid var(--hr);
 }
 
 .diag__right {
-  padding: 40px 0 56px clamp(24px, 4vw, 56px);
+  padding: clamp(26px, 3.4vw, 42px) 0 clamp(40px, 6vh, 64px) clamp(24px, 4vw, 56px);
   display: flex;
   flex-direction: column;
 }
 
+/* 右栏的日志头：章节名在左，「LIVE」只在真的收流时出现。 */
+.readout-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.readout-head .sec-head {
+  margin-bottom: 0;
+}
+
+.readout-head__state {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+  transition: color var(--base);
+}
+
+.readout-head__state[data-state="running"] {
+  color: var(--signal-text);
+}
+
+.readout-head__state[data-state="error"] {
+  color: var(--risk-critical);
+}
+
 .diag__foot {
-  margin-top: auto;
+  margin-top: clamp(30px, 6vh, 56px);
   padding-top: 22px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--hr);
   display: flex;
   flex-wrap: wrap;
   gap: 8px 22px;
@@ -2623,6 +2703,15 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-3);
+}
+
+/* 故障块：上传槽的本地校验与整次判读失败，各留一档呼吸。 */
+.workbench__fault {
+  margin-top: 16px;
+}
+
+.workbench__fault[data-scope="slot"] {
+  margin-top: 12px;
 }
 
 /* 右栏空台时的一行说明：示例影像在左侧取景槽里，别让右栏读成白屏。 */
@@ -2664,14 +2753,34 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 @media (max-width: 900px) {
+  .workbench__head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .workbench__rail {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--hr);
+    justify-content: space-between;
+  }
+
   .diag {
     grid-template-columns: 1fr;
   }
+
+  /* 单栏时取景槽别把整块平板撑满：收在 520，读数栏还在首屏附近。 */
+  .slot {
+    max-width: 520px;
+  }
+
   .diag__left {
     border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 28px 0 36px;
+    border-bottom: 1px solid var(--hr);
+    padding: 26px 0 36px;
   }
+
   .diag__right {
     padding: 32px 0 48px;
   }
@@ -2720,24 +2829,13 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   pointer-events: none;
 }
 
-/* 空槽自检：刻度环绕中心慢转，像仪器通电后在扫一圈。
-   只动 transform，减弱动效时整页静止。 */
+/* 空槽时环是死的参考线——转起来必须对应一次真实判读，
+   不拿「仪器通着电」当装饰（R2.5-04）。 */
 .slot__ring {
   transform-origin: 100px 100px;
-  animation: slot-sweep 14s linear infinite;
 }
 
-@keyframes slot-sweep {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.slot__reticle .slot__ring {
-  transform-origin: 100px 100px;
-}
-
-/* 空槽时环是死的参考线；读片时才绕着影像转起来。 */
+/* 读片时才绕着影像转起来：这一圈只绑定在途请求。 */
 .slot[data-busy="true"] .slot__reticle {
   color: rgba(255, 255, 255, 0.72);
 }
@@ -2890,10 +2988,19 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   margin: 12px 0 0;
   font-size: 11px;
   letter-spacing: 0.06em;
-  color: var(--fg-3);
+  color: var(--fg-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 空槽下的一行说明：告诉人影像是本机预览、什么时候才真正发出去。 */
+.slot__note {
+  margin: 12px 0 0;
+  max-width: 40em;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--fg-3);
 }
 
 /* 判读日志 */
@@ -2994,18 +3101,20 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   .roster__list {
     grid-template-columns: 1fr;
   }
-  .proc__zh {
-    display: none;
-  }
-  .proc__step {
-    margin-right: 16px;
-    padding-right: 16px;
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .slot__ring {
-    animation: none !important;
+  /* 窄屏也不把步骤名砍掉：三个词就是判读流程本身。 */
+  .proc__step {
+    gap: 6px;
+    margin-right: 14px;
+    padding-right: 14px;
+  }
+
+  .proc__zh {
+    font-size: 14px;
+  }
+
+  .proc__state {
+    font-size: 10.5px;
   }
 }
 
@@ -3015,6 +3124,15 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .sheet-shell {
   padding-block: clamp(32px, 5vh, 56px) clamp(56px, 8vh, 96px);
+}
+
+/* 出结果后的一行上下文：章节名 + 结果能做什么。记录纸本身不动。 */
+.workbench-result__head {
+  margin-bottom: 20px;
+}
+
+.workbench-result__head .sec-head {
+  margin-bottom: 6px;
 }
 
 .sheet {

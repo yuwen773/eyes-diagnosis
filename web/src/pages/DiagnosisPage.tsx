@@ -222,9 +222,10 @@ export function DiagnosisPage() {
 
         <div className="sheet-shell">
           <div className="wrap">
-            <div className="no-print" style={{ marginBottom: 20 }}>
-              <SectionHead code="判读" kicker="Reading record" en="Iris · B4" />
-            </div>
+            <header className="workbench-result__head no-print">
+              <SectionHead code="判读" kicker="Reading record" en="EfficientNet-B4" />
+              <p className="small">结果可打印留档；换一张影像会开始新的判读。</p>
+            </header>
 
             <RecordSheet
               result={result}
@@ -271,7 +272,8 @@ export function DiagnosisPage() {
     log.push({
       key: "check",
       text: file.name,
-      note: `${sizeMB} MB · PASS`,
+      // 这一步只核对了格式与体积，不是模型的质量门结论。
+      note: `${sizeMB} MB · 本地检查 PASS`,
       state: "done",
     })
   }
@@ -292,42 +294,42 @@ export function DiagnosisPage() {
     <div className="is-field">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap">
-        <div className="proc fade" role="list" aria-label="判读流程">
-          {STEP_DEFS.map((step, index) => {
-            const state = stepStateOf(index)
-            return (
-              <div
-                className="proc__step rise"
-                style={{ "--d": `${index * 90}ms` } as CSSProperties}
-                data-state={state}
-                role="listitem"
-                key={step.code}
-              >
-                <span className="proc__code num">{step.code}</span>
-                <span className="proc__zh">{step.zh}</span>
-                <span className="proc__mark" aria-hidden="true">
-                  {STEP_MARK[state]}
-                </span>
-              </div>
-            )
-          })}
-          <div className="proc__state num" data-state={stage}>
-            {STAGE_EN[stage]}
+      <main className="wrap workbench">
+        <header className="workbench__head">
+          <div className="workbench__intro">
+            <h1 className="workbench__title">上传一张彩色眼底照片，单眼、清晰、光照均匀</h1>
+            <p className="workbench__lead">系统会先过质量门，不合格的影像不会给出结论。</p>
           </div>
-        </div>
+
+          <div className="workbench__rail">
+            <div className="proc" role="list" aria-label="判读流程">
+              {STEP_DEFS.map((step, index) => {
+                const state = stepStateOf(index)
+                return (
+                  <div
+                    className="proc__step rise"
+                    style={{ "--d": `${index * 90}ms` } as CSSProperties}
+                    data-state={state}
+                    role="listitem"
+                    key={step.code}
+                  >
+                    <span className="proc__code num">{step.code}</span>
+                    <span className="proc__zh">{step.zh}</span>
+                    <span className="proc__mark" aria-hidden="true">
+                      {STEP_MARK[state]}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="proc__state num" data-state={stage}>
+              {STAGE_EN[stage]}
+            </div>
+          </div>
+        </header>
 
         <div className="diag">
-          <section className="diag__left rise">
-            {/* 眉线删掉：来源信息并进标题一句，首屏先看见这句话。
-                与步骤条之间留足一行呼吸，别让「影像」那一步贴在标题上方。 */}
-            <h1 className="h2 diag__title" style={{ marginTop: 44 }}>
-              上传一张彩色眼底照片，单眼、清晰、光照均匀
-            </h1>
-            <p className="small" style={{ marginBottom: 24, maxWidth: "34em" }}>
-              系统会先过质量门，不合格的影像不会给出结论。
-            </p>
-
+          <section className="diag__left rise" aria-label="影像上传">
             <input
               ref={inputRef}
               type="file"
@@ -427,10 +429,12 @@ export function DiagnosisPage() {
               <p className="slot__meta num">
                 {file.name} · {file.type === "image/png" ? "PNG" : "JPEG"} · {sizeMB} MB
               </p>
-            ) : null}
+            ) : (
+              <p className="slot__note">选图后先在本机预览，开始判读时才发送影像。</p>
+            )}
 
             {showLoginHint ? (
-              <div style={{ marginTop: 16 }}>
+              <div className="workbench__fault">
                 <FaultNote
                   fault={{
                     severity: "attention",
@@ -447,14 +451,19 @@ export function DiagnosisPage() {
                 />
               </div>
             ) : fault ? (
-              <div style={{ marginTop: faultScope === "run" ? 16 : 12 }}>
+              <div className="workbench__fault" data-scope={faultScope}>
                 <FaultNote fault={fault} variant={faultScope === "run" ? "block" : "field"} />
               </div>
             ) : null}
           </section>
 
-          <section className="diag__right rise" style={{ "--d": "90ms" } as CSSProperties}>
-            <SectionHead code="判读" kicker="Readout" en="LIVE" />
+          <section className="diag__right rise" style={{ "--d": "90ms" } as CSSProperties} aria-label="判读读数">
+            <div className="readout-head">
+              <SectionHead code="判读" kicker="Readout" />
+              <span className="readout-head__state num" data-state={stage}>
+                {stage === "running" ? "LIVE" : stage === "error" ? "FAIL" : "IDLE"}
+              </span>
+            </div>
 
             {/* 没有上传时右栏不是白屏：示例影像已铺在左侧取景槽里，
                 这里用一行说明把示例与真实判读区分开。 */}
