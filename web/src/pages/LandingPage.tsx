@@ -16,7 +16,7 @@ import { useTheme } from "@/components/theme-provider"
 import { LandingHero } from "@/components/brand/LandingHero"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
-import { SiteFooter } from "@/components/SiteFooter"
+import { BrandFooter } from "@/components/brand/BrandFooter"
 import { BrandHeader } from "@/components/brand/BrandHeader"
 import { TargetCursor } from "@/components/TargetCursor"
 
@@ -592,9 +592,8 @@ export function LandingPage() {
         </section>
       </main>
 
-      <div className="wrap">
-        <SiteFooter sections={LANDING_SECTIONS} />
-      </div>
+      {/* 全幅：深海蓝实体面要铺满视口宽度，版心在组件内部自己收。 */}
+      <BrandFooter sections={LANDING_SECTIONS} />
 
       <div className="night__grain" aria-hidden="true" />
     </div>
