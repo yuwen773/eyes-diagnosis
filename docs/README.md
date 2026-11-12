@@ -13,6 +13,7 @@
 | `design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` | 查 Iris 2.0 的视觉参考来源与取舍（A/B/F/G/H/I 代号定义、原始链接） |
 | `design/iris-2-rule-change-matrix.md` | 查旧「白色仪器」规则改成了什么、为什么改、落地到哪一步 |
 | `design/iris-2-implementation-roadmap.md` | 查首页 / 管理端 / 协作台各自的实施顺序、范围与验收门禁 |
+| `design/iris-2-r2-5-product-shell-audit.md` | 查 R2.5 全站视觉审计（逐路由现状/目标/复用/风险）与 Shared Product Shell 的 PR 拆分 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |

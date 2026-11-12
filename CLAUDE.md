@@ -154,6 +154,11 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
   诊断页是上传槽 → 记录纸。逐路由归属见 `DESIGN.md` §1.5。
 - **品牌首屏构图**：外层画布**全幅**铺满，玻璃外壳是 1240px 版心内的容器，光带裁在壳里
   （与 Optic Flow V4、PR #52 的 `LandingHero` 一致，`DESIGN.md` §3.6）。
+- **公开路由共用一个产品外壳**（R2.5，`DESIGN.md` §1.6）：`/`、`/news`、
+  `/diagnosis`、`/agent`、`/profile`、`/records` 共用同一顶栏组件、导航数据、
+  账号菜单、主题切换与移动抽屉；场景只切换材质强度、当前态语义色与内容密度。
+  **不许再新增第二个顶栏实现**。管理端保留独立侧栏，认证页保留无导航入口形态；
+  页脚按页面性质取完整 / 精简 / 免责 / 不展示，不强行占用工作区。
 
 ### 参考实现
 `web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
@@ -169,6 +174,7 @@ Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
 | `web/src/styles/tokens.css` | 查令牌真值（**已实现的事实**，与 DESIGN.md 冲突时以它为准） |
 | `docs/design/iris-2-rule-change-matrix.md` | 想知道旧「白色仪器」规则改成了什么、为什么改 |
 | `docs/design/iris-2-implementation-roadmap.md` | 想知道首页/管理端/协作台各自的实施顺序与门禁 |
+| `docs/design/iris-2-r2-5-product-shell-audit.md` | 想知道 R2.5 为什么统一外壳、逐页现状与目标、PR 拆分 |
 | `docs/design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` + `docs/design/assets/` | 查视觉参考来源与取舍（**灵感，不是实现**） |
 
 ### Priority Areas
