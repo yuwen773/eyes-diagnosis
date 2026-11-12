@@ -20,25 +20,36 @@
 
 > 上游没有给这个组件打版本标签，所以**只认 commit SHA**。换了 SHA 就要重做下面的校验。
 
-### 校验：vendored 的着色器与固定 commit 逐字一致
+### 校验：与固定 commit 的逐字比对
 
 2026-11-12 重新拉取 `ed33ebe4acfe29e60fb759bcccc70a138ce2dcef` 下的 `Beams.jsx`，
 把它与本仓库 `beamsEngine.ts` 里的三个模板字符串（顶点着色器 / FIELD / COMPOSITE）
 逐字比对：
 
-| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 长度 |
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 结论 |
 |---|---|---|---|
-| 顶点 | `254cf7532230` | 同值 | 93 字符 |
-| FIELD | `ce0437306e9d` | 同值 | 5214 字符 |
-| COMPOSITE | `39bf1cf8ca1a` | 同值 | 2760 字符 |
+| 顶点 | `254cf7532230` | **同值** | 逐字一致 |
+| FIELD | `ce0437306e9d` | 已改动 | 见下方「相对上游的改动」 |
+| COMPOSITE | `39bf1cf8ca1a` | 已改动 | 同上 |
 
-**三个着色器逐字相同**——本项目没有改动渲染算法，改的只是外壳（见下）。
+> ⚠️ **2026-11-12（R2-01）起，FIELD 与 COMPOSITE 不再与上游逐字一致**。
+> 原因是首屏要做「光学玻璃带」而不是「一团发光」：需要给带体一条可辨认的边缘。
+> 顶点着色器仍逐字一致。
+
+### 相对上游的改动：FIELD / COMPOSITE 的带边高光（R2-01，2026-11-12）
+
+| 位置 | 改动 | 理由 |
+|---|---|---|
+| `FIELD.main()` | 新增 `edgeDist = min(u, 1-u)` 与 `rim = 1 - smoothstep(0, 0.045, edgeDist)`，输出改为 `vec4(value.x, value.y, min(hot, 6.0), rim)`（上游 `.a` 恒为 `1.0`） | 上游的带子只是「一团发光」，没有边界；`rim` 表示距最近带边的归一化距离，合成阶段据此画镜面反光 |
+| `COMPOSITE.main()` | 读取 `.a` 作为 `rim`；亮色分支 `alpha *= 1.0 - rim * 0.55`；暗色分支在写入前 `color += rim * mix(uColor, white, 0.55) * 0.42 * mask` | 亮环境里玻璃读作「透明体 + 亮边」（边缘透出画布 = 反光），暗环境里给带体厚度与前后关系 |
+
+其余语句——噪声、lobe、ACES、泛光采样顺序、feather、抖动——与上游一致。
 
 ### 改动范围（相对上游）
 
 | 文件 | 改动 | 原因 |
 |------|------|------|
-| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；着色器源码逐字保留 | 让引擎能脱离 React 使用，并纳入仓库的类型检查 |
+| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；**顶点着色器逐字保留**；FIELD / COMPOSITE 增加带边高光（见上一节） | 让引擎能脱离 React 使用、纳入类型检查，并支持首屏的「光学玻璃带」目标 |
 | `beamsMount.ts` | 把上游写在 `useEffect` 里的挂载逻辑抽成普通函数 `mountBeams()`；补 `webglcontextlost` 处理、`prefers-reduced-motion` 的运行时订阅、`dispose()` 幂等与「不主动丢上下文」 | 支持「WebGL2 不可用 / 上下文丢失 / 减少动效 / StrictMode 重复挂载」四条生命周期路径 |
 
 上游原始渲染流程（场渲染 → mipmap 泛光 → 合成、鼠标交互、intro 动画、
