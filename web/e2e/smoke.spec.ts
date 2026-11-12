@@ -49,7 +49,9 @@ test.describe("验收冒烟", () => {
 
   test("Agent 发送后 30 秒内出现回复气泡", async ({ page }) => {
     await page.goto("/agent")
-    const input = page.getByPlaceholder(/Enter 发送/)
+    // 不能用 placeholder 定位后再输入：输入框有文字后 placeholder 会变成空串，
+    // 第二次解析 locator 就找不到了。用稳定的类名定位。
+    const input = page.locator(".agent-input__textarea")
     await input.fill("你好")
     await input.press("Enter")
     await expect(page.locator(".agent-msg--assistant").first()).toBeVisible({
