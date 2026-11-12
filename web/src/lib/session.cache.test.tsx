@@ -154,6 +154,66 @@ describe("身份切换与缓存隔离", () => {
     expect(late).toBeUndefined()
   })
 
+  it("换账号时先取消在途的个人查询：AbortSignal 真的被 abort", async () => {
+    renderSession()
+    await screen.findByText("authed")
+
+    let seen: AbortSignal | undefined
+    let settle: (value: unknown) => void = () => {}
+    const inFlight = client
+      .fetchQuery({
+        queryKey: queryKeys.records.mine("A", { current: 1, pageSize: 10 }),
+        queryFn: ({ signal }) => {
+          seen = signal
+          return new Promise((resolve) => {
+            settle = resolve
+          })
+        },
+      })
+      .catch(() => undefined)
+
+    await waitFor(() => expect(seen).toBeDefined())
+    expect(seen?.aborted).toBe(false)
+
+    screen.getByRole("button", { name: "登录 B" }).click()
+    await waitFor(() => expect(screen.getByTestId("scope").textContent).toBe("B"))
+
+    // 关键断言：请求方拿到的 signal 被真正 abort 了，而不是只把缓存删掉了事。
+    expect(seen?.aborted).toBe(true)
+
+    settle({ records: [{ id: "late-a" }], total: 1 })
+    await inFlight
+
+    expect(client.getQueryData(queryKeys.records.mine("A", { current: 1, pageSize: 10 }))).toBeUndefined()
+  })
+
+  it("公开资讯查询不会被身份切换取消", async () => {
+    renderSession()
+    await screen.findByText("authed")
+
+    let signal: AbortSignal | undefined
+    const inFlight = client
+      .fetchQuery({
+        queryKey: queryKeys.news.list(),
+        queryFn: ({ signal: s }) => {
+          signal = s
+          return new Promise((resolve) => {
+            setTimeout(() => resolve([{ id: "n1" }]), 0)
+          })
+        },
+      })
+      .catch(() => undefined)
+
+    await waitFor(() => expect(signal).toBeDefined())
+
+    screen.getByRole("button", { name: "登出" }).click()
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("anon"))
+
+    expect(signal?.aborted).toBe(false)
+    await inFlight
+    expect(client.getQueryData(queryKeys.news.list())).toEqual([{ id: "n1" }])
+  })
+
   it("会话失效（40100）同样清掉个人缓存", async () => {
     renderSession()
     await screen.findByText("authed")
