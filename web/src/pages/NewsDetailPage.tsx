@@ -11,7 +11,7 @@ import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { BrandHeader } from "@/components/brand/BrandHeader"
 
 export function NewsDetailPage() {
   const { id = "" } = useParams<{ id: string }>()
@@ -62,7 +62,7 @@ export function NewsDetailPage() {
 
   return (
     <div className="is-field">
-      <SiteHeader />
+      <BrandHeader />
 
       <main className="wrap news-detail">
         <Link className="news-detail__back" to="/news" data-cursor>

@@ -10,7 +10,7 @@ import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { BrandHeader } from "@/components/brand/BrandHeader"
 
 const PAGE_SIZE = 9
 
@@ -88,7 +88,7 @@ export function NewsPage() {
 
   return (
     <div className="is-field">
-      <SiteHeader />
+      <BrandHeader />
 
       <main className="wrap news">
         <SectionHead code="03" kicker="新闻资讯" en="NEWS · BULLETIN" />

@@ -77,3 +77,36 @@
 | `brand.css` | 3,167 B | 4,944 B | +1,777 B |
 
 合计 gzip **+2.7 KB**（其中一半是 R2-00 的材质令牌与 `brand-panel` 规则）。
+
+## R2-02 · Floating Brand Header
+
+品牌变体顶栏（`BrandHeader`）：字标 + 中央悬浮胶囊 + 右侧功能区（主题 / 账号 / 主 CTA）。
+胶囊是 **Frosted Glass**，当前路由是实心钴蓝胶囊；`.site-head` 一行未改，
+临床页 / 管理端 / 协作台仍是各自的顶栏。
+
+| 文件 | 内容 |
+|---|---|
+| `r2-02-home-{1440,768,390}-{light,dark}.jpg` | 首页视口截图（含顶栏），三档宽度 × 双主题 |
+| `r2-02-news-1440-{light,dark}.jpg` | `/news`：当前路由高亮胶囊（「03 新闻资讯」） |
+| `r2-02-drawer-open-390-{light,dark}.jpg` | 移动端抽屉打开态（复用既有 `MobileNav`） |
+
+### 实测（浏览器里量出来的，不是估的）
+
+| 项 | 结果 |
+|---|---|
+| 390px 触控目标 | 主题切换 **44×44**、汉堡 **44×44** |
+| 390px 桌面胶囊 | `display: none`（不压缩塞入），右侧只留主题与汉堡 |
+| 抽屉打开 | 焦点进入抽屉 = true；`body.overflow = hidden` = true |
+| Escape 关闭 | `data-open="false"`，焦点回到汉堡 = true，`body.overflow` 复原 = true |
+| 当前路由胶囊 | `/news` 上读到 `03 新闻资讯`（`aria-current="page"`） |
+| console | 双主题 × 三档宽度，无错误 |
+
+### 观察记录（如实）
+
+- **反相分支本轮未被触发**：浅色主题下首页没有 `data-head-invert` 深色区段
+  （`ScrollExpand` 的舞台按主题取 `tone`，浅色主题下就是 `light`）；
+  暗主题整页由 `html.dark` 令牌负责，胶囊本来就是暗色玻璃。
+  也就是说「浅色主题滚到深色区段时换令牌」这段写法**本轮没有实际画面证据**，
+  只有代码路径；R2-04 若在浅色主题下引入深色区段，需要补一次截图。
+- 为让 `ScrollExpand` 能正确量顶栏高度，品牌顶栏带了 `data-site-head` 标记
+  （纯测量钩子，不带任何样式，与 `.site-head` 类无关）。
