@@ -229,7 +229,7 @@ for (const theme of ["light", "dark"]) {
     await gotoEmpty(page)
     await page.evaluate(() => document.body.focus())
     const stops = []
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < 12; i += 1) {
       await page.keyboard.press("Tab")
       const info = await page.evaluate(() => {
         const el = document.activeElement

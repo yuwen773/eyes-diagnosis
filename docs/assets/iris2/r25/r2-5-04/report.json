@@ -126,6 +126,41 @@
           "outline": true,
           "shadow": false,
           "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "name": "",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "选择或拖入眼底照片",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "Iris 首页",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "01判读",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "02诊断 Agent",
+          "outline": true,
+          "shadow": false,
+          "visible": true
         }
       ]
     },
@@ -251,6 +286,41 @@
         {
           "tag": "BUTTON",
           "name": "无名▾",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "name": "",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "选择或拖入眼底照片",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "Iris 首页",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "01判读",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "02诊断 Agent",
           "outline": true,
           "shadow": false,
           "visible": true
