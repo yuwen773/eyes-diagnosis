@@ -1126,6 +1126,179 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 /* ==========================================================================
+   空态与故障面板（跨页面共享）
+   --------------------------------------------------------------------------
+   这两块原先住在 news.css 里，但 EmptyFrame / FaultPanel 也被个人中心与
+   记录页使用；路由懒加载时直接打开那些页面会取不到样式。放在全局层。
+   ========================================================================== */
+
+/* 空的取景框：框线是发丝线，四角是信号橙的定位角标。 */
+.empty-frame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  background: var(--surface-2);
+}
+
+.empty-frame__mark {
+  position: relative;
+  width: 38%;
+  aspect-ratio: 1;
+  border: 1px solid var(--line-strong);
+}
+
+.empty-frame__mark i {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: 0 solid var(--signal);
+}
+
+.empty-frame__mark i:nth-child(1) {
+  top: -1px;
+  left: -1px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.empty-frame__mark i:nth-child(2) {
+  top: -1px;
+  right: -1px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.empty-frame__mark i:nth-child(3) {
+  bottom: -1px;
+  left: -1px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.empty-frame__mark i:nth-child(4) {
+  bottom: -1px;
+  right: -1px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.empty-frame__label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* 有话的那一格：照片的位置摆上正文开头的一段。 */
+.empty-frame--quote {
+  place-items: stretch;
+  align-content: center;
+  padding: clamp(20px, 2.4vw, 30px);
+}
+
+.empty-frame--quote .empty-frame__mark {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 20px;
+  border: 0;
+}
+
+.empty-frame--quote .empty-frame__mark i {
+  width: 8px;
+  height: 8px;
+}
+
+.empty-frame__quote {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.62;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.empty-frame__rule {
+  display: block;
+  width: 30px;
+  height: 1px;
+  margin-top: 16px;
+  background: var(--signal);
+}
+
+/* 故障面板：左一道故障色竖线，中间说清发生了什么，底下摆状态码与端点。 */
+.fault {
+  margin-block: clamp(28px, 5vh, 56px);
+  max-width: 780px;
+  padding: clamp(24px, 3vw, 40px);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-left: 2px solid var(--risk-critical);
+}
+
+.fault__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.fault__tag {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--risk-critical);
+}
+
+.fault__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.fault__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(21px, 2.2vw, 27px);
+  line-height: 1.32;
+  color: var(--fg);
+}
+
+.fault__body {
+  margin: 10px 0 0;
+  max-width: 52ch;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--fg-2);
+}
+
+.fault__foot {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(20px, 3vw, 40px);
+  flex-wrap: wrap;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.fault__readout {
+  display: grid;
+  gap: 4px;
+}
+
+.fault__retry {
+  margin-left: auto;
+}
+
+/* ==========================================================================
    落地页 · 展开光幕
    ========================================================================== */
 

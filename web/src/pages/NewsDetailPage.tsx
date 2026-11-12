@@ -7,7 +7,6 @@ import { describeError, getNews, listNews } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { newsDate, newsPlainText, newsSections, newsWithAnchors, newsWordCount } from "@/lib/news"
 import { sanitizeNewsHtml } from "@/lib/sanitize"
-import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
@@ -69,13 +68,12 @@ export function NewsDetailPage() {
           <span aria-hidden="true">←</span> 资讯列表
         </Link>
 
-        <SectionHead code="03" kicker="新闻资讯" en="NEWS · BULLETIN" />
-
         {loading ? (
           <div className="news-detail__loading" aria-hidden="true">
-            <span className="news__skeleton-cell" />
-            <span className="news__skeleton-cell" />
-            <span className="news__skeleton-cell" />
+            <span className="news-detail__skeleton-title" />
+            <span className="news-detail__skeleton-line" />
+            <span className="news-detail__skeleton-line" />
+            <span className="news-detail__skeleton-block" />
           </div>
         ) : fault ? (
           <FaultPanel
@@ -86,92 +84,110 @@ export function NewsDetailPage() {
             onRetry={() => void detailQuery.refetch()}
           />
         ) : !item ? (
-          <div className="news__empty">
-            <EmptyFrame label="空样张" />
-            <p className="news__empty-title">没有这条资讯</p>
+          <div className="news-empty">
+            <p className="overline">No bulletin</p>
+            <p className="news-empty__title">没有这条资讯</p>
             <p className="small">它可能已经下架，或者链接有误。</p>
-            <Link className="btn btn--ghost btn--sm" to="/news">
+            <Link className="news__clear" to="/news">
               回到资讯列表
             </Link>
           </div>
         ) : (
           <>
-            <article className="news-detail__hero">
+            <article className="news-article">
+              <header className="news-article__head">
+                <p className="overline">
+                  发布于 {date}
+                  {time ? ` ${time}` : ""}
+                </p>
+                <h1 className="display news-article__title">{item.title}</h1>
+                {lead ? <p className="lead news-article__lead">{lead}</p> : null}
+                <p className="news-article__meta num">
+                  <span>{item.author || "编辑部"}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{words} 字</span>
+                  {sections.length > 0 ? (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>{sections.length} 节</span>
+                    </>
+                  ) : null}
+                </p>
+              </header>
+
               {/* 没有封面就不摆封面位——留一个空框只是占地方。 */}
               {item.coverImage ? (
-                <figure className="news-plate">
-                  <img className="news-plate__img" src={item.coverImage} alt={item.title} />
+                <figure className="news-article__plate">
+                  <img
+                    className="news-article__img"
+                    src={item.coverImage}
+                    alt=""
+                    loading="lazy"
+                  />
                   <figcaption className="num">封面 · COVER</figcaption>
                 </figure>
               ) : null}
 
-              <div className="news-detail__head">
-                <p className="overline">发布于 {date}{time ? ` ${time}` : ""}</p>
-                <h1 className="display news-detail__title">{item.title}</h1>
-                {lead ? <p className="lead news-detail__lead">{lead}</p> : null}
-                <div className="news-detail__readout">
-                  <div className="readout">
-                    <span className="readout__label">作者</span>
-                    <span className="readout__value">{item.author || "编辑部"}</span>
-                  </div>
-                  <div className="readout">
-                    <span className="readout__label">字数</span>
-                    <span className="readout__value readout__value--mono">{words} 字</span>
-                  </div>
-                  <div className="readout">
-                    <span className="readout__label">章节</span>
-                    <span className="readout__value readout__value--mono">{sections.length} 节</span>
+              <div className="news-article__body">
+                {sections.length > 1 ? (
+                  <aside className="news-toc" aria-label="正文目录">
+                    <span className="overline">目录 · CONTENTS</span>
+                    <ol className="news-toc__list">
+                      {sections.map((section, index) => (
+                        <li key={section.id}>
+                          <a href={`#${section.id}`} data-cursor>
+                            <span className="news-toc__index num">
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+                            <span className="news-toc__text">{section.text}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  </aside>
+                ) : null}
+
+                <div className="news-paper">
+                  <div
+                    className="news-paper__body"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                  <div className="disclaimer">
+                    <p>
+                      本页内容由编辑部发布，仅用于眼健康科普与院内信息传达，不构成诊断结论，
+                      不能替代执业医师的检查与判断。如有眼部不适，请及时就医。
+                    </p>
                   </div>
                 </div>
               </div>
             </article>
 
-            <div className="news-detail__body">
-              {sections.length > 1 ? (
-                <aside className="news-toc" aria-label="正文目录">
-                  <span className="overline">目录 · CONTENTS</span>
-                  <ol className="news-toc__list">
-                    {sections.map((section, index) => (
-                      <li key={section.id}>
-                        <a href={`#${section.id}`} data-cursor>
-                          <span className="news-toc__index num">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
-                          <span className="news-toc__text">{section.text}</span>
-                        </a>
-                      </li>
-                    ))}
-                  </ol>
-                </aside>
-              ) : null}
-
-              <div className="sheet is-sheet news-paper">
-                <div
-                  className="news-paper__body"
-                  dangerouslySetInnerHTML={{ __html: html }}
-                />
-                <div className="disclaimer">
-                  <p>
-                    本页内容由编辑部发布，仅用于眼健康科普与院内信息传达，不构成诊断结论，
-                    不能替代执业医师的检查与判断。如有眼部不适，请及时就医。
-                  </p>
-                </div>
-              </div>
+            <div className="news-article__return">
+              <Link className="news__clear" to="/news" data-cursor>
+                ← 返回资讯列表
+              </Link>
             </div>
 
             {others.length > 0 ? (
               <section className="news-detail__more">
                 <SectionHead code="更多" kicker="More bulletins" en="LATEST" />
-                <ul className="news-ledger">
+                <ul className="news-rows">
                   {others.map((row) => {
                     const rowDate = newsDate(row.publishTime)
                     return (
-                      <li key={row.id}>
-                        <Link to={`/news/${row.id}`} className="news-ledger__row" data-cursor>
-                          <span className="news-ledger__date num">{rowDate.date}</span>
-                          <span className="news-ledger__title">{row.title}</span>
-                          <span className="news-ledger__mark" aria-hidden="true">
-                            ›
+                      <li className="news-rows__item" key={row.id}>
+                        <Link
+                          to={`/news/${row.id}`}
+                          className="news-row"
+                          data-cursor
+                          data-cursor-label="阅读全文"
+                        >
+                          <span className="news-row__date num">{rowDate.date}</span>
+                          <span className="news-row__main">
+                            <span className="news-row__title">{row.title}</span>
+                          </span>
+                          <span className="news-row__mark" aria-hidden="true">
+                            ↗
                           </span>
                         </Link>
                       </li>

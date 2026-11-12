@@ -2,40 +2,28 @@ import "@/styles/news.css"
 
 import { useMemo, useState, type FormEvent } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { Link } from "react-router-dom"
 import { describeError, listNews, type NewsItem } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { newsDate, newsExcerpt, newsOpening } from "@/lib/news"
-import { ChromaGrid, type ChromaItem } from "@/components/ChromaGrid"
-import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
-import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { BrandFooter } from "@/components/brand/BrandFooter"
 
 const PAGE_SIZE = 9
 
-/** 把资讯条目摊成一张样片上的一格。 */
-function toCard(item: NewsItem): ChromaItem {
+/** 日期 / 作者这行共用一套口径：有就写，没有就不占位。 */
+function metaLine(item: NewsItem) {
   const { date, time } = newsDate(item.publishTime)
-  const hasCover = Boolean(item.coverImage)
+  return [date, time, item.author].filter(Boolean).join(" · ")
+}
 
-  return {
-    image: hasCover ? item.coverImage : undefined,
-    alt: hasCover ? item.title : undefined,
-    title: item.title,
-    // 无封面的条目都是几十字的短讯，摘要基本是标题的回声——不再复述一遍。
-    subtitle: hasCover ? newsExcerpt(item.content, item.summary, 76) : undefined,
-    note: (
-      <>
-        {date}
-        {time ? ` · ${time}` : ""}
-        {item.author ? ` · ${item.author}` : ""}
-      </>
-    ),
-    to: `/news/${item.id}`,
-    media: hasCover ? undefined : <EmptyFrame quote={newsOpening(item.content)} />,
-  }
+/** 列表行的摘要只给有封面的条目：无封面短讯的摘要基本是标题的回声。 */
+function rowExcerpt(item: NewsItem) {
+  if (!item.coverImage) return ""
+  // 优先用正文开头：后端的 summary 常是标题的回声，摆在标题下面读两遍。
+  return newsOpening(item.content, 64) || newsExcerpt(item.content, item.summary, 64)
 }
 
 export function NewsPage() {
@@ -66,13 +54,19 @@ export function NewsPage() {
   const records = useMemo(() => data?.records ?? [], [data])
   const total = data?.total ?? 0
   const pages = Math.max(1, data?.pages ?? 1)
-  const cards = useMemo(() => records.map(toCard), [records])
+
+  // 后端默认按 publishTime 倒序，所以第一页第一条就是最新一条。
+  // 只有第一页给它头版位置；翻页后全部回到列表，不制造「每页都有精选」。
+  const featured = page === 1 && !query ? records[0] : undefined
+  const rows = featured ? records.slice(1) : records
 
   const latest = records.reduce<string>((acc, item) => {
     const { date } = newsDate(item.publishTime)
     return !acc || date > acc ? date : acc
   }, "")
-  const withCover = records.filter((item) => item.coverImage).length
+  // 「更新至」只在第一页且未检索时成立：此时 records[0] 才是全站最新一条；
+  // 翻页或检索后它只是当前结果集的日期，不能冒充站点更新时间。
+  const showLatest = page === 1 && !query
 
   function search(event: FormEvent) {
     event.preventDefault()
@@ -92,9 +86,7 @@ export function NewsPage() {
       <ProductHeader scene="editorial" />
 
       <main className="wrap news">
-        <SectionHead code="03" kicker="新闻资讯" en="NEWS · BULLETIN" />
-
-        <div className="news__intro">
+        <header className="news__masthead">
           <div className="news__lede">
             <p className="overline">Briefing · 资讯</p>
             <h1 className="display news__title">眼科前沿</h1>
@@ -116,57 +108,43 @@ export function NewsPage() {
                 placeholder="按标题检索…"
                 onChange={(event) => setKeyword(event.target.value)}
               />
-              <button className="btn btn--sm" type="submit">
+              <button className="news__submit" type="submit">
                 检索
               </button>
               {query ? (
-                <button className="btn btn--ghost btn--sm" type="button" onClick={clear}>
+                <button className="news__clear" type="button" onClick={clear}>
                   清除
                 </button>
               ) : null}
             </div>
           </form>
-        </div>
+        </header>
 
-        {/* 读不出来的时候，上面的读数条没有意义——一排 0 只是噪音。 */}
-        {fault ? null : (
-          <div className="strip news__strip">
-            <div className="strip__cell">
-              <div className="readout">
-                <span className="readout__label">条目</span>
-                <span className="readout__value readout__value--mono">{total} 条</span>
-              </div>
-            </div>
-            <div className="strip__cell">
-              <div className="readout">
-                <span className="readout__label">页码</span>
-                <span className="readout__value readout__value--mono">
-                  {String(page).padStart(2, "0")} / {String(pages).padStart(2, "0")}
-                </span>
-              </div>
-            </div>
-            <div className="strip__cell">
-              <div className="readout">
-                <span className="readout__label">最新</span>
-                <span className="readout__value readout__value--mono">{latest || "—"}</span>
-              </div>
-            </div>
-            <div className="strip__cell">
-              <div className="readout">
-                <span className="readout__label">本页影像</span>
-                <span className="readout__value readout__value--mono">
-                  {withCover} / {records.length}
-                </span>
-              </div>
-            </div>
-          </div>
+        {/* 一条编辑口径的元信息，不是四列 KPI：总数、更新日期、页码都是列表接口的真实读数。 */}
+        {fault || loading ? null : (
+          <p className="news__meta num">
+            <span>共 {total} 条</span>
+            {showLatest ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>更新至 {latest || "—"}</span>
+              </>
+            ) : null}
+            <span aria-hidden="true">·</span>
+            <span>
+              第 {String(page).padStart(2, "0")} / {String(pages).padStart(2, "0")} 页
+            </span>
+          </p>
         )}
 
         {loading ? (
-          <div className="news__grid-skeleton" aria-hidden="true">
-            {Array.from({ length: PAGE_SIZE }, (_, index) => (
-              <span className="news__skeleton-cell" key={index} />
-            ))}
+          <div className="news-skeleton" aria-hidden="true">
+            <div className="news-skeleton__lead" />
+            <div className="news-skeleton__rows">
+              {Array.from({ length: 6 }, (_, index) => (
+                <span className="news-skeleton__row" key={index} />
+              ))}
+            </div>
           </div>
         ) : fault ? (
           <FaultPanel
@@ -177,35 +155,102 @@ export function NewsPage() {
             onRetry={() => void listQuery.refetch()}
           />
         ) : records.length === 0 ? (
-          <div className="news__empty">
-            <EmptyFrame label="空样张" />
-            <p className="news__empty-title">
+          <div className="news-empty">
+            <p className="overline">No bulletins</p>
+            <p className="news-empty__title">
               {query ? `没有匹配「${query}」的资讯` : "资讯库里还没有条目"}
             </p>
             <p className="small">
               {query ? "换个词再试一次，或者把检索清掉看全部。" : "编辑部发布之后，这里会按发布时间排好队。"}
             </p>
             {query ? (
-              <button className="btn btn--ghost btn--sm" type="button" onClick={clear}>
+              <button className="news__clear" type="button" onClick={clear}>
                 清除检索
               </button>
             ) : null}
           </div>
         ) : (
-          <ChromaGrid
-            className="news__grid"
-            items={cards}
-            columns={3}
-            minCardWidth={250}
-            gap={16}
-            aspectRatio="1 / 1"
-            radius={230}
-            softness={0.55}
-            dim={0.2}
-            glow={0.32}
-            borderGlow={1}
-            fadeOut={0.5}
-          />
+          <>
+            {featured ? (
+              <article
+                className={`news-lead${featured.coverImage ? "" : " news-lead--text"}`}
+              >
+                <div className="news-lead__body">
+                  <p className="overline">最新 · LATEST</p>
+                  <p className="news-lead__meta num">{metaLine(featured)}</p>
+                  <h2 className="news-lead__title">
+                    <Link
+                      to={`/news/${featured.id}`}
+                      data-cursor
+                      data-cursor-label="阅读全文"
+                    >
+                      {featured.title}
+                    </Link>
+                  </h2>
+                  <p className="news-lead__excerpt">
+                    {newsOpening(featured.content, featured.coverImage ? 140 : 200) ||
+                      newsExcerpt(featured.content, featured.summary, 120)}
+                  </p>
+                  <Link className="news-lead__more" to={`/news/${featured.id}`} data-cursor>
+                    阅读全文
+                    <span className="news-lead__more-mark" aria-hidden="true">
+                      ↗
+                    </span>
+                  </Link>
+                </div>
+
+                {featured.coverImage ? (
+                  <figure className="news-lead__plate">
+                    <img
+                      className="news-lead__img"
+                      src={featured.coverImage}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </figure>
+                ) : null}
+              </article>
+            ) : null}
+
+            {rows.length > 0 ? (
+              <ul className="news-rows">
+                {rows.map((item) => {
+                  const { date } = newsDate(item.publishTime)
+                  const excerpt = rowExcerpt(item)
+                  return (
+                    <li className="news-rows__item" key={item.id}>
+                      <Link
+                        className="news-row"
+                        to={`/news/${item.id}`}
+                        data-cursor
+                        data-cursor-label="阅读全文"
+                      >
+                        <span className="news-row__date num">{date}</span>
+                        <span className="news-row__main">
+                          <span className="news-row__title">{item.title}</span>
+                          {excerpt ? (
+                            <span className="news-row__excerpt">{excerpt}</span>
+                          ) : null}
+                        </span>
+                        {item.coverImage ? (
+                          <img
+                            className="news-row__thumb"
+                            src={item.coverImage}
+                            alt=""
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="news-row__mark" aria-hidden="true">
+                            ↗
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : null}
+          </>
         )}
 
         {pages > 1 && !loading && !fault ? (
