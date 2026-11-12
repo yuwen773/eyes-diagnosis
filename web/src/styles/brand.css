@@ -979,16 +979,6 @@ html.dark .optic-flow__fiber-set--rim {
   border-color: var(--brand-primary);
 }
 
-/* 汉堡的两根线用 --fg、账号下拉的小箭头用 --fg-3，都不继承 .brand-head 的
-   color，所以反相时要单独换色，否则会消失在深底上。 */
-html:not(.dark) .brand-head[data-invert="true"] .burger__bars > span {
-  color: var(--brand-deep-text);
-}
-
-html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
-  color: var(--brand-deep-muted);
-}
-
 /* ==========================================================================
    品牌页脚（DESIGN.md §2.1.3）
    --------------------------------------------------------------------------
