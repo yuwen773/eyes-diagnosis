@@ -37,19 +37,37 @@
     {
       "theme": "light",
       "view": "transcript-fixture",
-      "cards": 2,
+      "userCards": 1,
+      "assistantCards": 1,
+      "reasoningCards": 1,
+      "toolCards": 2,
+      "confirmCards": 1,
       "confirmVisible": true
     },
     {
       "theme": "light",
       "view": "composer",
-      "attachment": 1
+      "attachment": 1,
+      "welcomeCardOpensPicker": true
+    },
+    {
+      "theme": "light",
+      "view": "welcome-prefill",
+      "draftText": "帮我解读这张眼底照片"
     },
     {
       "theme": "light",
       "view": "narrow-default",
-      "collapsed": true,
-      "hamburgerVisible": true
+      "defaultCollapsed": true,
+      "hamburgerVisible": true,
+      "expandedCollapsed": false,
+      "autoCollapsedAfterSelect": true,
+      "sessionsScroll": {
+        "scrollHeight": 169,
+        "clientHeight": 111,
+        "scrollTop": 0
+      },
+      "realSessions": 2
     },
     {
       "theme": "dark",
@@ -87,19 +105,37 @@
     {
       "theme": "dark",
       "view": "transcript-fixture",
-      "cards": 2,
+      "userCards": 1,
+      "assistantCards": 1,
+      "reasoningCards": 1,
+      "toolCards": 2,
+      "confirmCards": 1,
       "confirmVisible": true
     },
     {
       "theme": "dark",
       "view": "composer",
-      "attachment": 1
+      "attachment": 1,
+      "welcomeCardOpensPicker": true
+    },
+    {
+      "theme": "dark",
+      "view": "welcome-prefill",
+      "draftText": "帮我解读这张眼底照片"
     },
     {
       "theme": "dark",
       "view": "narrow-default",
-      "collapsed": true,
-      "hamburgerVisible": true
+      "defaultCollapsed": true,
+      "hamburgerVisible": true,
+      "expandedCollapsed": false,
+      "autoCollapsedAfterSelect": true,
+      "sessionsScroll": {
+        "scrollHeight": 169,
+        "clientHeight": 111,
+        "scrollTop": 0
+      },
+      "realSessions": 2
     }
   ]
 }

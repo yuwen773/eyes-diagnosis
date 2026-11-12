@@ -6,7 +6,8 @@
  * 查疾病知识），每条都绑定真实输入框或真实发送动作。
  *
  * 「上传眼底图像」不发送一句空话：它直接打开输入区的选图对话框，
- * 让用户先拿到附件，再决定配什么文字发出去。
+ * 并把引导句预填进输入框（不替用户发送），用户先拿到附件与一句话草稿，
+ * 再决定发什么。
  */
 const HINTS = [
   {
@@ -62,7 +63,8 @@ export function WelcomeScreen({
   onPickImage,
 }: {
   onSend: (text: string) => void
-  onPickImage: () => void
+  /** 点「上传眼底图像」：打开选图对话框，并把引导句预填进输入框（不替用户发送）。 */
+  onPickImage: (prefill: string) => void
 }) {
   return (
     <div className="welcome">
@@ -96,7 +98,7 @@ export function WelcomeScreen({
               key={h.title}
               type="button"
               className="guide-card"
-              onClick={() => (h.icon === "image" ? onPickImage() : onSend(h.prompt))}
+              onClick={() => (h.icon === "image" ? onPickImage(h.prompt) : onSend(h.prompt))}
             >
               <span className="guide-icon-wrap">
                 <GuideIcon icon={h.icon} />

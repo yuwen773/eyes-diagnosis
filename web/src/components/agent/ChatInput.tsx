@@ -1,56 +1,71 @@
-import { useEffect, useRef, useState } from "react"
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 import { filterImageFiles } from "@/lib/agentUpload"
 import { clearDraft, loadDraft, saveDraft } from "@/lib/agentDraft"
+import { useMediaQuery } from "@/lib/useMediaQuery"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
 
+type ChatInputProps = {
+  disabled: boolean
+  streaming: boolean
+  onSend: (text: string, files: File[]) => Promise<boolean>
+  onStop: () => void
+}
+
 /**
  * 输入区：自适应 textarea + 粘贴图片附件 + 发送/停止。
  * Enter 发送 / Shift+Enter 换行；中文输入法组字中的 Enter 不发送（isComposing）。
+ *
+ * 外部要打开选图对话框（欢迎屏的「上传眼底图像」）时持有 ref 调 `pickImage()`：
+ * 文件对话框必须由用户手势同步触发（WebKit 要求），effect/信号派发在
+ * Safari 上会丢掉手势资格。
  */
-export function ChatInput({
-  disabled,
-  streaming,
-  pickSignal = 0,
-  onSend,
-  onStop,
-}: {
-  disabled: boolean
-  streaming: boolean
-  /** 欢迎屏要点选图时递增；只在新信号到来时打开一次对话框。 */
-  pickSignal?: number
-  onSend: (text: string, files: File[]) => Promise<boolean>
-  onStop: () => void
-}) {
+export type ChatInputHandle = {
+  /** 打开选图对话框（必须来自用户手势的同步调用链）。 */
+  pickImage: () => void
+  /** 预填一句话并聚焦输入框（欢迎屏的引导问题走这里，不替用户发送）。 */
+  prefill: (text: string) => void
+}
+
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput(
+  { disabled, streaming, onSend, onStop },
+  ref,
+) {
   // 草稿：跳登录页来回一趟不丢字。惰性初始化即可，不必用 effect 回填。
   const [text, setText] = useState(() => loadDraft())
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [hint, setHint] = useState("")
   const [focused, setFocused] = useState(false)
   // 窄屏放不下整串快捷键说明，只留最必要的一条。
-  const [narrow, setNarrow] = useState(
-    () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 720px)").matches,
-  )
+  const narrow = useMediaQuery("(max-width: 768px)")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const lastPickSignal = useRef(pickSignal)
 
   function updateText(next: string) {
     setText(next)
     saveDraft(next)
   }
 
-  // 跟系统一致：旋屏或拖窗口时实时换提示文案，不刷新页面。
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return
-    const mq = window.matchMedia("(max-width: 720px)")
-    const onChange = () => setNarrow(mq.matches)
-    mq.addEventListener("change", onChange)
-    return () => mq.removeEventListener("change", onChange)
-  }, [])
+  useImperativeHandle(
+    ref,
+    () => ({
+      pickImage: () => fileInputRef.current?.click(),
+      prefill: (value: string) => {
+        updateText(value)
+        textareaRef.current?.focus({ preventScroll: true })
+      },
+    }),
+    [],
+  )
 
   // 自适应高度
   useEffect(() => {
@@ -59,15 +74,6 @@ export function ChatInput({
     el.style.height = "auto"
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
-
-  // 欢迎屏的「上传眼底图像」入口：点了就打开选图对话框。
-  // 信号相同不重复打开；用户点「取消」后也不会自己弹第二次。
-  useEffect(() => {
-    if (pickSignal === lastPickSignal.current) return
-    lastPickSignal.current = pickSignal
-    if (disabled) return
-    fileInputRef.current?.click()
-  }, [pickSignal, disabled])
 
   // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
@@ -231,4 +237,4 @@ export function ChatInput({
       </div>
     </div>
   )
-}
+})

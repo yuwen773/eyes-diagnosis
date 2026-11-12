@@ -17,10 +17,11 @@ import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { newId } from "@/lib/id"
+import { useMediaQuery } from "@/lib/useMediaQuery"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { MessageList } from "@/components/agent/MessageList"
-import { ChatInput } from "@/components/agent/ChatInput"
+import { ChatInput, type ChatInputHandle } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
 import { ProductHeader } from "@/components/shell/ProductHeader"
@@ -29,10 +30,6 @@ const HISTORY_PAGE_SIZE = 100
 
 /** 与 agent.css 的窄屏断点一致：窄屏会话栏默认收起，首屏留给对话与输入区。 */
 const NARROW_QUERY = "(max-width: 900px)"
-
-function isNarrowViewport(): boolean {
-  return typeof window.matchMedia === "function" && window.matchMedia(NARROW_QUERY).matches
-}
 
 /** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
 function safeFileName(name: string): string {
@@ -79,14 +76,31 @@ export function AgentPage() {
   const lastUserKeyRef = useRef<string | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
-  const [sessionsCollapsed, setSessionsCollapsed] = useState(isNarrowViewport)
+  // 窄屏判定走全站同一个 useMediaQuery（实时订阅断点变化，不是一次性快照）。
+  const narrowViewport = useMediaQuery(NARROW_QUERY)
+  const [sessionsCollapsed, setSessionsCollapsed] = useState(narrowViewport)
+  // 拖窗口跨过断点时跟上：进窄屏把会话栏收起，回宽屏展开，
+  // 用户手动开合的状态以最后一次操作为准。
+  const prevNarrowRef = useRef(narrowViewport)
+  useEffect(() => {
+    if (prevNarrowRef.current !== narrowViewport) {
+      prevNarrowRef.current = narrowViewport
+      setSessionsCollapsed(narrowViewport)
+    }
+  }, [narrowViewport])
   const [panelOpen, setPanelOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
   const previewCloseRef = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false)
-  // 欢迎屏「上传眼底图像」→ 输入区选图：只递增一个信号，输入组件自己开对话框。
-  const [pickSignal, setPickSignal] = useState(0)
+  // 欢迎屏「上传眼底图像」→ 输入区选图：文件对话框必须由用户手势同步打开
+  // （WebKit 限制），所以持有输入区的 ref 直接调 pickImage()，不走 effect/信号。
+  const chatInputRef = useRef<ChatInputHandle>(null)
+  const pickImage = useCallback((prefill: string) => {
+    // 先预填引导句再开对话框：选完图回来，草稿已经在了。
+    chatInputRef.current?.prefill(prefill)
+    chatInputRef.current?.pickImage()
+  }, [])
   // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
   const { push: pushFault } = useFault()
 
@@ -220,8 +234,8 @@ export function AgentPage() {
     reset()
     setPanelOpen(false)
     // 窄屏上会话栏是盖住对话的展开区：选完就收回去，别让用户再手动收一次。
-    if (isNarrowViewport()) setSessionsCollapsed(true)
-  }, [reset, userKey])
+    if (narrowViewport) setSessionsCollapsed(true)
+  }, [reset, userKey, narrowViewport])
 
   const handleSelectHistory = useCallback(
     async (id: string) => {
@@ -230,10 +244,10 @@ export function AgentPage() {
       saveThreadId(userKey, id)
       reset()
       setPanelOpen(false)
-      if (isNarrowViewport()) setSessionsCollapsed(true)
+      if (narrowViewport) setSessionsCollapsed(true)
       await loadHistoryMessages(id)
     },
-    [reset, userKey, loadHistoryMessages],
+    [reset, userKey, loadHistoryMessages, narrowViewport],
   )
 
   /** 删除/置顶/重命名后刷新列表（Vue 版这里漏绑导致列表不刷新，勿复刻）。 */
@@ -340,7 +354,7 @@ export function AgentPage() {
               streaming={isStreaming}
               onSend={(text) => void handleSend(text)}
               onPreviewImage={(url) => setPreviewUrl(url)}
-              onPickImage={() => setPickSignal((value) => value + 1)}
+              onPickImage={pickImage}
               headLeft={
                 <>
                   {/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions） */}
@@ -403,9 +417,9 @@ export function AgentPage() {
             />
 
             <ChatInput
+              ref={chatInputRef}
               disabled={false}
               streaming={isStreaming}
-              pickSignal={pickSignal}
               onSend={handleSend}
               onStop={abort}
             />

@@ -80,8 +80,10 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
 - `--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` **只在 PR #52 里，尚未进入 `ui`**，
   合并前取不到；按本文档写品牌组件前必须先合并 PR #52；
-- **仍有 3 处 `outline: none`**：`CardSwap.css` 的装饰容器、
-  `admin.css` 里 Recharts 图表 wrapper 的 `:focus`、`app.css` 的账号菜单面板。
+- **仍有 2 处 `outline: none`**：`CardSwap.css` 的装饰容器、
+  `admin.css` 里 Recharts 图表 wrapper 的 `:focus`（`agent.css` 输入区那处
+  **已修 2026-11-13，R2.5-05**：textarea 保留全局焦点环、容器用
+  `:focus-within` 补柔光描边，不依赖 `:has()`）。
   前两处是装饰/弹层容器（焦点不在其上），**Recharts 那处会让图表聚焦时没有
   可见焦点环**——要改成可见焦点样式，不要留着。
 
