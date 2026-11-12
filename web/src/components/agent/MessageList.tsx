@@ -53,8 +53,8 @@ export function MessageList({
   streaming: boolean
   onSend: (text: string) => void
   onPreviewImage?: (url: string) => void
-  /** 欢迎屏「上传眼底图像」：打开输入区的选图对话框。 */
-  onPickImage: () => void
+  /** 欢迎屏「上传眼底图像」：预填引导句并打开输入区的选图对话框。 */
+  onPickImage: (prefill: string) => void
   /** 头栏左侧插槽：折叠后的左栏操作钮组。 */
   headLeft?: ReactNode
   /** 头栏右侧插槽：资源面板切换钮。 */

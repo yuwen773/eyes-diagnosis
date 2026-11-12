@@ -2552,7 +2552,9 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding-left: 0;
 }
 
-.proc__step:last-of-type {
+/* 相邻步之间画分隔线，而不是给最后一步摘线：
+   这样子元素里混进别的节点也不会残留一条悬空的竖线。 */
+.proc__step + .proc__step {
   padding-right: 0;
   margin-right: 0;
   border-right: 0;

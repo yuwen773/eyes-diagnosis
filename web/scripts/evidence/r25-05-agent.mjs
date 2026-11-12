@@ -158,7 +158,9 @@ for (const theme of ["light", "dark"]) {
     await context.close()
   }
 
-  // 3. 完整消息流（布局夹具，接口形状真实）
+  // 3. 完整消息流（布局夹具，接口形状真实）。
+  //    夹具走「点真实会话」之外的第二条路：直接把历史接口 fulfill 成夹具，
+  //    即使临时账号没有任何会话也能渲染出六种消息卡。
   {
     const { context, page } = await newPage(theme, 1440)
     await page.route("**/api/agent/history/**", (route) =>
@@ -188,13 +190,21 @@ for (const theme of ["light", "dark"]) {
     report.push({
       theme,
       view: "transcript-fixture",
-      cards: await page.locator(".agent-msg, .agent-msg--user").count(),
+      // 六种卡各自计数：user / assistant / reasoning / 工具卡 / mcp-confirm。
+      userCards: await page.locator(".agent-msg--user").count(),
+      assistantCards: await page.locator(".agent-msg--assistant").count(),
+      reasoningCards: await page.locator(".agent-msg--reasoning").count(),
+      toolCards: await page.locator(".agent-toolcard").count(),
+      confirmCards: await page.locator(".agent-msg--confirm").count(),
       confirmVisible: await page.locator(".agent-msg--confirm").isVisible(),
     })
     await context.close()
   }
 
-  // 4. 输入区：键盘焦点环 + 选图附件
+  // 4. 输入区：键盘焦点环 + 选图附件。
+  //    附件除了直接喂隐藏 input（验证预览排版），还要点一次欢迎屏的
+  //    「上传眼底图像」卡片：验证 pickImage 手势链路真的打开了文件选择
+  //    （Playwright 的 filechooser 事件即对话框被触发）。
   {
     const { context, page } = await newPage(theme, 1440)
     await gotoAgent(page)
@@ -205,27 +215,73 @@ for (const theme of ["light", "dark"]) {
     await page.waitForSelector(".agent-input__attachment", { timeout: 10000 })
     await settle(400)
     await shot(page, `${theme}-composer-attachment-1440`, { clip: await composerClip(page) })
+    let pickerOpened = false
+    const [chooser] = await Promise.all([
+      page
+        .waitForEvent("filechooser", { timeout: 8000 })
+        .then((c) => ((pickerOpened = true), c))
+        .catch(() => null),
+      page.locator(".guide-card").first().click(),
+    ])
     report.push({
       theme,
       view: "composer",
       attachment: await page.locator(".agent-input__attachment").count(),
+      welcomeCardOpensPicker: pickerOpened,
     })
+    if (chooser) {
+      await chooser.setFiles(IMAGE)
+      await page.waitForSelector(".agent-input__attachment", { timeout: 10000 })
+      await settle(300)
+      await shot(page, `${theme}-composer-welcome-pick-1440`, { clip: await composerClip(page) })
+      // 引导句已预填进输入框（欢迎屏卡片，不替用户发送）。
+      report.push({
+        theme,
+        view: "welcome-prefill",
+        draftText: await page.locator(".agent-input__textarea").inputValue(),
+      })
+    }
     await context.close()
   }
 
-  // 5. 窄屏：会话栏默认收起，可从对话头栏展开
+  // 5. 窄屏：会话栏默认收起，可从对话头栏展开，选完会话自动收回。
   {
     const { context, page } = await newPage(theme, 390)
     await gotoAgent(page)
+    const collapsedOf = () =>
+      page.locator(".agent-layout__left").evaluate((el) => el.classList.contains("is-collapsed"))
+    const defaultCollapsed = await collapsedOf()
+    const hamburgerVisible = await page.locator(".agent-collapsed-actions__btn").first().isVisible()
+    await page.locator(".agent-collapsed-actions__btn").first().click()
+    await settle(600)
+    const expandedCollapsed = await collapsedOf()
+    await shot(page, `${theme}-sessions-390-expanded`)
+    // 会话栏内的滚动尺寸写进报告（可核验，不留口头数字）。
+    const scroll = await page.evaluate(() => {
+      const body = document.querySelector(".agent-sessions__body")
+      return body
+        ? { scrollHeight: body.scrollHeight, clientHeight: body.clientHeight, scrollTop: body.scrollTop }
+        : null
+    })
+    // 选一条真实会话（若有）应自动收回会话栏；没有会话则记录跳过。
+    const rows = await page.locator(".agent-session__main").count()
+    let autoCollapsedAfterSelect = null
+    if (rows > 0) {
+      await page.locator(".agent-session__main").first().click()
+      await settle(800)
+      autoCollapsedAfterSelect = await collapsedOf()
+    }
+    await shot(page, `${theme}-sessions-390-after-select`)
     report.push({
       theme,
       view: "narrow-default",
-      collapsed: await page.locator(".agent-layout__left").evaluate((el) => el.classList.contains("is-collapsed")),
-      hamburgerVisible: await page.locator(".agent-collapsed-actions__btn").first().isVisible(),
+      defaultCollapsed,
+      hamburgerVisible,
+      expandedCollapsed,
+      autoCollapsedAfterSelect,
+      sessionsScroll: scroll,
+      realSessions: rows,
     })
-    await page.locator(".agent-collapsed-actions__btn").first().click()
-    await settle(600)
-    await shot(page, `${theme}-sessions-390-expanded`)
     await context.close()
   }
 }

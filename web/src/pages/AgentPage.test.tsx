@@ -251,3 +251,111 @@ describe("AgentPage 未登录", () => {
     expect(bubbles).toHaveLength(0)
   })
 })
+
+describe("AgentPage 窄屏", () => {
+  /** matchMedia 可控桩：断点判定由测试推动，模拟旋屏/拖窗口。 */
+  function stubMatchMediaControlled(initial: boolean) {
+    const listeners = new Set<() => void>()
+    const state = { matches: initial }
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        get matches() {
+          return state.matches
+        },
+        media: query,
+        onchange: null,
+        addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+        removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }),
+    })
+    return {
+      setMatches(next: boolean) {
+        state.matches = next
+        listeners.forEach((listener) => listener())
+      },
+    }
+  }
+
+  it("窄屏会话栏默认收起，首屏留给对话区", () => {
+    stubMatchMediaControlled(true)
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+  })
+
+  it("宽屏会话栏默认展开", () => {
+    stubMatchMediaControlled(false)
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+  })
+
+  it("跨过断点时跟上：回宽屏自动展开，进窄屏自动收起", async () => {
+    const mq = stubMatchMediaControlled(false)
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+
+    await act(async () => {
+      mq.setMatches(true)
+    })
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+
+    await act(async () => {
+      mq.setMatches(false)
+    })
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+  })
+
+  it("用户手动展开后不跨断点保持原状；真跨断点时以断点为准", async () => {
+    const mq = stubMatchMediaControlled(true)
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+    fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+
+    // 手动展开后先去宽屏：还是展开的（断点本来就要求展开）。
+    await act(async () => {
+      mq.setMatches(false)
+    })
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+
+    // 再回窄屏：自动收起，不要求用户再手动收一次。
+    await act(async () => {
+      mq.setMatches(true)
+    })
+    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+  })
+})

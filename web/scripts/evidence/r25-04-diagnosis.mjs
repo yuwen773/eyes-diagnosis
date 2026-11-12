@@ -17,7 +17,7 @@
  * - 账号请用临时账号，采完删除；本脚本不保存任何凭据。
  */
 import { chromium } from "playwright"
-import { mkdirSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 const BASE = process.env.EVIDENCE_BASE ?? "http://localhost:5175"
@@ -37,17 +37,39 @@ if (!USER || !PASS) {
 mkdirSync(OUT, { recursive: true })
 const settle = (ms) => new Promise((r) => setTimeout(r, ms))
 
+/**
+ * 真实判读响应的形状（不是随手编的数）。
+ *
+ * 字段与真实后端一致：
+ * - `result` 是后端枚举的中文短名（「糖尿病」），不是记录纸上的规范名；
+ * - `otherDisease` 是算法给的英文标签，且 top-1 会与 `result` 指同一类；
+ * - `severity` 在活路径上永远是 `NOT_ASSESSED`（严重度由人工复核给出）；
+ * - `weightSha256` / `qualityScore` / `preprocessVersion` 来自医疗安全证据链。
+ *
+ * 概率表因此会有多行、且混着英文标签——这正是要验证的排版：
+ * 前端要自己归一到规范类名、同一类只列一遍。
+ */
 const RESULT = {
   id: "2120940809030631426",
-  result: "糖尿病视网膜病变",
+  result: "糖尿病",
   probability: 91.2,
   confidence: 91.2,
-  severity: "severe",
-  details: "影像显示后极部散在微血管瘤与点片状出血，符合糖尿病视网膜病变表现，建议结合临床分期评估。",
+  severity: "NOT_ASSESSED",
+  details:
+    "糖尿病视网膜病变是糖尿病的常见微血管并发症。早期表现为微血管瘤、出血点，后期可出现新生血管、玻璃体出血，严重者可导致失明。",
   recommendations:
-    "建议尽快至眼科门诊进行散瞳眼底检查；控制血糖、血压与血脂；如出现视力骤降、眼前黑影增多，请立即就医。",
+    "严格控制血糖、血压和血脂\n定期进行眼底检查，早期发现视网膜病变\n激光光凝治疗，控制视网膜新生血管\n抗VEGF药物玻璃体内注射\n严重增殖期可能需要玻璃体视网膜手术",
+  otherDisease: [
+    { name: "diabetes", probability: 91.2 },
+    { name: "glaucoma", probability: 5.1 },
+    { name: "normal", probability: 2.3 },
+  ],
   createTime: "2026-11-13 10:24:00",
   modelVersion: "efficientnet-b4-8class-v1.2",
+  weightSha256:
+    "a3f1c9d2e5b7a04d6c8e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6",
+  preprocessVersion: "preprocess-v3",
+  qualityScore: 88,
   humanReviewStatus: "AI_ONLY",
   aiRejected: false,
 }
@@ -122,6 +144,7 @@ for (const theme of ["light", "dark"]) {
       state: "running",
       timer: await page.locator(".slot__timer").innerText(),
       stateText: await page.locator(".readout-head__state").innerText(),
+      railStateText: await page.locator(".proc__state").innerText(),
     })
 
     await page.waitForSelector(".fault-note", { timeout: 20000 })
@@ -149,40 +172,87 @@ for (const theme of ["light", "dark"]) {
     await settle(700)
     await page.screenshot({ path: join(OUT, `${theme}-${name}-1440-fold.jpg`), type: "jpeg", quality: 80 })
     await page.screenshot({ path: join(OUT, `${theme}-${name}-1440-full.jpg`), fullPage: true, type: "jpeg", quality: 70 })
-    await context.close()
-  }
-
-  for (const width of [390, 768, 1920]) {
-    const { context, page } = await newPage(theme, width)
-    await gotoEmpty(page)
-    await page.screenshot({ path: join(OUT, `${theme}-empty-${width}-fold.jpg`), type: "jpeg", quality: 80 })
     report.push({
       theme,
-      width,
-      hScroll: await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1),
+      state: name,
+      // 拒识态没有结论标题与概率表，读拒识提示与行数（应为 0）。
+      verdict:
+        name === "rejected"
+          ? await page.locator(".notice__title").first().innerText()
+          : await page.locator(".sheet__verdict").innerText(),
+      classRows: await page.locator(".scale__row").count(),
+      classNames: await page.locator(".scale__name").allInnerTexts(),
+      classCodes: await page.locator(".scale__code").allInnerTexts(),
     })
     await context.close()
   }
 
-  for (const width of [390, 768, 1920]) {
-    const { context, page } = await newPage(theme, width)
-    await page.route("**/api/diagnosis/diagnosis", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ code: 0, msg: "ok", data: RESULT }),
-      }),
-    )
+  // 四档宽度都测横向滚动——空态与「有结果」两种版式都要测，
+  // 只测空态会漏掉记录纸在窄屏撑破的情况。
+  for (const width of [390, 768, 1440, 1920]) {
+    for (const [name, payload] of [
+      ["empty", null],
+      ["done", RESULT],
+    ]) {
+      const { context, page } = await newPage(theme, width)
+      if (payload) {
+        await page.route("**/api/diagnosis/diagnosis", (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ code: 0, msg: "ok", data: payload }),
+          }),
+        )
+      }
+      await gotoEmpty(page)
+      if (payload) {
+        await upload(page)
+        await page.getByRole("button", { name: /开始判读/ }).click()
+        await page.waitForSelector(".sheet", { timeout: 20000 })
+        await settle(600)
+      }
+      await page.screenshot({ path: join(OUT, `${theme}-${name}-${width}-fold.jpg`), type: "jpeg", quality: 80 })
+      report.push({
+        theme,
+        width,
+        state: name,
+        hScroll: await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1),
+      })
+      await context.close()
+    }
+  }
+
+  // 键盘走查：上传槽是页面第一个可聚焦控件，Tab 过去要有可见焦点；
+  // 记录纸上的操作按钮同样要能被键盘走到。
+  {
+    const { context, page } = await newPage(theme, 1440)
     await gotoEmpty(page)
-    await upload(page)
-    await page.getByRole("button", { name: /开始判读/ }).click()
-    await page.waitForSelector(".sheet", { timeout: 20000 })
-    await settle(600)
-    await page.screenshot({ path: join(OUT, `${theme}-done-${width}-fold.jpg`), type: "jpeg", quality: 80 })
+    await page.evaluate(() => document.body.focus())
+    const stops = []
+    for (let i = 0; i < 6; i += 1) {
+      await page.keyboard.press("Tab")
+      const info = await page.evaluate(() => {
+        const el = document.activeElement
+        if (!el || el === document.body) return null
+        const style = getComputedStyle(el)
+        const box = el.getBoundingClientRect()
+        return {
+          tag: el.tagName,
+          name: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 24),
+          outline: style.outlineStyle !== "none" && style.outlineWidth !== "0px",
+          shadow: style.boxShadow !== "none",
+          visible: box.width > 0 && box.height > 0,
+        }
+      })
+      if (info) stops.push(info)
+    }
+    await page.screenshot({ path: join(OUT, `${theme}-keyboard-1440.jpg`), type: "jpeg", quality: 80 })
+    report.push({ theme, view: "keyboard", width: 1440, stops })
     await context.close()
   }
 }
 
 await browser.close()
+writeFileSync(join(OUT, "report.json"), JSON.stringify({ errors, report }, null, 2))
 console.log(JSON.stringify({ errors, report }, null, 2))
 if (errors.length) process.exitCode = 1

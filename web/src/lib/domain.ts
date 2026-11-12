@@ -18,12 +18,59 @@ const CODE_BY_NAME: Record<string, string> = Object.fromEntries(
   CLASSES.map((item) => [item.name, item.code]),
 )
 
+/**
+ * 别名 → 规范类名。
+ *
+ * <p>真实判读响应里同一个类别会以三种写法出现：
+ * 算法侧的英文标签（`diabetes`）、后端枚举的中文短名（`糖尿病`）、
+ * 以及记录纸用的规范名（`糖尿病视网膜病变`）。三处不统一的话，
+ * 记录纸的概率表会出现英文行、「—」短码，以及主诊断被列两遍。
+ *
+ * <p>这里的别名表是**前端展示口径**，不新增也不修改后端契约：
+ * 后端给什么，前端都要归到 `CLASSES` 里的同一类；实在认不出的原样显示，不猜。
+ */
+const CLASS_ALIASES: Record<string, string> = {
+  // 算法侧英文标签
+  normal: "正常",
+  amd: "年龄相关性黄斑变性",
+  cataract: "白内障",
+  diabetes: "糖尿病视网膜病变",
+  glaucoma: "青光眼",
+  hypertension: "高血压性视网膜病变",
+  myopia: "病理性近视",
+  other: "其他",
+  // 后端枚举的中文短名
+  糖尿病: "糖尿病视网膜病变",
+  高血压: "高血压性视网膜病变",
+  近视: "病理性近视",
+}
+
+/**
+ * 把任意写法的类别名归到 `CLASSES` 里的规范名。
+ *
+ * @returns 规范类名；认不出时返回 `null`（调用方按「未知类别」处理，不猜）。
+ */
+export function canonicalClassName(name?: string): string | null {
+  if (!name) return null
+  const trimmed = name.trim()
+  if (!trimmed) return null
+
+  const alias = CLASS_ALIASES[trimmed.toLowerCase()]
+  if (alias) return alias
+  if (CODE_BY_NAME[trimmed]) return trimmed
+
+  // 「疑似糖尿病视网膜病变」「糖尿病视网膜病变（DR）」这类带修饰的写法。
+  const hit = CLASSES.find((item) => trimmed.includes(item.name) || item.name.includes(trimmed))
+  return hit?.name ?? null
+}
+
 export function classCode(name?: string) {
   if (!name) return "—"
   const exact = CODE_BY_NAME[name]
   if (exact) return exact
-  const hit = CLASSES.find((item) => name.includes(item.name) || item.name.includes(name))
-  return hit?.code ?? "—"
+  const canonical = canonicalClassName(name)
+  if (canonical) return CODE_BY_NAME[canonical] ?? "—"
+  return "—"
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -118,7 +165,13 @@ export type RankedClass = {
   benign: boolean
 }
 
-/** 主诊断 + 其他诊断合成按概率排序的八类分布。 */
+/**
+ * 主诊断 + 其他诊断合成按概率排序的类别分布。
+ *
+ * <p>真实响应里 `result` 是后端给的中文名，`otherDisease` 是算法给的英文标签，
+ * 而且 top-1 会同时出现在两边——不归一就会把同一类列两遍、并且混进英文行。
+ * 这里先归一到规范类名，再按类去重（同一类取概率大的那个），最后排序。
+ */
 export function rankClasses(result?: DiagnosisResult): RankedClass[] {
   if (!result) return []
 
@@ -140,10 +193,21 @@ export function rankClasses(result?: DiagnosisResult): RankedClass[] {
     })
   }
 
-  rows.sort((a, b) => b.probability - a.probability)
-  const highest = rows[0]?.probability ?? 0
+  // 同一类只留一行：取概率大的那条，别把主诊断列两遍。
+  const merged = new Map<string, { name: string; probability: number }>()
+  for (const row of rows) {
+    const key = canonicalClassName(row.name) ?? row.name.trim()
+    const hit = merged.get(key)
+    if (!hit || row.probability > hit.probability) {
+      merged.set(key, { name: key, probability: row.probability })
+    }
+  }
 
-  return rows.map((row) => ({
+  const list = [...merged.values()]
+  list.sort((a, b) => b.probability - a.probability)
+  const highest = list[0]?.probability ?? 0
+
+  return list.map((row) => ({
     code: classCode(row.name),
     name: row.name,
     probability: row.probability,

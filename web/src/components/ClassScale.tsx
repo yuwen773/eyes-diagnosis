@@ -2,7 +2,7 @@ import type { RankedClass } from "@/lib/domain"
 import { confidencePercent } from "@/lib/domain"
 import { useInView } from "@/lib/useInView"
 
-/** 八类概率：一条带刻度的横尺，而不是圆角进度条。 */
+/** 类别概率：一条带刻度的横尺，而不是圆角进度条。 */
 export function ClassScale({
   rows,
   compact = false,
@@ -21,7 +21,7 @@ export function ClassScale({
       ref={ref}
       className={compact ? "scale scale--compact" : "scale"}
       role="table"
-      aria-label="八类判读概率"
+      aria-label="判读类别概率"
     >
       {rows.map((row, index) => (
         <div

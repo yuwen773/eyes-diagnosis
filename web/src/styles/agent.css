@@ -545,6 +545,12 @@
   color: var(--fg-3);
 }
 
+/* LIVE 徽标是运行态（app.css 里默认信号橙，落地页演示屏用它是对的）；
+   Agent 工作区的运行态语言是品牌钴蓝，作用域覆盖，不动 app.css。 */
+.agent-console .console__live {
+  color: var(--brand-primary);
+}
+
 .agent-load {
   padding: 16px 22px;
   font-family: var(--font-mono);
@@ -761,7 +767,7 @@ html:not(.dark) .welcome-mark__img--dark {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .welcome-hints {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -902,16 +908,13 @@ html:not(.dark) .welcome-mark__img--dark {
   text-overflow: ellipsis;
 }
 
-/* 输入框的焦点环画在整个输入容器上：textarea 自己再画一圈会变成
-   夹在「添加图片」与发送钮之间的方框，和容器描边互相打架。
-   焦点指示没有丢，只是上移一层。 */
-.agent-input__textarea:focus-visible {
-  outline: none;
-}
-
-.agent-input__container:has(.agent-input__textarea:focus-visible) {
-  outline: 1px solid var(--brand-primary);
-  outline-offset: 3px;
+/* 输入框焦点：不用 outline: none 压全局环（DESIGN.md §3.5），也不依赖
+   :has()（Firefox 121 前不支持，降级会完全没有焦点指示）。
+   全局 1px 焦点环保留在 textarea 上，容器再用 :focus-within 补一圈
+   柔光描边（news.css 同款写法），两层都看得见。 */
+.agent-input__container:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent);
 }
 
 .agent-input__send,
@@ -1522,10 +1525,22 @@ html:not(.dark) .welcome-mark__img--dark {
     min-height: 70vh;
   }
 
-  /* 会话栏在窄屏是首屏可见的主入口：文字钮与新建钮按手指尺寸来。 */
+  /* 会话栏在窄屏是首屏可见的主入口：文字钮与新建钮按手指尺寸来。
+     折叠态的两个图标钮（展开会话栏 / 新建对话）是窄屏打开会话栏的
+     唯一入口，同样要够到 44px 触控目标（DESIGN.md §3.5）。 */
   .agent-sessions__select,
-  .agent-sessions__newchat {
+  .agent-sessions__newchat,
+  .agent-collapsed-actions__btn {
     min-height: 44px;
+  }
+
+  .agent-collapsed-actions__btn {
+    min-width: 44px;
+  }
+
+  .agent-sessions__collapse {
+    width: 44px;
+    height: 44px;
   }
 
   .agent-panel {

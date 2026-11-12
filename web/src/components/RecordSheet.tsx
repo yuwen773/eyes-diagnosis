@@ -4,6 +4,7 @@ import { ClassScale } from "@/components/ClassScale"
 import { ConfidenceDial } from "@/components/ConfidenceDial"
 import { RiskTag } from "@/components/RiskTag"
 import {
+  canonicalClassName,
   classCode,
   confidenceBand,
   confidencePercent,
@@ -43,6 +44,9 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
   const review = reviewState(result.humanReviewStatus)
   const recos = recommendationLines(result)
   const stampRisk = severityRisk(result.severity)
+  // 主诊断用规范类名展示：后端枚举给的是短名（「糖尿病」），
+  // 概率表里是规范名（「糖尿病视网膜病变」），同一张纸上得是同一个说法。
+  const verdict = canonicalClassName(result.result) ?? result.result
 
   return (
     <article className={tone === "night" ? "sheet sheet--night" : "sheet is-sheet"} data-cursor>
@@ -87,9 +91,9 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
                 {/* 判读源与分类码是结论的一部分，和病名同一个标题元素里读完，
                     不再压一条微型眉线在标题上方。 */}
                 <span className="sheet__verdict-prefix">
-                  AI 判读结果 · {classCode(result.result)}
+                  AI 判读结果 · {classCode(verdict)}
                 </span>
-                {result.result ?? "未给出判读结果"}
+                {verdict ?? "未给出判读结果"}
               </h2>
               {result.details ? <p className="sheet__note">{result.details}</p> : null}
 
@@ -162,7 +166,7 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
 
           <section className="sheet__section">
             <div className="sheet__section-head">
-              <span className="overline">八类概率 · CLASS PROBABILITY</span>
+              <span className="overline">类别概率 · CLASS PROBABILITY</span>
               <span className="overline">0 — 100%</span>
             </div>
             <ClassScale rows={rows} />
