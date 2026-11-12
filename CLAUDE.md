@@ -100,15 +100,18 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 （场景规范、组件变体矩阵、双主题、可访问性、数据真实性）。后端任务不需要读。
 
 ### 四种体验场景（写前端先判断自己在哪个场景）
-`DESIGN.md` §1–§2 是场景规范，§4 是**组件变体矩阵**（按钮/卡片/图表/导航/弹层/
-表格/表单/状态标记 × 四场景）。**没有"全站通用"的一套控件外观**。
+`DESIGN.md` §1–§2 是场景规范，§1.5 是**逐路由归属表**（每个真实路由属于哪个场景、
+用什么容器类），§4 是**组件变体矩阵**（按钮/卡片/图表/导航/弹层/表格/表单/状态标记
+× 四场景）。**没有"全站通用"的一套控件外观**；也**不是每个页面都套 KPI + 台账**。
 
 | 场景 | 页面 | 主色 | 圆角 | 气质 |
 |---|---|---|---|---|
-| **Brand** | `LandingPage` | 钴蓝 `--brand-primary` | 24–38px | 精致、清透、留白足 |
+| **Brand** | `LandingPage`/`LoginPage`/`RegisterPage`/`NewsPage`/`NewsDetailPage` | 钴蓝 `--brand-primary` | 24–38px | 精致、清透、留白足 |
 | **Management** | `pages/admin/*` | 钴蓝主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
 | **Intelligence** | `AgentPage`、未来的影像工作台 | 运行态蓝/青、类别紫 | 12px | 专业、看得见协作 |
-| **Clinical** | `DiagnosisPage`/`RecordsPage`/`RecordSheet` | 墨色主 CTA + `--signal` 语义 | 0 | 克制、纸面稳定 |
+| **Clinical** | `DiagnosisPage`/`RecordsPage`/`ProfilePage`/`RecordSheet` | 墨色主 CTA + `--signal` 语义 | 0 | 克制、纸面稳定 |
+
+登录/注册走品牌层双栏，个人中心与资讯是资料/编辑式排版——都不以 KPI + 台账开头。
 
 ### Design Rules（写前端必须遵守）
 > 这是**索引**，不是规则正文。规则正文在 `DESIGN.md`，改动先改那里。
@@ -117,6 +120,8 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
   `--risk-*`（医学严重度）。主 CTA：Clinical 用墨色 `--ink`，其余场景用 `--brand-primary`。
   **信号橙永远不是主 CTA 色，也不大面积填充。**
+  `--brand-*` 是**跨场景**的品牌语义令牌（管理端主操作、Agent 运行态都能取用）；
+  `.iris2` 只是**品牌视觉容器**类，只在首页首屏用。两者不可混为一谈。
 - **严重度必须同时给文字标签**（`RiskTag` 永远带文字 + 小圆点，不整块填色）；
   **分类色只用于 Management/Intelligence 的图表**（`--viz-series-1..6`），
   且必须同时有读数表/直标/图例/线型等第二通道，颜色不是唯一信息载体。
@@ -128,20 +133,28 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
   不再写像素自由值。（`xl`/`2xl` 随 PR #52 进入 `tokens.css`，合并前取不到。）
 - **发丝线优先于厚重卡片阴影**；浮层 `--shadow-overlay`，模态/抽屉 `--shadow-modal`，
   阴影基于墨色（品牌玻璃用 `--brand-shadow`）。
-- **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题；
-  循环动效只允许**绑定真实状态**且离屏即停、`prefers-reduced-motion` **实时订阅**当场停、
-  可手动暂停（`DESIGN.md` §3.7）。
+- **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
+  动效分两类：**氛围动效**（品牌材质自身在动，不要求绑定业务事件，仅 Brand）与
+  **状态动效**（表示系统正在做什么，必须绑定真实后端事件/请求状态，仅 Management/Intelligence）。
+  两者都：离屏即停、`prefers-reduced-motion` **实时订阅**当场停、可手动暂停（`DESIGN.md` §3.7）。
 - **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
 - **弹层统一走 Base UI**（`src/components/ui/dialog.tsx`）：Portal、焦点陷阱、inert、
   滚动锁、嵌套 Esc 栈不手写第二套；Portal 面板显式带 `.is-field` 等语境类。
 - **不虚构业务能力**：界面上的每个数字都能追到后端端点与口径（全量/时间窗口/分页）；
   不虚构 KPI、准确率、AI 运行态；**设计稿里有 ≠ 产品里有**。
-- **页面骨架**：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条。
+- **页面骨架按页面类型选**：只有**台账页**（`RecordsPage`、`pages/admin/*`）用
+  「顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条」。
+  登录/注册用品牌双栏，个人中心用资料区 + 读数卡，资讯用编辑式列表，
+  诊断页是上传槽 → 记录纸。逐路由归属见 `DESIGN.md` §1.5。
+- **品牌首屏构图**：外层画布**全幅**铺满，玻璃外壳是 1240px 版心内的容器，光带裁在壳里
+  （与 Optic Flow V4、PR #52 的 `LandingHero` 一致，`DESIGN.md` §3.6）。
 
 ### 参考实现
 `web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
-`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`、
-`web/src/components/brand/OpticFlow.tsx`（品牌层首屏，**PR #52 后存在**）。Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
+`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。
+`web/src/components/brand/OpticFlow.tsx`（品牌层首屏）+ `--brand-*`/`.iris2`/`--radius-xl|2xl`
+**只存在于 PR #52，尚未进入 `ui`**——合并前取不到，不能当作目标分支已有能力引用。
+Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
 
 ### 设计文档
 | 文档 | 何时读 |
