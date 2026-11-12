@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query"
 
 import { ApiError } from "./api-error"
+import { PRIVATE_QUERY_ROOTS } from "./queryKeys"
 
 /**
  * 全站唯一的 QueryClient。
@@ -20,3 +21,17 @@ export const queryClient = new QueryClient({
     },
   },
 })
+
+/**
+ * 身份切换（登录 / 登出 / 换号 / 会话失效）时作废个人域缓存。
+ *
+ * <p>先取消在途请求再删缓存：取消会让实现了 AbortSignal 的请求真正停下；
+ * 即使某个请求没接 signal 晚归，个人域的键里也带着账号 scope（见 queryKeys），
+ * 它只会落回旧账号的键，不会被新账号读到。
+ */
+export function resetPrivateQueries(client: QueryClient) {
+  for (const root of PRIVATE_QUERY_ROOTS) {
+    void client.cancelQueries({ queryKey: [root] })
+    client.removeQueries({ queryKey: [root] })
+  }
+}

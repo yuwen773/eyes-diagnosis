@@ -63,7 +63,10 @@ export async function request<T>(
         ...init.headers,
       },
     })
-  } catch {
+  } catch (error) {
+    // 调用方主动取消（切账号 / 组件卸载）不是网络故障：原样抛出 AbortError，
+    // TanStack Query 才能把它识别成取消而不是「网络不可用」。
+    if (init.signal?.aborted) throw error
     throw new ApiError(-1, "网络不可用，请检查连接后重试")
   }
 

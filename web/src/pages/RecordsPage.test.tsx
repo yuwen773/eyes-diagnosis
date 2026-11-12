@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter } from "react-router-dom"
@@ -7,10 +7,18 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ApiError } from "@/lib/api"
 import { RecordsPage } from "./RecordsPage"
 
+// 会话状态要在 mock 工厂里可见——vi.mock 的工厂先于文件主体执行。
+const sessionState = vi.hoisted(() => ({
+  status: "authed" as "authed" | "anon" | "loading",
+  user: { id: "u1", userAccount: "u1" } as { id?: string; userAccount?: string } | null,
+  scope: "u1",
+}))
+
 vi.mock("@/lib/session", () => ({
   useSession: () => ({
-    status: "anon",
-    user: null,
+    status: sessionState.status,
+    user: sessionState.user,
+    scope: sessionState.scope,
     signIn: vi.fn(),
     signOut: vi.fn(),
     refresh: vi.fn(),
@@ -28,8 +36,16 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 import { getMyStats, listMyDiagnoses } from "@/lib/api"
 
+beforeEach(() => {
+  sessionState.status = "authed"
+  sessionState.user = { id: "u1", userAccount: "u1" }
+  sessionState.scope = "u1"
+})
+
 afterEach(() => {
   cleanup()
+  vi.mocked(listMyDiagnoses).mockReset()
+  vi.mocked(getMyStats).mockReset()
 })
 
 function stubMatchMedia() {
@@ -88,5 +104,18 @@ describe("RecordsPage 统计口径", () => {
 
     expect(await screen.findByText("高风险 · SEVERE")).toBeTruthy()
     expect(screen.queryByText("本页高风险 · SEVERE")).toBeNull()
+  })
+})
+
+describe("RecordsPage 身份闸门", () => {
+  it("匿名时不发个人请求，并给出登录入口", async () => {
+    sessionState.status = "anon"
+    sessionState.user = null
+    vi.mocked(listMyDiagnoses).mockResolvedValue({ records: [], total: 0 })
+
+    renderPage()
+
+    expect(await screen.findByText("登录后才能查看诊断记录")).toBeTruthy()
+    expect(listMyDiagnoses).not.toHaveBeenCalled()
   })
 })

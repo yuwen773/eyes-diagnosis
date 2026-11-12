@@ -66,16 +66,19 @@ export type ScopedStats = {
 export async function loadMyStats(
   records: DiagnosisManage[],
   total: number,
+  signal?: AbortSignal,
 ): Promise<ScopedStats> {
   const fallback = (): ScopedStats => ({
     stats: summarizeRecords(records, total),
     scope: "page",
   })
   try {
-    const stats = await getMyStats()
+    const stats = await getMyStats(signal)
     if (!isStatsPayload(stats)) return fallback()
     return { stats, scope: "all" }
-  } catch {
+  } catch (error) {
+    // 取消不是「聚合不可用」：原样抛出，别把降级结果写进已作废的查询。
+    if (signal?.aborted) throw error
     return fallback()
   }
 }
