@@ -94,6 +94,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 ### Design Rules（写前端必须遵守）
 - **三档表达强度**（DESIGN.md §2.1）：A 临床判读（`Diagnosis`/`Records`/`RecordSheet`）保持最严；B 管理/数据分析（`admin/`、图表、弹层）允许分类数据色、4–8px 浮层圆角与 ≤240ms 状态过渡；C 品牌/Agent 视觉层允许有界动效与品牌渐变。**安全、医学措辞、可访问性、统计口径、证据链不因档位放松**。
 - **品牌层是 Iris 2.0 的独立语境**（DESIGN.md §3.9）：`.iris2` 命名空间用钴蓝 `--brand-primary: #2457c9`（暗底 `#85b5ff`）、`--brand-cyan`、`--brand-aurora`（极光紫只做点缀），字体 `--font-brand`（Manrope Variable，中文回退 Noto Sans SC）。**只在 C 档首页/品牌组件用**，别去改 `--field/--ink/--signal`，也别让品牌蓝紫与 `--risk-*` 混用或同值。
+- **首屏光学主视觉只允许一个渲染器**（DESIGN.md §3.9）：光带是 vendored Beams（裸 WebGL2），内部细纤维是同一画面上的 SVG 图层，**不另起第二个 WebGL 循环**；禁把 GridScan / Beams / Ghost Fibers 同时挂首屏。**降级是硬要求**：WebGL2 不可用、上下文丢失、`prefers-reduced-motion`、低端机都要给出可读的静态画面，且背景永不降低文字对比度或遮住标题与 CTA。
 - **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。信号橙是**临床页**的语义色，与品牌层的钴蓝并存但不互换。
 - **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
 - **分类色只用于 B 档图表**：`--viz-series-1..6`（浅/暗两套），不得占用 `--signal` 或 `--risk-*`；用了分类色就必须同时有读数表/直标/图例/线型等第二通道。

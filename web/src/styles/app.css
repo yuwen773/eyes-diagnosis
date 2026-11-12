@@ -1024,191 +1024,53 @@ html:not(.dark) .pitch__glass.auth__glass::before {
    落地页 · 首屏
    ========================================================================== */
 
-.hero-stage {
-  position: relative;
-  isolation: isolate;
-}
 
-.hero-stage > .wrap {
-  position: relative;
-  z-index: 1;
-}
+
+
 
 /* 瑞士网格仪器盘：首屏是一张由发丝线切成格子的面板。
    masthead 顶条 → 主文案格 + 索引格 → 底部读数条，格间贴线不留 gap。 */
-.hero {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 0 24px;
-  padding-top: clamp(20px, 3vh, 36px);
-  padding-bottom: 0;
-}
 
 /* 仪器头版：一行 mono 元信息，左右两端对齐 */
-.hero__masthead {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: nowrap;
-  gap: 24px;
-  margin: 0;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line-strong);
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--fg);
-  white-space: nowrap;
-}
 
-.hero__masthead span:first-child {
-  color: var(--fg);
-  font-weight: 500;
-}
 
-.hero__masthead-mid {
-  margin-left: auto;
-}
 
-.hero__masthead span:last-child {
-  color: var(--signal-text);
-}
 
-.hero__copy {
-  grid-column: 1 / 7;
-  align-self: end;
-  padding-block: clamp(40px, 5.5vh, 68px);
-}
+
+
+
 
 /* 索引板是房间里的一张纸：表格印在纸上，纸浮在扫描舱前面。
    不做背景板的话，网格线会从字里穿过去，读数就废了。 */
-.hero__index {
-  grid-column: 8 / 13;
-  align-self: end;
-  margin-bottom: clamp(40px, 5.5vh, 68px);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  padding: 20px 22px 22px;
-  display: flex;
-  flex-direction: column;
-}
 
 /* 扫描舱：整块首屏就是一间线框房间。
    画在最底层，页面浮在上面——网格线压到很暗，只有那道读数光是亮的。 */
-.hero-stage__scan {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
+
 
 /* 幕布：把文字底下那一块压暗，房间才敢亮。
    左边罩住标题与按钮，下缘罩住读数条。
    右边本来也有层纱——索引改成一张不透明的纸板之后，那层纱只剩压边的作用，
    再压重就会把房间洗掉，所以撤到只剩边角。 */
-.hero-stage__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      48% 50% at 21% 52%,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg) 74%, transparent) 42%,
-      transparent 74%
-    ),
-    radial-gradient(
-      40% 46% at 80% 54%,
-      color-mix(in srgb, var(--bg) 26%, transparent) 0%,
-      transparent 72%
-    ),
-    linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 45%, transparent) 11%, transparent 26%),
-    /* 顶带要压住头版那行 mono：网格线正好会和它同高，露出来就像字被划了一道。 */
-    linear-gradient(
-      to bottom,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg) 72%, transparent) 7%,
-      color-mix(in srgb, var(--bg) 26%, transparent) 15%,
-      transparent 26%
-    );
-}
 
 /* 浅色页面：黑字压得住网格，幕布只留薄薄一层，
    免得整块首屏被洗成一张白纸。 */
-.is-field .hero-stage__scrim {
-  background:
-    radial-gradient(
-      40% 42% at 19% 50%,
-      color-mix(in srgb, var(--bg) 84%, transparent) 0%,
-      transparent 72%
-    ),
-    radial-gradient(
-      36% 42% at 80% 52%,
-      color-mix(in srgb, var(--bg) 18%, transparent) 0%,
-      transparent 74%
-    ),
-    linear-gradient(to top, color-mix(in srgb, var(--bg) 72%, transparent) 0%, transparent 16%),
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--bg) 92%, transparent) 0%,
-      color-mix(in srgb, var(--bg) 66%, transparent) 7%,
-      color-mix(in srgb, var(--bg) 24%, transparent) 15%,
-      transparent 26%
-    );
-}
 
-.hero__eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
-}
 
-.hero__eyebrow span:first-child {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  color: var(--ink);
-}
 
-.hero__eyebrow::after {
-  content: "";
-  width: 52px;
-  height: 1px;
-  background: var(--line-strong);
-}
+
+
+
+
 
 /* 字号上限按「六字行必须放得进 6 栏」算：
    版心 1160 − 11×24 = 896，一栏 74.7，文案栏 6 栏 = 568px。
    6 字 × 字号 × (1 − 0.03 字距) ≤ 568 → 字号 ≤ 97。
    取 92，留一截余量给不同字库的汉字宽度差。 */
-.hero__title {
-  font-size: clamp(42px, 6.5vw, 88px);
-  letter-spacing: -0.03em;
-}
-
-.hero__lead {
-  margin-top: 28px;
-  max-width: 30em;
-}
 
 /* 全页唯一一处强调色：标题里被「复核」的那个词 */
-.hero__mark {
-  text-decoration: underline;
-  text-decoration-color: var(--signal);
-  text-decoration-thickness: 0.05em;
-  text-underline-offset: 0.14em;
-  text-decoration-skip-ink: none;
-}
 
-.hero__actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px 30px;
-  margin-top: 38px;
-}
+
+
 
 /* 八类索引板：静态读数行，右列示例概率。
    纸板自带外框，表内只留行间发丝线，不再画外圈，避免双线。 */
@@ -1280,6 +1142,25 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   border-bottom: 0;
 }
 
+/* 八类覆盖板：从首屏挪到「判读流程」之后。左表右注，跟下面台账同一版心。 */
+.landing-classes {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+  gap: 20px 48px;
+  align-items: start;
+}
+
+.landing-classes .index__note {
+  max-width: 30em;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .landing-classes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* 读数条：仪器面板的底部整行 */
 .strip {
   grid-column: 1 / -1;
@@ -1332,12 +1213,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 @media (max-width: 1080px) {
-  .hero__copy {
-    grid-column: 1 / 8;
-  }
-  .hero__index {
-    grid-column: 8 / 13;
-  }
+  
+  
   .strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1350,38 +1227,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 @media (max-width: 860px) {
-  .hero {
-    grid-template-columns: 1fr;
-    padding-top: 24px;
-  }
-  .hero__masthead {
-    /* 窄屏一行挤不下三类元信息：日期是示例注记，收进「示例数据」标签里，
-       别让它换行掉到标题上方冒充眉线，也别挤出屏幕。
-       字号不降：降到 18px 以下这条头版行就会被当成标题眉线。 */
-    gap: 6px 14px;
-    font-size: 19px;
-  }
-  .hero__masthead-mid {
-    display: none;
-  }
-  .hero__masthead span:last-child {
-    margin-left: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .hero__copy,
-  .hero__index {
-    grid-column: 1 / -1;
-  }
-  .hero__copy {
-    padding-block: 36px 0;
-  }
+  
+  
   /* 索引在窄屏上仍是一张完整的纸板：内外边距与边框一概不动，
      只把上面的间距补回来，别让表头顶到上一块。 */
-  .hero__index {
-    margin-top: 40px;
-    margin-bottom: 0;
-  }
+  
   .strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1407,9 +1257,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
     font-size: 16px;
   }
   /* 头版行在手机上只留品牌一句；型号在读数条里已经给出。 */
-  .hero__masthead span:last-child {
-    display: none;
-  }
+  
 }
 
 /* ==========================================================================
@@ -2566,27 +2414,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
    入场：标题逐字、区内元素随滚动浮现
    ========================================================================== */
 
-@keyframes char-rise {
-  from {
-    transform: translateY(112%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
 
-.hero__title .line {
-  display: block;
-  overflow: hidden;
-  padding-bottom: 0.16em;
-  margin-bottom: -0.16em;
-}
 
-.hero__title .ch {
-  display: inline-block;
-  animation: char-rise 900ms var(--ease) both;
-  animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 26ms);
-}
+
+
+
 
 .reveal {
   opacity: 0;
@@ -2613,10 +2445,6 @@ html:not(.dark) .pitch__glass.auth__glass::before {
     transform: none !important;
     animation: none !important;
     transition: none !important;
-  }
-  .hero__title .ch {
-    animation: none;
-    transform: none;
   }
   *,
   *::before,
