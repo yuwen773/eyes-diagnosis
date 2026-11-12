@@ -37,6 +37,7 @@
     {
       "theme": "light",
       "view": "transcript-fixture",
+      "viaRealSession": true,
       "userCards": 1,
       "assistantCards": 1,
       "reasoningCards": 1,
@@ -105,6 +106,7 @@
     {
       "theme": "dark",
       "view": "transcript-fixture",
+      "viaRealSession": true,
       "userCards": 1,
       "assistantCards": 1,
       "reasoningCards": 1,

@@ -93,7 +93,7 @@ const browser = await chromium.launch({
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
 })
 
-async function newPage(theme, width) {
+async function newPage(theme, width, { seedThreadId = null } = {}) {
   const context = await browser.newContext({
     viewport: { width, height: width <= 430 ? 844 : width <= 820 ? 1024 : width >= 1920 ? 1080 : 900 },
     deviceScaleFactor: 1,
@@ -103,6 +103,17 @@ async function newPage(theme, width) {
     data: { userAccount: USER, userPassword: PASS },
   })
   if (!response.ok()) throw new Error(`login failed: ${response.status()}`)
+  // 零会话账号上也要能进「有当前会话」的分支：预置 threadStorage 的
+  // localStorage key（agent_current_thread_id:<userId>），挂载时会照常发起
+  // 一次历史请求——被 route fulfill 的夹具就接住了。userId 从登录响应取。
+  if (seedThreadId) {
+    const loginBody = await response.json().catch(() => null)
+    const userId = loginBody?.data?.id ?? null
+    await context.addInitScript(
+      ({ key, id }) => localStorage.setItem(key, id),
+      { key: `agent_current_thread_id:${userId ?? "anon"}`, id: seedThreadId },
+    )
+  }
   const page = await context.newPage()
   page.on("console", (m) => m.type() === "error" && errors.push(`${theme}/${width}: ${m.text()}`))
   page.on("pageerror", (e) => errors.push(`${theme}/${width}: ${e.message}`))
@@ -159,10 +170,11 @@ for (const theme of ["light", "dark"]) {
   }
 
   // 3. 完整消息流（布局夹具，接口形状真实）。
-  //    夹具走「点真实会话」之外的第二条路：直接把历史接口 fulfill 成夹具，
-  //    即使临时账号没有任何会话也能渲染出六种消息卡。
+  //    无论账号有没有真实会话都能走到这一步：预置当前会话 id，挂载时自然
+  //    发起一次被拦截的历史请求，夹具接住并渲染出六种消息卡。
+  //    有真实会话则优先点真实会话（历史接口已被 fulfill，渲染的是夹具）。
   {
-    const { context, page } = await newPage(theme, 1440)
+    const { context, page } = await newPage(theme, 1440, { seedThreadId: "evidence-fixture-thread" })
     await page.route("**/api/agent/history/**", (route) =>
       route.fulfill({
         status: 200,
@@ -190,6 +202,8 @@ for (const theme of ["light", "dark"]) {
     report.push({
       theme,
       view: "transcript-fixture",
+      // 来源：>0 点的是真实会话，=0 走的是预置 threadId 触发的历史请求。
+      viaRealSession: rows > 0,
       // 六种卡各自计数：user / assistant / reasoning / 工具卡 / mcp-confirm。
       userCards: await page.locator(".agent-msg--user").count(),
       assistantCards: await page.locator(".agent-msg--assistant").count(),
