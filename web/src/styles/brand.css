@@ -753,233 +753,6 @@ html.dark .optic-flow__fiber-set--rim {
 }
 
 /* ==========================================================================
-   品牌顶栏（DESIGN.md §2.1.2）
-   --------------------------------------------------------------------------
-   这是 `SiteHeader` 的**品牌变体**，不是全站替换：类名与 `.site-head` 完全
-   分离，改这里不会让临床页 / 管理端 / 协作台被动获得玻璃顶栏。
-   形态：字标 + 中央悬浮胶囊 + 右侧功能区；胶囊用 Frosted Glass 材质。
-   ========================================================================== */
-
-.brand-head {
-  position: sticky;
-  top: 0;
-  z-index: 60;
-  padding: 8px 0 6px;
-  color: var(--brand-text);
-  /* 顶部一条页面底色的幕：内容从它下面滚过时字标仍然清楚。
-     幕分两半——顶栏自身高度内是实色（保证底部任何时刻都不透字），
-     下沿再挂一段渐隐（::after），所以过渡是软的、不是一条硬边。 */
-  background: var(--field);
-}
-
-.brand-head::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: 28px;
-  background: linear-gradient(to bottom, var(--field), transparent);
-  pointer-events: none;
-}
-
-.brand-head__inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 0 clamp(16px, 3.2vw, 48px);
-  min-height: 56px;
-}
-
-.brand-head__brand {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.brand-head .wordmark__en {
-  color: var(--brand-muted);
-}
-
-/* 胶囊本体：材质交给 .brand-panel--frosted，这里只做版式与分隔。 */
-.brand-head__nav {
-  justify-self: center;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 5px;
-}
-
-.brand-head__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  /* 触控目标 ≥ 44×44：平板上（>900px 胶囊可见）这三项就是主导航。 */
-  height: 44px;
-  padding: 0 16px;
-  border-radius: var(--radius-pill);
-  color: var(--brand-muted);
-  font-family: var(--font-brand);
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 140ms ease, background 140ms ease;
-}
-
-.brand-head__link:hover {
-  color: var(--brand-text);
-  background: rgba(36, 87, 201, 0.08);
-}
-
-/* 当前路由：独立的实心高亮胶囊，不是给链接加一条下划线。 */
-.brand-head__link[aria-current="page"] {
-  background: var(--brand-primary);
-  color: var(--brand-primary-fg);
-}
-
-/* 焦点环保留在填充胶囊 / 主 CTA 上也看得见。
-   全局规则用 `currentColor`，但这两处的文字色是反相白/深蓝：
-   环落在胶囊外的玻璃上，与底色几乎同值。这里改用品牌主色。 */
-.brand-head__link:focus-visible,
-.brand-head__cta:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 4px;
-}
-
-.brand-head__code {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  opacity: 0.7;
-}
-
-.brand-head__actions {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand-head__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: var(--radius-pill);
-  background: var(--brand-primary);
-  color: var(--brand-primary-fg);
-  font-family: var(--font-brand);
-  font-size: 13.5px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 10px 22px rgba(36, 87, 201, 0.22);
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-
-.brand-head__cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(36, 87, 201, 0.28);
-}
-
-.brand-head__cta-go {
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-/* 触控目标：品牌顶栏里的三个圆形/胶囊控件都不小于 44×44。 */
-.brand-head .theme-toggle {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-circle);
-  border-color: var(--brand-outline);
-  color: var(--brand-muted);
-}
-
-.brand-head .theme-toggle:hover {
-  color: var(--brand-text);
-  border-color: var(--brand-primary);
-}
-
-.brand-head .acct__trigger {
-  height: 44px;
-  border-radius: var(--radius-pill);
-  border-color: var(--brand-outline);
-  color: var(--brand-text);
-  font-family: var(--font-brand);
-}
-
-.brand-head .acct__trigger:hover {
-  border-color: var(--brand-primary);
-}
-
-.brand-head .burger {
-  min-width: 44px;
-  min-height: 44px;
-}
-
-/* 窄屏不把胶囊压扁塞进去：导航收进 MobileNav 抽屉，右侧只留主题与菜单。
-   抽屉本身的路由、认证、焦点锁、滚动锁全部沿用既有实现。 */
-@media (max-width: 900px) {
-  .brand-head__inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-  }
-
-  .brand-head__nav,
-  .brand-head__cta,
-  .brand-head__actions .acct {
-    display: none;
-  }
-
-  /* 共享 `.burger` 只在 ≤800px 显示；品牌顶栏在 ≤900px 就收起胶囊，
-     801–900px 这段必须把汉堡放出来，否则顶栏没有任何导航入口。 */
-  .brand-head .burger {
-    display: inline-flex;
-  }
-}
-
-@media (max-width: 480px) {
-  .brand-head .wordmark__en {
-    display: none;
-  }
-}
-
-/* 品牌场景里「登录」不是一个实心墨色按钮：右侧只能有一个主 CTA。
-   这里收回共享样式里的填充与信号橙 hover，改成描边胶囊。 */
-.brand-head a.acct__trigger--anon {
-  justify-content: center;
-  background: transparent;
-  border-color: var(--brand-outline);
-  color: var(--brand-text);
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.brand-head a.acct__trigger--anon:hover {
-  background: transparent;
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-}
-
-/* 汉堡在品牌顶栏里也是圆形胶囊，和主题切换、账号按钮同一套形状语言。 */
-.brand-head .burger {
-  border-radius: var(--radius-circle);
-  border-color: var(--brand-outline);
-  color: var(--brand-text);
-}
-
-.brand-head .burger:hover {
-  border-color: var(--brand-primary);
-}
-
-/* ==========================================================================
    品牌页脚（DESIGN.md §2.1.3）
    --------------------------------------------------------------------------
    Solid Brand Surface：一块实体深海蓝，不做整块玻璃模糊。
@@ -1241,4 +1014,30 @@ html.dark .optic-flow__fiber-set--rim {
 
 html.dark .is-brand-page .btn:hover {
   background: color-mix(in srgb, var(--brand-primary) 86%, #000000);
+}
+
+/* ==========================================================================
+   精简品牌页脚（R2.5 · Shared Product Shell）
+   --------------------------------------------------------------------------
+   资讯列表这类门户页需要品牌收尾，但不需要整页的攻略式页脚。
+   去掉长主张、平台读数与印章后，收紧上边距，避免把列表压出长滚动。
+   ========================================================================== */
+
+.brand-foot--compact {
+  margin-top: clamp(32px, 5vw, 64px);
+}
+
+.brand-foot--compact .brand-foot__inner {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-top: clamp(28px, 3.4vw, 44px);
+}
+
+.brand-foot--compact .brand-foot__brand {
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .brand-foot--compact .brand-foot__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

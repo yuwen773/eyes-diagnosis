@@ -1041,7 +1041,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 悬浮胶囊品牌导航（Brand 变体，见 §2.1.2） | 🅿 | PR #57（R2-02） |
 | 深海蓝品牌页脚（品牌变体，见 §2.1.3） | 🅿 | PR #58（R2-03） |
 | 首页整页品牌作用域 `.is-brand-page` | 🅿 | PR #59（R2-04） |
-| **Shared Product Shell**（单一顶栏组件 + 场景变体 + 全公开路由迁移） | 🗓 | R2.5-01（§1.6） |
+| **Shared Product Shell**（单一顶栏组件 + 场景变体 + 全公开路由迁移） | 🅿 | R2.5-01（§1.6，PR 见分支 `feat/iris-2-r2-5-01-shared-shell`） |
 | 首页 Hero 之后区块的品牌版式 | 🗓 | R2.5-02 |
 | News / NewsDetail 编辑式版面 | 🗓 | R2.5-03 |
 | 判读工作区（RecordSheet 不动） | 🗓 | R2.5-04 |

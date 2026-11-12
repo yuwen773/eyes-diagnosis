@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { LaserFlow } from "@/components/LaserFlow"
-import { Wordmark } from "@/components/SiteHeader"
+import { Wordmark } from "@/components/shell/Wordmark"
 import { useTheme } from "@/components/theme-provider"
 
 const clamp = (value: number, min: number, max: number) =>

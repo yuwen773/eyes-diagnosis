@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 import { useSession } from "@/lib/session"
 
 /**
@@ -32,7 +32,7 @@ function LoadingState() {
 function DeniedPage({ anon }: { anon: boolean }) {
   return (
     <div className="is-field admin-denied">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap admin-denied__inner">
         <SectionHead
@@ -96,7 +96,7 @@ function UnavailablePage({
   const [busy, setBusy] = useState(false)
   return (
     <div className="is-field admin-denied">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap admin-denied__inner">
         <SectionHead

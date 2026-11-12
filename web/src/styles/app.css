@@ -200,36 +200,6 @@ a {
    顶栏 / 页脚
    ========================================================================== */
 
-/* 顶栏必须是页面的直接子级，否则 sticky 会被父盒的高度卡住。 */
-.site-head {
-  position: sticky;
-  top: 0;
-  z-index: 60;
-  background: var(--field);
-  border-bottom: 1px solid var(--line);
-  /* 自己解析一次 --fg，反相时才不会留下上一页继承下来的墨色。 */
-  color: var(--fg);
-  transition: background var(--base), border-color var(--base);
-}
-
-.site-head__inner {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  height: var(--nav-h);
-}
-
-.site-head__brand {
-  display: inline-flex;
-  align-items: baseline;
-  flex: 0 0 auto;
-}
-
-/* 压到深色区段上：反相。令牌映射在 tokens.css，底色由 JS 按下面那块区段取，见 SiteHeader。 */
-.site-head.is-invert {
-  border-bottom-color: var(--dark-line);
-  color: var(--on-dark);
-}
 
 .wordmark {
   display: inline-flex;
@@ -281,66 +251,6 @@ a:hover .wordmark__iris {
   color: var(--fg-3);
 }
 
-/* 品牌与导航之间的发丝竖线：顶栏也切成仪器段。 */
-.site-head__sep {
-  width: 1px;
-  height: 18px;
-  background: var(--line);
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  margin-left: auto;
-  font-size: 13px;
-}
-
-.nav__link {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  color: var(--fg-2);
-  position: relative;
-  padding-block: 4px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  /* 收窄到装不下时，宁可提前走汉堡菜单，也不要让「01 判读」断成两行。 */
-  white-space: nowrap;
-  transition: color var(--fast);
-}
-
-/* mono 序号：导航也带读数。当前页时序号亮信号橙。 */
-.nav__code {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: var(--fg-3);
-  transition: color var(--fast);
-}
-
-.nav__link:hover,
-.nav__link[aria-current="page"] {
-  color: var(--fg);
-}
-
-.nav__link:hover .nav__code {
-  color: var(--fg-2);
-}
-
-.nav__link[aria-current="page"] .nav__code {
-  color: var(--signal-text);
-}
-
-.nav__link[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: currentColor;
-}
 
 /* ── 主题切换：一枚半满的读数环，亮暗各占一半 ── */
 
@@ -605,32 +515,6 @@ a.acct__trigger--anon:hover {
 /* 顶栏固定之后，锚点目标要留出顶栏的高度。 */
 [id] {
   scroll-margin-top: calc(var(--nav-h) + 12px);
-}
-
-/* 800 而不是 760：768 这类平板宽度下，品牌 + 三条导航 + 主题钮 + 登录
-   正好卡在装不下的边缘，会挤成每个字一行。提前交给汉堡菜单。 */
-@media (max-width: 800px) {
-  .site-head__inner {
-    gap: 14px;
-  }
-  .wordmark__en {
-    display: none;
-  }
-  .site-head__sep {
-    display: none;
-  }
-  .nav,
-  .acct {
-    display: none;
-  }
-  .theme-toggle {
-    margin-left: auto;
-    margin-right: 10px;
-  }
-  .burger {
-    display: inline-flex;
-    margin-left: 0;
-  }
 }
 
 /* 页脚按仪器铭牌端搭：大字铭牌行 → mono 规格行 → 章节索引 → 免责栏。

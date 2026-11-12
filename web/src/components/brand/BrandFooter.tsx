@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 
-import { Wordmark } from "@/components/SiteHeader"
+import { Wordmark } from "@/components/shell/Wordmark"
 import { useMediaQuery } from "@/lib/useMediaQuery"
 import type { FooterSection } from "@/components/SiteFooter"
 
@@ -21,19 +21,28 @@ import type { FooterSection } from "@/components/SiteFooter"
  * <p>返回顶部尊重 `prefers-reduced-motion`：用户要求减少动画时直接跳转，
  * 不做平滑滚动。
  */
-export function BrandFooter({ sections = [] }: { sections?: FooterSection[] }) {
+export function BrandFooter({
+  sections = [],
+  compact = false,
+}: {
+  sections?: FooterSection[]
+  /** 精简版：门户/资讯列表用。保留品牌、产品入口、免责与版权，去掉长主张与平台读数。 */
+  compact?: boolean
+}) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)")
 
   return (
-    <footer className="brand-foot no-print">
+    <footer className={`brand-foot no-print${compact ? " brand-foot--compact" : ""}`}>
       <div className="brand-foot__inner">
         {/* 第一层：品牌收尾 */}
         <div className="brand-foot__brand">
           <Wordmark />
           <p className="brand-foot__claim">看清更多，理解更深。</p>
-          <p className="brand-foot__lead">
-            融合眼底影像分析与多智能体协作，让复杂的视觉信息变得清晰、可解释、可追溯。
-          </p>
+          {compact ? null : (
+            <p className="brand-foot__lead">
+              融合眼底影像分析与多智能体协作，让复杂的视觉信息变得清晰、可解释、可追溯。
+            </p>
+          )}
         </div>
 
         {/* 第二层：信息导航 */}
@@ -62,16 +71,18 @@ export function BrandFooter({ sections = [] }: { sections?: FooterSection[] }) {
             </nav>
           ) : null}
 
-          <div className="brand-foot__group">
-            <span className="brand-foot__label">平台 · PLATFORM</span>
-            <span className="brand-foot__spec num">EFFICIENTNET-B4</span>
-            <span className="brand-foot__spec num">8 CLASSES</span>
-            <span className="brand-foot__spec num">DIAGNOSIS AGENT · MCP</span>
-            {/* 质量门只有「通过 / 拒识」两种真实结果；86 是示例记录里的读数，
-                不是平台阈值，不能挪到这里当指标。 */}
-            <span className="brand-foot__spec num">QUALITY GATE · PASS/REJECT</span>
-            <span className="brand-foot__spec num">SHA-256 WEIGHTS</span>
-          </div>
+          {compact ? null : (
+            <div className="brand-foot__group">
+              <span className="brand-foot__label">平台 · PLATFORM</span>
+              <span className="brand-foot__spec num">EFFICIENTNET-B4</span>
+              <span className="brand-foot__spec num">8 CLASSES</span>
+              <span className="brand-foot__spec num">DIAGNOSIS AGENT · MCP</span>
+              {/* 质量门只有「通过 / 拒识」两种真实结果；86 是示例记录里的读数，
+                  不是平台阈值，不能挪到这里当指标。 */}
+              <span className="brand-foot__spec num">QUALITY GATE · PASS/REJECT</span>
+              <span className="brand-foot__spec num">SHA-256 WEIGHTS</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -82,11 +93,13 @@ export function BrandFooter({ sections = [] }: { sections?: FooterSection[] }) {
           系统输出为 AI 辅助判读，不构成诊断结论，不能替代执业医师的检查与判断。
           所有判读记录均保留模型版本与权重指纹，供事后复核。
         </p>
-        <span className="brand-foot__stamp num" aria-hidden="true">
-          辅助判读
-          <br />
-          NOT A DIAGNOSIS
-        </span>
+        {compact ? null : (
+          <span className="brand-foot__stamp num" aria-hidden="true">
+            辅助判读
+            <br />
+            NOT A DIAGNOSIS
+          </span>
+        )}
       </div>
 
       <div className="brand-foot__legal">

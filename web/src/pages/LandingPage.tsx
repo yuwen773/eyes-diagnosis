@@ -17,7 +17,7 @@ import { LandingHero } from "@/components/brand/LandingHero"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
 import { BrandFooter } from "@/components/brand/BrandFooter"
-import { BrandHeader } from "@/components/brand/BrandHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 import { TargetCursor } from "@/components/TargetCursor"
 
 // 重型视觉组件独立成块：首屏的扫描舱要立刻有，其余等进入视口再下载。
@@ -245,7 +245,7 @@ export function LandingPage() {
         dotSize={3}
       />
 
-      <BrandHeader />
+      <ProductHeader scene="brand" />
 
       <main>
         <LandingHero />

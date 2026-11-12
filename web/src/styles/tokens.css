@@ -251,8 +251,7 @@
 
 /* 反相令牌：反相带、整页暗房、反相顶栏共用同一份映射，改一处即可。 */
 .is-dark,
-.is-night,
-.site-head.is-invert {
+.is-night {
   --fg: var(--on-dark);
   --fg-2: var(--on-dark-2);
   --fg-3: var(--on-dark-3);
@@ -450,8 +449,3 @@ html.dark .is-sheet {
   --signal-text: var(--paper-signal-text);
 }
 
-/* 反相顶栏里的抬升面板跟着翻深，别留白板（账号菜单 / 移动抽屉）。 */
-.site-head.is-invert {
-  --surface: var(--dark-surface);
-  --field: var(--dark-surface);
-}

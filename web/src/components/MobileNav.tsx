@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSession } from "@/lib/session"
-import { NAV_LINKS } from "./SiteHeader"
+import { NAV_LINKS } from "./shell/navLinks"
 
 /**
  * 移动端导航。顶栏收成一个汉堡按钮，点开是左侧滑入的窄抽屉；

@@ -34,7 +34,7 @@ import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const PAGE_SIZE = 10
 
@@ -143,7 +143,7 @@ export function RecordsPage() {
     // 匿名：整页都是个人数据，不发请求，也不假装「没有记录」——给登录入口。
     return (
       <div className="is-field">
-        <SiteHeader />
+        <ProductHeader scene="clinical" />
         <main className="wrap records">
           <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
           <div className="records__empty">
@@ -162,7 +162,7 @@ export function RecordsPage() {
 
   return (
     <div className="is-field">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap records">
         <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />

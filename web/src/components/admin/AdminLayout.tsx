@@ -16,7 +16,8 @@ export const ADMIN_NAV = [
 
 /**
  * 管理后台外壳：仪表梁 + 侧栏 + 内容区。
- * 主题切换直接复用全站 ThemeProvider 的 useTheme 与 SiteHeader 的半满读数环。
+ * 主题切换直接复用全站 ThemeProvider 的 useTheme 与共享顶栏的半满读数环。
+ * 管理端不挂载产品顶栏（R2.5，DESIGN.md §1.6），侧栏才是它的导航。
  *
  * 外壳跟随全站主题：梁与侧栏吃上下文令牌（--surface / --fg-* / --hr），
  * 浅色主题下是纸白仪表面 + 墨色发丝线，暗色主题下整体翻成暗房——

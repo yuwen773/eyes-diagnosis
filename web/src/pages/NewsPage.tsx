@@ -10,7 +10,8 @@ import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { BrandHeader } from "@/components/brand/BrandHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
+import { BrandFooter } from "@/components/brand/BrandFooter"
 
 const PAGE_SIZE = 9
 
@@ -87,8 +88,8 @@ export function NewsPage() {
   }
 
   return (
-    <div className="is-field">
-      <BrandHeader />
+    <div className="is-field is-brand-page">
+      <ProductHeader scene="editorial" />
 
       <main className="wrap news">
         <SectionHead code="03" kicker="新闻资讯" en="NEWS · BULLETIN" />
@@ -233,6 +234,9 @@ export function NewsPage() {
       </main>
 
       <DisclaimerBar />
+
+      {/* 门户列表是公开品牌页的收尾：用精简页脚，不占满工作区。 */}
+      <BrandFooter compact />
     </div>
   )
 }
