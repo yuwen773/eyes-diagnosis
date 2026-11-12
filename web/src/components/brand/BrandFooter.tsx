@@ -66,7 +66,10 @@ export function BrandFooter({ sections = [] }: { sections?: FooterSection[] }) {
             <span className="brand-foot__label">平台 · PLATFORM</span>
             <span className="brand-foot__spec num">EFFICIENTNET-B4</span>
             <span className="brand-foot__spec num">8 CLASSES</span>
-            <span className="brand-foot__spec num">QUALITY GATE · 86/100</span>
+            <span className="brand-foot__spec num">DIAGNOSIS AGENT · MCP</span>
+            {/* 质量门只有「通过 / 拒识」两种真实结果；86 是示例记录里的读数，
+                不是平台阈值，不能挪到这里当指标。 */}
+            <span className="brand-foot__spec num">QUALITY GATE · PASS/REJECT</span>
             <span className="brand-foot__spec num">SHA-256 WEIGHTS</span>
           </div>
         </div>

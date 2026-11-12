@@ -229,14 +229,10 @@ export function LandingPage() {
   }, [specimenOpen])
 
   return (
-    // 整页语境随主题走：暗主题是暗房（顶栏全程反相），浅主题是品牌银蓝画布。
+    // 整页语境随主题走：暗主题是深夜蓝，浅主题是品牌银蓝画布。
     // `.is-brand-page`（R2-04）只换画布与发丝线，文字与临床语义令牌不动——
     // 上半页的钴蓝光学台和下半页的章节因此落在同一块底色上。
-    // 浅主题下顶栏反相只交给 ScrollExpand 的舞台标记。
-    <div
-      className={(dark ? "is-night " : "is-field ") + "night is-brand-page"}
-      data-head-invert={dark ? "true" : undefined}
-    >
+    <div className={(dark ? "is-night " : "is-field ") + "night is-brand-page"}>
       {/* 准星只属于落地页，别的地方用系统光标。 */}
       <TargetCursor
         targetSelector="a, button, [data-cursor]"

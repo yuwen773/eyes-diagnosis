@@ -174,12 +174,12 @@ describe("品牌材质 · 文字压在半透明玻璃上", () => {
     }
   })
 
-  it("暗色最坏情况：玻璃背后是光学带最亮处，文字仍要 ≥ 4.5", () => {
-    // 首屏信息卡压在光带上，而不是纯画布上。用光带的亮色当背衬取最坏值：
-    // 玻璃若不够实，次要文字会在光带经过时被吃掉。
-    const brightBacking = over(darkValue("--brand-cyan"), darkValue("--brand-canvas"))
+  it("暗色最坏情况：玻璃背后是纯白高光，文字仍要 ≥ 4.5", () => {
+    // 首屏信息卡与状态胶囊压在光带上。着色器的高光/bloom 可以比 --brand-cyan
+    // 更亮，所以背衬不能拿青色的字面值当上限——按纯白取真正的最坏值。
+    // 玻璃若不够实，次要文字会在高光经过时被吃掉。
     for (const glass of ["--brand-glass-layered", "--brand-glass-frosted"]) {
-      const surface = over(rawDarkValue(glass), brightBacking)
+      const surface = over(rawDarkValue(glass), "#ffffff")
       for (const fg of ["--brand-text", "--brand-muted"]) {
         expect(contrast(darkValue(fg), surface)).toBeGreaterThanOrEqual(4.5)
       }
@@ -191,13 +191,18 @@ describe("品牌材质 · 样式硬约束（静态检查 brand.css）", () => {
   const brandCss = readFileSync(new URL("./brand.css", import.meta.url), "utf8")
 
   it("五种材质各有独立的模糊强度，不是一个值套到底", () => {
-    for (const token of [
-      "--brand-glass-frosted-blur",
-      "--brand-glass-layered-blur",
-      "--brand-glass-soft-blur",
-    ]) {
-      expect(brandCss).toContain(token)
+    const blur = (token: string) => {
+      const match = new RegExp(`${token}:\\s*(\\d+)px`).exec(css)
+      expect(match, `${token} 未定义`).not.toBeNull()
+      return Number(match![1])
     }
+    const values = [
+      blur("--brand-glass-frosted-blur"),
+      blur("--brand-glass-layered-blur"),
+      blur("--brand-glass-soft-blur"),
+    ]
+    // 两两不同：三种材质共用一个 blur 时，这条测试必须失败。
+    expect(new Set(values).size).toBe(values.length)
   })
 
   it("不支持 backdrop-filter 时有静态替代，不能塌成一块灰", () => {
@@ -259,5 +264,12 @@ describe("品牌页作用域 · .is-brand-page（R2-04）", () => {
   it("品牌样式不写共享顶栏 .site-head（品牌变体只能改自己的类名）", () => {
     expect(brandCss).not.toMatch(/(^|\n)\.site-head/)
     expect(brandCss).not.toMatch(/\.site-head\s+\./)
+  })
+
+  it("暗色主题下落地页仍锁在品牌画布：.night.is-brand-page 覆盖必须存在", () => {
+    // app.css 在 tokens.css 之后加载，`.night { background: var(--night-sky) }`
+    // 同特异性会盖掉 `.is-brand-page`；少了这条，暗色首页下半页会回到绿黑夜色。
+    const body = block(css, ".night.is-brand-page {")
+    expect(body).toContain("background: var(--brand-canvas)")
   })
 })

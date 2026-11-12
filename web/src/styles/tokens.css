@@ -139,7 +139,7 @@
      入口卡要轻、页脚要实。每种材质 = 底色 + 描边 + 内侧高光 + 模糊强度。
      --brand-glass-optical-* 给 WebGL 渲染器与边缘高光用；其余四种由 CSS 消费。 */
   --brand-glass-optical-tint: #2f6fc9;
-  --brand-glass-optical-edge: rgba(255, 255, 255, 0.66);
+  --brand-glass-optical-edge: rgba(255, 255, 255, 0.92);
 
   --brand-glass-frosted: rgba(255, 255, 255, 0.62);
   --brand-glass-frosted-edge: rgba(255, 255, 255, 0.82);
@@ -309,6 +309,14 @@
   color: var(--brand-text);
 }
 
+/* 暗色主题的 `.night` 直接用 `--night-sky` 铺底，和 `.is-brand-page` 同特异性
+   却更晚出现（app.css 在 tokens.css 之后），会把品牌画布盖回绿黑夜色。
+   落地页同时带这两个类，这里用更高特异性把它锁在同一块品牌画布上；
+   浅色主题走 `html:not(.dark) .night { background: var(--bg) }`，本来就是对的。 */
+.night.is-brand-page {
+  background: var(--brand-canvas);
+}
+
 /* ==========================================================================
    Iris 2.0 品牌面（.iris2）
    --------------------------------------------------------------------------
@@ -385,16 +393,16 @@ html.dark {
   /* 暗色材质：午夜蓝底 + 冰蓝边缘光。不是把浅色值调暗——
      透明度的取法也不同：暗底上玻璃要更实一点，否则背后的光带会吃掉文字。 */
   --brand-glass-optical-tint: #7cc4ff;
-  --brand-glass-optical-edge: rgba(196, 232, 255, 0.45);
+  --brand-glass-optical-edge: rgba(235, 248, 255, 0.78);
 
-  --brand-glass-frosted: rgba(16, 34, 60, 0.78);
+  --brand-glass-frosted: rgba(16, 34, 60, 0.84);
   --brand-glass-frosted-edge: rgba(196, 222, 255, 0.26);
   --brand-glass-frosted-inner: rgba(255, 255, 255, 0.07);
   --brand-glass-frosted-blur: 20px;
 
   /* 0.82 是「背后是光带最亮处」时的可读性下限：再透，次要文字就会
      被经过的冰青高光吃掉（tokens.contrast.test.ts 有断言）。 */
-  --brand-glass-layered: rgba(19, 40, 70, 0.82);
+  --brand-glass-layered: rgba(19, 40, 70, 0.84);
   --brand-glass-layered-edge: rgba(200, 228, 255, 0.28);
   --brand-glass-layered-inner: rgba(255, 255, 255, 0.08);
   --brand-glass-layered-blur: 24px;

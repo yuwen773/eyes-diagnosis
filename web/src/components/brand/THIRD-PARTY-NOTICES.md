@@ -2,7 +2,8 @@
 
 本目录下的 `beamsEngine.ts` 与 `beamsMount.ts` 是**上游第三方组件的 vendor 副本**，
 不是本项目原创。其余文件（`OpticFlow.tsx`、`LandingHero.tsx`、`BrandPanel.tsx`、
-`OpticFlow.test.tsx`、`beamsMount.test.ts`）由本项目编写。
+`BrandHeader.tsx`、`BrandFooter.tsx`、`OpticFlow.test.tsx`、`beamsMount.test.ts`、
+`notices.test.ts`）由本项目编写。
 
 ---
 
@@ -26,11 +27,14 @@
 把它与本仓库 `beamsEngine.ts` 里的三个模板字符串（顶点着色器 / FIELD / COMPOSITE）
 逐字比对：
 
-| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 结论 |
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库（2026-11-12） | 结论 |
 |---|---|---|---|
-| 顶点 | `254cf7532230` | **同值** | 逐字一致 |
-| FIELD | `ce0437306e9d` | 已改动 | 见下方「相对上游的改动」 |
-| COMPOSITE | `39bf1cf8ca1a` | 已改动 | 同上 |
+| 顶点 | `254cf7532230` | `254cf7532230` | 逐字一致 |
+| FIELD | `ce0437306e9d` | `3663510bac21` | 已改动，见下方「相对上游的改动」 |
+| COMPOSITE | `39bf1cf8ca1a` | `05e950c06437` | 同上 |
+
+> 计算口径：取模板字符串**两个反引号之间的全部内容**，先把行尾统一成 `LF` 再算
+> SHA-256。换行符不统一会得到完全不同的哈希，下次比对请沿用这个口径。
 
 > ⚠️ **2026-11-12（R2-01）起，FIELD 与 COMPOSITE 不再与上游逐字一致**。
 > 原因是首屏要做「光学玻璃带」而不是「一团发光」：需要给带体一条可辨认的边缘。

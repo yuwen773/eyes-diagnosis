@@ -23,6 +23,19 @@ import "@/styles/brand.css"
  *
  * <p>画布是纯装饰：`aria-hidden`，不承担任何信息。医学信息一律在 DOM 文本里。
  */
+
+/**
+ * 读取材质令牌作为着色器颜色。
+ *
+ * <p>WebGL uniform 只吃具体色值，吃不了 `var()`，所以颜色必须在挂载时解析一次。
+ * 这样 `--brand-glass-optical-tint` 才是唯一真源：改令牌，画面跟着变。
+ * jsdom / 无样式环境下读不到值，退回调用方给的常量。
+ */
+function tokenColor(name: string, fallback: string) {
+  if (typeof window === "undefined") return fallback
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : fallback
+}
 export function OpticFlow(props: {
   theme: "light" | "dark"
   /** 用户主动暂停动效（首屏那个「暂停动画」按钮）。 */
@@ -118,9 +131,13 @@ export function OpticFlow(props: {
 function beamsSettings(theme: "light" | "dark"): BeamsSettings {
   const lowEnd =
     typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 8) <= 4
+  const tint = tokenColor(
+    "--brand-glass-optical-tint",
+    theme === "dark" ? "#7cc4ff" : "#2f6fc9",
+  )
   return theme === "light"
     ? {
-        color: "#2f6fc9",
+        color: tint,
         beamWidth: 620,
         rotation: 22,
         speed: 0.72,

@@ -489,10 +489,15 @@ html.dark .landing-hero__btn--primary {
 
 /* 玻璃体：一条连续光带 = 柔和鞘 + 内部纤维 + 边缘高光。
    `--optic-*` 是这层自己的调色板，双主题不是反色而是两种材质：
-   - 亮色：鞘是钴蓝到青色，纤维 multiply 压暗画布，外缘 normal 画银白反光；
-   - 暗色：鞘是冰蓝，纤维 screen 加光，外缘高光更亮。
-   旧写法给整张 SVG 套一个 multiply + 白色 stroke——白 × 白 = 白，
-   纤维在亮底上等于不存在；现在按组分开混合。 */
+   - 亮色：鞘是钴蓝到青色，外缘画银白反光；
+   - 暗色：鞘是冰蓝，外缘高光更亮。
+
+   关于 `mix-blend-mode`：它写在组（`<g>`）上，而根节点带 `opacity` 与
+   `mask-image`，两者都会让根形成一个独立的合成组——所以这些混合模式
+   **只作用于纤维与纤维之间的重叠**，不会再穿透到下层 WebGL 画布上。
+   纤维层与画布之间是普通 alpha 合成；边缘淡出靠下面那条径向遮罩。
+   如果要让纤维真正与画布混合，必须把遮罩和根透明度都拿掉（二者与
+   「穿透画布混合」不可兼得），这属于另一次视觉评审，不在本轮。 */
 .optic-flow__fibers {
   position: absolute;
   inset: 0;
@@ -584,13 +589,13 @@ html.dark .optic-stop--core-near {
 .optic-flow {
   --optic-fiber: rgba(38, 84, 160, 0.26);
   --optic-fiber-core: rgba(36, 87, 201, 0.42);
-  --optic-fiber-rim: rgba(255, 255, 255, 0.92);
+  --optic-fiber-rim: var(--brand-glass-optical-edge);
 }
 
 html.dark .optic-flow {
   --optic-fiber: rgba(190, 230, 255, 0.3);
   --optic-fiber-core: rgba(225, 244, 255, 0.5);
-  --optic-fiber-rim: rgba(235, 248, 255, 0.78);
+  /* 外缘高光取自 `--brand-glass-optical-edge`，它随主题翻转，不必在这里重复。 */
 }
 
 .optic-flow__fiber-set {
@@ -813,7 +818,8 @@ html.dark .optic-flow__fiber-set--rim {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  /* 触控目标 ≥ 44×44：平板上（>900px 胶囊可见）这三项就是主导航。 */
+  height: 44px;
   padding: 0 16px;
   border-radius: var(--radius-pill);
   color: var(--brand-muted);
@@ -835,6 +841,15 @@ html.dark .optic-flow__fiber-set--rim {
 .brand-head__link[aria-current="page"] {
   background: var(--brand-primary);
   color: var(--brand-primary-fg);
+}
+
+/* 焦点环保留在填充胶囊 / 主 CTA 上也看得见。
+   全局规则用 `currentColor`，但这两处的文字色是反相白/深蓝：
+   环落在胶囊外的玻璃上，与底色几乎同值。这里改用品牌主色。 */
+.brand-head__link:focus-visible,
+.brand-head__cta:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
 }
 
 .brand-head__code {
@@ -909,29 +924,6 @@ html.dark .optic-flow__fiber-set--rim {
   min-height: 44px;
 }
 
-/* 浅色主题滚到 data-head-invert 深色区段：把品牌令牌在**顶栏内部**换成深底
-   的一套，其余规则自动跟着变——胶囊仍然是玻璃（只是换成暗色那组玻璃令牌），
-   不是实体横栏，也不会在切换边界闪跳。
-   暗主题整页就是深色，走 html.dark 的令牌，不需要这条。 */
-html:not(.dark) .brand-head[data-invert="true"] {
-  --brand-text: var(--brand-deep-text);
-  --brand-muted: var(--brand-deep-muted);
-  --brand-outline: var(--brand-deep-hairline);
-  --brand-line: var(--brand-deep-line);
-  color: var(--brand-deep-text);
-  background: var(--brand-surface-deep);
-}
-
-html:not(.dark) .brand-head[data-invert="true"]::after {
-  background: linear-gradient(to bottom, var(--brand-surface-deep), transparent);
-}
-
-html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
-  --glass-bg: rgba(16, 34, 60, 0.78);
-  --glass-edge: rgba(196, 232, 255, 0.26);
-  --glass-inner: rgba(255, 255, 255, 0.07);
-}
-
 /* 窄屏不把胶囊压扁塞进去：导航收进 MobileNav 抽屉，右侧只留主题与菜单。
    抽屉本身的路由、认证、焦点锁、滚动锁全部沿用既有实现。 */
 @media (max-width: 900px) {
@@ -944,6 +936,12 @@ html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
   .brand-head__cta,
   .brand-head__actions .acct {
     display: none;
+  }
+
+  /* 共享 `.burger` 只在 ≤800px 显示；品牌顶栏在 ≤900px 就收起胶囊，
+     801–900px 这段必须把汉堡放出来，否则顶栏没有任何导航入口。 */
+  .brand-head .burger {
+    display: inline-flex;
   }
 }
 
@@ -1020,7 +1018,12 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
   right: 0;
   bottom: 100%;
   height: clamp(56px, 7vw, 96px);
-  background: linear-gradient(to bottom, transparent, var(--brand-surface-deep));
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--brand-surface-deep-2) 62%,
+    var(--brand-surface-deep)
+  );
   pointer-events: none;
 }
 
@@ -1092,6 +1095,10 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
 
 .brand-foot__link {
   width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  /* 13px 文字的行盒只有 ~21px；补到 28px 才过 WCAG 2.5.8 的 24px 下限。 */
+  min-height: 28px;
   color: var(--brand-deep-text);
   font-family: var(--font-sans);
   font-size: 13px;
