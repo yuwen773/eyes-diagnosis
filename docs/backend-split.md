@@ -48,8 +48,9 @@
 页面也没有 KPI 条骨架。前端改动要落到 Python 线，必须先显式搬运，不能假定两边一样。
 
 注意 Vue 版 `frontend/` 现已**弃用（deprecated，2026-11-10 起）**：产品前端已转到 `web/`（React），
-`DESIGN.md` 描述的是 `web/` 那套「白色仪器 + 信号橙 `#d9541f`」，不是本目录 `frontend/` 的
-青绿 `--iris-*`。设计真源 `DESIGN.md` 只在本线入库。
+`DESIGN.md` 描述的是 `web/` 那套 **Iris 2.0 · Adaptive Visual System**（品牌层钴蓝 `#2457c9`
++ 临床语义色信号橙 `#d9541f`），不是本目录 `frontend/` 的青绿 `--iris-*`。
+设计真源 `DESIGN.md` 只在本线入库。
 
 `web/` 自 2026-11-10 起由 `git subtree` 纳入本仓库（原独立仓库 `yuwen773/eyes-diagnosis-web`
 已归档）。前端代码、CI 门禁与设计文档都以本仓库为准。
