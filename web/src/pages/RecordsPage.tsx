@@ -169,7 +169,7 @@ export function RecordsPage() {
 
         <div className="records__intro">
           <p className="overline">Ledger · 判读台账</p>
-          <h1 className="display records__title">诊断记录</h1>
+          <h1 className="records__title">诊断记录</h1>
           <p className="lead">
             你名下所有的判读，每一条都保留模型版本与权重指纹。点开一条，展开就是那张记录纸。
           </p>
@@ -273,13 +273,9 @@ export function RecordsPage() {
                       </span>
                       <span className="records__meta">
                         <span className="num">{formatTimestamp(item.createTime)}</span>
-                        <span>·</span>
                         <span>{reexamineLabel(item.reexamineStatus)}</span>
                         {item.requiresReview && !item.aiRejected ? (
-                          <>
-                            <span>·</span>
-                            <span>待人工复核</span>
-                          </>
+                          <span>待人工复核</span>
                         ) : null}
                       </span>
                     </span>
@@ -368,21 +364,21 @@ export function RecordsPage() {
               ))}
             </ul>
 
-            <div className="news__pager">
+            <div className="records__pager">
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page <= 1}
                 onClick={() => goPage(page - 1)}
               >
                 ← 上一页
               </button>
-              <span className="news__pager-state num">
+              <span className="records__pager-state num">
                 {page} / {pages} · 共 {stats.total} 条
               </span>
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page >= pages}
                 onClick={() => goPage(page + 1)}
               >

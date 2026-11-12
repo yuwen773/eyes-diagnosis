@@ -5,11 +5,18 @@ import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
 import { loadMyStats, statsLabels, type ScopedStats } from "@/lib/records"
+import {
+  confidencePercent,
+  formatTimestamp,
+  severityLabel,
+  severityRisk,
+} from "@/lib/domain"
 import { queryKeys } from "@/lib/queryKeys"
 import { faultFromError, infoFault, validationFault } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { useSession } from "@/lib/session"
 import { EmptyFrame } from "@/components/EmptyFrame"
+import { RiskTag } from "@/components/RiskTag"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
@@ -131,6 +138,12 @@ export function ProfilePage() {
   const scoped: ScopedStats | null = statsQuery.data ?? null
   const stats = scoped?.stats ?? { total: 0, highRisk: 0 }
   const labels = statsLabels(scoped?.scope ?? "page")
+  // 最近判读：与判读记录页同一份列表数据（第一页），按时间倒序取前三条。
+  const recent = useMemo(() => {
+    const list = [...(sample?.records ?? [])]
+    list.sort((a, b) => (b.createTime ?? "").localeCompare(a.createTime ?? ""))
+    return list.slice(0, 3)
+  }, [sample])
   const highRiskLabel =
     scoped?.scope === "all" ? labels.highRisk : `近 ${PROFILE_SAMPLE} 条高风险`
   const roleLabel = useMemo(
@@ -167,40 +180,34 @@ export function ProfilePage() {
         <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
 
         <div className="records__intro">
-          <h1 className="display records__title">个人中心</h1>
+          <h1 className="records__title">个人中心</h1>
           <p className="lead">Account · 账号。资料可改，头像可传，判读统计会从你的判读记录里实时汇总。</p>
         </div>
 
-        <div className="strip records__strip">
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{labels.total}</span>
-              <span className="readout__value num">
-                {statsFault || statsLoading ? "—" : stats.total}
-              </span>
-            </div>
+        {/* 个人域用读数卡，不套四列 KPI 条（DESIGN.md §1.5）：
+            四张卡各自带口径，卡与卡之间是发丝线，不是仪表条。 */}
+        <div className="profile__stats">
+          <div className="profile__stat">
+            <span className="readout__label">{labels.total}</span>
+            <span className="profile__stat-value num">
+              {statsFault || statsLoading ? "—" : stats.total}
+            </span>
           </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{highRiskLabel}</span>
-              <span className="readout__value num">
-                {statsFault || statsLoading ? "—" : stats.highRisk}
-              </span>
-            </div>
+          <div className="profile__stat">
+            <span className="readout__label">{highRiskLabel}</span>
+            <span className="profile__stat-value num">
+              {statsFault || statsLoading ? "—" : stats.highRisk}
+            </span>
           </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">注册时间 · SINCE</span>
-              <span className="readout__value readout__value--mono">
-                {user.createTime ? user.createTime.slice(0, 10) : "—"}
-              </span>
-            </div>
+          <div className="profile__stat">
+            <span className="readout__label">注册时间 · SINCE</span>
+            <span className="profile__stat-value profile__stat-value--date num">
+              {user.createTime ? user.createTime.slice(0, 10) : "—"}
+            </span>
           </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">角色 · ROLE</span>
-              <span className="readout__value">{roleLabel}</span>
-            </div>
+          <div className="profile__stat">
+            <span className="readout__label">角色 · ROLE</span>
+            <span className="profile__stat-value profile__stat-value--text">{roleLabel}</span>
           </div>
         </div>
 
@@ -220,6 +227,7 @@ export function ProfilePage() {
         ) : null}
 
         <div className="profile__grid">
+          <div className="profile__side">
           {/* ── 头像与账号铭牌 ─────────────────────────── */}
           <section className="profile__card">
             <div className="profile__card-head">
@@ -258,6 +266,48 @@ export function ProfilePage() {
               </div>
             </div>
           </section>
+
+          {/* ── 最近判读（真实数据，同一页记录的前几条） ─── */}
+          <section className="profile__card profile__card--recent">
+            <div className="profile__card-head">
+              <span className="profile__card-title">最近判读 · RECENT</span>
+            </div>
+
+            {recent.length === 0 ? (
+              <p className="profile__recent-empty">
+                {statsLoading ? "读取中…" : "还没有判读记录。"}
+              </p>
+            ) : (
+              <ul className="profile__recent">
+                {recent.map((item) => (
+                  <li key={item.id} className="profile__recent-item">
+                    <span className="profile__recent-name">
+                      {item.aiRejected ? "AI 拒识" : item.result || "未给出判读结果"}
+                    </span>
+                    <span className="profile__recent-meta">
+                      <span className="num">{formatTimestamp(item.createTime)}</span>
+                      {!item.aiRejected ? (
+                        <>
+                          <span className="num">{confidencePercent(item.confidence)}</span>
+                          <RiskTag risk={severityRisk(item.severity ?? undefined)}>
+                            {severityLabel(item.severity ?? undefined)}
+                          </RiskTag>
+                        </>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="profile__ledger-link">
+              <button type="button" className="link" data-cursor onClick={() => navigate("/records")}>
+                查看全部判读记录
+                <span className="link__mark">→</span>
+              </button>
+            </div>
+          </section>
+          </div>
 
           {/* ── 资料编辑 ───────────────────────────────── */}
           <section className="profile__card">
@@ -303,14 +353,6 @@ export function ProfilePage() {
               </div>
             </form>
           </section>
-        </div>
-
-        {/* 判读台账入口 */}
-        <div className="profile__ledger-link">
-          <button type="button" className="link" data-cursor onClick={() => navigate("/records")}>
-            查看全部判读记录
-            <span className="link__mark">→</span>
-          </button>
         </div>
       </main>
 

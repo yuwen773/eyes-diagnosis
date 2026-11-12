@@ -1,0 +1,121 @@
+{
+  "errors": [],
+  "report": [
+    {
+      "theme": "light",
+      "width": 390,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "view": "records-expanded",
+      "rows": 4,
+      "expanded": true
+    },
+    {
+      "theme": "light",
+      "view": "profile-focus"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "route": "profile",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "route": "records",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "view": "records-expanded",
+      "rows": 4,
+      "expanded": true
+    },
+    {
+      "theme": "dark",
+      "view": "profile-focus"
+    }
+  ]
+}

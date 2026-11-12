@@ -120,12 +120,15 @@ a {
 .overline {
   /* 眉线标签不再使用：章节信息并入标题与正文（见 DESIGN.md §12）。
      保留类名只为兼容旧 markup 的排版尺寸；字号收到正文一档，
-     不再做微型大写 tracking（taste-skill micro-label 门禁）。 */
+     不再做微型大写 tracking（taste-skill micro-label 门禁）。
+     Tailwind v4 有同名工具类（text-decoration-line: overline），
+     会在字上方多画一条线——这里显式撤掉。 */
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+  text-decoration-line: none;
   color: var(--fg-2);
 }
 
