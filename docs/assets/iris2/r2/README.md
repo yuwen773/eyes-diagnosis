@@ -178,3 +178,25 @@
   暗色页面上它正好是那座白色内容区。
 - **ScrollExpand 未改**：判读舞台仍是独立的深色观察画布（R2-04 明确要求保留）。
 - 品牌页画布用的是 `--brand-canvas`；浅色 `#f2f6fc`、暗色 `#0b1425`。
+
+## 全局验收 · 十条动效 / WebGL 路径
+
+在真实浏览器（Chromium 1234 + SwiftShader WebGL2，1440 × 900）里逐条操作并读取真实状态，
+没有通过注入样式伪造结果。第 10 条用真实 `WEBGL_lose_context` 与 `visibilitychange`
+事件驱动，绘制次数通过包装 `WebGL2RenderingContext.prototype.drawArrays` 统计。
+
+| # | 路径 | 结果 |
+|---|---|---|
+| 01 | 正常运行 | `data-mode="live"`，canvas 1 个（StrictMode 未重复挂载），console 0 错误 |
+| 02 | 用户手动暂停 | 点击真实「暂停动效」按钮 → `paused`，纤维位移停止 |
+| 03 | `prefers-reduced-motion`（首载） | `paused`，纤维位移停止 |
+| 04 | 运行中实时切到 reduce | `live → paused`，当场生效（不等重新挂载） |
+| 05 | WebGL2 不可用 | `static`，静态纤维带存在，页面可读 |
+| 06 | 运行中上下文丢失 | `WEBGL_lose_context().loseContext()` → `static` |
+| 07 | 离屏 | 滚到页底后纤维层 `is-drifting` 移除 |
+| 08 | 路由离开再返回 | 返回后 `live`，canvas 1 个，console 0 错误 |
+| 09 | 主题切换 | `live` 不变，canvas 仍 1 个（换参数不重建引擎） |
+| 10 | 标签页隐藏 / 恢复 | 隐藏后 600ms `drawArrays` **0** 次；恢复后重新绘制（20 次/600ms） |
+
+第 10 条的「运行中」基线是 14 次 / 600ms——这是 SwiftShader 软件光栅下的帧率，
+不代表真实 GPU 表现；本表只用来证明**隐藏时确实停止绘制**。
