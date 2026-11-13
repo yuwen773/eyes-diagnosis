@@ -279,7 +279,10 @@ export function AdminDashboardPage(): ReactElement {
       </section>
 
       <section className="admin-dashboard__records" aria-label="最近判读记录">
-        <h2 className="admin-dashboard__records-title">最近判读记录</h2>
+        <h2 className="admin-dashboard__records-title">
+          最近判读记录
+          <span className="admin-analysis__title-note num">最新 5 条 · 全量在诊断管理</span>
+        </h2>
         {recentFault ? (
           <FaultNote
             className="admin-dashboard__fault"

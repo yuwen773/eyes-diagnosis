@@ -254,7 +254,7 @@ export function AdminNewsPage(): ReactElement {
         <SectionHead code="03" kicker="新闻管理" en="ADMIN · NEWS" />
         <button
           type="button"
-          className="btn btn--sm admin-news__new"
+          className="admin-btn admin-btn--primary admin-news__new"
           onClick={() => navigate("/admin/news/new/edit")}
         >
           新建资讯

@@ -124,7 +124,7 @@ function BackButton(): ReactElement {
   return (
     <button
       type="button"
-      className="btn btn--ghost btn--sm admin-newsedit__back"
+      className="admin-btn admin-btn--ghost admin-newsedit__back"
       onClick={() => navigate("/admin/news")}
     >
       返回列表

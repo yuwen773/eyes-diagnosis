@@ -719,8 +719,8 @@
 .admin-modal__title {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
   color: var(--admin-text);
 }
@@ -798,8 +798,8 @@
 .admin-drawer__title {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
   color: var(--admin-text);
 }
@@ -1180,8 +1180,8 @@
 .admin-dashboard__records-title {
   margin: 0 0 18px;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
   color: var(--admin-text);
 }
@@ -2078,8 +2078,8 @@
 .admin-analysis__title {
   margin: 0 0 18px;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
   color: var(--admin-text);
 }
@@ -2830,6 +2830,14 @@
   color: var(--admin-text-faint);
 }
 
+/* 仪表盘统计载入占位：mono 破折号节奏的读数行，与空态同源。 */
+.admin-dashboard__loading {
+  margin: 0;
+  padding: 32px 0;
+  font-size: 12.5px;
+  color: var(--admin-text-faint);
+}
+
 /* ==========================================================================
    管理后台 · 运营工作台增量（2026-11-11 · 仪表盘改版）
    --------------------------------------------------------------------------
@@ -2867,8 +2875,8 @@
 }
 
 .admin-tile__action:hover {
-  color: var(--admin-accent);
-  border-color: var(--admin-accent);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 .admin-tile__action:focus-visible {
@@ -2963,8 +2971,8 @@
 }
 
 .admin-dashboard__action-link:hover {
-  color: var(--admin-accent);
-  border-color: var(--admin-accent);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 .admin-dashboard__action-link:focus-visible {
@@ -3018,8 +3026,8 @@
 }
 
 .admin-analysis__note-link:hover {
-  color: var(--admin-accent);
-  border-color: var(--admin-accent);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 /* 两卡并排（病种分布 + 复核状态、知识库 + 资讯）：占满整行，不留空列。 */
