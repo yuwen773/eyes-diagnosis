@@ -50,7 +50,8 @@
   max-width: var(--maxw);
   margin: 0 auto;
   padding: 0 clamp(16px, 3.2vw, 48px);
-  min-height: 56px;
+  /* 内容高度 = --nav-h 减掉顶栏自己的上下 8px 呼吸。 */
+  min-height: calc(var(--nav-h) - 16px);
 }
 
 .product-head__brand {
@@ -69,9 +70,11 @@
   --shell-ink: var(--brand-text);
   --shell-muted: var(--brand-muted);
   --shell-line: var(--brand-line);
-  /* 高度钉在 --nav-h：Agent 的视口高度用它算，多出几像素就会让整页
-     多一条滚动条；其他场景同高，四页顶栏完全一致。 */
+  /* 顶栏上下留呼吸：导航胶囊不再贴住视口最上沿。
+     高度仍钉在 --nav-h（= 上下 8px + 内容 64px），Agent 的视口高度
+     用它算，多出几像素就会让整页多一条滚动条。 */
   min-height: var(--nav-h);
+  padding: 8px 0;
 }
 
 .product-head .wordmark__en {
