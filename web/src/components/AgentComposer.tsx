@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import type { ClipboardEvent, KeyboardEvent } from "react"
+import { ArrowRight, ArrowUp, CirclePlus, ImagePlus } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { ElectricBorder } from "@/components/ElectricBorder"
 import { saveDraft } from "@/lib/agentDraft"
@@ -106,36 +107,11 @@ export function AgentComposer({ dark }: { dark: boolean }) {
                 navigate("/agent")
               }}
             >
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
+              <ImagePlus size={19} strokeWidth={1.8} aria-hidden="true" />
             </button>
 
             <span className="composer__mode num">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3v18M3 12h18" />
-              </svg>
+              <CirclePlus size={13} strokeWidth={2} aria-hidden="true" />
               影像与知识库检索
             </span>
 
@@ -148,20 +124,7 @@ export function AgentComposer({ dark }: { dark: boolean }) {
               disabled={text.trim().length === 0}
               onClick={submit}
             >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="12" y1="19" x2="12" y2="5" />
-                <polyline points="5 12 12 5 19 12" />
-              </svg>
+              <ArrowUp size={17} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -182,7 +145,7 @@ export function AgentComposer({ dark }: { dark: boolean }) {
           data-cursor-label="诊断 Agent"
         >
           {status === "authed" ? "进入完整诊断 Agent" : "登录后体验诊断 Agent"}
-          <span className="link__mark">→</span>
+          <ArrowRight className="link__mark" size={14} strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
     </div>

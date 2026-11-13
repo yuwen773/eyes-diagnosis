@@ -1,4 +1,5 @@
 import { useMemo, type ReactElement, type ReactNode } from "react"
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react"
 import {
   functionalUpdate,
   rowSortingFeature,
@@ -301,7 +302,13 @@ export function DataTable<T extends RowData>(props: {
                         >
                           {column.title}
                           <span className="admin-dt__sort-mark" aria-hidden="true">
-                            {sorted === "asc" ? "↑" : sorted === "desc" ? "↓" : "↕"}
+                            {sorted === "asc" ? (
+                              <ChevronUp size={12} strokeWidth={2} />
+                            ) : sorted === "desc" ? (
+                              <ChevronDown size={12} strokeWidth={2} />
+                            ) : (
+                              <ChevronsUpDown size={12} strokeWidth={2} />
+                            )}
                           </span>
                         </button>
                       ) : (

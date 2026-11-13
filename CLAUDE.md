@@ -131,6 +131,10 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **圆角只用令牌梯** `--radius-none/sm/md/lg/xl/2xl/circle/pill`
   （0/4/8/12/24/38/50%/999px），按场景取（Clinical 0、Management 8–12、Brand 24–38）。
   不再写像素自由值。（`xl`/`2xl` 随 PR #52 进入 `tokens.css`，合并前取不到。）
+- **全站通用 UI 图标统一采用 lucide-react**（静态命名导入，保持 tree-shaking，不装
+  第二套图标库）；自定义 SVG 仅用于品牌标识、医学图形、数据可视化或 Lucide 无法
+  满足的特定设计需求。新增手写功能性图标必须说明理由。尺寸/描边/色彩的统一口径
+  见 `web/DESIGN.md` 规则 16。
 - **发丝线优先于厚重卡片阴影**；浮层 `--shadow-overlay`，模态/抽屉 `--shadow-modal`，
   阴影基于墨色（品牌玻璃用 `--brand-shadow`）。
 - **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。

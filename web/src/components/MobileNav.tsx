@@ -113,6 +113,7 @@ export function MobileNav() {
               className="drawer__link"
               onClick={() => setOpen(false)}
             >
+              <item.icon size={15} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </Link>
           ))}

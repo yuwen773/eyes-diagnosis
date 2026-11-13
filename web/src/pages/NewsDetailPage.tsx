@@ -1,6 +1,7 @@
 import "@/styles/news.css"
 
 import { useMemo } from "react"
+import { ArrowLeft } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
 import { describeError, getNews, listNews } from "@/lib/api"
@@ -65,7 +66,7 @@ export function NewsDetailPage() {
 
       <main className="wrap news-detail">
         <Link className="news-detail__back" to="/news" data-cursor>
-          <span aria-hidden="true">←</span> 资讯列表
+          <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" /> 资讯列表
         </Link>
 
         {loading ? (

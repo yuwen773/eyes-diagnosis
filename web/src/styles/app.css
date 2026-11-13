@@ -662,7 +662,9 @@ a.acct__trigger--anon:hover {
 }
 
 .drawer__link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 13px 0;
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -673,6 +675,11 @@ a.acct__trigger--anon:hover {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+}
+
+.drawer__link svg {
+  flex: none;
+  color: var(--fg-3);
 }
 
 .drawer__rule {

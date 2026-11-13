@@ -399,7 +399,7 @@ export function SessionList({
             aria-label="收起会话栏"
             title="收起会话栏"
           >
-            <ChevronLeft aria-hidden="true" />
+            <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
@@ -432,7 +432,7 @@ export function SessionList({
               onClick={onNewChat}
               disabled={busy}
             >
-              <Plus aria-hidden="true" />
+              <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
               <span>新对话</span>
             </button>
             <button
