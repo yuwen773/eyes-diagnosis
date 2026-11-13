@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **Vue 3** frontend + **Python** algorithm service.
+Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **React 19** product frontend (`web/`) + **Python** algorithm service. `frontend/` is the historical Vue frontend; realtime collaboration work belongs in `web/`.
 Base package: `com.csust.eyediagnosis`
 
 > **本分支是 Java 线。** 仓库里另有一条 Python 后端线（FastAPI），在 `feature/python-backend`
@@ -52,7 +52,9 @@ docker-compose up -d                 # ChromaDB vector store :8000
 
 **gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
 
-**Frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. Agent chat uses `@microsoft/fetch-event-source` for SSE.
+**Product frontend** (`web/`): React 19 + TypeScript + Vite. See `web/package.json` for typecheck, tests, build and lint. Ordinary chat and collaboration use `@microsoft/fetch-event-source`; their state and cancellation remain separate. TASK-04 collaboration is opt-in via `VITE_COLLABORATION_ENABLED=true`; see `docs/collaboration-client.md`.
+
+**Historical frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`.
 
 ## API Endpoints
 
@@ -62,15 +64,17 @@ docker-compose up -d                 # ChromaDB vector store :8000
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
 | DiagnosisTaskController | `/api/diagnosis-tasks/*` | Patient image task: submit, idempotent replay, safe status (see `docs/diagnosis-task.md`) |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
+| PatientDraftTestController / PatientDraftSeedController | `/api/patient-draft-test/*` | Opt-in admin-only draft validation |
 | McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
 | NewsController | `/api/news/*` | News CRUD |
 | ControlledReferenceController | `/api/controlled-references/*` | Controlled reference upload, governance, retrieval (see `docs/controlled-references.md`) |
+| CollaborationRunController | `/api/agent/collaboration-runs/*` | Opt-in run admission, authorized snapshot/SSE and cancellation (see `docs/collaboration-runs.md`) |
 | DoctorReviewController | `/api/doctor-reviews/*` | Assigned doctor review of frozen drafts (see `docs/doctor-review.md`) |
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V14. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V27. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -88,4 +92,4 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 
 ## Design Context
 
-前端视觉与交互规则的唯一真源是 `DESIGN.md`（含令牌值、字体、组件约定、Do/Don't 与 Agent 速查）。写 `.vue`、改样式、评审 UI 时读它。页面骨架用 sub-style B；已按 B 重写的三个页面是 `HomePage.vue`、`user/UserLoginPage.vue`、`user/UserRegisterPage.vue`，其余 17 页改到时以这三页为模板。
+产品前端设计真源是固定 React 基线引入的 `DESIGN.md`、`web/DESIGN.md` 和 `web/src/styles/tokens.css`。实时协作工作台沿用同一设计系统，按授权事实呈现状态和时间线。Vue 页面不作为实时协作交付或设计参考。

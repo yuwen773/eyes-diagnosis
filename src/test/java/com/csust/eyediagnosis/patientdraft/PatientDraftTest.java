@@ -45,7 +45,7 @@ class PatientDraftTest {
         if (!url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/issue19_test")) throw new IllegalArgumentException("Isolated database required");
         var ds = new DriverManagerDataSource(url, "issue19", "issue19");
         jdbc = new JdbcTemplate(ds);
-        for (String migration : List.of("V10__diagnosis_task.sql", "V11__controlled_reference.sql", "V12__patient_draft.sql")) {
+        for (String migration : List.of("V18__diagnosis_task.sql", "V19__controlled_reference.sql", "V20__patient_draft.sql")) {
             String table = migration.startsWith("V10") ? "t_diagnosis_task" : migration.startsWith("V11") ? "t_controlled_reference" : "t_patient_draft_run";
             if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?", Integer.class, table) == 0) {
                 new ResourceDatabasePopulator(new ClassPathResource("db/migration/" + migration)).execute(ds);
@@ -54,11 +54,11 @@ class PatientDraftTest {
         // V16 alters an existing table, so it is keyed on its own column rather than on table existence.
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
                 + "AND table_name='t_patient_draft_message' AND column_name='startedAt'", Integer.class) == 0) {
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V16__patient_draft_message_timing.sql")).execute(ds);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V23__patient_draft_message_timing.sql")).execute(ds);
         }
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
                 + "AND table_name='t_patient_draft_run' AND column_name='workflowVersion'", Integer.class) == 0) {
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V17__autonomous_draft_workflow.sql")).execute(ds);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V24__autonomous_draft_workflow.sql")).execute(ds);
         }
         jdbc.update("DELETE FROM t_patient_draft_message");
         jdbc.update("DELETE FROM t_patient_draft_version");

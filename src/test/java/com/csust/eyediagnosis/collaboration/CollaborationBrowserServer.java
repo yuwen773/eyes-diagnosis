@@ -53,7 +53,7 @@ public class CollaborationBrowserServer {
             for (String resource : List.of("db/callback/beforeMigrate__bootstrap_legacy_flyway_schema.sql",
                     "db/migration/V2__split_inference_cache.sql", "db/migration/V5__medical_reliability.sql",
                     "db/migration/V7__complete_inference_cache_safety_fields.sql", "db/migration/V9__version_inference_safety_policy.sql",
-                    "db/migration/V14__patient_authorization.sql")) ddl.addScript(new org.springframework.core.io.ClassPathResource(resource));
+                    "db/migration/V22__patient_authorization.sql")) ddl.addScript(new org.springframework.core.io.ClassPathResource(resource));
             ddl.execute(Objects.requireNonNull(jdbc.getDataSource()));
         }
         installModel.accept(prompt -> {

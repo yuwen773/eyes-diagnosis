@@ -50,7 +50,7 @@ class DoctorReviewApiTest {
         if (!url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/issue20_test")) throw new IllegalArgumentException("Isolated database required");
         var ds = new DriverManagerDataSource(url, "issue20", "issue20");
         jdbc = new JdbcTemplate(ds);
-        for (String migration : List.of("V10__diagnosis_task.sql", "V11__controlled_reference.sql", "V12__patient_draft.sql", "V13__doctor_review.sql")) {
+        for (String migration : List.of("V18__diagnosis_task.sql", "V19__controlled_reference.sql", "V20__patient_draft.sql", "V21__doctor_review.sql")) {
             String table = switch (migration.substring(0, 3)) {
                 case "V10" -> "t_diagnosis_task";
                 case "V11" -> "t_controlled_reference";

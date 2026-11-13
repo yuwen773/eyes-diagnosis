@@ -47,7 +47,7 @@ class ControlledReferenceApiTest {
         var ds = new DriverManagerDataSource(url, "issue18", "issue18");
         jdbc = new JdbcTemplate(ds);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='t_controlled_reference'", Integer.class) == 0) {
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V11__controlled_reference.sql")).execute(ds);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V19__controlled_reference.sql")).execute(ds);
         }
         jdbc.update("DELETE FROM t_controlled_reference_chunk");
         jdbc.update("DELETE FROM t_controlled_reference");

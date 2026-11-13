@@ -27,10 +27,10 @@ class ContractGateTest(unittest.TestCase):
         self.write(PYTHON_PRODUCER, producer)
         self.write(JAVA_GATE, gate)
 
-    def steering_tree(self, claude="Current head is V12", agents="Current head is V12",
+    def steering_tree(self, claude="Current head is V20", agents="Current head is V20",
                       paths=("/api/user",)):
         (self.root / "src/main/resources/db/migration").mkdir(parents=True)
-        self.write("src/main/resources/db/migration/V12__patient_draft.sql", "SELECT 1;")
+        self.write("src/main/resources/db/migration/V20__patient_draft.sql", "SELECT 1;")
         self.write("src/main/java/com/csust/eyediagnosis/controller/UserController.java",
                    '@RequestMapping("/user")')
         for doc, head in (("CLAUDE.md", claude), ("AGENTS.md", agents)):
@@ -72,9 +72,9 @@ class SteeringDocsTest(ContractGateTest):
         self.assertEqual([], steering_check(self.root))
 
     def test_stale_head_fails(self):
-        self.steering_tree(agents="Current head is V10")
+        self.steering_tree(agents="Current head is V18")
         errors = steering_check(self.root)
-        self.assertTrue(any("AGENTS.md: states V10" in e for e in errors))
+        self.assertTrue(any("AGENTS.md: states V18" in e for e in errors))
         self.assertTrue(any("disagree on migration head" in e for e in errors))
 
     def test_missing_controller_path_fails(self):
@@ -88,7 +88,7 @@ class SteeringDocsTest(ContractGateTest):
         self.assertTrue(steering_check(self.root))
 
     def test_cli_exit_code(self):
-        self.steering_tree(agents="Current head is V10")
+        self.steering_tree(agents="Current head is V18")
         import subprocess
         import sys
         result = subprocess.run(

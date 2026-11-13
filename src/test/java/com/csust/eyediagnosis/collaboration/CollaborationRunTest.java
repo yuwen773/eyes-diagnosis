@@ -55,21 +55,21 @@ class CollaborationRunTest {
         var source = new DriverManagerDataSource(url, "collaboration", "collaboration");
         jdbc = new JdbcTemplate(source);
         for (String[] entry : List.of(
-                new String[]{"t_diagnosis_task", "V10__diagnosis_task.sql"},
-                new String[]{"t_controlled_reference", "V11__controlled_reference.sql"},
-                new String[]{"t_patient_draft_run", "V12__patient_draft.sql"},
-                new String[]{"t_doctor_review", "V13__doctor_review.sql"})) {
+                new String[]{"t_diagnosis_task", "V18__diagnosis_task.sql"},
+                new String[]{"t_controlled_reference", "V19__controlled_reference.sql"},
+                new String[]{"t_patient_draft_run", "V20__patient_draft.sql"},
+                new String[]{"t_doctor_review", "V21__doctor_review.sql"})) {
             if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?", Integer.class, entry[0]) == 0)
                 new ResourceDatabasePopulator(new ClassPathResource("db/migration/" + entry[1])).execute(source);
         }
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='t_patient_draft_message' AND column_name='startedAt'", Integer.class) == 0)
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V16__patient_draft_message_timing.sql")).execute(source);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V23__patient_draft_message_timing.sql")).execute(source);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='t_patient_draft_run' AND column_name='workflowVersion'", Integer.class) == 0)
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V17__autonomous_draft_workflow.sql")).execute(source);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V24__autonomous_draft_workflow.sql")).execute(source);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='t_agent_collab_run'", Integer.class) == 0)
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V18__collaboration_events.sql")).execute(source);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V25__collaboration_events.sql")).execute(source);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='t_patient_graph_execution'", Integer.class) == 0)
-            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V19__graph_execution.sql")).execute(source);
+            new ResourceDatabasePopulator(new ClassPathResource("db/migration/V26__graph_execution.sql")).execute(source);
         // Existing pre-Flyway tables: minimal fixture columns, not a replacement production migration.
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_user (id BIGINT PRIMARY KEY,userRole VARCHAR(32),isDelete INT DEFAULT 0) ENGINE=InnoDB");
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_agent_session (sessionId VARCHAR(64) PRIMARY KEY,userId BIGINT,isDelete INT DEFAULT 0,status INT DEFAULT 1,expiredTime DATETIME NULL) ENGINE=InnoDB");

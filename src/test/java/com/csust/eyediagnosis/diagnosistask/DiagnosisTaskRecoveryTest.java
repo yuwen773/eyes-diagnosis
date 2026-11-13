@@ -232,7 +232,7 @@ class DiagnosisTaskRecoveryTest {
         var jdbc = new JdbcTemplate(dataSource);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 't_diagnosis_task'", Integer.class) == 0) {
             new org.springframework.jdbc.datasource.init.ResourceDatabasePopulator(
-                    new org.springframework.core.io.ClassPathResource("db/migration/V10__diagnosis_task.sql")).execute(dataSource);
+                    new org.springframework.core.io.ClassPathResource("db/migration/V18__diagnosis_task.sql")).execute(dataSource);
         }
     }
     @Test

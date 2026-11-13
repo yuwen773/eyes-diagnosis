@@ -102,7 +102,7 @@ python run_mcp_server.py
 - 推理缓存仅在图片哈希、模型版本、权重 SHA-256、预处理版本和安全策略版本全部一致时复用；并发写入采用原子 UPSERT。
 - 当前 OOD 状态为 `NOT_EVALUATED`，不表示图片已被确认属于训练分布。
 - 当前温度配置为 `1.0` 且状态为 `NOT_CALIBRATED`；界面显示的是模型置信分数，不是诊断可靠性或医学结论。
-- 数据库升级使用 Flyway，当前迁移到 **V10**（`V10__diagnosis_task.sql` 新增 `t_diagnosis_task`）。已应用 V8 的数据库在升级前须遵循 [Flyway 迁移历史计划](docs/flyway-migration-history-plan.md)；已应用的迁移脚本不得再修改。
+- 数据库升级使用 Flyway，当前迁移到 **V27**（V18–V27 为 Java 线协作与草稿链路）。已应用迁移的数据库升级前须遵循 [Flyway 迁移矩阵](docs/architecture/migration-matrix.md)；已应用的迁移脚本不得再修改。
 
 ## 🧪 验证与 CI 门禁
 

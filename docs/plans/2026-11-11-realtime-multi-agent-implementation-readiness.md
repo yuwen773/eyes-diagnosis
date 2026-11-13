@@ -27,16 +27,17 @@
 
 ### 2.1 数据库历史冲突：阻止整分支直接合并
 
-| 版本 | 当前 Java 线 | master |
-| --- | --- | --- |
-| V10–V14 | 诊断任务、受控引用、草稿、医生复核、患者授权 | 对照树未包含这些迁移 |
-| V15 | 工作区未跟踪的 `V15__bootstrap_user_table.sql` | `V15__baseline_legacy_tables.sql` |
-| V16 | `V16__patient_draft_message_timing.sql` | `V16__diagnosis_evidence_and_audit.sql` |
-| V17 | `V17__autonomous_draft_workflow.sql` | `V17__news_business_model.sql` |
+| 版本 | 原 Java 线 | master | 2026-11-13 处理 |
+| --- | --- | --- | --- |
+| V10–V14 | 诊断任务、受控引用、草稿、医生复核、患者授权 | 对照树未包含这些迁移 | 单调重排为 V18–V22 |
+| V15 | 工作区未跟踪的 `V15__bootstrap_user_table.sql` | `V15__baseline_legacy_tables.sql` | 删除重复 bootstrap，采用 master V15 |
+| V16 | `V16__patient_draft_message_timing.sql` | `V16__diagnosis_evidence_and_audit.sql` | Java 线重排为 V23，采用 master V16 |
+| V17 | `V17__autonomous_draft_workflow.sql` | `V17__news_business_model.sql` | Java 线重排为 V24，采用 master V17 |
+| V18–V20 | 协作事件、图执行、agent 历史 bootstrap | — | 重排为 V25–V27 |
 
-直接合并会留下同版本不同迁移；主干数据库也可能已经越过 Java 线新增的低版本迁移。不能通过修改已应用脚本、直接重编号、删除 Flyway 历史或盲开 out-of-order 解决。
+直接合并会留下同版本不同迁移；主干数据库也可能已经越过 Java 线新增的低版本迁移。不能通过修改已应用脚本、删除 Flyway 历史或盲开 out-of-order 解决。本轮采用的整合方式：以 master 的 V1–V9 + V15–V17 为已部署基线，保留其脚本原样；Java 线自己的 V10–V20 整体单调重排到 V18–V27（内容不变），并删除与 master V15 重复的 `t_user` bootstrap。这样任一已部署库的版本链都是单一、递增的。
 
-整合前先读取目标环境的实际 schema history、校验和及表结构，分别设计空库、Java 旧库和 master 旧库的升级路径。追加兼容迁移之前，必须先形成可加载且版本唯一的迁移集合及历史兼容方案；仅追加一个高版本脚本无法消除原有重号。该专项不阻止无数据库的 TASK-01。
+Java 线旧开发库（已应用 V10–V20）不在生产序列中，按迁移矩阵直接重建；master 生产库从 V17 顺序追加 V18–V27。迁移矩阵、校验步骤与演练脚本见 [Flyway 迁移矩阵](../architecture/migration-matrix.md)。后续新迁移必须大于 V27，不得再重排或复用已发布版本号。
 
 ### 2.2 正式前端未在当前树
 
@@ -67,7 +68,7 @@
 1. TASK-01 从上述 Java SHA 建立独立、干净的实施工作树；只增加隔离测试和必要说明，不复制当前脏工作区。
 2. 保留现有 `AGENTS.md`、`CLAUDE.md`、算法 OOD、`DiagnosisTaskApiTest`、`check_issue17_reports.py`、Vue 侧栏、V15 及证据文件。原计划本身也未提交，需要随相应文档交付单独纳入范围。
 3. React 阶段在专用整合分支按完整 SHA 引入 `master:web/` 及经审核的设计/构建必需文件。逐项核对 API 兼容，不整分支盲合，不覆盖 Java 领域服务；实施时重新读取该分支的约束。
-4. 数据库历史专项完成前，后端卡片以 Java 线为基线；新迁移编号以届时实际集合为准，不预占“V18”或重命名现有 V15–V17。
+4. 数据库历史专项已于 2026-11-13 按 §2.1 处理：master V15–V17 原样保留，Java 线迁移单调重排为 V18–V27。后端卡片以合并后的链为基线；新迁移编号必须大于 V27，不得再预占或重排既有版本。
 5. 每卡只暂存自身文件，记录目标 SHA 和测试环境。Graph 开关保持默认关闭；M0 不改正式 Coordinator 或用户入口。
 
 以上是后续执行策略，本轮未创建工作树、搬运前端或实施迁移修复。

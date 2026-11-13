@@ -36,13 +36,10 @@ def main():
             target = ROOT / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(source.read_bytes())
-        # The existing unapplied Java-line V15 is a required fresh-login dependency,
-        # copied explicitly instead of bringing unrelated OOD or Vue changes.
-        path = 'src/main/resources/db/migration/V15__bootstrap_user_table.sql'
-        target = ROOT / path
-        target.write_bytes((ROOT.parent / 'java-multi-agent-arch' / path).read_bytes())
+        # The Java-line fresh-login dependency (t_user bootstrap) is now provided by
+        # master's V15__baseline_legacy_tables.sql; no extra copy is required.
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-        OUTPUT.write_text(json.dumps({'sources': sources, 'additionalDependency': path}, indent=2) + '\n')
+        OUTPUT.write_text(json.dumps({'sources': sources, 'additionalDependency': None}, indent=2) + '\n')
     for name, expected in json.loads(OUTPUT.read_text())['sources'].items():
         if inventory(ROOT.parent / name) != expected:
             raise SystemExit('Input changed: ' + name)
