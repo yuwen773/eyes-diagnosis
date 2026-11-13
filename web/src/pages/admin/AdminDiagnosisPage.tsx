@@ -520,7 +520,7 @@ export function AdminDiagnosisPage(): ReactElement {
         <div className="admin-diagnosis__row-actions">
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => openDetail(row)}
           >
             详情
@@ -528,7 +528,7 @@ export function AdminDiagnosisPage(): ReactElement {
           {/* 复核是这张表的主动作之一：不该藏在详情抽屉底部，得在行上直接点得到。 */}
           <button
             type="button"
-            className="btn btn--sm"
+            className="admin-btn admin-btn--primary"
             onClick={() => {
               openDetail(row)
               openReview()
@@ -538,7 +538,7 @@ export function AdminDiagnosisPage(): ReactElement {
           </button>
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => openDelete(row)}
           >
             删除
@@ -608,10 +608,10 @@ export function AdminDiagnosisPage(): ReactElement {
             />
           </label>
           <div className="admin-diagnosis__actions">
-            <button className="btn btn--sm" type="submit">
+            <button className="admin-btn admin-btn--primary" type="submit">
               查询
             </button>
-            <button className="btn btn--ghost btn--sm" type="button" onClick={onReset}>
+            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
               重置
             </button>
           </div>
@@ -636,7 +636,7 @@ export function AdminDiagnosisPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="判读记录批量操作">
         <button
           type="button"
-          className="btn btn--sm"
+          className="admin-btn admin-btn--primary"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >
@@ -675,7 +675,7 @@ export function AdminDiagnosisPage(): ReactElement {
       <Drawer open={detailTarget != null} title="判读详情" onClose={closeDetail}>
         {detailBody()}
         <div className="admin-diagnosis__drawer-actions">
-          <button type="button" className="btn btn--sm" onClick={openReview}>
+          <button type="button" className="admin-btn admin-btn--primary" onClick={openReview}>
             人工复核
           </button>
         </div>
@@ -690,7 +690,7 @@ export function AdminDiagnosisPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeReview}
               disabled={submitting}
             >
@@ -698,7 +698,7 @@ export function AdminDiagnosisPage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={confirmReview}
               disabled={submitting || reviewResultEmpty}
             >
@@ -795,7 +795,7 @@ export function AdminDiagnosisPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeDelete}
               disabled={deleting}
             >
@@ -803,7 +803,7 @@ export function AdminDiagnosisPage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={confirmDelete}
               disabled={deleting}
             >

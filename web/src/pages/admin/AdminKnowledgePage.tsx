@@ -385,21 +385,21 @@ export function AdminKnowledgePage(): ReactElement {
         <div className="admin-knowledge__row-actions">
           <button
             type="button"
-            className="btn btn--sm"
+            className="admin-btn admin-btn--primary"
             onClick={() => openPreview(row)}
           >
             预览
           </button>
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => openRename(row)}
           >
             改名
           </button>
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => openDelete(row)}
           >
             删除
@@ -496,10 +496,10 @@ export function AdminKnowledgePage(): ReactElement {
             />
           </label>
           <div className="admin-knowledge__actions">
-            <button className="btn btn--sm" type="submit">
+            <button className="admin-btn admin-btn--primary" type="submit">
               查询
             </button>
-            <button className="btn btn--ghost btn--sm" type="button" onClick={onReset}>
+            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
               重置
             </button>
           </div>
@@ -517,7 +517,7 @@ export function AdminKnowledgePage(): ReactElement {
           />
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => fileInputRef.current?.click()}
           >
             选择文件
@@ -526,7 +526,7 @@ export function AdminKnowledgePage(): ReactElement {
           <div className="admin-knowledge__upload-actions">
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={startUpload}
               disabled={pendingFiles.length === 0 || uploading}
             >
@@ -594,7 +594,7 @@ export function AdminKnowledgePage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="知识文档批量操作">
         <button
           type="button"
-          className="btn btn--sm"
+          className="admin-btn admin-btn--primary"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >
@@ -725,13 +725,13 @@ export function AdminKnowledgePage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeRename}
               disabled={renaming}
             >
               取消
             </button>
-            <button type="button" className="btn btn--sm" onClick={confirmRename} disabled={renaming}>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={confirmRename} disabled={renaming}>
               {renaming ? "保存中…" : "保存"}
             </button>
           </>
@@ -772,7 +772,7 @@ export function AdminKnowledgePage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeDelete}
               disabled={deleting}
             >
@@ -780,7 +780,7 @@ export function AdminKnowledgePage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={confirmDelete}
               disabled={deleting}
             >
