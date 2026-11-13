@@ -280,3 +280,95 @@ describe("品牌页作用域 · .is-brand-page（R2-04）", () => {
     expect(body).toContain("background: var(--brand-canvas)")
   })
 })
+
+describe("Iris 2.0 管理端 · Purple Medical SaaS（--admin-*）", () => {
+  const ADMIN_SURFACES_LIGHT = ["--admin-canvas", "--admin-surface", "--admin-surface-deep", "--admin-sidebar"]
+  const ADMIN_SURFACES_DARK = ADMIN_SURFACES_LIGHT
+
+  const riskValues = [
+    "--paper-risk-normal",
+    "--paper-risk-attention",
+    "--paper-risk-critical",
+    "--risk-normal-lit",
+    "--risk-attention-lit",
+    "--risk-critical-lit",
+  ].map((name) => value(name))
+  const darkRiskValues = riskValues
+
+  it("浅色：正文三级色在画布、卡片、侧栏上都 ≥ 4.5", () => {
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      for (const surface of ADMIN_SURFACES_LIGHT) {
+        expect(contrast(value(fg), value(surface))).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("暗色：正文三级色在画布、卡片、侧栏上都 ≥ 4.5", () => {
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      for (const surface of ADMIN_SURFACES_DARK) {
+        expect(contrast(darkValue(fg), darkValue(surface))).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("浅色：管理紫当文字色时 ≥ 4.5；白字压在管理紫上 ≥ 4.5", () => {
+    for (const surface of ADMIN_SURFACES_LIGHT) {
+      expect(contrast(value("--admin-primary"), value(surface))).toBeGreaterThanOrEqual(4.5)
+    }
+    // hover 压深一档也要能当文字色。
+    expect(contrast(value("--admin-primary-strong"), value("--admin-surface"))).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(value("--admin-on-primary"), value("--admin-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(value("--admin-on-primary"), value("--admin-primary-strong")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("暗色：提亮的管理紫当文字色 ≥ 4.5；压在上面的深紫墨 ≥ 4.5", () => {
+    for (const surface of ADMIN_SURFACES_DARK) {
+      expect(contrast(darkValue("--admin-primary"), darkValue(surface))).toBeGreaterThanOrEqual(4.5)
+    }
+    expect(contrast(darkValue("--admin-on-primary"), darkValue("--admin-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(darkValue("--admin-on-primary"), darkValue("--admin-primary-strong")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("图表强调紫：浅底 ≥ 3（图形下限）、暗底当文字也 ≥ 4.5", () => {
+    expect(contrast(value("--admin-accent"), value("--admin-canvas"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(value("--admin-accent"), value("--admin-surface"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(darkValue("--admin-accent"), darkValue("--admin-canvas"))).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(darkValue("--admin-accent"), darkValue("--admin-surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("当前导航态：primary 文字落在 primary-soft 高亮底上仍 ≥ 4.5", () => {
+    // 侧栏当前项 = primary-soft（半透明紫衬）合成到侧栏表面。
+    const lightNavBg = over(rawValue("--admin-primary-soft"), value("--admin-sidebar"))
+    expect(contrast(value("--admin-primary"), lightNavBg)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(value("--admin-text-muted"), lightNavBg)).toBeGreaterThanOrEqual(4.5)
+    const darkNavBg = over(rawDarkValue("--admin-primary-soft"), darkValue("--admin-sidebar"))
+    expect(contrast(darkValue("--admin-primary"), darkNavBg)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(darkValue("--admin-text-muted"), darkNavBg)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("管理紫不得与医学风险色同值：紫色永不冒充严重度", () => {
+    for (const admin of [
+      "--admin-primary",
+      "--admin-primary-strong",
+      "--admin-accent",
+      "--admin-on-primary",
+    ]) {
+      for (const risk of riskValues) {
+        expect(value(admin)).not.toBe(risk)
+      }
+      for (const risk of darkRiskValues) {
+        expect(darkValue(admin)).not.toBe(risk)
+      }
+    }
+  })
+
+  it("亮暗两套紫不是同一枚色值：暗色是提亮版，不是简单复用", () => {
+    for (const admin of ["--admin-primary", "--admin-accent", "--admin-canvas"]) {
+      expect(value(admin)).not.toBe(darkValue(admin))
+    }
+  })
+})

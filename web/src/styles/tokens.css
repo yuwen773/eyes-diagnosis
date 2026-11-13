@@ -112,6 +112,28 @@
   --shadow-overlay: 0 10px 26px rgba(20, 23, 26, 0.09);
   --shadow-modal: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
 
+  /* ── Iris 2.0 管理端 · Purple Medical SaaS（DESIGN.md §2.2）─────────────
+     管理端独立的语义令牌：紫色承担管理品牌、主操作、当前导航、精选强调与
+     图表强调；医学严重度仍走 --risk-*，复核/拒识语义照旧——紫不冒充风险。
+     全部色值经 tokens.contrast.test.ts 实测锁定（文字 ≥ 4.5:1、图形 ≥ 3:1），
+     且与 --risk-* 六个值互不相同。圆角沿用既有令牌梯（8–12px），不另立像素。 */
+  --admin-canvas: #f4f1fa; /* 管理端页面底：浅紫灰 */
+  --admin-surface: #ffffff; /* 卡片 / 表格 / 图表容器 */
+  --admin-surface-deep: #ece7f6; /* 次级抬升 / 嵌入容器 */
+  --admin-sidebar: #f8f5fd; /* 侧栏表面：比画布浅半档的紫白 */
+  --admin-text: #211b33; /* 紫墨正文 */
+  --admin-text-muted: #5d5670;
+  --admin-text-faint: #69617e;
+  --admin-line: rgba(72, 49, 141, 0.14);
+  --admin-line-strong: rgba(72, 49, 141, 0.3);
+  --admin-primary: #6d28d9; /* 管理紫：主操作、当前导航文字 */
+  --admin-primary-strong: #5b21b6; /* hover / active 压深一档 */
+  --admin-on-primary: #ffffff; /* 压在管理紫上的文字（7.10:1） */
+  --admin-primary-soft: rgba(109, 40, 217, 0.09); /* 当前导航底、精选卡淡紫衬 */
+  --admin-accent: #7c3aed; /* 图表强调 / 指示条：亮一档的管理紫 */
+  --admin-shadow: 0 6px 22px rgba(61, 44, 105, 0.12);
+  --admin-shadow-overlay: 0 14px 34px rgba(61, 44, 105, 0.16);
+
   /* ── Iris 2.0 品牌层（§3.9；C 档用）──────────────
      品牌色与医学语义色是两套东西：--risk-* 只表示病情（正常/注意/危急），
      --brand-* 只表示品牌与信息层。两者不互相顶替，也不共用同一枚色值。
@@ -321,6 +343,34 @@
 }
 
 /* ==========================================================================
+   Iris 2.0 管理页作用域（.is-admin）
+   --------------------------------------------------------------------------
+   只在管理外壳根上叠加，把舞台底色从骨白换成浅紫灰（暗主题翻深紫蓝）。
+   与 .is-brand-page 同一手法：只换画布与发丝线，不碰 --ink/--fg 系列、
+   --risk-* / --signal（临床语义）与 --paper-*（判读记录永远同一张纸）。
+   管理令牌 --admin-* 在 :root / html.dark 各有一套，这里把「当前语境」
+   指向它们，让 .is-admin 内的 --bg / --hr 走紫白 SaaS 而不是骨白仪器。
+   ========================================================================== */
+.is-admin {
+  --field: var(--admin-canvas);
+  --bg: var(--admin-canvas);
+  --surface: var(--admin-surface);
+  --surface-2: var(--admin-surface-deep);
+  --line: var(--admin-line);
+  --line-strong: var(--admin-line-strong);
+  --hr: var(--admin-line);
+  --hr-strong: var(--admin-line-strong);
+  --ink: var(--admin-text);
+  --ink-2: var(--admin-text-muted);
+  --ink-3: var(--admin-text-faint);
+  --fg: var(--admin-text);
+  --fg-2: var(--admin-text-muted);
+  --fg-3: var(--admin-text-faint);
+  background: var(--admin-canvas);
+  color: var(--admin-text);
+}
+
+/* ==========================================================================
    Iris 2.0 品牌面（.iris2）
    --------------------------------------------------------------------------
    这里只做一件事：把一块区域声明成品牌面（品牌画布 + 品牌文字色）。
@@ -425,6 +475,26 @@ html.dark {
   --brand-deep-hairline: rgba(190, 220, 255, 0.24);
   --brand-deep-signal: #ef7a45;
   --brand-deep-signal-text: #ffa07a;
+
+  /* Iris 2.0 管理端的暗色版本：深紫蓝分层面板，同一组语义角色换一套值。
+     管理紫在暗底上提亮成 #b39dfb，压字用深紫墨 #171322，不用白色；
+     图表强调再亮一档（#c4b5fd）保证 9.5:1。与 --risk-*-lit 六值互不相同。 */
+  --admin-canvas: #12101c;
+  --admin-surface: #1a1727;
+  --admin-surface-deep: #211d31;
+  --admin-sidebar: #191527;
+  --admin-text: #ecebf5;
+  --admin-text-muted: #a69fbf;
+  --admin-text-faint: #918aad;
+  --admin-line: rgba(190, 176, 236, 0.18);
+  --admin-line-strong: rgba(190, 176, 236, 0.38);
+  --admin-primary: #b39dfb;
+  --admin-primary-strong: #c4b5fd;
+  --admin-on-primary: #171322;
+  --admin-primary-soft: rgba(179, 157, 251, 0.16);
+  --admin-accent: #c4b5fd;
+  --admin-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
+  --admin-shadow-overlay: 0 14px 34px rgba(0, 0, 0, 0.36);
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，
