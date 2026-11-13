@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session"
 const MAX_HEIGHT = 132
 
 /**
- * 落地页的问诊输入框：电流边框包着一条真输入。
+ * 落地页的问诊输入框：品牌蓝玻璃边缘光包着一条真输入。
  *
  * 提交不是「假演示」：文字存进 agentDraft，跳到 /agent，真实输入框挂载时
  * 会自动把草稿取回来。图片没法跨页传递，所以附件按钮直接带人去 Agent 页，
@@ -136,7 +136,7 @@ export function AgentComposer({ dark }: { dark: boolean }) {
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 3v18M3 12h18" />
               </svg>
-              全面诊断
+              影像与知识库检索
             </span>
 
             <span className="composer__spacer" />
@@ -172,7 +172,8 @@ export function AgentComposer({ dark }: { dark: boolean }) {
           {hint || "ENTER 发送 · SHIFT+ENTER 换行"}
         </p>
         <p className="small composer__note">
-          Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。
+          Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。发送后进入
+          Agent 页，由你的账号发起真实会话。
         </p>
         <Link
           to="/agent"

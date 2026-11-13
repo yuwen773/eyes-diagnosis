@@ -16,6 +16,7 @@ import { useTheme } from "@/components/theme-provider"
 import { LandingHero } from "@/components/brand/LandingHero"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
+import { Dialog } from "@/components/ui/dialog"
 import { BrandFooter } from "@/components/brand/BrandFooter"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { TargetCursor } from "@/components/TargetCursor"
@@ -58,8 +59,8 @@ const SPECIMEN_RATE: Record<string, string> = {
 
 /** 页脚章节索引。顶栏只放跨产品目的地，页面内的章节从这里进。 */
 const LANDING_SECTIONS = [
-  { href: "#specimen", label: "样本局部" },
-  { href: "#how", label: "判读流程" },
+  { href: "#specimen", label: "模型读什么" },
+  { href: "#how", label: "使用流程" },
   { href: "#record", label: "判读记录" },
   { href: "#agent", label: "诊断 Agent" },
   { href: "#bounds", label: "责任边界" },
@@ -200,6 +201,8 @@ export function LandingPage() {
   /* ── 样本局部灯箱 ─────────────────────────────────────── */
   const lightboxRef = useRef<HTMLDialogElement | null>(null)
   const [specimenOpen, setSpecimenOpen] = useState<number | null>(null)
+  /* ── 示例记录完整弹层 ─────────────────────────────────── */
+  const [recordPreviewOpen, setRecordPreviewOpen] = useState(false)
 
   const openSpecimen = (index: number) => setSpecimenOpen(index)
   const closeSpecimen = () => lightboxRef.current?.close()
@@ -293,7 +296,11 @@ export function LandingPage() {
         <section className="section section--line landing-section specimen-details" id="specimen" aria-label="眼底样本局部">
           <div className="wrap">
             <div className="reveal">
-              <SectionHead code="02" title="模型读的是这些结构" note="以下为同一张示例眼底照片的局部，非真实患者" />
+              <SectionHead code="02" title="模型读的是这些结构" note="血管弓、黄斑、视盘——判读依据都摆在你眼前 · 示例影像，非真实患者" />
+              <p className="lead" style={{ marginTop: 16, marginBottom: 40 }}>
+                影像判读由 EfficientNet-B4 模型完成，输入一张眼底照片，输出八类眼底改变的
+                概率。模型逐项看的东西不神秘：血管的走行、黄斑的渗出、视盘的边界。
+              </p>
             </div>
             <div className="specimen-grid">
               {SPECIMEN_DETAILS.map((item, index) => (
@@ -397,11 +404,11 @@ export function LandingPage() {
         <section id="how" className="section section--line landing-section">
           <div className="wrap">
             <div className="reveal">
-              <SectionHead code="03" title="判读流程" note="从一张照片，到一条可以复核的记录" />
+              <SectionHead code="03" title="怎么用" note="从一张照片，到一条可以复核的记录" />
             </div>
 
-            {/* 八类覆盖表：从首屏挪到这里。首屏改成光学台后，
-                这张「模型读什么」的表仍要留在正文里——它是产品事实，不是装饰。 */}
+            {/* 八类覆盖表 + 判读流程。八类覆盖与质量门是产品事实，
+                从首屏技术铭牌挪到正文，按用户能理解的方式说明。 */}
             <div className="landing-how">
               <div className="landing-how__classes reveal">
                 <div className="index">
@@ -444,34 +451,96 @@ export function LandingPage() {
 
         <section id="record" className="section section--line landing-section">
           <div className="wrap">
-            <div className="reveal">
-              <SectionHead code="04" title="判读记录" note="一份记录长这样" />
-              <p className="lead" style={{ marginTop: 16, marginBottom: 40 }}>
-                八类概率、质量门、复核状态与权重指纹，全部写在同一张纸上。下方为示例，非真实患者。
-              </p>
+            <div className="landing-record__intro">
+              <div className="reveal">
+                <SectionHead
+                  code="04"
+                  title="你能看到什么结果"
+                  note="一条可以逐项核对的判读记录"
+                />
+                <p className="lead landing-record__value">
+                  判读结束不是一张只有结论的图：八类概率、质量门结果、复核状态与
+                  模型版本都写在同一张记录纸上，条条可以核对。下面是一份示例记录的
+                  展示——完整记录在判读页生成。
+                </p>
+              </div>
+              <div className="reveal landing-record__actions" style={{ "--d": "90ms" } as CSSProperties}>
+                <button
+                  type="button"
+                  className="landing-record__peek"
+                  onClick={() => setRecordPreviewOpen(true)}
+                  aria-haspopup="dialog"
+                >
+                  查看完整示例记录
+                  <span aria-hidden="true">↗</span>
+                </button>
+                <span className="landing-record__peek-note num">示例 · 非真实患者</span>
+              </div>
             </div>
 
             <div
               className="landing-record reveal"
               style={{ "--d": "120ms" } as CSSProperties}
             >
-              {/* 记录纸在任何主题下都是同一张白纸（纸面原语不参与主题翻转），
-                  文案里也写着「写在同一张纸上」；暗色页面下它正好是那块白色内容区。
+              {/* 记录纸在任何主题下都是同一张白纸（纸面原语不参与主题翻转）。
+                  展示区只露纸上部的结论与置信读数：完整记录走「查看完整示例记录」弹层。
                   品牌画框只负责「陈列」：纸面、风险色与证据链一条不改。 */}
               <div className="landing-record__bar">
                 <span className="overline">记录纸 · RECORD SHEET</span>
-                <span className="num landing-record__stamp">AI 辅助判读 · 非真实患者</span>
+                <span className="num landing-record__stamp">示例 · 非真实患者</span>
               </div>
               <div className="landing-record__paper">
-                <RecordSheet
-                  result={SPECIMEN}
-                  recordId="IRIS-2026-1106-0042"
-                  specimen
-                  tone="paper"
-                />
+                <div className="landing-record__viewport" aria-hidden="true">
+                  <RecordSheet
+                    result={SPECIMEN}
+                    recordId="IRIS-2026-1106-0042"
+                    specimen
+                    tone="paper"
+                  />
+                </div>
+                <div className="landing-record__fade" aria-hidden="true" />
+              </div>
+              <div className="landing-record__foot">
+                <span className="num">… 下方还有建议、复核提示与免责 · 载于完整记录</span>
+                <button
+                  type="button"
+                  className="landing-record__foot-btn"
+                  onClick={() => setRecordPreviewOpen(true)}
+                >
+                  展开完整记录
+                </button>
               </div>
             </div>
           </div>
+
+          {/* 完整示例记录弹层：Base UI Dialog 管焦点与滚动锁，
+              语境类带上 .is-brand-page，纸面原语不随主题翻转。 */}
+          <Dialog
+            open={recordPreviewOpen}
+            title="示例判读记录 · 非真实患者"
+            onClose={() => setRecordPreviewOpen(false)}
+            className="landing-record__modal is-brand-page"
+          >
+            <header className="landing-record__modal-head">
+              <span className="overline">示例记录 · SPECIMEN</span>
+              <button
+                type="button"
+                className="landing-record__modal-close"
+                aria-label="关闭示例记录"
+                onClick={() => setRecordPreviewOpen(false)}
+              >
+                ✕
+              </button>
+            </header>
+            <div className="landing-record__modal-body">
+              <RecordSheet
+                result={SPECIMEN}
+                recordId="IRIS-2026-1106-0042"
+                specimen
+                tone="paper"
+              />
+            </div>
+          </Dialog>
         </section>
 
         <section id="agent" className="section section--line landing-section agent-section">
@@ -488,6 +557,7 @@ export function LandingPage() {
               >
                 诊断 Agent 把一次判读延伸成一段对话：先问症状，再读影像，需要时检索知识库。
                 每一次工具调用都摆在明面上——你可以顺着答案继续问「为什么」。
+                下面的界面是演示预览，真实的对话从你的账号开始。
               </p>
             </div>
 
@@ -595,6 +665,7 @@ export function LandingPage() {
             </div>
           </div>
         </section>
+
       </main>
 
       {/* 全幅：深海蓝实体面要铺满视口宽度，版心在组件内部自己收。 */}

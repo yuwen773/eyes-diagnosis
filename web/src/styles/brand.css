@@ -385,8 +385,9 @@ html.dark .landing-hero__btn--primary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  margin: 0;
-  padding: 0;
+  margin: 26px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--brand-line);
   list-style: none;
 }
 
@@ -435,39 +436,14 @@ html.dark .landing-hero__btn--primary {
   color: var(--brand-primary);
 }
 
+/* 免责条：首屏末尾的一行 mono 小字。
+   页脚可信信息层承担完整免责；这里只做口径提醒。 */
 .landing-hero__note {
   margin: 18px 0 0;
   font-size: 10.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--brand-muted);
-}
-
-/* 仪器读数：产品事实，四个一排 */
-.landing-hero__readouts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 22px 0 0;
-  padding: 16px 0 0;
-  border-top: 1px solid var(--brand-line);
-  list-style: none;
-}
-
-.landing-hero__readouts li {
-  display: grid;
-  gap: 6px;
-}
-
-.landing-hero__readout-label {
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  color: var(--brand-muted);
-}
-
-.landing-hero__readout-value {
-  font-size: 13.5px;
-  color: var(--brand-text);
 }
 
 /* ==========================================================================
@@ -740,11 +716,6 @@ html.dark .optic-flow__fiber-set--rim {
 
   .landing-hero__entries {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .landing-hero__readouts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 10px;
   }
 
   .landing-hero__entry {
@@ -1179,7 +1150,58 @@ html.dark .is-brand-page .btn:hover {
   color: var(--brand-primary);
 }
 
-/* ── 判读记录：品牌画框陈列纸面 ───────────────────────────────── */
+/* ── 判读记录：品牌画框陈列纸面（Visual Completion U1）────────── */
+
+/* 章节引言：标题 + 价值说明 + 「查看示例」入口，两栏对齐。 */
+.landing-record__intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+  gap: clamp(20px, 3vw, 48px);
+  align-items: end;
+  margin-bottom: clamp(24px, 4vh, 40px);
+}
+
+.landing-record__value {
+  margin: 16px 0 0;
+  max-width: 46em;
+}
+
+.landing-record__actions {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.landing-record__peek {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast),
+    background var(--fast);
+}
+
+.landing-record__peek:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.landing-record__peek-note {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--brand-muted);
+}
 
 .landing-record {
   padding: clamp(10px, 1.4vw, 18px);
@@ -1206,10 +1228,136 @@ html.dark .is-brand-page .btn:hover {
 
 /* 画框只负责裁边：纸、墨、风险色仍由 RecordSheet 的纸面原语决定。 */
 .landing-record__paper {
+  position: relative;
   overflow: hidden;
   /* 纸面内衬取最小档：画框是 24px，纸自己几乎方角，符合记录纸的物理感。 */
   border-radius: var(--radius-sm);
   background: var(--paper-surface);
+}
+
+/* 展示视窗：完整记录纸太高，页面上只陈列上部（结论、置信、八类概率），
+   下缘用纸色渐隐收口。完整记录走弹层，不整张长纸堆在页面中央。 */
+.landing-record__viewport {
+  max-height: clamp(420px, 52vh, 620px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 渐隐层铺在视窗下缘；纸色是同一张白纸的收口，不是页面底色。 */
+.landing-record__fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(72px, 12vh, 128px);
+  background: linear-gradient(to bottom, transparent, var(--paper-surface) 82%);
+  pointer-events: none;
+}
+
+.landing-record__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 14px 10px 2px;
+  color: var(--brand-muted);
+}
+
+.landing-record__foot span {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.landing-record__foot-btn {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  min-height: 36px;
+  color: var(--brand-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.landing-record__foot-btn:hover {
+  color: color-mix(in srgb, var(--brand-primary) 80%, #000);
+}
+
+/* 完整示例记录弹层：Brand 弹层 = 玻璃实体面 + --radius-xl，
+   语境类 .is-brand-page 让纸面原语与品牌画布在 Portal 里都取到正确值。 */
+.landing-record__modal {
+  position: fixed;
+  z-index: 80;
+  top: 50%;
+  left: 50%;
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100svh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  box-shadow: var(--brand-shadow);
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  transition: opacity var(--base);
+}
+
+.landing-record__modal[data-starting-style],
+.landing-record__modal[data-ending-style] {
+  opacity: 0;
+}
+
+.landing-record__modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.landing-record__modal-head .overline {
+  color: var(--brand-primary);
+}
+
+.landing-record__modal-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-circle);
+  background: none;
+  color: var(--brand-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.landing-record__modal-close:hover {
+  color: var(--brand-text);
+  border-color: var(--brand-primary);
+}
+
+.landing-record__modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(16px, 2.4vw, 28px);
+  background: var(--brand-canvas);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-record__modal {
+    transition: none;
+  }
 }
 
 /* ── Agent：四点从台账行改成品牌信息卡 ────────────────────────── */
@@ -1334,6 +1482,40 @@ html.dark .is-brand-page .btn:hover {
   }
 }
 
+/* ── Agent 展示：品牌蓝/青语义覆盖（Visual Completion U1）─────── */
+/* app.css 里 composer/deck/screen 的强调色走 --signal（临床重点橙）。
+   首页是 Brand 场景：品牌段内把运行态强调换成品牌蓝/冰青，
+   不改 app.css 本体——判读页与 Agent 工作区的橙色语义不受影响。 */
+
+.is-brand-page .composer__icon:hover {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+
+.is-brand-page .composer__send {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.is-brand-page .composer__send:not(:disabled):hover {
+  background: color-mix(in srgb, var(--brand-primary) 88%, #ffffff);
+}
+
+html.dark .is-brand-page .composer__send:not(:disabled):hover {
+  background: color-mix(in srgb, var(--brand-primary) 84%, #000000);
+}
+
+.is-brand-page .screen__eye,
+.is-brand-page .msg__tool,
+.is-brand-page .hits__rank,
+.is-brand-page .deck__index {
+  color: var(--brand-primary);
+}
+
+.is-brand-page .quote {
+  border-left-color: var(--brand-primary);
+}
+
 @media (max-width: 768px) {
   .landing-agent__points {
     grid-template-columns: minmax(0, 1fr);
@@ -1355,5 +1537,14 @@ html.dark .is-brand-page .btn:hover {
     flex-direction: column;
     gap: 4px;
     padding-inline: 6px;
+  }
+
+  .landing-record__intro {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .landing-record__viewport {
+    max-height: 480px;
   }
 }

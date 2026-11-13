@@ -15,31 +15,23 @@ const ENTRIES = [
     to: "/diagnosis",
     code: "01",
     title: "影像分析",
-    body: "清晰呈现眼底影像与辅助分析信息",
+    body: "上传眼底照片，得到一条可复核的判读记录",
     glyph: "◎",
   },
   {
     to: "/#agent",
     code: "02",
     title: "Agent 协作",
-    body: "观察智能体任务流、工具调用与进度",
+    body: "与诊断 Agent 对话，工具调用回执全程可见",
     glyph: "✳",
   },
   {
     to: "#record",
     code: "03",
     title: "证据与复核",
-    body: "保留分析依据，明确不确定性与复核",
+    body: "概率、质量门与复核状态写在同一张记录上",
     glyph: "◇",
   },
-]
-
-/** 仪器读数：产品事实，不是营销词。 */
-const READOUTS = [
-  { label: "覆盖", value: "8 类眼底改变" },
-  { label: "模型", value: "EfficientNet-B4" },
-  { label: "质量门", value: "通过 / 拒识" },
-  { label: "复核 · 溯源", value: "医生签字 · SHA-256" },
 ]
 
 /** 智能体协作的三个环节。这里写的是流程本身，不是某次真实会话的回放。 */
@@ -153,19 +145,6 @@ export function LandingHero(): ReactElement {
             </li>
           ))}
         </ul>
-
-        <ul className="landing-hero__readouts">
-          {READOUTS.map((readout) => (
-            <li key={readout.label}>
-              <span className="landing-hero__readout-label">{readout.label}</span>
-              <span className="landing-hero__readout-value num">{readout.value}</span>
-            </li>
-          ))}
-        </ul>
-
-        <p className="landing-hero__note num">
-          AI 辅助信息展示 · 不构成临床诊断结论
-        </p>
       </div>
     </section>
   )
