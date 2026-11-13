@@ -31,7 +31,7 @@ class CollaborationEvaluationTest(unittest.TestCase):
         }
         for name, methods in groups.items():
             suite = "com.csust.eyediagnosis." + name
-            count = 27 if "PatientDraftTest" in name else 37
+            count = 41 if "PatientDraftTest" in name else 37
             root = ElementTree.Element("testsuite", name=suite, tests=str(count))
             for index in range(count):
                 method = methods[index] if index < len(methods) else f"synthetic_parser_case_{index}"
@@ -120,8 +120,8 @@ class CollaborationEvaluationTest(unittest.TestCase):
             self.assertEqual(1, result.returncode, result.stderr)
             value = report["evidence"]["java_mysql_http"]
             self.assertEqual("FAIL", value["status"])
-            self.assertEqual(63, value["passed"])
-            self.assertEqual(64, value["denominator"])
+            self.assertEqual(77, value["passed"])
+            self.assertEqual(78, value["denominator"])
             self.assertEqual(0, value["groups"]["insufficient_evidence"]["passed"])
             self.assertEqual("SKIPPED", value["groups"]["insufficient_evidence"]["cases"][0]["status"])
 

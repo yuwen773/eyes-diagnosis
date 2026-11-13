@@ -26,7 +26,7 @@ CONDITIONS = {
     "without_critic": ["VISION", "EVIDENCE", "EXPLANATION"],
 }
 SUITES = {
-    "com.csust.eyediagnosis.patientdraft.PatientDraftTest": 27,
+    "com.csust.eyediagnosis.patientdraft.PatientDraftTest": 41,
     "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest": 37,
 }
 RELIABILITY_CASES = {
