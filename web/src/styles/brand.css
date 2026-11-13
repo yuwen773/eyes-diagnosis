@@ -1,0 +1,575 @@
+/*
+ * Iris 2.0 品牌层样式。
+ *
+ * 只在 .iris2 上下文里生效。颜色一律消费 --brand-* 令牌，
+ * 不引用 --field / --ink / --signal —— 品牌层与临床层互不串味。
+ */
+
+.brand-panel {
+  position: relative;
+  border: 1px solid var(--brand-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass);
+  box-shadow: var(--brand-shadow);
+  color: var(--brand-text);
+  /* 背景模糊是 GPU 合成，只给少量面板用；离屏面板不常驻。 */
+  backdrop-filter: blur(14px) saturate(120%);
+}
+
+.brand-panel--solid {
+  background: var(--brand-surface);
+  border-color: var(--brand-outline);
+  backdrop-filter: none;
+}
+
+.brand-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 暗底上的玻璃面需要更实的边，不然边缘会糊在背景里。 */
+html.dark .brand-panel {
+  border-color: var(--brand-outline);
+}
+
+/* ==========================================================================
+   首屏：Iris 2.0 光学台
+   ========================================================================== */
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 0 0;
+  font-family: var(--font-brand);
+}
+
+.landing-hero__shell {
+  position: relative;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 30px clamp(20px, 3.2vw, 48px) 30px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 42%);
+  box-shadow: var(--brand-shadow);
+  overflow: hidden;
+}
+
+html.dark .landing-hero__shell {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 42%);
+  border-color: var(--brand-outline);
+}
+
+/* 右上角的来源与开关条 */
+.landing-hero__badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  margin-left: auto;
+  padding: 7px 8px 7px 16px;
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-pill);
+  background: var(--brand-glass);
+  color: var(--brand-muted);
+  font-size: 12px;
+}
+
+.landing-hero__badge-tag {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--brand-primary);
+}
+
+.landing-hero__badge-btn {
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+
+.landing-hero__badge-btn:hover {
+  border-color: var(--brand-primary);
+}
+
+/* 标题与正文 */
+.landing-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 56px);
+  align-items: center;
+  min-height: clamp(400px, 52vh, 600px);
+  margin-top: 18px;
+}
+
+.landing-hero__copy {
+  position: relative;
+  z-index: 2;
+  padding: clamp(18px, 3vw, 40px) 0;
+}
+
+.landing-hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 26px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+/* 眉线是 mono overline：字重按 §4 的 overline 规格走 500。
+   继承 700 会让浏览器去取 mono 的 700 字面（本地没有，回落 600），
+   白白多下一份 15KB 的字重文件。 */
+.landing-hero__eyebrow .num {
+  font-weight: 500;
+}
+
+.landing-hero__eyebrow-rule {
+  width: 38px;
+  height: 1px;
+  background: var(--brand-primary);
+}
+
+.landing-hero__eyebrow-sub {
+  color: var(--brand-muted);
+  font-weight: 600;
+}
+
+.landing-hero__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(44px, 6.4vw, 92px);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  color: var(--brand-text);
+}
+
+.landing-hero__title-line {
+  display: block;
+}
+
+.landing-hero__title-line--brand {
+  background-image: linear-gradient(99deg, #1649b7 15%, #258acb 67%, #26b7d0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+html.dark .landing-hero__title-line--brand {
+  background-image: linear-gradient(95deg, #f3f7ff 4%, #a6d2ff 50%, #77ddeb 97%);
+}
+
+.landing-hero__title-zh {
+  display: block;
+  margin-top: 14px;
+  font-family: var(--font-sans);
+  font-size: clamp(20px, 2.4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-hero__sub {
+  max-width: 34em;
+  margin: 26px 0 0;
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 1.9;
+  color: var(--brand-muted);
+}
+
+.landing-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.landing-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-hero__btn:hover {
+  border-color: var(--brand-primary);
+}
+
+.landing-hero__btn--primary {
+  border-color: transparent;
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  box-shadow: 0 14px 28px rgba(36, 87, 201, 0.18);
+}
+
+html.dark .landing-hero__btn--primary {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+/* 光学主视觉：跨到右侧，裁在壳子圆角里 */
+.landing-hero__visual {
+  position: relative;
+  z-index: 1;
+  min-height: 320px;
+}
+
+.landing-hero__flow {
+  position: absolute;
+  left: 18%;
+  right: -12%;
+  top: -12%;
+  bottom: -12%;
+  z-index: 0;
+}
+
+.landing-hero__visual-hold {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 60% 45%,
+    rgba(78, 148, 240, 0.16),
+    rgba(78, 148, 240, 0) 60%
+  );
+}
+
+/* 浮在光带上的信息卡 */
+.landing-hero__card {
+  position: absolute;
+  right: 4%;
+  bottom: 12%;
+  z-index: 3;
+  width: min(320px, 62%);
+  padding: 20px 22px 18px;
+}
+
+.landing-hero__card-title {
+  margin: 12px 0 14px;
+  font-family: var(--font-brand);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-hero__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-hero__steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 9px;
+  border-top: 1px solid var(--brand-line);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.landing-hero__steps .num {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--brand-primary);
+}
+
+.landing-hero__card-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--brand-muted);
+}
+
+.landing-hero__card-note {
+  display: block;
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 底部三张入口卡 */
+.landing-hero__entries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-hero__entry {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass);
+  color: var(--brand-text);
+  text-decoration: none;
+}
+
+.landing-hero__entry:hover {
+  border-color: var(--brand-primary);
+}
+
+.landing-hero__entry-glyph {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--brand-primary);
+  opacity: 0.85;
+}
+
+.landing-hero__entry-title {
+  font-family: var(--font-brand);
+  font-size: 16.5px;
+  font-weight: 700;
+}
+
+.landing-hero__entry-body {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+.landing-hero__entry-go {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--brand-primary);
+}
+
+.landing-hero__note {
+  margin: 18px 0 0;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 仪器读数：产品事实，四个一排 */
+.landing-hero__readouts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--brand-line);
+  list-style: none;
+}
+
+.landing-hero__readouts li {
+  display: grid;
+  gap: 6px;
+}
+
+.landing-hero__readout-label {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--brand-muted);
+}
+
+.landing-hero__readout-value {
+  font-size: 13.5px;
+  color: var(--brand-text);
+}
+
+/* ==========================================================================
+   光学渲染器
+   ========================================================================== */
+
+.optic-flow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.optic-flow__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.optic-flow__fibers {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+
+html.dark .optic-flow__fibers {
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.optic-flow__fiber-set path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 1;
+}
+
+.optic-flow__fiber-set--fine path {
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 0.6;
+}
+
+.optic-flow__fibers.is-drifting .optic-flow__fiber-set {
+  animation: optic-drift 18s ease-in-out infinite alternate;
+}
+
+.optic-flow__fibers.is-drifting .optic-flow__fiber-set--fine {
+  animation-duration: 26s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes optic-drift {
+  from {
+    transform: translate3d(-1.4%, 0.6%, 0);
+  }
+  to {
+    transform: translate3d(1.4%, -0.6%, 0);
+  }
+}
+
+.optic-flow__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.optic-flow__fallback-band {
+  fill: none;
+  stroke-width: 96;
+  stroke-linecap: round;
+}
+
+.optic-flow__fallback-band--b {
+  stroke-width: 58;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optic-flow__fibers.is-drifting .optic-flow__fiber-set {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   窄屏：主动简化背景，而不是把桌面图压扁
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .landing-hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .landing-hero__visual {
+    min-height: 360px;
+  }
+
+  .landing-hero__flow {
+    left: -8%;
+    right: -8%;
+    top: 0;
+    bottom: 0;
+  }
+
+  .landing-hero__card {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(360px, 100%);
+    margin: 0 0 18px auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-hero {
+    padding-top: 16px;
+  }
+
+  .landing-hero__shell {
+    padding: 20px 18px 22px;
+  }
+
+  .landing-hero__badge {
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 8px 6px 12px;
+  }
+
+  .landing-hero__badge-note {
+    display: none;
+  }
+
+  .landing-hero__title {
+    font-size: clamp(38px, 11vw, 56px);
+    letter-spacing: -0.04em;
+  }
+
+  .landing-hero__eyebrow-sub {
+    display: none;
+  }
+
+  .landing-hero__sub {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .landing-hero__visual {
+    min-height: 300px;
+  }
+
+  /* 窄屏上纤维层减到只留一层，免得糊住字。 */
+  .optic-flow__fiber-set--fine {
+    display: none;
+  }
+
+  .landing-hero__entries {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-hero__readouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 10px;
+  }
+
+  .landing-hero__entry {
+    padding: 14px 16px 16px;
+  }
+}

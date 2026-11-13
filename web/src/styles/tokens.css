@@ -75,6 +75,10 @@
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong",
     "SimSun", Georgia, serif;
   --font-display: "Instrument Serif", "Noto Serif SC", Georgia, serif;
+  /* Iris 2.0 品牌/UI 主字体：拉丁字形用 Manrope，中文按字形回退到 Noto Sans SC
+     （Manrope 没有汉字，别指望它兜底）。 */
+  --font-brand: "Manrope Variable", "Manrope", "Noto Sans SC", "PingFang SC",
+    "Microsoft YaHei", system-ui, sans-serif;
   --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI",
     system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "Cascadia Mono",
@@ -100,10 +104,35 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
   --radius-circle: 50%;
+  /* 品牌层专用（C 档）：大容器与大圆角卡片。临床页不用这两档。 */
+  --radius-xl: 24px;
+  --radius-2xl: 38px;
 
   /* ── 深度（一律墨色，不用纯黑）──────────────── */
   --shadow-overlay: 0 10px 26px rgba(20, 23, 26, 0.09);
   --shadow-modal: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
+
+  /* ── Iris 2.0 品牌层（§3.9；C 档用）──────────────
+     品牌色与医学语义色是两套东西：--risk-* 只表示病情（正常/注意/危急），
+     --brand-* 只表示品牌与信息层。两者不互相顶替，也不共用同一枚色值。
+     令牌定义在根级，任何上下文都能取；`.iris2` 只是「品牌面」的语境类。 */
+  --brand-canvas: #f2f6fc;
+  --brand-surface: #ffffff;
+  --brand-text: #16233a;
+  --brand-muted: #5b6b82;
+  --brand-primary: #2457c9; /* 钴蓝：主 CTA、链接、当前态 */
+  --brand-primary-fg: #ffffff; /* 压在钴蓝上的文字 */
+  --brand-cyan: #006f82; /* 光学材质里的冷调高光 */
+  --brand-aurora: #6b56c5; /* 极光紫：只做局部点缀 */
+  --brand-spark: #2e8bdd;
+  --brand-line: rgba(22, 35, 58, 0.12);
+  --brand-line-strong: rgba(22, 35, 58, 0.28);
+  --brand-outline: rgba(38, 76, 136, 0.12);
+  --brand-glass: rgba(255, 255, 255, 0.68);
+  --brand-glass-strong: rgba(255, 255, 255, 0.84);
+  --brand-hairline: rgba(255, 255, 255, 0.79);
+  --brand-soft: rgba(9, 43, 110, 0.08);
+  --brand-shadow: 0 20px 54px rgba(51, 84, 143, 0.09);
 
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
@@ -225,6 +254,19 @@
 }
 
 /* ==========================================================================
+   Iris 2.0 品牌面（.iris2）
+   --------------------------------------------------------------------------
+   这里只做一件事：把一块区域声明成品牌面（品牌画布 + 品牌文字色）。
+   品牌色板本身在 :root / html.dark 里定义，任何上下文都取得到。
+   浅色：骨白偏冷 + 玻璃发丝线；深色：深蓝底 + 冰青高光。
+   对比度已由 tokens.contrast.test.ts 实跑锁定（正文与 muted ≥ 4.5:1）。
+   ========================================================================== */
+.iris2 {
+  background: var(--brand-canvas);
+  color: var(--brand-text);
+}
+
+/* ==========================================================================
    根级双主题
    ==========================================================================
    主题切在 <html> 的 .dark 类上，翻的是「页面底色语境」这一层：
@@ -263,6 +305,26 @@ html.dark {
   --viz-series-4: #b094c0;
   --viz-series-5: #c48d6c;
   --viz-series-6: #9aa1a6;
+
+  /* Iris 2.0 品牌层的暗色版本：同一组语义角色，换一套色值。
+     钴蓝在暗底上提亮成 #85B5FF（8.81:1），压字用深底色，不是白色。 */
+  --brand-canvas: #0b1425;
+  --brand-surface: #17263d;
+  --brand-text: #eff6ff;
+  --brand-muted: #a9bbd3;
+  --brand-primary: #85b5ff;
+  --brand-primary-fg: #0b1425;
+  --brand-cyan: #60d7e6;
+  --brand-aurora: #c0acff;
+  --brand-spark: #7ce6fb;
+  --brand-line: rgba(191, 220, 255, 0.29);
+  --brand-line-strong: rgba(191, 220, 255, 0.46);
+  --brand-outline: rgba(183, 211, 255, 0.13);
+  --brand-glass: rgba(19, 39, 68, 0.78);
+  --brand-glass-strong: rgba(22, 44, 74, 0.9);
+  --brand-hairline: rgba(210, 231, 255, 0.25);
+  --brand-soft: rgba(113, 159, 255, 0.12);
+  --brand-shadow: 0 22px 58px rgba(0, 0, 0, 0.24);
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，

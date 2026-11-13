@@ -13,6 +13,7 @@ import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useInView, useRevealScan } from "@/lib/useInView"
 import { useTheme } from "@/components/theme-provider"
+import { LandingHero } from "@/components/brand/LandingHero"
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
@@ -20,9 +21,6 @@ import { SiteHeader } from "@/components/SiteHeader"
 import { TargetCursor } from "@/components/TargetCursor"
 
 // 重型视觉组件独立成块：首屏的扫描舱要立刻有，其余等进入视口再下载。
-const GridScan = lazy(() =>
-  import("@/components/GridScan").then((m) => ({ default: m.GridScan })),
-)
 const ScrollExpand = lazy(() =>
   import("@/components/ScrollExpand").then((m) => ({ default: m.ScrollExpand })),
 )
@@ -45,13 +43,6 @@ function Deferred(props: { minHeight: string; children: ReactNode }) {
     </div>
   )
 }
-
-const STRIP = [
-  { label: "覆盖", value: "8 类眼底改变" },
-  { label: "模型", value: "EfficientNet-B4" },
-  { label: "质量门", value: "通过 / 拒识" },
-  { label: "复核 · 溯源", value: "医生签字 · SHA-256" },
-]
 
 /** 索引格右列的示例概率，与下方 SPECIMEN 同一套演示口径。 */
 const SPECIMEN_RATE: Record<string, string> = {
@@ -199,31 +190,6 @@ const SPECIMEN: DiagnosisResult = {
   createTime: "2026-11-06T14:32:00",
 }
 
-/** 标题逐字入场；每个字自带序号，CSS 用它排错落。 */
-function Chars({
-  text,
-  offset = 0,
-  marked = false,
-}: {
-  text: string
-  offset?: number
-  marked?: boolean
-}) {
-  return (
-    <>
-      {Array.from(text).map((char, index) => (
-        <span
-          key={`${char}-${index}`}
-          className={marked ? "ch hero__mark" : "ch"}
-          style={{ "--i": index + offset } as CSSProperties}
-        >
-          {char}
-        </span>
-      ))}
-    </>
-  )
-}
-
 export function LandingPage() {
   useRevealScan()
   const { resolvedTheme } = useTheme()
@@ -285,111 +251,7 @@ export function LandingPage() {
       <SiteHeader />
 
       <main>
-        <div className="hero-stage">
-          {/* 扫描舱：整块首屏就是一间线框房间。
-              读数光一遍遍从远处扫过来，页面浮在这间屋子里——机器在通电，界面在读数。 */}
-          <div className="hero-stage__scan" aria-hidden="true">
-            {/* 白纸上的房间要更「有体积」：线条压深一档、角落阴影加重，
-                读数光收细收暗——纸面上经不起一团亮光。 */}
-            <Suspense fallback={null}>
-            <GridScan
-              theme={dark ? "dark" : "light"}
-              cells={6}
-              depth={4}
-              depthFade={dark ? 0.5 : 0.4}
-              shading={dark ? 0.62 : 0.72}
-              reflection={0.34}
-              parallax={0.9}
-              scanDuration={2.8}
-              scanDelay={1.4}
-              scanWidth={dark ? 2 : 1.3}
-              trail={dark ? 0.62 : 0.38}
-              glow={dark ? 0.85 : 0.34}
-              linesColor={dark ? undefined : "#a9afa3"}
-              clickEffect="ping"
-            />
-            </Suspense>
-          </div>
-          <div className="hero-stage__scrim" aria-hidden="true" />
-
-          <section className="wrap hero">
-            {/* 仪器头版：一行元信息，发丝线切开；与标题同一句话里读完。 */}
-            <p className="hero__masthead rise">
-              <span>Iris 眼底判读 · 示例数据</span>
-              <span className="hero__masthead-mid">2026-11-07</span>
-              <span>模型 EfficientNet-B4</span>
-            </p>
-
-            <div className="hero__copy">
-              <h1 className="display hero__title">
-                <span className="line">
-                  <Chars text="读片是一件" />
-                </span>
-                <span className="line">
-                  <Chars text="可以" offset={5} />
-                  <Chars text="复核" offset={7} marked />
-                  <Chars text="的事" offset={9} />
-                </span>
-              </h1>
-
-              <p className="lead hero__lead rise" style={{ "--d": "640ms" } as CSSProperties}>
-                Iris 是一台眼底影像判读仪器：上传一张彩色眼底照片，模型给出八类常见眼底改变的判读。质量不足时主动拒识，可疑病例转入人工复核队列。
-              </p>
-
-              <div className="hero__actions rise" style={{ "--d": "760ms" } as CSSProperties}>
-                <Link
-                  to="/diagnosis"
-                  className="btn"
-                  data-cursor
-                  data-cursor-label="开始判读"
-                >
-                  上传眼底照片
-                  <span className="btn__key">JPG · PNG</span>
-                </Link>
-                <a className="link" href="#record" data-cursor data-cursor-label="示例记录">
-                  看一份判读记录
-                  <span className="link__mark">↓</span>
-                </a>
-                <a className="link" href="#agent" data-cursor data-cursor-label="追问 Agent">
-                  和诊断 Agent 聊聊
-                  <span className="link__mark">↘</span>
-                </a>
-              </div>
-            </div>
-
-            <aside className="hero__index rise" style={{ "--d": "520ms" } as CSSProperties}>
-              <div className="index">
-                <div className="index__head">
-                  <span className="overline">八类覆盖</span>
-                  <span className="overline">08 CLASSES</span>
-                </div>
-
-                {CLASSES.map((item) => (
-                  <div className="index__row" key={item.code}>
-                    <span className="index__code">{item.code}</span>
-                    <span className="index__name">{item.name}</span>
-                    <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
-                  </div>
-                ))}
-              </div>
-
-              <p className="small index__note" style={{ marginTop: 14, maxWidth: "32em" }}>
-                示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
-              </p>
-            </aside>
-
-            <div className="strip rise" style={{ "--d": "900ms" } as CSSProperties}>
-              {STRIP.map((cell) => (
-                <div className="strip__cell" key={cell.label}>
-                  <div className="readout">
-                    <span className="readout__label">{cell.label}</span>
-                    <span className="readout__value">{cell.value}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+        <LandingHero />
 
         <section className="plate" aria-label="眼底影像示意">
           <Deferred minHeight="100svh">
@@ -537,6 +399,29 @@ export function LandingPage() {
           <div className="wrap">
             <div className="reveal">
               <SectionHead code="03" title="判读流程" note="从一张照片，到一条可以复核的记录" />
+            </div>
+
+            {/* 八类覆盖表：从首屏挪到这里。首屏改成光学台后，
+                这张「模型读什么」的表仍要留在正文里——它是产品事实，不是装饰。 */}
+            <div className="landing-classes reveal" style={{ marginTop: 40 }}>
+              <div className="index">
+                <div className="index__head">
+                  <span className="overline">八类覆盖</span>
+                  <span className="overline">08 CLASSES</span>
+                </div>
+
+                {CLASSES.map((item) => (
+                  <div className="index__row" key={item.code}>
+                    <span className="index__code">{item.code}</span>
+                    <span className="index__name">{item.name}</span>
+                    <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="small index__note">
+                示例概率，非真实患者。其余改变不会被硬塞进这八类里——记录上会写「其他」，并如实标记为需要人工判读。
+              </p>
             </div>
 
             <div className="ledger" style={{ marginTop: 44 }}>

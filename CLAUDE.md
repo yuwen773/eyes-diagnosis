@@ -89,15 +89,18 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 **白色仪器（The White Instrument）**。设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。
 两条前端线：`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）**已弃用（deprecated）**，仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
 写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`（品牌令牌、双主题、页面骨架、参考实现）。后端任务不需要读。
+**Iris 2.0（2026-11-12 起）**：临床层不变，首页/品牌层新增 `.iris2` 语境（钴蓝 + 银蓝材质 + 极光紫，Manrope 拉丁字体），只服务 C 档，见 DESIGN.md §3.9。
 
 ### Design Rules（写前端必须遵守）
 - **三档表达强度**（DESIGN.md §2.1）：A 临床判读（`Diagnosis`/`Records`/`RecordSheet`）保持最严；B 管理/数据分析（`admin/`、图表、弹层）允许分类数据色、4–8px 浮层圆角与 ≤240ms 状态过渡；C 品牌/Agent 视觉层允许有界动效与品牌渐变。**安全、医学措辞、可访问性、统计口径、证据链不因档位放松**。
-- **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。
+- **品牌层是 Iris 2.0 的独立语境**（DESIGN.md §3.9）：`.iris2` 命名空间用钴蓝 `--brand-primary: #2457c9`（暗底 `#85b5ff`）、`--brand-cyan`、`--brand-aurora`（极光紫只做点缀），字体 `--font-brand`（Manrope Variable，中文回退 Noto Sans SC）。**只在 C 档首页/品牌组件用**，别去改 `--field/--ink/--signal`，也别让品牌蓝紫与 `--risk-*` 混用或同值。
+- **首屏光学主视觉只允许一个渲染器**（DESIGN.md §3.9）：光带是 vendored Beams（裸 WebGL2），内部细纤维是同一画面上的 SVG 图层，**不另起第二个 WebGL 循环**；禁把 GridScan / Beams / Ghost Fibers 同时挂首屏。**降级是硬要求**：WebGL2 不可用、上下文丢失、`prefers-reduced-motion`、低端机都要给出可读的静态画面，且背景永不降低文字对比度或遮住标题与 CTA。
+- **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。信号橙是**临床页**的语义色，与品牌层的钴蓝并存但不互换。
 - **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
 - **分类色只用于 B 档图表**：`--viz-series-1..6`（浅/暗两套），不得占用 `--signal` 或 `--risk-*`；用了分类色就必须同时有读数表/直标/图例/线型等第二通道。
 - **所有数字用等宽字体** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、计数、时间戳、哈希。
 - **衬线标题用 `--font-serif`（Noto Serif SC 栈），weight 只允许 400**，禁止 700+ 与斜体；正文与控件用 `--font-sans`。
-- **圆角只用令牌梯**：`--radius-none/sm/md/lg/circle/pill`（0 / 4 / 8 / 12 / 50% / 999px）；A 档主控件默认 0，B 档浮层 4–8px，C 档面板 8–12px。不再写像素自由值。
+- **圆角只用令牌梯**：`--radius-none/sm/md/lg/xl/2xl/circle/pill`（0 / 4 / 8 / 12 / 24 / 38 / 50% / 999px）；A 档主控件默认 0，B 档浮层 4–8px，C 档面板 8–12px（`xl/2xl` 只给品牌层大容器）。不再写像素自由值。
 - **发丝线优先于厚重卡片阴影**；浮层用 `--shadow-overlay`，模态/抽屉用 `--shadow-modal`，阴影一律基于墨色。
 - **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题；C 档动效必须有性能预算、离屏暂停与 `prefers-reduced-motion` 开关。
 - **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。

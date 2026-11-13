@@ -1,0 +1,114 @@
+# 第三方来源与许可
+
+本目录下的 `beamsEngine.ts` 与 `beamsMount.ts` 是**上游第三方组件的 vendor 副本**，
+不是本项目原创。其余文件（`OpticFlow.tsx`、`LandingHero.tsx`、`BrandPanel.tsx`、
+`OpticFlow.test.tsx`、`beamsMount.test.ts`）由本项目编写。
+
+---
+
+## React Bits · Beams
+
+| 项 | 内容 |
+|----|------|
+| 上游 | https://github.com/DavidHDev/react-bits |
+| 源文件 | `src/content/Backgrounds/Beams/Beams.jsx` |
+| **固定 commit** | **`ed33ebe4acfe29e60fb759bcccc70a138ce2dcef`**（2026-11-08，"Fix/responsive preview flicker (#1109)"） |
+| 取用时间 | 2026-11-12，取 `main` 当时该文件的最新一次提交；下面「校验」一节有比对证据 |
+| 作者 | David Haz |
+| 许可 | MIT License **+ Commons Clause License Condition v1.0**（Copyright (c) 2026 David Haz） |
+| 署名位置 | 本文件 + `beamsEngine.ts` 文件头，两处都保留 |
+
+> 上游没有给这个组件打版本标签，所以**只认 commit SHA**。换了 SHA 就要重做下面的校验。
+
+### 校验：vendored 的着色器与固定 commit 逐字一致
+
+2026-11-12 重新拉取 `ed33ebe4acfe29e60fb759bcccc70a138ce2dcef` 下的 `Beams.jsx`，
+把它与本仓库 `beamsEngine.ts` 里的三个模板字符串（顶点着色器 / FIELD / COMPOSITE）
+逐字比对：
+
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 长度 |
+|---|---|---|---|
+| 顶点 | `254cf7532230` | 同值 | 93 字符 |
+| FIELD | `ce0437306e9d` | 同值 | 5214 字符 |
+| COMPOSITE | `39bf1cf8ca1a` | 同值 | 2760 字符 |
+
+**三个着色器逐字相同**——本项目没有改动渲染算法，改的只是外壳（见下）。
+
+### 改动范围（相对上游）
+
+| 文件 | 改动 | 原因 |
+|------|------|------|
+| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；着色器源码逐字保留 | 让引擎能脱离 React 使用，并纳入仓库的类型检查 |
+| `beamsMount.ts` | 把上游写在 `useEffect` 里的挂载逻辑抽成普通函数 `mountBeams()`；补 `webglcontextlost` 处理、`prefers-reduced-motion` 的运行时订阅、`dispose()` 幂等与「不主动丢上下文」 | 支持「WebGL2 不可用 / 上下文丢失 / 减少动效 / StrictMode 重复挂载」四条生命周期路径 |
+
+上游原始渲染流程（场渲染 → mipmap 泛光 → 合成、鼠标交互、intro 动画、
+可见性监听、ResizeObserver）保持不变。
+
+### 许可原文（固定 commit 下的 `LICENSE.md`，逐字照录）
+
+```text
+MIT + Commons Clause License Condition v1.0
+
+Copyright (c) 2026 David Haz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, and distribute the Software **as part of an application, website, or product**, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+## Commons Clause Restriction
+
+You may use this Software, including for any commercial purpose, **so long as you do not sell, sublicense, or redistribute the components themselves-whether alone, in a bundle, or as a ported version.**
+
+The same restriction covers the React Bits tools (Background Studio, Texture Lab, Shape Magic, Center Stage, Sound Lab and any tools added later) and the sounds in the sound library. **You may not sell, sublicense, or redistribute the tools or the sounds themselves, or offer the tools or a substantially similar copy of them as a hosted service-whether alone, in a bundle, or as a ported version.**
+
+What you make with the tools is yours to use. You can use exported code, images, videos, and audio files in any personal or commercial application, website, or product, including paid ones. **You may not sell or redistribute the exports on their own, either individually or as the product itself, such as a sound, texture, background, or template pack.**
+
+## No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### 许可判断（**待产品负责人确认，不是结论**）
+
+这段话允许的：**把它作为应用 / 网站 / 产品的一部分使用，包含商业用途**，允许修改。
+这段话限制的：**不得销售、再许可、再分发「组件本身」——单独、打包、或以移植版的形式。**
+
+本项目符合的部分：
+
+- 它只作为 Iris 内部产品的一个首屏背景使用，不单独售卖、不再许可；
+- 版权与许可声明在两处保留（本文件 + 源文件头）。
+
+**需要确认的一点**：本仓库是**公开仓库**，`beamsEngine.ts` 是一份「去掉 React 外壳的
+移植版」，并且随仓库公开分发。严格按字面，"redistribute the components themselves …
+as a ported version" 覆盖这种情况。合规的做法有三条路，按代价从低到高：
+
+1. **保持现状 + 记录在案**：由负责人书面确认「内部产品、公开仓库、非商业分发」这一解释；
+2. **仓库里不放 vendored 副本**：把 `beamsEngine.ts` / `beamsMount.ts` 移到运行时私有依赖
+   或构建期注入，开源仓库只留接口与说明；
+3. **换成自研或更宽松许可的实现**：代价最大，且本轮明确禁止新增背景渲染器。
+
+本 PR 只做第 1 条的「记录在案」，不擅自替负责人做合规判断。
+
+---
+
+## 字体
+
+- **Manrope**（拉丁品牌字体）经 `@fontsource-variable/manrope` 引入，
+  SIL Open Font License 1.1，包内已含许可证。
+- **Noto Sans SC / Noto Serif SC / IBM Plex Mono** 沿用项目既有依赖，
+  均为 SIL Open Font License 1.1。
+
+## 未引入的依赖
+
+本轮**没有**引入 Three.js / React Three Fiber / `@react-three/*`：
+Beams 上游本身是裸 WebGL2 实现，无需三维库。

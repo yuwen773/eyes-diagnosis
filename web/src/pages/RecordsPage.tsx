@@ -18,6 +18,7 @@ import {
   type ScopedStats,
 } from "@/lib/records"
 import { queryKeys } from "@/lib/queryKeys"
+import { useSession } from "@/lib/session"
 import {
   classCode,
   confidencePercent,
@@ -41,15 +42,21 @@ export function RecordsPage() {
   const [page, setPage] = useState(1)
   const { push } = useFault()
   const queryClient = useQueryClient()
+  const { status, scope } = useSession()
+  /** 只有确认登录了才发个人请求：会话未知时不去猜，匿名时更不该问。 */
+  const authed = status === "authed"
 
   /**
    * 列表：筛选 / 翻页就是换查询键，取数由 React Query 接管。
    * page 1 / pageSize 10 与个人中心同键，两页共享缓存。
+   * 键里带 scope：换账号后 B 读的是另一个键，A 的缓存不会被 B 读到。
    */
-  const listKey = queryKeys.records.mine({ current: page, pageSize: PAGE_SIZE })
+  const listKey = queryKeys.records.mine(scope, { current: page, pageSize: PAGE_SIZE })
   const listQuery = useQuery({
     queryKey: listKey,
-    queryFn: () => listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }),
+    queryFn: ({ signal }) =>
+      listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }, signal),
+    enabled: authed,
   })
 
   const data = listQuery.data
@@ -65,8 +72,8 @@ export function RecordsPage() {
   // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页。
   const statsQuery = useQuery({
     queryKey: [...listKey, "stats"] as const,
-    queryFn: () => loadMyStats(records, data?.total ?? 0),
-    enabled: data !== undefined,
+    queryFn: ({ signal }) => loadMyStats(records, data?.total ?? 0, signal),
+    enabled: authed && data !== undefined,
   })
   const scoped: ScopedStats | null = statsQuery.data ?? null
 
@@ -80,9 +87,9 @@ export function RecordsPage() {
   const [submittingId, setSubmittingId] = useState<string | null>(null)
 
   const detailQuery = useQuery({
-    queryKey: ["records", "detail", openId] as const,
-    queryFn: () => getMyDiagnosis(openId as string),
-    enabled: openId !== null,
+    queryKey: queryKeys.records.detail(scope, openId ?? ""),
+    queryFn: ({ signal }) => getMyDiagnosis(openId as string, signal),
+    enabled: authed && openId !== null,
   })
   const detailLoading =
     openId !== null &&
@@ -131,6 +138,27 @@ export function RecordsPage() {
   }
 
   const pages = Math.max(1, data?.pages ?? 1)
+
+  if (status === "anon") {
+    // 匿名：整页都是个人数据，不发请求，也不假装「没有记录」——给登录入口。
+    return (
+      <div className="is-field">
+        <SiteHeader />
+        <main className="wrap records">
+          <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
+          <div className="records__empty">
+            <EmptyFrame label="未登录" />
+            <p className="records__empty-title">登录后才能查看诊断记录</p>
+            <p className="records__empty-body">记录、统计与复核状态都跟着账号走。</p>
+            <Link className="btn" to="/login?redirect=%2Frecords">
+              去登录 <span className="btn__key">↗</span>
+            </Link>
+          </div>
+        </main>
+        <DisclaimerBar />
+      </div>
+    )
+  }
 
   return (
     <div className="is-field">

@@ -23,29 +23,33 @@ const ROLE_LABEL: Record<string, string> = {
 const PROFILE_SAMPLE = 10
 
 export function ProfilePage() {
-  const { user, refresh } = useSession()
+  const { user, status, scope, refresh } = useSession()
   const navigate = useNavigate()
   const { push } = useFault()
+  /** 只有确认登录了才发个人请求。 */
+  const authed = status === "authed"
 
   const name = user?.userName || user?.userAccount || "账号"
 
   /* ── 判读统计（服务端全量优先，未上线时取最近一页） ───── */
   const queryClient = useQueryClient()
 
-  // 与判读记录页第 1 页同键：两页共享同一份列表缓存。
-  const sampleKey = queryKeys.records.mine({ current: 1, pageSize: PROFILE_SAMPLE })
+  // 与判读记录页第 1 页同键：两页共享同一份列表缓存（同一账号 scope 内）。
+  const sampleKey = queryKeys.records.mine(scope, { current: 1, pageSize: PROFILE_SAMPLE })
   const sampleQuery = useQuery({
     queryKey: sampleKey,
-    queryFn: () => listMyDiagnoses({ current: 1, pageSize: PROFILE_SAMPLE }),
-    enabled: !!user,
+    queryFn: ({ signal }) =>
+      listMyDiagnoses({ current: 1, pageSize: PROFILE_SAMPLE }, signal),
+    enabled: authed && !!user,
   })
   const sample = sampleQuery.data
 
   // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页样本。
   const statsQuery = useQuery({
     queryKey: [...sampleKey, "stats"] as const,
-    queryFn: () => loadMyStats(sample?.records ?? [], sample?.total ?? 0),
-    enabled: !!user && sample !== undefined,
+    queryFn: ({ signal }) =>
+      loadMyStats(sample?.records ?? [], sample?.total ?? 0, signal),
+    enabled: authed && !!user && sample !== undefined,
   })
 
   /* ── 资料编辑 ─────────────────────────────────────────── */

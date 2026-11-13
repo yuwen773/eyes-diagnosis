@@ -59,3 +59,50 @@ describe("图表分类色板", () => {
     expect(new Set(DARK).size).toBe(DARK.length)
   })
 })
+
+describe("Iris 2.0 品牌层", () => {
+  it("浅色：正文与次要文字在画布与卡片上都 ≥ 4.5", () => {
+    for (const fg of ["--brand-text", "--brand-muted"]) {
+      expect(contrast(value(fg), value("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(value(fg), value("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("暗色：正文与次要文字在画布与卡片上都 ≥ 4.5", () => {
+    for (const fg of ["--brand-text", "--brand-muted"]) {
+      expect(contrast(darkValue(fg), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(darkValue(fg), darkValue("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("主色当按钮底时，压在上面的文字 ≥ 4.5", () => {
+    expect(contrast(value("--brand-primary-fg"), value("--brand-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(darkValue("--brand-primary-fg"), darkValue("--brand-primary")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("青与极光紫当文字色时也 ≥ 4.5——点缀色不豁免可读性", () => {
+    for (const fg of ["--brand-cyan", "--brand-aurora"]) {
+      expect(contrast(value(fg), value("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(darkValue(fg), darkValue("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("品牌色不得与医学风险色同值：两种语义不能共用一枚颜色", () => {
+    const risks = [
+      "--paper-risk-normal",
+      "--paper-risk-attention",
+      "--paper-risk-critical",
+      "--risk-normal-lit",
+      "--risk-attention-lit",
+      "--risk-critical-lit",
+    ].map((name) => value(name))
+    for (const brand of ["--brand-primary", "--brand-cyan", "--brand-aurora"]) {
+      for (const risk of risks) {
+        expect(value(brand)).not.toBe(risk)
+        expect(darkValue(brand)).not.toBe(risk)
+      }
+    }
+  })
+})

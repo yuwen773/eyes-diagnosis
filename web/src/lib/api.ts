@@ -323,11 +323,16 @@ export type DiagnosisManage = {
 
 export function listMyDiagnoses(
   q: { current?: number; pageSize?: number; result?: string } = {},
+  signal?: AbortSignal,
 ) {
-  return request<RawPage<DiagnosisManage>>("/diagnosis/list/page/my", {
-    method: "POST",
-    body: JSON.stringify({ current: 1, pageSize: 10, ...q }),
-  }).then(toPage)
+  return request<RawPage<DiagnosisManage>>(
+    "/diagnosis/list/page/my",
+    {
+      method: "POST",
+      body: JSON.stringify({ current: 1, pageSize: 10, ...q }),
+      signal,
+    },
+  ).then(toPage)
 }
 
 export type MyDiagnosisStats = {
@@ -338,13 +343,13 @@ export type MyDiagnosisStats = {
 }
 
 /** 服务端聚合。接口未上线时返回 404，调用方据此降级到当前页口径。 */
-export function getMyStats() {
-  return request<MyDiagnosisStats>("/diagnosis/stats/my", { method: "GET" })
+export function getMyStats(signal?: AbortSignal) {
+  return request<MyDiagnosisStats>("/diagnosis/stats/my", { method: "GET", signal })
 }
 
 /** 本人判读详情（后端做归属校验）。返回完整记录纸字段。 */
-export function getMyDiagnosis(id: string | number) {
-  return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET" })
+export function getMyDiagnosis(id: string | number, signal?: AbortSignal) {
+  return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET", signal })
 }
 
 /**

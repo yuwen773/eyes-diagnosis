@@ -79,6 +79,21 @@ describe("request", () => {
       message: "请求数据不存在",
     })
   })
+
+  it("调用方取消请求时原样抛出 AbortError，不翻成「网络不可用」", async () => {
+    const controller = new AbortController()
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        controller.abort()
+        throw new DOMException("The operation was aborted.", "AbortError")
+      }),
+    )
+
+    await expect(request("/x", { signal: controller.signal })).rejects.toMatchObject({
+      name: "AbortError",
+    })
+  })
 })
 
 describe("toPage", () => {

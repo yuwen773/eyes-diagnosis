@@ -17,6 +17,12 @@
 > 允许分类数据色、浮层圆角与状态过渡；**C 品牌/Agent 视觉层**允许有界动效与
 > 品牌渐变，但必须有性能预算与 reduced-motion 开关。安全、医学表述、可访问性、
 > 统计口径、证据链**不因档位放松**。
+>
+> **2026-11-12 · Iris 2.0 品牌层。** 首页与品牌视觉改走**钴蓝主导 + 银蓝材质
+> + 极光紫点缀**（§3.9），落地在独立命名空间 `.iris2` 里，与临床页的信号橙
+> 并存但互不顶替：A 档判读页仍是骨白 + 墨色 + 信号橙；品牌层只改 C 档。
+> 「禁冷蓝主色 / 禁紫蓝渐变」这条旧禁令**只约束 A / B 档**，品牌层按 §3.9 执行。
+> 医学语义、可访问性、证据链与性能预算的约束一条没放松。
 
 ---
 
@@ -189,10 +195,51 @@ tooltip 与 `aria-label` 里的系列名。
 
 ### 3.8 禁区
 
-- 禁紫蓝渐变、冷蓝主色、纯黑 `#000`、纯白页面背景。
+- **A / B 档禁**：紫蓝渐变、冷蓝主色、纯黑 `#000`、纯白页面背景。
+  （C 档品牌层按 §3.9 走——钴蓝与极光紫是它的合法色。）
 - 禁把风险色当品牌色用，反之亦然。
-- 禁引入第七种彩色。彩色只能来自 §3.3 / §3.4 / §3.5 的令牌。
+- 禁引入第七种彩色。彩色只能来自 §3.3 / §3.4 / §3.5 / §3.9 的令牌。
 - 禁在浅色面上用纯黑投影。
+
+### 3.9 Iris 2.0 品牌层（`.iris2`，仅 C 档）
+
+品牌视觉单独一层，**不侵入临床页**。色板实现在 `web/src/styles/tokens.css` 的
+`:root` 与 `html.dark` 两组 `--brand-*` 令牌里（品牌色是全局可取的，
+`--risk-*` 依然是另一套，互不顶替）；`.iris2` 只**声明语境**——
+「这一块是品牌面」，组件只消费 `--brand-*`，别去改 `--field / --ink / --signal`。
+
+| 令牌 | 浅色 | 暗色 | 用途 |
+|---|---|---|---|
+| `--brand-canvas` | `#f2f6fc` | `#0b1425` | 品牌层画布 |
+| `--brand-surface` | `#ffffff` | `#17263d` | 品牌层卡片 / 玻璃面底 |
+| `--brand-text` | `#16233a` | `#eff6ff` | 主文字 |
+| `--brand-muted` | `#5b6b82` | `#a9bbd3` | 次要文字 |
+| `--brand-primary` | `#2457c9` | `#85b5ff` | 钴蓝：主 CTA、链接、当前态 |
+| `--brand-primary-fg` | `#ffffff` | `#0b1425` | 压在钴蓝上的文字 |
+| `--brand-cyan` | `#006f82` | `#60d7e6` | 光学材质里的冷调高光 |
+| `--brand-aurora` | `#6b56c5` | `#c0acff` | 极光紫：只做局部点缀 |
+| `--brand-glass` / `--brand-glass-strong` | 白 68% / 84% | 蓝黑 78% / 90% | 半透明轻质信息卡 |
+| `--brand-line` / `--brand-outline` | 蓝墨 12% | 冰蓝 29% / 13% | 发丝线与描边 |
+
+**守则**
+
+1. **银色是材质，不是正文色。** 光学主视觉的金属反射用 `--brand-glass` /
+   高光渐变表达；正文永远 `--brand-text`，次要文字 `--brand-muted`。
+2. **钴蓝是品牌色，信号橙是临床语义色。** 两者不互换、不同时承担"重点"，
+   也不与 `--risk-*` 混用（`tokens.contrast.test.ts` 有断言：品牌色不得与风险色同值）。
+3. **极光紫只做点缀**，面积不超过一个色块，不承载文字语义。
+4. **可访问性不因品牌放松**：正文 ≥ 4.5:1，图形 ≥ 3:1，亮暗两套都实测过。
+5. **渐进迁移**：品牌层只挂在首页与品牌组件上。判读记录、诊断页、管理端
+   继续用 `--field / --ink / --signal`，两套并存期间老页面不回归。
+6. **首屏光学主视觉只允许一个渲染器。** 首页那束光带是 vendored 的
+   Beams（裸 WebGL2，见 `web/src/components/brand/THIRD-PARTY-NOTICES.md`）；
+   内部细纤维是叠在同一张画面上的 SVG 图层，**不另起第二个 WebGL 循环**。
+   禁把 GridScan / Beams / Ghost Fibers 同时挂上首屏，也禁为此再写一套
+   上千行的自制特效库。
+7. **降级是硬要求，不是加分项。** WebGL2 不可用、上下文丢失、
+   `prefers-reduced-motion`、低端机四种情形都必须给出**可读且美观的静态画面**
+   （SVG 静态光带 / 冻结帧），且**背景永远不降低文字对比度、不遮标题与 CTA**。
+   离屏与标签页隐藏必须停机；用户可手动暂停动效。
 
 ---
 
@@ -203,7 +250,13 @@ tooltip 与 `aria-label` 里的系列名。
 | 标题 / 衬线 | `--font-serif` | `Noto Serif SC, Source Han Serif SC, Songti SC, STSong, SimSun, Georgia, serif` |
 | 拉丁展示字 | `--font-display` | `Instrument Serif, Noto Serif SC, Georgia, serif` |
 | 正文 / UI | `--font-sans` | `Noto Sans SC, PingFang SC, Microsoft YaHei, Segoe UI, system-ui, sans-serif` |
+| 品牌 / UI（Iris 2.0） | `--font-brand` | `Manrope Variable, Manrope, Noto Sans SC, PingFang SC, Microsoft YaHei, system-ui, sans-serif` |
 | 数字 / 代码 | `--font-mono` | `IBM Plex Mono, JetBrains Mono, ui-monospace, Cascadia Mono, Consolas, monospace` |
+
+**Manrope 只覆盖拉丁字形**（`@fontsource-variable/manrope`，可变字重 200–800，
+unicode-range 分片，命中拉丁约 25KB）。汉字按字形回退到 Noto Sans SC ——
+Manrope 没有汉字，别把它当中文兜底。中文标签仍用 `--font-sans`；
+`--font-brand` 用于品牌层（C 档）的标题、导航与按钮标签。
 
 ### 层级（实测值，基准 16px）
 
@@ -235,8 +288,12 @@ tooltip 与 `aria-label` 里的系列名。
 | `--radius-sm` | `4px` | B 档小浮层、tooltip、内嵌块 |
 | `--radius-md` | `8px` | B 档下拉、弹窗、抽屉 |
 | `--radius-lg` | `12px` | C 档 Agent 气泡、品牌面板 |
+| `--radius-xl` | `24px` | **Iris 2.0 品牌层**：大卡片、信息面板 |
+| `--radius-2xl` | `38px` | **Iris 2.0 品牌层**：首屏外壳容器 |
 | `--radius-circle` | `50%` | 圆形：影像缩略、置信环、状态点 |
 | `--radius-pill` | `999px` | 药丸标签（少数） |
+
+`--radius-xl` / `--radius-2xl` 只服务 C 档品牌层；A 档主控件仍是直角。
 
 **不再允许随手写像素值。** 新代码只用上表令牌；A 档主按钮仍是直角。
 
@@ -413,7 +470,7 @@ tooltip 与 `aria-label` 里的系列名。
 
 **Don't**
 
-- 不用纯黑、纯白页面背景、冷蓝主色、紫蓝渐变。
+- 不用纯黑、纯白页面背景。**A / B 档**不用冷蓝主色、紫蓝渐变（C 档品牌层见 §3.9）。
 - 不用橙色做大面积填充或主 CTA。
 - 不用厚重卡片阴影、不用圆角堆叠。
 - 不用 700+ 粗衬线、不用斜体标题。
@@ -422,7 +479,7 @@ tooltip 与 `aria-label` 里的系列名。
 
 ---
 
-## 12. 已知偏差与技术债（2026-11-10）
+## 12. 已知偏差与技术债（2026-11-12）
 
 写在这里，是为了让下一个读者知道"这不是设计意图，是待修的问题"，而不是照着它复刻。
 
@@ -437,6 +494,9 @@ tooltip 与 `aria-label` 里的系列名。
 | 模块里仍有多处 `outline: none` 压掉全局焦点环 | 键盘用户看不到焦点 | 逐处提高特异度重画，不要删焦点 |
 | ~~`highlight.js` 全量打包~~ | markdown 块曾达 1,019KB | **已修（2026-11-11）**：改 `lib/core` + 16 种按需语言，降到 186KB |
 | Tailwind v4 全量引入但 0 个工具类被使用，只承担 preflight reset | 体积成本，且正在制造上面的 `.overline` 缺陷 | 盘清被依赖的 reset 后移除，或改名避开冲突 |
+| 品牌层（`.iris2`）目前只覆盖首页首屏与其外壳 | 首页下半部分仍走旧的骨白/暗房语境，两套底色同页共存 | Iris 2.0 首期只做首屏；下半部分在下一期统一到 `--brand-*`，旧语境不强制迁移 |
+| ~~品牌层未提供「没有 WebGL / 低端设备」的静态降级素材~~ | 首屏主视觉在降级路径下可能留白 | **已修（2026-11-12，PR-03）**：`OpticFlow` 备了 SVG 静态光带，WebGL2 不可用或上下文丢失时接管；reduced-motion 冻结在静态帧 |
+| 首屏光带参数是手调的，不是从设计稿反推的 | 换个分辨率/ DPR 下观感可能不如预期 | 目前 390 / 768 / 1440 / 1920 × 亮暗都逐张看过；后续若改配色需重看一遍 |
 
 ---
 
@@ -455,8 +515,11 @@ tooltip 与 `aria-label` 里的系列名。
 正文        --font-sans
 数字        --font-mono + tabular-nums
 分类色      --viz-series-1..6（仅 B 档图表，浅/暗两套）
-圆角        --radius-none/sm/md/lg/circle/pill（0 / 4 / 8 / 12 / 50% / 999px）
+圆角        --radius-none/sm/md/lg/xl/2xl/circle/pill（0 / 4 / 8 / 12 / 24 / 38 / 50% / 999px）
 阴影        --shadow-overlay（浮层）/ --shadow-modal（模态）
+品牌层      --brand-primary #2457c9（暗底 #85b5ff）/ --brand-cyan / --brand-aurora
+            仅 .iris2 上下文，C 档首页用；信号橙仍是临床语义色，两者不混用
+品牌字体    --font-brand（Manrope Variable → Noto Sans SC 回退）
 版心        1240px；≥2200px 时 1760px
 动效        --motion-fast 140ms / --motion-base 240ms / --motion-slow 420ms
 真源        web/src/styles/tokens.css
