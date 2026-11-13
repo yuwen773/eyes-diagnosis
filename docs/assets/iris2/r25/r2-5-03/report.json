@@ -1,0 +1,191 @@
+{
+  "report": [
+    {
+      "theme": "light",
+      "page": "news",
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "page": "news-page2",
+      "meta": "共 13 条\n·\n第 02 / 02 页"
+    },
+    {
+      "theme": "light",
+      "page": "news-empty",
+      "meta": "共 0 条\n·\n第 01 / 01 页"
+    },
+    {
+      "theme": "light",
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false,
+      "url": "http://localhost:5175/news/13"
+    },
+    {
+      "theme": "light",
+      "page": "detail-long",
+      "toc": 4,
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "page": "detail-long-anchor",
+      "top": 88
+    },
+    {
+      "theme": "dark",
+      "page": "news",
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "page": "news-page2",
+      "meta": "共 13 条\n·\n第 02 / 02 页"
+    },
+    {
+      "theme": "dark",
+      "page": "news-empty",
+      "meta": "共 0 条\n·\n第 01 / 01 页"
+    },
+    {
+      "theme": "dark",
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false,
+      "url": "http://localhost:5175/news/13"
+    },
+    {
+      "theme": "dark",
+      "page": "detail-long",
+      "toc": 4,
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "page": "detail-long-anchor",
+      "top": 88
+    },
+    {
+      "theme": "light",
+      "vp": 390,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 390,
+      "page": "detail",
+      "bodyWidth": 304,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 768,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 768,
+      "page": "detail",
+      "bodyWidth": 580,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 900,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 900,
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 1920,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "light",
+      "vp": 1920,
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 390,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 390,
+      "page": "detail",
+      "bodyWidth": 304,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 768,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 768,
+      "page": "detail",
+      "bodyWidth": 580,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 900,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 900,
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 1920,
+      "bodyWidth": null,
+      "hScroll": false
+    },
+    {
+      "theme": "dark",
+      "vp": 1920,
+      "page": "detail",
+      "bodyWidth": 564,
+      "fontSize": "15.5px",
+      "hScroll": false
+    }
+  ],
+  "errors": []
+}

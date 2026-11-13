@@ -1,21 +1,24 @@
 /* ==========================================================================
-   资讯页 · 聚光样片
+   资讯 · Editorial（R2.5-03）
    --------------------------------------------------------------------------
-   资讯墙是一张摊在台面上的样片张：每一格是一帧底片，光标没靠近时是灰的，
-   靠近才显色——像对上了焦。没有封面的条目不是留白，是一格没曝到东西的
-   空框，四角是信号橙的定位角标。
+   资讯是 Brand 之下的编辑变体，不是数据仪表：没有读数条、没有橙角标、
+   没有等高等宽的样片墙。版式按门户组织——报头、最新一条做大、其余走
+   发丝线列表；详情页是一篇可以读的文章（68ch、目录、封面可选）。
+   所有数字（日期、字数、页码）仍用等宽。
    ========================================================================== */
 
 .news {
   padding-block: clamp(36px, 5vh, 60px) clamp(56px, 8vh, 96px);
 }
 
-.news__intro {
+/* ── 报头 ─────────────────────────────────────────────────────── */
+
+.news__masthead {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
-  gap: clamp(28px, 5vw, 64px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: clamp(28px, 5vw, 72px);
   align-items: end;
-  padding-block: clamp(22px, 3.4vh, 38px);
+  padding-block: clamp(22px, 3.4vh, 40px);
 }
 
 .news__title {
@@ -27,6 +30,10 @@
   gap: 9px;
 }
 
+.news__search-label {
+  color: var(--brand-muted);
+}
+
 .news__search-row {
   display: flex;
   gap: 8px;
@@ -35,57 +42,307 @@
 .news__input {
   flex: 1;
   min-width: 0;
-  height: 40px;
-  padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: 0;
-  color: var(--fg);
+  height: 44px;
+  padding-inline: 16px;
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--brand-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition:
     border-color var(--fast),
-    background var(--fast);
+    box-shadow var(--fast);
 }
 
 .news__input::placeholder {
-  color: var(--fg-3);
+  color: var(--brand-muted);
 }
 
 .news__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--brand-primary);
 }
 
+/* 焦点环不压掉：全局 1px currentColor 保留，这里只把底色描边与柔光补上
+   （DESIGN.md §3.5：模块不得写 outline: none）。 */
 .news__input:focus {
-  border-color: var(--signal);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent);
 }
 
-.news__strip {
-  margin-bottom: clamp(26px, 3.6vh, 40px);
+.news__submit {
+  height: 44px;
+  padding-inline: 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--fast);
 }
 
-.news__grid {
-  animation: fade 620ms var(--ease) both;
+.news__submit:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #000);
 }
 
-/* 载入时的骨架：同样是一格格的空框，只是还没有内容。
-   列宽公式照抄 ChromaGrid 的三列版，避免数据到了以后版面跳一下。 */
-.news__grid-skeleton {
-  --cols: 3;
+/* 实心钴蓝按钮上，全局 currentColor 焦点环是白字色——在浅色画布上几乎看不见。
+   这里提高特异度重画：用正文墨色，深浅主题都成立。 */
+.news__submit:focus-visible {
+  outline: 2px solid var(--brand-text);
+  outline-offset: 3px;
+}
+
+.news__clear {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding-inline: 12px;
+  border: 0;
+  background: none;
+  color: var(--brand-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.news__clear:hover {
+  color: color-mix(in srgb, var(--brand-primary) 78%, #000);
+}
+
+/* ── 编辑口径的一行元信息（不是四列 KPI）────────────────────── */
+
+.news__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 clamp(26px, 4vh, 40px);
+  padding: 14px 0;
+  border-block: 1px solid var(--brand-line);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brand-muted);
+}
+
+/* ── 最新一条：头版 ───────────────────────────────────────────── */
+
+.news-lead {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(min(100%, max(250px, calc((100% - (var(--cols) - 1) * 16px) / var(--cols)))), 1fr)
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: stretch;
+  padding: clamp(26px, 3.4vw, 48px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+}
+
+/* 无封面时不摆空框：文字自己撑起头版，宽度收在可读区间。 */
+.news-lead--text {
+  grid-template-columns: minmax(0, 1fr);
+  background: linear-gradient(
+    135deg,
+    var(--brand-surface) 0%,
+    color-mix(in srgb, var(--brand-primary) 6%, var(--brand-surface)) 100%
   );
 }
 
-.news__skeleton-cell {
+.news-lead--text .news-lead__body {
+  max-width: 68ch;
+}
+
+.news-lead__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+
+.news-lead__body .overline {
+  color: var(--brand-primary);
+}
+
+.news-lead__meta {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brand-muted);
+}
+
+.news-lead__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.22;
+  letter-spacing: -0.015em;
+  color: var(--brand-text);
+  text-wrap: balance;
+}
+
+.news-lead__title a {
+  color: inherit;
+  transition: color var(--fast);
+}
+
+.news-lead__title a:hover {
+  color: var(--brand-primary);
+}
+
+.news-lead__excerpt {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 14.5px;
+  line-height: 1.8;
+  color: var(--brand-muted);
+}
+
+.news-lead__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--brand-primary);
+}
+
+.news-lead__more-mark {
+  font-family: var(--font-mono);
+  transition: transform var(--fast);
+}
+
+.news-lead__more:hover .news-lead__more-mark {
+  transform: translate(2px, -2px);
+}
+
+.news-lead__plate {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--brand-surface);
+}
+
+.news-lead__img {
   display: block;
-  aspect-ratio: 1 / 1;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  max-height: 360px;
+  object-fit: cover;
+}
+
+/* ── 其余条目：发丝线列表（宽屏两栏）──────────────────────────── */
+
+.news-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(32px, 4vw, 64px);
+  margin: clamp(20px, 3vh, 32px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.news-rows__item {
+  border-top: 1px solid var(--brand-line);
+}
+
+.news-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 20px 0;
+  color: var(--brand-text);
+  transition:
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.news-row:hover {
+  color: var(--brand-primary);
+}
+
+.news-row__date {
+  padding-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--brand-muted);
+}
+
+.news-row__main {
+  display: grid;
+  gap: 5px;
+}
+
+.news-row__title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.45;
+  color: inherit;
+  text-wrap: pretty;
+}
+
+.news-row__excerpt {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--brand-muted);
+}
+
+.news-row__thumb {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.news-row__mark {
+  padding-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--brand-muted);
+  transition: color var(--fast);
+}
+
+.news-row:hover .news-row__mark {
+  color: var(--brand-primary);
+}
+
+/* ── 载入骨架 ─────────────────────────────────────────────────── */
+
+.news-skeleton {
+  display: grid;
+  gap: 20px;
+}
+
+.news-skeleton__lead,
+.news-skeleton__row {
+  display: block;
+  border: 1px solid var(--brand-line);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--brand-surface));
   animation: news-pulse 1.6s var(--ease) infinite;
+}
+
+.news-skeleton__lead {
+  height: clamp(220px, 26vw, 340px);
+  border-radius: var(--radius-xl);
+}
+
+.news-skeleton__rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(32px, 4vw, 64px);
+}
+
+.news-skeleton__row {
+  height: 72px;
+  border-width: 1px 0 0;
+  border-radius: 0;
 }
 
 @keyframes news-pulse {
@@ -98,28 +355,36 @@
   }
 }
 
-.news__empty {
+@media (prefers-reduced-motion: reduce) {
+  .news-skeleton__lead,
+  .news-skeleton__row {
+    animation: none;
+  }
+}
+
+/* ── 空态：用话说清楚，不摆空取景框 ───────────────────────────── */
+
+.news-empty {
   display: grid;
-  justify-items: center;
-  gap: 12px;
+  justify-items: start;
+  gap: 10px;
   padding-block: clamp(48px, 9vh, 96px);
-  text-align: center;
+  border-block: 1px solid var(--brand-line);
 }
 
-.news__empty .empty-frame {
-  position: relative;
-  inset: auto;
-  width: 132px;
-  height: 132px;
-  border: 1px solid var(--line);
+.news-empty .overline {
+  color: var(--brand-primary);
 }
 
-.news__empty-title {
-  margin: 6px 0 0;
+.news-empty__title {
+  margin: 4px 0 0;
   font-family: var(--font-serif);
-  font-size: 21px;
-  font-weight: 500;
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 400;
+  color: var(--brand-text);
 }
+
+/* ── 分页 ─────────────────────────────────────────────────────── */
 
 .news__pager {
   display: flex;
@@ -128,218 +393,44 @@
   gap: 18px;
   margin-top: clamp(30px, 4.4vh, 48px);
   padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--brand-line);
 }
 
 .news__pager-step {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 2px;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid transparent;
-  color: var(--fg);
+  padding: 8px 18px;
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--brand-text);
   font-size: 13px;
   cursor: pointer;
   transition:
-    color var(--fast),
-    border-color var(--fast);
+    border-color var(--fast),
+    color var(--fast);
 }
 
 .news__pager-step:hover:not(:disabled) {
-  border-bottom-color: var(--signal);
-  color: var(--signal-text);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
 .news__pager-step:disabled {
-  color: var(--fg-3);
-  opacity: 0.5;
+  color: var(--brand-muted);
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .news__pager-state {
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--fg-3);
-}
-
-/* ── 空的取景框 ─────────────────────────────────────── */
-
-.empty-frame {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 16px;
-  background: var(--surface-2);
-}
-
-.empty-frame__mark {
-  position: relative;
-  width: 38%;
-  aspect-ratio: 1;
-  border: 1px solid var(--line-strong);
-}
-
-.empty-frame__mark i {
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  border: 0 solid var(--signal);
-}
-
-.empty-frame__mark i:nth-child(1) {
-  top: -1px;
-  left: -1px;
-  border-top-width: 1px;
-  border-left-width: 1px;
-}
-
-.empty-frame__mark i:nth-child(2) {
-  top: -1px;
-  right: -1px;
-  border-top-width: 1px;
-  border-right-width: 1px;
-}
-
-.empty-frame__mark i:nth-child(3) {
-  bottom: -1px;
-  left: -1px;
-  border-bottom-width: 1px;
-  border-left-width: 1px;
-}
-
-.empty-frame__mark i:nth-child(4) {
-  bottom: -1px;
-  right: -1px;
-  border-bottom-width: 1px;
-  border-right-width: 1px;
-}
-
-.empty-frame__label {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-}
-
-/* 有话的那一格：照片的位置摆上正文开头的一段。 */
-.empty-frame--quote {
-  place-items: stretch;
-  align-content: center;
-  padding: clamp(20px, 2.4vw, 30px);
-}
-
-.empty-frame--quote .empty-frame__mark {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 20px;
-  border: 0;
-}
-
-.empty-frame--quote .empty-frame__mark i {
-  width: 8px;
-  height: 8px;
-}
-
-.empty-frame__quote {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: clamp(17px, 1.5vw, 21px);
-  line-height: 1.62;
-  letter-spacing: -0.01em;
-  color: var(--fg);
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.empty-frame__rule {
-  display: block;
-  width: 30px;
-  height: 1px;
-  margin-top: 16px;
-  background: var(--signal);
+  color: var(--brand-muted);
 }
 
 /* ==========================================================================
-   故障面板
-   --------------------------------------------------------------------------
-   读取失败不是一句粉红横幅，是仪表盘上的一次读数异常：左边一道故障色竖线，
-   中间说清发生了什么，底下把状态码和端点摆出来。故障色走风险语义色，
-   不占用信号橙。
-   ========================================================================== */
-
-.fault {
-  margin-block: clamp(28px, 5vh, 56px);
-  max-width: 780px;
-  padding: clamp(24px, 3vw, 40px);
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-left: 2px solid var(--risk-critical);
-}
-
-.fault__head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.fault__tag {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--risk-critical);
-}
-
-.fault__rule {
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-
-.fault__title {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: clamp(21px, 2.2vw, 27px);
-  line-height: 1.32;
-  color: var(--fg);
-}
-
-.fault__body {
-  margin: 10px 0 0;
-  max-width: 52ch;
-  font-size: 13.5px;
-  line-height: 1.85;
-  color: var(--fg-2);
-}
-
-.fault__foot {
-  display: flex;
-  align-items: flex-end;
-  gap: clamp(20px, 3vw, 40px);
-  flex-wrap: wrap;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-
-.fault__readout {
-  display: grid;
-  gap: 4px;
-}
-
-.fault__retry {
-  margin-left: auto;
-}
-
-/* ==========================================================================
-   资讯详情 · 一张放大的纸
+   资讯详情 · 一篇可以读的文章
    ========================================================================== */
 
 .news-detail {
@@ -354,74 +445,79 @@
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--fg-2);
+  color: var(--brand-muted);
   transition: color var(--fast);
 }
 
 .news-detail__back:hover {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
-.news-detail__hero {
-  display: grid;
-  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-  gap: clamp(26px, 4vw, 56px);
-  align-items: start;
-  padding-block: clamp(20px, 3vh, 32px) clamp(30px, 4.4vh, 48px);
+.news-article__head {
+  padding-block: clamp(20px, 3vh, 32px) clamp(24px, 3.6vh, 40px);
 }
 
-/* 没有封面位时，头版占满整行。 */
-.news-detail__hero:not(:has(.news-plate)) {
-  grid-template-columns: minmax(0, 1fr);
+.news-article__head .overline {
+  color: var(--brand-muted);
 }
 
-/* 封面：一块装裱起来的样片。 */
-.news-plate {
-  margin: 0;
-  padding: 10px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-}
-
-.news-plate__img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.news-plate figcaption {
-  padding-top: 9px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-}
-
-.news-detail__title {
+.news-article__title {
   margin-top: 14px;
-  font-size: clamp(30px, 3.6vw, 48px);
+  max-width: 22ch;
+  font-size: clamp(32px, 4.2vw, 56px);
+  line-height: 1.16;
 }
 
-.news-detail__lead {
+.news-article__lead {
   margin-top: 18px;
+  max-width: 62ch;
 }
 
-.news-detail__readout {
+.news-article__meta {
   display: flex;
-  gap: clamp(20px, 3vw, 40px);
+  align-items: center;
   flex-wrap: wrap;
-  margin-top: 26px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
+  gap: 8px;
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--brand-line);
+  max-width: 62ch;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brand-muted);
 }
 
-.news-detail__body {
+/* 封面：整幅图版，不做装裱小窗。 */
+.news-article__plate {
+  margin: 0 0 clamp(28px, 4vh, 48px);
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+}
+
+.news-article__img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+}
+
+.news-article__plate figcaption {
+  padding: 10px 16px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--brand-muted);
+  border-top: 1px solid var(--brand-line);
+}
+
+.news-article__body {
   display: grid;
   grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
   gap: clamp(24px, 3.6vw, 56px);
   align-items: start;
 }
 
-.news-detail__body:not(:has(.news-toc)) {
+.news-article__body:not(:has(.news-toc)) {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -434,11 +530,15 @@
   padding-top: 4px;
 }
 
+.news-toc .overline {
+  color: var(--brand-muted);
+}
+
 .news-toc__list {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--brand-line);
 }
 
 .news-toc__list a {
@@ -446,35 +546,43 @@
   grid-template-columns: 26px minmax(0, 1fr);
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
   transition: color var(--fast);
 }
 
 .news-toc__list a:hover {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .news-toc__index {
+  padding-top: 3px;
   font-size: 11px;
   letter-spacing: 0.02em;
-  color: var(--fg-3);
-  padding-top: 3px;
+  color: var(--brand-muted);
 }
 
 .news-toc__text {
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--fg-2);
+  color: var(--brand-muted);
 }
 
+/* 正文：实体面 + 68ch 阅读宽度。卡片宽度跟着量宽走，
+   短文不会在一张空荡的大卡里居中。 */
 .news-paper {
-  max-width: 78ch;
+  width: 100%;
+  max-width: calc(68ch + clamp(52px, 6.8vw, 104px));
+  padding: clamp(26px, 3.4vw, 52px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
 }
 
 .news-paper__body {
-  font-size: 15px;
+  max-width: 68ch;
+  font-size: 15.5px;
   line-height: 1.95;
-  color: var(--fg-2);
+  color: var(--brand-text);
 }
 
 .news-paper__body p {
@@ -484,18 +592,18 @@
 .news-paper__body h2 {
   margin: 2em 0 0.7em;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 21px;
+  font-weight: 400;
+  font-size: 22px;
   line-height: 1.4;
-  color: var(--fg);
+  color: var(--brand-text);
   scroll-margin-top: calc(var(--nav-h) + 24px);
 }
 
 .news-paper__body h3 {
   margin: 1.6em 0 0.5em;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 600;
-  color: var(--fg);
+  color: var(--brand-text);
 }
 
 .news-paper__body ul,
@@ -509,22 +617,31 @@
 }
 
 .news-paper__body a {
-  color: var(--signal-text);
-  border-bottom: 1px solid color-mix(in srgb, var(--signal) 40%, transparent);
+  color: var(--brand-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-primary) 40%, transparent);
 }
 
 .news-paper__body img {
   width: 100%;
   height: auto;
   margin: 1.4em 0;
-  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
 }
 
 .news-paper__body blockquote {
   margin: 1.4em 0;
   padding-left: 18px;
-  border-left: 2px solid var(--signal);
-  color: var(--fg-3);
+  border-left: 2px solid var(--brand-primary);
+  color: var(--brand-muted);
+}
+
+.news-paper .disclaimer {
+  max-width: 68ch;
+  margin: 2em 0 0;
+}
+
+.news-article__return {
+  margin-top: clamp(28px, 4vh, 44px);
 }
 
 /* 页尾 · 更多资讯 */
@@ -532,51 +649,64 @@
   margin-top: clamp(40px, 6vh, 72px);
 }
 
-.news-ledger {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--line);
-}
+/* ── 载入骨架（详情）─────────────────────────────────────────── */
 
-.news-ledger__row {
+.news-detail__loading {
   display: grid;
-  grid-template-columns: 108px minmax(0, 1fr) 20px;
-  gap: 18px;
-  align-items: baseline;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
-  transition: color var(--fast);
+  gap: 14px;
+  padding-block: clamp(20px, 3vh, 32px);
 }
 
-.news-ledger__row:hover {
-  color: var(--signal-text);
+.news-detail__skeleton-title,
+.news-detail__skeleton-line,
+.news-detail__skeleton-block {
+  display: block;
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--brand-surface));
+  animation: news-pulse 1.6s var(--ease) infinite;
 }
 
-.news-ledger__date {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--fg-3);
+.news-detail__skeleton-title {
+  width: min(100%, 560px);
+  height: 56px;
+  border-radius: var(--radius-md);
 }
 
-.news-ledger__title {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  line-height: 1.4;
+.news-detail__skeleton-line {
+  width: min(100%, 620px);
+  height: 16px;
+  border-radius: var(--radius-sm);
 }
 
-.news-ledger__mark {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fg-3);
-  text-align: right;
+.news-detail__skeleton-block {
+  margin-top: 12px;
+  height: 320px;
+  border-radius: var(--radius-xl);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .news-detail__skeleton-title,
+  .news-detail__skeleton-line,
+  .news-detail__skeleton-block {
+    animation: none;
+  }
+}
+
+/* ── 断点：只用 900 / 768 两档 ───────────────────────────────── */
 
 @media (max-width: 900px) {
-  .news__intro,
-  .news-detail__hero,
-  .news-detail__body {
+  .news__masthead,
+  .news-lead,
+  .news-article__body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .news-rows,
+  .news-skeleton__rows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .news-lead__img {
+    max-height: 300px;
   }
 
   .news-toc {
@@ -584,52 +714,43 @@
     padding-bottom: 8px;
   }
 
-  .news-plate {
-    max-width: 320px;
+  .news-article__title {
+    max-width: none;
   }
 }
 
-@media (max-width: 560px) {
-  .news-ledger__row {
-    grid-template-columns: minmax(0, 1fr) 16px;
+@media (max-width: 768px) {
+  .news__masthead {
+    gap: 24px;
   }
 
-  .news-ledger__date {
-    grid-column: 1 / -1;
-  }
-}
-
-/* ==========================================================================
-   超宽屏（≥2200px）· 资讯页
-   --------------------------------------------------------------------------
-   版心从 1240 放宽到 1760（见 tokens.css），这一段把多出来的横向空间
-   摊成多列，而不是把单张卡片拉长。
-   ========================================================================== */
-
-@media (min-width: 2200px) {
-  /* 资讯墙：一行放五格，而不是把三格撑大。 */
-  .news__grid .chroma-grid-inner,
-  .news__grid-skeleton {
-    --cols: 5;
+  .news-row {
+    grid-template-columns: 76px minmax(0, 1fr) auto;
+    gap: 12px;
   }
 
-  /* 目录栏给宽一点，正文那张纸在余下的空间里居中——
-     纸有物理宽度，居中比贴着左边更像摊在台面上的一张纸。 */
-  .news-detail__body {
-    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  .news-row__thumb {
+    width: 56px;
+    height: 56px;
   }
 
   .news-paper {
-    margin-inline: auto;
+    padding-inline: 18px;
   }
 
-  /* 更多资讯：单列在宽屏上太稀，分两栏读起来才像一叠单据。 */
-  .news-ledger {
-    columns: 2;
-    column-gap: clamp(40px, 4vw, 88px);
+  /* 触控目标 ≥ 44×44（DESIGN.md §2.1.2）：翻页、目录、返回都按手指尺寸来。 */
+  .news__pager-step {
+    min-height: 44px;
   }
 
-  .news-ledger__row {
-    break-inside: avoid;
+  .news-toc__list a {
+    min-height: 44px;
+    align-content: center;
+  }
+
+  .news-detail__back,
+  .news-lead__more {
+    min-height: 44px;
+    align-items: center;
   }
 }
