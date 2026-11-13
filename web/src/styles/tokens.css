@@ -58,6 +58,14 @@
   --risk-attention-lit: #cf9a37;
   --risk-critical-lit: #d96153;
 
+  /* ── 通用破坏性操作（数据删除）────────────────────
+     与医学严重度 --risk-* 分开：删除一个会话不是临床风险。
+     玫瑰红取另一条色相，不与 --risk-critical 的砖红同值；
+     只用于「删除」这类不可逆的数据动作，不用于医学提示。 */
+  --danger: #b4374a;
+  --danger-soft: rgba(180, 55, 74, 0.1);
+  --danger-lit: #ff9aa6;
+
   /* ── 反相带（全页只有一段）──────────────────── */
   --dark: #161a18;
   --on-dark: #f4f5f1;
@@ -411,6 +419,9 @@ html.dark {
   --risk-normal: var(--risk-normal-lit);
   --risk-attention: var(--risk-attention-lit);
   --risk-critical: var(--risk-critical-lit);
+
+  --danger: var(--danger-lit);
+  --danger-soft: rgba(255, 154, 166, 0.14);
 
   --viz-accent: #d9591f;
   --viz-mute: #767d79;

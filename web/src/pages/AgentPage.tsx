@@ -270,9 +270,12 @@ export function AgentPage() {
 
   const handleDelete = useCallback(
     (id: string) => {
-      void afterSessionChange(() => deleteSession(id)).then((ok) => {
+      // 返回值是「服务端真的删掉了」的唯一依据：会话列表据此决定收起确认框，
+      // 失败时保留会话与当前选择，不假装成功。
+      return afterSessionChange(() => deleteSession(id)).then((ok) => {
         // 删除失败时不清空当前对话——否则会话还在服务端，用户却以为删掉了
         if (ok && id === currentThreadId) handleNewChat()
+        return ok
       })
     },
     [afterSessionChange, currentThreadId, handleNewChat],
@@ -280,8 +283,9 @@ export function AgentPage() {
 
   const handleBatchDelete = useCallback(
     (ids: string[]) => {
-      void afterSessionChange(() => batchDeleteSessions(ids)).then((ok) => {
+      return afterSessionChange(() => batchDeleteSessions(ids)).then((ok) => {
         if (ok && ids.includes(currentThreadId)) handleNewChat()
+        return ok
       })
     },
     [afterSessionChange, currentThreadId, handleNewChat],
@@ -337,7 +341,7 @@ export function AgentPage() {
               onNewChat={handleNewChat}
               onSelect={(id) => void handleSelectHistory(id)}
               onRename={(id, title) =>
-                void afterSessionChange(() => updateSessionTitle(id, title))
+                afterSessionChange(() => updateSessionTitle(id, title))
               }
               onDelete={handleDelete}
               onBatchDelete={handleBatchDelete}

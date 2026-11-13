@@ -180,8 +180,9 @@ describe("AgentPage 未登录", () => {
     )
 
     // A 的请求先发出、B 的请求后发出——但 A 晚到，不能覆盖已经显示的 B。
-    fireEvent.click(await screen.findByRole("button", { name: /会话 A/ }))
-    fireEvent.click(await screen.findByRole("button", { name: /会话 B/ }))
+    // 行按钮的可访问名以标题开头；行级操作钮是「会话操作：…」，这里按前缀区分。
+    fireEvent.click(await screen.findByRole("button", { name: /^会话 A/ }))
+    fireEvent.click(await screen.findByRole("button", { name: /^会话 B/ }))
     await act(async () => historyB.resolve(history("B 的新消息")))
     expect(await screen.findByText("B 的新消息")).toBeTruthy()
 

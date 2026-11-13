@@ -287,7 +287,7 @@ a:hover .wordmark__iris {
   transform: rotate(180deg);
 }
 
-/* ── 账号控件：登录时是一个描边按钮，登录后是悬浮下拉 ── */
+/* ── 账号控件：登录时是一个描边按钮，登录后是一张 Iris 玻璃账号卡 ── */
 
 .acct {
   position: relative;
@@ -297,12 +297,13 @@ a:hover .wordmark__iris {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 32px;
-  padding-inline: 13px;
+  height: 36px;
+  padding: 0 12px 0 6px;
   border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
   background: none;
   color: var(--fg);
-  font-family: var(--font-sans);
+  font-family: var(--font-brand);
   font-size: 12.5px;
   cursor: pointer;
   transition: border-color var(--fast), color var(--fast), background var(--fast);
@@ -312,64 +313,209 @@ a:hover .wordmark__iris {
   border-color: var(--fg);
 }
 
+.acct__trigger[data-popup-open] {
+  border-color: var(--brand-primary);
+}
+
 /* 未登录的「登录」是一块实心片：顶栏里唯一填充的控件，去哪一目一目了然。 */
 a.acct__trigger--anon {
   justify-content: center;
   background: var(--fg);
   color: var(--bg);
   border-color: var(--fg);
+  border-radius: var(--radius-pill);
+  padding: 0 14px;
   font-weight: 500;
   letter-spacing: 0.06em;
 }
 
 a.acct__trigger--anon:hover {
-  background: var(--signal);
-  border-color: var(--signal);
-  color: var(--bg);
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+/* 头像：有真实头像就显示，没有就用昵称首字符。两者都不虚构资料。 */
+.acct__avatar {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: var(--radius-circle);
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--brand-glass-strong));
+  color: var(--brand-primary);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  font-family: var(--font-brand);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.acct__avatar--sm {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+
+.acct__avatar--lg {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+}
+
+.acct__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.acct__name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .acct__caret {
-  font-size: 11px;
-  line-height: 1;
+  width: 14px;
+  height: 14px;
   color: var(--fg-3);
+  transition: transform var(--fast), color var(--fast);
 }
 
-/* 下拉是一块读数面板，不是圆角浮层。
+.acct__trigger:hover .acct__caret,
+.acct__trigger[data-popup-open] .acct__caret {
+  color: var(--brand-primary);
+}
+
+.acct__trigger[data-popup-open] .acct__caret {
+  transform: rotate(180deg);
+}
+
+/* 下拉是一张悬浮账号卡，不是通用读数面板。
+   Portal 挂在 body：面板只消费根级品牌令牌（随 html.dark 翻转），
+   不依赖被打开时所在的 .is-field / .is-dark 上下文。
    Base UI 只在打开时挂载 Popup，所以面板基态就是可见；
    进出场交给 data-starting-style / data-ending-style。 */
-/* 定位由 Base UI Positioner 负责，面板不再自己 absolute + top/right。 */
 .acct__positioner {
-  z-index: 60;
+  z-index: 70;
 }
 
 .acct__menu {
-  min-width: 176px;
-  padding-block: 6px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  box-shadow: 0 10px 26px rgba(20, 23, 26, 0.09);
+  position: relative;
+  width: 264px;
+  padding: 6px;
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  color: var(--brand-text);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.25);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.25);
   outline: none;
-  transform: none;
+  transform-origin: top right;
   transition: opacity var(--fast), transform var(--fast);
+}
+
+/* 玻璃的内侧高光：上沿一层很淡的镜面反射，和下沿的投影一起把卡片抬起来。 */
+.acct__menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, var(--brand-glass-layered-inner), transparent 42%);
+  pointer-events: none;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .acct__menu {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .acct__menu[data-starting-style],
 .acct__menu[data-ending-style] {
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(0.98);
 }
 
-/* 头像与菜单之间的 10px 缝由 Positioner 的 sideOffset 留出，
-   hover 收起由 Base UI 的 closeDelay 兜底，不再需要透明桥。 */
+/* 身份区：只展示真实昵称、账号与角色，没有在线状态或会员等级。 */
+.acct__identity {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 10px 12px;
+}
+
+.acct__identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.acct__identity-name {
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--brand-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acct__identity-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--brand-muted);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.acct__identity-meta .num {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acct__role {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 34%, transparent);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--brand-primary);
+}
+
+.acct__sep {
+  height: 1px;
+  margin: 4px 8px;
+  border: 0;
+  background: var(--brand-line);
+}
 
 .acct__item {
-  display: block;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 9px 14px;
+  min-height: 40px;
+  padding: 0 10px;
   border: 0;
+  border-radius: var(--radius-sm);
   background: none;
-  color: var(--fg-2);
-  font-family: var(--font-sans);
+  color: var(--brand-text);
+  font-family: var(--font-brand);
   font-size: 13px;
   text-align: left;
   text-decoration: none;
@@ -377,9 +523,29 @@ a.acct__trigger--anon:hover {
   transition: color var(--fast), background var(--fast);
 }
 
-.acct__item:hover {
-  color: var(--fg);
-  background: var(--signal-soft);
+.acct__item-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--brand-muted);
+  transition: color var(--fast);
+}
+
+/* 普通 hover / 键盘高亮用品牌蓝，不用旧的信号橙。 */
+.acct__item:hover,
+.acct__item[data-highlighted] {
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+}
+
+.acct__item:hover .acct__item-icon,
+.acct__item[data-highlighted] .acct__item-icon {
+  color: var(--brand-primary);
+}
+
+.acct__item:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
 }
 
 /* ── 移动端：汉堡 + 侧抽屉 ── */

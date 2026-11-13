@@ -1118,7 +1118,7 @@ html:not(.dark) .welcome-mark__img--dark {
   color: var(--fg-3);
 }
 
-/* ── agent: 会话列表（U4 重做：Frosted Glass 品牌侧栏） ───────────── */
+/* ── agent: 会话列表（U4 重做：Frosted Glass 品牌侧栏 + 行级操作菜单） ── */
 
 .agent-sessions {
   display: flex;
@@ -1139,8 +1139,8 @@ html:not(.dark) .welcome-mark__img--dark {
 .agent-sessions__head {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px 12px;
+  gap: 10px;
+  padding: 16px 14px 12px;
   border-bottom: 1px solid var(--hr);
 }
 
@@ -1148,7 +1148,7 @@ html:not(.dark) .welcome-mark__img--dark {
 .agent-sessions__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .agent-sessions__brandname {
@@ -1163,37 +1163,82 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-circle);
   background: none;
   color: var(--fg-3);
   cursor: pointer;
   transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
 
+.agent-sessions__collapse svg {
+  width: 15px;
+  height: 15px;
+}
+
 .agent-sessions__collapse:hover {
   background: var(--surface-2);
-  color: var(--fg-2);
+  color: var(--fg);
 }
 
 .agent-sessions__actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
 }
 
-/* 「选择」文字钮（同 Vue 版 multi-select-btn） */
+.agent-sessions__actions--select {
+  justify-content: flex-end;
+}
+
+/* 「新对话」是侧栏主操作：钴蓝实心药丸 + Plus。 */
+.agent-sessions__newchat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease),
+    opacity 0.2s var(--ease);
+}
+
+.agent-sessions__newchat svg {
+  width: 15px;
+  height: 15px;
+}
+
+.agent-sessions__newchat:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-text));
+  border-color: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-text));
+}
+
+.agent-sessions__newchat:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 「选择」文字钮：低权重，不与主操作抢同一行按钮位。 */
 .agent-sessions__select {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 4px 8px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 10px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: none;
   font-family: var(--font-sans);
   font-size: 12px;
@@ -1205,42 +1250,52 @@ html:not(.dark) .welcome-mark__img--dark {
 }
 
 .agent-sessions__select:hover {
-  color: var(--fg-2);
-  background: var(--surface-2);
+  color: var(--fg);
+  background: color-mix(in srgb, var(--brand-primary) 8%, transparent);
 }
 
 .agent-sessions__select.is-active {
   color: var(--brand-primary);
 }
 
-/* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边；
-   U4：运行态钴蓝描边 + 浅蓝底 hover，作为 Intelligence 主操作语言） */
-.agent-sessions__newchat {
-  display: flex;
+/* 多选态计数 + 删除：数据删除用 --danger（与医学 --risk-* 分开）。 */
+.agent-sessions__count {
+  margin-right: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.agent-sessions__danger {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  flex: 1;
-  padding: 9px 12px;
-  border: 1px solid color-mix(in srgb, var(--brand-primary) 36%, var(--hr));
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 34%, transparent);
   border-radius: var(--radius-md);
   background: none;
-  color: var(--brand-primary);
+  color: var(--danger);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
 }
 
-.agent-sessions__newchat:hover:not(:disabled) {
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+.agent-sessions__danger svg {
+  width: 14px;
+  height: 14px;
 }
 
-.agent-sessions__newchat:disabled {
-  color: var(--fg-3);
+.agent-sessions__danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.agent-sessions__danger:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -1272,131 +1327,410 @@ html:not(.dark) .welcome-mark__img--dark {
 }
 
 .agent-sessions__label {
-  padding: 10px 18px 4px;
+  padding: 12px 10px 5px;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-3);
 }
 
 .agent-sessions__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 6px;
 }
 
 .agent-session {
   position: relative;
-  border-bottom: 1px solid var(--hr);
+  border-radius: var(--radius-md);
+  transition: background 0.15s var(--ease);
 }
 
+.agent-session:hover {
+  background: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+}
+
+/* 当前会话：品牌浅底 + 左侧 2px 钴蓝条，标题同时转成品牌蓝。 */
 .agent-session.is-active {
-  box-shadow: inset 2px 0 0 var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 6%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 9%, var(--brand-glass-strong));
+  box-shadow:
+    inset 2px 0 0 var(--brand-primary),
+    inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 24%, transparent);
 }
 
 .agent-session__main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   width: calc(100% - 34px);
-  padding: 9px 18px;
+  padding: 9px 10px;
   border: 0;
+  border-radius: var(--radius-md);
   background: none;
   text-align: left;
   cursor: pointer;
 }
 
+.agent-session__main:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+.agent-session__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .agent-session__title {
-  font-size: 12.5px;
-  color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--fg);
 }
 
 .agent-session.is-active .agent-session__title {
   color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.agent-session__pin {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--brand-primary);
+}
+
+.agent-session__pin svg {
+  width: 11px;
+  height: 11px;
 }
 
 .agent-session__meta {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
 .agent-session__checkline {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
+  gap: 9px;
+  padding: 9px 10px;
   cursor: pointer;
 }
 
+.agent-session__checkline input {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--brand-primary);
+  cursor: pointer;
+}
+
+.agent-session__checktext {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 行级操作钮常驻可见——不靠 hover 才出现，触屏也能点。
+   键盘/鼠标只改它的底色与颜色。 */
 .agent-session__menu-btn {
   position: absolute;
-  top: 8px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
+  border-radius: var(--radius-circle);
   background: none;
   color: var(--fg-3);
-  font-size: 14px;
   cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
 
-.agent-session__menu-btn:hover {
-  color: var(--fg);
+.agent-session__menu-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.agent-session__menu-btn:hover,
+.agent-session__menu-btn[data-popup-open] {
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+.agent-session__menu-btn:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+/* 行级操作菜单：Portal 到 body，不再被会话列表的滚动容器裁切。
+   视觉上是一张小型 Layered Glass 卡片，文字 + 图标双通道。 */
+.agent-session__positioner {
+  z-index: 70;
 }
 
 .agent-session__menu {
-  position: absolute;
-  top: 32px;
-  right: 6px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  min-width: 96px;
-  border: 1px solid var(--hr-strong);
-  background: var(--bg);
-  box-shadow: var(--shadow-overlay);
+  min-width: 196px;
+  padding: 5px;
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-md);
+  background: var(--brand-glass-layered);
+  color: var(--brand-text);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  outline: none;
+  transform-origin: top right;
+  transition: opacity var(--fast), transform var(--fast);
 }
 
-.agent-session__menu button {
-  padding: 7px 12px;
+@supports not (backdrop-filter: blur(1px)) {
+  .agent-session__menu {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+.agent-session__menu[data-starting-style],
+.agent-session__menu[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-3px) scale(0.98);
+}
+
+.agent-session__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
   border: 0;
-  border-bottom: 1px solid var(--hr);
+  border-radius: var(--radius-sm);
   background: none;
-  font-size: 12px;
-  color: var(--fg-2);
+  color: var(--brand-text);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
   text-align: left;
   cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
 }
 
-.agent-session__menu button:last-child {
-  border-bottom: 0;
+.agent-session__menu-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--brand-muted);
+  transition: color 0.15s var(--ease);
 }
 
-.agent-session__menu button:hover {
-  color: var(--fg);
-  background: var(--bg);
+.agent-session__menu-item:hover,
+.agent-session__menu-item[data-highlighted] {
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
 }
 
-.agent-session__menu button.is-danger {
-  color: var(--risk-critical);
+.agent-session__menu-item:hover .agent-session__menu-icon,
+.agent-session__menu-item[data-highlighted] .agent-session__menu-icon {
+  color: var(--brand-primary);
+}
+
+.agent-session__menu-item:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+/* 删除是数据操作，用 --danger；医学严重度 --risk-* 不参与。 */
+.agent-session__menu-item.is-destructive {
+  color: var(--danger);
+}
+
+.agent-session__menu-item.is-destructive .agent-session__menu-icon {
+  color: var(--danger);
+}
+
+.agent-session__menu-item.is-destructive:hover,
+.agent-session__menu-item.is-destructive[data-highlighted] {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.agent-session__menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  border: 0;
+  background: var(--brand-line);
+}
+
+.agent-session__renamebox {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 10px;
 }
 
 .agent-session__rename {
-  margin: 6px 14px;
-  padding: 5px 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
   border: 1px solid var(--brand-primary);
-  background: var(--bg);
+  border-radius: var(--radius-sm);
+  background: var(--brand-glass-strong);
   color: var(--fg);
+  font-family: var(--font-sans);
   font-size: 12.5px;
+}
+
+.agent-session__rename:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.agent-session__rename-error {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
+.agent-session__rename-state {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* Touch / 粗指针：行级操作与选择控件放大到可点尺寸。 */
+@media (pointer: coarse) {
+  .agent-session__menu-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .agent-session__main {
+    width: calc(100% - 42px);
+  }
+}
+
+/* ── agent: 删除确认（Base UI Dialog，Portal + 焦点陷阱 + Esc 栈） ── */
+
+.agent-confirm {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 80;
+  width: min(420px, calc(100vw - 32px));
+  padding: 22px;
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  color: var(--brand-text);
+  box-shadow: var(--shadow-modal);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  outline: none;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--fast), transform var(--fast);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .agent-confirm {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+.agent-confirm[data-starting-style],
+.agent-confirm[data-ending-style] {
+  opacity: 0;
+  transform: translate(-50%, -48%) scale(0.98);
+}
+
+.agent-confirm__title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--brand-text);
+}
+
+.agent-confirm__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+.agent-confirm__error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--danger);
+}
+
+.agent-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.agent-confirm__cancel,
+.agent-confirm__danger {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
+    opacity 0.15s var(--ease);
+}
+
+.agent-confirm__cancel {
+  border: 1px solid var(--brand-line);
+  background: none;
+  color: var(--brand-text);
+}
+
+.agent-confirm__cancel:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.agent-confirm__danger {
+  border: 1px solid var(--danger);
+  background: var(--danger);
+  color: var(--brand-canvas);
+}
+
+.agent-confirm__danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 86%, var(--brand-canvas));
+  border-color: color-mix(in srgb, var(--danger) 86%, var(--brand-canvas));
+}
+
+.agent-confirm__cancel:disabled,
+.agent-confirm__danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.agent-confirm__cancel:focus-visible,
+.agent-confirm__danger:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 /* ── agent: 页面布局（同 Vue 版：无页脚、无版心，三栏铺满顶栏以下视口）── */
@@ -1605,6 +1939,7 @@ html:not(.dark) .welcome-mark__img--dark {
      唯一入口，同样要够到 44px 触控目标（DESIGN.md §3.5）。 */
   .agent-sessions__select,
   .agent-sessions__newchat,
+  .agent-sessions__danger,
   .agent-collapsed-actions__btn {
     min-height: 44px;
   }
