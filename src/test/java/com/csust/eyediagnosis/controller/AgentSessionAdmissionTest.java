@@ -31,8 +31,8 @@ class AgentSessionAdmissionTest {
         when(mapper.selectBySessionId(any())).thenAnswer(call -> sessions.get(call.getArgument(0)));
         when(mapper.insert(any(AgentSession.class))).thenAnswer(call -> { AgentSession session = call.getArgument(0); sessions.put(session.getSessionId(), session); return 1; });
         messages = mock(AgentMessageMapper.class); queue = mock(SessionMessageQueue.class);
-        var history = new ChatHistoryService(mapper, messages, new com.fasterxml.jackson.databind.ObjectMapper(), queue);
-        history.setAgentConstants(new AgentConstants());
+        var messageWriter = new com.csust.eyediagnosis.agent.service.ChatMessageWriter(mapper, messages, new AgentConstants());
+        var history = new ChatHistoryService(mapper, messages, new com.fasterxml.jackson.databind.ObjectMapper(), queue, messageWriter);
         model = mock(com.csust.eyediagnosis.agent.DiagnosisAgent.class);
         var controller = new AgentController();
         ReflectionTestUtils.setField(controller, "userService", users); ReflectionTestUtils.setField(controller, "chatHistoryService", history);

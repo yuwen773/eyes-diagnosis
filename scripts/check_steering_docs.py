@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Fail CI when steering docs cache facts the environment already owns.
 
-`CLAUDE.md` and `AGENTS.md` each carry a copy of the Flyway head, the key
-table list, and the controller endpoint table. Copies go stale: a 2026-11-07
-commit updated CLAUDE.md to V12 and left AGENTS.md at V10. The migration
-directory and the `@RequestMapping` annotations are the sources of truth.
+`CLAUDE.md` is the declared single source for the Flyway head, the key table
+list, and the controller endpoint table; `AGENTS.md` points at it (a 2026-11-07
+commit updated CLAUDE.md to V12 and left AGENTS.md at V10 — that drift is why
+AGENTS.md was reduced to a pointer). The migration directory and the
+`@RequestMapping` annotations are the sources of truth.
 
 Checks (mechanical, so they belong here and not in CODING_STANDARDS.md):
-  * both steering files name the highest `V*.sql` migration as current head;
-  * both list every controller path from the Java annotations;
-  * both name the same head, so the two copies cannot diverge silently.
+  * CLAUDE.md names the highest `V*.sql` migration as current head;
+  * CLAUDE.md lists every controller path from the Java annotations;
+  * if AGENTS.md still states a head, it must agree with CLAUDE.md.
 
 Usage:
     python3 scripts/check_steering_docs.py [repo_root]
@@ -21,6 +22,7 @@ import sys
 from pathlib import Path
 
 STEERING = (Path("CLAUDE.md"), Path("AGENTS.md"))
+TRUTH_SOURCE = Path("CLAUDE.md")
 MIGRATIONS = Path("src/main/resources/db/migration")
 CONTROLLERS = Path("src/main/java/com/csust/eyediagnosis/controller")
 
@@ -68,17 +70,26 @@ def check(root: Path):
             continue
         text = file.read_text(encoding="utf-8")
         found = HEAD_PATTERN.search(text)
-        if not found:
-            errors.append(f"{doc}: no `Current head is V<n>` statement")
-        else:
+        if doc == TRUTH_SOURCE:
+            # The truth source must state the head and list every controller path.
+            if not found:
+                errors.append(f"{doc}: no `Current head is V<n>` statement")
+            else:
+                heads[doc] = int(found.group(1))
+                if heads[doc] != head:
+                    errors.append(
+                        f"{doc}: states V{heads[doc]}, but migrations reach V{head}"
+                    )
+            missing = sorted(path for path in paths if path not in text)
+            if missing:
+                errors.append(f"{doc}: missing controller paths {missing}")
+        elif found:
+            # A pointer file may still state a head, but then it must agree.
             heads[doc] = int(found.group(1))
             if heads[doc] != head:
                 errors.append(
                     f"{doc}: states V{heads[doc]}, but migrations reach V{head}"
                 )
-        missing = sorted(path for path in paths if path not in text)
-        if missing:
-            errors.append(f"{doc}: missing controller paths {missing}")
 
     if len(set(heads.values())) > 1:
         errors.append(f"steering files disagree on migration head: {heads}")

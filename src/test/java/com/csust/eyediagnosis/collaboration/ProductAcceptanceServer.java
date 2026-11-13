@@ -80,8 +80,9 @@ public class ProductAcceptanceServer {
         ReflectionTestUtils.setField(users, "baseMapper", mappers.getMapper(UserMapper.class));
         ReflectionTestUtils.setField(users, "passwordService", new com.csust.eyediagnosis.security.PasswordService());
         var queue = new SessionMessageQueue(2);
-        var history = new ChatHistoryService(mappers.getMapper(AgentSessionMapper.class), mappers.getMapper(AgentMessageMapper.class), JSON, queue);
-        history.setAgentConstants(new AgentConstants());
+        var messageWriter = new com.csust.eyediagnosis.agent.service.ChatMessageWriter(
+                mappers.getMapper(AgentSessionMapper.class), mappers.getMapper(AgentMessageMapper.class), new AgentConstants());
+        var history = new ChatHistoryService(mappers.getMapper(AgentSessionMapper.class), mappers.getMapper(AgentMessageMapper.class), JSON, queue, messageWriter);
         history.setTitleGenerationService(org.mockito.Mockito.mock(com.csust.eyediagnosis.agent.service.TitleGenerationService.class));
         var storage = new DiagnosisTaskStorage() {
             public String upload(String key, byte[] bytes, String type) { objects.put(key, bytes); return "synthetic-version-1"; }
