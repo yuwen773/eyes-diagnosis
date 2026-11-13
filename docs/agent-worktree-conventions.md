@@ -40,3 +40,56 @@ MSYS_NO_PATHCONV=1 /c/Windows/System32/taskkill.exe /PID <pid> /F
 `mvn test` 的中文异常信息按 UTF-8 输出，无需每次手加参数。
 MySQL 用 `--default-character-set=utf8mb4`。若 Bash 里读到的仍是乱码，是终端
 代码页而非 JVM：用 `chcp 65001` 或把输出重定向到文件后用编辑器读。
+
+## 连续开发基线（Continuous Development Baseline）
+
+> 2026-11-13 起的永久规则，适用于所有 Coding Agent（Claude Code / Codex）。
+> 背景：#74 曾误从 #69 创建而漏掉兄弟分支 #73 的图标治理，返工集成一次。
+
+### 1. 创建分支 / worktree 前先做基线检查
+
+不得默认以 `master` 或 `ui` 作为开发起点。必须先读当前项目「最近完成、
+经用户确认保留」的 PR 链（`gh pr list` + 交接文档 + 记忆），确定最新候选
+分支与完整 SHA；存在多个未合并候选 PR 时先定依赖顺序，不得擅自选旧分支。
+
+### 2. 新任务继承最新候选
+
+下一轮依赖同一前端成果的任务，必须从上一轮的 HEAD 创建分支。创建后必须
+实际跑 Git ancestry 检查，不能只写"基于上一轮"：
+
+```bash
+git merge-base --is-ancestor <parent-sha> <new-branch> && echo OK
+```
+
+### 3. Worktree 只负责隔离
+
+允许新建或复用 worktree，但它不是独立产品版本。新 worktree 必须从指定的
+最新候选 HEAD 创建（`git worktree add <path> -b <branch> <sha>`），
+不能隐式继承 `master`。
+
+### 4. 连续开发用 stacked PR
+
+上一轮已验收候选 → 本轮 PR → 下一轮 PR；每个 PR 的 base 指向父候选分支。
+只有用户批准的并行工作包才允许从共同基线分叉，且必须有明确集成步骤。
+
+### 5. 强制交付报告
+
+每次交付必须报告以下各项，缺一不算"完整交付"：
+
+- Parent PR / Parent SHA
+- 本轮 Branch / HEAD SHA
+- 本轮相对 Parent 新增的提交数
+- Git ancestry 检查结果
+- 真实变更文件数（`git diff --name-only <parent>..HEAD`）
+- 是否继承上一轮全部成果
+- 是否存在被恢复的旧代码、旧图标、旧设计令牌
+- 测试结果与未解决冲突
+
+### 6. 禁止行为
+
+- 禁止无理由从 master/ui 重开任务
+- 禁止遗漏上一轮已验收但未合并的功能
+- 禁止以 CI 全绿代替提交继承检查
+- 禁止在未确认依赖的情况下修改 PR base
+- 禁止未经批准自动合并或部署
+- 禁止为了修复分支关系而重复开发整套已有功能
