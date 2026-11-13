@@ -104,30 +104,40 @@ export function OpticFlow(props: {
   )
 }
 
-/** 主题对应的引擎参数。浅色走 multiply（像玻璃上的反射），暗色走加色。 */
+/**
+ * 主题对应的引擎参数。
+ *
+ * <p>两套**不是反色关系**，是两种材质：
+ * <ul>
+ *   <li>**Light · 冰川银蓝**：带体更亮、更透，靠合成阶段的 `alpha` 压低边缘
+ *       让画布透出来当反光；颗粒调低，避免玻璃显脏灰。</li>
+ *   <li>**Dark · 午夜蓝**：整体压暗，只有带边与高光发亮；填充光调低、
+ *       sharpness 调高，让轮廓（冰蓝边缘光）成为主要结构。</li>
+ * </ul>
+ */
 function beamsSettings(theme: "light" | "dark"): BeamsSettings {
   const lowEnd =
     typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 8) <= 4
   return theme === "light"
     ? {
         color: "#2f6fc9",
-        beamWidth: 240,
-        rotation: 24,
-        speed: 0.75,
-        waveLength: 320,
-        depth: 1.15,
-        sharpness: 0.7,
-        twist: 0.18,
-        fillLight: 0.55,
-        glow: 0.8,
-        brightness: 1.25,
-        variation: 0.35,
-        grain: 0.22,
+        beamWidth: 620,
+        rotation: 22,
+        speed: 0.72,
+        waveLength: 420,
+        depth: 0.9,
+        sharpness: 0.5,
+        twist: 0.26,
+        fillLight: 0.62,
+        glow: 1.05,
+        brightness: 1.2,
+        variation: 0.26,
+        grain: 0.06,
         quality: lowEnd ? 0.5 : 0.75,
         mouseInteraction: !lowEnd,
         mouseStrength: 0.7,
         intro: true,
-        fade: 0.1,
+        fade: 0.16,
         opacity: 1,
         lightMode: true,
         paused: false,
@@ -135,23 +145,23 @@ function beamsSettings(theme: "light" | "dark"): BeamsSettings {
       }
     : {
         color: "#7cc4ff",
-        beamWidth: 230,
-        rotation: 24,
-        speed: 0.8,
-        waveLength: 300,
-        depth: 1.2,
-        sharpness: 0.66,
-        twist: 0.22,
-        fillLight: 0.42,
-        glow: 0.95,
-        brightness: 1.6,
+        beamWidth: 520,
+        rotation: 22,
+        speed: 0.78,
+        waveLength: 380,
+        depth: 1.05,
+        sharpness: 0.62,
+        twist: 0.24,
+        fillLight: 0.36,
+        glow: 1.05,
+        brightness: 1.45,
         variation: 0.4,
-        grain: 0.3,
+        grain: 0.16,
         quality: lowEnd ? 0.5 : 0.75,
         mouseInteraction: !lowEnd,
         mouseStrength: 0.8,
         intro: true,
-        fade: 0.12,
+        fade: 0.14,
         opacity: 1,
         lightMode: false,
         paused: false,
@@ -159,10 +169,87 @@ function beamsSettings(theme: "light" | "dark"): BeamsSettings {
       }
 }
 
+/** 光带的中轴线：一条从右下流向左上的 S 形。 */
+const RIBBON_AXIS = "M-90 735 C 195 545, 425 590, 655 438 S 990 232, 1210 262"
+
+/** 纤维的横向偏移（-11…11），间距 4.4 → 整束宽约 100，正好落在带体内部。 */
+const FIBER_LINES = Array.from({ length: 23 }, (_, index) => index - 11)
+
 /**
- * 细纤维层：几束稀疏的细线，跟着光带走。
+ * 光带的梯度定义。
  *
- * <p>纯 SVG + CSS 位移，没有第二个 WebGL 上下文；离屏与 reduced-motion 时停掉位移。
+ * <p>颜色不写死在 `stop-color` 上，而是挂在 class 上交给 CSS 管——
+ * 双主题的差异（亮色钴蓝带 / 暗色冰蓝带）就只需要在 `brand.css` 里换一组值，
+ * 不用在这里复制两套 SVG。
+ */
+function RibbonDefs(props: { id: string }): ReactElement {
+  const { id } = props
+  return (
+    <defs>
+      <linearGradient id={`${id}-sheath`} x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" className="optic-stop--sheath-far" />
+        <stop offset="0.42" className="optic-stop--sheath-mid" />
+        <stop offset="0.78" className="optic-stop--sheath-near" />
+        <stop offset="1" className="optic-stop--sheath-tip" />
+      </linearGradient>
+      <linearGradient id={`${id}-core`} x1="0" y1="0.4" x2="1" y2="0.7">
+        <stop offset="0" className="optic-stop--core-far" />
+        <stop offset="0.5" className="optic-stop--core-mid" />
+        <stop offset="1" className="optic-stop--core-near" />
+      </linearGradient>
+    </defs>
+  )
+}
+
+/**
+ * 光带本体：**一条连续的带体**，不是几根散线。
+ *
+ * <p>参照 Optic Flow V4：带体先有一层宽的柔和鞘（sheath），鞘里铺二十余根
+ * 等距细纤维（中间密、边缘亮），最外两根是镜面高光（rim）——玻璃的「厚度」
+ * 由这一层给。全部是 SVG + CSS，不起第二个 GPU 循环。
+ *
+ * <p>WebGL 那层是**光**，这一层是**玻璃**。上一层负责环境亮度，这一层负责
+ * 可辨认的形体：带体在哪、多厚、边在哪。
+ */
+function RibbonBody(props: { id: string; sheathWidth: number }): ReactElement {
+  const { id, sheathWidth } = props
+  return (
+    <>
+      <path
+        className="optic-flow__sheath"
+        d={RIBBON_AXIS}
+        stroke={`url(#${id}-sheath)`}
+        strokeWidth={sheathWidth}
+      />
+      <path
+        className="optic-flow__sheath optic-flow__sheath--core"
+        d={RIBBON_AXIS}
+        stroke={`url(#${id}-core)`}
+        strokeWidth={sheathWidth * 0.6}
+      />
+      <g className="optic-flow__fiber-set">
+        {FIBER_LINES.map((offset) => (
+          <path key={offset} d={RIBBON_AXIS} transform={`translate(0 ${offset * 4.4})`} />
+        ))}
+      </g>
+      {/* 中间一道更实的芯线：带体不是中空的。 */}
+      <g className="optic-flow__fiber-set optic-flow__fiber-set--core">
+        <path d={RIBBON_AXIS} transform="translate(0 0)" />
+        <path d={RIBBON_AXIS} transform="translate(0 5)" />
+      </g>
+      {/* 外缘镜面高光：厚度感来自这里。 */}
+      <g className="optic-flow__fiber-set optic-flow__fiber-set--rim">
+        <path d={RIBBON_AXIS} transform="translate(0 -50)" />
+        <path d={RIBBON_AXIS} transform="translate(0 50)" />
+      </g>
+    </>
+  )
+}
+
+/**
+ * 细纤维层：叠在 WebGL 光场之上的玻璃体。
+ *
+ * <p>纯 SVG + CSS 位移；离屏与 reduced-motion 时停掉位移。
  */
 function Fibers(props: { theme: "light" | "dark"; drifting: boolean }): ReactElement {
   const { theme, drifting } = props
@@ -173,26 +260,17 @@ function Fibers(props: { theme: "light" | "dark"; drifting: boolean }): ReactEle
       preserveAspectRatio="xMidYMid slice"
       data-theme={theme}
     >
-      <g className="optic-flow__fiber-set">
-        <path d="M-60 640 C 220 470, 430 560, 640 430 S 980 260, 1180 300" />
-        <path d="M-40 700 C 260 520, 470 600, 700 460 S 1010 300, 1180 340" />
-        <path d="M-80 560 C 200 420, 420 480, 620 380 S 960 210, 1160 250" />
-        <path d="M-20 760 C 300 560, 520 640, 740 500 S 1030 340, 1190 380" />
-      </g>
-      <g className="optic-flow__fiber-set optic-flow__fiber-set--fine">
-        <path d="M0 620 C 240 480, 440 545, 660 415 S 990 250, 1170 290" />
-        <path d="M-30 680 C 250 500, 460 570, 680 445 S 1000 280, 1175 320" />
-        <path d="M-70 540 C 210 405, 430 465, 630 365 S 970 195, 1165 235" />
-      </g>
+      <RibbonDefs id="optic-live" />
+      <RibbonBody id="optic-live" sheathWidth={104} />
     </svg>
   )
 }
 
 /**
- * 静态光带：WebGL 不可用时的降级画面。
+ * 静态光带：WebGL 不可用 / 上下文丢失时的降级画面。
  *
- * <p>与动态版同一套构图语言（连续带状层 + 内部细纤维 + 边缘高光），只是不动。
- * 医疗信息不靠它承载——它是装饰。
+ * <p>与动态版同一套构图语言（同一中轴线、同一束纤维、同一组梯度），只是不动，
+ * 也不再需要 WebGL 的环境光。医疗信息不靠它承载——它是装饰。
  */
 function StaticBands(props: { theme: "light" | "dark" }): ReactElement {
   const { theme } = props
@@ -203,28 +281,8 @@ function StaticBands(props: { theme: "light" | "dark" }): ReactElement {
       preserveAspectRatio="xMidYMid slice"
       data-theme={theme}
     >
-      <defs>
-        <linearGradient id="optic-band-a" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#9fc4ef" stopOpacity="0" />
-          <stop offset="0.45" stopColor="#4e94f0" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#64cadd" stopOpacity="0.15" />
-        </linearGradient>
-        <linearGradient id="optic-band-b" x1="0" y1="0.4" x2="1" y2="0.7">
-          <stop offset="0" stopColor="#b7d8f7" stopOpacity="0" />
-          <stop offset="0.55" stopColor="#2f6fc4" stopOpacity="0.42" />
-          <stop offset="1" stopColor="#8f7fe0" stopOpacity="0.12" />
-        </linearGradient>
-      </defs>
-      <path
-        className="optic-flow__fallback-band"
-        d="M-60 700 C 240 520, 470 600, 690 450 S 1010 280, 1180 330"
-        stroke="url(#optic-band-a)"
-      />
-      <path
-        className="optic-flow__fallback-band optic-flow__fallback-band--b"
-        d="M-70 620 C 220 450, 450 520, 660 390 S 980 220, 1170 270"
-        stroke="url(#optic-band-b)"
-      />
+      <RibbonDefs id="optic-static" />
+      <RibbonBody id="optic-static" sheathWidth={112} />
     </svg>
   )
 }

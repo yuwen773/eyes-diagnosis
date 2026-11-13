@@ -15,8 +15,9 @@
  *   1. 去掉 React 组件外壳与自带 CSS，只保留着色器与 GL 辅助函数；
  *   2. 补 TypeScript 类型标注；
  *   3. 命名空间收敛为 beamsEngine 模块，不导出为通用组件库。
- * 三个着色器（顶点 / FIELD / COMPOSITE）与固定 commit 下的原文**逐字一致**，
- * 比对结果记在 THIRD-PARTY-NOTICES.md 的「校验」一节。
+ * 顶点着色器与固定 commit 下的原文**逐字一致**；FIELD / COMPOSITE 在 Iris 2.0 R2-01
+ * 增加了「带边高光」，改动处逐行标注 `Iris 2.0 增补`，其余行与上游一致。
+ * 差异清单与理由记在 THIRD-PARTY-NOTICES.md 的「相对上游的改动」一节。
  */
 
 export const QUAD_VERTEX = `#version 300 es
@@ -175,7 +176,13 @@ void main() {
   float near = exp(-dot(toPointer, toPointer) / (2.0 * uPointer.w * uPointer.w)) * uPointer.z;
   value *= 1.0 + near * 0.8;
   float hot = max(value.y - 0.18, 0.0);
-  outColor = vec4(value.x, value.y, min(hot, 6.0), 1.0);
+
+  // Iris 2.0 增补：带体边缘的高光。
+  // 上游的带子是「一团发光」，没有边界；这里按到带边的距离算一道窄高光，
+  // 合成阶段用它做「玻璃厚度 / 镜面反光」（写在 .a 通道——上游该通道恒为 1）。
+  float edgeDist = min(u, 1.0 - u);
+  float rim = 1.0 - smoothstep(0.0, 0.045, edgeDist);
+  outColor = vec4(value.x, value.y, min(hot, 6.0), rim);
 }`;
 
 export const COMPOSITE = `#version 300 es
@@ -245,6 +252,8 @@ void main() {
   bloom += textureLod(uField, uv, 5.0).b * 0.18;
 
   float hot = textureLod(uField, uv, 0.0).g;
+  // Iris 2.0 增补：带边高光（FIELD 写在 .a 通道）。
+  float rim = textureLod(uField, uv, 0.0).a;
   vec3 light = uColor * (radiance + bloom * uGlow) * uGain;
   light += mix(uColor, vec3(1.0), 0.7) * hot * hot * 0.12 * uGain;
   light *= uPresence;
@@ -259,10 +268,15 @@ void main() {
 
   float peak = max(color.r, max(color.g, color.b));
   if (uLightMode > 0.5) {
+    // 亮环境里玻璃读作「透明体 + 亮边」：边缘把墨色覆盖率压低，
+    // 让背后画布透出来成为镜面反光，而不是给整条带描一圈深色轮廓。
     float alpha = clamp(peak * 0.9 + dither, 0.0, 1.0) * mask;
+    alpha *= 1.0 - rim * 0.55;
     outColor = vec4(uInk * alpha, alpha);
   } else {
     color = clamp(color + dither, 0.0, 1.0) * mask;
+    // 暗环境里给边缘一道冰蓝反光，让带体有厚度与前后关系。
+    color += rim * mix(uColor, vec3(1.0), 0.55) * 0.42 * mask;
     outColor = vec4(color, max(color.r, max(color.g, color.b)));
   }
 }`;

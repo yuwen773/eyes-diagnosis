@@ -487,37 +487,159 @@ html.dark .landing-hero__btn--primary {
   height: 100%;
 }
 
+/* 玻璃体：一条连续光带 = 柔和鞘 + 内部纤维 + 边缘高光。
+   `--optic-*` 是这层自己的调色板，双主题不是反色而是两种材质：
+   - 亮色：鞘是钴蓝到青色，纤维 multiply 压暗画布，外缘 normal 画银白反光；
+   - 暗色：鞘是冰蓝，纤维 screen 加光，外缘高光更亮。
+   旧写法给整张 SVG 套一个 multiply + 白色 stroke——白 × 白 = 白，
+   纤维在亮底上等于不存在；现在按组分开混合。 */
 .optic-flow__fibers {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  mix-blend-mode: multiply;
-  opacity: 0.55;
+  opacity: 0.9;
 }
 
-html.dark .optic-flow__fibers {
+.optic-flow__sheath {
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* 带体的两端必须在容器边界之前就消失。
+   容器的 overflow 裁剪会留下一条笔直的硬边（窄屏上尤其明显：
+   光带被切成一条水平断口），所以统一用一层径向遮罩把四周收掉。 */
+.optic-flow__fibers,
+.optic-flow__fallback {
+  -webkit-mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+}
+
+.optic-stop--sheath-far {
+  stop-color: #9fc4ef;
+  stop-opacity: 0;
+}
+
+.optic-stop--sheath-mid {
+  stop-color: #4e94f0;
+  stop-opacity: 0.72;
+}
+
+.optic-stop--sheath-near {
+  stop-color: #2f6fc9;
+  stop-opacity: 0.56;
+}
+
+.optic-stop--sheath-tip {
+  stop-color: #64cadd;
+  stop-opacity: 0;
+}
+
+.optic-stop--core-far {
+  stop-color: #b7d8f7;
+  stop-opacity: 0;
+}
+
+.optic-stop--core-mid {
+  stop-color: #2f6fc4;
+  stop-opacity: 0.4;
+}
+
+.optic-stop--core-near {
+  stop-color: #8f7fe0;
+  stop-opacity: 0;
+}
+
+html.dark .optic-stop--sheath-far {
+  stop-color: #7cc4ff;
+}
+
+html.dark .optic-stop--sheath-mid {
+  stop-color: #5aa8ff;
+  stop-opacity: 0.34;
+}
+
+html.dark .optic-stop--sheath-near {
+  stop-color: #8fd6ff;
+  stop-opacity: 0.2;
+}
+
+html.dark .optic-stop--sheath-tip {
+  stop-color: #9ff0ff;
+}
+
+html.dark .optic-stop--core-far {
+  stop-color: #cfeeff;
+}
+
+html.dark .optic-stop--core-mid {
+  stop-color: #9fd8ff;
+  stop-opacity: 0.3;
+}
+
+html.dark .optic-stop--core-near {
+  stop-color: #b9a9ff;
+}
+
+.optic-flow {
+  --optic-fiber: rgba(38, 84, 160, 0.26);
+  --optic-fiber-core: rgba(36, 87, 201, 0.42);
+  --optic-fiber-rim: rgba(255, 255, 255, 0.92);
+}
+
+html.dark .optic-flow {
+  --optic-fiber: rgba(190, 230, 255, 0.3);
+  --optic-fiber-core: rgba(225, 244, 255, 0.5);
+  --optic-fiber-rim: rgba(235, 248, 255, 0.78);
+}
+
+.optic-flow__fiber-set {
+  mix-blend-mode: multiply;
+}
+
+html.dark .optic-flow__fiber-set {
   mix-blend-mode: screen;
-  opacity: 0.5;
 }
 
 .optic-flow__fiber-set path {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.72);
-  stroke-width: 1;
+  stroke: var(--optic-fiber);
+  stroke-width: 0.9;
 }
 
-.optic-flow__fiber-set--fine path {
-  stroke: rgba(255, 255, 255, 0.45);
-  stroke-width: 0.6;
+.optic-flow__fiber-set--core {
+  mix-blend-mode: multiply;
+}
+
+html.dark .optic-flow__fiber-set--core {
+  mix-blend-mode: screen;
+}
+
+.optic-flow__fiber-set--core path {
+  stroke: var(--optic-fiber-core);
+  stroke-width: 1.1;
+}
+
+/* 外缘镜面高光：亮色里就是白线（直接叠上去），暗色里是冰蓝加光。 */
+.optic-flow__fiber-set--rim {
+  mix-blend-mode: normal;
+}
+
+html.dark .optic-flow__fiber-set--rim {
+  mix-blend-mode: screen;
+}
+
+.optic-flow__fiber-set--rim path {
+  stroke: var(--optic-fiber-rim);
+  stroke-width: 1.6;
 }
 
 .optic-flow__fibers.is-drifting .optic-flow__fiber-set {
   animation: optic-drift 18s ease-in-out infinite alternate;
 }
 
-.optic-flow__fibers.is-drifting .optic-flow__fiber-set--fine {
-  animation-duration: 26s;
+.optic-flow__fibers.is-drifting .optic-flow__fiber-set--rim {
+  animation-duration: 24s;
   animation-direction: alternate-reverse;
 }
 
@@ -535,16 +657,6 @@ html.dark .optic-flow__fibers {
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.optic-flow__fallback-band {
-  fill: none;
-  stroke-width: 96;
-  stroke-linecap: round;
-}
-
-.optic-flow__fallback-band--b {
-  stroke-width: 58;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -619,11 +731,6 @@ html.dark .optic-flow__fibers {
 
   .landing-hero__visual {
     min-height: 300px;
-  }
-
-  /* 窄屏上纤维层减到只留一层，免得糊住字。 */
-  .optic-flow__fiber-set--fine {
-    display: none;
   }
 
   .landing-hero__entries {
