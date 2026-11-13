@@ -138,5 +138,10 @@ eye-diagnosis:
     hybrid-search:
       enabled: true
       rrf-k: 60
+    # B2 来源标记：默认关闭。开启后只会在既有 owner 过滤之后进一步收窄
+    # 可见集合（BUILTIN/USER_UPLOAD 保留，UNKNOWN/AUTHORIZED_EXTERNAL 一律排除），
+    # 绝不扩大默认可见性；不参与受控引用库的准入判定。
+    source-type:
+      enabled: false
     evaluation:
       enabled: false

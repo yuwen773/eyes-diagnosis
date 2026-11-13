@@ -68,6 +68,8 @@ class BuiltinCorpusSeederTest {
         for (Document document : documents) {
             assertEquals(BuiltinCorpus.SYSTEM_OWNER_ID, document.getMetadata().get("ownerUserId"));
             assertEquals(BuiltinCorpus.CORPUS_TAG, document.getMetadata().get("corpus"));
+            assertEquals("builtin", document.getMetadata().get("sourceType"),
+                    "builtin chunks must carry the server-derived source marker");
             assertTrue(document.getId().startsWith("builtin_"), "分块 id 需要稳定: " + document.getId());
         }
     }

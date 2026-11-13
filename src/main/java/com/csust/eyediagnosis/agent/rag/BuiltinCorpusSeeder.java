@@ -129,6 +129,7 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
         metadata.put("corpus", BuiltinCorpus.CORPUS_TAG);
         metadata.put("docId", BuiltinCorpus.CORPUS_TAG + ":" + slug);
         metadata.put("ownerUserId", BuiltinCorpus.SYSTEM_OWNER_ID);
+        metadata.put(SourceTypePolicy.METADATA_KEY, SourceTypePolicy.SourceType.BUILTIN.wire());
 
         List<Document> chunks = textChunkerService.chunk(text, metadata);
         List<Document> result = new ArrayList<>(chunks.size());

@@ -14,8 +14,7 @@
 
 ## 1. 当前阶段
 
-`ROUND 3 — A1/A2 已提交（commit 1），开始第二批 B1/B2 源码审查`。
-下一轮目标：提交 commit 1，然后开始第二批 B1（严格格式重试，默认关闭）与 B2（来源类型分层）。
+`ROUND 5 — B1/B2 待 commit 2；C1 导出规范、C2 离线评测已实现/测试通过；下一步两个 commit 与全量回归`。
 
 ## 2. 已读文档（基线）
 
@@ -25,7 +24,9 @@
 - `AGENTS.md`、`CLAUDE.md`、`web/DESIGN.md`（经子代理 survey）
 - 核心源码：`MessageDTO.java`、`MessageType.java`、`DiagnosisAgent.java`、`ChatHistoryService.java`、`ChatMessageWriter.java`、`AgentMessage.java`、`AgentMessageMapper.java`、`web/src/lib/agentStream.ts`、`web/src/lib/api.ts`、`web/src/components/agent/messages/ToolRequestMessage.tsx` / `ToolResponseMessage.tsx`、`AgentPage.tsx` 导出段。
 
-## 3. 实测结果（本轮，全绿）
+## 3. 实测结果（按轮次记录，勿把旧绿当成新树绿）
+
+### ROUND 2/3 — commit 1（A1/A2）基线，全绿，但改树后须重跑
 
 | 门禁 | 结果 |
 | --- | --- |
@@ -41,6 +42,33 @@
 | `collect_product_acceptance.py --verify-baseline` | `VERIFIED / evidenceFiles 18 / experimentClosed true` |
 
 `mvn -o test` 不带 DB 时 `contextLoads` 会因 Studio `agentController` 重名（无 profile）或 `eyeuser@3306` 拒绝（ci profile）失败——这是已知环境前提，故全量验证走 `scripts/verify.sh`（与 CI 编排一致），不是代码回归。
+
+### ROUND 4 — B1 POC + B2 增量验证
+
+| 门禁 | 结果 |
+| --- | --- |
+| `mvn -q -B -o -DskipTests compile`（B2 源码 + B1 POC 均在树） | 通过 |
+| `mvn -q -B -o -Dtest='SourceTypePolicyTest,DocumentSearchToolOwnershipTest,BuiltinCorpusSeederTest' test` | **17/17 通过**（6 + 5 + 6），0 failure / 0 error / 0 skip |
+| `mvn -q -B -o -Dtest='FormatOnlyRetryPocTest' test` | 首轮 8/9，1 个测试夹具误把第二次调用脚本写成合法 JSON；修正夹具后 **9/9 通过** |
+| `collect_product_acceptance.py --verify-baseline`（B2 改树后） | `VERIFIED / evidenceFiles 18 / experimentClosed true` |
+
+B2 新增覆盖：显式标记识别、可信服务端元数据保守回填、`AUTHORIZED_EXTERNAL` / 跨用户 / 未知来源 fail-closed、`DocumentSearchTool` 默认关与开启后的只收窄、混合检索 BM25 缓存路径不能绕过限制、每个内置/上传 chunk 都写入 `sourceType`。B1 POC 覆盖：默认关闭、`JsonProcessingException` 仅额外重试一次、两次格式失败不再第三次、provider/timeout/safety/insufficient-citation/schema/响应形状全不重试、Critic 不重试、预算/fencing/取消/总时长、崩溃后已记账未提交不重复调用、已提交结果幂等重放、故障分类。
+
+**B1 技术阻塞（POC_ONLY，不接运行时）**：真实运行时只有 `t_patient_draft_run.callCount` 在 `start()` 里预扣、`t_patient_draft_message` 按 `(taskId,sequence)` 记录一次逻辑调用；`docs/graph-execution.md:25-27` 明确「不是提供方调用的 exactly-once 保证」，崩溃恢复会重新消耗预算且可能重复发起。`INVALID_OUTPUT` 同时用于格式错误、响应形状、语义校验、引用不足和兜底异常，没有细粒度、可持久的 per-attempt 幂等键。要安全启用必须有新增迁移 V29+ 的 per-attempt 记账表，并把 `DraftAgents.Transport.ask` / Coordinator 的预算、取消、恢复、引用门禁一起改造；本轮按任务要求只交隔离 POC + 测试，不改 `DraftAgents` / `PatientDraftCoordinator` / `application.yml`，也不放宽任何医疗安全门禁。
+
+### ROUND 5 — C1 导出规范 + C2 离线评测
+
+| 门禁 | 结果 |
+| --- | --- |
+| `mvn -q -B -o -Dtest='ChatHistoryServiceOwnershipTest' test` | **3/3 通过**（跨用户导出拒绝、未知 format 拒绝、owner 的 markdown/json 导出） |
+| `npm --prefix web run typecheck` | 通过 |
+| `npm --prefix web run test` | **38 文件 / 356 测试通过**（基线 349 + C1 新测试 7） |
+| `python -X utf8 scripts/evaluate_rag_query_expansion.py` | 固定 10 例：recall@5 基线 `0.25` → 扩展 `1.0`（命中 +6）；OOD/QUALITY 零 provider 调用、跨用户隔离、延迟上限、扩展数上限全 true |
+| `python -X utf8 -m unittest discover -s scripts/tests -p "test_evaluate_rag_query_expansion.py"` | **5/5 OK**；连同既有离线评测共 **17/17 OK** |
+| `python -X utf8 -m unittest discover -s scripts/tests -p "test_check_*.py"` | **36/36 OK** |
+
+注意：`python -m unittest discover -p "test_*.py"` 会额外加载 `test_issue17_mysql_health.py`，它需要 `ISSUE17_MYSQL_CONTAINER` 真实容器环境变量；本轮不以该环境门禁充当脚本单元测试结果，也不跳过它来伪造绿色。CI 的 docs-contract 用的是 `test_check_*.py` 和各自固定测试文件。
+
 
 ## 4. 关键源码事实（主会话独立复核）
 
@@ -72,9 +100,33 @@
 ### 同步点（V28）
 `CLAUDE.md`（head V28 + 新增表名）、`docs/architecture/migration-matrix.md`、`FlywayMySqlIntegrationTest`（`28` / `11 migrations` / 表清单）、`scripts/check_surefire_skips.py` 两个契约、`scripts/tests/test_check_surefire_skips.py` 两个夹具、`.github/workflows/verify.yml`（`-Dtest` 列表 + `diagnosis_ci_audit_%` grant）、`scripts/verify.sh`（pass1 排除 / pass2 纳入）、`application.yml`（显式默认关闭）。
 
+### B1 严格格式重试（POC_ONLY，默认关闭且不接运行时）
+- 新增 `src/test/java/com/.../poc/realtime/FormatOnlyRetryPoc.java` 与同名测试：纯测试范围，非 Spring bean、不改生产源码、不调真实模型。
+- 失败分类只允许 Jackson `JsonProcessingException`（JSON 语法或严格 creator-property 校验）；`ScriptedModel` 注入的 provider / timeout / safety / insufficient-citation / schema / response-shape 故障一律终止。
+- 共享 `Ledger` 在每次真实调用前记账，CHARGED/COMMITTED/FAILED 三态；同一 `AttemptSpec`（task/role/instructions/context/evidenceVersion/workflowVersion/fencing）重试不改变任何身份字段，CRITIC 排除。
+- 崩溃后 CHARGED 未 COMMITTED 的行使新「进程」抛 `RECOVERY_PENDING`，模型调用数不增加；已 COMMITTED 的行直接重放结果。
+
+### B2 来源类型分层（IMPLEMENTED_DEFAULT_OFF）
+- `SourceTypePolicy.java`：Chroma metadata 标记 `sourceType`；`BUILTIN` / `USER_UPLOAD` / `AUTHORIZED_EXTERNAL` / `UNKNOWN`。`classify` 对存量 chunk 只用可信 `corpus=builtin` / `ownerUserId=0` / `documentId|docId + owner==caller` 保守回填；显式标记也必须有可信元数据佐证；`AUTHORIZED_EXTERNAL` 永不授予，UNKNOWN fail-closed。
+- `restrict()` 只从既有 owner OR 过滤后的候选列表删除元素，绝不新增；`DocumentSearchTool` 在向量/混合融合之后、空结果与 rerank 之前调用，BM25 缓存路径同样受限。`eye-diagnosis.rag.source-type.enabled=false` 默认关闭。
+- `DocumentProcessingService` 与 `BuiltinCorpusSeeder` 写入服务端派生的 `user_upload` / `builtin`，owner 仍取服务端 DB 行或系统哨兵，不接受模型输入。
+- 未触碰 `ControlledEvidenceRetriever`、`t_patient_authorization`、医生复核、协作 16 事件、R5 封存证据；没有新增 Flyway，因为 Chroma 元数据不能由 SQL 回填。
+
+### C1 会话导出规范（IMPLEMENTED）
+- 保留 `GET /agent/history/{sessionId}/export` 的 `BaseResponse<String>` 契约和既有 owner/login 校验；新增 `format` 白名单 `markdown|json`，未知格式 fail-closed 返回 `PARAMS_ERROR`，不静默把 `pdf` 当 Markdown。
+- 新建 `web/src/lib/sessionExport.ts` 作为 React 唯一导出实现：`safeFileName` 去控制字符/路径分隔符/首尾点空格/Windows 保留名并限长；`exportDescriptor` 生成中性文件名（只用 `会话导出` + 净化后的 sessionId，绝不拼会话标题或消息正文；标题由首条用户消息截断生成，可能含症状）、带 `charset=utf-8` 的 MIME 与 `.md`/`.json` 扩展名；`downloadText` 返回错误消息、包住 DOM 点击与 URL revoke。
+- `AgentPage.tsx` 删除重复的 `safeFileName`/`downloadText`，`handleExport` 下载失败时把错误交给既有 `useFault` 路径；不改 Vue 已弃用实现，不新增 PDF 或附件端点。
+- 后端 2 条导出测试 + 前端 7 条 `sessionExport.test.ts` 测试覆盖净化、标题不泄漏、MIME、下载失败、非法 envelope。
+
+### C2 白名单多查询扩展（IMPLEMENTED_DEFAULT_OFF 的离线评测；运行时未启用）
+- 新建 `scripts/evaluate_rag_query_expansion.py`、`evaluation/rag-query-expansion/corpus.json` + `results/`、`scripts/tests/test_evaluate_rag_query_expansion.py`、`docs/plans/2026-11-14-rag-query-expansion-eval.md`：零模型、零网络、零数据库、零真实患者数据的确定性离线评测。
+- 受控术语仅取 8 份内置语料标题及其已有中英文别名，最多 2 条精确别名探针；原查询与 disease/site/laterality 约束始终保留，歧义 `disease=unspecified` 不扩展；复用 RRF 形状与 id 去重；owner OR 过滤后的固定命中夹具覆盖跨用户隔离。
+- OOD/QUALITY 负例在检索前直接终止，baseline 与 expanded 两种模式均 `providerCalls=0`；受控证据准入、引用验证、Critic 全部未改；运行时默认关闭。
+- **收益判断**：该固定合成夹具上 recall@5 从 `2/8=0.25` 提升到 `8/8=1.0`，但这只是 instrument check，不是真实线上召回估计。任务要求「先构建确定性离线评测」且「如无明确收益不启用」；本轮只交付评测与结论，**不接 `DocumentSearchTool` 运行时、不加配置开关**，避免把合成收益误当成生产启用依据。
+
 ## 6. 已实现功能及提交
 
-**Commit 1 `eb04b18`** — `feat(agent): 落地普通聊天工具步骤状态与结构化审计`（27 文件，+1584/-52）。A1 + A2 全部代码、测试、V28 迁移、CI/文档同步已入库；留在当前分支，未 push、未合并、未部署。
+**Commit 1 `09f7c213`** — `feat(agent): 落地普通聊天工具步骤状态与结构化审计`（27 文件，+1584/-52）。A1 + A2 全部代码、测试、V28 迁移、CI/文档同步已入库；留在当前分支，未 push、未合并、未部署。
 
 涉及文件：
 - 新增：`ToolStepContract.java`、`ToolStepSink.java`、`ToolExecutionInterceptor.java`、`ToolAuditService.java`、`AgentToolAudit.java`、`AgentToolAuditMapper.java`、`V28__agent_tool_audit.sql`、`ToolStepContractTest.java`、`ToolAuditServiceTest.java`、`ToolAuditMySqlIntegrationTest.java`、`DiagnosisAgentRedactionTest.java`
@@ -94,14 +146,17 @@
 9. `mvn -o test`（无 profile / 无 DB）`contextLoads` 失败两次，根因分别为 Studio 控制器重名和 `eyeuser@localhost` 拒绝；已确认是环境前提，改用 `scripts/verify.sh` 全绿，未改动任何测试或安全配置来掩盖。
 10. 机械门禁夹具两处未同步新 suite：`test_check_surefire_skips.py` 的 backend-unit / flyway 夹具。补齐后 36/36 OK。
 11. 前端 typecheck 报错：DTO 的 `toolCalls` 元素缺 `stepLabel` 字段声明。补齐类型定义后通过。
+12. 自查发现 `ToolAuditService.record()` 的 DB 异常可能经拦截器打断聊天；加 try/catch，只记录 `errorType`，新增 `persistenceFailureNeverPropagatesIntoTheChatStream`，amend commit 1 为 `09f7c213`。
+13. V28 `UNIQUE(toolCallId, toolStatus)` 全局作用域过宽；发现时 V28 已提交/应用，按规则**不修改已应用迁移**，留作可由 V29+ 追加解决的残余风险。
+14. B1 POC 首轮 `budgetFencingCancellationAndDeadlineBlockTheExtraAttempt` 失败：测试脚本第二次响应写成了合法 JSON，导致重试成功而非抛出目标异常。这是夹具错误，不是放宽断言；改成第二次仍格式错误 / 用 `now` 与取消状态精确驱动护栏后 9/9 通过。
 
 ## 8. 仍未完成
 
-B1（严格格式重试，默认关闭；预算/取消/恢复无法证明则只交 POC+测试）、B2（sourceType 分层+保守回填+fail-closed）、C1（导出规范缺口）、C2（先离线评测，无收益不启用）、第二批/第三批 commit、最终独立审查、`docs/plans/2026-11-14-deepresearch-implementation-final.md`、更新借鉴评估实施状态、hosted CI 复核、标记需要新的最终合并审查。
+commit 2（B1 POC + B2）与 commit 3（C1/C2）、改树后的完整回归（`scripts/verify.sh` / GraphExecutionTest / CollaborationRunTest / 引用与权限安全测试 / 前端 lint+build / 契约 / hosted CI）、最终独立审查、`docs/plans/2026-11-14-deepresearch-implementation-final.md`、更新借鉴评估实施状态、标记需要新的最终合并审查。A2 残余：`ToolAuditService.listOwned` / `summarizeOwned` 尚无 REST 端点，服务与 owner-scoped mapper 已可用。C2 运行时扩展按「合成评测不等于生产收益」保持不启用。
 
 ## 9. 下一轮可执行动作
 
-1. 读本文件 + `git status` / `git log`；commit 1 已创建（`eb04b18`）。
-2. 开始 B1：先审查现有结构化输出/Critic/预算/取消/恢复代码，写失败分类 + 故障注入测试；若无法证明预算与恢复语义，只交隔离 POC + 测试，不接运行时。
-3. 并行（只读子代理）梳理 B2 的 RAG 元数据写入/检索全链路与 C1 的现有导出实现，主会话独立复核结论后再串行写入。
-4. 第二批完成并验证通过后提交 commit 2；随后 C1/C2 → commit 3。
+1. 读本文件 + `git status` / `git log`；commit 1 已在 `09f7c213`，B1/B2/C1/C2 改动尚未提交。
+2. 提交 commit 2：B1 隔离 POC + B2 来源分层 + 进度文件；提交 commit 3：C1 导出规范 + C2 离线评测 + 进度文件。
+3. 按第六节跑全量回归：后端 `scripts/verify.sh`、GraphExecutionTest / CollaborationRunTest / 引用与权限安全测试、`web` 四门禁、16 事件 / 默认关闭 / SSE / R5 基线；查看 hosted CI。
+4. 写最终报告、更新借鉴评估、显式标记「需要新的最终合并审查」，然后停止循环。
