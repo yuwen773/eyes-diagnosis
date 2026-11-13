@@ -76,11 +76,11 @@ const items = computed<MenuProps['items']>(() => originItems.value)
     <div class="header-inner">
       <RouterLink to="/" class="header-brand">
         <div class="brand-icon">
-          <img class="logo" src="../assets/eyesight-logo.svg" alt="EyeSight" />
+          <img class="logo" src="../assets/eyesight-logo.svg" alt="Iris" />
           <div class="brand-icon-glow"></div>
         </div>
         <div class="brand-text">
-          <span class="brand-name">EyeSight</span>
+          <span class="brand-name">Iris</span>
           <span class="brand-tagline">智能眼科诊断</span>
         </div>
       </RouterLink>

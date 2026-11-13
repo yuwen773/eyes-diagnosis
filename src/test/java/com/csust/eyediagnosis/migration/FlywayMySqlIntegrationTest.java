@@ -4,10 +4,17 @@ import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlywayMySqlIntegrationTest {
 
@@ -42,7 +49,7 @@ class FlywayMySqlIntegrationTest {
                 assertEquals(10, latest.migrate().migrationsExecuted);
                 try (var account = statement.executeQuery("SELECT userAccount,userPassword,userRole,legacyMarker FROM `"
                         + schema + "`.t_user WHERE id=7")) {
-                    org.junit.jupiter.api.Assertions.assertTrue(account.next());
+                    assertTrue(account.next());
                     assertEquals("existing-account", account.getString(1));
                     assertEquals("existing-hash", account.getString(2));
                     assertEquals("user", account.getString(3));
@@ -60,7 +67,8 @@ class FlywayMySqlIntegrationTest {
         Assumptions.assumeTrue(url != null && !url.isBlank(),
                 "Set FLYWAY_TEST_URL to run the real MySQL Flyway gate");
 
-        // Keep the empty-database assertion independent of the upload mapper suite.
+        // Keep the empty-database assertion independent of other suites: each run gets
+        // a throwaway schema so it can run beside a real database on the same server.
         String schema = "diagnosis_ci_empty_" + UUID.randomUUID().toString().replace("-", "");
         String username = System.getenv("FLYWAY_TEST_USERNAME");
         String password = System.getenv("FLYWAY_TEST_PASSWORD");
@@ -77,6 +85,47 @@ class FlywayMySqlIntegrationTest {
                 int expectedMigrations = flyway.info().all().length;
                 assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
                 assertEquals("27", flyway.info().current().getVersion().toString());
+
+                // 空库 migrate 后必须拥有全部被实体使用的表，否则登录、资讯、
+                // Agent 会话、知识库会在启动时无表可写。
+                Set<String> tables = new HashSet<>();
+                try (ResultSet rs = statement.executeQuery(
+                        "SELECT table_name FROM information_schema.tables WHERE table_schema = '"
+                                + schema + "'")) {
+                    while (rs.next()) {
+                        tables.add(rs.getString(1));
+                    }
+                }
+                for (String expected : new String[]{
+                        "t_user", "t_news", "t_agent_session", "t_knowledge_document",
+                        "t_diagnosis", "t_agent_message", "t_mcp_server", "t_inference_cache",
+                        "t_news_audit", "t_diagnosis_task", "t_patient_draft_run",
+                        "t_doctor_review", "t_patient_authorization"}) {
+                    assertTrue(tables.contains(expected), "missing table after migrate: " + expected);
+                }
+
+                // V15 的 t_news 对 content/publishTime/coverImg 有 NOT NULL 且无默认值。
+                // NewsLifecycleService 的创建分支必须填满这几列（空串/当前时间占位），
+                // 按真实写入路径验一次，顺带读回 V17 新列的默认值。
+                try (PreparedStatement insert = connection.prepareStatement(
+                        "INSERT INTO `" + schema + "`.t_news (title, userId, content, coverImg, status, publishTime) "
+                                + "VALUES (?, ?, ?, ?, ?, NOW())")) {
+                    insert.setString(1, "集成测试资讯");
+                    insert.setLong(2, 1L);
+                    insert.setString(3, "正文内容");
+                    insert.setString(4, "https://cdn/cover.png");
+                    insert.setInt(5, 1);
+                    assertEquals(1, insert.executeUpdate());
+                }
+                try (ResultSet rs = statement.executeQuery(
+                        "SELECT featured, isDelete, reviewNote FROM `" + schema + "`.t_news WHERE title = '集成测试资讯'")) {
+                    assertTrue(rs.next(), "inserted news row not found");
+                    assertEquals(0, rs.getInt("featured"));
+                    assertEquals(0, rs.getInt("isDelete"));
+                    assertTrue(rs.getObject("reviewNote") == null,
+                            "reviewNote should stay nullable for legacy rows");
+                }
+
                 // The real registration/login mapper must work after a fresh migration.
                 try (var users = statement.executeQuery("SELECT id,userAccount,userPassword,userName,userAvatar,userProfile,"
                         + "userRole,editTime,createTime,updateTime,isDelete FROM `" + schema + "`.t_user LIMIT 0")) {

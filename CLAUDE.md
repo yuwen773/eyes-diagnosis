@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **React 19** product frontend (`web/`) + **Python** algorithm service. `frontend/` is the historical Vue frontend; realtime collaboration work belongs in `web/`.
+Iris — **Spring Boot 3.5.6** (Java 21) + **React 19** 产品前端（`web/`）+
+**Vue 3** 已弃用前端（`frontend/`，deprecated）+ **Python** algorithm service.
 Base package: `com.csust.eyediagnosis`
 
 > **本分支是 Java 线。** 仓库里另有一条 Python 后端线（FastAPI），在 `feature/python-backend`
@@ -17,26 +18,23 @@ Worktree-isolated sessions 只接受单条、无运行时计算的 Bash 命令�
 
 派审查子代理前读 `docs/subagent-delegation.md`：明确完成判据、限定范围、等 harness 通知而非轮询；机械检查交给 `scripts/check_design_doc.py` 等脚本，子代理只判 judgement calls。
 
-## Build & Run
+## Navigation
 
-```bash
-# Backend
-mvn clean package                    # Build (includes protobuf codegen)
-mvn spring-boot:run                  # Dev server :8081, context-path /api
-mvn test -Dtest=ClassName#method     # Run single test
+- 领域命名、模块边界、易混术语 → `GLOSSARY.md`（架构评审与新增概念前读）。
+- 找设计 / 计划 / 验收 / 迁移文档 → `docs/README.md`（按主题分组的索引）。
+- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与目标库升级路径见 `docs/architecture/migration-matrix.md`。
+- 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
+- 多工作树协作、Windows 进程操作、临时验证产物清理 → `docs/agent-worktree-conventions.md`。
 
-# Frontend (in frontend/)
-npm run dev                          # Dev server :5173
-npm run build                        # Type-check + build
-npm run openapi                      # Generate API client from OpenAPI spec
+## Build & Verify
 
-# Algorithm (in algorithm/)
-pip install -r requirements.txt
-python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
-python grpc_server.py                # gRPC server :50051
+后端构建脚本看 `pom.xml`，产品前端脚本看 `web/package.json`（`typecheck` / `test` / `build` / `lint`，
+CI 里是根 `verify.yml` 的 `web` job），Vue 已弃用线看 `frontend/package.json`，算法服务看
+`algorithm/requirements.txt` 与 `run_mcp_server.py` / `grpc_server.py`；`docker-compose.yml` 起 ChromaDB :8000。
 
-docker-compose up -d                 # ChromaDB vector store :8000
-```
+**后端全量验证走 `scripts/verify.sh`**：它自带一次性 MySQL 8 + Redis、注入 `SPRING_PROFILES_ACTIVE=ci`、跑完整 `mvn test`（含 `contextLoads` 与两个 MySQL 集成门禁），结束自动清理容器。JDK 21 由脚本设为 `C:\Users\yuwen\.jdks\corretto-21.0.7`；手工跑 Maven 时用 `JAVA_HOME=<该路径> mvn ...`。
+
+Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local.md`（不入库，工作树不自动继承）；Codex 侧同一份在 `~/.codex/AGENTS.md`。
 
 ## Architecture
 
@@ -50,11 +48,11 @@ docker-compose up -d                 # ChromaDB vector store :8000
 - `interceptor/TextMcpModelInterceptor` — MCP server resolution priority: session override → user enabled → disabled
 - `rag/` — Document parsing + 512-word chunking → ChromaDB via DashScope embeddings
 
-**gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
+**gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `src/main/proto/diagnosis.proto`, compiled by `protobuf-maven-plugin` (Java) and `algorithm/generate_proto.py` (Python). Java client: `grpc/DiagnosisGrpcClient`.
 
-**Product frontend** (`web/`): React 19 + TypeScript + Vite. See `web/package.json` for typecheck, tests, build and lint. Ordinary chat and collaboration use `@microsoft/fetch-event-source`; their state and cancellation remain separate. TASK-04 collaboration is opt-in via `VITE_COLLABORATION_ENABLED=true`; see `docs/collaboration-client.md`.
+**Frontend (product)** (`web/`): React 19 + TypeScript + Vite + Tailwind v4 + React Router. API 层手写于 `web/src/lib/api.ts`（统一 `ApiError` / `BaseResponse`），Agent 聊天用 `@microsoft/fetch-event-source` 消费 SSE。2026-11-10 起由 `git subtree` 纳入本仓库，原独立仓库 `eyes-diagnosis-web` 已归档。实时协作工作台沿用同一设计系统；TASK-04 collaboration is opt-in via `VITE_COLLABORATION_ENABLED=true`; see `docs/collaboration-client.md`.
 
-**Historical frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`.
+**Frontend (deprecated)** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. **已弃用（deprecated，2026-11-10 起）**：不再开发、不再作为设计参考，仅保留可运行以作回溯；新功能与修复一律进 `web/`。
 
 ## API Endpoints
 
@@ -74,7 +72,7 @@ docker-compose up -d                 # ChromaDB vector store :8000
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V27. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V27; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -87,9 +85,9 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **Agent streaming**: `DiagnosisAgent.stream()` → SSE events (ASSISTANT/REASONING/TOOL_REQUEST/TOOL_CONFIRM), terminal `event: "done"`
 - **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
-- **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
+- **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
 - **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
 
 ## Design Context
 
-产品前端设计真源是固定 React 基线引入的 `DESIGN.md`、`web/DESIGN.md` 和 `web/src/styles/tokens.css`。实时协作工作台沿用同一设计系统，按授权事实呈现状态和时间线。Vue 页面不作为实时协作交付或设计参考。
+设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。实时协作工作台沿用同一设计系统，按授权事实呈现状态和时间线；Vue 页面不作为实时协作交付或设计参考。

@@ -12,7 +12,7 @@
           <circle cx="12" cy="6" r="1" class="ai-node" style="--delay:1s" />
           <circle cx="12" cy="18" r="1" class="ai-node" style="--delay:1.5s" />
         </svg>
-        <span class="agent-name">EyeSight</span>
+        <span class="agent-name">Iris</span>
       </div>
       <div class="message-body markdown-body" v-html="finalContent"></div>
 

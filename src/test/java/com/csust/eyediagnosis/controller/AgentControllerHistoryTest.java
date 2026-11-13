@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.controller;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
+import com.csust.eyediagnosis.agent.service.ChatMessageWriter;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.GlobalExceptionHandler;
 import com.csust.eyediagnosis.mapper.AgentMessageMapper;
@@ -47,8 +48,10 @@ class AgentControllerHistoryTest {
         session.setUserId(7L);
         when(sessionMapper.selectBySessionId("thread-a")).thenReturn(session);
         messageMapper = mock(AgentMessageMapper.class);
+        ChatMessageWriter messageWriter = new ChatMessageWriter(sessionMapper, messageMapper,
+                new AgentConstants());
         ChatHistoryService historyService = new ChatHistoryService(sessionMapper, messageMapper,
-                new ObjectMapper(), mock(SessionMessageQueue.class));
+                new ObjectMapper(), mock(SessionMessageQueue.class), messageWriter);
 
         AgentController controller = new AgentController();
         ReflectionTestUtils.setField(controller, "userService", userService);

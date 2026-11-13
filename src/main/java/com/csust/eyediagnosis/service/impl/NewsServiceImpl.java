@@ -66,6 +66,11 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         queryWrapper.eq(ObjUtil.isNotNull(newsId),"id", newsId);
         queryWrapper.like(StrUtil.isNotBlank(title),"title", title);
         queryWrapper.like(StrUtil.isNotBlank(summary),"summary", summary);
+        // 公开端只看已发布；管理员（visibleOnly=false）看全部状态以便审核。
+        // 默认值为 true，任何漏设 visibleOnly 的调用点都不会泄漏草稿/待审核文章。
+        if (newsQueryDTO.isVisibleOnly()) {
+            queryWrapper.eq("status", com.csust.eyediagnosis.constant.NewsStatus.PUBLIC_VISIBLE);
+        }
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals(ASC),sortField);
         //返回query
         return queryWrapper;
@@ -76,6 +81,7 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
        if (CollUtil.isEmpty(newsList)){
            return new ArrayList<>();
        }
+       // 列表批量转换统一走 toNewsVO，保证 status 等字段不在批量路径上丢失
        return newsList.stream().map(this::getNewsVO).collect(Collectors.toList());
     }
 
@@ -85,19 +91,32 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
             return null;
         }
 
-        //获取当前新闻的作者
+        //获取当前新闻的作者（孤儿 userId 会查不到，兜底避免公开列表 NPE → 500）
         User user = userMapper.selectUserNameAndUserAvatarByUserId(news.getUserId());
-        //设置作者名和作者头像
-        String Username = user.getUserName();
-        String UserAvatar = user.getUserAvatar();
+        //设置作者名和作者头像；作者查不到时用「未知用户」+ null 头像兜底
+        String Username = user == null ? "未知用户" : user.getUserName();
+        String UserAvatar = user == null ? null : user.getUserAvatar();
 
-        NewsVO newsVO = new NewsVO();
-        BeanUtil.copyProperties(news,newsVO);
-
-        newsVO.setCoverImage(news.getCoverImg());
-        //设置作者
+        // 实体→VO 的字段拷贝（含 status）统一收拢到 toNewsVO
+        NewsVO newsVO = toNewsVO(news);
         newsVO.setAuthor(Username);
         newsVO.setAvatar(UserAvatar);
+        return newsVO;
+    }
+
+    /**
+     * 实体→VO 的唯一转换入口：承担原来的 {@code BeanUtil.copyProperties(news, newsVO)}，
+     * 并显式映射封面字段名差异（实体 coverImg → VO coverImage）。
+     * 列表批量转换（{@link #getNewsVOList}）与详情（{@link #getNewsVO}）都经由本方法，
+     * 因此新增字段（如 status）在两条读侧都能读到。包外单测可直接调用。
+     */
+    public static NewsVO toNewsVO(News news) {
+        if (news == null) {
+            return null;
+        }
+        NewsVO newsVO = new NewsVO();
+        BeanUtil.copyProperties(news, newsVO);
+        newsVO.setCoverImage(news.getCoverImg());
         return newsVO;
     }
     @Override
@@ -108,48 +127,42 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         if(newsUploadDTO !=null){
             newsId = newsUploadDTO.getId();
         }
-        //如果是更新图片，则应可以在数据库中查询到该新闻
-        if(newsId != null){
-            News existing = this.getById(newsId);
-            ThrowUtils.throwIf(existing == null, ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
-        }
-        //上传图片
-        //用户Id作为每个用户的图库前缀
+        // 本系统不支持「上传封面即新建新闻」：编辑页总带已存在的新闻 id。
+        // 旧的无 id 分支会给 content/publishTime/status 全 null 插一行脏数据
+        // （V15 的 t_news 对前两列有 NOT NULL 约束，直接报 1364），且绕过
+        // NewsLifecycleService 的审计与状态口径。缺 id 一律拒绝。
+        ThrowUtils.throwIf(newsId == null, ErrorCode.PARAMS_ERROR, "请指定新闻 id");
+        // 新闻必须已存在，避免给伪造 id 上传封面留下孤儿文件
+        boolean exists = this.lambdaQuery()
+                .eq(News::getId, newsId)
+                .exists();
+        ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, PARAMS_IS_NULL);
+        // 上传图片：用户 id 作为每个用户的图库前缀
         String uploadPrefix = String.format("cover/%s",loginUser.getId());
         UploadPictureDetail uploadPictureDetail = fileManager.uploadPicture(multipartFile, uploadPrefix);
         String coverUrl = uploadPictureDetail.getUrl();
 
-        boolean result;
-        if (newsId != null) {
-            // 更新：只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
-            // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
-            result = this.updateById(coverPatch(newsId, coverUrl));
-        } else {
-            // 新增：保持原有插入语义（标题空串、作者为上传者、带封面）。
-            News news = new News();
-            news.setTitle("");
-            news.setUserId(loginUser.getId());
-            news.setCoverImg(coverUrl);
-            result = this.save(news);
-        }
+        // 只落 coverImg 与 editTime。coverPatch 返回的实体其余字段全为 null，
+        // MP 的 NOT_NULL 字段策略使它们不进 SET，从而不覆盖标题/作者/正文/摘要/状态。
+        boolean result = this.updateById(coverPatch(newsId, coverUrl, new Date()));
         ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
         return coverUrl;
     }
 
     /**
      * 构造封面更新用的窄 patch 实体：只带 id / coverImg / editTime，其余字段一律为 null。
-     * 仅供 {@link #uploadCoverImage} 的更新分支使用，避免整体覆写新闻。
+     * 供 {@link #uploadCoverImage} 的更新分支与单测使用，避免 saveOrUpdate 整体覆写新闻。
      *
      * <p>看护说明：本方法依赖 MP 默认 {@code NOT_NULL} 字段策略（null 字段不进 SET）。
      * 若将来给 {@code News} 加 {@code @TableField(fill = ...)} 自动填充或改全局
      * {@code update-strategy}，本方法「不覆盖其它列」的保证会失效——
-     * {@code NewsCoverUpdateTest} 捕获 updateById 实体后的 assertNull 断言是第一道防线。
+     * {@code NewsCoverUpdateTest} 的 assertNull 断言是第一道防线。
      */
-    private static News coverPatch(Long newsId, String coverUrl) {
+    public static News coverPatch(Long newsId, String coverUrl, Date editTime) {
         News news = new News();
         news.setId(newsId);
         news.setCoverImg(coverUrl);
-        news.setEditTime(new Date());
+        news.setEditTime(editTime);
         return news;
     }
 }

@@ -19,6 +19,7 @@ import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import com.csust.eyediagnosis.service.UserService;
+import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.DigestUtils;
@@ -72,7 +73,7 @@ public class DiagnosisController {
                                                                        HttpServletRequest request){
         ThrowUtils.throwIf(diagnosisQueryDTO==null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
-        diagnosisQueryDTO.setUserId(loginUser.getId());
+        DiagnosisServiceImpl.applyVisibilityScope(diagnosisQueryDTO, loginUser);
         // 获取分页相关数据
         long current = diagnosisQueryDTO.getCurrent();
         long pageSize = diagnosisQueryDTO.getPageSize();
@@ -90,7 +91,7 @@ public class DiagnosisController {
                                                                                 HttpServletRequest request){
         ThrowUtils.throwIf(diagnosisQueryDTO==null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
-        diagnosisQueryDTO.setUserId(loginUser.getId());
+        DiagnosisServiceImpl.applyVisibilityScope(diagnosisQueryDTO, loginUser);
         // 获取分页相关数据
         long current = diagnosisQueryDTO.getCurrent();
         long pageSize = diagnosisQueryDTO.getPageSize();

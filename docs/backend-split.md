@@ -14,7 +14,7 @@
 | 后端根 | `src/` + `pom.xml` | `algorithm/web/` + `algorithm/mcp_server/` + `pyproject.toml` |
 | 数据库迁移 | Flyway `src/main/resources/db/migration/` | `deploy/python-migrations/`、`deploy/workflow-migrations/sql/` |
 | 部署 | `Dockerfile` + `deploy/`（Java 探针） | `deploy/python/`（Dockerfile + compose.yml + nginx） |
-| 契约 | `algorithm/diagnosis.proto` | `contracts/diagnosis.proto`（同一份 proto 的副本） |
+| 契约 | `src/main/proto/diagnosis.proto` | `contracts/diagnosis.proto`（同一份 proto 的副本） |
 | 生产 | 在跑（RC 基线） | 未切流 |
 
 分叉点是 `d74784e`（`feat(p2-02a): add subprocess watchdog for CUDA probe cells`，2026-10-18 之前）。
@@ -31,7 +31,7 @@
 
 以下目录在两条线里**各有一份**，改动不会自动流到对面：
 
-- `frontend/` —— Vue 3 前端
+- `frontend/` —— Vue 3 前端（本线**已弃用**，见下文；Python 线副本仍各有状态）
 - `algorithm/` 下的 ML 与推理部分（`eye_diagnosis/`、`eye_diagnosis_p1/`、`p1/`、`train_model.py`、
   `grpc_server.py`、`eye_disease_model.py`、`mcp_server/`、`configs/`、`datasets/`、`checkpoints/`）
 - `docs/`、`scripts/`、`.github/workflows/`
@@ -46,7 +46,13 @@
 本线的 `frontend/` 已完成医疗编辑风重构（2026-10 的 PR #10，品牌主色由赤陶 `#c96442`
 改为青绿 `#1b7f6b`）；**Python 线的 `frontend/` 仍是重构前的副本**，没有 `--iris-*` 令牌，
 页面也没有 KPI 条骨架。前端改动要落到 Python 线，必须先显式搬运，不能假定两边一样。
-设计真源 `DESIGN.md` 只在本线入库。
+
+注意 Vue 版 `frontend/` 现已**弃用（deprecated，2026-11-10 起）**：产品前端已转到 `web/`（React），
+`DESIGN.md` 描述的是 `web/` 那套「白色仪器 + 信号橙 `#d9541f`」，不是本目录 `frontend/` 的
+青绿 `--iris-*`。设计真源 `DESIGN.md` 只在本线入库。
+
+`web/` 自 2026-11-10 起由 `git subtree` 纳入本仓库（原独立仓库 `yuwen773/eyes-diagnosis-web`
+已归档）。前端代码、CI 门禁与设计文档都以本仓库为准。
 
 ## 约定
 

@@ -1,19 +1,15 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+本仓库的项目指引以 [`CLAUDE.md`](CLAUDE.md) 为唯一真源：架构、API、数据库规范、
+Navigation、验证命令、设计真源都读它，本文只补 Codex 侧的环境事实。改项目约定时只改真源。
 
-## Project Overview
+## 本机环境（不入库）
 
-Eye Diagnosis AI System — **Spring Boot 3.5.6** (Java 21) + **React 19** product frontend (`web/`) + **Python** algorithm service. `frontend/` is the historical Vue frontend; realtime collaboration work belongs in `web/`.
-Base package: `com.csust.eyediagnosis`
-
-> **本分支是 Java 线。** 仓库里另有一条 Python 后端线（FastAPI），在 `feature/python-backend`
-> 分支，与本分支**不再互相合并**；`frontend/`、`algorithm/` 下的 ML 部分等共享目录各持一份，
-> 改动需人工搬运。约定见 `docs/backend-split.md`。
-
-## MySQL
-
-本机数据库连接信息属于环境事实，不入库：见 `src/main/resources/application-dev.yml`（已 gitignore）与本地 `CLAUDE.local.md` / `~/.codex/AGENTS.md`。
+- 数据库连接信息见 `src/main/resources/application-dev.yml`（已 gitignore）与
+  `CLAUDE.local.md`；Codex 侧同一份在 `~/.codex/AGENTS.md`。改配置前先确认端口与账号属于哪套实例。
+- Maven / Java 验证用 JDK 21：`C:\Users\yuwen\.jdks\corretto-21.0.7`。
+  新 shell 里设 `JAVA_HOME` 指向它即可（POSIX shell：`JAVA_HOME=<path> mvn ...`）。
+  后端全量验证直接跑 `scripts/verify.sh`，它自带 JDK 路径、一次性 MySQL 8 + Redis 与 ci profile。
 
 ## Java 21 Runtime
 
@@ -32,80 +28,3 @@ Shell state does not persist between Bash tool calls, but the **primary working
 directory does**: a `cd frontend` updates it for later calls, so subsequent
 commands with relative paths resolve under `frontend/`. Prefer absolute paths
 in tool arguments, or re-`cd` inside each invocation.
-
-## Build & Run
-
-```bash
-# Backend
-mvn clean package                    # Build (includes protobuf codegen)
-mvn spring-boot:run                  # Dev server :8081, context-path /api
-mvn test -Dtest=ClassName#method     # Run single test
-
-# Frontend (in frontend/)
-npm run dev                          # Dev server :5173
-npm run build                        # Type-check + build
-npm run openapi                      # Generate API client from OpenAPI spec
-
-# Algorithm (in algorithm/)
-pip install -r requirements.txt
-python run_mcp_server.py             # MCP diagnosis server (Streamable HTTP)
-python grpc_server.py                # gRPC server :50051
-
-docker-compose up -d                 # ChromaDB vector store :8000
-```
-
-## Architecture
-
-**Backend**: Controller → Service → Mapper (MyBatis Plus). `BaseResponse<T>{code:0, data, msg}` unified response. Auth: Spring Session + Redis, `@AuthCheck(mustRole=...)` AOP. MyBatis Plus `map-underscore-to-camel-case: false`.
-
-**Agent System** (`agent/`): Core AI chatbot on Spring AI + Spring AI Alibaba.
-- `DiagnosisAgent` — `ReactAgent` with streaming `Flux<MessageDTO>`, SSE endpoint `/api/agent/chat/stream`
-- `tools/EyeImageAnalyzerTool` — DashScope Qwen-VL-Plus vision analysis (`@Tool`)
-- `tools/DocumentSearchTool` — ChromaDB RAG retrieval (`@Tool`)
-- `manager/MCPManager` — MCP client factory (STDIO/SSE/Streamable HTTP), tool discovery cached in Redis 5min
-- `interceptor/TextMcpModelInterceptor` — MCP server resolution priority: session override → user enabled → disabled
-- `rag/` — Document parsing + 512-word chunking → ChromaDB via DashScope embeddings
-
-**gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `diagnosis.proto`, compiled by `protobuf-maven-plugin`. Java client: `grpc/DiagnosisGrpcClient`.
-
-**Product frontend** (`web/`): React 19 + TypeScript + Vite. See `web/package.json` for typecheck, tests, build and lint. Ordinary chat and collaboration use `@microsoft/fetch-event-source`; their state and cancellation remain separate. TASK-04 collaboration is opt-in via `VITE_COLLABORATION_ENABLED=true`; see `docs/collaboration-client.md`.
-
-**Historical frontend** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`.
-
-## API Endpoints
-
-| Controller | Path | Purpose |
-|------------|------|---------|
-| UserController | `/api/user/*` | Auth, CRUD |
-| DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
-| DiagnosisTaskController | `/api/diagnosis-tasks/*` | Patient image task: submit, idempotent replay, safe status (see `docs/diagnosis-task.md`) |
-| AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| PatientDraftTestController / PatientDraftSeedController | `/api/patient-draft-test/*` | Opt-in admin-only draft validation |
-| McpServerController | `/api/mcp-server/*` | MCP server CRUD |
-| KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
-| NewsController | `/api/news/*` | News CRUD |
-| ControlledReferenceController | `/api/controlled-references/*` | Controlled reference upload, governance, retrieval (see `docs/controlled-references.md`) |
-| CollaborationRunController | `/api/agent/collaboration-runs/*` | Opt-in run admission, authorized snapshot/SSE and cancellation (see `docs/collaboration-runs.md`) |
-| DoctorReviewController | `/api/doctor-reviews/*` | Assigned doctor review of frozen drafts (see `docs/doctor-review.md`) |
-
-## Database (MySQL `diagnosis`)
-
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V27. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
-
-**命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
-
-## External Services
-
-MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embeddings + vision) | Tencent COS (file storage) | Python gRPC (image classification)
-
-## Key Patterns
-
-- **Agent streaming**: `DiagnosisAgent.stream()` → SSE events (ASSISTANT/REASONING/TOOL_REQUEST/TOOL_CONFIRM), terminal `event: "done"`
-- **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
-- **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
-- **Protobuf codegen**: `algorithm/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs
-- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
-
-## Design Context
-
-产品前端设计真源是固定 React 基线引入的 `DESIGN.md`、`web/DESIGN.md` 和 `web/src/styles/tokens.css`。实时协作工作台沿用同一设计系统，按授权事实呈现状态和时间线。Vue 页面不作为实时协作交付或设计参考。

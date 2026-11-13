@@ -52,6 +52,12 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
     @Update("UPDATE t_agent_session SET title = #{title}, updatedTime = NOW() WHERE sessionId = #{sessionId}")
     int updateTitle(@Param("sessionId") String sessionId, @Param("title") String title);
 
-    @Update("UPDATE t_agent_session SET pinned = #{pinned}, pinTime = #{pinTime}, updatedTime = NOW() WHERE sessionId = #{sessionId}")
-    int updatePinStatus(@Param("sessionId") String sessionId, @Param("pinned") Integer pinned, @Param("pinTime") Date pinTime);
+    /**
+     * 置顶/取消置顶。updatedTime 由调用方显式回写原值：
+     * 该列带 ON UPDATE CURRENT_TIMESTAMP，不显式赋值就会被顶成当下，
+     * 会话会被误挪进「今天」分组。
+     */
+    @Update("UPDATE t_agent_session SET pinned = #{pinned}, pinTime = #{pinTime}, updatedTime = COALESCE(#{updatedTime}, updatedTime) WHERE sessionId = #{sessionId}")
+    int updatePinStatus(@Param("sessionId") String sessionId, @Param("pinned") Integer pinned,
+                        @Param("pinTime") Date pinTime, @Param("updatedTime") Date updatedTime);
 }

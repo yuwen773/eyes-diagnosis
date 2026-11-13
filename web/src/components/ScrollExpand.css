@@ -1,0 +1,226 @@
+/* ==========================================================================
+   展开光幕
+   ========================================================================== */
+
+.scroll-expand {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  /* 光幕里的文字要贴回页面网格：版心居中之后的左边界 + 内边距，
+     和 .wrap 算出来的是同一个数。百分比取的是舞台宽度，不含滚动条。 */
+  --se-inset: calc(max(0px, (100% - var(--maxw)) / 2) + var(--gutter));
+
+  /* 画面明暗决定三组颜色：画框底（letterbox 填色）、压暗层、叠加文字。
+     默认黑底片；亮底片那版在 [data-tone="light"] 里改写同一组变量。 */
+  --se-frame-bg: #000;
+  --se-ink: #fff;
+  --se-ink-2: rgba(255, 255, 255, 0.76);
+  --se-ink-3: rgba(255, 255, 255, 0.48);
+  --se-kicker: rgba(255, 255, 255, 0.62);
+  --se-scrim:
+    radial-gradient(
+      120% 95% at 0% 100%,
+      rgba(0, 0, 0, 0.85),
+      rgba(0, 0, 0, 0) 62%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.72),
+      rgba(0, 0, 0, 0.16) 46%,
+      rgba(0, 0, 0, 0.34)
+    );
+}
+
+/* 亮底片：画框底取页面底色（letterbox 直接融进页面，不成一块灰板），
+   压暗层换成提亮层，文字改墨色。左下角那块留白本来就干净，文字压上去更清楚。 */
+.scroll-expand[data-tone="light"] {
+  --se-frame-bg: var(--field);
+  --se-ink: #14171a;
+  --se-ink-2: rgba(20, 23, 26, 0.72);
+  --se-ink-3: rgba(20, 23, 26, 0.52);
+  --se-kicker: rgba(20, 23, 26, 0.55);
+  --se-scrim:
+    radial-gradient(
+      120% 95% at 0% 100%,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.26) 46%,
+      rgba(255, 255, 255, 0.4)
+    );
+}
+
+.scroll-expand--scroller {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.scroll-expand--scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-expand__track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand__stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--field);
+  /* 顶栏反相时用它当底色，跟画面的黑底一致。 */
+  --head-bg: #000;
+}
+
+.scroll-expand__frame {
+  position: absolute;
+  inset: 0;
+  /* 画框底跟画面同色，letterbox 就看不见了。 */
+  background: var(--se-frame-bg);
+  clip-path: inset(29.5% 27% 29.5% 27% round 0);
+  will-change: clip-path;
+}
+
+.scroll-expand__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  will-change: transform;
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.scroll-expand__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* 说明文字压在左下角，所以那一角要压得更暗（亮底片那版换成提亮）。 */
+  background: var(--se-scrim);
+  opacity: 0;
+}
+
+/* 展开到位后浮出的说明文字：压在照片的左下角，像压在样片上的标签。 */
+.scroll-expand__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  text-align: left;
+  padding: clamp(24px, 4.5vw, 64px) var(--se-inset);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin: 0;
+  /* 舞台 sticky 在视口顶端，顶栏压在它上面：标题得让开一条顶栏的高度，
+     否则「模型的唯一输入」会被顶栏切掉半行。
+     左右贴回页面网格，和首屏头版那条 mono 对齐。 */
+  padding: calc(var(--nav-h) + clamp(16px, 2.6vw, 40px)) var(--se-inset)
+    clamp(24px, 4.5vw, 64px);
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+/* 静止时的标题：衬线大字 + 等宽小注，跟随页面的排版语言。 */
+.scroll-expand__title-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.scroll-expand__title-main {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 40px);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.scroll-expand__title-kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.scroll-expand__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6%;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 34em;
+}
+
+.scroll-expand__caption-kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--se-kicker);
+}
+
+.scroll-expand__caption-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 40px);
+  line-height: 1.24;
+  letter-spacing: -0.02em;
+  color: var(--se-ink);
+  text-wrap: balance;
+}
+
+.scroll-expand__caption-body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--se-ink-2);
+}
+
+.scroll-expand__caption-note {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--se-ink-3);
+}

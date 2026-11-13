@@ -1,0 +1,10 @@
+# Grep-tool search exclusions (ripgrep reads this file; Glob does NOT — see
+# AGENTS.md "搜索与工作树" for the scoped-search rule).
+# These dirs are generated or vendored and are never a search target. Kept narrow:
+# no worktree paths, so Grep scoped inside a worktree still works.
+node_modules/
+target/
+dist/
+dist-ssr/
+coverage/
+.git/
