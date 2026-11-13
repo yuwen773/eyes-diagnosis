@@ -2481,12 +2481,19 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 /* ==========================================================================
-   诊断页 · 品牌化判读工作区（Visual Completion U3，DESIGN.md §2.4）
+   诊断页 · 品牌判读工作区（Visual Completion U3 重做）
    --------------------------------------------------------------------------
-   骨架：品牌化页头（kicker + 任务句 + 三步进度）→ 左侧上传主任务 + 右侧读数栏。
-   **包装层**升级到 Blue Optical Glass 品牌语言（品牌 kicker、蓝青结构强调、
-   发丝线容器），Clinical 的语义不动：墨色主 CTA、信号橙只标「当前」，
-   记录纸（.is-sheet）与风险语义由 RecordSheet 自己负责，一行不改。
+   整页落在品牌画布上（.is-brand-page：浅色银蓝 #F2F6FC / 暗色午夜蓝 #0B1425），
+   操作区升级为 Blue Optical Glass 品牌语言——不再是骨白仪器台上的白卡：
+
+     页头（品牌 kicker + 衬线任务句 + 三步进度）直接站在画布上
+     左侧上传主卡 = Layered Glass（透出画布层次 + 内侧高光 + 品牌投影）
+     右侧读数面板 = Soft Glass 次级面板（更收敛的透光，让位给主卡）
+     流程轨当前态 / 取景槽悬停 / 主按钮 = 品牌钴蓝
+     信号橙只留给「拖入影像」与风险语义——橙不是操作色
+
+   Clinical 的语义不动：记录纸（.is-sheet）与风险色由 RecordSheet 自己负责，
+   一行不改；主按钮仍是墨色实心（§2.4：临床页主 CTA 保持墨色）。
    ========================================================================== */
 
 .diag-hero {
@@ -2621,8 +2628,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   min-width: 1ch;
 }
 
-/* 激活态不抢戏，只把墨色给足；「当前」这一步的编号用信号橙点一下，
-   运转中交给右端的相位读数。 */
+/* 「当前」与「运转中」的编号用品牌钴蓝点一下（U3 重做：操作色归品牌，
+   橙只留给拖入影像与风险语义），运转中同时交给右端的相位读数。 */
 .proc__step[data-state="active"],
 .proc__step[data-state="run"] {
   color: var(--fg);
@@ -2630,12 +2637,12 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .proc__step[data-state="active"] .proc__code,
 .proc__step[data-state="active"] .proc__mark {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .proc__step[data-state="run"] .proc__code,
 .proc__step[data-state="run"] .proc__mark {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .proc__step[data-state="done"] {
@@ -2660,7 +2667,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   color: var(--fg-3);
 }
 
-/* 相位读数：运转中亮一枚信号橙的呼吸点。 */
+/* 相位读数：运转中亮一枚品牌钴蓝的呼吸点。 */
 .proc__state::before {
   content: "";
   width: 6px;
@@ -2669,11 +2676,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .proc__state[data-state="running"] {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .proc__state[data-state="running"]::before {
-  background: var(--signal);
+  background: var(--brand-primary);
   animation: live-pulse 1.6s var(--ease) infinite;
 }
 
@@ -2695,8 +2702,10 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   background: var(--risk-normal);
 }
 
-/* 主栅格：U3 把左右两栏升级为品牌语言容器——面板化的上传卡与读数卡
-   （发丝线描边 + 白底抬升），不再只是被一条竖线分开的两片骨白。 */
+/* 主栅格：U3 重做——左侧上传主卡是 Layered Glass（透出品牌画布层次），
+   右侧读数面板是 Soft Glass 次级面板（更收敛，让主卡做视觉重心）。
+   玻璃的规矩（DESIGN.md §2.1.1）：半透明底 + 发丝描边 + 内侧高光 +
+   品牌投影，`@supports not (backdrop-filter)` 退到静态替代，不塌成灰。 */
 .diag {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -2706,16 +2715,68 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .diag__left {
   padding: clamp(22px, 3vw, 34px);
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  position: relative;
+}
+
+/* Layered Glass 的内侧高光：玻璃上沿那一道镜面反射。 */
+.diag__left::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    var(--brand-glass-layered-inner),
+    transparent 38%
+  );
+  pointer-events: none;
 }
 
 .diag__right {
   padding: clamp(22px, 3vw, 34px);
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
+  -webkit-backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+  backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+
+/* Soft Glass 的内侧高光（比主卡更淡——次级面板不做重心）。 */
+.diag__right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    var(--brand-glass-soft-inner),
+    transparent 30%
+  );
+  pointer-events: none;
+}
+
+/* 不支持 backdrop-filter 的环境：玻璃退到静态替代（§2.1.1）——
+   提高底色不透明度、保留描边与高光，不能塌成一块灰。 */
+@supports not (backdrop-filter: blur(1px)) {
+  .diag__left,
+  .diag__right {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+/* 玻璃面板内的直写子元素都抬到高光层之上。 */
+.diag__left > *,
+.diag__right > * {
+  position: relative;
 }
 
 /* 右栏面板标题：正文大小的小节题，替代旧仪器章节头。 */
@@ -2743,7 +2804,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 .readout-head__state[data-state="running"] {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .readout-head__state[data-state="error"] {
@@ -2773,7 +2834,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   margin-top: 12px;
 }
 
-/* 右栏空台时的一行说明：示例影像在左侧取景槽里，别让右栏读成白屏。 */
+/* 右栏空台时的一行说明：示例影像在左侧取景槽里，别让右栏读成空白。 */
 .specimen-note {
   margin: 0 0 18px;
   color: var(--fg-2);
@@ -2843,15 +2904,15 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
 }
 
-/* 上传槽 · 测量腔（U3 现代化上传卡片）：空槽是品牌蓝描边的取景器，
-   读片时是暗室；悬停/聚焦亮品牌钴蓝边（操作区品牌化），拖入仍用
-   信号橙标记「这里是当前重点」——橙只做语义，不是卡片外观。 */
+/* 上传槽 · 取景器（U3 重做）：空槽是压在玻璃主卡上的品牌冷调取景面，
+   悬停/聚焦亮品牌钴蓝边，拖入用信号橙标记「这里是当前重点」——
+   橙只做语义（这是正在发生的动作），不是卡片常驻外观。 */
 .slot {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: color-mix(in srgb, var(--brand-canvas) 55%, var(--brand-surface));
+  border: 1px solid var(--brand-line);
   display: grid;
   place-items: center;
   padding: 0;
@@ -2866,6 +2927,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .slot:hover,
 .slot:focus-visible {
   border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 18%, transparent);
 }
 
 .slot[data-drag="true"] {
@@ -2884,7 +2946,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   inset: 4.5%;
   width: 91%;
   height: 91%;
-  color: var(--line-strong);
+  color: var(--brand-line-strong);
   pointer-events: none;
 }
 
@@ -3005,7 +3067,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   position: absolute;
   width: 13px;
   height: 13px;
-  border: 0 solid var(--line-strong);
+  border: 0 solid var(--brand-line-strong);
 }
 
 .slot[data-filled="true"] .slot__ticks span {
@@ -3041,6 +3103,37 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   display: flex;
   gap: 10px;
   margin-top: 14px;
+}
+
+/* 判读操作区的主按钮：品牌钴蓝实心（团队裁定 U3 操作色归品牌——
+   「开始判读」是品牌产品的自主动作，不是医疗复核提交；墨色 CTA 语义
+   仍由记录纸复核按钮承担）。作用域锁在 .diag__left 内，不漏到管理端
+   与记录纸（RecordSheet 的按钮原样不动）。 */
+.diag__left .btn.btn {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--brand-primary) 24%, transparent);
+}
+
+.diag__left .btn.btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-primary) 88%, var(--brand-primary-fg));
+  box-shadow: 0 14px 26px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+}
+
+/* 移除/次级动作是描边钮，不是实心钴蓝——盖过品牌页作用域的 .btn 填充。 */
+.diag__left .btn.btn--ghost {
+  background: transparent;
+  color: var(--brand-text);
+  border-color: var(--brand-line-strong);
+  box-shadow: none;
+}
+
+.diag__left .btn.btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-primary) 8%, transparent);
+  border-color: var(--brand-primary);
+  color: var(--brand-text);
+  box-shadow: none;
 }
 
 .slot__meta {

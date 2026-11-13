@@ -216,7 +216,9 @@ export function DiagnosisPage() {
 
   if (result) {
     return (
-      <div className="is-field">
+      // 结果区也落在品牌画布上：记录纸（.is-sheet）自己钉住纸面，
+      // 包装层与操作区共用同一块品牌舞台，不再上下换底色（U3）。
+      <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
 
         <div className="sheet-shell">
@@ -293,7 +295,10 @@ export function DiagnosisPage() {
   }
 
   return (
-    <div className="is-field">
+    // 品牌工作区画布（U3）：.is-brand-page 把 --field/--bg 换成品牌银蓝
+    // （暗主题是午夜蓝），只换舞台底色与发丝线，文字色与临床语义令牌不动。
+    // 操作区升级为 Blue Optical Glass——不再停留在骨白仪器台。
+    <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
       <main className="wrap diag-hero">

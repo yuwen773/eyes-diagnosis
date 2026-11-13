@@ -1,8 +1,13 @@
 /**
  * 底部免责条。
  *
- * 页脚去掉后，页面收尾只留一行话：一道发丝线、等宽标签、一句话、
- * 右端一枚信号橙印章。宽度与版心一致（外层 .wrap）。
+ * 页脚去掉后，页面收尾只留一行话。U3/U7 重做：免责条换到品牌语言——
+ * Solid Brand Surface（浅色 = 亮白实体面，暗色 = 深海蓝实体面，
+ * 都随主题走，与落地页责任边界同一套令牌），承载文字的区域可读性优先，
+ * 不做玻璃模糊（DESIGN.md §2.1.4）。右端仍是一枚信号橙印章：
+ * 「NOT A DIAGNOSIS」是免责语义，橙在这里是语义色。
+ *
+ * 深蓝面上的固定值用 --brand-deep-* 原语；浅色面上的文字走上下文令牌。
  */
 
 .disclaimer-bar {
@@ -10,8 +15,17 @@
   align-items: baseline;
   gap: 18px 28px;
   flex-wrap: wrap;
-  padding-block: 22px 26px;
-  border-top: 1px solid var(--line-strong);
+  margin-top: clamp(28px, 4vh, 44px);
+  padding: 22px clamp(20px, 3vw, 34px) 26px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-lg);
+  background: var(--brand-surface);
+}
+
+/* 暗主题下的品牌面沉到深海蓝：免责条在任何主题下都是一块明确的收尾面。 */
+html.dark .disclaimer-bar {
+  background: var(--brand-surface-deep);
+  border-color: var(--brand-deep-line);
 }
 
 .disclaimer-bar__mark {
@@ -19,7 +33,7 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--fg-2);
+  color: var(--brand-muted);
   white-space: nowrap;
 }
 
@@ -29,7 +43,8 @@
   max-width: 46em;
   font-size: 13px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--brand-text);
+  opacity: 0.82;
 }
 
 .disclaimer-bar__stamp {
@@ -41,6 +56,13 @@
   letter-spacing: 0.04em;
   white-space: nowrap;
   transform: rotate(-1.5deg);
+}
+
+/* 深海蓝面上橙的对比度不够（--signal-text 是给浅底的），
+   提到深底专用提亮版（--brand-deep-signal-text）。 */
+html.dark .disclaimer-bar__stamp {
+  border-color: var(--brand-deep-signal);
+  color: var(--brand-deep-signal-text);
 }
 
 @media (max-width: 760px) {

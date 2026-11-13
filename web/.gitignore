@@ -33,4 +33,5 @@ playwright-report
 
 # 视觉巡检产物（截图/探针/计划，非代码）
 .shots/
+.shots-visual/
 .taste-skill/
