@@ -358,8 +358,10 @@ jobs:
           CREATE USER 'issue21'@'%' IDENTIFIED BY 'issue21';
           GRANT ALL ON issue21_test.* TO 'issue21'@'%';
           SQL
-      - name: Verify the public evaluation CLI
-        run: python3 -m unittest discover -s scripts/tests -p 'test_evaluate_agent_collaboration.py'
+      - name: Verify the public evaluation CLIs
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_evaluate_agent_collaboration.py'
+          python3 -m unittest discover -s scripts/tests -p 'test_evaluate_rag_query_expansion.py'
       - name: Run current coordinator and patient HTTP reliability cases
         run: mvn -B -Dtest=PatientDraftTest,PatientExplanationApiTest test
       - name: Require complete zero-skip reliability evidence
@@ -374,12 +376,19 @@ jobs:
           --corpus evaluation/agent-collaboration/corpus.json
           --surefire-dir target/surefire-reports
           --output target/agent-collaboration
+      - name: Execute deterministic whitelist retrieval evaluation
+        if: always()
+        run: >-
+          python3 scripts/evaluate_rag_query_expansion.py
+          --corpus evaluation/rag-query-expansion/corpus.json
+          --output target/rag-query-expansion
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: issue24-evaluation
           path: |
             target/agent-collaboration/
+            target/rag-query-expansion/
             target/surefire-reports/TEST-*.xml
           if-no-files-found: error
 
