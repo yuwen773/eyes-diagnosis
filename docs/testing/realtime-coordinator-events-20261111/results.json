@@ -1,0 +1,362 @@
+{
+  "capturedAt": "2026-11-11T10:11:42.392560+00:00",
+  "branch": "codex/realtime-coordinator-events",
+  "baseCommit": "6572743169027bb1e7c27d7d969a26ed89d99cd1",
+  "committed": false,
+  "evidenceKind": "REAL_COORDINATOR_REAL_MYSQL_DETERMINISTIC_EXTERNAL_MODEL",
+  "command": "mvn -o -B -Dtest=CollaborationRunTest,PatientDraftTest,CoordinationPocTest test",
+  "build": "PASS",
+  "totalTests": 67,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "buildFinishedAt": "2026-11-11T18:10:48+08:00",
+  "buildDuration": "37.512 s",
+  "suites": [
+    {
+      "name": "com.csust.eyediagnosis.collaboration.CollaborationRunTest",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "9.964",
+      "reportSha256": "5b0b559b54f492f8f12bfbd023bb0bce215c8f4ab754bf5e40c4915a21c9e598",
+      "cases": [
+        {
+          "name": "normalCoordinatorPersistsOrderedFactsAndKeepsPatientDraftPrivate",
+          "status": "PASS"
+        },
+        {
+          "name": "changedInferenceBindingIsRejectedBeforeAnyModelCall",
+          "status": "PASS"
+        },
+        {
+          "name": "cancellationBeforeDispatchAndRecoveryOfCommittedCancelIntentNeverCallProviders",
+          "status": "PASS"
+        },
+        {
+          "name": "replayAndDuplicateCreationNeverRepeatTheCoordinator",
+          "status": "PASS"
+        },
+        {
+          "name": "cancellingAtFinalCriticBoundaryCannotCommitReviewReady",
+          "status": "PASS"
+        },
+        {
+          "name": "restrictedAndUnreadyInputsDoNotStartAgents",
+          "status": "PASS"
+        },
+        {
+          "name": "eventsAreIncrementalWhileVisionIsStillInFlightAndSnapshotHasExactBoundary",
+          "status": "PASS"
+        },
+        {
+          "name": "activeSubscriptionStopsOnSessionRevocationAndDisconnectDoesNotCancelRun",
+          "status": "PASS"
+        },
+        {
+          "name": "separateJvmReplaysTheSameCommittedFactsAndOpaqueCursorWithoutExecuting",
+          "status": "PASS"
+        },
+        {
+          "name": "slowSubscriberHasFiniteBufferAndCanReplayEveryDurableFactAfterClosure",
+          "status": "PASS"
+        },
+        {
+          "name": "assignedDoctorLosesExistingSubscriptionWhenGrantIsWithdrawn",
+          "status": "PASS"
+        },
+        {
+          "name": "liveHttpSseReplaysRealEventsAndRejectsFaultsBeforeOpeningTheStream",
+          "status": "PASS"
+        },
+        {
+          "name": "rolledBackDomainStateNeverPublishesAnEvent",
+          "status": "PASS"
+        },
+        {
+          "name": "providerFailuresAreClassifiedSeparatelyFromRestrictedModelOutput",
+          "status": "PASS"
+        },
+        {
+          "name": "subscriptionLimitAndShutdownReleaseSlotsWithoutCancellingTheRun",
+          "status": "PASS"
+        },
+        {
+          "name": "idempotencyConflictsAndConcurrentAdmissionsCannotCreateDuplicateRuns",
+          "status": "PASS"
+        },
+        {
+          "name": "crossAccountAndUnassignedDoctorCannotReadSubscribeOrCancelAndMissingRunsMatch",
+          "status": "PASS"
+        },
+        {
+          "name": "opaqueCursorsRejectTamperingCrossSubjectConflictsExpiryAndChangedProjection",
+          "status": "PASS"
+        },
+        {
+          "name": "cancellationWinsAgainstUncooperativeInFlightProvidersAndRepeatedCancellationIsIdempotent",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrentSnapshotWaitsForCancellationStateAndItsEventWatermarkTogether",
+          "status": "PASS"
+        },
+        {
+          "name": "feedbackFactsComeFromActualCriticRouting(String)[1]",
+          "status": "PASS"
+        },
+        {
+          "name": "feedbackFactsComeFromActualCriticRouting(String)[2]",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "name": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "11.443",
+      "reportSha256": "e109ae2fcc06f65635ef727d97431cf77548254a37e87695d08275b51864bb5a",
+      "cases": [
+        {
+          "name": "absentEligibleEvidenceStopsAndDoesNotAskForExplanation",
+          "status": "PASS"
+        },
+        {
+          "name": "evidenceFailureStopsWithoutWaitingForAnUncooperativeVisionPeer",
+          "status": "PASS"
+        },
+        {
+          "name": "operatorEntryIsOptInAndAdminOnly",
+          "status": "PASS"
+        },
+        {
+          "name": "seededSyntheticTaskIsRunnableAndLabelledAsSynthetic",
+          "status": "PASS"
+        },
+        {
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[1]",
+          "status": "PASS"
+        },
+        {
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[2]",
+          "status": "PASS"
+        },
+        {
+          "name": "providerRejectionIsNotReportedAsModelOutputFault",
+          "status": "PASS"
+        },
+        {
+          "name": "operatorEntrySerializesTraceWithoutRawInference",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrentInitialRolesCannotExceedASingleRemainingCall",
+          "status": "PASS"
+        },
+        {
+          "name": "timeoutDiscardsLateResultAndKeepsReservedCall",
+          "status": "PASS"
+        },
+        {
+          "name": "withdrawalDuringCriticPreventsReadyTransition",
+          "status": "PASS"
+        },
+        {
+          "name": "operatorTraceReportsRoleTimingCitationChecksAndSectionCoverage",
+          "status": "PASS"
+        },
+        {
+          "name": "duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion",
+          "status": "PASS"
+        },
+        {
+          "name": "supplementationCreatesNewFrozenEvidenceAndRewritesOnlyOnce",
+          "status": "PASS"
+        },
+        {
+          "name": "providerTransportIOExceptionIsReportedAsProviderFault",
+          "status": "PASS"
+        },
+        {
+          "name": "transportFailureSeparatesOutputFaultsFromProviderFaults",
+          "status": "PASS"
+        },
+        {
+          "name": "totalDeadlineIsCheckedAfterModelReturns",
+          "status": "PASS"
+        },
+        {
+          "name": "omittedCitationIndexIsInvalidEvenWhenZeroWouldMatch",
+          "status": "PASS"
+        },
+        {
+          "name": "providerOutageIsReportedAsProviderFault",
+          "status": "PASS"
+        },
+        {
+          "name": "operatorTraceShowsRejectedDraftAndTheReferenceThatFailed",
+          "status": "PASS"
+        },
+        {
+          "name": "patientSeesOnlySafeProgressAndNeverDraftOrAgentOutput",
+          "status": "PASS"
+        },
+        {
+          "name": "operatorTriggerStartsTheCoordinatorOnceAndReplayAddsNoCalls",
+          "status": "PASS"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[1]",
+          "status": "PASS"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[2]",
+          "status": "PASS"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[3]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[1]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[2]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[3]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[4]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[5]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[6]",
+          "status": "PASS"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[7]",
+          "status": "PASS"
+        },
+        {
+          "name": "totalCallBudgetCannotBeResetByReconstructingCoordinator",
+          "status": "PASS"
+        },
+        {
+          "name": "providerToolRequestsCannotExecuteAnyTool",
+          "status": "PASS"
+        },
+        {
+          "name": "fourIndependentAgentsProduceFrozenReviewableDraftWithoutPublishing",
+          "status": "PASS"
+        },
+        {
+          "name": "visionAndEvidenceEnterTheProviderConcurrentlyBeforeEitherReturns",
+          "status": "PASS"
+        },
+        {
+          "name": "twoCoordinatorsCannotGenerateTheSameTaskTwice",
+          "status": "PASS"
+        },
+        {
+          "name": "ambiguousDuplicateJsonKeysCannotChooseEvidenceQuery",
+          "status": "PASS"
+        },
+        {
+          "name": "providerRateLimitDoesNotTriggerHiddenTransportRetries",
+          "status": "PASS"
+        },
+        {
+          "name": "deliveredRoleMessagesBindActualInputsAndKeepSourceMetadataOutOfExplanation",
+          "status": "PASS"
+        },
+        {
+          "name": "processCrashKeepsSpentBudgetAndRecoveryRestrictsWithoutNewCall",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "name": "com.csust.eyediagnosis.poc.CoordinationPocTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "0.087",
+      "reportSha256": "b526b3b3f465967602f4a56a5909ffcfb7dae0382e193a89dbdade5ae9a52798",
+      "cases": [
+        {
+          "name": "graphTransitionAndCheckpointComeFromTheSameInterruptedRun",
+          "status": "PASS"
+        },
+        {
+          "name": "interruptedGraphCheckpointCanBeSerializedAndResumed",
+          "status": "PASS"
+        },
+        {
+          "name": "bothEnginesApplyTheSameFixedBusinessTransition",
+          "status": "PASS"
+        },
+        {
+          "name": "domainRecoveryTransitionsOnlyFromWaitingReview",
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "reportGatePythonTests": 34,
+    "steeringDocs": "PASS",
+    "designDocs": "PASS",
+    "probabilityScale": "PASS",
+    "whitespace": "PASS"
+  },
+  "noDatabaseDiscovery": {
+    "tests": 22,
+    "skipped": 22,
+    "note": "Intentional opt-in discovery; not acceptance evidence"
+  },
+  "originalWorkspace": {
+    "filesCompared": 34,
+    "changedFiles": []
+  },
+  "sourceSha256": {
+    ".github/workflows/verify.yml": "29080e839655f2ad36e8da202d164b0cb6e52a9c3f84a52ffb68ce7e012649ec",
+    "AGENTS.md": "56e515da46d203d8601e5acff6204e75f04fdaa159f100dbc91a1294dc20bc06",
+    "CLAUDE.md": "4ad772adb6419ebeb569e27551b8003e2ee997893139de9af1af26f0eedfed38",
+    "docs/collaboration-runs.md": "e55b9a3bc592062c25209998256d38e6179412addead7850de75f89466dc727a",
+    "scripts/check_surefire_skips.py": "01affc5cbfa9f3baf29d2a4750bdd1f80279e42784dfb4a449ea009fafe8b3e6",
+    "scripts/tests/test_check_surefire_skips.py": "b61e10985442e00a0919393f34f1efa799e6f4182f03d6b7f8996601fcd9f7a4",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationCursor.java": "7b741deec59c4dc0248949bd4b5ab3817645c2e198302950373e0a031149e12c",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationEvents.java": "e808bd9336e4c96ed36fd98e755435ca7fdccf75eb4197b20dd01082a9beb771",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "6b696c4c81cc53cc598c028de7ebde98e2f31bff053653d0496e5bee4f6e5bc0",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationStreams.java": "26efbcbf9e7fd1bce42c54dc90720e99c276d4ff571a9c306de448b52bf65a2e",
+    "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "57972a768d1263a224aeb44ea2a214d12017ae3f5dd8a6b1061601f7801091ec",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java": "776bb46da5abfaf8c5f38958c5f55f11d6956f0ac7d861e5ad65c34bd9c340a1",
+    "src/main/resources/db/migration/V18__collaboration_events.sql": "c9e80f8c2b60ddddb5bc149b3ffd0088c465d564aa43f4f756bce5693eb80b03",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationReplayWorker.java": "1420cefe1527947463fb8934dc40a4ab15ef99e56b2f2ca00b41a7cc373a1716",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationRunTest.java": "bb3f533e47d15bf3a97ef3b96f361f4980a564d6431041c6855bb203c6b6d86f",
+    "src/test/java/com/csust/eyediagnosis/migration/FlywayMySqlIntegrationTest.java": "ac7e3be8c3969f8e22dec33c206e6d717de4eae1676fca3d1b6eb12576a3b8ff"
+  },
+  "notRun": [
+    "Hosted CI",
+    "Full backend suite",
+    "Full Flyway history reconciliation/fresh-user bootstrap",
+    "Real model provider/medical input/feedback quality",
+    "React/browser E2E",
+    "Graph equivalence and execution lease takeover",
+    "Production load/real network slow-reader capacity",
+    "Doctor publication and patient save acceptance"
+  ]
+}

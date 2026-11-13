@@ -1,0 +1,2442 @@
+{
+  "capturedAt": "2026-11-11T11:58:44.414802+00:00",
+  "status": "PASS_FRONTEND_DETERMINISTIC_ONLY",
+  "baseCommit": "6572743169027bb1e7c27d7d969a26ed89d99cd1",
+  "branch": "codex/realtime-react-events",
+  "reactSourceCommit": "a0efaf46d6f8b53bea4a35d613fc806e2f6e9d47",
+  "evidenceTypes": [
+    "DETERMINISTIC_REDUCER_HOOK_PAGE_TESTS",
+    "REAL_FETCH_EVENT_SOURCE_SYNTHETIC_HTTP",
+    "REAL_PROJECT_JACKSON_SYNTHETIC_DTO"
+  ],
+  "tests": {
+    "total": 298,
+    "passed": 298,
+    "failed": 0,
+    "skipped": 0,
+    "baseline": 193,
+    "new": 105,
+    "files": 33
+  },
+  "commands": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS_WITH_CHUNK_WARNING",
+    "sourceContract": "PASS",
+    "designDoc": "PASS",
+    "steeringDocs": "PASS",
+    "probabilityScale": "PASS",
+    "diffCheck": "PASS"
+  },
+  "protectedInputFiles": [
+    {
+      "worktree": "D:/Work/code/eye-diagnosis/.claude/worktrees/java-multi-agent-arch",
+      "files": 34,
+      "contentUnchanged": true,
+      "pathSetUnchanged": true
+    },
+    {
+      "worktree": "D:/Work/code/eye-diagnosis/.claude/worktrees/realtime-coordinator-events",
+      "files": 18,
+      "contentUnchanged": true,
+      "pathSetUnchanged": true
+    }
+  ],
+  "importedBaseline": {
+    "files": 166,
+    "intentionalModifications": [
+      "web/src/pages/AgentPage.tsx"
+    ],
+    "inventory": [
+      {
+        "path": "DESIGN.md",
+        "sourceSha256": "42c70cecb273c5f3f2d861a5a2c2e5b8f4553e033b0b208021fb275aea4a0358",
+        "unchanged": true
+      },
+      {
+        "path": "web/.gitignore",
+        "sourceSha256": "dc3b80afacb939692aa3809fcac4fd463cd96ec23d1374e0b5b804ed0e528a6f",
+        "unchanged": true
+      },
+      {
+        "path": "web/.prettierignore",
+        "sourceSha256": "076f6e6ef92809c7ab3ccb63cafcbb16e71c29671085c26a33daf23d6a3b4301",
+        "unchanged": true
+      },
+      {
+        "path": "web/.prettierrc",
+        "sourceSha256": "6d35c23a00707c440bbd156e0e4ec7c1f7ec45e971fefd1ec468bc17e9949fbd",
+        "unchanged": true
+      },
+      {
+        "path": "web/DESIGN.md",
+        "sourceSha256": "b975d88d9427a1f575d4d1d6a0aeb100e421831b24e02538fadc3eb70a39936b",
+        "unchanged": true
+      },
+      {
+        "path": "web/README.md",
+        "sourceSha256": "6f92f7ceab867cbbb626a40ffae47b233b8ac71b25d400beb9b2b8e27edad543",
+        "unchanged": true
+      },
+      {
+        "path": "web/components.json",
+        "sourceSha256": "156858e2da20785ac0f1853580c7e34d5b8496f519e8839d2176e85947d4f779",
+        "unchanged": true
+      },
+      {
+        "path": "web/docs/superpowers/plans/2026-11-10-web-acceptance-remediation.md",
+        "sourceSha256": "db32276ed32641110e2574e9a577d139565f80b5bbe0e70accff4aa8af15d034",
+        "unchanged": true
+      },
+      {
+        "path": "web/docs/superpowers/specs/2026-11-10-web-acceptance-remediation-design.md",
+        "sourceSha256": "672d952ee2430282b2a4f4a90c185424411098fb7ffac5d02afa9805314adeee",
+        "unchanged": true
+      },
+      {
+        "path": "web/e2e/README.md",
+        "sourceSha256": "4ed90c621b52df84183359055f5f5bb475a0fe50006b7d867d5df4fbe41a0c4d",
+        "unchanged": true
+      },
+      {
+        "path": "web/e2e/smoke.spec.ts",
+        "sourceSha256": "b21e664c6eed5ba9374f712a8b354334fc403a54c906e598c39598cb31677500",
+        "unchanged": true
+      },
+      {
+        "path": "web/eslint.config.js",
+        "sourceSha256": "1148ce22cedc6e6b20867eff5f72c98b2a07e21e37ee8faa2594af3970862d9a",
+        "unchanged": true
+      },
+      {
+        "path": "web/index.html",
+        "sourceSha256": "3dbef60ed0016bf9e023ef424363ffb63425427cc2d68f34181cd6816d57f348",
+        "unchanged": true
+      },
+      {
+        "path": "web/package-lock.json",
+        "sourceSha256": "fbfd6d66da25f2ecb45a2ebd5bbaecdfa77ef040741b4ada5522bf2dfcf0c5a0",
+        "unchanged": true
+      },
+      {
+        "path": "web/package.json",
+        "sourceSha256": "821f9120f2738a633777f4dacd32838f67476ad8fbb854dd2d0cb1a4ac2dc06c",
+        "unchanged": true
+      },
+      {
+        "path": "web/playwright.config.ts",
+        "sourceSha256": "feb092ad868a71bdf3835842613a3d8b82ea66efb96224930cf738009b833a9f",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/fundus-demo.jpg",
+        "sourceSha256": "904d66eb1b7621da06cb574c04ff8d3c498c38bec6819c80d659b9d77c8068af",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/iris-mark-metallic-dark.svg",
+        "sourceSha256": "02b1a483d5ca14da89823750643ead74a58206ddc05347b23cc324be7679df53",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/iris-mark-metallic-light.svg",
+        "sourceSha256": "88a21f59fb77f21f0b7ae14716c9496acc135e57dbe58ca2d99c95981ddb780f",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/mark.svg",
+        "sourceSha256": "d2b4c3284169f12f66ad2aa0574ec25d2de0060ada82fa7feb24e20d4e1f0bbf",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/scroll-expand-dark.webp",
+        "sourceSha256": "cee94f736c654353ba9dc0b4d4e89c7981f2d8f1d79fc782c99043ef6ae3ea98",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/scroll-expand-light.webp",
+        "sourceSha256": "763e0e36033753874438c235f4b4a3d472f9f349e0ee9b958a825246d1d3b8c7",
+        "unchanged": true
+      },
+      {
+        "path": "web/public/vite.svg",
+        "sourceSha256": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/App.tsx",
+        "sourceSha256": "78159ffc816beeab5385edf882a8ecbc5ee0186fe1b732877c03dd30e431dd4b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/assets/react.svg",
+        "sourceSha256": "35ef61ed53b323ae94a16a8ec659b3d0af3880698791133f23b084085ab1c2e5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/AccountMenu.tsx",
+        "sourceSha256": "5384b0b5d8cb3850821f29874ba20911b0c8cd42bfbaac67548139b2cc7c2791",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/AgentComposer.test.tsx",
+        "sourceSha256": "1d4c4eb30543e622ceced6957cebfde679bf36842e3d35772ddd8e1b04ef9c9e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/AgentComposer.tsx",
+        "sourceSha256": "99c8f9e280681f78ed9504414a79f796f0d29d28ea61ddd3171396b4afc2d496",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/AgentScreenDeck.tsx",
+        "sourceSha256": "8775cfd8cb99a6f51957e8628aeddd845cada4fa56eda0266c8651184bb30434",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/AuthShell.tsx",
+        "sourceSha256": "5cfce695d08693111a7de97757ea5c9d4ae085a4797ca1ffed4943f4a2cec943",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/CardSwap.css",
+        "sourceSha256": "191401e3c46a29f5515c90a507f661224661a4fc7f40260eb67da80a47b76088",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/CardSwap.tsx",
+        "sourceSha256": "44891927487514f612c9f6750f95065b3793e9562a69fe2a8522356945a96331",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ChromaGrid.css",
+        "sourceSha256": "cbb6889c25feacc820f2539a66acc38187258e740dc02702c25d2ec1429150db",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ChromaGrid.tsx",
+        "sourceSha256": "f40f389480bfdf502de3734fe0815a658fa56d6fc8a5fbd9c4e6e7e3290e9b61",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ClassScale.tsx",
+        "sourceSha256": "7cdffa5e36f9f011526d71a3659c45dc9f7386e082bde3533b3d1500e2277afc",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ConfidenceDial.tsx",
+        "sourceSha256": "c662fdd5c2943a0f52d64e8e5b2cd413e3dc52beccda5e3537d816be3fd0cb47",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/DisclaimerBar.tsx",
+        "sourceSha256": "959817c9a0e14d10908116b4a93c6bbabfa243d0c7fa3ea14c78cb394a269f3f",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ElectricBorder.css",
+        "sourceSha256": "d474a1f976eaca972cd2c265a20c3fb0a49103c38d300970056b617d60a5e200",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ElectricBorder.tsx",
+        "sourceSha256": "dfadbfd1fae9fbc2472249607a3585980e9601a933a90bf79d051c2601e177c2",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/EmptyFrame.tsx",
+        "sourceSha256": "7231842096468703a97e07dab41246e812b2a023c908cbe8611ee4c141177aa1",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/FaultPanel.tsx",
+        "sourceSha256": "38791ecf1684bf87ebf93df7f4afd4b315e44fc6fb3894f547e156ac5b7469fe",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/GridScan.css",
+        "sourceSha256": "f73a04ca8750d86987b49038fe7ec2d459ec993d49ed46756f9c7b208de4a631",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/GridScan.tsx",
+        "sourceSha256": "a6ff23859f009ba0ab5d3eb8ca038ed2fa3b8b19e76b632690468b420a96d560",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/LaserFlow.css",
+        "sourceSha256": "5bcb99b06cb44fdafc14c3eb71d2b4408678c8d16decfcb50e301616605edbf5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/LaserFlow.tsx",
+        "sourceSha256": "e4fdaad50ada830ac463a4f9802d0920331e5ea69ea9842b1eb729f575d08422",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/MobileNav.tsx",
+        "sourceSha256": "108155c6c5dac3efdab77c00790b603a6a445179d6fb2c67460224bbfccd69da",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/PlaceholderPage.tsx",
+        "sourceSha256": "a85afc3f4d50c9c6763fda3ba28651acb30d5c12715e05f9571230dcc2e0f52a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/RecordSheet.test.tsx",
+        "sourceSha256": "bfb276022237df8be0add0db5b45c7581263b1d191339a116c087b590da23c24",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/RecordSheet.tsx",
+        "sourceSha256": "58aa352800322093d5ffba38ac67adf2ff7b8a55752b25a226078f48c3bd0ad3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/RiskTag.tsx",
+        "sourceSha256": "ba5f112498cec277f6f8743bf171f198328393f03bb30fdaa7d9354bf143a315",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ScrollExpand.css",
+        "sourceSha256": "05108206a74e27aebede278c87eb57b1fc81d30e7c862b1875755a24a0bfce00",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/ScrollExpand.tsx",
+        "sourceSha256": "e7a8611b26225daa2c4794aaa6e8f68bdf9aa9353db04e6c075124b2abaa9ea4",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/SectionHead.tsx",
+        "sourceSha256": "0d0cd61af3650479a035ff9ac110e7c98d75375c0cfba4a5723c27d7c1018e21",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/SiteFooter.tsx",
+        "sourceSha256": "947c5c4226517b81e955b599e12e04aad4c43c2c0b5ae27d9ff6b1ce84da58f5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/SiteHeader.tsx",
+        "sourceSha256": "42ebdc107906eed98d37fa30113e527912c0a6c7c8c26b60dfa7fc1333dccdb5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/TargetCursor.css",
+        "sourceSha256": "ea6d8f8778fa8821e973349c1cb0e4694eb31993ff3906d61b6cf33ae2db29c1",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/TargetCursor.tsx",
+        "sourceSha256": "8b591733a39994c27e8103ddc40fb03e7b55fcbcbe3f5f6ef0c986957408f1ba",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/AdminGate.tsx",
+        "sourceSha256": "e5d632fb98a80c433a449112098b68fa35d2ad13bc70f3b5d33b50ea5b442553",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/AdminLayout.tsx",
+        "sourceSha256": "8ff9f4c212c6d714a1b3cb44bd47d5a8ecfc63f9a8338552281825e204bdbef6",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/DataTable.tsx",
+        "sourceSha256": "0e3e1c68f59e565c53d94c96fb773d57d3b74acdace16117fef9f43d34493dc5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/Drawer.tsx",
+        "sourceSha256": "2ca5713cd8ade71a3633a16f1d2b9c86b08d9289ac59a310ab2282813dec43ed",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/Modal.test.tsx",
+        "sourceSha256": "d7b4872e0ab936c47e2862070c84ef0444c57394497eaba372e858072e915f54",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/Modal.tsx",
+        "sourceSha256": "e7cb42335cd08e3f9a82f1cb0e0e336c782218830451db461c04eae9ee3693d5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/StatTile.tsx",
+        "sourceSha256": "2711382ed65cc3216c98cf3e06b337621bfa37a1f1dcb396f115a61810219a34",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/Toolbar.tsx",
+        "sourceSha256": "944533caa44bc8ce91010167a12d18e02a676fdb5dd85e607bc56742ff6403a7",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/MiniBars.tsx",
+        "sourceSha256": "d7a1264fb851c8b3e468eedb4b61a75ef71bdc20bb0ff74ecb62705edbae162a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/MiniTrend.tsx",
+        "sourceSha256": "4ac1d9579a9fcb02f07e2b832ebf833441fcf88543a2b3e8f273dd0ff3aec6b3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/RankedBars.tsx",
+        "sourceSha256": "225b693099afe8f6ecbc7a347b1ec4da876304b0063593bd0098b2fc644ddfba",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/TrendChart.tsx",
+        "sourceSha256": "7a832491f19d6b6c79d559d47c77bea1350e687b7c62e809f51c59b12d337e63",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/chartGeometry.test.ts",
+        "sourceSha256": "1fd3e7770664935fe4804975998aeef328a4486b2bc18eec83db4f39b068bf7e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/chartGeometry.ts",
+        "sourceSha256": "0132526e193616fe8c2e03e718335cfee6dd6b73f74d3a8546191a463ccba7e4",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/admin/charts/useMeasuredWidth.ts",
+        "sourceSha256": "768c0a570a815413b080cbff2c9bec24eba7e8937f872654cddab69e4ccea4d7",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/ChatInput.test.tsx",
+        "sourceSha256": "02561851d90671c22bb77850e1d38b9a148ffe2e052689f8db70f3dfb6ee7a8a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/ChatInput.tsx",
+        "sourceSha256": "46854c1d69b4b2379afabed0ffd994c0b0bae0b73a19b63f4736dc080bae0a46",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/MessageList.tsx",
+        "sourceSha256": "40900cc195c40344eaf3846388d406d9be91784f1c145fbfeb1ff1352d7ca20c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/ResourcePanel.tsx",
+        "sourceSha256": "fe08b762956e4e904b41dc6c72297342b2e197d23c905dd71cdd6ee8a19ba9c3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/SessionList.test.tsx",
+        "sourceSha256": "9af526821df3b67492e876ae5ede9295e2518cade299fc1093e9069efadab9f9",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/SessionList.tsx",
+        "sourceSha256": "a43f5594ce68993a1777be7ff5a15c85ba3d69666b63cefcd436d8af5a5ea4d5",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/WelcomeScreen.tsx",
+        "sourceSha256": "f05fa55f854df28e91c72a1798205dd88dde7c2176b4bca3f683109609912e84",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/AssistantMessage.tsx",
+        "sourceSha256": "aba435438041aea1b026dba3cfc26db4d92bdab6641799c4845285913065ce92",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/ConfirmMessage.tsx",
+        "sourceSha256": "302e302ca233dab44e83ea0eb121048844de15d402abdc61af0fa37add307847",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/ReasoningMessage.tsx",
+        "sourceSha256": "ca20eaf03b0c10d36556aa2be91527f2a27710f35800e5facd8ca9afc7f9b735",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/ToolRequestMessage.tsx",
+        "sourceSha256": "545ec4bf94b0bcc316894344fdeb3da72432bd13cdd49a85097e9872bab3b7d4",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/ToolResponseMessage.tsx",
+        "sourceSha256": "f46de3f98c2374506fd51c601c42470390f576b2ffbfa5a86ff60649ff16d92e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/agent/messages/UserMessage.tsx",
+        "sourceSha256": "b9832ae5cd77656d3bf408b2a3580da937d3df4932e8f28bc3dc54582e467cf0",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/fault/FaultNote.tsx",
+        "sourceSha256": "cd31eaf340472ab96e5957d684aa8cc0f7864bee2aa323bb32e6416ab0a273ac",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/fault/FaultToaster.tsx",
+        "sourceSha256": "8e82a2c14ae1667038ced14da656aa1a68fc7eca53283a6acba094d969ef6d1d",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/fault/fault.test.tsx",
+        "sourceSha256": "ea4fa64ae5a698becdae7ee81d446bcf6e41e6e6624492379ad0e2ca25e97fb3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/fault/index.ts",
+        "sourceSha256": "8e88656b05796638585db7177578ca42e23abdaa7eb4772248ebdc6ab2696cb3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/theme-provider.test.tsx",
+        "sourceSha256": "b9770a3d39267e0743ffac5af6555f90f395235e52024487b8fcc22e641b70fb",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/components/theme-provider.tsx",
+        "sourceSha256": "c70b0adcd7b0d554391548a2150956c47cce1c27ca5943e416c622db92832ebe",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/index.css",
+        "sourceSha256": "c379b19e4dd35b6d250bf4ba0f96626ec3f6fcccdbac76a638055437f5ad4e29",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/adminApi.ts",
+        "sourceSha256": "40422214f6df59f7e7497185d7f8554d0660e69b767911bfc2853084f9ce353e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/adminDomain.test.ts",
+        "sourceSha256": "add7b7c4ece191c7683b9c631c1faeca5823341677ac370ec737576e8cede2e4",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/adminDomain.ts",
+        "sourceSha256": "f98bf849314fdd40cfa069f6a49af2233690063989e72d63a75207116021ed18",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentAttachments.test.ts",
+        "sourceSha256": "a89a9bc1c88174ba4420519e94fd518f454a161fa9f61cc78df314836ef1b620",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentAttachments.ts",
+        "sourceSha256": "a4cea36ee31546021c5c18e422d73d135259f03d7997d27d21ee0212192e1124",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentDraft.test.ts",
+        "sourceSha256": "66e7aa0e58ccbfcbb5434b2567b018505d8b4f3a28061611de0b952a4f4d29e0",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentDraft.ts",
+        "sourceSha256": "5ef4bf5c285f37032c569aacf03c359de113f6d0f9afc8630f9116ef975f161b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentImageOwnership.test.ts",
+        "sourceSha256": "b9e79406a28df53d4fb79b97b687d9301052f749fc59cc8fe86176a7f3c75e6c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentImageOwnership.ts",
+        "sourceSha256": "261a220034fe278325be8f1d581446f3955ef4611bbb18e44138b7fea5ba27dc",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentResources.test.ts",
+        "sourceSha256": "65fcceb39a4db652769289647d99b1431c2f7795e7b42a5531d7122eb61f715c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentResources.ts",
+        "sourceSha256": "72a74f78f3191de1f1c4c3ac18f1e2cca14cc96882be8c8fc941a5c34436877d",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentScroll.test.ts",
+        "sourceSha256": "dbcdab500928bb3e93200b7e74ab185e087e0a9b6c0c62a964e967c295806d09",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentScroll.ts",
+        "sourceSha256": "c6723924ec72ba4a9890ca271d6ef36670bf6527c9f9c158c43b4c133551149f",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentStream.hook.test.tsx",
+        "sourceSha256": "da55ba40075e4e1352251052fb8ba1df5a443583fdc099b8d86e25e1980ce803",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentStream.test.ts",
+        "sourceSha256": "b1e4d831f5ff9b083ebcb9e3840eb82feb859a2710f33e4e0c1d4fb5fd1a9ff7",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentStream.ts",
+        "sourceSha256": "a0743cdff4e8d16de08411134cacec476427522c21214d0e8d54cd8f7a7ac29c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentUpload.test.ts",
+        "sourceSha256": "8c3132b2dedfac4d805ed77ff78111c22166a50a12b68010f977e715a809936c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/agentUpload.ts",
+        "sourceSha256": "1873c307fd29ff8e8b000100f4c895f0eb7806cef481ed88c7f8ffc09c48078b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/api.auth.test.ts",
+        "sourceSha256": "0a95debf7ce38314cfe1f169a9fad49758e19540f875ede2ca2d55dc0cb41884",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/api.ts",
+        "sourceSha256": "dc89c77761df15b7c0dbd2fbb7d225e398af221f65b2fe9ef19468709d71b157",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/color.ts",
+        "sourceSha256": "3cc122d1191de6adb7457c2a022257e45cf5eb23b384edbb115848b4a4c854f8",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/domain.test.ts",
+        "sourceSha256": "c65e41f02a67f6aad72960e4754839e3787ccbe45772cfd7211d7ca07cd947f6",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/domain.ts",
+        "sourceSha256": "d24d5da9de20afcd8bc8911991507f34cda926d7251eb30de5ab533676ad25cf",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/faults.test.ts",
+        "sourceSha256": "6600a6e09f3c87aeae75856c40ca9de54cf761d642f7f504be0009b0ea321e77",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/faults.ts",
+        "sourceSha256": "5b25b370ffb90e0ac6a8d5ee49977c2c221ff2e139cc387dc7b34f38c3bceff2",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/htmlToMarkdown.test.ts",
+        "sourceSha256": "398d7834bd85f9ed782b0c02ed4b45ab07e978046f28b09757879be896e5df59",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/htmlToMarkdown.ts",
+        "sourceSha256": "0cb43fa3691ee1f9509a81f86593b79045abd2c9e053f6ddc9029db60b074b9f",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/markdown.ts",
+        "sourceSha256": "42a698ae61eead6dc837d307c0baa67e817b49f23832dff33f606efa297f746a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/news.ts",
+        "sourceSha256": "0c82c8ba69eb4a07e05a1ac5633ddac47a264eec6fb77d8c894de1a30956bfdf",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/pendingUpload.test.ts",
+        "sourceSha256": "2bb68ed37592492a8d3ffcf4bfe42cc8af6d39773b902ee71bc8d56f9af40afa",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/pendingUpload.ts",
+        "sourceSha256": "54fe36be8c1484c029141ec0dc762bba1196cc3c4faa0e7ca0b7bac5339733af",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/records.test.ts",
+        "sourceSha256": "fdfa2127f3d0c3f62168f496e4bff9fc5eff8e82262eb7a3520dcac32a19bd3b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/records.ts",
+        "sourceSha256": "ed511698e337d355c5cefd481fd6625294eb91358167f776873c5323211ea419",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/sanitize.test.ts",
+        "sourceSha256": "63c3223527228c8ec3a1fa118cf88de0ebf63d4393808a426d59f9163a42e07f",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/sanitize.ts",
+        "sourceSha256": "07929de230c58ac07a2d76af672f9d801eba678561646cce64514b6e355062c2",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/session.tsx",
+        "sourceSha256": "eb464e9879dc2dfbe36c277aff3977e63d80e2eb0dd35a4ba1052ba28043f451",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/threadStorage.test.ts",
+        "sourceSha256": "af4f914465e1094c211b0234cfb2ced72524348c0680a42cb62adf15bdca2275",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/threadStorage.ts",
+        "sourceSha256": "01a0c1215cd80477d16bb87a5414dc9bb1a2ebdef424967af72704d161a1b37a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/useInView.ts",
+        "sourceSha256": "1cf321df6fb6e35aca6b994cf63ed2a31658d8b3bcf889e06371c4dc88b5cf3b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/useMediaQuery.test.tsx",
+        "sourceSha256": "4ec2ea796c3efe5999bb1ffbc31d27375b75de34cb8a30163f5f83f26f753c1c",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/useMediaQuery.ts",
+        "sourceSha256": "73c12ece9da09ca69f4800f53b0293212ab92929b6ea04d88539943869972715",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/lib/utils.ts",
+        "sourceSha256": "f1b72b7326a013a224f356feaf4ccb1f3c2ebf448c9cf869e369568d2622b07d",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/main.tsx",
+        "sourceSha256": "045bd31f3d438fefcd43c8684864694332c70e1477fd45e8ffe5a7bd0b81175e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/AgentPage.test.tsx",
+        "sourceSha256": "a1f79f46636126d7b97cbd411e109f62522dea23817900d2c8e0c69db6ccda43",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/AgentPage.tsx",
+        "sourceSha256": "8d1c557e22ceaeb1426e1a3b062fbcddccff63c7707810fef95f6234591f8a47",
+        "unchanged": false
+      },
+      {
+        "path": "web/src/pages/DiagnosisPage.tsx",
+        "sourceSha256": "ea7f6355d035ec5cb3405d69289ba0eb2a3ef3ed0688a7fea29f3394db2f1def",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/LandingPage.tsx",
+        "sourceSha256": "111ce291fa3151a3fa30e4e043874cb8dec51f98d4a2f74d1d945b4f7fefd99a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/LoginPage.tsx",
+        "sourceSha256": "147b70ac44b1471743b1f51a654f4045d08822c509e0de0ab5c7a91b47c764ce",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/NewsDetailPage.tsx",
+        "sourceSha256": "8d8349931afd889a3831bb28dfba37e66148c4323eccf74a33a804f49dc04cb3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/NewsPage.tsx",
+        "sourceSha256": "c2e084983f84258f347a91b255499db7707628d24a4bf7b7296bb2ffe4596e7f",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/ProfilePage.tsx",
+        "sourceSha256": "aa4788743af951c0cbe94c4e99aaa9ad991c73fcc59d6f11b4aa8d47c5207e5d",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/RecordsPage.test.tsx",
+        "sourceSha256": "a8024d6e8301268f218d40631364a55497c07b6fee52bbf312749cadace2f8d1",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/RecordsPage.tsx",
+        "sourceSha256": "d3dca1369ef680dc3fc9f87d9832bf8ef7b39653656a21820140548b5acfec34",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/RegisterPage.tsx",
+        "sourceSha256": "68820a26a43e263aa6bc0d0fea431f2a93c4152325013efa6439c980fc6f7aa9",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminDashboardPage.tsx",
+        "sourceSha256": "63f54537ed475192083496062a1ca7eb0efa3646a666e70845cdc9f2086edf4d",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminDataAnalysisPage.tsx",
+        "sourceSha256": "091afe5e042399e51ee75129ee13d370bddf9fe4d164983b15f7cf1c79f5dd56",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminDiagnosisPage.tsx",
+        "sourceSha256": "1f7118a65112645b8eb88efa3afe8127c55e47ca7559defea6845a23b766197e",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminKnowledgePage.tsx",
+        "sourceSha256": "8ce70dba5f5ef3e2b3294579bbb99ea68cd14721d7c1bc95cde0a040bd72bb23",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminNewsEditPage.tsx",
+        "sourceSha256": "30c35131105741d35cfeca4f309daf6c3feb5aac90f201d92aeea4c74d85aa2b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminNewsPage.tsx",
+        "sourceSha256": "fbf7c976cf3cb9f5dafde5f98ac577ab3826235eb28e56d021c8238cf7305943",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/pages/admin/AdminUsersPage.tsx",
+        "sourceSha256": "aba5153fbee3112cae956abf22ab46f72672b90cbd9b96ba8d3a60f195f76aee",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/admin.css",
+        "sourceSha256": "30804e3e1a2854647c8fa573a54408eadcfdf7df962466832fa4f7f5394053bb",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/agent.css",
+        "sourceSha256": "fc749a5c0ae40825bd9b30c929de9ffdc3a8f66a6875889e09660a6b7acec17a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/app.css",
+        "sourceSha256": "f0a7861aab467a3a4feae2eee6d4085b381e87a3e926377b430db28180657a01",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/disclaimer.css",
+        "sourceSha256": "8d7bed85e7218f5db68df1ecb65815c5a9f57b34696383f48962e0a598955ba4",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/fault.css",
+        "sourceSha256": "ee7ece47e4c7d316532212cdba88d8ceef8c241acabd66becbfbaccd7736d355",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/news.css",
+        "sourceSha256": "27b91af8ff38a03c2565289309e6862dd622eeae216567a1948f48f214ba122b",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/records.css",
+        "sourceSha256": "7d60c0f83e20176eabc87f5d64be86eab45d734d20ab21f7a76530e48c29cca3",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/tokens.contrast.test.ts",
+        "sourceSha256": "d18c8e48ba1fe3cc14b17a140e1d262a7dbd1b298ed1cc1f5086d8176b81360a",
+        "unchanged": true
+      },
+      {
+        "path": "web/src/styles/tokens.css",
+        "sourceSha256": "04941a37c4c53cd12c7fe961176b67ed1457a3a6c89655026ee8f23bf4a6ab64",
+        "unchanged": true
+      },
+      {
+        "path": "web/tsconfig.app.json",
+        "sourceSha256": "9080094cd9a121b2086148ccd1676ead6f5260850db90cee9af6f0ab02da9b5a",
+        "unchanged": true
+      },
+      {
+        "path": "web/tsconfig.json",
+        "sourceSha256": "23c57da26bcec4996c4168f01187840c8ec08a1d60c2dd0edad6d984f5c33680",
+        "unchanged": true
+      },
+      {
+        "path": "web/tsconfig.node.json",
+        "sourceSha256": "c7a65fc2be982212721c93c724ebb8f799f2e54a060447f9ad31fa27f3a5631f",
+        "unchanged": true
+      },
+      {
+        "path": "web/vite.config.ts",
+        "sourceSha256": "34ec449b7b8bc34f9a8056bbb1cbbc4588f93968355ff376ae5663214a720855",
+        "unchanged": true
+      }
+    ]
+  },
+  "sourceFileSha256": {
+    "docs/collaboration-client.md": "ff1c93a5d69730bbd964bc8b2b51095ad6fe29fb47356567d88b9f5326b436ee",
+    "docs/testing/2026-11-11-realtime-react-events.md": "e5673e95cc7b91c914a21ed768900d239ebfd022ef0ba3bd8a4e84f8b664e4e5",
+    "docs/testing/realtime-react-events-20261111/source-contract.json": "93c9aa8efb365feeb981f1c59bf53645c052aa7f681be2ccddc2c86c266d5950",
+    "scripts/check_collaboration_fixture.py": "762f40b952edd710f98220df106223b13fb057fbde65e82fe9cb18ef3aea2913",
+    "scripts/fixtures/CollaborationWireFixture.java": "7de6d908c031edf3e307ab9027f481cefbf9c019363f9256de1d2750bc4dc511",
+    "web/.gitignore": "dc3b80afacb939692aa3809fcac4fd463cd96ec23d1374e0b5b804ed0e528a6f",
+    "web/.prettierignore": "076f6e6ef92809c7ab3ccb63cafcbb16e71c29671085c26a33daf23d6a3b4301",
+    "web/.prettierrc": "6d35c23a00707c440bbd156e0e4ec7c1f7ec45e971fefd1ec468bc17e9949fbd",
+    "web/DESIGN.md": "b975d88d9427a1f575d4d1d6a0aeb100e421831b24e02538fadc3eb70a39936b",
+    "web/README.md": "6f92f7ceab867cbbb626a40ffae47b233b8ac71b25d400beb9b2b8e27edad543",
+    "web/components.json": "156858e2da20785ac0f1853580c7e34d5b8496f519e8839d2176e85947d4f779",
+    "web/docs/superpowers/plans/2026-11-10-web-acceptance-remediation.md": "db32276ed32641110e2574e9a577d139565f80b5bbe0e70accff4aa8af15d034",
+    "web/docs/superpowers/specs/2026-11-10-web-acceptance-remediation-design.md": "672d952ee2430282b2a4f4a90c185424411098fb7ffac5d02afa9805314adeee",
+    "web/e2e/README.md": "4ed90c621b52df84183359055f5f5bb475a0fe50006b7d867d5df4fbe41a0c4d",
+    "web/e2e/smoke.spec.ts": "b21e664c6eed5ba9374f712a8b354334fc403a54c906e598c39598cb31677500",
+    "web/eslint.config.js": "1148ce22cedc6e6b20867eff5f72c98b2a07e21e37ee8faa2594af3970862d9a",
+    "web/index.html": "3dbef60ed0016bf9e023ef424363ffb63425427cc2d68f34181cd6816d57f348",
+    "web/package-lock.json": "fbfd6d66da25f2ecb45a2ebd5bbaecdfa77ef040741b4ada5522bf2dfcf0c5a0",
+    "web/package.json": "821f9120f2738a633777f4dacd32838f67476ad8fbb854dd2d0cb1a4ac2dc06c",
+    "web/playwright.config.ts": "feb092ad868a71bdf3835842613a3d8b82ea66efb96224930cf738009b833a9f",
+    "web/public/fundus-demo.jpg": "904d66eb1b7621da06cb574c04ff8d3c498c38bec6819c80d659b9d77c8068af",
+    "web/public/iris-mark-metallic-dark.svg": "02b1a483d5ca14da89823750643ead74a58206ddc05347b23cc324be7679df53",
+    "web/public/iris-mark-metallic-light.svg": "88a21f59fb77f21f0b7ae14716c9496acc135e57dbe58ca2d99c95981ddb780f",
+    "web/public/mark.svg": "d2b4c3284169f12f66ad2aa0574ec25d2de0060ada82fa7feb24e20d4e1f0bbf",
+    "web/public/scroll-expand-dark.webp": "cee94f736c654353ba9dc0b4d4e89c7981f2d8f1d79fc782c99043ef6ae3ea98",
+    "web/public/scroll-expand-light.webp": "763e0e36033753874438c235f4b4a3d472f9f349e0ee9b958a825246d1d3b8c7",
+    "web/public/vite.svg": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb",
+    "web/src/App.tsx": "78159ffc816beeab5385edf882a8ecbc5ee0186fe1b732877c03dd30e431dd4b",
+    "web/src/assets/react.svg": "35ef61ed53b323ae94a16a8ec659b3d0af3880698791133f23b084085ab1c2e5",
+    "web/src/components/AccountMenu.tsx": "5384b0b5d8cb3850821f29874ba20911b0c8cd42bfbaac67548139b2cc7c2791",
+    "web/src/components/AgentComposer.test.tsx": "1d4c4eb30543e622ceced6957cebfde679bf36842e3d35772ddd8e1b04ef9c9e",
+    "web/src/components/AgentComposer.tsx": "99c8f9e280681f78ed9504414a79f796f0d29d28ea61ddd3171396b4afc2d496",
+    "web/src/components/AgentScreenDeck.tsx": "8775cfd8cb99a6f51957e8628aeddd845cada4fa56eda0266c8651184bb30434",
+    "web/src/components/AuthShell.tsx": "5cfce695d08693111a7de97757ea5c9d4ae085a4797ca1ffed4943f4a2cec943",
+    "web/src/components/CardSwap.css": "191401e3c46a29f5515c90a507f661224661a4fc7f40260eb67da80a47b76088",
+    "web/src/components/CardSwap.tsx": "44891927487514f612c9f6750f95065b3793e9562a69fe2a8522356945a96331",
+    "web/src/components/ChromaGrid.css": "cbb6889c25feacc820f2539a66acc38187258e740dc02702c25d2ec1429150db",
+    "web/src/components/ChromaGrid.tsx": "f40f389480bfdf502de3734fe0815a658fa56d6fc8a5fbd9c4e6e7e3290e9b61",
+    "web/src/components/ClassScale.tsx": "7cdffa5e36f9f011526d71a3659c45dc9f7386e082bde3533b3d1500e2277afc",
+    "web/src/components/ConfidenceDial.tsx": "c662fdd5c2943a0f52d64e8e5b2cd413e3dc52beccda5e3537d816be3fd0cb47",
+    "web/src/components/DisclaimerBar.tsx": "959817c9a0e14d10908116b4a93c6bbabfa243d0c7fa3ea14c78cb394a269f3f",
+    "web/src/components/ElectricBorder.css": "d474a1f976eaca972cd2c265a20c3fb0a49103c38d300970056b617d60a5e200",
+    "web/src/components/ElectricBorder.tsx": "dfadbfd1fae9fbc2472249607a3585980e9601a933a90bf79d051c2601e177c2",
+    "web/src/components/EmptyFrame.tsx": "7231842096468703a97e07dab41246e812b2a023c908cbe8611ee4c141177aa1",
+    "web/src/components/FaultPanel.tsx": "38791ecf1684bf87ebf93df7f4afd4b315e44fc6fb3894f547e156ac5b7469fe",
+    "web/src/components/GridScan.css": "f73a04ca8750d86987b49038fe7ec2d459ec993d49ed46756f9c7b208de4a631",
+    "web/src/components/GridScan.tsx": "a6ff23859f009ba0ab5d3eb8ca038ed2fa3b8b19e76b632690468b420a96d560",
+    "web/src/components/LaserFlow.css": "5bcb99b06cb44fdafc14c3eb71d2b4408678c8d16decfcb50e301616605edbf5",
+    "web/src/components/LaserFlow.tsx": "e4fdaad50ada830ac463a4f9802d0920331e5ea69ea9842b1eb729f575d08422",
+    "web/src/components/MobileNav.tsx": "108155c6c5dac3efdab77c00790b603a6a445179d6fb2c67460224bbfccd69da",
+    "web/src/components/PlaceholderPage.tsx": "a85afc3f4d50c9c6763fda3ba28651acb30d5c12715e05f9571230dcc2e0f52a",
+    "web/src/components/RecordSheet.test.tsx": "bfb276022237df8be0add0db5b45c7581263b1d191339a116c087b590da23c24",
+    "web/src/components/RecordSheet.tsx": "58aa352800322093d5ffba38ac67adf2ff7b8a55752b25a226078f48c3bd0ad3",
+    "web/src/components/RiskTag.tsx": "ba5f112498cec277f6f8743bf171f198328393f03bb30fdaa7d9354bf143a315",
+    "web/src/components/ScrollExpand.css": "05108206a74e27aebede278c87eb57b1fc81d30e7c862b1875755a24a0bfce00",
+    "web/src/components/ScrollExpand.tsx": "e7a8611b26225daa2c4794aaa6e8f68bdf9aa9353db04e6c075124b2abaa9ea4",
+    "web/src/components/SectionHead.tsx": "0d0cd61af3650479a035ff9ac110e7c98d75375c0cfba4a5723c27d7c1018e21",
+    "web/src/components/SiteFooter.tsx": "947c5c4226517b81e955b599e12e04aad4c43c2c0b5ae27d9ff6b1ce84da58f5",
+    "web/src/components/SiteHeader.tsx": "42ebdc107906eed98d37fa30113e527912c0a6c7c8c26b60dfa7fc1333dccdb5",
+    "web/src/components/TargetCursor.css": "ea6d8f8778fa8821e973349c1cb0e4694eb31993ff3906d61b6cf33ae2db29c1",
+    "web/src/components/TargetCursor.tsx": "8b591733a39994c27e8103ddc40fb03e7b55fcbcbe3f5f6ef0c986957408f1ba",
+    "web/src/components/admin/AdminGate.tsx": "e5d632fb98a80c433a449112098b68fa35d2ad13bc70f3b5d33b50ea5b442553",
+    "web/src/components/admin/AdminLayout.tsx": "8ff9f4c212c6d714a1b3cb44bd47d5a8ecfc63f9a8338552281825e204bdbef6",
+    "web/src/components/admin/DataTable.tsx": "0e3e1c68f59e565c53d94c96fb773d57d3b74acdace16117fef9f43d34493dc5",
+    "web/src/components/admin/Drawer.tsx": "2ca5713cd8ade71a3633a16f1d2b9c86b08d9289ac59a310ab2282813dec43ed",
+    "web/src/components/admin/Modal.test.tsx": "d7b4872e0ab936c47e2862070c84ef0444c57394497eaba372e858072e915f54",
+    "web/src/components/admin/Modal.tsx": "e7cb42335cd08e3f9a82f1cb0e0e336c782218830451db461c04eae9ee3693d5",
+    "web/src/components/admin/StatTile.tsx": "2711382ed65cc3216c98cf3e06b337621bfa37a1f1dcb396f115a61810219a34",
+    "web/src/components/admin/Toolbar.tsx": "944533caa44bc8ce91010167a12d18e02a676fdb5dd85e607bc56742ff6403a7",
+    "web/src/components/admin/charts/MiniBars.tsx": "d7a1264fb851c8b3e468eedb4b61a75ef71bdc20bb0ff74ecb62705edbae162a",
+    "web/src/components/admin/charts/MiniTrend.tsx": "4ac1d9579a9fcb02f07e2b832ebf833441fcf88543a2b3e8f273dd0ff3aec6b3",
+    "web/src/components/admin/charts/RankedBars.tsx": "225b693099afe8f6ecbc7a347b1ec4da876304b0063593bd0098b2fc644ddfba",
+    "web/src/components/admin/charts/TrendChart.tsx": "7a832491f19d6b6c79d559d47c77bea1350e687b7c62e809f51c59b12d337e63",
+    "web/src/components/admin/charts/chartGeometry.test.ts": "1fd3e7770664935fe4804975998aeef328a4486b2bc18eec83db4f39b068bf7e",
+    "web/src/components/admin/charts/chartGeometry.ts": "0132526e193616fe8c2e03e718335cfee6dd6b73f74d3a8546191a463ccba7e4",
+    "web/src/components/admin/charts/useMeasuredWidth.ts": "768c0a570a815413b080cbff2c9bec24eba7e8937f872654cddab69e4ccea4d7",
+    "web/src/components/agent/ChatInput.test.tsx": "02561851d90671c22bb77850e1d38b9a148ffe2e052689f8db70f3dfb6ee7a8a",
+    "web/src/components/agent/ChatInput.tsx": "46854c1d69b4b2379afabed0ffd994c0b0bae0b73a19b63f4736dc080bae0a46",
+    "web/src/components/agent/MessageList.tsx": "40900cc195c40344eaf3846388d406d9be91784f1c145fbfeb1ff1352d7ca20c",
+    "web/src/components/agent/ResourcePanel.tsx": "fe08b762956e4e904b41dc6c72297342b2e197d23c905dd71cdd6ee8a19ba9c3",
+    "web/src/components/agent/SessionList.test.tsx": "9af526821df3b67492e876ae5ede9295e2518cade299fc1093e9069efadab9f9",
+    "web/src/components/agent/SessionList.tsx": "a43f5594ce68993a1777be7ff5a15c85ba3d69666b63cefcd436d8af5a5ea4d5",
+    "web/src/components/agent/WelcomeScreen.tsx": "f05fa55f854df28e91c72a1798205dd88dde7c2176b4bca3f683109609912e84",
+    "web/src/components/agent/messages/AssistantMessage.tsx": "aba435438041aea1b026dba3cfc26db4d92bdab6641799c4845285913065ce92",
+    "web/src/components/agent/messages/ConfirmMessage.tsx": "302e302ca233dab44e83ea0eb121048844de15d402abdc61af0fa37add307847",
+    "web/src/components/agent/messages/ReasoningMessage.tsx": "ca20eaf03b0c10d36556aa2be91527f2a27710f35800e5facd8ca9afc7f9b735",
+    "web/src/components/agent/messages/ToolRequestMessage.tsx": "545ec4bf94b0bcc316894344fdeb3da72432bd13cdd49a85097e9872bab3b7d4",
+    "web/src/components/agent/messages/ToolResponseMessage.tsx": "f46de3f98c2374506fd51c601c42470390f576b2ffbfa5a86ff60649ff16d92e",
+    "web/src/components/agent/messages/UserMessage.tsx": "b9832ae5cd77656d3bf408b2a3580da937d3df4932e8f28bc3dc54582e467cf0",
+    "web/src/components/fault/FaultNote.tsx": "cd31eaf340472ab96e5957d684aa8cc0f7864bee2aa323bb32e6416ab0a273ac",
+    "web/src/components/fault/FaultToaster.tsx": "8e82a2c14ae1667038ced14da656aa1a68fc7eca53283a6acba094d969ef6d1d",
+    "web/src/components/fault/fault.test.tsx": "ea4fa64ae5a698becdae7ee81d446bcf6e41e6e6624492379ad0e2ca25e97fb3",
+    "web/src/components/fault/index.ts": "8e88656b05796638585db7177578ca42e23abdaa7eb4772248ebdc6ab2696cb3",
+    "web/src/components/theme-provider.test.tsx": "b9770a3d39267e0743ffac5af6555f90f395235e52024487b8fcc22e641b70fb",
+    "web/src/components/theme-provider.tsx": "c70b0adcd7b0d554391548a2150956c47cce1c27ca5943e416c622db92832ebe",
+    "web/src/index.css": "c379b19e4dd35b6d250bf4ba0f96626ec3f6fcccdbac76a638055437f5ad4e29",
+    "web/src/lib/__fixtures__/collaboration.v1.json": "9f2737640278dec002d37fc5e90698afaed837073ad0acf10667b33fdfaee88a",
+    "web/src/lib/__fixtures__/collaboration.wire.v1.json": "03476a85c5639c037ddfd5221b9dc3433ebf8a747e16e8c2f65d8c3b72194962",
+    "web/src/lib/adminApi.ts": "40422214f6df59f7e7497185d7f8554d0660e69b767911bfc2853084f9ce353e",
+    "web/src/lib/adminDomain.test.ts": "add7b7c4ece191c7683b9c631c1faeca5823341677ac370ec737576e8cede2e4",
+    "web/src/lib/adminDomain.ts": "f98bf849314fdd40cfa069f6a49af2233690063989e72d63a75207116021ed18",
+    "web/src/lib/agentAttachments.test.ts": "a89a9bc1c88174ba4420519e94fd518f454a161fa9f61cc78df314836ef1b620",
+    "web/src/lib/agentAttachments.ts": "a4cea36ee31546021c5c18e422d73d135259f03d7997d27d21ee0212192e1124",
+    "web/src/lib/agentDraft.test.ts": "66e7aa0e58ccbfcbb5434b2567b018505d8b4f3a28061611de0b952a4f4d29e0",
+    "web/src/lib/agentDraft.ts": "5ef4bf5c285f37032c569aacf03c359de113f6d0f9afc8630f9116ef975f161b",
+    "web/src/lib/agentImageOwnership.test.ts": "b9e79406a28df53d4fb79b97b687d9301052f749fc59cc8fe86176a7f3c75e6c",
+    "web/src/lib/agentImageOwnership.ts": "261a220034fe278325be8f1d581446f3955ef4611bbb18e44138b7fea5ba27dc",
+    "web/src/lib/agentResources.test.ts": "65fcceb39a4db652769289647d99b1431c2f7795e7b42a5531d7122eb61f715c",
+    "web/src/lib/agentResources.ts": "72a74f78f3191de1f1c4c3ac18f1e2cca14cc96882be8c8fc941a5c34436877d",
+    "web/src/lib/agentScroll.test.ts": "dbcdab500928bb3e93200b7e74ab185e087e0a9b6c0c62a964e967c295806d09",
+    "web/src/lib/agentScroll.ts": "c6723924ec72ba4a9890ca271d6ef36670bf6527c9f9c158c43b4c133551149f",
+    "web/src/lib/agentStream.hook.test.tsx": "da55ba40075e4e1352251052fb8ba1df5a443583fdc099b8d86e25e1980ce803",
+    "web/src/lib/agentStream.test.ts": "b1e4d831f5ff9b083ebcb9e3840eb82feb859a2710f33e4e0c1d4fb5fd1a9ff7",
+    "web/src/lib/agentStream.ts": "a0743cdff4e8d16de08411134cacec476427522c21214d0e8d54cd8f7a7ac29c",
+    "web/src/lib/agentUpload.test.ts": "8c3132b2dedfac4d805ed77ff78111c22166a50a12b68010f977e715a809936c",
+    "web/src/lib/agentUpload.ts": "1873c307fd29ff8e8b000100f4c895f0eb7806cef481ed88c7f8ffc09c48078b",
+    "web/src/lib/api.auth.test.ts": "0a95debf7ce38314cfe1f169a9fad49758e19540f875ede2ca2d55dc0cb41884",
+    "web/src/lib/api.ts": "dc89c77761df15b7c0dbd2fbb7d225e398af221f65b2fe9ef19468709d71b157",
+    "web/src/lib/collaborationApi.test.ts": "da6adc5d8c03b735ddd282217290e3724d8071092a7da71d5b45b7b2eb838f78",
+    "web/src/lib/collaborationApi.ts": "bba1ed28605ace8c0158c6f7e04ef30fad4c4e0debbf9eed292fc3674716fb58",
+    "web/src/lib/collaborationProtocol.ts": "af106ade3e1ac560f22518cac647a536d905dab19c8eab7c789ab7d78c77b4cc",
+    "web/src/lib/collaborationReducer.test.ts": "82f357e12e18f212af120368c3f7f98e16e70ebdc53862b1d0edc098afd981eb",
+    "web/src/lib/collaborationReducer.ts": "ba5cfc93377a51845dc2eeec115822961d96e989b5421f3bcdfb592107b63d1e",
+    "web/src/lib/collaborationTestFixtures.ts": "899a4db92ebc1d9c7120b92361c1b387698583c7a0ee985d4827d78b66e6d81b",
+    "web/src/lib/color.ts": "3cc122d1191de6adb7457c2a022257e45cf5eb23b384edbb115848b4a4c854f8",
+    "web/src/lib/domain.test.ts": "c65e41f02a67f6aad72960e4754839e3787ccbe45772cfd7211d7ca07cd947f6",
+    "web/src/lib/domain.ts": "d24d5da9de20afcd8bc8911991507f34cda926d7251eb30de5ab533676ad25cf",
+    "web/src/lib/faults.test.ts": "6600a6e09f3c87aeae75856c40ca9de54cf761d642f7f504be0009b0ea321e77",
+    "web/src/lib/faults.ts": "5b25b370ffb90e0ac6a8d5ee49977c2c221ff2e139cc387dc7b34f38c3bceff2",
+    "web/src/lib/htmlToMarkdown.test.ts": "398d7834bd85f9ed782b0c02ed4b45ab07e978046f28b09757879be896e5df59",
+    "web/src/lib/htmlToMarkdown.ts": "0cb43fa3691ee1f9509a81f86593b79045abd2c9e053f6ddc9029db60b074b9f",
+    "web/src/lib/markdown.ts": "42a698ae61eead6dc837d307c0baa67e817b49f23832dff33f606efa297f746a",
+    "web/src/lib/news.ts": "0c82c8ba69eb4a07e05a1ac5633ddac47a264eec6fb77d8c894de1a30956bfdf",
+    "web/src/lib/pendingUpload.test.ts": "2bb68ed37592492a8d3ffcf4bfe42cc8af6d39773b902ee71bc8d56f9af40afa",
+    "web/src/lib/pendingUpload.ts": "54fe36be8c1484c029141ec0dc762bba1196cc3c4faa0e7ca0b7bac5339733af",
+    "web/src/lib/records.test.ts": "fdfa2127f3d0c3f62168f496e4bff9fc5eff8e82262eb7a3520dcac32a19bd3b",
+    "web/src/lib/records.ts": "ed511698e337d355c5cefd481fd6625294eb91358167f776873c5323211ea419",
+    "web/src/lib/sanitize.test.ts": "63c3223527228c8ec3a1fa118cf88de0ebf63d4393808a426d59f9163a42e07f",
+    "web/src/lib/sanitize.ts": "07929de230c58ac07a2d76af672f9d801eba678561646cce64514b6e355062c2",
+    "web/src/lib/session.tsx": "eb464e9879dc2dfbe36c277aff3977e63d80e2eb0dd35a4ba1052ba28043f451",
+    "web/src/lib/threadStorage.test.ts": "af4f914465e1094c211b0234cfb2ced72524348c0680a42cb62adf15bdca2275",
+    "web/src/lib/threadStorage.ts": "01a0c1215cd80477d16bb87a5414dc9bb1a2ebdef424967af72704d161a1b37a",
+    "web/src/lib/useCollaborationRun.test.tsx": "8a15c8b7034c3ec8be94c7fcb826a7968ab68aedba78d01365ea1e0266cab542",
+    "web/src/lib/useCollaborationRun.ts": "0bedade0084d6f5839bfd513c0bbcc682d688b7fa5aee12fc145072a818b6179",
+    "web/src/lib/useInView.ts": "1cf321df6fb6e35aca6b994cf63ed2a31658d8b3bcf889e06371c4dc88b5cf3b",
+    "web/src/lib/useMediaQuery.test.tsx": "4ec2ea796c3efe5999bb1ffbc31d27375b75de34cb8a30163f5f83f26f753c1c",
+    "web/src/lib/useMediaQuery.ts": "73c12ece9da09ca69f4800f53b0293212ab92929b6ea04d88539943869972715",
+    "web/src/lib/utils.ts": "f1b72b7326a013a224f356feaf4ccb1f3c2ebf448c9cf869e369568d2622b07d",
+    "web/src/main.tsx": "045bd31f3d438fefcd43c8684864694332c70e1477fd45e8ffe5a7bd0b81175e",
+    "web/src/pages/AgentPage.collaboration.test.tsx": "1f0afbc2a7e6c0368fde2a69c3fb3109696f61c22fec1f364d7a3995f70e4b00",
+    "web/src/pages/AgentPage.test.tsx": "a1f79f46636126d7b97cbd411e109f62522dea23817900d2c8e0c69db6ccda43",
+    "web/src/pages/AgentPage.tsx": "5887451fbd27ca6ac31c9d0592fc350988d98b8e360321a627e465608e9b2508",
+    "web/src/pages/DiagnosisPage.tsx": "ea7f6355d035ec5cb3405d69289ba0eb2a3ef3ed0688a7fea29f3394db2f1def",
+    "web/src/pages/LandingPage.tsx": "111ce291fa3151a3fa30e4e043874cb8dec51f98d4a2f74d1d945b4f7fefd99a",
+    "web/src/pages/LoginPage.tsx": "147b70ac44b1471743b1f51a654f4045d08822c509e0de0ab5c7a91b47c764ce",
+    "web/src/pages/NewsDetailPage.tsx": "8d8349931afd889a3831bb28dfba37e66148c4323eccf74a33a804f49dc04cb3",
+    "web/src/pages/NewsPage.tsx": "c2e084983f84258f347a91b255499db7707628d24a4bf7b7296bb2ffe4596e7f",
+    "web/src/pages/ProfilePage.tsx": "aa4788743af951c0cbe94c4e99aaa9ad991c73fcc59d6f11b4aa8d47c5207e5d",
+    "web/src/pages/RecordsPage.test.tsx": "a8024d6e8301268f218d40631364a55497c07b6fee52bbf312749cadace2f8d1",
+    "web/src/pages/RecordsPage.tsx": "d3dca1369ef680dc3fc9f87d9832bf8ef7b39653656a21820140548b5acfec34",
+    "web/src/pages/RegisterPage.tsx": "68820a26a43e263aa6bc0d0fea431f2a93c4152325013efa6439c980fc6f7aa9",
+    "web/src/pages/admin/AdminDashboardPage.tsx": "63f54537ed475192083496062a1ca7eb0efa3646a666e70845cdc9f2086edf4d",
+    "web/src/pages/admin/AdminDataAnalysisPage.tsx": "091afe5e042399e51ee75129ee13d370bddf9fe4d164983b15f7cf1c79f5dd56",
+    "web/src/pages/admin/AdminDiagnosisPage.tsx": "1f7118a65112645b8eb88efa3afe8127c55e47ca7559defea6845a23b766197e",
+    "web/src/pages/admin/AdminKnowledgePage.tsx": "8ce70dba5f5ef3e2b3294579bbb99ea68cd14721d7c1bc95cde0a040bd72bb23",
+    "web/src/pages/admin/AdminNewsEditPage.tsx": "30c35131105741d35cfeca4f309daf6c3feb5aac90f201d92aeea4c74d85aa2b",
+    "web/src/pages/admin/AdminNewsPage.tsx": "fbf7c976cf3cb9f5dafde5f98ac577ab3826235eb28e56d021c8238cf7305943",
+    "web/src/pages/admin/AdminUsersPage.tsx": "aba5153fbee3112cae956abf22ab46f72672b90cbd9b96ba8d3a60f195f76aee",
+    "web/src/styles/admin.css": "30804e3e1a2854647c8fa573a54408eadcfdf7df962466832fa4f7f5394053bb",
+    "web/src/styles/agent.css": "fc749a5c0ae40825bd9b30c929de9ffdc3a8f66a6875889e09660a6b7acec17a",
+    "web/src/styles/app.css": "f0a7861aab467a3a4feae2eee6d4085b381e87a3e926377b430db28180657a01",
+    "web/src/styles/disclaimer.css": "8d7bed85e7218f5db68df1ecb65815c5a9f57b34696383f48962e0a598955ba4",
+    "web/src/styles/fault.css": "ee7ece47e4c7d316532212cdba88d8ceef8c241acabd66becbfbaccd7736d355",
+    "web/src/styles/news.css": "27b91af8ff38a03c2565289309e6862dd622eeae216567a1948f48f214ba122b",
+    "web/src/styles/records.css": "7d60c0f83e20176eabc87f5d64be86eab45d734d20ab21f7a76530e48c29cca3",
+    "web/src/styles/tokens.contrast.test.ts": "d18c8e48ba1fe3cc14b17a140e1d262a7dbd1b298ed1cc1f5086d8176b81360a",
+    "web/src/styles/tokens.css": "04941a37c4c53cd12c7fe961176b67ed1457a3a6c89655026ee8f23bf4a6ab64",
+    "web/tsconfig.app.json": "9080094cd9a121b2086148ccd1676ead6f5260850db90cee9af6f0ab02da9b5a",
+    "web/tsconfig.json": "23c57da26bcec4996c4168f01187840c8ec08a1d60c2dd0edad6d984f5c33680",
+    "web/tsconfig.node.json": "c7a65fc2be982212721c93c724ebb8f799f2e54a060447f9ad31fa27f3a5631f",
+    "web/vite.config.ts": "34ec449b7b8bc34f9a8056bbb1cbbc4588f93968355ff376ae5663214a720855",
+    ".github/workflows/verify.yml": "28b4a685789e4c2b537ee5826de869a46592ca3cb18d46892514304496153384",
+    "AGENTS.md": "d680d4a0b32d88e7d9caca5db452f10462b2618c2bc28b55f7ed3e662301dc4f",
+    "CLAUDE.md": "031fd0985a780d99798c7c4e464f057f30a508c646646e78bea40122c460257c",
+    "DESIGN.md": "42c70cecb273c5f3f2d861a5a2c2e5b8f4553e033b0b208021fb275aea4a0358"
+  },
+  "testResults": [
+    {
+      "file": "web/src/lib/adminDomain.test.ts",
+      "tests": [
+        {
+          "name": "reviewView aiRejected 优先于一切",
+          "status": "passed"
+        },
+        {
+          "name": "reviewView requiresReview 次之",
+          "status": "passed"
+        },
+        {
+          "name": "reviewView reexamineStatus 1/2/3/缺省",
+          "status": "passed"
+        },
+        {
+          "name": "canDeleteUser 目标是 admin → 不给删",
+          "status": "passed"
+        },
+        {
+          "name": "canDeleteUser 目标是普通用户 → 可删",
+          "status": "passed"
+        },
+        {
+          "name": "canDeleteUser 目标缺失 → 不给删",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusView 0/1/2 映射后端语义：草稿 / 已发布 / 已下架",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusView 3 是待审核（后端 PENDING_REVIEW），不能再读成未知",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusView 缺省读「未知」而不是「草稿」——老数据没写状态不能冒充草稿",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusOptionsFor 草稿可保持草稿、提交待审核或直接发布",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusOptionsFor 已发布只能下架或退回草稿，不能直接改回待审核",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusOptionsFor 待审核可发布、驳回草稿或下架",
+          "status": "passed"
+        },
+        {
+          "name": "newsStatusOptionsFor 状态未知时返回全量，老数据仍可编辑",
+          "status": "passed"
+        },
+        {
+          "name": "newsContentValid 29 字拦 / 30 字放",
+          "status": "passed"
+        },
+        {
+          "name": "newsContentValid 不 trim——29 字加空白仍拦",
+          "status": "passed"
+        },
+        {
+          "name": "rankDistribution 降序 + 占比",
+          "status": "passed"
+        },
+        {
+          "name": "rankDistribution total 0 → share 全 0，不产生 NaN",
+          "status": "passed"
+        },
+        {
+          "name": "barLabelFits 长名窄条放不下",
+          "status": "passed"
+        },
+        {
+          "name": "barLabelFits 短名宽条放得下",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent 0–1 概率形态 → 百分比",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent 0–100 百分数形态 → 同一个读数",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent null（AI 拒识，后端置空）→ 「—」，不是 0.0%",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent undefined / NaN → 「—」",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentAttachments.test.ts",
+      "tests": [
+        {
+          "name": "agentAttachments 添加文件生成带 url 的附件项",
+          "status": "passed"
+        },
+        {
+          "name": "agentAttachments 删除某项后其余项的 url 与自己保持绑定（错位回归测试）",
+          "status": "passed"
+        },
+        {
+          "name": "agentAttachments 删除不存在的 id 不改变列表",
+          "status": "passed"
+        },
+        {
+          "name": "agentAttachments 同名文件各自独立（id 不冲突，url 各自绑定）",
+          "status": "passed"
+        },
+        {
+          "name": "agentAttachments 类型：Attachment 只暴露组件需要的字段",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentDraft.test.ts",
+      "tests": [
+        {
+          "name": "agentDraft 存取草稿",
+          "status": "passed"
+        },
+        {
+          "name": "agentDraft 清空草稿",
+          "status": "passed"
+        },
+        {
+          "name": "agentDraft 空文本等于清掉草稿",
+          "status": "passed"
+        },
+        {
+          "name": "agentDraft 没有草稿时返回空串",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentImageOwnership.test.ts",
+      "tests": [
+        {
+          "name": "agentImageOwnership acquire 两次 release 一次不删",
+          "status": "passed"
+        },
+        {
+          "name": "agentImageOwnership 最后持有者 release 才删",
+          "status": "passed"
+        },
+        {
+          "name": "agentImageOwnership retain 后永不删（消息已送达，对象归消息所有）",
+          "status": "passed"
+        },
+        {
+          "name": "agentImageOwnership 同一 URL 重复删除只发一次请求",
+          "status": "passed"
+        },
+        {
+          "name": "agentImageOwnership 空串 no-op；未登记的 URL 按 0 持有者释放=删除（与 Vue 版语义一致）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentResources.test.ts",
+      "tests": [
+        {
+          "name": "extractResources 提取 markdown 图片",
+          "status": "passed"
+        },
+        {
+          "name": "extractResources 提取非图片链接且排除图片语法（Vue 版 (?!!) bug 的回归测试）",
+          "status": "passed"
+        },
+        {
+          "name": "extractResources 累积时按 URL 去重",
+          "status": "passed"
+        },
+        {
+          "name": "extractResources 无效 URL 不产生链接条目",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentScroll.test.ts",
+      "tests": [
+        {
+          "name": "computeUnread 贴底时清零",
+          "status": "passed"
+        },
+        {
+          "name": "computeUnread 不在底部且是新消息才累加",
+          "status": "passed"
+        },
+        {
+          "name": "computeUnread 流式内容增长不累加（一条 200 token 的回复只算一条）",
+          "status": "passed"
+        },
+        {
+          "name": "computeUnread 不在底部且既非新消息也非内容增长时保持不变",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentStream.hook.test.tsx",
+      "tests": [
+        {
+          "name": "useAgentStream 切会话（reset）会中断在途 SSE，不让旧回合的 token 写进新会话",
+          "status": "passed"
+        },
+        {
+          "name": "useAgentStream 停止（abort）后消息收尾：不再有 isLoading 的消息",
+          "status": "passed"
+        },
+        {
+          "name": "useAgentStream 旧流收尾不清掉新流的停止句柄",
+          "status": "passed"
+        },
+        {
+          "name": "useAgentStream 切会话后旧流的事件不再写进消息表",
+          "status": "passed"
+        },
+        {
+          "name": "useAgentStream 工具调用后前一条 assistant 不再是流式态（不永久闪烁）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentStream.test.ts",
+      "tests": [
+        {
+          "name": "applyStreamEvent assistant 首片 push isLoading，后续原地累加",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent reasoning 独立累加；来 assistant 时 reasoning 不再续写",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent tool-request 复位 assistant 累加并逐 toolCall push 卡片",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent tool-request 截断时把前一条 assistant 的 isLoading 置 false（不再永久闪烁）",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent clearAllLoading 清掉所有流式中的 assistant",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent tool-confirm/mcp-confirm 都映射为 confirm 信息卡",
+          "status": "passed"
+        },
+        {
+          "name": "applyStreamEvent tool-response push 卡片（含 toolName）",
+          "status": "passed"
+        },
+        {
+          "name": "mapHistoryMessage role/subType 映射表",
+          "status": "passed"
+        },
+        {
+          "name": "mapHistoryMessage 历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）",
+          "status": "passed"
+        },
+        {
+          "name": "mapHistoryMessage 历史 tool-call 参数不是合法 JSON 时保留原文",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/agentUpload.test.ts",
+      "tests": [
+        {
+          "name": "filterImageFiles 只保留图片类型",
+          "status": "passed"
+        },
+        {
+          "name": "filterImageFiles 超过大小上限的丢弃",
+          "status": "passed"
+        },
+        {
+          "name": "filterImageFiles 类型为空但有图片扩展名也放行（部分浏览器剪贴板不给 MIME）",
+          "status": "passed"
+        },
+        {
+          "name": "filterImageFiles 空数组原样返回",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/api.auth.test.ts",
+      "tests": [
+        {
+          "name": "未登录处理 业务接口返回 40100 时广播未登录事件（供路由跳登录页）",
+          "status": "passed"
+        },
+        {
+          "name": "未登录处理 会话探测（getLoginUser）返回 40100 不广播——匿名访问是常态，不能把人一脚踢去登录",
+          "status": "passed"
+        },
+        {
+          "name": "未登录处理 其它错误码不广播",
+          "status": "passed"
+        },
+        {
+          "name": "未登录处理 SSE 端点回的是 JSON 错误信封（匿名时后端抛 NO_AUTH_ERROR）时也广播未登录",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/collaborationApi.test.ts",
+      "tests": [
+        {
+          "name": "collaborationApi creates only by explicit POST with the supplied idempotency key and session credentials",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi reads a snapshot with an encoded run id and no request body",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 400 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 403 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 409 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 410 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 429 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi retains HTTP 503 and the server's classified reason",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi rejects a success HTTP status with a failed BaseResponse",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi posts cancellation to the selected run without treating the acknowledgement as a clinical result",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi uses the real SSE parser across split UTF-8 chunks, applying facts before the heartbeat cursor",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi exposes SSE preflight 409 to the hook without automatic library retries",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi exposes SSE preflight 410 to the hook without automatic library retries",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationApi rejects unknown critical SSE types before delivering or persisting their cursor",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/collaborationReducer.test.ts",
+      "tests": [
+        {
+          "name": "collaboration v1 contract normalizes the snapshot watermark serialized by the actual application JsonConfig",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.accepted with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.started with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.started with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.completed with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.handoff with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO evidence.verified with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.revision.completed with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.feedback.requested with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.review_ready with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.completed with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.restricted with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.failed with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.cancel_requested with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract consumes actual Jackson wire DTO run.cancelled with string long sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"9007199254740992\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"-1\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"1e2\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"1.5\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \" 2\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"02\"",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.accepted payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.started payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete agent.started payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete agent.completed payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete agent.handoff payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete evidence.verified payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete agent.revision.completed payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete agent.feedback.requested payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.review_ready payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.completed payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.restricted payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.failed payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.cancel_requested payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates the complete run.cancelled payload",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"schemaVersion\":2}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"sequence\":-1}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"sequence\":9007199254740992}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"eventId\":\"fact-id-instead-of-run-sequence\"}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"actor\":\"VISION\"}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"visibility\":\"CLINICIAN\"}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"payload\":{\"status\":\"RUNNING\",\"reasoning\":\"private\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"payload\":{\"status\":\"SUCCEEDED\"}}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"hiddenDraft\":\"private\"}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"occurredAt\":\"yesterday\"}",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract rejects unknown type, mismatched SSE name, empty cursor, malformed JSON and oversized data",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract accepts only versioned metadata heartbeat",
+          "status": "passed"
+        },
+        {
+          "name": "collaboration v1 contract validates snapshot enums, required fields and absence of draft content",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer replays patient-filtered sequence gaps without creating a missing-event failure",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer ignores duplicates, out-of-order facts and pre-snapshot events without rolling back the cursor",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer replaces state at the snapshot watermark and advances heartbeats after applied facts",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer completes execution with a separately pending doctor review",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer never reopens terminal SUCCEEDED",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer never reopens terminal FAILED",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer never reopens terminal RESTRICTED",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer never reopens terminal CANCELLED",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer stops in-flight roles on run.failed without submitting review",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer stops in-flight roles on run.restricted without submitting review",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer holds cancellation pending until the durable cancellation event arrives",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer refuses a different run or thread before checking sequence",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer requests snapshot on unexplained state transitions",
+          "status": "passed"
+        },
+        {
+          "name": "collaborationReducer keeps a bounded timeline while retaining the latest cursor",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/domain.test.ts",
+      "tests": [
+        {
+          "name": "normalizeConfidence 0–1 的概率原样返回",
+          "status": "passed"
+        },
+        {
+          "name": "normalizeConfidence 0–100 的百分数除以 100",
+          "status": "passed"
+        },
+        {
+          "name": "normalizeConfidence 缺省与 NaN 读作 0（没有结论时不要抛）",
+          "status": "passed"
+        },
+        {
+          "name": "normalizeConfidence 越界值夹紧到 0–1",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent 两种量纲读同一个数——这是全站唯一的置信度口径",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent 没有结论显示破折号，不显示 0.0%",
+          "status": "passed"
+        },
+        {
+          "name": "confidencePercent 0 是一个结论，不是缺失",
+          "status": "passed"
+        },
+        {
+          "name": "confidenceBand 三档不折叠：0.40 与 0.65 不是同一个标签",
+          "status": "passed"
+        },
+        {
+          "name": "confidenceBand 边界值落在较高一档",
+          "status": "passed"
+        },
+        {
+          "name": "confidenceBand 百分数量纲也分对档",
+          "status": "passed"
+        },
+        {
+          "name": "confidenceBand 档位带风险色，低置信不是「正常」",
+          "status": "passed"
+        },
+        {
+          "name": "confidenceBand 缺失读作未评估，不猜",
+          "status": "passed"
+        },
+        {
+          "name": "isUrgentAdvice 急性表现算急症",
+          "status": "passed"
+        },
+        {
+          "name": "isUrgentAdvice 泛化建议不算急症——标红一旦泛滥就等于没标",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/faults.test.ts",
+      "tests": [
+        {
+          "name": "faultFromError 断网（-1）说的是「连不上服务」，不是技术描述",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 上传场景把断网说成「图片没传上去」",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 发送场景把断网说成「消息没送出去」",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 登录表单里的 40100 是「账号或密码不对」，不是「需要登录」",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 读取场景里的 40100 是「需要登录」",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 40300 是权限问题，措辞与未登录区分开",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 404 说成「已经不在了」，并带上状态码读数",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 5xx 是服务故障，最严重",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 非 ApiError 的意外给出兜底说法",
+          "status": "passed"
+        },
+        {
+          "name": "faultFromError 动作原样带出来，供提示里放「重试」",
+          "status": "passed"
+        },
+        {
+          "name": "手工故障 校验类是琥珀色，不是红色",
+          "status": "passed"
+        },
+        {
+          "name": "手工故障 提示是中性的",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/htmlToMarkdown.test.ts",
+      "tests": [
+        {
+          "name": "htmlToMarkdown 标题按层级转井号",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 段落之间留空行",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 加粗与斜体",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 链接与图片",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 无序与有序列表",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 嵌套列表按缩进输出",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 引用、分隔线与换行",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 未知标签剥标签保留文本",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 解码 HTML 实体",
+          "status": "passed"
+        },
+        {
+          "name": "htmlToMarkdown 代码块转为围栏",
+          "status": "passed"
+        },
+        {
+          "name": "保存链路 Markdown 里手写的 HTML 被转义，不会变成可执行标签",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/pendingUpload.test.ts",
+      "tests": [
+        {
+          "name": "pendingUpload 取出一次后即清空，避免跨账号泄漏",
+          "status": "passed"
+        },
+        {
+          "name": "pendingUpload 没有暂存时返回 null",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/records.test.ts",
+      "tests": [
+        {
+          "name": "reexamineLabel 三种复审状态各有文案",
+          "status": "passed"
+        },
+        {
+          "name": "reexamineLabel 缺省按未复审处理",
+          "status": "passed"
+        },
+        {
+          "name": "summarizeRecords total 取信封值而不是数 records",
+          "status": "passed"
+        },
+        {
+          "name": "summarizeRecords 高风险只数未拒识且 severity=severe 的记录",
+          "status": "passed"
+        },
+        {
+          "name": "summarizeRecords 待复核数 requiresReview 为真的记录",
+          "status": "passed"
+        },
+        {
+          "name": "summarizeRecords 最近判读时间取 createTime 的最大值",
+          "status": "passed"
+        },
+        {
+          "name": "summarizeRecords 空列表：总数照传、时间与计数归零",
+          "status": "passed"
+        },
+        {
+          "name": "canRequestReexamine 未复审与已复审都可申请",
+          "status": "passed"
+        },
+        {
+          "name": "canRequestReexamine 复审中不可重复申请",
+          "status": "passed"
+        },
+        {
+          "name": "canRequestReexamine 拒识记录没有可复核的结论，不给申请",
+          "status": "passed"
+        },
+        {
+          "name": "reexamineView 复审中显示回执，重新打开也能看到",
+          "status": "passed"
+        },
+        {
+          "name": "reexamineView 提交成功后的乐观态优先显示回执",
+          "status": "passed"
+        },
+        {
+          "name": "reexamineView 未复审与已复审都显示可申请",
+          "status": "passed"
+        },
+        {
+          "name": "reexamineView 拒识或没有复审状态时不渲染整块",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 服务端聚合可用时用全量口径",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 接口未实现（404）时降级到当前页并标注 page",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 网络错误同样降级，不向上抛",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 服务端返回空对象时降级到本页口径（不冒充全量）",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 服务端返回 null 时降级到本页口径",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 字段缺一（缺 highRisk）时降级到本页口径",
+          "status": "passed"
+        },
+        {
+          "name": "loadMyStats 数值字段不是有限数字时降级到本页口径",
+          "status": "passed"
+        },
+        {
+          "name": "statsLabels 全量口径不带「本页」",
+          "status": "passed"
+        },
+        {
+          "name": "statsLabels 本页口径必须写明「本页」",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/sanitize.test.ts",
+      "tests": [
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 一级标题保留为标题",
+          "status": "passed"
+        },
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 代码块保留 pre/code 结构",
+          "status": "passed"
+        },
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 表格保留 table 结构",
+          "status": "passed"
+        },
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 脚本仍然被剥掉",
+          "status": "passed"
+        },
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 编辑页预览与公开页同一条管线：所见即所存",
+          "status": "passed"
+        },
+        {
+          "name": "资讯正文：Markdown 渲染后经净化仍保留结构 代码块里的复制按钮不作为正文残留",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/threadStorage.test.ts",
+      "tests": [
+        {
+          "name": "threadStorage 不同用户各存各的",
+          "status": "passed"
+        },
+        {
+          "name": "threadStorage 匿名态单独一份",
+          "status": "passed"
+        },
+        {
+          "name": "threadStorage 保存空串等于清除",
+          "status": "passed"
+        },
+        {
+          "name": "threadStorage key 带用户 id 前缀",
+          "status": "passed"
+        },
+        {
+          "name": "threadStorage localStorage 抛错时按空值处理，不崩页面",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/useCollaborationRun.test.tsx",
+      "tests": [
+        {
+          "name": "useCollaborationRun does not read or create when scope is inactive {\"enabled\":false}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun does not read or create when scope is inactive {\"identityKey\":null}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun does not read or create when scope is inactive {\"runId\":null}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun starts at the snapshot cursor and replays filtered gaps and duplicate facts",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"threadId\":\"thread-b\"}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"identityKey\":2}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"runId\":\"run-b\"}",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun ignores a late snapshot from a previous identity",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun rejects a snapshot for another thread before opening SSE",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun unmount only disconnects; it never cancels the persistent task",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun reconnects from the last applied heartbeat cursor without creating or rerunning a task",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun replaces projection/snapshot after 409 and never POSTs a new run",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun replaces projection/snapshot after 410 and never POSTs a new run",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun clears protected state and stops after permission revocation",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun refreshes once on an incompatible protocol, then stops instead of looping",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun cancels only the selected run, deduplicates clicks and re-reads the winning terminal state",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun never cancels a new selection through a retained old callback",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun ignores late cancellation acknowledgement after switching accounts",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun keeps cancellation failure unconfirmed and never invents CANCELLED",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun uses an authoritative terminal snapshot without opening a live stream or treating approval as execution",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun supports React StrictMode cleanup without duplicate active subscriptions",
+          "status": "passed"
+        },
+        {
+          "name": "useCollaborationRun does not redisplay a stale projection before reconnect authorization succeeds",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/lib/useMediaQuery.test.tsx",
+      "tests": [
+        {
+          "name": "useMediaQuery 挂载时返回当前匹配结果",
+          "status": "passed"
+        },
+        {
+          "name": "useMediaQuery 媒体查询变化时跟着更新",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/pages/AgentPage.collaboration.test.tsx",
+      "tests": [
+        {
+          "name": "/agent collaboration scope integration binds an explicitly selected run to the authenticated user's restored conversation",
+          "status": "passed"
+        },
+        {
+          "name": "/agent collaboration scope integration leaves ordinary /agent visits and the default-off feature free of collaboration requests",
+          "status": "passed"
+        },
+        {
+          "name": "/agent collaboration scope integration does not infer a collaboration run from an ordinary chat thread",
+          "status": "passed"
+        },
+        {
+          "name": "/agent collaboration scope integration new conversation clears the selected run and only disconnects its stream",
+          "status": "passed"
+        },
+        {
+          "name": "/agent collaboration scope integration logout clears the protected view and prevents selected-run cancellation",
+          "status": "passed"
+        },
+        {
+          "name": "/agent collaboration scope integration exposes cancellation for only the selected run through the workbench context",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/pages/AgentPage.test.tsx",
+      "tests": [
+        {
+          "name": "AgentPage 未登录 先展示界面，不直接把人踢去登录页",
+          "status": "passed"
+        },
+        {
+          "name": "AgentPage 未登录 收起会话栏后左栏折叠（常驻 DOM + 宽度动画），对话区不被压窄",
+          "status": "passed"
+        },
+        {
+          "name": "AgentPage 未登录 切换会话后旧历史不落到新会话",
+          "status": "passed"
+        },
+        {
+          "name": "AgentPage 未登录 非安全上下文没有 crypto.randomUUID 时也能发送",
+          "status": "passed"
+        },
+        {
+          "name": "AgentPage 未登录 发送失败时撤回乐观消息，输入框保留原文",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/pages/RecordsPage.test.tsx",
+      "tests": [
+        {
+          "name": "RecordsPage 统计口径 服务端聚合未上线时，三项计数标注「本页」",
+          "status": "passed"
+        },
+        {
+          "name": "RecordsPage 统计口径 服务端聚合可用时使用全量口径",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/styles/tokens.contrast.test.ts",
+      "tests": [
+        {
+          "name": "正文三级色对比度 浅底 paper-ink-3 ≥ 4.5",
+          "status": "passed"
+        },
+        {
+          "name": "正文三级色对比度 暗底 on-dark-3 ≥ 4.5（含二级抬升面）",
+          "status": "passed"
+        },
+        {
+          "name": "正文三级色对比度 橙色文字 ≥ 4.5",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/AgentComposer.test.tsx",
+      "tests": [
+        {
+          "name": "AgentComposer Enter 提交：把文字存进草稿并跳到 Agent 页",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer 空输入按 Enter 不跳转",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer Shift+Enter 换行不提交",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer 中文输入法组字中的 Enter 不提交",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer 点附件按钮直接去 Agent 页上传图片",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer 带着已输入的文字点附件：先存草稿再去 Agent 页",
+          "status": "passed"
+        },
+        {
+          "name": "AgentComposer 粘贴图片时提示到 Agent 页上传",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/RecordSheet.test.tsx",
+      "tests": [
+        {
+          "name": "RecordSheet 人工复核结论 有复核结论时同时展示 AI 初判与人工结论",
+          "status": "passed"
+        },
+        {
+          "name": "RecordSheet 人工复核结论 没有复核结论时不渲染该区块",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/theme-provider.test.tsx",
+      "tests": [
+        {
+          "name": "ThemeProvider localStorage 不可用时照常渲染（无痕模式不白屏）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/admin/Modal.test.tsx",
+      "tests": [
+        {
+          "name": "Modal 焦点陷阱 Tab 从最后一个可聚焦元素回到第一个",
+          "status": "passed"
+        },
+        {
+          "name": "Modal 焦点陷阱 Shift+Tab 从第一个回到最后一个",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/agent/ChatInput.test.tsx",
+      "tests": [
+        {
+          "name": "ChatInput 流式期间按 Enter 不发送、也不清空已输入的文字",
+          "status": "passed"
+        },
+        {
+          "name": "ChatInput 非流式时 Enter 发送并清空",
+          "status": "passed"
+        },
+        {
+          "name": "ChatInput 发送失败时保留文字与附件，草稿不清",
+          "status": "passed"
+        },
+        {
+          "name": "ChatInput 中文输入法组字中的 Enter 不发送",
+          "status": "passed"
+        },
+        {
+          "name": "ChatInput 流式期间显示的是停止按钮",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/agent/SessionList.test.tsx",
+      "tests": [
+        {
+          "name": "SessionList 置顶 置顶的会话进「置顶」分组，不留在「今天」分组里",
+          "status": "passed"
+        },
+        {
+          "name": "SessionList 置顶 已置顶的会话菜单显示「取消置顶」，未置顶的显示「置顶」",
+          "status": "passed"
+        },
+        {
+          "name": "SessionList 置顶 点「取消置顶」把 isPinned=false 抛给页面",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/fault/fault.test.tsx",
+      "tests": [
+        {
+          "name": "FaultNote 行内提示带上标签、结论与补充",
+          "status": "passed"
+        },
+        {
+          "name": "FaultNote 字段级不摆标签，只留一行小字",
+          "status": "passed"
+        },
+        {
+          "name": "FaultNote 整块读数摆出状态码与端点读数",
+          "status": "passed"
+        },
+        {
+          "name": "FaultNote 动作可点",
+          "status": "passed"
+        },
+        {
+          "name": "FaultToaster 投放后浮出读数条，带标签与状态码",
+          "status": "passed"
+        },
+        {
+          "name": "FaultToaster 关闭按钮收掉那条读数",
+          "status": "passed"
+        },
+        {
+          "name": "FaultToaster 没有 Provider 时投放不报错（组件单测里单独渲染也不该崩）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "web/src/components/admin/charts/chartGeometry.test.ts",
+      "tests": [
+        {
+          "name": "trendGeometry 窄容器：逻辑高压到下限 240，绘图区随宽度缩",
+          "status": "passed"
+        },
+        {
+          "name": "trendGeometry 常规宽度（640）：逻辑高仍是 240——与移植前的固定 viewBox 同形",
+          "status": "passed"
+        },
+        {
+          "name": "trendGeometry 宽屏（1100）：逻辑高封顶 360，不再被拉成扁带",
+          "status": "passed"
+        },
+        {
+          "name": "trendGeometry 绘图区宽度随逻辑宽单调变长（宽屏 = 更长的横轴）",
+          "status": "passed"
+        },
+        {
+          "name": "rankedGeometry 轨道末与数值列留够净距：最长那条条不撞数字",
+          "status": "passed"
+        },
+        {
+          "name": "rankedGeometry 占比列右缘贴右留白，数值列在其左侧",
+          "status": "passed"
+        },
+        {
+          "name": "rankedGeometry 行块高度 = 上下留白 + 每行 40px",
+          "status": "passed"
+        },
+        {
+          "name": "rankedGeometry 容器变宽时轨道吃掉余量（名称带与数值带不跟着长）",
+          "status": "passed"
+        },
+        {
+          "name": "trendLabelStep 宽绘图区：每个点都画标签（步长 1）",
+          "status": "passed"
+        },
+        {
+          "name": "trendLabelStep 窄绘图区：按最小净距抽稀，隔一个画一个",
+          "status": "passed"
+        },
+        {
+          "name": "trendLabelStep 单个点不抽稀",
+          "status": "passed"
+        },
+        {
+          "name": "miniGeometry 小格：逻辑高落到下限 64",
+          "status": "passed"
+        },
+        {
+          "name": "miniGeometry 宽格：逻辑高封顶 120（不会被拉成扁带）",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "notRun": [
+    "HOSTED_CI",
+    "BROWSER_TO_REAL_BACKEND",
+    "MYSQL_REDIS_JOINT_VALIDATION",
+    "GRAPH",
+    "REAL_PROVIDER",
+    "CLINICAL_INPUT_OOD",
+    "TASK05_VISUAL_A11Y_PLAYWRIGHT",
+    "DOCTOR_PUBLISH_PATIENT_SAVE",
+    "PRODUCTION_MIGRATION",
+    "PERFORMANCE_SLO"
+  ],
+  "overallRealtimeAcceptance": "PARTIAL"
+}
