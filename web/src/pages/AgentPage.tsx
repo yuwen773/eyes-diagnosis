@@ -23,7 +23,7 @@ import { MessageList } from "@/components/agent/MessageList"
 import { ChatInput } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const HISTORY_PAGE_SIZE = 100
 
@@ -280,7 +280,7 @@ export function AgentPage() {
   if (status === "loading") {
     return (
       <div className="is-field">
-        <SiteHeader />
+        <ProductHeader scene="intelligence" />
         <main className="agent-viewport">
           <p className="num" style={{ color: "var(--fg-3)", padding: 16 }}>
             LOADING…
@@ -295,7 +295,7 @@ export function AgentPage() {
   // 同 Vue 版 BasicLayout：agent 页不出页脚、不进版心，三栏铺满顶栏以下视口。
   return (
     <div className="is-field">
-      <SiteHeader />
+      <ProductHeader scene="intelligence" />
 
       <main className="agent-viewport">
         <div className={`agent-layout${sessionsCollapsed ? " is-left-collapsed" : ""}`}>

@@ -1,0 +1,393 @@
+/* ==========================================================================
+   产品外壳 · Shared Product Shell（DESIGN.md §1.6，R2.5）
+   --------------------------------------------------------------------------
+   公开路由共用同一个顶栏组件。场景只换材质、当前态语义与主 CTA 语言：
+
+     brand        首页 ·       磨砂玻璃胶囊 + 钴蓝实心当前态 + 钴蓝 CTA
+     editorial    新闻 ·       实体面胶囊（不糊玻璃）+ 钴蓝实心当前态
+     clinical     判读/记录/个人中心 · 实体纸面胶囊 + 信号橙 2px 当前态 + 墨色 CTA
+     intelligence Agent ·      实体面胶囊 + 冰青 2px 当前态
+
+   结构、导航数据、账号菜单、主题切换、移动抽屉在所有场景里是同一份实现。
+   ========================================================================== */
+
+.product-head {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  color: var(--shell-ink, var(--fg));
+  background: var(--shell-surface, var(--field));
+  transition:
+    background var(--base),
+    border-color var(--base);
+}
+
+/* 顶部一条页面底色的幕：内容从它下面滚过时字标仍然清楚。
+   幕分两半——顶栏自身高度内是实色（保证底部任何时刻都不透字），
+   下沿再挂一段渐隐，所以过渡是软的、不是一条硬边。 */
+.product-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--shell-surface, var(--field)), transparent);
+  pointer-events: none;
+}
+
+.product-head__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.2vw, 48px);
+  min-height: 56px;
+}
+
+.product-head__brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ── 场景变量：底色、文字、发丝线 ─────────────────────────────── */
+
+.product-head[data-scene="brand"],
+.product-head[data-scene="editorial"] {
+  --shell-surface: var(--brand-canvas);
+  --shell-ink: var(--brand-text);
+  --shell-muted: var(--brand-muted);
+  --shell-line: var(--brand-line);
+  /* 品牌场景上下留 8/6px，顶栏悬浮于画布之上。 */
+  padding: 8px 0 6px;
+}
+
+.product-head[data-scene="clinical"],
+.product-head[data-scene="intelligence"] {
+  --shell-surface: var(--field);
+  --shell-ink: var(--fg);
+  --shell-muted: var(--fg-2);
+  --shell-line: var(--hr);
+  /* 工作区顶栏高度必须与 --nav-h 一致：Agent 的视口高度用它算，
+     多出几像素就会让整页多一条滚动条。 */
+  min-height: var(--nav-h);
+}
+
+.product-head[data-scene="brand"] .wordmark__en,
+.product-head[data-scene="editorial"] .wordmark__en {
+  color: var(--brand-muted);
+}
+
+/* ── 导航胶囊 ─────────────────────────────────────────────────── */
+
+.product-head__nav {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--shell-line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+/* 品牌/新闻：Frosted Glass。玻璃只用于这块窄胶囊，不铺满整页。 */
+.product-head[data-scene="brand"] .product-head__nav {
+  border-color: var(--brand-line);
+  background: var(--brand-glass);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+
+/* 新闻是 Brand 之下的 Editorial：同样的胶囊与当前态，但不糊玻璃。 */
+.product-head[data-scene="editorial"] .product-head__nav {
+  border-color: var(--brand-line);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+}
+
+.product-head[data-scene="clinical"] .product-head__nav {
+  border-color: var(--hr-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.product-head[data-scene="intelligence"] .product-head__nav {
+  border-color: var(--hr);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+/* ── 导航项 ───────────────────────────────────────────────────── */
+
+.product-head__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* 触控目标 ≥ 44×44：平板上（>900px 胶囊可见）这三项就是主导航。 */
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  color: var(--shell-muted);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.product-head__code {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+
+.product-head__link:hover {
+  color: var(--shell-ink);
+  background: color-mix(in srgb, var(--shell-ink) 7%, transparent);
+}
+
+/* 品牌/新闻/Agent：当前路由是独立高亮胶囊，不是一条下划线。 */
+.product-head[data-scene="brand"] .product-head__link[aria-current="page"],
+.product-head[data-scene="editorial"] .product-head__link[aria-current="page"] {
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.product-head[data-scene="intelligence"] .product-head__link[aria-current="page"] {
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--brand-text);
+}
+
+.product-head[data-scene="intelligence"] .product-head__link[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-cyan);
+}
+
+/* 临床：当前态是信号橙 2px 底线——这是临床层的「重点/当前」语义，
+   不是把品牌胶囊涂成蓝色。 */
+.product-head[data-scene="clinical"] .product-head__link[aria-current="page"] {
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  background: var(--signal-soft);
+}
+
+.product-head[data-scene="clinical"] .product-head__link[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--signal);
+}
+
+.product-head__link:focus-visible,
+.product-head__cta:focus-visible,
+.product-head__brand:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+
+.product-head[data-scene="clinical"] .product-head__link:focus-visible,
+.product-head[data-scene="clinical"] .product-head__cta:focus-visible,
+.product-head[data-scene="clinical"] .product-head__brand:focus-visible {
+  outline: 2px solid var(--signal);
+}
+
+/* ── 右侧功能区 ───────────────────────────────────────────────── */
+
+.product-head__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-head .theme-toggle,
+.product-head .acct__trigger,
+.product-head .burger {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.product-head .theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-circle);
+  border-color: var(--shell-line);
+  color: var(--shell-muted);
+}
+
+.product-head .theme-toggle:hover {
+  border-color: var(--brand-primary);
+  color: var(--shell-ink);
+}
+
+.product-head .acct__trigger {
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border-color: var(--shell-line);
+  color: var(--shell-ink);
+  font-family: var(--font-brand);
+}
+
+.product-head .acct__trigger:hover {
+  border-color: var(--brand-primary);
+}
+
+/* 品牌场景里「登录」不是一个实心墨色按钮：右侧只能有一个主 CTA。
+   这里收回共享样式里的填充与信号橙 hover，改成描边胶囊。 */
+.product-head[data-scene="brand"] a.acct__trigger--anon,
+.product-head[data-scene="editorial"] a.acct__trigger--anon {
+  justify-content: center;
+  background: transparent;
+  border-color: var(--brand-outline);
+  color: var(--brand-text);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.product-head[data-scene="brand"] a.acct__trigger--anon:hover,
+.product-head[data-scene="editorial"] a.acct__trigger--anon:hover {
+  background: transparent;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* 临床/工作区里「登录」只是账号入口，不是主操作：收回共享样式的实心墨底，
+   让右侧只有一个主 CTA（与品牌场景同一套层级规则）。 */
+.product-head[data-scene="clinical"] a.acct__trigger--anon,
+.product-head[data-scene="intelligence"] a.acct__trigger--anon {
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border-color: var(--hr-strong);
+  color: var(--fg);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.product-head[data-scene="clinical"] a.acct__trigger--anon:hover,
+.product-head[data-scene="intelligence"] a.acct__trigger--anon:hover {
+  background: var(--signal-soft);
+  border-color: var(--signal);
+  color: var(--fg);
+}
+
+/* 汉堡在品牌场景里是圆形胶囊，和主题切换、账号按钮同一套形状语言。 */
+.product-head[data-scene="brand"] .burger,
+.product-head[data-scene="editorial"] .burger {
+  border-radius: var(--radius-circle);
+  border-color: var(--brand-outline);
+  color: var(--brand-text);
+}
+
+.product-head[data-scene="brand"] .burger:hover,
+.product-head[data-scene="editorial"] .burger:hover {
+  border-color: var(--brand-primary);
+}
+
+/* ── 主 CTA ───────────────────────────────────────────────────── */
+
+.product-head__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(36, 87, 201, 0.22);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.product-head__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(36, 87, 201, 0.28);
+}
+
+.product-head__cta-go {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* 临床主 CTA 是墨色（DESIGN.md §4.1）：钴蓝是品牌/主操作色，
+   但临床页的主按钮必须先服从「克制、纸面稳定」的场景语义。 */
+.product-head[data-scene="clinical"] .product-head__cta {
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.product-head[data-scene="clinical"] .product-head__cta:hover {
+  transform: none;
+  background: var(--ink);
+  box-shadow: none;
+}
+
+/* Agent 工作区的主 CTA 与品牌场景同色，但不需要玻璃投影。 */
+.product-head[data-scene="intelligence"] .product-head__cta {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+/* ── 断点 ─────────────────────────────────────────────────────── */
+
+/* 窄屏不把胶囊压扁塞进去：导航收进共享 MobileNav 抽屉。
+   801–900px 这一段共享 `.burger` 默认还不显示，必须由外壳放出来，
+   否则顶栏没有任何导航入口。 */
+@media (max-width: 900px) {
+  .product-head__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .product-head__nav,
+  .product-head__cta,
+  .product-head__actions .acct {
+    display: none;
+  }
+
+  .product-head .burger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-head .wordmark__en {
+    display: none;
+  }
+}

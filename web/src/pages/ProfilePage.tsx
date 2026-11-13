@@ -12,7 +12,7 @@ import { useSession } from "@/lib/session"
 import { EmptyFrame } from "@/components/EmptyFrame"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "管理员",
@@ -142,7 +142,7 @@ export function ProfilePage() {
     // 会话还在探测时保持沉默，确认匿名后送登录页（带回跳）。
     return (
       <div className="is-field">
-        <SiteHeader />
+        <ProductHeader scene="clinical" />
         <main className="wrap records">
           <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
           <div className="records__empty">
@@ -161,7 +161,7 @@ export function ProfilePage() {
 
   return (
     <div className="is-field">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap records">
         <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />

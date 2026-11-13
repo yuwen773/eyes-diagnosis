@@ -11,7 +11,7 @@ import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { BrandHeader } from "@/components/brand/BrandHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 export function NewsDetailPage() {
   const { id = "" } = useParams<{ id: string }>()
@@ -61,8 +61,8 @@ export function NewsDetailPage() {
   const words = newsWordCount(item?.content)
 
   return (
-    <div className="is-field">
-      <BrandHeader />
+    <div className="is-field is-brand-page">
+      <ProductHeader scene="editorial" />
 
       <main className="wrap news-detail">
         <Link className="news-detail__back" to="/news" data-cursor>

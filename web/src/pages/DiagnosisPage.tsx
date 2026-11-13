@@ -9,7 +9,7 @@ import { faultFromError, infoFault, validationFault, type Fault } from "@/lib/fa
 import { RecordSheet } from "@/components/RecordSheet"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 type Stage = "empty" | "ready" | "running" | "done" | "error"
 type StepState = "idle" | "active" | "run" | "done" | "fail"
@@ -218,7 +218,7 @@ export function DiagnosisPage() {
   if (result) {
     return (
       <div className="is-field">
-        <SiteHeader />
+        <ProductHeader scene="clinical" />
 
         <div className="sheet-shell">
           <div className="wrap">
@@ -290,7 +290,7 @@ export function DiagnosisPage() {
 
   return (
     <div className="is-field">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap">
         <div className="proc fade" role="list" aria-label="判读流程">
