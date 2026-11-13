@@ -151,7 +151,7 @@ public class DiagnosisAgent {
                                 // 工具调用消息
                                 if (assistantMessage.hasToolCalls()) {
                                     String prevReasoning = reasoningContent.toString();
-                                    if (!prevReasoning.isEmpty()) {
+                                    if (agentConstants.isExposeReasoning() && !prevReasoning.isEmpty()) {
                                         chatHistoryService.saveReasoningMessage(threadId, userId, prevReasoning);
                                         reasoningContent.setLength(0);
                                     }
@@ -172,9 +172,10 @@ public class DiagnosisAgent {
                                     }
                                     chatHistoryService.saveToolCallMessage(threadId, userId, toolDesc.toString());
                                 }
-                                // reasoning 消息
+                                // reasoning 消息：默认不展示、不落库（见 agent.expose-reasoning）
                                 else if (metadata.get("reasoningContent") != null
                                         && !"".equals(metadata.get("reasoningContent"))) {
+                                    if (!agentConstants.isExposeReasoning()) return null;
                                     String reasoningText = (String) metadata.get("reasoningContent");
                                     reasoningContent.append(reasoningText);
                                     messageDTO.setContent(reasoningText);
@@ -205,7 +206,7 @@ public class DiagnosisAgent {
                     })
                     .doOnComplete(() -> {
                         String fullReasoning = reasoningContent.toString();
-                        if (!fullReasoning.isEmpty()) {
+                        if (agentConstants.isExposeReasoning() && !fullReasoning.isEmpty()) {
                             chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning);
                         }
                         String fullResponse = assistantContent.toString();

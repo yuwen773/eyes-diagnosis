@@ -79,6 +79,9 @@ app:
 # 事务性 Outbox 已退役：t_agent_message_outbox 与 t_agent_message 同库，
 # 没有跨系统边界可跨，且原有 dispatcher 会重放历史行。会话消息统一由
 # ChatMessageWriter 单事务直写 t_agent_message；表中历史行保留不清理。
+agent:
+  # 上游模型 reasoning 默认不展示、不落库；显式开启才进入消息流与历史。
+  expose-reasoning: false
 eye-diagnosis:
   collaboration:
     enabled: false

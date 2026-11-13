@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -64,7 +67,10 @@ public class AgentController {
         // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
         chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
 
-        log.info("Agent 流式对话请求, threadId={}, userId={}, message={}", threadId, userId, request.getMessage());
+        // 日志只记录关联 ID 与长度：症状、病史等原文不得进入运行日志
+        String requestId = UUID.randomUUID().toString();
+        log.info("Agent 流式对话请求, requestId={}, threadId={}, userIdHash={}, messageLength={}",
+                requestId, threadId, anonymize(userId), request.getMessage() == null ? 0 : request.getMessage().length());
 
         return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
                 request.getEnabledMcpServers(), request.getDisableMcpDefault())
@@ -79,7 +85,9 @@ public class AgentController {
                                 .build()
                 ))
                 .onErrorResume(error -> {
-                    log.error("流式对话错误", error);
+                    // 提供方异常文本可能夹带请求内容，只记录分类与关联 ID
+                    log.warn("Agent 流式对话失败, requestId={}, errorType={}", requestId, error.getClass().getSimpleName());
+                    log.debug("Agent 流式对话失败详情, requestId={}", requestId, error);
                     return Flux.just(ServerSentEvent.<String>builder()
                             .event("error")
                             .data("系统繁忙，请稍后重试")
@@ -217,6 +225,18 @@ public class AgentController {
         }
         String content = chatHistoryService.exportSession(sessionId, loginUser.getId(), format);
         return ResultUtils.success(content);
+    }
+
+    /** 日志中只保留可关联、不可直接识别身份的短哈希。 */
+    private static String anonymize(Long userId) {
+        if (userId == null) return "anonymous";
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(String.valueOf(userId).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest).substring(0, 12);
+        } catch (Exception e) {
+            return "unavailable";
+        }
     }
 
     private String toJson(Object obj) {
