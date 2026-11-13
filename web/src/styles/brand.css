@@ -974,3 +974,217 @@ html:not(.dark) .brand-head[data-invert="true"] .burger__bars > span {
 html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
   color: var(--brand-deep-muted);
 }
+
+/* ==========================================================================
+   品牌页脚（DESIGN.md §2.1.3）
+   --------------------------------------------------------------------------
+   Solid Brand Surface：一块实体深海蓝，不做整块玻璃模糊。
+   三层：品牌收尾 → 信息导航 → 可信信息。页脚承载大量文字与免责条款，
+   可读性优先于材质表现，也不挂任何 GPU 特效。
+   ========================================================================== */
+
+.brand-foot {
+  /* 页脚在任何主题下都是深底，所以高光用一个固定的浅冰蓝，
+     不跟随主题翻转。 */
+  --foot-accent: #9fd8ff;
+  position: relative;
+  margin-top: clamp(48px, 8vw, 112px);
+  background: var(--brand-surface-deep);
+  color: var(--brand-deep-text);
+  /* 与浅色主体之间用一根发丝线过渡，不做硬切。 */
+  border-top: 1px solid var(--brand-deep-hairline);
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--brand-surface-deep) 40%, transparent);
+}
+
+.brand-foot__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.55fr);
+  gap: clamp(28px, 4vw, 64px);
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(40px, 5vw, 68px) clamp(20px, 3.2vw, 48px) 0;
+}
+
+/* ── 第一层：品牌收尾 ── */
+
+.brand-foot__brand {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.brand-foot .wordmark__zh {
+  color: var(--brand-deep-text);
+}
+
+.brand-foot .wordmark__en {
+  color: var(--brand-deep-muted);
+}
+
+.brand-foot__claim {
+  margin: 4px 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--brand-deep-text);
+}
+
+.brand-foot__lead {
+  margin: 0;
+  max-width: 34em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--brand-deep-muted);
+}
+
+/* ── 第二层：信息导航 ── */
+
+.brand-foot__nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px clamp(18px, 2.4vw, 40px);
+  align-content: start;
+}
+
+.brand-foot__group {
+  display: grid;
+  gap: 9px;
+  align-content: start;
+}
+
+.brand-foot__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-deep-muted);
+}
+
+.brand-foot__link {
+  width: fit-content;
+  color: var(--brand-deep-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.brand-foot__link:hover {
+  color: var(--foot-accent);
+}
+
+.brand-foot__spec {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--brand-deep-muted);
+}
+
+/* ── 第三层：可信信息 ── */
+
+.brand-foot__trust {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(24px, 4vw, 64px);
+  max-width: var(--maxw);
+  margin: clamp(32px, 4vw, 52px) auto 0;
+  padding: 24px clamp(20px, 3.2vw, 48px) 0;
+  border-top: 1px solid var(--brand-deep-line);
+}
+
+.brand-foot__note {
+  margin: 0;
+  max-width: 62em;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.85;
+  color: var(--brand-deep-muted);
+}
+
+.brand-foot__note-mark {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--brand-deep-text);
+}
+
+.brand-foot__stamp {
+  flex: none;
+  font-size: 9.5px;
+  line-height: 1.6;
+  letter-spacing: 0.18em;
+  text-align: right;
+  color: var(--brand-deep-muted);
+}
+
+.brand-foot__legal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 22px clamp(20px, 3.2vw, 48px) clamp(26px, 3vw, 40px);
+}
+
+.brand-foot__copy {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--brand-deep-muted);
+}
+
+.brand-foot__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--brand-deep-text);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.brand-foot__top:hover {
+  color: var(--foot-accent);
+}
+
+.brand-foot__top-mark {
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .brand-foot__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-foot__nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-foot__nav {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .brand-foot__trust {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .brand-foot__stamp {
+    text-align: left;
+  }
+
+  .brand-foot__legal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

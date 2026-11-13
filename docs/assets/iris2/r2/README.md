@@ -110,3 +110,32 @@
   只有代码路径；R2-04 若在浅色主题下引入深色区段，需要补一次截图。
 - 为让 `ScrollExpand` 能正确量顶栏高度，品牌顶栏带了 `data-site-head` 标记
   （纯测量钩子，不带任何样式，与 `.site-head` 类无关）。
+
+## R2-03 · Brand Footer
+
+`BrandFooter`：**Solid Brand Surface**（深海蓝实体面，全幅铺满），三层信息架构。
+不做整块玻璃模糊，也不挂任何 GPU 特效。
+
+| 文件 | 内容 |
+|---|---|
+| `r2-03-footer-1440-{light,dark}.jpg` | 桌面页脚整体 |
+| `r2-03-footer-390-{light,dark}.jpg` | 390px 整屏（页脚 + 上方过渡） |
+
+### 实测（`getComputedStyle` + 真实点击）
+
+| 项 | Light | Dark |
+|---|---|---|
+| 页脚底色 | `rgb(10, 26, 51)` | `rgb(7, 17, 32)` |
+| 页面底色 | `rgb(243, 244, 241)` | `rgb(11, 13, 12)` |
+| 免责文字色 | `rgb(159, 179, 207)` | 同值 |
+
+- **链接清单**：`/diagnosis` `/agent` `/news` + 6 个页面锚点（`#specimen` `#how`
+  `#record` `#agent` `#bounds` `#start`），逐个查过目标节点都存在；
+  外加 `#top`（组件内 `preventDefault` + `scrollTo`，页面上本就没有这个锚点）。
+  **没有**隐私政策 / 法律声明 / 联系方式 / 支持中心这类不存在的页面。
+- **返回顶部**：`prefers-reduced-motion: no-preference` 时点击后 120ms 仍在滚动
+  （7696 → 7563，平滑）；`reduce` 时同一时刻已到 `scrollY = 0`（瞬时）。
+- **与主体分离**：浅色页面下是一块明确的深色区块；暗色下 `#071120` 与页面
+  `#0b0d0c` 之间有线与明度差，不会融进背景消失。
+- **既有规格未删**：EFFICIENTNET-B4 / 8 CLASSES / QUALITY GATE / SHA-256 WEIGHTS
+  都保留，只是从一条读数行改到「平台」列。
