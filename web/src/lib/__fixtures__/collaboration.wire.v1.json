@@ -1,209 +1,258 @@
 {
-  "events" : [ {
-    "eventId" : "run-a:1",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "1",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.accepted",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "ACCEPTED"
+  "events": [
+    {
+      "eventId": "run-a:1",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "1",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "ACCEPTED"
+      }
+    },
+    {
+      "eventId": "run-a:2",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "2",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.started",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "RUNNING"
+      }
+    },
+    {
+      "eventId": "run-a:3",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "3",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.started",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payload": {
+        "call": 1
+      }
+    },
+    {
+      "eventId": "run-a:4",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "4",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.completed",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payload": {
+        "call": 1
+      }
+    },
+    {
+      "eventId": "run-a:5",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "5",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payload": {
+        "messageId": "task-a:1:EVIDENCE",
+        "to": "EVIDENCE",
+        "kind": "VISION_READY",
+        "call": 1
+      }
+    },
+    {
+      "eventId": "run-a:6",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "6",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "evidence.verified",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payload": {
+        "evidenceVersion": 1
+      }
+    },
+    {
+      "eventId": "run-a:7",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "7",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payload": {
+        "draftVersion": 1,
+        "evidenceVersion": 1
+      }
+    },
+    {
+      "eventId": "run-a:8",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "8",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.feedback.requested",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payload": {
+        "action": "REWRITE",
+        "call": 4
+      }
+    },
+    {
+      "eventId": "run-a:9",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "9",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.review_ready",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "draftVersion": 2,
+        "reviewStatus": "PENDING"
+      }
+    },
+    {
+      "eventId": "run-a:10",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "10",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.completed",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "SUCCEEDED",
+        "reviewStatus": "PENDING"
+      }
+    },
+    {
+      "eventId": "run-a:11",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "11",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "RESTRICTED",
+        "reason": "INPUT_RESTRICTED"
+      }
+    },
+    {
+      "eventId": "run-a:12",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "12",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.failed",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "FAILED",
+        "reason": "PROVIDER_UNAVAILABLE"
+      }
+    },
+    {
+      "eventId": "run-a:13",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "13",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.cancel_requested",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "CANCEL_REQUESTED"
+      }
+    },
+    {
+      "eventId": "run-a:14",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "14",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "run.cancelled",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payload": {
+        "status": "CANCELLED"
+      }
+    },
+    {
+      "eventId": "run-a:15",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "15",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.summary",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payload": {
+        "call": 1,
+        "summary": "VISION_REVIEW_QUALITY:NONE",
+        "limitationCount": 2
+      }
+    },
+    {
+      "eventId": "run-a:16",
+      "schemaVersion": 1,
+      "runId": "run-a",
+      "threadId": "thread-a",
+      "sequence": "16",
+      "occurredAt": "2026-11-11T12:00:00Z",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payload": {
+        "call": 1,
+        "messageId": "msg-vision-1",
+        "to": "EVIDENCE",
+        "kind": "HANDOFF",
+        "content": "{}"
+      }
     }
-  }, {
-    "eventId" : "run-a:2",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "2",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.started",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "RUNNING"
-    }
-  }, {
-    "eventId" : "run-a:3",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "3",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "agent.started",
-    "actor" : "VISION",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "call" : 1
-    }
-  }, {
-    "eventId" : "run-a:4",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "4",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "agent.completed",
-    "actor" : "VISION",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "call" : 1
-    }
-  }, {
-    "eventId" : "run-a:5",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "5",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "agent.handoff",
-    "actor" : "VISION",
-    "visibility" : "CLINICIAN",
-    "payload" : {
-      "messageId" : "task-a:1:EVIDENCE",
-      "to" : "EVIDENCE",
-      "kind" : "VISION_READY",
-      "call" : 1
-    }
-  }, {
-    "eventId" : "run-a:6",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "6",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "evidence.verified",
-    "actor" : "EVIDENCE",
-    "visibility" : "CLINICIAN",
-    "payload" : {
-      "evidenceVersion" : 1
-    }
-  }, {
-    "eventId" : "run-a:7",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "7",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "agent.revision.completed",
-    "actor" : "EXPLANATION",
-    "visibility" : "CLINICIAN",
-    "payload" : {
-      "draftVersion" : 1,
-      "evidenceVersion" : 1
-    }
-  }, {
-    "eventId" : "run-a:8",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "8",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "agent.feedback.requested",
-    "actor" : "CRITIC",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "action" : "REWRITE",
-      "call" : 4
-    }
-  }, {
-    "eventId" : "run-a:9",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "9",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.review_ready",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "draftVersion" : 2,
-      "reviewStatus" : "PENDING"
-    }
-  }, {
-    "eventId" : "run-a:10",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "10",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.completed",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "SUCCEEDED",
-      "reviewStatus" : "PENDING"
-    }
-  }, {
-    "eventId" : "run-a:11",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "11",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.restricted",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "RESTRICTED",
-      "reason" : "INPUT_RESTRICTED"
-    }
-  }, {
-    "eventId" : "run-a:12",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "12",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.failed",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "FAILED",
-      "reason" : "PROVIDER_UNAVAILABLE"
-    }
-  }, {
-    "eventId" : "run-a:13",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "13",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.cancel_requested",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "CANCEL_REQUESTED"
-    }
-  }, {
-    "eventId" : "run-a:14",
-    "schemaVersion" : 1,
-    "runId" : "run-a",
-    "threadId" : "thread-a",
-    "sequence" : "14",
-    "occurredAt" : "2026-11-11T12:00:00Z",
-    "type" : "run.cancelled",
-    "actor" : "COORDINATOR",
-    "visibility" : "PATIENT",
-    "payload" : {
-      "status" : "CANCELLED"
-    }
-  } ],
-  "evidenceType" : "REAL_JACKSON_SYNTHETIC_DTO",
-  "snapshot" : {
-    "runId" : "run-a",
-    "taskId" : "task-a",
-    "threadId" : "thread-a",
-    "runtimeKind" : "COORDINATOR",
-    "workflowVersion" : "AUTONOMOUS_V2",
-    "executionStatus" : "ACCEPTED",
-    "reviewStatus" : "NOT_SUBMITTED",
-    "reason" : null,
-    "roles" : { },
-    "snapshotSequence" : "1",
-    "resumeCursor" : "opaque-snapshot",
-    "projectionVersion" : "v1:patient"
+  ],
+  "evidenceType": "REAL_JACKSON_SYNTHETIC_DTO",
+  "snapshot": {
+    "runId": "run-a",
+    "taskId": "task-a",
+    "threadId": "thread-a",
+    "runtimeKind": "COORDINATOR",
+    "workflowVersion": "AUTONOMOUS_V2",
+    "executionStatus": "ACCEPTED",
+    "reviewStatus": "NOT_SUBMITTED",
+    "reason": null,
+    "roles": {},
+    "snapshotSequence": "1",
+    "resumeCursor": "opaque-snapshot",
+    "projectionVersion": "v1:patient"
   }
 }
