@@ -16,6 +16,8 @@ import java.util.List;
 public class DoctorReviewController {
     private final DoctorReviewService reviews;
     private final UserService users;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.csust.eyediagnosis.collaboration.CollaborationImages images;
 
     public DoctorReviewController(DoctorReviewService reviews, UserService users) {
         this.reviews = reviews; this.users = users;
@@ -52,6 +54,25 @@ public class DoctorReviewController {
     public BaseResponse<DoctorReviewService.Detail> decide(@PathVariable String id,
             @RequestBody DoctorReviewService.Decision decision, HttpServletRequest request) {
         return ResultUtils.success(reviews.decide(users.getLoginUser(request), id, decision));
+    }
+
+    @GetMapping("/{id}/image")
+    @AuthCheck
+    public ResponseEntity<byte[]> image(@PathVariable String id, HttpServletRequest request) {
+        var user = users.getLoginUser(request);
+        var review = reviews.detail(user, id);
+        if (images == null) throw new com.csust.eyediagnosis.collaboration.CollaborationRunService.Fault(503, "IMAGE_UNAVAILABLE");
+        var image = images.readTask(review.taskId(), user.getId());
+        return ResponseEntity.ok().header("X-Content-Type-Options", "nosniff")
+                .header("Content-Disposition", "inline; filename=fundus." + image.format())
+                .contentType(org.springframework.http.MediaType.parseMediaType(image.format().equals("png") ? "image/png" : "image/jpeg"))
+                .body(image.bytes());
+    }
+
+    @ExceptionHandler(com.csust.eyediagnosis.collaboration.CollaborationRunService.Fault.class)
+    public ResponseEntity<BaseResponse<?>> imageFault(com.csust.eyediagnosis.collaboration.CollaborationRunService.Fault error) {
+        return ResponseEntity.status(error.status()).contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(ResultUtils.error(error.status() * 100, error.getMessage()));
     }
 
     @ExceptionHandler(DoctorReviewService.ReviewConflict.class)

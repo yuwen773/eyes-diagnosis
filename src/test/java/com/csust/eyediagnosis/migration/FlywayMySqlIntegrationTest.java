@@ -30,7 +30,7 @@ class FlywayMySqlIntegrationTest {
                 statement.executeUpdate("INSERT INTO `" + schema + "`.t_user VALUES (7,'existing-account','existing-hash','user',42)");
                 Flyway latest = Flyway.configure().dataSource(url, username, password).schemas(schema)
                         .locations("classpath:db/migration", "classpath:db/callback").load();
-                assertEquals(3, latest.migrate().migrationsExecuted);
+                assertEquals(6, latest.migrate().migrationsExecuted);
                 try (var account = statement.executeQuery("SELECT userAccount,userPassword,userRole,legacyMarker FROM `"
                         + schema + "`.t_user WHERE id=7")) {
                     org.junit.jupiter.api.Assertions.assertTrue(account.next());
@@ -67,7 +67,7 @@ class FlywayMySqlIntegrationTest {
 
                 int expectedMigrations = flyway.info().all().length;
                 assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
-                assertEquals("17", flyway.info().current().getVersion().toString());
+                assertEquals("20", flyway.info().current().getVersion().toString());
                 // The real registration/login mapper must work after a fresh migration.
                 try (var users = statement.executeQuery("SELECT id,userAccount,userPassword,userName,userAvatar,userProfile,"
                         + "userRole,editTime,createTime,updateTime,isDelete FROM `" + schema + "`.t_user LIMIT 0")) {
@@ -96,7 +96,7 @@ class FlywayMySqlIntegrationTest {
                 String before;
                 try (var result = statement.executeQuery("SELECT output FROM `" + schema + "`.t_patient_draft_message")) { result.next(); before = result.getString(1); }
                 assertEquals(1, Flyway.configure().dataSource(url, username, password).schemas(schema)
-                        .locations("classpath:db/migration", "classpath:db/callback").load().migrate().migrationsExecuted);
+                        .locations("classpath:db/migration", "classpath:db/callback").target("17").load().migrate().migrationsExecuted);
                 try (var result = statement.executeQuery("SELECT workflowVersion FROM `" + schema + "`.t_patient_draft_run")) {
                     result.next(); assertEquals("SEQUENTIAL_V1", result.getString(1));
                 }

@@ -51,6 +51,18 @@ final class DraftMailbox {
 
     boolean unread(Envelope message) { return message != null && !consumed.contains(message.messageId()); }
 
+    record Snapshot(List<Envelope> delivered, Set<String> consumed) {}
+    Snapshot snapshot() { return new Snapshot(List.copyOf(delivered.values()), Set.copyOf(consumed)); }
+    void restore(Snapshot snapshot) {
+        for (var message : snapshot.delivered()) {
+            delivered.put(message.messageId(), message);
+            inboxes.computeIfAbsent(message.recipientRole(), ignored -> new ArrayList<>()).add(message);
+        }
+        // HashMap order is not a causal order. Versions follow the persisted dispatch sequence.
+        inboxes.values().forEach(messages -> messages.sort(Comparator.comparingInt(Envelope::sourceSequence)));
+        consumed.addAll(snapshot.consumed());
+    }
+
     List<Envelope> consume(Envelope... messages) {
         var result = new ArrayList<Envelope>();
         for (Envelope message : messages) {

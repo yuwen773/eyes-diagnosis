@@ -77,6 +77,12 @@ app:
 
 # 眼科图像分析配置
 eye-diagnosis:
+  collaboration:
+    enabled: false
+    admission-enabled: false
+    graph-enabled: false
+    patient-progress-enabled: false
+    clinician-detail-enabled: false
   agent:
     # Chat history uses the ordinary single-write persistence path. Do not
     # enable the legacy dispatcher or it can replay pre-existing Outbox rows.

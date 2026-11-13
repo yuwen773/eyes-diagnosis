@@ -248,6 +248,76 @@ jobs:
       - name: Require every draft case to run
         run: python3 scripts/check_surefire_skips.py target/surefire-reports issue19
 
+  collaboration-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: collaboration_test
+          MYSQL_USER: collaboration
+          MYSQL_PASSWORD: collaboration
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -ucollaboration -pcollaboration collaboration_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      COLLABORATION_TEST_URL: jdbc:mysql://127.0.0.1:3306/collaboration_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run durable events, authorization, cancellation and HTTP SSE tests
+        run: mvn -B -Dtest=CollaborationRunTest test
+      - name: Require every collaboration case to run
+        if: always()
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports collaboration
+
+  graph-execution-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: graph_execution_test
+          MYSQL_USER: graph_execution
+          MYSQL_PASSWORD: graph_execution
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -ugraph_execution -pgraph_execution graph_execution_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      GRAPH_EXECUTION_TEST_URL: jdbc:mysql://127.0.0.1:3306/graph_execution_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run Graph equivalence, process-death recovery and fencing
+        # Only this disposable service enables the failure-injection trigger.
+        # The application's database account keeps schema-only privileges.
+        run: |
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password -e 'SET GLOBAL log_bin_trust_function_creators=1'
+          mvn -B -Dtest=GraphExecutionTest,RealtimeGraphSpikeTest,CoordinationPocTest test
+      - name: Require every Graph case to run
+        if: always()
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports graph-execution
+
   issue24-evaluation:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -482,6 +552,35 @@ jobs:
       - name: Require both Flyway suites to run fully
         run: python3 scripts/check_surefire_skips.py target/surefire-reports flyway
 
+  product-contract:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: product_acceptance_test
+          MYSQL_USER: product_acceptance
+          MYSQL_PASSWORD: product_acceptance
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      PRODUCT_ACCEPTANCE_TEST_URL: jdbc:mysql://127.0.0.1:3306/product_acceptance_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - run: mvn -B -Dtest=ProductSchemaTest,CollaborationImagesTest,ProductProviderLedgerTest,AgentSessionAdmissionTest test
+      - run: python3 scripts/check_surefire_skips.py target/surefire-reports product
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -498,3 +597,24 @@ jobs:
       - run: npm run test -- --run
       - run: npm run lint:check
       - run: npm run build
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check collaboration wire contract
+        working-directory: .
+        run: python3 scripts/check_collaboration_fixture.py --backend-root . --output target/collaboration-contract.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run lint

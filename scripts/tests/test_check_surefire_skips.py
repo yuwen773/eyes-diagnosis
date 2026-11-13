@@ -25,6 +25,18 @@ def suite_xml(name, cases, skipped=0, failures=0, errors=0):
 
 
 class SurefireSkipGateTest(unittest.TestCase):
+    def test_product_requires_schema_image_session_and_durable_budget_cases(self):
+        self.write("example.UnrelatedTest", cases=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["product"]))
+        for name, count in CONTRACTS["product"]["expected"].items():
+            self.write(name, cases=count)
+        self.assertEqual(0, self.verdict(CONTRACTS["product"]))
+        name = "com.csust.eyediagnosis.collaboration.ProductProviderLedgerTest"
+        self.write(name, cases=4, skipped=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["product"]))
+        self.write(name, cases=3)
+        self.assertEqual(1, self.verdict(CONTRACTS["product"]))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -39,14 +51,17 @@ class SurefireSkipGateTest(unittest.TestCase):
                 return check(self.directory, contract)
 
     def backend_reports(self):
-        """Reproduce the no-env `mvn test` run: 8 opt-in suites, 44 skips."""
+        """Reproduce the explicit no-env opt-in shape without hiding new skips."""
         P = "com.csust.eyediagnosis."
+        self.write(P + "collaboration.ProductSchemaTest", cases=1, skipped=1)
         self.write(P + "agent.config.VectorStoreConfigTest", cases=1, skipped=1)
         self.write(P + "agent.rag.RAGEvaluationTest", cases=2, skipped=2)
-        self.write(P + "diagnosistask.DiagnosisTaskApiTest", cases=15, skipped=12)
+        self.write(P + "diagnosistask.DiagnosisTaskApiTest", cases=7, skipped=4)
         self.write(P + "diagnosistask.DiagnosisTaskRecoveryTest", cases=10, skipped=10)
         self.write(P + "controlledreference.ControlledReferenceApiTest", cases=13, skipped=13)
         self.write(P + "patientdraft.PatientDraftTest", cases=41, skipped=41)
+        self.write(P + "collaboration.CollaborationRunTest", cases=31, skipped=31)
+        self.write(P + "collaboration.GraphExecutionTest", cases=32, skipped=32)
         self.write(P + "doctorreview.DoctorReviewApiTest", cases=36, skipped=36)
         self.write(P + "patientexplanation.PatientExplanationApiTest", cases=37, skipped=37)
         self.write(P + "patientauthorization.PatientAuthorizationApiTest", cases=37, skipped=37)
@@ -75,6 +90,28 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.assertEqual(1, self.verdict(CONTRACTS["issue19"]))
         self.write(name, cases=40)
         self.assertEqual(1, self.verdict(CONTRACTS["issue19"]))
+
+    def test_collaboration_requires_all_cases_without_skips_or_dropped_cases(self):
+        name = "com.csust.eyediagnosis.collaboration.CollaborationRunTest"
+        self.write("example.UnrelatedTest", cases=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["collaboration"]))
+        self.write(name, cases=31)
+        self.assertEqual(0, self.verdict(CONTRACTS["collaboration"]))
+        self.write(name, cases=31, skipped=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["collaboration"]))
+        self.write(name, cases=30)
+        self.assertEqual(1, self.verdict(CONTRACTS["collaboration"]))
+
+    def test_graph_execution_rejects_missing_skipped_and_dropped_cases(self):
+        name = "com.csust.eyediagnosis.collaboration.GraphExecutionTest"
+        self.write("example.UnrelatedTest", cases=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
+        self.write(name, cases=32)
+        self.assertEqual(0, self.verdict(CONTRACTS["graph-execution"]))
+        self.write(name, cases=32, skipped=1)
+        self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
+        self.write(name, cases=31)
+        self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
 
     def test_issue20_requires_complete_suite_without_skips_or_dropped_cases(self):
         name = "com.csust.eyediagnosis.doctorreview.DoctorReviewApiTest"
@@ -119,7 +156,7 @@ class SurefireSkipGateTest(unittest.TestCase):
 
     def test_issue17_contract_requires_three_full_suites(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=15)
+        self.write(P + "DiagnosisTaskApiTest", cases=7)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(0, self.verdict(CONTRACTS["issue17"]))
@@ -129,7 +166,7 @@ class SurefireSkipGateTest(unittest.TestCase):
 
     def test_issue17_contract_rejects_dropped_case(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=14)
+        self.write(P + "DiagnosisTaskApiTest", cases=6)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(1, self.verdict(CONTRACTS["issue17"]))
@@ -184,14 +221,14 @@ class SurefireSkipGateTest(unittest.TestCase):
     def test_failures_are_mavens_job_not_this_gate(self):
         # The workflow records Maven's exit code separately. A failed test
         # must not be double-reported as a skip-gate violation.
-        self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest", cases=15, failures=1)
+        self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest", cases=7, failures=1)
         self.write("com.csust.eyediagnosis.diagnosistask.DiagnosisTaskRecoveryTest", cases=10)
         self.write("com.csust.eyediagnosis.diagnosistask.CosDiagnosisTaskStorageTest", cases=1)
         self.assertEqual(0, self.verdict(CONTRACTS["issue17"]))
 
     def test_named_scope_ignores_stale_reports(self):
         P = "com.csust.eyediagnosis.diagnosistask."
-        self.write(P + "DiagnosisTaskApiTest", cases=15)
+        self.write(P + "DiagnosisTaskApiTest", cases=7)
         self.write(P + "DiagnosisTaskRecoveryTest", cases=10)
         self.write(P + "CosDiagnosisTaskStorageTest", cases=1)
         self.write("com.csust.eyediagnosis.StaleOptInTest", cases=4, skipped=4)

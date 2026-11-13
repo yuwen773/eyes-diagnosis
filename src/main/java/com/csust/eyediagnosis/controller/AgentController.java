@@ -106,6 +106,18 @@ public class AgentController {
         return ResultUtils.success(chatHistoryService.loadHistory(threadId, beforeId, Math.min(limit, agentConstants.getMaxHistoryPageSize())));
     }
 
+    public record SessionCreate(String sessionId) {}
+
+    @PostMapping("/sessions")
+    public BaseResponse<SessionVO> createSession(@RequestBody SessionCreate request, HttpServletRequest servlet,
+                                                jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store");
+        User user = userService.getLoginUser(servlet);
+        if (user == null || user.getId() == null) throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        if (request == null) throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(chatHistoryService.createEmptySession(request.sessionId(), user.getId()));
+    }
+
     @GetMapping("/sessions")
     public BaseResponse<List<SessionVO>> getSessions(
             @RequestParam(required = false) Long beforeId,

@@ -42,14 +42,17 @@ P = "com.csust.eyediagnosis."
 BACKEND_UNIT_CONTRACT = {
     "expected": {},
     "opt_in": {
+        P + "collaboration.ProductSchemaTest": {"env": "PRODUCT_ACCEPTANCE_TEST_URL", "cases": 1},
         P + "agent.config.VectorStoreConfigTest": {"env": "RUN_CHROMA_INTEGRATION_TESTS", "cases": 1},
         P + "agent.rag.RAGEvaluationTest": {"env": "RUN_RAG_EVALUATION_TESTS", "cases": 2},
-        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 15, "skipped": 12},
+        P + "diagnosistask.DiagnosisTaskApiTest": {"env": "ISSUE17_TEST_URL", "cases": 7, "skipped": 4},
         P + "diagnosistask.DiagnosisTaskRecoveryTest": {"env": "ISSUE17_TEST_URL", "cases": 10, "skipped": 10},
         P + "controlledreference.ControlledReferenceApiTest": {
             "env": "ISSUE18_TEST_URL", "cases": 13, "skipped": 13,
         },
         P + "patientdraft.PatientDraftTest": {"env": "ISSUE19_TEST_URL", "cases": 41, "skipped": 41},
+        P + "collaboration.CollaborationRunTest": {"env": "COLLABORATION_TEST_URL", "cases": 31, "skipped": 31},
+        P + "collaboration.GraphExecutionTest": {"env": "GRAPH_EXECUTION_TEST_URL", "cases": 32, "skipped": 32},
         P + "doctorreview.DoctorReviewApiTest": {"env": "ISSUE20_TEST_URL", "cases": 36, "skipped": 36},
         P + "patientexplanation.PatientExplanationApiTest": {"env": "ISSUE21_TEST_URL", "cases": 37, "skipped": 37},
         P + "patientauthorization.PatientAuthorizationApiTest": {"env": "ISSUE22_TEST_URL", "cases": 37, "skipped": 37},
@@ -65,7 +68,7 @@ BACKEND_UNIT_CONTRACT = {
 ISSUE17_CONTRACT = {
     "scope": "named",
     "expected": {
-        P + "diagnosistask.DiagnosisTaskApiTest": 15,
+        P + "diagnosistask.DiagnosisTaskApiTest": 7,
         P + "diagnosistask.DiagnosisTaskRecoveryTest": 10,
         P + "diagnosistask.CosDiagnosisTaskStorageTest": 1,
     },
@@ -99,11 +102,19 @@ CONTRACTS = {
     "issue17": ISSUE17_CONTRACT,
     "issue18": ISSUE18_CONTRACT,
     "issue19": ISSUE19_CONTRACT,
+    "collaboration": {"scope": "named", "expected": {P + "collaboration.CollaborationRunTest": 31}, "opt_in": {}},
+    "graph-execution": {"scope": "named", "expected": {P + "collaboration.GraphExecutionTest": 32}, "opt_in": {}},
     "issue20": {"scope": "named", "expected": {P + "doctorreview.DoctorReviewApiTest": 36}, "opt_in": {}},
     "issue21": {"scope": "named", "expected": {P + "patientexplanation.PatientExplanationApiTest": 37}, "opt_in": {}},
     "issue22": {"scope": "named", "expected": {P + "patientauthorization.PatientAuthorizationApiTest": 37}, "opt_in": {}},
     "issue23": {"scope": "named", "expected": {P + "patientfollowup.PatientFollowUpApiTest": 37}, "opt_in": {}},
     "flyway": FLYWAY_CONTRACT,
+    "product": {"scope": "named", "expected": {
+        P + "collaboration.ProductSchemaTest": 1,
+        P + "collaboration.CollaborationImagesTest": 7,
+        P + "collaboration.ProductProviderLedgerTest": 4,
+        P + "controller.AgentSessionAdmissionTest": 8,
+    }, "opt_in": {}},
 }
 
 

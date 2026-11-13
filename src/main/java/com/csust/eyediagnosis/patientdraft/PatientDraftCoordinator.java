@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.patientdraft;
 
 import com.csust.eyediagnosis.controlledreference.ControlledEvidenceRetriever;
 import com.csust.eyediagnosis.controlledreference.ControlledEvidenceRetriever.Citation;
+import com.csust.eyediagnosis.collaboration.CollaborationEvents;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.csust.eyediagnosis.patientdraft.DraftAgents.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,6 +45,10 @@ public class PatientDraftCoordinator implements AutoCloseable {
     private final EvidenceAgent evidence;
     private final ExplanationAgent explanation;
     private final CriticAgent critic;
+    private CollaborationEvents collaboration;
+
+    @Autowired(required = false)
+    public void setCollaborationEvents(CollaborationEvents collaboration) { this.collaboration = collaboration; }
     // Two provider slots and a bounded queue; orchestration never blocks a provider worker.
     private final ThreadPoolExecutor calls = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2), r -> {
         var thread = new Thread(r, "patient-draft-model"); thread.setDaemon(true); return thread;
@@ -75,16 +80,19 @@ public class PatientDraftCoordinator implements AutoCloseable {
     }
 
     public void run(String requestedTaskId) {
-        Claimed claimed = claim(requestedTaskId);
+        boolean graph = collaboration != null && !jdbc.queryForList(
+                "SELECT taskId FROM t_agent_collab_run WHERE taskId=? AND runtimeKind='GRAPH' AND workflowVersion='GRAPH_V1'", requestedTaskId).isEmpty();
+        Claimed claimed = claim(requestedTaskId, graph);
         if (claimed == null) return;
         String taskId = claimed.taskId();
-        var run = new AutonomousRun(taskId, claimed.inference(), claimed.deadline());
-        try { run.execute(); }
-        catch (Stop e) { restrict(taskId, e.reason); }
-        catch (DraftMailbox.Rejected e) { restrict(taskId, e.reason); }
-        catch (ControlledEvidenceRetriever.EvidenceUnavailable e) { restrict(taskId, "SOURCE_INVALIDATED"); }
-        catch (InterruptedException e) { Thread.currentThread().interrupt(); restrict(taskId, "INTERRUPTED"); }
-        catch (Exception e) { log.error("Patient draft run failed for an unexpected reason", e); restrict(taskId, "INVALID_OUTPUT"); }
+        var run = new AutonomousRun(taskId, claimed.inference(), claimed.deadline(), claimed.lease());
+        try { if (graph) run.executeGraph(); else run.execute(); }
+        catch (CollaborationEvents.Stopped e) { /* Persistent cancellation already owns the terminal commit. */ }
+        catch (Stop e) { restrict(taskId, e.reason, claimed.lease()); }
+        catch (DraftMailbox.Rejected e) { restrict(taskId, e.reason, claimed.lease()); }
+        catch (ControlledEvidenceRetriever.EvidenceUnavailable e) { restrict(taskId, "SOURCE_INVALIDATED", claimed.lease()); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); restrict(taskId, "INTERRUPTED", claimed.lease()); }
+        catch (Exception e) { log.error("Patient draft run failed for an unexpected reason", e); restrict(taskId, "INVALID_OUTPUT", claimed.lease()); }
         finally { run.cancel(); }
     }
 
@@ -95,7 +103,8 @@ public class PatientDraftCoordinator implements AutoCloseable {
         private final String disease;
         private final DraftMailbox mailbox;
         private final java.time.Instant deadline;
-        private final List<Pending> active = new ArrayList<>();
+        private final List<Pending> active = new CopyOnWriteArrayList<>();
+        private final Lease lease;
         private final BlockingQueue<Completed> completed = new ArrayBlockingQueue<>(8);
         private Evidence frozen;
         private Draft draft;
@@ -103,7 +112,8 @@ public class PatientDraftCoordinator implements AutoCloseable {
         private int draftVersion;
         private boolean ready;
 
-        AutonomousRun(String taskId, Inference inference, java.time.Instant deadline) {
+        AutonomousRun(String taskId, Inference inference, java.time.Instant deadline, Lease lease) {
+            this.lease = lease;
             this.taskId = taskId; this.inference = inference;
             this.deadline = deadline;
             disease = inference.predictedLabel().toUpperCase(Locale.ROOT);
@@ -115,6 +125,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
             var context = new EvidenceContext(inference, null, null);
             launch("EVIDENCE", context, List.of(), () -> evidence.retrieve(context, disease, TOPIC));
             while (!ready) {
+                if (collaboration != null) guarded(taskId, lease, () -> null);
                 if (active.isEmpty()) throw new Stop("MESSAGE_CONFLICT");
                 long remaining = deadline.toEpochMilli() - clock.millis();
                 if (remaining <= 0) throw new Stop("TOTAL_TIMEOUT");
@@ -134,13 +145,14 @@ public class PatientDraftCoordinator implements AutoCloseable {
                     throw new Stop(transportFailure(cause));
                 }
                 // Keep rejected provider output inspectable, but never send it to another role.
-                recordResult(taskId, done, List.of());
+                recordResult(taskId, lease, done, List.of(), false);
                 List<DraftMailbox.Envelope> outgoing = accept(done.call(), done.result());
-                recordResult(taskId, done, outgoing);
+                recordResult(taskId, lease, done, outgoing, true);
                 if (ready) {
-                    retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> guarded(taskId, () -> {
+                    retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> guarded(taskId, lease, () -> {
                         jdbc.update("UPDATE t_patient_draft_run SET status='REVIEW_READY' WHERE taskId=?", taskId);
                         jdbc.update("UPDATE t_diagnosis_task SET status='WAITING_REVIEW',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND BINARY status=BINARY 'DRAFTING'", taskId);
+                        if (collaboration != null) collaboration.succeeded(taskId, draftVersion);
                         return null;
                     }));
                 } else schedule();
@@ -149,7 +161,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
 
         private void launch(String role, Object context, List<DraftMailbox.Envelope> inbox, Callable<?> action) {
             if (active.stream().anyMatch(c -> c.role.equals(role))) throw new Stop("MESSAGE_CONFLICT");
-            active.add(start(taskId, role, context, inbox, action, completed));
+            active.add(start(taskId, lease, role, context, inbox, action, completed));
         }
 
         private List<DraftMailbox.Envelope> accept(Pending call, Object result) {
@@ -171,14 +183,14 @@ public class PatientDraftCoordinator implements AutoCloseable {
                         if (combined.size() == frozen.citations().size()) throw new Stop("INSUFFICIENT_EVIDENCE");
                         citations = List.copyOf(combined.values());
                     }
-                    frozen = freeze(taskId, disease, frozen == null ? 1 : 2, citations);
+                    frozen = freeze(taskId, lease, disease, frozen == null ? 1 : 2, citations);
                     for (String to : List.of("EXPLANATION", "CRITIC"))
                         outgoing.add(mailbox.send(call.sequence, call.role, to, "EVIDENCE_READY", cause, frozen.version(), null, frozen));
                 }
                 case "EXPLANATION" -> {
                     draft = (Draft) result;
                     validateDraft(draft, frozen);
-                    saveDraft(taskId, ++draftVersion, draft);
+                    saveDraft(taskId, lease, ++draftVersion, draft);
                     outgoing.add(mailbox.send(call.sequence, call.role, "CRITIC", "DRAFT_READY", cause, frozen.version(), draftVersion, draft));
                 }
                 case "CRITIC" -> {
@@ -189,7 +201,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
                         ready = true;
                     } else {
                         boolean supplement = "SUPPLEMENT".equals(review.action());
-                        reserveFeedback(taskId, supplement);
+                        reserveFeedback(taskId, lease, supplement);
                         feedback = review;
                         outgoing.add(mailbox.send(call.sequence, call.role, supplement ? "EVIDENCE" : "EXPLANATION",
                                 supplement ? "SUPPLEMENT_REQUESTED" : "REWRITE_REQUESTED", cause, frozen.version(), draftVersion, review));
@@ -236,6 +248,189 @@ public class PatientDraftCoordinator implements AutoCloseable {
         }
 
         void cancel() { active.forEach(c -> c.future.cancel(true)); calls.purge(); }
+
+        void executeGraph() throws Exception {
+            String saved = guarded(taskId, lease, () -> jdbc.queryForObject(
+                    "SELECT checkpointJson FROM t_patient_graph_execution WHERE taskId=?", String.class, taskId));
+            if (saved != null) restore(decode(saved, new TypeReference<GraphCheckpoint>() {}));
+            if (frozen != null) retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> null);
+            var parallel = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(8), r -> {
+                var t = new Thread(r, "patient-graph-branch"); t.setDaemon(true); return t;
+            });
+            var driver = Executors.newSingleThreadExecutor(r -> {
+                var t = new Thread(r, "patient-graph-driver"); t.setDaemon(true); return t;
+            });
+            CompletableFuture<List<com.alibaba.cloud.ai.graph.NodeOutput>> stream = null;
+            try {
+                var config = com.alibaba.cloud.ai.graph.RunnableConfig.builder().threadId(taskId)
+                        .defaultParallelExecutor(parallel).build();
+                stream = DraftGraph.compile(this::graphRole).stream(Map.of(), config)
+                        .subscribeOn(reactor.core.scheduler.Schedulers.fromExecutor(driver)).collectList().toFuture();
+                long renewAt = 0;
+                while (!stream.isDone()) {
+                    guarded(taskId, lease, () -> null);
+                    if (clock.millis() >= renewAt) {
+                        guarded(taskId, lease, () -> {
+                            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=? WHERE taskId=?", Timestamp.from(clock.instant().plusSeconds(10)), taskId);
+                            return null;
+                        });
+                        renewAt = clock.millis() + 1000;
+                    }
+                    try { stream.get(20, TimeUnit.MILLISECONDS); } catch (TimeoutException waiting) { /* monitor persisted intent */ }
+                }
+                var outputs = stream.get();
+                if (outputs.isEmpty() || !outputs.getLast().isEND() || !ready) throw new Stop("INVALID_OUTPUT");
+                retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> guarded(taskId, lease, () -> {
+                    jdbc.update("UPDATE t_patient_draft_run SET status='REVIEW_READY' WHERE taskId=?", taskId);
+                    jdbc.update("UPDATE t_diagnosis_task SET status='WAITING_REVIEW',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
+                    collaboration.succeeded(taskId, draftVersion);
+                    return null;
+                }));
+            } catch (Exception wrapped) {
+                for (Throwable cause = wrapped; cause != null; cause = cause.getCause()) {
+                    if (cause instanceof Stop stop) throw stop;
+                    if (cause instanceof CollaborationEvents.Stopped stopped) throw stopped;
+                    if (cause instanceof DraftMailbox.Rejected rejected) throw rejected;
+                    if (cause instanceof ControlledEvidenceRetriever.EvidenceUnavailable unavailable) throw unavailable;
+                }
+                throw wrapped;
+            } finally {
+                if (stream != null) stream.cancel(true);
+                cancel(); parallel.shutdownNow(); driver.shutdownNow();
+            }
+        }
+
+        private Map<String, Object> graphRole(String role, int version) throws Exception {
+            String nodeKey = role + ":" + version;
+            var cached = guarded(taskId, lease, () -> jdbc.query("SELECT statePatch FROM t_patient_graph_node WHERE taskId=? AND nodeKey=?",
+                    (rs, n) -> decode(rs.getString(1), new TypeReference<Map<String, Object>>() {}), taskId, nodeKey));
+            if (!cached.isEmpty()) return cached.getFirst();
+            Object context;
+            List<DraftMailbox.Envelope> inbox;
+            Callable<?> action;
+            synchronized (this) {
+                if (frozen != null) retriever.withValidatedEvidence(disease, TOPIC, frozen.citations(), () -> null);
+                switch (role) {
+                    case "VISION" -> { context = inference; inbox = List.of(); action = () -> vision.analyze(inference); }
+                    case "EVIDENCE" -> {
+                        var v = mailbox.latest("EVIDENCE", "VISION_READY");
+                        var request = version == 1 ? null : mailbox.latest("EVIDENCE", "SUPPLEMENT_REQUESTED");
+                        if (version > 1) { if (request == null) throw new Stop("MESSAGE_CONFLICT"); checkFeedback(request); }
+                        var c = new EvidenceContext(inference, version == 1 ? null : (Vision) v.payload(), request == null ? null : (Critique) request.payload());
+                        context = c; inbox = version == 1 ? List.of() : mailbox.consume(v, request);
+                        action = () -> evidence.retrieve(c, disease, TOPIC);
+                    }
+                    case "EXPLANATION" -> {
+                        var v = mailbox.latest("EXPLANATION", "VISION_READY");
+                        var e = mailbox.latest("EXPLANATION", "EVIDENCE_READY");
+                        var request = mailbox.latest("EXPLANATION", "REWRITE_REQUESTED");
+                        if (request != null) checkFeedback(request);
+                        if (v == null || e == null || version != draftVersion + 1) throw new Stop("MESSAGE_CONFLICT");
+                        var c = new ExplanationContext(inference, (Vision) v.payload(), ExplanationEvidence.from((Evidence) e.payload()), draft, feedback);
+                        context = c; inbox = mailbox.consume(v, e, request); action = () -> explanation.explain(c);
+                    }
+                    case "CRITIC" -> {
+                        var v = mailbox.latest("CRITIC", "VISION_READY");
+                        var e = mailbox.latest("CRITIC", "EVIDENCE_READY");
+                        var d = mailbox.latest("CRITIC", "DRAFT_READY");
+                        if (d == null || e == null || v == null || !Objects.equals(d.evidenceVersion(), e.evidenceVersion()) || version != draftVersion)
+                            throw new Stop("MESSAGE_CONFLICT");
+                        var c = new CriticContext(inference, (Vision) v.payload(), (Evidence) e.payload(), (Draft) d.payload());
+                        context = c; inbox = mailbox.consume(v, e, d); action = () -> critic.critique(c);
+                    }
+                    default -> throw new Stop("INVALID_MESSAGE_ROUTE");
+                }
+            }
+            var queue = new ArrayBlockingQueue<Completed>(1);
+            Pending pending = start(taskId, lease, role, context, inbox, action, queue);
+            active.add(pending);
+            try {
+                Completed done;
+                while ((done = queue.poll(20, TimeUnit.MILLISECONDS)) == null) {
+                    guarded(taskId, lease, () -> null);
+                    if (pending.startedNanos != 0 && TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - pending.startedNanos) >= budget.callMillis())
+                        throw new Stop("AGENT_TIMEOUT");
+                }
+                if (done.failure() != null) {
+                    if (done.failure() instanceof Stop stop) throw stop;
+                    if (done.failure() instanceof ControlledEvidenceRetriever.EvidenceUnavailable unavailable) throw unavailable;
+                    throw new Stop(transportFailure(done.failure()));
+                }
+                // Preserve rejected output for internal audit; only the next transaction commits a node.
+                recordResult(taskId, lease, done, List.of(), false);
+                synchronized (this) {
+                    Completed result = done;
+                    Supplier<Map<String, Object>> commit = () -> guarded(taskId, lease, () -> {
+                        var outgoing = accept(pending, result.result());
+                        recordResult(taskId, lease, result, outgoing, true);
+                        Map<String, Object> patch = switch (role) {
+                            case "EXPLANATION" -> Map.of("draftVersion", draftVersion);
+                            case "CRITIC" -> Map.of("feedback", ((Critique) result.result()).action());
+                            default -> Map.of();
+                        };
+                        jdbc.update("INSERT INTO t_patient_graph_node (taskId,nodeKey,statePatch) VALUES (?,?,?)", taskId, nodeKey, encode(patch));
+                        int changed = jdbc.update("UPDATE t_patient_graph_execution SET checkpointJson=?,checkpointVersion=checkpointVersion+1 WHERE taskId=? AND checkpointVersion=?",
+                                encode(new GraphCheckpoint(frozen, draft, feedback, draftVersion, ready, mailbox.snapshot())), taskId, lease.checkpointVersion);
+                        if (changed != 1) throw new Stop("STALE_EXECUTOR");
+                        // Advance memory only after the enclosing transaction actually committed.
+                        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                                new org.springframework.transaction.support.TransactionSynchronization() {
+                                    @Override public void afterCommit() { lease.checkpointVersion++; }
+                                });
+                        return patch;
+                    });
+                    // The retriever's governance locks precede task locks, as at the final gate.
+                    if (result.result() instanceof Retrieved retrieved) {
+                        var citations = new ArrayList<>(retrieved.citations());
+                        if (frozen != null) citations.addAll(frozen.citations());
+                        return retriever.withValidatedEvidence(disease, TOPIC, citations, commit);
+                    }
+                    return commit.get();
+                }
+            } finally { active.remove(pending); pending.future.cancel(true); calls.purge(); }
+        }
+
+        private void restore(GraphCheckpoint saved) {
+            frozen = saved.evidence(); draft = saved.draft(); feedback = saved.feedback(); draftVersion = saved.draftVersion(); ready = saved.ready();
+            var envelopes = saved.mailbox().delivered().stream().map(e -> new DraftMailbox.Envelope(e.messageId(), e.taskId(), e.workflowVersion(),
+                    e.senderRole(), e.recipientRole(), e.kind(), e.sourceSequence(), e.causationMessageId(), e.inferenceDigest(), e.evidenceVersion(), e.draftVersion(),
+                    restorePayload(e), e.sentAt())).toList();
+            mailbox.restore(new DraftMailbox.Snapshot(envelopes, saved.mailbox().consumed()));
+        }
+
+        private Object restorePayload(DraftMailbox.Envelope e) {
+            return switch (e.kind()) {
+                case "VISION_READY" -> json.convertValue(e.payload(), Vision.class);
+                case "EVIDENCE_READY" -> json.convertValue(e.payload(), Evidence.class);
+                case "DRAFT_READY" -> json.convertValue(e.payload(), Draft.class);
+                default -> json.convertValue(e.payload(), Critique.class);
+            };
+        }
+    }
+
+    private record GraphCheckpoint(Evidence evidence, Draft draft, Critique feedback, int draftVersion, boolean ready, DraftMailbox.Snapshot mailbox) {}
+    private static final class Lease {
+        final String owner;
+        final long token;
+        long checkpointVersion;
+        Lease(String owner, long token, long version) { this.owner = owner; this.token = token; this.checkpointVersion = version; }
+    }
+
+    private Lease takeLease(String taskId) {
+        var rows = jdbc.queryForList("SELECT fencingToken,checkpointVersion,leaseUntil FROM t_patient_graph_execution WHERE taskId=? FOR UPDATE", taskId);
+        if (rows.isEmpty()) throw new Stop("STALE_EXECUTOR");
+        var until = jdbc.queryForObject("SELECT leaseUntil FROM t_patient_graph_execution WHERE taskId=?", Timestamp.class, taskId);
+        if (until != null && until.toInstant().isAfter(clock.instant())) return null;
+        var row = rows.getFirst();
+        var lease = new Lease(UUID.randomUUID().toString(), ((Number) row.get("fencingToken")).longValue() + 1, ((Number) row.get("checkpointVersion")).longValue());
+        jdbc.update("UPDATE t_patient_graph_execution SET leaseOwner=?,fencingToken=?,leaseUntil=? WHERE taskId=?", lease.owner, lease.token, Timestamp.from(clock.instant().plusSeconds(10)), taskId);
+        return lease;
+    }
+
+    private void checkLease(String taskId, Lease lease) {
+        var current = jdbc.queryForList("SELECT taskId FROM t_patient_graph_execution WHERE taskId=? AND leaseOwner=? AND fencingToken=? AND leaseUntil>? FOR UPDATE",
+                taskId, lease.owner, lease.token, now());
+        if (current.size() != 1) throw new Stop("STALE_EXECUTOR");
     }
 
     /** Selects only unstarted work or expired, interrupted work; completed/restricted runs never replay calls. */
@@ -247,22 +442,43 @@ public class PatientDraftCoordinator implements AutoCloseable {
         if (!candidates.isEmpty()) run(candidates.getFirst());
     }
 
-    private Claimed claim(String requestedTaskId) {
+    private Claimed claim(String requestedTaskId, boolean graph) {
         return transactions.execute(tx -> {
             var tasks = jdbc.queryForList("SELECT * FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", requestedTaskId);
             if (tasks.size() != 1 || !Set.of("WAITING_REVIEW", "DRAFTING").contains(tasks.getFirst().get("status"))) return null;
             // Legacy task ids use a case-insensitive collation; budgets must use the stored canonical id.
             String taskId = (String) tasks.getFirst().get("taskId");
+            if (collaboration != null) {
+                try { collaboration.guard(taskId, graph ? "GRAPH" : "COORDINATOR", graph ? "GRAPH_V1" : DraftMailbox.VERSION); }
+                catch (CollaborationEvents.Stopped stopped) { return null; }
+            }
             var existing = jdbc.query("SELECT status,deadlineAt FROM t_patient_draft_run WHERE taskId=?",
                     (rs, n) -> new Gate(rs.getString(1), rs.getTimestamp(2).toInstant()), taskId);
             if (!existing.isEmpty()) {
+                if (graph) {
+                    if (!"RUNNING".equals(existing.getFirst().status())) return null;
+                    Lease lease = takeLease(taskId);
+                    if (lease == null) return null;
+                    if (!existing.getFirst().deadline().isAfter(clock.instant())) {
+                        restrict(taskId, "TOTAL_TIMEOUT", lease); return null;
+                    }
+                    String snapshot = Objects.toString(tasks.getFirst().get("inferenceSnapshot"), "");
+                    String stored = jdbc.queryForObject("SELECT inferenceDigest FROM t_patient_draft_run WHERE taskId=?", String.class, taskId);
+                    if (!stored.equals(digest(snapshot)) || !collaboration.boundTo(taskId, stored)) {
+                        restrict(taskId, "INVALID_INFERENCE", lease); return null;
+                    }
+                    jdbc.update("UPDATE t_patient_draft_message SET state='STOPPED',completedAt=? WHERE taskId=? AND state='STARTED'", now(), taskId);
+                    return new Claimed(taskId, inference(new Bound(taskId, tasks.getFirst(), snapshot, stored)), existing.getFirst().deadline(), lease);
+                }
                 if ("RUNNING".equals(existing.getFirst().status()) && !existing.getFirst().deadline().isAfter(clock.instant())) {
-                    restrict(taskId, "INTERRUPTED_OR_TIMEOUT");
+                    restrict(taskId, "INTERRUPTED_OR_TIMEOUT", null);
                 }
                 return null;
             }
             String snapshot = Objects.toString(tasks.getFirst().get("inferenceSnapshot"), "");
             Bound bound = new Bound(taskId, tasks.getFirst(), snapshot, digest(snapshot));
+            if (collaboration != null && !collaboration.boundTo(taskId, bound.digest()))
+                return invalidInference(taskId, bound.digest(), "INVALID_INFERENCE");
             Inference inference;
             try {
                 inference = inference(bound);
@@ -277,7 +493,13 @@ public class PatientDraftCoordinator implements AutoCloseable {
             jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,workflowVersion,status,startedAt,deadlineAt) VALUES (?,?,?,'RUNNING',?,?)",
                     taskId, bound.digest(), DraftMailbox.VERSION, now(), Timestamp.from(deadline));
             jdbc.update("UPDATE t_diagnosis_task SET status='DRAFTING',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
-            return new Claimed(taskId, inference, deadline);
+            if (collaboration != null) collaboration.started(taskId, graph ? "GRAPH" : "COORDINATOR", graph ? "GRAPH_V1" : DraftMailbox.VERSION);
+            Lease lease = null;
+            if (graph) {
+                jdbc.update("INSERT INTO t_patient_graph_execution (taskId) VALUES (?)", taskId);
+                lease = takeLease(taskId);
+            }
+            return new Claimed(taskId, inference, deadline, lease);
         });
     }
 
@@ -285,11 +507,12 @@ public class PatientDraftCoordinator implements AutoCloseable {
         jdbc.update("INSERT INTO t_patient_draft_run (taskId,inferenceDigest,workflowVersion,status,stopReason,startedAt,deadlineAt) VALUES (?,?,?,'RESTRICTED',?,?,?)",
                 taskId, digest, DraftMailbox.VERSION, reason, now(), Timestamp.from(clock.instant().plusMillis(budget.totalMillis())));
         jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=?", taskId);
+        if (collaboration != null) collaboration.stopped(taskId, reason);
         return null;
     }
 
     private record Bound(String taskId, Map<String, Object> task, String snapshot, String digest) {}
-    private record Claimed(String taskId, Inference inference, java.time.Instant deadline) {}
+    private record Claimed(String taskId, Inference inference, java.time.Instant deadline, Lease lease) {}
 
     private Inference inference(Bound bound) {
         JsonNode root;
@@ -326,9 +549,9 @@ public class PatientDraftCoordinator implements AutoCloseable {
     }
     private record Completed(Pending call, Object result, Throwable failure) {}
 
-    private Pending start(String taskId, String role, Object context, List<DraftMailbox.Envelope> inbox,
+    private Pending start(String taskId, Lease lease, String role, Object context, List<DraftMailbox.Envelope> inbox,
                           Callable<?> action, BlockingQueue<Completed> completed) {
-        int sequence = guarded(taskId, () -> {
+        int sequence = guarded(taskId, lease, () -> {
             int count = jdbc.queryForObject("SELECT callCount FROM t_patient_draft_run WHERE taskId=?", Integer.class, taskId);
             if (count >= budget.maxCalls()) throw new Stop("CALL_BUDGET");
             jdbc.update("UPDATE t_patient_draft_run SET callCount=callCount+1 WHERE taskId=?", taskId);
@@ -342,8 +565,9 @@ public class PatientDraftCoordinator implements AutoCloseable {
             pending.future = calls.submit(() -> {
                 Object result = null; Throwable failure = null;
                 try {
-                    guarded(taskId, () -> {
+                    guarded(taskId, lease, () -> {
                         jdbc.update("UPDATE t_patient_draft_message SET startedAt=? WHERE taskId=? AND sequence=?", now(), taskId, sequence);
+                        if (collaboration != null) collaboration.agent(taskId, role, sequence, false);
                         return null;
                     });
                     pending.startedNanos = System.nanoTime();
@@ -356,14 +580,23 @@ public class PatientDraftCoordinator implements AutoCloseable {
         return pending;
     }
 
-    private void recordResult(String taskId, Completed done, List<DraftMailbox.Envelope> outgoing) {
+    private void recordResult(String taskId, Lease lease, Completed done, List<DraftMailbox.Envelope> outgoing, boolean validated) {
         Pending call = done.call();
         if (call.startedNanos != 0 && TimeUnit.NANOSECONDS.toMillis(call.finishedNanos - call.startedNanos) >= budget.callMillis())
             throw new Stop("AGENT_TIMEOUT");
-        guarded(taskId, () -> {
+        guarded(taskId, lease, () -> {
             jdbc.update("UPDATE t_patient_draft_message SET state='COMPLETED',output=?,completedAt=? WHERE taskId=? AND sequence=?",
                     encode(Map.of("context", call.context, "result", done.result(), "collaboration", Map.of(
                             "workflowVersion", DraftMailbox.VERSION, "inbox", call.inbox, "outgoing", outgoing))), Timestamp.from(call.finishedAt), taskId, call.sequence);
+            if (collaboration != null && validated) {
+                collaboration.agent(taskId, call.role, call.sequence, true);
+                for (var message : outgoing) {
+                    collaboration.append(taskId, "agent.handoff", call.role, "CLINICIAN", Map.of(
+                            "messageId", message.messageId(), "to", message.recipientRole(), "kind", message.kind(), "call", call.sequence));
+                }
+                if (done.result() instanceof Critique review && !"NONE".equals(review.action()))
+                    collaboration.append(taskId, "agent.feedback.requested", call.role, "PATIENT", Map.of("action", review.action(), "call", call.sequence));
+            }
             return null;
         });
     }
@@ -406,23 +639,25 @@ public class PatientDraftCoordinator implements AutoCloseable {
         return "PROVIDER_UNAVAILABLE";
     }
 
-    private Evidence freeze(String taskId, String disease, int version, List<Citation> citations) {
+    private Evidence freeze(String taskId, Lease lease, String disease, int version, List<Citation> citations) {
         if (citations == null || citations.isEmpty()) throw new Stop("INSUFFICIENT_EVIDENCE");
-        return retriever.withValidatedEvidence(disease, TOPIC, citations, () -> guarded(taskId, () -> {
+        return retriever.withValidatedEvidence(disease, TOPIC, citations, () -> guarded(taskId, lease, () -> {
             jdbc.update("INSERT INTO t_patient_evidence_version (taskId,version,citations) VALUES (?,?,?)", taskId, version, encode(citations));
+            if (collaboration != null) collaboration.append(taskId, "evidence.verified", "EVIDENCE", "CLINICIAN", Map.of("evidenceVersion", version));
             return new Evidence(version, List.copyOf(citations));
         }));
     }
 
-    private void saveDraft(String taskId, int version, Draft draft) {
-        guarded(taskId, () -> {
+    private void saveDraft(String taskId, Lease lease, int version, Draft draft) {
+        guarded(taskId, lease, () -> {
             jdbc.update("INSERT INTO t_patient_draft_version (taskId,version,evidenceVersion,draft) VALUES (?,?,?,?)", taskId, version, draft.evidenceVersion(), encode(draft));
+            if (collaboration != null) collaboration.append(taskId, "agent.revision.completed", "EXPLANATION", "CLINICIAN", Map.of("draftVersion", version, "evidenceVersion", draft.evidenceVersion()));
             return null;
         });
     }
 
-    private void reserveFeedback(String taskId, boolean supplement) {
-        guarded(taskId, () -> {
+    private void reserveFeedback(String taskId, Lease lease, boolean supplement) {
+        guarded(taskId, lease, () -> {
             int updated = jdbc.update("UPDATE t_patient_draft_run SET rewriteCount=rewriteCount+1,supplementCount=supplementCount+? WHERE taskId=? AND rewriteCount=0 AND supplementCount=0",
                     supplement ? 1 : 0, taskId);
             if (updated != 1) throw new Stop("FEEDBACK_LIMIT");
@@ -430,7 +665,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
         });
     }
 
-    private <T> T guarded(String taskId, Supplier<T> action) {
+    private <T> T guarded(String taskId, Lease lease, Supplier<T> action) {
         return transactions.execute(tx -> {
             // Consistent task -> run lock ordering, including claim/recovery and restriction.
             var tasks = jdbc.queryForList("SELECT status,inferenceSnapshot FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", taskId);
@@ -440,6 +675,8 @@ public class PatientDraftCoordinator implements AutoCloseable {
             if (!rows.getFirst().deadline().isAfter(clock.instant())) throw new Stop("TOTAL_TIMEOUT");
             if (tasks.size() != 1 || !"DRAFTING".equals(tasks.getFirst().get("status"))
                     || !rows.getFirst().digest().equals(digest(Objects.toString(tasks.getFirst().get("inferenceSnapshot"), "")))) throw new Stop("INVALID_INFERENCE");
+            if (lease != null) checkLease(taskId, lease);
+            if (collaboration != null) collaboration.guard(taskId, lease == null ? "COORDINATOR" : "GRAPH", lease == null ? DraftMailbox.VERSION : "GRAPH_V1");
             return action.get();
         });
     }
@@ -447,9 +684,13 @@ public class PatientDraftCoordinator implements AutoCloseable {
     private record Gate(String status, java.time.Instant deadline) {}
     private record RunGate(String status, java.time.Instant deadline, String digest) {}
 
-    private void restrict(String taskId, String reason) {
+    private void restrict(String taskId, String reason, Lease lease) {
         transactions.executeWithoutResult(tx -> {
             jdbc.queryForList("SELECT taskId FROM t_diagnosis_task WHERE taskId=? FOR UPDATE", taskId);
+            jdbc.queryForList("SELECT taskId FROM t_patient_draft_run WHERE taskId=? FOR UPDATE", taskId);
+            if (lease != null) {
+                try { checkLease(taskId, lease); } catch (Stop stale) { return; }
+            }
             // A run recovered after process death stopped at its deadline, not when a later process noticed it.
             var stoppedAt = "INTERRUPTED_OR_TIMEOUT".equals(reason)
                     ? jdbc.query("SELECT deadlineAt FROM t_patient_draft_run WHERE taskId=?", (rs, n) -> rs.getTimestamp(1), taskId)
@@ -459,6 +700,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
             if (changed == 1) {
                 jdbc.update("UPDATE t_patient_draft_message SET state='STOPPED',completedAt=? WHERE taskId=? AND state='STARTED'", stoppedAt, taskId);
                 jdbc.update("UPDATE t_diagnosis_task SET status='RESTRICTED',version=version+1,updatedAt=CURRENT_TIMESTAMP(6) WHERE taskId=? AND BINARY status=BINARY 'DRAFTING'", taskId);
+                if (collaboration != null) collaboration.stopped(taskId, reason);
             }
         });
     }

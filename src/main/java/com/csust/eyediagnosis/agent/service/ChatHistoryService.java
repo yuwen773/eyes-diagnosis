@@ -134,6 +134,18 @@ public class ChatHistoryService {
         return session != null && userId.equals(session.getUserId());
     }
 
+    /** Explicit empty session admission; never generates a title or calls a model. */
+    @Transactional
+    public SessionVO createEmptySession(String sessionId, Long userId) {
+        if (sessionId == null || !sessionId.matches("[a-zA-Z0-9_-]{1,64}"))
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        AgentSession session = claimOrValidateSession(sessionId, userId, "影像协作");
+        if (!Integer.valueOf(1).equals(session.getStatus())
+                || (session.getExpiredTime() != null && !session.getExpiredTime().after(new Date())))
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        return toSessionVO(session);
+    }
+
     public void deleteSession(String sessionId, Long userId) {
         if (!isSessionOwner(sessionId, userId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
