@@ -10,19 +10,26 @@ import "@/styles/brand.css"
  */
 
 /**
- * 轻质信息面板。
+ * 品牌材质面板（DESIGN.md §2.1.1）。
  *
- * <p>两种形态：`glass`（半透明 + 背景模糊，用于浮在光学主视觉之上的卡片）、
- * `solid`（不透明，用于需要高可读性的内容块）。两者都带发丝描边与
- * 基于品牌色的极淡投影——层级靠描边与留白，不靠厚重阴影。
+ * <p>五种材质共用一套结构，只换底色 / 描边 / 内侧高光 / 模糊强度：
+ * <ul>
+ *   <li>`layered` —— Hero 信息卡：最透、层次最多（`glass` 是它的旧名，保留兼容）</li>
+ *   <li>`frosted` —— 悬浮导航：更实更稳，先保证可读</li>
+ *   <li>`soft` —— 首页入口卡：清爽、细描边、有限模糊</li>
+ *   <li>`solid` —— 承载大量文字的区域：不透明、不用模糊</li>
+ * </ul>
+ * 光学玻璃（`optical`）由 WebGL 渲染器画，不在这里。
  */
+export type BrandPanelVariant = "layered" | "glass" | "frosted" | "soft" | "solid"
+
 export function BrandPanel(props: {
-  variant?: "glass" | "solid"
+  variant?: BrandPanelVariant
   as?: "div" | "article" | "section" | "aside"
   className?: string
   children: ReactNode
 }): ReactElement {
-  const { variant = "glass", as: Tag = "div", className, children } = props
+  const { variant = "layered", as: Tag = "div", className, children } = props
   const classes = ["brand-panel", `brand-panel--${variant}`, className]
     .filter(Boolean)
     .join(" ")

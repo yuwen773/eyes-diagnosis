@@ -94,6 +94,17 @@ describe("request", () => {
       name: "AbortError",
     })
   })
+
+  it("把调用方的 AbortSignal 原样交给 fetch（取消才真的能停下请求）", async () => {
+    const fetchMock = stubFetch({ code: 0, data: { ok: true } })
+    const controller = new AbortController()
+
+    await request<{ ok: boolean }>("/x", { signal: controller.signal })
+
+    const init = fetchMock.mock.calls[0][1]
+    expect(init?.signal).toBe(controller.signal)
+    expect(init?.credentials).toBe("include")
+  })
 })
 
 describe("toPage", () => {

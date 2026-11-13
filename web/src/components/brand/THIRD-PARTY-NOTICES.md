@@ -44,7 +44,11 @@
 上游原始渲染流程（场渲染 → mipmap 泛光 → 合成、鼠标交互、intro 动画、
 可见性监听、ResizeObserver）保持不变。
 
-### 许可原文（固定 commit 下的 `LICENSE.md`，逐字照录）
+### 许可原文（固定 commit 下的 `LICENSE.md`，正文照录）
+
+> **不是逐字等同**：为便于阅读，下文对关键限制加了 Markdown 粗体强调。
+> 文字与语义未改，但字面上与上游文件不同；需要逐字比对时以上游仓库的
+> `LICENSE.md` 为准。
 
 ```text
 MIT + Commons Clause License Condition v1.0

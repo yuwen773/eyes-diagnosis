@@ -5,21 +5,93 @@
  * 不引用 --field / --ink / --signal —— 品牌层与临床层互不串味。
  */
 
+/* ==========================================================================
+   品牌材质（DESIGN.md §2.1.1）
+   --------------------------------------------------------------------------
+   五种材质共用同一套结构（底色 / 描边 / 内侧高光 / 模糊 / 投影），
+   只换这几组值。`.brand-panel` 是唯一入口，不另起一套玻璃组件。
+   默认落在 Layered Glass——Hero 信息卡是它最常见的用途。
+   ========================================================================== */
+
 .brand-panel {
   position: relative;
-  border: 1px solid var(--brand-hairline);
+  isolation: isolate;
+  --glass-bg: var(--brand-glass-layered);
+  --glass-edge: var(--brand-glass-layered-edge);
+  --glass-inner: var(--brand-glass-layered-inner);
+  --glass-blur: var(--brand-glass-layered-blur);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-xl);
-  background: var(--brand-glass);
+  background: var(--glass-bg);
   box-shadow: var(--brand-shadow);
   color: var(--brand-text);
   /* 背景模糊是 GPU 合成，只给少量面板用；离屏面板不常驻。 */
-  backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
 }
 
+/* 内侧高光：玻璃的「厚度」来自这一层，不是靠加厚阴影。 */
+.brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--glass-inner) 0%, transparent 48%);
+  pointer-events: none;
+}
+
+/* 1 · Layered Glass —— Hero 信息卡：最透，层次最多（默认值即此） */
+.brand-panel--layered,
+.brand-panel--glass {
+  --glass-bg: var(--brand-glass-layered);
+  --glass-edge: var(--brand-glass-layered-edge);
+  --glass-inner: var(--brand-glass-layered-inner);
+  --glass-blur: var(--brand-glass-layered-blur);
+}
+
+/* 2 · Frosted Glass —— 悬浮导航：更实、更稳，先保证可读 */
+.brand-panel--frosted {
+  --glass-bg: var(--brand-glass-frosted);
+  --glass-edge: var(--brand-glass-frosted-edge);
+  --glass-inner: var(--brand-glass-frosted-inner);
+  --glass-blur: var(--brand-glass-frosted-blur);
+  border-radius: var(--radius-pill);
+}
+
+/* 3 · Soft Glass —— 首页入口卡：清爽、细描边、有限模糊 */
+.brand-panel--soft {
+  --glass-bg: var(--brand-glass-soft);
+  --glass-edge: var(--brand-glass-soft-edge);
+  --glass-inner: var(--brand-glass-soft-inner);
+  --glass-blur: var(--brand-glass-soft-blur);
+}
+
+/* 4 · Solid Brand Surface —— 承载大量文字的区域，不用模糊 */
 .brand-panel--solid {
+  --glass-bg: var(--brand-surface);
+  --glass-edge: var(--brand-outline);
+  --glass-inner: transparent;
   background: var(--brand-surface);
   border-color: var(--brand-outline);
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.brand-panel--solid::before {
+  display: none;
+}
+
+/* 不支持 backdrop-filter：退到更实的静态表面，保留描边与内侧高光。
+   不能塌成一块灰，也不能变成完全透明的空气。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .brand-panel {
+    background: var(--brand-glass-fallback);
+  }
+
+  .brand-panel--solid {
+    background: var(--brand-surface);
+  }
 }
 
 .brand-kicker {
@@ -32,10 +104,8 @@
   color: var(--brand-muted);
 }
 
-/* 暗底上的玻璃面需要更实的边，不然边缘会糊在背景里。 */
-html.dark .brand-panel {
-  border-color: var(--brand-outline);
-}
+/* 暗底上的玻璃边由 --brand-glass-*-edge 的暗色取值负责（更实的冰蓝），
+   不再在类上单独覆写 border-color——材质令牌已经把双主题差异收在一处。 */
 
 /* ==========================================================================
    首屏：Iris 2.0 光学台
@@ -73,9 +143,6 @@ html.dark .landing-hero__shell {
   width: fit-content;
   margin-left: auto;
   padding: 7px 8px 7px 16px;
-  border: 1px solid var(--brand-outline);
-  border-radius: var(--radius-pill);
-  background: var(--brand-glass);
   color: var(--brand-muted);
   font-size: 12px;
 }
@@ -323,15 +390,14 @@ html.dark .landing-hero__btn--primary {
   list-style: none;
 }
 
+/* 材质（底色 / 描边 / 内侧高光 / 模糊）由 .brand-panel--soft 提供，
+   这里只管版式与交互态。 */
 .landing-hero__entry {
   position: relative;
   display: grid;
   gap: 6px;
   height: 100%;
   padding: 18px 20px 20px;
-  border: 1px solid var(--brand-outline);
-  border-radius: var(--radius-xl);
-  background: var(--brand-glass);
   color: var(--brand-text);
   text-decoration: none;
 }
