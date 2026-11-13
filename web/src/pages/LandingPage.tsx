@@ -598,7 +598,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* 责任边界：暗房里的一块仪器面板，条款印在发丝线上。 */}
+        {/* 责任边界：实体品牌面（浅色亮面 / 暗色深海蓝），条款印在发丝线上。 */}
         <section id="bounds" className="statute">
           <div className="wrap">
             <div className="statute__panel">

@@ -722,19 +722,37 @@ html.dark .optic-flow__fiber-set--rim {
    ========================================================================== */
 
 .brand-foot {
-  /* 页脚在任何主题下都是深底，所以高光用一个固定的浅冰蓝，
-     不跟随主题翻转。 */
-  --foot-accent: #9fd8ff;
+  /* 页脚是**实体品牌面，但跟随主题**：
+     浅色主题下是亮白实体面（不能突然掉进暗房，那会和整页蓝青光学品牌断开），
+     暗色主题下才是深海蓝。四组取值都用局部变量收口，
+     下面的子规则只消费 --foot-*，不再直接读 --brand-deep-*。 */
+  --foot-surface: var(--brand-surface);
+  --foot-surface-2: color-mix(in srgb, var(--brand-surface) 72%, var(--brand-canvas));
+  --foot-text: var(--brand-text);
+  --foot-muted: var(--brand-muted);
+  --foot-line: var(--brand-line);
+  --foot-hairline: var(--brand-line-strong);
+  --foot-accent: var(--brand-primary);
   position: relative;
   margin-top: clamp(48px, 8vw, 112px);
-  background: var(--brand-surface-deep);
-  color: var(--brand-deep-text);
-  /* 与浅色主体之间用一根发丝线过渡，不做硬切。 */
-  border-top: 1px solid var(--brand-deep-hairline);
+  background: var(--foot-surface);
+  color: var(--foot-text);
+  /* 与页面主体之间用一根发丝线过渡，不做硬切。 */
+  border-top: 1px solid var(--foot-hairline);
 }
 
-/* 与页面上方的浅色主体之间加一段渐变：不是从亮色直接切到深海蓝，
-   而是让画布自己沉下去。 */
+html.dark .brand-foot {
+  --foot-surface: var(--brand-surface-deep);
+  --foot-surface-2: var(--brand-surface-deep-2);
+  --foot-text: var(--brand-deep-text);
+  --foot-muted: var(--brand-deep-muted);
+  --foot-line: var(--brand-deep-line);
+  --foot-hairline: var(--brand-deep-hairline);
+  --foot-accent: #9fd8ff;
+}
+
+/* 页脚与上方主体之间加一段同色系渐变：不是硬切，而是让画布自然过渡。
+   浅色主题是画布 → 页脚亮面，暗色主题是画布 → 深海蓝。 */
 .brand-foot::before {
   content: "";
   position: absolute;
@@ -745,8 +763,8 @@ html.dark .optic-flow__fiber-set--rim {
   background: linear-gradient(
     to bottom,
     transparent,
-    var(--brand-surface-deep-2) 62%,
-    var(--brand-surface-deep)
+    var(--foot-surface-2) 62%,
+    var(--foot-surface)
   );
   pointer-events: none;
 }
@@ -769,11 +787,11 @@ html.dark .optic-flow__fiber-set--rim {
 }
 
 .brand-foot .wordmark__zh {
-  color: var(--brand-deep-text);
+  color: var(--foot-text);
 }
 
 .brand-foot .wordmark__en {
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 .brand-foot__claim {
@@ -782,7 +800,7 @@ html.dark .optic-flow__fiber-set--rim {
   font-size: clamp(18px, 1.6vw, 22px);
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--brand-deep-text);
+  color: var(--foot-text);
 }
 
 .brand-foot__lead {
@@ -791,7 +809,7 @@ html.dark .optic-flow__fiber-set--rim {
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.85;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 /* ── 第二层：信息导航 ── */
@@ -814,7 +832,7 @@ html.dark .optic-flow__fiber-set--rim {
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 .brand-foot__link {
@@ -823,7 +841,7 @@ html.dark .optic-flow__fiber-set--rim {
   align-items: center;
   /* 13px 文字的行盒只有 ~21px；补到 28px 才过 WCAG 2.5.8 的 24px 下限。 */
   min-height: 28px;
-  color: var(--brand-deep-text);
+  color: var(--foot-text);
   font-family: var(--font-sans);
   font-size: 13px;
   text-decoration: none;
@@ -837,7 +855,7 @@ html.dark .optic-flow__fiber-set--rim {
 .brand-foot__spec {
   font-size: 11.5px;
   letter-spacing: 0.04em;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 /* ── 第三层：可信信息 ── */
@@ -850,7 +868,7 @@ html.dark .optic-flow__fiber-set--rim {
   max-width: var(--maxw);
   margin: clamp(32px, 4vw, 52px) auto 0;
   padding: 24px clamp(20px, 3.2vw, 48px) 0;
-  border-top: 1px solid var(--brand-deep-line);
+  border-top: 1px solid var(--foot-line);
 }
 
 .brand-foot__note {
@@ -859,7 +877,7 @@ html.dark .optic-flow__fiber-set--rim {
   font-family: var(--font-sans);
   font-size: 12px;
   line-height: 1.85;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 .brand-foot__note-mark {
@@ -868,7 +886,7 @@ html.dark .optic-flow__fiber-set--rim {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.16em;
-  color: var(--brand-deep-text);
+  color: var(--foot-text);
 }
 
 .brand-foot__stamp {
@@ -877,7 +895,7 @@ html.dark .optic-flow__fiber-set--rim {
   line-height: 1.6;
   letter-spacing: 0.18em;
   text-align: right;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 .brand-foot__legal {
@@ -893,7 +911,7 @@ html.dark .optic-flow__fiber-set--rim {
 .brand-foot__copy {
   font-size: 10.5px;
   letter-spacing: 0.12em;
-  color: var(--brand-deep-muted);
+  color: var(--foot-muted);
 }
 
 .brand-foot__top {
@@ -902,7 +920,7 @@ html.dark .optic-flow__fiber-set--rim {
   gap: 8px;
   min-height: 44px;
   padding: 0 4px;
-  color: var(--brand-deep-text);
+  color: var(--foot-text);
   font-family: var(--font-sans);
   font-size: 12.5px;
   text-decoration: none;
@@ -1392,32 +1410,56 @@ html.dark .is-brand-page .btn:hover {
   color: var(--brand-muted);
 }
 
-/* ── 责任边界：深海蓝实体面（与页脚同一套品牌深色）───────────── */
+/* ── 责任边界：实体品牌面，**随主题**（浅色亮面 / 暗色深海蓝）───── */
 
-/* 深色实体面不随主题翻转：正文/发丝线取品牌深底令牌；信号橙用深底的
-   固定提亮令牌（不改写 --signal 语义本身）。 */
+/* 这一段承载免责条款与四条硬规则，属于「承载大量文字的区域」，
+   用实体面而不是玻璃。但实体面不等于永远深色：浅色主题下是和页脚
+   同一套亮白实体面，深色主题下才是深海蓝。正文/发丝线取 --stat-*，
+   信号橙只在印章上出现（浅色走 --signal，深色走深底提亮版）。 */
 .is-brand-page .statute {
-  --fg: var(--brand-deep-text);
-  --fg-2: var(--brand-deep-muted);
-  --fg-3: var(--brand-deep-muted);
+  --stat-surface: var(--brand-surface);
+  --stat-panel: color-mix(in srgb, var(--brand-primary) 4%, var(--brand-surface));
+  --stat-text: var(--brand-text);
+  --stat-muted: var(--brand-muted);
+  --stat-hairline: var(--brand-line-strong);
+  --fg: var(--stat-text);
+  --fg-2: var(--stat-muted);
+  --fg-3: var(--stat-muted);
+  --hr: var(--brand-line);
+  --hr-strong: var(--stat-hairline);
+  --line: var(--brand-line);
+  --line-strong: var(--stat-hairline);
+  margin-top: clamp(24px, 4vh, 56px);
+  border-top-color: var(--stat-hairline);
+  border-bottom-color: var(--stat-hairline);
+  background: var(--stat-surface);
+  color: var(--stat-text);
+}
+
+html.dark .is-brand-page .statute {
+  --stat-surface: var(--brand-surface-deep);
+  --stat-panel: color-mix(in srgb, #ffffff 4%, transparent);
+  --stat-text: var(--brand-deep-text);
+  --stat-muted: var(--brand-deep-muted);
+  --stat-hairline: var(--brand-deep-hairline);
   --hr: var(--brand-deep-hairline);
   --hr-strong: var(--brand-deep-hairline);
   --line: var(--brand-deep-hairline);
   --line-strong: var(--brand-deep-hairline);
-  margin-top: clamp(24px, 4vh, 56px);
-  border-top-color: var(--brand-deep-hairline);
-  border-bottom-color: var(--brand-deep-hairline);
-  background: var(--brand-surface-deep);
-  color: var(--brand-deep-text);
 }
 
 .is-brand-page .statute__panel {
-  border-color: var(--brand-deep-hairline);
+  border-color: var(--stat-hairline);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, #ffffff 4%, transparent);
+  background: var(--stat-panel);
 }
 
 .is-brand-page .statute__seal {
+  border-color: var(--signal);
+  color: var(--signal-text);
+}
+
+html.dark .is-brand-page .statute__seal {
   border-color: var(--brand-deep-signal);
   color: var(--brand-deep-signal-text);
 }
@@ -1425,13 +1467,13 @@ html.dark .is-brand-page .btn:hover {
 .is-brand-page .statute__overline,
 .is-brand-page .statute__code,
 .is-brand-page .statute__body {
-  color: var(--brand-deep-muted);
+  color: var(--stat-muted);
 }
 
 .is-brand-page .statute__title,
 .is-brand-page .statute__name,
 .is-brand-page .statute__lead {
-  color: var(--brand-deep-text);
+  color: var(--stat-text);
 }
 
 /* ── 收尾：品牌层留白与提示语 ─────────────────────────────────── */

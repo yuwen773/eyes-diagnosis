@@ -5,9 +5,11 @@ import { useMediaQuery } from "@/lib/useMediaQuery"
 import type { FooterSection } from "@/components/SiteFooter"
 
 /**
- * 品牌层页脚：**Solid Brand Surface**（深海蓝实体表面），不做整块玻璃模糊。
+ * 品牌层页脚：**Solid Brand Surface**（实体品牌表面），不做整块玻璃模糊。
+ * 浅色主题 = 亮白实体面，暗色主题 = 深海蓝——实体面随主题翻转，
+ * 浅色页面底部不出现暗房断层（DESIGN.md §2.1.4）。
  *
- * <p>页脚承载大量文字与免责条款，可读性优先于材质表现（DESIGN.md §2.1.3）。
+ * <p>页脚承载大量文字与免责条款，可读性优先于材质表现（DESIGN.md §2.1.4）。
  * 三层信息架构：
  * <ol>
  *   <li>品牌收尾——虹膜标 + 字标 + 主张；</li>
