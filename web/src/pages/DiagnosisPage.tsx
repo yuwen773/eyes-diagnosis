@@ -7,7 +7,6 @@ import { rememberPendingUpload, takePendingUpload } from "@/lib/pendingUpload"
 import { FaultNote } from "@/components/fault"
 import { faultFromError, infoFault, validationFault, type Fault } from "@/lib/faults"
 import { RecordSheet } from "@/components/RecordSheet"
-import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 
@@ -222,9 +221,12 @@ export function DiagnosisPage() {
 
         <div className="sheet-shell">
           <div className="wrap">
-            <header className="workbench-result__head no-print">
-              <SectionHead code="判读" kicker="Reading record" en="EfficientNet-B4" />
-              <p className="small">结果可打印留档；换一张影像会清空当前结果，重新选图后再开始判读。</p>
+            <header className="diag-result__head no-print">
+              <p className="diag-hero__kicker num">READING RECORD · 判读记录</p>
+              <h1 className="diag-result__title">AI 辅助判读结果</h1>
+              <p className="diag-result__lead">
+                结果可打印留档；换一张影像会清空当前结果，重新选图后再开始判读。
+              </p>
             </header>
 
             <RecordSheet
@@ -294,14 +296,17 @@ export function DiagnosisPage() {
     <div className="is-field">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap workbench">
-        <header className="workbench__head">
-          <div className="workbench__intro">
-            <h1 className="workbench__title">上传一张彩色眼底照片，单眼、清晰、光照均匀</h1>
-            <p className="workbench__lead">系统会先过质量门，不合格的影像不会给出结论。</p>
+      <main className="wrap diag-hero">
+        <header className="diag-hero__head">
+          <div className="diag-hero__intro">
+            <p className="diag-hero__kicker num">DIAGNOSIS · 影像判读</p>
+            <h1 className="diag-hero__title">上传一张彩色眼底照片，开始 AI 辅助判读</h1>
+            <p className="diag-hero__lead">
+              单眼、清晰、光照均匀。系统会先过质量门，不合格的影像不会给出结论。
+            </p>
           </div>
 
-          <div className="workbench__rail">
+          <div className="diag-hero__rail">
             <div className="proc" role="list" aria-label="判读流程">
               {STEP_DEFS.map((step, index) => {
                 const state = stepStateOf(index)
@@ -434,7 +439,7 @@ export function DiagnosisPage() {
             )}
 
             {showLoginHint ? (
-              <div className="workbench__fault">
+              <div className="diag-hero__fault">
                 <FaultNote
                   fault={{
                     severity: "attention",
@@ -451,7 +456,7 @@ export function DiagnosisPage() {
                 />
               </div>
             ) : fault ? (
-              <div className="workbench__fault" data-scope={faultScope}>
+              <div className="diag-hero__fault" data-scope={faultScope}>
                 <FaultNote fault={fault} variant={faultScope === "run" ? "block" : "field"} />
               </div>
             ) : null}
@@ -459,7 +464,7 @@ export function DiagnosisPage() {
 
           <section className="diag__right rise" style={{ "--d": "90ms" } as CSSProperties} aria-label="判读读数">
             <div className="readout-head">
-              <SectionHead code="判读" kicker="Readout" />
+              <p className="diag-panel__title">判读日志</p>
               <span className="readout-head__state num" data-state={stage}>
                 {/* 与流程轨用同一套状态词（STANDBY / READY / READING / DONE / FAIL），
                     同一页上不出现两套说法。 */}
@@ -494,7 +499,7 @@ export function DiagnosisPage() {
             </ol>
 
             <div className="roster">
-              <SectionHead code="八类" kicker="Model scope" en="08 CLASSES" />
+              <p className="diag-panel__title">八类判读范围</p>
               <ul className="roster__list">
                 {CLASSES.map((item) => (
                   <li key={item.code}>
