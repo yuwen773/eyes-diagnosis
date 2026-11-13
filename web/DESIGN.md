@@ -7,17 +7,27 @@
 
 ## 方向
 
-**同一套品牌身份，四种表达强度**：Brand（首页）/ Management（管理端）/
-Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
-场景决定圆角、主色与动效预算；**没有"全站通用"的一套控件外观**。
+**同一套品牌身份，四种表达强度；两条视觉产品线**（2026-11-13 Visual Completion）：
+
+- **用户端 = Blue Optical Glass**：`/`、`/news`、`/login`、`/register`、`/diagnosis`、
+  `/agent`、`/profile`、`/records` 全部统一蓝青光学玻璃品牌——钴蓝、银蓝、冰青、
+  悬浮玻璃导航、金属虹膜标。**场景差异只体现在内容密度与面板材质上，
+  不等于品牌身份变化**；不允许通过 scene 变体回退旧仪器视觉（纸面胶囊、
+  橙色底线、实体仪器风格）。
+- **管理端 = Purple Medical SaaS**：`pages/admin/*` 采用紫白医疗 SaaS 视觉
+  （参考代号 G），独立 `--admin-*` 令牌，紫色承担管理品牌/主操作/当前导航/
+  精选卡/图表强调；医学严重度仍用 `--risk-*`，紫色不冒充医学风险。
+
+场景决定圆角与动效预算；**没有"全站通用"的一套控件外观**。
 细则见根 `DESIGN.md` §1–§4。
 
 ## 规则（写代码时必须遵守）
 
-1. **先定场景再写样式**：Clinical 用直角 + 墨色主 CTA + 信号橙语义；
-   Management 用 8–12px 圆角 + 钴蓝主操作 + 分类数据色；
-   Brand 用 24–38px 圆角 + 玻璃材质 + 钴蓝；
+1. **先定场景再写样式**：Clinical 用直角 + 墨色主 CTA + 信号橙语义（包装在品牌壳内，
+   RecordSheet 纸面不动）；Management 用 8–12px 圆角 + **管理紫 `--admin-*` 主操作**
+   + 分类数据色；Brand 用 24–38px 圆角 + 玻璃材质 + 钴蓝；
    Intelligence 用 12px 圆角 + 运行态蓝/青。**组件变体矩阵见根 `DESIGN.md` §4。**
+   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫、Clinical 墨色。**
 2. **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
    `--risk-*`（医学严重度）。信号橙**不是主 CTA 色**、不大面积填充；
    承载文字时用 `--signal-text`（纸面 `#bd4515`，暗底 `#ef7a45`）——`--signal`
@@ -51,9 +61,12 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
     逐路由归属见根 `DESIGN.md` §1.5；加载/错误/空态见根 `DESIGN.md` §3.11。
 14. **品牌首屏**：外层画布全幅，玻璃外壳在 1240px 版心内，光带裁在壳里（根 `DESIGN.md` §3.6）。
 15. **公开路由共用一个产品外壳**（R2.5，根 `DESIGN.md` §1.6）：`/`、`/news`、
-    `/diagnosis`、`/agent`、`/profile`、`/records` 用同一个顶栏组件与导航数据，
-    场景只切换材质、当前态语义与密度。**不许再新增第二个顶栏实现**；
-    管理端保留独立侧栏，认证页不塞产品导航。
+    `/diagnosis`、`/agent`、`/profile`、`/records` 用同一个顶栏组件与导航数据。
+    **U2 收紧（Visual Completion）**：scene 只允许改背景透明度与空间密度，
+    **不允许**通过 `scene="clinical"` / `scene="intelligence"` 换回旧版纸面胶囊、
+    橙色底线、实体仪器风格；所有用户端主页面的导航视觉必须连续。
+    **不许再新增第二个顶栏实现**；管理端保留独立紫色 SaaS 侧栏，认证页不塞产品导航
+    （但共享品牌身份：金属虹膜标、Manrope 字标、蓝青光学背景，U6）。
     页脚按页面性质取完整 / 精简 / 免责 / 不展示，不强行占用工作区。
 
 ## 上下文令牌
@@ -61,13 +74,11 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
 组件只消费 `--fg / --fg-2 / --fg-3 / --bg / --hr / --hr-strong` 这组别名，
 它们由 `.is-field / .is-sheet / .is-dark / .is-night` 定义。
 **不要**在组件里直接读 `--ink / --line`（那会绕过主题与纸面翻转）。
-品牌视觉容器另加 `.iris2` 语境类——它**只是容器**，只在首页首屏；
-`--brand-*` 是**跨场景的令牌**（管理端主操作、Agent 运行态都可取用），
+品牌视觉容器另加 `.iris2` 语境类——它**只是容器**，只在首页首屏与认证壳（U6）；
+`--brand-*` 是**跨场景的令牌**（Agent 运行态、品牌强调都可取用），
 两者不是一回事，别把 `.iris2` 当成"用品牌色的开关"。
-管理面 `.is-admin`、工作台面 `.is-console` **尚未实现**，别提前写依赖它们的样式。
-
-品牌层还涉及 `--brand-surface`、`--brand-shadow`、`--radius-xl/2xl`——这些同样
-**只随 PR #52 进入 `tokens.css`，在 `ui` 上取不到**。
+管理面 `.is-admin` 由 Visual Completion 工作包 C 落地（含 `--admin-*` 令牌）；
+工作台面 `.is-console` 尚未实现，别提前写依赖它的样式。
 
 ## 已知债务
 
@@ -78,7 +89,11 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
   Tailwind 的 utilities 层）；不要照着复刻旧写法，也不要再写新的 `.overline` 变体；
 - 断点未完全收敛（各页 `@media` 有 18 个不同取值），新写样式只用 390 / 768 / 900，
   验收过 390 / 768 / 820 / 900 / 1440 / 1920 六档（根 `DESIGN.md` §3.6「R2.5 起的断点分工」）；
-- 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），与新规范不一致；
+- 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），
+  与新规范不一致——Visual Completion 工作包 C（Purple SaaS）落地 `--admin-*`；
+- 用户端 scene 变体仍存在旧仪器回退（U2 收紧前的遗留），Visual Completion 工作包 B 处理；
+- 认证页仍是橙色 LaserFlow + 暗房叙事，Visual Completion 工作包 A（U6）替换为
+  蓝青光学玻璃；
 - ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
 - `--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` **只在 PR #52 里，尚未进入 `ui`**，

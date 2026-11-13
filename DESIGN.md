@@ -34,6 +34,14 @@
 > 2026-11-12：本文件由「Iris · 白色仪器（The White Instrument）」总纲升级而来。
 > 旧理念作为**临床场景的设计历史**保留在 §1.4 与 §2.4，不作废、不删除。
 >
+> 2026-11-13：**Visual Completion 修订**。用户对已交付页面提出明确否定反馈：
+> 现有系统过度保守，只做了局部 token 替换，没有完成产品级视觉重设计。本轮修订确立
+> 两条视觉产品线——**用户端统一 Blue Optical Glass**（导航不再按 Clinical/Intelligence
+> 回退旧仪器视觉），**管理端采用 Purple Medical SaaS**（`--admin-*` 令牌体系，
+> 替代旧版"钴蓝主操作"规定）；认证页归入用户端品牌体验（蓝青光学玻璃，不是橙色
+> 检查室）；首页允许重新组织内容与替换旧组件视觉。规范先行，实现按工作包
+> A/B/C 推进，未落地条目标 🗓。
+>
 > 2026-11-13（R2.5）：新增 §1.6 **Shared Product Shell**。R2 已统一品牌材质与
 > 首页外壳，但公开路由仍存在两套顶栏实现；R2.5 把「导航与产品外壳」收敛为
 > 跨场景共享组件，场景差异只体现在材质强度、当前态语义与内容密度。
@@ -43,16 +51,29 @@
 
 ## 0. 一句话主张
 
-**同一套品牌身份，四种表达强度。**
+**同一套品牌身份，四种表达强度；两条视觉产品线。**
 
 Iris 2.0 不再要求全站长得一样。它把"看起来像一个可信的临床产品"这件事拆成
 四类使用场景，各给各的密度、材质与动效预算，但**共享同一套品牌色板、排版尺度、
 语义色、交互反馈、可访问性底线与数据诚实性**。
 
+**两条视觉产品线**（2026-11-13 Visual Completion 修订）：
+
+- **用户端（Brand + Clinical + Intelligence 的全部公开路由）= Blue Optical Glass**。
+  钴蓝、银蓝、冰青、光学玻璃、悬浮导航、金属虹膜标。**场景差异只体现在内容
+  密度与面板材质上，不等于品牌身份变化**——任何用户端页面都不允许回退成
+  旧版白色仪器视觉。专业工作区（判读、Agent）可以用更高密度的实体面板，
+  但导航、Logo、字体、品牌色、控件形态与首页同属一个品牌。
+- **管理端（Management）= Purple Medical SaaS**。紫白医疗科技 SaaS 视觉体系
+  （参考代号 G），独立 `--admin-*` 令牌，紫色承担管理品牌、主操作、当前导航、
+  精选卡片与图表强调。
+
+四场景的诉求不变：
+
 - 首页要**精致、清透、有空间感** → 品牌层（钴蓝 + 银蓝光学材质）
-- 管理台要**成熟、密度高、可操作** → 管理场景（实体卡片 + 分类数据色）
-- 协作台要**专业、看得见协作** → 智能层（深色画布 + 运行态反馈）
-- 判读页要**克制、可信、不打扰** → 临床层（骨白纸面 + 信号橙语义）
+- 管理台要**成熟、密度高、可操作** → 管理场景（紫色 SaaS + 实体卡片 + 分类数据色）
+- 协作台要**专业、看得见协作** → 智能层（蓝青运行态反馈 + 品牌工作区）
+- 判读页要**克制、可信、不打扰** → 临床层（骨白纸面 + 信号橙语义，包装在品牌壳内）
 
 底线不变：**医疗准确性、风险语义、人工复核、可追溯证据、登录数据隔离、
 性能与可访问性优先。视觉可以大胆，但不能牺牲真实内容。**
@@ -79,13 +100,19 @@ Iris 2.0 不再要求全站长得一样。它把"看起来像一个可信的临�
 
 | 场景 | 英文 | 表达强度 | 主要页面 | 核心诉求 |
 |---|---|---|---|---|
-| 品牌 | Brand | **高** | `LandingPage` | 精致、清透、科技感、空间感 |
-| 管理 | Management | **中** | `pages/admin/*` | 成熟 SaaS、信息密度、操作效率 |
+| 品牌 | Brand | **高** | `LandingPage`、`LoginPage`、`RegisterPage`、`NewsPage`、`NewsDetailPage` | 精致、清透、科技感、空间感 |
+| 管理 | Management | **中** | `pages/admin/*` | 成熟紫色 SaaS、信息密度、操作效率 |
 | 智能 | Intelligence | **中高** | `AgentPage`、未来的影像工作台 | 专业影像观察、真实协作可见、证据可追溯 |
-| 临床 | Clinical | **低** | `DiagnosisPage`、`RecordsPage`、`RecordSheet` | 克制、可信、不打扰、纸面稳定 |
+| 临床 | Clinical | **低** | `DiagnosisPage`、`RecordsPage`、`ProfilePage`、`RecordSheet` | 克制、可信、不打扰、纸面稳定 |
 
 **强度不等于"更花"**：Brand 高指的是材质与排版主张强，不是彩多动多；
 Clinical 低指的是视觉干扰少，不是信息少。
+
+**场景差异 ≠ 品牌身份变化**（Visual Completion 核心原则）：四个场景共享
+用户端统一的 Blue Optical Glass 品牌身份——导航、Logo、字体、品牌色、
+控件形态跨路由连续。Clinical/Intelligence 的"专业感"来自**内容密度、
+面板材质与语义色**的差异，不允许通过切换回旧仪器配色（纸面胶囊、橙色底线、
+实体仪器风格）来表达专业。
 
 ### 1.3 旧三档（A/B/C）的归位
 
@@ -116,22 +143,22 @@ Clinical 低指的是视觉干扰少，不是信息少。
 
 | 路由 | 页面 | 场景 | 版式骨架 | 语境类 | 说明 |
 |---|---|---|---|---|---|
-| `/` | `LandingPage` | **Brand** | 全幅画布 + 版心玻璃外壳 + 章节流 | `.iris2`（首屏） | 首屏是唯一使用品牌视觉容器的页面；下半页已按 R2.5-02 升级 |
-| `/login` | `LoginPage` | **Brand** | `AuthShell` 双栏：左侧品牌陈述 + 右侧玻璃表单 | `.is-dark` / `.is-field.auth--light` | 认证页是品牌入口，**不是营销页**：不放产品入口卡、不放光学主视觉 |
+| `/` | `LandingPage` | **Brand** | 全幅画布 + 版心玻璃外壳 + 章节流 | `.iris2`（首屏） | 首屏是唯一使用品牌视觉容器的页面；下半页允许内容重组（Visual Completion U1） |
+| `/login` | `LoginPage` | **Brand** | `AuthShell` 双栏：蓝青光学背景 + Layered Glass 表单 | `.iris2`（认证壳） | 认证页是**用户端品牌体验**：蓝青光学玻璃，**不是橙色检查室**（U6）；共享品牌身份，不展示完整导航 |
 | `/register` | `RegisterPage` | **Brand** | 同 `LoginPage` | 同上 | 两条认证页共用同一个 `AuthShell` |
-| `/diagnosis` | `DiagnosisPage` | **Clinical** | 页头任务句 + 三步进度 → 上传台 → 读数栏 → 记录纸（`RecordSheet`） | `.is-field` + `.is-sheet` | 结果区是纸面，任何主题下不变；R2.5-04 起上传槽是唯一主任务 |
-| `/records` | `RecordsPage` | **Clinical** | **KPI 读数条 + 台账** | `.is-field` | 全站唯一"KPI + 台账"的临床页 |
-| `/profile` | `ProfilePage` | **Clinical** | 资料区 + 读数卡 + 列表 | `.is-field` | 个人域：资料、判读统计、复诊申请；**不套四列 KPI 条** |
-| `/news` | `NewsPage` | **Brand** | 编辑式列表（头版 + 发丝线列表） | `.is-field .is-brand-page` | 对外资讯，用编辑排版，**不是数据仪表** |
-| `/news/:id` | `NewsDetailPage` | **Brand** | 文章页 + 返回入口 | `.is-field .is-brand-page` | 长文排版优先，不做卡片拼贴 |
-| `/agent` | `AgentPage` | **Intelligence** | 会话栏 + 空会话入口 + 消息流 + 资源面板 | `.is-field`（`agent-viewport`） | R2.5-05 起 ≤900 会话栏默认收起；空会话入口三条都绑真实动作，不画虚构拓扑 |
-| `/admin/dashboard` | `AdminDashboardPage` | **Management** | 侧栏 + 页头 + KPI 读数 + 图表 | `.is-field` | 概览页：**KPI 与图表优先**，台账只是其中一块 |
-| `/admin/data-analysis` | `AdminDataAnalysisPage` | **Management** | 侧栏 + 页头 + KPI 读数 + 图表矩阵 | `.is-field` | 分析页：**KPI 与图表优先**，本页没有台账 |
-| `/admin/users` | `AdminUsersPage` | **Management** | 侧栏 + 页头 + 筛选工具栏 + 表格 + 批量操作 | `.is-field` | 列表页：**表格、筛选与操作优先**，本页没有 KPI 条 |
-| `/admin/news` | `AdminNewsPage` | **Management** | 同上 | `.is-field` | 同上 |
-| `/admin/diagnosis` | `AdminDiagnosisPage` | **Management** | 同上 | `.is-field` | 同上 |
-| `/admin/knowledge` | `AdminKnowledgePage` | **Management** | 同上 | `.is-field` | 同上 |
-| `/admin/news/:id/edit` | `AdminNewsEditPage` | **Management** | 侧栏 + 页头 + 编辑表单 + 保存条 | `.is-field` | 编辑页：**表单优先**，既无 KPI 条也无台账 |
+| `/diagnosis` | `DiagnosisPage` | **Clinical** | 品牌化页头 + 上传主任务 → 读数栏 → 记录纸（`RecordSheet`） | `.is-field` + `.is-sheet` | 结果区是纸面，任何主题下不变；操作区升级为蓝青品牌语言（U3），RecordSheet 结构不动 |
+| `/records` | `RecordsPage` | **Clinical** | **KPI 读数条 + 台账**（品牌语言容器） | `.is-field` | 全站唯一"KPI + 台账"的临床页；容器、按钮、列表用统一品牌语言（U7） |
+| `/profile` | `ProfilePage` | **Clinical** | 资料区 + 读数卡 + 列表（品牌语言容器） | `.is-field` | 个人域：资料、判读统计、复诊申请；**不套四列 KPI 条**（U7） |
+| `/news` | `NewsPage` | **Brand** | 编辑式资讯门户（头版 Hero + 精选 + 现代卡片） | `.is-field .is-brand-page` | 对外资讯，现代资讯产品内容体验（U5），**不是数据仪表** |
+| `/news/:id` | `NewsDetailPage` | **Brand** | 文章页 + 返回入口 | `.is-field .is-brand-page` | 长文排版优先，不做卡片拼贴；不被浮动玻璃卡干扰 |
+| `/agent` | `AgentPage` | **Intelligence** | 会话侧栏 + 对话工作区 + 输入框 + 资源面板 | `.is-field`（`agent-viewport`） | 现代 AI 工作区视觉（U4）；运行态绑真实 SSE，≤900 会话栏默认收起 |
+| `/admin/dashboard` | `AdminDashboardPage` | **Management** | 紫色 SaaS 侧栏 + 品牌页头 + KPI 统计卡 + 趋势图 + 业务概览 | `.is-admin` | 概览页：**KPI 与图表优先**，台账只是其中一块；Purple SaaS 视觉（§2.2） |
+| `/admin/data-analysis` | `AdminDataAnalysisPage` | **Management** | 紫色 SaaS 侧栏 + 页头 + KPI 统计卡 + 图表矩阵 | `.is-admin` | 分析页：**时间窗口 + 真实统计 + 图表优先**，本页没有台账 |
+| `/admin/users` | `AdminUsersPage` | **Management** | 紫色 SaaS 侧栏 + 页头 + 筛选工具栏 + 高密度表格 + 批量操作 | `.is-admin` | 列表页：**表格、筛选与操作优先**，本页没有 KPI 条 |
+| `/admin/news` | `AdminNewsPage` | **Management** | 同上 | `.is-admin` | 同上 |
+| `/admin/diagnosis` | `AdminDiagnosisPage` | **Management** | 同上 | `.is-admin` | 同上 |
+| `/admin/knowledge` | `AdminKnowledgePage` | **Management** | 同上 | `.is-admin` | 同上 |
+| `/admin/news/:id/edit` | `AdminNewsEditPage` | **Management** | 紫色 SaaS 侧栏 + 页头 + 编辑表单 + 保存反馈 | `.is-admin` | 编辑页：**表单优先**，既无 KPI 条也无台账 |
 | `*` | 重定向到 `/` | — | — | — | 不做 404 页面 |
 
 > 管理端 7 页共用的只有**侧栏与页头**；主体骨架按页面类型取（见 §2.2 的逐页表）。
@@ -145,11 +172,15 @@ Clinical 低指的是视觉干扰少，不是信息少。
    为主体**，**新闻编辑页以表单为主体**——三者都不套台账骨架，
    **不要给 `pages/admin/*` 每页都加四列 KPI**。
    `/profile`、`/news`、认证页、`/agent` **各有版式**。
-2. **`.iris2` 只出现在 `/` 的首屏**。其余页面用 `.is-field` / `.is-dark` / `.is-sheet`。
-   `--brand-*` 令牌不在此限——见 §3.1。
+2. **`.iris2` 只出现在 `/` 的首屏与认证壳**。其余页面用 `.is-field` / `.is-dark` /
+   `.is-sheet` / `.is-admin`。`--brand-*` 令牌不在此限——见 §3.1。
 3. **公开路由共用同一个产品外壳**（R2.5，§1.6）。`/`、`/news`、`/diagnosis`、
    `/agent`、`/profile`、`/records` 不再各自维护顶栏；管理端保留独立侧栏，
    认证页保留无导航的入口形态。
+4. **用户端导航不分场景回退**（Visual Completion U2）：`ProductHeader` 的
+   `scene` 变体只允许改变背景透明度、空间密度等**有限参数**，不允许通过
+   `scene="clinical"` / `scene="intelligence"` 换回纸面胶囊、橙色底线等
+   旧仪器设计语言。详见 §2.1.2。
 
 ---
 
@@ -224,19 +255,29 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 精致、清透、大胆、有空间感。不是仪器说明书，也不是粒子炫技页。让人相信
 "这是一个能把复杂视觉信息讲清楚的团队"，而不是"这是一个炫技 Demo"。
 
-**页面结构**（首屏 → 下半页）
+**页面结构**（首屏 → 下半页；🅿 = R2/R2.5 栈已实现并审查，🗓 = Visual Completion 待做）
 
 | 区块 | 内容 | 状态 |
 |---|---|---|
-| 品牌导航 | 字标 + **悬浮胶囊导航** + 右侧功能区（主题切换 / 账号 / 主 CTA） | 🅿 R2.5-01（共享外壳的 `brand` 变体） |
-| 首屏眉线与标题 | `INTRODUCING IRIS 2.0 / THE FUTURE OF VISION` + `VISION, REIMAGINED.` + 中文副标题 | 🅿 在 PR 中 |
-| 首屏 CTA | 「探索影像分析」「探索 AI 协作」，指向真实路由 | 🅿 在 PR 中 |
-| 主视觉 | 一条连续蓝青光学带（WebGL2 单渲染器）+ 内部细纤维（SVG 层）+ 暂停动效按钮 | 🅿 在 PR 中 |
-| 玻璃信息卡 | 「影像 / 分析 / 证据」流程卡，标注「流程示意 · 非实时结果」 | 🅿 在 PR 中 |
-| 产品入口 | 三张卡：影像分析 / Agent 协作 / 证据与复核（链接指向真实去处） | 🅿 在 PR 中 |
-| 仪器读数条 | 4 列 mono 读数（覆盖 8 类 / 模型 B4 / 质量门 / 复核溯源） | 🅿 在 PR 中 |
-| 免责条 | 「AI 辅助信息展示 · 不构成临床诊断结论」 | 🅿 在 PR 中 |
-| 首页下半页 | 眼底影像示意 / 样本 / 流程 / 判读记录 / Agent / 边界 / 行动 | 🅿 R2.5-02（品牌版式） |
+| 品牌导航 | 字标 + **悬浮胶囊导航** + 右侧功能区（主题切换 / 账号 / 主 CTA） | 🅿 R2.5-01（共享外壳的 `brand` 变体）；🗓 U2 收紧 scene 变体边界 |
+| 首屏眉线与标题 | `INTRODUCING IRIS 2.0 / THE FUTURE OF VISION` + `VISION, REIMAGINED.` + 中文副标题 | 🅿 已实现 |
+| 首屏 CTA | 「探索影像分析」「探索 AI 协作」，指向真实路由 | 🅿 已实现 |
+| 主视觉 | 一条连续蓝青光学带（WebGL2 单渲染器）+ 内部细纤维（SVG 层）+ 暂停动效按钮 | 🅿 已实现（Hero 保留） |
+| 玻璃信息卡 | 「影像 / 分析 / 证据」流程卡，标注「流程示意 · 非实时结果」 | 🅿 已实现 |
+| 产品入口 | 三张卡：影像分析 / Agent 协作 / 证据与复核（链接指向真实去处） | 🅿 已实现 |
+| ~~仪器读数条~~ | ~~4 列 mono 读数（覆盖 8 类 / 模型 B4 / 质量门 / 复核溯源）~~ | 🗓 **U1 移除**：技术铭牌不适合品牌首屏；能力信息按用户理解方式融入工作流程、可信判读等章节 |
+| 免责条 | 「AI 辅助信息展示 · 不构成临床诊断结论」 | 🗓 U1：保留，移到更恰当位置（页脚可信信息层） |
+| 判读记录展示 | `RecordSheet` 真实医学语义 + 现代化报告预览构图（局部可见、重点突出、示例标注、「查看示例」入口） | 🗓 U1：不再整张长纸堆在页面中央 |
+| Agent 展示 | 「输入框 + 层叠卡片」构图保留；橙色电光 → 品牌蓝/青玻璃边缘光；Layered/Soft Glass 材质；演示交互必须有真实行为或明确标注预览 | 🗓 U1 |
+| 首页下半页其余章节 | ScrollExpand / 眼底细节 / 判读流程 / 八类覆盖 / Agent 介绍 / 能力边界 / CTA——允许重组顺序、标题、文案、卡片结构与信息层级，以「做什么、怎么用、可信在哪里、能看到什么结果」为主线 | 🗓 U1 |
+
+**U1 首页重设计的边界**：
+- Hero（首屏构图 + 主视觉 + 双 CTA）与品牌 Footer 的成熟部分**尽量保留**；
+- Hero 之后的**所有内容**都需要重新判断，允许删除冗余装饰、替换旧组件视觉、
+  调整章节顺序——不是只换画布颜色；
+- 不得删除关键医学信息（免责、能力边界、复核溯源的**事实**），只允许改变
+  其呈现方式与位置；
+- 不得虚构能力或演示数据；演示交互必须有真实行为，或明确标注为预览。
 
 #### 2.1.1 品牌材质体系（五种，不是五种不同的模糊值）
 
@@ -262,22 +303,42 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 - 材质变量属**第 0 层品牌原语**，任何场景可取；
   **但 `.iris2` 语境类仍只在首页首屏**——材质可复用不等于容器可乱套。
 
-#### 2.1.2 品牌导航规则
+#### 2.1.2 品牌导航规则（Visual Completion U2 口径）
 
 - **形态**：桌面端「左侧 Brand + 中央悬浮胶囊导航 + 右侧功能操作」。
   胶囊容器用 **Frosted Glass**；当前路由有**独立的高亮胶囊**。
-- **Brand 是共享外壳的场景变体**：R2.5-01 起公开路由只有一个 `ProductHeader`，
-  首页取 `scene="brand"`。Clinical / Intelligence 用同一组件的 `clinical` /
-  `intelligence` 变体（只换材质强度、当前态语义色与内容密度），Management 保留独立侧栏，
-  认证页保持无导航入口形态。**不得**再新增第二个顶栏实现；也**不得**用 `.iris2`
-  让所有页面被动获得玻璃材质。
+- **用户端统一导航身份（U2，收紧 R2.5 的 scene 变体边界）**：所有用户端主页面
+  （首页 / 判读 / Agent / 新闻 / 记录 / 个人中心）共享同一个 `ProductHeader` 实现与
+  同一套 Iris 悬浮玻璃导航身份——金属虹膜 Logo、Manrope 字标、钴蓝选中态、
+  一致的控件形态。**不再允许**通过 `scene="clinical"` / `scene="intelligence"`
+  把导航换回旧版纸面胶囊、橙色底线、实体仪器风格。
+- **场景只允许改有限参数**：导航背景透明度、空间密度（padding / 高度微调）。
+  **不允许**改变组件设计语言（结构、字体、Logo、选中态色、控件形态）。
+  首页 → 判读 → Agent → 新闻 → 记录 / 个人中心的导航视觉必须连续。
+  Management 保留独立侧栏，认证页保持无导航入口形态（但共享品牌身份）。
+  **不得**再新增第二个顶栏实现；也**不得**用 `.iris2` 让所有页面被动获得玻璃材质。
 - **吸顶与锚点**：顶栏以 sticky 直接子元素存在（`data-site-head` 供 `ScrollExpand` 量高），
   页面锚点统一靠 `[id] { scroll-margin-top }` 让出顶栏高度；按滚动位置反相的旧机制已删除。
 - **移动端**：导航收为菜单按钮，复用既有抽屉的路由与认证逻辑；
   焦点正确进入、Escape 关闭、关闭后焦点返回触发按钮、滚动锁正确；
   触控目标 ≥44×44px；**不把桌面胶囊缩小后塞进 390px**。
 
-#### 2.1.3 品牌页脚规则
+#### 2.1.3 认证页 · 用户端品牌体验（Visual Completion U6）
+
+认证页（`/login`、`/register`，共用 `AuthShell.tsx`）属于**用户端品牌体验**，
+与首页同属一个品牌：
+
+- **背景**：蓝青光学品牌背景（钴蓝 / 银蓝 / 冰青），**取代**现有橙色 `LaserFlow`、
+  暗房叙事与仪器技术读数。不得因此引入第二个 GPU 渲染器——用静态光学资产或
+  轻量 CSS 动效（氛围动效边界同 Brand）。
+- **表单**：精致的 Layered Glass 材质、金属 Iris Logo、统一字体（Manrope 字标 +
+  Noto Sans SC）、统一按钮 / 字段 / 错误反馈形态。
+- **双主题**：Light / Dark 完整适配，两种主题都独立设计。
+- **移动端**：舒适的单列交互。
+- **保留全部逻辑**：登录注册逻辑、重定向、错误处理、安全机制不动。
+- **导航**：不展示完整产品导航，但金属虹膜标、Manrope 字标与品牌色必须与首页连续。
+
+#### 2.1.4 品牌页脚规则
 
 - **形态**：**Solid Brand Surface**（深海蓝实体表面），**不强制整块玻璃模糊**。
   页脚承载大量文字与免责条款，可读性优先于材质表现。
@@ -365,9 +426,14 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 
 ---
 
-### 2.2 Management Experience · 管理后台
+### 2.2 Management Experience · 管理后台 · Purple Medical SaaS（Visual Completion 修订）
 
-参考代号 **F · Violet Clinical / 现代医疗 SaaS** + **G · Clinical AI / 智能数据台**。
+参考代号 **G · Healthcare Dashboard Design**（主参考，
+https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
+**F · Violet Clinical**（辅助）。借鉴参考的**体系与质感**：紫白色医疗科技 SaaS
+视觉、高质量 Dashboard 信息架构、精致的统计卡与图表容器、适度圆角与柔和阴影、
+明确的操作层级与数据密度、现代化交互状态。**禁止复制**参考中的虚构营收、医生、
+病人或 AI 准确率。
 
 **目标气质**
 成熟医疗 SaaS：柔和但不软弱，功能优先、数据可读、操作性强。强调"管理与行动"。
@@ -376,25 +442,37 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 **页面结构**（侧栏与页头共用，主体按页面类型取）
 
 ```
-侧边导航（常驻，窄屏折叠为抽屉）
-└── 页头：位置 + 上下文标题 + 主操作
+紫色 SaaS 侧边导航（常驻，窄屏折叠为抽屉；当前导航紫色高亮态）
+└── 品牌化管理页头：位置 + 上下文标题 + 主操作
     └── 主体（按页面类型取，见下表）
 ```
 
 | 管理页 | 主体骨架 |
 |---|---|
-| `/admin/dashboard` | KPI 区（mono 读数）→ 趋势 / 占比图表 → 近期台账 |
-| `/admin/data-analysis` | KPI 区 → 小多图趋势矩阵 → 周聚合与排名图 |
-| `/admin/users` `/admin/news` `/admin/diagnosis` `/admin/knowledge` | 筛选区（工具栏 + 日期/状态筛选）→ 台账区（表格，排序/分页/批量）→ 详情层（抽屉 / 模态） |
-| `/admin/news/:id/edit` | 编辑表单（封面 / 标题 / 摘要 / 正文 / 发布状态）→ 保存条 |
+| `/admin/dashboard` | 精致统计卡（KPI）→ 趋势 / 占比图表 → 业务概览 |
+| `/admin/data-analysis` | KPI 统计卡 → 小多图趋势矩阵 → 周聚合与排名图（时间窗口切换） |
+| `/admin/users` `/admin/news` `/admin/diagnosis` `/admin/knowledge` | 筛选区（工具栏 + 日期/状态筛选）→ 高密度台账区（表格，排序/分页/批量）→ 详情层（抽屉 / 模态） |
+| `/admin/news/:id/edit` | 编辑表单（封面 / 标题 / 摘要 / 正文 / 发布状态）→ 保存反馈 |
 
 **KPI 条不是管理端的入场券**：列表页与编辑页没有 KPI 区，
 概览页与数据分析页没有台账区。**别按"管理端 = KPI + 台账"去套。**
+**也不能把所有管理页复制成同一种 Dashboard 卡片排列**——七页各有骨架。
 
-**Light**：冷白 / 浅蓝灰背景、白卡、钴蓝作主要操作色、低饱和青/紫分类色；
-卡片与画布分层清晰。
+**`--admin-*` 令牌体系**（Visual Completion 新增，等价的第 0 层语义令牌）：
+管理端建立**独立的 `--admin-*` 语义令牌**（或等价的场景 Token 组）：
+管理品牌紫、管理主操作、侧栏表面、当前导航态、精选卡强调、图表强调。
+令牌必须亮暗两套实测对比度，写进 `tokens.css` 与 `tokens.contrast.test.ts`。
 
-**Dark**：深海蓝背景与分层面板；**图表系列亮度单独调整**；浅色文字与指标必须满足
+**紫色应用边界**（与医学语义的分离，不可越界）：
+- 紫色应用于：管理品牌、主操作、当前导航态、精选卡片、图表强调。
+- 医学严重度仍用 `--risk-*`；**不能用紫色冒充医学风险**。
+- 复核状态、拒识标记等业务语义保持既有语义色。
+- 真实运行态（如后台任务状态）仍用运行态蓝/青，不与紫色混用。
+
+**Light**：紫白医疗 SaaS——浅紫灰背景、白卡、管理紫主操作；卡片与画布分层清晰，
+适度圆角（8–12px）与柔和阴影。
+
+**Dark**：深紫蓝分层面板；**图表系列亮度单独调整**；浅色文字与指标必须满足
 对比度；**不会把所有 KPI 都渲染成发光渐变**。
 
 **字体**
@@ -402,12 +480,15 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 区块标题用 `--font-serif`（weight 400）。**不需要** Manrope——管理端不是品牌页，
 拉丁字少，Manrope 在这里是浪费一次字体下载。
 
-**颜色与材质**
-- 品牌钴蓝 `--brand-primary` **可以**用作主操作色与链接（这是与旧版最大的差别）。
-- 信号橙 `--signal` 退回到它的本职：**当前态 / 重点标记**，不再当主 CTA。
-- 分类数据色 `--viz-series-1..6` 用于图表系列，**不占用** `--signal` 与 `--risk-*`。
-- 材质：实体卡片 + 发丝描边 + 极淡墨色阴影（`--shadow-overlay`）。
-  **允许 8–12px 圆角**，卡片间距有规律，**不堆多重内嵌容器**。
+**颜色与材质**（Visual Completion 后的口径，**取代**旧版"钴蓝主操作"规定）
+- **管理紫 `--admin-*` 承担主操作色、当前导航态与图表强调**（旧版"钴蓝主操作"
+  规定作废）；`--brand-*` 仍是跨场景品牌令牌，但不再是管理端主操作色。
+- 信号橙 `--signal` 维持本职：**当前态 / 重点标记**，不当主 CTA。
+- 分类数据色 `--viz-series-1..6` 用于图表系列，**不占用** `--signal`、`--risk-*`
+  与 `--admin-*`。
+- 材质：实体卡片 + 发丝描边 + 柔和阴影（`--shadow-overlay`），
+  适度圆角 **8–12px**，卡片间距有规律，**不堆多重内嵌容器**。
+  统一表格、筛选、搜索、批量操作与分页形态；Drawer / Dialog / 表单设计一致。
 
 **组件复用（不得重造）**
 `TanStack Query`（服务端状态）、`TanStack Table`（表格/排序/分页）、`Recharts`（图表）、
@@ -448,8 +529,9 @@ Users / News / NewsEdit / Diagnosis / Knowledge）+ `AdminLayout`、`DataTable`�
 🗓 **视觉规范未落地**：当前仍是旧 B 档外观——主按钮是全局 `.btn`（墨色、0 圆角），
 信号橙只做当前态指示条、焦点环与 swatch（**不是主操作色**）；
 少数浮层已用 `--radius-md` / `--radius-sm`，其余仍是直角。
-本节（圆角 8–12px、实体卡片层次、**钴蓝主操作**、深海蓝暗底）是**目标**，
-落地属于路线图阶段 R3（见 `docs/design/iris-2-implementation-roadmap.md`）。
+本节（`--admin-*` 令牌、紫色 SaaS 侧栏与当前态、圆角 8–12px、实体卡片层次、
+柔和阴影、深紫蓝暗底）是**目标**，落地属于 Visual Completion 工作包 C
+（管理端 Purple SaaS，覆盖全部 7 个管理页）。
 
 ---
 
@@ -530,8 +612,13 @@ Users / News / NewsEdit / Diagnosis / Knowledge）+ `AdminLayout`、`DataTable`�
 tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件。
 `web/src/components/agent/` 完整。
 
-🗓 **未落地**：多 Agent 协作视图、影像工作台（主画布/标注/双眼对比/质量提示）、
-证据区结构化呈现、运行态可视化。**后端协议未定义**，本节是目标规范。
+🗓 **Visual Completion U4 待做**：Agent 工作区视觉升级——现代 AI 产品工作区视觉
+结合 Iris 品牌：会话侧栏、主对话工作区、输入框、工具消息与状态卡、资源面板、
+空会话欢迎区域、移动端布局。保持专业信息密度，避免大面积无意义玻璃模糊；
+运行态必须绑定真实 SSE/请求事件。Agent 协议与后端能力**不改**。
+
+🗓 **仍未落地**：多 Agent 协作视图、影像工作台（主画布/标注/双眼对比/质量提示）、
+证据区结构化呈现。**后端协议未定义**，本节是目标规范。
 
 ---
 
@@ -540,16 +627,31 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 参考代号无新增——这一场景**保留旧版全部已验证规则**，并把两处此前散落各处的
 规定收拢到一处：主 CTA 的颜色（仍是墨色）、复核与拒识的状态区分。
 
+**Visual Completion U3/U7 的定位**：临床页的专业语义（纸面、风险色、证据链）
+**全部保留**，但**包装层**（页头、页面背景、上传卡片、容器、按钮、列表、表单）
+升级到统一的 Blue Optical Glass 品牌语言——**场景差异不等于品牌身份变化**。
+不允许整个页面停留在旧版仪器配色；也不允许品牌蓝替代临床语义色。
+
 **目标气质**
 克制、可信、不打扰。像一份可信的判读报告，不像一个健康 App。
 医疗风险语义、拒识、待复核、模型版本、证据链、人工签字、免责、数值口径、
 可访问性是**不可妥协约束**。
 
 **页面结构**
-`DiagnosisPage`（上传 → 判读）→ `RecordSheet`（记录纸）→ `RecordsPage`（台账）→
-`RiskTag`（严重度标记）。`RecordSheet` 的结构固定：页头（编号/模型/时间）→
-结论 → 读数（置信度/严重度/复核）→ 置信环 → 八类概率尺 → 建议 → 复核提示 →
-印章排 → 免责。
+`DiagnosisPage`（品牌化页头 + 影像上传主任务 → 判读）→ `RecordSheet`（记录纸）→
+`RecordsPage`（台账）→ `RiskTag`（严重度标记）。`RecordSheet` 的结构固定：
+页头（编号/模型/时间）→ 结论 → 读数（置信度/严重度/复核）→ 置信环 →
+八类概率尺 → 建议 → 复核提示 → 印章排 → 免责。
+
+**U3 判读页升级要点**（操作区重新设计，不只是换颜色）：
+品牌化页头与页面背景、清晰的影像上传主任务、现代化上传卡片与预览区域、
+蓝青品牌操作色与结构分层、更简明的过程解释、明确的质量门/拒识/错误反馈、
+结果区专业阅读体验。**保留所有实际上传、推理、结果、打印和复核行为**；
+`RecordSheet` 的白纸结构、风险颜色、证据与模型来源**不得变更**。
+
+**U7 个人中心与判读记录**：业务容器、按钮、数据卡、列表和表单更新到统一品牌
+语言；保留用户数据隔离、统计口径与医疗记录真实性；**不得重引入旧版通用仪器
+台账外观**。
 
 **Light / Dark**
 纸面原语 `--paper-*` **不参与主题翻转**：判读记录在任何主题下都是**同一张白纸**
@@ -611,6 +713,8 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
   --paper-*      纸面原语，永不翻转（纸白 + 纸上的墨）
   --risk-*       医学严重度语义，与品牌色互不顶替
   --brand-*      品牌身份语义（钴蓝 / 冰青 / 极光紫 / 玻璃）
+  --admin-*      管理端语义（管理紫 / 侧栏表面 / 当前导航态 / 图表强调）——
+                 Visual Completion 新增，工作包 C 落地，亮暗两套
   --font-*  --radius-*  --shadow-*  --motion-*  --ease
 
 第 1 层 · 上下文别名（context alias）
@@ -619,8 +723,8 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
   组件只消费别名 → 换上下文不需要改组件
 
 第 2 层 · 场景语境（scenario context）
-  .iris2      品牌视觉容器（画布底色 + 文字色 + 玻璃材质）
-  .is-admin   管理面（Management）—— 规划中，尚未实现
+  .iris2      品牌视觉容器（画布底色 + 文字色 + 玻璃材质）——首页首屏 + 认证壳
+  .is-admin   管理面（Management，Purple SaaS）—— Visual Completion 工作包 C 落地
   .is-console 工作台面（Intelligence）—— 规划中，尚未实现
   .is-sheet   判读纸面（Clinical）
 ```
@@ -636,13 +740,15 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 | 能不能互相替代 | 取令牌 ≠ 变成品牌页 | 套 `.iris2` ≠ 自动拿到正确的按钮/卡片语义 |
 
 所以：
-- 在管理端写 `background: var(--brand-primary)` 是**合法**的；
+- 在管理端写 `background: var(--admin-primary)` 是**规定**的做法（Visual Completion 后）；
+  旧版"管理端钴蓝主操作"的说法**作废**；
 - 在管理端套 `.iris2` 是**错误**的（那会把整块画布变成品牌画布）；
-- 「品牌色只服务 C 档」是旧说法，**作废**——品牌色是语义令牌，场景无关。
+- `--brand-*` 仍是跨场景令牌（Agent 运行态、品牌强调都可取用），
+  但管理端主操作色**由 `--admin-*` 承担**。
 
 规则：
-- **组件只消费第 1 层别名 + 带语义的令牌**（`--brand-*`、`--signal`、`--risk-*`、
-  `--viz-series-*`），**不直接写死十六进制色值**；其余中性色一律走第 1 层别名。
+- **组件只消费第 1 层别名 + 带语义的令牌**（`--brand-*`、`--admin-*`、`--signal`、
+  `--risk-*`、`--viz-series-*`），**不直接写死十六进制色值**；其余中性色一律走第 1 层别名。
   换上下文不需要改组件——这正是第 1 层别名存在的理由。
 - 场景类只**声明语境**（底色、文字色、面板材质），不改第 0 层。
 - Portal 到 `body` 的面板**必须显式带上语境类**，否则令牌回退到根级。
@@ -680,30 +786,38 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 
 ### 3.4 颜色与材质
 
-**语义色板（三套，互不顶替）**
+**语义色板（四类业务语义，互不顶替；Visual Completion 起明确"四类分离"）**
 
-| 语义域 | 令牌 | 浅色 | 暗色 |
-|---|---|---|---|
-| 医学严重度 | `--risk-normal` | `#2f7d55` | `#58b183` |
-| | `--risk-attention` | `#96690f` | `#cf9a37` |
-| | `--risk-critical` | `#a83226` | `#d96153` |
-| 临床重点 | `--signal` | `#d9541f` | `#ef7a45` |
-| 品牌 | `--brand-primary` | `#2457c9` | `#85b5ff` |
-| | `--brand-cyan` | `#006f82` | `#60d7e6` |
-| | `--brand-aurora` | `#6b56c5` | `#c0acff` |
-| 分类数据 | `--viz-series-1..6` | 见 `tokens.css` | 见 `tokens.css` |
+| 语义域 | 令牌 | 浅色 | 暗色 | 说明 |
+|---|---|---|---|---|
+| 医学严重度 | `--risk-normal` | `#2f7d55` | `#58b183` | **品牌/管理色不能顶替** |
+| | `--risk-attention` | `#96690f` | `#cf9a37` | |
+| | `--risk-critical` | `#a83226` | `#d96153` | |
+| 临床重点 | `--signal` | `#d9541f` | `#ef7a45` | 当前态/重点，不是主 CTA |
+| 品牌身份 | `--brand-primary` | `#2457c9` | `#85b5ff` | 用户端品牌主色 |
+| | `--brand-cyan` | `#006f82` | `#60d7e6` | 冷调高光 |
+| | `--brand-aurora` | `#6b56c5` | `#c0acff` | 点缀 |
+| 管理操作 | `--admin-*` | 🗓 工作包 C 定值 | 🗓 | **紫色**：管理品牌/主操作/当前导航/图表强调 |
+| 分类数据 | `--viz-series-1..6` | 见 `tokens.css` | 见 `tokens.css` | 仅数据图表 |
+
+四类语义分离（Visual Completion §二.6）：**品牌**（`--brand-*`，用户端身份）、
+**管理操作**（`--admin-*`，紫色 SaaS）、**真实运行态**（品牌蓝/青，绑定真实事件）、
+**临床风险**（`--risk-*`，医学严重度）。任何一类都不能顶替另一类——
+尤其紫色不能冒充医学风险，品牌蓝不能冒充临床重点。
 
 **硬规则**
-1. **严重度色与品牌色解耦**：改品牌色不动风险色，改风险色不动品牌色。
-   `tokens.contrast.test.ts` 有断言：品牌色不得与风险色同值（🅿 该断言随 PR #52 加入）。
+1. **严重度色与品牌/管理色解耦**：改品牌色不动风险色，改风险色不动品牌色；
+   `--admin-*` 与 `--risk-*` 同样不得同值。
+   `tokens.contrast.test.ts` 是门禁的一部分。
 2. **颜色不是唯一信息载体**：所有状态必须同时有文字标签或第二通道
    （读数表 / 直标 / 图例 / 线型 / marker / `aria-label`）。
-3. **信号橙不是主 CTA 色**（Brand / Management / Intelligence 场景例外：主 CTA 是钴蓝）。
+3. **信号橙不是主 CTA 色**（Brand / Intelligence 主 CTA 是钴蓝；
+   Management 主 CTA 是管理紫；Clinical 主 CTA 保持墨色）。
    橙色表示"这里是重点/当前"，不表示"这里最危险"，不表示"点这里提交"。
-4. **分类色只用于 Management / Intelligence 的数据图表**，不占用 `--signal` 与 `--risk-*`。
-5. **彩色只能来自令牌表**（医学严重度 3 + 临床重点 1 + 品牌 3 + 分类 6），
-   不允许在组件里新写色值。品牌层引入钴蓝/冰青/极光紫**不是**破坏这条规则——
-   它们是已经过对比度实测的 `--brand-*` 令牌。新增色值必须同时满足：走令牌、
+4. **分类色只用于 Management / Intelligence 的数据图表**，不占用 `--signal`、
+   `--risk-*` 与 `--admin-*`。
+5. **彩色只能来自令牌表**（医学严重度 3 + 临床重点 1 + 品牌 3 + 管理操作组 +
+   分类 6），不允许在组件里新写色值。新增色值必须同时满足：走令牌、
    亮暗两套实测、不与既有语义域同值、写进 `tokens.contrast.test.ts`。
 6. 禁纯黑 `#000` 页面背景、禁纯白页面背景、禁在浅色面上用纯黑投影。
 7. **材质分层靠发丝线与明度差**；需要抬升时才用阴影，且阴影基于墨色
@@ -913,24 +1027,27 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
-| 主操作底色 | `--brand-primary` | `--brand-primary` | `--brand-primary` | `--ink`（墨色） |
-| 主操作字色 | `--brand-primary-fg` | `--brand-primary-fg` | `--brand-primary-fg` | `--bg` |
+| 主操作底色 | `--brand-primary` | 🗓 `--admin-primary`（管理紫，Visual Completion） | `--brand-primary` | `--ink`（墨色） |
+| 主操作字色 | `--brand-primary-fg` | 🗓 `--admin-primary-fg` | `--brand-primary-fg` | `--bg` |
 | 圆角 | `--radius-pill` / `--radius-lg` | `--radius-md` | `--radius-md` | `--radius-none` |
 | 高度 | 48–52px | 40–44px | 40–44px | 52px |
-| 次级 | 玻璃面板 + 发丝描边 | 白底 + 发丝描边 + 极淡阴影 | 深底 + 发丝描边 | 透明底 + `--hr-strong` 描边 |
-| 文字按钮 | `--brand-primary` | `--brand-primary` | `--brand-primary` | `--signal` |
-| 状态反馈 | 品牌色描边 + 底部 2px 指示条 | 描边加亮 + 极淡底 | 运行态脉冲（有事件才亮） | 描边 + `--signal` 底 |
+| 次级 | 玻璃面板 + 发丝描边 | 白底 + 发丝描边 + 柔和阴影 | 深底 + 发丝描边 | 透明底 + `--hr-strong` 描边 |
+| 文字按钮 | `--brand-primary` | 🗓 `--admin-primary` | `--brand-primary` | `--signal` |
+| 状态反馈 | 品牌色描边 + 底部 2px 指示条 | 🗓 描边加亮 + 极淡紫底 | 运行态脉冲（有事件才亮） | 描边 + `--signal` 底 |
 | 危险操作 | 不用品牌色 | `--risk-critical` + 文字确认 | `--risk-critical` + 文字确认 | `--risk-critical` + 文字确认 |
+
+> 主 CTA 颜色的完整口径（§3.4 规则 3）：Brand/Intelligence 钴蓝、
+> Management 管理紫、Clinical 墨色、信号橙任何场景都不是主 CTA。
 
 ### 4.2 卡片 / 面板
 
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
-| 底 | `--brand-glass` / `--brand-glass-strong` | `--surface` | `--surface` / `--surface-2` | `--surface`（纸） |
+| 底 | `--brand-glass` / `--brand-glass-strong` | 🗓 `--admin-surface`（白卡/深紫蓝面板） | `--surface` / `--surface-2` | `--surface`（纸） |
 | 描边 | `--brand-hairline` + 内高光 | `1px var(--hr)` | `1px var(--hr)` | `1px var(--hr)` |
-| 阴影 | `--brand-shadow` | `--shadow-overlay` | `--shadow-overlay` | 无（用发丝线） |
+| 阴影 | `--brand-shadow` | 🗓 柔和阴影（参考 G 质感，基于墨色） | `--shadow-overlay` | 无（用发丝线） |
 | 圆角 | `--radius-xl`（24px） | `--radius-lg`（12px） | `--radius-lg`（12px） | `--radius-none` |
-| 顶部条 | `.card-accent` 用 `--brand-primary` | `.card-accent` 用 `--signal`（当前态） | `.card-accent` 用状态语义色 | `.card-accent` 用 `--signal` |
+| 顶部条 | `.card-accent` 用 `--brand-primary` | 🗓 `.card-accent` 用 `--admin-primary`；精选卡紫色强调 | `.card-accent` 用状态语义色 | `.card-accent` 用 `--signal` |
 | 嵌套 | 不多层内嵌容器 | 不多层内嵌容器 | 分区用分隔线而非套卡 | 不套卡 |
 
 ### 4.3 图表
@@ -954,15 +1071,17 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
-| 形态 | **共享产品顶栏**的 `brand` 变体（悬浮胶囊，§1.6） | 常驻侧边导航（**不挂产品顶栏**） | 共享顶栏的 `intelligence` 变体 + 工作区侧栏 | 共享顶栏的 `clinical` 变体 |
-| 材质 | 磨砂玻璃胶囊 | 实体侧栏 | 实体面胶囊（深色工作区时用 `--surface-2`） | 实体纸面胶囊（无模糊） |
-| 高度 | 56–64px | 侧栏 220–240px | 顶栏 56px + 侧栏 260px | 56–64px |
-| 圆角 | `--radius-pill` | `--radius-md` | `--radius-md` | `--radius-md`（外框）/ 内部当前态 2px 条 |
-| 当前态 | 实心钴蓝胶囊 | 左栏 2px 品牌色指示条 + 加亮底 | 冰青/钴蓝底部 2px（运行态才发光） | `--signal` 底部 2px |
+| 形态 | **共享产品顶栏**（悬浮胶囊，§1.6 / §2.1.2） | 常驻侧边导航（**不挂产品顶栏**；🗓 Purple SaaS 侧栏） | **共享产品顶栏**（U2：不再单独变体回退）+ 工作区侧栏 | **共享产品顶栏**（U2：不再回退纸面胶囊） |
+| 材质 | 磨砂玻璃胶囊 | 🗓 实体紫色 SaaS 侧栏（`--admin-surface`） | 悬浮玻璃（背景透明度可调，U2 有限参数） | 悬浮玻璃（背景透明度可调，U2 有限参数） |
+| 高度 | 56–64px | 侧栏 220–240px | 顶栏 56–64px + 工作区侧栏 260px | 56–64px |
+| 圆角 | `--radius-pill` | `--radius-md` | `--radius-pill`（顶栏胶囊） | `--radius-pill`（顶栏胶囊） |
+| 当前态 | 实心钴蓝胶囊 | 🗓 左栏紫色指示条 + 加亮底 | 钴蓝胶囊（与 Brand 一致，U2） | 钴蓝胶囊（与 Brand 一致，U2） |
 | 移动端 | 折叠为共享 `MobileNav` 抽屉 | 抽屉 | 共享抽屉 | 共享抽屉 |
 
-> Editorial（`/news`）是 Brand 之下的变体：**同一套胶囊结构与钴蓝当前态**，
-> 但用实体面而不是磨砂玻璃，正文区提供编辑式阅读宽度。
+> **U2 修订说明**：旧表允许 `clinical` / `intelligence` 变体换材质与当前态语义色
+> （纸面胶囊 + 信号橙底线、冰青底线）——该规定**作废**。用户端四个场景的顶栏
+> 共享同一设计语言；scene 只调背景透明度与密度（§2.1.2）。
+> Editorial（`/news`）仍是 Brand 之下的密度变体，同一套胶囊与钴蓝当前态。
 
 ### 4.5 弹层（统一 Base UI）
 
@@ -1000,9 +1119,9 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
-| 通用 | `--brand-primary` | `--signal`（当前态） | 状态语义四色（§2.3） | `--risk-*` |
+| 通用 | `--brand-primary` | 🗓 `--admin-primary`（导航当前态）+ `--signal`（重点标记） | 状态语义四色（§2.3） | `--risk-*` |
 | 形态 | 药丸 / 描边 | 顶部条 + 小圆点 | 状态点 + 文字 | `RiskTag`：**永远带文字、永远带小圆点、永远不整块填色** |
-| 语义分离 | 不与风险色同屏 | 不与风险色同值 | 四套语义分离（§2.3） | 品牌色与风险色解耦 |
+| 语义分离 | 不与风险色同屏 | 管理紫不与风险色同值；紫色不冒充医学风险 | 四套语义分离（§2.3） | 品牌色与风险色解耦 |
 
 ---
 
@@ -1051,7 +1170,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 品牌玻璃材质体系（五种材质 × 双主题，见 §2.1.1） | 🅿 | PR #55（R2-00） |
 | 光学玻璃保真（透明带体 / 厚度边缘 / 镜面高光 / 可见纤维） | 🅿 | PR #56（R2-01） |
 | 悬浮胶囊品牌导航（Brand 变体，见 §2.1.2） | 🅿 | PR #57（R2-02） |
-| 深海蓝品牌页脚（品牌变体，见 §2.1.3） | 🅿 | PR #58（R2-03） |
+| 深海蓝品牌页脚（品牌变体，见 §2.1.4） | 🅿 | PR #58（R2-03） |
 | 首页整页品牌作用域 `.is-brand-page` | 🅿 | PR #59（R2-04） |
 | **Shared Product Shell**（单一顶栏组件 + 场景变体 + 全公开路由迁移） | 🅿 | R2.5-01（§1.6，PR 见分支 `feat/iris-2-r2-5-01-shared-shell`） |
 | 首页 Hero 之后区块的品牌版式 | 🅿 | R2.5-02（分支 `feat/iris-2-r2-5-02-landing`） |
@@ -1059,7 +1178,15 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 判读工作区（RecordSheet 不动） | 🅿 | R2.5-04（分支 `feat/iris-2-r2-5-04-diagnosis`） |
 | Agent 会话工作区视觉层次 | 🅿 | R2.5-05（分支 `feat/iris-2-r2-5-05-agent`） |
 | 个人中心 / 记录页外壳收敛 | 🅿 | R2.5-06（分支 `feat/iris-2-r2-5-06-profile-records`） |
-| 管理端视觉升级（圆角 8–12px、实体卡片、钴蓝主操作、深海蓝暗底） | 🗓 | 路线图 R3 |
+| 管理端视觉升级（圆角 8–12px、实体卡片、钴蓝主操作、深海蓝暗底） | ⛔ 已废止 | 旧 R3 目标被 Purple Medical SaaS 取代（见下行） |
+| **`--admin-*` 管理端令牌体系 + Purple Medical SaaS 视觉（侧栏/页头/统计卡/图表/7 页）** | 🗓 | Visual Completion 工作包 C（§2.2，参考代号 G） |
+| **U1 首页完整重设计（移除技术读数条 / 判读记录展示容器 / Agent 展示品牌化 / 章节重组）** | 🗓 | Visual Completion 工作包 A（§2.1） |
+| **U2 用户端导航统一（scene 变体收紧，消除旧仪器回退）** | 🗓 | Visual Completion 工作包 B（§2.1.2） |
+| **U3 判读页操作区重设计（品牌化页头/上传卡片/过程解释；RecordSheet 不动）** | 🗓 | Visual Completion 工作包 B（§2.4） |
+| **U4 Agent 工作区视觉升级（侧栏/对话区/输入框/状态卡/欢迎区/移动端）** | 🗓 | Visual Completion 工作包 B（§2.3） |
+| **U5 News / NewsDetail 现代资讯门户（头版 Hero/精选/卡片/阅读排版）** | 🗓 | Visual Completion 工作包 A（§1.5） |
+| **U6 认证页蓝青光学玻璃（替换橙色 LaserFlow 与暗房叙事）** | 🗓 | Visual Completion 工作包 A（§2.1.3） |
+| **U7 个人中心与判读记录品牌语言容器** | 🗓 | Visual Completion 工作包 B（§2.4） |
 | 多 Agent 协作视图 / 影像工作台 / 证据区 | 🗓 | 后端协议未定义，路线图 R4 |
 | 第三方概念稿中的任何界面 | ◌ | **不是**产品能力，不应被描述成已实现 |
 
@@ -1080,13 +1207,16 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 仍有 2 处 `outline: none`：`CardSwap.css` 的装饰容器、`admin.css` 里 Recharts 图表 wrapper 的 `:focus`（R2.5-05 曾给 `agent.css` 输入区加了第 4 处，**已修 2026-11-13**：textarea 保留全局焦点环、容器用 `:focus-within` 补柔光） | 前两处是装饰/弹层容器（焦点不在其上），**Recharts wrapper 那处会让图表聚焦时没有可见焦点环** | 逐处提高特异度重画，不要删焦点；装饰性的两处可留并写明理由 |
 | 断点未完全收敛：各页 `@media` 共有 18 个不同取值（390/480/520/560/600/640/680/700/760/768/780/860/900/980/1024/1080/1700/2200；旧记录里的 720、800 已不存在） | 各页断点行为不一致 | 验收档位与新增断点见 §3.6「R2.5 起的断点分工」：新写样式只用 390 / 768 / 900，验收过六档 |
 | ~~两套顶栏实现并存~~（**已修 2026-11-13，R2.5-01**：合并为 `ProductHeader` + `scene` 变体，`BrandHeader` / `SiteHeader` 删除） | 跨路由曾像进了另一个产品 | 勿再新增第二套顶栏 |
-| 首页 Hero 之后仍是旧仪器版式 | Hero 与下方区块同页两种语言 | R2.5-02 已逐区升级（流程卡 / 记录画框 / Agent 信息卡 / 深海蓝边界 / 胶囊 CTA）；`record` 区保留纸面语义 |
+| 首页 Hero 之后仍是旧仪器版式 | Hero 与下方区块同页两种语言 | R2.5-02 已逐区升级（流程卡 / 记录画框 / Agent 信息卡 / 深海蓝边界 / 胶囊 CTA）；**用户反馈仍不够**——Visual Completion U1 对 Hero 后所有内容重新判断（§2.1） |
 | ~~新闻页顶栏是品牌层、主体是仪器台账~~（**已修 2026-11-13，R2.5-03**：头版 + 发丝线列表，去掉读数条与橙角标） | 品牌身份与版面语言不一致 | 有/无封面两条路径都要验收 |
 | ~~个人中心 / 记录的主体仍是旧仪器版式~~（**已修 2026-11-13，R2.5-06**：个人中心改读数卡 + 最近判读列表，记录页保留 KPI + 台账但收敛标题与窄屏读数） | 外壳与主体两种语言 | 六个公开路由的主体已全部升级；管理端属 R3 |
 | 公开路由页脚策略不一致（仅首页有品牌页脚） | 门户页缺少收尾；工作区又不应被页脚占位 | R2.5-01 落实 §1.6.2：完整 / 精简 / 免责 / 不展示 |
 | 首屏光带参数是手调的，不是从设计稿反推的 | 换分辨率 / DPR 下观感可能不如预期 | 390/768/1440/1920 × 亮暗逐张看过；改配色需重看 |
 | `--brand-*` 令牌与 `.iris2` 只存在于 PR #52，**尚未进入 `ui`** | 在 `ui` 上写品牌组件会取不到令牌；按本文档开发前必须先合并 PR #52 | 合并 PR #52 后再开发；本文对这部分一律标 🅿，**不称其为"已实现于 `ui`"** |
-| 管理端仍是旧 B 档外观（0 圆角、墨色主按钮） | 与 §2.2 目标不一致 | 路线图 R3 |
+| 管理端仍是旧 B 档外观（0 圆角、墨色主按钮） | 与 §2.2 目标不一致 | Visual Completion 工作包 C（Purple SaaS） |
+| 用户端 scene 变体仍存在旧仪器回退（`clinical`/`intelligence` 变体的纸面胶囊与橙色底线） | 跨路由品牌身份断裂，用户明确否定 | Visual Completion U2（§2.1.2）；矩阵见 §4.4 |
+| 认证页仍是橙色 LaserFlow + 暗房叙事 | 与用户端品牌方向不一致 | Visual Completion U6（§2.1.3） |
+| 首页首屏技术读数条（4 项技术铭牌）不适合品牌首屏 | 首屏信息呈现方式不对 | Visual Completion U1：移除，能力信息融入正文章节 |
 | Intelligence 场景的后端事件协议未定义 | 协作区无法实现 | 先定协议再画界面，**不许先画假状态** |
 
 ---
@@ -1094,9 +1224,15 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 ## 附录 A · 速查卡
 
 ```
+两条产品线  用户端 = Blue Optical Glass（钴蓝/银蓝/冰青/光学玻璃/悬浮导航/金属虹膜标）
+            管理端 = Purple Medical SaaS（--admin-* 管理紫；参考代号 G）
+            场景差异 ≠ 品牌身份变化：用户端任何页面不回退旧仪器视觉
+
 品牌层      --brand-primary #2457c9（暗底 #85b5ff）/ --brand-cyan / --brand-aurora
-            --brand-* 是跨场景品牌令牌（管理端主操作、Agent 运行态可用）；
-            .iris2 只是品牌视觉容器，仅首页首屏；信号橙仍是临床语义色，两者不混用
+            --brand-* 是跨场景品牌令牌（Agent 运行态、品牌强调可用）；
+            .iris2 只是品牌视觉容器，仅首页首屏 + 认证壳；信号橙是临床语义色，不混用
+管理端      --admin-* 管理紫（Visual Completion 工作包 C 落地）：
+            管理品牌 / 主操作 / 当前导航 / 精选卡 / 图表强调；不冒充医学风险
 品牌字体    --font-brand（Manrope Variable → Noto Sans SC 回退）
 
 页面底      --field         #f3f4f1        （暗底 --night-bg #0b0d0c）
@@ -1109,6 +1245,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
             永远同时给文字标签
 分类色      --viz-series-1..6（仅 Management / Intelligence 图表，浅/暗两套）
 
+主 CTA      Brand/Intelligence 钴蓝 · Management 管理紫 · Clinical 墨色 · 橙永不
 标题        --font-serif（Noto Serif SC 栈），weight 400
 正文        --font-sans
 数字        --font-mono + tabular-nums
@@ -1121,10 +1258,12 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
             氛围动效（材质在动，不绑业务事件，仅 Brand）/ 状态动效（必须绑真实请求
             或运行事件，全场景允许、表现强度不同）；reduced-motion 实时订阅、
             离屏即停、可暂停
+导航        用户端统一悬浮玻璃导航（U2）：金属虹膜标 + Manrope 字标 + 钴蓝选中态；
+            scene 只调透明度/密度，不换设计语言；管理端独立紫色 SaaS 侧栏
 骨架        KPI 条 + overline + 台账行 + .card-accent —— 只给台账页（/records、
             /admin/users|news|diagnosis|knowledge）；管理端概览/数据分析页以 KPI + 图表为主，
-            新闻编辑页以表单为主；登录注册用品牌双栏，个人中心用资料区 + 读数卡，
-            资讯用编辑式列表（§1.5）
+            新闻编辑页以表单为主；登录注册用蓝青光学双栏（U6），个人中心用资料区 + 读数卡，
+            资讯用现代编辑式门户（U5）（§1.5）
 真源        web/src/styles/tokens.css（已实现的事实）
             本文（目标规范）；差异见 §8 与 docs/design/iris-2-rule-change-matrix.md
 ```
@@ -1132,7 +1271,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 **写组件前先问四句**：
 这里需要颜色吗（默认中性）？这个数字是量化数据吗（是就用 mono）？
 这是纸还是底（纸永远是纸）？**这个场景是 Brand / Management / Intelligence / Clinical
-里的哪一个（决定圆角、主色与动效预算）？**
+里的哪一个（决定圆角、主色与动效预算），它属于用户端还是管理端这两条产品线？**
 
 ---
 
@@ -1146,12 +1285,14 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | A | Iris Optic Flow V4 首页概念（**自有资产**） | `docs/design/assets/optic-flow-v4-light.png` / `-dark.png` / `optic-flow-v4.html` |
 | B | Axion · Clean Corporate Website for Life Sciences | https://dribbble.com/shots/27206008-Axion-Clean-Corporate-Website-for-Life-Sciences |
 | F | Cure.Med · Medical Platform Branding and Dashboard Concept | https://dribbble.com/shots/24203305-Cure-Med-Medical-Platform-Branding-and-Dashboard-Concept-SaaS |
-| G | Healthcare Dashboard Design（Clinical AI） | https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design |
+| G | Healthcare Dashboard Design（**Visual Completion 管理端主参考**：紫白医疗 SaaS 体系、统计卡、图表容器、侧栏质感） | https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design |
 | H | MediCore AI · Healthcare Command Center UI | https://dribbble.com/shots/27363076-MediCore-AI-Healthcare-Command-Center-UI |
 | I | Synthia OS · AI-Powered Biotech & Gene Synthesis（**信息布局参考，非眼科**） | https://www.behance.net/gallery/250063917/Synthia-OS-AI-Powered-Biotech-Gene-Synthesis |
 | 影像工作流 | V7 Darwin · Medical Imaging Annotation | https://www.v7darwin.com/medical-imaging-annotation |
 | 动态材质 | React Bits · Beams（vendored，见 `THIRD-PARTY-NOTICES.md`） | https://reactbits.dev/backgrounds/beams |
 
-访问日期：2026-11-12。
+访问日期：2026-11-12（G 的管理端主参考地位更新于 2026-11-13）。
+**G 参考（管理端）的借鉴边界**：借鉴其紫白色体系、Dashboard 信息架构、统计卡与
+图表容器质感、交互状态；**禁止复制**其虚构营收、医生、病人、AI 准确率等样例数据。
 完整的取舍说明（"只借鉴什么 / 不照搬什么"）见
 `docs/design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` §1。
