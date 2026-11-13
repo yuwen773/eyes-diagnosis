@@ -8,6 +8,10 @@
 
 Graph 使用真实并行 Vision/Evidence、汇合、Explanation、Critic 条件边；SUPPLEMENT 有独立回边，REWRITE 不重跑 Vision/Evidence。底层角色信封与内部草稿 workflow 仍为 `AUTONOMOUS_V2`：Graph 改变调度方式，保留既有消息语义。节点返回结构化结果，不提供 token 流、像素级视觉能力或医生批准权限。
 
+**Vision 角色的证据来源边界（2026-11-13 明确，评审 P1-03）**：Vision 角色的输入是已通过 gRPC 推理门禁的权威推理快照，职责是对该结果做医学解释与质量复核，**不是**直接看图的视觉模型；原始图像分析仍以 Python gRPC EfficientNet 推理为唯一权威来源。前端不得呈现「Vision 正在扫描/观察病灶」类叙事，只能描述「正在复核推理结果」。若未来引入受控多模态观察工具，须单独门禁并与分类结果区分呈现。
+
+**医生实时会诊定位（评审 P1-02）**：当前医生详情投影（`v1:doctor:<reviewId>`、`agent.readable`）只在 `t_doctor_review` 分配存在后开放，即**事后复核视图**，不是运行中实时会诊；执行中的角色可见性对患者投影保持不变。若产品需要「医生实时看完整协作过程」，必须新增独立的执行前授权绑定（可撤销、与复核权限分离），不得把审核通过权限提前授予——该能力尚未立项，前端不得假设其存在。
+
 关闭 graph-enabled 后，已受理的 Graph run 继续由其兼容适配器完成/恢复；新的 Coordinator run 不会接管它们。关闭整个 collaboration 功能或回退二进制之前，仍须先排空或持久取消全部活动 run，保持兼容 worker 到排空结束。
 
 ## 恢复权威
