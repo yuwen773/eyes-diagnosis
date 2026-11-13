@@ -46,7 +46,7 @@ class FlywayMySqlIntegrationTest {
                 assertEquals(12, masterMigrations);
                 Flyway latest = Flyway.configure().dataSource(url, username, password).schemas(schema)
                         .locations("classpath:db/migration", "classpath:db/callback").load();
-                assertEquals(10, latest.migrate().migrationsExecuted);
+                assertEquals(11, latest.migrate().migrationsExecuted);
                 try (var account = statement.executeQuery("SELECT userAccount,userPassword,userRole,legacyMarker FROM `"
                         + schema + "`.t_user WHERE id=7")) {
                     assertTrue(account.next());
@@ -84,7 +84,7 @@ class FlywayMySqlIntegrationTest {
 
                 int expectedMigrations = flyway.info().all().length;
                 assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
-                assertEquals("27", flyway.info().current().getVersion().toString());
+                assertEquals("28", flyway.info().current().getVersion().toString());
 
                 // 空库 migrate 后必须拥有全部被实体使用的表，否则登录、资讯、
                 // Agent 会话、知识库会在启动时无表可写。
@@ -100,7 +100,7 @@ class FlywayMySqlIntegrationTest {
                         "t_user", "t_news", "t_agent_session", "t_knowledge_document",
                         "t_diagnosis", "t_agent_message", "t_mcp_server", "t_inference_cache",
                         "t_news_audit", "t_diagnosis_task", "t_patient_draft_run",
-                        "t_doctor_review", "t_patient_authorization"}) {
+                        "t_doctor_review", "t_patient_authorization", "t_agent_tool_audit"}) {
                     assertTrue(tables.contains(expected), "missing table after migrate: " + expected);
                 }
 

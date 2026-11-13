@@ -385,6 +385,53 @@
   opacity: 0.6;
 }
 
+/* 工具执行状态：颜色只作辅助，状态文字始终存在；令牌在明暗主题下各自有值。 */
+.agent-toolcard__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.agent-toolcard__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.agent-toolcard__status--running,
+.agent-toolcard__status--awaiting-confirm {
+  color: var(--risk-attention, var(--fg-2));
+}
+
+.agent-toolcard__status--succeeded {
+  color: var(--risk-normal, var(--fg));
+}
+
+.agent-toolcard__status--failed {
+  color: var(--risk-critical, var(--fg));
+}
+
+.agent-toolcard__status--cancelled {
+  color: var(--fg-2);
+}
+
+@media (max-width: 480px) {
+  .agent-toolcard__head {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .agent-toolcard__tag {
+    margin-left: 0;
+  }
+}
+
 .agent-toolcard__args {
   padding: 8px 12px 10px;
   font-family: var(--font-mono);

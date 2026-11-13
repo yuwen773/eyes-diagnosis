@@ -479,8 +479,14 @@ export function requestReexamine(id: string | number) {
 export type AgentStreamDTO = {
   messageType: string
   content?: string
-  toolCalls?: { name: string; arguments: string }[]
+  toolCalls?: { name: string; arguments: string; id?: string; stepLabel?: string }[]
   toolName?: string
+  /* ── 普通聊天工具步骤契约：全部可选，历史消息与旧后端不带这些字段。 ── */
+  toolCallId?: string
+  toolStatus?: string
+  stepLabel?: string
+  finishReason?: string
+  errorCategory?: string
 }
 
 export type StreamChatHandlers = {

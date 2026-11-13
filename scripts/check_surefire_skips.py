@@ -58,6 +58,7 @@ BACKEND_UNIT_CONTRACT = {
         P + "patientauthorization.PatientAuthorizationApiTest": {"env": "ISSUE22_TEST_URL", "cases": 37, "skipped": 37},
         P + "patientfollowup.PatientFollowUpApiTest": {"env": "ISSUE23_TEST_URL", "cases": 37, "skipped": 37},
         P + "migration.FlywayMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
+        P + "agent.service.ToolAuditMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 1, "skipped": 1},
         P + "poc.CoordinationMySqlTest": {"env": "COORDINATION_POC_URL", "cases": 14, "skipped": 14},
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": {"env": "FLYWAY_TEST_URL", "cases": 3, "skipped": 3},
     },
@@ -75,12 +76,13 @@ ISSUE17_CONTRACT = {
     "opt_in": {},
 }
 
-# The Flyway job has database env vars set, so its two suites must run fully.
+# The Flyway job has database env vars set, so its suites must run fully.
 FLYWAY_CONTRACT = {
     "scope": "named",
     "expected": {
         P + "migration.FlywayMySqlIntegrationTest": 3,
         P + "upload.state.UploadTaskMapperMySqlIntegrationTest": 3,
+        P + "agent.service.ToolAuditMySqlIntegrationTest": 1,
     },
     "opt_in": {},
 }

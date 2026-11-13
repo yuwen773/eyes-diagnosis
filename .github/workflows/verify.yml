@@ -546,10 +546,10 @@ jobs:
       - name: Allow disposable empty-schema migration checks
         run: >-
           docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password
-          -e 'GRANT ALL PRIVILEGES ON `diagnosis_ci_empty_%`.* TO "eyeuser"@"%";'
-      # Each matrix job runs both suites together, so order dependence cannot hide.
-      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest -Dsurefire.runOrder=${{ matrix.run-order }} test
-      - name: Require both Flyway suites to run fully
+          -e 'GRANT ALL PRIVILEGES ON `diagnosis_ci_empty_%`.* TO "eyeuser"@"%"; GRANT ALL PRIVILEGES ON `diagnosis_ci_audit_%`.* TO "eyeuser"@"%";'
+      # Each matrix job runs all three suites together, so order dependence cannot hide.
+      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest,ToolAuditMySqlIntegrationTest -Dsurefire.runOrder=${{ matrix.run-order }} test
+      - name: Require all Flyway suites to run fully
         run: python3 scripts/check_surefire_skips.py target/surefire-reports flyway
 
   product-contract:

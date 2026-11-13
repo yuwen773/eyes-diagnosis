@@ -84,6 +84,11 @@ app:
 agent:
   # 上游模型 reasoning 默认不展示、不落库；显式开启才进入消息流与历史。
   expose-reasoning: false
+  tool-audit:
+    # 结构化工具调用审计：SSE 状态事件始终可用，但默认完全不落库。
+    # 启用前必须部署 V28 表，并通过部署环境变量提供独立 HMAC 密钥。
+    enabled: false
+    digest-key: ${AGENT_TOOL_AUDIT_DIGEST_KEY:iris-tool-audit-dev-only-key}
 eye-diagnosis:
   collaboration:
     enabled: false
