@@ -5,11 +5,16 @@
    Intelligence 的强调色是运行态钴蓝 / 冰青：--brand-primary 表示「当前、
    可操作」，--brand-cyan 只标「正在生成」。--signal 是临床「重点/当前」的
    语义色，不在这一层复用（R2.5-05）。浅色为主、双主题随 html.dark 翻转。
+
+   Visual Completion U4：现代 AI 工作区视觉结合 Iris 品牌——
+   骨白画布上的白色实体面板分层（会话侧栏 / 资源面板 / 工具卡），
+   正文消息去卡片化（助手回复平铺、用户消息品牌浅底气泡），
+   不做大面积玻璃模糊；运行态仍只绑真实 SSE 事件。
    ============================================================ */
 
-/* ── agent: 消息（排版一比一复刻 Vue 版气泡布局）── */
+/* ── agent: 消息（U4：正文平铺，工具与过程保留卡片）── */
 
-/* 用户消息：右对齐气泡，图片网格挂在气泡下方 */
+/* 用户消息：右对齐品牌浅底气泡，图片网格挂在气泡下方 */
 .agent-msg--user {
   display: flex;
   flex-direction: column;
@@ -21,8 +26,8 @@
 .agent-msg__bubble-user {
   max-width: 70%;
   padding: 10px 16px 8px;
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: color-mix(in srgb, var(--brand-primary) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 16%, var(--hr));
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
   word-break: break-word;
 }
@@ -94,7 +99,8 @@
   font-weight: 600;
 }
 
-/* 助手消息：左对齐气泡 + Iris 头（排版同 Vue 版 AssistantMessage） */
+/* 助手消息：左对齐、无卡片正文（U4——对话正文不做气泡嵌套，
+   工具卡与思考卡才是「系统在做事」的容器），+ Iris 头 */
 .agent-msg--assistant {
   display: flex;
   padding: 8px 16px;
@@ -102,9 +108,7 @@
 
 .agent-msg__bubble-ai {
   max-width: min(680px, 100%);
-  padding: 10px 16px;
-  border: 1px solid var(--hr);
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
+  padding: 4px 0;
   word-break: break-word;
 }
 
@@ -525,6 +529,7 @@
    右侧让出浮动资源钮的位置，避免与计数重叠。 */
 .agent-console .console__head {
   border-bottom-color: var(--hr);
+  background: var(--surface);
 }
 
 /* 头栏左右两组：左侧放折叠后的左栏操作钮，右侧放资源面板钮。
@@ -551,6 +556,14 @@
   color: var(--brand-primary);
 }
 
+/* U4：标题行用品牌拉丁字——DIAGNOSIS · AGENT 是产品名，与顶栏字标同语。 */
+.agent-console .console__title {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-size: 13px;
+}
+
 .agent-load {
   padding: 16px 22px;
   font-family: var(--font-mono);
@@ -567,6 +580,7 @@
    它会溢出容器、滑到输入区底下。这里把它压回可滚动区域。 */
 .agent-console .console__body {
   min-height: 0;
+  background: var(--surface);
 }
 
 .agent-msg__live-inline {
@@ -643,10 +657,10 @@ html:not(.dark) .welcome-mark__img--dark {
 
 .welcome-title {
   margin: 0 0 8px;
-  font-family: var(--font-serif);
-  font-weight: 400;
+  font-family: var(--font-brand);
+  font-weight: 700;
   font-size: 32px;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
   color: var(--fg);
 }
 
@@ -675,7 +689,9 @@ html:not(.dark) .welcome-mark__img--dark {
   padding: 18px 18px 14px;
   border: 1px solid var(--hr);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  /* 卡片落在白色对话面板上：底取画布色，靠明度差与发丝线分层（U4），
+     不做玻璃模糊。 */
+  background: var(--bg);
   font-family: var(--font-sans);
   cursor: pointer;
   text-align: left;
@@ -700,9 +716,10 @@ html:not(.dark) .welcome-mark__img--dark {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid var(--hr);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, var(--hr));
   border-radius: var(--radius-md);
   color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 6%, transparent);
 }
 
 .guide-content {
@@ -791,8 +808,9 @@ html:not(.dark) .welcome-mark__img--dark {
   border: 1px solid var(--hr);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-overlay);
   overflow: hidden;
-  transition: border-color 0.3s var(--ease);
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 
 .agent-input__container.is-focused {
@@ -914,7 +932,9 @@ html:not(.dark) .welcome-mark__img--dark {
    柔光描边（news.css 同款写法），两层都看得见。 */
 .agent-input__container:focus-within {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent),
+    var(--shadow-overlay);
 }
 
 .agent-input__send,
@@ -969,7 +989,7 @@ html:not(.dark) .welcome-mark__img--dark {
   opacity: 0.6;
 }
 
-/* ── agent: 资源面板 ───────────────────────────────────── */
+/* ── agent: 资源面板（U4：白色实体面板分层，不是玻璃） ─────────── */
 
 .agent-panel {
   display: flex;
@@ -978,7 +998,7 @@ html:not(.dark) .welcome-mark__img--dark {
   width: 340px;
   min-height: 0;
   border-left: 1px solid var(--hr);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .agent-panel__head {
@@ -1090,14 +1110,14 @@ html:not(.dark) .welcome-mark__img--dark {
   color: var(--fg-3);
 }
 
-/* ── agent: 会话列表 ───────────────────────────────────── */
+/* ── agent: 会话列表（U4：白色实体侧栏面板） ───────────── */
 
 .agent-sessions {
   display: flex;
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--hr);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .agent-sessions__head {
@@ -1177,7 +1197,8 @@ html:not(.dark) .welcome-mark__img--dark {
   color: var(--brand-primary);
 }
 
-/* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边） */
+/* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边；
+   U4：运行态钴蓝描边 + 浅蓝底 hover，作为 Intelligence 主操作语言） */
 .agent-sessions__newchat {
   display: flex;
   align-items: center;
@@ -1185,13 +1206,13 @@ html:not(.dark) .welcome-mark__img--dark {
   gap: 7px;
   flex: 1;
   padding: 9px 12px;
-  border: 1px solid var(--hr-strong);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 36%, var(--hr));
   border-radius: var(--radius-md);
   background: none;
-  color: var(--fg-2);
+  color: var(--brand-primary);
   font-family: var(--font-sans);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
 }
@@ -1256,6 +1277,7 @@ html:not(.dark) .welcome-mark__img--dark {
 
 .agent-session.is-active {
   box-shadow: inset 2px 0 0 var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 6%, transparent);
 }
 
 .agent-session__main {
@@ -1375,14 +1397,24 @@ html:not(.dark) .welcome-mark__img--dark {
 
 /* 三栏用 flex（同 Vue 版 .agent-chat-layout）：
    左栏常驻 DOM、收起靠宽度动画；用 grid + 从 DOM 摘掉侧栏会让
-   中栏自动排进左列而塌成窄条。 */
+   中栏自动排进左列而塌成窄条。
+   U4：画布是骨白工作台（--field），两侧栏是白色实体面板，
+   对话区是抬升一层的白面板——三个层次靠发丝线与明度差分开。 */
 .agent-layout {
   position: relative;
   display: flex;
   flex: 1;
   min-height: 0;
-  background: var(--bg);
+  background: var(--field);
   border-top: 1px solid var(--hr);
+}
+
+/* 对话工作区：白色面板，留出侧栏与画布之间的呼吸。 */
+.agent-main {
+  margin: clamp(10px, 1.4vw, 18px);
+  margin-left: 0;
+  border: 1px solid var(--hr);
+  background: var(--surface);
 }
 
 .agent-layout__left {
@@ -1409,6 +1441,7 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .agent-main__anon {
@@ -1523,6 +1556,7 @@ html:not(.dark) .welcome-mark__img--dark {
 
   .agent-main {
     min-height: 70vh;
+    margin: 10px 10px 0;
   }
 
   /* 会话栏在窄屏是首屏可见的主入口：文字钮与新建钮按手指尺寸来。

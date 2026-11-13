@@ -2481,18 +2481,20 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 /* ==========================================================================
-   诊断页 · 临床影像工作区（R2.5-04）
+   诊断页 · 品牌化判读工作区（Visual Completion U3，DESIGN.md §2.4）
    --------------------------------------------------------------------------
-   骨架：页头（任务句 + 三步进度）→ 左侧上传台 + 右侧读数栏。
-   临床场景的规则不动：0 圆角、发丝线、墨色主 CTA、信号橙只标「当前」，
-   记录纸与风险语义由 RecordSheet 自己负责。
+   骨架：品牌化页头（kicker + 任务句 + 三步进度）→ 左侧上传主任务 + 右侧读数栏。
+   **包装层**升级到 Blue Optical Glass 品牌语言（品牌 kicker、蓝青结构强调、
+   发丝线容器），Clinical 的语义不动：墨色主 CTA、信号橙只标「当前」，
+   记录纸（.is-sheet）与风险语义由 RecordSheet 自己负责，一行不改。
    ========================================================================== */
 
-.workbench {
+.diag-hero {
   padding-top: clamp(26px, 4.2vh, 44px);
 }
 
-.workbench__head {
+/* 品牌化页头：kicker 是品牌 mono 眉线（钴蓝拉丁字 + 中文），标题仍是衬线 400。 */
+.diag-hero__head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -2500,11 +2502,30 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding-bottom: clamp(20px, 3vh, 30px);
 }
 
-.workbench__intro {
+.diag-hero__intro {
   max-width: 46em;
 }
 
-.workbench__title {
+.diag-hero__kicker {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--fg-3);
+}
+
+/* kicker 前一枚品牌蓝短杠：判读页的身份来自品牌壳，不是仪器铭牌。 */
+.diag-hero__kicker::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  background: var(--brand-primary);
+  transform: translateY(-3px);
+}
+
+.diag-hero__title {
   margin: 0;
   font-family: var(--font-serif);
   font-weight: 400;
@@ -2515,7 +2536,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   text-wrap: balance;
 }
 
-.workbench__lead {
+.diag-hero__lead {
   margin: 10px 0 0;
   max-width: 36em;
   font-size: 13.5px;
@@ -2523,8 +2544,31 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   color: var(--fg-2);
 }
 
+/* 结果页头：记录纸上方的品牌化一行，替代旧仪器章节头。 */
+.diag-result__head {
+  margin-bottom: 20px;
+}
+
+.diag-result__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(25px, 2.5vw, 34px);
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.diag-result__lead {
+  margin: 10px 0 0;
+  max-width: 40em;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
 /* 进度条：01 影像 → 02 判读 → 03 记录。贴在页头右侧，窄屏落到标题下方。 */
-.workbench__rail {
+.diag-hero__rail {
   display: flex;
   align-items: center;
   gap: 22px;
@@ -2651,34 +2695,44 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   background: var(--risk-normal);
 }
 
+/* 主栅格：U3 把左右两栏升级为品牌语言容器——面板化的上传卡与读数卡
+   （发丝线描边 + 白底抬升），不再只是被一条竖线分开的两片骨白。 */
 .diag {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  border-top: 1px solid var(--hr);
+  gap: clamp(16px, 2.4vw, 28px);
+  align-items: start;
 }
 
 .diag__left {
-  padding: clamp(26px, 3.4vw, 42px) clamp(24px, 4vw, 56px) clamp(40px, 6vh, 64px) 0;
-  border-right: 1px solid var(--hr);
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--hr);
+  background: var(--surface);
 }
 
 .diag__right {
-  padding: clamp(26px, 3.4vw, 42px) 0 clamp(40px, 6vh, 64px) clamp(24px, 4vw, 56px);
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--hr);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
 }
 
-/* 右栏的日志头：章节名在左，「LIVE」只在真的收流时出现。 */
+/* 右栏面板标题：正文大小的小节题，替代旧仪器章节头。 */
+.diag-panel__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+/* 日志头：面板题在左，「LIVE」只在真的收流时出现。 */
 .readout-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 14px;
-}
-
-.readout-head .sec-head {
-  margin-bottom: 0;
 }
 
 .readout-head__state {
@@ -2711,11 +2765,11 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 /* 故障块：上传槽的本地校验与整次判读失败，各留一档呼吸。 */
-.workbench__fault {
+.diag-hero__fault {
   margin-top: 16px;
 }
 
-.workbench__fault[data-scope="slot"] {
+.diag-hero__fault[data-scope="slot"] {
   margin-top: 12px;
 }
 
@@ -2758,12 +2812,12 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 }
 
 @media (max-width: 900px) {
-  .workbench__head {
+  .diag-hero__head {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
 
-  .workbench__rail {
+  .diag-hero__rail {
     flex-wrap: wrap;
     row-gap: 10px;
     padding-top: 16px;
@@ -2781,23 +2835,23 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
 
   .diag__left {
-    border-right: 0;
-    border-bottom: 1px solid var(--hr);
-    padding: 26px 0 36px;
+    padding: 22px 20px 30px;
   }
 
   .diag__right {
-    padding: 32px 0 48px;
+    padding: 24px 20px 32px;
   }
 }
 
-/* 上传槽 · 测量腔：空槽是取景器，读片时是暗室。 */
+/* 上传槽 · 测量腔（U3 现代化上传卡片）：空槽是品牌蓝描边的取景器，
+   读片时是暗室；悬停/聚焦亮品牌钴蓝边（操作区品牌化），拖入仍用
+   信号橙标记「这里是当前重点」——橙只做语义，不是卡片外观。 */
 .slot {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  border: 1px solid var(--hr);
   display: grid;
   place-items: center;
   padding: 0;
@@ -2811,7 +2865,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .slot:hover,
 .slot:focus-visible {
-  border-color: var(--ink);
+  border-color: var(--brand-primary);
 }
 
 .slot[data-drag="true"] {
@@ -3056,10 +3110,12 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 /* 八类名录：模型能读什么，先亮在这里。 */
 .roster {
-  margin-top: 40px;
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hr);
 }
 
-.roster .sec-head {
+.roster .diag-panel__title {
   margin-bottom: 14px;
 }
 
@@ -3131,13 +3187,9 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   padding-block: clamp(32px, 5vh, 56px) clamp(56px, 8vh, 96px);
 }
 
-/* 出结果后的一行上下文：章节名 + 结果能做什么。记录纸本身不动。 */
-.workbench-result__head {
+/* 出结果后的一行上下文：品牌化标题 + 结果能做什么。记录纸本身不动。 */
+.diag-result__head {
   margin-bottom: 20px;
-}
-
-.workbench-result__head .sec-head {
-  margin-bottom: 6px;
 }
 
 .sheet {

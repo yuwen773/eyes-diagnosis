@@ -76,4 +76,22 @@ describe("ProductHeader · 共享产品外壳", () => {
     expect(first.textContent).toContain("判读")
     expect(first.querySelector(".product-head__code")?.getAttribute("aria-hidden")).toBe("true")
   })
+
+  // U2（DESIGN.md §2.1.2）：scene 变体只允许改画布与密度，不允许换导航设计语言。
+  // 四个场景共用同一块胶囊导航、同一套链接形态与当前态类名；
+  // 旧版 clinical 纸面胶囊 / 橙色底线、intelligence 冰青底线没有独立 DOM 形态。
+  it.each<ProductScene>(["brand", "editorial", "clinical", "intelligence"])(
+    "%s 场景的导航胶囊与链接结构逐字节一致（U2 统一导航身份）",
+    (scene) => {
+      const { container } = renderAt("/news", scene)
+      const nav = container.querySelector(".product-head__nav")!
+      expect(nav.classList.contains("product-head__nav")).toBe(true)
+      const links = nav.querySelectorAll(".product-head__link")
+      expect(links).toHaveLength(3)
+      // 当前态统一是 aria-current + product-head__link，场景不再有独立当前态结构
+      const current = nav.querySelectorAll('.product-head__link[aria-current="page"]')
+      expect(current).toHaveLength(1)
+      expect(current[0].getAttribute("href")).toBe("/news")
+    },
+  )
 })
