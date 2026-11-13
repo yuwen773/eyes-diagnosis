@@ -13,15 +13,11 @@ import { Wordmark } from "./Wordmark"
  * 在这条分支上收敛成一个组件：结构、导航数据、主题切换、账号菜单、
  * 移动抽屉、路由变化重挂全部只写一遍。
  *
- * <p>场景（`scene`）只改变**材质、当前态语义色与主 CTA 的语言**，
- * 不改变 DOM 结构与交互：
- * <ul>
- *   <li>`brand`：首页。磨砂玻璃胶囊 + 钴蓝实心当前态 + 钴蓝主 CTA；</li>
- *   <li>`editorial`：新闻。同品牌画布与结构，胶囊用实体面，少一层模糊；</li>
- *   <li>`clinical`：判读 / 记录 / 个人中心。实体纸面胶囊 + 信号橙 2px 当前态 +
- *       墨色主 CTA；</li>
- *   <li>`intelligence`：Agent 工作区。实体面胶囊 + 冰青当前态。</li>
- * </ul>
+ * <p>**Visual Completion U2（DESIGN.md §2.1.2）**：所有用户端主页面共享同一套
+ * Iris 悬浮玻璃导航身份——金属虹膜 Logo、Manrope 字标、钴蓝选中态、一致控件形态。
+ * `scene` 只允许改**有限参数**（背景画布、空间密度），不再允许通过
+ * `scene="clinical"` / `scene="intelligence"` 换回旧版纸面胶囊、橙色底线、
+ * 实体仪器风格。首页 → 判读 → Agent → 新闻 → 记录 / 个人中心的导航视觉连续。
  *
  * <p>`data-site-head` 是 `ScrollExpand` 量顶栏高度用的通用标记，不是样式类。
  * 顶栏必须是页面直接子级——`position: sticky` 会被父盒的高度卡住。
