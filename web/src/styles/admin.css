@@ -359,6 +359,8 @@
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
+  /* 390 档「展开筛选」曾被挤成两行竖排；按钮文案永远单行。 */
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background var(--fast),

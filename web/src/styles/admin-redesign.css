@@ -866,9 +866,10 @@
   font-size: 10.5px;
   letter-spacing: 0.06em;
   color: var(--fg-3);
-  /* 类型 + 大小是一体读数，窄屏宁断行也不要在「·」处折行；
-     完整值交给 title。 */
+  /* 类型 + 大小是一体读数：窄屏截断时给省略号，完整值在 title 里。 */
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── 诊断缩略图 ───────────────────────────────────────────── */
@@ -1551,10 +1552,13 @@ html.dark .admin-newsedit .w-md-editor {
     min-width: 932px;
   }
 
+  /* 列定义给 <th> 写了行内 width（160–190px），行内样式压过本表；
+     390 档必须 !important 才能把固定的 sticky 操作列收窄——
+     否则它会盖住判读结果列，把「AI 拒识」chip 切掉半截。 */
   .admin-dt__cell--action,
   .admin-dt__head--action {
-    width: 96px;
-    min-width: 96px;
+    width: 96px !important;
+    min-width: 96px !important;
   }
 
   .admin-dt__scroll {
