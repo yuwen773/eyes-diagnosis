@@ -1,18 +1,18 @@
 /* ==========================================================================
-   Iris · 管理后台外壳（设备背面）
+   Iris · 管理后台外壳（Purple Medical SaaS，DESIGN.md §2.2）
    ==========================================================================
-   仪表梁 + 侧栏 + 内容区同属一个主题：三者都吃上下文令牌（--surface /
-   --fg-* / --hr / --signal），随 html.dark 在「骨白工作台 / 暗房」之间整体
-   翻转——浅色主题下是纸白仪表面 + 墨色发丝线，暗色主题下整页翻成暗房，
-   不再出现「深色外壳 + 浅色内容」的割裂。
-   内容区的坐标轴文字等 SVG 内部尺寸由组件按容器实测宽重算（缩放比恒为 1），
-   与本文件的版心铺开配套：宽屏得到的是更长的绘图区，不是更大的字。
-   全文件不写死色值。
+   侧栏 + 内容区同属一个管理语境（.is-admin，见 tokens.css）：浅色是浅紫灰
+   画布 + 紫白侧栏 + 管理紫当前态，暗色整体翻成深紫蓝分层面板。医学严重度
+   仍走 --risk-*，复核/拒识语义照旧；信号橙不再承担管理语义——当前导航、
+   主操作与图表强调一律 --admin-primary / --admin-accent。
+   圆角取令牌梯的 8–12px（--radius-md/lg），阴影用柔和的紫墨 --admin-shadow。
+   动效 ≤ 240ms（--fast/--base），全部绑定真实交互状态。
+   全文件不写死色值，只消费 --admin-* / 上下文令牌 / --risk-* / --viz-*。
    ========================================================================== */
 
 .admin-shell {
-  --admin-beam-h: 56px;
-  --admin-side-w: 232px;
+  --admin-beam-h: 60px;
+  --admin-side-w: 236px;
   /* 管理后台版心：跟着可用宽度铺开，1920px 封顶居中（2560 宽屏两侧各留
      约 200px，其余给内容）；比全站 --maxw（1240px）宽，因为表格列需要
      横向空间，而图表自身按容器重算几何、不受版心限制。 */
@@ -21,6 +21,8 @@
   grid-template-columns: var(--admin-side-w) minmax(0, 1fr);
   grid-template-rows: var(--admin-beam-h) 1fr;
   min-height: 100svh;
+  background: var(--admin-canvas);
+  color: var(--admin-text);
 }
 
 /* ── 仪表梁 ────────────────────────────────────────────── */
@@ -28,9 +30,9 @@
 .admin-beam {
   grid-column: 1 / -1;
   grid-row: 1;
-  background: var(--surface);
-  color: var(--fg);
-  border-bottom: 1px solid var(--hr);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  border-bottom: 1px solid var(--admin-line);
   position: relative;
   z-index: 2;
 }
@@ -56,12 +58,12 @@
   gap: 8px;
   flex: none;
   font-size: 12.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   transition: color var(--fast);
 }
 
 .admin-beam__back:hover {
-  color: var(--fg);
+  color: var(--admin-primary);
 }
 
 .admin-beam__back-mark {
@@ -75,7 +77,7 @@
   width: 1px;
   height: 18px;
   flex: none;
-  background: var(--hr-strong);
+  background: var(--admin-line-strong);
 }
 
 .admin-beam__plate {
@@ -87,9 +89,10 @@
 
 .admin-beam__plate-zh {
   font-family: var(--font-serif);
+  font-weight: 400;
   font-size: 16px;
   letter-spacing: 0.06em;
-  color: var(--fg);
+  color: var(--admin-text);
   white-space: nowrap;
 }
 
@@ -97,7 +100,7 @@
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   white-space: nowrap;
 }
 
@@ -111,30 +114,30 @@
 
 .admin-beam__user {
   font-size: 12.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
-/* 复用全站 .theme-toggle 的形状与半满读数环；发丝线与墨色跟随上下文令牌。 */
+/* 复用全站 .theme-toggle 的形状与半满读数环；线条与文字跟随管理语境令牌。 */
 .admin-beam .theme-toggle {
-  border-color: var(--hr-strong);
-  color: var(--fg-2);
+  border-color: var(--admin-line-strong);
+  color: var(--admin-text-muted);
 }
 
 .admin-beam .theme-toggle:hover {
-  border-color: var(--fg);
-  color: var(--fg);
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
 }
 
-/* ── 侧栏 ──────────────────────────────────────────────── */
+/* ── 侧栏（紫色 SaaS 导航）──────────────────────────────── */
 
 .admin-side {
   grid-column: 1;
   grid-row: 2;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  color: var(--fg);
-  border-right: 1px solid var(--hr);
+  background: var(--admin-sidebar);
+  color: var(--admin-text);
+  border-right: 1px solid var(--admin-line);
   position: relative;
   z-index: 1;
 }
@@ -142,64 +145,65 @@
 .admin-side__nav {
   display: flex;
   flex-direction: column;
-  padding-top: 18px;
+  padding: 18px 12px 12px;
+  gap: 2px;
 }
 
 .admin-side__link {
   position: relative;
   display: flex;
   align-items: baseline;
-  gap: 14px;
-  padding: 13px 22px 13px 24px;
-  border-top: 1px solid var(--hr);
-  color: var(--fg-2);
+  gap: 12px;
+  padding: 11px 14px 11px 18px;
+  border-radius: var(--radius-md);
+  color: var(--admin-text-muted);
   font-size: 13.5px;
   transition: color var(--fast), background var(--fast);
 }
 
-.admin-side__link:last-child {
-  border-bottom: 1px solid var(--hr);
-}
-
 .admin-side__link:hover {
-  color: var(--fg);
-  background: var(--surface-2);
+  color: var(--admin-text);
+  background: var(--admin-primary-soft);
 }
 
 .admin-side__code {
+  font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   transition: color var(--fast);
 }
 
-/* 当前项：NavLink 自动打 aria-current="page"，亮信号橙短竖线 + 加亮。 */
+/* 当前项：NavLink 自动打 aria-current="page"——管理紫指示条 + 淡紫高亮底。 */
 .admin-side__link[aria-current="page"] {
-  color: var(--fg);
+  color: var(--admin-primary);
+  font-weight: 500;
+  background: var(--admin-primary-soft);
 }
 
 .admin-side__link[aria-current="page"] .admin-side__code {
-  color: var(--signal-text);
+  color: var(--admin-primary);
 }
 
 .admin-side__link[aria-current="page"]::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: 6px;
   top: 10px;
   bottom: 10px;
-  width: 2px;
-  background: var(--signal);
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--admin-accent);
 }
 
 .admin-side__foot {
   margin-top: auto;
   padding: 18px 24px 22px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* ── 内容区 ────────────────────────────────────────────── */
@@ -216,6 +220,8 @@
 .admin-gate,
 .admin-denied {
   min-height: 100svh;
+  background: var(--admin-canvas);
+  color: var(--admin-text);
 }
 
 .admin-gate__inner,
@@ -246,7 +252,7 @@
 .admin-denied__status {
   margin-top: 32px;
   padding-top: 20px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   max-width: 260px;
 }
 
@@ -298,36 +304,30 @@
 
   .admin-side {
     border-right: 0;
-    border-bottom: 1px solid var(--hr);
+    border-bottom: 1px solid var(--admin-line);
   }
 
   .admin-side__nav {
     flex-direction: row;
     overflow-x: auto;
-    padding-top: 0;
+    padding: 10px 12px;
   }
 
   .admin-side__link {
     flex: none;
     gap: 8px;
-    padding: 12px 16px;
-    border-top: 0;
-    border-bottom: 0;
+    padding: 10px 14px;
     white-space: nowrap;
   }
 
-  .admin-side__link:last-child {
-    border-bottom: 0;
-  }
-
-  /* 横条上的当前项：竖线翻成贴底的一小段信号橙横线。 */
+  /* 横条上的当前项：竖线翻成贴底的一小段管理紫横线。 */
   .admin-side__link[aria-current="page"]::before {
     left: 12px;
     right: 12px;
     top: auto;
-    bottom: 0;
+    bottom: 3px;
     width: auto;
-    height: 2px;
+    height: 3px;
   }
 
   .admin-side__foot {
@@ -336,15 +336,97 @@
 }
 
 /* ==========================================================================
-   管理后台 · 交互原语（Task 4）
+   管理后台 · 交互原语（Purple Medical SaaS）
    --------------------------------------------------------------------------
-   「白色仪器」：只吃上下文令牌 --bg / --fg-* / --hr / --hr-strong /
-   --surface / --surface-2 / --signal，零写死色值。分隔一律 1px 发丝线，
-   需要层级时用极轻阴影或 --surface-2 抬升；信号橙只做结构性强调
-   （主按钮 / 当前态 / accent 竖线），不拿来标状态。等宽数字沿用 .num。
-   Modal / Drawer 遮罩直接复用全站 .scrim 词汇类，面板另起命名空间，
-   不与左侧导航 .drawer 冲突。
+   只吃 --admin-* 管理令牌与 --risk-* 医学语义，零写死色值。卡片实体面 +
+   发丝描边 + 柔和阴影（--admin-shadow），圆角取令牌梯 8–12px；
+   主操作是管理紫（.admin-btn--primary），信号橙不再进管理端。
+   等宽数字沿用 .num；Modal / Drawer 遮罩仍复用全站 .scrim。
    ========================================================================== */
+
+/* ── 管理端按钮变体：主操作紫 / 次操作描边 ─────────────────
+   全站 .btn 是墨色 0 圆角的 Clinical 形态，管理端不套用它：
+   .admin-btn 提供同尺寸（.btn--sm 兼容 40px）的 SaaS 形态，
+   页面里的 className 只把 btn* 换成 admin-btn*。 */
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding-inline: 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast),
+    opacity var(--fast);
+}
+
+.admin-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* 主操作：管理紫实底白字。 */
+.admin-btn--primary {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+.admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary-strong);
+}
+
+/* 次操作：白卡描边，hover 提到管理紫描边与文字。 */
+.admin-btn--ghost {
+  background: transparent;
+  color: var(--admin-text);
+  border-color: var(--admin-line-strong);
+}
+
+.admin-btn--ghost:hover:not(:disabled) {
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
+
+/* 危险动作保持医学语义色（--risk-critical），紫色不冒充删除确认。 */
+.admin-btn--danger {
+  background: transparent;
+  color: var(--risk-critical);
+  border-color: var(--admin-line-strong);
+}
+
+.admin-btn--danger:hover:not(:disabled) {
+  border-color: var(--risk-critical);
+}
+
+.admin-btn:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* 管理语境下的章节头短码：全局 .sec-head__code 是信号橙，管理端取管理紫。 */
+.admin-main .sec-head__code,
+.admin-gate .sec-head__code,
+.admin-denied .sec-head__code {
+  color: var(--admin-primary);
+}
+
+.admin-main .sec-head__title,
+.admin-gate .sec-head__title,
+.admin-denied .sec-head__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 21px;
+  letter-spacing: 0.02em;
+}
 
 /* ── Toolbar：一行 flex，底部发丝线收口 ─────────────────── */
 
@@ -354,10 +436,10 @@
   align-items: center;
   gap: 14px;
   padding-block: 14px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
-/* ── StatTile：小字标签 + 大号等宽读数 ───────────────────── */
+/* ── StatTile：精致统计卡（白卡 + 发丝边 + 柔和阴影）────── */
 
 .admin-tile {
   position: relative;
@@ -365,25 +447,42 @@
   gap: 8px;
   align-content: start;
   padding: 20px 22px;
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--admin-shadow);
+  transition: border-color var(--fast), box-shadow var(--fast);
 }
 
-/* 首块强调：左侧 2px 信号橙竖线，纯结构性，不表状态。 */
+.admin-tile:hover {
+  border-color: var(--admin-primary-soft);
+  box-shadow: var(--admin-shadow-overlay);
+}
+
+/* 精选强调：左侧 3px 管理紫竖线 + 淡紫衬底，纯结构性，不表状态。 */
+.admin-tile--accent {
+  background: linear-gradient(
+    to right,
+    var(--admin-primary-soft),
+    var(--admin-surface) 32%
+  );
+}
+
 .admin-tile--accent::before {
   content: "";
   position: absolute;
   left: -1px;
   top: -1px;
   bottom: -1px;
-  width: 2px;
-  background: var(--signal);
+  width: 3px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--admin-accent);
 }
 
 .admin-tile__label {
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-tile__value {
@@ -392,20 +491,22 @@
   letter-spacing: -0.02em;
   font-size: 30px;
   line-height: 1.1;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-tile__delta {
   font-size: 11px;
   letter-spacing: 0.02em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* ── DataTable：语义化表格 + 三态 + 受控分页 ─────────────── */
 
 .admin-dt {
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-dt__scroll {
@@ -430,14 +531,14 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-align: left;
-  color: var(--fg-3);
-  background: var(--surface);
-  border-bottom: 1px solid var(--hr);
+  color: var(--admin-text-faint);
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-line);
   white-space: nowrap;
 }
 
 .admin-dt__head-row {
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 /* 表头排序按钮：继承表头的 mono/字距，只补一个方向读数。
@@ -458,23 +559,23 @@
 }
 
 .admin-dt__sort:hover {
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-dt__sort-mark {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 [aria-sort="ascending"] .admin-dt__sort-mark,
 [aria-sort="descending"] .admin-dt__sort-mark {
-  color: var(--signal-text);
+  color: var(--admin-primary-strong);
 }
 
 .admin-dt__cell {
   padding: 13px 16px;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--fg);
+  color: var(--admin-text);
   text-align: left;
   vertical-align: middle;
   overflow-wrap: anywhere;
@@ -490,7 +591,7 @@
 
 /* 行间 1px --hr 发丝线；hover 用 --surface-2 轻抬，不加阴影。 */
 .admin-dt__row {
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
   transition: background var(--fast);
 }
 
@@ -499,7 +600,7 @@
 }
 
 .admin-dt__row:hover {
-  background: var(--surface-2);
+  background: var(--admin-surface-deep);
 }
 
 /* 三态占一整行，不画表体之外的浮层。 */
@@ -507,7 +608,7 @@
   padding: 44px 16px;
   font-size: 13px;
   text-align: center;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-dt__state--error {
@@ -522,10 +623,10 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-dt__pager-info {
@@ -541,9 +642,9 @@
 
 .admin-dt__pager-btn {
   padding: 6px 12px;
-  border: 1px solid var(--hr);
-  background: var(--surface);
-  color: var(--fg);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-text);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
@@ -551,11 +652,11 @@
 }
 
 .admin-dt__pager-btn:hover:not(:disabled) {
-  border-color: var(--fg-2);
+  border-color: var(--admin-text-muted);
 }
 
 .admin-dt__pager-btn:disabled {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -564,15 +665,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-dt__pager-select {
   padding: 6px 8px;
-  border: 1px solid var(--hr);
-  border-radius: 0;
-  background: var(--surface);
-  color: var(--fg);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-text);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
@@ -589,11 +690,11 @@
   max-height: min(720px, calc(100svh - 64px));
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  color: var(--fg);
-  border: 1px solid var(--hr-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-modal);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--admin-shadow-overlay);
   transform: translate(-50%, -50%);
   opacity: 1;
   transition: opacity var(--base);
@@ -612,16 +713,16 @@
   gap: 16px;
   flex: none;
   padding: 18px 22px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-modal__title {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-modal__close,
@@ -629,7 +730,7 @@
   flex: none;
   border: 0;
   background: none;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
@@ -638,7 +739,7 @@
 
 .admin-modal__close:hover,
 .admin-drawer__close:hover {
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-modal__body {
@@ -656,7 +757,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 22px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 /* ── Drawer：右侧滑入 ───────────────────────────────────── */
@@ -670,11 +771,11 @@
   width: min(520px, 88vw);
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  color: var(--fg);
-  border-left: 1px solid var(--hr-strong);
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  box-shadow: var(--shadow-modal);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  border-left: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  box-shadow: var(--admin-shadow-overlay);
   transform: none;
   transition: transform var(--base);
 }
@@ -691,16 +792,16 @@
   gap: 16px;
   flex: none;
   padding: 18px 22px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-drawer__title {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-drawer__body {
@@ -714,7 +815,7 @@
    --------------------------------------------------------------------------
    图表由 Recharts 渲染（ResponsiveContainer 自适应宽度），但配色、字号、
    发丝线与「图 / 表」读数表仍由本文件掌控——Recharts 只负责几何与交互。
-   颜色一律 var(--signal) / --viz-mute / --hr / --fg-*，双主题自动翻，零写死色值。
+   颜色一律 var(--admin-accent) / --viz-mute / --hr / --fg-*，双主题自动翻，零写死色值。
    网格与轴 1px 实线发丝（禁虚线）；数字用 --font-mono + tabular-nums。
    tooltip 不是唯一读数通道：每张图都配一张常驻读数表（ChartView 的「表」视图）。
    ========================================================================== */
@@ -722,8 +823,10 @@
 /* ── 图 / 表 切换外壳 ────────────────────────────────────── */
 
 .admin-viz {
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-viz__head {
@@ -732,20 +835,20 @@
   justify-content: space-between;
   gap: 16px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-viz__title {
   font-size: 13px;
   letter-spacing: 0.02em;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* 图卡右上角的读数小标（如「最新 42」「合计 182」）：mono，与标题同一行。 */
 .admin-viz__head-extra {
   margin-left: auto;
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 /* 沿用 DataTable 分页按钮的仪器按键形状：1px 发丝线、mono 小字。 */
@@ -757,9 +860,9 @@
 
 .admin-viz__toggle-btn {
   padding: 5px 12px;
-  border: 1px solid var(--hr);
-  background: var(--surface);
-  color: var(--fg-2);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
@@ -767,19 +870,19 @@
 }
 
 .admin-viz__toggle-btn:hover {
-  border-color: var(--fg-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  color: var(--admin-text);
 }
 
 .admin-viz__toggle-btn[aria-pressed="true"] {
-  border-color: var(--fg-2);
-  background: var(--surface-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
 }
 
 .admin-viz__toggle-btn:focus-visible,
 .admin-viz__mini:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -792,7 +895,7 @@
   padding: 44px 16px;
   font-size: 13px;
   text-align: center;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* ── 读数表：tooltip 不是唯一读数通道（mono，label/value 两列 + 可选占比）── */
@@ -810,8 +913,8 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-align: left;
-  color: var(--fg-3);
-  border-bottom: 1px solid var(--hr);
+  color: var(--admin-text-faint);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-viz__th--right,
@@ -821,7 +924,7 @@
 }
 
 .admin-viz__tr {
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-viz__tr:last-child {
@@ -831,21 +934,21 @@
 .admin-viz__td {
   padding: 10px 12px;
   font-size: 12.5px;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-viz__td--label {
   font-weight: 500;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__td--value {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
 }
 
 .admin-viz__td--extra {
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 /* ── 图形容器 ─────────────────────────────────────────────── */
@@ -863,7 +966,7 @@
 
 /* 柱 / 折线上的数值直标：mono、tabular-nums，颜色不穿数据色。 */
 .admin-viz__bar-value {
-  fill: var(--fg);
+  fill: var(--admin-text);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
@@ -877,15 +980,15 @@
   gap: 4px;
   min-width: 132px;
   padding: 9px 11px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-overlay);
 }
 
 .admin-viz__tip-label {
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__tip-row {
@@ -897,13 +1000,13 @@
 
 .admin-viz__tip-name {
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__tip-value {
   font-size: 13px;
   font-weight: 600;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* ── 图例：色块 + 名称 + 计数 + 占比（颜色不是唯一信息载体）──── */
@@ -916,7 +1019,7 @@
   padding: 0;
   list-style: none;
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__legend--rows {
@@ -937,28 +1040,33 @@
 }
 
 .admin-viz__legend-name {
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__legend-value {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
 }
 
 .admin-viz__legend-share {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-viz__swatch {
   display: inline-block;
   width: 10px;
   height: 10px;
+  border-radius: 3px;
   flex: none;
   background: var(--viz-mute);
 }
 
 .admin-viz__swatch--accent {
-  background: var(--signal);
+  background: var(--admin-accent);
+}
+
+.admin-viz__swatch--mute {
+  background: var(--viz-mute);
 }
 
 /* ── 小倍数单元格（统一尺度的病种趋势）──────────────────── */
@@ -968,19 +1076,20 @@
   gap: 8px;
   align-content: start;
   padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--hr);
-  transition: border-color var(--fast);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  transition: border-color var(--fast), box-shadow var(--fast);
 }
 
 .admin-viz__mini:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-viz__mini-title {
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-viz__mini-svg {
@@ -992,7 +1101,7 @@
 .admin-viz__mini-value {
   font-size: 18px;
   line-height: 1.1;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* ==========================================================================
@@ -1016,7 +1125,7 @@
   align-items: center;
   gap: 20px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-dashboard__head .sec-head {
@@ -1031,7 +1140,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   white-space: nowrap;
 }
 
@@ -1041,7 +1150,7 @@
   margin: 0 0 22px;
   font-size: 12px;
   line-height: 1.75;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   max-width: 68ch;
 }
 
@@ -1065,16 +1174,16 @@
 .admin-dashboard__records {
   margin-top: 40px;
   padding-top: 26px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-dashboard__records-title {
   margin: 0 0 18px;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* 窄屏：KPI 折 2 列，图卡折单列，避免 SVG 读数带被压到裁字。 */
@@ -1108,7 +1217,7 @@
 /* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
 .admin-users__head {
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-users__head .sec-head {
@@ -1136,7 +1245,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* 沿用 news__input 的仪器形状，但高度对齐 .btn--sm（40px）。 */
@@ -1144,10 +1253,10 @@
   width: 100%;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition:
@@ -1156,15 +1265,15 @@
 }
 
 .admin-users__input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-users__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-users__input:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-users__actions {
@@ -1181,8 +1290,8 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-users__avatar-fallback {
@@ -1190,8 +1299,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-users__table {
@@ -1207,11 +1316,11 @@
   margin: 0;
   font-size: 13.5px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-users__modal-account {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
 }
 
@@ -1236,7 +1345,7 @@
   align-items: center;
   gap: 20px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-news__head .sec-head {
@@ -1270,7 +1379,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* 沿用 admin-users__input 的仪器形状，高度对齐 .btn--sm（40px）。 */
@@ -1278,10 +1387,10 @@
   width: 100%;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition:
@@ -1290,15 +1399,15 @@
 }
 
 .admin-news__input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-news__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-news__input:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-news__actions {
@@ -1329,11 +1438,11 @@
   margin: 0;
   font-size: 13.5px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-news__modal-title {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
 }
 
@@ -1357,7 +1466,7 @@
 /* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
 .admin-diagnosis__head {
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__head .sec-head {
@@ -1385,7 +1494,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* 沿用 admin-users__input 的仪器形状，高度对齐 .btn--sm（40px）。 */
@@ -1393,10 +1502,10 @@
   width: 100%;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition:
@@ -1405,15 +1514,15 @@
 }
 
 .admin-diagnosis__input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__input:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-diagnosis__actions {
@@ -1436,10 +1545,10 @@
 .admin-diagnosis__footer {
   margin: 22px 0 0;
   padding-top: 16px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-size: 10.5px;
   letter-spacing: 0.02em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* ── 表格单元格 ───────────────────────────────────────────── */
@@ -1450,8 +1559,8 @@
   width: 48px;
   height: 48px;
   object-fit: cover;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 /* AI 拒识行：result 为空的「—」+ 拒识原因摘要（摘要不撑破列宽）。 */
@@ -1465,7 +1574,7 @@
 .admin-diagnosis__abstain {
   font-size: 11px;
   line-height: 1.4;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   overflow-wrap: anywhere;
 }
 
@@ -1481,11 +1590,11 @@
   margin: 0;
   font-size: 13.5px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-diagnosis__modal-id {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
 }
 
@@ -1496,7 +1605,7 @@
   padding: 32px 0;
   font-size: 13px;
   text-align: center;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__drawer-fault {
@@ -1509,7 +1618,7 @@
   justify-content: flex-end;
   margin-top: 26px;
   padding-top: 18px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__detail {
@@ -1526,8 +1635,8 @@
   width: 100%;
   max-height: 320px;
   object-fit: contain;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__detail-figure figcaption {
@@ -1535,7 +1644,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__detail-noimg {
@@ -1543,9 +1652,9 @@
   padding: 20px;
   text-align: center;
   font-size: 11px;
-  color: var(--fg-3);
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  color: var(--admin-text-faint);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 /* 读数表：label / value 两列，行间发丝线，值可换行不溢出。 */
@@ -1558,25 +1667,25 @@
   grid-template-columns: minmax(96px, 0.36fr) minmax(0, 1fr);
   gap: 16px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__fact:first-child {
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__fact-label {
   margin: 0;
   font-size: 11.5px;
   letter-spacing: 0.04em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__fact-value {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--fg);
+  color: var(--admin-text);
   overflow-wrap: anywhere;
 }
 
@@ -1584,7 +1693,7 @@
   display: grid;
   gap: 10px;
   padding-top: 18px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-diagnosis__section-title {
@@ -1594,7 +1703,7 @@
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 /* 建议分行：每行独立成条，与记录纸的「建议」同源。 */
@@ -1608,14 +1717,14 @@
 .admin-diagnosis__recos li {
   font-size: 13px;
   line-height: 1.6;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-diagnosis__note {
   margin: 0;
   font-size: 13px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -1630,10 +1739,10 @@
 .admin-diagnosis__review-note {
   margin: 0;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
   font-size: 12px;
   line-height: 1.6;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__review-field {
@@ -1647,17 +1756,17 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__review-input,
 .admin-diagnosis__review-select {
   width: 100%;
   padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.5;
@@ -1669,23 +1778,23 @@
 }
 
 .admin-diagnosis__review-input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__review-input:hover,
 .admin-diagnosis__review-select:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__review-input:focus,
 .admin-diagnosis__review-select:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-diagnosis__review-hint {
   margin: -8px 0 0;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-diagnosis__review-fault {
@@ -1712,7 +1821,7 @@
 /* 页首：章节头占满，底端发丝线收口，与工具条分隔。 */
 .admin-knowledge__head {
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__head .sec-head {
@@ -1744,7 +1853,7 @@
 .admin-knowledge__hint {
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__upload-actions {
@@ -1761,14 +1870,14 @@
   gap: 10px;
   width: 100%;
   padding-top: 14px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__pending-label {
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__chips {
@@ -1787,10 +1896,10 @@
   gap: 8px;
   max-width: 100%;
   padding: 5px 6px 5px 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-knowledge__chip-name {
@@ -1806,7 +1915,7 @@
   height: 20px;
   border: 0;
   background: none;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
@@ -1814,7 +1923,7 @@
 }
 
 .admin-knowledge__chip-remove:hover {
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* 删除 / 上传失败的页内读数：贴着表格上方，留一道发丝线间距即可。 */
@@ -1827,15 +1936,15 @@
 .admin-knowledge__processing {
   margin-top: 22px;
   padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__processing-head {
   margin: 0;
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__processing-list {
@@ -1853,13 +1962,13 @@
   justify-content: space-between;
   gap: 10px;
   padding: 10px 0;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__processing-name {
   min-width: 0;
   font-size: 13px;
-  color: var(--fg);
+  color: var(--admin-text);
   overflow-wrap: anywhere;
 }
 
@@ -1871,21 +1980,21 @@
 .admin-knowledge__footer {
   margin: 22px 0 0;
   padding-top: 16px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-size: 10.5px;
   letter-spacing: 0.02em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__modal-text {
   margin: 0;
   font-size: 13.5px;
   line-height: 1.7;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-knowledge__modal-name {
-  color: var(--fg);
+  color: var(--admin-text);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -1913,7 +2022,7 @@
   align-items: center;
   gap: 20px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-analysis__head .sec-head {
@@ -1934,17 +2043,17 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-analysis__select {
   height: 40px;
   min-width: 160px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   cursor: pointer;
@@ -1952,27 +2061,27 @@
 }
 
 .admin-analysis__select:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-analysis__select:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 /* 章节：顶端发丝线与上一段分隔，小标题下接图表栅格。 */
 .admin-analysis__section {
   margin-top: 40px;
   padding-top: 26px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-analysis__title {
   margin: 0 0 18px;
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 19px;
+  font-weight: 400;
+  font-size: 20px;
   line-height: 1.35;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 /* 小倍数栅格：折线 3×2、柱图 3 列，格间 14px 由卡自身的边框勾线。
@@ -2043,7 +2152,7 @@
   align-items: center;
   gap: 20px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-newsedit__head .sec-head {
@@ -2062,7 +2171,7 @@
   padding: 44px 0;
   font-size: 13px;
   text-align: center;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-newsedit__fault {
@@ -2092,9 +2201,9 @@
 /* 沿用图 / 表切换的仪器按键形状：mono 小字、1px 发丝线，当前态抬一层 surface-2。 */
 .admin-newsedit__tab {
   padding: 9px 14px;
-  border: 1px solid var(--hr-strong);
-  background: var(--surface);
-  color: var(--fg-2);
+  border: 1px solid var(--admin-line-strong);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
   font-size: 11px;
   letter-spacing: 0.08em;
   cursor: pointer;
@@ -2102,18 +2211,18 @@
 }
 
 .admin-newsedit__tab:hover {
-  border-color: var(--fg-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  color: var(--admin-text);
 }
 
 .admin-newsedit__tab[aria-selected="true"] {
-  border-color: var(--fg-2);
-  background: var(--surface-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
 }
 
 .admin-newsedit__tab:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -2128,17 +2237,17 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-newsedit__select {
   height: 40px;
   min-width: 140px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   cursor: pointer;
@@ -2146,11 +2255,11 @@
 }
 
 .admin-newsedit__select:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-newsedit__select:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-newsedit__actions {
@@ -2179,25 +2288,25 @@
   width: 100%;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition: border-color var(--fast), background var(--fast);
 }
 
 .admin-newsedit__input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-newsedit__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-newsedit__input:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 /* 发布状态下拉：与标题输入同一条仪器外形（1px 发丝线 / 零圆角 / 40px 高）。 */
@@ -2206,10 +2315,10 @@
   max-width: 220px;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   cursor: pointer;
@@ -2217,11 +2326,11 @@
 }
 
 .admin-newsedit__select:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-newsedit__select:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 /* 封面：缩略图 + 更换 / 清除 / 提示排成一行，窄屏自动换行。 */
@@ -2242,8 +2351,8 @@
   width: 160px;
   height: 100px;
   object-fit: cover;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-newsedit__cover-empty {
@@ -2254,9 +2363,9 @@
   height: 100px;
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--fg-3);
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
+  color: var(--admin-text-faint);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-newsedit__cover-actions {
@@ -2283,12 +2392,12 @@
 .admin-newsedit__cover-hint {
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-newsedit__cover-note {
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 /* 正文 / 预览：同一块容器，切 tab 只换内容，避免跳版。 */
@@ -2306,10 +2415,10 @@
   width: 100%;
   min-height: 420px;
   padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13.5px;
   line-height: 1.75;
@@ -2318,15 +2427,15 @@
 }
 
 .admin-newsedit__textarea::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-newsedit__textarea:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-newsedit__textarea:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 /* 预览：纸面 + 发丝边框 + 最小高度对齐 textarea，正文排版交给 .markdown-body。 */
@@ -2335,8 +2444,8 @@
   gap: 12px;
   min-height: 420px;
   padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
   overflow-wrap: anywhere;
 }
 
@@ -2344,10 +2453,10 @@
 .admin-newsedit__footer {
   margin: 26px 0 0;
   padding-top: 16px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-size: 10.5px;
   letter-spacing: 0.02em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 @media (max-width: 640px) {
@@ -2365,11 +2474,11 @@
 .admin-newsedit__guide {
   margin: 14px 0 0;
   padding: 9px 12px;
-  border-left: 2px solid var(--hr-strong);
+  border-left: 2px solid var(--admin-line-strong);
   font-size: 11.5px;
   letter-spacing: 0.02em;
-  color: var(--fg-2);
-  background: var(--surface-2);
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-deep);
 }
 
 /* ==========================================================================
@@ -2391,15 +2500,16 @@
   gap: 14px;
   margin-top: 20px;
   padding: 10px 14px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-left: 2px solid var(--signal);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-left: 3px solid var(--admin-accent);
+  border-radius: var(--radius-md);
 }
 
 .admin-batch__count {
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: var(--fg);
+  color: var(--admin-text);
   flex: none;
 }
 
@@ -2433,14 +2543,14 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-form__hint {
   margin: 0;
   font-size: 12.5px;
   line-height: 1.7;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-form__fault {
@@ -2476,7 +2586,7 @@
   margin: 16px 0 0;
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 /* ── 表格勾选列 ─────────────────────────────────────────── */
@@ -2491,7 +2601,7 @@
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: var(--signal);
+  accent-color: var(--admin-accent);
   cursor: pointer;
 }
 
@@ -2523,17 +2633,17 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__input {
   width: 100%;
   height: 40px;
   padding-inline: 12px;
-  background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-radius: 0;
-  color: var(--fg);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  color: var(--admin-text);
   font-family: var(--font-sans);
   font-size: 13px;
   transition:
@@ -2542,15 +2652,15 @@
 }
 
 .admin-knowledge__input::placeholder {
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__input:hover {
-  border-color: var(--fg-3);
+  border-color: var(--admin-text-faint);
 }
 
 .admin-knowledge__input:focus {
-  border-color: var(--signal);
+  border-color: var(--admin-accent);
 }
 
 .admin-knowledge__actions {
@@ -2572,7 +2682,7 @@
   gap: 10px;
   margin: 0;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__fact {
@@ -2587,21 +2697,21 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__fact dd {
   margin: 0;
   font-size: 13px;
-  color: var(--fg);
+  color: var(--admin-text);
   word-break: break-all;
 }
 
 .admin-knowledge__preview-frame {
   width: 100%;
   height: 420px;
-  border: 1px solid var(--hr-strong);
-  background: var(--surface);
+  border: 1px solid var(--admin-line-strong);
+  background: var(--admin-surface);
 }
 
 .admin-knowledge__preview-text {
@@ -2609,9 +2719,9 @@
   margin: 0;
   padding: 12px;
   overflow: auto;
-  background: var(--surface-2);
-  border: 1px solid var(--hr);
-  color: var(--fg-2);
+  background: var(--admin-surface-deep);
+  border: 1px solid var(--admin-line);
+  color: var(--admin-text-muted);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.7;
@@ -2621,20 +2731,20 @@
 
 .admin-knowledge__preview-link {
   font-size: 12.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--hr-strong);
+  border-bottom: 1px solid var(--admin-line-strong);
 }
 
 .admin-knowledge__preview-link:hover {
-  color: var(--fg);
-  border-bottom-color: var(--signal);
+  color: var(--admin-text);
+  border-bottom-color: var(--admin-accent);
 }
 
 .admin-knowledge__preview-state {
   margin: 0;
   font-size: 12.5px;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__preview-fault {
@@ -2643,7 +2753,7 @@
 
 .admin-knowledge__chunks {
   padding-top: 18px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-knowledge__chunks-title {
@@ -2654,13 +2764,13 @@
   font-family: var(--font-serif);
   font-weight: 400;
   font-size: 16px;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-knowledge__chunks-title .num {
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__chunk-list {
@@ -2672,8 +2782,8 @@
 }
 
 .admin-knowledge__chunk {
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
 }
 
 .admin-knowledge__chunk-head {
@@ -2682,10 +2792,10 @@
   justify-content: space-between;
   gap: 12px;
   padding: 7px 12px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--admin-line);
   font-size: 11px;
   letter-spacing: 0.12em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-knowledge__chunk-text {
@@ -2693,7 +2803,7 @@
   padding: 12px;
   font-size: 13px;
   line-height: 1.75;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -2708,16 +2818,24 @@
 .admin-dashboard__note {
   margin: 28px 0 0;
   padding-top: 18px;
-  border-top: 1px solid var(--hr);
+  border-top: 1px solid var(--admin-line);
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-analysis__empty {
   margin: 0;
   font-size: 12.5px;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
+}
+
+/* 仪表盘统计载入占位：mono 破折号节奏的读数行，与空态同源。 */
+.admin-dashboard__loading {
+  margin: 0;
+  padding: 32px 0;
+  font-size: 12.5px;
+  color: var(--admin-text-faint);
 }
 
 /* ==========================================================================
@@ -2738,7 +2856,7 @@
 }
 
 .admin-tile--risk[data-tone="normal"] .admin-tile__value {
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-tile__tone {
@@ -2749,20 +2867,20 @@
 .admin-tile__action {
   margin-top: 2px;
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--hr-strong);
+  border-bottom: 1px solid var(--admin-line-strong);
   justify-self: start;
   transition: color var(--fast), border-color var(--fast);
 }
 
 .admin-tile__action:hover {
-  color: var(--signal);
-  border-color: var(--signal);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 .admin-tile__action:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -2775,9 +2893,9 @@
 
 .admin-dashboard__range-btn {
   padding: 5px 12px;
-  border: 1px solid var(--hr);
-  background: var(--surface);
-  color: var(--fg-2);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
@@ -2785,18 +2903,18 @@
 }
 
 .admin-dashboard__range-btn:hover {
-  border-color: var(--fg-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  color: var(--admin-text);
 }
 
 .admin-dashboard__range-btn[aria-pressed="true"] {
-  border-color: var(--fg-2);
-  background: var(--surface-2);
-  color: var(--fg);
+  border-color: var(--admin-text-muted);
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
 }
 
 .admin-dashboard__range-btn:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -2810,7 +2928,7 @@
   font-family: var(--font-serif);
   font-weight: 400;
   font-size: 15px;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-dashboard__action-list {
@@ -2827,38 +2945,38 @@
   gap: 6px;
   align-content: start;
   padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
 }
 
 .admin-dashboard__action-label {
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
 }
 
 .admin-dashboard__action-value {
   font-size: 22px;
   line-height: 1.1;
-  color: var(--fg);
+  color: var(--admin-text);
 }
 
 .admin-dashboard__action-link {
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--admin-text-muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--hr-strong);
+  border-bottom: 1px solid var(--admin-line-strong);
   justify-self: start;
   transition: color var(--fast), border-color var(--fast);
 }
 
 .admin-dashboard__action-link:hover {
-  color: var(--signal);
-  border-color: var(--signal);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 .admin-dashboard__action-link:focus-visible {
-  outline: 2px solid var(--signal);
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -2891,25 +3009,25 @@
   margin-left: 12px;
   font-size: 11px;
   font-weight: 400;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-analysis__note {
   margin: 18px 0 0;
   font-size: 11.5px;
-  color: var(--fg-3);
+  color: var(--admin-text-faint);
 }
 
 .admin-analysis__note-link {
   margin-left: 8px;
-  color: var(--fg-2);
-  border-bottom: 1px solid var(--hr-strong);
+  color: var(--admin-text-muted);
+  border-bottom: 1px solid var(--admin-line-strong);
   text-decoration: none;
 }
 
 .admin-analysis__note-link:hover {
-  color: var(--signal);
-  border-color: var(--signal);
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
 }
 
 /* 两卡并排（病种分布 + 复核状态、知识库 + 资讯）：占满整行，不留空列。 */

@@ -361,14 +361,14 @@ export function AdminUsersPage(): ReactElement {
           <div className="admin-users__row-actions">
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={() => openEdit(row)}
             >
               编辑
             </button>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               disabled={!allowed}
               title={allowed ? undefined : "无法操作管理员账号"}
               onClick={() => openDelete(row)}
@@ -389,7 +389,7 @@ export function AdminUsersPage(): ReactElement {
     <div className="admin-users">
       <div className="admin-users__head">
         <SectionHead code="02" kicker="用户管理" en="ADMIN · USERS" />
-        <button type="button" className="btn btn--sm" onClick={openCreate}>
+        <button type="button" className="admin-btn admin-btn--primary" onClick={openCreate}>
           新建用户
         </button>
       </div>
@@ -454,10 +454,10 @@ export function AdminUsersPage(): ReactElement {
             />
           </label>
           <div className="admin-users__actions">
-            <button className="btn btn--sm" type="submit">
+            <button className="admin-btn admin-btn--primary" type="submit">
               查询
             </button>
-            <button className="btn btn--ghost btn--sm" type="button" onClick={onReset}>
+            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
               重置
             </button>
           </div>
@@ -485,7 +485,7 @@ export function AdminUsersPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="用户批量操作">
         <button
           type="button"
-          className="btn btn--sm"
+          className="admin-btn admin-btn--primary"
           disabled={batchBusy}
           onClick={() => runBatch("批量删除", () => deleteUsers(selectedIds), true)}
         >
@@ -493,7 +493,7 @@ export function AdminUsersPage(): ReactElement {
         </button>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="admin-btn admin-btn--ghost"
           disabled={batchBusy}
           onClick={() => runBatch("批量封禁", () => updateUserRole(selectedIds, "ban"), true)}
         >
@@ -501,7 +501,7 @@ export function AdminUsersPage(): ReactElement {
         </button>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="admin-btn admin-btn--ghost"
           disabled={batchBusy}
           onClick={() => runBatch("批量解除封禁", () => updateUserRole(selectedIds, "user"), true)}
         >
@@ -543,13 +543,13 @@ export function AdminUsersPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeCreate}
               disabled={saving}
             >
               取消
             </button>
-            <button type="button" className="btn btn--sm" onClick={submitCreate} disabled={saving}>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={submitCreate} disabled={saving}>
               {saving ? "创建中…" : "创建"}
             </button>
           </>
@@ -631,13 +631,13 @@ export function AdminUsersPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeEdit}
               disabled={saving}
             >
               取消
             </button>
-            <button type="button" className="btn btn--sm" onClick={submitEdit} disabled={saving}>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={submitEdit} disabled={saving}>
               {saving ? "保存中…" : "保存"}
             </button>
           </>
@@ -703,7 +703,7 @@ export function AdminUsersPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeDelete}
               disabled={deleting}
             >
@@ -711,7 +711,7 @@ export function AdminUsersPage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={confirmDelete}
               disabled={deleting}
             >

@@ -15,13 +15,13 @@ export const ADMIN_NAV = [
 ] as const
 
 /**
- * 管理后台外壳：仪表梁 + 侧栏 + 内容区。
+ * 管理后台外壳：仪表梁 + 紫色 SaaS 侧栏 + 内容区。
  * 主题切换直接复用全站 ThemeProvider 的 useTheme 与共享顶栏的半满读数环。
  * 管理端不挂载产品顶栏（R2.5，DESIGN.md §1.6），侧栏才是它的导航。
  *
- * 外壳跟随全站主题：梁与侧栏吃上下文令牌（--surface / --fg-* / --hr），
- * 浅色主题下是纸白仪表面 + 墨色发丝线，暗色主题下整体翻成暗房——
- * 外壳与内容区永远同主题，不再出现「深色外壳 + 浅色内容」的割裂。
+ * 外壳吃 .is-admin 管理语境（tokens.css）：浅色是浅紫灰画布 + 紫白侧栏 +
+ * 管理紫当前态，暗色整体翻成深紫蓝分层面板——外壳与内容区永远同主题，
+ * 不出现「深色外壳 + 浅色内容」的割裂。医学语义（--risk-*）不进外壳。
  */
 export function AdminLayout() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -29,7 +29,7 @@ export function AdminLayout() {
   const accountName = user?.userName || user?.userAccount || "管理员"
 
   return (
-    <div className="is-field admin-shell">
+    <div className="is-admin admin-shell">
       <header className="admin-beam">
         <div className="admin-beam__inner">
           <Link to="/" className="admin-beam__back">

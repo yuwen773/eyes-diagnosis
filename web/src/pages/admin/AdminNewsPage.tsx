@@ -227,14 +227,14 @@ export function AdminNewsPage(): ReactElement {
         <div className="admin-news__row-actions">
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => navigate(`/admin/news/${row.id}/edit`)}
           >
             编辑
           </button>
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="admin-btn admin-btn--ghost"
             onClick={() => openDelete(row)}
           >
             删除
@@ -254,7 +254,7 @@ export function AdminNewsPage(): ReactElement {
         <SectionHead code="03" kicker="新闻管理" en="ADMIN · NEWS" />
         <button
           type="button"
-          className="btn btn--sm admin-news__new"
+          className="admin-btn admin-btn--primary admin-news__new"
           onClick={() => navigate("/admin/news/new/edit")}
         >
           新建资讯
@@ -311,10 +311,10 @@ export function AdminNewsPage(): ReactElement {
             />
           </label>
           <div className="admin-news__actions">
-            <button className="btn btn--sm" type="submit">
+            <button className="admin-btn admin-btn--primary" type="submit">
               查询
             </button>
-            <button className="btn btn--ghost btn--sm" type="button" onClick={onReset}>
+            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
               重置
             </button>
           </div>
@@ -338,7 +338,7 @@ export function AdminNewsPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="资讯批量操作">
         <button
           type="button"
-          className="btn btn--sm"
+          className="admin-btn admin-btn--primary"
           disabled={batchBusy}
           onClick={() => runBatch("批量发布", () => changeNewsStatusBatch(selectedIds, 1))}
         >
@@ -346,7 +346,7 @@ export function AdminNewsPage(): ReactElement {
         </button>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="admin-btn admin-btn--ghost"
           disabled={batchBusy}
           onClick={() => runBatch("批量下架", () => changeNewsStatusBatch(selectedIds, 2))}
         >
@@ -354,7 +354,7 @@ export function AdminNewsPage(): ReactElement {
         </button>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="admin-btn admin-btn--ghost"
           disabled={batchBusy}
           onClick={() => runBatch("批量删除", () => deleteNewsBatch(selectedIds))}
         >
@@ -394,7 +394,7 @@ export function AdminNewsPage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeDelete}
               disabled={deleting}
             >
@@ -402,7 +402,7 @@ export function AdminNewsPage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--primary"
               onClick={confirmDelete}
               disabled={deleting}
             >

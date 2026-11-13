@@ -124,7 +124,7 @@ function BackButton(): ReactElement {
   return (
     <button
       type="button"
-      className="btn btn--ghost btn--sm admin-newsedit__back"
+      className="admin-btn admin-btn--ghost admin-newsedit__back"
       onClick={() => navigate("/admin/news")}
     >
       返回列表
@@ -295,7 +295,7 @@ function NewsEditor(props: {
 
               <div className="admin-newsedit__actions">
                 <button
-                  className="btn btn--sm"
+                  className="admin-btn admin-btn--primary"
                   type="submit"
                   disabled={saving}
                 >
@@ -416,7 +416,7 @@ function NewsEditor(props: {
                   />
                   <button
                     type="button"
-                    className="btn btn--ghost btn--sm"
+                    className="admin-btn admin-btn--ghost"
                     disabled={isNew || uploading}
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -425,7 +425,7 @@ function NewsEditor(props: {
                   {form.coverImage ? (
                     <button
                       type="button"
-                      className="btn btn--ghost btn--sm"
+                      className="admin-btn admin-btn--ghost"
                       disabled={isNew}
                       onClick={clearCover}
                     >

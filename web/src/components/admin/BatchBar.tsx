@@ -26,7 +26,7 @@ export function BatchBar(props: {
     <div className="admin-batch" role="group" aria-label={label}>
       <span className="admin-batch__count num">已选 {count} 项</span>
       <div className="admin-batch__actions">{children}</div>
-      <button type="button" className="btn btn--ghost btn--sm admin-batch__clear" onClick={onClear}>
+      <button type="button" className="admin-btn admin-btn--ghost admin-batch__clear" onClick={onClear}>
         清除选择
       </button>
     </div>

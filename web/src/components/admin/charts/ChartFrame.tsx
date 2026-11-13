@@ -40,8 +40,8 @@ export function vizSeriesColor(index: number): string {
 
 /** 图表配色：全部引用 CSS 变量，深色主题自动跟随。 */
 export const VIZ = {
-  /** 强调（信号橙）：只给「当前要处理的重点」用，不做大面积填充。 */
-  accent: "var(--signal)",
+  /** 强调（管理紫，--admin-accent）：只给「当前要处理的重点」用，不做大面积填充。 */
+  accent: "var(--admin-accent)",
   /** 去强调的墨色：次要系列、参考线。 */
   mute: "var(--viz-mute)",
   /** 网格与轴：1px 实线发丝。 */
