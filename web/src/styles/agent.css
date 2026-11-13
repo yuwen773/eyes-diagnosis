@@ -1,8 +1,10 @@
 /* ============================================================
-   agent.css — Agent 对话页（/agent）
-   只消费上下文令牌（--fg/--fg-2/--fg-3/--hr/--surface/--signal），
-   浅色为主、双主题随 html.dark 自动翻转。
-   排版参数一比一取自 Vue 版（气泡圆角/图片网格/胶囊输入区/打字 pill）。
+   agent.css — Agent 对话页（/agent）· Intelligence
+   ------------------------------------------------------------------
+   只消费上下文令牌（--fg/--fg-2/--fg-3/--hr/--surface）。
+   Intelligence 的强调色是运行态钴蓝 / 冰青：--brand-primary 表示「当前、
+   可操作」，--brand-cyan 只标「正在生成」。--signal 是临床「重点/当前」的
+   语义色，不在这一层复用（R2.5-05）。浅色为主、双主题随 html.dark 翻转。
    ============================================================ */
 
 /* ── agent: 消息（排版一比一复刻 Vue 版气泡布局）── */
@@ -77,7 +79,7 @@
 }
 
 .agent-msg__thumb:hover {
-  outline: 1px solid var(--signal);
+  outline: 1px solid var(--brand-primary);
 }
 
 .agent-msg__imgmore {
@@ -114,16 +116,16 @@
 }
 
 .agent-msg__aiicon {
-  color: var(--signal-text);
+  color: var(--brand-primary);
   flex-shrink: 0;
 }
 
 .agent-msg__ainame {
   font-family: var(--font-serif);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: -0.01em;
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .agent-msg__bubble-ai .markdown-body {
@@ -143,7 +145,7 @@
   height: 1em;
   margin-left: 2px;
   vertical-align: text-bottom;
-  background: var(--signal);
+  background: var(--brand-cyan);
   animation: agent-caret 1s steps(2, start) infinite;
 }
 
@@ -185,12 +187,26 @@
   margin: 0.2em 0;
 }
 
+/* Tailwind preflight 把 ul/ol 的 list-style 清成 none：这里给回语义标记，
+   否则助手回复里的条目只剩缩进，编号与圆点全丢。 */
+.markdown-body ul {
+  list-style: disc;
+}
+
+.markdown-body ol {
+  list-style: decimal;
+}
+
+.markdown-body ul ul {
+  list-style: circle;
+}
+
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3,
 .markdown-body h4 {
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 15px;
   margin: 1em 0 0.4em;
 }
@@ -203,7 +219,7 @@
 }
 
 .markdown-body a {
-  color: var(--signal-text);
+  color: var(--brand-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -262,7 +278,7 @@
 }
 
 .markdown-body .copy-btn:hover {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .markdown-body table {
@@ -304,13 +320,13 @@
   display: none;
 }
 
-/* 确认终点卡：--signal 左边条区别于工具卡 */
+/* 确认终点卡：运行态钴蓝左边条区别于工具卡 */
 .agent-msg--confirm {
   max-width: min(400px, 100%);
   margin: 4px 16px;
   padding: 8px 12px;
   border: 1px solid var(--hr);
-  border-left: 2px solid var(--signal);
+  border-left: 2px solid var(--brand-primary);
   border-radius: var(--radius-md);
   background: var(--surface);
 }
@@ -320,7 +336,7 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--signal-text);
+  color: var(--brand-primary);
   margin-bottom: 6px;
 }
 
@@ -360,7 +376,7 @@
 
 .agent-toolcard__icon {
   display: flex;
-  color: var(--signal-text);
+  color: var(--brand-primary);
   flex-shrink: 0;
 }
 
@@ -369,7 +385,7 @@
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--signal-text);
+  color: var(--brand-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -377,6 +393,8 @@
 
 .agent-toolcard__tag {
   margin-left: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -456,7 +474,7 @@
   width: 3px;
   height: 14px;
   border-radius: var(--radius-sm);
-  background: var(--signal);
+  background: var(--brand-cyan);
   opacity: 0.35;
   animation: typing-bar-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -527,6 +545,12 @@
   color: var(--fg-3);
 }
 
+/* LIVE 徽标是运行态（app.css 里默认信号橙，落地页演示屏用它是对的）；
+   Agent 工作区的运行态语言是品牌钴蓝，作用域覆盖，不动 app.css。 */
+.agent-console .console__live {
+  color: var(--brand-primary);
+}
+
 .agent-load {
   padding: 16px 22px;
   font-family: var(--font-mono);
@@ -537,6 +561,12 @@
 
 .agent-msglist {
   overflow-y: auto;
+}
+
+/* 承载消息的 .console__body 默认 min-height:auto：窄屏欢迎屏比可用高度长时
+   它会溢出容器、滑到输入区底下。这里把它压回可滚动区域。 */
+.agent-console .console__body {
+  min-height: 0;
 }
 
 .agent-msg__live-inline {
@@ -559,11 +589,14 @@
 }
 
 .agent-msglist__unread:hover {
-  border-color: var(--signal);
-  color: var(--signal-text);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
-/* ── agent: 欢迎屏（排版一比一复刻 Vue 版 welcome 区，令牌换本项目） ── */
+/* ── agent: 欢迎屏（Intelligence 场景的空会话入口） ───────────
+   不用神经网络连线/节点：后端没有多 Agent 拓扑，画出来就是虚构结构。
+   主视觉只保留全站同一个金属虹膜标；卡片是 12px 的发丝线面板，
+   强调色走运行态钴蓝，不再借用临床的信号橙。 */
 
 .welcome {
   position: relative;
@@ -572,7 +605,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  padding: 28px 20px 36px;
+  padding: 32px 20px 40px;
 }
 
 .welcome-stage {
@@ -583,61 +616,25 @@
   align-items: center;
 }
 
-.eye-vision {
-  width: 160px;
-  height: 140px;
-  margin-bottom: 16px;
-  color: var(--signal-text);
+.welcome-mark {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
 }
 
-.ev-svg {
+.welcome-mark__img {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-/* 神经网络线与节点：Vue 版是脉冲动画，此处静态（装饰零容忍） */
-.ev-pulse {
-  stroke: currentColor;
-  stroke-width: 1;
-  opacity: 0.35;
+/* 金属标两版同时挂，靠根级 .dark 换——与顶栏字标同一套做法。 */
+html.dark .welcome-mark__img--light {
+  display: none;
 }
 
-.ev-pulse.ev-sub {
-  stroke-width: 0.8;
-  opacity: 0.22;
-}
-
-.ev-node {
-  fill: currentColor;
-  opacity: 0.45;
-}
-
-.ev-core-node {
-  fill: currentColor;
-}
-
-.ev-eye {
-  stroke: currentColor;
-  stroke-width: 2;
-}
-
-.ev-iris-ring {
-  stroke: currentColor;
-  stroke-width: 1.2;
-  opacity: 0.75;
-}
-
-.ev-iris-inner {
-  opacity: 0.5;
-}
-
-.ev-pupil {
-  fill: currentColor;
-}
-
-.ev-light {
-  /* 瞳孔高光：任何主题下都该是纸白，不跟随上下文墨色 */
-  fill: var(--paper-surface);
+html:not(.dark) .welcome-mark__img--dark {
+  display: none;
 }
 
 .welcome-text {
@@ -647,27 +644,27 @@
 .welcome-title {
   margin: 0 0 8px;
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 32px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   color: var(--fg);
 }
 
 .welcome-desc {
   margin: 0;
-  max-width: 400px;
-  font-size: 15px;
-  line-height: 1.6;
+  max-width: 420px;
+  font-size: 14.5px;
+  line-height: 1.65;
   color: var(--fg-2);
 }
 
 .welcome-hints {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 24px;
+  margin-top: 26px;
   width: 100%;
-  max-width: 760px;
+  max-width: 780px;
 }
 
 .guide-card {
@@ -675,21 +672,25 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 18px 16px;
+  padding: 18px 18px 14px;
   border: 1px solid var(--hr);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   font-family: var(--font-sans);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.2s var(--ease);
+  transition:
+    border-color var(--fast),
+    transform var(--fast);
 }
 
 .guide-card:hover {
-  border-color: var(--signal);
+  border-color: var(--brand-primary);
+  transform: translateY(-1px);
 }
 
 .guide-card:hover .guide-arrow {
-  color: var(--signal-text);
+  color: var(--brand-primary);
   transform: translateX(2px);
 }
 
@@ -697,10 +698,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--hr);
-  color: var(--signal-text);
+  border-radius: var(--radius-md);
+  color: var(--brand-primary);
 }
 
 .guide-content {
@@ -712,15 +714,15 @@
 
 .guide-title {
   font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.3;
+  font-weight: 400;
+  font-size: 14.5px;
+  line-height: 1.35;
   color: var(--fg);
 }
 
 .guide-desc {
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--fg-3);
 }
 
@@ -744,12 +746,34 @@
 .guide-arrow {
   flex-shrink: 0;
   color: var(--fg-3);
-  transition: color 0.2s var(--ease), transform 0.2s var(--ease);
+  transition:
+    color var(--fast),
+    transform var(--fast);
 }
 
-@media (max-width: 720px) {
+.welcome-note {
+  margin: 18px 0 0;
+  max-width: 780px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
   .welcome-hints {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .welcome-note {
+    text-align: left;
   }
 }
 
@@ -772,7 +796,7 @@
 }
 
 .agent-input__container.is-focused {
-  border-color: var(--signal);
+  border-color: var(--brand-primary);
 }
 
 /* 附件条（容器内第一行） */
@@ -852,7 +876,7 @@
 }
 
 .agent-input__attach:hover:not(:disabled) {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .agent-input__attach:disabled {
@@ -878,6 +902,19 @@
 .agent-input__textarea::placeholder {
   color: var(--fg-3);
   opacity: 0.8;
+  /* 窄屏放不下整串快捷键说明：截断，不要折成两行再被输入区裁掉。 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 输入框焦点：不用 outline: none 压全局环（DESIGN.md §3.5），也不依赖
+   :has()（Firefox 121 前不支持，降级会完全没有焦点指示）。
+   全局 1px 焦点环保留在 textarea 上，容器再用 :focus-within 补一圈
+   柔光描边（news.css 同款写法），两层都看得见。 */
+.agent-input__container:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent);
 }
 
 .agent-input__send,
@@ -897,8 +934,8 @@
 }
 
 .agent-input__send {
-  background: var(--signal);
-  color: var(--on-dark);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
 }
 
 .agent-input__send:disabled {
@@ -970,7 +1007,7 @@
 
 .agent-panel__tab.is-active {
   border-color: var(--hr-strong);
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .agent-panel__close {
@@ -1043,7 +1080,7 @@
 }
 
 .agent-panel__link a:hover .agent-panel__linktitle {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .agent-panel__linkdomain {
@@ -1081,7 +1118,7 @@
 .agent-sessions__brandname {
   flex: 1;
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 14px;
   color: var(--fg);
 }
@@ -1109,6 +1146,7 @@
 .agent-sessions__actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
 }
 
@@ -1116,6 +1154,7 @@
 .agent-sessions__select {
   display: inline-flex;
   align-items: center;
+  min-height: 32px;
   padding: 4px 8px;
   border: 0;
   border-radius: var(--radius-sm);
@@ -1135,7 +1174,7 @@
 }
 
 .agent-sessions__select.is-active {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 /* 「新对话」主钮（同 Vue 版 new-chat-btn：＋图标 + 文字、10px 圆角描边） */
@@ -1158,9 +1197,9 @@
 }
 
 .agent-sessions__newchat:hover:not(:disabled) {
-  border-color: var(--signal);
-  color: var(--signal-text);
-  background: var(--signal-soft);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
 }
 
 .agent-sessions__newchat:disabled {
@@ -1170,6 +1209,7 @@
 
 .agent-sessions__body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 6px 0 14px;
 }
@@ -1215,7 +1255,7 @@
 }
 
 .agent-session.is-active {
-  box-shadow: inset 2px 0 0 var(--signal);
+  box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
 .agent-session__main {
@@ -1239,7 +1279,7 @@
 }
 
 .agent-session.is-active .agent-session__title {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 .agent-session__meta {
@@ -1309,13 +1349,13 @@
 }
 
 .agent-session__menu button.is-danger {
-  color: var(--signal-text);
+  color: var(--risk-critical);
 }
 
 .agent-session__rename {
   margin: 6px 14px;
   padding: 5px 8px;
-  border: 1px solid var(--signal);
+  border: 1px solid var(--brand-primary);
   background: var(--bg);
   color: var(--fg);
   font-size: 12.5px;
@@ -1407,8 +1447,8 @@
 }
 
 .agent-collapsed-actions__btn.is-accent:hover {
-  color: var(--signal-text);
-  border-color: var(--signal);
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
 }
 
 /* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标，
@@ -1435,9 +1475,9 @@
 }
 
 .agent-main__resource-toggle.is-active {
-  color: var(--signal-text);
-  border-color: var(--signal);
-  background: var(--signal-soft);
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
 }
 
 .agent-main__resource-badge {
@@ -1448,8 +1488,8 @@
   height: 16px;
   padding: 0 4px;
   border-radius: var(--radius-md);
-  background: var(--signal);
-  color: var(--paper-surface);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
@@ -1463,14 +1503,18 @@
     overflow-y: auto;
   }
 
+  /* 固定高度而不是 max-height：只有定高才能让会话列表内部滚动，
+     max-height + 高度 auto 的组合会把超出的行直接裁掉、且滚不动。 */
   .agent-layout__left {
     width: 100%;
-    max-height: 240px;
+    height: 240px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s ease;
   }
 
   .agent-layout__left.is-collapsed {
     width: 100%;
-    max-height: 0;
+    height: 0;
   }
 
   .agent-layout__left > .agent-sessions {
@@ -1479,6 +1523,24 @@
 
   .agent-main {
     min-height: 70vh;
+  }
+
+  /* 会话栏在窄屏是首屏可见的主入口：文字钮与新建钮按手指尺寸来。
+     折叠态的两个图标钮（展开会话栏 / 新建对话）是窄屏打开会话栏的
+     唯一入口，同样要够到 44px 触控目标（DESIGN.md §3.5）。 */
+  .agent-sessions__select,
+  .agent-sessions__newchat,
+  .agent-collapsed-actions__btn {
+    min-height: 44px;
+  }
+
+  .agent-collapsed-actions__btn {
+    min-width: 44px;
+  }
+
+  .agent-sessions__collapse {
+    width: 44px;
+    height: 44px;
   }
 
   .agent-panel {

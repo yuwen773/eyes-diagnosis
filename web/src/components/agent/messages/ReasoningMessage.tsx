@@ -19,7 +19,7 @@ export function ReasoningMessage({ msg }: { msg: StreamMessage }) {
       className="agent-msg--reasoning"
       onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
     >
-      <summary className="agent-toolcard__head" style={{ borderRadius: 10 }}>
+      <summary className="agent-toolcard__head" style={{ borderRadius: "var(--radius-md)" }}>
         <span className="agent-toolcard__tag" style={{ marginLeft: 0, opacity: 1 }}>
           思考过程
         </span>

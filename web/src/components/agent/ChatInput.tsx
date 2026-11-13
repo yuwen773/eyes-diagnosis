@@ -1,32 +1,52 @@
-import { useEffect, useRef, useState } from "react"
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 import { filterImageFiles } from "@/lib/agentUpload"
 import { clearDraft, loadDraft, saveDraft } from "@/lib/agentDraft"
+import { useMediaQuery } from "@/lib/useMediaQuery"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
 
-/**
- * 输入区：自适应 textarea + 粘贴图片附件 + 发送/停止。
- * Enter 发送 / Shift+Enter 换行；中文输入法组字中的 Enter 不发送（isComposing）。
- */
-export function ChatInput({
-  disabled,
-  streaming,
-  onSend,
-  onStop,
-}: {
+type ChatInputProps = {
   disabled: boolean
   streaming: boolean
   onSend: (text: string, files: File[]) => Promise<boolean>
   onStop: () => void
-}) {
+}
+
+/**
+ * 输入区：自适应 textarea + 粘贴图片附件 + 发送/停止。
+ * Enter 发送 / Shift+Enter 换行；中文输入法组字中的 Enter 不发送（isComposing）。
+ *
+ * 外部要打开选图对话框（欢迎屏的「上传眼底图像」）时持有 ref 调 `pickImage()`：
+ * 文件对话框必须由用户手势同步触发（WebKit 要求），effect/信号派发在
+ * Safari 上会丢掉手势资格。
+ */
+export type ChatInputHandle = {
+  /** 打开选图对话框（必须来自用户手势的同步调用链）。 */
+  pickImage: () => void
+  /** 预填一句话并聚焦输入框（欢迎屏的引导问题走这里，不替用户发送）。 */
+  prefill: (text: string) => void
+}
+
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput(
+  { disabled, streaming, onSend, onStop },
+  ref,
+) {
   // 草稿：跳登录页来回一趟不丢字。惰性初始化即可，不必用 effect 回填。
   const [text, setText] = useState(() => loadDraft())
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [hint, setHint] = useState("")
   const [focused, setFocused] = useState(false)
+  // 窄屏放不下整串快捷键说明，只留最必要的一条。
+  const narrow = useMediaQuery("(max-width: 768px)")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -34,6 +54,18 @@ export function ChatInput({
     setText(next)
     saveDraft(next)
   }
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      pickImage: () => fileInputRef.current?.click(),
+      prefill: (value: string) => {
+        updateText(value)
+        textareaRef.current?.focus({ preventScroll: true })
+      },
+    }),
+    [],
+  )
 
   // 自适应高度
   useEffect(() => {
@@ -104,6 +136,8 @@ export function ChatInput({
     setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
     // 允许再次选同一个文件
     e.target.value = ""
+    // 选完图把焦点交回输入框：欢迎屏来的用户下一步就是写一句话。
+    if (images.length > 0) textareaRef.current?.focus({ preventScroll: true })
   }
 
   function removeAttachment(id: string) {
@@ -160,7 +194,13 @@ export function ChatInput({
           <textarea
             ref={textareaRef}
             className="agent-input__textarea"
-            placeholder={text.length === 0 && attachments.length === 0 ? "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片" : ""}
+            placeholder={
+              text.length === 0 && attachments.length === 0
+                ? narrow
+                  ? "输入问题，Enter 发送"
+                  : "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片"
+                : ""
+            }
             rows={1}
             value={text}
             disabled={disabled}
@@ -197,4 +237,4 @@ export function ChatInput({
       </div>
     </div>
   )
-}
+})
