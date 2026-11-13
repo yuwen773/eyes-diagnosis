@@ -39,6 +39,15 @@ class ProductProviderLedgerTest {
             for (var path : paths.filter(Files::isRegularFile).toList()) assertFalse(Files.readString(path).contains("synthetic-fixture-secret"));
         }
     }
+    @Test void explicitR5BudgetStopsAtSixteenAndNeverSendsTheSeventeenth() throws Exception {
+        var model = new ProductProviderLedger(directory.resolve("private16"), directory.resolve("public16.json"),
+                "synthetic-fixture-secret", client, 16);
+        for (int i = 0; i < 16; i++) model.call(prompt);
+        assertThrows(IllegalStateException.class, () -> model.call(prompt));
+        verify(client, times(16)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+        assertEquals(16, new com.fasterxml.jackson.databind.ObjectMapper().readTree(directory.resolve("public16.json").toFile()).path("hardLimit").asInt());
+        assertEquals(16, new com.fasterxml.jackson.databind.ObjectMapper().readTree(directory.resolve("public16.json").toFile()).path("realRequests").asInt());
+    }
     @Test void reopeningTheSameDirectoryCannotResetTheBudget() throws Exception {
         ledger(); assertThrows(FileAlreadyExistsException.class, this::ledger); verifyNoInteractions(client);
     }

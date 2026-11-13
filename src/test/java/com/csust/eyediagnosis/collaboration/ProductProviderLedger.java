@@ -13,41 +13,62 @@ import java.time.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Test-only, newly authorized 32-request ledger. Never resets/retries/reopens a live experiment. */
+/** Test-only live ledger. Never resets/retries/reopens a live experiment. */
 final class ProductProviderLedger implements ChatModel {
+    // R5 experiment (2026-11-13, authorized budget 16). The 2026-11-12 experiment
+    // (32 requests, docs/testing/product-acceptance-20261112, target/product-provider-private)
+    // is sealed history: these paths deliberately point elsewhere so it can never be reopened.
+    static final Path R5_PREREGISTRATION = Path.of("docs/testing/product-acceptance-r5/live-preregistration.json");
+    static final Path R5_PRIVATE_DIR = Path.of("target/r5-provider-private");
+    static final Path R5_OUTPUT = Path.of("docs/testing/product-acceptance-r5/real-provider-requests.json");
+
     private final ObjectMapper json = new ObjectMapper();
     private final Path privateDir;
     private final Path output;
     private final String key;
     private final HttpClient client;
+    private final int budget;
     private final List<Map<String, Object>> entries = new ArrayList<>();
     private volatile boolean stopped;
 
     ProductProviderLedger() throws Exception {
-        this(Path.of("target/product-provider-private"), Path.of("docs/testing/product-acceptance-20261112/real-provider-requests.json"),
-                System.getenv("DASHSCOPE_API_KEY"), verifiedClient());
+        this(R5_PRIVATE_DIR, R5_OUTPUT, System.getenv("DASHSCOPE_API_KEY"), verifiedClient(R5_PREREGISTRATION),
+                budgetOf(R5_PREREGISTRATION));
     }
     ProductProviderLedger(Path privateDir, Path output, String key, HttpClient client) throws Exception {
-        this.privateDir = privateDir; this.output = output; this.key = key; this.client = client;
+        this(privateDir, output, key, client, 32);
+    }
+    ProductProviderLedger(Path privateDir, Path output, String key, HttpClient client, int budget) throws Exception {
+        if (budget <= 0) throw new IllegalArgumentException("Budget must be positive");
+        this.privateDir = privateDir; this.output = output; this.key = key; this.client = client; this.budget = budget;
         if (key == null || key.isBlank()) throw new IllegalArgumentException("Provider credential missing");
         Files.createDirectories(privateDir);
         Files.writeString(privateDir.resolve("RUN_STARTED"), Instant.now().toString(), StandardOpenOption.CREATE_NEW);
         persist();
     }
-    private static HttpClient verifiedClient() throws Exception {
-        var registration = new ObjectMapper().readTree(Path.of("docs/testing/product-acceptance-20261112/live-preregistration.json").toFile());
+    private static HttpClient verifiedClient(Path preregistration) throws Exception {
+        var registration = new ObjectMapper().readTree(preregistration.toFile());
         for (var files = registration.path("files").fields(); files.hasNext();) {
             var file = files.next();
             if (!sha(Files.readAllBytes(Path.of(file.getKey()))).equals(file.getValue().asText())) throw new IllegalStateException("Frozen candidate changed: " + file.getKey());
         }
+        var model = registration.path("model");
+        if (!"qwen3.5-plus".equals(model.path("name").asText()) || model.path("temperature").asDouble() != 0.2
+                || model.path("enableThinking").asBoolean(true) || model.path("maxTokens").asInt() != 4000
+                || model.path("stream").asBoolean(true)) throw new IllegalStateException("Preregistered model config mismatch");
         return HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).followRedirects(HttpClient.Redirect.NEVER).build();
+    }
+    private static int budgetOf(Path preregistration) throws Exception {
+        int hardLimit = new ObjectMapper().readTree(preregistration.toFile()).path("hardLimit").asInt();
+        if (hardLimit <= 0) throw new IllegalStateException("Preregistration lacks a positive hardLimit");
+        return hardLimit;
     }
     private static String sha(byte[] bytes) throws Exception { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }
     private synchronized void persist() throws Exception {
-        Files.writeString(output, json.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of("hardLimit", 32, "requests", entries, "stopped", stopped, "realRequests", entries.size())) + "\n");
+        Files.writeString(output, json.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of("hardLimit", budget, "requests", entries, "stopped", stopped, "realRequests", entries.size())) + "\n");
     }
     private synchronized Map<String, Object> reserve(String role, String digest, byte[] body) throws Exception {
-        if (stopped || entries.size() >= 32) throw new IllegalStateException("LIVE_EXPERIMENT_STOPPED");
+        if (stopped || entries.size() >= budget) throw new IllegalStateException("LIVE_EXPERIMENT_STOPPED");
         String text = new String(body, StandardCharsets.UTF_8);
         if (text.contains("objectKey") || text.contains("userId") || text.contains("taskId") || text.contains("responseProtobufBase64")) { stopped = true; throw new IllegalArgumentException("Unsafe outbound fields"); }
         int id = entries.size() + 1;

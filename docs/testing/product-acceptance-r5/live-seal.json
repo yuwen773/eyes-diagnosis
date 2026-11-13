@@ -1,0 +1,22 @@
+{
+  "sealedAt": "2026-11-13T14:13:59.611071+00:00",
+  "experimentId": "r5-2026-11-13",
+  "hardLimit": 16,
+  "spentRequests": 10,
+  "experimentClosed": true,
+  "restartForbidden": true,
+  "automaticRetries": 0,
+  "ledgerSha256": "19215b6c33c19c8f229775d95872b40249ace2b3d84d4fb4b5910679eb789d5a",
+  "preregistrationSha256": "d9c8ae6711435c1b1d67ee018dbb022efbc246e92c7d94599944a9938deca70e",
+  "allHttp200": true,
+  "providerTimeouts": 0,
+  "providerFailures": 0,
+  "normalReadyCells": 0,
+  "plannedNormalCells": 2,
+  "restrictedCells": [
+    "OOD",
+    "QUALITY",
+    "GRAPH",
+    "COORDINATOR"
+  ]
+}

@@ -112,7 +112,7 @@ CONTRACTS = {
     "product": {"scope": "named", "expected": {
         P + "collaboration.ProductSchemaTest": 1,
         P + "collaboration.CollaborationImagesTest": 7,
-        P + "collaboration.ProductProviderLedgerTest": 4,
+        P + "collaboration.ProductProviderLedgerTest": 5,
         P + "controller.AgentSessionAdmissionTest": 8,
     }, "opt_in": {}},
 }

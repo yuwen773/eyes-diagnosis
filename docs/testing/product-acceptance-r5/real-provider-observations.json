@@ -1,0 +1,54 @@
+{
+  "evidenceKind": "SYNTHETIC_UPSTREAM_REAL_PROVIDER",
+  "clinical": "NOT_EVALUATED",
+  "observations": [
+    {
+      "cell": "OOD",
+      "status": "RESTRICTED",
+      "realRequests": 0
+    },
+    {
+      "cell": "QUALITY",
+      "status": "RESTRICTED",
+      "realRequests": 0
+    },
+    {
+      "cell": "GRAPH",
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "taskId": "86ff0436-d961-4f57-a8ba-11bd6747bfe7",
+      "status": "RESTRICTED",
+      "reviewStatus": "NOT_SUBMITTED",
+      "reason": "INSUFFICIENT_EVIDENCE",
+      "elapsedMillis": 23287,
+      "doctorUi": "NOT_RUN_NOT_READY",
+      "patientSaveUi": "NOT_RUN_NOT_READY",
+      "requestIds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "realRequests": 5
+    },
+    {
+      "cell": "COORDINATOR",
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "taskId": "16a344da-f6e3-49b8-8c58-781c745455ce",
+      "status": "RESTRICTED",
+      "reviewStatus": "NOT_SUBMITTED",
+      "reason": "INSUFFICIENT_EVIDENCE",
+      "elapsedMillis": 26101,
+      "doctorUi": "NOT_RUN_NOT_READY",
+      "patientSaveUi": "NOT_RUN_NOT_READY",
+      "requestIds": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "realRequests": 5
+    }
+  ]
+}

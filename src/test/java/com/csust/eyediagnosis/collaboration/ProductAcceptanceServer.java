@@ -47,7 +47,7 @@ public class ProductAcceptanceServer {
 
     public static void main(String[] args) throws Exception {
         String url = System.getenv("PRODUCT_ACCEPTANCE_TEST_URL");
-        boolean live = args.length == 1 && args[0].equals("--live-max-32");
+        boolean live = args.length == 1 && args[0].equals("--live-r5");
         if (args.length > 0 && !live) throw new IllegalArgumentException("Explicit live mode required");
         String account = live ? "product_provider" : "product_acceptance";
         if (url == null || !url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/" + account + "_test")) throw new IllegalArgumentException("Dedicated schema required");
@@ -56,9 +56,14 @@ public class ProductAcceptanceServer {
         new ProductAcceptanceServer(new JdbcTemplate(source), live).serve();
     }
 
+    private static int envPort(String name, int fallback) {
+        String value = System.getenv(name);
+        return value == null || value.isBlank() ? fallback : Integer.parseInt(value);
+    }
+
     void serve() throws Exception {
         seedReferences();
-        var redis = new org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory("127.0.0.1", 16379);
+        var redis = new org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory("127.0.0.1", envPort("PRODUCT_ACCEPTANCE_REDIS_PORT", 16379));
         redis.afterPropertiesSet(); redis.start();
         var redisTemplate = new org.springframework.data.redis.core.RedisTemplate<String, Object>();
         redisTemplate.setConnectionFactory(redis);
@@ -116,7 +121,7 @@ public class ProductAcceptanceServer {
             context.register(WebConfiguration.class);
             context.registerBean("objectMapper", ObjectMapper.class, () -> new com.csust.eyediagnosis.config.JsonConfig().jacksonObjectMapper(new org.springframework.http.converter.json.Jackson2ObjectMapperBuilder()));
             context.registerBean("webServerFactory", TomcatServletWebServerFactory.class, () -> {
-                var server = new TomcatServletWebServerFactory(live ? 18089 : 18087); server.setAddress(java.net.InetAddress.getLoopbackAddress()); server.setContextPath("/api"); return server;
+                var server = new TomcatServletWebServerFactory(live ? envPort("PRODUCT_ACCEPTANCE_SERVER_PORT", 18089) : 18087); server.setAddress(java.net.InetAddress.getLoopbackAddress()); server.setContextPath("/api"); return server;
             });
             context.registerBean("dispatcher", ServletRegistrationBean.class, () -> {
                 var servlet = new ServletRegistrationBean<>(new org.springframework.web.servlet.DispatcherServlet(context), "/");
@@ -141,7 +146,7 @@ public class ProductAcceptanceServer {
             context.registerBean(com.csust.eyediagnosis.exception.GlobalExceptionHandler.class);
             context.registerBean(Facade.class, Facade::new);
             context.refresh();
-            String prefix = live ? "product-real-server" : "product-server";
+            String prefix = live ? "r5-server" : "product-server";
             Files.writeString(Path.of("target/" + prefix + ".json"), JSON.writeValueAsString(Map.of("port", live ? 18089 : 18087, "evidence", live ? "REAL_PROVIDER_SYNTHETIC_UPSTREAM" : "ACTUAL_AUTH_MYBATIS_HTTP_GRAPH_SYNTHETIC_EXTERNAL_SEAMS")));
             try {
                 long end = System.nanoTime() + TimeUnit.MINUTES.toNanos(60);

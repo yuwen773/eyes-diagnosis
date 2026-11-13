@@ -32,9 +32,9 @@ class SurefireSkipGateTest(unittest.TestCase):
             self.write(name, cases=count)
         self.assertEqual(0, self.verdict(CONTRACTS["product"]))
         name = "com.csust.eyediagnosis.collaboration.ProductProviderLedgerTest"
-        self.write(name, cases=4, skipped=1)
+        self.write(name, cases=5, skipped=1)
         self.assertEqual(1, self.verdict(CONTRACTS["product"]))
-        self.write(name, cases=3)
+        self.write(name, cases=4)
         self.assertEqual(1, self.verdict(CONTRACTS["product"]))
 
     def setUp(self):
