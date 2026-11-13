@@ -1,8 +1,11 @@
 /**
- * 用户端 · 判读记录 + 个人中心
+ * 用户端 · 判读记录 + 个人中心（Visual Completion U7）
  *
- * 不发明新视觉：KPI 用全站 .strip/.readout，列表按台账语言搭
- * （发丝线 + 行号 + 缩略影像 + mono 读数），详情内嵌现成的记录纸。
+ * 业务容器、数据卡、列表、表单统一到 Blue Optical Glass 的**实体面板表达**：
+ * 白色面板 + 发丝线描边 + 品牌蓝只做非语义强调（kicker 短杠、行悬停、
+ * 当前态），Clinical 场景密度不变——行距、mono 读数、口径标注都保留。
+ * 医学语义（RiskTag、拒识、复核状态）与墨色主 CTA 不动；
+ * 记录纸（RecordSheet）仍是那张白纸。
  */
 
 /* ── 页头 ─────────────────────────────────────────────── */
@@ -24,10 +27,12 @@
   letter-spacing: -0.02em;
 }
 
-/* ── KPI 条 ───────────────────────────────────────────── */
+/* ── KPI 读数条（U7：四格读数装进白色面板卡，不再裸排在画布上） ── */
 
 .records__strip {
   margin-bottom: 10px;
+  border-top: 1px solid var(--hr);
+  background: var(--surface);
 }
 
 /* 口径说明：总数是全量，其余三项只覆盖当前页。不写清楚，读者会把一页的风险数
@@ -72,7 +77,13 @@
 }
 
 .records__row:hover {
-  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 4%, transparent);
+}
+
+/* 展开中的行：左侧品牌蓝当前态细条，与 Agent 会话列表同一套语言（U7）。 */
+.records__row[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+  box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
 .records__index {
@@ -83,7 +94,7 @@
 }
 
 .records__row:hover .records__index {
-  color: var(--fg);
+  color: var(--brand-primary);
 }
 
 /* 缩略影像：发丝线框，装不下时就摆一块「无影像」的读数。 */
@@ -174,11 +185,11 @@
 }
 
 .records__row:hover .records__caret {
-  color: var(--fg);
+  color: var(--brand-primary);
 }
 
 .records__row[aria-expanded="true"] .records__caret {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 /* 展开区：记录纸在台账里要缩进出一圈呼吸位。 */
@@ -291,7 +302,7 @@
   place-items: center;
   gap: 8px;
   padding: clamp(40px, 8vh, 80px) 20px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--hr);
   background: var(--surface);
   text-align: center;
 }
@@ -326,7 +337,8 @@
 /* ── 个人中心 ─────────────────────────────────────────── */
 
 /* 读数卡：个人域不套四列 KPI 条（DESIGN.md §1.5）。
-   四张卡各自成卡，发丝线分隔，口径写在标签上。 */
+   四张卡各自成卡，发丝线分隔，口径写在标签上。
+   U7：卡头挂一枚品牌蓝短杠（非语义装饰），与判读页 kicker 同语。 */
 .profile__stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -335,12 +347,23 @@
 }
 
 .profile__stat {
+  position: relative;
   display: grid;
   gap: 8px;
   align-content: start;
   padding: 16px 18px 18px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--hr);
   background: var(--surface);
+}
+
+.profile__stat::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 18px;
+  width: 26px;
+  height: 2px;
+  background: var(--brand-primary);
 }
 
 .profile__stat-value {
@@ -435,7 +458,7 @@
 
 .profile__card {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--hr);
   padding: clamp(20px, 2.6vw, 32px);
 }
 
@@ -445,7 +468,7 @@
   justify-content: space-between;
   padding-bottom: 14px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--hr);
 }
 
 /* 卡片小节标题：一句正文大小的说明，不是压在内容上的微型眉线。 */
@@ -535,7 +558,7 @@
 }
 
 .profile__input:focus {
-  border-color: var(--signal);
+  border-color: var(--brand-primary);
   background: var(--surface);
 }
 
