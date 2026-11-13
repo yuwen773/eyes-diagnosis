@@ -746,3 +746,231 @@ html.dark .optic-flow__fiber-set--rim {
     padding: 14px 16px 16px;
   }
 }
+
+/* ==========================================================================
+   品牌顶栏（DESIGN.md §2.1.2）
+   --------------------------------------------------------------------------
+   这是 `SiteHeader` 的**品牌变体**，不是全站替换：类名与 `.site-head` 完全
+   分离，改这里不会让临床页 / 管理端 / 协作台被动获得玻璃顶栏。
+   形态：字标 + 中央悬浮胶囊 + 右侧功能区；胶囊用 Frosted Glass 材质。
+   ========================================================================== */
+
+.brand-head {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  padding: 8px 0 6px;
+  color: var(--brand-text);
+  /* 顶部一条从页面底色渐隐的幕：内容从它下面滚过时字标仍然清楚，
+     但不会被读成一条实体横栏。 */
+  background: linear-gradient(to bottom, var(--field) 0%, var(--field) 58%, transparent 100%);
+}
+
+.brand-head__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.2vw, 48px);
+  min-height: 56px;
+}
+
+.brand-head__brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-head .wordmark__en {
+  color: var(--brand-muted);
+}
+
+/* 胶囊本体：材质交给 .brand-panel--frosted，这里只做版式与分隔。 */
+.brand-head__nav {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+}
+
+.brand-head__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  color: var(--brand-muted);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.brand-head__link:hover {
+  color: var(--brand-text);
+  background: rgba(36, 87, 201, 0.08);
+}
+
+/* 当前路由：独立的实心高亮胶囊，不是给链接加一条下划线。 */
+.brand-head__link[aria-current="page"] {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.brand-head__code {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+
+.brand-head__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-head__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(36, 87, 201, 0.22);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.brand-head__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(36, 87, 201, 0.28);
+}
+
+.brand-head__cta-go {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* 触控目标：品牌顶栏里的三个圆形/胶囊控件都不小于 44×44。 */
+.brand-head .theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-circle);
+  border-color: var(--brand-outline);
+  color: var(--brand-muted);
+}
+
+.brand-head .theme-toggle:hover {
+  color: var(--brand-text);
+  border-color: var(--brand-primary);
+}
+
+.brand-head .acct__trigger {
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border-color: var(--brand-outline);
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+}
+
+.brand-head .acct__trigger:hover {
+  border-color: var(--brand-primary);
+}
+
+.brand-head .burger {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* 浅色主题滚到 data-head-invert 深色区段：把品牌令牌在**顶栏内部**换成深底
+   的一套，其余规则自动跟着变——胶囊仍然是玻璃（只是换成暗色那组玻璃令牌），
+   不是实体横栏，也不会在切换边界闪跳。
+   暗主题整页就是深色，走 html.dark 的令牌，不需要这条。 */
+html:not(.dark) .brand-head[data-invert="true"] {
+  --brand-text: var(--brand-deep-text);
+  --brand-muted: var(--brand-deep-muted);
+  --brand-outline: var(--brand-deep-hairline);
+  --brand-line: var(--brand-deep-line);
+  color: var(--brand-deep-text);
+  background: linear-gradient(to bottom, #0a1a33 0%, #0a1a33 58%, transparent 100%);
+}
+
+html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
+  --glass-bg: rgba(16, 34, 60, 0.78);
+  --glass-edge: rgba(196, 232, 255, 0.26);
+  --glass-inner: rgba(255, 255, 255, 0.07);
+}
+
+/* 窄屏不把胶囊压扁塞进去：导航收进 MobileNav 抽屉，右侧只留主题与菜单。
+   抽屉本身的路由、认证、焦点锁、滚动锁全部沿用既有实现。 */
+@media (max-width: 900px) {
+  .brand-head__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .brand-head__nav,
+  .brand-head__cta,
+  .brand-head__actions .acct {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-head .wordmark__en {
+    display: none;
+  }
+}
+
+/* 品牌场景里「登录」不是一个实心墨色按钮：右侧只能有一个主 CTA。
+   这里收回共享样式里的填充与信号橙 hover，改成描边胶囊。 */
+.brand-head a.acct__trigger--anon {
+  justify-content: center;
+  background: transparent;
+  border-color: var(--brand-outline);
+  color: var(--brand-text);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.brand-head a.acct__trigger--anon:hover {
+  background: transparent;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* 汉堡在品牌顶栏里也是圆形胶囊，和主题切换、账号按钮同一套形状语言。 */
+.brand-head .burger {
+  border-radius: var(--radius-circle);
+  border-color: var(--brand-outline);
+  color: var(--brand-text);
+}
+
+.brand-head .burger:hover {
+  border-color: var(--brand-primary);
+}
+
+/* 汉堡的两根线用 --fg、账号下拉的小箭头用 --fg-3，都不继承 .brand-head 的
+   color，所以反相时要单独换色，否则会消失在深底上。 */
+html:not(.dark) .brand-head[data-invert="true"] .burger__bars > span {
+  color: var(--brand-deep-text);
+}
+
+html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
+  color: var(--brand-deep-muted);
+}
