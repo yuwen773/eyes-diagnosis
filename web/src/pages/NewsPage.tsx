@@ -86,17 +86,17 @@ export function NewsPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="editorial" />
 
-      <main className="wrap news">
-        <header className="news__masthead">
-          <div className="news__lede">
-            <p className="overline">Briefing · 资讯</p>
-            <h1 className="display news__title">眼科前沿</h1>
-            <p className="lead">
-              院内公告、学科动态与设备更新。按发布时间排列，条目打开即为全文。
-            </p>
-          </div>
+      {/* 头版 Hero：品牌化的编辑式门面。玻璃材质透出品牌画布，
+          排版仍左对齐（DESIGN.md §2.1 反例：不做居中 hero）。 */}
+      <section className="news-hero" aria-label="资讯门户">
+        <div className="wrap news-hero__inner">
+          <p className="news-hero__eyebrow num">IRIS · BRIEFING</p>
+          <h1 className="news-hero__title">眼科前沿</h1>
+          <p className="news-hero__sub">
+            眼健康科普、学科动态与院内公告。按发布时间排列，条目打开即为全文。
+          </p>
 
-          <form className="news__search" onSubmit={search}>
+          <form className="news__search news-hero__search" onSubmit={search}>
             <label className="news__search-label overline" htmlFor="news-search">
               检索标题 · SEARCH
             </label>
@@ -119,8 +119,10 @@ export function NewsPage() {
               ) : null}
             </div>
           </form>
-        </header>
+        </div>
+      </section>
 
+      <main className="wrap news">
         {/* 一条编辑口径的元信息，不是四列 KPI：总数、更新日期、页码都是列表接口的真实读数。 */}
         {fault || loading ? null : (
           <p className="news__meta num">

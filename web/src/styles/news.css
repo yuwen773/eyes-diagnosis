@@ -11,6 +11,78 @@
   padding-block: clamp(36px, 5vh, 60px) clamp(56px, 8vh, 96px);
 }
 
+/* ── 头版 Hero（Visual Completion U5）────────────────────────────
+   品牌画布上的编辑式门面：玻璃面板透出品牌底色，排版仍左对齐。
+   不引第二个 GPU 渲染器——材质只靠 brand 令牌 + 品牌渐变。 */
+
+.news-hero {
+  position: relative;
+  padding-block: clamp(48px, 7vh, 88px);
+  background:
+    radial-gradient(
+      58% 68% at 82% 8%,
+      var(--brand-soft),
+      transparent 68%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--brand-primary) 5%, transparent), transparent 74%);
+  border-bottom: 1px solid var(--brand-line);
+  overflow: hidden;
+}
+
+/* 品牌光带的一笔：静态渐变描出方向感，不抢标题的对比度。 */
+.news-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -12%;
+  width: 52%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brand-primary) 40%,
+    var(--brand-cyan) 78%,
+    transparent
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.news-hero__inner {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+
+.news-hero__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--brand-primary);
+}
+
+.news-hero__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 5.2vw, 72px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--brand-text);
+}
+
+.news-hero__sub {
+  margin: 4px 0 0;
+  max-width: 34em;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--brand-muted);
+}
+
+.news-hero__search {
+  margin-top: clamp(16px, 2.6vh, 28px);
+  width: min(460px, 100%);
+}
+
 /* ── 报头 ─────────────────────────────────────────────────────── */
 
 .news__masthead {
@@ -457,8 +529,17 @@
   padding-block: clamp(20px, 3vh, 32px) clamp(24px, 3.6vh, 40px);
 }
 
+/* 文章眉线：栏目色提亮，让「这是一篇正式发布的文章」先于标题到达。 */
+.news-article__kicker {
+  color: var(--brand-primary);
+}
+
 .news-article__head .overline {
   color: var(--brand-muted);
+}
+
+.news-article__kicker.overline {
+  color: var(--brand-primary);
 }
 
 .news-article__title {
@@ -698,6 +779,10 @@
   .news-lead,
   .news-article__body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .news-hero {
+    padding-block: clamp(36px, 5vh, 60px);
   }
 
   .news-rows,

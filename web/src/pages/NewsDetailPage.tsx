@@ -103,7 +103,7 @@ export function NewsDetailPage() {
           <>
             <article className="news-article">
               <header className="news-article__head">
-                <p className="overline">
+                <p className="overline news-article__kicker">
                   发布于{" "}
                   <span className="num">
                     {date}
