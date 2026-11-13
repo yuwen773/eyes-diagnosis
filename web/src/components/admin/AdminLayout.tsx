@@ -1,18 +1,28 @@
 import "@/styles/admin.css"
 
 import { Link, NavLink, Outlet } from "react-router-dom"
+import {
+  ArrowLeft,
+  ChartColumn,
+  LayoutDashboard,
+  Library,
+  Newspaper,
+  Stethoscope,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { useSession } from "@/lib/session"
 
 /** 侧栏六项。导出供测试/复用；路由与占位页编号同源。 */
 export const ADMIN_NAV = [
-  { to: "/admin/dashboard", code: "01", label: "仪表盘" },
-  { to: "/admin/users", code: "02", label: "用户管理" },
-  { to: "/admin/news", code: "03", label: "新闻管理" },
-  { to: "/admin/diagnosis", code: "04", label: "诊断管理" },
-  { to: "/admin/knowledge", code: "05", label: "知识库" },
-  { to: "/admin/data-analysis", code: "06", label: "数据分析" },
-] as const
+  { to: "/admin/dashboard", code: "01", label: "仪表盘", icon: LayoutDashboard },
+  { to: "/admin/users", code: "02", label: "用户管理", icon: Users },
+  { to: "/admin/news", code: "03", label: "新闻管理", icon: Newspaper },
+  { to: "/admin/diagnosis", code: "04", label: "诊断管理", icon: Stethoscope },
+  { to: "/admin/knowledge", code: "05", label: "知识库", icon: Library },
+  { to: "/admin/data-analysis", code: "06", label: "数据分析", icon: ChartColumn },
+] as const satisfies ReadonlyArray<{ to: string; code: string; label: string; icon: LucideIcon }>
 
 /**
  * 管理后台外壳：仪表梁 + 紫色 SaaS 侧栏 + 内容区。
@@ -33,9 +43,7 @@ export function AdminLayout() {
       <header className="admin-beam">
         <div className="admin-beam__inner">
           <Link to="/" className="admin-beam__back">
-            <span className="admin-beam__back-mark" aria-hidden="true">
-              ←
-            </span>
+            <ArrowLeft className="admin-beam__back-mark" size={14} strokeWidth={2} aria-hidden="true" />
             返回主站
           </Link>
 
@@ -84,9 +92,7 @@ export function AdminLayout() {
         <nav className="admin-side__nav" aria-label="系统管理导航">
           {ADMIN_NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className="admin-side__link">
-              <span className="admin-side__code num" aria-hidden="true">
-                {item.code}
-              </span>
+              <item.icon className="admin-side__icon" size={15} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </NavLink>
           ))}

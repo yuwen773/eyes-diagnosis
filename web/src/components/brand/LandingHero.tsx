@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, type ReactElement } from "react"
+import { ArrowUpRight } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { BrandKicker, BrandPanel } from "./BrandPanel"
@@ -94,11 +95,11 @@ export function LandingHero(): ReactElement {
             <div className="landing-hero__cta">
               <Link className="landing-hero__btn landing-hero__btn--primary" to="/diagnosis">
                 探索影像分析
-                <span aria-hidden="true">↗</span>
+                <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
               </Link>
               <Link className="landing-hero__btn" to="/agent">
                 探索 AI 协作
-                <span aria-hidden="true">↗</span>
+                <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -139,7 +140,7 @@ export function LandingHero(): ReactElement {
                 <span className="landing-hero__entry-title">{entry.title}</span>
                 <span className="landing-hero__entry-body">{entry.body}</span>
                 <span className="landing-hero__entry-go" aria-hidden="true">
-                  ↗
+                  <ArrowUpRight size={14} strokeWidth={2} />
                 </span>
               </Link>
             </li>

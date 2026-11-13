@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import type { StreamMessage } from "@/lib/agentStream"
 
 const FOLD_LIMIT = 120
@@ -6,20 +7,12 @@ const FOLD_LIMIT = 120
 /** 展开箭头：同 Vue 版 ToolResponseMessage 的 expand-icon。 */
 function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <ChevronDown
+      size={14}
+      strokeWidth={2}
       aria-hidden="true"
       style={{ transform: open ? "rotate(180deg)" : undefined }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
+    />
   )
 }
 

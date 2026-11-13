@@ -1,3 +1,4 @@
+import { ArrowUpRight } from "lucide-react"
 import { Link, NavLink, useLocation } from "react-router-dom"
 
 import { AccountMenu } from "@/components/AccountMenu"
@@ -44,9 +45,7 @@ export function ProductHeader({ scene = "brand" }: { scene?: ProductScene }) {
         <nav className="product-head__nav" aria-label="主导航">
           {NAV_LINKS.map((item) => (
             <NavLink key={item.to} to={item.to} className="product-head__link" data-cursor>
-              <span className="product-head__code num" aria-hidden="true">
-                {item.code}
-              </span>
+              <item.icon className="product-head__icon" size={15} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </NavLink>
           ))}
@@ -77,9 +76,7 @@ export function ProductHeader({ scene = "brand" }: { scene?: ProductScene }) {
               「回到上传起点」，视觉与新闻 / 落地页保持同一套构图。 */}
           <Link to="/diagnosis" className="product-head__cta" data-cursor>
             开始判读
-            <span className="product-head__cta-go" aria-hidden="true">
-              ↗
-            </span>
+            <ArrowUpRight className="product-head__cta-go" size={13} strokeWidth={2.25} aria-hidden="true" />
           </Link>
 
           <MobileNav />

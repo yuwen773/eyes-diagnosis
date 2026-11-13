@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react"
+import { X } from "lucide-react"
 
 import { Dialog } from "@/components/ui/dialog"
 
@@ -32,7 +33,7 @@ export function Drawer(props: {
           aria-label="关闭"
           onClick={onClose}
         >
-          ✕
+          <X size={16} strokeWidth={2} aria-hidden="true" />
         </button>
       </header>
 

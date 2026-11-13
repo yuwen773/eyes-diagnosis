@@ -1,6 +1,7 @@
 import "@/styles/records.css"
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
+import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
@@ -163,7 +164,7 @@ export function ProfilePage() {
             <p className="records__empty-title">登录后才能查看个人中心</p>
             <p className="records__empty-body">资料与判读统计都跟着账号走。</p>
             <Link className="btn" to="/login?redirect=%2Fprofile">
-              去登录 <span className="btn__key">↗</span>
+              去登录 <ArrowUpRight className="btn__key" size={13} strokeWidth={2} aria-hidden="true" />
             </Link>
           </div>
         </main>
@@ -324,7 +325,7 @@ export function ProfilePage() {
             <div className="profile__ledger-link">
               <button type="button" className="link" data-cursor onClick={() => navigate("/records")}>
                 查看全部判读记录
-                <span className="link__mark">→</span>
+                <ArrowRight className="link__mark" size={14} strokeWidth={2} aria-hidden="true" />
               </button>
             </div>
           </section>

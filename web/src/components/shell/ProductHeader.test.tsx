@@ -70,12 +70,12 @@ describe("ProductHeader · 共享产品外壳", () => {
     expect(screen.getByRole("link", { name: /开始判读/ }).getAttribute("href")).toBe("/diagnosis")
   })
 
-  it("导航链接带序号短码，读屏只读一次标签", () => {
+  it("导航链接带 lucide 图标，读屏只读一次标签", () => {
     renderAt("/")
     const nav = screen.getByRole("navigation", { name: "主导航" })
     const first = nav.querySelector("a")!
     expect(first.textContent).toContain("判读")
-    expect(first.querySelector(".product-head__code")?.getAttribute("aria-hidden")).toBe("true")
+    expect(first.querySelector(".product-head__icon")?.getAttribute("aria-hidden")).toBe("true")
   })
 
   // U2（DESIGN.md §2.1.2）：scene 变体只允许改画布与密度，不允许换导航设计语言。

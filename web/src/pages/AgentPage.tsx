@@ -1,6 +1,7 @@
 import "@/styles/agent.css"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Image, Menu, Plus } from "lucide-react"
 import {
   batchDeleteSessions,
   deleteSession,
@@ -369,11 +370,7 @@ export function AgentPage() {
                         aria-label="展开会话栏"
                         title="展开会话栏"
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                          <line x1="3" y1="12" x2="21" y2="12" />
-                          <line x1="3" y1="6" x2="21" y2="6" />
-                          <line x1="3" y1="18" x2="21" y2="18" />
-                        </svg>
+                        <Menu size={18} strokeWidth={2} aria-hidden="true" />
                       </button>
                       <button
                         type="button"
@@ -382,10 +379,7 @@ export function AgentPage() {
                         aria-label="新建对话"
                         title="新建对话"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                          <line x1="12" y1="5" x2="12" y2="19" />
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
+                        <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
                       </button>
                     </div>
                   )}
@@ -404,11 +398,7 @@ export function AgentPage() {
                   aria-label="资源面板"
                   title="资源面板"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
+                  <Image size={18} strokeWidth={2} aria-hidden="true" />
                   {resources.images.length + resources.links.length > 0 && (
                     <span className="agent-main__resource-badge num">
                       {resources.images.length + resources.links.length}

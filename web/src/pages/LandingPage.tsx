@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react"
 import {
   lazy,
   Suspense,
@@ -383,7 +384,7 @@ export function LandingPage() {
                       onClick={() => stepSpecimen(-1)}
                       aria-label="上一张"
                     >
-                      ←
+                      <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
                     </button>
                     <button
                       type="button"
@@ -391,7 +392,7 @@ export function LandingPage() {
                       onClick={() => stepSpecimen(1)}
                       aria-label="下一张"
                     >
-                      →
+                      <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
                     </button>
                   </div>
                   <span className="specimen-lightbox__note num">示例影像 · 非真实患者</span>
@@ -472,7 +473,7 @@ export function LandingPage() {
                   aria-haspopup="dialog"
                 >
                   查看完整示例记录
-                  <span aria-hidden="true">↗</span>
+                  <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
                 </button>
                 <span className="landing-record__peek-note num">示例 · 非真实患者</span>
               </div>

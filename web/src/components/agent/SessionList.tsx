@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { ChevronLeft, Plus } from "lucide-react"
 import type { AgentSessionVO } from "@/lib/api"
 
 type Group = { label: string; sessions: AgentSessionVO[] }
@@ -207,9 +208,7 @@ export function SessionList({
             aria-label="收起会话栏"
             title="收起会话栏"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
         <div className="agent-sessions__actions">
@@ -248,10 +247,7 @@ export function SessionList({
               onClick={onNewChat}
               disabled={busy}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
               <span>新对话</span>
             </button>
           )}

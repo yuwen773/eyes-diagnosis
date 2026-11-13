@@ -152,7 +152,7 @@
 .admin-side__link {
   position: relative;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
   padding: 11px 14px 11px 18px;
   border-radius: var(--radius-md);
@@ -166,10 +166,8 @@
   background: var(--admin-primary-soft);
 }
 
-.admin-side__code {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+.admin-side__icon {
+  flex: none;
   color: var(--admin-text-faint);
   transition: color var(--fast);
 }
@@ -181,7 +179,7 @@
   background: var(--admin-primary-soft);
 }
 
-.admin-side__link[aria-current="page"] .admin-side__code {
+.admin-side__link[aria-current="page"] .admin-side__icon {
   color: var(--admin-primary);
 }
 

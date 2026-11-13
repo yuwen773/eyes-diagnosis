@@ -1,6 +1,7 @@
 import "@/styles/records.css"
 
 import { useMemo, useState } from "react"
+import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
@@ -152,7 +153,7 @@ export function RecordsPage() {
             <p className="records__empty-title">登录后才能查看判读记录</p>
             <p className="records__empty-body">记录、统计与复核状态都跟着账号走。</p>
             <Link className="btn" to="/login?redirect=%2Frecords">
-              去登录 <span className="btn__key">↗</span>
+              去登录 <ArrowUpRight className="btn__key" size={13} strokeWidth={2} aria-hidden="true" />
             </Link>
           </div>
         </main>
@@ -238,7 +239,7 @@ export function RecordsPage() {
               上传一张眼底影像开始第一次判读，记录会按时间倒序落在这本台账里。
             </p>
             <Link className="btn" to="/diagnosis">
-              去判读 <span className="btn__key">↗</span>
+              去判读 <ArrowUpRight className="btn__key" size={13} strokeWidth={2} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
@@ -385,7 +386,7 @@ export function RecordsPage() {
                 disabled={page >= pages}
                 onClick={() => goPage(page + 1)}
               >
-                下一页 →
+                下一页 <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
               </button>
             </nav>
           </>
