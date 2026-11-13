@@ -167,6 +167,10 @@
   --brand-deep-muted: #9fb3cf;
   --brand-deep-line: rgba(190, 220, 255, 0.16);
   --brand-deep-hairline: rgba(190, 220, 255, 0.26);
+  /* 信号橙在深底上的提亮版：深底不随主题翻转，所以这组值也固定。
+     只用于深海蓝实体面上的印章等点缀，不改写 --signal 本身。 */
+  --brand-deep-signal: #ef7a45;
+  --brand-deep-signal-text: #ffa07a;
 
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
@@ -419,6 +423,8 @@ html.dark {
   --brand-deep-muted: #9fb3cf;
   --brand-deep-line: rgba(190, 220, 255, 0.14);
   --brand-deep-hairline: rgba(190, 220, 255, 0.24);
+  --brand-deep-signal: #ef7a45;
+  --brand-deep-signal-text: #ffa07a;
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，

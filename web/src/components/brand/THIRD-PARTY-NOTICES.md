@@ -2,8 +2,8 @@
 
 本目录下的 `beamsEngine.ts` 与 `beamsMount.ts` 是**上游第三方组件的 vendor 副本**，
 不是本项目原创。其余文件（`OpticFlow.tsx`、`LandingHero.tsx`、`BrandPanel.tsx`、
-`BrandHeader.tsx`、`BrandFooter.tsx`、`OpticFlow.test.tsx`、`beamsMount.test.ts`、
-`notices.test.ts`）由本项目编写。
+`BrandFooter.tsx`、`OpticFlow.test.tsx`、`beamsMount.test.ts`、`notices.test.ts`）由本项目编写。
+品牌顶栏的虹膜标与字标已随 R2.5-01 移到 `src/components/shell/Wordmark.tsx`，同样是本项目编写。
 
 ---
 
