@@ -11,6 +11,7 @@ import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
 import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
 import com.csust.eyediagnosis.agent.tools.UserBoundDocumentSearchTool;
+import com.csust.eyediagnosis.agent.tools.UserBoundEyeImageAnalyzerTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
@@ -95,7 +96,7 @@ public class DiagnosisAgent {
                 .name("eye_diagnosis_assistant")
                 .model(chatModel)
                 .instruction(SYSTEM_PROMPT)
-                .methodTools(eyeImageAnalyzerTool,
+                .methodTools(new UserBoundEyeImageAnalyzerTool(eyeImageAnalyzerTool, userId),
                         new UserBoundDocumentSearchTool(documentSearchTool, userId));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
