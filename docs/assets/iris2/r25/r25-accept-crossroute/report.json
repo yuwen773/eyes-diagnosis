@@ -1,0 +1,213 @@
+{
+  "errors": [],
+  "failures": [],
+  "report": [
+    {
+      "theme": "light",
+      "width": 390,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "light",
+      "width": 1920,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "theme": "dark",
+      "width": 1920,
+      "routes": [
+        "/",
+        "/diagnosis",
+        "/agent",
+        "/news",
+        "/profile",
+        "/records"
+      ],
+      "ok": true
+    },
+    {
+      "view": "theme-toggle",
+      "width": 390,
+      "before": {
+        "path": "/news",
+        "dark": false
+      },
+      "after": {
+        "path": "/news",
+        "dark": true,
+        "stored": "dark"
+      }
+    },
+    {
+      "view": "theme-toggle",
+      "width": 1440,
+      "before": {
+        "path": "/news",
+        "dark": false
+      },
+      "after": {
+        "path": "/news",
+        "dark": true,
+        "stored": "dark"
+      }
+    },
+    {
+      "view": "keyboard",
+      "width": 1440,
+      "stops": [
+        {
+          "tag": "A",
+          "name": "Iris 首页",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "01判读",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "02诊断 Agent",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "03新闻资讯",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "切换到暗色主题",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "name": "无名▾",
+          "outline": true,
+          "shadow": false,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "name": "开始判读↗",
+          "outline": true,
+          "shadow": true,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "name": "",
+          "outline": true,
+          "shadow": true,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "view": "drawer",
+      "width": 390,
+      "inDrawer": {
+        "open": "true",
+        "bodyLocked": true,
+        "focusInside": true,
+        "drawerLinks": 5
+      },
+      "closed": {
+        "open": "false",
+        "bodyLocked": false,
+        "focusOnBurger": true
+      }
+    }
+  ]
+}

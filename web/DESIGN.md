@@ -73,8 +73,11 @@ Intelligence（Agent 与影像工作台）/ Clinical（诊断与判读）。
 
 根 `DESIGN.md` §8 有完整清单。改到这些地方时顺手修，不要照着复刻：
 
-- Tailwind v4 的 `.overline` 工具类给眉线多加一条上划线；
-- 断点未完全收敛（各页 `@media` 有 17 个不同取值），新代码只用根 `DESIGN.md` §3.6 五档；
+- ~~Tailwind v4 的 `.overline` 工具类给眉线多加一条上划线~~：**已修 2026-11-13（R2.5-06）**——
+  `app.css` 的 `.overline` 显式写了 `text-decoration-line: none`（未分层，优先级高于
+  Tailwind 的 utilities 层）；不要照着复刻旧写法，也不要再写新的 `.overline` 变体；
+- 断点未完全收敛（各页 `@media` 有 18 个不同取值），新写样式只用 390 / 768 / 900，
+  验收过 390 / 768 / 820 / 900 / 1440 / 1920 六档（根 `DESIGN.md` §3.6「R2.5 起的断点分工」）；
 - 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），与新规范不一致；
 - ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；

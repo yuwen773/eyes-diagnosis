@@ -146,10 +146,10 @@ export function RecordsPage() {
       <div className="is-field">
         <ProductHeader scene="clinical" />
         <main className="wrap records">
-          <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
+          <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
           <div className="records__empty">
             <EmptyFrame label="未登录" />
-            <p className="records__empty-title">登录后才能查看诊断记录</p>
+            <p className="records__empty-title">登录后才能查看判读记录</p>
             <p className="records__empty-body">记录、统计与复核状态都跟着账号走。</p>
             <Link className="btn" to="/login?redirect=%2Frecords">
               去登录 <span className="btn__key">↗</span>
@@ -166,11 +166,11 @@ export function RecordsPage() {
       <ProductHeader scene="clinical" />
 
       <main className="wrap records">
-        <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
+        <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
 
         <div className="records__intro">
           <p className="overline">Ledger · 判读台账</p>
-          <h1 className="display records__title">诊断记录</h1>
+          <h1 className="records__title">判读记录</h1>
           <p className="lead">
             你名下所有的判读，每一条都保留模型版本与权重指纹。点开一条，展开就是那张记录纸。
           </p>
@@ -276,13 +276,9 @@ export function RecordsPage() {
                       </span>
                       <span className="records__meta">
                         <span className="num">{formatTimestamp(item.createTime)}</span>
-                        <span>·</span>
                         <span>{reexamineLabel(item.reexamineStatus)}</span>
                         {item.requiresReview && !item.aiRejected ? (
-                          <>
-                            <span>·</span>
-                            <span>待人工复核</span>
-                          </>
+                          <span>待人工复核</span>
                         ) : null}
                       </span>
                     </span>
@@ -371,27 +367,27 @@ export function RecordsPage() {
               ))}
             </ul>
 
-            <div className="news__pager">
+            <nav className="records__pager" aria-label="判读记录分页">
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page <= 1}
                 onClick={() => goPage(page - 1)}
               >
                 ← 上一页
               </button>
-              <span className="news__pager-state num">
+              <span className="records__pager-state num">
                 {page} / {pages} · 共 {stats.total} 条
               </span>
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page >= pages}
                 onClick={() => goPage(page + 1)}
               >
                 下一页 →
               </button>
-            </div>
+            </nav>
           </>
         ) : null}
       </main>

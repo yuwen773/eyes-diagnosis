@@ -1,5 +1,5 @@
 /**
- * 用户端 · 诊断记录 + 个人中心
+ * 用户端 · 判读记录 + 个人中心
  *
  * 不发明新视觉：KPI 用全站 .strip/.readout，列表按台账语言搭
  * （发丝线 + 行号 + 缩略影像 + mono 读数），详情内嵌现成的记录纸。
@@ -10,11 +10,18 @@
 .records__intro {
   display: grid;
   gap: 10px;
-  padding: clamp(30px, 5vh, 54px) 0 30px;
+  padding: clamp(20px, 3.4vh, 34px) 0 clamp(18px, 2.4vh, 26px);
 }
 
+/* 标题降一档：Clinical 的页面标题是「章节名」，不是首屏大字。
+   字号取 28–38px，衬线 400，与下面的读数条形成层级而不是压场。 */
 .records__title {
   margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 2.6vw, 38px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
 }
 
 /* ── KPI 条 ───────────────────────────────────────────── */
@@ -76,7 +83,7 @@
 }
 
 .records__row:hover .records__index {
-  color: var(--signal-text);
+  color: var(--fg);
 }
 
 /* 缩略影像：发丝线框，装不下时就摆一块「无影像」的读数。 */
@@ -132,9 +139,17 @@
 .records__meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
   color: var(--fg-2);
+}
+
+/* 分隔点挂在后一项前面：单独一个「·」span 在窄屏换行后会孤零零留一行。 */
+.records__meta > span + span::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--fg-3);
 }
 
 /* 行尾读数：置信度 + 风险标签纵排。 */
@@ -158,7 +173,10 @@
   transition: color var(--fast);
 }
 
-.records__row:hover .records__caret,
+.records__row:hover .records__caret {
+  color: var(--fg);
+}
+
 .records__row[aria-expanded="true"] .records__caret {
   color: var(--signal-text);
 }
@@ -194,6 +212,49 @@
 .records__actions-note {
   font-size: 12px;
   color: var(--fg-3);
+}
+
+/* ── 翻页 ─────────────────────────────────────────────────
+   记录页自己带翻页样式：之前借用 .news__pager，而 news.css 是路由级
+   样式、不在记录页加载，页码那行因此完全没有控件外观。 */
+
+.records__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 0 4px;
+  border-top: 1px solid var(--line);
+}
+
+.records__pager-step {
+  min-height: 44px;
+  padding: 0 16px;
+  /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃纸面。 */
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.records__pager-step:hover:not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.records__pager-step:disabled {
+  color: var(--fg-3);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+
+.records__pager-state {
+  font-size: 12px;
+  color: var(--fg-2);
 }
 
 /* ── 骨架 / 空态 ──────────────────────────────────────── */
@@ -264,11 +325,112 @@
 
 /* ── 个人中心 ─────────────────────────────────────────── */
 
+/* 读数卡：个人域不套四列 KPI 条（DESIGN.md §1.5）。
+   四张卡各自成卡，发丝线分隔，口径写在标签上。 */
+.profile__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.profile__stat {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.profile__stat-value {
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+/* 日期与角色不是计数：跟计数同字号会抢读数卡的视线。 */
+.profile__stat-value--date {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.profile__stat-value--text {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 .profile__grid {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   gap: clamp(20px, 3vw, 40px);
   align-items: start;
+}
+
+/* 左列：头像卡 + 最近判读卡叠放，右列是资料表单——两列高度自然接近。 */
+.profile__side {
+  display: grid;
+  gap: clamp(16px, 2vw, 24px);
+  align-content: start;
+}
+
+/* 最近判读：真实记录的前三条，够看又不铺满台账。 */
+.profile__recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile__recent-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.profile__recent-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.profile__recent-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.profile__recent-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+/* 置信度带口径标签（与台账同一读法），百分比不再悬空。 */
+.profile__recent-conf {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.profile__recent-conf .readout__label {
+  font-size: 11px;
+}
+
+.profile__recent-empty {
+  margin: 0;
+  padding: 8px 0 12px;
+  font-size: 13px;
+  color: var(--fg-3);
+}
+
+.profile__card--recent .profile__ledger-link {
+  margin-top: 14px;
+  padding-top: 14px;
 }
 
 .profile__card {
@@ -410,22 +572,47 @@
 
 /* ── 响应式 ───────────────────────────────────────────── */
 
+@media (max-width: 1080px) {
+  .profile__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
+  /* 窄屏台账：置信度与风险标签不能藏（临床信息），挪到第二行横排。 */
   .records__row {
     grid-template-columns: 34px 56px minmax(0, 1fr) 20px;
+    grid-template-areas:
+      "index thumb main caret"
+      "index thumb readout caret";
+    row-gap: 10px;
   }
 
   .records__index {
+    grid-area: index;
     font-size: 15px;
   }
 
   .records__thumb {
+    grid-area: thumb;
     width: 56px;
     height: 44px;
   }
 
+  .records__main {
+    grid-area: main;
+  }
+
   .records__readout {
-    display: none;
+    grid-area: readout;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .records__caret {
+    grid-area: caret;
   }
 
   .records__detail {
@@ -434,6 +621,19 @@
 
   .profile__grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .profile__stats {
+    /* 手机档读数卡允许 2×2（DESIGN.md §3.6 手机档例外，见 §8 断点口径）：
+       深窄屏上单列会把四张卡摊满两屏，读数对不上视线。 */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .records__pager {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 
