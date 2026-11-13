@@ -1,10 +1,11 @@
 /**
  * 用户端 · 判读记录 + 个人中心（Visual Completion U7）
  *
- * 业务容器、数据卡、列表、表单统一到 Blue Optical Glass 的**实体面板表达**：
- * 白色面板 + 发丝线描边 + 品牌蓝只做非语义强调（kicker 短杠、行悬停、
- * 当前态），Clinical 场景密度不变——行距、mono 读数、口径标注都保留。
- * 医学语义（RiskTag、拒识、复核状态）与墨色主 CTA 不动；
+ * 业务容器、数据卡、列表、表单统一到 Blue Optical Glass 品牌语言：
+ * 页面画布落在品牌工作区（.is-brand-page 银蓝/午夜蓝）；KPI 读数条与
+ * 读数卡是 Layered/Soft Glass 面板（发丝描边 + 内侧高光 + @supports 静态
+ * 替代），台账当前态与悬服用品牌钴蓝。Clinical 场景密度不变——行距、
+ * mono 读数、口径标注都保留；医学语义（RiskTag、拒识、复核状态）不动；
  * 记录纸（RecordSheet）仍是那张白纸。
  */
 
@@ -27,13 +28,29 @@
   letter-spacing: -0.02em;
 }
 
-/* ── KPI 读数条（U7：四格读数装进白色面板卡，不再裸排在画布上） ── */
+/* ── KPI 读数条（U7 重做：四格读数装进 Layered Glass 品牌面板） ── */
 
 .records__strip {
   margin-bottom: 10px;
-  border-top: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
 }
+
+@supports not (backdrop-filter: blur(1px)) {
+  .records__strip {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+.records__strip .strip__cell {
+  border-right-color: var(--brand-line);
+}
+
+/* 台账列表本身也立在玻璃台面上：行是画布上的直接内容，靠玻璃条带分层。 */
 
 /* 口径说明：总数是全量，其余三项只覆盖当前页。不写清楚，读者会把一页的风险数
    当成名下全部风险数——那正是会让临床判断出错的读法。 */
@@ -48,13 +65,23 @@
 
 .records__list {
   margin: 0;
-  padding: 0;
+  padding: clamp(6px, 1vw, 12px) clamp(14px, 2vw, 24px);
   list-style: none;
-  border-top: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
+  -webkit-backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+  backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .records__list {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .records__item {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
 }
 
 .records__item:last-child {
@@ -101,8 +128,8 @@
 .records__thumb {
   width: 76px;
   height: 56px;
-  border: 1px solid var(--line);
-  background: var(--surface-2);
+  border: 1px solid var(--brand-line);
+  background: color-mix(in srgb, var(--brand-canvas) 55%, var(--brand-surface));
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -142,7 +169,7 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--brand-line);
   padding: 1px 6px;
   flex: none;
 }
@@ -235,14 +262,14 @@
   justify-content: space-between;
   gap: 16px;
   padding: 22px 0 4px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--brand-line);
 }
 
 .records__pager-step {
   min-height: 44px;
   padding: 0 16px;
-  /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃纸面。 */
-  border: 1px solid var(--line-strong);
+  /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃面板。 */
+  border: 1px solid var(--brand-line-strong);
   background: transparent;
   color: var(--fg);
   font-family: var(--font-sans);
@@ -254,12 +281,12 @@
 }
 
 .records__pager-step:hover:not(:disabled) {
-  border-color: var(--line-strong);
+  border-color: var(--brand-primary);
 }
 
 .records__pager-step:disabled {
   color: var(--fg-3);
-  border-color: var(--line);
+  border-color: var(--brand-line);
   cursor: not-allowed;
 }
 
@@ -271,12 +298,14 @@
 /* ── 骨架 / 空态 ──────────────────────────────────────── */
 
 .records__skeleton {
-  border-top: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
 }
 
 .records__skeleton-row {
   height: 88px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -302,8 +331,9 @@
   place-items: center;
   gap: 8px;
   padding: clamp(40px, 8vh, 80px) 20px;
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
   text-align: center;
 }
 
@@ -352,8 +382,9 @@
   gap: 8px;
   align-content: start;
   padding: 16px 18px 18px;
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-md);
+  background: var(--brand-glass-soft);
 }
 
 .profile__stat::before {
@@ -409,7 +440,7 @@
   display: grid;
   gap: 4px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
 }
 
 .profile__recent-item:last-child {
@@ -457,9 +488,19 @@
 }
 
 .profile__card {
-  background: var(--surface);
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
   padding: clamp(20px, 2.6vw, 32px);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .profile__card {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .profile__card-head {
@@ -488,11 +529,11 @@
   width: 96px;
   height: 96px;
   flex: none;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-line-strong);
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--brand-canvas) 55%, var(--brand-surface));
 }
 
 .profile__avatar img {
@@ -544,7 +585,7 @@
   width: 100%;
   padding: 10px 12px;
   background: var(--field);
-  border: 1px solid var(--line);
+  border: 1px solid var(--brand-line);
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -554,18 +595,18 @@
 }
 
 .profile__input:hover {
-  border-color: var(--line-strong);
+  border-color: var(--brand-line-strong);
 }
 
 .profile__input:focus {
   border-color: var(--brand-primary);
-  background: var(--surface);
+  background: var(--brand-surface);
 }
 
 .profile__input:disabled {
   color: var(--fg-3);
   cursor: not-allowed;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--brand-canvas) 45%, var(--brand-surface));
 }
 
 .profile__input--area {
@@ -590,7 +631,7 @@
 .profile__ledger-link {
   margin-top: clamp(24px, 3.6vh, 40px);
   padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--brand-line);
 }
 
 /* ── 响应式 ───────────────────────────────────────────── */

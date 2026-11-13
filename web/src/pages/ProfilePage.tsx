@@ -154,7 +154,7 @@ export function ProfilePage() {
   if (!user) {
     // 会话还在探测时保持沉默，确认匿名后送登录页（带回跳）。
     return (
-      <div className="is-field">
+      <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
         <main className="wrap records">
           <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
@@ -173,7 +173,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="is-field">
+    <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
       <main className="wrap records">

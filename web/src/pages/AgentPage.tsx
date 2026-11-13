@@ -305,7 +305,7 @@ export function AgentPage() {
 
   if (status === "loading") {
     return (
-      <div className="is-field">
+      <div className="is-field is-brand-page">
         <ProductHeader scene="intelligence" />
         <main className="agent-viewport">
           <p className="num" style={{ color: "var(--fg-3)", padding: 16 }}>
@@ -319,8 +319,10 @@ export function AgentPage() {
   // 未登录不拦页面：先把界面给出来，等真的调 agent 接口拿到 40100/40101
   // 再由路由层跳登录页（带回跳地址）。
   // 同 Vue 版 BasicLayout：agent 页不出页脚、不进版心，三栏铺满顶栏以下视口。
+  // U4 重做：画布落在品牌工作区（.is-brand-page 银蓝/午夜蓝），
+  // 侧栏与面板用玻璃/实体分层，不再是骨白仪器台上的白卡。
   return (
-    <div className="is-field">
+    <div className="is-field is-brand-page">
       <ProductHeader scene="intelligence" />
 
       <main className="agent-viewport">

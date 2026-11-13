@@ -143,7 +143,7 @@ export function RecordsPage() {
   if (status === "anon") {
     // 匿名：整页都是个人数据，不发请求，也不假装「没有记录」——给登录入口。
     return (
-      <div className="is-field">
+      <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
         <main className="wrap records">
           <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
@@ -162,7 +162,7 @@ export function RecordsPage() {
   }
 
   return (
-    <div className="is-field">
+    <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
       <main className="wrap records">

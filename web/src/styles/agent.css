@@ -6,10 +6,10 @@
    可操作」，--brand-cyan 只标「正在生成」。--signal 是临床「重点/当前」的
    语义色，不在这一层复用（R2.5-05）。浅色为主、双主题随 html.dark 翻转。
 
-   Visual Completion U4：现代 AI 工作区视觉结合 Iris 品牌——
-   骨白画布上的白色实体面板分层（会话侧栏 / 资源面板 / 工具卡），
-   正文消息去卡片化（助手回复平铺、用户消息品牌浅底气泡），
-   不做大面积玻璃模糊；运行态仍只绑真实 SSE 事件。
+   Visual Completion U4 重做：品牌工作区画布（.is-brand-page 银蓝/午夜蓝）上
+   的三层材质——会话侧栏与资源面板是 Frosted/Solid 品牌分层，
+   对话工作区是抬升一层的品牌面板；保持专业密度，不做大面积玻璃模糊。
+   运行态仍只绑真实 SSE 事件。
    ============================================================ */
 
 /* ── agent: 消息（U4：正文平铺，工具与过程保留卡片）── */
@@ -302,9 +302,9 @@
 .agent-msg--reasoning {
   max-width: min(400px, 100%);
   margin: 4px 16px;
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--brand-glass);
   overflow: hidden;
 }
 
@@ -329,10 +329,10 @@
   max-width: min(400px, 100%);
   margin: 4px 16px;
   padding: 8px 12px;
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-line);
   border-left: 2px solid var(--brand-primary);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--brand-glass);
 }
 
 .agent-msg__confirm-head {
@@ -364,9 +364,9 @@
 .agent-toolcard {
   max-width: min(400px, 100%);
   margin: 4px 16px;
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--brand-glass);
   overflow: hidden;
 }
 
@@ -467,9 +467,9 @@
   align-items: center;
   gap: 4px;
   padding: 10px 18px;
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
-  background: var(--surface);
+  background: var(--brand-glass);
   overflow: hidden;
 }
 
@@ -525,11 +525,11 @@
 }
 
 /* 会话屏头部复用 app.css 的 .console__* 骨架（落地页反相带同款），
-   但这里在浅色上下文中，把写死的反相色拉回上下文令牌。
+   在品牌面板上把底色拉回品牌玻璃——与侧栏同一块材质。
    右侧让出浮动资源钮的位置，避免与计数重叠。 */
 .agent-console .console__head {
   border-bottom-color: var(--hr);
-  background: var(--surface);
+  background: var(--brand-glass-strong);
 }
 
 /* 头栏左右两组：左侧放折叠后的左栏操作钮，右侧放资源面板钮。
@@ -580,7 +580,7 @@
    它会溢出容器、滑到输入区底下。这里把它压回可滚动区域。 */
 .agent-console .console__body {
   min-height: 0;
-  background: var(--surface);
+  background: var(--brand-glass-strong);
 }
 
 .agent-msg__live-inline {
@@ -805,10 +805,10 @@ html:not(.dark) .welcome-mark__img--dark {
 }
 
 .agent-input__container {
-  border: 1px solid var(--hr);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-overlay);
+  background: var(--brand-glass-strong);
+  box-shadow: var(--brand-shadow);
   overflow: hidden;
   transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
@@ -934,7 +934,7 @@ html:not(.dark) .welcome-mark__img--dark {
   border-color: var(--brand-primary);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent),
-    var(--shadow-overlay);
+    var(--brand-shadow);
 }
 
 .agent-input__send,
@@ -989,7 +989,7 @@ html:not(.dark) .welcome-mark__img--dark {
   opacity: 0.6;
 }
 
-/* ── agent: 资源面板（U4：白色实体面板分层，不是玻璃） ─────────── */
+/* ── agent: 资源面板（U4 重做：Frosted Glass 品牌侧板） ─────────── */
 
 .agent-panel {
   display: flex;
@@ -997,8 +997,16 @@ html:not(.dark) .welcome-mark__img--dark {
   flex-shrink: 0;
   width: 340px;
   min-height: 0;
-  border-left: 1px solid var(--hr);
-  background: var(--surface);
+  border-left: 1px solid var(--brand-line);
+  background: var(--brand-glass-frosted);
+  -webkit-backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
+  backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .agent-panel {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .agent-panel__head {
@@ -1110,14 +1118,22 @@ html:not(.dark) .welcome-mark__img--dark {
   color: var(--fg-3);
 }
 
-/* ── agent: 会话列表（U4：白色实体侧栏面板） ───────────── */
+/* ── agent: 会话列表（U4 重做：Frosted Glass 品牌侧栏） ───────────── */
 
 .agent-sessions {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid var(--hr);
-  background: var(--surface);
+  border-right: 1px solid var(--brand-line);
+  background: var(--brand-glass-frosted);
+  -webkit-backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
+  backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .agent-sessions {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .agent-sessions__head {
@@ -1398,23 +1414,34 @@ html:not(.dark) .welcome-mark__img--dark {
 /* 三栏用 flex（同 Vue 版 .agent-chat-layout）：
    左栏常驻 DOM、收起靠宽度动画；用 grid + 从 DOM 摘掉侧栏会让
    中栏自动排进左列而塌成窄条。
-   U4：画布是骨白工作台（--field），两侧栏是白色实体面板，
-   对话区是抬升一层的白面板——三个层次靠发丝线与明度差分开。 */
+   U4 重做：画布是品牌工作区（--brand-canvas 银蓝/午夜蓝），两侧栏是
+   Frosted Glass 品牌侧板，对话区是抬升一层的品牌玻璃面板——
+   三个层次靠材质透明度差与发丝线分开，不做大面积糊玻璃。 */
 .agent-layout {
   position: relative;
   display: flex;
   flex: 1;
   min-height: 0;
-  background: var(--field);
-  border-top: 1px solid var(--hr);
+  background: var(--brand-canvas);
+  border-top: 1px solid var(--brand-line);
 }
 
-/* 对话工作区：白色面板，留出侧栏与画布之间的呼吸。 */
+/* 对话工作区：Layered Glass 面板，留出侧栏与画布之间的呼吸。 */
 .agent-main {
   margin: clamp(10px, 1.4vw, 18px);
   margin-left: 0;
-  border: 1px solid var(--hr);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .agent-main {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .agent-layout__left {
@@ -1444,6 +1471,20 @@ html:not(.dark) .welcome-mark__img--dark {
   overflow: hidden;
 }
 
+/* Layered Glass 的内侧高光：玻璃上沿的镜面反射（与判读页主卡同语）。 */
+.agent-main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    var(--brand-glass-layered-inner),
+    transparent 34%
+  );
+  pointer-events: none;
+}
+
 .agent-main__anon {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1466,9 +1507,9 @@ html:not(.dark) .welcome-mark__img--dark {
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--hr-strong);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--brand-glass-strong);
   color: var(--fg-3);
   cursor: pointer;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
@@ -1494,9 +1535,9 @@ html:not(.dark) .welcome-mark__img--dark {
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 1px solid var(--hr-strong);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--brand-glass-strong);
   color: var(--fg-3);
   cursor: pointer;
   transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
@@ -1580,7 +1621,7 @@ html:not(.dark) .welcome-mark__img--dark {
   .agent-panel {
     width: 100%;
     border-left: 0;
-    border-top: 1px solid var(--hr);
+    border-top: 1px solid var(--brand-line);
   }
 }
 
