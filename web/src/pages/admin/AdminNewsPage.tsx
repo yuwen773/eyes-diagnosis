@@ -431,7 +431,7 @@ export function AdminNewsPage(): ReactElement {
         </button>
         <button
           type="button"
-          className="admin-btn admin-btn--ghost"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={() => runBatch("批量删除", () => deleteNewsBatch(selectedIds))}
         >

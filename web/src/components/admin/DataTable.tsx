@@ -366,7 +366,13 @@ export function DataTable<T extends RowData>(props: {
       {hidePager ? null : (
       <div className="admin-dt__pager num">
         <span className="admin-dt__pager-info">
-          共 <b>{page.total}</b> 条 · 第 {current} / {totalPages} 页
+          {/* 还没读到 ≠ 读到是零：加载中或出错时总数与页码都报「—」，
+              不把 0/1 这种默认值当成真实读数发布出去。 */}
+          {error || isLoading ? (
+            <>共 <b>—</b> 条 · 第 — / — 页</>
+          ) : (
+            <>共 <b>{page.total}</b> 条 · 第 {current} / {totalPages} 页</>
+          )}
         </span>
         <div className="admin-dt__pager-controls">
           <button

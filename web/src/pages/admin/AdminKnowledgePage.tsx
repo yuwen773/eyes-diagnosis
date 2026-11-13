@@ -653,7 +653,7 @@ export function AdminKnowledgePage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="知识文档批量操作">
         <button
           type="button"
-          className="admin-btn admin-btn--primary"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >

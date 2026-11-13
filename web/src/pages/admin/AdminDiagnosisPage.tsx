@@ -478,7 +478,7 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "result",
       title: "判读结果",
-      // 弹性列也要给底宽：表格 min-width 780 里它拿 156px，窄屏横向滚动时
+      // 弹性列也要给底宽：表格 min-width 992 里它拿 156px，窄屏横向滚动时
       // 判读文字与 AI 拒识原因才不会挤成 0 宽竖条。
       width: "156px",
       sortable: true,
@@ -706,7 +706,7 @@ export function AdminDiagnosisPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="判读记录批量操作">
         <button
           type="button"
-          className="admin-btn admin-btn--primary"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >

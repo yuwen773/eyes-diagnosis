@@ -562,7 +562,7 @@ export function AdminUsersPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="用户批量操作">
         <button
           type="button"
-          className="admin-btn admin-btn--primary"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={() => runBatch("批量删除", () => deleteUsers(selectedIds), true)}
         >
