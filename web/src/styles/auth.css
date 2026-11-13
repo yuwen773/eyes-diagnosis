@@ -1,0 +1,470 @@
+/* ==========================================================================
+   认证壳 · 蓝青光学品牌背景（Visual Completion U6）
+   --------------------------------------------------------------------------
+   认证页是用户端品牌体验：钴蓝 / 银蓝 / 冰青光学画布 + Layered Glass 表单，
+   与首页同一品牌。全部背景是静态/轻量 CSS 光学资产——不引第二个 GPU 渲染器。
+
+   本文件自带 `.auth-auth` 前缀与独立语境类（.is-light / .is-dark），
+   不消费 app.css 里旧「暗房验光台」（.auth）的任何样式；
+   表单结构类（.form / .field）仍来自 app.css，控件外观在这里按
+   品牌语境重画（提高特异度，不写 outline: none）。
+   ========================================================================== */
+
+.auth-auth {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  overflow: hidden;
+  isolation: isolate;
+  /* 画布语境令牌：一套给浅色（银蓝画布），一套给深色（午夜蓝画布）。 */
+  --aa-canvas: #f2f6fc;
+  --aa-canvas-2: #e8effa;
+  --aa-text: var(--brand-text);
+  --aa-muted: var(--brand-muted);
+  --aa-line: var(--brand-line);
+  --aa-glass-bg: var(--brand-glass-layered);
+  --aa-glass-edge: var(--brand-glass-layered-edge);
+  --aa-glass-inner: var(--brand-glass-layered-inner);
+  --aa-glass-blur: var(--brand-glass-layered-blur);
+  --aa-field-bg: rgba(255, 255, 255, 0.62);
+  --aa-field-line: rgba(22, 35, 58, 0.18);
+  --aa-field-line-hover: rgba(22, 35, 58, 0.34);
+  --aa-field-text: var(--brand-text);
+  --aa-field-placeholder: rgba(22, 35, 58, 0.4);
+  --aa-shadow: var(--brand-shadow);
+  background:
+    radial-gradient(46% 42% at 76% 16%, rgba(36, 87, 201, 0.10), transparent 70%),
+    radial-gradient(60% 52% at 16% 88%, rgba(0, 111, 130, 0.07), transparent 66%),
+    linear-gradient(168deg, var(--aa-canvas) 0%, var(--aa-canvas-2) 100%);
+  color: var(--aa-text);
+  font-family: var(--font-sans);
+}
+
+.auth-auth.is-dark {
+  --aa-canvas: #0b1425;
+  --aa-canvas-2: #0d1a30;
+  --aa-line: var(--brand-line);
+  --aa-field-bg: rgba(255, 255, 255, 0.05);
+  --aa-field-line: rgba(191, 220, 255, 0.26);
+  --aa-field-line-hover: rgba(191, 220, 255, 0.46);
+  --aa-field-text: var(--brand-text);
+  --aa-field-placeholder: rgba(169, 187, 211, 0.55);
+  background:
+    radial-gradient(46% 42% at 76% 16%, rgba(133, 181, 255, 0.13), transparent 70%),
+    radial-gradient(60% 52% at 16% 88%, rgba(96, 215, 230, 0.08), transparent 66%),
+    linear-gradient(168deg, var(--aa-canvas) 0%, var(--aa-canvas-2) 100%);
+}
+
+/* ── 光学背景层 ─────────────────────────────────────────────── */
+
+.auth-auth__optics {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 品牌光带的一笔：静态渐变横贯右上，方向感与首页光学带同源。 */
+.auth-auth__wash {
+  position: absolute;
+  top: 14%;
+  right: -8%;
+  width: 62%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brand-primary) 34%,
+    var(--brand-cyan) 72%,
+    transparent
+  );
+  opacity: 0.55;
+}
+
+/* 虹膜同心环：品牌侧写。糊进玻璃后只剩柔和的环。 */
+.auth-auth__iris {
+  position: absolute;
+  right: 4%;
+  top: 44%;
+  width: min(700px, 64vw);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      var(--brand-outline) 0 1px,
+      transparent 1px 30px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(36, 87, 201, 0.10),
+      transparent 60%
+    );
+  -webkit-mask-image: radial-gradient(circle, #000 22%, transparent 74%);
+  mask-image: radial-gradient(circle, #000 22%, transparent 74%);
+}
+
+.auth-auth.is-dark .auth-auth__iris {
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(183, 211, 255, 0.12) 0 1px,
+      transparent 1px 30px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(133, 181, 255, 0.10),
+      transparent 60%
+    );
+}
+
+/* 校准网格：玻璃背后要有东西可透。 */
+.auth-auth__grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--brand-outline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--brand-outline) 1px, transparent 1px);
+  background-size: 76px 76px;
+  -webkit-mask-image: radial-gradient(120% 90% at 62% 40%, #000 8%, transparent 86%);
+  mask-image: radial-gradient(120% 90% at 62% 40%, #000 8%, transparent 86%);
+}
+
+/* 一束缓慢漂移的品牌光：唯一的氛围动效，仅 Brand 场景，
+   不绑定也不暗示任何业务事件；reduced-motion 当场停。 */
+.auth-auth__beam {
+  position: absolute;
+  left: -18%;
+  top: 30%;
+  width: 64%;
+  height: 34%;
+  background: radial-gradient(
+    52% 58% at 50% 50%,
+    rgba(36, 87, 201, 0.09),
+    transparent 72%
+  );
+  animation: auth-drift 26s var(--ease) infinite alternate;
+}
+
+.auth-auth.is-dark .auth-auth__beam {
+  background: radial-gradient(
+    52% 58% at 50% 50%,
+    rgba(133, 181, 255, 0.11),
+    transparent 72%
+  );
+}
+
+@keyframes auth-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(9%, -7%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-auth__beam {
+    animation: none;
+  }
+}
+
+/* ── 布局：双栏，左叙事右表单 ───────────────────────────────── */
+
+.auth-auth__grid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(26px, 3.6vw, 48px) var(--gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: clamp(36px, 5vw, 88px);
+  align-items: stretch;
+}
+
+.auth-auth__aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(30px, 5vh, 56px);
+  padding-block: 4px;
+}
+
+.auth-auth__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auth-auth__code {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--aa-muted);
+}
+
+.auth-auth__statement-wrap {
+  display: grid;
+  gap: 20px;
+  max-width: 440px;
+}
+
+.auth-auth__statement {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--aa-text);
+}
+
+.auth-auth__statement-en {
+  margin: -4px 0 0;
+  font-family: var(--font-brand);
+  font-size: clamp(17px, 1.45vw, 21px);
+  line-height: 1.45;
+  letter-spacing: 0.005em;
+  color: var(--aa-muted);
+}
+
+.auth-auth__note {
+  margin: 0;
+  max-width: 34em;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--aa-muted);
+}
+
+/* 可信信息：发丝线清单，mono 读数。 */
+.auth-auth__trust {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--aa-line);
+}
+
+.auth-auth__trust li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--aa-line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--aa-muted);
+}
+
+.auth-auth__trust b {
+  font-weight: 500;
+  color: var(--aa-text);
+  letter-spacing: 0.04em;
+}
+
+/* ── 表单面板：Layered Glass ────────────────────────────────── */
+
+.auth-auth__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-auth__stack {
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  gap: 14px;
+}
+
+.auth-auth__glass {
+  position: relative;
+  width: 100%;
+  padding: 30px 32px 32px;
+  border: 1px solid var(--aa-glass-edge);
+  border-radius: var(--radius-xl);
+  background: var(--aa-glass-bg);
+  backdrop-filter: blur(var(--aa-glass-blur)) saturate(130%);
+  -webkit-backdrop-filter: blur(var(--aa-glass-blur)) saturate(130%);
+  box-shadow: var(--aa-shadow);
+}
+
+/* 内侧高光：玻璃的「厚度」层。 */
+.auth-auth__glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--aa-glass-inner) 0%, transparent 48%);
+  pointer-events: none;
+}
+
+/* 不支持 backdrop-filter：退到更实的静态表面（品牌 fallback 令牌）。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .auth-auth__glass {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+.auth-auth__glass .overline {
+  color: var(--brand-primary);
+}
+
+.auth-auth__title {
+  margin: 12px 0 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--aa-text);
+}
+
+.auth-auth__sub {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--aa-muted);
+}
+
+.auth-auth__foot {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--aa-muted);
+}
+
+.auth-auth__foot::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-circle);
+  background: var(--brand-primary);
+  flex: none;
+}
+
+/* ── 玻璃上的表单控件（覆盖 app.css 的 .form/.field/.btn 仪器外观）── */
+
+.auth-auth .form {
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.auth-auth .field__label {
+  color: var(--aa-muted);
+}
+
+.auth-auth .field__input {
+  height: 48px;
+  padding-inline: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--aa-field-line);
+  background: var(--aa-field-bg);
+  color: var(--aa-field-text);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  transition:
+    border-color var(--fast),
+    background var(--fast),
+    box-shadow var(--fast);
+}
+
+.auth-auth .field__input::placeholder {
+  color: var(--aa-field-placeholder);
+  letter-spacing: 0.04em;
+}
+
+.auth-auth .field__input:hover {
+  border-color: var(--aa-field-line-hover);
+}
+
+.auth-auth .field__input:focus {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--aa-field-bg) 88%, #ffffff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+}
+
+.auth-auth .field__input[aria-invalid="true"] {
+  border-color: var(--risk-critical);
+}
+
+/* 主按钮：Brand 主操作 = 钴蓝（§4.1），胶囊圆角。 */
+.auth-auth .btn {
+  height: 50px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-weight: 600;
+}
+
+.auth-auth .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #ffffff);
+}
+
+.auth-auth .btn:disabled {
+  opacity: 0.55;
+}
+
+/* 浅色画布上实心钴蓝的焦点环换墨色，否则白字环不可见（同 news.css 的处理）。 */
+.auth-auth .btn:focus-visible {
+  outline: 2px solid var(--brand-text);
+  outline-offset: 3px;
+}
+
+.auth-auth .form__meta {
+  color: var(--aa-muted);
+}
+
+.auth-auth .form__meta a {
+  color: var(--brand-primary);
+  border-bottom-color: color-mix(in srgb, var(--brand-primary) 40%, transparent);
+}
+
+.auth-auth .form__meta a:hover {
+  color: color-mix(in srgb, var(--brand-primary) 78%, #000);
+}
+
+/* ── 窄屏：单列，叙事收拢 ───────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .auth-auth {
+    overflow: visible;
+  }
+
+  .auth-auth__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 22px;
+  }
+
+  .auth-auth__aside {
+    gap: 22px;
+  }
+
+  .auth-auth__statement-wrap {
+    gap: 14px;
+  }
+
+  .auth-auth__statement {
+    font-size: 24px;
+  }
+
+  .auth-auth__trust {
+    display: none;
+  }
+
+  .auth-auth__glass {
+    padding: 24px 22px 26px;
+  }
+
+  .auth-auth__title {
+    font-size: 26px;
+  }
+}
