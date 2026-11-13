@@ -590,6 +590,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
                             "workflowVersion", DraftMailbox.VERSION, "inbox", call.inbox, "outgoing", outgoing))), Timestamp.from(call.finishedAt), taskId, call.sequence);
             if (collaboration != null && validated) {
                 collaboration.agent(taskId, call.role, call.sequence, true);
+                appendReadableEvents(taskId, call, done.result(), outgoing);
                 for (var message : outgoing) {
                     collaboration.append(taskId, "agent.handoff", call.role, "CLINICIAN", Map.of(
                             "messageId", message.messageId(), "to", message.recipientRole(), "kind", message.kind(), "call", call.sequence));
@@ -599,6 +600,57 @@ public class PatientDraftCoordinator implements AutoCloseable {
             }
             return null;
         });
+    }
+
+    /**
+     * Derives readable collaboration events from an already-validated role output.
+     * The patient projection receives only structural facts (counts and enum states) —
+     * never model text, clinical body, quotes or prompt material. The clinician projection
+     * receives the validated structured output itself, which is the same material the
+     * existing doctor-review path already exposes; raw clinical body still requires the
+     * existing publish/patient-save authorization. No hidden reasoning is emitted.
+     */
+    private void appendReadableEvents(String taskId, Pending call, Object result, List<DraftMailbox.Envelope> outgoing) {
+        switch (call.role) {
+            case "VISION" -> {
+                Vision vision = (Vision) result;
+                collaboration.append(taskId, "agent.summary", call.role, "PATIENT", Map.of(
+                        "call", call.sequence, "summary", "VISION_REVIEW_QUALITY:" + vision.reanalysisSuggestion(),
+                        "limitationCount", vision.limitations().size()));
+                for (var message : outgoing)
+                    collaboration.append(taskId, "agent.readable", call.role, "CLINICIAN", Map.of(
+                            "call", call.sequence, "messageId", message.messageId(), "to", message.recipientRole(),
+                            "kind", message.kind(), "content", encode(vision)));
+            }
+            case "EVIDENCE" -> {
+                var retrieved = (DraftAgents.Retrieved) result;
+                collaboration.append(taskId, "agent.summary", call.role, "PATIENT", Map.of(
+                        "call", call.sequence, "summary", "EVIDENCE_FROZEN", "limitationCount", retrieved.citations().size()));
+                for (var message : outgoing)
+                    collaboration.append(taskId, "agent.readable", call.role, "CLINICIAN", Map.of(
+                            "call", call.sequence, "messageId", message.messageId(), "to", message.recipientRole(),
+                            "kind", message.kind(), "content", encode(retrieved.citations())));
+            }
+            case "EXPLANATION" -> {
+                Draft draft = (Draft) result;
+                collaboration.append(taskId, "agent.summary", call.role, "PATIENT", Map.of(
+                        "call", call.sequence, "summary", "DRAFT_PENDING_REVIEW", "limitationCount", draft.claims().size()));
+                for (var message : outgoing)
+                    collaboration.append(taskId, "agent.readable", call.role, "CLINICIAN", Map.of(
+                            "call", call.sequence, "messageId", message.messageId(), "to", message.recipientRole(),
+                            "kind", message.kind(), "content", encode(draft)));
+            }
+            case "CRITIC" -> {
+                Critique critique = (Critique) result;
+                collaboration.append(taskId, "agent.summary", call.role, "PATIENT", Map.of(
+                        "call", call.sequence, "summary", "CRITIC_" + critique.action(), "limitationCount", critique.objections().size()));
+                for (var message : outgoing)
+                    collaboration.append(taskId, "agent.readable", call.role, "CLINICIAN", Map.of(
+                            "call", call.sequence, "messageId", message.messageId(), "to", message.recipientRole(),
+                            "kind", message.kind(), "content", encode(critique)));
+            }
+            default -> throw new Stop("INVALID_MESSAGE_ROUTE");
+        }
     }
 
     /**

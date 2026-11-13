@@ -280,6 +280,41 @@ class CollaborationRunTest {
         fault(403, "ACCESS_DENIED", () -> runs.operations(45));
     }
 
+    @Test void readableProjectionsGivePatientsSummariesAndCliniciansValidatedContent() throws Exception {
+        var run = create(); done(run.runId());
+        var patient = history(run.runId(), 42); var clinician = history(run.runId(), 45);
+        var patientSummaries = patient.stream().filter(e -> e.type().equals("agent.summary")).toList();
+        // 每个完成的角色一个患者可见结构化事实摘要；summary 只能是安全标记，绝不是模型文本。
+        assertEquals(4, patientSummaries.size());
+        var allowedMarkers = Set.of("VISION_REVIEW_QUALITY:REVIEW_QUALITY", "VISION_REVIEW_QUALITY:RECAPTURE",
+                "VISION_REVIEW_QUALITY:NONE", "EVIDENCE_FROZEN", "DRAFT_PENDING_REVIEW", "CRITIC_NONE", "CRITIC_REWRITE", "CRITIC_SUPPLEMENT");
+        for (var event : patientSummaries) {
+            var payload = event.payload();
+            assertTrue(allowedMarkers.contains(payload.get("summary").asText()), payload.get("summary").asText());
+            assertEquals(Set.of("call", "summary", "limitationCount"), Set.of(
+                    "call", "summary", "limitationCount"));
+            assertTrue(payload.has("call") && payload.has("summary") && payload.has("limitationCount"), payload.toString());
+            assertFalse(payload.get("summary").asText().contains("Synthetic"));
+            assertFalse(payload.get("summary").asText().contains("glaucoma"));
+        }
+        assertTrue(patient.stream().noneMatch(e -> e.type().equals("agent.readable")), "patient projection must not carry readable content");
+        var readable = clinician.stream().filter(e -> e.type().equals("agent.readable")).toList();
+        // 医生投影收已校验输出的结构化 JSON，键集合与信封对齐。
+        assertTrue(readable.size() >= 4);
+        for (var event : readable) {
+            var payload = event.payload();
+            assertTrue(payload.has("call") && payload.has("messageId") && payload.has("to")
+                    && payload.has("kind") && payload.has("content"), payload.toString());
+            JSON.readTree(payload.get("content").toString());
+        }
+        assertTrue(readable.stream().anyMatch(e -> e.actor().equals("VISION") && e.payload().get("to").toString().contains("EVIDENCE")));
+        var explanationReadable = readable.stream().filter(e -> e.actor().equals("EXPLANATION")).findFirst().orElseThrow();
+        var content = JSON.readTree(explanationReadable.payload().get("content").toString());
+        // content 是 JSON 字符串载荷，里面才是 draft 的 claims 结构。
+        var draftContent = JSON.readTree(content.asText());
+        assertTrue(draftContent.has("claims") && draftContent.get("claims").isArray(), "EXPLANATION readable content must carry draft claims");
+    }
+
     @Test void normalCoordinatorPersistsOrderedFactsAndKeepsPatientDraftPrivate() throws Exception {
         var run = create(); var end = done(run.runId());
         assertEquals("SUCCEEDED", end.executionStatus()); assertEquals("PENDING", end.reviewStatus());

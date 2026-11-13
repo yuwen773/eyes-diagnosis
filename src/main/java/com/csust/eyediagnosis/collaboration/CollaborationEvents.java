@@ -23,6 +23,8 @@ public class CollaborationEvents {
             Map.entry("run.restricted", Set.of("status", "reason")), Map.entry("run.failed", Set.of("status", "reason")),
             Map.entry("run.cancel_requested", Set.of("status")), Map.entry("run.cancelled", Set.of("status")),
             Map.entry("agent.started", Set.of("call")), Map.entry("agent.completed", Set.of("call")),
+            Map.entry("agent.summary", Set.of("call", "summary", "limitationCount")),
+            Map.entry("agent.readable", Set.of("call", "messageId", "to", "kind", "content")),
             Map.entry("agent.handoff", Set.of("messageId", "to", "kind", "call")),
             Map.entry("agent.feedback.requested", Set.of("action", "call")),
             Map.entry("evidence.verified", Set.of("evidenceVersion")),
@@ -86,7 +88,7 @@ public class CollaborationEvents {
         if (!FIELDS.containsKey(type) || !FIELDS.get(type).equals(payload.keySet())
                 || !(ROLES.contains(actor) || "COORDINATOR".equals(actor)) || !Set.of("PATIENT", "CLINICIAN").contains(visibility))
             throw new IllegalArgumentException("Invalid collaboration event");
-        boolean detail = Set.of("agent.handoff", "evidence.verified", "agent.revision.completed").contains(type);
+        boolean detail = Set.of("agent.readable", "agent.handoff", "evidence.verified", "agent.revision.completed").contains(type);
         if (!visibility.equals(detail ? "CLINICIAN" : "PATIENT")) throw new IllegalArgumentException("Invalid event projection");
         String body = encode(payload);
         if (body.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 16_384) throw new IllegalArgumentException("Event too large");

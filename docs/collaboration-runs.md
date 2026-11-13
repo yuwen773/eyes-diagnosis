@@ -45,10 +45,16 @@ Snapshot 字段：runId、taskId、threadId、runtimeKind、workflowVersion、ex
 | run.restricted / run.failed | COORDINATOR | PATIENT | status, reason |
 | run.cancel_requested / run.cancelled | COORDINATOR | PATIENT | status |
 | agent.started / agent.completed | 对应角色 | PATIENT | call |
+| agent.summary | 对应角色 | PATIENT | call, summary, limitationCount |
 | agent.feedback.requested | CRITIC | PATIENT | action（REWRITE/SUPPLEMENT）, call |
+| agent.readable | 发件角色 | CLINICIAN | call, messageId, to, kind, content |
 | agent.handoff | 发件角色 | CLINICIAN | messageId, to, kind, call |
 | evidence.verified | EVIDENCE | CLINICIAN | evidenceVersion |
 | agent.revision.completed | EXPLANATION | CLINICIAN | draftVersion, evidenceVersion |
+
+`agent.summary` 与 `agent.readable` 是从**已通过校验的结构化角色输出**派生的可读投影（2026-11-13 起）：
+- `agent.summary`（患者投影）：`summary` 只能是**结构化事实标记**（`VISION_REVIEW_QUALITY:<reanalysisSuggestion>`、`EVIDENCE_FROZEN`、`DRAFT_PENDING_REVIEW`、`CRITIC_<action>`），不是模型文本——绝不携带临床正文、摘要原文、引用原文或 prompt；`limitationCount` 是结构化计数（Vision limitations 条数、冻结证据引用条数、draft claim 条数、objection 条数）。患者看到的仍是阶段语义（与 snapshot `roles` 状态一致），只是更细粒度。
+- `agent.readable`（医生投影，仅 `clinician-detail-enabled`）：`content` 是该角色已校验输出记录的 JSON 序列化（Vision 结构、冻结证据引用列表、Draft claims、Critique），与 `agent.handoff` 同一信封对齐。这不是隐藏思考链——它们本来就是医生复核可见的结构化结果；原始临床正文的发布仍走既有医生批准/患者保存授权接口。
 
 SSE 的 `event` 等于 DTO.type，`data` 为 DTO，`id` 是下述不透明游标。患者被过滤的事件不产生占位消息；sequence 跳号合法。客户端按 (runId,sequence) 幂等且不得倒退；未知 schemaVersion、未知关键类型或无法解释的状态迁移时停止应用并重新取快照。v1 不允许静默忽略关键事件；增加类型/改变语义需要新协议/投影版本。
 
