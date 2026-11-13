@@ -92,8 +92,8 @@
 - 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），
   与新规范不一致——Visual Completion 工作包 C（Purple SaaS）落地 `--admin-*`；
 - 用户端 scene 变体仍存在旧仪器回退（U2 收紧前的遗留），Visual Completion 工作包 B 处理；
-- 认证页仍是橙色 LaserFlow + 暗房叙事，Visual Completion 工作包 A（U6）替换为
-  蓝青光学玻璃；
+- ~~认证页仍是橙色 LaserFlow + 暗房叙事~~：**已修 2026-11-13（U6）**，AuthShell
+  改为蓝青光学 CSS 背景，LaserFlow 死组件已删除；不要再引入 GPU 渲染器；
 - ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
 - `--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` **只在 PR #52 里，尚未进入 `ui`**，

@@ -436,16 +436,6 @@ html.dark .landing-hero__btn--primary {
   color: var(--brand-primary);
 }
 
-/* 免责条：首屏末尾的一行 mono 小字。
-   页脚可信信息层承担完整免责；这里只做口径提醒。 */
-.landing-hero__note {
-  margin: 18px 0 0;
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--brand-muted);
-}
-
 /* ==========================================================================
    光学渲染器
    ========================================================================== */

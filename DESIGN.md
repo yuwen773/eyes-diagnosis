@@ -1028,7 +1028,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
 | 主操作底色 | `--brand-primary` | 🗓 `--admin-primary`（管理紫，Visual Completion） | `--brand-primary` | `--ink`（墨色） |
-| 主操作字色 | `--brand-primary-fg` | 🗓 `--admin-primary-fg` | `--brand-primary-fg` | `--bg` |
+| 主操作字色 | `--brand-primary-fg` | 🗓 `--admin-on-primary`（实现名） | `--brand-primary-fg` | `--bg` |
 | 圆角 | `--radius-pill` / `--radius-lg` | `--radius-md` | `--radius-md` | `--radius-none` |
 | 高度 | 48–52px | 40–44px | 40–44px | 52px |
 | 次级 | 玻璃面板 + 发丝描边 | 白底 + 发丝描边 + 柔和阴影 | 深底 + 发丝描边 | 透明底 + `--hr-strong` 描边 |
@@ -1215,7 +1215,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | `--brand-*` 令牌与 `.iris2` 只存在于 PR #52，**尚未进入 `ui`** | 在 `ui` 上写品牌组件会取不到令牌；按本文档开发前必须先合并 PR #52 | 合并 PR #52 后再开发；本文对这部分一律标 🅿，**不称其为"已实现于 `ui`"** |
 | 管理端仍是旧 B 档外观（0 圆角、墨色主按钮） | 与 §2.2 目标不一致 | Visual Completion 工作包 C（Purple SaaS） |
 | 用户端 scene 变体仍存在旧仪器回退（`clinical`/`intelligence` 变体的纸面胶囊与橙色底线） | 跨路由品牌身份断裂，用户明确否定 | Visual Completion U2（§2.1.2）；矩阵见 §4.4 |
-| 认证页仍是橙色 LaserFlow + 暗房叙事 | 与用户端品牌方向不一致 | Visual Completion U6（§2.1.3） |
+| ~~认证页仍是橙色 LaserFlow + 暗房叙事~~（**已修 2026-11-13，U6**：AuthShell 重写为蓝青光学 CSS 背景，LaserFlow 死组件已删除） | 与用户端品牌方向不一致 | 已修；不要再引入 GPU 渲染器 |
 | 首页首屏技术读数条（4 项技术铭牌）不适合品牌首屏 | 首屏信息呈现方式不对 | Visual Completion U1：移除，能力信息融入正文章节 |
 | Intelligence 场景的后端事件协议未定义 | 协作区无法实现 | 先定协议再画界面，**不许先画假状态** |
 

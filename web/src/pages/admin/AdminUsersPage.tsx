@@ -711,7 +711,7 @@ export function AdminUsersPage(): ReactElement {
             </button>
             <button
               type="button"
-              className="admin-btn admin-btn--primary"
+              className="admin-btn admin-btn--danger"
               onClick={confirmDelete}
               disabled={deleting}
             >

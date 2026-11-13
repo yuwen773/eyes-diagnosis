@@ -17,8 +17,10 @@
   overflow: hidden;
   isolation: isolate;
   /* 画布语境令牌：一套给浅色（银蓝画布），一套给深色（午夜蓝画布）。 */
-  --aa-canvas: #f2f6fc;
-  --aa-canvas-2: #e8effa;
+  /* 画布取品牌令牌，不另写字面量（DESIGN.md §2.1.1）；第二档是同一画布
+     混入 6% 钴蓝的浅一档，与品牌画布改色同步。 */
+  --aa-canvas: var(--brand-canvas);
+  --aa-canvas-2: color-mix(in srgb, var(--brand-canvas) 94%, var(--brand-primary) 6%);
   --aa-text: var(--brand-text);
   --aa-muted: var(--brand-muted);
   --aa-line: var(--brand-line);
@@ -41,8 +43,8 @@
 }
 
 .auth-auth.is-dark {
-  --aa-canvas: #0b1425;
-  --aa-canvas-2: #0d1a30;
+  --aa-canvas: var(--brand-canvas);
+  --aa-canvas-2: color-mix(in srgb, var(--brand-canvas) 92%, var(--brand-cyan) 8%);
   --aa-line: var(--brand-line);
   --aa-field-bg: rgba(255, 255, 255, 0.05);
   --aa-field-line: rgba(191, 220, 255, 0.26);
