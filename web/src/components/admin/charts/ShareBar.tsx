@@ -27,8 +27,9 @@ export function ShareBar(props: {
   ariaLabel: string
   /** 哪些状态用强调色（通常是「当前需要处理」的那一类） */
   accentNames?: string[]
+  emptyText?: string
 }): ReactElement {
-  const { rows, ariaLabel, accentNames = [] } = props
+  const { rows, ariaLabel, accentNames = [], emptyText } = props
   const total = rows.reduce((sum, row) => sum + row.value, 0)
 
   // 单行堆叠：每段一个 dataKey（s0/s1…），名称另存一份给图例用。
@@ -51,6 +52,7 @@ export function ShareBar(props: {
     <ChartView
       title={ariaLabel}
       ariaLabel={ariaLabel}
+      emptyText={emptyText}
       labelHeader="状态"
       extraHeader="占比"
       rows={rows.map((row) => ({

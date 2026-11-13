@@ -1,0 +1,1902 @@
+/* ==========================================================================
+   Admin Visual Completion · C2（2026-11-14）
+   --------------------------------------------------------------------------
+   目标：从「把传统后台换成紫色」升级为成熟的 Purple Medical SaaS 工作台。
+   本段只做三件事：
+   1) 外壳与页面头——分组侧栏、账户卡、大口径页头；
+   2) 台账——筛选面板、紧凑行高、行内主动作 + 更多菜单、页码分页、骨架/空态；
+   3) 页面职责差异——仪表盘的 Bento 读数、分析页的图表分区、编辑页的工作台。
+   颜色只消费 --admin-* / --risk-* / --viz-*；紫色不承担医学严重度。
+   ========================================================================== */
+
+/* ── 画布与外壳 ───────────────────────────────────────────── */
+
+.admin-shell {
+  --admin-beam-h: 64px;
+  --admin-side-w: 248px;
+  background:
+    radial-gradient(
+      1100px 520px at 82% -12%,
+      color-mix(in srgb, var(--admin-accent) 10%, transparent),
+      transparent 62%
+    ),
+    var(--admin-canvas);
+}
+
+.admin-beam {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--admin-surface) 84%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.admin-beam__plate-zh {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+/* ── 侧栏：品牌位 + 分组导航 + 账户卡 ─────────────────────── */
+
+.admin-side {
+  padding: 16px 14px 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--admin-sidebar) 88%, var(--admin-accent) 12%),
+    var(--admin-sidebar) 44%
+  );
+}
+
+.admin-side__brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 8px 16px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-side__brand-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  color: var(--admin-on-primary);
+  background: linear-gradient(145deg, var(--admin-accent), var(--admin-primary-strong));
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.18),
+    0 10px 22px -14px var(--admin-primary);
+}
+
+.admin-side__mark {
+  width: 24px;
+  height: 24px;
+}
+
+.admin-side__brand-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-side__brand-name {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  color: var(--admin-text);
+  line-height: 1.1;
+}
+
+.admin-side__brand-sub {
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  color: var(--admin-text-faint);
+}
+
+.admin-side__nav {
+  padding: 6px 0 10px;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.admin-side__group {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-side__group-label {
+  margin: 6px 10px 2px;
+  font-family: var(--font-brand);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+.admin-side__link {
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.admin-side__link:hover {
+  background: color-mix(in srgb, var(--admin-surface) 62%, transparent);
+}
+
+.admin-side__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--admin-surface) 58%, transparent);
+  color: var(--admin-text-faint);
+  transition:
+    background var(--fast),
+    color var(--fast);
+}
+
+.admin-side__label {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* 当前项：白色浮起卡 + 紫色图标砖。比「淡紫铺底 + 左竖条」更像成熟 SaaS。 */
+.admin-side__link[aria-current="page"] {
+  background: var(--admin-surface);
+  color: var(--admin-primary);
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.06),
+    0 12px 24px -22px rgba(61, 44, 105, 0.55);
+}
+
+.admin-side__link[aria-current="page"] .admin-side__icon {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+.admin-side__link[aria-current="page"]::before {
+  display: none;
+}
+
+.admin-side__link:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.admin-side__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 14px 8px 2px;
+  border-top: 1px solid var(--admin-line);
+  font-size: 12px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--admin-text);
+}
+
+.admin-side__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-circle);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.admin-side__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-side__foot-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-side__foot-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-side__foot-role {
+  font-size: 11px;
+  color: var(--admin-text-faint);
+}
+
+.admin-side__foot-status {
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  flex: none;
+  border-radius: var(--radius-circle);
+  background: var(--risk-normal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--risk-normal) 15%, transparent);
+}
+
+/* ── 页面头 ───────────────────────────────────────────────── */
+
+.admin-pagehead {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-pagehead__lead {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.admin-pagehead__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 9px;
+  font-family: var(--font-brand);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+.admin-pagehead__code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 20px;
+  padding-inline: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+
+.admin-pagehead__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: clamp(24px, 2.3vw, 30px);
+  line-height: 1.16;
+  letter-spacing: -0.012em;
+  color: var(--fg);
+}
+
+.admin-pagehead__desc {
+  max-width: 68ch;
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.admin-pagehead__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-end;
+  flex-wrap: wrap;
+}
+
+.admin-pagehead__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-end;
+  flex: none;
+}
+
+/* ── 按钮与图标钮 ─────────────────────────────────────────── */
+
+.admin-btn {
+  height: 36px;
+  padding-inline: 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.admin-btn--primary {
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.12),
+    0 8px 18px -14px var(--admin-primary);
+}
+
+.admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary-strong);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.14),
+    0 10px 22px -14px var(--admin-primary-strong);
+}
+
+.admin-btn--ghost {
+  background: var(--admin-surface);
+}
+
+.admin-btn--ghost:hover:not(:disabled) {
+  background: var(--admin-primary-soft);
+}
+
+.admin-btn--soft {
+  border-color: transparent;
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-btn--soft:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--admin-primary) 16%, transparent);
+}
+
+.admin-btn--sm {
+  height: 30px;
+  padding-inline: 11px;
+  font-size: 12px;
+}
+
+.admin-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.admin-iconbtn:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-iconbtn:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* ── 行内更多操作菜单（Base UI）────────────────────────────── */
+
+.admin-menu__positioner {
+  z-index: 70;
+}
+
+.admin-menu {
+  min-width: 168px;
+  padding: 5px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--shadow-overlay);
+  outline: none;
+}
+
+.admin-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--fg);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.admin-menu__item[data-highlighted] {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-menu__item--danger {
+  color: var(--risk-critical);
+}
+
+.admin-menu__item--danger[data-highlighted] {
+  background: color-mix(in srgb, var(--risk-critical) 10%, transparent);
+  color: var(--risk-critical);
+}
+
+.admin-menu__item[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-menu__icon {
+  display: inline-grid;
+  place-items: center;
+  color: currentColor;
+}
+
+.admin-menu__sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--hr);
+}
+
+/* ── 筛选面板 ─────────────────────────────────────────────── */
+
+.admin-filter {
+  padding: 16px 18px 18px;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 18px 38px -34px rgba(61, 44, 105, 0.4);
+  margin-bottom: 18px;
+}
+
+.admin-filter__head {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-filter__title {
+  font-size: 13px;
+}
+
+.admin-filter__note {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.admin-filter__count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.admin-users__input,
+.admin-news__input,
+.admin-diagnosis__input,
+.admin-knowledge__input,
+.admin-analysis__select {
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.admin-users__input:focus,
+.admin-news__input:focus,
+.admin-diagnosis__input:focus,
+.admin-knowledge__input:focus,
+.admin-analysis__select:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-primary-soft);
+}
+
+.admin-users__label,
+.admin-news__label,
+.admin-diagnosis__label,
+.admin-knowledge__label,
+.admin-analysis__label {
+  letter-spacing: 0.08em;
+  color: var(--admin-text-faint);
+}
+
+.admin-users__actions,
+.admin-news__actions,
+.admin-diagnosis__actions,
+.admin-knowledge__actions {
+  margin-left: auto;
+  padding-bottom: 0;
+}
+
+/* ── 台账表格 ─────────────────────────────────────────────── */
+
+.admin-dt {
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 22px 44px -40px rgba(61, 44, 105, 0.45);
+  overflow: hidden;
+}
+
+.admin-dt__head {
+  height: 40px;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--admin-surface-deep) 52%, var(--admin-surface));
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.admin-dt__head-row {
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-dt__cell {
+  height: 58px;
+  padding: 11px 16px;
+  font-size: 13px;
+}
+
+.admin-dt__row:hover {
+  background: color-mix(in srgb, var(--admin-surface-deep) 45%, var(--admin-surface));
+}
+
+.admin-dt__row--skeleton:hover {
+  background: transparent;
+}
+
+.admin-dt__skeleton {
+  display: block;
+  width: 72%;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    var(--admin-surface-deep) 0%,
+    color-mix(in srgb, var(--admin-surface-deep) 55%, var(--admin-surface)) 50%,
+    var(--admin-surface-deep) 100%
+  );
+  background-size: 200% 100%;
+  animation: admin-skeleton 1.4s ease-in-out infinite;
+}
+
+.admin-dt__skeleton--check {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes admin-skeleton {
+  from { background-position: 140% 0; }
+  to { background-position: -40% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dt__skeleton { animation: none; }
+}
+
+.admin-dt__state--empty {
+  padding: 0;
+  text-align: initial;
+}
+
+.admin-dt__row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* 表格行内主动作：低饱和紫，不抢页面主按钮。 */
+.admin-dt__row-actions .admin-btn {
+  height: 30px;
+  padding-inline: 11px;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+.admin-dt__row-actions .admin-btn--primary {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-dt__row-actions .admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+/* 分页：信息在左，页码居中，每页条数在右。 */
+.admin-dt__pager {
+  gap: 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--admin-surface-deep) 30%, var(--admin-surface));
+}
+
+.admin-dt__pager-info {
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+
+.admin-dt__pager-info b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.admin-dt__pager-controls {
+  gap: 6px;
+}
+
+.admin-dt__pager-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.admin-dt__pager-page,
+.admin-dt__pager-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding-inline: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.admin-dt__pager-page:hover,
+.admin-dt__pager-btn:hover:not(:disabled) {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-dt__pager-page[aria-current="page"] {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+  font-weight: 600;
+}
+
+.admin-dt__pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-dt__pager-btn--step {
+  min-width: 58px;
+  border-color: var(--admin-line-strong);
+  background: var(--admin-surface);
+}
+
+.admin-dt__pager-gap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  color: var(--fg-3);
+}
+
+.admin-dt__pager-size-label {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.admin-dt__pager-select {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 11.5px;
+}
+
+/* ── 状态 chip（非医学状态：角色 / 文件类型 / 处理中）──────── */
+
+.admin-chip {
+  height: 23px;
+  padding-inline: 9px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
+.admin-chip--plain {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  letter-spacing: 0;
+}
+
+/* ── 行单元格：用户 / 标题 / 文件 ─────────────────────────── */
+
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-user-cell__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-circle);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-user-cell__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-user-cell__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-user-cell__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-cell__sub {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-cell__bio {
+  max-width: 34ch;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-title-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-title-cell__main {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-title-cell__sub {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--fg-3);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.admin-file-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-file-cell__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-file-cell__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-file-cell__name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-file-cell__sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+/* ── 诊断缩略图 ───────────────────────────────────────────── */
+
+.admin-diagnosis__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--admin-line);
+  object-fit: cover;
+  background: var(--admin-surface-deep);
+}
+
+.admin-diagnosis__thumb--empty {
+  display: grid;
+  place-items: center;
+  color: var(--fg-3);
+  border-style: dashed;
+}
+
+/* ── 页脚注记 ─────────────────────────────────────────────── */
+
+.admin-users__note,
+.admin-news__note,
+.admin-diagnosis__note,
+.admin-knowledge__note,
+.admin-analysis__note,
+.admin-dashboard__note {
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+/* ── 仪表盘：读数条与面板 ─────────────────────────────────── */
+
+.admin-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-metric-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  background: var(--admin-surface);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 16px 32px -34px rgba(61, 44, 105, 0.45);
+  overflow: hidden;
+}
+
+.admin-metric-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--admin-accent);
+  opacity: 0;
+}
+
+.admin-metric-card--accent::after {
+  opacity: 1;
+}
+
+.admin-metric-card__label {
+  font-family: var(--font-brand);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+.admin-metric-card__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.admin-metric-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 18px;
+}
+
+.admin-metric-card__delta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.panel {
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 20px 40px -40px rgba(61, 44, 105, 0.4);
+}
+
+.panel__head {
+  padding: 18px 20px 12px;
+}
+
+.panel__title {
+  font-size: 14px;
+}
+
+.panel__body {
+  padding: 0 20px 18px;
+}
+
+.feature-card {
+  min-height: 100%;
+  padding: 24px 26px;
+  gap: 12px;
+}
+
+.feature-card__value {
+  font-size: 46px;
+}
+
+.feature-card__label {
+  font-size: 12.5px;
+  line-height: 1.65;
+  opacity: 0.86;
+}
+
+.feature-card__cta {
+  height: 36px;
+  padding-inline: 15px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+}
+
+.panel-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 26px 16px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.panel-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.panel-empty__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.panel-empty__desc {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--fg-2);
+}
+
+/* 最近判读记录在面板里：去掉重复的外框，让面板做容器。 */
+.panel .admin-dt {
+  border: 0;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  background: transparent;
+}
+
+.panel .admin-dt__head {
+  background: transparent;
+}
+
+/* ── 数据分析：分区卡 ─────────────────────────────────────── */
+
+.admin-analysis__section {
+  padding: 18px 20px 20px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  background: var(--admin-surface);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 20px 40px -40px rgba(61, 44, 105, 0.4);
+  margin-bottom: 16px;
+}
+
+.admin-analysis__title {
+  font-family: var(--font-brand);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-analysis__section .admin-viz {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.admin-analysis__empty {
+  padding: 26px 12px;
+  text-align: center;
+}
+
+/* ── 知识库上传区 ─────────────────────────────────────────── */
+
+.admin-knowledge__upload-row {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--admin-primary-soft) 45%, transparent);
+}
+
+.admin-knowledge__upload-row:hover {
+  border-color: var(--admin-accent);
+}
+
+/* ── 编辑工作台 ───────────────────────────────────────────── */
+
+.admin-newsedit__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 326px;
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-newsedit__main,
+.admin-newsedit__rail {
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-lg);
+  background: var(--admin-surface);
+  box-shadow:
+    0 1px 2px rgba(23, 19, 34, 0.04),
+    0 20px 40px -40px rgba(61, 44, 105, 0.4);
+}
+
+.admin-newsedit__main {
+  padding: 20px 22px 22px;
+  min-width: 0;
+}
+
+.admin-newsedit__rail {
+  padding: 18px;
+  position: sticky;
+  top: calc(var(--admin-beam-h) + 16px);
+  display: grid;
+  gap: 16px;
+}
+
+.admin-newsedit__topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-newsedit__topbar-title {
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.admin-newsedit__save-state {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__rail-title {
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+  margin: 0;
+}
+
+.admin-newsedit__rail-group {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-newsedit__rail-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-newsedit__rail-actions .admin-btn {
+  width: 100%;
+}
+
+.admin-newsedit__meta-list {
+  display: grid;
+  gap: 7px;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-newsedit__meta-row b {
+  color: var(--fg-2);
+  font-weight: 500;
+}
+
+.admin-newsedit__field {
+  gap: 8px;
+}
+
+.admin-newsedit__input,
+.admin-newsedit__select {
+  height: 38px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.admin-newsedit__input--title {
+  height: 50px;
+  font-family: var(--font-brand);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.admin-newsedit__cover-row {
+  align-items: flex-start;
+}
+
+.admin-newsedit__cover-thumb,
+.admin-newsedit__cover-empty {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.admin-newsedit__cover-empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--admin-line-strong);
+  background: var(--admin-surface-deep);
+  color: var(--fg-3);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.admin-newsedit__cover-actions {
+  flex-wrap: wrap;
+}
+
+.admin-newsedit__editor {
+  margin-top: 4px;
+}
+
+/* @uiw/react-md-editor 主题桥接：编辑器只做「输入面」，
+   外观跟随管理端表面 / 发丝线 / 管理紫焦点。 */
+.admin-newsedit .w-md-editor {
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  box-shadow: none;
+  min-height: 460px;
+  overflow: hidden;
+}
+
+.admin-newsedit .w-md-editor-toolbar {
+  border-bottom: 1px solid var(--admin-line);
+  background: color-mix(in srgb, var(--admin-surface-deep) 45%, var(--admin-surface));
+  padding: 6px 8px;
+  gap: 2px;
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button {
+  color: var(--fg-2);
+  border-radius: var(--radius-sm);
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-newsedit .w-md-editor-text,
+.admin-newsedit .w-md-editor-text-input,
+.admin-newsedit .w-md-editor-text-pre > code,
+.admin-newsedit .w-md-editor-preview {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.admin-newsedit .w-md-editor-text-pre > code,
+.admin-newsedit .w-md-editor-text-input {
+  color: var(--fg);
+}
+
+.admin-newsedit .w-md-editor-text-input::placeholder {
+  color: var(--fg-3);
+}
+
+.admin-newsedit .w-md-editor-preview {
+  background: var(--admin-surface);
+}
+
+.admin-newsedit .w-md-editor-bar {
+  background: var(--admin-surface-deep);
+}
+
+.admin-newsedit .w-md-editor:focus-within {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-primary-soft);
+}
+
+.admin-newsedit__editor-hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+/* 暗色：@uiw 的 data-color-mode 会切自己的一套变量，这里只校正表面与文字。 */
+html.dark .admin-newsedit .w-md-editor {
+  --color-canvas-default: var(--admin-surface);
+  --color-canvas-subtle: var(--admin-surface-deep);
+  --color-border-default: var(--admin-line-strong);
+  --color-border-muted: var(--admin-line);
+  --color-fg-default: var(--admin-text);
+  --color-fg-muted: var(--admin-text-muted);
+  --color-accent-fg: var(--admin-primary);
+  --color-accent-emphasis: var(--admin-primary);
+  --color-neutral-muted: var(--admin-primary-soft);
+  background: var(--admin-surface);
+}
+
+/* 预览正文：与资讯公开页共用 .markdown-body，只在管理面板里收一下字号。 */
+.admin-newsedit__preview {
+  padding: 20px 22px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  min-height: 460px;
+}
+
+.admin-newsedit__preview .markdown-body {
+  max-width: 72ch;
+  margin: 0 auto;
+}
+
+/* ── 响应式 ───────────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+  .admin-newsedit__workspace {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .admin-newsedit__workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-newsedit__rail {
+    position: static;
+  }
+
+  .admin-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-side {
+    padding: 10px 12px;
+  }
+
+  .admin-side__brand {
+    display: none;
+  }
+
+  .admin-side__group {
+    display: contents;
+  }
+
+  .admin-side__group-label {
+    display: none;
+  }
+
+  .admin-side__nav {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    padding: 4px 0;
+    overflow-x: auto;
+  }
+
+  .admin-side__link {
+    flex: none;
+    padding: 7px 12px;
+    background: color-mix(in srgb, var(--admin-surface) 45%, transparent);
+  }
+
+  .admin-side__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .admin-side__link[aria-current="page"] {
+    box-shadow: none;
+  }
+
+  .admin-pagehead {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .admin-pagehead__actions {
+    width: 100%;
+  }
+
+  .admin-pagehead__actions .admin-btn {
+    flex: 1;
+  }
+
+  .admin-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-filter form,
+  .admin-filter .admin-users__form,
+  .admin-filter .admin-news__form,
+  .admin-filter .admin-diagnosis__form,
+  .admin-filter .admin-knowledge__form {
+    gap: 12px;
+  }
+
+  .admin-users__actions,
+  .admin-news__actions,
+  .admin-diagnosis__actions,
+  .admin-knowledge__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .admin-users__actions .admin-btn,
+  .admin-news__actions .admin-btn,
+  .admin-diagnosis__actions .admin-btn,
+  .admin-knowledge__actions .admin-btn {
+    flex: 1;
+  }
+
+  .admin-dt__pager {
+    justify-content: center;
+  }
+
+  .admin-dt__pager-pages {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-metric-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── 台账窄屏：保住列宽，宁可横向滚动 ───────────────────────
+   固定列宽的表在 768px 下会把弹性列压成零宽（判读结果竖排、
+   AI 拒识 chip 压到患者名上）。这里给每类台账一个保底宽度，
+   由 .admin-dt__scroll 承担横向滚动；不做「按屏藏列」的假适配。 */
+
+.admin-users__table .admin-dt__table {
+  min-width: 780px;
+}
+
+.admin-news__table .admin-dt__table {
+  min-width: 900px;
+}
+
+.admin-diagnosis__table .admin-dt__table {
+  min-width: 1000px;
+}
+
+.admin-knowledge__table .admin-dt__table {
+  min-width: 960px;
+}
+
+/* 台账横向滚动时把「操作」列钉在右侧：窄屏最重要的动作不必先滑到底。 */
+@media (max-width: 900px) {
+  .admin-users__table .admin-dt__head:last-child,
+  .admin-users__table .admin-dt__cell:last-child,
+  .admin-news__table .admin-dt__head:last-child,
+  .admin-news__table .admin-dt__cell:last-child,
+  .admin-diagnosis__table .admin-dt__head:last-child,
+  .admin-diagnosis__table .admin-dt__cell:last-child,
+  .admin-knowledge__table .admin-dt__head:last-child,
+  .admin-knowledge__table .admin-dt__cell:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background: var(--admin-surface);
+    box-shadow: -14px 0 18px -18px rgba(23, 19, 34, 0.5);
+  }
+
+  .admin-users__table .admin-dt__head:last-child,
+  .admin-news__table .admin-dt__head:last-child,
+  .admin-diagnosis__table .admin-dt__head:last-child,
+  .admin-knowledge__table .admin-dt__head:last-child {
+    z-index: 3;
+    background: color-mix(in srgb, var(--admin-surface-deep) 52%, var(--admin-surface));
+  }
+
+  .admin-users__table .admin-dt__row:hover .admin-dt__cell:last-child,
+  .admin-news__table .admin-dt__row:hover .admin-dt__cell:last-child,
+  .admin-diagnosis__table .admin-dt__row:hover .admin-dt__cell:last-child,
+  .admin-knowledge__table .admin-dt__row:hover .admin-dt__cell:last-child {
+    background: color-mix(in srgb, var(--admin-surface-deep) 45%, var(--admin-surface));
+  }
+}
+
+/* 横向滚动条本身也是可交互提示：细轨 + 紫灰滑块，双主题同源令牌。 */
+.admin-dt__scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-line-strong) transparent;
+}
+
+.admin-dt__scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.admin-dt__scroll::-webkit-scrollbar-thumb {
+  background: var(--admin-line-strong);
+  border-radius: var(--radius-pill);
+}
+
+/* 仪表盘的「最近判读记录」是摘要表：窄屏只保留患者 / 结果 / 复审，
+   影像与时间退到诊断管理全量视图，避免 6 列在 390px 里挤成竖排。 */
+@media (max-width: 900px) {
+  /* 摘要表藏列后不再需要全局 560px 保底，让剩余列按容器铺满。 */
+  .admin-dashboard__recent .admin-dt__table {
+    min-width: 0;
+  }
+
+  .admin-dashboard__recent .admin-dt__head:nth-child(1),
+  .admin-dashboard__recent .admin-dt__cell:nth-child(1),
+  .admin-dashboard__recent .admin-dt__head:nth-child(6),
+  .admin-dashboard__recent .admin-dt__cell:nth-child(6) {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard__recent .admin-dt__head:nth-child(2),
+  .admin-dashboard__recent .admin-dt__cell:nth-child(2),
+  .admin-dashboard__recent .admin-dt__head:nth-child(4),
+  .admin-dashboard__recent .admin-dt__cell:nth-child(4) {
+    display: none;
+  }
+}
+
+/* 移动端导航：390px 下六个入口一行放不下，换行成两行，
+   比「横滑到一半才知道还有入口」更容易发现。 */
+@media (max-width: 560px) {
+  .admin-side__nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .admin-side__link {
+    flex: 1 1 calc(33.333% - 6px);
+    justify-content: center;
+  }
+}
+
+/* ── 时间窗切换（数据分析页头）────────────────────────────── */
+
+.admin-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+}
+
+.admin-range__btn {
+  height: 28px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast);
+}
+
+.admin-range__btn:hover {
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
+}
+
+.admin-range__btn[aria-pressed="true"] {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+.admin-range__btn:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* ── 诊断行：结果 / 用户 / 置信度 ─────────────────────────── */
+
+.admin-diagnosis__result {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.admin-diagnosis__result-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-diagnosis__abstain {
+  font-size: 11.5px;
+  color: var(--fg-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 24ch;
+}
+
+.admin-diagnosis__user {
+  color: var(--fg-2);
+  font-size: 12.5px;
+}
+
+.admin-diagnosis__thumb-link {
+  display: inline-block;
+  border-radius: var(--radius-md);
+  line-height: 0;
+}
+
+.admin-diagnosis__thumb-link:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.admin-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-confidence__bar {
+  position: relative;
+  width: 38px;
+  height: 4px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--admin-surface-deep);
+}
+
+.admin-confidence__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-accent);
+}
+
+.admin-confidence__text {
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+
+/* 用户简介已并入身份块（.admin-user-cell__bio），不再单开一列。 */
+
+/* ── 图表空态：给一句可执行的说明，不留白 ─────────────────── */
+
+.admin-viz__empty {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  margin: 0;
+  padding: 22px;
+  border: 1px dashed var(--admin-line);
+  border-radius: var(--radius-md);
+  color: var(--fg-3);
+  font-size: 12px;
+  text-align: center;
+}
+
+.admin-analysis__title-note {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.admin-empty__action {
+  margin-top: 4px;
+}
+
+.admin-analysis .admin-metric-strip {
+  margin-bottom: 16px;
+}
+
+/* ── 编辑工作台补充：工具行 / 正文头 / 封面动作 ───────────── */
+
+.admin-newsedit__save {
+  margin-left: auto;
+}
+
+.admin-newsedit__save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-newsedit__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--risk-attention);
+}
+
+.admin-newsedit__editor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.admin-newsedit__editor-count {
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__cover {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-line);
+}
+
+.admin-newsedit__cover-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-newsedit__cover-hint {
+  font-size: 10px;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__footer {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-line);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.admin-newsedit__rail .admin-newsedit__field {
+  display: grid;
+  gap: 8px;
+}
+
+/* 旧样式里的工具栏外壳不再使用，收掉残留的底边距。 */
+.admin-newsedit__form > .admin-toolbar {
+  border-bottom: 0;
+  padding-block: 0;
+}
+
+/* ── 紫色重点卡：底部真实读数，填住卡片空间 ───────────────── */
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: auto 0 0;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in srgb, var(--admin-on-primary) 22%, transparent);
+}
+
+.feature-card__stats dt {
+  font-family: var(--font-brand);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.feature-card__stats dd {
+  margin: 3px 0 0;
+  font-size: 17px;
+  line-height: 1.2;
+  opacity: 0.95;
+}
+
+/* ── 筛选面板：标题独占一行，字段等宽铺开 ─────────────────── */
+
+.admin-filter__head {
+  flex: 1 0 100%;
+  margin-bottom: 2px;
+}
+
+.admin-filter .admin-users__field,
+.admin-filter .admin-news__field,
+.admin-filter .admin-diagnosis__field,
+.admin-filter .admin-knowledge__field {
+  flex: 1 1 160px;
+}
+
+.admin-filter .admin-users__field--narrow,
+.admin-filter .admin-news__field--narrow,
+.admin-filter .admin-diagnosis__field--narrow,
+.admin-filter .admin-knowledge__field--narrow {
+  flex: 0 1 152px;
+}
+
+.admin-filter .admin-users__field {
+  flex-basis: 180px;
+}
+
+/* ── 筛选面板结构：标题行（含动作）+ 字段行 ───────────────── */
+
+.admin-filter form,
+.admin-filter .admin-users__form,
+.admin-filter .admin-news__form,
+.admin-filter .admin-diagnosis__form,
+.admin-filter .admin-knowledge__form {
+  display: block;
+  width: 100%;
+}
+
+.admin-filter__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-filter__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.admin-filter__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .admin-filter__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .admin-filter__actions .admin-btn {
+    flex: 1;
+  }
+}
+
+/* 编辑器工具栏：图标与按钮加大到可点尺度（默认 12px 在 1440 下太细）。 */
+.admin-newsedit .w-md-editor-toolbar li > button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-newsedit .w-md-editor-toolbar-divider {
+  height: 18px;
+  margin-inline: 4px;
+}

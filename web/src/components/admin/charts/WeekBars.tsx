@@ -78,6 +78,10 @@ export function WeekBars(props: {
                 tickLine={false}
                 width={36}
                 allowDecimals={false}
+                // 显式给域：Recharts 3 在没有 dataKey 时会拿整行数据的最大值定域，
+                // 于是「4 人 / 5 个周五 = 日均 0.8」被画成 0→4 坐标轴上的一小截。
+                // 这里只按柱值（该星期几的日均）取整定域，柱高才与读数一致。
+                domain={[0, max > 0 ? Math.max(1, Math.ceil(max)) : 1]}
               />
               <Tooltip
                 content={<VizTooltip unit="人/日" />}
@@ -99,26 +103,16 @@ export function WeekBars(props: {
                   dataKey="average"
                   position="top"
                   offset={6}
-                  content={(props) => {
-                    // 只给最高的那根柱标数：七根柱全是数字反而没人看，
-                    // 其余的读数靠坐标轴、tooltip 与「表」视图的常驻读数。
-                    const entry = props as unknown as {
-                      index?: number
-                      value?: number
-                      x?: number
-                      y?: number
-                    }
-                    if (entry.index !== maxIndex) return null
-                    return (
-                      <text
-                        x={entry.x ?? 0}
-                        y={(entry.y ?? 0) - 6}
-                        textAnchor="middle"
-                        className="admin-viz__bar-value"
-                      >
-                        {formatVizNumber(Number((entry.value ?? 0).toFixed(1)))}
-                      </text>
-                    )
+                  className="admin-viz__bar-value"
+                  // 只给最高的那根柱标数：七根柱全是数字反而没人看，
+                  // 其余的读数靠坐标轴、tooltip 与「表」视图的常驻读数。
+                  // 用默认 LabelList（而非自定义 content）定位：Recharts 3 的
+                  // content 回调不保证带 x/y，自己算会画到画布左上角。
+                  formatter={(value: unknown) => {
+                    const numeric = typeof value === "number" ? value : Number(value ?? 0)
+                    return max > 0 && numeric === max
+                      ? formatVizNumber(Number(numeric.toFixed(1)))
+                      : ""
                   }}
                 />
               </Bar>

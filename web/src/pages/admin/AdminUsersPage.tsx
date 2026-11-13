@@ -1,9 +1,11 @@
 import { useMemo, useState, type FormEvent, type ReactElement } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Pencil, Trash2, UserPlus, Users as UsersIcon } from "lucide-react"
 
-import { SectionHead } from "@/components/SectionHead"
+import { AdminEmpty } from "@/components/admin/AdminEmpty"
+import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
-import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { BatchBar } from "@/components/admin/BatchBar"
 import { FaultNote } from "@/components/fault"
@@ -21,6 +23,7 @@ import {
 import {
   canDeleteUser,
   userRoleView,
+  formatStatNumber,
   USER_ROLE_ASSIGN_OPTIONS,
   USER_ROLE_FILTER_OPTIONS,
 } from "@/lib/adminDomain"
@@ -57,15 +60,26 @@ const EMPTY_FORM: UserForm = {
   userPassword: "",
 }
 
+/** 角色 chip：管理员用管理紫（身份），封禁用医学危险色，普通用户用中性。 */
+function RoleChip({ role }: { role?: string | null }) {
+  const view = userRoleView(role)
+  const tone =
+    role === "admin" ? "admin" : role === "ban" ? "critical" : "mute"
+  return (
+    <span className="admin-chip" data-tone={tone}>
+      {view.label}
+    </span>
+  )
+}
+
 /**
  * 用户管理（真实端点）。
  *
- * 取数是事件驱动的：唯一的 load() 由查询 / 重置 / 翻页 / 删除成功后刷新调用，
- * 首次挂载只用一个 useEffect 加载一次。三态全部从 view 派生，按 DataTable 的
- * 自然接线把 rows（加载/出错时为 undefined）、error（describeError 的 text）、
- * loading 一起交给表格——出错时 error 优先于隐式 loading，文案可达。
+ * <p>页面结构：页头（口径 + 主操作）→ 筛选面板 → 批量动作条 → 台账。
+ * 表格把「账号 / 名称 / 头像 / 雪花 id」收进一个用户单元格：管理员先认人，
+ * 再认 id；长 id 不再单独占一列把表格撑宽。
  *
- * 动作面：单条的新建 / 编辑 / 删除，多条的批量删除 / 批量改角色（封禁·解封）。
+ * <p>动作面：单条的新建 / 编辑 / 删除，多条的批量删除 / 批量改角色（封禁·解封）。
  */
 export function AdminUsersPage(): ReactElement {
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
@@ -314,67 +328,81 @@ export function AdminUsersPage(): ReactElement {
   }
 
   const columns: Column<AdminUser>[] = [
-    { key: "id", title: "ID", width: "176px", mono: true, sortable: true },
-    { key: "userAccount", title: "账号", width: "132px", sortable: true },
-    { key: "userName", title: "用户名", width: "120px", sortable: true },
     {
-      key: "userAvatar",
-      title: "头像",
-      width: "76px",
-      render: (row) =>
-        row.userAvatar ? (
-          <img
-            className="admin-users__avatar"
-            src={row.userAvatar}
-            alt={row.userName || row.userAccount || "头像"}
-            width={32}
-            height={32}
-            loading="lazy"
-          />
-        ) : (
-          <span className="admin-users__avatar-fallback" aria-hidden="true" />
-        ),
+      key: "userAccount",
+      title: "用户",
+      width: "268px",
+      sortable: true,
+      render: (row) => {
+        const name = row.userName || row.userAccount || "未命名"
+        return (
+          <div className="admin-user-cell">
+            <span className="admin-user-cell__avatar" aria-hidden="true">
+              {row.userAvatar ? (
+                <img src={row.userAvatar} alt="" loading="lazy" />
+              ) : (
+                name.slice(0, 1)
+              )}
+            </span>
+            <span className="admin-user-cell__text">
+              <span className="admin-user-cell__name">{name}</span>
+              <span className="admin-user-cell__sub">
+                {row.userAccount || "—"} · {row.id}
+              </span>
+              {/* 简介多数为空，单开一列会留下整列「—」；有内容时并入身份块。 */}
+              {row.userProfile ? (
+                <span className="admin-user-cell__bio" title={row.userProfile}>
+                  {row.userProfile}
+                </span>
+              ) : null}
+            </span>
+          </div>
+        )
+      },
     },
-    { key: "userProfile", title: "简介" },
     {
       key: "userRole",
       title: "角色",
       width: "116px",
       sortable: true,
-      render: (row) => {
-        const view = userRoleView(row.userRole)
-        return (
-          <span className="risk" data-risk={view.risk}>
-            {view.label}
-          </span>
-        )
-      },
+      render: (row) => <RoleChip role={row.userRole} />,
     },
-    { key: "createTime", title: "创建时间", width: "180px", mono: true, sortable: true },
+    {
+      key: "createTime",
+      title: "创建时间",
+      width: "180px",
+      mono: true,
+      sortable: true,
+    },
     {
       key: "action",
       title: "操作",
-      width: "150px",
+      width: "128px",
       render: (row) => {
         const allowed = canDeleteUser(row)
         return (
-          <div className="admin-users__row-actions">
+          <div className="admin-dt__row-actions">
             <button
               type="button"
-              className="admin-btn admin-btn--ghost"
+              className="admin-btn admin-btn--primary admin-btn--sm"
               onClick={() => openEdit(row)}
             >
+              <Pencil size={13} strokeWidth={2} aria-hidden="true" />
               编辑
             </button>
-            <button
-              type="button"
-              className="admin-btn admin-btn--ghost"
-              disabled={!allowed}
-              title={allowed ? undefined : "无法操作管理员账号"}
-              onClick={() => openDelete(row)}
-            >
-              删除
-            </button>
+            <RowMenu
+              label={`更多用户操作：${row.userAccount || row.id}`}
+              items={[
+                {
+                  label: "删除用户",
+                  icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
+                  danger: true,
+                  disabled: !allowed,
+                  hint: allowed ? undefined : "管理员账号不可删除",
+                  onSelect: () => openDelete(row),
+                },
+              ]}
+            />
           </div>
         )
       },
@@ -384,18 +412,48 @@ export function AdminUsersPage(): ReactElement {
   // 三态同源：loading / error / 数据都从同一个查询读；加载与出错时 rows 都是 undefined。
   const rows = listQuery.data?.records
   const total = listQuery.data?.total ?? 0
+  const activeFilters = Object.values(query).filter(Boolean).length
 
   return (
     <div className="admin-users">
-      <div className="admin-users__head">
-        <SectionHead code="02" kicker="用户管理" en="ADMIN · USERS" />
-        <button type="button" className="admin-btn admin-btn--primary" onClick={openCreate}>
-          新建用户
-        </button>
-      </div>
+      <AdminPageHead
+        code="02"
+        title="用户管理"
+        eyebrow="ADMIN · USERS"
+        description="维护账号、角色与访问状态。管理员账号不可删除，也不会进入批量降级。"
+        meta={
+          <span className="admin-filter__note num">
+            {listQuery.data ? `共 ${formatStatNumber(total)} 个账号` : "账号数读取中"}
+          </span>
+        }
+        actions={
+          <button type="button" className="admin-btn admin-btn--primary" onClick={openCreate}>
+            <UserPlus size={15} strokeWidth={2} aria-hidden="true" />
+            新建用户
+          </button>
+        }
+      />
 
-      <Toolbar>
+      <section className="admin-filter" aria-label="用户筛选">
         <form className="admin-users__form" onSubmit={onSearch}>
+          <div className="admin-filter__head">
+            <h2 className="admin-filter__title">筛选</h2>
+            <span className="admin-filter__note num">
+              {listQuery.data ? `共 ${formatStatNumber(total)} 条` : "条数读取中"}
+            </span>
+            {activeFilters > 0 ? (
+              <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
+            ) : null}
+            <div className="admin-filter__actions">
+              <button className="admin-btn admin-btn--primary" type="submit">
+                查询
+              </button>
+              <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
+                重置
+              </button>
+            </div>
+          </div>
+          <div className="admin-filter__fields">
           <label className="admin-users__field">
             <span className="admin-users__label">账号 · ACCOUNT</span>
             <input
@@ -453,16 +511,9 @@ export function AdminUsersPage(): ReactElement {
               aria-label="注册时间止"
             />
           </label>
-          <div className="admin-users__actions">
-            <button className="admin-btn admin-btn--primary" type="submit">
-              查询
-            </button>
-            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
-              重置
-            </button>
           </div>
         </form>
-      </Toolbar>
+      </section>
 
       {/* 删除失败的页内读数：describeError 的文案，走全站故障语法（等宽标签 +
           结论 + 状态码，只吃 --risk-* 语义色），不是临时拼的一句话。 */}
@@ -517,6 +568,17 @@ export function AdminUsersPage(): ReactElement {
           loading={listQuery.isPending}
           error={listFault?.text ?? null}
           emptyText="暂无用户"
+          emptyContent={
+            <AdminEmpty
+              icon={UsersIcon}
+              title="还没有匹配的用户"
+              description={
+                activeFilters > 0
+                  ? "当前筛选条件下没有账号。放宽筛选或重置后再看全量。"
+                  : "系统里还没有用户。新建账号后，它会出现在这里。"
+              }
+            />
+          }
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
           sort={sort}

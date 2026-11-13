@@ -480,10 +480,13 @@ https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
 **Dark**：深紫蓝分层面板；**图表系列亮度单独调整**；浅色文字与指标必须满足
 对比度；**不会把所有 KPI 都渲染成发光渐变**。
 
-**字体**
+**字体**（2026-11-13 Visual Completion 二次修订：管理端不再强制旧仪器衬线标题）
 界面与表格用 `--font-sans`；KPI 数值、计数、占比、时间戳用 `--font-mono`；
-区块标题用 `--font-serif`（weight 400）。**不需要** Manrope——管理端不是品牌页，
-拉丁字少，Manrope 在这里是浪费一次字体下载。
+**页头与区块标题用 `--font-brand`（Manrope 变体，已随主站加载，无额外下载成本）**，
+与 Iris 主站同一品牌身份；拉丁文 overline / 短码用 `--font-brand` 大写加字距。
+`--font-serif`（weight 400）**不再是管理端的强制标题字体**——管理端是成熟 SaaS
+工作台，不是临床仪器读数台；衬线只保留给主站品牌层与临床记录纸的既定用法。
+Manrope 无汉字，汉字按字形回退到 Noto Sans SC（与 `--font-brand` 栈一致）。
 
 **颜色与材质**（Visual Completion 后的口径，**取代**旧版"钴蓝主操作"规定）
 - **管理紫 `--admin-*` 承担主操作色、当前导航态与图表强调**（旧版"钴蓝主操作"
@@ -494,6 +497,29 @@ https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
 - 材质：实体卡片 + 发丝描边 + 柔和阴影（`--shadow-overlay`），
   适度圆角 **8–12px**，卡片间距有规律，**不堆多重内嵌容器**。
   统一表格、筛选、搜索、批量操作与分页形态；Drawer / Dialog / 表单设计一致。
+
+**视觉层次与构图**（2026-11-13 Visual Completion 二次修订新增）
+- **圆角 / 阴影 / 密度由组件职责决定，不由场景一刀切**：管理端整体取 8–12px
+  圆角与柔和阴影，但组件内部允许有规格差——页头大卡可到 `--radius-xl`，
+  表格行内 chip / 状态点用 `--radius-sm`，按钮用 `--radius-md`；
+  密度同样按职责分层（KPI 行疏、表格密、Drawer 最疏）。**不再强制"所有管理端
+  组件只有一种圆角 / 一种阴影 / 一种密度"**。
+- **允许紫色重点卡**：一张主操作引导卡或重点数据卡可以用管理紫渐变/实底，
+  作为页面的视觉锚点；它表达的是"管理品牌与当前工作区"，**不是医学风险**，
+  不得借紫色传严重度。
+- **允许适量的插画 / 抽象医疗科技视觉**：空状态、引导态、侧栏品牌位可以用
+  轻量抽象图形（几何光斑、极简器官轮廓、网格纹理），**禁止**粒子、扫描线、
+  光环动画与假进度；装饰服从信息，不铺气氛。
+- **允许分层表面**：画布 → 卡片 → 卡内嵌板（如筛选板、读数表）可以有三层，
+  每层靠 `--admin-surface` / `--admin-surface-deep` + 发丝线区分，
+  不再为"不堆卡片"而把信息压平成一层。
+- **允许高质量数据图表**：图表容器可以有精致的坐标、网格、端点直标与
+  图例芯片；图表是管理端的核心信息层，不是附件。
+- **Bento 构图按数据职责分组**：Dashboard 允许非对称栅格（重点卡跨列、
+  趋势图占主位、分布图与待办并列），但每个格子的大小由其信息量决定，
+  不为造型而造型；列表页与编辑页不套 Bento。
+- **不虚构**：紫色重点卡再精致，也不能装虚构统计、模型能力或医学信息；
+  数字口径仍走 §2.2 的真实业务约束表。
 
 **组件复用（不得重造）**
 `TanStack Query`（服务端状态）、`TanStack Table`（表格/排序/分页）、`Recharts`（图表）、
@@ -526,17 +552,31 @@ https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
 - ❌ 每一层都套卡片（卡片里再套卡片再套内嵌容器）。
 - ❌ 为了"有科技感"给每个 KPI 加发光渐变。
 
-**当前完成状态**
+**当前完成状态**（2026-11-13 Visual Completion 二次修订时核对）
+✅ **令牌与外壳已落地**：`web/src/styles/tokens.css` 已实现 `--admin-*` 全套
+（画布 / 表面 / 侧栏 / 文本三级 / 发丝线 / 管理紫主操作 / 精选卡衬底 / 图表强调 /
+柔和阴影，亮暗两套实测对比度）；`AdminLayout` 已是紫色 SaaS 侧栏 + 仪表梁 +
+管理紫当前导航态；`.admin-btn--primary` 已是管理紫实底白字（旧版"主按钮是全局
+`.btn` 墨色直角"的描述已过时，作废）。
+
 ✅ **页面与数据层已实现**：`web/src/pages/admin/` 下 7 个页（Dashboard / DataAnalysis /
 Users / News / NewsEdit / Diagnosis / Knowledge）+ `AdminLayout`、`DataTable`（TanStack Table）、
 `charts/*`（Recharts）、`Modal` / `Drawer`（Base UI）、TanStack Query 接入。
 
-🗓 **视觉规范未落地**：当前仍是旧 B 档外观——主按钮是全局 `.btn`（墨色、0 圆角），
-信号橙只做当前态指示条、焦点环与 swatch（**不是主操作色**）；
-少数浮层已用 `--radius-md` / `--radius-sm`，其余仍是直角。
-本节（`--admin-*` 令牌、紫色 SaaS 侧栏与当前态、圆角 8–12px、实体卡片层次、
-柔和阴影、深紫蓝暗底）是**目标**，落地属于 Visual Completion 工作包 C
-（管理端 Purple SaaS，覆盖全部 7 个管理页）。
+✅ **七页视觉基线已交付（2026-11-13/14，`feat/admin-visual-redesign`）**：
+- **Dashboard**：Bento 构图——紫色重点卡（待复核积压）+ 判读趋势 + 运营待办 +
+  判读分布 + 最近记录；窗口内无判读时走解释型空态，不画贴地假曲线。
+- **台账页**（Users / News / Diagnosis / Knowledge）：筛选头与动作同排、身份/标题
+  合并单元、业务状态 chip、行操作菜单、编号分页；窄屏保底列宽 + 右侧固定操作列，
+  医学严重度与复核状态仍只走 `--risk-*`。
+- **News Edit**：`@uiw/react-md-editor` 编辑工作台 + 同一净化管线的预览 +
+  发布设置 / 封面 / 保存态 / 未保存离开提醒；编辑路由独立懒加载。
+- **Data Analysis**：KPI 条 + 病种小倍数 + 按星期分布 + 知识库/资讯状态分布，
+  与 Dashboard 共用同一统计端点与口径。
+
+证据：`docs/design/admin-redesign-after/r1/`（Light/Dark · 1440 · 390/768/1920），
+改造前：`docs/design/admin-redesign-before/`。**自动化与截图通过不等于视觉验收通过**，
+最终视觉结论仍由人工复核给出。
 
 ---
 
