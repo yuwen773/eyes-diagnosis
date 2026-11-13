@@ -6,16 +6,15 @@
      所有场景    金属虹膜标 + Manrope 字标 + Frosted Glass 胶囊导航 +
                  钴蓝实心当前态 + 钴蓝主 CTA + 同一套控件形态
 
-   scene 只允许改**有限参数**（U2，DESIGN.md §2.1.2）：
-     brand / editorial   品牌画布上下文，上下留 8/6px 悬浮呼吸
-     clinical / intelligence  同一块品牌画布顶栏，高度钉在 --nav-h（Agent 视口
-                              用它算，多几像素整页就多一条滚动条），不留悬浮呼吸
+   scene 只剩一个用途：标记当前语境（U2，DESIGN.md §2.1.2）。
+   **所有场景同一构图**：同高（--nav-h）、同一块 Frosted Glass 胶囊、
+   同一套控件与主 CTA——判读 / Agent 的顶栏与新闻 / 落地页完全一致，
+   不再有呼吸间距差、高度差或 CTA 出现与否的差异（U2 复检）。
+   Agent 的视口高度用 --nav-h 算，顶栏钉在同一个数上，整页不会多滚动条。
 
    结构、导航数据、账号菜单、主题切换、移动抽屉在所有场景里是同一份实现；
-   顶栏表面全部走品牌画布 + 同一块 Frosted Glass 胶囊——不允许工作区场景
-   退回骨白仪器顶栏（U2 复检：判读 / Agent 顶栏必须与新闻 / 落地页同一套）。
-   旧版 clinical 的纸面胶囊 + 信号橙底线、intelligence 的冰青底线已删除——
-   场景差异不等于品牌身份变化（DESIGN.md §1.2）。
+   顶栏表面全部走品牌画布。旧版 clinical 的纸面胶囊 + 信号橙底线、
+   intelligence 的冰青底线已删除——场景差异不等于品牌身份变化（DESIGN.md §1.2）。
    ========================================================================== */
 
 .product-head {
@@ -62,28 +61,17 @@
   color: inherit;
 }
 
-/* ── 场景变量：只有悬浮呼吸与高度（U2 有限参数）────────────────── */
+/* ── 场景：只剩语境标记，构图零差异（U2 复检）──────────────────── */
 
-.product-head[data-scene="brand"],
-.product-head[data-scene="editorial"] {
-  /* 品牌场景上下留 8/6px，顶栏悬浮于画布之上。 */
-  padding: 8px 0 6px;
-}
-
-.product-head[data-scene="clinical"],
-.product-head[data-scene="intelligence"] {
-  /* 工作区顶栏高度必须与 --nav-h 一致：Agent 的视口高度用它算，
-     多出几像素就会让整页多一条滚动条。不留呼吸间距。 */
-  min-height: var(--nav-h);
-}
-
-/* 所有场景同一块品牌画布顶栏（U2 复检）：表面、文字、发丝线全部取
-   品牌令牌，不随 scene 换成骨白仪器台。 */
 .product-head {
+  /* 所有场景同一块品牌画布顶栏：表面、文字、发丝线取品牌令牌。 */
   --shell-surface: var(--brand-canvas);
   --shell-ink: var(--brand-text);
   --shell-muted: var(--brand-muted);
   --shell-line: var(--brand-line);
+  /* 高度钉在 --nav-h：Agent 的视口高度用它算，多出几像素就会让整页
+     多一条滚动条；其他场景同高，四页顶栏完全一致。 */
+  min-height: var(--nav-h);
 }
 
 .product-head .wordmark__en {

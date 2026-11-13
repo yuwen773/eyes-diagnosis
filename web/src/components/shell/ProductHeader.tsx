@@ -28,9 +28,6 @@ export function ProductHeader({ scene = "brand" }: { scene?: ProductScene }) {
   const location = useLocation()
   const { resolvedTheme, setTheme } = useTheme()
 
-  // 已经在判读页时，再给一个「开始判读」CTA 只会占位；其余页面保留同一个入口。
-  const showCta = location.pathname !== "/diagnosis"
-
   return (
     <header
       className="product-head no-print"
@@ -76,14 +73,14 @@ export function ProductHeader({ scene = "brand" }: { scene?: ProductScene }) {
 
           <AccountMenu />
 
-          {showCta ? (
-            <Link to="/diagnosis" className="product-head__cta" data-cursor>
-              开始判读
-              <span className="product-head__cta-go" aria-hidden="true">
-                ↗
-              </span>
-            </Link>
-          ) : null}
+          {/* 主 CTA 所有页面恒在（U2 复检）：判读页上它指向本页，语义退化成
+              「回到上传起点」，视觉与新闻 / 落地页保持同一套构图。 */}
+          <Link to="/diagnosis" className="product-head__cta" data-cursor>
+            开始判读
+            <span className="product-head__cta-go" aria-hidden="true">
+              ↗
+            </span>
+          </Link>
 
           <MobileNav />
         </div>

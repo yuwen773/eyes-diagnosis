@@ -64,9 +64,10 @@ describe("ProductHeader · 共享产品外壳", () => {
     expect(screen.getByRole("link", { name: /开始判读/ }).getAttribute("href")).toBe("/diagnosis")
   })
 
-  it("已经在判读页时不再重复显示「开始判读」CTA", () => {
+  // U2 复检：主 CTA 所有页面恒在，判读页也不例外——四页顶栏构图完全一致。
+  it("判读页也显示「开始判读」CTA（指向本页上传起点）", () => {
     renderAt("/diagnosis", "clinical")
-    expect(screen.queryByRole("link", { name: /开始判读/ })).toBeNull()
+    expect(screen.getByRole("link", { name: /开始判读/ }).getAttribute("href")).toBe("/diagnosis")
   })
 
   it("导航链接带序号短码，读屏只读一次标签", () => {
