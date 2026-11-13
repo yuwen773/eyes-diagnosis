@@ -1,4 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactElement } from "react"
+import { ChevronDown, ChevronUp } from "lucide-react"
+
+import { useMediaQuery } from "@/lib/useMediaQuery"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Pencil, Trash2, UserPlus, Users as UsersIcon } from "lucide-react"
 
@@ -382,13 +385,16 @@ export function AdminUsersPage(): ReactElement {
         const allowed = canDeleteUser(row)
         return (
           <div className="admin-dt__row-actions">
+            {/* 主动作（编辑）收进图标按钮：窄屏下文字版会把操作列撑到
+                盖住账号列；标签交给 title/aria-label。 */}
             <button
               type="button"
-              className="admin-btn admin-btn--primary admin-btn--sm"
+              className="admin-btn admin-btn--primary admin-btn--icon-sm"
+              title="编辑用户"
+              aria-label="编辑用户"
               onClick={() => openEdit(row)}
             >
-              <Pencil size={13} strokeWidth={2} aria-hidden="true" />
-              编辑
+              <Pencil size={14} strokeWidth={2} aria-hidden="true" />
             </button>
             <RowMenu
               label={`更多用户操作：${row.userAccount || row.id}`}
@@ -414,6 +420,12 @@ export function AdminUsersPage(): ReactElement {
   const total = listQuery.data?.total ?? 0
   const activeFilters = Object.values(query).filter(Boolean).length
 
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
+
   return (
     <div className="admin-users">
       <AdminPageHead
@@ -438,13 +450,25 @@ export function AdminUsersPage(): ReactElement {
         <form className="admin-users__form" onSubmit={onSearch}>
           <div className="admin-filter__head">
             <h2 className="admin-filter__title">筛选</h2>
-            <span className="admin-filter__note num">
-              {listQuery.data ? `共 ${formatStatNumber(total)} 条` : "条数读取中"}
-            </span>
             {activeFilters > 0 ? (
               <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
             ) : null}
             <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
               <button className="admin-btn admin-btn--primary" type="submit">
                 查询
               </button>
@@ -453,6 +477,7 @@ export function AdminUsersPage(): ReactElement {
               </button>
             </div>
           </div>
+          {showFields ? (
           <div className="admin-filter__fields">
           <label className="admin-users__field">
             <span className="admin-users__label">账号 · ACCOUNT</span>
@@ -512,6 +537,7 @@ export function AdminUsersPage(): ReactElement {
             />
           </label>
           </div>
+          ) : null}
         </form>
       </section>
 

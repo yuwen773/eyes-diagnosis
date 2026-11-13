@@ -251,15 +251,6 @@ function NewsEditor(props: {
   // 预览与落库、公开页显示走同一条管线——所见即所存。
   const previewHtml = tab === "preview" ? renderNewsHtml(form.content) : ""
   const contentLength = useMemo(() => visibleLength(form.content), [form.content])
-  const saveState = saving
-    ? "保存中…"
-    : dirty
-      ? "有未保存的修改"
-      : success
-        ? "已保存"
-        : isNew
-          ? "尚未创建"
-          : "没有未保存的修改"
   // 侧栏读数位窄：同一状态用短标签，避免「没有未保存的修改」把数字列挤歪。
   const saveStateShort = saving
     ? "保存中…"
@@ -402,10 +393,8 @@ function NewsEditor(props: {
               </button>
             </div>
 
-            <span className="admin-newsedit__save-state num" role="status">
-              {dirty ? <span className="admin-newsedit__dot" aria-hidden="true" /> : null}
-              {saveState}
-            </span>
+            {/* 保存状态只保留右侧栏「保存状态」一处读数：
+                tab 行再放一份会让人以为有第三个视图。 */}
 
             <button
               className="admin-btn admin-btn--primary admin-newsedit__save"

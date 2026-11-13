@@ -367,9 +367,19 @@
     opacity var(--fast);
 }
 
+/* 禁用态不走 opacity：主操作紫压 45% 透明后白字落在浅紫上只有约 2:1，
+   全页唯一主动作会显得「坏了」。这里换成中性面 + 弱文字色，
+   双主题都读得清，禁用语义由光标与 aria-disabled 承担。 */
 .admin-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  background: color-mix(in srgb, var(--admin-surface-deep) 55%, var(--admin-surface));
+  border-color: var(--admin-line);
+  color: var(--admin-text-faint);
+}
+
+.admin-btn--primary:disabled {
+  background: color-mix(in srgb, var(--admin-surface-deep) 55%, var(--admin-surface));
+  color: var(--admin-text-faint);
 }
 
 /* 主操作：管理紫实底白字。 */
@@ -834,6 +844,25 @@
   gap: 16px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--admin-line);
+}
+
+/* 390px 档：标题与右上读数允许换行堆叠，不再把「图/表」切换挤成
+   竖排、标题折两行的破形。 */
+@media (max-width: 640px) {
+  .admin-viz__head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px 12px;
+  }
+
+  .admin-viz__head-extra {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  .admin-viz__toggle {
+    margin-left: auto;
+  }
 }
 
 .admin-viz__title {
@@ -2596,12 +2625,62 @@
   padding-inline: 10px;
 }
 
+/* 勾选热区铺满 40px 高的单元格：视觉盒仍是 15px，但整格可点（移动端够到）。 */
+.admin-dt__pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  margin-inline: -4px;
+  padding-block: 4px;
+  cursor: pointer;
+}
+
+/* 勾选盒不用原生 accent-color：暗色主题下原生未勾选盒会渲染成实心白块，
+   看起来像整页都被选中。这里自绘：底色跟纸面、描边跟发丝线，勾上与
+   强调态才着管理紫，双主题同源令牌。 */
 .admin-dt__check {
+  appearance: none;
+  -webkit-appearance: none;
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: var(--admin-accent);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
   cursor: pointer;
+  transition:
+    background var(--fast),
+    border-color var(--fast);
+}
+
+.admin-dt__check:hover {
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:checked {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.7l4.5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:indeterminate {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6h7' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+/* 暗主题下 --admin-primary 提亮成 #b39dfb，勾选标记必须换成
+   --admin-on-primary（#171322）才能保持 ≥4.5:1；白标记只有 ~1.7:1。 */
+html.dark .admin-dt__check:checked {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.7l4.5-5' fill='none' stroke='%23171322' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+}
+
+html.dark .admin-dt__check:indeterminate {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6h7' fill='none' stroke='%23171322' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px no-repeat;
 }
 
 .admin-dt__check:disabled {
@@ -3291,9 +3370,32 @@
   opacity: 0.78;
 }
 
-/* 暗色主题下重点卡保持同一材质，不做发光渐变堆砌。 */
+/* 暗色主题下重点卡保持同一材质，不做发光渐变堆砌。
+   浅色版用 --admin-primary 实底压字；暗色版那些令牌是提亮的前景色
+   （#b39dfb / #c4b5fd），整卡实底会把 360px 卡片变成全页最亮的浅色板、
+   极性翻转。这里改用深紫蓝渐变面 + 亮色文字：亮紫只留给 CTA、
+   描边与读数，卡片本身沉回暗色分层里。 */
 html.dark .feature-card {
   border-color: var(--admin-line-strong);
+  color: #ecebf5;
+  background:
+    radial-gradient(
+      120% 140% at 85% -10%,
+      color-mix(in srgb, var(--admin-primary) 38%, var(--admin-canvas)) 0%,
+      color-mix(in srgb, var(--admin-primary) 18%, var(--admin-canvas)) 55%,
+      var(--admin-canvas) 100%
+    );
+}
+
+html.dark .feature-card::before {
+  border-color: #ecebf5;
+  opacity: 0.12;
+}
+
+html.dark .feature-card__cta {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent);
+  color: var(--admin-on-primary);
 }
 
 /* ── 运营待办行（动作项列表）────────────────────────────────── */

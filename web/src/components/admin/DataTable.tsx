@@ -214,30 +214,35 @@ export function DataTable<T extends RowData>(props: {
         <tr key={key} className="admin-dt__row">
           {selectable ? (
             <td className="admin-dt__cell admin-dt__cell--pick">
-              <input
-                type="checkbox"
-                className="admin-dt__check"
-                checked={checked}
-                disabled={!selectableRow}
-                onChange={() => {
-                  if (!onSelectionChange) return
-                  onSelectionChange(
-                    checked
-                      ? selectedKeys.filter((item) => item !== key)
-                      : [...selectedKeys, key],
-                  )
-                }}
-                aria-label={`选择该行 ${key}`}
-              />
+              {/* label 铺满单元格：15px 的视觉盒仍小，但 40px 高的整格都是热区 */}
+              <label className="admin-dt__pick">
+                <input
+                  type="checkbox"
+                  className="admin-dt__check"
+                  checked={checked}
+                  disabled={!selectableRow}
+                  onChange={() => {
+                    if (!onSelectionChange) return
+                    onSelectionChange(
+                      checked
+                        ? selectedKeys.filter((item) => item !== key)
+                        : [...selectedKeys, key],
+                    )
+                  }}
+                  aria-label={`选择该行 ${key}`}
+                />
+              </label>
             </td>
           ) : null}
-          {columns.map((column) => (
+          {columns.map((column, columnIndex) => (
             <td
               key={column.key}
               className={
                 "admin-dt__cell" +
                 (column.mono ? " num" : "") +
-                (column.align ? ` admin-dt__cell--${column.align}` : "")
+                (column.align ? ` admin-dt__cell--${column.align}` : "") +
+                // 末列约定为操作列：窄屏钉住列宽与渐隐提示都按它定位。
+                (columnIndex === columns.length - 1 ? " admin-dt__cell--action" : "")
               }
             >
               {column.render ? column.render(row) : defaultCell(row, column.key)}
@@ -281,21 +286,23 @@ export function DataTable<T extends RowData>(props: {
               <tr key={group.id} className="admin-dt__head-row">
                 {selectable ? (
                   <th scope="col" className="admin-dt__head admin-dt__head--pick">
-                    <input
-                      type="checkbox"
-                      className="admin-dt__check"
-                      checked={allChecked}
-                      ref={(node) => {
-                        // 半选态（部分选中）用 indeterminate 表达，不能只靠 checked。
-                        if (node) node.indeterminate = !allChecked && someChecked
-                      }}
-                      disabled={selectableKeys.length === 0}
-                      onChange={() => {
-                        if (!onSelectionChange) return
-                        onSelectionChange(allChecked ? [] : selectableKeys)
-                      }}
-                      aria-label="全选本页"
-                    />
+                    <label className="admin-dt__pick">
+                      <input
+                        type="checkbox"
+                        className="admin-dt__check"
+                        checked={allChecked}
+                        ref={(node) => {
+                          // 半选态（部分选中）用 indeterminate 表达，不能只靠 checked。
+                          if (node) node.indeterminate = !allChecked && someChecked
+                        }}
+                        disabled={selectableKeys.length === 0}
+                        onChange={() => {
+                          if (!onSelectionChange) return
+                          onSelectionChange(allChecked ? [] : selectableKeys)
+                        }}
+                        aria-label="全选本页"
+                      />
+                    </label>
                   </th>
                 ) : null}
                 {group.headers.map((header) => {
@@ -309,7 +316,11 @@ export function DataTable<T extends RowData>(props: {
                       scope="col"
                       className={
                         "admin-dt__head num" +
-                        (column.align ? ` admin-dt__cell--${column.align}` : "")
+                        (column.align ? ` admin-dt__cell--${column.align}` : "") +
+                        // 末列约定为操作列：窄屏钉住列宽与渐隐提示都按它定位。
+                        (header.column.id === columns[columns.length - 1].key
+                          ? " admin-dt__head--action"
+                          : "")
                       }
                       style={column.width ? { width: column.width } : undefined}
                       aria-sort={

@@ -8,7 +8,9 @@ import {
 } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
-import { FileText, Pencil, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Eye, FileText, Pencil, Trash2 } from "lucide-react"
+
+import { useMediaQuery } from "@/lib/useMediaQuery"
 
 import { AdminEmpty } from "@/components/admin/AdminEmpty"
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
@@ -350,6 +352,9 @@ export function AdminKnowledgePage(): ReactElement {
     {
       key: "fileName",
       title: "文档",
+      // 弹性列也要给底宽：表格 min-width 740 里它拿 172px，否则自动布局
+      // 会把文件名列挤成 0 宽竖条，行高跟着爆掉。
+      width: "172px",
       render: (row) => (
         <div className="admin-file-cell">
           <span className="admin-file-cell__icon" aria-hidden="true">
@@ -357,7 +362,10 @@ export function AdminKnowledgePage(): ReactElement {
           </span>
           <span className="admin-file-cell__text">
             <span className="admin-file-cell__name">{row.fileName || "未命名文件"}</span>
-            <span className="admin-file-cell__sub">
+            <span
+              className="admin-file-cell__sub"
+              title={`${(row.fileType || "—").toUpperCase()} · ${formatFileSize(row.fileSize)}`}
+            >
               {(row.fileType || "—").toUpperCase()} · {formatFileSize(row.fileSize)}
             </span>
           </span>
@@ -388,24 +396,25 @@ export function AdminKnowledgePage(): ReactElement {
       width: "176px",
       render: (row) => (
         <div className="admin-dt__row-actions">
+          {/* 主动作（预览）收进图标按钮：窄屏下文字版会把操作列撑到
+              盖住文件名列；标签交给 title/aria-label。 */}
           <button
             type="button"
-            className="admin-btn admin-btn--primary admin-btn--sm"
+            className="admin-btn admin-btn--primary admin-btn--icon-sm"
+            title="预览文档"
+            aria-label="预览文档"
             onClick={() => openPreview(row)}
           >
-            预览
-          </button>
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost admin-btn--sm"
-            onClick={() => openRename(row)}
-          >
-            <Pencil size={13} strokeWidth={2} aria-hidden="true" />
-            改名
+            <Eye size={14} strokeWidth={2} aria-hidden="true" />
           </button>
           <RowMenu
             label={`更多文档操作：${row.fileName || row.id}`}
             items={[
+              {
+                label: "改名",
+                icon: <Pencil size={14} strokeWidth={2} aria-hidden="true" />,
+                onSelect: () => openRename(row),
+              },
               {
                 label: "删除文档",
                 icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
@@ -426,6 +435,12 @@ export function AdminKnowledgePage(): ReactElement {
   const listError = listData === undefined ? (listFault?.text ?? null) : null
   const activeFilters = Object.values(query).filter(Boolean).length
 
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
+
   return (
     <div className="admin-knowledge">
       <AdminPageHead
@@ -444,13 +459,25 @@ export function AdminKnowledgePage(): ReactElement {
         <form className="admin-knowledge__form" onSubmit={onSearch}>
           <div className="admin-filter__head">
             <h2 className="admin-filter__title">筛选与上传</h2>
-            <span className="admin-filter__note num">
-              {listData ? `共 ${total} 份` : "份数读取中"}
-            </span>
             {activeFilters > 0 ? (
               <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
             ) : null}
             <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
               <button className="admin-btn admin-btn--primary" type="submit">
                 查询
               </button>
@@ -459,6 +486,7 @@ export function AdminKnowledgePage(): ReactElement {
               </button>
             </div>
           </div>
+          {showFields ? (
           <div className="admin-filter__fields">
           <label className="admin-knowledge__field">
             <span className="admin-knowledge__label">文件名 · FILE</span>
@@ -533,6 +561,7 @@ export function AdminKnowledgePage(): ReactElement {
             />
           </label>
           </div>
+          ) : null}
         </form>
 
         <div className="admin-knowledge__upload-row">

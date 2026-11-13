@@ -362,6 +362,18 @@
   font-size: 12px;
 }
 
+/* 行内主动作的图标级形态：文字标签收进 title/aria-label，
+   30px 高与 --sm 同尺，窄屏不再把操作列撑到盖住数据列。 */
+.admin-btn--icon-sm {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding-inline: 0;
+  font-size: 12px;
+}
+
 .admin-iconbtn {
   display: inline-grid;
   place-items: center;
@@ -854,6 +866,9 @@
   font-size: 10.5px;
   letter-spacing: 0.06em;
   color: var(--fg-3);
+  /* 类型 + 大小是一体读数，窄屏宁断行也不要在「·」处折行；
+     完整值交给 title。 */
+  white-space: nowrap;
 }
 
 /* ── 诊断缩略图 ───────────────────────────────────────────── */
@@ -1410,14 +1425,8 @@ html.dark .admin-newsedit .w-md-editor {
     gap: 14px;
   }
 
-  .admin-pagehead__actions {
-    width: 100%;
-  }
-
-  .admin-pagehead__actions .admin-btn {
-    flex: 1;
-  }
-
+  /* 768 下主操作仍保持自然宽、右对齐：整行铺满会把按钮撑成 ~690px 的
+     紫色横幅、盖过标题。全宽只留给 520 以下的真窄屏。 */
   .admin-metric-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1455,6 +1464,14 @@ html.dark .admin-newsedit .w-md-editor {
 }
 
 @media (max-width: 520px) {
+  .admin-pagehead__actions {
+    width: 100%;
+  }
+
+  .admin-pagehead__actions .admin-btn {
+    flex: 1;
+  }
+
   .admin-metric-strip {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1466,15 +1483,15 @@ html.dark .admin-newsedit .w-md-editor {
    由 .admin-dt__scroll 承担横向滚动；不做「按屏藏列」的假适配。 */
 
 .admin-users__table .admin-dt__table {
-  min-width: 780px;
+  min-width: 732px;
 }
 
 .admin-news__table .admin-dt__table {
-  min-width: 900px;
+  min-width: 700px;
 }
 
 .admin-diagnosis__table .admin-dt__table {
-  min-width: 1000px;
+  min-width: 992px;
 }
 
 .admin-knowledge__table .admin-dt__table {
@@ -1511,6 +1528,44 @@ html.dark .admin-newsedit .w-md-editor {
   .admin-diagnosis__table .admin-dt__row:hover .admin-dt__cell:last-child,
   .admin-knowledge__table .admin-dt__row:hover .admin-dt__cell:last-child {
     background: color-mix(in srgb, var(--admin-surface-deep) 45%, var(--admin-surface));
+  }
+}
+
+/* 390px 档：操作列只剩两个图标钮，96–128px 足够；钉住列再盖住数据列
+   的问题（主列被截成「判读{」）随之消失。右缘加一道渐隐提示横向可滚——
+   细滚动条藏在十行表格下面，肉眼不可靠。 */
+@media (max-width: 640px) {
+  .admin-users__table .admin-dt__table {
+    min-width: 732px;
+  }
+
+  .admin-news__table .admin-dt__table {
+    min-width: 700px;
+  }
+
+  .admin-diagnosis__table .admin-dt__table {
+    min-width: 992px;
+  }
+
+  .admin-knowledge__table .admin-dt__table {
+    min-width: 932px;
+  }
+
+  .admin-dt__cell--action,
+  .admin-dt__head--action {
+    width: 96px;
+    min-width: 96px;
+  }
+
+  .admin-dt__scroll {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+  }
+
+  .admin-dt__scroll:hover,
+  .admin-dt__scroll:focus-within {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 }
 
@@ -1616,6 +1671,13 @@ html.dark .admin-newsedit .w-md-editor {
 .admin-diagnosis__result {
   font-weight: 500;
   color: var(--fg);
+  /* 底宽只有 156px：长结果名换行但最多两行，行高不被撑爆；
+     超出的部分交给 title 与详情弹层。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .admin-diagnosis__result-empty {

@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent, type ReactElement, type ReactNode } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
-import { Eye, ScanEye, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Eye, ScanEye, Trash2 } from "lucide-react"
+
+import { useMediaQuery } from "@/lib/useMediaQuery"
 
 import { AdminEmpty } from "@/components/admin/AdminEmpty"
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
@@ -476,6 +478,9 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "result",
       title: "判读结果",
+      // 弹性列也要给底宽：表格 min-width 780 里它拿 156px，窄屏横向滚动时
+      // 判读文字与 AI 拒识原因才不会挤成 0 宽竖条。
+      width: "156px",
       sortable: true,
       render: (row) =>
         row.result ? (
@@ -535,26 +540,27 @@ export function AdminDiagnosisPage(): ReactElement {
       width: "190px",
       render: (row) => (
         <div className="admin-dt__row-actions">
+          {/* 主动作（复核）在窄屏收进「...」菜单，行高与列宽才稳；
+              这里保留的按钮是图标级，标签交给 title/aria-label。 */}
           <button
             type="button"
-            className="admin-btn admin-btn--primary admin-btn--sm"
+            className="admin-btn admin-btn--primary admin-btn--icon-sm"
+            title="人工复核"
+            aria-label="人工复核"
             onClick={() => {
               openDetail(row)
               openReview()
             }}
           >
-            复核
-          </button>
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost admin-btn--sm"
-            onClick={() => openDetail(row)}
-          >
-            详情
+            <ScanEye size={14} strokeWidth={2} aria-hidden="true" />
           </button>
           <RowMenu
             label={`更多判读操作：${row.id}`}
             items={[
+              {
+                label: "详情",
+                onSelect: () => openDetail(row),
+              },
               {
                 label: "删除记录",
                 icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
@@ -578,6 +584,12 @@ export function AdminDiagnosisPage(): ReactElement {
     (query.startDate ? 1 : 0) +
     (query.endDate ? 1 : 0)
 
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
+
   return (
     <div className="admin-diagnosis">
       <AdminPageHead
@@ -596,13 +608,25 @@ export function AdminDiagnosisPage(): ReactElement {
         <form className="admin-diagnosis__form" onSubmit={onSearch}>
           <div className="admin-filter__head">
             <h2 className="admin-filter__title">筛选</h2>
-            <span className="admin-filter__note num">
-              {listQuery.data ? `共 ${formatStatNumber(total)} 条` : "条数读取中"}
-            </span>
             {activeFilters > 0 ? (
               <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
             ) : null}
             <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
               <button className="admin-btn admin-btn--primary" type="submit">
                 查询
               </button>
@@ -611,6 +635,7 @@ export function AdminDiagnosisPage(): ReactElement {
               </button>
             </div>
           </div>
+          {showFields ? (
           <div className="admin-filter__fields">
           <label className="admin-diagnosis__field">
             <span className="admin-diagnosis__label">疾病名 · RESULT</span>
@@ -659,6 +684,7 @@ export function AdminDiagnosisPage(): ReactElement {
             />
           </label>
           </div>
+          ) : null}
         </form>
       </section>
 
