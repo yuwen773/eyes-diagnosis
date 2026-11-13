@@ -120,15 +120,18 @@ class AdminStatsServiceTest {
 
     @Test
     void 上一窗口的趋势也补齐空缺的天() {
+        // 上一窗口是滚动的 [startDay - window, startDay)，写死日期会随真实时间
+        // 滚出窗口（2026-10-30 从 2026-11-13 起就出窗了）。取窗口内的一天。
+        String day = LocalDate.now().minusDays(8).toString();
         when(mapper.diagnosisDailyBetween(any(), any()))
-                .thenReturn(List.of(new StatDayCount("2026-10-30", 2L)));
+                .thenReturn(List.of(new StatDayCount(day, 2L)));
 
         AdminOverviewVO vo = service.overview(7);
 
         assertEquals(7, vo.getPreviousDiagnosisTrend().size());
         assertEquals(7, vo.getPreviousUserTrend().size());
         long nonZero = vo.getPreviousDiagnosisTrend().stream()
-                .filter(day -> day.getValue() > 0).count();
+                .filter(d -> d.getValue() > 0).count();
         assertEquals(1, nonZero);
     }
 
