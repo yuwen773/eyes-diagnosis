@@ -489,10 +489,15 @@ html.dark .landing-hero__btn--primary {
 
 /* 玻璃体：一条连续光带 = 柔和鞘 + 内部纤维 + 边缘高光。
    `--optic-*` 是这层自己的调色板，双主题不是反色而是两种材质：
-   - 亮色：鞘是钴蓝到青色，纤维 multiply 压暗画布，外缘 normal 画银白反光；
-   - 暗色：鞘是冰蓝，纤维 screen 加光，外缘高光更亮。
-   旧写法给整张 SVG 套一个 multiply + 白色 stroke——白 × 白 = 白，
-   纤维在亮底上等于不存在；现在按组分开混合。 */
+   - 亮色：鞘是钴蓝到青色，外缘画银白反光；
+   - 暗色：鞘是冰蓝，外缘高光更亮。
+
+   关于 `mix-blend-mode`：它写在组（`<g>`）上，而根节点带 `opacity` 与
+   `mask-image`，两者都会让根形成一个独立的合成组——所以这些混合模式
+   **只作用于纤维与纤维之间的重叠**，不会再穿透到下层 WebGL 画布上。
+   纤维层与画布之间是普通 alpha 合成；边缘淡出靠下面那条径向遮罩。
+   如果要让纤维真正与画布混合，必须把遮罩和根透明度都拿掉（二者与
+   「穿透画布混合」不可兼得），这属于另一次视觉评审，不在本轮。 */
 .optic-flow__fibers {
   position: absolute;
   inset: 0;
@@ -584,13 +589,13 @@ html.dark .optic-stop--core-near {
 .optic-flow {
   --optic-fiber: rgba(38, 84, 160, 0.26);
   --optic-fiber-core: rgba(36, 87, 201, 0.42);
-  --optic-fiber-rim: rgba(255, 255, 255, 0.92);
+  --optic-fiber-rim: var(--brand-glass-optical-edge);
 }
 
 html.dark .optic-flow {
   --optic-fiber: rgba(190, 230, 255, 0.3);
   --optic-fiber-core: rgba(225, 244, 255, 0.5);
-  --optic-fiber-rim: rgba(235, 248, 255, 0.78);
+  /* 外缘高光取自 `--brand-glass-optical-edge`，它随主题翻转，不必在这里重复。 */
 }
 
 .optic-flow__fiber-set {
@@ -761,9 +766,21 @@ html.dark .optic-flow__fiber-set--rim {
   z-index: 60;
   padding: 8px 0 6px;
   color: var(--brand-text);
-  /* 顶部一条从页面底色渐隐的幕：内容从它下面滚过时字标仍然清楚，
-     但不会被读成一条实体横栏。 */
-  background: linear-gradient(to bottom, var(--field) 0%, var(--field) 58%, transparent 100%);
+  /* 顶部一条页面底色的幕：内容从它下面滚过时字标仍然清楚。
+     幕分两半——顶栏自身高度内是实色（保证底部任何时刻都不透字），
+     下沿再挂一段渐隐（::after），所以过渡是软的、不是一条硬边。 */
+  background: var(--field);
+}
+
+.brand-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--field), transparent);
+  pointer-events: none;
 }
 
 .brand-head__inner {
@@ -801,7 +818,8 @@ html.dark .optic-flow__fiber-set--rim {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  /* 触控目标 ≥ 44×44：平板上（>900px 胶囊可见）这三项就是主导航。 */
+  height: 44px;
   padding: 0 16px;
   border-radius: var(--radius-pill);
   color: var(--brand-muted);
@@ -823,6 +841,15 @@ html.dark .optic-flow__fiber-set--rim {
 .brand-head__link[aria-current="page"] {
   background: var(--brand-primary);
   color: var(--brand-primary-fg);
+}
+
+/* 焦点环保留在填充胶囊 / 主 CTA 上也看得见。
+   全局规则用 `currentColor`，但这两处的文字色是反相白/深蓝：
+   环落在胶囊外的玻璃上，与底色几乎同值。这里改用品牌主色。 */
+.brand-head__link:focus-visible,
+.brand-head__cta:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
 }
 
 .brand-head__code {
@@ -897,25 +924,6 @@ html.dark .optic-flow__fiber-set--rim {
   min-height: 44px;
 }
 
-/* 浅色主题滚到 data-head-invert 深色区段：把品牌令牌在**顶栏内部**换成深底
-   的一套，其余规则自动跟着变——胶囊仍然是玻璃（只是换成暗色那组玻璃令牌），
-   不是实体横栏，也不会在切换边界闪跳。
-   暗主题整页就是深色，走 html.dark 的令牌，不需要这条。 */
-html:not(.dark) .brand-head[data-invert="true"] {
-  --brand-text: var(--brand-deep-text);
-  --brand-muted: var(--brand-deep-muted);
-  --brand-outline: var(--brand-deep-hairline);
-  --brand-line: var(--brand-deep-line);
-  color: var(--brand-deep-text);
-  background: linear-gradient(to bottom, #0a1a33 0%, #0a1a33 58%, transparent 100%);
-}
-
-html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
-  --glass-bg: rgba(16, 34, 60, 0.78);
-  --glass-edge: rgba(196, 232, 255, 0.26);
-  --glass-inner: rgba(255, 255, 255, 0.07);
-}
-
 /* 窄屏不把胶囊压扁塞进去：导航收进 MobileNav 抽屉，右侧只留主题与菜单。
    抽屉本身的路由、认证、焦点锁、滚动锁全部沿用既有实现。 */
 @media (max-width: 900px) {
@@ -928,6 +936,12 @@ html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
   .brand-head__cta,
   .brand-head__actions .acct {
     display: none;
+  }
+
+  /* 共享 `.burger` 只在 ≤800px 显示；品牌顶栏在 ≤900px 就收起胶囊，
+     801–900px 这段必须把汉堡放出来，否则顶栏没有任何导航入口。 */
+  .brand-head .burger {
+    display: inline-flex;
   }
 }
 
@@ -965,16 +979,6 @@ html:not(.dark) .brand-head[data-invert="true"] .brand-head__nav {
   border-color: var(--brand-primary);
 }
 
-/* 汉堡的两根线用 --fg、账号下拉的小箭头用 --fg-3，都不继承 .brand-head 的
-   color，所以反相时要单独换色，否则会消失在深底上。 */
-html:not(.dark) .brand-head[data-invert="true"] .burger__bars > span {
-  color: var(--brand-deep-text);
-}
-
-html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
-  color: var(--brand-deep-muted);
-}
-
 /* ==========================================================================
    品牌页脚（DESIGN.md §2.1.3）
    --------------------------------------------------------------------------
@@ -993,7 +997,24 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
   color: var(--brand-deep-text);
   /* 与浅色主体之间用一根发丝线过渡，不做硬切。 */
   border-top: 1px solid var(--brand-deep-hairline);
-  box-shadow: 0 -1px 0 color-mix(in srgb, var(--brand-surface-deep) 40%, transparent);
+}
+
+/* 与页面上方的浅色主体之间加一段渐变：不是从亮色直接切到深海蓝，
+   而是让画布自己沉下去。 */
+.brand-foot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: clamp(56px, 7vw, 96px);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--brand-surface-deep-2) 62%,
+    var(--brand-surface-deep)
+  );
+  pointer-events: none;
 }
 
 .brand-foot__inner {
@@ -1064,6 +1085,10 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
 
 .brand-foot__link {
   width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  /* 13px 文字的行盒只有 ~21px；补到 28px 才过 WCAG 2.5.8 的 24px 下限。 */
+  min-height: 28px;
   color: var(--brand-deep-text);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -1187,4 +1212,33 @@ html:not(.dark) .brand-head[data-invert="true"] .acct__caret {
     align-items: flex-start;
     gap: 4px;
   }
+}
+
+/* ==========================================================================
+   整页品牌统一（R2-04）
+   --------------------------------------------------------------------------
+   品牌页作用域换的是画布与发丝线（见 tokens.css 的 .is-brand-page）。
+   剩下两处「旧语境遗留色」在这里逐条收口，不做整页滤镜：
+   ========================================================================== */
+
+/* 章节短码在品牌页上用钴蓝，不再借用临床的信号橙——
+   信号橙是「重点/当前」的临床语义，不该在这里当装饰色。 */
+.is-brand-page .sec-head__code {
+  color: var(--brand-primary);
+}
+
+/* 品牌页的收尾 CTA 是品牌主操作，不是临床主操作：
+   `.btn` 默认用墨色（Clinical 的规矩），这里在品牌页作用域内换成钴蓝。 */
+.is-brand-page .btn {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  border-color: var(--brand-primary);
+}
+
+.is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #ffffff);
+}
+
+html.dark .is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #000000);
 }
