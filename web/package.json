@@ -11,6 +11,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:collaboration": "playwright test e2e/collaboration.spec.ts",
+    "test:collaboration-backend": "playwright test e2e/collaboration-backend.spec.ts",
     "preview": "vite preview"
   },
   "dependencies": {

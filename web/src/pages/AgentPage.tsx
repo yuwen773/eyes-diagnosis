@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   batchDeleteSessions,
   deleteSession,
@@ -13,6 +14,7 @@ import {
 import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
 import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
+import { CollaborationRunContext, useCollaborationRun } from "@/hooks/useCollaborationRun"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
@@ -21,6 +23,8 @@ import { ChatInput } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
 import { SiteHeader } from "@/components/SiteHeader"
+import { CollaborationWorkspace } from "@/components/agent/collaboration/CollaborationWorkspace"
+import { CollaborationTaskForm } from "@/components/agent/collaboration/CollaborationTaskForm"
 
 const HISTORY_PAGE_SIZE = 100
 
@@ -57,6 +61,8 @@ function downloadText(content: string, filename: string, mime: string) {
 
 export function AgentPage() {
   const { status, user } = useSession()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [entryThreadId] = useState(() => searchParams.get("threadId"))
 
   // 与 useAgentStream 的 messages 单一数据源：历史加载也走 setMessages
   const stream = useAgentStream()
@@ -77,6 +83,34 @@ export function AgentPage() {
   const historySeq = useRef(0)
   // 当前登录身份的稳定键：登录/登出/换账号时要清掉上一个身份的会话态。
   const userKey = user?.id ?? null
+  // TASK-08B：普通聊天与影像协作是两种模式。协作仅在显式开启（VITE_COLLABORATION_ENABLED）
+  // 且 URL 带 runId（或用户点了「影像协作」）时展示；默认态完全走原聊天路径。
+  const collaborationEnabled = import.meta.env.VITE_COLLABORATION_ENABLED === "true"
+  const [submissionOpen, setSubmissionOpen] = useState(false)
+  const collaborationOpen = collaborationEnabled && (submissionOpen || !!searchParams.get("runId"))
+  const [submittedImage, setSubmittedImage] = useState<{ identity: number | null; runId: string; url: string } | null>(null)
+  useEffect(() => () => {
+    if (submittedImage) URL.revokeObjectURL(submittedImage.url)
+  }, [submittedImage])
+  const collaboration = useCollaborationRun({
+    identityKey: status === "authed" ? userKey : null,
+    threadId,
+    runId: searchParams.get("runId"),
+    enabled: collaborationEnabled,
+  })
+  // 身份或授权一丢，本地附件立刻撤下——不给未授权状态留可视入口。
+  if (submittedImage && (status !== "authed" || submittedImage.identity !== userKey || collaboration.connection === "forbidden")) {
+    setSubmittedImage(null)
+  }
+  const clearSelectedRun = useCallback(() => {
+    setSubmittedImage(null)
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.delete("runId")
+      next.delete("threadId")
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
   const lastUserKeyRef = useRef<number | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
@@ -141,7 +175,7 @@ export function AgentPage() {
       setCurrentThreadId("")
       reset()
     }
-    const savedThreadId = loadThreadId(userKey)
+    const savedThreadId = entryThreadId || loadThreadId(userKey)
     // refreshSessions 的首个操作是 await getSessions()，状态更新不在 effect 同步阶段。
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshSessions()
@@ -153,7 +187,7 @@ export function AgentPage() {
       setCurrentThreadId(savedThreadId)
       setThreadId(savedThreadId)
     }
-  }, [status, userKey, reset, refreshSessions, loadHistoryMessages])
+  }, [status, userKey, reset, refreshSessions, loadHistoryMessages, entryThreadId])
 
   const handleSend = useCallback(
     async (text: string, files: File[] = []): Promise<boolean> => {
@@ -213,15 +247,19 @@ export function AgentPage() {
   )
 
   const handleNewChat = useCallback(() => {
+    clearSelectedRun()
+    setSubmissionOpen(false)
     saveThreadId(userKey, "")
     setCurrentThreadId("")
     setThreadId(generateThreadId())
     reset()
     setPanelOpen(false)
-  }, [reset, userKey])
+  }, [reset, userKey, clearSelectedRun])
 
   const handleSelectHistory = useCallback(
     async (id: string) => {
+      clearSelectedRun()
+      setSubmissionOpen(false)
       setCurrentThreadId(id)
       setThreadId(id)
       saveThreadId(userKey, id)
@@ -229,7 +267,7 @@ export function AgentPage() {
       setPanelOpen(false)
       await loadHistoryMessages(id)
     },
-    [reset, userKey, loadHistoryMessages],
+    [reset, userKey, loadHistoryMessages, clearSelectedRun],
   )
 
   /** 删除/置顶/重命名后刷新列表（Vue 版这里漏绑导致列表不刷新，勿复刻）。 */
@@ -302,11 +340,12 @@ export function AgentPage() {
   // 再由路由层跳登录页（带回跳地址）。
   // 同 Vue 版 BasicLayout：agent 页不出页脚、不进版心，三栏铺满顶栏以下视口。
   return (
+    <CollaborationRunContext.Provider value={collaboration}>
     <div className="is-field">
       <SiteHeader />
 
       <main className="agent-viewport">
-        <div className={`agent-layout${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
+        <div className={`agent-layout${sessionsCollapsed ? " is-left-collapsed" : ""}${collaborationEnabled ? " agent-layout--collaboration" : ""}`}>
           {/* 会话栏常驻 DOM（同 Vue 版 AgentChatLayout）：收起靠宽度动画，
               从 DOM 摘掉会让中栏自动排进左列而塌成窄条。 */}
           <div className={`agent-layout__left${sessionsCollapsed ? " is-collapsed" : ""}`}>
@@ -330,6 +369,27 @@ export function AgentPage() {
           </div>
 
           <div className={`agent-main${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
+            {collaborationEnabled && <div className="collab-toolbar">
+              <button type="button" className="collab-button" onClick={() => setSessionsCollapsed(!sessionsCollapsed)} aria-expanded={!sessionsCollapsed}>{sessionsCollapsed ? "展开会话" : "收起会话"}</button>
+              <p>问答与协作 · 影像提交后启动</p>
+              {!searchParams.get("runId") && <button type="button" className="collab-button" onClick={() => {
+                if (collaborationOpen) { clearSelectedRun(); setSubmissionOpen(false) }
+                else { setSubmissionOpen(true); setPanelOpen(false) }
+              }}>{collaborationOpen ? "返回文字问答" : "影像协作"}</button>}
+            </div>}
+            {collaborationOpen && (searchParams.get("runId") ? <CollaborationWorkspace
+              imageUrl={submittedImage?.identity === userKey && submittedImage?.runId === collaboration.run?.snapshot.runId ? submittedImage?.url : undefined}
+              onClose={() => { clearSelectedRun(); setSubmissionOpen(false) }}
+            /> : <CollaborationTaskForm key={`${status}:${userKey}:${threadId}`} threadId={threadId}
+              ready={status === "authed"}
+              onAccepted={(snapshot, file) => {
+                if (threadIdRef.current !== snapshot.threadId) return
+                setSubmittedImage(file ? { identity: userKey, runId: snapshot.runId, url: URL.createObjectURL(file) } : null)
+                saveThreadId(userKey, snapshot.threadId)
+                setSearchParams({ runId: snapshot.runId, threadId: snapshot.threadId })
+                setSubmissionOpen(false)
+              }} />)}
+            <div className="agent-chat-region" hidden={collaborationOpen}>
             <MessageList
               messages={messages}
               loading={historyLoading}
@@ -396,6 +456,7 @@ export function AgentPage() {
                 </button>
               }
             />
+            </div>
 
             <ChatInput
               disabled={false}
@@ -405,7 +466,7 @@ export function AgentPage() {
             />
           </div>
 
-          {panelOpen && (
+          {panelOpen && !collaborationOpen && (
             <ResourcePanel
               open
               resources={resources}
@@ -450,5 +511,6 @@ export function AgentPage() {
       )}
 
     </div>
+    </CollaborationRunContext.Provider>
   )
 }

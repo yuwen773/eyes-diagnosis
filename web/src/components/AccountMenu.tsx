@@ -127,6 +127,17 @@ export function AccountMenu() {
         >
           诊断记录
         </Link>
+        {["doctor", "admin"].includes(user.userRole ?? "") &&
+          import.meta.env.VITE_COLLABORATION_ENABLED === "true" && (
+            <Link
+              role="menuitem"
+              className="acct__item"
+              to="/doctor-reviews"
+              onClick={() => setOpen(false)}
+            >
+              医生复核
+            </Link>
+          )}
         <button
           role="menuitem"
           type="button"

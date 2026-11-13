@@ -96,4 +96,28 @@ class SameOriginFilterTest {
         filter.doFilter(request("POST", "null", null), response, chain);
         assertEquals(403, response.getStatus());
     }
+
+    @Test
+    void viteDevProxyRequestIsAcceptedWithoutDisablingTheFilter() throws Exception {
+        // TASK-08B：前端 dev 用 Vite 代理（5173→8081，changeOrigin 改写 Host），
+        // vite.config.ts 显式把 Origin 改写为 target（http://localhost:8081），
+        // 到达后端时是同源请求——过滤器保持开启即可放行，不存在「为了跨域关过滤器」。
+        MockHttpServletRequest proxied = request("POST", "http://localhost:8081", null);
+        proxied.setServerName("localhost");
+        proxied.setServerPort(8081);
+        filter.doFilter(proxied, response, chain);
+        verify(chain).doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void proxiedPortMismatchIsStillRejected() throws Exception {
+        // 若 dev server 换端口而代理头没有跟着改（Origin: 8081 vs Host 5199），
+        // 过滤器必须拒绝——端口混淆不能因为代理而放行。
+        MockHttpServletRequest stale = request("POST", "http://localhost:8081", null);
+        stale.setServerName("localhost");
+        stale.setServerPort(5199);
+        filter.doFilter(stale, response, chain);
+        assertEquals(403, response.getStatus());
+        verify(chain, never()).doFilter(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
 }

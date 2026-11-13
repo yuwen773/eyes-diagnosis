@@ -11,6 +11,7 @@ import { NewsPage } from "@/pages/NewsPage"
 import { NewsDetailPage } from "@/pages/NewsDetailPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { RecordsPage } from "@/pages/RecordsPage"
+import { DoctorReviewsPage } from "@/pages/DoctorReviewsPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { RegisterPage } from "@/pages/RegisterPage"
 import { AdminGate } from "@/components/admin/AdminGate"
@@ -85,6 +86,7 @@ export function App() {
           <Route path="/news/:id" element={<NewsDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/records" element={<RecordsPage />} />
+          <Route path="/doctor-reviews" element={<DoctorReviewsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
