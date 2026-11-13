@@ -20,6 +20,7 @@ import {
 import { queryKeys } from "@/lib/queryKeys"
 import { useSession } from "@/lib/session"
 import {
+  canonicalClassName,
   classCode,
   confidencePercent,
   formatTimestamp,
@@ -268,7 +269,9 @@ export function RecordsPage() {
 
                     <span className="records__main">
                       <span className="records__disease">
-                        {item.aiRejected ? "AI 拒识" : item.result || "未给出判读结果"}
+                        {item.aiRejected
+                          ? "AI 拒识"
+                          : canonicalClassName(item.result ?? undefined) ?? item.result ?? "未给出判读结果"}
                         <span className="records__code num">{classCode(item.result ?? undefined)}</span>
                       </span>
                       <span className="records__meta">
