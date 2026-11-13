@@ -6,4 +6,7 @@
 @import "./styles/fault.css";
 
 /* admin / agent / news / records 由各自的路由模块自带：
-   没进后台的人不必下载管理端样式，首屏 CSS 也更小。 */
+   没进后台的人不必下载管理端样式，首屏 CSS 也更小。
+   例外是 markdown.css：.markdown-body 为编辑页预览、Agent 对话、公开页正文
+   共用，任何一条路由深链都可能直接渲染它，故放全局。 */
+@import "./styles/markdown.css";
