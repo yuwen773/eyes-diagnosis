@@ -16,6 +16,7 @@ import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { CollaborationRunContext, useCollaborationRun } from "@/hooks/useCollaborationRun"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
+import { downloadText, exportDescriptor, type ExportFormat } from "@/lib/sessionExport"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { MessageList } from "@/components/agent/MessageList"
@@ -38,26 +39,6 @@ const generateLocalId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
-
-/** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
-function safeFileName(name: string): string {
-  const cleaned = name.replace(/[\\/:*?"<>|]/g, "_").trim()
-  return cleaned || "会话"
-}
-
-/** Blob 下载：必须挂进 DOM 再点击，且 revoke 要等一拍，否则部分浏览器下载静默失败。 */
-function downloadText(content: string, filename: string, mime: string) {
-  const blob = new Blob([content], { type: mime })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = filename
-  a.style.display = "none"
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
-}
 
 export function AgentPage() {
   const { status, user } = useSession()
@@ -308,19 +289,14 @@ export function AgentPage() {
   )
 
   const handleExport = useCallback(
-    (id: string, format: "markdown" | "json") => {
+    (id: string, format: ExportFormat) => {
       void afterSessionChange(async () => {
         const content = await exportSession(id, format)
-        const session = sessions.find((s) => s.sessionId === id)
-        const base = safeFileName(session?.title || "会话")
-        downloadText(
-          content,
-          `${base}.${format === "json" ? "json" : "md"}`,
-          format === "json" ? "application/json" : "text/markdown",
-        )
+        const failure = downloadText(content, exportDescriptor(id, format))
+        if (failure) throw new Error(failure)
       })
     },
-    [afterSessionChange, sessions],
+    [afterSessionChange],
   )
 
   if (status === "loading") {

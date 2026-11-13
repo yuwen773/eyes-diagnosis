@@ -185,15 +185,17 @@ public class ChatHistoryService {
         if (!isSessionOwner(sessionId, userId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // Fail closed on unknown formats: otherwise "pdf" silently produces Markdown.
+        if (!"json".equalsIgnoreCase(format) && !"markdown".equalsIgnoreCase(format)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "仅支持 markdown 或 json 导出");
+        }
         List<AgentMessage> messages = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, 1000);
         AgentSession session = sessionMapper.selectBySessionId(sessionId);
 
         try {
-            if ("json".equalsIgnoreCase(format)) {
-                return exportAsJson(session, messages);
-            } else {
-                return exportAsMarkdown(session, messages);
-            }
+            return "json".equalsIgnoreCase(format)
+                    ? exportAsJson(session, messages)
+                    : exportAsMarkdown(session, messages);
         } catch (JsonProcessingException e) {
             log.error("导出会话失败, sessionId={}", sessionId, e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "导出失败");
