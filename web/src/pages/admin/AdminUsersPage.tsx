@@ -30,9 +30,12 @@ import {
   USER_ROLE_ASSIGN_OPTIONS,
   USER_ROLE_FILTER_OPTIONS,
 } from "@/lib/adminDomain"
+import { formatTimestamp } from "@/lib/domain"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
+
+import "@/styles/admin-polish-ledger.css"
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -63,14 +66,28 @@ const EMPTY_FORM: UserForm = {
   userPassword: "",
 }
 
-/** 角色 chip：管理员用管理紫（身份），封禁用医学危险色，普通用户用中性。 */
+/**
+ * 角色 chip：管理员是管理紫（身份语义，不是医学风险），普通用户 / 已封禁走
+ * --risk-* 语义色（账号正常 / 账号被封）。三种状态一律「描边 chip + 圆点 +
+ * 文字标签」，颜色永远不是唯一的信息载体。
+ */
 function RoleChip({ role }: { role?: string | null }) {
   const view = userRoleView(role)
   const tone =
-    role === "admin" ? "admin" : role === "ban" ? "critical" : "mute"
+    role === "admin" ? "admin" : view.risk === "unknown" ? "mute" : view.risk
+  const protectedAdmin = role === "admin"
   return (
-    <span className="admin-chip" data-tone={tone}>
-      {view.label}
+    <span className="admin-users__rolecell">
+      <span
+        className="admin-chip"
+        data-tone={tone}
+        title={protectedAdmin ? "管理员账号受保护，不可删除、不会进入批量降级" : undefined}
+      >
+        {view.label}
+      </span>
+      {protectedAdmin ? (
+        <span className="admin-users__protected">账号受保护</span>
+      ) : null}
     </span>
   )
 }
@@ -88,7 +105,6 @@ export function AdminUsersPage(): ReactElement {
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [accountDraft, setAccountDraft] = useState("")
   const [nameDraft, setNameDraft] = useState("")
-  const [roleDraft, setRoleDraft] = useState("")
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
   const [query, setQuery] = useState<Query>({
@@ -151,7 +167,7 @@ export function AdminUsersPage(): ReactElement {
     setQuery({
       userAccount: accountDraft.trim(),
       userName: nameDraft.trim(),
-      userRole: roleDraft,
+      userRole: query.userRole,
       startDate: startDraft,
       endDate: endDraft,
     })
@@ -162,7 +178,6 @@ export function AdminUsersPage(): ReactElement {
   function onReset() {
     setAccountDraft("")
     setNameDraft("")
-    setRoleDraft("")
     setStartDraft("")
     setEndDraft("")
     setActionError(null)
@@ -170,6 +185,17 @@ export function AdminUsersPage(): ReactElement {
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
     setSort(null)
+  }
+
+  /**
+   * 角色段控件：点一下即刻生效（枚举筛选不该再多一次「查询」），
+   * 与文本 / 日期字段的「打字不触发请求」分工明确。
+   */
+  function applyRoleFilter(value: string) {
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, userRole: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -334,7 +360,7 @@ export function AdminUsersPage(): ReactElement {
     {
       key: "userAccount",
       title: "用户",
-      width: "268px",
+      width: "272px",
       sortable: true,
       render: (row) => {
         const name = row.userName || row.userAccount || "未命名"
@@ -350,7 +376,15 @@ export function AdminUsersPage(): ReactElement {
             <span className="admin-user-cell__text">
               <span className="admin-user-cell__name">{name}</span>
               <span className="admin-user-cell__sub">
-                {row.userAccount || "—"} · {row.id}
+                {row.userAccount || "—"}
+                {row.id ? (
+                  // 雪花 id 与分隔点一起包起来：窄屏卡片里整段藏掉，
+                  // 免得截成半个 id（"9223372036854…"）反而读不出是什么。
+                  <span className="admin-users__idwrap" title={row.id}>
+                    {" · "}
+                    <span className="admin-users__id">{row.id}</span>
+                  </span>
+                ) : null}
               </span>
               {/* 简介多数为空，单开一列会留下整列「—」；有内容时并入身份块。 */}
               {row.userProfile ? (
@@ -366,16 +400,17 @@ export function AdminUsersPage(): ReactElement {
     {
       key: "userRole",
       title: "角色",
-      width: "116px",
+      width: "128px",
       sortable: true,
       render: (row) => <RoleChip role={row.userRole} />,
     },
     {
       key: "createTime",
       title: "创建时间",
-      width: "180px",
+      width: "168px",
       mono: true,
       sortable: true,
+      render: (row) => formatTimestamp(row.createTime),
     },
     {
       key: "action",
@@ -478,7 +513,31 @@ export function AdminUsersPage(): ReactElement {
             </div>
           </div>
           {showFields ? (
-          <div className="admin-filter__fields">
+          <>
+            {/* 角色：枚举筛选用段控件，点一下即生效，少一次「查询」。 */}
+            <div className="admin-ledger__group">
+              <span className="admin-ledger__grouplabel" id="admin-users-role-label">
+                角色 · ROLE
+              </span>
+              <div
+                className="admin-ledger__chips"
+                role="group"
+                aria-labelledby="admin-users-role-label"
+              >
+                {USER_ROLE_FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className="admin-ledger__chip"
+                    aria-pressed={query.userRole === option.value}
+                    onClick={() => applyRoleFilter(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="admin-filter__fields">
           <label className="admin-users__field">
             <span className="admin-users__label">账号 · ACCOUNT</span>
             <input
@@ -501,21 +560,8 @@ export function AdminUsersPage(): ReactElement {
               aria-label="用户名"
             />
           </label>
-          <label className="admin-users__field admin-users__field--narrow">
-            <span className="admin-users__label">角色 · ROLE</span>
-            <select
-              className="admin-users__input"
-              value={roleDraft}
-              onChange={(event) => setRoleDraft(event.target.value)}
-              aria-label="角色"
-            >
-              {USER_ROLE_FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* 起止日期成对换行：拆到两行会让「自」和「至」分家。 */}
+          <div className="admin-ledger__daterange">
           <label className="admin-users__field admin-users__field--narrow">
             <span className="admin-users__label">注册自 · FROM</span>
             <input
@@ -537,6 +583,8 @@ export function AdminUsersPage(): ReactElement {
             />
           </label>
           </div>
+            </div>
+          </>
           ) : null}
         </form>
       </section>

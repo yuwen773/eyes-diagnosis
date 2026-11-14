@@ -1,0 +1,297 @@
+/* ==========================================================================
+   Iris 2.1 · R3.3 · 数据分析页专有样式
+   --------------------------------------------------------------------------
+   只服务 /admin/data-analysis。它复用管理端既有令牌（--admin-* / --fg-* /
+   --viz-* / --risk-*）与既有原语（.admin-metric-strip / .admin-bento /
+   .admin-viz / .feature-card），不新增第二套按钮、分段控件或卡片语言。
+
+   两处与旧版不同：
+   1. 小倍数单元格从「标题 + 折线 + 末值」改成「短码 + 中文名 + 窗口内合计
+      + 形状 + 峰值/日均脚注」——末值常常落在没有判读的那一天，读出来是 0，
+      会让人误以为这批病种清零了。
+   2. 口径带（.admin-analysis__ledger）从一行小字改成一条有边界的横带：
+      仍然克制，但读起来是「这一页所有读数的口径」，不是页脚残渣。
+   ========================================================================== */
+
+/* 小倍数单元格的形状与读数样式在 admin.css（它是共享的图表原语，
+   六个病种格与记录纸同源，不该由某一页私藏）。 */
+
+/* ── 病种趋势卡：小倍数栅格自带内边距 ──────────────────────── */
+
+/* 图表卡体的内边距由内容自己给（栅格要贴边排），这里收掉外层留白。 */
+.admin-viz__body--flush {
+  padding: 0;
+}
+
+/* ── 小倍数栅格：自适应列宽，小倍数就该小 ──────────────────── */
+
+/* auto-fit + minmax：容器能放几列就放几列，六个病种在宽屏自然并成一条带，
+   在窄屏自动折成两列或一列——不需要为每个断点手写列数。 */
+.admin-analysis__grid--trend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+/* ── 重点卡里的复核状态构成 ────────────────────────────────── */
+
+/* 构成表的口径标题：这组数字覆盖的是窗口内全部判读，不是上面那个积压数。
+   标题必须写清楚范围，否则四行会被读成积压的分解。 */
+.admin-analysis .feature-card__breakdown-title {
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  opacity: 0.72;
+}
+
+/* 构成行：名称与读数一行，发丝线分隔。颜色随卡片变体走（紫面 / 中性面）。 */
+.admin-analysis .feature-card__breakdown {
+  display: grid;
+  gap: 9px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-analysis .feature-card__breakdown li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.admin-analysis .feature-card__breakdown li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.admin-analysis .feature-card__breakdown-name {
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.82;
+}
+
+.admin-analysis .feature-card__breakdown-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+  flex: none;
+}
+
+/* ── 运营底盘：状态读数表 ──────────────────────────────────── */
+
+.admin-analysis__base-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+/* 运营底盘与同排的图表卡等高时，读数居中留白，不堆在顶部——
+   否则卡尾会留一段说不清是留白还是漏了东西的空白。 */
+.admin-analysis__base {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-analysis__base .panel__body {
+  flex: 1 1 auto;
+  display: grid;
+  align-content: center;
+}
+
+.admin-analysis__status-title {
+  margin: 0 0 10px;
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--admin-text-faint);
+}
+
+.admin-analysis__status-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-analysis__status-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 46px 46px;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-analysis__status-name {
+  font-size: 12.5px;
+  color: var(--admin-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 细条：第二通道，不是主读数。 */
+.admin-analysis__status-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--admin-surface-deep);
+  overflow: hidden;
+}
+
+.admin-analysis__status-track > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--viz-mute);
+}
+
+.admin-analysis__status-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text);
+  text-align: right;
+}
+
+.admin-analysis__status-value i {
+  margin-left: 2px;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--admin-text-faint);
+}
+
+.admin-analysis__status-share {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--admin-text-faint);
+  text-align: right;
+}
+
+/* ── 口径带 ────────────────────────────────────────────────── */
+
+.admin-analysis__ledger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 32px;
+  margin: 20px 0 0;
+  padding: 14px 20px;
+  border: 1px solid var(--admin-line-soft);
+  border-left: 3px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.admin-analysis__ledger > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-analysis__ledger dt {
+  font-family: var(--font-brand);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--admin-text-faint);
+  white-space: nowrap;
+}
+
+.admin-analysis__ledger dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text);
+  white-space: nowrap;
+}
+
+.admin-analysis__ledger dd span {
+  margin-left: 5px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--admin-text-muted);
+}
+
+/* ── 版心约束 ──────────────────────────────────────────────── */
+
+/* 旧版把分析页的图卡限宽在 1200px，是为「一列长尺」的排版留下的。
+   现在图卡进 Bento 栅格，宽度由栅格决定——限宽会让半行留白。 */
+.admin-analysis .admin-viz {
+  max-width: none;
+}
+
+/* 分析页的 Bento 行距比仪表盘略松一档：这一页的卡片更高、读数更多。 */
+.admin-analysis .admin-bento {
+  gap: 18px;
+}
+
+/* ── 窄屏 ──────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .admin-analysis__grid--trend {
+    padding: 14px;
+  }
+
+  /* 运营底盘的两列读数表在窄屏折成一列。 */
+  .admin-analysis__base-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-analysis__grid--trend {
+    padding: 12px;
+  }
+
+  .admin-analysis__ledger {
+    gap: 8px 20px;
+    padding: 12px 14px;
+  }
+
+  .admin-analysis__ledger > div {
+    flex-wrap: wrap;
+  }
+
+  /* 窄屏读数表：名称独占一行，细条与两个读数收在第二行。 */
+  .admin-analysis__status-list li {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "name name name"
+      "track value share";
+    gap: 4px 10px;
+  }
+
+  .admin-analysis__status-name {
+    grid-area: name;
+  }
+
+  .admin-analysis__status-track {
+    grid-area: track;
+  }
+
+  .admin-analysis__status-value {
+    grid-area: value;
+  }
+
+  .admin-analysis__status-share {
+    grid-area: share;
+  }
+}

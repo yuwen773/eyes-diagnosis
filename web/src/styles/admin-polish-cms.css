@@ -1,0 +1,982 @@
+/* ==========================================================================
+   Iris 2.1 · 管理端内容与知识精修（CMS 三页）
+   --------------------------------------------------------------------------
+   只服务三个页面：新闻管理（AdminNewsPage）/ 知识库（AdminKnowledgePage）/
+   新闻编辑（AdminNewsEditPage）。
+
+   与 admin.css / admin-redesign.css 的同名类冲突一律用「页面作用域 + 更具体
+   的选择器」压过，不依赖样式表的加载顺序（组件各自 import，顺序不定）。
+
+   纪律（与仓库 CLAUDE.md 一致）：
+   - 只吃 --admin-* / --risk-* 令牌，零写死色值；双主题随 html.dark 自动翻。
+   - 圆角只走令牌梯（--admin-radius-* / --radius-*），不写自由像素值。
+   - 数字 / 时间 / 百分比一律等宽（.num / --font-mono）。
+   - 状态色必须同时带文字标签；颜色不是唯一信息载体。
+   - 窄屏（≤640px）把台账行卡片化：一条记录一屏可读，横向滚动消失。
+
+   窄屏卡片化用 :nth-child 定位表格里的每一格。这一列顺序与
+   AdminNewsPage / AdminKnowledgePage 的 columns 定义一一对应；改动那份
+   列定义时必须同步改这里的定位块，否则窄屏会串位。
+   ========================================================================== */
+
+/* ── 共用：台账格 ─────────────────────────────────────────────
+   标题为主、摘要为次的两级排版。标题允许两行、摘要允许两行，
+   行高由内容撑开（下面的 min-height 兜底），不裁字、不撑破行高。 */
+
+.admin-cms__titlecell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-cms__titlecell__main {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--admin-text);
+  overflow-wrap: anywhere;
+}
+
+.admin-cms__titlecell__sub {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--admin-text-faint);
+  overflow-wrap: anywhere;
+}
+
+/* 状态：RiskTag 的语义色 + 一层同色淡底。色点与文字都在，
+   颜色只是第三重信息，不承担唯一区分职责。 */
+
+.admin-cms__status {
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-cms__status .risk {
+  padding: 3px 10px 3px 9px;
+  border-radius: var(--admin-radius-control);
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  letter-spacing: 0.1em;
+}
+
+.admin-cms__statuscell {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  min-width: 0;
+}
+
+/* 下架原因：审核留痕，挂在状态下面，不另开一列。 */
+
+.admin-cms__statusreason {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
+}
+
+/* 元信息格：作者（主）+ 发布时间（次，等宽）。 */
+
+.admin-cms__metacell {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-cms__metacell__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--admin-text);
+}
+
+.admin-cms__metacell__time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--admin-text-faint);
+}
+
+/* 文件格：类型图标 + 文件名（主）+ 标题（次）。 */
+
+.admin-cms__filecell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-cms__filecell__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface-deep);
+  color: var(--admin-text-muted);
+}
+
+.admin-cms__filecell__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-cms__filecell__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.admin-cms__filecell__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--admin-text-faint);
+}
+
+/* 类型 + 体积：等宽读数，类型是短码，体积带单位。 */
+
+.admin-cms__typecell {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.admin-cms__typecell__code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--admin-text);
+}
+
+.admin-cms__typecell__size {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+/* 分块数：数字等宽，单位小字跟着数字走。 */
+
+.admin-cms__chunkcell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--admin-text);
+}
+
+.admin-cms__chunkcell__unit {
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+/* ── 共用：枚举筛选的段控件 ───────────────────────────────────
+   发布状态 / 处理状态这类「枚举筛选」用一排可点的段控件替掉下拉：
+   桌面端省一行高度，移动端一次点得中，也省掉「点开才知道有哪些值」的一跳。 */
+
+.admin-cms__chipsgroup {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-cms__chipslabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+.admin-cms__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-cms__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding-inline: 12px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.admin-cms__chip:hover:not([aria-pressed="true"]) {
+  border-color: var(--admin-text-faint);
+  color: var(--admin-text);
+}
+
+.admin-cms__chip:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.admin-cms__chip[aria-pressed="true"] {
+  background: var(--admin-primary-soft);
+  border-color: color-mix(in srgb, var(--admin-primary) 45%, transparent);
+  color: var(--admin-primary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   新闻管理
+   ========================================================================== */
+
+/* 筛选区：标题字段不再无限拉宽，窄字段按固定档位并排；
+   段控件独占一行，其余字段左对齐成一条紧凑工具条。 */
+
+.admin-news .admin-filter .admin-news__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-news .admin-filter .admin-news__fields {
+  display: grid;
+  grid-template-columns: minmax(220px, 420px) repeat(2, minmax(140px, 190px));
+  gap: 12px 14px;
+  align-items: end;
+}
+
+.admin-news .admin-news__field {
+  min-width: 0;
+}
+
+/* 段控件与文本字段之间一道发丝线：两类筛选各成一段，不糊成一片。 */
+
+.admin-news .admin-filter .admin-news__fields,
+.admin-knowledge .admin-filter .admin-filter__fields {
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-line);
+}
+
+/* 台账行：标题两行 + 摘要两行，行高由内容撑开，密度不低于 58px。 */
+
+.admin-news .admin-news__table .admin-dt__cell {
+  height: auto;
+  min-height: 58px;
+  vertical-align: top;
+}
+
+.admin-news .admin-news__table .admin-dt__cell--action {
+  vertical-align: middle;
+}
+
+/* 行内动作：一个主动作（编辑）+ 一个溢出菜单，不折行。 */
+
+.admin-news .admin-news__rowactions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* 主操作按钮：与全站行内主动作同一档（低饱和紫面），不抢页面主按钮。 */
+
+.admin-news .admin-news__rowactions .admin-btn--primary {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-news .admin-news__rowactions .admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+/* 表格下方的数据边界说明：与页脚小字同一口径。 */
+
+.admin-news .admin-news__footer {
+  margin: 20px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-line);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+/* ==========================================================================
+   知识库
+   ========================================================================== */
+
+/* 上传区：标题 + 支持格式 + 两个动作，一块独立面板。 */
+
+.admin-knowledge .admin-knowledge__upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px dashed var(--admin-line-strong);
+  border-radius: var(--admin-radius-card);
+  background: color-mix(in srgb, var(--admin-primary-soft) 38%, transparent);
+  transition:
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.admin-knowledge .admin-knowledge__upload[data-dragging="true"] {
+  border-color: var(--admin-accent);
+  background: color-mix(in srgb, var(--admin-primary-soft) 70%, transparent);
+}
+
+.admin-knowledge .admin-knowledge__upload-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-knowledge .admin-knowledge__upload-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: var(--admin-radius-control);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-primary);
+}
+
+.admin-knowledge .admin-knowledge__upload-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-knowledge .admin-knowledge__upload-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-knowledge .admin-knowledge__upload-hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-faint);
+}
+
+.admin-knowledge .admin-knowledge__upload-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* 待传清单：文件名 + 体积，移除按钮贴右。 */
+
+.admin-knowledge .admin-knowledge__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-knowledge .admin-knowledge__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 6px 5px 10px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  font-size: 12px;
+  color: var(--admin-text-muted);
+}
+
+.admin-knowledge .admin-knowledge__chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-knowledge .admin-knowledge__chip-size {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+.admin-knowledge .admin-knowledge__chip-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--admin-text-faint);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--fast),
+    background var(--fast);
+}
+
+.admin-knowledge .admin-knowledge__chip-remove:hover {
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
+}
+
+/* 拖放 / 类型提示：一行读数，失败时给明确说法。 */
+
+.admin-knowledge .admin-knowledge__dropnote {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--admin-text-muted);
+}
+
+/* 处理中条：文件名单独一行，状态在右。 */
+
+.admin-knowledge .admin-knowledge__processing {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-card);
+  background: var(--admin-surface);
+}
+
+/* 台账行：文档名两行 + 元信息，行高由内容撑开。 */
+
+.admin-knowledge .admin-knowledge__table .admin-dt__cell {
+  height: auto;
+  min-height: 58px;
+  vertical-align: top;
+}
+
+.admin-knowledge .admin-knowledge__table .admin-dt__cell--action {
+  vertical-align: middle;
+}
+
+.admin-knowledge .admin-knowledge__rowactions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.admin-knowledge .admin-knowledge__rowactions .admin-btn--primary {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-knowledge .admin-knowledge__rowactions .admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+/* ==========================================================================
+   新闻编辑
+   ========================================================================== */
+
+/* 工作台版心：编辑区与发布设置栏的比例。
+   断点沿用 admin-redesign.css 的那套（≤1280 收窄右栏、≤1100 折成单列）——
+   这里必须把三条断点都写全：只写桌面档会用两栏栅格盖掉 ≤1100 的单列规则，
+   390px 下编辑区会被挤成一条竖缝。
+   :not(--preview) 让预览态沿用 admin-news-preview.css 的单列画布，
+   不靠样式表先后顺序决胜负。 */
+.admin-newsedit .admin-newsedit__workspace:not(.admin-newsedit__workspace--preview) {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+@media (max-width: 1280px) {
+  .admin-newsedit .admin-newsedit__workspace:not(.admin-newsedit__workspace--preview) {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .admin-newsedit .admin-newsedit__workspace:not(.admin-newsedit__workspace--preview) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1600px) {
+  .admin-newsedit .admin-newsedit__workspace:not(.admin-newsedit__workspace--preview) {
+    grid-template-columns: minmax(0, 1fr) 348px;
+  }
+}
+
+/* 视图切换：分段控件。当前段是实心纸面，其余段只有字。 */
+
+.admin-newsedit .admin-newsedit__tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface-deep);
+}
+
+.admin-newsedit .admin-newsedit__tab {
+  padding: 6px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.admin-newsedit .admin-newsedit__tab:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--admin-surface) 70%, transparent);
+  color: var(--admin-text);
+}
+
+.admin-newsedit .admin-newsedit__tab[aria-selected="true"] {
+  border-color: var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-weight: 600;
+  box-shadow: var(--admin-shadow-card);
+}
+
+/* 保存状态读数：色点 + 文字。色点只表示「有没有待保存」，
+   真正的状态是那行字——颜色不是唯一信息载体。 */
+
+.admin-newsedit .admin-newsedit__save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface-deep);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--admin-text-muted);
+}
+
+.admin-newsedit .admin-newsedit__dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: var(--radius-circle);
+  background: var(--admin-text-faint);
+}
+
+.admin-newsedit .admin-newsedit__dot[data-state="dirty"] {
+  background: var(--risk-attention);
+}
+
+.admin-newsedit .admin-newsedit__dot[data-state="saving"] {
+  background: var(--admin-primary);
+}
+
+.admin-newsedit .admin-newsedit__dot[data-state="saved"] {
+  background: var(--risk-normal);
+}
+
+/* 标题输入：正文的门面，字号与字族跟文章标题同一套。 */
+
+.admin-newsedit .admin-newsedit__input--title {
+  height: 54px;
+  border-radius: var(--admin-radius-control);
+  font-family: var(--font-brand);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  padding-inline: 14px;
+}
+
+/* 引导条：一条说明，不是横幅。左缘一道线 + 淡底即可。 */
+
+.admin-newsedit .admin-newsedit__guide {
+  margin: 0 0 14px;
+  padding: 7px 12px;
+  border-left: 2px solid var(--admin-line-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: color-mix(in srgb, var(--admin-surface-deep) 55%, transparent);
+  font-size: 11.5px;
+  color: var(--admin-text-muted);
+}
+
+/* 编辑器：工具条与正文之间的一条发丝线，工具条按钮同一档。 */
+
+.admin-newsedit .w-md-editor-toolbar {
+  padding: 5px 8px;
+  background: var(--admin-surface-deep);
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button {
+  color: var(--admin-text-muted);
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-newsedit .w-md-editor-toolbar li > button:disabled {
+  color: var(--admin-text-faint);
+  opacity: 0.5;
+}
+
+.admin-newsedit .w-md-editor-text,
+.admin-newsedit .w-md-editor-text-input,
+.admin-newsedit .w-md-editor-text-pre > code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+/* 预览：摘要提示降为一行读数，不再是一条紫色横幅。 */
+
+.admin-newsedit .admin-newsedit__preview-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface-deep);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--admin-text-muted);
+}
+
+.admin-newsedit .admin-newsedit__preview-summary > span:first-child {
+  color: var(--admin-text-faint);
+}
+
+.admin-newsedit .admin-newsedit__preview-summary-old {
+  color: var(--admin-text-faint);
+}
+
+/* 长文章的预览画布：内部滚动，页面不被撑成一条看不到头的长卷。 */
+
+.admin-newsedit .admin-newsedit__preview-stage {
+  max-height: min(72vh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 封面：空位与有图共用一个 16:9 框，框内有一行读数。 */
+
+.admin-newsedit .admin-newsedit__cover-thumb,
+.admin-newsedit .admin-newsedit__cover-empty {
+  border-radius: var(--admin-radius-control);
+}
+
+.admin-newsedit .admin-newsedit__cover-empty {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--admin-text-faint);
+}
+
+/* 发布设置栏的读数：标题与行距收紧，数字仍等宽。 */
+
+.admin-newsedit .admin-newsedit__meta-row {
+  align-items: baseline;
+  gap: 10px;
+}
+
+.admin-newsedit .admin-newsedit__meta-row b {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   知识库 · 文档工作区
+   --------------------------------------------------------------------------
+   原文与 RAG 切片必须是两个独立的信息区域：右栏给一层与纸面不同的底色，
+   两栏之间那道发丝线加重成实线——一眼能看出「这是检索切片，不是原文」。
+   ========================================================================== */
+
+.admin-doc__pane--chunks {
+  background: color-mix(in srgb, var(--admin-surface-deep) 42%, var(--admin-surface));
+}
+
+.admin-doc__pane--chunks .admin-doc__pane-head {
+  background: color-mix(in srgb, var(--admin-surface-deep) 62%, var(--admin-surface));
+}
+
+.admin-doc__pane--reader {
+  border-right-color: var(--admin-line-strong);
+}
+
+/* ==========================================================================
+   窄屏卡片化台账（≤ 900px）
+   --------------------------------------------------------------------------
+   横向滚动的宽表在 768px 下会把「处理状态」盖成半截（钉在右缘的操作列正好
+   压住它），390px 下更只剩「标题 + 操作」两列，多条记录长得一模一样。
+   900px 以下把每一行改写成一张卡片：一屏能读完这条记录，动作可达，
+   勾选框保留在卡片左上角。断点与 admin-polish-ledger.css（诊断 / 用户台账）
+   一致，四本台账在同一个宽度上换同一种形态。桌面端表格形态完全不变。
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* 表格退成块级流，卡片自己排版；横向滚动与右缘渐隐提示一并撤掉。 */
+  .admin-news .admin-news__table .admin-dt__table,
+  .admin-knowledge .admin-knowledge__table .admin-dt__table {
+    min-width: 0 !important;
+    display: block;
+  }
+
+  .admin-news .admin-news__table .admin-dt__scroll,
+  .admin-knowledge .admin-knowledge__table .admin-dt__scroll {
+    overflow-x: visible;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  .admin-news .admin-news__table thead,
+  .admin-knowledge .admin-knowledge__table thead {
+    display: none;
+  }
+
+  .admin-news .admin-news__table tbody,
+  .admin-knowledge .admin-knowledge__table tbody {
+    display: block;
+  }
+
+  /* 钉在右缘的操作列在卡片形态下没有意义：撤掉 sticky 与固定列宽。 */
+  .admin-news .admin-news__table .admin-dt__cell--action,
+  .admin-news .admin-news__table .admin-dt__head--action,
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell--action,
+  .admin-knowledge .admin-knowledge__table .admin-dt__head--action {
+    position: static !important;
+    width: auto !important;
+    min-width: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    z-index: auto !important;
+  }
+
+  .admin-news .admin-news__table .admin-dt__row,
+  .admin-knowledge .admin-knowledge__table .admin-dt__row {
+    position: relative;
+    display: grid;
+    align-items: start;
+    gap: 6px 10px;
+    padding: 14px 14px 12px;
+    border-bottom: 1px solid var(--admin-line);
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell,
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell {
+    display: block;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    vertical-align: top;
+  }
+
+  /* ── 资讯卡片：勾选 / 标题摘要 / 状态 / 作者时间 / 操作 ──
+     列顺序与 AdminNewsPage 的 columns 一致：标题 → 状态 → 作者/发布时间 →
+     操作（第一格是 DataTable 的勾选列）。 */
+
+  .admin-news .admin-news__table .admin-dt__row {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell:nth-child(3) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell:nth-child(4) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .admin-news .admin-news__table .admin-dt__cell:nth-child(5) {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+    align-self: end;
+  }
+
+  .admin-news .admin-news__table .admin-dt__row-actions {
+    justify-content: flex-end;
+  }
+
+  /* ── 文档卡片：勾选 / 文档 / 状态 / 类型体积 / 分块数 / 时间 / 操作 ──
+     列顺序与 AdminKnowledgePage 的 columns 一致：文档 → 类型/大小 →
+     分块数 → 状态 → 上传时间 → 操作。 */
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__row {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(4) {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(5) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(6) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(7) {
+    grid-column: 3;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  .admin-knowledge .admin-knowledge__table .admin-dt__row-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* 390px 档再收一档：筛选字段单列、上传区上下两段。 */
+
+@media (max-width: 640px) {
+  /* 筛选字段在窄屏排成单列：一次一个，不挤成两行半。 */
+  .admin-news .admin-filter .admin-news__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 上传区在窄屏改成上下两段：说明在上，动作在下。 */
+  .admin-knowledge .admin-knowledge__upload {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .admin-knowledge .admin-knowledge__upload-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* ==========================================================================
+   窄屏：新闻编辑
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  /* 编辑器在手机上留半屏就够：正文长了往里滚，别把设置挤到屏幕外。 */
+  .admin-newsedit .w-md-editor {
+    height: 320px !important;
+    min-height: 320px;
+  }
+
+  /* 工具栏按钮在窄屏换行排布，避免被裁掉一半。 */
+  .admin-newsedit .w-md-editor-toolbar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  /* 三条脚注太长，窄屏只留前两条。 */
+  .admin-newsedit__editor-hint span:last-child {
+    display: none;
+  }
+
+  .admin-newsedit__editor-hint {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* 视图切换与保存状态各占一行，保存按钮不被挤扁。 */
+  .admin-newsedit .admin-newsedit__topbar {
+    gap: 10px;
+  }
+
+  .admin-newsedit .admin-newsedit__save-state {
+    order: 3;
+    margin-right: 0;
+  }
+
+  .admin-newsedit .admin-newsedit__save {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .admin-newsedit .admin-newsedit__input--title {
+    height: 48px;
+    font-size: 18px;
+  }
+}

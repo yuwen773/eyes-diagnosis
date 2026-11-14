@@ -1,7 +1,19 @@
+import "@/styles/admin-polish-cms.css"
+
 import { useMemo, useState, type FormEvent, type ReactElement } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { ChevronDown, ChevronUp, Newspaper, Pencil, Trash2 } from "lucide-react"
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  EyeOff,
+  FileClock,
+  Newspaper,
+  Pencil,
+  Send,
+  Trash2,
+} from "lucide-react"
 
 import { useMediaQuery } from "@/lib/useMediaQuery"
 
@@ -11,6 +23,7 @@ import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
 import { Modal } from "@/components/admin/Modal"
 import { BatchBar } from "@/components/admin/BatchBar"
+import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import {
   changeNewsStatusBatch,
@@ -21,33 +34,67 @@ import {
   type BatchResult,
   type NewsQuery,
 } from "@/lib/adminApi"
-import { newsStatusView, NEWS_STATUS_OPTIONS } from "@/lib/adminDomain"
+import {
+  newsStatusOptionsFor,
+  newsStatusView,
+  NEWS_STATUS_OPTIONS,
+} from "@/lib/adminDomain"
+import { newsExcerpt } from "@/lib/news"
 import { describeError, type ErrorDetail } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
-const SUMMARY_LIMIT = 40
+const SUMMARY_LIMIT = 96
 
 /** 已应用的筛选条件。 */
 type Query = { title: string; status: string; startDate: string; endDate: string }
 type Params = NewsQuery
 
-/** 摘要截 40 字，超出补「…」；空值走表格统一的「—」占位。 */
+/** 摘要截 96 字，超出补「…」；没有摘要时从正文开头取一段。 */
 function truncateSummary(value?: string): string {
   if (!value) return "—"
   return value.length > SUMMARY_LIMIT ? `${value.slice(0, SUMMARY_LIMIT)}…` : value
 }
 
-/** 发布状态 chip：业务状态走中性 / 注意 / 危险语义，不用管理紫冒充医学风险。 */
-function NewsStatusChip({ status }: { status?: number | null }) {
+/**
+ * 状态动作的措辞与图标。
+ *
+ * 只覆盖后端状态机里真实存在的四个值（0 草稿 / 3 待审核 / 1 已发布 / 2 下架）；
+ * 可选的目标状态一律由 newsStatusOptionsFor 给出，这里只管怎么写、画什么。
+ */
+const NEWS_STATUS_ACTION: Record<
+  number,
+  { verb: string; menu: string; icon: ReactElement }
+> = {
+  0: {
+    verb: "转为草稿",
+    menu: "转为草稿",
+    icon: <FileClock size={14} strokeWidth={2} aria-hidden="true" />,
+  },
+  1: {
+    verb: "发布",
+    menu: "发布资讯",
+    icon: <CheckCircle2 size={14} strokeWidth={2} aria-hidden="true" />,
+  },
+  2: {
+    verb: "下架",
+    menu: "下架资讯",
+    icon: <EyeOff size={14} strokeWidth={2} aria-hidden="true" />,
+  },
+  3: {
+    verb: "送审",
+    menu: "提交审核",
+    icon: <Send size={14} strokeWidth={2} aria-hidden="true" />,
+  },
+}
+
+/** 发布状态标签：语义色 + 文字，颜色只是第三重信息。 */
+function NewsStatusTag({ status }: { status?: number | null }) {
   const view = newsStatusView(status)
-  // 已发布 / 待审核 / 已下架 / 草稿：下架是业务状态而非医学风险，
-  // 用中性色，把 --risk-* 留给真正需要警示的失败与严重度。
-  const tone = status === 1 ? "normal" : status === 3 ? "attention" : "mute"
   return (
-    <span className="admin-chip" data-tone={tone}>
-      {view.label}
+    <span className="admin-cms__status">
+      <RiskTag risk={view.risk}>{view.label}</RiskTag>
     </span>
   )
 }
@@ -93,6 +140,8 @@ export function AdminNewsPage(): ReactElement {
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
+  // 单行状态迁移中的行 id：那一行的菜单项置灰，避免连点重复提交。
+  const [statusBusy, setStatusBusy] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
 
@@ -147,6 +196,42 @@ export function AdminNewsPage(): ReactElement {
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
     setSort(null)
+  }
+
+  /**
+   * 状态段控件：点一下即生效，不用再按「查询」。
+   * 只改状态这一项，其余已应用的筛选保持不变。
+   */
+  function applyStatusFilter(value: string) {
+    setStatusDraft(value)
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, status: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
+  /** 单行状态迁移：合法目标状态由 newsStatusOptionsFor 给出，后端再校验一次。 */
+  async function changeStatus(row: AdminNews, status: number) {
+    const id = row.id
+    if (!id || statusBusy) return
+    setStatusBusy(id)
+    setActionError(null)
+    setActionNote(null)
+    try {
+      const result = await changeNewsStatusBatch([id], status)
+      const failed = result.failed ?? 0
+      if (failed > 0) {
+        // 非法迁移由后端逐条裁决：这里如实回执，不假装成功。
+        setActionNote(`状态未变更：${result.message ?? "该状态不允许此迁移"}`)
+      } else {
+        setActionNote(`${newsStatusView(status).label}：1 篇已更新。`)
+        await refreshNews()
+      }
+    } catch (cause) {
+      setActionError(describeError(cause))
+    } finally {
+      setStatusBusy(null)
+    }
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -223,54 +308,97 @@ export function AdminNewsPage(): ReactElement {
       key: "title",
       title: "标题 / 摘要",
       sortable: true,
-      render: (row) => (
-        <div className="admin-title-cell">
-          <span className="admin-title-cell__main">{row.title || "未命名资讯"}</span>
-          <span className="admin-title-cell__sub">{truncateSummary(row.summary)}</span>
-        </div>
-      ),
+      render: (row) => {
+        // 摘要在后端就有（正文前 30 字）；没有摘要的老数据从正文开头取一段，
+        // 口径与公开页一致，不另编一段话。
+        const excerpt = newsExcerpt(row.content, row.summary, SUMMARY_LIMIT)
+        return (
+          <div className="admin-cms__titlecell">
+            <span className="admin-cms__titlecell__main">{row.title || "未命名资讯"}</span>
+            <span className="admin-cms__titlecell__sub" title={excerpt || undefined}>
+              {truncateSummary(excerpt)}
+            </span>
+          </div>
+        )
+      },
     },
     {
       key: "status",
-      title: "状态",
-      width: "104px",
+      title: "发布状态",
+      // 列宽用百分比：表格随视口变宽时各列按比例走，标题列不会独吞
+      // 整条余量（1920 档尤其明显），窄屏换卡片后这些宽度整体失效。
+      width: "13%",
       sortable: true,
       // status 由后端 NewsVO 暴露（0 草稿 / 3 待审核 / 1 已发布 / 2 下架）；缺省读「未知」。
-      render: (row) => <NewsStatusChip status={row.status} />,
+      render: (row) => (
+        <div className="admin-cms__statuscell">
+          <NewsStatusTag status={row.status} />
+          {/* 下架原因：审核留痕，挂在状态下面，不另开一列。 */}
+          {row.status === 2 && row.offlineReason ? (
+            <span className="admin-cms__statusreason" title={row.offlineReason}>
+              {row.offlineReason}
+            </span>
+          ) : null}
+        </div>
+      ),
     },
-    { key: "author", title: "作者", width: "120px" },
-    { key: "publishTime", title: "发布时间", width: "176px", mono: true, sortable: true },
+    {
+      key: "publishTime",
+      title: "作者 / 发布时间",
+      width: "18%",
+      sortable: true,
+      render: (row) => (
+        <div className="admin-cms__metacell">
+          <span className="admin-cms__metacell__name">{row.author || "未署名"}</span>
+          <span className="admin-cms__metacell__time num">{row.publishTime || "—"}</span>
+        </div>
+      ),
+    },
     {
       key: "action",
       title: "操作",
-      width: "128px",
-      render: (row) => (
-        <div className="admin-dt__row-actions">
-          {/* 主动作（编辑）收进图标按钮：窄屏下文字版会把操作列撑到
-              盖住标题列；标签交给 title/aria-label。 */}
-          <button
-            type="button"
-            className="admin-btn admin-btn--primary admin-btn--icon-sm"
-            title="编辑资讯"
-            aria-label="编辑资讯"
-            onClick={() => navigate(`/admin/news/${row.id}/edit`)}
-          >
-            <Pencil size={14} strokeWidth={2} aria-hidden="true" />
-          </button>
-          <RowMenu
-            label={`更多资讯操作：${row.title || row.id}`}
-            items={[
-              {
-                label: "删除资讯",
-                icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
-                danger: true,
-                disabled: !row.id,
-                onSelect: () => openDelete(row),
-              },
-            ]}
-          />
-        </div>
-      ),
+      width: "12%",
+      render: (row) => {
+        // 可选目标状态只来自后端状态机：newsStatusOptionsFor 收窄，
+        // 不在这里自己造一条迁移表。
+        const targets = newsStatusOptionsFor(row.status).filter(
+          (option) => option.value !== row.status,
+        )
+        return (
+          <div className="admin-dt__row-actions admin-news__rowactions">
+            {/* 主动作（编辑）收进图标按钮：窄屏下文字版会把操作列撑到
+                盖住标题列；标签交给 title/aria-label。 */}
+            <button
+              type="button"
+              className="admin-btn admin-btn--primary admin-btn--icon-sm"
+              title="编辑资讯"
+              aria-label={`编辑资讯：${row.title || "未命名资讯"}`}
+              onClick={() => navigate(`/admin/news/${row.id}/edit`)}
+            >
+              <Pencil size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+            <RowMenu
+              label={`更多资讯操作：${row.title || row.id}`}
+              items={[
+                ...targets.map((option) => ({
+                  label: NEWS_STATUS_ACTION[option.value].menu,
+                  icon: NEWS_STATUS_ACTION[option.value].icon,
+                  disabled: !row.id || statusBusy === row.id,
+                  onSelect: () => changeStatus(row, option.value),
+                })),
+                "separator" as const,
+                {
+                  label: "删除资讯",
+                  icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
+                  danger: true,
+                  disabled: !row.id,
+                  onSelect: () => openDelete(row),
+                },
+              ]}
+            />
+          </div>
+        )
+      },
     },
   ]
 
@@ -344,8 +472,40 @@ export function AdminNewsPage(): ReactElement {
               </button>
             </div>
           </div>
+          {/* 发布状态是枚举：段控件一次点得中，不用先点开下拉才知道有哪些值。
+              这一段常驻可见——最常用的筛选不该藏在「展开筛选」后面。 */}
+          <div className="admin-cms__chipsgroup">
+            <span className="admin-cms__chipslabel" id="admin-news-status-label">
+              发布状态 · STATUS
+            </span>
+            <div
+              className="admin-cms__chips"
+              role="group"
+              aria-labelledby="admin-news-status-label"
+            >
+              <button
+                type="button"
+                className="admin-cms__chip"
+                aria-pressed={query.status === ""}
+                onClick={() => applyStatusFilter("")}
+              >
+                全部状态
+              </button>
+              {NEWS_STATUS_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="admin-cms__chip"
+                  aria-pressed={query.status === String(option.value)}
+                  onClick={() => applyStatusFilter(String(option.value))}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {showFields ? (
-          <div className="admin-filter__fields">
+          <div className="admin-filter__fields admin-news__fields">
           <label className="admin-news__field">
             <span className="admin-news__label">标题 · TITLE</span>
             <input
@@ -356,22 +516,6 @@ export function AdminNewsPage(): ReactElement {
               placeholder="按标题模糊检索…"
               aria-label="标题"
             />
-          </label>
-          <label className="admin-news__field admin-news__field--narrow">
-            <span className="admin-news__label">状态 · STATUS</span>
-            <select
-              className="admin-news__input"
-              value={statusDraft}
-              onChange={(event) => setStatusDraft(event.target.value)}
-              aria-label="发布状态"
-            >
-              <option value="">全部状态</option>
-              {NEWS_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </label>
           <label className="admin-news__field admin-news__field--narrow">
             <span className="admin-news__label">发布自 · FROM</span>
@@ -473,6 +617,10 @@ export function AdminNewsPage(): ReactElement {
           isRowSelectable={(row) => !!row.id}
         />
       </section>
+
+      <p className="admin-news__footer num">
+        列出的是全站资讯（管理员视角）；发布状态由后端状态机裁决，非法迁移会被逐条拒绝
+      </p>
 
       <Modal
         open={deleteTarget != null}

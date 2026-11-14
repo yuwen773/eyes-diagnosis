@@ -1,10 +1,12 @@
-import { useMemo, useState, type ReactElement, type ReactNode } from "react"
+import { useMemo, useState, type ReactElement } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowUpRight, ChartColumn, Eye, ScanEye, type LucideIcon } from "lucide-react"
+import { ArrowUpRight, ChartColumn, Eye, ScanEye } from "lucide-react"
 
 import { AdminEmpty } from "@/components/admin/AdminEmpty"
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { InsightEmpty } from "@/components/admin/InsightEmpty"
+import { MetricCell } from "@/components/admin/MetricCell"
 import { ConfidenceCell } from "@/components/admin/ConfidenceCell"
 import { TrendAreaChart } from "@/components/admin/charts/TrendAreaChart"
 import { ShareBar } from "@/components/admin/charts/ShareBar"
@@ -35,60 +37,6 @@ const RANGES = [
 
 /** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
 const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
-
-/**
- * 读数轨的一格：标签 + 等宽大数 + 一行口径。
- *
- * <p>四个读数同属一条轨（不是四张卡）：左缘一枚管理紫短柱标出主指标，
- * 格子之间用发丝竖线分栏——密度高于卡片阵列，扫读路径也只有一条。
- */
-function MetricCell(props: {
-  label: string
-  value: string
-  foot?: ReactNode
-  /** 主指标：左缘加一枚管理紫短柱 */
-  primary?: boolean
-}): ReactElement {
-  return (
-    <div className={`admin-metric-card${props.primary ? " admin-metric-card--primary" : ""}`}>
-      <span className="admin-metric-card__label">{props.label}</span>
-      <span className="admin-metric-card__value">{props.value}</span>
-      <span className="admin-metric-card__foot">{props.foot}</span>
-    </div>
-  )
-}
-
-/**
- * 解释型空态：图表位让位时给的说明卡。
- *
- * <p>外壳与图表卡同款（.admin-viz），里面只放「为什么空 + 下一步去哪」，
- * 不留一块空白大画布，也不画贴地的假曲线。
- */
-function InsightEmpty(props: {
-  title: string
-  note: string
-  icon: LucideIcon
-  emptyTitle: string
-  description: string
-  action?: ReactNode
-}): ReactElement {
-  return (
-    <section className="admin-viz admin-viz--empty">
-      <div className="admin-viz__head">
-        <span className="admin-viz__title">{props.title}</span>
-        <span className="admin-viz__head-extra num">{props.note}</span>
-      </div>
-      <div className="admin-viz__body">
-        <AdminEmpty
-          icon={props.icon}
-          title={props.emptyTitle}
-          description={props.description}
-          action={props.action}
-        />
-      </div>
-    </section>
-  )
-}
 
 /**
  * 仪表盘（真实统计 · 运营工作台）。
@@ -312,7 +260,7 @@ export function AdminDashboardPage(): ReactElement {
   )
 
   const rankedBlock = (
-    <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" nameWidth={104} />
+    <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" nameWidth={128} />
   )
 
   const actionsBlock = (

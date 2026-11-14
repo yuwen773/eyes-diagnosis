@@ -27,6 +27,7 @@ import "@uiw/react-md-editor/markdown-editor.css"
 import "@uiw/react-markdown-preview/markdown.css"
 
 import "@/styles/admin-news-preview.css"
+import "@/styles/admin-polish-cms.css"
 
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
 import { NewsArticleView } from "@/components/news/NewsArticleView"
@@ -332,6 +333,9 @@ function NewsEditor(props: {
         : isNew
           ? "尚未创建"
           : "已同步"
+  // 保存状态只在这一处读数（工具行）。色点只是提示，颜色不是唯一信息载体：
+  // 真正的状态是那行字。
+  const saveStateKind = saving ? "saving" : dirty ? "dirty" : success ? "saved" : "idle"
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -468,8 +472,16 @@ function NewsEditor(props: {
               </button>
             </div>
 
-            {/* 保存状态只保留右侧栏「保存状态」一处读数：
-                tab 行再放一份会让人以为有第三个视图。 */}
+            {/* 保存状态读数：色点 + 文字。这一处是全页唯一的保存状态读数，
+                右侧栏不再重复一份（重复的读数会让人以为有两个状态）。 */}
+            <span className="admin-newsedit__save-state" role="status" aria-live="polite">
+              <span
+                className="admin-newsedit__dot"
+                data-state={saveStateKind}
+                aria-hidden="true"
+              />
+              {saveStateShort}
+            </span>
 
             <button
               className="admin-btn admin-btn--primary admin-newsedit__save"
@@ -795,10 +807,6 @@ function NewsEditor(props: {
               <b className="num">
                 {contentLength >= 30 ? "30 字符" : "不足 30 字符"}
               </b>
-            </div>
-            <div className="admin-newsedit__meta-row">
-              <span>保存状态</span>
-              <b>{saveStateShort}</b>
             </div>
           </div>
 

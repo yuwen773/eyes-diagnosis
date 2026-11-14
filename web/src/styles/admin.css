@@ -1225,33 +1225,48 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   color: var(--admin-text-muted);
 }
 
-/* 沿用 DataTable 分页按钮的仪器按键形状：1px 发丝线、mono 小字。 */
+/* 图 / 表切换：现代分段控件（一条轨道 + 滑动的当前态）。
+   旧版是两个各自带发丝边框的按钮，看起来像两张小卡片而不是一个控件。
+   现在：轨道是凹陷的 surface-2，当前态是一枚抬起的 surface 键。 */
 .admin-viz__toggle {
   display: inline-flex;
-  gap: 6px;
+  gap: 2px;
   flex: none;
+  padding: 2px;
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface-deep);
 }
 
 .admin-viz__toggle-btn {
-  padding: 5px 12px;
-  border: 1px solid var(--admin-line);
-  background: var(--admin-surface);
+  padding: 4px 12px;
+  border: 0;
+  border-radius: calc(var(--admin-radius-control) - 3px);
+  background: transparent;
   color: var(--admin-text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
+  line-height: 1.6;
   cursor: pointer;
-  transition: border-color var(--fast), color var(--fast), background var(--fast);
+  transition:
+    background var(--fast),
+    color var(--fast),
+    box-shadow var(--fast);
 }
 
 .admin-viz__toggle-btn:hover {
-  border-color: var(--admin-text-muted);
   color: var(--admin-text);
 }
 
 .admin-viz__toggle-btn[aria-pressed="true"] {
-  border-color: var(--admin-text-muted);
-  background: var(--admin-surface-deep);
+  background: var(--admin-surface);
   color: var(--admin-text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(61, 44, 105, 0.14);
+}
+
+/* 暗色下抬起键的投影要更实一点，否则「当前态」读不出来。 */
+html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .admin-viz__toggle-btn:focus-visible,
@@ -1447,13 +1462,17 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   background: var(--viz-mute);
 }
 
-/* ── 小倍数单元格（统一尺度的病种趋势）──────────────────── */
+/* ── 小倍数单元格（统一尺度的病种趋势）────────────────────
+   头行 = 短码 + 中文名（折两行）+ 窗口内合计读数；下方是形状；脚注是峰值/日均。
+   合计而不是「末值」：窗口最后一天常常没有判读，末值读出来是 0，
+   会被读成「这批病种清零了」。 */
 
 .admin-viz__mini {
   display: grid;
-  gap: 8px;
+  grid-template-rows: auto auto auto;
+  gap: 10px;
   align-content: start;
-  padding: 14px 16px;
+  padding: 13px 14px 12px;
   background: var(--admin-surface);
   border: 1px solid var(--admin-line);
   border-radius: var(--radius-md);
@@ -1461,25 +1480,69 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
 }
 
 .admin-viz__mini:hover {
-  border-color: var(--admin-text-faint);
+  border-color: var(--admin-line-strong);
+  box-shadow: var(--admin-shadow-card);
+}
+
+/* 头行：短码 + 中文名 + 合计读数。短码与记录纸同源，扫读时先认短码再看名字。 */
+.admin-viz__mini-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-viz__mini-code {
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
 }
 
 .admin-viz__mini-title {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--admin-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--admin-text);
+  /* 病种名最长 9 个字（「年龄相关性黄斑变性」），窄格放不下就折两行，
+     不截字——截掉的「病变」「变性」正好是判断依据。 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 合计读数：这一格的主读数，等宽 + tabular。 */
+.admin-viz__mini-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--admin-text);
 }
 
 .admin-viz__mini-svg {
   display: block;
   width: 100%;
-  height: 72px;
+  height: 64px;
 }
 
-.admin-viz__mini-value {
-  font-size: 18px;
-  line-height: 1.1;
-  color: var(--admin-text);
+/* 脚注：峰值 / 日均，等宽小字，辅助通道。 */
+.admin-viz__mini-foot {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -2410,100 +2473,13 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   margin-bottom: 0;
 }
 
-/* 时间范围字段：沿用检索页的仪器形状（mono 小字标签 + 40px select）。 */
-.admin-analysis__field {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-
-.admin-analysis__label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--admin-text-faint);
-}
-
-.admin-analysis__select {
-  height: 40px;
-  min-width: 160px;
-  padding-inline: 12px;
-  background: var(--admin-surface);
-  border: 1px solid var(--admin-line-strong);
-  border-radius: var(--radius-md);
-  color: var(--admin-text);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  cursor: pointer;
-  transition: border-color var(--fast);
-}
-
-.admin-analysis__select:hover {
-  border-color: var(--admin-text-faint);
-}
-
-.admin-analysis__select:focus {
-  border-color: var(--admin-accent);
-}
-
-/* 章节：顶端发丝线与上一段分隔，小标题下接图表栅格。 */
-.admin-analysis__section {
-  margin-top: 40px;
-  padding-top: 26px;
-  border-top: 1px solid var(--admin-line);
-}
-
-.admin-analysis__title {
-  margin: 0 0 18px;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 20px;
-  line-height: 1.35;
-  color: var(--admin-text);
-}
-
-/* 小倍数栅格：折线 3×2、柱图 3 列，格间 14px 由卡自身的边框勾线。
-   宽屏（≥1700px）折线改 6 列一行——小倍数就该小，六个病种并排成一条带，
-   比三张巨宽的卡更接近「小倍数」的本意。 */
+/* 小倍数栅格：格数随容器宽度自适应（auto-fit + minmax），
+   六个病种在宽屏自然并成一条带，在窄屏折成两列或一列。
+   具体的列数、内边距与断点由 admin-polish-analysis.css 拥有——
+   它是分析页的专有样式，不该靠「谁先加载」来赢过共享样式表。 */
 .admin-analysis__grid {
   display: grid;
   gap: 14px;
-}
-
-.admin-analysis__grid--trend {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.admin-analysis__grid--weekly {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-@media (min-width: 1700px) {
-  .admin-analysis__grid--trend {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-/* 疾病分布（排序横条）：刻度轨是一条长尺，铺到 1920 会变成一条没有比例感的
-   长线；把整张图卡收在 1200px 内，右侧留白由版心承担而不是由尺子承担。 */
-.admin-analysis .admin-viz {
-  max-width: 1200px;
-}
-
-/* 窄屏：小倍数折 2 列 / 1 列，避免 SVG 读数被压到裁字。 */
-@media (max-width: 900px) {
-  .admin-analysis__grid--trend,
-  .admin-analysis__grid--weekly {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .admin-analysis__grid--trend,
-  .admin-analysis__grid--weekly {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* ==========================================================================
@@ -3250,12 +3226,6 @@ html.dark .admin-dt__check:indeterminate {
   border-top: 1px solid var(--admin-line);
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--admin-text-faint);
-}
-
-.admin-analysis__empty {
-  margin: 0;
-  font-size: 12.5px;
   color: var(--admin-text-faint);
 }
 

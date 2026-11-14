@@ -38,8 +38,10 @@ export function WeekBars(props: {
   average: number
   /** 统计窗口长度（天）：日均的口径要写清楚，否则「日均」会被读成别的意思 */
   windowDays: number
+  /** 柱图高度：卡片高度随内容走，别让一张小图撑出一张高卡。 */
+  height?: number
 }): ReactElement {
-  const { bars, title, ariaLabel, total, average, windowDays } = props
+  const { bars, title, ariaLabel, total, average, windowDays, height = 220 } = props
   const max = Math.max(0, ...bars.map((bar) => bar.average))
   const maxIndex = max > 0 ? bars.findIndex((bar) => bar.average === max) : -1
 
@@ -59,7 +61,7 @@ export function WeekBars(props: {
       }))}
       figure={
         <div className="admin-viz__chart">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={height}>
             <BarChart
               data={bars}
               margin={{ top: 16, right: 8, bottom: 4, left: 0 }}

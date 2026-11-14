@@ -40,15 +40,23 @@ export function TrendAreaChart(props: {
   const { data, ariaLabel, height = 280, previousLabel = "上一等长窗口" } = props
   const gradientId = `iris-viz-area-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`
 
-  const lastIndex = data.length - 1
-  const lastValue = data.length > 0 ? data[lastIndex].value : undefined
+  // 卡片右上角的口径读数：窗口的规模，而不是最后一天的读数。
+  // 「最新 N」看着精确，实际是被窗口末尾那一天的噪声左右的数——窗口最后一天
+  // 常常没有判读，它读出来是 0，读者会以为这批记录清零了。合计 + 日均说的是
+  // 整条曲线代表的量，与纵轴、与 KPI 读数轨同口径。
+  const sum = data.reduce((total, row) => total + row.value, 0)
+  const average = data.length > 0 ? sum / data.length : 0
+  const headExtra =
+    data.length > 0
+      ? `合计 ${formatVizNumber(sum)} · 日均 ${formatVizNumber(Number(average.toFixed(1)))}`
+      : undefined
 
   return (
     <ChartView
       title={ariaLabel}
       ariaLabel={ariaLabel}
       labelHeader="日期"
-      headExtra={lastValue !== undefined ? `最新 ${formatVizNumber(lastValue)}` : undefined}
+      headExtra={headExtra}
       rows={data.map((row) => ({
         label: row.label,
         value: formatVizNumber(row.value),

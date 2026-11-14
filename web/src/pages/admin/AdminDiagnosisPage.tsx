@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactElement, type ReactNode } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
-import { ChevronDown, ChevronUp, Eye, ScanEye, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Eye, FileText, ScanEye, Trash2 } from "lucide-react"
 
 import { useMediaQuery } from "@/lib/useMediaQuery"
 
@@ -40,8 +40,12 @@ import {
   severityLabel,
   formatTimestamp,
   recommendationLines,
+  canonicalClassName,
+  classCode,
 } from "@/lib/domain"
 import { fault } from "@/lib/faults"
+
+import "@/styles/admin-polish-ledger.css"
 
 const DEFAULT_PAGE_SIZE = 10
 const ABSTAIN_LIMIT = 20
@@ -69,10 +73,40 @@ type Params = DiagnosisQuery
  * 那里有回归用例锁住「没有结论 ≠ 0.0%」这条规则。
  */
 
+/**
+ * AI 拒识的判定只认后端的 aiRejected 标记。
+ *
+ * <p>「没有判读结果」与「模型拒识」是两件事：前者是这条记录压根没有结论
+ * （老数据、跑失败的记录），后者是模型主动弃权并给了原因。把两者混为一谈
+ * 会让管理员以为每一次空结果都是模型拒识，拒识的信号也就废了。
+ */
+function isRejected(row: AdminDiagnosis): boolean {
+  return row.aiRejected === true
+}
+
+/**
+ * 判读结论的展示口径。
+ *
+ * <p>算法侧的原始标签（cataract / diabetes…）在页面上归一到规范中文名；
+ * 归一不出来的原样显示，并标一句「未归类」——不猜它属于哪一类。
+ */
+function resultView(row: AdminDiagnosis): {
+  name: string
+  code: string
+  canonical: boolean
+} {
+  const raw = row.result?.trim() ?? ""
+  const canonical = canonicalClassName(raw)
+  return {
+    name: canonical ?? raw,
+    code: canonical ? classCode(canonical) : "",
+    canonical: canonical !== null,
+  }
+}
+
 function truncate(value: string, limit: number): string {
   return value.length > limit ? `${value.slice(0, limit)}…` : value
 }
-
 
 /** Drawer 读数表的一行：label / value 两列，值可含 JSX。 */
 function FactRow({
@@ -85,9 +119,15 @@ function FactRow({
   mono?: boolean
 }): ReactElement {
   return (
-    <div className="admin-diagnosis__fact">
-      <dt className="admin-diagnosis__fact-label">{label}</dt>
-      <dd className={"admin-diagnosis__fact-value" + (mono ? " num" : "")}>{value}</dd>
+    <div className="admin-diagnosis__drawer-fact">
+      <dt className="admin-diagnosis__drawer-fact-label">{label}</dt>
+      <dd
+        className={
+          "admin-diagnosis__drawer-fact-value" + (mono ? " num" : "")
+        }
+      >
+        {value}
+      </dd>
     </div>
   )
 }
@@ -118,7 +158,6 @@ export function AdminDiagnosisPage(): ReactElement {
 
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [resultDraft, setResultDraft] = useState("")
-  const [reviewDraft, setReviewDraft] = useState<DiagnosisReviewFilter>(initialReview)
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
   const [query, setQuery] = useState<Query>({
@@ -194,7 +233,7 @@ export function AdminDiagnosisPage(): ReactElement {
     event.preventDefault()
     const nextQuery: Query = {
       result: resultDraft.trim(),
-      review: reviewDraft,
+      review: query.review,
       startDate: startDraft,
       endDate: endDraft,
     }
@@ -206,7 +245,6 @@ export function AdminDiagnosisPage(): ReactElement {
 
   function onReset() {
     setResultDraft("")
-    setReviewDraft("")
     setStartDraft("")
     setEndDraft("")
     setActionError(null)
@@ -214,6 +252,17 @@ export function AdminDiagnosisPage(): ReactElement {
     setPage((prev) => ({ ...prev, current: 1 }))
     setSelectedIds([])
     setSort(null)
+  }
+
+  /**
+   * 复核状态段控件：点一下即刻生效（枚举筛选不该再多一次「查询」），
+   * 与文本 / 日期字段的「打字不触发请求」分工明确。
+   */
+  function applyReviewFilter(value: DiagnosisReviewFilter) {
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, review: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -276,43 +325,86 @@ export function AdminDiagnosisPage(): ReactElement {
       !!detail.humanReviewNote ||
       !!detail.humanRecommendations ||
       (!!detail.humanReviewStatus && detail.humanReviewStatus !== "PENDING_AI")
+    // 详情里的结论同样走规范类名：抽屉与台账不能一个显示英文一个显示中文。
+    const verdict = resultView({
+      id: detail.id ?? "",
+      result: detail.result,
+    })
+    const rejected = detail.aiRejected === true
     return (
       <div className="admin-diagnosis__detail">
+        {/* 结论抬头：先说「判成了什么」，再看图与逐项读数。 */}
+        <section
+          className={
+            "admin-diagnosis__verdict" +
+            (rejected ? " admin-diagnosis__verdict--reject" : "")
+          }
+        >
+          <div className="admin-diagnosis__verdict-top">
+            <span className="admin-diagnosis__verdict-name">
+              {rejected ? "未出结论" : verdict.name || "—"}
+            </span>
+            {verdict.code ? (
+              <span className="admin-diagnosis__verdict-code">{verdict.code}</span>
+            ) : null}
+          </div>
+          <div className="admin-diagnosis__verdict-meta">
+            <span>
+              <span className="admin-diagnosis__verdict-key">严重程度</span>
+              {severityLabel(detail.severity)}
+            </span>
+            <span>
+              <span className="admin-diagnosis__verdict-key">置信度</span>
+              <span className="num">
+                {confidencePercent(detail.confidence ?? detail.probability)}
+              </span>
+            </span>
+          </div>
+          {rejected && detail.abstainReason ? (
+            <p className="admin-diagnosis__verdict-reason">
+              AI 拒识原因 · {detail.abstainReason}
+            </p>
+          ) : null}
+        </section>
+
         {detail.url ? (
-          <figure className="admin-diagnosis__detail-figure">
+          <figure className="admin-diagnosis__drawer-figure">
             <img
-              className="admin-diagnosis__detail-img"
+              className="admin-diagnosis__drawer-img"
               src={detail.url}
               alt="判读影像"
               loading="lazy"
             />
-            <figcaption className="num">影像 · SOURCE</figcaption>
+            <figcaption>
+              <span>影像 · SOURCE</span>
+              <span className="num">{detail.id ?? "—"}</span>
+            </figcaption>
           </figure>
         ) : (
           <p className="admin-diagnosis__detail-noimg num">— · 无影像</p>
         )}
 
-        <dl className="admin-diagnosis__facts">
-          <FactRow label="结果" value={detail.result || "—"} />
-          <FactRow
-            label="置信度"
-            value={confidencePercent(detail.confidence ?? detail.probability)}
-            mono
-          />
-          <FactRow label="严重程度" value={severityLabel(detail.severity)} />
+        {/* 读数表只列抬头里没有的项：结论 / 置信度 / 严重程度已经在抬头说过，
+            同一读数不在两处各写一遍。 */}
+        <dl className="admin-diagnosis__drawer-facts">
           <FactRow label="模型版本" value={detail.modelVersion || "—"} mono />
           <FactRow label="预处理版本" value={detail.preprocessVersion || "—"} mono />
-          <FactRow label="推理策略版本" value={detail.inferencePolicyVersion || "—"} mono />
+          <FactRow
+            label="推理策略版本"
+            value={detail.inferencePolicyVersion || "—"}
+            mono
+          />
           <FactRow
             label="人工复核状态"
             value={humanReviewStatusLabel(detail.humanReviewStatus)}
           />
+          <FactRow label="判读时间" value={formatTimestamp(detail.createTime)} mono />
         </dl>
 
         <section className="admin-diagnosis__section">
           <h3 className="admin-diagnosis__section-title">建议 · RECOMMENDATIONS</h3>
           {recos.length > 0 ? (
-            <ol className="admin-diagnosis__recos">
+            <ol className="admin-diagnosis__drawer-recos">
               {recos.map((line) => (
                 <li key={line}>{line}</li>
               ))}
@@ -322,7 +414,10 @@ export function AdminDiagnosisPage(): ReactElement {
           )}
         </section>
 
-        {detail.abstainReason ? (
+        {/* 拒识原因已经贴在抬头（结论就是「未出结论」，原因紧随其后）；
+            只有「有原因但后端没打拒识标记」这种旧数据才另起一段，
+            同一句话不在两处各写一遍。 */}
+        {detail.abstainReason && !rejected ? (
           <section className="admin-diagnosis__section">
             <h3 className="admin-diagnosis__section-title">AI 拒识原因</h3>
             <p className="admin-diagnosis__note">{detail.abstainReason}</p>
@@ -332,7 +427,7 @@ export function AdminDiagnosisPage(): ReactElement {
         {hasHumanReview ? (
           <section className="admin-diagnosis__section">
             <h3 className="admin-diagnosis__section-title">人工复核记录 · HUMAN REVIEW</h3>
-            <dl className="admin-diagnosis__facts">
+            <dl className="admin-diagnosis__drawer-facts">
               <FactRow label="人工结论" value={detail.humanResult || "—"} />
               <FactRow label="人工严重程度" value={detail.humanSeverity || "—"} />
               <FactRow label="人工建议" value={detail.humanRecommendations || "—"} />
@@ -450,7 +545,7 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "url",
       title: "影像",
-      width: "68px",
+      width: "64px",
       render: (row) =>
         row.url ? (
           <a
@@ -478,58 +573,98 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "result",
       title: "判读结果",
-      // 弹性列也要给底宽：表格 min-width 992 里它拿 156px，窄屏横向滚动时
+      // 弹性列也要给底宽：表格 min-width 992 里它拿 190px，窄屏横向滚动时
       // 判读文字与 AI 拒识原因才不会挤成 0 宽竖条。
-      width: "156px",
+      width: "190px",
       sortable: true,
-      render: (row) =>
-        row.result ? (
-          <span className="admin-diagnosis__result">{row.result}</span>
-        ) : (
-          // AI 拒识行 result 为空 → 「—」+ 拒识原因摘要（完整原因在 title 与详情里）。
-          <span className="admin-diagnosis__result-empty">
-            <span className="admin-chip" data-tone="critical">
-              AI 拒识
-            </span>
-            {row.abstainReason ? (
-              <span className="admin-diagnosis__abstain" title={row.abstainReason}>
-                {truncate(row.abstainReason, ABSTAIN_LIMIT)}
+      render: (row) => {
+        // AI 拒识与「没有结论」分开说：拒识由复核状态列给独立标识，
+        // 这一格只负责说清「模型给了什么 / 为什么不给」。
+        if (!row.result) {
+          return (
+            <span className="admin-diagnosis__noresult">
+              <span className="admin-diagnosis__noresult-label">
+                {isRejected(row) ? "未出结论" : "无判读结果"}
               </span>
-            ) : null}
+              {row.abstainReason ? (
+                <span
+                  className="admin-diagnosis__noresult-reason"
+                  title={row.abstainReason}
+                >
+                  {truncate(row.abstainReason, ABSTAIN_LIMIT)}
+                </span>
+              ) : null}
+            </span>
+          )
+        }
+        const view = resultView(row)
+        return (
+          <span className="admin-diagnosis__result">
+            <span className="admin-diagnosis__result-name" title={view.name}>
+              {view.name}
+            </span>
+            <span className="admin-diagnosis__result-sub">
+              {view.canonical ? (
+                <>
+                  <span className="admin-diagnosis__result-code">{view.code}</span>
+                  {" · "}
+                </>
+              ) : (
+                <span title="不在模型八类规范名内，按原始标签显示">未归类 · </span>
+              )}
+              {severityLabel(row.severity ?? undefined)}
+            </span>
           </span>
-        ),
+        )
+      },
     },
     {
       key: "username",
       title: "用户",
-      width: "116px",
+      width: "112px",
       render: (row) => (
-        <span className="admin-diagnosis__user">{row.username || "—"}</span>
+        <span className="admin-diagnosis__user" title={row.username || undefined}>
+          {row.username || "—"}
+        </span>
       ),
     },
     {
       key: "confidence",
       title: "置信度",
-      width: "132px",
+      width: "128px",
       mono: true,
       sortable: true,
-      render: (row) => <ConfidenceCell value={row.confidence} />,
+      render: (row) =>
+        // 没有置信度不是 0.0%：AI 拒识的记录后端把置信度置空，读数要说清
+        // 「没有读数」，不能画成一条 0% 的进度。
+        typeof row.confidence === "number" && !Number.isNaN(row.confidence) ? (
+          <span className="admin-diagnosis__reading">
+            <span className="admin-diagnosis__reading-label">置信度</span>
+            <ConfidenceCell value={row.confidence} />
+          </span>
+        ) : (
+          <span className="admin-diagnosis__reading-none">— 无置信度</span>
+        ),
     },
     {
       key: "review",
-      title: "复审状态",
-      width: "126px",
+      title: "复核状态",
+      width: "120px",
       // 直接消费 reviewView 的映射，不在此另写一套：AI 拒识 / 待人工复核 /
       // 复审中 / 已复审 / 未复审 的优先级与风险档全部由它裁决。
       render: (row) => {
-        const v = reviewView(row)
+        const v = reviewView({
+          reexamineStatus: row.reexamineStatus,
+          requiresReview: row.requiresReview,
+          aiRejected: isRejected(row),
+        })
         return <RiskTag risk={v.risk}>{v.label}</RiskTag>
       },
     },
     {
       key: "createTime",
       title: "时间",
-      width: "164px",
+      width: "156px",
       mono: true,
       sortable: true,
       render: (row) => formatTimestamp(row.createTime),
@@ -537,29 +672,29 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "action",
       title: "操作",
-      width: "190px",
+      width: "132px",
       render: (row) => (
         <div className="admin-dt__row-actions">
-          {/* 主动作（复核）在窄屏收进「...」菜单，行高与列宽才稳；
-              这里保留的按钮是图标级，标签交给 title/aria-label。 */}
+          {/* 主动作是「详情」：先看影像与逐项读数，再决定要不要复核。
+              复核与删除收进溢出菜单，行内不再堆三个按钮。 */}
           <button
             type="button"
-            className="admin-btn admin-btn--primary admin-btn--icon-sm"
-            title="人工复核"
-            aria-label="人工复核"
-            onClick={() => {
-              openDetail(row)
-              openReview()
-            }}
+            className="admin-btn admin-btn--primary admin-diagnosis__rowaction"
+            onClick={() => openDetail(row)}
           >
-            <ScanEye size={14} strokeWidth={2} aria-hidden="true" />
+            <FileText size={14} strokeWidth={2} aria-hidden="true" />
+            详情
           </button>
           <RowMenu
             label={`更多判读操作：${row.id}`}
             items={[
               {
-                label: "详情",
-                onSelect: () => openDetail(row),
+                label: "人工复核",
+                icon: <ScanEye size={14} strokeWidth={2} aria-hidden="true" />,
+                onSelect: () => {
+                  openDetail(row)
+                  openReview()
+                },
               },
               {
                 label: "删除记录",
@@ -636,8 +771,32 @@ export function AdminDiagnosisPage(): ReactElement {
             </div>
           </div>
           {showFields ? (
-          <div className="admin-filter__fields">
-          <label className="admin-diagnosis__field">
+          <>
+            {/* 复核状态：枚举筛选用段控件，点一下即生效，少一次「查询」。 */}
+            <div className="admin-ledger__group">
+              <span className="admin-ledger__grouplabel" id="admin-diagnosis-review-label">
+                复核状态 · REVIEW
+              </span>
+              <div
+                className="admin-ledger__chips"
+                role="group"
+                aria-labelledby="admin-diagnosis-review-label"
+              >
+                {DIAGNOSIS_REVIEW_FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className="admin-ledger__chip"
+                    aria-pressed={query.review === option.value}
+                    onClick={() => applyReviewFilter(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="admin-filter__fields">
+          <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
             <span className="admin-diagnosis__label">疾病名 · RESULT</span>
             <input
               className="admin-diagnosis__input"
@@ -648,21 +807,8 @@ export function AdminDiagnosisPage(): ReactElement {
               aria-label="疾病名"
             />
           </label>
-          <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
-            <span className="admin-diagnosis__label">复核状态 · REVIEW</span>
-            <select
-              className="admin-diagnosis__input"
-              value={reviewDraft}
-              onChange={(event) => setReviewDraft(event.target.value as DiagnosisReviewFilter)}
-              aria-label="复核状态"
-            >
-              {DIAGNOSIS_REVIEW_FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* 起止日期成对换行：拆到两行会让「自」和「至」分家。 */}
+          <div className="admin-ledger__daterange">
           <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
             <span className="admin-diagnosis__label">判读自 · FROM</span>
             <input
@@ -684,6 +830,8 @@ export function AdminDiagnosisPage(): ReactElement {
             />
           </label>
           </div>
+            </div>
+          </>
           ) : null}
         </form>
       </section>

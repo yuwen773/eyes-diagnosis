@@ -31,10 +31,35 @@ import {
  * <p>饼图不用：类别多、名称长，排序横条比饼图更容易比大小，也更符合
  * 「白色仪器」的账目读法。
  */
-const NAME_MAX = 11
+/**
+ * 轴宽能放下多少「全角字」。
+ *
+ * <p>中文按 1 个全角、半角按 0.55 个全角估算，另留 16px 给省略号与轴距。
+ * 少算一个字，标签就会被 SVG 左边缘裁掉——被裁掉的是<b>字首</b>
+ * （「年龄相关性黄斑变性」变成「龄相关性黄斑变…」），恰恰是最要命的位置。
+ */
+function fitUnits(name: string, nameWidth: number): number {
+  const budget = nameWidth - 16
+  const units = [...name].reduce(
+    (sum, ch) => sum + (ch.charCodeAt(0) <= 0xff ? 0.55 : 1),
+    0,
+  )
+  return Math.max(3, Math.floor(budget / Math.max(units, 1)))
+}
 
-function truncateName(name: string, max = NAME_MAX): string {
-  return name.length > max ? `${name.slice(0, max)}…` : name
+/**
+ * 按全角单位截断，超出部分用省略号收尾。
+ */
+function truncateByUnits(name: string, maxUnits: number): string {
+  let used = 0
+  let out = ""
+  for (const ch of name) {
+    const unit = ch.charCodeAt(0) <= 0xff ? 0.55 : 1
+    if (used + unit > maxUnits) return `${out}…`
+    used += unit
+    out += ch
+  }
+  return out
 }
 
 export function RankedBars(props: {
@@ -49,7 +74,6 @@ export function RankedBars(props: {
   const { rows, ariaLabel, unit, emptyText, nameWidth = 140 } = props
   const leading = Math.max(0, ...rows.map((row) => row.value))
   const height = Math.max(rows.length * 34 + 12, 64)
-  const maxChars = Math.max(5, Math.round(nameWidth / 13))
 
   return (
     <ChartView
@@ -88,7 +112,7 @@ export function RankedBars(props: {
                 tick={{ fill: "var(--fg-2)", fontSize: 12.5 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(name: string) => truncateName(name, maxChars)}
+                tickFormatter={(name: string) => truncateByUnits(name, fitUnits(name, nameWidth))}
               />
               <Tooltip
                 content={<VizTooltip unit={unit} />}

@@ -1,0 +1,645 @@
+/* ==========================================================================
+   Iris 2.1 · 管理端台账精修（P1 诊断管理 / P4 用户管理）
+   --------------------------------------------------------------------------
+   只服务这两个页面：筛选段控件、判读结论的二级读数、AI 拒识的独立标识、
+   行内动作、窄屏卡片化台账、详情抽屉的读数排版。
+
+   纪律（与仓库 CLAUDE.md 一致）：
+   - 只吃 --admin-* / --risk-* 令牌，零写死色值；双主题随 html.dark 自动翻。
+   - 圆角只走 --admin-radius-* 令牌梯，不写自由像素值。
+   - 与 admin.css / admin-redesign.css 的同名类冲突一律用「页面作用域 + 更具体
+     的选择器」压过，不依赖样式表的加载顺序；对方带 !important 的地方（窄屏
+     钉住的操作列）这里同样用 !important + 更高特异性压回去。
+   - 数字 / 时间 / 百分比一律等宽（.num）。
+
+   窄屏卡片化用 :nth-child 定位表格里的每一格。这一列顺序与
+   AdminDiagnosisPage / AdminUsersPage 里的 columns 定义一一对应；改动那份
+   列定义时必须同步改这里的定位块，否则窄屏会串位。
+   ========================================================================== */
+
+/* ── 筛选：状态段控件 ───────────────────────────────────────────────
+   复核状态 / 角色这类「枚举筛选」用一排可点的段控件替掉下拉：桌面端省一
+   行、下拉框的高度，移动端一次点得中，且省掉「点开才知道有哪些值」的一跳。 */
+
+.admin-ledger__group {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-ledger__grouplabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+.admin-ledger__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-ledger__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding-inline: 11px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.admin-ledger__chip:hover:not([aria-pressed="true"]) {
+  border-color: var(--admin-text-faint);
+  color: var(--admin-text);
+}
+
+.admin-ledger__chip:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.admin-ledger__chip[aria-pressed="true"] {
+  background: var(--admin-primary-soft);
+  border-color: color-mix(in srgb, var(--admin-primary) 45%, transparent);
+  color: var(--admin-primary);
+  font-weight: 600;
+}
+
+/* 段控件里的计数（等宽）：只在真有计数时出现，「—」不当 0 发布。 */
+.admin-ledger__chip-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+.admin-ledger__chip[aria-pressed="true"] .admin-ledger__chip-count {
+  color: color-mix(in srgb, var(--admin-primary) 72%, var(--admin-text));
+}
+
+/* ── 筛选：字段宽度 ───────────────────────────────────────────────
+   文本框不再被 flex 拉满一整行：筛选面板是工具条，不是表单。留白落在
+   右边，比把一个「疾病名」输入框拉到 700px 宽更像成熟 SaaS。 */
+
+.admin-diagnosis__form .admin-diagnosis__field {
+  flex: 1 1 240px;
+  max-width: 420px;
+}
+
+.admin-users__form .admin-users__field {
+  flex: 1 1 200px;
+  max-width: 320px;
+}
+
+/* 日期字段保持窄档（168px），不被上面的通用规则撑开。 */
+.admin-diagnosis__form .admin-diagnosis__field--narrow,
+.admin-users__form .admin-users__field--narrow {
+  flex: 0 1 168px;
+  max-width: 168px;
+}
+
+/* 起止日期成对换行：「自」和「至」不能被 flex 拆到两行去。 */
+.admin-ledger__daterange {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ── 行内动作：带文字的主动作 ───────────────────────────────────────
+   行内只留一个主动作，其余收进溢出菜单；主动作带文字（不靠图标猜），
+   窄屏由 .admin-dt__row-actions 的既有规则压到 30px 图标级。 */
+
+.admin-diagnosis__rowaction {
+  gap: 6px;
+}
+
+.admin-diagnosis__rowaction-label {
+  font-size: 12px;
+}
+
+/* ── 判读结论单元格 ────────────────────────────────────────────────
+   一格两级读数：病种名（主）+ 短码 / 分级（次）。模型侧的英文原始标签
+   在页面上归一到规范中文名，认不出的原样显示并标注「未归类」。 */
+
+.admin-diagnosis__result {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-diagnosis__result-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--admin-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-diagnosis__result-sub {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-diagnosis__result-code {
+  color: var(--admin-text-muted);
+}
+
+/* 无结论：模型没给出判读结果。颜色保持中性——危险语义由「复核状态」列的
+   AI 拒识标签承担，同一事实不在两处各喊一遍。 */
+
+.admin-diagnosis__noresult {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-diagnosis__noresult-label {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--admin-text-muted);
+}
+
+.admin-diagnosis__noresult-reason {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--admin-text-faint);
+  overflow-wrap: anywhere;
+}
+
+/* 置信度缺读：「无置信度」是读数，不是 0.0%。 */
+
+.admin-diagnosis__reading-none {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--admin-text-faint);
+  white-space: nowrap;
+}
+
+/* 窄屏卡片里给置信度补一个文字标签：桌面端表格有列头，不需要。 */
+
+.admin-diagnosis__reading-label {
+  display: none;
+  font-size: 11px;
+  color: var(--admin-text-faint);
+}
+
+/* 用户名（次级元信息）：比结论名弱一档，不与判读结论抢视线。 */
+
+.admin-diagnosis__user {
+  font-size: 12.5px;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 台账行高 ───────────────────────────────────────────────────────
+   结论格是两行读数，58px 的固定行高会把它压扁；这里放成「至少 62px、
+   内容自适应」。 */
+
+.admin-diagnosis__table .admin-dt__cell {
+  height: auto;
+  min-height: 62px;
+  vertical-align: middle;
+}
+
+.admin-diagnosis__table .admin-dt__head {
+  height: 40px;
+}
+
+/* ── 详情抽屉：读数排版 ───────────────────────────────────────────
+   结论抬头 → 影像 → 读数表 → 建议 → 复核记录，五段各自成层。 */
+
+/* 抽屉是 Portal 到 body 的，页面作用域前缀够不着它；按标题定位这一个面板，
+   给影像大图多留一点横向空间。改标题要同步改这里。 */
+.admin-drawer[aria-label="判读详情"] {
+  width: min(620px, 92vw);
+}
+
+.admin-diagnosis__verdict {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  background: var(--admin-surface-deep);
+}
+
+.admin-diagnosis__verdict--reject {
+  border-color: color-mix(in srgb, var(--risk-critical) 32%, transparent);
+  background: color-mix(in srgb, var(--risk-critical) 8%, var(--admin-surface-deep));
+}
+
+.admin-diagnosis__verdict-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-diagnosis__verdict-name {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--admin-text);
+}
+
+.admin-diagnosis__verdict-code {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--admin-text-faint);
+}
+
+.admin-diagnosis__verdict-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: 12.5px;
+  color: var(--admin-text);
+}
+
+.admin-diagnosis__verdict-key {
+  margin-right: 6px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-faint);
+}
+
+.admin-diagnosis__verdict-reason {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--risk-critical);
+}
+
+.admin-diagnosis__drawer-figure {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  background: var(--admin-surface-deep);
+}
+
+.admin-diagnosis__drawer-img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
+}
+
+.admin-diagnosis__drawer-figure figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--admin-line);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-text-faint);
+}
+
+/* 读数表：标签固定一列，读数左对齐；等宽读数（版本号 / 指纹）右对齐收口。 */
+
+.admin-diagnosis__drawer-facts {
+  display: grid;
+  grid-template-columns: minmax(104px, 0.34fr) minmax(0, 1fr);
+  margin: 0;
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  overflow: hidden;
+}
+
+/* 每一行读数摊平成两个网格项（display: contents），表格才能连成一张。 */
+.admin-diagnosis__drawer-fact {
+  display: contents;
+}
+
+.admin-diagnosis__drawer-fact-label,
+.admin-diagnosis__drawer-fact-value {
+  margin: 0;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--admin-line-soft);
+}
+
+.admin-diagnosis__drawer-fact-label {
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--admin-text-faint);
+  background: color-mix(in srgb, var(--admin-surface-deep) 46%, var(--admin-surface));
+}
+
+.admin-diagnosis__drawer-fact-value {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--admin-text);
+  overflow-wrap: anywhere;
+}
+
+/* 末行不留底线：表格的收口交给容器边框。 */
+.admin-diagnosis__drawer-facts > :nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+/* 建议：每条一行带序号，分行读，不糊成一段。 */
+
+.admin-diagnosis__drawer-recos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-diagnosis__drawer-recos li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--admin-text);
+}
+
+.admin-diagnosis__drawer-recos li::before {
+  content: counter(list-item);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  line-height: 1.9;
+  text-align: right;
+  color: var(--admin-text-faint);
+}
+
+/* ── 用户管理：角色与身份 ───────────────────────────────────────────
+   管理员 = 管理紫（身份，不是医学风险）；普通用户 = --risk-normal（账号
+   正常）；已封禁 = --risk-critical。全部是描边 chip + 文字标签，颜色不
+   是唯一信息载体。 */
+
+.admin-users__rolecell {
+  display: grid;
+  gap: 3px;
+  justify-items: start;
+}
+
+.admin-users__rolecell .admin-chip {
+  height: 22px;
+  font-size: 10.5px;
+}
+
+/* 雪花 id 退到第三层：等宽但更淡，长串不再抢用户名的视线。 */
+
+.admin-users__id {
+  color: var(--admin-text-faint);
+  opacity: 0.75;
+}
+
+/* 管理员账号受保护：标签自带 title 说明，不额外加图标噪音。 */
+
+.admin-users__protected {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
+}
+
+.admin-users__table .admin-dt__cell {
+  height: auto;
+  min-height: 58px;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   窄屏卡片化台账（≤ 900px）
+   --------------------------------------------------------------------------
+   横向滚动的宽表在 768px 下会把「复核状态」压成半截竖条（钉在右缘的操作列
+   正好盖住它），390px 下更只剩「结论 + 状态」两列，多条记录长得一模一样，
+   分不清谁是谁。900px 以下一律把每一行改写成一张卡片：缩略图 + 病种 +
+   时间同屏可辨，动作可达，勾选框保留在卡片左上角。桌面端表格形态不变。
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* 表格退成块级流，卡片自己排版；横向滚动与右缘渐隐提示一并撤掉。 */
+  .admin-diagnosis__table .admin-dt__table,
+  .admin-users__table .admin-dt__table {
+    min-width: 0 !important;
+    display: block;
+  }
+
+  .admin-diagnosis__table .admin-dt__scroll,
+  .admin-users__table .admin-dt__scroll {
+    overflow-x: visible;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  .admin-diagnosis__table thead,
+  .admin-users__table thead {
+    display: none;
+  }
+
+  .admin-diagnosis__table tbody,
+  .admin-users__table tbody {
+    display: block;
+  }
+
+  /* 钉在右缘的操作列在卡片形态下没有意义：撤掉 sticky 与固定列宽。 */
+  .admin-diagnosis__table .admin-dt__cell--action,
+  .admin-diagnosis__table .admin-dt__head--action,
+  .admin-users__table .admin-dt__cell--action,
+  .admin-users__table .admin-dt__head--action {
+    position: static !important;
+    width: auto !important;
+    min-width: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    z-index: auto !important;
+  }
+
+  .admin-diagnosis__table .admin-dt__row,
+  .admin-users__table .admin-dt__row {
+    position: relative;
+    display: grid;
+    align-items: start;
+    gap: 6px 10px;
+    padding: 14px 14px 12px;
+    border-bottom: 1px solid var(--admin-line);
+  }
+
+  .admin-diagnosis__table .admin-dt__cell,
+  .admin-users__table .admin-dt__cell {
+    display: block;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  /* ── 诊断卡片：勾选 / 影像 / 结论 / 复核 / 用户 / 置信度 / 时间 / 操作 ──
+     列顺序与 AdminDiagnosisPage 的 columns 一致：影像 → 结论 → 用户 →
+     置信度 → 复核状态 → 时间 → 操作（第一格是 DataTable 的勾选列）。 */
+
+  .admin-diagnosis__table .admin-dt__row {
+    grid-template-columns: 18px 46px minmax(0, 1fr) auto;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(3) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(4) {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(5) {
+    grid-column: 4;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(6) {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(7) {
+    grid-column: 3;
+    grid-row: 2;
+    /* 时间读数不折行：折成两行会把时刻和日期拆成两截。 */
+    white-space: nowrap;
+  }
+
+  .admin-diagnosis__table .admin-dt__cell:nth-child(8) {
+    grid-column: 4;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  /* 卡片里置信度补一个文字标签；进度条在窄格里没有意义，收起。 */
+  .admin-diagnosis__reading-label {
+    display: inline;
+    margin-right: 6px;
+  }
+
+  .admin-diagnosis__table .admin-confidence__bar {
+    display: none;
+  }
+
+  .admin-diagnosis__table .admin-dt__row-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  /* ── 用户卡片：勾选 / 身份 / 角色 / 创建时间 / 操作 ──
+     列顺序与 AdminUsersPage 的 columns 一致：用户 → 角色 → 创建时间 → 操作。 */
+
+  .admin-users__table .admin-dt__row {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+
+  .admin-users__table .admin-dt__cell:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .admin-users__table .admin-dt__cell:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-users__table .admin-dt__cell:nth-child(3) {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .admin-users__table .admin-dt__cell:nth-child(4) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .admin-users__table .admin-dt__cell:nth-child(5) {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .admin-users__table .admin-dt__row-actions {
+    justify-content: flex-end;
+  }
+
+  /* 「账号受保护」这行注记在窄卡片里会挤走身份块的地盘；同一信息在行菜单里
+     （删除项灰掉并写明原因）仍然给得到。 */
+  .admin-users__protected {
+    display: none;
+  }
+}
+
+/* 390px 档：卡片更窄，动作按钮另起一行——它挤在右列会把「时间」那一格
+   压到折行，读数反而更难认。 */
+@media (max-width: 640px) {
+  .admin-diagnosis__table .admin-dt__cell:nth-child(8) {
+    grid-column: 3 / -1;
+    grid-row: 4;
+    justify-self: end;
+  }
+
+  /* 用户卡片只留「用户名 + 账号」两级：雪花 id 截断成半个数字既读不出
+     什么，又把账号挤没了（完整 id 在宽表与行菜单 title 里仍可取）。 */
+  .admin-users__idwrap {
+    display: none;
+  }
+}
