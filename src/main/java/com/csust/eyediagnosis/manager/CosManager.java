@@ -8,6 +8,7 @@ import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.ListObjectsRequest;
 import com.qcloud.cos.model.ObjectListing;
+import com.qcloud.cos.model.ObjectMetadata;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
@@ -60,6 +61,20 @@ public class CosManager {
     public COSObject getObject(String key) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(cosClientConfig.getBucket(), key);
         return cosClient.getObject(getObjectRequest);
+    }
+
+    /**
+     * 只取对象元信息（HEAD 语义：一次往返，不下载正文）。
+     *
+     * <p>与 {@link #getObject(String)} 的区别是这里不拉对象体：探一份文档是不是
+     * PDF、有多大，只需要头部。管理端阅读器的 PDF 探针就走这条——否则每开一份
+     * 文档都会把整个文件从对象存储拉一遍，探针本身成了第二遍下载。
+     *
+     * @param key 唯一键
+     * @return 对象元信息（长度、类型等）
+     */
+    public ObjectMetadata getObjectMetadata(String key) {
+        return cosClient.getObjectMetadata(cosClientConfig.getBucket(), key);
     }
 
     /**

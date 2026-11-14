@@ -73,14 +73,25 @@ export function ChartView(props: {
   rows: ReadoutRow[]
   figure: ReactNode
   headExtra?: ReactNode
+  /** 空数据说明：解释「为什么空」，而不是一句放之四海的「暂无数据」。 */
+  emptyText?: string
 }): ReactElement {
-  const { title, ariaLabel, labelHeader, extraHeader, rows, figure, headExtra } = props
+  const {
+    title,
+    ariaLabel,
+    labelHeader,
+    extraHeader,
+    rows,
+    figure,
+    headExtra,
+    emptyText = "暂无数据",
+  } = props
   const [view, setView] = useState<"chart" | "table">("chart")
   const hasExtra = rows.some((row) => row.extra !== undefined)
 
   let body: ReactNode
   if (rows.length === 0) {
-    body = <p className="admin-viz__empty">暂无数据</p>
+    body = <p className="admin-viz__empty">{emptyText}</p>
   } else if (view === "chart") {
     body = figure
   } else {

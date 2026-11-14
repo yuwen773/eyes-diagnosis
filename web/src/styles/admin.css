@@ -359,6 +359,8 @@
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
+  /* 390 档「展开筛选」曾被挤成两行竖排；按钮文案永远单行。 */
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background var(--fast),
@@ -367,9 +369,19 @@
     opacity var(--fast);
 }
 
+/* 禁用态不走 opacity：主操作紫压 45% 透明后白字落在浅紫上只有约 2:1，
+   全页唯一主动作会显得「坏了」。这里换成中性面 + 弱文字色，
+   双主题都读得清，禁用语义由光标与 aria-disabled 承担。 */
 .admin-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  background: color-mix(in srgb, var(--admin-surface-deep) 55%, var(--admin-surface));
+  border-color: var(--admin-line);
+  color: var(--admin-text-faint);
+}
+
+.admin-btn--primary:disabled {
+  background: color-mix(in srgb, var(--admin-surface-deep) 55%, var(--admin-surface));
+  color: var(--admin-text-faint);
 }
 
 /* 主操作：管理紫实底白字。 */
@@ -836,6 +848,25 @@
   border-bottom: 1px solid var(--admin-line);
 }
 
+/* 390px 档：标题与右上读数允许换行堆叠，不再把「图/表」切换挤成
+   竖排、标题折两行的破形。 */
+@media (max-width: 640px) {
+  .admin-viz__head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px 12px;
+  }
+
+  .admin-viz__head-extra {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  .admin-viz__toggle {
+    margin-left: auto;
+  }
+}
+
 .admin-viz__title {
   font-size: 13px;
   letter-spacing: 0.02em;
@@ -1152,7 +1183,8 @@
   max-width: 68ch;
 }
 
-/* KPI 条：4 列等宽，首块 accent 竖线由 StatTile 自身给出。 */
+/* KPI 条（旧版平铺四列）已由 .admin-bento + .feature-card 的 Bento 构图取代；
+   这两条规则只留给仍按旧骨架写的页面兜底，不再用于 Dashboard。 */
 .admin-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1160,7 +1192,7 @@
   margin-top: 28px;
 }
 
-/* 两张图卡：趋势略宽于分布（2:1），发丝线来自卡自身的边框。 */
+/* 旧的两张图卡横排段：Dashboard 已进 bento，其余页面未用，保留兜底。 */
 .admin-dashboard__charts {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -2595,12 +2627,62 @@
   padding-inline: 10px;
 }
 
+/* 勾选热区铺满 40px 高的单元格：视觉盒仍是 15px，但整格可点（移动端够到）。 */
+.admin-dt__pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  margin-inline: -4px;
+  padding-block: 4px;
+  cursor: pointer;
+}
+
+/* 勾选盒不用原生 accent-color：暗色主题下原生未勾选盒会渲染成实心白块，
+   看起来像整页都被选中。这里自绘：底色跟纸面、描边跟发丝线，勾上与
+   强调态才着管理紫，双主题同源令牌。 */
 .admin-dt__check {
+  appearance: none;
+  -webkit-appearance: none;
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: var(--admin-accent);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
   cursor: pointer;
+  transition:
+    background var(--fast),
+    border-color var(--fast);
+}
+
+.admin-dt__check:hover {
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:checked {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.7l4.5-5' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:indeterminate {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6h7' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+  border-color: var(--admin-primary);
+}
+
+.admin-dt__check:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+/* 暗主题下 --admin-primary 提亮成 #b39dfb，勾选标记必须换成
+   --admin-on-primary（#171322）才能保持 ≥4.5:1；白标记只有 ~1.7:1。 */
+html.dark .admin-dt__check:checked {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2 5 8.7l4.5-5' fill='none' stroke='%23171322' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat;
+}
+
+html.dark .admin-dt__check:indeterminate {
+  background: var(--admin-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6h7' fill='none' stroke='%23171322' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") center / 11px no-repeat;
 }
 
 .admin-dt__check:disabled {
@@ -3056,4 +3138,575 @@
   .admin-dashboard__range {
     flex: none;
   }
+}
+
+/* ==========================================================================
+   管理后台 · 视觉层次原语（Purple Medical SaaS，Visual Completion 工作包 C）
+   --------------------------------------------------------------------------
+   2026-11-13 二次修订：在已落地的 --admin-* 令牌之上补「构图与层次」层。
+   只消费上下文令牌（--admin-* / --fg-* / --hr / --surface / --risk-* /
+   --viz-*），零写死色值，双主题自动翻。
+
+   三件套：
+   - .admin-bento   非对称栅格容器（Dashboard / DataAnalysis 用）
+   - .panel         通用面板：发丝边 + 柔和阴影 + 8–12px 圆角，三层表面靠
+                    --surface / --surface-2 区分，不堆嵌套卡片
+   - .feature-card  紫色重点卡：管理紫渐变实体面 + 白字，页面的视觉锚点。
+                    表达「管理品牌 / 当前工作区」，绝不冒充医学风险。
+   ========================================================================== */
+
+/* ── Bento 栅格 ────────────────────────────────────────────── */
+
+.admin-bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* 跨列工具类：span-3/4/5/6/7/8/12。窄屏统一折单列，避免 SVG 读数带被压裁字。 */
+.admin-bento > .span-3 { grid-column: span 3 }
+.admin-bento > .span-4 { grid-column: span 4 }
+.admin-bento > .span-5 { grid-column: span 5 }
+.admin-bento > .span-6 { grid-column: span 6 }
+.admin-bento > .span-7 { grid-column: span 7 }
+.admin-bento > .span-8 { grid-column: span 8 }
+.admin-bento > .span-12 { grid-column: span 12 }
+
+@media (max-width: 1280px) {
+  /* 4+8 配对在 12 列里是 14 列，必然溢出并把整行打散；
+     这一档统一折成单列，900px 以下沿用同一形态。 */
+  .admin-bento > .span-3,
+  .admin-bento > .span-4,
+  .admin-bento > .span-5,
+  .admin-bento > .span-6,
+  .admin-bento > .span-7,
+  .admin-bento > .span-8 { grid-column: span 12 }
+}
+
+@media (max-width: 900px) {
+  .admin-bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-bento > .span-3,
+  .admin-bento > .span-4,
+  .admin-bento > .span-5,
+  .admin-bento > .span-6,
+  .admin-bento > .span-7,
+  .admin-bento > .span-8 { grid-column: span 12 }
+}
+
+/* ── 通用面板 ──────────────────────────────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--hr);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  transition:
+    border-color var(--fast),
+    box-shadow var(--fast);
+}
+
+/* 面板头：标题 + 读数小标 + 右侧动作位，一行收口，不另起容器。 */
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px 12px;
+}
+
+.panel__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.panel__note {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.panel__actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel__body {
+  padding: 0 20px 18px;
+}
+
+/* 面板内的大号读数：与 StatTile 的 .admin-tile__value 同尺度，
+   但归 panel 管——面板是「标题 + 读数 + 附注」三层，不需要 StatTile 的动作位。 */
+.panel__metric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--fg);
+  margin: 8px 0 6px;
+}
+
+/* 面板抬升 hover：只动边框与阴影，不动布局。 */
+.panel--lift:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-modal);
+}
+
+/* ── 紫色重点卡 ────────────────────────────────────────────── */
+
+.feature-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 22px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--admin-line-strong);
+  color: var(--admin-on-primary);
+  background:
+    radial-gradient(
+      120% 140% at 85% -10%,
+      var(--admin-accent) 0%,
+      var(--admin-primary) 42%,
+      var(--admin-primary-strong) 100%
+    );
+  box-shadow: var(--admin-shadow);
+}
+
+/* 抽象医疗科技纹理：极淡的同心弧，只在重点卡上起「材质」作用，
+   不抢读数；reduced-motion 与暗色下都静止。 */
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: -40% -30% auto auto;
+  width: 260px;
+  height: 260px;
+  border-radius: var(--radius-circle);
+  border: 1px solid var(--admin-on-primary);
+  opacity: 0.16;
+  box-shadow:
+    0 0 0 28px transparent,
+    0 0 0 29px var(--admin-on-primary),
+    0 0 0 56px transparent,
+    0 0 0 57px var(--admin-on-primary);
+  pointer-events: none;
+}
+
+.feature-card__kicker {
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.feature-card__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.feature-card__label {
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.9;
+  max-width: 46ch;
+}
+
+.feature-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.feature-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding-inline: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--admin-on-primary);
+  background: var(--admin-on-primary);
+  color: var(--admin-primary-strong);
+  font-family: var(--font-brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform var(--fast),
+    box-shadow var(--fast);
+}
+
+.feature-card__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.feature-card__cta:focus-visible {
+  outline: 2px solid var(--admin-on-primary);
+  outline-offset: 2px;
+}
+
+.feature-card__sub {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+}
+
+/* 暗色主题下重点卡保持同一材质，不做发光渐变堆砌。
+   浅色版用 --admin-primary 实底压字；暗色版那些令牌是提亮的前景色
+   （#b39dfb / #c4b5fd），整卡实底会把 360px 卡片变成全页最亮的浅色板、
+   极性翻转。这里改用深紫蓝渐变面 + 亮色文字：亮紫只留给 CTA、
+   描边与读数，卡片本身沉回暗色分层里。 */
+html.dark .feature-card {
+  border-color: var(--admin-line-strong);
+  color: #ecebf5;
+  background:
+    radial-gradient(
+      120% 140% at 85% -10%,
+      color-mix(in srgb, var(--admin-primary) 38%, var(--admin-canvas)) 0%,
+      color-mix(in srgb, var(--admin-primary) 18%, var(--admin-canvas)) 55%,
+      var(--admin-canvas) 100%
+    );
+}
+
+html.dark .feature-card::before {
+  border-color: #ecebf5;
+  opacity: 0.12;
+}
+
+html.dark .feature-card__cta {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent);
+  color: var(--admin-on-primary);
+}
+
+/* ── 运营待办行（动作项列表）────────────────────────────────── */
+
+.action-list {
+  display: grid;
+  gap: 2px;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--hr);
+}
+
+.action-row:last-child {
+  border-bottom: 0;
+}
+
+.action-row__label {
+  font-size: 13px;
+  color: var(--fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.action-row__count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  color: var(--fg);
+}
+
+.action-row__count--hot {
+  color: var(--admin-primary);
+}
+
+.action-row__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding-inline: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hr-strong);
+  color: var(--fg-2);
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color var(--fast),
+    border-color var(--fast),
+    background var(--fast);
+}
+
+.action-row__link:hover {
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
+  background: var(--admin-primary-soft);
+}
+
+.action-row__link:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* 窗口空态：趋势 / 分布位让位给的说明面板正文。 */
+.admin-dashboard__empty {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--fg-2);
+  max-width: 56ch;
+}
+
+/* ── 章节标题（管理端用 brand 字族，不再强制衬线）────────────── */
+
+.admin-sec-title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.admin-sec-sub {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* ==========================================================================
+   管理后台 · 筛选 / 表格 / 空态 精修（Visual Completion 工作包 C）
+   --------------------------------------------------------------------------
+   只吃上下文令牌，双主题自动翻。表格页的筛选区从「工具条上的一行输入框」
+   升级为「一张有标题的筛选面板」：字段对齐、动作落底、与下方表格用间距
+   而不是发丝线硬切。表格行加高与留白按「高密度台账」口径取，不套品牌层
+   的大留白；状态标记走 chip（文字 + 小圆点 + 淡衬底），颜色不是唯一载体。
+   ========================================================================== */
+
+/* ── 筛选面板 ────────────────────────────────────────────── */
+
+.admin-filter {
+  background: var(--surface);
+  border: 1px solid var(--hr);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  padding: 14px 18px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-filter form,
+.admin-filter .admin-users__form,
+.admin-filter .admin-news__form,
+.admin-filter .admin-diagnosis__form,
+.admin-filter .admin-knowledge__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  width: 100%;
+}
+
+/* 面板头：标题 + 口径注记一行收口，不另起容器。 */
+.admin-filter__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-filter__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.admin-filter__note {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* 字段：标签在上、输入在下，标签用 brand 字族小写 overline。 */
+.admin-users__field .admin-users__label,
+.admin-news__field .admin-news__label,
+.admin-diagnosis__field .admin-diagnosis__label,
+.admin-knowledge__field .admin-knowledge__label {
+  font-family: var(--font-brand);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* 输入 / 下拉：焦点落到管理紫，hover 只动边框不发散。 */
+.admin-users__input:focus,
+.admin-news__input:focus,
+.admin-diagnosis__input:focus,
+.admin-knowledge__input:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-primary-soft);
+  outline: none;
+}
+
+/* ── 表格行精修 ──────────────────────────────────────────── */
+
+/* 行高：表头 36px、行 48px——高密度但不挤；首列留白与面板内边距对齐。 */
+.admin-dt__head {
+  padding: 10px 16px;
+  height: 36px;
+}
+
+.admin-dt__cell {
+  padding: 12px 16px;
+  height: 48px;
+}
+
+/* 行 hover 只抬表面，不改边框，避免整表抖动。 */
+.admin-dt__row:hover {
+  background: var(--surface-2);
+}
+
+/* 状态 chip：文字 + 小圆点 + 淡衬底，颜色不是唯一载体。 */
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding-inline: 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hr-strong);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.admin-chip::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-circle);
+  background: currentColor;
+  flex: none;
+}
+
+/* 语义变体：正常 / 注意 / 危险 / 中性。颜色只走语义令牌，紫色不冒充医学风险。 */
+.admin-chip[data-tone="normal"] {
+  color: var(--risk-normal);
+  border-color: color-mix(in srgb, var(--risk-normal) 30%, transparent);
+  background: color-mix(in srgb, var(--risk-normal) 8%, transparent);
+}
+
+.admin-chip[data-tone="attention"] {
+  color: var(--risk-attention);
+  border-color: color-mix(in srgb, var(--risk-attention) 30%, transparent);
+  background: color-mix(in srgb, var(--risk-attention) 8%, transparent);
+}
+
+.admin-chip[data-tone="critical"] {
+  color: var(--risk-critical);
+  border-color: color-mix(in srgb, var(--risk-critical) 30%, transparent);
+  background: color-mix(in srgb, var(--risk-critical) 8%, transparent);
+}
+
+.admin-chip[data-tone="admin"] {
+  color: var(--admin-primary);
+  border-color: color-mix(in srgb, var(--admin-primary) 30%, transparent);
+  background: var(--admin-primary-soft);
+}
+
+.admin-chip[data-tone="mute"] {
+  color: var(--fg-3);
+}
+
+/* ── 表格空态 ────────────────────────────────────────────── */
+
+/* 空态不再是表格里的一行字：整块面板 + 图标 + 说明 + 一个动作位。 */
+.admin-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 44px 24px;
+  text-align: center;
+}
+
+.admin-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-empty__title {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg);
+  margin: 0;
+}
+
+.admin-empty__desc {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  max-width: 46ch;
+  margin: 0;
+}
+
+/* ── 页头主操作位 ────────────────────────────────────────── */
+
+/* 页头右侧动作组：主操作 + 次操作并排，主操作是管理紫。 */
+.admin-pagehead__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+/* 页头：章节头 + 动作组在同一基线，窄屏折行。 */
+.admin-users__head,
+.admin-news__head,
+.admin-diagnosis__head,
+.admin-knowledge__head,
+.admin-newsedit__head,
+.admin-dashboard__head,
+.admin-analysis__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--admin-line);
 }

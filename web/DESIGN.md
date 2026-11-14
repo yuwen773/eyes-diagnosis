@@ -86,7 +86,7 @@
 品牌视觉容器另加 `.iris2` 语境类——它**只是容器**，只在首页首屏与认证壳（U6）；
 `--brand-*` 是**跨场景的令牌**（Agent 运行态、品牌强调都可取用），
 两者不是一回事，别把 `.iris2` 当成"用品牌色的开关"。
-管理面 `.is-admin` 由 Visual Completion 工作包 C 落地（含 `--admin-*` 令牌）；
+管理面 `.is-admin` **已落地**（含 `--admin-*` 令牌；2026-11-13 工作包 C）；
 工作台面 `.is-console` 尚未实现，别提前写依赖它的样式。
 
 ## 已知债务
@@ -98,8 +98,13 @@
   Tailwind 的 utilities 层）；不要照着复刻旧写法，也不要再写新的 `.overline` 变体；
 - 断点未完全收敛（各页 `@media` 有 18 个不同取值），新写样式只用 390 / 768 / 900，
   验收过 390 / 768 / 820 / 900 / 1440 / 1920 六档（根 `DESIGN.md` §3.6「R2.5 起的断点分工」）；
-- 管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），
-  与新规范不一致——Visual Completion 工作包 C（Purple SaaS）落地 `--admin-*`；
+- ~~管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），
+  与新规范不一致——Visual Completion 工作包 C（Purple SaaS）落地 `--admin-*`~~：
+  **已修 2026-11-13（工作包 C 落地）**——`--admin-*` 令牌、紫色 SaaS 侧栏、
+  管理紫主操作与当前导航态均已实现（`tokens.css` + `admin.css`）；
+  `feat/admin-visual-redesign` 已完成七页**视觉质量**升级（Bento 构图、
+  台账行操作、Markdown 编辑工作流），证据见
+  `docs/design/admin-redesign-after/r1/`；视觉验收仍待人工复核；
 - 用户端 scene 变体仍存在旧仪器回退（U2 收紧前的遗留），Visual Completion 工作包 B 处理；
 - ~~认证页仍是橙色 LaserFlow + 暗房叙事~~：**已修 2026-11-13（U6）**，AuthShell
   改为蓝青光学 CSS 背景，LaserFlow 死组件已删除；不要再引入 GPU 渲染器；

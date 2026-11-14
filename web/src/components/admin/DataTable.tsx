@@ -38,6 +38,22 @@ export type SortState = { field: string; order: "ascend" | "descend" } | null
 /** 行模型要求 data 引用稳定；空表用同一个空数组，别每次渲染新建。 */
 const EMPTY_ROWS: never[] = []
 
+/**
+ * 页码窗口：当前页附近两页，首尾页常驻，中间用省略号。
+ * 只画可点的真实页码，不做「省略号也能点」的假交互。
+ */
+function pageWindow(current: number, total: number): Array<number | "gap"> {
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1)
+  const pages = new Set<number>([1, total, current - 1, current, current + 1])
+  const list = [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b)
+  const result: Array<number | "gap"> = []
+  list.forEach((page, index) => {
+    if (index > 0 && page - list[index - 1] > 1) result.push("gap")
+    result.push(page)
+  })
+  return result
+}
+
 /** 显式特性树：只有排序需要额外注册，其余用核心能力。 */
 const features = tableFeatures({ rowSortingFeature })
 
@@ -87,6 +103,8 @@ export function DataTable<T extends RowData>(props: {
   /** 服务端排序状态（受控）。只有传了 onSortChange，sortable 列才可点。 */
   sort?: SortState
   onSortChange?: (sort: SortState) => void
+  /** 自定义空态（图标 + 说明 + 动作）；不传时退回一行文字。 */
+  emptyContent?: ReactNode
 }): ReactElement {
   const {
     columns,
@@ -104,6 +122,7 @@ export function DataTable<T extends RowData>(props: {
     hidePager = false,
     sort = null,
     onSortChange,
+    emptyContent,
   } = props
 
   // 列定义映射到 TanStack 的列模型：key 同时是服务端排序字段。
@@ -154,13 +173,21 @@ export function DataTable<T extends RowData>(props: {
 
   let body: ReactNode
   if (isLoading) {
-    body = (
-      <tr className="admin-dt__state-row">
-        <td className="admin-dt__state" colSpan={columnCount}>
-          读取中…
-        </td>
+    // 骨架行：形状与真实行一致，读者先看到「表正在读」，不是一句孤立文案。
+    body = Array.from({ length: 4 }, (_, index) => (
+      <tr key={`skeleton-${index}`} className="admin-dt__row admin-dt__row--skeleton" aria-hidden="true">
+        {selectable ? (
+          <td className="admin-dt__cell admin-dt__cell--pick">
+            <span className="admin-dt__skeleton admin-dt__skeleton--check" />
+          </td>
+        ) : null}
+        {columns.map((column) => (
+          <td key={column.key} className="admin-dt__cell">
+            <span className="admin-dt__skeleton" />
+          </td>
+        ))}
       </tr>
-    )
+    ))
   } else if (error) {
     body = (
       <tr className="admin-dt__state-row">
@@ -172,8 +199,8 @@ export function DataTable<T extends RowData>(props: {
   } else if (resolvedRows.length === 0) {
     body = (
       <tr className="admin-dt__state-row">
-        <td className="admin-dt__state" colSpan={columnCount}>
-          {emptyText}
+        <td className="admin-dt__state admin-dt__state--empty" colSpan={columnCount}>
+          {emptyContent ?? emptyText}
         </td>
       </tr>
     )
@@ -187,30 +214,35 @@ export function DataTable<T extends RowData>(props: {
         <tr key={key} className="admin-dt__row">
           {selectable ? (
             <td className="admin-dt__cell admin-dt__cell--pick">
-              <input
-                type="checkbox"
-                className="admin-dt__check"
-                checked={checked}
-                disabled={!selectableRow}
-                onChange={() => {
-                  if (!onSelectionChange) return
-                  onSelectionChange(
-                    checked
-                      ? selectedKeys.filter((item) => item !== key)
-                      : [...selectedKeys, key],
-                  )
-                }}
-                aria-label={`选择该行 ${key}`}
-              />
+              {/* label 铺满单元格：15px 的视觉盒仍小，但 40px 高的整格都是热区 */}
+              <label className="admin-dt__pick">
+                <input
+                  type="checkbox"
+                  className="admin-dt__check"
+                  checked={checked}
+                  disabled={!selectableRow}
+                  onChange={() => {
+                    if (!onSelectionChange) return
+                    onSelectionChange(
+                      checked
+                        ? selectedKeys.filter((item) => item !== key)
+                        : [...selectedKeys, key],
+                    )
+                  }}
+                  aria-label={`选择该行 ${key}`}
+                />
+              </label>
             </td>
           ) : null}
-          {columns.map((column) => (
+          {columns.map((column, columnIndex) => (
             <td
               key={column.key}
               className={
                 "admin-dt__cell" +
                 (column.mono ? " num" : "") +
-                (column.align ? ` admin-dt__cell--${column.align}` : "")
+                (column.align ? ` admin-dt__cell--${column.align}` : "") +
+                // 末列约定为操作列：窄屏钉住列宽与渐隐提示都按它定位。
+                (columnIndex === columns.length - 1 ? " admin-dt__cell--action" : "")
               }
             >
               {column.render ? column.render(row) : defaultCell(row, column.key)}
@@ -247,27 +279,30 @@ export function DataTable<T extends RowData>(props: {
   return (
     <div className="admin-dt">
       <div className="admin-dt__scroll">
-        <table className="admin-dt__table">
+        <table className="admin-dt__table" aria-busy={isLoading}>
+          {isLoading ? <caption className="sr-only">读取中…</caption> : null}
           <thead>
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id} className="admin-dt__head-row">
                 {selectable ? (
                   <th scope="col" className="admin-dt__head admin-dt__head--pick">
-                    <input
-                      type="checkbox"
-                      className="admin-dt__check"
-                      checked={allChecked}
-                      ref={(node) => {
-                        // 半选态（部分选中）用 indeterminate 表达，不能只靠 checked。
-                        if (node) node.indeterminate = !allChecked && someChecked
-                      }}
-                      disabled={selectableKeys.length === 0}
-                      onChange={() => {
-                        if (!onSelectionChange) return
-                        onSelectionChange(allChecked ? [] : selectableKeys)
-                      }}
-                      aria-label="全选本页"
-                    />
+                    <label className="admin-dt__pick">
+                      <input
+                        type="checkbox"
+                        className="admin-dt__check"
+                        checked={allChecked}
+                        ref={(node) => {
+                          // 半选态（部分选中）用 indeterminate 表达，不能只靠 checked。
+                          if (node) node.indeterminate = !allChecked && someChecked
+                        }}
+                        disabled={selectableKeys.length === 0}
+                        onChange={() => {
+                          if (!onSelectionChange) return
+                          onSelectionChange(allChecked ? [] : selectableKeys)
+                        }}
+                        aria-label="全选本页"
+                      />
+                    </label>
                   </th>
                 ) : null}
                 {group.headers.map((header) => {
@@ -281,7 +316,11 @@ export function DataTable<T extends RowData>(props: {
                       scope="col"
                       className={
                         "admin-dt__head num" +
-                        (column.align ? ` admin-dt__cell--${column.align}` : "")
+                        (column.align ? ` admin-dt__cell--${column.align}` : "") +
+                        // 末列约定为操作列：窄屏钉住列宽与渐隐提示都按它定位。
+                        (header.column.id === columns[columns.length - 1].key
+                          ? " admin-dt__head--action"
+                          : "")
                       }
                       style={column.width ? { width: column.width } : undefined}
                       aria-sort={
@@ -327,36 +366,63 @@ export function DataTable<T extends RowData>(props: {
       {hidePager ? null : (
       <div className="admin-dt__pager num">
         <span className="admin-dt__pager-info">
-          第 {current} / {totalPages} 页 · 共 {page.total} 条
+          {/* 还没读到 ≠ 读到是零：加载中或出错时总数与页码都报「—」，
+              不把 0/1 这种默认值当成真实读数发布出去。 */}
+          {error || isLoading ? (
+            <>共 <b>—</b> 条 · 第 — / — 页</>
+          ) : (
+            <>共 <b>{page.total}</b> 条 · 第 {current} / {totalPages} 页</>
+          )}
         </span>
         <div className="admin-dt__pager-controls">
           <button
             type="button"
-            className="admin-dt__pager-btn"
+            className="admin-dt__pager-btn admin-dt__pager-btn--step"
             onClick={goPrev}
             disabled={current <= 1}
+            aria-label="上一页"
           >
             上一页
           </button>
+          <div className="admin-dt__pager-pages" role="group" aria-label="页码">
+            {pageWindow(current, totalPages).map((entry, index) =>
+              entry === "gap" ? (
+                <span key={`gap-${index}`} className="admin-dt__pager-gap" aria-hidden="true">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={entry}
+                  type="button"
+                  className="admin-dt__pager-page"
+                  aria-current={entry === current ? "page" : undefined}
+                  onClick={() => onPageChange({ current: entry, pageSize: page.pageSize })}
+                >
+                  {entry}
+                </button>
+              ),
+            )}
+          </div>
           <button
             type="button"
-            className="admin-dt__pager-btn"
+            className="admin-dt__pager-btn admin-dt__pager-btn--step"
             onClick={goNext}
             disabled={current >= totalPages}
+            aria-label="下一页"
           >
             下一页
           </button>
           <label className="admin-dt__pager-size">
-            <span className="admin-dt__pager-size-label">每页条数</span>
+            <span className="admin-dt__pager-size-label">每页</span>
             <select
               className="admin-dt__pager-select"
               value={page.pageSize}
               onChange={(event) => changeSize(Number(event.target.value))}
               aria-label="每页条数"
             >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
+              <option value={10}>10 条</option>
+              <option value={20}>20 条</option>
+              <option value={50}>50 条</option>
             </select>
           </label>
         </div>

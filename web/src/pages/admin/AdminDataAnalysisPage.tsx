@@ -1,10 +1,10 @@
-import { useMemo, useState, type ReactElement } from "react"
+import { useMemo, useState, type ReactElement, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
+import { ScanEye } from "lucide-react"
 
-import { SectionHead } from "@/components/SectionHead"
-import { StatTile } from "@/components/admin/StatTile"
-import { Toolbar } from "@/components/admin/Toolbar"
+import { AdminEmpty } from "@/components/admin/AdminEmpty"
+import { AdminPageHead } from "@/components/admin/AdminPageHead"
 import { SmallMultipleTrend } from "@/components/admin/charts/SmallMultipleTrend"
 import { WeekBars } from "@/components/admin/charts/WeekBars"
 import { ShareBar } from "@/components/admin/charts/ShareBar"
@@ -36,6 +36,22 @@ const MAX_DISEASE_SERIES = 6
 
 /** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
 const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
+
+/** 读数卡：标签 + 等宽大数 + 一行口径。强调位只加左侧紫线，不做整卡填色。 */
+function KpiCard(props: {
+  label: string
+  value: string
+  foot?: ReactNode
+  accent?: boolean
+}): ReactElement {
+  return (
+    <div className={`admin-metric-card${props.accent ? " admin-metric-card--accent" : ""}`}>
+      <span className="admin-metric-card__label">{props.label}</span>
+      <span className="admin-metric-card__value">{props.value}</span>
+      <span className="admin-metric-card__foot">{props.foot}</span>
+    </div>
+  )
+}
 
 /**
  * 数据分析（真实统计）。
@@ -148,14 +164,34 @@ export function AdminDataAnalysisPage(): ReactElement {
 
   return (
     <div className="admin-analysis">
-      <div className="admin-analysis__head">
-        <SectionHead code="06" kicker="数据分析" en="ADMIN · DATA ANALYSIS" />
-        {stats ? (
-          <span className="admin-sample num">
-            {stats.rangeStart} ~ {stats.rangeEnd} · 近 {stats.days} 天
-          </span>
-        ) : null}
-      </div>
+      <AdminPageHead
+        code="06"
+        title="数据分析"
+        eyebrow="ADMIN · DATA ANALYSIS"
+        description="与仪表盘同一份统计口径，把时间窗拉长、维度拆细。切换时间窗会重新取数，而不是只改显示。"
+        meta={
+          stats ? (
+            <span className="admin-sample num">
+              {stats.rangeStart} ~ {stats.rangeEnd} · 近 {stats.days} 天
+            </span>
+          ) : null
+        }
+        actions={
+          <div className="admin-range" role="group" aria-label="时间范围">
+            {RANGES.map((range) => (
+              <button
+                key={range.value}
+                type="button"
+                className="admin-range__btn"
+                aria-pressed={String(days) === range.value}
+                onClick={() => changeDays(Number(range.value))}
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {statsFault ? (
         <FaultNote
@@ -169,55 +205,57 @@ export function AdminDataAnalysisPage(): ReactElement {
         />
       ) : null}
 
-      <section className="admin-kpis" aria-label="关键指标">
-        <StatTile
-          label="窗口内判读"
+      <section className="admin-metric-strip" aria-label="关键指标">
+        <KpiCard
+          label="窗口内判读 · IN RANGE"
           value={read(stats?.diagnosisInRange)}
-          delta={
-            stats
-              ? changeLabel(stats.diagnosisInRange, stats.previousDiagnosisInRange)
-              : undefined
-          }
           accent
+          foot={
+            <span className="admin-metric-card__delta">
+              {stats
+                ? changeLabel(stats.diagnosisInRange, stats.previousDiagnosisInRange)
+                : "—"}
+            </span>
+          }
         />
-        <StatTile
-          label="待人工复核"
+        <KpiCard
+          label="待人工复核 · AWAITING"
           value={read(stats?.diagnosisAwaitingReviewTotal)}
-          tone={awaitingTotal > 0 ? "attention" : "normal"}
-          toneLabel={awaitingTotal > 0 ? "待处理" : "已清空"}
-          action={{ label: "去复核", to: "/admin/diagnosis?review=requiresReview" }}
+          foot={
+            <>
+              <span
+                className="admin-chip"
+                data-tone={stats ? (awaitingTotal > 0 ? "attention" : "normal") : "mute"}
+              >
+                {stats ? (awaitingTotal > 0 ? "待处理" : "已清空") : "读取中"}
+              </span>
+              <Link className="action-row__link" to="/admin/diagnosis?review=requiresReview">
+                去复核
+              </Link>
+            </>
+          }
         />
-        <StatTile
-          label="AI 拒识"
+        <KpiCard
+          label="AI 拒识 · REJECTED"
           value={read(stats?.diagnosisAiRejected)}
-          tone={aiRejected > 0 ? "attention" : "normal"}
-          toneLabel={aiRejected > 0 ? "无结论" : "无"}
-          delta={`占窗口内判读 ${formatStatPercent(rejectShare)}`}
+          foot={
+            <span className="admin-metric-card__delta">
+              {stats
+                ? `占窗口内判读 ${formatStatPercent(rejectShare)}`
+                : "统计读数尚未返回"}
+            </span>
+          }
         />
-        <StatTile
-          label="窗口内新增用户"
+        <KpiCard
+          label="新增用户 · NEW USERS"
           value={read(stats?.userNew)}
-          delta={stats ? changeLabel(stats.userNew, stats.previousUserNew) : undefined}
+          foot={
+            <span className="admin-metric-card__delta">
+              {stats ? changeLabel(stats.userNew, stats.previousUserNew) : "—"}
+            </span>
+          }
         />
       </section>
-
-      <Toolbar>
-        <label className="admin-analysis__field">
-          <span className="admin-analysis__label">时间范围 · RANGE</span>
-          <select
-            className="admin-analysis__select"
-            value={String(days)}
-            onChange={(event) => changeDays(Number(event.target.value))}
-            aria-label="时间范围"
-          >
-            {RANGES.map((range) => (
-              <option key={range.value} value={range.value}>
-                {range.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </Toolbar>
 
       <section className="admin-analysis__section" aria-label="病种趋势">
         <h2 className="admin-analysis__title">
@@ -229,7 +267,11 @@ export function AdminDataAnalysisPage(): ReactElement {
         {statsLoading ? (
           <p className="admin-analysis__empty num">统计载入中…</p>
         ) : diseaseSeries.length === 0 ? (
-          <p className="admin-analysis__empty num">窗口内没有可统计的判读记录。</p>
+          <AdminEmpty
+            icon={ScanEye}
+            title="窗口内没有可统计的判读"
+            description="当前时间范围内没有判读记录。换一个更长的时间窗，或到诊断管理查看全量记录。"
+          />
         ) : (
           <div className="admin-analysis__grid admin-analysis__grid--trend">
             {diseaseSeries.map((series, index) => (
@@ -247,17 +289,26 @@ export function AdminDataAnalysisPage(): ReactElement {
 
       <section className="admin-analysis__section" aria-label="病种分布与复核状态">
         <div className="admin-analysis__grid admin-analysis__grid--pair">
-          <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" />
+          <RankedBars
+            rows={distribution}
+            ariaLabel="病种分布"
+            unit="条"
+            emptyText="窗口内没有可统计的判读记录"
+          />
           <ShareBar
             rows={reviewDistribution}
             ariaLabel="复核状态分布"
             accentNames={[AWAITING_REVIEW_LABEL]}
+            emptyText="窗口内没有复核记录"
           />
         </div>
       </section>
 
       <section className="admin-analysis__section" aria-label="按星期分布">
         <h2 className="admin-analysis__title">新增用户 · 按星期分布</h2>
+        <span className="admin-analysis__title-note num">
+          主读数是窗口内合计与日均，不是某一格的值
+        </span>
         <WeekBars
           bars={weekly.bars}
           title="新增注册 · 按星期（日均）"
@@ -270,8 +321,18 @@ export function AdminDataAnalysisPage(): ReactElement {
 
       <section className="admin-analysis__section" aria-label="知识库与资讯">
         <div className="admin-analysis__grid admin-analysis__grid--pair">
-          <RankedBars rows={knowledgeDistribution} ariaLabel="知识库文档状态分布" unit="份" />
-          <RankedBars rows={newsDistribution} ariaLabel="资讯发布状态分布" unit="篇" />
+          <RankedBars
+            rows={knowledgeDistribution}
+            ariaLabel="知识库文档状态分布"
+            unit="份"
+            emptyText="还没有知识库文档"
+          />
+          <RankedBars
+            rows={newsDistribution}
+            ariaLabel="资讯发布状态分布"
+            unit="篇"
+            emptyText="还没有资讯记录"
+          />
         </div>
         {stats && stats.knowledgeFailed > 0 ? (
           <p className="admin-analysis__note num">
