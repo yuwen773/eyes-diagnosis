@@ -1,165 +1,185 @@
 import "@/styles/admin.css"
 import "@/styles/admin-redesign.css"
 
-import { Link, NavLink, Outlet } from "react-router-dom"
-import {
-  ArrowLeft,
-  ChartColumn,
-  LayoutDashboard,
-  Library,
-  Newspaper,
-  Stethoscope,
-  Users,
-  type LucideIcon,
-} from "lucide-react"
+import { useState, type ReactElement } from "react"
+import { Link, Outlet, useLocation } from "react-router-dom"
+import { ArrowLeft, ChevronRight, Menu, Moon, Sun } from "lucide-react"
+
+import { Dialog } from "@/components/ui/dialog"
 import { useTheme } from "@/components/theme-provider"
 import { useSession } from "@/lib/session"
+import { ADMIN_NAV, AdminBrand, AdminNav } from "./AdminNav"
 
-/** 侧栏六项。导出供测试/复用；路由与占位页编号同源。 */
-export const ADMIN_NAV = [
-  { to: "/admin/dashboard", code: "01", label: "仪表盘", icon: LayoutDashboard },
-  { to: "/admin/users", code: "02", label: "用户管理", icon: Users },
-  { to: "/admin/news", code: "03", label: "新闻管理", icon: Newspaper },
-  { to: "/admin/diagnosis", code: "04", label: "诊断管理", icon: Stethoscope },
-  { to: "/admin/knowledge", code: "05", label: "知识库", icon: Library },
-  { to: "/admin/data-analysis", code: "06", label: "数据分析", icon: ChartColumn },
-] as const satisfies ReadonlyArray<{ to: string; code: string; label: string; icon: LucideIcon }>
+/** 侧栏导航数据源（历史出口保留：外部按 ADMIN_NAV 取路由与编号）。 */
+export { ADMIN_NAV } from "./AdminNav"
 
 /**
- * 侧栏分组：按「管理员此刻在做什么」切，不按功能数量平均分。
- * 编号仍取自 ADMIN_NAV，路由与顺序只有一份真源。
+ * 主题切换：两态分段控件。
+ *
+ * <p>不再是「一个圆环按钮 + 悬停变紫」——那读不出当前在哪一侧。
+ * 分段控件把「浅色 / 深色」两个真实状态摆出来，当前段是实心紫面，
+ * 与侧栏当前导航态同一套视觉语言。
  */
-const ADMIN_GROUPS = [
-  { label: "概览", codes: ["01"] },
-  { label: "业务管理", codes: ["02", "04"] },
-  { label: "内容与知识", codes: ["03", "05"] },
-  { label: "分析", codes: ["06"] },
-] as const
-
-/** 品牌标：同心虹膜。只用几何圆，不做发光 / 粒子。 */
-function IrisMark() {
+function ThemeSwitch(): ReactElement {
+  const { resolvedTheme, setTheme } = useTheme()
   return (
-    <svg className="admin-side__mark" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="13.2" fill="none" stroke="currentColor" strokeOpacity="0.28" />
-      <circle cx="16" cy="16" r="8.6" fill="none" stroke="currentColor" strokeOpacity="0.55" />
-      <circle cx="16" cy="16" r="4.2" fill="currentColor" />
-      <path d="M16 2.8 A13.2 13.2 0 0 1 29.2 16" fill="none" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
+    <div className="admin-theme" role="group" aria-label="主题切换">
+      <button
+        type="button"
+        className="admin-theme__btn"
+        aria-pressed={resolvedTheme === "light"}
+        onClick={() => setTheme("light")}
+        title="浅色主题"
+        aria-label="切换到浅色主题"
+      >
+        <Sun size={15} strokeWidth={1.9} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="admin-theme__btn"
+        aria-pressed={resolvedTheme === "dark"}
+        onClick={() => setTheme("dark")}
+        title="深色主题"
+        aria-label="切换到深色主题"
+      >
+        <Moon size={15} strokeWidth={1.9} aria-hidden="true" />
+      </button>
+    </div>
   )
 }
 
 /**
- * 管理后台外壳：仪表梁 + 紫色 SaaS 侧栏 + 内容区。
- * 主题切换直接复用全站 ThemeProvider 的 useTheme 与共享顶栏的半满读数环。
- * 管理端不挂载产品顶栏（R2.5，DESIGN.md §1.6），侧栏才是它的导航。
+ * 账户区：真实登录用户的头像、名称与角色。
  *
- * 外壳吃 .is-admin 管理语境（tokens.css）：浅色是浅紫灰画布 + 紫白侧栏 +
+ * <p>头像有图用图、无图退回姓名首字（不再写死「管理员」字样）。
+ */
+function AccountChip(props: {
+  name: string
+  role: string
+  avatar?: string
+}): ReactElement {
+  const { name, role, avatar } = props
+  return (
+    <div className="admin-account">
+      <span className="admin-account__avatar" aria-hidden="true">
+        {avatar ? <img src={avatar} alt="" /> : name.slice(0, 1)}
+      </span>
+      <span className="admin-account__text">
+        <span className="admin-account__name">{name}</span>
+        <span className="admin-account__role">{role}</span>
+      </span>
+    </div>
+  )
+}
+
+/**
+ * 管理后台外壳：左侧常驻导航 + 右侧工作区（自带 Topbar）。
+ *
+ * <p>结构（Iris 2.1）：侧栏从视口顶部开始，右侧工作区有自己的顶栏——
+ * 顶栏只回答「我在哪、我是谁、什么主题」，不再重复 Iris 品牌铭牌；
+ * 品牌与「返回主站」收在侧栏底部，形成一条清晰的「工作台 ↔ 主站」回路。
+ *
+ * <p>顶栏、侧栏、内容区共用同一组尺寸令牌（--admin-side-w /
+ * --admin-topbar-h / --gutter / --admin-maxw），三者的左右缘因此始终对齐。
+ *
+ * <p>窄屏（≤900px）侧栏收成抽屉：顶栏左侧的菜单钮打开 Base UI Dialog
+ * 抽屉，导航内容与桌面侧栏同源（ADMIN_NAV 一份），不另写一套横向标签条。
+ *
+ * <p>外壳吃 .is-admin 管理语境（tokens.css）：浅色是浅紫灰画布 + 紫白侧栏 +
  * 管理紫当前态，暗色整体翻成深紫蓝分层面板——外壳与内容区永远同主题，
  * 不出现「深色外壳 + 浅色内容」的割裂。医学语义（--risk-*）不进外壳。
  */
-export function AdminLayout() {
-  const { resolvedTheme, setTheme } = useTheme()
+export function AdminLayout(): ReactElement {
   const { user } = useSession()
+  const location = useLocation()
+  const [navOpen, setNavOpen] = useState(false)
+  // 抽屉里点导航后自动收起；浏览器前进后退换路由时同样收起。
+  // 用「渲染期校正状态」而不是 effect：换路由就是换了一页，抽屉不该留着。
+  const [lastPath, setLastPath] = useState(location.pathname)
+  if (lastPath !== location.pathname) {
+    setLastPath(location.pathname)
+    setNavOpen(false)
+  }
+
   const accountName = user?.userName || user?.userAccount || "管理员"
   const accountRole = user?.userRole === "admin" ? "系统管理员" : "管理账号"
-  const initial = accountName.slice(0, 1)
+
+  // 面包屑取当前路由，不写死页名：新增管理路由自动跟上。
+  const current = ADMIN_NAV.find((item) => location.pathname.startsWith(item.to))
+  const currentLabel = current?.label ?? "系统管理"
 
   return (
     <div className="is-admin admin-shell">
-      <header className="admin-beam">
-        <div className="admin-beam__inner">
-          <Link to="/" className="admin-beam__back">
-            <ArrowLeft className="admin-beam__back-mark" size={14} strokeWidth={2} aria-hidden="true" />
+      <aside className="admin-side">
+        <AdminBrand />
+        <AdminNav />
+        <div className="admin-side__foot">
+          <Link to="/" className="admin-side__back">
+            <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
             返回主站
           </Link>
-
-          <span className="admin-beam__sep" aria-hidden="true" />
-
-          <span className="admin-beam__plate">
-            <span className="admin-beam__plate-zh">Iris · 系统管理</span>
-            <span className="admin-beam__plate-en num">/ ADMINISTRATION</span>
-          </span>
-
-          <div className="admin-beam__right">
-            <span className="admin-beam__user">{accountName}</span>
-            <button
-              type="button"
-              className="theme-toggle"
-              onClick={() =>
-                setTheme(resolvedTheme === "dark" ? "light" : "dark")
-              }
-              aria-label={
-                resolvedTheme === "dark" ? "切换到浅色主题" : "切换到暗色主题"
-              }
-              title={resolvedTheme === "dark" ? "切换到浅色" : "切换到暗色"}
-            >
-              {/* 环上是一半描边一半实心：亮一半暗一半，当前侧实心。 */}
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <circle
-                  cx="8"
-                  cy="8"
-                  r="6.4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                />
-                {resolvedTheme === "dark" ? (
-                  <path d="M8 1.6 A6.4 6.4 0 0 1 8 14.4 Z" fill="currentColor" />
-                ) : (
-                  <path d="M8 1.6 A6.4 6.4 0 0 0 8 14.4 Z" fill="currentColor" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <aside className="admin-side">
-        <div className="admin-side__brand">
-          <span className="admin-side__brand-mark">
-            <IrisMark />
-          </span>
-          <span className="admin-side__brand-text">
-            <span className="admin-side__brand-name">Iris</span>
-            <span className="admin-side__brand-sub num">MEDICAL SAAS</span>
-          </span>
-        </div>
-
-        <nav className="admin-side__nav" aria-label="系统管理导航">
-          {ADMIN_GROUPS.map((group) => (
-            <div className="admin-side__group" key={group.label}>
-              <p className="admin-side__group-label">{group.label}</p>
-              {ADMIN_NAV.filter((item) => (group.codes as readonly string[]).includes(item.code)).map(
-                (item) => (
-                  <NavLink key={item.to} to={item.to} className="admin-side__link">
-                    <span className="admin-side__icon" aria-hidden="true">
-                      <item.icon size={16} strokeWidth={1.75} />
-                    </span>
-                    <span className="admin-side__label">{item.label}</span>
-                  </NavLink>
-                ),
-              )}
-            </div>
-          ))}
-        </nav>
-
-        <div className="admin-side__foot">
-          <span className="admin-side__avatar" aria-hidden="true">
-            {user?.userAvatar ? <img src={user.userAvatar} alt="" /> : initial}
-          </span>
-          <span className="admin-side__foot-text">
-            <span className="admin-side__foot-name">{accountName}</span>
-            <span className="admin-side__foot-role">{accountRole}</span>
-          </span>
-          <span className="admin-side__foot-status" role="status">
-            <span className="sr-only">已登录</span>
-          </span>
+          <p className="admin-side__session">
+            <span className="admin-side__session-dot" aria-hidden="true" />
+            已登录 · {accountRole}
+          </p>
         </div>
       </aside>
 
-      <main className="admin-main">
-        <Outlet />
-      </main>
+      <div className="admin-workspace">
+        <header className="admin-topbar">
+          <div className="admin-topbar__inner">
+            <button
+              type="button"
+              className="admin-topbar__menu"
+              onClick={() => setNavOpen(true)}
+              aria-label="打开系统管理导航"
+            >
+              <Menu size={18} strokeWidth={1.9} aria-hidden="true" />
+            </button>
+
+            <nav className="admin-crumbs" aria-label="当前位置">
+              <span className="admin-crumbs__root">系统管理</span>
+              <ChevronRight className="admin-crumbs__sep" size={13} strokeWidth={2} aria-hidden="true" />
+              <span className="admin-crumbs__current" aria-current="page">
+                {currentLabel}
+              </span>
+            </nav>
+
+            <div className="admin-topbar__right">
+              <ThemeSwitch />
+              <AccountChip
+                name={accountName}
+                role={accountRole}
+                avatar={user?.userAvatar}
+              />
+            </div>
+          </div>
+        </header>
+
+        <main className="admin-main">
+          <Outlet />
+        </main>
+      </div>
+
+      <Dialog
+        open={navOpen}
+        title="系统管理导航"
+        onClose={() => setNavOpen(false)}
+        className="is-admin admin-navdrawer"
+      >
+        <AdminBrand />
+        <AdminNav onNavigate={() => setNavOpen(false)} />
+        <div className="admin-side__foot">
+          <Link to="/" className="admin-side__back" onClick={() => setNavOpen(false)}>
+            <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
+            返回主站
+          </Link>
+          <p className="admin-side__session">
+            <span className="admin-side__session-dot" aria-hidden="true" />
+            已登录 · {accountRole}
+          </p>
+        </div>
+      </Dialog>
     </div>
   )
 }
