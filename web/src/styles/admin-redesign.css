@@ -49,6 +49,26 @@
   );
 }
 
+/* 桌面端把侧栏钉在视口里（顶栏之下）：外壳是两行 grid，第二行 `1fr`
+   会随正文长高，侧栏默认 stretch 跟着被拉到与正文同高——账户卡就落到
+   文档底部，长页面（知识库/数据分析）要滚到底才看得见。
+   这里改成 sticky + 视口高度 + 自身内部滚动：品牌/导航/账户卡始终在
+   屏内，导航过多时只滚导航区。≤768 侧栏变横向导航条，规则不适用。 */
+@media (min-width: 769px) {
+  .admin-side {
+    position: sticky;
+    top: var(--admin-beam-h);
+    align-self: start;
+    height: calc(100svh - var(--admin-beam-h));
+    overflow: hidden;
+  }
+
+  .admin-side__nav {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
 .admin-side__brand {
   display: flex;
   align-items: center;
