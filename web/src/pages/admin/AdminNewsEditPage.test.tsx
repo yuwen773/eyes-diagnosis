@@ -295,3 +295,73 @@ describe("AdminNewsEditPage 旧版 HTML 预览", () => {
     expect(summary).not.toContain("<p>")
   })
 })
+
+describe("AdminNewsEditPage 预览设备框几何", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  /** jsdom 没有布局：把 clientWidth 固定成给定宽度，模拟画布有多宽。 */
+  function stubCanvasWidth(width: number) {
+    vi.spyOn(Element.prototype, "clientWidth", "get").mockReturnValue(width)
+  }
+
+  function deviceElement(): HTMLElement {
+    const element = document.querySelector<HTMLElement>(".admin-newsedit__device")
+    if (!element) throw new Error("预览设备框没渲染出来")
+    return element
+  }
+
+  it("逻辑宽度固定：桌面 1240 / 手机 390，与公开页同宽即同版式", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    // 版式按逻辑宽度算，不按画布宽度——画布多宽都不改写这两个数。
+    expect(deviceElement().style.getPropertyValue("--news-preview-logical-width")).toBe("1240px")
+
+    fireEvent.click(screen.getByRole("button", { name: "手机" }))
+    expect(deviceElement().style.getPropertyValue("--news-preview-logical-width")).toBe("390px")
+  })
+
+  it("画布装不下逻辑宽度时整体等比缩放，断点不重算", async () => {
+    await openEditor(LEGACY_HTML)
+    stubCanvasWidth(600)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    const device = deviceElement()
+    // 缩放系数 = 画布 / 逻辑宽度；逻辑宽度本身不变（版式没被重排）。
+    expect(Number(device.style.getPropertyValue("--news-preview-scale"))).toBeCloseTo(600 / 1240, 6)
+    expect(device.style.getPropertyValue("--news-preview-logical-width")).toBe("1240px")
+    // 缩放比例写在预览条上：管理员知道自己看的是缩小版，不是另一套版式。
+    expect(screen.getByText(/按 48% 等比呈现/)).toBeTruthy()
+  })
+
+  it("手机档在更窄的画布里同样按 390 逻辑宽度缩放", async () => {
+    await openEditor(LEGACY_HTML)
+    stubCanvasWidth(250)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    fireEvent.click(screen.getByRole("button", { name: "手机" }))
+
+    const device = deviceElement()
+    expect(Number(device.style.getPropertyValue("--news-preview-scale"))).toBeCloseTo(250 / 390, 6)
+    expect(device.style.getPropertyValue("--news-preview-logical-width")).toBe("390px")
+  })
+
+  it("画布够宽时按 1:1 呈现，不缩不放", async () => {
+    await openEditor(LEGACY_HTML)
+    stubCanvasWidth(1600)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    expect(deviceElement().style.getPropertyValue("--news-preview-scale")).toBe("1")
+    expect(screen.queryByText(/等比呈现/)).toBeNull()
+  })
+
+  it("预览画布包着设备框：画布是可用宽度，设备框在里面等比缩放", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    const stage = document.querySelector(".admin-newsedit__preview-stage")
+    expect(stage).toBeTruthy()
+    expect(stage?.contains(deviceElement())).toBe(true)
+  })
+})

@@ -2,17 +2,24 @@
  * 管理端资讯预览画布。
  *
  * <p>预览不是「再写一套文章样式」，而是把公开详情页的同一个
- * `NewsArticleView` 装进一个设备框里。公开页的断点是媒体查询（按浏览器宽度
- * 生效），所以桌面视口下缩到 390px 不会触发移动端版式；这里给设备框加
- * `container-type: inline-size`，再用容器查询补上公开页同样的 900 / 768 两档。
+ * `NewsArticleView` 装进一个设备框里。
+ *
+ * <p>设备框有两个宽度：**逻辑宽度**（排版用）与**呈现宽度**（屏幕上看到的）。
+ * 逻辑宽度固定——桌面 1240（公开页版心）、手机 390（公开页手机视口），
+ * 由脚本按设备档位注入（`--news-preview-logical-width`）。公开页的断点是媒体
+ * 查询（按浏览器宽度生效），所以桌面视口下缩到 390px 不会触发移动端版式；
+ * 这里给设备框加 `container-type: inline-size`，再用容器查询补上公开页同样的
+ * 900 / 768 两档。**断点按逻辑宽度判定，不按画布宽度**：画布窄了不换版式，
+ * 只把整幅版式等比缩小——重新排版等于给管理员看另一篇文章。
  *
  * <p>断点只是「什么时候换版式」，版式里的**尺寸**另有一批：文章标题、纸面
  * 内边距、目录与正文的间距原本都按视口单位（vw/vh）写，vw 在设备框里仍按
  * 浏览器视口算——那样 390px 的设备框会拿到 1440 视口的字号与留白，「手机
  * 预览」就成了缩小版桌面。news.css 已把这批长度收成 `--news-scale-*` 变量，
  * 这里在设备框上覆写同一批变量：宽度项用容器单位（cqi = 设备框宽度的 1%），
- * 高度项用声明的模拟视口高度。于是「设备框 390px」与「公开页 390px 视口」
- * 逐项同值——同一份 CSS，两种上下文各自成立。
+ * 高度项用声明的模拟视口高度（`--news-sim-vh`，同样由脚本注入）。于是
+ * 「设备框 390px」与「公开页 390px 视口」逐项同值——同一份 CSS，两种上下文
+ * 各自成立。
  */
 
 /* 预览时让画布占满工作区：编辑区的两栏（正文 + 发布设置）只有 676px，
@@ -30,6 +37,9 @@
 .admin-newsedit__preview {
   display: grid;
   gap: 12px;
+  /* 显式单列：设备框的布局宽度恒为逻辑宽度（1240/390），不封顶的话
+     网格轨道会被它的 min-content 撑开，把整页撑出横向滚动条。 */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .admin-newsedit__preview-bar {
@@ -47,13 +57,13 @@
   color: var(--admin-text-faint);
 }
 
-/* 模拟视口读数：设备框多宽就是模拟多宽的视口，断点与字号都按它算。
-   摆在预览条上，管理员才知道自己看的是哪一档版式。 */
+/* 模拟视口读数：模拟的是哪一档版式，摆在预览条上，管理员才知道自己看的是什么。
+   窄屏放得下时它会折行——强行不折会把整页撑出横向滚动条。 */
 .admin-newsedit__preview-viewport {
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--admin-text-faint);
-  white-space: nowrap;
+  min-width: 0;
 }
 
 /* 设备切换：与列表页的分段控件同一套外观（2px 内衬 + 当前态淡紫底）。 */
@@ -117,7 +127,20 @@
   color: var(--admin-text-faint);
 }
 
-/* ── 设备框 ─────────────────────────────────────────────── */
+/* ── 画布与设备框 ───────────────────────────────────────── */
+
+/* 画布 = 预览真正可用的宽度。设备框在画布里等比缩放，画布本身不参与排版，
+   所以「画布窄了」不会换成另一套版式。 */
+.admin-newsedit__preview-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  /* 设备框的布局宽度恒为逻辑宽度（1240/390），transform 不改变布局——
+     溢出的那一截必须裁掉，否则整页会被撑出横向滚动条。缩放后的画面
+     正好落在画布内，裁掉的是看不见的布局溢出。 */
+  overflow: hidden;
+}
 
 /* 设备框本身就是「被模拟的视口」：宽度、字号、断点都按它算。
    机身边框用 box-shadow 画，不占布局——边框若占布局，同宽下正文列宽会比
@@ -125,17 +148,22 @@
    就不是同一张纸了。 */
 .admin-newsedit__device {
   container-type: inline-size;
-  width: 100%;
-  /* 与公开页版心同宽（--maxw: 1240px），桌面预览才是公开页的真实宽度。 */
-  max-width: 1240px;
-  margin-inline: auto;
+  /* 逻辑宽度固定，由脚本按设备档位注入（桌面 1240 / 手机 390）。
+     画布装不下时整体缩放，不重新计算文章断点。 */
+  width: var(--news-preview-logical-width, 1240px);
+  flex: 0 0 auto;
   border-radius: var(--radius-md);
   box-shadow: 0 0 0 1px var(--admin-line);
 
+  /* 等比缩放：缩放不改变布局，断点与字号仍按逻辑宽度算。
+     原点是自身顶部中点——画布用 flex 居中，缩放后正好也居中。 */
+  transform: scale(var(--news-preview-scale, 1));
+  transform-origin: top center;
+
   /* 设备框 = 模拟视口。宽度项按容器算（1cqi = 设备框宽度的 1%），
      高度项按声明的模拟视口高度算——vh 那一族在设备框里没有对应的量，
-     与其让它们继续按管理员的浏览器高度算，不如把模拟值写明。 */
-  --news-sim-vh: 900px;
+     与其让它们继续按管理员的浏览器高度算，不如把模拟值写明。
+     --news-sim-vh 由脚本注入（PREVIEW_DEVICE_HEIGHT），这里只消费。 */
   --news-scale-title: clamp(32px, 4.2cqi, 56px);
   --news-scale-paper-pad: clamp(26px, 3.4cqi, 52px);
   --news-scale-paper-max: clamp(52px, 6.8cqi, 104px);
@@ -147,9 +175,6 @@
 }
 
 .admin-newsedit__device--mobile {
-  max-width: 390px;
-  /* 手机模拟视口高度按常见机型取 844px；眉线与封面的纵向留白随它算。 */
-  --news-sim-vh: 844px;
   border-radius: var(--radius-lg);
 }
 
@@ -210,3 +235,34 @@
 
 /* 480 以下不再另调：封面圆角与限高交给 news.css 自己，
    预览与公开页同宽就该同版式，不在这里做「手机专属调校」。 */
+
+/* ── 真实窄屏：预览整屏铺开 ─────────────────────────────────────
+   管理员在手机上打开编辑页时，卡片内边距会把画布挤成两百多像素的窄条——
+   手机预览比公开页还窄，等于什么都看不出来。这里在 ≤600px（与公开页
+   --gutter 的窄屏档同一断点）让预览卡片与画布整屏铺开：画布拿到整屏宽度，
+   与公开页同宽即同版式；画布之外的内容仍留页边距，不贴着屏幕边缘。 */
+@media (max-width: 600px) {
+  .admin-newsedit__workspace--preview .admin-newsedit__main {
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: 0;
+    border-inline: 0;
+  }
+
+  /* 预览区自己的内边距也收掉，否则画布仍被卡在卡片内缘。 */
+  .admin-newsedit__workspace--preview .admin-newsedit__preview {
+    padding-inline: 0;
+    border-inline: 0;
+  }
+
+  /* 画布之外的内容保留页边距：工具行、标题、读数不该贴着屏幕边缘。 */
+  .admin-newsedit__workspace--preview .admin-newsedit__topbar,
+  .admin-newsedit__workspace--preview .admin-newsedit__guide,
+  .admin-newsedit__workspace--preview .admin-newsedit__fault,
+  .admin-newsedit__workspace--preview .admin-newsedit__field,
+  .admin-newsedit__workspace--preview .admin-newsedit__editor-head,
+  .admin-newsedit__workspace--preview .admin-newsedit__editor-hint,
+  .admin-newsedit__workspace--preview .admin-newsedit__preview-bar,
+  .admin-newsedit__workspace--preview .admin-newsedit__preview-summary {
+    margin-inline: var(--gutter);
+  }
+}

@@ -1,9 +1,11 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
+  type CSSProperties,
   type FormEvent,
   type ReactElement,
 } from "react"
@@ -42,6 +44,12 @@ import { queryKeys } from "@/lib/queryKeys"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
 import { newsPlainText } from "@/lib/news"
+import {
+  PREVIEW_DEVICE_HEIGHT,
+  PREVIEW_DEVICE_WIDTH,
+  previewScale,
+  type PreviewDevice,
+} from "@/lib/newsPreview"
 import { sanitizeNewsHtml } from "@/lib/sanitize"
 import { htmlToMarkdown } from "@/lib/htmlToMarkdown"
 
@@ -213,16 +221,23 @@ function NewsEditor(props: {
   const [contentDirty, setContentDirty] = useState(false)
 
   const [tab, setTab] = useState<"edit" | "preview">("edit")
-  /** 预览设备宽度：桌面看整页留白，手机看 390px 下断点是否真的生效。 */
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop")
-  /** 设备框实测宽度 = 预览正在模拟的视口宽度（断点与字号都按它算）。 */
-  const [viewportWidth, setViewportWidth] = useState(0)
+  /** 预览设备档位：桌面看整页留白，手机看 390px 下断点是否真的生效。 */
+  const [device, setDevice] = useState<PreviewDevice>("desktop")
+  /** 设备框的呈现状态：等比例缩放系数与缩放后的画布高度。
+   *  逻辑宽度固定（桌面 1240 / 手机 390），画布装不下就整体缩小，
+   *  版式仍按逻辑宽度算——不按画布宽度重排。 */
+  const [frame, setFrame] = useState<{ scale: number; height: number }>({
+    scale: 1,
+    height: 0,
+  })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formFault, setFormFault] = useState<ReturnType<typeof validationFault> | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  /** 设备框元素：用来量出预览当前模拟的视口宽度。 */
+  /** 画布元素：预览区里真正可用的宽度，缩放系数按它算。 */
+  const stageRef = useRef<HTMLDivElement | null>(null)
+  /** 设备框元素：逻辑宽度固定，画布高度按它乘缩放系数。 */
   const deviceRef = useRef<HTMLDivElement | null>(null)
   /** 表单修订号：请求返回时只清掉「提交时的那个版本」的 dirty，不吞掉在途编辑。 */
   const revisionRef = useRef(0)
@@ -260,16 +275,27 @@ function NewsEditor(props: {
     }
   }, [dirty])
 
-  // 设备框宽度 = 预览正在模拟的视口宽度：断点与字号都按它算，
-  // 所以把它读出来摆在预览条上——管理员窗口窄一点，预览就换一档版式，
-  // 这一点不该只存在于实现里。
-  useEffect(() => {
-    const element = deviceRef.current
-    if (!element) return
-    const measure = () => setViewportWidth(Math.round(element.getBoundingClientRect().width))
+  // 画布宽度 → 设备框的等比例缩放：画布装不下逻辑宽度时整体缩小，
+  // 而不是按画布宽度重新排版——那样看到的就是另一篇文章了。
+  // 画布高度同步按缩放系数收掉，缩放后不留一截空白。
+  // 用 useLayoutEffect：切到预览的那一帧就量好，避免先闪一屏未缩放的高度。
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    const frameElement = deviceRef.current
+    if (!stage || !frameElement) return
+    const measure = () => {
+      const available = stage.clientWidth
+      if (!available) return
+      const scale = previewScale(available, PREVIEW_DEVICE_WIDTH[device])
+      const height = Math.round(frameElement.offsetHeight * scale)
+      setFrame((prev) =>
+        prev.scale === scale && prev.height === height ? prev : { scale, height },
+      )
+    }
     measure()
     const observer = new ResizeObserver(measure)
-    observer.observe(element)
+    observer.observe(stage)
+    observer.observe(frameElement)
     return () => observer.disconnect()
   }, [tab, device])
 
@@ -551,10 +577,14 @@ function NewsEditor(props: {
                       .join("；")}
                   </p>
                   <span className="admin-newsedit__preview-viewport num">
-                    {/* 纵向按声明的模拟高度排版，写明，免得读成「访客看到的就是这个」。 */}
-                    {`模拟视口 ${viewportWidth > 0 ? viewportWidth : "—"} × ${
-                      device === "mobile" ? 844 : 900
+                    {/* 纵向按声明的模拟高度排版，写明，免得读成「访客看到的就是这个」。
+                        宽度写的是逻辑宽度（排版按它算）；画布装不下时说明缩放比例。 */}
+                    {`模拟视口 ${PREVIEW_DEVICE_WIDTH[device]} × ${
+                      PREVIEW_DEVICE_HEIGHT[device]
                     }（纵向按此高度排版）`}
+                    {frame.scale < 1
+                      ? ` · 画布放不下，按 ${Math.round(frame.scale * 100)}% 等比呈现`
+                      : ""}
                   </span>
                   <div
                     className="admin-newsedit__device-toggle"
@@ -596,30 +626,47 @@ function NewsEditor(props: {
                   ) : null}
                 </p>
 
+                {/* 画布 = 预览真正可用的宽度；设备框在画布里按逻辑宽度等比缩放。
+                    高度由脚本按缩放系数收掉，免得缩放后下面留一截空白。 */}
                 <div
-                  ref={deviceRef}
-                  className={`admin-newsedit__device admin-newsedit__device--${device}`}
+                  ref={stageRef}
+                  className="admin-newsedit__preview-stage"
+                  style={frame.height > 0 ? { height: frame.height } : undefined}
                 >
-                  <div className="admin-newsedit__device-page is-brand-page">
-                    <NewsArticleView
-                      article={{
-                        title: form.title,
-                        content: previewContent,
-                        coverImage: form.coverImage,
-                        author: initial?.author,
-                        publishTime: initial?.publishTime,
-                      }}
-                      contentFormat={previewFormat}
-                      authorFallback="未署名"
-                      headingLevel={2}
-                      kicker={
-                        // 只有「已发布」的文章才真的在公开页上；草稿 / 待审核 /
-                        // 下架即使带着 publishTime 也不会出现，不能让它冒充已上线。
-                        initial?.status === 1
-                          ? undefined
-                          : "预览稿 · 尚未发布，公开页不会出现"
-                      }
-                    />
+                  <div
+                    ref={deviceRef}
+                    className={`admin-newsedit__device admin-newsedit__device--${device}`}
+                    style={
+                      {
+                        // 逻辑宽度与模拟视口高度由这里注入：CSS 只消费，不另存一份，
+                        // 免得「设备框多宽」这件事有两个真源。
+                        "--news-preview-logical-width": `${PREVIEW_DEVICE_WIDTH[device]}px`,
+                        "--news-sim-vh": `${PREVIEW_DEVICE_HEIGHT[device]}px`,
+                        "--news-preview-scale": frame.scale,
+                      } as CSSProperties
+                    }
+                  >
+                    <div className="admin-newsedit__device-page is-brand-page">
+                      <NewsArticleView
+                        article={{
+                          title: form.title,
+                          content: previewContent,
+                          coverImage: form.coverImage,
+                          author: initial?.author,
+                          publishTime: initial?.publishTime,
+                        }}
+                        contentFormat={previewFormat}
+                        authorFallback="未署名"
+                        headingLevel={2}
+                        kicker={
+                          // 只有「已发布」的文章才真的在公开页上；草稿 / 待审核 /
+                          // 下架即使带着 publishTime 也不会出现，不能让它冒充已上线。
+                          initial?.status === 1
+                            ? undefined
+                            : "预览稿 · 尚未发布，公开页不会出现"
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

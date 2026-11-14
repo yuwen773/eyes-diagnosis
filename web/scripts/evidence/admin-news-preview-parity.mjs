@@ -7,6 +7,11 @@
 // 用法：CAP_USER=... CAP_PASS=... node web/scripts/evidence/admin-news-preview-parity.mjs [输出目录]
 // 凭据只走环境变量，不打印、不进截图。
 //
+// 宽度口径：设备框的**逻辑宽度**固定（桌面 1240 / 手机 390），画布装不下时
+// 整幅版式等比缩小。所以「同宽」指的是逻辑宽度同宽——公开页按逻辑宽度开窗口，
+// 预览侧量到的渲染宽度是视觉宽度（已含缩放），比之前先除掉缩放系数还原成
+// 逻辑宽度。断行行数与缩放无关，直接比。
+//
 // 文章：脚本自己建一篇**临时发布**的对照稿（多级标题 + 列表 + 引用 + 长段落 +
 // 封面），因为库里现有的 13 篇已发布文章没有一篇带章节或封面——目录与封面
 // 这两条路径在公开页上根本没被走过，不造一篇就量不到。采集结束删除该文章，
@@ -151,6 +156,20 @@ function compare(label, left, right) {
   }
 }
 
+/**
+ * 预览的渲染宽度是**视觉**宽度（含等比缩放），除以缩放系数才还原成逻辑宽度。
+ * 计算样式与断行行数与缩放无关，原样比。
+ */
+function normalizePreview(metrics, scale) {
+  if (!scale || scale === 1) return metrics
+  const out = { ...metrics, rendered: { ...metrics.rendered } }
+  for (const key of ["articleWidth", "paperWidth", "paperBodyWidth", "tocWidth"]) {
+    const value = out.rendered[key]
+    if (typeof value === "number") out.rendered[key] = value / scale
+  }
+  return out
+}
+
 async function main() {
   mkdirSync(outDir, { recursive: true })
   const pw = await import("playwright")
@@ -243,7 +262,7 @@ async function main() {
   await setupCtx.close()
 
   try {
-    // 2) 后台预览：桌面窗口里量出设备框宽度（手机 390 / 桌面取主列实际宽度）。
+    // 2) 后台预览：量出设备框的**逻辑宽度**（版式按它算）与呈现缩放系数。
     const adminCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     const adminPage = await adminCtx.newPage()
     await login(adminPage)
@@ -251,19 +270,25 @@ async function main() {
     await adminPage.getByRole("tab", { name: "预览" }).click()
     await adminPage.waitForTimeout(600)
 
-    const frameWidth = async () =>
+    /** 逻辑宽度（断点与字号按它算）与缩放系数（画布装不下时 < 1）。 */
+    const frameGeometry = async () =>
       adminPage.evaluate(() => {
         const el = document.querySelector(".admin-newsedit__device")
-        return el ? Math.round(el.getBoundingClientRect().width) : 0
+        if (!el) return { logical: 0, scale: 1 }
+        const cs = getComputedStyle(el)
+        return {
+          logical: Math.round(parseFloat(cs.getPropertyValue("--news-preview-logical-width")) || 0),
+          scale: parseFloat(cs.getPropertyValue("--news-preview-scale")) || 1,
+        }
       })
 
     const modes = []
     await adminPage.getByRole("button", { name: "手机" }).click()
     await adminPage.waitForTimeout(400)
-    modes.push({ name: "mobile", width: await frameWidth(), height: 844 })
+    modes.push({ name: "mobile", height: 844, ...(await frameGeometry()) })
     await adminPage.getByRole("button", { name: "桌面" }).click()
     await adminPage.waitForTimeout(400)
-    modes.push({ name: "desktop", width: await frameWidth(), height: 900 })
+    modes.push({ name: "desktop", height: 900, ...(await frameGeometry()) })
 
     // 双主题都跑：版式量值应当与主题无关，只跑浅色就等于拿一个主题代表两个主题。
     for (const theme of ["light", "dark"]) {
@@ -274,15 +299,19 @@ async function main() {
       for (const mode of modes) {
         await adminPage.getByRole("button", { name: mode.name === "mobile" ? "手机" : "桌面" }).click()
         await adminPage.waitForTimeout(500)
-        const previewMetrics = await adminPage.evaluate(MEASURE)
+        const previewMetrics = normalizePreview(
+          await adminPage.evaluate(MEASURE),
+          mode.scale,
+        )
         await shotTheme(
           adminPage,
           `${outDir}/parity-preview-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
           theme === "dark",
         )
 
+        // 公开页按**逻辑宽度**开窗口：预览的版式就是这一档的版式。
         const publicCtx = await browser.newContext({
-          viewport: { width: mode.width, height: mode.height },
+          viewport: { width: mode.logical, height: mode.height },
         })
         const publicPage = await publicCtx.newPage()
         await publicPage.goto(`${base}/news/${newsId}`, { waitUntil: "networkidle" })
@@ -296,7 +325,7 @@ async function main() {
         )
         await publicCtx.close()
 
-        const tag = `[${theme} ${mode.name} ${mode.width}px] `
+        const tag = `[${theme} ${mode.name} ${mode.logical}px] `
         compare(tag + "title", publicMetrics.computed.title, previewMetrics.computed.title)
         compare(tag + "head", publicMetrics.computed.head, previewMetrics.computed.head)
         compare(tag + "paper", publicMetrics.computed.paper, previewMetrics.computed.paper)
@@ -327,8 +356,8 @@ async function main() {
           )
         }
 
-        console.log(`[${theme} ${mode.name} ${mode.width}px] public :`, JSON.stringify(publicMetrics.rendered))
-        console.log(`[${theme} ${mode.name} ${mode.width}px] preview:`, JSON.stringify(previewMetrics.rendered))
+        console.log(`[${theme} ${mode.name} ${mode.logical}px] public :`, JSON.stringify(publicMetrics.rendered))
+        console.log(`[${theme} ${mode.name} ${mode.logical}px] preview:`, JSON.stringify(previewMetrics.rendered))
       }
     }
 
@@ -353,7 +382,7 @@ async function main() {
     await editor.fill(DIRTY_MARKDOWN)
     await adminPage.getByRole("tab", { name: "预览" }).click()
     await adminPage.waitForTimeout(800)
-    const dirtyPreview = await adminPage.evaluate(MEASURE)
+    const dirtyPreviewRaw = await adminPage.evaluate(MEASURE)
     await shotTheme(adminPage, `${outDir}/parity-preview-dirty.png`, true)
 
     await adminPage.getByRole("button", { name: "保存" }).click()
@@ -366,8 +395,12 @@ async function main() {
       failures.push(`保存后状态读数不是「已保存」：${saveState.replace(/\s+/g, " ").trim()}`)
     }
 
-    const dirtyWidth = await frameWidth()
-    const publicCtx2 = await browser.newContext({ viewport: { width: dirtyWidth, height: 900 } })
+    // 情形 B 同样按逻辑宽度开公开页窗口，并把预览的渲染宽度还原成逻辑宽度。
+    const dirtyGeometry = await frameGeometry()
+    const dirtyPreview = normalizePreview(dirtyPreviewRaw, dirtyGeometry.scale)
+    const publicCtx2 = await browser.newContext({
+      viewport: { width: dirtyGeometry.logical, height: 900 },
+    })
     const publicPage2 = await publicCtx2.newPage()
     await publicPage2.goto(`${base}/news/${newsId}`, { waitUntil: "networkidle" })
     // 两侧同一主题才可比：公开页也要切到与管理端预览一致的主题。
