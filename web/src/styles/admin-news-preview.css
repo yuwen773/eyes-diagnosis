@@ -110,14 +110,27 @@
   letter-spacing: 0.06em;
 }
 
+/* 库里旧摘要与「保存后摘要」是两回事：竖线隔开，别让两段连读成一段。 */
+.admin-newsedit__preview-summary-old {
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--admin-line);
+  color: var(--admin-text-faint);
+}
+
 /* ── 设备框 ─────────────────────────────────────────────── */
 
+/* 设备框本身就是「被模拟的视口」：宽度、字号、断点都按它算。
+   机身边框用 box-shadow 画，不占布局——边框若占布局，同宽下正文列宽会比
+   公开页少 2px（box-sizing: border-box），断行随之不同，「同一篇文章」
+   就不是同一张纸了。 */
 .admin-newsedit__device {
   container-type: inline-size;
   width: 100%;
   /* 与公开页版心同宽（--maxw: 1240px），桌面预览才是公开页的真实宽度。 */
   max-width: 1240px;
   margin-inline: auto;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px var(--admin-line);
 
   /* 设备框 = 模拟视口。宽度项按容器算（1cqi = 设备框宽度的 1%），
      高度项按声明的模拟视口高度算——vh 那一族在设备框里没有对应的量，
@@ -137,19 +150,26 @@
   max-width: 390px;
   /* 手机模拟视口高度按常见机型取 844px；眉线与封面的纵向留白随它算。 */
   --news-sim-vh: 844px;
+  border-radius: var(--radius-lg);
 }
 
-.admin-newsedit__device-screen {
-  /* 文章纸面与品牌画布由 .is-brand-page 提供，这里只负责框住它。 */
-  padding: clamp(16px, 2.6vw, 34px);
-  border: 1px solid var(--admin-line);
-  border-radius: var(--radius-md);
+/* 设备里的这一页 = 公开页的那层 `.wrap.news-detail`：同样的版心、同样的页边距，
+   于是正文列宽与断行和公开页一致（公开页 390 视口 → 正文列 342px）。
+   页边距取自 tokens 的 --gutter（>600 档 40px / ≤600 档 24px），
+   纵向留白取自 .news-detail 的 padding-block。 */
+.admin-newsedit__device-page {
+  padding-inline: 40px;
+  padding-block: clamp(30px, calc(var(--news-sim-vh) * 0.044), 52px)
+    clamp(56px, calc(var(--news-sim-vh) * 0.08), 96px);
+  border-radius: inherit;
   background: var(--brand-canvas);
 }
 
-.admin-newsedit__device--mobile .admin-newsedit__device-screen {
-  padding: 14px;
-  border-radius: var(--radius-lg);
+/* 与公开页 --gutter 的 ≤600 档同断点：窄视口下页边距收到 24px。 */
+@container (max-width: 600px) {
+  .admin-newsedit__device .admin-newsedit__device-page {
+    padding-inline: 24px;
+  }
 }
 
 /* 预览里没有真实滚动容器：目录不吸顶，避免它钉在编辑页视口中段。 */

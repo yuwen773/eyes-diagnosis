@@ -540,13 +540,21 @@ function NewsEditor(props: {
               <div className="admin-newsedit__preview">
                 <div className="admin-newsedit__preview-bar">
                   <p className="admin-newsedit__preview-note num">
-                    预览 · 与公开页同一组件；不会保存，也不会改变发布状态；
-                    预览时收起发布设置栏（保存按钮在顶部工具行）
-                    {dirty ? "；当前有未保存修改" : ""}
+                    {/* 拼成一段字符串：JSX 换行会被折叠成空格，渲染出「； 」这种断句。 */}
+                    {[
+                      "预览 · 与公开页同一组件",
+                      "不会保存，也不会改变发布状态",
+                      "预览时收起发布设置栏（保存按钮在顶部工具行）",
+                      dirty ? "当前有未保存修改" : "",
+                    ]
+                      .filter(Boolean)
+                      .join("；")}
                   </p>
                   <span className="admin-newsedit__preview-viewport num">
-                    模拟视口 {viewportWidth > 0 ? viewportWidth : "—"} ×{" "}
-                    {device === "mobile" ? 844 : 900}
+                    {/* 纵向按声明的模拟高度排版，写明，免得读成「访客看到的就是这个」。 */}
+                    {`模拟视口 ${viewportWidth > 0 ? viewportWidth : "—"} × ${
+                      device === "mobile" ? 844 : 900
+                    }（纵向按此高度排版）`}
                   </span>
                   <div
                     className="admin-newsedit__device-toggle"
@@ -582,7 +590,9 @@ function NewsEditor(props: {
                       : "正文不足 30 个字符，保存会被拒绝"}
                   </span>
                   {initial?.summary && initial.summary !== summaryText ? (
-                    <span>库里当前摘要：{initial.summary}</span>
+                    <span className="admin-newsedit__preview-summary-old">
+                      库里当前摘要：{initial.summary}
+                    </span>
                   ) : null}
                 </p>
 
@@ -590,7 +600,7 @@ function NewsEditor(props: {
                   ref={deviceRef}
                   className={`admin-newsedit__device admin-newsedit__device--${device}`}
                 >
-                  <div className="admin-newsedit__device-screen is-brand-page">
+                  <div className="admin-newsedit__device-page is-brand-page">
                     <NewsArticleView
                       article={{
                         title: form.title,
@@ -617,6 +627,11 @@ function NewsEditor(props: {
             <p className="admin-newsedit__editor-hint">
               <span>Markdown · 支持标题 / 粗斜体 / 链接 / 列表 / 引用 / 代码块</span>
               <span>Ctrl+Z 撤销 · Ctrl+Shift+Z 重做</span>
+              {/* 两套口径都是真读数，差在哪要写在界面上（不只藏在 title 里）。 */}
+              <span>
+                「字符」= 可见字符数（含标点与空格），服务于「正文至少 30 字符」的保存校验；
+                文章眉线的「字」是另一套口径（汉字按字、拉丁按词）
+              </span>
             </p>
           </div>
         </div>

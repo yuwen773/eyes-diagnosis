@@ -193,6 +193,33 @@ describe("AdminNewsEditPage 完整文章预览", () => {
     expect(screen.getByText(/模拟视口/)).toBeTruthy()
   })
 
+  it("模拟视口读数写明纵向按声明高度排版，不让人读成访客所见", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    // 纵向尺寸按模拟视口高度算（vh 在设备框里没有对应量），读数要写明。
+    expect(screen.getByText(/（纵向按此高度排版）/)).toBeTruthy()
+  })
+
+  it("预览条提示是一整句：分句用「；」连接，不被 JSX 换行折出空格", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    // JSX 里的换行会被折叠成空格，渲染出「； 」这种断句——提示语要连成一句。
+    const note = document.querySelector(".admin-newsedit__preview-note")?.textContent ?? ""
+    expect(note).toContain("同一组件；不会保存")
+    expect(note).not.toMatch(/；\s/)
+  })
+
+  it("编辑器把「字符」与眉线「字」两套口径写在界面上", async () => {
+    await openEditor(LEGACY_HTML)
+
+    // 编辑区数可见字符、眉线数「字」，两者差在哪要看得见，不只藏在 title 里。
+    const hint = document.querySelector(".admin-newsedit__editor-hint")?.textContent ?? ""
+    expect(hint).toContain("「字符」= 可见字符数")
+    expect(hint).toContain("文章眉线的「字」是另一套口径")
+  })
+
   it("已发布文章不摆「预览稿」眉线，待审核 / 下架 / 草稿才摆", async () => {
     await openEditor(LEGACY_HTML)
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
