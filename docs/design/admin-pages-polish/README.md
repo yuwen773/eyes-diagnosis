@@ -16,10 +16,10 @@
 | 页 | 完成情况 | 主要改动 | 视觉验收 |
 |---|---|---|---|
 | **数据中心** `AdminDataAnalysisPage` | 完成 | KPI 读数轨（窗口内判读 / 涉及结论类别 / 窗口内平均置信度 / 待人工复核·全站）逐格标注范围；重点卡列出**全部**复核状态档位并写明「AI 拒识并入『拒识 / 低置信 · 待复核』一档」，第 3 轮再补「『仅 AI 结论 · 待复核』是另一档待办，没有计入积压数」；复核状态分布卡顶端对齐并补卡内口径说明；按星期柱图补「柱为各星期几日均」口径；病种日趋势注明「只画判读量前 N 个类别（共 M 个）」；底部口径带按「窗口内 / 全站」分组；「表」视图读数表限高滚动、重点卡按内容收高 | `after/data-analysis-*.png`（8 张）+ `after/x-data-analysis-readtable-1440-*.png`；`after-nodata/data-analysis-*.png` 空窗口态；`compare/compare-data-analysis-*.png` |
-| **诊断管理** `AdminDiagnosisPage` | 完成 | 批量删除加二次确认（第 3 轮）；判读结论列显示归一后的规范中文名 + 类别码 + 严重度；AI 拒识独立成「未出结论 + 拒识原因」，与「无判读结果」分开；疾病名筛选把规范名换算成库内落库标签，框下写明对照，空态说明检索口径；单元格 title 带库内原值；抽屉建议列表用自建计数器（序号不再恒为 0） | `after/diagnosis-*.png`（8 张）+ `after/x-diagnosis-{rowmenu,drawer,batch}-1440-*.png`；`compare/compare-diagnosis-*.png` |
+| **诊断管理** `AdminDiagnosisPage` | 完成 | 批量删除加二次确认（第 3 轮，证据 `after/x-diagnosis-batchdelete-1440-light.png`）；判读结论列显示归一后的规范中文名 + 类别码 + 严重度；AI 拒识独立成「未出结论 + 拒识原因」，与「无判读结果」分开；疾病名筛选把规范名换算成库内落库标签，框下写明对照，空态说明检索口径；单元格 title 带库内原值；抽屉建议列表用自建计数器（序号不再恒为 0） | `after/diagnosis-*.png`（8 张）+ `after/x-diagnosis-{rowmenu,drawer,batch}-1440-*.png`；`compare/compare-diagnosis-*.png` |
 | **新闻管理** `AdminNewsPage` | 完成 | 第 3 轮：台账四列改百分比分配，标题列 864px → 539px；两级标题排版（标题 / 摘要分主次）；封面缩略图内联在标题格（有图才出现，不占列）；状态以 `RiskTag` 呈现并附状态口径脚注；行菜单里的下线类迁移（下架 / 转为草稿）先弹确认，发布与送审直接执行 | `after/news-*.png`（8 张）+ `after/x-news-{rowmenu,offline-confirm,batch}-1440-*.png`；`compare/compare-news-*.png` |
-| **知识库** `AdminKnowledgePage` | 完成 | 第 3 轮：批量删除加二次确认；文档预览 / 文档工作区故障提示按 5xx / 4xx 分级并给重试；「筛选与上传」合成一个面板；上传区说明可多选、可直接拖到该区域；台账拆出「文档 / 类型体积 / 分块数 / 处理状态 / 上传时间 / 操作」；文档预览抽屉里**原文与 RAG 切片分成两个独立区域**；类型段控件不再并列 MD 与 MARKDOWN 两种等价写法 | `after/knowledge-*.png`（8 张）+ `after/x-knowledge-{preview,rowmenu}-1440-*.png`；`compare/compare-knowledge-*.png` |
-| **用户管理** `AdminUsersPage` | 完成 | 第 3 轮：批量删除加二次确认；角色 / 身份两级 chip（管理紫 = 管理身份，`--risk-*` = 账号状态）；批量条（批量删除 / 封禁 / 解封）；新建用户弹层；台账列收紧 | `after/users-*.png`（8 张）+ `after/x-users-{create,rowmenu,batch}-1440-*.png`；`compare/compare-users-*.png` |
+| **知识库** `AdminKnowledgePage` | 完成 | 第 3 轮：批量删除加二次确认（证据 `after/x-knowledge-batchdelete-1440-light.png`）；文档预览 / 文档工作区故障提示按 5xx / 4xx 分级并给重试；「筛选与上传」合成一个面板；上传区说明可多选、可直接拖到该区域；台账拆出「文档 / 类型体积 / 分块数 / 处理状态 / 上传时间 / 操作」；文档预览抽屉里**原文与 RAG 切片分成两个独立区域**；类型段控件不再并列 MD 与 MARKDOWN 两种等价写法 | `after/knowledge-*.png`（8 张）+ `after/x-knowledge-{preview,rowmenu}-1440-*.png`；`compare/compare-knowledge-*.png` |
+| **用户管理** `AdminUsersPage` | 完成 | 第 3 轮：批量删除加二次确认（证据 `after/x-users-batchdelete-1440-light.png`）；角色 / 身份两级 chip（管理紫 = 管理身份，`--risk-*` = 账号状态）；批量条（批量删除 / 封禁 / 解封）；新建用户弹层；台账列收紧 | `after/users-*.png`（8 张）+ `after/x-users-{create,rowmenu,batch}-1440-*.png`；`compare/compare-users-*.png` |
 | **新闻编辑** `AdminNewsEditPage` | 完成 | 封面占位「NO COVER」改「暂无封面」（第 3 轮）；独立的编辑工作台（正文 / 发布设置双栏）；「编辑 / 预览」分段切换；预览**只渲染不落库**；保存状态读数（色点 + 文字）；≤640px 三条脚注全部保留（「字符」与「字」两套口径不再被藏起来） | `after/news-edit-*.png`（8 张）+ `after/x-newsedit-preview-1440-*.png`；`compare/compare-news-edit-*.png` |
 
 **共享原语**：新增 `MetricCell`（KPI 读数格，仪表盘与数据分析共用）、`InsightEmpty`（空窗口解释面板）、读数表滚动壳 `.admin-viz__tablewrap`；`TrendAreaChart` / `RankedBars` / `SmallMultipleTrend` / `WeekBars` 只改读数口径与截断算法，不改图表语言；`TrendAreaChart` 的读数**默认值保持基线不变**，要新口径的页面自己声明。
@@ -122,7 +122,7 @@
 |---|---|
 | `before/` | 改造前基线（基线代码 `8f83f542`），7 页 × {390, 768, 1440, 1920} × 双主题 + 交互态，共 **78 张**。**全部用与 `after/` 同一份夹具数据重拍**（本轮收尾时重拍；此前那批是夹具种下之前拍的，内容不可比，已作废） |
 | `before-nodata/` | 改造前 + 窗口内无判读（空数据态）：仪表盘与数据中心，**18 张**（含「表」视图读数表） |
-| `after/` | 改造后 + 窗口内有判读：7 页 × 4 视口 × 双主题 + 交互态（行菜单 / 详情抽屉 / 批量条 / 新建弹层 / 文档预览 / 预览模式 / 下架确认 / 批量下架确认 / 图表读数表），共 **82 张** |
+| `after/` | 改造后 + 窗口内有判读：7 页 × 4 视口 × 双主题 + 交互态（行菜单 / 详情抽屉 / 批量条 / 新建弹层 / 文档预览 / 预览模式 / 下架确认 / 批量下架确认 / 图表读数表 / **三页批量删除二次确认**），共 **85 张** |
 | `after-nodata/` | 改造后 + 窗口内无判读（空数据态）：仪表盘与数据中心，**18 张**（含「表」视图读数表） |
 | `compare/` | 改造前 / 改造后并排对比，7 页 × {1440 light, 1440 dark, 390 light}，共 **21 张**。左右两侧是同一份夹具数据下两张真实截图的原始像素 |
 | `acceptance/` | `acceptance.json`：56 次探针的逐页结果（横向溢出量、console 错误、入口在位） |

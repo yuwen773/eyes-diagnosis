@@ -92,7 +92,7 @@ Agent 编排、医学诊断逻辑、登录鉴权、资讯发布状态机、知�
 |---|---|
 | `before/` | 改造前（基线代码 `8f83f542`），7 页 × {390, 768, 1440, 1920} × 双主题 + 交互态，共 **78 张**。**全部用与 `after/` 同一份夹具数据重拍**（本 PR 收尾时重拍；此前那批是夹具种下之前拍的，内容不可比，已作废） |
 | `before-nodata/` | 改造前 + 窗口内无判读（空数据态）：仪表盘与数据中心，**18 张** |
-| `after/` | 改造后 + 窗口内有判读：7 页 × 4 视口 × 双主题 + 交互态（行菜单 / 详情抽屉 / 批量条 / 新建弹层 / 文档预览 / 预览模式 / 下架确认 / 批量下架确认 / 图表读数表），共 **82 张** |
+| `after/` | 改造后 + 窗口内有判读：7 页 × 4 视口 × 双主题 + 交互态（行菜单 / 详情抽屉 / 批量条 / 新建弹层 / 文档预览 / 预览模式 / 下架确认 / 批量下架确认 / 图表读数表 / **三页批量删除二次确认**），共 **85 张** |
 | `after-nodata/` | 改造后 + 窗口内无判读（空数据态），**18 张** |
 | `compare/` | 改造前 / 改造后并排，7 页 × {1440 light, 1440 dark, 390 light}，共 **21 张**（左右两侧是同一份夹具数据下两张真实截图的原始像素） |
 | `acceptance/` | `acceptance.json`：56 次探针逐页结果 |
@@ -100,8 +100,8 @@ Agent 编排、医学诊断逻辑、登录鉴权、资讯发布状态机、知�
 - 逐页：`<page>-{390,768,1440,1920}-{light,dark}.png`
 - 逐页双主题：同名的 `-light` / `-dark` 两张
 - 逐页 390px：`-390-light.png` / `-390-dark.png`
-- 交互态：`x-diagnosis-{rowmenu,drawer,batch}`、`x-news-{rowmenu,offline-confirm,batch}`、
-  `x-knowledge-{preview,rowmenu}`、`x-users-{create,rowmenu,batch}`、
+- 交互态：`x-diagnosis-{rowmenu,drawer,batch,batchdelete}`、`x-news-{rowmenu,offline-confirm,batch}`、
+  `x-knowledge-{preview,rowmenu,batchdelete}`、`x-users-{create,rowmenu,batch,batchdelete}`、
   `x-data-analysis-readtable`、`x-newsedit-preview`
 
 > 影像缩略图引用仓库既有公开图地址（COS `public/`），用户名为本机测试账号，不含患者身份信息。
