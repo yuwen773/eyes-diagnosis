@@ -61,6 +61,14 @@ public class KnowledgeDetailVO implements Serializable {
     /** 切片是否可读：解析失败或文件缺失时为 false */
     private boolean chunksReadable;
 
+    /**
+     * 切片是否因数量上限被截断。
+     *
+     * <p>重放最多回传 {@code MAX_PREVIEW_CHUNKS} 块；被截断时前端必须写明
+     * 「最多显示 N 块」，否则截断后的数字会被当成真实块数。
+     */
+    private boolean chunksTruncated;
+
     /** 切片不可读时的原因 */
     private String chunksMessage;
 

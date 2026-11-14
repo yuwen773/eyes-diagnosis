@@ -36,6 +36,15 @@ public interface KnowledgeBaseService extends IService<KnowledgeDocument> {
     KnowledgeDetailVO getDocumentDetail(Long documentId, User actor);
 
     /**
+     * 读取原文所需的文档元信息（含鉴权）。
+     *
+     * <p>管理端阅读器要拿到文件本体，但对象存储是私有的、也没有对浏览器开放跨域读。
+     * 由后端按同一条 {@code owner / 管理员} 规则鉴权后代理流出，前端不必接触
+     * COS 凭据，也不会拿到长期有效的直链。
+     */
+    KnowledgeDocument getDocumentForRead(Long documentId, User actor);
+
+    /**
      * 按筛选条件分页查文档。管理员看全站，普通用户只看本人。
      */
     Page<KnowledgeDocument> pageDocuments(KnowledgeQueryDTO query, User actor);

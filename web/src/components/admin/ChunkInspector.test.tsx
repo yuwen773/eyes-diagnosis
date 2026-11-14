@@ -1,0 +1,132 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+
+import { ChunkInspector } from "./ChunkInspector"
+import type { KnowledgeDetail } from "@/lib/adminApi"
+
+function detail(overrides: Partial<KnowledgeDetail> = {}): KnowledgeDetail {
+  return {
+    id: "11",
+    title: "文档",
+    fileName: "文档.md",
+    fileType: "md",
+    fileSize: "1024",
+    chunkCount: 2,
+    status: 1,
+    userId: "1",
+    createTime: "2026-04-30T15:51:31",
+    updateTime: "2026-04-30T15:51:31",
+    chunks: [
+      { index: 0, text: "第一块切片内容", chars: 7 },
+      { index: 1, text: "第二块切片内容", chars: 7 },
+    ],
+    chunksReadable: true,
+    ...overrides,
+  }
+}
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+describe("ChunkInspector", () => {
+  it("按序号列出切片，并显示每块字符数", () => {
+    render(<ChunkInspector detail={detail()} />)
+
+    expect(screen.getByText("CHUNK 00")).toBeTruthy()
+    expect(screen.getByText("CHUNK 01")).toBeTruthy()
+    expect(screen.getAllByText("7 字")).toHaveLength(2)
+    expect(screen.getByText("共 2 块")).toBeTruthy()
+  })
+
+  it("折叠后隐藏正文，再点一次展开", () => {
+    render(<ChunkInspector detail={detail()} />)
+
+    const toggle = screen.getByRole("button", { name: /CHUNK 00/ })
+    expect(toggle.getAttribute("aria-expanded")).toBe("true")
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByText("第一块切片内容")).toBeNull()
+    fireEvent.click(toggle)
+    expect(screen.getByText("第一块切片内容")).toBeTruthy()
+  })
+
+  it("复制切片调用剪贴板并给出回执", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } })
+
+    render(<ChunkInspector detail={detail()} />)
+    fireEvent.click(screen.getByRole("button", { name: "复制第 0 块切片" }))
+
+    await screen.findByText("已复制")
+    expect(writeText).toHaveBeenCalledWith("第一块切片内容")
+  })
+
+  it("读取失败与「切片为 0」是两种结论，不混为一谈", () => {
+    const { rerender } = render(
+      <ChunkInspector detail={detail({ chunksReadable: false, chunksMessage: "文件已不在存储里" })} />,
+    )
+    expect(screen.getByText("文件已不在存储里")).toBeTruthy()
+    expect(screen.getByText(/不是「切片为 0」/)).toBeTruthy()
+
+    rerender(<ChunkInspector detail={detail({ chunks: [] })} />)
+    expect(screen.getByText("该文档没有切片。")).toBeTruthy()
+  })
+
+  it("入库计数与重放结果不一致时如实说明，不声称向量库一一对应", () => {
+    render(<ChunkInspector detail={detail({ chunkCount: 5 })} />)
+
+    expect(screen.getByText("入库时 5 块，按当前规则重放 2 块")).toBeTruthy()
+    // 「与向量库一一对应」是替后端断言没人验过的事：向量库里实际有多少条
+    // 没有接口可查，界面就不说。
+    expect(screen.queryByText(/一一对应/)).toBeNull()
+  })
+
+  it("计数相同时只说编号规则，不替后端断言向量库存量", () => {
+    render(<ChunkInspector detail={detail({ chunkCount: 2 })} />)
+
+    expect(screen.getByText("编号与入库时一致（doc_{id}_chunk_{i}）")).toBeTruthy()
+    expect(screen.queryByText(/一一对应/)).toBeNull()
+  })
+
+  it("切片被数量上限截断时写明「已显示 N 块」", () => {
+    render(<ChunkInspector detail={detail({ chunkCount: 2000, chunksTruncated: true })} />)
+
+    expect(screen.getByText("已显示 2 块（已达显示上限，实际可能更多）")).toBeTruthy()
+    expect(screen.queryByText(/共 2 块/)).toBeNull()
+  })
+
+  it("DOC 的不可读原因原样转述后端给的原因，不自己编一句", () => {
+    render(
+      <ChunkInspector
+        detail={detail({
+          fileType: "doc",
+          chunksReadable: false,
+          chunksMessage: "无法读取该文档的切片：文件读取失败",
+        })}
+      />,
+    )
+
+    // 真实原因由后端给：文件读不到时，说「没解析出正文 / 已解析过一次」
+    // 就是替后端断言了一件没发生过的事（文件根本没被读到）。
+    expect(screen.getByText("无法读取该文档的切片：文件读取失败")).toBeTruthy()
+    expect(screen.queryByText(/没解析出正文/)).toBeNull()
+    expect(screen.queryByText(/已按入库同一套规则解析过一次/)).toBeNull()
+    expect(screen.queryByText(/不做在线解析/)).toBeNull()
+  })
+
+  it("切片很多时分批显示，不一次铺满", () => {
+    const many = Array.from({ length: 45 }, (_, index) => ({
+      index,
+      text: `切片 ${index}`,
+      chars: 4,
+    }))
+    render(<ChunkInspector detail={detail({ chunks: many })} />)
+
+    expect(screen.getAllByText(/^CHUNK \d+$/)).toHaveLength(30)
+    fireEvent.click(screen.getByRole("button", { name: /再显示/ }))
+    expect(screen.getAllByText(/^CHUNK \d+$/)).toHaveLength(45)
+  })
+})

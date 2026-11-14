@@ -87,8 +87,11 @@ const mdNews = new MarkdownIt({
 /**
  * 资讯正文：编辑页预览、落库内容、公开页显示走同一条管线。
  * 公开页还会再净化一次（后端存的也可能是旧 HTML），净化是幂等的。
+ *
+ * <p>allowRemoteImages=false 用于上传文档这类外部来源：正文里的远程图片
+ * 会把读者的浏览器引到第三方。资讯正文是编辑部自己写的，默认放行。
  */
-export function renderNewsHtml(content: string): string {
+export function renderNewsHtml(content: string, options?: { allowRemoteImages?: boolean }): string {
   if (!content) return ""
-  return sanitizeNewsHtml(mdNews.render(content))
+  return sanitizeNewsHtml(mdNews.render(content), options)
 }
