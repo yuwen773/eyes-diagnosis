@@ -781,31 +781,38 @@ export function AdminDiagnosisPage(): ReactElement {
               </button>
             </div>
           </div>
-          {showFields ? (
-          <>
-            {/* 复核状态：枚举筛选用段控件，点一下即生效，少一次「查询」。 */}
-            <div className="admin-ledger__group">
-              <span className="admin-ledger__grouplabel" id="admin-diagnosis-review-label">
-                复核状态 · REVIEW
-              </span>
-              <div
-                className="admin-ledger__chips"
-                role="group"
-                aria-labelledby="admin-diagnosis-review-label"
-              >
-                {DIAGNOSIS_REVIEW_FILTER_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className="admin-ledger__chip"
-                    aria-pressed={query.review === option.value}
-                    onClick={() => applyReviewFilter(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          {/* 复核状态：枚举筛选用段控件，点一下即生效，少一次「查询」。
+              常驻不折叠：最常用的筛选不该藏在「展开筛选」后面
+              （与资讯页、知识库页的同类控件口径一致）。 */}
+          <div className="admin-ledger__group">
+            <span className="admin-ledger__grouplabel" id="admin-diagnosis-review-label">
+              复核状态 · REVIEW
+            </span>
+            <div
+              className="admin-ledger__chips"
+              role="group"
+              aria-labelledby="admin-diagnosis-review-label"
+            >
+              {DIAGNOSIS_REVIEW_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="admin-ledger__chip"
+                  aria-pressed={query.review === option.value}
+                  onClick={() => applyReviewFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
+            {/* 复审状态字段的口径写在脸上：库里没有 1 这个值，
+                「未复审」筛的是落库值 0；后端单值等值匹配覆盖不到历史值 1。 */}
+            <span className="admin-diagnosis__fieldhint num">
+              「未复审」按 reexamineStatus = 0 检索（判读落库不写复审状态，落库值 0）· 历史值 1 同样算未复审，后端等值匹配覆盖不到
+            </span>
+          </div>
+          {showFields ? (
+            <>
             <div className="admin-filter__fields">
           <label className="admin-diagnosis__field admin-diagnosis__field--narrow">
             <span className="admin-diagnosis__label">疾病名 · RESULT</span>
@@ -892,7 +899,9 @@ export function AdminDiagnosisPage(): ReactElement {
               title="还没有判读记录"
               description={
                 activeFilters > 0
-                  ? query.result
+                  ? query.review === "notReviewed"
+                    ? "没有 reexamineStatus = 0 的记录。判读落库不写复审状态，落库值是 0；若这一档为空，说明库里都是历史值 1——后端当前只支持单值等值匹配，覆盖不到 0 与 1 两档（已记后端工单）。"
+                    : query.result
                     ? `当前筛选条件下没有记录。疾病名按库内原始标签「${query.result}」模糊匹配，库里也可能写成另一种写法（例：近视 / myopia）。`
                     : "当前筛选条件下没有记录。放宽复核状态或时间范围后再看。"
                   : "患者完成一次影像判读后，记录会出现在这里，等待人工复核。"

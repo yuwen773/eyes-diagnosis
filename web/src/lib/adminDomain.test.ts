@@ -156,7 +156,15 @@ describe("diagnosisFilterParams", () => {
   it("已复审 / 复审中 / 未复审 走 reexamineStatus", () => {
     expect(diagnosisFilterParams("reviewed")).toEqual({ reexamineStatus: 3 })
     expect(diagnosisFilterParams("reviewing")).toEqual({ reexamineStatus: 2 })
-    expect(diagnosisFilterParams("notReviewed")).toEqual({ reexamineStatus: 1 })
+    // 「未复审」筛的是落库值 0，不是 DTO 注释里的 1。
+    //
+    // 依据（2026-11-15 实测 + 读后端写路径）：
+    // - Diagnosis.reexamineStatus 是 primitive int，判读落库不写它 → 新记录落库即 0；
+    // - 全仓只有两处写它：复核写 3、患者申请复诊写 2，**没有任何路径产出 1**；
+    // - 两个本机库里 0 与 1 并存（历史数据用的是注释里的 1）。
+    // 按 1 检索会一条都查不到（后端只支持单值 eq，覆盖不到 0 与 1 两档）。
+    // 旧期望写死 1，等于把「筛不出来」这个缺陷固化成了契约。
+    expect(diagnosisFilterParams("notReviewed")).toEqual({ reexamineStatus: 0 })
   })
 })
 

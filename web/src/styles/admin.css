@@ -1894,6 +1894,40 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   font-weight: 600;
 }
 
+/* 下架原因输入：后端只在 note 非空时写 offlineReason，
+   没有这块输入，资讯表里的「下架原因」列就永远是空的。 */
+.admin-news__notefield {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.admin-news__notelabel {
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--admin-text-muted);
+}
+
+.admin-news__noteinput {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.admin-news__noteinput:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+}
+
 /* ==========================================================================
    管理后台 · 诊断管理段（Task 9）
    --------------------------------------------------------------------------

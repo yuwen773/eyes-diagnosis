@@ -137,6 +137,28 @@
   color: var(--admin-text-faint);
 }
 
+/* ── 筛选：三个字段的标签要在同一条基线上 ───────────────────────────
+   「疾病名」下面多了一行检索口径提示。若还按 .admin-filter__fields 的
+   flex-end 底对齐，底边齐平就会把另外两个字段整体顶上去——标签错开十几像素，
+   读起来像筛选区没排好。
+
+   改成：整行 stretch，每格固定三行（标签 / 控件 / 提示）。标签行与控件行
+   各自齐平，提示落在自己那一行里，多出来的行由日期格补齐。 */
+.admin-diagnosis__form .admin-filter__fields {
+  align-items: stretch;
+}
+
+.admin-diagnosis__form .admin-diagnosis__field {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  row-gap: 6px;
+}
+
+.admin-diagnosis__form .admin-ledger__daterange {
+  align-items: stretch;
+}
+
 /* ── 行内动作：带文字的主动作 ───────────────────────────────────────
    行内只留一个主动作，其余收进溢出菜单；主动作带文字（不靠图标猜），
    窄屏由 .admin-dt__row-actions 的既有规则压到 30px 图标级。 */

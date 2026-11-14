@@ -95,10 +95,13 @@
 }
 
 /* 运营底盘与同排的图表卡等高时，读数居中留白，不堆在顶部——
-   否则卡尾会留一段说不清是留白还是漏了东西的空白。 */
+   否则卡尾会留一段说不清是留白还是漏了东西的空白。
+   但「等高」本身就会在卡内留出一段空洞（标题与读数之间能空出上百像素），
+   所以这张卡按内容收高，高度差让给同排的图卡。 */
 .admin-analysis__base {
   display: flex;
   flex-direction: column;
+  align-self: start;
 }
 
 .admin-analysis__base .panel__body {

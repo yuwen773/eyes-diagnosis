@@ -274,7 +274,11 @@ export function diagnosisFilterParams(key: DiagnosisReviewFilter): {
     case "reviewing":
       return { reexamineStatus: 2 }
     case "notReviewed":
-      return { reexamineStatus: 1 }
+      // 落库值是 0，不是 DTO 注释里写的 1：判读链路不写复审状态，
+      // Diagnosis.reexamineStatus 是 primitive int，新记录落库即 0
+      // （写路径只有 2=复审中、3=已复审，没有任何路径产出 1）。
+      // 按 1 检索会一条都查不到——后端只支持单值等值匹配，覆盖不到 0 与 1 两档。
+      return { reexamineStatus: 0 }
     default:
       return {}
   }

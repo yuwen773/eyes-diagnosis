@@ -36,20 +36,36 @@ export function TrendAreaChart(props: {
   height?: number
   /** 对照系列的图例名 */
   previousLabel?: string
+  /**
+   * 卡头读数的口径。
+   *
+   * <p>`window` = 合计 · 日均，说的是整条曲线代表的量；`latest` = 最后一天的读数。
+   * 两者都对，但**不是同一件事**：窗口末尾常常没有判读，`latest` 读出来是 0，
+   * 容易被误读成这批记录清零了。默认值给 `window`（新页面用新口径）；
+   * 已冻结的仪表盘由它自己显式决定口径，不被别人的改动带着变。
+   */
+  readout?: "window" | "latest"
 }): ReactElement {
-  const { data, ariaLabel, height = 280, previousLabel = "上一等长窗口" } = props
+  const {
+    data,
+    ariaLabel,
+    height = 280,
+    previousLabel = "上一等长窗口",
+    readout = "window",
+  } = props
   const gradientId = `iris-viz-area-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`
 
-  // 卡片右上角的口径读数：窗口的规模，而不是最后一天的读数。
-  // 「最新 N」看着精确，实际是被窗口末尾那一天的噪声左右的数——窗口最后一天
-  // 常常没有判读，它读出来是 0，读者会以为这批记录清零了。合计 + 日均说的是
-  // 整条曲线代表的量，与纵轴、与 KPI 读数轨同口径。
   const sum = data.reduce((total, row) => total + row.value, 0)
   const average = data.length > 0 ? sum / data.length : 0
+  const lastValue = data.length > 0 ? data[data.length - 1].value : undefined
   const headExtra =
-    data.length > 0
-      ? `合计 ${formatVizNumber(sum)} · 日均 ${formatVizNumber(Number(average.toFixed(1)))}`
-      : undefined
+    readout === "latest"
+      ? lastValue !== undefined
+        ? `最新 ${formatVizNumber(lastValue)}`
+        : undefined
+      : data.length > 0
+        ? `合计 ${formatVizNumber(sum)} · 日均 ${formatVizNumber(Number(average.toFixed(1)))}`
+        : undefined
 
   return (
     <ChartView

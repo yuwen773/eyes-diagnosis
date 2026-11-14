@@ -246,7 +246,7 @@ export function AdminDataAnalysisPage(): ReactElement {
     >
       <div className="feature-card__top">
         <span className="feature-card__kicker">
-          {awaitingTotal > 0 ? "待人工复核 · 积压" : "待人工复核 · 已清空"}
+          {awaitingTotal > 0 ? "待人工复核 · 全站积压" : "待人工复核 · 已清空"}
         </span>
         <span className="feature-card__value num">{read(awaitingTotal)}</span>
         <span className="feature-card__label">
@@ -280,10 +280,14 @@ export function AdminDataAnalysisPage(): ReactElement {
       </ul>
       <div className="feature-card__bottom">
         <div className="feature-card__foot">
-          <Link className="feature-card__cta" to="/admin/diagnosis?review=requiresReview">
-            去复核
-            <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
-          </Link>
+          {/* 没有待复核的记录时不挂「去复核」：点了只会落到一个空列表，
+              那是个坏入口，不如不出现。 */}
+          {awaitingTotal > 0 ? (
+            <Link className="feature-card__cta" to="/admin/diagnosis?review=requiresReview">
+              去复核
+              <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
+            </Link>
+          ) : null}
           <span className="feature-card__sub num">
             {stats ? `窗口内新增 ${formatStatNumber(awaitingInRange)} 条` : "—"}
           </span>
@@ -452,9 +456,12 @@ export function AdminDataAnalysisPage(): ReactElement {
                   >
                     {stats ? (awaitingTotal > 0 ? "待处理" : "已清空") : "读取中"}
                   </span>
-                  <Link className="action-row__link" to="/admin/diagnosis?review=requiresReview">
-                    去复核
-                  </Link>
+                  {/* 已清空时不挂入口：点进去只会得到空列表。 */}
+                  {awaitingTotal > 0 ? (
+                    <Link className="action-row__link" to="/admin/diagnosis?review=requiresReview">
+                      去复核
+                    </Link>
+                  ) : null}
                 </>
               }
             />

@@ -7,6 +7,8 @@
 // 纪律：
 // - 所有夹具行以 modelVersion = 'fixture-iris21' 标记，清理按该标记整段删。
 // - 只写本地开发 MySQL 3306（eyeuser 所在实例），不碰 3307 / 生产库。
+// - 连接参数全部走环境变量：脚本入库，**不把本机口令写进仓库**。
+//   FIXTURE_MYSQL_HOST / _PORT / _USER / _PASSWORD（口令无默认值，缺了就退出）。
 // - 不伪造医学结论的「真值」：result 用后端落库时的中文短名，页面必须把它
 //   归一成规范名（糖尿病 → 糖尿病视网膜病变），归一是否生效看得见。
 import { execFileSync } from "node:child_process"
@@ -16,7 +18,24 @@ const MYSQL = "mysql"
 // 实测仍是 latin1），中文会被当成单字节字符塞进 utf8mb4 列，存进去就是双重
 // 编码的乱码。SET NAMES 才是真正改变会话字符集的那一句，必须放在 SQL 最前面。
 const SET_NAMES = "SET NAMES utf8mb4;\n"
-const CONN = ["-h127.0.0.1", "-P3306", "-uroot", "-p123456", "--default-character-set=utf8mb4", "diagnosis"]
+const MYSQL_HOST = process.env.FIXTURE_MYSQL_HOST ?? "127.0.0.1"
+const MYSQL_PORT = process.env.FIXTURE_MYSQL_PORT ?? "3306"
+const MYSQL_USER = process.env.FIXTURE_MYSQL_USER
+const MYSQL_PASSWORD = process.env.FIXTURE_MYSQL_PASSWORD
+const MYSQL_DB = process.env.FIXTURE_MYSQL_DB ?? "diagnosis"
+if (!MYSQL_USER || !MYSQL_PASSWORD) {
+  throw new Error(
+    "FIXTURE_MYSQL_USER / FIXTURE_MYSQL_PASSWORD required（口令只走环境变量，不入库）",
+  )
+}
+const CONN = [
+  `-h${MYSQL_HOST}`,
+  `-P${MYSQL_PORT}`,
+  `-u${MYSQL_USER}`,
+  `-p${MYSQL_PASSWORD}`,
+  "--default-character-set=utf8mb4",
+  MYSQL_DB,
+]
 const MARKER = "fixture-iris21"
 
 /** 真实存在的 COS 影像地址（复用已有判读记录的公开图，给缩略图用）。 */
@@ -105,7 +124,11 @@ function seed() {
       ? "NULL"
       : (0.42 + rand() * 0.55).toFixed(4)
     const result = rejected ? "NULL" : `'${label}'`
-    const reexamine = reviewed ? 3 : awaiting ? 2 : pending ? 0 : 1
+    // 复审状态按**真实写路径**落：只有复核写 3、患者申请复诊写 2，
+    // 其余一律是 primitive int 的默认值 0——判读链路不写这个字段，
+    // 全仓没有任何路径产出 1。夹具照抄这条，不然截图里的「未复审」
+    // 会和筛选口径（按 0 检索）对不上。
+    const reexamine = reviewed ? 3 : awaiting ? 2 : 0
     const humanStatus = rejected
       ? "'AWAITING_REVIEW'"
       : reviewed

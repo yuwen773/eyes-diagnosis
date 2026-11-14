@@ -248,6 +248,9 @@ export function AdminDashboardPage(): ReactElement {
       data={trendRows}
       ariaLabel={`判读趋势 · 近 ${days} 天（含上一等长窗口对照）`}
       height={288}
+      /* 仪表盘的卡头读数口径由本页自己决定：沿用 PR #79 评审过的「最新 N」，
+         不被共享原语的默认口径带着变。 */
+      readout="latest"
     />
   )
 

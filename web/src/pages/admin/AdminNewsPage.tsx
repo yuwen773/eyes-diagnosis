@@ -139,13 +139,20 @@ export function AdminNewsPage(): ReactElement {
   const [sort, setSort] = useState<SortState>(null)
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [deleteTarget, setDeleteTarget] = useState<AdminNews | null>(null)
+  // 删除的确认目标：单行或批量（批量删除不可恢复，同样要拦一道确认）。
+  const [deleteTarget, setDeleteTarget] = useState<
+    { kind: "row"; row: AdminNews } | { kind: "batch"; ids: string[] } | null
+  >(null)
   const [deleting, setDeleting] = useState(false)
   // 状态迁移的确认目标：把「下线类」迁移（下架 / 转为草稿）拦一道确认。
-  const [statusTarget, setStatusTarget] = useState<{
-    row: AdminNews
-    status: number
-  } | null>(null)
+  // 单行与批量走同一套确认——批量下架的不可逆代价和单行一样。
+  const [statusTarget, setStatusTarget] = useState<
+    | { kind: "row"; row: AdminNews; status: number }
+    | { kind: "batch"; ids: string[]; status: number }
+    | null
+  >(null)
+  // 下架原因：后端只在 note 非空时写 offlineReason，留空就等于没记原因。
+  const [statusNote, setStatusNote] = useState("")
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -222,14 +229,14 @@ export function AdminNewsPage(): ReactElement {
   /**
    * 单行状态迁移：合法目标状态由 newsStatusOptionsFor 给出，后端再校验一次。
    */
-  async function changeStatus(row: AdminNews, status: number) {
+  async function changeStatus(row: AdminNews, status: number, note?: string) {
     const id = row.id
     if (!id || statusBusy) return
     setStatusBusy(id)
     setActionError(null)
     setActionNote(null)
     try {
-      const result = await changeNewsStatusBatch([id], status)
+      const result = await changeNewsStatusBatch([id], status, note)
       const failed = result.failed ?? 0
       if (failed > 0) {
         // 非法迁移由后端逐条裁决：这里如实回执，不假装成功。
@@ -253,22 +260,49 @@ export function AdminNewsPage(): ReactElement {
    */
   function requestStatusChange(row: AdminNews, status: number) {
     if (status === NEWS_STATUS_DRAFT || status === NEWS_STATUS_OFFLINE) {
-      setStatusTarget({ row, status })
+      setStatusTarget({ kind: "row", row, status })
+      setStatusNote("")
       return
     }
     void changeStatus(row, status)
   }
 
+  /**
+   * 批量状态迁移的入口。
+   *
+   * <p>批量下架与单行下架的不可逆代价一样，所以同样走确认弹层；
+   * 批量发布是增量动作，直接执行。
+   */
+  function requestBatchStatus(status: number) {
+    if (selectedIds.length === 0) return
+    if (status === NEWS_STATUS_DRAFT || status === NEWS_STATUS_OFFLINE) {
+      setStatusTarget({ kind: "batch", ids: [...selectedIds], status })
+      setStatusNote("")
+      return
+    }
+    void runBatch("批量发布", () => changeNewsStatusBatch(selectedIds, status))
+  }
+
   function closeStatusConfirm() {
     if (statusBusy) return
     setStatusTarget(null)
+    setStatusNote("")
   }
 
   async function confirmStatusChange() {
     if (!statusTarget || statusBusy) return
-    const { row, status } = statusTarget
+    const target = statusTarget
+    const note = statusNote.trim() ? statusNote.trim() : undefined
     setStatusTarget(null)
-    await changeStatus(row, status)
+    setStatusNote("")
+    if (target.kind === "row") {
+      await changeStatus(target.row, target.status, note)
+      return
+    }
+    await runBatch(
+      target.status === NEWS_STATUS_OFFLINE ? "批量下架" : "批量转为草稿",
+      () => changeNewsStatusBatch(target.ids, target.status, note),
+    )
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -284,7 +318,13 @@ export function AdminNewsPage(): ReactElement {
 
   function openDelete(row: AdminNews) {
     setActionError(null)
-    setDeleteTarget(row)
+    setDeleteTarget({ kind: "row", row })
+  }
+
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setDeleteTarget({ kind: "batch", ids: [...selectedIds] })
   }
 
   function closeDelete() {
@@ -295,14 +335,29 @@ export function AdminNewsPage(): ReactElement {
   async function confirmDelete() {
     if (!deleteTarget || deleting) return
     const target = deleteTarget
-    const id = target.id
-    if (!id) return // 缺 id 的空白行不该发出带空路径的请求
     setDeleting(true)
     setActionError(null)
     try {
-      await deleteNews(id) // 雪花 id 全程保持 string，绝不转成数字
+      if (target.kind === "row") {
+        const id = target.row.id
+        if (!id) return // 缺 id 的空白行不该发出带空路径的请求
+        await deleteNews(id) // 雪花 id 全程保持 string，绝不转成数字
+        setDeleteTarget(null)
+        setSelectedIds((prev) => prev.filter((item) => item !== id))
+        await refreshNews()
+        return
+      }
+      // 批量删除：逐条执行，部分失败如实回执。
+      const result = await deleteNewsBatch(target.ids)
+      const succeeded = result.succeeded ?? 0
+      const failed = result.failed ?? 0
       setDeleteTarget(null)
-      setSelectedIds((prev) => prev.filter((item) => item !== id))
+      setActionNote(
+        failed > 0
+          ? `批量删除：成功 ${succeeded} 篇，失败 ${failed} 篇。${result.message ?? ""}`
+          : `批量删除：成功 ${succeeded} 篇。`,
+      )
+      if (failed === 0) setSelectedIds([])
       await refreshNews()
     } catch (cause) {
       const detail = describeError(cause)
@@ -610,15 +665,16 @@ export function AdminNewsPage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--primary"
           disabled={batchBusy}
-          onClick={() => runBatch("批量发布", () => changeNewsStatusBatch(selectedIds, 1))}
+          onClick={() => requestBatchStatus(1)}
         >
           批量发布
         </button>
+        {/* 下架与删除都不可逆（内容撤下 / 记录消失），与单行走同一道确认。 */}
         <button
           type="button"
           className="admin-btn admin-btn--ghost"
           disabled={batchBusy}
-          onClick={() => runBatch("批量下架", () => changeNewsStatusBatch(selectedIds, 2))}
+          onClick={() => requestBatchStatus(2)}
         >
           批量下架
         </button>
@@ -626,7 +682,7 @@ export function AdminNewsPage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--danger"
           disabled={batchBusy}
-          onClick={() => runBatch("批量删除", () => deleteNewsBatch(selectedIds))}
+          onClick={requestBatchDelete}
         >
           批量删除
         </button>
@@ -691,23 +747,42 @@ export function AdminNewsPage(): ReactElement {
               onClick={confirmStatusChange}
               disabled={statusBusy != null}
             >
-              {statusBusy != null
-                ? "处理中…"
-                : statusTarget
-                  ? `确认${NEWS_STATUS_ACTION[statusTarget.status].verb}`
-                  : "确认"}
+              {statusTarget ? `确认${NEWS_STATUS_ACTION[statusTarget.status].verb}` : "确认"}
             </button>
           </>
         }
       >
         {statusTarget ? (
-          <p className="admin-news__modal-text">
-            确认把资讯{" "}
-            <span className="admin-news__modal-title">{statusTarget.row.title}</span>{" "}
-            {statusTarget.status === NEWS_STATUS_OFFLINE
-              ? "下架？下架后公开站点不再显示该篇，可再次发布回来。"
-              : "转为草稿？转为草稿后公开站点不再显示该篇，可再次发布回来。"}
-          </p>
+          <>
+            <p className="admin-news__modal-text">
+              确认把
+              {statusTarget.kind === "batch" ? (
+                <span className="admin-news__modal-title">选中的 {statusTarget.ids.length} 篇资讯</span>
+              ) : (
+                <>
+                  资讯{" "}
+                  <span className="admin-news__modal-title">{statusTarget.row.title}</span>{" "}
+                </>
+              )}
+              {statusTarget.status === NEWS_STATUS_OFFLINE
+                ? "下架？下架后公开站点不再显示，可再次发布回来。"
+                : "转为草稿？转为草稿后公开站点不再显示，可再次发布回来。"}
+            </p>
+            {/* 下架原因：后端只在 note 非空时写 offlineReason。
+                不给输入框，这张表里的「下架原因」就永远是空的。 */}
+            {statusTarget.status === NEWS_STATUS_OFFLINE ? (
+              <label className="admin-news__notefield">
+                <span className="admin-news__notelabel">下架原因（会写进审核留痕）</span>
+                <textarea
+                  className="admin-news__noteinput"
+                  rows={3}
+                  value={statusNote}
+                  onChange={(event) => setStatusNote(event.target.value)}
+                  placeholder="例：内容涉及未授权的第三方材料，待复核后重新发布。"
+                />
+              </label>
+            ) : null}
+          </>
         ) : null}
       </Modal>
 
@@ -738,9 +813,19 @@ export function AdminNewsPage(): ReactElement {
       >
         {deleteTarget ? (
           <p className="admin-news__modal-text">
-            确定删除资讯{" "}
-            <span className="admin-news__modal-title">{deleteTarget.title}</span>{" "}
-            吗？删除后不可恢复。
+            {deleteTarget.kind === "batch" ? (
+              <>
+                确定删除选中的{" "}
+                <span className="admin-news__modal-title">{deleteTarget.ids.length} 篇资讯</span>{" "}
+                吗？删除后不可恢复。
+              </>
+            ) : (
+              <>
+                确定删除资讯{" "}
+                <span className="admin-news__modal-title">{deleteTarget.row.title}</span>{" "}
+                吗？删除后不可恢复。
+              </>
+            )}
           </p>
         ) : null}
       </Modal>

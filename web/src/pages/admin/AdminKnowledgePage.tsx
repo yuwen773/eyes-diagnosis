@@ -643,6 +643,11 @@ export function AdminKnowledgePage(): ReactElement {
                 </button>
               ))}
             </div>
+            {/* 两枚相邻的 MD 是同一格式的两个扩展名：后端按扩展名精确匹配，
+                两个值都得能筛。不解释就会被读成两种格式。 */}
+            <span className="admin-knowledge__fieldhint num">
+              MD 与 MD（.markdown）是同一格式的两个扩展名 · 后端按扩展名精确匹配，故并列两枚
+            </span>
           </div>
           {showFields ? (
           <div className="admin-filter__fields">
@@ -708,7 +713,7 @@ export function AdminKnowledgePage(): ReactElement {
             <div className="admin-knowledge__upload-text">
               <p className="admin-knowledge__upload-title">上传医疗文档</p>
               <p className="admin-knowledge__upload-hint num">
-                PDF / DOC / DOCX / TXT / MD · 可多选 · 也可直接拖到这块区域
+                PDF / DOC / DOCX / TXT / MD / MARKDOWN · 可多选 · 也可直接拖到这块区域
               </p>
             </div>
           </div>

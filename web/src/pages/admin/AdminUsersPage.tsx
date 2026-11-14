@@ -425,8 +425,8 @@ export function AdminUsersPage(): ReactElement {
             <button
               type="button"
               className="admin-btn admin-btn--primary admin-btn--icon-sm"
-              title="编辑用户"
-              aria-label="编辑用户"
+              title={`编辑用户：${row.userAccount || row.id}`}
+              aria-label={`编辑用户：${row.userAccount || row.id}`}
               onClick={() => openEdit(row)}
             >
               <Pencil size={14} strokeWidth={2} aria-hidden="true" />
@@ -512,31 +512,33 @@ export function AdminUsersPage(): ReactElement {
               </button>
             </div>
           </div>
-          {showFields ? (
-          <>
-            {/* 角色：枚举筛选用段控件，点一下即生效，少一次「查询」。 */}
-            <div className="admin-ledger__group">
-              <span className="admin-ledger__grouplabel" id="admin-users-role-label">
-                角色 · ROLE
-              </span>
-              <div
-                className="admin-ledger__chips"
-                role="group"
-                aria-labelledby="admin-users-role-label"
-              >
-                {USER_ROLE_FILTER_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className="admin-ledger__chip"
-                    aria-pressed={query.userRole === option.value}
-                    onClick={() => applyRoleFilter(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+          {/* 角色：枚举筛选用段控件，点一下即生效，少一次「查询」。
+              常驻不折叠：最常用的筛选不该藏在「展开筛选」后面
+              （与资讯页、知识库页的同类控件口径一致）。 */}
+          <div className="admin-ledger__group">
+            <span className="admin-ledger__grouplabel" id="admin-users-role-label">
+              角色 · ROLE
+            </span>
+            <div
+              className="admin-ledger__chips"
+              role="group"
+              aria-labelledby="admin-users-role-label"
+            >
+              {USER_ROLE_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="admin-ledger__chip"
+                  aria-pressed={query.userRole === option.value}
+                  onClick={() => applyRoleFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
+          </div>
+          {showFields ? (
+            <>
             <div className="admin-filter__fields">
           <label className="admin-users__field">
             <span className="admin-users__label">账号 · ACCOUNT</span>

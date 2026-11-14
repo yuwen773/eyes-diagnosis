@@ -248,6 +248,15 @@
   min-width: 0;
 }
 
+/* 段控件下方的口径提示：与诊断页的检索口径提示同一副口吻（mono 10.5px）。 */
+.admin-knowledge__fieldhint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
+}
+
 .admin-cms__chip {
   display: inline-flex;
   align-items: center;
