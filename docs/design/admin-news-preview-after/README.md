@@ -9,7 +9,10 @@
   `admin-news-preview-parity.mjs`（预览与公开页的版式同值核对），Playwright，Chromium 1234
 - 预览证据用的是**临时草稿**（标题带「【预览验证】」）：主套件自己建草稿并经真实
   `/api/news/edit` 与 `/api/news/uploadCover` 写入封面，采集结束即删，不留在库里
-  （每次跑完脚本都会列库核对「预览验证」残留为 0）。
+  （每次跑完脚本都会列库核对「预览验证」残留为 0）。**这个「0」指活记录**（`isDelete=0`）——
+  删除走产品接口 `POST /api/news/delete/{id}`，那是 `@TableLogic` **软删除**，表里会留下
+  `isDelete=1` 的行；MyBatis Plus 的逻辑删除过滤让它们不出现在任何列表与详情查询里，
+  界面与接口层面看不到。要让表里彻底没有这类行只能直接改库，超出本 PR 的接口约定。
 - 脚本会在预览期间监听网络：一旦出现 `POST /news/edit` 或 `POST /news/uploadCover`
   就以退出码 3 失败。本轮所有截图采集均退出码 0（**预览没有保存、没有改状态**）。
 - 暗色截图**带硬断言**：名字以 `-dark` 结尾的图，截图前必须验到 `html.dark` 真的在，

@@ -191,6 +191,25 @@ async function main() {
     if (theme === "light" && isDark) throw new Error("主题没切回浅色：html.dark 还在")
   }
 
+  /**
+   * 截图 + **截图时**断言主题。
+   *
+   * <p>`setTheme()` 已经断言过主题，但那是「切主题时」；截图发生在其后（中间还
+   * 有 tab / 设备档位点击）。别的两个采集脚本是按文件名在 `shot()` 里硬断言，
+   * 这里保持同一口径：暗色图必须在截图那一刻验到 `html.dark` 在，否则报错退出
+   * ——不接受「拿浅色冒充暗色」。
+   */
+  const shotTheme = async (page, path, expectDark) => {
+    if (expectDark) {
+      const isDark = await page.evaluate(() =>
+        document.documentElement.classList.contains("dark"),
+      )
+      if (!isDark) throw new Error(`截图前发现主题不是暗色：html.dark 不存在（${path}）`)
+    }
+    await page.screenshot({ path, fullPage: true })
+    console.log("captured", path)
+  }
+
   // 1) 造一篇临时发布的对照稿（真实走 /news/edit 与 /news/uploadCover）。
   const setupCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const setupPage = await setupCtx.newPage()
@@ -256,10 +275,11 @@ async function main() {
         await adminPage.getByRole("button", { name: mode.name === "mobile" ? "手机" : "桌面" }).click()
         await adminPage.waitForTimeout(500)
         const previewMetrics = await adminPage.evaluate(MEASURE)
-        await adminPage.screenshot({
-          path: `${outDir}/parity-preview-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
-          fullPage: true,
-        })
+        await shotTheme(
+          adminPage,
+          `${outDir}/parity-preview-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
+          theme === "dark",
+        )
 
         const publicCtx = await browser.newContext({
           viewport: { width: mode.width, height: mode.height },
@@ -269,10 +289,11 @@ async function main() {
         await setTheme(publicPage, theme)
         await publicPage.waitForTimeout(900)
         const publicMetrics = await publicPage.evaluate(MEASURE)
-        await publicPage.screenshot({
-          path: `${outDir}/parity-public-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
-          fullPage: true,
-        })
+        await shotTheme(
+          publicPage,
+          `${outDir}/parity-public-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
+          theme === "dark",
+        )
         await publicCtx.close()
 
         const tag = `[${theme} ${mode.name} ${mode.width}px] `
@@ -333,7 +354,7 @@ async function main() {
     await adminPage.getByRole("tab", { name: "预览" }).click()
     await adminPage.waitForTimeout(800)
     const dirtyPreview = await adminPage.evaluate(MEASURE)
-    await adminPage.screenshot({ path: `${outDir}/parity-preview-dirty.png`, fullPage: true })
+    await shotTheme(adminPage, `${outDir}/parity-preview-dirty.png`, true)
 
     await adminPage.getByRole("button", { name: "保存" }).click()
     await adminPage.waitForTimeout(2000)
@@ -353,7 +374,7 @@ async function main() {
     await setTheme(publicPage2, "dark")
     await publicPage2.waitForTimeout(900)
     const savedPublic = await publicPage2.evaluate(MEASURE)
-    await publicPage2.screenshot({ path: `${outDir}/parity-public-after-save.png`, fullPage: true })
+    await shotTheme(publicPage2, `${outDir}/parity-public-after-save.png`, true)
     await publicCtx2.close()
 
     const tagB = "[未保存→保存后] "
