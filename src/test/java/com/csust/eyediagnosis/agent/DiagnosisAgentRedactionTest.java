@@ -3,7 +3,10 @@ package com.csust.eyediagnosis.agent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
+import com.csust.eyediagnosis.utils.JsonUtils;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -54,17 +57,16 @@ class DiagnosisAgentRedactionTest {
     }
 
     @Test
-    void nullLegacyAndOptionalFieldsAreOmittedRatherThanByteCompatible() throws Exception {
-        ObjectMapper json = new ObjectMapper();
+    void nullLegacyAndOptionalFieldsAreOmittedRatherThanByteCompatible() {
         MessageDTO dto = new MessageDTO();
-        assertEquals(json.readTree("{}"), json.valueToTree(dto));
+        assertEquals(Map.of(), JsonUtils.fromJsonToMap(JsonUtils.toJson(dto)));
         dto.setContent("普通回复");
         dto.setMessageType(MessageType.ASSISTANT);
-        assertEquals(json.readTree("{\"content\":\"普通回复\",\"messageType\":\"assistant\"}"),
-                json.valueToTree(dto));
-        MessageDTO explicitNulls = json.readValue(
+        assertEquals(Map.of("content", "普通回复", "messageType", "assistant"),
+                JsonUtils.fromJsonToMap(JsonUtils.toJson(dto)));
+        MessageDTO explicitNulls = JsonUtils.fromJson(
                 "{\"content\":null,\"messageType\":null,\"toolCalls\":null}", MessageDTO.class);
-        assertEquals(json.readTree("{}"), json.valueToTree(explicitNulls));
+        assertEquals(Map.of(), JsonUtils.fromJsonToMap(JsonUtils.toJson(explicitNulls)));
     }
 
     @Test
