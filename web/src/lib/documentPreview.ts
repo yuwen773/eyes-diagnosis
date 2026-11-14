@@ -46,12 +46,3 @@ export async function renderDocxHtml(arrayBuffer: ArrayBuffer): Promise<string> 
 export function renderMarkdownDocument(source: string): string {
   return renderNewsHtml(source)
 }
-
-/** 原文区渲染结果：空串表示「按纯文本展示」。纯文本分支不注入 HTML。 */
-export async function renderDocumentHtml(
-  kind: "markdown" | "docx",
-  source: string | ArrayBuffer,
-): Promise<string> {
-  if (kind === "markdown") return renderMarkdownDocument(source as string)
-  return renderDocxHtml(source as ArrayBuffer)
-}

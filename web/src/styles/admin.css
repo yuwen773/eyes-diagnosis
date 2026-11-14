@@ -736,27 +736,15 @@
 }
 
 .admin-modal__close,
-/* 40×40 命中区（WCAG 2.5.8 最小 24px）；负 margin 让图标位置保持原样。 */
 .admin-drawer__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  margin: -8px -8px -8px 0;
   border: 0;
-  border-radius: var(--radius-sm);
   background: none;
   color: var(--admin-text-muted);
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  transition: color var(--fast), background var(--fast);
-}
-
-.admin-drawer__close:hover {
-  background: var(--admin-surface-deep);
+  transition: color var(--fast);
 }
 
 .admin-modal__close:hover,

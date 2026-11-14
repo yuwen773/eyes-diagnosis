@@ -265,10 +265,24 @@ async function fetchKnowledgeContent(
 
   const contentType = response.headers.get("content-type") ?? ""
   if (contentType.includes("application/json")) {
-    const payload = (await response.json().catch(() => ({}))) as Envelope<unknown>
-    const code = payload.code ?? -1
-    if (code === 40100 || code === 40101) notifyAuthExpired(code)
-    throw new ApiError(code, payload.msg || "原文读取失败")
+    // 「响应是 JSON」不等于「出错了」：错误信封是 { code, msg }，但端点将来也可能
+    // 合法返回 JSON 正文。按 http.ts 的口径——只有数值 code 且不等于 0 才算错误。
+    const raw = await response.text()
+    let payload: Envelope<unknown> | undefined
+    try {
+      payload = JSON.parse(raw) as Envelope<unknown>
+    } catch {
+      payload = undefined
+    }
+    const code = payload?.code
+    if (typeof code === "number" && code !== 0) {
+      if (code === 40100 || code === 40101) notifyAuthExpired(code)
+      throw new ApiError(code, payload?.msg || "原文读取失败")
+    }
+    if (!response.ok) {
+      throw new ApiError(response.status, `服务返回 ${response.status}`)
+    }
+    return as === "text" ? raw : (new TextEncoder().encode(raw).buffer as ArrayBuffer)
   }
   if (!response.ok) {
     throw new ApiError(response.status, `服务返回 ${response.status}`)
