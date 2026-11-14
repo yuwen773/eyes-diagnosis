@@ -1,0 +1,169 @@
+/**
+ * 管理端资讯预览画布。
+ *
+ * <p>预览不是「再写一套文章样式」，而是把公开详情页的同一个
+ * `NewsArticleView` 装进一个设备框里。公开页的断点是媒体查询（按浏览器宽度
+ * 生效），所以桌面视口下缩到 390px 不会触发移动端版式；这里给设备框加
+ * `container-type: inline-size`，再用容器查询补上公开页同样的 900 / 768 两档，
+ * 再加一档 480 的手机微调（封面圆角与限高），
+ * 让「手机预览」看到的是真实的窄屏版式，而不是被 CSS 缩小的桌面版。
+ */
+
+/* 预览时让画布占满工作区：编辑区的两栏（正文 + 发布设置）只有 676px，
+   塞不下公开页 900px 以上的桌面版式。切到预览就把右栏收起来，桌面预览
+   才是真的桌面宽度，而不是一个被容器查询降级的窄版。 */
+/* 双类选择器压过 admin-redesign.css 里的 1280 断点（同特异性，顺序不可靠）。 */
+.admin-newsedit__workspace.admin-newsedit__workspace--preview {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-newsedit__workspace.admin-newsedit__workspace--preview .admin-newsedit__rail {
+  display: none;
+}
+
+.admin-newsedit__preview {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-newsedit__preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.admin-newsedit__preview-note {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-faint);
+}
+
+/* 设备切换：与列表页的分段控件同一套外观（2px 内衬 + 当前态淡紫底）。 */
+.admin-newsedit__device-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
+}
+
+.admin-newsedit__device-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--admin-text-muted);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.admin-newsedit__device-btn[aria-pressed="true"] {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-newsedit__device-btn:hover {
+  color: var(--admin-primary);
+}
+
+/* 摘要读数：与编辑区右上角的字数同一口径（后端剥标签后的前 30 字）。 */
+.admin-newsedit__preview-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 8px 10px;
+  border-inline-start: 2px solid var(--admin-line-strong);
+  /* --admin-surface-muted 不存在；用已定义的次级面令牌，深浅主题都翻转。 */
+  background: var(--admin-surface-deep);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--admin-text-muted);
+}
+
+.admin-newsedit__preview-summary > span:first-child {
+  color: var(--admin-text-faint);
+  letter-spacing: 0.06em;
+}
+
+/* ── 设备框 ─────────────────────────────────────────────── */
+
+.admin-newsedit__device {
+  container-type: inline-size;
+  width: 100%;
+  /* 与公开页版心同宽（--maxw: 1240px），桌面预览才是公开页的真实宽度。 */
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
+.admin-newsedit__device--mobile {
+  max-width: 390px;
+}
+
+.admin-newsedit__device-screen {
+  /* 文章纸面与品牌画布由 .is-brand-page 提供，这里只负责框住它。 */
+  padding: clamp(16px, 2.6vw, 34px);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-canvas);
+}
+
+.admin-newsedit__device--mobile .admin-newsedit__device-screen {
+  padding: 14px;
+  border-radius: var(--radius-lg);
+}
+
+/* 预览里没有真实滚动容器：目录不吸顶，避免它钉在编辑页视口中段。 */
+.admin-newsedit__device .news-toc {
+  position: static;
+}
+
+/* ── 容器断点：900 / 768 两档与 news.css 一一对应，另加 480 手机微调 ── */
+
+@container (max-width: 900px) {
+  .admin-newsedit__device .news-article__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-newsedit__device .news-article__title {
+    max-width: none;
+    /* vw 在设备框里没有意义：改用容器字号单位，手机预览才是真窄屏比例。 */
+    font-size: clamp(28px, 7cqi, 44px);
+  }
+
+  .admin-newsedit__device .news-toc {
+    padding-bottom: 8px;
+  }
+}
+
+/* 对应 news.css 的 768 档：纸面内边距收窄 + 触控目标 ≥ 44×44。 */
+@container (max-width: 768px) {
+  .admin-newsedit__device .news-paper {
+    padding-inline: 18px;
+  }
+
+  .admin-newsedit__device .news-toc__list a {
+    min-height: 44px;
+    align-content: center;
+  }
+}
+
+/* 480 以下是手机微调：封面圆角与限高，只为手机预览的观感，不对应公开页断点。 */
+@container (max-width: 480px) {
+  .admin-newsedit__device .news-article__plate {
+    border-radius: var(--radius-lg);
+  }
+
+  .admin-newsedit__device .news-article__img {
+    max-height: 260px;
+  }
+}

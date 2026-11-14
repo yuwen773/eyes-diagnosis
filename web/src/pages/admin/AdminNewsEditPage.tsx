@@ -9,13 +9,25 @@ import {
 } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Check, ImagePlus, Save, Trash2, Upload } from "lucide-react"
+import {
+  ArrowLeft,
+  Check,
+  ImagePlus,
+  Monitor,
+  Save,
+  Smartphone,
+  Trash2,
+  Upload,
+} from "lucide-react"
 import MDEditor from "@uiw/react-md-editor"
 
 import "@uiw/react-md-editor/markdown-editor.css"
 import "@uiw/react-markdown-preview/markdown.css"
 
+import "@/styles/admin-news-preview.css"
+
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { NewsArticleView } from "@/components/news/NewsArticleView"
 import { FaultNote } from "@/components/fault"
 import { useTheme } from "@/components/theme-provider"
 import {
@@ -30,6 +42,7 @@ import { queryKeys } from "@/lib/queryKeys"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
 import { newsPlainText } from "@/lib/news"
+import { sanitizeNewsHtml } from "@/lib/sanitize"
 import { htmlToMarkdown } from "@/lib/htmlToMarkdown"
 
 /** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。
@@ -43,7 +56,7 @@ const EMPTY_FORM: Form = { title: "", content: "", status: 0 }
 
 const MAX_COVER_BYTES = 5 * 1024 * 1024
 const COVER_ACCEPT = "image/jpeg,image/png"
-const SUMMARY_HINT = "正文至少 30 字（后端以正文前 30 字生成摘要）"
+const SUMMARY_HINT = "正文至少 30 个字符（后端以正文前 30 个字符生成摘要）"
 const LEAVE_CONFIRM = "有未保存的修改，确定离开编辑页吗？未保存的内容会丢失。"
 /** 新建模式封面引导：uploadCover 需要已存在的 id，首次保存后才能上传。 */
 const NEW_COVER_HINT = "新建保存后会生成记录并进入编辑模式，之后可上传封面。"
@@ -61,7 +74,12 @@ function coverProblem(file: File): string | null {
 
 /** 正文里参与摘要的可见字数：与后端 `buildSummary` 同一口径——
  *  先按落库管线渲染成 HTML，再剥标签、反转义、压缩空白。Markdown 记号
- *  不进正文，代码块与链接文字则和后端一样计入（后端只剥 HTML）。 */
+ *  不进正文，代码块与链接文字则和后端一样计入（后端只剥 HTML）。
+ *
+ *  注意这里数的是**字符**，服务于后端那条「正文至少 30 字」的守卫；
+ *  文章眉线上的「N 字」是另一套口径（`newsWordCount`：汉字按字、拉丁按词），
+ *  与公开页同一个组件、同一个读数。两者数字不同是口径不同，不是少了字，
+ *  所以界面上把编辑器这一侧写成「字符」，不跟眉线的「字」混用。 */
 function visibleLength(content: string): number {
   return newsPlainText(renderNewsHtml(content)).replace(/\s+/g, " ").trim().length
 }
@@ -195,6 +213,8 @@ function NewsEditor(props: {
   const [contentDirty, setContentDirty] = useState(false)
 
   const [tab, setTab] = useState<"edit" | "preview">("edit")
+  /** 预览设备宽度：桌面看整页留白，手机看 390px 下断点是否真的生效。 */
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop")
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formFault, setFormFault] = useState<ReturnType<typeof validationFault> | null>(null)
@@ -246,11 +266,19 @@ function NewsEditor(props: {
     setForm((prev) => ({ ...prev, ...next }))
   }
 
-  // 只在预览态解析：编辑态每敲一个字都重渲染，没必要把全文再过一遍
-  // markdown（与 AssistantMessage 的流式策略同源）。
-  // 预览与落库、公开页显示走同一条管线——所见即所存。
-  const previewHtml = tab === "preview" ? renderNewsHtml(form.content) : ""
   const contentLength = useMemo(() => visibleLength(form.content), [form.content])
+  // 预览内容与「保存时会写进库的东西」保持一致：旧版 HTML 且正文没改时，
+  // 保存提交的是原始 HTML，预览就按 HTML 渲染，避免有损往返让预览与线上不一样。
+  const previewContent = legacyHtml && !contentDirty ? legacyHtml : form.content
+  const previewFormat: "html" | "markdown" = legacyHtml && !contentDirty ? "html" : "markdown"
+  // 摘要真实口径：后端取剥标签后正文的前 30 字。这里显示同一段文字，不另编摘要。
+  const summaryText = useMemo(() => {
+    // 旧版 HTML 原样提交时按 HTML 剥标签；Markdown 先走渲染管线再剥——两条路径
+    // 都必须得到可见文字，不能把 <p> 当摘要显示出来。
+    const html =
+      previewFormat === "html" ? sanitizeNewsHtml(previewContent) : renderNewsHtml(previewContent)
+    return newsPlainText(html).replace(/\s+/g, " ").trim().slice(0, 30)
+  }, [previewContent, previewFormat])
   // 侧栏读数位窄：同一状态用短标签，避免「没有未保存的修改」把数字列挤歪。
   const saveStateShort = saving
     ? "保存中…"
@@ -368,7 +396,11 @@ function NewsEditor(props: {
 
   return (
     <form className="admin-newsedit__form" onSubmit={onSubmit}>
-      <div className="admin-newsedit__workspace">
+      <div
+        className={`admin-newsedit__workspace${
+          tab === "preview" ? " admin-newsedit__workspace--preview" : ""
+        }`}
+      >
         <div className="admin-newsedit__main">
           {/* 工具行：编辑 / 预览 tab + 保存态 + 主保存。 */}
           <div className="admin-newsedit__topbar">
@@ -466,7 +498,7 @@ function NewsEditor(props: {
             <div className="admin-newsedit__editor-head">
               <span className="admin-newsedit__label">正文 · MARKDOWN</span>
               <span className="admin-newsedit__editor-count num">
-                {contentLength} 字 · 摘要取前 30 字
+                {contentLength} 字符 · 摘要取前 30 字符
               </span>
             </div>
             {tab === "edit" ? (
@@ -486,12 +518,68 @@ function NewsEditor(props: {
               />
             ) : (
               <div className="admin-newsedit__preview">
-                {/* markdown.ts 以 html:false 渲染，原始 HTML 已转义、危险链接被禁用；
-                    与 AssistantMessage 同一条 innerHTML 注入路径。 */}
-                <div
-                  className="markdown-body"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
-                />
+                <div className="admin-newsedit__preview-bar">
+                  <p className="admin-newsedit__preview-note num">
+                    预览 · 与公开页同一组件；不会保存，也不会改变发布状态
+                    {dirty ? "；有未保存修改，发布设置栏已隐藏" : ""}
+                  </p>
+                  <div
+                    className="admin-newsedit__device-toggle"
+                    role="group"
+                    aria-label="预览设备"
+                  >
+                    <button
+                      type="button"
+                      className="admin-newsedit__device-btn num"
+                      aria-pressed={device === "desktop"}
+                      onClick={() => setDevice("desktop")}
+                    >
+                      <Monitor size={13} strokeWidth={2} aria-hidden="true" />
+                      桌面
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-newsedit__device-btn num"
+                      aria-pressed={device === "mobile"}
+                      onClick={() => setDevice("mobile")}
+                    >
+                      <Smartphone size={13} strokeWidth={2} aria-hidden="true" />
+                      手机
+                    </button>
+                  </div>
+                </div>
+
+                <p className="admin-newsedit__preview-summary num">
+                  <span>摘要预览</span>
+                  <span>
+                    {summaryText.length >= 30
+                      ? `${summaryText}…`
+                      : "正文不足 30 个字符，保存会被拒绝"}
+                  </span>
+                </p>
+
+                <div className={`admin-newsedit__device admin-newsedit__device--${device}`}>
+                  <div className="admin-newsedit__device-screen is-brand-page">
+                    <NewsArticleView
+                      article={{
+                        title: form.title,
+                        content: previewContent,
+                        coverImage: form.coverImage,
+                        author: initial?.author,
+                        publishTime: initial?.publishTime,
+                      }}
+                      contentFormat={previewFormat}
+                      authorFallback="未署名"
+                      kicker={
+                        // 只有「已发布」的文章才真的在公开页上；草稿 / 待审核 /
+                        // 下架即使带着 publishTime 也不会出现，不能让它冒充已上线。
+                        initial?.status === 1
+                          ? undefined
+                          : "预览稿 · 尚未发布，公开页不会出现"
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             )}
             <p className="admin-newsedit__editor-hint">
@@ -611,7 +699,7 @@ function NewsEditor(props: {
             <div className="admin-newsedit__meta-row">
               <span>摘要长度</span>
               <b className="num">
-                {contentLength >= 30 ? "30 字" : "不足 30 字"}
+                {contentLength >= 30 ? "30 字符" : "不足 30 字符"}
               </b>
             </div>
             <div className="admin-newsedit__meta-row">

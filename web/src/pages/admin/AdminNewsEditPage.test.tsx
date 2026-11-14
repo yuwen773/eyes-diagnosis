@@ -60,13 +60,14 @@ function renderPage(entry: string) {
  * 以「已有文章」模式打开编辑页。getNews 用常驻实现：保存后 invalidateQueries
  * 会再次取详情，once 值会被第二次调用消费掉。
  */
-async function openEditor(content: string, coverImage?: string) {
+async function openEditor(content: string, coverImage?: string, status = 0, publishTime?: string) {
   vi.mocked(getNews).mockResolvedValue({
     id: "9001",
     title: "旧文",
     content,
     coverImage,
-    status: 1,
+    status,
+    publishTime,
   })
   renderPage("/admin/news/9001/edit")
   return await screen.findByRole("button", { name: "保存" })
@@ -126,15 +127,109 @@ describe("AdminNewsEditPage 保存守卫", () => {
       `<pre><code>${"b".repeat(40)}</code></pre>`
     await openEditor(content)
 
-    // 代码块内容后端计入可见文本：摘要长度应显示「30 字」而非「不足 30 字」。
-    await screen.findByText("30 字")
-    expect(screen.queryByText("不足 30 字")).toBeNull()
+    // 代码块内容后端计入可见文本：摘要长度应显示「30 字符」而非「不足 30 字符」。
+    await screen.findByText("30 字符")
+    expect(screen.queryByText("不足 30 字符")).toBeNull()
   })
 
   it("Markdown 记号本身不计入正文字符", async () => {
     const markup = "# 标题\n\n> 引用一行\n\n- 条目一\n- 条目二"
     await openEditor(markup)
 
-    await screen.findByText("不足 30 字")
+    await screen.findByText("不足 30 字符")
+  })
+})
+
+describe("AdminNewsEditPage 完整文章预览", () => {
+  it("预览反映未保存的标题与正文，且不触发保存", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "还没保存的标题" } })
+    fireEvent.change(screen.getByTestId("md-editor"), {
+      target: { value: "## 第一节\n\n这是预览里应该出现的正文。" },
+    })
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    const article = screen.getByRole("heading", { level: 1, name: "还没保存的标题" })
+    expect(article.closest(".news-article")).toBeTruthy()
+    expect(screen.getByText("这是预览里应该出现的正文。")).toBeTruthy()
+    expect(saveNews).not.toHaveBeenCalled()
+    // 未发布信息的预览稿不编造发布时间。
+    expect(screen.getByText(/预览稿 · 尚未发布/)).toBeTruthy()
+  })
+
+  it("未保存修改在预览里如实提示：发布设置栏已隐藏", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    expect(screen.queryByText(/发布设置栏已隐藏/)).toBeNull()
+
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "改了标题" } })
+    expect(screen.getByText(/有未保存修改，发布设置栏已隐藏/)).toBeTruthy()
+  })
+
+  it("已发布文章不摆「预览稿」眉线，待审核 / 下架 / 草稿才摆", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    // status: 0（草稿）fixture：眉线必须存在。
+    expect(screen.getByText(/预览稿 · 尚未发布/)).toBeTruthy()
+  })
+
+  it("status=1 已发布才走真实发布时间；待审核 / 下架一律不冒充已上线", async () => {
+    // 已发布：摆真实发布时间，不摆「预览稿」眉线。
+    await openEditor(LEGACY_HTML, undefined, 1, "2026-11-01 09:30:00")
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    expect(screen.queryByText(/预览稿 · 尚未发布/)).toBeNull()
+    expect(screen.getByText(/2026-11-01/)).toBeTruthy()
+    cleanup()
+
+    // 待审核（3）：公开页看不到，却带着 publishTime——不能显示成已上线。
+    await openEditor(LEGACY_HTML, undefined, 3, "2026-11-01 09:30:00")
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    expect(screen.getByText(/预览稿 · 尚未发布/)).toBeTruthy()
+    expect(screen.queryByText(/2026-11-01/)).toBeNull()
+    cleanup()
+
+    // 下架（2）：同上。
+    await openEditor(LEGACY_HTML, undefined, 2, "2026-11-01 09:30:00")
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    expect(screen.getByText(/预览稿 · 尚未发布/)).toBeTruthy()
+    expect(screen.queryByText(/2026-11-01/)).toBeNull()
+  })
+
+  it("桌面 / 手机切换只改设备框，文章组件还是同一个", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    expect(document.querySelector(".admin-newsedit__device--desktop")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "手机" }))
+
+    expect(document.querySelector(".admin-newsedit__device--mobile")).toBeTruthy()
+    expect(document.querySelectorAll(".news-article")).toHaveLength(1)
+    expect(screen.getByRole("button", { name: "手机" }).getAttribute("aria-pressed")).toBe("true")
+  })
+
+  it("摘要预览按后端口径显示正文前 30 字，不足时如实说保存会被拒绝", async () => {
+    await openEditor("<p>短正文。</p>")
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    expect(screen.getByText("正文不足 30 个字符，保存会被拒绝")).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("tab", { name: "编辑" }))
+    fireEvent.change(screen.getByTestId("md-editor"), {
+      target: { value: "一".repeat(40) },
+    })
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    const summary = screen.getByText(/^一{30}…$/)
+    expect(summary).toBeTruthy()
+  })
+})
+
+describe("AdminNewsEditPage 旧版 HTML 预览", () => {
+  it("摘要预览剥掉标签，不把 <p> 当正文显示", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    expect(screen.queryByText(/<p>/)).toBeNull()
+    const summary = screen.getByText("摘要预览").parentElement?.textContent ?? ""
+    expect(summary).toContain("这是一段超过三十个字的旧版富文本正文")
+    expect(summary).not.toContain("<p>")
   })
 })

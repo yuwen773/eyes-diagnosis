@@ -547,6 +547,9 @@
   max-width: 22ch;
   font-size: clamp(32px, 4.2vw, 56px);
   line-height: 1.16;
+  /* 中文行首禁则：不让「、」「。」这类标点孤零零地起一行
+     （窄量宽 + 大字号下很容易出现「…干 / 眼症日常护理」这种断法）。 */
+  line-break: strict;
 }
 
 .news-article__lead {
@@ -664,6 +667,8 @@
   font-size: 15.5px;
   line-height: 1.95;
   color: var(--brand-text);
+  /* 同上：行首不留标点。 */
+  line-break: strict;
 }
 
 .news-paper__body p {
