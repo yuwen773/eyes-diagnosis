@@ -7,6 +7,9 @@ import type { ReactElement, ReactNode } from "react"
  * 给出口径（时间窗 / 总数等读数），以及把本页主操作放在同一水平线上。
  * 短码与拉丁文只做节奏，不做装饰性大写堆叠。
  *
+ * <p>右侧的读数与动作收进一个 aside 组：口径读数在左、主操作在右，
+ * 两块各自成段，不与标题基线打架。窄屏时整组换行到标题下方。
+ *
  * <p>与全站 `SectionHead` 的分工：`SectionHead` 是内容页的一行章节信息；
  * 管理端每一页都需要更大的标题、描述与动作位，因此单独有这一层。
  */
@@ -19,14 +22,16 @@ export function AdminPageHead(props: {
   eyebrow: string
   /** 一句话说明本页职责与口径 */
   description?: string
-  /** 口径读数（时间窗、总数等），放在标题右侧基线 */
+  /** 口径读数（时间窗、总数等） */
   meta?: ReactNode
   /** 本页主操作 / 次操作 */
   actions?: ReactNode
+  /** 标题字号档：default 台账页（26–30px）/ lead 门面页（32–36px） */
+  size?: "default" | "lead"
 }): ReactElement {
-  const { code, title, eyebrow, description, meta, actions } = props
+  const { code, title, eyebrow, description, meta, actions, size = "default" } = props
   return (
-    <header className="admin-pagehead">
+    <header className={`admin-pagehead${size === "lead" ? " admin-pagehead--lead" : ""}`}>
       <div className="admin-pagehead__lead">
         <p className="admin-pagehead__eyebrow">
           <span className="admin-pagehead__code num">{code}</span>
@@ -35,8 +40,12 @@ export function AdminPageHead(props: {
         <h1 className="admin-pagehead__title">{title}</h1>
         {description ? <p className="admin-pagehead__desc">{description}</p> : null}
       </div>
-      {meta ? <div className="admin-pagehead__meta">{meta}</div> : null}
-      {actions ? <div className="admin-pagehead__actions">{actions}</div> : null}
+      {(meta || actions) && (
+        <div className="admin-pagehead__aside">
+          {meta ? <div className="admin-pagehead__meta">{meta}</div> : null}
+          {actions ? <div className="admin-pagehead__actions">{actions}</div> : null}
+        </div>
+      )}
     </header>
   )
 }

@@ -66,7 +66,7 @@ export function ShareBar(props: {
             <p className="admin-viz__empty">窗口内没有可统计的记录。</p>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={40}>
+              <ResponsiveContainer width="100%" height={56}>
                 <BarChart
                   data={data}
                   layout="vertical"

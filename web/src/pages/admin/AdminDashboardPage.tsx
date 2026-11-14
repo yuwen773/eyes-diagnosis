@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactElement, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowUpRight, ChartColumn, Eye, ScanEye } from "lucide-react"
+import { ArrowUpRight, ChartColumn, Eye, ScanEye, type LucideIcon } from "lucide-react"
 
 import { AdminEmpty } from "@/components/admin/AdminEmpty"
 import { AdminPageHead } from "@/components/admin/AdminPageHead"
@@ -23,7 +23,7 @@ import {
 import { alignPreviousWindow, changeLabel } from "@/lib/chartData"
 import { describeError } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
-import { formatTimestamp } from "@/lib/domain"
+import { canonicalClassName, confidencePercent, formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
 /** 统计时间窗：整页统一，KPI、趋势、分布都覆盖同一段时间。 */
@@ -36,19 +36,57 @@ const RANGES = [
 /** 待人工复核在状态分布里的名字（用于给占比条上强调色）。 */
 const AWAITING_REVIEW_LABEL = humanReviewStatusLabel("AWAITING_REVIEW")
 
-/** 读数卡：标签 + 等宽大数 + 一行口径。强调位只加左侧紫线，不做整卡填色。 */
-function KpiCard(props: {
+/**
+ * 读数轨的一格：标签 + 等宽大数 + 一行口径。
+ *
+ * <p>四个读数同属一条轨（不是四张卡）：左缘一枚管理紫短柱标出主指标，
+ * 格子之间用发丝竖线分栏——密度高于卡片阵列，扫读路径也只有一条。
+ */
+function MetricCell(props: {
   label: string
   value: string
   foot?: ReactNode
-  accent?: boolean
+  /** 主指标：左缘加一枚管理紫短柱 */
+  primary?: boolean
 }): ReactElement {
   return (
-    <div className={`admin-metric-card${props.accent ? " admin-metric-card--accent" : ""}`}>
+    <div className={`admin-metric-card${props.primary ? " admin-metric-card--primary" : ""}`}>
       <span className="admin-metric-card__label">{props.label}</span>
       <span className="admin-metric-card__value">{props.value}</span>
       <span className="admin-metric-card__foot">{props.foot}</span>
     </div>
+  )
+}
+
+/**
+ * 解释型空态：图表位让位时给的说明卡。
+ *
+ * <p>外壳与图表卡同款（.admin-viz），里面只放「为什么空 + 下一步去哪」，
+ * 不留一块空白大画布，也不画贴地的假曲线。
+ */
+function InsightEmpty(props: {
+  title: string
+  note: string
+  icon: LucideIcon
+  emptyTitle: string
+  description: string
+  action?: ReactNode
+}): ReactElement {
+  return (
+    <section className="admin-viz admin-viz--empty">
+      <div className="admin-viz__head">
+        <span className="admin-viz__title">{props.title}</span>
+        <span className="admin-viz__head-extra num">{props.note}</span>
+      </div>
+      <div className="admin-viz__body">
+        <AdminEmpty
+          icon={props.icon}
+          title={props.emptyTitle}
+          description={props.description}
+          action={props.action}
+        />
+      </div>
+    </section>
   )
 }
 
@@ -58,17 +96,18 @@ function KpiCard(props: {
  * <p>读数来自 {@code GET /stats/admin/overview}：KPI、趋势、分布都是后端聚合
  * 出来的真实数据，不是示例数据。
  *
- * <p>构图（Bento，12 列栅格，信息量决定格子大小）：
+ * <p>构图（Bento 12 列，格子大小由信息量决定）：
  * <ol>
- *   <li>读数条：窗口判读 / AI 拒识 / 新增用户 / 待审核资讯；</li>
- *   <li>紫色重点卡跨 4 列——「待人工复核积压」是工作台第一动作，直接给下钻；</li>
- *   <li>趋势图跨 8 列——窗口内规模最大，占主位；</li>
- *   <li>运营待办 + 复核状态分布（或空态说明）；</li>
- *   <li>病种分布 + 最近判读记录。</li>
+ *   <li>读数轨（跨满列）：窗口判读 / AI 拒识 / 新增用户 / 待审核资讯；</li>
+ *   <li>判读趋势（8 列，主位）+ 待人工复核重点卡（4 列）；</li>
+ *   <li>复核状态分布 / 病种分布 / 运营待办（各 4 列）；</li>
+ *   <li>最近判读记录（跨满列，全量台账）。</li>
  * </ol>
  *
  * <p>零值纪律：真实数据为空时不画一排「0」KPI 假装系统活着，也不画一条贴地的
- * 假趋势线——趋势与分布位整体让位给有解释力的空态面板，并注明窗口口径。
+ * 假趋势线——趋势与分布位整体让位给有解释力的空态说明，并把真实存在的
+ * 最近判读记录放进主位区。四块内容两两成行，同一行等高：
+ * 积压卡与空窗解释一行，记录台账与运营待办一行。
  */
 export function AdminDashboardPage(): ReactElement {
   const [days, setDays] = useState(30)
@@ -108,7 +147,16 @@ export function AdminDashboardPage(): ReactElement {
     [stats],
   )
 
-  const distribution = rankDistribution(stats?.diagnosisDistribution ?? [])
+  const distribution = useMemo(() => {
+    // 后端按原始 result 分组；前端按产品的类名口径归一（同一类的不同写法合并成
+    // 一行），图例、读数表与最近记录读到的都是规范中文名。
+    const merged = new Map<string, number>()
+    for (const row of stats?.diagnosisDistribution ?? []) {
+      const name = canonicalClassName(row.name) ?? row.name
+      merged.set(name, (merged.get(name) ?? 0) + row.value)
+    }
+    return rankDistribution([...merged].map(([name, value]) => ({ name, value })))
+  }, [stats])
 
   const reviewDistribution = useMemo(
     () =>
@@ -164,7 +212,9 @@ export function AdminDashboardPage(): ReactElement {
       key: "result",
       title: "判读结果",
       render: (row) =>
-        row.result ?? (
+        row.result ? (
+          canonicalClassName(row.result) ?? row.result
+        ) : (
           <span className="admin-chip" data-tone="critical">
             AI 拒识
           </span>
@@ -195,18 +245,189 @@ export function AdminDashboardPage(): ReactElement {
     },
   ]
 
-  // 零值纪律：窗口内完全没有判读时，不画贴地折线与空白分布卡；
-  // 用一个说明面板解释「为什么没有」并给去全量的入口。
-  const trendHasData = trendRows.some((row) => row.value > 0 || row.previous > 0)
+  // 窗口内有没有判读，决定这一页是「工作台」还是「解释面板」。
   const noDiagnosis = stats ? stats.diagnosisInRange === 0 : false
+  // 积压强度：没有待复核时重点卡降为中性卡，不给无积压的页面制造警报氛围。
+  const backlogActive = stats ? awaitingTotal > 0 : false
+
+  /* ── 面板块（两种布局复用同一批内容）────────────────────────── */
+
+  const backlogCard = (
+    <section
+      className={`feature-card span-4${backlogActive ? "" : " feature-card--calm"}`}
+      aria-label="待人工复核积压"
+    >
+      <div className="feature-card__top">
+        <span className="feature-card__kicker">
+          {backlogActive ? "待人工复核 · 积压" : "待人工复核 · 已清空"}
+        </span>
+        <span className="feature-card__value num">{read(awaitingTotal)}</span>
+        <span className="feature-card__label">
+          {!stats
+            ? "统计读数尚未返回，积压数暂不可判读。"
+            : backlogActive
+              ? `窗口内新增 ${formatStatNumber(stats.diagnosisAwaitingReview ?? 0)} 条，` +
+                "积压需要人工复核才能进入正式记录。"
+              : "当前没有等待人工复核的判读记录，积压已清空。"}
+        </span>
+      </div>
+      <div className="feature-card__bottom">
+        <div className="feature-card__foot">
+          <Link className="feature-card__cta" to="/admin/diagnosis?review=requiresReview">
+            去复核
+            <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
+          </Link>
+          <span className="feature-card__sub num">
+            {stats ? `窗口内新增 ${formatStatNumber(stats.diagnosisAwaitingReview)} 条` : "—"}
+          </span>
+        </div>
+        <dl className="feature-card__stats">
+          <div>
+            <dt>已复核</dt>
+            <dd className="num">{read(stats?.diagnosisReviewed)}</dd>
+          </div>
+          <div>
+            <dt>AI 拒识</dt>
+            <dd className="num">{read(aiRejected)}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  )
+
+  const trendBlock = (
+    <TrendAreaChart
+      data={trendRows}
+      ariaLabel={`判读趋势 · 近 ${days} 天（含上一等长窗口对照）`}
+      height={288}
+    />
+  )
+
+  const shareBlock = (
+    <ShareBar
+      rows={reviewDistribution}
+      ariaLabel="复核状态分布"
+      accentNames={[AWAITING_REVIEW_LABEL]}
+    />
+  )
+
+  const rankedBlock = (
+    <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" nameWidth={104} />
+  )
+
+  const actionsBlock = (
+    <section className="panel admin-dashboard__todo" aria-label="运营待办">
+      <div className="panel__head">
+        <h2 className="admin-sec-title">运营待办</h2>
+        <span className="panel__note">{stats ? `近 ${stats.days} 天` : "—"}</span>
+      </div>
+      <div className="panel__body">
+        <div className="action-list">
+          <div className="action-row">
+            <span className="action-row__label">AI 拒识记录</span>
+            <span className={`action-row__count num ${aiRejected > 0 ? "action-row__count--hot" : ""}`}>
+              {read(aiRejected)}
+            </span>
+            <Link className="action-row__link" to="/admin/diagnosis?review=aiRejected">
+              去查看
+            </Link>
+          </div>
+          <div className="action-row">
+            <span className="action-row__label">知识库处理失败</span>
+            <span className={`action-row__count num ${stats && stats.knowledgeFailed > 0 ? "action-row__count--hot" : ""}`}>
+              {read(stats?.knowledgeFailed)}
+            </span>
+            <Link className="action-row__link" to="/admin/knowledge?status=2">
+              去处理
+            </Link>
+          </div>
+          <div className="action-row">
+            <span className="action-row__label">资讯待审核</span>
+            <span className={`action-row__count num ${newsPending > 0 ? "action-row__count--hot" : ""}`}>
+              {read(newsPending)}
+            </span>
+            <Link className="action-row__link" to="/admin/news?status=3">
+              去审核
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+
+  const recentBlock = (
+    <>
+      <div className="panel__head">
+        <h2 className="admin-sec-title">最近判读记录</h2>
+        <span className="panel__note">最新 5 条 · 全量在诊断管理</span>
+        <div className="panel__actions">
+          <Link className="action-row__link" to="/admin/diagnosis">
+            打开诊断管理
+          </Link>
+        </div>
+      </div>
+      <div className="panel__body">
+        {recentFault ? (
+          <FaultNote
+            fault={fault({
+              severity: "attention",
+              kind: "client",
+              title: `最近判读记录加载失败：${recentFault.text}`,
+              code: recentFault.code,
+            })}
+          />
+        ) : null}
+        <DataTable<AdminDiagnosis>
+          columns={recentColumns}
+          rows={recentRows}
+          rowKey={(row) => row.id}
+          loading={recentLoading}
+          emptyText="暂无判读记录"
+          emptyContent={
+            <AdminEmpty
+              icon={ScanEye}
+              title="还没有判读记录"
+              description="患者完成首次影像判读后，这里会显示最近 5 条。"
+            />
+          }
+          page={{ current: 1, pageSize: 5, total: recent?.total ?? 0 }}
+          onPageChange={() => {}}
+          hidePager
+        />
+      </div>
+    </>
+  )
+
+  // 空窗口时的解释面板：说清「为什么空」与「上一窗口有多少」，并给出真实出口。
+  const emptyInsight = (
+    <InsightEmpty
+      title="判读趋势与分布"
+      note={`近 ${days} 天`}
+      icon={ChartColumn}
+      emptyTitle="窗口内还没有可统计的判读"
+      description={
+        stats?.previousDiagnosisInRange
+          ? `上一等长窗口有 ${formatStatNumber(stats.previousDiagnosisInRange)} 条判读。` +
+            "复核状态与病种分布要等窗口内出现判读才会成图——把时间窗拉长，或到诊断管理查看全量。"
+          : "上一等长窗口同样没有记录。复核状态与病种分布要等窗口内出现判读才会成图——" +
+            "把时间窗拉长，或到诊断管理查看全量。"
+      }
+      action={
+        <Link className="action-row__link" to="/admin/diagnosis">
+          打开诊断管理
+        </Link>
+      }
+    />
+  )
 
   return (
     <div className="admin-dashboard">
       <AdminPageHead
         code="01"
-        title="仪表盘"
+        title="运营总览"
         eyebrow="ADMIN · DASHBOARD"
-        description="运营总览：积压、判读规模、拒识与待审核资讯，读数来自同一时间窗。"
+        size="lead"
+        description="积压、判读规模、拒识与待审核资讯，读数来自同一时间窗。"
         meta={
           stats ? (
             <span className="admin-sample num">
@@ -248,29 +469,27 @@ export function AdminDashboardPage(): ReactElement {
       ) : (
         <>
           <section className="admin-metric-strip" aria-label="关键指标">
-            <KpiCard
-              label="窗口内判读 · IN RANGE"
+            <MetricCell
+              label="窗口内判读"
               value={read(inRange)}
-              accent
+              primary
               foot={
                 <span className="admin-metric-card__delta">
                   {stats ? changeLabel(inRange, stats.previousDiagnosisInRange) : "—"}
                 </span>
               }
             />
-            <KpiCard
-              label="AI 拒识 · REJECTED"
+            <MetricCell
+              label="AI 拒识"
               value={read(aiRejected)}
               foot={
                 <span className="admin-metric-card__delta">
-                  {stats
-                    ? `占窗口内判读 ${formatStatPercent(rejectShare)}`
-                    : "统计读数尚未返回"}
+                  {stats ? `占窗口内判读 ${formatStatPercent(rejectShare)}` : "统计读数尚未返回"}
                 </span>
               }
             />
-            <KpiCard
-              label="新增用户 · NEW USERS"
+            <MetricCell
+              label="新增用户"
               value={read(userNew)}
               foot={
                 <span className="admin-metric-card__delta">
@@ -278,8 +497,8 @@ export function AdminDashboardPage(): ReactElement {
                 </span>
               }
             />
-            <KpiCard
-              label="待审核资讯 · NEWS PENDING"
+            <MetricCell
+              label="待审核资讯"
               value={read(newsPending)}
               foot={
                 <>
@@ -297,199 +516,38 @@ export function AdminDashboardPage(): ReactElement {
             />
           </section>
 
-          <div className="admin-bento">
-            {/* 第一行：紫色重点卡（动作项）+ 趋势图（主位） */}
-            <section className="feature-card span-4" aria-label="待人工复核积压">
-              <span className="feature-card__kicker">待人工复核 · 积压</span>
-              <span className="feature-card__value num">{read(awaitingTotal)}</span>
-              <span className="feature-card__label">
-                {!stats
-                  ? "统计读数尚未返回，积压数暂不可判读。"
-                  : awaitingTotal > 0
-                    ? `窗口内新增 ${formatStatNumber(stats.diagnosisAwaitingReview ?? 0)} 条，` +
-                      "积压需要人工复核才能进入正式记录。"
-                    : "当前没有等待人工复核的判读记录，积压已清空。"}
-              </span>
-              <div className="feature-card__foot">
-                <Link className="feature-card__cta" to="/admin/diagnosis?review=requiresReview">
-                  去复核
-                  <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
-                </Link>
-                <span className="feature-card__sub num">
-                  {stats
-                    ? `窗口内新增 ${formatStatNumber(stats.diagnosisAwaitingReview)} 条`
-                    : "—"}
-                </span>
-              </div>
-              <dl className="feature-card__stats">
-                <div>
-                  <dt>已复核</dt>
-                  <dd className="num">{read(stats?.diagnosisReviewed)}</dd>
-                </div>
-                <div>
-                  <dt>AI 拒识</dt>
-                  <dd className="num">{read(aiRejected)}</dd>
-                </div>
-              </dl>
-            </section>
-
-            <div className="span-8">
-              {trendHasData ? (
-                <TrendAreaChart
-                  data={trendRows}
-                  ariaLabel={`判读趋势 · 近 ${days} 天（含上一等长窗口对照）`}
-                  height={260}
-                />
-              ) : (
-                <section className="panel admin-dashboard__trend-empty" aria-label="窗口内判读趋势">
-                  <div className="panel__head">
-                    <h2 className="admin-sec-title">判读趋势</h2>
-                    <span className="panel__note">近 {days} 天 · 含上一等长窗口对照</span>
-                  </div>
-                  <div className="panel__body">
-                    <AdminEmpty
-                      icon={ScanEye}
-                      title="窗口内还没有判读记录"
-                      description={
-                        stats?.previousDiagnosisInRange
-                          ? `上一等长窗口为 ${formatStatNumber(stats.previousDiagnosisInRange)} 条。换个更长的时间窗，或到诊断管理查看全量。`
-                          : "上一等长窗口同样没有记录。换个更长的时间窗，或到诊断管理查看全量。"
-                      }
-                      action={
-                        <Link className="action-row__link" to="/admin/diagnosis">
-                          打开诊断管理
-                        </Link>
-                      }
-                    />
-                  </div>
-                </section>
-              )}
-            </div>
-
-            {/* 第二行：运营待办 + 分布（或空态说明） */}
-            <section className="panel span-4" aria-label="运营待办">
-              <div className="panel__head">
-                <h2 className="admin-sec-title">运营待办</h2>
-                <span className="panel__note">{stats ? `近 ${stats.days} 天` : "—"}</span>
-              </div>
-              <div className="panel__body">
-                <div className="action-list">
-                  <div className="action-row">
-                    <span className="action-row__label">AI 拒识记录</span>
-                    <span className={`action-row__count num ${aiRejected > 0 ? "action-row__count--hot" : ""}`}>
-                      {read(aiRejected)}
-                    </span>
-                    <Link className="action-row__link" to="/admin/diagnosis?review=aiRejected">
-                      去查看
-                    </Link>
-                  </div>
-                  <div className="action-row">
-                    <span className="action-row__label">知识库处理失败</span>
-                    <span className={`action-row__count num ${stats && stats.knowledgeFailed > 0 ? "action-row__count--hot" : ""}`}>
-                      {read(stats?.knowledgeFailed)}
-                    </span>
-                    <Link className="action-row__link" to="/admin/knowledge?status=2">
-                      去处理
-                    </Link>
-                  </div>
-                  <div className="action-row">
-                    <span className="action-row__label">资讯待审核</span>
-                    <span className={`action-row__count num ${newsPending > 0 ? "action-row__count--hot" : ""}`}>
-                      {read(newsPending)}
-                    </span>
-                    <Link className="action-row__link" to="/admin/news?status=3">
-                      去审核
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {noDiagnosis ? (
-              <section className="panel span-8" aria-label="判读分布空态">
-                <div className="panel__head">
-                  <h2 className="admin-sec-title">判读分布</h2>
-                  <span className="panel__note">复核状态 / 病种</span>
-                </div>
-                <div className="panel__body">
-                  <AdminEmpty
-                    icon={ChartColumn}
-                    title="窗口内还没有可统计的判读"
-                    description="没有判读记录时，复核状态与病种分布不会画出空图形。把时间窗拉长，或先处理运营待办里的积压。"
-                    action={
-                      <Link className="action-row__link" to="/admin/diagnosis">
-                        打开诊断管理
-                      </Link>
-                    }
-                  />
-                </div>
+          {noDiagnosis ? (
+            /* 空窗口：积压与空窗解释在上，真实存在的记录与待办在下。
+               两行各自成对，格子高度一致——不留下半张卡高的空洞。 */
+            <div className="admin-bento">
+              {backlogCard}
+              <div className="span-8">{emptyInsight}</div>
+              <section className="panel admin-dashboard__recent span-8" aria-label="最近判读记录">
+                {recentBlock}
               </section>
-            ) : (
-              <>
-                <div className="span-8">
-                  <ShareBar
-                    rows={reviewDistribution}
-                    ariaLabel="复核状态分布"
-                    accentNames={[AWAITING_REVIEW_LABEL]}
-                  />
-                </div>
-                <div className="span-5">
-                  <RankedBars rows={distribution} ariaLabel="病种分布" unit="条" />
-                </div>
-              </>
-            )}
-
-            {/* 最近判读记录：全量入口在诊断管理，这里只给最近 5 条。 */}
-            <section
-              className={`panel admin-dashboard__recent ${noDiagnosis ? "span-12" : "span-7"}`}
-              aria-label="最近判读记录"
-            >
-              <div className="panel__head">
-                <h2 className="admin-sec-title">最近判读记录</h2>
-                <span className="panel__note">最新 5 条 · 全量在诊断管理</span>
-                <div className="panel__actions">
-                  <Link className="action-row__link" to="/admin/diagnosis">
-                    打开诊断管理
-                  </Link>
-                </div>
-              </div>
-              <div className="panel__body">
-                {recentFault ? (
-                  <FaultNote
-                    fault={fault({
-                      severity: "attention",
-                      kind: "client",
-                      title: `最近判读记录加载失败：${recentFault.text}`,
-                      code: recentFault.code,
-                    })}
-                  />
-                ) : null}
-                <DataTable<AdminDiagnosis>
-                  columns={recentColumns}
-                  rows={recentRows}
-                  rowKey={(row) => row.id}
-                  loading={recentLoading}
-                  emptyText="暂无判读记录"
-                  emptyContent={
-                    <AdminEmpty
-                      icon={ScanEye}
-                      title="还没有判读记录"
-                      description="患者完成首次影像判读后，这里会显示最近 5 条。"
-                    />
-                  }
-                  page={{ current: 1, pageSize: 5, total: recent?.total ?? 0 }}
-                  onPageChange={() => {}}
-                  hidePager
-                />
-              </div>
-            </section>
-          </div>
+              <div className="span-4">{actionsBlock}</div>
+            </div>
+          ) : (
+            <div className="admin-bento">
+              <div className="span-8">{trendBlock}</div>
+              {backlogCard}
+              <div className="span-4">{shareBlock}</div>
+              <div className="span-4">{rankedBlock}</div>
+              <div className="span-4">{actionsBlock}</div>
+              <section
+                className="panel admin-dashboard__recent span-12"
+                aria-label="最近判读记录"
+              >
+                {recentBlock}
+              </section>
+            </div>
+          )}
         </>
       )}
 
       {stats ? (
         <p className="admin-dashboard__note num">
-          平均置信度 {formatStatPercent(stats.avgConfidence)}（模型自评的置信度均值，
+          平均置信度 {confidencePercent(stats.avgConfidence)}（模型自评的置信度均值，
           <b>不是诊断准确率</b>） · 已复核 {formatStatNumber(stats.diagnosisReviewed)} 条 ·
           AI 拒识 {formatStatNumber(stats.diagnosisAiRejected)} 条 · 资讯{" "}
           {formatStatNumber(stats.newsTotal)} 篇
