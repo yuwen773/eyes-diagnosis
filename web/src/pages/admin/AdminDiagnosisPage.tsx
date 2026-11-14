@@ -1,16 +1,15 @@
-import {
-  useMemo,
-  useState,
-  type FormEvent,
-  type ReactElement,
-  type ReactNode,
-} from "react"
+import { useMemo, useState, type FormEvent, type ReactElement, type ReactNode } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
+import { ChevronDown, ChevronUp, Eye, ScanEye, Trash2 } from "lucide-react"
 
-import { SectionHead } from "@/components/SectionHead"
+import { useMediaQuery } from "@/lib/useMediaQuery"
+
+import { AdminEmpty } from "@/components/admin/AdminEmpty"
+import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { ConfidenceCell } from "@/components/admin/ConfidenceCell"
+import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column, type SortState } from "@/components/admin/DataTable"
-import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { Drawer } from "@/components/admin/Drawer"
 import { BatchBar } from "@/components/admin/BatchBar"
@@ -30,6 +29,7 @@ import {
   reviewView,
   confidencePercent,
   diagnosisFilterParams,
+  formatStatNumber,
   DIAGNOSIS_REVIEW_FILTER_OPTIONS,
   humanReviewStatusLabel,
   type DiagnosisReviewFilter,
@@ -72,6 +72,7 @@ type Params = DiagnosisQuery
 function truncate(value: string, limit: number): string {
   return value.length > limit ? `${value.slice(0, limit)}…` : value
 }
+
 
 /** Drawer 读数表的一行：label / value 两列，值可含 JSX。 */
 function FactRow({
@@ -446,52 +447,73 @@ export function AdminDiagnosisPage(): ReactElement {
   }
 
   const columns: Column<AdminDiagnosis>[] = [
-    { key: "id", title: "ID", width: "176px", mono: true, sortable: true },
     {
       key: "url",
-      title: "诊断图像",
-      width: "76px",
+      title: "影像",
+      width: "68px",
       render: (row) =>
         row.url ? (
-          <img
-            className="admin-diagnosis__thumb"
-            src={row.url}
-            alt={`判读影像 ${row.id}`}
-            width={48}
-            height={48}
-            loading="lazy"
-          />
+          <a
+            className="admin-diagnosis__thumb-link"
+            href={row.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="在新窗口查看判读影像"
+          >
+            <img
+              className="admin-diagnosis__thumb"
+              src={row.url}
+              alt={`判读影像 ${row.id}`}
+              width={44}
+              height={44}
+              loading="lazy"
+            />
+          </a>
         ) : (
-          "—"
+          <span className="admin-diagnosis__thumb admin-diagnosis__thumb--empty" aria-label="无影像">
+            <Eye size={16} strokeWidth={1.6} aria-hidden="true" />
+          </span>
         ),
     },
-    { key: "username", title: "用户", width: "120px" },
     {
       key: "result",
-      title: "结果",
+      title: "判读结果",
+      // 弹性列也要给底宽：表格 min-width 992 里它拿 156px，窄屏横向滚动时
+      // 判读文字与 AI 拒识原因才不会挤成 0 宽竖条。
+      width: "156px",
       sortable: true,
       render: (row) =>
         row.result ? (
-          row.result
+          <span className="admin-diagnosis__result">{row.result}</span>
         ) : (
           // AI 拒识行 result 为空 → 「—」+ 拒识原因摘要（完整原因在 title 与详情里）。
           <span className="admin-diagnosis__result-empty">
-            <span>—</span>
+            <span className="admin-chip" data-tone="critical">
+              AI 拒识
+            </span>
             {row.abstainReason ? (
               <span className="admin-diagnosis__abstain" title={row.abstainReason}>
-                拒识 · {truncate(row.abstainReason, ABSTAIN_LIMIT)}
+                {truncate(row.abstainReason, ABSTAIN_LIMIT)}
               </span>
             ) : null}
           </span>
         ),
     },
     {
+      key: "username",
+      title: "用户",
+      width: "116px",
+      render: (row) => (
+        <span className="admin-diagnosis__user">{row.username || "—"}</span>
+      ),
+    },
+    {
       key: "confidence",
       title: "置信度",
-      width: "96px",
+      width: "132px",
       mono: true,
       sortable: true,
-      render: (row) => confidencePercent(row.confidence),
+      render: (row) => <ConfidenceCell value={row.confidence} />,
     },
     {
       key: "review",
@@ -507,7 +529,7 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "createTime",
       title: "时间",
-      width: "160px",
+      width: "164px",
       mono: true,
       sortable: true,
       render: (row) => formatTimestamp(row.createTime),
@@ -515,34 +537,38 @@ export function AdminDiagnosisPage(): ReactElement {
     {
       key: "action",
       title: "操作",
-      width: "196px",
+      width: "190px",
       render: (row) => (
-        <div className="admin-diagnosis__row-actions">
+        <div className="admin-dt__row-actions">
+          {/* 主动作（复核）在窄屏收进「...」菜单，行高与列宽才稳；
+              这里保留的按钮是图标级，标签交给 title/aria-label。 */}
           <button
             type="button"
-            className="admin-btn admin-btn--ghost"
-            onClick={() => openDetail(row)}
-          >
-            详情
-          </button>
-          {/* 复核是这张表的主动作之一：不该藏在详情抽屉底部，得在行上直接点得到。 */}
-          <button
-            type="button"
-            className="admin-btn admin-btn--primary"
+            className="admin-btn admin-btn--primary admin-btn--icon-sm"
+            title="人工复核"
+            aria-label="人工复核"
             onClick={() => {
               openDetail(row)
               openReview()
             }}
           >
-            复核
+            <ScanEye size={14} strokeWidth={2} aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost"
-            onClick={() => openDelete(row)}
-          >
-            删除
-          </button>
+          <RowMenu
+            label={`更多判读操作：${row.id}`}
+            items={[
+              {
+                label: "详情",
+                onSelect: () => openDetail(row),
+              },
+              {
+                label: "删除记录",
+                icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
+                danger: true,
+                onSelect: () => openDelete(row),
+              },
+            ]}
+          />
         </div>
       ),
     },
@@ -552,15 +578,65 @@ export function AdminDiagnosisPage(): ReactElement {
   const rows = listQuery.data?.records
   const total = listQuery.data?.total ?? 0
   const reviewResultEmpty = humanResult.trim().length === 0
+  const activeFilters =
+    (query.result ? 1 : 0) +
+    (query.review ? 1 : 0) +
+    (query.startDate ? 1 : 0) +
+    (query.endDate ? 1 : 0)
+
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
 
   return (
     <div className="admin-diagnosis">
-      <div className="admin-diagnosis__head">
-        <SectionHead code="04" kicker="诊断管理" en="ADMIN · DIAGNOSIS" />
-      </div>
+      <AdminPageHead
+        code="04"
+        title="诊断管理"
+        eyebrow="ADMIN · DIAGNOSIS"
+        description="全站判读记录与人工复核队列。紫色只表示管理身份；医学严重度与复核状态始终走风险语义色。"
+        meta={
+          <span className="admin-filter__note num">
+            {listQuery.data ? `共 ${formatStatNumber(total)} 条记录` : "记录数读取中"}
+          </span>
+        }
+      />
 
-      <Toolbar>
+      <section className="admin-filter" aria-label="判读记录筛选">
         <form className="admin-diagnosis__form" onSubmit={onSearch}>
+          <div className="admin-filter__head">
+            <h2 className="admin-filter__title">筛选</h2>
+            {activeFilters > 0 ? (
+              <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
+            ) : null}
+            <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
+              <button className="admin-btn admin-btn--primary" type="submit">
+                查询
+              </button>
+              <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
+                重置
+              </button>
+            </div>
+          </div>
+          {showFields ? (
+          <div className="admin-filter__fields">
           <label className="admin-diagnosis__field">
             <span className="admin-diagnosis__label">疾病名 · RESULT</span>
             <input
@@ -607,16 +683,10 @@ export function AdminDiagnosisPage(): ReactElement {
               aria-label="判读时间止"
             />
           </label>
-          <div className="admin-diagnosis__actions">
-            <button className="admin-btn admin-btn--primary" type="submit">
-              查询
-            </button>
-            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
-              重置
-            </button>
           </div>
+          ) : null}
         </form>
-      </Toolbar>
+      </section>
 
       {/* 删除失败的页内读数：describeError 的文案，走全站故障语法。 */}
       {actionError ? (
@@ -636,7 +706,7 @@ export function AdminDiagnosisPage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="判读记录批量操作">
         <button
           type="button"
-          className="admin-btn admin-btn--primary"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >
@@ -652,6 +722,17 @@ export function AdminDiagnosisPage(): ReactElement {
           loading={listQuery.isPending}
           error={listFault?.text ?? null}
           emptyText="暂无判读记录"
+          emptyContent={
+            <AdminEmpty
+              icon={ScanEye}
+              title="还没有判读记录"
+              description={
+                activeFilters > 0
+                  ? "当前筛选条件下没有记录。放宽疾病名、复核状态或时间范围后再看。"
+                  : "患者完成一次影像判读后，记录会出现在这里，等待人工复核。"
+              }
+            />
+          }
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
           sort={sort}

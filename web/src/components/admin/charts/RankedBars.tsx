@@ -42,8 +42,9 @@ export function RankedBars(props: {
   ariaLabel: string
   /** 数值列的单位后缀（如「条」） */
   unit?: string
+  emptyText?: string
 }): ReactElement {
-  const { rows, ariaLabel, unit } = props
+  const { rows, ariaLabel, unit, emptyText } = props
   const leading = Math.max(0, ...rows.map((row) => row.value))
   const height = Math.max(rows.length * 34 + 12, 64)
 
@@ -51,6 +52,7 @@ export function RankedBars(props: {
     <ChartView
       title={ariaLabel}
       ariaLabel={ariaLabel}
+      emptyText={emptyText}
       labelHeader="类别"
       extraHeader="占比"
       rows={rows.map((row) => ({

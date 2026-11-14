@@ -8,10 +8,14 @@ import {
 } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
+import { ChevronDown, ChevronUp, Eye, FileText, Pencil, Trash2 } from "lucide-react"
 
-import { SectionHead } from "@/components/SectionHead"
+import { useMediaQuery } from "@/lib/useMediaQuery"
+
+import { AdminEmpty } from "@/components/admin/AdminEmpty"
+import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column } from "@/components/admin/DataTable"
-import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
 import { Drawer } from "@/components/admin/Drawer"
 import { BatchBar } from "@/components/admin/BatchBar"
@@ -345,21 +349,30 @@ export function AdminKnowledgePage(): ReactElement {
   }
 
   const columns: Column<KnowledgeDoc>[] = [
-    { key: "fileName", title: "文件名" },
+    {
+      key: "fileName",
+      title: "文档",
+      // 弹性列也要给底宽：表格 min-width 740 里它拿 172px，否则自动布局
+      // 会把文件名列挤成 0 宽竖条，行高跟着爆掉。
+      width: "172px",
+      render: (row) => (
+        <div className="admin-file-cell">
+          <span className="admin-file-cell__icon" aria-hidden="true">
+            <FileText size={16} strokeWidth={1.8} />
+          </span>
+          <span className="admin-file-cell__text">
+            <span className="admin-file-cell__name">{row.fileName || "未命名文件"}</span>
+            <span
+              className="admin-file-cell__sub"
+              title={`${(row.fileType || "—").toUpperCase()} · ${formatFileSize(row.fileSize)}`}
+            >
+              {(row.fileType || "—").toUpperCase()} · {formatFileSize(row.fileSize)}
+            </span>
+          </span>
+        </div>
+      ),
+    },
     { key: "title", title: "标题", width: "180px" },
-    {
-      key: "fileType",
-      title: "类型",
-      width: "92px",
-      render: (row) => (row.fileType ? row.fileType.toUpperCase() : "—"),
-    },
-    {
-      key: "fileSize",
-      title: "大小",
-      width: "108px",
-      mono: true,
-      render: (row) => formatFileSize(row.fileSize),
-    },
     { key: "chunkCount", title: "分块数", width: "88px", mono: true },
     {
       key: "status",
@@ -373,37 +386,43 @@ export function AdminKnowledgePage(): ReactElement {
     {
       key: "createTime",
       title: "上传时间",
-      width: "158px",
+      width: "164px",
       mono: true,
       render: (row) => formatTimestamp(row.createTime),
     },
     {
       key: "action",
       title: "操作",
-      width: "196px",
+      width: "176px",
       render: (row) => (
-        <div className="admin-knowledge__row-actions">
+        <div className="admin-dt__row-actions">
+          {/* 主动作（预览）收进图标按钮：窄屏下文字版会把操作列撑到
+              盖住文件名列；标签交给 title/aria-label。 */}
           <button
             type="button"
-            className="admin-btn admin-btn--primary"
+            className="admin-btn admin-btn--primary admin-btn--icon-sm"
+            title="预览文档"
+            aria-label="预览文档"
             onClick={() => openPreview(row)}
           >
-            预览
+            <Eye size={14} strokeWidth={2} aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost"
-            onClick={() => openRename(row)}
-          >
-            改名
-          </button>
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost"
-            onClick={() => openDelete(row)}
-          >
-            删除
-          </button>
+          <RowMenu
+            label={`更多文档操作：${row.fileName || row.id}`}
+            items={[
+              {
+                label: "改名",
+                icon: <Pencil size={14} strokeWidth={2} aria-hidden="true" />,
+                onSelect: () => openRename(row),
+              },
+              {
+                label: "删除文档",
+                icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
+                danger: true,
+                onSelect: () => openDelete(row),
+              },
+            ]}
+          />
         </div>
       ),
     },
@@ -414,15 +433,61 @@ export function AdminKnowledgePage(): ReactElement {
   const total = listData?.total ?? 0
   // 静默轮询失败不该把已有列表换成错误页；只有一次数据都没拿到才报错。
   const listError = listData === undefined ? (listFault?.text ?? null) : null
+  const activeFilters = Object.values(query).filter(Boolean).length
+
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
 
   return (
     <div className="admin-knowledge">
-      <div className="admin-knowledge__head">
-        <SectionHead code="05" kicker="知识库" en="ADMIN · KNOWLEDGE" />
-      </div>
+      <AdminPageHead
+        code="05"
+        title="知识库"
+        eyebrow="ADMIN · KNOWLEDGE"
+        description="上传、解析并向量化医疗文档，管理 RAG 切片与处理状态。"
+        meta={
+          <span className="admin-filter__note num">
+            {listData ? `共 ${total} 份文档` : "文档数读取中"}
+          </span>
+        }
+      />
 
-      <Toolbar>
+      <section className="admin-filter" aria-label="知识库筛选与上传">
         <form className="admin-knowledge__form" onSubmit={onSearch}>
+          <div className="admin-filter__head">
+            <h2 className="admin-filter__title">筛选与上传</h2>
+            {activeFilters > 0 ? (
+              <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
+            ) : null}
+            <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
+              <button className="admin-btn admin-btn--primary" type="submit">
+                查询
+              </button>
+              <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
+                重置
+              </button>
+            </div>
+          </div>
+          {showFields ? (
+          <div className="admin-filter__fields">
           <label className="admin-knowledge__field">
             <span className="admin-knowledge__label">文件名 · FILE</span>
             <input
@@ -495,14 +560,8 @@ export function AdminKnowledgePage(): ReactElement {
               aria-label="上传时间止"
             />
           </label>
-          <div className="admin-knowledge__actions">
-            <button className="admin-btn admin-btn--primary" type="submit">
-              查询
-            </button>
-            <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
-              重置
-            </button>
           </div>
+          ) : null}
         </form>
 
         <div className="admin-knowledge__upload-row">
@@ -557,7 +616,7 @@ export function AdminKnowledgePage(): ReactElement {
             </ul>
           </div>
         ) : null}
-      </Toolbar>
+      </section>
 
       {/* 上传 / 删除失败的页内读数：describeError → fault → FaultNote，语法全站一致。 */}
       {actionError ? (
@@ -594,7 +653,7 @@ export function AdminKnowledgePage(): ReactElement {
       <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="知识文档批量操作">
         <button
           type="button"
-          className="admin-btn admin-btn--primary"
+          className="admin-btn admin-btn--danger"
           disabled={batchBusy}
           onClick={runBatchDelete}
         >
@@ -610,6 +669,17 @@ export function AdminKnowledgePage(): ReactElement {
           loading={listQuery.isPending}
           error={listError}
           emptyText="暂无文档"
+          emptyContent={
+            <AdminEmpty
+              icon={FileText}
+              title="知识库里还没有文档"
+              description={
+                activeFilters > 0
+                  ? "当前筛选条件下没有文档。放宽文件名、状态或上传时间后再看。"
+                  : "上传 PDF / Word / Markdown 后，系统会解析、切块并写入向量库。"
+              }
+            />
+          }
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
           selectable

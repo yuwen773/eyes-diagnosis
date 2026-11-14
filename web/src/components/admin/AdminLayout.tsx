@@ -1,4 +1,5 @@
 import "@/styles/admin.css"
+import "@/styles/admin-redesign.css"
 
 import { Link, NavLink, Outlet } from "react-router-dom"
 import {
@@ -25,6 +26,29 @@ export const ADMIN_NAV = [
 ] as const satisfies ReadonlyArray<{ to: string; code: string; label: string; icon: LucideIcon }>
 
 /**
+ * 侧栏分组：按「管理员此刻在做什么」切，不按功能数量平均分。
+ * 编号仍取自 ADMIN_NAV，路由与顺序只有一份真源。
+ */
+const ADMIN_GROUPS = [
+  { label: "概览", codes: ["01"] },
+  { label: "业务管理", codes: ["02", "04"] },
+  { label: "内容与知识", codes: ["03", "05"] },
+  { label: "分析", codes: ["06"] },
+] as const
+
+/** 品牌标：同心虹膜。只用几何圆，不做发光 / 粒子。 */
+function IrisMark() {
+  return (
+    <svg className="admin-side__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="13.2" fill="none" stroke="currentColor" strokeOpacity="0.28" />
+      <circle cx="16" cy="16" r="8.6" fill="none" stroke="currentColor" strokeOpacity="0.55" />
+      <circle cx="16" cy="16" r="4.2" fill="currentColor" />
+      <path d="M16 2.8 A13.2 13.2 0 0 1 29.2 16" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  )
+}
+
+/**
  * 管理后台外壳：仪表梁 + 紫色 SaaS 侧栏 + 内容区。
  * 主题切换直接复用全站 ThemeProvider 的 useTheme 与共享顶栏的半满读数环。
  * 管理端不挂载产品顶栏（R2.5，DESIGN.md §1.6），侧栏才是它的导航。
@@ -37,6 +61,8 @@ export function AdminLayout() {
   const { resolvedTheme, setTheme } = useTheme()
   const { user } = useSession()
   const accountName = user?.userName || user?.userAccount || "管理员"
+  const accountRole = user?.userRole === "admin" ? "系统管理员" : "管理账号"
+  const initial = accountName.slice(0, 1)
 
   return (
     <div className="is-admin admin-shell">
@@ -89,15 +115,46 @@ export function AdminLayout() {
       </header>
 
       <aside className="admin-side">
+        <div className="admin-side__brand">
+          <span className="admin-side__brand-mark">
+            <IrisMark />
+          </span>
+          <span className="admin-side__brand-text">
+            <span className="admin-side__brand-name">Iris</span>
+            <span className="admin-side__brand-sub num">MEDICAL SAAS</span>
+          </span>
+        </div>
+
         <nav className="admin-side__nav" aria-label="系统管理导航">
-          {ADMIN_NAV.map((item) => (
-            <NavLink key={item.to} to={item.to} className="admin-side__link">
-              <item.icon className="admin-side__icon" size={15} strokeWidth={1.75} aria-hidden="true" />
-              {item.label}
-            </NavLink>
+          {ADMIN_GROUPS.map((group) => (
+            <div className="admin-side__group" key={group.label}>
+              <p className="admin-side__group-label">{group.label}</p>
+              {ADMIN_NAV.filter((item) => (group.codes as readonly string[]).includes(item.code)).map(
+                (item) => (
+                  <NavLink key={item.to} to={item.to} className="admin-side__link">
+                    <span className="admin-side__icon" aria-hidden="true">
+                      <item.icon size={16} strokeWidth={1.75} />
+                    </span>
+                    <span className="admin-side__label">{item.label}</span>
+                  </NavLink>
+                ),
+              )}
+            </div>
           ))}
         </nav>
-        <div className="admin-side__foot num">Iris · ADMINISTRATION / 系统管理</div>
+
+        <div className="admin-side__foot">
+          <span className="admin-side__avatar" aria-hidden="true">
+            {user?.userAvatar ? <img src={user.userAvatar} alt="" /> : initial}
+          </span>
+          <span className="admin-side__foot-text">
+            <span className="admin-side__foot-name">{accountName}</span>
+            <span className="admin-side__foot-role">{accountRole}</span>
+          </span>
+          <span className="admin-side__foot-status" role="status">
+            <span className="sr-only">已登录</span>
+          </span>
+        </div>
       </aside>
 
       <main className="admin-main">
