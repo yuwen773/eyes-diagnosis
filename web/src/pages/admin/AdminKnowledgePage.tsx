@@ -139,6 +139,9 @@ export function AdminKnowledgePage(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeDoc | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 批量删除的待确认目标：选中文档 id 的快照。批量删除不可撤销，
+   *  必须先过确认弹层（与资讯页批量删除同口径）。 */
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<string[] | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -347,14 +350,28 @@ export function AdminKnowledgePage(): ReactElement {
     }
   }
 
+  /** 批量删除：先弹确认，不直接执行。 */
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  function closeBatchDelete() {
+    if (batchBusy) return
+    setBatchDeleteTarget(null)
+  }
+
   /** 批量删除：逐条鉴权与执行，部分失败如实回执。 */
   async function runBatchDelete() {
     if (batchBusy || selectedIds.length === 0) return
+    const ids = batchDeleteTarget ?? selectedIds
+    setBatchDeleteTarget(null)
     setBatchBusy(true)
     setActionError(null)
     setActionNote(null)
     try {
-      const result = await deleteKnowledgeBatch(selectedIds)
+      const result = await deleteKnowledgeBatch(ids)
       const succeeded = result.succeeded ?? 0
       const failed = result.failed ?? 0
       setActionNote(
@@ -817,7 +834,7 @@ export function AdminKnowledgePage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--danger"
           disabled={batchBusy}
-          onClick={runBatchDelete}
+          onClick={requestBatchDelete}
         >
           批量删除
         </button>
@@ -839,6 +856,27 @@ export function AdminKnowledgePage(): ReactElement {
                 activeFilters > 0
                   ? "当前筛选条件下没有文档。放宽文件名、状态或上传时间后再看。"
                   : "上传 PDF / Word / Markdown 后，系统会解析、切块并写入向量库。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11）：有筛选给「清筛选」，
+                   没筛选给本页主操作（直接唤起文件选择）。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--primary"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    上传文档
+                  </button>
+                )
               }
             />
           }
@@ -936,6 +974,42 @@ export function AdminKnowledgePage(): ReactElement {
             确定删除文档{" "}
             <span className="admin-knowledge__modal-name">{deleteTarget.fileName}</span>{" "}
             吗？此操作不可撤销。
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={batchDeleteTarget != null}
+        title="批量删除知识文档"
+        onClose={closeBatchDelete}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeBatchDelete}
+              disabled={batchBusy}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={runBatchDelete}
+              disabled={batchBusy}
+            >
+              {batchBusy ? "删除中…" : "确认删除"}
+            </button>
+          </>
+        }
+      >
+        {batchDeleteTarget ? (
+          <p className="admin-knowledge__modal-text">
+            确定删除选中的{" "}
+            <span className="admin-knowledge__modal-name">
+              {batchDeleteTarget.length} 份文档
+            </span>{" "}
+            吗？批量删除不可撤销。
           </p>
         ) : null}
       </Modal>

@@ -73,6 +73,8 @@ export function ChartView(props: {
   rows: ReadoutRow[]
   figure: ReactNode
   headExtra?: ReactNode
+  /** 图下方的口径说明：解释「这个数说的是哪一档」，不是装饰。 */
+  note?: ReactNode
   /** 空数据说明：解释「为什么空」，而不是一句放之四海的「暂无数据」。 */
   emptyText?: string
 }): ReactElement {
@@ -84,6 +86,7 @@ export function ChartView(props: {
     rows,
     figure,
     headExtra,
+    note,
     emptyText = "暂无数据",
   } = props
   const [view, setView] = useState<"chart" | "table">("chart")
@@ -161,7 +164,12 @@ export function ChartView(props: {
           </button>
         </div>
       </div>
-      <div className="admin-viz__body">{body}</div>
+      {/* 口径说明跟图一起放在卡体里（不是卡外）：卡体是 grid + 顶端对齐，
+          说明贴着图走，卡片多出来的高度留在底部——图不会被浮在中间。 */}
+      <div className="admin-viz__body">
+        {body}
+        {note ? <p className="admin-viz__note num">{note}</p> : null}
+      </div>
     </section>
   )
 }

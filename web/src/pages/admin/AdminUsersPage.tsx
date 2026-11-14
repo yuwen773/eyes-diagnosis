@@ -121,6 +121,9 @@ export function AdminUsersPage(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 批量删除的待确认目标：选中账号的 id 快照。批量删除不可撤销，
+   *  必须先过确认弹层（与资讯页批量删除同口径）。 */
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<string[] | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
 
@@ -328,6 +331,25 @@ export function AdminUsersPage(): ReactElement {
   /* ── 批量：删除 / 改角色 ─────────────────────────────── */
 
   const [batchBusy, setBatchBusy] = useState(false)
+
+  /** 批量删除：先弹确认，不直接执行。 */
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  function closeBatchDelete() {
+    if (batchBusy) return
+    setBatchDeleteTarget(null)
+  }
+
+  async function confirmBatchDelete() {
+    if (!batchDeleteTarget || batchBusy) return
+    const ids = batchDeleteTarget
+    setBatchDeleteTarget(null)
+    await runBatch("批量删除", () => deleteUsers(ids), true)
+  }
 
   async function runBatch(
     label: string,
@@ -614,7 +636,7 @@ export function AdminUsersPage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--danger"
           disabled={batchBusy}
-          onClick={() => runBatch("批量删除", () => deleteUsers(selectedIds), true)}
+          onClick={requestBatchDelete}
         >
           批量删除
         </button>
@@ -652,6 +674,27 @@ export function AdminUsersPage(): ReactElement {
                 activeFilters > 0
                   ? "当前筛选条件下没有账号。放宽筛选或重置后再看全量。"
                   : "系统里还没有用户。新建账号后，它会出现在这里。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11）：有筛选给「清筛选」，
+                   没筛选给本页主操作。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--primary"
+                    onClick={() => setCreateOpen(true)}
+                  >
+                    新建用户
+                  </button>
+                )
               }
             />
           }
@@ -865,6 +908,42 @@ export function AdminUsersPage(): ReactElement {
               {deleteTarget.userAccount || deleteTarget.userName || deleteTarget.id}
             </span>{" "}
             吗？此操作不可撤销。
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={batchDeleteTarget != null}
+        title="批量删除用户"
+        onClose={closeBatchDelete}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeBatchDelete}
+              disabled={batchBusy}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={confirmBatchDelete}
+              disabled={batchBusy}
+            >
+              {batchBusy ? "删除中…" : "确认删除"}
+            </button>
+          </>
+        }
+      >
+        {batchDeleteTarget ? (
+          <p className="admin-users__modal-text">
+            确定删除选中的{" "}
+            <span className="admin-users__modal-account num">
+              {batchDeleteTarget.length} 个账号
+            </span>{" "}
+            吗？批量删除不可撤销。
           </p>
         ) : null}
       </Modal>

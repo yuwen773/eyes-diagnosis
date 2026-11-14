@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent, type ReactElement, type ReactNode } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useSearchParams } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { ChevronDown, ChevronUp, Eye, FileText, ScanEye, Trash2 } from "lucide-react"
 
 import { useMediaQuery } from "@/lib/useMediaQuery"
@@ -175,6 +175,9 @@ export function AdminDiagnosisPage(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminDiagnosis | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 批量删除的待确认目标：选中记录的 id 快照。判读记录属医疗数据，
+   *  批量删除不可撤销，必须先过确认弹层（与资讯页批量删除同口径）。 */
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<string[] | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -522,14 +525,28 @@ export function AdminDiagnosisPage(): ReactElement {
     }
   }
 
+  /** 批量删除：先弹确认，不直接执行。 */
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  function closeBatchDelete() {
+    if (batchBusy) return
+    setBatchDeleteTarget(null)
+  }
+
   /** 批量删除：逐条执行，部分失败如实回执。 */
   async function runBatchDelete() {
     if (batchBusy || selectedIds.length === 0) return
+    const ids = batchDeleteTarget ?? selectedIds
+    setBatchDeleteTarget(null)
     setBatchBusy(true)
     setActionError(null)
     setActionNote(null)
     try {
-      const result: BatchResult = await deleteDiagnoses(selectedIds)
+      const result: BatchResult = await deleteDiagnoses(ids)
       const succeeded = result.succeeded ?? 0
       const failed = result.failed ?? 0
       setActionNote(
@@ -808,7 +825,7 @@ export function AdminDiagnosisPage(): ReactElement {
             {/* 复审状态字段的口径写在脸上：库里没有 1 这个值，
                 「未复审」筛的是落库值 0；后端单值等值匹配覆盖不到历史值 1。 */}
             <span className="admin-diagnosis__fieldhint num">
-              「未复审」按 reexamineStatus = 0 检索（判读落库不写复审状态，落库值 0）· 历史值 1 同样算未复审，后端等值匹配覆盖不到
+              「未复审」按 reexamineStatus = 0 检索（判读落库不写复审状态，落库值 0）· 历史值 1 同样算未复审，后端等值匹配覆盖不到 0 与 1 两档
             </span>
           </div>
           {showFields ? (
@@ -879,7 +896,7 @@ export function AdminDiagnosisPage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--danger"
           disabled={batchBusy}
-          onClick={runBatchDelete}
+          onClick={requestBatchDelete}
         >
           批量删除
         </button>
@@ -905,6 +922,24 @@ export function AdminDiagnosisPage(): ReactElement {
                     ? `当前筛选条件下没有记录。疾病名按库内原始标签「${query.result}」模糊匹配，库里也可能写成另一种写法（例：近视 / myopia）。`
                     : "当前筛选条件下没有记录。放宽复核状态或时间范围后再看。"
                   : "患者完成一次影像判读后，记录会出现在这里，等待人工复核。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11）：有筛选给「清筛选」，
+                   没筛选给一个真实的去处（判读记录的产出入口在诊断流程里，
+                   管理端能去的是数据中心的积压视图）。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <Link className="admin-btn admin-btn--ghost" to="/admin/data-analysis">
+                    打开数据中心
+                  </Link>
+                )
               }
             />
           }
@@ -1073,6 +1108,43 @@ export function AdminDiagnosisPage(): ReactElement {
             确定删除判读记录{" "}
             <span className="admin-diagnosis__modal-id num">{deleteTarget.id}</span>{" "}
             吗？此操作不可撤销。
+          </p>
+        ) : null}
+      </Modal>
+
+      {/* 批量删除确认 Modal：判读记录属医疗数据，不可撤销。 */}
+      <Modal
+        open={batchDeleteTarget != null}
+        title="批量删除判读记录"
+        onClose={closeBatchDelete}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeBatchDelete}
+              disabled={batchBusy}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={runBatchDelete}
+              disabled={batchBusy}
+            >
+              {batchBusy ? "删除中…" : "确认删除"}
+            </button>
+          </>
+        }
+      >
+        {batchDeleteTarget ? (
+          <p className="admin-diagnosis__modal-text">
+            确定删除选中的{" "}
+            <span className="admin-diagnosis__modal-id num">
+              {batchDeleteTarget.length} 条判读记录
+            </span>{" "}
+            吗？判读记录属医疗数据，批量删除不可撤销。
           </p>
         ) : null}
       </Modal>

@@ -104,6 +104,18 @@ export function classSearchMatches(name?: string): string[] {
 }
 
 /**
+ * 库里可能出现的**原值集合**：后端枚举的中文短名 ∪ 算法侧的英文标签。
+ *
+ * <p>不是所有落库值都走 `getChineseLabelByEnglishLabel`：历史数据里有直接写
+ * 英文标签的行（本机 3306 实存一条 `result='myopia'`）。这些值照抄进筛选框
+ * 本来就查得到，换算成另一个标签反而把这一类行查丢。
+ */
+const STORED_LABELS = new Set<string>([
+  ...Object.values(CLASS_SEARCH_LABELS),
+  ...Object.keys(CLASS_ALIASES),
+])
+
+/**
  * 输入 → 库内原始标签（检索用）。
  *
  * <p>后端 `DiagnosisCategoryEnum` 落库的是短名，与前端规范名有三处不同：
@@ -111,12 +123,22 @@ export function classSearchMatches(name?: string): string[] {
  * `queryWrapper.like("result", …)`——按库内原值模糊匹配，**不认规范名**。
  * 用户在列表里看到的是规范名，照抄进筛选框会一条都查不到。
  *
- * <p>只有**唯一命中**时才换算：命中多个说明输入太宽，后端单列 LIKE
- * 一次覆盖不了，宁可原样透传（结果为空 + 提示补全），也不静默只查其中一个。
+ * <p>两种情况原样透传，不换算：
+ * <ol>
+ *   <li>输入**本身就是库内原值**（中文短名或英文标签）——换算会把这一类行查丢；</li>
+ *   <li>命中多个规范类——后端单列 LIKE 一次覆盖不了，宁可原样检索，
+ *       也不静默只查其中一个（界面会提示命中的候选类别）。</li>
+ * </ol>
  *
  * @param name 用户输入；命中唯一规范名时返回库内标签，否则返回 `null`（原样检索）。
  */
 export function classSearchLabel(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  // 输入已经是库内原值：原样透传（英文标签 'myopia' 换算成 '近视' 就查不到那一行）。
+  if (STORED_LABELS.has(trimmed) || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return trimmed
+  }
   const matches = classSearchMatches(name)
   if (matches.length !== 1) return null
   return CLASS_SEARCH_LABELS[matches[0]] ?? null
@@ -129,13 +151,17 @@ export function classSearchHint(name?: string): string | null {
   const matches = classSearchMatches(trimmed)
   if (matches.length === 0) return null
   if (matches.length > 1) {
-    return `「${trimmed}」命中 ${matches.length} 个类别：${matches.join(" / ")} · 请补全类别名`
+    // 多命中：原样透传给后端（LIKE 可能同时命中多类），把候选写出来供人挑。
+    return `「${trimmed}」可能命中 ${matches.length} 个类别：${matches.join(" / ")} · 可补全类别名缩小范围`
   }
   const canonical = matches[0]
   const label = CLASS_SEARCH_LABELS[canonical]
-  if (!label || label === canonical) return null
-  // 输入本身就是库内值（例：糖尿病）：不用换算，只告诉它属于哪一类。
-  if (label === trimmed) return canonical
+  if (!label) return null
+  // 输入本身就是库内原值（例：糖尿病 / myopia）：不换算，只告诉它属于哪一类。
+  if (label === trimmed || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return canonical === trimmed ? null : canonical
+  }
+  if (label === canonical) return null
   return canonical === trimmed
     ? `${canonical} → ${label}`
     : `「${trimmed}」→ ${canonical}（库内：${label}）`

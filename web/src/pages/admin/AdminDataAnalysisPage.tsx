@@ -245,6 +245,32 @@ export function AdminDataAnalysisPage(): ReactElement {
     />
   )
 
+  /** 「仅 AI 结论 · 待复核」是独立的一档待办，不在积压数里。 */
+  const aiOnlyTotal =
+    breakdownRows.find((row) => row.name === "仅 AI 结论 · 待复核")?.value ?? 0
+
+  /** 重点卡的说明句：积压数说的是哪一档、拒识去了哪一档。 */
+  const focusNote = !stats
+    ? "统计读数尚未返回，积压数暂不可判读。"
+    : awaitingTotal > 0
+      ? `窗口内新增 ${formatStatNumber(awaitingInRange)} 条判读等待人工复核；` +
+        `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识——它们没有结论，` +
+        "已并入下方「拒识 / 低置信 · 待复核」一档。"
+      : aiRejected > 0
+        ? "窗口内没有等待人工复核的判读；" +
+          `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识，已并入下方构成。`
+        : "窗口内没有等待人工复核的判读，也没有被模型拒识的记录。"
+
+  /**
+   * 口径补一句：积压数只算「拒识 / 低置信 · 待复核」一档，
+   * 「仅 AI 结论 · 待复核」是另一档待办，数在这里但没进积压。
+   * 不写这一句，读者会拿 15 去对 15 + 6 的构成，账对不上。
+   */
+  const focusScopeNote =
+    stats && aiOnlyTotal > 0
+      ? `「仅 AI 结论 · 待复核」${formatStatNumber(aiOnlyTotal)} 条是另一档待办，没有计入上面这个积压数。`
+      : ""
+
   /** 窗口重点卡：这一页唯一需要「动手」的地方（积压与拒识）。 */
   const focusCard = (
     <section
@@ -257,16 +283,8 @@ export function AdminDataAnalysisPage(): ReactElement {
         </span>
         <span className="feature-card__value num">{read(awaitingTotal)}</span>
         <span className="feature-card__label">
-          {!stats
-            ? "统计读数尚未返回，积压数暂不可判读。"
-            : awaitingTotal > 0
-              ? `窗口内新增 ${formatStatNumber(awaitingInRange)} 条判读等待人工复核；` +
-                `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识——它们没有结论，` +
-                "已并入下方「拒识 / 低置信 · 待复核」一档。"
-              : aiRejected > 0
-                ? "窗口内没有等待人工复核的判读；" +
-                  `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识，已并入下方构成。`
-                : "窗口内没有等待人工复核的判读，也没有被模型拒识的记录。"}
+          {focusNote}
+          {focusScopeNote ? ` ${focusScopeNote}` : ""}
         </span>
       </div>
       {/* 复核状态构成。注意口径：下面这组是「窗口内全部判读」的复核状态构成
@@ -498,12 +516,19 @@ export function AdminDataAnalysisPage(): ReactElement {
                     emptyText="窗口内没有可统计的判读记录"
                   />
                 </div>
-                <div className="span-6">
+                <div className="span-6 admin-analysis__share">
                   <ShareBar
                     rows={reviewDistribution}
                     ariaLabel="复核状态分布"
                     accentNames={[AWAITING_REVIEW_LABEL]}
                     emptyText="窗口内没有复核记录"
+                    note={
+                      stats
+                        ? `窗口内 ${formatStatNumber(inRange)} 条判读 · ${formatStatNumber(
+                            aiRejected,
+                          )} 条被模型拒识（无结论，已并入「拒识 / 低置信 · 待复核」）`
+                        : undefined
+                    }
                   />
                 </div>
                 {/* 次级趋势：六个病种的小倍数并成一条带——小倍数就该小。 */}

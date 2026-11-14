@@ -93,11 +93,19 @@ export function KnowledgeWorkspace(props: {
         <FaultNote
           className="admin-doc__fault"
           fault={fault({
-            severity: "attention",
-            kind: "client",
+            /* 5xx 是服务端故障，不是「条件不对」：严重度跟着状态码走
+               （faults.ts 的既有口径），别一律降成琥珀。 */
+            severity: faultInfo.code && faultInfo.code >= 500 ? "critical" : "attention",
+            kind: faultInfo.code && faultInfo.code >= 500 ? "server" : "client",
             title: faultInfo.text,
             code: faultInfo.code,
           })}
+          action={{
+            label: "重试",
+            run: () => {
+              void detailQuery.refetch()
+            },
+          }}
         />
       ) : detail ? (
         <div className="admin-doc">

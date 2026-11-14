@@ -129,12 +129,14 @@
 /* 检索口径提示：规范名 ↔ 库内原始标签的对照写在筛选框下面。
    「照抄可见名查不到」必须看起来像一条规矩，而不是筛选坏了。 */
 .admin-diagnosis__fieldhint {
-  margin-top: -2px;
+  /* 口径提示是给人读的：11px + --fg-2 起步，10.5px 的 --admin-text-faint
+     在暗色下对比度不够（实测偏灰糊）。 */
+  margin-top: 0;
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
-  line-height: 1.4;
-  color: var(--admin-text-faint);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  color: var(--fg-3);
 }
 
 /* ── 筛选：三个字段的标签要在同一条基线上 ───────────────────────────

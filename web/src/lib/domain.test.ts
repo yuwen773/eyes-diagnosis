@@ -206,9 +206,11 @@ describe("classSearchLabel / classSearchHint（疾病名检索的库内标签换
     // 「糖尿病」换算回来还是「糖尿病」——等价的原样透传。
     expect(classSearchLabel("糖尿病")).toBe("糖尿病")
     expect(classSearchHint("糖尿病")).toBe("糖尿病视网膜病变")
-    // 算法侧的英文标签也换算成库内落库值（后端落库恒为中文短名）。
-    expect(classSearchLabel("myopia")).toBe("近视")
-    expect(classSearchHint("myopia")).toBe("「myopia」→ 病理性近视（库内：近视）")
+    // 算法侧的英文标签也是**库内可能存在的原值**（历史数据里有直接写英文标签的行，
+    // 本机 3306 实存一条 result='myopia'）：照抄进筛选框必须查得到，
+    // 换算成「近视」反而把那一行查丢。原样透传，只提示它属于哪一类。
+    expect(classSearchLabel("myopia")).toBe("myopia")
+    expect(classSearchHint("myopia")).toBe("病理性近视")
     // 认不出的写法不猜：原样透传，交给后端去匹。
     expect(classSearchLabel("红眼病")).toBeNull()
   })
@@ -218,9 +220,10 @@ describe("classSearchLabel / classSearchHint（疾病名检索的库内标签换
     expect(classSearchHint("病理性")).toBe("「病理性」→ 病理性近视（库内：近视）")
   })
 
-  it("命中多个类时不静默只查一个——原样透传并提示补全", () => {
+  it("命中多个类时不静默只查一个——原样透传并列出候选", () => {
     // 「视网膜病变」同时是 DR 与 HR 的子串，后端只在 result 一列上 LIKE，
-    // 覆盖不了多值；宁可查不到 + 提示补全，也不悄悄漏掉一类。
+    // 一次覆盖不了多值：原样透传（LIKE 仍可能命中存了全名的行），
+    // 同时把候选类别写出来供人补全缩小范围，不悄悄漏掉一类。
     expect(classSearchMatches("视网膜病变")).toEqual([
       "糖尿病视网膜病变",
       "高血压性视网膜病变",

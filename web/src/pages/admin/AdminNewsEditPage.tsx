@@ -749,7 +749,7 @@ function NewsEditor(props: {
                 />
               ) : (
                 <span className="admin-newsedit__cover-empty num" aria-hidden="true">
-                  NO COVER
+                  暂无封面
                 </span>
               )}
               <div className="admin-newsedit__cover-actions">

@@ -19,7 +19,7 @@ export type RecordStats = {
   lastReadAt: string | null
 }
 
-/** reexamineStatus → 展示文案。1 未复审 / 2 复审中 / 3 已复审。 */
+/** reexamineStatus → 展示文案。0 未复审（历史值 1 同义）/ 2 复审中 / 3 已复审。 */
 export function reexamineLabel(status?: number): string {
   switch (status) {
     case 2:

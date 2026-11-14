@@ -1291,6 +1291,14 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   color: var(--admin-text-faint);
 }
 
+/* 图下方的口径说明：说明「这个数说的是哪一档」，不与图争视线。 */
+.admin-viz__note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--admin-text-faint);
+}
+
 /* ── 读数表：tooltip 不是唯一读数通道（mono，label/value 两列 + 可选占比）── */
 
 /* 读数表的滚动壳：默认不限高（表格照常撑开），

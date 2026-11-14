@@ -55,7 +55,9 @@ function unitWidth(text: string): number {
  * （「年龄相关性黄斑变性」变成「龄相关性黄斑变…」），恰恰是最要命的位置。
  */
 function fitUnits(nameWidth: number): number {
-  const budget = nameWidth - 6 // 轴距与轴线留白
+  // recharts 的 Y 轴在 'left' 位置留给文字的是 `width - tickSize(6) - tickMargin(2)`，
+  // 即 8px 的轴线与留白；预算按它算，标签才不会把首字顶出 SVG 左缘。
+  const budget = nameWidth - 8
   return Math.max(3, Math.floor(budget / AXIS_FONT_SIZE))
 }
 

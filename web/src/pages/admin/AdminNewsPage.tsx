@@ -340,7 +340,11 @@ export function AdminNewsPage(): ReactElement {
     try {
       if (target.kind === "row") {
         const id = target.row.id
-        if (!id) return // 缺 id 的空白行不该发出带空路径的请求
+        if (!id) {
+          // 缺 id 的空白行不该发出带空路径的请求：收起弹层，让页内提示露出来。
+          setDeleteTarget(null)
+          return
+        }
         await deleteNews(id) // 雪花 id 全程保持 string，绝不转成数字
         setDeleteTarget(null)
         setSelectedIds((prev) => prev.filter((item) => item !== id))
@@ -400,6 +404,12 @@ export function AdminNewsPage(): ReactElement {
       key: "title",
       title: "标题 / 摘要",
       sortable: true,
+      // 列宽用百分比：固定表格布局里百分比列是定值，像素列会把余量独吞。
+      // 标题列不给宽度时，它会吃掉整条余量（1920 档约 860px），而摘要只有
+      // 一行短文，中间空出一大片。四列按内容分量分配合计 100%（勾选列 4%，
+      // 见 admin-polish-cms.css），空腔摊到几列之间，不再堆在首列。
+      // 窄屏换卡片后这些宽度整体失效。
+      width: "34%",
       render: (row) => {
         // 摘要在后端就有（正文前 30 字）；没有摘要的老数据从正文开头取一段，
         // 口径与公开页一致，不另编一段话。
@@ -429,9 +439,7 @@ export function AdminNewsPage(): ReactElement {
     {
       key: "status",
       title: "发布状态",
-      // 列宽用百分比：表格随视口变宽时各列按比例走，标题列不会独吞
-      // 整条余量（1920 档尤其明显），窄屏换卡片后这些宽度整体失效。
-      width: "13%",
+      width: "18%",
       sortable: true,
       // status 由后端 NewsVO 暴露（0 草稿 / 3 待审核 / 1 已发布 / 2 下架）；缺省读「未知」。
       render: (row) => (
@@ -449,7 +457,7 @@ export function AdminNewsPage(): ReactElement {
     {
       key: "publishTime",
       title: "作者 / 发布时间",
-      width: "18%",
+      width: "22%",
       sortable: true,
       render: (row) => (
         <div className="admin-cms__metacell">
@@ -461,7 +469,7 @@ export function AdminNewsPage(): ReactElement {
     {
       key: "action",
       title: "操作",
-      width: "12%",
+      width: "22%",
       render: (row) => {
         // 可选目标状态只来自后端状态机：newsStatusOptionsFor 收窄，
         // 不在这里自己造一条迁移表。
@@ -704,6 +712,27 @@ export function AdminNewsPage(): ReactElement {
                 activeFilters > 0
                   ? "当前筛选条件下没有资讯。放宽标题、状态或发布时间后再看。"
                   : "还没有任何资讯。新建一篇后，它会先以草稿出现在这里。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11：一句说明 + 一个 CTA）：
+                   有筛选就给「清筛选」，没筛选就给本页的主操作。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--primary"
+                    onClick={() => navigate("/admin/news/new/edit")}
+                  >
+                    新建资讯
+                  </button>
+                )
               }
             />
           }

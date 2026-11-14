@@ -51,9 +51,13 @@ export function WeekBars(props: {
       ariaLabel={ariaLabel}
       labelHeader="星期"
       extraHeader="合计 / 出现天数"
-      headExtra={`合计 ${formatVizNumber(total)} · 日均 ${formatVizNumber(
+      headExtra={`合计 ${formatVizNumber(total)} · 窗口日均 ${formatVizNumber(
         Number(average.toFixed(1)),
       )}（${windowDays} 天）`}
+      /* 柱值是「该星期几的日均」（合计 ÷ 该星期几出现天数），卡头那个
+         「窗口日均」是合计 ÷ 窗口天数——两个日均不是一个口径，不写清楚
+         读者会拿柱高去对合计（4 条注册画出一根 1 的柱子）。 */
+      note={`柱为各星期几的日均（合计 ÷ 该星期几出现天数），与卡头的窗口日均不是同一口径`}
       rows={bars.map((bar) => ({
         label: bar.label,
         value: formatVizNumber(Number(bar.average.toFixed(1))),

@@ -336,6 +336,17 @@
   vertical-align: top;
 }
 
+/* 勾选列：与四列数据列一起按百分比分配（合计 100%）。
+   全局的 40px 定宽是像素列，固定表格布局会把余量全摊给没有定宽的列——
+   资讯台账的标题列因此独吞 ~860px，摘要只有一行短文，中间空出一大片。
+   改成百分比后四列都是定值，空腔摊到列与列之间。窄屏卡片形态另算。 */
+@media (min-width: 901px) {
+  .admin-news .admin-news__table .admin-dt__head--pick,
+  .admin-news .admin-news__table .admin-dt__cell--pick {
+    width: 4%;
+  }
+}
+
 .admin-news .admin-news__table .admin-dt__cell--action {
   vertical-align: middle;
 }
