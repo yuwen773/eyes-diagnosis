@@ -28,14 +28,19 @@ import { useMediaQuery } from "@/lib/useMediaQuery"
  * 两者可能不等（切分参数改过就会差）。同一块屏幕上只能有一个数，
  * 差异在切片栏的摘要里如实说明。
  */
-function chunkSummary(detail: KnowledgeDetail): string {
+export function chunkSummary(detail: KnowledgeDetail): string {
   if (detail.status === 0) return "切片处理中"
   if (detail.chunksReadable === false) return "切片不可读"
   const count = detail.chunks?.length ?? 0
-  if (detail.status !== 1) return `${count} 块 · 未入库`
+  // 触到重放上限时，这个数是「显示出来的数」，不是全部——读数必须带限定语，
+  // 免得一个被截断的数字冒充真实块数。
+  const capped = detail.chunksTruncated ? " · 已达上限" : ""
+  if (detail.status !== 1) return `${count} 块 · 未入库${capped}`
   // 入库计数与当前规则重放不一致时，头部必须带口径，不能让人以为索引里只有这些。
   const stored = detail.chunkCount ?? 0
-  return stored === count ? `${count} 块切片` : `${count} 块 · 当前规则重放`
+  return stored === count
+    ? `${count} 块切片${capped}`
+    : `${count} 块 · 当前规则重放${capped}`
 }
 
 /** 与管理端其它台账一致的字节格式化（列表与详情用同一口径）。 */
@@ -174,8 +179,12 @@ export function KnowledgeWorkspace(props: {
                     {detail.chunksReadable === false
                       ? "不可读"
                       : detail.status === 1
-                        ? `${detail.chunks?.length ?? 0} 块 · 重放`
-                        : `${detail.chunks?.length ?? 0} 块 · 未入库`}
+                        ? `${detail.chunks?.length ?? 0} 块 · 重放${
+                            detail.chunksTruncated ? " · 已达上限" : ""
+                          }`
+                        : `${detail.chunks?.length ?? 0} 块 · 未入库${
+                            detail.chunksTruncated ? " · 已达上限" : ""
+                          }`}
                   </span>
                 </div>
                 <div className="admin-doc__pane-body">

@@ -87,6 +87,9 @@ public class KnowledgeBaseController {
      * 这里按与 {@code /get/{id}} 同一条 owner / 管理员 规则鉴权后把原文代理流出，
      * MIME 按扩展名映射，文件名走 RFC 5987 编码；不暴露服务器路径、不放行长期凭据。
      * 端点排在 /get/{id} 之后，Spring 会把 /get/ 前缀的路径优先匹配到详情接口。
+     *
+     * <p>HEAD 请求只回头不下载正文（管理端阅读器探「这是不是 PDF」用）：取对象的
+     * 元信息即可，不把整份文件从对象存储拉一遍。
      */
     @GetMapping("/{id}/content")
     @AuthCheck
@@ -96,14 +99,6 @@ public class KnowledgeBaseController {
             HttpServletRequest httpRequest) {
         User loginUser = userService.getLoginUser(httpRequest);
         KnowledgeDocument doc = knowledgeBaseService.getDocumentForRead(id, loginUser);
-
-        COSObject object;
-        try {
-            object = cosManager.getObject(doc.getFileUrl());
-        } catch (Exception e) {
-            log.warn("知识文档对象读取失败: docId={}", id, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件读取失败");
-        }
 
         String fileName = doc.getFileName();
         String contentType = contentTypeOf(doc.getFileType());
@@ -120,9 +115,34 @@ public class KnowledgeBaseController {
         // 私有文档字节：不允许任何中间层留存，也不允许浏览器缓存。
         headers.setCacheControl("private, no-store");
 
-        return ResponseEntity.ok()
+        ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
                 .headers(headers)
-                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType));
+
+        // HEAD 探针：只取对象元信息，不下载正文。管理端阅读器在显示 PDF 前会先探
+        // 一次「这是不是 PDF」，若这里照样把整个对象拉下来，每开一份文档就会从
+        // 对象存储下载两遍——探针自己成了第二遍下载。
+        if (httpRequest != null && "HEAD".equalsIgnoreCase(httpRequest.getMethod())) {
+            try {
+                builder.contentLength(cosManager.getObjectMetadata(doc.getFileUrl()).getContentLength());
+            } catch (Exception e) {
+                log.warn("知识文档对象元信息读取失败: docId={}", id, e);
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件读取失败");
+            }
+            // HEAD 没有响应体（容器也会丢弃它），这里保持空流即可。
+            return builder.body(output -> {
+            });
+        }
+
+        COSObject object;
+        try {
+            object = cosManager.getObject(doc.getFileUrl());
+        } catch (Exception e) {
+            log.warn("知识文档对象读取失败: docId={}", id, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件读取失败");
+        }
+
+        return builder
                 .contentLength(object.getObjectMetadata().getContentLength())
                 .body(output -> {
                     try (java.io.InputStream in = object.getObjectContent()) {

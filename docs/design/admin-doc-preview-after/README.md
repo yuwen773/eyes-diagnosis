@@ -39,6 +39,42 @@
 
 ## 视觉审查整改复验（本轮截图对应的修复）
 
+### 第 6 轮（功能复审 verdict：REQUEST CHANGES，无 P0/P1；1 个 P2 只关了一半 + 1 个由整改引入的 P3 + 4 个 P3）
+
+第 5 轮复核的十项整改里**九项经实跑确认关闭**（计数口径、DOC 故障文案、远程图片、
+HEAD 探针、缓存指令、切片角标、`admin.css` 无差异、E2E 断言数更正等）。剩下这一轮
+处理的是复核指出的两处「说了不算数」：
+
+- **F-1（P2，未关闭，仅缓解）· 客户端提前断开仍打出 ERROR 级堆栈**：第 5 轮在流式
+  体内 catch 了 `IOException`，但 Tomcat 的 `AsyncListener.onError` → `WebAsyncManager`
+  → `GlobalExceptionHandler` 这条路仍会打一条 ERROR（`AsyncRequestNotUsableException`）。
+  复核实测：小文件（≤ socket 缓冲）0 条 ERROR，**必须用大于缓冲的文件才暴露**——
+  上一轮的小夹具跑不出来。现在全局处理器专门接住这个异常：降级成一行 INFO，并且
+  **返回 null**（响应早已提交，不再往 socket 里写任何东西），顺带消除「往已提交响应
+  里写 JSON」的二次失败。补了单测（`GlobalExceptionHandlerTest`）。
+- **F-2（P3，本轮整改引入的回归）· HEAD 探针照样把整份文件从对象存储拉一遍**：第 5 轮
+  加 HEAD 探针时以为 HEAD 就不带正文——服务端却照样 `getObject()`（完整 GET），实测
+  9MB 对象的 HEAD 与 GET 耗时同量级（3.5–4.7s vs 3.9s），等于每开一份文档下载两遍。
+  现在 `CosManager` 增加 `getObjectMetadata()`（HEAD 语义，一次往返不下载正文），
+  控制器按请求方法分流：HEAD 只取元信息并置 `Content-Length`，响应体为空。补了单测：
+  `verify(cos, never()).getObject(...)`。
+- **F-3（P3）· 注释里的「本站不解析 PDF」是假的**：服务端对**所有**类型都走 Tika
+  `parseToString`（PDF 也在内，切片重放与入库共用同一套规则）。注释改成
+  「本站**不还原 PDF 版式**——版式交给浏览器查看器，服务端只提取文字层供切分」。
+- **F-4（P3）· DOC 故障分支把后端给的真因覆盖掉**：DOC 分支无条件显示「没解析出正文」
+  +「服务端已解析过一次」，把后端返回的 `chunksMessage` 丢了——但 `readChunks` 失败
+  的原因不止一种（文件读不到时后端给「无法读取该文档的切片：文件读取失败」），此时
+  说「已解析过一次」又是替后端断言了一件没发生过的事。现在**原样转述后端给的原因**；
+  后端那条「扫描件或没有可提取的文字层」的猜测措辞也改成事实（「解析器没有提取到任何文字」）。
+- **F-5（P3）· 截断限定语只覆盖了三处读数里的一处**：命中重放上限时，切片摘要写了
+  「已达显示上限」，但工作区头部读数与切片栏角标仍是裸的截断数。现在三处都带限定语：
+  头部「2000 块切片 · 已达上限」、角标「2000 块 · 重放 · 已达上限」、切片摘要改成
+  「已显示 2000 块（已达显示上限，实际可能更多）」——措辞从「共 N 块」改成
+  「已显示 N 块」，被截断的数字不再冒充全部块数。补了单测（`KnowledgeWorkspace.test.tsx`）。
+- **F-6（P3，潜在）· HEAD 不是 CORS 简单方法，跨域部署会被预检挡掉**：
+  `CorsConfig.allowedMethods` 没有 HEAD，`VITE_API_BASE_URL` 一旦指向跨域地址，
+  PDF 探针会直接失败（GET 反而没事）。`allowedMethods` 补上 HEAD。
+
 ### 第 5 轮（功能复审 verdict：REQUEST CHANGES，无 P0/P1；3 个 P2 + 7 个 P3）
 
 第二轮功能复审指出：界面上有几处说的比系统做的多。逐条整改如下——
@@ -56,6 +92,7 @@
 - **P2-3 客户端断连打出 500 级堆栈**：切文档时前端 `abort()`，服务端写 socket 抛
   `IOException`，而响应 Content-Type 早已钉成文件类型，全局 JSON 处理器写不进去。
   流式体内改为捕获 `IOException` 并记 debug（客户端提前断开是正常操作，不是服务端错误）。
+  **（第 6 轮补完：容器 `AsyncListener.onError` 那条路仍会打 ERROR，改由全局处理器接住。）**
 - **P3-1** `documentPreview.ts` 的模块注释仍写「COS 签名 URL 交给浏览器 PDF 查看器」——
   实现早已改成同源代理端点（签名直链这条路被这个 PR 明确废掉），注释改成事实。
 - **P3-2** 审查员报的「`admin.css` 改了 `.admin-modal__close`」在当前树上**不存在**：

@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -27,8 +29,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -219,5 +225,29 @@ class KnowledgeFileAccessTest {
         assertEquals(0, response.getCode());
         assertEquals("pdf", response.getData().getPreviewKind());
         assertTrue(response.getData().isChunksReadable());
+    }
+
+    @Test
+    void headProbeReadsMetadataOnlyAndNeverDownloadsTheObject() {
+        // 阅读器在显示 PDF 前先探一次「这是不是 PDF」。这个探针若走完整下载，
+        // 每开一份文档就把文件从对象存储拉两遍（探针一遍、iframe 一遍）。
+        KnowledgeBaseService service = mock(KnowledgeBaseService.class);
+        CosManager cos = mock(CosManager.class);
+        when(service.getDocumentForRead(eq(7L), any())).thenReturn(doc(7L, "眼底.pdf", "pdf"));
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(8_740_000);
+        when(cos.getObjectMetadata("object-key")).thenReturn(metadata);
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("HEAD");
+
+        ResponseEntity<StreamingResponseBody> response =
+                controller(service, cos).getContent(7L, false, request);
+
+        assertEquals(8_740_000, response.getHeaders().getContentLength());
+        assertEquals(MediaType.APPLICATION_PDF, response.getHeaders().getContentType());
+        // 关键断言：HEAD 路径一次对象体都不取。
+        verify(cos, never()).getObject(anyString());
+        verify(cos, times(1)).getObjectMetadata("object-key");
     }
 }

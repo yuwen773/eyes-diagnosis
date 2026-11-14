@@ -66,13 +66,14 @@ export function ChunkInspector({ detail }: { detail: KnowledgeDetail }): ReactEl
       <div className="admin-doc__chunks-state">
         <p className="admin-doc__chunks-fault">
           <TriangleAlert size={14} strokeWidth={2} aria-hidden="true" />
-          {/* DOC 的正文读不出来，可能是扫描件或非标准 OLE2 文件——
-              服务端确实按入库同一套规则解析过一次，不是「本站不解析 DOC」。 */}
-          {isDoc ? "这份 DOC 没解析出正文。" : (detail.chunksMessage ?? "切片读取失败。")}
+          {/* 失败原因由后端给（正文为空 / 文件读不到 / 解析器报错），界面原样转述：
+              自己编一句「没解析出正文」会盖掉真实原因——比如文件根本读不到时，
+              说「服务端已解析过一次」就是替后端断言了一件没发生过的事。 */}
+          {detail.chunksMessage ?? "切片读取失败。"}
         </p>
         <p className="admin-doc__chunks-hint">
           {isDoc
-            ? "旧版二进制 Word：服务端已按入库同一套规则解析过一次，浏览器里也还原不了版式（阅读器不支持 DOC）。需要核对内容请下载原文件。这不是「切片为 0」——是没读出来。"
+            ? "旧版二进制 Word：阅读器不还原 DOC 版式，要核对内容请下载原文件。上面那条原因是服务端按入库同一套规则重放解析时给的；重放没成功，切片栏就没有可对照的块。这不是「切片为 0」——是没读出来。"
             : "切片不可读通常意味着文件已不在对象存储里，或原文件被解析器判定为无正文（例如扫描件 PDF）。这不是「切片为 0」——是读不到。"}
         </p>
       </div>
@@ -98,7 +99,9 @@ export function ChunkInspector({ detail }: { detail: KnowledgeDetail }): ReactEl
     <div className="admin-doc__chunk-wrap">
       <div className="admin-doc__chunks-summary num">
         <span>
-          共 {total} 块
+          {/* 截断时这个数是「显示出来的数」，措辞要跟着变：
+              写「共 N 块」会让被截断的数字冒充全部块数。 */}
+          {detail.chunksTruncated ? `已显示 ${total} 块` : `共 ${total} 块`}
           {detail.chunksTruncated ? "（已达显示上限，实际可能更多）" : ""}
         </span>
         <span>

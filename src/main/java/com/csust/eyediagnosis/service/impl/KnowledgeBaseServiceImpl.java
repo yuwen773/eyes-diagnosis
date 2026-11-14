@@ -411,7 +411,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             List<String> paragraphs = documentParser.parse(temp.getAbsolutePath(), doc.getFileType());
             String rawText = paragraphs.stream().reduce("", (a, b) -> a + "\n\n" + b).trim();
             ThrowUtils.throwIf(StrUtil.isEmpty(rawText), ErrorCode.PARAMS_ERROR,
-                    "文档正文为空：扫描件或没有可提取的文字层");
+                    "文档正文为空：解析器没有提取到任何文字");
             Map<String, Object> metadata = documentParser.buildMetadata(
                     rawText, doc.getFileUrl(), doc.getTitle(), doc.getFileType());
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);

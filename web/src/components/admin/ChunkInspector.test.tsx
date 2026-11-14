@@ -91,27 +91,29 @@ describe("ChunkInspector", () => {
     expect(screen.queryByText(/一一对应/)).toBeNull()
   })
 
-  it("切片被数量上限截断时写明「最多显示 N 块」", () => {
+  it("切片被数量上限截断时写明「已显示 N 块」", () => {
     render(<ChunkInspector detail={detail({ chunkCount: 2000, chunksTruncated: true })} />)
 
-    expect(screen.getByText("共 2 块（已达显示上限，实际可能更多）")).toBeTruthy()
+    expect(screen.getByText("已显示 2 块（已达显示上限，实际可能更多）")).toBeTruthy()
+    expect(screen.queryByText(/共 2 块/)).toBeNull()
   })
 
-  it("DOC 的不可读原因不冒充扫描件，也不谎称本站不解析", () => {
+  it("DOC 的不可读原因原样转述后端给的原因，不自己编一句", () => {
     render(
       <ChunkInspector
         detail={detail({
           fileType: "doc",
           chunksReadable: false,
-          chunksMessage: "文档正文为空：扫描件或没有可提取的文字层",
+          chunksMessage: "无法读取该文档的切片：文件读取失败",
         })}
       />,
     )
 
-    // 服务端确实按入库同一套规则解析过一次（DocumentParser → Tika）：
-    // 说「本站不做在线解析」是把浏览器阅读器的限制说成了服务端的。
-    expect(screen.getByText("这份 DOC 没解析出正文。")).toBeTruthy()
-    expect(screen.queryByText(/扫描件/)).toBeNull()
+    // 真实原因由后端给：文件读不到时，说「没解析出正文 / 已解析过一次」
+    // 就是替后端断言了一件没发生过的事（文件根本没被读到）。
+    expect(screen.getByText("无法读取该文档的切片：文件读取失败")).toBeTruthy()
+    expect(screen.queryByText(/没解析出正文/)).toBeNull()
+    expect(screen.queryByText(/已按入库同一套规则解析过一次/)).toBeNull()
     expect(screen.queryByText(/不做在线解析/)).toBeNull()
   })
 
