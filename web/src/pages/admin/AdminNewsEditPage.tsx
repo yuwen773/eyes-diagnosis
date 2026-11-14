@@ -215,11 +215,15 @@ function NewsEditor(props: {
   const [tab, setTab] = useState<"edit" | "preview">("edit")
   /** 预览设备宽度：桌面看整页留白，手机看 390px 下断点是否真的生效。 */
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop")
+  /** 设备框实测宽度 = 预览正在模拟的视口宽度（断点与字号都按它算）。 */
+  const [viewportWidth, setViewportWidth] = useState(0)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [formFault, setFormFault] = useState<ReturnType<typeof validationFault> | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  /** 设备框元素：用来量出预览当前模拟的视口宽度。 */
+  const deviceRef = useRef<HTMLDivElement | null>(null)
   /** 表单修订号：请求返回时只清掉「提交时的那个版本」的 dirty，不吞掉在途编辑。 */
   const revisionRef = useRef(0)
 
@@ -255,6 +259,19 @@ function NewsEditor(props: {
       document.removeEventListener("click", guardLinks, true)
     }
   }, [dirty])
+
+  // 设备框宽度 = 预览正在模拟的视口宽度：断点与字号都按它算，
+  // 所以把它读出来摆在预览条上——管理员窗口窄一点，预览就换一档版式，
+  // 这一点不该只存在于实现里。
+  useEffect(() => {
+    const element = deviceRef.current
+    if (!element) return
+    const measure = () => setViewportWidth(Math.round(element.getBoundingClientRect().width))
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [tab, device])
 
   function patch(next: Partial<Form>) {
     revisionRef.current += 1
@@ -497,7 +514,10 @@ function NewsEditor(props: {
           <div className="admin-newsedit__editor" data-color-mode={resolvedTheme}>
             <div className="admin-newsedit__editor-head">
               <span className="admin-newsedit__label">正文 · MARKDOWN</span>
-              <span className="admin-newsedit__editor-count num">
+              <span
+                className="admin-newsedit__editor-count num"
+                title="可见字符（含标点与空格）· 后端「正文至少 30 字符」的保存校验按这个口径数"
+              >
                 {contentLength} 字符 · 摘要取前 30 字符
               </span>
             </div>
@@ -520,9 +540,14 @@ function NewsEditor(props: {
               <div className="admin-newsedit__preview">
                 <div className="admin-newsedit__preview-bar">
                   <p className="admin-newsedit__preview-note num">
-                    预览 · 与公开页同一组件；不会保存，也不会改变发布状态
-                    {dirty ? "；有未保存修改，发布设置栏已隐藏" : ""}
+                    预览 · 与公开页同一组件；不会保存，也不会改变发布状态；
+                    预览时收起发布设置栏（保存按钮在顶部工具行）
+                    {dirty ? "；当前有未保存修改" : ""}
                   </p>
+                  <span className="admin-newsedit__preview-viewport num">
+                    模拟视口 {viewportWidth > 0 ? viewportWidth : "—"} ×{" "}
+                    {device === "mobile" ? 844 : 900}
+                  </span>
                   <div
                     className="admin-newsedit__device-toggle"
                     role="group"
@@ -550,15 +575,21 @@ function NewsEditor(props: {
                 </div>
 
                 <p className="admin-newsedit__preview-summary num">
-                  <span>摘要预览</span>
+                  <span>保存后摘要（前 30 字符）</span>
                   <span>
                     {summaryText.length >= 30
-                      ? `${summaryText}…`
+                      ? summaryText
                       : "正文不足 30 个字符，保存会被拒绝"}
                   </span>
+                  {initial?.summary && initial.summary !== summaryText ? (
+                    <span>库里当前摘要：{initial.summary}</span>
+                  ) : null}
                 </p>
 
-                <div className={`admin-newsedit__device admin-newsedit__device--${device}`}>
+                <div
+                  ref={deviceRef}
+                  className={`admin-newsedit__device admin-newsedit__device--${device}`}
+                >
                   <div className="admin-newsedit__device-screen is-brand-page">
                     <NewsArticleView
                       article={{
@@ -570,6 +601,7 @@ function NewsEditor(props: {
                       }}
                       contentFormat={previewFormat}
                       authorFallback="未署名"
+                      headingLevel={2}
                       kicker={
                         // 只有「已发布」的文章才真的在公开页上；草稿 / 待审核 /
                         // 下架即使带着 publishTime 也不会出现，不能让它冒充已上线。

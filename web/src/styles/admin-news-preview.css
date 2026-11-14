@@ -4,9 +4,15 @@
  * <p>预览不是「再写一套文章样式」，而是把公开详情页的同一个
  * `NewsArticleView` 装进一个设备框里。公开页的断点是媒体查询（按浏览器宽度
  * 生效），所以桌面视口下缩到 390px 不会触发移动端版式；这里给设备框加
- * `container-type: inline-size`，再用容器查询补上公开页同样的 900 / 768 两档，
- * 再加一档 480 的手机微调（封面圆角与限高），
- * 让「手机预览」看到的是真实的窄屏版式，而不是被 CSS 缩小的桌面版。
+ * `container-type: inline-size`，再用容器查询补上公开页同样的 900 / 768 两档。
+ *
+ * <p>断点只是「什么时候换版式」，版式里的**尺寸**另有一批：文章标题、纸面
+ * 内边距、目录与正文的间距原本都按视口单位（vw/vh）写，vw 在设备框里仍按
+ * 浏览器视口算——那样 390px 的设备框会拿到 1440 视口的字号与留白，「手机
+ * 预览」就成了缩小版桌面。news.css 已把这批长度收成 `--news-scale-*` 变量，
+ * 这里在设备框上覆写同一批变量：宽度项用容器单位（cqi = 设备框宽度的 1%），
+ * 高度项用声明的模拟视口高度。于是「设备框 390px」与「公开页 390px 视口」
+ * 逐项同值——同一份 CSS，两种上下文各自成立。
  */
 
 /* 预览时让画布占满工作区：编辑区的两栏（正文 + 发布设置）只有 676px，
@@ -39,6 +45,15 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--admin-text-faint);
+}
+
+/* 模拟视口读数：设备框多宽就是模拟多宽的视口，断点与字号都按它算。
+   摆在预览条上，管理员才知道自己看的是哪一档版式。 */
+.admin-newsedit__preview-viewport {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-faint);
+  white-space: nowrap;
 }
 
 /* 设备切换：与列表页的分段控件同一套外观（2px 内衬 + 当前态淡紫底）。 */
@@ -103,10 +118,25 @@
   /* 与公开页版心同宽（--maxw: 1240px），桌面预览才是公开页的真实宽度。 */
   max-width: 1240px;
   margin-inline: auto;
+
+  /* 设备框 = 模拟视口。宽度项按容器算（1cqi = 设备框宽度的 1%），
+     高度项按声明的模拟视口高度算——vh 那一族在设备框里没有对应的量，
+     与其让它们继续按管理员的浏览器高度算，不如把模拟值写明。 */
+  --news-sim-vh: 900px;
+  --news-scale-title: clamp(32px, 4.2cqi, 56px);
+  --news-scale-paper-pad: clamp(26px, 3.4cqi, 52px);
+  --news-scale-paper-max: clamp(52px, 6.8cqi, 104px);
+  --news-scale-body-gap: clamp(24px, 3.6cqi, 56px);
+  --news-scale-head-pad: clamp(20px, calc(var(--news-sim-vh) * 0.03), 32px)
+    clamp(24px, calc(var(--news-sim-vh) * 0.036), 40px);
+  --news-scale-plate-gap: clamp(28px, calc(var(--news-sim-vh) * 0.04), 48px);
+  --news-scale-return-gap: clamp(28px, calc(var(--news-sim-vh) * 0.04), 44px);
 }
 
 .admin-newsedit__device--mobile {
   max-width: 390px;
+  /* 手机模拟视口高度按常见机型取 844px；眉线与封面的纵向留白随它算。 */
+  --news-sim-vh: 844px;
 }
 
 .admin-newsedit__device-screen {
@@ -127,17 +157,18 @@
   position: static;
 }
 
-/* ── 容器断点：900 / 768 两档与 news.css 一一对应，另加 480 手机微调 ── */
+/* ── 容器断点：900 / 768 两档与 news.css 一一对应 ────────────────
+   断点本身按设备框宽度判定，与公开页的媒体查询同一套阈值：设备框多宽，
+   就等于模拟多宽的视口。 */
 
 @container (max-width: 900px) {
   .admin-newsedit__device .news-article__body {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* 公开页 900 档放开标题的 22ch 量宽，窄屏时标题按整行排。 */
   .admin-newsedit__device .news-article__title {
     max-width: none;
-    /* vw 在设备框里没有意义：改用容器字号单位，手机预览才是真窄屏比例。 */
-    font-size: clamp(28px, 7cqi, 44px);
   }
 
   .admin-newsedit__device .news-toc {
@@ -157,13 +188,5 @@
   }
 }
 
-/* 480 以下是手机微调：封面圆角与限高，只为手机预览的观感，不对应公开页断点。 */
-@container (max-width: 480px) {
-  .admin-newsedit__device .news-article__plate {
-    border-radius: var(--radius-lg);
-  }
-
-  .admin-newsedit__device .news-article__img {
-    max-height: 260px;
-  }
-}
+/* 480 以下不再另调：封面圆角与限高交给 news.css 自己，
+   预览与公开页同宽就该同版式，不在这里做「手机专属调校」。 */

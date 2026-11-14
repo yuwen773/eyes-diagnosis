@@ -501,6 +501,26 @@
   color: var(--brand-muted);
 }
 
+/* ── 文章排版尺度 ────────────────────────────────────────────────
+   文章版式里有几处长度是按视口算的（vw/vh）。公开页里视口就是版心，直接写
+   vw/vh 没问题；但管理端预览把同一个组件塞进一个设备框，vw 依然按浏览器
+   视口算——于是「390px 宽的设备框」会拿到 1440 视口的字号与留白，预览就
+   不是真机版式了。
+
+   这里把这一批长度收成变量：公开页用视口单位（行为与改之前逐字等价），
+   管理端预览在设备框上覆写同一批变量为容器单位（cqi = 设备框宽度的 1%）
+   与声明的模拟视口高度。于是「设备框 390px」与「公开页 390px 视口」
+   得到同一套比例——同一份 CSS，两种上下文各自成立，不必复制第二套样式。 */
+:root {
+  --news-scale-title: clamp(32px, 4.2vw, 56px);
+  --news-scale-paper-pad: clamp(26px, 3.4vw, 52px);
+  --news-scale-paper-max: clamp(52px, 6.8vw, 104px);
+  --news-scale-body-gap: clamp(24px, 3.6vw, 56px);
+  --news-scale-head-pad: clamp(20px, 3vh, 32px) clamp(24px, 3.6vh, 40px);
+  --news-scale-plate-gap: clamp(28px, 4vh, 48px);
+  --news-scale-return-gap: clamp(28px, 4vh, 44px);
+}
+
 /* ==========================================================================
    资讯详情 · 一篇可以读的文章
    ========================================================================== */
@@ -526,7 +546,7 @@
 }
 
 .news-article__head {
-  padding-block: clamp(20px, 3vh, 32px) clamp(24px, 3.6vh, 40px);
+  padding-block: var(--news-scale-head-pad);
 }
 
 /* 文章眉线：栏目色提亮，让「这是一篇正式发布的文章」先于标题到达。 */
@@ -545,11 +565,8 @@
 .news-article__title {
   margin-top: 14px;
   max-width: 22ch;
-  font-size: clamp(32px, 4.2vw, 56px);
+  font-size: var(--news-scale-title);
   line-height: 1.16;
-  /* 中文行首禁则：不让「、」「。」这类标点孤零零地起一行
-     （窄量宽 + 大字号下很容易出现「…干 / 眼症日常护理」这种断法）。 */
-  line-break: strict;
 }
 
 .news-article__lead {
@@ -573,7 +590,7 @@
 
 /* 封面：整幅图版，不做装裱小窗。 */
 .news-article__plate {
-  margin: 0 0 clamp(28px, 4vh, 48px);
+  margin: 0 0 var(--news-scale-plate-gap);
   overflow: hidden;
   border-radius: var(--radius-xl);
   background: var(--brand-surface);
@@ -597,7 +614,7 @@
 .news-article__body {
   display: grid;
   grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
-  gap: clamp(24px, 3.6vw, 56px);
+  gap: var(--news-scale-body-gap);
   align-items: start;
 }
 
@@ -655,8 +672,8 @@
    短文不会在一张空荡的大卡里居中。 */
 .news-paper {
   width: 100%;
-  max-width: calc(68ch + clamp(52px, 6.8vw, 104px));
-  padding: clamp(26px, 3.4vw, 52px);
+  max-width: calc(68ch + var(--news-scale-paper-max));
+  padding: var(--news-scale-paper-pad);
   border: 1px solid var(--brand-line);
   border-radius: var(--radius-xl);
   background: var(--brand-surface);
@@ -667,8 +684,6 @@
   font-size: 15.5px;
   line-height: 1.95;
   color: var(--brand-text);
-  /* 同上：行首不留标点。 */
-  line-break: strict;
 }
 
 .news-paper__body p {
@@ -727,7 +742,7 @@
 }
 
 .news-article__return {
-  margin-top: clamp(28px, 4vh, 44px);
+  margin-top: var(--news-scale-return-gap);
 }
 
 /* 页尾 · 更多资讯 */

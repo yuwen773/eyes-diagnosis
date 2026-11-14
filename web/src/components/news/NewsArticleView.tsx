@@ -44,6 +44,12 @@ export type NewsArticleViewProps = {
   kicker?: ReactNode
   /** 作者缺省值。公开页是「编辑部」，预览是「未署名」。 */
   authorFallback?: string
+  /**
+   * 标题层级。公开页用 h1；管理端编辑页自己已经有一个 h1（「编辑资讯」），
+   * 预览里的文章降成 h2，同一页不会出现两个 h1。外观不受影响——
+   * 版式走 class，不走标签名。
+   */
+  headingLevel?: 1 | 2
   showDisclaimer?: boolean
   className?: string
 }
@@ -54,6 +60,7 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
     contentFormat = "html",
     kicker,
     authorFallback = "编辑部",
+    headingLevel = 1,
     showDisclaimer = true,
     className,
   } = props
@@ -78,6 +85,7 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
 
   const sections = useMemo(() => newsSections(html), [html])
   const { date, time } = newsDate(article.publishTime ?? undefined)
+  const Heading = headingLevel === 2 ? "h2" : "h1"
 
   return (
     <article className={`news-article${className ? ` ${className}` : ""}`}>
@@ -89,7 +97,9 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
             </>
           )}
         </p>
-        <h1 className="display news-article__title">{article.title || "未命名文章"}</h1>
+        <Heading className="display news-article__title">
+          {article.title || "未命名文章"}
+        </Heading>
         {lead ? <p className="lead news-article__lead">{lead}</p> : null}
         <p className="news-article__meta num">
           <span>{article.author?.trim() || authorFallback}</span>

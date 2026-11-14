@@ -60,7 +60,13 @@ function renderPage(entry: string) {
  * 以「已有文章」模式打开编辑页。getNews 用常驻实现：保存后 invalidateQueries
  * 会再次取详情，once 值会被第二次调用消费掉。
  */
-async function openEditor(content: string, coverImage?: string, status = 0, publishTime?: string) {
+async function openEditor(
+  content: string,
+  coverImage?: string,
+  status = 0,
+  publishTime?: string,
+  summary?: string,
+) {
   vi.mocked(getNews).mockResolvedValue({
     id: "9001",
     title: "旧文",
@@ -68,6 +74,7 @@ async function openEditor(content: string, coverImage?: string, status = 0, publ
     coverImage,
     status,
     publishTime,
+    summary,
   })
   renderPage("/admin/news/9001/edit")
   return await screen.findByRole("button", { name: "保存" })
@@ -149,7 +156,7 @@ describe("AdminNewsEditPage 完整文章预览", () => {
     })
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
 
-    const article = screen.getByRole("heading", { level: 1, name: "还没保存的标题" })
+    const article = screen.getByRole("heading", { level: 2, name: "还没保存的标题" })
     expect(article.closest(".news-article")).toBeTruthy()
     expect(screen.getByText("这是预览里应该出现的正文。")).toBeTruthy()
     expect(saveNews).not.toHaveBeenCalled()
@@ -157,13 +164,33 @@ describe("AdminNewsEditPage 完整文章预览", () => {
     expect(screen.getByText(/预览稿 · 尚未发布/)).toBeTruthy()
   })
 
-  it("未保存修改在预览里如实提示：发布设置栏已隐藏", async () => {
+  it("预览里的文章标题是 h2，同一页不出现两个 h1", async () => {
     await openEditor(LEGACY_HTML)
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
-    expect(screen.queryByText(/发布设置栏已隐藏/)).toBeNull()
+
+    // 编辑页自己的 h1（「编辑资讯」）+ 预览里的文章标题（h2）= 一个 h1。
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(0)
+  })
+
+  it("发布设置栏在预览里无条件收起，未保存修改另行提示", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+    // 收起右栏是「切到预览」的结果，与有没有未保存修改无关——
+    // 提示语不能写成「有未保存修改所以收起了右栏」这种不存在的因果。
+    expect(screen.getByText(/预览时收起发布设置栏/)).toBeTruthy()
+    expect(screen.queryByText(/当前有未保存修改/)).toBeNull()
 
     fireEvent.change(screen.getByLabelText("标题"), { target: { value: "改了标题" } })
-    expect(screen.getByText(/有未保存修改，发布设置栏已隐藏/)).toBeTruthy()
+    expect(screen.getByText(/当前有未保存修改/)).toBeTruthy()
+  })
+
+  it("预览条报出当前模拟的视口宽度", async () => {
+    await openEditor(LEGACY_HTML)
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    // 宽度读数摆在预览条上：管理员窗口窄一点，预览就换一档版式。
+    expect(screen.getByText(/模拟视口/)).toBeTruthy()
   })
 
   it("已发布文章不摆「预览稿」眉线，待审核 / 下架 / 草稿才摆", async () => {
@@ -207,7 +234,7 @@ describe("AdminNewsEditPage 完整文章预览", () => {
     expect(screen.getByRole("button", { name: "手机" }).getAttribute("aria-pressed")).toBe("true")
   })
 
-  it("摘要预览按后端口径显示正文前 30 字，不足时如实说保存会被拒绝", async () => {
+  it("保存后摘要按后端口径显示正文前 30 字，不足时如实说保存会被拒绝", async () => {
     await openEditor("<p>短正文。</p>")
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
     expect(screen.getByText("正文不足 30 个字符，保存会被拒绝")).toBeTruthy()
@@ -217,18 +244,26 @@ describe("AdminNewsEditPage 完整文章预览", () => {
       target: { value: "一".repeat(40) },
     })
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
-    const summary = screen.getByText(/^一{30}…$/)
-    expect(summary).toBeTruthy()
+    // 后端落库的是刚好 30 个字、不带省略号：预览读数必须同形。
+    expect(screen.getByText(/^一{30}$/)).toBeTruthy()
+  })
+
+  it("库里旧摘要与保存后摘要不同时，两者并列显示", async () => {
+    await openEditor(LEGACY_HTML, undefined, 0, undefined, "旧文章手写的九字摘要")
+    fireEvent.click(screen.getByRole("tab", { name: "预览" }))
+
+    expect(screen.getByText(/库里当前摘要：旧文章手写的九字摘要/)).toBeTruthy()
+    expect(screen.getByText(/保存后摘要（前 30 字符）/)).toBeTruthy()
   })
 })
 
 describe("AdminNewsEditPage 旧版 HTML 预览", () => {
-  it("摘要预览剥掉标签，不把 <p> 当正文显示", async () => {
+  it("保存后摘要剥掉标签，不把 <p> 当正文显示", async () => {
     await openEditor(LEGACY_HTML)
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
 
     expect(screen.queryByText(/<p>/)).toBeNull()
-    const summary = screen.getByText("摘要预览").parentElement?.textContent ?? ""
+    const summary = screen.getByText("保存后摘要（前 30 字符）").parentElement?.textContent ?? ""
     expect(summary).toContain("这是一段超过三十个字的旧版富文本正文")
     expect(summary).not.toContain("<p>")
   })
