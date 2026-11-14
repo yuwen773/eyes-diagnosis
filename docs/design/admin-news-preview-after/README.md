@@ -12,6 +12,8 @@
   （每次跑完脚本都会列库核对「预览验证」残留为 0）。
 - 脚本会在预览期间监听网络：一旦出现 `POST /news/edit` 或 `POST /news/uploadCover`
   就以退出码 3 失败。本轮所有截图采集均退出码 0（**预览没有保存、没有改状态**）。
+- 暗色截图**带硬断言**：名字以 `-dark` 结尾的图，截图前必须验到 `html.dark` 真的在，
+  否则脚本报错退出——不接受「拿浅色冒充暗色」（第 6 轮修的就是这个无声失败）。
 - 截图**不等于**人工视觉签收。
 
 ## 第 4 轮：把「预览就是公开页那篇文章」变成可核对的事实
@@ -116,6 +118,54 @@
 | F5 读数只写宽度，纵向留白怎么算没说 | 读数改为「模拟视口 N × H（纵向按此高度排版）」 | 单测 + 预览条截图 |
 | F6 编辑器的「字符」与眉线的「字」两套口径只藏在 title 里 | 编辑器提示第三句写明两套口径 | 单测 |
 
+## 第 6 轮：把「暗色证据」修成**真暗色**，并把同值核对扩到双主题
+
+第 5 轮复审（`pr-b-verify-3`）指出一个证据本身不可信的问题：两张标着「暗色」的图
+（`preview-complex-desktop-1440-dark.png` 与 `public-news-1440-dark.png`）与各自的
+浅色图**逐字节相同**——它们根本不是暗色。
+
+### 根因：主题开关在登录页不存在，而脚本是「点一下试试」
+
+采集脚本原本这样切主题：
+
+```js
+const t = page.locator(".theme-toggle")
+if (await t.count()) await t.click()   // 计数为 0 → 静默跳过
+```
+
+`.theme-toggle` 只存在于 `AdminLayout.tsx`（后台外壳）与 `ProductHeader.tsx`（产品页
+顶栏）。**登录页没有这个按钮**——脚本登录后停留在登录页切主题，`count()` 返回 0，
+`if` 直接跳过，主题从未切换；于是拍下来的「暗色」是浅色图的副本，而脚本一路绿灯。
+
+这是一类典型的**无声失败**：条件不成立时不是报错，而是「什么都没发生」，证据看起来
+齐了，实际什么都没证明。
+
+### 改法：写 localStorage + 重载 + **硬断言**
+
+| 位置 | 改法 |
+|---|---|
+| 三个采集脚本 | 统一 `setTheme(page, theme)`：写 `localStorage["theme"]`（键见 `theme-provider.tsx`）→ 重载 → **断言 `html.dark` 存在 / 不存在**，不成立就抛错 |
+| 截图前 | 名字以 `-dark` 结尾的截图，截图前再断言一次 `html.dark`；浅色图断言 `html.dark` 不在 |
+| 核对脚本 | 测量循环扩成 **浅色 × 暗色** 两轮，两轮各自出图并逐项比对 |
+
+断言是关键：**把无声失败变成硬错误**。现在主题没切过去，脚本会带着
+`主题没切到暗色：html.dark 不存在` 退出，而不是拍出一张浅色图冒充暗色。
+
+### 复采结果
+
+- 深色图与浅色图不再逐字节相同（`preview-desktop-1440-dark.png` 与
+  `preview-desktop-1440-light.png` 哈希不同，肉眼可见品牌画布、纸面、目录、正文
+  层级均已翻到暗色）；
+- 核对脚本浅色、暗色**两轮都退出码 0**，两轮的量值逐项相同（暗色只换配色，不换
+  版式——这正是「双主题一致性」要证明的事）：
+  - 手机档 390：文章宽 342 / 纸面 342 / 正文列 304 / 目录 342 / 段落行盒 5-4-5-2-2-2-2-5；
+  - 桌面档 1020：文章宽 940 / 纸面 635.45 / 正文列 564.11 / 目录 220 /
+    网格 220px 683.28px / 段落行盒 3-2-3-1-1-1-1-3。
+- 对应截图新增：`parity-preview-mobile-dark.png`、`parity-preview-desktop-dark.png`、
+  `parity-public-mobile-dark.png`、`parity-public-desktop-dark.png`（情形 B 的
+  `parity-preview-dirty.png` / `parity-public-after-save.png` 也显式固定在暗色，
+  两侧同主题才可比）。
+
 ## 本轮整改（独立功能审查 + 视觉审查后）
 
 | 审查发现 | 整改 | 证据 |
@@ -158,7 +208,9 @@
 | `public-news-1280-light.png` / `-768-light.png` / `-390-light.png` | 公开页 1280 / 768 / 390 回归（目录、更多资讯、页脚都在） |
 | `parity-public-mobile.png` / `parity-preview-mobile.png` | 390 宽：公开页与预览逐项同值的并排实拍 |
 | `parity-public-desktop.png` / `parity-preview-desktop.png` | 1020 宽：同上 |
-| `parity-preview-dirty.png` / `parity-public-after-save.png` | 情形 B：未保存的编辑状态在预览里成立，保存后公开页与它同值 |
+| `parity-public-mobile-dark.png` / `parity-preview-mobile-dark.png` | 390 宽**暗色**同值核对（脚本断言 `html.dark` 真的在） |
+| `parity-public-desktop-dark.png` / `parity-preview-desktop-dark.png` | 1020 宽**暗色**同上 |
+| `parity-preview-dirty.png` / `parity-public-after-save.png` | 情形 B：未保存的编辑状态在预览里成立，保存后公开页与它同值（两侧同主题） |
 
 复杂排版与无封面两组由 `web/scripts/evidence/admin-news-preview-gap.mjs` 补采：
 草稿经真实 `/api/news/edit` 创建、封面经真实 `/api/news/uploadCover` 上传
@@ -215,3 +267,11 @@
 13. **核对脚本的临时素材只清库、不清对象存储**：对照稿的封面是真实上传到对象存储的
    临时图片，删除新闻不会连带删除那个文件——库里不留记录，对象存储里会留一个孤儿
    对象。脚本收尾打印删除回执，如实记录这一层残留。
+14. **预览模拟的视口上限是 1240px，宽屏访客的两档差异复现不了**：设备框
+   `max-width: 1240px`，因此预览能模拟的最宽视口就是 1240px。而公开页在
+   **≥2200px** 的视口上会同时切走两档——`--maxw: 1760px`、`--gutter: 56px`
+   （`tokens.css` 的 2200 断点），标题字号 `clamp(32px, 4.2vw, 56px)` 在 1240px
+   时算到 52.08px、在 2200px 时到顶 56px。也就是说：1440–2199px 的访客看到的
+   版式预览能复现（`4.2vw` 仍在同一档），2200px 以上的访客会看到**更大的标题与更宽的
+   版心**，这两档预览模拟不出来。预览条写明的「模拟视口 N × H」里的 N 就是当前
+   模拟值，不会假装自己覆盖了宽屏档。

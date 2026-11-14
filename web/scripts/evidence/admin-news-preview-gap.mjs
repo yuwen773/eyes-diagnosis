@@ -130,6 +130,14 @@ async function main() {
   // } catch … finally 在文件末尾统一收尾（见下）。
 
   const shot = async (page, name) => {
+    // 暗色截图先断言主题真的切过去了：拿浅色冒充暗色，证据就不算证据
+    // （曾出过两张「暗色」图与浅色图逐字节相同的无声失败）。
+    if (name.endsWith("-dark")) {
+      const isDark = await page.evaluate(() =>
+        document.documentElement.classList.contains("dark"),
+      )
+      if (!isDark) throw new Error(`${name} 截图前发现主题不是暗色：html.dark 不存在`)
+    }
     await page.screenshot({ path: `${outDir}/${name}.png`, fullPage: true })
     console.log("captured", name)
   }
@@ -167,12 +175,23 @@ async function main() {
     const p = await ctx.newPage()
     track(p, "complex-dark")
     await p.goto(base + "/login", { waitUntil: "networkidle" })
-    const t = p.locator(".theme-toggle").first()
-    if (await t.count()) await t.click()
     await p.getByPlaceholder("useraccount").fill(user)
     await p.locator('input[type="password"]').fill(pass)
     await p.getByRole("button", { name: "登录" }).click()
     await p.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 20000 })
+    // 切主题走 localStorage + 重载，不点界面开关：主题开关只存在于后台外壳
+    // 与产品页顶栏，登录页没有——在登录页点它是**静默失败**（count 0 直接跳过），
+    // 于是拍出来的「暗色」其实是浅色图的逐字节副本。
+    await p.evaluate(() => {
+      try {
+        localStorage.setItem("theme", "dark")
+      } catch {
+        /* 无痕模式：忽略，断言会拦住 */
+      }
+    })
+    await p.goto(`${base}/admin/news/${draftId}/edit`, { waitUntil: "networkidle" })
+    await p.reload({ waitUntil: "networkidle" })
+    await p.waitForTimeout(400)
     await p.goto(`${base}/admin/news/${draftId}/edit`, { waitUntil: "networkidle" })
     watchWrites(p)
     await p.getByRole("tab", { name: "预览" }).click()

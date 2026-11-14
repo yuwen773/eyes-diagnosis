@@ -41,22 +41,35 @@ async function main() {
   const ctx = async (width, height) => browser.newContext({ viewport: { width, height } })
 
 
+  /**
+   * 切主题：写 localStorage 再重载。
+   *
+   * <p>不点界面上的开关——主题开关只存在于后台外壳（AdminLayout）与产品页顶栏
+   * （ProductHeader），登录页与某些页面没有；在没有开关的页面上点它是**静默
+   * 失败**（`if (count) click()` 直接跳过），于是拍出来的「暗色」其实是浅色。
+   * localStorage 的键是 `theme`（见 theme-provider.tsx），在页面脚本之前就位，
+   * 也不会闪白。切完由 `shot()` 断言 `html.dark` 真的在。
+   */
+  const setDarkTheme = async (page) => {
+    await page.evaluate(() => {
+      try {
+        localStorage.setItem("theme", "dark")
+      } catch {
+        /* 无痕模式：忽略，断言会拦住 */
+      }
+    })
+    await page.reload({ waitUntil: "networkidle" })
+    await page.waitForTimeout(400)
+  }
+
   const login = async (page, theme) => {
     await page.goto(base + "/login", { waitUntil: "networkidle" })
-    if (theme === "dark") {
-      const t = page.locator(".theme-toggle").first()
-      if (await t.count()) await t.click()
-    }
     await page.getByPlaceholder("useraccount").fill(user)
     await page.locator('input[type="password"]').fill(pass)
     await page.getByRole("button", { name: "登录" }).click()
     await page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 20000 })
     await page.waitForTimeout(700)
-    if (theme === "dark") {
-      const t = page.locator(".theme-toggle").first()
-      if (await t.count()) await t.click()
-      await page.waitForTimeout(300)
-    }
+    if (theme === "dark") await setDarkTheme(page)
   }
 
   // 预览稿：脚本自己建（真实走 /news/edit 与 /news/uploadCover），采完删掉。
@@ -103,6 +116,16 @@ async function main() {
   }
 
   const shot = async (page, name, fullPage = true) => {
+    // 暗色截图必须先断言主题真的切过去了：曾经脚本在**登录页**点主题开关，
+    // 那个按钮只存在于后台外壳与产品页顶栏，登录页没有——`if (count) click()`
+    // 于是静默跳过，两张「暗色」证据成了浅色图的逐字节副本。
+    // 断言把这种无声失败变成硬错误：拿浅色冒充暗色，证据就不算证据。
+    if (name.endsWith("-dark")) {
+      const isDark = await page.evaluate(() =>
+        document.documentElement.classList.contains("dark"),
+      )
+      if (!isDark) throw new Error(`${name} 截图前发现主题不是暗色：html.dark 不存在`)
+    }
     await page.screenshot({ path: `${outDir}/${name}.png`, fullPage })
     console.log("captured", name)
   }
@@ -168,12 +191,12 @@ async function main() {
   ]) {
     const c = await ctx(w, h)
     const p = await c.newPage()
-    await p.goto(base + "/login", { waitUntil: "networkidle" })
-    if (theme === "dark") {
-      const t = p.locator(".theme-toggle").first()
-      if (await t.count()) await t.click()
-    }
     await p.goto(`${base}/news/${publicId}`, { waitUntil: "networkidle" })
+    if (theme === "dark") {
+      // 公开页的主题在产品页顶栏有开关，但这里不点它——统一走 localStorage +
+      // 重载（见 setDarkTheme 的注释），截图前由 shot() 断言 html.dark。
+      await setDarkTheme(p)
+    }
     await p.waitForTimeout(900)
     await shot(p, `public-news-${tag}`)
     await c.close()

@@ -165,6 +165,32 @@ async function main() {
     await page.waitForTimeout(600)
   }
 
+  /**
+   * 切主题并断言生效。
+   *
+   * <p>不点界面上的主题开关：那个开关只存在于后台外壳与产品页顶栏，在没有它的
+   * 页面上「点了」是静默失败（count 0 直接跳过）——采集脚本曾因此拍出两张
+   * 逐字节相同的「暗色 / 浅色」图。这里统一写 localStorage（键见
+   * theme-provider.tsx），并在切完之后断言 `html.dark` 真的在：断言能把
+   * 「无声失败」变成硬错误。
+   */
+  const setTheme = async (page, theme) => {
+    await page.evaluate((t) => {
+      try {
+        localStorage.setItem("theme", t)
+      } catch {
+        /* 无痕模式：忽略，断言会拦住 */
+      }
+    }, theme)
+    await page.reload({ waitUntil: "networkidle" })
+    await page.waitForTimeout(400)
+    const isDark = await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    )
+    if (theme === "dark" && !isDark) throw new Error("主题没切到暗色：html.dark 不存在")
+    if (theme === "light" && isDark) throw new Error("主题没切回浅色：html.dark 还在")
+  }
+
   // 1) 造一篇临时发布的对照稿（真实走 /news/edit 与 /news/uploadCover）。
   const setupCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const setupPage = await setupCtx.newPage()
@@ -220,55 +246,69 @@ async function main() {
     await adminPage.waitForTimeout(400)
     modes.push({ name: "desktop", width: await frameWidth(), height: 900 })
 
-    for (const mode of modes) {
-      await adminPage.getByRole("button", { name: mode.name === "mobile" ? "手机" : "桌面" }).click()
-      await adminPage.waitForTimeout(500)
-      const previewMetrics = await adminPage.evaluate(MEASURE)
-      await adminPage.screenshot({ path: `${outDir}/parity-preview-${mode.name}.png`, fullPage: true })
+    // 双主题都跑：版式量值应当与主题无关，只跑浅色就等于拿一个主题代表两个主题。
+    for (const theme of ["light", "dark"]) {
+      await setTheme(adminPage, theme)
+      await adminPage.getByRole("tab", { name: "预览" }).click()
+      await adminPage.waitForTimeout(600)
 
-      const publicCtx = await browser.newContext({
-        viewport: { width: mode.width, height: mode.height },
-      })
-      const publicPage = await publicCtx.newPage()
-      await publicPage.goto(`${base}/news/${newsId}`, { waitUntil: "networkidle" })
-      await publicPage.waitForTimeout(900)
-      const publicMetrics = await publicPage.evaluate(MEASURE)
-      await publicPage.screenshot({ path: `${outDir}/parity-public-${mode.name}.png`, fullPage: true })
-      await publicCtx.close()
+      for (const mode of modes) {
+        await adminPage.getByRole("button", { name: mode.name === "mobile" ? "手机" : "桌面" }).click()
+        await adminPage.waitForTimeout(500)
+        const previewMetrics = await adminPage.evaluate(MEASURE)
+        await adminPage.screenshot({
+          path: `${outDir}/parity-preview-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
+          fullPage: true,
+        })
 
-      const tag = `[${mode.name} ${mode.width}px] `
-      compare(tag + "title", publicMetrics.computed.title, previewMetrics.computed.title)
-      compare(tag + "head", publicMetrics.computed.head, previewMetrics.computed.head)
-      compare(tag + "paper", publicMetrics.computed.paper, previewMetrics.computed.paper)
-      compare(tag + "plate", publicMetrics.computed.plate, previewMetrics.computed.plate)
-      compare(tag + "articleWidth", publicMetrics.rendered.articleWidth, previewMetrics.rendered.articleWidth)
-      compare(tag + "paperWidth", publicMetrics.rendered.paperWidth, previewMetrics.rendered.paperWidth)
-      compare(tag + "paperBodyWidth", publicMetrics.rendered.paperBodyWidth, previewMetrics.rendered.paperBodyWidth)
-      compare(tag + "tocWidth", publicMetrics.rendered.tocWidth, previewMetrics.rendered.tocWidth)
-      compare(tag + "lineCounts", publicMetrics.rendered.lineCounts, previewMetrics.rendered.lineCounts)
-      compare(tag + "columnGap", publicMetrics.rendered.columnGap, previewMetrics.rendered.columnGap)
-      compare(tag + "hasToc", publicMetrics.rendered.hasToc, previewMetrics.rendered.hasToc)
-      compare(tag + "hasPlate", publicMetrics.rendered.hasPlate, previewMetrics.rendered.hasPlate)
-      compare(tag + "titleText", publicMetrics.text, previewMetrics.text)
+        const publicCtx = await browser.newContext({
+          viewport: { width: mode.width, height: mode.height },
+        })
+        const publicPage = await publicCtx.newPage()
+        await publicPage.goto(`${base}/news/${newsId}`, { waitUntil: "networkidle" })
+        await setTheme(publicPage, theme)
+        await publicPage.waitForTimeout(900)
+        const publicMetrics = await publicPage.evaluate(MEASURE)
+        await publicPage.screenshot({
+          path: `${outDir}/parity-public-${mode.name}${theme === "dark" ? "-dark" : ""}.png`,
+          fullPage: true,
+        })
+        await publicCtx.close()
 
-      // gridTemplateColumns 是像素串，两侧的可用宽度可能只差亚像素——按列数比更稳。
-      const cols = (v) => (v ? v.split(" ").filter(Boolean).length : 0)
-      if (cols(publicMetrics.rendered.gridColumns) !== cols(previewMetrics.rendered.gridColumns)) {
-        failures.push(
-          `${tag}列数: 公开页 ${publicMetrics.rendered.gridColumns} vs 预览 ${previewMetrics.rendered.gridColumns}`,
-        )
+        const tag = `[${theme} ${mode.name} ${mode.width}px] `
+        compare(tag + "title", publicMetrics.computed.title, previewMetrics.computed.title)
+        compare(tag + "head", publicMetrics.computed.head, previewMetrics.computed.head)
+        compare(tag + "paper", publicMetrics.computed.paper, previewMetrics.computed.paper)
+        compare(tag + "plate", publicMetrics.computed.plate, previewMetrics.computed.plate)
+        compare(tag + "articleWidth", publicMetrics.rendered.articleWidth, previewMetrics.rendered.articleWidth)
+        compare(tag + "paperWidth", publicMetrics.rendered.paperWidth, previewMetrics.rendered.paperWidth)
+        compare(tag + "paperBodyWidth", publicMetrics.rendered.paperBodyWidth, previewMetrics.rendered.paperBodyWidth)
+        compare(tag + "tocWidth", publicMetrics.rendered.tocWidth, previewMetrics.rendered.tocWidth)
+        compare(tag + "lineCounts", publicMetrics.rendered.lineCounts, previewMetrics.rendered.lineCounts)
+        compare(tag + "columnGap", publicMetrics.rendered.columnGap, previewMetrics.rendered.columnGap)
+        compare(tag + "hasToc", publicMetrics.rendered.hasToc, previewMetrics.rendered.hasToc)
+        compare(tag + "hasPlate", publicMetrics.rendered.hasPlate, previewMetrics.rendered.hasPlate)
+        compare(tag + "titleText", publicMetrics.text, previewMetrics.text)
+
+        // gridTemplateColumns 是像素串，两侧的可用宽度可能只差亚像素——按列数比更稳。
+        const cols = (v) => (v ? v.split(" ").filter(Boolean).length : 0)
+        if (cols(publicMetrics.rendered.gridColumns) !== cols(previewMetrics.rendered.gridColumns)) {
+          failures.push(
+            `${tag}列数: 公开页 ${publicMetrics.rendered.gridColumns} vs 预览 ${previewMetrics.rendered.gridColumns}`,
+          )
+        }
+        if (!publicMetrics.rendered.hasToc || !publicMetrics.rendered.hasPlate) {
+          notes.push(`${tag}对照稿未覆盖目录/封面路径（hasToc=${publicMetrics.rendered.hasToc} hasPlate=${publicMetrics.rendered.hasPlate}）`)
+        }
+        if (publicMetrics.rendered.tocPosition !== previewMetrics.rendered.tocPosition) {
+          notes.push(
+            `${tag}目录 position 不同：公开页 ${publicMetrics.rendered.tocPosition} vs 预览 ${previewMetrics.rendered.tocPosition}`,
+          )
+        }
+
+        console.log(`[${theme} ${mode.name} ${mode.width}px] public :`, JSON.stringify(publicMetrics.rendered))
+        console.log(`[${theme} ${mode.name} ${mode.width}px] preview:`, JSON.stringify(previewMetrics.rendered))
       }
-      if (!publicMetrics.rendered.hasToc || !publicMetrics.rendered.hasPlate) {
-        notes.push(`${tag}对照稿未覆盖目录/封面路径（hasToc=${publicMetrics.rendered.hasToc} hasPlate=${publicMetrics.rendered.hasPlate}）`)
-      }
-      if (publicMetrics.rendered.tocPosition !== previewMetrics.rendered.tocPosition) {
-        notes.push(
-          `${tag}目录 position 不同：公开页 ${publicMetrics.rendered.tocPosition} vs 预览 ${previewMetrics.rendered.tocPosition}`,
-        )
-      }
-
-      console.log(`[${mode.name} ${mode.width}px] public :`, JSON.stringify(publicMetrics.rendered))
-      console.log(`[${mode.name} ${mode.width}px] preview:`, JSON.stringify(previewMetrics.rendered))
     }
 
     // ── 情形 B：未保存的表单状态 → 保存 → 公开页 ──────────────────────
@@ -283,6 +323,9 @@ async function main() {
 - 甲等条目
 - 乙等条目
 `
+    // 情形 B 的两侧都固定在暗色：公开页显式切主题，管理端这一步也显式切，
+    // 不依赖上面循环留下的主题状态（那个状态会随循环顺序漂移）。
+    await setTheme(adminPage, "dark")
     await adminPage.getByRole("tab", { name: "编辑" }).click()
     const editor = adminPage.locator('textarea[aria-label="正文"]')
     await editor.waitFor({ timeout: 10000 })
@@ -306,6 +349,8 @@ async function main() {
     const publicCtx2 = await browser.newContext({ viewport: { width: dirtyWidth, height: 900 } })
     const publicPage2 = await publicCtx2.newPage()
     await publicPage2.goto(`${base}/news/${newsId}`, { waitUntil: "networkidle" })
+    // 两侧同一主题才可比：公开页也要切到与管理端预览一致的主题。
+    await setTheme(publicPage2, "dark")
     await publicPage2.waitForTimeout(900)
     const savedPublic = await publicPage2.evaluate(MEASURE)
     await publicPage2.screenshot({ path: `${outDir}/parity-public-after-save.png`, fullPage: true })
