@@ -33,6 +33,18 @@ describe("documentRenderKind", () => {
 })
 
 describe("renderMarkdownDocument", () => {
+  it("上传文档里的远程图片不放行：不给第三方做像素级追踪", () => {
+    const html = renderMarkdownDocument(
+      "![追踪](https://third.example/track.gif)\n\n![内嵌](data:image/png;base64,AAAA)",
+    )
+
+    // 文档是外部来源：远程图片会把管理员的浏览器引到第三方。
+    expect(html).not.toContain("track.gif")
+    expect(html).not.toContain("third.example")
+    // 内嵌图（data:）留着——它不发外联请求。
+    expect(html).toContain("data:image/png;base64,AAAA")
+  })
+
   it("渲染 Markdown 结构（标题 / 列表 / 表格 / 代码块）", () => {
     const html = renderMarkdownDocument([
       "# 标题",

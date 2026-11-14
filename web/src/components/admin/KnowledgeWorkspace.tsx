@@ -174,7 +174,7 @@ export function KnowledgeWorkspace(props: {
                     {detail.chunksReadable === false
                       ? "不可读"
                       : detail.status === 1
-                        ? `${detail.chunks?.length ?? 0} 块`
+                        ? `${detail.chunks?.length ?? 0} 块 · 重放`
                         : `${detail.chunks?.length ?? 0} 块 · 未入库`}
                   </span>
                 </div>

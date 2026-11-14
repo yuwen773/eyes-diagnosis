@@ -200,6 +200,8 @@ export type KnowledgeDetail = {
   textPreview?: string | null
   chunks: KnowledgeChunk[]
   chunksReadable: boolean
+  /** 切片是否因数量上限被截断（真值时界面必须写明「最多显示 N 块」） */
+  chunksTruncated?: boolean
   chunksMessage?: string | null
 }
 

@@ -117,6 +117,8 @@ public class KnowledgeBaseController {
         headers.setContentDisposition(disposition);
         // MIME 已按扩展名钉死，禁止浏览器再嗅探成可执行/可渲染类型。
         headers.set("X-Content-Type-Options", "nosniff");
+        // 私有文档字节：不允许任何中间层留存，也不允许浏览器缓存。
+        headers.setCacheControl("private, no-store");
 
         return ResponseEntity.ok()
                 .headers(headers)
@@ -125,6 +127,11 @@ public class KnowledgeBaseController {
                 .body(output -> {
                     try (java.io.InputStream in = object.getObjectContent()) {
                         in.transferTo(output);
+                    } catch (java.io.IOException e) {
+                        // 客户端提前断开（切文档、关抽屉）是正常操作，不是服务端错误：
+                        // 响应头早已钉成文件类型，这时再把异常抛给全局 JSON 处理器，
+                        // 它写不进 {code,msg}，最后只剩一条 500 堆栈。
+                        log.debug("客户端提前断开文档流: docId={}", id, e);
                     }
                 });
     }

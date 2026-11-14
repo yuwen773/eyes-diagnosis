@@ -33,6 +33,28 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
   const id = detail.id
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [pdfLoadedId, setPdfLoadedId] = useState<string | null>(null)
+  /** PDF 探针：iframe 的 onLoad 拿到什么内容都会触发，得先问服务端「这是 PDF 吗」。 */
+  const [pdfProbe, setPdfProbe] = useState<"checking" | "pdf" | "not-pdf">("checking")
+
+  // 只探响应头（HEAD），不下载正文：确认拿到的真是 PDF 再让 iframe 显示，
+  // 否则鉴权过期时 iframe 里会是一坨 JSON，角标却写着「浏览器内嵌查看器」。
+  useEffect(() => {
+    if (kind !== "pdf") return
+    let cancelled = false
+    const controller = new AbortController()
+    fetch(knowledgeContentUrl(id), { method: "HEAD", signal: controller.signal })
+      .then((response) => {
+        const type = response.headers.get("content-type") ?? ""
+        if (!cancelled) setPdfProbe(type.includes("application/pdf") ? "pdf" : "not-pdf")
+      })
+      .catch(() => {
+        if (!cancelled) setPdfProbe("not-pdf")
+      })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [id, kind])
 
   useEffect(() => {
     if (kind !== "docx" && kind !== "markdown" && kind !== "text") return
@@ -80,11 +102,14 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
 
   if (kind === "pdf") {
     const pdfLoaded = pdfLoadedId === id
+    const notPdf = pdfProbe === "not-pdf"
     return (
       <div className="admin-doc__reader-inner">
         <div className="admin-doc__reader-tools num">
-          <span className={`admin-doc__reader-chip${pdfLoaded ? "" : " is-loading"}`}>
-            {pdfLoaded ? (
+          <span className={`admin-doc__reader-chip${pdfLoaded && !notPdf ? "" : " is-loading"}`}>
+            {notPdf ? (
+              "没有拿到 PDF 内容（登录可能已过期）"
+            ) : pdfLoaded ? (
               `${detail.fileName} · 浏览器内嵌查看器`
             ) : (
               <>
@@ -98,12 +123,18 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
             新窗口打开
           </a>
         </div>
-        <iframe
-          className="admin-doc__pdf"
-          src={openUrl}
-          title={`${detail.fileName} 原文`}
-          onLoad={() => setPdfLoadedId(id)}
-        />
+        {notPdf ? (
+          <p className="admin-doc__reader-note num">
+            服务端返回的不是 PDF（多半是鉴权过期后的错误响应）。请重新登录，或用「下载原文件」核对。
+          </p>
+        ) : (
+          <iframe
+            className="admin-doc__pdf"
+            src={openUrl}
+            title={`${detail.fileName} 原文`}
+            onLoad={() => setPdfLoadedId(id)}
+          />
+        )}
         <p className="admin-doc__reader-note num">
           浏览器没有内置 PDF 查看器时这里会是空白——用「新窗口打开」或下载后查看。
         </p>

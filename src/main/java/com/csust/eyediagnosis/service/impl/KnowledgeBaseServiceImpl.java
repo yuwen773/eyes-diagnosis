@@ -259,6 +259,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             ChunkPreview preview = readChunks(doc);
             vo.setChunks(preview.chunks());
             vo.setChunksReadable(true);
+            vo.setChunksTruncated(preview.truncated());
             if ("text".equals(vo.getPreviewKind())) {
                 vo.setTextPreview(truncate(preview.rawText(), MAX_TEXT_PREVIEW));
             }
@@ -396,8 +397,11 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
      * 按入库时的同一套规则重放解析与切分，得到这份文档的切片清单。
      *
      * <p>拼接方式与 {@link DocumentProcessingService} 保持逐字一致：
-     * 段落以空行相接、首尾去空白。只有这样，切片序号才与向量库里的
-     * {@code doc_{id}_chunk_{i}} 一一对应，管理员看到的第 3 块就是检索时的第 3 块。
+     * 段落以空行相接、首尾去空白，切片编号沿用入库时的
+     * {@code doc_{id}_chunk_{i}} 约定——管理员看到的第 3 块就是第 3 块。
+     *
+     * <p>这里只重放「规则」，不推断向量库里的存量：入库条数只有库里那一个
+     * 计数（{@code chunkCount}），向量库实际存了多少条没有接口可查，界面就不说。
      */
     private ChunkPreview readChunks(KnowledgeDocument doc) {
         File temp = null;
@@ -413,14 +417,16 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);
             List<KnowledgeChunkVO> list = new ArrayList<>();
             int index = 0;
+            boolean truncated = false;
             for (Document chunk : chunks) {
                 if (index >= MAX_PREVIEW_CHUNKS) {
+                    truncated = true;
                     break;
                 }
                 list.add(new KnowledgeChunkVO(index, chunk.getText()));
                 index++;
             }
-            return new ChunkPreview(list, rawText);
+            return new ChunkPreview(list, rawText, truncated);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件读取失败");
         } finally {
@@ -457,7 +463,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
     }
 
     /** 切片清单 + 原文（纯文本直读用）。 */
-    private record ChunkPreview(List<KnowledgeChunkVO> chunks, String rawText) {
+    private record ChunkPreview(List<KnowledgeChunkVO> chunks, String rawText, boolean truncated) {
     }
 
     private record UploadResult(Long docId, String filename, String error) {

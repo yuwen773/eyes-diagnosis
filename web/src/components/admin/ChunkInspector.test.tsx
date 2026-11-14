@@ -75,14 +75,29 @@ describe("ChunkInspector", () => {
     expect(screen.getByText("该文档没有切片。")).toBeTruthy()
   })
 
-  it("入库计数与重放结果不一致时如实说明，不声称一一对应", () => {
+  it("入库计数与重放结果不一致时如实说明，不声称向量库一一对应", () => {
     render(<ChunkInspector detail={detail({ chunkCount: 5 })} />)
 
     expect(screen.getByText("入库时 5 块，按当前规则重放 2 块")).toBeTruthy()
-    expect(screen.queryByText("每条与向量库序号一一对应")).toBeNull()
+    // 「与向量库一一对应」是替后端断言没人验过的事：向量库里实际有多少条
+    // 没有接口可查，界面就不说。
+    expect(screen.queryByText(/一一对应/)).toBeNull()
   })
 
-  it("DOC 的不可读原因不冒充扫描件", () => {
+  it("计数相同时只说编号规则，不替后端断言向量库存量", () => {
+    render(<ChunkInspector detail={detail({ chunkCount: 2 })} />)
+
+    expect(screen.getByText("编号与入库时一致（doc_{id}_chunk_{i}）")).toBeTruthy()
+    expect(screen.queryByText(/一一对应/)).toBeNull()
+  })
+
+  it("切片被数量上限截断时写明「最多显示 N 块」", () => {
+    render(<ChunkInspector detail={detail({ chunkCount: 2000, chunksTruncated: true })} />)
+
+    expect(screen.getByText("共 2 块（已达显示上限，实际可能更多）")).toBeTruthy()
+  })
+
+  it("DOC 的不可读原因不冒充扫描件，也不谎称本站不解析", () => {
     render(
       <ChunkInspector
         detail={detail({
@@ -93,8 +108,11 @@ describe("ChunkInspector", () => {
       />,
     )
 
-    expect(screen.getByText(/DOC 不做在线解析/)).toBeTruthy()
+    // 服务端确实按入库同一套规则解析过一次（DocumentParser → Tika）：
+    // 说「本站不做在线解析」是把浏览器阅读器的限制说成了服务端的。
+    expect(screen.getByText("这份 DOC 没解析出正文。")).toBeTruthy()
     expect(screen.queryByText(/扫描件/)).toBeNull()
+    expect(screen.queryByText(/不做在线解析/)).toBeNull()
   })
 
   it("切片很多时分批显示，不一次铺满", () => {

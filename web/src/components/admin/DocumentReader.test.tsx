@@ -42,13 +42,23 @@ afterEach(() => {
   vi.mocked(fetchKnowledgeText).mockReset()
   vi.mocked(fetchKnowledgeDocx).mockReset()
   vi.mocked(convertToHtml).mockReset()
+  vi.unstubAllGlobals()
 })
 
+/** PDF 探针只看响应头：真正的 PDF 才让 iframe 显示。 */
+function stubPdfProbe(contentType: string) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async () => new Response("", { headers: { "Content-Type": contentType } })),
+  )
+}
+
 describe("DocumentReader", () => {
-  it("PDF 用同源代理地址内嵌，并提供新窗口与下载入口", () => {
+  it("PDF 用同源代理地址内嵌，并提供新窗口与下载入口", async () => {
+    stubPdfProbe("application/pdf")
     render(<DocumentReader detail={detail({ fileType: "pdf", fileName: "a.pdf" })} />)
 
-    const frame = screen.getByTitle("a.pdf 原文")
+    const frame = await screen.findByTitle("a.pdf 原文")
     expect(frame.tagName).toBe("IFRAME")
     expect(frame.getAttribute("src")).toBe("/api/knowledge/11/content")
     expect(screen.getByText("新窗口打开").closest("a")?.getAttribute("href")).toBe(
@@ -57,6 +67,15 @@ describe("DocumentReader", () => {
     // 下载入口只保留一处（工作区头部）；阅读区不再重复一遍。
     expect(screen.queryByText("下载原文件")).toBeNull()
     expect(screen.getByText("PDF 载入中…")).toBeTruthy()
+  })
+
+  it("拿到的不是 PDF 时不摆查看器角标，如实说没拿到 PDF", async () => {
+    stubPdfProbe("application/json")
+    render(<DocumentReader detail={detail({ fileType: "pdf", fileName: "a.pdf" })} />)
+
+    // 鉴权过期时端点回的是 JSON 错误信封：角标不能说「浏览器内嵌查看器」。
+    expect(await screen.findByText("没有拿到 PDF 内容（登录可能已过期）")).toBeTruthy()
+    expect(screen.queryByTitle("a.pdf 原文")).toBeNull()
   })
 
   it("Markdown 走富文本渲染：标题与列表可见", async () => {
