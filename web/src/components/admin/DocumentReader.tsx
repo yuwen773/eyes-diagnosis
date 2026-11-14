@@ -24,9 +24,18 @@ import { fault } from "@/lib/faults"
  *
  * <p>读取结果按文档 id 标记：换一份文档时旧结果自动失效、显示「正在读取」，
  * 不需要在 effect 体内同步 setState（react-hooks/set-state-in-effect）。
+ * PDF 探针结论与「已载入」标记同样按 id 隔离，旧文档的结论不会落到新文档上。
  */
 
 type Loaded = { id: string; html?: string; text?: string; error?: string }
+
+/**
+ * PDF 探针结论，按文档 id 标记。
+ *
+ * <p>不带 id 的话，换文档时上一份的结论会留在新文档上：上一份探出「不是 PDF」
+ * （比如会话过期），新文档就会被误判成「没拿到 PDF 内容（登录可能已过期）」。
+ */
+type PdfProbe = { id: string; state: "pdf" | "not-pdf" }
 
 export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactElement {
   const kind = documentRenderKind(detail.fileType)
@@ -34,7 +43,9 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [pdfLoadedId, setPdfLoadedId] = useState<string | null>(null)
   /** PDF 探针：iframe 的 onLoad 拿到什么内容都会触发，得先问服务端「这是 PDF 吗」。 */
-  const [pdfProbe, setPdfProbe] = useState<"checking" | "pdf" | "not-pdf">("checking")
+  const [pdfProbe, setPdfProbe] = useState<PdfProbe | null>(null)
+  /** 探针结论只认当前文档；换文档后上一份的结论立刻失效，回到「探测中」。 */
+  const probeState = pdfProbe && pdfProbe.id === id ? pdfProbe.state : "checking"
 
   // 只探响应头（HEAD），不下载正文：确认拿到的真是 PDF 再让 iframe 显示，
   // 否则鉴权过期时 iframe 里会是一坨 JSON，角标却写着「浏览器内嵌查看器」。
@@ -42,13 +53,21 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
     if (kind !== "pdf") return
     let cancelled = false
     const controller = new AbortController()
-    fetch(knowledgeContentUrl(id), { method: "HEAD", signal: controller.signal })
+    // credentials 必须与全站其他请求一致（http.ts / adminApi 都是 "include"）：
+    // 默认的 "same-origin" 在同源时带 cookie、跨源时就不带——后端把
+    // VITE_API_BASE_URL 指到别的源时，探针会变成匿名请求，把「鉴权过期」
+    // 误报成「服务端返回的不是 PDF」。
+    fetch(knowledgeContentUrl(id), {
+      method: "HEAD",
+      credentials: "include",
+      signal: controller.signal,
+    })
       .then((response) => {
         const type = response.headers.get("content-type") ?? ""
-        if (!cancelled) setPdfProbe(type.includes("application/pdf") ? "pdf" : "not-pdf")
+        if (!cancelled) setPdfProbe({ id, state: type.includes("application/pdf") ? "pdf" : "not-pdf" })
       })
       .catch(() => {
-        if (!cancelled) setPdfProbe("not-pdf")
+        if (!cancelled) setPdfProbe({ id, state: "not-pdf" })
       })
     return () => {
       cancelled = true
@@ -102,7 +121,7 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
 
   if (kind === "pdf") {
     const pdfLoaded = pdfLoadedId === id
-    const notPdf = pdfProbe === "not-pdf"
+    const notPdf = probeState === "not-pdf"
     return (
       <div className="admin-doc__reader-inner">
         <div className="admin-doc__reader-tools num">
@@ -129,6 +148,10 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
           </p>
         ) : (
           <iframe
+            // key 绑文档 id：换文档时重建 iframe。复用同一个元素的话，
+            // 上一份文档的 load 事件会落在新文档的 onLoad 上，把还没载入的
+            // 新文档标成「已载入」。
+            key={id}
             className="admin-doc__pdf"
             src={openUrl}
             title={`${detail.fileName} 原文`}

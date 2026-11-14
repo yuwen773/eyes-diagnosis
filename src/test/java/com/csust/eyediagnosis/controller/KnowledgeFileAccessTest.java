@@ -22,6 +22,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -249,5 +253,62 @@ class KnowledgeFileAccessTest {
         // 关键断言：HEAD 路径一次对象体都不取。
         verify(cos, never()).getObject(anyString());
         verify(cos, times(1)).getObjectMetadata("object-key");
+    }
+
+    // ── 文档流：客户端断开与上游故障必须分开 ─────────────────────
+
+    /** 读侧失败：模拟对象存储在读到一半时出问题。 */
+    private static InputStream failingInput() {
+        return new InputStream() {
+            @Override
+            public int read() throws IOException {
+                throw new IOException("COS 读取失败");
+            }
+        };
+    }
+
+    /** 写侧失败：模拟浏览器提前断开（切文档、关抽屉）。 */
+    private static OutputStream failingOutput() {
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                throw new IOException("Connection reset by peer");
+            }
+        };
+    }
+
+    @Test
+    void normalStreamIsReportedAsCompleted() {
+        ByteArrayOutputStream sink = new ByteArrayOutputStream();
+
+        KnowledgeBaseController.StreamResult result = KnowledgeBaseController.copyDocumentStream(
+                new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)), sink);
+
+        assertEquals(KnowledgeBaseController.StreamOutcome.COMPLETED, result.outcome());
+        assertEquals("hello", sink.toString(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void clientAbortIsNotSwallowedAsUpstreamFailure() {
+        // 客户端断开是正常操作：不能抛异常（抛出去只会变成一条 500 堆栈），
+        // 也不能被当成上游故障——它只记 debug。
+        KnowledgeBaseController.StreamResult result =
+                KnowledgeBaseController.copyDocumentStream(
+                        new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)),
+                        failingOutput());
+
+        assertEquals(KnowledgeBaseController.StreamOutcome.CLIENT_ABORTED, result.outcome());
+    }
+
+    @Test
+    void upstreamReadFailureIsDistinguishedFromClientAbort() {
+        // 对象存储真的坏了：必须与「客户端断开」分开，异常要留住，
+        // 否则 COS 读取失败会被静默吞掉、线上只剩一条 debug 日志。
+        KnowledgeBaseController.StreamResult result =
+                KnowledgeBaseController.copyDocumentStream(failingInput(), new ByteArrayOutputStream());
+
+        assertEquals(KnowledgeBaseController.StreamOutcome.UPSTREAM_FAILED, result.outcome());
+        assertNotNull(result.error());
+        assertEquals("COS 读取失败", result.error().getMessage());
     }
 }

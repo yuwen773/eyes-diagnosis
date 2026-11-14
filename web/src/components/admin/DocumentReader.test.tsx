@@ -53,6 +53,24 @@ function stubPdfProbe(contentType: string) {
   )
 }
 
+/**
+ * 探针按文档 id 应答：同一份 fetch mock 里，A 份文档回 JSON（探出「不是 PDF」），
+ * B 份文档**永不结束**——用来复现「上一份文档的探针结论落到新文档上」这一类
+ * 状态残留：B 的探针还没回来，界面上就不该沿用 A 的结论。
+ */
+function stubPdfProbeById(types: Record<string, string>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      const id = url.match(/\/knowledge\/([^/]+)\/content/)?.[1] ?? ""
+      const type = types[id] ?? "application/json"
+      if (type === "pending") return new Promise<Response>(() => {})
+      return new Response("", { headers: { "Content-Type": type } })
+    }),
+  )
+}
+
 describe("DocumentReader", () => {
   it("PDF 用同源代理地址内嵌，并提供新窗口与下载入口", async () => {
     stubPdfProbe("application/pdf")
@@ -67,6 +85,56 @@ describe("DocumentReader", () => {
     // 下载入口只保留一处（工作区头部）；阅读区不再重复一遍。
     expect(screen.queryByText("下载原文件")).toBeNull()
     expect(screen.getByText("PDF 载入中…")).toBeTruthy()
+  })
+
+  it("PDF 探针带上会话凭据，与全站其他请求一致", async () => {
+    // 默认的 credentials 是 "same-origin"：同源时带 cookie，跨源时就不带。
+    // 后端把 VITE_API_BASE_URL 指到别的源时，探针会变成匿名请求，
+    // 把「鉴权过期」误报成「服务端返回的不是 PDF」。
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response("", { headers: { "Content-Type": "application/pdf" } }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+    render(<DocumentReader detail={detail({ fileType: "pdf", fileName: "a.pdf" })} />)
+
+    await screen.findByTitle("a.pdf 原文")
+    const init = fetchMock.mock.calls[0]?.[1]
+    expect(init?.method).toBe("HEAD")
+    expect(init?.credentials).toBe("include")
+  })
+
+  it("换一份 PDF 时不沿用上一份的探针结论", async () => {
+    // A 份探出「不是 PDF」（会话过期），换到 B 份时 B 的探针还没回来：
+    // 界面上不能继续显示 A 的结论（「登录可能已过期」），也不能把 B 判成不是 PDF。
+    stubPdfProbeById({ "11": "application/json", "12": "pending" })
+    const { rerender } = render(
+      <DocumentReader detail={detail({ id: "11", fileType: "pdf", fileName: "a.pdf" })} />,
+    )
+    expect(await screen.findByText("没有拿到 PDF 内容（登录可能已过期）")).toBeTruthy()
+
+    rerender(<DocumentReader detail={detail({ id: "12", fileType: "pdf", fileName: "b.pdf" })} />)
+
+    // B 的探针未回：查看器照常摆出来（探针只用来纠正角标），过期文案必须消失。
+    expect(await screen.findByTitle("b.pdf 原文")).toBeTruthy()
+    expect(screen.queryByText("没有拿到 PDF 内容（登录可能已过期）")).toBeNull()
+  })
+
+  it("换文档时重建 PDF 查看器，旧文档的载入事件不标记新文档", async () => {
+    // iframe 复用同一个元素时，上一份文档的 load 事件会落到新文档的 onLoad 上，
+    // 把还没载入的新文档标成「已载入」。
+    stubPdfProbe("application/pdf")
+    const { rerender, container } = render(
+      <DocumentReader detail={detail({ id: "11", fileType: "pdf", fileName: "a.pdf" })} />,
+    )
+    const first = await screen.findByTitle("a.pdf 原文")
+
+    rerender(<DocumentReader detail={detail({ id: "12", fileType: "pdf", fileName: "b.pdf" })} />)
+    const second = await screen.findByTitle("b.pdf 原文")
+
+    expect(second).not.toBe(first)
+    // 新文档还没触发 onLoad，角标不能写「浏览器内嵌查看器」。
+    expect(screen.getByText("PDF 载入中…")).toBeTruthy()
+    expect(container.querySelectorAll("iframe")).toHaveLength(1)
   })
 
   it("拿到的不是 PDF 时不摆查看器角标，如实说没拿到 PDF", async () => {

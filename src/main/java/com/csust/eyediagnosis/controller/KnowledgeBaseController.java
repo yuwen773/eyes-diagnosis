@@ -28,6 +28,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -145,15 +148,87 @@ public class KnowledgeBaseController {
         return builder
                 .contentLength(object.getObjectMetadata().getContentLength())
                 .body(output -> {
-                    try (java.io.InputStream in = object.getObjectContent()) {
-                        in.transferTo(output);
-                    } catch (java.io.IOException e) {
-                        // 客户端提前断开（切文档、关抽屉）是正常操作，不是服务端错误：
-                        // 响应头早已钉成文件类型，这时再把异常抛给全局 JSON 处理器，
-                        // 它写不进 {code,msg}，最后只剩一条 500 堆栈。
-                        log.debug("客户端提前断开文档流: docId={}", id, e);
+                    try (InputStream in = object.getObjectContent()) {
+                        StreamResult result = copyDocumentStream(in, output);
+                        switch (result.outcome()) {
+                            // 客户端提前断开（切文档、关抽屉）是正常操作，不是服务端错误：
+                            // 响应头早已钉成文件类型，这时再把异常抛给全局 JSON 处理器，
+                            // 它写不进 {code,msg}，最后只剩一条 500 堆栈。
+                            case CLIENT_ABORTED -> log.debug("客户端提前断开文档流: docId={}", id,
+                                    result.error());
+                            // 上游读取失败是服务端故障：对象存储真的坏了，必须留痕。
+                            case UPSTREAM_FAILED -> log.error("知识文档上游读取失败: docId={}", id,
+                                    result.error());
+                            case COMPLETED -> {
+                                // 正常传完，不用记日志。
+                            }
+                        }
+                    } catch (IOException e) {
+                        // 关闭上游流失败：同样不能当成断连吞掉。
+                        log.error("知识文档上游流关闭失败: docId={}", id, e);
                     }
                 });
+    }
+
+    /** 文档流传输的结果分类。 */
+    enum StreamOutcome {
+        /** 正常传完。 */
+        COMPLETED,
+        /** 客户端提前断开（切文档、关抽屉）：正常操作。 */
+        CLIENT_ABORTED,
+        /** 上游读取失败：服务端故障，必须留痕。 */
+        UPSTREAM_FAILED
+    }
+
+    /**
+     * 文档流传输结果。
+     *
+     * @param outcome 结果分类
+     * @param error 失败时的原始异常（正常结束为 null）
+     */
+    record StreamResult(StreamOutcome outcome, IOException error) {
+        static StreamResult completed() {
+            return new StreamResult(StreamOutcome.COMPLETED, null);
+        }
+
+        static StreamResult clientAborted(IOException error) {
+            return new StreamResult(StreamOutcome.CLIENT_ABORTED, error);
+        }
+
+        static StreamResult upstreamFailed(IOException error) {
+            return new StreamResult(StreamOutcome.UPSTREAM_FAILED, error);
+        }
+    }
+
+    /**
+     * 把对象内容复制到响应流，并把「客户端断开」与「上游读取失败」分开。
+     *
+     * <p>写侧失败（往浏览器写不动）= 客户端断开：切文档、关抽屉、刷新页面都是
+     * 正常操作，不该打错误日志。读侧失败（从对象存储读不动）= 服务端故障：
+     * 对象存储真的坏了，必须留 ERROR 堆栈，否则 COS 读取失败就此隐身。
+     *
+     * <p>早期版本用一个 catch 把两者都当成断连、只记 debug——上游故障被静默吞掉，
+     * 线上既没有 5xx 也没有错误日志。
+     *
+     * @param in 对象存储的正文流
+     * @param out 响应输出流
+     * @return 传输结果，调用方据此决定记哪一级日志
+     */
+    static StreamResult copyDocumentStream(InputStream in, OutputStream out) {
+        byte[] buffer = new byte[16 * 1024];
+        try {
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                try {
+                    out.write(buffer, 0, read);
+                } catch (IOException e) {
+                    return StreamResult.clientAborted(e);
+                }
+            }
+            return StreamResult.completed();
+        } catch (IOException e) {
+            return StreamResult.upstreamFailed(e);
+        }
     }
 
     /**
