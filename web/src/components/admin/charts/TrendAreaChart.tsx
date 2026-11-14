@@ -41,8 +41,10 @@ export function TrendAreaChart(props: {
    *
    * <p>`window` = 合计 · 日均，说的是整条曲线代表的量；`latest` = 最后一天的读数。
    * 两者都对，但**不是同一件事**：窗口末尾常常没有判读，`latest` 读出来是 0，
-   * 容易被误读成这批记录清零了。默认值给 `window`（新页面用新口径）；
-   * 已冻结的仪表盘由它自己显式决定口径，不被别人的改动带着变。
+   * 容易被误读成这批记录清零了。
+   *
+   * <p>默认值给 `latest`——**与本原语改造前的行为一致**，冻结页不因为别人改了
+   * 共享原语而跟着变口径。需要 `window` 口径的页面自己显式声明。
    */
   readout?: "window" | "latest"
 }): ReactElement {
@@ -51,7 +53,7 @@ export function TrendAreaChart(props: {
     ariaLabel,
     height = 280,
     previousLabel = "上一等长窗口",
-    readout = "window",
+    readout = "latest",
   } = props
   const gradientId = `iris-viz-area-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`
 

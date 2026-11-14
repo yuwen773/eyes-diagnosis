@@ -235,7 +235,14 @@ export function AdminDataAnalysisPage(): ReactElement {
   /* ── 面板块（两种布局复用同一批内容）────────────────────────── */
 
   const trendBlock = (
-    <TrendAreaChart data={trendRows} ariaLabel="判读趋势" height={288} />
+    <TrendAreaChart
+      data={trendRows}
+      ariaLabel="判读趋势"
+      height={288}
+      /* 本页的卡头读数说的是整条曲线代表的量（合计 · 日均），
+         不与冻结的仪表盘共用口径。 */
+      readout="window"
+    />
   )
 
   /** 窗口重点卡：这一页唯一需要「动手」的地方（积压与拒识）。 */
