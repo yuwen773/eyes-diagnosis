@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
+import com.csust.eyediagnosis.model.dto.agent.MessageType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,6 +51,20 @@ class DiagnosisAgentRedactionTest {
         assertNull(parsed.getStepLabel());
         assertNull(parsed.getFinishReason());
         assertNull(parsed.getErrorCategory());
+    }
+
+    @Test
+    void nullLegacyAndOptionalFieldsAreOmittedRatherThanByteCompatible() throws Exception {
+        ObjectMapper json = new ObjectMapper();
+        MessageDTO dto = new MessageDTO();
+        assertEquals(json.readTree("{}"), json.valueToTree(dto));
+        dto.setContent("普通回复");
+        dto.setMessageType(MessageType.ASSISTANT);
+        assertEquals(json.readTree("{\"content\":\"普通回复\",\"messageType\":\"assistant\"}"),
+                json.valueToTree(dto));
+        MessageDTO explicitNulls = json.readValue(
+                "{\"content\":null,\"messageType\":null,\"toolCalls\":null}", MessageDTO.class);
+        assertEquals(json.readTree("{}"), json.valueToTree(explicitNulls));
     }
 
     @Test

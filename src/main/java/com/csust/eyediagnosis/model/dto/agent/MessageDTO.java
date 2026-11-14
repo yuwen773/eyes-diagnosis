@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Omit absent fields so ordinary-chat SSE frames stay byte-compatible with the
- * pre-A1 shape (no new null keys) for existing clients and fixtures.
+ * Ordinary-chat SSE omits every null field, including the legacy content,
+ * messageType and toolCalls fields. Consumers must accept missing fields;
+ * this is structural compatibility, not byte-for-byte compatibility with pre-A1 frames.
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -18,7 +19,7 @@ public class MessageDTO {
 
     /* ── Ordinary-chat tool step contract (all optional) ──────────────────
      * Absent on historical messages, plain assistant chunks and every event
-     * emitted before this feature: consumers must tolerate null. No new SSE
+     * emitted before this feature: consumers must tolerate missing or null fields. No new SSE
      * event name is introduced; these ride on existing MessageDTO frames.
      * Never populated from model-generated text — see ToolStepContract.
      * ──────────────────────────────────────────────────────────────────── */

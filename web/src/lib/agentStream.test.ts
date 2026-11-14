@@ -112,6 +112,59 @@ describe("applyStreamEvent", () => {
 })
 
 describe("工具执行状态契约 (A1)", () => {
+  it.each(["succeeded", "failed", "cancelled"] as const)(
+    "%s 终态不被重复、冲突或迟到状态及请求覆盖",
+    (terminal) => {
+      let msgs = applyStreamEvent([], toolRequest("a"))
+      msgs = applyStreamEvent(msgs, toolStatus("a", terminal, { finishReason: "original" }))
+      for (const status of ["running", "awaiting-confirm", "succeeded", "failed", "cancelled"]) {
+        msgs = applyStreamEvent(msgs, toolStatus("a", status, { finishReason: "late" }))
+      }
+      msgs = applyStreamEvent(msgs, toolRequest("a"))
+      msgs = applyStreamEvent(msgs, { messageType: "tool-confirm", toolCallId: "a", content: "迟到确认" })
+      expect(msgs).toHaveLength(1)
+      expect(msgs[0]).toMatchObject({ toolStatus: terminal, finishReason: "original" })
+    },
+  )
+
+  it("状态先到、请求后到仍只有一张卡且保留真实终态", () => {
+    let msgs = applyStreamEvent([], toolStatus("a", "succeeded", { finishReason: "STOP" }))
+    msgs = applyStreamEvent(msgs, toolRequest("a"))
+    expect(msgs).toHaveLength(1)
+    expect(msgs[0]).toMatchObject({ toolStatus: "succeeded", finishReason: "STOP", toolName: "searchDocuments" })
+  })
+
+  it("重复确认只保留一张通知，流结束保留关联工具的等待状态", () => {
+    let msgs = applyStreamEvent([], toolRequest("a"))
+    const confirm = { messageType: "tool-confirm", toolCallId: "a", content: "等待审批" }
+    msgs = applyStreamEvent(msgs, confirm)
+    msgs = applyStreamEvent(msgs, confirm)
+    msgs = markPendingToolsCancelled(msgs)
+    expect(msgs).toHaveLength(2)
+    expect(msgs[0].toolStatus).toBe("awaiting-confirm")
+    expect(msgs[1].type).toBe("confirm")
+    msgs = applyStreamEvent(msgs, toolStatus("a", "succeeded", { finishReason: "STOP" }))
+    expect(msgs).toHaveLength(1)
+    expect(msgs[0].toolStatus).toBe("succeeded")
+  })
+
+  it("确认先到后补请求时按 ID 合并等待态，不因流结束误取消", () => {
+    let msgs = applyStreamEvent([], { messageType: "tool-confirm", toolCallId: "a", content: "等待审批" })
+    msgs = applyStreamEvent(msgs, toolRequest("a"))
+    const request = markPendingToolsCancelled(msgs).find((m) => m.type === "tool-request")
+    expect(request?.toolStatus).toBe("awaiting-confirm")
+  })
+
+  it("无关联 ID 的多工具确认不按相同标签猜测归属", () => {
+    let msgs = applyStreamEvent([], toolRequest("a"))
+    msgs = applyStreamEvent(msgs, toolRequest("b"))
+    msgs = applyStreamEvent(msgs, { messageType: "tool-confirm", stepLabel: "检索医学知识库", content: "等待审批" })
+    msgs = markPendingToolsCancelled(msgs)
+    expect(msgs.slice(0, 2).map((m) => m.toolStatus)).toEqual(["cancelled", "cancelled"])
+    expect(msgs[2]).toMatchObject({ type: "confirm", toolStatus: "awaiting-confirm" })
+    expect(msgs[2].toolCallId).toBeUndefined()
+  })
+
   it("五个状态都能通过确定性事件序列重现，且只有 succeeded 带 STOP", () => {
     const states = [
       { wire: "awaiting-confirm", finishReason: undefined },
@@ -237,22 +290,24 @@ describe("mapHistoryMessage", () => {
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "text", content: "答" }).type).toBe("assistant")
   })
 
-  it("历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）", () => {
+  it("旧历史 tool-call 恢复安全工具标签，不向界面传递旧参数", () => {
     const m = mapHistoryMessage({
       id: 2,
       role: "ASSISTANT",
       subType: "tool-call",
-      // 后端落库格式：工具名: 参数 JSON（DiagnosisAgent.java:168-173）
+      // A1 之前的历史格式；兼容读取不再恢复参数展示。
       content: 'searchDocuments: {"query":"青光眼"}',
       isSummary: false,
       createdTime: "2026-11-08 10:00:00",
     })
     expect(m.type).toBe("tool-request")
     expect(m.toolName).toBe("searchDocuments")
-    expect(m.toolCalls?.[0]).toEqual({ name: "searchDocuments", args: { query: "青光眼" } })
+    expect(m.stepLabel).toBe("检索医学知识库")
+    expect(m.toolCalls?.[0]).toEqual({ name: "searchDocuments", stepLabel: "检索医学知识库", args: {} })
+    expect(JSON.stringify(m)).not.toContain("青光眼")
   })
 
-  it("历史 tool-call 参数不是合法 JSON 时保留原文", () => {
+  it("旧历史无效 JSON 和未知工具均不展示原始内容", () => {
     const m = mapHistoryMessage({
       id: 3,
       role: "ASSISTANT",
@@ -261,6 +316,8 @@ describe("mapHistoryMessage", () => {
       isSummary: false,
       createdTime: "2026-11-08 10:00:00",
     })
-    expect(m.toolCalls?.[0].args).toEqual({ _raw: "{not json" })
+    expect(m.stepLabel).toBe("调用工具")
+    expect(m.toolCalls?.[0].args).toEqual({})
+    expect(JSON.stringify(m)).not.toMatch(/broken|not json|_raw/)
   })
 })

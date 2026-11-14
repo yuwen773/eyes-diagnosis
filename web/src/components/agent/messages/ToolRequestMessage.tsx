@@ -23,6 +23,15 @@ const STATUS_TEXT: Record<ToolStepStatus, string> = {
 
 /** 工具调用卡：头部（扳手 + 固定标签 + 状态）+ 参数键值行。 */
 export function ToolRequestMessage({ msg }: { msg: StreamMessage }) {
+  // 一条历史消息可含多个调用；同名工具也保留独立步骤。
+  if (msg.toolCalls && msg.toolCalls.length > 1) {
+    return msg.toolCalls.map((tc, index) => (
+      <ToolRequestMessage
+        key={`${msg.id}-${index}`}
+        msg={{ ...msg, toolCallId: tc.id, stepLabel: tc.stepLabel ?? tc.name, toolCalls: [tc] }}
+      />
+    ))
+  }
   const status = msg.toolCallId ? msg.toolStatus : undefined
   const label = msg.stepLabel ?? (msg.toolCalls ?? []).map((tc) => tc.name).join(", ") ?? "工具"
   return (

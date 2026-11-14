@@ -91,6 +91,10 @@ function parseToolStatus(raw: unknown): ToolStepStatus | undefined {
   return TOOL_STATUSES.includes(raw as ToolStepStatus) ? (raw as ToolStepStatus) : undefined
 }
 
+function isTerminal(status: ToolStepStatus | undefined): boolean {
+  return status === "succeeded" || status === "failed" || status === "cancelled"
+}
+
 /**
  * 状态事件按 toolCallId 归属到对应卡片；找不到目标时返回 null，调用方
  * 自行决定是否补一张匿名卡。绝不把状态套到"最后一张"卡上——并发工具会串台。
@@ -106,6 +110,7 @@ function applyToolStatus(
   const out = msgs.map((m) => {
     if (m.type !== "tool-request" || m.toolCallId !== callId) return m
     found = true
+    if (isTerminal(m.toolStatus)) return m
     return {
       ...m,
       toolStatus: status,
@@ -114,18 +119,22 @@ function applyToolStatus(
       errorCategory: dto.errorCategory,
     }
   })
-  return found ? out : null
+  if (!found) return null
+  // 已恢复执行或收到结果时，移除同一调用的过期暂停通知。
+  const awaiting = out.some((m) => m.type === "tool-request" && m.toolCallId === callId
+    && m.toolStatus === "awaiting-confirm")
+  return awaiting ? out : out.filter((m) => m.type !== "confirm" || m.toolCallId !== callId)
 }
 
 /**
- * 流终止时把仍未收到真实结果的卡统一标成 cancelled；已有成功/失败/取消
- * 终态的卡不动。错误、断流和取消都走这里，绝不产生虚假成功。
+ * 流终止时把仍在执行的卡标成 cancelled；图中断的等待确认与已有终态保留。
+ * 错误、断流和取消都走这里，绝不产生虚假成功。
  */
 export function markPendingToolsCancelled(msgs: StreamMessage[]): StreamMessage[] {
   let changed = false
   const out = msgs.map((m) => {
     if (m.type !== "tool-request" || !m.toolCallId) return m
-    if (m.toolStatus === "succeeded" || m.toolStatus === "failed" || m.toolStatus === "cancelled") return m
+    if (isTerminal(m.toolStatus) || m.toolStatus === "awaiting-confirm") return m
     changed = true
     return { ...m, toolStatus: "cancelled" as ToolStepStatus, finishReason: "INTERRUPTED" }
   })
@@ -167,7 +176,7 @@ export function applyStreamEvent(
     }
 
     case "tool-request": {
-      const out = truncate(msgs)
+      const out = [...truncate(msgs)]
       for (const tc of dto.toolCalls ?? []) {
         const name = tc.name || "工具"
         let parsedArgs: Record<string, unknown>
@@ -177,7 +186,19 @@ export function applyStreamEvent(
           parsedArgs = { _raw: tc.arguments }
         }
         const callId = tc.id ?? undefined
-        const status = parseToolStatus(dto.toolStatus) ?? (callId ? "running" : undefined)
+        const waiting = callId && out.some((m) => m.type === "confirm" && m.toolCallId === callId)
+        const status = waiting ? "awaiting-confirm" : parseToolStatus(dto.toolStatus) ?? (callId ? "running" : undefined)
+        const existing = callId ? out.findIndex((m) => m.type === "tool-request" && m.toolCallId === callId) : -1
+        if (existing >= 0) {
+          // 重放请求只补卡片资料；状态先到时也不能重置真实结果。
+          out[existing] = {
+            ...out[existing],
+            toolName: name,
+            stepLabel: out[existing].stepLabel ?? tc.stepLabel ?? dto.stepLabel ?? name,
+            toolCalls: [{ name, args: parsedArgs, id: callId, stepLabel: tc.stepLabel ?? dto.stepLabel }],
+          }
+          continue
+        }
         out.push({
           id: newId(),
           type: "tool-request",
@@ -202,7 +223,8 @@ export function applyStreamEvent(
       if (status && dto.toolCallId) {
         // 状态事件先于 TOOL_REQUEST 到达：补一张最小匿名卡，不推断成功。
         return [
-          ...truncate(msgs),
+          ...truncate(msgs).filter((m) => m.type !== "confirm" || m.toolCallId !== dto.toolCallId
+            || status === "awaiting-confirm"),
           {
             id: newId(),
             type: "tool-request",
@@ -244,18 +266,23 @@ export function applyStreamEvent(
     // 兼容后端 MessageType.TOOL_CONFIRM（序列化为 tool-confirm）
     // 与历史 mcp-confirm 事件名。两者都是图中断的终点卡。
     case "tool-confirm":
-    case "mcp-confirm":
+    case "mcp-confirm": {
+      if (dto.toolCallId && msgs.some((m) => m.type === "tool-request"
+        && m.toolCallId === dto.toolCallId && isTerminal(m.toolStatus))) return msgs
+      const out = truncate(applyToolStatus(msgs, { ...dto, toolStatus: "awaiting-confirm" }) ?? msgs)
+      if (dto.toolCallId && out.some((m) => m.type === "confirm" && m.toolCallId === dto.toolCallId)) return out
       return [
-        ...truncate(msgs),
+        ...out,
         {
           id: newId(),
           type: "confirm",
           content,
           toolCallId: dto.toolCallId,
-          toolStatus: parseToolStatus(dto.toolStatus) ?? "awaiting-confirm",
+          toolStatus: "awaiting-confirm",
           stepLabel: dto.stepLabel,
         },
       ]
+    }
 
     default:
       return msgs
@@ -294,16 +321,16 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     }
   }
 
-  // 历史里的工具调用落库格式是「工具名: 参数 JSON」（DiagnosisAgent.java:168-173），
-  // 不解析的话工具步骤只剩一行空白的 TOOL 标签。
+  // 新历史按行保存固定标签；旧历史只读工具名，不把存量敏感参数带回展示层。
   if (type === "tool-request") {
-    const parsed = parseToolCallText(m.content)
+    const calls = parseHistoricalToolCalls(m.content)
     return {
       id: newId(),
       type,
       content: "",
-      toolName: parsed?.name,
-      toolCalls: parsed ? [parsed] : undefined,
+      toolName: calls.length === 1 ? calls[0].name : undefined,
+      stepLabel: calls.length === 1 ? calls[0].stepLabel : undefined,
+      toolCalls: calls,
       time: m.createdTime ? formatTime(m.createdTime) : "",
     }
   }
@@ -319,18 +346,30 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
   }
 }
 
-/** 「工具名: 参数 JSON」→ { name, args }；解析不出时返回 null。 */
-function parseToolCallText(content: string): ToolCallArg | null {
-  const sep = content.indexOf(":")
-  if (sep <= 0) return null
-  const name = content.slice(0, sep).trim()
-  const raw = content.slice(sep + 1).trim()
-  if (!name) return null
-  try {
-    return { name, args: JSON.parse(raw || "{}") as Record<string, unknown> }
-  } catch {
-    return { name, args: { _raw: raw } }
+/** 对齐 ToolStepContract 的历史标签白名单；未知旧工具名也不透传。 */
+const HISTORY_TOOL_LABELS = new Map([
+  ["searchDocuments", "检索医学知识库"],
+  ["userBoundSearchDocuments", "检索医学知识库"],
+  ["analyzeEyeImage", "分析眼底图像"],
+  ["userBoundAnalyzeEyeImage", "分析眼底图像"],
+])
+
+function parseHistoricalToolCalls(content: string): ToolCallArg[] {
+  const labels = new Set([...HISTORY_TOOL_LABELS.values(), "调用工具"])
+  const calls: ToolCallArg[] = []
+  for (const line of content.split(/\r?\n/)) {
+    const label = line.trim()
+    if (labels.has(label)) {
+      calls.push({ name: label, stepLabel: label, args: {} })
+      continue
+    }
+    const legacyName = /^([A-Za-z_][\w.-]*):/.exec(line)?.[1]
+    if (legacyName) {
+      const stepLabel = HISTORY_TOOL_LABELS.get(legacyName) ?? "调用工具"
+      calls.push({ name: HISTORY_TOOL_LABELS.has(legacyName) ? legacyName : "调用工具", stepLabel, args: {} })
+    }
   }
+  return calls.length ? calls : [{ name: "调用工具", stepLabel: "调用工具", args: {} }]
 }
 
 export function useAgentStream() {
