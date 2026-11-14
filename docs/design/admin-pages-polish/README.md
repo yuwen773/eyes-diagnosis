@@ -4,8 +4,8 @@
 |---|---|
 | 源分支 | `feat/iris21-admin-pages-polish`（叠在 PR #79 的 `feat/iris21-admin-workspace` 之上） |
 | 基线 commit | `8f83f542afcb2a95efc73a258734f9217b930f0d`（PR #79 HEAD，**未改写**） |
-| 本轮 HEAD | `b937e701`（+ 本轮收尾提交见 §5 第 3 轮） |
-| 本轮 commit | `eac563a0`（首轮实现）→ `c90af659`（第 1 轮整改）→ `a5c82aec`（第 2 轮整改）→ `b937e701`（收紧共享原语改动面）→ 证据重拍与报告收尾 |
+| 本轮 HEAD | `fd4e41c`（第 3 轮整改；+ 本轮文档提交见 §5 第 3 轮） |
+| 本轮 commit | `eac563a0`（首轮实现）→ `c90af659`（第 1 轮整改）→ `a5c82aec`（第 2 轮整改）→ `b937e701`（收紧共享原语改动面）→ `afacecc7`（证据重拍）→ `fd4e41c`（第 3 轮整改）→ 文档收尾 |
 | 改动范围 | 仅 `web/`（前端源码 + 证据脚本）与 `docs/design/admin-pages-polish/`（证据树）。后端、Flyway、Agent、鉴权、发布状态机**零改动** |
 | 裁决 | **READY FOR HUMAN REVIEW**（机器门禁全绿；视觉终判仍以人工为准） |
 
@@ -15,12 +15,12 @@
 
 | 页 | 完成情况 | 主要改动 | 视觉验收 |
 |---|---|---|---|
-| **数据中心** `AdminDataAnalysisPage` | 完成 | KPI 读数轨（窗口内判读 / 涉及结论类别 / 窗口内平均置信度 / 待人工复核·全站）逐格标注范围；重点卡列出**全部**复核状态档位并写明「AI 拒识并入『拒识 / 低置信 · 待复核』一档」；病种日趋势注明「只画判读量前 N 个类别（共 M 个）」；底部口径带按「窗口内 / 全站」分组；「表」视图读数表限高滚动、重点卡按内容收高 | `after/data-analysis-*.png`（8 张）+ `after/x-data-analysis-readtable-1440-*.png`；`after-nodata/data-analysis-*.png` 空窗口态；`compare/compare-data-analysis-*.png` |
-| **诊断管理** `AdminDiagnosisPage` | 完成 | 判读结论列显示归一后的规范中文名 + 类别码 + 严重度；AI 拒识独立成「未出结论 + 拒识原因」，与「无判读结果」分开；疾病名筛选把规范名换算成库内落库标签，框下写明对照，空态说明检索口径；单元格 title 带库内原值；抽屉建议列表用自建计数器（序号不再恒为 0） | `after/diagnosis-*.png`（8 张）+ `after/x-diagnosis-{rowmenu,drawer,batch}-1440-*.png`；`compare/compare-diagnosis-*.png` |
-| **新闻管理** `AdminNewsPage` | 完成 | 两级标题排版（标题 / 摘要分主次）；封面缩略图内联在标题格（有图才出现，不占列）；状态以 `RiskTag` 呈现并附状态口径脚注；行菜单里的下线类迁移（下架 / 转为草稿）先弹确认，发布与送审直接执行 | `after/news-*.png`（8 张）+ `after/x-news-{rowmenu,offline-confirm,batch}-1440-*.png`；`compare/compare-news-*.png` |
-| **知识库** `AdminKnowledgePage` | 完成 | 「筛选与上传」合成一个面板；上传区说明可多选、可直接拖到该区域；台账拆出「文档 / 类型体积 / 分块数 / 处理状态 / 上传时间 / 操作」；文档预览抽屉里**原文与 RAG 切片分成两个独立区域**；类型段控件不再并列 MD 与 MARKDOWN 两种等价写法 | `after/knowledge-*.png`（8 张）+ `after/x-knowledge-{preview,rowmenu}-1440-*.png`；`compare/compare-knowledge-*.png` |
-| **用户管理** `AdminUsersPage` | 完成 | 角色 / 身份两级 chip（管理紫 = 管理身份，`--risk-*` = 账号状态）；批量条（批量删除 / 封禁 / 解封）；新建用户弹层；台账列收紧 | `after/users-*.png`（8 张）+ `after/x-users-{create,rowmenu,batch}-1440-*.png`；`compare/compare-users-*.png` |
-| **新闻编辑** `AdminNewsEditPage` | 完成 | 独立的编辑工作台（正文 / 发布设置双栏）；「编辑 / 预览」分段切换；预览**只渲染不落库**；保存状态读数（色点 + 文字）；≤640px 三条脚注全部保留（「字符」与「字」两套口径不再被藏起来） | `after/news-edit-*.png`（8 张）+ `after/x-newsedit-preview-1440-*.png`；`compare/compare-news-edit-*.png` |
+| **数据中心** `AdminDataAnalysisPage` | 完成 | KPI 读数轨（窗口内判读 / 涉及结论类别 / 窗口内平均置信度 / 待人工复核·全站）逐格标注范围；重点卡列出**全部**复核状态档位并写明「AI 拒识并入『拒识 / 低置信 · 待复核』一档」，第 3 轮再补「『仅 AI 结论 · 待复核』是另一档待办，没有计入积压数」；复核状态分布卡顶端对齐并补卡内口径说明；按星期柱图补「柱为各星期几日均」口径；病种日趋势注明「只画判读量前 N 个类别（共 M 个）」；底部口径带按「窗口内 / 全站」分组；「表」视图读数表限高滚动、重点卡按内容收高 | `after/data-analysis-*.png`（8 张）+ `after/x-data-analysis-readtable-1440-*.png`；`after-nodata/data-analysis-*.png` 空窗口态；`compare/compare-data-analysis-*.png` |
+| **诊断管理** `AdminDiagnosisPage` | 完成 | 批量删除加二次确认（第 3 轮）；判读结论列显示归一后的规范中文名 + 类别码 + 严重度；AI 拒识独立成「未出结论 + 拒识原因」，与「无判读结果」分开；疾病名筛选把规范名换算成库内落库标签，框下写明对照，空态说明检索口径；单元格 title 带库内原值；抽屉建议列表用自建计数器（序号不再恒为 0） | `after/diagnosis-*.png`（8 张）+ `after/x-diagnosis-{rowmenu,drawer,batch}-1440-*.png`；`compare/compare-diagnosis-*.png` |
+| **新闻管理** `AdminNewsPage` | 完成 | 第 3 轮：台账四列改百分比分配，标题列 864px → 539px；两级标题排版（标题 / 摘要分主次）；封面缩略图内联在标题格（有图才出现，不占列）；状态以 `RiskTag` 呈现并附状态口径脚注；行菜单里的下线类迁移（下架 / 转为草稿）先弹确认，发布与送审直接执行 | `after/news-*.png`（8 张）+ `after/x-news-{rowmenu,offline-confirm,batch}-1440-*.png`；`compare/compare-news-*.png` |
+| **知识库** `AdminKnowledgePage` | 完成 | 第 3 轮：批量删除加二次确认；文档预览 / 文档工作区故障提示按 5xx / 4xx 分级并给重试；「筛选与上传」合成一个面板；上传区说明可多选、可直接拖到该区域；台账拆出「文档 / 类型体积 / 分块数 / 处理状态 / 上传时间 / 操作」；文档预览抽屉里**原文与 RAG 切片分成两个独立区域**；类型段控件不再并列 MD 与 MARKDOWN 两种等价写法 | `after/knowledge-*.png`（8 张）+ `after/x-knowledge-{preview,rowmenu}-1440-*.png`；`compare/compare-knowledge-*.png` |
+| **用户管理** `AdminUsersPage` | 完成 | 第 3 轮：批量删除加二次确认；角色 / 身份两级 chip（管理紫 = 管理身份，`--risk-*` = 账号状态）；批量条（批量删除 / 封禁 / 解封）；新建用户弹层；台账列收紧 | `after/users-*.png`（8 张）+ `after/x-users-{create,rowmenu,batch}-1440-*.png`；`compare/compare-users-*.png` |
+| **新闻编辑** `AdminNewsEditPage` | 完成 | 封面占位「NO COVER」改「暂无封面」（第 3 轮）；独立的编辑工作台（正文 / 发布设置双栏）；「编辑 / 预览」分段切换；预览**只渲染不落库**；保存状态读数（色点 + 文字）；≤640px 三条脚注全部保留（「字符」与「字」两套口径不再被藏起来） | `after/news-edit-*.png`（8 张）+ `after/x-newsedit-preview-1440-*.png`；`compare/compare-news-edit-*.png` |
 
 **共享原语**：新增 `MetricCell`（KPI 读数格，仪表盘与数据分析共用）、`InsightEmpty`（空窗口解释面板）、读数表滚动壳 `.admin-viz__tablewrap`；`TrendAreaChart` / `RankedBars` / `SmallMultipleTrend` / `WeekBars` 只改读数口径与截断算法，不改图表语言；`TrendAreaChart` 的读数**默认值保持基线不变**，要新口径的页面自己声明。
 
@@ -28,16 +28,18 @@
 
 ## 2. 改动文件范围
 
-**页面与组件（13）**
-`web/src/pages/admin/AdminDataAnalysisPage.tsx`、`AdminDiagnosisPage.tsx`、`AdminNewsPage.tsx`、`AdminKnowledgePage.tsx`、`AdminUsersPage.tsx`、`AdminNewsEditPage.tsx`、`AdminDashboardPage.tsx`（仅共享组件抽取，**主布局未动**）、`web/src/components/admin/MetricCell.tsx`（新）、`InsightEmpty.tsx`（新）、`charts/ChartFrame.tsx`、`charts/RankedBars.tsx`、`charts/SmallMultipleTrend.tsx`、`charts/TrendAreaChart.tsx`、`charts/WeekBars.tsx`
+**页面与组件（16）**
+`web/src/pages/admin/AdminDataAnalysisPage.tsx`、`AdminDiagnosisPage.tsx`、`AdminNewsPage.tsx`、`AdminKnowledgePage.tsx`、`AdminUsersPage.tsx`、`AdminNewsEditPage.tsx`、`AdminDashboardPage.tsx`（仅共享组件抽取，**主布局未动**）、`web/src/components/admin/MetricCell.tsx`（新）、`InsightEmpty.tsx`（新）、`DocumentReader.tsx`（第 3 轮：故障分级 + 重试）、`KnowledgeWorkspace.tsx`（第 3 轮：故障分级 + 重试）、`charts/ChartFrame.tsx`、`charts/RankedBars.tsx`、`charts/ShareBar.tsx`（第 3 轮：可选口径说明）、`charts/SmallMultipleTrend.tsx`、`charts/TrendAreaChart.tsx`、`charts/WeekBars.tsx`
 
-**领域层（2）**：`web/src/lib/adminDomain.ts`、`web/src/lib/domain.ts`（新增 `classSearchLabel` / `classSearchHint`）
+**领域层（2）**：`web/src/lib/adminDomain.ts`、`web/src/lib/domain.ts`（新增 `classSearchLabel` / `classSearchHint`；第 3 轮补「库内原值原样透传」）
 
-**样式（5）**：`admin.css`（共享）、`admin-polish-analysis.css`（新）、`admin-polish-ledger.css`（新）、`admin-polish-cms.css`（新）；`admin-redesign.css` 仅读取未改
+**注释订正（3，第 3 轮）**：`web/src/lib/api.ts`、`web/src/lib/records.ts`、`web/src/lib/adminApi.ts`——三处 `reexamineStatus` 注释由「1 未复审」改为「0 未复审（历史值 1 同义）」。**只改注释，不改任何类型或字段**；后端四处同名注释属后端工单，本轮不改。
+
+**样式（5）**：`admin.css`（共享：新增 `.admin-viz__note` 口径说明）、`admin-polish-analysis.css`（新）、`admin-polish-ledger.css`（新）、`admin-polish-cms.css`（新；第 3 轮补资讯台账勾选列百分比）；`admin-redesign.css` 仅读取未改
 
 **证据脚本（5）**：`web/scripts/evidence/admin-pages-polish.mjs`、`admin-pages-acceptance.mjs`、`compare.mjs`、`fixture-diagnosis.mjs`、`publish-handoff.mjs`
 
-**未触碰**：后端 Java、Flyway 迁移、`web/src/lib/api.ts`、`web/e2e/`（**Playwright 冒烟用例逐字未动**）、`ui` / `master` 分支。
+**未触碰**：后端 Java、Flyway 迁移、`web/e2e/`（**Playwright 冒烟用例逐字未动**）、`ui` / `master` 分支。`web/src/lib/api.ts` 只改了第 3 轮的一行注释（见上），无逻辑改动。
 
 **测试文件（2 个，均为前端单测）**：`web/src/lib/adminDomain.test.ts`（第 2 轮：`notReviewed` 的期望值 1 → 0，见 §5 第 2 轮 P1-2 的证据说明）、`web/src/lib/domain.test.ts`（第 2 轮新增 5 条 `classSearchLabel` / `classSearchHint` 用例）。**没有删改任何一条断言去迁就实现**：`adminDomain.test.ts` 的改动是把「按 1 检索」的期望改成「按 0 检索」，而这正是修复本身（落库值就是 0）；`domain.test.ts` 是**纯新增**。
 
@@ -65,14 +67,18 @@
 | 页 | 横向溢出 | 最宽的一列 | 被裁切的单元格 |
 |---|---|---|---|
 | 诊断管理 | **0px** | 判读结论格 320px | 0 |
-| 新闻管理 | **0px** | **标题格 864px**（该列最长内容约 150px） | 0 |
+| 新闻管理 | **0px** | 标题格 **539px**（第 3 轮由 864px 收窄；该列最长内容约 250px） | 0 |
 | 知识库 | **0px** | 文档格 587px | 0 |
 | 用户管理 | **0px** | 账户格 586px | 0 |
 | 数据中心 | **0px** | —（无台账） | 0 |
 
-结论：**五页在 1920px 下均无横向溢出，无任何单元格发生文字裁切**。
-唯一的版面遗留是资讯台账标题格的宽度与内容宽度不匹配（864px vs 约 150px）——已列为 P2，
-并说明收窄 `--admin-maxw` 解决不了（1440 下标题列仍约 780px）且会动到 PR #79 冻结的外壳宽度。
+结论：**五页在 1920px 下均无横向溢出，无任何单元格发生文字裁切**（每个单元格 `scrollWidth == clientWidth`）。
+第 3 轮修掉了原先唯一的版面遗留：资讯台账标题格由 **864px 收窄到 539px**。
+
+**为什么不是「收窄 `--admin-maxw`」**：1920 下的空白来自**列宽口径**，不是版心宽度——固定表格布局
+（`table-layout: fixed`）里百分比列是定值、没定宽的列会独吞整条余量，1440 下标题列仍约 780px，
+收窄版心并不能解决，还会动到 PR #79 冻结的外壳宽度。改法是让四列都按百分比分配（勾选列 4%），
+余量摊到列与列之间，见 §5 第 3 轮 P2-1。
 
 > 修正记录：本条最初按评审原话写成「资讯 / 诊断台账标题列约 780px 空白」。
 > 实测后确认**诊断台账根本没有标题列**（最宽的是判读结论格 320px），780px 这个数字也不精确，
@@ -83,8 +89,10 @@
 
 ### 3.2 仪表盘受影响的改动（逐条披露）
 
-仪表盘的**主布局未动**（栅格、卡片构成、层级、外壳、KPI 轨、图表类型与配色一律未改）。它复用的图表原语改过三处，
-第 2 轮后**两处已改回基线**、剩下一处保留并在此写明；本轮收尾时又把两处改回去了：
+仪表盘的**主布局未动**（栅格、卡片构成、层级、外壳、KPI 轨、图表类型与配色一律未改）。它复用的图表原语改过三处：
+两处**已改回基线**（共享原语的默认值与页面传参都回到基线），一处是**缺陷修复**、保留并在此逐条写明。
+**第 3 轮没有再动仪表盘的任何一行**（`git diff fd4e41c^ fd4e41c -- web/src/pages/admin/AdminDashboardPage.tsx` 为空），
+下表描述的是 HEAD `fd4e41c` 的真实状态：
 
 | 位置 | 状态 | 说明 |
 |---|---|---|
@@ -95,8 +103,10 @@
 
 **证据链自证**：`before/dashboard-*.png`（8 张）是把受影响的文件临时回退到基线 `8f83f542`、
 用**同一份夹具数据**渲染出来的仪表盘。与 `after/dashboard-*.png` 并排即可看出改了什么、没改什么。
-本轮收尾时**把 `before/` 全部 7 页都用同一份夹具重拍了一遍**（此前的 `before/` 是夹具种下之前拍的，
+第 2 轮收尾时**把 `before/` 全部 7 页都用同一份夹具重拍了一遍**（此前的 `before/` 是夹具种下之前拍的，
 内容与 `after/` 不可比，已作废），因此 `compare/` 里六页的前后图现在**逐行同数据**。
+第 3 轮又重拍了 `after/`（82 张）与 `after-nodata/`（18 张）——**重拍前后仪表盘的 8 张截图逐像素相同**，
+说明第 3 轮的改动确实没有碰它。
 
 **口径更正（重要）**：本报告早前版本写过「仪表盘渲染逐像素未变」——**不成立**，已作废。
 当时的比对把 PR #79 的夹具截图与本轮的夹具截图叠在一起，两者**数据集不同**（KPI 12 → 44、AI 拒识 1 → 5、
@@ -197,8 +207,31 @@
 2. `t_diagnosis.result` 的疾病名检索目前只能在 `result` 一列上 LIKE。若要支持「视网膜病变」这类
    跨类别的子串检索，需要一张规范名 ↔ 落库标签的对照表（前端 `CLASS_SEARCH_LABELS` 是它的前端副本）。
 
+**第 3 轮（两路独立评审；评审者读的是真实截图与真实代码，不是实现者的自述）**
+
+- 视觉路：**0 P0 / 1 P1 / 9 P2 / 7 P3**。唯一的 P1 是**三页批量删除无二次确认**（判读记录 / 账号 / 知识文档都是不可撤销的批量操作；资讯页第 2 轮补了，其余三页没补 → 同站口径不一致）。
+- 功能路：**0 P0 / 0 P1**（最高 P2）。结论是「没有必须修的 P0/P1」，但点名三条合并前应顺手修的 P2：库内原值不再换算、README §3.2 按 HEAD 重写、文档与实现对齐「行内发布无二次确认」——三条本轮全部落进代码或文档。
+- 评审期间工作树曾被临时回退到基线重拍 `before/`（同一份夹具），评审者读到的是基线代码；已恢复并向两路评审者发了更正消息，要求用 `git show HEAD:<path>` 复核每一条基于代码的结论。**评审结论以更正后的复核为准。**
+
+| 编号 | 来源 | 问题 | 处置 |
+|---|---|---|---|
+| **P1（视觉）** | 视觉 | 判读 / 知识库 / 用户三页「批量删除」一点即执行，无二次确认（不可撤销） | **已修**：三页都加确认弹层，确认前不发请求；判读页文案注明「属医疗数据，批量删除不可撤销」 |
+| **P2-1** | 视觉 | 资讯台账首列无宽度约束，1920 档吸收约 864px，而摘要只有一行短文 | **已修**：四列改百分比分配（勾选列 4%），标题列 **864px → 539px**（实测，见 §3.1） |
+| **P2-2** | 视觉 | 重点卡「待人工复核 15」与构成档「仅 AI 结论 · 待复核 6」对不上账 | **已修**：卡内补口径句，写明该档是另一档待办、未计入积压数 |
+| **P2-3** | 视觉 | 复核状态分布卡与同行的病种分布卡等高，条形图上方空出约 70px | **已修**：该卡内容顶端对齐 + 卡内补口径说明，空腔集中到卡片底部（不再把图浮在中间） |
+| **P2-4** | 视觉 | 「新增注册 · 按星期（日均）」卡头写合计 4，柱图却只有一根 1 | **已修**：卡头改「窗口日均」，柱图下补「柱为各星期几的日均（合计 ÷ 该星期几出现天数），与卡头的窗口日均不是同一口径」 |
+| **P2-5** | 视觉 | 台账页空态没有出口（筛选无结果时只有一句「没有数据」） | **已修**：四个台账页空态加 CTA（有筛选时「清筛选」，否则给页面主动作：新建用户 / 上传文档 / 新建资讯 / 打开数据中心） |
+| **P2-6** | 视觉 | 文档预览与文档工作区读取失败一律降成琥珀且没有重试 | **已修**：按 5xx / 4xx 分级（5xx = critical · server，4xx = attention · client），并给「重试」 |
+| **P2-7** | 功能 | 库内原值被换算：`classSearchLabel('myopia')` → 「近视」，那一行反而查不到（本机 3306 实存 `result='myopia'` 一行） | **已修**：已是库内原值的输入原样透传，只提示它属于哪一类；单测期望同步更正并附证据注释（**改的是被固化的错误契约，不是把断言改松**） |
+| **P2-8** | 功能 | README §3.2 的披露表与 HEAD 不符 | **已修**：按 HEAD 重写（见 §3.2） |
+| **P2-9** | 功能 | 文档写「行内发布已加二次确认」，实现里发布 / 送审是直接执行的（只有下线类有确认） | **已修**：文档与实现对齐（本表与 §1），发布 / 送审仍是直接执行 |
+| **P3-1** | 视觉 | 编辑页封面占位是英文 `NO COVER` | **已修**：改「暂无封面」 |
+| **P3-2** | 功能 | 前端三处注释仍写「1 未复审」（正是第 2 轮 P1-2 的根因注释） | **已修（前端部分）**：`api.ts` / `records.ts` / `adminApi.ts` 改为「0 未复审（历史值 1 同义）」；后端四处同名注释属后端工单，本轮不改 |
+| **P3-3** | 功能 | 资讯行菜单删除目标缺 id 时提前返回，弹层留在旧目标 | **已修**：判定前移，缺 id 时收起弹层并让页内提示露出来 |
+| **P2（遗留）** | 功能 | 仪表盘「AI 拒识」标签把**所有空结果行**都标成拒识（判据只看 `row.result`，不看 `row.aiRejected`），与诊断页的 `isRejected(row)` 两档拆法不一致 | **不改**：基线 `8f83f542` 与 HEAD 逐字相同（本轮未引入）；改它要动 PR #79 冻结的仪表盘，登记为待人工裁决（见 §6） |
+
 **未采纳的意见（附理由）**
-- 「把 `--admin-maxw` 从 1920px 收窄到 1440px」：1920 下的空白来自列宽比例，不是版心宽度；1440 下标题列仍约 780px，收窄版心并不能解决，且会改动 PR #79 冻结的外壳宽度。**降级为 P2 记录，不做**。
+- 「把 `--admin-maxw` 从 1920px 收窄到 1440px」：1920 下的空白来自列宽口径，不是版心宽度——固定表格布局里没定宽的列会独吞整条余量，1440 下标题列仍约 780px，收窄版心并不能解决，且会改动 PR #79 冻结的外壳宽度。第 3 轮已用**列宽口径**（四列百分比分配）把这个问题解掉，无需动版心。
 - 「把资讯状态迁移整体挪回编辑页」：本轮新增行内迁移是有意为之的能力（已加二次确认），保留。
 
 ---
@@ -207,7 +240,7 @@
 
 | 级别 | 问题 | 影响 / 处置 |
 |---|---|---|
-| P2 | **1920px 下资讯台账的标题格宽 864px，而该列最长内容约 150px**，尾部留下大片空白 | 实测数字见 §3.1；这是列宽比例问题，与版心无关；收窄版心（`--admin-maxw`）并不能解决，还会改动 PR #79 冻结的外壳宽度，本轮不改 |
+| P2 | **仪表盘「AI 拒识」标签把空结果行一律标成拒识**（判据只看 `row.result`，不看 `row.aiRejected`），与诊断页「未出结论 / 无判读结果」两档拆法不一致 | 基线逐字相同、本轮未引入；改它要动 PR #79 **冻结的仪表盘**，本轮不改，登记为待人工裁决。诊断台账侧口径已统一 |
 | P2 | 分析页「病种分布」与「病种日趋势」的标题沿用 Dashboard 词汇（其中含「正常」类） | 仪表盘属冻结范围，两页保持同一词汇优先于单页改名；KPI 已改用「涉及结论类别」并在脚注写明只统计有结论的记录 |
 | P2 | 分页当前页是实心主色方块，与页面主 CTA 同权重 | **PR #79 遗留**（`before/users-1440-light.png` 里已有）。改它要动共享分页原语，会连带改到冻结的仪表盘；属口味判断，本轮不改，留给人工裁决 |
 | P2 | 疾病名检索只能单值命中：后端在 `result` 一列上 LIKE，「视网膜病变」这类跨类别子串查不到（0 条 + 提示补全） | 后端契约限制，本轮不改后端；已开工单（需要一张规范名 ↔ 落库标签的对照表） |
@@ -224,12 +257,12 @@
 
 | 条件 | 状态 |
 |---|---|
-| 工作树干净、全部待集成源码在稳定提交内 | ✅ 见 §5 第 3 轮收尾提交，`git status` 无未提交改动 |
+| 工作树干净、全部待集成源码在稳定提交内 | ✅ 第 3 轮整改提交 `fd4e41c`（源码 + 证据）与随后的文档提交，`git status` 无未提交改动 |
 | 机器门禁全绿 | ✅ 见 §3 |
 | 验收报告完整、证据路径可查 | ✅ 本文件 + `docs/design/admin-pages-polish/` |
 | 后端 / 数据库 / 迁移未改 | ✅ |
 | 未合并进 `ui` / `master`、未部署 | ✅ 本分支只是叠在 PR #79 之上的 Draft PR |
-| 视觉终判 | ⏳ **仍需人工复核**：截图与自动化通过 ≠ 视觉验收通过 |
+| 视觉终判 | ⏳ **仍需人工复核**：截图与自动化通过 ≠ 视觉验收通过（第 3 轮视觉路的 P1 已修并复拍，P2/P3 见 §5） |
 
 **交接信号**：`D:\Work\code\iris-integration-handoff\ui-ready.json`（`ready=true`，原子写入：同目录临时文件 + `rename`）。若本分支在交接后再改动，先把 `ready` 置回 `false`，新提交通过验收后再重新发布。
 
