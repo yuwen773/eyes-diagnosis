@@ -7,7 +7,16 @@
  */
 
 import type { DiagnosisResult } from "./api"
-import { request, toPage, type Page, type RawPage } from "./http"
+import { ApiError } from "./api-error"
+import {
+  BASE_URL,
+  notifyAuthExpired,
+  request,
+  toPage,
+  type Envelope,
+  type Page,
+  type RawPage,
+} from "./http"
 
 export type { Page } from "./http"
 
@@ -220,6 +229,61 @@ export function updateKnowledgeTitle(id: string, title: string): Promise<boolean
 /** 文档详情：元信息 + 限时预览链接 + 切片清单。 */
 export function getKnowledgeDetail(id: string): Promise<KnowledgeDetail> {
   return request<KnowledgeDetail>(`/knowledge/get/${id}`, { method: "GET" })
+}
+
+/**
+ * 原文代理地址（管理端阅读器用）。
+ *
+ * 后端按 owner / 管理员规则鉴权后把 COS 私有对象流出来；浏览器不接触签名、
+ * 也没有长期直链。PDF 直接塞进 iframe，文本与 DOCX 由前端 fetch 成字节再渲染。
+ */
+export function knowledgeContentUrl(id: string, download = false): string {
+  const suffix = download ? "?download=1" : ""
+  return `${BASE_URL}/knowledge/${encodeURIComponent(id)}/content${suffix}`
+}
+
+/**
+ * 取原文字节。返回 type 让调用方按格式分支：
+ * - text：文本（Markdown / TXT）
+ * - bytes：二进制（DOCX）
+ *
+ * 鉴权失败时后端仍走 { code, msg } 信封（HTTP 200 + JSON），这里按 content-type
+ * 识别并抛 ApiError；401xx 与全站一致广播未登录事件。
+ */
+async function fetchKnowledgeContent(
+  id: string,
+  as: "text" | "bytes",
+  signal?: AbortSignal,
+): Promise<string | ArrayBuffer> {
+  let response: Response
+  try {
+    response = await fetch(knowledgeContentUrl(id), { credentials: "include", signal })
+  } catch (error) {
+    if (signal?.aborted) throw error
+    throw new ApiError(-1, "网络不可用，请检查连接后重试")
+  }
+
+  const contentType = response.headers.get("content-type") ?? ""
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json().catch(() => ({}))) as Envelope<unknown>
+    const code = payload.code ?? -1
+    if (code === 40100 || code === 40101) notifyAuthExpired(code)
+    throw new ApiError(code, payload.msg || "原文读取失败")
+  }
+  if (!response.ok) {
+    throw new ApiError(response.status, `服务返回 ${response.status}`)
+  }
+  return as === "text" ? response.text() : response.arrayBuffer()
+}
+
+/** 读取 Markdown / TXT 原文。 */
+export function fetchKnowledgeText(id: string, signal?: AbortSignal): Promise<string> {
+  return fetchKnowledgeContent(id, "text", signal) as Promise<string>
+}
+
+/** 读取 DOCX 字节，交给浏览器内的 mammoth 解析。 */
+export function fetchKnowledgeDocx(id: string, signal?: AbortSignal): Promise<ArrayBuffer> {
+  return fetchKnowledgeContent(id, "bytes", signal) as Promise<ArrayBuffer>
 }
 
 /* ── 统计 ─────────────────────────────────────────────────── */

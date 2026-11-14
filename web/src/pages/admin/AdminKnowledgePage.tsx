@@ -1,3 +1,5 @@
+import "@/styles/admin-document.css"
+
 import {
   useMemo,
   useRef,
@@ -17,14 +19,13 @@ import { AdminPageHead } from "@/components/admin/AdminPageHead"
 import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column } from "@/components/admin/DataTable"
 import { Modal } from "@/components/admin/Modal"
-import { Drawer } from "@/components/admin/Drawer"
+import { KnowledgeWorkspace } from "@/components/admin/KnowledgeWorkspace"
 import { BatchBar } from "@/components/admin/BatchBar"
 import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import {
   deleteKnowledge,
   deleteKnowledgeBatch,
-  getKnowledgeDetail,
   listKnowledge,
   updateKnowledgeTitle,
   uploadKnowledge,
@@ -118,7 +119,7 @@ export function AdminKnowledgePage(): ReactElement {
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
 
-  // 预览抽屉：元信息 + 原文预览 + 切片清单
+  // 预览抽屉：元信息 + 原文阅读 + 切片清单。详情查询在 KnowledgeWorkspace 内。
   const [previewTarget, setPreviewTarget] = useState<KnowledgeDoc | null>(null)
 
   // 改名弹层
@@ -165,15 +166,6 @@ export function AdminKnowledgePage(): ReactElement {
     const status = new Map((listData?.records ?? []).map((doc) => [doc.fileName, doc.status]))
     return uploadedNames.filter((name) => status.get(name) === 0)
   }, [uploadedNames, listData])
-
-  const previewQuery = useQuery({
-    queryKey: queryKeys.admin.knowledgeDetail(previewTarget?.id ?? ""),
-    queryFn: () => getKnowledgeDetail(previewTarget!.id),
-    enabled: previewTarget !== null,
-  })
-  const preview = previewTarget ? previewQuery.data : undefined
-  const previewLoading = previewTarget !== null && previewQuery.isPending
-  const previewFault = previewQuery.error ? describeError(previewQuery.error) : null
 
   /** 写操作成功后失效知识库域与统计域（失败文档数在仪表盘上）。 */
   const refreshKnowledge = () =>
@@ -692,99 +684,9 @@ export function AdminKnowledgePage(): ReactElement {
         列出的是全站知识文档（管理员视角）；普通用户只看到自己上传的
       </p>
 
-      {/* 预览抽屉：原文 + 切片清单。切片是 RAG 真正检索的最小单位，
-          管理员要能看清「这份文档被切成了什么样子」。 */}
-      <Drawer open={previewTarget != null} title="文档预览" onClose={closePreview}>
-        {previewLoading ? (
-          <p className="admin-knowledge__preview-state">读取中…</p>
-        ) : previewFault ? (
-          <FaultNote
-            className="admin-knowledge__preview-fault"
-            fault={fault({
-              severity: "attention",
-              kind: "client",
-              title: previewFault.text,
-              code: previewFault.code,
-            })}
-          />
-        ) : preview ? (
-          <div className="admin-knowledge__preview">
-            <dl className="admin-knowledge__preview-facts">
-              <div className="admin-knowledge__fact">
-                <dt>文件名</dt>
-                <dd>{preview.fileName}</dd>
-              </div>
-              <div className="admin-knowledge__fact">
-                <dt>类型 / 大小</dt>
-                <dd className="num">
-                  {preview.fileType?.toUpperCase()} · {formatFileSize(preview.fileSize)}
-                </dd>
-              </div>
-              <div className="admin-knowledge__fact">
-                <dt>切片数</dt>
-                <dd className="num">{preview.chunkCount ?? 0}</dd>
-              </div>
-            </dl>
-
-            {preview.previewKind === "pdf" && preview.previewUrl ? (
-              <iframe
-                className="admin-knowledge__preview-frame"
-                src={preview.previewUrl}
-                title={`${preview.fileName} 原文预览`}
-              />
-            ) : null}
-
-            {preview.previewKind === "text" && preview.textPreview ? (
-              <pre className="admin-knowledge__preview-text">{preview.textPreview}</pre>
-            ) : null}
-
-            {preview.previewKind === "none" ? (
-              <p className="admin-knowledge__preview-state num">
-                该格式不能直接预览，请下载原文件查看；下方是它的切片清单。
-              </p>
-            ) : null}
-
-            {preview.previewUrl ? (
-              <a
-                className="admin-knowledge__preview-link"
-                href={preview.previewUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                在新窗口打开原文件 ↗
-              </a>
-            ) : null}
-
-            <section className="admin-knowledge__chunks">
-              <h3 className="admin-knowledge__chunks-title">
-                切片清单 · CHUNKS
-                <span className="num"> {preview.chunks?.length ?? 0} 块</span>
-              </h3>
-              {preview.chunksReadable === false ? (
-                <p className="admin-knowledge__preview-state">
-                  {preview.chunksMessage ?? "切片读取失败"}
-                </p>
-              ) : (preview.chunks?.length ?? 0) === 0 ? (
-                <p className="admin-knowledge__preview-state">该文档没有切片。</p>
-              ) : (
-                <ol className="admin-knowledge__chunk-list">
-                  {preview.chunks?.map((chunk) => (
-                    <li key={chunk.index} className="admin-knowledge__chunk">
-                      <div className="admin-knowledge__chunk-head num">
-                        <span>CHUNK {chunk.index}</span>
-                        <span>{chunk.chars} 字</span>
-                      </div>
-                      <p className="admin-knowledge__chunk-text">{chunk.text}</p>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-          </div>
-        ) : (
-          <p className="admin-knowledge__preview-state">暂无详情</p>
-        )}
-      </Drawer>
+      {/* 文档工作区：原文阅读 + 切片检查。详情请求与分栏布局都在组件内，
+          页面只负责选中哪一份文档。 */}
+      <KnowledgeWorkspace target={previewTarget} onClose={closePreview} />
 
       {/* 改名弹层 */}
       <Modal

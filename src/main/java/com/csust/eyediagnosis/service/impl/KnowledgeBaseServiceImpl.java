@@ -271,6 +271,14 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
     }
 
     @Override
+    public KnowledgeDocument getDocumentForRead(Long documentId, User actor) {
+        KnowledgeDocument doc = loadDocument(documentId);
+        assertCanManage(doc, actor);
+        ThrowUtils.throwIf(StrUtil.isBlank(doc.getFileUrl()), ErrorCode.NOT_FOUND_ERROR, "文档没有存储对象");
+        return doc;
+    }
+
+    @Override
     public void updateDocument(Long documentId, MultipartFile file, String title, Long userId) {
         KnowledgeDocument doc = loadDocument(documentId);
         if (!doc.getUserId().equals(userId)) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -399,7 +407,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             List<String> paragraphs = documentParser.parse(temp.getAbsolutePath(), doc.getFileType());
             String rawText = paragraphs.stream().reduce("", (a, b) -> a + "\n\n" + b).trim();
             ThrowUtils.throwIf(StrUtil.isEmpty(rawText), ErrorCode.PARAMS_ERROR,
-                    "文档正文为空（扫描件 PDF 提取不到文本）");
+                    "文档正文为空：扫描件或没有可提取的文字层");
             Map<String, Object> metadata = documentParser.buildMetadata(
                     rawText, doc.getFileUrl(), doc.getTitle(), doc.getFileType());
             List<Document> chunks = textChunkerService.chunk(rawText, metadata);

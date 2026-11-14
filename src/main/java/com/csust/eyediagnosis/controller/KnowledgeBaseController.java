@@ -7,6 +7,9 @@ import com.csust.eyediagnosis.common.BatchIdsRequest;
 import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.common.DeleteRequest;
 import com.csust.eyediagnosis.common.ResultUtils;
+import com.csust.eyediagnosis.exception.BusinessException;
+import com.csust.eyediagnosis.exception.ErrorCode;
+import com.csust.eyediagnosis.manager.CosManager;
 import com.csust.eyediagnosis.model.dto.knowledge.KnowledgeQueryDTO;
 import com.csust.eyediagnosis.model.dto.knowledge.KnowledgeUpdateDTO;
 import com.csust.eyediagnosis.model.dto.knowledge.KnowledgeUploadRequest;
@@ -15,11 +18,17 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.knowledge.KnowledgeDetailVO;
 import com.csust.eyediagnosis.service.KnowledgeBaseService;
 import com.csust.eyediagnosis.service.UserService;
+import com.qcloud.cos.model.COSObject;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
@@ -32,6 +41,9 @@ public class KnowledgeBaseController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private CosManager cosManager;
 
     @PostMapping("/upload")
     @AuthCheck
@@ -66,6 +78,72 @@ public class KnowledgeBaseController {
                                                      HttpServletRequest httpRequest) {
         User loginUser = userService.getLoginUser(httpRequest);
         return ResultUtils.success(knowledgeBaseService.getDocumentDetail(id, loginUser));
+    }
+
+    /**
+     * 原文内容：管理端阅读器用。
+     *
+     * <p>知识文档的对象存储在 COS 私有桶里，浏览器既拿不到直链、也没有跨域读授权。
+     * 这里按与 {@code /get/{id}} 同一条 owner / 管理员 规则鉴权后把原文代理流出，
+     * MIME 按扩展名映射，文件名走 RFC 5987 编码；不暴露服务器路径、不放行长期凭据。
+     * 端点排在 /get/{id} 之后，Spring 会把 /get/ 前缀的路径优先匹配到详情接口。
+     */
+    @GetMapping("/{id}/content")
+    @AuthCheck
+    public ResponseEntity<StreamingResponseBody> getContent(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "download", defaultValue = "false") boolean download,
+            HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        KnowledgeDocument doc = knowledgeBaseService.getDocumentForRead(id, loginUser);
+
+        COSObject object;
+        try {
+            object = cosManager.getObject(doc.getFileUrl());
+        } catch (Exception e) {
+            log.warn("知识文档对象读取失败: docId={}", id, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件读取失败");
+        }
+
+        String fileName = doc.getFileName();
+        String contentType = contentTypeOf(doc.getFileType());
+        // 内嵌阅读器要 inline（attachment 会被浏览器当成下载、iframe 一片空白），
+        // 下载按钮显式带 download=1 才走 attachment。文件名两种情况都按 RFC 5987 编码。
+        ContentDisposition disposition = (download ? ContentDisposition.attachment()
+                : ContentDisposition.inline())
+                .filename(fileName == null ? "document" : fileName, StandardCharsets.UTF_8)
+                .build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(disposition);
+        // MIME 已按扩展名钉死，禁止浏览器再嗅探成可执行/可渲染类型。
+        headers.set("X-Content-Type-Options", "nosniff");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .contentLength(object.getObjectMetadata().getContentLength())
+                .body(output -> {
+                    try (java.io.InputStream in = object.getObjectContent()) {
+                        in.transferTo(output);
+                    }
+                });
+    }
+
+    /**
+     * 文件扩展名 → MIME。未知扩展名一律按二进制下载处理，不让浏览器猜错类型。
+     */
+    private static String contentTypeOf(String fileType) {
+        if (fileType == null) {
+            return "application/octet-stream";
+        }
+        return switch (fileType.toLowerCase()) {
+            case "pdf" -> "application/pdf";
+            case "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case "doc" -> "application/msword";
+            case "txt" -> "text/plain;charset=UTF-8";
+            case "md", "markdown" -> "text/markdown;charset=UTF-8";
+            default -> "application/octet-stream";
+        };
     }
 
     /**
