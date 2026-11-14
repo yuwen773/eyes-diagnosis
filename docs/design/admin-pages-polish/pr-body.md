@@ -6,7 +6,8 @@
 数据中心 / 诊断管理 / 新闻管理 / 知识库 / 用户管理 / 新闻编辑——六页的视觉精修与口径整改。
 **只动前端**（`web/`）与证据树（`docs/design/admin-pages-polish/`）；后端接口、数据库结构、
 Agent 编排、医学诊断逻辑、登录鉴权、资讯发布状态机、知识库解析行为、Markdown 存取语义
-**零改动**，PR #79 冻结的仪表盘主布局**未动**（只抽了一个共用的读数格组件）。
+**零改动**，PR #79 冻结的仪表盘主布局**未动**（只抽了两个共用组件；它复用的两个图表原语有两处可见变化，
+已在 §三「仪表盘受影响的改动」逐条披露）。
 
 ---
 
@@ -40,14 +41,33 @@ Agent 编排、医学诊断逻辑、登录鉴权、资讯发布状态机、知�
 |---|---|---|
 | `web/src/components/admin/MetricCell.tsx`（新） | 从仪表盘与数据分析页各一份的重复实现里抽出共用读数格 | 仪表盘 + 数据分析 |
 | `web/src/components/admin/InsightEmpty.tsx`（新） | 空窗口解释面板 | 数据分析 |
-| `web/src/components/admin/charts/ChartFrame.tsx` | 读数表加滚动壳 `.admin-viz__tablewrap`（`overflow` 在 `display:table` 上会被浏览器忽略，表格自己滚不了） | 仪表盘 + 数据分析（**仪表盘渲染逐像素未变**，见证据 diff） |
-| `web/src/components/admin/charts/RankedBars.tsx` | 轴宽预算从「名字长度除像素预算」（量纲不成立，长名反被砍短）改成「轴宽 ÷ 字号」 | 仪表盘 + 数据分析 |
+| `web/src/components/admin/charts/ChartFrame.tsx` | 读数表加滚动壳 `.admin-viz__tablewrap`（`overflow` 在 `display:table` 上会被浏览器忽略，表格自己滚不了） | 仪表盘 + 数据分析（仪表盘读数表未设限高，不出现滚动条，**无可见差异**） |
+| `web/src/components/admin/charts/RankedBars.tsx` | 轴宽预算从「名字长度除像素预算」（量纲不成立，长名反被砍短）改成「轴宽 ÷ 字号」 | 仪表盘 + 数据分析（**仪表盘的病种轴宽同时从 104px 放宽到 128px**，见下方「仪表盘受影响的改动」） |
 | `web/src/components/admin/charts/TrendAreaChart.tsx` | 卡头读数由「最新 N」改为「合计 N · 日均 X」（末尾那天常无判读，读出来是 0，会被误读成清零） | **仪表盘复用该组件，仪表盘的读数随之改变** —— 已知且已披露 |
 | `web/src/lib/domain.ts` | 新增 `classSearchLabel` / `classSearchHint`：规范名 ↔ 库内落库标签的对照 | 诊断管理 + 领域层 |
 | `web/src/styles/admin.css` | `.admin-viz__tablewrap`、`.admin-viz__mini*` 归并、≤900px 勾选列定宽复位 | 共享 |
 | `web/src/styles/admin-polish-{analysis,ledger,cms}.css`（新） | 三页的专有样式，全部走 `--admin-*` / `--risk-*` 令牌，零写死色值 | 分页作用域 |
 
 **没有新增第二套按钮 / 分段控件 / 卡片语言**；本轮把四套并存的分段控件收敛到同一尺寸与圆角。
+
+### 仪表盘受影响的改动（逐条披露）
+
+仪表盘的**主布局未动**（栅格、卡片构成、层级、外壳一律未改）。但它复用的两个图表原语被改了，
+因此仪表盘上有两处可见变化，本 PR 一并承担：
+
+| 位置 | 变化 | 原因 |
+|---|---|---|
+| 判读趋势卡右上读数 | `最新 N` → `合计 N · 日均 X` | 「最新 N」取的是窗口最后一天，而窗口末日常常没有判读，读出来是 0，会被误读成清零；「合计 · 日均」与纵轴、与 KPI 读数轨同口径 |
+| 病种分布轴宽 | `nameWidth` 104px → 128px | 配合新的截断预算（轴宽 ÷ 字号），否则 9 字的「年龄相关性黄斑变性」会被截成 7 字 |
+
+除这两处外，仪表盘的 DOM 结构与样式类名逐字未改；`MetricCell` / `InsightEmpty` 是**逐字搬出**
+的原实现，渲染输出不变。
+
+> 口径更正：本 PR 早前版本写过「仪表盘渲染逐像素未变」——**不成立**。两轮证据对比显示，
+> 仪表盘的 KPI 读数（12 → 44、AI 拒识 1 → 5）与趋势读数（最新 1 → 合计 44 · 日均 1.5）都变了。
+> 其中 KPI 数字的变化来自**两轮夹具数据集不同**（PR #79 的夹具与本轮夹具行数不同），不是代码改动；
+> 趋势读数的变化来自上面披露的 `TrendAreaChart` 改动。
+
 
 ## 四、前后对照截图
 
