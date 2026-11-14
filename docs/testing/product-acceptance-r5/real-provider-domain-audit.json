@@ -1,0 +1,614 @@
+{
+  "evidenceKind": "SYNTHETIC_UPSTREAM_REAL_PROVIDER",
+  "runs": [
+    {
+      "taskId": "86ff0436-d961-4f57-a8ba-11bd6747bfe7",
+      "status": "RESTRICTED",
+      "stopReason": "INSUFFICIENT_EVIDENCE",
+      "callCount": "5",
+      "supplementCount": "1",
+      "rewriteCount": "1"
+    },
+    {
+      "taskId": "16a344da-f6e3-49b8-8c58-781c745455ce",
+      "status": "RESTRICTED",
+      "stopReason": "INSUFFICIENT_EVIDENCE",
+      "callCount": "5",
+      "supplementCount": "1",
+      "rewriteCount": "1"
+    }
+  ],
+  "drafts": [
+    {
+      "taskId": "16a344da-f6e3-49b8-8c58-781c745455ce",
+      "version": "1",
+      "evidenceVersion": "1"
+    },
+    {
+      "taskId": "86ff0436-d961-4f57-a8ba-11bd6747bfe7",
+      "version": "1",
+      "evidenceVersion": "1"
+    }
+  ],
+  "evidence": [
+    {
+      "taskId": "16a344da-f6e3-49b8-8c58-781c745455ce",
+      "version": "1",
+      "citationCount": "1"
+    },
+    {
+      "taskId": "86ff0436-d961-4f57-a8ba-11bd6747bfe7",
+      "version": "1",
+      "citationCount": "1"
+    }
+  ],
+  "publicEvents": [
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "2",
+      "type": "run.started",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"RUNNING\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "3",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "4",
+      "type": "agent.started",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "5",
+      "type": "evidence.verified",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "6",
+      "type": "agent.completed",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "7",
+      "type": "agent.summary",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1, \"summary\": \"EVIDENCE_FROZEN\", \"limitationCount\": 1}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "8",
+      "type": "agent.readable",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"EVIDENCE_READY\", \"content\": \"[{\\\"documentId\\\":\\\"cbaec35a-c470-43c7-a8d5-74c63a6486dd\\\",\\\"title\\\":\\\"Synthetic engineering reference\\\",\\\"source\\\":\\\"synthetic.invalid\\\",\\\"documentVersion\\\":\\\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\\\",\\\"governanceVersion\\\":1,\\\"chunkIndex\\\":0,\\\"excerpt\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\",\\\"excerptDigest\\\":\\\"d589c71e071ce0c1afa0fd0ddf6a9f6153d0cff0969d16b21db9878d3e9cd292\\\",\\\"reviewStatus\\\":\\\"APPROVED\\\",\\\"reviewedBy\\\":2,\\\"retrievedAt\\\":1794579166.892119200}]\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "9",
+      "type": "agent.readable",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"EVIDENCE_READY\", \"content\": \"[{\\\"documentId\\\":\\\"cbaec35a-c470-43c7-a8d5-74c63a6486dd\\\",\\\"title\\\":\\\"Synthetic engineering reference\\\",\\\"source\\\":\\\"synthetic.invalid\\\",\\\"documentVersion\\\":\\\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\\\",\\\"governanceVersion\\\":1,\\\"chunkIndex\\\":0,\\\"excerpt\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\",\\\"excerptDigest\\\":\\\"d589c71e071ce0c1afa0fd0ddf6a9f6153d0cff0969d16b21db9878d3e9cd292\\\",\\\"reviewStatus\\\":\\\"APPROVED\\\",\\\"reviewedBy\\\":2,\\\"retrievedAt\\\":1794579166.892119200}]\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:1:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "10",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "11",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:1:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "12",
+      "type": "agent.completed",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "13",
+      "type": "agent.summary",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2, \"summary\": \"VISION_REVIEW_QUALITY:RECAPTURE\", \"limitationCount\": 3}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "14",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 2, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a probability of 70.0%. However, the image quality score is 0, indicating severe degradation or failure in image acquisition that prevents reliable analysis.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, rendering visual features unreliable.\\\",\\\"Uncalibrated probability values do not represent clinical certainty.\\\",\\\"Model prediction is not a clinical diagnosis.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:EVIDENCE\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "15",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a probability of 70.0%. However, the image quality score is 0, indicating severe degradation or failure in image acquisition that prevents reliable analysis.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, rendering visual features unreliable.\\\",\\\"Uncalibrated probability values do not represent clinical certainty.\\\",\\\"Model prediction is not a clinical diagnosis.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "16",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a probability of 70.0%. However, the image quality score is 0, indicating severe degradation or failure in image acquisition that prevents reliable analysis.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, rendering visual features unreliable.\\\",\\\"Uncalibrated probability values do not represent clinical certainty.\\\",\\\"Model prediction is not a clinical diagnosis.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "17",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 2, \"kind\": \"VISION_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:EVIDENCE\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "18",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"VISION_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "19",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"VISION_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:2:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "20",
+      "type": "agent.started",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "21",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"draftVersion\": 1, \"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "22",
+      "type": "agent.completed",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "23",
+      "type": "agent.summary",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3, \"summary\": \"DRAFT_PENDING_REVIEW\", \"limitationCount\": 6}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "24",
+      "type": "agent.readable",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"content\": \"{\\\"evidenceVersion\\\":1,\\\"claims\\\":[{\\\"id\\\":\\\"c1\\\",\\\"section\\\":\\\"MAIN_FINDING\\\",\\\"text\\\":\\\"The model predicts 'glaucoma' with a probability of 70.0%, but this finding is unsupported by visual evidence due to severe image degradation.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c2\\\",\\\"section\\\":\\\"RISK\\\",\\\"text\\\":\\\"Relying on this prediction poses a risk because the image quality score is 0, indicating that visual features are unreliable for analysis.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c3\\\",\\\"section\\\":\\\"NEXT_STEP\\\",\\\"text\\\":\\\"Immediate recapture of the eye image is required to enable any reliable analysis or follow-up.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c4\\\",\\\"section\\\":\\\"UNCERTAINTY\\\",\\\"text\\\":\\\"There is total uncertainty in the model's output because uncalibrated probability values do not represent clinical certainty and the input data is invalid.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c5\\\",\\\"section\\\":\\\"DETAIL\\\",\\\"text\\\":\\\"While the system generated a label of 'glaucoma', the underlying image acquisition failed completely, preventing the extraction of diagnostic features.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c6\\\",\\\"section\\\":\\\"LIMITATION\\\",\\\"text\\\":\\\"This output cannot serve as a clinical diagnosis as the model prediction is not a clinical diagnosis and the image quality prevents feature assessment.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]}]}\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:3:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "25",
+      "type": "agent.handoff",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:3:CRITIC\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "26",
+      "type": "agent.started",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "27",
+      "type": "agent.completed",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "28",
+      "type": "agent.summary",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"summary\": \"CRITIC_SUPPLEMENT\", \"limitationCount\": 3}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "29",
+      "type": "agent.readable",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 4, \"kind\": \"SUPPLEMENT_REQUESTED\", \"content\": \"{\\\"action\\\":\\\"SUPPLEMENT\\\",\\\"objections\\\":[{\\\"target\\\":\\\"claim:c1\\\",\\\"reason\\\":\\\"The claim states the finding is 'unsupported by visual evidence' which is an inference; the direct fact is that the image quality score is 0, making any visual evidence assessment impossible rather than just unsupported.\\\"},{\\\"target\\\":\\\"claim:c4\\\",\\\"reason\\\":\\\"The phrase 'total uncertainty' is an overconfident characterization of the statistical state; while reliability is zero, the model did output a specific probability distribution, and 'total uncertainty' implies a lack of any output data rather than invalid input data.\\\"},{\\\"target\\\":\\\"evidence:0\\\",\\\"reason\\\":\\\"The cited excerpt 'Synthetic glaucoma follow-up requires an eye examination' does not substantiate the specific technical claims regarding image quality scores, calibration status, or acquisition failure described in claims c1 through c6.\\\"}]}\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:4:EVIDENCE\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "30",
+      "type": "agent.handoff",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 4, \"kind\": \"SUPPLEMENT_REQUESTED\", \"messageId\": \"86ff0436-d961-4f57-a8ba-11bd6747bfe7:4:EVIDENCE\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "31",
+      "type": "agent.feedback.requested",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"action\": \"SUPPLEMENT\"}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "32",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 5}"
+    },
+    {
+      "runId": "4fa2c162-e80f-4da7-bbb4-5e49469c0729",
+      "seq": "33",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INSUFFICIENT_EVIDENCE\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "7ac6ced3-474a-4870-ba2e-09352980e88e",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "7ac6ced3-474a-4870-ba2e-09352980e88e",
+      "seq": "2",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INPUT_RESTRICTED\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "2",
+      "type": "run.started",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"RUNNING\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "3",
+      "type": "agent.started",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "4",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "5",
+      "type": "evidence.verified",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "6",
+      "type": "agent.completed",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "7",
+      "type": "agent.summary",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2, \"summary\": \"EVIDENCE_FROZEN\", \"limitationCount\": 1}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "8",
+      "type": "agent.readable",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"content\": \"[{\\\"documentId\\\":\\\"cbaec35a-c470-43c7-a8d5-74c63a6486dd\\\",\\\"title\\\":\\\"Synthetic engineering reference\\\",\\\"source\\\":\\\"synthetic.invalid\\\",\\\"documentVersion\\\":\\\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\\\",\\\"governanceVersion\\\":1,\\\"chunkIndex\\\":0,\\\"excerpt\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\",\\\"excerptDigest\\\":\\\"d589c71e071ce0c1afa0fd0ddf6a9f6153d0cff0969d16b21db9878d3e9cd292\\\",\\\"reviewStatus\\\":\\\"APPROVED\\\",\\\"reviewedBy\\\":2,\\\"retrievedAt\\\":1794579188.629890900}]\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "9",
+      "type": "agent.readable",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"content\": \"[{\\\"documentId\\\":\\\"cbaec35a-c470-43c7-a8d5-74c63a6486dd\\\",\\\"title\\\":\\\"Synthetic engineering reference\\\",\\\"source\\\":\\\"synthetic.invalid\\\",\\\"documentVersion\\\":\\\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\\\",\\\"governanceVersion\\\":1,\\\"chunkIndex\\\":0,\\\"excerpt\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\",\\\"excerptDigest\\\":\\\"d589c71e071ce0c1afa0fd0ddf6a9f6153d0cff0969d16b21db9878d3e9cd292\\\",\\\"reviewStatus\\\":\\\"APPROVED\\\",\\\"reviewedBy\\\":2,\\\"retrievedAt\\\":1794579188.629890900}]\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:2:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "10",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "11",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:2:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "12",
+      "type": "agent.completed",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "13",
+      "type": "agent.summary",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1, \"summary\": \"VISION_REVIEW_QUALITY:RECAPTURE\", \"limitationCount\": 3}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "14",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 1, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a 70.0% probability using the 'synthetic-product-NORMAL' version. However, the image quality score is 0, indicating severe degradation or failure in image assessment, which renders the prediction unreliable.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, preventing reliable feature extraction.\\\",\\\"Probability is uncalibrated and does not represent clinical certainty.\\\",\\\"Model version indicates synthetic product data, limiting real-world applicability.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:EVIDENCE\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "15",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a 70.0% probability using the 'synthetic-product-NORMAL' version. However, the image quality score is 0, indicating severe degradation or failure in image assessment, which renders the prediction unreliable.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, preventing reliable feature extraction.\\\",\\\"Probability is uncalibrated and does not represent clinical certainty.\\\",\\\"Model version indicates synthetic product data, limiting real-world applicability.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "16",
+      "type": "agent.readable",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"VISION_READY\", \"content\": \"{\\\"summary\\\":\\\"The model predicts 'glaucoma' with a 70.0% probability using the 'synthetic-product-NORMAL' version. However, the image quality score is 0, indicating severe degradation or failure in image assessment, which renders the prediction unreliable.\\\",\\\"limitations\\\":[\\\"Image quality score is 0, preventing reliable feature extraction.\\\",\\\"Probability is uncalibrated and does not represent clinical certainty.\\\",\\\"Model version indicates synthetic product data, limiting real-world applicability.\\\"],\\\"reanalysisSuggestion\\\":\\\"RECAPTURE\\\"}\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "17",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:EVIDENCE\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "18",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "19",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:1:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "20",
+      "type": "agent.started",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "21",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"draftVersion\": 1, \"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "22",
+      "type": "agent.completed",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "23",
+      "type": "agent.summary",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3, \"summary\": \"DRAFT_PENDING_REVIEW\", \"limitationCount\": 6}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "24",
+      "type": "agent.readable",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"content\": \"{\\\"evidenceVersion\\\":1,\\\"claims\\\":[{\\\"id\\\":\\\"c1\\\",\\\"section\\\":\\\"MAIN_FINDING\\\",\\\"text\\\":\\\"The automated system generated a prediction label of 'glaucoma' based on the submitted image data.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c2\\\",\\\"section\\\":\\\"RISK\\\",\\\"text\\\":\\\"There is a significant risk that this prediction is invalid because the image quality score was recorded as 0, indicating severe degradation or failure in assessment.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c3\\\",\\\"section\\\":\\\"NEXT_STEP\\\",\\\"text\\\":\\\"Independent clinical review and a new image capture are strictly required before any clinical consideration can be given to this output.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c4\\\",\\\"section\\\":\\\"UNCERTAINTY\\\",\\\"text\\\":\\\"The reported 70.0% probability is uncalibrated and does not represent clinical certainty, particularly given the failure in image quality assessment.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c5\\\",\\\"section\\\":\\\"DETAIL\\\",\\\"text\\\":\\\"The analysis utilized a synthetic product model version, which limits the applicability of the findings to real-world clinical scenarios without further validation.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]},{\\\"id\\\":\\\"c6\\\",\\\"section\\\":\\\"LIMITATION\\\",\\\"text\\\":\\\"This output cannot serve as a diagnosis; the zero quality score prevents reliable feature extraction, rendering the model's prediction unreliable.\\\",\\\"references\\\":[{\\\"citationIndex\\\":0,\\\"quote\\\":\\\"Synthetic glaucoma follow-up requires an eye examination.\\\"}]}]}\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:3:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "25",
+      "type": "agent.handoff",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:3:CRITIC\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "26",
+      "type": "agent.started",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "27",
+      "type": "agent.completed",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "28",
+      "type": "agent.summary",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"summary\": \"CRITIC_SUPPLEMENT\", \"limitationCount\": 5}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "29",
+      "type": "agent.readable",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 4, \"kind\": \"SUPPLEMENT_REQUESTED\", \"content\": \"{\\\"action\\\":\\\"SUPPLEMENT\\\",\\\"objections\\\":[{\\\"target\\\":\\\"claim:c1\\\",\\\"reason\\\":\\\"The claim states the prediction is based on 'submitted image data' without explicitly noting that the quality score of 0 indicates the data was insufficient for valid feature extraction, making the basis of the prediction technically void.\\\"},{\\\"target\\\":\\\"claim:c2\\\",\\\"reason\\\":\\\"The citation 'Synthetic glaucoma follow-up requires an eye examination' does not provide evidence regarding image quality scores or assessment failure; the link between the evidence and the specific risk of invalidity due to quality score 0 is unsupported by the provided excerpt.\\\"},{\\\"target\\\":\\\"claim:c4\\\",\\\"reason\\\":\\\"The excerpt provided does not contain information about probability calibration or the specific meaning of the 70.0% value; citing it to support the claim about uncalibrated probabilities is an unsupported connection.\\\"},{\\\"target\\\":\\\"claim:c5\\\",\\\"reason\\\":\\\"The cited excerpt mentions 'synthetic glaucoma follow-up' but does not explicitly state that the model version limits applicability to real-world scenarios; this interpretation is an overreach of the provided text.\\\"},{\\\"target\\\":\\\"claim:c6\\\",\\\"reason\\\":\\\"While the claim correctly identifies the zero quality score as a limitation, the supporting quote regarding 'eye examination' does not technically substantiate the mechanism of 'preventing reliable feature extraction'; the evidence does not match the specific technical assertion.\\\"}]}\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:4:EVIDENCE\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "30",
+      "type": "agent.handoff",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 4, \"kind\": \"SUPPLEMENT_REQUESTED\", \"messageId\": \"16a344da-f6e3-49b8-8c58-781c745455ce:4:EVIDENCE\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "31",
+      "type": "agent.feedback.requested",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"action\": \"SUPPLEMENT\"}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "32",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 5}"
+    },
+    {
+      "runId": "a5ca62cb-e140-4ddd-a9ef-4d232c4c31d0",
+      "seq": "33",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INSUFFICIENT_EVIDENCE\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "b045bcd8-01cb-4c8b-aee4-5613165786a4",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "b045bcd8-01cb-4c8b-aee4-5613165786a4",
+      "seq": "2",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INPUT_RESTRICTED\", \"status\": \"RESTRICTED\"}"
+    }
+  ],
+  "sideEffects": [
+    {
+      "reviewCount": "0",
+      "authorizationCount": "0",
+      "diagnosisCount": "0"
+    }
+  ]
+}

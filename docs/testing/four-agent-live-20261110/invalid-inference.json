@@ -1,0 +1,7 @@
+{
+  "task_id" : "cbddf38a-0177-41da-838d-f5b3d6d822c0",
+  "reserved_calls" : 0,
+  "observed_http_calls" : 0,
+  "status" : "RESTRICTED",
+  "stop_reason" : "INVALID_INFERENCE"
+}

@@ -266,7 +266,28 @@ export type ChatHistoryVO = {
 export function getSessions(beforeId?: string, limit = 20) {
   let path = `/agent/sessions?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<AgentSessionVO[]>(path)
+  return request<AgentSessionVO[]>(path).then((sessions) =>
+    sessions.map((session) => ({
+      ...session,
+      createdTime: chatDate(session.createdTime),
+      updatedTime: chatDate(session.updatedTime),
+    }))
+  )
+}
+
+/** 协作提交前确保会话已落库（后端按请求体内的 sessionId 建会话）。 */
+export function createAgentSession(sessionId: string, signal: AbortSignal) {
+  return request<{ sessionId: string }>("/agent/sessions", {
+    method: "POST",
+    body: JSON.stringify({ sessionId }),
+    signal,
+    cache: "no-store",
+  })
+}
+
+/** Java Long 经 JsonConfig 序列化为字符串；兼容工具直接给数字。 */
+function chatDate(value: string | number | null) {
+  return typeof value === "number" ? new Date(value).toISOString() : (value ?? "")
 }
 
 export function deleteSession(sessionId: string) {
@@ -304,7 +325,13 @@ export function generateTitle(sessionId: string, firstMessage: string) {
 export function getChatHistory(threadId: string, beforeId?: number, limit = 40) {
   let path = `/agent/history/${threadId}?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<ChatHistoryVO>(path)
+  return request<ChatHistoryVO>(path).then((history) => ({
+    ...history,
+    messages: history.messages.map((message) => ({
+      ...message,
+      createdTime: chatDate(message.createdTime),
+    })),
+  }))
 }
 
 export function exportSession(sessionId: string, format: "markdown" | "json") {
@@ -452,8 +479,14 @@ export function requestReexamine(id: string | number) {
 export type AgentStreamDTO = {
   messageType: string
   content?: string
-  toolCalls?: { name: string; arguments: string }[]
+  toolCalls?: { name: string; arguments: string; id?: string; stepLabel?: string }[]
   toolName?: string
+  /* ── 普通聊天工具步骤契约：全部可选，历史消息与旧后端不带这些字段。 ── */
+  toolCallId?: string
+  toolStatus?: string
+  stepLabel?: string
+  finishReason?: string
+  errorCategory?: string
 }
 
 export type StreamChatHandlers = {

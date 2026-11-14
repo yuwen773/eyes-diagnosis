@@ -1,0 +1,125 @@
+{
+  "source_commit": "f9d66660cc8ec3ac6b9438f408f7ed2e5ddf500a",
+  "command": "mvn -B -Dtest=CoordinationPocTest,CoordinationMySqlTest test",
+  "environment": "Corretto Java 21; Graph 1.1.2.2; disposable MySQL 8.0.36; synthetic inputs; no real external services",
+  "tests": 18,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": [
+    {
+      "suite": "com.csust.eyediagnosis.poc.CoordinationMySqlTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml_file": "TEST-com.csust.eyediagnosis.poc.CoordinationMySqlTest.xml",
+      "xml_sha256": "b30e6322af374f66af195e1b493d023a08f395d5873198570c6857049d755056",
+      "cases": [
+        {
+          "name": "simultaneousRecoveryClaimsAllowOnlyOneWorker",
+          "status": "PASS",
+          "seconds": "1.869"
+        },
+        {
+          "name": "staleGraphWorkerCannotPersistCheckpointOrAdvanceWorkflow",
+          "status": "PASS",
+          "seconds": "0.202"
+        },
+        {
+          "name": "competingClaimsAndExpiredWorkerCannotCommit",
+          "status": "PASS",
+          "seconds": "0.192"
+        },
+        {
+          "name": "bothEnginesResumeTheTaskOnlyOnceInNewProcesses",
+          "status": "PASS",
+          "seconds": "6.85"
+        },
+        {
+          "name": "incompatibleRecordedSaverVersionStopsRecovery",
+          "status": "PASS",
+          "seconds": "1.068"
+        },
+        {
+          "name": "graphCheckpointCommitsWithWorkflowAndFailsClosedOnVersionMismatch",
+          "status": "PASS",
+          "seconds": "0.119"
+        },
+        {
+          "name": "processDeathDuringRecoveryKeepsSaverAndBusinessStateAtomic",
+          "status": "PASS",
+          "seconds": "15.658"
+        },
+        {
+          "name": "graphRecoversCommittedCheckpointInAnotherProcess",
+          "status": "PASS",
+          "seconds": "3.045"
+        },
+        {
+          "name": "recoveryCannotBypassGraphVersionWithAnotherEngine",
+          "status": "PASS",
+          "seconds": "2.212"
+        },
+        {
+          "name": "competingRecoveryWorkersFenceExpiredResultsForBothEngines",
+          "status": "PASS",
+          "seconds": "0.423"
+        },
+        {
+          "name": "processDeathBeforeAndAfterCommitLeavesOnlyCommittedState",
+          "status": "PASS",
+          "seconds": "1.994"
+        },
+        {
+          "name": "bothEnginesUseFencedTransactionsAcrossProcessCrashes",
+          "status": "PASS",
+          "seconds": "8.033"
+        },
+        {
+          "name": "saverWritesInBothSegmentsCommitOnlyWithFencedBusinessState",
+          "status": "PASS",
+          "seconds": "0.381"
+        },
+        {
+          "name": "businessTransitionAndNextTaskRollbackTogether",
+          "status": "PASS",
+          "seconds": "0.117"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.poc.CoordinationPocTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml_file": "TEST-com.csust.eyediagnosis.poc.CoordinationPocTest.xml",
+      "xml_sha256": "f528bcf31db7098f20aff6a4811d6ab877da795a508b90696263a54ea26a325b",
+      "cases": [
+        {
+          "name": "graphTransitionAndCheckpointComeFromTheSameInterruptedRun",
+          "status": "PASS",
+          "seconds": "0.003"
+        },
+        {
+          "name": "interruptedGraphCheckpointCanBeSerializedAndResumed",
+          "status": "PASS",
+          "seconds": "0.003"
+        },
+        {
+          "name": "bothEnginesApplyTheSameFixedBusinessTransition",
+          "status": "PASS",
+          "seconds": "0.002"
+        },
+        {
+          "name": "domainRecoveryTransitionsOnlyFromWaitingReview",
+          "status": "PASS",
+          "seconds": "0.001"
+        }
+      ]
+    }
+  ],
+  "log_sha256": "e0bb42b73abed9bc125a54550bc3afaab1ef0706273cae71677fb0b275bd8d72",
+  "scope": "Two-node Graph with RecordingSaver and domain transition PoC only; no production DDL or clinical release claim"
+}

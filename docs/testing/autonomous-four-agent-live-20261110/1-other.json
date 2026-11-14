@@ -1,0 +1,507 @@
+{
+  "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+  "taskStatus": "RESTRICTED",
+  "status": "RESTRICTED",
+  "stopReason": "INVALID_CITATION",
+  "calls": 3,
+  "supplements": 0,
+  "rewrites": 0,
+  "startedAt": "2026-11-10T15:51:33.238223Z",
+  "deadlineAt": "2026-11-10T15:53:03.238223Z",
+  "elapsedMs": "8188",
+  "predictedLabel": "other",
+  "roles": [
+    {
+      "sequence": 1,
+      "role": "VISION",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:33.318516Z",
+      "completedAt": "2026-11-10T15:51:35.789305Z",
+      "elapsedMs": "2470",
+      "hasResult": true,
+      "context": {
+        "probability": 70.0,
+        "modelVersion": "synthetic-draft-test",
+        "qualityScore": 80,
+        "predictedLabel": "other",
+        "qualityReasons": "",
+        "snapshotDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+        "calibrationStatus": "NOT_CALIBRATED",
+        "preprocessVersion": "synthetic-draft-test"
+      },
+      "result": {
+        "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+        "limitations": [
+          "Uncalibrated probabilities are not clinically reliable.",
+          "Model version is a synthetic draft test.",
+          "No specific quality reasons provided despite high quality score."
+        ],
+        "reanalysisSuggestion": "REVIEW_QUALITY"
+      },
+      "collaboration": {
+        "inbox": [],
+        "outgoing": [
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325895.811452,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+              "limitations": [
+                "Uncalibrated probabilities are not clinically reliable.",
+                "Model version is a synthetic draft test.",
+                "No specific quality reasons provided despite high quality score."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:1:EVIDENCE",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EVIDENCE",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325895.811452,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+              "limitations": [
+                "Uncalibrated probabilities are not clinically reliable.",
+                "Model version is a synthetic draft test.",
+                "No specific quality reasons provided despite high quality score."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:1:EXPLANATION",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325895.811452,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+              "limitations": [
+                "Uncalibrated probabilities are not clinically reliable.",
+                "Model version is a synthetic draft test.",
+                "No specific quality reasons provided despite high quality score."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:1:CRITIC",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    },
+    {
+      "sequence": 2,
+      "role": "EVIDENCE",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:33.337833Z",
+      "completedAt": "2026-11-10T15:51:34.899349Z",
+      "elapsedMs": "1561",
+      "hasResult": true,
+      "context": {
+        "vision": null,
+        "feedback": null,
+        "inference": {
+          "probability": 70.0,
+          "modelVersion": "synthetic-draft-test",
+          "qualityScore": 80,
+          "predictedLabel": "other",
+          "qualityReasons": "",
+          "snapshotDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+          "calibrationStatus": "NOT_CALIBRATED",
+          "preprocessVersion": "synthetic-draft-test"
+        }
+      },
+      "result": {
+        "search": {
+          "query": "patient explanation for other eye diagnosis with 70% probability and quality score 80"
+        },
+        "citations": [
+          {
+            "title": "SYNTHETIC-other",
+            "source": "synthetic.invalid",
+            "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+            "chunkIndex": 0,
+            "documentId": "3ae7f6dd-1b8f-3265-b306-07839e65ef3c",
+            "reviewedBy": "2120154741968723970",
+            "retrievedAt": 1794325894.8977945,
+            "reviewStatus": "APPROVED",
+            "excerptDigest": "dafd57b0125cf1e72ed54b1f8a5bf39add6964fdd3c96387057800ec105f51d2",
+            "documentVersion": "6c164e5b99c8dd9c75897f600357836d88ab1f42ae09a0649201a4c0ee7d77d0",
+            "governanceVersion": 1
+          }
+        ]
+      },
+      "collaboration": {
+        "inbox": [],
+        "outgoing": [
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325894.9441898,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "SYNTHETIC-other",
+                  "source": "synthetic.invalid",
+                  "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "3ae7f6dd-1b8f-3265-b306-07839e65ef3c",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325894.8977945,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "dafd57b0125cf1e72ed54b1f8a5bf39add6964fdd3c96387057800ec105f51d2",
+                  "documentVersion": "6c164e5b99c8dd9c75897f600357836d88ab1f42ae09a0649201a4c0ee7d77d0",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:2:EXPLANATION",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325894.9447072,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "SYNTHETIC-other",
+                  "source": "synthetic.invalid",
+                  "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "3ae7f6dd-1b8f-3265-b306-07839e65ef3c",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325894.8977945,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "dafd57b0125cf1e72ed54b1f8a5bf39add6964fdd3c96387057800ec105f51d2",
+                  "documentVersion": "6c164e5b99c8dd9c75897f600357836d88ab1f42ae09a0649201a4c0ee7d77d0",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:2:CRITIC",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    },
+    {
+      "sequence": 3,
+      "role": "EXPLANATION",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:35.855247Z",
+      "completedAt": "2026-11-10T15:51:41.427218Z",
+      "elapsedMs": "5571",
+      "hasResult": true,
+      "context": {
+        "vision": {
+          "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+          "limitations": [
+            "Uncalibrated probabilities are not clinically reliable.",
+            "Model version is a synthetic draft test.",
+            "No specific quality reasons provided despite high quality score."
+          ],
+          "reanalysisSuggestion": "REVIEW_QUALITY"
+        },
+        "evidence": {
+          "version": 1,
+          "citations": [
+            {
+              "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+              "citationIndex": 0
+            }
+          ]
+        },
+        "feedback": null,
+        "inference": {
+          "probability": 70.0,
+          "modelVersion": "synthetic-draft-test",
+          "qualityScore": 80,
+          "predictedLabel": "other",
+          "qualityReasons": "",
+          "snapshotDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+          "calibrationStatus": "NOT_CALIBRATED",
+          "preprocessVersion": "synthetic-draft-test"
+        },
+        "previousDraft": null
+      },
+      "result": {
+        "claims": [
+          {
+            "id": "c1",
+            "text": "The model prediction indicates 'other fundus findings' which requires further examination by an ophthalmologist.",
+            "section": "MAIN_FINDING",
+            "references": [
+              {
+                "quote": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "text": "Uncalibrated probabilities mean the reported 70.0% probability does not reflect clinical reliability.",
+            "section": "RISK",
+            "references": [
+              {
+                "quote": "模型概率不代表临床可靠性。",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c3",
+            "text": "This patient explanation draft must be reviewed and confirmed by an independent ophthalmologist.",
+            "section": "NEXT_STEP",
+            "references": [
+              {
+                "quote": "患者解释需由眼科医生复核。",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c4",
+            "text": "The model version is a synthetic draft test, limiting its applicability for definitive diagnosis.",
+            "section": "UNCERTAINTY",
+            "references": [
+              {
+                "quote": "合成资料",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c5",
+            "text": "The vision summary notes a quality score of 80 despite no specific quality reasons being provided.",
+            "section": "DETAIL",
+            "references": [
+              {
+                "quote": "other fundus findings",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c6",
+            "text": "Probabilities from this uncalibrated model are not clinically reliable indicators.",
+            "section": "LIMITATION",
+            "references": [
+              {
+                "quote": "模型概率不代表临床可靠性。",
+                "citationIndex": 0
+              }
+            ]
+          }
+        ],
+        "evidenceVersion": 1
+      },
+      "collaboration": {
+        "inbox": [
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325895.811452,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "summary": "Model prediction indicates 'other' with 70.0% probability and a quality score of 80. The model is uncalibrated, meaning probabilities do not reflect clinical reliability.",
+              "limitations": [
+                "Uncalibrated probabilities are not clinically reliable.",
+                "Model version is a synthetic draft test.",
+                "No specific quality reasons provided despite high quality score."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:1:EXPLANATION",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325894.9441898,
+            "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "SYNTHETIC-other",
+                  "source": "synthetic.invalid",
+                  "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "3ae7f6dd-1b8f-3265-b306-07839e65ef3c",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325894.8977945,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "dafd57b0125cf1e72ed54b1f8a5bf39add6964fdd3c96387057800ec105f51d2",
+                  "documentVersion": "6c164e5b99c8dd9c75897f600357836d88ab1f42ae09a0649201a4c0ee7d77d0",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4:2:EXPLANATION",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "43fc982d49fced3c0a4f578cb9a603bee88069ef35ff3993d5ebf64309b1e0ba",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "outgoing": [],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "citations": [
+        {
+          "index": 0,
+          "title": "SYNTHETIC-other",
+          "source": "synthetic.invalid",
+          "chunkIndex": 0,
+          "excerpt": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。患者解释需由眼科医生复核，模型概率不代表临床可靠性。"
+        }
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "sequence": 3,
+      "saved": false,
+      "evidenceVersion": 1,
+      "allSectionsPresent": true,
+      "missingSections": [],
+      "claims": [
+        {
+          "id": "c1",
+          "section": "MAIN_FINDING",
+          "text": "The model prediction indicates 'other fundus findings' which requires further examination by an ophthalmologist.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "合成资料：其他眼底改变 other fundus findings，需由眼科医生进一步检查确认。"
+            }
+          ]
+        },
+        {
+          "id": "c2",
+          "section": "RISK",
+          "text": "Uncalibrated probabilities mean the reported 70.0% probability does not reflect clinical reliability.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "模型概率不代表临床可靠性。"
+            }
+          ]
+        },
+        {
+          "id": "c3",
+          "section": "NEXT_STEP",
+          "text": "This patient explanation draft must be reviewed and confirmed by an independent ophthalmologist.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": false,
+              "quote": "患者解释需由眼科医生复核。"
+            }
+          ]
+        },
+        {
+          "id": "c4",
+          "section": "UNCERTAINTY",
+          "text": "The model version is a synthetic draft test, limiting its applicability for definitive diagnosis.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "合成资料"
+            }
+          ]
+        },
+        {
+          "id": "c5",
+          "section": "DETAIL",
+          "text": "The vision summary notes a quality score of 80 despite no specific quality reasons being provided.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "other fundus findings"
+            }
+          ]
+        },
+        {
+          "id": "c6",
+          "section": "LIMITATION",
+          "text": "Probabilities from this uncalibrated model are not clinically reliable indicators.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "模型概率不代表临床可靠性。"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "budget": {
+    "maxCalls": 8,
+    "totalMillis": "90000",
+    "callMillis": "20000"
+  },
+  "workflowVersion": "AUTONOMOUS_V2"
+}

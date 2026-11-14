@@ -1,0 +1,118 @@
+[
+  {
+    "local_run_name": "run-default",
+    "model_options": {
+      "thinking_explicitly_disabled": false,
+      "model": "qwen3.5-plus",
+      "completed_at": "2026-11-10T13:04:08.809113600Z",
+      "budgets": {
+        "max_total_ms": 90000,
+        "max_call_ms": 20000,
+        "max_calls_per_task": 8
+      }
+    },
+    "scenarios": 2,
+    "product_review_ready": 0,
+    "stops": [
+      "INVALID_OUTPUT",
+      "INVALID_OUTPUT"
+    ],
+    "http_requests": 2,
+    "http_statuses": [
+      401,
+      401
+    ],
+    "transport_failures": [],
+    "scenario_results_sha256": "64f445b0e3ec1315a211911e408b9457da16906cf1da1c9053b331b83bdd2e07",
+    "http_calls_sha256": "1ed472da9bfd3fdf7bf329983b459eb594f0f31fd7adb72bf406c3fd1d5cbae9"
+  },
+  {
+    "local_run_name": "run-20261110-210807",
+    "model_options": {
+      "model": "qwen3.5-plus",
+      "completed_at": "2026-11-10T13:08:11.906519300Z",
+      "budgets": {
+        "max_calls_per_task": 8,
+        "max_total_ms": 90000,
+        "max_call_ms": 20000
+      },
+      "thinking_explicitly_disabled": false
+    },
+    "scenarios": 2,
+    "product_review_ready": 0,
+    "stops": [
+      "INVALID_OUTPUT",
+      "INVALID_OUTPUT"
+    ],
+    "http_requests": 2,
+    "http_statuses": [
+      401,
+      401
+    ],
+    "transport_failures": [],
+    "scenario_results_sha256": "eae8d594420ddbac7511a248801d2d638e806040a69a064ecd6206858043d902",
+    "http_calls_sha256": "25b8aa2d756263a25611a22994f1235493cc274e95de764b907c04075dc0dd5d"
+  },
+  {
+    "local_run_name": "run-20261110-210922",
+    "model_options": {
+      "thinking_explicitly_disabled": false,
+      "model": "qwen3.5-plus",
+      "completed_at": "2026-11-10T13:10:05.315409200Z",
+      "budgets": {
+        "max_total_ms": 90000,
+        "max_call_ms": 20000,
+        "max_calls_per_task": 8
+      }
+    },
+    "scenarios": 2,
+    "product_review_ready": 0,
+    "stops": [
+      "AGENT_TIMEOUT",
+      "AGENT_TIMEOUT"
+    ],
+    "http_requests": 2,
+    "http_statuses": [
+      null,
+      null
+    ],
+    "transport_failures": [
+      "SocketTimeoutException",
+      "SocketTimeoutException"
+    ],
+    "scenario_results_sha256": "43fe2421c711bd76b5bcd0d5e0b45a4260ad07bf1d75417099b824f14253d791",
+    "http_calls_sha256": "ac910d69ff0394bef9ba5f0f816f175aec0b9e0cc0ff9a2363095b09d68fd5ed"
+  },
+  {
+    "local_run_name": "run-20261110-211047",
+    "model_options": {
+      "thinking_explicitly_disabled": true,
+      "model": "qwen3.5-plus",
+      "completed_at": "2026-11-10T13:11:22.883451100Z",
+      "budgets": {
+        "max_total_ms": 90000,
+        "max_call_ms": 20000,
+        "max_calls_per_task": 8
+      }
+    },
+    "scenarios": 2,
+    "product_review_ready": 1,
+    "stops": [
+      "INVALID_CITATION",
+      null
+    ],
+    "http_requests": 7,
+    "http_statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "transport_failures": [],
+    "scenario_results_sha256": "bdf2618f35bdf49440df734cd8c41a0909616036e45d10fcb20836db4163e4cc",
+    "http_calls_sha256": "86afed9a6d678d5c7684a334893901c6e70463d687f346e001a2e7dfdeffd481"
+  }
+]

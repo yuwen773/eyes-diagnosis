@@ -8,9 +8,11 @@ import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
+import com.csust.eyediagnosis.agent.service.ToolAuditService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
 import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
 import com.csust.eyediagnosis.agent.tools.UserBoundDocumentSearchTool;
+import com.csust.eyediagnosis.agent.tools.UserBoundEyeImageAnalyzerTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
@@ -23,6 +25,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,16 +93,21 @@ public class DiagnosisAgent {
     @Resource
     private DocumentSearchTool documentSearchTool;
 
-    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId) {
+    @Resource
+    private ToolAuditService toolAuditService;
+
+    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
                 .model(chatModel)
                 .instruction(SYSTEM_PROMPT)
-                .methodTools(eyeImageAnalyzerTool,
+                .methodTools(new UserBoundEyeImageAnalyzerTool(eyeImageAnalyzerTool, userId),
                         new UserBoundDocumentSearchTool(documentSearchTool, userId));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
         }
+        // Per-request interceptor: observes real tool execution for status + audit.
+        builder.interceptors(new ToolExecutionInterceptor(sink, toolAuditService.digestKey()));
         return builder.build();
     }
 
@@ -119,8 +127,9 @@ public class DiagnosisAgent {
         chatRequest.setDisableMcpDefault(disableMcpDefault);
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
-        // 选择 Agent：无 MCP 用内置 agent，有 MCP 创建 combined agent
-        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId);
+        // 每个请求独立一个 sink/拦截器：不同会话、不同工具卡不会串台。
+        ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record);
+        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink);
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)
@@ -132,7 +141,7 @@ public class DiagnosisAgent {
             StringBuilder assistantContent = new StringBuilder();
             StringBuilder reasoningContent = new StringBuilder();
 
-            return stream
+            Flux<MessageDTO> graphEvents = stream
                     .filter(output -> {
                         if (output instanceof StreamingOutput<?> so) {
                             String typeName = so.getOutputType() != null ? so.getOutputType().name() : "";
@@ -148,39 +157,45 @@ public class DiagnosisAgent {
                                 MessageDTO messageDTO = new MessageDTO();
                                 Map<String, Object> metadata = assistantMessage.getMetadata();
 
-                                // 工具调用消息
+                                // 工具请求：只给浏览器白名单标签和状态，不把参数原文落库。
                                 if (assistantMessage.hasToolCalls()) {
                                     String prevReasoning = reasoningContent.toString();
-                                    if (!prevReasoning.isEmpty()) {
+                                    if (agentConstants.isExposeReasoning() && !prevReasoning.isEmpty()) {
                                         chatHistoryService.saveReasoningMessage(threadId, userId, prevReasoning);
                                         reasoningContent.setLength(0);
                                     }
                                     messageDTO.setMessageType(MessageType.TOOL_REQUEST);
-                                    messageDTO.setContent(assistantMessage.getText());
-                                    List<Map<String, Object>> toolCallingList = assistantMessage.getToolCalls().stream()
-                                            .map(toolCall -> {
-                                                Map<String, Object> tcMap = new HashMap<>();
-                                                tcMap.put("name", toolCall.name());
-                                                tcMap.put("arguments", toolCall.arguments());
-                                                return tcMap;
-                                            }).toList();
-                                    messageDTO.setToolCalls(toolCallingList);
-                                    StringBuilder toolDesc = new StringBuilder();
-                                    for (Map<String, Object> tc : toolCallingList) {
-                                        if (toolDesc.length() > 0) toolDesc.append("\n");
-                                        toolDesc.append(tc.get("name")).append(": ").append(tc.get("arguments"));
+                                    messageDTO.setContent("");
+                                    List<Map<String, Object>> toolCallingList = new ArrayList<>();
+                                    StringBuilder redactedDesc = new StringBuilder();
+                                    for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
+                                        Map<String, Object> tcMap = new HashMap<>();
+                                        tcMap.put("name", toolCall.name());
+                                        // SSE 给浏览器保留参数供展示；落库文本走白名单脱敏，两者分离。
+                                        tcMap.put("arguments", toolCall.arguments());
+                                        tcMap.put("id", toolCall.id());
+                                        tcMap.put("stepLabel", ToolStepContract.stepLabel(toolCall.name()));
+                                        toolCallingList.add(tcMap);
+                                        if (redactedDesc.length() > 0) redactedDesc.append("\n");
+                                        redactedDesc.append(redactedToolCall(toolCall.name()));
                                     }
-                                    chatHistoryService.saveToolCallMessage(threadId, userId, toolDesc.toString());
+                                    messageDTO.setToolCalls(toolCallingList);
+                                    messageDTO.setToolStatus(ToolStepContract.Status.RUNNING.wire());
+                                    messageDTO.setStepLabel(toolCallingList.size() == 1
+                                            ? ToolStepContract.stepLabel(assistantMessage.getToolCalls().get(0).name())
+                                            : null);
+                                    chatHistoryService.saveToolCallMessage(threadId, userId, redactedDesc.toString());
                                 }
-                                // reasoning 消息
+                                // reasoning 消息：默认不展示、不落库（见 agent.expose-reasoning）
                                 else if (metadata.get("reasoningContent") != null
                                         && !"".equals(metadata.get("reasoningContent"))) {
+                                    if (!agentConstants.isExposeReasoning()) return null;
                                     String reasoningText = (String) metadata.get("reasoningContent");
                                     reasoningContent.append(reasoningText);
                                     messageDTO.setContent(reasoningText);
                                     messageDTO.setMessageType(MessageType.REASONING);
                                 }
-                                // 普通文本消息
+                                // 普通文本消息：不是工具执行结果，绝不据此推断工具成功。
                                 else {
                                     String text = assistantMessage.getText();
                                     assistantContent.append(text);
@@ -192,20 +207,31 @@ public class DiagnosisAgent {
                         } else if (output instanceof InterruptionMetadata interruptionMetadata) {
                             MessageDTO messageDTO = new MessageDTO();
                             messageDTO.setMessageType(MessageType.TOOL_CONFIRM);
+                            messageDTO.setToolStatus(ToolStepContract.Status.AWAITING_CONFIRM.wire());
                             StringBuilder sb = new StringBuilder();
-                            for (InterruptionMetadata.ToolFeedback feedback : interruptionMetadata.toolFeedbacks()) {
+                            StringBuilder persisted = new StringBuilder();
+                            List<InterruptionMetadata.ToolFeedback> feedbacks = interruptionMetadata.toolFeedbacks();
+                            for (InterruptionMetadata.ToolFeedback feedback : feedbacks) {
                                 sb.append("工具: ").append(feedback.getName()).append("\n");
                                 sb.append("评估: ").append(feedback.getDescription()).append("\n");
+                                // 落库只保留固定白名单标签，不写模型生成的评估描述
+                                // （其中可能带参数原文、患者信息或完整 Prompt）。
+                                if (persisted.length() > 0) persisted.append("\n");
+                                persisted.append(redactedToolCall(feedback.getName()));
+                            }
+                            if (feedbacks.size() == 1) {
+                                messageDTO.setToolCallId(feedbacks.get(0).getId());
+                                messageDTO.setStepLabel(ToolStepContract.stepLabel(feedbacks.get(0).getName()));
                             }
                             messageDTO.setContent(sb.toString());
-                            chatHistoryService.saveToolConfirmMessage(threadId, userId, sb.toString());
+                            chatHistoryService.saveToolConfirmMessage(threadId, userId, persisted.toString());
                             return messageDTO;
                         }
                         return null;
                     })
                     .doOnComplete(() -> {
                         String fullReasoning = reasoningContent.toString();
-                        if (!fullReasoning.isEmpty()) {
+                        if (agentConstants.isExposeReasoning() && !fullReasoning.isEmpty()) {
                             chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning);
                         }
                         String fullResponse = assistantContent.toString();
@@ -213,10 +239,33 @@ public class DiagnosisAgent {
                             chatHistoryService.saveAssistantMessage(threadId, userId, fullResponse, "text");
                         }
                     });
+
+            // 状态事件来自真实工具执行（拦截器），与图事件合并后按同一 SSE 通道下发。
+            Flux<MessageDTO> statusEvents = sink.events().asFlux();
+
+            // 图流终止（正常结束 / 报错 / 浏览器取消）时关闭 sink：仍未拿到真实结果的
+            // 调用一律 CANCELLED，绝不在缺结果时呈现成功。必须由 graphEvents 自己触发，
+            // 放在合并流的 doFinally 会形成循环等待（statusEvents 还开着）。
+            Flux<MessageDTO> boundedGraphEvents = graphEvents
+                    .doOnComplete(sink::closePending)
+                    .doOnError(e -> sink.closePending())
+                    .doOnCancel(sink::closePending);
+
+            return Flux.merge(boundedGraphEvents, statusEvents);
         } catch (Exception e) {
+            sink.closePending();
             log.error("流式对话执行异常, threadId={}", threadId, e);
             return Flux.error(new RuntimeException("Agent流式执行失败", e));
         }
+    }
+
+    /**
+     * 历史落库用的脱敏工具调用文本：只有白名单工具名 + 固定标签。
+     * 模型生成的参数 JSON、评估描述、自由文本一律不进 t_agent_message。
+     * package-visible 以便针对性单测验证无敏感原文泄漏。
+     */
+    static String redactedToolCall(String toolName) {
+        return ToolStepContract.stepLabel(toolName);
     }
 
     /**

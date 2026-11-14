@@ -1,0 +1,39 @@
+{
+  "ownedRedisRemoved": true,
+  "chroma": {
+    "collection": "product-acceptance-20261112-context",
+    "id": "89931c27-101b-4e71-b3b5-ce648eed94e5",
+    "removed": true,
+    "originalContainerPreserved": true
+  },
+  "originalContainers": {
+    "eye-admin-redis": "d776560e6b1e8871f9c71f0bb8797905a92039f55d0d0b2c00e5aef328e38dca true",
+    "eye-admin-chroma": "79190e6841933dfe295c105003b0a1033484639f00d537781eb38fb31cbc26b8 true",
+    "eye-draft-mysql": "69f1ef304ebff39b2f7423d1e94f84841bc1a5011ba7b03fbf6ee799184d2113 true"
+  },
+  "closedPorts": [
+    3322,
+    16379,
+    18087,
+    18089,
+    5194,
+    5195,
+    5196
+  ],
+  "taskPortsClosed": true,
+  "ownedNodeProcesses": [
+    {
+      "pid": 40900,
+      "port": 5194
+    },
+    {
+      "pid": 42944,
+      "port": 5195
+    },
+    {
+      "pid": 40356,
+      "port": 5196
+    }
+  ],
+  "temporaryCredentialConfigRemoved": true
+}

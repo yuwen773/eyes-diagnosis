@@ -5,9 +5,10 @@
 #   - 不带 profile 时 EyeDiagnosisApplicationTests 因 COS 凭据为空启动失败；
 #   - 带 SPRING_PROFILES_ACTIVE=ci 时 application-ci.yml 指向 CI 的
 #     127.0.0.1:3306/diagnosis_ci，本机通常没有这套实例；
-#   - 两个 MySQL 集成测试（FlywayMySqlIntegrationTest 断言空库 migrate 12 个、
-#     UploadTaskMapperMySqlIntegrationTest 直连 JDBC 做 CRUD）与 Spring 上下文
-#     的 Flyway 共用一个 schema 会互相污染，故按 CI 的编排分两遍跑。
+#   - 三个 MySQL 集成测试（FlywayMySqlIntegrationTest 断言空库 migrate 12 个、
+#     UploadTaskMapperMySqlIntegrationTest 直连 JDBC 做 CRUD、ToolAuditMySqlIntegrationTest
+#     校验 V28 审计表）与 Spring 上下文的 Flyway 共用一个 schema 会互相污染，故按 CI
+#     的编排分两遍跑。
 #
 # 用法：scripts/verify.sh [额外的 mvn 参数...]
 # 覆盖：VERIFY_MYSQL_PORT / VERIFY_REDIS_PORT / MYSQL_IMAGE / JAVA_HOME
@@ -75,7 +76,7 @@ export SPRING_DATA_REDIS_HOST=127.0.0.1
 export SPRING_DATA_REDIS_PORT="$REDIS_PORT"
 
 echo "==> pass 1/2: full unit suite (including contextLoads)"
-mvn -o test -Dtest='!FlywayMySqlIntegrationTest,!UploadTaskMapperMySqlIntegrationTest' "$@"
+mvn -o test -Dtest='!FlywayMySqlIntegrationTest,!UploadTaskMapperMySqlIntegrationTest,!ToolAuditMySqlIntegrationTest' "$@"
 
 # 第二遍要一个从未被 Spring 的 Flyway 碰过的空库。
 echo "==> pass 2/2: MySQL integration gates on a fresh schema"
@@ -86,6 +87,6 @@ export FLYWAY_TEST_URL="$IT_URL"
 export FLYWAY_TEST_USERNAME=root
 export FLYWAY_TEST_PASSWORD=root-password
 export FLYWAY_TEST_SCHEMA=diagnosis_ci
-mvn -o test -Dtest='FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest' "$@"
+mvn -o test -Dtest='FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest,ToolAuditMySqlIntegrationTest' "$@"
 
 echo "==> verify green"

@@ -1,0 +1,155 @@
+[ {
+  "role" : "VISION",
+  "request_sha256" : "06b55ee8ee937bcfb52eca20aa8c5576af1f4963ef33d707b31984bc4e27d1a6",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "84e373182798688efe376d2f76840ec3ef1da53c44ff1e620d3bd2d8547f9b15",
+  "usage" : {
+    "prompt_tokens" : 282,
+    "completion_tokens" : 96,
+    "total_tokens" : 378,
+    "completion_tokens_details" : {
+      "text_tokens" : 96
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 282
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 3338
+}, {
+  "role" : "EVIDENCE",
+  "request_sha256" : "7ad7e8bad1207c4065822819ecedbc65271de30206b182ed66b2b879dfbed482",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "4b354f7dd2aa450942c11d1a2621bc0297b79230509dd1cd16afdfce2970d0cf",
+  "usage" : {
+    "prompt_tokens" : 371,
+    "completion_tokens" : 12,
+    "total_tokens" : 383,
+    "completion_tokens_details" : {
+      "text_tokens" : 12
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 371
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 887
+}, {
+  "role" : "EXPLANATION",
+  "request_sha256" : "9dab6a2ca9fc3c7cc19e24e32266d4ad7c85bc225a7d33ce3c29ab3060bf8a89",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "520498393b38da7f4a233de6000d802ea005e13951eefb74140495f256d8825d",
+  "usage" : {
+    "prompt_tokens" : 871,
+    "completion_tokens" : 622,
+    "total_tokens" : 1493,
+    "completion_tokens_details" : {
+      "text_tokens" : 622
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 871
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 10973
+}, {
+  "role" : "VISION",
+  "request_sha256" : "b6ae798ad21bb0f16d89de1e64bb8ec27f1f4a2abd779a89ef57fda2c1dbd7f0",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "136da25ba8963f27a20cf8a743135e09acb0639ff38c6aa0346ed84f43a22ccf",
+  "usage" : {
+    "prompt_tokens" : 288,
+    "completion_tokens" : 115,
+    "total_tokens" : 403,
+    "completion_tokens_details" : {
+      "text_tokens" : 115
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 288
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 3174
+}, {
+  "role" : "EVIDENCE",
+  "request_sha256" : "6340f80030a95f22d32b74aef31ed6e88c4f89025bb832bc99df0828342fdca1",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "58745fe9424f2d7fabf4fb6c54c8250aef7fd192c22fce09ce0b1460d9f842ef",
+  "usage" : {
+    "prompt_tokens" : 396,
+    "completion_tokens" : 14,
+    "total_tokens" : 410,
+    "completion_tokens_details" : {
+      "text_tokens" : 14
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 396
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 1156
+}, {
+  "role" : "EXPLANATION",
+  "request_sha256" : "bc181a87696df4addac653e05e26f6f786ac3be99b6f7774b3699aca6d5c0feb",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "609f57a2d8081eea4edd6a83762ba812a4f0d66177f49fd1b6938949f3507877",
+  "usage" : {
+    "prompt_tokens" : 906,
+    "completion_tokens" : 622,
+    "total_tokens" : 1528,
+    "completion_tokens_details" : {
+      "text_tokens" : 622
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 906
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 10665
+}, {
+  "role" : "CRITIC",
+  "request_sha256" : "b808f0a17c7f4f877eed97d18fdc2d29c9134d191bfe34663970f4d5af6c602c",
+  "model" : "qwen3.5-plus",
+  "contains_patient_identity_or_object_location" : false,
+  "http_status" : 200,
+  "response_sha256" : "c99ccbee13dd322dc23415264a6b0f5f78d60797a0d580ae35962c78a6ca34d2",
+  "usage" : {
+    "prompt_tokens" : 1250,
+    "completion_tokens" : 9,
+    "total_tokens" : 1259,
+    "completion_tokens_details" : {
+      "text_tokens" : 9
+    },
+    "prompt_tokens_details" : {
+      "text_tokens" : 1250
+    }
+  },
+  "returned_model" : "qwen3.5-plus",
+  "finish_reason" : "stop",
+  "reasoning_content_present" : false,
+  "elapsed_ms" : 1108
+} ]

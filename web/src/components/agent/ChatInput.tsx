@@ -160,6 +160,7 @@ export function ChatInput({
           <textarea
             ref={textareaRef}
             className="agent-input__textarea"
+            aria-label="问答内容"
             placeholder={text.length === 0 && attachments.length === 0 ? "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片" : ""}
             rows={1}
             value={text}

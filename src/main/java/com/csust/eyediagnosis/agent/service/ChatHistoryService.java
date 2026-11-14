@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -121,6 +122,18 @@ public class ChatHistoryService {
         return session != null && userId.equals(session.getUserId());
     }
 
+    /** Explicit empty session admission; never generates a title or calls a model. */
+    @Transactional
+    public SessionVO createEmptySession(String sessionId, Long userId) {
+        if (sessionId == null || !sessionId.matches("[a-zA-Z0-9_-]{1,64}"))
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        AgentSession session = claimOrValidateSession(sessionId, userId, "影像协作");
+        if (!Integer.valueOf(1).equals(session.getStatus())
+                || (session.getExpiredTime() != null && !session.getExpiredTime().after(new Date())))
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        return toSessionVO(session);
+    }
+
     public void deleteSession(String sessionId, Long userId) {
         if (!isSessionOwner(sessionId, userId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -172,15 +185,17 @@ public class ChatHistoryService {
         if (!isSessionOwner(sessionId, userId)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // Fail closed on unknown formats: otherwise "pdf" silently produces Markdown.
+        if (!"json".equalsIgnoreCase(format) && !"markdown".equalsIgnoreCase(format)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "仅支持 markdown 或 json 导出");
+        }
         List<AgentMessage> messages = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, 1000);
         AgentSession session = sessionMapper.selectBySessionId(sessionId);
 
         try {
-            if ("json".equalsIgnoreCase(format)) {
-                return exportAsJson(session, messages);
-            } else {
-                return exportAsMarkdown(session, messages);
-            }
+            return "json".equalsIgnoreCase(format)
+                    ? exportAsJson(session, messages)
+                    : exportAsMarkdown(session, messages);
         } catch (JsonProcessingException e) {
             log.error("导出会话失败, sessionId={}", sessionId, e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "导出失败");

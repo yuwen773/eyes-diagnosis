@@ -13,6 +13,10 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // 本机 Chromium 未随 Playwright 版本下载时显式指向已有安装（报告须记录实际版本）。
+    launchOptions: process.env.E2E_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.E2E_CHROMIUM_EXECUTABLE_PATH }
+      : {},
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 })

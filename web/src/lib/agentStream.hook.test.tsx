@@ -13,6 +13,7 @@ vi.mock("./api", async () => {
 
 /** 造一个可手动推进的流：返回 handlers 与一个「结束」动作。 */
 function fakeStream() {
+  let end: () => void = () => {}
   let handlers: {
     onEvent(dto: AgentStreamDTO): void
     onDone(): void
@@ -26,8 +27,8 @@ function fakeStream() {
       signal = sig
       // 挂起，直到 abort 或测试主动结束
       await new Promise<void>((resolve) => {
+        end = resolve
         sig.addEventListener("abort", () => resolve(), { once: true })
-        ;(resolve as unknown as { __done?: () => void }).__done = resolve
       })
     },
   )
@@ -41,6 +42,7 @@ function fakeStream() {
     finish() {
       act(() => {
         handlers?.onDone()
+        end()
       })
     },
     get signal() {
@@ -71,6 +73,19 @@ describe("useAgentStream", () => {
 
   afterEach(() => {
     cleanup()
+  })
+
+  it("请求 → 确认 → done/finally 保持等待确认，不产生已取消卡", async () => {
+    const stream = fakeStream()
+    let api!: ReturnType<typeof useAgentStream>
+    render(<Probe onReady={(a) => (api = a)} />)
+    await act(async () => { void api.send("查一下", "thread-A") })
+    stream.emit({ messageType: "tool-request", toolCalls: [{ name: "searchDocuments", arguments: "{}", id: "a" }] })
+    stream.emit({ messageType: "tool-confirm", toolCallId: "a", content: "等待审批" })
+    await act(async () => { stream.finish() })
+    expect(api.isStreaming).toBe(false)
+    expect(api.messages.find((m) => m.type === "tool-request")?.toolStatus).toBe("awaiting-confirm")
+    expect(api.messages.some((m) => m.toolStatus === "cancelled")).toBe(false)
   })
 
   it("切会话（reset）会中断在途 SSE，不让旧回合的 token 写进新会话", async () => {

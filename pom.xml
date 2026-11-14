@@ -95,6 +95,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- TASK-08/PR-08A：仅测试作用域的 Studio 复用验证 Spike，不进生产类路径 -->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-studio</artifactId>
+            <version>${spring-ai-alibaba.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

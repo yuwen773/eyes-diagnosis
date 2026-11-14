@@ -1,4 +1,4 @@
-import type { StreamMessage } from "@/lib/agentStream"
+import type { StreamMessage, ToolStepStatus } from "@/lib/agentStream"
 
 /** 扳手图标：同 Vue 版 ToolRequestMessage 的 tool-icon。 */
 function WrenchIcon() {
@@ -9,17 +9,48 @@ function WrenchIcon() {
   )
 }
 
-/** 工具调用卡：排版复刻 Vue 版 ToolRequestMessage——头部（扳手 + 工具名 + 调用）+ 参数键值行。 */
+/**
+ * 状态文案是前端固定字典，不接受后端自由文本；颜色永远与文字同时出现。
+ * 没有 toolCallId 的历史卡不显示状态——旧数据没有真实执行结果可依据。
+ */
+const STATUS_TEXT: Record<ToolStepStatus, string> = {
+  "awaiting-confirm": "等待确认",
+  running: "执行中",
+  succeeded: "执行成功",
+  failed: "执行失败",
+  cancelled: "已取消",
+}
+
+/** 工具调用卡：头部（扳手 + 固定标签 + 状态）+ 参数键值行。 */
 export function ToolRequestMessage({ msg }: { msg: StreamMessage }) {
+  // 一条历史消息可含多个调用；同名工具也保留独立步骤。
+  if (msg.toolCalls && msg.toolCalls.length > 1) {
+    return msg.toolCalls.map((tc, index) => (
+      <ToolRequestMessage
+        key={`${msg.id}-${index}`}
+        msg={{ ...msg, toolCallId: tc.id, stepLabel: tc.stepLabel ?? tc.name, toolCalls: [tc] }}
+      />
+    ))
+  }
+  const status = msg.toolCallId ? msg.toolStatus : undefined
+  const label = msg.stepLabel ?? (msg.toolCalls ?? []).map((tc) => tc.name).join(", ") ?? "工具"
   return (
     <div className="agent-toolcard">
       <div className="agent-toolcard__head">
         <span className="agent-toolcard__icon">
           <WrenchIcon />
         </span>
-        <span className="agent-toolcard__name">
-          {(msg.toolCalls ?? []).map((tc) => tc.name).join(", ") || "工具"}
-        </span>
+        <span className="agent-toolcard__name">{label || "工具"}</span>
+        {status && (
+          <span
+            className={`agent-toolcard__status agent-toolcard__status--${status}`}
+            role="status"
+            aria-live="polite"
+          >
+            <span className="agent-toolcard__dot" aria-hidden="true" />
+            {STATUS_TEXT[status]}
+          </span>
+        )}
         <span className="agent-toolcard__tag">调用</span>
       </div>
       <div className="agent-toolcard__args">

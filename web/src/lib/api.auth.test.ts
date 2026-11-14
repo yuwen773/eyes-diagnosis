@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AUTH_EXPIRED_EVENT, getLoginUser, getSessions, streamChat } from "./api"
+import { applyStreamEvent, clearAllLoading, type StreamMessage } from "./agentStream"
 
 let calls: number
 let codes: number[]
@@ -75,5 +76,34 @@ describe("未登录处理", () => {
 
     expect(calls).toBe(1)
     expect(codes).toEqual([40101])
+  })
+})
+
+describe("普通聊天 SSE 可选字段契约", () => {
+  it.each([true, false])("旧字段显式 null / 省略均可消费：null=%s", async (explicitNull) => {
+    const empty = explicitNull ? { content: null, toolCalls: null } : {}
+    const frames = [
+      explicitNull ? { ...empty, messageType: null } : {},
+      { ...empty, messageType: "assistant" },
+      { messageType: "assistant", content: "安全回复" },
+      { ...empty, messageType: "tool-request" },
+    ]
+    const wire = frames.map((frame) => `data: ${JSON.stringify(frame)}\n\n`).join("")
+      + "event: done\ndata: {}\n\n"
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(wire, {
+      headers: { "content-type": "text/event-stream" },
+    })))
+    let messages: StreamMessage[] = []
+    const onDone = vi.fn(() => { messages = clearAllLoading(messages) })
+    const onError = vi.fn()
+    await streamChat({ message: "你好", threadId: "synthetic" }, {
+      onEvent(dto) { messages = applyStreamEvent(messages, dto) },
+      onDone,
+      onError,
+    }, new AbortController().signal)
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toMatchObject({ type: "assistant", content: "安全回复", isLoading: false })
+    expect(onDone).toHaveBeenCalledOnce()
+    expect(onError).not.toHaveBeenCalled()
   })
 })

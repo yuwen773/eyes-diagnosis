@@ -1,0 +1,194 @@
+{
+  "run": 42782994089,
+  "attempt": 1,
+  "head": "659ca14d5fce6089bda666d865c1a26c683ee089",
+  "merge": "f9d66660cc8ec3ac6b9438f408f7ed2e5ddf500a",
+  "jobs": [
+    {
+      "name": "python",
+      "id": 129717278955,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:31:44.9545992Z 426 passed, 17 skipped, 35 deselected, 5 warnings in 55.39s"
+      ]
+    },
+    {
+      "name": "frontend",
+      "id": 129717279310,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:32.7147123Z  Test Files  8 passed (8)",
+        "2026-11-10T08:29:32.7148051Z       Tests  60 passed (60)"
+      ]
+    },
+    {
+      "name": "issue18-mysql",
+      "id": 129717279330,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:47.0408673Z Ran 33 tests in 0.191s",
+        "2026-11-10T08:29:47.0409727Z skip gate passed: no unexpected skipped or dropped tests",
+        "2026-11-10T08:30:26.8589238Z [INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.140 s -- in com.csust.eyediagnosis.controlledreference.ControlledReferenceApiTest",
+        "2026-11-10T08:30:26.8928026Z [INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:26.9905914Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "issue17-mysql",
+      "id": 129717279339,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:41.8651012Z skip gate passed: no unexpected skipped or dropped tests",
+        "2026-11-10T08:29:42.0751057Z Ran 3 tests in 0.149s",
+        "2026-11-10T08:30:26.3470408Z [INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.084 s -- in com.csust.eyediagnosis.diagnosistask.DiagnosisTaskRecoveryTest",
+        "2026-11-10T08:30:26.6242465Z [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.317 s -- in com.csust.eyediagnosis.diagnosistask.CosDiagnosisTaskStorageTest",
+        "2026-11-10T08:30:27.6602095Z [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.034 s -- in com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest",
+        "2026-11-10T08:30:27.6863598Z [INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:27.7799282Z DiagnosisTaskApiTest: 7 passed, 0 skipped",
+        "2026-11-10T08:30:27.7799510Z DiagnosisTaskRecoveryTest: 10 passed, 0 skipped",
+        "2026-11-10T08:30:27.7799740Z CosDiagnosisTaskStorageTest: 1 passed, 0 skipped"
+      ]
+    },
+    {
+      "name": "flyway-mysql (reversealphabetical)",
+      "id": 129717279350,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:21.7448740Z [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.890 s -- in com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest",
+        "2026-11-10T08:30:22.3897996Z [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.682 s -- in com.csust.eyediagnosis.migration.FlywayMySqlIntegrationTest",
+        "2026-11-10T08:30:22.4095925Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:22.5088969Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "issue22-mysql",
+      "id": 129717279394,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:45.8892229Z [INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 24.67 s -- in com.csust.eyediagnosis.patientauthorization.PatientAuthorizationApiTest",
+        "2026-11-10T08:30:45.9296756Z [INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:46.0649290Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "issue21-mysql",
+      "id": 129717279428,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:32.0085674Z [INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.27 s -- in com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+        "2026-11-10T08:30:32.0453149Z [INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:32.1540578Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "backend-unit",
+      "id": 129717279448,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:24.2199863Z [WARNING] Tests run: 3, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 0.001 s -- in com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest",
+        "2026-11-10T08:30:24.2270768Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.csust.eyediagnosis.upload.state.UploadStateMachineTest",
+        "2026-11-10T08:30:24.3451469Z [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.122 s -- in com.csust.eyediagnosis.upload.state.UploadCompensationServiceTest",
+        "2026-11-10T08:30:24.3511009Z [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.csust.eyediagnosis.upload.state.UploadStatusTest",
+        "2026-11-10T08:30:24.3942185Z [WARNING] Tests run: 36, Failures: 0, Errors: 0, Skipped: 36, Time elapsed: 0.045 s -- in com.csust.eyediagnosis.doctorreview.DoctorReviewApiTest",
+        "2026-11-10T08:30:24.4672434Z [WARNING] Tests run: 37, Failures: 0, Errors: 0, Skipped: 37, Time elapsed: 0.070 s -- in com.csust.eyediagnosis.patientfollowup.PatientFollowUpApiTest",
+        "2026-11-10T08:30:24.4959365Z [WARNING] Tests run: 27, Failures: 0, Errors: 0, Skipped: 27, Time elapsed: 0.029 s -- in com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+        "2026-11-10T08:30:24.8682440Z [WARNING] Tests run: 304, Failures: 0, Errors: 0, Skipped: 220",
+        "2026-11-10T08:30:24.9724499Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "flyway-mysql (alphabetical)",
+      "id": 129717279456,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:08.0466390Z [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.292 s -- in com.csust.eyediagnosis.migration.FlywayMySqlIntegrationTest",
+        "2026-11-10T08:30:08.8622414Z [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.829 s -- in com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest",
+        "2026-11-10T08:30:08.8806334Z [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:08.9750579Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "docs-contract",
+      "id": 129717279492,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": []
+    },
+    {
+      "name": "backend-compile",
+      "id": 129717279521,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": []
+    },
+    {
+      "name": "issue23-mysql",
+      "id": 129717279565,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:33.4734419Z [INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.89 s -- in com.csust.eyediagnosis.patientfollowup.PatientFollowUpApiTest",
+        "2026-11-10T08:30:33.5016514Z [INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:33.5908162Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "issue20-mysql",
+      "id": 129717279566,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:30:28.3823682Z [INFO] Tests run: 36, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.77 s -- in com.csust.eyediagnosis.doctorreview.DoctorReviewApiTest",
+        "2026-11-10T08:30:28.4179371Z [INFO] Tests run: 36, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:28.5394564Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "issue24-evaluation",
+      "id": 129717279590,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:44.7616932Z Ran 12 tests in 0.661s",
+        "2026-11-10T08:30:45.9663203Z [INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.48 s -- in com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+        "2026-11-10T08:30:53.1379179Z [INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.235 s -- in com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+        "2026-11-10T08:30:53.1792832Z [INFO] Tests run: 64, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:53.2732952Z skip gate passed: no unexpected skipped or dropped tests",
+        "2026-11-10T08:30:53.3056054Z skip gate passed: no unexpected skipped or dropped tests",
+        "2026-11-10T08:30:53.3703291Z SCRIPTED_REPLAY: 48 paired cells; reliability PASS; target/agent-collaboration",
+        "2026-11-10T08:30:54.6536554Z Artifact issue24-evaluation has been successfully uploaded! Final size is 48193 bytes. Artifact ID is 13746079853"
+      ]
+    },
+    {
+      "name": "issue19-mysql",
+      "id": 129717279642,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:39.3933518Z Ran 33 tests in 0.171s",
+        "2026-11-10T08:29:39.3985705Z skip gate passed: no unexpected skipped or dropped tests",
+        "2026-11-10T08:30:25.5243507Z [INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.75 s -- in com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+        "2026-11-10T08:30:25.5597614Z [INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0",
+        "2026-11-10T08:30:25.6830855Z skip gate passed: no unexpected skipped or dropped tests"
+      ]
+    },
+    {
+      "name": "watchdog",
+      "id": 129717279773,
+      "status": "completed",
+      "conclusion": "success",
+      "evidence": [
+        "2026-11-10T08:29:45.3047902Z 53 passed in 30.88s"
+      ]
+    }
+  ]
+}

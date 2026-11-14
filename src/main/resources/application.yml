@@ -3,15 +3,18 @@ server:
   port: 8081
   servlet:
     context-path: /api
-    # cookie 30 天过期
+    # cookie 30 天过期；SameSite=Lax 是 CSRF 基线防护，生产必须 HTTPS 时再加 secure
     session:
       cookie:
         max-age: 2592000
+        same-site: lax
+        http-only: true
 spring:
   servlet:
     multipart:
       # 上传文件最大大小 10MB
       max-file-size: 10MB
+      max-request-size: 11MB
   profiles:
     # 启用配置文件
     active: local,dev
@@ -78,7 +81,26 @@ app:
 # 事务性 Outbox 已退役：t_agent_message_outbox 与 t_agent_message 同库，
 # 没有跨系统边界可跨，且原有 dispatcher 会重放历史行。会话消息统一由
 # ChatMessageWriter 单事务直写 t_agent_message；表中历史行保留不清理。
+agent:
+  # 上游模型 reasoning 默认不展示、不落库；显式开启才进入消息流与历史。
+  expose-reasoning: false
+  tool-audit:
+    # 结构化工具调用审计：SSE 状态事件始终可用，但默认完全不落库。
+    # 启用前必须部署 V28 表，并通过部署环境变量提供独立 HMAC 密钥。
+    enabled: false
+    digest-key: ${AGENT_TOOL_AUDIT_DIGEST_KEY:iris-tool-audit-dev-only-key}
 eye-diagnosis:
+  collaboration:
+    enabled: false
+    admission-enabled: false
+    graph-enabled: false
+    patient-progress-enabled: false
+    clinician-detail-enabled: false
+  agent:
+    # Chat history uses the ordinary single-write persistence path. Do not
+    # enable the legacy dispatcher or it can replay pre-existing Outbox rows.
+    outbox:
+      enabled: false
   # 上传补偿对账：清理 COS 上没有任务行登记的孤儿图片。
   # 该任务会真实删除对象存储中的文件，默认关闭，需显式开启。
   upload:
@@ -116,5 +138,10 @@ eye-diagnosis:
     hybrid-search:
       enabled: true
       rrf-k: 60
+    # B2 来源标记：默认关闭。开启后只会在既有 owner 过滤之后进一步收窄
+    # 可见集合（BUILTIN/USER_UPLOAD 保留，UNKNOWN/AUTHORIZED_EXTERNAL 一律排除），
+    # 绝不扩大默认可见性；不参与受控引用库的准入判定。
+    source-type:
+      enabled: false
     evaluation:
       enabled: false

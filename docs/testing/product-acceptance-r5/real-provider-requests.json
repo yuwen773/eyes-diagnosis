@@ -1,0 +1,246 @@
+{
+  "requests" : [ {
+    "role" : "EVIDENCE",
+    "requestSha256" : "c6a7317fc2d278d05fc78001b1ebaa157cccee9e982cb16ee7261ddb48ef16bb",
+    "snapshotDigest" : "2a498ba0f3ec915f86b99736c2dca07c47cb8851f6b87bc4720455f3a77de674",
+    "usage" : {
+      "prompt_tokens" : 277,
+      "completion_tokens" : 12,
+      "total_tokens" : 289,
+      "completion_tokens_details" : {
+        "text_tokens" : 12
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 277
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 1767,
+    "requestId" : "bed2a9c2-a5a7-900c-8cdd-c7478e57e9f6",
+    "httpStatus" : 200,
+    "id" : 1,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:12:45.090911300Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "2e263b0039e5df6e807c2ab672e678d7430234fb4cde2c5a1ece5e883697456e"
+  }, {
+    "role" : "VISION",
+    "requestSha256" : "a29652eb4a8ee7dd7b8d45a5b6d73d10d8082f76f55dd6cbe1e08955462c4e9c",
+    "snapshotDigest" : "2a498ba0f3ec915f86b99736c2dca07c47cb8851f6b87bc4720455f3a77de674",
+    "usage" : {
+      "prompt_tokens" : 261,
+      "completion_tokens" : 87,
+      "total_tokens" : 348,
+      "completion_tokens_details" : {
+        "text_tokens" : 87
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 261
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 3645,
+    "requestId" : "34836cec-7866-9ad2-9feb-184219da1339",
+    "httpStatus" : 200,
+    "id" : 2,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:12:45.099220700Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "e608dc007a2e7517d11a06be91730f0c8824b2c746fde511f7e531f228573a2a"
+  }, {
+    "role" : "EXPLANATION",
+    "requestSha256" : "882c0cb9a6f7589e29609d194f8b7d7ed78819b2bcc986c9c8ca500129128e7c",
+    "snapshotDigest" : "2a498ba0f3ec915f86b99736c2dca07c47cb8851f6b87bc4720455f3a77de674",
+    "usage" : {
+      "prompt_tokens" : 505,
+      "completion_tokens" : 377,
+      "total_tokens" : 882,
+      "completion_tokens_details" : {
+        "text_tokens" : 377
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 505
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 8807,
+    "requestId" : "a03ccca6-7484-91e0-8df8-291e99051742",
+    "httpStatus" : 200,
+    "id" : 3,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:12:48.857060500Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "3634919dcd4eb94a4b2be6d18dadbfb39343040f2f81b2ba2830068e65727897"
+  }, {
+    "role" : "CRITIC",
+    "requestSha256" : "5b29796738d6b098a4d4d4df1c795d5e173d9a501abea1a82b042b5f3ac6045a",
+    "snapshotDigest" : "2a498ba0f3ec915f86b99736c2dca07c47cb8851f6b87bc4720455f3a77de674",
+    "usage" : {
+      "prompt_tokens" : 977,
+      "completion_tokens" : 172,
+      "total_tokens" : 1149,
+      "completion_tokens_details" : {
+        "text_tokens" : 172
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 977
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 4484,
+    "requestId" : "49352ac8-6879-968c-b840-a7f1e081d524",
+    "httpStatus" : 200,
+    "id" : 4,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:12:57.832810800Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "ef85b0b97623c2a4687ac8a5b791be9b453449eedc1a0d380d39d899cda30d67"
+  }, {
+    "role" : "EVIDENCE",
+    "requestSha256" : "b611d0ee6fa7cf10bbc9a2ef2fc172aee4847b2c69e2183861484d1952dc0359",
+    "snapshotDigest" : "2a498ba0f3ec915f86b99736c2dca07c47cb8851f6b87bc4720455f3a77de674",
+    "usage" : {
+      "prompt_tokens" : 530,
+      "completion_tokens" : 16,
+      "total_tokens" : 546,
+      "completion_tokens_details" : {
+        "text_tokens" : 16
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 530
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 1988,
+    "requestId" : "d46409e2-8592-9bea-9464-c9fcde770222",
+    "httpStatus" : 200,
+    "id" : 5,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:02.501387500Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "a7eea3dcf83788c3303bd2cf89efa6d5a2de5b2d7172c398299022c3c4ebee54"
+  }, {
+    "role" : "VISION",
+    "requestSha256" : "3591827c642e01772adc5877bfa241525c5ca32f37aaf377f405c37051ea6a9b",
+    "snapshotDigest" : "d14dc430820d32bfb6d60b1bcc7e35f6e5c66344376196cc4cb477b79f0180db",
+    "usage" : {
+      "prompt_tokens" : 260,
+      "completion_tokens" : 105,
+      "total_tokens" : 365,
+      "completion_tokens_details" : {
+        "text_tokens" : 105
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 260
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 3288,
+    "requestId" : "a44c7f88-2433-9927-9813-e701b2162418",
+    "httpStatus" : 200,
+    "id" : 6,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:07.111098Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "d31d62ca80733f29e9f8f2e76877ed5aa10b4865c3e0281758d7a5e4386f0c2f"
+  }, {
+    "role" : "EVIDENCE",
+    "requestSha256" : "29315773b58563af1b45a11c06df822727145b25c2e468bf08eb1a3f5e5da88d",
+    "snapshotDigest" : "d14dc430820d32bfb6d60b1bcc7e35f6e5c66344376196cc4cb477b79f0180db",
+    "usage" : {
+      "prompt_tokens" : 276,
+      "completion_tokens" : 12,
+      "total_tokens" : 288,
+      "completion_tokens_details" : {
+        "text_tokens" : 12
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 276
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 1498,
+    "requestId" : "423ada82-b7d5-9e16-8e8e-0bf0e1d7dbf9",
+    "httpStatus" : 200,
+    "id" : 7,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:07.122432300Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "00a3bbfef48755c50645f6ee40c0fd44ae81428910c5f8865b117cca94ba811a"
+  }, {
+    "role" : "EXPLANATION",
+    "requestSha256" : "d4ba667a376009891155d3e1f41b12b36eb7490f77ed8a065a26fa07120ab8cf",
+    "snapshotDigest" : "d14dc430820d32bfb6d60b1bcc7e35f6e5c66344376196cc4cb477b79f0180db",
+    "usage" : {
+      "prompt_tokens" : 522,
+      "completion_tokens" : 606,
+      "total_tokens" : 1128,
+      "completion_tokens_details" : {
+        "text_tokens" : 606
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 522
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 11303,
+    "requestId" : "6c7ab087-61c1-9e3e-9b76-71e7f5a22fe5",
+    "httpStatus" : 200,
+    "id" : 8,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:10.497003700Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "d01ace76d641bd0816295b157d6a73712609e2403b23c42a2f9795c5ac7cf2c7"
+  }, {
+    "role" : "CRITIC",
+    "requestSha256" : "85faea3d04a04057bab71edf1510a4d2cfcee7fc690f29817f1a1e4736cf88bf",
+    "snapshotDigest" : "d14dc430820d32bfb6d60b1bcc7e35f6e5c66344376196cc4cb477b79f0180db",
+    "usage" : {
+      "prompt_tokens" : 989,
+      "completion_tokens" : 276,
+      "total_tokens" : 1265,
+      "completion_tokens_details" : {
+        "text_tokens" : 276
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 989
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 7406,
+    "requestId" : "c544af61-d513-9e24-b9b7-a2128b7ebe7c",
+    "httpStatus" : 200,
+    "id" : 9,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:21.905406200Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "85025ff6223cea63f7e4b571c5a9d726e3c68489401766391db8879329ca8062"
+  }, {
+    "role" : "EVIDENCE",
+    "requestSha256" : "901956a5615a663439616dacf6b665cde22eb0fa2d44185fea857406f53a151b",
+    "snapshotDigest" : "d14dc430820d32bfb6d60b1bcc7e35f6e5c66344376196cc4cb477b79f0180db",
+    "usage" : {
+      "prompt_tokens" : 651,
+      "completion_tokens" : 18,
+      "total_tokens" : 669,
+      "completion_tokens_details" : {
+        "text_tokens" : 18
+      },
+      "prompt_tokens_details" : {
+        "text_tokens" : 651
+      }
+    },
+    "reasoningContentPresent" : false,
+    "elapsedMillis" : 1389,
+    "requestId" : "7fc13a0e-7536-9176-9508-1fa3a832f1eb",
+    "httpStatus" : 200,
+    "id" : 10,
+    "state" : "RETURNED",
+    "reservedAt" : "2026-11-13T14:13:29.433048400Z",
+    "returnedModel" : "qwen3.5-plus",
+    "responseSha256" : "f21222f077fd88e3d9a7db0c81956205fe7fa9391435ced34b6904b083772b4b"
+  } ],
+  "stopped" : false,
+  "hardLimit" : 16,
+  "realRequests" : 10
+}

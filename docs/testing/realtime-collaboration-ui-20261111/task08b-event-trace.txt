@@ -1,0 +1,37 @@
+--- /api/agent/collaboration-runs/run-a/events (v1:patient) ---
+run.started
+agent.started
+agent.started
+agent.completed
+agent.completed
+agent.started
+agent.completed
+agent.started
+agent.feedback.requested
+agent.completed
+agent.started
+agent.completed
+agent.started
+agent.completed
+run.review_ready
+run.completed
+--- /api/agent/collaboration-runs/run-a/events (v1:admin) ---
+run.started
+agent.started
+agent.started
+agent.completed
+agent.completed
+agent.handoff
+evidence.verified
+agent.started
+agent.completed
+agent.started
+agent.feedback.requested
+agent.completed
+agent.started
+agent.revision.completed
+agent.completed
+agent.started
+agent.completed
+run.review_ready
+run.completed

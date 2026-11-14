@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "task": "TASK-01",
+  "assessment": "PASS_WITH_LIMITATIONS",
+  "m0Overall": "PARTIAL",
+  "evidenceType": "REAL_GRAPH_WITH_SYNTHETIC_ROLE_RESPONSES",
+  "baseCommit": "6572743169027bb1e7c27d7d969a26ed89d99cd1",
+  "branch": "codex/realtime-graph-spike",
+  "candidateState": "UNCOMMITTED_ADDITIONS_BOUND_BY_SOURCE_HASHES",
+  "finishedAt": "2026-11-11T17:34:51+08:00",
+  "command": "mvn -o -B -Dtest=RealtimeGraphSpikeTest,CoordinationPocTest test",
+  "javaVersion": "21.0.7",
+  "mavenVersion": "3.9.9",
+  "springAiVersion": "1.1.2",
+  "springAiAlibabaVersion": "1.1.2.2",
+  "graphCoreBinarySha256": "598D5AA825C88F156F47A1B760151F2C9EF5C7059BDFC7203FF95B4C173884AA",
+  "graphCoreSourcesUrl": "https://repo.maven.apache.org/maven2/com/alibaba/cloud/ai/spring-ai-alibaba-graph-core/1.1.2.2/spring-ai-alibaba-graph-core-1.1.2.2-sources.jar",
+  "graphCoreSourcesSha256": "7FAD01E85A2697C4590BD025DF1798C77A2DDA5BFCDD01551A99F92634B27E93",
+  "sourceFileSha256": {
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/FourRoleGraph.java": "373FCDE0C3425474EA03DC30351232D33649D73644B900933F3228CEC8D39B6C",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/RealtimeGraphSpikeTest.java": "6A2F8AFB40C00EED011661A75FD861EFE3F6AC2460F080BA1E4F783A48A15378",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/GraphSpikeResumeWorker.java": "B0B3C3FC153A2CC522326BCD808ED031C047B0C1ECB7E6F0C82C9EBECAAF2EE0",
+    "docs/plans/EyesDiagnosis_RealTime_MultiAgent_Implementation_Plan_v1.1.md": "CD3B1BCD51FED7EFB6479DBF6AB38B04584A7AC194C06DFC9392676CBE8990BB"
+  },
+  "totals": {
+    "tests": 16.0,
+    "failures": 0.0,
+    "errors": 0.0,
+    "skipped": 0.0,
+    "buildSeconds": 19.995
+  },
+  "suites": [
+    {
+      "name": "com.csust.eyediagnosis.poc.realtime.RealtimeGraphSpikeTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.25,
+      "cases": [
+        {
+          "name": "supplementRechecksDraftAgainstNewEvidenceWithoutRerunningVision",
+          "seconds": 0.048
+        },
+        {
+          "name": "cancellingSubscriberStopsDownstreamButDoesNotStopProviderOrLateLifecycleCallbacks",
+          "seconds": 0.015
+        },
+        {
+          "name": "lifecycleListenerExceptionDoesNotVetoExecution",
+          "seconds": 0.009
+        },
+        {
+          "name": "roleFailurePreventsExplanationAndCritique",
+          "seconds": 0.008
+        },
+        {
+          "name": "parallelLifecycleReportsEvidenceBeforeVisionCompletesButAfterStateIsNotTheResult",
+          "seconds": 0.009
+        },
+        {
+          "name": "missingFeedbackCannotBeTreatedAsSuccessfulReview",
+          "seconds": 0.005
+        },
+        {
+          "name": "applicationFeedbackBudgetStopsRepeatedRewrite",
+          "seconds": 0.006
+        },
+        {
+          "name": "fourRoleCheckpointResumesInAnotherJvmWithoutRepeatingCompletedRoles(Path)",
+          "seconds": 1.116
+        },
+        {
+          "name": "rewriteRechecksNewDraftWithoutRerunningVisionOrEvidence",
+          "seconds": 0.007
+        },
+        {
+          "name": "parallelBranchesJoinBeforeExplanationWithoutLosingState",
+          "seconds": 0.004
+        },
+        {
+          "name": "nodeStreamEmitsExplanationWhileCriticIsStillInFlight",
+          "seconds": 0.004
+        },
+        {
+          "name": "frameworkRecursionLimitCanCloseStreamWithoutSuccessfulEnd",
+          "seconds": 0.002
+        }
+      ]
+    },
+    {
+      "name": "com.csust.eyediagnosis.poc.CoordinationPocTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.498,
+      "cases": [
+        {
+          "name": "graphTransitionAndCheckpointComeFromTheSameInterruptedRun",
+          "seconds": 0.467
+        },
+        {
+          "name": "interruptedGraphCheckpointCanBeSerializedAndResumed",
+          "seconds": 0.004
+        },
+        {
+          "name": "bothEnginesApplyTheSameFixedBusinessTransition",
+          "seconds": 0.004
+        },
+        {
+          "name": "domainRecoveryTransitionsOnlyFromWaitingReview",
+          "seconds": 0.0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Parallel NodeOutput aggregates at join; branch lifecycle state is pre-merge",
+    "Lifecycle exceptions cannot veto execution",
+    "Subscriber cancellation does not stop in-flight external work or late lifecycle callbacks",
+    "Checkpoint resume requires explicit key strategies and does not prove domain transaction recovery",
+    "Reactor completion or recursion exhaustion is not domain success"
+  ],
+  "notRun": [
+    "real-provider",
+    "clinical-or-normal-image-OOD",
+    "production-coordinator-equivalence",
+    "MySQL-transactions-and-fencing",
+    "crash-injection",
+    "SSE-auth-replay",
+    "React-browser",
+    "Studio",
+    "real-token-stream",
+    "full-backend-suite",
+    "hosted-CI",
+    "deployment"
+  ]
+}

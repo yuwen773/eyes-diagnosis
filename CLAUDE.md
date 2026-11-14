@@ -12,11 +12,17 @@ Base package: `com.csust.eyediagnosis`
 > 分支，与本分支**不再互相合并**；`frontend/`、`algorithm/` 下的 ML 部分等共享目录各持一份，
 > 改动需人工搬运。约定见 `docs/backend-split.md`。
 
+诊断工作流的业务术语与授权边界（聊天会话 / 诊断工作流 / 正式记录、医生复核 / 患者保存授权）以 `CONTEXT.md` 为准：涉及这些概念或设计人工等待点时先读该文件。
+
+Worktree-isolated sessions 只接受单条、无运行时计算的 Bash 命令；跨分支只读用 `git show <branch>:<path>`，详见 `AGENTS.md` 的 Worktree shell guard。JDK 21 用 `JAVA_HOME="/c/Users/yuwen/.jdks/corretto-21.0.7"`（MSYS 形式）。
+
+派审查子代理前读 `docs/subagent-delegation.md`：明确完成判据、限定范围、等 harness 通知而非轮询；机械检查交给 `scripts/check_design_doc.py` 等脚本，子代理只判 judgement calls。
+
 ## Navigation
 
 - 领域命名、模块边界、易混术语 → `GLOSSARY.md`（架构评审与新增概念前读）。
 - 找设计 / 计划 / 验收 / 迁移文档 → `docs/README.md`（按主题分组的索引）。
-- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`。
+- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与目标库升级路径见 `docs/architecture/migration-matrix.md`。
 - 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
 - 多工作树协作、Windows 进程操作、临时验证产物清理 → `docs/agent-worktree-conventions.md`。
 
@@ -44,7 +50,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 
 **gRPC + Python Algorithm** (`algorithm/`): EfficientNet-B4 model for 8-class eye disease classification. Protobuf in `src/main/proto/diagnosis.proto`, compiled by `protobuf-maven-plugin` (Java) and `algorithm/generate_proto.py` (Python). Java client: `grpc/DiagnosisGrpcClient`.
 
-**Frontend (product)** (`web/`): React 19 + TypeScript + Vite + Tailwind v4 + React Router. API 层手写于 `web/src/lib/api.ts`（统一 `ApiError` / `BaseResponse`），Agent 聊天用 `@microsoft/fetch-event-source` 消费 SSE。2026-11-10 起由 `git subtree` 纳入本仓库，原独立仓库 `eyes-diagnosis-web` 已归档。
+**Frontend (product)** (`web/`): React 19 + TypeScript + Vite + Tailwind v4 + React Router. API 层手写于 `web/src/lib/api.ts`（统一 `ApiError` / `BaseResponse`），Agent 聊天用 `@microsoft/fetch-event-source` 消费 SSE。2026-11-10 起由 `git subtree` 纳入本仓库，原独立仓库 `eyes-diagnosis-web` 已归档。实时协作工作台沿用同一设计系统；TASK-04 collaboration is opt-in via `VITE_COLLABORATION_ENABLED=true`; see `docs/collaboration-client.md`.
 
 **Frontend (deprecated)** (`frontend/`): Vue 3 + TypeScript + Ant Design Vue 4 + Tailwind CSS v4 + Pinia + ECharts. API clients generated via `@umijs/openapi`. **已弃用（deprecated，2026-11-10 起）**：不再开发、不再作为设计参考，仅保留可运行以作回溯；新功能与修复一律进 `web/`。
 
@@ -54,14 +60,19 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| DiagnosisTaskController | `/api/diagnosis-tasks/*` | Patient image task: submit, idempotent replay, safe status (see `docs/diagnosis-task.md`) |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| McpServerController | `/api/mcp/*` | MCP server CRUD |
+| PatientDraftTestController / PatientDraftSeedController | `/api/patient-draft-test/*` | Opt-in admin-only draft validation |
+| McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
 | NewsController | `/api/news/*` | News CRUD |
+| ControlledReferenceController | `/api/controlled-references/*` | Controlled reference upload, governance, retrieval (see `docs/controlled-references.md`) |
+| CollaborationRunController | `/api/agent/collaboration-runs/*` | Opt-in run admission, authorized snapshot/SSE and cancellation (see `docs/collaboration-runs.md`) |
+| DoctorReviewController | `/api/doctor-reviews/*` | Assigned doctor review of frozen drafts (see `docs/doctor-review.md`) |
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V28; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_agent_tool_audit`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -79,39 +90,4 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 
 ## Design Context
 
-### Users
-混合用户群——眼科医生（临床检查）、医院管理员（记录管理/系统运维）、普通患者（AI 自助诊断）。三种角色技术熟练度和使用场景差异大，界面需根据角色调整复杂度。
-
-### Brand Personality
-**冷静、精密、克制**。骨白工作台 + 信号橙作唯一强调 + 衬线标题 + 等宽读数，传达"这是一台可信的临床仪器"，而不是一个健康 App。温度靠文案与留白表达，不靠暖色调。
-
-### Aesthetic Direction
-**白色仪器（The White Instrument）**。设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。
-两条前端线：`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）**已弃用（deprecated）**，仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
-写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`（品牌令牌、双主题、页面骨架、参考实现）。后端任务不需要读。
-
-### Design Rules（写前端必须遵守）
-- **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。
-- **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
-- **所有数字用等宽字体** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、计数、时间戳、哈希。
-- **衬线标题用 `--font-serif`（Noto Serif SC 栈），weight 只允许 400**，禁止 700+ 与斜体；正文与控件用 `--font-sans`。
-- **圆角默认 0**（按钮、输入、卡片、表格），圆形用 50%，药丸 999px；不要堆圆角。
-- **发丝线优先于厚重卡片阴影**，需要层级时才用极淡的墨色阴影。
-- **AI 装饰零容忍**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
-- **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
-- 页面骨架：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条。
-
-### 参考实现
-`web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
-
-### Priority Areas
-1. **诊断流程**：登录、首页、图片上传、诊断结果——用户最先接触的核心路径
-2. **用户中心**：个人中心、诊断历史、通知——高频使用功能
-3. **Agent 智能对话**：AI 对话、会话管理、资源面板——最复杂的交互界面
-
-### Design Principles
-1. **克制 = 信任**：骨白与墨色为主，彩色只做语义，界面读起来像一份可信的判读报告
-2. **角色自适应**：医生看专业数据，患者看通俗解读，同一系统不同复杂度
-3. **橙只做语义**：信号橙标记"重点/当前"，铺满就失去意义
-4. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
-5. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转
+设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。实时协作工作台沿用同一设计系统，按授权事实呈现状态和时间线；Vue 页面不作为实时协作交付或设计参考。

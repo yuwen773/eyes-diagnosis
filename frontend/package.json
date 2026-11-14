@@ -12,7 +12,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
-    "lint:check": "eslint .",
+    "lint:check": "eslint . -f json | node ../scripts/check-eslint-baseline.cjs eslint-baseline.txt -",
+    "lint:baseline": "eslint . -f json | node ../scripts/write-eslint-baseline.cjs - eslint-baseline.txt",
     "format": "prettier --write src/",
     "openapi": "node openapi.config.js",
     "test": "vitest"

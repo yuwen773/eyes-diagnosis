@@ -101,6 +101,7 @@ CLAUDE.local.md
 /design-previews/
 node_modules/
 .npm-cache/
+/evaluation/rag-query-expansion/results/
 
 # CodeGraph 本地索引（由 `codegraph init` 生成，不入库）
 /.codegraph/
