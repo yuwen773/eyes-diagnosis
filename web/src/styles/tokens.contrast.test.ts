@@ -371,4 +371,26 @@ describe("Iris 2.0 管理端 · Purple Medical SaaS（--admin-*）", () => {
       expect(value(admin)).not.toBe(darkValue(admin))
     }
   })
+
+  it("画布氛围底（--admin-ambient）不得吃掉画布上的文字对比度", () => {
+    // 氛围底是管理紫的极低对比版本（7%），只作画布上的一层静态晕：
+    // 压在画布上之后，正文三级色仍要 ≥ 4.5；卡片不参与这层晕（卡片是实心表面）。
+    const ambientLiteral = rawValue("--admin-ambient")
+    expect(ambientLiteral).toContain("7%")
+
+    const alpha = (hex: string, pct: number) => {
+      const n = parseInt(hex.slice(1), 16)
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${pct})`
+    }
+
+    const lightWash = over(alpha(value("--admin-accent"), 0.07), value("--admin-canvas"))
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      expect(contrast(value(fg), lightWash)).toBeGreaterThanOrEqual(4.5)
+    }
+
+    const darkWash = over(alpha(darkValue("--admin-accent"), 0.07), darkValue("--admin-canvas"))
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      expect(contrast(darkValue(fg), darkWash)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
 })

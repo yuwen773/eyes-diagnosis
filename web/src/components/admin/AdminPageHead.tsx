@@ -26,10 +26,12 @@ export function AdminPageHead(props: {
   meta?: ReactNode
   /** 本页主操作 / 次操作 */
   actions?: ReactNode
+  /** 标题字号档：default 台账页（26–30px）/ lead 门面页（32–36px） */
+  size?: "default" | "lead"
 }): ReactElement {
-  const { code, title, eyebrow, description, meta, actions } = props
+  const { code, title, eyebrow, description, meta, actions, size = "default" } = props
   return (
-    <header className="admin-pagehead">
+    <header className={`admin-pagehead${size === "lead" ? " admin-pagehead--lead" : ""}`}>
       <div className="admin-pagehead__lead">
         <p className="admin-pagehead__eyebrow">
           <span className="admin-pagehead__code num">{code}</span>

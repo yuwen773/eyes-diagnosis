@@ -3,10 +3,11 @@ import "@/styles/admin-redesign.css"
 
 import { useState, type ReactElement } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
-import { ArrowLeft, ChevronRight, Menu, Moon, Sun } from "lucide-react"
+import { ArrowLeft, ChevronRight, Menu, Moon, Sun, X } from "lucide-react"
 
 import { Dialog } from "@/components/ui/dialog"
 import { useTheme } from "@/components/theme-provider"
+import { AccountMenu } from "@/components/AccountMenu"
 import { useSession } from "@/lib/session"
 import { ADMIN_NAV, AdminBrand, AdminNav } from "./AdminNav"
 
@@ -49,30 +50,6 @@ function ThemeSwitch(): ReactElement {
 }
 
 /**
- * 账户区：真实登录用户的头像、名称与角色。
- *
- * <p>头像有图用图、无图退回姓名首字（不再写死「管理员」字样）。
- */
-function AccountChip(props: {
-  name: string
-  role: string
-  avatar?: string
-}): ReactElement {
-  const { name, role, avatar } = props
-  return (
-    <div className="admin-account">
-      <span className="admin-account__avatar" aria-hidden="true">
-        {avatar ? <img src={avatar} alt="" /> : name.slice(0, 1)}
-      </span>
-      <span className="admin-account__text">
-        <span className="admin-account__name">{name}</span>
-        <span className="admin-account__role">{role}</span>
-      </span>
-    </div>
-  )
-}
-
-/**
  * 管理后台外壳：左侧常驻导航 + 右侧工作区（自带 Topbar）。
  *
  * <p>结构（Iris 2.1）：侧栏从视口顶部开始，右侧工作区有自己的顶栏——
@@ -84,6 +61,7 @@ function AccountChip(props: {
  *
  * <p>窄屏（≤900px）侧栏收成抽屉：顶栏左侧的菜单钮打开 Base UI Dialog
  * 抽屉，导航内容与桌面侧栏同源（ADMIN_NAV 一份），不另写一套横向标签条。
+ * 抽屉自带一个显式关闭按钮——窄屏没有 Esc 键可依赖。
  *
  * <p>外壳吃 .is-admin 管理语境（tokens.css）：浅色是浅紫灰画布 + 紫白侧栏 +
  * 管理紫当前态，暗色整体翻成深紫蓝分层面板——外壳与内容区永远同主题，
@@ -101,7 +79,6 @@ export function AdminLayout(): ReactElement {
     setNavOpen(false)
   }
 
-  const accountName = user?.userName || user?.userAccount || "管理员"
   const accountRole = user?.userRole === "admin" ? "系统管理员" : "管理账号"
 
   // 面包屑取当前路由，不写死页名：新增管理路由自动跟上。
@@ -118,10 +95,6 @@ export function AdminLayout(): ReactElement {
             <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
             返回主站
           </Link>
-          <p className="admin-side__session">
-            <span className="admin-side__session-dot" aria-hidden="true" />
-            已登录 · {accountRole}
-          </p>
         </div>
       </aside>
 
@@ -147,11 +120,9 @@ export function AdminLayout(): ReactElement {
 
             <div className="admin-topbar__right">
               <ThemeSwitch />
-              <AccountChip
-                name={accountName}
-                role={accountRole}
-                avatar={user?.userAvatar}
-              />
+              {/* 账户身份只在这里出现一次：顶栏承载头像 / 姓名 / 角色，
+                  侧栏不再叠一张账户卡。 */}
+              <AccountMenu variant="admin" roleLabel={accountRole} />
             </div>
           </div>
         </header>
@@ -167,17 +138,23 @@ export function AdminLayout(): ReactElement {
         onClose={() => setNavOpen(false)}
         className="is-admin admin-navdrawer"
       >
-        <AdminBrand />
+        <div className="admin-navdrawer__head">
+          <AdminBrand />
+          <button
+            type="button"
+            className="admin-navdrawer__close"
+            onClick={() => setNavOpen(false)}
+            aria-label="关闭系统管理导航"
+          >
+            <X size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
+        </div>
         <AdminNav onNavigate={() => setNavOpen(false)} />
         <div className="admin-side__foot">
           <Link to="/" className="admin-side__back" onClick={() => setNavOpen(false)}>
             <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" />
             返回主站
           </Link>
-          <p className="admin-side__session">
-            <span className="admin-side__session-dot" aria-hidden="true" />
-            已登录 · {accountRole}
-          </p>
         </div>
       </Dialog>
     </div>

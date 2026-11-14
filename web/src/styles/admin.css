@@ -136,7 +136,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  /* 行高 44px：导航项要有「点得中、看得清」的体量，不是密排的文字列表。 */
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   color: var(--admin-text-muted);
   font-size: 13px;
@@ -211,44 +212,33 @@ html.dark .admin-side__link[aria-current="page"] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
-  padding-inline: 10px;
-  border-radius: var(--radius-md);
+  height: 38px;
+  padding-inline: 12px;
+  /* 「返回主站」是侧栏底部唯一的出口，给它一块实体面，
+     免得被当成一行普通说明文字。 */
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
   color: var(--admin-text-muted);
   font-size: 12.5px;
+  font-weight: 600;
   text-decoration: none;
+  box-shadow: var(--admin-shadow-card);
   transition:
     color var(--fast),
-    background var(--fast);
+    background var(--fast),
+    border-color var(--fast);
 }
 
 .admin-side__back:hover {
   color: var(--admin-primary);
+  border-color: color-mix(in srgb, var(--admin-primary) 32%, transparent);
   background: var(--admin-primary-soft);
 }
 
 .admin-side__back:focus-visible {
   outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
-}
-
-.admin-side__session {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding-inline: 10px;
-  font-size: 11px;
-  color: var(--admin-text-faint);
-}
-
-.admin-side__session-dot {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: var(--radius-circle);
-  background: var(--risk-normal);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--risk-normal) 15%, transparent);
 }
 
 /* ── 工作区（右侧：自己的顶栏 + 内容）───────────────────── */
@@ -259,6 +249,14 @@ html.dark .admin-side__link[aria-current="page"] {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* 氛围底：右上角一层极低对比的静态紫晕，给工作区一点空气感。
+     卡片都是实心表面，不受影响；落在画布上的小字仍 ≥ 4.5:1
+     （tokens.contrast.test.ts 里锁住这条）。不是动画，不是装饰元素。 */
+  background: radial-gradient(
+    88% 52% at 84% -6%,
+    var(--admin-ambient) 0%,
+    transparent 62%
+  );
 }
 
 .admin-topbar {
@@ -398,54 +396,105 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   box-shadow: none;
 }
 
-/* 账户区：真实登录用户的头像、名称与角色。 */
-.admin-account {
-  display: flex;
-  align-items: center;
+/* ── 账号菜单 · 管理端变体（Iris 2.1 · Purple Medical SaaS）────────────
+   主站的 AccountMenu 是 Iris Blue 光学玻璃；管理端不吃那套蓝，
+   但交互与目的地完全复用（Base UI Menu / 焦点归还 / 真实资料），
+   这里只换皮肤：管理端自己的表面材质与管理紫。
+
+   下拉面板 Portal 挂在 body 上，吃不到 .is-admin 语境，所以面板显式
+   消费 --admin-* 令牌，不依赖 --fg / --surface 的语境映射。 */
+.acct--admin .acct__trigger {
+  height: 42px;
   gap: 10px;
-  padding-left: 14px;
-  border-left: 1px solid var(--admin-line);
+  padding: 0 12px 0 8px;
+  border-color: var(--admin-line-soft);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow-card);
 }
 
-.admin-account__avatar {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: none;
-  overflow: hidden;
-  border-radius: var(--radius-circle);
+.acct--admin .acct__trigger:hover {
+  border-color: var(--admin-line-strong);
+}
+
+.acct--admin .acct__trigger[data-popup-open] {
+  border-color: var(--admin-primary);
+}
+
+.acct--admin .acct__avatar {
   background: var(--admin-primary-soft);
   color: var(--admin-primary);
-  font-weight: 600;
-  font-size: 13px;
+  border-color: color-mix(in srgb, var(--admin-primary) 26%, transparent);
 }
 
-.admin-account__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.admin-account__text {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-
-.admin-account__name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--admin-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.admin-account__role {
-  font-size: 11px;
+.acct--admin .acct__role-line {
   color: var(--admin-text-faint);
-  white-space: nowrap;
+}
+
+.acct--admin .acct__caret {
+  color: var(--admin-text-faint);
+}
+
+.acct--admin .acct__trigger:hover .acct__caret,
+.acct--admin .acct__trigger[data-popup-open] .acct__caret {
+  color: var(--admin-primary);
+}
+
+.acct__menu.acct__menu--admin {
+  width: 272px;
+  border-color: var(--admin-line);
+  border-radius: var(--admin-radius-card);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow-overlay);
+  /* 管理端不吃玻璃：面板是实心表面，避免与深色底的糊化。 */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.acct__menu.acct__menu--admin::before {
+  display: none;
+}
+
+.acct__menu--admin .acct__identity-name {
+  color: var(--admin-text);
+}
+
+.acct__menu--admin .acct__identity-meta {
+  color: var(--admin-text-faint);
+}
+
+.acct__menu--admin .acct__role {
+  border-color: color-mix(in srgb, var(--admin-primary) 34%, transparent);
+  color: var(--admin-primary);
+}
+
+.acct__menu--admin .acct__sep {
+  background: var(--admin-line);
+}
+
+.acct__menu--admin .acct__item {
+  color: var(--admin-text);
+}
+
+.acct__menu--admin .acct__item-icon {
+  color: var(--admin-text-faint);
+}
+
+.acct__menu--admin .acct__item:hover,
+.acct__menu--admin .acct__item[data-highlighted] {
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
+}
+
+.acct__menu--admin .acct__item:hover .acct__item-icon,
+.acct__menu--admin .acct__item[data-highlighted] .acct__item-icon {
+  color: var(--admin-primary);
+}
+
+.acct__menu--admin .acct__item:focus-visible {
+  outline-color: var(--admin-primary);
 }
 
 /* ── 内容区 ────────────────────────────────────────────── */
@@ -531,13 +580,23 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
    否则 390px 下三段会挤在同一行互相压住。 */
 @media (max-width: 768px) {
   .admin-crumbs__root,
-  .admin-crumbs__sep,
-  .admin-account__text {
+  .admin-crumbs__sep {
     display: none;
   }
 
-  .admin-account {
-    padding-left: 12px;
+  /* 窄屏下账号只剩头像（可访问名仍带完整身份），姓名与角色交给抽屉里的身份区。 */
+  .acct--admin .acct__stack {
+    display: none;
+  }
+
+  .acct--admin .acct__trigger {
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .acct--admin .acct__caret {
+    display: none;
   }
 
   .admin-topbar__inner {
@@ -559,9 +618,46 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   background: var(--admin-sidebar);
   color: var(--admin-text);
   border-right: 1px solid var(--admin-line-strong);
+  border-radius: 0 var(--admin-radius-card-lg) var(--admin-radius-card-lg) 0;
   box-shadow: var(--admin-shadow-overlay);
   transform: none;
   transition: transform var(--base);
+}
+
+/* 抽屉顶：品牌与「关闭」并排。窄屏没有 Esc 键可依赖，
+   必须有一个显式可点的关闭入口。 */
+.admin-navdrawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-navdrawer__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  margin-top: 2px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-control);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.admin-navdrawer__close:hover {
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
+}
+
+.admin-navdrawer__close:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
 }
 
 .admin-navdrawer[data-starting-style],
@@ -705,9 +801,9 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   align-content: start;
   padding: 20px 22px;
   background: var(--admin-surface);
-  border: 1px solid var(--admin-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--admin-shadow);
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  box-shadow: var(--admin-shadow-card);
   transition: border-color var(--fast), box-shadow var(--fast);
 }
 
@@ -761,9 +857,9 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
 
 .admin-dt {
   background: var(--admin-surface);
-  border: 1px solid var(--admin-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--admin-shadow);
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  box-shadow: var(--admin-shadow-card);
 }
 
 .admin-dt__scroll {
@@ -1083,9 +1179,9 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   display: flex;
   flex-direction: column;
   background: var(--admin-surface);
-  border: 1px solid var(--admin-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--admin-shadow);
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  box-shadow: var(--admin-shadow-card);
 }
 
 .admin-viz__head {
@@ -3376,9 +3472,9 @@ html.dark .admin-dt__check:indeterminate {
 
 .panel {
   background: var(--surface);
-  border: 1px solid var(--hr);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-overlay);
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  box-shadow: var(--admin-shadow-card);
   transition:
     border-color var(--fast),
     box-shadow var(--fast);
@@ -3448,7 +3544,8 @@ html.dark .admin-dt__check:indeterminate {
   gap: 10px;
   align-content: start;
   padding: 22px 24px;
-  border-radius: var(--radius-lg);
+  /* 重点卡：管理端最大的圆角（20px），与普通卡片的 18px 拉开半档。 */
+  border-radius: var(--admin-radius-card-lg);
   border: 1px solid var(--admin-line-strong);
   color: var(--admin-on-primary);
   background:
@@ -3659,8 +3756,9 @@ html.dark .feature-card__cta {
 .admin-sec-title {
   font-family: var(--font-brand);
   font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.01em;
+  /* 区块标题 16px：与面板标题同档，读数与说明仍在下方。 */
+  font-size: 16px;
+  letter-spacing: 0.005em;
   color: var(--fg);
   margin: 0;
 }
@@ -3686,9 +3784,9 @@ html.dark .feature-card__cta {
 
 .admin-filter {
   background: var(--surface);
-  border: 1px solid var(--hr);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-overlay);
+  border: 1px solid var(--admin-line-soft);
+  border-radius: var(--admin-radius-card);
+  box-shadow: var(--admin-shadow-card);
   padding: 14px 18px 16px;
   margin-bottom: 16px;
 }

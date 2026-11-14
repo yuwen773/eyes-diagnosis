@@ -88,6 +88,21 @@ async function main() {
       fullPage: false,
       clip: { x: 0, y: 0, width: 900, height: 520 },
     })
+    // 顶栏右侧近景：主题切换 + 账户菜单触发器（账户身份只在这里出现一次）。
+    await shot(page, `topbar-1440-${suffix}`, {
+      fullPage: false,
+      clip: { x: 1000, y: 0, width: 440, height: 96 },
+    })
+    // 展开的账号菜单：管理端变体（实心表面、无重复的「系统管理」入口）。
+    const trigger = page.locator(".acct--admin .acct__trigger")
+    if (await trigger.count()) {
+      await trigger.click()
+      await page.waitForTimeout(600)
+      await shot(page, `account-menu-1440-${suffix}`, {
+        fullPage: false,
+        clip: { x: 900, y: 0, width: 540, height: 320 },
+      })
+    }
     await context.close()
   }
 

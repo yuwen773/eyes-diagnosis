@@ -106,7 +106,8 @@ function InsightEmpty(props: {
  *
  * <p>零值纪律：真实数据为空时不画一排「0」KPI 假装系统活着，也不画一条贴地的
  * 假趋势线——趋势与分布位整体让位给有解释力的空态说明，并把真实存在的
- * 最近判读记录提前到主位。
+ * 最近判读记录放进主位区。四块内容两两成行，同一行等高：
+ * 积压卡与空窗解释一行，记录台账与运营待办一行。
  */
 export function AdminDashboardPage(): ReactElement {
   const [days, setDays] = useState(30)
@@ -425,6 +426,7 @@ export function AdminDashboardPage(): ReactElement {
         code="01"
         title="运营总览"
         eyebrow="ADMIN · DASHBOARD"
+        size="lead"
         description="积压、判读规模、拒识与待审核资讯，读数来自同一时间窗。"
         meta={
           stats ? (
@@ -515,13 +517,14 @@ export function AdminDashboardPage(): ReactElement {
           </section>
 
           {noDiagnosis ? (
-            /* 空窗口：记录提前到主位，图表位让位给解释面板。 */
+            /* 空窗口：积压与空窗解释在上，真实存在的记录与待办在下。
+               两行各自成对，格子高度一致——不留下半张卡高的空洞。 */
             <div className="admin-bento">
+              {backlogCard}
+              <div className="span-8">{emptyInsight}</div>
               <section className="panel admin-dashboard__recent span-8" aria-label="最近判读记录">
                 {recentBlock}
               </section>
-              {backlogCard}
-              <div className="span-8">{emptyInsight}</div>
               <div className="span-4">{actionsBlock}</div>
             </div>
           ) : (
