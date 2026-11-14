@@ -48,14 +48,16 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
-  padding-inline: 11px;
+  /* 与 CMS 段的段控件同一副尺寸（30px / 12.5px）：同一页里两种高度
+     的分段按钮会读成两种控件。 */
+  height: 30px;
+  padding-inline: 12px;
   border: 1px solid var(--admin-line-strong);
   border-radius: var(--admin-radius-control);
   background: var(--admin-surface);
   color: var(--admin-text-muted);
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -122,6 +124,17 @@
   align-items: flex-end;
   gap: 14px;
   min-width: 0;
+}
+
+/* 检索口径提示：规范名 ↔ 库内原始标签的对照写在筛选框下面。
+   「照抄可见名查不到」必须看起来像一条规矩，而不是筛选坏了。 */
+.admin-diagnosis__fieldhint {
+  margin-top: -2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  color: var(--admin-text-faint);
 }
 
 /* ── 行内动作：带文字的主动作 ───────────────────────────────────────
@@ -388,6 +401,9 @@
   list-style: none;
   display: grid;
   gap: 8px;
+  /* 序号自己计数，不借 counter(list-item)：li 是 display:grid，
+     已经不再是 list-item，list-item 计数器不会自增，序号会一直读成 0。 */
+  counter-reset: reco;
 }
 
 .admin-diagnosis__drawer-recos li {
@@ -398,10 +414,11 @@
   font-size: 13px;
   line-height: 1.65;
   color: var(--admin-text);
+  counter-increment: reco;
 }
 
 .admin-diagnosis__drawer-recos li::before {
-  content: counter(list-item);
+  content: counter(reco);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 11px;

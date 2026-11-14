@@ -73,6 +73,45 @@ export function classCode(name?: string) {
   return "—"
 }
 
+/**
+ * 规范名 → 库内原始标签（检索用）。
+ *
+ * <p>后端 `DiagnosisCategoryEnum` 落库的是短名，与前端规范名有三处不同：
+ * 糖尿病 / 高血压 / 近视。管理端的筛选最终落到后端
+ * `queryWrapper.like("result", …)`——按库内原值模糊匹配，**不认规范名**。
+ * 用户在列表里看到的是规范名，照抄进筛选框会一条都查不到。
+ *
+ * <p>这里给出对照：命中规范名时换算成库内标签再检索；其余写法
+ * （`myopia`、`红眼病` 这类原始标签或未归类的值）原样透传。
+ *
+ * @param name 用户输入；命中规范名时返回库内标签，否则返回 `null`（原样检索）。
+ */
+const CLASS_SEARCH_LABELS: Record<string, string> = {
+  正常: "正常",
+  年龄相关性黄斑变性: "年龄相关性黄斑变性",
+  白内障: "白内障",
+  糖尿病视网膜病变: "糖尿病",
+  青光眼: "青光眼",
+  高血压性视网膜病变: "高血压",
+  病理性近视: "近视",
+  其他: "其他",
+}
+
+export function classSearchLabel(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  return CLASS_SEARCH_LABELS[trimmed] ?? null
+}
+
+/** 规范名与库内标签不一致时，界面上要能看见这层对照（检索提示用）。 */
+export function classSearchHint(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  const label = CLASS_SEARCH_LABELS[trimmed]
+  if (!label || label === trimmed) return null
+  return `${trimmed} → ${label}`
+}
+
 const SEVERITY_LABEL: Record<string, string> = {
   normal: "正常",
   mild: "轻度",

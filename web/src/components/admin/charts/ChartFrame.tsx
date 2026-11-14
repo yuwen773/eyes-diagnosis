@@ -96,36 +96,40 @@ export function ChartView(props: {
     body = figure
   } else {
     body = (
-      <table className="admin-viz__table num" aria-label={`${ariaLabel} · 读数表`}>
-        <thead>
-          <tr>
-            <th className="admin-viz__th" scope="col">
-              {labelHeader}
-            </th>
-            <th className="admin-viz__th admin-viz__th--right" scope="col">
-              数值
-            </th>
-            {hasExtra ? (
+      /* 滚动壳：overflow 在 display:table 的表格框上会被浏览器忽略，
+         表格本身没法自己滚。要限高就得由外层壳来滚，表头在壳里 sticky。 */
+      <div className="admin-viz__tablewrap">
+        <table className="admin-viz__table num" aria-label={`${ariaLabel} · 读数表`}>
+          <thead>
+            <tr>
+              <th className="admin-viz__th" scope="col">
+                {labelHeader}
+              </th>
               <th className="admin-viz__th admin-viz__th--right" scope="col">
-                {extraHeader ?? "占比"}
+                数值
               </th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={`${row.label}-${index}`} className="admin-viz__tr">
-              <th className="admin-viz__td admin-viz__td--label" scope="row">
-                {row.label}
-              </th>
-              <td className="admin-viz__td admin-viz__td--value">{row.value}</td>
               {hasExtra ? (
-                <td className="admin-viz__td admin-viz__td--extra">{row.extra ?? "—"}</td>
+                <th className="admin-viz__th admin-viz__th--right" scope="col">
+                  {extraHeader ?? "占比"}
+                </th>
               ) : null}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={`${row.label}-${index}`} className="admin-viz__tr">
+                <th className="admin-viz__td admin-viz__td--label" scope="row">
+                  {row.label}
+                </th>
+                <td className="admin-viz__td admin-viz__td--value">{row.value}</td>
+                {hasExtra ? (
+                  <td className="admin-viz__td admin-viz__td--extra">{row.extra ?? "—"}</td>
+                ) : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   }
 

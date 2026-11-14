@@ -22,6 +22,9 @@ const CHROME = "C:/Users/yuwen/AppData/Local/ms-playwright/chromium-1234/chrome-
 const executablePath = process.env.E2E_CHROMIUM_PATH ?? CHROME
 
 const PAGES = [
+  // 仪表盘也在探针里：这一轮改了它复用的 .admin-viz__toggle / .admin-viz__mini
+  // 与 TrendAreaChart，只靠人工截图不够。
+  ["dashboard", "/admin/dashboard"],
   ["data-analysis", "/admin/data-analysis"],
   ["diagnosis", "/admin/diagnosis"],
   ["news", "/admin/news"],
@@ -39,6 +42,11 @@ const VIEWPORTS = [
 
 /** 每页必须存在的关键入口（缺一个就记一条 finding）。 */
 const AFFORDANCES = {
+  dashboard: [
+    [".admin-metric-strip", "KPI 读数轨"],
+    [".admin-viz__toggle-btn", "图/表切换"],
+    [".admin-range__btn", "时间窗切换"],
+  ],
   "data-analysis": [
     [".admin-metric-strip", "KPI 读数轨"],
     [".admin-viz__toggle-btn", "图/表切换"],

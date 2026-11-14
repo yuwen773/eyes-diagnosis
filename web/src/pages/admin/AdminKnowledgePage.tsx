@@ -79,6 +79,8 @@ function formatFileSize(bytes?: string | number): string {
 function fileTypeCode(fileType?: string | null): string {
   const value = (fileType ?? "").trim()
   if (!value) return "—"
+  // .markdown 与 .md 是同一种格式，短码统一成 MD；原始扩展名留在 title 里。
+  if (value.toLowerCase() === "markdown") return "MD"
   return value.toUpperCase()
 }
 
@@ -452,7 +454,12 @@ export function AdminKnowledgePage(): ReactElement {
       width: "12%",
       render: (row) => (
         <div className="admin-cms__typecell">
-          <span className="admin-cms__typecell__code">{fileTypeCode(row.fileType)}</span>
+          <span
+            className="admin-cms__typecell__code"
+            title={row.fileType ? `扩展名 .${row.fileType}` : undefined}
+          >
+            {fileTypeCode(row.fileType)}
+          </span>
           <span className="admin-cms__typecell__size num">{formatFileSize(row.fileSize)}</span>
         </div>
       ),

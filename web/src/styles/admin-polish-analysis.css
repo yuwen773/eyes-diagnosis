@@ -9,8 +9,8 @@
    1. 小倍数单元格从「标题 + 折线 + 末值」改成「短码 + 中文名 + 窗口内合计
       + 形状 + 峰值/日均脚注」——末值常常落在没有判读的那一天，读出来是 0，
       会让人误以为这批病种清零了。
-   2. 口径带（.admin-analysis__ledger）从一行小字改成一条有边界的横带：
-      仍然克制，但读起来是「这一页所有读数的口径」，不是页脚残渣。
+   2. 口径带（.admin-analysis__scope）从四列读数表改成一行分组小字：
+      按「窗口内 / 全站」把范围写清，不再让同一页的数字看起来是同一种口径。
    ========================================================================== */
 
 /* 小倍数单元格的形状与读数样式在 admin.css（它是共享的图表原语，
@@ -38,7 +38,7 @@
 
 /* 构成表的口径标题：这组数字覆盖的是窗口内全部判读，不是上面那个积压数。
    标题必须写清楚范围，否则四行会被读成积压的分解。 */
-.admin-analysis .feature-card__breakdown-title {
+.admin-analysis__breakdown-title {
   margin: 14px 0 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -181,11 +181,10 @@
 
 /* ── 口径带 ────────────────────────────────────────────────── */
 
-.admin-analysis__ledger {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px 32px;
+/* 口径带：把这一页的两条时间范围写清楚——窗口内判读 vs 全站累计。
+   数字按「窗口内 / 全站」分组，不再做四列读数表：四列里同样的词
+   （平均置信度、已复核）会在别处再出现一次，读起来像两个口径。 */
+.admin-analysis__scope {
   margin: 20px 0 0;
   padding: 14px 20px;
   border: 1px solid var(--admin-line-soft);
@@ -193,40 +192,46 @@
   border-radius: var(--admin-radius-control);
   background: var(--admin-surface);
   box-shadow: var(--admin-shadow-card);
-}
-
-.admin-analysis__ledger > div {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-.admin-analysis__ledger dt {
-  font-family: var(--font-brand);
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--admin-text-faint);
-  white-space: nowrap;
-}
-
-.admin-analysis__ledger dd {
-  margin: 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--admin-text);
-  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--admin-text-muted);
 }
 
-.admin-analysis__ledger dd span {
-  margin-left: 5px;
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  font-weight: 400;
-  color: var(--admin-text-muted);
+/* 口径带里两个范围名加重：读者先看范围，再看数字。 */
+.admin-analysis__scope b {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+/* ── 重点卡（待人工复核）──────────────────────────────────────── */
+
+/* 重点卡按内容收高，不跟同排图表拉成等高：紫面上摊开一大段空白，
+   读起来像卡里缺了东西，而不是「留白」。 */
+.admin-analysis .feature-card {
+  align-self: start;
+}
+
+/* 本页重点卡底部只留「AI 拒识」一项读数——「已复核」的分档已经在上面
+   那张构成表里，再写一遍会像另一个口径。单列铺满，不留半格空档。 */
+.admin-analysis .feature-card__stats {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* 「表」视图的读数表：30 天就是 30 行，表比同排的重点卡高出一大截，
+   整页被拉成一根长条，卡面也只能摊出一段空紫。表内自己滚，表头钉住。 */
+.admin-analysis .admin-viz__tablewrap {
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.admin-analysis .admin-viz__th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--admin-surface);
 }
 
 /* ── 版心约束 ──────────────────────────────────────────────── */
@@ -261,13 +266,8 @@
     padding: 12px;
   }
 
-  .admin-analysis__ledger {
-    gap: 8px 20px;
+  .admin-analysis__scope {
     padding: 12px 14px;
-  }
-
-  .admin-analysis__ledger > div {
-    flex-wrap: wrap;
   }
 
   /* 窄屏读数表：名称独占一行，细条与两个读数收在第二行。 */

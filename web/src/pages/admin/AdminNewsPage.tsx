@@ -57,6 +57,10 @@ function truncateSummary(value?: string): string {
   return value.length > SUMMARY_LIMIT ? `${value.slice(0, SUMMARY_LIMIT)}…` : value
 }
 
+/** 需要二次确认的下线类迁移目标状态（草稿 / 下架）。 */
+const NEWS_STATUS_DRAFT = 0
+const NEWS_STATUS_OFFLINE = 2
+
 /**
  * 状态动作的措辞与图标。
  *
@@ -137,6 +141,11 @@ export function AdminNewsPage(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<AdminNews | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // 状态迁移的确认目标：把「下线类」迁移（下架 / 转为草稿）拦一道确认。
+  const [statusTarget, setStatusTarget] = useState<{
+    row: AdminNews
+    status: number
+  } | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -210,7 +219,9 @@ export function AdminNewsPage(): ReactElement {
     setSelectedIds([])
   }
 
-  /** 单行状态迁移：合法目标状态由 newsStatusOptionsFor 给出，后端再校验一次。 */
+  /**
+   * 单行状态迁移：合法目标状态由 newsStatusOptionsFor 给出，后端再校验一次。
+   */
   async function changeStatus(row: AdminNews, status: number) {
     const id = row.id
     if (!id || statusBusy) return
@@ -232,6 +243,32 @@ export function AdminNewsPage(): ReactElement {
     } finally {
       setStatusBusy(null)
     }
+  }
+
+  /**
+   * 行菜单里的状态迁移入口。
+   *
+   * <p>下线类迁移（下架 / 转为草稿）会把内容从公开站点撤下来，误触的代价
+   * 比「发布」「送审」大得多，所以先弹一次确认；发布与送审是增量动作，直接执行。
+   */
+  function requestStatusChange(row: AdminNews, status: number) {
+    if (status === NEWS_STATUS_DRAFT || status === NEWS_STATUS_OFFLINE) {
+      setStatusTarget({ row, status })
+      return
+    }
+    void changeStatus(row, status)
+  }
+
+  function closeStatusConfirm() {
+    if (statusBusy) return
+    setStatusTarget(null)
+  }
+
+  async function confirmStatusChange() {
+    if (!statusTarget || statusBusy) return
+    const { row, status } = statusTarget
+    setStatusTarget(null)
+    await changeStatus(row, status)
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
@@ -314,6 +351,18 @@ export function AdminNewsPage(): ReactElement {
         const excerpt = newsExcerpt(row.content, row.summary, SUMMARY_LIMIT)
         return (
           <div className="admin-cms__titlecell">
+            {/* 封面内联在标题格，只有真的有封面才出现：单开一列的话，
+                没有封面的资讯会排出一整列灰占位，比没有这一列更吵。 */}
+            {row.coverImage ? (
+              <img
+                className="admin-cms__titlethumb"
+                src={row.coverImage}
+                alt=""
+                width={40}
+                height={40}
+                loading="lazy"
+              />
+            ) : null}
             <span className="admin-cms__titlecell__main">{row.title || "未命名资讯"}</span>
             <span className="admin-cms__titlecell__sub" title={excerpt || undefined}>
               {truncateSummary(excerpt)}
@@ -384,7 +433,7 @@ export function AdminNewsPage(): ReactElement {
                   label: NEWS_STATUS_ACTION[option.value].menu,
                   icon: NEWS_STATUS_ACTION[option.value].icon,
                   disabled: !row.id || statusBusy === row.id,
-                  onSelect: () => changeStatus(row, option.value),
+                  onSelect: () => requestStatusChange(row, option.value),
                 })),
                 "separator" as const,
                 {
@@ -621,6 +670,46 @@ export function AdminNewsPage(): ReactElement {
       <p className="admin-news__footer num">
         列出的是全站资讯（管理员视角）；发布状态由后端状态机裁决，非法迁移会被逐条拒绝
       </p>
+
+      <Modal
+        open={statusTarget != null}
+        title={statusTarget ? NEWS_STATUS_ACTION[statusTarget.status].verb : "状态变更"}
+        onClose={closeStatusConfirm}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeStatusConfirm}
+              disabled={statusBusy != null}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={confirmStatusChange}
+              disabled={statusBusy != null}
+            >
+              {statusBusy != null
+                ? "处理中…"
+                : statusTarget
+                  ? `确认${NEWS_STATUS_ACTION[statusTarget.status].verb}`
+                  : "确认"}
+            </button>
+          </>
+        }
+      >
+        {statusTarget ? (
+          <p className="admin-news__modal-text">
+            确认把资讯{" "}
+            <span className="admin-news__modal-title">{statusTarget.row.title}</span>{" "}
+            {statusTarget.status === NEWS_STATUS_OFFLINE
+              ? "下架？下架后公开站点不再显示该篇，可再次发布回来。"
+              : "转为草稿？转为草稿后公开站点不再显示该篇，可再次发布回来。"}
+          </p>
+        ) : null}
+      </Modal>
 
       <Modal
         open={deleteTarget != null}

@@ -97,6 +97,28 @@ async function main() {
     console.log("captured", name)
   }
 
+  /* 行溢出菜单：只认 RowMenu 的触发器（.admin-iconbtn 且 aria-label 以「更多」开头）。
+     用「行内第一个 button」会命中主动作（诊断页是「详情」、资讯页是「编辑」），
+     拍出来是抽屉或编辑页，不是溢出菜单。 */
+  const openRowMenu = async (page) => {
+    const rowMenuBtn = page
+      .locator(".admin-dt__row-actions button.admin-iconbtn[aria-label^='更多']")
+      .first()
+    if (!(await rowMenuBtn.count())) return false
+    await rowMenuBtn.click()
+    await page.waitForTimeout(500)
+    return true
+  }
+
+  /* 批量条：勾表头全选。 */
+  const openBatchBar = async (page) => {
+    const pickAll = page.locator(".admin-dt__head .admin-dt__check").first()
+    if (!(await pickAll.count())) return false
+    await pickAll.click()
+    await page.waitForTimeout(600)
+    return true
+  }
+
   /* ── 六页 × 四档位 × 双主题 ──────────────────────────────── */
 
   for (const [slug, route] of PAGES) {
@@ -145,8 +167,11 @@ async function main() {
       if (wantInteraction("diagnosis")) {
         await page.goto(base + "/admin/diagnosis", { waitUntil: "networkidle" })
         await settle(page)
+        // 只认 RowMenu 的触发器（.admin-iconbtn 且 aria-label 以「更多」开头）。
+        // 用「行内第一个 button」会命中主动作（诊断页是「详情」、资讯页是「编辑」），
+        // 拍出来是抽屉或编辑页，不是溢出菜单。
         const rowMenuBtn = page
-          .locator(".admin-dt__row-actions .admin-iconbtn, .admin-dt__row-actions button")
+          .locator(".admin-dt__row-actions button.admin-iconbtn[aria-label^='更多']")
           .first()
         if (await rowMenuBtn.count()) {
           await rowMenuBtn.click()
@@ -167,16 +192,13 @@ async function main() {
           await page.waitForTimeout(500)
         }
         // 批量条
-        const pickAll = page.locator(".admin-dt__head .admin-dt__check").first()
-        if (await pickAll.count()) {
-          await pickAll.click()
-          await page.waitForTimeout(600)
+        if (await openBatchBar(page)) {
           await shot(page, `x-diagnosis-batch-1440-${theme}`, { fullPage: false })
           await page.keyboard.press("Escape")
         }
       }
 
-      // 用户管理：新建对话框
+      // 用户管理：新建对话框 + 行菜单 + 批量条
       if (wantInteraction("users")) {
         await page.goto(base + "/admin/users", { waitUntil: "networkidle" })
         await settle(page)
@@ -190,9 +212,18 @@ async function main() {
           else await page.keyboard.press("Escape")
           await page.waitForTimeout(400)
         }
+        if (await openRowMenu(page)) {
+          await shot(page, `x-users-rowmenu-1440-${theme}`, { fullPage: false })
+          await page.keyboard.press("Escape")
+          await page.waitForTimeout(400)
+        }
+        if (await openBatchBar(page)) {
+          await shot(page, `x-users-batch-1440-${theme}`, { fullPage: false })
+          await page.keyboard.press("Escape")
+        }
       }
 
-      // 知识库：文档预览抽屉（原文 + RAG Chunk 两个独立区域）
+      // 知识库：文档预览抽屉（原文 + RAG Chunk 两个独立区域）+ 行菜单
       if (wantInteraction("knowledge")) {
         await page.goto(base + "/admin/knowledge", { waitUntil: "networkidle" })
         await settle(page)
@@ -205,6 +236,10 @@ async function main() {
           if (await close.count()) await close.click()
           else await page.keyboard.press("Escape")
           await page.waitForTimeout(400)
+        }
+        if (await openRowMenu(page)) {
+          await shot(page, `x-knowledge-rowmenu-1440-${theme}`, { fullPage: false })
+          await page.keyboard.press("Escape")
         }
       }
 
@@ -220,17 +255,29 @@ async function main() {
         }
       }
 
-      // 新闻管理：行菜单
+      // 新闻管理：行菜单 + 下架确认 + 批量条
       if (wantInteraction("news")) {
         await page.goto(base + "/admin/news", { waitUntil: "networkidle" })
         await settle(page)
-        const rowMenuBtn = page
-          .locator(".admin-dt__row-actions .admin-iconbtn, .admin-dt__row-actions button")
-          .first()
-        if (await rowMenuBtn.count()) {
-          await rowMenuBtn.click()
-          await page.waitForTimeout(500)
+        if (await openRowMenu(page)) {
           await shot(page, `x-news-rowmenu-1440-${theme}`, { fullPage: false })
+          // 下架是下线类迁移，必须先弹确认——这一步只开弹层，不点确认，
+          // 库里那一行的状态不会被改。
+          const offline = page.getByRole("menuitem", { name: /下架资讯/ }).first()
+          if (await offline.count()) {
+            await offline.click()
+            await page.waitForTimeout(700)
+            await shot(page, `x-news-offline-confirm-1440-${theme}`, { fullPage: false })
+            await page.keyboard.press("Escape")
+            await page.waitForTimeout(400)
+          } else {
+            await page.keyboard.press("Escape")
+            await page.waitForTimeout(400)
+          }
+        }
+        if (await openBatchBar(page)) {
+          await shot(page, `x-news-batch-1440-${theme}`, { fullPage: false })
+          await page.keyboard.press("Escape")
         }
       }
     } finally {

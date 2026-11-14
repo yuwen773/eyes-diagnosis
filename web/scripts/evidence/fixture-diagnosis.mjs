@@ -7,8 +7,8 @@
 // 纪律：
 // - 所有夹具行以 modelVersion = 'fixture-iris21' 标记，清理按该标记整段删。
 // - 只写本地开发 MySQL 3306（eyeuser 所在实例），不碰 3307 / 生产库。
-// - 不伪造医学结论的「真值」：result 用算法侧英文原始标签，正好用来验证
-//   canonicalClassName 归一是否生效（页面上必须显示规范中文名）。
+// - 不伪造医学结论的「真值」：result 用后端落库时的中文短名，页面必须把它
+//   归一成规范名（糖尿病 → 糖尿病视网膜病变），归一是否生效看得见。
 import { execFileSync } from "node:child_process"
 
 const MYSQL = "mysql"
@@ -30,19 +30,23 @@ const IMAGE_URLS = [
 const USERS = ["1913835897733287938", "2120924169975005185", "1915412470597001217"]
 
 /**
- * 病种 → [原始 result 标签, 严重度, 出现次数]
- * 标签刻意混用算法侧英文（cataract / glaucoma / diabetes…）与后端中文短名，
- * 页面必须把它们归一到同一个规范中文类名。
+ * 病种 → [落库的 result 标签, 严重度, 出现次数]
+ *
+ * 标签用<b>后端落库时的中文短名</b>（DiagnosisCategoryEnum.getChineseLabelByEnglishLabel
+ * 的产物：正常 / 年龄相关性黄斑变性 / 白内障 / 糖尿病 / 青光眼 / 高血压 / 近视 / 其他），
+ * 与生产落库口径一致——管理端的疾病名筛选走的就是这个值。
+ * 页面仍要把它们归一到规范名（糖尿病 → 糖尿病视网膜病变、近视 → 病理性近视），
+ * 所以这层归一照样被验证。
  */
 const DISEASES = [
-  ["cataract", "moderate", 12],
-  ["glaucoma", "mild", 9],
-  ["diabetes", "severe", 8],
-  ["amd", "moderate", 5],
-  ["normal", "normal", 4],
-  ["hypertension", "mild", 3],
-  ["myopia", "moderate", 2],
-  ["other", "mild", 1],
+  ["白内障", "moderate", 12],
+  ["青光眼", "mild", 9],
+  ["糖尿病", "severe", 8],
+  ["年龄相关性黄斑变性", "moderate", 5],
+  ["正常", "normal", 4],
+  ["高血压", "mild", 3],
+  ["近视", "moderate", 2],
+  ["其他", "mild", 1],
 ]
 
 /** 确定性伪随机：同一个 seed 永远得到同一批夹具，截图可复现。 */

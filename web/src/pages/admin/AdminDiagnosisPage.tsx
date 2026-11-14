@@ -42,6 +42,8 @@ import {
   recommendationLines,
   canonicalClassName,
   classCode,
+  classSearchLabel,
+  classSearchHint,
 } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
@@ -231,8 +233,11 @@ export function AdminDiagnosisPage(): ReactElement {
 
   function onSearch(event: FormEvent) {
     event.preventDefault()
+    const trimmed = resultDraft.trim()
     const nextQuery: Query = {
-      result: resultDraft.trim(),
+      // 列表显示的是规范名，后端按库内原始标签模糊匹配：命中规范名时
+      // 换算成库内标签再查，否则「照抄可见名」会一条都查不到。
+      result: classSearchLabel(trimmed) ?? trimmed,
       review: query.review,
       startDate: startDraft,
       endDate: endDraft,
@@ -598,9 +603,15 @@ export function AdminDiagnosisPage(): ReactElement {
           )
         }
         const view = resultView(row)
+        // 规范名与库内原值不同时，把原值带进 title：用户要照着它检索。
+        const rawLabel = row.result?.trim() ?? ""
+        const resultTitle =
+          rawLabel && rawLabel !== view.name
+            ? `${view.name}（库内标签：${rawLabel}）`
+            : view.name
         return (
           <span className="admin-diagnosis__result">
-            <span className="admin-diagnosis__result-name" title={view.name}>
+            <span className="admin-diagnosis__result-name" title={resultTitle}>
               {view.name}
             </span>
             <span className="admin-diagnosis__result-sub">
@@ -806,6 +817,11 @@ export function AdminDiagnosisPage(): ReactElement {
               placeholder="按疾病名模糊检索…"
               aria-label="疾病名"
             />
+            {/* 列表显示规范名、后端按库内原值检索：这层对照必须写在脸上，
+                否则「照抄可见名查不到」看起来像筛选坏了。 */}
+            <span className="admin-diagnosis__fieldhint num">
+              {classSearchHint(resultDraft) ?? "规范名会换算成库内标签检索"}
+            </span>
           </label>
           {/* 起止日期成对换行：拆到两行会让「自」和「至」分家。 */}
           <div className="admin-ledger__daterange">
@@ -876,7 +892,9 @@ export function AdminDiagnosisPage(): ReactElement {
               title="还没有判读记录"
               description={
                 activeFilters > 0
-                  ? "当前筛选条件下没有记录。放宽疾病名、复核状态或时间范围后再看。"
+                  ? query.result
+                    ? `当前筛选条件下没有记录。疾病名按库内原始标签「${query.result}」模糊匹配，库里也可能写成另一种写法（例：近视 / myopia）。`
+                    : "当前筛选条件下没有记录。放宽复核状态或时间范围后再看。"
                   : "患者完成一次影像判读后，记录会出现在这里，等待人工复核。"
               }
             />

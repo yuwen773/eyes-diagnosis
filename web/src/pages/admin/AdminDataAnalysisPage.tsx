@@ -179,8 +179,13 @@ export function AdminDataAnalysisPage(): ReactElement {
     })),
   )
 
-  /** 重点卡里的复核状态构成：按数量降序取前四档（「谁还没处理」的分法）。 */
-  const breakdownRows = reviewDistribution.slice(0, 4)
+  /**
+   * 重点卡里的复核状态构成：窗口内全部判读的复核状态构成。
+   *
+   * <p>不截断：同页「复核状态分布」画的是全部档位，这里只取前四档时两处
+   * 对不上账（合计差一截，像漏了数据）。状态档位最多六档，全列出来更好读。
+   */
+  const breakdownRows = reviewDistribution
 
   /** 知识库状态分布（0 处理中 / 1 已完成 / 2 失败）。 */
   const knowledgeDistribution = rankDistribution(
@@ -249,11 +254,11 @@ export function AdminDataAnalysisPage(): ReactElement {
             ? "统计读数尚未返回，积压数暂不可判读。"
             : awaitingTotal > 0
               ? `窗口内新增 ${formatStatNumber(awaitingInRange)} 条判读等待人工复核；` +
-                `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识。` +
-                "积压需要人工复核才能进入正式记录。"
+                `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识——它们没有结论，` +
+                "已并入下方「拒识 / 低置信 · 待复核」一档。"
               : aiRejected > 0
                 ? "窗口内没有等待人工复核的判读；" +
-                  `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识，需要人工过目。`
+                  `同期有 ${formatStatNumber(aiRejected)} 条被模型拒识，已并入下方构成。`
                 : "窗口内没有等待人工复核的判读，也没有被模型拒识的记录。"}
         </span>
       </div>
@@ -285,12 +290,8 @@ export function AdminDataAnalysisPage(): ReactElement {
         </div>
         <dl className="feature-card__stats">
           <div>
-            <dt>AI 拒识</dt>
+            <dt>AI 拒识 · 窗口内</dt>
             <dd className="num">{read(aiRejected)}</dd>
-          </div>
-          <div>
-            <dt>已复核</dt>
-            <dd className="num">{read(reviewed)}</dd>
           </div>
         </dl>
       </div>
@@ -304,6 +305,9 @@ export function AdminDataAnalysisPage(): ReactElement {
         <span className="admin-viz__title">病种日趋势</span>
         <span className="admin-viz__head-extra num">
           统一纵轴上限 {formatStatNumber(domainMax)} 条 · 跨病种可比
+          {diseaseSeries.length < distribution.length
+            ? ` · 只画判读量前 ${diseaseSeries.length} 个类别（共 ${distribution.length} 个）`
+            : ""}
         </span>
       </div>
       <div className="admin-viz__body admin-viz__body--flush">
@@ -419,25 +423,26 @@ export function AdminDataAnalysisPage(): ReactElement {
               }
             />
             <MetricCell
-              label="涉及病种"
+              label="涉及结论类别"
               value={read(distribution.length)}
               foot={
                 <span className="admin-metric-card__delta">
                   {distribution.length > 0
                     ? `最多 ${distribution[0].name} ${formatStatNumber(distribution[0].value)} 条`
                     : "窗口内没有判读"}
+                  {" · 只统计有结论的记录"}
                 </span>
               }
             />
             <MetricCell
-              label="平均置信度"
+              label="窗口内平均置信度"
               value={stats ? confidencePercent(stats.avgConfidence) : "—"}
               foot={
                 <span className="admin-metric-card__delta">模型自评均值 · 非诊断准确率</span>
               }
             />
             <MetricCell
-              label="待人工复核"
+              label="待人工复核 · 全站"
               value={read(awaitingTotal)}
               foot={
                 <>
@@ -497,7 +502,7 @@ export function AdminDataAnalysisPage(): ReactElement {
             <section className="panel admin-analysis__base span-6" aria-label="运营底盘">
               <div className="panel__head">
                 <h2 className="panel__title">运营底盘</h2>
-                <span className="panel__note">知识库与资讯</span>
+                <span className="panel__note">全站累计 · 知识库与资讯</span>
               </div>
               <div className="panel__body admin-analysis__base-grid">
                 <StatusList title="知识库文档" rows={knowledgeDistribution} unit="份" />
@@ -516,36 +521,16 @@ export function AdminDataAnalysisPage(): ReactElement {
           ) : null}
 
           {stats ? (
-            <dl className="admin-analysis__ledger num" aria-label="统计口径">
-              <div>
-                <dt>平均置信度</dt>
-                <dd>
-                  {confidencePercent(stats.avgConfidence)}
-                  <span>模型自评均值，不是诊断准确率</span>
-                </dd>
-              </div>
-              <div>
-                <dt>已复核</dt>
-                <dd>
-                  {formatStatNumber(reviewed)}
-                  <span>条判读</span>
-                </dd>
-              </div>
-              <div>
-                <dt>知识库文档</dt>
-                <dd>
-                  {formatStatNumber(stats.knowledgeTotal)}
-                  <span>份 · 切片 {formatStatNumber(stats.knowledgeChunks)} 块</span>
-                </dd>
-              </div>
-              <div>
-                <dt>资讯</dt>
-                <dd>
-                  {formatStatNumber(stats.newsTotal)}
-                  <span>篇</span>
-                </dd>
-              </div>
-            </dl>
+            /* 口径带：按「窗口内 / 全站」分组写清每个数字的范围。
+               这一页同时有两种时间范围（窗口内判读、全站累计积压与内容），
+               不分组就会读成同一个口径。 */
+            <p className="admin-analysis__scope num" aria-label="统计口径">
+              <b>窗口内</b>（{stats.rangeStart} ~ {stats.rangeEnd}）· 判读{" "}
+              {formatStatNumber(inRange)} 条 · 已复核 {formatStatNumber(reviewed)} 条 ·{" "}
+              <b>全站</b> · 知识库文档 {formatStatNumber(stats.knowledgeTotal)} 份 / 切片{" "}
+              {formatStatNumber(stats.knowledgeChunks)} 块 · 资讯{" "}
+              {formatStatNumber(stats.newsTotal)} 篇
+            </p>
           ) : null}
         </>
       )}

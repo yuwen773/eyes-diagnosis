@@ -214,10 +214,20 @@ export const KNOWLEDGE_FILE_TYPES = [
   "markdown",
 ] as const
 
-/** 知识文档类型筛选下拉。 */
+/**
+ * 知识文档类型筛选下拉。
+ *
+ * <p>`md` 与 `markdown` 是同一种格式、两个扩展名：后端按扩展名精确匹配
+ * （`eq(fileType)`），所以两个值都得能筛。但并列摆成「MD / MARKDOWN」
+ * 会被读成两种格式，这里把长扩展名那个标成「MD（.markdown）」，
+ * 说清是同一格式的另一种扩展名。
+ */
 export const KNOWLEDGE_FILE_TYPE_OPTIONS = [
   { value: "", label: "全部类型" },
-  ...KNOWLEDGE_FILE_TYPES.map((value) => ({ value, label: value.toUpperCase() })),
+  ...KNOWLEDGE_FILE_TYPES.map((value) => ({
+    value,
+    label: value === "markdown" ? "MD（.markdown）" : value.toUpperCase(),
+  })),
 ] as const
 
 /**

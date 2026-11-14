@@ -1293,6 +1293,12 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 /* ── 读数表：tooltip 不是唯一读数通道（mono，label/value 两列 + 可选占比）── */
 
+/* 读数表的滚动壳：默认不限高（表格照常撑开），
+   要限高时由页面样式给这个壳设 max-height，表格在壳里滚、表头 sticky。 */
+.admin-viz__tablewrap {
+  min-width: 0;
+}
+
 .admin-viz__table {
   width: 100%;
   border-collapse: collapse;
@@ -2950,6 +2956,21 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 .admin-dt__head--pick {
   width: 40px;
   padding-inline: 10px;
+}
+
+/* 卡片化（≤900px）之后勾选列只剩 18px 宽：定宽 40px 会溢出这一格，
+   勾选盒顶到标题首字上。表格形态的定宽在卡片形态里不再成立，这里复位。 */
+@media (max-width: 900px) {
+  .admin-dt__cell--pick,
+  .admin-dt__head--pick {
+    width: auto;
+    padding-inline: 0;
+  }
+
+  /* 热区不再往外扩：卡片形态里那 18px 就是全部宽度。 */
+  .admin-dt__pick {
+    margin-inline: 0;
+  }
 }
 
 /* 勾选热区铺满 40px 高的单元格：视觉盒仍是 15px，但整格可点（移动端够到）。 */
