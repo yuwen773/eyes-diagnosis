@@ -4,8 +4,9 @@
 |---|---|
 | 源分支 | `feat/iris21-admin-pages-polish`（叠在 PR #79 的 `feat/iris21-admin-workspace` 之上） |
 | 基线 commit | `8f83f542afcb2a95efc73a258734f9217b930f0d`（PR #79 HEAD，**未改写**） |
-| 本轮 HEAD | `fd4e41c`（第 3 轮整改；+ 本轮文档提交见 §5 第 3 轮） |
-| 本轮 commit | `eac563a0`（首轮实现）→ `c90af659`（第 1 轮整改）→ `a5c82aec`（第 2 轮整改）→ `b937e701`（收紧共享原语改动面）→ `afacecc7`（证据重拍）→ `fd4e41c`（第 3 轮整改）→ 文档收尾 |
+| 验收基线 HEAD（源码 + 视觉证据） | `fd4e41c`（第 3 轮整改）——所有截图、读数与测试结论都对着这个 commit 取 |
+| 交付 HEAD | 本报告所在提交 = 分支 `feat/iris21-admin-pages-polish` 的最新 commit（`git rev-parse origin/feat/iris21-admin-pages-polish`）；PR #80 页面与 `ui-ready.json` 里写的是它的完整 sha |
+| 本轮 commit | `eac563a0`（首轮实现）→ `c90af659`（第 1 轮整改）→ `a5c82aec`（第 2 轮整改）→ `b937e701`（收紧共享原语改动面）→ `afacecc7`（证据重拍）→ `fd4e41c`（第 3 轮整改）→ `e1634074`（第 3 轮批量删除二次确认证据 + 计数同步）→ 交付提交 |
 | 改动范围 | 仅 `web/`（前端源码 + 证据脚本）与 `docs/design/admin-pages-polish/`（证据树）。后端、Flyway、Agent、鉴权、发布状态机**零改动** |
 | 裁决 | **READY FOR HUMAN REVIEW**（机器门禁全绿；视觉终判仍以人工为准） |
 
@@ -105,7 +106,7 @@
 用**同一份夹具数据**渲染出来的仪表盘。与 `after/dashboard-*.png` 并排即可看出改了什么、没改什么。
 第 2 轮收尾时**把 `before/` 全部 7 页都用同一份夹具重拍了一遍**（此前的 `before/` 是夹具种下之前拍的，
 内容与 `after/` 不可比，已作废），因此 `compare/` 里六页的前后图现在**逐行同数据**。
-第 3 轮又重拍了 `after/`（82 张）与 `after-nodata/`（18 张）——**重拍前后仪表盘的 8 张截图逐像素相同**，
+第 3 轮又重拍了 `after/`（82 张）＋第 3 轮整改后的 3 张批量删除二次确认（85 张）与 `after-nodata/`（18 张）——**重拍前后仪表盘的 8 张截图逐像素相同**，
 说明第 3 轮的改动确实没有碰它。
 
 **口径更正（重要）**：本报告早前版本写过「仪表盘渲染逐像素未变」——**不成立**，已作废。

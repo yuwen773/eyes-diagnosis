@@ -1,7 +1,7 @@
 # Iris 2.1 · R3.3 管理端六页视觉精修
 
 > **Draft PR** · 叠在 **PR #79**（`feat/iris21-admin-workspace`）之上 · 不自动合并、不部署
-> 基线：`8f83f542`（PR #79 HEAD，**未改写**） · 本轮 HEAD：`fd4e41c`（第 3 轮整改）+ 文档收尾提交
+> 基线：`8f83f542`（PR #79 HEAD，**未改写**） · 验收基线 HEAD：`fd4e41c`（第 3 轮整改，截图/读数/测试都对着这个 commit 取） · 交付 HEAD：本 PR 最新 commit（`git rev-parse origin/feat/iris21-admin-pages-polish`；完整 sha 见 PR 页面与 `ui-ready.json`）
 
 数据中心 / 诊断管理 / 新闻管理 / 知识库 / 用户管理 / 新闻编辑——六页的视觉精修与口径整改。
 **只动前端**（`web/`）与证据树（`docs/design/admin-pages-polish/`）；后端接口、数据库结构、
