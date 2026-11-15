@@ -448,6 +448,23 @@ class GraphExecutionTest {
         } finally { release.countDown(); if (connection != null) connection.stop(null); }
     }
 
+    @Test void fastClockCompetitorCannotStealLiveDatabaseLease() throws Exception {
+        var entered = new CountDownLatch(2); var release = new CountDownLatch(1);
+        answer = p -> { entered.countDown(); uninterruptible(release); return valid(p); };
+        var competingCalls = new AtomicInteger();
+        try {
+            var run = create(); assertTrue(entered.await(5, TimeUnit.SECONDS));
+            ChatModel model = p -> { competingCalls.incrementAndGet(); return new ChatResponse(List.of(new Generation(new AssistantMessage(valid(p))))); };
+            try (var competitor = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model,
+                    Clock.offset(Clock.systemUTC(), Duration.ofSeconds(20)), new PatientDraftCoordinator.Budget(8, 90_000, 20_000))) {
+                competitor.setCollaborationEvents(events); competitor.run(taskId);
+            }
+            assertEquals(0, competingCalls.get(), "A fast host clock cannot steal a database-live lease");
+            assertEquals(1, jdbc.queryForObject("SELECT fencingToken FROM t_patient_graph_execution WHERE taskId=?", Integer.class, taskId));
+            release.countDown(); assertEquals("SUCCEEDED", done(run.runId()).executionStatus());
+        } finally { release.countDown(); }
+    }
+
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(ints = {-6, 6})
     void databaseLeaseSurvivesHostClockSkew(int seconds) throws Exception {

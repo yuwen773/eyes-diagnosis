@@ -31,13 +31,17 @@ import static org.mockito.Mockito.*;
 class DiagnosisAgentImageReferenceTest {
     private final CosManager storage = mock(CosManager.class);
     private final UploadTaskMapper uploads = mock(UploadTaskMapper.class);
-    private final AgentImageUploadService images = new AgentImageUploadService();
-    private final DiagnosisAgent agent = new DiagnosisAgent();
+    @org.mockito.Spy private AgentImageUploadService images = new AgentImageUploadService();
+    @org.mockito.InjectMocks private DiagnosisAgent agent = new DiagnosisAgent();
     private final List<String> modelInputs = new ArrayList<>();
     private final Map<String, UploadTask> registered = new HashMap<>();
     private String url;
+    private AutoCloseable injections;
+
+    @AfterEach void closeMocks() throws Exception { injections.close(); }
 
     @BeforeEach void fixture() throws Exception {
+        injections = org.mockito.MockitoAnnotations.openMocks(this);
         var config = new CosClientConfig();
         ReflectionTestUtils.setField(config, "host", "https://fixture.invalid");
         ReflectionTestUtils.setField(images, "cosManager", storage);
@@ -65,7 +69,6 @@ class DiagnosisAgentImageReferenceTest {
         ReflectionTestUtils.setField(agent, "documentSearchTool", mock(DocumentSearchTool.class));
         var audit = mock(ToolAuditService.class); when(audit.digestKey()).thenReturn(new byte[32]);
         ReflectionTestUtils.setField(agent, "toolAuditService", audit);
-        ReflectionTestUtils.setField(agent, "agentImageUploadService", images);
     }
 
     private void chat(String reference) {
