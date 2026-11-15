@@ -415,6 +415,39 @@ class GraphExecutionTest {
         } finally { if (first.isAlive()) { first.destroyForcibly(); first.waitFor(5, TimeUnit.SECONDS); } }
     }
 
+    @Test void deletedChatClosesLiveDeliveryButPreservesAuditAndBackgroundRun() throws Exception {
+        var entered = new CountDownLatch(2); var release = new CountDownLatch(1);
+        answer = p -> { entered.countDown(); uninterruptible(release); return valid(p); };
+        var heartbeat = new CountDownLatch(1); var closed = new CountDownLatch(1);
+        var afterDelete = new CopyOnWriteArrayList<String>();
+        var deleted = new AtomicBoolean();
+        CollaborationStreams.Connection connection = null;
+        try {
+            var run = create(); assertTrue(entered.await(5, TimeUnit.SECONDS));
+            var snapshot = runs.snapshot(run.runId(), 42);
+            var sub = runs.subscribe(run.runId(), 42, null, snapshot.resumeCursor());
+            connection = streams.connect(sub, () -> 42, new CollaborationStreams.Sink() {
+                public void send(CollaborationStreams.Delivery delivery) {
+                    if (delivery.event() == null) heartbeat.countDown();
+                    else if (deleted.get()) afterDelete.add(delivery.event().type());
+                }
+                public void close(Throwable failure) { closed.countDown(); }
+            });
+            assertTrue(heartbeat.await(5, TimeUnit.SECONDS));
+            jdbc.update("UPDATE t_agent_session SET isDelete=1 WHERE sessionId='thread-42'");
+            deleted.set(true);
+            fault(403, "ACCESS_DENIED", () -> runs.reauthorize(sub));
+            fault(403, "ACCESS_DENIED", () -> runs.read(sub, sub.sequence()));
+            fault(403, "ACCESS_DENIED", () -> runs.subscribe(run.runId(), 42, null, snapshot.resumeCursor()));
+            connection.poll();
+            assertTrue(closed.await(5, TimeUnit.SECONDS));
+            release.countDown();
+            assertEquals("SUCCEEDED", done(run.runId()).executionStatus());
+            assertTrue(afterDelete.isEmpty(), afterDelete.toString());
+            assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM t_agent_collab_event WHERE runId=?", Integer.class, run.runId()) > 0);
+        } finally { release.countDown(); if (connection != null) connection.stop(null); }
+    }
+
     @Test void heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders() throws Exception {
         var entered = new CountDownLatch(2); var release = new CountDownLatch(1);
         answer = p -> { entered.countDown(); uninterruptible(release); return valid(p); };

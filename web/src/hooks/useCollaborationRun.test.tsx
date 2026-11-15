@@ -2,7 +2,10 @@
 import { StrictMode, type ReactNode } from "react"
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { collaborationApi, CollaborationHttpError } from "@/lib/collaborationApi"
+import {
+  collaborationApi,
+  CollaborationHttpError,
+} from "@/lib/collaborationApi"
 import {
   CollaborationProtocolError,
   type CollaborationFrame,
@@ -225,6 +228,41 @@ describe("useCollaborationRun", () => {
       error: "PROTOCOL_MISMATCH",
     })
     expect(collaborationApi.snapshot).toHaveBeenCalledTimes(2)
+  })
+  it.each([false, true])(
+    "heartbeats and duplicate facts cannot erase protocol failures (duplicate=%s)",
+    async (duplicate) => {
+      const { result } = renderHook(() => useCollaborationRun(scope))
+      await flush()
+      act(() => streams[0].fail(new CollaborationProtocolError()))
+      await flush()
+      act(() => {
+        streams[1].emit({ cursor: "heartbeat-only", event: null })
+        if (duplicate) streams[1].emit(frame("agent.started", 1))
+        streams[1].fail(new CollaborationProtocolError())
+      })
+      await flush()
+      expect(result.current).toMatchObject({
+        run: null,
+        connection: "error",
+        error: "PROTOCOL_MISMATCH",
+      })
+      expect(streams).toHaveLength(2)
+      expect(collaborationApi.snapshot).toHaveBeenCalledTimes(2)
+    }
+  )
+  it("a newly applied compatible fact permits a later independent repair", async () => {
+    renderHook(() => useCollaborationRun(scope))
+    await flush()
+    act(() => streams[0].fail(new CollaborationProtocolError()))
+    await flush()
+    act(() => {
+      streams[1].emit(frame("agent.started", 8))
+      streams[1].fail(new CollaborationProtocolError())
+    })
+    await flush()
+    expect(streams).toHaveLength(3)
+    expect(collaborationApi.snapshot).toHaveBeenCalledTimes(3)
   })
   it("cancels only the selected run, deduplicates clicks and re-reads the winning terminal state", async () => {
     let acknowledge!: () => void

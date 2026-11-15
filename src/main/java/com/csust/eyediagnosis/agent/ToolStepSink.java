@@ -5,7 +5,9 @@ import com.csust.eyediagnosis.model.dto.agent.MessageType;
 import reactor.core.publisher.Sinks;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -27,8 +29,12 @@ public final class ToolStepSink {
     private final Consumer<ToolAuditRecord> audit;
     private final String sessionId;
     private final Long userId;
-    /** tool-call id → tool name. Concurrent because graph tools may run in parallel. */
-    private final Map<String, String> pending = new ConcurrentHashMap<>();
+    // One monitor owns transitions, audit order and sink emissions together.
+    private final Map<String, String> pending = new HashMap<>();
+    private final Set<String> started = new HashSet<>();
+    private boolean closed;
+    private boolean deliveryCancelled;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ToolStepSink.class);
 
     public ToolStepSink(String sessionId, Long userId, Consumer<ToolAuditRecord> audit) {
         this.sessionId = sessionId;
@@ -39,28 +45,30 @@ public final class ToolStepSink {
     public Sinks.Many<MessageDTO> events() { return events; }
 
     /** Emit RUNNING for exactly one tool call. id is the graph's tool-call id. */
-    public void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
-        if (toolCallId != null) pending.put(toolCallId, toolName);
-        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
+    public synchronized void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
+        if (closed || !started.add(toolCallId)) return;
+        pending.put(toolCallId, toolName);
         if (audit != null) {
             audit.accept(ToolAuditRecord.start(sessionId, userId, toolCallId, toolName)
                     .withDigest(argsDigest, argsKeyNames));
         }
+        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
     }
 
     /** Emit a terminal state only after the real tool result is known. */
-    public void finished(String toolCallId, String toolName, boolean success,
+    public synchronized void finished(String toolCallId, String toolName, boolean success,
                          ToolStepContract.ErrorCategory errorCategory) {
-        if (toolCallId != null) pending.remove(toolCallId);
+        if (closed || !pending.containsKey(toolCallId)) return;
+        toolName = pending.remove(toolCallId);
         ToolStepContract.Status status = success
                 ? ToolStepContract.Status.SUCCEEDED : ToolStepContract.Status.FAILED;
         ToolStepContract.FinishReason reason = success
                 ? ToolStepContract.FinishReason.SUCCESS : ToolStepContract.FinishReason.TOOL_ERROR;
-        emit(toolCallId, toolName, status, reason, errorCategory);
         if (audit != null) {
             audit.accept(ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
                     status, errorCategory));
         }
+        emit(toolCallId, toolName, status, reason, errorCategory);
     }
 
     /**
@@ -68,25 +76,28 @@ public final class ToolStepSink {
      * Marks every call that never received a real result CANCELLED, never SUCCEEDED,
      * then closes the status flux so {@code Flux.merge} can terminate.
      */
-    public void closePending() {
+    public synchronized void closePending() {
+        if (closed) return;
+        closed = true;
         for (Map.Entry<String, String> entry : pending.entrySet()) {
             cancelled(entry.getKey(), entry.getValue());
         }
         pending.clear();
-        events.tryEmitComplete();
+        if (!deliveryCancelled) checkEmission(events.tryEmitComplete());
     }
 
     private void cancelled(String toolCallId, String toolName) {
-        emit(toolCallId, toolName, ToolStepContract.Status.CANCELLED,
-                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED);
         if (audit != null) {
             audit.accept(ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
                     ToolStepContract.Status.CANCELLED, ToolStepContract.ErrorCategory.CANCELLED));
         }
+        emit(toolCallId, toolName, ToolStepContract.Status.CANCELLED,
+                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED);
     }
 
     private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
                       ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory) {
+        if (deliveryCancelled) return;
         MessageDTO dto = new MessageDTO();
         dto.setMessageType(MessageType.TOOL_RESULT);
         dto.setContent("");
@@ -95,7 +106,18 @@ public final class ToolStepSink {
         dto.setStepLabel(ToolStepContract.stepLabel(toolName));
         if (reason != null) dto.setFinishReason(reason.wire());
         if (errorCategory != null) dto.setErrorCategory(errorCategory.name());
-        events.tryEmitNext(dto);
+        checkEmission(events.tryEmitNext(dto));
+    }
+
+    private void checkEmission(Sinks.EmitResult result) {
+        if (result == Sinks.EmitResult.FAIL_CANCELLED) {
+            // Cancellation withdraws the transport only; pending calls still get
+            // their one audit terminal state when closePending runs.
+            deliveryCancelled = true;
+            log.debug("Tool status subscriber cancelled; subsequent transitions are audit-only");
+            return;
+        }
+        result.orThrow();
     }
 
     /** Minimal audit payload. Never contains raw arguments, prompts or patient text. */

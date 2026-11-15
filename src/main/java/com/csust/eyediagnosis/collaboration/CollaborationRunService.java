@@ -131,6 +131,7 @@ public class CollaborationRunService implements AutoCloseable {
         String token = lastEventId != null ? lastEventId : cursor;
         if (token == null || token.isBlank()) throw new Fault(400, "SNAPSHOT_REQUIRED");
         Access access = access(runId, userId, false);
+        requireLiveThread(access);
         long seq = cursors.read(token, runId, userId, access.projection());
         if (seq > number(access.row(), "seq")) throw new Fault(400, "INVALID_CURSOR");
         return new Subscription(runId, userId, access.projection(), seq);
@@ -140,6 +141,7 @@ public class CollaborationRunService implements AutoCloseable {
         if (after < subscription.sequence()) throw new Fault(400, "INVALID_CURSOR");
         return transactions.execute(tx -> {
             Access access = access(subscription.runId(), subscription.userId(), true);
+            requireLiveThread(access);
             if (!access.projection().equals(subscription.projectionVersion())) throw new Fault(409, "SNAPSHOT_REQUIRED");
             long high = number(access.row(), "seq");
             var rows = jdbc.query("SELECT * FROM t_agent_collab_event WHERE runId=? AND seq>? AND seq<=? ORDER BY seq LIMIT 32",
@@ -162,7 +164,16 @@ public class CollaborationRunService implements AutoCloseable {
 
     public void reauthorize(Subscription subscription) {
         Access current = access(subscription.runId(), subscription.userId(), false);
+        requireLiveThread(current);
         if (!current.projection().equals(subscription.projectionVersion())) throw new Fault(409, "SNAPSHOT_REQUIRED");
+    }
+
+    // Chat visibility gates streaming only. Historical snapshots and medical
+    // background work retain their independent task authorization/lifecycle.
+    private void requireLiveThread(Access access) {
+        var threads = jdbc.queryForList("SELECT sessionId FROM t_agent_session WHERE BINARY sessionId=BINARY ? AND userId=? AND isDelete=0 AND status=1 AND (expiredTime IS NULL OR expiredTime>CURRENT_TIMESTAMP)",
+                access.row().get("threadId"), access.row().get("ownerUserId"));
+        if (threads.size() != 1) throw denied();
     }
 
     public Cancellation cancel(String runId, long userId) {

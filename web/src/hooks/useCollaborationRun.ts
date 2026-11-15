@@ -132,13 +132,16 @@ class CollaborationSession {
           signal,
           (frame) => {
             if (!this.current(epoch) || signal.aborted) return
+            const previous = this.view.run!
+            const next = collaborationReducer(previous, frame)
             this.update({
-              run: collaborationReducer(this.view.run!, frame),
+              run: next,
               connection: "live",
               error: null,
             })
             attempts = 0
-            repairs = 0
+            // A heartbeat or replayed fact proves transport liveness only.
+            if (next.sequence > previous.sequence) repairs = 0
           },
           () => {
             if (this.current(epoch) && !signal.aborted)
