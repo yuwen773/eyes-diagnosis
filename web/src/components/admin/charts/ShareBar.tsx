@@ -1,4 +1,4 @@
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 import {
@@ -28,8 +28,10 @@ export function ShareBar(props: {
   /** 哪些状态用强调色（通常是「当前需要处理」的那一类） */
   accentNames?: string[]
   emptyText?: string
+  /** 图下方的口径说明（可选）：图本身不解释「这个数说的是哪一档」。 */
+  note?: ReactNode
 }): ReactElement {
-  const { rows, ariaLabel, accentNames = [], emptyText } = props
+  const { rows, ariaLabel, accentNames = [], emptyText, note } = props
   const total = rows.reduce((sum, row) => sum + row.value, 0)
 
   // 单行堆叠：每段一个 dataKey（s0/s1…），名称另存一份给图例用。
@@ -53,6 +55,7 @@ export function ShareBar(props: {
       title={ariaLabel}
       ariaLabel={ariaLabel}
       emptyText={emptyText}
+      note={note}
       labelHeader="状态"
       extraHeader="占比"
       rows={rows.map((row) => ({

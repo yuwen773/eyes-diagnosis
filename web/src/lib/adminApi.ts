@@ -137,7 +137,7 @@ export type AdminDiagnosis = {
 /** 诊断列表的筛选条件：疾病名 + 复核状态 + AI 拒识 + 判读时间区间。 */
 export type DiagnosisQuery = {
   current: number; pageSize: number; result?: string
-  /** 复诊流程状态：1 未复审 / 2 复审中 / 3 已复审 */
+  /** 复诊状态：0 未复审（历史值 1 同义）/ 2 复审中 / 3 已复审 */
   reexamineStatus?: number
   /** 人工复核状态：AWAITING_REVIEW / REVIEWED / OVERRIDDEN … */
   humanReviewStatus?: string

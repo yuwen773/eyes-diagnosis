@@ -1,16 +1,26 @@
 import "@/styles/admin-document.css"
+import "@/styles/admin-polish-cms.css"
 
 import {
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
+  type DragEvent,
   type FormEvent,
   type ReactElement,
 } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
-import { ChevronDown, ChevronUp, Eye, FileText, Pencil, Trash2 } from "lucide-react"
+import {
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  FileText,
+  Pencil,
+  Trash2,
+  Upload,
+} from "lucide-react"
 
 import { useMediaQuery } from "@/lib/useMediaQuery"
 
@@ -65,6 +75,18 @@ function formatFileSize(bytes?: string | number): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/** 文件类型短码：PDF / DOC / DOCX / TXT / MD，认不出的原样显示。 */
+function fileTypeCode(fileType?: string | null): string {
+  const value = (fileType ?? "").trim()
+  if (!value) return "—"
+  // .markdown 与 .md 是同一种格式，短码统一成 MD；原始扩展名留在 title 里。
+  if (value.toLowerCase() === "markdown") return "MD"
+  return value.toUpperCase()
+}
+
+/** 扩展名白名单：与后端一致，拖放进来的文件也按同一套判定。 */
+const ACCEPTED_EXTENSIONS = ACCEPT.split(",").map((item) => item.replace(".", ""))
+
 /**
  * 知识库（真实端点：上传 / 轮询 / 预览 / 删除 / 改名）。
  *
@@ -107,6 +129,8 @@ export function AdminKnowledgePage(): ReactElement {
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [dropNote, setDropNote] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // 本次会话上传过的文件名：用于「处理中」条立即显示，列表回来后再按服务端状态收口。
@@ -115,6 +139,9 @@ export function AdminKnowledgePage(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeDoc | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 批量删除的待确认目标：选中文档 id 的快照。批量删除不可撤销，
+   *  必须先过确认弹层（与资讯页批量删除同口径）。 */
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<string[] | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -202,6 +229,23 @@ export function AdminKnowledgePage(): ReactElement {
     setSelectedIds([])
   }
 
+  /** 枚举筛选（处理状态 / 文件类型）用段控件，点一下即生效。 */
+  function applyStatusFilter(value: string) {
+    setStatusDraft(value)
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, status: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
+  function applyTypeFilter(value: string) {
+    setFileTypeDraft(value)
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, fileType: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
     setActionError(null)
@@ -213,10 +257,45 @@ export function AdminKnowledgePage(): ReactElement {
     setSelectedIds([])
   }
 
+  /**
+   * 收下选择的文件：按后端白名单过滤扩展名，被挡下的明确说出来，
+   * 不静默丢弃。文件选择与拖放走同一条路，上传管线不变。
+   */
+  function addFiles(list: File[]) {
+    if (list.length === 0) return
+    const accepted = list.filter((file) => {
+      const name = file.name.toLowerCase()
+      return ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(`.${ext}`))
+    })
+    const rejected = list.length - accepted.length
+    setDropNote(
+      rejected > 0
+        ? `${rejected} 个文件类型不受支持（仅 PDF / DOC / DOCX / TXT / MD），已忽略。`
+        : null,
+    )
+    if (accepted.length > 0) setPendingFiles((prev) => [...prev, ...accepted])
+  }
+
   function onPickFiles(event: ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(event.target.files ?? [])
-    if (picked.length > 0) setPendingFiles((prev) => [...prev, ...picked])
+    addFiles(Array.from(event.target.files ?? []))
     event.target.value = "" // 允许再次选择同名文件
+  }
+
+  function onDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragging(false)
+    addFiles(Array.from(event.dataTransfer.files ?? []))
+  }
+
+  function onDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragging(true)
+  }
+
+  function onDragLeave(event: DragEvent<HTMLDivElement>) {
+    // 只在指针真正离开这块区域时才收起高亮：子元素之间移动也会触发 dragleave。
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setDragging(false)
   }
 
   function removePending(index: number) {
@@ -271,14 +350,28 @@ export function AdminKnowledgePage(): ReactElement {
     }
   }
 
+  /** 批量删除：先弹确认，不直接执行。 */
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  function closeBatchDelete() {
+    if (batchBusy) return
+    setBatchDeleteTarget(null)
+  }
+
   /** 批量删除：逐条鉴权与执行，部分失败如实回执。 */
   async function runBatchDelete() {
     if (batchBusy || selectedIds.length === 0) return
+    const ids = batchDeleteTarget ?? selectedIds
+    setBatchDeleteTarget(null)
     setBatchBusy(true)
     setActionError(null)
     setActionNote(null)
     try {
-      const result = await deleteKnowledgeBatch(selectedIds)
+      const result = await deleteKnowledgeBatch(ids)
       const succeeded = result.succeeded ?? 0
       const failed = result.failed ?? 0
       setActionNote(
@@ -344,57 +437,100 @@ export function AdminKnowledgePage(): ReactElement {
     {
       key: "fileName",
       title: "文档",
-      // 弹性列也要给底宽：表格 min-width 740 里它拿 172px，否则自动布局
-      // 会把文件名列挤成 0 宽竖条，行高跟着爆掉。
-      width: "172px",
-      render: (row) => (
-        <div className="admin-file-cell">
-          <span className="admin-file-cell__icon" aria-hidden="true">
-            <FileText size={16} strokeWidth={1.8} />
-          </span>
-          <span className="admin-file-cell__text">
-            <span className="admin-file-cell__name">{row.fileName || "未命名文件"}</span>
-            <span
-              className="admin-file-cell__sub"
-              title={`${(row.fileType || "—").toUpperCase()} · ${formatFileSize(row.fileSize)}`}
-            >
-              {(row.fileType || "—").toUpperCase()} · {formatFileSize(row.fileSize)}
+      // 列宽用百分比：表格随视口变宽时各列按比例走，文档列不会独吞
+      // 整条余量（1920 档尤其明显），窄屏换卡片后这些宽度整体失效。
+      width: "37%",
+      render: (row) => {
+        // 标题与文件名常常相同：相同就不重复占一行，不同才显示——那是真信息。
+        const title = (row.title ?? "").trim()
+        const fileName = row.fileName || "未命名文件"
+        const showTitle = title.length > 0 && title !== fileName
+        return (
+          <div className="admin-cms__filecell">
+            <span className="admin-cms__filecell__icon" aria-hidden="true">
+              <FileText size={16} strokeWidth={1.8} />
             </span>
+            <span className="admin-cms__filecell__text">
+              <span className="admin-cms__filecell__name" title={fileName}>
+                {fileName}
+              </span>
+              {/* 标题与文件名常常相同：相同就不占第二行，不同才显示——那是真信息。 */}
+              {showTitle ? (
+                <span className="admin-cms__filecell__sub" title={title}>
+                  {title}
+                </span>
+              ) : null}
+            </span>
+          </div>
+        )
+      },
+    },
+    {
+      key: "fileType",
+      title: "类型 / 体积",
+      width: "12%",
+      render: (row) => (
+        <div className="admin-cms__typecell">
+          <span
+            className="admin-cms__typecell__code"
+            title={row.fileType ? `扩展名 .${row.fileType}` : undefined}
+          >
+            {fileTypeCode(row.fileType)}
           </span>
+          <span className="admin-cms__typecell__size num">{formatFileSize(row.fileSize)}</span>
         </div>
       ),
     },
-    { key: "title", title: "标题", width: "180px" },
-    { key: "chunkCount", title: "分块数", width: "88px", mono: true },
+    {
+      key: "chunkCount",
+      title: "分块数",
+      width: "8%",
+      render: (row) => {
+        const count =
+          typeof row.chunkCount === "number" && Number.isFinite(row.chunkCount)
+            ? row.chunkCount
+            : null
+        return (
+          <span className="admin-cms__chunkcell num">
+            {count ?? "—"}
+            {count === null ? null : <span className="admin-cms__chunkcell__unit">块</span>}
+          </span>
+        )
+      },
+    },
     {
       key: "status",
-      title: "状态",
-      width: "112px",
+      title: "处理状态",
+      width: "12%",
       render: (row) => {
         const v = knowledgeStatusView(row.status)
-        return <RiskTag risk={v.risk}>{v.label}</RiskTag>
+        return (
+          <span className="admin-cms__status">
+            <RiskTag risk={v.risk}>{v.label}</RiskTag>
+          </span>
+        )
       },
     },
     {
       key: "createTime",
       title: "上传时间",
-      width: "164px",
+      width: "15%",
       mono: true,
       render: (row) => formatTimestamp(row.createTime),
     },
     {
       key: "action",
       title: "操作",
-      width: "176px",
+      width: "12%",
       render: (row) => (
-        <div className="admin-dt__row-actions">
+        <div className="admin-dt__row-actions admin-knowledge__rowactions">
           {/* 主动作（预览）收进图标按钮：窄屏下文字版会把操作列撑到
               盖住文件名列；标签交给 title/aria-label。 */}
           <button
             type="button"
             className="admin-btn admin-btn--primary admin-btn--icon-sm"
             title="预览文档"
-            aria-label="预览文档"
+            aria-label={`预览文档：${row.fileName || "未命名文件"}`}
             onClick={() => openPreview(row)}
           >
             <Eye size={14} strokeWidth={2} aria-hidden="true" />
@@ -478,6 +614,58 @@ export function AdminKnowledgePage(): ReactElement {
               </button>
             </div>
           </div>
+          {/* 处理状态与文件类型都是枚举：段控件一次点得中，
+              不用先点开下拉才知道有哪些值。这一段常驻可见——
+              最常用的筛选不该藏在「展开筛选」后面。 */}
+          <div className="admin-cms__chipsgroup">
+            <span className="admin-cms__chipslabel" id="admin-knowledge-status-label">
+              处理状态 · STATUS
+            </span>
+            <div
+              className="admin-cms__chips"
+              role="group"
+              aria-labelledby="admin-knowledge-status-label"
+            >
+              {KNOWLEDGE_STATUS_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value || "all"}
+                  type="button"
+                  className="admin-cms__chip"
+                  aria-pressed={query.status === option.value}
+                  onClick={() => applyStatusFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="admin-cms__chipsgroup">
+            <span className="admin-cms__chipslabel" id="admin-knowledge-type-label">
+              文件类型 · TYPE
+            </span>
+            <div
+              className="admin-cms__chips"
+              role="group"
+              aria-labelledby="admin-knowledge-type-label"
+            >
+              {KNOWLEDGE_FILE_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value || "all"}
+                  type="button"
+                  className="admin-cms__chip"
+                  aria-pressed={query.fileType === option.value}
+                  onClick={() => applyTypeFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {/* 两枚相邻的 MD 是同一格式的两个扩展名：后端按扩展名精确匹配，
+                两个值都得能筛。不解释就会被读成两种格式。 */}
+            <span className="admin-knowledge__fieldhint num">
+              MD 与 MD（.markdown）是同一格式的两个扩展名 · 后端按扩展名精确匹配，故并列两枚
+            </span>
+          </div>
           {showFields ? (
           <div className="admin-filter__fields">
           <label className="admin-knowledge__field">
@@ -503,36 +691,6 @@ export function AdminKnowledgePage(): ReactElement {
             />
           </label>
           <label className="admin-knowledge__field admin-knowledge__field--narrow">
-            <span className="admin-knowledge__label">状态 · STATUS</span>
-            <select
-              className="admin-knowledge__input"
-              value={statusDraft}
-              onChange={(event) => setStatusDraft(event.target.value)}
-              aria-label="处理状态"
-            >
-              {KNOWLEDGE_STATUS_FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="admin-knowledge__field admin-knowledge__field--narrow">
-            <span className="admin-knowledge__label">类型 · TYPE</span>
-            <select
-              className="admin-knowledge__input"
-              value={fileTypeDraft}
-              onChange={(event) => setFileTypeDraft(event.target.value)}
-              aria-label="文件类型"
-            >
-              {KNOWLEDGE_FILE_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="admin-knowledge__field admin-knowledge__field--narrow">
             <span className="admin-knowledge__label">上传自 · FROM</span>
             <input
               className="admin-knowledge__input"
@@ -556,35 +714,59 @@ export function AdminKnowledgePage(): ReactElement {
           ) : null}
         </form>
 
-        <div className="admin-knowledge__upload-row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={ACCEPT}
-            className="admin-knowledge__file-input"
-            onChange={onPickFiles}
-            aria-label="选择知识库文件"
-          />
-          <button
-            type="button"
-            className="admin-btn admin-btn--ghost"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            选择文件
-          </button>
-          <span className="admin-knowledge__hint num">PDF / DOC / DOCX / TXT / MD · 可多选</span>
+        {/* 上传区：可点选也可拖放，两条路走同一个上传管线。
+            拖放只改「怎么把文件送进来」，解析与向量化流程不变。 */}
+        <div
+          className="admin-knowledge__upload"
+          data-dragging={dragging}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          <div className="admin-knowledge__upload-lead">
+            <span className="admin-knowledge__upload-icon" aria-hidden="true">
+              <Upload size={17} strokeWidth={1.8} />
+            </span>
+            <div className="admin-knowledge__upload-text">
+              <p className="admin-knowledge__upload-title">上传医疗文档</p>
+              <p className="admin-knowledge__upload-hint num">
+                PDF / DOC / DOCX / TXT / MD / MARKDOWN · 可多选 · 也可直接拖到这块区域
+              </p>
+            </div>
+          </div>
           <div className="admin-knowledge__upload-actions">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={ACCEPT}
+              className="admin-knowledge__file-input"
+              onChange={onPickFiles}
+              aria-label="选择知识库文件"
+            />
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              选择文件
+            </button>
             <button
               type="button"
               className="admin-btn admin-btn--primary"
               onClick={startUpload}
               disabled={pendingFiles.length === 0 || uploading}
             >
-              {uploading ? "上传中…" : "开始上传"}
+              {uploading
+                ? "上传中…"
+                : pendingFiles.length > 0
+                  ? `开始上传 · ${pendingFiles.length}`
+                  : "开始上传"}
             </button>
           </div>
         </div>
+
+        {dropNote ? <p className="admin-knowledge__dropnote">{dropNote}</p> : null}
 
         {pendingFiles.length > 0 ? (
           <div className="admin-knowledge__pending">
@@ -594,7 +776,12 @@ export function AdminKnowledgePage(): ReactElement {
             <ul className="admin-knowledge__chips">
               {pendingFiles.map((file, index) => (
                 <li key={`${file.name}-${index}`} className="admin-knowledge__chip">
-                  <span className="admin-knowledge__chip-name">{file.name}</span>
+                  <span className="admin-knowledge__chip-name" title={file.name}>
+                    {file.name}
+                  </span>
+                  <span className="admin-knowledge__chip-size num">
+                    {formatFileSize(file.size)}
+                  </span>
                   <button
                     type="button"
                     className="admin-knowledge__chip-remove"
@@ -647,7 +834,7 @@ export function AdminKnowledgePage(): ReactElement {
           type="button"
           className="admin-btn admin-btn--danger"
           disabled={batchBusy}
-          onClick={runBatchDelete}
+          onClick={requestBatchDelete}
         >
           批量删除
         </button>
@@ -669,6 +856,27 @@ export function AdminKnowledgePage(): ReactElement {
                 activeFilters > 0
                   ? "当前筛选条件下没有文档。放宽文件名、状态或上传时间后再看。"
                   : "上传 PDF / Word / Markdown 后，系统会解析、切块并写入向量库。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11）：有筛选给「清筛选」，
+                   没筛选给本页主操作（直接唤起文件选择）。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--primary"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    上传文档
+                  </button>
+                )
               }
             />
           }
@@ -766,6 +974,42 @@ export function AdminKnowledgePage(): ReactElement {
             确定删除文档{" "}
             <span className="admin-knowledge__modal-name">{deleteTarget.fileName}</span>{" "}
             吗？此操作不可撤销。
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={batchDeleteTarget != null}
+        title="批量删除知识文档"
+        onClose={closeBatchDelete}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeBatchDelete}
+              disabled={batchBusy}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={runBatchDelete}
+              disabled={batchBusy}
+            >
+              {batchBusy ? "删除中…" : "确认删除"}
+            </button>
+          </>
+        }
+      >
+        {batchDeleteTarget ? (
+          <p className="admin-knowledge__modal-text">
+            确定删除选中的{" "}
+            <span className="admin-knowledge__modal-name">
+              {batchDeleteTarget.length} 份文档
+            </span>{" "}
+            吗？批量删除不可撤销。
           </p>
         ) : null}
       </Modal>

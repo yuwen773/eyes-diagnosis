@@ -38,8 +38,10 @@ export function WeekBars(props: {
   average: number
   /** 统计窗口长度（天）：日均的口径要写清楚，否则「日均」会被读成别的意思 */
   windowDays: number
+  /** 柱图高度：卡片高度随内容走，别让一张小图撑出一张高卡。 */
+  height?: number
 }): ReactElement {
-  const { bars, title, ariaLabel, total, average, windowDays } = props
+  const { bars, title, ariaLabel, total, average, windowDays, height = 220 } = props
   const max = Math.max(0, ...bars.map((bar) => bar.average))
   const maxIndex = max > 0 ? bars.findIndex((bar) => bar.average === max) : -1
 
@@ -49,9 +51,13 @@ export function WeekBars(props: {
       ariaLabel={ariaLabel}
       labelHeader="星期"
       extraHeader="合计 / 出现天数"
-      headExtra={`合计 ${formatVizNumber(total)} · 日均 ${formatVizNumber(
+      headExtra={`合计 ${formatVizNumber(total)} · 窗口日均 ${formatVizNumber(
         Number(average.toFixed(1)),
       )}（${windowDays} 天）`}
+      /* 柱值是「该星期几的日均」（合计 ÷ 该星期几出现天数），卡头那个
+         「窗口日均」是合计 ÷ 窗口天数——两个日均不是一个口径，不写清楚
+         读者会拿柱高去对合计（4 条注册画出一根 1 的柱子）。 */
+      note={`柱为各星期几的日均（合计 ÷ 该星期几出现天数），与卡头的窗口日均不是同一口径`}
       rows={bars.map((bar) => ({
         label: bar.label,
         value: formatVizNumber(Number(bar.average.toFixed(1))),
@@ -59,7 +65,7 @@ export function WeekBars(props: {
       }))}
       figure={
         <div className="admin-viz__chart">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={height}>
             <BarChart
               data={bars}
               margin={{ top: 16, right: 8, bottom: 4, left: 0 }}

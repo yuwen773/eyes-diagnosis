@@ -312,7 +312,7 @@ export type DiagnosisManage = {
   result?: string | null
   confidence?: number | null
   severity?: string | null
-  /** 1 未复审 / 2 复审中 / 3 已复审。 */
+  /** 复诊状态：0 未复审（历史值 1 同义）/ 2 复审中 / 3 已复审 */
   reexamineStatus?: number
   createTime?: string
   status?: string

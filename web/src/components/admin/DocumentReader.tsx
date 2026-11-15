@@ -27,7 +27,7 @@ import { fault } from "@/lib/faults"
  * PDF 探针结论与「已载入」标记同样按 id 隔离，旧文档的结论不会落到新文档上。
  */
 
-type Loaded = { id: string; html?: string; text?: string; error?: string }
+type Loaded = { id: string; html?: string; text?: string; error?: string; code?: number }
 
 /**
  * PDF 探针结论，按文档 id 标记。
@@ -41,6 +41,8 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
   const kind = documentRenderKind(detail.fileType)
   const id = detail.id
   const [loaded, setLoaded] = useState<Loaded | null>(null)
+  /** 失败后重读一次：token 加一即触发下面的读取 effect 重跑。 */
+  const [reloadToken, setReloadToken] = useState(0)
   const [pdfLoadedId, setPdfLoadedId] = useState<string | null>(null)
   /** PDF 探针：iframe 的 onLoad 拿到什么内容都会触发，得先问服务端「这是 PDF 吗」。 */
   const [pdfProbe, setPdfProbe] = useState<PdfProbe | null>(null)
@@ -99,12 +101,14 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
         // 卸载 / 切换文档导致的 abort 不是错误，交给下一轮状态。
         if (cancelled || controller.signal.aborted) return
         // 解析失败不是传输失败：mammoth 抛的是文件本身的问题，要说清楚。
+        const detail = describeError(cause)
         setLoaded({
           id,
+          code: detail.code ?? undefined,
           error:
             kind === "docx" && !(cause instanceof ApiError)
               ? "这份 DOCX 解析失败，文件可能已损坏或不是有效的 Word 文档。"
-              : describeError(cause).text,
+              : detail.text,
         })
       }
     }
@@ -114,7 +118,7 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
       cancelled = true
       controller.abort()
     }
-  }, [id, kind])
+  }, [id, kind, reloadToken])
 
   const downloadUrl = knowledgeContentUrl(id, true)
   const openUrl = knowledgeContentUrl(id)
@@ -199,10 +203,20 @@ export function DocumentReader({ detail }: { detail: KnowledgeDetail }): ReactEl
       <FaultNote
         className="admin-doc__reader-fault"
         fault={fault({
-          severity: "attention",
-          kind: "client",
+          /* 5xx 是服务端故障，不是「条件不对」：严重度跟着状态码走，
+             别一律降成琥珀（faults.ts 的既有口径）。 */
+          severity: current.code && current.code >= 500 ? "critical" : "attention",
+          kind: current.code && current.code >= 500 ? "server" : "client",
           title: current.error,
+          code: current.code,
         })}
+        action={{
+          label: "重试",
+          run: () => {
+            setLoaded(null)
+            setReloadToken((token) => token + 1)
+          },
+        }}
       />
     )
   }

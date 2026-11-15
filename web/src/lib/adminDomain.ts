@@ -214,10 +214,20 @@ export const KNOWLEDGE_FILE_TYPES = [
   "markdown",
 ] as const
 
-/** 知识文档类型筛选下拉。 */
+/**
+ * 知识文档类型筛选下拉。
+ *
+ * <p>`md` 与 `markdown` 是同一种格式、两个扩展名：后端按扩展名精确匹配
+ * （`eq(fileType)`），所以两个值都得能筛。但并列摆成「MD / MARKDOWN」
+ * 会被读成两种格式，这里把长扩展名那个标成「MD（.markdown）」，
+ * 说清是同一格式的另一种扩展名。
+ */
 export const KNOWLEDGE_FILE_TYPE_OPTIONS = [
   { value: "", label: "全部类型" },
-  ...KNOWLEDGE_FILE_TYPES.map((value) => ({ value, label: value.toUpperCase() })),
+  ...KNOWLEDGE_FILE_TYPES.map((value) => ({
+    value,
+    label: value === "markdown" ? "MD（.markdown）" : value.toUpperCase(),
+  })),
 ] as const
 
 /**
@@ -264,7 +274,11 @@ export function diagnosisFilterParams(key: DiagnosisReviewFilter): {
     case "reviewing":
       return { reexamineStatus: 2 }
     case "notReviewed":
-      return { reexamineStatus: 1 }
+      // 落库值是 0，不是 DTO 注释里写的 1：判读链路不写复审状态，
+      // Diagnosis.reexamineStatus 是 primitive int，新记录落库即 0
+      // （写路径只有 2=复审中、3=已复审，没有任何路径产出 1）。
+      // 按 1 检索会一条都查不到——后端只支持单值等值匹配，覆盖不到 0 与 1 两档。
+      return { reexamineStatus: 0 }
     default:
       return {}
   }

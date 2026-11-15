@@ -73,6 +73,100 @@ export function classCode(name?: string) {
   return "—"
 }
 
+/** 规范名 → 库内原始标签（后端落库值）。 */
+const CLASS_SEARCH_LABELS: Record<string, string> = {
+  正常: "正常",
+  年龄相关性黄斑变性: "年龄相关性黄斑变性",
+  白内障: "白内障",
+  糖尿病视网膜病变: "糖尿病",
+  青光眼: "青光眼",
+  高血压性视网膜病变: "高血压",
+  病理性近视: "近视",
+  其他: "其他",
+}
+
+/**
+ * 输入 → 命中的规范类名（按别名表 + 子串关系）。
+ *
+ * <p>子串匹配让「病理性」这类只写一半的输入也能落到一个类上；
+ * 命中多个时（`视网膜病变` 同时是 DR 与 HR 的子串）返回多个，
+ * 由调用方决定怎么提示——后端只在 `result` 一列上做 LIKE，覆盖不了多值。
+ */
+export function classSearchMatches(name?: string): string[] {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return []
+  const alias = CLASS_ALIASES[trimmed.toLowerCase()]
+  if (alias) return [alias]
+  if (CODE_BY_NAME[trimmed]) return [trimmed]
+  return CLASSES.filter(
+    (item) => trimmed.includes(item.name) || item.name.includes(trimmed),
+  ).map((item) => item.name)
+}
+
+/**
+ * 库里可能出现的**原值集合**：后端枚举的中文短名 ∪ 算法侧的英文标签。
+ *
+ * <p>不是所有落库值都走 `getChineseLabelByEnglishLabel`：历史数据里有直接写
+ * 英文标签的行（本机 3306 实存一条 `result='myopia'`）。这些值照抄进筛选框
+ * 本来就查得到，换算成另一个标签反而把这一类行查丢。
+ */
+const STORED_LABELS = new Set<string>([
+  ...Object.values(CLASS_SEARCH_LABELS),
+  ...Object.keys(CLASS_ALIASES),
+])
+
+/**
+ * 输入 → 库内原始标签（检索用）。
+ *
+ * <p>后端 `DiagnosisCategoryEnum` 落库的是短名，与前端规范名有三处不同：
+ * 糖尿病 / 高血压 / 近视。管理端的筛选最终落到后端
+ * `queryWrapper.like("result", …)`——按库内原值模糊匹配，**不认规范名**。
+ * 用户在列表里看到的是规范名，照抄进筛选框会一条都查不到。
+ *
+ * <p>两种情况原样透传，不换算：
+ * <ol>
+ *   <li>输入**本身就是库内原值**（中文短名或英文标签）——换算会把这一类行查丢；</li>
+ *   <li>命中多个规范类——后端单列 LIKE 一次覆盖不了，宁可原样检索，
+ *       也不静默只查其中一个（界面会提示命中的候选类别）。</li>
+ * </ol>
+ *
+ * @param name 用户输入；命中唯一规范名时返回库内标签，否则返回 `null`（原样检索）。
+ */
+export function classSearchLabel(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  // 输入已经是库内原值：原样透传（英文标签 'myopia' 换算成 '近视' 就查不到那一行）。
+  if (STORED_LABELS.has(trimmed) || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return trimmed
+  }
+  const matches = classSearchMatches(name)
+  if (matches.length !== 1) return null
+  return CLASS_SEARCH_LABELS[matches[0]] ?? null
+}
+
+/** 检索口径提示：换算对照、命中歧义，都要写在脸上。 */
+export function classSearchHint(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  const matches = classSearchMatches(trimmed)
+  if (matches.length === 0) return null
+  if (matches.length > 1) {
+    // 多命中：原样透传给后端（LIKE 可能同时命中多类），把候选写出来供人挑。
+    return `「${trimmed}」可能命中 ${matches.length} 个类别：${matches.join(" / ")} · 可补全类别名缩小范围`
+  }
+  const canonical = matches[0]
+  const label = CLASS_SEARCH_LABELS[canonical]
+  if (!label) return null
+  // 输入本身就是库内原值（例：糖尿病 / myopia）：不换算，只告诉它属于哪一类。
+  if (label === trimmed || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return canonical === trimmed ? null : canonical
+  }
+  if (label === canonical) return null
+  return canonical === trimmed
+    ? `${canonical} → ${label}`
+    : `「${trimmed}」→ ${canonical}（库内：${label}）`
+}
+
 const SEVERITY_LABEL: Record<string, string> = {
   normal: "正常",
   mild: "轻度",
