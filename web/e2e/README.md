@@ -1,7 +1,9 @@
 # 验收冒烟（Playwright）
 
-四条走真实后端的冒烟：登录 → 判读槽 / 记录纸 / 资讯详情 / Agent 回复。
-它不是单元测试的替代品，只回答一个问题：**这套前端在真环境里还走得通吗。**
+四条浏览器冒烟：登录 → 判读槽 / 记录纸 / 资讯详情 / Agent 回复。
+登录与会话走真实后端；记录、资讯读数和 Agent SSE 使用测试内的合成夹具，
+不依赖当前账号已有患者记录、已有资讯或外网模型。这些结果属于浏览器契约验收，
+不代表真实推理、真实数据或临床验收。
 
 ## 前置
 
@@ -12,7 +14,7 @@
 | 前端 | `npm run dev`（默认 :5173；换端口用 `E2E_BASE_URL`） |
 | 后端 | `mvn spring-boot:run`，:8081，`/api` 前缀 |
 | MySQL / Redis | 后端会话与数据（本机两套 MySQL，见仓库 `CLAUDE.local.md`） |
-| 算法服务 | 判读链路需要 Python gRPC :50051（只看 Agent/资讯时可不验判读） |
+| 算法 / 外网模型 | 这四条不触发推理或外网模型；完整推理链需另行验收 |
 
 ## 环境变量
 
@@ -29,6 +31,29 @@ E2E_USER=<账号> E2E_PASSWORD=<密码> npm run test:e2e
 npx playwright install chromium
 ```
 
+`playwright.config.ts` 在**本地**会三级回落找浏览器（`E2E_CHROMIUM_PATH` → 匹配版本 →
+`ms-playwright` 里修订号最新的一份），这只是本机兼容兜底。**CI 不用这个回落**：CI 的标准
+环境是用 `npx playwright install --with-deps chromium` 装与 `@playwright/test` 版本匹配的那一版。
+
+## Issue #81 与 fixme 预算
+
+`smoke.spec.ts` 的四条用例均执行，无 fixme。三条历史隔离已修复，预算降为 **0**。
+缺账号时仍整体跳过，必须如实报告 skipped；不能把跳过描述成通过。
+
+| 用例 | 状态 | 修法 |
+| --- | --- | --- |
+| 登录后判读页的影像槽可见 | 执行 | 真实登录与页面 |
+| 记录页空态与合成记录展开 | 执行 | 固定分页、统计、详情夹具；同一条验证空态与记录纸 |
+| 资讯合成条目 → 标题与正文 | 执行 | 固定列表与详情；按链接内标题定位，不用历史类名 |
+| Agent 本地 SSE 回复与加载结束 | 执行 | 拦截流与自动标题请求，断言固定回复与发送内容 |
+
+`test.fixme` 是**临时隔离**，不是"这条先不跑"的开关：
+
+- 每条都必须登记在 `e2e/fixme-budget.json`（文件 / 标题 / issue / 原因），并受 `max` 硬上限约束；
+- `npm run check:e2e-fixme`（CI 的 `web` job 会跑）会拒绝：未登记的 fixme、超预算的数量、
+  缺少原因、测试修好后没删掉的条目、以及 `test.only`（它会让其余用例静默不跑）；
+- 所以新增一条 fixme = 一次需要人审批的动作，PR diff 里看得见。
+
 ## 失败时
 
 - 截图：`test-results/**/test-failed-*.png`
@@ -36,12 +61,14 @@ npx playwright install chromium
 
 ## 为什么不进 CI
 
-CI 没有 MySQL / Redis / 算法服务，也拿不到真实账号；进 CI 只会得到一串环境失败。
-发布前手动跑一次即可（见仓库根 `README.md` 的验证段）。
+CI 不提供这四条 smoke 的登录账号与运行中的应用栈；发布前手动跑一次（见仓库根
+`README.md` 的验证段）。CI 的 web job 跑 `npm run check:e2e-fixme` 与
+`npm run check:gate-tests`，不以静态门禁冒充浏览器验收。
 
 ## TASK-08B 协作专项（显式选择，证据分开）
 
-`npm run test:e2e` 保留上述生产依赖 smoke；不把本节的合成夹具计为生产通过。
+`smoke.spec.ts` 保留真实登录并使用上述合成读数与 SSE；本节协作专项的夹具
+同样单独报告，不计为生产通过。使用文件名或专项脚本选择目标套件。
 
 - `npm run test:collaboration`：前端以 `VITE_COLLABORATION_ENABLED=true` 启动，验证合成 HTTP/SSE 契约、四组 Windows Chromium 截图、投影、终态、滚动和键盘/对比度/reduced-motion。截图初次生成后须检查，再在不带 `--update-snapshots` 的运行中验证。当前截图基线为 Windows Chromium，其他平台应单独建立和审阅。
 - `npm run test:collaboration-backend`：显式启动 `CollaborationBrowserServer`（仓库根 `scripts/run_task05_browser_server.ps1`），直连真实 Java 控制器、Coordinator、MySQL 和 MapSessionRepository。存储、推理、模型及会话引导为合成夹具；不会调用真实提供方。临时库只允许 `jdbc:mysql://127.0.0.1:<port>/collaboration_test`，须是专用可清理库。
