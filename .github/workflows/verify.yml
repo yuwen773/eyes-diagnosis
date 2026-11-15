@@ -189,3 +189,4 @@ jobs:
       - run: npm run build
       - run: npm run lint
       - run: npm run check:e2e-fixme
+      - run: npm run check:gate-tests

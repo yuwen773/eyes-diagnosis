@@ -71,7 +71,17 @@ for (const file of specFiles(E2E_DIR)) {
   for (const _ of onlys) problems.push(`${rel}: 出现 test.only，其余用例会静默不跑`)
 }
 
-const entries = Array.isArray(budget.entries) ? budget.entries : []
+if (!Array.isArray(budget.entries)) {
+  console.error("fixme-budget.json 的 entries 必须是数组")
+  process.exit(1)
+}
+const entries = budget.entries.filter((entry) => {
+  if (!entry || typeof entry !== "object") {
+    problems.push("fixme-budget.json: 登记条目必须是对象")
+    return false
+  }
+  return true
+})
 const key = (e) => `${e.file}::${e.title}`
 
 for (const a of actual) {
@@ -83,6 +93,13 @@ for (const a of actual) {
   }
 }
 for (const e of entries) {
+  for (const field of ["file", "title", "reason"]) {
+    if (typeof e[field] !== "string" || !e[field].trim()) {
+      problems.push(
+        `fixme-budget.json:「${e.title ?? "未命名"}」缺少非空 ${field}`
+      )
+    }
+  }
   if (!Number.isInteger(e.issue) || e.issue <= 0) {
     problems.push(`fixme-budget.json:「${e.title}」缺少 issue 号，跳过必须有单可追`)
   }

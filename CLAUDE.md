@@ -133,8 +133,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 ### UI 冻结（2026-11-15）
 
 **Iris 2.1 UI 开发已冻结**，冻结基线 = annotated tag `iris-ui-v2.1-freeze-20261115`
-→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（冻结当时的 `ui` tip；此后 `ui` 只前进到
-文档合并 `7ec746fb`，tag 不移动）。
+→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（冻结当时的 `ui` tip，tag 不移动）。
 
 - **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
 - **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。

@@ -105,8 +105,23 @@ function loadShaAllowlist() {
   const p = join(reportDir, "sha-allowlist.json")
   if (!existsSync(p)) return []
   try {
-    const list = JSON.parse(readFileSync(p, "utf8")).entries ?? []
-    return list.filter((e) => typeof e.sha === "string" && e.sha.length >= 7)
+    const list = JSON.parse(readFileSync(p, "utf8")).entries
+    if (!Array.isArray(list)) throw new Error("entries 必须是数组")
+    return list.filter((e) => {
+      if (
+        !e ||
+        typeof e.sha !== "string" ||
+        !/^[a-f0-9]{7,40}$/.test(e.sha) ||
+        typeof e.reason !== "string" ||
+        !e.reason.trim()
+      ) {
+        problems.push(
+          "sha-allowlist.json: 每条必须包含合法的 7–40 位十六进制 sha 与非空 reason"
+        )
+        return false
+      }
+      return true
+    })
   } catch (e) {
     problems.push(`sha-allowlist.json 解析失败：${e.message}`)
     return []
@@ -139,7 +154,7 @@ for (const { name, text } of docs) {
     // 两种写法都认：「共 **18 张**」与「**18 张**」。
     const stated = row.match(/共 \*\*(\d+) 张\*\*/) ?? row.match(/\*\*(\d+) 张\*\*/)
     if (!stated) {
-      warnings.push(`${name}: 「${sub}/」行没有写「共 **N 张**」，无法核对`)
+      problems.push(`${name}: 「${sub}/」行没有写「共 **N 张**」，无法核对`)
       continue
     }
     const n = Number(stated[1])
