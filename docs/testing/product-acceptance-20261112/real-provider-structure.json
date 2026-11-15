@@ -1,0 +1,157 @@
+[
+  {
+    "id": 1,
+    "role": "VISION",
+    "validJson": true,
+    "topLevelKeys": [
+      "summary",
+      "limitations",
+      "reanalysisSuggestion"
+    ]
+  },
+  {
+    "id": 2,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 3,
+    "role": "EXPLANATION",
+    "validJson": true,
+    "topLevelKeys": [
+      "evidenceVersion",
+      "claims"
+    ]
+  },
+  {
+    "id": 4,
+    "role": "CRITIC",
+    "validJson": true,
+    "topLevelKeys": [
+      "action",
+      "objections"
+    ],
+    "action": "SUPPLEMENT",
+    "objections": [
+      {
+        "target": "claim:c1",
+        "reason": "The claim states a prediction was generated but omits the critical context that the image quality score is 0, which renders the visual features underlying this prediction unreliable."
+      },
+      {
+        "target": "claim:c2",
+        "reason": "While the claim correctly identifies uncalibrated probability, it fails to explicitly link this unreliability to the 'synthetic-product-NORMAL' model version noted in the inference data."
+      },
+      {
+        "target": "claim:c4",
+        "reason": "The claim mentions severe uncertainty due to quality scores but does not specify that the score is exactly 0, indicating a total failure of image assessment rather than just degradation."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 6,
+    "role": "VISION",
+    "validJson": true,
+    "topLevelKeys": [
+      "summary",
+      "limitations",
+      "reanalysisSuggestion"
+    ]
+  },
+  {
+    "id": 7,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 8,
+    "role": "EXPLANATION",
+    "validJson": true,
+    "topLevelKeys": [
+      "evidenceVersion",
+      "claims"
+    ]
+  },
+  {
+    "id": 9,
+    "role": "CRITIC",
+    "validJson": true,
+    "topLevelKeys": [
+      "action",
+      "objections"
+    ],
+    "action": "REWRITE",
+    "objections": [
+      {
+        "target": "claim:c1",
+        "reason": "The claim states the finding is based on 'invalid image quality' as a definitive fact, whereas the evidence only supports that the quality score is 0 and requires examination; the causal link between the specific synthetic model version and the invalidity of the image data itself is an unsupported conflation in the text."
+      },
+      {
+        "target": "claim:c2",
+        "reason": "The citation 'Synthetic glaucoma follow-up requires an eye examination' does not contain evidence regarding 'quality score of 0' or 'unusable image data'; the reference is irrelevant to the specific technical claim made."
+      },
+      {
+        "target": "claim:c3",
+        "reason": "The recommendation for 'immediate recapture' is not supported by the provided excerpt, which only mentions the requirement for an eye examination, not the specific action of recapturing images due to insufficiency."
+      },
+      {
+        "target": "claim:c4",
+        "reason": "The excerpt provided does not mention 'uncalibrated probability' or 'clinical decision making'; the claim attributes these specific limitations to a source that only discusses the need for an examination."
+      },
+      {
+        "target": "claim:c5",
+        "reason": "The specific details about 'synthetic-product-NORMAL' model mismatch and 'empty quality reasons' are not present in the cited document excerpt, making the reference unsupported."
+      },
+      {
+        "target": "claim:c6",
+        "reason": "The assertion that 'no definitive diagnosis can be made' specifically because of 'quality score of 0' is not derived from the cited text, which broadly states an examination is required without detailing image quality metrics."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "role": "EXPLANATION",
+    "validJson": true,
+    "topLevelKeys": [
+      "evidenceVersion",
+      "claims"
+    ]
+  },
+  {
+    "id": 11,
+    "role": "CRITIC",
+    "validJson": true,
+    "topLevelKeys": [
+      "action",
+      "objections"
+    ],
+    "action": "SUPPLEMENT",
+    "objections": [
+      {
+        "target": "vision:summary",
+        "reason": "The summary states the model predicts glaucoma with 70% probability, but fails to explicitly highlight that the quality score of 0 renders the image technically unusable for diagnosis, making the probability value meaningless rather than just uncalibrated."
+      },
+      {
+        "target": "claim:c1",
+        "reason": "The claim implies the prediction is valid but requires further evaluation; it should explicitly state that the prediction is invalid due to the quality score of 0."
+      },
+      {
+        "target": "claim:c4",
+        "reason": "The claim attributes uncertainty to 'nature of the data' and 'manual verification' generally, whereas the specific cause of uncertainty is the total failure of image quality (score 0), which prevents any valid inference."
+      }
+    ]
+  }
+]

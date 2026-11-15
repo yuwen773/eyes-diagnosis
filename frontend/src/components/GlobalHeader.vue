@@ -65,7 +65,7 @@ const originItems = computed(() => {
     .map(menuToRouteItem)
 })
 
-const items = ref<MenuProps['items']>(originItems.value)
+const items = computed<MenuProps['items']>(() => originItems.value)
 </script>
 
 <template>
@@ -236,6 +236,8 @@ const items = ref<MenuProps['items']>(originItems.value)
 }
 
 :deep(.ant-menu-horizontal) {
+  flex: 1;
+  min-width: 0;
   line-height: 80px !important;
   border-bottom: none !important;
   background: transparent !important;

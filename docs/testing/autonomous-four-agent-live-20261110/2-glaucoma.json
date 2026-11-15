@@ -1,0 +1,881 @@
+{
+  "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+  "taskStatus": "WAITING_REVIEW",
+  "status": "REVIEW_READY",
+  "stopReason": null,
+  "calls": 4,
+  "supplements": 0,
+  "rewrites": 0,
+  "startedAt": "2026-11-10T15:51:41.773297Z",
+  "deadlineAt": "2026-11-10T15:53:11.773297Z",
+  "elapsedMs": "10569",
+  "predictedLabel": "glaucoma",
+  "roles": [
+    {
+      "sequence": 1,
+      "role": "VISION",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:41.834724Z",
+      "completedAt": "2026-11-10T15:51:44.847274Z",
+      "elapsedMs": "3012",
+      "hasResult": true,
+      "context": {
+        "probability": 70.0,
+        "modelVersion": "synthetic-draft-test",
+        "qualityScore": 80,
+        "predictedLabel": "glaucoma",
+        "qualityReasons": "",
+        "snapshotDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+        "calibrationStatus": "NOT_CALIBRATED",
+        "preprocessVersion": "synthetic-draft-test"
+      },
+      "result": {
+        "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+        "limitations": [
+          "Model probabilities are uncalibrated and do not represent clinical reliability.",
+          "Prediction is from a synthetic draft test version, not a validated clinical model.",
+          "No specific visual findings can be confirmed or invented based on this output alone."
+        ],
+        "reanalysisSuggestion": "REVIEW_QUALITY"
+      },
+      "collaboration": {
+        "inbox": [],
+        "outgoing": [
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325904.8745377,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+              "limitations": [
+                "Model probabilities are uncalibrated and do not represent clinical reliability.",
+                "Prediction is from a synthetic draft test version, not a validated clinical model.",
+                "No specific visual findings can be confirmed or invented based on this output alone."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:1:EVIDENCE",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EVIDENCE",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325904.8745377,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+              "limitations": [
+                "Model probabilities are uncalibrated and do not represent clinical reliability.",
+                "Prediction is from a synthetic draft test version, not a validated clinical model.",
+                "No specific visual findings can be confirmed or invented based on this output alone."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:1:EXPLANATION",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325904.8745377,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+              "limitations": [
+                "Model probabilities are uncalibrated and do not represent clinical reliability.",
+                "Prediction is from a synthetic draft test version, not a validated clinical model.",
+                "No specific visual findings can be confirmed or invented based on this output alone."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:1:CRITIC",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    },
+    {
+      "sequence": 2,
+      "role": "EVIDENCE",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:41.849323Z",
+      "completedAt": "2026-11-10T15:51:43.480494Z",
+      "elapsedMs": "1631",
+      "hasResult": true,
+      "context": {
+        "vision": null,
+        "feedback": null,
+        "inference": {
+          "probability": 70.0,
+          "modelVersion": "synthetic-draft-test",
+          "qualityScore": 80,
+          "predictedLabel": "glaucoma",
+          "qualityReasons": "",
+          "snapshotDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+          "calibrationStatus": "NOT_CALIBRATED",
+          "preprocessVersion": "synthetic-draft-test"
+        }
+      },
+      "result": {
+        "search": {
+          "query": "glaucoma patient education symptoms and treatment"
+        },
+        "citations": [
+          {
+            "title": "合成试验资料（非真实医学来源）· glaucoma",
+            "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+            "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+            "chunkIndex": 0,
+            "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+            "reviewedBy": "2120154741968723970",
+            "retrievedAt": 1794325903.479972,
+            "reviewStatus": "APPROVED",
+            "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+            "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+            "governanceVersion": 1
+          }
+        ]
+      },
+      "collaboration": {
+        "inbox": [],
+        "outgoing": [
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325903.5256276,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "合成试验资料（非真实医学来源）· glaucoma",
+                  "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+                  "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325903.479972,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+                  "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:EXPLANATION",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325903.5256276,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "合成试验资料（非真实医学来源）· glaucoma",
+                  "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+                  "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325903.479972,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+                  "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:CRITIC",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    },
+    {
+      "sequence": 3,
+      "role": "EXPLANATION",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:44.918128Z",
+      "completedAt": "2026-11-10T15:51:51.369374Z",
+      "elapsedMs": "6451",
+      "hasResult": true,
+      "context": {
+        "vision": {
+          "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+          "limitations": [
+            "Model probabilities are uncalibrated and do not represent clinical reliability.",
+            "Prediction is from a synthetic draft test version, not a validated clinical model.",
+            "No specific visual findings can be confirmed or invented based on this output alone."
+          ],
+          "reanalysisSuggestion": "REVIEW_QUALITY"
+        },
+        "evidence": {
+          "version": 1,
+          "citations": [
+            {
+              "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+              "citationIndex": 0
+            }
+          ]
+        },
+        "feedback": null,
+        "inference": {
+          "probability": 70.0,
+          "modelVersion": "synthetic-draft-test",
+          "qualityScore": 80,
+          "predictedLabel": "glaucoma",
+          "qualityReasons": "",
+          "snapshotDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+          "calibrationStatus": "NOT_CALIBRATED",
+          "preprocessVersion": "synthetic-draft-test"
+        },
+        "previousDraft": null
+      },
+      "result": {
+        "claims": [
+          {
+            "id": "c1",
+            "text": "The model prediction suggests glaucoma, but this is based on synthetic draft data and requires independent doctor review.",
+            "section": "MAIN_FINDING",
+            "references": [
+              {
+                "quote": "合成资料：青光眼 glaucoma",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c2",
+            "text": "Follow-up monitoring of intraocular pressure, visual fields, and the optic nerve is indicated if confirmed by a specialist.",
+            "section": "RISK",
+            "references": [
+              {
+                "quote": "随访需监测眼压、视野与视神经",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c3",
+            "text": "Treatment decisions must be made by an ophthalmologist, and the patient explanation requires their复核 (review).",
+            "section": "NEXT_STEP",
+            "references": [
+              {
+                "quote": "治疗由眼科医生决定。患者解释需由眼科医生复核",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c4",
+            "text": "The model probability does not represent clinical reliability and cannot be used as a definitive diagnostic metric.",
+            "section": "UNCERTAINTY",
+            "references": [
+              {
+                "quote": "模型概率不代表临床可靠性",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c5",
+            "text": "This output is derived from synthetic materials intended for testing purposes rather than live clinical diagnosis.",
+            "section": "DETAIL",
+            "references": [
+              {
+                "quote": "合成资料",
+                "citationIndex": 0
+              }
+            ]
+          },
+          {
+            "id": "c6",
+            "text": "No specific visual findings can be confirmed or invented based on this output alone, and the prediction comes from an uncalibrated synthetic draft.",
+            "section": "LIMITATION",
+            "references": [
+              {
+                "quote": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                "citationIndex": 0
+              }
+            ]
+          }
+        ],
+        "evidenceVersion": 1
+      },
+      "collaboration": {
+        "inbox": [
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325904.8745377,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+              "limitations": [
+                "Model probabilities are uncalibrated and do not represent clinical reliability.",
+                "Prediction is from a synthetic draft test version, not a validated clinical model.",
+                "No specific visual findings can be confirmed or invented based on this output alone."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:1:EXPLANATION",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325903.5256276,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "合成试验资料（非真实医学来源）· glaucoma",
+                  "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+                  "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325903.479972,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+                  "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:EXPLANATION",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "EXPLANATION",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          }
+        ],
+        "outgoing": [
+          {
+            "kind": "DRAFT_READY",
+            "sentAt": 1794325911.42641,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "The model prediction suggests glaucoma, but this is based on synthetic draft data and requires independent doctor review.",
+                  "section": "MAIN_FINDING",
+                  "references": [
+                    {
+                      "quote": "合成资料：青光眼 glaucoma",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Follow-up monitoring of intraocular pressure, visual fields, and the optic nerve is indicated if confirmed by a specialist.",
+                  "section": "RISK",
+                  "references": [
+                    {
+                      "quote": "随访需监测眼压、视野与视神经",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "Treatment decisions must be made by an ophthalmologist, and the patient explanation requires their复核 (review).",
+                  "section": "NEXT_STEP",
+                  "references": [
+                    {
+                      "quote": "治疗由眼科医生决定。患者解释需由眼科医生复核",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "The model probability does not represent clinical reliability and cannot be used as a definitive diagnostic metric.",
+                  "section": "UNCERTAINTY",
+                  "references": [
+                    {
+                      "quote": "模型概率不代表临床可靠性",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c5",
+                  "text": "This output is derived from synthetic materials intended for testing purposes rather than live clinical diagnosis.",
+                  "section": "DETAIL",
+                  "references": [
+                    {
+                      "quote": "合成资料",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c6",
+                  "text": "No specific visual findings can be confirmed or invented based on this output alone, and the prediction comes from an uncalibrated synthetic draft.",
+                  "section": "LIMITATION",
+                  "references": [
+                    {
+                      "quote": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                      "citationIndex": 0
+                    }
+                  ]
+                }
+              ],
+              "evidenceVersion": 1
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:3:CRITIC",
+            "senderRole": "EXPLANATION",
+            "draftVersion": 1,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 3,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:EXPLANATION"
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    },
+    {
+      "sequence": 4,
+      "role": "CRITIC",
+      "state": "COMPLETED",
+      "startedAt": "2026-11-10T15:51:51.485636Z",
+      "completedAt": "2026-11-10T15:51:52.342315Z",
+      "elapsedMs": "856",
+      "hasResult": true,
+      "context": {
+        "draft": {
+          "claims": [
+            {
+              "id": "c1",
+              "text": "The model prediction suggests glaucoma, but this is based on synthetic draft data and requires independent doctor review.",
+              "section": "MAIN_FINDING",
+              "references": [
+                {
+                  "quote": "合成资料：青光眼 glaucoma",
+                  "citationIndex": 0
+                }
+              ]
+            },
+            {
+              "id": "c2",
+              "text": "Follow-up monitoring of intraocular pressure, visual fields, and the optic nerve is indicated if confirmed by a specialist.",
+              "section": "RISK",
+              "references": [
+                {
+                  "quote": "随访需监测眼压、视野与视神经",
+                  "citationIndex": 0
+                }
+              ]
+            },
+            {
+              "id": "c3",
+              "text": "Treatment decisions must be made by an ophthalmologist, and the patient explanation requires their复核 (review).",
+              "section": "NEXT_STEP",
+              "references": [
+                {
+                  "quote": "治疗由眼科医生决定。患者解释需由眼科医生复核",
+                  "citationIndex": 0
+                }
+              ]
+            },
+            {
+              "id": "c4",
+              "text": "The model probability does not represent clinical reliability and cannot be used as a definitive diagnostic metric.",
+              "section": "UNCERTAINTY",
+              "references": [
+                {
+                  "quote": "模型概率不代表临床可靠性",
+                  "citationIndex": 0
+                }
+              ]
+            },
+            {
+              "id": "c5",
+              "text": "This output is derived from synthetic materials intended for testing purposes rather than live clinical diagnosis.",
+              "section": "DETAIL",
+              "references": [
+                {
+                  "quote": "合成资料",
+                  "citationIndex": 0
+                }
+              ]
+            },
+            {
+              "id": "c6",
+              "text": "No specific visual findings can be confirmed or invented based on this output alone, and the prediction comes from an uncalibrated synthetic draft.",
+              "section": "LIMITATION",
+              "references": [
+                {
+                  "quote": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "citationIndex": 0
+                }
+              ]
+            }
+          ],
+          "evidenceVersion": 1
+        },
+        "vision": {
+          "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+          "limitations": [
+            "Model probabilities are uncalibrated and do not represent clinical reliability.",
+            "Prediction is from a synthetic draft test version, not a validated clinical model.",
+            "No specific visual findings can be confirmed or invented based on this output alone."
+          ],
+          "reanalysisSuggestion": "REVIEW_QUALITY"
+        },
+        "evidence": {
+          "version": 1,
+          "citations": [
+            {
+              "title": "合成试验资料（非真实医学来源）· glaucoma",
+              "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+              "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+              "chunkIndex": 0,
+              "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+              "reviewedBy": "2120154741968723970",
+              "retrievedAt": 1794325903.479972,
+              "reviewStatus": "APPROVED",
+              "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+              "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+              "governanceVersion": 1
+            }
+          ]
+        },
+        "inference": {
+          "probability": 70.0,
+          "modelVersion": "synthetic-draft-test",
+          "qualityScore": 80,
+          "predictedLabel": "glaucoma",
+          "qualityReasons": "",
+          "snapshotDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+          "calibrationStatus": "NOT_CALIBRATED",
+          "preprocessVersion": "synthetic-draft-test"
+        }
+      },
+      "result": {
+        "action": "NONE",
+        "objections": []
+      },
+      "collaboration": {
+        "inbox": [
+          {
+            "kind": "VISION_READY",
+            "sentAt": 1794325904.8745377,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "summary": "The model predicts 'glaucoma' with a probability of 70.0% and an image quality score of 80. The prediction is from a synthetic draft test model and is not calibrated for clinical reliability.",
+              "limitations": [
+                "Model probabilities are uncalibrated and do not represent clinical reliability.",
+                "Prediction is from a synthetic draft test version, not a validated clinical model.",
+                "No specific visual findings can be confirmed or invented based on this output alone."
+              ],
+              "reanalysisSuggestion": "REVIEW_QUALITY"
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:1:CRITIC",
+            "senderRole": "VISION",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 1,
+            "evidenceVersion": null,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "EVIDENCE_READY",
+            "sentAt": 1794325903.5256276,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "version": 1,
+              "citations": [
+                {
+                  "title": "合成试验资料（非真实医学来源）· glaucoma",
+                  "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+                  "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                  "chunkIndex": 0,
+                  "documentId": "bf904dbe-14d1-3138-b324-65080eb54bd9",
+                  "reviewedBy": "2120154741968723970",
+                  "retrievedAt": 1794325903.479972,
+                  "reviewStatus": "APPROVED",
+                  "excerptDigest": "5ed4f3e88a0c369befbda94ed954e0b565d42881c6e93347957b609ca0992e9f",
+                  "documentVersion": "2bea0d8c0f7409d8d9c9524d2394acb9ff69350218d18749ceb780268ce79a80",
+                  "governanceVersion": 1
+                }
+              ]
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:CRITIC",
+            "senderRole": "EVIDENCE",
+            "draftVersion": null,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 2,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": null
+          },
+          {
+            "kind": "DRAFT_READY",
+            "sentAt": 1794325911.42641,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "The model prediction suggests glaucoma, but this is based on synthetic draft data and requires independent doctor review.",
+                  "section": "MAIN_FINDING",
+                  "references": [
+                    {
+                      "quote": "合成资料：青光眼 glaucoma",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Follow-up monitoring of intraocular pressure, visual fields, and the optic nerve is indicated if confirmed by a specialist.",
+                  "section": "RISK",
+                  "references": [
+                    {
+                      "quote": "随访需监测眼压、视野与视神经",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "Treatment decisions must be made by an ophthalmologist, and the patient explanation requires their复核 (review).",
+                  "section": "NEXT_STEP",
+                  "references": [
+                    {
+                      "quote": "治疗由眼科医生决定。患者解释需由眼科医生复核",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "The model probability does not represent clinical reliability and cannot be used as a definitive diagnostic metric.",
+                  "section": "UNCERTAINTY",
+                  "references": [
+                    {
+                      "quote": "模型概率不代表临床可靠性",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c5",
+                  "text": "This output is derived from synthetic materials intended for testing purposes rather than live clinical diagnosis.",
+                  "section": "DETAIL",
+                  "references": [
+                    {
+                      "quote": "合成资料",
+                      "citationIndex": 0
+                    }
+                  ]
+                },
+                {
+                  "id": "c6",
+                  "text": "No specific visual findings can be confirmed or invented based on this output alone, and the prediction comes from an uncalibrated synthetic draft.",
+                  "section": "LIMITATION",
+                  "references": [
+                    {
+                      "quote": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。",
+                      "citationIndex": 0
+                    }
+                  ]
+                }
+              ],
+              "evidenceVersion": 1
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:3:CRITIC",
+            "senderRole": "EXPLANATION",
+            "draftVersion": 1,
+            "recipientRole": "CRITIC",
+            "sourceSequence": 3,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:2:EXPLANATION"
+          }
+        ],
+        "outgoing": [
+          {
+            "kind": "REVIEW_COMPLETED",
+            "sentAt": 1794325912.3689334,
+            "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+            "payload": {
+              "action": "NONE",
+              "objections": []
+            },
+            "messageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:4:GATE",
+            "senderRole": "CRITIC",
+            "draftVersion": 1,
+            "recipientRole": "GATE",
+            "sourceSequence": 4,
+            "evidenceVersion": 1,
+            "inferenceDigest": "137bc79dfd42a1de771057e4d4f2fd317222603ee0c78da9210322bd37285d92",
+            "workflowVersion": "AUTONOMOUS_V2",
+            "causationMessageId": "b8d71767-a020-4dc3-b010-b37e4857ad2f:3:CRITIC"
+          }
+        ],
+        "workflowVersion": "AUTONOMOUS_V2"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "version": 1,
+      "citations": [
+        {
+          "index": 0,
+          "title": "合成试验资料（非真实医学来源）· glaucoma",
+          "source": "synthetic.invalid · 合成试验资料，非真实医学来源，仅用于验证四角色协作",
+          "chunkIndex": 0,
+          "excerpt": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。"
+        }
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "sequence": 3,
+      "saved": true,
+      "evidenceVersion": 1,
+      "allSectionsPresent": true,
+      "missingSections": [],
+      "claims": [
+        {
+          "id": "c1",
+          "section": "MAIN_FINDING",
+          "text": "The model prediction suggests glaucoma, but this is based on synthetic draft data and requires independent doctor review.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "合成资料：青光眼 glaucoma"
+            }
+          ]
+        },
+        {
+          "id": "c2",
+          "section": "RISK",
+          "text": "Follow-up monitoring of intraocular pressure, visual fields, and the optic nerve is indicated if confirmed by a specialist.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "随访需监测眼压、视野与视神经"
+            }
+          ]
+        },
+        {
+          "id": "c3",
+          "section": "NEXT_STEP",
+          "text": "Treatment decisions must be made by an ophthalmologist, and the patient explanation requires their复核 (review).",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "治疗由眼科医生决定。患者解释需由眼科医生复核"
+            }
+          ]
+        },
+        {
+          "id": "c4",
+          "section": "UNCERTAINTY",
+          "text": "The model probability does not represent clinical reliability and cannot be used as a definitive diagnostic metric.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "模型概率不代表临床可靠性"
+            }
+          ]
+        },
+        {
+          "id": "c5",
+          "section": "DETAIL",
+          "text": "This output is derived from synthetic materials intended for testing purposes rather than live clinical diagnosis.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "合成资料"
+            }
+          ]
+        },
+        {
+          "id": "c6",
+          "section": "LIMITATION",
+          "text": "No specific visual findings can be confirmed or invented based on this output alone, and the prediction comes from an uncalibrated synthetic draft.",
+          "references": [
+            {
+              "citationIndex": 0,
+              "matched": true,
+              "quote": "合成资料：青光眼 glaucoma，随访需监测眼压、视野与视神经，治疗由眼科医生决定。患者解释需由眼科医生复核，模型概率不代表临床可靠性。"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "budget": {
+    "maxCalls": 8,
+    "totalMillis": "90000",
+    "callMillis": "20000"
+  },
+  "workflowVersion": "AUTONOMOUS_V2"
+}
