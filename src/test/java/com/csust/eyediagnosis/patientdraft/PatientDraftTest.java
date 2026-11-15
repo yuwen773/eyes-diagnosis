@@ -3,6 +3,8 @@ package com.csust.eyediagnosis.patientdraft;
 import com.csust.eyediagnosis.controlledreference.ControlledEvidenceRetriever;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -12,9 +14,9 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
+import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
@@ -38,12 +40,39 @@ class PatientDraftTest {
     // Distinct chunk with no "glaucoma" token, so only a different (supplement) query can add new evidence.
     private static final String EXCERPT_SUPPLEMENT = "Synthetic addendum: monitoring interval is individualized by an ophthalmologist.";
 
+    /**
+     * Pooled on purpose. The coordinator polls its providers through a transaction every 20 ms,
+     * and an unpooled {@code DriverManagerDataSource} opened a brand-new physical connection for
+     * every one of those transactions (TLS handshake included). That is well over a hundred
+     * connections per second, which makes connection setup the bottleneck of the whole isolated
+     * suite. Production runs on HikariCP, so the fixture must pool too.
+     */
+    private static HikariDataSource pool;
+
+    @AfterAll
+    static void closePoolAfterAll() {
+        if (pool != null) {
+            pool.close();
+            pool = null;
+        }
+    }
+
     @BeforeEach
     void database() throws Exception {
         String url = System.getenv("ISSUE19_TEST_URL");
         org.junit.jupiter.api.Assumptions.assumeTrue(url != null, "Requires isolated ISSUE19_TEST_URL");
         if (!url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/issue19_test")) throw new IllegalArgumentException("Isolated database required");
-        var ds = new DriverManagerDataSource(url, "issue19", "issue19");
+        if (pool == null) {
+            pool = new HikariDataSource();
+            pool.setJdbcUrl(url);
+            pool.setUsername("issue19");
+            pool.setPassword("issue19");
+            pool.setMaximumPoolSize(16);
+            pool.setMinimumIdle(1);
+            pool.setConnectionTimeout(20_000);
+            pool.setPoolName("patient-draft-test");
+        }
+        DataSource ds = pool;
         jdbc = new JdbcTemplate(ds);
         for (String migration : List.of("V18__diagnosis_task.sql", "V19__controlled_reference.sql", "V20__patient_draft.sql")) {
             String table = migration.startsWith("V10") ? "t_diagnosis_task" : migration.startsWith("V11") ? "t_controlled_reference" : "t_patient_draft_run";

@@ -4,17 +4,18 @@ import com.csust.eyediagnosis.controlledreference.ControlledEvidenceRetriever;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.csust.eyediagnosis.patientdraft.PatientDraftCoordinator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.*;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.*;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
+import javax.sql.DataSource;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -39,11 +40,31 @@ class GraphExecutionTest {
     private Function<Prompt, String> answer = this::valid;
     private String taskId;
 
+    /**
+     * Pooled on purpose. The coordinator opens a transaction every 20 ms per worker thread
+     * ({@code guarded}), and a transaction needs a connection. With an unpooled
+     * {@code DriverManagerDataSource} every one of those transactions opened a brand-new physical
+     * connection (TLS handshake included), i.e. well over a hundred connections per second.
+     * Connection setup then became the test's bottleneck: a single stalled handshake delayed the
+     * lease heartbeat past its one-second renewal cadence, the deliberately shortened lease
+     * expired, and the run ended in STALE_EXECUTOR. Production runs on HikariCP, so the fixture
+     * must pool too or it measures a world that does not exist.
+     */
+    private static HikariDataSource pool;
+
     @BeforeAll static void isolatedDatabase() {
         String url = System.getenv("GRAPH_EXECUTION_TEST_URL");
         if (url == null) return;
         if (!url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/graph_execution_test")) throw new IllegalArgumentException("Isolated schema required");
-        var source = new DriverManagerDataSource(url, "graph_execution", "graph_execution");
+        pool = new HikariDataSource();
+        pool.setJdbcUrl(url);
+        pool.setUsername("graph_execution");
+        pool.setPassword("graph_execution");
+        pool.setMaximumPoolSize(16);
+        pool.setMinimumIdle(1);
+        pool.setConnectionTimeout(20_000);
+        pool.setPoolName("graph-execution-test");
+        DataSource source = pool;
         jdbc = new JdbcTemplate(source);
         for (String[] entry : List.of(
                 new String[]{"t_diagnosis_task", "V18__diagnosis_task.sql"},
@@ -64,6 +85,13 @@ class GraphExecutionTest {
         // Existing pre-Flyway tables: minimal fixture columns, not a replacement production migration.
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_user (id BIGINT PRIMARY KEY,userRole VARCHAR(32),isDelete INT DEFAULT 0) ENGINE=InnoDB");
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_agent_session (sessionId VARCHAR(64) PRIMARY KEY,userId BIGINT,isDelete INT DEFAULT 0,status INT DEFAULT 1,expiredTime DATETIME NULL) ENGINE=InnoDB");
+    }
+
+    @AfterAll static void closePool() {
+        if (pool != null) {
+            pool.close();
+            pool = null;
+        }
     }
 
     @BeforeEach void fixture() throws Exception {
@@ -530,6 +558,8 @@ class GraphExecutionTest {
             };
             try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model)) {
                 coordinator.setCollaborationEvents(new CollaborationEvents(jdbc)); coordinator.run(args[0]);
+            } finally {
+                closePool();
             }
         }
     }

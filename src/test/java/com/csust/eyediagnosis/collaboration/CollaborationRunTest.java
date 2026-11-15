@@ -4,17 +4,18 @@ import com.csust.eyediagnosis.controlledreference.ControlledEvidenceRetriever;
 import com.csust.eyediagnosis.grpc.DiagnosisProto;
 import com.csust.eyediagnosis.patientdraft.PatientDraftCoordinator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.*;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.*;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
+import javax.sql.DataSource;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -48,11 +49,29 @@ class CollaborationRunTest {
     private Function<Prompt, String> answer = this::valid;
     private String taskId;
 
+    /**
+     * Pooled on purpose. The coordinator polls its providers through a transaction every 20 ms,
+     * and an unpooled {@code DriverManagerDataSource} opened a brand-new physical connection for
+     * every one of those transactions (TLS handshake included). That is well over a hundred
+     * connections per second, which makes connection setup the bottleneck of the whole suite and
+     * starves the lease heartbeat of the neighbouring graph suite that shares the JVM.
+     * Production runs on HikariCP, so the fixture must pool too.
+     */
+    private static HikariDataSource pool;
+
     @BeforeAll static void isolatedDatabase() {
         String url = System.getenv("COLLABORATION_TEST_URL");
         if (url == null) return;
         if (!url.matches("jdbc:mysql://127\\.0\\.0\\.1:[0-9]+/collaboration_test")) throw new IllegalArgumentException("Isolated schema required");
-        var source = new DriverManagerDataSource(url, "collaboration", "collaboration");
+        pool = new HikariDataSource();
+        pool.setJdbcUrl(url);
+        pool.setUsername("collaboration");
+        pool.setPassword("collaboration");
+        pool.setMaximumPoolSize(16);
+        pool.setMinimumIdle(1);
+        pool.setConnectionTimeout(20_000);
+        pool.setPoolName("collaboration-run-test");
+        DataSource source = pool;
         jdbc = new JdbcTemplate(source);
         for (String[] entry : List.of(
                 new String[]{"t_diagnosis_task", "V18__diagnosis_task.sql"},
@@ -73,6 +92,13 @@ class CollaborationRunTest {
         // Existing pre-Flyway tables: minimal fixture columns, not a replacement production migration.
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_user (id BIGINT PRIMARY KEY,userRole VARCHAR(32),isDelete INT DEFAULT 0) ENGINE=InnoDB");
         jdbc.execute("CREATE TABLE IF NOT EXISTS t_agent_session (sessionId VARCHAR(64) PRIMARY KEY,userId BIGINT,isDelete INT DEFAULT 0,status INT DEFAULT 1,expiredTime DATETIME NULL) ENGINE=InnoDB");
+    }
+
+    @AfterAll static void closePool() {
+        if (pool != null) {
+            pool.close();
+            pool = null;
+        }
     }
 
     @BeforeEach void fixture() throws Exception {
