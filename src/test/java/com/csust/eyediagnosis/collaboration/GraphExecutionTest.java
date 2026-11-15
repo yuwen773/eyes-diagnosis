@@ -448,6 +448,26 @@ class GraphExecutionTest {
         } finally { release.countDown(); if (connection != null) connection.stop(null); }
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {-6, 6})
+    void databaseLeaseSurvivesHostClockSkew(int seconds) throws Exception {
+        streams.close(); runs.close(); coordinator.close();
+        Clock hostClock = Clock.offset(Clock.systemUTC(), Duration.ofSeconds(seconds));
+        var dbNow = jdbc.queryForObject("SELECT CURRENT_TIMESTAMP(6)", java.sql.Timestamp.class).toInstant();
+        long measuredSkew = Duration.between(dbNow, hostClock.instant()).toMillis();
+        assertTrue(Math.abs(measuredSkew - seconds * 1000L) < 1000, "Controlled database/host skew: " + measuredSkew);
+        ChatModel model = prompt -> { calls.incrementAndGet(); return new ChatResponse(List.of(new Generation(new AssistantMessage(answer.apply(prompt))))); };
+        coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model, hostClock,
+                new PatientDraftCoordinator.Budget(8, 90_000, 20_000));
+        coordinator.setCollaborationEvents(events);
+        runs = new CollaborationRunService(jdbc, events, new CollaborationCursor(KEY), coordinator);
+        CollaborationRunTest.enableFixture(runs); runs.setGraphEnabled(true);
+        streams = new CollaborationStreams(runs);
+        // Same real call sequence and unchanged renewal/fencing assertions as the
+        // original failure, with the previously uncontrolled clock offset pinned.
+        heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders();
+    }
+
     @Test void heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders() throws Exception {
         var entered = new CountDownLatch(2); var release = new CountDownLatch(1);
         answer = p -> { entered.countDown(); uninterruptible(release); return valid(p); };

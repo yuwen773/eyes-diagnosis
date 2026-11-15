@@ -271,7 +271,7 @@ public class PatientDraftCoordinator implements AutoCloseable {
                     guarded(taskId, lease, () -> null);
                     if (clock.millis() >= renewAt) {
                         guarded(taskId, lease, () -> {
-                            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=? WHERE taskId=?", Timestamp.from(clock.instant().plusSeconds(10)), taskId);
+                            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=TIMESTAMPADD(SECOND,10,CURRENT_TIMESTAMP(6)) WHERE taskId=?", taskId);
                             return null;
                         });
                         renewAt = clock.millis() + 1000;
@@ -419,17 +419,18 @@ public class PatientDraftCoordinator implements AutoCloseable {
     private Lease takeLease(String taskId) {
         var rows = jdbc.queryForList("SELECT fencingToken,checkpointVersion,leaseUntil FROM t_patient_graph_execution WHERE taskId=? FOR UPDATE", taskId);
         if (rows.isEmpty()) throw new Stop("STALE_EXECUTOR");
-        var until = jdbc.queryForObject("SELECT leaseUntil FROM t_patient_graph_execution WHERE taskId=?", Timestamp.class, taskId);
-        if (until != null && until.toInstant().isAfter(clock.instant())) return null;
+        // The recovery scanner uses database time. Lease claim, validation and
+        // renewal must use that same authority, even if executor clocks differ.
+        if (Boolean.TRUE.equals(jdbc.queryForObject("SELECT leaseUntil>CURRENT_TIMESTAMP(6) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId))) return null;
         var row = rows.getFirst();
         var lease = new Lease(UUID.randomUUID().toString(), ((Number) row.get("fencingToken")).longValue() + 1, ((Number) row.get("checkpointVersion")).longValue());
-        jdbc.update("UPDATE t_patient_graph_execution SET leaseOwner=?,fencingToken=?,leaseUntil=? WHERE taskId=?", lease.owner, lease.token, Timestamp.from(clock.instant().plusSeconds(10)), taskId);
+        jdbc.update("UPDATE t_patient_graph_execution SET leaseOwner=?,fencingToken=?,leaseUntil=TIMESTAMPADD(SECOND,10,CURRENT_TIMESTAMP(6)) WHERE taskId=?", lease.owner, lease.token, taskId);
         return lease;
     }
 
     private void checkLease(String taskId, Lease lease) {
-        var current = jdbc.queryForList("SELECT taskId FROM t_patient_graph_execution WHERE taskId=? AND leaseOwner=? AND fencingToken=? AND leaseUntil>? FOR UPDATE",
-                taskId, lease.owner, lease.token, now());
+        var current = jdbc.queryForList("SELECT taskId FROM t_patient_graph_execution WHERE taskId=? AND leaseOwner=? AND fencingToken=? AND leaseUntil>CURRENT_TIMESTAMP(6) FOR UPDATE",
+                taskId, lease.owner, lease.token);
         if (current.size() != 1) throw new Stop("STALE_EXECUTOR");
     }
 
