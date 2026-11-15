@@ -164,6 +164,18 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
   **不许再新增第二个顶栏实现**。管理端保留独立侧栏，认证页保留无导航入口形态；
   页脚按页面性质取完整 / 精简 / 免责 / 不展示，不强行占用工作区。
 
+### UI 冻结（2026-11-15）
+
+**Iris 2.1 UI 开发已冻结**，冻结基线 = annotated tag `iris-ui-v2.1-freeze-20261115`
+→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（`ui` 的 tip）。
+
+- **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
+- **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。
+- **例外**：阻断性故障与安全修复。
+- 后续重心转向**多 Agent 系统**（主线 PR #68 `codex/realtime-product-acceptance`，
+  暂不并入 `ui`，后续单独集成）。
+- 规则正文见 `DESIGN.md` 头部（2026-11-15 条），此处只作指针。
+
 ### 参考实现
 `web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
 `web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。

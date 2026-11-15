@@ -3,6 +3,12 @@
 > **配套**：`../../DESIGN.md`（新规范）、`iris-2-rule-change-matrix.md`（规则变更对照表）、
 > `IRIS_2_DESIGN_REFERENCE_BRIEF.md`（设计简报）。
 >
+> **2026-11-15：Iris 2.1 UI 已冻结**（annotated tag `iris-ui-v2.1-freeze-20261115`
+> → `80f53f7f55955c2d30a1a9c98479dcb87682051b`）。本文记录的 R0–R3 已执行完毕并进入
+> 冻结基线；**本路线图不再推进新的视觉阶段**。R4（协作台与影像工作台）随多 Agent
+> 系统另立主线（PR #68 `codex/realtime-product-acceptance`），不在本文继续。
+> 冻结范围与冻结后的变更规则见 `../../DESIGN.md` 头部（2026-11-15 条）。
+>
 > **原则**（来自简报 §4 与本次任务约束）：
 >
 > - **不一次性全面翻新**。基线顺序是：PR #52 工程验收 → 规范文档合并 → 首页二期 →
