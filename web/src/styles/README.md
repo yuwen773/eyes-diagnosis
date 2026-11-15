@@ -28,7 +28,7 @@
 | `records.css` | `/records`、`/profile` |
 | `agent.css` | `/agent` |
 | `disclaimer.css` | 免责条 |
-| `fault.css` | 故障提示三尺度（toast / note / 区块） |
+| `fault.css` | 故障提示三尺度：`.fault-toast` / `.fault-note` / `.fault-panel` |
 | `markdown.css` | `.markdown-body` 共用排版 |
 | `admin.css` | 管理端外壳 + **共享原语**（`.admin-viz__*` / `.admin-dt__*` / `.admin-metric-*` / `.feature-card` / `.panel` / `.admin-batch`） |
 | `admin-redesign.css` | C2 历史层（外壳 / 页头 / 指标轨）——只读，不再加新规则 |
