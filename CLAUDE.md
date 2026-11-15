@@ -56,6 +56,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 | Controller | Path | Purpose |
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
+| AdminStatsController | `/api/stats/*` | 管理端总览读数（Dashboard 与数据分析共用口径） |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
 | McpServerController | `/api/mcp/*` | MCP server CRUD |
@@ -78,7 +79,6 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
-- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
 
 ## Design Context
 
@@ -107,67 +107,33 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 | 场景 | 页面 | 主色 | 圆角 | 气质 |
 |---|---|---|---|---|
 | **Brand** | `LandingPage`/`LoginPage`/`RegisterPage`/`NewsPage`/`NewsDetailPage` | 钴蓝 `--brand-primary` | 24–38px | 精致、清透、留白足 |
-| **Management** | `pages/admin/*` | 钴蓝主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
+| **Management** | `pages/admin/*` | 管理紫 `--admin-primary` 主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
 | **Intelligence** | `AgentPage`、未来的影像工作台 | 运行态蓝/青、类别紫 | 12px | 专业、看得见协作 |
 | **Clinical** | `DiagnosisPage`/`RecordsPage`/`ProfilePage`/`RecordSheet` | 墨色主 CTA + `--signal` 语义 | 0 | 克制、纸面稳定 |
 
 登录/注册走品牌层双栏，个人中心与资讯是资料/编辑式排版——都不以 KPI + 台账开头。
 
-### Design Rules（写前端必须遵守）
-> 这是**索引**，不是规则正文。规则正文在 `DESIGN.md`，改动先改那里。
-- **先定场景，再写样式**：Brand / Management / Intelligence / Clinical 四选一，
-  它决定圆角、主色、动效预算（`DESIGN.md` §1.2、§4）。
-- **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
-  `--risk-*`（医学严重度）。主 CTA：Clinical 用墨色 `--ink`，其余场景用 `--brand-primary`。
-  **信号橙永远不是主 CTA 色，也不大面积填充。**
-  `--brand-*` 是**跨场景**的品牌语义令牌（管理端主操作、Agent 运行态都能取用）；
-  `.iris2` 只是**品牌视觉容器**类，只在首页首屏用。两者不可混为一谈。
-- **严重度必须同时给文字标签**（`RiskTag` 永远带文字 + 小圆点，不整块填色）；
-  **分类色只用于 Management/Intelligence 的图表**（`--viz-series-1..6`），
-  且必须同时有读数表/直标/图例/线型等第二通道，颜色不是唯一信息载体。
-- **所有数字用等宽** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、
-  计数、时间戳、哈希。衬线标题 `--font-serif`（Noto Serif SC 栈）weight 只允许 400；
-  正文 `--font-sans`；品牌拉丁字 `--font-brand`（Manrope，**无汉字，不许兜底中文**）。
-- **圆角只用令牌梯** `--radius-none/sm/md/lg/xl/2xl/circle/pill`
-  （0/4/8/12/24/38/50%/999px），按场景取（Clinical 0、Management 8–12、Brand 24–38）。
-  不再写像素自由值。（`xl`/`2xl` 随 PR #52 进入 `tokens.css`，合并前取不到。）
-- **全站通用 UI 图标统一采用 lucide-react**（静态命名导入，保持 tree-shaking，不装
-  第二套图标库）；自定义 SVG 仅用于品牌标识、医学图形、数据可视化或 Lucide 无法
-  满足的特定设计需求。新增手写功能性图标必须说明理由。尺寸/描边/色彩的统一口径
-  见 `web/DESIGN.md` 规则 16。
-- **发丝线优先于厚重卡片阴影**；浮层 `--shadow-overlay`，模态/抽屉 `--shadow-modal`，
-  阴影基于墨色（品牌玻璃用 `--brand-shadow`）。
-- **装饰必须服从信息**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
-  动效分两类：**氛围动效**（品牌材质自身在动，不要求绑定业务事件，仅 Brand）与
-  **状态动效**（表示系统正在做什么，必须绑定真实后端事件/请求状态）。
-  状态动效**四个场景都允许**——Clinical 与 Auth 的上传、提交、保存、加载与错误反馈
-  同样是真实状态，只是表现更克制；**任何场景都禁止假进度、虚构执行状态与
-  无意义的伪加载**。
-  两者都：离屏即停、`prefers-reduced-motion` **实时订阅**当场停、可手动暂停（`DESIGN.md` §3.7）。
-- **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
-- **弹层统一走 Base UI**（`src/components/ui/dialog.tsx`）：Portal、焦点陷阱、inert、
-  滚动锁、嵌套 Esc 栈不手写第二套；Portal 面板显式带 `.is-field` 等语境类。
-- **不虚构业务能力**：界面上的每个数字都能追到后端端点与口径（全量/时间窗口/分页）；
-  不虚构 KPI、准确率、AI 运行态；**设计稿里有 ≠ 产品里有**。
-- **页面骨架按页面类型选**：只有**台账页**（`RecordsPage`、`pages/admin/` 下的
-  列表页 users/news/diagnosis/knowledge）用
-  「顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条」。
-  管理端**概览页与数据分析页以 KPI 与图表为主**（没有台账），**新闻编辑页以表单为主**
-  （既无 KPI 也无台账）——不要给 `pages/admin/*` 每页都塞四列 KPI。
-  登录/注册用品牌双栏，个人中心用资料区 + 读数卡，资讯用编辑式列表，
-  诊断页是上传槽 → 记录纸。逐路由归属见 `DESIGN.md` §1.5。
-- **品牌首屏构图**：外层画布**全幅**铺满，玻璃外壳是 1240px 版心内的容器，光带裁在壳里
-  （与 Optic Flow V4、PR #52 的 `LandingHero` 一致，`DESIGN.md` §3.6）。
-- **公开路由共用一个产品外壳**（R2.5，`DESIGN.md` §1.6）：`/`、`/news`、
-  `/diagnosis`、`/agent`、`/profile`、`/records` 共用同一顶栏组件、导航数据、
-  账号菜单、主题切换与移动抽屉；场景只切换材质强度、当前态语义色与内容密度。
-  **不许再新增第二个顶栏实现**。管理端保留独立侧栏，认证页保留无导航入口形态；
-  页脚按页面性质取完整 / 精简 / 免责 / 不展示，不强行占用工作区。
+### 规则入口（写 / 评审 `web/` 前读这几处，规则正文不在本文件）
+
+| 要判断的事 | 读 |
+|---|---|
+| 路由属于哪个场景、用什么容器类、什么版式骨架 | `DESIGN.md` §1.5 |
+| 组件外观（按钮 / 卡片 / 图表 / 导航 / 弹层 / 表格 / 表单 / 状态标记 × 四场景） | `DESIGN.md` §4 |
+| 语义色、等宽读数、圆角令牌梯、阴影与发丝线、纸面原语 | `DESIGN.md` §2–§3；令牌真值看 `web/src/styles/tokens.css`（与 DESIGN.md 冲突时以它为准） |
+| 动效预算（氛围 / 状态）与 `prefers-reduced-motion` | `DESIGN.md` §3.7 |
+| 图标 | `web/DESIGN.md` 规则 16（`lucide-react` 静态命名导入） |
+| 品牌首屏构图 / 公开路由共用外壳 | `DESIGN.md` §3.6 / §1.6 |
+
+三条不可让渡的判据（正文仍在 `DESIGN.md`）：
+
+- **场景先定**：Brand / Management / Intelligence / Clinical 四选一，它决定圆角、主色与密度。
+- **三套语义色互不顶替**：`--signal` 管当前态、`--brand-*` 管品牌身份、`--risk-*` 管医学严重度。
+- **严重度永远带文字标签**，颜色不是唯一信息载体。
 
 ### UI 冻结（2026-11-15）
 
 **Iris 2.1 UI 开发已冻结**，冻结基线 = annotated tag `iris-ui-v2.1-freeze-20261115`
-→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（`ui` 的 tip）。
+→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（冻结当时的 `ui` tip，tag 不移动）。
 
 - **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
 - **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。
@@ -179,8 +145,8 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 ### 参考实现
 `web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
 `web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。
-`web/src/components/brand/OpticFlow.tsx`（品牌层首屏）+ `--brand-*`/`.iris2`/`--radius-xl|2xl`
-**只存在于 PR #52，尚未进入 `ui`**——合并前取不到，不能当作目标分支已有能力引用。
+`web/src/components/brand/OpticFlow.tsx`（品牌层首屏）与 `--brand-*` / `.iris2` /
+`--radius-xl|2xl` 均已在 `ui`（`tokens.css` 有定义），可直接引用。
 Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
 
 ### 设计文档
