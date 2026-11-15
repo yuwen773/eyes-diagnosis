@@ -33,8 +33,8 @@ import {
  */
 const NAME_MAX = 11
 
-function truncateName(name: string): string {
-  return name.length > NAME_MAX ? `${name.slice(0, NAME_MAX)}…` : name
+function truncateName(name: string, max = NAME_MAX): string {
+  return name.length > max ? `${name.slice(0, max)}…` : name
 }
 
 export function RankedBars(props: {
@@ -43,10 +43,13 @@ export function RankedBars(props: {
   /** 数值列的单位后缀（如「条」） */
   unit?: string
   emptyText?: string
+  /** 名称列宽度：容器窄时收窄，给条形让出空间 */
+  nameWidth?: number
 }): ReactElement {
-  const { rows, ariaLabel, unit, emptyText } = props
+  const { rows, ariaLabel, unit, emptyText, nameWidth = 140 } = props
   const leading = Math.max(0, ...rows.map((row) => row.value))
   const height = Math.max(rows.length * 34 + 12, 64)
+  const maxChars = Math.max(5, Math.round(nameWidth / 13))
 
   return (
     <ChartView
@@ -81,11 +84,11 @@ export function RankedBars(props: {
               <YAxis
                 type="category"
                 dataKey="name"
-                width={140}
+                width={nameWidth}
                 tick={{ fill: "var(--fg-2)", fontSize: 12.5 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={truncateName}
+                tickFormatter={(name: string) => truncateName(name, maxChars)}
               />
               <Tooltip
                 content={<VizTooltip unit={unit} />}

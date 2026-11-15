@@ -20,6 +20,7 @@ import {
   rankDistribution,
 } from "@/lib/adminDomain"
 import { changeLabel, sharedDomainMax, weekdayBreakdown } from "@/lib/chartData"
+import { confidencePercent } from "@/lib/domain"
 import { describeError } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { fault } from "@/lib/faults"
@@ -346,7 +347,7 @@ export function AdminDataAnalysisPage(): ReactElement {
 
       {stats ? (
         <p className="admin-analysis__note num">
-          平均置信度 {formatStatPercent(stats.avgConfidence)}（模型自评的置信度均值，
+          平均置信度 {confidencePercent(stats.avgConfidence)}（模型自评的置信度均值，
           <b>不是诊断准确率</b>） · 已复核 {formatStatNumber(stats.diagnosisReviewed)} 条 ·
           知识库文档 {formatStatNumber(stats.knowledgeTotal)} 份 / 切片{" "}
           {formatStatNumber(stats.knowledgeChunks)} 块

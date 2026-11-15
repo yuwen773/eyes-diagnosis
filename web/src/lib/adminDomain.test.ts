@@ -11,6 +11,7 @@ import {
   newsContentValid,
   newsStatusOptionsFor,
   newsStatusView,
+  noConclusionView,
   rankDistribution,
   reviewView,
   userRoleView,
@@ -32,6 +33,27 @@ describe("reviewView", () => {
       label: "已复审", risk: "normal", tone: "plain",
     })
     expect(reviewView({ requiresReview: false, aiRejected: false }).label).toBe("未复审")
+  })
+})
+
+describe("noConclusionView", () => {
+  it("aiRejected 为真 → 未出结论，并带上拒识原因", () => {
+    expect(noConclusionView({ aiRejected: true, abstainReason: "图像质量不足" })).toEqual({
+      label: "未出结论", rejected: true, reason: "图像质量不足",
+    })
+  })
+  it("空结果但不是拒识 → 无判读结果，不能冒充拒识", () => {
+    expect(noConclusionView({ aiRejected: false })).toEqual({
+      label: "无判读结果", rejected: false,
+    })
+  })
+  it("aiRejected 缺省也按未拒识处理", () => {
+    expect(noConclusionView({})).toEqual({ label: "无判读结果", rejected: false })
+  })
+  it("拒识但没有原因时，reason 不给 undefined 之外的东西", () => {
+    expect(noConclusionView({ aiRejected: true })).toEqual({
+      label: "未出结论", rejected: true, reason: undefined,
+    })
   })
 })
 

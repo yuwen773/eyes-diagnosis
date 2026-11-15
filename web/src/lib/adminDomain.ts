@@ -304,3 +304,37 @@ export function formatStatPercent(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "—"
   return `${(value * 100).toFixed(1)}%`
 }
+
+/**
+ * 「没有结论」怎么显示——仪表盘与诊断台账共用一份口径。
+ *
+ * <p>空结论有两种，不能混为一谈：
+ * - 模型明确拒识（后端 `aiRejected` 标记）：显示「未出结论」，并带上拒识原因；
+ * - 其它空结论：显示「无判读结果」——那只是没跑出结果，不是拒识。
+ *
+ * <p>把空结果一律标成「AI 拒识」会让医生把没跑出结果的记录当成模型拒识；
+ * 界面口径必须与后端的 `aiRejected` 标记一致，拒识条数才对得上。
+ */
+export type NoConclusionView = {
+  /** 展示文字：「未出结论」/「无判读结果」。 */
+  label: string
+  /** 是否拒识（决定标签色，以及是否带拒识原因）。 */
+  rejected: boolean
+  /** 拒识原因（仅拒识行有，后端 `abstainReason`）。 */
+  reason?: string
+}
+
+/**
+ * 判读没有结论时的展示口径。
+ *
+ * <p>判定只认后端的 `aiRejected` 标记，不看 `result` 是否为空——
+ * 空结果可能是拒识，也可能只是没判读出来，两者的临床含义不同。
+ */
+export function noConclusionView(
+  row: Pick<AdminDiagnosis, "aiRejected" | "abstainReason">,
+): NoConclusionView {
+  if (row.aiRejected === true) {
+    return { label: "未出结论", rejected: true, reason: row.abstainReason ?? undefined }
+  }
+  return { label: "无判读结果", rejected: false }
+}

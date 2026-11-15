@@ -121,7 +121,7 @@ Clinical 低指的是视觉干扰少，不是信息少。
 | 旧档 | 新归属 | 变化 |
 |---|---|---|
 | **A 临床判读** | → **Clinical** | 规则保留：仍是直角、发丝线、单强调色、等宽读数，**主 CTA 仍是墨色** |
-| **B 管理 / 数据分析** | → **Management** | **放宽**：卡片与面板允许 8–12px 圆角与实体层次；主操作允许用品牌钴蓝 |
+| **B 管理 / 数据分析** | → **Management** | **放宽**：卡片与面板允许 16–20px 圆角（管理端作用域令牌，见 §2.2）与实体层次；主操作允许用品牌钴蓝 |
 | **C 品牌 / Agent 视觉层** | → 拆成 **Brand**（品牌材质与动效预算）+ **Intelligence**（协作与工作台） | **拆分**：Brand 的渐变/大圆角/玻璃不进工作台；工作台的面板分栏与运行态反馈不进首页 |
 
 ### 1.4 「白色仪器」是什么地位
@@ -475,10 +475,11 @@ https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
 - 真实运行态（如后台任务状态）仍用运行态蓝/青，不与紫色混用。
 
 **Light**：紫白医疗 SaaS——浅紫灰背景、白卡、管理紫主操作；卡片与画布分层清晰，
-适度圆角（8–12px）与柔和阴影。
+适度圆角（卡片 16–18px、重点卡 20px）与柔和阴影。
 
 **Dark**：深紫蓝分层面板；**图表系列亮度单独调整**；浅色文字与指标必须满足
-对比度；**不会把所有 KPI 都渲染成发光渐变**。
+对比度；**不会把所有 KPI 都渲染成发光渐变**。管理端的圆角、描边与阴影
+**浅/暗分别校准**，不共用一套数值。
 
 **字体**（2026-11-13 Visual Completion 二次修订：管理端不再强制旧仪器衬线标题）
 界面与表格用 `--font-sans`；KPI 数值、计数、占比、时间戳用 `--font-mono`；
@@ -488,19 +489,48 @@ https://dribbble.com/shots/27302963-Healthcare-Dashboard-Design ）+
 工作台，不是临床仪器读数台；衬线只保留给主站品牌层与临床记录纸的既定用法。
 Manrope 无汉字，汉字按字形回退到 Noto Sans SC（与 `--font-brand` 栈一致）。
 
+**管理端字号口径（2026-11-15 精修）**
+| 层级 | 字号 | 说明 |
+|---|---|---|
+| Dashboard 页头主标题 | 32–36px | 概览页的主锚点（`AdminPageHead size="lead"`） |
+| 其余页头标题 | 26–30px | 列表页 / 分析页 / 编辑页共用 |
+| KPI 大数 | 32–36px | 等宽 + `tabular-nums`；四个读数同属一条轨 |
+| 区块标题 | 15–17px | 卡片、面板、台账区标题 |
+| 表格与正文 | 12–13px | 密度不让位给标题：放大字号不得牺牲表格密度 |
+
+窄屏（≤520px）按比例回落（主标题 27px、页标题 22px、KPI 30px），
+**不为了放大字体牺牲移动端布局**。
+
+**管理端外壳（2026-11-15 精修）**
+- **账户身份只出现一次**：由顶栏承载头像、姓名与角色（`AccountMenu variant="admin"`），
+  侧栏**不再叠一张账户卡**。
+- 侧栏底部只留一个清晰的**「返回主站」**出口；导航项行高 40–44px。
+- 顶栏不放没有业务实现的搜索、通知与消息中心。
+- 管理端变体只换皮肤（表面材质与管理紫），**交互与目的地完全复用主站
+  `AccountMenu`**，且不重复「系统管理」入口。
+
 **颜色与材质**（Visual Completion 后的口径，**取代**旧版"钴蓝主操作"规定）
 - **管理紫 `--admin-*` 承担主操作色、当前导航态与图表强调**（旧版"钴蓝主操作"
   规定作废）；`--brand-*` 仍是跨场景品牌令牌，但不再是管理端主操作色。
 - 信号橙 `--signal` 维持本职：**当前态 / 重点标记**，不当主 CTA。
 - 分类数据色 `--viz-series-1..6` 用于图表系列，**不占用** `--signal`、`--risk-*`
   与 `--admin-*`。
-- 材质：实体卡片 + 发丝描边 + 柔和阴影（`--shadow-overlay`），
-  适度圆角 **8–12px**，卡片间距有规律，**不堆多重内嵌容器**。
+- 材质：实体卡片 + **较轻的发丝描边**（`--admin-line-soft`）+ **柔和阴影**
+  （`--admin-shadow-card`，基于管理紫墨），适度圆角（卡片 18px、重点卡 20px），
+  卡片间距有规律，**不堆多重内嵌容器**。
   统一表格、筛选、搜索、批量操作与分页形态；Drawer / Dialog / 表单设计一致。
+- **管理端的作用域令牌，不动全局梯**：管理端的圆角、描边、阴影走
+  `--admin-radius-control`（10px）/`--admin-radius-card`（18px）/
+  `--admin-radius-card-lg`（20px）、`--admin-line-soft`、`--admin-shadow-card`；
+  **不改全局 `--radius-lg`**，也不靠层层覆盖旧 CSS 追加补丁。
+- **画布可以有一层极低对比的静态氛围底**：`--admin-ambient`（管理紫约 7%）
+  只作画布右侧上角的一层静态晕，**不进入卡片、不降低卡片与正文对比度**、
+  **不做动画**。卡片仍是实心表面。
 
 **视觉层次与构图**（2026-11-13 Visual Completion 二次修订新增）
-- **圆角 / 阴影 / 密度由组件职责决定，不由场景一刀切**：管理端整体取 8–12px
-  圆角与柔和阴影，但组件内部允许有规格差——页头大卡可到 `--radius-xl`，
+- **圆角 / 阴影 / 密度由组件职责决定，不由场景一刀切**：管理端整体取
+  **作用域圆角（控件 10px / 卡片 18px / 重点卡 20px）**与柔和阴影，
+  但组件内部允许有规格差——重点卡可到 20px，
   表格行内 chip / 状态点用 `--radius-sm`，按钮用 `--radius-md`；
   密度同样按职责分层（KPI 行疏、表格密、Drawer 最疏）。**不再强制"所有管理端
   组件只有一种圆角 / 一种阴影 / 一种密度"**。
@@ -877,16 +907,26 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 | `--radius-none` | `0` | Clinical 主控件默认；Management 表格与台账行 |
 | `--radius-sm` | `4px` | Management 小浮层、tooltip、内嵌块 |
 | `--radius-md` | `8px` | Management 下拉、弹窗、抽屉 |
-| `--radius-lg` | `12px` | Management 卡片与面板；Intelligence 工作台面板 |
+| `--radius-lg` | `12px` | Intelligence 工作台面板；Management 的**下拉、弹窗、抽屉等浮层**（管理端卡片另有作用域圆角，见下） |
 | `--radius-xl` | `24px` | **Brand** 大卡片、信息面板 |
 | `--radius-2xl` | `38px` | **Brand** 首屏外壳容器 |
 | `--radius-circle` | `50%` | 圆形：影像缩略、置信环、状态点 |
 | `--radius-pill` | `999px` | 药丸标签（少数） |
 
+**Management 作用域圆角（不改全局梯）**
+
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `--admin-radius-control` | `10px` | 按钮、输入、下拉、页签 |
+| `--admin-radius-card` | `18px` | 管理端卡片与面板 |
+| `--admin-radius-card-lg` | `20px` | 管理端重点卡（Bento 重点卡） |
+
 > **规则已按场景拆开**（这是旧版最大的痛点）：旧规则要求"A 档主控件默认 0"，
 > 同时又要求管理端像成熟 SaaS——两者只能二选一。现在：
-> **Clinical 保持直角；Management 用 8–12px；Brand 用 24–38px；
+> **Clinical 保持直角；Management 用作用域圆角 10–20px；Brand 用 24–38px；
 > Intelligence 用 12px。** 同一组件在不同场景取不同变体，见 §4。
+> 管理端圆角走 `--admin-radius-*`，**不修改全局 `--radius-lg`**，
+> 也不用叠加覆盖旧规则的方式实现。
 
 **深度**
 
@@ -1295,9 +1335,11 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 正文        --font-sans
 数字        --font-mono + tabular-nums
 
-圆角        Clinical 0 / Management 8–12px / Intelligence 12px / Brand 24–38px
-            令牌：--radius-none/sm/md/lg/xl/2xl/circle/pill
+圆角        Clinical 0 / Management 10–20px（--admin-radius-* 作用域令牌）/
+            Intelligence 12px / Brand 24–38px
+            全局令牌：--radius-none/sm/md/lg/xl/2xl/circle/pill
 阴影        --shadow-overlay（浮层）/ --shadow-modal（模态）/ --brand-shadow（品牌玻璃）
+            管理端卡片：--admin-shadow-card（浅/暗分别校准）
 版心        1240px；≥2200px 时 1760px
 动效        --motion-fast 140ms / --motion-base 240ms / --motion-slow 420ms
             氛围动效（材质在动，不绑业务事件，仅 Brand）/ 状态动效（必须绑真实请求
