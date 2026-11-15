@@ -578,6 +578,9 @@ class GraphExecutionTest {
             assertTrue(stalled.awaitStalled(5), "The coordinator thread must block on connection acquisition");
             jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=TIMESTAMPADD(SECOND,3,NOW(6)) WHERE taskId=?", taskId);
             long before = stalled.statementsBy("collaboration-coordinator");
+            // The counter has to have seen this thread's SQL before the stall, otherwise the
+            // assertion below would hold for the wrong reason (an observer that never counts).
+            assertTrue(before > 0, "The statement counter must observe the coordinator's SQL");
             Thread.sleep(1500);
             assertEquals(before, stalled.statementsBy("collaboration-coordinator"),
                     "A coordinator blocked on connection acquisition must not issue any SQL");
@@ -626,14 +629,50 @@ class GraphExecutionTest {
             }
             return counted(delegate.getConnection(username, password));
         }
+        /**
+         * Counts the statements a thread actually executes. Spring's JdbcTemplate prepares a
+         * {@link java.sql.PreparedStatement} on the connection and then executes it on the
+         * statement, so counting the connection's own execute methods would never fire; the
+         * statement is wrapped instead.
+         */
         private java.sql.Connection counted(java.sql.Connection real) {
             return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{java.sql.Connection.class}, (proxy, method, args) -> {
                 String name = method.getName();
-                if (name.equals("execute") || name.equals("executeQuery") || name.equals("executeUpdate") || name.equals("prepareCall"))
-                    counters.computeIfAbsent(Thread.currentThread().getName(), k -> new AtomicLong()).incrementAndGet();
-                try { return method.invoke(real, args); }
-                catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
+                if (name.equals("prepareStatement") || name.equals("createStatement") || name.equals("prepareCall"))
+                    return countedStatement(invoke(method, real, args));
+                if (name.equals("execute") || name.equals("executeQuery") || name.equals("executeUpdate")) count();
+                return invoke(method, real, args);
             });
+        }
+
+        private Object countedStatement(Object statement) {
+            if (statement == null) return null;
+            Class<?>[] interfaces = statement instanceof java.sql.CallableStatement
+                    ? new Class<?>[]{java.sql.CallableStatement.class, java.sql.PreparedStatement.class, java.sql.Statement.class}
+                    : statement instanceof java.sql.PreparedStatement
+                    ? new Class<?>[]{java.sql.PreparedStatement.class, java.sql.Statement.class}
+                    : new Class<?>[]{java.sql.Statement.class};
+            return java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(), interfaces, (proxy, method, args) -> {
+                String name = method.getName();
+                if (name.equals("execute") || name.equals("executeQuery") || name.equals("executeUpdate")) count();
+                return invoke(method, statement, args);
+            });
+        }
+
+        private Object invoke(java.lang.reflect.Method method, Object target, Object[] args) throws java.sql.SQLException {
+            try { return method.invoke(target, args); }
+            catch (java.lang.reflect.InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof java.sql.SQLException sql) throw sql;
+                if (cause instanceof RuntimeException runtime) throw runtime;
+                if (cause instanceof Error error) throw error;
+                throw new java.sql.SQLException(cause);
+            }
+            catch (IllegalAccessException e) { throw new java.sql.SQLException(e); }
+        }
+
+        private void count() {
+            counters.computeIfAbsent(Thread.currentThread().getName(), k -> new AtomicLong()).incrementAndGet();
         }
     }
 
