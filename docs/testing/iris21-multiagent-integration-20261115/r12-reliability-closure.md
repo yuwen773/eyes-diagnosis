@@ -141,6 +141,11 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 **3 718** 条（同一份日志里能数到 **3 722** 个 `Connect` 行，差 4 条来自测量窗口边界：状态计数在连接
 关闭前后取样，日志按行计数）。对照池化夹具（`0c3d0aec` 之后）同口径是 **50–55** 条。数量级差 ≈ 70 倍。
 
+> 可复算性边界：**只有 3 722 这个数能从落盘的 general log 直接数出来**。4 358、3 718 与 50–55 都是
+> 运行当时读全局 `Connections` 状态的前后差值（口径见本节开头），当时**只记了差值、没有把两次读数
+> 落成独立文件**，因此无法从仓库或 `target/` 复算。它们不承担机制论证——机制由 §2.4(d) 的线程栈与
+> §2.5 的排除实验支撑——这里按「当时记录、现在不可复算」标注，而不是当成可复核数据引用。
+
 **(b) pre-fix 夹具上整类结果不稳定。** 一轮 **32/32 PASS**（74.60 s，带 general log 与线程栈）；
 另一轮 32 条里 **2 F + 11 E**（33.42 s）。
 后一轮的失败链与历史 Docker 失败**签名不同**，必须分开说：首发故障是**夹具清理阶段的外键违规**
@@ -152,7 +157,7 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 **关键区分**：历史 Docker 失败的签名是「协调器约 3 秒无 SQL → 租约过期 → `STALE_EXECUTOR`」，
 本机 pre-fix 这一次**不是**这个签名，因此**不能**拿它当作历史现场的复现。
 
-**(c) general log 的签名检索。** 修正解析器后，在 45 051 行日志上得到：
+**(c) general log 的签名检索。** 修正解析器后，在 45 064 行数据行（文件共 45 070 行，含 6 行文件头）上得到：
 
 - 打开的连接 **3 722** 个，其中 **3 722** 个都至少发出过一条语句；
 - **「`Connect` 之后 ≥ 1 s 才发出第一条语句」的连接：0 个**；
@@ -337,7 +342,7 @@ BLOCKED_ENV 只作为过程事实保留。
 另一轮单独的 `GraphExecutionTest` 复跑给出 `-8463` / `3545`，同样得到 **δ = −2463 ms**。
 
 这不是测试写错，而是本机 Docker 的时钟拓扑：MySQL 在 WSL2 虚拟机里，JVM 在 Windows 宿主上，
-两者是**两个时钟域**。实测（三次独立取样）：
+两者是**两个时钟域**。三次独立运行给出的偏移（**一次直接取样 + 两次由断言值反推**）：
 
 - 容器时钟 vs Windows 宿主时钟：实测 **+1358 ms**（容器在前，即数据库快）。
 - 失败运行期由断言反推：数据库比宿主快 **3189 ms** 与 **2463 ms**（方向与上面的实测一致）。
@@ -441,10 +446,55 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | **未闭环（不是缺陷，是证据边界）** | **历史 Docker 现场「约 3 秒无 SQL」的确切成因** | **UNEXPLAINED**：原始 general log 与数据库已被第一次审查删除。机制已确立并有确定性回归，但**历史现场本身不可再取证**（§2） |
 | P2（夹具脆弱点） | 隔离库套件的时区耦合 | `scripts/verify.sh` 第三遍把 JVM 与服务端时区成对固定为 UTC；其余列仍未统一走 SQL 侧时钟 |
 | P2（覆盖缺口） | `run.restricted` 事件缺完整应用级用例 | 代码路径与 `run.failed` 共用；隔离库套件覆盖停止语义，完整应用级未单独构造 RESTRICTED 输入 |
+| MINOR（纵深防御） | `SameOriginFilter` 不比对 scheme | `portSuffix` 把 80/443 归一为空串，`Origin: http://host` 与发往 `https://host` 的请求被判为同源。`session.cookie.same-site=lax` + 现代浏览器的 Schemeful Same-Site 使跨 scheme 的 POST 不带会话 Cookie，**不构成可利用的 CSRF**；但 `SameOriginFilterTest` 没有 scheme 不匹配用例。登记为已知 MINOR，本轮不改代码（改过滤器需新增用例并重跑门禁） |
 | 环境 | Docker 已恢复并实跑 | `scripts/verify.sh` 本机 **pass 1 ✅ / pass 2 ✅ / pass 3 ❌ 3 条**，**不记 PASS**；3 条归因为跨时钟域（§3.2） |
 | 环境（未定性） | 容器内整类顺序执行时的有界等待抖动 | `heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders`：整类跑失败 1 次、单条复跑 3/3 通过；**近因 UNEXPLAINED**，未改断言、未延超时（§3.2） |
 
 ### 4.4 独立审查结论
 
-__REVIEW_VERDICT__
+**审查员**：独立子代理（只读；按约束不跑构建、测试、MySQL、Redis、Docker）。
+**审查对象**：`4aaf315deeec2c8c7c629ea362c4e8cefb4780a2`（本分支 tip，工作树干净）。
+
+**结论：`REVIEW_PASS`。**
+
+理由（审查员原话摘要）：没有任何报告中的主张被源码或落盘证据推翻——七项历史 P2 都是真实修复且
+有真实守卫；36→37 的计数变更是**要求更多用例必须跑到**而非放宽；WP-C 机制由确定性注入加真实
+线程栈确立，历史实例正确地保留为 UNEXPLAINED；报告明确写了 `scripts/verify.sh` 在本机没有全绿。
+
+**审查员接受、并明确不构成合并阻断的残余风险**
+
+- `scripts/verify.sh` 在本机 Docker 上 pass 3 未全绿（302 跑 / 3 失败），因此套件在 Docker 拓扑下的
+  稳定性**未被证明**；跨时钟域的归因是**推断**（依据容器内复跑），不是隔离实验。
+- `heartbeatRenewsLease…` 在容器内整类跑失败 1 次、单条 3/3 通过，近因 UNEXPLAINED。
+- 历史 WP-C 实例仍为 UNEXPLAINED。
+- `CollaborationRunService.snapshot()`（`:114`）没有 `requireLiveThread`（与 `subscribe` / `read` /
+  `reauthorize` 不同），已在本报告披露。
+- 生产医疗协作仍 BLOCKED。
+
+**审查员提出的 5 处异议与本轮处理**（改动只涉及文档，未改任何代码）
+
+| # | 位置 | 问题 | 处理 |
+|---|---|---|---|
+| 1 | `report.md` §8.2 表 | pass 3 行把原生替代的 302/302 记成 `verify.sh` 的 PASS | 已按跑法分行：真实 Docker 的 pass 3 记 **FAIL**，原生替代单列一行并标注 |
+| 2 | `report.md` 标题行 | `INTEGRATION_PASS` 未带边界限定 | 标题下补「`verify.sh` 本机 pass 3 未全绿，不记 PASS」 |
+| 3 | 本文件 §2.4(c) | 「45 051 行」与实际文件不符 | 改为 **45 064 数据行 / 45 070 行文件** |
+| 4 | 本文件 §3.2 | 「三次独立取样」措辞不实（只有一次直接取样） | 改为「一次直接取样 + 两次由断言值反推」 |
+| 5 | 本文件 §2.4(a)(e) | 4 358 / 3 718 / 50–55 没有落盘产物 | 加「可复算性边界」：只有 3 722 能从 general log 数出，其余为当时读数、现不可复算，且不承担机制论证 |
+
+另有一条审查员在 D 段发现、报告此前未披露的 **MINOR**：`SameOriginFilter` 不比对 scheme。
+已登记进 §4.3 与 `report.md` §10 第 7 条（`same-site: lax` 使其不构成可利用的 CSRF，本轮不改代码）。
+
+**审查员实际核对了什么（摘要）**：独立重算 37 个用例的构成与 12 套件的 302 合计；
+`check_surefire_skips.py` 的 diff 恰好两行（36→37）；`dump-17/18/19` 的调用点与
+`:721` / `:271` / `:279` 逐行对上；general log 的 3 722 个 `Connect`、0 个 ≥1 s 的
+Connect→首语句、1 处 8.002 s 静默；§2.5 的锁等待行逐字对上；新回归测试的语句计数器确实包住
+statement 且 `before > 0` 的自检让「没有 SQL」的断言非空；§2.4(b) 的 2F+11E 没有被当作历史复现；
+迁移只新增 V18–V28、V1–V17 与 `origin/ui` 逐字节相同；五个 `collaboration.*` 开关全为 `false`；
+投影隔离无泄漏；租约/围栏三条路径一致；`web/` 本轮零改动、`AgentPage` blob 与冻结 tag 一致。
+
+**审查员明确未验证**：没有跑任何构建/测试/数据库，所有测试结论均来自落盘日志与 XML；
+时钟偏差样本、§2.6 探测与物理连接计数因容器已清理而无法复算；前端数字（Vitest 66 文件 / 636 用例、
+typecheck、lint、build、Playwright）为二手引用；`backend-unit` 的 618/309 只能由归档日志
+`r12-ci-unit-job.log` 支撑（当前 `target/surefire-reports` 已被后续单条复跑覆盖，
+`target/surefire-reports-pass3/` 未被覆盖，`graph-execution` 门禁可重跑复核）。
 

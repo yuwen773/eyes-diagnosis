@@ -2,6 +2,7 @@
 > 归因收口——**机制由确定性回归确立，历史现场本身判定为 UNEXPLAINED**（原始 general log 与
 > 数据库已被第一次审查删除，不可再取证，不以推测替代结论）；
 > **§3.2 / §5.2 / §8.1 / §8.2 / §10 第 1、5 项已按当前事实重写**。
+> **独立审查结论：`REVIEW_PASS`**（审查对象 `4aaf315d`）；审查提出的 5 处文档异议已逐条修正。
 > 详见 [R1.2 可靠性与审查收口报告](r12-reliability-closure.md)。
 >
 > **2026-11-15 R1.1 更正：当时总体 REQUEST_CHANGES。** 七项整改、Graph 确认缺陷与未解历史因果、最终验证及新 HEAD 以 [R1.1 整改报告](r11-remediation.md) 为准。本文以下是历史 R1 记录；“继承失败所以只是夹具问题”的结论已撤回，历史 INTEGRATION_PASS 不构成当前 REVIEW_PASS。
@@ -19,9 +20,13 @@
 > 日期：2026-11-15
 >
 > **结论（工程门禁口径）：INTEGRATION_PASS**（代码集成与规定的工程测试完成）。
-> **评审口径**：以 R1.2 的独立审查结论为准（见
-> [r12-reliability-closure.md](r12-reliability-closure.md) §4.4 与本文 §10）；
-> 历史 Docker 现场的因果不再是「未闭环缺陷」，而是**证据边界（UNEXPLAINED）**。
+> **边界**：`scripts/verify.sh` 在本机 Docker 上 pass 3 未全绿（302 跑 / 3 失败），
+> **不记 PASS**；这 3 条已归因为跨时钟域的测试前置条件，见 §8.2 与
+> [r12 §3.2](r12-reliability-closure.md)。
+> **评审口径**：**R1.2 独立审查结论为 `REVIEW_PASS`**（审查对象 `4aaf315d`，
+> 见 [r12-reliability-closure.md](r12-reliability-closure.md) §4.4 与本文 §10）。
+> 审查通过**不等于**生产启用依据；历史 Docker 现场的因果不再是「未闭环缺陷」，
+> 而是**证据边界（UNEXPLAINED）**。
 >
 > 门禁口径先说清楚：前端全部绿；Java **pass 1 与 pass 2 在真实 Docker 容器上全绿**
 > （611 / 7），**pass 3 在真实 Docker 上是 302 跑、3 失败**——3 条都是「构造受控时差/截止时间」
@@ -310,8 +315,8 @@ Playwright 期望的 rev 1254 在本机未安装；截图比对仍全部通过�
 > （`heartbeatRenewsLease…`，10 s 有界等待未满足，近因未定位）。
 > 详见 [R1.2 报告 §3.2](r12-reliability-closure.md)。**未删除测试、未放宽断言、未延长超时。**
 >
-> 表中 pass 1/pass 2 的绿色行同时被真实 Docker 跑与下面这次**明确标注的等价替代**跑覆盖；
-> 替代跑法（Docker 失效期间做的）把一次性容器换成原生 MySQL 8.0.26（3307，同引擎版本）+
+> 表中标「原生替代」的那一行来自 Docker 失效期间做的**明确标注的等价替代**跑法：
+> 把一次性容器换成原生 MySQL 8.0.26（3307，同引擎版本）+
 > 原生 Redis（36419）+ 最小 Chroma HTTP 夹具（只应答 `ChromaVectorStore` 初始化时的那一次
 > collection GET，其余 501；**不做向量检索、不调嵌入，不等于真实 Chroma / RAG 验收**），
 > 服务端 `time_zone` 运行期置 `+00:00`。它的 pass 3 是 302/302，但**原生 MySQL 与 JVM
@@ -319,11 +324,12 @@ Playwright 期望的 rev 1254 在本机未安装；截图比对仍全部通过�
 >
 > **不能**把本轮写成「Docker 三遍通过」——pass 3 在本机 Docker 里没有全绿。
 
-| 遍次 | 内容 | 结果 |
-|---|---|---|
-| pass 1/3 | 全量单元 + `contextLoads` + 完整应用级验收 | **PASS** — `Tests run: 611, Failures: 0, Errors: 0, Skipped: 302`（302 条隔离库用例按设计在此遍跳过） |
-| pass 2/3 | MySQL 集成门禁（Flyway / 上传状态机 / 工具审计） | **PASS** — 7/7 |
-| pass 3/3 | 12 个隔离库套件（协作、图执行、产品 schema、受控检索、任务、任务恢复、复核、授权、草稿、说明、随访、协调） | **PASS** — `Tests run: 302, Failures: 0, Errors: 0, Skipped: 0` |
+| 遍次 | 运行方式 | 内容 | 结果 |
+|---|---|---|---|
+| pass 1/3 | **真实 Docker**（`scripts/verify.sh` 原样） | 全量单元 + `contextLoads` + 完整应用级验收 | **PASS** — `Tests run: 611, Failures: 0, Errors: 0, Skipped: 302`（302 条隔离库用例按设计在此遍跳过） |
+| pass 2/3 | **真实 Docker** | MySQL 集成门禁（Flyway / 上传状态机 / 工具审计） | **PASS** — 7/7 |
+| pass 3/3 | **真实 Docker** | 12 个隔离库套件 | **FAIL** — `Tests run: 302, Failures: 3, Errors: 0, Skipped: 0`（3 条全部在 `GraphExecutionTest`，归因见 r12 §3.2） |
+| pass 3/3 | 原生替代（MySQL 8.0.26 与 JVM **同一时钟域**） | 12 个隔离库套件（协作、图执行、产品 schema、受控检索、任务、任务恢复、复核、授权、草稿、说明、随访、协调） | **PASS** — `Tests run: 302, Failures: 0, Errors: 0, Skipped: 0` |
 
 > **CI `backend-unit` job 的本地等价跑法**：`mvn test`（**不**带 `-Dtest` 过滤）、只设
 > `SPRING_PROFILES_ACTIVE=ci`、**不**给任何隔离库 URL（`FLYWAY_TEST_URL` / `ISSUE17..23_TEST_URL` /
@@ -336,6 +342,11 @@ Playwright 期望的 rev 1254 在本机未安装；截图比对仍全部通过�
 > 另一道门禁 `python scripts/check_surefire_skips.py target/surefire-reports-pass3 graph-execution`
 > 输出 `ok: …GraphExecutionTest (37 cases, 0 skipped)`。
 > 两道门禁都是**只增不放**：Graph 的期望用例数 36 → 37，门禁要求这 37 条**必须全部跑到**。
+>
+> **证据出处**：`backend-unit` 那次的 `618 / 309` 与 `skip gate passed` 以**当时保存的运行日志**
+> （`r12-ci-unit-job.log`）为准——本轮之后又跑过单条与容器内复跑，`target/surefire-reports` 已被
+> 后续运行覆盖，**不再是那次的门禁现场**；`graph-execution` 门禁的现场在
+> `target/surefire-reports-pass3/`（未被动过，可重跑复核）。
 
 #### pass 3/3 上一轮的唯一失败：根因、修复与复验
 
@@ -570,7 +581,18 @@ P2 / 已知缺口：
    同一容器、同一 schema 下**单条复跑 3/3 通过**；原生与 Docker 的整类跑也都通过。
    本轮**没有**改断言、没有延长超时、没有跳过用例，按口径只记录事实与「近因未定位」。
    它与 §3.2 的跨时钟域 3 条失败是**两回事**，不要混为一谈。
-7. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
+7. **`SameOriginFilter` 不比对 scheme（纵深防御缺口，MINOR）**：`portSuffix` 把 80/443 归一为空串，
+   `Origin: http://host` 与发往 `https://host` 的请求被判为同源；`SameOriginFilterTest` 也没有
+   scheme 不匹配用例。`session.cookie.same-site=lax` 加上现代浏览器的 Schemeful Same-Site
+   使跨 scheme 的 POST 不携带会话 Cookie，**不构成可利用的 CSRF**；本轮按 MINOR 登记、不改代码
+   （改过滤器需要新增用例并重跑门禁）。
+8. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
+
+**R1.2 独立审查结论：`REVIEW_PASS`**（审查对象 `4aaf315d`，只读审查、未跑构建/测试）。
+审查员接受了 5 条残余风险（本机 Docker pass 3 未全绿、容器内有界等待抖动近因未定、
+历史 WP-C 实例 UNEXPLAINED、`snapshot()` 缺 live-thread 守卫、生产协作仍 BLOCKED），
+并提出 5 处文档异议——全部已在本轮逐条修正（详见
+[r12 §4.4](r12-reliability-closure.md)）。**审查结论不等于生产启用依据。**
 
 **生产启用门禁（本报告不解除）**
 
