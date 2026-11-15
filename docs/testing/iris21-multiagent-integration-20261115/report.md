@@ -527,6 +527,12 @@ CI 与本地的配置差别：CI 把每个隔离库套件拆成独立 job（`gra
 `FullApplicationAcceptanceTest` 7/7 PASS（见 §6）。该测试在 pass 1/3 中随全量套件执行，
 也单独在一次性 MySQL+Redis 环境复跑通过。
 
+**一处必须标注的时序敏感**：其中的
+`collaborationRunProjectsDetailsOnlyToCliniciansAndSurvivesReplay` 在 hosted CI #1 上失败过
+（患者回放缺 `run.started`），本机三次与 CI #2 均通过。失败原因是产品侧
+「创建响应游标可能跳过 `run.started`」的窄窗口竞态（§10 第 8 条），**不是**该用例断言过严。
+因此本节的 7/7 是**实跑记录**，不代表该用例在任意时序下都稳定。
+
 ### 8.4 证据未被人为修饰
 
 - 本会话**没有删除任何测试**、没有放宽任何断言。
