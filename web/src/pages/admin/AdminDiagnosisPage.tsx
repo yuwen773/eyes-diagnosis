@@ -30,6 +30,7 @@ import {
   confidencePercent,
   diagnosisFilterParams,
   formatStatNumber,
+  noConclusionView,
   DIAGNOSIS_REVIEW_FILTER_OPTIONS,
   humanReviewStatusLabel,
   type DiagnosisReviewFilter,
@@ -482,22 +483,26 @@ export function AdminDiagnosisPage(): ReactElement {
       // 判读文字与 AI 拒识原因才不会挤成 0 宽竖条。
       width: "156px",
       sortable: true,
-      render: (row) =>
-        row.result ? (
-          <span className="admin-diagnosis__result">{row.result}</span>
-        ) : (
-          // AI 拒识行 result 为空 → 「—」+ 拒识原因摘要（完整原因在 title 与详情里）。
+      render: (row) => {
+        if (row.result) {
+          return <span className="admin-diagnosis__result">{row.result}</span>
+        }
+        // AI 拒识与「没有结论」分开说：口径由 noConclusionView 统一裁决，
+        // 与仪表盘同一份——空结果不等于拒识，两页对同一行不能各说各话。
+        const gap = noConclusionView(row)
+        return (
           <span className="admin-diagnosis__result-empty">
-            <span className="admin-chip" data-tone="critical">
-              AI 拒识
+            <span className="admin-chip" data-tone={gap.rejected ? "critical" : "mute"}>
+              {gap.label}
             </span>
-            {row.abstainReason ? (
-              <span className="admin-diagnosis__abstain" title={row.abstainReason}>
-                {truncate(row.abstainReason, ABSTAIN_LIMIT)}
+            {gap.reason ? (
+              <span className="admin-diagnosis__abstain" title={gap.reason}>
+                {truncate(gap.reason, ABSTAIN_LIMIT)}
               </span>
             ) : null}
           </span>
-        ),
+        )
+      },
     },
     {
       key: "username",
