@@ -644,7 +644,13 @@ P2 / 已知缺口：
    患者从该游标回放**永远收不到** `run.started`。CI #1 的
    `FullApplicationAcceptanceTest…:306` 失败与此逐项吻合；本机三次通过、CI #2 通过。
    **未删测试、未放宽断言**。修复方向：游标钉在创建事务内的 seq 再 `kick`（需改产品代码，留待合并决策）。
-9. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
+9. **`check_steering_docs.py` 的 controller 扫描不递归（门禁缺口，MINOR，本轮不改）**：
+   脚本用 `controller/*.java` 非递归 glob，因此 `agent/controller/AgentImageUploadController.java`
+   （`/agent/image`）不在扫描范围内；`CLAUDE.md` 的 `/api/agent/*` 一行在语义上覆盖了它，
+   所以**没有错误声明**，但「列全所有 controller」并非字面强制。另外它用子串匹配
+   （`path not in text`），路径在文档任意位置出现即通过。属**既有**门禁强度问题，
+   建议单独开 Issue 收紧（递归扫描 + 按表格行匹配）。
+10. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
 
 **R1.2 独立审查结论：`REVIEW_PASS`**（审查对象 `4aaf315d`，只读审查、未跑构建/测试）。
 审查员接受了 5 条残余风险（本机 Docker pass 3 未全绿、容器内有界等待抖动近因未定、

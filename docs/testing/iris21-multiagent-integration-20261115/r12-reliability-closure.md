@@ -557,6 +557,25 @@ seq 2 的 `run.started`——与失败消息"缺 `run.started`、其余事件齐
   这反过来支持「本机 pass 3 的 3 条失败是环境条件差异」的判定。
 - `flyway-mysql` 两个方向全绿 ⇒ V18–V28 在空库与既有库两条升级路径上都可执行。
 
+**审查后的增量核对（同一审查员，只读）**
+
+审查通过后本分支新增 4 个提交，内容全部是文档与门禁自测，**没有业务代码或断言变更**：
+
+| 提交 | 内容 | 审查结论 |
+|---|---|---|
+| `69233c8d` | 审查员 5 处文档异议修正 + `SameOriginFilter` MINOR 登记 | 已复核 |
+| `b5613166` | `CLAUDE.md` steering 契约恢复；`scripts/tests` 夹具 32→37 / 31→36 | **ACCEPT** |
+| `51b42c10` / `89659360` | hosted CI 记录、P2 竞态与 §8.3 时序敏感性标注 | 见下 |
+
+`b5613166` 的 ACCEPT 依据（审查员原话摘要）：range 恰好一个提交、恰好两个文件；
+`check_surefire_skips.py:55` 仍要求 `GraphExecutionTest` 37 例、`:108` 仍要求 37，
+自测仍在「缺套件 / 跳过 1 例 / 少 1 例」三种情形下判失败，**门禁没有被放宽**；
+`V28` 与 12 行 controller 表逐条对得上真实 `@RequestMapping`，`/api/mcp-server/*`
+修正了旧行的真实错误。审查员另指出两处**既有、非本轮引入**的缺口：`check_steering_docs.py`
+的 controller glob 不递归（`agent/controller/AgentImageUploadController.java` 不在扫描内）、
+`CLAUDE.md` 缺 `VITE_COLLABORATION_ENABLED` 说明。前者已登记进 `report.md` §10 第 9 条，
+后者已在本轮补进 `CLAUDE.md`。
+
 **原样 Docker 本地验证的 3 条失败与本轮 CI 不矛盾**：那是**同一个测试在两种环境下**的结果——
 本机 MySQL 在 WSL2 虚拟机、JVM 在 Windows 宿主（两个时钟域，实测数据库比宿主快 3189 / 2463 ms），
 CI 的 JVM 与 MySQL 在同一个 runner、同一个时钟域。§3.2 的控制变量实验（JVM 放进 MySQL 容器）

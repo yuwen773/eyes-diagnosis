@@ -85,6 +85,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
 - **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
+- **协作工作台（多 Agent）**: 前端入口由构建期变量 `VITE_COLLABORATION_ENABLED` 控制（`web/src/components/shell/navLinks.ts`），未设为 `true` 时导航不出现协作入口；后端能力由 `eye-diagnosis.collaboration.*` 控制，默认全 `false`。**两者必须同时开启**协作才真正可用；本分支（R1.2）不开启、不部署、不做临床启用。
 
 ## Design Context
 
