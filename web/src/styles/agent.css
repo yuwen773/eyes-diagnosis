@@ -294,17 +294,20 @@
   flex-shrink: 0;
 }
 
+/* 工具执行态属于 Intelligence 运行态，不用医学严重度 --risk-*：
+   running/awaiting 是「正在生成」→ --brand-cyan；成功用 Intelligence 主强调；
+   失败是执行故障（不是医学严重度）→ --danger。 */
 .agent-toolcard__status--running,
 .agent-toolcard__status--awaiting-confirm {
-  color: var(--risk-attention, var(--fg-2));
+  color: var(--brand-cyan, var(--fg-2));
 }
 
 .agent-toolcard__status--succeeded {
-  color: var(--risk-normal, var(--fg));
+  color: var(--brand-primary, var(--fg));
 }
 
 .agent-toolcard__status--failed {
-  color: var(--risk-critical, var(--fg));
+  color: var(--danger, var(--fg));
 }
 
 .agent-toolcard__status--cancelled {

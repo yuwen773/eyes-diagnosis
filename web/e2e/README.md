@@ -20,9 +20,11 @@
 ## 环境变量
 
 ```bash
-E2E_USER=<账号> E2E_PASSWORD=<密码> npm run test:e2e
+E2E_USER=<账号> E2E_PASSWORD=<密码> npm run test:smoke
 ```
 
+- `npm run test:e2e` 会跑整个 `e2e/` 目录（含协作专项与需要 `PRODUCT_ACCEPTANCE_LIVE`
+  的真实提供方用例），**不是**这四条冒烟的入口；只跑冒烟用 `npm run test:smoke`。
 - 两个变量缺任意一个：四条用例全部 **skipped**（不红），用于 CI / 无账号机器。
 - `E2E_BASE_URL`：默认 `http://localhost:5173`。
 
