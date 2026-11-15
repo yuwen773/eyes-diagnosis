@@ -4,6 +4,7 @@
 > 完整设计系统在仓库根的 `DESIGN.md`（**Iris 2.0 · Adaptive Visual System**，目标规范）；
 > **色值一律以 `src/styles/tokens.css` 为准**（已实现的事实）。
 > 本文只记 `web/` 相关的规则与速查，**不抄数值**——抄下来就会漂。
+> 要改样式、不确定写进哪个文件 → `src/styles/README.md`（文件归属 + 共享原语清单）。
 
 ## 方向
 
