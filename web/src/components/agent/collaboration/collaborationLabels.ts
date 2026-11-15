@@ -61,12 +61,12 @@ export function summaryLabel(summary: string, limitationCount: number) {
     return `辅助草稿待复核 · 说明条目 ${limitationCount} 条`
   if (summary.startsWith("VISION_REVIEW_QUALITY:"))
     return `影像质量已复核 · 限制 ${limitationCount} 条`
-  if (summary.startsWith("CRITIC_")) {
-    const action = summary.slice("CRITIC_".length)
-    return action === "SUPPLEMENT"
-      ? `安全复核要求补充证据 · 质疑 ${limitationCount} 条`
-      : `安全复核要求修订 · 质疑 ${limitationCount} 条`
-  }
+  if (summary === "CRITIC_NONE")
+    return `安全复核未提出异议 · 质疑 ${limitationCount} 条`
+  if (summary === "CRITIC_SUPPLEMENT")
+    return `安全复核要求补充证据 · 质疑 ${limitationCount} 条`
+  if (summary === "CRITIC_REWRITE")
+    return `安全复核要求修订 · 质疑 ${limitationCount} 条`
   return `角色阶段事实已记录`
 }
 

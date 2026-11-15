@@ -8,6 +8,7 @@ import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
 import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
+import com.csust.eyediagnosis.agent.service.AgentImageUploadService;
 import com.csust.eyediagnosis.agent.service.ToolAuditService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
 import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
@@ -85,6 +86,9 @@ public class DiagnosisAgent {
     private ChatHistoryService chatHistoryService;
 
     @Resource
+    private AgentImageUploadService agentImageUploadService;
+
+    @Resource
     private AgentConstants agentConstants;
 
     @Resource
@@ -119,7 +123,9 @@ public class DiagnosisAgent {
         // Agent 运行前再校验一次会话所有权，防止 Controller 路径被绕过
         chatHistoryService.assertSessionOwner(threadId, userId);
         // 用户消息由 Controller 在入口处持久化（同步队列），此处不再重复写入。
-        String fullMessage = buildUserMessage(userMessage, imageUrls);
+        List<String> imageIds = imageUrls == null ? List.of() : imageUrls.stream()
+                .map(url -> agentImageUploadService.resolveOwnedImageId(url, userId)).toList();
+        String fullMessage = buildUserMessage(userMessage, imageIds);
 
         // 解析MCP回调
         AgentChatRequest chatRequest = new AgentChatRequest();

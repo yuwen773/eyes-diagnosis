@@ -51,6 +51,34 @@ function ReviewMessages({ messages }: { messages: unknown[] }) {
                 </p>
               )
             })}
+            {message.role === "VISION" && message.state === "COMPLETED" && (
+              <div aria-label="冻结 Vision 结果">
+                {typeof result.summary === "string" && <p>{result.summary}</p>}
+                {Array.isArray(result.limitations) && (
+                  <ul aria-label="影像限制">
+                    {result.limitations
+                      .filter(
+                        (value): value is string => typeof value === "string"
+                      )
+                      .map((value, i) => (
+                        <li key={i}>{value}</li>
+                      ))}
+                  </ul>
+                )}
+                {typeof result.reanalysisSuggestion === "string" && (
+                  <p>
+                    重拍与复核建议：
+                    {result.reanalysisSuggestion === "REVIEW_QUALITY"
+                      ? "重新核对影像质量，必要时重拍"
+                      : result.reanalysisSuggestion === "NONE"
+                        ? "未提出重拍建议"
+                        : result.reanalysisSuggestion === "RECAPTURE"
+                          ? "建议重新拍摄影像"
+                          : result.reanalysisSuggestion}
+                  </p>
+                )}
+              </div>
+            )}
             {objections.map((value, i) => {
               const objection = object(value)
               return (
