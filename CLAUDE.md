@@ -56,6 +56,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 | Controller | Path | Purpose |
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
+| AdminStatsController | `/api/stats/*` | 管理端总览读数（Dashboard 与数据分析共用口径） |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
 | McpServerController | `/api/mcp/*` | MCP server CRUD |
@@ -78,7 +79,6 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
-- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
 
 ## Design Context
 
@@ -107,7 +107,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 | 场景 | 页面 | 主色 | 圆角 | 气质 |
 |---|---|---|---|---|
 | **Brand** | `LandingPage`/`LoginPage`/`RegisterPage`/`NewsPage`/`NewsDetailPage` | 钴蓝 `--brand-primary` | 24–38px | 精致、清透、留白足 |
-| **Management** | `pages/admin/*` | 钴蓝主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
+| **Management** | `pages/admin/*` | 管理紫 `--admin-primary` 主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
 | **Intelligence** | `AgentPage`、未来的影像工作台 | 运行态蓝/青、类别紫 | 12px | 专业、看得见协作 |
 | **Clinical** | `DiagnosisPage`/`RecordsPage`/`ProfilePage`/`RecordSheet` | 墨色主 CTA + `--signal` 语义 | 0 | 克制、纸面稳定 |
 
@@ -133,7 +133,8 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 ### UI 冻结（2026-11-15）
 
 **Iris 2.1 UI 开发已冻结**，冻结基线 = annotated tag `iris-ui-v2.1-freeze-20261115`
-→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（`ui` 的 tip）。
+→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（冻结当时的 `ui` tip；此后 `ui` 只前进到
+文档合并 `7ec746fb`，tag 不移动）。
 
 - **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
 - **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。
