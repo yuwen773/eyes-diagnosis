@@ -61,7 +61,7 @@ class SurefireSkipGateTest(unittest.TestCase):
         self.write(P + "controlledreference.ControlledReferenceApiTest", cases=13, skipped=13)
         self.write(P + "patientdraft.PatientDraftTest", cases=41, skipped=41)
         self.write(P + "collaboration.CollaborationRunTest", cases=32, skipped=32)
-        self.write(P + "collaboration.GraphExecutionTest", cases=32, skipped=32)
+        self.write(P + "collaboration.GraphExecutionTest", cases=37, skipped=37)
         self.write(P + "doctorreview.DoctorReviewApiTest", cases=36, skipped=36)
         self.write(P + "patientexplanation.PatientExplanationApiTest", cases=37, skipped=37)
         self.write(P + "patientauthorization.PatientAuthorizationApiTest", cases=37, skipped=37)
@@ -107,11 +107,11 @@ class SurefireSkipGateTest(unittest.TestCase):
         name = "com.csust.eyediagnosis.collaboration.GraphExecutionTest"
         self.write("example.UnrelatedTest", cases=1)
         self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
-        self.write(name, cases=32)
+        self.write(name, cases=37)
         self.assertEqual(0, self.verdict(CONTRACTS["graph-execution"]))
-        self.write(name, cases=32, skipped=1)
+        self.write(name, cases=37, skipped=1)
         self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
-        self.write(name, cases=31)
+        self.write(name, cases=36)
         self.assertEqual(1, self.verdict(CONTRACTS["graph-execution"]))
 
     def test_issue20_requires_complete_suite_without_skips_or_dropped_cases(self):
