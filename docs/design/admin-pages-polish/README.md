@@ -2,13 +2,14 @@
 
 | 项 | 值 |
 |---|---|
-| 源分支 | `feat/iris21-admin-pages-polish`（叠在 PR #79 的 `feat/iris21-admin-workspace` 之上） |
-| 基线 commit | `8f83f542afcb2a95efc73a258734f9217b930f0d`（PR #79 HEAD，**未改写**） |
+| 源分支 | `feat/iris21-admin-pages-polish`（PR #80） |
+| base | `ui` @ `ea257d37`。本 PR 原叠在 PR #79 的 `feat/iris21-admin-workspace` 之上；PR #79 先合入 `ui` 后，本分支把 `ui` 并回（唯一冲突 `AdminDiagnosisPage.tsx` 的判读结论格，按「保留本 PR 的新标记 + 共用同一份 helper」解决），base 随之改为 `ui` |
+| 基线 commit | `8f83f542afcb2a95efc73a258734f9217b930f0d`（PR #79 HEAD，**未改写**；`before/` 证据链的「改造前」基线仍指它） |
 | 验收基线 HEAD（源码 + 视觉证据） | `fd4e41c`（第 3 轮整改）——所有截图、读数与测试结论都对着这个 commit 取 |
-| 交付 HEAD | 本报告所在提交 = 分支 `feat/iris21-admin-pages-polish` 的最新 commit（`git rev-parse origin/feat/iris21-admin-pages-polish`）；PR #80 页面与 `ui-ready.json` 里写的是它的完整 sha |
+| 交付 HEAD | 分支 tip `27102da2`（PR #80 合并前） · 合并 commit `95beeef6`（合入 `ui`）。`ui` 的合并树与被测的 `27102da2` 树**逐字节相同**（tree `91c840fb`），故 CI 证据直接成立 |
 | 本轮 commit | `eac563a0`（首轮实现）→ `c90af659`（第 1 轮整改）→ `a5c82aec`（第 2 轮整改）→ `b937e701`（收紧共享原语改动面）→ `afacecc7`（证据重拍）→ `fd4e41c`（第 3 轮整改）→ `e1634074`（第 3 轮批量删除二次确认证据 + 计数同步）→ 交付提交 |
 | 改动范围 | 仅 `web/`（前端源码 + 证据脚本）与 `docs/design/admin-pages-polish/`（证据树）。后端、Flyway、Agent、鉴权、发布状态机**零改动** |
-| 裁决 | **READY FOR HUMAN REVIEW**（机器门禁全绿；视觉终判仍以人工为准） |
+| 裁决 | **MERGED** —— PR #80 已合入 `ui`（merge commit `95beeef6`，CI 7/7：backend-compile / backend-unit / flyway-mysql / frontend / python / watchdog / web）。PR #79 已先合入 `ui`（merge commit `ea257d37`）。**未合入 `master`、未部署** |
 
 ---
 
@@ -231,7 +232,7 @@
 | **P3-1** | 视觉 | 编辑页封面占位是英文 `NO COVER` | **已修**：改「暂无封面」 |
 | **P3-2** | 功能 | 前端三处注释仍写「1 未复审」（正是第 2 轮 P1-2 的根因注释） | **已修（前端部分）**：`api.ts` / `records.ts` / `adminApi.ts` 改为「0 未复审（历史值 1 同义）」；后端四处同名注释属后端工单，本轮不改 |
 | **P3-3** | 功能 | 资讯行菜单删除目标缺 id 时提前返回，弹层留在旧目标 | **已修**：判定前移，缺 id 时收起弹层并让页内提示露出来 |
-| **P2（遗留）** | 功能 | 仪表盘「AI 拒识」标签把**所有空结果行**都标成拒识（判据只看 `row.result`，不看 `row.aiRejected`），与诊断页的 `isRejected(row)` 两档拆法不一致 | **不改**：基线 `8f83f542` 与 HEAD 逐字相同（本轮未引入）；改它要动 PR #79 冻结的仪表盘，登记为待人工裁决（见 §6） |
+| **P2（遗留）** | 功能 | 仪表盘「AI 拒识」标签把**所有空结果行**都标成拒识（判据只看 `row.result`，不看 `row.aiRejected`），与诊断页的 `isRejected(row)` 两档拆法不一致 | **已修**（原为待人工裁决）：收尾阶段按人工裁决做定向修复——新增 `noConclusionView`（`web/src/lib/adminDomain.ts`）单点裁决空结论读法，判据**只看后端 `aiRejected`**，空结论拆成「未出结论」（拒识，带原因）/「无判读结果」（其它）两档；PR #79（`ac38285`）与本 PR（`eec2e9e0`）各落地同一份实现，仪表盘与诊断台账共用一份口径（见 §9） |
 
 **未采纳的意见（附理由）**
 - 「把 `--admin-maxw` 从 1920px 收窄到 1440px」：1920 下的空白来自列宽口径，不是版心宽度——固定表格布局里没定宽的列会独吞整条余量，1440 下标题列仍约 780px，收窄版心并不能解决，且会改动 PR #79 冻结的外壳宽度。第 3 轮已用**列宽口径**（四列百分比分配）把这个问题解掉，无需动版心。
@@ -243,13 +244,13 @@
 
 | 级别 | 问题 | 影响 / 处置 |
 |---|---|---|
-| P2 | **仪表盘「AI 拒识」标签把空结果行一律标成拒识**（判据只看 `row.result`，不看 `row.aiRejected`），与诊断页「未出结论 / 无判读结果」两档拆法不一致 | 基线逐字相同、本轮未引入；改它要动 PR #79 **冻结的仪表盘**，本轮不改，登记为待人工裁决。诊断台账侧口径已统一 |
+| ~~P2~~ **已闭合** | ~~仪表盘「AI 拒识」标签把空结果行一律标成拒识~~ | **已修**：判据改为只看后端 `aiRejected`，空结论拆成「未出结论」/「无判读结果」两档，仪表盘与诊断台账共用 `noConclusionView`（见 §5 P2（遗留）行与 §9） |
 | P2 | 分析页「病种分布」与「病种日趋势」的标题沿用 Dashboard 词汇（其中含「正常」类） | 仪表盘属冻结范围，两页保持同一词汇优先于单页改名；KPI 已改用「涉及结论类别」并在脚注写明只统计有结论的记录 |
 | P2 | 分页当前页是实心主色方块，与页面主 CTA 同权重 | **PR #79 遗留**（`before/users-1440-light.png` 里已有）。改它要动共享分页原语，会连带改到冻结的仪表盘；属口味判断，本轮不改，留给人工裁决 |
 | P2 | 疾病名检索只能单值命中：后端在 `result` 一列上 LIKE，「视网膜病变」这类跨类别子串查不到（0 条 + 提示补全） | 后端契约限制，本轮不改后端；已开工单（需要一张规范名 ↔ 落库标签的对照表） |
 | P2 | 「未复审」筛选只覆盖落库值 0；库里历史值 1 同样是未复审，但后端 `eq` 覆盖不到 | 后端契约限制，本轮不改后端；界面已写明口径，已开工单（`eq` → `in (0,1)`） |
 | P3 | `AdminNewsEditPage` chunk 1,092 kB 超过 500 kB 提示线 | 构建仍成功；本轮不涉及分包策略 |
-| P3 | `web/e2e/smoke.spec.ts` 3 条既有失败（`.chroma-card` 选择器失效） | 基线既有，**未修改测试期望**；建议另开一条任务修 e2e 选择器 |
+| P3 | `web/e2e/smoke.spec.ts` 3 条既有失败（`.chroma-card` 选择器失效） | 基线既有，**未修改测试期望**；已拆成**独立测试维护任务** [#81](https://github.com/yuwen773/eyes-diagnosis/issues/81)，不挂在设计/视觉 PR 的合并路径上。本 PR 的 e2e 状态是「1 通过 / 3 失败」，**不是全量通过** |
 | P3 | 字体未随包分发（无 `@font-face`），未命中时回退到机器自带等宽字体 | 全站级资产问题（pre-existing），需另开任务自托管 woff2 |
 | P3 | 复核状态三态（待人工复核 / 复审中 / 未复审）同色 | 属医学语义配色；文字标签已带（硬约束满足），改色需产品/医学侧确认 |
 | P3 | 「病种名 ↔ 库内标签」的换算只覆盖后端落库口径（中文短名） | 生产落库路径 `DiagnosisCategoryEnum.getChineseLabelByEnglishLabel` 恒为中文短名，映射完备；若将来落库允许英文标签，需同步补一条别名（前端一行映射） |
@@ -264,8 +265,8 @@
 | 机器门禁全绿 | ✅ 见 §3 |
 | 验收报告完整、证据路径可查 | ✅ 本文件 + `docs/design/admin-pages-polish/` |
 | 后端 / 数据库 / 迁移未改 | ✅ |
-| 未合并进 `ui` / `master`、未部署 | ✅ 本分支只是叠在 PR #79 之上的 Draft PR |
-| 视觉终判 | ⏳ **仍需人工复核**：截图与自动化通过 ≠ 视觉验收通过（第 3 轮视觉路的 P1 已修并复拍，P2/P3 见 §5） |
+| 未合并进 `ui` / `master`、未部署 | ✅ 已合入 `ui`（PR #80 merge commit `95beeef6`）；**未合并进 `master`、未部署** |
+| 视觉终判 | ✅ 已完成：第 3 轮视觉路的 P1 已修并复拍；收尾的定向修复（§9）按人工裁决落地，受影响的 Dashboard 整页证据已重拍 |
 
 **交接信号**：`D:\Work\code\iris-integration-handoff\ui-ready.json`（`ready=true`，原子写入：同目录临时文件 + `rename`）。若本分支在交接后再改动，先把 `ready` 置回 `false`，新提交通过验收后再重新发布。
 
@@ -276,3 +277,54 @@
 - 截图与自动化通过 **不等于** 用户视觉验收通过；最终视觉结论以人工复核为准。
 - 本轮未触碰后端接口、数据库结构、Agent 编排与 SSE、检索逻辑、医学诊断业务逻辑、登录鉴权、资讯发布状态机、知识库解析行为、新闻 Markdown 存取语义，也未改动 PR #79 冻结的仪表盘主布局。
 - 界面上的每个数字都能追到后端端点与口径；无 mock、无手工填充、无假曲线。
+
+---
+
+## 9. 收尾记录：合并与定向修复（2026-11-15）
+
+### 9.1 base 变更与合并
+
+| 步骤 | 结果 |
+|---|---|
+| PR #79 → `ui` | 人工审查后合并，merge commit `ea257d37`（CI 7/7） |
+| 本 PR base 变更 | `feat/iris21-admin-workspace` → `ui`；分支把 `ui` 并回，唯一冲突在 `AdminDiagnosisPage.tsx` 的判读结论格，按「保留本 PR 的新标记 + 共用同一份 helper」解决 |
+| 变更范围复核 | `git diff --name-only origin/ui...origin/feat/iris21-admin-pages-polish`：36 个非 PNG 文件 + 220 张 PNG 证据；**零后端 / Flyway / 依赖变更**（无 `pom.xml`、无 `package.json`、无 `.sql`） |
+| CI | `ui` 的合并树与被测的分支 tip **逐字节相同**（tree `91c840fb`）；PR run `43674391122` 在 `27102da2` 上 7/7 通过（`verify` 工作流只在 `pull_request` 与 `master` push 上触发，合入 `ui` 不额外起跑） |
+| 合并 | PR #80 → `ui`，merge commit `95beeef6` |
+
+### 9.2 定向修复：判读空结果的展示口径
+
+仪表盘「判读结果」格原先把 `result` 为空的行**一律**渲染成「AI 拒识」标记；诊断台账那一版也这么说。
+两页口径一致，但都是错的——把「没跑出结果」误报成「模型拒识」。而拒识条数在后端是按 `aiRejected`
+标记统计的，界面口径与它对不上：医生会把没有判读结果的记录当成模型拒识。
+
+修复：新增 `noConclusionView`（`web/src/lib/adminDomain.ts`）单点裁决——
+
+| 判据 | 读数 | 说明 |
+|---|---|---|
+| `aiRejected === true` | **未出结论**（critical 色） | 模型明确拒识，并带上拒识原因 |
+| 其它空结果 | **无判读结果**（mute 色） | 只是没跑出结果，不是拒识 |
+
+判定**只认后端 `aiRejected`**，不看 `result` 是否为空。PR #79 与本 PR 各落地同一份实现与同一套文案，
+口径由 `noConclusionView` 单点裁决，合并前后展示口径一致。
+
+**测试**：新增 `noConclusionView` 4 例 + 仪表盘结论格渲染 1 例。
+
+**证据**：`docs/design/admin-workspace-polish/with-data/` 里含判读结论格的四张 Dashboard 整页图
+在 PR #79 内重拍（旧图上那个标签已与代码不符）。本 PR 的 `after/dashboard-*.png` 不受影响——
+该状态下「最近判读记录」前 5 条里没有拒识行，格内无该标签。
+
+**验收探针复跑**：合并后在 `ui` 树上重跑 `web/scripts/evidence/admin-pages-acceptance.mjs`
+（夹具按 `modelVersion='fixture-iris21'` 种下、跑完按该标记整段删除），
+**56 项检查 / 0 findings**，且与本 PR 提交的 `acceptance/acceptance.json` **逐条一致**——
+合并没有引入任何新的布局或控制台问题。
+
+> 补充一条环境事实：若本地库窗口内**没有**判读记录，仪表盘会走空窗口分支（不渲染趋势图，
+> 因而没有「图/表切换」控件），验收探针会记一条 `图/表切换 (.admin-viz__toggle-btn)` 缺失。
+> 那是数据状态，不是代码回归——种下夹具后同一条探针即 0 findings。
+
+### 9.3 e2e 既有失败已拆出
+
+`web/e2e/smoke.spec.ts` 的 3 条基线既有失败（选择器漂移 / 依赖账号数据 / 依赖外网 LLM）
+已另开**独立测试维护任务 [#81](https://github.com/yuwen773/eyes-diagnosis/issues/81)**。
+本 PR 的 e2e 状态如实记为「1 通过 / 3 失败」，**不得**描述成全量 E2E 通过。
