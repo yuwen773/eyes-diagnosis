@@ -16,7 +16,8 @@
 > 工作台正式集成到同一套系统，并完成**完整应用级**（真实 Spring Boot + MySQL/Flyway + Redis）
 > 的前后端联调与验收。
 >
-> 分支：`feat/iris21-multiagent-integration`（独立集成分支，未推送、未合并、未部署）
+> 分支：`feat/iris21-multiagent-integration`（独立集成分支；**已推送**并建 Draft PR #87，
+> base = `ui`；**未合并、未部署**）
 > 日期：2026-11-15
 >
 > **结论（工程门禁口径）：INTEGRATION_PASS**（代码集成与规定的工程测试完成）。
@@ -421,7 +422,9 @@ Playwright 期望的 rev 1254 在本机未安装；截图比对仍全部通过�
 **修复在 PR #68 原线上完成**（分支 `fix/graph-lease-heartbeat-flake`，基点 `10173ae9`，
 提交 `464b9142` 池化夹具 + `bf1858fe` 给 `scripts/verify.sh` 补第三遍隔离库门禁），
 **验证通过后**才整合回本集成分支（cherry-pick → `0c3d0aec`）。PR #68 的原开发分支
-`codex/realtime-product-acceptance` **未被改动**，两个分支都**未推送**。
+`codex/realtime-product-acceptance` **未被改动**。两条线现在都已进入本集成分支
+（`fix/graph-lease-heartbeat-flake` 本身仍未单独推送；其提交经 cherry-pick 进入
+`feat/iris21-multiagent-integration`，已随该分支推送）。
 
 | 运行方式（在 PR #68 原线 `464b9142` 上） | 次数 | 结果 |
 |---|---|---|
@@ -468,11 +471,53 @@ Playwright 期望的 rev 1254 在本机未安装；截图比对仍全部通过�
 
 #### Hosted CI
 
-- PR #68 原线 `codex/realtime-product-acceptance` 在基点 `10173ae9` 上最近一次 `verify`
-  运行 **20/20 job SUCCESS**（含 `graph-execution-mysql`），该分支连续 12 次运行全绿。
-- **本轮所有修复提交都在本地、没有推送**（本阶段禁止推送），因此**修复提交本身没有 hosted CI
-  证据**——这是必须照实说明的边界。
-- CI 与本地的配置差别：CI 把每个隔离库套件拆成独立 job（`graph-execution-mysql` 跑
+本轮已在**用户授权后**推送分支并创建 Draft PR #87（base `ui`），`verify` 工作流跑了两轮：
+
+| 运行 | SHA | 结果 |
+|---|---|---|
+| #1 `43722307612` | `69233c8d` | **15 ✅ / 5 ❌** |
+| #2 `43722586269` | `b5613166` | **20/20 ✅** |
+
+**#1 的 5 个失败，两个根因**（都在 `b5613166` 修复，均未触及业务代码与断言）：
+
+1. **门禁自测停留在旧契约**（`docs-contract`、`issue17/18/19-mysql`）：`scripts/tests/test_check_surefire_skips.py`
+   的夹具仍写 `GraphExecutionTest` 32 例，而契约已 32→36（R1.1）→37（R1.2）。
+   这是**本轮之前就存在的缺陷**：本机只跑过 `check_surefire_skips.py` 本身、没跑过它自己的单测，
+   直到 hosted CI 才暴露。夹具改为 37/36 是**跟随契约**，门禁仍然要求全部 37 例跑到。
+2. **steering 契约在集成时丢失**（`docs-contract`）：`check_steering_docs.py` 要求 `CLAUDE.md`
+   声明迁移头与全部 controller 路径。本分支沿用了 `ui` 的 `CLAUDE.md`，把 PR #68 线
+   （`10173ae9`）里的这段契约丢了（既无 `Current head is V<n>`，`/api/mcp-server` 也仍写成 `/api/mcp`）。
+   已补回迁移头、完整 controller 表与关键表清单。
+
+**#1 的 `backend-unit` 失败是一条真实的窄窗口竞态（P2，不是断言过严）**
+
+`FullApplicationAcceptanceTest.collaborationRunProjectsDetailsOnlyToCliniciansAndSurvivesReplay:306`
+——患者从创建响应里的 `resumeCursor` 回放，实际收到
+`[agent.started, agent.completed, agent.summary, run.review_ready, run.completed]`，**缺 `run.started`**。
+
+机制（读代码可确定，不是推测）：
+
+- `CollaborationRunService.create()` 在事务提交后先 `kick(runId)`（`:110`）**再** `snapshot(runId, userId)`（`:111`）；
+- `snapshot()` 在 `:118` 读当前 `seq`，据此在 `:124` 签发游标；
+- 回放查询是 `... WHERE runId=? AND seq>? AND seq<=?`（`:147`，**严格大于**）；
+- 协调器线程若在 `kick` 与这次读之间写入 `run.started`（seq 2），创建响应返回的游标就是 2，
+  客户端从该游标续读**永远看不到** seq 2 的 `run.started`——与失败消息里"缺 `run.started`、
+  其余事件齐全"逐项吻合。
+
+时序依赖：本机三次通过、CI #1 失败、CI #2 通过。**判定为产品侧事件丢失，未删测试、未放宽断言、
+未重跑掩盖。** 建议修复（本轮**未实施**，产品代码改动留待合并决策）：创建响应的游标钉在创建事务内的
+seq（`run.accepted` 之后），再 `kick`。
+
+**#2 的 20/20 说明三件事**
+
+- `graph-execution-mysql`、`collaboration-mysql`、`issue17–24` 全绿：§8.2「环境干扰」里那 3 条
+  时钟用例在 CI 的**单一时钟域**上通过，与本机 Docker 跨时钟域的归因一致。
+- `flyway-mysql`（正序 / 逆序两个 job）、`web`、`frontend`、`product-contract`、`python`、`watchdog`、
+  `backend-compile` 全绿；`backend-unit` 本轮 `Tests run: 618, Failures: 0, Errors: 0, Skipped: 309`。
+- 上一轮 PR #68 原线 `codex/realtime-product-acceptance` 在基点 `10173ae9` 上也连续 12 次全绿；
+  本分支在 `b5613166` 上达到同一状态。
+
+CI 与本地的配置差别：CI 把每个隔离库套件拆成独立 job（`graph-execution-mysql` 跑
   `GraphExecutionTest,RealtimeGraphSpikeTest,CoordinationPocTest`，`collaboration-mysql`、
   `issue17..23-mysql` 各跑各的），**12 个套件同 JVM 的组合只在 `scripts/verify.sh` 第三遍存在**
   ——而失败恰恰只在这个组合下出现。`scripts/verify.sh` 补上第三遍，等于把这条组合配置纳入门禁。
@@ -586,7 +631,14 @@ P2 / 已知缺口：
    scheme 不匹配用例。`session.cookie.same-site=lax` 加上现代浏览器的 Schemeful Same-Site
    使跨 scheme 的 POST 不携带会话 Cookie，**不构成可利用的 CSRF**；本轮按 MINOR 登记、不改代码
    （改过滤器需要新增用例并重跑门禁）。
-8. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
+8. **创建响应的游标可能跳过 `run.started`（P2，hosted CI 暴露，本轮未修）**：
+   `CollaborationRunService.create()` 先 `kick(runId)`（`:110`）再 `snapshot(runId, userId)`（`:111`），
+   `snapshot()` 在 `:118` 读 `seq` 签发游标，而回放是 `seq>?` 严格大于（`:147`）。
+   协调器若在这两步之间写入 `run.started`（seq 2），创建响应给出的游标即为 2，
+   患者从该游标回放**永远收不到** `run.started`。CI #1 的
+   `FullApplicationAcceptanceTest…:306` 失败与此逐项吻合；本机三次通过、CI #2 通过。
+   **未删测试、未放宽断言**。修复方向：游标钉在创建事务内的 seq 再 `kick`（需改产品代码，留待合并决策）。
+9. `e2e/smoke.spec.ts`（真实后端 + 真实账号 + 算法服务）按设计 SKIP，见 §8。
 
 **R1.2 独立审查结论：`REVIEW_PASS`**（审查对象 `4aaf315d`，只读审查、未跑构建/测试）。
 审查员接受了 5 条残余风险（本机 Docker pass 3 未全绿、容器内有界等待抖动近因未定、
@@ -618,14 +670,17 @@ P2 / 已知缺口：
 | `0c3d0aec` | 隔离库夹具改用 HikariCP 池化数据源（cherry-pick 自 `464b9142`，PR #68 原线） |
 | `ae78593f` | **R1.2**：新增租约续约静默的确定性因果回归（第 37 条）+ 精确用例数门禁 36 → 37 |
 | `5d7afd11` | **R1.2**：修正该回归的语句计数器（改为代理语句对象）并加计数自检，避免空断言 |
+| `4aaf315d` | **R1.2**：独立审查结论入档（`REVIEW_PASS`，审查对象即此 SHA） |
+| `69233c8d` | **R1.2**：审查员 5 处文档异议逐条修正 + `SameOriginFilter` MINOR 登记（仅文档） |
+| `b5613166` | **R1.2**：修复 hosted CI——`scripts/tests` 夹具跟随 37 例契约、`CLAUDE.md` 补回 steering 契约 |
 | 本文件所在提交 | 交付报告（分支 tip，交付时给出） |
 
 分支：`feat/iris21-multiagent-integration`，基点 `7ec746fb`（`origin/ui`）。
-**未推送、未合并到 `ui`/`master`、未部署。**
+**已推送**（用户明确授权）并创建 Draft PR #87，base = `ui`；**未合并到 `ui`/`master`、未部署。**
 
 配套的 PR #68 原线修复分支：`fix/graph-lease-heartbeat-flake`（基点 `10173ae9`），
 `464b9142`（池化夹具修复）+ `bf1858fe`（`scripts/verify.sh` 补第三遍隔离库门禁）。
-该分支同样**未推送**。
+该分支本身**仍未推送**（其提交已 cherry-pick 进集成分支并随之推送）。
 
 ---
 

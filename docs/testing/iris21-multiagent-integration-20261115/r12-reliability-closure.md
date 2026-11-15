@@ -18,8 +18,9 @@
 | 本轮发现的夹具级假失败 | 已定性并修复（隔离库夹具未池化 → 池化，`464b9142`），并新增确定性因果回归 `GraphExecutionTest.blockedConnectionAcquisitionSilencesCoordinatorSqlAndExpiresTheLease` |
 | Docker | 会话中途恢复，**已实跑 `scripts/verify.sh`**：pass 1 ✅ 611、pass 2 ✅ 7/7、pass 3 ❌ 302 跑 / 3 失败。3 条失败经控制变量实验判定为**跨时钟域（WSL2↔Windows）的测试前置条件**，非产品缺陷；但**本机 verify.sh 未全绿，不记 PASS**。见 §3 |
 | 生产医疗协作 | 仍 **BLOCKED**，本轮不启用 |
-| 推送/合并/部署 | 全程未推送、未合并到 `ui`/`master`、未部署 |
+| 推送/合并/部署 | **已推送**（用户明确授权）并建 Draft PR #87（base `ui`）；**未合并到 `ui`/`master`、未部署** |
 | 评审口径 | **不能因测试全绿自行认定 REVIEW_PASS**；见 §4.4 的独立审查结论 |
+| Hosted CI | 推送后两轮：`69233c8d` **15 ✅ / 5 ❌**（两个根因已在 `b5613166` 修复）；`b5613166` **20/20 ✅**。见 §4.5 |
 
 ---
 
@@ -373,8 +374,8 @@ URL 仍满足夹具硬编码的 `jdbc:mysql://127.0.0.1:<port>/<schema>` 正则�
 GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内核时钟域，不存在 WSL2↔Windows
 的偏移；产品代码本身也不跨时钟域做比较——`deadlineAt` 由 JVM 时钟写入、由 JVM 时钟比较
 （`:494` / `:727`，自洽），租约三列已在 WP-C 统一到 MySQL `CURRENT_TIMESTAMP(6)`。
-本轮**没有**据此宣称「Docker 三遍通过」，也**没有**据此宣称 hosted CI 已覆盖本分支的修复
-（本轮提交仍未推送，见 §4.1）。
+本轮**没有**据此宣称「Docker 三遍通过」。推送后 hosted CI 已实跑（§4.5）：`b5613166` 上
+`graph-execution-mysql` 全绿，即这 3 条时钟用例在 CI 的单一时钟域上通过——与本节归因一致。
 
 ### 3.4 遗留目录
 
@@ -417,7 +418,9 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | 前端 Vitest / typecheck / ESLint / build | R1.1 候选上已跑通，本轮未改前端 | 66 文件 636/636、全 PASS | 本轮前端零改动 |
 | 协作浏览器 + 双主题冻结布局 | R1.1 候选 | 31/31 PASS | 合成 HTTP/SSE |
 | 默认关闭浏览器 / 真实 Java 浏览器 | R1.1 候选 | 1/1、5/5 PASS | — |
-| Hosted CI | PR #68 原线 `codex/realtime-product-acceptance` @ `10173ae9` | 20/20 job SUCCESS（连续 12 次全绿） | **本轮所有提交均未推送，因此修复本身没有 hosted CI 证据** |
+| Hosted CI · 本分支第 1 轮 | `verify` @ `69233c8d` | **15 ✅ / 5 ❌**（`docs-contract`、`issue17/18/19-mysql`、`backend-unit`） | 两个根因已在 `b5613166` 修复，见 §4.5 |
+| Hosted CI · 本分支第 2 轮 | `verify` @ `b5613166` | **20/20 ✅** | 同一 SHA 的本地 `verify.sh` pass 3 仍 ❌（§3）——环境差异，不是产品差异 |
+| Hosted CI · PR #68 原线 | `codex/realtime-product-acceptance` @ `10173ae9` | 20/20 job SUCCESS（连续 12 次全绿） | 历史参照 |
 
 ### 4.2 UI 冻结与生产门禁
 
@@ -431,8 +434,8 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
   （65 文件 / +7866 / −51）。
 - **生产医疗协作仍为 BLOCKED**：全部 `eye-diagnosis.collaboration.*` 默认 `false`；本轮不部署、
   不启用、不改任何开关。
-- 本轮**未推送、未合并到 `ui`/`master`、未部署**；PR #68 原开发分支
-  `codex/realtime-product-acceptance` 未被改动。
+- 本轮**已推送**（用户明确授权）并建 Draft PR #87（base `ui`）；**未合并到 `ui`/`master`、
+  未部署**；PR #68 原开发分支 `codex/realtime-product-acceptance` 未被改动。
 
 ### 4.3 剩余 P0/P1/P2 与未闭环项
 
@@ -446,6 +449,7 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | **未闭环（不是缺陷，是证据边界）** | **历史 Docker 现场「约 3 秒无 SQL」的确切成因** | **UNEXPLAINED**：原始 general log 与数据库已被第一次审查删除。机制已确立并有确定性回归，但**历史现场本身不可再取证**（§2） |
 | P2（夹具脆弱点） | 隔离库套件的时区耦合 | `scripts/verify.sh` 第三遍把 JVM 与服务端时区成对固定为 UTC；其余列仍未统一走 SQL 侧时钟 |
 | P2（覆盖缺口） | `run.restricted` 事件缺完整应用级用例 | 代码路径与 `run.failed` 共用；隔离库套件覆盖停止语义，完整应用级未单独构造 RESTRICTED 输入 |
+| **P2（新发现，未修）** | **创建响应的游标可能跳过 `run.started`** | `create()` 先 `kick`（`:110`）再 `snapshot`（`:111`），`snapshot` 在 `:118` 读 `seq` 签发游标，回放是 `seq>?`（`:147`）。协调器若在这两步之间写入 `run.started`（seq 2），创建响应的游标即为 2，患者回放永远收不到该事件。hosted CI #1 的 `FullApplicationAcceptanceTest…:306` 与之逐项吻合（本机 3/3 通过、CI #2 通过）。**未删测试、未放宽断言**；修复需改产品代码，留待合并决策。见 §4.5 |
 | MINOR（纵深防御） | `SameOriginFilter` 不比对 scheme | `portSuffix` 把 80/443 归一为空串，`Origin: http://host` 与发往 `https://host` 的请求被判为同源。`session.cookie.same-site=lax` + 现代浏览器的 Schemeful Same-Site 使跨 scheme 的 POST 不带会话 Cookie，**不构成可利用的 CSRF**；但 `SameOriginFilterTest` 没有 scheme 不匹配用例。登记为已知 MINOR，本轮不改代码（改过滤器需新增用例并重跑门禁） |
 | 环境 | Docker 已恢复并实跑 | `scripts/verify.sh` 本机 **pass 1 ✅ / pass 2 ✅ / pass 3 ❌ 3 条**，**不记 PASS**；3 条归因为跨时钟域（§3.2） |
 | 环境（未定性） | 容器内整类顺序执行时的有界等待抖动 | `heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders`：整类跑失败 1 次、单条复跑 3/3 通过；**近因 UNEXPLAINED**，未改断言、未延超时（§3.2） |
@@ -498,3 +502,62 @@ typecheck、lint、build、Playwright）为二手引用；`backend-unit` 的 618
 `r12-ci-unit-job.log` 支撑（当前 `target/surefire-reports` 已被后续单条复跑覆盖，
 `target/surefire-reports-pass3/` 未被覆盖，`graph-execution` 门禁可重跑复核）。
 
+### 4.5 Hosted CI（推送后实跑）与增量核对
+
+用户明确授权推送后，`feat/iris21-multiagent-integration` 推到 origin，Draft PR #87 以冻结的
+`ui`（`7ec746fb`）为 base 创建。`verify.yml` 的 20 个 job 自动运行两轮：
+
+| 运行 | SHA | 结果 |
+|---|---|---|
+| #1 `43722307612` | `69233c8d` | **15 ✅ / 5 ❌** |
+| #2 `43722586269` | `b5613166` | **20/20 ✅** |
+
+**#1 的 5 个失败，分三类**：其中 4 个 job（`docs-contract`、`issue17/18/19-mysql`）是**门禁与
+文档契约**问题，已在 `b5613166` 修复（未触及 `src/main`、`src/test`、`web/`、`frontend/`、
+迁移或 `verify.yml`）；剩下的 `backend-unit` 是**产品侧竞态**，本轮未修（见下）：
+
+1. **门禁自测停留在旧契约**（`docs-contract`、`issue17/18/19-mysql` 四个 job 跑同一段
+   `scripts/tests`）：`test_check_surefire_skips.py` 的夹具仍写 `GraphExecutionTest` 32 例，
+   而契约已 32→36（R1.1）→37（R1.2）。**这是本轮之前就存在的缺陷**——本机只跑过
+   `check_surefire_skips.py` 本身，没跑过它自己的单测，因此直到 hosted CI 才暴露。
+   夹具改为 37 / 36 是**跟随契约**：门禁仍要求 37 例全部跑到，跳 1 例、少 1 例都判失败。
+2. **steering 契约在集成时丢失**（`docs-contract`）：`check_steering_docs.py` 要求 `CLAUDE.md`
+   声明迁移头与全部 controller 路径。本分支沿用了 `ui` 的 `CLAUDE.md`，把 PR #68 线
+   （`10173ae9`）里的这段契约丢了（既无 `Current head is V<n>`，`/api/mcp-server` 也仍写成 `/api/mcp`）。
+   已补回 `Current head is V28`、完整 controller 表（含 `/api/diagnosis-tasks/*`、
+   `/api/agent/collaboration-runs/*`、`/api/mcp-server/*`、`/api/controlled-references/*`、
+   `/api/doctor-reviews/*`、`/api/patient-draft-test/*`、`/api/stats/*`）与关键表清单。
+
+**#1 的 `backend-unit` 失败是一条真实的窄窗口竞态（P2）**
+
+`FullApplicationAcceptanceTest.collaborationRunProjectsDetailsOnlyToCliniciansAndSurvivesReplay:306`
+——患者从创建响应里的 `resumeCursor` 回放，实际收到
+`[agent.started, agent.completed, agent.summary, run.review_ready, run.completed]`，**缺 `run.started`**。
+`Tests run: 618, Failures: 1, Errors: 0, Skipped: 309`。
+
+机制（读代码可确定）：`create()` 在事务提交后先 `kick(runId)`（`:110`）**再**
+`snapshot(runId, userId)`（`:111`）；`snapshot()` 在 `:118` 读 `seq` 并在 `:124` 据此签发游标；
+回放查询是 `WHERE runId=? AND seq>? AND seq<=?`（`:147`，**严格大于**）。协调器若在 `kick` 与
+这次读之间写入 `run.started`（seq 2），创建响应的游标就是 2，客户端从该游标续读**永远看不到**
+seq 2 的 `run.started`——与失败消息"缺 `run.started`、其余事件齐全"逐项吻合。
+
+时序依赖：本机三次通过、CI #1 失败、CI #2 通过。判定为**产品侧事件丢失**，不是断言过严；
+**未删除测试、未放宽断言、未重跑掩盖**。修复方向（本轮**未实施**，需改产品代码，留待合并决策）：
+创建响应的游标钉在创建事务内的 seq（`run.accepted` 之后）再 `kick`。
+
+**#2 的 20/20 覆盖了什么**
+
+`backend-compile`、`backend-unit`（618/0/309）、`collaboration-mysql`、`docs-contract`、
+`flyway-mysql`（正序 + 逆序）、`frontend`、`graph-execution-mysql`、`issue17–24`、
+`product-contract`、`python`、`watchdog`、`web` 全部 SUCCESS。
+
+其中两条对本次归因特别重要：
+
+- `graph-execution-mysql` 全绿 ⇒ §3.2 里那 3 条**跨时钟域**失败用例在 CI 的**单一时钟域**上通过。
+  这反过来支持「本机 pass 3 的 3 条失败是环境条件差异」的判定。
+- `flyway-mysql` 两个方向全绿 ⇒ V18–V28 在空库与既有库两条升级路径上都可执行。
+
+**原样 Docker 本地验证的 3 条失败与本轮 CI 不矛盾**：那是**同一个测试在两种环境下**的结果——
+本机 MySQL 在 WSL2 虚拟机、JVM 在 Windows 宿主（两个时钟域，实测数据库比宿主快 3189 / 2463 ms），
+CI 的 JVM 与 MySQL 在同一个 runner、同一个时钟域。§3.2 的控制变量实验（JVM 放进 MySQL 容器）
+把 3 条转绿，是判定依据；**本机 `verify.sh` 仍未全绿，本文件不记 PASS**。
