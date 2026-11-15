@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { diagnosisTaskApi } from "@/lib/diagnosisTaskApi"
 import { createAgentSession } from "@/lib/api"
+import { ApiError } from "@/lib/api-error"
 import {
   collaborationApi,
   CollaborationHttpError,
@@ -68,6 +69,35 @@ const submit = () =>
     screen.getByRole("button", { name: /提交影像并开始协作|继续受理协作/ })
   )
 describe("explicit image task admission", () => {
+  it("rejecting a replacement file cannot submit the previously selected image", () => {
+    mount()
+    pick(new File(["valid"], "first.png", { type: "image/png" }))
+    pick(new File(["invalid"], "replacement.gif", { type: "image/gif" }))
+    expect((screen.getByRole("button", { name: "提交影像并开始协作" }) as HTMLButtonElement).disabled).toBe(true)
+    expect(createAgentSession).not.toHaveBeenCalled()
+    expect(diagnosisTaskApi.create).not.toHaveBeenCalled()
+  })
+  it("session admission denial from the shared HTTP layer clears protected selections", async () => {
+    mount()
+    pick()
+    vi.mocked(createAgentSession).mockRejectedValue(new ApiError(40101, "ACCESS_DENIED"))
+    submit()
+    await screen.findByRole("alert")
+    expect((screen.getByRole("button", { name: "提交影像并开始协作" }) as HTMLButtonElement).disabled).toBe(true)
+    expect(diagnosisTaskApi.create).not.toHaveBeenCalled()
+    expect(collaborationApi.create).not.toHaveBeenCalled()
+  })
+  it("revoked task-list authorization clears the previous selection and disables admission", async () => {
+    mount()
+    fireEvent.click(screen.getByRole("button", { name: "选择本人已有影像任务" }))
+    await screen.findByLabelText("本人影像任务")
+    fireEvent.change(screen.getByLabelText("本人影像任务"), { target: { value: "task-a" } })
+    vi.mocked(diagnosisTaskApi.list).mockRejectedValue(new CollaborationHttpError(403, "ACCESS_DENIED"))
+    fireEvent.click(screen.getByRole("button", { name: "选择本人已有影像任务" }))
+    await screen.findByRole("alert")
+    expect(screen.queryByLabelText("本人影像任务")).toBeNull()
+    expect((screen.getByRole("button", { name: "提交影像并开始协作" }) as HTMLButtonElement).disabled).toBe(true)
+  })
   it("file selection alone never uploads or creates a run; repeated submit admits once", async () => {
     const { onAccepted } = mount()
     pick()

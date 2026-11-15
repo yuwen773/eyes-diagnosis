@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { collaborationApi, CollaborationHttpError } from "./collaborationApi"
+import { collaborationApi } from "./collaborationApi"
 import {
   CollaborationProtocolError,
   type CollaborationFrame,
@@ -70,7 +70,7 @@ describe("collaborationApi", () => {
     )
     await expect(
       collaborationApi.snapshot("run-a", new AbortController().signal)
-    ).rejects.toBeInstanceOf(CollaborationHttpError)
+    ).rejects.toMatchObject({ status: 401, message: "NOT_LOGIN" })
   })
   it("posts cancellation to the selected run without treating the acknowledgement as a clinical result", async () => {
     const fetch = vi

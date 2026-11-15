@@ -60,7 +60,7 @@ export function ClinicalSource({ source }: { source: Source }) {
     </section>
   )
 }
-export function ClinicalExplanation({
+export function ClinicalProvenance({
   explanation,
 }: {
   explanation: Explanation
@@ -69,6 +69,21 @@ export function ClinicalExplanation({
     <>
       <p className="clinical-notice">{explanation.disclaimer}</p>
       <p>{explanation.calibrationNotice}</p>
+      <p>
+        模型版本 <span className="num">{explanation.modelVersion}</span>
+      </p>
+    </>
+  )
+}
+
+export function ClinicalExplanation({
+  explanation,
+}: {
+  explanation: Explanation
+}) {
+  return (
+    <>
+      <ClinicalProvenance explanation={explanation} />
       <ClinicalClaims claims={explanation.claims} />
       <details>
         <summary>全部依据与限制</summary>

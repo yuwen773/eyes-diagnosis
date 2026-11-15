@@ -1,4 +1,5 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source"
+import { notifyAuthExpired } from "./http"
 import {
   CollaborationProtocolError,
   executionStatuses,
@@ -16,6 +17,15 @@ export class CollaborationHttpError extends Error {
     super(reason)
     this.status = status
   }
+}
+
+/** Java也可能以HTTP200返回身份错误；接入产品既有的失效广播和fail-closed分支。 */
+export function collaborationFailure(status: number, code: number | undefined, reason: string) {
+  if (code === 40100 || code === 40101) {
+    notifyAuthExpired(code)
+    return new CollaborationHttpError(code === 40100 ? 401 : 403, reason)
+  }
+  return new CollaborationHttpError(status, reason)
 }
 export type CreateCollaboration = {
   taskId: string
@@ -50,8 +60,9 @@ async function envelope(response: Response): Promise<unknown> {
     throw new CollaborationHttpError(response.status, "INVALID_RESPONSE")
   }
   if (!body || !response.ok || body.code !== 0)
-    throw new CollaborationHttpError(
+    throw collaborationFailure(
       response.status,
+      body?.code,
       body?.msg || "INVALID_RESPONSE"
     )
   return body.data
@@ -120,6 +131,8 @@ export const collaborationApi: CollaborationApi = {
           await envelope(response)
           throw new CollaborationHttpError(response.status, "INVALID_RESPONSE")
         }
+        if (response.headers.get("content-type")?.includes("application/json"))
+          await envelope(response)
         if (
           response.headers
             .get("content-type")

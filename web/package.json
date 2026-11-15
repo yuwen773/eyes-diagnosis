@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "test:collaboration": "playwright test e2e/collaboration.spec.ts",
     "test:collaboration-backend": "playwright test e2e/collaboration-backend.spec.ts",
+    "test:collaboration-evidence": "node scripts/evidence/collaboration-workspace.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

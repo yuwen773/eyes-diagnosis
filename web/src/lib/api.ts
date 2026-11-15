@@ -231,6 +231,16 @@ function chatDate(value: string | number | null) {
   return typeof value === "number" ? new Date(value).toISOString() : (value ?? "")
 }
 
+/** 协作受理前创建所属会话；沿用现有 HTTP 信封与身份失效处理。 */
+export function createAgentSession(sessionId: string, signal: AbortSignal) {
+  return request<{ sessionId: string }>("/agent/sessions", {
+    method: "POST",
+    body: JSON.stringify({ sessionId }),
+    signal,
+    cache: "no-store",
+  })
+}
+
 export function deleteSession(sessionId: string) {
   return request<boolean>(`/agent/sessions/${sessionId}`, { method: "DELETE" })
 }

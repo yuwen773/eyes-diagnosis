@@ -61,7 +61,7 @@ def main():
     paths = [events_path, service_path, source / "config/JsonConfig.java",
              source / "controller/CollaborationRunController.java"]
     result = {
-        "evidenceType": "SOURCE_CONTRACT_AND_REAL_JACKSON_SYNTHETIC_DTOS",
+        "evidenceType": "SOURCE_CONTRACT_AND_FROZEN_WIRE_FIXTURES",
         "eventTypes": len(fields), "snapshotFields": len(wire["snapshot"]),
         "backendSourceSha256": {str(p.relative_to(args.backend_root)).replace("\\", "/"): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
         "wireFixtureSha256": hashlib.sha256(wire_path.read_bytes()).hexdigest(),

@@ -1,0 +1,13 @@
+{
+  "evidenceType": "ACTUAL_BROWSER_SYNTHETIC_API",
+  "viewport": {
+    "width": 820,
+    "height": 844
+  },
+  "theme": "dark",
+  "capturedAt": "2026-11-14T16:12:39.123Z",
+  "contrastFailures": [],
+  "horizontalOverflow": false,
+  "roles": 4,
+  "imageObjectFit": "contain"
+}

@@ -56,6 +56,14 @@ beforeEach(() => {
   vi.mocked(reviewApi.offer).mockResolvedValue(offer)
 })
 afterEach(cleanup)
+it("keeps the supplied model version in approved viewing and the consent preview", async () => {
+  render(<PatientResultPanel taskId="task" />)
+  await screen.findByText("Approved text")
+  expect(screen.getByText("synthetic").className).toContain("num")
+  fireEvent.click(screen.getByRole("button", { name: "查看拟保存内容或查询回执" }))
+  await screen.findByRole("checkbox")
+  expect(screen.getByText("synthetic").className).toContain("num")
+})
 async function prepared() {
   render(<PatientResultPanel taskId="task" />)
   await screen.findByText("Approved text")

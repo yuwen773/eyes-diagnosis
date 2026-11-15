@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { createAgentSession } from "@/lib/api"
+import { ApiError } from "@/lib/api-error"
 import {
   collaborationApi,
   CollaborationHttpError,
@@ -9,6 +10,10 @@ import type { CollaborationSnapshot } from "@/lib/collaborationProtocol"
 
 const key = () =>
   `ui-${crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`
+const authorizationLost = (failure: unknown) =>
+  failure instanceof CollaborationHttpError
+    ? [401, 403].includes(failure.status)
+    : failure instanceof ApiError && [401, 403, 40100, 40101].includes(failure.code)
 function pause(signal: AbortSignal) {
   return new Promise<void>((resolve) => {
     const done = () => {
@@ -33,12 +38,14 @@ export function CollaborationTaskForm({
   const [file, setFile] = useState<File | null>(null)
   const [taskId, setTaskId] = useState("")
   const [tasks, setTasks] = useState<ImageTask[]>([])
+  const [tasksLoaded, setTasksLoaded] = useState(false)
   const [phase, setPhase] = useState("")
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
   const request = useRef<AbortController | null>(null)
   const uploadKey = useRef("")
+  const fileInput = useRef<HTMLInputElement>(null)
   useEffect(() => () => request.current?.abort(), [])
 
   function begin() {
@@ -59,12 +66,26 @@ export function CollaborationTaskForm({
     if (!signal) return
     try {
       const list = await diagnosisTaskApi.list(signal)
-      if (!signal.aborted) setTasks(list)
-    } catch {
-      if (!signal.aborted) setError("任务列表暂不可用，请稍后重试。")
+      if (!signal.aborted) { setTasks(list); setTasksLoaded(true) }
+    } catch (failure) {
+      if (!signal.aborted) {
+        if (authorizationLost(failure)) clearProtectedSelection()
+        setError("任务列表暂不可用，请核对访问权限后重试。")
+      }
     } finally {
       finish(signal)
     }
+  }
+  function clearProtectedSelection() {
+    setTasks([])
+    setTasksLoaded(false)
+    resetAdmission()
+  }
+  function resetAdmission() {
+    setTaskId("")
+    setFile(null)
+    uploadKey.current = ""
+    if (fileInput.current) fileInput.current.value = ""
   }
   async function submit() {
     if (!ready || (!file && !taskId)) return
@@ -130,6 +151,7 @@ export function CollaborationTaskForm({
         setPhase("影像仍在处理，稍后点击继续等待；不会重复提交影像。")
     } catch (failure) {
       if (!signal.aborted) {
+        if (authorizationLost(failure)) clearProtectedSelection()
         setPhase("")
         const reason =
           failure instanceof CollaborationHttpError ? failure.message : ""
@@ -161,6 +183,7 @@ export function CollaborationTaskForm({
       <label className="collab-file">
         选择一张 JPEG / PNG，最大 10 MB
         <input
+          ref={fileInput}
           type="file"
           accept="image/jpeg,image/png"
           disabled={busy || !ready}
@@ -173,8 +196,9 @@ export function CollaborationTaskForm({
               next.size > 10 * 1024 * 1024 ||
               (next.type && !["image/jpeg", "image/png"].includes(next.type))
             ) {
+              resetAdmission()
+              setPhase("")
               setError("请选择不超过 10 MB 的有效 JPEG 或 PNG 影像。")
-              event.target.value = ""
               return
             }
             setFile(next)
@@ -222,6 +246,7 @@ export function CollaborationTaskForm({
             </select>
           </label>
         )}
+        {tasksLoaded && tasks.length === 0 && <p role="status">暂无可选择的影像任务，请先上传眼底影像。</p>}
       </div>
       <button
         type="button"

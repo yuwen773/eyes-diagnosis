@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
-import { SiteHeader } from "@/components/SiteHeader"
+import "@/styles/collaboration.css"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 import { DoctorReviewImage } from "@/components/agent/collaboration/DoctorReviewImage"
 import {
   ClinicalClaims,
@@ -313,8 +314,8 @@ export function DoctorReviewsPage() {
   const { user, status } = useSession()
   const role = user?.userRole ?? ""
   return (
-    <div className="is-field">
-      <SiteHeader />
+    <div className="is-field is-brand-page collaboration-page">
+      <ProductHeader scene="intelligence" />
       <main className="wrap review-page">
         {import.meta.env.VITE_COLLABORATION_ENABLED === "true" &&
         status === "authed" &&

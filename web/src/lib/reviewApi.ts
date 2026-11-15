@@ -1,4 +1,4 @@
-import { CollaborationHttpError } from "./collaborationApi"
+import { collaborationFailure, CollaborationHttpError } from "./collaborationApi"
 
 export type Claim = {
   id: string
@@ -90,7 +90,7 @@ export async function reviewRequest<T>(
     const status = [40100, 40101, 40400].includes(value?.code)
       ? 403
       : response.status
-    throw new CollaborationHttpError(status, "REVIEW_UNAVAILABLE")
+    throw collaborationFailure(status, value?.code, "REVIEW_UNAVAILABLE")
   }
   return value.data as T
 }

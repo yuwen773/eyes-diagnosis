@@ -8,6 +8,7 @@ import {
 import {
   ClinicalClaims,
   ClinicalExplanation,
+  ClinicalProvenance,
   ClinicalSource,
 } from "./ClinicalContent"
 
@@ -133,8 +134,7 @@ export function PatientResultPanel({ taskId }: { taskId: string }) {
       )}
       {view?.result && (
         <>
-          <p className="clinical-notice">{view.result.disclaimer}</p>
-          <p>{view.result.calibrationNotice}</p>
+          <ClinicalProvenance explanation={view.result} />
           <ClinicalClaims
             claims={view.result.claims}
             onSource={(index) => void action("source", index)}

@@ -1,4 +1,4 @@
-import { CollaborationHttpError } from "./collaborationApi"
+import { collaborationFailure } from "./collaborationApi"
 
 export type ImageTask = {
   taskId: string
@@ -17,8 +17,9 @@ async function request(path: string, signal: AbortSignal, body?: FormData) {
   })
   const value = await response.json()
   if (!response.ok || value?.code !== 0)
-    throw new CollaborationHttpError(
+    throw collaborationFailure(
       response.status,
+      value?.code,
       value?.msg || "TASK_UNAVAILABLE"
     )
   return value.data as unknown

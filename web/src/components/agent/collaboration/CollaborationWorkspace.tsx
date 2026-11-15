@@ -1,16 +1,15 @@
 import { useContext } from "react"
-import { roles, isTerminal } from "@/lib/collaborationProtocol"
+import { isTerminal } from "@/lib/collaborationProtocol"
 import { CollaborationRunContext } from "@/hooks/useCollaborationRun"
 import { CollaborationTimeline } from "./CollaborationTimeline"
 import { AuthorizedRunImage } from "./AuthorizedRunImage"
 import { PatientResultPanel } from "./PatientResultPanel"
+import { CollaborationRoles } from "./CollaborationRoles"
 import {
   clinicianProjection,
   executionLabel,
   reasons,
   reviewLabels,
-  roleDescriptions,
-  roleNames,
 } from "./collaborationLabels"
 
 export function CollaborationWorkspace({
@@ -80,37 +79,8 @@ export function CollaborationWorkspace({
         </div>
       ) : (
         <>
-          <div
-            className="collab-roles"
-            aria-label="协作角色状态"
-            aria-live="polite"
-          >
-            {roles.map((role, index) => (
-              <div
-                key={role}
-                className="collab-role"
-                data-state={snapshot.roles[role] ?? "WAITING"}
-              >
-                <span className="collab-eyebrow">
-                  0{index + 1} / {role}
-                </span>
-                <h3>{roleNames[role]}</h3>
-                <span className="collab-role__status">
-                  {
-                    {
-                      RUNNING: "处理中",
-                      COMPLETED: "本轮已完成",
-                      STOPPED: "已停止",
-                      WAITING: isTerminal(snapshot.executionStatus)
-                        ? "未执行"
-                        : "等待执行",
-                    }[snapshot.roles[role] ?? "WAITING"]
-                  }
-                </span>
-                <p>{roleDescriptions[role]}</p>
-              </div>
-            ))}
-          </div>
+          <div className="collab-task-context"><span>任务 <span className="num">{snapshot.taskId}</span></span><span>协作 <span className="num">{snapshot.runId}</span></span></div>
+          <CollaborationRoles snapshot={snapshot} />
           <div className="collab-workspace__body">
             <div className="collab-workspace__record">
               {snapshot.reason && (
