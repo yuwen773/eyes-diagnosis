@@ -188,6 +188,45 @@ class CollaborationRunTest {
         throw new AssertionError("Unbounded history");
     }
 
+    @Test void admissionCursorReplaysStartedEvenWhenRecoveryWinsImmediatelyAfterCommit() throws Exception {
+        var started = new CountDownLatch(1); var release = new CountDownLatch(1);
+        answer = prompt -> {
+            if (prompt.getSystemMessage().getText().startsWith("VISION")) {
+                started.countDown();
+                try { assertTrue(release.await(10, TimeUnit.SECONDS)); }
+                catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError(failure); }
+            }
+            return valid(prompt);
+        };
+        var admissionEvents = new CollaborationEvents(jdbc) {
+            @Override public void append(String task, String type, String actor, String visibility, Map<String, ?> payload) {
+                super.append(task, type, actor, visibility, payload);
+                if (!"run.accepted".equals(type)) return;
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override public void afterCommit() {
+                                // Another poller may recover the committed row before create() returns.
+                                runs.recoverPending();
+                                try { assertTrue(started.await(5, TimeUnit.SECONDS), "Recovery must commit run.started before the admission response"); }
+                                catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError(failure); }
+                            }
+                        });
+            }
+        };
+        streams.close(); runs.close();
+        runs = new CollaborationRunService(jdbc, admissionEvents, new CollaborationCursor(KEY), coordinator);
+        enableFixture(runs); streams = new CollaborationStreams(runs);
+        try {
+            var admitted = create();
+            assertEquals(1, admitted.snapshotSequence(), "Admission must retain its own watermark even if recovery already started");
+            assertEquals("ACCEPTED", admitted.executionStatus());
+            var subscription = runs.subscribe(admitted.runId(), 42, null, admitted.resumeCursor());
+            assertEquals(1, subscription.sequence());
+            assertTrue(runs.read(subscription, subscription.sequence()).frames().stream()
+                    .anyMatch(frame -> "run.started".equals(frame.event().type())), "The creation cursor must replay run.started");
+        } finally { release.countDown(); }
+    }
+
     @Test void idleSubscriptionImmediatelyEmitsAuthenticatedHeartbeatAtSnapshotWatermark() throws Exception {
         runs.close(); var run = create(); var snapshot = runs.snapshot(run.runId(), 42);
         var subscription = runs.subscribe(run.runId(), 42, null, snapshot.resumeCursor());

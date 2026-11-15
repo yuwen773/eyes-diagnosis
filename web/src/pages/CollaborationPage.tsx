@@ -27,6 +27,7 @@ function CollaborationSession({ identity }: { identity: string | null }) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const [draftThread, setDraftThread] = useState(newId)
+  const [admission, setAdmission] = useState<CollaborationSnapshot>()
   const [linkError, setLinkError] = useState<{
     run: string
     message: string
@@ -39,6 +40,7 @@ function CollaborationSession({ identity }: { identity: string | null }) {
     threadId,
     runId,
     enabled,
+    initialSnapshot: admission?.runId === runId ? admission : undefined,
   })
 
   // 单 runId 深链先经服务端鉴权获取所属会话，再交给同一个协作 hook。
@@ -63,11 +65,13 @@ function CollaborationSession({ identity }: { identity: string | null }) {
   }, [enabled, identity, runId, entryThread, setParams])
 
   function newTask() {
+    setAdmission(undefined)
     setDraftThread(newId())
     setLinkError(null)
     setParams({}, { replace: true })
   }
   function accepted(snapshot: CollaborationSnapshot) {
+    setAdmission(snapshot)
     setLinkError(null)
     setParams(
       { runId: snapshot.runId, threadId: snapshot.threadId },

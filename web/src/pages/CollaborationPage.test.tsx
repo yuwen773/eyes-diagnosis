@@ -120,11 +120,7 @@ describe("独立协作页面受理与生命周期", () => {
   })
 
   it("只有用户提交才按 Session → Task → Run 链受理，不读取聊天历史", async () => {
-    // 受理返回新会话，hook必须跟随该会话，而非聊天localStorage。
-    vi.mocked(collaborationApi.snapshot).mockImplementation(async () => {
-      const body = vi.mocked(collaborationApi.create).mock.calls[0][0]
-      return snapshot({ threadId: body.threadId, executionStatus: "RUNNING" })
-    })
+    // 受理返回新会话与起始游标；更晚的 GET 不能覆盖它。
     render(page())
     expect(createAgentSession).not.toHaveBeenCalled()
     expect(screen.getAllByText("尚未启动")).toHaveLength(4)
@@ -157,6 +153,14 @@ describe("独立协作页面受理与生命周期", () => {
     })
     await waitFor(() =>
       expect(screen.getByLabelText("协作角色状态")).toBeTruthy()
+    )
+    expect(collaborationApi.snapshot).not.toHaveBeenCalled()
+    expect(collaborationApi.stream).toHaveBeenCalledWith(
+      "run-a",
+      "opaque-snapshot",
+      expect.any(AbortSignal),
+      expect.any(Function),
+      expect.any(Function)
     )
   })
 

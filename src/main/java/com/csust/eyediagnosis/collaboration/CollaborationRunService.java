@@ -71,9 +71,9 @@ public class CollaborationRunService implements AutoCloseable {
     public Snapshot create(long userId, Create request) {
         if (request == null || !id(request.taskId(), 36) || !id(request.threadId(), 64)
                 || request.idempotencyKey() == null || !request.idempotencyKey().matches("[!-~]{1,128}")) throw new Fault(400, "INVALID_REQUEST");
-        String runId;
+        Snapshot admitted;
         try {
-            runId = transactions.execute(tx -> {
+            admitted = transactions.execute(tx -> {
                 // Serialize admission across different tasks from the same owner, including the concurrency cap.
                 jdbc.queryForList("SELECT id FROM t_user WHERE id=? FOR UPDATE", userId);
                 requireUser(userId);
@@ -89,7 +89,7 @@ public class CollaborationRunService implements AutoCloseable {
                     var old = keyed.getFirst();
                     if (!taskId.equals(old.get("taskId")) || !request.threadId().equals(old.get("threadId"))
                             || !Objects.equals(old.get("inferenceDigest"), digest(Objects.toString(task.get("inferenceSnapshot"), "")))) throw new Fault(409, "IDEMPOTENCY_CONFLICT");
-                    return old.get("runId").toString();
+                    return snapshot(old.get("runId").toString(), userId);
                 }
                 if (!admissionEnabled) throw new Fault(503, "ADMISSION_DISABLED");
                 if (!jdbc.queryForList("SELECT runId FROM t_agent_collab_run WHERE taskId=?", taskId).isEmpty()) throw new Fault(409, "TASK_ALREADY_BOUND");
@@ -103,12 +103,13 @@ public class CollaborationRunService implements AutoCloseable {
                         graphEnabled ? "GRAPH" : "COORDINATOR", graphEnabled ? "GRAPH_V1" : "AUTONOMOUS_V2");
                 events.append(taskId, "run.accepted", "COORDINATOR", "PATIENT", Map.of("status", "ACCEPTED"));
                 if ("RESTRICTED".equals(task.get("status"))) events.stopped(taskId, "INPUT_RESTRICTED");
-                return created;
+                // Capture admission while its locks still exclude worker/recovery writes.
+                return snapshot(created, userId);
             });
         } catch (org.springframework.dao.DuplicateKeyException conflict) { throw new Fault(409, "IDEMPOTENCY_CONFLICT"); }
         // Only admission/worker invokes the coordinator. Durable ACCEPTED rows survive queue saturation/restart.
-        kick(runId);
-        return snapshot(runId, userId);
+        kick(admitted.runId());
+        return admitted;
     }
 
     public Snapshot snapshot(String runId, long userId) {

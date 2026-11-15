@@ -81,6 +81,42 @@ afterEach(() => {
 })
 
 describe("useCollaborationRun", () => {
+  it("retains the admission cursor through StrictMode and receives run.started before later facts", async () => {
+    const admitted = snapshot({
+      executionStatus: "ACCEPTED",
+      snapshotSequence: 1,
+      resumeCursor: "admission-1",
+    })
+    vi.mocked(collaborationApi.snapshot).mockResolvedValue(
+      snapshot({
+        executionStatus: "SUCCEEDED",
+        snapshotSequence: 20,
+        resumeCursor: "too-late-20",
+      })
+    )
+    const { result } = renderHook(
+      () => useCollaborationRun({ ...scope, initialSnapshot: admitted }),
+      {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <StrictMode>{children}</StrictMode>
+        ),
+      }
+    )
+    await flush()
+    const active = streams.filter((stream) => !stream.signal.aborted)
+    expect(active).toHaveLength(1)
+    expect(active[0].cursor).toBe("admission-1")
+    expect(collaborationApi.snapshot).not.toHaveBeenCalled()
+    act(() => {
+      active[0].emit(frame("run.started", 2))
+      active[0].emit(frame("agent.started", 4))
+    })
+    expect(result.current.run?.events.map((event) => event.type)).toEqual([
+      "run.started",
+      "agent.started",
+    ])
+  })
+
   it.each([{ enabled: false }, { identityKey: null }, { runId: null }])(
     "does not read or create when scope is inactive %j",
     async (patch) => {

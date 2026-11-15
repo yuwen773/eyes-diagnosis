@@ -20,6 +20,7 @@ export type CollaborationScope = {
   threadId: string
   runId: string | null
   enabled: boolean
+  initialSnapshot?: CollaborationSnapshot
 }
 type Connection =
   | "disabled"
@@ -77,7 +78,7 @@ class CollaborationSession {
       throw new CollaborationHttpError(403, "SCOPE_MISMATCH")
     return fromSnapshot(snapshot)
   }
-  connect = () => {
+  connect = (refresh = false) => {
     this.active = true
     if (
       !this.scope.enabled ||
@@ -90,7 +91,7 @@ class CollaborationSession {
     const epoch = ++this.epoch
     const controller = new AbortController()
     this.controller = controller
-    void this.follow(epoch, controller.signal)
+    void this.follow(epoch, controller.signal, refresh)
   }
   disconnect = () => {
     this.active = false
@@ -105,8 +106,16 @@ class CollaborationSession {
     ++this.epoch
     this.controller?.abort()
   }
-  private async follow(epoch: number, signal: AbortSignal) {
-    let refresh = true
+  private async follow(
+    epoch: number,
+    signal: AbortSignal,
+    forceRefresh: boolean
+  ) {
+    // Admission is already authorized for this identity. SSE reauthorizes before
+    // exposing it; a later GET would discard the first events of a fast run.
+    let admitted =
+      !forceRefresh && !this.view.run ? this.scope.initialSnapshot : undefined
+    let refresh = forceRefresh || !this.view.run
     let repairs = 0
     let attempts = 0
     while (this.current(epoch) && !signal.aborted) {
@@ -114,7 +123,9 @@ class CollaborationSession {
         if (refresh) {
           // Drop the old projection before waiting for replacement authorization.
           this.update({ run: null, connection: "loading", error: null })
-          const snapshot = await this.api.snapshot(this.scope.runId!, signal)
+          const snapshot =
+            admitted ?? (await this.api.snapshot(this.scope.runId!, signal))
+          admitted = undefined
           if (!this.current(epoch)) return
           this.update({ run: this.authorized(snapshot), error: null })
           refresh = false
@@ -222,7 +233,7 @@ class CollaborationSession {
     })
   }
   retry = () => {
-    if (this.active) this.connect()
+    if (this.active) this.connect(true)
   }
   cancel = async () => {
     const run = this.view.run
@@ -246,7 +257,7 @@ class CollaborationSession {
       if (!this.current(epoch)) return
       // The response is an acknowledgement, not a replacement event/snapshot.
       // ALREADY_TERMINAL may be a success; fetch the authoritative review status.
-      this.connect()
+      this.connect(true)
     } catch (error) {
       if (!this.current(epoch)) return
       if (
@@ -269,14 +280,14 @@ class CollaborationSession {
 }
 
 export function useCollaborationRun(scope: CollaborationScope) {
-  const { identityKey, threadId, runId, enabled } = scope
+  const { identityKey, threadId, runId, enabled, initialSnapshot } = scope
   const session = useMemo(
     () =>
       new CollaborationSession(
-        { identityKey, threadId, runId, enabled },
+        { identityKey, threadId, runId, enabled, initialSnapshot },
         collaborationApi
       ),
-    [identityKey, threadId, runId, enabled]
+    [identityKey, threadId, runId, enabled, initialSnapshot]
   )
   const view = useSyncExternalStore(
     session.subscribe,
