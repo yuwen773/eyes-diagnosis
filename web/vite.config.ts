@@ -23,7 +23,9 @@ export default defineConfig({
     proxy: {
       // Spring Boot dev server: context-path /api
       "/api": {
-        target: "http://localhost:8081",
+        // 本地联调：设置 COLLABORATION_TEST_BACKEND 时指向回环测试服务（:18085，
+        // 仅测试 classpath + 隔离 MySQL8 库）；未设置仍是开发后端 :8081。只影响 dev 代理。
+        target: process.env.COLLABORATION_TEST_BACKEND ?? "http://localhost:8081",
         changeOrigin: true,
         // 后端 CORS 是精确白名单（默认只有 5173）。dev server 换端口（5199 等）
         // 时 Origin 会跟着变，把 Origin 改写成 target，代理后就是同源请求。

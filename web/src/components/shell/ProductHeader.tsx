@@ -44,7 +44,7 @@ export function ProductHeader({ scene = "brand" }: { scene?: ProductScene }) {
 
         <nav className="product-head__nav" aria-label="主导航">
           {NAV_LINKS.map((item) => (
-            <NavLink key={item.to} to={item.to} className="product-head__link" data-cursor>
+            <NavLink key={item.to} to={item.to} end={item.to === "/agent"} className="product-head__link" data-cursor>
               <item.icon className="product-head__icon" size={15} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </NavLink>

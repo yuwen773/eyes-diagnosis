@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { BotMessageSquare, Newspaper, ScanEye } from "lucide-react"
+import { BotMessageSquare, Newspaper, ScanEye, Workflow } from "lucide-react"
 
 /**
  * 跨产品的目的地。落地页自己的章节不在这里，章节链接放在页脚。
@@ -13,5 +13,6 @@ import { BotMessageSquare, Newspaper, ScanEye } from "lucide-react"
 export const NAV_LINKS = [
   { to: "/diagnosis", label: "判读", code: "01", icon: ScanEye },
   { to: "/agent", label: "诊断 Agent", code: "02", icon: BotMessageSquare },
-  { to: "/news", label: "新闻资讯", code: "03", icon: Newspaper },
+  ...(import.meta.env.VITE_COLLABORATION_ENABLED === "true" ? [{ to: "/agent/collaboration", label: "影像协作", code: "03", icon: Workflow }] : []),
+  { to: "/news", label: "新闻资讯", code: import.meta.env.VITE_COLLABORATION_ENABLED === "true" ? "04" : "03", icon: Newspaper },
 ] as const satisfies ReadonlyArray<{ to: string; label: string; code: string; icon: LucideIcon }>
