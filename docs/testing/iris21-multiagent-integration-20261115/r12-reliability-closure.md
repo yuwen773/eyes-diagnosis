@@ -374,7 +374,7 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | 项 | 事实 |
 |---|---|
 | 遗留目录 | `iris-r11-remediation/target/r11-runtime/mysql`（一次性 MySQL 数据目录，247 MB，gitignored）。本轮用普通 `rm -rf`（非强制、未绕过任何策略）删除，退出码 0；该目录不属于交付分支，也不含任何证据文件（其中的 `general_log.CSV` 本就是 0 字节）。剩余 `target/r11-runtime` 41 MB 为日志与 surefire 报告，保留未动 |
-| 本轮自建容器 | `iris-r12-mysql` / `iris-r12-clockskew` / `iris-r12-chroma`（诊断用，全部不在交付物内）。取证完成后用 `docker rm -f` 清理，清理结果见 §4.3 |
+| 本轮自建容器 | `iris-r12-mysql` / `iris-r12-clockskew` / `iris-r12-chroma`（诊断用，全部不在交付物内）。取证完成后用 `docker rm -f` 逐个清理，**三个均已删除**；`docker ps -a` 里不再有 `iris-r12*` 或 `eye-diagnosis-verify*` 残留，`scripts/verify.sh` 的一次性容器由脚本自身的 EXIT trap 回收 |
 
 **合法且安全的清理方案（备查，本轮只执行了第一条）**
 
