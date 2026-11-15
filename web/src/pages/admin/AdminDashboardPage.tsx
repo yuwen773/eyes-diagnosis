@@ -19,6 +19,7 @@ import {
   formatStatNumber,
   formatStatPercent,
   humanReviewStatusLabel,
+  noConclusionView,
   rankDistribution,
   reviewView,
 } from "@/lib/adminDomain"
@@ -159,14 +160,22 @@ export function AdminDashboardPage(): ReactElement {
     {
       key: "result",
       title: "判读结果",
-      render: (row) =>
-        row.result ? (
-          canonicalClassName(row.result) ?? row.result
-        ) : (
-          <span className="admin-chip" data-tone="critical">
-            AI 拒识
+      render: (row) => {
+        const raw = row.result?.trim() ?? ""
+        if (raw) return canonicalClassName(raw) ?? raw
+        // 没有结论有两种，拒识与「没判读结果」不是一回事：
+        // 口径由 noConclusionView 统一裁决（与诊断台账同一份）。
+        const view = noConclusionView(row)
+        return (
+          <span
+            className="admin-chip"
+            data-tone={view.rejected ? "critical" : "mute"}
+            title={view.reason}
+          >
+            {view.label}
           </span>
-        ),
+        )
+      },
     },
     {
       key: "confidence",

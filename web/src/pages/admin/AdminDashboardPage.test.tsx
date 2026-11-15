@@ -68,6 +68,39 @@ function renderPage() {
   )
 }
 
+describe("AdminDashboardPage 判读结论口径", () => {
+  it("空结果按 aiRejected 分开说：拒识=未出结论，其它=无判读结果", async () => {
+    vi.mocked(getAdminStats).mockResolvedValue(statsOf(30, 3))
+    vi.mocked(listDiagnoses).mockResolvedValue({
+      records: [
+        {
+          id: "1",
+          result: null,
+          aiRejected: true,
+          abstainReason: "图像质量不足",
+          username: "a",
+        },
+        { id: "2", result: null, aiRejected: false, username: "b" },
+      ],
+      total: 2,
+      current: 1,
+    })
+
+    renderPage()
+
+    // 结论格：拒识行说「未出结论」，非拒识的空行说「无判读结果」。
+    const rejected = await screen.findByText("未出结论")
+    expect(rejected.className).toContain("admin-chip")
+    expect(screen.getByText("无判读结果").className).toContain("admin-chip")
+
+    // 结论格一律不写「AI 拒识」——空结果不是拒识，那个标签留给复核状态列。
+    const chips = Array.from(document.querySelectorAll(".admin-chip")).map((el) => el.textContent)
+    expect(chips).toContain("未出结论")
+    expect(chips).toContain("无判读结果")
+    expect(chips).not.toContain("AI 拒识")
+  })
+})
+
 describe("AdminDashboardPage 切窗", () => {
   it("切到新窗口时旧读数立刻消失，等新窗口数据回来才显示", async () => {
     let resolve90: (value: AdminStats) => void = () => {}

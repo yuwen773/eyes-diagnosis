@@ -30,6 +30,7 @@ import {
   confidencePercent,
   diagnosisFilterParams,
   formatStatNumber,
+  noConclusionView,
   DIAGNOSIS_REVIEW_FILTER_OPTIONS,
   humanReviewStatusLabel,
   type DiagnosisReviewFilter,
@@ -603,17 +604,18 @@ export function AdminDiagnosisPage(): ReactElement {
         // AI 拒识与「没有结论」分开说：拒识由复核状态列给独立标识，
         // 这一格只负责说清「模型给了什么 / 为什么不给」。
         if (!row.result) {
+          // 口径由 noConclusionView 统一裁决，与仪表盘同一份——
+          // 空结论不等于拒识，两页对同一行不能各说各话。
+          const gap = noConclusionView(row)
           return (
             <span className="admin-diagnosis__noresult">
-              <span className="admin-diagnosis__noresult-label">
-                {isRejected(row) ? "未出结论" : "无判读结果"}
-              </span>
-              {row.abstainReason ? (
+              <span className="admin-diagnosis__noresult-label">{gap.label}</span>
+              {gap.reason ? (
                 <span
                   className="admin-diagnosis__noresult-reason"
-                  title={row.abstainReason}
+                  title={gap.reason}
                 >
-                  {truncate(row.abstainReason, ABSTAIN_LIMIT)}
+                  {truncate(gap.reason, ABSTAIN_LIMIT)}
                 </span>
               ) : null}
             </span>
