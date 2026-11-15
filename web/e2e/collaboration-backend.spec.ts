@@ -22,9 +22,8 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
     localStorage.setItem("agent_current_thread_id:42", "thread-42")
     localStorage.setItem("theme", "light")
   })
-  await page.goto("/agent")
+  await page.goto("/agent/collaboration")
   await page.waitForLoadState("networkidle")
-  await page.getByRole("button", { name: "影像协作", exact: true }).click()
   // A valid 1px synthetic PNG, never a clinical input.
   const image = Buffer.from(
     await page.evaluate(() => {
@@ -58,7 +57,7 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
   ).toBeVisible()
   await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
   await page.screenshot({
-    path: "../docs/testing/realtime-collaboration-ui-20261111/real-http-running.png",
+    path: "../target/r11-runtime/real-http-running.png",
   })
   await page.request.post("/api/test/release")
   await expect(page.getByText("协作完成", { exact: true })).toBeVisible()
@@ -68,18 +67,22 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
     "Synthetic private clinical draft"
   )
   const before = await (await page.request.get("/api/test/counts")).json()
+  const firstImage = await page.getByAltText("本次提交的眼底影像").getAttribute("src")
   await page.reload()
   await expect(page.getByText("协作完成", { exact: true })).toBeVisible()
   expect(await (await page.request.get("/api/test/counts")).json()).toEqual(
     before
   )
-  await expect(page.getByAltText("本次提交的眼底影像")).toHaveCount(0)
+  // The standalone workbench reauthorizes and reloads its server-owned image.
+  await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
+  const restoredImage = await page.getByAltText("本次提交的眼底影像").getAttribute("src")
+  expect(restoredImage).toMatch(/^blob:/)
+  expect(restoredImage).not.toBe(firstImage)
   await page.screenshot({
-    path: "../docs/testing/realtime-collaboration-ui-20261111/real-http-restored.png",
+    path: "../target/r11-runtime/real-http-restored.png",
   })
-  await page.getByRole("button", { name: "返回问答", exact: true }).click()
+  await page.getByRole("button", { name: "新建协作", exact: true }).click()
   await page.request.post("/api/test/hold")
-  await page.getByRole("button", { name: "影像协作", exact: true }).click()
   await page
     .getByLabel(/选择一张 JPEG/)
     .setInputFiles({
@@ -99,9 +102,8 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
     page.getByText("任务已取消", { exact: true }).first()
   ).toBeVisible()
   await expect(page.getByText("待医生复核", { exact: true })).toHaveCount(0)
-  await page.getByRole("button", { name: "返回问答", exact: true }).click()
+  await page.getByRole("button", { name: "新建协作", exact: true }).click()
   await page.request.post("/api/test/hold")
-  await page.getByRole("button", { name: "影像协作", exact: true }).click()
   await page
     .getByLabel(/选择一张 JPEG/)
     .setInputFiles({
