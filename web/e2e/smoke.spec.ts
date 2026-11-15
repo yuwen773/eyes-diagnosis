@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test"
  * 四条验收冒烟：登录 → 判读槽、记录纸、资讯详情、Agent 回复。
  * 账号从环境变量取；缺账号时整体 skip（不红），见 e2e/README.md。
  *
- * 登录走真实后端；记录与资讯用固定合成读数夹具，Agent 用可控 SSE。
+ * 登录、记录与资讯走真实后端；数据种在专用测试库，Agent 用可控 SSE。
  * 四条都执行；不代表真实模型、算法推理或临床验收。
  */
 const user = process.env.E2E_USER
@@ -34,85 +34,70 @@ test.describe("验收冒烟", () => {
     await expect(page.getByText("点击或拖入影像")).toBeVisible()
   })
 
-  test("记录页空态与合成记录展开均可见", async ({ page }) => {
-    const record = {
-      id: "81001",
-      result: "青光眼",
-      confidence: 0.7,
-      createTime: "2026-11-15T10:00:00",
-      modelVersion: "synthetic-smoke",
-      humanReviewStatus: "PENDING",
-      severity: "MODERATE",
-    }
-    let records: (typeof record)[] = []
-    await page.route("**/api/diagnosis/list/page/my", (route) =>
-      route.fulfill({
-        json: {
-          code: 0,
-          data: {
-            records,
-            total: records.length,
-            current: 1,
-            size: 10,
-            pages: 1,
-          },
-        },
-      })
-    )
-    await page.route("**/api/diagnosis/stats/my", (route) =>
-      route.fulfill({
-        json: {
-          code: 0,
-          data: {
-            total: records.length,
-            highRisk: 0,
-            awaitingReview: records.length,
-            lastReadAt: null,
-          },
-        },
-      })
-    )
-    await page.route("**/api/diagnosis/get/81001", (route) =>
-      route.fulfill({ json: { code: 0, data: record } })
+  test("记录页读取本人记录，空态或记录纸可见", async ({ page }) => {
+    const listed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/diagnosis/list/page/my" &&
+        response.request().method() === "POST"
     )
     await page.goto("/records")
-    await expect(page.getByText("还没有属于你的判读")).toBeVisible()
-    records = [record]
-    await page.reload()
+    const payload = await (await listed).json()
+    expect(payload.code).toBe(0)
+    const records = payload.data.records
+    expect(Array.isArray(records)).toBe(true)
+    if (records.length === 0) {
+      await expect(page.getByText("还没有属于你的判读")).toBeVisible()
+      await expect(page.locator(".records__row")).toHaveCount(0)
+      return
+    }
+    const id = String(records[0].id)
+    const detail = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/api/diagnosis/get/${id}`
+    )
     const firstRow = page.locator(".records__row").first()
     await expect(firstRow).toBeVisible({ timeout: 15_000 })
     await firstRow.click()
+    const selected = await (await detail).json()
+    expect(selected.code).toBe(0)
+    expect(String(selected.data.id)).toBe(id)
     await expect(page.locator(".sheet")).toBeVisible()
-    await expect(page.locator(".sheet")).toContainText("synthetic-smoke")
-    await expect(page.locator(".sheet__verdict")).toContainText("青光眼")
+    await expect(page.locator(".sheet__head")).toContainText(id)
+    await expect(page.locator(".sheet__verdict")).toBeVisible()
   })
 
-  test("资讯页点合成条目，详情标题与正文可见", async ({ page }) => {
-    const news = {
-      id: "81002",
-      title: "合成冒烟资讯",
-      content: "仅用于测试的合成资讯正文。",
-      publishTime: "2026-11-15T10:00:00",
-    }
-    await page.route("**/api/news/list/page/vo", (route) =>
-      route.fulfill({
-        json: {
-          code: 0,
-          data: { records: [news], total: 1, current: 1, size: 9, pages: 1 },
-        },
-      })
-    )
-    await page.route("**/api/news/get/81002", (route) =>
-      route.fulfill({ json: { code: 0, data: news } })
+  test("资讯页点已发布条目，真实详情标题与正文可见", async ({ page }) => {
+    const listed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/news/list/page/vo" &&
+        response.request().method() === "POST"
     )
     await page.goto("/news")
-    const firstCard = page.getByRole("link", { name: news.title, exact: true })
+    const payload = await (await listed).json()
+    expect(payload.code).toBe(0)
+    expect(
+      payload.data.records.length,
+      "专用测试库需至少一条已发布资讯"
+    ).toBeGreaterThan(0)
+    const news = payload.data.records[0]
+    const detail = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/api/news/get/${news.id}`
+    )
+    const firstCard = page
+      .getByRole("link", { name: news.title, exact: true })
+      .first()
     await expect(firstCard).toBeVisible({ timeout: 15_000 })
     await firstCard.click()
+    const selected = await (await detail).json()
+    expect(selected.code).toBe(0)
+    expect(String(selected.data.id)).toBe(String(news.id))
+    expect(selected.data.content?.trim()).toBeTruthy()
     await expect(
       page.getByRole("heading", { level: 1, name: news.title })
     ).toBeVisible()
-    await expect(page.getByText(news.content)).toBeVisible()
+    await expect(page.locator(".news-paper__body")).toBeVisible()
+    await expect(page.locator(".news-paper__body")).not.toBeEmpty()
   })
 
   test("Agent 发送后显示本地 SSE 回复并结束加载", async ({ page }) => {
@@ -140,7 +125,9 @@ test.describe("验收冒烟", () => {
     ).toBeVisible()
     expect(sent?.message).toBe("你好")
     expect(sent?.threadId).toBeTruthy()
-    await expect(page.getByRole("button", { name: "发送", exact: true })).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "发送", exact: true })
+    ).toBeVisible()
     await expect(input).toHaveValue("")
   })
 })
