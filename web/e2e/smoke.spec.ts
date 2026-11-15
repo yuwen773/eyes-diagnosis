@@ -4,8 +4,10 @@ import { expect, test, type Page } from "@playwright/test"
  * 四条验收冒烟：登录 → 判读槽、记录纸、资讯详情、Agent 回复。
  * 账号从环境变量取；缺账号时整体 skip（不红），见 e2e/README.md。
  *
- * 后三条是**已知失败**，修好之前用声明层 `test.fixme` 标住（Issue #81）：
- * 整套在健康环境下应当是绿的，红就是真回归。
+ * 当前是 **1 条真跑 + 3 条 fixme**（Issue #81），不能说成"4 条通过"。
+ * 后三条是已知失败，用声明层 `test.fixme` 标住；每条都登记在 `fixme-budget.json`，
+ * 由 `npm run check:e2e-fixme` 守着——修好后要连条目一起删。
+ * 真跑的那条在健康环境下应当是绿的，红就是真回归。
  */
 const user = process.env.E2E_USER
 const password = process.env.E2E_PASSWORD

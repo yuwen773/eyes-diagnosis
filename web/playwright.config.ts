@@ -14,7 +14,11 @@ import { chromium, defineConfig, devices } from "@playwright/test"
  *   3. 本机 `ms-playwright` 目录里**修订号最新**的一份主浏览器二进制。
  *
  * 第 3 级是为了本机这种「包要 1254、只装了 1234、headless shell 还没装」的情况：
- * 以前要人记住路径再传环境变量，现在直接可用。CI 上没有这个目录，自然回落默认。
+ * 以前要人记住路径再传环境变量，现在直接可用。
+ *
+ * **第 3 级只在本地生效**（`CI` 环境变量存在时跳过）。CI 的标准环境是
+ * `npx playwright install --with-deps chromium` 装与 `@playwright/test` 版本匹配的那一版；
+ * 抓一个别的修订号来跑等于换浏览器测，结果不可比，也不该被当成门禁。
  */
 function resolveChromium(): string | undefined {
   if (process.env.E2E_CHROMIUM_PATH) return process.env.E2E_CHROMIUM_PATH
@@ -25,6 +29,9 @@ function resolveChromium(): string | undefined {
   } catch {
     // 没装任何浏览器时 executablePath() 会抛，继续往下找。
   }
+
+  // 第 3 级是本地兼容兜底，不是 CI 标准环境。
+  if (process.env.CI) return undefined
 
   const root =
     process.env.PLAYWRIGHT_BROWSERS_PATH ??

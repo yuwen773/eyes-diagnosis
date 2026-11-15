@@ -1,0 +1,25 @@
+{
+  "$comment": "e2e 里允许存在的声明层 test.fixme 白名单。新增一条 = 一次需要人审批的动作（PR diff 里看得见），并受 max 硬上限约束。条目对应的测试修好之后必须同时删掉条目，否则 check:e2e-fixme 会失败——fixme 只能是临时的。",
+  "max": 3,
+  "issue": 81,
+  "entries": [
+    {
+      "file": "e2e/smoke.spec.ts",
+      "title": "记录页展开第一条，能看到记录纸标题",
+      "issue": 81,
+      "reason": "管理员账号没有患者记录，缺数据夹具"
+    },
+    {
+      "file": "e2e/smoke.spec.ts",
+      "title": "资讯页点第一条，详情标题可见",
+      "issue": 81,
+      "reason": ".chroma-card 选择器已随资讯页改版下线"
+    },
+    {
+      "file": "e2e/smoke.spec.ts",
+      "title": "Agent 发送后 30 秒内出现回复气泡",
+      "issue": 81,
+      "reason": "回复依赖外网 LLM，需换成本地可控 SSE 测试源"
+    }
+  ]
+}
