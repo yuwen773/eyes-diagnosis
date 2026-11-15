@@ -14,7 +14,7 @@ describe("历史工具卡重载", () => {
     { content: 'searchDocuments: {"query":"PRIVATE","prompt":"SECRET"}\nanalyzeEyeImage: {"url":"PRIVATE"}', labels: ["检索医学知识库", "分析眼底图像"] },
     { content: "unknown_PRIVATE: {SECRET", labels: ["调用工具"] },
   ])("恢复独立步骤并隐藏旧参数：$labels", ({ content, labels }) => {
-    const msg = mapHistoryMessage({ id: 1, role: "ASSISTANT", subType: "tool-call", content, isSummary: false, createdTime: "2026-11-14 10:00:00" })
+    const msg = mapHistoryMessage({ id: "1", role: "ASSISTANT", subType: "tool-call", content, isSummary: false, createdTime: "2026-11-14 10:00:00" })
     const { container } = render(<ToolRequestMessage msg={msg} />)
     expect(Array.from(container.querySelectorAll(".agent-toolcard__name"), (el) => el.textContent)).toEqual(labels)
     expect(container.querySelectorAll(".agent-toolcard")).toHaveLength(labels.length)

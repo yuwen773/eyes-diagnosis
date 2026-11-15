@@ -1,57 +1,110 @@
 // @vitest-environment jsdom
-import { useContext } from "react"
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react"
-import { MemoryRouter } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { cleanup, render, screen } from "@testing-library/react"
+import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { ThemeProvider } from "@/components/theme-provider"
 import { collaborationApi } from "@/lib/collaborationApi"
 import { getChatHistory, getSessions } from "@/lib/api"
-import { snapshot } from "@/lib/collaborationTestFixtures"
-import { CollaborationRunContext } from "@/hooks/useCollaborationRun"
-import { saveThreadId } from "@/lib/threadStorage"
 import { AgentPage } from "./AgentPage"
 
-const identity = vi.hoisted(() => ({
-  status: "authed",
-  user: { id: 1 } as { id: number } | null,
-}))
-vi.mock("@/lib/session", () => ({ useSession: () => identity }))
-vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }))
-vi.mock("@/components/agent/MessageList", () => ({
-  MessageList: function Probe() {
-    const run = useContext(CollaborationRunContext)
-    return (
-      <>
-        <output data-testid="run">{run?.run?.snapshot.runId ?? "empty"}</output>
-        <button onClick={() => void run?.cancel()}>取消选定协作</button>
-      </>
-    )
-  },
-}))
-vi.mock("@/lib/api", async (original) => ({
-  ...(await original<typeof import("@/lib/api")>()),
-  getSessions: vi.fn().mockResolvedValue([]),
-  getChatHistory: vi
-    .fn()
-    .mockResolvedValue({ messages: [], hasMore: false, nextCursor: null }),
-}))
-vi.mock("@/lib/collaborationApi", async (original) => ({
-  ...(await original<typeof import("@/lib/collaborationApi")>()),
-  collaborationApi: {
-    create: vi.fn(),
-    snapshot: vi.fn(),
-    stream: vi.fn(),
-    cancel: vi.fn(),
-  },
+/**
+ * /agent 是冻结的普通聊天页：协作工作台在 /agent/collaboration 独立路由。
+ * 这里守的是这条边界——普通聊天在任何开关状态下都不发起协作请求，
+ * 也不因为 URL 里带了 runId 就把协作视图渲染出来。
+ */
+const sessionState = vi.hoisted(() => ({
+  status: "anon" as string,
+  user: null as null | { id: number; userAccount: string },
 }))
 
-let signals: AbortSignal[]
+vi.mock("@/lib/session", () => ({
+  useSession: () => ({
+    status: sessionState.status,
+    user: sessionState.user,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}))
+
+vi.mock("@/lib/agentStream", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/agentStream")>()
+  const React = await import("react")
+  return {
+    ...actual,
+    useAgentStream: () => {
+      const [messages, setMessages] = React.useState<unknown[]>([])
+      return {
+        messages,
+        isStreaming: false,
+        resources: { images: [], links: [] },
+        send: vi.fn(),
+        abort: vi.fn(),
+        pushUser: (message: unknown) => setMessages((prev) => [...prev, message]),
+        setMessages,
+        reset: vi.fn(),
+      }
+    },
+  }
+})
+
+vi.mock("@/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api")>()
+  return {
+    ...actual,
+    getSessions: vi.fn().mockResolvedValue([]),
+    getChatHistory: vi.fn().mockResolvedValue({
+      messages: [],
+      hasMore: false,
+      nextCursor: null,
+    }),
+    generateTitle: vi.fn().mockResolvedValue(true),
+  }
+})
+
+vi.mock("@/lib/collaborationApi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/collaborationApi")>()
+  return {
+    ...actual,
+    collaborationApi: {
+      create: vi.fn(),
+      snapshot: vi.fn(),
+      stream: vi.fn(),
+      cancel: vi.fn(),
+    },
+  }
+})
+
+const originalRandomUUID = globalThis.crypto.randomUUID
+
+function stubMatchMedia() {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  })
+}
+
+function renderAgent(path: string) {
+  return render(
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/agent" element={<AgentPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
+  )
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getSessions).mockResolvedValue([])
@@ -60,103 +113,44 @@ beforeEach(() => {
     hasMore: false,
     nextCursor: null,
   })
-  vi.stubEnv("VITE_COLLABORATION_ENABLED", "true")
-  identity.status = "authed"
-  identity.user = { id: 1 }
+  sessionState.status = "authed"
+  sessionState.user = { id: 1, userAccount: "tester" }
   localStorage.clear()
-  saveThreadId(1, "thread-a")
-  signals = []
-  vi.mocked(collaborationApi.snapshot).mockResolvedValue(
-    snapshot({ executionStatus: "RUNNING" })
-  )
-  vi.mocked(collaborationApi.stream).mockImplementation(
-    (_id, _cursor, signal, _receive, opened) =>
-      new Promise<void>((resolve) => {
-        opened?.()
-        signals.push(signal)
-        signal.addEventListener("abort", () => resolve(), { once: true })
-      })
-  )
-  vi.mocked(collaborationApi.cancel).mockResolvedValue({
-    status: "CANCELLED",
-    outcome: "CANCELLED",
-  })
+  stubMatchMedia()
 })
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
   vi.unstubAllEnvs()
+  Object.defineProperty(globalThis.crypto, "randomUUID", {
+    value: originalRandomUUID,
+    configurable: true,
+  })
 })
-const page = (path = "/agent?runId=run-a") => (
-  <MemoryRouter initialEntries={[path]}>
-    <AgentPage />
-  </MemoryRouter>
-)
 
-describe("/agent collaboration scope integration", () => {
-  it("binds an explicitly selected run to the authenticated user's restored conversation", async () => {
-    render(page())
-    await waitFor(() =>
-      expect(screen.getByTestId("run").textContent).toBe("run-a")
-    )
-    expect(signals.filter((s) => !s.aborted)).toHaveLength(1)
+describe("/agent 保持普通聊天边界", () => {
+  it("开关打开且 URL 带 runId 时，普通聊天仍不发起任何协作请求", () => {
+    vi.stubEnv("VITE_COLLABORATION_ENABLED", "true")
+    renderAgent("/agent?runId=run-a")
     expect(collaborationApi.create).not.toHaveBeenCalled()
+    expect(collaborationApi.snapshot).not.toHaveBeenCalled()
+    expect(collaborationApi.stream).not.toHaveBeenCalled()
+    expect(collaborationApi.cancel).not.toHaveBeenCalled()
   })
-  it("leaves ordinary /agent visits and the default-off feature free of collaboration requests", async () => {
+
+  it("开关关闭时同样不发起协作请求", () => {
     vi.stubEnv("VITE_COLLABORATION_ENABLED", "false")
-    render(page())
-    await act(async () => {
-      await Promise.resolve()
-    })
+    renderAgent("/agent?runId=run-a")
     expect(collaborationApi.snapshot).not.toHaveBeenCalled()
     expect(collaborationApi.create).not.toHaveBeenCalled()
   })
-  it("does not infer a collaboration run from an ordinary chat thread", async () => {
-    render(page("/agent"))
-    await act(async () => {
-      await Promise.resolve()
-    })
-    expect(collaborationApi.snapshot).not.toHaveBeenCalled()
-  })
-  it("new conversation clears the selected run and only disconnects its stream", async () => {
-    render(page())
-    await waitFor(() =>
-      expect(screen.getByTestId("run").textContent).toBe("run-a")
-    )
-    fireEvent.click(screen.getByRole("button", { name: "新对话" }))
-    expect(screen.getByTestId("run").textContent).toBe("empty")
-    expect(signals.every((s) => s.aborted)).toBe(true)
-    expect(collaborationApi.cancel).not.toHaveBeenCalled()
-  })
-  it("logout clears the protected view and prevents selected-run cancellation", async () => {
-    const { rerender } = render(page())
-    await waitFor(() =>
-      expect(screen.getByTestId("run").textContent).toBe("run-a")
-    )
-    identity.status = "anon"
-    identity.user = null
-    rerender(page())
-    expect(screen.getByTestId("run").textContent).toBe("empty")
+
+  it("普通聊天页不渲染协作工作台控件", () => {
+    vi.stubEnv("VITE_COLLABORATION_ENABLED", "true")
+    renderAgent("/agent")
     expect(screen.queryByRole("button", { name: "取消协作任务" })).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "取消选定协作", hidden: true }))
-    expect(collaborationApi.cancel).not.toHaveBeenCalled()
-    expect(signals.every((s) => s.aborted)).toBe(true)
-  })
-  it("exposes cancellation for only the selected run through the workbench context", async () => {
-    render(page())
-    await waitFor(() =>
-      expect(screen.getByTestId("run").textContent).toBe("run-a")
-    )
-    vi.mocked(collaborationApi.snapshot).mockResolvedValue(
-      snapshot({ executionStatus: "CANCELLED", snapshotSequence: 20 })
-    )
-    fireEvent.click(screen.getByRole("button", { name: "取消协作任务" }))
-    await waitFor(() =>
-      expect(collaborationApi.cancel).toHaveBeenCalledTimes(1)
-    )
-    expect(collaborationApi.cancel).toHaveBeenCalledWith(
-      "run-a",
-      expect.any(AbortSignal)
-    )
+    expect(document.querySelector(".collaboration-page")).toBeNull()
+    expect(document.querySelector(".collab-page-heading")).toBeNull()
   })
 })

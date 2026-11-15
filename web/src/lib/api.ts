@@ -216,16 +216,6 @@ export function getSessions(beforeId?: string, limit = 20) {
   )
 }
 
-/** 协作提交前确保会话已落库（后端按请求体内的 sessionId 建会话）。 */
-export function createAgentSession(sessionId: string, signal: AbortSignal) {
-  return request<{ sessionId: string }>("/agent/sessions", {
-    method: "POST",
-    body: JSON.stringify({ sessionId }),
-    signal,
-    cache: "no-store",
-  })
-}
-
 /** Java Long 经 JsonConfig 序列化为字符串；兼容工具直接给数字。 */
 function chatDate(value: string | number | null) {
   return typeof value === "number" ? new Date(value).toISOString() : (value ?? "")
