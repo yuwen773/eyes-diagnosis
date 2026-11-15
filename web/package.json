@@ -15,7 +15,7 @@
     "test:collaboration-backend": "playwright test e2e/collaboration-backend.spec.ts",
     "test:collaboration-evidence": "node scripts/evidence/collaboration-workspace.mjs",
     "check:e2e-fixme": "node scripts/e2e/check-fixme.mjs",
-    "check:gate-tests": "node --test scripts/gate-checks.node.mjs",
+    "check:gate-tests": "node --test scripts/gate-checks.node.mjs scripts/playwright-config.node.mjs",
     "check:report": "node scripts/evidence/check-report.mjs",
     "preview": "vite preview"
   },

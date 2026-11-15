@@ -9,7 +9,7 @@ import { chromium, defineConfig, devices } from "@playwright/test"
 
 /**
  * 浏览器可执行文件，三级回落：
- *   1. `E2E_CHROMIUM_PATH` —— 显式指定，永远优先；
+ *   1. `E2E_CHROMIUM_PATH` / 旧名 `E2E_CHROMIUM_EXECUTABLE_PATH` —— 显式指定，新名优先；
  *   2. Playwright 自己期望的那一版 —— 装好了就不传 `executablePath`，走默认；
  *   3. 本机 `ms-playwright` 目录里**修订号最新**的一份主浏览器二进制。
  *
@@ -21,7 +21,8 @@ import { chromium, defineConfig, devices } from "@playwright/test"
  * 抓一个别的修订号来跑等于换浏览器测，结果不可比，也不该被当成门禁。
  */
 function resolveChromium(): string | undefined {
-  if (process.env.E2E_CHROMIUM_PATH) return process.env.E2E_CHROMIUM_PATH
+  const explicit = process.env.E2E_CHROMIUM_PATH || process.env.E2E_CHROMIUM_EXECUTABLE_PATH
+  if (explicit) return explicit
 
   try {
     const expected = chromium.executablePath()
@@ -74,10 +75,6 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    // 本机 Chromium 未随 Playwright 版本下载时显式指向已有安装（报告须记录实际版本）。
-    launchOptions: process.env.E2E_CHROMIUM_EXECUTABLE_PATH
-      ? { executablePath: process.env.E2E_CHROMIUM_EXECUTABLE_PATH }
-      : {},
   },
   projects: [
     {
