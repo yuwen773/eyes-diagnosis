@@ -136,3 +136,4 @@ Old real-browser attempt 2FAIL/3NOTRUN entered obsolete chat route; final correc
 Docker scripts/verify.sh FAILED starting first Redis: Docker Desktop is unable to start. Native equivalents are separate evidence.
 Exploratory overlapping-Maven class-scan run discarded; accepted invocations sequential per worktree.
 Cleanup: local test services stopped. Recursive deletion of stopped target/r11-runtime/mysql rejected twice by automatic safety policy (blocked by policy), directory retained without bypass.
+Docker Desktop normal stop also timed out (context deadline exceeded); native test ports are closed, Desktop processes were not force-killed.

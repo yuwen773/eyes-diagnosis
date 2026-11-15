@@ -118,4 +118,4 @@ Docker Desktop 初始未启动；启动后容器 create 请求挂起，VM 日志
 
 建议：七项修复可进入后续独立复核；已执行第二轮并保留REQUEST_CHANGES。要整体放行，需在能复现历史静默的环境采集时间差、线程和锁证据，或建立能解释该静默的另一条确定性复现并最小修复。不得以此报告启用生产医疗协作。
 
-原始执行日志及截图位于整改工作树 `target/r11-runtime/`。RED与最终GREEN的摘要和hash见 [验证清单](r11-verification.txt)。本轮服务已停止，测试端口无监听，日志保留。临时MySQL datadir `target/r11-runtime/mysql` 的递归删除被自动安全检查拒绝（`blocked by policy`），故保留该已停机目录，未改用其他方式绕过。
+原始执行日志及截图位于整改工作树 `target/r11-runtime/`。RED与最终GREEN的摘要和hash见 [验证清单](r11-verification.txt)。本轮原生MySQL/Redis、Vite与Java/HTTP夹具均已停止，测试端口无监听，日志保留。临时MySQL datadir `target/r11-runtime/mysql` 的递归删除被自动安全检查拒绝（`blocked by policy`），故保留该已停机目录，未改用其他方式绕过。Docker Desktop的正常停止命令也因`context deadline exceeded`失败，桌面/后端进程可能仍在；未强杀共享WSL或其他进程。
