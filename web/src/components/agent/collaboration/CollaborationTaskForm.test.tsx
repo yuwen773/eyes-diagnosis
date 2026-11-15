@@ -261,4 +261,33 @@ describe("explicit image task admission", () => {
     expect(onAccepted).not.toHaveBeenCalled()
     expect(collaborationApi.create).toHaveBeenCalledTimes(1)
   })
+  it("unknown task status stops admission instead of being read as ready", async () => {
+    vi.mocked(diagnosisTaskApi.get).mockResolvedValue({
+      taskId: "task-a",
+      status: "UNKNOWN",
+    })
+    const { onAccepted } = mount()
+    pick()
+    submit()
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toContain("状态无法识别")
+    )
+    // 未知状态既不当成推理中，也不当成已就绪：绝不创建协作运行。
+    expect(collaborationApi.create).not.toHaveBeenCalled()
+    expect(onAccepted).not.toHaveBeenCalled()
+  })
+  it("lists an unknown task as unusable and refuses to offer it for admission", async () => {
+    vi.mocked(diagnosisTaskApi.list).mockResolvedValue([
+      { taskId: "task-a", status: "UNKNOWN" },
+    ])
+    mount()
+    fireEvent.click(screen.getByRole("button", { name: "选择本人已有影像任务" }))
+    await waitFor(() =>
+      expect(screen.getByRole("option", { name: /状态未知/ })).toBeTruthy()
+    )
+    expect(
+      (screen.getByRole("option", { name: /状态未知/ }) as HTMLOptionElement)
+        .disabled,
+    ).toBe(true)
+  })
 })

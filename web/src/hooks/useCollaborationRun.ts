@@ -227,13 +227,15 @@ class CollaborationSession {
       !this.active ||
       !this.scope.enabled ||
       !run ||
-      this.controller?.signal.aborted ||
       isTerminal(run.snapshot.executionStatus) ||
       this.cancelPending
     )
       return
     const epoch = this.epoch
-    const signal = this.controller!.signal
+    // 取消请求自带信号。SSE 流的生命周期（重连、终态、换账号）会 abort 流的
+    // controller；若共用同一个信号，请求还没送达服务端就被撤回——「已发送」
+    // 不等于「已完成」。这里让取消请求独立于流存活，直到服务端明确答复。
+    const signal = new AbortController().signal
     this.cancelPending = true
     this.update({ cancelling: true, error: null })
     try {
@@ -243,7 +245,7 @@ class CollaborationSession {
       // ALREADY_TERMINAL may be a success; fetch the authoritative review status.
       this.connect()
     } catch (error) {
-      if (!this.current(epoch) || signal.aborted) return
+      if (!this.current(epoch)) return
       if (
         error instanceof CollaborationHttpError &&
         [401, 403].includes(error.status)

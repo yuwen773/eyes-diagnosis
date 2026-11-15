@@ -45,3 +45,31 @@ it("HTTP200身份失效信封仍触发清理广播并拒绝读取", async () => 
     window.removeEventListener(AUTH_EXPIRED_EVENT, expired)
   }
 })
+it("未知影像任务状态降级为 UNKNOWN——既不当成推理中，也不当成已就绪", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(
+      Response.json({
+        code: 0,
+        data: { taskId: "task-b", status: "DRAFTING_V2" },
+      })
+    )
+  vi.stubGlobal("fetch", fetch)
+  await expect(
+    diagnosisTaskApi.get("task-b", new AbortController().signal)
+  ).resolves.toEqual({ taskId: "task-b", status: "UNKNOWN" })
+})
+it("错误响应体不是 JSON 时按 HTTP 状态失败，不冒充成功也不当作解析异常", async () => {
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(
+      new Response("<html>502</html>", {
+        status: 502,
+        headers: { "content-type": "text/html" },
+      })
+    )
+  vi.stubGlobal("fetch", fetch)
+  await expect(
+    diagnosisTaskApi.list(new AbortController().signal)
+  ).rejects.toMatchObject({ status: 502 })
+})

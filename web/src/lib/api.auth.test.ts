@@ -77,6 +77,57 @@ describe("未登录处理", () => {
     expect(calls).toBe(1)
     expect(codes).toEqual([40101])
   })
+
+  it("SSE 端点回的是错误状态 + 认证信封时也广播未登录（与协作 SSE 同一口径）", async () => {
+    // 错误响应体同样要解析：只看 HTTP 状态会让 401/403 的信封静默失效。
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ code: 40100, data: null, msg: "未登录" }),
+        text: async () => JSON.stringify({ code: 40100, data: null, msg: "未登录" }),
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+      }, new AbortController().signal),
+    ).rejects.toThrow()
+
+    expect(calls).toBe(1)
+    expect(codes).toEqual([40100])
+  })
+
+  it("SSE 端点回的是非 JSON 错误体时按 HTTP 状态失败，不广播未登录", async () => {
+    // 代理错误页不是 JSON：既不能当成流继续读，也不能冒充成未登录。
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        headers: new Headers({ "content-type": "text/html" }),
+        json: async () => {
+          throw new SyntaxError("Unexpected token '<'")
+        },
+        text: async () => "<html>502</html>",
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+      }, new AbortController().signal),
+    ).rejects.toThrow(/502/)
+
+    expect(calls).toBe(0)
+  })
 })
 
 describe("普通聊天 SSE 可选字段契约", () => {

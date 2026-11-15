@@ -307,6 +307,52 @@ describe("useCollaborationRun", () => {
     expect(result.current.error).toBe("CANCELLATION_UNCONFIRMED")
     expect(result.current.run?.snapshot.executionStatus).toBe("RUNNING")
   })
+  it("keeps the cancellation request alive when the SSE stream tears down mid-flight", async () => {
+    let acknowledge!: (value: {
+      status: "CANCELLED"
+      outcome: "CANCELLED"
+    }) => void
+    vi.mocked(collaborationApi.cancel).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          acknowledge = resolve
+        })
+    )
+    const { result } = renderHook(() => useCollaborationRun(scope))
+    await flush()
+    const streamSignal = streams[0].signal
+    act(() => {
+      void result.current.cancel()
+    })
+    const cancelSignal = vi.mocked(collaborationApi.cancel).mock.calls[0][1]
+    expect(cancelSignal).toBeDefined()
+    // 协作流在取消请求仍在途时到达终态：流被拆掉（controller abort）。
+    act(() => {
+      streams[0].emit(frame("run.completed", 30))
+      streams[0].close()
+    })
+    await flush()
+    expect(streamSignal.aborted).toBe(true)
+    // 取消请求自带信号，不被流的生命周期连带撤回——撤回等于没取消。
+    expect(cancelSignal.aborted).toBe(false)
+    await act(async () => {
+      acknowledge({ status: "CANCELLED", outcome: "CANCELLED" })
+    })
+  })
+  it("treats a REQUESTED acknowledgement as not yet cancelled and re-reads the authoritative snapshot", async () => {
+    vi.mocked(collaborationApi.cancel).mockResolvedValueOnce({
+      status: "RUNNING",
+      outcome: "REQUESTED",
+    })
+    const { result } = renderHook(() => useCollaborationRun(scope))
+    await flush()
+    await act(async () => {
+      await result.current.cancel()
+    })
+    // 取消请求被受理 ≠ 运行已取消：以服务端快照为准。
+    expect(result.current.run?.snapshot.executionStatus).toBe("RUNNING")
+    expect(collaborationApi.snapshot).toHaveBeenCalledTimes(2)
+  })
   it("uses an authoritative terminal snapshot without opening a live stream or treating approval as execution", async () => {
     vi.mocked(collaborationApi.snapshot).mockResolvedValue(
       snapshot({ executionStatus: "SUCCEEDED", reviewStatus: "APPROVED" })

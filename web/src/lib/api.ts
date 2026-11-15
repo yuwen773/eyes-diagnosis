@@ -7,10 +7,9 @@ import { fetchEventSource } from "@microsoft/fetch-event-source"
 import {
   ApiError,
   BASE_URL,
-  notifyAuthExpired,
+  rejectNonStreamResponse,
   request,
   toPage,
-  type Envelope,
   type RawPage,
 } from "./http"
 
@@ -429,19 +428,15 @@ export async function streamChat(
     openWhenHidden: true,
 
     async onopen(response) {
-      if (!response.ok) {
-        throw new ApiError(response.status, `服务返回 ${response.status}`)
-      }
+      const contentType = response.headers.get("content-type") ?? ""
       // 匿名访问时后端抛 BusinessException(NO_AUTH_ERROR)，返回的是 200 + JSON 信封，
       // 而不是 SSE 流——把它当流读会一直等到超时。识别出来并转成未登录事件。
-      const contentType = response.headers.get("content-type") ?? ""
+      // 错误响应体同样要解析：否则 401/403 的信封不会广播未登录，会话也不会失效。
       if (contentType.includes("application/json")) {
-        const payload = (await response.json().catch(() => null)) as Envelope<unknown> | null
-        const code = payload?.code ?? -1
-        if (code === 40100 || code === 40101) {
-          notifyAuthExpired(code)
-        }
-        throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
+        await rejectNonStreamResponse(response, "对话服务拒绝了这次请求")
+      }
+      if (!response.ok) {
+        await rejectNonStreamResponse(response, `服务返回 ${response.status}`)
       }
     },
 

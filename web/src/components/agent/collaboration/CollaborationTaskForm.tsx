@@ -114,6 +114,13 @@ export function CollaborationTaskForm({
         const task = await diagnosisTaskApi.get(id, signal)
         if (signal.aborted) return
         if (task.taskId !== id) throw new Error("SCOPE_MISMATCH")
+        // 状态认不出来时不能继续：既不当成推理中，也不当成已就绪。显式停在这里。
+        if (task.status === "UNKNOWN") {
+          setPhase(
+            "影像任务状态无法识别，已停止自动受理。请刷新后重试，或联系医生确认该影像。"
+          )
+          return
+        }
         if (task.status !== "PROCESSING") {
           try {
             const snapshot = await collaborationApi.create(
@@ -234,13 +241,19 @@ export function CollaborationTaskForm({
             >
               <option value="">请选择任务</option>
               {tasks.map((task, index) => (
-                <option key={task.taskId} value={task.taskId}>
+                <option
+                  key={task.taskId}
+                  value={task.taskId}
+                  disabled={task.status === "UNKNOWN"}
+                >
                   任务 {index + 1} ·{" "}
                   {task.status === "PROCESSING"
                     ? "推理中"
                     : task.status === "RESTRICTED"
                       ? "受限"
-                      : "推理已就绪"}
+                      : task.status === "UNKNOWN"
+                        ? "状态未知（不可受理）"
+                        : "推理已就绪"}
                 </option>
               ))}
             </select>
