@@ -59,6 +59,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
 | DiagnosisTaskController / PatientAuthorizationController / PatientExplanationController / PatientFollowUpController | `/api/diagnosis-tasks/*` | 患者影像任务、保存授权、分层解释与随访 |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
+| AgentImageUploadController | `/api/agent/image/*` | Authenticated agent image upload and deletion |
 | CollaborationRunController | `/api/agent/collaboration-runs/*` | 多 Agent 协作运行：准入、授权快照/SSE、取消（默认关闭） |
 | McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |

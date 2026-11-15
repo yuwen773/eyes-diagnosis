@@ -24,7 +24,7 @@ from pathlib import Path
 STEERING = (Path("CLAUDE.md"), Path("AGENTS.md"))
 TRUTH_SOURCE = Path("CLAUDE.md")
 MIGRATIONS = Path("src/main/resources/db/migration")
-CONTROLLERS = Path("src/main/java/com/csust/eyediagnosis/controller")
+CONTROLLERS = Path("src/main/java/com/csust/eyediagnosis")
 
 HEAD_PATTERN = re.compile(r"Current head is\s+V?([0-9]+)")
 MAPPING_PATTERN = re.compile(r'@RequestMapping\("(/[^"]+)"\)')
@@ -43,7 +43,7 @@ def migration_head(root: Path):
 
 def controller_paths(root: Path):
     paths = set()
-    for path in (root / CONTROLLERS).glob("*.java"):
+    for path in (root / CONTROLLERS).rglob("*Controller.java"):
         for value in MAPPING_PATTERN.findall(path.read_text(encoding="utf-8")):
             paths.add("/api" + value)
     if not paths:
@@ -80,7 +80,8 @@ def check(root: Path):
                     errors.append(
                         f"{doc}: states V{heads[doc]}, but migrations reach V{head}"
                     )
-            missing = sorted(path for path in paths if path not in text)
+            documented = {value.rstrip("/") for value in re.findall(r"/api/[A-Za-z0-9_/-]+", text)}
+            missing = sorted(paths - documented)
             if missing:
                 errors.append(f"{doc}: missing controller paths {missing}")
         elif found:
