@@ -1,0 +1,206 @@
+diff --git a/src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java b/src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java
+index b8435cd6..e3d3aab4 100644
+--- a/src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java
++++ b/src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java
+@@ -10,0 +11 @@ import com.csust.eyediagnosis.agent.service.ChatHistoryService;
++import com.csust.eyediagnosis.agent.service.AgentImageUploadService;
+@@ -86,0 +88,3 @@ public class DiagnosisAgent {
++    @Resource
++    private AgentImageUploadService agentImageUploadService;
++
+@@ -122 +126,3 @@ public class DiagnosisAgent {
+-        String fullMessage = buildUserMessage(userMessage, imageUrls);
++        List<String> imageIds = imageUrls == null ? List.of() : imageUrls.stream()
++                .map(url -> agentImageUploadService.resolveOwnedImageId(url, userId)).toList();
++        String fullMessage = buildUserMessage(userMessage, imageIds);
+diff --git a/src/main/java/com/csust/eyediagnosis/agent/ToolStepSink.java b/src/main/java/com/csust/eyediagnosis/agent/ToolStepSink.java
+index f287fa09..52a3e7d8 100644
+--- a/src/main/java/com/csust/eyediagnosis/agent/ToolStepSink.java
++++ b/src/main/java/com/csust/eyediagnosis/agent/ToolStepSink.java
+@@ -8 +8,3 @@ import java.util.Map;
+-import java.util.concurrent.ConcurrentHashMap;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.Set;
+@@ -30,2 +32,6 @@ public final class ToolStepSink {
+-    /** tool-call id → tool name. Concurrent because graph tools may run in parallel. */
+-    private final Map<String, String> pending = new ConcurrentHashMap<>();
++    // One monitor owns transitions, audit order and sink emissions together.
++    private final Map<String, String> pending = new HashMap<>();
++    private final Set<String> started = new HashSet<>();
++    private boolean closed;
++    private boolean deliveryCancelled;
++    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ToolStepSink.class);
+@@ -42,3 +48,3 @@ public final class ToolStepSink {
+-    public void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
+-        if (toolCallId != null) pending.put(toolCallId, toolName);
+-        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
++    public synchronized void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
++        if (closed || !started.add(toolCallId)) return;
++        pending.put(toolCallId, toolName);
+@@ -48,0 +55 @@ public final class ToolStepSink {
++        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
+@@ -52 +59 @@ public final class ToolStepSink {
+-    public void finished(String toolCallId, String toolName, boolean success,
++    public synchronized void finished(String toolCallId, String toolName, boolean success,
+@@ -54 +61,2 @@ public final class ToolStepSink {
+-        if (toolCallId != null) pending.remove(toolCallId);
++        if (closed || !pending.containsKey(toolCallId)) return;
++        toolName = pending.remove(toolCallId);
+@@ -59 +66,0 @@ public final class ToolStepSink {
+-        emit(toolCallId, toolName, status, reason, errorCategory);
+@@ -63,0 +71 @@ public final class ToolStepSink {
++        emit(toolCallId, toolName, status, reason, errorCategory);
+@@ -71 +79,3 @@ public final class ToolStepSink {
+-    public void closePending() {
++    public synchronized void closePending() {
++        if (closed) return;
++        closed = true;
+@@ -76 +86 @@ public final class ToolStepSink {
+-        events.tryEmitComplete();
++        if (!deliveryCancelled) checkEmission(events.tryEmitComplete());
+@@ -80,2 +89,0 @@ public final class ToolStepSink {
+-        emit(toolCallId, toolName, ToolStepContract.Status.CANCELLED,
+-                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED);
+@@ -85,0 +94,2 @@ public final class ToolStepSink {
++        emit(toolCallId, toolName, ToolStepContract.Status.CANCELLED,
++                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED);
+@@ -89,0 +100 @@ public final class ToolStepSink {
++        if (deliveryCancelled) return;
+@@ -98 +109,12 @@ public final class ToolStepSink {
+-        events.tryEmitNext(dto);
++        checkEmission(events.tryEmitNext(dto));
++    }
++
++    private void checkEmission(Sinks.EmitResult result) {
++        if (result == Sinks.EmitResult.FAIL_CANCELLED) {
++            // Cancellation withdraws the transport only; pending calls still get
++            // their one audit terminal state when closePending runs.
++            deliveryCancelled = true;
++            log.debug("Tool status subscriber cancelled; subsequent transitions are audit-only");
++            return;
++        }
++        result.orThrow();
+diff --git a/src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java b/src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java
+index 70021507..f1ebcc3c 100644
+--- a/src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java
++++ b/src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java
+@@ -100,0 +101,14 @@ public class AgentImageUploadService {
++
++    /** Convert only an exact server-issued upload URL; never fetch a user URL. */
++    public String resolveOwnedImageId(String imageUrl, Long userId) {
++        ThrowUtils.throwIf(imageUrl == null || userId == null, ErrorCode.NO_AUTH_ERROR);
++        String key = extractOwnedObjectKey(imageUrl);
++        ThrowUtils.throwIf(!imageUrl.equals(cosClientConfig.getHost() + "/" + key)
++                        || !key.matches("agent-chat/" + userId + "/[A-Za-z0-9_-]+\\.(png|jpg)"),
++                ErrorCode.NO_AUTH_ERROR, "图片引用未获授权");
++        var task = uploadTaskMapper.selectByObjectKey(userId, key);
++        ThrowUtils.throwIf(task == null || !userId.equals(task.getUserId())
++                        || !key.equals(task.getObjectKey()) || !UploadStatus.activeCodes().contains(task.getStatus()),
++                ErrorCode.PARAMS_ERROR, "图片不存在或已删除");
++        return key;
++    }
+diff --git a/src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java b/src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java
+index 9c4a7d7a..19e7b8d3 100644
+--- a/src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java
++++ b/src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java
+@@ -133,0 +134 @@ public class CollaborationRunService implements AutoCloseable {
++        requireLiveThread(access);
+@@ -142,0 +144 @@ public class CollaborationRunService implements AutoCloseable {
++            requireLiveThread(access);
+@@ -164,0 +167 @@ public class CollaborationRunService implements AutoCloseable {
++        requireLiveThread(current);
+@@ -167,0 +171,8 @@ public class CollaborationRunService implements AutoCloseable {
++    // Chat visibility gates streaming only. Historical snapshots and medical
++    // background work retain their independent task authorization/lifecycle.
++    private void requireLiveThread(Access access) {
++        var threads = jdbc.queryForList("SELECT sessionId FROM t_agent_session WHERE BINARY sessionId=BINARY ? AND userId=? AND isDelete=0 AND status=1 AND (expiredTime IS NULL OR expiredTime>CURRENT_TIMESTAMP)",
++                access.row().get("threadId"), access.row().get("ownerUserId"));
++        if (threads.size() != 1) throw denied();
++    }
++
+diff --git a/src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java b/src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java
+index b8a99d81..aa5a286c 100644
+--- a/src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java
++++ b/src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java
+@@ -274 +274 @@ public class PatientDraftCoordinator implements AutoCloseable {
+-                            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=? WHERE taskId=?", Timestamp.from(clock.instant().plusSeconds(10)), taskId);
++                            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=TIMESTAMPADD(SECOND,10,CURRENT_TIMESTAMP(6)) WHERE taskId=?", taskId);
+@@ -422,2 +422,3 @@ public class PatientDraftCoordinator implements AutoCloseable {
+-        var until = jdbc.queryForObject("SELECT leaseUntil FROM t_patient_graph_execution WHERE taskId=?", Timestamp.class, taskId);
+-        if (until != null && until.toInstant().isAfter(clock.instant())) return null;
++        // The recovery scanner uses database time. Lease claim, validation and
++        // renewal must use that same authority, even if executor clocks differ.
++        if (Boolean.TRUE.equals(jdbc.queryForObject("SELECT leaseUntil>CURRENT_TIMESTAMP(6) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId))) return null;
+@@ -426 +427 @@ public class PatientDraftCoordinator implements AutoCloseable {
+-        jdbc.update("UPDATE t_patient_graph_execution SET leaseOwner=?,fencingToken=?,leaseUntil=? WHERE taskId=?", lease.owner, lease.token, Timestamp.from(clock.instant().plusSeconds(10)), taskId);
++        jdbc.update("UPDATE t_patient_graph_execution SET leaseOwner=?,fencingToken=?,leaseUntil=TIMESTAMPADD(SECOND,10,CURRENT_TIMESTAMP(6)) WHERE taskId=?", lease.owner, lease.token, taskId);
+@@ -431,2 +432,2 @@ public class PatientDraftCoordinator implements AutoCloseable {
+-        var current = jdbc.queryForList("SELECT taskId FROM t_patient_graph_execution WHERE taskId=? AND leaseOwner=? AND fencingToken=? AND leaseUntil>? FOR UPDATE",
+-                taskId, lease.owner, lease.token, now());
++        var current = jdbc.queryForList("SELECT taskId FROM t_patient_graph_execution WHERE taskId=? AND leaseOwner=? AND fencingToken=? AND leaseUntil>CURRENT_TIMESTAMP(6) FOR UPDATE",
++                taskId, lease.owner, lease.token);
+diff --git a/web/src/components/agent/collaboration/collaborationLabels.ts b/web/src/components/agent/collaboration/collaborationLabels.ts
+index e2c2fe14..6110c4c5 100644
+--- a/web/src/components/agent/collaboration/collaborationLabels.ts
++++ b/web/src/components/agent/collaboration/collaborationLabels.ts
+@@ -64,6 +64,6 @@ export function summaryLabel(summary: string, limitationCount: number) {
+-  if (summary.startsWith("CRITIC_")) {
+-    const action = summary.slice("CRITIC_".length)
+-    return action === "SUPPLEMENT"
+-      ? `安全复核要求补充证据 · 质疑 ${limitationCount} 条`
+-      : `安全复核要求修订 · 质疑 ${limitationCount} 条`
+-  }
++  if (summary === "CRITIC_NONE")
++    return `安全复核未提出异议 · 质疑 ${limitationCount} 条`
++  if (summary === "CRITIC_SUPPLEMENT")
++    return `安全复核要求补充证据 · 质疑 ${limitationCount} 条`
++  if (summary === "CRITIC_REWRITE")
++    return `安全复核要求修订 · 质疑 ${limitationCount} 条`
+diff --git a/web/src/hooks/useCollaborationRun.ts b/web/src/hooks/useCollaborationRun.ts
+index 848075fa..488c36a9 100644
+--- a/web/src/hooks/useCollaborationRun.ts
++++ b/web/src/hooks/useCollaborationRun.ts
+@@ -134,0 +135,2 @@ class CollaborationSession {
++            const previous = this.view.run!
++            const next = collaborationReducer(previous, frame)
+@@ -136 +138 @@ class CollaborationSession {
+-              run: collaborationReducer(this.view.run!, frame),
++              run: next,
+@@ -141 +143,2 @@ class CollaborationSession {
+-            repairs = 0
++            // A heartbeat or replayed fact proves transport liveness only.
++            if (next.sequence > previous.sequence) repairs = 0
+diff --git a/web/src/pages/DoctorReviewsPage.tsx b/web/src/pages/DoctorReviewsPage.tsx
+index 3c905d27..39ac9573 100644
+--- a/web/src/pages/DoctorReviewsPage.tsx
++++ b/web/src/pages/DoctorReviewsPage.tsx
+@@ -53,0 +54,28 @@ function ReviewMessages({ messages }: { messages: unknown[] }) {
++            {message.role === "VISION" && message.state === "COMPLETED" && (
++              <div aria-label="冻结 Vision 结果">
++                {typeof result.summary === "string" && <p>{result.summary}</p>}
++                {Array.isArray(result.limitations) && (
++                  <ul aria-label="影像限制">
++                    {result.limitations
++                      .filter(
++                        (value): value is string => typeof value === "string"
++                      )
++                      .map((value, i) => (
++                        <li key={i}>{value}</li>
++                      ))}
++                  </ul>
++                )}
++                {typeof result.reanalysisSuggestion === "string" && (
++                  <p>
++                    重拍与复核建议：
++                    {result.reanalysisSuggestion === "REVIEW_QUALITY"
++                      ? "重新核对影像质量，必要时重拍"
++                      : result.reanalysisSuggestion === "NONE"
++                        ? "未提出重拍建议"
++                        : result.reanalysisSuggestion === "RECAPTURE"
++                          ? "建议重新拍摄影像"
++                          : result.reanalysisSuggestion}
++                  </p>
++                )}
++              </div>
++            )}

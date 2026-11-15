@@ -1,3 +1,5 @@
+> **2026-11-15 R1.1 更正：当前总体 REQUEST_CHANGES。** 七项整改、Graph 确认缺陷与未解历史因果、最终验证及新 HEAD 以 [R1.1 整改报告](r11-remediation.md) 为准。本文以下是历史 R1 记录；“继承失败所以只是夹具问题”的结论已撤回，历史 INTEGRATION_PASS 不构成当前 REVIEW_PASS。
+
 # Iris · Multi-Agent Integration R1 交付报告
 
 > 任务：在 Iris 2.1 冻结 UI 的基础上，把 PR #68 的 Java 多 Agent 运行时与独立 React 协作
