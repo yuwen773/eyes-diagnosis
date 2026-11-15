@@ -419,7 +419,7 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | 协作浏览器 + 双主题冻结布局 | R1.1 候选 | 31/31 PASS | 合成 HTTP/SSE |
 | 默认关闭浏览器 / 真实 Java 浏览器 | R1.1 候选 | 1/1、5/5 PASS | — |
 | Hosted CI · 本分支第 1 轮 | `verify` @ `69233c8d` | **15 ✅ / 5 ❌**（`docs-contract`、`issue17/18/19-mysql`、`backend-unit`） | 两个根因已在 `b5613166` 修复，见 §4.5 |
-| Hosted CI · 本分支第 2 轮 | `verify` @ `b5613166` | **20/20 ✅** | 同一 SHA 的本地 `verify.sh` pass 3 仍 ❌（§3）——环境差异，不是产品差异 |
+| Hosted CI · 本分支第 2 轮 | `verify` @ `b5613166` | **20/20 ✅** | 同一 SHA 的本地 `verify.sh` pass 3 仍 ❌（§3）。归因是**来自容器内复跑的推断**（§3.2），不是隔离实验；本节不据此断言「环境差异已证明」 |
 | Hosted CI · PR #68 原线 | `codex/realtime-product-acceptance` @ `10173ae9` | 20/20 job SUCCESS（连续 12 次全绿） | 历史参照 |
 
 ### 4.2 UI 冻结与生产门禁
@@ -449,7 +449,7 @@ GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内
 | **未闭环（不是缺陷，是证据边界）** | **历史 Docker 现场「约 3 秒无 SQL」的确切成因** | **UNEXPLAINED**：原始 general log 与数据库已被第一次审查删除。机制已确立并有确定性回归，但**历史现场本身不可再取证**（§2） |
 | P2（夹具脆弱点） | 隔离库套件的时区耦合 | `scripts/verify.sh` 第三遍把 JVM 与服务端时区成对固定为 UTC；其余列仍未统一走 SQL 侧时钟 |
 | P2（覆盖缺口） | `run.restricted` 事件缺完整应用级用例 | 代码路径与 `run.failed` 共用；隔离库套件覆盖停止语义，完整应用级未单独构造 RESTRICTED 输入 |
-| **P2（新发现，未修）** | **创建响应的游标可能跳过 `run.started`** | `create()` 先 `kick`（`:110`）再 `snapshot`（`:111`），`snapshot` 在 `:118` 读 `seq` 签发游标，回放是 `seq>?`（`:147`）。协调器若在这两步之间写入 `run.started`（seq 2），创建响应的游标即为 2，患者回放永远收不到该事件。hosted CI #1 的 `FullApplicationAcceptanceTest…:306` 与之逐项吻合（本机 3/3 通过、CI #2 通过）。**未删测试、未放宽断言**；修复需改产品代码，留待合并决策。见 §4.5 |
+| **P2（新发现，未修）** | **创建响应的游标可能跳过 `run.started`** | `create()` 先 `kick`（`:110`）再 `snapshot`（`:111`），`snapshot` 在 `:118` 读 `seq` 签发游标，回放是 `seq>?`（`:147`）。协调器若在这两步之间写入 `run.started`（seq 2），创建响应的游标即为 2，患者回放永远收不到该事件。hosted CI #1 与 #3 的 `FullApplicationAcceptanceTest…:306` 与之逐项吻合（本机 4 份日志 7/7 通过；CI 4 次运行失败 2 次）。前端 `useCollaborationRun.follow()`（`:109`/`:117` 重取快照、`:131` 起流）是同一缺陷的第二个实例，水位更晚。**未删测试、未放宽断言**；修复需改产品代码，留待合并决策。见 §4.5 |
 | MINOR（纵深防御） | `SameOriginFilter` 不比对 scheme | `portSuffix` 把 80/443 归一为空串，`Origin: http://host` 与发往 `https://host` 的请求被判为同源。`session.cookie.same-site=lax` + 现代浏览器的 Schemeful Same-Site 使跨 scheme 的 POST 不带会话 Cookie，**不构成可利用的 CSRF**；但 `SameOriginFilterTest` 没有 scheme 不匹配用例。登记为已知 MINOR，本轮不改代码（改过滤器需新增用例并重跑门禁） |
 | 环境 | Docker 已恢复并实跑 | `scripts/verify.sh` 本机 **pass 1 ✅ / pass 2 ✅ / pass 3 ❌ 3 条**，**不记 PASS**；3 条归因为跨时钟域（§3.2） |
 | 环境（未定性） | 容器内整类顺序执行时的有界等待抖动 | `heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders`：整类跑失败 1 次、单条复跑 3/3 通过；**近因 UNEXPLAINED**，未改断言、未延超时（§3.2） |
@@ -511,6 +511,7 @@ typecheck、lint、build、Playwright）为二手引用；`backend-unit` 的 618
 |---|---|---|
 | #1 `43722307612` | `69233c8d` | **15 ✅ / 5 ❌** |
 | #2 `43722586269` | `b5613166` | **20/20 ✅** |
+| #3 `43723396362` | `51b42c10` | **19 ✅ / 1 ❌**（`backend-unit`，与 #1 同一个未修复竞态） |
 
 **#1 的 5 个失败，分三类**：其中 4 个 job（`docs-contract`、`issue17/18/19-mysql`）是**门禁与
 文档契约**问题，已在 `b5613166` 修复（未触及 `src/main`、`src/test`、`web/`、`frontend/`、
@@ -537,11 +538,14 @@ typecheck、lint、build、Playwright）为二手引用；`backend-unit` 的 618
 
 机制（读代码可确定）：`create()` 在事务提交后先 `kick(runId)`（`:110`）**再**
 `snapshot(runId, userId)`（`:111`）；`snapshot()` 在 `:118` 读 `seq` 并在 `:124` 据此签发游标；
-回放查询是 `WHERE runId=? AND seq>? AND seq<=?`（`:147`，**严格大于**）。协调器若在 `kick` 与
-这次读之间写入 `run.started`（seq 2），创建响应的游标就是 2，客户端从该游标续读**永远看不到**
-seq 2 的 `run.started`——与失败消息"缺 `run.started`、其余事件齐全"逐项吻合。
+回放查询是 `WHERE runId=? AND seq>? AND seq<=?`（`:147`，**严格大于**）——游标语义是「最后已见 = N」，
+`run.accepted` 是 seq 1（`V25` 里 `seq` 默认 0，`append()` 自增后插入）。协调器若在 `kick` 与
+这次读之间写入 `run.started`（`CollaborationEvents.java:55`，seq 2），创建响应的游标就是 2，
+客户端从该游标续读**永远看不到** seq 1 与 seq 2——失败消息里实际收到的正是 `agent.started`
+起的后续事件，与该游标值逐项吻合（用例只断言 `run.started`，故「其余事件齐全」只就其清单成立）。
 
-时序依赖：本机三次通过、CI #1 失败、CI #2 通过。判定为**产品侧事件丢失**，不是断言过严；
+时序依赖：本机 4 份日志各记录 `FullApplicationAcceptanceTest` 7/7 通过；**CI 4 次运行失败 2 次**
+（`69233c8d`、`51b42c10`），`b5613166` 通过。判定为**产品侧事件丢失**，不是断言过严；
 **未删除测试、未放宽断言、未重跑掩盖**。修复方向（本轮**未实施**，需改产品代码，留待合并决策）：
 创建响应的游标钉在创建事务内的 seq（`run.accepted` 之后）再 `kick`。
 
@@ -559,7 +563,7 @@ seq 2 的 `run.started`——与失败消息"缺 `run.started`、其余事件齐
 
 **审查后的增量核对（同一审查员，只读）**
 
-审查通过后本分支新增 4 个提交，内容全部是文档与门禁自测，**没有业务代码或断言变更**：
+审查通过后本分支新增 5 个提交，内容全部是文档与门禁自测，**没有业务代码或断言变更**：
 
 | 提交 | 内容 | 审查结论 |
 |---|---|---|
