@@ -1,5 +1,8 @@
 # Iris Multi-Agent R1.2 · 可靠性与审查收口
 
+> 后续当前记录：[R1.3 UI 基线同步与游标修复](r13-baseline-sync.md)。R1.2 的创建游标竞态与
+> steering 扫描缺口已修复；本轮完整验证三遍均绿。本文保留 R1.2 的历史证据与残余风险。
+
 日期：2026-11-15。集成分支 `feat/iris21-multiagent-integration`，工作树
 `D:\Work\code\eye-diagnosis\.claude\worktrees\iris21-multiagent`。
 冻结 UI tag `iris-ui-v2.1-freeze-20261115`（`80f53f7f`）未被本轮触碰。
