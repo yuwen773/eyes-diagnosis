@@ -16,7 +16,7 @@
 | WP-C 产品时钟缺陷 | **已闭环**（交付分支提交 `8cc9f9fe`，对应整改分支的 `100a34fb`；领取/校验/续约统一到 MySQL `CURRENT_TIMESTAMP(6)`），含受控时差与快时钟竞争者负例 |
 | WP-C 历史 Docker 静默的根因 | **机制已确立；历史现场本身判定为 UNEXPLAINED**（原始 general log 与数据库已被第一次审查删除，无法再取原始证据）。见 §2 |
 | 本轮发现的夹具级假失败 | 已定性并修复（隔离库夹具未池化 → 池化，`464b9142`），并新增确定性因果回归 `GraphExecutionTest.blockedConnectionAcquisitionSilencesCoordinatorSqlAndExpiresTheLease` |
-| Docker | **BLOCKED_ENV**（本机 Docker Desktop 的 WSL2 引擎失效，`scripts/verify.sh` 本机跑不完）。不是 PASS |
+| Docker | 会话中途恢复，**已实跑 `scripts/verify.sh`**：pass 1 ✅ 611、pass 2 ✅ 7/7、pass 3 ❌ 302 跑 / 3 失败。3 条失败经控制变量实验判定为**跨时钟域（WSL2↔Windows）的测试前置条件**，非产品缺陷；但**本机 verify.sh 未全绿，不记 PASS**。见 §3 |
 | 生产医疗协作 | 仍 **BLOCKED**，本轮不启用 |
 | 推送/合并/部署 | 全程未推送、未合并到 `ui`/`master`、未部署 |
 | 评审口径 | **不能因测试全绿自行认定 REVIEW_PASS**；见 §4.4 的独立审查结论 |
@@ -161,6 +161,9 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 
 ⇒ 本机这一轮 pre-fix 运行**没有**出现「连接已建立却迟迟不发 SQL」的签名（至少没有持续 ≥ 1 s 的）。
 
+> 这个否定结果**不能**读成「没有静默」：§2.6 的判别实验证明，卡在握手期的客户端根本不会被写出
+> `Connect` 行，所以上述检索只能排除「握手完成之后才卡住」这一类。§2.4(d) 的线程栈正是握手期。
+
 **(d) 线程栈：协调器确实会卡在物理连接建立里。** 14 份 jstack 中有 **3 份**抓到
 `collaboration-coordinator` 线程：
 
@@ -244,12 +247,27 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 是否就是这一形状，因证据缺失**不能断言**。因此结论写成「机制已确立 + 历史现场 UNEXPLAINED」，
 而不是「历史根因已定位」。
 
-**闭环所需步骤（若要真正结案）**：在同一 Docker 场景重跑一次 `GraphExecutionTest` 整类，
-并同时打开 MySQL general log 与周期线程栈（脚本：`scripts/verify.sh` 第三遍已具备该组合），
-即可在同一现场同时拿到「Connect 而无 Query」与协调器线程栈。本轮的实验脚本已经跑通，
-只差一个能用的 Docker 引擎。
+**原定的「闭环步骤」已执行，但它想取的那个签名按构造取不到。** 原计划是在同一 Docker 场景
+重跑整类，同时开 general log 与线程栈，拿到「`Connect` 之后长时间没有 Query」。本轮用
+Docker 恢复后的 `mysql:8.0.26`（`--general-log=1`）做了判别实验，结论是这个签名**不可能存在**，
+因此它的缺席**不是证据缺失**：
 
-### 2.7 本轮两条环境干扰（均已定性，非产品缺陷）
+- 实验：用一个**只建立 TCP、一个字节都不发**的连接对 3306 保持 6 秒
+  （`bash -c 'exec 3<>/dev/tcp/127.0.0.1/3306; sleep 6'`，13:23:11Z–13:23:18Z，期间整类测试正在跑）。
+- 结果：该窗口内 general log **没有任何一行属于这个连接**；连接号序列在 **26 与 28 之间跳过了 27**，
+  而 27 在整份日志里 **0 行**（26 有 4 行、28 有 237 行）——服务端确实为它分配了连接号，
+  却没有记录任何东西。
+- 含义：MySQL 只在**握手与认证完成之后**才写 `Connect` 行。客户端卡在连接获取 / TLS 握手时，
+  服务端看到的就是**什么都没有**——这与历史现场的「协调器约 3 秒无 SQL」形状一致。
+  同一场景里所有真实连接都记为 `Connect … using SSL/TLS`，与 §2.4(d) 抓到的 TLS 握手栈帧同一条路径。
+- 推论：§2.4(c) 那条「`Connect` 之后 ≥ 1 s 才发出第一条语句：0 个」的检索，**只排除**了
+  「握手完成之后才卡住」这一类，对「握手期卡住」不构成反证；把它读成「没有静默」是错的。
+
+**因此历史现场不再有可执行的闭环步骤**：它缺的是原始数据库与 general log，而按上面的实验，
+即便当时开着 general log，一个卡在握手里的客户端也不会留下可检索的行。本轮据此把结论限定为
+「机制已确立 + 历史现场 UNEXPLAINED」，**不**把它升级成「历史根因已定位」。
+
+### 2.7 本轮三条环境干扰（均非产品缺陷；第 3 条的近因待定）
 
 本轮集成候选的三遍验证出现过两次失败，**都不是产品回归**，逐条留证：
 
@@ -272,17 +290,88 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
    即失败现场正是「服务端 SYSTEM + JVM UTC」组合。**教训**：`scripts/verify.sh` 第三遍的
    `-Duser.timezone=UTC` 与服务端 `time_zone` 必须成对设置，且**同一台机器上不得并发跑两套
    三遍验证**（任一进程退出时的还原会污染另一进程）。
+3. **Docker 实跑 pass 3 的 3 条失败**：与第 2 条**不同源**——这次的偏差是 1–3.5 秒级（不是 8 小时），
+   来自 WSL2 内核时钟与 Windows 宿主时钟的两个时钟域。控制变量实验（JVM 置于容器内）让这 3 条
+   全部转绿，但同时暴露了一条有界等待抖动，近因未定位。详见 §3.2。
 
 ---
 
-## 3. 任务三：Docker 环境阻断与遗留目录
+## 3. 任务三：Docker 环境与遗留目录（会话中途恢复，已实跑）
+
+**状态变化**：本会话前期 Docker Desktop 的 WSL2 引擎确实失效（`docker info` 返回
+`Error response from daemon: Docker Desktop is unable to start`），当时 `scripts/verify.sh`
+在创建第一个 Redis 容器时就退出，记为 **BLOCKED_ENV**。**会话中途 Docker 恢复可用**，
+本轮因此在恢复后**真跑了 `scripts/verify.sh`**（不是等价替代）。下面的结论建立在这次实跑上，
+BLOCKED_ENV 只作为过程事实保留。
+
+### 3.1 `scripts/verify.sh` 实跑结果（一次性 `mysql:8.0.26` + `redis:7-alpine`，`SPRING_PROFILES_ACTIVE=ci`）
+
+| 遍 | 结果 |
+|---|---|
+| pass 1/3（全量单元 + `contextLoads`） | **PASS** — `Tests run: 611, Failures: 0, Errors: 0, Skipped: 302`。`FullApplicationAcceptanceTest` 在 `ci` profile 下连的就是容器里的 `jdbc:mysql://127.0.0.1:33306/diagnosis_ci`（日志可查），7/7 在其中 |
+| pass 2/3（MySQL 集成门禁） | **PASS** — `Tests run: 7, Failures: 0, Errors: 0, Skipped: 0` |
+| pass 3/3（12 个隔离库套件） | **FAIL** — `Tests run: 302, Failures: 3, Errors: 0, Skipped: 0` |
+
+因此**本机 `scripts/verify.sh` 未全绿，不记 PASS**。三条失败全部在 `GraphExecutionTest`：
+
+| 用例 | 断言消息 |
+|---|---|
+| `databaseLeaseSurvivesHostClockSkew(int)[1]`（`:503`） | `Controlled database/host skew: -9189` |
+| `databaseLeaseSurvivesHostClockSkew(int)[2]`（`:503`） | `Controlled database/host skew: 2811` |
+| `processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[7]`（`:426`） | `expected: <TOTAL_TIMEOUT> but was: <null>` |
+
+其余 11 个隔离库套件全绿（`CollaborationRunTest` 32、`DoctorReviewApiTest` 36、
+`PatientAuthorizationApiTest` 37、`PatientDraftTest` 41、`PatientExplanationApiTest` 37、
+`PatientFollowUpApiTest` 37、`CoordinationMySqlTest` 14 …）。
+
+### 3.2 这 3 条失败是什么：跨时钟域的测试前置条件，不是产品缺陷
+
+`databaseLeaseSurvivesHostClockSkew` 的第一步是**构造**一个受控时差并断言它成立：
+`Clock.offset(Clock.systemUTC(), ±6 s)` 与数据库 `CURRENT_TIMESTAMP(6)` 的实测差必须落在
+`±6000 ± 1000 ms` 内。断言消息给出的是**实测值**：`-9189` 与 `2811` 相对各自的目标
+（`-6000` / `+6000`）**同向偏离 3189 ms**——即那一刻数据库时钟比宿主 JVM 慢 3189 ms。
+另一轮单独的 `GraphExecutionTest` 复跑给出 `-8463` / `3545`，同样同向偏离 **2463 ms**。
+
+这不是测试写错，而是本机 Docker 的时钟拓扑：MySQL 在 WSL2 虚拟机里，JVM 在 Windows 宿主上，
+两者是**两个时钟域**。实测（同一分钟内的两次独立取样）：
+
+- 容器时钟 vs Windows 宿主时钟：**+1358 ms**（容器在前）；失败运行期由断言反推：**−3189 ms**
+  与 **−2463 ms**。符号与量级都在 1–3.5 s 之间漂移。
+- 两个容器共享网络命名空间时（`--network container:…`）：两次独立 `docker run` 取样相差 479 ms
+  ——同一内核时钟。
+
+**控制变量实验**：把 JVM 放进与 MySQL **同一时钟域**（`--network container:iris-r12-mysql`，
+URL 仍满足夹具硬编码的 `jdbc:mysql://127.0.0.1:<port>/<schema>` 正则），跑同一批 12 个套件：
+
+- `GraphExecutionTest` 的 3 条时钟/截止时间用例**全部通过**（`databaseLeaseSurvivesHostClockSkew[1]/[2]`、
+  `processDeath…[JOIN:DEADLINE]`）；
+- 但整批出现 **1 条别的失败**：`heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders`
+  ——`Bounded condition did not become true`，落在 `await(GraphExecutionTest.java:157)` ← `:522`
+  那个 10 秒有界等待上（该用例把租约压到 `NOW+3` 后等心跳把它推到 `> NOW+5`）。
+  同一用例在原生 pass 3 与 Docker pass 3 里**都是通过的**。整批结果 `302 / 1 failure / 0 error`。
+  随后在**同一容器、同一 schema** 上把这条用例**单独复跑 3 次：3/3 通过**。因此它只在
+  **整类顺序执行**时出现，是顺序/状态相关的抖动，**近因未定位（UNEXPLAINED）**——
+  本轮不把它写成「已解释」，也不因此改动任何既有断言或超时。
+
+结论边界：控制变量实验**支持**「Docker 那 3 条失败 = 跨时钟域」——唯一改动的变量就是时钟域，
+3 条失败随之消失；它**不**说明这批测试在本机容器里已经稳定，因为同一次运行暴露了另一个
+有界等待的抖动，其近因**未定位（UNEXPLAINED）**。本轮**没有**删除任何测试、放宽任何断言、
+延长任何超时；上面两个数字（3 条 / 1 条）都是原样记录的。
+
+### 3.3 为什么 CI 上没有这个问题
+
+GitHub runner 上的 JVM 与 service container 在同一台虚拟机、同一内核时钟域，不存在 WSL2↔Windows
+的偏移；产品代码本身也不跨时钟域做比较——`deadlineAt` 由 JVM 时钟写入、由 JVM 时钟比较
+（`:494` / `:727`，自洽），租约三列已在 WP-C 统一到 MySQL `CURRENT_TIMESTAMP(6)`。
+本轮**没有**据此宣称「Docker 三遍通过」，也**没有**据此宣称 hosted CI 已覆盖本分支的修复
+（本轮提交仍未推送，见 §4.1）。
+
+### 3.4 遗留目录
 
 | 项 | 事实 |
 |---|---|
-| Docker 状态 | `docker info` 返回 `Error response from daemon: Docker Desktop is unable to start`；WSL2 引擎失效，重启 WSL 需要管理员权限，本会话没有 |
-| `scripts/verify.sh` | **BLOCKED_ENV**——它在创建第一个 Redis 容器时就报错退出。**不记 PASS** |
-| 本机替代 | MySQL 8.0.26（Windows 服务 `MySQL80`，端口 3307，与 `mysql:8.0.26` 镜像同引擎版本）+ 原生 Redis（端口 36419）+ 最小 Chroma HTTP 夹具（只应答 `ChromaVectorStore` 初始化时的那一次 collection GET，其余 501；**不做向量检索、不调嵌入，不等于真实 Chroma/RAG 验收**） |
 | 遗留目录 | `iris-r11-remediation/target/r11-runtime/mysql`（一次性 MySQL 数据目录，247 MB，gitignored）。本轮用普通 `rm -rf`（非强制、未绕过任何策略）删除，退出码 0；该目录不属于交付分支，也不含任何证据文件（其中的 `general_log.CSV` 本就是 0 字节）。剩余 `target/r11-runtime` 41 MB 为日志与 surefire 报告，保留未动 |
+| 本轮自建容器 | `iris-r12-mysql` / `iris-r12-clockskew` / `iris-r12-chroma`（诊断用，全部不在交付物内）。取证完成后用 `docker rm -f` 清理，清理结果见 §4.3 |
 
 **合法且安全的清理方案（备查，本轮只执行了第一条）**
 
@@ -302,11 +391,14 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 
 | 门禁 | 运行方式 | 结果 | 边界 |
 |---|---|---|---|
-| Java 隔离库（12 套件同 JVM） | `scripts/verify.sh` 第三遍的等价替代，本机原生 MySQL 8.0.26 + 原生 Redis | **PASS** — `Tests run: 302, Failures: 0, Errors: 0, Skipped: 0`（含 `GraphExecutionTest` 37 条，其中新增第 37 条为确定性因果回归） | 不是 Docker 容器运行；`scripts/verify.sh` 本机 BLOCKED_ENV |
+| Java 隔离库（12 套件同 JVM）· 原生替代 | `scripts/verify.sh` 第三遍的等价替代，本机原生 MySQL 8.0.26 + 原生 Redis | **PASS** — `Tests run: 302, Failures: 0, Errors: 0, Skipped: 0`（含 `GraphExecutionTest` 37 条，其中新增第 37 条为确定性因果回归） | 原生 MySQL 与 JVM 同一时钟域。Docker 实跑见下面两行 |
+| Java 隔离库 · **真实 Docker**（`scripts/verify.sh` pass 3/3） | 一次性 `mysql:8.0.26` + `redis:7-alpine` | **FAIL** — `Tests run: 302, Failures: 3, Errors: 0, Skipped: 0`（3 条全部在 `GraphExecutionTest`） | 跨时钟域（WSL2↔Windows）导致的前置条件失败，见 §3.2；**未删除测试、未放宽断言、未延长超时** |
+| Java 隔离库 · 控制变量复跑（JVM 与 MySQL 同时钟域） | JVM 放进 `--network container:iris-r12-mysql` 的 Linux 容器，跑同一批 12 套件 | **302 跑 / 1 失败 / 0 error** — 上述 3 条时钟用例**转绿**；另 1 条有界等待抖动（`heartbeatRenewsLease…`），同容器单条复跑 **3/3 通过**，近因 UNEXPLAINED | 唯一改动变量是时钟域；不据此宣称「容器里稳定」 |
 | Java 全量单元 + `contextLoads` + 完整应用级验收 | 第一遍等价替代 | **PASS** — `Tests run: 611, Failures: 0, Errors: 0, Skipped: 302`（`FullApplicationAcceptanceTest` 7/7 在其中） | 隔离库套件在此遍按设计跳过 |
 | CI `backend-unit` job 的本地等价跑法 | `mvn test`（不带 `-Dtest` 过滤）+ 只设 `SPRING_PROFILES_ACTIVE=ci`、不给任何隔离库 URL，随后跑 `backend-unit` 门禁 | **PASS** — `Tests run: 618, Failures: 0, Errors: 0, Skipped: 309`（302 + 7，按设计全部 skipped）；门禁 `skip gate passed` | 与 CI job 同样的命令与环境变量集合；容器换成原生服务（§3） |
 | Java MySQL 集成门禁 | 第二遍等价替代 | **PASS** — 7/7 | — |
-| 完整三遍 | 连续执行 | 全绿（pass1 611 / pass2 7/7 / pass3 302），在交付 SHA `5d7afd11` 上复跑 | — |
+| 完整三遍 · 原生替代 | 连续执行 | 全绿（pass1 611 / pass2 7/7 / pass3 302），在交付 SHA `5d7afd11` 上复跑 | — |
+| 完整三遍 · **真实 Docker**（`scripts/verify.sh` 原样） | 一次性 MySQL 8.0.26 + Redis 7 容器 | **pass1 ✅ 611 / pass2 ✅ 7/7 / pass3 ❌ 3 条**（§3.1） | **不记 PASS**；3 条失败经控制变量实验归因为跨时钟域（§3.2） |
 | pass 3 等价组合单独复跑 | 12 套件同 JVM | 2/2 PASS（302/302） | — |
 | 精确计数门禁 · `graph-execution` | `python scripts/check_surefire_skips.py target/surefire-reports-pass3 graph-execution` | **PASS** — `ok: …GraphExecutionTest (37 cases, 0 skipped)` + `skip gate passed: no unexpected skipped or dropped tests` | Graph 用例数 36 → **37**（同步更新，**不是放宽**：该门禁要求这些用例必须全部跑到） |
 | 精确计数门禁 · `backend-unit` | 按 CI `backend-unit` job 的口径本地复跑：`mvn test`（**不**带 `-Dtest` 过滤）+ 只设 `SPRING_PROFILES_ACTIVE=ci`，**不**给任何隔离库 URL，然后 `python scripts/check_surefire_skips.py target/surefire-reports backend-unit` | **PASS** — `skip gate passed` | 本地替代：MySQL/Redis/Chroma 用本机原生服务替掉一次性容器（§3） |
@@ -320,8 +412,10 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 ### 4.2 UI 冻结与生产门禁
 
 - 冻结 UI tag `iris-ui-v2.1-freeze-20261115`（`80f53f7f`）**未被本轮触碰**；本轮改动只落在
-  `src/test/java/.../GraphExecutionTest.java`、`scripts/check_surefire_skips.py` 与
-  `docs/testing/iris21-multiagent-integration-20261115/` 下的报告。
+  `pom.xml`（HikariCP 测试依赖）、`scripts/check_surefire_skips.py`、
+  三个隔离库夹具文件（`GraphExecutionTest.java` / `CollaborationRunTest.java` / `PatientDraftTest.java`）
+  与 `docs/testing/iris21-multiagent-integration-20261115/` 下的报告——
+  `git diff --stat 58955939..HEAD` 的全部 7 个文件即这些，**没有一行业务代码（`src/main/**`）改动**。
 - `web/` 目录本轮**零改动**：`git diff --stat 0c3d0aec..5d7afd11 -- web/` 为空，
   且 `git diff origin/ui...58955939 -- web/` 与 `git diff origin/ui...HEAD -- web/` 逐字节相同
   （65 文件 / +7866 / −51）。
@@ -342,7 +436,8 @@ R1.1 报告记录的历史现象：MySQL general log 显示，用例把 `leaseUn
 | **未闭环（不是缺陷，是证据边界）** | **历史 Docker 现场「约 3 秒无 SQL」的确切成因** | **UNEXPLAINED**：原始 general log 与数据库已被第一次审查删除。机制已确立并有确定性回归，但**历史现场本身不可再取证**（§2） |
 | P2（夹具脆弱点） | 隔离库套件的时区耦合 | `scripts/verify.sh` 第三遍把 JVM 与服务端时区成对固定为 UTC；其余列仍未统一走 SQL 侧时钟 |
 | P2（覆盖缺口） | `run.restricted` 事件缺完整应用级用例 | 代码路径与 `run.failed` 共用；隔离库套件覆盖停止语义，完整应用级未单独构造 RESTRICTED 输入 |
-| 环境 | Docker Desktop 失效 | `scripts/verify.sh` 本机 BLOCKED_ENV（§3） |
+| 环境 | Docker 已恢复并实跑 | `scripts/verify.sh` 本机 **pass 1 ✅ / pass 2 ✅ / pass 3 ❌ 3 条**，**不记 PASS**；3 条归因为跨时钟域（§3.2） |
+| 环境（未定性） | 容器内整类顺序执行时的有界等待抖动 | `heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders`：整类跑失败 1 次、单条复跑 3/3 通过；**近因 UNEXPLAINED**，未改断言、未延超时（§3.2） |
 
 ### 4.4 独立审查结论
 
