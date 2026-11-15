@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -100,6 +101,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Import(FullApplicationAcceptanceTest.DeterministicSeams.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class FullApplicationAcceptanceTest {
 
     private static final String REFERENCE_ID = "a11ce0de-0000-4000-8000-00000000a11c";
