@@ -529,6 +529,114 @@ class GraphExecutionTest {
         } finally { release.countDown(); }
     }
 
+    /**
+     * Causal proof for the historical "the coordinator issued no SQL for about three seconds" symptom.
+     *
+     * <p>The symptom can only be produced by a coordinator thread that is stopped <em>before</em> any
+     * statement reaches the server: a lock wait would still show the waiting statement in the general
+     * log, and the lease renewal runs inline on the caller thread, so there is no heartbeat task that
+     * could be cancelled or missed. This test injects exactly that condition - a blocked connection
+     * acquisition, the shape of a stalled TLS handshake - and asserts the whole chain:
+     *
+     * <ol>
+     *   <li>while the coordinator thread waits for a connection it executes no SQL at all;</li>
+     *   <li>the renewal therefore never happens, so the deliberately shortened lease expires against
+     *       the database clock;</li>
+     *   <li>the run is fenced - the executor cannot renew, cannot validate the lease any more and
+     *       therefore never completes the run, instead of silently succeeding.</li>
+     * </ol>
+     *
+     * <p>The stall is injected, so the chain is deterministic rather than timing dependent: the
+     * coordinator stays blocked until the test releases it, the lease expiry is awaited instead of
+     * slept on, and the two sleeps are only observation windows (the assertions hold for any window
+     * length). No timeout is stretched and no existing assertion is weakened.
+     */
+    @Test void blockedConnectionAcquisitionSilencesCoordinatorSqlAndExpiresTheLease() throws Exception {
+        var entered = new CountDownLatch(2); var release = new CountDownLatch(1);
+        answer = p -> { entered.countDown(); uninterruptible(release); return valid(p); };
+        var stalled = new StallingDataSource(jdbc.getDataSource());
+        try {
+            streams.close(); runs.close(); coordinator.close();
+            var stallingJdbc = new JdbcTemplate(stalled);
+            // The event writer must share the very same data source as the run service, otherwise
+            // append() would read through a second connection outside the caller's transaction and
+            // block on the row that transaction is still holding.
+            events = new CollaborationEvents(stallingJdbc);
+            ChatModel model = prompt -> { calls.incrementAndGet(); return new ChatResponse(List.of(new Generation(new AssistantMessage(answer.apply(prompt))))); };
+            coordinator = new PatientDraftCoordinator(stallingJdbc, new ControlledEvidenceRetriever(stallingJdbc), model);
+            coordinator.setCollaborationEvents(events);
+            runs = new CollaborationRunService(stallingJdbc, events, new CollaborationCursor(KEY), coordinator);
+            CollaborationRunTest.enableFixture(runs); runs.setGraphEnabled(true);
+            streams = new CollaborationStreams(runs);
+
+            var run = create();
+            assertTrue(entered.await(5, TimeUnit.SECONDS));
+            await(() -> jdbc.queryForObject("SELECT leaseUntil>TIMESTAMPADD(SECOND,5,NOW(6)) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId));
+            // Arm the stall and wait until the coordinator is actually blocked inside connection
+            // acquisition. Only then is the renewal guaranteed to be impossible.
+            stalled.arm("collaboration-coordinator");
+            assertTrue(stalled.awaitStalled(5), "The coordinator thread must block on connection acquisition");
+            jdbc.update("UPDATE t_patient_graph_execution SET leaseUntil=TIMESTAMPADD(SECOND,3,NOW(6)) WHERE taskId=?", taskId);
+            long before = stalled.statementsBy("collaboration-coordinator");
+            Thread.sleep(1500);
+            assertEquals(before, stalled.statementsBy("collaboration-coordinator"),
+                    "A coordinator blocked on connection acquisition must not issue any SQL");
+            assertFalse(jdbc.queryForObject("SELECT leaseUntil>TIMESTAMPADD(SECOND,5,NOW(6)) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId),
+                    "The lease must not be renewed while the coordinator cannot issue any SQL");
+            await(() -> !jdbc.queryForObject("SELECT leaseUntil>CURRENT_TIMESTAMP(6) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId));
+            stalled.release();
+            release.countDown();
+            // A fenced executor may not write the terminal state: restrict() returns early when the
+            // lease check fails, so the run stays RUNNING and the recovery scanner owns the outcome.
+            // This is exactly the end state the historical failure produced - a bounded wait that
+            // never sees a terminal status - and it is the fencing working, not a silent success.
+            Thread.sleep(2000);
+            assertNotEquals("SUCCEEDED", runs.snapshot(run.runId(), 42).executionStatus());
+            assertEquals("RUNNING", jdbc.queryForObject("SELECT status FROM t_patient_draft_run WHERE taskId=?", String.class, taskId));
+        } finally { stalled.release(); release.countDown(); }
+    }
+
+    /**
+     * Delegates to the pooled data source but can stall connection acquisition for one named thread,
+     * and counts the SQL statements each thread actually executes.
+     */
+    private static final class StallingDataSource extends org.springframework.jdbc.datasource.AbstractDataSource {
+        private final DataSource delegate;
+        private final Map<String, AtomicLong> counters = new ConcurrentHashMap<>();
+        private final CountDownLatch stalled = new CountDownLatch(1);
+        private final CountDownLatch released = new CountDownLatch(1);
+        private final AtomicBoolean armed = new AtomicBoolean();
+        private volatile String target = "";
+        StallingDataSource(DataSource delegate) { this.delegate = delegate; }
+        void arm(String thread) { target = thread; armed.set(true); }
+        boolean awaitStalled(long seconds) throws InterruptedException { return stalled.await(seconds, TimeUnit.SECONDS); }
+        void release() { armed.set(false); released.countDown(); }
+        long statementsBy(String thread) { var c = counters.get(thread); return c == null ? 0L : c.get(); }
+        @Override public java.sql.Connection getConnection() throws java.sql.SQLException {
+            if (armed.get() && target.equals(Thread.currentThread().getName())) {
+                stalled.countDown();
+                try { released.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            }
+            return counted(delegate.getConnection());
+        }
+        @Override public java.sql.Connection getConnection(String username, String password) throws java.sql.SQLException {
+            if (armed.get() && target.equals(Thread.currentThread().getName())) {
+                stalled.countDown();
+                try { released.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            }
+            return counted(delegate.getConnection(username, password));
+        }
+        private java.sql.Connection counted(java.sql.Connection real) {
+            return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{java.sql.Connection.class}, (proxy, method, args) -> {
+                String name = method.getName();
+                if (name.equals("execute") || name.equals("executeQuery") || name.equals("executeUpdate") || name.equals("prepareCall"))
+                    counters.computeIfAbsent(Thread.currentThread().getName(), k -> new AtomicLong()).incrementAndGet();
+                try { return method.invoke(real, args); }
+                catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
+            });
+        }
+    }
+
     private Process child(String id, String stage, String feedback, java.nio.file.Path marker, java.nio.file.Path callsLog, java.nio.file.Path output) throws Exception {
         return new ProcessBuilder(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-cp", System.getProperty("java.class.path"), RecoveryWorker.class.getName(), id, stage, feedback, marker.toString(), callsLog.toString())
