@@ -15,7 +15,7 @@ import { Wordmark } from "./Wordmark"
  * 移动抽屉、路由变化重挂全部只写一遍。
  *
  * <p>**Visual Completion U2（DESIGN.md §2.1.2）**：所有用户端主页面共享同一套
- * Iris 悬浮玻璃导航身份——金属虹膜 Logo、Manrope 字标、钴蓝选中态、一致控件形态。
+ * Iris 悬浮玻璃导航身份——光学虹膜 Logo、Manrope 字标、钴蓝选中态、一致控件形态。
  * `scene` 只允许改**有限参数**（背景画布、空间密度），不再允许通过
  * `scene="clinical"` / `scene="intelligence"` 换回旧版纸面胶囊、橙色底线、
  * 实体仪器风格。首页 → 判读 → Agent → 新闻 → 记录 / 个人中心的导航视觉连续。

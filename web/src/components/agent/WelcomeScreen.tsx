@@ -2,7 +2,7 @@
  * 欢迎屏：空会话时的工作区入口。
  *
  * 不用神经网络连线/节点做主视觉：后端没有多 Agent 拓扑，画出来就是虚构
- * 执行结构。这里用全站同一个金属虹膜标 + 三条真实入口（添图、描述症状、
+ * 执行结构。这里用全站同一个光学虹膜标 + 三条真实入口（添图、描述症状、
  * 查疾病知识），每条都绑定真实输入框或真实发送动作。
  *
  * 「上传眼底图像」不发送一句空话：它直接打开输入区的选图对话框，
@@ -56,18 +56,22 @@ export function WelcomeScreen({
   return (
     <div className="welcome">
       <div className="welcome-stage">
-        {/* 全站同一个金属虹膜标：两版一起挂，靠 html.dark 换。 */}
+        {/* 全站同一个 Optical Iris 标：两版一起挂，靠 html.dark 换。 */}
         <div className="welcome-mark" aria-hidden="true">
           <img
             className="welcome-mark__img welcome-mark__img--light"
-            src="/iris-mark-metallic-light.svg"
+            src="/brand/iris-optical-light-96.png"
+            srcSet="/brand/iris-optical-light-96.png 96w, /brand/iris-optical-light-192.png 192w"
+            sizes="56px"
             alt=""
             width={56}
             height={56}
           />
           <img
             className="welcome-mark__img welcome-mark__img--dark"
-            src="/iris-mark-metallic-dark.svg"
+            src="/brand/iris-optical-dark-96.png"
+            srcSet="/brand/iris-optical-dark-96.png 96w, /brand/iris-optical-dark-192.png 192w"
+            sizes="56px"
             alt=""
             width={56}
             height={56}

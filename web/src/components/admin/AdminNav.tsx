@@ -30,15 +30,35 @@ const ADMIN_GROUPS = [
   { label: "分析", codes: ["06"] },
 ] as const
 
-/** 品牌标：同心虹膜。只用几何圆，不做发光 / 粒子。 */
+/**
+ * 品牌标：Optical Iris 单色版。
+ *
+ * 与用户端同一外形；管理端把紫色留给品牌块底色（`--admin-*`），标本身只用单色。
+ * 品牌块底色随主题翻转（浅色主题深紫 / 深色主题浅紫），所以单色也要两版一起挂：
+ * 浅色主题用白色，深色主题用深海军蓝——靠 <html>.dark 换，规则在 admin.css。
+ */
 export function IrisMark() {
   return (
-    <svg className="admin-side__mark" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="13.2" fill="none" stroke="currentColor" strokeOpacity="0.28" />
-      <circle cx="16" cy="16" r="8.6" fill="none" stroke="currentColor" strokeOpacity="0.55" />
-      <circle cx="16" cy="16" r="4.2" fill="currentColor" />
-      <path d="M16 2.8 A13.2 13.2 0 0 1 29.2 16" fill="none" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
+    <>
+      <img
+        className="admin-side__mark admin-side__mark--light"
+        src="/brand/iris-mono-white-96.png"
+        srcSet="/brand/iris-mono-white-64.png 64w, /brand/iris-mono-white-96.png 96w"
+        sizes="24px"
+        alt=""
+        width={24}
+        height={24}
+      />
+      <img
+        className="admin-side__mark admin-side__mark--dark"
+        src="/brand/iris-mono-navy-96.png"
+        srcSet="/brand/iris-mono-navy-64.png 64w, /brand/iris-mono-navy-96.png 96w"
+        sizes="24px"
+        alt=""
+        width={24}
+        height={24}
+      />
+    </>
   )
 }
 
