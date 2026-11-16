@@ -58,6 +58,47 @@ describe("applyStreamEvent", () => {
     expect(msgs).toHaveLength(3)
     expect(msgs[2].isLoading).toBe(true)
   })
+  it("首个事件即 tool-request：返回新数组，不改写上一份 state", () => {
+    // 回归：truncate 在无流式 assistant 时原样返回同一引用，就地 push 会让
+    // setMessages 的 updater 返回同引用，React 按 Object.is 跳过渲染（卡片不出现）。
+    const prev: StreamMessage[] = []
+    const next = applyStreamEvent(prev, {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+    expect(next).not.toBe(prev)
+    expect(prev).toHaveLength(0)
+    expect(next).toHaveLength(1)
+  })
+
+  it("reasoning 之后紧跟 tool-request 也不改写旧 state", () => {
+    // reasoning 不带 isLoading，同样走 truncate 的「原样返回」分支。
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, { messageType: "reasoning", content: "先想想" })
+    const prev = msgs
+    const next = applyStreamEvent(prev, {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+    expect(next).not.toBe(prev)
+    expect(prev).toHaveLength(1)
+    expect(next).toHaveLength(2)
+  })
+
+  it("updater 可重复调用（StrictMode 双执行）不产生重复卡片", () => {
+    const prev: StreamMessage[] = []
+    const dto = {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    }
+    expect(applyStreamEvent(prev, dto)).toHaveLength(1)
+    expect(applyStreamEvent(prev, dto)).toHaveLength(1)
+    expect(prev).toHaveLength(0)
+  })
+
   it("clearAllLoading 清掉所有流式中的 assistant", () => {
     let msgs: StreamMessage[] = []
     msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "一" })

@@ -96,8 +96,11 @@ export function applyStreamEvent(
     }
 
     case "tool-request": {
-      const out = truncate(msgs)
-      for (const tc of dto.toolCalls ?? []) {
+      // 必须构造新数组：truncate 在没有流式 assistant 时原样返回同一引用，
+      // 就地 push 会改写上一份 state 并返回同引用 —— React 按 Object.is 判定
+      // 「没变」而跳过渲染（工具卡不出现），StrictMode 双调用还会 push 两次。
+      const base = truncate(msgs)
+      const added = (dto.toolCalls ?? []).map((tc) => {
         const name = tc.name || "工具"
         let parsedArgs: Record<string, unknown>
         try {
@@ -105,15 +108,15 @@ export function applyStreamEvent(
         } catch {
           parsedArgs = { _raw: tc.arguments }
         }
-        out.push({
+        return {
           id: newId(),
-          type: "tool-request",
+          type: "tool-request" as const,
           content: "",
           toolName: name,
           toolCalls: [{ name, args: parsedArgs }],
-        })
-      }
-      return out
+        }
+      })
+      return added.length === 0 ? base : [...base, ...added]
     }
 
     case "tool-response":
