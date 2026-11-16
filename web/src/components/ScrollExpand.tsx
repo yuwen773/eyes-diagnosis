@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react"
 import type { CSSProperties, ReactNode, RefObject } from "react"
+import { useMediaQuery } from "@/lib/useMediaQuery"
 import "./ScrollExpand.css"
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v)
@@ -91,7 +92,9 @@ export function ScrollExpand({
   const scrimRef = useRef<HTMLDivElement | null>(null)
   const hintRef = useRef<HTMLDivElement | null>(null)
   // 减弱动效时展开动画整体跳过；applyProgress 据此把标题留在完成的页面上。
-  const reducedRef = useRef(false)
+  // 跟随系统开关变化，而不是只在挂载时读一次。
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)")
+  const reducedRef = useRef(reduceMotion)
 
   const propsRef = useRef({
     startWidth,
@@ -138,10 +141,34 @@ export function ScrollExpand({
     const c = propsRef.current
     progressRef.current = p
 
+    // ── 读阶段 ──────────────────────────────────────────────
+    // 这些查询都会强制布局。必须先全部读完再写样式：否则「写 clip-path →
+    // 读 getBoundingClientRect」会让每一帧多一次同步回流。
+    const compact = window.innerWidth < 720
+    const stage = stageRef.current
+    const stageTop = stage ? stage.getBoundingClientRect().top : 0
+    const stageH = stage?.clientHeight || 1
+    let head = headRef.current
+    if (!head) {
+      head = document.querySelector<HTMLElement>("[data-site-head]")
+      headRef.current = head
+    }
+    const navH = head?.offsetHeight ?? 0
+    const elW = media.clientWidth || 1
+    const elH = media.clientHeight || 1
+    const ar =
+      (media instanceof HTMLVideoElement
+        ? media.videoWidth && media.videoHeight
+          ? media.videoWidth / media.videoHeight
+          : 0
+        : media.naturalWidth && media.naturalHeight
+          ? media.naturalWidth / media.naturalHeight
+          : 0) || 16 / 9
+
+    // ── 写阶段 ──────────────────────────────────────────────
     const e = smoothstep(0, 1, p)
 
     // 窄屏上舞台比例不同，静止尺寸跟着调，免得裁成一条缝。
-    const compact = window.innerWidth < 720
     const startW = compact ? Math.max(c.startWidth, 92) : c.startWidth
     const startH = compact ? Math.min(c.startHeight, 26) : c.startHeight
     const zoom = compact ? 1.02 : c.mediaZoom
@@ -155,32 +182,14 @@ export function ScrollExpand({
 
     // 黑画面上沿压到顶栏下沿时，给舞台打一个标记，顶栏据此反相。
     // 只有黑底画面才需要：亮底片压上来时顶栏保持本色，反相了反而看不清。
-    const stage = stageRef.current
     if (stage) {
-      let head = headRef.current
-      if (!head) {
-        head = document.querySelector<HTMLElement>("[data-site-head]")
-        headRef.current = head
-      }
-      const navH = head?.offsetHeight ?? 0
-      const stageTop = stage.getBoundingClientRect().top
-      const frameTop = stageTop + (iy / 100) * (stage.clientHeight || 1)
+      const frameTop = stageTop + (iy / 100) * stageH
       const invert = c.tone === "dark" && navH > 0 && frameTop <= navH
       const flag = String(invert)
       if (stage.dataset.headInvert !== flag) stage.dataset.headInvert = flag
     }
 
     // 媒体按窗口尺寸缩放：静止时整张照片正好落在小窗里，展开时一路涨到满屏。
-    const elW = media.clientWidth || 1
-    const elH = media.clientHeight || 1
-    const ar =
-      (media instanceof HTMLVideoElement
-        ? media.videoWidth && media.videoHeight
-          ? media.videoWidth / media.videoHeight
-          : 0
-        : media.naturalWidth && media.naturalHeight
-          ? media.naturalWidth / media.naturalHeight
-          : 0) || 16 / 9
     // object-fit: contain 之后的实际成像框。
     const contentW = Math.min(elW, elH * ar)
     const contentH = contentW / ar
@@ -217,9 +226,6 @@ export function ScrollExpand({
     const stage = stageRef.current
     if (!root || !track || !stage) return
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
     reducedRef.current = reduceMotion
     propsRef.current.skipMotion = reduceMotion
 
@@ -306,7 +312,7 @@ export function ScrollExpand({
       window.removeEventListener("resize", onResize)
       ro.disconnect()
     }
-  }, [applyProgress, useWindowScroll])
+  }, [applyProgress, useWindowScroll, reduceMotion])
 
   const media =
     mediaType === "video" ? (

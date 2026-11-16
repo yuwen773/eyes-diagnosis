@@ -360,8 +360,13 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
       const root = rootRef.current
       const stage = stageRef.current
       if (!root || !stage || !count) return undefined
-      const reduce =
-        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+      // 系统「减弱动效」开关可能在页面打开期间被切换，监听它而不是只读一次。
+      const motionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      let reduce = motionQuery?.matches ?? false
+      const onMotionPreference = () => {
+        reduce = motionQuery?.matches ?? false
+        schedule()
+      }
       const now = performance.now()
       const s0 = settingsRef.current
 
@@ -940,6 +945,7 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
       root.addEventListener("pointercancel", onUp)
       root.addEventListener("click", onClick)
       document.addEventListener("visibilitychange", onVisibility)
+      motionQuery?.addEventListener("change", onMotionPreference)
       schedule()
 
       return () => {
@@ -955,13 +961,16 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
         root.removeEventListener("pointercancel", onUp)
         root.removeEventListener("click", onClick)
         document.removeEventListener("visibilitychange", onVisibility)
+        motionQuery?.removeEventListener("change", onMotionPreference)
         apiRef.current = null
       }
     }, [count])
 
+    // refresh 会重排整副牌并重新量尺寸（fit 读布局），只在几何/动画参数变化时跑，
+    // 而不是每次渲染都跑一遍。
     useIsomorphicLayoutEffect(() => {
       apiRef.current?.refresh()
-    })
+    }, [bounds, cards, delay, autoplay, dim, draggable])
 
     const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {

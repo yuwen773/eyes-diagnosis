@@ -20,9 +20,12 @@ import { SectionHead } from "@/components/SectionHead"
 import { Dialog } from "@/components/ui/dialog"
 import { BrandFooter } from "@/components/brand/BrandFooter"
 import { ProductHeader } from "@/components/shell/ProductHeader"
-import { TargetCursor } from "@/components/TargetCursor"
 
 // 重型视觉组件独立成块：首屏的扫描舱要立刻有，其余等进入视口再下载。
+// 取景光标同理：它只服务于这一页，且晚一帧出现没人看得出来。
+const TargetCursor = lazy(() =>
+  import("@/components/TargetCursor").then((m) => ({ default: m.TargetCursor })),
+)
 const ScrollExpand = lazy(() =>
   import("@/components/ScrollExpand").then((m) => ({ default: m.ScrollExpand })),
 )
@@ -240,16 +243,18 @@ export function LandingPage() {
     // 上半页的钴蓝光学台和下半页的章节因此落在同一块底色上。
     <div className={(dark ? "is-night " : "is-field ") + "night is-brand-page"}>
       {/* 准星只属于落地页，别的地方用系统光标。 */}
-      <TargetCursor
-        targetSelector="a, button, [data-cursor]"
-        spinDuration={2.6}
-        hoverDuration={0.2}
-        size={30}
-        cornerSize={10}
-        thickness={1.5}
-        padding={4}
-        dotSize={3}
-      />
+      <Suspense fallback={null}>
+        <TargetCursor
+          targetSelector="a, button, [data-cursor]"
+          spinDuration={2.6}
+          hoverDuration={0.2}
+          size={30}
+          cornerSize={10}
+          thickness={1.5}
+          padding={4}
+          dotSize={3}
+        />
+      </Suspense>
 
       <ProductHeader scene="brand" />
 
