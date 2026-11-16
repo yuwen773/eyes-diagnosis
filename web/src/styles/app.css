@@ -1,5 +1,9 @@
 /* ==========================================================================
-   Iris · 白色仪器
+   Iris · 全局底座与共用原语
+   --------------------------------------------------------------------------
+   令牌真源在 tokens.css；场景归属见根 DESIGN.md §1.5。
+   本文件只放跨场景的底座（reset、排版、外壳、纸面原语），
+   场景专属样式在 brand.css / admin.css / agent.css / records.css。
    ========================================================================== */
 
 *,
@@ -4378,31 +4382,10 @@ html:not(.dark) .auth__beam {
   border-color: rgba(200, 74, 60, 0.85);
 }
 
-.auth .btn {
-  height: 50px;
-  border-radius: 11px;
-  background: #f1f2ee;
-  color: #14171a;
-  font-weight: 500;
-}
-
-.auth .btn:hover {
-  background: #ffffff;
-}
-
-/* 浅色台上的按钮翻成墨片：玻璃雾底上要压得住。 */
-.auth--light .btn {
-  background: var(--ink);
-  color: var(--field);
-}
-
-.auth--light .btn:hover {
-  background: color-mix(in srgb, var(--ink) 85%, var(--surface));
-}
-
-.auth .btn:disabled {
-  opacity: 0.4;
-}
+/* 旧认证页（.auth）的按钮样式已删除：登录/注册改用 AuthShell 的
+   `.auth-auth`（auth.css 里有自己的 `.auth-auth .btn`），DOM 里不再有
+   `.auth` 类，这几条规则（含写死的 #f1f2ee / #14171a）从未生效。
+   `.auth__glass` 例外——它作为独立类被落地页收尾玻璃复用，规则保留。 */
 
 
 .auth .form__meta {
@@ -4424,6 +4407,60 @@ html:not(.dark) .auth__beam {
   border-bottom-color: var(--ink);
 }
 
+
+/* ==========================================================================
+   管理端守卫页：loading 占位 + 无权限说明页
+   --------------------------------------------------------------------------
+   放在全局层而不是 admin.css：AdminGate 的守卫分支不渲染 AdminLayout，
+   而 admin.css 只被 AdminLayout 导入（懒加载），规则在守卫分支根本不会加载。
+   这几条必须在「进不了管理端」的那一屏就生效——铺满一屏、用管理紫画布，
+   否则会退回 body 的骨白底。 */
+.admin-gate,
+.admin-denied {
+  min-height: 100svh;
+  background: var(--admin-canvas);
+  color: var(--admin-text);
+}
+
+.admin-gate__inner,
+.admin-denied__inner {
+  padding-block: clamp(56px, 10vh, 120px);
+}
+
+.admin-gate__inner {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.admin-denied__eyebrow {
+  margin-top: 40px;
+}
+
+.admin-denied__title {
+  margin-top: 20px;
+  max-width: 16em;
+}
+
+.admin-denied__body {
+  margin-top: 18px;
+  max-width: 40em;
+}
+
+.admin-denied__status {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-line);
+  max-width: 260px;
+}
+
+.admin-denied__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  margin-top: 40px;
+}
 
 /* ==========================================================================
    打印：只留记录纸

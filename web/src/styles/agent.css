@@ -509,7 +509,7 @@
   height: 100%;
 }
 
-/* 金属标两版同时挂，靠根级 .dark 换——与顶栏字标同一套做法。 */
+/* 光学虹膜标两版同时挂，靠根级 .dark 换——与顶栏字标同一套做法。 */
 html.dark .welcome-mark__img--light {
   display: none;
 }

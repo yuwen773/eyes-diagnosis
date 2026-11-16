@@ -109,7 +109,7 @@ async function readHeader(page) {
       : []
     const brand = document.querySelector(".product-head__brand")
     const brandBox = brand?.getBoundingClientRect()
-    // 金属虹膜标两版都在 DOM 里（浅色底挂 light 版，深色底挂 dark 版），
+    // 光学虹膜标两版都在 DOM 里（浅色底挂 light 版，深色底挂 dark 版），
     // 隐藏的那版 display:none，取有尺寸的那一个。
     const marks = Array.from(
       document.querySelectorAll(".product-head__brand img, .product-head__brand svg"),

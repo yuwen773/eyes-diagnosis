@@ -9,7 +9,8 @@
     <link rel="preload" as="image" href="/scroll-expand-light.webp" />
     <link rel="preload" as="image" href="/scroll-expand-dark.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f3f4f1" />
+    <!-- 品牌画布色；内联脚本会按应用内实际主题改写（不只看系统偏好）。 -->
+    <meta name="theme-color" content="#f2f6fc" />
     <meta
       name="description"
       content="Iris · 眼底影像判读。上传彩色眼底照片，获得八类常见眼底改变的判读、质量门与可追溯的判读记录。"
@@ -25,6 +26,9 @@
             (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)
           if (dark) document.documentElement.classList.add("dark")
           else document.documentElement.classList.add("light")
+          // theme-color 跟应用内主题走：手机地址栏/系统 UI 与首屏画布同色。
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute("content", dark ? "#0b1425" : "#f2f6fc")
         } catch (e) {}
       })()
     </script>
