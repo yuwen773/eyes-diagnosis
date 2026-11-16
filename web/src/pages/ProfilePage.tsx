@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
-import { loadMyStats, statsLabels, type ScopedStats } from "@/lib/records"
+import { loadServerStats, statsLabels } from "@/lib/records"
 import {
   confidencePercent,
   formatTimestamp,
@@ -52,12 +52,11 @@ export function ProfilePage() {
   })
   const sample = sampleQuery.data
 
-  // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页样本。
+  // 服务端聚合与样本列表并行发出；不可用时在渲染期回退到本页样本。
   const statsQuery = useQuery({
     queryKey: [...sampleKey, "stats"] as const,
-    queryFn: ({ signal }) =>
-      loadMyStats(sample?.records ?? [], sample?.total ?? 0, signal),
-    enabled: authed && !!user && sample !== undefined,
+    queryFn: ({ signal }) => loadServerStats(signal),
+    enabled: authed && !!user,
   })
 
   /* ── 资料编辑 ─────────────────────────────────────────── */
@@ -136,17 +135,18 @@ export function ProfilePage() {
   const statsFault = sampleQuery.error ? describeError(sampleQuery.error) : null
   const statsLoading =
     !statsFault && (sampleQuery.isPending || statsQuery.isPending)
-  const scoped: ScopedStats | null = statsQuery.data ?? null
-  const stats = scoped?.stats ?? { total: 0, highRisk: 0 }
-  const labels = statsLabels(scoped?.scope ?? "page")
+  const serverStats = statsQuery.data ?? null
+  const stats = serverStats ?? { total: 0, highRisk: 0 }
+  const labels = statsLabels(serverStats ? "all" : "page")
   // 最近判读：与判读记录页同一份列表数据（第一页），按时间倒序取前三条。
   const recent = useMemo(() => {
     const list = [...(sample?.records ?? [])]
     list.sort((a, b) => (b.createTime ?? "").localeCompare(a.createTime ?? ""))
     return list.slice(0, 3)
   }, [sample])
-  const highRiskLabel =
-    scoped?.scope === "all" ? labels.highRisk : `近 ${PROFILE_SAMPLE} 条高风险`
+  const highRiskLabel = serverStats
+    ? labels.highRisk
+    : `近 ${PROFILE_SAMPLE} 条高风险`
   const roleLabel = useMemo(
     () => (user?.userRole ? (ROLE_LABEL[user.userRole] ?? user.userRole) : "—"),
     [user?.userRole],
@@ -221,7 +221,7 @@ export function ProfilePage() {
           </div>
         ) : null}
 
-        {!statsFault && !statsLoading && scoped?.scope !== "all" ? (
+        {!statsFault && !statsLoading && !serverStats ? (
           <p className="records__scope">
             带「近 {PROFILE_SAMPLE} 条」的统计只取自最近一页记录；服务端聚合上线后会自动切到全量。
           </p>

@@ -331,6 +331,9 @@
 }
 
 .admin-dt__head {
+  /* 列定义给的宽度写成 --col-w，这里统一落成 width：不再走行内样式，
+     窄屏要收窄固定列时普通规则就够，不需要 !important。 */
+  width: var(--col-w, auto);
   height: 40px;
   padding: 0 16px;
   background: color-mix(in srgb, var(--admin-surface-deep) 52%, var(--admin-surface));
@@ -1479,13 +1482,13 @@ html.dark .admin-newsedit .w-md-editor {
     min-width: 932px;
   }
 
-  /* 列定义给 <th> 写了行内 width（160–190px），行内样式压过本表；
-     390 档必须 !important 才能把固定的 sticky 操作列收窄——
-     否则它会盖住判读结果列，把「AI 拒识」chip 切掉半截。 */
+  /* 390 档把固定的 sticky 操作列收窄，否则它会盖住判读结果列，
+     把「AI 拒识」chip 切掉半截。列宽走 --col-w（见 .admin-dt__head），
+     不再有行内 width 要压，普通声明即可。 */
   .admin-dt__cell--action,
   .admin-dt__head--action {
-    width: 96px !important;
-    min-width: 96px !important;
+    width: 96px;
+    min-width: 96px;
   }
 
   .admin-dt__scroll {
@@ -1511,19 +1514,19 @@ html.dark .admin-newsedit .w-md-editor {
     min-width: 0;
   }
 
-  .admin-dashboard__recent .admin-dt__head:nth-child(1),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(1),
-  .admin-dashboard__recent .admin-dt__head:nth-child(6),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(6) {
+  .admin-dashboard__recent .admin-dt__head[data-col="url"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="url"],
+  .admin-dashboard__recent .admin-dt__head[data-col="createTime"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="createTime"] {
     display: none;
   }
 }
 
 @media (max-width: 600px) {
-  .admin-dashboard__recent .admin-dt__head:nth-child(2),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(2),
-  .admin-dashboard__recent .admin-dt__head:nth-child(4),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(4) {
+  .admin-dashboard__recent .admin-dt__head[data-col="username"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="username"],
+  .admin-dashboard__recent .admin-dt__head[data-col="confidence"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="confidence"] {
     display: none;
   }
 }

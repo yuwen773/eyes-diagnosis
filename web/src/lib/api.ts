@@ -3,7 +3,6 @@
  * 统一返回 { code: 0, data, msg }，会话走 Spring Session Cookie。
  */
 
-import { fetchEventSource } from "@microsoft/fetch-event-source"
 import {
   ApiError,
   BASE_URL,
@@ -387,6 +386,8 @@ export async function streamChat(
   signal: AbortSignal,
 ): Promise<void> {
   let completed = false
+  // 按需加载：SSE 客户端只有 /agent 用，静态引入会把它塞进所有路由的首屏包。
+  const { fetchEventSource } = await import("@microsoft/fetch-event-source")
   await fetchEventSource(`${BASE_URL}/agent/chat/stream`, {
     method: "POST",
     headers: { Accept: "text/event-stream", "Content-Type": "application/json" },

@@ -12,9 +12,8 @@
      钉住的操作列）这里同样用 !important + 更高特异性压回去。
    - 数字 / 时间 / 百分比一律等宽（.num）。
 
-   窄屏卡片化用 :nth-child 定位表格里的每一格。这一列顺序与
-   AdminDiagnosisPage / AdminUsersPage 里的 columns 定义一一对应；改动那份
-   列定义时必须同步改这里的定位块，否则窄屏会串位。
+   窄屏卡片化按 data-col（DataTable 写到每个格子上）定位，不再按 :nth-child
+   数位次：改动列定义时，CSS 跟着列 key 走，不会因为重排而串位。
    ========================================================================== */
 
 /* ── 筛选：状态段控件 ───────────────────────────────────────────────
@@ -564,46 +563,46 @@
     grid-template-columns: 18px 46px minmax(0, 1fr) auto;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(1) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="pick"] {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(2) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="url"] {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(3) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="result"] {
     grid-column: 3;
     grid-row: 1;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(4) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="username"] {
     grid-column: 3;
     grid-row: 3;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(5) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="confidence"] {
     grid-column: 4;
     grid-row: 2;
     justify-self: end;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(6) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="review"] {
     grid-column: 4;
     grid-row: 1;
     justify-self: end;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(7) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="createTime"] {
     grid-column: 3;
     grid-row: 2;
     /* 时间读数不折行：折成两行会把时刻和日期拆成两截。 */
     white-space: nowrap;
   }
 
-  .admin-diagnosis__table .admin-dt__cell:nth-child(8) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="action"] {
     grid-column: 4;
     grid-row: 3;
     justify-self: end;
@@ -631,28 +630,28 @@
     grid-template-columns: 18px minmax(0, 1fr) auto;
   }
 
-  .admin-users__table .admin-dt__cell:nth-child(1) {
+  .admin-users__table .admin-dt__cell[data-col="pick"] {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .admin-users__table .admin-dt__cell:nth-child(2) {
+  .admin-users__table .admin-dt__cell[data-col="userAccount"] {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .admin-users__table .admin-dt__cell:nth-child(3) {
+  .admin-users__table .admin-dt__cell[data-col="userRole"] {
     grid-column: 3;
     grid-row: 1;
     justify-self: end;
   }
 
-  .admin-users__table .admin-dt__cell:nth-child(4) {
+  .admin-users__table .admin-dt__cell[data-col="createTime"] {
     grid-column: 2;
     grid-row: 2;
   }
 
-  .admin-users__table .admin-dt__cell:nth-child(5) {
+  .admin-users__table .admin-dt__cell[data-col="action"] {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
@@ -672,7 +671,7 @@
 /* 390px 档：卡片更窄，动作按钮另起一行——它挤在右列会把「时间」那一格
    压到折行，读数反而更难认。 */
 @media (max-width: 640px) {
-  .admin-diagnosis__table .admin-dt__cell:nth-child(8) {
+  .admin-diagnosis__table .admin-dt__cell[data-col="action"] {
     grid-column: 3 / -1;
     grid-row: 4;
     justify-self: end;

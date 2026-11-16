@@ -54,6 +54,14 @@ a {
   outline-offset: 3px;
 }
 
+/* 路由级错误边界的落点：整块居中，四周留出与页面同级的边距，
+   不让一条故障读数贴在视口边缘。 */
+.route-fault {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(48px, 12vh, 140px) var(--gutter);
+}
+
 /* ==========================================================================
    滚动条
    --------------------------------------------------------------------------
@@ -1590,7 +1598,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   display: grid;
   gap: 12px;
   padding: 18px 18px 14px;
-  border-radius: 22px;
+  border-radius: var(--radius-panel);
   background: var(--surface);
 }
 
@@ -2722,6 +2730,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
+    /* 无限动画在 0.01ms 下仍会不停循环，兜底只让它跑一次。 */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
@@ -3110,7 +3120,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .slot[data-filled="false"] .slot__prompt {
   /* 有示例片在槽里时，提示文字要压得住底：给一层暗角。 */
   background: rgba(20, 23, 26, 0.42);
-  border-radius: 2px;
+  border-radius: var(--radius-hair-sm);
 }
 
 .slot[data-filled="false"] .slot__title,
@@ -4101,7 +4111,7 @@ html:not(.dark) .auth__beam {
   position: relative;
   width: 100%;
   padding: 26px 30px 28px;
-  border-radius: 22px;
+  border-radius: var(--radius-panel);
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: linear-gradient(
     180deg,
@@ -4278,7 +4288,7 @@ html:not(.dark) .auth__beam {
 
   .auth__glass {
     padding: 22px 20px 24px;
-    border-radius: 18px;
+    border-radius: var(--radius-panel-sm);
   }
 
   .auth__title {
@@ -4382,7 +4392,7 @@ html:not(.dark) .auth__beam {
 .auth .field__input {
   height: 48px;
   padding-inline: 14px;
-  border-radius: 11px;
+  border-radius: var(--radius-field);
   border: 1px solid var(--auth-line);
   background: rgba(255, 255, 255, 0.045);
   color: var(--on-dark);

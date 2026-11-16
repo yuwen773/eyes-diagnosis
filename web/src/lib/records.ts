@@ -68,18 +68,24 @@ export async function loadMyStats(
   total: number,
   signal?: AbortSignal,
 ): Promise<ScopedStats> {
-  const fallback = (): ScopedStats => ({
-    stats: summarizeRecords(records, total),
-    scope: "page",
-  })
+  const stats = await loadServerStats(signal)
+  if (stats) return { stats, scope: "all" }
+  return { stats: summarizeRecords(records, total), scope: "page" }
+}
+
+/**
+ * 只取服务端聚合，不做降级：不可用时返回 null，由调用方在渲染期回退到
+ * 本页汇总。它不依赖列表数据，所以能和列表请求并行发出——用 loadMyStats
+ * 挂 `enabled: data !== undefined` 会把两个独立请求串成瀑布。
+ */
+export async function loadServerStats(signal?: AbortSignal): Promise<RecordStats | null> {
   try {
     const stats = await getMyStats(signal)
-    if (!isStatsPayload(stats)) return fallback()
-    return { stats, scope: "all" }
+    return isStatsPayload(stats) ? stats : null
   } catch (error) {
     // 取消不是「聚合不可用」：原样抛出，别把降级结果写进已作废的查询。
     if (signal?.aborted) throw error
-    return fallback()
+    return null
   }
 }
 
