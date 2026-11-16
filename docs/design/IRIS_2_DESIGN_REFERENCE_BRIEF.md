@@ -99,7 +99,7 @@
 | `--brand-cyan` | `#006f82` | `#60d7e6` |
 | `--brand-aurora` | `#6b56c5` | `#c0acff` |
 
-统一使用现有 `ThemeProvider`，主题选择器 `html.dark`，支持系统主题。Manrope 主导拉丁品牌与 UI 文本，Noto Sans SC 负责中文，IBM Plex Mono 负责程序/技术读数。Logo 沿用项目现有金属虹膜标 `iris-mark-metallic-light/dark.svg`（具体文件路径以仓库实际位置为准）。
+统一使用现有 `ThemeProvider`，主题选择器 `html.dark`，支持系统主题。Manrope 主导拉丁品牌与 UI 文本，Noto Sans SC 负责中文，IBM Plex Mono 负责程序/技术读数。Logo 使用光学虹膜标（Optical Iris v1.0，2026-11-16 起取代旧金属虹膜标 SVG）：运行时资产在 `web/public/brand/`，接入映射见 `docs/design/assets/iris-optical-brand-v1.0/INTEGRATION.md`。
 
 **统一的是品牌身份、基本排版、语义色、按钮反馈、可访问性和交互逻辑；不同的是页面密度、视觉强度、面板材质与布局。** 不要求三大场景都长成同一种卡片布局。
 

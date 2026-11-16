@@ -1082,10 +1082,14 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 - Iris 自有资产：光学虹膜标（Optical Iris v1.0，`web/public/brand/`，母版与 QA 在
   `docs/design/assets/iris-optical-brand-v1.0/`）、Optic Flow V4 概念图（`docs/design/assets/`）。
   - 2026-11-16 起取代旧「金属虹膜标」SVG；旧文件已删除，历史版本见 git。
-  - 三种彩色版（light / dark / admin 紫）共享同一 alpha 轮廓（品牌包 QA 提供 sha256 比对）；
-    管理端把紫色留给品牌块底色，标本身用白色单色版。
-  - 位图按 64/96/192 提供并用 `sizes` 固定展示尺寸；不要把 1024 母版直接放进 `public/`。
-  - 16px favicon 只能保留虹膜外环识别，星点细节不可见——最终以真实标签栏验收。
+  - 三张彩色母版（light / dark / admin 紫）共享同一 alpha 轮廓（sha256 `d4f31d69…`）；
+    项目内只用 light / dark 两版，管理端把紫色留给品牌块底色（`--admin-*`）。
+  - 管理端单色版（white / navy）从同一彩色母版派生：alpha 轮廓完全一致，亮度映射为
+    单色明度阶梯，不是另画的近似图形。品牌包原始单色母版存于 `vendor-original/`。
+  - 位图按 64/96/192 提供（彩色与单色同规格）并用 `sizes` 固定展示尺寸；
+    不要把 1024 母版直接放进 `public/`。
+  - 16px favicon 只能保留虹膜外环识别，星点细节不可见——最终以真实标签栏验收；
+    单色版在 16px 下简化为「环 + 心」结构，管理端实际使用 24px。
 - **React Bits · Beams** 是 vendored 代码：必须保留**许可原文**与**固定上游 commit**，
   记录在 `web/src/components/brand/THIRD-PARTY-NOTICES.md`。
   换 SHA 必须重做逐字比对。

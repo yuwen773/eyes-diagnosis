@@ -48,5 +48,36 @@
     "nonzero_alpha_pixels": 534590,
     "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
   },
-  "same_colorway_silhouette": true
+  "iris-optical-mono-white-1024.png": {
+    "corner_alphas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "nonzero_alpha_pixels": 534590,
+    "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
+  },
+  "iris-optical-mono-navy-1024.png": {
+    "corner_alphas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "nonzero_alpha_pixels": 534590,
+    "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
+  },
+  "same_colorway_silhouette": true,
+  "mono_derivation": {
+    "derived_at": "2026-11-16",
+    "source": "iris-optical-primary-1024.png",
+    "method": "alpha 通道原样保留；亮度按 p5/p95 归一化后映射单色明度阶梯（white: #7a7a7a→#ffffff；navy: #08152b→#4a6ca0）",
+    "mono_matches_color_silhouette": true,
+    "vendor_originals": [
+      "vendor-original/iris-optical-mono-white-1024.png",
+      "vendor-original/iris-optical-mono-navy-1024.png"
+    ],
+    "note": "品牌包原始单色母版是挖空中心暗区的近似图形，轮廓与彩色版不同；本项目已按统一母版重新派生。"
+  }
 }
