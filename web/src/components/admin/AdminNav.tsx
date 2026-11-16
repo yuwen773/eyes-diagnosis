@@ -33,7 +33,9 @@ const ADMIN_GROUPS = [
 /**
  * 品牌标：Optical Iris 单色版。
  *
- * 与用户端同一外形；管理端把紫色留给品牌块底色（`--admin-*`），标本身只用单色。
+ * 单色版从同一张彩色母版派生（取 alpha 轮廓 + 亮度阶梯），
+ * 与用户端标共用同一核心轮廓，不是另画的近似图形。
+ * 管理端把紫色留给品牌块底色（`--admin-*`），标本身只用单色。
  * 品牌块底色随主题翻转（浅色主题深紫 / 深色主题浅紫），所以单色也要两版一起挂：
  * 浅色主题用白色，深色主题用深海军蓝——靠 <html>.dark 换，规则在 admin.css。
  */
@@ -43,7 +45,7 @@ export function IrisMark() {
       <img
         className="admin-side__mark admin-side__mark--light"
         src="/brand/iris-mono-white-96.png"
-        srcSet="/brand/iris-mono-white-64.png 64w, /brand/iris-mono-white-96.png 96w"
+        srcSet="/brand/iris-mono-white-64.png 64w, /brand/iris-mono-white-96.png 96w, /brand/iris-mono-white-192.png 192w"
         sizes="24px"
         alt=""
         width={24}
@@ -52,7 +54,7 @@ export function IrisMark() {
       <img
         className="admin-side__mark admin-side__mark--dark"
         src="/brand/iris-mono-navy-96.png"
-        srcSet="/brand/iris-mono-navy-64.png 64w, /brand/iris-mono-navy-96.png 96w"
+        srcSet="/brand/iris-mono-navy-64.png 64w, /brand/iris-mono-navy-96.png 96w, /brand/iris-mono-navy-192.png 192w"
         sizes="24px"
         alt=""
         width={24}

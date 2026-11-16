@@ -1,11 +1,14 @@
 /**
  * Iris · 设计令牌
  * ---------------------------------------------
- * 方向：白色仪器（The White Instrument）
+ * 方向：Iris 2.0 · Adaptive Visual System（见根 DESIGN.md）。
  *
- * 不用影像做视觉，靠三样东西撑住：极端的字号对比、贯穿全页的发丝线、
- * 以及仪器读数一样的等宽数字。彩色只出现在两处——
- * 风险语义，和唯一一个强调色（信号橙），其余一律墨色。
+ * 一套品牌身份，四种表达强度：Brand（钴蓝 + 银蓝光学）/ Management（管理紫）/
+ * Intelligence（运行态蓝青）/ Clinical（骨白仪器台 + 墨色）。
+ * 三套语义色互不顶替：--signal 管当前态、--brand-* 管品牌身份、--risk-* 管
+ * 医学严重度。骨白与等宽读数仍是 Clinical 场景的底色，不再是全站默认。
+ *
+ * 本文件仍是令牌真源；DESIGN.md 是目标规范，两者冲突时以这里为准。
  */
 
 :root {
@@ -351,6 +354,16 @@
 .is-brand-page {
   --field: var(--brand-canvas);
   --bg: var(--brand-canvas);
+  /* 内容表面阶梯也换到品牌色系：故障面板、输入框、空态框、弹层都消费
+     --surface*，不接管的话会在品牌画布上掉回旧仪器风的冷绿灰
+     （#e9ebe6 / 暗色 #242a27）。这里用「实底 + 少量品牌墨」混出抬升面，
+     不用半透明玻璃——玻璃只留给品牌组件自己的装饰面（--brand-glass-*），
+     内容表面必须保证文字可读与遮挡一致。
+     判读记录纸不受影响：.sheet 自己带 .is-sheet，暗色下该作用域会把
+     --surface 钉回纸面原语（纸仍是白的）。 */
+  --surface: var(--brand-surface);
+  --surface-2: color-mix(in srgb, var(--brand-surface) 92%, var(--brand-text));
+  --surface-3: color-mix(in srgb, var(--brand-surface) 84%, var(--brand-text));
   --line: var(--brand-line);
   --line-strong: var(--brand-line-strong);
   --hr: var(--brand-line);
@@ -365,6 +378,22 @@
    浅色主题走 `html:not(.dark) .night { background: var(--bg) }`，本来就是对的。 */
 .night.is-brand-page {
   background: var(--brand-canvas);
+}
+
+/* 整页根容器：品牌画布至少铺满一屏。
+   上面这条作用域只换画布与发丝线，不管画布有多高——页面内容比视口短时
+   （判读页空态、个人中心、诊断记录、资讯详情），画布在免责声明条处就结束，
+   剩下的高度露出 body 的骨白 / 近黑底，与品牌画布形成一条横带
+   （浅色 #F2F6FC vs #F3F4F1，暗色 #0B1425 vs #0B0D0C）。
+   这里只补「不低于一屏」，不改任何布局与尺寸。
+
+   选择器必须锚在 #root 的直接子元素上：`.is-brand-page` 还被复用在
+   落地页的判读记录弹层（.landing-record__modal）与管理端新闻编辑的
+   设备预览（.admin-newsedit__device-page）里，那两处是页内容器，
+   不能被撑成一屏高。 */
+#root > .is-brand-page {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ==========================================================================

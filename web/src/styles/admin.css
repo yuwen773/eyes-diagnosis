@@ -74,7 +74,7 @@
   height: 38px;
   flex: none;
   border-radius: 12px;
-  color: var(--admin-on-primary);
+  /* 标是 PNG，不吃 currentColor；着色交给 iris-mono-* 两版。 */
   background: linear-gradient(145deg, var(--admin-accent), var(--admin-primary-strong));
   box-shadow:
     0 1px 2px rgba(23, 19, 34, 0.18),
@@ -515,54 +515,8 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   min-height: 0;
 }
 
-/* ── 守卫：loading 占位 + 无权限说明页 ───────────────────── */
-
-.admin-gate,
-.admin-denied {
-  min-height: 100svh;
-  background: var(--admin-canvas);
-  color: var(--admin-text);
-}
-
-.admin-gate__inner,
-.admin-denied__inner {
-  padding-block: clamp(56px, 10vh, 120px);
-}
-
-.admin-gate__inner {
-  display: grid;
-  gap: 12px;
-  justify-items: start;
-}
-
-.admin-denied__eyebrow {
-  margin-top: 40px;
-}
-
-.admin-denied__title {
-  margin-top: 20px;
-  max-width: 16em;
-}
-
-.admin-denied__body {
-  margin-top: 18px;
-  max-width: 40em;
-}
-
-.admin-denied__status {
-  margin-top: 32px;
-  padding-top: 20px;
-  border-top: 1px solid var(--admin-line);
-  max-width: 260px;
-}
-
-.admin-denied__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 22px;
-  margin-top: 40px;
-}
+/* 守卫页（.admin-gate / .admin-denied）的样式在 app.css 全局层：
+   守卫分支不渲染 AdminLayout，admin.css 在那条路径上不会被加载。 */
 
 /* ── 窄屏：侧栏收进抽屉，顶栏出菜单钮 ───────────────────── */
 
