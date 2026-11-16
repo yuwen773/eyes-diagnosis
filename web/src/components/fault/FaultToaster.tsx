@@ -31,13 +31,15 @@ type FaultApi = {
   push: (fault: Fault) => void
   /** 收掉一条。 */
   dismiss: (id: string) => void
-  /** 当前挂着哪些（渲染用）。 */
-  toasts: Toast[]
 }
 
-const NOOP: FaultApi = { push: () => {}, dismiss: () => {}, toasts: [] }
+const NOOP: FaultApi = { push: () => {}, dismiss: () => {} }
 
+// 两个 context 分开：push / dismiss 引用恒定，toasts 每来一条就变。
+// 合成一个的话，任何订阅了 useFault() 的组件都会跟着每条浮条重渲染——
+// 而绝大多数调用方只想要 push。
 const FaultContext = createContext<FaultApi | null>(null)
+const ToastListContext = createContext<Toast[]>([])
 
 /** 停留时长：越严重给越久，但都留了关闭。 */
 const DWELL: Record<FaultSeverity, number> = {
@@ -95,9 +97,13 @@ export function FaultProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => [...prev, toast].slice(-MAX_TOASTS))
   }, [])
 
-  const value = useMemo<FaultApi>(() => ({ push, dismiss, toasts }), [push, dismiss, toasts])
+  const api = useMemo<FaultApi>(() => ({ push, dismiss }), [push, dismiss])
 
-  return <FaultContext.Provider value={value}>{children}</FaultContext.Provider>
+  return (
+    <FaultContext.Provider value={api}>
+      <ToastListContext.Provider value={toasts}>{children}</ToastListContext.Provider>
+    </FaultContext.Provider>
+  )
 }
 
 /**
@@ -108,6 +114,11 @@ export function FaultProvider({ children }: { children: ReactNode }) {
  */
 export function useFault(): FaultApi {
   return useContext(FaultContext) ?? NOOP
+}
+
+/** 当前挂着的浮条。只有宿主需要——别在页面里订阅它。 */
+function useToasts(): Toast[] {
+  return useContext(ToastListContext)
 }
 
 function FaultToast({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
@@ -278,7 +289,8 @@ function FaultToast({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string
 
 /** 提示宿主：挂在应用根部，一处渲染，全站可用。 */
 export function FaultToaster() {
-  const { toasts, dismiss } = useFault()
+  const toasts = useToasts()
+  const { dismiss } = useFault()
   if (toasts.length === 0) return null
   return (
     <div className="fault-stack" aria-live="polite">
