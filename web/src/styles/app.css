@@ -54,6 +54,51 @@ a {
   outline-offset: 3px;
 }
 
+/* ==========================================================================
+   滚动条
+   --------------------------------------------------------------------------
+   全站一套：透明轨道 + 胶囊滑块。滑块颜色从 --fg 派生，所以浅色 / 深色 /
+   暗房 / 管理端自动换色；页面级滚动与弹层、侧栏、消息流、输入框共用。
+   需要隐藏滚动条的容器（ScrollExpand 的滚动驱动舞台）用更高特异度覆盖。
+   Chromium / Safari 走 WebKit 伪元素；Firefox 只认标准属性，单独放在
+   @supports 里——标准属性一旦在 Chromium 生效，会反过来屏蔽伪元素样式。
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--fg) var(--scrollbar-thumb-mix), transparent);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: color-mix(in srgb, var(--fg) var(--scrollbar-thumb-mix-hover), transparent);
+}
+
+/* Firefox：标准属性。细轨上滑块用 hover 档浓度才看得清。 */
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--fg) var(--scrollbar-thumb-mix-hover), transparent)
+      var(--scrollbar-track);
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

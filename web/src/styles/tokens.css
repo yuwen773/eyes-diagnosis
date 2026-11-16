@@ -123,6 +123,15 @@
   --shadow-overlay: 0 10px 26px rgba(20, 23, 26, 0.09);
   --shadow-modal: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
 
+  /* ── 滚动条（app.css 的全局规则消费）──────────────────────
+     轨道透明，滑块是从 --fg 派生的胶囊：浅色 / 深色 / 暗房 / 管理端
+     各自换色，不需要每个容器再写一份。12px 是 Windows 经典滚动条的
+     收窄值，滑块再用 3px 透明描边收成 6px 可见截面。 */
+  --scrollbar-size: 12px;
+  --scrollbar-thumb-mix: 30%;
+  --scrollbar-thumb-mix-hover: 52%;
+  --scrollbar-track: transparent;
+
   /* ── Iris 2.0 管理端 · Purple Medical SaaS（DESIGN.md §2.2）─────────────
      管理端独立的语义令牌：紫色承担管理品牌、主操作、当前导航、精选强调与
      图表强调；医学严重度仍走 --risk-*，复核/拒识语义照旧——紫不冒充风险。
@@ -422,6 +431,19 @@
   --fg-3: var(--admin-text-faint);
   background: var(--admin-canvas);
   color: var(--admin-text);
+}
+
+/* 文档画布跟随路由语境。
+   全局滚动条是透明轨道（app.css），轨道底下露出的其实是 body 的画布。
+   品牌页 / 管理页把 --field 换在内容容器上，body 仍是根级骨白（暗色近黑），
+   于是右侧 12px 轨道会成一条异色竖带。这里让 body 与路由画布同底——
+   只影响滚动条轨道与过卷区域，内容容器本来就已经铺了同一块底色。 */
+html:has(#root > .is-brand-page) body {
+  background: var(--brand-canvas);
+}
+
+html:has(#root > .is-admin) body {
+  background: var(--admin-canvas);
 }
 
 /* ==========================================================================

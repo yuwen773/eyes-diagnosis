@@ -976,6 +976,26 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 焦点环继承当前文字色，深浅上下文都自动成立。
 **禁止**在模块里写 `outline: none` 压掉它——要改样式请提高特异度重画。
 
+**滚动条**
+
+全站一套：透明轨道 + 胶囊滑块，颜色从当前上下文的 `--fg` 派生
+（静置 `color-mix(in srgb, var(--fg) 30%, transparent)`，hover / 拖动 52%），
+所以浅色、深色、暗房、管理端自动换色，**不按场景另立一套轨道**。
+
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `--scrollbar-size` | `12px` | 轨道宽 / 高（Windows 经典滚动条的收窄值） |
+| `--scrollbar-thumb-mix` | `30%` | 静置滑块的前景墨浓度 |
+| `--scrollbar-thumb-mix-hover` | `52%` | hover / 拖动时的浓度 |
+| `--scrollbar-track` | `transparent` | 轨道不铺色，露出所在画布 |
+
+滑块另加 3px 透明描边 + `background-clip: padding-box`，可见截面 6px。
+页面级滚动、弹层正文（`.admin-modal__body` / `.landing-record__modal-body` /
+`.admin-drawer__body`）、侧栏、消息流、输入框共用这一套；只有滚动驱动动画
+容器（`ScrollExpand`）显式隐藏。Firefox 走标准属性，浓度取 hover 档。
+**改滚动条只改 `tokens.css` 与 `app.css` 这一处**，页面文件里不再写
+`::-webkit-scrollbar`。
+
 ### 3.6 间距 / 栅格 / 断点
 
 | 令牌 | 值 | 说明 |

@@ -1500,20 +1500,8 @@ html.dark .admin-newsedit .w-md-editor {
   }
 }
 
-/* 横向滚动条本身也是可交互提示：细轨 + 紫灰滑块，双主题同源令牌。 */
-.admin-dt__scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--admin-line-strong) transparent;
-}
-
-.admin-dt__scroll::-webkit-scrollbar {
-  height: 8px;
-}
-
-.admin-dt__scroll::-webkit-scrollbar-thumb {
-  background: var(--admin-line-strong);
-  border-radius: var(--radius-pill);
-}
+/* 横向滚动条交给 app.css 的全局规则（透明轨道 + 随 --fg 派生的胶囊滑块）。
+   这里不再单独定义，避免管理端台账与页面级滚动条出现两套外观。 */
 
 /* 仪表盘的「最近判读记录」是摘要表：窄屏只保留患者 / 结果 / 复审，
    影像与时间退到诊断管理全量视图，避免 6 列在 390px 里挤成竖排。 */
