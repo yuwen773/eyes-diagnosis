@@ -152,22 +152,20 @@ export function AdminDiagnosisPage(): ReactElement {
   // 下钻入口：仪表盘的「去复核 / 去查看」带着 ?review= 进来，直接落到对应筛选上，
   // 管理员不用自己再点一次筛选下拉。参数只认白名单里的语义键，其余一律忽略。
   const [searchParams] = useSearchParams()
-  const initialReview = ((): DiagnosisReviewFilter => {
-    const value = searchParams.get("review")
-    return DIAGNOSIS_REVIEW_FILTER_OPTIONS.some((option) => option.value === value)
-      ? (value as DiagnosisReviewFilter)
-      : ""
-  })()
 
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [resultDraft, setResultDraft] = useState("")
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
-  const [query, setQuery] = useState<Query>({
-    result: "",
-    review: initialReview,
-    startDate: "",
-    endDate: "",
+  // 初始值只在挂载时用一次：用惰性初始化，避免每次渲染都重读 URL 参数。
+  const [query, setQuery] = useState<Query>(() => {
+    const value = searchParams.get("review")
+    const review: DiagnosisReviewFilter = DIAGNOSIS_REVIEW_FILTER_OPTIONS.some(
+      (option) => option.value === value,
+    )
+      ? (value as DiagnosisReviewFilter)
+      : ""
+    return { result: "", review, startDate: "", endDate: "" }
   })
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
   // 服务端排序：不在当前页做二次排序，字段必须落在后端白名单里。

@@ -172,11 +172,15 @@ export function AdminDataAnalysisPage(): ReactElement {
   }, [stats])
 
   /** 复核状态分布：后端给的是状态代码，这里换成中文标签再排序。 */
-  const reviewDistribution = rankDistribution(
-    (stats?.reviewDistribution ?? []).map((row) => ({
-      name: humanReviewStatusLabel(row.name),
-      value: row.value,
-    })),
+  const reviewDistribution = useMemo(
+    () =>
+      rankDistribution(
+        (stats?.reviewDistribution ?? []).map((row) => ({
+          name: humanReviewStatusLabel(row.name),
+          value: row.value,
+        })),
+      ),
+    [stats],
   )
 
   /**
@@ -188,19 +192,27 @@ export function AdminDataAnalysisPage(): ReactElement {
   const breakdownRows = reviewDistribution
 
   /** 知识库状态分布（0 处理中 / 1 已完成 / 2 失败）。 */
-  const knowledgeDistribution = rankDistribution(
-    (stats?.knowledgeByStatus ?? []).map((row) => ({
-      name: knowledgeStatusView(Number(row.name)).label,
-      value: row.value,
-    })),
+  const knowledgeDistribution = useMemo(
+    () =>
+      rankDistribution(
+        (stats?.knowledgeByStatus ?? []).map((row) => ({
+          name: knowledgeStatusView(Number(row.name)).label,
+          value: row.value,
+        })),
+      ),
+    [stats],
   )
 
   /** 资讯发布状态分布（0 草稿 / 1 已发布 / 2 下架 / 3 待审核）。 */
-  const newsDistribution = rankDistribution(
-    (stats?.newsByStatus ?? []).map((row) => ({
-      name: newsStatusView(Number(row.name)).label,
-      value: row.value,
-    })),
+  const newsDistribution = useMemo(
+    () =>
+      rankDistribution(
+        (stats?.newsByStatus ?? []).map((row) => ({
+          name: newsStatusView(Number(row.name)).label,
+          value: row.value,
+        })),
+      ),
+    [stats],
   )
 
   /** 新增用户的按周分布：合计与日均才是主读数。 */

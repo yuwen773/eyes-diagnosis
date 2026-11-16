@@ -125,6 +125,9 @@ export function DataTable<T extends RowData>(props: {
     emptyContent,
   } = props
 
+  // 勾选状态每行都要查一次：数组 includes 是 O(n)，换 Set 后 O(1)。
+  const selectedSet = useMemo(() => new Set(selectedKeys), [selectedKeys])
+
   // 列定义映射到 TanStack 的列模型：key 同时是服务端排序字段。
   const tableColumns = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
@@ -209,7 +212,7 @@ export function DataTable<T extends RowData>(props: {
       const row = tableRow.original
       const key = tableRow.id
       const selectableRow = selectable && (isRowSelectable ? isRowSelectable(row) : true)
-      const checked = selectedKeys.includes(key)
+      const checked = selectedSet.has(key)
       return (
         <tr key={key} className="admin-dt__row">
           {selectable ? (
@@ -257,14 +260,17 @@ export function DataTable<T extends RowData>(props: {
    * 全选 / 取消全选：只作用于「当前页里可选的行」。
    * 不可选的行（例如管理员账号）不参与全选，否则会把不可操作的行塞进选中集。
    */
-  const selectableKeys = selectable
-    ? (rows ?? [])
-        .filter((row) => (isRowSelectable ? isRowSelectable(row) : true))
-        .map((row) => rowKey(row))
-    : []
+  const selectableKeys = useMemo(() => {
+    if (!selectable) return []
+    const out: string[] = []
+    for (const row of rows ?? []) {
+      if (!isRowSelectable || isRowSelectable(row)) out.push(rowKey(row))
+    }
+    return out
+  }, [selectable, rows, isRowSelectable, rowKey])
   const allChecked =
-    selectableKeys.length > 0 && selectableKeys.every((key) => selectedKeys.includes(key))
-  const someChecked = selectableKeys.some((key) => selectedKeys.includes(key))
+    selectableKeys.length > 0 && selectableKeys.every((key) => selectedSet.has(key))
+  const someChecked = selectableKeys.some((key) => selectedSet.has(key))
 
   const goPrev = () => {
     if (current > 1) onPageChange({ current: current - 1, pageSize: page.pageSize })

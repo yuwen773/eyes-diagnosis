@@ -105,26 +105,27 @@ export function AdminKnowledgePage(): ReactElement {
   // 下钻入口：仪表盘的「知识库处理失败」带 ?status=2 进来，直接落到失败筛选上。
   // 只认合法的状态码，其余忽略。
   const [searchParams] = useSearchParams()
-  const initialStatus = ((): string => {
+  // 初始值只在挂载时用一次：惰性初始化，避免每次渲染都重读 URL 参数。
+  const readInitialStatus = () => {
     const value = searchParams.get("status")
     return value !== null && KNOWLEDGE_STATUS_FILTER_OPTIONS.some((o) => o.value === value)
       ? value
       : ""
-  })()
+  }
   const [fileNameDraft, setFileNameDraft] = useState("")
   const [titleDraft, setTitleDraft] = useState("")
-  const [statusDraft, setStatusDraft] = useState(initialStatus)
+  const [statusDraft, setStatusDraft] = useState(readInitialStatus)
   const [fileTypeDraft, setFileTypeDraft] = useState("")
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
-  const [query, setQuery] = useState<Query>({
+  const [query, setQuery] = useState<Query>(() => ({
     fileName: "",
     title: "",
-    status: initialStatus,
+    status: readInitialStatus(),
     fileType: "",
     startDate: "",
     endDate: "",
-  })
+  }))
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
