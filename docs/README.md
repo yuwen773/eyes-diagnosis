@@ -27,6 +27,8 @@
 
 ## 计划与规格（按时间倒序，检出时以文件名为准）
 
+- `product/iris-control-center-1.0-mvp-prd.md` — 系统配置中心 MVP PRD（V0.1，**待评审，未进入开发**；WP-00 源码审计是开发前置）
+- `product/wp-00/` — WP-00 源代码审计交付物（配置项清单、模型调用清单、配置边界、ADR、API 契约、审计结论）；基线 `f42065e4`
 - `plans/` — 2026-04 的移植、Admin UI、gRPC、MCP、find-lock、用户中心、会话管理设计/实施计划
 - `superpowers/specs/` — 设计规格：GitHub 门面、仓库深度整理、P2 系列基线 / watchdog / GPU matrix / epoch loop / fold0 smoke、React 管理后台移植
 - `superpowers/plans/` — 对应实施计划：P2 系列、React 管理后台 / Agent 对话页移植、Java 管理后台缺陷修复
