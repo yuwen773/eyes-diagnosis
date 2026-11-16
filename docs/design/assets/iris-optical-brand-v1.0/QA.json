@@ -1,0 +1,52 @@
+{
+  "source": "光耀旋转虹膜标志.png",
+  "source_dims": [
+    1254,
+    1254
+  ],
+  "clean_geometry_bbox": [
+    235,
+    270,
+    1016,
+    1009
+  ],
+  "master_size": [
+    1024,
+    1024
+  ],
+  "alpha_range": [
+    0,
+    255
+  ],
+  "iris-optical-primary-1024.png": {
+    "corner_alphas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "nonzero_alpha_pixels": 534590,
+    "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
+  },
+  "iris-optical-dark-1024.png": {
+    "corner_alphas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "nonzero_alpha_pixels": 534590,
+    "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
+  },
+  "iris-optical-admin-purple-1024.png": {
+    "corner_alphas": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "nonzero_alpha_pixels": 534590,
+    "alpha_sha256": "d4f31d696f159bcdbedb43f2e25bb5907261e2b12a3455e7ab8497891147a70b"
+  },
+  "same_colorway_silhouette": true
+}

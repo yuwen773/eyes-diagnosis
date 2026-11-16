@@ -82,8 +82,18 @@
 }
 
 .admin-side__mark {
+  display: block;
   width: 24px;
   height: 24px;
+}
+
+/* 单色标跟着品牌块的明暗翻转：浅色主题白色、深色主题深海军蓝。 */
+html.dark .admin-side__mark--light {
+  display: none;
+}
+
+html:not(.dark) .admin-side__mark--dark {
+  display: none;
 }
 
 .admin-side__brand-text {

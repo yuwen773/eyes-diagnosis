@@ -8,7 +8,7 @@ import "@/styles/auth.css"
  * 认证壳：蓝青光学品牌背景 + Layered Glass 表单（Visual Completion U6）。
  *
  * <p>认证页是用户端品牌体验，与首页同属一个品牌：钴蓝 / 银蓝 / 冰青的光学
- * 画布，金属虹膜标 + Manrope 字标与首页连续。背景是纯 CSS 光学资产
+ * 画布，光学虹膜标 + Manrope 字标与首页连续。背景是纯 CSS 光学资产
  * （同心环虹膜 + 两道品牌渐变 + 校准网格），不引入第二个 GPU 渲染器；
  * 动效仅一层缓慢的光学漂移，尊重 prefers-reduced-motion，且只是氛围
  * （不暗示任何业务事件）。
