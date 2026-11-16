@@ -409,7 +409,8 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 
 **组件复用**
 沿用（🅿 PR #52 引入的）React 生态：`web/src/components/brand/`（`LandingHero.tsx`、
-`BrandPanel.tsx`、`OpticFlow.tsx`）、`web/src/styles/brand.css`、`Base UI`（弹层与基础交互）。
+`BrandPanel.tsx`、`HeroPrism.tsx` / `Prism.tsx`）、`web/src/styles/brand.css`、
+`Base UI`（弹层与基础交互）。
 **不引入新的 UI 库，不自研图表，不做第二套设计系统。**
 
 **真实业务约束**
@@ -423,7 +424,7 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 
 **反例**
 
-- ❌ 多层 GPU 背景叠加（Beams + GridScan + Ghost Fibers 同时挂）。
+- ❌ 多层 GPU 背景叠加（Prism + GridScan + Ghost Fibers 同时挂）。
 - ❌ 三维材质压在标题上，文字对比度靠发光撑。
 - ❌ 居中大标题 + 粒子雨 + 圆形渐变装饰（这套"AI 生成味"样板）。
   本项目的首屏是**左对齐排版**（PR #52 的 `VISION, REIMAGINED.` + 中文副标题），
@@ -434,8 +435,8 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 **当前完成状态**
 🅿 **首屏在 PR #52**：品牌令牌（`--brand-*`、`--font-brand`、`--radius-xl/2xl`、`.iris2`
 语境类）、`LandingHero.tsx`（眉线 / 标题 / 双 CTA / 玻璃流程卡 / 三张入口卡 /
-仪器读数条 / 免责条）、`OpticFlow.tsx`（WebGL2 Beams + SVG 纤维 + 静态降级 +
-暂停动效）、`brand.css`。验收截图随 PR #52 入库于 `docs/assets/iris2/`
+仪器读数条 / 免责条）、`HeroPrism.tsx` + `Prism.tsx`（WebGL2 棱镜 + 多色光 +
+静态降级 + `prefers-reduced-motion` 冻结）、`brand.css`。验收截图随 PR #52 入库于 `docs/assets/iris2/`
 （390/768/1440/1920 × 亮暗 + 两条降级路径）。
 
 🅿 **首页下半页已按品牌层重排（R2.5-02，PR #63）**：眼底影像示意、样本局部、
@@ -596,7 +597,7 @@ Manrope 无汉字，汉字按字形回退到 Noto Sans SC（与 `--font-brand` �
 - **切时间窗必须立即失效 + 占位**：不能 Tab 显示 30d、卡片却留着 7d 的旧缓存。
 - 图表**不能只靠颜色区分**：每个系列都要有读数表、条端直标、图例文字、线型/marker
   之一；tooltip 与 `aria-label` 里带系列名。
-- **不把首页的 Beams 铺到管理页面**。管理端要的是密度，不是气氛。
+- **不把首页的 Prism 铺到管理页面**。管理端要的是密度，不是气氛。
 
 **反例**
 
@@ -975,6 +976,26 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 焦点环继承当前文字色，深浅上下文都自动成立。
 **禁止**在模块里写 `outline: none` 压掉它——要改样式请提高特异度重画。
 
+**滚动条**
+
+全站一套：透明轨道 + 胶囊滑块，颜色从当前上下文的 `--fg` 派生
+（静置 `color-mix(in srgb, var(--fg) 30%, transparent)`，hover / 拖动 52%），
+所以浅色、深色、暗房、管理端自动换色，**不按场景另立一套轨道**。
+
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `--scrollbar-size` | `12px` | 轨道宽 / 高（Windows 经典滚动条的收窄值） |
+| `--scrollbar-thumb-mix` | `30%` | 静置滑块的前景墨浓度 |
+| `--scrollbar-thumb-mix-hover` | `52%` | hover / 拖动时的浓度 |
+| `--scrollbar-track` | `transparent` | 轨道不铺色，露出所在画布 |
+
+滑块另加 3px 透明描边 + `background-clip: padding-box`，可见截面 6px。
+页面级滚动、弹层正文（`.admin-modal__body` / `.landing-record__modal-body` /
+`.admin-drawer__body`）、侧栏、消息流、输入框共用这一套；只有滚动驱动动画
+容器（`ScrollExpand`）显式隐藏。Firefox 走标准属性，浓度取 hover 档。
+**改滚动条只改 `tokens.css` 与 `app.css` 这一处**，页面文件里不再写
+`::-webkit-scrollbar`。
+
 ### 3.6 间距 / 栅格 / 断点
 
 | 令牌 | 值 | 说明 |
@@ -1048,7 +1069,8 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 **全场景硬要求（两条都适用）**
 - **性能与生命周期**：有明确的性能预算；离屏即停；页面隐藏即停；
   `prefers-reduced-motion: reduce` 下**当场停**（实时订阅，不是一次性读取）；
-  首屏动效用户可手动暂停。
+  首屏动效不设手动控件：intro 后自动旋转约 5 秒即停（`data-mode="settled"`），
+  系统动效偏好仍可随时立即冻结。
 - **入场与可访问性**：入场位移不超过 12px，透明度 0→1；流式输出配 live region；
   动效不得造成布局位移（CLS）或遮挡可点击目标。
 
@@ -1090,11 +1112,12 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
     不要把 1024 母版直接放进 `public/`。
   - 16px favicon 只能保留虹膜外环识别，星点细节不可见——最终以真实标签栏验收；
     单色版在 16px 下简化为「环 + 心」结构，管理端实际使用 24px。
-- **React Bits · Beams** 是 vendored 代码：必须保留**许可原文**与**固定上游 commit**，
-  记录在 `web/src/components/brand/THIRD-PARTY-NOTICES.md`。
-  换 SHA 必须重做逐字比对。
-- **不新开特效库**：品牌特效优先复用已 vendored 的 Beams，
-  细纤维用 SVG/CSS 层。**首页只允许一个正在运行的 GPU 背景。**
+- **React Bits · Prism** 是 vendored 代码：必须保留**许可原文**与**取用记录**，
+  记录在 `web/src/components/brand/THIRD-PARTY-NOTICES.md`。上游无版本标签时按取用日期记录。
+  公开仓库分发按 2026-11-16 负责人确认的解释保留（非商业演示 / 学术项目、
+  不作为组件单独分发或售卖）；该确认是风险接受，不是上游书面授权。
+- **不新开特效库**：品牌特效优先复用已 vendored 的 Prism。
+  **首页只允许一个正在运行的 GPU 背景。**
 - 图片资产要考虑长文案、不同色彩模式与深浅主题下的可读性。
 
 ### 3.10 数据真实性
@@ -1277,7 +1300,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 能力 | 状态 | 依据 |
 |---|---|---|
 | 品牌令牌 `--brand-*` / `--font-brand` / `--radius-xl` / `--radius-2xl` / `.iris2` | 🅿 | PR #52（`ui` 上尚未存在） |
-| 首屏光学主视觉（WebGL2 Beams + SVG 纤维 + 静态降级 + 暂停） | 🅿 | PR #52 `OpticFlow.tsx` / `beamsMount.ts` |
+| 首屏光学主视觉（WebGL2 棱镜 + 多色光 + 静态降级 + reduced-motion 冻结） | 🅿 | `HeroPrism.tsx` / `Prism.tsx` |
 | 首屏品牌排版（眉线 / Manrope 标题 / 双 CTA / 玻璃流程卡 / 三张入口卡 / 仪器读数条 / 免责条） | 🅿 | PR #52 `LandingHero.tsx` |
 | 品牌层对比度断言 | 🅿 | PR #52 `tokens.contrast.test.ts` |
 | 管理端 7 个页面 + TanStack Query/Table + Recharts + Base UI 弹层 | ✅ | `web/src/pages/admin/` |
@@ -1409,7 +1432,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | H | MediCore AI · Healthcare Command Center UI | https://dribbble.com/shots/27363076-MediCore-AI-Healthcare-Command-Center-UI |
 | I | Synthia OS · AI-Powered Biotech & Gene Synthesis（**信息布局参考，非眼科**） | https://www.behance.net/gallery/250063917/Synthia-OS-AI-Powered-Biotech-Gene-Synthesis |
 | 影像工作流 | V7 Darwin · Medical Imaging Annotation | https://www.v7darwin.com/medical-imaging-annotation |
-| 动态材质 | React Bits · Beams（vendored，见 `THIRD-PARTY-NOTICES.md`） | https://reactbits.dev/backgrounds/beams |
+| 动态材质 | React Bits · Prism（vendored，见 `THIRD-PARTY-NOTICES.md`） | https://reactbits.dev/backgrounds/prism |
 
 访问日期：2026-11-12（G 的管理端主参考地位更新于 2026-11-13）。
 **G 参考（管理端）的借鉴边界**：借鉴其紫白色体系、Dashboard 信息架构、统计卡与

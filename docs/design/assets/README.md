@@ -14,13 +14,12 @@
 
 1. V4 概念稿是 **Hybrid SVG 概念**（文件页脚自己写着
    `HYBRID SVG CONCEPT, NOT LIVE REACT BITS`）。
-   线上首屏跑的是 **vendored React Bits Beams（裸 WebGL2）**，
-   见 `web/src/components/brand/OpticFlow.tsx` 与
+   线上首屏跑的是 **vendored React Bits Prism（裸 WebGL2）**，
+   见 `web/src/components/brand/HeroPrism.tsx` / `Prism.tsx` 与
    `web/src/components/brand/THIRD-PARTY-NOTICES.md`。
    **不要把概念稿说成"实时 WebGL / 3D"。**
 2. 概念稿里的示意内容（如 "INTELLIGENCE LAYER" 卡片）**不是产品能力**。
    产品界面上的能力描述必须对应真实后端能力，未上线的写"规划中"。
 
-**接入许可**：Beams 是 vendored 代码，许可为 MIT + Commons Clause v1.0，
-固定上游 commit 与许可原文见 `web/src/components/brand/THIRD-PARTY-NOTICES.md`。
-换 commit 必须重做逐字比对。
+**接入许可**：Prism 是 vendored 代码，许可为 MIT + Commons Clause v1.0，
+取用记录与许可原文见 `web/src/components/brand/THIRD-PARTY-NOTICES.md`。

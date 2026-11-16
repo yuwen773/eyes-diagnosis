@@ -1,65 +1,37 @@
 # 第三方来源与许可
 
-本目录下的 `beamsEngine.ts` 与 `beamsMount.ts` 是**上游第三方组件的 vendor 副本**，
-不是本项目原创。其余文件（`OpticFlow.tsx`、`LandingHero.tsx`、`BrandPanel.tsx`、
-`BrandFooter.tsx`、`OpticFlow.test.tsx`、`beamsMount.test.ts`、`notices.test.ts`）由本项目编写。
+本目录下的 `Prism.tsx` 与 `Prism.css` 是**上游第三方组件的 vendor 副本**，
+不是本项目原创。其余文件（`HeroPrism.tsx`、`HeroPrism.test.tsx`、`LandingHero.tsx`、
+`BrandPanel.tsx`、`BrandFooter.tsx`、`notices.test.ts`）由本项目编写。
 品牌顶栏的虹膜标与字标已随 R2.5-01 移到 `src/components/shell/Wordmark.tsx`，同样是本项目编写。
 
 ---
 
-## React Bits · Beams
+## React Bits · Prism
 
 | 项 | 内容 |
 |----|------|
 | 上游 | https://github.com/DavidHDev/react-bits |
-| 源文件 | `src/content/Backgrounds/Beams/Beams.jsx` |
-| **固定 commit** | **`ed33ebe4acfe29e60fb759bcccc70a138ce2dcef`**（2026-11-08，"Fix/responsive preview flicker (#1109)"） |
-| 取用时间 | 2026-11-12，取 `main` 当时该文件的最新一次提交；下面「校验」一节有比对证据 |
+| 源文件 | `src/content/Backgrounds/Prism/Prism.jsx` + `Prism.css`（JavaScript + CSS 版本） |
+| 取用时间 | 2026-11-16，由产品负责人提供的组件源码 |
+| 上游版本 | **无版本标签 / 固定 commit**；本仓库以 `Prism.tsx` 的移植版为准 |
 | 作者 | David Haz |
 | 许可 | MIT License **+ Commons Clause License Condition v1.0**（Copyright (c) 2026 David Haz） |
-| 署名位置 | 本文件 + `beamsEngine.ts` 文件头，两处都保留 |
+| 署名位置 | 本文件 + `Prism.tsx` 文件头，两处都保留 |
 
-> 上游没有给这个组件打版本标签，所以**只认 commit SHA**。换了 SHA 就要重做下面的校验。
-
-### 校验：与固定 commit 的逐字比对
-
-2026-11-12 重新拉取 `ed33ebe4acfe29e60fb759bcccc70a138ce2dcef` 下的 `Beams.jsx`，
-把它与本仓库 `beamsEngine.ts` 里的三个模板字符串（顶点着色器 / FIELD / COMPOSITE）
-逐字比对：
-
-| 着色器 | 上游 SHA-256 前 12 位 | 本仓库（2026-11-12） | 结论 |
-|---|---|---|---|
-| 顶点 | `254cf7532230` | `254cf7532230` | 逐字一致 |
-| FIELD | `ce0437306e9d` | `3663510bac21` | 已改动，见下方「相对上游的改动」 |
-| COMPOSITE | `39bf1cf8ca1a` | `05e950c06437` | 同上 |
-
-> 计算口径：取模板字符串**两个反引号之间的全部内容**，先把行尾统一成 `LF` 再算
-> SHA-256。换行符不统一会得到完全不同的哈希，下次比对请沿用这个口径。
-
-> ⚠️ **2026-11-12（R2-01）起，FIELD 与 COMPOSITE 不再与上游逐字一致**。
-> 原因是首屏要做「光学玻璃带」而不是「一团发光」：需要给带体一条可辨认的边缘。
-> 顶点着色器仍逐字一致。
-
-### 相对上游的改动：FIELD / COMPOSITE 的带边高光（R2-01，2026-11-12）
-
-| 位置 | 改动 | 理由 |
-|---|---|---|
-| `FIELD.main()` | 新增 `edgeDist = min(u, 1-u)` 与 `rim = 1 - smoothstep(0, 0.045, edgeDist)`，输出改为 `vec4(value.x, value.y, min(hot, 6.0), rim)`（上游 `.a` 恒为 `1.0`） | 上游的带子只是「一团发光」，没有边界；`rim` 表示距最近带边的归一化距离，合成阶段据此画镜面反光 |
-| `COMPOSITE.main()` | 读取 `.a` 作为 `rim`；亮色分支 `alpha *= 1.0 - rim * 0.55`；暗色分支在写入前 `color += rim * mix(uColor, white, 0.55) * 0.42 * mask` | 亮环境里玻璃读作「透明体 + 亮边」（边缘透出画布 = 反光），暗环境里给带体厚度与前后关系 |
-
-其余语句——噪声、lobe、ACES、泛光采样顺序、feather、抖动——与上游一致。
-
-### 改动范围（相对上游）
+### 相对上游的改动
 
 | 文件 | 改动 | 原因 |
 |------|------|------|
-| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；**顶点着色器逐字保留**；FIELD / COMPOSITE 增加带边高光（见上一节） | 让引擎能脱离 React 使用、纳入类型检查，并支持首屏的「光学玻璃带」目标 |
-| `beamsMount.ts` | 把上游写在 `useEffect` 里的挂载逻辑抽成普通函数 `mountBeams()`；补 `webglcontextlost` 处理、`prefers-reduced-motion` 的运行时订阅、`dispose()` 幂等与「不主动丢上下文」 | 支持「WebGL2 不可用 / 上下文丢失 / 减少动效 / StrictMode 重复挂载」四条生命周期路径 |
+| `Prism.tsx` | 补 TypeScript 类型标注，纳入 `tsc -b` 门禁 | 与项目其余代码同一套类型检查 |
+| `Prism.tsx` | `prefers-reduced-motion` 从「挂载时读一次」改为**实时订阅** | 用户运行中切换系统动效偏好要当场生效 |
+| `Prism.tsx` | 新增 `onUnavailable`：WebGL2 不可用、着色器编译/链接失败、`webglcontextlost` 时通知调用方 | 首屏必须有静态降级，不能留一块空白画布 |
+| `Prism.tsx` | cleanup 不在 StrictMode 假卸载时无条件 `loseContext()` | 假卸载会立刻复用同一张 canvas，提前丢上下文会把新上下文一起弄丢 |
+| `Prism.tsx` | 删除上游的 `settingsRef.current = settings` 渲染期赋值，改到 effect 里 | 避免 React Hooks 的 refs-during-render 规则 |
 
-上游原始渲染流程（场渲染 → mipmap 泛光 → 合成、鼠标交互、intro 动画、
-可见性监听、ResizeObserver）保持不变。
+着色器与渲染流程（场渲染、色带、intro、鼠标倾斜、可见性监听、ResizeObserver）与上游保持一致。
 
-### 许可原文（固定 commit 下的 `LICENSE.md`，正文照录）
+### 许可原文（正文照录）
 
 > **不是逐字等同**：为便于阅读，下文对关键限制加了 Markdown 粗体强调。
 > 文字与语义未改，但字面上与上游文件不同；需要逐字比对时以上游仓库的
@@ -73,7 +45,7 @@ Copyright (c) 2026 David Haz
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, and distribute the Software **as part of an application, website, or product**, subject to the following conditions:
+to use, copy, modify, merge, publish, distribute the Software **as part of an application, website, or product**, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -97,26 +69,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### 许可判断（**待产品负责人确认，不是结论**）
+### 分发授权核对（2026-11-16）
 
-这段话允许的：**把它作为应用 / 网站 / 产品的一部分使用，包含商业用途**，允许修改。
-这段话限制的：**不得销售、再许可、再分发「组件本身」——单独、打包、或以移植版的形式。**
+**已核对上游原文**：`https://raw.githubusercontent.com/DavidHDev/react-bits/main/LICENSE.md`
+（HTTP 200，2026-11-16）；README 的 License 段落写的是
+"MIT + Commons Clause, free for personal and commercial use"。
 
-本项目符合的部分：
+允许的：把软件**作为应用 / 网站 / 产品的一部分**使用、复制、修改、合并、发布与分发，
+包含商业用途；版权与许可声明随附。
 
-- 它只作为 Iris 内部产品的一个首屏背景使用，不单独售卖、不再许可；
-- 版权与许可声明在两处保留（本文件 + 源文件头）。
+限制的（Commons Clause）：**不得销售、再许可、再分发「组件本身」——单独、打包、
+或以移植版的形式。**
 
-**需要确认的一点**：本仓库是**公开仓库**，`beamsEngine.ts` 是一份「去掉 React 外壳的
-移植版」，并且随仓库公开分发。严格按字面，"redistribute the components themselves …
-as a ported version" 覆盖这种情况。合规的做法有三条路，按代价从低到高：
+**与本仓库的关系**：`Prism.tsx` 是补类型并改生命周期的**移植版**，本仓库是
+**公开仓库**（GitHub `yuwen773/eyes-diagnosis`，PUBLIC）。严格按字面，
+「公开仓库里的移植版源码」落在 "redistribute … as a ported version" 的限制范围内；
+MIT 的 "as part of an application" 是否覆盖公开源码分发，原文没有给出明确许可。
 
-1. **保持现状 + 记录在案**：由负责人书面确认「内部产品、公开仓库、非商业分发」这一解释；
-2. **仓库里不放 vendored 副本**：把 `beamsEngine.ts` / `beamsMount.ts` 移到运行时私有依赖
-   或构建期注入，开源仓库只留接口与说明；
-3. **换成自研或更宽松许可的实现**：代价最大，且本轮明确禁止新增背景渲染器。
+### 分发授权结论（2026-11-16，负责人确认）
 
-本 PR 只做第 1 条的「记录在案」，不擅自替负责人做合规判断。
+产品负责人于 2026-11-16 确认按以下解释**保留现状**：
+
+- 本仓库是公开的**非商业演示 / 学术项目**（Iris 眼底判读），Prism 只作为应用
+  首屏背景的一部分使用；
+- 不销售、不再许可、不把 Prism 组件本身（含移植版）作为独立组件、模板或
+  付费产品分发；
+- 版权与许可声明保留在本文件与 `Prism.tsx` 文件头。
+
+这是项目方对 Commons Clause 公开源码分发解释的**风险接受**，不是上游的书面授权。
+若后续项目商业化、改为组件库，或上游提出异议，应重新评估；必要时改为私有依赖
+或自研实现。
 
 ---
 
@@ -130,4 +112,4 @@ as a ported version" 覆盖这种情况。合规的做法有三条路，按代�
 ## 未引入的依赖
 
 本轮**没有**引入 Three.js / React Three Fiber / `@react-three/*`：
-Beams 上游本身是裸 WebGL2 实现，无需三维库。
+Prism 上游本身是裸 WebGL2 实现，无需三维库。

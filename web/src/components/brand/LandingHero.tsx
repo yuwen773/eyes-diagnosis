@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type ReactElement } from "react"
+import { lazy, Suspense, type ReactElement } from "react"
 import { ArrowUpRight } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -6,8 +6,8 @@ import { BrandKicker, BrandPanel } from "./BrandPanel"
 import { useTheme } from "@/components/theme-provider"
 
 // 光学主视觉独立成块：首屏文字与 CTA 不等它——主包先落地，动效随后到。
-const OpticFlow = lazy(() =>
-  import("./OpticFlow").then((m) => ({ default: m.OpticFlow })),
+const HeroPrism = lazy(() =>
+  import("./HeroPrism").then((m) => ({ default: m.HeroPrism })),
 )
 
 /** 首屏下缘三张入口卡。链接都指向真实去处，没有假按钮。 */
@@ -49,29 +49,23 @@ const LAYERS = [
  * 光学带、半透明信息卡、底部产品体验区），但**内容全部是真的**：CTA 指向
  * 真实路由，卡片写的是产品实际做的事，没有任何一处冒充模型结论或患者数据。
  *
- * <p>主视觉是一个渲染器（见 OpticFlow）；这一层只负责排版与信息层级。
+ * <p>主视觉是一个渲染器（见 HeroPrism）；这一层只负责排版与信息层级。
  */
 export function LandingHero(): ReactElement {
   const { resolvedTheme } = useTheme()
   const theme = resolvedTheme === "dark" ? "dark" : "light"
-  const [paused, setPaused] = useState(false)
 
   return (
     <section className="landing-hero iris2" aria-label="Iris 2.0 首屏">
-      <div className="landing-hero__shell">
-        <div className="landing-hero__badge brand-panel brand-panel--frosted">
-          <span className="landing-hero__badge-tag num">IRIS 2.0 · OPTIC FLOW</span>
-          <span className="landing-hero__badge-note">光带 × 细纤维 · 单渲染器</span>
-          <button
-            type="button"
-            className="landing-hero__badge-btn"
-            onClick={() => setPaused((value) => !value)}
-            aria-pressed={paused}
-          >
-            {paused ? "继续动效" : "暂停动效"}
-          </button>
-        </div>
+      {/* 光学主视觉铺满整个 hero 区段：顶栏以下、左右到视口边缘。
+          玻璃外壳是叠加层，不再把画面裁在 1240px 里。 */}
+      <div className="landing-hero__flow">
+        <Suspense fallback={<div className="landing-hero__visual-hold" aria-hidden="true" />}>
+          <HeroPrism theme={theme} />
+        </Suspense>
+      </div>
 
+      <div className="landing-hero__shell">
         <div className="landing-hero__grid">
           <div className="landing-hero__copy">
             <p className="landing-hero__eyebrow">
@@ -105,12 +99,6 @@ export function LandingHero(): ReactElement {
           </div>
 
           <div className="landing-hero__visual">
-            <div className="landing-hero__flow">
-              <Suspense fallback={<div className="landing-hero__visual-hold" aria-hidden="true" />}>
-                <OpticFlow theme={theme} paused={paused} />
-              </Suspense>
-            </div>
-
             <BrandPanel variant="layered" as="aside" className="landing-hero__card">
               <BrandKicker>INTELLIGENCE LAYER</BrandKicker>
               <h2 className="landing-hero__card-title">让协作过程，清晰可见。</h2>
