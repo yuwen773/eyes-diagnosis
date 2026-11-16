@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { memo, useMemo, useRef, useState } from "react"
 import {
   ChevronLeft,
   Download,
@@ -80,7 +80,11 @@ function formatSessionStamp(value?: string): string {
  * boolean 作为「服务端真的成功了」的唯一依据：失败时保留输入、保留选中、
  * 保留会话本身，不假装成功。
  */
-export function SessionList({
+/**
+ * 会话栏与流式内容无关：memo 后只有 sessions / activeId / busy / 回调变化时
+ * 才重渲染。回调由 AgentPage 用 useCallback 固定引用。
+ */
+export const SessionList = memo(function SessionList({
   sessions,
   activeId,
   busy,
@@ -120,9 +124,14 @@ export function SessionList({
   const [batchPending, setBatchPending] = useState(false)
   const [batchError, setBatchError] = useState("")
 
-  const { pinned, groups } = groupSessions(sessions)
+  // 分组含逐条 new Date()，勾选过滤是全表遍历；两者只依赖 sessions / checked，
+  // 不该跟着流式 token 每片重算。
+  const { pinned, groups } = useMemo(() => groupSessions(sessions), [sessions])
   // 只把当前列表里真实存在的勾选项交给删除接口——刷新后消失的 id 不再冒充。
-  const selectedIds = sessions.filter((s) => checked.has(s.sessionId)).map((s) => s.sessionId)
+  const selectedIds = useMemo(
+    () => sessions.filter((s) => checked.has(s.sessionId)).map((s) => s.sessionId),
+    [sessions, checked],
+  )
 
   function toggleCheck(id: string) {
     setChecked((prev) => {
@@ -546,4 +555,4 @@ export function SessionList({
       </Dialog>
     </aside>
   )
-}
+})

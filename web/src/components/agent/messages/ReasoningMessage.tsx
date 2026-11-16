@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
 import { renderMarkdown } from "@/lib/markdown"
 
@@ -8,9 +8,12 @@ import { renderMarkdown } from "@/lib/markdown"
  */
 export function ReasoningMessage({ msg }: { msg: StreamMessage }) {
   const [open, setOpen] = useState(false)
+  // reasoning 片没有 isLoading 闸门：展开时每片 token 都会重跑一次 markdown。
+  // 延迟内容让输入/流式保持紧急优先级，昂贵的渲染等空闲再补。
+  const deferredContent = useDeferredValue(msg.content)
   const html = useMemo(
-    () => (open ? renderMarkdown(msg.content) : ""),
-    [open, msg.content],
+    () => (open ? renderMarkdown(deferredContent) : ""),
+    [open, deferredContent],
   )
   const preview = msg.content.length > 50 ? `${msg.content.slice(0, 50)}...` : msg.content
 
