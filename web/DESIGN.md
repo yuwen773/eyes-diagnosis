@@ -73,8 +73,8 @@
     `lucide-react` 的**静态命名导入**（保持 tree-shaking，不装第二套图标库）。
     常用尺寸 12/14/16/18/20px、`strokeWidth` 1.75–2.5 按语境取；颜色走
     `currentColor` 或语义令牌，不写独立色值。纯装饰图标必须 `aria-hidden`，
-    图标按钮必须有可访问名称。**自定义 SVG 仅用于**：品牌图形（Optic Flow 等；光学虹膜标自 v1.0 起用品牌包 PNG，
-    不再手写 SVG）、医学图形（AssistantMessage 眼形标、上传槽取景框）、
+    图标按钮必须有可访问名称。**自定义 SVG 仅用于**：品牌图形（Prism 静态降级；
+    光学虹膜标自 v1.0 起用品牌包 PNG，不再手写 SVG）、医学图形（AssistantMessage 眼形标、上传槽取景框）、
     数据可视化（ConfidenceDial）或 Lucide 无法满足的特定设计需求；
     新增手写功能性图标必须在此说明理由。品牌验收过的精细图形（主题切换
     半满读数环）不替换。
