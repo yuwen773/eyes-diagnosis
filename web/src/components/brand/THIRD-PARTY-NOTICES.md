@@ -45,8 +45,7 @@ Copyright (c) 2026 David Haz
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-Software **as part of an application, website, or product**, subject to the following conditions:
+to use, copy, modify, merge, publish, distribute the Software **as part of an application, website, or product**, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -70,26 +69,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### 许可判断（**待产品负责人确认，不是结论**）
+### 分发授权核对（2026-11-16）
 
-这段话允许的：**把它作为应用 / 网站 / 产品的一部分使用，包含商业用途**，允许修改。
-这段话限制的：**不得销售、再许可、再分发「组件本身」——单独、打包、或以移植版的形式。**
+**已核对上游原文**：`https://raw.githubusercontent.com/DavidHDev/react-bits/main/LICENSE.md`
+（HTTP 200，2026-11-16）；README 的 License 段落写的是
+"MIT + Commons Clause, free for personal and commercial use"。
 
-本项目符合的部分：
+允许的：把软件**作为应用 / 网站 / 产品的一部分**使用、复制、修改、合并、发布与分发，
+包含商业用途；版权与许可声明随附。
 
-- 它只作为 Iris 内部产品的一个首屏背景使用，不单独售卖、不再许可；
-- 版权与许可声明在两处保留（本文件 + `Prism.tsx` 文件头）。
+限制的（Commons Clause）：**不得销售、再许可、再分发「组件本身」——单独、打包、
+或以移植版的形式。**
 
-**需要确认的一点**：本仓库是**公开仓库**，`Prism.tsx` 是一份「补类型 + 改生命周期的
-移植版」，并且随仓库公开分发。严格按字面，"redistribute the components themselves …
-as a ported version" 覆盖这种情况。合规的做法有三条路，按代价从低到高：
+**与本仓库的关系**：`Prism.tsx` 是补类型并改生命周期的**移植版**，本仓库是
+**公开仓库**（GitHub `yuwen773/eyes-diagnosis`，PUBLIC）。严格按字面，
+「公开仓库里的移植版源码」落在 "redistribute … as a ported version" 的限制范围内；
+MIT 的 "as part of an application" 是否覆盖公开源码分发，原文没有给出明确许可。
 
-1. **保持现状 + 记录在案**：由负责人书面确认「内部产品、公开仓库、非商业分发」这一解释；
-2. **仓库里不放 vendored 副本**：把 `Prism.tsx` / `Prism.css` 移到运行时私有依赖
-   或构建期注入，开源仓库只留接口与说明；
-3. **换成自研或更宽松许可的实现**。
+### 分发授权结论（2026-11-16，负责人确认）
 
-本文件只做第 1 条的「记录在案」，不擅自替负责人做合规判断。
+产品负责人于 2026-11-16 确认按以下解释**保留现状**：
+
+- 本仓库是公开的**非商业演示 / 学术项目**（Iris 眼底判读），Prism 只作为应用
+  首屏背景的一部分使用；
+- 不销售、不再许可、不把 Prism 组件本身（含移植版）作为独立组件、模板或
+  付费产品分发；
+- 版权与许可声明保留在本文件与 `Prism.tsx` 文件头。
+
+这是项目方对 Commons Clause 公开源码分发解释的**风险接受**，不是上游的书面授权。
+若后续项目商业化、改为组件库，或上游提出异议，应重新评估；必要时改为私有依赖
+或自研实现。
 
 ---
 

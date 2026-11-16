@@ -61,15 +61,15 @@ const initScript = (theme) => {
   }
 }
 
-/** 单个 3 秒采样窗口（在页面里执行）。 */
-async function sampleOnce() {
+/** 一个动效窗口内的采样（在页面里执行）。 */
+async function sampleOnce(durationMs) {
   const longTasks = []
   let observer = null
   try {
     observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) longTasks.push(entry.duration)
     })
-    // 不取 buffered：首屏加载期的长任务不属于「稳态运行」读数。
+    // 不取 buffered：首屏加载期的长任务不属于动效窗口读数。
     observer.observe({ type: "longtask" })
   } catch {
     // 不支持 longtask 的浏览器只少一项读数。
@@ -82,7 +82,7 @@ async function sampleOnce() {
     const tick = (now) => {
       frames.push(now - last)
       last = now
-      if (now - start < 3000) requestAnimationFrame(tick)
+      if (now - start < durationMs) requestAnimationFrame(tick)
       else done()
     }
     requestAnimationFrame(tick)
@@ -129,11 +129,15 @@ function collectMeta() {
   }
 }
 
-/** 每个主题跑 3 个窗口，取中位数，避免单次抖动把结论带偏。 */
+/**
+ * 动效只跑 5 秒：采样必须落在 intro 之后、settle 之前。
+ * 3 个 1s 窗口（挂载后约 1.5–4.5s），取中位数，不跨过冻结点，
+ * 也不把冻结后的静态帧算进 FPS。
+ */
 async function measure(page) {
   const samples = []
   for (let index = 0; index < 3; index += 1) {
-    samples.push(await page.evaluate(sampleOnce))
+    samples.push(await page.evaluate(sampleOnce, 1000))
   }
   const meta = await page.evaluate(collectMeta)
 
@@ -163,8 +167,8 @@ async function capture(theme) {
   await page.bringToFront()
   await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 30_000 })
   await page.waitForSelector('.hero-prism[data-mode="live"] canvas', { timeout: 10_000 })
-  // intro 1.4s，多等一拍让画面稳定在常规相位。
-  await page.waitForTimeout(1800)
+  // intro 1.4s；从 1.5s 起采 3s，落在 5s 冻结之前。
+  await page.waitForTimeout(1500)
 
   const metrics = await measure(page)
   await page.screenshot({
@@ -172,6 +176,16 @@ async function capture(theme) {
     type: "jpeg",
     quality: 88,
   })
+
+  // 本轮新增的自动循环控制：满 5s 后必须停在当前相位。
+  await page.waitForTimeout(1200)
+  const settled = await page.evaluate(() => ({
+    mode: document.querySelector(".hero-prism")?.getAttribute("data-mode"),
+    atMs: Math.round(performance.now()),
+  }))
+  if (settled.mode !== "settled") {
+    throw new Error(`${theme}: 期望 5s 后 data-mode=settled，实际 ${settled.mode}`)
+  }
 
   let themeSwitch = null
   if (theme === "light") {
@@ -185,7 +199,7 @@ async function capture(theme) {
   }
 
   await context.close()
-  return { theme, metrics, themeSwitch }
+  return { theme, metrics, settled, themeSwitch }
 }
 
 const results = [await capture("light"), await capture("dark")]
@@ -201,14 +215,15 @@ const report = {
 const jsonPath = resolve(OUT, "hero-prism-performance.json")
 writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`, "utf8")
 
-for (const { theme, metrics, themeSwitch } of results) {
+for (const { theme, metrics, settled, themeSwitch } of results) {
   const { summary } = metrics
   console.log(
     `${theme}: ${summary.medianFps} fps median (${summary.minFps}–${summary.maxFps}) · ` +
       `p95 ${summary.medianP95FrameMs}ms · ` +
       `dropped ${summary.droppedFrames}/${summary.sampledFrames} · ` +
       `long tasks ${summary.longTasksMs.length} · ` +
-      `ctx ${metrics.webgl2Contexts} · ${metrics.canvas?.buffer} · ${metrics.renderer}`,
+      `ctx ${metrics.webgl2Contexts} · ${metrics.canvas?.buffer} · ` +
+      `settled@${settled.atMs}ms · ${metrics.renderer}`,
   )
   if (themeSwitch) console.log("theme switch:", JSON.stringify(themeSwitch))
 }

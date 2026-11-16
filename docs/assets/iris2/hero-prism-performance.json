@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-11-16T12:08:46.949Z",
+  "capturedAt": "2026-11-16T12:32:13.428Z",
   "base": "http://localhost:4173",
   "viewport": "1440×900 @1x",
   "browser": "C:/Users/yuwen/AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe",
@@ -9,104 +9,43 @@
       "metrics": {
         "samples": [
           {
-            "sampledFrames": 154,
-            "sampleWindowMs": 3009,
-            "averageFps": 51.3,
-            "averageFrameMs": 19.51,
-            "p95FrameMs": 31.9,
-            "maxFrameMs": 45.7,
-            "droppedFrames": 61,
-            "longTasksMs": []
-          },
-          {
-            "sampledFrames": 165,
-            "sampleWindowMs": 3016,
-            "averageFps": 54.8,
-            "averageFrameMs": 18.25,
-            "p95FrameMs": 27.4,
-            "maxFrameMs": 140.8,
-            "droppedFrames": 39,
-            "longTasksMs": []
-          },
-          {
-            "sampledFrames": 159,
-            "sampleWindowMs": 3008,
-            "averageFps": 52.9,
-            "averageFrameMs": 18.9,
-            "p95FrameMs": 36.1,
-            "maxFrameMs": 127.2,
-            "droppedFrames": 49,
-            "longTasksMs": []
-          }
-        ],
-        "summary": {
-          "medianFps": 52.9,
-          "minFps": 51.3,
-          "maxFps": 54.8,
-          "medianP95FrameMs": 31.9,
-          "droppedFrames": 149,
-          "sampledFrames": 478,
-          "longTasksMs": []
-        },
-        "webgl2Contexts": 1,
-        "canvas": {
-          "buffer": "1071×588",
-          "css": "1428×784"
-        },
-        "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
-        "devicePixelRatio": 1,
-        "hardwareConcurrency": 16,
-        "jsHeapMB": 5.9,
-        "mode": "live"
-      },
-      "themeSwitch": {
-        "webgl2Contexts": 1,
-        "heroTheme": "dark",
-        "htmlDark": true
-      }
-    },
-    {
-      "theme": "dark",
-      "metrics": {
-        "samples": [
-          {
-            "sampledFrames": 124,
-            "sampleWindowMs": 3013,
-            "averageFps": 41.2,
-            "averageFrameMs": 24.28,
-            "p95FrameMs": 41.3,
-            "maxFrameMs": 100.2,
-            "droppedFrames": 77,
-            "longTasksMs": []
-          },
-          {
-            "sampledFrames": 145,
-            "sampleWindowMs": 3007,
-            "averageFps": 48.3,
-            "averageFrameMs": 20.71,
+            "sampledFrames": 53,
+            "sampleWindowMs": 1010,
+            "averageFps": 52.6,
+            "averageFrameMs": 19.02,
             "p95FrameMs": 36.4,
-            "maxFrameMs": 45.6,
-            "droppedFrames": 65,
+            "maxFrameMs": 54.5,
+            "droppedFrames": 22,
             "longTasksMs": []
           },
           {
-            "sampledFrames": 152,
-            "sampleWindowMs": 3008,
-            "averageFps": 50.6,
-            "averageFrameMs": 19.75,
-            "p95FrameMs": 28.8,
-            "maxFrameMs": 41.4,
-            "droppedFrames": 64,
+            "sampledFrames": 58,
+            "sampleWindowMs": 1023,
+            "averageFps": 56.8,
+            "averageFrameMs": 17.61,
+            "p95FrameMs": 27.4,
+            "maxFrameMs": 68.2,
+            "droppedFrames": 17,
+            "longTasksMs": []
+          },
+          {
+            "sampledFrames": 56,
+            "sampleWindowMs": 1019,
+            "averageFps": 55,
+            "averageFrameMs": 18.18,
+            "p95FrameMs": 36.4,
+            "maxFrameMs": 50.1,
+            "droppedFrames": 21,
             "longTasksMs": []
           }
         ],
         "summary": {
-          "medianFps": 48.3,
-          "minFps": 41.2,
-          "maxFps": 50.6,
+          "medianFps": 55,
+          "minFps": 52.6,
+          "maxFps": 56.8,
           "medianP95FrameMs": 36.4,
-          "droppedFrames": 206,
-          "sampledFrames": 421,
+          "droppedFrames": 60,
+          "sampledFrames": 167,
           "longTasksMs": []
         },
         "webgl2Contexts": 1,
@@ -119,6 +58,75 @@
         "hardwareConcurrency": 16,
         "jsHeapMB": 6,
         "mode": "live"
+      },
+      "settled": {
+        "mode": "settled",
+        "atMs": 8115
+      },
+      "themeSwitch": {
+        "webgl2Contexts": 1,
+        "heroTheme": "dark",
+        "htmlDark": true
+      }
+    },
+    {
+      "theme": "dark",
+      "metrics": {
+        "samples": [
+          {
+            "sampledFrames": 48,
+            "sampleWindowMs": 1017,
+            "averageFps": 47.3,
+            "averageFrameMs": 21.13,
+            "p95FrameMs": 36.4,
+            "maxFrameMs": 50.1,
+            "droppedFrames": 24,
+            "longTasksMs": []
+          },
+          {
+            "sampledFrames": 46,
+            "sampleWindowMs": 1022,
+            "averageFps": 45.1,
+            "averageFrameMs": 22.19,
+            "p95FrameMs": 36.5,
+            "maxFrameMs": 45.5,
+            "droppedFrames": 31,
+            "longTasksMs": []
+          },
+          {
+            "sampledFrames": 46,
+            "sampleWindowMs": 1008,
+            "averageFps": 45.7,
+            "averageFrameMs": 21.9,
+            "p95FrameMs": 36.4,
+            "maxFrameMs": 40.9,
+            "droppedFrames": 26,
+            "longTasksMs": []
+          }
+        ],
+        "summary": {
+          "medianFps": 45.7,
+          "minFps": 45.1,
+          "maxFps": 47.3,
+          "medianP95FrameMs": 36.4,
+          "droppedFrames": 81,
+          "sampledFrames": 140,
+          "longTasksMs": []
+        },
+        "webgl2Contexts": 1,
+        "canvas": {
+          "buffer": "1071×588",
+          "css": "1428×784"
+        },
+        "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "devicePixelRatio": 1,
+        "hardwareConcurrency": 16,
+        "jsHeapMB": 5.8,
+        "mode": "live"
+      },
+      "settled": {
+        "mode": "settled",
+        "atMs": 7356
       },
       "themeSwitch": null
     }

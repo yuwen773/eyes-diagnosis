@@ -10,6 +10,7 @@ import {
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
@@ -66,5 +67,26 @@ describe("HeroPrism", () => {
     expect(container.querySelector(".hero-prism")?.getAttribute("data-theme")).toBe("dark")
     expect(container.querySelector("canvas")).toBe(canvas)
     expect(webgl2Requests()).toBe(1)
+  })
+
+  it("自动循环五秒后停在当前相位，且没有手动暂停控件", () => {
+    installFakeWebgl2()
+    const raf = installRafHarness()
+    vi.useFakeTimers()
+
+    const { container } = render(<HeroPrism theme="light" />)
+    const root = () => container.querySelector(".hero-prism") as HTMLElement
+
+    expect(root().dataset.mode).toBe("live")
+    expect(container.querySelector("button")).toBeNull()
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(root().dataset.mode).toBe("settled")
+
+    // 冻结后引擎只再画一帧（timeScale / noise 归零），随后不再排帧。
+    raf.flush()
+    expect(raf.pending()).toBe(0)
   })
 })
