@@ -58,6 +58,10 @@ describe("R3 的 React Bits 交互实现是自研的", () => {
     }
   })
 
+  it("声明文件钉住了上游的 commit 锚点（上游无 tag）", () => {
+    expect(notices).toContain("d01aa914dcbe76da8b2923ebf871b5c8b1066e4c")
+  })
+
   it("没有因为这些交互引入新的第三方依赖", () => {
     const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
     for (const forbidden of ["motion", "gsap", "three", "@react-three/fiber", "@hugeicons"]) {
