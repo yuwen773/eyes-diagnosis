@@ -1,8 +1,8 @@
 # Iris System States 治理报告
 
 > 工作树：`D:/Work/code/eye-diagnosis/.worktrees/system-states-react-bits`
-> 分支：`fix/system-states-react-bits` @ `b9ff4e69`（含 `e65dad66`、`229c0352` 与 base 合并）
-> PR：https://github.com/yuwen773/eyes-diagnosis/pull/97 （Draft，OPEN；远端 head 仍为旧的 `e65dad66`，本地新提交尚未推送）
+> 分支：`fix/system-states-react-bits`（当前 head 以 PR #97 为准；历史提交含 `e65dad66`、`229c0352`、`b9ff4e69`、`880b0b4`、`505bcb2c`）
+> PR：https://github.com/yuwen773/eyes-diagnosis/pull/97 （Draft，OPEN；已推送并更新描述）
 > 日期：2026-11-17
 
 ## 1. Git 与开发基线
@@ -91,7 +91,7 @@ ErrorBoundary fallback 只依赖 React + CSS + lucide 静态图标；没有动�
 | Build | PASS | `npm run build`；仅有既存 `AdminNewsEditPage` 大 chunk 警告 |
 | CI gate checks | PASS | `npm run check:e2e-fixme` 0/0；`npm run check:gate-tests` 3/3 |
 | E2E（最终，base 合并后） | PASS | 临时账号安全注入 + 临时账号删除；**14 passed / 0 skipped**，见下方清单 |
-| GitHub Actions | BLOCKED | 本机 GitHub TLS / `curl` / `git push` 握手失败；web-access CDP 未启用；WebFetch 能看到 PR 仍停在旧 head `e65dad66`，新提交未推送，无法确认新 CI |
+| GitHub Actions | PASS | 推送后的 head `505bcb2c` 共 7 项 check：`watchdog` / `python` / `frontend` / `backend-unit` / `flyway-mysql` / `backend-compile` / `web` 全部 `completed` + `success` |
 
 ### 7 条历史上因缺账号 skip 的 E2E
 
@@ -150,8 +150,8 @@ ErrorBoundary fallback 只依赖 React + CSS + lucide 静态图标；没有动�
 - **Gate C 稳定与安全：PASS** — 边界兜底不依赖 WebGL / 动态导入；无自动重试；鉴权与 SSE 契约未改；无凭据泄漏；生命周期保留。
 - **Gate D 工程质量：PASS（本地）/ BLOCKED（远端）** — 本地 608 单测 + 14 E2E + typecheck/lint/build/gates 全绿；但新提交未推送、GitHub Actions 未重跑，**远端门禁不可报 PASS**。
 - **Gate E Review 收敛：PASS** — P0 / P1 = 0；P2 已处置，P3 逐项登记。
-- **Gate F 独立验收 / PR 更新：BLOCKED** — 评审已完成但 P1 未裁定；PR #97 远端 head 未更新，PR body 仍写旧的 2 passed / 7 skipped；GitHub Actions 未复查。
+- **Gate F 独立验收 / PR 更新：PASS** — 五轮独立评审 P0/P1 清零；证据归档、PR #97 描述更新；推送后 GitHub Actions 7/7 success。
 
-**最终结论：BLOCKED / NOT READY**
+**最终结论：READY FOR REVIEW**
 
-阻断项不是“测试没跑”：本地 608 单测 + 14 E2E + typecheck / lint / build / gates 全绿，P0 / P1 已清零。唯一阻断是远端交付门禁——新提交未推送、PR #97 与 GitHub Actions 仍停在旧 head `e65dad66`，不能报告 READY FOR REVIEW。
+无阻断项：本地 608 单测 + 14 E2E + typecheck / lint / build / gates 全绿，P0 / P1 已清零；远端 PR #97 已更新，推送后 GitHub Actions 7/7 success。按约定不合并、不部署。
