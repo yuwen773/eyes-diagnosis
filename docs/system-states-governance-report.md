@@ -124,7 +124,7 @@ ErrorBoundary fallback 只依赖 React + CSS + lucide 静态图标；没有动�
 | C · 可靠性 / 安全 | P2 五位业务码误判 critical；P2 渲染错误死胡同；P3 404 返回按钮可离站 | `faultFromError` 统一分类；次出口；404 单 `replace` 链接 | 三项 CLOSED |
 | D · QA / 无障碍 / 性能 | P1×2 对比度；P2 缺对比度门禁；P2 截图矩阵不足；P2 `aria-busy` | 对比度修复 + 门禁；补 390/768/1024/1920 × 双主题；判定不加 `aria-busy` | 四项 CLOSED |
 | E · 证据 / 恢复（本轮） | P1 冻结管理端状态皮肤被 `fault.css` 改动；P2 报告过期；P3 取证说明精度 | P1 追加 `.is-admin` 视觉恢复块；P2 本报告更新；P3 在 evidence README 补全来源与缩放说明 | 三项 CLOSED；冻结管理端布局与状态外观均保持基线 |
-| F · 架构 / 回归（本轮） | 见 reviewer 返回；独立检查 fault.css 行为保持与 E2E 契约 | — | 见 §6 后续条目 |
+| F · 架构 / 回归（本轮） | P0/P1 = 0；P3：`.is-admin` 下两个动作按钮 `font-weight` 与 hover 边框仍未完全还原冻结值 | 补 `font-weight: 400` 与 hover `border-color` 恢复 | 三项 CLOSED；生命周期、分类、E2E 契约均保持 |
 
 ### 键盘走查记录（2026-11-17，Chromium 1234）
 
