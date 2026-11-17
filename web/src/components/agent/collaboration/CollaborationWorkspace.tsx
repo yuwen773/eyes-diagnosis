@@ -1,10 +1,15 @@
-import { useContext } from "react"
-import { isTerminal } from "@/lib/collaborationProtocol"
+import { useContext, useState } from "react"
+import { ArrowLeft, Info, ScanEye, X } from "lucide-react"
+import { Dialog } from "@/components/ui/dialog"
 import { CollaborationRunContext } from "@/hooks/useCollaborationRun"
-import { CollaborationTimeline } from "./CollaborationTimeline"
-import { AuthorizedRunImage } from "./AuthorizedRunImage"
-import { PatientResultPanel } from "./PatientResultPanel"
+import { isTerminal } from "@/lib/collaborationProtocol"
+import { useMediaQuery } from "@/lib/useMediaQuery"
+import {
+  CollaborationTimeline,
+  type TimelinePosition,
+} from "./CollaborationTimeline"
 import { CollaborationRoles } from "./CollaborationRoles"
+import { EvidenceInspector, type InspectorTab } from "./EvidenceInspector"
 import {
   clinicianProjection,
   executionLabel,
@@ -12,64 +17,130 @@ import {
   reviewLabels,
 } from "./collaborationLabels"
 
-export function CollaborationWorkspace({
-  imageUrl,
-  onClose,
-}: {
-  imageUrl?: string
-  onClose: () => void
-}) {
+const connectionLabels = {
+  disabled: "协作暂未开放",
+  idle: "请选择协作任务",
+  loading: "正在核对任务权限",
+  connecting: "正在连接",
+  live: "进度已连接",
+  reconnecting: "连接中断，正在恢复",
+  closed: "当前状态已同步",
+  error: "进度暂不可用",
+  forbidden: "当前无权查看此任务",
+}
+
+export function CollaborationWorkspace({ onClose }: { onClose: () => void }) {
   const view = useContext(CollaborationRunContext)
+  const compact = useMediaQuery("(max-width: 1099px)")
+  const [tab, setTab] = useState<InspectorTab>("image")
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [inspected, setInspected] = useState<{ eventId: string } | null>(null)
+  const [historyTarget, setHistoryTarget] = useState<{
+    eventId: string
+  } | null>(null)
+  const [position, setPosition] = useState<TimelinePosition>({
+    following: true,
+    top: 0,
+    expanded: false,
+  })
+  const [readEvidence, setReadEvidence] = useState<string>()
   if (!view) return null
   const { run, connection, cancelling, error, cancel, retry } = view
   const snapshot = run?.snapshot
-  const clinician = snapshot
-    ? clinicianProjection(snapshot.projectionVersion)
-    : false
-  const connectionLabels = {
-    disabled: "协作暂未开放",
-    idle: "请选择协作任务",
-    loading: "正在核对任务权限",
-    connecting: "正在连接",
-    live: "进度已连接",
-    reconnecting: "连接中断，正在恢复",
-    closed: "当前状态已同步",
-    error: "进度暂不可用",
-    forbidden: "当前无权查看此任务",
+  const clinician = snapshot && clinicianProjection(snapshot.projectionVersion)
+  const events = (run?.events ?? []).filter(
+    (event) => clinician || event.visibility === "PATIENT"
+  )
+  const latestEvidence = events.findLast(
+    (event) => event.type === "evidence.verified"
+  )?.eventId
+  const criticAction = events.findLast(
+    (event) =>
+      event.actor === "CRITIC" &&
+      (event.type === "agent.feedback.requested" ||
+        event.type === "agent.started")
+  )
+  let currentFeedback: string | undefined
+  if (
+    snapshot?.executionStatus === "RUNNING" &&
+    criticAction?.type === "agent.feedback.requested"
+  ) {
+    const supplement = criticAction.payload.action === "SUPPLEMENT"
+    const target = supplement ? "EVIDENCE" : "EXPLANATION"
+    const started = events.some(
+      (event) =>
+        event.actor === target &&
+        event.type === "agent.started" &&
+        event.sequence > criticAction.sequence
+    )
+    currentFeedback = `${started ? "正在" : "等待"}${supplement ? "补证" : "修订"}`
   }
+  const unreadEvidence = Boolean(
+    latestEvidence &&
+    latestEvidence !== readEvidence &&
+    (tab !== "evidence" || (compact && !drawerOpen))
+  )
+
+  function inspect(target: InspectorTab, eventId?: string) {
+    setTab(target)
+    setInspected(eventId ? { eventId } : null)
+    if (
+      target === "evidence" ||
+      (tab === "evidence" && (!compact || drawerOpen))
+    )
+      setReadEvidence(latestEvidence)
+    if (compact) setDrawerOpen(true)
+  }
+  function closeInspector() {
+    if (tab === "evidence") setReadEvidence(latestEvidence)
+    setDrawerOpen(false)
+    setInspected(null)
+  }
+  function showHistory(eventId: string) {
+    setPosition((current) => ({
+      ...current,
+      following: false,
+      expanded:
+        current.expanded ||
+        !events.slice(-30).some((event) => event.eventId === eventId),
+      oldest: current.oldest ?? events.slice(-30)[0]?.eventId,
+      pausedAt: events.at(-1)?.eventId,
+    }))
+    setHistoryTarget({ eventId })
+  }
+
   return (
     <section className="collab-workspace" aria-label="实时协作工作台">
-      <header className="collab-workspace__head">
-        <div>
-          <span className="collab-eyebrow">IRIS / COLLABORATION</span>
-          <h2>协作判读</h2>
+      <div className="roundtable-runbar">
+        <div
+          className="collab-summary"
+          role="status"
+          aria-label="协作与连接状态"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="collab-connection" data-connection={connection}>
+            {connectionLabels[connection]}
+          </span>
+          {snapshot && (
+            <>
+              <strong>{executionLabel(snapshot)}</strong>
+              <span>{reviewLabels[snapshot.reviewStatus]}</span>
+            </>
+          )}
         </div>
         <button type="button" className="collab-button" onClick={onClose}>
+          <ArrowLeft size={16} aria-hidden="true" />
           返回问答
         </button>
-      </header>
-      <div
-        className="collab-summary"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <span className="collab-connection">
-          {connectionLabels[connection]}
-        </span>
-        {snapshot && (
-          <>
-            <strong>{executionLabel(snapshot)}</strong>
-            <span>{reviewLabels[snapshot.reviewStatus]}</span>
-          </>
-        )}
       </div>
+
       {!snapshot ? (
-        <div className="collab-empty">
+        <div className="roundtable-panel collab-empty">
           <p>
             {connection === "forbidden"
               ? "任务信息已清除。请核对登录身份与授权后重新打开。"
-              : "正在等待已授权的任务状态。重新连接只恢复进度，不会重新执行协作。"}
+              : "等待已授权的任务状态。重新连接只恢复进度。"}
           </p>
           {["error", "forbidden"].includes(connection) && (
             <button className="collab-button" type="button" onClick={retry}>
@@ -79,86 +150,102 @@ export function CollaborationWorkspace({
         </div>
       ) : (
         <>
-          <div className="collab-task-context"><span>任务 <span className="num">{snapshot.taskId}</span></span><span>协作 <span className="num">{snapshot.runId}</span></span></div>
-          <CollaborationRoles snapshot={snapshot} />
-          <div className="collab-workspace__body">
-            <div className="collab-workspace__record">
-              {snapshot.reason && (
-                <p className="collab-fault" role="alert">
-                  {reasons[snapshot.reason] ??
-                    "本次未满足处理条件，未形成可发布结果。请联系医生或稍后重试。"}
-                </p>
-              )}
-              {snapshot.executionStatus === "SUCCEEDED" && (
-                <div className="collab-review-note">
-                  <h3>{reviewLabels[snapshot.reviewStatus]}</h3>
-                  <p>
-                    {snapshot.reviewStatus === "PENDING"
-                      ? "协作已结束，辅助草稿尚未获得医生批准。此处不展示未复核的临床内容。"
-                      : "复核状态与协作执行分别记录。获准内容仍须通过来源核验与发布许可。"}
-                  </p>
-                </div>
-              )}
-              <CollaborationTimeline key={snapshot.runId} run={run!} />
-              {snapshot.projectionVersion === "v1:patient" &&
-                snapshot.reviewStatus === "APPROVED" && (
-                  <PatientResultPanel
-                    key={snapshot.taskId}
-                    taskId={snapshot.taskId}
+          <div className="roundtable-taskline">
+            <span>
+              任务 <span className="num">{snapshot.taskId}</span>
+            </span>
+            {compact && (
+              <button
+                type="button"
+                className="collab-button"
+                aria-haspopup="dialog"
+                onClick={() => inspect(tab)}
+              >
+                <ScanEye size={16} aria-hidden="true" />
+                影像与证据
+                {unreadEvidence && (
+                  <span
+                    className="roundtable-new-dot"
+                    aria-label="证据有更新"
                   />
                 )}
-              {clinician && (
-                <p>
-                  <a className="collab-text-button" href="/doctor-reviews">
-                    进入医生复核
-                  </a>
-                </p>
-              )}
-            </div>
-            <aside className="collab-evidence" aria-label="影像与证据">
-              <details open>
-                <summary>影像与证据</summary>
-                <span className="collab-eyebrow">SOURCE / SAFETY</span>
-                {snapshot.projectionVersion === "v1:patient" ||
-                snapshot.projectionVersion.startsWith("v1:doctor:") ? (
-                  <AuthorizedRunImage
-                    key={snapshot.runId}
-                    runId={snapshot.runId}
-                    localUrl={imageUrl}
-                  />
-                ) : (
-                  <p className="collab-image-empty">
-                    当前身份没有本任务的影像读取许可。
-                  </p>
-                )}
-                <p>
-                  影像解读基于已有推理快照及质量限制，不表示 Agent
-                  直接判读了原图像素。
-                </p>
-                <h4>引用与复核</h4>
-                <p>
-                  {snapshot.reviewStatus === "APPROVED" &&
-                  snapshot.projectionVersion === "v1:patient"
-                    ? "已获准的说明与逐条依据可在左侧查看。"
-                    : "引用正文将在医生复核获准后提供。"}
-                </p>
-                {clinician && (
-                  <p>
-                    授权协作元数据可在记录中展开；完整审查材料请使用既有医生复核流程。
-                  </p>
-                )}
-                <h4>医疗使用边界</h4>
-                <p>辅助信息不构成诊断结论，不能替代执业医师。</p>
-              </details>
-            </aside>
+              </button>
+            )}
           </div>
+          {snapshot.reason && (
+            <p className="collab-fault roundtable-run-fault" role="alert">
+              {reasons[snapshot.reason] ??
+                "本次未满足处理条件，未形成可发布结果。请联系医生或稍后重试。"}
+            </p>
+          )}
+          <div className="roundtable-columns">
+            <CollaborationRoles
+              snapshot={snapshot}
+              events={events}
+              onHistory={showHistory}
+            />
+            <CollaborationTimeline
+              events={events}
+              snapshot={snapshot}
+              target={historyTarget}
+              onTargetApplied={() => setHistoryTarget(null)}
+              position={position}
+              setPosition={setPosition}
+              currentFeedback={currentFeedback}
+              onInspect={inspect}
+            />
+            {!compact && (
+              <EvidenceInspector
+                snapshot={snapshot}
+                events={events}
+                tab={tab}
+                selected={inspected}
+                onTab={inspect}
+                unreadEvidence={unreadEvidence}
+              />
+            )}
+          </div>
+
+          {compact && drawerOpen && (
+            <Dialog
+              open
+              title="影像与证据"
+              onClose={closeInspector}
+              className="roundtable-dialog roundtable-drawer"
+              backdropClassName="roundtable-backdrop"
+            >
+              <div className="roundtable-dialog__head">
+                <h2>影像与证据</h2>
+                <button
+                  type="button"
+                  className="collab-button roundtable-icon-button"
+                  aria-label="关闭影像与证据"
+                  onClick={closeInspector}
+                >
+                  <X size={18} aria-hidden="true" />
+                </button>
+              </div>
+              <EvidenceInspector
+                snapshot={snapshot}
+                events={events}
+                tab={tab}
+                selected={inspected}
+                onTab={inspect}
+                unreadEvidence={unreadEvidence}
+              />
+            </Dialog>
+          )}
+
           <footer className="collab-workspace__foot">
             <p>
+              <Info size={16} aria-hidden="true" />
               {snapshot.executionStatus === "CANCELLED"
                 ? "已取消后续处理；已发生的服务调用可能仍计费。"
-                : "离开页面只断开进度连接。需要停止后续处理时，请取消任务。"}
+                : isTerminal(snapshot.executionStatus)
+                  ? "辅助信息仅供参考，临床结论由医生独立判断。"
+                  : "离开页面只断开连接。如需停止后续处理，请取消任务。"}
             </p>
-            {!isTerminal(snapshot.executionStatus) && (
+            {!isTerminal(snapshot.executionStatus) ? (
               <button
                 type="button"
                 className="collab-button"
@@ -171,18 +258,17 @@ export function CollaborationWorkspace({
                   ? "正在取消…"
                   : "取消协作任务"}
               </button>
-            )}
-            {isTerminal(snapshot.executionStatus) && (
+            ) : (
               <button type="button" className="collab-button" onClick={retry}>
                 刷新复核状态
               </button>
             )}
-            {error === "CANCELLATION_UNCONFIRMED" && (
-              <p className="collab-fault" role="alert">
-                取消未获确认，任务可能仍在处理。请重试取消或核对状态。
-              </p>
-            )}
           </footer>
+          {error === "CANCELLATION_UNCONFIRMED" && (
+            <p className="collab-fault" role="alert">
+              取消未获确认，任务可能仍在处理。请重试取消或核对状态。
+            </p>
+          )}
         </>
       )}
     </section>

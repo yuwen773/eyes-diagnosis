@@ -248,9 +248,12 @@ describe("独立协作页面受理与生命周期", () => {
     const receive = vi.mocked(collaborationApi.stream).mock.calls.at(-1)![3]
     act(() => receive(frame("run.cancelled", 2)))
     expect(
-      within(screen.getByRole("status")).getByText("任务已取消", {
-        exact: true,
-      })
+      within(screen.getByRole("status", { name: "协作与连接状态" })).getByText(
+        "任务已取消",
+        {
+          exact: true,
+        }
+      )
     ).toBeTruthy()
     mounted.unmount()
     expect(signals.every((signal) => signal.aborted)).toBe(true)

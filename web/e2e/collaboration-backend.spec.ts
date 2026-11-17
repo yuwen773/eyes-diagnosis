@@ -16,6 +16,8 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
     }
   })
   const initial = (await (await page.request.get("/api/test/counts")).json()).data.statuses
+  await page.request.post("/api/test/flags", { data: { graph: false, admission: true, patient: true, clinician: true } })
+  await page.request.post("/api/test/restore-sources")
   await page.request.post("/api/test/hold")
   await page.request.post("/api/test/session")
   await page.addInitScript(() => {
@@ -113,6 +115,7 @@ test("real Java HTTP/MySQL: upload → incremental facts → review → refresh 
     })
   await page.getByRole("button", { name: "提交影像并开始协作" }).click()
   await expect(page.getByText("正在协作", { exact: true })).toBeVisible()
+  await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
   const revocationsBefore = revokedImages.length
   await page.request.post("/api/test/revoke")
   await expect(page.getByText("当前无权查看此任务")).toBeVisible({

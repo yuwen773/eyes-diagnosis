@@ -23,7 +23,9 @@ async function create(request: APIRequestContext) {
   return (await created.json()).data
 }
 async function terminal(request: APIRequestContext, runId: string) {
-  await expect.poll(async () => (await body(request, `${runs}/${runId}`)).executionStatus).toBe("SUCCEEDED")
+  await expect.poll(async () => (await body(request, `${runs}/${runId}`)).executionStatus, { timeout: 20_000 })
+    .toMatch(/^(SUCCEEDED|RESTRICTED|FAILED|CANCELLED)$/)
+  expect(await body(request, `${runs}/${runId}`)).toMatchObject({ executionStatus: "SUCCEEDED", reason: null })
 }
 async function assign(admin: APIRequestContext, doctor: APIRequestContext, taskId: string) {
   const assigned = await admin.post("/api/doctor-reviews/assign", { data: { taskId, doctorId: "44" } })
@@ -39,7 +41,7 @@ function decision(detail: Record<string, unknown>, status = "APPROVED") {
   }
 }
 
-test("Graph: patient/doctor isolation, approved read, explicit save and immutable receipt after withdrawal", async ({ page, playwright, baseURL }) => {
+test("Graph: patient/doctor isolation, approved read, explicit save and immutable receipt after withdrawal", async ({ page, playwright, baseURL }, info) => {
   test.setTimeout(60_000)
   const admin = await playwright.request.newContext({ baseURL })
   const doctor = await playwright.request.newContext({ baseURL })
@@ -99,7 +101,7 @@ test("Graph: patient/doctor isolation, approved read, explicit save and immutabl
     expect((await (await other.get(`${tasks}/${run.taskId}/save-authorization`)).json()).code).toBe(40400)
     await page.getByRole("button", { name: "刷新复核状态" }).click()
     await expect(page.locator(".collab-summary")).toContainText("该版本已获医生批准")
-    await page.screenshot({ path: "../docs/testing/realtime-safety-release-20261111/approved-metadata.png" })
+    await page.screenshot({ path: info.outputPath("approved-metadata.png") })
     const counts = await body(page.request, "/api/test/counts")
     await admin.post("/api/test/withdraw-sources")
     expect((await body(page.request, `${tasks}/${run.taskId}/explanation`)).result).toBeNull()
@@ -108,7 +110,7 @@ test("Graph: patient/doctor isolation, approved read, explicit save and immutabl
   } finally { await admin.dispose(); await doctor.dispose(); await other.dispose() }
 })
 
-test("rollout: stop admissions and patient display while active Graph finishes under its original runtime", async ({ page, playwright, baseURL }) => {
+test("rollout: stop admissions and patient display while active Graph finishes under its original runtime", async ({ page, playwright, baseURL }, info) => {
   const admin = await playwright.request.newContext({ baseURL })
   try {
     await admin.post("/api/test/session?id=45")
@@ -135,7 +137,7 @@ test("rollout: stop admissions and patient display while active Graph finishes u
     // Admission alone remains off; the old idempotency key still replays without work.
     const old = await page.request.post(runs, { data: { taskId: run.taskId, threadId: "thread-42", idempotencyKey: run.taskId } })
     expect((await old.json()).data.runId).toBe(run.runId)
-    await page.screenshot({ path: "../docs/testing/realtime-safety-release-20261111/drained-graph.png" })
+    await page.screenshot({ path: info.outputPath("drained-graph.png") })
   } finally { await admin.dispose() }
 })
 

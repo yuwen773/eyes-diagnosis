@@ -38,7 +38,11 @@ public class CollaborationStreams implements AutoCloseable {
                 emitter.send(frame);
             }
             public void close(Throwable failure) {
-                if (failure == null) emitter.complete(); else emitter.completeWithError(failure);
+                // Headers may already be committed. Finish SSE so the next HTTP
+                // request can report revocation or a changed projection normally.
+                if (failure == null || failure instanceof CollaborationRunService.Fault fault
+                        && (fault.status() == 403 || fault.status() == 409)) emitter.complete();
+                else emitter.completeWithError(failure);
             }
         });
         emitter.onCompletion(() -> connection.stop(null));

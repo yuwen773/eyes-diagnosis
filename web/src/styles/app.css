@@ -211,8 +211,7 @@ a {
   white-space: nowrap;
 }
 
-/* 品牌标：金属虹膜。两版一起挂在 DOM 里，靠 <html>.dark 换。
-   不用 filter: invert()——那会把金属高光翻成脏灰，星星的橙也会变色。 */
+/* 品牌标：光学虹膜。两版一起挂在 DOM 里，靠 <html>.dark 换。 */
 .wordmark__iris {
   align-self: center;
   display: block;
@@ -241,9 +240,10 @@ a:hover .wordmark__iris {
 }
 
 .wordmark__zh {
-  font-family: var(--font-serif);
+  font-family: var(--font-brand);
+  font-weight: 700;
   font-size: 20px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
 }
 
 .wordmark__en {
