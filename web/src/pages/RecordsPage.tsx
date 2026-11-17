@@ -141,7 +141,7 @@ export function RecordsPage() {
         <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
 
         <div className="records__intro">
-          <p className="overline">Reading history · 判读存档</p>
+          <p className="overline">Reading history · 判读记录</p>
           <h1 className="records__title">判读记录</h1>
           <p className="lead">
             你名下所有的判读，每一条都保留模型版本与权重指纹。点开任意一行会打开独立的报告页，可直接打印与追溯。

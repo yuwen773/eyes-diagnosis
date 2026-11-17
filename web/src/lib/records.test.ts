@@ -116,6 +116,7 @@ describe("summarizeRecords", () => {
       highRisk: 0,
       awaitingReview: 0,
       lastReadAt: null,
+      pageTotal: 0,
     })
   })
 })
@@ -186,6 +187,8 @@ describe("resolveScopedStats", () => {
       highRisk: 1,
       awaitingReview: 0,
       lastReadAt: "2026-11-01 10:00:00",
+      // 本页只有 1 条：page 口径的高风险分母必须用它，不能用全量 37。
+      pageTotal: 1,
     })
   })
 
@@ -312,5 +315,17 @@ describe("highRiskCell：未知与零必须分开", () => {
   it("个人中心用样本口径前缀，不冒充「本页」", () => {
     const cell = highRiskCell(base, "page", "近 5 条")
     expect(cell.label).toBe("近 5 条严重度 · 未评估")
+  })
+
+  it("page 口径的分母用本页条数，不拿本页分子配全量分母", () => {
+    // total=57 是名下全量，assessed=3 只数到本页；分母必须也是本页的 5。
+    const cell = highRiskCell({ ...base, total: 57, pageTotal: 5, assessed: 3, highRisk: 1 }, "page")
+    expect(cell.label).toBe("本页高风险 · 已分级 3/5")
+    expect(cell.note).toContain("3 条")
+  })
+
+  it("all 口径忽略本页条数，分母是服务端全量", () => {
+    const cell = highRiskCell({ ...base, total: 57, pageTotal: 5, assessed: 3, highRisk: 1 }, "all")
+    expect(cell.label).toBe("高风险 · 已分级 3/57")
   })
 })
