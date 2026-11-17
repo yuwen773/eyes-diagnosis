@@ -29,6 +29,9 @@ const ProfilePage = lazy(() =>
 const RecordsPage = lazy(() =>
   import("@/pages/RecordsPage").then((m) => ({ default: m.RecordsPage })),
 )
+const RecordDetailPage = lazy(() =>
+  import("@/pages/RecordDetailPage").then((m) => ({ default: m.RecordDetailPage })),
+)
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
 )
@@ -139,6 +142,7 @@ export function App() {
           <Route path="/news/:id" element={<NewsDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/records" element={<RecordsPage />} />
+          <Route path="/records/:id" element={<RecordDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 

@@ -55,6 +55,21 @@ describe("faultFromError", () => {
     expect(f.severity).toBe("critical")
   })
 
+  it("影像存储失败（50002）透出后端文案，不被笼统的 5xx 文案盖掉", () => {
+    const f = faultFromError(
+      new ApiError(50002, "影像存储失败，本次判读未归档，请重试"),
+    )
+    expect(f.severity).toBe("critical")
+    expect(f.title).toBe("影像没有保存下来")
+    expect(f.detail).toContain("未归档")
+    expect(f.code).toBe(50002)
+  })
+
+  it("影像存储失败即使后端没带文案，也说清「没有归档」", () => {
+    const f = faultFromError(new ApiError(50002, ""))
+    expect(f.detail).toContain("没有归档")
+  })
+
   it("非 ApiError 的意外给出兜底说法", () => {
     const f = faultFromError(new Error("boom"))
     expect(f.kind).toBe("client")

@@ -76,6 +76,16 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
               </p>
             </div>
           </div>
+          {/* 拒识不等于「不用复核」：算法在拒识时同样把记录置入人工复核队列。
+              两个维度各自陈述，不能因为拒识就把复核状态藏起来。 */}
+          <div className="sheet__facts">
+            <div className="readout">
+              <span className="readout__label">人工复核</span>
+              <span className="readout__value">
+                <RiskTag risk={review.risk}>{review.label}</RiskTag>
+              </span>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -207,14 +217,18 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
         </>
       )}
 
-      {result.requiresReview && !rejected ? (
+      {result.requiresReview ? (
         <section className="sheet__section">
           <div className="notice" data-tone="attention">
             <span className="notice__mark">待复核</span>
             <div>
-              <p className="notice__title">AI 初步判读待人工复核</p>
+              <p className="notice__title">
+                {rejected ? "该影像已转入人工复核" : "AI 初步判读待人工复核"}
+              </p>
               <p className="notice__body">
-                该记录已进入人工复核队列，签字前不得作为诊疗依据引用。
+                {rejected
+                  ? "模型未给出结论，记录已进入人工复核队列；复核完成前不构成诊断。"
+                  : "该记录已进入人工复核队列，签字前不得作为诊疗依据引用。"}
               </p>
             </div>
           </div>
@@ -222,6 +236,24 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
       ) : null}
 
       <div className="sheet__stamps">
+        {/* 记录存在 ≠ 影像已归档：这两个事实分开陈述，不能让「有报告」暗示「原图可追溯」。
+            注：修复前（commit 46628563 之前）写入的历史记录可能没有影像——那时后端把
+            对象存储异常吞掉照样落库；现在存储失败会终止请求、不落库，所以「未归档」
+            主要出现在历史数据上。 */}
+        {!specimen ? (
+          <div className="sheet__stamp">
+            <div className="readout">
+              <span className="readout__label">原始影像</span>
+              <span className="readout__value">
+                {imageSrc ? (
+                  <span className="num">已归档</span>
+                ) : (
+                  <RiskTag risk="attention">未归档</RiskTag>
+                )}
+              </span>
+            </div>
+          </div>
+        ) : null}
         <div className="sheet__stamp">
           <div className="readout">
             <span className="readout__label">质量门</span>
@@ -268,7 +300,9 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
         <p>
           {result.disclaimer ||
             "本记录由 AI 辅助判读生成，仅供参考，不构成诊断结论，不能替代执业医师的检查与判断。"}
-          影像、模型版本与权重指纹随记录保存，可在复核时回放。
+          {specimen || imageSrc
+            ? "影像、模型版本与权重指纹随记录保存，可在复核时回放。"
+            : "模型版本与权重指纹随记录保存；本次原始影像未成功归档，复核时无法回放原图。"}
         </p>
       </div>
 

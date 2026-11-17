@@ -1,5 +1,10 @@
 import { uploadAgentImage } from "./api"
 import {
+  ACCEPTED_IMAGE_TYPES,
+  UPLOAD_LIMIT_BYTES,
+  exceedsUploadLimit,
+} from "./uploadLimits"
+import {
   acquireAgentImage,
   releaseAgentImage,
   retainAgentImage,
@@ -7,20 +12,26 @@ import {
 
 const inFlight = new Map<string, Promise<string>>()
 
-/** 单张图片上限 10MB。 */
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024
-
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|heic|tiff?)$/i
-
 /**
- * 只放行图片、且不超过大小上限。
- * 部分浏览器剪贴板不给 MIME 类型，此时按扩展名兜底。
+ * 单张图片上限沿用服务端真值（`AgentImageUploadService.MAX_SIZE` = 2 MB）。
+ * 前端曾写 10 MB，用户能选 3 MB 的图，上传到服务端才被拒——本地就该拦。
  */
+export const MAX_IMAGE_SIZE = UPLOAD_LIMIT_BYTES
+
+/** 服务端只收 jpeg / png；扩展名兜底同样只认这两种。 */
+const IMAGE_EXT = /\.(png|jpe?g)$/i
+
+function isAcceptedImage(file: File): boolean {
+  if (file.type) {
+    return ACCEPTED_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_IMAGE_TYPES)[number])
+  }
+  // 部分浏览器剪贴板不给 MIME 类型，此时按扩展名兜底。
+  return IMAGE_EXT.test(file.name)
+}
+
+/** 只放行服务端接受的图片类型，且不超过大小上限。 */
 export function filterImageFiles(files: File[]): File[] {
-  return files.filter((f) => {
-    const isImage = f.type.startsWith("image/") || (!f.type && IMAGE_EXT.test(f.name))
-    return isImage && f.size <= MAX_IMAGE_SIZE
-  })
+  return files.filter((f) => isAcceptedImage(f) && !exceedsUploadLimit(f.size))
 }
 
 /**

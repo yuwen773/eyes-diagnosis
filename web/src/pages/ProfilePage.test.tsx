@@ -149,11 +149,9 @@ describe("ProfilePage 判读统计口径", () => {
     await screen.findByText(/服务端聚合暂不可用/)
 
     await waitFor(() => {
-      const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
-        (node) => node.textContent,
-      )
-      expect(values[0]).toBe("37")
-      expect(values[1]).toBe("2")
+      const line = container.querySelector(".profile__identity-stats")?.textContent ?? ""
+      expect(line).toContain("37")
+      expect(line).toContain("2")
     })
   })
 
@@ -165,6 +163,7 @@ describe("ProfilePage 判读统计口径", () => {
     } as never)
     vi.mocked(getMyStats).mockResolvedValue({
       total: 128,
+      assessed: 128,
       highRisk: 9,
       awaitingReview: 12,
       lastReadAt: "2026-11-08 14:32:10",
@@ -172,11 +171,9 @@ describe("ProfilePage 判读统计口径", () => {
     const { container } = renderProfile()
 
     await waitFor(() => {
-      const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
-        (node) => node.textContent,
-      )
-      expect(values[0]).toBe("128")
-      expect(values[1]).toBe("9")
+      const line = container.querySelector(".profile__identity-stats")?.textContent ?? ""
+      expect(line).toContain("128")
+      expect(line).toContain("9")
     })
     expect(screen.queryByText(/服务端聚合暂不可用/)).toBeNull()
   })
@@ -188,10 +185,32 @@ describe("ProfilePage 判读统计口径", () => {
     const { container } = renderProfile()
 
     await screen.findByText(/判读记录这会儿没读出来/)
-    const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
-      (node) => node.textContent,
-    )
-    expect(values[0]).toBe("—")
-    expect(values[1]).toBe("—")
+    // 读不到就说读不到：不显示 0，也不永远停在「读取中」。
+    const line = container.querySelector(".profile__identity-stats")?.textContent ?? ""
+    expect(line).toContain("暂不可用")
+    expect(line).not.toContain("0")
+  })
+})
+
+describe("ProfilePage 最近判读", () => {
+  it("每条最近判读都能直接进入对应报告", async () => {
+    stubMatchMedia()
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        {
+          id: "9001",
+          result: "青光眼",
+          confidence: 0.7,
+          createTime: "2026-11-15T10:00:00",
+        } as never,
+      ],
+      total: 1,
+    } as never)
+    vi.mocked(getMyStats).mockRejectedValue(new Error("offline"))
+
+    renderProfile()
+
+    const link = await screen.findByRole("link", { name: /青光眼/ })
+    expect(link.getAttribute("href")).toBe("/records/9001")
   })
 })

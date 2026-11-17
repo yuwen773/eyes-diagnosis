@@ -1,11 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 
 /**
- * 四条验收冒烟：登录 → 判读槽、记录纸、资讯详情、Agent 回复。
+ * 九条验收冒烟：登录 → 判读槽、记录纸（合成链 + 真实后端链）、资讯详情
+ * （真实链 + 合成链 + 头条封面 + 目录锚点）、Agent 回复（正常回复 + 工具无回执）。
  * 账号从环境变量取；缺账号时整体 skip（不红），见 e2e/README.md。
  *
- * 登录走真实后端；记录与资讯用固定合成读数夹具，Agent 用可控 SSE。
- * 四条都执行；不代表真实模型、算法推理或临床验收。
+ * 登录走真实后端；部分记录与资讯用固定合成读数夹具，Agent 用可控 SSE。
+ * 九条都执行；不代表真实模型、算法推理或临床验收。
  */
 const user = process.env.E2E_USER
 const password = process.env.E2E_PASSWORD
@@ -34,7 +35,7 @@ test.describe("验收冒烟", () => {
     await expect(page.getByText("点击或拖入影像")).toBeVisible()
   })
 
-  test("记录页空态与合成记录展开均可见", async ({ page }) => {
+  test("记录页空态与合成记录：点行进入独立报告页", async ({ page }) => {
     const record = {
       id: "81001",
       result: "青光眼",
@@ -82,13 +83,73 @@ test.describe("验收冒烟", () => {
     const firstRow = page.locator(".records__row").first()
     await expect(firstRow).toBeVisible({ timeout: 15_000 })
     await firstRow.click()
+    // R3 Phase 3：报告不再在列表里展开，而是独立路由，刷新后仍可取。
+    await expect(page).toHaveURL(/\/records\/81001$/)
     await expect(page.locator(".sheet")).toBeVisible()
     await expect(page.locator(".sheet")).toContainText("synthetic-smoke")
     await expect(page.locator(".sheet__verdict")).toContainText("青光眼")
   })
 
-  test("资讯页点合成条目，详情标题与正文可见", async ({ page }) => {
-    const news = {
+  // 来自 Roundtable 集成分支：真实后端（专用测试库）的记录链。
+  // 上面的合成用例保证「行 → 独立报告」的导航；这条保证同一流程在真实接口上成立。
+  test("记录页读取真实后端本人记录：行 → 独立报告", async ({ page }) => {
+    const listed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/diagnosis/list/page/my" &&
+        response.request().method() === "POST"
+    )
+    await page.goto("/records")
+    const payload = await (await listed).json()
+    expect(payload.code).toBe(0)
+    const records = payload.data.records
+    expect(Array.isArray(records)).toBe(true)
+    if (records.length === 0) {
+      await expect(page.getByText("还没有属于你的判读")).toBeVisible()
+      await expect(page.locator(".records__row")).toHaveCount(0)
+      return
+    }
+    const id = String(records[0].id)
+    const detail = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === `/api/diagnosis/get/${id}`
+    )
+    const firstRow = page.locator(".records__row").first()
+    await expect(firstRow).toBeVisible({ timeout: 15_000 })
+    await firstRow.click()
+    const selected = await (await detail).json()
+    expect(selected.code).toBe(0)
+    expect(String(selected.data.id)).toBe(id)
+    await expect(page).toHaveURL(new RegExp(`/records/${id}$`))
+    await expect(page.locator(".sheet")).toBeVisible()
+    await expect(page.locator(".sheet__head")).toContainText(id)
+    await expect(page.locator(".sheet__verdict")).toBeVisible()
+  })
+
+  test("资讯页读取真实后端已发布条目：详情正文非空", async ({ page }) => {
+    const listed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/news/list/page/vo" &&
+        response.request().method() === "POST"
+    )
+    await page.goto("/news")
+    const payload = await (await listed).json()
+    expect(payload.code).toBe(0)
+    expect(payload.data.records.length, "专用测试库需至少一条已发布资讯").toBeGreaterThan(0)
+    const news = payload.data.records[0]
+    const detail = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === `/api/news/get/${news.id}`
+    )
+    // 期刊抬头把首条当头条，可访问名字里带「最新 · LATEST」与日期，按子串匹配。
+    await page.getByRole("link", { name: news.title }).first().click()
+    const selected = await (await detail).json()
+    expect(selected.code).toBe(0)
+    expect(String(selected.data.id)).toBe(String(news.id))
+    expect(selected.data.content?.trim()).toBeTruthy()
+    await expect(page.getByRole("heading", { level: 1, name: news.title })).toBeVisible()
+    await expect(page.locator(".news-paper__body")).toBeVisible()
+    await expect(page.locator(".news-paper__body")).not.toBeEmpty()
+  })
+
+  test("资讯页点合成条目，详情标题与正文可见", async ({ page }) => {    const news = {
       id: "81002",
       title: "合成冒烟资讯",
       content: "仅用于测试的合成资讯正文。",

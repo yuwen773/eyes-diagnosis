@@ -10,6 +10,7 @@
  * 再决定发什么。
  */
 import { ArrowRight, BookOpen, Image, MessageSquare } from "lucide-react"
+import { UPLOAD_LIMIT_MB } from "@/lib/uploadLimits"
 
 const HINTS = [
   {
@@ -107,7 +108,7 @@ export function WelcomeScreen({
       </div>
 
       <p className="welcome__note">
-        支持常见图片格式，单张不超过 10 MB；图片只在发送时才上传。
+        支持 JPG / PNG，单张不超过 {UPLOAD_LIMIT_MB} MB；图片只在发送时才上传。
         回答由 AI 生成，仅供健康科普参考，不能替代执业医师的检查与判断。
       </p>
     </div>

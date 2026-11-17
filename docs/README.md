@@ -7,6 +7,7 @@
 | 文档 | 何时读 |
 |---|---|
 | `agent-worktree-conventions.md` | 在多个工作树里跑 git、杀 Windows 进程、清理临时验证产物 |
+| `backend-image-storage-failure-semantics.md` | 改判读影像上传 / 对象存储失败处理前读：影像存储失败为何终止而不是落「无原图记录」、补偿删除边界、已知限制 |
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
 | `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准） |
@@ -43,9 +44,10 @@
 | 文档 | 何时读 |
 |---|---|
 | `2026-11-16-web-react-code-review.md` | 查 `web/` 的性能 / 包体 / 设计系统层技术债与改进清单（基线 `9d3c5317`；含 P0/P1/P2、已核实无问题清单、UI 冻结边界分流） |
+| `2026-11-17-fix-batches-review-report.md` | 查四条修复分支（后端 A/B/C8 + 前端 PR #92）的 `/code-review` 发现汇总、前端整改过程与验证读数、后端遗留项 |
 
-> 这份是**按用户要求入库**的例外；其余一次性评审报告仍走下面的临时目录约定。
-> 报告里的行号与包体数字是 `9d3c5317` 当时的快照，代码改动后以源码为准。
+> 这两份是**按用户要求入库**的例外；其余一次性评审报告仍走下面的临时目录约定。
+> 报告里的行号与包体数字是各自基线当时的快照，代码改动后以源码为准。
 
 ## 架构评审报告
 

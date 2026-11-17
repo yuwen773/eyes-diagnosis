@@ -20,6 +20,13 @@ public enum ErrorCode {
     FORBIDDEN_ERROR(40300,"禁止访问"),
     SYSTEM_ERROR(50000,"系统内部异常"),
     OPERATION_ERROR(50001,"操作失败"),
+    /**
+     * 影像存储失败（对象存储超时 / 鉴权 / 服务端异常）。
+     *
+     * 单独一个码，而不是复用 SYSTEM_ERROR：前端要能把「影像没存下来、
+     * 本次判读未归档、可以重试」和笼统的「服务没响应」分开说。
+     */
+    STORAGE_ERROR(50002,"影像存储失败"),
 
     DIAGNOSIS_REJECTED_QUALITY(40010,"图片质量不合格"),
     DIAGNOSIS_REJECTED_OOD(40011,"图像分布外"),

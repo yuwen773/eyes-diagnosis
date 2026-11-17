@@ -10,6 +10,8 @@ import {
   isUrgentAdvice,
   normalizeConfidence,
   rankClasses,
+  severityLabel,
+  severityRisk,
 } from "./domain"
 
 describe("normalizeConfidence", () => {
@@ -237,5 +239,31 @@ describe("classSearchLabel / classSearchHint（疾病名检索的库内标签换
     expect(classSearchHint("白内障")).toBeNull()
     expect(classSearchHint("红眼病")).toBeNull()
     expect(classSearchHint("")).toBeNull()
+  })
+})
+
+describe("severityLabel / severityRisk（人工严重程度与 AI 分级同一套词表）", () => {
+  it("AI 分级照旧", () => {
+    expect(severityLabel("normal")).toBe("正常")
+    expect(severityLabel("severe")).toBe("严重")
+    expect(severityLabel("NOT_ASSESSED")).toBe("未评估")
+  })
+
+  it("人工严重程度（low/medium/high）不再原样露出英文枚举", () => {
+    expect(severityLabel("low")).toBe("低风险")
+    expect(severityLabel("medium")).toBe("中风险")
+    expect(severityLabel("high")).toBe("高风险")
+  })
+
+  it("大小写不敏感：大写的人工取值也不原样露出", () => {
+    expect(severityLabel("MODERATE")).toBe("中度")
+    expect(severityLabel("HIGH")).toBe("高风险")
+    expect(severityRisk("HIGH")).toBe("critical")
+  })
+
+  it("风险色：high 走严重，low/medium 走注意", () => {
+    expect(severityRisk("high")).toBe("critical")
+    expect(severityRisk("low")).toBe("attention")
+    expect(severityRisk("medium")).toBe("attention")
   })
 })

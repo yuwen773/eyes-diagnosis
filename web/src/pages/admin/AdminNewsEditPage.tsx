@@ -46,6 +46,7 @@ import { queryKeys } from "@/lib/queryKeys"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
 import { newsPlainText } from "@/lib/news"
+import { UPLOAD_LIMIT_BYTES, UPLOAD_LIMIT_MB } from "@/lib/uploadLimits"
 import {
   PREVIEW_DEVICE_HEIGHT,
   PREVIEW_DEVICE_WIDTH,
@@ -64,20 +65,20 @@ type Form = { title: string; content: string; coverImage?: string; status?: numb
 /** 新建默认草稿：后端在 status 缺席时也落草稿，显式给出让下拉能显示当前值。 */
 const EMPTY_FORM: Form = { title: "", content: "", status: 0 }
 
-const MAX_COVER_BYTES = 5 * 1024 * 1024
+const MAX_COVER_BYTES = UPLOAD_LIMIT_BYTES
 const COVER_ACCEPT = "image/jpeg,image/png"
 const SUMMARY_HINT = "正文至少 30 个字符（后端以正文前 30 个字符生成摘要）"
 const LEAVE_CONFIRM = "有未保存的修改，确定离开编辑页吗？未保存的内容会丢失。"
 /** 新建模式封面引导：uploadCover 需要已存在的 id，首次保存后才能上传。 */
 const NEW_COVER_HINT = "新建保存后会生成记录并进入编辑模式，之后可上传封面。"
 
-/** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
+/** 封面预检：JPG/PNG + 服务端单张上限。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
 function coverProblem(file: File): string | null {
   if (file.type !== "image/jpeg" && file.type !== "image/png") {
     return "只能上传 JPG/PNG 格式的图片。"
   }
   if (file.size > MAX_COVER_BYTES) {
-    return "图片大小不能超过 5MB。"
+    return `图片大小不能超过 ${UPLOAD_LIMIT_MB}MB。`
   }
   return null
 }
@@ -801,7 +802,7 @@ function NewsEditor(props: {
                     </button>
                   </>
                 ) : null}
-                <span className="admin-newsedit__cover-hint num">JPG / PNG · ≤5MB</span>
+                <span className="admin-newsedit__cover-hint num">JPG / PNG · ≤{UPLOAD_LIMIT_MB}MB</span>
               </div>
             </div>
           </section>

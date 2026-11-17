@@ -9,6 +9,7 @@ import {
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 import { filterImageFiles } from "@/lib/agentUpload"
+import { UPLOAD_LIMIT_MB } from "@/lib/uploadLimits"
 import { clearDraft, loadDraft, saveDraft } from "@/lib/agentDraft"
 import { useMediaQuery } from "@/lib/useMediaQuery"
 import { PromptBar } from "./PromptBar"
@@ -206,7 +207,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     e.preventDefault()
     const images = filterImageFiles(pasted)
     if (images.length === 0) {
-      setHint("只支持图片，且单张不超过 10MB")
+      setHint(`只支持 JPG / PNG，且单张不超过 ${UPLOAD_LIMIT_MB} MB`)
       return
     }
     setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
@@ -217,7 +218,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     if (picked.length === 0) return
     const images = filterImageFiles(picked)
     if (images.length < picked.length) {
-      setHint("已忽略非图片或超过 10MB 的文件")
+      setHint(`已忽略非 JPG / PNG 或超过 ${UPLOAD_LIMIT_MB} MB 的文件`)
     }
     setAttachments((prev) => addFiles(prev, images, (f) => URL.createObjectURL(f)))
     // 允许再次选同一个文件

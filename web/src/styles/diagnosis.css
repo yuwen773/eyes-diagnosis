@@ -1,0 +1,455 @@
+/* 影像判读工作区（Iris R3 · Phase 3 UX-A）
+ *
+ * 三个明确阶段：上传与预览 → 真实等待 → 结果摘要。
+ * 主视觉是一张真实影像，不是取景刻度或仪表读数；等待只显示真实耗时。
+ * 颜色全部走 tokens.css 令牌（本文件受 hardcoded-colors 棘轮约束，零字面色）。
+ */
+
+.dx {
+  padding-block: 40px 72px;
+}
+
+.dx__head {
+  max-width: 62ch;
+  margin-bottom: 26px;
+}
+
+.dx__kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.dx__title {
+  margin: 0 0 10px;
+  font-family: var(--font-serif, serif);
+  font-size: clamp(30px, 3.4vw, 44px);
+  line-height: 1.16;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.dx__lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+/* ── 三步 ───────────────────────────────────────── */
+
+.dx__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.dx__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.dx__step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-circle);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.dx__step[data-state="current"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.dx__step[data-state="current"] .dx__step-no {
+  border-color: var(--signal);
+  color: var(--signal-text);
+  background: var(--signal-soft);
+}
+
+.dx__step[data-state="done"] .dx__step-no {
+  border-color: var(--line-strong);
+  color: var(--ink-2);
+}
+
+/* ── 主体两栏 ───────────────────────────────────── */
+
+.dx__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  gap: 26px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dx__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dx__media {
+  min-width: 0;
+}
+
+.dx__frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  aspect-ratio: 4 / 3;
+}
+
+.dx__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dx__frame[data-busy="true"] .dx__img {
+  filter: saturate(0.92) contrast(0.98);
+}
+
+.dx__waiting {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink);
+  backdrop-filter: blur(6px);
+}
+
+.dx__waiting-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-circle);
+  background: var(--signal);
+  animation: dx-pulse 1.8s var(--ease) infinite;
+}
+
+@keyframes dx-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx__waiting-dot {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* 空态：示例影像 + 明确的取图入口 */
+.dx__drop {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--fast), background var(--fast);
+}
+
+.dx__drop:hover,
+.dx__drop:focus-visible,
+.dx__drop[data-drag="true"] {
+  border-color: var(--signal);
+  outline: none;
+}
+
+.dx__drop[data-drag="true"] {
+  background: var(--signal-soft);
+}
+
+.dx__specimen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.dx__drop-copy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 24px;
+}
+
+.dx__drop-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dx__drop-hint {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.dx__drop-note {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.dx__filebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.dx__filemeta {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 右栏 ───────────────────────────────────────── */
+
+.dx__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel-sm);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.dx__panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.dx__panel-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+.dx__class-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hair);
+  color: var(--ink-3);
+}
+
+.dx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.dx__actions .btn {
+  text-decoration: none;
+}
+
+.dx__facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.dx__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.dx__facts dt {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.dx__facts dd {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  color: var(--ink);
+  text-align: right;
+  word-break: break-all;
+}
+
+/* 结局标记：颜色 + 文字同时出现，颜色不是唯一信息载体 */
+.dx__outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-chip);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.dx__outcome-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dx__outcome-note {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.dx__outcome[data-outcome="rejected"] {
+  border-color: color-mix(in srgb, var(--risk-attention) 45%, var(--line));
+}
+
+.dx__outcome[data-outcome="review"] {
+  border-color: color-mix(in srgb, var(--risk-attention) 45%, var(--line));
+}
+
+.dx__outcome[data-risk="normal"] .dx__outcome-label {
+  color: var(--risk-normal);
+}
+
+.dx__outcome[data-risk="attention"] .dx__outcome-label {
+  color: var(--risk-attention);
+}
+
+.dx__band {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-hair-sm);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.dx__band[data-risk="normal"] {
+  color: var(--risk-normal);
+  border-color: color-mix(in srgb, var(--risk-normal) 40%, var(--line));
+}
+
+.dx__band[data-risk="attention"] {
+  color: var(--risk-attention);
+  border-color: color-mix(in srgb, var(--risk-attention) 40%, var(--line));
+}
+
+.dx__band[data-risk="critical"] {
+  color: var(--risk-critical);
+  border-color: color-mix(in srgb, var(--risk-critical) 40%, var(--line));
+}
+
+.dx__fineprint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+
+/* 判读范围 */
+.dx__range {
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.dx__sub-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.dx__range-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.dx__range-list li {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dx__range-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.dx__fault {
+  margin-top: 2px;
+}
+
+/* 品牌页把 .btn 整体换成钴蓝（.is-brand-page .btn），特异性高于 .btn--ghost，
+   于是「换一张」这类次级动作被画成了主按钮。这里在判读页作用域内把
+   ghost 按钮恢复成透明描边：主次要分得开。 */
+.dx .btn--ghost {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.dx .btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border-color: var(--fg);
+}

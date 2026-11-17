@@ -336,6 +336,8 @@ export function listMyDiagnoses(
 
 export type MyDiagnosisStats = {
   total: number
+  /** 有真实严重度分级的条数；缺了它，highRisk=0 无法与「未评估」区分。 */
+  assessed: number
   highRisk: number
   awaitingReview: number
   lastReadAt: string | null
