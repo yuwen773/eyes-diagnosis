@@ -27,8 +27,13 @@ describe("RouteErrorBoundary", () => {
       </RouteErrorBoundary>,
     )
     expect(screen.getByRole("alert")).toBeTruthy()
-    expect(screen.getByText("这个页面没能渲染出来")).toBeTruthy()
-    expect(screen.getByRole("button", { name: /刷新页面/ })).toBeTruthy()
+    expect(screen.getByText("这个页面没能显示出来")).toBeTruthy()
+    expect(screen.getByRole("button", { name: /重新加载本页/ })).toBeTruthy()
+    // 持续失败时仍有一条不依赖重载的离场路径。
+    expect(screen.getByRole("link", { name: /回到首页/ }).getAttribute("href")).toBe("/")
+    // 不谎称已上报，也不展示堆栈。
+    expect(screen.queryByText(/已经记下/)).toBeNull()
+    expect(screen.queryByText(/渲染炸了/)).toBeNull()
   })
 
   it("换路由（resetKey 变化）后自动复位", () => {

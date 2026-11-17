@@ -1,10 +1,15 @@
+import { IrisErrorState } from "@/components/system/IrisStates"
+import { ApiError } from "@/lib/api"
+import { fault, faultFromError } from "@/lib/faults"
+
 /**
- * 仪器故障面板。
+ * 页内故障面板（新闻 / 记录详情等整页读取失败）。
  *
- * 读取失败不该是一条横贯整页的粉红横幅——那是句号，不是仪表。
- * 这里按仪器的读数面板来搭：左边一道故障色竖线，中间说清发生了什么，
- * 底下把状态码和端点摆出来，右端一个重试。
- * 故障色用风险语义色（--risk-critical），不占用信号橙。
+ * 对外 props 保持不变，调用方无需改动；内部统一走 Iris 错误状态外壳，
+ * 消除与 FaultNote(panel) 重复的仪器式样式。
+ *
+ * 严重度与故障种类不在这里重复判断：交给全站唯一的 faultFromError，
+ * 再覆盖调用方给的标题、说明与重试动作。状态码作为读数露出，方便用户报障。
  */
 export function FaultPanel({
   code,
@@ -20,30 +25,27 @@ export function FaultPanel({
   endpoint: string
   onRetry: () => void
 }) {
+  // code 为 null 表示拿不到机器码（例如后端返回了非 JSON 错误页），
+  // 不能当作断网（-1）。其余交给全站唯一的 faultFromError 分类：
+  // 它先匹配 401/403/404/400 等业务码，再用 >=500 判服务端故障，
+  // 避免把 40400 这类五位业务码误判成 critical。
+  const base =
+    code === null
+      ? fault({ severity: "attention", kind: "client", title, detail: body, code: null })
+      : faultFromError(new ApiError(code, body))
   return (
-    <section className="fault" role="alert">
-      <div className="fault__head">
-        <span className="fault__tag num">FAULT</span>
-        <span className="fault__rule" aria-hidden="true" />
-      </div>
-
-      <h2 className="fault__title">{title}</h2>
-      <p className="fault__body">{body}</p>
-
-      <div className="fault__foot">
-        <div className="fault__readout">
-          <span className="readout__label">状态</span>
-          <span className="readout__value readout__value--mono">{code ?? "—"}</span>
-        </div>
-        <div className="fault__readout">
-          <span className="readout__label">端点</span>
-          <span className="readout__value readout__value--mono">{endpoint}</span>
-        </div>
-        <button className="btn btn--sm fault__retry" type="button" onClick={onRetry}>
-          重试
-          <span className="btn__key">↻</span>
-        </button>
-      </div>
-    </section>
+    <IrisErrorState
+      fault={{
+        ...base,
+        title,
+        detail: body,
+        code,
+        action: { label: "重试", run: onRetry },
+      }}
+      readouts={[
+        { label: "状态", value: code === null ? "—" : String(code) },
+        { label: "请求", value: endpoint },
+      ]}
+    />
   )
 }

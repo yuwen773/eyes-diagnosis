@@ -27,6 +27,7 @@ import { ChatInput, type ChatInputHandle } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
 import { ResourcePanel } from "@/components/agent/ResourcePanel"
 import { ProductHeader } from "@/components/shell/ProductHeader"
+import { IrisPageLoading } from "@/components/system/IrisStates"
 
 const HISTORY_PAGE_SIZE = 100
 
@@ -388,7 +389,7 @@ export function AgentPage() {
       <div className="is-field is-brand-page">
         <ProductHeader scene="intelligence" />
         <main className="agent-viewport">
-          <p className="agent-loading">载入中…</p>
+          <IrisPageLoading title="正在核对登录状态" hint="正在准备对话工作区，请稍候。" />
         </main>
       </div>
     )

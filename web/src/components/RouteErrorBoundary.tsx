@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
-import { FaultNote } from "@/components/fault"
+
+import { IrisErrorState } from "@/components/system/IrisStates"
 import { fault } from "@/lib/faults"
 
 type Props = {
@@ -13,11 +14,9 @@ type State = { failed: boolean }
 /**
  * 路由级错误边界。
  *
- * 没有它的时候，render 期抛错就是整页白屏——用户看到一块空白，没有解释，
- * 也没有出口。这里接住错误，复用全站的故障读数把「哪里坏了、还能做什么」
- * 讲清楚，并给一个刷新动作。
- *
  * 只接渲染期的错误；事件处理器与异步回调里的错误仍走各自的故障提示。
+ * 边界自身保持极小：静态 getDerivedStateFromError + 一个刷新动作，
+ * 不依赖 WebGL / 远程图片 / 动态导入，稳定的兜底优先于视觉。
  */
 export class RouteErrorBoundary extends Component<Props, State> {
   state: State = { failed: false }
@@ -27,7 +26,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
-    // 留一份现场：生产环境至少能从控制台/上报里追到是哪个组件树炸的。
+    // 留一份现场供控制台排查；不向用户展示堆栈，也不谎称"已上报"。
     console.error("路由渲染失败", error, info.componentStack)
   }
 
@@ -41,15 +40,21 @@ export class RouteErrorBoundary extends Component<Props, State> {
     if (!this.state.failed) return this.props.children
     return (
       <main className="route-fault">
-        <FaultNote
-          variant="panel"
+        <IrisErrorState
           fault={fault({
             severity: "critical",
             kind: "client",
-            title: "这个页面没能渲染出来",
-            detail: "已经记下这次错误。刷新页面可以重新加载；如果反复出现，请把当前网址反馈给我们。",
-            action: { label: "刷新页面", run: () => window.location.reload() },
+            title: "这个页面没能显示出来",
+            detail:
+              "页面遇到了意外情况，可以重新加载这一页；如果反复出现，请记下当前网址并联系我们。已经提交的内容不会被这个提示更改。",
+            action: { label: "重新加载本页", run: () => window.location.reload() },
           })}
+          secondary={
+            // 兜底不能再依赖路由 context：用普通链接给一条稳定的离场路径。
+            <a className="iris-action iris-action--secondary" href="/">
+              回到首页
+            </a>
+          }
         />
       </main>
     )
