@@ -171,10 +171,16 @@ export function MessageList({
               />
             ),
           )}
-
-          {waiting.active ? <LatticeLoader label={waiting.label} /> : null}
         </div>
       </div>
+
+      {/* 等待态独立成一条，不塞进滚动列：塞进去会被列底裁掉半截，
+          而它恰恰是用户最该看见的一行。 */}
+      {waiting.active ? (
+        <div className="agent-thread__status">
+          <LatticeLoader label={waiting.label} />
+        </div>
+      ) : null}
 
       {unread > 0 ? (
         <button type="button" className="agent-msglist__unread" onClick={scrollToBottom}>

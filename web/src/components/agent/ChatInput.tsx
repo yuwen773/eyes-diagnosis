@@ -47,6 +47,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
 ) {
   // 草稿：跳登录页来回一趟不丢字。惰性初始化即可，不必用 effect 回填。
   const [text, setText] = useState(() => loadDraft())
+  // 文本的同步副本：发送失败要把原文放回输入框，那时不能只信闭包里的旧值。
+  const textRef = useRef(text)
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [hint, setHint] = useState("")
   const [focused, setFocused] = useState(false)
@@ -67,11 +69,13 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       window.clearTimeout(draftTimer.current)
       draftTimer.current = null
     }
+    textRef.current = next
     setText(next)
     saveDraft(next)
   }, [])
 
   const typeText = useCallback((next: string) => {
+    textRef.current = next
     setText(next)
     pendingDraft.current = next
     if (draftTimer.current !== null) return
@@ -136,17 +140,30 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       setHint("助手正在回复，完成后即可发送")
       return
     }
-    const ok = await onSend(trimmed, attachments.map((a) => a.file))
-    if (!ok) {
-      setHint("发送没成功，内容已保留，可以重试")
-      textareaRef.current?.focus()
-      return
-    }
-    attachments.forEach((a) => URL.revokeObjectURL(a.url))
+    const sentAttachments = attachments
+
+    // 消息一旦发出，输入框就不再留着同一句话：它已经作为气泡出现在对话里，
+    // 留在框里等于同一句话说两遍。发送失败时下面会把它放回去，内容不丢。
     updateText("")
     setAttachments([])
     setHint("")
     clearDraft()
+
+    const ok = await onSend(trimmed, sentAttachments.map((a) => a.file))
+    if (ok) {
+      sentAttachments.forEach((a) => URL.revokeObjectURL(a.url))
+      return
+    }
+
+    // 失败：把原文放回输入框。万一这期间用户已经打了新字，新字留在后面，
+    // 原文补在前面——两边都不丢。
+    const current = textRef.current
+    updateText(current.length === 0 ? trimmed : `${trimmed}\n${current}`)
+    setAttachments((prev) =>
+      prev.length === 0 ? sentAttachments : [...prev, ...sentAttachments],
+    )
+    setHint("发送没成功，内容已保留，可以重试")
+    textareaRef.current?.focus()
   }, [attachments, disabled, onSend, streaming, text, updateText])
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {

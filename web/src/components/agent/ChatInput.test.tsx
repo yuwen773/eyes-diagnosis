@@ -135,6 +135,15 @@ describe("ChatInput 发送与停止（既有行为）", () => {
     expect(onSend.mock.calls[0][0]).toBe("你好")
   })
 
+  it("发送成功后输入框立刻清空（消息已经在气泡里，不说两遍）", async () => {
+    const { onSend, textarea } = setup(false)
+    fireEvent.change(textarea, { target: { value: "去问医生" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(textarea.value).toBe(""))
+    expect(onSend).toHaveBeenCalledTimes(1)
+  })
+
   it("发送失败时保留文字与附件，草稿不清", async () => {
     const { onSend, textarea } = setup(false, false)
     fireEvent.change(textarea, { target: { value: "别丢我" } })
