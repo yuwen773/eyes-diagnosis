@@ -82,19 +82,23 @@ function renderPage() {
 }
 
 describe("RecordsPage 统计口径", () => {
-  it("服务端聚合未上线时，三项计数标注「本页」", async () => {
+  it("服务端聚合未上线时，计数标注「本页」且严重度显示未评估", async () => {
     vi.mocked(listMyDiagnoses).mockResolvedValue({ records: [], total: 0 })
     vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
 
     renderPage()
 
-    expect(await screen.findByText("本页高风险 · SEVERE")).toBeTruthy()
+    expect(await screen.findByText("本页严重度 · 未评估")).toBeTruthy()
+    expect(screen.getByText("本页待人工复核 · REVIEW")).toBeTruthy()
+    // 「未评估」是读数本身，不能退化成 0。
+    expect(screen.getByText("未评估")).toBeTruthy()
   })
 
   it("服务端聚合可用时使用全量口径", async () => {
     vi.mocked(listMyDiagnoses).mockResolvedValue({ records: [], total: 0 })
     vi.mocked(getMyStats).mockResolvedValue({
       total: 128,
+      assessed: 128,
       highRisk: 9,
       awaitingReview: 12,
       lastReadAt: null,
@@ -103,7 +107,63 @@ describe("RecordsPage 统计口径", () => {
     renderPage()
 
     expect(await screen.findByText("高风险 · SEVERE")).toBeTruthy()
-    expect(screen.queryByText("本页高风险 · SEVERE")).toBeNull()
+    expect(screen.queryByText("本页严重度 · 未评估")).toBeNull()
+  })
+
+  it("当前页记录全部未评估时，高风险格显示未评估而不是 0", async () => {
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        { id: "1", result: "正常", severity: "NOT_ASSESSED", createTime: "2026-11-15T10:00:00" },
+        { id: "2", result: "青光眼", severity: null, createTime: "2026-11-14T10:00:00" },
+      ] as never,
+      total: 2,
+    })
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
+
+    renderPage()
+
+    expect(await screen.findByText("本页严重度 · 未评估")).toBeTruthy()
+    expect(screen.getByText(/后端尚未产出严重度分级/)).toBeTruthy()
+  })
+
+  it("当前页有真实分级时按明确口径计数", async () => {
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        { id: "1", result: "正常", severity: "normal", createTime: "2026-11-15T10:00:00" },
+        { id: "2", result: "青光眼", severity: "severe", createTime: "2026-11-14T10:00:00" },
+        { id: "3", result: "白内障", severity: "NOT_ASSESSED", createTime: "2026-11-13T10:00:00" },
+      ] as never,
+      total: 3,
+    })
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
+
+    renderPage()
+
+    expect(await screen.findByText("本页高风险 · 已分级 2/3")).toBeTruthy()
+  })
+})
+
+describe("RecordsPage 拒识与复核独立表达", () => {
+  it("拒识记录同时显示「AI 拒识」与「待人工复核」", async () => {
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        {
+          id: "7001",
+          result: null,
+          aiRejected: true,
+          requiresReview: true,
+          createTime: "2026-11-15T10:00:00",
+          reexamineStatus: 0,
+        },
+      ] as never,
+      total: 1,
+    })
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
+
+    renderPage()
+
+    expect(await screen.findByText("AI 拒识")).toBeTruthy()
+    expect(screen.getByText("待人工复核")).toBeTruthy()
   })
 })
 

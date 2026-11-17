@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
-import { loadServerStats, resolveScopedStats, statsLabels } from "@/lib/records"
+import { highRiskCell, loadServerStats, resolveScopedStats, statsLabels } from "@/lib/records"
 import {
   confidencePercent,
   formatTimestamp,
@@ -14,6 +14,12 @@ import {
 } from "@/lib/domain"
 import { queryKeys } from "@/lib/queryKeys"
 import { faultFromError, infoFault, validationFault } from "@/lib/faults"
+import {
+  ACCEPTED_PICTURE_TYPES,
+  UPLOAD_LIMIT_HINT,
+  exceedsUploadLimit,
+  uploadLimitError,
+} from "@/lib/uploadLimits"
 import { useFault } from "@/components/fault"
 import { useSession } from "@/lib/session"
 import { EmptyFrame } from "@/components/EmptyFrame"
@@ -110,14 +116,14 @@ export function ProfilePage() {
     event.target.value = ""
     if (!file) return
 
-    if (!file.type.startsWith("image/")) {
-      push(validationFault("头像得是一张图片——当前选中的文件不是"))
+    if (!ACCEPTED_PICTURE_TYPES.includes(file.type as (typeof ACCEPTED_PICTURE_TYPES)[number])) {
+      push(validationFault("头像只支持 JPG、PNG 或 WebP"))
       return
     }
-    // 服务端头像上传走 FileManager.validPicture，硬上限 2 MB；
+    // 服务端头像上传走 FileManager.validPicture，硬上限与判读影像同一处；
     // 前端原先写 10 MB，选了 3 MB 的图只会被服务端拒掉。
-    if (file.size > 2 * 1024 * 1024) {
-      push(validationFault("图片超过 2MB（服务端单张上限），换一张小一点的"))
+    if (exceedsUploadLimit(file.size)) {
+      push(validationFault(uploadLimitError("图片")))
       return
     }
 
@@ -152,13 +158,10 @@ export function ProfilePage() {
     list.sort((a, b) => (b.createTime ?? "").localeCompare(a.createTime ?? ""))
     return list.slice(0, 3)
   }, [sample])
-  const highRiskLabel = serverStats
-    ? labels.highRisk
-    : `近 ${PROFILE_SAMPLE} 条高风险`
-  const roleLabel = useMemo(
-    () => (user?.userRole ? (ROLE_LABEL[user.userRole] ?? user.userRole) : "—"),
-    [user?.userRole],
-  )
+  // 高风险读数与记录页同一口径：没有分级数据时显示「未评估」，不显示 0。
+  const risk = highRiskCell(stats, scoped.scope, `近 ${PROFILE_SAMPLE} 条`)
+  // 角色文案是一次字典查找，不需要 memo；手写依赖反而与编译器推断不一致。
+  const roleLabel = user?.userRole ? (ROLE_LABEL[user.userRole] ?? user.userRole) : "—"
 
   if (!user) {
     // 会话还在探测时保持沉默，确认匿名后送登录页（带回跳）。
@@ -221,12 +224,12 @@ export function ProfilePage() {
                 <span className="btn__key">↥</span>
               </button>
               <p className="profile__avatar-hint">
-                支持 JPG / PNG / WebP，2MB 以内（服务端单张上限）。上传后立即生效，全站可见。
+                支持 JPG / PNG / WebP，{UPLOAD_LIMIT_HINT}（服务端单张上限）。上传后立即生效，全站可见。
               </p>
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 onChange={(event) => void onAvatarChange(event)}
               />
@@ -239,9 +242,12 @@ export function ProfilePage() {
               {statsLoading
                 ? "判读统计读取中…"
                 : hasStats
-                  ? `${labels.total} ${stats.total} · ${highRiskLabel} ${stats.highRisk}`
+                  ? `${labels.total} ${stats.total} · ${risk.label} ${risk.value}`
                   : "判读统计暂不可用"}
             </p>
+            {!statsLoading && risk.note ? (
+              <p className="profile__identity-note">{risk.note}</p>
+            ) : null}
             {!statsLoading && serverStats === null && hasStats ? (
               <p className="profile__identity-note">
                 服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录，不是全量。

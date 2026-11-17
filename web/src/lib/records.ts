@@ -11,13 +11,27 @@ import type { DiagnosisManage } from "./api"
 export type RecordStats = {
   /** 名下判读总数（分页信封的 total，不依赖拉满首页）。 */
   total: number
-  /** 高风险（severity=severe）条数。拒识记录没有严重度，不计入。 */
+  /**
+   * 有**真实严重度分级**的记录条数。`NOT_ASSESSED`、空值、AI 拒识都不算，
+   * 它们不是「低风险」，是「没有分级」。
+   */
+  assessed: number
+  /**
+   * `assessed` 里 severity=severe 的条数。
+   *
+   * <p>`assessed === 0` 时这个 0 **没有医学含义**：界面必须显示「未评估」，
+   * 不能把「全体未评估」渲染成「高风险 0」。后端当前（`DiagnosisServiceImpl`
+   * 硬编码 `NOT_ASSESSED`）一直是这一支。
+   */
   highRisk: number
-  /** 待人工复核条数。 */
+  /** 待人工复核条数。拒识记录同样在复核队列里，也计入。 */
   awaitingReview: number
   /** 最近一次判读时间，没有记录时为 null。 */
   lastReadAt: string | null
 }
+
+/** 后端 `Severity` 里真正带临床分级的取值；`NOT_ASSESSED` 明确排除。 */
+const GRADED_SEVERITIES = new Set(["normal", "mild", "moderate", "severe"])
 
 /** reexamineStatus → 展示文案。0 未复审（历史值 1 同义）/ 2 复审中 / 3 已复审。 */
 export function reexamineLabel(status?: number): string {
@@ -36,16 +50,22 @@ export function summarizeRecords(
   records: DiagnosisManage[],
   total: number,
 ): RecordStats {
-  const highRisk = records.filter(
-    (item) => !item.aiRejected && item.severity === "severe",
-  ).length
+  // 拒识记录的 result/confidence/severity 被后端清空；即便有残留 severity，
+  // 拒识也不是一次分级结果，一律不计。
+  const graded = records.filter(
+    (item) =>
+      !item.aiRejected &&
+      typeof item.severity === "string" &&
+      GRADED_SEVERITIES.has(item.severity),
+  )
+  const highRisk = graded.filter((item) => item.severity === "severe").length
   const awaitingReview = records.filter((item) => item.requiresReview).length
   const lastReadAt = records.reduce<string | null>((acc, item) => {
     if (!item.createTime) return acc
     return !acc || item.createTime > acc ? item.createTime : acc
   }, null)
 
-  return { total, highRisk, awaitingReview, lastReadAt }
+  return { total, assessed: graded.length, highRisk, awaitingReview, lastReadAt }
 }
 
 /** 统计口径：all = 服务端全量聚合；page = 当前页本地汇总。 */
@@ -92,7 +112,7 @@ export async function loadServerStats(signal?: AbortSignal): Promise<RecordStats
   }
 }
 
-/** 聚合载荷的形状校验：四个字段齐全且类型正确。 */
+/** 聚合载荷的形状校验：五个字段齐全且类型正确。 */
 function isStatsPayload(value: unknown): value is RecordStats {
   if (!value || typeof value !== "object") return false
   const payload = value as Record<string, unknown>
@@ -100,6 +120,9 @@ function isStatsPayload(value: unknown): value is RecordStats {
     typeof n === "number" && Number.isFinite(n) && n >= 0
   return (
     isCount(payload.total) &&
+    // assessed 必须随聚合一起返回：没有它就分不清「0 条高风险」和
+    // 「一条都没分级」，旧形状不能冒充全量口径。
+    isCount(payload.assessed) &&
     isCount(payload.highRisk) &&
     isCount(payload.awaitingReview) &&
     (payload.lastReadAt === null || typeof payload.lastReadAt === "string")
@@ -108,23 +131,69 @@ function isStatsPayload(value: unknown): value is RecordStats {
 
 export function statsLabels(scope: StatsScope): {
   total: string
-  highRisk: string
   awaitingReview: string
   lastReadAt: string
 } {
   if (scope === "all") {
     return {
       total: "判读总数 · TOTAL",
-      highRisk: "高风险 · SEVERE",
       awaitingReview: "待人工复核 · REVIEW",
       lastReadAt: "最近判读 · LAST",
     }
   }
   return {
     total: "判读总数 · TOTAL",
-    highRisk: "本页高风险 · SEVERE",
     awaitingReview: "本页待人工复核 · REVIEW",
     lastReadAt: "本页最近 · LAST",
+  }
+}
+
+/** 高风险读数格：未知（无分级数据）与零（真的没有高风险）必须区分。 */
+export type RiskCell = {
+  label: string
+  /** 直接上屏的读数；未知时是「未评估」而不是 0。 */
+  value: string
+  /** 读数下的口径说明，没有则为 null。 */
+  note: string | null
+  /** true = 严重度尚不可用，读数不是医学意义上的 0。 */
+  unknown: boolean
+}
+
+/**
+ * 高风险格的口径。
+ *
+ * <p>后端目前不产出真实严重度（`DiagnosisServiceImpl` 恒写 `NOT_ASSESSED`），
+ * 所有记录都是「未评估」。此时显示「高风险 0」等于宣称筛查过且无人高危——
+ * 这是医学语义上的假陈述。分级数据只有部分覆盖时，读数配「已分级 N/M 条」，
+ * 让数字可核对。
+ */
+export function highRiskCell(
+  stats: RecordStats,
+  scope: StatsScope,
+  pagePrefix = "本页",
+): RiskCell {
+  const page = scope === "page" ? pagePrefix : ""
+  if (stats.assessed === 0) {
+    return {
+      label: `${page}严重度 · 未评估`,
+      value: "未评估",
+      note: "后端尚未产出严重度分级，高风险计数暂不可用",
+      unknown: true,
+    }
+  }
+  if (stats.assessed < stats.total) {
+    return {
+      label: `${page}高风险 · 已分级 ${stats.assessed}/${stats.total}`,
+      value: String(stats.highRisk),
+      note: `仅 ${stats.assessed} 条有分级数据，其余未评估`,
+      unknown: false,
+    }
+  }
+  return {
+    label: `${page}高风险 · SEVERE`,
+    value: String(stats.highRisk),
+    note: null,
+    unknown: false,
   }
 }
 

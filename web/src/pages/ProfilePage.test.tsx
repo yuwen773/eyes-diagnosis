@@ -163,6 +163,7 @@ describe("ProfilePage 判读统计口径", () => {
     } as never)
     vi.mocked(getMyStats).mockResolvedValue({
       total: 128,
+      assessed: 128,
       highRisk: 9,
       awaitingReview: 12,
       lastReadAt: "2026-11-08 14:32:10",

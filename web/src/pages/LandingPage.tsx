@@ -13,6 +13,7 @@ import { Link } from "react-router-dom"
 import type { DiagnosisResult } from "@/lib/api"
 import { CLASSES } from "@/lib/domain"
 import { useInView, useRevealScan } from "@/lib/useInView"
+import { UPLOAD_LIMIT_HINT, UPLOAD_LIMIT_MB } from "@/lib/uploadLimits"
 import { useTheme } from "@/components/theme-provider"
 import { LandingHero } from "@/components/brand/LandingHero"
 import { RecordSheet } from "@/components/RecordSheet"
@@ -74,8 +75,8 @@ const LANDING_SECTIONS = [
 const STEPS = [
   {
     title: "上传",
-    body: "照片在浏览器端先校验格式与体积，只接受 JPG 与 PNG，单张不超过 5 MB。",
-    readout: "JPG · PNG ≤ 5 MB",
+    body: `照片在浏览器端先校验格式与体积，只接受 JPG 与 PNG，单张${UPLOAD_LIMIT_HINT}。`,
+    readout: `JPG · PNG ≤ ${UPLOAD_LIMIT_MB} MB`,
   },
   {
     title: "过质量门",

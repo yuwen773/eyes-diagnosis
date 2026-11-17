@@ -99,3 +99,59 @@ describe("DiagnosisPage 影像上限", () => {
     expect(await screen.findByRole("button", { name: "开始判读" })).toBeTruthy()
   })
 })
+
+describe("DiagnosisPage 口径与结果语义", () => {
+  it("上传说明用服务端真实上限（2 MB），不再写 5 MB", async () => {
+    renderPage()
+    const hints = await screen.findAllByText(/不超过 2 MB/)
+    expect(hints.length).toBeGreaterThan(0)
+    expect(screen.queryByText(/5 MB/)).toBeNull()
+  })
+
+  async function runWith(result: Record<string, unknown>) {
+    vi.mocked(runDiagnosis).mockResolvedValue(result as never)
+    renderPage()
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    const { fireEvent } = await import("@testing-library/react")
+    fireEvent.change(input, { target: { files: [fileOfSize("ok.jpg", 1024 * 1024)] } })
+    fireEvent.click(await screen.findByRole("button", { name: "开始判读" }))
+    return screen.findByRole("link", { name: "查看完整报告" })
+  }
+
+  it("拒识且 requiresReview：两个维度同时展示，复核要求不被拒识吞掉", async () => {
+    await runWith({
+      id: "42",
+      url: "https://cdn.example/x.jpg",
+      aiRejected: true,
+      requiresReview: true,
+      abstainReason: "QUALITY_FAIL",
+    })
+
+    expect(await screen.findByText("模型未给出结论")).toBeTruthy()
+    expect(screen.getByText(/已转入人工复核队列/)).toBeTruthy()
+  })
+
+  it("有记录但没有影像地址：明确说原图未保存，不把记录存在当成完整归档", async () => {
+    await runWith({
+      id: "43",
+      result: "正常",
+      confidence: 0.9,
+      requiresReview: false,
+    })
+
+    expect(await screen.findByText("原始影像未保存")).toBeTruthy()
+    expect(screen.getByText(/报告编号 IRIS-43/)).toBeTruthy()
+  })
+
+  it("影像已归档时显示归档事实，不显示未保存提示", async () => {
+    await runWith({
+      id: "44",
+      url: "https://cdn.example/ok.jpg",
+      result: "正常",
+      confidence: 0.9,
+    })
+
+    expect(await screen.findByText(/原始影像已随记录归档/)).toBeTruthy()
+    expect(screen.queryByText("原始影像未保存")).toBeNull()
+  })
+})

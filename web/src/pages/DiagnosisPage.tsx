@@ -12,6 +12,12 @@ import {
 } from "@/lib/domain"
 import { useSession } from "@/lib/session"
 import { rememberPendingUpload, takePendingUpload } from "@/lib/pendingUpload"
+import {
+  ACCEPTED_IMAGE_TYPES,
+  UPLOAD_LIMIT_HINT,
+  exceedsUploadLimit,
+  uploadLimitError,
+} from "@/lib/uploadLimits"
 import { FaultNote } from "@/components/fault"
 import { faultFromError, infoFault, validationFault, type Fault } from "@/lib/faults"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
@@ -20,18 +26,19 @@ import { ProductHeader } from "@/components/shell/ProductHeader"
 type Stage = "empty" | "ready" | "running" | "done" | "error"
 
 /**
- * 单张影像上限 = 服务端真实上限（FileManager.validPicture：2 MB）。
+ * 单张影像上限 = 服务端真实上限（`FileManager.validPicture`），
+ * 口径集中在 `@/lib/uploadLimits`，不在页面里写字面量。
  *
- * <p>之前前端写 5 MB，服务端只收 2 MB：2–5 MB 的片子能判读出结果，
- * 但存图那步被异常吞掉，记录里**没有原图**——用户拿到结论却核验不了影像。
- * 前端口径与服务端对齐：要么本地拦下并说清楚，要么后端把上限提上去。
+ * <p>之前前端写 5 MB、服务端只收 2 MB：2–5 MB 的片子能判读出结果，
+ * 但存图那步失败被吞掉，记录里**没有原图**——用户拿到结论却核验不了影像。
+ * 前端口径与服务端对齐：本地就拦下并说清楚。
  */
-const MAX_BYTES = 2 * 1024 * 1024
-const ACCEPTED = ["image/jpeg", "image/png"]
+const ACCEPTED = ACCEPTED_IMAGE_TYPES
 
 function validate(file: File): string | null {
-  if (!ACCEPTED.includes(file.type)) return "只接受 JPG 与 PNG 格式的影像"
-  if (file.size > MAX_BYTES) return "影像超过 2 MB（服务端单张上限），请压缩后重试"
+  if (!ACCEPTED.includes(file.type as (typeof ACCEPTED)[number]))
+    return "只接受 JPG 与 PNG 格式的影像"
+  if (exceedsUploadLimit(file.size)) return uploadLimitError("影像")
   return null
 }
 
@@ -262,7 +269,7 @@ export function DiagnosisPage() {
                   <span className="dx__drop-title">
                     {dragging ? "松手，放入影像" : "点击或拖入影像"}
                   </span>
-                  <span className="dx__drop-hint">JPG · PNG · 不超过 2 MB</span>
+                  <span className="dx__drop-hint">JPG · PNG · {UPLOAD_LIMIT_HINT}</span>
                   <span className="dx__drop-note">示例影像 · 非真实患者</span>
                 </span>
               </button>
@@ -345,7 +352,7 @@ function UploadPanel(props: {
       <p className="dx__panel-text">
         {file
           ? "影像只在本机预览，点「开始判读」时才会上传。判读期间不能换图——结论必须对应同一张影像。"
-          : "支持彩色眼底照片（JPG / PNG，≤ 5 MB）。选图后可以在本机先看清再决定是否判读。"}
+          : `支持彩色眼底照片（JPG / PNG，${UPLOAD_LIMIT_HINT}）。选图后可以在本机先看清再决定是否判读。`}
       </p>
 
       <div className="dx__actions">
@@ -415,13 +422,18 @@ function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) 
   const className = canonicalClassName(result.result) ?? result.result ?? null
   const code = className ? classCode(className) : null
   const recordId = result.id
+  // 记录 id 只证明「这条判读落库了」；原图是否留存要看影像地址。
+  // 后端在对象存储失败时不写 url（它会吞掉异常继续落库），两者必须分开说。
+  const imageArchived = Boolean(result.url)
 
   return (
     <>
       <div className="dx__outcome" data-outcome={outcome.key} data-risk={outcome.risk}>
         <span className="dx__outcome-label">{outcome.label}</span>
-        {result.requiresReview && !result.aiRejected ? (
-          <span className="dx__outcome-note">结论需医生复核后才可用于临床</span>
+        {/* 拒识与待复核是两个独立维度：算法在拒识时同样会置 requiresReview，
+            拒识记录也在人工复核队列里。不能因为拒识就把复核要求藏起来。 */}
+        {result.requiresReview ? (
+          <span className="dx__outcome-note">已转入人工复核队列，医生签字前不构成诊断</span>
         ) : null}
       </div>
 
@@ -480,12 +492,25 @@ function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) 
       </div>
 
       {recordId ? (
-        <p className="dx__fineprint">报告编号 IRIS-{recordId}</p>
+        <p className="dx__fineprint">
+          报告编号 IRIS-{recordId} · 原始影像{imageArchived ? "已随记录归档" : "未保存"}
+        </p>
       ) : (
         <p className="dx__fineprint">
           这次结果没有返回记录编号，未归档。需要留存请重试，或在记录页确认是否已有这条记录。
         </p>
       )}
+
+      {/* 有记录但没影像：结论可查、原图不可追溯。这与「未归档」是两件事，
+          不能合并成一句，也不能用成功态盖过去。 */}
+      {recordId && !imageArchived ? (
+        <div className="dx__outcome" data-risk="attention">
+          <span className="dx__outcome-label">原始影像未保存</span>
+          <span className="dx__outcome-note">
+            影像存储失败，记录与结论仍可查看，但原图暂不可追溯。需要留存请重新判读或申请人工复核。
+          </span>
+        </div>
+      ) : null}
     </>
   )
 }
