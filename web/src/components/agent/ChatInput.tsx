@@ -79,12 +79,19 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }
 
   // 卸载时把还没落盘的那几个字补上：300ms 内离开页面不该丢草稿。
+  // 卸载只覆盖「组件被拆掉」——刷新页面、关标签页都不卸载组件，
+  // 所以还要挂 pagehide 兜底：那一下不会触发 React 的清理。
   useEffect(() => {
-    return () => {
+    const flush = () => {
       if (draftTimer.current === null) return
       window.clearTimeout(draftTimer.current)
       draftTimer.current = null
       saveDraft(pendingDraft.current)
+    }
+    window.addEventListener("pagehide", flush)
+    return () => {
+      window.removeEventListener("pagehide", flush)
+      flush()
     }
   }, [])
 

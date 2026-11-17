@@ -186,7 +186,9 @@ export function DataTable<T extends RowData>(props: {
           </td>
         ) : null}
         {columns.map((column) => (
-          <td key={column.key} className="admin-dt__cell">
+          // 列身份同样写进 DOM：窄屏卡片化与列隐藏规则按 data-col 定位列。
+          // 骨架行少了它，加载瞬间的列就会排错位，数据到达后再跳回去。
+          <td key={column.key} className="admin-dt__cell" data-col={column.key}>
             <span className="admin-dt__skeleton" />
           </td>
         ))}

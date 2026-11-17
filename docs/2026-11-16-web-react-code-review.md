@@ -15,6 +15,7 @@
 | P0-1 | `applyStreamEvent` 就地改写 state | 已修（`b067efe0`，含 3 条回归测试） |
 | 首屏三项 | 光幕图 preload、字体去重、latin 子集 | 已修（`1a4df433`） |
 | 其余 P1 / P2 | 见下方各节 | 已修于 `fix/frontend-review-20261116`（`eed44852`…`368583c3`） |
+| 独立复审 | 对本分支再跑一轮 `/code-review` 的 6 条发现 | 1 条已修于 `77e43f6c`，其余 5 条见下 |
 
 逐条对账、验证读数与**未做项的理由**见交接文档
 `D:\Work\code\iris-integration-handoff\iris-frontend-fix.md`。
@@ -37,6 +38,26 @@ B-1（`@base-ui/react` 首屏拆包，报告本身就要求单独 PR）、§4.4 
 
 复核后 61 张与基线逐像素一致；唯一残差是远程头像位图的解码噪声（61 px，
 阈值 12/255），非布局差异。
+
+### 独立复审整改（2026-11-17，PR #92 draft）
+
+对 `fix/frontend-review-20261116` 另跑一轮独立 `/code-review`，6 条发现里
+1 条已在 `77e43f6c` 修掉（勾选列宽度），其余 5 条在本批修掉：
+
+| 发现 | 位置 | 处理 |
+|---|---|---|
+| 聚合读不出来时统计显示 0，副标题却写「按当前页」 | `ProfilePage.tsx` | 退回本页汇总（口径标 page），两个来源都没读数才显示「—」；`loadMyStats` 那段死代码换成纯函数 `resolveScopedStats`，`RecordsPage` 一并复用 |
+| 加载骨架没有列身份 | `DataTable.tsx` | 骨架 `<td>` 补 `data-col`，窄屏卡片化不再在加载瞬间错位 |
+| 防抖草稿在刷新/关页时丢 | `ChatInput.tsx` | 补 `pagehide` 兜底（卸载只覆盖「组件被拆掉」） |
+| 离开棱镜后 hover 态卡住 | `Prism.tsx` | `pointerleave` 取消已排队的 rAF |
+| 测试只覆盖死代码 | `records.test.ts` | 载荷校验用例移到 `loadServerStats`，合成用例给 `resolveScopedStats` |
+
+验证：`typecheck` / `lint` / `test`（53 文件 470 例全绿）/ `build` 全过；
+入口 JS 仍是 474.84 kB（gzip 154.60 kB），与上一批一致。
+
+**视觉 delta**：个人中心那条口径提示的文案改了（原来写「服务端聚合上线后会自动
+切到全量」，而聚合接口已经上线），只出现在聚合不可用时；冻结基线的 61 张逐像素
+证据要为这一页重跑一次。
 
 ---
 

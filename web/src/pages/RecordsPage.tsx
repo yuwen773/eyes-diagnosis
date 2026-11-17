@@ -14,8 +14,8 @@ import {
   loadServerStats,
   reexamineLabel,
   reexamineView,
+  resolveScopedStats,
   statsLabels,
-  summarizeRecords,
 } from "@/lib/records"
 import { queryKeys } from "@/lib/queryKeys"
 import { useSession } from "@/lib/session"
@@ -79,8 +79,9 @@ export function RecordsPage() {
   })
   const serverStats = statsQuery.data ?? null
 
-  const stats = serverStats ?? summarizeRecords(records, data?.total ?? 0)
-  const labels = statsLabels(serverStats ? "all" : "page")
+  const scoped = resolveScopedStats(serverStats, records, data?.total ?? 0)
+  const stats = scoped.stats
+  const labels = statsLabels(scoped.scope)
 
   /** 展开的记录详情。同一时刻只开一条。 */
   const [openId, setOpenId] = useState<string | null>(null)

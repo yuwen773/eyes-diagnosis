@@ -542,6 +542,13 @@ export function Prism({
     }
 
     const onPointerLeave = () => {
+      // 离开时把已排队的合帧取消：applyPointer 会拿离开前的最后坐标重算
+      // inside，把刚清掉的「在容器内」又置回 true，棱镜就卡在 hover 态
+      // （要等下一次移动才恢复）。
+      if (moveRaf) {
+        cancelAnimationFrame(moveRaf)
+        moveRaf = 0
+      }
       pointer.inside = false
       wake()
     }

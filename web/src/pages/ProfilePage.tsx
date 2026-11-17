@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { describeError, listMyDiagnoses, updateProfile, uploadAvatar } from "@/lib/api"
-import { loadServerStats, statsLabels } from "@/lib/records"
+import { loadServerStats, resolveScopedStats, statsLabels } from "@/lib/records"
 import {
   confidencePercent,
   formatTimestamp,
@@ -131,13 +131,18 @@ export function ProfilePage() {
     }
   }
 
-  // 统计读不出来不拦着资料编辑：页面降级成「—」并给一条浮条。
-  const statsFault = sampleQuery.error ? describeError(sampleQuery.error) : null
-  const statsLoading =
-    !statsFault && (sampleQuery.isPending || statsQuery.isPending)
+  // 统计读不出来不拦着资料编辑：服务端聚合不可用时退回本页汇总，口径标 page。
+  // 列表读失败才叫 sampleFault——它同时决定「最近判读」那块的错误态。
+  const sampleFault = sampleQuery.error ? describeError(sampleQuery.error) : null
+  const statsLoading = sampleQuery.isPending || statsQuery.isPending
   const serverStats = statsQuery.data ?? null
-  const stats = serverStats ?? { total: 0, highRisk: 0 }
-  const labels = statsLabels(serverStats ? "all" : "page")
+  // 聚合与列表并行发出，合成放在渲染期：聚合拿不到就取本页样本。
+  // 直接把 0 当读数是不行的——「没判读过」和「读不出来」是两回事。
+  const scoped = resolveScopedStats(serverStats, sample?.records ?? [], sample?.total ?? 0)
+  const stats = scoped.stats
+  const labels = statsLabels(scoped.scope)
+  // 两个来源都没有读数时显示「—」，不显示 0。
+  const hasStats = serverStats !== null || sample !== undefined
   // 最近判读：与判读记录页同一份列表数据（第一页），按时间倒序取前三条。
   const recent = useMemo(() => {
     const list = [...(sample?.records ?? [])]
@@ -191,13 +196,13 @@ export function ProfilePage() {
           <div className="profile__stat">
             <span className="readout__label">{labels.total}</span>
             <span className="profile__stat-value num">
-              {statsFault || statsLoading ? "—" : stats.total}
+              {statsLoading || !hasStats ? "—" : stats.total}
             </span>
           </div>
           <div className="profile__stat">
             <span className="readout__label">{highRiskLabel}</span>
             <span className="profile__stat-value num">
-              {statsFault || statsLoading ? "—" : stats.highRisk}
+              {statsLoading || !hasStats ? "—" : stats.highRisk}
             </span>
           </div>
           <div className="profile__stat">
@@ -212,18 +217,10 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {statsFault ? (
-          <div className="records__stats-note">
-            判读统计这会儿没读出来（{statsFault.text}），
-            <button type="button" className="link" onClick={() => void sampleQuery.refetch()}>
-              重试<span className="link__mark">↻</span>
-            </button>
-          </div>
-        ) : null}
-
-        {!statsFault && !statsLoading && !serverStats ? (
+        {/* 聚合不可用时写明口径：这组数字取自最近一页，不是全量。 */}
+        {!statsLoading && serverStats === null && hasStats ? (
           <p className="records__scope">
-            带「近 {PROFILE_SAMPLE} 条」的统计只取自最近一页记录；服务端聚合上线后会自动切到全量。
+            服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录。
           </p>
         ) : null}
 
@@ -277,7 +274,7 @@ export function ProfilePage() {
             {/* 错误 > 空 > 加载（DESIGN.md §3.11）：列表读失败就说读失败，
                 不能在故障之上盖一层「还没有判读记录」——那会把读不到
                 说成名下没有，误导的正是「有没有判过」这种判断。 */}
-            {statsFault && recent.length === 0 ? (
+            {sampleFault && recent.length === 0 ? (
               <p className="profile__recent-empty">
                 判读记录这会儿没读出来，稍后再来，或去
                 <button
