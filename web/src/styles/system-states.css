@@ -1,0 +1,425 @@
+/* ============================================================
+   system-states.css — Iris System States
+   ------------------------------------------------------------
+   Loading / Error / Empty / Recovery 的统一视觉外壳。
+
+   只消费 tokens.css 里既有的语义令牌：品牌身份走 --brand-*，
+   故障严重度走 --risk-*，纸面/文字走 --surface / --fg-*。
+   不新增品牌色，不写死颜色，不引入第二套 UI 基础设施。
+
+   动效预算（DESIGN.md §3.7）：状态反馈 150–300ms，
+   进入动画只走 opacity / transform；prefers-reduced-motion
+   下动画与装饰环都实质停用。
+   ============================================================ */
+
+/* ── 光学环：加载与品牌状态的唯一旋转元素 ───────────────── */
+
+.iris-optic {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.iris-optic::before,
+.iris-optic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-circle);
+}
+
+/* 外环：钴蓝 → 青 → 极光紫的锥形渐变圆盘；内层用页面底色盖出环。 */
+.iris-optic::before {
+  background: conic-gradient(
+    from 0deg,
+    var(--brand-primary),
+    var(--brand-cyan),
+    var(--brand-aurora),
+    var(--brand-primary)
+  );
+  animation: iris-optic-spin 1400ms linear infinite;
+}
+
+/* 页面隐藏（切到别的标签页）即停：与 LatticeLoader 的口径一致。 */
+.iris-optic[data-hidden="true"]::before {
+  animation-play-state: paused;
+}
+
+/* 内盘：跟随表面色，浅/深主题下都留出同一圈细弧。 */
+.iris-optic::after {
+  inset: 5px;
+  background: var(--surface);
+}
+
+@keyframes iris-optic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── 路由 / 页面级加载 ──────────────────────────────────── */
+
+.iris-page-loading {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 20px;
+  min-height: 60svh;
+  padding: clamp(64px, 12vh, 140px) var(--gutter);
+  text-align: center;
+}
+
+.iris-page-loading__eyebrow {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+.iris-page-loading__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.iris-page-loading__hint {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+/* 骨架条：与加载文案同组出现，形状只是占位，不代表真实进度。 */
+.iris-page-loading__skeleton {
+  display: grid;
+  gap: 10px;
+  width: min(420px, 100%);
+  margin-top: 8px;
+}
+
+.iris-page-loading__skeleton span {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--surface-2));
+}
+
+.iris-page-loading__skeleton span:nth-child(2) {
+  width: 84%;
+}
+
+.iris-page-loading__skeleton span:nth-child(3) {
+  width: 62%;
+}
+
+/* 入场：一次性的轻淡入，不循环。 */
+.iris-state-enter {
+  animation: iris-state-in var(--motion-base) var(--ease) both;
+}
+
+@keyframes iris-state-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── 错误 / 恢复面板 ────────────────────────────────────── */
+
+.iris-error {
+  max-width: 640px;
+  margin-inline: auto;
+  padding: clamp(24px, 4vw, 40px);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, var(--hr));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  text-align: left;
+}
+
+.iris-error__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.iris-error__mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--surface));
+  color: var(--brand-primary);
+}
+
+.iris-error__kicker {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+/* 严重度不靠颜色单独表达：标签始终是文字。 */
+.iris-error__severity {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  /* 文字用前景色：严重度语义由前面的色点承担，文字必须始终满足 AA 4.5:1。
+     早期版本把文字也染成 --risk-*，在淡色衬底上实测只有 3.69–4.16:1。 */
+  color: var(--fg);
+}
+
+.iris-error__severity::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--iris-severity);
+}
+
+.iris-error--critical {
+  --iris-severity: var(--risk-critical);
+}
+
+.iris-error--attention {
+  --iris-severity: var(--risk-attention);
+}
+
+.iris-error--info {
+  --iris-severity: var(--brand-cyan);
+}
+
+.iris-error__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.iris-error__body {
+  margin: 12px 0 0;
+  max-width: 56ch;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--fg-2);
+}
+
+.iris-error__readouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hr);
+}
+
+.iris-error__readout {
+  display: grid;
+  gap: 2px;
+}
+
+.iris-error__readout dt {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.iris-error__readout dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.iris-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* 恢复动作：主次分明，触控目标 ≥44px。 */
+.iris-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+.iris-action--primary {
+  border: 1px solid var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.iris-action--primary:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 82%, var(--ink));
+  background: color-mix(in srgb, var(--brand-primary) 88%, var(--ink));
+}
+
+.iris-action--secondary {
+  border: 1px solid var(--hr-strong);
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.iris-action--secondary:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.iris-action:focus-visible {
+  outline: 2px solid var(--brand-cyan);
+  outline-offset: 2px;
+}
+
+/* ── 空状态 ─────────────────────────────────────────────── */
+
+.iris-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: clamp(40px, 8vh, 88px) var(--gutter);
+  text-align: center;
+}
+
+.iris-empty__mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--surface));
+  color: var(--brand-primary);
+}
+
+.iris-empty__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.iris-empty__body {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+/* ── 404 ────────────────────────────────────────────────── */
+
+.iris-notfound {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 62svh;
+  padding: clamp(48px, 10vh, 120px) var(--gutter);
+  text-align: center;
+}
+
+.iris-notfound__code {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(72px, 14vw, 132px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(120deg, var(--brand-primary), var(--brand-cyan), var(--brand-aurora));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.iris-notfound__title {
+  margin: 12px 0 0;
+  font-family: var(--font-brand);
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.iris-notfound__body {
+  margin: 10px 0 24px;
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+/* ── 响应式：长中文与按钮换行不溢出 ─────────────────────── */
+
+@media (max-width: 480px) {
+  .iris-error {
+    padding: 22px 18px;
+  }
+
+  .iris-error__actions {
+    flex-direction: column;
+  }
+
+  .iris-action {
+    width: 100%;
+  }
+}
+
+/* ── 低动态：不是降速，是实质停用 ───────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .iris-optic::before {
+    animation: none;
+  }
+
+  .iris-state-enter {
+    animation: none;
+  }
+
+  .iris-action {
+    transition: none;
+  }
+}

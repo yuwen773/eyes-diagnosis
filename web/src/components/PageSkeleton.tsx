@@ -1,15 +1,14 @@
 import type { ReactElement } from "react"
 
+import { IrisPageLoading } from "@/components/system/IrisStates"
+
 /**
  * 路由分包时的占位。
  *
- * 不做骨架屏动画（无 shimmer、无脉冲）：一块固定高度的空白 + 一行等宽读数，
- * 与「白色仪器」的语气一致，也避免 ASI 式的装饰感。min-height 兜住 CLS。
+ * 保留原导出名与 `role=status` 语义，视觉升级为 Iris 路由加载态：
+ * 品牌光学环 + 温和文案 + 与内容同形的骨架条。不造假进度，不设置
+ * 最短等待时间；`min-height` 继续兜住 CLS。
  */
 export function PageSkeleton(): ReactElement {
-  return (
-    <div className="page-skeleton" role="status" aria-live="polite">
-      <span className="page-skeleton__text num">载入中 · LOADING</span>
-    </div>
-  )
+  return <IrisPageLoading />
 }

@@ -6,6 +6,7 @@ import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { PageSkeleton } from "@/components/PageSkeleton"
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary"
+import { NotFoundPage } from "@/components/system/IrisStates"
 import { LandingPage } from "@/pages/LandingPage"
 
 // 首页保持同步：它是第一屏，分包只会多一次往返。其余路由按需下载——
@@ -185,7 +186,7 @@ export function App() {
             />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </RouteBoundary>
         </Suspense>
