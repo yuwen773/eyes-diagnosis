@@ -9,93 +9,139 @@
 
 .news {
   padding-block: clamp(36px, 5vh, 60px) clamp(56px, 8vh, 96px);
+  /* 换页后回到列表开头时，给吸顶导航留出位置，别把第一行卡在导航底下。 */
+  scroll-margin-top: var(--nav-h);
 }
 
-/* ── 头版 Hero（Visual Completion U5）────────────────────────────
-   品牌画布上的编辑式门面：玻璃面板透出品牌底色，排版仍左对齐。
-   不引第二个 GPU 渲染器——材质只靠 brand 令牌 + 品牌渐变。 */
+/* ── 期刊抬头 ───────────────────────────────────────────────────
+   旧版是一整屏 hero：眉线、巨号刊名、副标题、检索各占一行，真正的资讯
+   要往下滚两屏才看得到。现在压成一条期刊抬头：刊名与检索同行，最新一条的
+   真实标题直接落在抬头里——读者第一眼看到的是内容，不是装饰。
 
-.news-hero {
-  position: relative;
-  padding-block: clamp(48px, 7vh, 88px);
-  background:
-    radial-gradient(
-      58% 68% at 82% 8%,
-      var(--brand-soft),
-      transparent 68%
-    ),
-    linear-gradient(180deg, color-mix(in srgb, var(--brand-primary) 5%, transparent), transparent 74%);
+   横向留白与 .wrap 对齐，抬头与下面那张列表用的是同一条基准线。 */
+
+.journal {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: clamp(24px, 3.6vh, 42px) clamp(16px, 2.4vh, 24px);
   border-bottom: 1px solid var(--brand-line);
-  overflow: hidden;
-}
-
-/* 品牌光带的一笔：静态渐变描出方向感，不抢标题的对比度。 */
-.news-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: -12%;
-  width: 52%;
-  height: 3px;
   background: linear-gradient(
-    90deg,
-    transparent,
-    var(--brand-primary) 40%,
-    var(--brand-cyan) 78%,
-    transparent
+    180deg,
+    color-mix(in srgb, var(--brand-primary) 5%, transparent),
+    transparent 78%
   );
-  opacity: 0.6;
-  pointer-events: none;
 }
 
-.news-hero__inner {
+.journal__top {
   display: grid;
-  gap: 14px;
-  justify-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: clamp(18px, 3.4vw, 48px);
+  align-items: end;
 }
 
-.news-hero__eyebrow {
+.journal__eyebrow {
+  margin: 0;
   font-size: 11px;
   letter-spacing: 0.22em;
   color: var(--brand-primary);
 }
 
-.news-hero__title {
-  margin: 0;
+.journal__title {
+  margin: 8px 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(40px, 5.2vw, 72px);
+  font-size: clamp(26px, 2.6vw, 34px);
   font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  line-height: 1.14;
+  letter-spacing: -0.015em;
   color: var(--brand-text);
 }
 
-.news-hero__sub {
-  margin: 4px 0 0;
-  max-width: 34em;
-  font-size: 15px;
-  line-height: 1.85;
+.journal__sub {
+  margin: 8px 0 0;
+  max-width: 40em;
+  font-size: 13.5px;
+  line-height: 1.8;
   color: var(--brand-muted);
 }
 
-.news-hero__search {
-  margin-top: clamp(16px, 2.6vh, 28px);
-  width: min(460px, 100%);
+.journal__search {
+  width: 100%;
+}
+
+/* 头条：抬头里的真实最新一条。有真实封面就是「图 + 文」双栏，没有封面
+   就是纯文字排版占满整行——两种都是真实数据摆出来的样子，不拿占位图
+   补位。标题即入口，不另设「阅读全文」按钮。 */
+.journal__latest {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  gap: clamp(20px, 3vw, 44px);
+  align-items: center;
+  margin-top: clamp(18px, 2.8vh, 30px);
+  padding-top: clamp(14px, 2.2vh, 22px);
+  border-top: 1px solid var(--brand-line);
+}
+
+.journal__latest.is-text {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.journal__latest-text {
+  min-width: 0;
+}
+
+.journal__latest-plate {
+  border-radius: var(--radius-lg);
+  background: var(--brand-canvas);
+}
+
+.journal__latest-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  /* 窄屏上图位叠到整行宽，不限高的话一张图就吃掉半屏，
+     读者还没看到正文就已经滚过去了。 */
+  max-height: clamp(180px, 42vw, 320px);
+  object-fit: cover;
+}
+
+.journal__latest-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  color: var(--brand-primary);
+}
+
+.journal__latest-meta {
+  color: var(--brand-muted);
+  letter-spacing: 0.06em;
+}
+
+.journal__latest-title {
+  margin: 8px 0 0;
+  max-width: 15em;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(23px, 2.5vw, 33px);
+  line-height: 1.24;
+  letter-spacing: -0.012em;
+  color: var(--brand-text);
+  text-wrap: balance;
+}
+
+.journal__latest-title a {
+  color: inherit;
+  transition: color var(--fast);
+}
+
+.journal__latest-title a:hover {
+  color: var(--brand-primary);
 }
 
 /* ── 报头 ─────────────────────────────────────────────────────── */
-
-.news__masthead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  gap: clamp(28px, 5vw, 72px);
-  align-items: end;
-  padding-block: clamp(22px, 3.4vh, 40px);
-}
-
-.news__title {
-  margin-top: 12px;
-}
 
 .news__search {
   display: grid;
@@ -199,222 +245,185 @@
   color: var(--brand-muted);
 }
 
-/* ── 最新一条：头版 ───────────────────────────────────────────── */
+/* ── 编辑式网格 ─────────────────────────────────────────────────
+   发丝线行换成内容卡：卡里只有接口给的字段——发布时间、标题、摘要、
+   真实封面。没有分类、没有阅读数、没有「编辑精选」，那些后端没有，
+   编出来就是假信息。有封面才带图，没封面就是纯文字排版。 */
 
-.news-lead {
+.journal-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: clamp(28px, 4vw, 56px);
-  align-items: stretch;
-  padding: clamp(26px, 3.4vw, 48px);
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-xl);
-  background: var(--brand-surface);
-  box-shadow: var(--brand-shadow);
-}
-
-/* 无封面时不摆空框：文字自己撑起头版，宽度收在可读区间。 */
-.news-lead--text {
-  grid-template-columns: minmax(0, 1fr);
-  background: linear-gradient(
-    135deg,
-    var(--brand-surface) 0%,
-    color-mix(in srgb, var(--brand-primary) 6%, var(--brand-surface)) 100%
-  );
-}
-
-.news-lead--text .news-lead__body {
-  max-width: 68ch;
-}
-
-.news-lead__body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 12px;
-}
-
-.news-lead__body .overline {
-  color: var(--brand-primary);
-}
-
-.news-lead__meta {
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  align-items: start;
+  gap: clamp(16px, 2vw, 26px);
   margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--brand-muted);
-}
-
-.news-lead__title {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: clamp(28px, 3vw, 42px);
-  line-height: 1.22;
-  letter-spacing: -0.015em;
-  color: var(--brand-text);
-  text-wrap: balance;
-}
-
-.news-lead__title a {
-  color: inherit;
-  transition: color var(--fast);
-}
-
-.news-lead__title a:hover {
-  color: var(--brand-primary);
-}
-
-.news-lead__excerpt {
-  margin: 0;
-  max-width: 52ch;
-  font-size: 14.5px;
-  line-height: 1.8;
-  color: var(--brand-muted);
-}
-
-.news-lead__more {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--brand-primary);
-}
-
-.news-lead__more-mark {
-  font-family: var(--font-mono);
-  transition: transform var(--fast);
-}
-
-.news-lead__more:hover .news-lead__more-mark {
-  transform: translate(2px, -2px);
-}
-
-.news-lead__plate {
-  margin: 0;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--brand-surface);
-}
-
-.news-lead__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 220px;
-  max-height: 360px;
-  object-fit: cover;
-}
-
-/* ── 其余条目：发丝线列表（宽屏两栏）──────────────────────────── */
-
-.news-rows {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 clamp(32px, 4vw, 64px);
-  margin: clamp(20px, 3vh, 32px) 0 0;
   padding: 0;
   list-style: none;
 }
 
-.news-rows__item {
-  border-top: 1px solid var(--brand-line);
+.journal-grid--related {
+  margin-top: clamp(16px, 2vh, 24px);
 }
 
-.news-row {
+.journal-card {
+  min-width: 0;
+}
+
+/* 纯文字卡：没有照片可上，用一层极淡的底色标出它是另一种排版，
+   而不是「图没加载出来」的空卡。 */
+.journal-card--text .journal-card__link {
+  background: color-mix(in srgb, var(--brand-primary) 5%, var(--brand-surface));
+}
+
+.journal-card__link {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: start;
-  padding: 20px 0;
+  grid-template-rows: auto 1fr;
+  gap: 13px;
+  height: 100%;
+  padding: 13px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-lg);
+  background: var(--brand-surface);
   color: var(--brand-text);
   transition:
     border-color var(--fast),
-    color var(--fast);
+    transform var(--fast),
+    box-shadow var(--fast);
 }
 
-.news-row:hover {
-  color: var(--brand-primary);
+.journal-card__link:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 40%, var(--brand-line));
+  transform: translateY(-2px);
+  box-shadow: var(--brand-shadow);
 }
 
-.news-row__date {
-  padding-top: 4px;
+.journal-card__link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+.journal-card__plate {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--brand-canvas);
+}
+
+.journal-card__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.journal-card__body {
+  display: grid;
+  gap: 7px;
+  align-content: start;
+  padding: 0 3px 4px;
+}
+
+.journal-card__date {
+  margin: 0;
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--brand-muted);
 }
 
-.news-row__main {
-  display: grid;
-  gap: 5px;
-}
-
-.news-row__title {
+.journal-card__title {
+  margin: 0;
   font-family: var(--font-serif);
-  font-size: 17px;
+  font-weight: 400;
+  font-size: 17.5px;
   line-height: 1.45;
   color: inherit;
   text-wrap: pretty;
 }
 
-.news-row__excerpt {
+.journal-card__excerpt {
+  display: -webkit-box;
+  margin: 0;
   font-size: 12.5px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--brand-muted);
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
-.news-row__thumb {
-  width: 68px;
-  height: 68px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
+/* ── 聚光（Glare Hover）─────────────────────────────────────────
+   只挂在真实封面上。光斑在图片内部，不压标题、不盖正文；触屏没有
+   hover 就没有指针位置，弱动效偏好下整层不渲染。 */
+
+.glare {
+  position: relative;
+  display: block;
+  overflow: hidden;
 }
 
-.news-row__mark {
-  padding-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--brand-muted);
-  transition: color var(--fast);
+.glare__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--fast);
+  background: radial-gradient(
+    38% 38% at var(--gx, 50%) var(--gy, 35%),
+    color-mix(in srgb, var(--brand-spark) 22%, transparent),
+    transparent 72%
+  );
+  mix-blend-mode: screen;
 }
 
-.news-row:hover .news-row__mark {
-  color: var(--brand-primary);
+.glare[data-glare="on"] .glare__sheen {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glare__sheen {
+    display: none;
+  }
 }
 
 /* ── 载入骨架 ─────────────────────────────────────────────────── */
 
+/* 骨架与真卡同形：有封面位的卡先占一块图位，其余是两行文字条。
+   加载完切换过去时版式不跳。 */
 .news-skeleton {
   display: grid;
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: clamp(16px, 2vw, 26px);
 }
 
-.news-skeleton__lead,
-.news-skeleton__row {
-  display: block;
+.news-skeleton__card {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
   border: 1px solid var(--brand-line);
+  border-radius: var(--radius-lg);
+  background: var(--brand-surface);
+}
+
+.news-skeleton__plate,
+.news-skeleton__line {
+  display: block;
   background: color-mix(in srgb, var(--brand-primary) 8%, var(--brand-surface));
   animation: news-pulse 1.6s var(--ease) infinite;
 }
 
-.news-skeleton__lead {
-  height: clamp(220px, 26vw, 340px);
-  border-radius: var(--radius-xl);
+.news-skeleton__plate {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
 }
 
-.news-skeleton__rows {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 clamp(32px, 4vw, 64px);
+.news-skeleton__line {
+  height: 14px;
+  border-radius: var(--radius-sm);
 }
 
-.news-skeleton__row {
-  height: 72px;
-  border-width: 1px 0 0;
-  border-radius: 0;
+.news-skeleton__line.is-short {
+  width: 62%;
+  height: 11px;
 }
 
 @keyframes news-pulse {
@@ -428,8 +437,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .news-skeleton__lead,
-  .news-skeleton__row {
+  .news-skeleton__plate,
+  .news-skeleton__line {
     animation: none;
   }
 }
@@ -512,7 +521,11 @@
    与声明的模拟视口高度。于是「设备框 390px」与「公开页 390px 视口」
    得到同一套比例——同一份 CSS，两种上下文各自成立，不必复制第二套样式。 */
 :root {
-  --news-scale-title: clamp(32px, 4.2vw, 56px);
+  /* 正文阅读宽度：中文长文一行 40–46 字最舒服，折合 700–760px。
+     用固定 px 而不是 ch——ch 跟着字体走，同一段文字在不同字体下
+     行长会飘。 */
+  --news-reading: 728px;
+  --news-scale-title: clamp(30px, 3.4vw, 46px);
   --news-scale-paper-pad: clamp(26px, 3.4vw, 52px);
   --news-scale-paper-max: clamp(52px, 6.8vw, 104px);
   --news-scale-body-gap: clamp(24px, 3.6vw, 56px);
@@ -564,14 +577,15 @@
 
 .news-article__title {
   margin-top: 14px;
-  max-width: 22ch;
+  /* 中文按 em 量，不按 ch：ch 是「0」的宽度，对汉字没有参考意义。 */
+  max-width: 15em;
   font-size: var(--news-scale-title);
   line-height: 1.16;
 }
 
 .news-article__lead {
   margin-top: 18px;
-  max-width: 62ch;
+  max-width: var(--news-reading);
 }
 
 .news-article__meta {
@@ -582,7 +596,7 @@
   margin: 22px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--brand-line);
-  max-width: 62ch;
+  max-width: var(--news-reading);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--brand-muted);
@@ -619,6 +633,12 @@
 }
 
 .news-article__body:not(:has(.news-toc)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* 窄档由 JS 量版心宽度后加这个类：公开页与管理端预览按同一把尺子判断，
+   不会出现「视口宽但版心窄」的错位。 */
+.news-article__body.is-narrow {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -668,11 +688,57 @@
   color: var(--brand-muted);
 }
 
-/* 正文：实体面 + 68ch 阅读宽度。卡片宽度跟着量宽走，
+/* 窄屏目录：收成可折叠的一份，默认合上——长文里一串章节名会把正文
+   推到屏外。展开控件是原生 <summary>，键盘与读屏都可用。 */
+.news-toc--compact {
+  position: static;
+  display: block;
+  padding: 0;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+}
+
+.news-toc__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  list-style: none;
+  cursor: pointer;
+  color: var(--brand-muted);
+}
+
+.news-toc__summary::-webkit-details-marker {
+  display: none;
+}
+
+.news-toc__summary::after {
+  content: "▾";
+  margin-left: auto;
+  font-family: var(--font-mono);
+  transition: transform var(--fast);
+}
+
+.news-toc--compact[open] .news-toc__summary::after {
+  transform: rotate(180deg);
+}
+
+.news-toc__summary-count {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.news-toc--compact .news-toc__list {
+  padding: 0 14px 10px;
+}
+
+/* 正文：实体面 + 728px 阅读宽度。卡片宽度跟着量宽走，
    短文不会在一张空荡的大卡里居中。 */
 .news-paper {
   width: 100%;
-  max-width: calc(68ch + var(--news-scale-paper-max));
+  max-width: calc(var(--news-reading) + var(--news-scale-paper-max));
   padding: var(--news-scale-paper-pad);
   border: 1px solid var(--brand-line);
   border-radius: var(--radius-xl);
@@ -680,8 +746,8 @@
 }
 
 .news-paper__body {
-  max-width: 68ch;
-  font-size: 15.5px;
+  max-width: var(--news-reading);
+  font-size: 16px;
   line-height: 1.95;
   color: var(--brand-text);
 }
@@ -702,9 +768,10 @@
 
 .news-paper__body h3 {
   margin: 1.6em 0 0.5em;
-  font-size: 15.5px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--brand-text);
+  scroll-margin-top: calc(var(--nav-h) + 24px);
 }
 
 .news-paper__body ul,
@@ -737,7 +804,7 @@
 }
 
 .news-paper .disclaimer {
-  max-width: 68ch;
+  max-width: var(--news-reading);
   margin: 2em 0 0;
 }
 
@@ -795,23 +862,23 @@
 /* ── 断点：只用 900 / 768 两档 ───────────────────────────────── */
 
 @media (max-width: 900px) {
-  .news__masthead,
-  .news-lead,
   .news-article__body {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .news-hero {
-    padding-block: clamp(36px, 5vh, 60px);
-  }
-
-  .news-rows,
-  .news-skeleton__rows {
+  .journal__top {
     grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
   }
 
-  .news-lead__img {
-    max-height: 300px;
+  /* 头条的图文两栏在窄屏叠起来：留着两栏的话，标题栏会被挤成一字一行。 */
+  .journal__latest {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .journal__search {
+    width: min(420px, 100%);
   }
 
   .news-toc {
@@ -825,20 +892,6 @@
 }
 
 @media (max-width: 768px) {
-  .news__masthead {
-    gap: 24px;
-  }
-
-  .news-row {
-    grid-template-columns: 76px minmax(0, 1fr) auto;
-    gap: 12px;
-  }
-
-  .news-row__thumb {
-    width: 56px;
-    height: 56px;
-  }
-
   .news-paper {
     padding-inline: 18px;
   }
@@ -853,8 +906,7 @@
     align-content: center;
   }
 
-  .news-detail__back,
-  .news-lead__more {
+  .news-detail__back {
     min-height: 44px;
     align-items: center;
   }

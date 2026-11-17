@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { newsWordCount } from "@/lib/news"
 
@@ -12,6 +12,32 @@ afterEach(cleanup)
 
 /** 期望值直接复用管线里的 newsWordCount，算法不会自己跟自己不一致。 */
 const wordCount = newsWordCount
+
+const ORIGINAL_OFFSET_WIDTH = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "offsetWidth",
+)
+
+/**
+ * 假装版心有多宽。
+ *
+ * <p>版式窄档是按**版心宽度**判的（管理端预览把整页缩放显示，视口宽度
+ * 说了不算），jsdom 不排版，量不到宽度——这里把 offsetWidth 顶成
+ * 想要的版心宽，其余断言照常。
+ */
+function withLayoutWidth(width: number, run: () => void) {
+  Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get: () => width,
+  })
+  try {
+    run()
+  } finally {
+    if (ORIGINAL_OFFSET_WIDTH) {
+      Object.defineProperty(HTMLElement.prototype, "offsetWidth", ORIGINAL_OFFSET_WIDTH)
+    }
+  }
+}
 
 describe("NewsArticleView", () => {
   it("库里的 HTML 先净化：脚本与事件属性到不了 DOM", () => {
@@ -106,5 +132,58 @@ describe("NewsArticleView", () => {
     const body = container.querySelector(".news-paper__body")?.textContent ?? ""
     const lead = container.querySelector(".news-article__lead")?.textContent ?? ""
     expect(meta).toContain(`${wordCount(body) + wordCount(`<p>${lead}</p>`)} 字`)
+  })
+
+  it("版心够宽时目录钉在左侧常驻，不折叠", () => {
+    withLayoutWidth(900, () => {
+      const { container } = render(
+        <NewsArticleView
+          article={{ title: "标题", content: "## 第一节\n\n内容一\n\n## 第二节\n\n内容二" }}
+          contentFormat="markdown"
+        />,
+      )
+      expect(container.querySelector(".news-toc--compact")).toBeNull()
+      expect(container.querySelector("aside.news-toc")).toBeTruthy()
+      expect(container.querySelector(".news-article__body")?.className).not.toContain("is-narrow")
+    })
+  })
+
+  it("版心窄了目录收成可折叠的一份，正文不再分栏", () => {
+    withLayoutWidth(600, () => {
+      const { container } = render(
+        <NewsArticleView
+          article={{ title: "标题", content: "## 第一节\n\n内容一\n\n## 第二节\n\n内容二" }}
+          contentFormat="markdown"
+        />,
+      )
+      const compact = container.querySelector(".news-toc--compact")
+      expect(compact).toBeTruthy()
+      // 折叠控件是原生 <summary>：键盘可达、读屏能念。
+      expect(compact?.querySelector("summary")?.textContent).toContain("目录")
+      expect(container.querySelector(".news-article__body")?.className).toContain("is-narrow")
+    })
+  })
+
+  it("点目录是平滑滚到章节，不是瞬时跳过去", () => {
+    withLayoutWidth(900, () => {
+      const scrolled: string[] = []
+      const original = Element.prototype.scrollIntoView
+      Element.prototype.scrollIntoView = function scrollIntoView(this: Element) {
+        scrolled.push(this.id)
+      }
+      try {
+        render(
+          <NewsArticleView
+            article={{ title: "标题", content: "## 第一节\n\n内容一\n\n## 第二节\n\n内容二" }}
+            contentFormat="markdown"
+          />,
+        )
+        fireEvent.click(screen.getByRole("link", { name: /第二节/ }))
+        expect(scrolled).toEqual(["news-sec-2"])
+        expect(window.location.hash).toBe("#news-sec-2")
+      } finally {
+        Element.prototype.scrollIntoView = original
+      }
+    })
   })
 })

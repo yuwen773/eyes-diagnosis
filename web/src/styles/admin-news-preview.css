@@ -164,7 +164,7 @@
      高度项按声明的模拟视口高度算——vh 那一族在设备框里没有对应的量，
      与其让它们继续按管理员的浏览器高度算，不如把模拟值写明。
      --news-sim-vh 由脚本注入（PREVIEW_DEVICE_HEIGHT），这里只消费。 */
-  --news-scale-title: clamp(32px, 4.2cqi, 56px);
+  --news-scale-title: clamp(30px, 3.4cqi, 46px);
   --news-scale-paper-pad: clamp(26px, 3.4cqi, 52px);
   --news-scale-paper-max: clamp(52px, 6.8cqi, 104px);
   --news-scale-body-gap: clamp(24px, 3.6cqi, 56px);

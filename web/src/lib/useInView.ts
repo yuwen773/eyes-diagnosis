@@ -32,8 +32,11 @@ export function useInView<T extends Element>(
 /**
  * 扫描页面上的 `.reveal`，进入视口后加上 `is-in`。
  * 每个页面挂一次即可；错峰由元素自己的 `--d` 控制。
+ *
+ * @param deps 依赖变化时重新扫描。列表类页面的卡片是数据到位后才挂上的，
+ *   只在挂载时扫一遍会漏掉它们——依赖传数据本身（条数/首条 id 就够）。
  */
-export function useRevealScan() {
+export function useRevealScan(deps: readonly unknown[] = []) {
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>(".reveal"))
     if (!nodes.length) return
@@ -62,5 +65,6 @@ export function useRevealScan() {
     })
 
     return () => observer.disconnect()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
 }
