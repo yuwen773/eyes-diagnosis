@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { ShieldCheck } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSession } from "@/lib/session"
 import { NAV_LINKS } from "./shell/navLinks"
@@ -56,6 +57,9 @@ export function MobileNav() {
   }
 
   const authed = status === "authed" && user
+  // 与 AccountMenu 同一条角色判断：窄屏把顶栏账号区收进抽屉后，/admin
+  // 不能跟着消失。这里只补管理员入口，不改任何服务端的业务权限。
+  const isAdmin = authed && user.userRole === "admin"
 
   return (
     <>
@@ -130,6 +134,16 @@ export function MobileNav() {
               <Link to="/records" className="drawer__link" onClick={() => setOpen(false)}>
                 判读记录
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="drawer__link"
+                  onClick={() => setOpen(false)}
+                >
+                  <ShieldCheck size={15} strokeWidth={1.75} aria-hidden="true" />
+                  系统管理
+                </Link>
+              )}
               <button
                 type="button"
                 className="drawer__link"
