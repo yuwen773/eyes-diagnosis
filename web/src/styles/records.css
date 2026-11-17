@@ -711,3 +711,160 @@
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
   }
 }
+
+/* ── R3 Phase 3：记录行变成链接、报告独立成页 ───────── */
+
+/* 行本身是 <Link>：去掉下划线与链接色，保留整行可点。 */
+a.records__row {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.records__row:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* 复诊申请从「展开区」移到行下方：与整行链接并列，避免可交互元素嵌套。 */
+.records__actions--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 16px 140px;
+}
+
+@media (max-width: 900px) {
+  .records__actions--row {
+    padding-left: 0;
+  }
+}
+
+/* ── 独立报告页 ───────────────────────────────────── */
+
+.report {
+  padding-bottom: 72px;
+}
+
+.report__crumb {
+  margin: 24px 0 18px;
+}
+
+.report__head {
+  margin-bottom: 18px;
+}
+
+.report__title {
+  margin: 6px 0 8px;
+  font-family: var(--font-serif, serif);
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.18;
+  color: var(--fg);
+}
+
+.report__meta {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.report__note {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+/* ── R3 Phase 3：个人中心先看人，再看数 ─────────────── */
+
+.profile__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
+}
+
+.profile__identity-main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile__name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+.profile__identity-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+/* 统计降级成一行摘要：仍在，但不抢身份的视线。 */
+.profile__identity-stats {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.profile__identity-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.profile__avatar--lg {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 auto;
+}
+
+.profile__avatar--lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.profile__avatar--lg .profile__avatar-fallback {
+  font-size: 32px;
+}
+
+.profile__identity .profile__avatar-actions {
+  margin-top: 6px;
+}
+
+.profile__recent-link {
+  display: grid;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-sm);
+}
+
+.profile__recent-link:hover .profile__recent-name,
+.profile__recent-link:focus-visible .profile__recent-name {
+  color: var(--brand-primary);
+}
+
+.profile__recent-link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .profile__identity {
+    flex-direction: column;
+    gap: 14px;
+  }
+}

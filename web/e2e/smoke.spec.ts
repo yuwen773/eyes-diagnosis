@@ -34,7 +34,7 @@ test.describe("验收冒烟", () => {
     await expect(page.getByText("点击或拖入影像")).toBeVisible()
   })
 
-  test("记录页空态与合成记录展开均可见", async ({ page }) => {
+  test("记录页空态与合成记录：点行进入独立报告页", async ({ page }) => {
     const record = {
       id: "81001",
       result: "青光眼",
@@ -82,6 +82,8 @@ test.describe("验收冒烟", () => {
     const firstRow = page.locator(".records__row").first()
     await expect(firstRow).toBeVisible({ timeout: 15_000 })
     await firstRow.click()
+    // R3 Phase 3：报告不再在列表里展开，而是独立路由，刷新后仍可取。
+    await expect(page).toHaveURL(/\/records\/81001$/)
     await expect(page.locator(".sheet")).toBeVisible()
     await expect(page.locator(".sheet")).toContainText("synthetic-smoke")
     await expect(page.locator(".sheet__verdict")).toContainText("青光眼")

@@ -6,7 +6,6 @@ import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   describeError,
-  getMyDiagnosis,
   listMyDiagnoses,
   requestReexamine,
 } from "@/lib/api"
@@ -29,7 +28,6 @@ import {
 } from "@/lib/domain"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
-import { RecordSheet } from "@/components/RecordSheet"
 import { RiskTag } from "@/components/RiskTag"
 import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
@@ -84,25 +82,9 @@ export function RecordsPage() {
   const stats = scoped.stats
   const labels = statsLabels(scoped.scope)
 
-  /** 展开的记录详情。同一时刻只开一条。 */
-  const [openId, setOpenId] = useState<string | null>(null)
   /** 本次会话里刚提交过复诊的记录 id：列表重取落地前先把行内状态翻成「复审中」。 */
   const [reexaminedId, setReexaminedId] = useState<string | null>(null)
   const [submittingId, setSubmittingId] = useState<string | null>(null)
-
-  const detailQuery = useQuery({
-    queryKey: queryKeys.records.detail(scope, openId ?? ""),
-    queryFn: ({ signal }) => getMyDiagnosis(openId as string, signal),
-    enabled: authed && openId !== null,
-  })
-  const detailLoading =
-    openId !== null &&
-    (detailQuery.isPending || (detailQuery.isFetching && detailQuery.data === undefined))
-  // 同理：后台重取失败时保留已读出的记录纸。
-  const detailFault =
-    !detailLoading && detailQuery.data === undefined && detailQuery.error
-      ? describeError(detailQuery.error)
-      : null
 
   async function submitReexamine(id: string) {
     setSubmittingId(id)
@@ -118,26 +100,11 @@ export function RecordsPage() {
     }
   }
 
-  function closeDetail() {
-    setOpenId(null)
-  }
-
-  function openDetail(id: string) {
-    setOpenId(id)
-  }
-
-  function toggle(id: string) {
-    if (openId === id) closeDetail()
-    else openDetail(id)
-  }
-
   function retry() {
-    closeDetail()
     void listQuery.refetch()
   }
 
   function goPage(next: number) {
-    closeDetail()
     setPage(next)
   }
 
@@ -251,13 +218,7 @@ export function RecordsPage() {
             <ul className="records__list">
               {records.map((item, index) => (
                 <li key={item.id} className="records__item">
-                  <button
-                    type="button"
-                    className="records__row"
-                    data-cursor
-                    aria-expanded={openId === item.id}
-                    onClick={() => toggle(item.id)}
-                  >
+                  <Link className="records__row" to={`/records/${item.id}`} data-cursor>
                     <span className="records__index num">
                       {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
                     </span>
@@ -301,71 +262,44 @@ export function RecordsPage() {
                     </span>
 
                     <span className="records__caret" aria-hidden="true">
-                      {openId === item.id ? "−" : "+"}
+                      →
                     </span>
-                  </button>
+                  </Link>
 
-                  {openId === item.id ? (
-                    <div className="records__detail">
-                      {detailLoading ? (
-                        <div className="records__detail-loading num">读取中…</div>
-                      ) : detailFault ? (
-                        <FaultPanel
-                          code={detailFault.code}
-                          title="这条记录没有读出来"
-                          body={detailFault.text}
-                          endpoint={`GET /diagnosis/get/${item.id}`}
-                          onRetry={() => void detailQuery.refetch()}
-                        />
-                      ) : detailQuery.data ? (
-                        <>
-                          <RecordSheet
-                            result={detailQuery.data}
-                            recordId={`IRIS-${item.id}`}
-                            imageSrc={item.url ?? detailQuery.data.url}
-                            tone="paper"
-                          />
-                          {(() => {
-                            const view = reexamineView(item, reexaminedId === item.id)
-                            if (!view) return null
-                            if (view === "receipt") {
-                              return (
-                                <div className="records__actions">
-                                  <span className="records__actions-done">
-                                    <RiskTag risk="attention">复审中</RiskTag>
-                                    申请已提交，等待医生安排复诊。
-                                  </span>
-                                </div>
-                              )
-                            }
-                            return (
-                              <div className="records__actions">
-                                {view === "reviewed" ? (
-                                  <RiskTag risk="normal">已复审</RiskTag>
-                                ) : null}
-                                <button
-                                  type="button"
-                                  className="btn"
-                                  disabled={submittingId === item.id}
-                                  onClick={() => void submitReexamine(item.id)}
-                                >
-                                  {submittingId === item.id
-                                    ? "提交中…"
-                                    : view === "reviewed"
-                                      ? "再次申请复诊"
-                                      : "申请复诊"}
-                                  <span className="btn__key">↻</span>
-                                </button>
-                                <span className="records__actions-note">
-                                  提交后这条记录进入复诊队列，状态变为「复审中」。
-                                </span>
-                              </div>
-                            )
-                          })()}
-                        </>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const view = reexamineView(item, reexaminedId === item.id)
+                    if (!view) return null
+                    if (view === "receipt") {
+                      return (
+                        <div className="records__actions records__actions--row">
+                          <span className="records__actions-done">
+                            <RiskTag risk="attention">复审中</RiskTag>
+                            申请已提交，等待医生安排复诊。
+                          </span>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className="records__actions records__actions--row">
+                        {view === "reviewed" ? <RiskTag risk="normal">已复审</RiskTag> : null}
+                        <button
+                          type="button"
+                          className="btn btn--sm"
+                          disabled={submittingId === item.id}
+                          onClick={() => void submitReexamine(item.id)}
+                        >
+                          {submittingId === item.id
+                            ? "提交中…"
+                            : view === "reviewed"
+                              ? "再次申请复诊"
+                              : "申请复诊"}
+                        </button>
+                        <span className="records__actions-note">
+                          提交后这条记录进入复诊队列，状态变为「复审中」。
+                        </span>
+                      </div>
+                    )
+                  })()}
                 </li>
               ))}
             </ul>

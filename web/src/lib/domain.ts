@@ -194,15 +194,28 @@ export function severityRisk(severity?: string): Risk {
   }
 }
 
-/** 复核状态 → 展示文案与风险色。 */
+/**
+ * 复核状态 → 展示文案与风险色。
+ *
+ * 后端写的是 `HumanReviewStatus` 的五个值（`PENDING_AI / AI_ONLY /
+ * AWAITING_REVIEW / REVIEWED / OVERRIDDEN`）；早期前端只认
+ * `APPROVED / REJECTED / PENDING` 那一组，结果**已复核的记录也被写成“待复核”**。
+ * 两套都认，未知值才落到保守的“待复核”。
+ */
 export function reviewState(status?: string): { label: string; risk: Risk } {
   switch (status) {
     case "APPROVED":
-      return { label: "已签字", risk: "normal" }
+    case "REVIEWED":
+      return { label: "已复核", risk: "normal" }
     case "REJECTED":
       return { label: "已退回", risk: "critical" }
+    case "OVERRIDDEN":
+      // 医生推翻 AI 结论：这是人工结论，不是 AI 结论，风险色跟着人工判断走。
+      return { label: "已人工改判", risk: "normal" }
     case "PENDING":
+    case "AWAITING_REVIEW":
       return { label: "待复核", risk: "attention" }
+    case "AI_ONLY":
     case "PENDING_AI":
     default:
       return { label: "待复核", risk: "attention" }

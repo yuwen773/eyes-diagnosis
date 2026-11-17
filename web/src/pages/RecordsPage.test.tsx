@@ -119,3 +119,28 @@ describe("RecordsPage 身份闸门", () => {
     expect(listMyDiagnoses).not.toHaveBeenCalled()
   })
 })
+
+describe("RecordsPage 记录行", () => {
+  it("整行是指向独立报告页的链接，报告不在列表里展开", async () => {
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        {
+          id: "9001",
+          result: "青光眼",
+          confidence: 0.7,
+          createTime: "2026-11-15T10:00:00",
+          reexamineStatus: 0,
+        } as never,
+      ],
+      total: 1,
+    })
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
+
+    renderPage()
+
+    const link = await screen.findByRole("link", { name: /青光眼/ })
+    expect(link.getAttribute("href")).toBe("/records/9001")
+    // 列表不再展开整份报告：没有打印按钮，也没有记录纸。
+    expect(screen.queryByRole("button", { name: /打印/ })).toBeNull()
+  })
+})
