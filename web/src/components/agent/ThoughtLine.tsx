@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Check, ChevronDown, CircleDashed, Pause, Sparkles } from "lucide-react"
+import { Check, ChevronDown, CircleDashed, CircleHelp, Pause, Sparkles } from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
 import { stepStateLabel } from "@/lib/agentSteps"
@@ -8,7 +8,7 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
 const PREVIEW_LIMIT = 180
 
-/** 单步的状态图标：完成 / 执行中 / 待返回 / 已暂停。 */
+/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停。 */
 function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "done") {
     return <Check size={13} strokeWidth={2.6} aria-hidden="true" />
@@ -19,7 +19,8 @@ function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "paused") {
     return <Pause size={13} strokeWidth={2.4} aria-hidden="true" />
   }
-  return <CircleDashed size={13} strokeWidth={1.8} aria-hidden="true" />
+  // 未确认：不是「还在转」，是一个问号——结果不知道。
+  return <CircleHelp size={13} strokeWidth={2} aria-hidden="true" />
 }
 
 function StepDetail({ step }: { step: AgentStep }) {
@@ -43,8 +44,14 @@ function StepDetail({ step }: { step: AgentStep }) {
   }
 
   // 工具步：参数与返回各自成段，原始内容默认折叠在展开区里。
+  const unresolved = step.state === "pending"
   return (
     <div className="thought__detail">
+      {unresolved ? (
+        <p className="thought__empty">
+          本次回合已结束，没有收到这个工具的返回，无法确认它是否执行完成。
+        </p>
+      ) : null}
       {step.args && step.args.length > 0 ? (
         <dl className="thought__args">
           {step.args.map((arg) => (
@@ -62,7 +69,7 @@ function StepDetail({ step }: { step: AgentStep }) {
             : step.output}
         </pre>
       ) : null}
-      {!step.output && step.args && step.args.length === 0 ? (
+      {!step.output && !unresolved && step.args && step.args.length === 0 ? (
         <p className="thought__empty">该工具没有可展示的返回内容。</p>
       ) : null}
     </div>
@@ -104,7 +111,10 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
               ? Boolean(step.text)
               : step.kind === "confirm"
                 ? true
-                : Boolean(step.output) || Boolean(step.args && step.args.length > 0)
+                : Boolean(step.output) ||
+                  Boolean(step.args && step.args.length > 0) ||
+                  // 未确认的步骤即使没有参数也要能展开：那里写着为什么没有结果。
+                  step.state === "pending"
 
           return (
             <li

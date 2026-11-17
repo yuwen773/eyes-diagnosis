@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { act, createRef } from "react"
+import { act, createRef, StrictMode } from "react"
 import { ChatInput, type ChatInputHandle } from "./ChatInput"
 import { loadDraft, saveDraft } from "@/lib/agentDraft"
 
@@ -176,5 +176,123 @@ describe("ChatInput 发送与停止（既有行为）", () => {
     const { onStop } = setup(true)
     fireEvent.click(screen.getByRole("button", { name: "停止生成" }))
     expect(onStop).toHaveBeenCalled()
+  })
+})
+
+describe("ChatInput 发送互斥", () => {
+  it("上传/发送进行中再按 Enter 不重复提交，新输入留在框里", async () => {
+    let resolveSend!: (value: boolean) => void
+    const onSend = vi.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveSend = resolve
+        }),
+    )
+    render(
+      <ChatInput disabled={false} streaming={false} onSend={onSend} onStop={vi.fn()} />,
+    )
+    const textarea = screen.getByPlaceholderText(/Enter 发送/) as HTMLTextAreaElement
+
+    fireEvent.change(textarea, { target: { value: "第一句" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+    expect(onSend).toHaveBeenCalledTimes(1)
+
+    // 上传还没结束、流还没开始（此时 streaming 仍是 false）：再按一次回车
+    // 不能并发发出第二条消息。
+    fireEvent.change(textarea, { target: { value: "第二句" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    expect(onSend).toHaveBeenCalledTimes(1)
+    // 被拦下的输入留在框里，不吞。
+    expect(textarea.value).toBe("第二句")
+    expect(screen.getByText("正在发送，请稍候")).toBeTruthy()
+
+    await act(async () => {
+      resolveSend(true)
+    })
+    // 发送落定后互斥解除：这句还能再发。
+    expect(onSend).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ChatInput 附件 Blob URL 生命周期", () => {
+  function stubBlobUrls() {
+    const created = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview-1")
+    const revoked = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {})
+    return { created, revoked }
+  }
+
+  async function attachOne() {
+    const file = new File(["x"], "fundus.jpg", { type: "image/jpeg" })
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [file] } })
+    })
+    return file
+  }
+
+  it("StrictMode 下卸载仍然回收未发送的预览 URL（且只回收一次）", async () => {
+    const { revoked } = stubBlobUrls()
+    try {
+      const { unmount } = render(
+        <StrictMode>
+          <ChatInput disabled={false} streaming={false} onSend={vi.fn()} onStop={vi.fn()} />
+        </StrictMode>,
+      )
+      await attachOne()
+
+      unmount()
+      expect(revoked).toHaveBeenCalledWith("blob:preview-1")
+      expect(revoked).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.restoreAllMocks()
+    }
+  })
+
+  it("发送失败回退的附件不会被提前回收（预览仍可用），卸载时才回收", async () => {
+    const { revoked } = stubBlobUrls()
+    try {
+      const onSend = vi.fn().mockResolvedValue(false)
+      const { unmount } = render(
+        <ChatInput disabled={false} streaming={false} onSend={onSend} onStop={vi.fn()} />,
+      )
+      await attachOne()
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "发送" }))
+      })
+
+      expect(onSend).toHaveBeenCalledTimes(1)
+      // 失败回退：附件还在输入区，预览 URL 不能在这时被吊销。
+      expect(screen.getByRole("button", { name: /移除 fundus\.jpg/ })).toBeTruthy()
+      expect(revoked).not.toHaveBeenCalled()
+
+      unmount()
+      expect(revoked).toHaveBeenCalledWith("blob:preview-1")
+    } finally {
+      vi.restoreAllMocks()
+    }
+  })
+
+  it("发送成功的附件当场回收，卸载时不会再重复回收", async () => {
+    const { revoked } = stubBlobUrls()
+    try {
+      const onSend = vi.fn().mockResolvedValue(true)
+      const { unmount } = render(
+        <ChatInput disabled={false} streaming={false} onSend={onSend} onStop={vi.fn()} />,
+      )
+      await attachOne()
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "发送" }))
+      })
+
+      expect(revoked).toHaveBeenCalledTimes(1)
+      unmount()
+      // 已经发出去的附件不再挂在 state 上，卸载清理不会重复吊销。
+      expect(revoked).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.restoreAllMocks()
+    }
   })
 })

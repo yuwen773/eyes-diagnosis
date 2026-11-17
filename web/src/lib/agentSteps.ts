@@ -12,6 +12,12 @@
 
 import type { StreamMessage } from "./agentStream"
 
+/**
+ * 步骤状态。
+ *
+ * <p>`pending` 是「流已结束、没有收到工具返回」，展示成「未确认」：
+ * 既不是完成，也不是还在等——后端不会给已结束的回合补发回执。
+ */
 export type AgentStepState = "done" | "running" | "pending" | "paused"
 
 export type AgentStepKind = "reasoning" | "tool" | "confirm"
@@ -70,13 +76,79 @@ function isProcessMessage(msg: StreamMessage): boolean {
 /**
  * 参数里可能出现的敏感键名。工具参数是模型生成的，不是用户写的，
  * 但仍可能带上凭据——展示前统一打码。
+ *
+ * <p>只认**键名**、不看值的长相：值像不像密码没有可靠判据，硬猜会把
+ * 正常参数打掉。键名在任意深度都算——嵌套的 `config.apiKey` 与顶层的
+ * `apiKey` 一样危险。
  */
-const SENSITIVE_KEY = /(pass|pwd|secret|token|api[-_]?key|authorization|cookie|credential)/i
+const SENSITIVE_KEY =
+  /(pass|pwd|secret|token|api[-_]?key|apikey|authorization|cookie|credential|private[-_]?key|access[-_]?key|client[-_]?secret|session[-_]?id)/i
+
+/**
+ * 带敏感词、但其实只是计数/上限的键名：`max_tokens: 4096` 打码之后
+ * 反而让人以为参数丢了。这类键保持原值。
+ */
+const SAFE_KEY = /^(max[-_]?tokens?|token[-_]?(count|limit|budget)|maxTokens)$/i
+
+function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEY.test(key) && !SAFE_KEY.test(key)
+}
 
 /** 敏感值一律换成固定占位串，不保留长度信息。 */
 export const REDACTED = "••••••"
 
-/** 参数值转成可展示的短文本：对象/数组用 JSON，长文本截断。 */
+/** 递归深度上限：参数是模型生成的，防一手自引用结构。 */
+const MAX_DEPTH = 8
+
+/**
+ * 键值递归打码：嵌套对象、数组里的敏感键都换掉。
+ *
+ * <p>只打码键名命中的值，不改结构——读者仍看得出参数长什么样，
+ * 但看不到凭据。
+ */
+function redactValue(value: unknown, depth = 0): unknown {
+  if (depth > MAX_DEPTH) return "…"
+  if (Array.isArray(value)) return value.map((item) => redactValue(item, depth + 1))
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {}
+    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = isSensitiveKey(key) ? REDACTED : redactValue(inner, depth + 1)
+    }
+    return out
+  }
+  return value
+}
+
+/**
+ * 文本里的凭据：工具返回是外部系统的原文，里面可能夹着
+ * `Authorization: Bearer …`、`"password": "…"`、PEM 私钥。
+ *
+ * <p>先跑 Bearer / PEM 这两条结构明确的，再跑「敏感键 = 值」——
+ * 顺序反了的话 `authorization: Bearer xxx` 只会打掉 `Bearer` 一词，
+ * 后面的令牌原样留在正文里。
+ */
+const PEM_PRIVATE_KEY =
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g
+const BEARER_TOKEN = /\b(bearer)\s+[A-Za-z0-9._~+/=-]{8,}/gi
+const SECRET_PAIR =
+  /((?:pass(?:word)?|passwd|pwd|secret|token|api[-_]?key|apikey|authorization|cookie|credential|private[-_]?key|access[-_]?key|client[-_]?secret)["']?\s*[=:]\s*)(["']?)([^\s"',;}\]]{2,})\2/gi
+
+/** 文本级脱敏：工具返回与原始参数文本在展示前都要过这一道。 */
+export function redactText(text: string): string {
+  if (!text) return text
+  return text
+    .replace(PEM_PRIVATE_KEY, REDACTED)
+    .replace(BEARER_TOKEN, `$1 ${REDACTED}`)
+    .replace(SECRET_PAIR, (_match, prefix: string, quote: string) => {
+      return `${prefix}${quote}${REDACTED}${quote}`
+    })
+}
+
+/**
+ * 参数值转成可展示的短文本：对象/数组用 JSON，长文本截断。
+ *
+ * <p>先脱敏再截断——反过来会把一个令牌从中间切开，前半截照样露出来。
+ */
 function formatArgValue(value: unknown, max = 220): string {
   let text: string
   if (typeof value === "string") {
@@ -90,18 +162,19 @@ function formatArgValue(value: unknown, max = 220): string {
       text = String(value)
     }
   }
+  text = redactText(text)
   if (text.length > max) return `${text.slice(0, max)}…`
   return text
 }
 
-/** 工具参数 → 脱敏后的键值对列表。 */
+/** 工具参数 → 脱敏后的键值对列表（嵌套敏感键同样打码）。 */
 export function sanitizeToolArgs(
   args: Record<string, unknown> | undefined,
 ): { key: string; value: string }[] {
   if (!args) return []
   return Object.entries(args).map(([key, value]) => ({
     key,
-    value: SENSITIVE_KEY.test(key) ? REDACTED : formatArgValue(value),
+    value: isSensitiveKey(key) ? REDACTED : formatArgValue(redactValue(value)),
   }))
 }
 
@@ -109,8 +182,8 @@ export function sanitizeToolArgs(
  * 把一段真实事件整理成步骤。
  *
  * <p>tool-request 与它之后的 tool-response 合并成同一步：步骤标题取工具名，
- * 有返回就是「完成」，还没收到返回就是「执行中」（流仍在跑）或「待返回」
- * （流已结束但工具没回）。
+ * 有返回就是「完成」，还没收到返回就是「执行中」（流仍在跑）或「未确认」
+ * （流已结束、工具没回）。
  */
 function toStep(
   msg: StreamMessage,
@@ -144,9 +217,11 @@ function toStep(
 
     case "tool-response": {
       // 归并到同一步未完成的工具调用上；找不到就自己成一步。
+      // 返回原文是外部系统的输出，展示前先过文本脱敏。
+      const output = redactText(msg.content)
       const pending = [...steps].reverse().find((s) => s.kind === "tool" && !s.output)
       if (pending) {
-        pending.output = msg.content
+        pending.output = output
         pending.state = "done"
         return null
       }
@@ -156,7 +231,7 @@ function toStep(
         label: toolLabel(msg.toolName),
         toolName: msg.toolName,
         state: "done",
-        output: msg.content,
+        output,
       }
     }
 
@@ -180,8 +255,9 @@ function toStep(
 /**
  * 线程分组：连续的过程事件合成一个过程块，其余保持消息原序。
  *
- * @param streaming 流是否仍在进行。仍在进行时，最后一个没有返回的工具步骤
- *   标成「执行中」；流已结束则标成「待返回」——两者都不是假状态。
+ * @param streaming 流是否仍在进行。仍在进行时，没有返回的工具步骤标成
+ *   「执行中」；流已结束则标成「未确认」——不是「待返回」，后端不会为
+ *   已经结束的回合补发回执，说「待返回」等于承诺一件不会发生的事。
  */
 export function buildThread(
   messages: StreamMessage[],
@@ -207,11 +283,14 @@ export function buildThread(
       index += 1
     }
 
-    // 流结束了但最后一步还没等到工具返回：如实标成「待返回」。
+    // 流结束了：**所有**还没拿到返回的工具步骤都转成「未确认」。
+    // 只看最后一个是不够的——一次请求可能连续调多个工具，前面的步骤
+    // 会一直挂着「执行中」，像是永远没跑完。
     if (!streaming) {
-      const last = steps[steps.length - 1]
-      if (last && last.kind === "tool" && last.state === "running") {
-        last.state = "pending"
+      for (const step of steps) {
+        if (step.kind === "tool" && step.state === "running") {
+          step.state = "pending"
+        }
       }
     }
 
@@ -231,7 +310,9 @@ export function stepStateLabel(state: AgentStepState): string {
     case "running":
       return "执行中"
     case "pending":
-      return "待返回"
+      // 「未确认」只陈述事实：没收到返回，不知道结果。
+      // 不说「完成」，也不说「待返回」——那是在承诺一份不会到的回执。
+      return "未确认"
     case "paused":
       return "已暂停"
   }

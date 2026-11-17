@@ -173,61 +173,74 @@ export function AgentPage() {
     }
   }, [status, userKey, reset, refreshSessions, loadHistoryMessages])
 
+  // 发送互斥：从「开始上传」到「这一回合的流结束」为止。
+  //
+  // <p>`isStreaming` 要等上传完、`send()` 真正开始才变 true——上传那几秒里
+  // 再触发一次发送会并发上传并推入第二条用户消息。ref 同步置位，跨上传与
+  // 流式两段生命周期；被拦下的调用直接返回 false，输入区据此把原文留住。
+  const sendingRef = useRef(false)
+
   const handleSend = useCallback(
     async (text: string, files: File[] = []): Promise<boolean> => {
       if ((!text.trim() && files.length === 0) || isStreaming) return false
-
-      // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
-      // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
-      const isFirstMessage = messages.length === 0
-      // 本回合用的会话 id：发送过程中用户可能切了会话，收尾时只能写回这一个
-      const usedThreadId = threadId
-
-      let imageUrls: string[] = []
-      if (files.length > 0) {
-        setUploading(true)
-        try {
-          const result = await uploader.uploadFiles(files)
-          imageUrls = result.urls
-        } catch (e) {
-          pushFault(faultFromError(e, { intent: "upload" }))
-          return false
-        } finally {
-          setUploading(false)
-        }
-      }
-
-      const localId = newId()
-      pushUser({
-        id: localId,
-        type: "user",
-        content: text,
-        time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-        images: imageUrls,
-      })
+      if (sendingRef.current) return false
+      sendingRef.current = true
 
       try {
-        await send(text, usedThreadId, imageUrls)
-        uploader.commitSuccess(imageUrls)
-        // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
-        if (threadIdRef.current === usedThreadId) {
-          saveThreadId(userKey, usedThreadId)
-          setCurrentThreadId(usedThreadId)
+        // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
+        // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
+        const isFirstMessage = messages.length === 0
+        // 本回合用的会话 id：发送过程中用户可能切了会话，收尾时只能写回这一个
+        const usedThreadId = threadId
+
+        let imageUrls: string[] = []
+        if (files.length > 0) {
+          setUploading(true)
+          try {
+            const result = await uploader.uploadFiles(files)
+            imageUrls = result.urls
+          } catch (e) {
+            pushFault(faultFromError(e, { intent: "upload" }))
+            return false
+          } finally {
+            setUploading(false)
+          }
         }
 
-        // 首条消息触发 AI 生成标题，完成后刷新列表
-        if (isFirstMessage) {
-          void generateTitle(usedThreadId, text)
-            .then(() => refreshSessions())
-            .catch((e) => console.warn("标题生成触发失败", e))
+        const localId = newId()
+        pushUser({
+          id: localId,
+          type: "user",
+          content: text,
+          time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+          images: imageUrls,
+        })
+
+        try {
+          await send(text, usedThreadId, imageUrls)
+          uploader.commitSuccess(imageUrls)
+          // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
+          if (threadIdRef.current === usedThreadId) {
+            saveThreadId(userKey, usedThreadId)
+            setCurrentThreadId(usedThreadId)
+          }
+
+          // 首条消息触发 AI 生成标题，完成后刷新列表
+          if (isFirstMessage) {
+            void generateTitle(usedThreadId, text)
+              .then(() => refreshSessions())
+              .catch((e) => console.warn("标题生成触发失败", e))
+          }
+          return true
+        } catch (e) {
+          uploader.commitFailure(imageUrls)
+          // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
+          setMessages((prev) => prev.filter((message) => message.id !== localId))
+          pushFault(faultFromError(e, { intent: "send" }))
+          return false
         }
-        return true
-      } catch (e) {
-        uploader.commitFailure(imageUrls)
-        // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
-        setMessages((prev) => prev.filter((message) => message.id !== localId))
-        pushFault(faultFromError(e, { intent: "send" }))
-        return false
+      } finally {
+        sendingRef.current = false
       }
     },
     [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, setMessages, refreshSessions, pushFault],
