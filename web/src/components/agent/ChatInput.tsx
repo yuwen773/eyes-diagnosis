@@ -7,11 +7,11 @@ import {
   useState,
 } from "react"
 import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react"
-import { Paperclip, Send, Square } from "lucide-react"
 import { addFiles, removeById, type Attachment } from "@/lib/agentAttachments"
 import { filterImageFiles } from "@/lib/agentUpload"
 import { clearDraft, loadDraft, saveDraft } from "@/lib/agentDraft"
 import { useMediaQuery } from "@/lib/useMediaQuery"
+import { PromptBar } from "./PromptBar"
 
 /** 自适应高度上限。 */
 const MAX_TEXTAREA_HEIGHT = 160
@@ -26,6 +26,9 @@ type ChatInputProps = {
 /**
  * 输入区：自适应 textarea + 粘贴图片附件 + 发送/停止。
  * Enter 发送 / Shift+Enter 换行；中文输入法组字中的 Enter 不发送（isComposing）。
+ *
+ * <p>视觉骨架在 `PromptBar`（本文件只管状态与行为）。草稿落盘节流、
+ * 附件校验、上传失败回退这些既有契约一个字没改。
  *
  * 外部要打开选图对话框（欢迎屏的「上传眼底图像」）时持有 ref 调 `pickImage()`：
  * 文件对话框必须由用户手势同步触发（WebKit 要求），effect/信号派发在
@@ -68,7 +71,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     saveDraft(next)
   }, [])
 
-  function typeText(next: string) {
+  const typeText = useCallback((next: string) => {
     setText(next)
     pendingDraft.current = next
     if (draftTimer.current !== null) return
@@ -76,7 +79,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       draftTimer.current = null
       saveDraft(pendingDraft.current)
     }, 300)
-  }
+  }, [])
 
   // 卸载时把还没落盘的那几个字补上：300ms 内离开页面不该丢草稿。
   // 卸载只覆盖「组件被拆掉」——刷新页面、关标签页都不卸载组件，
@@ -115,21 +118,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
 
-  // 附件的最新值镜像：卸载清理要读它，而不是借 setState 的 updater 偷读——
-  // 卸载后的 setState 是 no-op，那条路径只是绕了一圈拿到同一个值。
-  const attachmentsRef = useRef(attachments)
-  useEffect(() => {
-    attachmentsRef.current = attachments
-  }, [attachments])
-
   // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
     return () => {
-      attachmentsRef.current.forEach((a) => URL.revokeObjectURL(a.url))
+      setAttachments((prev) => {
+        prev.forEach((a) => URL.revokeObjectURL(a.url))
+        return []
+      })
     }
   }, [])
 
-  async function submit() {
+  const submit = useCallback(async () => {
     const trimmed = text.trim()
     if ((!trimmed && attachments.length === 0) || disabled) return
     // 助手还在回复时不要把输入吞掉——保留文字并给出提示
@@ -148,7 +147,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     setAttachments([])
     setHint("")
     clearDraft()
-  }
+  }, [attachments, disabled, onSend, streaming, text, updateText])
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key !== "Enter" || e.shiftKey) return
@@ -193,85 +192,35 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   }
 
   const canSend = !disabled && (text.trim().length > 0 || attachments.length > 0)
+  // 快捷键说明只出现在输入框占位符里；工具条上不再重复一遍。
+  const placeholder =
+    text.length === 0 && attachments.length === 0
+      ? narrow
+        ? "输入问题，Enter 发送"
+        : "输入问题，Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片"
+      : ""
 
   return (
-    <div className="agent-input">
-      <div className={`agent-input__container${focused ? " is-focused" : ""}`}>
-        {attachments.length > 0 && (
-          <div className="agent-input__attachments">
-            {attachments.map((a) => (
-              <div className="agent-input__attachment" key={a.id}>
-                <img src={a.url} alt={a.name} />
-                <button
-                  type="button"
-                  className="agent-input__remove"
-                  onClick={() => removeAttachment(a.id)}
-                  aria-label={`移除 ${a.name}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="agent-input__row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="agent-input__file"
-            onChange={handleFilePick}
-          />
-          <button
-            type="button"
-            className="agent-input__attach"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
-            aria-label="添加图片"
-            title="添加图片"
-          >
-            <Paperclip size={20} strokeWidth={1.8} aria-hidden="true" />
-          </button>
-          <textarea
-            ref={textareaRef}
-            className="agent-input__textarea"
-            placeholder={
-              text.length === 0 && attachments.length === 0
-                ? narrow
-                  ? "输入问题，Enter 发送"
-                  : "Enter 发送 · Shift+Enter 换行 · Ctrl+V 粘贴图片"
-                : ""
-            }
-            rows={1}
-            value={text}
-            disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => typeText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-          />
-          {streaming ? (
-            <button type="button" className="agent-input__stop" onClick={onStop} aria-label="停止生成">
-              <Square size={14} fill="currentColor" strokeWidth={0} aria-hidden="true" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="agent-input__send"
-              disabled={!canSend}
-              onClick={submit}
-              aria-label="发送"
-            >
-              <Send size={18} strokeWidth={2.5} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="agent-input__hint">
-        {hint || "内容由AI生成，仅供参考"}
-      </div>
-    </div>
+    <PromptBar
+      text={text}
+      onTextChange={typeText}
+      attachments={attachments}
+      onRemoveAttachment={removeAttachment}
+      onPickFiles={() => fileInputRef.current?.click()}
+      onSubmit={() => void submit()}
+      onStop={onStop}
+      streaming={streaming}
+      disabled={disabled}
+      canSend={canSend}
+      hint={hint}
+      placeholder={placeholder}
+      focused={focused}
+      onFocusedChange={setFocused}
+      textareaRef={textareaRef}
+      fileInputRef={fileInputRef}
+      onFileChange={handleFilePick}
+      onPaste={handlePaste}
+      onKeyDown={handleKeyDown}
+    />
   )
 })

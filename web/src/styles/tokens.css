@@ -73,6 +73,9 @@
   --danger: var(--paper-danger);
   --danger-soft: var(--paper-danger-soft);
   --danger-lit: #ff9aa6;
+  /* 破坏性按钮上的文字色。暗主题的 --danger 是提亮版（粉），压白字只有
+     1.9:1，所以这一项要跟着主题翻：浅主题压白，暗主题压深墨。 */
+  --danger-fg: #ffffff;
 
   /* ── 反相带（全页只有一段）──────────────────── */
   --dark: #161a18;
@@ -246,6 +249,19 @@
   --brand-deep-signal: #ef7a45;
   --brand-deep-signal-text: #ffa07a;
 
+  /* ── 深色浮层遮罩（图片预览一类）──────────────
+     遮罩本身就是深色蒙版，不随主题翻转，所以这一族不分 Light/Dark。
+     压在照片或深色画布上的小角标也走这里，避免各页面各写一套黑。 */
+  --brand-scrim: rgba(6, 12, 24, 0.82);
+  --brand-scrim-fg: #ffffff;
+  --brand-scrim-fg-2: #dbe7fb;
+  --brand-scrim-line: rgba(255, 255, 255, 0.28);
+  --brand-scrim-surface: rgba(255, 255, 255, 0.12);
+  --brand-scrim-surface-hover: rgba(255, 255, 255, 0.22);
+  --brand-scrim-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  --brand-scrim-chip: rgba(9, 16, 28, 0.72);
+  --brand-scrim-chip-fg: #eaf2ff;
+
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
   --viz-mute: #8b9195;
@@ -318,6 +334,8 @@
   /* 删除红也钉回纸面值：暗主题的 --danger 是提亮版，落在白纸上约 1.7:1。 */
   --danger: var(--paper-danger);
   --danger-soft: var(--paper-danger-soft);
+  /* 同理，按钮上的文字色也要跟着钉回白字。 */
+  --danger-fg: #ffffff;
   --fg: var(--ink);
   --fg-2: var(--ink-2);
   --fg-3: var(--ink-3);
@@ -505,6 +523,8 @@ html.dark {
 
   --danger: var(--danger-lit);
   --danger-soft: rgba(255, 154, 166, 0.14);
+  /* 提亮版粉底上压深墨，白字在 1.9:1 过不了。 */
+  --danger-fg: #0b1425;
 
   --viz-accent: #d9591f;
   --viz-mute: #767d79;

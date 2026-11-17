@@ -103,7 +103,7 @@ describe("AgentPage 未登录", () => {
       </ThemeProvider>,
     )
     // 界面在，欢迎屏可见
-    expect(screen.getByRole("heading", { name: "Iris" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "你好，我是 Iris" })).toBeTruthy()
     expect(screen.queryByText("登录页")).toBeNull()
   })
 
@@ -121,16 +121,16 @@ describe("AgentPage 未登录", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "收起会话栏" }))
 
-    const layout = document.querySelector(".agent-layout")!
-    expect(layout.className).toContain("is-left-collapsed")
+    const layout = document.querySelector(".agent-workspace")!
+    expect(layout.className).toContain("is-nav-collapsed")
     // 会话栏常驻 DOM，只是折叠——移除会让中栏自动排进左列而塌成窄条
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeTruthy()
     expect(document.querySelector(".agent-sessions")).toBeTruthy()
     // 左上角恢复钮组在
     expect(screen.getByRole("button", { name: "展开会话栏" })).toBeTruthy()
     // 再展开，侧栏回来
     fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
     expect(document.querySelector(".agent-sessions")).toBeTruthy()
   })
 
@@ -292,7 +292,9 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    // 紧凑档：会话导航不再占一列，改由抽屉承载，首屏整块留给对话
+    expect(document.querySelector(".agent-nav")).toBeNull()
+    expect(screen.getByRole("button", { name: "打开会话列表" })).toBeTruthy()
   })
 
   it("宽屏会话栏默认展开", () => {
@@ -306,7 +308,8 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
   })
 
   it("跨过断点时跟上：回宽屏自动展开，进窄屏自动收起", async () => {
@@ -320,17 +323,18 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
 
     await act(async () => {
       mq.setMatches(true)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav")).toBeNull()
+    expect(screen.getByRole("button", { name: "打开会话列表" })).toBeTruthy()
 
     await act(async () => {
       mq.setMatches(false)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
   })
 
   it("用户手动展开后不跨断点保持原状；真跨断点时以断点为准", async () => {
@@ -344,19 +348,21 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    // 紧凑档：手动「打开会话列表」把导航拉成抽屉盖在对话上
+    fireEvent.click(screen.getByRole("button", { name: "打开会话列表" }))
+    expect(document.querySelector(".agent-drawer.is-left")).toBeTruthy()
 
-    // 手动展开后先去宽屏：还是展开的（断点本来就要求展开）。
+    // 手动展开后先去宽屏：侧栏以常驻列回来。
     await act(async () => {
       mq.setMatches(false)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
 
-    // 再回窄屏：自动收起，不要求用户再手动收一次。
+    // 再回窄屏：列消失、以断点为准，不要求用户再手动收一次。
     await act(async () => {
       mq.setMatches(true)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav")).toBeNull()
   })
 })

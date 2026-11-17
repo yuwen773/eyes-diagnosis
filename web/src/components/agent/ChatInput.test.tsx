@@ -145,6 +145,15 @@ describe("ChatInput 发送与停止（既有行为）", () => {
     expect(screen.getByText("发送没成功，内容已保留，可以重试")).toBeTruthy()
   })
 
+  it("Shift+Enter 换行，不发送", () => {
+    const { onSend, textarea } = setup(false)
+    fireEvent.change(textarea, { target: { value: "第一行" } })
+    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true })
+
+    expect(onSend).not.toHaveBeenCalled()
+    expect((textarea as HTMLTextAreaElement).value).toBe("第一行")
+  })
+
   it("中文输入法组字中的 Enter 不发送", () => {
     const { onSend, textarea } = setup(false)
     fireEvent.change(textarea, { target: { value: "你好" } })
