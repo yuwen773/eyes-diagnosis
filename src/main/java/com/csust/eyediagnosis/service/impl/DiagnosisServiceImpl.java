@@ -262,14 +262,26 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 }
             }
 
-            // 3. 异步上传 COS
-            String imageUrl = null;
+            // 3. 上传对象存储。
+            // 这一步失败必须终止本次请求：此前异常被吞掉，仍会落一条没有影像的
+            // 正式记录——用户拿到结论，报告却核验不了原图。推理结果已按图片哈希
+            // 写入推理缓存（缓存启用时），重试不会重复计算。
+            String imageUrl;
+            String imageKey;
             try {
                 String uploadPrefix = String.format("public/%s", loginUser.getId());
                 UploadPictureDetail detail = fileManager.uploadPicture(file, uploadPrefix);
                 imageUrl = detail.getUrl();
-            } catch (Exception e) {
-                log.error("COS upload failed", e);
+                imageKey = detail.getObjectKey();
+            } catch (BusinessException e) {
+                if (e.getCode() == ErrorCode.SYSTEM_ERROR.getCode()) {
+                    // 存储侧失败（超时 / 鉴权 / 服务端异常），统一换成本次请求的语义：
+                    // 没有归档，可以重试。
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR,
+                            "影像存储失败，本次判读未归档，请重试");
+                }
+                // 体积 / 格式等校验失败原样上抛，不能被包装成「存储失败」。
+                throw e;
             }
 
             // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
@@ -284,10 +296,19 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
             // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
             evidence.applyTo(diagnosis);
-            this.save(diagnosis);
+            try {
+                this.save(diagnosis);
+            } catch (RuntimeException e) {
+                // 对象已写入、记录没落库：删掉这个对象，避免留下无人引用的孤儿影像。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw e;
+            }
             vo.setId(diagnosis.getId());
 
             return vo;
+        } catch (BusinessException e) {
+            // 业务异常带着可读错误码与文案，不能被压成一条笼统的「诊断失败」。
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
         }

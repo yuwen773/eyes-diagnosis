@@ -19,6 +19,14 @@ public class UploadPictureDetail {
     private String url;
 
     /**
+     * 对象存储里的 key（不含 host）。
+     *
+     * <p>供调用方在「对象写入成功、数据库落库失败」时做补偿删除用：
+     * 只拿 url 反解 key 依赖 host 拼接格式，格式一改就会删错对象。
+     */
+    private String objectKey;
+
+    /**
      * 文件体积
      */
     private Long picSize;

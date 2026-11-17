@@ -81,12 +81,34 @@ public class FileManager {
             uploadPictureDetail.setPicSize(FileUtil.size(file));
             //拼接图片访问地址
             uploadPictureDetail.setUrl(cosClientConfig.getHost()+"/"+uploadPath);
+            // 对象 key 一并交给调用方，落库失败时才能精确删除这一个对象
+            uploadPictureDetail.setObjectKey(uploadPath);
             return uploadPictureDetail;
         } catch (Exception e) {
             log.error("图片上传到对象存储失败",e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, FileConstant.FAIL_UPLOAD);
         }finally{
             this.deleteTemFile(file);
+        }
+    }
+
+    /**
+     * 补偿删除：对象已写入存储、但后续数据库落库失败时，删除这一个对象。
+     *
+     * <p>只接受本类刚上传返回的 key（调用方不得用请求参数拼 key）。
+     * 删除失败不抛异常——落库失败才是主因，补偿失败记日志留待人工/对账处理，
+     * 不能把异常盖回去掩盖原始错误。
+     *
+     * @param objectKey {@link #uploadPicture} 返回的 key
+     */
+    public void deleteUploadedPictureQuietly(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            return;
+        }
+        try {
+            cosManager.deleteObject(objectKey);
+        } catch (Exception e) {
+            log.error("补偿删除对象失败，可能留下孤儿对象: key={}", objectKey, e);
         }
     }
 
