@@ -2,12 +2,13 @@
    fault.css — 故障提示的统一样式
 
    一套语法，三个尺度：
-     .fault-toast  瞬时读数（右上角浮条，操作反馈）
-     .fault-note   行内读数（表单/字段/局部）
-     .fault-panel  整块读数（整页取不到数）
+     .fault-toast  瞬时反馈（右上角浮条，操作结果）
+     .fault-note   行内提示（表单 / 字段 / 局部）
+     .fault-panel  整块状态（整页取不到数）
 
-   配色只用风险语义色（红 / 琥珀 / 中性），不占信号橙——
-   橙色是品牌色，拿它表示故障会把「注意」和「这里是主按钮」混成一件事。
+   视觉语言与 System States 一致：文字用 --fg / --fg-2 保证对比度，
+   语义色只出现在小圆点与描边，不拿颜色当唯一信息通道；不用细红竖线、
+   9px 仪表标签或方框指示灯。故障严重度走 --risk-*，不占信号橙。
    ============================================================ */
 
 .fault-tone-critical {
@@ -19,10 +20,11 @@
 }
 
 .fault-tone-info {
-  --fault-tone: var(--fg-3);
+  /* info 与 System States 一致，走品牌青而不是次级灰。 */
+  --fault-tone: var(--brand-cyan);
 }
 
-/* ── 瞬时读数：右上角的一条仪器读数 ─────────────────────── */
+/* ── 瞬时反馈：右上角浮条，不伪造仪表读数 ────────────────── */
 
 .fault-stack {
   position: fixed;
@@ -49,12 +51,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 10px 13px 12px 14px;
+  gap: 8px;
+  padding: 16px 16px 16px 18px;
   background: var(--surface);
-  border: 1px solid var(--hr);
-  border-left: 2px solid var(--fault-tone);
-  box-shadow: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 20%, var(--hr));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
   will-change: transform;
 }
 
@@ -71,97 +73,105 @@
 }
 
 .fault-toast__card:hover {
-  border-color: color-mix(in srgb, var(--fault-tone) 34%, var(--hr));
+  border-color: color-mix(in srgb, var(--fault-tone) 42%, var(--hr));
 }
 
 .fault-toast__head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-right: 22px;
-  padding-bottom: 6px;
+  gap: 8px;
+  padding-right: 32px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--hr);
 }
 
+/* 语义标签：文字始终可读，颜色只由前置小圆点承担。 */
 .fault-toast__tag {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-brand);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--fault-tone);
+  letter-spacing: 0.04em;
+  color: var(--fg);
 }
 
-/* 状态灯：方块，不是圆点——仪表上的指示灯本来就是方的。 */
 .fault-toast__tag::before {
   content: "";
-  width: 5px;
-  height: 5px;
-  background: currentColor;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: var(--radius-circle);
+  background: var(--fault-tone);
 }
 
 .fault-toast__code {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
 .fault-toast__title {
-  margin: 2px 0 0;
-  font-size: 13px;
-  font-weight: 500;
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.5;
   color: var(--fg);
 }
 
 .fault-toast__detail {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.65;
+  font-size: 12.5px;
+  line-height: 1.7;
   color: var(--fg-2);
 }
 
 .fault-toast__action {
   align-self: flex-start;
-  margin-top: 5px;
-  padding: 3px 11px;
+  min-height: 44px;
+  margin-top: 2px;
+  padding: 0 14px;
   border: 1px solid var(--hr-strong);
   border-radius: var(--radius-md);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--fg-2);
+  background: var(--surface);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
   cursor: pointer;
-  transition: color var(--fast), border-color var(--fast);
+  transition: color var(--fast), border-color var(--fast), background var(--fast);
 }
 
 .fault-toast__action:hover {
-  color: var(--fault-tone);
+  background: var(--surface-2);
   border-color: var(--fault-tone);
 }
 
 .fault-toast__close {
   position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-chip-xs);
+  border-radius: var(--radius-md);
   background: none;
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1;
-  color: var(--fg-3);
+  color: var(--fg-2);
   cursor: pointer;
-  transition: color var(--fast);
+  transition: color var(--fast), background var(--fast);
 }
 
 .fault-toast__close:hover {
+  background: var(--surface-2);
   color: var(--fg);
 }
 
@@ -187,34 +197,46 @@
   }
 }
 
-/* ── 行内读数：表单、字段、局部 ─────────────────────────── */
+/* ── 行内提示：表单、字段、局部 ─────────────────────────── */
 
 .fault-note {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 9px 12px;
-  border: 1px solid color-mix(in srgb, var(--fault-tone) 30%, transparent);
-  border-left: 2px solid var(--fault-tone);
-  background: color-mix(in srgb, var(--fault-tone) 7%, transparent);
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 20%, var(--hr));
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
 }
 
 .fault-note__tag {
   flex: none;
-  padding-top: 1px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+  font-family: var(--font-brand);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--fault-tone);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+.fault-note__tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: var(--radius-circle);
+  background: var(--fault-tone);
 }
 
 .fault-note__text {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.7;
   color: var(--fg-2);
 }
 
@@ -225,32 +247,35 @@
 .fault-note__detail {
   display: block;
   margin-top: 2px;
-  color: var(--fg-3);
+  color: var(--fg-2);
 }
 
 .fault-note__action {
   flex: none;
   align-self: center;
-  padding: 2px 9px;
-  border: 1px solid color-mix(in srgb, var(--fault-tone) 40%, transparent);
-  border-radius: var(--radius-chip-sm);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--fault-tone);
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--hr-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
   cursor: pointer;
-  transition: background var(--fast);
+  transition: background var(--fast), border-color var(--fast);
 }
 
 .fault-note__action:hover {
-  background: color-mix(in srgb, var(--fault-tone) 12%, transparent);
+  background: var(--surface-2);
+  border-color: var(--fault-tone);
 }
 
-/* 字段级：贴着输入框，不占一整块。 */
+/* 字段级：贴着输入框，不占一整块；严重度仍带文字（tag 虽隐藏，title/detail 仍可读）。 */
 .fault-note--field {
   padding: 0;
   border: 0;
-  border-left: 0;
+  border-radius: 0;
   background: none;
 }
 
@@ -259,41 +284,55 @@
 }
 
 .fault-note--field .fault-note__text {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--fault-tone);
+  font-family: var(--font-brand);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  color: var(--fg);
 }
 
 .fault-note--field .fault-note__detail {
   display: inline;
   margin-left: 6px;
-  color: var(--fg-3);
+  color: var(--fg-2);
 }
 
-/* ── 整块读数：整页取不到数 ─────────────────────────────── */
+/* ── 整块状态：整页取不到数 ─────────────────────────────── */
 
 .fault-note--panel {
   display: block;
+  max-width: 640px;
+  margin-inline: auto;
   padding: clamp(20px, 2.4vw, 30px);
   background: var(--surface);
-  border: 1px solid var(--hr-strong);
-  border-left: 2px solid var(--fault-tone);
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 18%, var(--hr));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
 }
 
 .fault-panel__head {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .fault-panel__tag {
-  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-brand);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.2em;
-  color: var(--fault-tone);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+.fault-panel__tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--fault-tone);
 }
 
 .fault-panel__rule {
@@ -303,29 +342,29 @@
 }
 
 .fault-panel__title {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: clamp(19px, 2vw, 22px);
   font-weight: 400;
-  line-height: 1.35;
+  line-height: 1.4;
   letter-spacing: -0.01em;
   color: var(--fg);
 }
 
 .fault-panel__body {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.75;
   color: var(--fg-2);
 }
 
 .fault-panel__foot {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 12px 22px;
   flex-wrap: wrap;
-  margin-top: 18px;
-  padding-top: 14px;
+  margin-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--hr);
 }
 
@@ -337,32 +376,34 @@
 
 .fault-panel__label {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.16em;
+  font-size: 10px;
+  letter-spacing: 0.1em;
   color: var(--fg-3);
 }
 
 .fault-panel__value {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--fg);
 }
 
 .fault-panel__action {
   margin-left: auto;
-  padding: 5px 14px;
+  min-height: 44px;
+  padding: 0 18px;
   border: 1px solid var(--hr-strong);
-  border-radius: var(--radius-chip);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--fg-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
   cursor: pointer;
-  transition: color var(--fast), border-color var(--fast);
+  transition: color var(--fast), border-color var(--fast), background var(--fast);
 }
 
 .fault-panel__action:hover {
-  color: var(--fault-tone);
+  background: var(--surface-2);
   border-color: var(--fault-tone);
 }
 
