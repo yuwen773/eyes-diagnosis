@@ -57,29 +57,38 @@ export type ScopedStats = {
 }
 
 /**
- * 服务端聚合优先。任何失败（404 未实现、5xx、网络）都降级到当前页，
- * 并把口径标成 page——页面据此写明「本页」，不会把一页的数字冒充全量。
+ * 统计口径的合成：服务端聚合优先，聚合不可用时退回本页汇总，口径随之
+ * 标成 page——页面据此写明「本页」，不会把一页的数字冒充全量。
  *
- * 200 但载荷不对（空对象、null、缺字段、类型不对）同样降级：
- * 空 KPI 配「高风险」这种全量标签，比报错更糟。
+ * 纯函数。聚合与列表是两个独立端点、并行发出，合成放在渲染期做：
+ * 把两个请求串起来会让聚合等列表，聚合慢时整页都跟着慢。
  */
-export async function loadMyStats(
+export function resolveScopedStats(
+  serverStats: RecordStats | null,
   records: DiagnosisManage[],
   total: number,
-  signal?: AbortSignal,
-): Promise<ScopedStats> {
-  const fallback = (): ScopedStats => ({
-    stats: summarizeRecords(records, total),
-    scope: "page",
-  })
+): ScopedStats {
+  if (serverStats) return { stats: serverStats, scope: "all" }
+  return { stats: summarizeRecords(records, total), scope: "page" }
+}
+
+/**
+ * 只取服务端聚合，不做降级：不可用时返回 null，由调用方在渲染期回退到
+ * 本页汇总（见 resolveScopedStats）。它不依赖列表数据，所以能和列表请求
+ * 并行发出。
+ *
+ * 任何失败（404 未实现、5xx、网络）都返回 null；200 但载荷不对
+ * （空对象、null、缺字段、类型不对）同样返回 null——空 KPI 配「高风险」
+ * 这种全量标签，比报错更糟。
+ */
+export async function loadServerStats(signal?: AbortSignal): Promise<RecordStats | null> {
   try {
     const stats = await getMyStats(signal)
-    if (!isStatsPayload(stats)) return fallback()
-    return { stats, scope: "all" }
+    return isStatsPayload(stats) ? stats : null
   } catch (error) {
     // 取消不是「聚合不可用」：原样抛出，别把降级结果写进已作废的查询。
     if (signal?.aborted) throw error
-    return fallback()
+    return null
   }
 }
 

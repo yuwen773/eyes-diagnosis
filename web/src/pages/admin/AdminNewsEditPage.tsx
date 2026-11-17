@@ -1,4 +1,5 @@
 import {
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -89,8 +90,11 @@ function coverProblem(file: File): string | null {
  *  文章眉线上的「N 字」是另一套口径（`newsWordCount`：汉字按字、拉丁按词），
  *  与公开页同一个组件、同一个读数。两者数字不同是口径不同，不是少了字，
  *  所以界面上把编辑器这一侧写成「字符」，不跟眉线的「字」混用。 */
+/** 正则字面量提到模块级：每次按键新建 RegExp 没有必要。 */
+const WHITESPACE_RUN = /\s+/g
+
 function visibleLength(content: string): number {
-  return newsPlainText(renderNewsHtml(content)).replace(/\s+/g, " ").trim().length
+  return newsPlainText(renderNewsHtml(content)).replace(WHITESPACE_RUN, " ").trim().length
 }
 
 /**
@@ -310,19 +314,24 @@ function NewsEditor(props: {
     setForm((prev) => ({ ...prev, ...next }))
   }
 
-  const contentLength = useMemo(() => visibleLength(form.content), [form.content])
+  // 字数走 markdown 渲染 + 剥标签，长文每次按键约 30–45ms。延迟内容让输入
+  // 保持紧急优先级，读数落后一帧用户看不出来。
+  const deferredContent = useDeferredValue(form.content)
+  const contentLength = useMemo(() => visibleLength(deferredContent), [deferredContent])
   // 预览内容与「保存时会写进库的东西」保持一致：旧版 HTML 且正文没改时，
   // 保存提交的是原始 HTML，预览就按 HTML 渲染，避免有损往返让预览与线上不一样。
   const previewContent = legacyHtml && !contentDirty ? legacyHtml : form.content
   const previewFormat: "html" | "markdown" = legacyHtml && !contentDirty ? "html" : "markdown"
   // 摘要真实口径：后端取剥标签后正文的前 30 字。这里显示同一段文字，不另编摘要。
   const summaryText = useMemo(() => {
+    // 摘要只在预览页签消费；编辑态算它就是每个按键白跑一遍 markdown + 净化。
+    if (tab !== "preview") return ""
     // 旧版 HTML 原样提交时按 HTML 剥标签；Markdown 先走渲染管线再剥——两条路径
     // 都必须得到可见文字，不能把 <p> 当摘要显示出来。
     const html =
       previewFormat === "html" ? sanitizeNewsHtml(previewContent) : renderNewsHtml(previewContent)
     return newsPlainText(html).replace(/\s+/g, " ").trim().slice(0, 30)
-  }, [previewContent, previewFormat])
+  }, [tab, previewContent, previewFormat])
   // 侧栏读数位窄：同一状态用短标签，避免「没有未保存的修改」把数字列挤歪。
   const saveStateShort = saving
     ? "保存中…"

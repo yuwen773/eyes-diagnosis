@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
 import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
@@ -12,7 +12,18 @@ import { WelcomeScreen } from "./WelcomeScreen"
 /** 距底 80px 内视为贴底。 */
 const BOTTOM_EPSILON = 80
 
-function MessageRow({ msg, onPreviewImage }: { msg: StreamMessage; onPreviewImage?: (url: string) => void }) {
+/**
+ * 单条消息行。memo 的前提在上游已成立：applyStreamEvent 累加时保留历史
+ * 消息的对象引用，只有正在流式的那一条会换新对象。因此每片 token 只需
+ * 重渲染最后一行，而不是整个列表。
+ */
+const MessageRow = memo(function MessageRow({
+  msg,
+  onPreviewImage,
+}: {
+  msg: StreamMessage
+  onPreviewImage?: (url: string) => void
+}) {
   switch (msg.type) {
     case "user":
       return <UserMessage msg={msg} onPreviewImage={onPreviewImage} />
@@ -29,7 +40,7 @@ function MessageRow({ msg, onPreviewImage }: { msg: StreamMessage; onPreviewImag
     default:
       return null
   }
-}
+})
 
 /**
  * 消息列表：白色实体面板滚动区（U4——对话工作区不做暗底反相带，
@@ -81,26 +92,41 @@ export function MessageList({
     return () => el.removeEventListener("scroll", onScroll)
   }, [])
 
+  // 贴底跟随合帧：读 scrollHeight 会强制一次同步布局，SSE 每片都读就是每片
+  // 一次回流。用 rAF 把同一帧内的多次请求并成一次读 + 一次写。
+  const followRaf = useRef<number | null>(null)
+  const followBottom = useCallback(() => {
+    if (followRaf.current !== null) return
+    followRaf.current = requestAnimationFrame(() => {
+      followRaf.current = null
+      const el = listRef.current
+      if (el) el.scrollTop = el.scrollHeight
+    })
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (followRaf.current !== null) cancelAnimationFrame(followRaf.current)
+    },
+    [],
+  )
+
   // 新消息：贴底则跟随，否则计一条未读
   useEffect(() => {
-    const el = listRef.current
-    if (!el || messages.length === 0) return
+    if (messages.length === 0) return
     if (atBottomRef.current) {
-      el.scrollTop = el.scrollHeight
+      followBottom()
     } else {
       setUnread((n) => computeUnread(n, { atBottom: false, isNewMessage: true, isContentGrowth: false }))
     }
     // 只跟消息条数：内容增长在下面的 effect 里处理
-  }, [messages.length])
+  }, [messages.length, followBottom])
 
   // 流式内容增长：贴底时跟随滚动，但不增加未读计数
   useEffect(() => {
-    const el = listRef.current
-    if (!el || lastContent === undefined) return
-    if (atBottomRef.current) {
-      el.scrollTop = el.scrollHeight
-    }
-  }, [lastContent, lastMsgId])
+    if (lastContent === undefined) return
+    if (atBottomRef.current) followBottom()
+  }, [lastContent, lastMsgId, followBottom])
 
   function scrollToBottom() {
     const el = listRef.current

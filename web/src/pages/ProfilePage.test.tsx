@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -30,22 +30,26 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     listMyDiagnoses: vi.fn(),
+    getMyStats: vi.fn(),
     uploadAvatar: vi.fn(),
     updateUserProfile: vi.fn(),
   }
 })
 
-import { listMyDiagnoses } from "@/lib/api"
+import { ApiError, getMyStats, listMyDiagnoses } from "@/lib/api"
 
 beforeEach(() => {
   sessionState.status = "authed"
   sessionState.user = { id: "u1", userAccount: "u1" }
   sessionState.scope = "u1"
+  // 聚合默认不可用：个人中心要能退回本页口径，而不是显示 0。
+  vi.mocked(getMyStats).mockResolvedValue(null as never)
 })
 
 afterEach(() => {
   cleanup()
   vi.mocked(listMyDiagnoses).mockReset()
+  vi.mocked(getMyStats).mockReset()
 })
 
 function stubMatchMedia() {
@@ -121,5 +125,73 @@ describe("ProfilePage 最近判读", () => {
     renderProfile()
     await screen.findByText("还没有判读记录。")
     expect(screen.queryByText(/没读出来/)).toBeNull()
+  })
+})
+
+describe("ProfilePage 判读统计口径", () => {
+  it("聚合接口 404 时退回本页口径：显示真实总数与最近 10 条高风险，不是 0", async () => {
+    stubMatchMedia()
+    // 37 条判读记录，最近 10 条里有 2 条高风险；聚合接口尚未上线（404）。
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [
+        ...Array.from({ length: 8 }, (_, index) =>
+          record({ id: `m${index}`, severity: "mild" }),
+        ),
+        record({ id: "s1", severity: "severe" }),
+        record({ id: "s2", severity: "severe" }),
+      ],
+      total: 37,
+    } as never)
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
+    const { container } = renderProfile()
+
+    // 口径提示写明：这组数字取自最近一页，不是全量。
+    await screen.findByText(/服务端聚合暂不可用/)
+
+    await waitFor(() => {
+      const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
+        (node) => node.textContent,
+      )
+      expect(values[0]).toBe("37")
+      expect(values[1]).toBe("2")
+    })
+  })
+
+  it("聚合可用时用全量口径，不写「暂不可用」", async () => {
+    stubMatchMedia()
+    vi.mocked(listMyDiagnoses).mockResolvedValue({
+      records: [record({ id: "a", severity: "severe" })],
+      total: 1,
+    } as never)
+    vi.mocked(getMyStats).mockResolvedValue({
+      total: 128,
+      highRisk: 9,
+      awaitingReview: 12,
+      lastReadAt: "2026-11-08 14:32:10",
+    } as never)
+    const { container } = renderProfile()
+
+    await waitFor(() => {
+      const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
+        (node) => node.textContent,
+      )
+      expect(values[0]).toBe("128")
+      expect(values[1]).toBe("9")
+    })
+    expect(screen.queryByText(/服务端聚合暂不可用/)).toBeNull()
+  })
+
+  it("两个来源都没读出来时显示「—」，不显示 0", async () => {
+    stubMatchMedia()
+    vi.mocked(listMyDiagnoses).mockRejectedValue(new Error("network down"))
+    vi.mocked(getMyStats).mockResolvedValue(null as never)
+    const { container } = renderProfile()
+
+    await screen.findByText(/判读记录这会儿没读出来/)
+    const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
+      (node) => node.textContent,
+    )
+    expect(values[0]).toBe("—")
+    expect(values[1]).toBe("—")
   })
 })

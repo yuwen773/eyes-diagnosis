@@ -79,6 +79,22 @@ describe("ChatInput", () => {
       "上次没发完的一句话",
     )
   })
+
+  it("页面关闭/刷新（pagehide）时把还在防抖窗口里的草稿补上", () => {
+    vi.useFakeTimers()
+    try {
+      renderInput()
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "还没发出去的半句话" },
+      })
+      // 还在 300ms 防抖窗口里：字只在内存里，落盘要等定时器或页面离开。
+      expect(loadDraft()).toBe("")
+      window.dispatchEvent(new Event("pagehide"))
+      expect(loadDraft()).toBe("还没发出去的半句话")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 describe("ChatInput 发送与停止（既有行为）", () => {

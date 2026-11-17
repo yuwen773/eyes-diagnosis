@@ -14,9 +14,8 @@
    - 状态色必须同时带文字标签；颜色不是唯一信息载体。
    - 窄屏（≤640px）把台账行卡片化：一条记录一屏可读，横向滚动消失。
 
-   窄屏卡片化用 :nth-child 定位表格里的每一格。这一列顺序与
-   AdminNewsPage / AdminKnowledgePage 的 columns 定义一一对应；改动那份
-   列定义时必须同步改这里的定位块，否则窄屏会串位。
+   窄屏卡片化按 data-col（DataTable 写到每个格子上）定位，不再按 :nth-child
+   数位次：改动列定义时，CSS 跟着列 key 走，不会因为重排而串位。
    封面缩略图内联在标题格里，不占列，因此不参与这个映射。
    ========================================================================== */
 
@@ -879,28 +878,28 @@
     grid-template-columns: 18px minmax(0, 1fr) auto;
   }
 
-  .admin-news .admin-news__table .admin-dt__cell:nth-child(1) {
+  .admin-news .admin-news__table .admin-dt__cell[data-col="pick"] {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .admin-news .admin-news__table .admin-dt__cell:nth-child(2) {
+  .admin-news .admin-news__table .admin-dt__cell[data-col="title"] {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .admin-news .admin-news__table .admin-dt__cell:nth-child(3) {
+  .admin-news .admin-news__table .admin-dt__cell[data-col="status"] {
     grid-column: 3;
     grid-row: 1;
     justify-self: end;
   }
 
-  .admin-news .admin-news__table .admin-dt__cell:nth-child(4) {
+  .admin-news .admin-news__table .admin-dt__cell[data-col="publishTime"] {
     grid-column: 2;
     grid-row: 2;
   }
 
-  .admin-news .admin-news__table .admin-dt__cell:nth-child(5) {
+  .admin-news .admin-news__table .admin-dt__cell[data-col="action"] {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
@@ -919,39 +918,39 @@
     grid-template-columns: 18px minmax(0, 1fr) auto;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(1) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="pick"] {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(2) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="fileName"] {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(3) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="fileType"] {
     grid-column: 2;
     grid-row: 2;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(4) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="chunkCount"] {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(5) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="status"] {
     grid-column: 3;
     grid-row: 1;
     justify-self: end;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(6) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="createTime"] {
     grid-column: 2;
     grid-row: 3;
   }
 
-  .admin-knowledge .admin-knowledge__table .admin-dt__cell:nth-child(7) {
+  .admin-knowledge .admin-knowledge__table .admin-dt__cell[data-col="action"] {
     grid-column: 3;
     grid-row: 3;
     justify-self: end;

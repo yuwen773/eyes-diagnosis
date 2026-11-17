@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -51,10 +52,48 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  function updateText(next: string) {
+  // 草稿落盘分两条路径：打字节流（sessionStorage 是同步写，每个按键都写会拖慢
+  // 输入），prefill / 清空仍立刻写（跳登录回来不丢字、发送后草稿必须当场消失）。
+  const draftTimer = useRef<number | null>(null)
+  const pendingDraft = useRef("")
+
+  // 稳定引用：prefill 通过 useImperativeHandle 暴露出去，不能每次渲染换新函数。
+  const updateText = useCallback((next: string) => {
+    // 立刻写的场合必须先撤掉挂起的定时器，否则它会在发送后把旧草稿写回来。
+    if (draftTimer.current !== null) {
+      window.clearTimeout(draftTimer.current)
+      draftTimer.current = null
+    }
     setText(next)
     saveDraft(next)
+  }, [])
+
+  function typeText(next: string) {
+    setText(next)
+    pendingDraft.current = next
+    if (draftTimer.current !== null) return
+    draftTimer.current = window.setTimeout(() => {
+      draftTimer.current = null
+      saveDraft(pendingDraft.current)
+    }, 300)
   }
+
+  // 卸载时把还没落盘的那几个字补上：300ms 内离开页面不该丢草稿。
+  // 卸载只覆盖「组件被拆掉」——刷新页面、关标签页都不卸载组件，
+  // 所以还要挂 pagehide 兜底：那一下不会触发 React 的清理。
+  useEffect(() => {
+    const flush = () => {
+      if (draftTimer.current === null) return
+      window.clearTimeout(draftTimer.current)
+      draftTimer.current = null
+      saveDraft(pendingDraft.current)
+    }
+    window.addEventListener("pagehide", flush)
+    return () => {
+      window.removeEventListener("pagehide", flush)
+      flush()
+    }
+  }, [])
 
   useImperativeHandle(
     ref,
@@ -65,7 +104,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         textareaRef.current?.focus({ preventScroll: true })
       },
     }),
-    [],
+    [updateText],
   )
 
   // 自适应高度
@@ -76,13 +115,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
 
+  // 附件的最新值镜像：卸载清理要读它，而不是借 setState 的 updater 偷读——
+  // 卸载后的 setState 是 no-op，那条路径只是绕了一圈拿到同一个值。
+  const attachmentsRef = useRef(attachments)
+  useEffect(() => {
+    attachmentsRef.current = attachments
+  }, [attachments])
+
   // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
     return () => {
-      setAttachments((prev) => {
-        prev.forEach((a) => URL.revokeObjectURL(a.url))
-        return []
-      })
+      attachmentsRef.current.forEach((a) => URL.revokeObjectURL(a.url))
     }
   }, [])
 
@@ -203,7 +246,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             rows={1}
             value={text}
             disabled={disabled}
-            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => updateText(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => typeText(e.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             onFocus={() => setFocused(true)}

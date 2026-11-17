@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -527,34 +528,57 @@ export function ElectricBorder({
   const wakeRef = useRef<(() => void) | null>(null)
   const [generation, setGeneration] = useState(0)
 
-  const base = parseColor(color)
-  const settings: Settings = {
-    core: base.map((channel) => channel + (1 - channel) * 0.55) as Rgb,
-    glowColor: glowColor ? parseColor(glowColor) : base,
-    speed: Math.max(0, speed),
-    chaos: clamp(chaos, 0, 2),
-    spread: clamp(spread, 0, 2),
-    thickness: Math.max(0.25, thickness),
-    strands: clamp(Math.round(strands), 1, 6),
-    glow: clamp(glow, 0, 3),
-    intensity: Math.max(0, intensity),
-    arcs: Math.max(0, arcs),
-    flicker: clamp(flicker, 0, 1),
-    borderRadius: Math.max(0, borderRadius),
+  // 参数只在真的变化时才重建：父组件每次渲染都新建对象会让下面的 effect
+  // 每次都跑 resize()（读 offsetWidth 强制布局）。
+  const settings = useMemo<Settings>(() => {
+    const base = parseColor(color)
+    return {
+      core: base.map((channel) => channel + (1 - channel) * 0.55) as Rgb,
+      glowColor: glowColor ? parseColor(glowColor) : base,
+      speed: Math.max(0, speed),
+      chaos: clamp(chaos, 0, 2),
+      spread: clamp(spread, 0, 2),
+      thickness: Math.max(0.25, thickness),
+      strands: clamp(Math.round(strands), 1, 6),
+      glow: clamp(glow, 0, 3),
+      intensity: Math.max(0, intensity),
+      arcs: Math.max(0, arcs),
+      flicker: clamp(flicker, 0, 1),
+      borderRadius: Math.max(0, borderRadius),
+      offset,
+      active,
+      intro,
+      interactive,
+      cursorRadius: Math.max(1, cursorRadius),
+      light: theme === "light",
+    }
+  }, [
+    color,
+    glowColor,
+    speed,
+    chaos,
+    spread,
+    thickness,
+    strands,
+    glow,
+    intensity,
+    arcs,
+    flicker,
+    borderRadius,
     offset,
     active,
     intro,
     interactive,
-    cursorRadius: Math.max(1, cursorRadius),
-    light: theme === "light",
-  }
+    cursorRadius,
+    theme,
+  ])
   const settingsRef = useRef<Settings>(settings)
 
-  // 每次渲染后同步最新参数并唤醒循环（rAF 里读 ref，不重建 WebGL 上下文）。
+  // 参数变化后同步 ref 并唤醒循环（rAF 里读 ref，不重建 WebGL 上下文）。
   useEffect(() => {
     settingsRef.current = settings
     wakeRef.current?.()
-  })
+  }, [settings])
 
   useEffect(() => {
     const container = containerRef.current
@@ -572,7 +596,9 @@ export function ElectricBorder({
     const program = gl ? link(gl) : null
     if (!gl || !program) return
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    // 系统「减弱动效」开关可能在页面打开期间被切换：监听它，而不是挂载时读一次。
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+    let reduced = motionQuery.matches
     const vao = gl.createVertexArray()
     const arcEnds = new Float32Array(ARCS * 4)
     const arcShape = new Float32Array(ARCS * 4)
@@ -873,6 +899,12 @@ export function ElectricBorder({
     }
     document.addEventListener("visibilitychange", onVisibility)
 
+    const onMotionPreference = () => {
+      reduced = motionQuery.matches
+      wake()
+    }
+    motionQuery.addEventListener("change", onMotionPreference)
+
     resize()
     wake()
 
@@ -885,6 +917,7 @@ export function ElectricBorder({
       window.removeEventListener("pointerdown", onPointerDown)
       document.documentElement.removeEventListener("pointerleave", onLeave)
       document.removeEventListener("visibilitychange", onVisibility)
+      motionQuery.removeEventListener("change", onMotionPreference)
       canvas.removeEventListener("webglcontextlost", onLost)
       canvas.removeEventListener("webglcontextrestored", onRestored)
       if (!gl.isContextLost()) {

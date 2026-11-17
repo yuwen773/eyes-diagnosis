@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect } from "react"
+import { lazy, Suspense, useEffect, type ReactNode } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
 import { FaultProvider, FaultToaster } from "@/components/fault"
 import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { PageSkeleton } from "@/components/PageSkeleton"
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary"
 import { LandingPage } from "@/pages/LandingPage"
 
 // 首页保持同步：它是第一屏，分包只会多一次往返。其余路由按需下载——
@@ -107,6 +108,18 @@ export function AuthRedirect() {
   return null
 }
 
+/**
+ * 把错误边界绑到当前路由上：换页自动复位，不会把上一页的崩溃状态带过去。
+ */
+function RouteBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  return (
+    <RouteErrorBoundary resetKey={`${location.pathname}${location.search}`}>
+      {children}
+    </RouteErrorBoundary>
+  )
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -117,6 +130,7 @@ export function App() {
         <ScrollToTop />
         <AuthRedirect />
         <Suspense fallback={<PageSkeleton />}>
+        <RouteBoundary>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/diagnosis" element={<DiagnosisPage />} />
@@ -169,6 +183,7 @@ export function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </RouteBoundary>
         </Suspense>
         <FaultToaster />
         </FaultProvider>

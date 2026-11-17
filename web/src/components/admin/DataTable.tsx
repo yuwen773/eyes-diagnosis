@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement, type ReactNode } from "react"
+import { useMemo, type CSSProperties, type ReactElement, type ReactNode } from "react"
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react"
 import {
   functionalUpdate,
@@ -15,7 +15,8 @@ import {
  *
  * - `key`：列的稳定标识，同时作为未提供 `render` 时的取值键（见下方 cell 读取），
  *   也是服务端排序的字段名。
- * - `width`：直接落到 <th> 的 width，调用方给字符串（如 "120px" / "18%"）。
+ * - `width`：写成 <th> 上的 --col-w，由 CSS 落成 width；调用方给字符串
+ *   （如 "120px" / "18%"）。
  * - `align`：单元格文本对齐。
  * - `mono`：该列读数用全站 `.num`（等宽 + tabular-nums）。
  * - `render`：自定义单元格内容；不传时按 `key` 从行对象取值。
@@ -125,6 +126,9 @@ export function DataTable<T extends RowData>(props: {
     emptyContent,
   } = props
 
+  // 勾选状态每行都要查一次：数组 includes 是 O(n)，换 Set 后 O(1)。
+  const selectedSet = useMemo(() => new Set(selectedKeys), [selectedKeys])
+
   // 列定义映射到 TanStack 的列模型：key 同时是服务端排序字段。
   const tableColumns = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
@@ -177,12 +181,14 @@ export function DataTable<T extends RowData>(props: {
     body = Array.from({ length: 4 }, (_, index) => (
       <tr key={`skeleton-${index}`} className="admin-dt__row admin-dt__row--skeleton" aria-hidden="true">
         {selectable ? (
-          <td className="admin-dt__cell admin-dt__cell--pick">
+          <td className="admin-dt__cell admin-dt__cell--pick" data-col="pick">
             <span className="admin-dt__skeleton admin-dt__skeleton--check" />
           </td>
         ) : null}
         {columns.map((column) => (
-          <td key={column.key} className="admin-dt__cell">
+          // 列身份同样写进 DOM：窄屏卡片化与列隐藏规则按 data-col 定位列。
+          // 骨架行少了它，加载瞬间的列就会排错位，数据到达后再跳回去。
+          <td key={column.key} className="admin-dt__cell" data-col={column.key}>
             <span className="admin-dt__skeleton" />
           </td>
         ))}
@@ -209,11 +215,11 @@ export function DataTable<T extends RowData>(props: {
       const row = tableRow.original
       const key = tableRow.id
       const selectableRow = selectable && (isRowSelectable ? isRowSelectable(row) : true)
-      const checked = selectedKeys.includes(key)
+      const checked = selectedSet.has(key)
       return (
         <tr key={key} className="admin-dt__row">
           {selectable ? (
-            <td className="admin-dt__cell admin-dt__cell--pick">
+            <td className="admin-dt__cell admin-dt__cell--pick" data-col="pick">
               {/* label 铺满单元格：15px 的视觉盒仍小，但 40px 高的整格都是热区 */}
               <label className="admin-dt__pick">
                 <input
@@ -237,6 +243,9 @@ export function DataTable<T extends RowData>(props: {
           {columns.map((column, columnIndex) => (
             <td
               key={column.key}
+              // 列身份写进 DOM：窄屏卡片化的列序规则按 data-col 匹配，
+              // 列一重排不用同步改 CSS（:nth-child 曾把列序焊死在样式里）。
+              data-col={column.key}
               className={
                 "admin-dt__cell" +
                 (column.mono ? " num" : "") +
@@ -257,14 +266,17 @@ export function DataTable<T extends RowData>(props: {
    * 全选 / 取消全选：只作用于「当前页里可选的行」。
    * 不可选的行（例如管理员账号）不参与全选，否则会把不可操作的行塞进选中集。
    */
-  const selectableKeys = selectable
-    ? (rows ?? [])
-        .filter((row) => (isRowSelectable ? isRowSelectable(row) : true))
-        .map((row) => rowKey(row))
-    : []
+  const selectableKeys = useMemo(() => {
+    if (!selectable) return []
+    const out: string[] = []
+    for (const row of rows ?? []) {
+      if (!isRowSelectable || isRowSelectable(row)) out.push(rowKey(row))
+    }
+    return out
+  }, [selectable, rows, isRowSelectable, rowKey])
   const allChecked =
-    selectableKeys.length > 0 && selectableKeys.every((key) => selectedKeys.includes(key))
-  const someChecked = selectableKeys.some((key) => selectedKeys.includes(key))
+    selectableKeys.length > 0 && selectableKeys.every((key) => selectedSet.has(key))
+  const someChecked = selectableKeys.some((key) => selectedSet.has(key))
 
   const goPrev = () => {
     if (current > 1) onPageChange({ current: current - 1, pageSize: page.pageSize })
@@ -285,7 +297,7 @@ export function DataTable<T extends RowData>(props: {
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id} className="admin-dt__head-row">
                 {selectable ? (
-                  <th scope="col" className="admin-dt__head admin-dt__head--pick">
+                  <th scope="col" className="admin-dt__head admin-dt__head--pick" data-col="pick">
                     <label className="admin-dt__pick">
                       <input
                         type="checkbox"
@@ -314,6 +326,12 @@ export function DataTable<T extends RowData>(props: {
                     <th
                       key={header.id}
                       scope="col"
+                      data-col={column.key}
+                      // 有列宽的表头才挂 data-col-w：CSS 靠这个属性把 --col-w
+                      // 落成 width。没列宽的列（勾选列）不吃这条规则，
+                      // 否则 table-layout:fixed 会让 auto 列吸走整表富余宽度，
+                      // 把数据列压成名义宽度（宽表会整张向右歪）。
+                      data-col-w={column.width ? "" : undefined}
                       className={
                         "admin-dt__head num" +
                         (column.align ? ` admin-dt__cell--${column.align}` : "") +
@@ -322,7 +340,13 @@ export function DataTable<T extends RowData>(props: {
                           ? " admin-dt__head--action"
                           : "")
                       }
-                      style={column.width ? { width: column.width } : undefined}
+                      // 列宽走变量而不是行内 width：行内样式只能被 !important
+                      // 压过，窄屏收窄固定列时会逼着基础层和语境层打特技。
+                      style={
+                        column.width
+                          ? ({ "--col-w": column.width } as CSSProperties)
+                          : undefined
+                      }
                       aria-sort={
                         !header.column.getCanSort()
                           ? undefined

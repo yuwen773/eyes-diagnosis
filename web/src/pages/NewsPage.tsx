@@ -58,12 +58,29 @@ export function NewsPage() {
   // 后端默认按 publishTime 倒序，所以第一页第一条就是最新一条。
   // 只有第一页给它头版位置；翻页后全部回到列表，不制造「每页都有精选」。
   const featured = page === 1 && !query ? records[0] : undefined
-  const rows = featured ? records.slice(1) : records
+  // slice 每次渲染都会产出新数组，先固定引用，下面的行派生才缓存得住。
+  const rows = useMemo(() => (featured ? records.slice(1) : records), [featured, records])
 
-  const latest = records.reduce<string>((acc, item) => {
-    const { date } = newsDate(item.publishTime)
-    return !acc || date > acc ? date : acc
-  }, "")
+  // 日期解析与摘要截断都要跑正则；搜索框每次按键都会重渲染，
+  // 提前按 rows 算一次，渲染期只读结果。
+  const rowViews = useMemo(
+    () =>
+      rows.map((item) => ({
+        item,
+        date: newsDate(item.publishTime).date,
+        excerpt: rowExcerpt(item),
+      })),
+    [rows]
+  )
+
+  const latest = useMemo(
+    () =>
+      records.reduce<string>((acc, item) => {
+        const { date } = newsDate(item.publishTime)
+        return !acc || date > acc ? date : acc
+      }, ""),
+    [records]
+  )
   // 「更新至」只在第一页且有数据、未检索时成立：此时 records[0] 才是全站最新一条；
   // 翻页或检索后它只是当前结果集的日期，不能冒充站点更新时间。
   // 空库不写「更新至 —」——那是在报一个不存在的更新时间。
@@ -218,9 +235,7 @@ export function NewsPage() {
 
             {rows.length > 0 ? (
               <ul className="news-rows">
-                {rows.map((item) => {
-                  const { date } = newsDate(item.publishTime)
-                  const excerpt = rowExcerpt(item)
+                {rowViews.map(({ item, date, excerpt }) => {
                   return (
                     <li className="news-rows__item" key={item.id}>
                       <Link

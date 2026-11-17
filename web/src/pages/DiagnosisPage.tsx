@@ -110,11 +110,14 @@ export function DiagnosisPage() {
   const [faultScope, setFaultScope] = useState<"slot" | "run">("slot")
   const [needsLogin, setNeedsLogin] = useState(false)
   const [result, setResult] = useState<DiagnosisResult | null>(null)
-  const [elapsed, setElapsed] = useState(0)
   const [dragging, setDragging] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef<number>(0)
+  // 耗时读数直写 DOM：100ms 一次的 setState 会让整页（含顶栏）重渲染；
+  // 写进 aria-live 日志时还会被读屏器持续播报，所以日志那格要 aria-hidden。
+  const elapsedSlotRef = useRef<HTMLSpanElement>(null)
+  const elapsedJournalRef = useRef<HTMLSpanElement>(null)
   // 本次判读的代号。每次真正发起判读就换号，回来时先核对号对不对得上：
   // 对不上说明这次结果已经被换图或重置取代了，直接丢掉，绝不落到新的影像上。
   const runId = useRef(0)
@@ -126,12 +129,16 @@ export function DiagnosisPage() {
     }
   }, [])
 
-  // 计时器：只显示真实等待时长，不做进度假动作。
+  // 计时器：只显示真实等待时长，不做进度假动作。读数直写 DOM，不触发渲染。
   useEffect(() => {
     if (stage !== "running") return
-    const timer = window.setInterval(() => {
-      setElapsed((Date.now() - startedAt.current) / 1000)
-    }, 100)
+    const tick = () => {
+      const seconds = (Date.now() - startedAt.current) / 1000
+      if (elapsedSlotRef.current) elapsedSlotRef.current.textContent = `T+ ${clock(seconds)}`
+      if (elapsedJournalRef.current) elapsedJournalRef.current.textContent = `${seconds.toFixed(1)} s`
+    }
+    tick()
+    const timer = window.setInterval(tick, 100)
     return () => window.clearInterval(timer)
   }, [stage])
 
@@ -169,7 +176,6 @@ export function DiagnosisPage() {
     setFault(null)
     setNeedsLogin(false)
     setResult(null)
-    setElapsed(0)
     startedAt.current = Date.now()
 
     try {
@@ -286,7 +292,8 @@ export function DiagnosisPage() {
     log.push({
       key: "wait",
       text: "等待模型响应",
-      note: `${elapsed.toFixed(1)} s`,
+      // 读数由计时器直接写进对应单元格（见 render），这里不参与渲染。
+      note: "",
       state: stage === "running" ? "run" : "done",
     })
   }
@@ -385,7 +392,7 @@ export function DiagnosisPage() {
                   {stage === "running" ? (
                     <span className="slot__timer num" aria-hidden="true">
                       <span>READING · B4</span>
-                      <span>T+ {clock(elapsed)}</span>
+                      <span ref={elapsedSlotRef}>T+ {clock(0)}</span>
                     </span>
                   ) : null}
                 </>
@@ -497,7 +504,13 @@ export function DiagnosisPage() {
                   <li key={line.key} data-state={line.state}>
                     <span>{line.state === "run" ? "›" : line.state === "fail" ? "×" : "✓"}</span>
                     <span>{line.text}</span>
-                    <span>{line.note}</span>
+                    {/* 耗时格由计时器直写；aria-hidden 防止 live region 每 100ms 播报一次。 */}
+                    <span
+                      ref={line.key === "wait" ? elapsedJournalRef : undefined}
+                      aria-hidden={line.key === "wait" ? true : undefined}
+                    >
+                      {line.note}
+                    </span>
                   </li>
                 ))
               )}

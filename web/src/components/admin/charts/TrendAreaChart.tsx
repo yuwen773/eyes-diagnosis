@@ -18,6 +18,9 @@ import {
   formatVizNumber,
 } from "./ChartFrame"
 
+/** useId 产出里可能有 `:`，SVG id 只留字母数字与连字符。模块级避免每帧新建。 */
+const ID_UNSAFE_CHARS = /[^a-zA-Z0-9-]/g
+
 /**
  * 判读趋势（面积 + 上一等长窗口对比）。
  *
@@ -55,7 +58,7 @@ export function TrendAreaChart(props: {
     previousLabel = "上一等长窗口",
     readout = "latest",
   } = props
-  const gradientId = `iris-viz-area-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`
+  const gradientId = `iris-viz-area-${useId().replace(ID_UNSAFE_CHARS, "")}`
 
   const sum = data.reduce((total, row) => total + row.value, 0)
   const average = data.length > 0 ? sum / data.length : 0

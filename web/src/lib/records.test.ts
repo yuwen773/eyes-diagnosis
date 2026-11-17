@@ -2,9 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   canRequestReexamine,
-  loadMyStats,
+  loadServerStats,
   reexamineLabel,
   reexamineView,
+  resolveScopedStats,
   statsLabels,
   summarizeRecords,
 } from "./records"
@@ -118,7 +119,7 @@ describe("reexamineView", () => {
   })
 })
 
-describe("loadMyStats", () => {
+describe("resolveScopedStats", () => {
   const serverStats = {
     total: 128,
     highRisk: 9,
@@ -126,17 +127,15 @@ describe("loadMyStats", () => {
     lastReadAt: "2026-11-08 14:32:10",
   }
 
-  it("服务端聚合可用时用全量口径", async () => {
-    mockedStats.mockResolvedValueOnce(serverStats)
-    await expect(loadMyStats([row({ severity: "severe" })], 1)).resolves.toEqual({
+  it("服务端聚合可用时用全量口径", () => {
+    expect(resolveScopedStats(serverStats, [row({ severity: "severe" })], 1)).toEqual({
       stats: serverStats,
       scope: "all",
     })
   })
 
-  it("接口未实现（404）时降级到当前页并标注 page", async () => {
-    mockedStats.mockRejectedValueOnce(new ApiError(404, "服务返回 404"))
-    const result = await loadMyStats([row({ severity: "severe" })], 37)
+  it("聚合不可用时退回当前页并标注 page", () => {
+    const result = resolveScopedStats(null, [row({ severity: "severe" })], 37)
     expect(result.scope).toBe("page")
     expect(result.stats).toEqual({
       total: 37,
@@ -146,44 +145,57 @@ describe("loadMyStats", () => {
     })
   })
 
-  it("网络错误同样降级，不向上抛", async () => {
-    mockedStats.mockRejectedValueOnce(new ApiError(-1, "网络不可用"))
-    await expect(loadMyStats([], 0)).resolves.toMatchObject({ scope: "page" })
-  })
-
-  it("服务端返回空对象时降级到本页口径（不冒充全量）", async () => {
-    mockedStats.mockResolvedValueOnce({} as never)
-    const result = await loadMyStats([row({ severity: "severe" })], 37)
-    expect(result.scope).toBe("page")
-    expect(result.stats.highRisk).toBe(1)
-  })
-
-  it("服务端返回 null 时降级到本页口径", async () => {
-    mockedStats.mockResolvedValueOnce(null as never)
-    const result = await loadMyStats([], 0)
+  it("聚合与页面都没有数据时口径仍是 page，不冒充全量", () => {
+    const result = resolveScopedStats(null, [], 0)
     expect(result.scope).toBe("page")
     expect(result.stats.total).toBe(0)
   })
+})
 
-  it("字段缺一（缺 highRisk）时降级到本页口径", async () => {
+describe("loadServerStats", () => {
+  it("载荷齐全时原样返回", async () => {
+    const payload = { total: 128, highRisk: 9, awaitingReview: 12, lastReadAt: null }
+    mockedStats.mockResolvedValueOnce(payload as never)
+    await expect(loadServerStats()).resolves.toEqual(payload)
+  })
+
+  it("接口未实现（404）时返回 null，不向上抛", async () => {
+    mockedStats.mockRejectedValueOnce(new ApiError(404, "服务返回 404"))
+    await expect(loadServerStats()).resolves.toBeNull()
+  })
+
+  it("网络错误同样返回 null", async () => {
+    mockedStats.mockRejectedValueOnce(new ApiError(-1, "网络不可用"))
+    await expect(loadServerStats()).resolves.toBeNull()
+  })
+
+  it("服务端返回空对象时返回 null（不冒充全量）", async () => {
+    mockedStats.mockResolvedValueOnce({} as never)
+    await expect(loadServerStats()).resolves.toBeNull()
+  })
+
+  it("服务端返回 null 时返回 null", async () => {
+    mockedStats.mockResolvedValueOnce(null as never)
+    await expect(loadServerStats()).resolves.toBeNull()
+  })
+
+  it("字段缺一（缺 highRisk）时返回 null", async () => {
     mockedStats.mockResolvedValueOnce({
       total: 128,
       awaitingReview: 12,
       lastReadAt: null,
     } as never)
-    const result = await loadMyStats([], 0)
-    expect(result.scope).toBe("page")
+    await expect(loadServerStats()).resolves.toBeNull()
   })
 
-  it("数值字段不是有限数字时降级到本页口径", async () => {
+  it("数值字段不是有限数字时返回 null", async () => {
     mockedStats.mockResolvedValueOnce({
       total: "128",
       highRisk: 9,
       awaitingReview: 12,
       lastReadAt: null,
     } as never)
-    const result = await loadMyStats([], 0)
-    expect(result.scope).toBe("page")
+    await expect(loadServerStats()).resolves.toBeNull()
   })
 })
 

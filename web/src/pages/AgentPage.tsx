@@ -308,6 +308,24 @@ export function AgentPage() {
     [afterSessionChange, sessions],
   )
 
+  // 子组件的 memo 依赖：这些回调必须引用稳定，否则 SessionList / MessageList
+  // 每片 token 都会因为收到新 props 而整棵重渲染。
+  const handleSelectSession = useCallback(
+    (id: string) => void handleSelectHistory(id),
+    [handleSelectHistory],
+  )
+  const handleRenameSession = useCallback(
+    (id: string, title: string) => afterSessionChange(() => updateSessionTitle(id, title)),
+    [afterSessionChange],
+  )
+  const handleTogglePinSession = useCallback(
+    (id: string, pinned: boolean) =>
+      void afterSessionChange(() => updatePinStatus(id, pinned)),
+    [afterSessionChange],
+  )
+  const handleCollapseSessions = useCallback(() => setSessionsCollapsed(true), [])
+  const handleSendText = useCallback((text: string) => void handleSend(text), [handleSend])
+
   if (status === "loading") {
     return (
       <div className="is-field is-brand-page">
@@ -340,17 +358,13 @@ export function AgentPage() {
               activeId={currentThreadId}
               busy={busy}
               onNewChat={handleNewChat}
-              onSelect={(id) => void handleSelectHistory(id)}
-              onRename={(id, title) =>
-                afterSessionChange(() => updateSessionTitle(id, title))
-              }
+              onSelect={handleSelectSession}
+              onRename={handleRenameSession}
               onDelete={handleDelete}
               onBatchDelete={handleBatchDelete}
-              onTogglePin={(id, pinned) =>
-                void afterSessionChange(() => updatePinStatus(id, pinned))
-              }
+              onTogglePin={handleTogglePinSession}
               onExport={handleExport}
-              onCollapse={() => setSessionsCollapsed(true)}
+              onCollapse={handleCollapseSessions}
             />
           </div>
 
@@ -359,8 +373,8 @@ export function AgentPage() {
               messages={messages}
               loading={historyLoading}
               streaming={isStreaming}
-              onSend={(text) => void handleSend(text)}
-              onPreviewImage={(url) => setPreviewUrl(url)}
+              onSend={handleSendText}
+              onPreviewImage={setPreviewUrl}
               onPickImage={pickImage}
               headLeft={
                 <>
@@ -426,7 +440,7 @@ export function AgentPage() {
               open
               resources={resources}
               onClose={() => setPanelOpen(false)}
-              onPreviewImage={(url) => setPreviewUrl(url)}
+              onPreviewImage={setPreviewUrl}
             />
           )}
         </div>

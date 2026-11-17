@@ -116,24 +116,25 @@ export function AdminNewsPage(): ReactElement {
   const navigate = useNavigate()
   // 下钻入口：仪表盘的「资讯待审核」带 ?status=3 进来，直接落到待审核筛选上。
   const [searchParams] = useSearchParams()
-  const initialStatus = ((): string => {
+  // 初始值只在挂载时用一次：惰性初始化，避免每次渲染都重读 URL 参数。
+  const readInitialStatus = () => {
     const value = searchParams.get("status")
     return value !== null && NEWS_STATUS_OPTIONS.some((option) => String(option.value) === value)
       ? value
       : ""
-  })()
+  }
 
   // 输入草稿与「已应用的查询」分开：打字不触发请求，回车 / 查询按钮才提交。
   const [titleDraft, setTitleDraft] = useState("")
-  const [statusDraft, setStatusDraft] = useState(initialStatus)
+  const [statusDraft, setStatusDraft] = useState(readInitialStatus)
   const [startDraft, setStartDraft] = useState("")
   const [endDraft, setEndDraft] = useState("")
-  const [query, setQuery] = useState<Query>({
+  const [query, setQuery] = useState<Query>(() => ({
     title: "",
-    status: initialStatus,
+    status: readInitialStatus(),
     startDate: "",
     endDate: "",
-  })
+  }))
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
   // 服务端排序：字段必须落在后端白名单里。
   const [sort, setSort] = useState<SortState>(null)

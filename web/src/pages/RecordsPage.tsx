@@ -11,12 +11,11 @@ import {
   requestReexamine,
 } from "@/lib/api"
 import {
-  loadMyStats,
+  loadServerStats,
   reexamineLabel,
   reexamineView,
+  resolveScopedStats,
   statsLabels,
-  summarizeRecords,
-  type ScopedStats,
 } from "@/lib/records"
 import { queryKeys } from "@/lib/queryKeys"
 import { useSession } from "@/lib/session"
@@ -71,16 +70,19 @@ export function RecordsPage() {
       ? describeError(listQuery.error)
       : null
 
-  // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页。
+  // 服务端聚合与列表是两个独立端点，并行发出；接口未上线或失败时
+  // 在渲染期回退到本页汇总，并把口径标成 page。
+  // 统计是账号级的，查询键不带页码：翻页不换键，个人中心与这里共享同一份缓存。
   const statsQuery = useQuery({
-    queryKey: [...listKey, "stats"] as const,
-    queryFn: ({ signal }) => loadMyStats(records, data?.total ?? 0, signal),
-    enabled: authed && data !== undefined,
+    queryKey: queryKeys.records.stats(scope),
+    queryFn: ({ signal }) => loadServerStats(signal),
+    enabled: authed,
   })
-  const scoped: ScopedStats | null = statsQuery.data ?? null
+  const serverStats = statsQuery.data ?? null
 
-  const stats = scoped?.stats ?? summarizeRecords(records, data?.total ?? 0)
-  const labels = statsLabels(scoped?.scope ?? "page")
+  const scoped = resolveScopedStats(serverStats, records, data?.total ?? 0)
+  const stats = scoped.stats
+  const labels = statsLabels(scoped.scope)
 
   /** 展开的记录详情。同一时刻只开一条。 */
   const [openId, setOpenId] = useState<string | null>(null)
@@ -206,7 +208,7 @@ export function RecordsPage() {
           </div>
         </div>
 
-        {scoped?.scope === "all" ? null : (
+        {serverStats ? null : (
           <p className="records__scope">
             总数是你名下的全部判读；带「本页」的三项只统计当前这一页（第 {page} / {pages}
             页），翻页会变。服务端聚合上线后会自动切到全量。

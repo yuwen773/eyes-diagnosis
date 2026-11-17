@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { ClipboardEvent, KeyboardEvent } from "react"
 import { ArrowRight, ArrowUp, CirclePlus, ImagePlus } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { BRAND_BLUE_DARK, BRAND_BLUE_LIGHT } from "@/lib/brandPalette"
 import { ElectricBorder } from "@/components/ElectricBorder"
 import { saveDraft } from "@/lib/agentDraft"
 import { useSession } from "@/lib/session"
@@ -56,8 +57,8 @@ export function AgentComposer({ dark }: { dark: boolean }) {
       <ElectricBorder
         /* 首页是 Brand 场景：光标跟随的边框走钴蓝 / 冰蓝，
            不再用信号橙——橙色只留给临床重点态（DESIGN §3.4）。 */
-        color={dark ? "#85b5ff" : "#4f86e8"}
-        glowColor={dark ? "#85b5ff" : "#4f86e8"}
+        color={dark ? BRAND_BLUE_DARK : BRAND_BLUE_LIGHT}
+        glowColor={dark ? BRAND_BLUE_DARK : BRAND_BLUE_LIGHT}
         theme={dark ? "dark" : "light"}
         borderRadius={22}
         thickness={1.9}
