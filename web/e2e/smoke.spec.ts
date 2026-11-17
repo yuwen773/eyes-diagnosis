@@ -131,8 +131,9 @@ test.describe("验收冒烟", () => {
     )
     await page.goto("/agent")
     // 不能用 placeholder 定位后再输入：输入框有文字后 placeholder 会变成空串，
-    // 第二次解析 locator 就找不到了。用稳定的类名定位。
-    const input = page.locator(".agent-input__textarea")
+    // 第二次解析 locator 就找不到了。用稳定的类名定位（R3 起输入框是
+    // `.prompt__input`，旧 `.agent-input__textarea` 已随工作区重做删除）。
+    const input = page.locator(".prompt__input")
     await input.fill("你好")
     await input.press("Enter")
     await expect(
