@@ -1,12 +1,7 @@
 import "@/styles/collaboration.css"
+import "@/styles/roundtable.css"
 import { useEffect, useState } from "react"
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Layers3,
-  Plus,
-  ShieldCheck,
-} from "lucide-react"
+import { ArrowLeft, ArrowUpRight, Plus, ShieldCheck } from "lucide-react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { CollaborationTaskForm } from "@/components/agent/collaboration/CollaborationTaskForm"
@@ -86,28 +81,18 @@ function CollaborationSession({ identity }: { identity: string | null }) {
         aria-labelledby="collaboration-title"
       >
         <div>
-          <span className="collab-eyebrow">
-            <Layers3 size={14} aria-hidden="true" /> COLLABORATIVE INTELLIGENCE
+          <span className="collab-eyebrow" lang="en">
+            Agent Roundtable <span className="num">3.0</span>
           </span>
-          <h1 id="collaboration-title">
-            多{" "}
-            <span className="collab-brand-word" lang="en">
-              Agent
-            </span>{" "}
-            协作工作台
-            <span className="collab-page-heading__subtitle">
-              把每一步，交给合适的角色。
-            </span>
-          </h1>
-          <p>
-            从眼底影像到受控证据，查看真实协作进展。辅助草稿由医生复核后，才进入获准结果流程。
-          </p>
+          <h1 id="collaboration-title">影像协作</h1>
         </div>
         <div className="collab-page-actions">
-          <Link to="/agent" className="collab-button">
-            <ArrowLeft size={15} aria-hidden="true" />
-            普通 AI 问答
-          </Link>
+          {(!enabled || !identity || !runId) && (
+            <Link to="/agent" className="collab-button">
+              <ArrowLeft size={15} aria-hidden="true" />
+              普通 AI 问答
+            </Link>
+          )}
           {enabled && identity && runId && (
             <button type="button" className="collab-button" onClick={newTask}>
               <Plus size={15} aria-hidden="true" />
@@ -146,7 +131,10 @@ function CollaborationSession({ identity }: { identity: string | null }) {
           </p>
         ) : (
           <CollaborationRunContext.Provider value={view}>
-            <CollaborationWorkspace onClose={() => navigate("/agent")} />
+            <CollaborationWorkspace
+              key={runId}
+              onClose={() => navigate("/agent")}
+            />
           </CollaborationRunContext.Provider>
         )
       ) : (
@@ -158,13 +146,6 @@ function CollaborationSession({ identity }: { identity: string | null }) {
             onAccepted={accepted}
           />
           <aside className="collab-launch-guide" aria-label="协作流程说明">
-            <span className="collab-eyebrow">
-              FOUR ROLES · ONE REVIEWED WORKFLOW
-            </span>
-            <h2>各司其职，保留依据。</h2>
-            <p>
-              以下为角色职责说明。提交影像并通过处理条件后，才会产生实际执行状态。
-            </p>
             <CollaborationRoles />
             <div className="collab-boundary">
               <ShieldCheck size={18} aria-hidden="true" />

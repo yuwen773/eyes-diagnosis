@@ -81,6 +81,7 @@ test("one-shot R5 real provider: safe negatives then Graph and Coordinator, with
         await expect(doctor.page.getByText("该冻结版本已批准", { exact: true })).toBeVisible()
         row.doctorUi = "PASS_SYNTHETIC_ENGINEERING_DECISION"
         await patient.page.bringToFront(); await patient.page.getByRole("button", { name: "刷新复核状态" }).click()
+        await patient.page.getByRole("button", { name: "查看获准的辅助说明", exact: true }).click()
         const panel = patient.page.getByLabel("本人获准说明与保存")
         await expect(panel).toContainText("模型预测并非确诊")
         await panel.getByRole("button", { name: "查看拟保存内容或查询回执" }).click()

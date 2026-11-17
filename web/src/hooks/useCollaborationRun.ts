@@ -115,6 +115,7 @@ class CollaborationSession {
     // exposing it; a later GET would discard the first events of a fast run.
     let admitted =
       !forceRefresh && !this.view.run ? this.scope.initialSnapshot : undefined
+    let retained = forceRefresh ? this.view.run : null
     let refresh = forceRefresh || !this.view.run
     let repairs = 0
     let attempts = 0
@@ -127,7 +128,15 @@ class CollaborationSession {
             admitted ?? (await this.api.snapshot(this.scope.runId!, signal))
           admitted = undefined
           if (!this.current(epoch)) return
-          this.update({ run: this.authorized(snapshot), error: null })
+          const next = this.authorized(snapshot)
+          if (
+            retained?.snapshot.projectionVersion ===
+              snapshot.projectionVersion &&
+            retained.sequence <= next.sequence
+          )
+            next.events = retained.events
+          retained = null
+          this.update({ run: next, error: null })
           refresh = false
         }
         const run = this.view.run!
@@ -205,7 +214,7 @@ class CollaborationSession {
           error.status !== 429 &&
           error.status < 500
         ) {
-          this.update({ connection: "error", error: error.message })
+          this.update({ run: null, connection: "error", error: error.message })
           this.stopStream()
           return
         }
@@ -296,7 +305,15 @@ export function useCollaborationRun(scope: CollaborationScope) {
   )
   useEffect(() => {
     session.connect()
-    return session.disconnect
+    function revalidateTerminal() {
+      if (!document.hidden && session.getSnapshot().connection === "closed")
+        session.retry()
+    }
+    document.addEventListener("visibilitychange", revalidateTerminal)
+    return () => {
+      document.removeEventListener("visibilitychange", revalidateTerminal)
+      session.disconnect()
+    }
   }, [session])
   return {
     ...view,

@@ -282,6 +282,23 @@
   }
 }
 
+/* 四个入口与登录控件在窄桌面会碰撞，沿用同一个导航抽屉。 */
+@media (900px < width <= 1099px) {
+  .product-head:has(.product-head__link[href="/agent/collaboration"]) .product-head__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .product-head:has(.product-head__link[href="/agent/collaboration"])
+    :is(.product-head__nav, .product-head__cta, .product-head__actions .acct) {
+    display: none;
+  }
+
+  .product-head:has(.product-head__link[href="/agent/collaboration"]) .burger {
+    display: inline-flex;
+  }
+}
+
 @media (max-width: 480px) {
   .product-head .wordmark__en {
     display: none;

@@ -14,6 +14,7 @@ async function setup(
     long?: boolean
     live?: boolean
     review?: string
+    roundtable?: "normal" | "supplement"
   } = {}
 ) {
   const started = fixture.events[2],
@@ -52,20 +53,23 @@ async function setup(
   let admissions = 0
   let cancellations = 0
   let saves = 0
-  if (options.live) {
+  if (options.live || options.roundtable) {
     await page.addInitScript(
-      ({ samples }) => {
+      ({ samples, roundtable }) => {
         let controller: ReadableStreamDefaultController<Uint8Array> | null =
           null
         let sequence = 1
         const cursors: string[] = []
         const original = window.fetch.bind(window)
-        const send = (type: string) => {
-          const sample = samples.find((event) => event.type === type)!
+        const send = (type: string, patch: Record<string, unknown> = {}) => {
+          const sample = {
+            ...samples.find((event) => event.type === type),
+            ...patch,
+          }
           sequence++
           controller?.enqueue(
             new TextEncoder().encode(
-              `id: live-${sequence}\nevent: ${type}\ndata: ${JSON.stringify({ ...sample, schemaVersion: 1, runId: "run-a", threadId: "thread-a", occurredAt: "2026-11-14T12:00:00Z", sequence, eventId: `run-a:${sequence}` })}\n\n`
+              `id: live-${sequence}\nevent: ${type}\ndata: ${JSON.stringify({ ...sample, type, schemaVersion: 1, runId: "run-a", threadId: "thread-a", occurredAt: new Date(Date.UTC(2026, 10, 17, 2, 42, sequence)).toISOString(), sequence, eventId: `run-a:${sequence}` })}\n\n`
             )
           )
         }
@@ -101,6 +105,69 @@ async function setup(
                   if (cursors.length === 1) {
                     send("run.started")
                     send("agent.started")
+                    if (roundtable) {
+                      send("agent.completed")
+                      send("agent.summary", {
+                        actor: "VISION",
+                        visibility: "PATIENT",
+                        payload: {
+                          call: 1,
+                          summary: "VISION_REVIEW_QUALITY:NONE",
+                          limitationCount: 0,
+                        },
+                      })
+                      send("agent.started", {
+                        actor: "EVIDENCE",
+                        payload: { call: 2 },
+                      })
+                    }
+                    if (roundtable === "supplement") {
+                      send("agent.completed", {
+                        actor: "EVIDENCE",
+                        payload: { call: 2 },
+                      })
+                      send("agent.summary", {
+                        actor: "EVIDENCE",
+                        visibility: "PATIENT",
+                        payload: {
+                          call: 2,
+                          summary: "EVIDENCE_FROZEN",
+                          limitationCount: 1,
+                        },
+                      })
+                      send("agent.started", {
+                        actor: "EXPLANATION",
+                        payload: { call: 3 },
+                      })
+                      send("agent.completed", {
+                        actor: "EXPLANATION",
+                        payload: { call: 3 },
+                      })
+                      send("agent.summary", {
+                        actor: "EXPLANATION",
+                        visibility: "PATIENT",
+                        payload: {
+                          call: 3,
+                          summary: "DRAFT_PENDING_REVIEW",
+                          limitationCount: 1,
+                        },
+                      })
+                      send("agent.started", {
+                        actor: "CRITIC",
+                        payload: { call: 4 },
+                      })
+                      send("agent.feedback.requested", {
+                        payload: { action: "SUPPLEMENT", call: 4 },
+                      })
+                      send("agent.completed", {
+                        actor: "CRITIC",
+                        payload: { call: 4 },
+                      })
+                      send("agent.started", {
+                        actor: "EVIDENCE",
+                        payload: { call: 5 },
+                      })
+                    }
                     next.enqueue(
                       new TextEncoder().encode(
                         'id: opaque-scanned\nevent: run.heartbeat\ndata: {"schemaVersion":1}\n\n'
@@ -115,7 +182,7 @@ async function setup(
           return original(input, init)
         }
       },
-      { samples: fixture.events }
+      { samples: fixture.events, roundtable: options.roundtable }
     )
   }
   await page.addInitScript(() => {
@@ -271,9 +338,14 @@ async function setup(
     }
     if (path.endsWith("/image"))
       return route.fulfill({
-        contentType: "image/png",
+        contentType: options.roundtable ? "image/jpeg" : "image/png",
         body: readFileSync(
-          new URL("./fixtures/collaboration-synthetic.png", import.meta.url)
+          new URL(
+            options.roundtable
+              ? "../public/fundus-demo.jpg"
+              : "./fixtures/collaboration-synthetic.png",
+            import.meta.url
+          )
         ),
       })
     if (path.startsWith("/api/agent/collaboration-runs/"))
@@ -287,6 +359,19 @@ async function setup(
     cancellations: () => cancellations,
     saves: () => saves,
   }
+}
+
+async function openInspector(page: Page) {
+  const button = page.getByRole("button", { name: /^影像与证据/ })
+  if (await button.count()) await button.click()
+}
+
+function evidenceDir() {
+  const dir = resolve(
+    process.env.ROUNDTABLE_EVIDENCE_DIR ?? "test-results/roundtable-evidence"
+  )
+  mkdirSync(dir, { recursive: true })
+  return dir
 }
 
 function textContrastFailures(root: HTMLElement) {
@@ -352,7 +437,7 @@ function textContrastFailures(root: HTMLElement) {
 }
 
 for (const theme of ["light", "dark"]) {
-  for (const width of [390, 768, 820, 900, 1440, 1920]) {
+  for (const width of [360, 390, 768, 820, 900, 1024, 1280, 1440, 1920]) {
     test(`completed workbench screenshot / ${theme} / ${width}`, async ({
       page,
     }) => {
@@ -366,7 +451,9 @@ for (const theme of ["light", "dark"]) {
       await expect(
         page.getByRole("region", { name: "实时协作工作台" })
       ).toBeVisible()
-      await expect(page.getByText("正在复核与修订")).toBeVisible()
+      await expect(
+        page.getByText("已请求修订说明", { exact: true })
+      ).toBeVisible()
       await expect(page.locator(".collab-summary")).toContainText("待医生复核")
       expect(
         await page.evaluate(
@@ -375,6 +462,12 @@ for (const theme of ["light", "dark"]) {
       ).toBe(true)
       expect(errors).toEqual([])
       await page.evaluate(() => document.fonts.ready)
+      const dir = evidenceDir()
+      await page.screenshot({
+        path: resolve(dir, `completed-${theme}-${width}.png`),
+        animations: "disabled",
+      })
+      await openInspector(page)
       await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
       await expect(page.getByAltText("本次提交的眼底影像")).toHaveJSProperty(
         "naturalWidth",
@@ -384,10 +477,13 @@ for (const theme of ["light", "dark"]) {
         .locator(".collab-page-main")
         .evaluate(textContrastFailures)
       expect(contrast).toEqual([])
-      const dir = resolve(
-        "../docs/testing/iris2-collaboration-20261114/screenshots"
-      )
-      mkdirSync(dir, { recursive: true })
+      if (width <= 1099) {
+        expect(
+          await page
+            .getByRole("dialog", { name: "影像与证据" })
+            .evaluate(textContrastFailures)
+        ).toEqual([])
+      }
       writeFileSync(
         resolve(dir, `ui-${theme}-${width}.json`),
         JSON.stringify(
@@ -410,7 +506,7 @@ for (const theme of ["light", "dark"]) {
         )
       )
       await page.screenshot({
-        path: resolve(dir, `collaboration-${theme}-${width}.png`),
+        path: resolve(dir, `inspector-${theme}-${width}.png`),
         fullPage: true,
         animations: "disabled",
       })
@@ -429,6 +525,17 @@ test("patient progress hides handoff details; clinician projection can expand re
   await expect(page.getByText(/影像解读 → 证据检索：已交接/)).toBeVisible()
   await page.getByText("查看交接元数据").first().click()
   await expect(page.getByText("调用轮次 1")).toBeVisible()
+  await expect(page.getByRole("tab", { name: "影像" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  )
+  await expect(page.getByLabel("证据有更新")).toBeVisible()
+  await page.getByRole("button", { name: /查看核验记录/ }).click()
+  await expect(page.getByRole("tab", { name: "证据" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  )
+  await expect(page.getByText("证据版本", { exact: false })).toBeVisible()
   await expect(page.locator("body")).not.toContainText(
     "Synthetic private clinical draft"
   )
@@ -580,6 +687,162 @@ test("a live disconnect resumes the applied cursor without readmission; cancel a
   expect(state.cancellations()).toBe(1)
 })
 
+for (const theme of ["light", "dark"]) {
+  test(`Roundtable running / ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const dir = evidenceDir()
+    await setup(page, { roundtable: "normal" })
+    await expect(
+      page.getByText("影像质量已复核", { exact: false })
+    ).toBeVisible()
+    await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
+    if (theme === "dark")
+      await page.getByRole("button", { name: "切换到暗色主题" }).click()
+    await page.evaluate(() => document.fonts.ready)
+    await page.screenshot({
+      path: resolve(dir, `running-${theme}-1440.png`),
+      animations: "disabled",
+    })
+    await page.unrouteAll({ behavior: "wait" })
+  })
+
+  test(`Roundtable supplement preserves earlier facts / ${theme}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const dir = evidenceDir()
+    await setup(page, { roundtable: "supplement" })
+    await expect(page.getByText("正在补证", { exact: true })).toBeVisible()
+    await expect(
+      page.getByText("证据检索开始处理", { exact: true })
+    ).toHaveCount(2)
+    await expect(
+      page.getByText("受控证据已冻结", { exact: false })
+    ).toBeVisible()
+    await expect(page.getByText(/已交接|AI 协作已完成/)).toHaveCount(0)
+    await expect(page.getByAltText("本次提交的眼底影像")).toBeVisible()
+    if (theme === "dark")
+      await page.getByRole("button", { name: "切换到暗色主题" }).click()
+    await page.evaluate(() => document.fonts.ready)
+    await page.screenshot({
+      path: resolve(dir, `supplement-${theme}-1440.png`),
+      animations: "disabled",
+    })
+
+    await page.getByRole("button", { name: /^Atlas/ }).click()
+    const detail = page.getByRole("dialog", { name: "Atlas 成员详情" })
+    await expect(detail.getByText(/受控证据已冻结/)).toBeVisible()
+    await expect(
+      detail.getByRole("button", { name: "定位参与记录" })
+    ).toBeVisible()
+    await page.screenshot({
+      path: resolve(dir, `member-${theme}-1440.png`),
+      animations: "disabled",
+    })
+    await detail.getByRole("button", { name: "定位参与记录" }).click()
+    await expect(detail).toHaveCount(0)
+    await page.getByRole("button", { name: "查看复核反馈" }).click()
+    await expect(page.getByRole("tab", { name: "复核" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    )
+    await expect(page.getByText("Vera 已请求补充证据。")).toBeVisible()
+    await expect(
+      page.getByText("尚未提交医生复核", { exact: true })
+    ).toHaveCount(2)
+    const history = page.getByRole("region", { name: "协作记录滚动区" })
+    await history.evaluate((element) => {
+      element.scrollTop = 32
+      element.dispatchEvent(new Event("scroll", { bubbles: true }))
+    })
+    await expect(
+      page.getByRole("button", { name: "回到最新进展" })
+    ).toBeVisible()
+    await page.evaluate(() =>
+      (
+        window as unknown as {
+          __irisStream: { disconnect(): void }
+        }
+      ).__irisStream.disconnect()
+    )
+    await expect(
+      page.getByText("连接中断，正在恢复", { exact: true })
+    ).toBeVisible()
+    await expect(page.getByText("进度已连接", { exact: true })).toBeVisible()
+    await expect
+      .poll(() => history.evaluate((element) => element.scrollTop))
+      .toBe(32)
+  })
+
+  test(`Roundtable mobile evidence drawer / ${theme}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const dir = evidenceDir()
+    await setup(page, { roundtable: "supplement" })
+    await expect(page.getByText("正在补证", { exact: true })).toBeVisible()
+    if (theme === "dark")
+      await page.getByRole("button", { name: "切换到暗色主题" }).click()
+    await page.evaluate(() => document.fonts.ready)
+    await page.screenshot({
+      path: resolve(dir, `supplement-${theme}-390.png`),
+      animations: "disabled",
+    })
+    await openInspector(page)
+    const inspector = page.getByRole("dialog", { name: "影像与证据" })
+    await expect(inspector.getByAltText("本次提交的眼底影像")).toBeVisible()
+    await page.screenshot({
+      path: resolve(dir, `mobile-inspector-${theme}-390.png`),
+      animations: "disabled",
+    })
+    const imageTab = inspector.getByRole("tab", { name: "影像" })
+    await imageTab.focus()
+    await page.keyboard.press("ArrowRight")
+    await page.keyboard.press("Enter")
+    await expect(inspector.getByRole("tab", { name: "证据" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    )
+    await expect(inspector.getByText("引用资料受限")).toBeVisible()
+    await inspector.getByRole("button", { name: "关闭影像与证据" }).click()
+    await expect(inspector).toHaveCount(0)
+    await expect(
+      page.getByRole("button", { name: /^影像与证据/ })
+    ).toBeFocused()
+  })
+}
+
+for (const theme of ["light", "dark"]) {
+  test(`captures transport loss separately from a failed run / ${theme}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    const dir = evidenceDir()
+    await setup(page, { live: true })
+    await expect(page.getByText("进度已连接", { exact: true })).toBeVisible()
+    if (theme === "dark")
+      await page.getByRole("button", { name: "切换到暗色主题" }).click()
+    await page.evaluate(() =>
+      (
+        window as unknown as { __irisStream: { disconnect(): void } }
+      ).__irisStream.disconnect()
+    )
+    await expect(
+      page.getByText("连接中断，正在恢复", { exact: true })
+    ).toBeVisible()
+    await expect(page.getByLabel("协作角色状态")).toHaveCount(0)
+    await page.screenshot({
+      path: resolve(dir, `connection-interrupted-${theme}-1280.png`),
+    })
+    await page.unrouteAll({ behavior: "wait" })
+    await setup(page, { status: "FAILED", reason: "PROVIDER_UNAVAILABLE" })
+    await expect(page.getByText("协作未完成", { exact: true })).toBeVisible()
+    if (theme === "dark")
+      await page.getByRole("button", { name: "切换到暗色主题" }).click()
+    await page.screenshot({
+      path: resolve(dir, `execution-failed-${theme}-1280.png`),
+    })
+  })
+}
+
 test("existing task admission creates one session and one run, preserving ordinary chat", async ({
   page,
 }) => {
@@ -624,14 +887,27 @@ test("upload admission uses the existing task chain and an authorized blob previ
       return img.naturalWidth / img.naturalHeight
     })
   ).toBe(1)
-  const preview = page.getByRole("link", { name: "在新窗口放大本次提交影像" })
-  await expect(preview).toHaveAttribute("href", /^blob:/)
-  const popup = page.waitForEvent("popup")
-  await preview.click()
-  const opened = await popup
-  await opened.waitForLoadState("load")
-  await expect(opened.locator("img")).toBeVisible()
-  await opened.close()
+  await expect(image).toHaveAttribute("src", /^blob:/)
+  await page.getByRole("button", { name: "打开放大眼底影像" }).click()
+  const viewer = page.getByRole("dialog", { name: "眼底影像查看器" })
+  await expect(viewer.getByAltText("放大查看本次提交的眼底影像")).toBeVisible()
+  await viewer.getByRole("button", { name: "放大影像", exact: true }).click()
+  await expect(viewer.getByLabel("影像缩放")).toHaveText("150%")
+  await viewer.getByRole("button", { name: "缩小影像" }).click()
+  await expect(viewer.getByLabel("影像缩放")).toHaveText("100%")
+  const fullscreen = viewer.getByRole("button", { name: "全屏影像" })
+  if (await fullscreen.count()) {
+    await fullscreen.click()
+    await expect
+      .poll(() => page.evaluate(() => document.fullscreenElement !== null))
+      .toBe(true)
+    await viewer.getByRole("button", { name: "退出全屏" }).click()
+    await expect
+      .poll(() => page.evaluate(() => document.fullscreenElement === null))
+      .toBe(true)
+  }
+  await page.keyboard.press("Escape")
+  await expect(viewer).toHaveCount(0)
   expect(state.admissions()).toBe(1)
 })
 
@@ -639,6 +915,9 @@ test("approved patient results and controlled citations do not imply save consen
   page,
 }) => {
   const state = await setup(page, { status: "SUCCEEDED", review: "APPROVED" })
+  await page
+    .getByRole("button", { name: "查看获准的辅助说明", exact: true })
+    .click()
   await expect(page.getByText("合成已批准说明", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "查看依据 1", exact: true }).click()
   await expect(
@@ -664,6 +943,7 @@ test("doctor projection enters the existing authorized review route", async ({
   page,
 }) => {
   await setup(page, { clinician: true })
+  await page.getByRole("tab", { name: "复核" }).click()
   await page.getByRole("link", { name: "进入医生复核" }).click()
   await expect(page).toHaveURL(/\/doctor-reviews$/)
   await expect(
@@ -690,10 +970,7 @@ test("doctor projection enters the existing authorized review route", async ({
     expect(
       await page.locator(".review-page").evaluate(textContrastFailures)
     ).toEqual([])
-    const dir = resolve(
-      "../docs/testing/iris2-collaboration-20261114/screenshots"
-    )
-    mkdirSync(dir, { recursive: true })
+    const dir = evidenceDir()
     await page.screenshot({
       path: resolve(dir, `doctor-review-${theme}-1440.png`),
       fullPage: true,
@@ -743,10 +1020,7 @@ for (const theme of ["light", "dark"]) {
           () => document.documentElement.scrollWidth <= innerWidth
         )
       ).toBe(true)
-      const dir = resolve(
-        "../docs/testing/iris2-collaboration-20261114/screenshots"
-      )
-      mkdirSync(dir, { recursive: true })
+      const dir = evidenceDir()
       await page.screenshot({
         path: resolve(dir, `collaboration-new-${theme}-${width}.png`),
         fullPage: true,

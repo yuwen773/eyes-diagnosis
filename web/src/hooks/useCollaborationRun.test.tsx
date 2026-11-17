@@ -437,6 +437,34 @@ describe("useCollaborationRun", () => {
     expect(result.current.run?.snapshot.reviewStatus).toBe("APPROVED")
     expect(streams).toHaveLength(0)
   })
+  it("retains observed facts after a reauthorized refresh, and drops them on a projection change", async () => {
+    const { result } = renderHook(() => useCollaborationRun(scope))
+    await flush()
+    const observed = frame("agent.started", 2)
+    act(() => streams[0].emit(observed))
+    vi.mocked(collaborationApi.snapshot).mockResolvedValue(
+      snapshot({
+        executionStatus: "RUNNING",
+        snapshotSequence: 2,
+        resumeCursor: "authoritative-2",
+      })
+    )
+    act(() => result.current.retry())
+    expect(result.current.run).toBeNull()
+    await flush()
+    expect(result.current.run?.events).toEqual([observed.event])
+    expect(streams.at(-1)?.cursor).toBe("authoritative-2")
+    vi.mocked(collaborationApi.snapshot).mockResolvedValue(
+      snapshot({
+        executionStatus: "RUNNING",
+        snapshotSequence: 2,
+        projectionVersion: "v1:doctor:review-a",
+      })
+    )
+    act(() => result.current.retry())
+    await flush()
+    expect(result.current.run?.events).toEqual([])
+  })
   it("supports React StrictMode cleanup without duplicate active subscriptions", async () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <StrictMode>{children}</StrictMode>

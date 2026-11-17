@@ -48,14 +48,20 @@ describe("collaboration workbench visibility", () => {
       roles: { VISION: "RUNNING", EVIDENCE: "COMPLETED" },
     })
     expect(screen.getAllByText("处理中")).toHaveLength(1)
-    expect(screen.getAllByText("等待执行")).toHaveLength(2)
-    expect(screen.getByText("解读已有推理快照及质量限制")).toBeTruthy()
+    expect(screen.getAllByText("等待执行")).toHaveLength(1)
+    expect(screen.getByText("已请求修订")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: /Luma/ }))
+    expect(
+      within(screen.getByRole("dialog", { name: "Luma 成员详情" })).getByText(
+        "解读已有推理快照及质量限制。"
+      )
+    ).toBeTruthy()
   })
   it("keeps clinician handoffs hidden for the patient even if passed to the view", () => {
     mount()
     expect(screen.queryByText(/已交接/)).toBeNull()
     expect(screen.queryByText(/调用轮次/)).toBeNull()
-    expect(screen.getByText("正在复核与修订")).toBeTruthy()
+    expect(screen.getByText("已请求修订说明")).toBeTruthy()
   })
   it.each(["v1:admin", "v1:doctor:review-42"])(
     "shows structured handoffs only with authorized projection %s",
