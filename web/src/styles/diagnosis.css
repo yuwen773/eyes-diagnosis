@@ -439,3 +439,17 @@
 .dx__fault {
   margin-top: 2px;
 }
+
+/* 品牌页把 .btn 整体换成钴蓝（.is-brand-page .btn），特异性高于 .btn--ghost，
+   于是「换一张」这类次级动作被画成了主按钮。这里在判读页作用域内把
+   ghost 按钮恢复成透明描边：主次要分得开。 */
+.dx .btn--ghost {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.dx .btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border-color: var(--fg);
+}

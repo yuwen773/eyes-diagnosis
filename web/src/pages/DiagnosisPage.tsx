@@ -19,12 +19,19 @@ import { ProductHeader } from "@/components/shell/ProductHeader"
 
 type Stage = "empty" | "ready" | "running" | "done" | "error"
 
-const MAX_BYTES = 5 * 1024 * 1024
+/**
+ * 单张影像上限 = 服务端真实上限（FileManager.validPicture：2 MB）。
+ *
+ * <p>之前前端写 5 MB，服务端只收 2 MB：2–5 MB 的片子能判读出结果，
+ * 但存图那步被异常吞掉，记录里**没有原图**——用户拿到结论却核验不了影像。
+ * 前端口径与服务端对齐：要么本地拦下并说清楚，要么后端把上限提上去。
+ */
+const MAX_BYTES = 2 * 1024 * 1024
 const ACCEPTED = ["image/jpeg", "image/png"]
 
 function validate(file: File): string | null {
   if (!ACCEPTED.includes(file.type)) return "只接受 JPG 与 PNG 格式的影像"
-  if (file.size > MAX_BYTES) return "影像超过 5 MB，请压缩后重试"
+  if (file.size > MAX_BYTES) return "影像超过 2 MB（服务端单张上限），请压缩后重试"
   return null
 }
 
@@ -255,7 +262,7 @@ export function DiagnosisPage() {
                   <span className="dx__drop-title">
                     {dragging ? "松手，放入影像" : "点击或拖入影像"}
                   </span>
-                  <span className="dx__drop-hint">JPG · PNG · 不超过 5 MB</span>
+                  <span className="dx__drop-hint">JPG · PNG · 不超过 2 MB</span>
                   <span className="dx__drop-note">示例影像 · 非真实患者</span>
                 </span>
               </button>
@@ -267,7 +274,7 @@ export function DiagnosisPage() {
                   {file.name} · {file.type === "image/png" ? "PNG" : "JPEG"} · {sizeMB} MB
                 </p>
                 <button
-                  className="btn btn--ghost btn--sm"
+                  className="link"
                   type="button"
                   onClick={reset}
                   disabled={stage === "running"}

@@ -114,8 +114,10 @@ export function ProfilePage() {
       push(validationFault("头像得是一张图片——当前选中的文件不是"))
       return
     }
-    if (file.size > 10 * 1024 * 1024) {
-      push(validationFault("图片超过 10MB，换一张小一点的"))
+    // 服务端头像上传走 FileManager.validPicture，硬上限 2 MB；
+    // 前端原先写 10 MB，选了 3 MB 的图只会被服务端拒掉。
+    if (file.size > 2 * 1024 * 1024) {
+      push(validationFault("图片超过 2MB（服务端单张上限），换一张小一点的"))
       return
     }
 
@@ -208,19 +210,6 @@ export function ProfilePage() {
               {roleLabel}
               {user.createTime ? ` · 注册于 ${user.createTime.slice(0, 10)}` : ""}
             </p>
-            <p className="profile__identity-stats num">
-              {statsLoading
-                ? "判读统计读取中…"
-                : hasStats
-                  ? `${labels.total} ${stats.total} · ${highRiskLabel} ${stats.highRisk}`
-                  : "判读统计暂不可用"}
-            </p>
-            {!statsLoading && serverStats === null && hasStats ? (
-              <p className="profile__identity-note">
-                服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录，不是全量。
-              </p>
-            ) : null}
-
             <div className="profile__avatar-actions">
               <button
                 type="button"
@@ -232,7 +221,7 @@ export function ProfilePage() {
                 <span className="btn__key">↥</span>
               </button>
               <p className="profile__avatar-hint">
-                支持 JPG / PNG / WebP，10MB 以内。上传后立即生效，全站可见。
+                支持 JPG / PNG / WebP，2MB 以内（服务端单张上限）。上传后立即生效，全站可见。
               </p>
               <input
                 ref={fileRef}
@@ -242,6 +231,22 @@ export function ProfilePage() {
                 onChange={(event) => void onAvatarChange(event)}
               />
             </div>
+          </div>
+
+          {/* 统计摘要靠右：身份在左、数字在右，宽屏上不吊着一大片空白。 */}
+          <div className="profile__identity-stats">
+            <p className="profile__identity-stats-line num">
+              {statsLoading
+                ? "判读统计读取中…"
+                : hasStats
+                  ? `${labels.total} ${stats.total} · ${highRiskLabel} ${stats.highRisk}`
+                  : "判读统计暂不可用"}
+            </p>
+            {!statsLoading && serverStats === null && hasStats ? (
+              <p className="profile__identity-note">
+                服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录，不是全量。
+              </p>
+            ) : null}
           </div>
         </section>
 
