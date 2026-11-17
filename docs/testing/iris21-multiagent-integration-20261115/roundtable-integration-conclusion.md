@@ -57,7 +57,13 @@
 
 仓库 `verify.yml` 仅在 `pull_request` 与 `push` 到 `master` 时触发；向本集成分支（非 master）的 push/merge commit **不触发 CI**，因此 `290d6f15` 本身没有新的 check-runs。这不是失败：合并树与已获 20/20 绿、且经本地全套复跑的 `3cad9514` 完全相同（tree `ed9ac5fe`）。#87 最终合并到 `ui` 时会在 PR 事件上重新跑全套门禁。
 
-## 五、授权边界与未覆盖能力（合并结论按此口径）
+## 五、与本轮集成同时发现的 `ui` 方向冲突（未处理）
+
+- 会话开始时 `origin/ui` = `b5f37e5c`，PR #87 的 `mergeStateStatus` 为 `CLEAN`；会话期间 `origin/ui` 被另一条工作线推进到 `9d3c5317`（PR #91：Prism 首屏/统一滚动条等）。
+- 当前 PR #87（head `d1a01b5`）对 `ui` 的 `mergeStateStatus` 变为 `CONFLICTING`。`git merge-tree origin/ui d1a01b5` 显示唯一冲突文件 `web/src/styles/app.css`；原 #87 head `6ba65478` 对当前 `ui` 仍可干净合并，说明冲突来自 #93 对 `app.css` 字标区的 4 行改动（同步 #88 光学虹膜字标）与 #91 对同区的改写。
+- **本轮未解决该冲突**：解决需要改写 `app.css` 中与 `ui` 新内容相邻的区域，超出「仅将 #93 合并到 #87 集成分支、不合并到 ui、不修改冻结 tag」的授权范围。冲突留给后续单独授权的 #87→ui 集成处理；本分支内部（#93 合入 #87）完全干净，合并树与已测 head 一致。
+
+## 六、授权边界与未覆盖能力（合并结论按此口径）
 
 1. **冷刷新无法补读快照水位以前的完整时间线**，界面只按当前状态恢复，不伪造历史。
 2. **SSE 重新鉴权期间（`connecting`/`loading`/`reconnecting`）会暂时隐藏受保护会话内容**，直到服务端重新签发快照；授权变化时旧事实被清除。
@@ -65,6 +71,6 @@
 4. **真实模型提供方、临床效果与生产环境未验收**（NOT_RUN）。
 5. 协作前端入口由 `VITE_COLLABORATION_ENABLED` 控制（未设为 `true` 时导航不出现），后端由 `eye-diagnosis.collaboration.*` 控制（默认全 false）；本分支**不开启、不部署**。
 
-## 六、下一步
+## 七、下一步
 
-本集成分支保持 Draft，等待正式 Review；后续是否合并到 `ui` 需单独授权。合并 ≠ 生产启用；启用医疗协作需要另行验收真实模型与临床有效性。
+本集成分支保持 Draft / REVIEW_PENDING，等待正式 Review；后续是否合并到 `ui` 需单独授权，并且需先在上游 `ui` 新基线（`9d3c5317`）上处理 `app.css` 冲突、重跑全套门禁。合并 ≠ 生产启用；启用医疗协作需要另行验收真实模型与临床有效性。
