@@ -417,6 +417,139 @@
   border-color: var(--risk-critical);
 }
 
+/* ── 冻结管理端：保留 Iris 2.1 状态皮肤 ─────────────────────
+   `.is-admin` 是 AdminLayout 的稳定祖先。管理端页面已随
+   `iris-ui-v2.1-freeze-20261115` 冻结；本轮统一的是非管理端的
+   生产故障状态，不把共享 CSS 的视觉改动带入冻结页面。
+   下面只恢复冻结基线里 FaultNote / FaultPanel 的视觉声明，
+   不改 DOM、语义、动作或任何页面布局容器。
+   ------------------------------------------------------------ */
+.is-admin .fault-note {
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 30%, transparent);
+  border-left: 2px solid var(--fault-tone);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--fault-tone) 7%, transparent);
+}
+
+.is-admin .fault-note__tag,
+.is-admin .fault-panel__tag {
+  display: inline-flex;
+  padding-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--fault-tone);
+}
+
+.is-admin .fault-note__tag::before,
+.is-admin .fault-panel__tag::before {
+  content: none;
+}
+
+.is-admin .fault-note__text {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--fg-2);
+}
+
+.is-admin .fault-note__detail {
+  color: var(--fg-3);
+}
+
+.is-admin .fault-note__action {
+  min-height: 0;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, var(--fault-tone) 40%, transparent);
+  border-radius: var(--radius-chip-sm);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fault-tone);
+}
+
+.is-admin .fault-note__action:hover {
+  background: color-mix(in srgb, var(--fault-tone) 12%, transparent);
+}
+
+.is-admin .fault-note--field {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.is-admin .fault-note--field .fault-note__text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fault-tone);
+}
+
+.is-admin .fault-note--field .fault-note__detail {
+  color: var(--fg-3);
+}
+
+.is-admin .fault-note--panel {
+  max-width: none;
+  margin-inline: 0;
+  padding: clamp(20px, 2.4vw, 30px);
+  border: 1px solid var(--hr-strong);
+  border-left: 2px solid var(--fault-tone);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.is-admin .fault-panel__head {
+  margin-bottom: 14px;
+}
+
+.is-admin .fault-panel__tag {
+  padding-top: 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+}
+
+.is-admin .fault-panel__title {
+  margin-bottom: 6px;
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+.is-admin .fault-panel__body {
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+
+.is-admin .fault-panel__foot {
+  gap: 22px;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.is-admin .fault-panel__label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.is-admin .fault-panel__value {
+  font-size: 11.5px;
+}
+
+.is-admin .fault-panel__action {
+  min-height: 0;
+  padding: 5px 14px;
+  border-radius: var(--radius-chip);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+
+.is-admin .fault-panel__action:hover {
+  background: none;
+  color: var(--fault-tone);
+}
+
 /* ── 动效克制：系统设置里说了不要动，就不动 ─────────────── */
 
 @media (prefers-reduced-motion: reduce) {
