@@ -158,6 +158,10 @@ export function AgentPage() {
       lastUserKeyRef.current = userKey
       setThreadId(newId())
       setCurrentThreadId("")
+      // 会话列表也要清：reset() 只清消息与资源。refreshSessions() 是异步的，
+      // 且失败时只 console.warn——不清就会让上一个身份的会话标题留在左栏，
+      // 甚至一直留到刷新失败之后。标题本身是敏感信息。
+      setSessions([])
       reset()
     }
     const savedThreadId = loadThreadId(userKey)
@@ -235,8 +239,20 @@ export function AgentPage() {
           return true
         } catch (e) {
           uploader.commitFailure(imageUrls)
-          // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
-          setMessages((prev) => prev.filter((message) => message.id !== localId))
+          // 发送失败：**只有服务端压根没受理**才撤回乐观用户气泡。
+          //
+          // 后端在开流之前就把用户消息落库了（AgentController 先 saveUserMessage 再
+          // diagnosisAgent.stream）。只要这一回合已经流出了任何内容，这条用户消息在
+          // 服务端一定存在；此时撤回会得到「界面没有提问、服务端有记录」，用户按提示
+          // 重试还会再写一条同样的用户轮次。所以：本条之后还有消息（assistant/工具卡）
+          // 就全部保留；一条都没有才当作「没发出去」。找不到本条时什么也不做——
+          // 那说明用户中途切走了会话，改的是别的线程的数组。
+          setMessages((prev) => {
+            const index = prev.findIndex((message) => message.id === localId)
+            if (index < 0) return prev
+            const producedTurnContent = prev.length > index + 1
+            return producedTurnContent ? prev : prev.filter((message) => message.id !== localId)
+          })
           pushFault(faultFromError(e, { intent: "send" }))
           return false
         }

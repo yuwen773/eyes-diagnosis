@@ -24,6 +24,9 @@ vi.mock("@/lib/session", () => ({
 const sendMock = vi.hoisted(() => vi.fn())
 // reset 必须整个会话稳定——否则初始化 effect 每次渲染都重跑，历史被反复拉取。
 const resetMock = vi.hoisted(() => vi.fn())
+// 让用例在 send 抛错之前往消息表里塞一条「本回合已流出的内容」，
+// 用来区分「服务端已受理后失败」与「压根没发出去」两种回滚语义。
+const streamControls = vi.hoisted(() => ({ push: (message: unknown) => { void message } }))
 
 vi.mock("@/lib/agentStream", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/agentStream")>()
@@ -33,6 +36,7 @@ vi.mock("@/lib/agentStream", async (importOriginal) => {
     ...actual,
     useAgentStream: () => {
       const [messages, setMessages] = React.useState<unknown[]>([])
+      streamControls.push = (message: unknown) => setMessages((prev) => [...prev, message])
       return {
         messages,
         isStreaming: false,
@@ -267,6 +271,50 @@ describe("AgentPage 未登录", () => {
       .queryAllByText("发不出去的话")
       .filter((node) => node.tagName !== "TEXTAREA")
     expect(bubbles).toHaveLength(0)
+  })
+
+  it("流已产生内容后失败：保留用户气泡，不制造「没有提问的回答」", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    // 后端先落库用户消息再开流：只要已流出内容，这条提问在服务端一定存在。
+    sendMock.mockImplementationOnce(async () => {
+      streamControls.push({
+        id: "assistant-partial",
+        type: "assistant",
+        content: "先说一半",
+        time: "00:00",
+      })
+      throw new Error("stream interrupted")
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "已经发出去的话" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    // 提问必须留着：撤回会和服务端已落库的那条对不上，重试还会再写一条。
+    await waitFor(() =>
+      expect(
+        screen.queryAllByText("已经发出去的话").filter((node) => node.tagName !== "TEXTAREA"),
+      ).toHaveLength(1),
+    )
+    // 半截回答也留着，界面上是「提问 + 半截回答 + 失败提示」，而不是一条悬空回答。
+    expect(
+      screen.queryAllByText("先说一半").filter((node) => node.tagName !== "TEXTAREA"),
+    ).toHaveLength(1)
   })
 })
 
