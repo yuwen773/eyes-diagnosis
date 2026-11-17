@@ -331,14 +331,20 @@
 }
 
 .admin-dt__head {
-  /* 列定义给的宽度写成 --col-w，这里统一落成 width：不再走行内样式，
-     窄屏要收窄固定列时普通规则就够，不需要 !important。 */
-  width: var(--col-w, auto);
   height: 40px;
   padding: 0 16px;
   background: color-mix(in srgb, var(--admin-surface-deep) 52%, var(--admin-surface));
   font-size: 10.5px;
   letter-spacing: 0.12em;
+}
+
+/* 列定义给的宽度写成 --col-w，这里统一落成 width：不再走行内样式，
+   窄屏要收窄固定列时普通规则就够，不需要 !important。
+   只作用于「声明了列宽」的表头（DataTable 写 data-col-w）：没列宽的列
+   （勾选列）不吃这条规则——table-layout:fixed 下 auto 列会吸走整表的
+   富余宽度，数据列缩成名义宽度，宽表整张向右歪。 */
+.admin-dt__head[data-col-w] {
+  width: var(--col-w);
 }
 
 .admin-dt__head-row {
@@ -1484,9 +1490,11 @@ html.dark .admin-newsedit .w-md-editor {
 
   /* 390 档把固定的 sticky 操作列收窄，否则它会盖住判读结果列，
      把「AI 拒识」chip 切掉半截。列宽走 --col-w（见 .admin-dt__head），
-     不再有行内 width 要压，普通声明即可。 */
+     不再有行内 width 要压，普通声明即可。
+     表头选择器写成 .admin-dt__head.admin-dt__head--action：它要压过
+     .admin-dt__head[data-col-w]（列宽那条），特异度得持平或更高。 */
   .admin-dt__cell--action,
-  .admin-dt__head--action {
+  .admin-dt__head.admin-dt__head--action {
     width: 96px;
     min-width: 96px;
   }

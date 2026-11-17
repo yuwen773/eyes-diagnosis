@@ -325,6 +325,11 @@ export function DataTable<T extends RowData>(props: {
                       key={header.id}
                       scope="col"
                       data-col={column.key}
+                      // 有列宽的表头才挂 data-col-w：CSS 靠这个属性把 --col-w
+                      // 落成 width。没列宽的列（勾选列）不吃这条规则，
+                      // 否则 table-layout:fixed 会让 auto 列吸走整表富余宽度，
+                      // 把数据列压成名义宽度（宽表会整张向右歪）。
+                      data-col-w={column.width ? "" : undefined}
                       className={
                         "admin-dt__head num" +
                         (column.align ? ` admin-dt__cell--${column.align}` : "") +
