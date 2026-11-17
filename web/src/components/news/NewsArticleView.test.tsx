@@ -186,4 +186,30 @@ describe("NewsArticleView", () => {
       }
     })
   })
+
+  it("目录跳转不会抹掉 React Router 存在 history.state 里的导航状态", () => {
+    withLayoutWidth(900, () => {
+      // React Router 把 { usr, key, idx } 放在 history.state：传 null 会把它
+      // 清掉，之后按浏览器返回就退不到该退的那一条。
+      const routerState = { usr: { from: "journal" }, key: "abc123", idx: 4 }
+      window.history.replaceState(routerState, "")
+      const original = Element.prototype.scrollIntoView
+      Element.prototype.scrollIntoView = function scrollIntoView() {}
+      try {
+        render(
+          <NewsArticleView
+            article={{ title: "标题", content: "## 第一节\n\n内容一\n\n## 第二节\n\n内容二" }}
+            contentFormat="markdown"
+          />,
+        )
+        fireEvent.click(screen.getByRole("link", { name: /第二节/ }))
+
+        expect(window.location.hash).toBe("#news-sec-2")
+        expect(window.history.state).toEqual(routerState)
+      } finally {
+        Element.prototype.scrollIntoView = original
+        window.history.replaceState(null, "", window.location.pathname)
+      }
+    })
+  })
 })

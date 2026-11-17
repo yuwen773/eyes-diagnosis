@@ -81,6 +81,16 @@
   margin-top: clamp(18px, 2.8vh, 30px);
   padding-top: clamp(14px, 2.2vh, 22px);
   border-top: 1px solid var(--brand-line);
+  /* 整块头条是一个 <a>：清掉链接默认色与下划线，外观保持原样。 */
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 整块可点，键盘上也要看得见焦点落在哪一块。 */
+.journal__latest:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 6px;
+  border-radius: var(--radius-md);
 }
 
 .journal__latest.is-text {
@@ -132,12 +142,13 @@
   text-wrap: balance;
 }
 
-.journal__latest-title a {
-  color: inherit;
+.journal__latest-title {
   transition: color var(--fast);
 }
 
-.journal__latest-title a:hover {
+/* 悬停/聚焦在整块上时标题转主色——入口是整块，不再只认标题那几个字。 */
+.journal__latest:hover .journal__latest-title,
+.journal__latest:focus-visible .journal__latest-title {
   color: var(--brand-primary);
 }
 

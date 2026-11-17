@@ -39,7 +39,7 @@ describe("JournalHeader", () => {
   it("抬头里摆的是真实最新一条：标题、日期与作者都来自这一条", () => {
     renderHeader()
 
-    const link = screen.getByRole("link", { name: LATEST.title })
+    const link = screen.getByRole("link", { name: /白内障手术的窗口期比想象中宽/ })
     expect(link.getAttribute("href")).toBe("/news/9001")
     expect(screen.getByText(/2026-11-02/)).toBeTruthy()
     expect(screen.getByText(/编辑部/)).toBeTruthy()
@@ -48,14 +48,14 @@ describe("JournalHeader", () => {
   it("没有最新一条就不摆头条位，也不编一条出来", () => {
     renderHeader({ latest: undefined })
 
-    expect(screen.queryByRole("link", { name: LATEST.title })).toBeNull()
+    expect(screen.queryByRole("link", { name: /白内障手术的窗口期比想象中宽/ })).toBeNull()
     expect(screen.queryByText(/最新 · LATEST/)).toBeNull()
   })
 
   it("缺发布时间与作者时不留空位：只摆标题", () => {
     renderHeader({ latest: { id: "7", title: "只有标题的一条" } })
 
-    expect(screen.getByRole("link", { name: "只有标题的一条" })).toBeTruthy()
+    expect(screen.getByRole("link", { name: /只有标题的一条/ })).toBeTruthy()
     // 没有日期就没有日期读数——不拿「更新至 —」之类的占位糊过去。
     expect(screen.queryByText("—")).toBeNull()
   })
@@ -106,6 +106,32 @@ describe("JournalHeader", () => {
     expect(container.querySelector(".journal__latest-plate")).toBeNull()
     expect(container.querySelector("img")).toBeNull()
     expect(container.querySelector(".journal__latest")?.className).toContain("is-text")
+  })
+
+  it("整块头条是一个链接：封面也在可点区域里，键盘只有一个停靠点", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <JournalHeader
+          latest={{ ...LATEST, coverImage: "https://example.com/cover.jpg" }}
+          keyword=""
+          onKeywordChange={vi.fn()}
+          onSearch={vi.fn()}
+          onClear={vi.fn()}
+          searching={false}
+        />
+      </MemoryRouter>,
+    )
+
+    const links = screen.getAllByRole("link", { name: /白内障手术的窗口期比想象中宽/ })
+    // 标题与封面各算一个链接的话，读屏会把同一篇文章念两遍。
+    expect(links).toHaveLength(1)
+    const link = links[0]
+    expect(link.getAttribute("href")).toBe("/news/9001")
+    // 封面确实在这一个链接里面：点图能进文章，不是一块死图。
+    expect(link.querySelector(".journal__latest-plate img")).toBeTruthy()
+    // 键盘可达：不是 tabIndex=-1 的鼠标专用热点。
+    expect(link.getAttribute("tabindex")).toBeNull()
+    expect(container.querySelector(".journal__latest")).toBe(link)
   })
 
   it("不编造后端没有的字段：没有分类、没有阅读数、没有精选", () => {

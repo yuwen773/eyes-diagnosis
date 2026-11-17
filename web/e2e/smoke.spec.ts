@@ -106,13 +106,78 @@ test.describe("验收冒烟", () => {
       route.fulfill({ json: { code: 0, data: news } })
     )
     await page.goto("/news")
-    const firstCard = page.getByRole("link", { name: news.title, exact: true })
+    // 单条资讯会被期刊抬头当成头条：整块头条是一个链接，可访问名字里
+    // 还带着「最新 · LATEST」和日期，所以这里按子串匹配。
+    const firstCard = page.getByRole("link", { name: news.title })
     await expect(firstCard).toBeVisible({ timeout: 15_000 })
     await firstCard.click()
     await expect(
       page.getByRole("heading", { level: 1, name: news.title })
     ).toBeVisible()
     await expect(page.getByText(news.content)).toBeVisible()
+  })
+
+  test("期刊头条的封面本身就能点进文章", async ({ page }) => {
+    const news = {
+      id: "81004",
+      title: "有封面的合成头条",
+      content: "仅用于测试的合成资讯正文。",
+      publishTime: "2026-11-15T10:00:00",
+      // 1×1 GIF：不引外部资源，图位照常渲染。
+      coverImage:
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+    }
+    await page.route("**/api/news/list/page/vo", (route) =>
+      route.fulfill({
+        json: {
+          code: 0,
+          data: { records: [news], total: 1, current: 1, size: 9, pages: 1 },
+        },
+      })
+    )
+    await page.route("**/api/news/get/81004", (route) =>
+      route.fulfill({ json: { code: 0, data: news } })
+    )
+    await page.goto("/news")
+
+    // 点的是封面本身，不是标题文字：整块头条是一个链接。
+    const plate = page.locator(".journal__latest-plate")
+    await expect(plate).toBeVisible({ timeout: 15_000 })
+    await plate.click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: news.title })
+    ).toBeVisible()
+  })
+
+  test("目录锚点不给历史加条目：浏览器返回直接离开文章", async ({ page }) => {
+    const news = {
+      id: "81005",
+      title: "带章节的合成长文",
+      content: "<h2>第一节</h2><p>内容一</p><h2>第二节</h2><p>内容二</p>",
+      publishTime: "2026-11-15T10:00:00",
+    }
+    await page.route("**/api/news/list/page/vo", (route) =>
+      route.fulfill({
+        json: {
+          code: 0,
+          data: { records: [news], total: 1, current: 1, size: 9, pages: 1 },
+        },
+      })
+    )
+    await page.route("**/api/news/get/81005", (route) =>
+      route.fulfill({ json: { code: 0, data: news } })
+    )
+    await page.goto("/news")
+    await page.getByRole("link", { name: news.title }).click()
+
+    const toc = page.locator(".news-toc").getByRole("link", { name: /第二节/ })
+    await expect(toc).toBeVisible()
+    await toc.click()
+    await expect(page).toHaveURL(/#news-sec-2$/)
+
+    // replaceState 只改地址栏，不塞历史：返回应当离开文章，回到列表。
+    await page.goBack()
+    await expect(page).toHaveURL(/\/news$/)
   })
 
   test("Agent 发送后显示本地 SSE 回复并结束加载", async ({ page }) => {
@@ -143,5 +208,31 @@ test.describe("验收冒烟", () => {
     expect(sent?.threadId).toBeTruthy()
     await expect(page.getByRole("button", { name: "发送", exact: true })).toBeVisible()
     await expect(input).toHaveValue("")
+  })
+
+  test("工具没有回执就结束的回合，执行过程显示「未确认」而不是「执行中」", async ({ page }) => {
+    await page.route("**/api/agent/chat/stream", (route) =>
+      route.fulfill({
+        contentType: "text/event-stream",
+        body:
+          `data: ${JSON.stringify({
+            // 后端 MessageType 的 @JsonValue 是 "tool-request"（小写连字符）。
+            messageType: "tool-request",
+            toolCalls: [{ name: "searchDocuments", arguments: '{"query":"白内障"}' }],
+          })}\n\nevent: done\ndata: {}\n\n`,
+      })
+    )
+    await page.route("**/api/agent/sessions/*/generate-title", (route) =>
+      route.fulfill({ json: { code: 0, data: true } })
+    )
+    await page.goto("/agent")
+    const input = page.locator(".prompt__input")
+    await input.fill("查一下白内障")
+    await input.press("Enter")
+
+    // 流结束了但后端没有 tool-response：不能一直挂着「执行中」，
+    // 也不能说「完成」——只能说「未确认」。
+    await expect(page.getByText("未确认")).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator(".thought__state").filter({ hasText: "执行中" })).toHaveCount(0)
   })
 })

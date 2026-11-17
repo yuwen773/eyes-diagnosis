@@ -70,20 +70,23 @@ export function NewsPage() {
   // 换页之后回到列表开头：留在上一条的滚动位置，读者会以为「点了没反应」——
   // 新一页的第一行在屏幕外，谁也看不见。
   //
-  // 只在**页码变**时滚，不在检索词变时滚：检索是从抬头的输入框发起的，那时
-  // 读者本来就站在页首；再滚一次会把刚用过的检索框推出视口，结果页上看不到
-  // 自己搜的是什么。
-  //
-  // 首次渲染不动：那时候读者本来就站在页首，一 scroll 就把刊名推出视口。
+  // **只有翻页按钮会滚**。只看 `page` 变没变是不够的：在第 2 页检索时
+  // `setPage(1)` 也会改页码，一滚就把刚用过的检索框推出视口，结果页上
+  // 看不到自己搜的是什么。所以用一次性标记把「翻页动作」和「页码变化」分开。
   const listRef = useRef<HTMLElement>(null)
-  const mounted = useRef(false)
+  const pagerScroll = useRef(false)
   useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true
-      return
-    }
+    if (!pagerScroll.current) return
+    pagerScroll.current = false
     listRef.current?.scrollIntoView({ block: "start" })
   }, [page])
+
+  /** 翻页入口：只有走这里才把下一次页码变化标记成「要回到列表开头」。 */
+  function goToPage(next: number) {
+    if (next === page) return
+    pagerScroll.current = true
+    setPage(next)
+  }
 
   function search(event: FormEvent) {
     event.preventDefault()
@@ -182,7 +185,7 @@ export function NewsPage() {
               className="news__pager-step"
               type="button"
               disabled={page <= 1}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              onClick={() => goToPage(Math.max(1, page - 1))}
             >
               <span aria-hidden="true">‹</span> 上一页
             </button>
@@ -193,7 +196,7 @@ export function NewsPage() {
               className="news__pager-step"
               type="button"
               disabled={page >= pages}
-              onClick={() => setPage((value) => Math.min(pages, value + 1))}
+              onClick={() => goToPage(Math.min(pages, page + 1))}
             >
               下一页 <span aria-hidden="true">›</span>
             </button>

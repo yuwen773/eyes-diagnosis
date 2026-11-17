@@ -75,19 +75,26 @@ export function JournalHeader({
       </div>
 
       {latest ? (
+        // 整块头条就是一个链接：标题、日期、封面都能进文章。
+        //
+        // 原先只有标题是链接，封面是块死的图——读者会去点图，点了没反应。
+        // 现在整块可点，键盘上也只有**一个** Tab 停靠点（标题不再单独成一个
+        // 链接），读屏不会把同一篇文章念两遍。
+        //
         // 有真实封面才摆图位：头条是有图有文的双栏，纯文字的那一档就占满
         // 整行。绝不拿占位图补位——假图比没有图更糟。
-        <div className={`journal__latest${latest.coverImage ? "" : " is-text"}`}>
+        <Link
+          to={`/news/${latest.id}`}
+          className={`journal__latest${latest.coverImage ? "" : " is-text"}`}
+          data-cursor
+          data-cursor-label="阅读头条"
+        >
           <div className="journal__latest-text">
             <p className="journal__latest-eyebrow overline num">
               最新 · LATEST
               {metaParts ? <span className="journal__latest-meta num">{metaParts}</span> : null}
             </p>
-            <h2 className="journal__latest-title">
-              <Link to={`/news/${latest.id}`} data-cursor data-cursor-label="阅读头条">
-                {latest.title || "未命名文章"}
-              </Link>
-            </h2>
+            <h2 className="journal__latest-title">{latest.title || "未命名文章"}</h2>
           </div>
 
           {latest.coverImage ? (
@@ -98,7 +105,7 @@ export function JournalHeader({
               alt=""
             />
           ) : null}
-        </div>
+        </Link>
       ) : null}
     </header>
   )

@@ -75,6 +75,10 @@ export type NewsArticleViewProps = {
  * `scrollIntoView`，并保留 `replaceState`：地址栏里留得住锚点（可以直接
  * 复制分享），但不会给历史塞一串同页记录。
  *
+ * <p>**必须把现有的 `history.state` 原样带过去**：React Router 把
+ * `{ usr, key, idx }` 存在这里，传 `null` 会把它抹掉——之后按浏览器返回，
+ * 路由拿不到 `idx`，退回到哪一条就说不准了。
+ *
  * <p>焦点不动：章节标题不是可聚焦元素，跳过去以后焦点仍留在目录链接上，
  * 键盘用户接着按 Tab 就能走目录，不用被扔到正文中间。
  */
@@ -86,7 +90,7 @@ function jumpTo(event: MouseEvent<HTMLAnchorElement>, id: string) {
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
   target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" })
-  window.history.replaceState(null, "", `#${id}`)
+  window.history.replaceState(window.history.state, "", `#${id}`)
 }
 
 export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
