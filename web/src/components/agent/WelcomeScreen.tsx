@@ -37,12 +37,12 @@ const HINTS = [
 
 function GuideIcon({ icon }: { icon: "image" | "text" | "learn" }) {
   if (icon === "image") {
-    return <Image size={20} strokeWidth={1.8} aria-hidden="true" />
+    return <Image size={18} strokeWidth={1.8} aria-hidden="true" />
   }
   if (icon === "text") {
-    return <MessageSquare size={20} strokeWidth={1.8} aria-hidden="true" />
+    return <MessageSquare size={18} strokeWidth={1.8} aria-hidden="true" />
   }
-  return <BookOpen size={20} strokeWidth={1.8} aria-hidden="true" />
+  return <BookOpen size={18} strokeWidth={1.8} aria-hidden="true" />
 }
 
 export function WelcomeScreen({
@@ -55,59 +55,61 @@ export function WelcomeScreen({
 }) {
   return (
     <div className="welcome">
-      <div className="welcome-stage">
-        {/* 全站同一个 Optical Iris 标：两版一起挂，靠 html.dark 换。 */}
-        <div className="welcome-mark" aria-hidden="true">
-          <img
-            className="welcome-mark__img welcome-mark__img--light"
-            src="/brand/iris-optical-light-96.png"
-            srcSet="/brand/iris-optical-light-96.png 96w, /brand/iris-optical-light-192.png 192w"
-            sizes="56px"
-            alt=""
-            width={56}
-            height={56}
-          />
-          <img
-            className="welcome-mark__img welcome-mark__img--dark"
-            src="/brand/iris-optical-dark-96.png"
-            srcSet="/brand/iris-optical-dark-96.png 96w, /brand/iris-optical-dark-192.png 192w"
-            sizes="56px"
-            alt=""
-            width={56}
-            height={56}
-          />
-        </div>
-
-        <div className="welcome-text">
-          <h2 className="welcome-title">Iris</h2>
-          <p className="welcome-desc">上传眼底图片或描述症状，我来帮你理解影像与检查结果</p>
-        </div>
-
-        <div className="welcome-hints">
-          {HINTS.map((h) => (
-            <button
-              key={h.title}
-              type="button"
-              className="guide-card"
-              onClick={() => (h.icon === "image" ? onPickImage(h.prompt) : onSend(h.prompt))}
-            >
-              <span className="guide-icon-wrap">
-                <GuideIcon icon={h.icon} />
-              </span>
-              <span className="guide-content">
-                <span className="guide-title">{h.title}</span>
-                <span className="guide-desc">{h.desc}</span>
-              </span>
-              <span className="guide-action">
-                <span className="guide-action-text">{h.action}</span>
-                <ArrowRight className="guide-arrow" size={12} strokeWidth={2.5} aria-hidden="true" />
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <p className="welcome-note">支持常见图片格式，单张不超过 10 MB；图片只在发送时才上传。</p>
+      {/* 全站同一个 Optical Iris 标：两版一起挂，靠 html.dark 换。 */}
+      <div className="welcome__mark" aria-hidden="true">
+        <img
+          className="welcome__mark-img welcome__mark-img--light"
+          src="/brand/iris-optical-light-96.png"
+          srcSet="/brand/iris-optical-light-96.png 96w, /brand/iris-optical-light-192.png 192w"
+          sizes="44px"
+          alt=""
+          width={44}
+          height={44}
+        />
+        <img
+          className="welcome__mark-img welcome__mark-img--dark"
+          src="/brand/iris-optical-dark-96.png"
+          srcSet="/brand/iris-optical-dark-96.png 96w, /brand/iris-optical-dark-192.png 192w"
+          sizes="44px"
+          alt=""
+          width={44}
+          height={44}
+        />
       </div>
+
+      <p className="welcome__eyebrow">Iris Intelligence</p>
+      <h2 className="welcome__title">你好，我是 Iris</h2>
+      <p className="welcome__desc">
+        上传眼底照片，或直接描述你的眼部不适与检查结果，我会帮你一起解读。
+      </p>
+
+      <div className="welcome__hints">
+        {HINTS.map((h) => (
+          <button
+            key={h.title}
+            type="button"
+            className="guide-card"
+            onClick={() => (h.icon === "image" ? onPickImage(h.prompt) : onSend(h.prompt))}
+          >
+            <span className="guide-icon-wrap">
+              <GuideIcon icon={h.icon} />
+            </span>
+            <span className="guide-content">
+              <span className="guide-title">{h.title}</span>
+              <span className="guide-desc">{h.desc}</span>
+            </span>
+            <span className="guide-action">
+              <span className="guide-action-text">{h.action}</span>
+              <ArrowRight className="guide-arrow" size={12} strokeWidth={2.5} aria-hidden="true" />
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <p className="welcome__note">
+        支持常见图片格式，单张不超过 10 MB；图片只在发送时才上传。
+        回答由 AI 生成，仅供健康科普参考，不能替代执业医师的检查与判断。
+      </p>
     </div>
   )
 }

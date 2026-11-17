@@ -1,7 +1,7 @@
 import "@/styles/agent.css"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Image, Menu, Plus } from "lucide-react"
+import { Menu, PanelRight } from "lucide-react"
 import {
   batchDeleteSessions,
   deleteSession,
@@ -21,6 +21,7 @@ import { newId } from "@/lib/id"
 import { useMediaQuery } from "@/lib/useMediaQuery"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
+import { Dialog } from "@/components/ui/dialog"
 import { MessageList } from "@/components/agent/MessageList"
 import { ChatInput, type ChatInputHandle } from "@/components/agent/ChatInput"
 import { SessionList } from "@/components/agent/SessionList"
@@ -29,8 +30,13 @@ import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const HISTORY_PAGE_SIZE = 100
 
-/** 与 agent.css 的窄屏断点一致：窄屏会话栏默认收起，首屏留给对话与输入区。 */
-const NARROW_QUERY = "(max-width: 900px)"
+/**
+ * 断点：1024px 以下会话导航与资源面板都改成抽屉。
+ *
+ * 旧版用 900px，768px 平板上会挤成「导航 + 窄对话」两列，正文宽度不到
+ * 400px。1024 把平板也交给抽屉，桌面才有完整的 264 / 320 两根侧栏。
+ */
+const COMPACT_QUERY = "(max-width: 1023px)"
 
 /** 文件名净化：去掉路径分隔符与系统不允许的字符。 */
 function safeFileName(name: string): string {
@@ -77,23 +83,19 @@ export function AgentPage() {
   const lastUserKeyRef = useRef<string | null | undefined>(undefined)
   const [currentThreadId, setCurrentThreadId] = useState("")
   const [sessions, setSessions] = useState<AgentSessionVO[]>([])
-  // 窄屏判定走全站同一个 useMediaQuery（实时订阅断点变化，不是一次性快照）。
-  const narrowViewport = useMediaQuery(NARROW_QUERY)
-  const [sessionsCollapsed, setSessionsCollapsed] = useState(narrowViewport)
-  // 拖窗口跨过断点时跟上：进窄屏把会话栏收起，回宽屏展开，
-  // 用户手动开合的状态以最后一次操作为准。
-  const prevNarrowRef = useRef(narrowViewport)
-  useEffect(() => {
-    if (prevNarrowRef.current !== narrowViewport) {
-      prevNarrowRef.current = narrowViewport
-      setSessionsCollapsed(narrowViewport)
-    }
-  }, [narrowViewport])
+  // 紧凑档（平板与手机）：会话导航与资源面板都是抽屉，不占正文宽度。
+  const compact = useMediaQuery(COMPACT_QUERY)
+  // 桌面档：导航栏可以自己收起（正文更宽）；紧凑档不再有这个状态。
+  const [navCollapsed, setNavCollapsed] = useState(false)
+  // 紧凑档的抽屉开关。
+  const [navOpen, setNavOpen] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState("")
   const previewCloseRef = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false)
+  // 上传中：给「图片还在路上」一个诚实的反馈，不假装已经收到回复。
+  const [uploading, setUploading] = useState(false)
   // 欢迎屏「上传眼底图像」→ 输入区选图：文件对话框必须由用户手势同步打开
   // （WebKit 限制），所以持有输入区的 ref 直接调 pickImage()，不走 effect/信号。
   const chatInputRef = useRef<ChatInputHandle>(null)
@@ -171,58 +173,74 @@ export function AgentPage() {
     }
   }, [status, userKey, reset, refreshSessions, loadHistoryMessages])
 
+  // 发送互斥：从「开始上传」到「这一回合的流结束」为止。
+  //
+  // <p>`isStreaming` 要等上传完、`send()` 真正开始才变 true——上传那几秒里
+  // 再触发一次发送会并发上传并推入第二条用户消息。ref 同步置位，跨上传与
+  // 流式两段生命周期；被拦下的调用直接返回 false，输入区据此把原文留住。
+  const sendingRef = useRef(false)
+
   const handleSend = useCallback(
     async (text: string, files: File[] = []): Promise<boolean> => {
       if ((!text.trim() && files.length === 0) || isStreaming) return false
+      if (sendingRef.current) return false
+      sendingRef.current = true
 
-      // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
-      // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
-      const isFirstMessage = messages.length === 0
-      // 本回合用的会话 id：发送过程中用户可能切了会话，收尾时只能写回这一个
-      const usedThreadId = threadId
-
-      let imageUrls: string[] = []
       try {
+        // 必须在 pushUser 之前判断：用户消息推入后 messages 已非空，
+        // 放到后面判断会让"是否首条消息"永远为假，标题生成从不触发。
+        const isFirstMessage = messages.length === 0
+        // 本回合用的会话 id：发送过程中用户可能切了会话，收尾时只能写回这一个
+        const usedThreadId = threadId
+
+        let imageUrls: string[] = []
         if (files.length > 0) {
-          const result = await uploader.uploadFiles(files)
-          imageUrls = result.urls
-        }
-      } catch (e) {
-        pushFault(faultFromError(e, { intent: "upload" }))
-        return false
-      }
-
-      const localId = newId()
-      pushUser({
-        id: localId,
-        type: "user",
-        content: text,
-        time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-        images: imageUrls,
-      })
-
-      try {
-        await send(text, usedThreadId, imageUrls)
-        uploader.commitSuccess(imageUrls)
-        // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
-        if (threadIdRef.current === usedThreadId) {
-          saveThreadId(userKey, usedThreadId)
-          setCurrentThreadId(usedThreadId)
+          setUploading(true)
+          try {
+            const result = await uploader.uploadFiles(files)
+            imageUrls = result.urls
+          } catch (e) {
+            pushFault(faultFromError(e, { intent: "upload" }))
+            return false
+          } finally {
+            setUploading(false)
+          }
         }
 
-        // 首条消息触发 AI 生成标题，完成后刷新列表
-        if (isFirstMessage) {
-          void generateTitle(usedThreadId, text)
-            .then(() => refreshSessions())
-            .catch((e) => console.warn("标题生成触发失败", e))
+        const localId = newId()
+        pushUser({
+          id: localId,
+          type: "user",
+          content: text,
+          time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+          images: imageUrls,
+        })
+
+        try {
+          await send(text, usedThreadId, imageUrls)
+          uploader.commitSuccess(imageUrls)
+          // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
+          if (threadIdRef.current === usedThreadId) {
+            saveThreadId(userKey, usedThreadId)
+            setCurrentThreadId(usedThreadId)
+          }
+
+          // 首条消息触发 AI 生成标题，完成后刷新列表
+          if (isFirstMessage) {
+            void generateTitle(usedThreadId, text)
+              .then(() => refreshSessions())
+              .catch((e) => console.warn("标题生成触发失败", e))
+          }
+          return true
+        } catch (e) {
+          uploader.commitFailure(imageUrls)
+          // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
+          setMessages((prev) => prev.filter((message) => message.id !== localId))
+          pushFault(faultFromError(e, { intent: "send" }))
+          return false
         }
-        return true
-      } catch (e) {
-        uploader.commitFailure(imageUrls)
-        // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
-        setMessages((prev) => prev.filter((message) => message.id !== localId))
-        pushFault(faultFromError(e, { intent: "send" }))
-        return false
+      } finally {
+        sendingRef.current = false
       }
     },
     [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, setMessages, refreshSessions, pushFault],
@@ -234,9 +252,9 @@ export function AgentPage() {
     setThreadId(newId())
     reset()
     setPanelOpen(false)
-    // 窄屏上会话栏是盖住对话的展开区：选完就收回去，别让用户再手动收一次。
-    if (narrowViewport) setSessionsCollapsed(true)
-  }, [reset, userKey, narrowViewport])
+    // 紧凑档上会话栏是盖住对话的抽屉：选完就收回去，别让用户再手动收一次。
+    if (compact) setNavOpen(false)
+  }, [reset, userKey, compact])
 
   const handleSelectHistory = useCallback(
     async (id: string) => {
@@ -245,10 +263,10 @@ export function AgentPage() {
       saveThreadId(userKey, id)
       reset()
       setPanelOpen(false)
-      if (narrowViewport) setSessionsCollapsed(true)
+      if (compact) setNavOpen(false)
       await loadHistoryMessages(id)
     },
-    [reset, userKey, loadHistoryMessages, narrowViewport],
+    [reset, userKey, loadHistoryMessages, compact],
   )
 
   /** 删除/置顶/重命名后刷新列表（Vue 版这里漏绑导致列表不刷新，勿复刻）。 */
@@ -323,17 +341,54 @@ export function AgentPage() {
       void afterSessionChange(() => updatePinStatus(id, pinned)),
     [afterSessionChange],
   )
-  const handleCollapseSessions = useCallback(() => setSessionsCollapsed(true), [])
+  const handleCollapseSessions = useCallback(() => setNavCollapsed(true), [])
   const handleSendText = useCallback((text: string) => void handleSend(text), [handleSend])
+
+  // 会话栏的全部操作打包成一份：桌面侧栏与紧凑档抽屉共用同一份组件。
+  const sessionPanel = (
+    <SessionList
+      sessions={sessions}
+      activeId={currentThreadId}
+      busy={busy}
+      onNewChat={handleNewChat}
+      onSelect={handleSelectSession}
+      onRename={handleRenameSession}
+      onDelete={handleDelete}
+      onBatchDelete={handleBatchDelete}
+      onTogglePin={handleTogglePinSession}
+      onExport={handleExport}
+      onCollapse={compact ? undefined : handleCollapseSessions}
+    />
+  )
+
+  // 顶栏标题用真实会话标题；新会话没有标题就写「新对话」，不编号。
+  const threadTitle =
+    sessions.find((s) => s.sessionId === currentThreadId)?.title?.trim() ||
+    (currentThreadId ? "新对话" : "")
+
+  // 等待态：上传中，或已发送但第一条真实事件还没到。
+  const lastMessage = messages[messages.length - 1]
+  const awaitingFirstEvent =
+    isStreaming && messages.length > 0 && lastMessage?.type === "user"
+  const waiting = uploading
+    ? { active: true, label: "正在上传图片" }
+    : { active: awaitingFirstEvent, label: "正在接收回复" }
+
+  const resourcePanel = (
+    <ResourcePanel
+      open
+      resources={resources}
+      onClose={() => setPanelOpen(false)}
+      onPreviewImage={setPreviewUrl}
+    />
+  )
 
   if (status === "loading") {
     return (
       <div className="is-field is-brand-page">
         <ProductHeader scene="intelligence" />
         <main className="agent-viewport">
-          <p className="num" style={{ color: "var(--fg-3)", padding: 16 }}>
-            LOADING…
-          </p>
+          <p className="agent-loading">载入中…</p>
         </main>
       </div>
     )
@@ -341,110 +396,122 @@ export function AgentPage() {
 
   // 未登录不拦页面：先把界面给出来，等真的调 agent 接口拿到 40100/40101
   // 再由路由层跳登录页（带回跳地址）。
-  // 同 Vue 版 BasicLayout：agent 页不出页脚、不进版心，三栏铺满顶栏以下视口。
-  // U4 重做：画布落在品牌工作区（.is-brand-page 银蓝/午夜蓝），
-  // 侧栏与面板用玻璃/实体分层，不再是骨白仪器台上的白卡。
   return (
     <div className="is-field is-brand-page">
       <ProductHeader scene="intelligence" />
 
       <main className="agent-viewport">
-        <div className={`agent-layout${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
-          {/* 会话栏常驻 DOM（同 Vue 版 AgentChatLayout）：收起靠宽度动画，
-              从 DOM 摘掉会让中栏自动排进左列而塌成窄条。 */}
-          <div className={`agent-layout__left${sessionsCollapsed ? " is-collapsed" : ""}`}>
-            <SessionList
-              sessions={sessions}
-              activeId={currentThreadId}
-              busy={busy}
-              onNewChat={handleNewChat}
-              onSelect={handleSelectSession}
-              onRename={handleRenameSession}
-              onDelete={handleDelete}
-              onBatchDelete={handleBatchDelete}
-              onTogglePin={handleTogglePinSession}
-              onExport={handleExport}
-              onCollapse={handleCollapseSessions}
-            />
-          </div>
+        <div
+          className={`agent-workspace${compact ? " is-compact" : ""}${
+            !compact && navCollapsed ? " is-nav-collapsed" : ""
+          }${panelOpen && !compact ? " is-rail-open" : ""}`}
+        >
+          {/* 桌面：会话导航常驻左栏（收起靠宽度动画，从 DOM 摘掉会让
+              中栏自动排进左列而塌成窄条）。紧凑档：改抽屉，见下。 */}
+          {!compact ? (
+            <div className={`agent-nav${navCollapsed ? " is-collapsed" : ""}`}>
+              {sessionPanel}
+            </div>
+          ) : null}
 
-          <div className={`agent-main${sessionsCollapsed ? " is-left-collapsed" : ""}`}>
+          <div className="agent-main">
             <MessageList
               messages={messages}
               loading={historyLoading}
               streaming={isStreaming}
+              waiting={waiting}
+              title={threadTitle}
               onSend={handleSendText}
               onPreviewImage={setPreviewUrl}
               onPickImage={pickImage}
               headLeft={
                 <>
-                  {/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions） */}
-                  {sessionsCollapsed && (
-                    <div role="toolbar" aria-label="侧边栏操作" className="agent-collapsed-actions">
-                      <button
-                        type="button"
-                        className="agent-collapsed-actions__btn"
-                        onClick={() => setSessionsCollapsed(false)}
-                        aria-label="展开会话栏"
-                        title="展开会话栏"
-                      >
-                        <Menu size={18} strokeWidth={2} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="agent-collapsed-actions__btn is-accent"
-                        onClick={handleNewChat}
-                        aria-label="新建对话"
-                        title="新建对话"
-                      >
-                        <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
-                      </button>
-                    </div>
-                  )}
-                  {status === "anon" && (
-                    <span className="agent-main__anon num">未登录 · 发送时将引导登录</span>
-                  )}
+                  {compact ? (
+                    <button
+                      type="button"
+                      className="agent-iconbtn"
+                      onClick={() => setNavOpen(true)}
+                      aria-label="打开会话列表"
+                      title="会话列表"
+                    >
+                      <Menu size={18} strokeWidth={2} aria-hidden="true" />
+                    </button>
+                  ) : navCollapsed ? (
+                    <button
+                      type="button"
+                      className="agent-iconbtn"
+                      onClick={() => setNavCollapsed(false)}
+                      aria-label="展开会话栏"
+                      title="展开会话栏"
+                    >
+                      <Menu size={18} strokeWidth={2} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                  {status === "anon" ? (
+                    <span className="agent-anon">未登录 · 发送时将引导登录</span>
+                  ) : null}
                 </>
               }
               headRight={
-                /* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标） */
                 <button
                   type="button"
-                  className={`agent-main__resource-toggle${panelOpen ? " is-active" : ""}`}
+                  className={`agent-iconbtn${panelOpen ? " is-active" : ""}`}
                   onClick={() => setPanelOpen((v) => !v)}
                   aria-expanded={panelOpen}
                   aria-label="资源面板"
                   title="资源面板"
                 >
-                  <Image size={18} strokeWidth={2} aria-hidden="true" />
-                  {resources.images.length + resources.links.length > 0 && (
-                    <span className="agent-main__resource-badge num">
+                  <PanelRight size={18} strokeWidth={2} aria-hidden="true" />
+                  {resources.images.length + resources.links.length > 0 ? (
+                    <span className="agent-iconbtn__badge">
                       {resources.images.length + resources.links.length}
                     </span>
-                  )}
+                  ) : null}
                 </button>
               }
             />
 
-            <ChatInput
-              ref={chatInputRef}
-              disabled={false}
-              streaming={isStreaming}
-              onSend={handleSend}
-              onStop={abort}
-            />
+            <div className="agent-composer">
+              <ChatInput
+                ref={chatInputRef}
+                disabled={false}
+                streaming={isStreaming}
+                onSend={handleSend}
+                onStop={abort}
+              />
+            </div>
           </div>
 
-          {panelOpen && (
-            <ResourcePanel
-              open
-              resources={resources}
-              onClose={() => setPanelOpen(false)}
-              onPreviewImage={setPreviewUrl}
-            />
-          )}
+          {/* 桌面：资源面板是右侧常驻栏；紧凑档：改抽屉。 */}
+          {!compact && panelOpen ? (
+            <div className="agent-rail">{resourcePanel}</div>
+          ) : null}
         </div>
       </main>
+
+      {/* 紧凑档抽屉：会话导航 */}
+      {compact ? (
+        <Dialog
+          open={navOpen}
+          title="会话"
+          onClose={() => setNavOpen(false)}
+          className="agent-drawer is-left"
+        >
+          {sessionPanel}
+        </Dialog>
+      ) : null}
+
+      {/* 紧凑档抽屉：资源面板 */}
+      {compact && panelOpen ? (
+        <Dialog
+          open={panelOpen}
+          title="资源面板"
+          onClose={() => setPanelOpen(false)}
+          className="agent-drawer is-right"
+        >
+          {resourcePanel}
+        </Dialog>
+      ) : null}
 
       {previewUrl && (
         <div
@@ -468,7 +535,7 @@ export function AgentPage() {
           </button>
           <img src={previewUrl} alt="预览" onClick={(e) => e.stopPropagation()} />
           <a
-            className="agent-preview__open num"
+            className="agent-preview__open"
             href={previewUrl}
             target="_blank"
             rel="noreferrer"
@@ -478,7 +545,6 @@ export function AgentPage() {
           </a>
         </div>
       )}
-
     </div>
   )
 }

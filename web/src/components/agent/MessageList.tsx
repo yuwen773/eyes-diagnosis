@@ -1,12 +1,12 @@
-import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+
 import type { StreamMessage } from "@/lib/agentStream"
+import { buildThread } from "@/lib/agentSteps"
 import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
 import { AssistantMessage } from "./messages/AssistantMessage"
-import { ReasoningMessage } from "./messages/ReasoningMessage"
-import { ToolRequestMessage } from "./messages/ToolRequestMessage"
-import { ToolResponseMessage } from "./messages/ToolResponseMessage"
-import { ConfirmMessage } from "./messages/ConfirmMessage"
+import { ThoughtLine } from "./ThoughtLine"
+import { LatticeLoader } from "./LatticeLoader"
 import { WelcomeScreen } from "./WelcomeScreen"
 
 /** 距底 80px 内视为贴底。 */
@@ -29,29 +29,29 @@ const MessageRow = memo(function MessageRow({
       return <UserMessage msg={msg} onPreviewImage={onPreviewImage} />
     case "assistant":
       return <AssistantMessage msg={msg} />
-    case "reasoning":
-      return <ReasoningMessage msg={msg} />
-    case "tool-request":
-      return <ToolRequestMessage msg={msg} />
-    case "tool-response":
-      return <ToolResponseMessage msg={msg} />
-    case "confirm":
-      return <ConfirmMessage msg={msg} />
     default:
+      // reasoning / tool-* / confirm 都在 buildThread 里并入「执行过程」块，
+      // 不再逐条平铺。走到这里的只可能是历史数据里的未知类型，不渲染。
       return null
   }
 })
 
 /**
- * 消息列表：白色实体面板滚动区（U4——对话工作区不做暗底反相带，
- * 会话侧栏与对话区都落在骨白画布上的白色面板里，靠发丝线分层）。
+ * 消息区：中央阅读列 + 真实事件驱动的执行过程。
  *
- * 贴底时跟随新消息与流式累加滚动；不贴底时显示未读悬浮按钮（只按新消息计数）。
+ * <p>**不再有仪器读数。** 旧版的 `DIAGNOSIS · AGENT` 头与 `N MSG` 计数
+ * 已从主视觉里去掉——它们既不携带信息，也把页面拉回「控制台」的语气。
+ * 顶栏只留当前会话的真实标题与两个操作钮。
+ *
+ * <p>正文列宽上限 820px 并水平居中：对话是读物，不是仪表盘，
+ * 正文贴着左边缘、右侧留一大片空白是旧版最刺眼的结构问题。
  */
 export function MessageList({
   messages,
   loading,
   streaming,
+  waiting,
+  title,
   onSend,
   onPreviewImage,
   onPickImage,
@@ -61,13 +61,17 @@ export function MessageList({
   messages: StreamMessage[]
   loading: boolean
   streaming: boolean
+  /** 等第一条真实事件到达：上传中 / 等待首个回复。 */
+  waiting: { active: boolean; label: string }
+  /** 当前会话的真实标题（空会话不显示）。 */
+  title?: string
   onSend: (text: string) => void
   onPreviewImage?: (url: string) => void
   /** 欢迎屏「上传眼底图像」：预填引导句并打开输入区的选图对话框。 */
   onPickImage: (prefill: string) => void
-  /** 头栏左侧插槽：折叠后的左栏操作钮组。 */
+  /** 顶栏左侧插槽：折叠后的左栏操作钮组。 */
   headLeft?: ReactNode
-  /** 头栏右侧插槽：资源面板切换钮。 */
+  /** 顶栏右侧插槽：资源面板切换钮。 */
   headRight?: ReactNode
 }) {
   const listRef = useRef<HTMLDivElement>(null)
@@ -137,45 +141,53 @@ export function MessageList({
   }
 
   const empty = messages.length === 0 && !loading
+  // 过程块只由真实事件派生；消息对象引用在累加时保持稳定，
+  // 所以历史行仍然被 memo 跳过，只有正在流式的那一行会重渲染。
+  const thread = useMemo(() => buildThread(messages, streaming), [messages, streaming])
 
   return (
-    <div className="agent-console">
-      <div className="console__head">
-        <div className="console__head-left">
-          {headLeft}
-          <h1 className="console__title">DIAGNOSIS · AGENT</h1>
+    <div className="agent-thread">
+      <div className="agent-thread__bar">
+        <div className="agent-thread__bar-side">{headLeft}</div>
+        <div className="agent-thread__bar-center">
+          {title ? <h1 className="agent-thread__title">{title}</h1> : null}
         </div>
-        <div className="console__head-right">
-          {streaming ? (
-            <span className="console__live">LIVE</span>
-          ) : (
-            <span className="console__meta">{messages.length} MSG</span>
+        <div className="agent-thread__bar-side is-right">{headRight}</div>
+      </div>
+
+      <div className="agent-thread__scroll" ref={listRef}>
+        <div className={`agent-thread__column${empty ? " is-empty" : ""}`}>
+          {loading ? <div className="agent-load">读取历史会话…</div> : null}
+          {empty ? <WelcomeScreen onSend={onSend} onPickImage={onPickImage} /> : null}
+
+          {thread.map((item) =>
+            item.type === "process" ? (
+              <ThoughtLine key={item.id} steps={item.steps} />
+            ) : (
+              <MessageRow
+                key={item.message.id}
+                msg={item.message}
+                onPreviewImage={onPreviewImage}
+              />
+            ),
           )}
-          {headRight}
         </div>
       </div>
-      <div className="console__body agent-msglist" ref={listRef}>
-        {loading && <div className="agent-load">读取历史会话…</div>}
-        {empty && <WelcomeScreen onSend={onSend} onPickImage={onPickImage} />}
-        {messages.map((msg) => (
-          <MessageRow key={msg.id} msg={msg} onPreviewImage={onPreviewImage} />
-        ))}
-        {/* 打字指示器：排版复刻 Vue 版 typing-pill（三条跳动竖条） */}
-        {streaming && (
-          <div className="typing-row">
-            <div className="typing-pill" aria-label="正在输入">
-              <span className="typing-bar" />
-              <span className="typing-bar" />
-              <span className="typing-bar" />
-            </div>
-          </div>
-        )}
-      </div>
-      {unread > 0 && (
-        <button type="button" className="agent-msglist__unread num" onClick={scrollToBottom}>
-          ↓ {unread} 条新消息
+
+      {/* 等待态独立成一条，不塞进滚动列：塞进去会被列底裁掉半截，
+          而它恰恰是用户最该看见的一行。 */}
+      {waiting.active ? (
+        <div className="agent-thread__status">
+          <LatticeLoader label={waiting.label} />
+        </div>
+      ) : null}
+
+      {unread > 0 ? (
+        <button type="button" className="agent-msglist__unread" onClick={scrollToBottom}>
+          <span className="agent-msglist__unread-dot" aria-hidden="true" />
+          {unread} 条新消息
         </button>
-      )}
+      ) : null}
     </div>
   )
 }

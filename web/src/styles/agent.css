@@ -1,141 +1,285 @@
 /* ============================================================
-   agent.css — Agent 对话页（/agent）· Intelligence
+   agent.css — Agent 对话页（/agent）· Iris Blue Optical Glass
    ------------------------------------------------------------------
-   只消费上下文令牌（--fg/--fg-2/--fg-3/--hr/--surface）。
-   Intelligence 的强调色是运行态钴蓝 / 冰青：--brand-primary 表示「当前、
-   可操作」，--brand-cyan 只标「正在生成」。--signal 是临床「重点/当前」的
-   语义色，不在这一层复用（R2.5-05）。浅色为主、双主题随 html.dark 翻转。
+   R3 用户端体验重做：从「医疗仪器控制台」改成「医疗 AI 对话工作区」。
 
-   Visual Completion U4 重做：品牌工作区画布（.is-brand-page 银蓝/午夜蓝）上
-   的三层材质——会话侧栏与资源面板是 Frosted/Solid 品牌分层，
-   对话工作区是抬升一层的品牌面板；保持专业密度，不做大面积玻璃模糊。
-   运行态仍只绑真实 SSE 事件。
+   结构性改动（不是换色）：
+   - 三栏工作区：会话导航 268px / 阅读列 820px / 资源侧栏 320px；
+   - 阅读列水平居中，旧版「正文贴左、右侧一大片空白」消失；
+   - 旧仪器读数（DIAGNOSIS · AGENT、N MSG、typing-pill、toolcard）
+     全部退场，换成执行过程时间线（Thought Line）与等待态（Lattice Loader）；
+   - 输入区从「贴着屏幕底的细工具栏」改成多行 Prompt Bar。
+
+   令牌：只消费品牌层（--brand-*）与语义层（--fg / --hr / --risk-*）。
+   --signal 是临床「重点/当前」的语义色，不在这一层复用。
+   双主题由 html.dark 翻转，本文件不写第二套色值。
    ============================================================ */
 
-/* ── agent: 消息（U4：正文平铺，工具与过程保留卡片）── */
+/* ── 工作区三栏 ───────────────────────────────────────── */
 
-/* 用户消息：右对齐品牌浅底气泡，图片网格挂在气泡下方 */
-.agent-msg--user {
+.agent-viewport {
+  height: calc(100vh - var(--nav-h));
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  padding: 8px 16px;
 }
 
-.agent-msg__bubble-user {
-  max-width: 70%;
-  padding: 10px 16px 8px;
-  background: color-mix(in srgb, var(--brand-primary) 7%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--brand-primary) 16%, var(--hr));
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
-  word-break: break-word;
-}
-
-.agent-msg__text {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--fg);
-  padding: 2px 0;
-}
-
-.agent-msg__time {
-  margin-top: 4px;
-  font-size: 11px;
-  text-align: right;
+.agent-loading {
+  padding: 24px;
   color: var(--fg-3);
+  font-size: 13px;
 }
 
-.agent-msg__imggrid {
+.agent-workspace {
   position: relative;
-  display: inline-grid;
-  gap: 4px;
-  margin-bottom: 6px;
-  border-radius: var(--radius-lg);
-}
-
-.agent-msg__imggrid.grid-1 {
-  grid-template-columns: 48px;
-}
-
-.agent-msg__imggrid.grid-2,
-.agent-msg__imggrid.grid-3,
-.agent-msg__imggrid.grid-4 {
-  grid-template-columns: 48px 48px;
-}
-
-.agent-msg__thumb {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: none;
-  cursor: zoom-in;
-}
-
-.agent-msg__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.agent-msg__thumb:hover {
-  outline: 1px solid var(--brand-primary);
-}
-
-.agent-msg__imgmore {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-md);
-  background: rgba(11, 13, 12, 0.6);
-  color: var(--on-dark);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* 助手消息：左对齐、无卡片正文（U4——对话正文不做气泡嵌套，
-   工具卡与思考卡才是「系统在做事」的容器），+ Iris 头 */
-.agent-msg--assistant {
   display: flex;
-  padding: 8px 16px;
+  flex: 1;
+  min-height: 0;
+  background: var(--brand-canvas);
+  border-top: 1px solid var(--brand-line);
 }
 
-.agent-msg__bubble-ai {
-  max-width: min(680px, 100%);
-  padding: 4px 0;
-  word-break: break-word;
+/* 会话导航：玻璃分层，右边一道发丝线。收起靠宽度动画——
+   从 DOM 摘掉会让中栏自动排进左列而塌成窄条。 */
+.agent-nav {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 268px;
+  min-height: 0;
+  overflow: hidden;
+  transition: width var(--motion-base) var(--ease);
 }
 
-.agent-msg__aihead {
+.agent-nav.is-collapsed {
+  width: 0;
+}
+
+.agent-nav > .agent-sessions {
+  width: 268px;
+  height: 100%;
+}
+
+/* 中栏：对话 + 输入 */
+.agent-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 资源侧栏 */
+.agent-rail {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 320px;
+  min-height: 0;
+}
+
+.agent-rail > .agent-panel {
+  width: 320px;
+  height: 100%;
+}
+
+/* ── 对话线程 ─────────────────────────────────────────── */
+
+.agent-thread {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 顶栏：只留真实会话标题与两个操作钮。没有仪器读数。 */
+.agent-thread__bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--brand-line);
+  background: var(--brand-glass-soft);
+  -webkit-backdrop-filter: blur(var(--brand-glass-soft-blur));
+  backdrop-filter: blur(var(--brand-glass-soft-blur));
+}
+
+.agent-thread__bar-side {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  min-width: 0;
 }
 
-.agent-msg__aiicon {
+.agent-thread__bar-side.is-right {
+  justify-content: flex-end;
+}
+
+.agent-thread__bar-center {
+  min-width: 0;
+  text-align: center;
+}
+
+.agent-thread__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-thread__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 阅读列：宽度上限 820px，水平居中。 */
+.agent-thread__column {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 26px 28px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 空会话：欢迎屏在阅读区里垂直居中，不贴在顶上留一大片空白。 */
+.agent-thread__column.is-empty {
+  min-height: 100%;
+  justify-content: center;
+  padding-bottom: 12px;
+}
+
+/* 等待态独立一行，贴在滚动区之下、输入区之上。 */
+.agent-thread__status {
+  display: flex;
+  justify-content: center;
+  padding: 0 28px 10px;
+}
+
+.agent-load {
+  padding: 20px 4px;
+  font-size: 13px;
+  color: var(--fg-3);
+}
+
+/* 顶栏图标钮 */
+.agent-iconbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+}
+
+.agent-iconbtn:hover {
+  color: var(--fg);
+  background: var(--brand-soft);
+}
+
+.agent-iconbtn:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.agent-iconbtn.is-active {
+  color: var(--brand-primary);
+  border-color: color-mix(in srgb, var(--brand-primary) 34%, transparent);
+  background: var(--brand-soft);
+}
+
+.agent-iconbtn__badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.agent-anon {
+  font-size: 11.5px;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 消息 ─────────────────────────────────────────────── */
+
+.agent-msg {
+  margin: 0 0 22px;
+}
+
+.agent-msg:last-child {
+  margin-bottom: 8px;
+}
+
+/* 助手消息：开放式正文，不是气泡。 */
+.agent-msg--assistant {
+  display: block;
+}
+
+.agent-author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.agent-author__mark {
   color: var(--brand-primary);
   flex-shrink: 0;
 }
 
-.agent-msg__ainame {
-  font-family: var(--font-serif);
+.agent-author__name {
+  font-family: var(--font-brand);
   font-size: 12px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   color: var(--brand-primary);
 }
 
-.agent-msg__bubble-ai .markdown-body {
-  font-size: 14px;
-  line-height: 1.6;
-  padding-left: 2px;
+.agent-author__time {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.agent-msg__body {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--fg);
+  word-break: break-word;
+}
+
+.agent-msg__body--streaming {
+  white-space: pre-wrap;
 }
 
 .agent-msg__streaming {
@@ -143,6 +287,7 @@
   word-break: break-word;
 }
 
+/* 光标：只在真正流式中出现。 */
 .caret-blink {
   display: inline-block;
   width: 7px;
@@ -165,308 +310,118 @@
   }
 }
 
-/* 思考过程卡：复用工具卡的容器观感（Vue 版是抬一层的三级底，此处取反相带的线条层） */
-.agent-msg--reasoning {
-  max-width: min(400px, 100%);
-  margin: 4px 16px;
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-md);
-  background: var(--brand-glass);
-  overflow: hidden;
-}
-
-/* 折叠 */
-.agent-msg--reasoning summary {
-  cursor: pointer;
-  list-style: none;
-  border-bottom: 0;
-}
-
-.agent-msg--reasoning[open] .agent-toolcard__head,
-.agent-msg--reasoning[open] summary {
-  border-bottom: 1px solid var(--hr);
-}
-
-.agent-msg--reasoning summary::-webkit-details-marker {
-  display: none;
-}
-
-/* 确认终点卡：运行态钴蓝左边条区别于工具卡 */
-.agent-msg--confirm {
-  max-width: min(400px, 100%);
-  margin: 4px 16px;
-  padding: 8px 12px;
-  border: 1px solid var(--brand-line);
-  border-left: 2px solid var(--brand-primary);
-  border-radius: var(--radius-md);
-  background: var(--brand-glass);
-}
-
-.agent-msg__confirm-head {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--brand-primary);
-  margin-bottom: 6px;
-}
-
-.agent-msg__confirm-detail {
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 6px;
-}
-
-.agent-msg--confirm .trace__text,
-.agent-msg--confirm .trace__note {
-  color: var(--fg);
-}
-
-.agent-msg--confirm .trace__note {
-  color: var(--fg-3);
-}
-
-/* ── 工具卡（排版复刻 Vue 版 ToolRequestMessage / ToolResponseMessage）── */
-
-.agent-toolcard {
-  max-width: min(400px, 100%);
-  margin: 4px 16px;
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-md);
-  background: var(--brand-glass);
-  overflow: hidden;
-}
-
-.agent-toolcard__head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--hr);
-}
-
-.agent-toolcard__icon {
-  display: flex;
-  color: var(--brand-primary);
-  flex-shrink: 0;
-}
-
-.agent-toolcard__name {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--brand-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.agent-toolcard__tag {
-  margin-left: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-  opacity: 0.6;
-}
-
-.agent-toolcard__args {
-  padding: 8px 12px 10px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.65;
-}
-
-.agent-toolcard__argrow {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  row-gap: 1px;
-}
-
-.agent-toolcard__argkey {
-  color: var(--fg-2);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.agent-toolcard__argsep {
-  margin: 0 2px;
-  color: var(--fg-3);
-}
-
-.agent-toolcard__argval {
-  flex: 1;
-  min-width: 0;
-  color: var(--fg);
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.agent-toolcard__emptyargs {
-  color: var(--fg-3);
-}
-
-.agent-toolcard__body {
-  padding: 8px 12px 10px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.65;
-  color: var(--fg);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* ── 打字指示器（排版复刻 Vue 版 typing-pill：三条跳动竖条）──
-   barPulse 是轻量反馈动画（回答「正在输入」这一状态），不属于装饰动画，保留；
-   prefers-reduced-motion 下退化为静态竖条。 */
-.typing-row {
-  padding: 16px 16px 16px 20px;
-}
-
-.typing-pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 18px;
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
-  background: var(--brand-glass);
-  overflow: hidden;
-}
-
-.typing-bar {
-  display: block;
-  width: 3px;
-  height: 14px;
-  border-radius: var(--radius-sm);
-  background: var(--brand-cyan);
-  opacity: 0.35;
-  animation: typing-bar-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.typing-bar:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.typing-bar:nth-child(2) {
-  animation-delay: 0.18s;
-}
-
-.typing-bar:nth-child(3) {
-  animation-delay: 0.36s;
-}
-
-@keyframes typing-bar-pulse {
-  0%,
-  100% {
-    transform: scaleY(0.55);
-    opacity: 0.3;
-  }
-  40% {
-    transform: scaleY(1);
-    opacity: 0.9;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .typing-bar {
-    animation: none;
-    opacity: 0.6;
-  }
-}
-
-/* ── agent: 会话屏容器与消息列表 ───────────────────────── */
-
-.agent-console {
-  position: relative;
+/* 用户消息：轻量玻璃气泡，右对齐。 */
+.agent-msg--user {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  align-items: flex-end;
+  gap: 8px;
 }
 
-/* 会话屏头部复用 app.css 的 .console__* 骨架（落地页反相带同款），
-   在品牌面板上把底色拉回品牌玻璃——与侧栏同一块材质。
-   右侧让出浮动资源钮的位置，避免与计数重叠。 */
-.agent-console .console__head {
-  border-bottom-color: var(--hr);
-  background: var(--brand-glass-strong);
+.agent-msg__bubble-user {
+  max-width: 78%;
+  padding: 11px 16px 9px;
+  background: var(--brand-glass);
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-md) var(--radius-xl);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  word-break: break-word;
 }
 
-/* 头栏左右两组：左侧放折叠后的左栏操作钮，右侧放资源面板钮。
-   都走常规流，不浮在正文/提示条上——浮动会压住字。 */
-.console__head-left,
-.console__head-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+.agent-msg__text {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--fg);
+  white-space: pre-wrap;
 }
 
-.console__head-left {
-  gap: 12px;
-}
-
-.agent-console .console__meta {
-  color: var(--fg-3);
-}
-
-/* LIVE 徽标是运行态（app.css 里默认信号橙，落地页演示屏用它是对的）；
-   Agent 工作区的运行态语言是品牌钴蓝，作用域覆盖，不动 app.css。 */
-.agent-console .console__live {
-  color: var(--brand-primary);
-}
-
-/* U4：标题行用品牌拉丁字——DIAGNOSIS · AGENT 是产品名，与顶栏字标同语。 */
-.agent-console .console__title {
-  font-family: var(--font-brand);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  font-size: 13px;
-}
-
-.agent-load {
-  padding: 16px 22px;
-  font-family: var(--font-mono);
+.agent-msg__time {
+  margin-top: 3px;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  text-align: right;
   color: var(--fg-3);
 }
 
-.agent-msglist {
-  overflow-y: auto;
+.agent-msg__imggrid {
+  position: relative;
+  display: inline-grid;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
-/* 承载消息的 .console__body 默认 min-height:auto：窄屏欢迎屏比可用高度长时
-   它会溢出容器、滑到输入区底下。这里把它压回可滚动区域。 */
-.agent-console .console__body {
-  min-height: 0;
-  background: var(--brand-glass-strong);
+.agent-msg__imggrid.grid-1 {
+  grid-template-columns: 76px;
 }
 
-.agent-msg__live-inline {
-  animation: live-pulse 2.6s var(--ease) infinite;
+.agent-msg__imggrid.grid-2,
+.agent-msg__imggrid.grid-3,
+.agent-msg__imggrid.grid-4 {
+  grid-template-columns: 76px 76px;
 }
 
+.agent-msg__thumb {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: none;
+  cursor: zoom-in;
+  transition: border-color 0.18s var(--ease);
+}
+
+.agent-msg__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.agent-msg__thumb:hover {
+  border-color: var(--brand-primary);
+}
+
+.agent-msg__thumb:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.agent-msg__imgmore {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-scrim-chip);
+  color: var(--brand-scrim-chip-fg);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 未读提示 */
 .agent-msglist__unread {
   position: absolute;
-  bottom: 14px;
   left: 50%;
+  bottom: 18px;
   transform: translateX(-50%);
-  padding: 5px 14px;
-  border: 1px solid var(--hr);
-  background: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-pill);
+  background: var(--brand-glass-strong);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--brand-shadow);
   color: var(--fg);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
   cursor: pointer;
+  z-index: 6;
 }
 
 .agent-msglist__unread:hover {
@@ -474,484 +429,43 @@
   color: var(--brand-primary);
 }
 
-/* ── agent: 欢迎屏（Intelligence 场景的空会话入口） ───────────
-   不用神经网络连线/节点：后端没有多 Agent 拓扑，画出来就是虚构结构。
-   主视觉只保留全站同一个光学虹膜标；卡片是 12px 的发丝线面板，
-   强调色走运行态钴蓝，不再借用临床的信号橙。 */
+.agent-msglist__unread:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
 
-.welcome {
-  position: relative;
+.agent-msglist__unread-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--brand-primary);
+}
+
+/* ── 执行过程（Thought Line）───────────────────────────── */
+
+.thought {
+  margin: 0 0 22px;
+  padding: 12px 16px 12px 4px;
+  border-left: 2px solid var(--brand-line);
+}
+
+.thought__summary {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100%;
-  padding: 32px 20px 40px;
-}
-
-.welcome-stage {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.welcome-mark {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 18px;
-}
-
-.welcome-mark__img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* 光学虹膜标两版同时挂，靠根级 .dark 换——与顶栏字标同一套做法。 */
-html.dark .welcome-mark__img--light {
-  display: none;
-}
-
-html:not(.dark) .welcome-mark__img--dark {
-  display: none;
-}
-
-.welcome-text {
-  text-align: center;
-}
-
-.welcome-title {
+  gap: 7px;
   margin: 0 0 8px;
   font-family: var(--font-brand);
-  font-weight: 700;
-  font-size: 32px;
-  letter-spacing: -0.02em;
-  color: var(--fg);
-}
-
-.welcome-desc {
-  margin: 0;
-  max-width: 420px;
-  font-size: 14.5px;
-  line-height: 1.65;
-  color: var(--fg-2);
-}
-
-.welcome-hints {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 26px;
-  width: 100%;
-  max-width: 780px;
-}
-
-.guide-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 18px 18px 14px;
-  border: 1px solid var(--hr);
-  border-radius: var(--radius-lg);
-  /* 卡片落在白色对话面板上：底取画布色，靠明度差与发丝线分层（U4），
-     不做玻璃模糊。 */
-  background: var(--bg);
-  font-family: var(--font-sans);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    border-color var(--fast),
-    transform var(--fast);
-}
-
-.guide-card:hover {
-  border-color: var(--brand-primary);
-  transform: translateY(-1px);
-}
-
-.guide-card:hover .guide-arrow {
-  color: var(--brand-primary);
-  transform: translateX(2px);
-}
-
-.guide-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, var(--hr));
-  border-radius: var(--radius-md);
-  color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 6%, transparent);
-}
-
-.guide-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-}
-
-.guide-title {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 14.5px;
-  line-height: 1.35;
-  color: var(--fg);
-}
-
-.guide-desc {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--fg-3);
-}
-
-.guide-action {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid var(--hr);
-}
-
-.guide-action-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--fg-2);
-}
-
-.guide-arrow {
-  flex-shrink: 0;
-  color: var(--fg-3);
-  transition:
-    color var(--fast),
-    transform var(--fast);
-}
-
-.welcome-note {
-  margin: 18px 0 0;
-  max-width: 780px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  color: var(--fg-3);
-  text-align: center;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .guide-card:hover {
-    transform: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .welcome-hints {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .welcome-note {
-    text-align: left;
-  }
-}
-
-/* ── agent: 输入区（排版复刻 Vue 版 AgentChatInput：圆角胶囊容器）── */
-
-.agent-input {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  padding: 8px 16px 6px;
-}
-
-.agent-input__container {
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-lg);
-  background: var(--brand-glass-strong);
-  box-shadow: var(--brand-shadow);
-  overflow: hidden;
-  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
-}
-
-.agent-input__container.is-focused {
-  border-color: var(--brand-primary);
-}
-
-/* 附件条（容器内第一行） */
-.agent-input__attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 12px 4px;
-}
-
-.agent-input__attachment {
-  position: relative;
-}
-
-.agent-input__attachment img {
-  width: 64px;
-  height: 64px;
-  border: 1px solid var(--hr);
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  display: block;
-  cursor: pointer;
-}
-
-.agent-input__remove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 2px solid var(--surface);
-  border-radius: var(--radius-circle);
-  background: var(--surface-3);
-  color: var(--fg-2);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.agent-input__remove:hover {
-  background: var(--risk-critical);
-  border-color: var(--risk-critical);
-  color: var(--on-dark);
-}
-
-.agent-input__row {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding: 6px 8px 6px 6px;
-}
-
-.agent-input__file {
-  display: none;
-}
-
-.agent-input__attach {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  margin-bottom: 1px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-lg);
-  background: none;
-  color: var(--fg-3);
-  cursor: pointer;
-  transition: color 0.2s var(--ease);
-}
-
-.agent-input__attach:hover:not(:disabled) {
-  color: var(--brand-primary);
-}
-
-.agent-input__attach:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.agent-input__textarea {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 6px;
-  border: 0;
-  background: transparent;
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.6;
-  resize: none;
-  overflow-y: auto;
-  min-height: 24px;
-}
-
-.agent-input__textarea::placeholder {
-  color: var(--fg-3);
-  opacity: 0.8;
-  /* 窄屏放不下整串快捷键说明：截断，不要折成两行再被输入区裁掉。 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 输入框焦点：不用 outline: none 压全局环（DESIGN.md §3.5），也不依赖
-   :has()（Firefox 121 前不支持，降级会完全没有焦点指示）。
-   全局 1px 焦点环保留在 textarea 上，容器再用 :focus-within 补一圈
-   柔光描边（news.css 同款写法），两层都看得见。 */
-.agent-input__container:focus-within {
-  border-color: var(--brand-primary);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--brand-primary) 28%, transparent),
-    var(--brand-shadow);
-}
-
-.agent-input__send,
-.agent-input__stop {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  margin-bottom: 1px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: transform 0.2s var(--ease);
-}
-
-.agent-input__send {
-  background: var(--brand-primary);
-  color: var(--brand-primary-fg);
-}
-
-.agent-input__send:disabled {
-  background: var(--hr);
-  color: var(--fg-3);
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.agent-input__send:not(:disabled):hover {
-  transform: translateY(-1px) scale(1.05);
-}
-
-.agent-input__stop {
-  background: var(--risk-critical);
-  color: var(--on-dark);
-}
-
-.agent-input__stop:hover {
-  filter: brightness(1.15);
-}
-
-.agent-input__hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 6px;
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--fg-3);
-  opacity: 0.6;
-}
-
-/* ── agent: 资源面板（U4 重做：Frosted Glass 品牌侧板） ─────────── */
-
-.agent-panel {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 340px;
-  min-height: 0;
-  border-left: 1px solid var(--brand-line);
-  background: var(--brand-glass-frosted);
-  -webkit-backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
-  backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  .agent-panel {
-    background: var(--brand-glass-fallback);
-  }
-}
-
-.agent-panel__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--hr);
-}
-
-.agent-panel__tabs {
-  display: flex;
-  gap: 6px;
-}
-
-.agent-panel__tab {
-  padding: 4px 10px;
-  border: 1px solid transparent;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--fg-3);
-  cursor: pointer;
-}
-
-.agent-panel__tab.is-active {
-  border-color: var(--hr-strong);
-  color: var(--brand-primary);
-}
-
-.agent-panel__close {
-  border: 0;
-  background: none;
-  font-size: 16px;
-  color: var(--fg-3);
-  cursor: pointer;
-}
-
-.agent-panel__close:hover {
-  color: var(--fg);
-}
-
-.agent-panel__body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 14px;
-}
-
-.agent-panel__empty {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   color: var(--fg-3);
 }
 
-.agent-panel__imggrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 8px;
+.thought__summary svg {
+  color: var(--brand-cyan);
 }
 
-.agent-panel__img {
-  padding: 0;
-  border: 1px solid var(--hr);
-  background: none;
-  cursor: zoom-in;
-}
-
-.agent-panel__img img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
-
-.agent-panel__links {
+.thought__steps {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -959,38 +473,695 @@ html:not(.dark) .welcome-mark__img--dark {
   flex-direction: column;
 }
 
-.agent-panel__link a {
+.thought__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: start;
+  column-gap: 2px;
+}
+
+/* 竖轨：只有相邻两步之间有线，最后一步不拖尾。 */
+.thought__rail {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--hr);
-  color: inherit;
-  text-decoration: none;
+  justify-content: center;
+  padding-top: 5px;
 }
 
-.agent-panel__linktitle {
-  font-size: 12.5px;
-  color: var(--fg);
+.thought__rail::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  bottom: -2px;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--brand-line);
 }
 
-.agent-panel__link a:hover .agent-panel__linktitle {
-  color: var(--brand-primary);
+.thought__step:last-child .thought__rail::before {
+  display: none;
 }
 
-.agent-panel__linkdomain {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
+.thought__dot {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-circle);
+  background: var(--brand-canvas);
   color: var(--fg-3);
 }
 
-/* ── agent: 会话列表（U4 重做：Frosted Glass 品牌侧栏 + 行级操作菜单） ── */
+.thought__step.is-done .thought__dot {
+  color: var(--brand-primary);
+  border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent);
+}
+
+.thought__step.is-running .thought__dot {
+  color: var(--brand-cyan);
+  border-color: color-mix(in srgb, var(--brand-cyan) 46%, transparent);
+}
+
+.thought__step.is-paused .thought__dot {
+  color: var(--brand-aurora);
+  border-color: color-mix(in srgb, var(--brand-aurora) 46%, transparent);
+}
+
+.thought__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 30px;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thought__head:disabled {
+  cursor: default;
+}
+
+.thought__head:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.thought__label {
+  font-weight: 500;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 工具的原始函数名：标题给人话，角标留底，便于核对到底调了哪个工具。 */
+.thought__toolname {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--fg-3);
+  background: var(--brand-glass);
+}
+
+.thought__state {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--fg-3);
+  background: var(--brand-soft);
+}
+
+.thought__state.is-running {
+  color: var(--brand-cyan);
+  background: color-mix(in srgb, var(--brand-cyan) 12%, transparent);
+}
+
+.thought__state.is-done {
+  color: var(--brand-primary);
+  background: var(--brand-soft);
+}
+
+.thought__state.is-paused {
+  color: var(--brand-aurora);
+  background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
+}
+
+.thought__chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--fg-3);
+  transition: transform 0.2s var(--ease);
+}
+
+.thought__step.is-open .thought__chevron {
+  transform: rotate(180deg);
+}
+
+.thought__body {
+  grid-column: 2;
+  padding: 2px 0 10px;
+}
+
+.thought__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thought__args {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.thought__arg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.thought__argkey {
+  color: var(--fg-3);
+}
+
+.thought__argval {
+  margin: 0;
+  color: var(--fg-2);
+  word-break: break-word;
+}
+
+.thought__output {
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 9px 11px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-glass-soft);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thought__reasoning {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.thought__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+}
+
+.thought__note-tail {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.thought__empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+
+/* ── 等待态（Lattice Loader）────────────────────────────── */
+
+.lattice {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 8px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-pill);
+  background: var(--brand-glass-soft);
+  color: var(--fg-3);
+  font-size: 12.5px;
+}
+
+.lattice__grid {
+  display: block;
+}
+
+.lattice__node {
+  fill: var(--brand-cyan);
+  opacity: 0.28;
+  animation: lattice-pulse 1.5s var(--ease) infinite;
+}
+
+@keyframes lattice-pulse {
+  0%,
+  100% {
+    opacity: 0.24;
+    transform: scale(0.85);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* 后台标签页停掉动画：不制造无意义的处理中反馈。 */
+.lattice[data-hidden="true"] .lattice__node {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lattice__node {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
+/* ── 输入区（Prompt Bar）───────────────────────────────── */
+
+/* 输入区。底色必须不透明：正文滚动到输入区下面时不能从工具条背后透出来。
+   渐隐交给上方那条 ::before，正文最后一行是在渐变里淡掉的，不是被盖住。 */
+.agent-composer {
+  position: relative;
+  flex-shrink: 0;
+  padding: 10px 28px 16px;
+  background: var(--brand-canvas);
+}
+
+.agent-composer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background: linear-gradient(to top, var(--brand-canvas), transparent);
+  pointer-events: none;
+}
+
+.prompt {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.prompt__surface {
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass-strong);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.15);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.15);
+  box-shadow: var(--brand-shadow);
+  overflow: hidden;
+  transition: border-color var(--motion-base) var(--ease),
+    box-shadow var(--motion-base) var(--ease);
+}
+
+.prompt__surface.is-focused {
+  border-color: color-mix(in srgb, var(--brand-primary) 58%, var(--brand-line));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 16%, transparent),
+    var(--brand-shadow);
+}
+
+/* 附件与文本自然组合：附件芯片排在正文之上，共享同一块玻璃。 */
+.prompt__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px 2px;
+}
+
+.prompt__chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  padding: 5px 30px 5px 5px;
+  border: 1px solid var(--brand-outline);
+  border-radius: var(--radius-md);
+  background: var(--brand-glass);
+}
+
+.prompt__chip-img {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.prompt__chip-name {
+  font-size: 12px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt__chip-remove {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.prompt__chip-remove:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.prompt__chip-remove:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+.prompt__input {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  padding: 13px 16px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  resize: none;
+  overflow-y: auto;
+}
+
+.prompt__input:focus {
+  outline: none;
+}
+
+.prompt__input::placeholder {
+  color: var(--fg-3);
+  opacity: 0.75;
+}
+
+.prompt__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 10px 8px;
+}
+
+.prompt__file {
+  display: none;
+}
+
+.prompt__tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+}
+
+.prompt__tool:hover:not(:disabled) {
+  color: var(--brand-primary);
+  background: var(--brand-soft);
+}
+
+.prompt__tool:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.prompt__tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.prompt__meta {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--fg-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease),
+    opacity 0.18s var(--ease), transform 0.18s var(--ease);
+}
+
+.prompt__action.is-send {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.prompt__action.is-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.prompt__action.is-send:disabled {
+  background: transparent;
+  color: var(--fg-3);
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 停止不是「危急」。这里刻意不用 --risk-critical（那是医学严重度），
+   也不抢 --brand-primary 的实体面：发送是钴蓝实心，停止是描边中性地标，
+   一眼可分，又不把红色塞进不属于它的语义位。 */
+.prompt__action.is-stop {
+  border: 1px solid var(--brand-line-strong);
+  background: none;
+  color: var(--fg-2);
+}
+
+.prompt__action.is-stop:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.prompt__action:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.prompt__note {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--fg-3);
+  opacity: 0.85;
+}
+
+/* ── 欢迎屏 ───────────────────────────────────────────── */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 0 12px;
+}
+
+.welcome__mark {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+}
+
+.welcome__mark-img {
+  position: absolute;
+  inset: 0;
+  width: 44px;
+  height: 44px;
+}
+
+html.dark .welcome__mark-img--light {
+  display: none;
+}
+
+html:not(.dark) .welcome__mark-img--dark {
+  display: none;
+}
+
+.welcome__eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--font-brand);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-cyan);
+}
+
+.welcome__title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+
+.welcome__desc {
+  margin: 0 0 26px;
+  max-width: 34em;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.welcome__hints {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 150px;
+  padding: 16px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.guide-card:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 44%, var(--brand-line));
+  background: var(--brand-glass-strong);
+  transform: translateY(-2px);
+}
+
+.guide-card:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.guide-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand-primary);
+}
+
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.guide-desc {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.guide-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--brand-line);
+  font-size: 12px;
+  color: var(--brand-primary);
+}
+
+.guide-action-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s var(--ease);
+}
+
+.guide-card:hover .guide-arrow {
+  transform: translateX(3px);
+}
+
+.welcome__note {
+  margin: 22px 0 0;
+  max-width: 46em;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-card:hover,
+  .guide-card:hover .guide-arrow,
+  .prompt__action.is-send:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ── 会话列表 ─────────────────────────────────────────── */
 
 .agent-sessions {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
   border-right: 1px solid var(--brand-line);
   background: var(--brand-glass-frosted);
   -webkit-backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
@@ -1008,10 +1179,9 @@ html:not(.dark) .welcome-mark__img--dark {
   flex-direction: column;
   gap: 10px;
   padding: 16px 14px 12px;
-  border-bottom: 1px solid var(--hr);
+  border-bottom: 1px solid var(--brand-line);
 }
 
-/* 品牌行 + 收起钮（同 Vue 版 LeftSidebar brand） */
 .agent-sessions__brand {
   display: flex;
   align-items: center;
@@ -1020,9 +1190,10 @@ html:not(.dark) .welcome-mark__img--dark {
 
 .agent-sessions__brandname {
   flex: 1;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 14px;
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
   color: var(--fg);
 }
 
@@ -1030,8 +1201,8 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-circle);
@@ -1047,8 +1218,13 @@ html:not(.dark) .welcome-mark__img--dark {
 }
 
 .agent-sessions__collapse:hover {
-  background: var(--surface-2);
+  background: var(--brand-soft);
   color: var(--fg);
+}
+
+.agent-sessions__collapse:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .agent-sessions__actions {
@@ -1061,14 +1237,13 @@ html:not(.dark) .welcome-mark__img--dark {
   justify-content: flex-end;
 }
 
-/* 「新对话」是侧栏主操作：钴蓝实心药丸 + Plus。 */
 .agent-sessions__newchat {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   flex: 1;
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 12px;
   border: 1px solid var(--brand-primary);
   border-radius: var(--radius-md);
@@ -1092,17 +1267,22 @@ html:not(.dark) .welcome-mark__img--dark {
   border-color: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-text));
 }
 
+.agent-sessions__newchat:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
 .agent-sessions__newchat:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* 「选择」文字钮：低权重，不与主操作抢同一行按钮位。 */
 .agent-sessions__select {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   justify-content: center;
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 10px;
   border: 0;
   border-radius: var(--radius-md);
@@ -1118,19 +1298,21 @@ html:not(.dark) .welcome-mark__img--dark {
 
 .agent-sessions__select:hover {
   color: var(--fg);
-  background: color-mix(in srgb, var(--brand-primary) 8%, transparent);
+  background: var(--brand-soft);
+}
+
+.agent-sessions__select:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .agent-sessions__select.is-active {
   color: var(--brand-primary);
 }
 
-/* 多选态计数 + 删除：数据删除用 --danger（与医学 --risk-* 分开）。 */
 .agent-sessions__count {
   margin-right: auto;
-  font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
@@ -1138,7 +1320,7 @@ html:not(.dark) .welcome-mark__img--dark {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--danger) 34%, transparent);
   border-radius: var(--radius-md);
@@ -1161,6 +1343,11 @@ html:not(.dark) .welcome-mark__img--dark {
   background: var(--danger-soft);
 }
 
+.agent-sessions__danger:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}
+
 .agent-sessions__danger:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -1170,76 +1357,78 @@ html:not(.dark) .welcome-mark__img--dark {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 6px 0 14px;
+  padding: 8px 8px 16px;
 }
 
 .agent-sessions__empty {
-  padding: 28px 18px;
+  padding: 28px 12px;
+  text-align: center;
 }
 
-.agent-sessions__empty .num {
-  margin: 0 0 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+.agent-sessions__empty p {
+  margin: 0;
+  font-size: 12.5px;
   color: var(--fg-3);
 }
 
 .agent-sessions__emptyhint {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.8;
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.7;
   color: var(--fg-3);
   opacity: 0.8;
 }
 
 .agent-sessions__label {
-  padding: 12px 10px 5px;
-  font-family: var(--font-mono);
+  padding: 12px 8px 5px;
   font-size: 10.5px;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-3);
+  opacity: 0.8;
 }
 
 .agent-sessions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  list-style: none;
-  margin: 0;
-  padding: 0 6px;
 }
 
 .agent-session {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
   border-radius: var(--radius-md);
   transition: background 0.15s var(--ease);
 }
 
 .agent-session:hover {
-  background: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+  background: var(--brand-soft);
 }
 
-/* 当前会话：品牌浅底 + 左侧 2px 钴蓝条，标题同时转成品牌蓝。 */
 .agent-session.is-active {
-  background: color-mix(in srgb, var(--brand-primary) 9%, var(--brand-glass-strong));
-  box-shadow:
-    inset 2px 0 0 var(--brand-primary),
-    inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 24%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
 .agent-session__main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  width: calc(100% - 34px);
-  padding: 9px 10px;
+  gap: 1px;
+  padding: 8px 10px;
   border: 0;
-  border-radius: var(--radius-md);
   background: none;
+  color: inherit;
   text-align: left;
   cursor: pointer;
+  border-radius: var(--radius-md);
 }
 
 .agent-session__main:focus-visible {
@@ -1251,15 +1440,16 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
 .agent-session__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12.5px;
-  color: var(--fg);
 }
 
 .agent-session.is-active .agent-session__title {
@@ -1267,77 +1457,48 @@ html:not(.dark) .welcome-mark__img--dark {
   font-weight: 600;
 }
 
+.agent-session__meta {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
 .agent-session__pin {
   display: inline-flex;
-  flex-shrink: 0;
   color: var(--brand-primary);
+  flex-shrink: 0;
 }
 
 .agent-session__pin svg {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
 }
 
-.agent-session__meta {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-}
-
-.agent-session__checkline {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 10px;
-  cursor: pointer;
-}
-
-.agent-session__checkline input {
-  flex-shrink: 0;
-  width: 15px;
-  height: 15px;
-  margin: 0;
-  accent-color: var(--brand-primary);
-  cursor: pointer;
-}
-
-.agent-session__checktext {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* 行级操作钮常驻可见——不靠 hover 才出现，触屏也能点。
-   键盘/鼠标只改它的底色与颜色。 */
 .agent-session__menu-btn {
-  position: absolute;
-  top: 50%;
-  right: 5px;
-  transform: translateY(-50%);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
+  margin-right: 4px;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-circle);
+  border-radius: var(--radius-md);
   background: none;
   color: var(--fg-3);
   cursor: pointer;
-  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  opacity: 0;
+  transition: opacity 0.15s var(--ease), background 0.15s var(--ease),
+    color 0.15s var(--ease);
 }
 
-.agent-session__menu-btn svg {
-  width: 16px;
-  height: 16px;
+.agent-session:hover .agent-session__menu-btn,
+.agent-session__menu-btn:focus-visible {
+  opacity: 1;
 }
 
-.agent-session__menu-btn:hover,
-.agent-session__menu-btn[data-popup-open] {
-  color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+.agent-session__menu-btn:hover {
+  background: var(--brand-glass);
+  color: var(--fg);
 }
 
 .agent-session__menu-btn:focus-visible {
@@ -1345,74 +1506,97 @@ html:not(.dark) .welcome-mark__img--dark {
   outline-offset: -2px;
 }
 
-/* 行级操作菜单：Portal 到 body，不再被会话列表的滚动容器裁切。
-   视觉上是一张小型 Layered Glass 卡片，文字 + 图标双通道。 */
-.agent-session__positioner {
-  z-index: 70;
+.agent-session__menu-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.agent-session__checkline {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.agent-session__checkline input {
+  margin-top: 3px;
+  accent-color: var(--brand-primary);
+}
+
+.agent-session__checktext {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.agent-session__renamebox {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.agent-session__rename {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-sm);
+  background: var(--brand-canvas);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.agent-session__rename:focus {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary) 40%, transparent);
+  outline-offset: 1px;
+}
+
+.agent-session__rename-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--danger);
+}
+
+.agent-session__rename-state {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--fg-3);
 }
 
 .agent-session__menu {
-  min-width: 196px;
+  min-width: 176px;
   padding: 5px;
-  border: 1px solid var(--brand-glass-layered-edge);
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-md);
-  background: var(--brand-glass-layered);
-  color: var(--brand-text);
+  background: var(--brand-surface);
   box-shadow: var(--brand-shadow);
-  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
-  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
-  outline: none;
-  transform-origin: top right;
-  transition: opacity var(--fast), transform var(--fast);
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  .agent-session__menu {
-    background: var(--brand-glass-fallback);
-  }
-}
-
-.agent-session__menu[data-starting-style],
-.agent-session__menu[data-ending-style] {
-  opacity: 0;
-  transform: translateY(-3px) scale(0.98);
 }
 
 .agent-session__menu-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 9px;
   border: 0;
   border-radius: var(--radius-sm);
   background: none;
-  color: var(--brand-text);
+  color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
-  transition: color 0.15s var(--ease), background 0.15s var(--ease);
 }
 
-.agent-session__menu-icon {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  color: var(--brand-muted);
-  transition: color 0.15s var(--ease);
-}
-
-.agent-session__menu-item:hover,
-.agent-session__menu-item[data-highlighted] {
-  color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
-}
-
-.agent-session__menu-item:hover .agent-session__menu-icon,
-.agent-session__menu-item[data-highlighted] .agent-session__menu-icon {
-  color: var(--brand-primary);
+.agent-session__menu-item:hover {
+  background: var(--brand-soft);
 }
 
 .agent-session__menu-item:focus-visible {
@@ -1420,102 +1604,42 @@ html:not(.dark) .welcome-mark__img--dark {
   outline-offset: -2px;
 }
 
-/* 删除是数据操作，用 --danger；医学严重度 --risk-* 不参与。 */
 .agent-session__menu-item.is-destructive {
   color: var(--danger);
 }
 
-.agent-session__menu-item.is-destructive .agent-session__menu-icon {
-  color: var(--danger);
-}
-
-.agent-session__menu-item.is-destructive:hover,
-.agent-session__menu-item.is-destructive[data-highlighted] {
-  color: var(--danger);
-  background: var(--danger-soft);
+.agent-session__menu-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .agent-session__menu-sep {
   height: 1px;
   margin: 4px 6px;
-  border: 0;
   background: var(--brand-line);
 }
 
-.agent-session__renamebox {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 7px 10px;
+.agent-session__positioner {
+  z-index: 40;
 }
 
-.agent-session__rename {
-  width: 100%;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--brand-primary);
-  border-radius: var(--radius-sm);
-  background: var(--brand-glass-strong);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-}
-
-.agent-session__rename:disabled {
-  opacity: 0.7;
-  cursor: progress;
-}
-
-.agent-session__rename-error {
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: var(--danger);
-}
-
-.agent-session__rename-state {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-}
-
-/* Touch / 粗指针：行级操作与选择控件放大到可点尺寸。 */
-@media (pointer: coarse) {
-  .agent-session__menu-btn {
-    width: 38px;
-    height: 38px;
-  }
-
-  .agent-session__main {
-    width: calc(100% - 42px);
-  }
-}
-
-/* ── agent: 删除确认（Base UI Dialog，Portal + 焦点陷阱 + Esc 栈） ── */
-
+/* 删除确认框 */
 .agent-confirm {
   position: fixed;
   top: 50%;
   left: 50%;
+  /* 同样要压过 .scrim（70）：弹层被自己的遮罩盖住会点不动。 */
   z-index: 80;
   width: min(420px, calc(100vw - 32px));
-  padding: 22px;
-  border: 1px solid var(--brand-glass-layered-edge);
+  padding: 20px;
+  border: 1px solid var(--brand-line);
   border-radius: var(--radius-lg);
-  background: var(--brand-glass-layered);
+  background: var(--brand-surface);
   color: var(--brand-text);
-  box-shadow: var(--shadow-modal);
-  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
-  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  box-shadow: var(--brand-shadow);
   outline: none;
   transform: translate(-50%, -50%);
-  transition: opacity var(--fast), transform var(--fast);
-}
-
-@supports not (backdrop-filter: blur(1px)) {
-  .agent-confirm {
-    background: var(--brand-glass-fallback);
-  }
 }
 
 .agent-confirm[data-starting-style],
@@ -1526,23 +1650,21 @@ html:not(.dark) .welcome-mark__img--dark {
 
 .agent-confirm__title {
   margin: 0 0 8px;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: 18px;
-  color: var(--brand-text);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .agent-confirm__body {
-  margin: 0;
-  font-size: 13px;
+  margin: 0 0 14px;
+  font-size: 13.5px;
   line-height: 1.7;
-  color: var(--brand-muted);
+  color: var(--fg-2);
 }
 
 .agent-confirm__error {
-  margin: 10px 0 0;
-  font-size: 12px;
-  line-height: 1.6;
+  margin: 0 0 12px;
+  font-size: 12.5px;
   color: var(--danger);
 }
 
@@ -1550,284 +1672,259 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 18px;
 }
 
 .agent-confirm__cancel,
 .agent-confirm__danger {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 16px;
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
-    opacity 0.15s var(--ease);
 }
 
 .agent-confirm__cancel {
   border: 1px solid var(--brand-line);
   background: none;
-  color: var(--brand-text);
-}
-
-.agent-confirm__cancel:hover:not(:disabled) {
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
+  color: var(--fg);
 }
 
 .agent-confirm__danger {
   border: 1px solid var(--danger);
   background: var(--danger);
-  color: var(--brand-canvas);
-}
-
-.agent-confirm__danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 86%, var(--brand-canvas));
-  border-color: color-mix(in srgb, var(--danger) 86%, var(--brand-canvas));
+  color: var(--danger-fg);
 }
 
 .agent-confirm__cancel:disabled,
 .agent-confirm__danger:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.agent-confirm__cancel:focus-visible,
-.agent-confirm__danger:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
-}
+/* ── 资源面板 ─────────────────────────────────────────── */
 
-/* ── agent: 页面布局（同 Vue 版：无页脚、无版心，三栏铺满顶栏以下视口）── */
-
-/* 高度必须硬约束（同 Vue 版 layoutStyle 的 100vh）：外层不是 flex 容器，
-   靠 flex:1 拿不到高度，输入区会跟在内容后面而非钉在底部。 */
-.agent-viewport {
-  height: calc(100vh - var(--nav-h));
-  min-height: 0;
-  overflow: hidden;
+.agent-panel {
   display: flex;
   flex-direction: column;
-}
-
-/* 三栏用 flex（同 Vue 版 .agent-chat-layout）：
-   左栏常驻 DOM、收起靠宽度动画；用 grid + 从 DOM 摘掉侧栏会让
-   中栏自动排进左列而塌成窄条。
-   U4 重做：画布是品牌工作区（--brand-canvas 银蓝/午夜蓝），两侧栏是
-   Frosted Glass 品牌侧板，对话区是抬升一层的品牌玻璃面板——
-   三个层次靠材质透明度差与发丝线分开，不做大面积糊玻璃。 */
-.agent-layout {
-  position: relative;
-  display: flex;
-  flex: 1;
   min-height: 0;
-  background: var(--brand-canvas);
-  border-top: 1px solid var(--brand-line);
-}
-
-/* 对话工作区：Layered Glass 面板，留出侧栏与画布之间的呼吸。 */
-.agent-main {
-  margin: clamp(10px, 1.4vw, 18px);
-  margin-left: 0;
-  border: 1px solid var(--brand-glass-layered-edge);
-  border-radius: var(--radius-lg);
-  background: var(--brand-glass-layered);
-  box-shadow: var(--brand-shadow);
-  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
-  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  height: 100%;
+  border-left: 1px solid var(--brand-line);
+  background: var(--brand-glass-frosted);
+  -webkit-backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
+  backdrop-filter: blur(var(--brand-glass-frosted-blur)) saturate(1.15);
 }
 
 @supports not (backdrop-filter: blur(1px)) {
-  .agent-main {
+  .agent-panel {
     background: var(--brand-glass-fallback);
   }
 }
 
-.agent-layout__left {
-  flex-shrink: 0;
-  width: 280px;
-  overflow: hidden;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-}
-
-.agent-layout__left.is-collapsed {
-  width: 0;
-  opacity: 0;
-}
-
-.agent-layout__left > .agent-sessions {
-  width: 280px;
-  height: 100%;
-}
-
-.agent-main {
-  position: relative;
-  flex: 1;
-  min-width: 0;
+.agent-panel__head {
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 10px;
 }
 
-/* Layered Glass 的内侧高光：玻璃上沿的镜面反射（与判读页主卡同语）。 */
-.agent-main::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    to bottom,
-    var(--brand-glass-layered-inner),
-    transparent 34%
-  );
-  pointer-events: none;
+.agent-panel__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--fg);
 }
 
-.agent-main__anon {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+.agent-panel__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
   color: var(--fg-3);
-  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
 
-/* 折叠后的左栏操作组（同 Vue 版 collapsed-actions）：跟在对话头栏左侧，不浮在正文上 */
-.agent-collapsed-actions {
+.agent-panel__close:hover {
+  background: var(--brand-soft);
+  color: var(--fg);
+}
+
+.agent-panel__close:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.agent-panel__tabs {
   display: flex;
+  gap: 4px;
+  padding: 0 14px 10px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.agent-panel__tab {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.agent-collapsed-actions__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--brand-line);
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background: var(--brand-glass-strong);
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
   color: var(--fg-3);
   cursor: pointer;
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+  transition: color 0.15s var(--ease), background 0.15s var(--ease),
+    border-color 0.15s var(--ease);
 }
 
-.agent-collapsed-actions__btn:hover {
+.agent-panel__tab:hover {
   color: var(--fg);
-  border-color: var(--fg-3);
 }
 
-.agent-collapsed-actions__btn.is-accent:hover {
+.agent-panel__tab.is-active {
+  border-color: color-mix(in srgb, var(--brand-primary) 36%, transparent);
+  background: var(--brand-soft);
   color: var(--brand-primary);
-  border-color: var(--brand-primary);
 }
 
-/* 资源面板切换钮（同 Vue 版 toggle-right-btn：图标钮 + 徽标，
-   收在对话头栏右侧，不浮在正文上） */
-.agent-main__resource-toggle {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-md);
-  background: var(--brand-glass-strong);
-  color: var(--fg-3);
-  cursor: pointer;
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+.agent-panel__tab:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
-.agent-main__resource-toggle:hover {
-  color: var(--fg);
-  border-color: var(--fg-3);
-}
-
-.agent-main__resource-toggle.is-active {
-  color: var(--brand-primary);
-  border-color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
-}
-
-.agent-main__resource-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: var(--radius-md);
-  background: var(--brand-primary);
-  color: var(--brand-primary-fg);
-  font-family: var(--font-mono);
+.agent-panel__count {
   font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  text-align: center;
+  opacity: 0.8;
 }
 
-@media (max-width: 900px) {
-  .agent-layout {
-    flex-direction: column;
-    overflow-y: auto;
-  }
-
-  /* 固定高度而不是 max-height：只有定高才能让会话列表内部滚动，
-     max-height + 高度 auto 的组合会把超出的行直接裁掉、且滚不动。 */
-  .agent-layout__left {
-    width: 100%;
-    height: 240px;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.3s ease;
-  }
-
-  .agent-layout__left.is-collapsed {
-    width: 100%;
-    height: 0;
-  }
-
-  .agent-layout__left > .agent-sessions {
-    width: 100%;
-  }
-
-  .agent-main {
-    min-height: 70vh;
-    margin: 10px 10px 0;
-  }
-
-  /* 会话栏在窄屏是首屏可见的主入口：文字钮与新建钮按手指尺寸来。
-     折叠态的两个图标钮（展开会话栏 / 新建对话）是窄屏打开会话栏的
-     唯一入口，同样要够到 44px 触控目标（DESIGN.md §3.5）。 */
-  .agent-sessions__select,
-  .agent-sessions__newchat,
-  .agent-sessions__danger,
-  .agent-collapsed-actions__btn {
-    min-height: 44px;
-  }
-
-  .agent-collapsed-actions__btn {
-    min-width: 44px;
-  }
-
-  .agent-sessions__collapse {
-    width: 44px;
-    height: 44px;
-  }
-
-  .agent-panel {
-    width: 100%;
-    border-left: 0;
-    border-top: 1px solid var(--brand-line);
-  }
+.agent-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
 }
 
-/* ── agent: 图片预览 ───────────────────────────────────── */
+.agent-panel__empty {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+.agent-panel__imggrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.agent-panel__img {
+  padding: 0;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: zoom-in;
+  overflow: hidden;
+  transition: border-color 0.18s var(--ease);
+}
+
+.agent-panel__img:hover {
+  border-color: var(--brand-primary);
+}
+
+.agent-panel__img:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.agent-panel__img img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.agent-panel__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-panel__link a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--brand-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.agent-panel__linktitle {
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.agent-panel__link a:hover .agent-panel__linktitle {
+  color: var(--brand-primary);
+}
+
+.agent-panel__linkdomain {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.agent-panel__caveat {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+/* ── 紧凑档抽屉（平板 / 手机）──────────────────────────── */
+
+.agent-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  /* 必须压过自己的遮罩（.scrim z-index 70）与顶栏（60），
+     否则抽屉自己的表头会被盖住，点也点不到。 */
+  z-index: 80;
+  width: min(320px, 86vw);
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--brand-line);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+  overflow: hidden;
+}
+
+.agent-drawer.is-right {
+  inset: 0 0 0 auto;
+  width: min(340px, 88vw);
+  border-right: 0;
+  border-left: 1px solid var(--brand-line);
+}
+
+.agent-drawer .agent-sessions,
+.agent-drawer .agent-panel {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ── 图片预览 ─────────────────────────────────────────── */
 
 .agent-preview {
   position: fixed;
@@ -1836,67 +1933,96 @@ html:not(.dark) .welcome-mark__img--dark {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  flex-direction: column;
-  background: rgba(11, 13, 12, 0.72);
+  padding: 32px;
+  background: var(--brand-scrim);
   cursor: zoom-out;
 }
 
 .agent-preview img {
-  max-width: min(86vw, 1100px);
+  max-width: min(1100px, 100%);
   max-height: 82vh;
   object-fit: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--brand-scrim-shadow);
 }
 
-.agent-preview__open {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--on-dark);
-  text-decoration: none;
-}
-
-/* 键盘可达的关闭钮：右上角，与「原图 ↗」同用 mono 语言。 */
 .agent-preview__close {
   position: absolute;
   top: 20px;
-  right: 24px;
-  min-width: 44px;
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  color: var(--on-dark);
-  font-family: var(--font-mono);
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--brand-scrim-line);
+  border-radius: var(--radius-circle);
+  background: var(--brand-scrim-surface);
+  color: var(--brand-scrim-fg);
   font-size: 16px;
+  line-height: 1;
   cursor: pointer;
 }
 
-.agent-preview__close:hover,
+.agent-preview__close:hover {
+  background: var(--brand-scrim-surface-hover);
+}
+
 .agent-preview__close:focus-visible {
-  border-color: var(--on-dark);
+  outline: 2px solid var(--brand-scrim-fg);
+  outline-offset: 2px;
 }
 
-/* ── markdown-body 语境层（基础排版在 styles/markdown.css，全局加载）── */
-
-/* 反相带里的代码块要抬升一层，否则底色与屏同色等于没有代码块 */
-.console .markdown-body code,
-.console .markdown-body pre.code-block {
-  background: var(--surface);
-  border-color: var(--hr);
+.agent-preview__open {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  color: var(--brand-scrim-fg-2);
+  font-size: 12.5px;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 2px;
 }
 
-.markdown-body .copy-btn {
-  border: 0;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--fg-3);
-  cursor: pointer;
+/* ── 响应式 ───────────────────────────────────────────── */
+
+@media (max-width: 1023px) {
+  .agent-thread__column {
+    padding: 20px 18px 32px;
+  }
+
+  .agent-composer {
+    padding: 0 18px 14px;
+  }
+
+  .welcome__hints {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-card {
+    min-height: 0;
+  }
 }
 
-.markdown-body .copy-btn:hover {
-  color: var(--brand-primary);
+@media (max-width: 640px) {
+  .agent-thread__column {
+    padding: 16px 14px 26px;
+  }
+
+  .agent-composer {
+    padding: 0 12px 12px;
+  }
+
+  .agent-thread__bar {
+    padding: 0 12px;
+  }
+
+  .agent-msg__bubble-user {
+    max-width: 86%;
+  }
+
+  .welcome__title {
+    font-size: 25px;
+  }
+
+  .prompt__meta {
+    font-size: 11px;
+  }
 }

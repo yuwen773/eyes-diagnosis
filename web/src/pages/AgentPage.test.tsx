@@ -57,6 +57,20 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
+// 上传器可控：上传耗时是「发送互斥」唯一能观察到的窗口。
+const uploadFilesMock = vi.hoisted(() => vi.fn())
+vi.mock("@/lib/agentUpload", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/agentUpload")>()
+  return {
+    ...actual,
+    createAgentUploader: () => ({
+      uploadFiles: uploadFilesMock,
+      commitSuccess: vi.fn(),
+      commitFailure: vi.fn(),
+    }),
+  }
+})
+
 const originalRandomUUID = globalThis.crypto.randomUUID
 
 afterEach(() => {
@@ -64,6 +78,9 @@ afterEach(() => {
   sessionState.status = "anon"
   sessionState.user = null
   localStorage.clear()
+  // 输入区草稿存在 sessionStorage：不清的话上一条用例的草稿会带进下一条，
+  // 输入框一开场就有字，占位符查不到。
+  sessionStorage.clear()
   vi.mocked(getSessions).mockResolvedValue([])
   vi.mocked(getChatHistory).mockReset()
   Object.defineProperty(globalThis.crypto, "randomUUID", {
@@ -103,7 +120,7 @@ describe("AgentPage 未登录", () => {
       </ThemeProvider>,
     )
     // 界面在，欢迎屏可见
-    expect(screen.getByRole("heading", { name: "Iris" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "你好，我是 Iris" })).toBeTruthy()
     expect(screen.queryByText("登录页")).toBeNull()
   })
 
@@ -121,16 +138,16 @@ describe("AgentPage 未登录", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "收起会话栏" }))
 
-    const layout = document.querySelector(".agent-layout")!
-    expect(layout.className).toContain("is-left-collapsed")
+    const layout = document.querySelector(".agent-workspace")!
+    expect(layout.className).toContain("is-nav-collapsed")
     // 会话栏常驻 DOM，只是折叠——移除会让中栏自动排进左列而塌成窄条
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeTruthy()
     expect(document.querySelector(".agent-sessions")).toBeTruthy()
     // 左上角恢复钮组在
     expect(screen.getByRole("button", { name: "展开会话栏" })).toBeTruthy()
     // 再展开，侧栏回来
     fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
     expect(document.querySelector(".agent-sessions")).toBeTruthy()
   })
 
@@ -292,7 +309,9 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    // 紧凑档：会话导航不再占一列，改由抽屉承载，首屏整块留给对话
+    expect(document.querySelector(".agent-nav")).toBeNull()
+    expect(screen.getByRole("button", { name: "打开会话列表" })).toBeTruthy()
   })
 
   it("宽屏会话栏默认展开", () => {
@@ -306,7 +325,8 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
   })
 
   it("跨过断点时跟上：回宽屏自动展开，进窄屏自动收起", async () => {
@@ -320,17 +340,18 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
 
     await act(async () => {
       mq.setMatches(true)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav")).toBeNull()
+    expect(screen.getByRole("button", { name: "打开会话列表" })).toBeTruthy()
 
     await act(async () => {
       mq.setMatches(false)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
   })
 
   it("用户手动展开后不跨断点保持原状；真跨断点时以断点为准", async () => {
@@ -344,19 +365,74 @@ describe("AgentPage 窄屏", () => {
         </MemoryRouter>
       </ThemeProvider>,
     )
-    fireEvent.click(screen.getByRole("button", { name: "展开会话栏" }))
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    // 紧凑档：手动「打开会话列表」把导航拉成抽屉盖在对话上
+    fireEvent.click(screen.getByRole("button", { name: "打开会话列表" }))
+    expect(document.querySelector(".agent-drawer.is-left")).toBeTruthy()
 
-    // 手动展开后先去宽屏：还是展开的（断点本来就要求展开）。
+    // 手动展开后先去宽屏：侧栏以常驻列回来。
     await act(async () => {
       mq.setMatches(false)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeNull()
+    expect(document.querySelector(".agent-nav")).toBeTruthy()
+    expect(document.querySelector(".agent-nav.is-collapsed")).toBeNull()
 
-    // 再回窄屏：自动收起，不要求用户再手动收一次。
+    // 再回窄屏：列消失、以断点为准，不要求用户再手动收一次。
     await act(async () => {
       mq.setMatches(true)
     })
-    expect(document.querySelector(".agent-layout__left.is-collapsed")).toBeTruthy()
+    expect(document.querySelector(".agent-nav")).toBeNull()
+  })
+})
+
+describe("AgentPage 发送互斥", () => {
+  it("上传进行中再触发发送不会并发上传，也不会推第二条用户消息", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    sendMock.mockClear()
+    uploadFilesMock.mockClear()
+
+    let resolveUpload!: (value: { urls: string[] }) => void
+    uploadFilesMock.mockReturnValueOnce(
+      new Promise<{ urls: string[] }>((resolve) => {
+        resolveUpload = resolve
+      }),
+    )
+    sendMock.mockResolvedValueOnce(undefined)
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    const file = new File(["x"], "fundus.jpg", { type: "image/jpeg" })
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [file] } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(uploadFilesMock).toHaveBeenCalledTimes(1))
+
+    // 上传还没回来：用户消息尚未推入，欢迎屏还在。这时从欢迎屏点一个
+    // 引导入口，不能并发再发一条（否则会出现两次上传、两条用户气泡）。
+    fireEvent.click(screen.getByRole("button", { name: /描述症状/ }))
+
+    expect(uploadFilesMock).toHaveBeenCalledTimes(1)
+    expect(sendMock).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveUpload({ urls: ["https://cos.example/fundus.jpg"] })
+    })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    // 只发了一条，且带的是这一次上传的图片。
+    expect(sendMock.mock.calls[0][2]).toEqual(["https://cos.example/fundus.jpg"])
   })
 })

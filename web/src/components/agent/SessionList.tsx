@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   Download,
   Ellipsis,
+  ListChecks,
   Pencil,
   Pin,
   PinOff,
@@ -107,7 +108,7 @@ export const SessionList = memo(function SessionList({
   onBatchDelete: (ids: string[]) => Promise<boolean>
   onTogglePin: (id: string, pinned: boolean) => void
   onExport: (id: string, format: "markdown" | "json") => void
-  onCollapse: () => void
+  onCollapse?: () => void
 }) {
   const [selectMode, setSelectMode] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
@@ -401,15 +402,17 @@ export const SessionList = memo(function SessionList({
       <div className="agent-sessions__head">
         <div className="agent-sessions__brand">
           <span className="agent-sessions__brandname">会话</span>
-          <button
-            type="button"
-            className="agent-sessions__collapse"
-            onClick={onCollapse}
-            aria-label="收起会话栏"
-            title="收起会话栏"
-          >
-            <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
-          </button>
+          {onCollapse ? (
+            <button
+              type="button"
+              className="agent-sessions__collapse"
+              onClick={onCollapse}
+              aria-label="收起会话栏"
+              title="收起会话栏"
+            >
+              <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
 
         {selectMode ? (
@@ -449,7 +452,8 @@ export const SessionList = memo(function SessionList({
               className="agent-sessions__select"
               onClick={() => setSelectMode(true)}
             >
-              选择
+              <ListChecks size={14} strokeWidth={2} aria-hidden="true" />
+              <span>选择</span>
             </button>
           </div>
         )}

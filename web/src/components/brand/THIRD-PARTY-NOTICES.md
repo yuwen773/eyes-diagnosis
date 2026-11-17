@@ -102,6 +102,39 @@ MIT 的 "as part of an application" 是否覆盖公开源码分发，原文没�
 
 ---
 
+## React Bits · R3 Agent 工作区交互（2026-11-17）
+
+R3 Phase 1 的 Agent 工作区**参考**了 React Bits 的四种交互形态：Prompt Bar、
+Thought Line、Lattice Loader、Animated Content。
+
+**这四种交互全部是本仓库独立实现的**：没有复制上游源码，没有引入上游依赖，
+`package.json` 没有因此多出任何一个包。上游许可（MIT + Commons Clause v1.0，
+见上节照录；2026-11-17 复核 `LICENSE.md` 仍为 "MIT + Commons Clause License
+Condition v1.0"，`Copyright (c) 2026 David Haz`）允许把软件作为应用的一部分使用与
+修改，但 Commons Clause 明确禁止**销售、再许可、再分发组件本身——单独、打包、
+或以移植版的形式**。本仓库是公开仓库，把上游组件源码搬进来正落在「移植版再分发」
+这一条上；**「免费使用」不等于「可以抄源码」**。因此这里走的是「读懂交互意图，
+自己写一份」的路线：自研实现不构成 `redistribute … the component`，该限制不触发。
+
+上游无 tag，参考阅读时的 `main` HEAD 为
+`d01aa914dcbe76da8b2923ebf871b5c8b1066e4c`（2026-11-16）；对应文件为
+`src/ts-default/Micro/{PromptBar,ThoughtLine,LatticeLoader}/` 与
+`src/ts-default/Animations/AnimatedContent/`——**仅阅读，未复制**。上游这几个组件
+自身的依赖是 `motion`、`@hugeicons/react`、`@hugeicons/core-free-icons`（Prompt Bar、
+Thought Line）与 `gsap`（Animated Content），本仓库一个都没有引入。
+
+| 交互 | 上游做法 | 本仓库实现 | 文件 |
+|------|---------|-----------|------|
+| Prompt Bar | 自带输入与附件状态；`motion` + `@hugeicons` + 2D canvas 火花 | 无状态摆件 `PromptBar`，状态仍在 `ChatInput`；多行输入、Enter/Shift+Enter、IME 保护、附件增删、草稿存取、发送/停止全在原组件 | `web/src/components/agent/PromptBar.tsx` |
+| Thought Line | DOM + CSS + `motion` 动画的执行行 | 纯 CSS 状态行；数据来自 `buildThread` 的**纯派生**，不额外维护一份状态机 | `web/src/components/agent/ThoughtLine.tsx` |
+| Lattice Loader | 纯 DOM + CSS 点阵 | 纯 CSS 点阵；屏外 / 后台 / 减弱动效下不启动 | `web/src/components/agent/LatticeLoader.tsx` |
+| Animated Content | `gsap` + ScrollTrigger 滚动触发 | 复用本仓库既有 `.reveal → .is-in` 基元与 `useRevealScan`（CSS transition，无 GSAP） | `web/src/lib/useInView.ts` |
+
+**没有引入的东西**：Motion、GSAP、Three.js / React Three Fiber、`@react-three/*`、
+Hugeicons。图标一律用既有的 `lucide-react` 静态命名导入。
+
+---
+
 ## 字体
 
 - **Manrope**（拉丁品牌字体）经 `@fontsource-variable/manrope` 引入，
