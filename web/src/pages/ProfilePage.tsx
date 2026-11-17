@@ -191,81 +191,62 @@ export function ProfilePage() {
           <p className="lead">Account · 账号。资料可改，头像可传，判读统计会从你的判读记录里实时汇总。</p>
         </div>
 
-        {/* 个人域用读数卡，不套四列 KPI 条（DESIGN.md §1.5）：
-            四张卡各自带口径，卡与卡之间是发丝线，不是仪表条。 */}
-        <div className="profile__stats">
-          <div className="profile__stat">
-            <span className="readout__label">{labels.total}</span>
-            <span className="profile__stat-value num">
-              {statsLoading || !hasStats ? "—" : stats.total}
-            </span>
-          </div>
-          <div className="profile__stat">
-            <span className="readout__label">{highRiskLabel}</span>
-            <span className="profile__stat-value num">
-              {statsLoading || !hasStats ? "—" : stats.highRisk}
-            </span>
-          </div>
-          <div className="profile__stat">
-            <span className="readout__label">注册时间 · SINCE</span>
-            <span className="profile__stat-value profile__stat-value--date num">
-              {user.createTime ? user.createTime.slice(0, 10) : "—"}
-            </span>
-          </div>
-          <div className="profile__stat">
-            <span className="readout__label">角色 · ROLE</span>
-            <span className="profile__stat-value profile__stat-value--text">{roleLabel}</span>
-          </div>
-        </div>
+        {/* 身份先于数字：头像、称呼与账号属性是第一视觉；
+            判读统计降成一行摘要，口径仍随数据来源标注（不是全量就写清楚）。 */}
+        <section className="profile__identity" aria-label="账号身份">
+          <span className="profile__avatar profile__avatar--lg" aria-hidden="true">
+            {user.userAvatar ? (
+              <img src={user.userAvatar} alt="" />
+            ) : (
+              <span className="profile__avatar-fallback">{name.slice(0, 1)}</span>
+            )}
+          </span>
 
-        {/* 聚合不可用时写明口径：这组数字取自最近一页，不是全量。 */}
-        {!statsLoading && serverStats === null && hasStats ? (
-          <p className="records__scope">
-            服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录。
-          </p>
-        ) : null}
+          <div className="profile__identity-main">
+            <h2 className="profile__name">{name}</h2>
+            <p className="profile__identity-meta">
+              {roleLabel}
+              {user.createTime ? ` · 注册于 ${user.createTime.slice(0, 10)}` : ""}
+            </p>
+            <p className="profile__identity-stats num">
+              {statsLoading
+                ? "判读统计读取中…"
+                : hasStats
+                  ? `${labels.total} ${stats.total} · ${highRiskLabel} ${stats.highRisk}`
+                  : "判读统计暂不可用"}
+            </p>
+            {!statsLoading && serverStats === null && hasStats ? (
+              <p className="profile__identity-note">
+                服务端聚合暂不可用，这里的数字取自最近 {PROFILE_SAMPLE} 条记录，不是全量。
+              </p>
+            ) : null}
+
+            <div className="profile__avatar-actions">
+              <button
+                type="button"
+                className="btn btn--sm"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+              >
+                {uploading ? "上传中…" : "更换头像"}
+                <span className="btn__key">↥</span>
+              </button>
+              <p className="profile__avatar-hint">
+                支持 JPG / PNG / WebP，10MB 以内。上传后立即生效，全站可见。
+              </p>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(event) => void onAvatarChange(event)}
+              />
+            </div>
+          </div>
+        </section>
 
         <div className="profile__grid">
           <div className="profile__side">
-          {/* ── 头像与账号铭牌 ─────────────────────────── */}
-          <section className="profile__card">
-            <div className="profile__card-head">
-              <span className="profile__card-title">头像 · AVATAR</span>
-            </div>
-
-            <div className="profile__avatar-row">
-              <span className="profile__avatar" aria-hidden="true">
-                {user.userAvatar ? (
-                  <img src={user.userAvatar} alt="" />
-                ) : (
-                  <span className="profile__avatar-fallback">{name.slice(0, 1)}</span>
-                )}
-              </span>
-
-              <div className="profile__avatar-actions">
-                <button
-                  type="button"
-                  className="btn btn--sm"
-                  disabled={uploading}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  {uploading ? "上传中…" : "更换头像"}
-                  <span className="btn__key">↥</span>
-                </button>
-                <p className="profile__avatar-hint">
-                  支持 JPG / PNG / WebP，10MB 以内。上传后立即生效，全站可见。
-                </p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(event) => void onAvatarChange(event)}
-                />
-              </div>
-            </div>
-          </section>
-
           {/* ── 最近判读（真实数据，同一页记录的前几条） ─── */}
           <section className="profile__card profile__card--recent">
             <div className="profile__card-head">
@@ -298,23 +279,25 @@ export function ProfilePage() {
               <ul className="profile__recent">
                 {recent.map((item) => (
                   <li key={item.id} className="profile__recent-item">
-                    <span className="profile__recent-name">
-                      {item.aiRejected ? "AI 拒识" : item.result || "未给出判读结果"}
-                    </span>
-                    <span className="profile__recent-meta">
-                      <span className="num">{formatTimestamp(item.createTime)}</span>
-                      {!item.aiRejected ? (
-                        <>
-                          <span className="profile__recent-conf">
-                            <span className="readout__label">置信度</span>
-                            <span className="num">{confidencePercent(item.confidence)}</span>
-                          </span>
-                          <RiskTag risk={severityRisk(item.severity ?? undefined)}>
-                            {severityLabel(item.severity ?? undefined)}
-                          </RiskTag>
-                        </>
-                      ) : null}
-                    </span>
+                    <Link className="profile__recent-link" to={`/records/${item.id}`}>
+                      <span className="profile__recent-name">
+                        {item.aiRejected ? "AI 拒识" : item.result || "未给出判读结果"}
+                      </span>
+                      <span className="profile__recent-meta">
+                        <span className="num">{formatTimestamp(item.createTime)}</span>
+                        {!item.aiRejected ? (
+                          <>
+                            <span className="profile__recent-conf">
+                              <span className="readout__label">置信度</span>
+                              <span className="num">{confidencePercent(item.confidence)}</span>
+                            </span>
+                            <RiskTag risk={severityRisk(item.severity ?? undefined)}>
+                              {severityLabel(item.severity ?? undefined)}
+                            </RiskTag>
+                          </>
+                        ) : null}
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
