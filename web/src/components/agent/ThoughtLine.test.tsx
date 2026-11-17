@@ -98,6 +98,41 @@ describe("ThoughtLine", () => {
     expect(screen.queryByRole("button", { name: /批准|同意|确认继续|放行/ })).toBeNull()
   })
 
+  it("流结束时没有回执的工具步标「未确认」，不谎报完成也不承诺回执", () => {
+    const pendingStep: AgentStep = {
+      id: "t9",
+      kind: "tool",
+      label: "分析眼底图像",
+      toolName: "analyzeEyeImage",
+      state: "pending",
+      args: [{ key: "imageUrl", value: "https://cos.example/a.jpg" }],
+    }
+    render(<ThoughtLine steps={[pendingStep]} />)
+
+    expect(screen.getByText("未确认")).toBeTruthy()
+    expect(screen.queryByText("完成")).toBeNull()
+    // 「待返回」是在承诺一份不会到的回执——后端不会给已结束的回合补发。
+    expect(screen.queryByText("待返回")).toBeNull()
+
+    // 没有参数/返回也能展开：那里写着为什么没有结果。
+    fireEvent.click(screen.getByRole("button", { expanded: false }))
+    expect(screen.getByText(/没有收到这个工具的返回/)).toBeTruthy()
+  })
+
+  it("没有参数也没有返回的未确认步骤同样可以展开看原因", () => {
+    const bare: AgentStep = {
+      id: "t10",
+      kind: "tool",
+      label: "检索知识库文档",
+      state: "pending",
+    }
+    render(<ThoughtLine steps={[bare]} />)
+    const head = screen.getByRole("button", { expanded: false })
+    expect(head.hasAttribute("disabled")).toBe(false)
+    fireEvent.click(head)
+    expect(screen.getByText(/无法确认它是否执行完成/)).toBeTruthy()
+  })
+
   it("没有步骤时不渲染任何东西", () => {
     const { container } = render(<ThoughtLine steps={[]} />)
     expect(container.firstChild).toBeNull()

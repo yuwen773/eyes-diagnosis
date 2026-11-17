@@ -122,24 +122,44 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`
   }, [text])
 
+  // 附件的最新值镜像：卸载清理要读它。
+  //
+  // <p>**不要**在卸载时借 `setAttachments(prev => …)` 的 updater 去回收
+  // Blob URL：卸载后的 setState 是 no-op，updater 根本不会被调用，预览 URL
+  // 就永远漏在那里。这里用 ref 直接读。
+  const attachmentsRef = useRef(attachments)
+  useEffect(() => {
+    attachmentsRef.current = attachments
+  }, [attachments])
+
   // 组件卸载时回收仍未发送的预览 URL
   useEffect(() => {
     return () => {
-      setAttachments((prev) => {
-        prev.forEach((a) => URL.revokeObjectURL(a.url))
-        return []
-      })
+      attachmentsRef.current.forEach((a) => URL.revokeObjectURL(a.url))
     }
   }, [])
+
+  // 发送互斥：从点下发送到 `onSend` 落定（上传 + 整个流式回合）为止。
+  //
+  // <p>不能只靠 `streaming` 判断——上传期间流还没开始，`streaming` 仍是
+  // false，这时再按一次 Enter 就会并发上传、发第二条用户消息。ref 同步置位，
+  // 不依赖下一次渲染。
+  const submittingRef = useRef(false)
 
   const submit = useCallback(async () => {
     const trimmed = text.trim()
     if ((!trimmed && attachments.length === 0) || disabled) return
+    // 已在发送/上传中：把话留住，不吞输入，也不重复提交。
+    if (submittingRef.current) {
+      setHint("正在发送，请稍候")
+      return
+    }
     // 助手还在回复时不要把输入吞掉——保留文字并给出提示
     if (streaming) {
       setHint("助手正在回复，完成后即可发送")
       return
     }
+    submittingRef.current = true
     const sentAttachments = attachments
 
     // 消息一旦发出，输入框就不再留着同一句话：它已经作为气泡出现在对话里，
@@ -149,21 +169,25 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     setHint("")
     clearDraft()
 
-    const ok = await onSend(trimmed, sentAttachments.map((a) => a.file))
-    if (ok) {
-      sentAttachments.forEach((a) => URL.revokeObjectURL(a.url))
-      return
-    }
+    try {
+      const ok = await onSend(trimmed, sentAttachments.map((a) => a.file))
+      if (ok) {
+        sentAttachments.forEach((a) => URL.revokeObjectURL(a.url))
+        return
+      }
 
-    // 失败：把原文放回输入框。万一这期间用户已经打了新字，新字留在后面，
-    // 原文补在前面——两边都不丢。
-    const current = textRef.current
-    updateText(current.length === 0 ? trimmed : `${trimmed}\n${current}`)
-    setAttachments((prev) =>
-      prev.length === 0 ? sentAttachments : [...prev, ...sentAttachments],
-    )
-    setHint("发送没成功，内容已保留，可以重试")
-    textareaRef.current?.focus()
+      // 失败：把原文放回输入框。万一这期间用户已经打了新字，新字留在后面，
+      // 原文补在前面——两边都不丢。
+      const current = textRef.current
+      updateText(current.length === 0 ? trimmed : `${trimmed}\n${current}`)
+      setAttachments((prev) =>
+        prev.length === 0 ? sentAttachments : [...prev, ...sentAttachments],
+      )
+      setHint("发送没成功，内容已保留，可以重试")
+      textareaRef.current?.focus()
+    } finally {
+      submittingRef.current = false
+    }
   }, [attachments, disabled, onSend, streaming, text, updateText])
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
