@@ -102,6 +102,32 @@ MIT 的 "as part of an application" 是否覆盖公开源码分发，原文没�
 
 ---
 
+## React Bits · R3 用户端体验重设计（2026-11-17）
+
+R3 的 Phase 1（Agent 工作区）与 Phase 2（Journal 资讯体验）**参考**了 React Bits 的
+五种交互形态：Prompt Bar、Thought Line、Lattice Loader、Animated Content、
+Glare Hover。
+
+**这五种交互全部是本仓库独立实现的**：没有复制上游源码，没有引入上游依赖，
+`package.json` 没有因此多出任何一个包。上游许可（MIT + Commons Clause v1.0，
+见上节照录）允许把软件作为应用的一部分使用与修改，但 Commons Clause 明确禁止
+**销售、再许可、再分发组件本身——单独、打包、或以移植版的形式**。本仓库是公开
+仓库，把上游组件源码搬进来正落在「移植版再分发」这一条上；**「免费使用」不等于
+「可以抄源码」**。因此这里采取的是「读懂交互意图，自己写一份」的路线。
+
+| 交互 | 上游做法 | 本仓库实现 | 文件 |
+|------|---------|-----------|------|
+| Prompt Bar | 自带输入与附件状态 | 无状态摆件 `PromptBar` + 状态仍在 `ChatInput`；多行输入、Enter/Shift+Enter、IME 保护、附件增删、草稿存取、发送/停止全在原组件 | `web/src/components/agent/PromptBar.tsx` |
+| Thought Line | 带动画的执行行 | 纯 CSS 状态行；数据来自 `buildThread` 的**纯派生**，不额外维护一份状态机 | `web/src/components/agent/ThoughtLine.tsx` |
+| Lattice Loader | 画布点阵 | 纯 CSS 点阵；屏外 / 后台 / 减弱动效下不启动 | `web/src/components/agent/LatticeLoader.tsx` |
+| Animated Content | 进场动画 | 复用本仓库既有 `.reveal → .is-in` 基元与 `useRevealScan` | `web/src/lib/useInView.ts` |
+| Glare Hover | canvas 逐帧绘制 | 一层 CSS 径向渐变跟随指针（位置写进 `--gx` / `--gy`，不触发 React 重渲染）；触屏与减弱动效下不生效 | `web/src/components/news/GlareImage.tsx` |
+
+**没有引入的东西**：Motion、GSAP、Three.js / React Three Fiber、`@react-three/*`、
+Hugeicons。图标一律用既有的 `lucide-react` 静态命名导入。
+
+---
+
 ## 字体
 
 - **Manrope**（拉丁品牌字体）经 `@fontsource-variable/manrope` 引入，
