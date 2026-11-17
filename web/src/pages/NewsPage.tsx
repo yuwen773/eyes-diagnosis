@@ -67,8 +67,13 @@ export function NewsPage() {
   // 入场动画：网格卡片是数据到位后才挂上的，扫描要跟着数据重跑一次。
   useRevealScan([records.length, page, query])
 
-  // 换页或换检索词之后回到列表开头：留在上一条的滚动位置，读者会以为
-  // 「点了没反应」——新一页的第一行在屏幕外，谁也看不见。
+  // 换页之后回到列表开头：留在上一条的滚动位置，读者会以为「点了没反应」——
+  // 新一页的第一行在屏幕外，谁也看不见。
+  //
+  // 只在**页码变**时滚，不在检索词变时滚：检索是从抬头的输入框发起的，那时
+  // 读者本来就站在页首；再滚一次会把刚用过的检索框推出视口，结果页上看不到
+  // 自己搜的是什么。
+  //
   // 首次渲染不动：那时候读者本来就站在页首，一 scroll 就把刊名推出视口。
   const listRef = useRef<HTMLElement>(null)
   const mounted = useRef(false)
@@ -78,7 +83,7 @@ export function NewsPage() {
       return
     }
     listRef.current?.scrollIntoView({ block: "start" })
-  }, [page, query])
+  }, [page])
 
   function search(event: FormEvent) {
     event.preventDefault()
