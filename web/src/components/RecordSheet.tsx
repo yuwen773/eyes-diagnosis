@@ -236,8 +236,10 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
       ) : null}
 
       <div className="sheet__stamps">
-        {/* 记录存在 ≠ 影像已归档：对象存储失败时后端仍会落库，只是 url 为空。
-            这两个事实分开陈述，不能让「有报告」暗示「原图可追溯」。 */}
+        {/* 记录存在 ≠ 影像已归档：这两个事实分开陈述，不能让「有报告」暗示「原图可追溯」。
+            注：修复前（commit 46628563 之前）写入的历史记录可能没有影像——那时后端把
+            对象存储异常吞掉照样落库；现在存储失败会终止请求、不落库，所以「未归档」
+            主要出现在历史数据上。 */}
         {!specimen ? (
           <div className="sheet__stamp">
             <div className="readout">

@@ -262,32 +262,66 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 }
             }
 
-            // 3. 异步上传 COS
-            String imageUrl = null;
+            // 3. 上传对象存储。
+            // 这一步失败必须终止本次请求：此前异常被吞掉，仍会落一条没有影像的
+            // 正式记录——用户拿到结论，报告却核验不了原图。推理结果已按图片哈希
+            // 写入推理缓存（缓存启用时），重试不会重复计算。
+            String imageUrl;
+            String imageKey;
             try {
                 String uploadPrefix = String.format("public/%s", loginUser.getId());
                 UploadPictureDetail detail = fileManager.uploadPicture(file, uploadPrefix);
                 imageUrl = detail.getUrl();
-            } catch (Exception e) {
-                log.error("COS upload failed", e);
+                imageKey = detail.getObjectKey();
+            } catch (BusinessException e) {
+                if (e.getCode() == ErrorCode.SYSTEM_ERROR.getCode()) {
+                    // 存储侧失败（超时 / 鉴权 / 服务端异常），换成本次请求的语义：
+                    // 没有归档，可以重试。用独立的 STORAGE_ERROR 码，前端才能把它
+                    // 与笼统的「服务没响应」分开说。
+                    throw new BusinessException(ErrorCode.STORAGE_ERROR,
+                            "影像存储失败，本次判读未归档，请重试");
+                }
+                // 体积 / 格式等校验失败原样上抛，不能被包装成「存储失败」。
+                throw e;
             }
 
-            // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
-            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse, evidence);
-            vo.setUrl(imageUrl);
+            // 4-5. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）并落库。
+            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入，
+            // 任何一步失败都必须把已经上传的对象删掉，否则留下无人引用的孤儿影像。
+            DiagnosisResultVO vo;
+            Diagnosis diagnosis;
+            boolean saved;
+            try {
+                vo = buildDiagnosisResult(grpcResponse, evidence);
+                vo.setUrl(imageUrl);
 
-            // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
-            Diagnosis diagnosis = DiagnosisResultVO.voToObj(vo);
-            diagnosis.setUserId(loginUser.getId());
-            if (imageUrl != null) {
-                diagnosis.setUrl(imageUrl);
+                // 仅写入用户字段，绝不复用旧记录
+                diagnosis = DiagnosisResultVO.voToObj(vo);
+                diagnosis.setUserId(loginUser.getId());
+                if (imageUrl != null) {
+                    diagnosis.setUrl(imageUrl);
+                }
+                // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
+                evidence.applyTo(diagnosis);
+                saved = this.save(diagnosis);
+            } catch (RuntimeException e) {
+                // 对象已写入、记录没落库：删掉这个对象，避免留下无人引用的孤儿影像。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw e;
             }
-            // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
-            evidence.applyTo(diagnosis);
-            this.save(diagnosis);
+            if (!saved) {
+                // save() 返回 false 表示插入 0 行（不抛异常）：同样是「有图、无记录」，
+                // 必须当作失败处理并补偿删除。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR,
+                        "诊断记录保存失败，本次判读未归档，请重试");
+            }
             vo.setId(diagnosis.getId());
 
             return vo;
+        } catch (BusinessException e) {
+            // 业务异常带着可读错误码与文案，不能被压成一条笼统的「诊断失败」。
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
         }
