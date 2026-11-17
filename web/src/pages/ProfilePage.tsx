@@ -53,8 +53,9 @@ export function ProfilePage() {
   const sample = sampleQuery.data
 
   // 服务端聚合与样本列表并行发出；不可用时在渲染期回退到本页样本。
+  // 统计是账号级的，查询键不带页码：与记录页共享同一份缓存，翻页不会重复请求。
   const statsQuery = useQuery({
-    queryKey: [...sampleKey, "stats"] as const,
+    queryKey: queryKeys.records.stats(scope),
     queryFn: ({ signal }) => loadServerStats(signal),
     enabled: authed && !!user,
   })

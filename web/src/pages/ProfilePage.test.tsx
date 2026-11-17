@@ -36,7 +36,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
-import { getMyStats, listMyDiagnoses } from "@/lib/api"
+import { ApiError, getMyStats, listMyDiagnoses } from "@/lib/api"
 
 beforeEach(() => {
   sessionState.status = "authed"
@@ -129,28 +129,31 @@ describe("ProfilePage 最近判读", () => {
 })
 
 describe("ProfilePage 判读统计口径", () => {
-  it("聚合读不出来时退回本页口径，不显示 0", async () => {
+  it("聚合接口 404 时退回本页口径：显示真实总数与最近 10 条高风险，不是 0", async () => {
     stubMatchMedia()
+    // 37 条判读记录，最近 10 条里有 2 条高风险；聚合接口尚未上线（404）。
     vi.mocked(listMyDiagnoses).mockResolvedValue({
       records: [
-        record({ id: "a", severity: "severe" }),
-        record({ id: "b", severity: "mild" }),
+        ...Array.from({ length: 8 }, (_, index) =>
+          record({ id: `m${index}`, severity: "mild" }),
+        ),
+        record({ id: "s1", severity: "severe" }),
+        record({ id: "s2", severity: "severe" }),
       ],
-      total: 12,
+      total: 37,
     } as never)
-    vi.mocked(getMyStats).mockResolvedValue(null as never)
+    vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
     const { container } = renderProfile()
 
-    // 口径提示：数字取自最近一页，不是全量。
+    // 口径提示写明：这组数字取自最近一页，不是全量。
     await screen.findByText(/服务端聚合暂不可用/)
 
     await waitFor(() => {
       const values = [...container.querySelectorAll(".profile__stat-value.num")].map(
         (node) => node.textContent,
       )
-      // 总数取信封值（12），高风险取本页里的 severe（1）——不是「0 次判读」。
-      expect(values[0]).toBe("12")
-      expect(values[1]).toBe("1")
+      expect(values[0]).toBe("37")
+      expect(values[1]).toBe("2")
     })
   })
 

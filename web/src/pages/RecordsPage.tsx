@@ -72,8 +72,9 @@ export function RecordsPage() {
 
   // 服务端聚合与列表是两个独立端点，并行发出；接口未上线或失败时
   // 在渲染期回退到本页汇总，并把口径标成 page。
+  // 统计是账号级的，查询键不带页码：翻页不换键，个人中心与这里共享同一份缓存。
   const statsQuery = useQuery({
-    queryKey: [...listKey, "stats"] as const,
+    queryKey: queryKeys.records.stats(scope),
     queryFn: ({ signal }) => loadServerStats(signal),
     enabled: authed,
   })

@@ -83,6 +83,15 @@
     弹层正文、侧栏、消息流、输入框自动一致；只有滚动驱动动画容器
     （`ScrollExpand`）显式隐藏。**禁止**在页面文件里写 `::-webkit-scrollbar`
     或 `scrollbar-color`，否则会出现第二套滚动条。
+18. **组件底座是 Base UI，`components.json` 是生成约束不是现状**：
+    `src/components/ui/` 里的 `dialog.tsx` / `menu.tsx` 是 Base UI 的薄封装，
+    **不是** shadcn 生成物；本项目不装 shadcn 生成的组件，也不再装 CVA /
+    `tw-animate-css`。但 `components.json`（style `base-nova`、`iconLibrary:
+    lucide`、`aliases` 指向 `@/components` 与 `@/lib/utils`）要留着——
+    它约束「将来用 `shadcn` CLI 起手时生成什么、落在哪、用哪套图标」。
+    `src/lib/utils.ts` 的 `cn` 仅为 CLI 的落点而存在，**不是**运行时依赖。
+    生成出来的组件必须按本文件的令牌与语义色改写后才算完成，
+    不允许直接进代码库就算数。
 
 ## 上下文令牌
 
