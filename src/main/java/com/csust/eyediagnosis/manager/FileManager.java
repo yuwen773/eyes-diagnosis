@@ -96,8 +96,11 @@ public class FileManager {
      * 补偿删除：对象已写入存储、但后续数据库落库失败时，删除这一个对象。
      *
      * <p>只接受本类刚上传返回的 key（调用方不得用请求参数拼 key）。
-     * 删除失败不抛异常——落库失败才是主因，补偿失败记日志留待人工/对账处理，
-     * 不能把异常盖回去掩盖原始错误。
+     * 删除失败不抛异常——落库失败才是主因，补偿失败记日志。
+     *
+     * <p>如实说明：目前**没有**自动对账会扫这些对象。仓库里唯一的对账器
+     * （{@code UploadCompensationService}）只扫 {@code agent-chat/} 前缀，
+     * 判读影像用的 {@code public/{userId}/} 前缀属于「只记日志、人工排查」的遗留面。
      *
      * @param objectKey {@link #uploadPicture} 返回的 key
      */
@@ -120,6 +123,8 @@ public class FileManager {
         ThrowUtils.throwIf(multipartFile==null,ErrorCode.PARAMS_ERROR,FILE_CAN_NOT_BE_NULL);
         //1.校验文件大小
         long fileSize = multipartFile.getSize();
+        //空文件不是合法图片：直接拒掉（0 字节会一路传到对象存储）
+        ThrowUtils.throwIf(fileSize==0,ErrorCode.PARAMS_ERROR,FILE_CONTENT_EMPTY);
         //不能超过 2M
         ThrowUtils.throwIf(fileSize>2*ONE_M,ErrorCode.PARAMS_ERROR,FILE_SIZE_ERROR);
         //2. 校验文件后缀

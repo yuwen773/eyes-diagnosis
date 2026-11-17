@@ -275,33 +275,46 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 imageKey = detail.getObjectKey();
             } catch (BusinessException e) {
                 if (e.getCode() == ErrorCode.SYSTEM_ERROR.getCode()) {
-                    // 存储侧失败（超时 / 鉴权 / 服务端异常），统一换成本次请求的语义：
-                    // 没有归档，可以重试。
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR,
+                    // 存储侧失败（超时 / 鉴权 / 服务端异常），换成本次请求的语义：
+                    // 没有归档，可以重试。用独立的 STORAGE_ERROR 码，前端才能把它
+                    // 与笼统的「服务没响应」分开说。
+                    throw new BusinessException(ErrorCode.STORAGE_ERROR,
                             "影像存储失败，本次判读未归档，请重试");
                 }
                 // 体积 / 格式等校验失败原样上抛，不能被包装成「存储失败」。
                 throw e;
             }
 
-            // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
-            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse, evidence);
-            vo.setUrl(imageUrl);
-
-            // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
-            Diagnosis diagnosis = DiagnosisResultVO.voToObj(vo);
-            diagnosis.setUserId(loginUser.getId());
-            if (imageUrl != null) {
-                diagnosis.setUrl(imageUrl);
-            }
-            // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
-            evidence.applyTo(diagnosis);
+            // 4-5. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）并落库。
+            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入，
+            // 任何一步失败都必须把已经上传的对象删掉，否则留下无人引用的孤儿影像。
+            DiagnosisResultVO vo;
+            Diagnosis diagnosis;
+            boolean saved;
             try {
-                this.save(diagnosis);
+                vo = buildDiagnosisResult(grpcResponse, evidence);
+                vo.setUrl(imageUrl);
+
+                // 仅写入用户字段，绝不复用旧记录
+                diagnosis = DiagnosisResultVO.voToObj(vo);
+                diagnosis.setUserId(loginUser.getId());
+                if (imageUrl != null) {
+                    diagnosis.setUrl(imageUrl);
+                }
+                // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
+                evidence.applyTo(diagnosis);
+                saved = this.save(diagnosis);
             } catch (RuntimeException e) {
                 // 对象已写入、记录没落库：删掉这个对象，避免留下无人引用的孤儿影像。
                 fileManager.deleteUploadedPictureQuietly(imageKey);
                 throw e;
+            }
+            if (!saved) {
+                // save() 返回 false 表示插入 0 行（不抛异常）：同样是「有图、无记录」，
+                // 必须当作失败处理并补偿删除。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR,
+                        "诊断记录保存失败，本次判读未归档，请重试");
             }
             vo.setId(diagnosis.getId());
 

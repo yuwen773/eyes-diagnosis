@@ -96,6 +96,19 @@ class FileManagerTest {
     }
 
     @Test
+    void rejectsEmptyFileBeforeTouchingObjectStorage() {
+        // 0 字节不是合法图片：直接拒掉，别让对象存储收下一份空对象。
+        MockMultipartFile file = bytes("empty.png", 0);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> fileManager.uploadPicture(file, "public/7"));
+
+        assertEquals(ErrorCode.PARAMS_ERROR.getCode(), ex.getCode());
+        assertEquals(FileConstant.FILE_CONTENT_EMPTY, ex.getMessage());
+        verify(cosManager, never()).putPictureObject(anyString(), any(File.class));
+    }
+
+    @Test
     void objectStorageTimeoutSurfacesAsStorageFailure() {
         // 超时 / 鉴权失败 / 服务端异常在 COS 客户端都是运行时异常，这里统一验证
         // 它们被转成 SYSTEM_ERROR，而不是被当成「上传成功但没有地址」。

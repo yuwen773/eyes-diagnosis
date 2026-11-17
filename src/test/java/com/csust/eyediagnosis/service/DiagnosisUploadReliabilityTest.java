@@ -90,7 +90,7 @@ class DiagnosisUploadReliabilityTest {
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.doDiagnosis(imageFile(), user(7L)));
 
-        assertEquals(ErrorCode.SYSTEM_ERROR.getCode(), ex.getCode());
+        assertEquals(ErrorCode.STORAGE_ERROR.getCode(), ex.getCode());
         assertEquals("影像存储失败，本次判读未归档，请重试", ex.getMessage());
         // 关键断言：推理已经完成，但绝不能因此落一条没有原图的正式记录。
         verify(grpcClient).diagnose(any(), any());
@@ -146,6 +146,21 @@ class DiagnosisUploadReliabilityTest {
         assertThrows(RuntimeException.class, () -> service.doDiagnosis(imageFile(), user(7L)));
 
         // 对象已写入、记录没落库 → 删除这一个对象，不留无人引用的影像。
+        verify(fileManager).deleteUploadedPictureQuietly("/public/7/x.png");
+    }
+
+    @Test
+    void zeroRowInsertIsTreatedAsFailureAndDeletesTheOrphanObject() {
+        when(fileManager.uploadPicture(any(), anyString()))
+                .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));
+        // MyBatis-Plus 的 save() 在插入 0 行时返回 false（不抛异常）。
+        // 这与本次要消灭的「有结论、无原图」互为镜像：有图、无记录、无 id。
+        when(baseMapper.insert(any(Diagnosis.class))).thenReturn(0);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.doDiagnosis(imageFile(), user(7L)));
+
+        assertEquals(ErrorCode.OPERATION_ERROR.getCode(), ex.getCode());
         verify(fileManager).deleteUploadedPictureQuietly("/public/7/x.png");
     }
 
