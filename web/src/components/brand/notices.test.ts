@@ -38,16 +38,22 @@ describe("vendored Prism 的来源与许可", () => {
 })
 
 /**
- * R3 的四种交互（Prompt Bar / Thought Line / Lattice Loader / Animated
- * Content）是**自研实现**，不是 React Bits 源码。
+ * R3 的五种交互（Prompt Bar / Thought Line / Lattice Loader / Animated
+ * Content / Glare Hover）是**自研实现**，不是 React Bits 源码。
  *
  * <p>这条断言守的是许可边界：Commons Clause 禁止再分发组件本身（含移植版），
  * 而本仓库是公开仓库。哪天上游的组件源码被整段搬进来，这条测试就该红。
  */
 describe("R3 的 React Bits 交互实现是自研的", () => {
-  it("声明文件逐条写明四种交互各自的独立实现", () => {
+  it("声明文件逐条写明五种交互各自的独立实现", () => {
     expect(notices).toContain("独立实现")
-    for (const name of ["Prompt Bar", "Thought Line", "Lattice Loader", "Animated Content"]) {
+    for (const name of [
+      "Prompt Bar",
+      "Thought Line",
+      "Lattice Loader",
+      "Animated Content",
+      "Glare Hover",
+    ]) {
       expect(notices).toContain(name)
     }
   })

@@ -1,10 +1,23 @@
 import "@/styles/news.css"
 
-import { useMemo, type ReactNode } from "react"
+import { useMemo, useRef, type MouseEvent, type ReactNode } from "react"
 
 import { newsDate, newsPlainText, newsSections, newsWithAnchors, newsWordCount } from "@/lib/news"
 import { renderNewsHtml } from "@/lib/markdown"
 import { sanitizeNewsHtml } from "@/lib/sanitize"
+import { useElementWidth } from "@/lib/useElementWidth"
+
+/**
+ * 正文版心的窄档阈值。
+ *
+ * <p>按**版心宽度**判，不按视口：管理端预览把一整页塞进设备框，设备框
+ * 才是那一页真正的宽度。900 是公开页的媒体查询阈值，减去两侧页边距后
+ * 版心到 860 左右就该切到窄版式，两边对齐。
+ *
+ * <p>阈值取 840：900 视口扣掉两侧页边距后版心约 820（窄），940 视口约
+ * 860（宽）——正好卡在媒体查询的 900 断点两侧，两条判断不会打架。
+ */
+const NARROW_BODY = 840
 
 /**
  * 一篇资讯文章的完整版式——公开详情页与管理端预览共用这一份实现。
@@ -54,6 +67,32 @@ export type NewsArticleViewProps = {
   className?: string
 }
 
+/**
+ * 目录跳转：平滑滚到章节，弱动效偏好下改成瞬时。
+ *
+ * <p>不用原生 `href="#id"` 的默认跳转——它没有过渡，长文里从第一屏滚到
+ * 第五屏是「啪」的一下，读者会丢掉刚才看的位置。这里改成显式的
+ * `scrollIntoView`，并保留 `replaceState`：地址栏里留得住锚点（可以直接
+ * 复制分享），但不会给历史塞一串同页记录。
+ *
+ * <p>**必须把现有的 `history.state` 原样带过去**：React Router 把
+ * `{ usr, key, idx }` 存在这里，传 `null` 会把它抹掉——之后按浏览器返回，
+ * 路由拿不到 `idx`，退回到哪一条就说不准了。
+ *
+ * <p>焦点不动：章节标题不是可聚焦元素，跳过去以后焦点仍留在目录链接上，
+ * 键盘用户接着按 Tab 就能走目录，不用被扔到正文中间。
+ */
+function jumpTo(event: MouseEvent<HTMLAnchorElement>, id: string) {
+  const target = document.getElementById(id)
+  if (!target) return
+  event.preventDefault()
+  const reduced =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" })
+  window.history.replaceState(window.history.state, "", `#${id}`)
+}
+
 export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
   const {
     article,
@@ -86,6 +125,25 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
   const sections = useMemo(() => newsSections(html), [html])
   const { date, time } = newsDate(article.publishTime ?? undefined)
   const Heading = headingLevel === 2 ? "h2" : "h1"
+
+  // 目录的窄版形态：宽屏是钉在左侧的常驻目录，窄屏收成可折叠的一份。
+  // 宽度按版心算，公开页与管理端预览因此得到同一套判断。
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const bodyWidth = useElementWidth(bodyRef)
+  const narrow = bodyWidth > 0 && bodyWidth <= NARROW_BODY
+
+  const tocList = (
+    <ol className="news-toc__list">
+      {sections.map((section, index) => (
+        <li key={section.id}>
+          <a href={`#${section.id}`} data-cursor onClick={(event) => jumpTo(event, section.id)}>
+            <span className="news-toc__index num">{String(index + 1).padStart(2, "0")}</span>
+            <span className="news-toc__text">{section.text}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  )
 
   return (
     <article className={`news-article${className ? ` ${className}` : ""}`}>
@@ -132,23 +190,24 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
         </figure>
       ) : null}
 
-      <div className="news-article__body">
+      <div className={`news-article__body${narrow ? " is-narrow" : ""}`} ref={bodyRef}>
         {sections.length > 1 ? (
-          <aside className="news-toc" aria-label="正文目录">
-            <span className="overline">目录 · CONTENTS</span>
-            <ol className="news-toc__list">
-              {sections.map((section, index) => (
-                <li key={section.id}>
-                  <a href={`#${section.id}`} data-cursor>
-                    <span className="news-toc__index num">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="news-toc__text">{section.text}</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </aside>
+          narrow ? (
+            // 窄屏：目录收成可折叠的一份，默认合上——长文里一串章节名会
+            // 把正文推到屏外。展开按钮就是原生 <summary>，键盘可用。
+            <details className="news-toc news-toc--compact" aria-label="正文目录">
+              <summary className="news-toc__summary overline">
+                目录 · CONTENTS
+                <span className="news-toc__summary-count num">{sections.length} 节</span>
+              </summary>
+              {tocList}
+            </details>
+          ) : (
+            <aside className="news-toc" aria-label="正文目录">
+              <span className="overline">目录 · CONTENTS</span>
+              {tocList}
+            </aside>
+          )
         ) : null}
 
         <div className="news-paper">

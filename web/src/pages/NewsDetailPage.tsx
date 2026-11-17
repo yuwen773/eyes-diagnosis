@@ -6,12 +6,13 @@ import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
 import { describeError, getNews, listNews } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
-import { newsDate } from "@/lib/news"
+import { useRevealScan } from "@/lib/useInView"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { NewsArticleView } from "@/components/news/NewsArticleView"
+import { NewsCard } from "@/components/news/NewsCard"
 
 export function NewsDetailPage() {
   const { id = "" } = useParams<{ id: string }>()
@@ -40,6 +41,9 @@ export function NewsDetailPage() {
         .slice(0, 4),
     [othersQuery.data, id],
   )
+
+  // 相关阅读的卡片是数据到位后才挂上的，入场扫描要跟着数据重跑一次。
+  useRevealScan([others.length])
 
   return (
     <div className="is-field is-brand-page">
@@ -95,28 +99,10 @@ export function NewsDetailPage() {
             {others.length > 0 ? (
               <section className="news-detail__more">
                 <SectionHead code="更多" kicker="More bulletins" en="LATEST" />
-                <ul className="news-rows">
-                  {others.map((row) => {
-                    const rowDate = newsDate(row.publishTime)
-                    return (
-                      <li className="news-rows__item" key={row.id}>
-                        <Link
-                          to={`/news/${row.id}`}
-                          className="news-row"
-                          data-cursor
-                          data-cursor-label="阅读全文"
-                        >
-                          <span className="news-row__date num">{rowDate.date}</span>
-                          <span className="news-row__main">
-                            <span className="news-row__title">{row.title}</span>
-                          </span>
-                          <span className="news-row__mark" aria-hidden="true">
-                            ↗
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
+                <ul className="journal-grid journal-grid--related">
+                  {others.map((row, index) => (
+                    <NewsCard item={row} index={index} key={row.id} />
+                  ))}
                 </ul>
               </section>
             ) : null}

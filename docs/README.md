@@ -15,6 +15,7 @@
 | `design/iris-2-rule-change-matrix.md` | 查旧「白色仪器」规则改成了什么、为什么改、落地到哪一步 |
 | `design/iris-2-implementation-roadmap.md` | 查首页 / 管理端 / 协作台各自的实施顺序、范围与验收门禁 |
 | `design/iris-2-r2-5-product-shell-audit.md` | 查 R2.5 全站视觉审计（逐路由现状/目标/复用/风险）与 Shared Product Shell 的 PR 拆分 |
+| `design/iris-r3-user-experience-inventory.md` | 查 R3 用户端体验重设计的**现状盘点**：保留清单、不改的契约、要删的旧样式、资讯字段真实读数、React Bits 许可结论、已知后端缺口 |
 | `design/iris2-r2-5-release-integration.md` | 查 R2/R2.5 的 13 步合并序列与三条绕行规则（跳过 #53、关闭 #60、逐级 retarget）——**已执行完毕的归档记录**，文中的 SHA 是当时快照 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
