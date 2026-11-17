@@ -28,6 +28,14 @@ export type RecordStats = {
   awaitingReview: number
   /** 最近一次判读时间，没有记录时为 null。 */
   lastReadAt: string | null
+  /**
+   * **本页**的记录条数。只有本地汇总（page 口径）时才有值。
+   *
+   * <p>存在的理由：`assessed` 是按本页逐条数出来的，`total` 却来自分页信封
+   * （名下全量）。拿本页的分子配全量的分母会得出「已分级 3/57 条」这种
+   * 口径混算的读数——57 是全量，3 是本页。page 口径下分母必须用本页条数。
+   */
+  pageTotal?: number
 }
 
 /** 后端 `Severity` 里真正带临床分级的取值；`NOT_ASSESSED` 明确排除。 */
@@ -65,7 +73,14 @@ export function summarizeRecords(
     return !acc || item.createTime > acc ? item.createTime : acc
   }, null)
 
-  return { total, assessed: graded.length, highRisk, awaitingReview, lastReadAt }
+  return {
+    total,
+    assessed: graded.length,
+    highRisk,
+    awaitingReview,
+    lastReadAt,
+    pageTotal: records.length,
+  }
 }
 
 /** 统计口径：all = 服务端全量聚合；page = 当前页本地汇总。 */
@@ -173,6 +188,9 @@ export function highRiskCell(
   pagePrefix = "本页",
 ): RiskCell {
   const page = scope === "page" ? pagePrefix : ""
+  // 分母：page 口径用本页条数，all 口径用服务端全量。混用会得出
+  // 「本页高风险 · 已分级 3/57 条」这种本页分子配全量分母的读数。
+  const denominator = scope === "page" ? (stats.pageTotal ?? stats.total) : stats.total
   if (stats.assessed === 0) {
     return {
       label: `${page}严重度 · 未评估`,
@@ -181,9 +199,9 @@ export function highRiskCell(
       unknown: true,
     }
   }
-  if (stats.assessed < stats.total) {
+  if (stats.assessed < denominator) {
     return {
-      label: `${page}高风险 · 已分级 ${stats.assessed}/${stats.total}`,
+      label: `${page}高风险 · 已分级 ${stats.assessed}/${denominator}`,
       value: String(stats.highRisk),
       note: `仅 ${stats.assessed} 条有分级数据，其余未评估`,
       unknown: false,

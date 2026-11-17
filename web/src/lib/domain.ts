@@ -172,22 +172,39 @@ const SEVERITY_LABEL: Record<string, string> = {
   mild: "轻度",
   moderate: "中度",
   severe: "严重",
+  // 人工严重程度用另一组值（管理端下拉写入的就是这一组）。此前这里没有它们，
+  // 患者端记录纸会把「high」原样显示出来——同一字段两种语言。
+  low: "低风险",
+  medium: "中风险",
+  high: "高风险",
   NOT_ASSESSED: "未评估",
 }
 
 export function severityLabel(severity?: string) {
   if (!severity) return "未评估"
-  return SEVERITY_LABEL[severity] ?? severity
+  // 大小写不敏感：人工严重程度既有 "high"（管理端下拉写入），也可能出现
+  // "MODERATE" 这类大写写法；查不到就原样返回，绝不吞掉未知取值。
+  return (
+    SEVERITY_LABEL[severity] ??
+    SEVERITY_LABEL[severity.toUpperCase()] ??
+    SEVERITY_LABEL[severity.toLowerCase()] ??
+    severity
+  )
 }
 
 export function severityRisk(severity?: string): Risk {
-  switch (severity) {
-    case "normal":
+  // 与 severityLabel 同样大小写不敏感，避免 "HIGH" 落到 unknown。
+  const key = severity?.toUpperCase()
+  switch (key) {
+    case "NORMAL":
       return "normal"
-    case "mild":
-    case "moderate":
+    case "MILD":
+    case "LOW":
+    case "MODERATE":
+    case "MEDIUM":
       return "attention"
-    case "severe":
+    case "SEVERE":
+    case "HIGH":
       return "critical"
     default:
       return "unknown"

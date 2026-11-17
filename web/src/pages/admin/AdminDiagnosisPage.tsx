@@ -436,7 +436,7 @@ export function AdminDiagnosisPage(): ReactElement {
             <h3 className="admin-diagnosis__section-title">人工复核记录 · HUMAN REVIEW</h3>
             <dl className="admin-diagnosis__drawer-facts">
               <FactRow label="人工结论" value={detail.humanResult || "—"} />
-              <FactRow label="人工严重程度" value={detail.humanSeverity || "—"} />
+              <FactRow label="人工严重程度" value={detail.humanSeverity ? severityLabel(detail.humanSeverity) : "—"} />
               <FactRow label="人工建议" value={detail.humanRecommendations || "—"} />
               <FactRow label="复核备注" value={detail.humanReviewNote || "—"} />
             </dl>
