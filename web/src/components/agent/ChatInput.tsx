@@ -149,14 +149,16 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const submit = useCallback(async () => {
     const trimmed = text.trim()
     if ((!trimmed && attachments.length === 0) || disabled) return
+    // 助手还在回复时不要把输入吞掉——保留文字并给出提示。
+    // 这条要排在互斥之前：流式期间互斥也是 held，但「正在回复」比
+    // 「正在发送」更准确（用户等的是一条回答，不是一次提交）。
+    if (streaming) {
+      setHint("助手正在回复，完成后即可发送")
+      return
+    }
     // 已在发送/上传中：把话留住，不吞输入，也不重复提交。
     if (submittingRef.current) {
       setHint("正在发送，请稍候")
-      return
-    }
-    // 助手还在回复时不要把输入吞掉——保留文字并给出提示
-    if (streaming) {
-      setHint("助手正在回复，完成后即可发送")
       return
     }
     submittingRef.current = true

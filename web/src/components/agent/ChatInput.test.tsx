@@ -123,6 +123,8 @@ describe("ChatInput 发送与停止（既有行为）", () => {
 
     expect(onSend).not.toHaveBeenCalled()
     expect((textarea as HTMLTextAreaElement).value).toBe("追问一句")
+    // 流式期间说的是「助手正在回复」，不是「正在发送」——用户等的是回答。
+    expect(screen.getByText("助手正在回复，完成后即可发送")).toBeTruthy()
   })
 
   it("非流式时 Enter 发送并清空", async () => {
