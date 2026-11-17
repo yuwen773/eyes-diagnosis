@@ -144,4 +144,30 @@ test.describe("验收冒烟", () => {
     await expect(page.getByRole("button", { name: "发送", exact: true })).toBeVisible()
     await expect(input).toHaveValue("")
   })
+
+  test("工具没有回执就结束的回合，执行过程显示「未确认」而不是「执行中」", async ({ page }) => {
+    await page.route("**/api/agent/chat/stream", (route) =>
+      route.fulfill({
+        contentType: "text/event-stream",
+        body:
+          `data: ${JSON.stringify({
+            // 后端 MessageType 的 @JsonValue 是 "tool-request"（小写连字符）。
+            messageType: "tool-request",
+            toolCalls: [{ name: "searchDocuments", arguments: '{"query":"白内障"}' }],
+          })}\n\nevent: done\ndata: {}\n\n`,
+      })
+    )
+    await page.route("**/api/agent/sessions/*/generate-title", (route) =>
+      route.fulfill({ json: { code: 0, data: true } })
+    )
+    await page.goto("/agent")
+    const input = page.locator(".prompt__input")
+    await input.fill("查一下白内障")
+    await input.press("Enter")
+
+    // 流结束了但后端没有 tool-response：不能一直挂着「执行中」，
+    // 也不能说「完成」——只能说「未确认」。
+    await expect(page.getByText("未确认")).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator(".thought__state").filter({ hasText: "执行中" })).toHaveCount(0)
+  })
 })
