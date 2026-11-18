@@ -200,7 +200,7 @@ ls <tmp>/assets | grep -i "DesignHeroCompare\|HeroCompare"                  # �
 
 ### 4.1 全局检查
 
-- **无横向溢出**：48 张矩阵截图 `horizontalOverflow` 全为 `false`。
+- **无横向溢出**：63 张截图（含 48 张矩阵）`horizontalOverflow` 全为 `false`。
 - **无页面异常**：控制台错误与失败请求在 manifest 里逐张记录（§5 末尾）。
 - **无错误资源请求**：见 §5 末尾汇总。
 
@@ -210,15 +210,15 @@ ls <tmp>/assets | grep -i "DesignHeroCompare\|HeroCompare"                  # �
 
 同一台机器、同一个 Chromium、同一构建、1440×900 亮色、每个方案 3 段 1 s 采样。
 
-**上表是「空载独立复测」那一轮的读数**（`HERO_COMPARE_PERF_ONLY=1`，
-manifest 里 `perfMeasuredAt` = 2026-11-18T07:21:25Z；截图那一轮的 `capturedAt` =
-2026-11-18T07:16:32Z）。为什么不是直接用跑截图那一轮的读数——见 §5.3。
-
 | 方案 | 动效中 FPS（中位 / 最低） | p95 帧时间 | 掉帧 | 长任务 | 动效中 draws/s | 停机后 draws/s | 离屏 draws/s |
 |---|---|---|---|---|---|---|---|
 | A OpticFlow | 73.9 / 72.5 | 22.8 ms | 24 / 223 | 无 | 148 | 0 | 0 |
 | B Prism | 79.1 / 78.9 | 22.8 ms | 25 / 240 | 无 | 80 | 0 | 0 |
 | C OpticFlow × Prism | 83 / 74 | 18.3 ms | 8 / 243 | 无 | 168 | 0 | 0 |
+
+> 这张表是「**空载独立复测**」那一轮的读数（`HERO_COMPARE_PERF_ONLY=1`；manifest 里
+> `perfMeasuredAt` = 2026-11-18T07:21:25Z，截图那一轮的 `capturedAt` = 07:16:32Z）。
+> 为什么不用跑截图那一轮的读数——见 §5.3。
 
 「停机后」的口径：A / C 是「点完暂停动效 → 指针移出画布 → 等 4.2 s → 采样 2 s」；
 B 是「等过 Prism 的 5 s 自动停机窗口 → 采样 2 s」。
