@@ -13,10 +13,15 @@
 //   E2E_CHROMIUM_PATH
 //   HERO_COMPARE_PERF_ONLY=1（只重跑性能与降级读数，截图沿用上一轮，
 //                            结果并回上一轮的 manifest.json）
+//   HERO_EVIDENCE=r2（E-09 R2 定向取证：只跑 C 方案的矩阵 / 定格 / 降级 /
+//                     裁剪 / 录屏 / 交错性能 / 遮挡几何与像素复核，
+//                     产出写到 docs/reviews/assets/iris-hero-fusion-r2/）
 //
 // 产出：
 //   docs/reviews/assets/iris-hero-comparison/   核心桌面截图 + 三版对照拼图（入库）
 //   target/iris-hero-comparison/               全量截图 + manifest + 录屏（本地）
+//   docs/reviews/assets/iris-hero-fusion-r2/    R2 定向取证（入库）
+//   target/iris-hero-fusion-r2/                 R2 全量截图 + manifest + 录屏（本地）
 //
 // 为什么要真实浏览器：jsdom 只能验生命周期契约，验不了 WebGL 实际出图、
 // 首屏 FPS、GPU 渲染器与 draw call 频次。静态降级结果绝不能当成真实 GPU 动效。
@@ -27,8 +32,12 @@ import { resolve } from "node:path"
 import { chromium } from "playwright"
 
 const ROOT = resolve(import.meta.dirname, "../../..")
-const DOC_DIR = resolve(ROOT, "docs/reviews/assets/iris-hero-comparison")
-const TARGET_DIR = resolve(ROOT, "target/iris-hero-comparison")
+/** `compare` = 三方案对照（E-09 首轮）；`r2` = C 方案定向精修取证。 */
+const EVIDENCE = process.env.HERO_EVIDENCE === "r2" ? "r2" : "compare"
+const DOC_REL =
+  EVIDENCE === "r2" ? "docs/reviews/assets/iris-hero-fusion-r2" : "docs/reviews/assets/iris-hero-comparison"
+const DOC_DIR = resolve(ROOT, DOC_REL)
+const TARGET_DIR = resolve(ROOT, EVIDENCE === "r2" ? "target/iris-hero-fusion-r2" : "target/iris-hero-comparison")
 const COMPARE_BASE = process.env.HERO_COMPARE_BASE ?? "http://localhost:4173"
 const OPTIC_BASE = process.env.HERO_OPTIC_BASE ?? "http://localhost:4174"
 const PERF_ONLY = process.env.HERO_COMPARE_PERF_ONLY === "1"
@@ -216,6 +225,8 @@ async function sampleOnce(target, durationMs) {
     const drawCalls = window.__drawCalls - drawsBefore
     return {
       sampledFrames: frames.length,
+      // 注意：这是**采样循环自己的 rAF 节拍**，不是页面渲染帧率。页面完全空闲时
+      // rAF 跑满 220 Hz，这个数会读到 200 以上，只能用来横向比较两个方案。
       averageFps: Number((1000 / average).toFixed(1)),
       averageFrameMs: Number(average.toFixed(2)),
       p95FrameMs: Number(sorted[Math.floor(sorted.length * 0.95)].toFixed(2)),
@@ -224,6 +235,9 @@ async function sampleOnce(target, durationMs) {
       longTasksMs: longTasks.map((value) => Number(value.toFixed(1))),
       drawCalls,
       drawCallsPerSec: Number((drawCalls / (durationMs / 1000)).toFixed(1)),
+      // 把采样时看到的 mode 一并记下来：脱离 mode 的 draw 增量无法判断是不是
+      // 「定格之后又被唤醒」。
+      mode: document.querySelector(".hero-fusion")?.getAttribute("data-mode") ?? null,
     }
   }, durationMs)
 }
@@ -277,7 +291,7 @@ async function capture({
 
   const entry = {
     file,
-    doc: saveToDoc ? `docs/reviews/assets/iris-hero-comparison/${file}` : null,
+    doc: saveToDoc ? `${DOC_REL}/${file}` : null,
     url,
     variant: variantKey ?? null,
     group: group ?? null,
@@ -343,9 +357,716 @@ async function contactSheet(items, outFile, title) {
 }
 
 // ---------------------------------------------------------------------------
+// E-09 R2 · C 方案定向取证（HERO_EVIDENCE=r2）
+//
+// 首轮三方案对照回答的是「谁更像」，这一轮回答的是「C 能不能用」：
+// 四个视口里光学主体有没有出壳、有没有压住文字与信息卡、5 秒后 GPU 是不是
+// 真的停了、悬停会不会把动画叫回来、降级画面是不是一片空白。
+// ---------------------------------------------------------------------------
+
+/** 线段与矩形是否相交（屏幕坐标，CSS px）。端点落在矩形内也算相交。 */
+function segmentHitsRect(a, b, r) {
+  const inside = (p) => p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom
+  if (inside(a) || inside(b)) return true
+  const cross = (p, q) => p.x * q.y - p.y * q.x
+  const straddle = (p, q, s, t) => {
+    const d1 = cross({ x: q.x - p.x, y: q.y - p.y }, { x: s.x - p.x, y: s.y - p.y })
+    const d2 = cross({ x: q.x - p.x, y: q.y - p.y }, { x: t.x - p.x, y: t.y - p.y })
+    const d3 = cross({ x: t.x - s.x, y: t.y - s.y }, { x: p.x - s.x, y: p.y - s.y })
+    const d4 = cross({ x: t.x - s.x, y: t.y - s.y }, { x: q.x - s.x, y: q.y - s.y })
+    return d1 * d2 < 0 && d3 * d4 < 0
+  }
+  const corners = [
+    { x: r.left, y: r.top },
+    { x: r.right, y: r.top },
+    { x: r.right, y: r.bottom },
+    { x: r.left, y: r.bottom },
+  ]
+  return corners.some((c, i) => straddle(a, b, c, corners[(i + 1) % 4]))
+}
+
+function rectsOverlap(a, b) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+}
+
+/** 页面里量：舞台盒、棱镜盒、每条射线的两个端点、各内容块的盒子。 */
+async function measureOptics(tab) {
+  return await tab.evaluate(() => {
+    const box = (el) => {
+      if (!el) return null
+      const r = el.getBoundingClientRect()
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }
+    }
+    const pick = (sel) => box(document.querySelector(sel))
+    const rays = [...document.querySelectorAll(".hero-fusion__rays:not(.hero-fusion__rays--glow) line")].map(
+      (line) => {
+        const m = line.getScreenCTM()
+        const total = line.getTotalLength()
+        const a = line.getPointAtLength(0).matrixTransform(m)
+        const b = line.getPointAtLength(total).matrixTransform(m)
+        return { a: { x: a.x, y: a.y }, b: { x: b.x, y: b.y } }
+      },
+    )
+    // SVG 的 getBoundingClientRect 不含描边宽度：光带按最宽那条描边自己外扩。
+    const ribbonGroup = document.querySelector(".hero-fusion__ribbon")
+    const ribbonPaths = ribbonGroup ? [...ribbonGroup.querySelectorAll("path")] : []
+    const ribbonStroke = ribbonPaths.reduce(
+      (max, path) => Math.max(max, Number(path.getAttribute("stroke-width") ?? 0)),
+      0,
+    )
+    const ribbonBox = box(ribbonGroup)
+    const ribbon = ribbonBox
+      ? {
+          ...ribbonBox,
+          left: ribbonBox.left - ribbonStroke / 2,
+          right: ribbonBox.right + ribbonStroke / 2,
+          top: ribbonBox.top - ribbonStroke / 2,
+          bottom: ribbonBox.bottom + ribbonStroke / 2,
+          strokeWidth: ribbonStroke,
+        }
+      : null
+    return {
+      stage: pick(".hero-fusion__stage"),
+      prism: pick(".hero-fusion__prism"),
+      ribbon,
+      rays,
+      regions: {
+        title: pick(".landing-hero__title"),
+        sub: pick(".landing-hero__sub"),
+        cta: pick(".landing-hero__cta"),
+        card: pick(".landing-hero__card"),
+        entries: pick(".landing-hero__entries"),
+      },
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+    }
+  })
+}
+
+/** 把一次几何量测变成「谁压了谁」的判据。硬约束失败 = P1。 */
+function judgeOptics(measured, breakpoint) {
+  const { stage, prism, ribbon, rays, regions } = measured
+  const hard = []
+  const info = []
+  if (!stage || !prism) return { breakpoint, hard: ["光学层缺失"], info: [] }
+
+  const content = { title: regions.title, sub: regions.sub, cta: regions.cta, card: regions.card }
+  for (const [name, rect] of Object.entries(content)) {
+    if (!rect) continue
+    rays.forEach((ray, index) => {
+      if (segmentHitsRect(ray.a, ray.b, rect)) {
+        hard.push(`射线 #${index} 穿过 ${name}`)
+      }
+    })
+    if (rectsOverlap(prism, rect)) hard.push(`棱镜压住 ${name}`)
+  }
+  // entries 是信息卡下面那行条目，原来只查了棱镜。色散扇同样不许扫过它。
+  if (regions.entries) {
+    if (rectsOverlap(prism, regions.entries)) hard.push("棱镜压住 entries")
+    rays.forEach((ray, index) => {
+      if (segmentHitsRect(ray.a, ray.b, regions.entries)) hard.push(`射线 #${index} 穿过 entries`)
+    })
+  }
+
+  // 出壳：端点或棱镜越出舞台（舞台是 `overflow: hidden`，越出即被切）。
+  const margin = 2
+  const inStage = (p) =>
+    p.x >= stage.left + margin &&
+    p.x <= stage.right - margin &&
+    p.y >= stage.top + margin &&
+    p.y <= stage.bottom - margin
+  rays.forEach((ray, index) => {
+    if (!inStage(ray.b)) hard.push(`射线 #${index} 末端越出舞台`)
+  })
+  if (
+    prism.left < stage.left ||
+    prism.right > stage.right ||
+    prism.top < stage.top ||
+    prism.bottom > stage.bottom
+  ) {
+    hard.push("棱镜越出舞台")
+  }
+  if (stage.right > measured.viewport.width + 0.5) info.push("舞台宽于视口")
+
+  // 光带是半透明的宽玻璃体，bbox 压到文字不等于像素压到文字：只记录，不判死。
+  for (const name of ["title", "sub", "cta"]) {
+    if (regions[name] && ribbon && rectsOverlap(ribbon, regions[name])) {
+      info.push(`光带包围盒与 ${name} 相交（需看像素复核）`)
+    }
+  }
+  return { breakpoint, hard, info }
+}
+
+/**
+ * 区域像素复核：光学层显示 / 隐藏两张同尺寸截图，比较文字与卡片区域。
+ *
+ * <p>只看亮度均值与 p5–p95 展布会**漏掉细线**：一条 2px 的光带穿过整块标题区，
+ * 均值可能只动 1–2 个色阶，展布完全不变。所以这里同时按像素逐点统计
+ * 「变化超过 24/255 的像素占比」与最大单点差——那才是「有没有东西压上来」的证据。
+ */
+async function compareRegions(shownBuffer, hiddenBuffer, regions) {
+  const context = await browser.newContext({ viewport: { width: 400, height: 300 } })
+  const tab = await context.newPage()
+  const result = await tab.evaluate(
+    async ({ a, b, regions }) => {
+      const load = (src) =>
+        new Promise((res, rej) => {
+          const img = new Image()
+          img.onload = () => res(img)
+          img.onerror = () => rej(new Error("decode failed"))
+          img.src = src
+        })
+      const [shown, hidden] = await Promise.all([load(a), load(b)])
+      const canvas = document.createElement("canvas")
+      canvas.width = shown.width
+      canvas.height = shown.height
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      const grab = (img, rect) => {
+        const x = Math.max(0, Math.round(rect.left))
+        const y = Math.max(0, Math.round(rect.top))
+        const w = Math.min(canvas.width - x, Math.round(rect.width))
+        const h = Math.min(canvas.height - y, Math.round(rect.height))
+        if (w <= 0 || h <= 0) return null
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0)
+        const data = ctx.getImageData(x, y, w, h).data
+        const lum = []
+        for (let i = 0; i < data.length; i += 4) {
+          lum.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2])
+        }
+        const sorted = [...lum].sort((p, q) => p - q)
+        const at = (f) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * f))]
+        return {
+          lum,
+          mean: Number((lum.reduce((s, v) => s + v, 0) / lum.length).toFixed(2)),
+          p5: Number(at(0.05).toFixed(2)),
+          p95: Number(at(0.95).toFixed(2)),
+        }
+      }
+      const out = {}
+      for (const [key, rect] of Object.entries(regions)) {
+        if (!rect) continue
+        const withOptics = grab(shown, rect)
+        const withoutOptics = grab(hidden, rect)
+        if (!withOptics || !withoutOptics || withOptics.lum.length !== withoutOptics.lum.length) {
+          continue
+        }
+        let changed = 0
+        let maxDelta = 0
+        for (let i = 0; i < withOptics.lum.length; i += 1) {
+          const diff = Math.abs(withOptics.lum[i] - withoutOptics.lum[i])
+          if (diff > 24) changed += 1
+          if (diff > maxDelta) maxDelta = diff
+        }
+        out[key] = {
+          withOptics: { mean: withOptics.mean, p5: withOptics.p5, p95: withOptics.p95 },
+          withoutOptics: { mean: withoutOptics.mean, p5: withoutOptics.p5, p95: withoutOptics.p95 },
+          deltaMean: Number(Math.abs(withOptics.mean - withoutOptics.mean).toFixed(2)),
+          deltaSpread: Number(
+            Math.abs(
+              withOptics.p95 - withOptics.p5 - (withoutOptics.p95 - withoutOptics.p5),
+            ).toFixed(2),
+          ),
+          maxDelta: Number(maxDelta.toFixed(1)),
+          changedPixelRatio: Number((changed / withOptics.lum.length).toFixed(4)),
+        }
+      }
+      return out
+    },
+    {
+      a: `data:image/png;base64,${shownBuffer.toString("base64")}`,
+      b: `data:image/png;base64,${hiddenBuffer.toString("base64")}`,
+      regions,
+    },
+  )
+  await context.close()
+  return result
+}
+
+/**
+ * 交错的性能轮次：A / C 交替，轮次顺序每轮反过来，压掉预热与热降频的顺序偏差。
+ *
+ * <p>**必须偶数轮**：三轮时 A 有两次排在前面（1、3），先跑的那一方占掉预热，
+ * 读数的差异会变成测序的差异。四轮两种顺序各两次。
+ */
+async function interleavedPerf(rounds = 4) {
+  const out = []
+  for (let round = 1; round <= rounds; round += 1) {
+    const order = round % 2 === 1 ? ["optic", "fusion"] : ["fusion", "optic"]
+    const row = { round, order, samples: {} }
+    for (const key of order) {
+      const variant = VARIANTS.find((item) => item.key === key)
+      const context = await openContext({ viewport: VIEWPORTS[2], theme: "light" })
+      const tab = await context.newPage()
+      await tab.goto(compareUrl(key), { waitUntil: "load", timeout: 45_000 })
+      await tab.waitForSelector(`${variant.selector}[data-mode="live"]`, { timeout: 20_000 })
+      await tab.waitForTimeout(1600)
+      const samples = []
+      for (let index = 0; index < 2; index += 1) samples.push(await sampleOnce(tab, 1200))
+      row.samples[key] = {
+        medianFps: median(samples.map((s) => s.averageFps)),
+        medianP95FrameMs: median(samples.map((s) => s.p95FrameMs)),
+        medianDrawCallsPerSec: median(samples.map((s) => s.drawCallsPerSec)),
+        droppedFrames: samples.reduce((sum, s) => sum + s.droppedFrames, 0),
+      }
+      await context.close()
+    }
+    out.push(row)
+    console.log(
+      `  第 ${round} 轮（${order.join(" → ")}）：` +
+        Object.entries(row.samples)
+          .map(([key, value]) => `${key} ${value.medianFps}fps / ${value.medianDrawCallsPerSec} draws/s`)
+          .join(" · "),
+    )
+  }
+  return out
+}
+
+/** 棱镜局部裁剪：只截棱镜包围盒外扩 `pad` 的那一块，用来判断玻璃材质。 */
+async function captureCrop({ name, viewport, theme, pad = 150 }) {
+  const context = await openContext({ viewport, theme })
+  const tab = await context.newPage()
+  await tab.goto(compareUrl("fusion"), { waitUntil: "load", timeout: 45_000 })
+  await tab.waitForSelector(".hero-fusion[data-mode]", { timeout: 20_000 })
+  await tab.waitForTimeout(FRAME_AT_MS)
+  const box = await tab.evaluate(() => {
+    const node = document.querySelector(".hero-fusion__prism")
+    if (!node) return null
+    const r = node.getBoundingClientRect()
+    return { x: r.x, y: r.y, width: r.width, height: r.height }
+  })
+  if (!box || box.width < 2) {
+    await context.close()
+    return null
+  }
+  const x = Math.max(0, box.x - pad)
+  const y = Math.max(0, box.y - pad)
+  const clip = {
+    x,
+    y,
+    width: Math.min(viewport.width - x, box.width + pad * 2),
+    height: Math.min(viewport.height - y, box.height + pad * 2),
+  }
+  const buffer = await tab.screenshot({ type: "png", clip })
+  const file = `${name}.png`
+  writeFileSync(resolve(TARGET_DIR, file), buffer)
+  writeFileSync(resolve(DOC_DIR, file), buffer)
+  entries.push({
+    file,
+    doc: `${DOC_REL}/${file}`,
+    url: compareUrl("fusion"),
+    variant: "fusion",
+    group: "crop",
+    resolution: viewport.label,
+    width: Math.round(clip.width),
+    height: Math.round(clip.height),
+    theme,
+    reducedMotion: "no-preference",
+    webglDisabled: false,
+    animationState: "live",
+    animationTimepointMs: FRAME_AT_MS,
+    capturedAt: new Date().toISOString(),
+    commit: COMMIT,
+    sha256: sha256(buffer),
+    bytes: buffer.length,
+    consoleErrors: [],
+    failedRequests: [],
+    meta: await tab.evaluate(collectMeta, ".hero-fusion"),
+  })
+  await context.close()
+  console.log(`  裁剪 ${file}`)
+  return file
+}
+
+async function runFusionR2() {
+  const report = { matrix: [], states: {}, crops: [], geometry: {}, regions: {}, c4: {}, perf: [], video: null }
+
+  // --- 1) 矩阵：3 方案 × 4 视口 × 2 主题 = 24 张 -----------------------------
+  console.log("· R2 矩阵（3 方案 × 4 视口 × 2 主题）")
+  for (const viewport of VIEWPORTS) {
+    for (const theme of ["light", "dark"]) {
+      for (const variant of VARIANTS) {
+        const { entry } = await capture({
+          name: `r2-matrix-${variant.code}-${variant.key}-${viewport.key}-${theme}`,
+          variantKey: variant.key,
+          group: "matrix",
+          url: compareUrl(variant.key),
+          selector: variant.selector,
+          viewport,
+          theme,
+          saveToDoc: true,
+        })
+        report.matrix.push({
+          file: entry.file,
+          variant: variant.code,
+          viewport: viewport.key,
+          theme,
+          mode: entry.meta.mode,
+          overflow: entry.meta.horizontalOverflow,
+        })
+      }
+    }
+  }
+
+  // --- 2) C 的三个状态帧：定格 / reduced-motion / WebGL 降级 -----------------
+  console.log("· C 状态帧")
+  const states = [
+    {
+      key: "settled",
+      name: "r2-c-settled-desktop-light",
+      expectMode: "settled",
+      waitMs: 1500,
+      animationState: "settled（5s 自动定格）",
+    },
+    {
+      key: "reduced-motion",
+      name: "r2-c-reduced-motion-desktop-light",
+      expectMode: "frozen",
+      waitMs: 1200,
+      reducedMotion: "reduce",
+      animationState: "prefers-reduced-motion: reduce",
+    },
+    {
+      key: "webgl-disabled",
+      name: "r2-c-webgl-disabled-desktop-light",
+      expectMode: "static",
+      waitMs: 1200,
+      disableWebgl: true,
+      animationState: "WebGL2 不可用（静态降级）",
+    },
+  ]
+  for (const state of states) {
+    const { entry } = await capture({
+      name: state.name,
+      variantKey: "fusion",
+      group: "states",
+      url: compareUrl("fusion"),
+      selector: ".hero-fusion",
+      viewport: VIEWPORTS[2],
+      theme: "light",
+      expectMode: state.expectMode,
+      waitMs: state.waitMs,
+      reducedMotion: state.reducedMotion ?? "no-preference",
+      disableWebgl: state.disableWebgl ?? false,
+      animationState: state.animationState,
+      saveToDoc: true,
+    })
+    report.states[state.key] = { file: entry.file, mode: entry.meta.mode, drawCalls: entry.meta.drawCalls }
+  }
+
+  // --- 3) 局部裁剪：桌面与手机的棱镜 ----------------------------------------
+  console.log("· 棱镜局部裁剪")
+  for (const viewport of [VIEWPORTS[2], VIEWPORTS[0]]) {
+    for (const theme of ["light", "dark"]) {
+      const file = await captureCrop({
+        name: `r2-crop-prism-${viewport.key}-${theme}`,
+        viewport,
+        theme,
+        pad: viewport.key === "phone" ? 90 : 150,
+      })
+      if (file) report.crops.push(file)
+    }
+  }
+
+  // --- 4) 遮挡复核：几何 + 像素（定格态，画面不再变化） ----------------------
+  console.log("· 遮挡复核（几何 + 像素）")
+  for (const viewport of VIEWPORTS) {
+    const context = await openContext({ viewport, theme: "light" })
+    const tab = await context.newPage()
+    await tab.goto(compareUrl("fusion"), { waitUntil: "load", timeout: 45_000 })
+    await tab.waitForSelector('.hero-fusion[data-mode="settled"]', { timeout: 20_000 })
+    await tab.waitForTimeout(400)
+
+    const measured = await measureOptics(tab)
+    const breakpoint =
+      viewport.key === "phone" ? "phone" : viewport.key === "tablet" ? "tablet" : "wide"
+    const verdict = judgeOptics(measured, breakpoint)
+    // 三张同尺寸截图：全显示 / 只藏光学主体 / 连环境光一起藏。
+    // 两组差分分别回答「主体层压没压内容」与「环境光有没有把文字对比度吃掉」。
+    const shownBuffer = await tab.screenshot({ type: "png" })
+    await tab.addStyleTag({
+      content: ".hero-fusion__optics{visibility:hidden !important}",
+    })
+    await tab.waitForTimeout(200)
+    const noSubjectBuffer = await tab.screenshot({ type: "png" })
+    await tab.addStyleTag({
+      content: ".hero-fusion__canvas{visibility:hidden !important}",
+    })
+    await tab.waitForTimeout(200)
+    const bareBuffer = await tab.screenshot({ type: "png" })
+    writeFileSync(resolve(TARGET_DIR, `r2-optics-hidden-${viewport.key}.png`), bareBuffer)
+    const regions = {
+      subject: await compareRegions(shownBuffer, noSubjectBuffer, measured.regions),
+      ambient: await compareRegions(noSubjectBuffer, bareBuffer, measured.regions),
+    }
+    report.geometry[viewport.key] = {
+      ...verdict,
+      prism: measured.prism && {
+        left: Math.round(measured.prism.left),
+        top: Math.round(measured.prism.top),
+        width: Math.round(measured.prism.width),
+        height: Math.round(measured.prism.height),
+      },
+      stage: measured.stage && {
+        left: Math.round(measured.stage.left),
+        top: Math.round(measured.stage.top),
+        width: Math.round(measured.stage.width),
+        height: Math.round(measured.stage.height),
+      },
+      rayCount: measured.rays.length,
+      rayEnds: measured.rays.map((ray) => ({
+        x: Math.round(ray.b.x),
+        y: Math.round(ray.b.y),
+      })),
+    }
+    report.regions[viewport.key] = regions
+    console.log(
+      `  ${viewport.label}: 硬约束 ${verdict.hard.length === 0 ? "通过" : verdict.hard.join("；")}` +
+        ` · 主体层 Δ展布 ${Object.entries(regions.subject)
+          .map(([key, value]) => `${key} ${value.deltaSpread}`)
+          .join(" / ")}` +
+        ` · 环境光 Δ展布 ${Object.entries(regions.ambient)
+          .map(([key, value]) => `${key} ${value.deltaSpread}`)
+          .join(" / ")}`,
+    )
+    await context.close()
+  }
+
+  // --- 5) C-4：5 秒定格之后 GPU 到底停没停 ----------------------------------
+  console.log("· C-4 停机行为")
+  {
+    const context = await openContext({ viewport: VIEWPORTS[2], theme: "light" })
+    const tab = await context.newPage()
+    await tab.goto(compareUrl("fusion", { bare: false }), { waitUntil: "load", timeout: 45_000 })
+    await tab.waitForSelector('.hero-fusion[data-mode="live"]', { timeout: 20_000 })
+    // 用**页面自己的时钟**量：CDP 往返与轮询延迟会凭空加进读数。
+    const liveAtPageMs = await tab.evaluate(() => performance.now())
+    await tab.waitForSelector('.hero-fusion[data-mode="settled"]', { timeout: 15_000 })
+    const settledAtPageMs = await tab.evaluate(() => performance.now())
+    // ⚠ 两个读数都从「导航开始」起算，不是从组件挂载起算：`waitForSelector`
+    // 每 100ms 轮询一次，所以它必然**晚于**真实状态切换。窗口本身的实现是
+    // 挂载后 5000ms（只在可见时计时）。
+    const settleDelayMs = Math.round(settledAtPageMs - liveAtPageMs)
+    const settleDelayFromNavMs = Math.round(settledAtPageMs)
+
+    const settledSample = await sampleOnce(tab, 2000)
+
+    const canvasCentre = await tab.evaluate(() => {
+      const canvas = document.querySelector(".hero-fusion__canvas")
+      if (!canvas) return null
+      const r = canvas.getBoundingClientRect()
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+    })
+    let hoverSample = null
+    if (canvasCentre) {
+      // 指针必须在**整个采样窗口内持续移动**。原来的写法是「先移四次、停 1.2s、
+      // 最后才采样 1.5s」，窗口内指针完全静止——那只证明了「指针不动时不画」，
+      // 证明不了「悬停不会把已定格的动效唤醒」。现在采样与手势同时进行。
+      const pending = sampleOnce(tab, 1500)
+      for (let step = 0; step < 12; step += 1) {
+        const t = step / 11
+        await tab.mouse.move(
+          canvasCentre.x - 120 + 240 * t,
+          canvasCentre.y - 60 + 120 * Math.sin(t * Math.PI),
+        )
+        await tab.waitForTimeout(105)
+      }
+      hoverSample = await pending
+    }
+
+    const beforeTheme = await tab.evaluate(() => ({
+      draws: window.__drawCalls,
+      contexts: window.__webgl2Created,
+    }))
+    await tab.getByRole("button", { name: "切换到暗色主题" }).click()
+    await tab.waitForTimeout(1000)
+    const afterTheme = await tab.evaluate(() => ({
+      draws: window.__drawCalls,
+      contexts: window.__webgl2Created,
+      mode: document.querySelector(".hero-fusion")?.getAttribute("data-mode"),
+      theme: document.querySelector(".hero-fusion")?.getAttribute("data-theme"),
+    }))
+
+    const beforeNav = await tab.evaluate(() => window.__drawCalls)
+    await tab.evaluate(() => document.querySelector('a[href="/news"]')?.click())
+    await tab.waitForTimeout(1200)
+    const afterNav = await tab.evaluate(() => ({
+      draws: window.__drawCalls,
+      canvases: document.querySelectorAll("canvas").length,
+    }))
+    await tab.waitForTimeout(1200)
+    const afterNavLater = await tab.evaluate(() => window.__drawCalls)
+
+    report.c4 = {
+      settleDelayMs,
+      settleDelayFromNavMs,
+      settled: {
+        drawCallsIn2s: settledSample.drawCalls,
+        drawCallsPerSec: settledSample.drawCallsPerSec,
+        fps: settledSample.averageFps,
+        mode: settledSample.mode,
+      },
+      hoverAfterSettled: {
+        // 采样窗口内指针一直在动；读数为 0 才说明悬停没把定格唤醒。
+        pointerMovingThroughoutWindow: true,
+        drawCallsIn1_5s: hoverSample?.drawCalls ?? null,
+        drawCallsPerSec: hoverSample?.drawCallsPerSec ?? null,
+        mode: hoverSample?.mode ?? null,
+      },
+      themeSwitchWhileSettled: {
+        drawCalls: afterTheme.draws - beforeTheme.draws,
+        newContexts: afterTheme.contexts - beforeTheme.contexts,
+        mode: afterTheme.mode,
+        theme: afterTheme.theme,
+      },
+      routeLeave: {
+        canvasesAfter: afterNav.canvases,
+        stoppedDrawing: afterNavLater === afterNav.draws,
+      },
+    }
+    console.log(
+      `  定格 ${settleDelayMs}ms 后 2s 内 ${settledSample.drawCalls} draws · ` +
+        `悬停(全程移动) 1.5s ${hoverSample?.drawCalls ?? "n/a"} draws · 换主题重绘 ${afterTheme.draws - beforeTheme.draws} 次 · ` +
+        `换页后画布 ${afterNav.canvases} 个`,
+    )
+    await context.close()
+  }
+
+  // --- 5.5) C 的三条额外停机路径 -------------------------------------------
+  console.log("· C 的额外停机路径")
+  {
+    // reduced-motion：挂载即定格，之后 2s 内不许再有 draw。
+    const context = await openContext({
+      viewport: VIEWPORTS[2],
+      theme: "light",
+      reducedMotion: "reduce",
+    })
+    const tab = await context.newPage()
+    await tab.goto(compareUrl("fusion"), { waitUntil: "load", timeout: 45_000 })
+    await tab.waitForSelector('.hero-fusion[data-mode="frozen"]', { timeout: 20_000 })
+    await tab.waitForTimeout(2500)
+    const sample = await sampleOnce(tab, 2000)
+    const cssAnimations = await tab.evaluate(
+      () => document.querySelector(".hero-fusion")?.getAnimations({ subtree: true }).length ?? -1,
+    )
+    report.c4.reducedMotion = {
+      drawCallsIn2s: sample.drawCalls,
+      drawCallsPerSec: sample.drawCallsPerSec,
+      cssAnimations,
+    }
+    await context.close()
+
+    // 上下文丢失：不靠「禁用 WebGL」，而是在跑起来之后真的丢一次上下文。
+    const lostContext = await openContext({ viewport: VIEWPORTS[2], theme: "light" })
+    const lostTab = await lostContext.newPage()
+    await lostTab.goto(compareUrl("fusion"), { waitUntil: "load", timeout: 45_000 })
+    await lostTab.waitForSelector('.hero-fusion[data-mode="live"]', { timeout: 20_000 })
+    await lostTab.waitForTimeout(1200)
+    const lost = await lostTab.evaluate(() => {
+      const canvas = document.querySelector(".hero-fusion__canvas")
+      const gl = canvas?.getContext("webgl2")
+      const ext = gl?.getExtension("WEBGL_lose_context")
+      if (!ext) return { supported: false }
+      ext.loseContext()
+      return { supported: true }
+    })
+    await lostTab.waitForTimeout(800)
+    const afterLost = await lostTab.evaluate(() => ({
+      mode: document.querySelector(".hero-fusion")?.getAttribute("data-mode") ?? null,
+      canvases: document.querySelectorAll(".hero-fusion canvas").length,
+      staticWash: !!document.querySelector(".hero-fusion__static-wash"),
+      prism: !!document.querySelector(".hero-fusion__prism"),
+    }))
+    report.c4.contextLost = { ...lost, ...afterLost }
+    await lostContext.close()
+
+    // 页面隐藏**不在这里测**。headful Playwright 造不出真正的 hidden：
+    // `bringToFront()` 之后原页 `document.hidden` 仍是 false（`Page.setWebLifecycleState`
+    // 也不改可见性），`Emulation.setPageVisibilityOverride` 不存在。以前这里量到的
+    // 「少量 draws」是窗口失焦的 rAF 节流，被误读成「隐藏时仍在绘制」。
+    // 该路径改由可控桩的单测覆盖：`src/components/brand/beamsMount.test.ts`。
+    report.c4.pageHidden = {
+      measured: false,
+      note: "Playwright 无法制造真实的 document.hidden；由 beamsMount.test.ts 的可控桩覆盖",
+    }
+    console.log(
+      `  reduced-motion 2s 内 ${sample.drawCalls} draws / CSS 动画 ${cssAnimations} · ` +
+        `上下文丢失后 mode=${afterLost.mode} 画布 ${afterLost.canvases} 个 · ` +
+        `页面隐藏改由单测覆盖（浏览器侧造不出真 hidden）`,
+    )
+  }
+
+  // --- 6) 交错性能轮次 ------------------------------------------------------
+  console.log("· 交错性能轮次（A ↔ C，4 轮，顺序每轮反转）")
+  report.perf = await interleavedPerf(4)
+
+  // --- 7) 录屏：C 的 5 秒动效窗口 -------------------------------------------
+  console.log("· C 录屏")
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+      deviceScaleFactor: 1,
+      recordVideo: { dir: resolve(TARGET_DIR, "video"), size: { width: 1440, height: 900 } },
+    })
+    await context.addInitScript(initScript, { theme: "light", disableWebgl: false })
+    const tab = await context.newPage()
+    await tab.goto(compareUrl("fusion"), { waitUntil: "load", timeout: 45_000 })
+    await tab.waitForSelector('.hero-fusion[data-mode="live"]', { timeout: 20_000 })
+    await tab.waitForTimeout(5000)
+    const video = tab.video()
+    await tab.close()
+    if (video) {
+      const target = resolve(TARGET_DIR, "r2-c-motion-desktop-light.webm")
+      await video.saveAs(target)
+      report.video = target
+      console.log("  录屏 r2-c-motion-desktop-light.webm")
+    }
+    await context.close()
+  } catch (error) {
+    console.log(`  跳过录屏：${String(error).split("\n")[0]}`)
+  }
+
+  // --- 8) 拼图 --------------------------------------------------------------
+  console.log("· R2 拼图")
+  for (const viewport of [VIEWPORTS[2], VIEWPORTS[0]]) {
+    for (const theme of ["light", "dark"]) {
+      const items = VARIANTS.map((variant) => ({
+        buffer: readFileSync(
+          resolve(TARGET_DIR, `r2-matrix-${variant.code}-${variant.key}-${viewport.key}-${theme}.png`),
+        ),
+        caption: `${variant.code} · ${variant.name}`,
+        detail: `${viewport.label} · ${theme}`,
+      }))
+      await contactSheet(
+        items,
+        `r2-compare-${viewport.key}-${theme}.png`,
+        `E-09 R2 · 三方案 · ${viewport.label} · ${theme}`,
+      )
+    }
+  }
+  for (const theme of ["light", "dark"]) {
+    const items = VIEWPORTS.map((viewport) => ({
+      buffer: readFileSync(resolve(TARGET_DIR, `r2-matrix-C-fusion-${viewport.key}-${theme}.png`)),
+      caption: `C · ${viewport.label}`,
+      detail: `${viewport.key} · ${theme}`,
+    }))
+    await contactSheet(items, `r2-c-viewports-${theme}.png`, `E-09 R2 · C 方案四视口 · ${theme}`)
+  }
+  {
+    const items = states.map((state) => ({
+      buffer: readFileSync(resolve(TARGET_DIR, `${state.name}.png`)),
+      caption: state.key,
+      detail: state.animationState,
+    }))
+    await contactSheet(items, "r2-c-states.png", "E-09 R2 · C 的三个终止状态")
+  }
+
+  return report
+}
+
+// ---------------------------------------------------------------------------
 // 1) 核心矩阵：3 方案 × 4 视口 × 2 主题 × 2 构图
 // ---------------------------------------------------------------------------
-if (!PERF_ONLY) {
+if (!PERF_ONLY && EVIDENCE === "compare") {
     console.log("· 核心矩阵")
   for (const shell of SHELLS) {
     for (const viewport of VIEWPORTS) {
@@ -464,8 +1185,9 @@ if (!PERF_ONLY) {
 // ---------------------------------------------------------------------------
 // 5) 性能：动效窗口 / 停机后 / 页面不可见 / 路由离开后的回收 / 主题切换
 // ---------------------------------------------------------------------------
-console.log("· 性能与资源回收")
 const perf = {}
+if (EVIDENCE === "compare") {
+console.log("· 性能与资源回收")
 for (const variant of VARIANTS) {
   const context = await openContext({ viewport: VIEWPORTS[2], theme: "light" })
   const tab = await context.newPage()
@@ -611,9 +1333,11 @@ for (const variant of VARIANTS) {
   )
   await context.close()
 }
+}
 
 // Reduced Motion 是否真的停动画（独立复核）
 const reducedChecks = {}
+if (EVIDENCE === "compare") {
 for (const variant of VARIANTS) {
   const context = await openContext({
     viewport: VIEWPORTS[2],
@@ -643,6 +1367,7 @@ for (const variant of VARIANTS) {
   )
   await context.close()
 }
+}
 
 // ---------------------------------------------------------------------------
 // 5.5) 动效录屏：每方案 5 秒，证明「动起来了」而不只是「截到一帧」
@@ -652,7 +1377,7 @@ for (const variant of VARIANTS) {
 // ---------------------------------------------------------------------------
 console.log("· 动效录屏")
 const videos = []
-if (!PERF_ONLY) {
+if (!PERF_ONLY && EVIDENCE === "compare") {
   for (const variant of VARIANTS) {
     try {
       const context = await browser.newContext({
@@ -778,40 +1503,98 @@ if (!PERF_ONLY) {
 // ---------------------------------------------------------------------------
 // 7) manifest
 // ---------------------------------------------------------------------------
-// PERF_ONLY：只重测性能与降级读数，截图沿用上一轮，但 manifest 必须写全，
-// 否则报告会引用到一份只剩性能段落的清单。
-// ---------------------------------------------------------------------------
-const previous = PERF_ONLY
-  ? JSON.parse(readFileSync(resolve(TARGET_DIR, "manifest.json"), "utf8"))
-  : null
-if (PERF_ONLY && !previous) {
-  throw new Error("HERO_COMPARE_PERF_ONLY=1 但找不到上一轮的 manifest.json，请先完整跑一轮。")
-}
-const allEntries = previous ? previous.entries : entries
-const allVideos = previous ? previous.videos : videos
+const r2 = EVIDENCE === "r2" ? await runFusionR2() : null
 
-const manifest = {
-  task: "E-09 · OpticFlow × Prism 三方案真实浏览器对照",
-  status: "VISUAL_REVIEW_PENDING",
-  capturedAt: previous?.capturedAt ?? new Date().toISOString(),
-  perfMeasuredAt: new Date().toISOString(),
-  commit: COMMIT,
-  branch: BRANCH,
-  browser: browserPath,
-  browserVersion: browser.version(),
-  frameTimepointMs: FRAME_AT_MS,
-  shells: SHELLS,
-  bases: { compare: COMPARE_BASE, opticNative: OPTIC_BASE },
-  regenerate: [
-    "cd web && VITE_DESIGN_PREVIEW=true npx vite build && npx vite preview --port 4173 --strictPort",
-    "cd <feat/iris21-multiagent-integration 的 web> && npx vite build && npx vite preview --port 4174 --strictPort",
-    "node web/scripts/evidence/hero-compare.mjs",
-  ],
-  entries: allEntries,
-  performance: perf,
-  reducedMotionChecks: reducedChecks,
-  videos: allVideos,
-}
+if (r2) {
+  const manifest = {
+    task: "E-09 R2 · Fusion Refinement（C 方案定向视觉精修与真实浏览器复验）",
+    status: "VISUAL_REVIEW_PENDING",
+    capturedAt: new Date().toISOString(),
+    commit: COMMIT,
+    branch: BRANCH,
+    browser: browserPath,
+    browserVersion: browser.version(),
+    frameTimepointMs: FRAME_AT_MS,
+    viewports: VIEWPORTS,
+    variants: VARIANTS,
+    bases: { compare: COMPARE_BASE },
+    regenerate: [
+      "cd web && VITE_DESIGN_PREVIEW=true npx vite build && npx vite preview --port 4173 --strictPort",
+      "cd web && HERO_EVIDENCE=r2 node scripts/evidence/hero-compare.mjs",
+    ],
+    entries,
+    matrix: r2.matrix,
+    states: r2.states,
+    crops: r2.crops,
+    geometry: r2.geometry,
+    regions: r2.regions,
+    c4: r2.c4,
+    interleavedPerf: r2.perf,
+    video: r2.video,
+  }
+  writeFileSync(resolve(TARGET_DIR, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+  writeFileSync(
+    resolve(DOC_DIR, "manifest-summary.json"),
+    `${JSON.stringify(
+      {
+        task: manifest.task,
+        status: manifest.status,
+        commit: COMMIT,
+        branch: BRANCH,
+        browserVersion: browser.version(),
+        capturedAt: manifest.capturedAt,
+        frames: entries.length,
+        states: r2.states,
+        c4: r2.c4,
+        interleavedPerf: r2.perf,
+        geometry: Object.fromEntries(
+          Object.entries(r2.geometry).map(([key, value]) => [
+            key,
+            { hard: value.hard, info: value.info, rayCount: value.rayCount },
+          ]),
+        ),
+        video: r2.video,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  )
+} else {
+  // PERF_ONLY：只重测性能与降级读数，截图沿用上一轮，但 manifest 必须写全，
+  // 否则报告会引用到一份只剩性能段落的清单。
+  // -------------------------------------------------------------------------
+  const previous = PERF_ONLY
+    ? JSON.parse(readFileSync(resolve(TARGET_DIR, "manifest.json"), "utf8"))
+    : null
+  if (PERF_ONLY && !previous) {
+    throw new Error("HERO_COMPARE_PERF_ONLY=1 但找不到上一轮的 manifest.json，请先完整跑一轮。")
+  }
+  const allEntries = previous ? previous.entries : entries
+  const allVideos = previous ? previous.videos : videos
+
+  const manifest = {
+    task: "E-09 · OpticFlow × Prism 三方案真实浏览器对照",
+    status: "VISUAL_REVIEW_PENDING",
+    capturedAt: previous?.capturedAt ?? new Date().toISOString(),
+    perfMeasuredAt: new Date().toISOString(),
+    commit: COMMIT,
+    branch: BRANCH,
+    browser: browserPath,
+    browserVersion: browser.version(),
+    frameTimepointMs: FRAME_AT_MS,
+    shells: SHELLS,
+    bases: { compare: COMPARE_BASE, opticNative: OPTIC_BASE },
+    regenerate: [
+      "cd web && VITE_DESIGN_PREVIEW=true npx vite build && npx vite preview --port 4173 --strictPort",
+      "cd <feat/iris21-multiagent-integration 的 web> && npx vite build && npx vite preview --port 4174 --strictPort",
+      "node web/scripts/evidence/hero-compare.mjs",
+    ],
+    entries: allEntries,
+    performance: perf,
+    reducedMotionChecks: reducedChecks,
+    videos: allVideos,
+  }
 
 writeFileSync(
   resolve(TARGET_DIR, "manifest.json"),
@@ -837,9 +1620,10 @@ writeFileSync(
   )}\n`,
   "utf8",
 )
+}
 
 await browser.close()
 
-console.log(`\n共 ${allEntries.length} 张截图。`)
+console.log(`\n共 ${entries.length} 张截图。`)
 console.log(`全量：${TARGET_DIR}`)
 console.log(`入库：${DOC_DIR}`)

@@ -45,6 +45,17 @@ export type BeamsEngine = {
   /** 参数变化后叫醒渲染循环（内部会判断是否需要重设尺寸）。 */
   wake: () => void
   dispose: () => void
+  /**
+   * 定格：取消 rAF，并让之后所有唤醒（指针、可见性、参数变化）都不再起循环，
+   * 只保留最后一帧画面。首屏「5 秒自动停机」用它把「动画逻辑停止」兑现成
+   * 「GPU 真的不再绘制」——`paused` 只是停止状态推进，循环仍要等 `settling`
+   * 条件全部落空才收尾，指针一直悬停时永远不会收尾。
+   */
+  freeze: () => void
+  /** 解除定格，回到 live。 */
+  thaw: () => void
+  /** 只重绘一帧（定格状态下的主题切换 / 尺寸变化）。 */
+  repaint: () => void
 }
 
 export function mountBeams(options: {
@@ -143,6 +154,8 @@ export function mountBeams(options: {
   let visible = true
   /** dispose 之后一切异步回调都失效：RAF、指针、可见性都不许再把循环叫醒。 */
   let disposed = false
+  /** 定格：见 `BeamsEngine.freeze`。默认 false，不改变 A 方案原有的行为。 */
+  let frozen = false
 
   const render = () => {
     const s = getSettings()
@@ -211,7 +224,7 @@ export function mountBeams(options: {
 
   const frame = (now: number) => {
     raf = 0
-    if (disposed || !visible || document.hidden) return
+    if (disposed || frozen || !visible || document.hidden) return
     const s = getSettings()
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60
     last = now
@@ -246,7 +259,7 @@ export function mountBeams(options: {
   }
 
   const wake = () => {
-    if (disposed || raf || !visible || document.hidden) return
+    if (disposed || frozen || raf || !visible || document.hidden) return
     raf = requestAnimationFrame(frame)
   }
 
@@ -265,11 +278,16 @@ export function mountBeams(options: {
     }
     view.fieldWidth = Math.max(1, Math.round(width * fieldScale))
     view.fieldHeight = Math.max(1, Math.round(height * fieldScale))
+    // canvas.width/height 一旦被赋值，整块画布会被清空——所以这里**必须**重绘一帧，
+    // 哪怕处于定格态，否则窗口缩放之后留下一块空白。定格时 `wake()` 是空操作，
+    // 因此这正好是「一次重绘、零循环」，不是「定格被重新唤醒」。
     render()
     wake()
   }
 
   const onPointerMove = (event: PointerEvent) => {
+    // 定格之后指针不再参与：既不重绘，也不把「用户还在悬停」记进状态。
+    if (frozen) return
     const rect = container.getBoundingClientRect()
     pointer.x = event.clientX - rect.left
     pointer.y = event.clientY - rect.top
@@ -279,11 +297,13 @@ export function mountBeams(options: {
   }
 
   const onPointerLeave = () => {
+    if (frozen) return
     pointer.inside = false
     wake()
   }
 
   const onVisibility = () => {
+    if (frozen) return
     last = 0
     wake()
   }
@@ -297,6 +317,8 @@ export function mountBeams(options: {
   const onMotionChange = () => {
     reduce = motionQuery?.matches ?? false
     last = 0
+    // `reduce` 照常更新（thaw 之后要按新值起算），但定格期间不再叫醒循环。
+    if (frozen) return
     wake()
   }
 
@@ -329,7 +351,7 @@ export function mountBeams(options: {
 
   return {
     wake: () => {
-      if (disposed) return
+      if (disposed || frozen) return
       const s = getSettings()
       if (s.quality !== lastQuality || s.dpr !== lastDpr) {
         lastQuality = s.quality
@@ -339,6 +361,25 @@ export function mountBeams(options: {
       }
       if (!raf) render()
       wake()
+    },
+    freeze: () => {
+      if (disposed) return
+      frozen = true
+      cancelAnimationFrame(raf)
+      raf = 0
+      last = 0
+      // 定格在最后一帧：停循环之前先把当前参数画一遍，画面不会停在一个半帧上。
+      render()
+    },
+    thaw: () => {
+      if (disposed || !frozen) return
+      frozen = false
+      last = 0
+      wake()
+    },
+    repaint: () => {
+      if (disposed) return
+      render()
     },
     dispose: () => {
       if (disposed) return

@@ -1,13 +1,23 @@
 /* ==========================================================================
    E-09 · 融合主视觉（OpticFlow 光带 × Prism 棱镜）
    --------------------------------------------------------------------------
-   两层：下面是一张 WebGL2 光场画布（vendored Beams，唯一一个渲染循环），
-   上面是一张 SVG 光学层（入射线 + 棱镜 + 色散扇）。
+   两层，各自管自己的裁切（DESIGN.md §3.6「全幅环境光 + 壳内受控光学主体」）：
+
+   1. `.hero-fusion__canvas` —— 全幅 Beams 光场，**唯一一个** GPU 渲染循环。
+      铺满整个 hero 区段，四周用径向遮罩收到透明，不出现画布矩形硬边。
+   2. `.hero-fusion__stage` —— 光学主体（入射线 / 棱镜 / 色散扇 / 纤维）。
+      盒子就是玻璃外壳的盒子（`--maxw` 版心内），`overflow: hidden` +
+      同一条 `--radius-2xl` 圆角，可辨认的光学结构出不了壳。
 
    入射线**直接复用方案 A 的玻璃体样式**：`.optic-flow__sheath`、
    `.optic-flow__fiber-set*` 与 `optic-stop--*` 渐变都在 brand.css 里。
    这里只补三件事：把 A 的纤维调色板变量挂到 `.hero-fusion` 上（那组变量原本
    作用域是 `.optic-flow`）、棱镜与色散扇自己的材质、以及动效预算。
+
+   棱镜的门槛（2026-11-18 评审后写死，改之前先按它量）：
+   - 受光面相对底色必须有 **≥ 18/255** 的亮度差，且暗色**不能**靠外轮廓撑体量；
+   - 外轮廓的不透明度不超过受光面的 **2 倍**；
+   - 亮/暗两套是同一材质语言，只是绝对明度不同。
    ========================================================================== */
 
 .hero-fusion {
@@ -27,12 +37,53 @@ html.dark .hero-fusion {
   --optic-fiber-core: rgba(225, 244, 255, 0.5);
 }
 
+/* --- 第 1 层：全幅环境光 ---------------------------------------------------- */
+
 .hero-fusion__canvas {
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+  /* 环境光只负责氛围：向四周淡出，画布边缘不留一条矩形硬边。 */
+  -webkit-mask-image: radial-gradient(116% 104% at 62% 42%, #000 34%, transparent 100%);
+  mask-image: radial-gradient(116% 104% at 62% 42%, #000 34%, transparent 100%);
+}
+
+/* 暗色不是把亮色反过来。亮色的纸面本来就亮，光比纸面暗 30% 才安静；暗色的底色
+   只有 20/255，同一档光束会变成 7 倍反差、读成科幻海报。这里做两件事：
+   遮罩中心往右上挪（让光束在文案列右侧才起势，不切字标），整体再压一档不透明度。
+   合成参数在 `HeroFusion.tsx` 的 `fusionSettings` 里同步调低。 */
+html.dark .hero-fusion__canvas {
+  opacity: 0.66;
+  -webkit-mask-image: radial-gradient(104% 94% at 72% 32%, #000 26%, transparent 100%);
+  mask-image: radial-gradient(104% 94% at 72% 32%, #000 26%, transparent 100%);
+}
+
+/* 平板单栏时信息卡在右下，环境光的重心得落到棱镜上方那块空地。 */
+@media (max-width: 1024px) {
+  .hero-fusion__canvas {
+    -webkit-mask-image: radial-gradient(96% 76% at 42% 50%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(96% 76% at 42% 50%, #000 30%, transparent 100%);
+  }
+
+  html.dark .hero-fusion__canvas {
+    -webkit-mask-image: radial-gradient(96% 76% at 46% 46%, #000 28%, transparent 100%);
+    mask-image: radial-gradient(96% 76% at 46% 46%, #000 28%, transparent 100%);
+  }
+}
+
+/* 手机只有一条横带能放光学主体，环境光跟着横带横过来。 */
+@media (max-width: 640px) {
+  .hero-fusion__canvas {
+    -webkit-mask-image: radial-gradient(150% 58% at 34% 64%, #000 26%, transparent 100%);
+    mask-image: radial-gradient(150% 58% at 34% 64%, #000 26%, transparent 100%);
+  }
+
+  html.dark .hero-fusion__canvas {
+    -webkit-mask-image: radial-gradient(150% 58% at 38% 64%, #000 24%, transparent 100%);
+    mask-image: radial-gradient(150% 58% at 38% 64%, #000 24%, transparent 100%);
+  }
 }
 
 /* WebGL 不可用时的静态底：一层很淡的径向光，避免只剩棱镜浮在白板上。 */
@@ -54,24 +105,61 @@ html.dark .hero-fusion__static-wash {
   );
 }
 
+/* --- 第 2 层：受控光学主体 -------------------------------------------------- */
+
+/* 盒子 = 玻璃外壳的盒子。`.landing-hero` 的 padding-top 是 26px（≤640px 时 16px），
+   外壳从那里开始，所以舞台也跟着下移同样距离。 */
+.hero-fusion__stage {
+  position: absolute;
+  top: 26px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: min(var(--maxw), 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .hero-fusion__stage {
+    top: 16px;
+  }
+}
+
 .hero-fusion__optics {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
-  /* 四周收边：光带与色散扇都不许被容器裁出一条直边。 */
-  -webkit-mask-image: radial-gradient(132% 112% at 58% 44%, #000 54%, transparent 100%);
-  mask-image: radial-gradient(132% 112% at 58% 44%, #000 54%, transparent 100%);
 }
 
-/* 手机上容器比桌面高得多：桌面的径向遮罩会把光带上半段整段吃掉。
-   窄屏把遮罩中心挪到棱镜所在的空档上。 */
-@media (max-width: 640px) {
-  .hero-fusion__optics {
-    -webkit-mask-image: radial-gradient(120% 62% at 55% 62%, #000 58%, transparent 100%);
-    mask-image: radial-gradient(120% 62% at 55% 62%, #000 58%, transparent 100%);
-  }
+/* --- 入射线 ---------------------------------------------------------------- */
+
+/* 光带本体沿用方案 A 的玻璃体，但 C 的带子比 A 短，同样的渐变压到更短的弧上
+   会显得更实——整体压一档透明度，让棱镜仍是主角。 */
+.hero-fusion__ribbon {
+  opacity: 0.72;
+}
+
+html.dark .hero-fusion__ribbon {
+  opacity: 0.8;
+}
+
+/* 平板 / 手机：带子短、底色又亮，同一档透明度会显得发灰，各提一档。 */
+.hero-fusion__stage[data-breakpoint="tablet"] .hero-fusion__ribbon,
+.hero-fusion__stage[data-breakpoint="phone"] .hero-fusion__ribbon {
+  opacity: 1;
+}
+
+/* 纤维的端帽改圆头：带子的终点落在棱镜体内，butt 端帽会在玻璃里留下几根
+   「半空中断头」的白线。宽鞘保持 butt（圆头会在棱镜里糊出一块色斑），
+   只让细纤维收圆。 */
+.hero-fusion__ribbon .optic-flow__fiber-set path,
+.hero-fusion__ribbon .optic-flow__fiber-set--core path,
+.hero-fusion__ribbon .optic-flow__fiber-set--rim path {
+  stroke-linecap: round;
 }
 
 /* --- 色散扇 ---------------------------------------------------------------- */
@@ -86,65 +174,132 @@ html.dark .hero-fusion__rays {
   mix-blend-mode: screen;
 }
 
+/* 亮色走 multiply，在白底上细线会读成「墨线」——辉光这一层的模糊必须更大，
+   让三条线长在一片光晕里，而不是三根排线。 */
 .hero-fusion__rays--glow {
-  filter: blur(5px);
+  filter: blur(9px);
+}
+
+html.dark .hero-fusion__rays--glow {
+  filter: blur(4px);
 }
 
 /* --- 棱镜 ------------------------------------------------------------------ */
 
 .hero-fusion__face {
-  stroke-width: 1.9;
+  stroke: none;
+}
+
+/* 棱镜本体（不含光晕）的落影：玻璃要有「挡在光带前面」的实体感，
+   靠的不是提高填充不透明度，而是一层很淡的方向性阴影。 */
+.hero-fusion__prism {
+  filter: drop-shadow(0 7px 18px rgba(30, 74, 138, 0.22));
+}
+
+html.dark .hero-fusion__prism {
+  filter: drop-shadow(0 8px 22px rgba(0, 18, 46, 0.55));
+}
+
+/* 外轮廓。门槛：不透明度不超过受光面的 2 倍。亮色 0.8 / 0.5 / 0.42 对受光面
+   0.72；暗色 0.42 / 0.30 / 0.26 对受光面 0.5——暗色的线框感就是这么来的，
+   原来 0.72 对 0.36 是 2:1，现在反过来让受光面占主导。 */
+.hero-fusion__outline {
+  stroke-width: 2.2;
   stroke-linejoin: round;
+}
+
+html.dark .hero-fusion__outline {
+  stroke-width: 1.8;
 }
 
 .hero-fusion__facet {
   fill: none;
-  stroke: rgba(47, 111, 201, 0.32);
-  stroke-width: 1;
+  stroke: rgba(47, 111, 201, 0.3);
+  stroke-width: 0.9;
 }
 
-.hero-fusion__facet-fill {
-  fill: rgba(47, 111, 201, 0.05);
-  stroke: none;
-}
-
-html.dark .hero-fusion__facet-fill {
-  fill: rgba(140, 200, 255, 0.07);
+.hero-fusion__facet--soft {
+  stroke: rgba(47, 111, 201, 0.16);
 }
 
 html.dark .hero-fusion__facet {
-  stroke: rgba(191, 224, 255, 0.4);
+  stroke: rgba(191, 224, 255, 0.32);
+}
+
+html.dark .hero-fusion__facet--soft {
+  stroke: rgba(191, 224, 255, 0.18);
+}
+
+/* 内反射：右面中段一片很淡的亮面。玻璃的体量不是靠轮廓线，是靠「里面还有一层」。
+   这一片在暗色里尤其重要——没有它，受光面再亮也只是一块贴纸。 */
+.hero-fusion__inner-glow {
+  fill: #ffffff;
+  fill-opacity: 0.09;
+  stroke: none;
+}
+
+html.dark .hero-fusion__inner-glow {
+  fill: #cfe6ff;
+  fill-opacity: 0.12;
+}
+
+/* 左棱反射：一条贴着左面的细高光。亮色里原来是纯白 0.9 / 2.1px，成了整块棱镜
+   最亮的元素，读成「画上去的一道高光」而不是玻璃反光——降下来，比受光面暗。 */
+.hero-fusion__specular {
+  fill: none;
+  stroke: #eaf4ff;
+  stroke-opacity: 0.45;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+html.dark .hero-fusion__specular {
+  stroke: #d8f0ff;
+  stroke-opacity: 0.32;
+  stroke-width: 1.4;
 }
 
 .hero-fusion__caustic {
-  opacity: 0.1;
+  opacity: 0.12;
 }
 
-/* 棱镜压在光带上：如果只给一层钴蓝，三角形会读成「光带上的一块暗斑」。
-   亮色给一层乳白玻璃（提亮而不是压暗），暗色给一层比背景略亮的冷蓝。 */
-.hero-fusion__stop--face-a {
-  stop-color: #ffffff;
-  stop-opacity: 0.52;
+/* 两个方向性面：左暗右亮。亮色不是「乳白 0.52 → 淡蓝 0.1」那种整体半透明，
+   而是左面压暗、右面受光——两面的明度差才是玻璃棱，不是轮廓线。
+   亮色的受光面原来 #f8fbff@0.86 合成到纸面上只差 1–2 个色阶（等于没有面），
+   现在比纸面**低**一档，靠蓝灰而不是靠白。 */
+.hero-fusion__stop--face-left-a {
+  stop-color: #3a688f;
+  stop-opacity: 0.44;
 }
 
-.hero-fusion__stop--face-b {
-  stop-color: #cfe6ff;
-  stop-opacity: 0.1;
+.hero-fusion__stop--face-left-b {
+  stop-color: #9dbfdd;
+  stop-opacity: 0.34;
+}
+
+.hero-fusion__stop--face-right-a {
+  stop-color: #d6e6f7;
+  stop-opacity: 0.72;
+}
+
+.hero-fusion__stop--face-right-b {
+  stop-color: #a9c8e6;
+  stop-opacity: 0.5;
 }
 
 .hero-fusion__stop--edge-a {
   stop-color: #2f6fc9;
-  stop-opacity: 0.95;
+  stop-opacity: 0.8;
 }
 
 .hero-fusion__stop--edge-b {
   stop-color: #64cadd;
-  stop-opacity: 0.6;
+  stop-opacity: 0.5;
 }
 
 .hero-fusion__stop--edge-c {
   stop-color: #8f7fe0;
-  stop-opacity: 0.52;
+  stop-opacity: 0.42;
 }
 
 .hero-fusion__stop--caustic-core {
@@ -167,6 +322,28 @@ html.dark .hero-fusion__facet {
   stop-opacity: 0;
 }
 
+/* 出射点的焦散：三根线不该凭空起笔。亮色原来只有一个小白 smudge，
+   暗色靠 screen+blur 反而有——两套主题的起点质感必须一致。 */
+.hero-fusion__stop--origin-core {
+  stop-color: #ffffff;
+  stop-opacity: 0.34;
+}
+
+.hero-fusion__stop--origin-fade {
+  stop-color: #ffffff;
+  stop-opacity: 0;
+}
+
+html.dark .hero-fusion__stop--origin-core {
+  stop-color: #b9ecff;
+  stop-opacity: 0.38;
+}
+
+html.dark .hero-fusion__stop--origin-fade {
+  stop-color: #b9ecff;
+  stop-opacity: 0;
+}
+
 html.dark .hero-fusion__stop--halo-core {
   stop-color: #7cc4ff;
   stop-opacity: 0.22;
@@ -177,29 +354,44 @@ html.dark .hero-fusion__stop--halo-fade {
   stop-opacity: 0;
 }
 
-html.dark .hero-fusion__stop--face-a {
+html.dark .hero-fusion__stop--face-left-a {
+  stop-color: #1b3f70;
+  stop-opacity: 0.62;
+}
+
+/* 暗色同样是「左面压暗、右面受光」，只是两面的绝对明度整体低一档。
+   0.2 / 0.06 那两个值实测会让棱镜退化成只剩外轮廓的线框——玻璃的体量在
+   暗底上靠受光面，不靠轮廓线，所以受光面必须留得住（0.5 / 0.26）。 */
+html.dark .hero-fusion__stop--face-left-b {
+  stop-color: #2c5f96;
+  stop-opacity: 0.4;
+}
+
+html.dark .hero-fusion__stop--face-right-a {
   stop-color: #a8ccff;
-  stop-opacity: 0.16;
+  stop-opacity: 0.5;
 }
 
-html.dark .hero-fusion__stop--face-b {
+html.dark .hero-fusion__stop--face-right-b {
   stop-color: #4a86c8;
-  stop-opacity: 0.06;
+  stop-opacity: 0.26;
 }
 
+/* 暗色外轮廓：0.72 / 0.52 / 0.46 对受光面 0.36，是 2–4 倍的线框比。
+   压到 0.42 / 0.30 / 0.26，让受光面成为棱镜里最亮的东西。 */
 html.dark .hero-fusion__stop--edge-a {
   stop-color: #a6d2ff;
-  stop-opacity: 0.95;
+  stop-opacity: 0.42;
 }
 
 html.dark .hero-fusion__stop--edge-b {
   stop-color: #7ce6fb;
-  stop-opacity: 0.62;
+  stop-opacity: 0.3;
 }
 
 html.dark .hero-fusion__stop--edge-c {
   stop-color: #c0acff;
-  stop-opacity: 0.58;
+  stop-opacity: 0.26;
 }
 
 html.dark .hero-fusion__stop--caustic-core {
@@ -228,7 +420,7 @@ html.dark .hero-fusion__stop--caustic-fade {
 
 @keyframes hero-fusion-shimmer {
   from {
-    opacity: 0.84;
+    opacity: 0.86;
   }
   to {
     opacity: 1;
@@ -237,7 +429,7 @@ html.dark .hero-fusion__stop--caustic-fade {
 
 @keyframes hero-fusion-breathe {
   from {
-    opacity: 0.9;
+    opacity: 0.92;
   }
   to {
     opacity: 1;

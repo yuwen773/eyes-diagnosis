@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { mountBeams, type BeamsSettings } from "./beamsMount"
+import { installIntersectionHarness, installVisibilityHarness } from "@/test/webglHarness"
 
 /**
  * jsdom 没有 WebGL。这里用一个记录调用的假上下文，验的是**生命周期契约**，
@@ -240,5 +241,124 @@ describe("mountBeams 生命周期", () => {
     expect(media.listenerCount()).toBe(1)
     engine.dispose()
     expect(media.listenerCount()).toBe(0)
+  })
+
+  it("freeze 之后 GPU 真的不再绘制：指针、可见性、参数变化都叫不醒", () => {
+    motionQuery(false)
+    const { canvas, container, base } = setup()
+    const engine = mountBeams({
+      canvas,
+      container,
+      getSettings: () => settings({ mouseInteraction: true }),
+    })!
+    const draws = () => (base.drawArrays as ReturnType<typeof vi.fn>).mock.calls.length
+
+    runFrames(4)
+    const before = draws()
+    expect(before).toBeGreaterThan(1)
+
+    engine.freeze()
+    // 定格会把最后一帧画完再收循环——画面不会停在一个半帧上。
+    const settled = draws()
+    expect(settled).toBe(before + 2)
+    expect(frameQueue).toHaveLength(0)
+
+    // 所有唤醒路径都必须被 frozen 挡住。
+    window.dispatchEvent(new MouseEvent("pointermove", { clientX: 12, clientY: 12 }))
+    document.dispatchEvent(new Event("visibilitychange"))
+    engine.wake()
+    runFrames(4)
+
+    expect(frameQueue).toHaveLength(0)
+    expect(draws()).toBe(settled)
+  })
+
+  it("定格期间 repaint 只画一帧，thaw 之后循环恢复", () => {
+    motionQuery(false)
+    const { canvas, container, base } = setup()
+    const engine = mountBeams({ canvas, container, getSettings: () => settings() })!
+    const draws = () => (base.drawArrays as ReturnType<typeof vi.fn>).mock.calls.length
+
+    runFrames(3)
+    engine.freeze()
+    const settled = draws()
+
+    engine.repaint()
+    expect(draws()).toBe(settled + 2)
+    expect(frameQueue).toHaveLength(0)
+
+    engine.thaw()
+    runFrames(4)
+    expect(draws()).toBeGreaterThan(settled + 2)
+
+    engine.dispose()
+  })
+
+  it("thaw 在没定格时是空操作，不会凭空多起一个循环", () => {
+    motionQuery(false)
+    const { canvas, container } = setup()
+    const engine = mountBeams({ canvas, container, getSettings: () => settings() })!
+
+    frameQueue = []
+    engine.thaw()
+    expect(frameQueue).toHaveLength(0)
+
+    engine.dispose()
+  })
+
+  /**
+   * 离屏与页面隐藏两条停机路径，在真实浏览器里没法稳定复现（headful Playwright 的
+   * `bringToFront` 不改变 `document.hidden`，滚出视口又会和窗口失焦的 rAF 节流混在
+   * 一起）。所以这里用可控的桩把「引擎有没有停」变成确定性的断言。
+   */
+  it("离屏即停，回到视口内恢复", () => {
+    const intersection = installIntersectionHarness()
+    motionQuery(false)
+    const { canvas, container, base } = setup()
+    const engine = mountBeams({ canvas, container, getSettings: () => settings() })!
+    const draws = () => (base.drawArrays as ReturnType<typeof vi.fn>).mock.calls.length
+
+    runFrames(3)
+    expect(draws()).toBeGreaterThan(1)
+
+    intersection.emit(false)
+    runFrames(4)
+    const offscreen = draws()
+    runFrames(4)
+    expect(draws()).toBe(offscreen)
+
+    intersection.emit(true)
+    runFrames(4)
+    expect(draws()).toBeGreaterThan(offscreen)
+
+    engine.dispose()
+  })
+
+  it("页面隐藏即停，回到前台恢复", () => {
+    const visibility = installVisibilityHarness()
+    motionQuery(false)
+    const { canvas, container, base } = setup()
+    const engine = mountBeams({ canvas, container, getSettings: () => settings() })!
+    const draws = () => (base.drawArrays as ReturnType<typeof vi.fn>).mock.calls.length
+
+    try {
+      runFrames(3)
+      const live = draws()
+      expect(live).toBeGreaterThan(1)
+
+      visibility.set(true)
+      runFrames(4)
+      const hidden = draws()
+      runFrames(4)
+      expect(draws()).toBe(hidden)
+
+      visibility.set(false)
+      runFrames(4)
+      expect(draws()).toBeGreaterThan(hidden)
+    } finally {
+      visibility.restore()
+    }
+
+    engine.dispose()
   })
 })

@@ -9,10 +9,22 @@ vi.mock("./beamsMount", () => ({ mountBeams: beams.mountBeams }))
 
 import { HeroFusion } from "./HeroFusion"
 
-type Engine = { wake: () => void; dispose: () => void }
+type Engine = {
+  wake: () => void
+  freeze: () => void
+  thaw: () => void
+  repaint: () => void
+  dispose: () => void
+}
 
 function engine(): Engine {
-  return { wake: vi.fn(), dispose: vi.fn() }
+  return {
+    wake: vi.fn(),
+    freeze: vi.fn(),
+    thaw: vi.fn(),
+    repaint: vi.fn(),
+    dispose: vi.fn(),
+  }
 }
 
 /** 每次挂载都返回一台新引擎，调用方拿得到它们，好断言谁被 dispose 了。 */
@@ -27,9 +39,23 @@ beforeEach(() => {
 
 const originalMatchMedia = window.matchMedia
 
+/** 可控的 `document.hidden`：翻转后补一个 visibilitychange 事件。 */
+function setHidden(hidden: boolean) {
+  Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden })
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    get: () => (hidden ? "hidden" : "visible"),
+  })
+  document.dispatchEvent(new Event("visibilitychange"))
+}
+
 afterEach(() => {
   cleanup()
+  // 撤销 setHidden 的实例级 getter，恢复原型上的原始实现。
+  delete (document as unknown as Record<string, unknown>).hidden
+  delete (document as unknown as Record<string, unknown>).visibilityState
   vi.unstubAllGlobals()
+  vi.useRealTimers()
   window.matchMedia = originalMatchMedia
 })
 
@@ -71,7 +97,7 @@ describe("HeroFusion 与 React StrictMode", () => {
     expect(only.dispose).toHaveBeenCalledTimes(1)
   })
 
-  it("主题切换与手动暂停只是叫醒引擎，不重建它", () => {
+  it("主题切换只是叫醒引擎，不重建它；暂停改成定格", () => {
     const only = engine()
     mountReturns(only)
 
@@ -81,13 +107,106 @@ describe("HeroFusion 与 React StrictMode", () => {
     rerender(<HeroFusion theme="dark" />)
     expect(root().dataset.theme).toBe("dark")
     expect(only.wake).toHaveBeenCalledTimes(1)
+    expect(only.freeze).not.toHaveBeenCalled()
 
     rerender(<HeroFusion theme="dark" paused />)
     expect(root().dataset.mode).toBe("paused")
-    expect(only.wake).toHaveBeenCalledTimes(2)
+    // 暂停 = 定格：停 rAF 并保留最后一帧，而不是只停状态推进。
+    expect(only.freeze).toHaveBeenCalledTimes(1)
+
+    rerender(<HeroFusion theme="dark" />)
+    expect(root().dataset.mode).toBe("live")
+    expect(only.thaw).toHaveBeenCalledTimes(1)
 
     expect(beams.mountBeams).toHaveBeenCalledTimes(1)
     expect(only.dispose).not.toHaveBeenCalled()
+  })
+
+  it("满 5 秒进 settled 并定格；之后换主题只重绘一帧，不重启动效", () => {
+    vi.useFakeTimers()
+    const only = engine()
+    mountReturns(only)
+
+    const { rerender, container } = render(<HeroFusion theme="light" />)
+    const root = () => container.querySelector(".hero-fusion") as HTMLElement
+
+    expect(root().dataset.mode).toBe("live")
+    expect(only.freeze).not.toHaveBeenCalled()
+
+    act(() => vi.advanceTimersByTime(5000))
+
+    expect(root().dataset.mode).toBe("settled")
+    expect(only.freeze).toHaveBeenCalledTimes(1)
+    expect(container.querySelector(".hero-fusion__optics")?.classList).not.toContain("is-drifting")
+
+    rerender(<HeroFusion theme="dark" />)
+    expect(only.repaint).toHaveBeenCalledTimes(1)
+    expect(only.wake).not.toHaveBeenCalled()
+    expect(only.thaw).not.toHaveBeenCalled()
+  })
+
+  it("卸载后 5 秒窗口的计时器被清掉，不会再改状态", () => {
+    vi.useFakeTimers()
+    const only = engine()
+    mountReturns(only)
+
+    const { unmount } = render(<HeroFusion theme="light" />)
+    unmount()
+
+    act(() => vi.advanceTimersByTime(6000))
+    expect(only.freeze).not.toHaveBeenCalled()
+  })
+
+  it("5 秒窗口只算可见时长：后台标签页不会把动效窗口耗光", () => {
+    vi.useFakeTimers()
+    const only = engine()
+    mountReturns(only)
+
+    const { container } = render(<HeroFusion theme="light" />)
+    const root = () => container.querySelector(".hero-fusion") as HTMLElement
+
+    // 前台看了 2 秒
+    act(() => vi.advanceTimersByTime(2000))
+    expect(root().dataset.mode).toBe("live")
+
+    // 切到后台 30 秒：一次都不该画到定格
+    setHidden(true)
+    act(() => vi.advanceTimersByTime(30_000))
+    expect(root().dataset.mode).toBe("live")
+    expect(only.freeze).not.toHaveBeenCalled()
+
+    // 切回前台，还剩 3 秒
+    setHidden(false)
+    act(() => vi.advanceTimersByTime(2999))
+    expect(root().dataset.mode).toBe("live")
+
+    act(() => vi.advanceTimersByTime(1))
+    expect(root().dataset.mode).toBe("settled")
+    expect(only.freeze).toHaveBeenCalledTimes(1)
+  })
+
+  it("换主题时 DOM 的主题类名还没跟上，就用同主题兜底色，不读上一套令牌", () => {
+    const only = engine()
+    mountReturns(only)
+    document.documentElement.style.setProperty("--brand-glass-optical-tint", "#123456")
+
+    const { rerender } = render(<HeroFusion theme="dark" />)
+    const color = () => beams.mountBeams.mock.calls.at(-1)![0].getSettings().color
+
+    // DOM 上还是亮色（ThemeProvider 的 effect 还没跑）：必须用暗色兜底，不能读令牌。
+    expect(color()).toBe("#7cc4ff")
+
+    // DOM 跟上之后才读令牌。
+    document.documentElement.classList.add("dark")
+    rerender(<HeroFusion theme="dark" />)
+    // 注意：settings 是在 effect 里换的，而 effect 只有 theme 变了才跑，
+    // 所以这里再切一次主题把重算逼出来。
+    rerender(<HeroFusion theme="light" />)
+    rerender(<HeroFusion theme="dark" />)
+    expect(color()).toBe("#123456")
+
+    document.documentElement.classList.remove("dark")
+    document.documentElement.style.removeProperty("--brand-glass-optical-tint")
   })
 
   it("上下文丢失：切静态，把引擎回收掉，且不再重挂", () => {
@@ -133,10 +252,22 @@ describe("HeroFusion 与 React StrictMode", () => {
     act(() => media.set(true))
 
     expect(root().dataset.mode).toBe("frozen")
+    expect(only.freeze).toHaveBeenCalledTimes(1)
     expect(container.querySelector(".hero-fusion__optics")?.classList).not.toContain("is-drifting")
 
     act(() => media.set(false))
     expect(root().dataset.mode).toBe("live")
+    expect(only.thaw).toHaveBeenCalledTimes(1)
+  })
+
+  it("首帧就是定格态（挂载时已开启减少动态效果）时，引擎一挂上就冻结", () => {
+    const only = engine()
+    mountReturns(only)
+    installMatchMedia(true)
+
+    render(<HeroFusion theme="light" />)
+
+    expect(only.freeze).toHaveBeenCalledTimes(1)
   })
 })
 
