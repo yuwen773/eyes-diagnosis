@@ -16,7 +16,9 @@ import java.io.Serializable;
  *
  * <p>三者不能互相替代。患者授权保存**不等于**临床人工复核，也不等于医生批准了草稿。
  *
- * @param recordSource  记录来源：`DIRECT`（患者自传影像直接判读）/ `COLLABORATION_DRAFT`（协作草稿获批后患者授权保存）
+ * @param recordSource  记录来源：`DIRECT`（患者自传影像直接判读）/ `COLLABORATION_DRAFT`（经协作任务落下的记录）。
+ *                      只描述「这条记录挂在一个影像任务上」，**不**断言草稿已获批或患者已授权——
+ *                      那两件事分别看 `draftReviewState` 与 `authorizationState`。
  * @param patientTaskId 关联的影像任务 id；直接拍摄的记录为 null
  * @param draftReviewState 协作草稿审核状态（PENDING / APPROVED / REJECTED）；无关联草稿为 null
  * @param authorizationState 患者授权状态（OFFERED / APPROVED / EXPIRED）；无授权记录为 null
@@ -47,9 +49,14 @@ public record DiagnosisSourceProjection(
      * 「未保存」就是在说一件不成立的事。
      */
     public static final class Archival {
-        /** 记录里引用了可取用的影像地址。 */
+        /**
+         * 记录引用了公开影像地址。
+         *
+         * <p>只说「记录里有这个地址」，**不**保证对象此刻仍在——本轮没有做存储侧
+         * 存在性探测（那需要一次远端 HEAD）。要升级为「已确认可取回」得先有探测。
+         */
         public static final String ARCHIVED = "ARCHIVED";
-        /** 原图已归档，但按隐私策略不提供公开地址（协作影像）。 */
+        /** 影像按隐私策略不提供公开地址（协作影像）；对象键存在，但同样未做存在性探测。 */
         public static final String ARCHIVED_NOT_PUBLIC = "ARCHIVED_NOT_PUBLIC";
         /** 既没有地址也没有对象键：这张判读确实没有留下影像。 */
         public static final String NOT_ARCHIVED = "NOT_ARCHIVED";
