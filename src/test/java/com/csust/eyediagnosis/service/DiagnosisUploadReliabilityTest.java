@@ -34,7 +34,9 @@ import static org.mockito.Mockito.when;
  *
  * <p>历史缺陷：推理成功后 COS 上传异常被 catch 吞掉，仍继续落库，用户拿到结论
  * 却查不到原图。这里把失败语义钉死：存储失败 → 请求失败、不落库、可重试；
- * 存储成功但落库失败 → 补偿删除刚上传的对象，不留孤儿影像。
+ * 存储成功且**明确**落库失败（0 行 / 回查确认不存在）→ 补偿删除刚上传的对象。
+ * 落库结果**未知**（抛异常且回查到记录、或回查本身失败）→ 保留对象，只记日志：
+ * 删掉被正式记录引用的原图不可逆，而 public/ 没有对账器，多留的那个只能人工排查。
  *
  * <p>全部依赖为 Mock，不访问真实 COS / gRPC / 数据库。
  */
@@ -278,6 +280,12 @@ class DiagnosisUploadReliabilityTest {
         org.junit.jupiter.api.Assertions.assertNull(
                 DiagnosisServiceImpl.class.getAnnotation(org.springframework.transaction.annotation.Transactional.class),
                 "类级 @Transactional 同样会让 recordMayExist 的回查失去意义");
+        // 接口方法上加事务，代理同样会开事务——实现类上那张注解检查不到。
+        var declared = DiagnosisService.class.getMethod(
+                "doDiagnosis", org.springframework.web.multipart.MultipartFile.class, User.class);
+        org.junit.jupiter.api.Assertions.assertNull(
+                declared.getAnnotation(org.springframework.transaction.annotation.Transactional.class),
+                "接口方法上的 @Transactional 也会生效");
     }
 
     // --- helpers -----------------------------------------------------------

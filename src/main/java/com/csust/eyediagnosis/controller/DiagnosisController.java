@@ -56,8 +56,11 @@ public class DiagnosisController {
      * 判读记录里有患者影像结论和报告正文，浏览器或中间代理都不该留副本。
      *
      * <p>用 {@code @ModelAttribute} 统一加在全部端点上，而不是逐个方法写：
-     * 新增端点时不会漏，也没人需要记得这件事。服务端自己的推理缓存走 Redis，
-     * 与 HTTP 缓存无关。
+     * 新增端点时不会漏，也没人需要记得这件事。服务端的推理缓存是库表
+     * （{@code t_inference_cache}），与 HTTP 缓存无关。
+     *
+     * <p>范围仅限 {@code /diagnosis/*}：{@code /agent/history}、{@code /user/get}
+     * 这类同样含患者信息的响应还没有禁缓存，是已知的 follow-up，不要在这里声称「全部已禁」。
      */
     @ModelAttribute
     public void preventCaching(HttpServletResponse response) {

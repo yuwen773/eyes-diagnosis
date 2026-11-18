@@ -115,7 +115,17 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         diagnosis.setUserId(loginUser.getId());
 
         //插入/更新
-        boolean result = this.saveOrUpdate(diagnosis);
+        boolean result;
+        try {
+            result = this.saveOrUpdate(diagnosis);
+        } catch (RuntimeException e) {
+            // 与 doDiagnosis 同一类「提交结果未知」：不删（可能已经提交，删了不可逆）。
+            // 但这条日志是事后唯一能找回这个对象的线索——public/ 没有对账器，
+            // 不记就彻底查不到这张原图去了哪里。
+            log.warn("影像已上传但落库结果未知，保留对象待人工排查, objectKey={}",
+                    uploadPictureDetail.getObjectKey(), e);
+            throw e;
+        }
         if (!result) {
             // 明确 0 行 = 记录没写进去，这张原图没有任何东西引用它。
             // 与 doDiagnosis 同一口径：删掉刚上传的那一个对象，否则它会在
@@ -293,8 +303,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
 
             // 4-5. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）并落库。
-            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入，
-            // 任何一步失败都必须把已经上传的对象删掉，否则留下无人引用的孤儿影像。
+            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入。
+            // 默认把已经上传的对象删掉，唯一例外是**落库结果未知**（见下方 catch：
+            // 回查到记录、或回查本身失败时保留对象——删掉被引用的原图不可逆）。
             DiagnosisResultVO vo;
             Diagnosis diagnosis = null;
             boolean saved;
@@ -355,6 +366,10 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
      * 删掉一张被正式记录引用的原图不可逆；而多留的那个对象**没有**自动对账器
      * （{@code UploadCompensationService} 只扫 {@code agent-chat/}），只能人工排查。
      * 两害相权，选那个还能靠人查回来的。
+     *
+     * <p>已知不足：这条回查没有单独的 statement timeout，DB 全挂时会和写入一样
+     * 等连接超时（一次失败请求可能等两倍）。方向是安全的（超时也走「可能存在」），
+     * 但会放大故障期间的线程占用，登记为 follow-up。
      */
     private boolean recordMayExist(Diagnosis diagnosis) {
         Long id = diagnosis.getId();
