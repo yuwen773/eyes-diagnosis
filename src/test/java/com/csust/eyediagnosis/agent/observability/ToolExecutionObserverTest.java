@@ -109,7 +109,7 @@ class ToolExecutionObserverTest {
     @Test
     void resourcesRecordedDuringSuccessfulCallAreKeptAndTaggedWithTheCallId() {
         observer.interceptToolCall(request("call_r1"), req -> {
-            ToolResourceContext.record(ResourceRef.document("42", "干眼症诊疗共识", 0.81, "片段", null));
+            ToolResourceContext.record(ResourceRef.document("42", "干眼症诊疗共识", 0.81, null, "片段", null));
             return ToolCallResponse.of("找到 1 段文档", "searchDocuments", "call_r1");
         });
 
@@ -124,7 +124,7 @@ class ToolExecutionObserverTest {
     @Test
     void failedCallCarriesNoResourcesEvenIfTheToolRegisteredSome() {
         observer.interceptToolCall(request("call_r2"), req -> {
-            ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, "片段", null));
+            ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, null, "片段", null));
             return ToolCallResponse.error("检索失败", "searchDocuments", "call_r2");
         });
 
@@ -137,7 +137,7 @@ class ToolExecutionObserverTest {
     void thrownCallDropsResourcesAndLeavesNoResidueForTheNextCall() {
         assertThrows(IllegalStateException.class,
                 () -> observer.interceptToolCall(request("call_r3"), req -> {
-                    ToolResourceContext.record(ResourceRef.document("44", "残渣", 0.4, "片段", null));
+                    ToolResourceContext.record(ResourceRef.document("44", "残渣", 0.4, null, "片段", null));
                     throw new IllegalStateException("boom");
                 }));
         assertTrue(observer.peek("call_r3").resources().isEmpty());

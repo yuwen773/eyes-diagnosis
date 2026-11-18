@@ -37,6 +37,11 @@ export type AgentResource = {
   documentId?: string
   /** 检索相关度——只有检索结果真的带分数时才有。 */
   score?: number
+  /**
+   * 原始检索分。rerank 生效且成功时，`score` 是重排序分，这里单独保留检索分；
+   * 没有 rerank 时为空（两个分数同源，不重复展示）。
+   */
+  retrievalScore?: number
   /** 命中的片段原文。 */
   snippet?: string
   /** 链接域名（展示用）。 */
@@ -178,6 +183,10 @@ export function parseResourceRefs(raw: unknown): AgentResource[] {
       if (!documentId) continue
       const score =
         typeof obj.score === "number" && Number.isFinite(obj.score) ? obj.score : undefined
+      const retrievalScore =
+        typeof obj.retrievalScore === "number" && Number.isFinite(obj.retrievalScore)
+          ? obj.retrievalScore
+          : undefined
       out.push({
         id: asText(obj.id) ?? `doc:${documentId}`,
         kind: "document",
@@ -185,6 +194,7 @@ export function parseResourceRefs(raw: unknown): AgentResource[] {
         source: "knowledge-base",
         documentId,
         score,
+        retrievalScore,
         snippet: asText(obj.snippet),
         toolCallId,
       })

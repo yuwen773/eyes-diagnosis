@@ -7,6 +7,7 @@ import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
 import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import com.csust.eyediagnosis.service.impl.DocumentProcessingService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,6 +29,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,6 +54,19 @@ class DocumentSearchToolOwnershipTest {
     private TextChunkerService chunker;
     @Mock
     private KnowledgeDocumentMapper mapper;
+
+    /**
+     * {@code @Value} 字段在单测里没有容器注入，显式给出生产默认值。
+     * 少了 {@code finalTopK} 就是 0——任何命中都不会交给模型，也不会登记成来源，
+     * 测试会静默变成「空检索」。
+     */
+    @BeforeEach
+    void applySearchDefaults() {
+        setField(tool, "searchTopK", 20);
+        setField(tool, "finalTopK", 5);
+        setField(tool, "similarityThreshold", 0.5);
+        setField(tool, "rerankEnabled", false);
+    }
 
     /** 没有可信用户上下文时必须失败，而不是返回「没找到」这种假成功。 */
     @Test
@@ -156,6 +171,7 @@ class DocumentSearchToolOwnershipTest {
             assertEquals("42", ref.documentId());
             assertEquals("干眼症诊疗共识", ref.title());
             assertEquals(0.81, ref.score());
+            assertNull(ref.retrievalScore(), "没有 rerank 时不存在第二个分数，保持为空");
             assertEquals("knowledge-base", ref.source());
             assertEquals("睑板腺功能障碍是干眼的主要原因之一。", ref.snippet());
         } finally {

@@ -13,6 +13,13 @@ import java.util.List;
  * {@link ToolExecutionObserver} 的回调在同一个线程、同一个调用栈里，
  * 收集器随调用结束被取走并清空——不会跨请求、跨会话串数据。
  *
+ * <p><b>前提</b>：工具必须与拦截器在同一个线程同步执行。当前 {@code ReactAgent}
+ * 用的是默认配置（{@code parallelToolExecution=false}、
+ * {@code wrapSyncToolsAsAsync=false}），{@code executeSyncTool} 直接调
+ * {@code ToolCallback.call()}，满足这个前提。若将来开启并行执行或异步包装，
+ * 工具会跑到工作线程，这里必须改成显式传递（例如经 ToolContext），否则资源
+ * 会静默丢失。
+ *
  * <p>只有成功完成的调用才带走资源（见观察者的处理）：失败/超时/中断的检索
  * 不应在侧栏留下「证据」。
  */

@@ -25,17 +25,26 @@ public record ResourceRef(
         String url,
         /** 知识库文档标识（来自检索结果，不由模型生成）。 */
         String documentId,
-        /** 检索相关度（仅当检索结果真的带分数）。 */
+        /**
+         * 最终排序分：rerank 生效时是重排序分，否则是文档自带的检索分。
+         * 只有检索结果真的带分数时才有值。
+         */
         Double score,
+        /**
+         * 原始检索分（向量相似度 / 文档自带分）。只在 rerank 生效、且这一条拿到了重排序分
+         * 时单独记录；没有 rerank（含回退）时与 {@link #score} 同源，保持为空，
+         * 避免两个分数看起来不一致。
+         */
+        Double retrievalScore,
         /** 命中的片段（来自检索结果原文）。 */
         String snippet,
         /** 产生这条资源的工具调用，便于和执行步骤对上。 */
         String toolCallId
 ) {
-    public static ResourceRef document(String documentId, String title, Double score, String snippet,
-                                       String toolCallId) {
+    public static ResourceRef document(String documentId, String title, Double score, Double retrievalScore,
+                                       String snippet, String toolCallId) {
         return new ResourceRef("doc:" + documentId, "document", title, "knowledge-base",
-                null, documentId, score, snippet, toolCallId);
+                null, documentId, score, retrievalScore, snippet, toolCallId);
     }
 
     /**
@@ -49,6 +58,7 @@ public record ResourceRef(
         if (this.toolCallId != null && !this.toolCallId.isBlank()) {
             return this;
         }
-        return new ResourceRef(id, kind, title, source, url, documentId, score, snippet, toolCallId);
+        return new ResourceRef(id, kind, title, source, url, documentId, score, retrievalScore, snippet,
+                toolCallId);
     }
 }

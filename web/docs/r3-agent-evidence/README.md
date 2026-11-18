@@ -90,3 +90,50 @@ R3_API_BASE=http://localhost:18081/api node scripts/evidence/r3-resources-real-b
 `.is-prose` 变体）；`suppressHighlight` 仍是模块级标志（同步调用内安全，但脆）；
 正文行宽 34em 的理想值未调（会与表格/代码块布局冲突，需要单独一轮）；
 `stableBoundary` 每次从 0 扫描（正确性无碍，成本可忽略）。
+
+## 合并前最后一轮：来源与模型片段一致（2026-11-18）
+
+**修的是什么**：`DocumentSearchTool.searchDocuments()` 原来在 rerank 与 `finalTopK`
+确定之前就登记结构化来源，侧栏可能出现模型从没见过的候选，分数也停在检索分上。
+现在先定「最终交给模型的片段」（rerank → `finalTopK`），再从**同一份结果**登记来源：
+同集合、同顺序、同分数。
+
+**两种分数的语义**（`ResourceRef`）：
+
+| 字段 | 含义 | 何时有值 |
+| --- | --- | --- |
+| `score` | 最终排序分：rerank 生效时是重排序分，否则是文档自带检索分 | 检索结果带分数时 |
+| `retrievalScore` | 原始检索分（向量相似度） | 只在 rerank **成功**且给了分时单独记录；其余为空 |
+
+rerank 抛错或返回空结果时回退到原始检索顺序：`score` 就是检索分、`retrievalScore`
+为空、正文不印「相关度」——回退只影响排序质量，不冒充重排序分，也不改变「这次调用成功」。
+
+**新增测试**：`DocumentSearchToolCitationTest` 6 条（命中数 > `finalTopK`、rerank 改序、
+rerank 异常回退、空响应回退、rerank 无分结果、无 `docId` 不登记）；
+`ToolResourceContextTest` 4 条（跨线程不可见、`drain` 即清空、重复 id 只留首条、取走的是快照）。
+
+**线程前提**（已写进 `ToolResourceContext` 注释）：`ReactAgent` 用默认配置
+（`parallelToolExecution=false`、`wrapSyncToolsAsAsync=false`），`executeSyncTool`
+在拦截器同一线程里直接调 `ToolCallback.call()`，线程内收集才成立；将来开启并行/异步
+包装必须改成显式传递，否则资源会静默丢失。
+
+### 真实后端复跑（同一 HEAD 的 jar，profile `local,dev`）
+
+真实 COS、真实 DashScope（qwen + gte-rerank-v2）、真实 Chroma，脚本不拦截任何请求
+（先起后端：`java -jar target/eye-diagnosis-0.0.1-SNAPSHOT.jar --server.port=18081
+--spring.profiles.active=local,dev`，然后 `R3_API_BASE=http://localhost:18081/api node
+scripts/evidence/<脚本>.mjs`）：
+
+| 脚本 | 结果 |
+| --- | --- |
+| `r3-agent-real-backend.mjs` | 218 个 SSE 时间戳全部带时区偏移；`searchDocuments` → `success`（结果 2604 字符）；6 条历史消息时间带偏移；`done` 收口 |
+| `r3-resources-real-backend.mjs` | COS 上传可达 HTTP 200；tool-result 携带 2 条结构化引用：`builtin:05-glaucoma`（rerank 0.2158 / 检索 0.7190）、`builtin:01-normal`（0.1812 / 0.5776）；历史恢复出同一批 2 条来源；上传对象已删除 |
+| `r3-authz-real-backend.mjs` | B 读 A 的历史 → `40101`（不泄露消息）；B 的会话列表 0 条；未登录 → `40100`；A 自读 3 条（正对照） |
+
+真实链**未覆盖**：工具失败 / 超时 / 中断的真实链路（不破坏共享服务就无法稳定构造），
+仍由合成用例 `tool-error` / `tool-timeout` / `tool-completed` 覆盖；这两类证据不互相代替。
+
+产物 JSON 在 `web/test-results/r3-acceptance|r3-resources|r3-authz/`（`web/.gitignore` 忽略，可复跑再生）。
+本轮回归：`scripts/verify.sh` 绿（270 单测，3 skipped + 4 条 MySQL 集成）；前端 730 单测 /
+typecheck / lint / build 绿；合成验收 154 + 45 条断言 0 失败。临时账号与上传对象已清理。
+

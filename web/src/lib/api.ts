@@ -379,6 +379,8 @@ export type ResourceRefDTO = {
   url?: string
   documentId?: string
   score?: number
+  /** 原始检索分：rerank 生效时与 score（重排序分）分开记录。 */
+  retrievalScore?: number
   snippet?: string
   /** 产生这条资源的工具调用。 */
   toolCallId?: string

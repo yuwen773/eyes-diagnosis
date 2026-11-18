@@ -183,7 +183,7 @@ class DiagnosisAgentToolEventTest {
                         "searchDocuments", "{}", toolCallId, Map.of()),
                 req -> {
                     ToolResourceContext.record(ResourceRef.document(
-                            "42", "干眼症诊疗共识", 0.81, "睑板腺功能障碍是干眼的主要原因之一。", null));
+                            "42", "干眼症诊疗共识", 0.81, null, "睑板腺功能障碍是干眼的主要原因之一。", null));
                     return com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse
                             .of("找到 1 段文档", "searchDocuments", toolCallId);
                 });
@@ -217,7 +217,7 @@ class DiagnosisAgentToolEventTest {
                 new com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest(
                         "searchDocuments", "{}", "call_r2", Map.of()),
                 req -> {
-                    ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, "片段", null));
+                    ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, null, "片段", null));
                     return com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse
                             .error("检索失败", "searchDocuments", "call_r2");
                 });
