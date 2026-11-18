@@ -5,42 +5,70 @@ import com.csust.eyediagnosis.constant.HumanReviewStatus;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
-import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * 验证 recordHumanReview 不允许 AI 字段越权写入。
+ * D-01b：正式临床复核写入路径的安全关闭。
+ *
+ * <p>产品决策已确认「正式临床复核只能由具有有效、已核验授权的医生执行」，
+ * 而系统当前没有可核验的资质数据源。因此：
+ * <ul>
+ *   <li>管理员**不能**凭 {@code ADMIN_ROLE} 写 {@code REVIEWED}；</li>
+ *   <li>{@code userRole = doctor} 也不被当成资质证明；</li>
+ *   <li>资格判定本身（{@link ClinicalReviewQualification}）恒为 false，这是策略而不是占位。</li>
+ * </ul>
  */
 class DiagnosisHumanReviewTest {
 
-    @Test
-    void blankHumanResultIsRejected() {
-        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
-        DiagnosisResultDTO dto = new DiagnosisResultDTO();
-        dto.setId(1L);
-        User admin = new User();
-        admin.setId(99L);
-        admin.setUserRole(AuthConstant.ADMIN_ROLE);
-        BusinessException ex = Assertions.assertThrows(BusinessException.class,
-                () -> impl.recordHumanReview(1L, admin, dto));
-        Assertions.assertEquals(ErrorCode.PARAMS_ERROR.getCode(), ex.getCode());
+    private static User user(long id, String role) {
+        User user = new User();
+        user.setId(id);
+        user.setUserRole(role);
+        return user;
     }
 
-    @Test
-    void nonAdminIsRejected() {
-        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
+    private static DiagnosisResultDTO filledDto() {
         DiagnosisResultDTO dto = new DiagnosisResultDTO();
         dto.setId(1L);
         dto.setHumanResult("正常");
-        User normal = new User();
-        normal.setId(2L);
-        normal.setUserRole(AuthConstant.DEFAULT_ROLE);
+        return dto;
+    }
+
+    @Test
+    void administratorsCanNoLongerWriteAFormalClinicalReview() {
+        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
         BusinessException ex = Assertions.assertThrows(BusinessException.class,
-                () -> impl.recordHumanReview(1L, normal, dto));
+                () -> impl.recordHumanReview(1L, user(99L, AuthConstant.ADMIN_ROLE), filledDto()));
         Assertions.assertEquals(ErrorCode.NO_AUTH_ERROR.getCode(), ex.getCode());
+        Assertions.assertTrue(ex.getMessage().contains("安全关闭"),
+                "拒绝理由必须说明是策略关闭，而不是含糊的权限不足：" + ex.getMessage());
+    }
+
+    @Test
+    void doctorRoleIsNotTreatedAsVerifiedQualification() {
+        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
+        BusinessException ex = Assertions.assertThrows(BusinessException.class,
+                () -> impl.recordHumanReview(1L, user(5L, "doctor"), filledDto()));
+        Assertions.assertEquals(ErrorCode.NO_AUTH_ERROR.getCode(), ex.getCode());
+    }
+
+    @Test
+    void ordinaryUserIsRejected() {
+        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
+        BusinessException ex = Assertions.assertThrows(BusinessException.class,
+                () -> impl.recordHumanReview(1L, user(2L, AuthConstant.DEFAULT_ROLE), filledDto()));
+        Assertions.assertEquals(ErrorCode.NO_AUTH_ERROR.getCode(), ex.getCode());
+    }
+
+    @Test
+    void nullDtoIsRejectedBeforeAnythingElse() {
+        DiagnosisServiceImpl impl = new DiagnosisServiceImpl();
+        BusinessException ex = Assertions.assertThrows(BusinessException.class,
+                () -> impl.recordHumanReview(1L, user(99L, AuthConstant.ADMIN_ROLE), null));
+        Assertions.assertEquals(ErrorCode.PARAMS_ERROR.getCode(), ex.getCode());
     }
 
     @Test

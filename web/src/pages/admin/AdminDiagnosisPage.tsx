@@ -18,7 +18,6 @@ import { FaultNote } from "@/components/fault"
 import {
   listDiagnoses,
   getDiagnosis,
-  submitReview,
   deleteDiagnosis,
   deleteDiagnoses,
   type AdminDiagnosis,
@@ -45,6 +44,11 @@ import {
   classCode,
   classSearchLabel,
   classSearchHint,
+  archivalLabel,
+  draftReviewLabel,
+  recordSourceLabel,
+  reviewerRoleLabel,
+  authorizationRestrictedLabel,
 } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
@@ -52,15 +56,6 @@ import "@/styles/admin-polish-ledger.css"
 
 const DEFAULT_PAGE_SIZE = 10
 const ABSTAIN_LIMIT = 20
-
-/** 人工严重程度下拉：值逐字照 brief，与后端 humanSeverity 对齐。 */
-const HUMAN_SEVERITY = [
-  { value: "NOT_ASSESSED", label: "未评估" },
-  { value: "normal", label: "正常" },
-  { value: "low", label: "低风险" },
-  { value: "medium", label: "中风险" },
-  { value: "high", label: "高风险" },
-] as const
 
 /** 已应用的筛选条件。 */
 type Query = {
@@ -143,8 +138,8 @@ function FactRow({
  * requestSeq 递增序号挡过期响应；删除走确认 Modal + deleting 锁；
  * 失败收起弹层、改用 FaultNote 页内读数。
  *
- * 详情 Drawer 与复核 Modal 会同时打开（弹层栈专为此设计）：复核只收
- * 四个 human* 字段，AI 判读字段界面上无任何输入。getDiagnosis 的加载 / 错误态
+ * 详情 Drawer 单独处理加载 / 错误态：复核 Modal 已按 D-01b 安全关闭并移除，
+ * 页面只保留「看」与「删除」两类动作。getDiagnosis 的加载 / 错误态
  * 在 Drawer 内自洽处理，另用 detailSeq 挡住快速开关时的过期响应。
  * 雪花 id 全程 string：列表 / 详情 / 复核 / 删除都不做 Number(id) 转换。
  */
@@ -182,14 +177,6 @@ export function AdminDiagnosisPage(): ReactElement {
   const [batchBusy, setBatchBusy] = useState(false)
 
   const [detailTarget, setDetailTarget] = useState<AdminDiagnosis | null>(null)
-
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [reviewError, setReviewError] = useState<ErrorDetail | null>(null)
-  const [humanResult, setHumanResult] = useState("")
-  const [humanSeverity, setHumanSeverity] = useState<string>("NOT_ASSESSED")
-  const [humanRecommendations, setHumanRecommendations] = useState("")
-  const [humanReviewNote, setHumanReviewNote] = useState("")
 
   const queryClient = useQueryClient()
 
@@ -288,8 +275,6 @@ export function AdminDiagnosisPage(): ReactElement {
   function openDetail(row: AdminDiagnosis) {
     setActionError(null)
     setDetailTarget(row)
-    setReviewOpen(false)
-    setReviewError(null)
   }
 
   /** 收起 Drawer：详情的加载态由查询键管理，关掉即不再展示。 */
@@ -298,10 +283,7 @@ export function AdminDiagnosisPage(): ReactElement {
   }
 
   function closeDetail() {
-    if (submitting) return
     clearDetail()
-    setReviewOpen(false)
-    setReviewError(null)
   }
 
   /** Drawer 内容：加载 / 错误 / 数据三态都在 Drawer 内处理，不影响列表。 */
@@ -403,10 +385,58 @@ export function AdminDiagnosisPage(): ReactElement {
           />
           <FactRow
             label="人工复核状态"
-            value={humanReviewStatusLabel(detail.humanReviewStatus)}
+            // 复核人角色不是 doctor 时，展示层标「资质未核验」——历史上这些 REVIEWED
+            // 多是管理员写的（系统当时没有资质核验），不能显示成医生正式复核。
+            value={humanReviewStatusLabel(
+              detail.humanReviewStatus,
+              detail.source?.reviewerRole,
+            )}
           />
           <FactRow label="判读时间" value={formatTimestamp(detail.createTime)} mono />
         </dl>
+
+        {/* 来源与授权只读投影：管理端要看得出「这条记录从哪来、影像在不在」，
+            但授权回执号 / 授权时间 / 任务 id 属于患者授权凭证，服务端按最小权限隐去。 */}
+        {detail.source ? (
+          <section className="admin-diagnosis__section">
+            <h3 className="admin-diagnosis__section-title">来源与授权 · PROVENANCE</h3>
+            <dl className="admin-diagnosis__drawer-facts">
+              <FactRow
+                label="记录来源"
+                value={recordSourceLabel(detail.source.recordSource)}
+              />
+              <FactRow
+                label="草稿审核"
+                value={
+                  draftReviewLabel(detail.source.draftReviewState) ??
+                  (detail.source.recordSource === "COLLABORATION_DRAFT" ? "未记录" : "—")
+                }
+              />
+              <FactRow
+                label="患者授权"
+                value={
+                  detail.source.authorizationDetailsRestricted
+                    ? authorizationRestrictedLabel()
+                    : detail.source.authorizationState === "APPROVED"
+                      ? "患者已授权保存"
+                      : detail.source.authorizationState ?? "—"
+                }
+              />
+              <FactRow
+                label="复核人角色"
+                value={reviewerRoleLabel(detail.source.reviewerRole)}
+                mono
+              />
+              <FactRow
+                label="影像"
+                value={archivalLabel(detail.source.imageArchivalState)}
+              />
+            </dl>
+            <p className="admin-diagnosis__note">
+              复核人角色取自账号，不是临床资质证明；患者授权保存也不代表完成临床人工复核。
+            </p>
+          </section>
+        ) : null}
 
         <section className="admin-diagnosis__section">
           <h3 className="admin-diagnosis__section-title">建议 · RECOMMENDATIONS</h3>
@@ -446,52 +476,15 @@ export function AdminDiagnosisPage(): ReactElement {
     )
   }
 
-  /* ── 复核 Modal ───────────────────────────────────────────── */
+  /* ── 正式临床复核：已安全关闭，不提供写入入口 ───────────────── */
 
-  function openReview() {
-    setHumanResult("")
-    setHumanSeverity("NOT_ASSESSED")
-    setHumanRecommendations("")
-    setHumanReviewNote("")
-    setReviewError(null)
-    setReviewOpen(true)
-  }
-
-  function closeReview() {
-    if (submitting) return
-    setReviewOpen(false)
-    setReviewError(null)
-  }
-
-  async function confirmReview() {
-    if (!detailTarget || submitting) return
-    const result = humanResult.trim()
-    if (!result) return // humanResult 为空时提交按钮已禁用，这里再兜一次
-    setSubmitting(true)
-    setReviewError(null)
-    try {
-      await submitReview({
-        id: detailTarget.id, // 雪花 id 全程 string
-        humanResult: result,
-        humanSeverity,
-        ...(humanRecommendations.trim()
-          ? { humanRecommendations: humanRecommendations.trim() }
-          : {}),
-        ...(humanReviewNote.trim() ? { humanReviewNote: humanReviewNote.trim() } : {}),
-      })
-      // 成功：关 Drawer + 关 Modal + 刷新当前页（复审状态随之变「已复审」）。
-      clearDetail()
-      setReviewOpen(false)
-      setReviewError(null)
-      setActionNote("已提交人工复核")
-      await refreshDiagnosis()
-    } catch (cause) {
-      // 失败：保持弹层不丢已填内容，按 describeError → fault → FaultNote 语法页内提示。
-      setReviewError(describeError(cause))
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  /**
+   * D-01b（2026-11-18 产品裁定）：正式临床复核只能由具有有效、已核验授权的医生执行，
+   * 而系统尚无资质数据源。服务端一律拒绝写入，这里也就不再摆一个必然失败的按钮——
+   * 管理员仍可查看历史复核记录，但不会被引导去「代医生签字」。
+   */
+  const clinicalReviewSafeOff =
+    "正式临床复核写入已安全关闭：系统尚无经过核验的医生资质数据源，管理员角色不构成临床资质证明。历史复核记录仍可查看。"
 
   /* ── 删除 ────────────────────────────────────────────────── */
 
@@ -719,10 +712,9 @@ export function AdminDiagnosisPage(): ReactElement {
               {
                 label: "人工复核",
                 icon: <ScanEye size={14} strokeWidth={2} aria-hidden="true" />,
-                onSelect: () => {
-                  openDetail(row)
-                  openReview()
-                },
+                disabled: true,
+                hint: clinicalReviewSafeOff,
+                onSelect: () => {},
               },
               {
                 label: "删除记录",
@@ -740,7 +732,6 @@ export function AdminDiagnosisPage(): ReactElement {
   // 三态同源：loading / error / 数据都从同一个查询读；加载与出错时 rows 都是 undefined。
   const rows = listQuery.data?.records
   const total = listQuery.data?.total ?? 0
-  const reviewResultEmpty = humanResult.trim().length === 0
   const activeFilters =
     (query.result ? 1 : 0) +
     (query.review ? 1 : 0) +
@@ -962,120 +953,14 @@ export function AdminDiagnosisPage(): ReactElement {
         列出的是全站判读记录（管理员视角，后端按角色放行）
       </p>
 
-      {/* 详情 Drawer：加载 / 错误态在 Drawer 内处理，底部常驻人工复核入口。 */}
+      {/* 详情 Drawer：加载 / 错误态在 Drawer 内处理。
+          正式临床复核的写入入口已按 D-01b 安全关闭，不再摆一个必然失败的按钮。 */}
       <Drawer open={detailTarget != null} title="判读详情" onClose={closeDetail}>
         {detailBody()}
         <div className="admin-diagnosis__drawer-actions">
-          <button type="button" className="admin-btn admin-btn--primary" onClick={openReview}>
-            人工复核
-          </button>
+          <p className="admin-diagnosis__note">{clinicalReviewSafeOff}</p>
         </div>
       </Drawer>
-
-      {/* 复核 Modal：只收 human* 字段，AI 判读字段界面上无任何输入。 */}
-      <Modal
-        open={reviewOpen}
-        title="人工复核"
-        onClose={closeReview}
-        footer={
-          <>
-            <button
-              type="button"
-              className="admin-btn admin-btn--ghost"
-              onClick={closeReview}
-              disabled={submitting}
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              className="admin-btn admin-btn--primary"
-              onClick={confirmReview}
-              disabled={submitting || reviewResultEmpty}
-            >
-              {submitting ? "提交中…" : "提交复核"}
-            </button>
-          </>
-        }
-      >
-        <div className="admin-diagnosis__review">
-          <p className="admin-diagnosis__review-note">
-            仅填写人工复核结论；AI 判读字段只读，不予修改。
-          </p>
-
-          <label className="admin-diagnosis__review-field">
-            <span className="admin-diagnosis__review-label">
-              人工结论 · HUMAN RESULT（必填）
-            </span>
-            <textarea
-              className="admin-diagnosis__review-input"
-              value={humanResult}
-              onChange={(event) => setHumanResult(event.target.value)}
-              rows={3}
-              aria-label="人工结论"
-            />
-          </label>
-          {reviewResultEmpty ? (
-            <p className="admin-diagnosis__review-hint">人工结论为必填项，填写后方可提交。</p>
-          ) : null}
-
-          <label className="admin-diagnosis__review-field">
-            <span className="admin-diagnosis__review-label">
-              人工严重程度 · HUMAN SEVERITY
-            </span>
-            <select
-              className="admin-diagnosis__review-select"
-              value={humanSeverity}
-              onChange={(event) => setHumanSeverity(event.target.value)}
-              aria-label="人工严重程度"
-            >
-              {HUMAN_SEVERITY.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="admin-diagnosis__review-field">
-            <span className="admin-diagnosis__review-label">
-              人工建议 · HUMAN RECOMMENDATIONS
-            </span>
-            <textarea
-              className="admin-diagnosis__review-input"
-              value={humanRecommendations}
-              onChange={(event) => setHumanRecommendations(event.target.value)}
-              rows={3}
-              aria-label="人工建议"
-            />
-          </label>
-
-          <label className="admin-diagnosis__review-field">
-            <span className="admin-diagnosis__review-label">
-              复核备注 · HUMAN REVIEW NOTE
-            </span>
-            <textarea
-              className="admin-diagnosis__review-input"
-              value={humanReviewNote}
-              onChange={(event) => setHumanReviewNote(event.target.value)}
-              rows={3}
-              aria-label="复核备注"
-            />
-          </label>
-
-          {reviewError ? (
-            <FaultNote
-              className="admin-diagnosis__review-fault"
-              fault={fault({
-                severity: "attention",
-                kind: "client",
-                title: reviewError.text,
-                code: reviewError.code,
-              })}
-            />
-          ) : null}
-        </div>
-      </Modal>
 
       {/* 删除确认 Modal。 */}
       <Modal

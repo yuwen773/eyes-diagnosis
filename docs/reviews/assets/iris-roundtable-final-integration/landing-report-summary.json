@@ -1,0 +1,78 @@
+{
+  "when": "2026-11-18T13:30:26.948Z",
+  "base": "http://localhost:4183",
+  "viewports": [
+    {
+      "viewport": "390",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "phone",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "390",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "phone",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "820",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "tablet",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "820",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "tablet",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "1920",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    },
+    {
+      "viewport": "1920",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0
+    }
+  ]
+}

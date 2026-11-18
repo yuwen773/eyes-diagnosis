@@ -120,7 +120,7 @@ export type DiagnosisSource = {
   draftReviewState?: string | null
   /** 患者授权状态 OFFERED / APPROVED / EXPIRED；无授权记录为 null。 */
   authorizationState?: string | null
-  /** 授权时间（原样来自库，不做时区改写）。 */
+  /** 授权时间：ISO-8601 **UTC**（带 Z）。展示层负责转本地时间并标注时区。 */
   authorizedAt?: string | null
   /** 回执号**前缀**（前 8 位 + 省略号）；完整回执未开放。 */
   authorizationReceipt?: string | null
@@ -128,6 +128,12 @@ export type DiagnosisSource = {
   reviewerRole?: string | null
   /** ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN。 */
   imageArchivalState?: string | null
+  /**
+   * 授权细节是否按最小权限被隐去（非本人查看时为 true）。
+   *
+   * <p>为 true 表示「不给看」，**不是**「没有授权」——展示层不得退化成「无授权记录」。
+   */
+  authorizationDetailsRestricted?: boolean | null
 }
 
 export type UploadedPicture = {

@@ -168,7 +168,7 @@ describe("RecordDetailPage", () => {
 
     expect(await screen.findByText("来源与授权 · PROVENANCE")).toBeTruthy()
     expect(screen.getByText("协作任务 · 由草稿生成")).toBeTruthy()
-    expect(screen.getByText(/患者已授权保存 · 2026-11-17 22:10:00/)).toBeTruthy()
+    expect(screen.getByText(/患者已授权保存 · 2026-11-17 22:10:00（未标注时区） · 回执 abcdef12…/)).toBeTruthy()
     expect(screen.getByText("已归档 · 按隐私策略不公开")).toBeTruthy()
     // D-01b：写复核的人是管理员，报告上就不能出现「医生」
     expect(screen.getByText("管理员（admin）")).toBeTruthy()

@@ -28,6 +28,10 @@ import java.io.Serializable;
  *                      只陈述「这个账号的角色是什么」，不陈述「他有没有临床资质」——
  *                      本系统没有可核验的资质数据源，见 D-01b。
  * @param imageArchivalState 影像归档状态：ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN
+ * @param authorizationDetailsRestricted 授权细节是否按最小权限隐去。
+ *                      非本人查看（管理端复核视角）时为 true：`authorizationReceipt` /
+ *                      `authorizedAt` / `patientTaskId` 一律不下发。前端据此说
+ *                      「按最小权限不展示」，**不能**退化成「无授权记录」。
  */
 public record DiagnosisSourceProjection(
         String recordSource,
@@ -37,7 +41,8 @@ public record DiagnosisSourceProjection(
         String authorizedAt,
         String authorizationReceipt,
         String reviewerRole,
-        String imageArchivalState
+        String imageArchivalState,
+        boolean authorizationDetailsRestricted
 ) implements Serializable {
 
     /** 患者自己上传、直接判读的记录（历史数据也走这一支）。 */

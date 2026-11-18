@@ -224,8 +224,15 @@ export function severityRisk(severity?: string): Risk {
  *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统没有
  *       可核验的临床资质，复核人角色看 {@code source.reviewerRole}（D-01b）。</li>
  * </ul>
+ *
+ * @param reviewerRole 复核人的账号角色。只有 `doctor` 才不加限定词；
+ *   其余（admin / user / 未知）一律标「资质未核验」——历史上这些记录是管理员写的，
+ *   展示成「医生复核」就是伪造医学事实。
  */
-export function humanReviewState(status?: string | null): { label: string; risk: Risk } {
+export function humanReviewState(
+  status?: string | null,
+  reviewerRole?: string | null,
+): { label: string; risk: Risk } {
   switch (status) {
     case "PENDING_AI":
       return { label: "待模型出结论", risk: "unknown" }
@@ -234,7 +241,9 @@ export function humanReviewState(status?: string | null): { label: string; risk:
     case "AWAITING_REVIEW":
       return { label: "已进入复核队列 · 待复核", risk: "attention" }
     case "REVIEWED":
-      return { label: "人工复核已记录", risk: "normal" }
+      return reviewerRole === "doctor"
+        ? { label: "人工复核已记录", risk: "normal" }
+        : { label: "人工复核已记录 · 资质未核验", risk: "attention" }
     case "OVERRIDDEN":
       return { label: "人工结论已推翻 AI", risk: "attention" }
     default:
@@ -275,6 +284,40 @@ export function draftReviewLabel(state?: string | null): string | null {
 }
 
 /**
+ * 授权时间 → 展示文本。
+ *
+ * <p>后端下发的是 **ISO-8601 UTC**（`2026-11-17T14:10:00Z`）。这里转成本地时间
+ * 并**把时区写出来**：只写「2026-11-17 22:10」会让读者按自己的时区去猜，
+ * 差 8 小时是常事。
+ *
+ * <p>历史数据是 `2026-11-17 22:10:00.0` 这种**没有时区标注**的字面量——
+ * 那种值判定不出是哪个时区的几点，就原样回读并标明「未标注时区」，
+ * 不替它猜一个偏移。
+ */
+export function formatAuthorizedAt(value?: string | null): string | null {
+  if (!value) return null
+  const raw = value.trim()
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)
+  if (!hasZone) return `${raw}（未标注时区）`
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return `${raw}（时间无法解析）`
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZoneName: "short",
+    }).format(parsed)
+  } catch {
+    return parsed.toISOString()
+  }
+}
+
+/**
  * 患者授权保存 → 文案。授权**不等于**临床人工复核，也不等于草稿获批。
  *
  * <p>回执只给前缀：完整回执是否对本人开放是产品决策，前端不补全也不展示全文。
@@ -286,7 +329,7 @@ export function authorizationLabel(
 ): string {
   switch (state) {
     case "APPROVED": {
-      const when = authorizedAt ? ` · ${authorizedAt}` : ""
+      const when = authorizedAt ? ` · ${formatAuthorizedAt(authorizedAt) ?? authorizedAt}` : ""
       const code = receipt ? ` · 回执 ${receipt}` : ""
       return `患者已授权保存${when}${code}`
     }
@@ -297,6 +340,16 @@ export function authorizationLabel(
     default:
       return "无授权记录"
   }
+}
+
+/**
+ * 授权细节按最小权限被隐去时的文案。
+ *
+ * <p>与「无授权记录」是两件事：这里说的是**不给看**，不是**没有**。
+ * 说成「无授权记录」就是在替系统陈述一件它没核实过的事。
+ */
+export function authorizationRestrictedLabel(): string {
+  return "授权详情按最小权限不展示（管理员视角）"
 }
 
 /**

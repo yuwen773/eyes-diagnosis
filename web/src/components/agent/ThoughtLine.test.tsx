@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ThoughtLine } from "./ThoughtLine"
 import type { AgentStep } from "@/lib/agentSteps"
@@ -131,6 +131,28 @@ describe("ThoughtLine", () => {
     expect(head.hasAttribute("disabled")).toBe(false)
     fireEvent.click(head)
     expect(screen.getByText(/无法确认它是否执行完成/)).toBeTruthy()
+  })
+
+  it("运行中只报真实已用时长，不编造百分比或「预计剩余」", () => {
+    vi.useFakeTimers()
+    try {
+      render(<ThoughtLine steps={[runningToolStep]} />)
+      // 第一秒之前不摆一个「0s」出来假装在动。
+      expect(document.querySelector(".thought__elapsed")).toBeNull()
+      act(() => {
+        vi.advanceTimersByTime(3000)
+      })
+      expect(document.querySelector(".thought__elapsed")?.textContent).toBe("3s")
+      expect(screen.queryByText(/%/)).toBeNull()
+      expect(screen.queryByText(/预计|剩余/)).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("已完成 / 未确认的步骤不显示计时", () => {
+    render(<ThoughtLine steps={[doneToolStep]} />)
+    expect(document.querySelector(".thought__elapsed")).toBeNull()
   })
 
   it("没有步骤时不渲染任何东西", () => {

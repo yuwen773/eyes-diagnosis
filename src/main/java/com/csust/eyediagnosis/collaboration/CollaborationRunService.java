@@ -234,6 +234,12 @@ public class CollaborationRunService implements AutoCloseable {
             if (!patientProgressEnabled && !cancelling) throw denied();
             return new Access(row, "v1:patient", false);
         }
+        // 管理员的医生投影**不是**按角色自动拿到的：它要求运维显式打开
+        // `clinician-detail-enabled`（默认 false，与总开关、患者投影一起默认关闭），
+        // 且 CollaborationImages 只接受 v1:patient / v1:doctor: —— 管理员读不到影像字节。
+        // 这是运营审阅用途，不构成临床资质，也不产生任何 REVIEWED 结论；显式取消
+        // （cancelling）单独放行，是为了让运营能在患者无响应时停住一次运行。
+        // D-01b 之后若要让管理员彻底看不到医生投影，改的是这一行与 runbook，不是权限模型。
         if (role.equals("admin") && (clinicianDetailEnabled || cancelling)) return new Access(row, "v1:admin", true);
         if (role.equals("doctor") && clinicianDetailEnabled) {
             var grants = jdbc.queryForList("SELECT reviewId FROM t_doctor_review WHERE taskId=? AND doctorId=?", row.get("taskId"), userId);

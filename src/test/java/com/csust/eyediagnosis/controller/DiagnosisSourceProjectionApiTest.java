@@ -15,8 +15,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -74,7 +76,7 @@ class DiagnosisSourceProjectionApiTest {
     @Test
     void projectionFailureDegradesToUnknownInsteadOfServerError() throws Exception {
         ownedRecord();
-        when(projectionService.project(anyLong(), anyString()))
+        when(projectionService.project(anyLong(), anyString(), anyBoolean()))
                 .thenThrow(new DiagnosisSourceProjectionService.ProjectionUnavailable(new RuntimeException("db down")));
 
         mockMvc.perform(get("/diagnosis/get/9"))
@@ -87,11 +89,12 @@ class DiagnosisSourceProjectionApiTest {
     @Test
     void projectionNeverTurnsPatientAuthorizationIntoClinicalReview() throws Exception {
         ownedRecord();
-        when(projectionService.project(anyLong(), anyString())).thenReturn(new DiagnosisSourceProjection(
+        when(projectionService.project(anyLong(), anyString(), anyBoolean())).thenReturn(new DiagnosisSourceProjection(
                 DiagnosisSourceProjection.SOURCE_COLLABORATION_DRAFT,
-                "task-1", "APPROVED", "APPROVED", "2026-11-17 22:10:00", "abcdef12…",
+                "task-1", "APPROVED", "APPROVED", "2026-11-17T14:10:00Z", "abcdef12…",
                 "doctor",
-                DiagnosisSourceProjection.Archival.ARCHIVED_NOT_PUBLIC));
+                DiagnosisSourceProjection.Archival.ARCHIVED_NOT_PUBLIC,
+                false));
 
         mockMvc.perform(get("/diagnosis/get/9"))
                 .andExpect(status().isOk())
@@ -100,6 +103,42 @@ class DiagnosisSourceProjectionApiTest {
                 .andExpect(jsonPath("$.data.requiresReview").value(false))
                 .andExpect(jsonPath("$.data.source.authorizationState").value("APPROVED"))
                 .andExpect(jsonPath("$.data.source.imageArchivalState").value("ARCHIVED_NOT_PUBLIC"));
+    }
+
+    /**
+     * 最小权限：管理员为做记录管理可以读这条记录，但授权回执前缀 / 授权时间 / 任务 id
+     * 属于患者的授权凭证，不随管理端视角扩散。
+     */
+    @Test
+    void adminViewersCannotReadAuthorizationDetails() throws Exception {
+        User admin = new User();
+        admin.setId(99L);
+        admin.setUserRole(com.csust.eyediagnosis.constant.AuthConstant.ADMIN_ROLE);
+        when(userService.getLoginUser(any(HttpServletRequest.class))).thenReturn(admin);
+
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setId(9L);
+        diagnosis.setUserId(7L);
+        diagnosis.setUrl("");
+        diagnosis.setHumanReviewStatus("AI_ONLY");
+        when(diagnosisService.getOwnedDiagnosis(anyLong(), any(User.class))).thenReturn(diagnosis);
+        when(projectionService.project(anyLong(), anyString(), anyBoolean())).thenReturn(new DiagnosisSourceProjection(
+                DiagnosisSourceProjection.SOURCE_COLLABORATION_DRAFT,
+                null, "APPROVED", "APPROVED", null, null, "admin",
+                DiagnosisSourceProjection.Archival.ARCHIVED_NOT_PUBLIC,
+                true));
+
+        mockMvc.perform(get("/diagnosis/get/9"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.source.authorizationDetailsRestricted").value(true))
+                // 字段以 null 下发（项目没有全局 NON_NULL），关键是不携带任何值。
+                .andExpect(jsonPath("$.data.source.authorizedAt").value(nullValue()))
+                .andExpect(jsonPath("$.data.source.authorizationReceipt").value(nullValue()))
+                .andExpect(jsonPath("$.data.source.patientTaskId").value(nullValue()));
+
+        // 控制器必须把「非本人」这一事实传给投影层，而不是在展示层事后删字段。
+        org.mockito.Mockito.verify(projectionService)
+                .project(9L, "", true);
     }
 
     @Test

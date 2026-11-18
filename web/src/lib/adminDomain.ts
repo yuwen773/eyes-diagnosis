@@ -290,7 +290,17 @@ export function diagnosisFilterParams(key: DiagnosisReviewFilter): {
  * 这列后端给的是代码（PENDING_AI / AI_ONLY / …），仪表盘与数据分析要显示
  * 人话；映射写在这里，两页共用一份。
  */
-export function humanReviewStatusLabel(status?: string | null): string {
+/**
+ * 复核状态 → 文案。
+ *
+ * @param reviewerRole 复核人账号角色。**只有显式传入且不是 `doctor` 时**才追加
+ *   「资质未核验」：仪表盘的聚合图例只按状态计数，没有逐条的角色可传，
+ *   那里写成「已复核」是状态名；抽屉与记录纸是逐条陈述，必须带上资格说明。
+ */
+export function humanReviewStatusLabel(
+  status?: string | null,
+  reviewerRole?: string | null,
+): string {
   switch (status) {
     case "PENDING_AI":
       return "待模型出结论"
@@ -301,7 +311,10 @@ export function humanReviewStatusLabel(status?: string | null): string {
     case "AWAITING_REVIEW":
       return "拒识 / 低置信 · 待复核"
     case "REVIEWED":
-      return "已复核"
+      // 历史 REVIEWED 多是管理员写的（系统当时没有资质核验），不能显示成医生正式复核。
+      return reviewerRole === undefined || reviewerRole === "doctor"
+        ? "已复核"
+        : "已复核 · 资质未核验"
     case "OVERRIDDEN":
       return "已推翻 AI 结论"
     default:

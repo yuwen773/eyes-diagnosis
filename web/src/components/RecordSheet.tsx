@@ -6,6 +6,7 @@ import { RiskTag } from "@/components/RiskTag"
 import {
   archivalLabel,
   authorizationLabel,
+  authorizationRestrictedLabel,
   canonicalClassName,
   classCode,
   confidenceBand,
@@ -71,10 +72,11 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
   const rows = rankClasses(result)
   const confidence = normalizeConfidence(result.confidence ?? result.probability)
   const band = confidenceBand(result.confidence ?? result.probability)
-  const review = humanReviewState(result.humanReviewStatus)
   // 来源投影只在本人详情接口下发；老记录/读取失败时为 undefined，整段不显示，
   // 绝不能退化成「没有授权、没有归档」。
   const source = result.source
+  // 复核状态带复核人角色：历史上的 REVIEWED 多是管理员写的，标「资质未核验」。
+  const review = humanReviewState(result.humanReviewStatus, source?.reviewerRole)
   const archival = archivalStateOf(source, imageSrc)
   const recos = recommendationLines(result)
   const stampRisk = severityRisk(result.severity)
@@ -231,13 +233,16 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
                     <div className="readout">
                       <span className="readout__label">患者授权</span>
                       <span className="readout__value">
-                        {source.recordSource === "DIRECT" && !source.authorizationState
-                          ? "本人上传，无需授权"
-                          : authorizationLabel(
-                              source.authorizationState,
-                              source.authorizedAt,
-                              source.authorizationReceipt,
-                            )}
+                        {/* 「不给看」不是「没有」：说成无授权记录，就是替系统陈述一件它没核实过的事。 */}
+                        {source.authorizationDetailsRestricted
+                          ? authorizationRestrictedLabel()
+                          : source.recordSource === "DIRECT" && !source.authorizationState
+                            ? "本人上传，无需授权"
+                            : authorizationLabel(
+                                source.authorizationState,
+                                source.authorizedAt,
+                                source.authorizationReceipt,
+                              )}
                       </span>
                     </div>
                     <div className="readout">

@@ -499,11 +499,19 @@ class FullApplicationAcceptanceTest {
                 "协作影像有对象键、但没有公开地址");
 
         // 授权时间必须与库内同源（同一行、同一次转换），不能是服务端补的 now()。
-        Object rawAuthorizedAt = jdbc.queryForObject(
-                "SELECT authorizedAt FROM t_patient_authorization WHERE taskId=?", Object.class, taskId);
-        assertNotNull(rawAuthorizedAt, "批准保存后必须有授权时间");
-        assertEquals(String.valueOf(rawAuthorizedAt), source.path("authorizedAt").asText(),
-                "authorizedAt 必须原样来自 t_patient_authorization");
+        // 库里由 UTC_TIMESTAMP 写入；接口按 ISO-8601 UTC（带 Z）下发，
+        // 避免 JDBC 把 UTC 字面量当成 JVM 默认时区、让报告时间差 8 小时。
+        String expectedAuthorizedAt = jdbc.queryForObject(
+                "SELECT DATE_FORMAT(authorizedAt, '%Y-%m-%dT%H:%i:%sZ') FROM t_patient_authorization WHERE taskId=?",
+                String.class, taskId);
+        assertNotNull(expectedAuthorizedAt, "批准保存后必须有授权时间");
+        String projectedAuthorizedAt = source.path("authorizedAt").asText();
+        assertEquals(expectedAuthorizedAt, projectedAuthorizedAt,
+                "authorizedAt 必须原样来自 t_patient_authorization，并以 UTC ISO-8601 下发");
+        assertTrue(projectedAuthorizedAt.endsWith("Z"),
+                "授权时间必须标出时区，实际：" + projectedAuthorizedAt);
+        assertEquals(false, source.path("authorizationDetailsRestricted").asBoolean(),
+                "本人查看不受最小权限限制");
 
         // 回执只给前缀：完整回执对本人是否可见是产品决策，接口不替产品决定。
         String receiptId = jdbc.queryForObject(
@@ -520,6 +528,18 @@ class FullApplicationAcceptanceTest {
         // 归属：他人读不到这条记录，也拿不到投影。
         Reply strangerRead = stranger.get("/api/diagnosis/get/" + diagnosisId);
         assertNotEquals(0, strangerRead.code(), "他人的判读记录不可读");
+
+        // 最小权限：管理员为做记录管理能读到这条记录，但授权细节（回执前缀 / 授权时间 /
+        // 任务 id）属于患者的授权凭证，不随管理端视角扩散。
+        Reply adminRead = admin.get("/api/diagnosis/get/" + diagnosisId);
+        assertEquals(0, adminRead.code(), adminRead.body());
+        JsonNode adminSource = adminRead.json().path("data").path("source");
+        assertEquals(true, adminSource.path("authorizationDetailsRestricted").asBoolean(),
+                "非本人查看必须标记授权细节受限：" + adminRead.body());
+        assertTrue(adminSource.path("authorizedAt").isNull(), "管理端不得看到授权时间");
+        assertTrue(adminSource.path("authorizationReceipt").isNull(), "管理端不得看到回执前缀");
+        assertTrue(adminSource.path("patientTaskId").isNull(), "管理端不得看到关联任务 id");
+        assertFalse(adminRead.body().contains(receiptId), "管理端响应里不得出现完整回执");
 
         // 列表接口不下发投影：回执前缀与授权时间不该随管理端分页扩散。
         Reply list = patient.postJson("/api/diagnosis/list/page/vo",
@@ -548,9 +568,10 @@ class FullApplicationAcceptanceTest {
     /**
      * D-01b：人工复核人是谁，必须能追到账号角色。
      *
-     * <p>现状是 `recordHumanReview` 只校验 admin 角色、系统里没有可核验的临床资质，
-     * 所以「管理员做的复核」和「医生做的复核」在库里长得一样（都是 REVIEWED）。
-     * 至少要让报告侧拿到复核人角色，才谈得上「不把管理员操作展示为医生复核」。
+     * <p>2026-11-18 起 `recordHumanReview` 已安全关闭（系统没有可核验的资质数据源），
+     * 新的 REVIEWED 不会再由管理员产生；但**历史**记录里存在管理员写下的 REVIEWED，
+     * 所以投影链路仍必须把复核人角色如实带出来，展示层据此标「资质未核验」，
+     * 不能说成医生正式复核。
      *
      * <p>这里直接改库制造一条 REVIEWED 记录（不经接口），只验投影链路。
      */
@@ -573,6 +594,36 @@ class FullApplicationAcceptanceTest {
                     "复核人角色必须原样来自 t_user，不能由展示层补一个「医生」");
             // 写入方是管理员，报告上就不许出现「医生复核」这种说法。
             assertFalse(reply.body().contains("医生复核"), "不得把管理员操作说成医生复核：" + reply.body());
+        } finally {
+            jdbc.update("DELETE FROM t_diagnosis WHERE id=?", id);
+        }
+    }
+
+    /**
+     * D-01b 安全关闭：管理员不再能凭 ADMIN_ROLE 产生正式临床 REVIEWED。
+     *
+     * <p>接口保留（历史前端与文档可追溯），但服务层一律拒绝；拒绝时必须
+     * 不落库、不写审计，记录状态仍是 AI_ONLY。
+     */
+    @Test
+    @Order(10)
+    void formalClinicalReviewWritesAreSafeOffForAdministrators() throws Exception {
+        String url = "https://synthetic.invalid/safe-off-" + suffix + ".png";
+        jdbc.update("INSERT INTO t_diagnosis (url,userId,result,humanReviewStatus) VALUES (?,?,'normal','AI_ONLY')",
+                url, patientId);
+        Long id = jdbc.queryForObject(
+                "SELECT id FROM t_diagnosis WHERE url=? AND userId=?", Long.class, url, patientId);
+        try {
+            Reply reply = admin.postJson("/api/diagnosis/update",
+                    json.writeValueAsString(Map.of("id", id, "humanResult", "正常")));
+            assertNotEquals(0, reply.code(), "管理员不得再写正式临床复核：" + reply.body());
+            assertTrue(reply.body().contains("安全关闭"), "拒绝理由必须说明是策略关闭：" + reply.body());
+            assertEquals("AI_ONLY", jdbc.queryForObject(
+                            "SELECT humanReviewStatus FROM t_diagnosis WHERE id=?", String.class, id),
+                    "写入被拒绝后状态不得改变");
+            assertEquals(0, jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM t_diagnosis_audit WHERE diagnosisId=?", Integer.class, id),
+                    "没有发生复核，就不该有复核审计行");
         } finally {
             jdbc.update("DELETE FROM t_diagnosis WHERE id=?", id);
         }

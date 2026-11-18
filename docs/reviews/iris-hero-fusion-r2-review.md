@@ -2,7 +2,10 @@
 
 - **日期**：2026-11-18
 - **分支**：`local/e09-hero-compare-20261118`（隔离设计分支，未推送、未合并）
-- **状态**：**`E-09 = VISUAL_REVIEW_PENDING`**
+- **状态**：**`E-09 = APPROVED（2026-11-18 产品负责人放行 Fusion R2-b）`**；
+  同日接入正式首页 `LandingHero`，接入后的真实首页复验见
+  `docs/reviews/iris-roundtable-final-integration.md`。本文件正文 §1–§14 保留
+  放行前的评审口径与读数，不回改。
 - **证据**：`docs/reviews/assets/iris-hero-fusion-r2/`（31 张实拍 + 7 张拼图 + manifest）
 - **全量**：`target/iris-hero-fusion-r2/`（本地，含录屏与逐档隐藏层对照图）
 - **上一轮**：`docs/reviews/iris-hero-optic-prism-comparison.md`（三方案选型）

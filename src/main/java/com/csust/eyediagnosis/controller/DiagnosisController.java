@@ -208,13 +208,17 @@ public class DiagnosisController {
         // 归属校验在前：投影里含授权时间与回执前缀，只能给这条记录的主人（或管理端复核人）。
         Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
         DiagnosisResultVO vo = DiagnosisResultVO.objToVo(diagnosis);
+        // 最小权限：管理员为做记录管理可以读到这条记录，但「是谁、何时、凭哪张回执授权保存」
+        // 属于患者的授权凭证，不随管理端视角扩散。非本人查看时隐去回执前缀、授权时间与任务 id。
+        boolean restrictAuthorizationDetails = !loginUser.getId().equals(diagnosis.getUserId());
         try {
-            vo.setSource(sourceProjectionService.project(id, diagnosis.getUrl()));
+            vo.setSource(sourceProjectionService.project(id, diagnosis.getUrl(),
+                    restrictAuthorizationDetails));
         } catch (DiagnosisSourceProjectionService.ProjectionUnavailable e) {
             // 读不出来源就说读不出来。不能退化成「没有授权、没有归档」——那是在编事实。
             vo.setSource(new DiagnosisSourceProjection(
                     null, null, null, null, null, null, null,
-                    DiagnosisSourceProjection.Archival.UNKNOWN));
+                    DiagnosisSourceProjection.Archival.UNKNOWN, false));
         }
         return ResultUtils.success(vo);
     }
@@ -222,6 +226,11 @@ public class DiagnosisController {
     /**
      * 人工复诊：仅允许写入 humanResult / humanSeverity / humanRecommendations / humanReviewNote；
      * AI 字段（result/probability/confidence/details/severity）不可通过本接口覆盖。
+     *
+     * <p><b>当前安全关闭</b>（D-01b，2026-11-18 产品已裁定）：正式临床复核只能由具有
+     * 有效、已核验授权的医生执行，而系统尚无资质数据源。本端点保留路由与 DTO 形状
+     * 是为了历史前端与文档可追溯，**写入一律被服务层拒绝**并回明确理由；
+     * 管理员角色不再能凭 {@code ADMIN_ROLE} 产生 {@code REVIEWED} 结论。
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)

@@ -13,15 +13,32 @@ describe("humanReviewState 覆盖后端真实枚举", () => {
     ["PENDING_AI", "待模型出结论", "unknown"],
     ["AI_ONLY", "仅 AI 结论 · 未进入复核队列", "unknown"],
     ["AWAITING_REVIEW", "已进入复核队列 · 待复核", "attention"],
-    ["REVIEWED", "人工复核已记录", "normal"],
     ["OVERRIDDEN", "人工结论已推翻 AI", "attention"],
   ] as const)("%s → %s", (status, label, risk) => {
     expect(humanReviewState(status)).toEqual({ label, risk })
   })
 
+  it("REVIEWED 的复核人不是 doctor 时标「资质未核验」：系统没有可核验的资质数据源", () => {
+    for (const role of ["admin", "user", null, undefined]) {
+      expect(humanReviewState("REVIEWED", role)).toEqual({
+        label: "人工复核已记录 · 资质未核验",
+        risk: "attention",
+      })
+    }
+  })
+
+  it("REVIEWED 且复核人是 doctor 角色时只陈述「已记录」，仍不写「医生复核」", () => {
+    expect(humanReviewState("REVIEWED", "doctor")).toEqual({
+      label: "人工复核已记录",
+      risk: "normal",
+    })
+    expect(humanReviewState("REVIEWED", "doctor").label).not.toContain("医生")
+  })
+
   it("两条不能互相冒充：AI_ONLY 不读作待复核，REVIEWED 不读作医生复核", () => {
     expect(humanReviewState("AI_ONLY").label).not.toContain("待复核")
-    expect(humanReviewState("REVIEWED").label).not.toContain("医生")
+    expect(humanReviewState("REVIEWED", "doctor").label).not.toContain("医生")
+    expect(humanReviewState("REVIEWED", "admin").label).not.toContain("医生")
   })
 
   it("旧枚举（APPROVED / REJECTED / PENDING）后端已不再写入，不再特殊处理", () => {

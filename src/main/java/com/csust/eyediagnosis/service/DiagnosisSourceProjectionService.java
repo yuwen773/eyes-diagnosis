@@ -29,10 +29,22 @@ public class DiagnosisSourceProjectionService {
     }
 
     /**
+     * 本人视角：授权时间与回执前缀都下发。
+     *
      * @param diagnosisId  已经通过归属校验的记录 id
      * @param diagnosisUrl 该记录的影像地址（`t_diagnosis.url`），只用来判定归档状态
      */
     public DiagnosisSourceProjection project(long diagnosisId, String diagnosisUrl) {
+        return project(diagnosisId, diagnosisUrl, false);
+    }
+
+    /**
+     * @param restrictAuthorizationDetails 非本人查看（管理端复核视角）时为 true：
+     *     授权回执前缀、授权时间、关联任务 id 一律不下发，只保留「这条记录来自哪」与归档状态。
+     *     管理端要做的是记录管理，不需要按回执号或授权时间去拼患者的授权凭证。
+     */
+    public DiagnosisSourceProjection project(long diagnosisId, String diagnosisUrl,
+                                             boolean restrictAuthorizationDetails) {
         String taskId = firstString(
                 "SELECT patientTaskId FROM t_diagnosis WHERE id = ?", diagnosisId);
         // 复核人角色：只陈述账号角色，不陈述临床资质（本系统没有可核验的资质数据源）。
@@ -46,24 +58,34 @@ public class DiagnosisSourceProjectionService {
                     DiagnosisSourceProjection.SOURCE_DIRECT,
                     null, null, null, null, null,
                     reviewerRole,
-                    archivalState(diagnosisUrl, null));
+                    archivalState(diagnosisUrl, null),
+                    false);
         }
 
         Map<String, Object> review = firstRow(
                 "SELECT status FROM t_doctor_review WHERE taskId = ? ORDER BY assignedAt DESC LIMIT 1", taskId);
+        // authorizedAt 由 `UTC_TIMESTAMP(6)` 写入，是 UTC 的 DATETIME 字面量。
+        // 这里**在 SQL 里**格式化成带 Z 的 ISO-8601：JDBC 的 Timestamp 会按 JVM 默认时区
+        // 解释同一个字面量，直接 String.valueOf 出来就是「UTC 时间被当成北京时间」，
+        // 患者与复核人都会读出差 8 小时的时间。
         Map<String, Object> authorization = firstRow(
-                "SELECT status, receiptId, authorizedAt FROM t_patient_authorization WHERE taskId = ?", taskId);
+                "SELECT status, receiptId, "
+                        + "DATE_FORMAT(authorizedAt, '%Y-%m-%dT%H:%i:%sZ') AS authorizedAt "
+                        + "FROM t_patient_authorization WHERE taskId = ?", taskId);
         String objectKey = firstString("SELECT objectKey FROM t_diagnosis_task WHERE taskId = ?", taskId);
 
         return new DiagnosisSourceProjection(
                 DiagnosisSourceProjection.SOURCE_COLLABORATION_DRAFT,
-                taskId,
+                restrictAuthorizationDetails ? null : taskId,
                 review == null ? null : asString(review.get("status")),
                 authorization == null ? null : asString(authorization.get("status")),
-                authorization == null ? null : asString(authorization.get("authorizedAt")),
-                authorization == null ? null : maskReceipt(asString(authorization.get("receiptId"))),
+                authorization == null || restrictAuthorizationDetails
+                        ? null : asString(authorization.get("authorizedAt")),
+                authorization == null || restrictAuthorizationDetails
+                        ? null : maskReceipt(asString(authorization.get("receiptId"))),
                 reviewerRole,
-                archivalState(diagnosisUrl, objectKey));
+                archivalState(diagnosisUrl, objectKey),
+                restrictAuthorizationDetails);
     }
 
     /**

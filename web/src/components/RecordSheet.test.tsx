@@ -96,8 +96,20 @@ describe("RecordSheet 人工复核状态的措辞", () => {
     expect(screen.getAllByText("已进入复核队列 · 待复核").length).toBeGreaterThan(0)
   })
 
-  it("REVIEWED 只说「人工复核已记录」，不冒充医生复核", () => {
+  it("REVIEWED 不冒充医生复核：缺复核人角色时标「资质未核验」", () => {
     render(<RecordSheet result={{ result: "正常", humanReviewStatus: "REVIEWED" } as DiagnosisResult} />)
+
+    expect(screen.getAllByText("人工复核已记录 · 资质未核验").length).toBeGreaterThan(0)
+    expect(screen.queryByText(/医生复核/)).toBeNull()
+  })
+
+  it("REVIEWED 且复核人角色是 doctor 时只陈述「已记录」", () => {
+    const result = {
+      result: "正常",
+      humanReviewStatus: "REVIEWED",
+      source: { recordSource: "DIRECT", reviewerRole: "doctor", imageArchivalState: "ARCHIVED" },
+    } as DiagnosisResult
+    render(<RecordSheet result={result} />)
 
     expect(screen.getAllByText("人工复核已记录").length).toBeGreaterThan(0)
     expect(screen.queryByText(/医生复核/)).toBeNull()
@@ -114,7 +126,7 @@ describe("RecordSheet 来源与授权投影", () => {
         patientTaskId: "task-1",
         draftReviewState: "APPROVED",
         authorizationState: "APPROVED",
-        authorizedAt: "2026-11-17 22:10:00",
+        authorizedAt: "2026-11-17T14:10:00Z",
         authorizationReceipt: "abcdef12…",
         reviewerRole: "doctor",
         imageArchivalState: "ARCHIVED_NOT_PUBLIC",
@@ -126,8 +138,11 @@ describe("RecordSheet 来源与授权投影", () => {
     expect(screen.getByText("来源与授权 · PROVENANCE")).toBeTruthy()
     expect(screen.getByText("协作任务 · 由草稿生成")).toBeTruthy()
     expect(screen.getByText("草稿已审核通过")).toBeTruthy()
-    // 授权 ≠ 临床复核：这一行必须带着时间与回执前缀，且不写成「已复核」
-    expect(screen.getByText(/患者已授权保存 · 2026-11-17 22:10:00 · 回执 abcdef12…/)).toBeTruthy()
+    // 授权 ≠ 临床复核：这一行必须带着时间（含时区）与回执前缀，且不写成「已复核」。
+    // 具体本地时间随运行环境时区变化，这里只钉「有日期 + 有时区标注 + 有回执」。
+    expect(screen.getByText(/患者已授权保存 · .*(GMT|UTC).* · 回执 abcdef12…/)).toBeTruthy()
+    // 不再把 UTC 时间当成北京时间原样展示（旧口径差 8 小时）。
+    expect(screen.queryByText(/2026-11-17T14:10:00Z/)).toBeNull()
     expect(screen.getByText("医生（doctor）")).toBeTruthy()
     // 协作影像按隐私策略不公开，但确实归档了——不能说「未保存」
     expect(screen.getByText("已归档 · 按隐私策略不公开")).toBeTruthy()
@@ -146,7 +161,7 @@ describe("RecordSheet 来源与授权投影", () => {
         patientTaskId: "task-1",
         draftReviewState: "APPROVED",
         authorizationState: "APPROVED",
-        authorizedAt: "2026-11-17 22:10:00",
+        authorizedAt: "2026-11-17T14:10:00Z",
         authorizationReceipt: "abcdef12…",
         reviewerRole: null,
         imageArchivalState: "ARCHIVED_NOT_PUBLIC",
@@ -159,6 +174,27 @@ describe("RecordSheet 来源与授权投影", () => {
     expect(screen.queryByText(/未成功归档/)).toBeNull()
     expect(screen.queryByText(/无法回放原图/)).toBeNull()
     expect(screen.getByText("已归档 · 不公开地址")).toBeTruthy()
+  })
+
+  it("授权细节按最小权限隐去时说「不展示」，不说「无授权记录」", () => {
+    // 非本人查看（管理端复核视角）：服务端不下发回执前缀、授权时间与任务 id。
+    // 「不给看」与「没有」是两件事，前端不能替系统陈述它没核实过的事。
+    const result = {
+      result: "正常",
+      humanReviewStatus: "AI_ONLY",
+      source: {
+        recordSource: "COLLABORATION_DRAFT",
+        draftReviewState: "APPROVED",
+        authorizationState: "APPROVED",
+        authorizationDetailsRestricted: true,
+        imageArchivalState: "ARCHIVED_NOT_PUBLIC",
+      },
+    } as DiagnosisResult
+
+    render(<RecordSheet result={result} />)
+
+    expect(screen.getByText("授权详情按最小权限不展示（管理员视角）")).toBeTruthy()
+    expect(screen.queryByText(/无授权记录/)).toBeNull()
   })
 
   it("直接判读没有授权记录时说明「无需授权」，不显示成缺失", () => {

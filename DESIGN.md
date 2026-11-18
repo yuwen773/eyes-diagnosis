@@ -382,7 +382,11 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 - 页脚**不需要**额外 GPU 特效。
 
 **首屏构图**（全文档唯一口径；2026-11-18 E-09 R2 确认为
-**「全幅环境光 + 壳内受控光学主体」**）：
+**「全幅环境光 + 壳内受控光学主体」**，同日起 **Fusion R2-b 已获产品负责人视觉批准并接入
+正式首页** `LandingHero`——`OpticFlow 光带 × Prism 棱镜`，实现在
+`web/src/components/brand/HeroFusion.tsx` / `HeroFusion.css`；
+`/design/hero-compare` 对照台只在开发期或 `VITE_DESIGN_PREVIEW=true` 的构建里注册，
+**不进入生产构建**）：
 
 主视觉是**两层**，两层各自管自己的裁切——**不要**用一个 `overflow: hidden`
 把整块画面粗暴切掉：
@@ -433,7 +437,8 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 
 **组件复用**
 沿用（🅿 PR #52 引入的）React 生态：`web/src/components/brand/`（`LandingHero.tsx`、
-`BrandPanel.tsx`、`HeroPrism.tsx` / `Prism.tsx`）、`web/src/styles/brand.css`、
+`BrandPanel.tsx`、`HeroFusion.tsx`（首屏现行主视觉）、`HeroPrism.tsx` / `Prism.tsx` /
+`OpticFlow.tsx`（保留用于对照台与回溯））、`web/src/styles/brand.css`、
 `Base UI`（弹层与基础交互）。
 **不引入新的 UI 库，不自研图表，不做第二套设计系统。**
 

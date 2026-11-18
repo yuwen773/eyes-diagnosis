@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Check, ChevronDown, CircleDashed, CircleHelp, CircleSlash, Pause, Sparkles, XCircle } from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
@@ -100,6 +100,21 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
     return `执行过程 · ${tools} 个工具调用`
   }, [steps])
 
+  // 运行中的真实进度：只报**已经过去的时间**，不编造百分比或「预计剩余」。
+  // 计时从本组件第一次看到 running 的那一帧起算；读数只在 running 的步骤上渲染，
+  // 下一轮工具调用重新起算——不复用上一轮的读数。
+  const runningCount = steps.filter((s) => s.state === "running").length
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  useEffect(() => {
+    if (runningCount === 0) return
+    const startedAt = Date.now()
+    const timer = window.setInterval(
+      () => setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000)),
+      1000,
+    )
+    return () => window.clearInterval(timer)
+  }, [runningCount])
+
   if (steps.length === 0) return null
 
   return (
@@ -143,6 +158,11 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
                 <span className="thought__label">{step.label}</span>
                 {step.toolName && step.toolName !== step.label ? (
                   <span className="thought__toolname num">{step.toolName}</span>
+                ) : null}
+                {step.state === "running" && elapsedSeconds > 0 ? (
+                  <span className="thought__elapsed num" aria-hidden="true">
+                    {elapsedSeconds}s
+                  </span>
                 ) : null}
                 <span className={`thought__state is-${step.state}`}>
                   {stepStateLabel(step.state)}
