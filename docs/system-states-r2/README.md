@@ -50,6 +50,8 @@ R1 已确认本机 502 根因是后端 `:8081` 未启动，Vite 代理返回 502
 - `npm run check:e2e-fixme`：PASS，0/0
 - `npm run check:gate-tests`：PASS，3/3
 - `npm run test:e2e -- --grep "Iris System States R2"`：PASS，13 passed / 0 skipped
+- GitHub Actions（head `ae4f46ef`）：7/7 completed + success
+  （`watchdog` / `python` / `frontend` / `backend-unit` / `flyway-mysql` / `backend-compile` / `web`）
 
 R1 的 14 条 E2E 与本轮新增 13 条运行在同一个 Playwright 配置；本轮没有运行全量 E2E，
 因此不声称全量 E2E PASS。未启动 Java 后端，不声称真实后端业务链路 PASS。
