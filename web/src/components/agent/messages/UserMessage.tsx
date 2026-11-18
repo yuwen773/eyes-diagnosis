@@ -1,6 +1,19 @@
 import type { StreamMessage } from "@/lib/agentStream"
 
 /**
+ * 送达状态只说实话，而且只在「不能确定服务端有这条」时出现。
+ *
+ * <p>`sending` 是常态，不打扰；`accepted`（以及历史消息的缺省态）表示
+ * 服务端已有记录，也不需要说话；只有 `unconfirmed` 和 `failed` 需要
+ * 让人知道「这条可能没到，别以为对方看见了」。
+ */
+const DELIVERY_NOTE: Partial<Record<NonNullable<StreamMessage["delivery"]>, { mark: string; text: string }>> = {
+  sending: { mark: "…", text: "发送中" },
+  unconfirmed: { mark: "?", text: "送达未确认 · 刷新后可核对" },
+  failed: { mark: "!", text: "未送达 · 服务端没有这条记录" },
+}
+
+/**
  * 用户消息：轻量玻璃气泡（右对齐）+ 气泡下方图片网格。
  *
  * <p>气泡用玻璃层而不是实心色块：用户的话是「输入」，不该比 Iris 的
@@ -11,6 +24,7 @@ export function UserMessage({ msg, onPreviewImage }: { msg: StreamMessage; onPre
   const shown = images.slice(0, 4)
   const more = images.length - shown.length
   const gridCols = Math.min(images.length, 4)
+  const delivery = msg.delivery ? DELIVERY_NOTE[msg.delivery] : undefined
 
   return (
     <article className="agent-msg agent-msg--user">
@@ -36,6 +50,14 @@ export function UserMessage({ msg, onPreviewImage }: { msg: StreamMessage; onPre
           {msg.time && <div className="agent-msg__time">{msg.time}</div>}
         </div>
       )}
+      {delivery ? (
+        <div className={`agent-msg__delivery is-${msg.delivery}`} role="status">
+          <span className="agent-msg__delivery-mark" aria-hidden="true">
+            {delivery.mark}
+          </span>
+          {delivery.text}
+        </div>
+      ) : null}
     </article>
   )
 }

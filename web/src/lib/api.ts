@@ -375,6 +375,16 @@ export type StreamChatHandlers = {
   onEvent(dto: AgentStreamDTO): void
   onDone(): void
   onError(err: unknown): void
+  /**
+   * 服务端已受理：拿到了 2xx 的 SSE 响应头。
+   *
+   * <p>这不是「开始生成」的同义词，但它比「收到第一条助手内容」可靠得多：
+   * `AgentController` 在校验会话归属之后、返回 Flux 之前**同步**落库用户消息，
+   * 所以响应头到达就意味着这条用户轮次已经写进 `t_agent_message`。反过来说，
+   * 没触发 `onAccepted` 就失败时，**不能**推断服务端没收到——请求可能已经
+   * 到达并落库，只是响应头没回来。
+   */
+  onAccepted?(): void
 }
 
 /**
@@ -413,6 +423,8 @@ export async function streamChat(
         }
         throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
       }
+      // 走到这里说明服务端已经开始推流：用户消息在返回 Flux 之前就落库了。
+      handlers.onAccepted?.()
     },
 
     onmessage(event) {

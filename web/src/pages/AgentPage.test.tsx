@@ -241,10 +241,13 @@ describe("AgentPage 未登录", () => {
     await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
   })
 
-  it("发送失败时撤回乐观消息，输入框保留原文", async () => {
+  it("发送失败但没拿到服务端回执：保留气泡并标「送达未确认」", async () => {
     sessionState.status = "authed"
     sessionState.user = { id: 1, userAccount: "tester" }
+    // 没有 2xx 响应头 ≠ 服务端没收到：请求可能已经落库，只是响应没回来。
+    // 这时撤回气泡会导致「界面没有提问、服务端有记录」，重试还会再写一条。
     sendMock.mockRejectedValueOnce(new Error("boom"))
+    vi.mocked(getChatHistory).mockRejectedValueOnce(new Error("network down"))
     stubMatchMedia()
 
     render(
@@ -264,13 +267,60 @@ describe("AgentPage 未登录", () => {
     fireEvent.keyDown(textarea, { key: "Enter" })
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(textarea.value).toBe("发不出去的话"))
-    // 乐观插入的用户气泡已撤回——否则重试会出现两条一模一样的消息。
-    // textarea 的 value 也会被 getByText 命中，这里只看非输入框节点。
-    const bubbles = screen
-      .queryAllByText("发不出去的话")
-      .filter((node) => node.tagName !== "TEXTAREA")
-    expect(bubbles).toHaveLength(0)
+    // 气泡留在原地
+    await waitFor(() =>
+      expect(
+        screen.queryAllByText("发不出去的话").filter((node) => node.tagName !== "TEXTAREA"),
+      ).toHaveLength(1),
+    )
+    // 并且诚实地说「送达未确认」——不臆断成发出去了，也不假装没发生
+    expect(await screen.findByText(/送达未确认/)).toBeTruthy()
+    // 输入框保留原文，方便用户自己决定要不要重发
+    expect(textarea.value).toBe("发不出去的话")
+  })
+
+  it("回执未知时用历史接口核对：服务端已有这条就按已受理处理", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
+    vi.mocked(getChatHistory).mockResolvedValueOnce({
+      messages: [
+        {
+          id: "99",
+          role: "USER",
+          subType: "",
+          content: "其实已经落库了",
+          isSummary: false,
+          createdTime: "2026-11-18 01:00:00",
+        },
+      ],
+      hasMore: false,
+      nextCursor: null,
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "其实已经落库了" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    // 核对结果：服务端有这条 → 不再显示「送达未确认」
+    await waitFor(() => expect(screen.queryByText(/送达未确认/)).toBeNull())
+    expect(
+      screen.queryAllByText("其实已经落库了").filter((node) => node.tagName !== "TEXTAREA"),
+    ).toHaveLength(1)
   })
 
   it("流已产生内容后失败：保留用户气泡，不制造「没有提问的回答」", async () => {

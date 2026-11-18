@@ -13,7 +13,7 @@ import {
   updateSessionTitle,
   type AgentSessionVO,
 } from "@/lib/api"
-import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
+import { useAgentStream, mapHistoryMessage, AgentSendError, type StreamMessage } from "@/lib/agentStream"
 import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
@@ -79,6 +79,9 @@ export function AgentPage() {
   }, [threadId])
   // 历史响应的序号：切会话后，旧请求晚到也不能把内容写进新会话。
   const historySeq = useRef(0)
+  // 每推入一条用户气泡就加一。历史响应回来时这个值变了，说明这期间用户
+  // 又发了消息——晚到的历史是旧的，不能整表覆盖。
+  const turnCounter = useRef(0)
   // 当前登录身份的稳定键：登录/登出/换账号时要清掉上一个身份的会话态。
   const userKey = user?.id ?? null
   const lastUserKeyRef = useRef<string | null | undefined>(undefined)
@@ -123,9 +126,22 @@ export function AgentPage() {
     }
   }, [previewUrl])
 
+  // 当前身份的 ref 版本：异步回调回来时要能和「现在是谁」比对。
+  const userKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    userKeyRef.current = userKey
+  }, [userKey])
+
+  // 会话列表请求的序号与发起时的身份：换账号后旧响应晚到，既不能覆盖新列表，
+  // 也不能把别人的会话标题留在左栏。
+  const sessionsSeq = useRef(0)
   const refreshSessions = useCallback(async () => {
+    const seq = ++sessionsSeq.current
+    const expectedUser = userKeyRef.current
     try {
-      setSessions(await getSessions())
+      const list = await getSessions()
+      if (seq !== sessionsSeq.current || userKeyRef.current !== expectedUser) return
+      setSessions(list)
     } catch (e) {
       console.warn("加载会话列表失败", e)
     }
@@ -134,12 +150,18 @@ export function AgentPage() {
   const loadHistoryMessages = useCallback(
     async (id: string) => {
       const seq = ++historySeq.current
+      const expectedUser = userKeyRef.current
+      const turnsAtRequest = turnCounter.current
       // 加载态在发起请求的那一刻置位；调用方是事件处理器或初始化 effect。
       setHistoryLoading(true)
       try {
         const data = await getChatHistory(id, undefined, HISTORY_PAGE_SIZE)
         // 晚到的旧会话历史不能覆盖当前会话——序号变了或人已经切走，直接丢弃。
         if (seq !== historySeq.current || threadIdRef.current !== id) return
+        // 换了账号：这条历史属于上一个身份，不写回。
+        if (userKeyRef.current !== expectedUser) return
+        // 请求期间用户又发了消息：历史里没有这条，整表替换会把它抹掉。
+        if (turnCounter.current !== turnsAtRequest) return
         setMessages((data.messages ?? []).map(mapHistoryMessage))
       } catch (e) {
         if (seq === historySeq.current) pushFault(faultFromError(e, { intent: "load" }))
@@ -185,6 +207,46 @@ export function AgentPage() {
   // 流式两段生命周期；被拦下的调用直接返回 false，输入区据此把原文留住。
   const sendingRef = useRef(false)
 
+  /** 只改这一条气泡的送达状态，不动其它消息。 */
+  const markDelivery = useCallback(
+    (id: string, delivery: NonNullable<StreamMessage["delivery"]>) => {
+      setMessages((prev) => {
+        const index = prev.findIndex((message) => message.id === id)
+        if (index < 0) return prev
+        const current = prev[index]
+        if (current.delivery === delivery) return prev
+        const next = [...prev]
+        next[index] = { ...current, delivery }
+        return next
+      })
+    },
+    [setMessages],
+  )
+
+  /**
+   * 发送结果未知时，用历史接口核对这条提问到底有没有落库。
+   *
+   * <p>只读、不重发：如果服务端其实收到了，自动重试会写出一条重复的用户轮次。
+   * 核对本身失败（断网、超时）就停在「未确认」——那正是我们知道的全部。
+   */
+  const reconcileDelivery = useCallback(
+    async (localId: string, threadId: string, text: string) => {
+      const expectedUser = userKeyRef.current
+      try {
+        const data = await getChatHistory(threadId, undefined, HISTORY_PAGE_SIZE)
+        // 核对期间换了账号：这条结果属于上一个身份的会话，一律不许写回。
+        if (userKeyRef.current !== expectedUser) return
+        const lastUser = [...(data.messages ?? [])]
+          .reverse()
+          .find((message) => (message.role ?? "").toUpperCase() === "USER")
+        markDelivery(localId, lastUser && lastUser.content === text ? "accepted" : "failed")
+      } catch {
+        // 核对不了就保持「未确认」：不猜服务端有没有收到。
+      }
+    },
+    [markDelivery],
+  )
+
   const handleSend = useCallback(
     async (text: string, files: File[] = []): Promise<boolean> => {
       if ((!text.trim() && files.length === 0) || isStreaming) return false
@@ -213,17 +275,20 @@ export function AgentPage() {
         }
 
         const localId = newId()
+        turnCounter.current += 1
         pushUser({
           id: localId,
           type: "user",
           content: text,
           time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
           images: imageUrls,
+          delivery: "sending",
         })
 
         try {
           await send(text, usedThreadId, imageUrls)
           uploader.commitSuccess(imageUrls)
+          markDelivery(localId, "accepted")
           // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
           if (threadIdRef.current === usedThreadId) {
             saveThreadId(userKey, usedThreadId)
@@ -239,28 +304,29 @@ export function AgentPage() {
           return true
         } catch (e) {
           uploader.commitFailure(imageUrls)
-          // 发送失败：**只有服务端压根没受理**才撤回乐观用户气泡。
-          //
-          // 后端在开流之前就把用户消息落库了（AgentController 先 saveUserMessage 再
-          // diagnosisAgent.stream）。只要这一回合已经流出了任何内容，这条用户消息在
-          // 服务端一定存在；此时撤回会得到「界面没有提问、服务端有记录」，用户按提示
-          // 重试还会再写一条同样的用户轮次。所以：本条之后还有消息（assistant/工具卡）
-          // 就全部保留；一条都没有才当作「没发出去」。找不到本条时什么也不做——
-          // 那说明用户中途切走了会话，改的是别的线程的数组。
-          setMessages((prev) => {
-            const index = prev.findIndex((message) => message.id === localId)
-            if (index < 0) return prev
-            const producedTurnContent = prev.length > index + 1
-            return producedTurnContent ? prev : prev.filter((message) => message.id !== localId)
-          })
-          pushFault(faultFromError(e, { intent: "send" }))
+          // 发送失败分两种，不能混为一谈：
+          //   ① 拿到了 2xx 流响应头（`accepted`）——后端在返回 Flux 之前就
+          //      同步落库了用户消息，这条轮次在服务端**一定存在**。撤回气泡
+          //      会得到「界面没有提问、服务端有记录」，重试还会再写一条。
+          //   ② 没拿到响应头——请求可能已经到了并落库，只是响应没回来。
+          //      「没有助手内容」**不能**推断「服务端没收到」，所以也不撤回，
+          //      标成「未确认」并用历史接口核对；绝不自动重发。
+          const accepted = e instanceof AgentSendError ? e.accepted : false
+          const inner = e instanceof AgentSendError ? e.cause : e
+          if (accepted) {
+            markDelivery(localId, "accepted")
+          } else {
+            markDelivery(localId, "unconfirmed")
+            void reconcileDelivery(localId, usedThreadId, text)
+          }
+          pushFault(faultFromError(inner, { intent: "send" }))
           return false
         }
       } finally {
         sendingRef.current = false
       }
     },
-    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, setMessages, refreshSessions, pushFault],
+    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, refreshSessions, pushFault, markDelivery, reconcileDelivery],
   )
 
   const handleNewChat = useCallback(() => {

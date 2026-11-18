@@ -343,6 +343,38 @@
   color: var(--fg-3);
 }
 
+/* 送达状态：只在「服务端不一定有这条」时出现。
+   用等宽读数 + 语义色，和全站的读数语言一致；不改气泡本身的重量。 */
+.agent-msg__delivery {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+.agent-msg__delivery-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.agent-msg__delivery.is-unconfirmed {
+  color: var(--risk-attention, var(--fg-2));
+}
+
+.agent-msg__delivery.is-failed {
+  color: var(--risk-critical, var(--fg-2));
+}
+
 .agent-msg__imggrid {
   position: relative;
   display: inline-grid;

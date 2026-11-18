@@ -33,6 +33,31 @@ export type StreamMessage = {
   toolCalls?: ToolCallArg[]
   time?: string
   images?: string[]
+  /**
+   * 仅用户轮次：这条提问在服务端是什么状态。
+   *
+   * <p>缺省（历史消息）表示「服务端已有记录」。实时发送的乐观气泡依次经过
+   * `sending → accepted | unconfirmed → failed`。`unconfirmed` 是诚实的中间态：
+   * 请求发出去了但没拿到 2xx 响应头，服务端到底有没有落库**不知道**。
+   */
+  delivery?: "sending" | "accepted" | "unconfirmed" | "failed"
+}
+
+/**
+ * 发送失败。`accepted` 说明服务端是否已经受理这条用户消息——
+ * `true` 表示拿到了 2xx 流响应头（`AgentController` 在此之前已同步落库），
+ * `false` 表示没拿到响应头，**不代表**服务端没收到。
+ */
+export class AgentSendError extends Error {
+  readonly accepted: boolean
+  readonly cause?: unknown
+
+  constructor(accepted: boolean, message: string, cause?: unknown) {
+    super(message)
+    this.name = "AgentSendError"
+    this.accepted = accepted
+    this.cause = cause
+  }
 }
 
 /** assistant 是否可继续累加：最后一条就是它且仍在流式中。 */
@@ -242,6 +267,9 @@ export function useAgentStream() {
       const eventToken = eventSeq.current
       const controller = new AbortController()
       abortRef.current = { token, controller }
+      // 服务端是否已受理（拿到 2xx 响应头）。失败时这是判断能不能撤回
+      // 乐观用户气泡的唯一可靠依据——见 AgentSendError。
+      let accepted = false
 
       // 只操作自己这一流：晚到的旧流不得清掉新流的流式态与光标。
       const isCurrent = () => streamSeq.current === token
@@ -268,6 +296,9 @@ export function useAgentStream() {
             onDone() {
               clearLoading()
             },
+            onAccepted() {
+              accepted = true
+            },
             onError(err) {
               clearLoading()
               throw err
@@ -278,7 +309,9 @@ export function useAgentStream() {
       } catch (e) {
         clearLoading()
         // 旧流的错误不得冒泡成新流的失败
-        if (isCurrent()) throw e
+        if (isCurrent()) {
+          throw new AgentSendError(accepted, e instanceof Error ? e.message : String(e), e)
+        }
       } finally {
         // abort 时 fetch-event-source 直接 resolve，不触发 onDone/onError，
         // 所以收尾必须放在 finally——否则被「停止」打断的回复永远带着光标。
