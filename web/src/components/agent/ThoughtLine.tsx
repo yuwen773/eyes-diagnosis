@@ -106,7 +106,11 @@ function StepDetail({ step }: { step: AgentStep }) {
   return (
     <div className="thought__detail">
       {!received ? <UnresolvedNote state={step.state} /> : null}
-      {failure ? <p className="thought__failure">{failure}</p> : null}
+      {failure ? (
+        <p className={`thought__failure${step.state === "timeout" ? " is-muted" : ""}`}>
+          {failure}
+        </p>
+      ) : null}
       {received && step.state === "returned" ? (
         <p className="thought__empty">
           工具返回了结果，但没有拿到成败判定；工具输出本身不是诊断结论。

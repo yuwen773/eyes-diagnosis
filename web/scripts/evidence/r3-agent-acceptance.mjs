@@ -162,6 +162,49 @@ const TOOL_MISSING = [
   { delay: 150, payload: { messageType: "assistant", content: "我先说结论：视野缺损需要尽快就诊。" } },
 ]
 
+// 结果回来了但没拿到成败判定：框架只给了 completed，前端不许画成「完成」。
+const TOOL_COMPLETED = [
+  {
+    delay: 0,
+    payload: {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ id: "call_c1", name: "searchDocuments", arguments: '{"query":"干眼症"}' }],
+    },
+  },
+  {
+    delay: 150,
+    payload: {
+      messageType: "tool-result",
+      content: "文档片段：热敷每日两次。",
+      toolCallId: "call_c1",
+      toolName: "searchDocuments",
+      status: "completed",
+    },
+  },
+]
+
+const TOOL_TIMEOUT = [
+  {
+    delay: 0,
+    payload: {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ id: "call_t1", name: "analyzeEyeImage", arguments: '{"imageUrl":"/fundus-demo.jpg"}' }],
+    },
+  },
+  {
+    delay: 150,
+    payload: {
+      messageType: "tool-result",
+      content: "上游超时",
+      toolCallId: "call_t1",
+      toolName: "analyzeEyeImage",
+      status: "timeout",
+    },
+  },
+]
+
 const INTERRUPTED = [
   {
     delay: 0,
@@ -182,6 +225,8 @@ const SCENARIOS = {
   "tool-empty": TOOL_EMPTY,
   "tool-multi": TOOL_MULTI,
   "tool-missing": TOOL_MISSING,
+  "tool-completed": TOOL_COMPLETED,
+  "tool-timeout": TOOL_TIMEOUT,
   interrupted: INTERRUPTED,
 }
 
@@ -304,7 +349,13 @@ async function newPage(browser, { theme, width, frames, history, timezone = "Asi
   const page = await context.newPage()
   const errors = []
   page.on("pageerror", (e) => errors.push(e.message))
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
+  // 网络层失败（dev server 复位 keep-alive、例子域名取不到图）不是产品异常，
+  // 单独记账；「无页面错误」只看 JS 异常与真正的控制台错误。
+  page.on("console", (m) => {
+    if (m.type() !== "error") return
+    if (/Failed to load resource/.test(m.text())) return
+    errors.push(m.text())
+  })
   return { context, page, errors }
 }
 
@@ -392,6 +443,9 @@ async function run() {
     { name: "tool-empty", expectStates: ["完成"], expectText: "工具返回了空结果" },
     { name: "tool-multi", expectStates: ["完成", "完成"], expectText: "文档：建议" },
     { name: "tool-missing", expectStates: ["未确认"], expectText: "没有收到这个工具的返回" },
+    // completed 不等于 success：只许说「已返回」，并说明没有成败判定。
+    { name: "tool-completed", expectStates: ["已返回"], expectText: "没有拿到成败判定" },
+    { name: "tool-timeout", expectStates: ["超时"], expectText: "工具执行超时" },
     { name: "interrupted", expectStates: ["未确认"], expectText: "没有收到这个工具的返回" },
   ]
 
@@ -420,6 +474,11 @@ async function run() {
       )
       check(`${toolCase.name}/${theme} 文案包含「${toolCase.expectText}」`, text.includes(toolCase.expectText))
       check(`${toolCase.name}/${theme} 无错误状态冒充完成`, !(toolCase.name === "tool-error" && states.includes("完成")))
+      check(
+        `${toolCase.name}/${theme} completed 不画成「完成」`,
+        !(toolCase.name === "tool-completed" && states.includes("完成")),
+        JSON.stringify(states),
+      )
       if (toolCase.name === "interrupted") {
         const fault = await page.locator("body").innerText()
         check(`interrupted/${theme} 断流有可见提示`, /中断|失败|重试/.test(fault), fault.slice(0, 120))

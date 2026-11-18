@@ -221,9 +221,18 @@ describe("Agent 状态药丸 · 抬升面上的文字", () => {
     ).toBeGreaterThanOrEqual(4.5)
   })
 
-  it("超时圆点是图形元素：琥珀在画布上 ≥ 3:1（文字已回中性）", () => {
+  it("超时圆点是图形元素：琥珀在画布上 ≥ 3:1（文字走中性）", () => {
     expect(contrast(value("--paper-risk-attention"), value("--brand-canvas"))).toBeGreaterThanOrEqual(3)
     expect(contrast(value("--risk-attention-lit"), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+  })
+
+  it("超时药丸的琥珀淡底上，中性文字仍 ≥ 4.5", () => {
+    // 底色是 14% 琥珀叠在画布上；--risk-attention 自己当 11px 文字只有 3.9:1，
+    // 所以药丸文字必须是 --fg-2。
+    const pill = mix(value("--paper-risk-attention"), 0.14, value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+    const darkPill = mix(value("--risk-attention-lit"), 0.14, darkValue("--brand-canvas"))
+    expect(contrast(value("--on-dark-2"), darkPill)).toBeGreaterThanOrEqual(4.5)
   })
 })
 

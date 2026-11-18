@@ -221,7 +221,9 @@ async function mockApi(context, history = { messages: [], hasMore: false, nextCu
       })
     }
     if (path.includes("/agent/image/upload")) {
-      return route.fulfill({ json: { code: 0, msg: "ok", data: "https://cos.example.com/seed.jpg" } })
+      // 必须返回一条 dev server 真能取到的地址：外域假域名会让缩略图落到
+      // 「图片无法加载」错误态，那里没有预览入口，点击自然打不开预览层。
+      return route.fulfill({ json: { code: 0, msg: "ok", data: "/fundus-demo.jpg" } })
     }
     if (path.includes("/agent/chat/stream")) {
       return route.fulfill({ status: 500, body: "should be patched" })
@@ -276,7 +278,13 @@ async function newPage(browser, { theme, width, frames, history }) {
   const page = await context.newPage()
   const errors = []
   page.on("pageerror", (e) => errors.push(e.message))
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
+  // 网络层失败（dev server 复位 keep-alive、例子域名取不到图）不是产品异常，
+  // 单独记账；「无页面错误」只看 JS 异常与真正的控制台错误。
+  page.on("console", (m) => {
+    if (m.type() !== "error") return
+    if (/Failed to load resource/.test(m.text())) return
+    errors.push(m.text())
+  })
   return { context, page, errors }
 }
 
@@ -354,6 +362,8 @@ async function run() {
       // 影像：上传的可以自动加载，点击开启预览
       const thumb = page.locator(".agent-panel__img img").first()
       check(`${theme} 上传影像出现在缩略图`, (await thumb.count()) === 1)
+      // 缩略图真的加载出来了：错误态没有预览入口，不能拿它去验预览层。
+      check(`${theme} 缩略图没有落到错误态`, (await page.locator(".agent-panel__img.is-failed").count()) === 0)
       await page.locator(".agent-panel__img").first().click()
       check(`${theme} 点击缩略图打开预览层`, (await page.locator(".agent-preview").count()) === 1)
       await screenshot(page, `${theme}-resources-preview-1440`)

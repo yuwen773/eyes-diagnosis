@@ -737,15 +737,10 @@
 }
 
 .thought__state.is-timeout {
-  /* 浅色下 --risk-attention 在淡底上只有 3.9:1，当文字不达标；超时也不该穿
-     「出错红」。文字回中性，靠「超时」二字 + 时钟图标说明，圆点仍是琥珀。 */
+  /* 琥珀淡底标出「这一族不顺利」，文字用中性：浅色下 --risk-attention 当 11px
+     文字只有 3.9:1，靠「超时」二字与时钟图标区分，不拿颜色当唯一载体。 */
   color: var(--fg-2);
-  background: var(--brand-soft);
-}
-
-.thought__state.is-paused {
-  color: var(--brand-aurora);
-  background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
+  background: color-mix(in srgb, var(--risk-attention) 14%, transparent);
 }
 
 .thought__state.is-cancelled,
@@ -827,8 +822,13 @@
   color: var(--risk-critical);
 }
 
-/* 「没收到返回」与「返回了错误」是同一档强调：两者都是「这一步的结果不可信」，
-   区别交给状态药丸与图标，不靠把其中一条压成脚注。 */
+/* 超时只说「没拿到完整结果」，不说「结果错了」——不给它失败红，
+   与「未确认」同一档中性强调；红色留给确实返回了错误的那一种。 */
+.thought__failure.is-muted {
+  color: var(--fg-2);
+}
+
+/* 「没收到返回」是这一步唯一的实质信息，不压成脚注。 */
 .thought__unresolved {
   font-size: 12.5px;
   color: var(--fg-2);

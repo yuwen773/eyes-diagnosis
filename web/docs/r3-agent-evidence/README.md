@@ -17,13 +17,15 @@ ACCEPT_BASE=http://localhost:5199 node scripts/evidence/r3-agent-acceptance.mjs
 
 | 文件 | 场景 | 看什么 |
 | --- | --- | --- |
-| `light-rich-streaming-1440.jpg` | 流式中 | 标题/列表已成形，光标仍在，表格还没出现（不过早显示半张表） |
+| `light-rich-streaming-1440.jpg` | 流式中 | 标题/列表已成形，光标画在最后一块行末，表格还没出现（不过早显示半张表） |
 | `light-rich-final-1440.jpg` | 流结束 | 标题、列表、表格、引用、代码块的层级与行距 |
 | `dark-rich-final-1440.jpg` | 深色同上 | 深色下同一套层级与对比 |
 | `dark-rich-final-375.jpg` | 375px | 窄屏不横向溢出，正文仍是读物宽度 |
 | `dark-tool-error-1440.jpg` | 工具失败 | 状态「失败」+ 一句「不能当作医学证据」，结果与参数分层 |
 | `light-tool-multi-1440.jpg` | 两工具乱序返回 | 两步各自配对，都显示「完成」，不串结果 |
 | `light-tool-missing-1440.jpg` | 无回执 | 「未确认」只陈述事实，不承诺回执、不谎报完成 |
+| `light-tool-completed-1440.jpg` | 只有 `completed`、没有成败判定 | 显示「已返回」，不画实心对勾，并说明工具输出不是诊断结论 |
+| `light-tool-timeout-1440.jpg` | 超时 | 琥珀淡底药丸 + 中性说明；不穿失败红，也不把橙色当「出错」 |
 | `light-history-1440.jpg` | 历史恢复 | 工具结果回放为「完成」；UTC 10:20 显示为本地 18:20 |
 
 完整断言表与全部截图在 `web/test-results/r3-acceptance/report.json`（不提交，可复跑再生）。
@@ -79,6 +81,10 @@ R3_API_BASE=http://localhost:18081/api node scripts/evidence/r3-resources-real-b
 | 流式光标画在最后一块行末 | `agent.css`、`AssistantMessage.tsx` | 原来是游离的方块；顺带补 `role="status"` 播报与 `aria-busy` |
 | StrictMode 下合帧停摆修复 | `lib/useStreamingMarkdown.ts` + 回归测试 | cleanup 只 `clearTimeout` 不置空，重挂载后再不排帧 |
 | 状态药丸：失败 `--risk-critical`、超时回中性、`--fg-2` 替换不达标的 `--fg-3` | `agent.css` + `tokens.contrast.test.ts` | 错误色不用品牌橙；11px 药丸从 4.13:1 抬到 ≥4.5 |
+
+**验收口径变化**：合成 harness 的「无页面错误」只统计 JS 异常与真正的控制台错误，
+`Failed to load resource` 这类网络层噪声（dev server 复位 keep-alive、例子域名取不到图）
+单独记账、不进断言；场景内有意义的失败另有逐条断言。
 
 **已知债务（登记未修）**：`agent.css` 仍按元素重定义 `markdown.css` 的基础排版（应抽
 `.is-prose` 变体）；`suppressHighlight` 仍是模块级标志（同步调用内安全，但脆）；
