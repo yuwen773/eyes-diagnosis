@@ -8,7 +8,7 @@
 > | 证据分支 | `local/e09-hero-compare-20261118`（本地隔离候选，**未推送、未合并**） |
 > | 应用代码 commit | `add10bb9`——`web/src` 自 `ecb9d5fc` 起未再改动，manifest 里每张截图的 `commit` 都指向它 |
 > | 取证脚本 | `web/scripts/evidence/hero-compare.mjs` @ `541b070`，SHA-256 `1adb8d0a4841…` |
-> | 基线 · 方案 B（Prism） | `ui@b805377f` |
+> | 基线 · 方案 B（Prism） | `b805377f`（= `origin/ui`） |
 > | 基线 · 方案 A（OpticFlow） | `feat/iris21-multiagent-integration@9a6dbcb6` |
 > | 取证日期 | 2026-11-18（截图 07:16:32Z，性能复测 07:21:25Z） |
 > | 证据目录 | `docs/reviews/assets/iris-hero-comparison/`（入库）<br>`target/iris-hero-comparison/`（全量 + manifest，本地） |
@@ -74,7 +74,7 @@ B（Prism）是现行生产首页的视觉，它的两个硬伤是：**壳内构
 
 | 层 | 三方案是否相同 | 说明 |
 |---|---|---|
-| 顶栏、Logo、Manrope、标题、副标题、CTA、右侧信息卡、入口卡、页面宽度 | **完全相同** | 外壳逐字取自 `ui@b805377f` 的 `LandingHero`，一处没改 |
+| 顶栏、Logo、Manrope、标题、副标题、CTA、右侧信息卡、入口卡、页面宽度 | **完全相同** | 外壳逐字取自 `b805377f` 的 `LandingHero`，一处没改 |
 | 主题、色彩令牌、截图时点 | **完全相同** | 同一份 `tokens.css`；动效帧统一取「渲染器进入 live 后第 3000 ms」 |
 | 渲染器 | **不同** | A = Beams（`ui` 之外，multiagent 分支）；B = Prism（`ui`）；C = Beams + SVG 光学层 |
 | 首屏构图 | **分两组各测一遍** | 「全幅」（`ui` 现行）与「壳内」（multiagent 分支）——两条分支本来就不同构，不能只测一种然后把差异算到渲染器头上 |
@@ -118,16 +118,29 @@ B（Prism）是现行生产首页的视觉，它的两个硬伤是：**壳内构
 - 另外：原生 OpticFlow / 原生 Prism 页面参考各 2 张（桌面亮/暗）+ 2 张补充；
   Reduced Motion 3 张；WebGL 不可用 3 张；动效录屏 3 段（5 s/方案）；对照拼图 10 张。
 
-### 3.3 方案 A 是逐字原件（不是复刻）
+### 3.3 方案 A 是逐字原件（不是复刻），方案 B 一行未改
 
-| 文件 | 来源 | SHA-256（来源分支 / 本分支） |
+比对方式：把两边的字节流统一成 LF 后取 SHA-256（Windows 工作区检出是 CRLF，
+不归一化会比出假差异）。
+
+| 文件 | 来源 | SHA-256（来源 / 本分支） |
 |---|---|---|
 | `OpticFlow.tsx` | `feat/iris21-multiagent-integration@9a6dbcb6` | `4b139b040c0e…` / `4b139b040c0e…` ✅ 一致 |
 | `beamsEngine.ts` | 同上 | `97233ff964f5…` / `97233ff964f5…` ✅ 一致 |
 | `beamsMount.ts` | 同上 | `673a7e3129f3…` / `673a7e3129f3…` ✅ 一致 |
+| `HeroPrism.tsx` | `b805377f`（= `origin/ui`） | `5d7ef00a1890…` / `5d7ef00a1890…` ✅ 一致 |
+| `Prism.tsx` | 同上 | `3c2d7788c974…` / `3c2d7788c974…` ✅ 一致 |
+| `Prism.css` | 同上 | `5810e2664c1e…` / `5810e2664c1e…` ✅ 一致 |
+| `LandingHero.tsx`（统一外壳） | 同上 | `585f68d8931c…` / `585f68d8931c…` ✅ 一致 |
+| `BrandPanel.tsx`（右侧信息卡） | 同上 | `2bde1f2c394c…` / `2bde1f2c394c…` ✅ 一致 |
 
 `brand.css` 里那段 `.optic-flow*` 光学带样式同样逐字取回（+200 行）。
-方案 B 则完全就是 `ui@b805377f` 现行的 `HeroPrism` + `Prism`，本轮**一行未改**。
+**方案 B 就是 `b805377f` 现行的 `HeroPrism` + `Prism`，本轮一行未改**——所以同一份构建
+既能当 B 的对照台，也能当 B 的原生参考。
+
+> 注：本地 `ui` 分支在本轮之前已经陈旧（停在 2026-11-16 的三个本地提交上，
+> 与 `origin/ui` 分叉），所以本文一律用**提交 SHA** `b805377f` 指代基线，
+> 不用 `ui@…` 这种已经解析不到的写法。`origin/ui` 至今仍是 `b805377f`，本轮未动。
 
 ### 3.4 方案 C 的技术形状
 
@@ -290,7 +303,7 @@ B 是「等过 Prism 的 5 s 自动停机窗口 → 采样 2 s」。
 
 | 实现 | 画布全幅 | 光带裁在壳里 | 与 §3.6 的关系 |
 |---|---|---|---|
-| `ui@b805377f`（Prism，全幅） | ✅ | ❌ 光带铺满整页、压在文字下面 | 落在「不是…」那句的反例里 |
+| `b805377f`（Prism，全幅） | ✅ | ❌ 光带铺满整页、压在文字下面 | 落在「不是…」那句的反例里 |
 | `feat/iris21-multiagent-integration`（OpticFlow，壳内） | ❌ 画布也缩在壳里 | ✅ | 接近，但「不是把整个视觉缩成一个小窗」那句又对不上 |
 | 本报告的 `contained` 对照组 | 画布与光带都在壳内 | ✅ | 与 multiagent 一致，供对照用 |
 
