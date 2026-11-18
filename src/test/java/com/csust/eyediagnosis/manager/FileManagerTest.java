@@ -120,6 +120,24 @@ class FileManagerTest {
 
         assertEquals(ErrorCode.SYSTEM_ERROR.getCode(), ex.getCode());
         assertEquals(FileConstant.FAIL_UPLOAD, ex.getMessage());
+        // put 抛错也可能已经在存储侧落了一半：删一次是幂等的，留下才是不可逆的。
+        verify(cosManager).deleteObject(anyString());
+    }
+
+    @Test
+    void uploadsObjectThenParsingTheReplyFailsDeletesTheWrittenObject() {
+        // 对象已经写进存储，回包却解析不出宽高（CI 字段缺失）。此时 key 从未返回给调用方，
+        // 落库不会发生——不删就是一张永久孤儿原图：public/ 前缀没有对账器，只能人工排查。
+        when(cosManager.putPictureObject(anyString(), any(File.class))).thenReturn(new PutObjectResult());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> fileManager.uploadPicture(bytes("eye.png", 1024), "public/7"));
+
+        assertEquals(ErrorCode.SYSTEM_ERROR.getCode(), ex.getCode());
+        org.mockito.ArgumentCaptor<String> key = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(cosManager).putPictureObject(key.capture(), any(File.class));
+        verify(cosManager).deleteObject(key.getValue());
+        assertTrue(key.getValue().startsWith("/public/7/"), "补偿删除必须删刚写的那一个 key");
     }
 
     @Test
