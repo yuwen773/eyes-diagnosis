@@ -79,13 +79,14 @@
 |---|---|---|
 | `3a2ad688` | `DiagnosisPrivacyTest` 补 `DiagnosisSourceProjectionService` mock | #99 的手工装配 controller 测试不认识 #100 新增的依赖，合并后 NPE |
 | `990559d8` | 协作用例改用 `.prompt__input`；新增 `scripts/evidence/joint-r5-capture.mjs` | ui 的 R3 工作区重做删掉了 `.agent-input__textarea`，#87 的两条用例仍按旧类名找控件 |
+| `7fc98733` | 独立终审整改：记录纸归档口径统一、投影读失败不再冒充「无授权」、工具状态按回执渲染、管理端 AI_ONLY 口径、患者第一屏去掉「医生」、e2e README 还原 | 合并后同一张报告会同时说「已归档」与「未归档」；成功的工具显示「未确认」。见 §5 |
 
 ## 4. 合并冲突的解决口径（逐文件）
 
 | 文件 | 取法 | 理由 / 代价 |
 |---|---|---|
 | `web/src/lib/agentStream.ts` | 两侧字段并存：`toolCallId/toolStatus/stepLabel/finishReason`（#87）+ `delivery/SendOutcome/abortedBy`（#98） | 两套语义正交；`tool-request` 分支整段取 #87 |
-| `web/src/components/agent/messages/ToolRequestMessage.tsx`(+test) | **删除** | ui 的 ThoughtLine 模型已取代 #87 的五态工具卡渲染；合并后全仓无引用。**代价**：五态数据仍在 `agentStream`，但不再有专用卡片渲染——这是需要设计层签字的集成决策 |
+| `web/src/components/agent/messages/ToolRequestMessage.tsx`(+test) | **删除** | ui 的 ThoughtLine 已取代 #87 的五态工具卡渲染；合并后全仓无引用。合并当时 `toolStatus` 无人消费，成功的工具会一直显示「未确认」；`7fc98733` 起 `agentSteps` 直接读回执（succeeded / failed / cancelled / awaiting-confirm），ThoughtLine 补了失败与取消两态——卡片式渲染确认不再回来 |
 | `web/src/lib/agentStream.hook.test.tsx` | #98 的受理语义用例 + 补回 #87 三条独有用例（等待确认 / reset 后迟到事件 / 工具卡后 assistant 退流式） | 改用同一 `renderHook` 夹具，断言未弱化 |
 | `web/src/lib/api.auth.test.ts` | 三组用例并存（onAccepted 正反例 / 错误状态 + 认证信封 / 非 JSON 错误体） | — |
 | `web/src/lib/domain.ts` | 取 #100 的 `humanReviewState`；ui 的 `reviewState` 退场 | 旧枚举 APPROVED/REJECTED/PENDING 不再特殊处理，落「未记录」（已写成显式断言） |
@@ -93,7 +94,7 @@
 | `web/src/pages/RecordsPage.test.tsx` | 保留 ui 的「行 → 独立报告路由」；#100 的三条详情用例**迁到** `RecordDetailPage.test.tsx` | 合并后详情归独立路由 `/records/:id`，旧的内联展开不存在 |
 | `web/src/styles/agent.css` / `app.css` | 取 ui | #87 的 `agent-msg--reasoning / typing-bar / agent-console` 在合并后无任何引用 |
 | `web/src/styles/roundtable.css` | 5 处字面色改令牌；CRITIC 角色金 2 处登记进硬编码色棘轮 | 见 §11 |
-| `web/e2e/smoke.spec.ts` / `README.md` | 取 ui 的九条版本；README 的「四条」计数同步为「九条」 | ui 版本已含 Roundtable 的真实后端记录链 |
+| `web/e2e/smoke.spec.ts` / `README.md` | 取 ui 的九条版本；README 一度被解出空表格与悬空从句，`7fc98733` 按 `b805377f:web/e2e/README.md` 整文还原 | ui 版本已含 Roundtable 的真实后端记录链；九条用例实际都在，坏的是文档 |
 
 ## 5. 审查问题关闭证据（含本候选新增）
 
@@ -115,13 +116,19 @@
 | E 用户端 | #2 | P2 | **CLOSED** | `--fg-1`（全仓未定义）→ `--fg` |
 | F 证据 | #99 × #100 合并后 NPE | **P1（本候选发现）** | **CLOSED** | `3a2ad688`；`DiagnosisPrivacyTest` 3/3 |
 | F 证据 | 协作用例选择器漂移 | **P1（本候选发现）** | **CLOSED** | `990559d8`；两条用例重跑通过 |
+| A 医疗语义 | 记录纸同时说「已归档·不公开」与「未归档」 | **P1（独立终审发现）** | **CLOSED** | `7fc98733`：印章与免责改吃 `source.imageArchivalState`；`RecordSheet.test.tsx` 新增协作记录用例 |
+| A 医疗语义 | 投影读失败被渲染成「无授权记录」 | **P1（独立终审发现）** | **CLOSED** | `7fc98733`：`recordSource=null` 时整段说明读不到；新增对应用例 |
+| A 医疗语义 | 管理端把 `AI_ONLY` 标成「待复核」 | **P1（独立终审发现）** | **CLOSED** | `7fc98733`；`adminDomain.test.ts` 断言不含「待复核」 |
+| A 医疗语义 | 患者第一屏写「已转医生复核 / 医生签字」 | **P1（独立终审发现）** | **CLOSED（措辞）** | `7fc98733` 改为「人工复核队列 / 复核完成前」；资格裁定仍归 D-01b |
+| C Agent SSE | 有状态回执却不渲染，成功工具显示「未确认」 | **P1（独立终审发现）** | **CLOSED** | `7fc98733`；`agentSteps.test.ts` 三态 + 暂停各一条 |
+| F 证据 | e2e README 冲突解出空表格与悬空从句 | P2（独立终审发现） | **CLOSED** | 按 ui 侧整文还原，与 `b805377f` 逐字节一致 |
 
 ## 6. D-01 / D-06 / D-01b 最终状态
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| **D-01** 患者授权 ≠ 临床复核 | **CLOSED（前后端）** | 报告页把「来源 / 草稿审核 / 患者授权 / 影像归档 / 复核人角色」分行陈述；授权的措辞是「患者已授权保存 · 时间 · 回执前缀」，不写「已复核」 |
-| **D-06** 影像归档来源 | **CLOSED（前后端）** | 四态 `ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN`；`ARCHIVED_NOT_PUBLIC` 只陈述「按隐私策略不公开」，**不**陈述对象可回放 |
+| **D-01** 患者授权 ≠ 临床复核 | **CLOSED（前后端）** | 报告页把「来源 / 草稿审核 / 患者授权 / 影像归档 / 复核人角色」分行陈述；授权的措辞是「患者已授权保存 · 时间 · 回执前缀」，不写「已复核」。投影读失败（`recordSource=null`）时整段说「读不到」，不落成「无授权记录 / 未记录」 |
+| **D-06** 影像归档来源 | **CLOSED（前后端）** | 四态 `ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN`；`ARCHIVED_NOT_PUBLIC` 只陈述「按隐私策略不公开」，**不**陈述对象可回放。印章与免责与投影同源——协作记录（`t_diagnosis.url` 恒空）不再出现「未归档 / 无法回放」 |
 | **D-01b** 谁能写 `REVIEWED` | **BLOCKED（医学 / 产品）** | 见下 |
 
 **D-01b 的事实链（本轮实测）：**
@@ -166,7 +173,7 @@
 
 `local/r3-joint-20261118-v2` @ **本报告所在提交（见 §17）**，**仅本地**，不推送、不部署。
 
-内容 = `origin/ui`（`b805377f`）+ #87 集成线 + #100 来源投影 + 两处集成修复。
+内容 = `origin/ui`（`b805377f`）+ #87 集成线 + #100 来源投影 + 两处合并期集成修复 + 一轮独立终审整改（`7fc98733`）。
 
 验证栈（本轮实测）：
 
@@ -182,18 +189,22 @@
 |---|---|---|
 | 类型 | `npm run typecheck`（`tsc -b`） | 通过 |
 | Lint | `npm run lint`（`eslint .`） | 通过 |
-| 前端单测 | `npx vitest run` | **82 文件 / 857 例通过** |
+| 前端单测 | `npx vitest run` | **82 文件 / 862 例通过**（`7fc98733` 后为 862；合并点时为 857） |
 | 前端构建 | `npm run build` | 通过（含协作 flag 开/关两种构建） |
 | e2e 硬门禁 | `check:e2e-fixme` / `check:gate-tests` | 0 fixme；6/6 |
 | 后端全量 | `scripts/verify.sh`（一次性 MySQL 8 + Redis） | pass1 单元 **649 例（303 依赖专用真库跳过）**、pass2 MySQL 集成门禁 **7 例**、pass3 隔离库套件 **303 例** —— 三遍 **BUILD SUCCESS**，退出码 0 |
 | Playwright · 前端类（真实应用 + 合成 API） | `admin-columns` / `agent-delivery` / `system-states`（flag 开，:5273） | **11 passed** |
 | 同上 | `nav-breakpoint`（flag 开 :5273 → 8 passed；「协作关闭」那条改在 flag 关 :5274） | **9 passed / 0 failed**（两档构建各跑对应分组） |
 | 同上 | `ui-freeze-regression`（13 路由 × 6 宽度 × 明暗） | **2 passed**，无横向溢出、无未捕获异常 |
-| 真实后端冒烟 | `smoke.spec.ts`（:5273 代理 → :8081，合成账号 + 合成种子） | **9 passed** |
+| 真实后端冒烟 | `smoke.spec.ts`（:5275 代理 → :8081，`7fc98733` 后重跑，合成账号 `smoke_r5_u1` + 合成资讯/记录种子） | **9 passed** |
 | 协作夹具 | `collaboration.spec.ts`（flag 开 :5273） | **43 passed** |
 | 协作默认关 | `collaboration-default-off.spec.ts`（flag 关 :5274） | **1 passed** |
 | 协作真后端 | `collaboration-backend.spec.ts` + `collaboration-safety.spec.ts`（:5275 → :18085） | **5 passed** |
-| 截图归档 | `node scripts/evidence/joint-r5-capture.mjs` | **48 张**，横向溢出 0 |
+| 截图归档 | `node scripts/evidence/joint-r5-capture.mjs`（`7fc98733` 后重跑） | **48 张**，横向溢出 0 |
+| 前端类重跑（`7fc98733` 后） | `admin-columns` / `agent-delivery` / `system-states` / `ui-freeze-regression` / `nav-breakpoint`（flag 开 :5275） | **21 passed**（`nav-breakpoint` 的「协作关闭」一条在 flag 开的构建下按设计不适用） |
+| 同上 | `nav-breakpoint`（flag 关 :5276） | **5 passed**（「协作关闭」通过；4 条「协作开启」在该构建下按设计不适用） |
+
+**验证时点（如实登记）：** 真实后端冒烟 9 条与 48 张截图已在 `7fc98733` 树上重跑（后端 :8081 + 一次性库 `diagnosis_joint_v2`，后端用假 COS / 假模型凭据起步，推理与存储替换为合成夹具）。协作夹具 43 条、协作默认关 1 条、协作真后端 5 条仍是 `990559d8` 树上的结果——`7fc98733` 只改展示分支与文案，未触及协作协议。
 
 **未运行（如实登记）：**
 - `product-real-provider-r5.spec.ts` —— 预注册的一次性真实提供方实验（16 次请求上限），
@@ -221,14 +232,26 @@
 | **P0** | — | **无** |
 | P1 | D-01b 复核主体资格 | **BLOCKED**（医学 / 产品） |
 | P1 | `public/` 前缀无常驻对账 | 已知 key 都会清；「提交结果未知」可能留对象，需人工排查或后续接 ADR |
-| P2 | 五态工具卡渲染被 ThoughtLine 取代 | `agentStream.ts` 仍产出 `toolStatus`，但合并后没有专用卡片消费它 —— 需设计层签字确认这是想要的 |
+| P2 | ThoughtLine 的形态取代五态工具卡 | `7fc98733` 起状态回执已被消费（完成 / 失败 / 取消 / 暂停 / 未确认），但显示仍是折叠行而非独立卡片；是否要卡片式呈现属设计层决定 |
 | P2 | CRITIC 角色金无令牌 | `roundtable.css` 2 处字面色已登记进棘轮（`hardcoded-colors.test.ts`），待设计层决定是否升成正式令牌 |
 | P2 | B-04' 刷新后工具五态退化 | 未改；当前展示「未确认」，不虚构 |
 | P2 | C-08 `doctor` 角色无开通路径 | 未改（D-01b 的上游） |
+| P2 | 授权时间不是 ISO-8601 | 后端下发 `2026-11-17 22:10:00.0`（`String.valueOf(Timestamp)`），无时区标注；患者可能按本地时间误读 8 小时 |
+| P2 | 管理端「复审中 / 已复审」实为复诊申请 | `reexamineStatus=2/3` 由患者点「申请复诊」与 `recordHumanReview` 顺手写入，不是临床复核状态；台账列与筛选项沿用它 |
 | P3 | `@ModelAttribute` 覆盖不到 413/405 | 接受现状（这些响应不含患者数据） |
 | P3 | `t_diagnosis_task.taskId` collation 不一致 | 加 JOIN 前用新迁移统一 |
 | P3 | `npm run test:collaboration` 直连 `E2E_BASE_URL` | 不设变量时默认打 :5173，容易打到别的构建上；本轮是显式指定 :5273 |
 | P3 | `DiagnosisPage` 的归档措辞仍由 `Boolean(result.url)` 推出 | 与后端 `ARCHIVED` 口径同源（有地址＝记录引用了一个影像地址，不做存储侧存在性探测），但拿不到 `ARCHIVED_NOT_PUBLIC` / `UNKNOWN` 两态；该页只处理直传影像，协作影像走 `RecordSheet` 的四态投影。要统一需判读响应回带 `source` |
+
+**需负责人裁定的门禁（代码侧不得自行关闭）**
+
+| 编号 | 事项 | 现在的实现 |
+|---|---|---|
+| G-1 | `recordSource` 命名与 Proposed ADR 不一致 | ADR 写 `PATIENT_AUTHORIZED_NOTE`，实现用 `DIRECT` / `COLLABORATION_DRAFT`（语义更窄、更安全），需 owner 追认 |
+| G-2 | 管理员是否可见授权回执前缀 / 授权时间 / `patientTaskId` / `reviewerRole` | ADR §6-3 默认不给管理端；实际管理员经 `GET /diagnosis/get/{id}` 可见。关闭或改 ADR，二选一 |
+| G-3 | 回执可见范围 | 报告页只给 8 位前缀，患者协作面板给全量；ADR §5-10「页面回执号 == `receiptId`」与打码要求互相矛盾 |
+| G-4 | `AI_ONLY` 是否应进复核队列 | 现状不进队，`7fc98733` 后两端文案一致说「未进入复核队列」；若产品要把它做成待办，需另开 ADR 改状态机 |
+| G-5 | 管理员是否有资格写正式临床复核 | `DiagnosisController#updateDiagnosisResult` 只校验 `ADMIN_ROLE` 即写 `REVIEWED`；展示层已不称「医生」，但资格本身未裁定 |
 
 ## 13. 是否建议 #98 合并
 
@@ -300,6 +323,7 @@ git -C <worktree> log -1 --format=%h -- docs/reviews/iris-r5-final-readiness.md
 
 | 提交 | 内容 |
 |---|---|
+| `7fc98733` | 独立终审整改（归档口径 / 投影读失败 / 工具状态渲染 / 管理端口径 / 患者第一屏措辞 / e2e README） |
 | `990559d8` | 协作用例改用 `.prompt__input`；新增截图脚本 |
 | `3a2ad688` | `DiagnosisPrivacyTest` 补来源投影依赖 |
 
