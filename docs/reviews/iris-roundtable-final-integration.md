@@ -3,8 +3,8 @@
 - **日期**：2026-11-18
 - **分支**：`feat/roundtable-final-integration`（单一正式集成分支；未 force push、未 rebase 共享分支、未直接推 `ui`）
 - **目标基线**：`origin/ui` @ `b805377f`
-- **集成 HEAD**：见文末 §8（本报告与代码同批入库）
-- **状态**：**MERGE_READY_WITH_FOLLOWUPS**（应用侧改动与验证全绿；协作开关保持默认关闭；生产开放与临床启用另需审批）
+- **集成 HEAD**：`48509290`（已测树 `585b1e2a`）；合并提交 `26ab47a6`，`ui` 树同为 `585b1e2a`
+- **状态**：**MERGED_WITH_FOLLOWUPS**（应用侧改动与验证全绿；协作开关保持默认关闭；生产开放与临床启用另需审批）
 
 ---
 
@@ -169,13 +169,13 @@ E-09 Fusion 首屏，一次性集成到最新 `ui`，并落地区块任务书 §
 
 | # | 条件 | 判定 |
 |---|---|---|
-| 1 | 最新 HEAD 的 CI 全绿 | 见 §8（推送后回填） |
-| 2 | 本地全栈 + E2E 通过 | ✅ §3.1–§3.4 |
+| 1 | 最新 HEAD 的 CI 全绿 | ✅ run `44330141419`，20/20（head `48509290`） |
+| 2 | 本地全栈 + E2E 通过 | ✅ §3.1–§3.4；同树 `scripts/verify.sh` 另跑一轮仍全绿 |
 | 3 | 无未决的权限 / 医学语义阻断项 | ✅ 三条评审线 P0 = 0，P1 全部整改 |
 | 4 | 独立评审通过 | ✅ 三条线均 MERGE_READY_WITH_FOLLOWUPS，整改后复测 |
-| 5 | 分支保护 / 评审 / 权限满足 | 见 §8（需仓库权限与评审） |
+| 5 | 分支保护 / 评审 / 权限满足 | ✅ `ui` 无分支保护（`gh api .../protection` → 404），合并依产品负责人的书面放行；本 PR 未自我 approve |
 | 6 | 协作相关开关仍默认关闭 | ✅ `eye-diagnosis.collaboration.*` 五项全 `false`；React `VITE_COLLABORATION_ENABLED` 未设置即关闭；生产构建实测无协作入口 |
-| 7 | 最终 PR 树 == 已测树 | 见 §8 |
+| 7 | 最终 PR 树 == 已测树 | ✅ PR head 树与合并后 `ui` 树同为 `585b1e2a` |
 
 ## 6. 残余风险与后续项（登记，不阻塞本次集成）
 
@@ -195,14 +195,15 @@ E-09 Fusion 首屏，一次性集成到最新 `ui`，并落地区块任务书 §
    `.admin-diagnosis__drawer-facts` 的末行底线规则对 `display: contents` 的行无效。都属样式债。
 7. **`GraphExecutionTest.databaseLeaseSurvivesHostClockSkew` 是环境时钟漂移敏感的 flaky 自助检查**：
    先读 `SELECT CURRENT_TIMESTAMP(6)`（MySQL 容器 = WSL2 VM 时钟），再读主机 `Clock.systemUTC()`，
-   然后断言 `|measured − seconds×1000| < 1000`。本机两次触发：
-   - 早先一次 `measuredSkew 7329`（期望 `6000±1000`），孤立复跑即绿；
-   - 最终一轮两个参数同时红：`-4834` / `+4834`，即容器时钟滞后主机约 1.17 秒（该轮失败耗时仅 0.275 s，不是负载超时）。
-   独立探针（`docker run --rm --entrypoint sh mysql:8 -c 'date -u +%s%3N'` 与主机时钟三点对齐）当时测得 +50 / +193 / +218 ms，
-   说明这是 WSL2 侧时钟漂移的瞬时窗口，不是本分支引入的回归：该文件不在本分支 diff 内，
-   最近三次改动都是 `4138b545` 的祖先。建议把两次取样合并到同一往返（`SELECT CURRENT_TIMESTAMP(6), ?`），
-   或把这条**自助检查**的容差放宽到 2000ms——但不要用它掩盖真实的时序断言；
-   断言之后的 lease / fencing 用例本身在每轮都是绿的。
+   然后断言 `|measured − seconds×1000| < 1000`。本机四次命中：
+   - `measuredSkew 7329`（期望 `6000±1000`，与同时段的 Playwright 重叠），孤立复跑即绿；
+   - 一轮两个参数同时红：`-4834` / `+4834`，即容器时钟领先主机约 1.17 秒（失败耗时仅 0.275 s，不是负载超时）；
+   - 提交树 `48509290` 的第一轮 `measuredSkew 7522`（提前约 1.5 秒），同树复跑全绿（654 / 7 / 303 例）。
+   独立探针（容器 `date -u +%s%3N` 与主机时钟三点对齐，往返 ≈ 410 ms）测得 +50 / +193 / +218 / +328 / +368 / +421 ms
+   且方向会翻转，说明这是 Docker Desktop 的 WSL2 VM 时钟相对 Windows 主机的漂移窗口，
+   不是本分支引入的回归：该文件不在本分支 diff 内，最近三次改动都是 `4138b545` 的祖先；CI（ubuntu runner，时钟同源）在该 HEAD 上 20/20 绿。
+   建议把两次取样合并到同一往返（`SELECT CURRENT_TIMESTAMP(6), ?`）或先测一次基线偏移再断言**增量**；
+   若只是放宽容差到 2000ms，别用它掩盖真实的时序断言——断言之后的 lease / fencing 用例本身在每轮都是绿的。
 8. **`project(id, url)` 两参重载是「默认不限制」的不安全默认值**：目前只剩降级与测试路径在调用。
    投影降级分支里 `authorizationDetailsRestricted` 写 `false`，但同一目标对象的 `recordSource`
    为 `null`，前后端都把「读不到」判在前面，不会退化成「没有授权」。建议后续删掉两参重载，
@@ -222,4 +223,17 @@ E-09 Fusion 首屏，一次性集成到最新 `ui`，并落地区块任务书 §
 
 ## 8. 合并后核对与状态
 
-（推送、PR、CI 与合并后回填：HEAD、Merge Commit、Tree SHA、冻结 tag 不变、旧 PR 链接。）
+| 项 | 值 |
+|---|---|
+| PR | #117 `feat: integrate Iris Roundtable 3.0 and R5 clinical safeguards`（Draft → Ready → merged） |
+| 合并前 `origin/ui` | `b805377f26caf12b3a147e0bb31d332d1d6e6ff5` |
+| 集成 HEAD（已测树） | `48509290ec1ed9a8d3e10e2494c6194a1fa96a48`，树 `585b1e2a108cbda93316b699d95fccb951683896` |
+| CI（该 HEAD） | run `44330141419`：**20/20 绿**（backend-compile / backend-unit / collaboration-mysql / flyway-mysql×2 / frontend / graph-execution-mysql / issue17–24 / product-contract / docs-contract / python / watchdog） |
+| 合并方式 | merge commit `26ab47a6e5a2842271872e1ebba5e6910df94f70`（保留分支内 141 个提交） |
+| 合并后 `origin/ui` HEAD | `26ab47a6e5a2842271872e1ebba5e6910df94f70` |
+| 合并后 `ui` 树 | `585b1e2a108cbda93316b699d95fccb951683896` —— **与 PR head 的树逐字节一致**（门禁 7 成立） |
+| 冻结 tag | `iris-ui-v2.1-freeze-20261115`（annotated `18f2bc11…`）仍指向 `80f53f7f…`，**未移动** |
+| 旧 PR | #87 已合并（`9a6dbcb6` 为分支祖先）留了集成轨迹；#100 的 `18126256` 已在集成线内，已评论并关闭，不重复合并 |
+| 部署 / 开关 | **未部署**。后端 `eye-diagnosis.collaboration.*` 五项仍全 `false`，前端 `VITE_COLLABORATION_ENABLED` 未设；生产开放与临床启用仍需单独审批 |
+
+合并后又跑了一轮同树 `scripts/verify.sh`（654 / 7 / 303 例，0 失败），用于确认「已测树 == 合并树」不是靠时序侥幸。
