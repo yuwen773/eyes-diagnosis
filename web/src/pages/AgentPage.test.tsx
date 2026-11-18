@@ -111,13 +111,14 @@ afterEach(() => {
   })
 })
 
-/** 当前时间 → 后端 `yyyy-MM-dd HH:mm:ss` 本地时间字符串（与服务端同格式、无时区）。 */
+/**
+ * 当前时间 → 带偏移的 ISO 串（新契约）。
+ *
+ * <p>旧契约的无偏移串被统一按 UTC 解释，用本地墙上时间去拼会凭空早 8 小时，
+ * 核对逻辑里的时间门槛会把「刚刚」判成旧消息。
+ */
 function nowStamp(): string {
-  const now = new Date()
-  const pad = (value: number) => String(value).padStart(2, "0")
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(
-    now.getHours(),
-  )}:${pad(now.getMinutes())}:00`
+  return new Date().toISOString()
 }
 
 /** jsdom 没有 matchMedia——主题探测要用。 */

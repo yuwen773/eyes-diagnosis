@@ -367,8 +367,17 @@ export function requestReexamine(id: string) {
 export type AgentStreamDTO = {
   messageType: string
   content?: string
-  toolCalls?: { name: string; arguments: string }[]
+  toolCalls?: { id?: string; name: string; arguments: string }[]
   toolName?: string
+  /** 工具的稳定关联键：请求与结果共用。 */
+  toolCallId?: string
+  /**
+   * 工具结果状态：success / error / timeout / cancelled /
+   * completed（收到结果但未区分成败）/ unknown（流结束仍未收到）。
+   */
+  status?: string
+  /** 服务端时间点，带时区偏移的 ISO-8601。 */
+  timestamp?: string
 }
 
 export type StreamChatHandlers = {

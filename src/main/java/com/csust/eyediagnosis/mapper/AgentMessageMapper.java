@@ -16,7 +16,7 @@ public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
             "SELECT * FROM t_agent_message " +
             "WHERE sessionId = #{sessionId} " +
             "<if test='beforeId != null'> AND id &lt; #{beforeId} </if>" +
-            "ORDER BY createdTime DESC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}" +
+            "ORDER BY createdTime DESC, " + SUBTYPE_SORT + " ASC, id DESC LIMIT #{limit} " +
             "</script>")
     List<AgentMessage> selectByCursor(
             @Param("sessionId") String sessionId,
@@ -25,7 +25,7 @@ public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
 
     @Select("SELECT * FROM t_agent_message " +
             "WHERE sessionId = #{sessionId} " +
-            "ORDER BY createdTime ASC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}")
+            "ORDER BY createdTime ASC, " + SUBTYPE_SORT + " ASC, id ASC LIMIT #{limit}")
     List<AgentMessage> selectBySessionIdOrderByTimeASC(
             @Param("sessionId") String sessionId,
             @Param("limit") int limit);

@@ -24,6 +24,7 @@ import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { newId } from "@/lib/id"
+import { formatClock } from "@/lib/time"
 import { useMediaQuery } from "@/lib/useMediaQuery"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
@@ -339,7 +340,7 @@ export function AgentPage() {
           id: localId,
           type: "user",
           content: text,
-          time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+          time: formatClock(new Date()),
           images: imageUrls,
           delivery: "sending",
         })

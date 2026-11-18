@@ -103,7 +103,10 @@ public class DocumentSearchTool {
             return formatDocuments(topDocs);
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
-            return "知识库检索暂时不可用，请稍后重试。";
+            // 不能把失败包装成一句正常返回值：那样工具生命周期是「成功」，
+            // 模型与用户都拿不到「这次检索没做成」的事实。异常交给框架转成
+            // 错误结果，观察者据此标 error，页面上如实显示「失败」。
+            throw new IllegalStateException("知识库检索暂时不可用，请稍后重试。", e);
         }
     }
 

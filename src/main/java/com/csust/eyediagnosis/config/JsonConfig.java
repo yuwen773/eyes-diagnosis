@@ -58,6 +58,13 @@ public class JsonConfig {
          */
         simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
         simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
+        // java.util.Date 统一输出带偏移的 ISO-8601。模块序列化器优先于
+        // builder 的 dateFormat，所以即使某个 profile 还留着旧的
+        // spring.jackson.date-format，也不会退回到「无偏移的 UTC 墙钟」。
+        ApiDateSerializer dateSerializer = new ApiDateSerializer();
+        simpleModule.addSerializer(java.util.Date.class, dateSerializer);
+        simpleModule.addSerializer(java.sql.Timestamp.class, dateSerializer);
+        simpleModule.addSerializer(java.sql.Date.class, dateSerializer);
         objectMapper.registerModule(simpleModule);
 
         return objectMapper;

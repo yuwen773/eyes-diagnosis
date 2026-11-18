@@ -26,6 +26,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -78,6 +79,36 @@ class DocumentSearchToolOwnershipTest {
         Number ownerId = assertInstanceOf(Number.class,
                 assertInstanceOf(Filter.Value.class, expression.right()).value());
         assertEquals(expectedOwnerId, ownerId.longValue());
+    }
+
+    /**
+     * 回归：雪花 ID 超过 int 范围。旧实现把过滤条件拼成文本，文本解析器按
+     * {@code Integer} 解析数字字面量，真实用户（19 位 ID）一检索就
+     * {@code NumberFormatException}，随后被 catch 吞成「暂时不可用」。
+     */
+    @Test
+    void snowflakeOwnerIdDoesNotOverflowTheFilter() {
+        long snowflake = 2123010432165113858L;
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+
+        tool.searchDocuments("青光眼", snowflake);
+
+        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(vectorStore).similaritySearch(captor.capture());
+        Filter.Expression filter = captor.getValue().getFilterExpression();
+        assertEquals(Filter.ExpressionType.OR, filter.type());
+        assertOwnerEquals(assertInstanceOf(Filter.Expression.class, filter.left()), snowflake);
+    }
+
+    /** 检索失败必须抛出去变成「工具失败」，不能伪装成一句正常返回值。 */
+    @Test
+    void retrievalFailureIsSurfacedInsteadOfDisguised() {
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenThrow(new RuntimeException("向量库不可达"));
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> tool.searchDocuments("青光眼", 42L));
+        assertEquals("知识库检索暂时不可用，请稍后重试。", thrown.getMessage());
     }
 
     /**

@@ -11,6 +11,7 @@ import com.csust.eyediagnosis.model.dto.agent.MessageVO;
 import com.csust.eyediagnosis.model.dto.agent.SessionVO;
 import com.csust.eyediagnosis.model.entity.AgentMessage;
 import com.csust.eyediagnosis.model.entity.AgentSession;
+import com.csust.eyediagnosis.utils.TimeFormats;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -206,13 +207,13 @@ public class ChatHistoryService {
         StringBuilder sb = new StringBuilder();
         sb.append("# ").append(session.getTitle()).append("\n\n");
         sb.append("会话 ID: ").append(session.getSessionId()).append("\n");
-        sb.append("创建时间: ").append(session.getCreatedTime()).append("\n\n");
+        sb.append("创建时间: ").append(TimeFormats.toHumanLocal(session.getCreatedTime())).append("\n\n");
         sb.append("---\n\n");
         for (AgentMessage m : messages) {
             String role = "USER".equals(m.getRole()) ? "用户" : "AI";
             sb.append("## ").append(role).append("\n");
             sb.append(escapeMarkdown(m.getContent())).append("\n\n");
-            sb.append("*").append(m.getCreatedTime()).append("*\n\n");
+            sb.append("*").append(TimeFormats.toHumanLocal(m.getCreatedTime())).append("*\n\n");
         }
         return sb.toString();
     }

@@ -227,6 +227,101 @@ describe("buildThread", () => {
     expect(items).toHaveLength(1)
     expect(stepsOf(items)).toHaveLength(2)
   })
+
+  it("一次请求里的多个工具调用各自成步，不与结果串配", () => {
+    const items = buildThread(
+      [
+        msg({
+          id: "t1",
+          type: "tool-request",
+          toolCalls: [
+            { id: "call_a", name: "searchDocuments", args: { query: "青光眼" } },
+            { id: "call_b", name: "analyzeEyeImage", args: { url: "u" } },
+          ],
+        }),
+        // 乱序返回：先回 b，再回 a
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_b", toolStatus: "success", content: "图像结果" }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "call_a", toolStatus: "success", content: "文档结果" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(2)
+    expect(steps[0].toolCallId).toBe("call_a")
+    expect(steps[0].output).toBe("文档结果")
+    expect(steps[0].state).toBe("done")
+    expect(steps[1].toolCallId).toBe("call_b")
+    expect(steps[1].output).toBe("图像结果")
+  })
+
+  it("空字符串结果也是「已返回」：不能停在未确认", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_a", toolStatus: "success", content: "" }),
+      ],
+      false,
+    )
+    const step = stepsOf(items)[0]
+    expect(step.received).toBe(true)
+    expect(step.output).toBe("")
+    expect(step.state).toBe("done")
+  })
+
+  it("失败/超时/中断有真实观察依据，不伪装成完成", () => {
+    const cases: { status: string; expected: AgentStep["state"] }[] = [
+      { status: "error", expected: "error" },
+      { status: "timeout", expected: "timeout" },
+      { status: "cancelled", expected: "cancelled" },
+      { status: "completed", expected: "done" },
+    ]
+    for (const { status, expected } of cases) {
+      const items = buildThread(
+        [
+          msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+          msg({
+            id: "r1",
+            type: "tool-response",
+            toolCallId: "call_a",
+            toolStatus: status,
+            content: status === "error" ? "检索失败" : "",
+          }),
+        ],
+        false,
+      )
+      expect(stepsOf(items)[0].state).toBe(expected)
+    }
+  })
+
+  it("流结束时只把仍在执行的步骤转为未确认，已有失败结论的保持原状", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+        msg({ id: "t2", type: "tool-request", toolCalls: [{ id: "call_b", name: "analyzeEyeImage", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_a", toolStatus: "error", content: "失败" }),
+      ],
+      false,
+    )
+    expect(stepsOf(items).map((s) => s.state)).toEqual(["error", "pending"])
+  })
+
+  it("旧数据没有 toolCallId 时按顺序配对，且不会重复占用同一步", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", content: "第一次" }),
+        msg({ id: "r2", type: "tool-response", content: "第二次" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    // 第一个回执吃掉唯一的请求步；第二个没有可配对的，独立成步。
+    expect(steps).toHaveLength(2)
+    expect(steps[0].output).toBe("第一次")
+    expect(steps[0].received).toBe(true)
+    expect(steps[1].output).toBe("第二次")
+    expect(steps[1].received).toBe(true)
+  })
 })
 
 describe("stepStateLabel", () => {
@@ -236,5 +331,8 @@ describe("stepStateLabel", () => {
     // 「未确认」只陈述「没收到返回」，不承诺还会收到回执。
     expect(stepStateLabel("pending")).toBe("未确认")
     expect(stepStateLabel("paused")).toBe("已暂停")
+    expect(stepStateLabel("error")).toBe("失败")
+    expect(stepStateLabel("timeout")).toBe("超时")
+    expect(stepStateLabel("cancelled")).toBe("已中断")
   })
 })

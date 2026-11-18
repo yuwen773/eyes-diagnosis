@@ -43,6 +43,21 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "colspan", "rowspan", "start"]
 
+/**
+ * Agent 正文来自模型输出，除了资讯那套排版标签，还要保留代码块的
+ * 「复制」按钮（`button.copy-btn` + `data-code` / `data-lang`）。
+ * 不放行任何事件属性；链接协议由 DOMPurify 默认策略把关。
+ */
+const AGENT_ALLOWED_TAGS = [...ALLOWED_TAGS, "button"]
+const AGENT_ALLOWED_ATTR = [
+  ...ALLOWED_ATTR,
+  "type",
+  "disabled",
+  "aria-label",
+  "data-code",
+  "data-lang",
+]
+
 let hooked = false
 
 /**
@@ -90,6 +105,27 @@ export function sanitizeNewsHtml(html?: string, options?: SanitizeOptions): stri
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS,
       ALLOWED_ATTR,
+      ALLOW_DATA_ATTR: false,
+    })
+  } finally {
+    allowRemoteImages = true
+  }
+}
+
+/**
+ * Agent 正文净化：白名单与资讯一致，额外放行代码块复制按钮。
+ *
+ * <p>Markdown 解析器已经关闭原始 HTML（`html: false`），这里仍再过一遍——
+ * 语法高亮、链接自动识别、未来的插件都可能产出 HTML；纵深防御比信任
+ * 单点配置便宜。`data-code` 只带代码文本，不参与任何 DOM 解释。
+ */
+export function sanitizeAgentHtml(html?: string): string {
+  if (!html) return ""
+  ensureHook()
+  try {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: AGENT_ALLOWED_TAGS,
+      ALLOWED_ATTR: AGENT_ALLOWED_ATTR,
       ALLOW_DATA_ATTR: false,
     })
   } finally {

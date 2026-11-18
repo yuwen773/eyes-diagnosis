@@ -1,5 +1,15 @@
 import { useMemo, useState } from "react"
-import { Check, ChevronDown, CircleDashed, CircleHelp, Pause, Sparkles } from "lucide-react"
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  CircleDashed,
+  CircleHelp,
+  CircleX,
+  Clock,
+  Pause,
+  Sparkles,
+} from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
 import { stepStateLabel } from "@/lib/agentSteps"
@@ -8,7 +18,7 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
 const PREVIEW_LIMIT = 180
 
-/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停。 */
+/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停 / 失败 / 超时 / 已中断。 */
 function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "done") {
     return <Check size={13} strokeWidth={2.6} aria-hidden="true" />
@@ -19,8 +29,40 @@ function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "paused") {
     return <Pause size={13} strokeWidth={2.4} aria-hidden="true" />
   }
+  if (state === "error") {
+    return <CircleX size={13} strokeWidth={2.2} aria-hidden="true" />
+  }
+  if (state === "timeout") {
+    return <Clock size={13} strokeWidth={2.2} aria-hidden="true" />
+  }
+  if (state === "cancelled") {
+    return <Ban size={13} strokeWidth={2.2} aria-hidden="true" />
+  }
   // 未确认：不是「还在转」，是一个问号——结果不知道。
   return <CircleHelp size={13} strokeWidth={2} aria-hidden="true" />
+}
+
+/** 工具结果未返回时的说明：只陈述事实，不说「完成」也不承诺「待返回」。 */
+function UnresolvedNote({ state }: { state: AgentStep["state"] }) {
+  if (state === "running") {
+    return <p className="thought__empty">正在执行…</p>
+  }
+  if (state === "paused") {
+    return <p className="thought__empty">工具执行已暂停，本次回合结束。</p>
+  }
+  return (
+    <p className="thought__empty">
+      本次回合已结束，没有收到这个工具的返回，无法确认它是否执行完成。
+    </p>
+  )
+}
+
+/** 失败类的说明：状态来自真实观察，不把失败包装成完成。 */
+function failureNote(step: AgentStep): string | null {
+  if (step.state === "error") return "工具返回了错误，本次结果不能当作医学证据。"
+  if (step.state === "timeout") return "工具执行超时，没有拿到完整结果。"
+  if (step.state === "cancelled") return "工具执行被中断，结果不完整。"
+  return null
 }
 
 function StepDetail({ step }: { step: AgentStep }) {
@@ -43,34 +85,41 @@ function StepDetail({ step }: { step: AgentStep }) {
     )
   }
 
-  // 工具步：参数与返回各自成段，原始内容默认折叠在展开区里。
-  const unresolved = step.state === "pending"
+  const failure = failureNote(step)
+  const hasArgs = Boolean(step.args && step.args.length > 0)
+  // 兼容手工构造的步骤（测试/旧调用）：有 output 字段就视为收到过返回；
+  // 显式 received=false 仍然优先——空字符串结果不能靠 `!output` 判断。
+  const received = step.received ?? step.output !== undefined
+  const hasOutput = received && Boolean(step.output && step.output.length > 0)
+
   return (
     <div className="thought__detail">
-      {unresolved ? (
-        <p className="thought__empty">
-          本次回合已结束，没有收到这个工具的返回，无法确认它是否执行完成。
-        </p>
-      ) : null}
-      {step.args && step.args.length > 0 ? (
-        <dl className="thought__args">
-          {step.args.map((arg) => (
-            <div className="thought__arg" key={arg.key}>
-              <dt className="thought__argkey">{arg.key}</dt>
-              <dd className="thought__argval">{arg.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-      {step.output ? (
+      {!received ? <UnresolvedNote state={step.state} /> : null}
+      {failure ? <p className="thought__failure">{failure}</p> : null}
+
+      {hasOutput ? (
         <pre className="thought__output">
-          {step.output.length > PREVIEW_LIMIT
+          {step.output && step.output.length > PREVIEW_LIMIT
             ? `${step.output.slice(0, PREVIEW_LIMIT)}…`
             : step.output}
         </pre>
       ) : null}
-      {!step.output && !unresolved && step.args && step.args.length === 0 ? (
-        <p className="thought__empty">该工具没有可展示的返回内容。</p>
+      {received && !hasOutput ? (
+        <p className="thought__empty">工具返回了空结果。</p>
+      ) : null}
+
+      {hasArgs ? (
+        <details className="thought__args-wrap">
+          <summary className="thought__args-summary">调用参数</summary>
+          <dl className="thought__args">
+            {step.args?.map((arg) => (
+              <div className="thought__arg" key={arg.key}>
+                <dt className="thought__argkey">{arg.key}</dt>
+                <dd className="thought__argval">{arg.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       ) : null}
     </div>
   )
@@ -80,7 +129,7 @@ function StepDetail({ step }: { step: AgentStep }) {
  * 执行过程（Thought Line）。
  *
  * <p>只展示已经真实发生过的步骤——数据来自 `buildThread`，那里不生成事件。
- * 步骤默认折叠，原始参数与返回不抢占正文阅读空间；点标题才展开。
+ * 步骤默认折叠；展开后先看结果摘要，原始参数收在第二层折叠里，不抢正文。
  *
  * <p>「模型推理」一栏如实标注它是模型内部推理，不是可核验的医学证据；
  * 「已暂停」是信息性终点，不提供批准动作（后端没有确认回传端点）。
@@ -106,15 +155,19 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
       <ol className="thought__steps">
         {steps.map((step) => {
           const open = openId === step.id
+          const received = step.received ?? step.output !== undefined
           const hasDetail =
             step.kind === "reasoning"
               ? Boolean(step.text)
               : step.kind === "confirm"
                 ? true
-                : Boolean(step.output) ||
+                : received ||
                   Boolean(step.args && step.args.length > 0) ||
                   // 未确认的步骤即使没有参数也要能展开：那里写着为什么没有结果。
-                  step.state === "pending"
+                  step.state === "pending" ||
+                  step.state === "error" ||
+                  step.state === "timeout" ||
+                  step.state === "cancelled"
 
           return (
             <li

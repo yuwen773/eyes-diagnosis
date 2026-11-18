@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState, type SetStateAction } from "r
 import { ApiError, streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
 import { extractResources, type AgentResources } from "./agentResources"
 import { newId } from "./id"
+import { formatClock, parseApiDate, parseApiTime } from "./time"
 
 export type StreamMsgType =
   | "user"
@@ -19,6 +20,8 @@ export type StreamMsgType =
   | "confirm"
 
 export type ToolCallArg = {
+  /** 稳定关联键；历史旧数据可能没有。 */
+  id?: string
   name: string
   args: Record<string, unknown>
 }
@@ -30,6 +33,12 @@ export type StreamMessage = {
   /** 仅 assistant 流式进行中为 true。 */
   isLoading?: boolean
   toolName?: string
+  toolCallId?: string
+  /**
+   * 工具结果状态（仅 tool-response）：success / error / timeout /
+   * cancelled / completed / unknown。缺省表示历史旧数据没有回执。
+   */
+  toolStatus?: string
   toolCalls?: ToolCallArg[]
   time?: string
   images?: string[]
@@ -104,6 +113,7 @@ export function applyStreamEvent(
 ): StreamMessage[] {
   const type = (dto.messageType ?? "").toLowerCase()
   const content = dto.content ?? ""
+  const time = eventClock(dto.timestamp)
 
   switch (type) {
     case "assistant": {
@@ -111,12 +121,17 @@ export function applyStreamEvent(
       if (target) {
         return [
           ...msgs.slice(0, -1),
-          { ...target, content: target.content + content },
+          {
+            ...target,
+            content: target.content + content,
+            // 首片时间就是这一轮的落点；后续分片不再改写它。
+            time: target.time ?? time,
+          },
         ]
       }
       return [
         ...msgs,
-        { id: newId(), type: "assistant", content, isLoading: true },
+        { id: newId(), type: "assistant", content, isLoading: true, time },
       ]
     }
 
@@ -125,10 +140,14 @@ export function applyStreamEvent(
       if (target) {
         return [
           ...msgs.slice(0, -1),
-          { ...target, content: target.content + content },
+          {
+            ...target,
+            content: target.content + content,
+            time: target.time ?? time,
+          },
         ]
       }
-      return [...msgs, { id: newId(), type: "reasoning", content }]
+      return [...msgs, { id: newId(), type: "reasoning", content, time }]
     }
 
     case "tool-request": {
@@ -149,12 +168,16 @@ export function applyStreamEvent(
           type: "tool-request" as const,
           content: "",
           toolName: name,
-          toolCalls: [{ name, args: parsedArgs }],
+          toolCallId: tc.id,
+          toolCalls: [{ id: tc.id, name, args: parsedArgs }],
+          time,
         }
       })
       return added.length === 0 ? base : [...base, ...added]
     }
 
+    // 后端新契约是 tool-result；tool-response 是前端历史内部名与旧别名。
+    case "tool-result":
     case "tool-response":
       return [
         ...truncate(msgs),
@@ -163,6 +186,9 @@ export function applyStreamEvent(
           type: "tool-response",
           content,
           toolName: dto.toolName,
+          toolCallId: dto.toolCallId,
+          toolStatus: dto.status,
+          time,
         },
       ]
 
@@ -170,31 +196,35 @@ export function applyStreamEvent(
     // 与历史 mcp-confirm 事件名。两者都是图中断的终点卡。
     case "tool-confirm":
     case "mcp-confirm":
-      return [...truncate(msgs), { id: newId(), type: "confirm", content }]
+      return [...truncate(msgs), { id: newId(), type: "confirm", content, time }]
 
     default:
       return msgs
   }
 }
 
-/** "2026-11-08 10:00:00" 无时区；只取时分展示。 */
-function formatTime(createdTime: string): string {
-  const d = new Date(createdTime.replace(" ", "T"))
-  if (Number.isNaN(d.getTime())) return ""
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+/** SSE 时间戳 → 本地 HH:mm；缺失或不可解析时留空，不猜。 */
+function eventClock(timestamp?: string): string | undefined {
+  const date = parseApiDate(timestamp)
+  return date ? formatClock(date) : undefined
+}
+
+/** 历史时间点 → 本地 HH:mm；解析不出留空。 */
+function formatHistoryTime(createdTime?: string): string {
+  const date = parseApiDate(createdTime)
+  return date ? formatClock(date) : ""
 }
 
 /**
- * "2026-11-08 10:00:00"（无时区，按本地时间解析）→ epoch 毫秒。
+ * 历史消息时间 → epoch 毫秒。
  *
  * <p>历史核对要用它判断「这条是不是刚发的那条」：字面相同但时间早得多的
- * 消息，只可能是用户以前问过一模一样的问题。解析不出返回 `null`，
- * 调用方据此放弃判断而不是瞎猜。
+ * 消息，只可能是用户以前问过一模一样的问题。新 API 是带偏移的 ISO；旧数据
+ * 是无偏移的 UTC 墙钟，由 {@link parseApiDate} 统一处理。解析不出返回
+ * `null`，调用方据此放弃判断而不是瞎猜。
  */
 export function parseServerTime(createdTime: string | undefined): number | null {
-  if (!createdTime) return null
-  const t = new Date(createdTime.replace(" ", "T")).getTime()
-  return Number.isNaN(t) ? null : t
+  return parseApiTime(createdTime)
 }
 
 /** 历史消息 role/subType → 流消息类型。 */
@@ -222,17 +252,35 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     }
   }
 
-  // 历史里的工具调用落库格式是「工具名: 参数 JSON」（DiagnosisAgent.java:168-173），
-  // 不解析的话工具步骤只剩一行空白的 TOOL 标签。
+  const time = formatHistoryTime(m.createdTime)
+
   if (type === "tool-request") {
-    const parsed = parseToolCallText(m.content)
+    // 新落库格式是带 toolCallId 的 JSON；旧格式是「工具名: 参数 JSON」。
+    const parsed = parsePersistedToolCall(m.content)
     return {
       id: newId(),
       type,
       content: "",
       toolName: parsed?.name,
+      toolCallId: parsed?.id,
       toolCalls: parsed ? [parsed] : undefined,
-      time: m.createdTime ? formatTime(m.createdTime) : "",
+      time,
+    }
+  }
+
+  if (type === "tool-response") {
+    // 新落库格式带 toolCallId / status / output；旧行是工具输出原文。
+    const parsed = parsePersistedToolResult(m.content)
+    return {
+      id: newId(),
+      type,
+      content: parsed.output,
+      toolName: parsed.name,
+      toolCallId: parsed.toolCallId,
+      // 旧行没有状态，但「有这一行」本身就说明工具返回过结果：
+      // 标 completed（已返回），不冒充 success，也不说未确认。
+      toolStatus: parsed.status ?? "completed",
+      time,
     }
   }
 
@@ -240,11 +288,70 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     id: newId(),
     type,
     content: m.content,
-    // tool-result 在后端没有落库（saveToolResultMessage 无调用方），
-    // 保留分支只为兼容存量数据；内容是工具输出，从中切名字没有意义。
-    toolName: undefined,
-    time: m.createdTime ? formatTime(m.createdTime) : "",
+    time,
   }
+}
+
+type ParsedToolCall = ToolCallArg
+
+/** 新格式 `{toolCallId,name,arguments}`；解析不出回退旧格式「name: args」。 */
+function parsePersistedToolCall(content: string): ParsedToolCall | null {
+  const trimmed = content.trim()
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as Record<string, unknown>
+      if (typeof parsed.name === "string") {
+        let args: Record<string, unknown>
+        if (typeof parsed.arguments === "string") {
+          try {
+            args = JSON.parse(parsed.arguments || "{}") as Record<string, unknown>
+          } catch {
+            args = { _raw: parsed.arguments }
+          }
+        } else if (parsed.arguments && typeof parsed.arguments === "object") {
+          args = parsed.arguments as Record<string, unknown>
+        } else {
+          args = {}
+        }
+        return {
+          id: typeof parsed.toolCallId === "string" ? parsed.toolCallId : undefined,
+          name: parsed.name,
+          args,
+        }
+      }
+    } catch {
+      // 落到旧格式解析
+    }
+  }
+  return parseToolCallText(content)
+}
+
+type ParsedToolResult = {
+  toolCallId?: string
+  name?: string
+  status?: string
+  output: string
+}
+
+/** 新格式 `{toolCallId,name,status,output}`；旧行把整段内容当输出。 */
+function parsePersistedToolResult(content: string): ParsedToolResult {
+  const trimmed = content.trim()
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as Record<string, unknown>
+      if ("output" in parsed || "status" in parsed || "toolCallId" in parsed) {
+        return {
+          toolCallId: typeof parsed.toolCallId === "string" ? parsed.toolCallId : undefined,
+          name: typeof parsed.name === "string" ? parsed.name : undefined,
+          status: typeof parsed.status === "string" ? parsed.status : undefined,
+          output: typeof parsed.output === "string" ? parsed.output : "",
+        }
+      }
+    } catch {
+      // 旧行
+    }
+  }
+  return { output: content }
 }
 
 /** 「工具名: 参数 JSON」→ { name, args }；解析不出时返回 null。 */

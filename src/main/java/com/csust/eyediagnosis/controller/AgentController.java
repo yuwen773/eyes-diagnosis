@@ -64,7 +64,11 @@ public class AgentController {
         // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
         chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
 
-        log.info("Agent 流式对话请求, threadId={}, userId={}, message={}", threadId, userId, request.getMessage());
+        // 不记录消息正文：其中可能包含用户症状、影像描述等敏感医学信息。
+        log.info("Agent 流式对话请求, threadId={}, userId={}, messageLength={}, imageCount={}",
+                threadId, userId,
+                request.getMessage() == null ? 0 : request.getMessage().length(),
+                request.getImageUrls() == null ? 0 : request.getImageUrls().size());
 
         return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
                 request.getEnabledMcpServers(), request.getDisableMcpDefault())
