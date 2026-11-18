@@ -278,6 +278,12 @@ function parseToolCallText(content: string): ToolCallArg | null {
 export type SendOutcome = {
   accepted: boolean
   aborted: boolean
+  /**
+   * 谁中止的：`user` 是用户自己按了「停止」，`superseded` 是会话被切走 / 组件卸载。
+   * 两者在界面上的正确反应**相反**：前者该把草稿留给用户重试，后者绝不该把上一个
+   * 会话的原文灌回新会话的输入框（下一次回车就发错会话了）。
+   */
+  abortedBy: "user" | "superseded" | null
 }
 
 export function useAgentStream() {
@@ -288,7 +294,12 @@ export function useAgentStream() {
     links: [],
   })
   // 句柄带令牌：旧流收尾时新流可能已经建立，不能按「当前句柄」一把清。
-  const abortRef = useRef<{ token: number; controller: AbortController } | null>(null)
+  // `cause` 由中止方填写，send() 据此回报 SendOutcome.abortedBy。
+  const abortRef = useRef<{
+    token: number
+    controller: AbortController
+    cause: "user" | "superseded" | null
+  } | null>(null)
   const streamSeq = useRef(0)
   // 事件闸门：中止/切会话后，在途流送来的事件一律不算数。
   // 与 streamSeq 分开：闸门只拦事件，不拦收尾清理（中止后仍要收掉光标）。
@@ -297,7 +308,10 @@ export function useAgentStream() {
   useEffect(
     () => () => {
       // StrictMode 双挂载安全：abort 未激活的 controller 是 no-op
-      abortRef.current?.controller.abort()
+      if (abortRef.current) {
+        abortRef.current.cause = "superseded"
+        abortRef.current.controller.abort()
+      }
       abortRef.current = null
     },
     [],
@@ -319,7 +333,8 @@ export function useAgentStream() {
       const token = ++streamSeq.current
       const eventToken = eventSeq.current
       const controller = new AbortController()
-      abortRef.current = { token, controller }
+      const handle = { token, controller, cause: null as "user" | "superseded" | null }
+      abortRef.current = handle
       // 服务端是否已受理（拿到 2xx 响应头）。失败时这是判断能不能撤回
       // 乐观用户气泡的唯一依据——见 AgentSendError。注意它只说明「请求被受理」，
       // 不说明「已落库」。
@@ -377,7 +392,11 @@ export function useAgentStream() {
           abortRef.current = null
         }
       }
-      return { accepted, aborted: controller.signal.aborted }
+      return {
+        accepted,
+        aborted: controller.signal.aborted,
+        abortedBy: controller.signal.aborted ? (handle.cause ?? "superseded") : null,
+      }
     },
     [],
   )
@@ -385,7 +404,11 @@ export function useAgentStream() {
   const abort = useCallback(() => {
     // 闸门递增：被中止的流随后送来的事件不算数（收尾清理照旧）。
     eventSeq.current += 1
-    abortRef.current?.controller.abort()
+    if (abortRef.current) {
+      // 用户主动按的「停止」：页面对这一格的处理是「草稿留给你重试」。
+      abortRef.current.cause = "user"
+      abortRef.current.controller.abort()
+    }
     abortRef.current = null
     setIsStreaming(false)
   }, [])
@@ -403,7 +426,11 @@ export function useAgentStream() {
     // 切会话/新建会话必须先中断在途 SSE——否则旧回合的 token 会继续写进新会话。
     // 闸门一并递增：旧流在中断之后才送来的事件，一律不算数。
     eventSeq.current += 1
-    abortRef.current?.controller.abort()
+    if (abortRef.current) {
+      // 会话被切走：调用方不该为此回填草稿（那是上一个会话的问题）。
+      abortRef.current.cause = "superseded"
+      abortRef.current.controller.abort()
+    }
     abortRef.current = null
     setIsStreaming(false)
     setMessages([])

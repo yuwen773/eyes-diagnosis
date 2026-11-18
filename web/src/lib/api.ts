@@ -425,7 +425,9 @@ export async function streamChat(
         }
         throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
       }
-      // 走到这里说明服务端已经开始推流：用户消息在返回 Flux 之前就落库了。
+      // 走到这里说明服务端已经受理这次请求（拿到 2xx 流响应头）。
+      // 注意口径：受理 = 用户消息已**入队**，落库是会话队列里的异步任务，
+      // 未必此刻已经写进 t_agent_message——所以「没有助手内容」推不出「没收到」。
       handlers.onAccepted?.()
     },
 

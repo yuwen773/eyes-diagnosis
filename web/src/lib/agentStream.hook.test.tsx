@@ -98,7 +98,7 @@ describe("useAgentStream · 受理语义", () => {
     })
 
     expect(onAccepted).toHaveBeenCalledTimes(1)
-    expect(outcome).toEqual({ accepted: true, aborted: false })
+    expect(outcome).toEqual({ accepted: true, aborted: false, abortedBy: null })
   })
 
   it("响应头到达前被「停止」：返回 accepted=false / aborted=true，且不抛错", async () => {
@@ -123,7 +123,7 @@ describe("useAgentStream · 受理语义", () => {
       outcome = await pending
     })
 
-    expect(outcome).toEqual({ accepted: false, aborted: true })
+    expect(outcome).toEqual({ accepted: false, aborted: true, abortedBy: "user" })
     expect(api().isStreaming).toBe(false)
   })
 })

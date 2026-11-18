@@ -164,6 +164,8 @@ export function AgentPage() {
       const seq = ++historySeq.current
       const expectedUser = userKeyRef.current
       const turnsAtRequest = turnCounter.current
+      // 合并去重的时间门槛：只承认「本轮之后才落库」的那条才算副本。
+      const requestedAt = Date.now()
       // 加载态在发起请求的那一刻置位；调用方是事件处理器或初始化 effect。
       setHistoryLoading(true)
       try {
@@ -172,7 +174,12 @@ export function AgentPage() {
         if (seq !== historySeq.current || threadIdRef.current !== id) return
         // 换了账号：这条历史属于上一个身份，不写回。
         if (userKeyRef.current !== expectedUser) return
-        const history = (data.messages ?? []).map(mapHistoryMessage)
+        const raw = data.messages ?? []
+        const history = raw.map(mapHistoryMessage)
+        // 时间门槛与 reconcileDelivery 同一口径：只比内容会把「用户十分钟前问过
+        // 一模一样的一句话」当成副本删掉，而删的是带 delivery / images 的本地气泡。
+        const tailAt = parseServerTime(raw[raw.length - 1]?.createdTime)
+        const freshTail = tailAt === null || tailAt >= requestedAt - RECONCILE_CLOCK_SKEW_MS
         if (turnCounter.current !== turnsAtRequest) {
           // 请求期间用户又发了消息：历史里没有这一轮，整表替换会把它抹掉。
           // 但直接丢弃会让这段历史**永远**加载不上（守卫不会复位）。所以把
@@ -190,6 +197,7 @@ export function AgentPage() {
             // 这一页偶尔已经包含刚发的那条（新会话的第一页就是整段会话）：
             // 此时本地第一条用户气泡是它的副本，只丢这一条，后面的照接。
             const duplicated =
+              freshTail &&
               first?.type === "user" &&
               tail?.type === "user" &&
               tail.content === first.content
@@ -343,15 +351,17 @@ export function AgentPage() {
             markDelivery(localId, "accepted"),
           )
           if (!outcome.accepted) {
-            // 没等到响应头就结束了——只可能是用户按了「停止」或切走会话
-            // （abort 时 fetch-event-source 是 resolve 不是 reject，所以这里
-            // 走的是成功分支）。服务端收没收到**不知道**：
-            // 不写回会话 id、不生成标题（那等于替用户断言这轮成功了），
+            // 没等到响应头就结束了——只可能是被中止（abort 时 fetch-event-source
+            // 是 resolve 不是 reject，所以这里走的是成功分支）。服务端收没收到
+            // **不知道**：不写回会话 id、不生成标题（那等于替用户断言这轮成功了），
             // 也不删图片（可能已经被那条消息引用），只用历史接口核对。
             uploader.commitUnknown(imageUrls)
             markDelivery(localId, "unconfirmed")
             void reconcileDelivery(localId, usedThreadId, text, sentAt)
-            return false
+            // 「停止」是用户对**这一条**的处置：草稿留给他重试。
+            // 切走会话/换账号则是「这一条已经不属于当前界面」——把上一个会话的
+            // 原文灌回新会话的输入框，下一次回车就发到错误的会话里。
+            return outcome.abortedBy !== "user"
           }
           uploader.commitSuccess(imageUrls)
           markDelivery(localId, "accepted")

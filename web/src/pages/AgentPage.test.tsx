@@ -11,7 +11,7 @@ import {
   type AgentSessionVO,
   type ChatHistoryVO,
 } from "@/lib/api"
-import { AgentSendError } from "@/lib/agentStream"
+import { AgentSendError, type SendOutcome } from "@/lib/agentStream"
 import { AgentPage } from "./AgentPage"
 
 const sessionState = vi.hoisted(() => ({
@@ -90,7 +90,7 @@ beforeEach(() => {
   // 默认：拿到 2xx 响应头、跑完整条流。`send` 的返回值是 `SendOutcome`，
   // 不是 undefined——页面据它决定要不要写回会话 id、生成标题。
   sendMock.mockReset()
-  sendMock.mockResolvedValue({ accepted: true, aborted: false })
+  sendMock.mockResolvedValue({ accepted: true, aborted: false, abortedBy: null })
   // 标题生成按用例断言「有没有被触发」，必须逐例清零
   vi.mocked(generateTitle).mockClear()
 })
@@ -110,6 +110,15 @@ afterEach(() => {
     configurable: true,
   })
 })
+
+/** 当前时间 → 后端 `yyyy-MM-dd HH:mm:ss` 本地时间字符串（与服务端同格式、无时区）。 */
+function nowStamp(): string {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, "0")
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(
+    now.getHours(),
+  )}:${pad(now.getMinutes())}:00`
+}
 
 /** jsdom 没有 matchMedia——主题探测要用。 */
 function stubMatchMedia() {
@@ -303,12 +312,7 @@ describe("AgentPage 未登录", () => {
     sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
     // 时间取「刚刚」：核对会排除明显更早的同文消息（用户以前问过一模一样的话），
     // 写死的历史时间在测试跑久了之后会被正确排除掉。
-    const now = new Date()
-    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate(),
-    ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(
-      now.getMinutes(),
-    ).padStart(2, "0")}:00`
+    const stamp = nowStamp()
     vi.mocked(getChatHistory).mockResolvedValueOnce({
       messages: [
         {
@@ -355,6 +359,8 @@ describe("AgentPage 未登录", () => {
     sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
     // 不带游标返回的是**最早**一页：hasMore 为真说明后面还有消息，
     // 刚发的那条不可能在这一页里，内容相同只是巧合。
+    // 时间必须取「刚刚」——否则单靠时间差守卫就会 return，这条用例变成恒真，
+    // 删掉 hasMore 守卫也照样绿。
     vi.mocked(getChatHistory).mockResolvedValueOnce({
       messages: [
         {
@@ -363,7 +369,7 @@ describe("AgentPage 未登录", () => {
           subType: "",
           content: "看着一样的话",
           isSummary: false,
-          createdTime: "2026-11-18 01:00:00",
+          createdTime: nowStamp(),
         },
       ],
       hasMore: true,
@@ -389,6 +395,83 @@ describe("AgentPage 未登录", () => {
 
     await waitFor(() => expect(getChatHistory).toHaveBeenCalled())
     expect(await screen.findByText(/送达未确认/)).toBeTruthy()
+  })
+
+  it("这一页就是整段会话且时间吻合时，核对才升级为已受理", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
+    // 与上一条互为反证：唯一差别是 hasMore=false。守卫若被删掉，两条仍然一绿一红，
+    // 但上一条会变成恒真——两条一起才钉得住「没有下一页才敢下结论」。
+    vi.mocked(getChatHistory).mockResolvedValueOnce({
+      messages: [
+        {
+          id: "100",
+          role: "USER",
+          subType: "",
+          content: "真的发上去了",
+          isSummary: false,
+          createdTime: nowStamp(),
+        },
+      ],
+      hasMore: false,
+      nextCursor: null,
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "真的发上去了" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(screen.queryByText(/送达未确认/)).toBeNull())
+  })
+
+  it("切走会话导致的中止：不回填草稿，免得旧会话的原文发到新会话", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    // abortedBy 区分「用户按停止」（草稿留给重试）与「会话被切走」（别把旧原文
+    // 倒进新会话的输入框）——两者都是 aborted，界面反应必须相反。
+    sendMock.mockResolvedValueOnce({ accepted: false, aborted: true, abortedBy: "superseded" })
+    vi.mocked(getChatHistory).mockResolvedValue({
+      messages: [],
+      hasMore: false,
+      nextCursor: null,
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "旧会话的问题" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText(/送达未确认/)).toBeTruthy()
+    // 草稿不能回填：回车就会把这句话发到当前这个新会话里
+    await waitFor(() => expect(textarea.value).toBe(""))
   })
 
   it("服务端明确拒绝（未登录）：标「未送达」且不再去核对历史", async () => {
@@ -486,7 +569,7 @@ describe("AgentPage 未登录", () => {
     sessionState.user = { id: 1, userAccount: "tester" }
     // fetch-event-source 在被 abort 时是 **resolve**，`await send()` 会正常返回。
     // 若把「没抛异常」当成成功，就会把一次根本没拿到响应头的请求标成已受理。
-    sendMock.mockResolvedValueOnce({ accepted: false, aborted: true })
+    sendMock.mockResolvedValueOnce({ accepted: false, aborted: true, abortedBy: "user" })
     vi.mocked(getChatHistory).mockResolvedValue({
       messages: [],
       hasMore: false,
@@ -541,9 +624,9 @@ describe("AgentPage 未登录", () => {
       }),
     )
     // 发送挂住，好让「历史请求还没回来时用户又发了一条」这个窗口稳定出现。
-    let finishSend!: (value: { accepted: boolean; aborted: boolean }) => void
+    let finishSend!: (value: SendOutcome) => void
     sendMock.mockReturnValueOnce(
-      new Promise<{ accepted: boolean; aborted: boolean }>((resolve) => {
+      new Promise<SendOutcome>((resolve) => {
         finishSend = resolve
       }),
     )
@@ -598,7 +681,8 @@ describe("AgentPage 未登录", () => {
             subType: "",
             content: "本地这一问",
             isSummary: false,
-            createdTime: "2026-11-18 01:00:00",
+            // 刚落的库：去重带时间门槛，写死旧时间会被正确地判成「以前问过的话」
+            createdTime: nowStamp(),
           },
         ],
         hasMore: false,
@@ -618,7 +702,7 @@ describe("AgentPage 未登录", () => {
     ).toHaveLength(1)
 
     await act(async () => {
-      finishSend({ accepted: true, aborted: false })
+      finishSend({ accepted: true, aborted: false, abortedBy: null })
     })
   })
 })
@@ -750,7 +834,7 @@ describe("AgentPage 发送互斥", () => {
         resolveUpload = resolve
       }),
     )
-    sendMock.mockResolvedValueOnce({ accepted: true, aborted: false })
+    sendMock.mockResolvedValueOnce({ accepted: true, aborted: false, abortedBy: null })
     stubMatchMedia()
 
     render(
