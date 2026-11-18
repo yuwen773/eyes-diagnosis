@@ -352,7 +352,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
      * 与「插入失败」在调用方看来是同一个异常。用主键回查找出区别：
      * 查到说明提交确实生效，它引用的对象**绝不能删**；明确查不到才允许补偿删除；
      * 查询本身失败（连接还没恢复）属于「结果未知」，一律按可能存在处理——
-     * 留一个无人引用的孤儿对象是可回收的，删掉一张被正式记录引用的原图不可逆。
+     * 删掉一张被正式记录引用的原图不可逆；而多留的那个对象**没有**自动对账器
+     * （{@code UploadCompensationService} 只扫 {@code agent-chat/}），只能人工排查。
+     * 两害相权，选那个还能靠人查回来的。
      */
     private boolean recordMayExist(Diagnosis diagnosis) {
         Long id = diagnosis.getId();
