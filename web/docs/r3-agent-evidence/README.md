@@ -132,6 +132,20 @@ scripts/evidence/<脚本>.mjs`）：
 
 真实链**未覆盖**：工具失败 / 超时 / 中断的真实链路（不破坏共享服务就无法稳定构造），
 仍由合成用例 `tool-error` / `tool-timeout` / `tool-completed` 覆盖；这两类证据不互相代替。
+**生产启用前应单独安排隔离环境的故障注入**（断链、超时、取消），验证界面状态、落库与
+资源丢弃三条链路。
+
+**三条需要长期记住的边界**：
+
+1. **资源上下文依赖同步执行模型**：`ToolResourceContext` 是 ThreadLocal，成立的前提是
+   `parallelToolExecution=false` 且 `wrapSyncToolsAsAsync=false`（工具与拦截器同线程）。
+   一旦开启并行工具或异步包装，必须改成显式传播（`ToolContext` / `ToolCallRequest.context`），
+   否则资源会静默丢失——这是架构约束，不是可选优化。
+2. **来源粒度是文档级，不是段落级**：没有 `docId` 的片段仍会交给模型、但不登记来源；
+   同一文档的多个片段按 `doc:<documentId>` 去重合并，侧栏只保留先登记那一段的片段与分数。
+   不是回归，但做精确的段落级证据引用时必须解决（需要 chunk 级标识与逐段映射）。
+3. **两个分数不可比**：`score`（重排序分）与 `retrievalScore`（向量相似度）量纲不同，
+   不要并排展示或相减；界面上只显示 `score`。
 
 产物 JSON 在 `web/test-results/r3-acceptance|r3-resources|r3-authz/`（`web/.gitignore` 忽略，可复跑再生）。
 本轮回归：`scripts/verify.sh` 绿（270 单测，3 skipped + 4 条 MySQL 集成）；前端 730 单测 /
