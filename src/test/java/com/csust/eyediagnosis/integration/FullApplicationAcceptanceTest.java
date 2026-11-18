@@ -545,6 +545,39 @@ class FullApplicationAcceptanceTest {
         }
     }
 
+    /**
+     * D-01b：人工复核人是谁，必须能追到账号角色。
+     *
+     * <p>现状是 `recordHumanReview` 只校验 admin 角色、系统里没有可核验的临床资质，
+     * 所以「管理员做的复核」和「医生做的复核」在库里长得一样（都是 REVIEWED）。
+     * 至少要让报告侧拿到复核人角色，才谈得上「不把管理员操作展示为医生复核」。
+     *
+     * <p>这里直接改库制造一条 REVIEWED 记录（不经接口），只验投影链路。
+     */
+    @Test
+    @Order(9)
+    void humanReviewCarriesTheReviewerRoleSoAdminsAreNotShownAsDoctors() throws Exception {
+        String url = "https://synthetic.invalid/reviewed-" + suffix + ".png";
+        jdbc.update("INSERT INTO t_diagnosis (url,userId,result,humanReviewStatus,humanReviewerId) "
+                + "VALUES (?,?,'normal','REVIEWED',?)", url, patientId, adminId);
+        Long id = jdbc.queryForObject(
+                "SELECT id FROM t_diagnosis WHERE url=? AND userId=?", Long.class, url, patientId);
+        try {
+            Reply reply = patient.get("/api/diagnosis/get/" + id);
+            assertEquals(0, reply.code(), reply.body());
+            JsonNode data = reply.json().path("data");
+            assertEquals("REVIEWED", data.path("humanReviewStatus").asText());
+            String role = jdbc.queryForObject(
+                    "SELECT userRole FROM t_user WHERE id=?", String.class, adminId);
+            assertEquals(role, data.path("source").path("reviewerRole").asText(),
+                    "复核人角色必须原样来自 t_user，不能由展示层补一个「医生」");
+            // 写入方是管理员，报告上就不许出现「医生复核」这种说法。
+            assertFalse(reply.body().contains("医生复核"), "不得把管理员操作说成医生复核：" + reply.body());
+        } finally {
+            jdbc.update("DELETE FROM t_diagnosis WHERE id=?", id);
+        }
+    }
+
     // ── 安全：Origin/CSRF 过滤 ─────────────────────────────────────────
 
     @Test

@@ -121,6 +121,23 @@ class DiagnosisSourceProjectionServiceTest {
     }
 
     @Test
+    void reviewerRoleIsReportedSoTheClientCanTellAdminFromDoctor() {
+        // D-01b：报告要能说出「谁做的复核」。只给账号角色，不给「医生」这个词——
+        // 本系统没有可核验的临床资质数据源，把 admin 的操作说成医生复核就是编事实。
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        when(jdbc.queryForList(anyString(), eq(String.class), any(Object[].class))).thenAnswer(inv -> {
+            String sql = inv.getArgument(0);
+            return sql.contains("userRole") ? List.of("admin") : List.of();
+        });
+
+        DiagnosisSourceProjection view =
+                new DiagnosisSourceProjectionService(jdbc).project(6L, "https://cdn/x.png");
+
+        assertEquals("admin", view.reviewerRole());
+        assertEquals(DiagnosisSourceProjection.SOURCE_DIRECT, view.recordSource());
+    }
+
+    @Test
     void receiptMaskingKeepsShortIdsWhole() {
         assertEquals("abc", DiagnosisSourceProjectionService.maskReceipt("abc"));
         assertEquals("abcdefgh…", DiagnosisSourceProjectionService.maskReceipt("abcdefghIJKL"));

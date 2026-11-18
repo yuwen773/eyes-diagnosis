@@ -197,7 +197,8 @@ public class DiagnosisController {
         } catch (DiagnosisSourceProjectionService.ProjectionUnavailable e) {
             // 读不出来源就说读不出来。不能退化成「没有授权、没有归档」——那是在编事实。
             vo.setSource(new DiagnosisSourceProjection(
-                    null, null, null, null, null, null, DiagnosisSourceProjection.Archival.UNKNOWN));
+                    null, null, null, null, null, null, null,
+                    DiagnosisSourceProjection.Archival.UNKNOWN));
         }
         return ResultUtils.success(vo);
     }

@@ -194,23 +194,139 @@ export function severityRisk(severity?: string): Risk {
   }
 }
 
-/** 复核状态 → 展示文案与风险色。 */
-export function reviewState(status?: string): { label: string; risk: Risk } {
+/**
+ * 人工复核状态 → 展示文案与风险色。
+ *
+ * <p>取值来自后端 {@code HumanReviewStatus}（PENDING_AI / AI_ONLY / AWAITING_REVIEW /
+ * REVIEWED / OVERRIDDEN）。三条不能混的说法：
+ *
+ * <ul>
+ *   <li>AI_ONLY = **只有 AI 结论，没有进入复核队列**。以前这里统一显示「待复核」，
+ *       等于替系统承诺了一件没发生的事：队列里根本没有这条。</li>
+ *   <li>AWAITING_REVIEW 才是真的进了队列。</li>
+ *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统没有
+ *       可核验的临床资质，复核人角色看 {@code source.reviewerRole}（D-01b）。</li>
+ * </ul>
+ */
+export function humanReviewState(status?: string | null): { label: string; risk: Risk } {
   switch (status) {
-    case "APPROVED":
-      return { label: "已签字", risk: "normal" }
-    case "REJECTED":
-      return { label: "已退回", risk: "critical" }
-    case "PENDING":
-      return { label: "待复核", risk: "attention" }
     case "PENDING_AI":
+      return { label: "待模型出结论", risk: "unknown" }
+    case "AI_ONLY":
+      return { label: "仅 AI 结论 · 未进入复核队列", risk: "unknown" }
+    case "AWAITING_REVIEW":
+      return { label: "已进入复核队列 · 待复核", risk: "attention" }
+    case "REVIEWED":
+      return { label: "人工复核已记录", risk: "normal" }
+    case "OVERRIDDEN":
+      return { label: "人工结论已推翻 AI", risk: "attention" }
     default:
-      return { label: "待复核", risk: "attention" }
+      return { label: "未记录", risk: "unknown" }
   }
 }
 
 /**
- * 置信度分档。
+ * 记录来源 → 展示文案。
+ *
+ * <p>只陈述「这条记录挂在哪个流程上」：`COLLABORATION_DRAFT` 说明它由协作草稿生成，
+ * **不**说明草稿已获批、患者已授权——那两件事分别看 `draftReviewState` 与
+ * `authorizationState`。把它们折叠成一句「已授权诊断」就是在编事实。
+ */
+export function recordSourceLabel(source?: string | null): string {
+  switch (source) {
+    case "DIRECT":
+      return "本人上传 · 直接判读"
+    case "COLLABORATION_DRAFT":
+      return "协作任务 · 由草稿生成"
+    default:
+      return "未记录"
+  }
+}
+
+/** 协作草稿审核状态 → 文案。无关联草稿返回 null（调用方整行不显示）。 */
+export function draftReviewLabel(state?: string | null): string | null {
+  switch (state) {
+    case "APPROVED":
+      return "草稿已审核通过"
+    case "REJECTED":
+      return "草稿被退回"
+    case "PENDING":
+      return "草稿待审核"
+    default:
+      return null
+  }
+}
+
+/**
+ * 患者授权保存 → 文案。授权**不等于**临床人工复核，也不等于草稿获批。
+ *
+ * <p>回执只给前缀：完整回执是否对本人开放是产品决策，前端不补全也不展示全文。
+ */
+export function authorizationLabel(
+  state?: string | null,
+  authorizedAt?: string | null,
+  receipt?: string | null,
+): string {
+  switch (state) {
+    case "APPROVED": {
+      const when = authorizedAt ? ` · ${authorizedAt}` : ""
+      const code = receipt ? ` · 回执 ${receipt}` : ""
+      return `患者已授权保存${when}${code}`
+    }
+    case "OFFERED":
+      return "已向患者提出，待授权"
+    case "EXPIRED":
+      return "授权已过期"
+    default:
+      return "无授权记录"
+  }
+}
+
+/**
+ * 影像归档状态 → 文案。
+ *
+ * <p>刻意不用「有没有公开 URL」代替：协作影像按隐私策略不提供公开地址，
+ * 但对象**确实归档了**，把它显示成「未保存」就是在说一件不成立的事。
+ * `ARCHIVED` 也只说「记录里有这个地址」，本轮没有存储侧存在性探测。
+ */
+export function archivalLabel(state?: string | null): string {
+  switch (state) {
+    case "ARCHIVED":
+      return "已归档 · 有公开地址"
+    case "ARCHIVED_NOT_PUBLIC":
+      return "已归档 · 按隐私策略不公开"
+    case "NOT_ARCHIVED":
+      return "未留存影像"
+    default:
+      return "归档状态无法确认"
+  }
+}
+
+/**
+ * 复核人角色 → 文案（D-01b）。
+ *
+ * <p>**只说账号角色，不说职称**：系统里没有可核验的执业资质数据源，
+ * 把 `admin` 的操作写成「医生复核」是伪造医学事实。角色本身也照原码给出，
+ * 便于核对。
+ */
+export function reviewerRoleLabel(role?: string | null): string {
+  switch (role) {
+    case "doctor":
+      return "医生（doctor）"
+    case "admin":
+      return "管理员（admin）"
+    case "user":
+      return "普通用户（user）"
+    case null:
+    case undefined:
+    case "":
+      return "未记录"
+    default:
+      return role
+  }
+}
+
+/**
  *
  * 三档，不把 0.4 与 0.6 折叠成同一个标签：患者看到「低置信」时无从判断该多担心，
  * 两档折叠等于把风险信息直接丢掉。阈值沿用 0.75 / 0.60（低于 0.6 不宜单独下结论）。

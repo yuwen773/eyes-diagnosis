@@ -35,11 +35,17 @@ public class DiagnosisSourceProjectionService {
     public DiagnosisSourceProjection project(long diagnosisId, String diagnosisUrl) {
         String taskId = firstString(
                 "SELECT patientTaskId FROM t_diagnosis WHERE id = ?", diagnosisId);
+        // 复核人角色：只陈述账号角色，不陈述临床资质（本系统没有可核验的资质数据源）。
+        // 与记录来源无关，直接拍摄与协作记录都要读。
+        String reviewerRole = firstString(
+                "SELECT u.userRole FROM t_diagnosis d JOIN t_user u ON u.id = d.humanReviewerId "
+                        + "WHERE d.id = ?", diagnosisId);
         if (taskId == null || taskId.isBlank()) {
             // 患者自传影像的直接判读：没有草稿、没有授权、没有任务。这是正常的，不是缺失。
             return new DiagnosisSourceProjection(
                     DiagnosisSourceProjection.SOURCE_DIRECT,
                     null, null, null, null, null,
+                    reviewerRole,
                     archivalState(diagnosisUrl, null));
         }
 
@@ -56,6 +62,7 @@ public class DiagnosisSourceProjectionService {
                 authorization == null ? null : asString(authorization.get("status")),
                 authorization == null ? null : asString(authorization.get("authorizedAt")),
                 authorization == null ? null : maskReceipt(asString(authorization.get("receiptId"))),
+                reviewerRole,
                 archivalState(diagnosisUrl, objectKey));
     }
 

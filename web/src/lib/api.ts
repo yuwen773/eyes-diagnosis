@@ -96,6 +96,39 @@ export type DiagnosisResult = {
   calibrationStatus?: string
   oodStatus?: string
   oodScore?: number
+  /**
+   * 来源与复核的只读投影（仅详情接口下发；列表接口**不带**）。
+   *
+   * <p>缺省有两种含义：老记录走的是没有投影的接口，或投影读取失败——
+   * 后者后端仍会下发一个只有 `imageArchivalState: "UNKNOWN"` 的对象。
+   * 两种情况都不能当成「没有授权、没有归档」。
+   */
+  source?: DiagnosisSource
+}
+
+/**
+ * 来源投影：把库里**本来分开存着**的三件事并排摆出来，不让报告页再互相猜。
+ *
+ * <p>草稿是否被批准、患者是否授权保存、有没有做过人工复核——三者不能互相替代。
+ * 全部字段只读，后端不接受它们作为写入参数。
+ */
+export type DiagnosisSource = {
+  /** DIRECT = 本人上传直接判读；COLLABORATION_DRAFT = 由协作草稿生成（不代表草稿已获批）。 */
+  recordSource?: string | null
+  /** 关联的影像任务 id；直接判读为 null。 */
+  patientTaskId?: string | null
+  /** 协作草稿审核状态 PENDING / APPROVED / REJECTED；无关联草稿为 null。 */
+  draftReviewState?: string | null
+  /** 患者授权状态 OFFERED / APPROVED / EXPIRED；无授权记录为 null。 */
+  authorizationState?: string | null
+  /** 授权时间（原样来自库，不做时区改写）。 */
+  authorizedAt?: string | null
+  /** 回执号**前缀**（前 8 位 + 省略号）；完整回执未开放。 */
+  authorizationReceipt?: string | null
+  /** 复核人**账号角色**（admin / doctor / user）；不是临床资质证明。 */
+  reviewerRole?: string | null
+  /** ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN。 */
+  imageArchivalState?: string | null
 }
 
 export type UploadedPicture = {

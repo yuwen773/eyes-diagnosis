@@ -90,6 +90,7 @@ class DiagnosisSourceProjectionApiTest {
         when(projectionService.project(anyLong(), anyString())).thenReturn(new DiagnosisSourceProjection(
                 DiagnosisSourceProjection.SOURCE_COLLABORATION_DRAFT,
                 "task-1", "APPROVED", "APPROVED", "2026-11-17 22:10:00", "abcdef12…",
+                "doctor",
                 DiagnosisSourceProjection.Archival.ARCHIVED_NOT_PUBLIC));
 
         mockMvc.perform(get("/diagnosis/get/9"))

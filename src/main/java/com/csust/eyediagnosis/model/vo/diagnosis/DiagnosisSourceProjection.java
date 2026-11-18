@@ -24,6 +24,9 @@ import java.io.Serializable;
  * @param authorizationState 患者授权状态（OFFERED / APPROVED / EXPIRED）；无授权记录为 null
  * @param authorizedAt  患者授权时间（ISO-8601，UTC）；未授权为 null
  * @param authorizationReceipt 回执号**前缀**（前 8 位 + 省略号）。完整回执是否对本人开放是产品决策，本轮不开放
+ * @param reviewerRole  人工复核人的**账号角色**（`admin` / `doctor` / `user`）；没有人工复核记录为 null。
+ *                      只陈述「这个账号的角色是什么」，不陈述「他有没有临床资质」——
+ *                      本系统没有可核验的资质数据源，见 D-01b。
  * @param imageArchivalState 影像归档状态：ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN
  */
 public record DiagnosisSourceProjection(
@@ -33,6 +36,7 @@ public record DiagnosisSourceProjection(
         String authorizationState,
         String authorizedAt,
         String authorizationReceipt,
+        String reviewerRole,
         String imageArchivalState
 ) implements Serializable {
 
