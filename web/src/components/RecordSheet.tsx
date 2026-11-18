@@ -4,15 +4,20 @@ import { ClassScale } from "@/components/ClassScale"
 import { ConfidenceDial } from "@/components/ConfidenceDial"
 import { RiskTag } from "@/components/RiskTag"
 import {
+  archivalLabel,
+  authorizationLabel,
   canonicalClassName,
   classCode,
   confidenceBand,
   confidencePercent,
+  draftReviewLabel,
   formatTimestamp,
+  humanReviewState,
   normalizeConfidence,
   rankClasses,
   recommendationLines,
-  reviewState,
+  recordSourceLabel,
+  reviewerRoleLabel,
   severityLabel,
   severityRisk,
   shortHash,
@@ -41,7 +46,10 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
   const rows = rankClasses(result)
   const confidence = normalizeConfidence(result.confidence ?? result.probability)
   const band = confidenceBand(result.confidence ?? result.probability)
-  const review = reviewState(result.humanReviewStatus)
+  const review = humanReviewState(result.humanReviewStatus)
+  // 来源投影只在本人详情接口下发；老记录/读取失败时为 undefined，整段不显示，
+  // 绝不能退化成「没有授权、没有归档」。
+  const source = result.source
   const recos = recommendationLines(result)
   const stampRisk = severityRisk(result.severity)
   // 主诊断用规范类名展示：后端枚举给的是短名（「糖尿病」），
@@ -171,6 +179,54 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
               {result.humanReviewNote ? (
                 <p className="sheet__note">{result.humanReviewNote}</p>
               ) : null}
+            </section>
+          ) : null}
+
+          {source ? (
+            <section className="sheet__section" data-provenance="record">
+              <div className="sheet__section-head">
+                <span className="overline">来源与授权 · PROVENANCE</span>
+                <span className="overline">只读</span>
+              </div>
+              <div className="sheet__facts">
+                <div className="readout">
+                  <span className="readout__label">记录来源</span>
+                  <span className="readout__value">{recordSourceLabel(source.recordSource)}</span>
+                </div>
+                <div className="readout">
+                  <span className="readout__label">草稿审核</span>
+                  <span className="readout__value">
+                    {draftReviewLabel(source.draftReviewState) ??
+                      (source.recordSource === "COLLABORATION_DRAFT" ? "未记录" : "—")}
+                  </span>
+                </div>
+                <div className="readout">
+                  <span className="readout__label">患者授权</span>
+                  <span className="readout__value">
+                    {source.recordSource === "DIRECT" && !source.authorizationState
+                      ? "本人上传，无需授权"
+                      : authorizationLabel(
+                          source.authorizationState,
+                          source.authorizedAt,
+                          source.authorizationReceipt,
+                        )}
+                  </span>
+                </div>
+                <div className="readout">
+                  <span className="readout__label">复核人角色</span>
+                  <span className="readout__value readout__value--mono">
+                    {reviewerRoleLabel(source.reviewerRole)}
+                  </span>
+                </div>
+                <div className="readout">
+                  <span className="readout__label">影像</span>
+                  <span className="readout__value">{archivalLabel(source.imageArchivalState)}</span>
+                </div>
+              </div>
+              <p className="sheet__note">
+                复核人角色取自账号，系统内没有可核验的执业资质数据；角色不等于临床资质证明。
+                患者授权保存只表示同意保存这份材料，不表示已完成临床复核。
+              </p>
             </section>
           ) : null}
 

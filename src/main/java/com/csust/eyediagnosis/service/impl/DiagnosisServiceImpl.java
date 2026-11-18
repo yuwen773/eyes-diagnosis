@@ -391,6 +391,14 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         ThrowUtils.throwIf(diagnosisId == null || diagnosisId <= 0, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(dto == null, ErrorCode.PARAMS_ERROR);
         // 仅允许管理员；其他角色绝不能写入 human* 字段
+        //
+        // D-01b（未决，需医学负责人裁定）：这里把「能写人工复核」等同于 admin 角色，
+        // 而系统里没有任何**可核验的临床资质**数据源——t_user 只有一个 userRole，
+        // 没有执业证书编号、没有资质审核流程。所以在资质制度落地之前：
+        //   1) 裁定前维持现状：只有 admin 能写（doctor 角色反而写不了），既不扩权也不收权；
+        //   2) 也不假装已经解决——状态只记 REVIEWED，who 记在 humanReviewerId 与审计的
+        //      actorRole 里，展示层据此说「人工复核（复核人角色 admin）」，
+        //      绝不写成「医生复核」。
         ThrowUtils.throwIf(!AuthConstant.ADMIN_ROLE.equals(reviewer.getUserRole()),
                 ErrorCode.NO_AUTH_ERROR, "仅管理员可写入人工复核字段");
         // humanResult 必填；防止空 DTO 通过校验

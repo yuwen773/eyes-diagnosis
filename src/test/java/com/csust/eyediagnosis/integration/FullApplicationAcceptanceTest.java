@@ -463,10 +463,125 @@ class FullApplicationAcceptanceTest {
         assertNotEquals(0, strangerApprove.code(), "他人不得代为授权");
     }
 
+    // ── N. 来源投影（D-01 / D-06）：真实 MySQL 上的 round-trip ───────────
+
+    /**
+     * 证明 {@code GET /diagnosis/get/{id}} 的 {@code source} 真的来自
+     * t_diagnosis / t_doctor_review / t_patient_authorization / t_diagnosis_task 四张表，
+     * 不是单测里 mock 出来的形状。
+     *
+     * <p>为什么非要放在应用级验收里：投影服务的单测全是 mock JdbcTemplate 的
+     * 「SQL 片段 + 返回行」字符串断言——列名写错、类型漂移、排序失效都不会红。
+     *
+     * <p>数据不是新造的，是前面步骤的真实产物：Order 2 建任务（有 objectKey），
+     * Order 5 医生批准草稿，Order 6 患者批准保存授权（授权落库会写入一条
+     * patientTaskId 指向本任务的 t_diagnosis）。
+     */
+    @Test
+    @Order(7)
+    void sourceProjectionRoundTripsThroughTheRealTablesAndStaysInsideOwnership() throws Exception {
+        List<Long> ids = jdbc.queryForList(
+                "SELECT id FROM t_diagnosis WHERE patientTaskId=?", Long.class, taskId);
+        assertEquals(1, ids.size(), "授权保存后应恰好有一条 patientTaskId 指向本任务的判读记录");
+        long diagnosisId = ids.get(0);
+        String objectKey = jdbc.queryForObject(
+                "SELECT objectKey FROM t_diagnosis_task WHERE taskId=?", String.class, taskId);
+        assertNotNull(objectKey);
+
+        Reply mine = patient.get("/api/diagnosis/get/" + diagnosisId);
+        assertEquals(0, mine.code(), mine.body());
+        JsonNode source = mine.json().path("data").path("source");
+        assertEquals("COLLABORATION_DRAFT", source.path("recordSource").asText(), mine.body());
+        assertEquals(taskId, source.path("patientTaskId").asText());
+        assertEquals("APPROVED", source.path("draftReviewState").asText(), "Order 5 已由医生批准草稿");
+        assertEquals("APPROVED", source.path("authorizationState").asText(), "Order 6 已由患者批准保存");
+        assertEquals("ARCHIVED_NOT_PUBLIC", source.path("imageArchivalState").asText(),
+                "协作影像有对象键、但没有公开地址");
+
+        // 授权时间必须与库内同源（同一行、同一次转换），不能是服务端补的 now()。
+        Object rawAuthorizedAt = jdbc.queryForObject(
+                "SELECT authorizedAt FROM t_patient_authorization WHERE taskId=?", Object.class, taskId);
+        assertNotNull(rawAuthorizedAt, "批准保存后必须有授权时间");
+        assertEquals(String.valueOf(rawAuthorizedAt), source.path("authorizedAt").asText(),
+                "authorizedAt 必须原样来自 t_patient_authorization");
+
+        // 回执只给前缀：完整回执对本人是否可见是产品决策，接口不替产品决定。
+        String receiptId = jdbc.queryForObject(
+                "SELECT receiptId FROM t_patient_authorization WHERE taskId=?", String.class, taskId);
+        assertNotNull(receiptId);
+        String masked = source.path("authorizationReceipt").asText();
+        assertTrue(masked.endsWith("…") && masked.length() < receiptId.length(),
+                "回执必须打码，实际：" + masked);
+        assertFalse(mine.body().contains(receiptId), "完整回执不得下发");
+
+        // 内部对象键不外泄。
+        assertFalse(mine.body().contains(objectKey), "不得输出内部 objectKey");
+
+        // 归属：他人读不到这条记录，也拿不到投影。
+        Reply strangerRead = stranger.get("/api/diagnosis/get/" + diagnosisId);
+        assertNotEquals(0, strangerRead.code(), "他人的判读记录不可读");
+
+        // 列表接口不下发投影：回执前缀与授权时间不该随管理端分页扩散。
+        Reply list = patient.postJson("/api/diagnosis/list/page/vo",
+                json.writeValueAsString(Map.of("current", 1, "pageSize", 20)));
+        assertEquals(0, list.code(), list.body());
+        assertFalse(list.body().contains("patientTaskId"), "列表接口不得带来源投影：" + list.body());
+
+        // 历史普通记录（没有 patientTaskId）必须保持兼容：有公开地址即 ARCHIVED。
+        String directUrl = "https://synthetic.invalid/direct-" + suffix + ".png";
+        jdbc.update("INSERT INTO t_diagnosis (url,userId,result) VALUES (?,?,'normal')", directUrl, patientId);
+        Long directId = jdbc.queryForObject(
+                "SELECT id FROM t_diagnosis WHERE url=? AND userId=?", Long.class, directUrl, patientId);
+        try {
+            Reply direct = patient.get("/api/diagnosis/get/" + directId);
+            assertEquals(0, direct.code(), direct.body());
+            JsonNode directSource = direct.json().path("data").path("source");
+            assertEquals("DIRECT", directSource.path("recordSource").asText(), direct.body());
+            assertEquals("ARCHIVED", directSource.path("imageArchivalState").asText());
+            assertTrue(directSource.path("patientTaskId").isNull(), "直接判读没有任务 id");
+            assertTrue(directSource.path("authorizationState").isNull(), "直接判读没有授权记录");
+        } finally {
+            jdbc.update("DELETE FROM t_diagnosis WHERE id=?", directId);
+        }
+    }
+
+    /**
+     * D-01b：人工复核人是谁，必须能追到账号角色。
+     *
+     * <p>现状是 `recordHumanReview` 只校验 admin 角色、系统里没有可核验的临床资质，
+     * 所以「管理员做的复核」和「医生做的复核」在库里长得一样（都是 REVIEWED）。
+     * 至少要让报告侧拿到复核人角色，才谈得上「不把管理员操作展示为医生复核」。
+     *
+     * <p>这里直接改库制造一条 REVIEWED 记录（不经接口），只验投影链路。
+     */
+    @Test
+    @Order(9)
+    void humanReviewCarriesTheReviewerRoleSoAdminsAreNotShownAsDoctors() throws Exception {
+        String url = "https://synthetic.invalid/reviewed-" + suffix + ".png";
+        jdbc.update("INSERT INTO t_diagnosis (url,userId,result,humanReviewStatus,humanReviewerId) "
+                + "VALUES (?,?,'normal','REVIEWED',?)", url, patientId, adminId);
+        Long id = jdbc.queryForObject(
+                "SELECT id FROM t_diagnosis WHERE url=? AND userId=?", Long.class, url, patientId);
+        try {
+            Reply reply = patient.get("/api/diagnosis/get/" + id);
+            assertEquals(0, reply.code(), reply.body());
+            JsonNode data = reply.json().path("data");
+            assertEquals("REVIEWED", data.path("humanReviewStatus").asText());
+            String role = jdbc.queryForObject(
+                    "SELECT userRole FROM t_user WHERE id=?", String.class, adminId);
+            assertEquals(role, data.path("source").path("reviewerRole").asText(),
+                    "复核人角色必须原样来自 t_user，不能由展示层补一个「医生」");
+            // 写入方是管理员，报告上就不许出现「医生复核」这种说法。
+            assertFalse(reply.body().contains("医生复核"), "不得把管理员操作说成医生复核：" + reply.body());
+        } finally {
+            jdbc.update("DELETE FROM t_diagnosis WHERE id=?", id);
+        }
+    }
+
     // ── 安全：Origin/CSRF 过滤 ─────────────────────────────────────────
 
     @Test
-    @Order(7)
+    @Order(8)
     void crossOriginStateChangesAreRejectedBeforeReachingAnyController() throws Exception {
         String payload = json.writeValueAsString(Map.of(
                 "taskId", taskId, "threadId", threadId, "idempotencyKey", "origin-" + suffix));
