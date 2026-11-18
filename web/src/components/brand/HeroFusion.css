@@ -1,0 +1,253 @@
+/* ==========================================================================
+   E-09 · 融合主视觉（OpticFlow 光带 × Prism 棱镜）
+   --------------------------------------------------------------------------
+   两层：下面是一张 WebGL2 光场画布（vendored Beams，唯一一个渲染循环），
+   上面是一张 SVG 光学层（入射线 + 棱镜 + 色散扇）。
+
+   入射线**直接复用方案 A 的玻璃体样式**：`.optic-flow__sheath`、
+   `.optic-flow__fiber-set*` 与 `optic-stop--*` 渐变都在 brand.css 里。
+   这里只补三件事：把 A 的纤维调色板变量挂到 `.hero-fusion` 上（那组变量原本
+   作用域是 `.optic-flow`）、棱镜与色散扇自己的材质、以及动效预算。
+   ========================================================================== */
+
+.hero-fusion {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* 与 `.optic-flow` 同一组纤维调色板，只是换了个作用域。 */
+  --optic-fiber: rgba(38, 84, 160, 0.26);
+  --optic-fiber-core: rgba(36, 87, 201, 0.42);
+  --optic-fiber-rim: var(--brand-glass-optical-edge);
+}
+
+html.dark .hero-fusion {
+  --optic-fiber: rgba(190, 230, 255, 0.3);
+  --optic-fiber-core: rgba(225, 244, 255, 0.5);
+}
+
+.hero-fusion__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* WebGL 不可用时的静态底：一层很淡的径向光，避免只剩棱镜浮在白板上。 */
+.hero-fusion__static-wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 62% 44%,
+    rgba(78, 148, 240, 0.16),
+    rgba(78, 148, 240, 0) 66%
+  );
+}
+
+html.dark .hero-fusion__static-wash {
+  background: radial-gradient(
+    circle at 62% 44%,
+    rgba(124, 196, 255, 0.18),
+    rgba(124, 196, 255, 0) 66%
+  );
+}
+
+.hero-fusion__optics {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* 四周收边：光带与色散扇都不许被容器裁出一条直边。 */
+  -webkit-mask-image: radial-gradient(132% 112% at 58% 44%, #000 54%, transparent 100%);
+  mask-image: radial-gradient(132% 112% at 58% 44%, #000 54%, transparent 100%);
+}
+
+/* 手机上容器比桌面高得多：桌面的径向遮罩会把光带上半段整段吃掉。
+   窄屏把遮罩中心挪到棱镜所在的空档上。 */
+@media (max-width: 640px) {
+  .hero-fusion__optics {
+    -webkit-mask-image: radial-gradient(120% 62% at 55% 62%, #000 58%, transparent 100%);
+    mask-image: radial-gradient(120% 62% at 55% 62%, #000 58%, transparent 100%);
+  }
+}
+
+/* --- 色散扇 ---------------------------------------------------------------- */
+
+.hero-fusion__rays {
+  mix-blend-mode: multiply;
+  fill: none;
+  stroke-linecap: round;
+}
+
+html.dark .hero-fusion__rays {
+  mix-blend-mode: screen;
+}
+
+.hero-fusion__rays--glow {
+  filter: blur(5px);
+}
+
+/* --- 棱镜 ------------------------------------------------------------------ */
+
+.hero-fusion__face {
+  stroke-width: 1.9;
+  stroke-linejoin: round;
+}
+
+.hero-fusion__facet {
+  fill: none;
+  stroke: rgba(47, 111, 201, 0.32);
+  stroke-width: 1;
+}
+
+.hero-fusion__facet-fill {
+  fill: rgba(47, 111, 201, 0.05);
+  stroke: none;
+}
+
+html.dark .hero-fusion__facet-fill {
+  fill: rgba(140, 200, 255, 0.07);
+}
+
+html.dark .hero-fusion__facet {
+  stroke: rgba(191, 224, 255, 0.4);
+}
+
+.hero-fusion__caustic {
+  opacity: 0.1;
+}
+
+/* 棱镜压在光带上：如果只给一层钴蓝，三角形会读成「光带上的一块暗斑」。
+   亮色给一层乳白玻璃（提亮而不是压暗），暗色给一层比背景略亮的冷蓝。 */
+.hero-fusion__stop--face-a {
+  stop-color: #ffffff;
+  stop-opacity: 0.52;
+}
+
+.hero-fusion__stop--face-b {
+  stop-color: #cfe6ff;
+  stop-opacity: 0.1;
+}
+
+.hero-fusion__stop--edge-a {
+  stop-color: #2f6fc9;
+  stop-opacity: 0.95;
+}
+
+.hero-fusion__stop--edge-b {
+  stop-color: #64cadd;
+  stop-opacity: 0.6;
+}
+
+.hero-fusion__stop--edge-c {
+  stop-color: #8f7fe0;
+  stop-opacity: 0.52;
+}
+
+.hero-fusion__stop--caustic-core {
+  stop-color: #dff0ff;
+  stop-opacity: 0.5;
+}
+
+.hero-fusion__stop--caustic-fade {
+  stop-color: #e8f6ff;
+  stop-opacity: 0;
+}
+
+.hero-fusion__stop--halo-core {
+  stop-color: #7fb6f0;
+  stop-opacity: 0.16;
+}
+
+.hero-fusion__stop--halo-fade {
+  stop-color: #7fb6f0;
+  stop-opacity: 0;
+}
+
+html.dark .hero-fusion__stop--halo-core {
+  stop-color: #7cc4ff;
+  stop-opacity: 0.22;
+}
+
+html.dark .hero-fusion__stop--halo-fade {
+  stop-color: #7cc4ff;
+  stop-opacity: 0;
+}
+
+html.dark .hero-fusion__stop--face-a {
+  stop-color: #a8ccff;
+  stop-opacity: 0.16;
+}
+
+html.dark .hero-fusion__stop--face-b {
+  stop-color: #4a86c8;
+  stop-opacity: 0.06;
+}
+
+html.dark .hero-fusion__stop--edge-a {
+  stop-color: #a6d2ff;
+  stop-opacity: 0.95;
+}
+
+html.dark .hero-fusion__stop--edge-b {
+  stop-color: #7ce6fb;
+  stop-opacity: 0.62;
+}
+
+html.dark .hero-fusion__stop--edge-c {
+  stop-color: #c0acff;
+  stop-opacity: 0.58;
+}
+
+html.dark .hero-fusion__stop--caustic-core {
+  stop-color: #7ce6fb;
+  stop-opacity: 0.28;
+}
+
+html.dark .hero-fusion__stop--caustic-fade {
+  stop-color: #7ce6fb;
+  stop-opacity: 0;
+}
+
+/* --- 动效预算：只在 live 且可见时跑 ---------------------------------------- */
+
+.hero-fusion__optics.is-drifting .optic-flow__fiber-set {
+  animation: optic-drift 26s ease-in-out infinite alternate;
+}
+
+.hero-fusion__optics.is-drifting .hero-fusion__rays {
+  animation: hero-fusion-shimmer 11s ease-in-out infinite alternate;
+}
+
+.hero-fusion__optics.is-drifting .hero-fusion__prism {
+  animation: hero-fusion-breathe 14s ease-in-out infinite alternate;
+}
+
+@keyframes hero-fusion-shimmer {
+  from {
+    opacity: 0.84;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-fusion-breathe {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fusion__optics.is-drifting .optic-flow__fiber-set,
+  .hero-fusion__optics.is-drifting .hero-fusion__rays,
+  .hero-fusion__optics.is-drifting .hero-fusion__prism {
+    animation: none;
+  }
+}

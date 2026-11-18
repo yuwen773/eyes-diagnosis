@@ -27,7 +27,11 @@ const BASELINE: Record<string, number> = {
   "agent.css": 3,
   "app.css": 97,
   "auth.css": 24,
-  "brand.css": 47,
+  // 47 → 67（E-09，2026-11-18）：新增的 20 条全部来自 `OpticFlow` 的光学带调色板，
+  // 且是从 `feat/iris21-multiagent-integration@9a6dbcb6` **逐字**取回的——SVG
+  // `stop-color` 与 mask 的 `#000` / `transparent` 属本棘轮明确允许的写死类别，
+  // 本轮没有新写任何一个字面色。此处只登记，不放松其他文件。
+  "brand.css": 67,
   "fault.css": 1,
   "news.css": 2,
   // 协作四角色的 CRITIC 金（浅/深两版）：现有令牌里没有对应色，

@@ -1,9 +1,17 @@
 # 第三方来源与许可
 
-本目录下的 `Prism.tsx` 与 `Prism.css` 是**上游第三方组件的 vendor 副本**，
-不是本项目原创。其余文件（`HeroPrism.tsx`、`HeroPrism.test.tsx`、`LandingHero.tsx`、
-`BrandPanel.tsx`、`BrandFooter.tsx`、`notices.test.ts`）由本项目编写。
+本目录下有**两组**上游第三方组件的 vendor 副本，不是本项目原创：
+
+- `Prism.tsx` + `Prism.css` —— React Bits · **Prism**（首屏方案 B）；
+- `beamsEngine.ts` + `beamsMount.ts` —— React Bits · **Beams**（首屏方案 A 与融合候选 C 的动态光场）。
+
+其余文件（`HeroPrism.tsx`、`HeroFusion.tsx`、`OpticFlow.tsx`、`HeroCompareStage.tsx`、
+`LandingHero.tsx`、`BrandPanel.tsx`、`BrandFooter.tsx` 及各自的测试）由本项目编写。
 品牌顶栏的虹膜标与字标已随 R2.5-01 移到 `src/components/shell/Wordmark.tsx`，同样是本项目编写。
+
+> **E-09（2026-11-18）**：`OpticFlow.tsx` / `beamsEngine.ts` / `beamsMount.ts` 是**逐字**从
+> `feat/iris21-multiagent-integration@9a6dbcb6` 取回的方案 A 基线，为的是让三方案对照
+> 跑的是真实组件，而不是复刻版。E-09 没有引入任何新的第三方依赖。
 
 ---
 
@@ -136,6 +144,58 @@ Content），本仓库一个都没有引入。
 
 **没有引入的东西**：Motion、GSAP、Three.js / React Three Fiber、`@react-three/*`、
 Hugeicons。图标一律用既有的 `lucide-react` 静态命名导入。
+
+---
+
+## React Bits · Beams
+
+| 项 | 内容 |
+|----|------|
+| 上游 | https://github.com/DavidHDev/react-bits |
+| 源文件 | `src/content/Backgrounds/Beams/Beams.jsx` |
+| **固定 commit** | **`ed33ebe4acfe29e60fb759bcccc70a138ce2dcef`**（2026-11-08，"Fix/responsive preview flicker (#1109)"） |
+| 取用时间 | 2026-11-12，取 `main` 当时该文件的最新一次提交 |
+| 作者 | David Haz |
+| 许可 | MIT License **+ Commons Clause License Condition v1.0**（Copyright (c) 2026 David Haz） |
+| 署名位置 | 本文件 + `beamsEngine.ts` 文件头，两处都保留 |
+
+> 上游没有给这个组件打版本标签，所以**只认 commit SHA**。换了 SHA 就要重做逐字比对。
+
+### 与固定 commit 的逐字比对（2026-11-12）
+
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 结论 |
+|---|---|---|---|
+| 顶点 | `254cf7532230` | `254cf7532230` | 逐字一致 |
+| FIELD | `ce0437306e9d` | `3663510bac21` | 已改动（见下） |
+| COMPOSITE | `39bf1cf8ca1a` | `05e950c06437` | 已改动（见下） |
+
+> 计算口径：取模板字符串**两个反引号之间的全部内容**，先把行尾统一成 `LF` 再算
+> SHA-256。换行符不统一会得到完全不同的哈希，下次比对请沿用这个口径。
+
+### 相对上游的改动
+
+| 位置 | 改动 | 理由 |
+|---|---|---|
+| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；顶点着色器逐字保留 | 让引擎能脱离 React 使用并纳入 `tsc -b` |
+| `FIELD.main()` | 新增 `edgeDist` / `rim`，输出改为 `vec4(value.x, value.y, min(hot, 6.0), rim)`（上游 `.a` 恒为 `1.0`） | 首屏要做「光学玻璃带」而不是「一团发光」，需要可辨认的带边 |
+| `COMPOSITE.main()` | 读取 `.a` 作为 `rim`，亮色压低边缘 alpha、暗色加一道冰蓝反光 | 亮环境读作「透明体 + 亮边」，暗环境给带体厚度与前后关系 |
+| `beamsMount.ts` | 把上游写在 `useEffect` 里的挂载逻辑抽成普通函数 `mountBeams()`；补 `webglcontextlost` 处理、`prefers-reduced-motion` 运行时订阅、`dispose()` 幂等与「不主动丢上下文」 | 支持 WebGL2 不可用 / 上下文丢失 / 减少动效 / StrictMode 重复挂载四条路径 |
+
+其余语句——噪声、lobe、ACES、泛光采样顺序、feather、抖动——与上游一致。
+
+### 分发授权结论
+
+Beams 与 Prism 出自同一上游、同一份 `LICENSE.md`（MIT + Commons Clause v1.0，
+`Copyright (c) 2026 David Haz`），Commons Clause 的限制也相同：**不得销售、再许可或
+再分发「组件本身」——单独、打包或以移植版的形式。**
+
+产品负责人 2026-11-16 对 Prism 作出的**风险接受**（见上一节「分发授权结论」）在
+E-09 一并适用于 Beams：本仓库是公开的**非商业演示 / 学术项目**，组件只作为首屏背景
+的一部分使用，不单独售卖、不再许可、不作为组件库分发，版权与许可声明保留在本文件
+与源文件头。若后续商业化、改为组件库，或上游提出异议，应重新评估。
+
+E-09 的融合候选（`HeroFusion.tsx`）**没有**复制任何新的上游源码：它复用上面两份已
+记录的 vendor 副本，其余（棱镜、色散扇、细纤维）是自研 SVG / CSS。
 
 ---
 

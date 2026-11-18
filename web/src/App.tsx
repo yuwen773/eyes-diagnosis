@@ -73,6 +73,22 @@ const AdminNewsEditPage = lazy(() =>
   import("@/pages/admin/AdminNewsEditPage").then((m) => ({ default: m.AdminNewsEditPage })),
 )
 
+/**
+ * E-09 设计对照台：**只在开发期或显式打开 `VITE_DESIGN_PREVIEW=true` 的构建里注册**。
+ * 正式生产构建两条都不满足，`/design/hero-compare` 会落到 404 路由，
+ * 不会把设计选择器暴露给线上用户。
+ */
+const DESIGN_PREVIEW_ENABLED =
+  import.meta.env.DEV || import.meta.env.VITE_DESIGN_PREVIEW === "true"
+
+const DesignHeroComparePage = DESIGN_PREVIEW_ENABLED
+  ? lazy(() =>
+      import("@/pages/DesignHeroComparePage").then((m) => ({
+        default: m.DesignHeroComparePage,
+      })),
+    )
+  : null
+
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
 
@@ -195,6 +211,9 @@ export function App() {
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
+          {DesignHeroComparePage ? (
+            <Route path="/design/hero-compare" element={<DesignHeroComparePage />} />
+          ) : null}
         </Routes>
         </RouteBoundary>
         </Suspense>

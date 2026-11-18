@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest"
 const dir = fileURLToPath(new URL(".", import.meta.url))
 const notices = readFileSync(`${dir}THIRD-PARTY-NOTICES.md`, "utf8")
 const prism = readFileSync(`${dir}Prism.tsx`, "utf8")
+const beams = readFileSync(`${dir}beamsEngine.ts`, "utf8")
 const pkg = JSON.parse(
   readFileSync(new URL("../../../package.json", import.meta.url), "utf8"),
 ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
@@ -34,6 +35,24 @@ describe("vendored Prism 的来源与许可", () => {
     expect(prism).toContain("React Bits")
     expect(prism).toContain("Commons Clause")
     expect(prism).toContain("David Haz")
+  })
+})
+
+/**
+ * Beams 与 Prism 出自同一上游、同一份许可。E-09 把 Beams 的 vendor 副本带进
+ * 这个目录，为的是让「方案 A」对照跑真实组件；来源与固定 commit 同样不能丢。
+ */
+describe("vendored Beams 的来源与许可", () => {
+  it("来源、固定 commit 与取用时间记录在声明文件里", () => {
+    expect(notices).toContain("Beams.jsx")
+    expect(notices).toContain("ed33ebe4acfe29e60fb759bcccc70a138ce2dcef")
+    expect(notices).toContain("2026-11-12")
+  })
+
+  it("源文件头保留来源与许可", () => {
+    expect(beams).toContain("React Bits")
+    expect(beams).toContain("Commons Clause")
+    expect(beams).toContain("David Haz")
   })
 })
 
