@@ -25,6 +25,18 @@
 | `security-governance-plan-2026-11-18.md` | 判断 MD5→BCrypt 存量迁移的退出条件、配置中心三条上线门禁、CSRF 该按什么载体判定——写安全相关结论前先读，避免把「缺注解」直接当漏洞 |
 | `cleanup-ledger-2026-11-18.md` | 接手「考古报告逐项清理」前先读：哪些已交付成 PR、报告哪几条结论被实测修正、哪些还等 owner 拍板 |
 
+## 发版集成（本轮 RC）
+
+| 文档 | 何时读 |
+|---|---|
+| `release/integration-ledger.md` | 查本轮集成的批次进度、契约裁定与已关闭阻断（想知道「为什么是这个实现」先读它） |
+| `release/pr-disposition.md` | 查每个 PR 的去向（INCLUDE / ABSORB / DEFER / SUPERSEDED / HOLD）与依据 |
+| `release/conflict-resolution.md` | 查冲突文件的语义裁定——哪一侧为何被否决、哪些断言调整不是放水 |
+| `release/verification-matrix.md` | 查每条结论绑定的 SHA、命令与未执行的门禁 |
+| `release/release-notes-rc.md` | 查本版本内容、默认关闭能力与已知限制 |
+| `release/upgrade-rollback-manual.md` | 部署前核对、升级步骤与回滚路径（**不授权部署**） |
+| `release/release-candidate-readiness.md` | 查终态判定与仍未关闭的阻断 |
+
 ## 知识库
 
 - `眼科疾病知识库.md` — 领域语料说明
