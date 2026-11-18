@@ -374,3 +374,77 @@ describe("useAgentStream · 生命周期", () => {
     expect(api().messages.find((m) => m.type === "assistant")?.isLoading).toBe(false)
   })
 })
+
+describe("useAgentStream · 会话资源", () => {
+  it("流里回放的资源进入资源栏，切换会话后清空", async () => {
+    streamChatMock.mockImplementationOnce(
+      async (_body: unknown, handlers: { onEvent: (dto: unknown) => void; onDone: () => void }) => {
+        handlers.onEvent({
+          messageType: "tool-result",
+          content: "检索到 1 段文档",
+          toolName: "searchDocuments",
+          toolCallId: "call_1",
+          status: "success",
+          resources: [
+            {
+              id: "doc:42",
+              kind: "document",
+              title: "干眼症诊疗共识",
+              source: "knowledge-base",
+              documentId: "42",
+              score: 0.81,
+            },
+          ],
+        })
+        handlers.onDone()
+      },
+    )
+    renderHarness()
+
+    await act(async () => {
+      await api().send("干眼怎么治", "thread-1")
+    })
+
+    expect(api().resources.documents).toHaveLength(1)
+    expect(api().resources.documents[0].documentId).toBe("42")
+
+    await act(async () => {
+      api().reset()
+    })
+    expect(api().resources.documents).toHaveLength(0)
+  })
+
+  it("历史加载后资源从消息里重建（刷新 / 切会话不丢）", async () => {
+    renderHarness()
+    const history: StreamMessage[] = [
+      {
+        id: "h1",
+        type: "user",
+        content: "看看这张图",
+        images: ["https://cos.example.com/f.jpg"],
+      },
+      {
+        id: "h2",
+        type: "tool-response",
+        content: "检索到 1 段文档",
+        toolStatus: "success",
+        resources: [
+          {
+            id: "doc:7",
+            kind: "document",
+            title: "眼底影像判读要点",
+            source: "knowledge-base",
+            documentId: "7",
+          },
+        ],
+      },
+    ]
+
+    await act(async () => {
+      api().setMessages(history)
+    })
+
+    expect(api().resources.images).toHaveLength(1)
+    expect(api().resources.documents).toHaveLength(1)
+  })
+})

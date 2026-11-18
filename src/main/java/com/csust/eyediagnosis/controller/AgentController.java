@@ -65,12 +65,16 @@ public class AgentController {
         chatHistoryService.claimOrValidateSession(threadId, userId, request.getMessage());
 
         // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
-        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
+        // 图片附件随消息一起落库：刷新/换会话后资源栏要能恢复，不能只在内存里活一轮。
+        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage(), request.getImageUrls());
 
-        // 日志只记录关联 ID 与长度：症状、病史等原文不得进入运行日志
+        // 日志只记录关联 ID 与长度：症状、病史等原文不得进入运行日志。
+        // 采用 ui 侧的匿名化口径（userIdHash），并在其后追加 #111 的 imageCount。
         String requestId = UUID.randomUUID().toString();
-        log.info("Agent 流式对话请求, requestId={}, threadId={}, userIdHash={}, messageLength={}",
-                requestId, threadId, anonymize(userId), request.getMessage() == null ? 0 : request.getMessage().length());
+        log.info("Agent 流式对话请求, requestId={}, threadId={}, userIdHash={}, messageLength={}, imageCount={}",
+                requestId, threadId, anonymize(userId),
+                request.getMessage() == null ? 0 : request.getMessage().length(),
+                request.getImageUrls() == null ? 0 : request.getImageUrls().size());
 
         return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
                 request.getEnabledMcpServers(), request.getDisableMcpDefault())

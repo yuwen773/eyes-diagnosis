@@ -1,10 +1,13 @@
 package com.csust.eyediagnosis.agent.tools;
 
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.DocumentParser;
 import com.csust.eyediagnosis.agent.rag.TextChunkerService;
 import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import com.csust.eyediagnosis.service.impl.DocumentProcessingService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,6 +31,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -52,11 +57,35 @@ class DocumentSearchToolOwnershipTest {
     @Mock
     private KnowledgeDocumentMapper mapper;
 
+    /**
+     * {@code @Value} 字段在单测里没有容器注入，显式给出生产默认值。
+     * 少了 {@code finalTopK} 就是 0——任何命中都不会交给模型，也不会登记成来源，
+     * 测试会静默变成「空检索」。
+     */
+    @BeforeEach
+    void applySearchDefaults() {
+        setField(tool, "searchTopK", 20);
+        setField(tool, "finalTopK", 5);
+        setField(tool, "similarityThreshold", 0.5);
+        setField(tool, "rerankEnabled", false);
+    }
+
+    /** 没有可信用户上下文时必须失败，而不是返回「没找到」这种假成功。 */
     @Test
-    void searchWithoutUserContextReturnsEmptyAndDoesNotQueryStore() {
-        String result = tool.searchDocuments("青光眼", null);
-        assertEquals("[]", result);
+    void searchWithoutUserContextFailsAndDoesNotQueryStore() {
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> tool.searchDocuments("青光眼", null));
+        assertTrue(thrown.getMessage().contains("登录"));
         verifyNoInteractions(vectorStore);
+    }
+
+    /** 向量库未配置同样是一次「没做成」，不能长成 success。 */
+    @Test
+    void missingVectorStoreIsSurfacedAsFailure() {
+        DocumentSearchTool withoutStore = new DocumentSearchTool();
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> withoutStore.searchDocuments("青光眼", 42L));
+        assertTrue(thrown.getMessage().contains("暂未启用"));
     }
 
     @Test
@@ -122,6 +151,85 @@ class DocumentSearchToolOwnershipTest {
         Number ownerId = assertInstanceOf(Number.class,
                 assertInstanceOf(Filter.Value.class, expression.right()).value());
         assertEquals(expectedOwnerId, ownerId.longValue());
+    }
+
+    /**
+     * 回归：雪花 ID 超过 int 范围。旧实现把过滤条件拼成文本，文本解析器按
+     * {@code Integer} 解析数字字面量，真实用户（19 位 ID）一检索就
+     * {@code NumberFormatException}，随后被 catch 吞成「暂时不可用」。
+     */
+    @Test
+    void snowflakeOwnerIdDoesNotOverflowTheFilter() {
+        long snowflake = 2123010432165113858L;
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+
+        tool.searchDocuments("青光眼", snowflake);
+
+        ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+        verify(vectorStore).similaritySearch(captor.capture());
+        Filter.Expression filter = captor.getValue().getFilterExpression();
+        assertEquals(Filter.ExpressionType.OR, filter.type());
+        assertOwnerEquals(assertInstanceOf(Filter.Expression.class, filter.left()), snowflake);
+    }
+
+    /** 检索失败必须抛出去变成「工具失败」，不能伪装成一句正常返回值。 */
+    @Test
+    void retrievalFailureIsSurfacedInsteadOfDisguised() {
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenThrow(new RuntimeException("向量库不可达"));
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> tool.searchDocuments("青光眼", 42L));
+        assertEquals("知识库检索暂时不可用，请稍后重试。", thrown.getMessage());
+    }
+
+    /**
+     * 命中的文档必须登记成结构化来源：文档 ID / 相关度 / 片段都取自检索结果，
+     * 前端资源栏据此展示可核验的出处。没有 docId 的片段不登记（不可核验）。
+     */
+    @Test
+    void hitsAreRegisteredAsStructuredCitations() {
+        Document withId = Document.builder()
+                .id("chunk-1")
+                .text("睑板腺功能障碍是干眼的主要原因之一。")
+                .metadata(Map.of("docId", 42, "title", "干眼症诊疗共识"))
+                .score(0.81)
+                .build();
+        Document withoutId = Document.builder()
+                .id("chunk-2")
+                .text("没有文档标识的片段")
+                .metadata(Map.of("title", "无来源"))
+                .score(0.6)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(withId, withoutId)));
+
+        try {
+            tool.searchDocuments("干眼", 42L);
+
+            List<ResourceRef> refs = ToolResourceContext.drain();
+            assertEquals(1, refs.size(), "只有带 docId 的命中才算可核验来源");
+            ResourceRef ref = refs.get(0);
+            assertEquals("document", ref.kind());
+            assertEquals("42", ref.documentId());
+            assertEquals("干眼症诊疗共识", ref.title());
+            assertEquals(0.81, ref.score());
+            assertNull(ref.retrievalScore(), "没有 rerank 时不存在第二个分数，保持为空");
+            assertEquals("knowledge-base", ref.source());
+            assertEquals("睑板腺功能障碍是干眼的主要原因之一。", ref.snippet());
+        } finally {
+            ToolResourceContext.drain();
+        }
+    }
+
+    @Test
+    void failedRetrievalRegistersNoCitations() {
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenThrow(new RuntimeException("向量库不可达"));
+
+        assertThrows(IllegalStateException.class, () -> tool.searchDocuments("干眼", 42L));
+        assertEquals(List.of(), ToolResourceContext.drain(),
+                "失败的一次检索不能在资源栏留下任何来源");
     }
 
     /**

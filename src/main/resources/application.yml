@@ -15,6 +15,10 @@ spring:
       # 上传文件最大大小 10MB
       max-file-size: 10MB
       max-request-size: 11MB
+  jackson:
+    # 时间统一走 ApiDateSerializer（带偏移的 ISO-8601），不输出数字时间戳。
+    serialization:
+      write-dates-as-timestamps: false
   profiles:
     # 启用配置文件
     active: local,dev

@@ -1,6 +1,7 @@
 package com.csust.eyediagnosis.service.impl;
 
 import com.csust.eyediagnosis.agent.rag.DocumentParser;
+import com.csust.eyediagnosis.agent.rag.EmbeddingBatchWriter;
 import com.csust.eyediagnosis.agent.rag.SourceTypePolicy;
 import com.csust.eyediagnosis.agent.rag.TextChunkerService;
 import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
@@ -117,7 +118,7 @@ public class DocumentProcessingService {
             log.info("[ETL-Load] 开始存储到向量数据库: docId={}, chunk数量={}", docId, chunks.size());
             long loadStart = System.currentTimeMillis();
             if (vectorStore != null) {
-                vectorStore.add(chunks);
+                EmbeddingBatchWriter.add(vectorStore, chunks);
                 log.info("[ETL-Load] 向量存储完成: docId={}, 耗时={}ms", docId, System.currentTimeMillis() - loadStart);
             } else {
                 log.warn("[ETL-Load] VectorStore 未配置，跳过向量存储: docId={}", docId);

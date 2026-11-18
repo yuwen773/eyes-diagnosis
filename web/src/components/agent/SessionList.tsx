@@ -11,15 +11,13 @@ import {
   Trash2,
 } from "lucide-react"
 import type { AgentSessionVO } from "@/lib/api"
+import { dayKey, formatSessionStamp, yesterdayKey } from "@/lib/time"
 import { Dialog } from "@/components/ui/dialog"
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu"
 
 type Group = { label: string; sessions: AgentSessionVO[] }
 
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-const pad = (n: number) => String(n).padStart(2, "0")
-
-/** 置顶区 + 今天/昨天/更早 分组（按 updatedTime 本地零点比较）。 */
+/** 置顶区 + 今天/昨天/更早 分组（按 updatedTime 的本地日历日比较）。 */
 function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; groups: Group[] } {
   const pinned: AgentSessionVO[] = []
   const today: AgentSessionVO[] = []
@@ -27,17 +25,17 @@ function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; 
   const earlier: AgentSessionVO[] = []
 
   const now = new Date()
-  const todayStart = startOfDay(now)
-  const yesterdayStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
+  const todayKey = dayKey(now)
+  const yesterdayKeyValue = yesterdayKey(now)
 
   for (const s of sessions) {
     if (s.isPinned) {
       pinned.push(s)
       continue
     }
-    const t = s.updatedTime ? new Date(s.updatedTime.replace(" ", "T")).getTime() : 0
-    if (t >= todayStart) today.push(s)
-    else if (t >= yesterdayStart) yesterday.push(s)
+    const key = dayKey(s.updatedTime)
+    if (key && key === todayKey) today.push(s)
+    else if (key && key === yesterdayKeyValue) yesterday.push(s)
     else earlier.push(s)
   }
 
@@ -46,30 +44,6 @@ function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; 
   if (yesterday.length > 0) groups.push({ label: "昨天", sessions: yesterday })
   if (earlier.length > 0) groups.push({ label: "更早", sessions: earlier })
   return { pinned, groups }
-}
-
-/**
- * 行内日期读数：今天 / 昨天给到时刻，更早只给日期。
- * 用真实 updatedTime 换算，不做「刚刚 / 3 分钟前」这类会随着刷新失真的措辞。
- */
-function formatSessionStamp(value?: string): string {
-  if (!value) return ""
-  const time = new Date(value.replace(" ", "T"))
-  if (Number.isNaN(time.getTime())) return value.slice(0, 10)
-
-  const now = new Date()
-  const day = startOfDay(time)
-  const today = startOfDay(now)
-  const clock = `${pad(time.getHours())}:${pad(time.getMinutes())}`
-
-  if (day === today) return `今天 ${clock}`
-  if (day === startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) {
-    return `昨天 ${clock}`
-  }
-  if (time.getFullYear() === now.getFullYear()) {
-    return `${pad(time.getMonth() + 1)}-${pad(time.getDate())}`
-  }
-  return `${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}`
 }
 
 /**

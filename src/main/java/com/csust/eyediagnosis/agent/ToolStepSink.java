@@ -2,8 +2,11 @@ package com.csust.eyediagnosis.agent;
 
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
+import com.csust.eyediagnosis.utils.TimeFormats;
 import reactor.core.publisher.Sinks;
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,9 +58,16 @@ public final class ToolStepSink {
         emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
     }
 
-    /** Emit a terminal state only after the real tool result is known. */
+    /**
+     * Emit a terminal state only after the real tool result is known.
+     *
+     * <p>{@code content} 是真实返回值的脱敏截断版，只随终态下发一次：
+     * 前端据此展示工具输出，不需要第二条「tool-response」通道。
+     * {@code resources} 只来自成功调用——失败/超时/中断的调用不带走任何证据。
+     */
     public synchronized void finished(String toolCallId, String toolName, boolean success,
-                         ToolStepContract.ErrorCategory errorCategory) {
+                         ToolStepContract.ErrorCategory errorCategory,
+                         List<ResourceRef> resources, String content) {
         if (closed || !pending.containsKey(toolCallId)) return;
         toolName = pending.remove(toolCallId);
         ToolStepContract.Status status = success
@@ -68,7 +78,15 @@ public final class ToolStepSink {
             audit.accept(ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
                     status, errorCategory));
         }
-        emit(toolCallId, toolName, status, reason, errorCategory);
+        emit(toolCallId, toolName, status, reason, errorCategory,
+                success ? resources : null,
+                success ? content : null);
+    }
+
+    /** 旧签名：只关心成败、不需要正文与资源的调用方使用。 */
+    public synchronized void finished(String toolCallId, String toolName, boolean success,
+                         ToolStepContract.ErrorCategory errorCategory) {
+        finished(toolCallId, toolName, success, errorCategory, null, null);
     }
 
     /**
@@ -97,15 +115,26 @@ public final class ToolStepSink {
 
     private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
                       ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory) {
+        emit(toolCallId, toolName, status, reason, errorCategory, null, null);
+    }
+
+    private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
+                      ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory,
+                      List<ResourceRef> resources, String content) {
         if (deliveryCancelled) return;
         MessageDTO dto = new MessageDTO();
         dto.setMessageType(MessageType.TOOL_RESULT);
-        dto.setContent("");
+        dto.setContent(content == null ? "" : content);
         dto.setToolCallId(toolCallId);
+        // 工具名不是患者数据：请求帧本来就带 toolCalls[].name，
+        // 结果帧缺了它，历史回放就配不回是哪次调用。
+        dto.setToolName(toolName);
         dto.setToolStatus(status.wire());
         dto.setStepLabel(ToolStepContract.stepLabel(toolName));
+        dto.setTimestamp(TimeFormats.nowIsoOffset());
         if (reason != null) dto.setFinishReason(reason.wire());
         if (errorCategory != null) dto.setErrorCategory(errorCategory.name());
+        if (resources != null && !resources.isEmpty()) dto.setResources(List.copyOf(resources));
         checkEmission(events.tryEmitNext(dto));
     }
 

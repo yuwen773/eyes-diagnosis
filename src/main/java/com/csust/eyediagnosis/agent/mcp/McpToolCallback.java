@@ -50,6 +50,11 @@ public class McpToolCallback implements ToolCallback {
         request.setToolParams(params);
 
         McpServerCallToolResponse response = mcpManager.callTool(request, mcpServer);
+        // MCP 的 isError 是一等信号：把它当普通文本返回，观察者会记 success，
+        // 界面显示「完成」，模型也会把「401 Unauthorized」当正文依据。
+        if (response != null && Boolean.TRUE.equals(response.getIsError())) {
+            throw new IllegalStateException("MCP 工具返回错误：" + formatResponse(response));
+        }
         return formatResponse(response);
     }
 

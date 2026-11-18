@@ -77,12 +77,26 @@ public final class ToolStepContract {
         return toolName != null && KNOWN_TOOLS.contains(toolName);
     }
 
-    /** Sanitize an error into a stable category without persisting the message. */
+    /**
+     * Sanitize an error into a stable category without persisting the message.
+     *
+     * <p>沿 cause 链走一段再判定：框架把工具异常包成 {@code ToolExecutionException}，
+     * 真正的超时/取消原因在里层；只看最外层的类名会把它们统一记成 TOOL_EXCEPTION。
+     */
     public static ErrorCategory categorize(Throwable error, boolean interrupted) {
         if (interrupted) return ErrorCategory.CANCELLED;
         if (error == null) return ErrorCategory.NONE;
-        String type = error.getClass().getSimpleName();
-        if (type.contains("Timeout") || type.contains("Interrupted")) return ErrorCategory.TIMEOUT;
+        Throwable cursor = error;
+        for (int depth = 0; cursor != null && depth < 8; depth++) {
+            if (cursor instanceof java.util.concurrent.TimeoutException) return ErrorCategory.TIMEOUT;
+            if (cursor instanceof java.util.concurrent.CancellationException) return ErrorCategory.CANCELLED;
+            if (cursor instanceof InterruptedException) return ErrorCategory.CANCELLED;
+            String type = cursor.getClass().getSimpleName();
+            if (type.contains("Timeout")) return ErrorCategory.TIMEOUT;
+            if (type.contains("Cancelled") || type.contains("Canceled")) return ErrorCategory.CANCELLED;
+            Throwable next = cursor.getCause();
+            cursor = next == cursor ? null : next;
+        }
         if (error instanceof IllegalArgumentException) return ErrorCategory.INVALID_OUTPUT;
         return ErrorCategory.TOOL_EXCEPTION;
     }

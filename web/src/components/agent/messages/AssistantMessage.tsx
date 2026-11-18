@@ -1,9 +1,8 @@
-import { useMemo } from "react"
 import type { MouseEvent } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
-import { renderMarkdown } from "@/lib/markdown"
 import { useFault } from "@/components/fault"
 import { infoFault } from "@/lib/faults"
+import { useStreamingMarkdown } from "@/lib/useStreamingMarkdown"
 
 async function copyText(text: string, onFail: (message: string) => void) {
   try {
@@ -44,16 +43,13 @@ function IrisMark() {
  * <p>Iris 的回答是读物：正文占满阅读列，标头只是一行署名。旧版的
  * 「左对齐圆角气泡 + 缩进」把回答压进了一条窄带，右侧留下大片空白。
  *
- * <p>流式中正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次——
- * 每来一个 token 就对累积全文做一遍 markdown+hljs 是 O(n²) 的无用开销。
+ * <p>流式期间同样按 Markdown 富文本渲染（增量 + 合帧），不再先显示原始
+ * 记号、结束时整篇换一次——那种「纯文本 → 富文本」的跳变正是本轮要修掉的。
  */
 export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   const { push } = useFault()
-  // 流式期间正文按纯文本渲染（带光标），markdown 只在回合结束时渲染一次
-  const html = useMemo(
-    () => (msg.isLoading ? "" : renderMarkdown(msg.content)),
-    [msg.isLoading, msg.content],
-  )
+  const html = useStreamingMarkdown(msg.content, Boolean(msg.isLoading))
+  const streaming = Boolean(msg.isLoading)
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     if (e.target instanceof Element) {
@@ -63,25 +59,32 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   }
 
   return (
-    <article className="agent-msg agent-msg--assistant">
+    <article className="agent-msg agent-msg--assistant" data-msg-id={msg.id}>
       <header className="agent-author">
         <IrisMark />
         <span className="agent-author__name">Iris</span>
         {msg.time ? <span className="agent-author__time">{msg.time}</span> : null}
       </header>
 
-      {msg.isLoading ? (
-        <div className="agent-msg__body agent-msg__body--streaming">
-          <span className="agent-msg__streaming">{msg.content}</span>
-          <span className="caret-blink" aria-hidden="true" />
-        </div>
-      ) : (
+      {/* 流式正文每 60ms 整体换一次 innerHTML：直接给它挂 aria-live 会让读屏
+          不停重念全文。这里只用一个隐藏的 status 播报「开始生成」，
+          正文本身靠 aria-busy 表示还在写。 */}
+      {streaming ? (
+        <p className="sr-only" role="status" aria-live="polite">
+          Iris 正在生成回答
+        </p>
+      ) : null}
+
+      <div
+        className={`agent-msg__body${streaming ? " is-streaming" : ""}`}
+        onClick={handleClick}
+        aria-busy={streaming || undefined}
+      >
         <div
-          className="agent-msg__body markdown-body"
-          onClick={handleClick}
+          className={`markdown-body${streaming ? " is-streaming" : ""}`}
           dangerouslySetInnerHTML={{ __html: html }}
         />
-      )}
+      </div>
     </article>
   )
 }

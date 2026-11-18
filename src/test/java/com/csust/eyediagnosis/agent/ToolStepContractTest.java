@@ -151,7 +151,11 @@ class ToolStepContractTest {
         sink.closePending();
 
         for (MessageDTO dto : eventsOf(sink)) {
-            assertEquals("", dto.getContent());
+            // 执行中帧只陈述状态；终态帧可以带工具正文（已脱敏截断），
+            // 但任何一帧都不得包含原始参数、提示词或密钥。
+            if (ToolStepContract.Status.RUNNING.wire().equals(dto.getToolStatus())) {
+                assertEquals("", dto.getContent(), "执行中帧不得携带正文");
+            }
             assertNull(dto.getToolCalls());
             assertFalse(String.valueOf(dto).contains("张三"));
             assertFalse(String.valueOf(dto).contains("SECRET"));

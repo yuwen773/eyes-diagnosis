@@ -58,6 +58,17 @@ public class JsonConfig {
          */
         simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
         simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
+        // java.util.Date 统一输出带偏移的 ISO-8601。模块序列化器优先于
+        // builder 的 dateFormat，所以即使某个 profile 还留着旧的
+        // spring.jackson.date-format，也不会退回到「无偏移的 UTC 墙钟」。
+        ApiDateSerializer dateSerializer = new ApiDateSerializer();
+        simpleModule.addSerializer(java.util.Date.class, dateSerializer);
+        simpleModule.addSerializer(java.sql.Timestamp.class, dateSerializer);
+        simpleModule.addSerializer(java.sql.Date.class, dateSerializer);
+        // 实体里的 createTime 是 LocalDateTime（服务器本地墙钟）：同样补上偏移，
+        // 否则前端会把「无偏移串」按 UTC 解析，知识库列表这类页面整体偏 8 小时。
+        // 注册在 simpleModule 里，优先于上面 javaTimeModule 的旧格式。
+        simpleModule.addSerializer(LocalDateTime.class, new ApiLocalDateTimeSerializer());
         objectMapper.registerModule(simpleModule);
 
         return objectMapper;

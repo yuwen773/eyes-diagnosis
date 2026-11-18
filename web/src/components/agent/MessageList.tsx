@@ -132,6 +132,14 @@ export function MessageList({
     if (atBottomRef.current) followBottom()
   }, [lastContent, lastMsgId, followBottom])
 
+  // 收口那一刻的排版会变（分段边界被整篇渲染替换，未闭合的表格/围栏收拢），
+  // 高度可能跳一次而内容字符串已经不再变化——单独跟一次，避免停在半截。
+  const wasStreaming = useRef(streaming)
+  useEffect(() => {
+    if (wasStreaming.current && !streaming && atBottomRef.current) followBottom()
+    wasStreaming.current = streaming
+  }, [streaming, followBottom])
+
   function scrollToBottom() {
     const el = listRef.current
     if (!el) return

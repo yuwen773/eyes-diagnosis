@@ -11,6 +11,7 @@ import com.csust.eyediagnosis.model.dto.agent.MessageVO;
 import com.csust.eyediagnosis.model.dto.agent.SessionVO;
 import com.csust.eyediagnosis.model.entity.AgentMessage;
 import com.csust.eyediagnosis.model.entity.AgentSession;
+import com.csust.eyediagnosis.utils.TimeFormats;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +54,32 @@ public class ChatHistoryService {
     }
 
     public void saveUserMessage(String sessionId, Long userId, String content) {
+        saveUserMessage(sessionId, userId, content, null);
+    }
+
+    /**
+     * 带附件的用户消息落库。
+     *
+     * <p>t_agent_message 没有附件列，用同一个「规范 JSON」约定扩展内容：
+     * {@code {"text":"…","images":["https://…"]}}。没有附件时仍写纯文本——
+     * 旧行、旧前端都不需要知道这个信封。
+     */
+    public void saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
+        String payload = content;
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            Map<String, Object> envelope = new java.util.LinkedHashMap<>();
+            envelope.put("text", content == null ? "" : content);
+            envelope.put("images", imageUrls);
+            try {
+                payload = objectMapper.writeValueAsString(envelope);
+            } catch (JsonProcessingException e) {
+                log.warn("用户消息附件序列化失败, images={}", imageUrls.size());
+                payload = content;
+            }
+        }
+        String stored = payload;
         messageQueue.submit(sessionId, () -> {
-            messageWriter.writeUserMessage(sessionId, userId, content);
+            messageWriter.writeUserMessage(sessionId, userId, stored);
 
             AgentSession session = sessionMapper.selectBySessionId(sessionId);
             if (session != null && session.getMessageCount() == 1) {
@@ -221,13 +246,13 @@ public class ChatHistoryService {
         StringBuilder sb = new StringBuilder();
         sb.append("# ").append(session.getTitle()).append("\n\n");
         sb.append("会话 ID: ").append(session.getSessionId()).append("\n");
-        sb.append("创建时间: ").append(session.getCreatedTime()).append("\n\n");
+        sb.append("创建时间: ").append(TimeFormats.toHumanLocal(session.getCreatedTime())).append("\n\n");
         sb.append("---\n\n");
         for (AgentMessage m : messages) {
             String role = "USER".equals(m.getRole()) ? "用户" : "AI";
             sb.append("## ").append(role).append("\n");
             sb.append(escapeMarkdown(m.getContent())).append("\n\n");
-            sb.append("*").append(m.getCreatedTime()).append("*\n\n");
+            sb.append("*").append(TimeFormats.toHumanLocal(m.getCreatedTime())).append("*\n\n");
         }
         return sb.toString();
     }
