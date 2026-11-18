@@ -58,7 +58,7 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   }
 
   return (
-    <article className="agent-msg agent-msg--assistant">
+    <article className="agent-msg agent-msg--assistant" data-msg-id={msg.id}>
       <header className="agent-author">
         <IrisMark />
         <span className="agent-author__name">Iris</span>

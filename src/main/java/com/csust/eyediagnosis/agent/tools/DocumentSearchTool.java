@@ -3,8 +3,10 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -94,6 +96,9 @@ public class DocumentSearchTool {
             if (candidates.isEmpty()) {
                 return "未找到相关文档。";
             }
+            // 结构化引用只来自真实命中的结果：文档 ID、标题、相关度、片段
+            // 都从 Document 的 metadata / score 取，不从模型输出反推。
+            recordCitations(candidates);
 
             if (rerankEnabled && rerankModel != null) {
                 return rerankAndFormat(query, candidates);
@@ -139,6 +144,30 @@ public class DocumentSearchTool {
             log.warn("Rerank 失败，回退到原始检索: {}", e.getMessage());
             return formatDocuments(candidates.stream().limit(finalTopK).toList());
         }
+    }
+
+    /** 把真实命中的文档登记为会话资源（同 id 去重，由上下文负责）。 */
+    private void recordCitations(List<Document> docs) {
+        for (Document doc : docs) {
+            String docId = doc.getMetadata().get("docId") == null
+                    ? null : String.valueOf(doc.getMetadata().get("docId"));
+            if (docId == null || docId.isBlank()) {
+                // 没有稳定文档标识的片段不能当「可核验来源」展示。
+                continue;
+            }
+            String title = doc.getMetadata().get("title") == null
+                    ? snippetOf(doc.getText()) : String.valueOf(doc.getMetadata().get("title"));
+            ToolResourceContext.record(ResourceRef.document(
+                    docId, title, doc.getScore(), snippetOf(doc.getText()), null));
+        }
+    }
+
+    private static String snippetOf(String text) {
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.strip().replaceAll("\s+", " ");
+        return trimmed.length() <= 300 ? trimmed : trimmed.substring(0, 300) + "…";
     }
 
     private String formatDocuments(List<Document> docs) {

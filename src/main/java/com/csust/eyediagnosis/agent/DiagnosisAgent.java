@@ -16,6 +16,7 @@ import com.csust.eyediagnosis.agent.tools.UserBoundDocumentSearchTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.csust.eyediagnosis.utils.SensitiveDataRedactor;
 import com.csust.eyediagnosis.utils.TimeFormats;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -202,7 +203,11 @@ public class DiagnosisAgent {
                     if (toolCallId != null && !emittedToolResults.add(toolCallId)) {
                         continue;
                     }
-                    String status = resolveToolStatus(toolCallId);
+                    ToolExecutionObserver.Outcome outcome = toolExecutionObserver.peek(toolCallId);
+                    String status = outcome != null ? outcome.status() : "completed";
+                    // 资源只来自成功调用；失败/超时/中断不带证据。
+                    List<ResourceRef> resources = outcome != null && "success".equals(outcome.status())
+                            ? outcome.resources() : List.of();
 
                     MessageDTO dto = new MessageDTO();
                     dto.setMessageType(MessageType.TOOL_RESULT);
@@ -211,9 +216,12 @@ public class DiagnosisAgent {
                     dto.setToolName(response.name());
                     dto.setStatus(status);
                     dto.setTimestamp(TimeFormats.nowIsoOffset());
+                    if (!resources.isEmpty()) {
+                        dto.setResources(resources);
+                    }
                     events.add(dto);
 
-                    persistToolResult(threadId, userId, toolCallId, response.name(), status, content);
+                    persistToolResult(threadId, userId, toolCallId, response.name(), status, content, resources);
                 }
                 return events;
             }
@@ -287,15 +295,6 @@ public class DiagnosisAgent {
         return messageDTO;
     }
 
-    /**
-     * 结果状态只取观察到的真实值。收到响应却查不到观察记录时标
-     * {@code completed}——「框架返回了结果」≠「工具执行成功」。
-     */
-    private String resolveToolStatus(String toolCallId) {
-        ToolExecutionObserver.Outcome outcome = toolExecutionObserver.peek(toolCallId);
-        return outcome != null ? outcome.status() : "completed";
-    }
-
     private String truncateToolResult(String content) {
         if (content == null) {
             return "";
@@ -319,14 +318,17 @@ public class DiagnosisAgent {
         chatHistoryService.saveToolCallMessage(threadId, userId, toJson(payload));
     }
 
-    /** 工具结果落库格式：{@code {"toolCallId","name","status","output"}}。 */
+    /** 工具结果落库格式：{@code {"toolCallId","name","status","output","resources"}}。 */
     private void persistToolResult(String threadId, Long userId, String toolCallId, String name,
-                                   String status, String output) {
+                                   String status, String output, List<ResourceRef> resources) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("toolCallId", toolCallId);
         payload.put("name", name);
         payload.put("status", status);
         payload.put("output", output);
+        if (resources != null && !resources.isEmpty()) {
+            payload.put("resources", resources);
+        }
         chatHistoryService.saveToolResultMessage(threadId, userId, toJson(payload));
     }
 

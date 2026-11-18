@@ -1,8 +1,10 @@
 package com.csust.eyediagnosis.agent.tools;
 
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.DocumentParser;
 import com.csust.eyediagnosis.agent.rag.TextChunkerService;
 import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import com.csust.eyediagnosis.service.impl.DocumentProcessingService;
 import org.junit.jupiter.api.Test;
@@ -109,6 +111,54 @@ class DocumentSearchToolOwnershipTest {
         IllegalStateException thrown = assertThrows(IllegalStateException.class,
                 () -> tool.searchDocuments("青光眼", 42L));
         assertEquals("知识库检索暂时不可用，请稍后重试。", thrown.getMessage());
+    }
+
+    /**
+     * 命中的文档必须登记成结构化来源：文档 ID / 相关度 / 片段都取自检索结果，
+     * 前端资源栏据此展示可核验的出处。没有 docId 的片段不登记（不可核验）。
+     */
+    @Test
+    void hitsAreRegisteredAsStructuredCitations() {
+        Document withId = Document.builder()
+                .id("chunk-1")
+                .text("睑板腺功能障碍是干眼的主要原因之一。")
+                .metadata(Map.of("docId", 42, "title", "干眼症诊疗共识"))
+                .score(0.81)
+                .build();
+        Document withoutId = Document.builder()
+                .id("chunk-2")
+                .text("没有文档标识的片段")
+                .metadata(Map.of("title", "无来源"))
+                .score(0.6)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(withId, withoutId)));
+
+        try {
+            tool.searchDocuments("干眼", 42L);
+
+            List<ResourceRef> refs = ToolResourceContext.drain();
+            assertEquals(1, refs.size(), "只有带 docId 的命中才算可核验来源");
+            ResourceRef ref = refs.get(0);
+            assertEquals("document", ref.kind());
+            assertEquals("42", ref.documentId());
+            assertEquals("干眼症诊疗共识", ref.title());
+            assertEquals(0.81, ref.score());
+            assertEquals("knowledge-base", ref.source());
+            assertEquals("睑板腺功能障碍是干眼的主要原因之一。", ref.snippet());
+        } finally {
+            ToolResourceContext.drain();
+        }
+    }
+
+    @Test
+    void failedRetrievalRegistersNoCitations() {
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenThrow(new RuntimeException("向量库不可达"));
+
+        assertThrows(IllegalStateException.class, () -> tool.searchDocuments("干眼", 42L));
+        assertEquals(List.of(), ToolResourceContext.drain(),
+                "失败的一次检索不能在资源栏留下任何来源");
     }
 
     /**

@@ -62,7 +62,8 @@ public class AgentController {
         chatHistoryService.claimOrValidateSession(threadId, userId, request.getMessage());
 
         // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
-        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
+        // 图片附件随消息一起落库：刷新/换会话后资源栏要能恢复，不能只在内存里活一轮。
+        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage(), request.getImageUrls());
 
         // 不记录消息正文：其中可能包含用户症状、影像描述等敏感医学信息。
         log.info("Agent 流式对话请求, threadId={}, userId={}, messageLength={}, imageCount={}",

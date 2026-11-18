@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest"
-import { applyStreamEvent, clearAllLoading, mapHistoryMessage, type StreamMessage } from "./agentStream"
+import {
+  applyStreamEvent,
+  clearAllLoading,
+  mapHistoryMessage,
+  parseUserEnvelope,
+  type StreamMessage,
+} from "./agentStream"
+import { deriveResources } from "./agentResources"
 
 describe("applyStreamEvent", () => {
   it("assistant 首片 push isLoading，后续原地累加", () => {
@@ -293,5 +300,112 @@ describe("mapHistoryMessage", () => {
     // 只在当前进程时区可换算时不强断言具体时分；这里验证遇到旧格式不抛错且非空。
     expect(m.time === undefined || /^\d{2}:\d{2}$/.test(m.time)).toBe(true)
     expect(formatClock(new Date(Date.UTC(2026, 10, 8, 10, 20)), "Asia/Shanghai")).toBe("18:20")
+  })
+})
+
+describe("资源闭环（Phase R）", () => {
+  it("工具结果事件把后端结构化资源带进消息，并进而进入资源栏", () => {
+    const msgs = applyStreamEvent(
+      [
+        { id: "u1", type: "user", content: "干眼怎么治", images: ["https://cos.example.com/e.jpg"] },
+      ],
+      {
+        messageType: "tool-result",
+        content: "检索到 1 段文档",
+        toolName: "searchDocuments",
+        toolCallId: "call_1",
+        status: "success",
+        resources: [
+          {
+            id: "doc:42",
+            kind: "document",
+            title: "干眼症诊疗共识",
+            source: "knowledge-base",
+            documentId: "42",
+            score: 0.81,
+            snippet: "睑板腺功能障碍是干眼的主要原因之一。",
+            toolCallId: "call_1",
+          },
+        ],
+      },
+    )
+    expect(msgs[msgs.length - 1].resources).toHaveLength(1)
+
+    const resources = deriveResources(msgs)
+    expect(resources.images).toHaveLength(1)
+    expect(resources.images[0].source).toBe("upload")
+    expect(resources.documents[0]).toMatchObject({ documentId: "42", score: 0.81 })
+  })
+
+  it("失败的工具结果没有资源，不得补造证据", () => {
+    const msgs = applyStreamEvent([], {
+      messageType: "tool-result",
+      content: "工具返回了错误",
+      toolCallId: "call_2",
+      status: "error",
+      resources: [{ kind: "document", documentId: "9", title: "不该出现的来源" }],
+    })
+    expect(msgs[0].resources).toBeUndefined()
+    // 但后端若真下发了资源，前端仍按数据展示——这里的主防线在后端（失败不带资源）。
+    const withFake = deriveResources(msgs)
+    expect(withFake.documents).toHaveLength(0)
+  })
+
+  it("历史工具结果能从落库 JSON 恢复资源", () => {
+    const m = mapHistoryMessage({
+      id: "8",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: JSON.stringify({
+        toolCallId: "call_3",
+        name: "searchDocuments",
+        status: "success",
+        output: "【文档片段】…",
+        resources: [
+          { id: "doc:5", kind: "document", title: "白内障指南", documentId: "5", score: 0.7 },
+        ],
+      }),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.resources?.[0]).toMatchObject({ documentId: "5", source: "knowledge-base" })
+  })
+
+  it("旧的历史工具结果行没有资源字段：资源栏空着，而不是编造来源", () => {
+    const m = mapHistoryMessage({
+      id: "9",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: "检索到 2 段文档",
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(m.resources).toBeUndefined()
+    expect(deriveResources([m]).documents).toEqual([])
+  })
+
+  it("用户消息信封能恢复上传图片，刷新/切会话后影像不丢", () => {
+    const m = mapHistoryMessage({
+      id: "10",
+      role: "USER",
+      subType: "",
+      content: JSON.stringify({
+        text: "帮我看看",
+        images: ["https://cos.example.com/f.jpg"],
+      }),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe("帮我看看")
+    expect(m.images).toEqual(["https://cos.example.com/f.jpg"])
+    expect(deriveResources([m]).images).toHaveLength(1)
+  })
+
+  it("旧版纯文本用户消息不会被误当信封解析", () => {
+    const plain = parseUserEnvelope("普通提问")
+    expect(plain).toEqual({ text: "普通提问", images: [] })
+    const jsonish = parseUserEnvelope('{"foo":"bar"}')
+    expect(jsonish.text).toBe('{"foo":"bar"}')
+    expect(jsonish.images).toEqual([])
   })
 })

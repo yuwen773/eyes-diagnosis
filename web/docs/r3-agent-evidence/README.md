@@ -27,3 +27,38 @@ ACCEPT_BASE=http://localhost:5199 node scripts/evidence/r3-agent-acceptance.mjs
 | `light-history-1440.jpg` | 历史恢复 | 工具结果回放为「完成」；UTC 10:20 显示为本地 18:20 |
 
 完整断言表与全部截图在 `web/test-results/r3-acceptance/report.json`（不提交，可复跑再生）。
+
+## Phase R：会话资源与证据闭环
+
+复跑（真实浏览器，合成事件；上传接口与 SSE 分片均为合成，面板逻辑走产品代码）：
+
+```bash
+cd web
+# 1) 另开终端起前端
+VITE_PROXY_TARGET=http://localhost:18081 npx vite --port 5199 --strictPort
+# 2) 采集
+ACCEPT_BASE=http://localhost:5199 node scripts/evidence/r3-resources-acceptance.mjs
+```
+
+真实后端联调（真实上传 COS、真实 DashScope 模型、真实 Chroma 检索，不拦截任何请求）：
+
+```bash
+cd web
+R3_API_BASE=http://localhost:18081/api node scripts/evidence/r3-resources-real-backend.mjs
+```
+
+脚本会注册临时账号并删除本轮上传对象；本地库里保留该临时账号以便复核。
+
+| 文件 | 场景 | 看什么 |
+| --- | --- | --- |
+| `light-resources-panel-1440.jpg` | 上传 + 检索命中 + 链接 | 会话级汇总、三类 tab 计数、来源卡（相关度 0.81 / `#42` / 片段）、定位按钮 |
+| `dark-resources-panel-1440.jpg` | 深色同上 | 深色下同一套层级与对比 |
+| `light-resources-preview-1440.jpg` | 影像预览 | 点缩略图打开预览层，尺寸受控 |
+| `light-resources-drawer-375.jpg` | 375px 抽屉 | 窄屏资源面板不挤占正文宽度 |
+| `light-resources-failed-tool-1440.jpg` | 失败工具却带资源 | 来源计数为 0，不让失败的工具长出一份假证据 |
+| `dark-resources-interrupted-1440.jpg` | 断流 | 没有回执的一轮不产出来源 |
+| `light-resources-history-1440.jpg` | 历史恢复 | 刷新/换会话后影像与来源从落库消息重建 |
+
+**边界**：`资源栏显示 0` 是合法空态（这个会话确实没有影像 / 没有命中 / 没有外链）。
+合成验收与真实后端验收的结果不互相代替：真实链只覆盖「模型确实触发了 searchDocuments」
+这一条路，模型没触发时以合成用例为准。

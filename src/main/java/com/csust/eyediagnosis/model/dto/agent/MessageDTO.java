@@ -33,4 +33,9 @@ public class MessageDTO {
     private String status;
     /** 带时区偏移的 ISO-8601 时间点，展示层按浏览器本地时区换算。 */
     private String timestamp;
+    /**
+     * 本次工具调用产生的结构化资源（目前是知识库检索命中的文档）。
+     * 只挂在 tool-result 上；失败/超时/中断的调用不带资源。
+     */
+    private List<ResourceRef> resources;
 }

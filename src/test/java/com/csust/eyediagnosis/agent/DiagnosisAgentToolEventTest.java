@@ -4,9 +4,11 @@ import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.streaming.OutputType;
 import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.observability.ToolExecutionObserver;
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -172,6 +175,65 @@ class DiagnosisAgentToolEventTest {
                 OutputType.AGENT_TOOL_FINISHED);
 
         assertEquals("error", events.get(0).getStatus());
+    }
+
+    /** 让观察者记录一次成功执行，并在执行期间登记一条知识库来源。 */
+    private void observeSuccessWithCitation(String toolCallId) {
+        observer.interceptToolCall(
+                new com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest(
+                        "searchDocuments", "{}", toolCallId, Map.of()),
+                req -> {
+                    ToolResourceContext.record(ResourceRef.document(
+                            "42", "干眼症诊疗共识", 0.81, "睑板腺功能障碍是干眼的主要原因之一。", null));
+                    return com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse
+                            .of("找到 1 段文档", "searchDocuments", toolCallId);
+                });
+    }
+
+    @Test
+    void successfulToolCallCarriesStructuredResourcesIntoEventAndHistory() throws Exception {
+        observeSuccessWithCitation("call_r1");
+        List<MessageDTO> events = events(
+                toolResponse("call_r1", "searchDocuments", "找到 1 段文档"),
+                OutputType.AGENT_TOOL_FINISHED);
+
+        assertEquals(1, events.size());
+        assertEquals(1, events.get(0).getResources().size());
+        ResourceRef ref = events.get(0).getResources().get(0);
+        assertEquals("document", ref.kind());
+        assertEquals("42", ref.documentId());
+        assertEquals("call_r1", ref.toolCallId());
+
+        ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
+        verify(history).saveToolResultMessage(eq(THREAD_ID), eq(USER_ID), json.capture());
+        JsonNode node = new ObjectMapper().readTree(json.getValue());
+        assertEquals(1, node.get("resources").size());
+        assertEquals("42", node.get("resources").get(0).get("documentId").asText());
+        assertEquals("knowledge-base", node.get("resources").get(0).get("source").asText());
+    }
+
+    @Test
+    void failedToolCallCarriesNoResources() throws Exception {
+        observer.interceptToolCall(
+                new com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest(
+                        "searchDocuments", "{}", "call_r2", Map.of()),
+                req -> {
+                    ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, "片段", null));
+                    return com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse
+                            .error("检索失败", "searchDocuments", "call_r2");
+                });
+
+        List<MessageDTO> events = events(
+                toolResponse("call_r2", "searchDocuments", "检索失败"),
+                OutputType.AGENT_TOOL_FINISHED);
+
+        assertEquals("error", events.get(0).getStatus());
+        assertNull(events.get(0).getResources());
+
+        ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
+        verify(history).saveToolResultMessage(eq(THREAD_ID), eq(USER_ID), json.capture());
+        JsonNode node = new ObjectMapper().readTree(json.getValue());
+        assertFalse(node.has("resources"), "失败的工具结果不得落库任何来源");
     }
 
     @Test

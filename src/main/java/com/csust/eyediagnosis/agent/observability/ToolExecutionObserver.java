@@ -4,10 +4,12 @@ import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallHandler;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolInterceptor;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,8 +28,14 @@ import java.util.Map;
 @Component
 public class ToolExecutionObserver extends ToolInterceptor {
 
-    /** 观察结果。status 取 success / error / timeout / cancelled。 */
-    public record Outcome(String status, String errorType, long finishedAt) {
+    /**
+     * 观察结果。status 取 success / error / timeout / cancelled。
+     *
+     * <p>{@code resources} 只携带成功调用登记的结构化资源——失败/超时/中断的
+     * 调用即使登记了内容也不带走，侧栏不拿它当证据。
+     */
+    public record Outcome(String status, String errorType, long finishedAt,
+                          java.util.List<ResourceRef> resources) {
     }
 
     private static final int MAX_ENTRIES = 4096;
@@ -49,16 +57,26 @@ public class ToolExecutionObserver extends ToolInterceptor {
     @Override
     public ToolCallResponse interceptToolCall(ToolCallRequest request, ToolCallHandler handler) {
         String toolCallId = request != null ? request.getToolCallId() : null;
+        // 上一次调用若异常退出可能留下残渣：开始前清空，避免串到这一次。
+        ToolResourceContext.drain();
         try {
             ToolCallResponse response = handler.call(request);
-            if (response != null && response.isError()) {
-                remember(toolCallId, "error", "ToolCallResponse.error", System.currentTimeMillis());
+            boolean failed = response != null && response.isError();
+            if (failed) {
+                ToolResourceContext.drain();
+                remember(toolCallId, "error", "ToolCallResponse.error", System.currentTimeMillis(), List.of());
             } else {
-                remember(toolCallId, "success", null, System.currentTimeMillis());
+                // 工具本身不知道框架分配的 toolCallId，在这里补齐，
+                // 前端才能把「来源」对回具体的执行步骤。
+                List<ResourceRef> resources = ToolResourceContext.drain().stream()
+                        .map(ref -> ref.withToolCallId(toolCallId))
+                        .toList();
+                remember(toolCallId, "success", null, System.currentTimeMillis(), resources);
             }
             return response;
         } catch (RuntimeException e) {
-            remember(toolCallId, classify(e), e.getClass().getSimpleName(), System.currentTimeMillis());
+            ToolResourceContext.drain();
+            remember(toolCallId, classify(e), e.getClass().getSimpleName(), System.currentTimeMillis(), List.of());
             throw e;
         }
     }
@@ -71,11 +89,13 @@ public class ToolExecutionObserver extends ToolInterceptor {
         return outcomes.get(toolCallId);
     }
 
-    private void remember(String toolCallId, String status, String errorType, long finishedAt) {
+    private void remember(String toolCallId, String status, String errorType, long finishedAt,
+                          List<ResourceRef> resources) {
         if (toolCallId == null || toolCallId.isBlank()) {
             return;
         }
-        outcomes.put(toolCallId, new Outcome(status, errorType, finishedAt));
+        outcomes.put(toolCallId, new Outcome(status, errorType, finishedAt,
+                resources == null ? List.of() : List.copyOf(resources)));
     }
 
     private static String classify(Throwable error) {

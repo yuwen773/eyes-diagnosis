@@ -5,9 +5,9 @@
  * tool-request/tool-response/tool-confirm 都截断累加回合。tool-confirm 是
  * 信息性终点卡——后端图中断后流即结束，没有确认回传端点。
  */
-import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react"
 import { ApiError, streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
-import { extractResources, type AgentResources } from "./agentResources"
+import { deriveResources, parseResourceRefs, type AgentResource } from "./agentResources"
 import { newId } from "./id"
 import { formatClock, parseApiDate, parseApiTime } from "./time"
 
@@ -42,6 +42,11 @@ export type StreamMessage = {
   toolCalls?: ToolCallArg[]
   time?: string
   images?: string[]
+  /**
+   * 后端随工具结果下发的结构化资源（目前是知识库检索命中）。
+   * 只来自真实工具调用，不从正文反推。
+   */
+  resources?: AgentResource[]
   /**
    * 仅用户轮次：这条提问在服务端是什么状态。
    *
@@ -178,7 +183,9 @@ export function applyStreamEvent(
 
     // 后端新契约是 tool-result；tool-response 是前端历史内部名与旧别名。
     case "tool-result":
-    case "tool-response":
+    case "tool-response": {
+      // 资源只跟成功的工具调用一起到达；缺省就是没有，不补造。
+      const resources = evidenceResources(dto.status, dto.resources)
       return [
         ...truncate(msgs),
         {
@@ -189,8 +196,10 @@ export function applyStreamEvent(
           toolCallId: dto.toolCallId,
           toolStatus: dto.status,
           time,
+          ...(resources.length > 0 ? { resources } : {}),
         },
       ]
+    }
 
     // 兼容后端 MessageType.TOOL_CONFIRM（序列化为 tool-confirm）
     // 与历史 mcp-confirm 事件名。两者都是图中断的终点卡。
@@ -201,6 +210,18 @@ export function applyStreamEvent(
     default:
       return msgs
   }
+}
+
+/**
+ * 工具结果里的资源 → 可展示的资源。
+ *
+ * <p>只有明确成功的调用才带证据：失败、超时、被中断、或「有返回但未区分
+ * 成败」的结果，一律不往侧栏放来源。后端已经在源头拦了一道，这里是第二道——
+ * 两边任何一边出错，都不会让失败的工具长出一份「看起来成功」的引用。
+ */
+function evidenceResources(status: string | undefined, raw: unknown): AgentResource[] {
+  if (status !== undefined && status !== "success") return []
+  return parseResourceRefs(raw)
 }
 
 /** SSE 时间戳 → 本地 HH:mm；缺失或不可解析时留空，不猜。 */
@@ -254,6 +275,19 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
 
   const time = formatHistoryTime(m.createdTime)
 
+  if (type === "user") {
+    // 新落库格式是 {"text":…,"images":[…]} 信封；旧行是纯文本。
+    // 旧行里的图片找不回来——这里不做任何猜测。
+    const envelope = parseUserEnvelope(m.content)
+    return {
+      id: newId(),
+      type,
+      content: envelope.text,
+      time,
+      ...(envelope.images.length > 0 ? { images: envelope.images } : {}),
+    }
+  }
+
   if (type === "tool-request") {
     // 新落库格式是带 toolCallId 的 JSON；旧格式是「工具名: 参数 JSON」。
     const parsed = parsePersistedToolCall(m.content)
@@ -269,8 +303,9 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
   }
 
   if (type === "tool-response") {
-    // 新落库格式带 toolCallId / status / output；旧行是工具输出原文。
+    // 新落库格式带 toolCallId / status / output / resources；旧行是工具输出原文。
     const parsed = parsePersistedToolResult(m.content)
+    const resources = evidenceResources(parsed.status, parsed.resources)
     return {
       id: newId(),
       type,
@@ -281,6 +316,7 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
       // 标 completed（已返回），不冒充 success，也不说未确认。
       toolStatus: parsed.status ?? "completed",
       time,
+      ...(resources.length > 0 ? { resources } : {}),
     }
   }
 
@@ -331,9 +367,11 @@ type ParsedToolResult = {
   name?: string
   status?: string
   output: string
+  /** 后端随结果下发的结构化资源（新格式才有）。 */
+  resources?: unknown
 }
 
-/** 新格式 `{toolCallId,name,status,output}`；旧行把整段内容当输出。 */
+/** 新格式 `{toolCallId,name,status,output,resources}`；旧行把整段内容当输出。 */
 function parsePersistedToolResult(content: string): ParsedToolResult {
   const trimmed = content.trim()
   if (trimmed.startsWith("{")) {
@@ -345,6 +383,7 @@ function parsePersistedToolResult(content: string): ParsedToolResult {
           name: typeof parsed.name === "string" ? parsed.name : undefined,
           status: typeof parsed.status === "string" ? parsed.status : undefined,
           output: typeof parsed.output === "string" ? parsed.output : "",
+          resources: parsed.resources,
         }
       }
     } catch {
@@ -352,6 +391,27 @@ function parsePersistedToolResult(content: string): ParsedToolResult {
     }
   }
   return { output: content }
+}
+
+/**
+ * 用户消息落库信封 `{"text":…,"images":[…]} → { text, images }。
+ *
+ * <p>只认结构完全对得上的对象：有一条 `text` 字符串和一组字符串 `images`。
+ * 老版本用户消息就是纯文本（哪怕它本身长得像 JSON），不会走到这里被误解。
+ */
+export function parseUserEnvelope(content: string): { text: string; images: string[] } {
+  const trimmed = (content ?? "").trim()
+  if (!trimmed.startsWith("{")) return { text: content ?? "", images: [] }
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>
+    if (typeof parsed.text !== "string" || !Array.isArray(parsed.images)) {
+      return { text: content ?? "", images: [] }
+    }
+    const images = parsed.images.filter((url): url is string => typeof url === "string" && !!url)
+    return { text: parsed.text, images }
+  } catch {
+    return { text: content ?? "", images: [] }
+  }
 }
 
 /** 「工具名: 参数 JSON」→ { name, args }；解析不出时返回 null。 */
@@ -396,10 +456,9 @@ export type SendOutcome = {
 export function useAgentStream() {
   const [messages, setMessages] = useState<StreamMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
-  const [resources, setResources] = useState<AgentResources>({
-    images: [],
-    links: [],
-  })
+  // 资源是从消息派生的，不是第二份状态：历史加载、切会话、刷新重建都走同一条路，
+  // 不会出现「流里收集过一次、历史回放又收集不到」的两套口径。
+  const resources = useMemo(() => deriveResources(messages), [messages])
   // 句柄带令牌：旧流收尾时新流可能已经建立，不能按「当前句柄」一把清。
   // `cause` 由中止方填写，send() 据此回报 SendOutcome.abortedBy。
   const abortRef = useRef<{
@@ -465,9 +524,6 @@ export function useAgentStream() {
             onEvent(dto) {
               if (eventToken !== eventSeq.current) return
               setMessages((prev) => applyStreamEvent(prev, dto))
-              if ((dto.messageType ?? "").toLowerCase() === "tool-response") {
-                setResources((prev) => extractResources(dto.content ?? "", prev))
-              }
             },
             onDone() {
               clearLoading()
@@ -541,7 +597,6 @@ export function useAgentStream() {
     abortRef.current = null
     setIsStreaming(false)
     setMessages([])
-    setResources({ images: [], links: [] })
   }, [])
 
   return {

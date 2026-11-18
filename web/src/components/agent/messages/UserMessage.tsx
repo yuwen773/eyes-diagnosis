@@ -29,7 +29,7 @@ export function UserMessage({ msg, onPreviewImage }: { msg: StreamMessage; onPre
   const delivery = msg.delivery ? DELIVERY_NOTE[msg.delivery] : undefined
 
   return (
-    <article className="agent-msg agent-msg--user">
+    <article className="agent-msg agent-msg--user" data-msg-id={msg.id}>
       {images.length > 0 ? (
         <div className={`agent-msg__imggrid grid-${gridCols}`}>
           {shown.map((url) => (

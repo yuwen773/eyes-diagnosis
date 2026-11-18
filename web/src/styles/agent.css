@@ -2089,6 +2089,229 @@ html:not(.dark) .welcome__mark-img--dark {
   color: var(--fg-3);
 }
 
+/* ── 资源面板：会话资源与证据中心 ─────────────────────── */
+
+.agent-panel__subtitle {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fg-3);
+}
+
+.agent-panel__filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.agent-panel__filterlabel {
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+
+.agent-panel__select {
+  flex: 1;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+.agent-panel__select:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+/* 图片占位：外部图片未加载 / 加载失败 */
+.agent-panel__img.is-gated,
+.agent-panel__img.is-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: 1;
+  padding: 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--fg-3);
+  background: var(--brand-soft);
+}
+
+.agent-panel__img.is-gated {
+  cursor: pointer;
+}
+
+.agent-panel__img.is-gated:hover {
+  color: var(--fg);
+  border-color: var(--brand-primary);
+}
+
+/* 知识来源卡片 */
+.agent-panel__docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-panel__doc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+}
+
+.agent-panel__dochead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--brand-primary);
+}
+
+.agent-panel__score {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.agent-panel__doctitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+.agent-panel__snippet {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.agent-panel__doctail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-panel__docid {
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.agent-panel__locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--fg-3);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.agent-panel__locate:hover {
+  background: var(--brand-soft);
+  color: var(--brand-primary);
+}
+
+.agent-panel__locate:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* 链接行：分隔线移到整行，定位按钮与链接同一行 */
+.agent-panel__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.agent-panel__link a {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.agent-panel__linkmeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.agent-panel__linktag {
+  padding: 0 6px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* 从资源栏定位回对话：目标短暂高亮，说明「就是这里」 */
+.is-located {
+  border-radius: var(--radius-md);
+  animation: agent-located 1.6s var(--ease);
+}
+
+@keyframes agent-located {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 55%, transparent);
+  }
+  25% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-located {
+    animation: none;
+    outline: 2px solid color-mix(in srgb, var(--brand-primary) 55%, transparent);
+    outline-offset: 3px;
+  }
+}
+
 /* ── 紧凑档抽屉（平板 / 手机）──────────────────────────── */
 
 .agent-drawer {

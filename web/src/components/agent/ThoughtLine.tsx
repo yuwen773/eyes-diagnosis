@@ -173,6 +173,8 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
             <li
               key={step.id}
               className={`thought__step is-${step.state}${open ? " is-open" : ""}`}
+              // 资源栏「定位到执行步骤」按 toolCallId 找到这一步。
+              data-tool-call-id={step.toolCallId}
             >
               <span className="thought__rail" aria-hidden="true">
                 <span className="thought__dot">

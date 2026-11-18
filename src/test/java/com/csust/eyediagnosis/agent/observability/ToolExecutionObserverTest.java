@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.observability;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallHandler;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -102,5 +104,46 @@ class ToolExecutionObserverTest {
                 (ToolCallHandler) req -> ToolCallResponse.of("后成功", "searchDocuments", "call_6"));
 
         assertEquals("success", observer.peek("call_6").status());
+    }
+
+    @Test
+    void resourcesRecordedDuringSuccessfulCallAreKeptAndTaggedWithTheCallId() {
+        observer.interceptToolCall(request("call_r1"), req -> {
+            ToolResourceContext.record(ResourceRef.document("42", "干眼症诊疗共识", 0.81, "片段", null));
+            return ToolCallResponse.of("找到 1 段文档", "searchDocuments", "call_r1");
+        });
+
+        ToolExecutionObserver.Outcome outcome = observer.peek("call_r1");
+        assertEquals("success", outcome.status());
+        assertEquals(1, outcome.resources().size());
+        assertEquals("42", outcome.resources().get(0).documentId());
+        // 工具自己不知道框架分配的 toolCallId，由观察者补齐。
+        assertEquals("call_r1", outcome.resources().get(0).toolCallId());
+    }
+
+    @Test
+    void failedCallCarriesNoResourcesEvenIfTheToolRegisteredSome() {
+        observer.interceptToolCall(request("call_r2"), req -> {
+            ToolResourceContext.record(ResourceRef.document("43", "不该出现的来源", 0.5, "片段", null));
+            return ToolCallResponse.error("检索失败", "searchDocuments", "call_r2");
+        });
+
+        assertEquals("error", observer.peek("call_r2").status());
+        assertTrue(observer.peek("call_r2").resources().isEmpty(),
+                "失败的工具调用不能留下任何「证据」");
+    }
+
+    @Test
+    void thrownCallDropsResourcesAndLeavesNoResidueForTheNextCall() {
+        assertThrows(IllegalStateException.class,
+                () -> observer.interceptToolCall(request("call_r3"), req -> {
+                    ToolResourceContext.record(ResourceRef.document("44", "残渣", 0.4, "片段", null));
+                    throw new IllegalStateException("boom");
+                }));
+        assertTrue(observer.peek("call_r3").resources().isEmpty());
+
+        observer.interceptToolCall(request("call_r4"), req -> ToolCallResponse.of("ok", "searchDocuments", "call_r4"));
+        assertTrue(observer.peek("call_r4").resources().isEmpty(),
+                "上一次调用登记的资源不能串到下一次");
     }
 }

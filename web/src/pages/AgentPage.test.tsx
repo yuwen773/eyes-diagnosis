@@ -48,7 +48,7 @@ vi.mock("@/lib/agentStream", async (importOriginal) => {
       return {
         messages,
         isStreaming: false,
-        resources: { images: [], links: [] },
+        resources: { images: [], documents: [], links: [] },
         send: sendMock,
         abort: vi.fn(),
         pushUser: (message: unknown) => setMessages((prev) => [...prev, message]),

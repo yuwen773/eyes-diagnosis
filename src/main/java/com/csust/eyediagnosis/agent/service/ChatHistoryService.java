@@ -53,8 +53,32 @@ public class ChatHistoryService {
     }
 
     public void saveUserMessage(String sessionId, Long userId, String content) {
+        saveUserMessage(sessionId, userId, content, null);
+    }
+
+    /**
+     * 带附件的用户消息落库。
+     *
+     * <p>t_agent_message 没有附件列，用同一个「规范 JSON」约定扩展内容：
+     * {@code {"text":"…","images":["https://…"]}}。没有附件时仍写纯文本——
+     * 旧行、旧前端都不需要知道这个信封。
+     */
+    public void saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
+        String payload = content;
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            Map<String, Object> envelope = new java.util.LinkedHashMap<>();
+            envelope.put("text", content == null ? "" : content);
+            envelope.put("images", imageUrls);
+            try {
+                payload = objectMapper.writeValueAsString(envelope);
+            } catch (JsonProcessingException e) {
+                log.warn("用户消息附件序列化失败, images={}", imageUrls.size());
+                payload = content;
+            }
+        }
+        String stored = payload;
         messageQueue.submit(sessionId, () -> {
-            messageWriter.writeUserMessage(sessionId, userId, content);
+            messageWriter.writeUserMessage(sessionId, userId, stored);
 
             AgentSession session = sessionMapper.selectBySessionId(sessionId);
             if (session != null && session.getMessageCount() == 1) {
