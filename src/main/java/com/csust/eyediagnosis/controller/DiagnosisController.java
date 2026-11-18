@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +51,18 @@ public class DiagnosisController {
     private UserService userService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * 判读记录里有患者影像结论和报告正文，浏览器或中间代理都不该留副本。
+     *
+     * <p>用 {@code @ModelAttribute} 统一加在全部端点上，而不是逐个方法写：
+     * 新增端点时不会漏，也没人需要记得这件事。服务端自己的推理缓存走 Redis，
+     * 与 HTTP 缓存无关。
+     */
+    @ModelAttribute
+    public void preventCaching(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store");
+    }
 
     /**
      * 诊断图片上传

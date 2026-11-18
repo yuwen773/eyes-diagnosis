@@ -150,6 +150,47 @@ class DiagnosisUploadReliabilityTest {
     }
 
     @Test
+    void commitSucceededButDriverThrewKeepsTheReferencedObject() {
+        when(fileManager.uploadPicture(any(), anyString()))
+                .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));
+        // 最坏的一种：插入其实已经提交，驱动在返回途中抛了超时。
+        // 此时记录在库、原图如果被补偿删除，就得到「有正式记录、无原始影像」——
+        // 不可恢复。回查能看到这条记录，就必须保留对象。
+        when(baseMapper.insert(any(Diagnosis.class))).thenAnswer(inv -> {
+            Diagnosis d = inv.getArgument(0);
+            if (d.getId() == null) {
+                d.setId(42L);
+            }
+            throw new RuntimeException("connection reset after commit");
+        });
+        when(baseMapper.selectById(42L)).thenReturn(new Diagnosis());
+
+        assertThrows(RuntimeException.class, () -> service.doDiagnosis(imageFile(), user(7L)));
+
+        verify(baseMapper).selectById(42L);
+        verify(fileManager, never()).deleteUploadedPictureQuietly(anyString());
+    }
+
+    @Test
+    void unknownCommitStateKeepsTheObjectWhenEvenTheReadbackFails() {
+        when(fileManager.uploadPicture(any(), anyString()))
+                .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));
+        when(baseMapper.insert(any(Diagnosis.class))).thenAnswer(inv -> {
+            Diagnosis d = inv.getArgument(0);
+            if (d.getId() == null) {
+                d.setId(43L);
+            }
+            throw new RuntimeException("connection reset after commit");
+        });
+        // 连接还没恢复，回查也失败：结果未知 → 按「可能存在」处理，宁留孤儿不删引用。
+        when(baseMapper.selectById(43L)).thenThrow(new RuntimeException("still down"));
+
+        assertThrows(RuntimeException.class, () -> service.doDiagnosis(imageFile(), user(7L)));
+
+        verify(fileManager, never()).deleteUploadedPictureQuietly(anyString());
+    }
+
+    @Test
     void zeroRowInsertIsTreatedAsFailureAndDeletesTheOrphanObject() {
         when(fileManager.uploadPicture(any(), anyString()))
                 .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));

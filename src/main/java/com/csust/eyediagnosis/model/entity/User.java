@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -29,8 +30,13 @@ public class User implements Serializable {
     private String userAccount;
 
     /**
-     * 密码
+     * 密码（BCrypt 哈希）
+     *
+     * <p>这一层用 {@code @JsonIgnore} 而不是只在个别接口上挑字段：实体对象会被
+     * 多个接口直接返回，任何一处忘记脱敏就等于把哈希下发出去。MyBatis-Plus 走
+     * 反射读写列，不经过 Jackson，所以不影响持久化。
      */
+    @JsonIgnore
     private String userPassword;
 
     /**

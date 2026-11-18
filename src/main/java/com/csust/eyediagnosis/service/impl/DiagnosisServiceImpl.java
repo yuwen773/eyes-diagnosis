@@ -289,7 +289,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入，
             // 任何一步失败都必须把已经上传的对象删掉，否则留下无人引用的孤儿影像。
             DiagnosisResultVO vo;
-            Diagnosis diagnosis;
+            Diagnosis diagnosis = null;
             boolean saved;
             try {
                 vo = buildDiagnosisResult(grpcResponse, evidence);
@@ -305,8 +305,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 evidence.applyTo(diagnosis);
                 saved = this.save(diagnosis);
             } catch (RuntimeException e) {
-                // 对象已写入、记录没落库：删掉这个对象，避免留下无人引用的孤儿影像。
-                fileManager.deleteUploadedPictureQuietly(imageKey);
+                // 对象已写入、记录可能没落库。**不能一律删对象**：
+                // 无事务时 `save` 走自动提交，可能已经提交成功、只是驱动在返回
+                // 途中抛了超时——这时记录在库、原图却被删掉，是最坏的结果。
+                // 先按主键回查一次：查不到（且查询本身没失败）才认为记录确实没落库。
+                if (diagnosis != null && recordMayExist(diagnosis)) {
+                    log.error("诊断记录落库结果未知，保留已上传影像以免误删被引用对象, diagnosisId={}, objectKey={}",
+                            diagnosis.getId(), imageKey);
+                } else {
+                    fileManager.deleteUploadedPictureQuietly(imageKey);
+                }
                 throw e;
             }
             if (!saved) {
@@ -324,6 +332,28 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 落库抛异常之后，判断这条记录是不是其实已经提交成功了。
+     *
+     * <p>doDiagnosis 没有包裹事务，每次 Mapper 调用各自提交，所以「提交超时」
+     * 与「插入失败」在调用方看来是同一个异常。用主键回查找出区别：
+     * 查到说明提交确实生效，它引用的对象**绝不能删**；明确查不到才允许补偿删除；
+     * 查询本身失败（连接还没恢复）属于「结果未知」，一律按可能存在处理——
+     * 留一个无人引用的孤儿对象是可回收的，删掉一张被正式记录引用的原图不可逆。
+     */
+    private boolean recordMayExist(Diagnosis diagnosis) {
+        Long id = diagnosis.getId();
+        if (id == null) {
+            return false;
+        }
+        try {
+            return this.getById(id) != null;
+        } catch (Exception readError) {
+            log.warn("诊断记录回查失败，按「可能已落库」处理, diagnosisId={}", id);
+            return true;
         }
     }
 
