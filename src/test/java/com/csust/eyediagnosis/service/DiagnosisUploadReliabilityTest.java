@@ -191,6 +191,28 @@ class DiagnosisUploadReliabilityTest {
     }
 
     @Test
+    void insertFailedWithAllocatedIdAndEmptyReadbackDeletesTheObject() {
+        when(fileManager.uploadPicture(any(), anyString()))
+                .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));
+        // id 已分配（ASSIGN_ID 在插入前生成）、插入抛异常、回查明确查不到 ——
+        // 这才是「确实没落库」，补偿删除必须照旧发生。缺了这条，把 recordMayExist
+        // 改成「有 id 就返回 true」也会全绿。
+        when(baseMapper.insert(any(Diagnosis.class))).thenAnswer(inv -> {
+            Diagnosis d = inv.getArgument(0);
+            if (d.getId() == null) {
+                d.setId(44L);
+            }
+            throw new RuntimeException("duplicate key");
+        });
+        when(baseMapper.selectById(44L)).thenReturn(null);
+
+        assertThrows(RuntimeException.class, () -> service.doDiagnosis(imageFile(), user(7L)));
+
+        verify(baseMapper).selectById(44L);
+        verify(fileManager).deleteUploadedPictureQuietly("/public/7/x.png");
+    }
+
+    @Test
     void zeroRowInsertIsTreatedAsFailureAndDeletesTheOrphanObject() {
         when(fileManager.uploadPicture(any(), anyString()))
                 .thenReturn(uploaded("https://cdn/x.png", "/public/7/x.png"));

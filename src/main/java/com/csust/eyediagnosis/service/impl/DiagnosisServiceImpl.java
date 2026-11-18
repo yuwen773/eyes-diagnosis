@@ -310,7 +310,10 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 // 途中抛了超时——这时记录在库、原图却被删掉，是最坏的结果。
                 // 先按主键回查一次：查不到（且查询本身没失败）才认为记录确实没落库。
                 if (diagnosis != null && recordMayExist(diagnosis)) {
-                    log.error("诊断记录落库结果未知，保留已上传影像以免误删被引用对象, diagnosisId={}, objectKey={}",
+                    // 注意：public/ 前缀下**没有**自动对账器（UploadCompensationService
+                    // 只扫 agent-chat/），这里留下的对象需要人工排查或后续接入对账。
+                    // 仍然选择保留：删掉一张可能被正式记录引用的原图不可逆。
+                    log.warn("诊断记录落库结果未知，保留已上传影像以免误删被引用对象（public/ 暂无常驻对账）, diagnosisId={}, objectKey={}",
                             diagnosis.getId(), imageKey);
                 } else {
                     fileManager.deleteUploadedPictureQuietly(imageKey);
@@ -352,7 +355,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         try {
             return this.getById(id) != null;
         } catch (Exception readError) {
-            log.warn("诊断记录回查失败，按「可能已落库」处理, diagnosisId={}", id);
+            log.warn("诊断记录回查失败，按「可能已落库」处理, diagnosisId={}", id, readError);
             return true;
         }
     }
