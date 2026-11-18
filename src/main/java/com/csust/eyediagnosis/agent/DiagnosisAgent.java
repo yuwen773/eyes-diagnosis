@@ -215,7 +215,7 @@ public class DiagnosisAgent {
                                     messageDTO.setMessageType(MessageType.TOOL_REQUEST);
                                     messageDTO.setContent("");
                                     List<Map<String, Object>> toolCallingList = new ArrayList<>();
-                                    StringBuilder redactedDesc = new StringBuilder();
+                                    List<Map<String, Object>> persistedCalls = new ArrayList<>();
                                     for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
                                         Map<String, Object> tcMap = new HashMap<>();
                                         tcMap.put("name", toolCall.name());
@@ -225,15 +225,15 @@ public class DiagnosisAgent {
                                         tcMap.put("id", toolCall.id());
                                         tcMap.put("stepLabel", ToolStepContract.stepLabel(toolCall.name()));
                                         toolCallingList.add(tcMap);
-                                        if (redactedDesc.length() > 0) redactedDesc.append("\n");
-                                        redactedDesc.append(redactedToolCall(toolCall.name()));
+                                        persistedCalls.add(persistedToolCallRef(toolCall.id(), toolCall.name()));
                                     }
                                     messageDTO.setToolCalls(toolCallingList);
                                     messageDTO.setToolStatus(ToolStepContract.Status.RUNNING.wire());
                                     messageDTO.setStepLabel(toolCallingList.size() == 1
                                             ? ToolStepContract.stepLabel(assistantMessage.getToolCalls().get(0).name())
                                             : null);
-                                    chatHistoryService.saveToolCallMessage(threadId, userId, redactedDesc.toString());
+                                    chatHistoryService.saveToolCallMessage(threadId, userId,
+                                            persistedToolCallsJson(persistedCalls));
                                 }
                                 // reasoning 消息：默认不展示、不落库（见 agent.expose-reasoning）
                                 else if (metadata.get("reasoningContent") != null
@@ -342,6 +342,27 @@ public class DiagnosisAgent {
      */
     static String redactedToolCall(String toolName) {
         return ToolStepContract.stepLabel(toolName);
+    }
+
+    /**
+     * 请求行的落库形状：只留关联键与白名单工具名，**不含参数**。
+     *
+     * <p>为什么要带 {@code toolCallId}：终态行（{@link #persistTerminalToolResult}）
+     * 用同一个 id 落库；请求行没有 id 时，前端回放只能按顺序猜，一次调用会被
+     * 拆成「未确认 + 完成」两步。参数仍然不进历史，这条只加关联键。
+     */
+    static Map<String, Object> persistedToolCallRef(String toolCallId, String toolName) {
+        Map<String, Object> ref = new LinkedHashMap<>();
+        ref.put("toolCallId", toolCallId);
+        ref.put("name", toolName);
+        ref.put("stepLabel", ToolStepContract.stepLabel(toolName));
+        return ref;
+    }
+
+    /** 单次调用落成对象、多次调用落成数组；前端两种形状都认。 */
+    static String persistedToolCallsJson(List<Map<String, Object>> refs) {
+        if (refs == null || refs.isEmpty()) return "";
+        return JsonUtils.toJson(refs.size() == 1 ? refs.get(0) : refs);
     }
 
     /**

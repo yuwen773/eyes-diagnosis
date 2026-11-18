@@ -128,12 +128,10 @@ public class EyeImageAnalyzerTool {
             log.error("眼科图像分析失败, objectKeyPrefix={}, errorType={}",
                     prefixOf(objectKey), e.getClass().getSimpleName());
             log.debug("眼科图像分析失败详情, objectKeyPrefix={}", prefixOf(objectKey), e);
-            return EyeAnalysisResult.builder()
-                    .description("图像分析失败")
-                    .medicalKeywords("")
-                    .urgency("attention")
-                    .recommendations("图片分析服务暂时不可用，建议您描述症状或稍后重试。")
-                    .build();
+            // 不返回「看起来成功」的兜底结果：视觉模型不可用是**工具失败**，
+            // 必须走失败的终态（sink → failed），否则界面会把一次没发生的分析
+            // 显示成「完成」，用户据此做出的判断没有任何证据支撑。
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图片分析服务暂时不可用，请稍后重试");
         }
     }
 
@@ -177,6 +175,10 @@ public class EyeImageAnalyzerTool {
     }
 
     private EyeAnalysisResult parseAnalysisResult(String rawText) {
+        if (rawText == null || rawText.isBlank()) {
+            // 模型什么都没返回：没有结果就是失败，不能造一份空壳结果交回对话。
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图像分析结果为空，请稍后重试");
+        }
         try {
             String json = rawText;
             if (rawText.contains("```")) {
@@ -184,7 +186,8 @@ public class EyeImageAnalyzerTool {
             }
             return JSONUtil.toBean(json, EyeAnalysisResult.class);
         } catch (Exception e) {
-            log.warn("解析眼科图像分析结果失败，原始内容: {}", rawText, e);
+            // 只记长度与异常类型：原始内容是模型对患者影像的描述，不写进日志。
+            log.warn("解析眼科图像分析结果失败, length={}", rawText.length(), e);
             return EyeAnalysisResult.builder()
                     .description(rawText)
                     .medicalKeywords("")

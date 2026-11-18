@@ -309,15 +309,15 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
   }
 
   if (type === "tool-request") {
-    // 新落库格式是带 toolCallId 的 JSON；旧格式是「工具名: 参数 JSON」。
+    // 新落库格式是带 toolCallId 的 JSON（单个或数组）；旧格式是「工具名: 参数 JSON」。
     const parsed = parsePersistedToolCall(m.content)
     return {
       id: newId(),
       type,
       content: "",
-      toolName: parsed?.name,
-      toolCallId: parsed?.id,
-      toolCalls: parsed ? [parsed] : undefined,
+      toolName: parsed[0]?.name,
+      toolCallId: parsed[0]?.id,
+      toolCalls: parsed.length > 0 ? parsed : undefined,
       time,
     }
   }
@@ -350,36 +350,52 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
 
 type ParsedToolCall = ToolCallArg
 
-/** 新格式 `{toolCallId,name,arguments}`；解析不出回退旧格式「name: args」。 */
-function parsePersistedToolCall(content: string): ParsedToolCall | null {
+/**
+ * 请求行落库格式：
+ * - 新格式单个 `{toolCallId,name,stepLabel}`；
+ * - 新格式多个 `[{toolCallId,name,stepLabel}, …]`（一次请求里多工具调用）；
+ * - 旧格式「工具名: 参数 JSON」或纯标签文本。
+ *
+ * <p>带 `toolCallId` 是为了和结果行配对：没有 id 时一次调用在回放里会被
+ * 拆成「未确认」+「完成」两步。参数永远不进历史，这里只接 id 与名字。
+ */
+function parsePersistedToolCall(content: string): ParsedToolCall[] {
   const trimmed = content.trim()
-  if (trimmed.startsWith("{")) {
-    try {
-      const parsed = JSON.parse(trimmed) as Record<string, unknown>
-      if (typeof parsed.name === "string") {
-        let args: Record<string, unknown>
-        if (typeof parsed.arguments === "string") {
-          try {
-            args = JSON.parse(parsed.arguments || "{}") as Record<string, unknown>
-          } catch {
-            args = { _raw: parsed.arguments }
-          }
-        } else if (parsed.arguments && typeof parsed.arguments === "object") {
-          args = parsed.arguments as Record<string, unknown>
-        } else {
-          args = {}
-        }
-        return {
-          id: typeof parsed.toolCallId === "string" ? parsed.toolCallId : undefined,
-          name: parsed.name,
-          args,
-        }
+  const parseOne = (value: unknown): ParsedToolCall | null => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null
+    const parsed = value as Record<string, unknown>
+    if (typeof parsed.name !== "string") return null
+    let args: Record<string, unknown>
+    if (typeof parsed.arguments === "string") {
+      try {
+        args = JSON.parse(parsed.arguments || "{}") as Record<string, unknown>
+      } catch {
+        args = { _raw: parsed.arguments }
       }
+    } else if (parsed.arguments && typeof parsed.arguments === "object") {
+      args = parsed.arguments as Record<string, unknown>
+    } else {
+      args = {}
+    }
+    return {
+      id: typeof parsed.toolCallId === "string" ? parsed.toolCallId : undefined,
+      name: parsed.name,
+      args,
+    }
+  }
+
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown
+      const list = Array.isArray(parsed) ? parsed : [parsed]
+      const calls = list.map(parseOne).filter((call): call is ParsedToolCall => call !== null)
+      if (calls.length > 0) return calls
     } catch {
       // 落到旧格式解析
     }
   }
-  return parseToolCallText(content)
+  const legacy = parseToolCallText(content)
+  return legacy ? [legacy] : []
 }
 
 type ParsedToolResult = {

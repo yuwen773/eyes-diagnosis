@@ -140,6 +140,57 @@ describe("buildThread", () => {
     expect(steps[0].args).toEqual([{ key: "query", value: "青光眼" }])
   })
 
+  it("历史回放：请求行带 toolCallId 时与结果行配对，不产生幽灵步骤", () => {
+    // 回归：请求行若只落「模糊标签」而没有 toolCallId，回放时结果行配不上它，
+    // 一次调用会显示成「工具/未确认 + 检索知识库文档/完成」两步。
+    const items = buildThread(
+      [
+        msg({
+          id: "h1",
+          type: "tool-request",
+          toolCallId: "call_1",
+          toolCalls: [{ id: "call_1", name: "searchDocuments", args: {} }],
+        }),
+        msg({
+          id: "h2",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolCallId: "call_1",
+          toolStatus: "succeeded",
+        }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(1)
+    expect(steps[0].state).toBe("done")
+    expect(steps[0].output).toBe("检索到 3 段文档")
+  })
+
+  it("历史回放：一次请求里的多个工具各自成步并按 id 配对", () => {
+    const items = buildThread(
+      [
+        msg({
+          id: "h3",
+          type: "tool-request",
+          toolCallId: "call_a",
+          toolCalls: [
+            { id: "call_a", name: "searchDocuments", args: {} },
+            { id: "call_b", name: "analyzeEyeImage", args: {} },
+          ],
+        }),
+        msg({ id: "h4", type: "tool-response", content: "3 段", toolCallId: "call_a", toolStatus: "succeeded" }),
+        msg({ id: "h5", type: "tool-response", content: "失败", toolCallId: "call_b", toolStatus: "failed" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(2)
+    expect(steps[0].state).toBe("done")
+    expect(steps[1].state).toBe("error")
+  })
+
   it("有状态回执就以回执为准：succeeded / failed / cancelled 各自成态", () => {
     // 回归：合并进来的后端每个工具状态帧都带 toolCallId + toolStatus，content 恒为空，
     // 前端永远收不到 tool-response。只按消息类型推断会把成功的工具一直标成「未确认」。

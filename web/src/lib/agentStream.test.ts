@@ -234,6 +234,24 @@ describe("mapHistoryMessage", () => {
     expect(m.toolCalls?.[0].args).toEqual({ _raw: "{not json" })
   })
 
+  it("新落库 JSON 数组能恢复一次请求里的多个 toolCallId", () => {
+    const m = mapHistoryMessage({
+      id: "6",
+      role: "ASSISTANT",
+      subType: "tool-call",
+      content: JSON.stringify([
+        { toolCallId: "call_a", name: "searchDocuments", stepLabel: "检索知识库文档" },
+        { toolCallId: "call_b", name: "analyzeEyeImage", stepLabel: "分析影像" },
+      ]),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.type).toBe("tool-request")
+    expect(m.toolCalls).toHaveLength(2)
+    expect(m.toolCalls?.[0].id).toBe("call_a")
+    expect(m.toolCalls?.[1]).toEqual({ id: "call_b", name: "analyzeEyeImage", args: {} })
+  })
+
   it("新落库 JSON 能恢复 toolCallId 与返回状态", () => {
     const call = mapHistoryMessage({
       id: "4",
