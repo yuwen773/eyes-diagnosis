@@ -1,6 +1,6 @@
 /// <reference types="node" />
 // app 的 tsconfig 只带 vite/client；这个测试跑 node 环境，单独把 node 类型引进来。
-import { readFileSync } from "node:fs"
+import { readFileSync, readdirSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 function lin(c: number) {
@@ -555,5 +555,35 @@ describe("上下文解析 · 根级兜底", () => {
     expect(at(LIGHT, "--fg")).not.toBe("")
     expect(at(LIGHT, "--hr")).not.toBe("")
     expect(at(DARK, "--fg")).not.toBe("")
+  })
+})
+
+// ── 组件层取色：悬空 var() 与「橙色当正文」─────────────────────────────
+//
+// R5 审查在 Agent 送达读数上一次性踩了两个坑，而令牌对比度测试全绿：
+//   ① `--fg-1` 全仓未定义 —— 声明在计算值阶段就失效，颜色靠继承父级「碰巧」看着对；
+//   ② `--signal` 承载文字 —— 浅色画布上只有 3.7:1，够不着正文 4.5:1 底线。
+// 令牌测试只测令牌自己，测不到组件怎么用它们，所以这里对 agent.css 做静态检查。
+
+describe("Agent 送达读数的取色", () => {
+  const agent = readFileSync(new URL("./agent.css", import.meta.url), "utf8")
+  const allCss = readdirSync(new URL("./", import.meta.url))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), "utf8"))
+    .join("\n")
+
+  it("橙色正文压在 Agent 画布上仍 ≥ 4.5", () => {
+    expect(contrast(value("--paper-signal-text"), value("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("不把 --signal 直接当 color 用（它只做标记，不做正文）", () => {
+    const offenders = agent.split("\n").filter((line) => /^\s*color:\s*var\(--signal\)\s*;/.test(line))
+    expect(offenders).toEqual([])
+  })
+
+  it("agent.css 引用的变量都在样式层定义过（悬空 var() 会静默继承父级）", () => {
+    const defined = new Set([...allCss.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((m) => m[1]))
+    const used = [...new Set([...agent.matchAll(/var\((--[a-z0-9-]+)/gi)].map((m) => m[1]))]
+    expect(used.filter((name) => !defined.has(name))).toEqual([])
   })
 })

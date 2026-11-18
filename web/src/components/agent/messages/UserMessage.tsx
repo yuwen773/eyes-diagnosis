@@ -53,7 +53,10 @@ export function UserMessage({ msg, onPreviewImage }: { msg: StreamMessage; onPre
         </div>
       )}
       {delivery ? (
-        <div className={`agent-msg__delivery is-${msg.delivery}`} role="status">
+        /* 刻意不加 role="status"：失败已经在 FaultToaster 里播报过一次，
+           每条消息再各自开一个 live region 会让读屏用户听到两遍。读数本身
+           仍在可访问树里，逐条回看时读得到。 */
+        <div className={`agent-msg__delivery is-${msg.delivery}`}>
           <span className="agent-msg__delivery-mark" aria-hidden="true">
             {delivery.mark}
           </span>
