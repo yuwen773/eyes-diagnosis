@@ -3,7 +3,7 @@ import { StrictMode } from "react"
 import { act, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { renderMarkdown } from "./markdown"
+import { getMarkdownRenderStats, renderMarkdown, resetMarkdownRenderStats } from "./markdown"
 import { useStreamingMarkdown } from "./useStreamingMarkdown"
 
 beforeEach(() => {
@@ -83,6 +83,14 @@ describe("useStreamingMarkdown", () => {
       vi.advanceTimersByTime(60)
     })
     expect(result.current).toContain("一二")
+  })
+
+  it("已结束的消息只整篇渲染一次，不在初始化时白跑一遍", () => {
+    // 回归：惰性初始化无条件 renderer.render(...) 会让历史会话里每条消息
+    // 渲染两遍（StrictMode 下四遍），切会话时肉眼可见。
+    resetMarkdownRenderStats()
+    renderHook(() => useStreamingMarkdown("## 结论\n\n复查。", false))
+    expect(getMarkdownRenderStats().renders).toBe(1)
   })
 
   it("空内容返回空串", () => {

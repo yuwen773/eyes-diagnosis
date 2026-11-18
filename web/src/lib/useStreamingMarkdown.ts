@@ -19,7 +19,10 @@ export function useStreamingMarkdown(content: string, streaming: boolean): strin
   // 渲染器是「每个组件实例一份」的普通状态：惰性初始化只跑一次，
   // 不在渲染期读写 ref（渲染期碰 ref 会违反 hooks 规则）。
   const [renderer] = useState(createIncrementalMarkdownRenderer)
-  const [html, setHtml] = useState(() => renderer.render(content, streaming))
+  // 非流式内容一律交给下面的 finalHtml：这里再整篇渲染一次只是白跑一遍
+  // markdown + DOMPurify（切到长历史会话时是每条消息两遍），而且会把
+  // renderStats 的计数翻倍。
+  const [html, setHtml] = useState(() => (streaming ? renderer.render(content, true) : ""))
 
   // 已收口的内容在渲染期直接算：它是最终结果，整篇渲染一次即可。
   const finalHtml = useMemo(
