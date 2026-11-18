@@ -492,9 +492,19 @@ for (const variant of VARIANTS) {
     await tab.waitForTimeout(4000)
   } else {
     await tab.getByRole("button", { name: "暂停动效" }).click()
-    await tab.waitForTimeout(400)
+    // 点击会把指针留在工具栏上，而工具栏压在 hero 画布范围内——Beams 的
+    // `mouseInteraction` 会让光带继续跟随指针，于是「暂停」了 GPU 仍在画。
+    // 要量的是「动效停了以后还画不画」，所以先把指针移出画布再采样。
+    await tab.mouse.move(4, 4)
+    await tab.waitForTimeout(600)
   }
   const settledSample = await sampleOnce(tab, 2000)
+  const settledPointerInside = await tab.evaluate((selector) => {
+    const canvas = document.querySelector(selector)?.querySelector("canvas")
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    return { inside: 4 >= rect.left && 4 <= rect.right && 4 >= rect.top && 4 <= rect.bottom }
+  }, variant.selector)
 
   // 页面不可见：另开一页抢焦点，原页应停机。
   const other = await context.newPage()
@@ -543,7 +553,7 @@ for (const variant of VARIANTS) {
   perf[variant.key] = {
     variant: `${variant.code} ${variant.name}`,
     animation,
-    settled: settledSample,
+    settled: { sample: settledSample, pointerOutsideCanvas: settledPointerInside },
     hidden: { sample: hiddenSample, meta: hiddenMeta },
     navigationCleanup: {
       drawCallsBefore: beforeNav,
