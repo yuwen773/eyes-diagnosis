@@ -80,14 +80,62 @@ describe("useAgentStream · 受理语义", () => {
     expect((error as AgentSendError).accepted).toBe(false)
     expect(api().isStreaming).toBe(false)
   })
+
+  it("响应头一到就回调 onAccepted，且只回调一次", async () => {
+    streamChatMock.mockImplementationOnce(
+      async (_body: unknown, handlers: { onAccepted?: () => void }) => {
+        // 后端的受理信号可能重复送达，回调只能一次
+        handlers.onAccepted?.()
+        handlers.onAccepted?.()
+      },
+    )
+    renderHarness()
+
+    const onAccepted = vi.fn()
+    let outcome: unknown
+    await act(async () => {
+      outcome = await api().send("你好", "thread-1", [], onAccepted)
+    })
+
+    expect(onAccepted).toHaveBeenCalledTimes(1)
+    expect(outcome).toEqual({ accepted: true, aborted: false })
+  })
+
+  it("响应头到达前被「停止」：返回 accepted=false / aborted=true，且不抛错", async () => {
+    // fetch-event-source 在 abort 时是 resolve 而不是 reject——`await send()`
+    // 会正常返回。调用方若把「没抛异常」当成功，就会把一次根本没拿到响应头的
+    // 请求标成已受理。
+    streamChatMock.mockImplementationOnce(
+      async (_body: unknown, _handlers: unknown, signal: AbortSignal) => {
+        await new Promise<void>((resolve) => {
+          if (signal.aborted) resolve()
+          else signal.addEventListener("abort", () => resolve())
+        })
+      },
+    )
+    renderHarness()
+
+    let outcome: unknown
+    await act(async () => {
+      const pending = api().send("你好", "thread-1")
+      await Promise.resolve()
+      api().abort()
+      outcome = await pending
+    })
+
+    expect(outcome).toEqual({ accepted: false, aborted: true })
+    expect(api().isStreaming).toBe(false)
+  })
 })
 
 describe("useAgentStream · 生命周期", () => {
   it("abort 之后不再接收在途事件，且 send 正常收尾", async () => {
     let emit: ((dto: unknown) => void) | undefined
+    let signal: AbortSignal | undefined
     streamChatMock.mockImplementationOnce(
-      async (_body: unknown, handlers: { onEvent: (dto: unknown) => void }) => {
+      async (_body: unknown, handlers: { onEvent: (dto: unknown) => void }, s: AbortSignal) => {
         emit = handlers.onEvent
+        signal = s
         // 模拟一个永不结束的流：由 abort 打断
         await new Promise<void>((resolve) => {
           const timer = setInterval(() => {
@@ -101,7 +149,7 @@ describe("useAgentStream · 生命周期", () => {
     )
     renderHarness()
 
-    let pending: Promise<void> | undefined
+    let pending: Promise<unknown> | undefined
     await act(async () => {
       pending = api().send("你好", "thread-1")
       await Promise.resolve()
@@ -113,6 +161,8 @@ describe("useAgentStream · 生命周期", () => {
       await Promise.resolve()
     })
     expect(api().isStreaming).toBe(false)
+    // 「停止」必须真的把中止信号送到在途请求上，否则服务端还在生成
+    expect(signal?.aborted).toBe(true)
 
     const before = api().messages.length
     act(() => {
@@ -175,5 +225,63 @@ describe("useAgentStream · 生命周期", () => {
     })
     expect(userMessages()).toHaveLength(1)
     expect(userMessages()[0].content).toBe("严格模式")
+  })
+
+  it("旧流晚到的收尾不清掉新流的停止句柄", async () => {
+    // 旧流在新流已经开始之后才真正结束：它的 finally 若按「当前句柄」一把清，
+    // 会把新流的 controller 一起扔掉——此后「停止」发出去了却中止不了任何请求。
+    const signals: AbortSignal[] = []
+    let finishFirst!: () => void
+    streamChatMock
+      .mockImplementationOnce(async (...args: unknown[]) => {
+        const signal = args[2] as AbortSignal
+        signals.push(signal)
+        await new Promise<void>((resolve) => {
+          finishFirst = resolve
+        })
+      })
+      .mockImplementationOnce(async (...args: unknown[]) => {
+        const signal = args[2] as AbortSignal
+        signals.push(signal)
+        await new Promise<void>((resolve) => {
+          if (signal.aborted) resolve()
+          else signal.addEventListener("abort", () => resolve())
+        })
+      })
+    renderHarness()
+
+    let first: Promise<unknown> | undefined
+    await act(async () => {
+      first = api().send("第一条", "thread-1")
+      await Promise.resolve()
+    })
+    await act(async () => {
+      api().abort()
+      await Promise.resolve()
+    })
+    expect(signals[0]?.aborted).toBe(true)
+
+    let second: Promise<unknown> | undefined
+    await act(async () => {
+      second = api().send("第二条", "thread-1")
+      await Promise.resolve()
+    })
+
+    // 旧流现在才收尾
+    await act(async () => {
+      finishFirst()
+      await first
+    })
+
+    // 新流的句柄还必须活着：这一次「停止」要能打到它身上
+    await act(async () => {
+      api().abort()
+      await Promise.resolve()
+    })
+    expect(signals[1]?.aborted).toBe(true)
+
+    await act(async () => {
+      await second
+    })
   })
 })

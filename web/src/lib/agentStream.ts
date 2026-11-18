@@ -184,6 +184,19 @@ function formatTime(createdTime: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
 
+/**
+ * "2026-11-08 10:00:00"（无时区，按本地时间解析）→ epoch 毫秒。
+ *
+ * <p>历史核对要用它判断「这条是不是刚发的那条」：字面相同但时间早得多的
+ * 消息，只可能是用户以前问过一模一样的问题。解析不出返回 `null`，
+ * 调用方据此放弃判断而不是瞎猜。
+ */
+export function parseServerTime(createdTime: string | undefined): number | null {
+  if (!createdTime) return null
+  const t = new Date(createdTime.replace(" ", "T")).getTime()
+  return Number.isNaN(t) ? null : t
+}
+
 /** 历史消息 role/subType → 流消息类型。 */
 export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
   let type: StreamMsgType
@@ -248,6 +261,25 @@ function parseToolCallText(content: string): ToolCallArg | null {
   }
 }
 
+/**
+ * 一次 `send()` 的结果。**不看有没有助手内容**——「助手一句话没说」既可能是
+ * 服务端没收到，也可能是收到了但生成失败，两者在流里长得一模一样。
+ *
+ * <ul>
+ *   <li>`accepted`：拿到 2xx 响应头（用户消息**已入队**，落库是会话队列里的
+ *       异步任务，所以不等于「已落库」）。</li>
+ *   <li>`aborted`：被「停止」/切会话/换账号打断。这是用户按的，不是故障。</li>
+ * </ul>
+ *
+ * <p>`aborted === true && accepted === false` 是最容易写错的一格：`fetch-event-source`
+ * 在被 abort 时**resolve** 而不是 reject，`await send()` 会正常返回。调用方若
+ * 默认「没抛异常 = 成功」，就会把一次根本没拿到响应头的请求标成已受理。
+ */
+export type SendOutcome = {
+  accepted: boolean
+  aborted: boolean
+}
+
 export function useAgentStream() {
   const [messages, setMessages] = useState<StreamMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
@@ -272,7 +304,17 @@ export function useAgentStream() {
   )
 
   const send = useCallback(
-    async (message: string, threadId: string, urls: string[] = []) => {
+    async (
+      message: string,
+      threadId: string,
+      urls: string[] = [],
+      /**
+       * 响应头到达时立刻回调一次。用户气泡的「已受理」必须在这里翻，
+       * 不能等整条流结束——流中途断掉时那一轮**确实已经受理**，
+       * 等流结束再标会把它写成「未确认」。
+       */
+      onAccepted?: () => void,
+    ): Promise<SendOutcome> => {
       setIsStreaming(true)
       const token = ++streamSeq.current
       const eventToken = eventSeq.current
@@ -309,7 +351,9 @@ export function useAgentStream() {
               clearLoading()
             },
             onAccepted() {
+              if (accepted) return
               accepted = true
+              onAccepted?.()
             },
             onError(err) {
               clearLoading()
@@ -333,6 +377,7 @@ export function useAgentStream() {
           abortRef.current = null
         }
       }
+      return { accepted, aborted: controller.signal.aborted }
     },
     [],
   )

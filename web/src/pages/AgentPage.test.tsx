@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
-import { ApiError, getChatHistory, getSessions, type AgentSessionVO, type ChatHistoryVO } from "@/lib/api"
+import {
+  ApiError,
+  generateTitle,
+  getChatHistory,
+  getSessions,
+  type AgentSessionVO,
+  type ChatHistoryVO,
+} from "@/lib/api"
 import { AgentSendError } from "@/lib/agentStream"
 import { AgentPage } from "./AgentPage"
 
@@ -72,11 +79,21 @@ vi.mock("@/lib/agentUpload", async (importOriginal) => {
       uploadFiles: uploadFilesMock,
       commitSuccess: vi.fn(),
       commitFailure: vi.fn(),
+      commitUnknown: vi.fn(),
     }),
   }
 })
 
 const originalRandomUUID = globalThis.crypto.randomUUID
+
+beforeEach(() => {
+  // 默认：拿到 2xx 响应头、跑完整条流。`send` 的返回值是 `SendOutcome`，
+  // 不是 undefined——页面据它决定要不要写回会话 id、生成标题。
+  sendMock.mockReset()
+  sendMock.mockResolvedValue({ accepted: true, aborted: false })
+  // 标题生成按用例断言「有没有被触发」，必须逐例清零
+  vi.mocked(generateTitle).mockClear()
+})
 
 afterEach(() => {
   cleanup()
@@ -284,6 +301,14 @@ describe("AgentPage 未登录", () => {
     sessionState.status = "authed"
     sessionState.user = { id: 1, userAccount: "tester" }
     sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
+    // 时间取「刚刚」：核对会排除明显更早的同文消息（用户以前问过一模一样的话），
+    // 写死的历史时间在测试跑久了之后会被正确排除掉。
+    const now = new Date()
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate(),
+    ).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes(),
+    ).padStart(2, "0")}:00`
     vi.mocked(getChatHistory).mockResolvedValueOnce({
       messages: [
         {
@@ -292,7 +317,7 @@ describe("AgentPage 未登录", () => {
           subType: "",
           content: "其实已经落库了",
           isSummary: false,
-          createdTime: "2026-11-18 01:00:00",
+          createdTime: stamp,
         },
       ],
       hasMore: false,
@@ -322,6 +347,48 @@ describe("AgentPage 未登录", () => {
     expect(
       screen.queryAllByText("其实已经落库了").filter((node) => node.tagName !== "TEXTAREA"),
     ).toHaveLength(1)
+  })
+
+  it("历史还有下一页时核对无依据：停在「送达未确认」", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    sendMock.mockRejectedValueOnce(new Error("stream interrupted before headers"))
+    // 不带游标返回的是**最早**一页：hasMore 为真说明后面还有消息，
+    // 刚发的那条不可能在这一页里，内容相同只是巧合。
+    vi.mocked(getChatHistory).mockResolvedValueOnce({
+      messages: [
+        {
+          id: "99",
+          role: "USER",
+          subType: "",
+          content: "看着一样的话",
+          isSummary: false,
+          createdTime: "2026-11-18 01:00:00",
+        },
+      ],
+      hasMore: true,
+      nextCursor: "cursor-2",
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "看着一样的话" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(getChatHistory).toHaveBeenCalled())
+    expect(await screen.findByText(/送达未确认/)).toBeTruthy()
   })
 
   it("服务端明确拒绝（未登录）：标「未送达」且不再去核对历史", async () => {
@@ -356,19 +423,29 @@ describe("AgentPage 未登录", () => {
     expect(getChatHistory).not.toHaveBeenCalled()
   })
 
-  it("流已产生内容后失败：保留用户气泡，不制造「没有提问的回答」", async () => {
+  it("已受理后断流：保留用户气泡与半截回答，不制造「没有提问的回答」", async () => {
     sessionState.status = "authed"
     sessionState.user = { id: 1, userAccount: "tester" }
-    // 后端先落库用户消息再开流：只要已流出内容，这条提问在服务端一定存在。
-    sendMock.mockImplementationOnce(async () => {
-      streamControls.push({
-        id: "assistant-partial",
-        type: "assistant",
-        content: "先说一半",
-        time: "00:00",
-      })
-      throw new Error("stream interrupted")
-    })
+    // 后端先落库用户消息再开流：只要拿到 2xx 响应头，这条提问在服务端就存在。
+    // 这里必须抛**真实的** AgentSendError(accepted=true)——普通 Error 的
+    // accepted 是 false，测的其实是「受理状态未知」，两者不是一回事。
+    sendMock.mockImplementationOnce(
+      async (
+        _text: string,
+        _threadId: string,
+        _urls: string[],
+        onAccepted?: () => void,
+      ) => {
+        onAccepted?.()
+        streamControls.push({
+          id: "assistant-partial",
+          type: "assistant",
+          content: "先说一半",
+          time: "00:00",
+        })
+        throw new AgentSendError(true, "stream interrupted")
+      },
+    )
     stubMatchMedia()
 
     render(
@@ -398,6 +475,151 @@ describe("AgentPage 未登录", () => {
     expect(
       screen.queryAllByText("先说一半").filter((node) => node.tagName !== "TEXTAREA"),
     ).toHaveLength(1)
+    // 响应头已经拿到：这轮确实受理了，不能因为流断掉就说「送达未确认」
+    expect(screen.queryByText(/送达未确认/)).toBeNull()
+    // 已受理就不该再去核对历史（核对只服务「不知道」的情况）
+    expect(getChatHistory).not.toHaveBeenCalled()
+  })
+
+  it("响应头到达前被「停止」：不冒充已受理，不清草稿也不生成标题", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    // fetch-event-source 在被 abort 时是 **resolve**，`await send()` 会正常返回。
+    // 若把「没抛异常」当成成功，就会把一次根本没拿到响应头的请求标成已受理。
+    sendMock.mockResolvedValueOnce({ accepted: false, aborted: true })
+    vi.mocked(getChatHistory).mockResolvedValue({
+      messages: [],
+      hasMore: false,
+      nextCursor: null,
+    })
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "发到一半停了" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    // 诚实停在「送达未确认」：服务端收没收到我们不知道
+    expect(await screen.findByText(/送达未确认/)).toBeTruthy()
+    // 草稿留着，用户可以自己决定要不要重发
+    expect(textarea.value).toBe("发到一半停了")
+    // 首条消息也不该触发生成标题——那等于替用户断言这轮成功了
+    expect(generateTitle).not.toHaveBeenCalled()
+  })
+
+  it("历史晚到：保留本地回合的助手回复，只丢掉重复的那条用户气泡", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    vi.mocked(getSessions).mockResolvedValue([
+      {
+        sessionId: "A",
+        title: "会话 A",
+        lastMessage: "",
+        messageCount: 1,
+        summaryContent: "",
+        createdTime: "2026-11-08 10:00:00",
+        updatedTime: "2026-11-08 10:00:00",
+      } satisfies AgentSessionVO,
+    ])
+
+    let resolveHistory!: (value: ChatHistoryVO) => void
+    vi.mocked(getChatHistory).mockReturnValueOnce(
+      new Promise<ChatHistoryVO>((resolve) => {
+        resolveHistory = resolve
+      }),
+    )
+    // 发送挂住，好让「历史请求还没回来时用户又发了一条」这个窗口稳定出现。
+    let finishSend!: (value: { accepted: boolean; aborted: boolean }) => void
+    sendMock.mockReturnValueOnce(
+      new Promise<{ accepted: boolean; aborted: boolean }>((resolve) => {
+        finishSend = resolve
+      }),
+    )
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    // 切到会话 A：历史请求发出但挂住不返回
+    fireEvent.click(await screen.findByRole("button", { name: /^会话 A/ }))
+    await waitFor(() => expect(getChatHistory).toHaveBeenCalledTimes(1))
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "本地这一问" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+
+    // 本地回合长出一条助手回复（模拟流式内容）
+    act(() => {
+      streamControls.push({
+        id: "assistant-local",
+        type: "assistant",
+        content: "本地这半句回答",
+        time: "00:01",
+      })
+    })
+
+    // 历史这时才回来，而且这一页**已经包含**刚发的那条用户消息
+    await act(async () => {
+      resolveHistory({
+        messages: [
+          {
+            id: "h1",
+            role: "USER",
+            subType: "",
+            content: "更早的一问",
+            isSummary: false,
+            createdTime: "2026-11-18 00:00:00",
+          },
+          {
+            id: "h2",
+            role: "USER",
+            subType: "",
+            content: "本地这一问",
+            isSummary: false,
+            createdTime: "2026-11-18 01:00:00",
+          },
+        ],
+        hasMore: false,
+        nextCursor: null,
+      })
+    })
+
+    // 历史接进来了
+    expect(await screen.findByText("更早的一问")).toBeTruthy()
+    // 助手回复不能因为合并而消失（只挑用户气泡的老写法会把它扔掉）
+    expect(
+      screen.queryAllByText("本地这半句回答").filter((node) => node.tagName !== "TEXTAREA"),
+    ).toHaveLength(1)
+    // 用户气泡也不重复：本地那条与历史最后一条同文，只留一份
+    expect(
+      screen.queryAllByText("本地这一问").filter((node) => node.tagName !== "TEXTAREA"),
+    ).toHaveLength(1)
+
+    await act(async () => {
+      finishSend({ accepted: true, aborted: false })
+    })
   })
 })
 
@@ -528,7 +750,7 @@ describe("AgentPage 发送互斥", () => {
         resolveUpload = resolve
       }),
     )
-    sendMock.mockResolvedValueOnce(undefined)
+    sendMock.mockResolvedValueOnce({ accepted: true, aborted: false })
     stubMatchMedia()
 
     render(

@@ -82,12 +82,26 @@ export function createAgentUploader() {
     }
   }
 
-  /** 消息未送达：释放持有权，无人持有时删除对象 */
+  /** 消息明确被拒（未登录 / 无权限）：释放持有权，无人持有时删除对象 */
   function commitFailure(urls: string[]) {
     for (const url of urls) {
       releaseAgentImage(url)
     }
   }
 
-  return { uploadFiles, commitSuccess, commitFailure }
+  /**
+   * 发送结果未知：按「可能已被引用」处理，**不删**。
+   *
+   * <p>请求可能已经到了服务端并落库，只是响应没回来。删掉一张被消息引用的
+   * 图片不可逆（历史记录里留着一条打不开的图）；多留的对象虽然也要人工清理
+   * ——`agent-chat/` 有对账，但 {@code PERSISTED} 状态的任务仍在活跃集合里，
+   * 对账不会回收它——两害相权选那个还能查回来的。与后端 C-12 同一取舍。
+   */
+  function commitUnknown(urls: string[]) {
+    for (const url of urls) {
+      retainAgentImage(url)
+    }
+  }
+
+  return { uploadFiles, commitSuccess, commitFailure, commitUnknown }
 }
