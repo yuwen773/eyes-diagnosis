@@ -13,7 +13,13 @@ import {
   updateSessionTitle,
   type AgentSessionVO,
 } from "@/lib/api"
-import { useAgentStream, mapHistoryMessage } from "@/lib/agentStream"
+import {
+  useAgentStream,
+  mapHistoryMessage,
+  parseServerTime,
+  AgentSendError,
+  type StreamMessage,
+} from "@/lib/agentStream"
 import { createAgentUploader } from "@/lib/agentUpload"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
@@ -30,6 +36,12 @@ import { ProductHeader } from "@/components/shell/ProductHeader"
 import { IrisPageLoading } from "@/components/system/IrisStates"
 
 const HISTORY_PAGE_SIZE = 100
+
+/**
+ * 历史核对时允许的时钟偏差。服务端时间不带时区、按本地解析，客户端与服务端
+ * 也可能有偏差；10 分钟足够宽，又能把「用户半小时前问过一模一样的话」排除掉。
+ */
+const RECONCILE_CLOCK_SKEW_MS = 10 * 60 * 1000
 
 /**
  * 断点：1024px 以下会话导航与资源面板都改成抽屉。
@@ -79,6 +91,9 @@ export function AgentPage() {
   }, [threadId])
   // 历史响应的序号：切会话后，旧请求晚到也不能把内容写进新会话。
   const historySeq = useRef(0)
+  // 每推入一条用户气泡就加一。历史响应回来时这个值变了，说明这期间用户
+  // 又发了消息——晚到的历史是旧的，不能整表覆盖。
+  const turnCounter = useRef(0)
   // 当前登录身份的稳定键：登录/登出/换账号时要清掉上一个身份的会话态。
   const userKey = user?.id ?? null
   const lastUserKeyRef = useRef<string | null | undefined>(undefined)
@@ -123,9 +138,22 @@ export function AgentPage() {
     }
   }, [previewUrl])
 
+  // 当前身份的 ref 版本：异步回调回来时要能和「现在是谁」比对。
+  const userKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    userKeyRef.current = userKey
+  }, [userKey])
+
+  // 会话列表请求的序号与发起时的身份：换账号后旧响应晚到，既不能覆盖新列表，
+  // 也不能把别人的会话标题留在左栏。
+  const sessionsSeq = useRef(0)
   const refreshSessions = useCallback(async () => {
+    const seq = ++sessionsSeq.current
+    const expectedUser = userKeyRef.current
     try {
-      setSessions(await getSessions())
+      const list = await getSessions()
+      if (seq !== sessionsSeq.current || userKeyRef.current !== expectedUser) return
+      setSessions(list)
     } catch (e) {
       console.warn("加载会话列表失败", e)
     }
@@ -134,13 +162,50 @@ export function AgentPage() {
   const loadHistoryMessages = useCallback(
     async (id: string) => {
       const seq = ++historySeq.current
+      const expectedUser = userKeyRef.current
+      const turnsAtRequest = turnCounter.current
+      // 合并去重的时间门槛：只承认「本轮之后才落库」的那条才算副本。
+      const requestedAt = Date.now()
       // 加载态在发起请求的那一刻置位；调用方是事件处理器或初始化 effect。
       setHistoryLoading(true)
       try {
         const data = await getChatHistory(id, undefined, HISTORY_PAGE_SIZE)
         // 晚到的旧会话历史不能覆盖当前会话——序号变了或人已经切走，直接丢弃。
         if (seq !== historySeq.current || threadIdRef.current !== id) return
-        setMessages((data.messages ?? []).map(mapHistoryMessage))
+        // 换了账号：这条历史属于上一个身份，不写回。
+        if (userKeyRef.current !== expectedUser) return
+        const raw = data.messages ?? []
+        const history = raw.map(mapHistoryMessage)
+        // 时间门槛与 reconcileDelivery 同一口径：只比内容会把「用户十分钟前问过
+        // 一模一样的一句话」当成副本删掉，而删的是带 delivery / images 的本地气泡。
+        const tailAt = parseServerTime(raw[raw.length - 1]?.createdTime)
+        const freshTail = tailAt === null || tailAt >= requestedAt - RECONCILE_CLOCK_SKEW_MS
+        if (turnCounter.current !== turnsAtRequest) {
+          // 请求期间用户又发了消息：历史里没有这一轮，整表替换会把它抹掉。
+          // 但直接丢弃会让这段历史**永远**加载不上（守卫不会复位）。所以把
+          // 本地这一轮接在历史后面——既不丢历史，也不丢提问。
+          setMessages((prev) => {
+            // 本地回合从**第一条带 delivery 的用户气泡**开始，之后才是流里长出来的
+            // 助手内容、推理与工具卡。只挑用户气泡会把助手回复和工具卡一起扔掉
+            // （用户看到「问题还在、回答没了」），整表替换则连提问都抹掉。
+            const localStart = prev.findIndex(
+              (message) => message.type === "user" && message.delivery,
+            )
+            const local = localStart < 0 ? [] : prev.slice(localStart)
+            const tail = history[history.length - 1]
+            const first = local[0]
+            // 这一页偶尔已经包含刚发的那条（新会话的第一页就是整段会话）：
+            // 此时本地第一条用户气泡是它的副本，只丢这一条，后面的照接。
+            const duplicated =
+              freshTail &&
+              first?.type === "user" &&
+              tail?.type === "user" &&
+              tail.content === first.content
+            return [...history, ...(duplicated ? local.slice(1) : local)]
+          })
+          return
+        }
+        setMessages(history)
       } catch (e) {
         if (seq === historySeq.current) pushFault(faultFromError(e, { intent: "load" }))
       } finally {
@@ -158,6 +223,10 @@ export function AgentPage() {
       lastUserKeyRef.current = userKey
       setThreadId(newId())
       setCurrentThreadId("")
+      // 会话列表也要清：reset() 只清消息与资源。refreshSessions() 是异步的，
+      // 且失败时只 console.warn——不清就会让上一个身份的会话标题留在左栏，
+      // 甚至一直留到刷新失败之后。标题本身是敏感信息。
+      setSessions([])
       reset()
     }
     const savedThreadId = loadThreadId(userKey)
@@ -180,6 +249,58 @@ export function AgentPage() {
   // 再触发一次发送会并发上传并推入第二条用户消息。ref 同步置位，跨上传与
   // 流式两段生命周期；被拦下的调用直接返回 false，输入区据此把原文留住。
   const sendingRef = useRef(false)
+
+  /** 只改这一条气泡的送达状态，不动其它消息。 */
+  const markDelivery = useCallback(
+    (id: string, delivery: NonNullable<StreamMessage["delivery"]>) => {
+      setMessages((prev) => {
+        const index = prev.findIndex((message) => message.id === id)
+        if (index < 0) return prev
+        const current = prev[index]
+        if (current.delivery === delivery) return prev
+        const next = [...prev]
+        next[index] = { ...current, delivery }
+        return next
+      })
+    },
+    [setMessages],
+  )
+
+  /**
+   * 发送结果未知时，用历史接口核对这条提问到底有没有落库。
+   *
+   * <p>只读、不重发：如果服务端其实收到了，自动重试会写出一条重复的用户轮次。
+   * 核对本身失败（断网、超时）就停在「未确认」——那正是我们知道的全部。
+   *
+   * <p>`sentAt` 是发起发送时客户端的时间。服务端时间取本地时区，两边时钟
+   * 可能有偏差，所以只用来排除**明显更早**的同文消息（用户以前问过一模一样的
+   * 问题），不作为精确判据。
+   */
+  const reconcileDelivery = useCallback(
+    async (localId: string, threadId: string, text: string, sentAt: number) => {
+      const expectedUser = userKeyRef.current
+      try {
+        const data = await getChatHistory(threadId, undefined, HISTORY_PAGE_SIZE)
+        // 核对期间换了账号：这条结果属于上一个身份的会话，一律不许写回。
+        if (userKeyRef.current !== expectedUser) return
+        // 不带游标返回的是**最早**一页。hasMore 为真说明后面还有消息，
+        // 刚发的那条不可能在这一页里——没有判断依据，停在「未确认」。
+        if (data.hasMore) return
+        const lastUser = [...(data.messages ?? [])]
+          .reverse()
+          .find((message) => (message.role ?? "").toUpperCase() === "USER")
+        // 只能「升级」不能「证伪」：查不到 ≠ 没送到（落库还在队列里），
+        // 所以绝不标成「未送达」。
+        if (!lastUser || lastUser.content !== text) return
+        const at = parseServerTime(lastUser.createdTime)
+        if (at !== null && at < sentAt - RECONCILE_CLOCK_SKEW_MS) return
+        markDelivery(localId, "accepted")
+      } catch {
+        // 核对不了就保持「未确认」：不猜服务端有没有收到。
+      }
+    },
+    [markDelivery],
+  )
 
   const handleSend = useCallback(
     async (text: string, files: File[] = []): Promise<boolean> => {
@@ -209,19 +330,43 @@ export function AgentPage() {
         }
 
         const localId = newId()
+        turnCounter.current += 1
+        // 发起时间：历史核对用它排除「以前问过一模一样的话」
+        const sentAt = Date.now()
+        // 发送期间换了账号：收尾一律不许把旧身份的结果写进新身份
+        const expectedUser = userKeyRef.current
         pushUser({
           id: localId,
           type: "user",
           content: text,
           time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
           images: imageUrls,
+          delivery: "sending",
         })
 
         try {
-          await send(text, usedThreadId, imageUrls)
+          // 响应头一到就在回调里翻成「已受理」：此后流中途断掉，这一轮也确实
+          // 已经受理了，不能因为流没跑完就退回「未确认」。
+          const outcome = await send(text, usedThreadId, imageUrls, () =>
+            markDelivery(localId, "accepted"),
+          )
+          if (!outcome.accepted) {
+            // 没等到响应头就结束了——只可能是被中止（abort 时 fetch-event-source
+            // 是 resolve 不是 reject，所以这里走的是成功分支）。服务端收没收到
+            // **不知道**：不写回会话 id、不生成标题（那等于替用户断言这轮成功了），
+            // 也不删图片（可能已经被那条消息引用），只用历史接口核对。
+            uploader.commitUnknown(imageUrls)
+            markDelivery(localId, "unconfirmed")
+            void reconcileDelivery(localId, usedThreadId, text, sentAt)
+            // 「停止」是用户对**这一条**的处置：草稿留给他重试。
+            // 切走会话/换账号则是「这一条已经不属于当前界面」——把上一个会话的
+            // 原文灌回新会话的输入框，下一次回车就发到错误的会话里。
+            return outcome.abortedBy !== "user"
+          }
           uploader.commitSuccess(imageUrls)
-          // 只在仍停留在这个会话时才写回——用户中途切走就别覆盖他的选择
-          if (threadIdRef.current === usedThreadId) {
+          markDelivery(localId, "accepted")
+          // 只在仍停留在这个会话、且还是同一个身份时才写回
+          if (threadIdRef.current === usedThreadId && userKeyRef.current === expectedUser) {
             saveThreadId(userKey, usedThreadId)
             setCurrentThreadId(usedThreadId)
           }
@@ -234,17 +379,39 @@ export function AgentPage() {
           }
           return true
         } catch (e) {
-          uploader.commitFailure(imageUrls)
-          // 发送失败：撤回乐观消息，输入框会保留原文，重试时才不会出现两条一样的用户气泡。
-          setMessages((prev) => prev.filter((message) => message.id !== localId))
-          pushFault(faultFromError(e, { intent: "send" }))
+          // 发送失败分三种，不能混为一谈：
+          //   ① 拿到了 2xx 流响应头（`accepted`）——用户消息**已入队**（落库是
+          //      会话队列里的异步任务，可能还没写）。撤回气泡会得到「界面没有
+          //      提问、服务端有记录」，重试还会再写一条；图片也不能删，那条消息
+          //      可能已经引用它们。
+          //   ② 服务端**明确拒绝**（未登录 / 无权限）——唯一能断言「没有进记录」
+          //      的情况：撤回语气最硬，图片也确实没人引用。
+          //   ③ 其余（网络失败、超时、5xx、断流）——请求可能已经到了并落库，
+          //      只是响应没回来。「没有助手内容」**不能**推断「服务端没收到」，
+          //      所以不撤气泡、不删图片，标成「未确认」用历史接口核对；
+          //      绝不自动重发。
+          const accepted = e instanceof AgentSendError ? e.accepted : false
+          const rejected = e instanceof AgentSendError ? e.rejected : false
+          const inner = e instanceof AgentSendError ? e.cause : e
+          if (accepted) {
+            markDelivery(localId, "accepted")
+            uploader.commitSuccess(imageUrls)
+          } else if (rejected) {
+            markDelivery(localId, "failed")
+            uploader.commitFailure(imageUrls)
+          } else {
+            markDelivery(localId, "unconfirmed")
+            uploader.commitUnknown(imageUrls)
+            void reconcileDelivery(localId, usedThreadId, text, sentAt)
+          }
+          pushFault(faultFromError(inner, { intent: "send" }))
           return false
         }
       } finally {
         sendingRef.current = false
       }
     },
-    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, setMessages, refreshSessions, pushFault],
+    [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, refreshSessions, pushFault, markDelivery, reconcileDelivery],
   )
 
   const handleNewChat = useCallback(() => {

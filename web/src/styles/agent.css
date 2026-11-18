@@ -343,6 +343,46 @@
   color: var(--fg-3);
 }
 
+/* 送达状态：只在「服务端不一定有这条」时出现。
+   用等宽读数 + 语义色，和全站的读数语言一致；不改气泡本身的重量。 */
+.agent-msg__delivery {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--fg-3);
+}
+
+.agent-msg__delivery-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.agent-msg__delivery.is-unconfirmed {
+  /* --signal 管「当前态」；--risk-* 留给医学严重度，不拿来说明送达。
+     但**文字**不能用 --signal：它在浅色画布上只有 3.7:1，达不到正文 4.5:1 底线，
+     用压深一档的 --signal-text（同底 4.8:1）。圆形标记跟着 currentColor 变深也无妨。 */
+  color: var(--signal-text);
+}
+
+.agent-msg__delivery.is-failed {
+  /* 明确的拒绝（未登录 / 无权限）用正文色 + 实心标记，强调由故障提示承担。 */
+  color: var(--fg);
+}
+
+.agent-msg__delivery.is-failed .agent-msg__delivery-mark {
+  border-width: 2px;
+}
+
 .agent-msg__imggrid {
   position: relative;
   display: inline-grid;

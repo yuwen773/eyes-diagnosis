@@ -375,6 +375,18 @@ export type StreamChatHandlers = {
   onEvent(dto: AgentStreamDTO): void
   onDone(): void
   onError(err: unknown): void
+  /**
+   * 服务端已受理：拿到了 2xx 的 SSE 响应头。
+   *
+   * <p>只到「请求已被接受、用户消息已入队」为止，**不**等于已经落库：
+   * `AgentController` 调 `ChatHistoryService.saveUserMessage`，后者把写库任务
+   * 提交进 `SessionMessageQueue` 就返回（没有等待 Future）。控制器方法体确实在
+   * 响应头之前执行完，但落库是后台任务，可能还没写、也可能写失败。
+   *
+   * <p>所以：`onAccepted` 之前失败 **不能**推断服务端没收到；`onAccepted` 之后
+   * 失败也不能断言「服务端一定有这条」。两端都只能说到「受理」或「不知道」。
+   */
+  onAccepted?(): void
 }
 
 /**
@@ -413,6 +425,10 @@ export async function streamChat(
         }
         throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
       }
+      // 走到这里说明服务端已经受理这次请求（拿到 2xx 流响应头）。
+      // 注意口径：受理 = 用户消息已**入队**，落库是会话队列里的异步任务，
+      // 未必此刻已经写进 t_agent_message——所以「没有助手内容」推不出「没收到」。
+      handlers.onAccepted?.()
     },
 
     onmessage(event) {

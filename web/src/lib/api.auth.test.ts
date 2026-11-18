@@ -76,4 +76,56 @@ describe("未登录处理", () => {
     expect(calls).toBe(1)
     expect(codes).toEqual([40101])
   })
+  it("SSE 收到 200 + text/event-stream 时回调 onAccepted（受理信号）", async () => {
+    // 这条钉住发射点本身：把 api.ts 里的 onAccepted?.() 删掉，本用例必须红。
+    let onAcceptedCalls = 0
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "text/event-stream" }),
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('event: done\ndata: \n\n'))
+            controller.close()
+          },
+        }),
+      }),
+    )
+
+    await streamChat({ message: "你好", threadId: "t-1" }, {
+      onEvent: () => {},
+      onDone: () => {},
+      onError: () => {},
+      onAccepted: () => { onAcceptedCalls += 1 },
+    }, new AbortController().signal)
+
+    expect(onAcceptedCalls).toBe(1)
+  })
+
+  it("SSE 回的是 JSON 信封时不回调 onAccepted——请求根本没被受理", async () => {
+    let onAcceptedCalls = 0
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ code: 40101, data: null, msg: "会话标识或用户为空" }),
+        text: async () => JSON.stringify({ code: 40101 }),
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+        onAccepted: () => { onAcceptedCalls += 1 },
+      }, new AbortController().signal),
+    ).rejects.toThrow()
+
+    expect(onAcceptedCalls).toBe(0)
+  })
 })
