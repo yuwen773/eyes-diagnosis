@@ -52,6 +52,17 @@ class ApiDateSerializerTest {
                 objectMapper.writeValueAsString(BEIJING_1820));
     }
 
+    /**
+     * 实体里的 {@code createTime} 是 LocalDateTime（服务器本地墙钟）。
+     * 它必须和 Date 走同一条出口契约，否则前端按 UTC 解析会整体偏 8 小时。
+     */
+    @Test
+    void localDateTimeIsSerializedWithOffset() throws Exception {
+        String json = mapper(new Jackson2ObjectMapperBuilder())
+                .writeValueAsString(java.time.LocalDateTime.of(2026, 11, 8, 18, 20, 0));
+        assertEquals("\"2026-11-08T18:20:00.000+08:00\"", json);
+    }
+
     @Test
     void moduleSerializerBeatsLegacyDateFormat() throws Exception {
         // 模拟历史 profile 里遗留的 spring.jackson.date-format

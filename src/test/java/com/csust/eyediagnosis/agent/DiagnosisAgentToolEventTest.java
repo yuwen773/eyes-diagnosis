@@ -56,7 +56,6 @@ class DiagnosisAgentToolEventTest {
         history = mock(ChatHistoryService.class);
         observer = new ToolExecutionObserver();
         ReflectionTestUtils.setField(agent, "chatHistoryService", history);
-        ReflectionTestUtils.setField(agent, "toolExecutionObserver", observer);
         ReflectionTestUtils.setField(agent, "objectMapper", new ObjectMapper());
     }
 
@@ -74,7 +73,7 @@ class DiagnosisAgentToolEventTest {
     private List<MessageDTO> events(org.springframework.ai.chat.messages.Message message,
                                     OutputType type) {
         return agent.toEventDtos(output(message, type), THREAD_ID, USER_ID,
-                assistantContent, reasoningContent, emitted);
+                assistantContent, reasoningContent, emitted, observer);
     }
 
     /** 让观察者记录一次成功执行，模拟框架真正调用了工具。 */

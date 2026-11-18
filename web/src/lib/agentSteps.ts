@@ -17,10 +17,14 @@ import type { StreamMessage } from "./agentStream"
  *
  * <p>`pending` 是「流已结束、没有收到工具返回」，展示成「未确认」：
  * 既不是完成，也不是还在等——后端不会给已结束的回合补发回执。
+ * `returned` 是「结果回来了，但没有拿到成败判定」（后端观察到的事件里没有
+ * 这个 toolCallId 的记录，或后端给了我们还不认识的 status）——展示成「已返回」，
+ * 不画实心对勾：把「框架返回了结果」说成「执行成功」是在替后端下结论。
  * `error` / `timeout` / `cancelled` 是有观察依据的失败，不是猜的。
  */
 export type AgentStepState =
   | "done"
+  | "returned"
   | "running"
   | "pending"
   | "paused"
@@ -196,7 +200,11 @@ export function sanitizeToolArgs(
 /** 工具结果状态 → 步骤状态。只映射观察到的事实。 */
 export function stateFromToolStatus(status: string | undefined): AgentStepState {
   switch ((status ?? "").toLowerCase()) {
+    case "success":
+      return "done"
     case "error":
+    case "failed":
+    case "failure":
       return "error"
     case "timeout":
       return "timeout"
@@ -207,8 +215,9 @@ export function stateFromToolStatus(status: string | undefined): AgentStepState 
     case "unknown":
       return "pending"
     default:
-      // success / completed / 缺失：结果确实回来了。
-      return "done"
+      // completed / 缺失 / 还不认识的 status：结果确实回来了，但成败未知。
+      // 落成「完成」会把这个不确定性抹掉——宁可显示「已返回」。
+      return "returned"
   }
 }
 
@@ -316,7 +325,9 @@ function findPendingToolStep(steps: AgentStep[], toolCallId?: string): AgentStep
       (step) => step.kind === "tool" && step.toolCallId === toolCallId,
     )
   }
-  return [...steps].reverse().find((step) => step.kind === "tool" && !step.received)
+  // 先进先出：旧数据里的工具是顺序执行的，第一条返回属于第一个还没回执的调用。
+  // 取「最后一个未回执」会把多工具的第一步永远留在「未确认」。
+  return steps.find((step) => step.kind === "tool" && !step.received)
 }
 
 /**
@@ -373,6 +384,9 @@ export function stepStateLabel(state: AgentStepState): string {
   switch (state) {
     case "done":
       return "完成"
+    case "returned":
+      // 只陈述「结果回来了」，不替后端宣布成功。
+      return "已返回"
     case "running":
       return "执行中"
     case "pending":

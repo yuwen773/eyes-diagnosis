@@ -11,7 +11,8 @@
    - 输入区从「贴着屏幕底的细工具栏」改成多行 Prompt Bar。
 
    令牌：只消费品牌层（--brand-*）与语义层（--fg / --hr / --risk-*）。
-   --signal 是临床「重点/当前」的语义色，不在这一层复用。
+   三套语义色互不顶替：--signal 只在「送达未确认」这类当前态上作文字色，
+   不做填充也不当错误色；工具失败 / 超时走 --risk-*；--danger 只留给删除。
    双主题由 html.dark 翻转，本文件不写第二套色值。
    ============================================================ */
 
@@ -278,9 +279,17 @@
   word-break: break-word;
 }
 
-/* 流式正文：Markdown 边生成边成形；光标跟在正文下方，不再整篇重排。 */
-.agent-msg__body.is-streaming .caret-blink {
-  margin-top: 3px;
+/* 流式正文：Markdown 边生成边成形；光标画在最后一块的行末，
+   让它读起来是「字还在往下写」，而不是正文下方一块游离的方块。 */
+.markdown-body.is-streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--brand-cyan);
+  animation: agent-caret 1s steps(2, start) infinite;
 }
 
 /* 助手正文的阅读排版：比资讯正文更松，标题层级更明确，
@@ -372,17 +381,6 @@
   line-height: 1.65;
 }
 
-/* 光标：只在真正流式中出现。 */
-.caret-blink {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: var(--brand-cyan);
-  animation: agent-caret 1s steps(2, start) infinite;
-}
-
 @keyframes agent-caret {
   50% {
     opacity: 0;
@@ -390,7 +388,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caret-blink {
+  .markdown-body.is-streaming > :last-child::after {
     animation: none;
   }
 }
@@ -710,7 +708,9 @@
   border-radius: var(--radius-pill);
   font-size: 11px;
   line-height: 1.6;
-  color: var(--fg-3);
+  /* 压在同色系抬升面上，--fg-3 只有约 4.1:1；药丸本身已有底色与描边区分，
+     层次不需要靠压暗取得。 */
+  color: var(--fg-2);
   background: var(--brand-soft);
 }
 
@@ -729,33 +729,43 @@
   background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
 }
 
+/* 「结果不可用」一个族：失败与超时用 --risk-*（DESIGN.md §3.11：错误色不用品牌橙），
+   中断回中性——用户自己按的停止不是故障。--danger 只留给删除这类不可逆动作。 */
 .thought__state.is-error {
-  color: var(--danger);
-  background: var(--danger-soft);
+  color: var(--risk-critical);
+  background: color-mix(in srgb, var(--risk-critical) 10%, transparent);
 }
 
 .thought__state.is-timeout {
-  color: var(--signal-text);
-  background: var(--signal-soft);
+  /* 浅色下 --risk-attention 在淡底上只有 3.9:1，当文字不达标；超时也不该穿
+     「出错红」。文字回中性，靠「超时」二字 + 时钟图标说明，圆点仍是琥珀。 */
+  color: var(--fg-2);
+  background: var(--brand-soft);
 }
 
-.thought__state.is-cancelled {
-  color: var(--fg-3);
+.thought__state.is-paused {
+  color: var(--brand-aurora);
+  background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
+}
+
+.thought__state.is-cancelled,
+.thought__state.is-returned {
+  color: var(--fg-2);
   background: var(--brand-soft);
 }
 
 .thought__step.is-error .thought__dot {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 46%, transparent);
+  color: var(--risk-critical);
+  border-color: color-mix(in srgb, var(--risk-critical) 46%, transparent);
 }
 
 .thought__step.is-timeout .thought__dot {
-  color: var(--signal-text);
-  border-color: color-mix(in srgb, var(--signal-text) 46%, transparent);
+  color: var(--risk-attention);
+  border-color: color-mix(in srgb, var(--risk-attention) 46%, transparent);
 }
 
 .thought__step.is-cancelled .thought__dot {
-  color: var(--fg-3);
+  color: var(--fg-2);
 }
 
 .thought__chevron {
@@ -792,18 +802,6 @@
   margin: 0;
 }
 
-.thought__args-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 1px 0;
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: var(--fg-3);
-  cursor: pointer;
-  list-style: none;
-}
-
 .thought__args-summary::-webkit-details-marker {
   display: none;
 }
@@ -826,7 +824,34 @@
   margin: 0;
   font-size: 12.5px;
   line-height: 1.6;
-  color: var(--danger);
+  color: var(--risk-critical);
+}
+
+/* 「没收到返回」与「返回了错误」是同一档强调：两者都是「这一步的结果不可信」，
+   区别交给状态药丸与图标，不靠把其中一条压成脚注。 */
+.thought__unresolved {
+  font-size: 12.5px;
+  color: var(--fg-2);
+}
+
+/* 「调用参数」是展开步骤后唯一的二级入口，热区要够大、要看得出能点。 */
+.thought__args-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.thought__args-summary:hover,
+.thought__args-summary:focus-visible {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .thought__arg {

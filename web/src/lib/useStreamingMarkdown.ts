@@ -54,7 +54,12 @@ export function useStreamingMarkdown(content: string, streaming: boolean): strin
 
   useEffect(
     () => () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current)
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current)
+        // 必须一并置空：只 clear 不置空，StrictMode 的「卸载→重挂载」会让
+        // 上面那条守卫以为还排着帧，之后再也不渲染任何一片。
+        timerRef.current = null
+      }
     },
     [],
   )

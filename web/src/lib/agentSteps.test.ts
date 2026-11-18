@@ -121,7 +121,13 @@ describe("buildThread", () => {
     const items = buildThread(
       [
         msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: { query: "青光眼" } }] }),
-        msg({ id: "t2", type: "tool-response", content: "检索到 3 段文档", toolName: "searchDocuments" }),
+        msg({
+          id: "t2",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolStatus: "success",
+        }),
       ],
       false,
     )
@@ -162,16 +168,40 @@ describe("buildThread", () => {
     expect(stepsOf(items).map((s) => s.state)).toEqual(["pending", "pending", "pending"])
   })
 
-  it("多工具里只有最后一个收到返回：其余仍是「未确认」，不会一起算完成", () => {
+  it("多工具里只回来一条：旧数据按先进先出配对，其余仍是「未确认」", () => {
     const items = buildThread(
       [
         msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
         msg({ id: "t2", type: "tool-request", toolCalls: [{ name: "analyzeEyeImage", args: {} }] }),
-        msg({ id: "t3", type: "tool-response", content: "分析完成", toolName: "analyzeEyeImage" }),
+        msg({
+          id: "t3",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolStatus: "success",
+        }),
       ],
       false,
     )
-    expect(stepsOf(items).map((s) => s.state)).toEqual(["pending", "done"])
+    const steps = stepsOf(items)
+    expect(steps.map((s) => s.state)).toEqual(["done", "pending"])
+    // 结果落在第一条调用上，不跳到最后一个未回执的步骤。
+    expect(steps[0].output).toBe("检索到 3 段文档")
+    expect(steps[1].output).toBeUndefined()
+  })
+
+  it("老数据没有 status：结果回来了但成败未知，显示「已返回」而不是「完成」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "t2", type: "tool-response", content: "检索到 3 段文档", toolName: "searchDocuments" }),
+      ],
+      false,
+    )
+    const step = stepsOf(items)[0]
+    expect(step.received).toBe(true)
+    expect(step.state).toBe("returned")
+    expect(stepStateLabel(step.state)).toBe("已返回")
   })
 
   it("工具返回原文里的凭据在展示前被抹掉", () => {
@@ -273,7 +303,11 @@ describe("buildThread", () => {
       { status: "error", expected: "error" },
       { status: "timeout", expected: "timeout" },
       { status: "cancelled", expected: "cancelled" },
-      { status: "completed", expected: "done" },
+      // 「框架返回了结果」不等于「执行成功」：completed 只够说「已返回」。
+      { status: "completed", expected: "returned" },
+      // 缺失 / 还不认识的 status 同样不落成完成——不确定性要显示出来。
+      { status: "", expected: "returned" },
+      { status: "partial", expected: "returned" },
     ]
     for (const { status, expected } of cases) {
       const items = buildThread(
@@ -327,6 +361,8 @@ describe("buildThread", () => {
 describe("stepStateLabel", () => {
   it("每个状态都有中文标签", () => {
     expect(stepStateLabel("done")).toBe("完成")
+    // 「已返回」与「完成」分开：前者只说明结果回来了，没说成败。
+    expect(stepStateLabel("returned")).toBe("已返回")
     expect(stepStateLabel("running")).toBe("执行中")
     // 「未确认」只陈述「没收到返回」，不承诺还会收到回执。
     expect(stepStateLabel("pending")).toBe("未确认")

@@ -32,18 +32,10 @@ public record ResourceRef(
         /** 产生这条资源的工具调用，便于和执行步骤对上。 */
         String toolCallId
 ) {
-    public static ResourceRef image(String url, String title) {
-        return new ResourceRef("image:" + url, "image", title, "upload", url, null, null, null, null);
-    }
-
     public static ResourceRef document(String documentId, String title, Double score, String snippet,
                                        String toolCallId) {
         return new ResourceRef("doc:" + documentId, "document", title, "knowledge-base",
                 null, documentId, score, snippet, toolCallId);
-    }
-
-    public static ResourceRef link(String url, String title, String source) {
-        return new ResourceRef("link:" + url, "link", title, source, url, null, null, null, null);
     }
 
     /**

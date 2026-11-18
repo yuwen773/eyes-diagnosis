@@ -351,7 +351,11 @@ async function run() {
       await page.waitForSelector(".agent-msg__body.is-streaming h2", { timeout: 15000 })
       const midHasTable = await page.locator(".agent-msg__body table").count()
       if (width === 1440) await screenshot(page, `${theme}-rich-streaming-${width}`)
-      await page.waitForFunction(() => !document.querySelector(".caret-blink"), null, { timeout: 20000 })
+      await page.waitForFunction(
+        () => !document.querySelector(".agent-msg__body.is-streaming"),
+        null,
+        { timeout: 20000 },
+      )
       await page.waitForTimeout(300)
 
       const body = page.locator(".agent-msg__body").last()

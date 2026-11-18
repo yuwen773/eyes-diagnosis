@@ -7,6 +7,7 @@ import {
   CircleHelp,
   CircleX,
   Clock,
+  Minus,
   Pause,
   Sparkles,
 } from "lucide-react"
@@ -18,10 +19,14 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
 const PREVIEW_LIMIT = 180
 
-/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停 / 失败 / 超时 / 已中断。 */
+/** 单步的状态图标：完成 / 已返回 / 执行中 / 未确认 / 已暂停 / 失败 / 超时 / 已中断。 */
 function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "done") {
     return <Check size={13} strokeWidth={2.6} aria-hidden="true" />
+  }
+  if (state === "returned") {
+    // 结果回来了，但没拿到成败判定——不给实心对勾，那是在替后端下结论。
+    return <Minus size={13} strokeWidth={2.4} aria-hidden="true" />
   }
   if (state === "running") {
     return <CircleDashed size={13} strokeWidth={2.2} aria-hidden="true" />
@@ -51,7 +56,7 @@ function UnresolvedNote({ state }: { state: AgentStep["state"] }) {
     return <p className="thought__empty">工具执行已暂停，本次回合结束。</p>
   }
   return (
-    <p className="thought__empty">
+    <p className="thought__empty thought__unresolved">
       本次回合已结束，没有收到这个工具的返回，无法确认它是否执行完成。
     </p>
   )
@@ -66,12 +71,18 @@ function failureNote(step: AgentStep): string | null {
 }
 
 function StepDetail({ step }: { step: AgentStep }) {
+  // hooks 不能放在下面的分支之后；推理正文只渲染一次，避免每次展开都重跑解析。
+  const reasoningHtml = useMemo(
+    () => (step.kind === "reasoning" && step.text ? renderMarkdown(step.text) : ""),
+    [step.kind, step.text],
+  )
+
   if (step.kind === "reasoning") {
-    if (!step.text) return null
+    if (!reasoningHtml) return null
     return (
       <div
         className="thought__reasoning markdown-body"
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(step.text) }}
+        dangerouslySetInnerHTML={{ __html: reasoningHtml }}
       />
     )
   }
@@ -96,6 +107,11 @@ function StepDetail({ step }: { step: AgentStep }) {
     <div className="thought__detail">
       {!received ? <UnresolvedNote state={step.state} /> : null}
       {failure ? <p className="thought__failure">{failure}</p> : null}
+      {received && step.state === "returned" ? (
+        <p className="thought__empty">
+          工具返回了结果，但没有拿到成败判定；工具输出本身不是诊断结论。
+        </p>
+      ) : null}
 
       {hasOutput ? (
         <pre className="thought__output">

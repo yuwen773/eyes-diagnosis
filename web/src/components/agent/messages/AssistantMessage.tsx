@@ -49,6 +49,7 @@ function IrisMark() {
 export function AssistantMessage({ msg }: { msg: StreamMessage }) {
   const { push } = useFault()
   const html = useStreamingMarkdown(msg.content, Boolean(msg.isLoading))
+  const streaming = Boolean(msg.isLoading)
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     if (e.target instanceof Element) {
@@ -65,12 +66,24 @@ export function AssistantMessage({ msg }: { msg: StreamMessage }) {
         {msg.time ? <span className="agent-author__time">{msg.time}</span> : null}
       </header>
 
+      {/* 流式正文每 60ms 整体换一次 innerHTML：直接给它挂 aria-live 会让读屏
+          不停重念全文。这里只用一个隐藏的 status 播报「开始生成」，
+          正文本身靠 aria-busy 表示还在写。 */}
+      {streaming ? (
+        <p className="sr-only" role="status" aria-live="polite">
+          Iris 正在生成回答
+        </p>
+      ) : null}
+
       <div
-        className={`agent-msg__body${msg.isLoading ? " is-streaming" : ""}`}
+        className={`agent-msg__body${streaming ? " is-streaming" : ""}`}
         onClick={handleClick}
+        aria-busy={streaming || undefined}
       >
-        <div className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />
-        {msg.isLoading ? <span className="caret-blink" aria-hidden="true" /> : null}
+        <div
+          className={`markdown-body${streaming ? " is-streaming" : ""}`}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
       </div>
     </article>
   )

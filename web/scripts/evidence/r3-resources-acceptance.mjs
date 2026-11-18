@@ -306,7 +306,7 @@ const panelText = (page) => page.locator(".agent-panel").innerText()
 
 /**
  * 等这一轮真的流完：先等执行过程出现，再等最后一句可见，最后让收尾动效落定。
- * 只等 `caret-blink` 消失是不够的——发送被上传拖延时那一刻还没有任何回复。
+ * 只等流式光标消失是不够的——发送被上传拖延时那一刻还没有任何回复。
  */
 async function waitForFinal(page, marker) {
   await page.waitForSelector(".thought__step", { timeout: 20000 })

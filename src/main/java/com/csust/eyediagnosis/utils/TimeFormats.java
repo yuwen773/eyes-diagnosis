@@ -1,6 +1,7 @@
 package com.csust.eyediagnosis.utils;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -42,6 +43,21 @@ public final class TimeFormats {
             return null;
         }
         return ISO_OFFSET.format(instant.atZone(ZoneId.systemDefault()));
+    }
+
+    /**
+     * 服务端本地墙钟（{@link LocalDateTime}）→ 带偏移的 ISO-8601。
+     *
+     * <p>实体里的 {@code createTime} 这类字段是 {@code LocalDateTime}，由 MyBatis
+     * 从 {@code DATETIME} 读成「服务器本地时间」，没有时区信息。输出时按同一个
+     * 默认时区补上偏移，前端才能和后端其它时间走同一条解析规则——否则它们会被
+     * 当成 UTC，显示整体偏 8 小时。
+     */
+    public static String toIsoOffset(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
+        return ISO_OFFSET.format(localDateTime.atZone(ZoneId.systemDefault()));
     }
 
     public static String nowIsoOffset() {

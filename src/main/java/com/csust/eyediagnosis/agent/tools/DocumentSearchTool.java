@@ -70,11 +70,13 @@ public class DocumentSearchTool {
      * 不得由模型输入控制。
      */
     public String searchDocuments(String query, Long currentUserId) {
+        // 这两种「没做成」不能写成一句正常返回值：观察者会记 success，
+        // 界面显示「完成」，而实际上一次检索都没发生。
         if (currentUserId == null) {
-            return "[]";
+            throw new IllegalStateException("知识库检索需要登录用户上下文。");
         }
         if (vectorStore == null) {
-            return "知识库暂未启用，请稍后再试。";
+            throw new IllegalStateException("知识库暂未启用，请稍后再试。");
         }
         try {
             SearchRequest searchRequest = SearchRequest.builder()

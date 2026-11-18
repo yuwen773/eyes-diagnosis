@@ -29,6 +29,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -52,11 +53,22 @@ class DocumentSearchToolOwnershipTest {
     @Mock
     private KnowledgeDocumentMapper mapper;
 
+    /** 没有可信用户上下文时必须失败，而不是返回「没找到」这种假成功。 */
     @Test
-    void searchWithoutUserContextReturnsEmptyAndDoesNotQueryStore() {
-        String result = tool.searchDocuments("青光眼", null);
-        assertEquals("[]", result);
+    void searchWithoutUserContextFailsAndDoesNotQueryStore() {
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> tool.searchDocuments("青光眼", null));
+        assertTrue(thrown.getMessage().contains("登录"));
         verifyNoInteractions(vectorStore);
+    }
+
+    /** 向量库未配置同样是一次「没做成」，不能长成 success。 */
+    @Test
+    void missingVectorStoreIsSurfacedAsFailure() {
+        DocumentSearchTool withoutStore = new DocumentSearchTool();
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> withoutStore.searchDocuments("青光眼", 42L));
+        assertTrue(thrown.getMessage().contains("暂未启用"));
     }
 
     @Test

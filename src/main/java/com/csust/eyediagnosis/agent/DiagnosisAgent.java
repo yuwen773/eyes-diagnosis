@@ -85,19 +85,19 @@ public class DiagnosisAgent {
     private DocumentSearchTool documentSearchTool;
 
     @Resource
-    private ToolExecutionObserver toolExecutionObserver;
-
-    @Resource
     private ObjectMapper objectMapper;
 
-    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId) {
+    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId,
+                                  ToolExecutionObserver observer) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
                 .model(chatModel)
                 .instruction(SYSTEM_PROMPT)
                 // 旁路观察工具结果：只记录，不改变工具行为。没有观察记录时
                 // 前端只能标「已返回、未区分成败」，不会退化成假成功。
-                .interceptors(toolExecutionObserver)
+                // 观察者按「一次运行」新建：toolCallId 由模型供应商生成、不保证
+                // 跨会话唯一，共享实例会把别人的执行状态读成自己的。
+                .interceptors(observer)
                 .methodTools(eyeImageAnalyzerTool,
                         new UserBoundDocumentSearchTool(documentSearchTool, userId));
         if (extraTools != null && extraTools.length > 0) {
@@ -122,8 +122,11 @@ public class DiagnosisAgent {
         chatRequest.setDisableMcpDefault(disableMcpDefault);
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
+        // 本次运行专属的工具观察者：流结束即丢弃，不跨会话共享状态。
+        ToolExecutionObserver runObserver = new ToolExecutionObserver();
+
         // 选择 Agent：无 MCP 用内置 agent，有 MCP 创建 combined agent
-        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId);
+        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, runObserver);
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)
@@ -148,8 +151,12 @@ public class DiagnosisAgent {
                         return true;
                     })
                     .concatMapIterable(output -> toEventDtos(
-                            output, threadId, userId, assistantContent, reasoningContent, emittedToolResults))
-                    .doOnComplete(() -> {
+                            output, threadId, userId, assistantContent, reasoningContent,
+                            emittedToolResults, runObserver))
+                    // doFinally 而不是 doOnComplete：工具抛错或用户按停止时流不会
+                    // complete，但用户已经看到的内容必须落库，否则历史里只剩
+                    // tool-call / tool-result 半截。
+                    .doFinally(signal -> {
                         String fullReasoning = reasoningContent.toString();
                         if (!fullReasoning.isEmpty()) {
                             chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning);
@@ -176,7 +183,7 @@ public class DiagnosisAgent {
      */
     List<MessageDTO> toEventDtos(NodeOutput output, String threadId, Long userId,
                                          StringBuilder assistantContent, StringBuilder reasoningContent,
-                                         Set<String> emittedToolResults) {
+                                         Set<String> emittedToolResults, ToolExecutionObserver observer) {
         List<MessageDTO> events = new ArrayList<>();
 
         if (output instanceof StreamingOutput<?> streamingOutput) {
@@ -200,10 +207,13 @@ public class DiagnosisAgent {
                     String content = truncateToolResult(
                             SensitiveDataRedactor.redact(response.responseData()));
                     String toolCallId = response.id();
-                    if (toolCallId != null && !emittedToolResults.add(toolCallId)) {
+                    // 空 id 不参与去重：供应商偶尔返回空串，用它当键会把同一回合
+                    // 第二个工具的结果整条吞掉（SSE 没有、历史也没有）。
+                    if (toolCallId != null && !toolCallId.isBlank()
+                            && !emittedToolResults.add(toolCallId)) {
                         continue;
                     }
-                    ToolExecutionObserver.Outcome outcome = toolExecutionObserver.peek(toolCallId);
+                    ToolExecutionObserver.Outcome outcome = observer.peek(toolCallId);
                     String status = outcome != null ? outcome.status() : "completed";
                     // 资源只来自成功调用；失败/超时/中断不带证据。
                     List<ResourceRef> resources = outcome != null && "success".equals(outcome.status())
@@ -237,9 +247,10 @@ public class DiagnosisAgent {
                 sb.append("工具: ").append(feedback.getName()).append("\n");
                 sb.append("评估: ").append(feedback.getDescription()).append("\n");
             }
-            dto.setContent(sb.toString());
+            String confirmText = SensitiveDataRedactor.redact(sb.toString());
+            dto.setContent(confirmText);
             dto.setTimestamp(TimeFormats.nowIsoOffset());
-            chatHistoryService.saveToolConfirmMessage(threadId, userId, sb.toString());
+            chatHistoryService.saveToolConfirmMessage(threadId, userId, confirmText);
             events.add(dto);
             return events;
         }
@@ -268,7 +279,8 @@ public class DiagnosisAgent {
                         // toolCallId 是请求与结果唯一的稳定关联键。
                         tcMap.put("id", toolCall.id());
                         tcMap.put("name", toolCall.name());
-                        tcMap.put("arguments", toolCall.arguments());
+                        // 参数由模型生成，可能带上用户贴进来的 token。
+                        tcMap.put("arguments", SensitiveDataRedactor.redact(toolCall.arguments()));
                         return tcMap;
                     }).toList();
             messageDTO.setToolCalls(toolCallingList);
@@ -280,14 +292,17 @@ public class DiagnosisAgent {
         // reasoning 消息
         else if (metadata.get("reasoningContent") != null
                 && !"".equals(metadata.get("reasoningContent"))) {
-            String reasoningText = (String) metadata.get("reasoningContent");
+            // 推理正文同样可能复述工具结果里的凭据，出站前统一脱敏。
+            String reasoningText = SensitiveDataRedactor.redact(
+                    (String) metadata.get("reasoningContent"));
             reasoningContent.append(reasoningText);
             messageDTO.setContent(reasoningText);
             messageDTO.setMessageType(MessageType.REASONING);
         }
         // 普通文本消息
         else {
-            String text = assistantMessage.getText();
+            // 模型可能把工具结果里的凭据复述进回答：SSE 与落库用同一份脱敏后的文本。
+            String text = SensitiveDataRedactor.redact(assistantMessage.getText());
             assistantContent.append(text);
             messageDTO.setContent(text);
             messageDTO.setMessageType(MessageType.ASSISTANT);
@@ -302,7 +317,13 @@ public class DiagnosisAgent {
         if (content.length() <= MAX_TOOL_RESULT_CHARS) {
             return content;
         }
-        return content.substring(0, MAX_TOOL_RESULT_CHARS) + "\n…（工具结果过长，已截断）";
+        int cut = MAX_TOOL_RESULT_CHARS;
+        // 切点落在代理对中间会留下孤立高代理：浏览器渲染成替换符，
+        // utf8mb4 列也可能拒收整行历史。
+        if (Character.isHighSurrogate(content.charAt(cut - 1))) {
+            cut -= 1;
+        }
+        return content.substring(0, cut) + "\n…（工具结果过长，已截断）";
     }
 
     /**

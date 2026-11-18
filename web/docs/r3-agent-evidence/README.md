@@ -47,7 +47,7 @@ cd web
 R3_API_BASE=http://localhost:18081/api node scripts/evidence/r3-resources-real-backend.mjs
 ```
 
-脚本会注册临时账号并删除本轮上传对象；本地库里保留该临时账号以便复核。
+脚本会注册临时账号，并在结束时删除本轮上传的对象；临时账号请按需自行清理（本仓库不保留测试账号）。
 
 | 文件 | 场景 | 看什么 |
 | --- | --- | --- |
@@ -62,3 +62,25 @@ R3_API_BASE=http://localhost:18081/api node scripts/evidence/r3-resources-real-b
 **边界**：`资源栏显示 0` 是合法空态（这个会话确实没有影像 / 没有命中 / 没有外链）。
 合成验收与真实后端验收的结果不互相代替：真实链只覆盖「模型确实触发了 searchDocuments」
 这一条路，模型没触发时以合成用例为准。
+
+### 四路评审后的整改（2026-11-18，同一工作树）
+
+四份独立评审（后端/Agent 正确性、前端并发与渲染、安全与医学边界、UI/UX 与可访问性）
+的 P1 与低成本 P2 已修，剩余项记为债务见下。
+
+| 改动 | 位置 | 为什么 |
+| --- | --- | --- |
+| MCP 工具 `isError=true` 抛错 | `agent/mcp/McpToolCallback.java` | 不再把「401 Unauthorized」当成功文本喂给模型与前端 |
+| 脱敏器重写（值带空格 / 键名带空格 / URL userinfo / 二次转义 JSON / PGP） | `utils/SensitiveDataRedactor.java` + 10 条单测 | 原来 `Basic <base64>` 只打掉 `Basic` |
+| 工具参数、确认文案、推理与正文出站前统一脱敏 | `agent/DiagnosisAgent.java` | 凭据不落库、不进 SSE |
+| Agent 正文不放行远程图片 | `lib/sanitize.ts` | 与文档预览同一口径，堵像素追踪外带通道 |
+| `completed` / 未知 status → 「已返回」，不再是 ✓「完成」 | `lib/agentSteps.ts`、`ThoughtLine` | 框架返回了结果 ≠ 执行成功 |
+| 旧数据无 `toolCallId` 时按先进先出配对 | `lib/agentSteps.ts` | 原来取最后一个未回执，第一步永远停在「未确认」 |
+| 流式光标画在最后一块行末 | `agent.css`、`AssistantMessage.tsx` | 原来是游离的方块；顺带补 `role="status"` 播报与 `aria-busy` |
+| StrictMode 下合帧停摆修复 | `lib/useStreamingMarkdown.ts` + 回归测试 | cleanup 只 `clearTimeout` 不置空，重挂载后再不排帧 |
+| 状态药丸：失败 `--risk-critical`、超时回中性、`--fg-2` 替换不达标的 `--fg-3` | `agent.css` + `tokens.contrast.test.ts` | 错误色不用品牌橙；11px 药丸从 4.13:1 抬到 ≥4.5 |
+
+**已知债务（登记未修）**：`agent.css` 仍按元素重定义 `markdown.css` 的基础排版（应抽
+`.is-prose` 变体）；`suppressHighlight` 仍是模块级标志（同步调用内安全，但脆）；
+正文行宽 34em 的理想值未调（会与表格/代码块布局冲突，需要单独一轮）；
+`stableBoundary` 每次从 0 扫描（正确性无碍，成本可忽略）。

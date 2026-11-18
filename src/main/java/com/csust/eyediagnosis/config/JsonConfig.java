@@ -65,6 +65,10 @@ public class JsonConfig {
         simpleModule.addSerializer(java.util.Date.class, dateSerializer);
         simpleModule.addSerializer(java.sql.Timestamp.class, dateSerializer);
         simpleModule.addSerializer(java.sql.Date.class, dateSerializer);
+        // 实体里的 createTime 是 LocalDateTime（服务器本地墙钟）：同样补上偏移，
+        // 否则前端会把「无偏移串」按 UTC 解析，知识库列表这类页面整体偏 8 小时。
+        // 注册在 simpleModule 里，优先于上面 javaTimeModule 的旧格式。
+        simpleModule.addSerializer(LocalDateTime.class, new ApiLocalDateTimeSerializer());
         objectMapper.registerModule(simpleModule);
 
         return objectMapper;

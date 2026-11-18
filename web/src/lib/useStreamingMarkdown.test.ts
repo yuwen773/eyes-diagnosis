@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react"
 import { act, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -67,6 +68,21 @@ describe("useStreamingMarkdown", () => {
     const first = result.current
     rerender({ content: "答案", streaming: false })
     expect(result.current).toBe(first)
+  })
+
+  it("StrictMode 的「卸载→重挂载」之后仍会继续合帧", () => {
+    // 回归：cleanup 只 clearTimeout 不把 ref 置空时，重挂载后的守卫以为
+    // 还排着帧，之后再也不会渲染任何一片——开发模式下正文会停在第一帧。
+    const { result, rerender } = renderHook(
+      ({ content, streaming }: { content: string; streaming: boolean }) =>
+        useStreamingMarkdown(content, streaming),
+      { initialProps: { content: "一", streaming: true }, wrapper: StrictMode },
+    )
+    rerender({ content: "一二", streaming: true })
+    act(() => {
+      vi.advanceTimersByTime(60)
+    })
+    expect(result.current).toContain("一二")
   })
 
   it("空内容返回空串", () => {

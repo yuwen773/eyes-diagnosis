@@ -187,6 +187,46 @@ describe("品牌材质 · 文字压在半透明玻璃上", () => {
   })
 })
 
+/**
+ * Agent 执行过程的状态药丸。
+ *
+ * <p>药丸压在同色系抬升面（`--brand-soft` 叠在 `--brand-canvas`）上，
+ * 而不是纯画布上——按字面值算出来的对比度会比实际好看一档，所以这里
+ * 按合成后的底色算。`--fg-3` 在这一层只有约 4.13:1，不达标，故药丸
+ * 一律用 `--fg-2`；失败 / 超时用 `--risk-*`（错误色不用品牌橙）。
+ */
+describe("Agent 状态药丸 · 抬升面上的文字", () => {
+  const mix = (color: string, weight: number, base: string) => {
+    const { r, g, b } = parseColor(color)
+    return over(`rgba(${r}, ${g}, ${b}, ${weight})`, base)
+  }
+
+  it("浅色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawValue("--brand-soft"), value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("暗色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawDarkValue("--brand-soft"), darkValue("--brand-canvas"))
+    // --on-dark-2 只定义一次、双主题共用，不走 darkValue。
+    expect(contrast(value("--on-dark-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("失败药丸在淡底上 ≥ 4.5", () => {
+    expect(
+      contrast(value("--paper-risk-critical"), mix(value("--paper-risk-critical"), 0.1, value("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(value("--risk-critical-lit"), mix(value("--risk-critical-lit"), 0.1, darkValue("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("超时圆点是图形元素：琥珀在画布上 ≥ 3:1（文字已回中性）", () => {
+    expect(contrast(value("--paper-risk-attention"), value("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(value("--risk-attention-lit"), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+  })
+})
+
 describe("品牌材质 · 样式硬约束（静态检查 brand.css）", () => {
   const brandCss = readFileSync(new URL("./brand.css", import.meta.url), "utf8")
 

