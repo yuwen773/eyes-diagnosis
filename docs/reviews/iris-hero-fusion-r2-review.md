@@ -268,10 +268,11 @@ rAF 还要再画约 3.45 s；本轮把「动画逻辑停止」兑现成「GPU �
 | 场景 | 读数 | 结论 |
 |---|---|---|
 | 进入 settled 的延迟 | **4926 ms**（页面时钟，从看到 `live` 起算） | 与 `MOTION_WINDOW_MS = 5000` 一致（轮询误差 <100 ms） |
+| 定格那一帧 | **2 次 draw**（field + composite，`freeze()` 有意先画完最后一帧） | 「0 draws」是从**进入 settled 之后**起算的，不含这 2 次 |
 | 定格后 2 s 内 `drawArrays` | **0**（采样时 `mode=settled`） | 循环真停，不是只改属性 |
 | 定格后指针在画布上移动 1.5 s | **0** | 悬停不再唤醒 |
 | 定格态切换主题 | **2 次 draw**（field + composite 各一次）、**0 个新上下文**、`data-mode` 仍是 `settled` | 只重绘一帧 |
-| 路由离开（点导航到 `/news`） | 画布 **0** 个，之后不再绘制 | 卸载即回收 |
+| 路由离开（点导航到 `/news`） | 画布 **0** 个，之后不再绘制 | 画布已移除；`dispose()` 回收自建对象，**不主动丢上下文**（StrictMode 会复用同一张 canvas） |
 | reduced-motion（挂载即开） | 2 s 内 **0** draws，CSS 动画 **0** 条 | 当场定格 |
 | 运行中丢上下文 | `mode="static"`，画布移除，静态底 + 棱镜 + 色散仍在 | 降级不是空白 |
 | WebGL2 不可用 | `mode="static"`，`ctx=0`，`draws=0` | 静态降级 |
@@ -425,6 +426,11 @@ SVG 层不再先漂 5 秒才安静下来。
 | E-13 | P3 | 静态降级下 SVG 仍跑 6 条 CSS 动画 5 秒 | **已修**：`drifting` 增加 `!fallback` |
 | E-14 | P3 | 报告「与上一轮 4% 同一量级」措辞不实 | **已修**：§9 明写 7%–12%，并更正 4% 的说法 |
 | E-15 | P3 | `pausedRef.current = frozen` 混淆三种语义 | **已修**：删掉 `pausedRef`，只用 `frozenRef` |
+
+> 评审另外指出（未编号）**`dispose()` 从不主动释放 WebGL 上下文**：`routeLeave` 只证明了
+> 画布被移除，没证明 GPU 资源被释放。这是**有意取舍**——React StrictMode 会先假卸载再重挂同一张
+> canvas，主动丢上下文会让第二次挂载拿到一个已失效的 surface；`beamsMount.test.ts` 里
+> 「dispose 不丢上下文」这一条正是为此写的。§8 的措辞已按此收紧，不再写「卸载即回收 GPU」。
 
 ### 13.4 P1 整改后的复测（同一套脚本、同一台机器）
 
