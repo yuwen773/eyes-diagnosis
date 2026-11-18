@@ -31,7 +31,10 @@ const BASELINE: Record<string, number> = {
   // 且是从 `feat/iris21-multiagent-integration@9a6dbcb6` **逐字**取回的——SVG
   // `stop-color` 与 mask 的 `#000` / `transparent` 属本棘轮明确允许的写死类别，
   // 本轮没有新写任何一个字面色。此处只登记，不放松其他文件。
-  "brand.css": 67,
+  // 67 → 75（E-09 接入，2026-11-18）：`≤1024` 档把 `.landing-hero__flow` 的横向遮罩
+  // 换成竖向渐隐，8 条全部是 mask 的灰度停点（3 个 rgba 透明度 + `#000`，双前缀各一份），
+  // 同属本棘轮允许的 mask 类别；`-webkit-` 前缀沿用仓库既有的双写约定。
+  "brand.css": 75,
   "fault.css": 1,
   "news.css": 2,
   // 协作四角色的 CRITIC 金（浅/深两版）：现有令牌里没有对应色，

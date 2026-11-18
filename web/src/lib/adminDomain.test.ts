@@ -203,7 +203,8 @@ describe("knowledgeStatusView", () => {
 
 describe("humanReviewStatusLabel", () => {
   it("代码翻成人话", () => {
-    expect(humanReviewStatusLabel("REVIEWED")).toBe("已复核")
+    // 系统没有资质数据源，REVIEWED 不按账号角色给出"干净"的「已复核」。
+    expect(humanReviewStatusLabel("REVIEWED")).toBe("已复核 · 资质未核验")
     expect(humanReviewStatusLabel("AWAITING_REVIEW")).toBe("拒识 / 低置信 · 待复核")
     expect(humanReviewStatusLabel(null)).toBe("未记录")
   })

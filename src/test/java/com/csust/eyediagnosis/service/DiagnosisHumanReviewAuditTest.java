@@ -23,6 +23,12 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  *
  * <p>历史记录（已存在的 REVIEWED 与 t_diagnosis_audit）保持原样，本条只验证
  * 关闭之后**新**的写入不会发生——拦截发生在取记录之前，连读取都不需要。
+ *
+ * <p><b>恢复资格时要一起恢复的用例</b>：安全关闭之前这里有一条「一次复核恰好写一行
+ * {@code t_diagnosis_audit}，actor / role / payload 正确」的用例。写入路径
+ * （{@code DiagnosisServiceImpl#recordHumanReview} 的审计段）现在不可达，所以那条用例
+ * 被移除了；接上资质数据源、重新放行写入时，必须把这条审计用例补回来，
+ * 否则最容易漏掉的审计写入会失去全部覆盖。
  */
 class DiagnosisHumanReviewAuditTest {
 

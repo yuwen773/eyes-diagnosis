@@ -6,7 +6,9 @@ import { humanReviewState } from "./domain"
  *
  * - AI_ONLY = **没进复核队列**，不能写成「待复核」——那是替系统承诺一件没发生的事；
  * - AWAITING_REVIEW 才是真的进了队列；
- * - REVIEWED 只说明有人复核过，不说明那个人是医生（D-01b，角色看 source.reviewerRole）。
+ * - REVIEWED 只说明有人复核过，不说明那个人是医生（D-01b）；系统从来没核验过
+ *   任何资质，账号角色（reviewerRole）也可能被改派，所以 REVIEWED 一律带
+ *   「资质未核验」，不按角色给出干净的「已复核」。
  */
 describe("humanReviewState 覆盖后端真实枚举", () => {
   it.each([
@@ -18,27 +20,16 @@ describe("humanReviewState 覆盖后端真实枚举", () => {
     expect(humanReviewState(status)).toEqual({ label, risk })
   })
 
-  it("REVIEWED 的复核人不是 doctor 时标「资质未核验」：系统没有可核验的资质数据源", () => {
-    for (const role of ["admin", "user", null, undefined]) {
-      expect(humanReviewState("REVIEWED", role)).toEqual({
-        label: "人工复核已记录 · 资质未核验",
-        risk: "attention",
-      })
-    }
-  })
-
-  it("REVIEWED 且复核人是 doctor 角色时只陈述「已记录」，仍不写「医生复核」", () => {
-    expect(humanReviewState("REVIEWED", "doctor")).toEqual({
-      label: "人工复核已记录",
-      risk: "normal",
+  it("REVIEWED 一律标「资质未核验」：任何账号角色都不是资质证明", () => {
+    expect(humanReviewState("REVIEWED")).toEqual({
+      label: "人工复核已记录 · 资质未核验",
+      risk: "attention",
     })
-    expect(humanReviewState("REVIEWED", "doctor").label).not.toContain("医生")
   })
 
   it("两条不能互相冒充：AI_ONLY 不读作待复核，REVIEWED 不读作医生复核", () => {
     expect(humanReviewState("AI_ONLY").label).not.toContain("待复核")
-    expect(humanReviewState("REVIEWED", "doctor").label).not.toContain("医生")
-    expect(humanReviewState("REVIEWED", "admin").label).not.toContain("医生")
+    expect(humanReviewState("REVIEWED").label).not.toContain("医生")
   })
 
   it("旧枚举（APPROVED / REJECTED / PENDING）后端已不再写入，不再特殊处理", () => {

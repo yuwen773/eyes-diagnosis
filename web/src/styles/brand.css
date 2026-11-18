@@ -291,6 +291,28 @@ html.dark .landing-hero__btn--primary {
   );
 }
 
+/* ≤1024：Fusion 把光学主体挪到左侧/下半区，旧的「左隐右实」横向遮罩正好压在最亮的主体上
+   （实测 820 亮色档棱镜与底色的 R 通道差只有 2–22，低于 18 的门槛）。
+   平板与手机改为竖向渐隐：文字带仍收，光学主体所在的底部放行。 */
+@media (max-width: 1024px) {
+  .landing-hero__flow {
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.45) 35%,
+      rgba(0, 0, 0, 0.85) 60%,
+      #000 78%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.45) 35%,
+      rgba(0, 0, 0, 0.85) 60%,
+      #000 78%
+    );
+  }
+}
+
 .landing-hero__visual-hold {
   position: absolute;
   inset: 0;

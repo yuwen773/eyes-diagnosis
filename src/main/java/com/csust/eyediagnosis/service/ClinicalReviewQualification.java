@@ -25,8 +25,9 @@ import com.csust.eyediagnosis.model.entity.User;
  * 再把这里改成读那份凭证，而不是读 {@code userRole}。
  *
  * <p>历史记录不受影响：已写入的 {@code humanReviewStatus=REVIEWED} 与
- * {@code t_diagnosis_audit} 原样保留，展示层据 {@code reviewerRole}
- * 标明「资质未核验」，不把它们说成医生正式复核。
+ * {@code t_diagnosis_audit} 原样保留，展示层**一律**标「资质未核验」——
+ * 不按 {@code reviewerRole} 豁免：账号角色可以被管理员改派，拿它当资质证明
+ * 和拿角色当资历是同一件事。
  */
 public final class ClinicalReviewQualification {
 
@@ -40,6 +41,9 @@ public final class ClinicalReviewQualification {
      *
      * <p>当前恒为 {@code false}：资质核验尚未建设。这不是占位实现，
      * 而是本轮授权的**安全关闭策略**本身。
+     *
+     * <p>{@code reviewer} 参数是给将来「查资质凭证」预留的入口；现在**故意不读它**——
+     * 当前唯一能读到的就是 {@code userRole}，读它等于把角色当资质证明。
      */
     public static boolean mayWriteFormalClinicalReview(User reviewer) {
         // 故意不写 `reviewer != null && ADMIN_ROLE.equals(...)` 或 `doctor` 分支：

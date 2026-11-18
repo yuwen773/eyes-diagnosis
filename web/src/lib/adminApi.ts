@@ -156,6 +156,13 @@ export function listDiagnoses(q: DiagnosisQuery): Promise<Page<AdminDiagnosis>> 
 export function getDiagnosis(id: string): Promise<DiagnosisResult> {
   return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET" })
 }
+/**
+ * 正式临床复核写入**已安全关闭**（D-01b）：服务端恒拒绝，且理由是「系统尚无核验过的
+ * 医生资质」，不是「你没有权限」。这里保留导出只是为了历史调用点可追溯；
+ * **不要**在新代码里使用——页面上已无调用方。
+ *
+ * @deprecated 写入路径已在服务层安全关闭，调用必然失败。
+ */
 export function submitReview(body: { id: string; humanResult: string; humanSeverity?: string; humanRecommendations?: string; humanReviewNote?: string }): Promise<boolean> {
   return request<boolean>("/diagnosis/update", { method: "POST", body: JSON.stringify(body) })
 }

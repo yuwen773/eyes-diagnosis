@@ -499,12 +499,16 @@ class FullApplicationAcceptanceTest {
                 "协作影像有对象键、但没有公开地址");
 
         // 授权时间必须与库内同源（同一行、同一次转换），不能是服务端补的 now()。
-        // 库里由 UTC_TIMESTAMP 写入；接口按 ISO-8601 UTC（带 Z）下发，
-        // 避免 JDBC 把 UTC 字面量当成 JVM 默认时区、让报告时间差 8 小时。
-        String expectedAuthorizedAt = jdbc.queryForObject(
-                "SELECT DATE_FORMAT(authorizedAt, '%Y-%m-%dT%H:%i:%sZ') FROM t_patient_authorization WHERE taskId=?",
-                String.class, taskId);
-        assertNotNull(expectedAuthorizedAt, "批准保存后必须有授权时间");
+        // 期望值独立地从 Timestamp 还原成 UTC 瞬时再格式化：如果只在 SQL 里用同一条
+        // DATE_FORMAT 表达式取期望值，把 %H 写错也会两边一起变，断言就成了同义反复。
+        java.sql.Timestamp storedAuthorizedAt = jdbc.queryForObject(
+                "SELECT authorizedAt FROM t_patient_authorization WHERE taskId=?",
+                java.sql.Timestamp.class, taskId);
+        assertNotNull(storedAuthorizedAt, "批准保存后必须有授权时间");
+        String expectedAuthorizedAt = java.time.format.DateTimeFormatter
+                .ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                .withZone(java.time.ZoneOffset.UTC)
+                .format(storedAuthorizedAt.toInstant());
         String projectedAuthorizedAt = source.path("authorizedAt").asText();
         assertEquals(expectedAuthorizedAt, projectedAuthorizedAt,
                 "authorizedAt 必须原样来自 t_patient_authorization，并以 UTC ISO-8601 下发");

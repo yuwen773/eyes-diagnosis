@@ -577,7 +577,7 @@ export function AdminDataAnalysisPage(): ReactElement {
                不分组就会读成同一个口径。 */
             <p className="admin-analysis__scope num" aria-label="统计口径">
               <b>窗口内</b>（{stats.rangeStart} ~ {stats.rangeEnd}）· 判读{" "}
-              {formatStatNumber(inRange)} 条 · 已复核 {formatStatNumber(reviewed)} 条 ·{" "}
+              {formatStatNumber(inRange)} 条 · 人工复核已记录 {formatStatNumber(reviewed)} 条 ·{" "}
               <b>全站</b> · 知识库文档 {formatStatNumber(stats.knowledgeTotal)} 份 / 切片{" "}
               {formatStatNumber(stats.knowledgeChunks)} 块 · 资讯{" "}
               {formatStatNumber(stats.newsTotal)} 篇

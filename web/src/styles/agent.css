@@ -669,8 +669,8 @@
 /* 运行中的已用时长：只报真实过去的时间，没有「预计剩余」。 */
 .thought__elapsed {
   flex-shrink: 0;
-  font-size: 10.5px;
-  color: var(--fg-3);
+  font-size: 11px;
+  color: var(--fg-2);
   font-variant-numeric: tabular-nums;
 }
 

@@ -12,6 +12,7 @@ import {
   rankClasses,
   severityLabel,
   severityRisk,
+  formatAuthorizedAt,
 } from "./domain"
 
 describe("normalizeConfidence", () => {
@@ -265,5 +266,38 @@ describe("severityLabel / severityRisk（人工严重程度与 AI 分级同一�
     expect(severityRisk("high")).toBe("critical")
     expect(severityRisk("low")).toBe("attention")
     expect(severityRisk("medium")).toBe("attention")
+  })
+})
+
+describe("formatAuthorizedAt", () => {
+  it("带 Z 的 UTC 字面量转成本地时间，并把时区写出来", () => {
+    const text = formatAuthorizedAt("2026-11-17T14:10:00Z")
+    expect(text).toBeTruthy()
+    // 具体时区名由运行环境的 ICU 决定（GMT+8 / UTC / 中国标准时间…），
+    // 只钉「换算了本地时间 + 带时区标注」，不再写死一个正则。
+    expect(text).not.toContain("T14:10:00Z")
+    expect(text).toMatch(/GMT|UTC|中国标准时间/)
+  })
+
+  it("±HH:MM 偏移同样按带时区处理", () => {
+    const text = formatAuthorizedAt("2026-11-17T22:10:00+08:00")
+    expect(text).toMatch(/GMT|UTC|中国标准时间/)
+    expect(text).not.toContain("+08:00")
+  })
+
+  it("历史值没有时区就原样回显并标注，不替它猜偏移", () => {
+    expect(formatAuthorizedAt("2026-11-17 22:10:00")).toBe("2026-11-17 22:10:00（未标注时区）")
+    // 纯日期也没有时区信息。
+    expect(formatAuthorizedAt("2026-11-17")).toBe("2026-11-17（未标注时区）")
+  })
+
+  it("带时区但解析不了的值不装作算过", () => {
+    expect(formatAuthorizedAt("not-a-dateZ")).toBe("not-a-dateZ（时间无法解析）")
+  })
+
+  it("空值返回 null，由调用方决定怎么说", () => {
+    expect(formatAuthorizedAt(null)).toBeNull()
+    expect(formatAuthorizedAt("")).toBeNull()
+    expect(formatAuthorizedAt(undefined)).toBeNull()
   })
 })

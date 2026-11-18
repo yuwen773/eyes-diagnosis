@@ -29,6 +29,33 @@ function StateIcon({ state }: { state: AgentStep["state"] }) {
   return <CircleHelp size={13} strokeWidth={2} aria-hidden="true" />
 }
 
+/**
+ * 单个运行中步骤的真实用时。
+ *
+ * <p>计时状态挂在**这一步自己身上**：并发调用时两行各有各的起点，先开始的工具不会
+ * 因为后一个开始而被清零；换步或结束即卸载，读数自然丢弃，不需要在 effect 里
+ * 同步 setState 复位。只报已经过去的时间，不编造百分比或「预计剩余」。
+ */
+function RunningElapsed() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const startedAt = Date.now()
+    const timer = window.setInterval(
+      () => setSeconds(Math.floor((Date.now() - startedAt) / 1000)),
+      1000,
+    )
+    return () => window.clearInterval(timer)
+  }, [])
+  // 第一秒之前不摆一个「0s」出来假装在动。
+  if (seconds === 0) return null
+  // 读屏软件读到的是完整句子，视觉上仍只是紧凑的读数。
+  return (
+    <span className="thought__elapsed num" aria-label={`已用时 ${seconds} 秒`}>
+      {seconds}s
+    </span>
+  )
+}
+
 function StepDetail({ step }: { step: AgentStep }) {
   if (step.kind === "reasoning") {
     if (!step.text) return null
@@ -100,21 +127,6 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
     return `执行过程 · ${tools} 个工具调用`
   }, [steps])
 
-  // 运行中的真实进度：只报**已经过去的时间**，不编造百分比或「预计剩余」。
-  // 计时从本组件第一次看到 running 的那一帧起算；读数只在 running 的步骤上渲染，
-  // 下一轮工具调用重新起算——不复用上一轮的读数。
-  const runningCount = steps.filter((s) => s.state === "running").length
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  useEffect(() => {
-    if (runningCount === 0) return
-    const startedAt = Date.now()
-    const timer = window.setInterval(
-      () => setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000)),
-      1000,
-    )
-    return () => window.clearInterval(timer)
-  }, [runningCount])
-
   if (steps.length === 0) return null
 
   return (
@@ -159,11 +171,7 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
                 {step.toolName && step.toolName !== step.label ? (
                   <span className="thought__toolname num">{step.toolName}</span>
                 ) : null}
-                {step.state === "running" && elapsedSeconds > 0 ? (
-                  <span className="thought__elapsed num" aria-hidden="true">
-                    {elapsedSeconds}s
-                  </span>
-                ) : null}
+                {step.state === "running" ? <RunningElapsed /> : null}
                 <span className={`thought__state is-${step.state}`}>
                   {stepStateLabel(step.state)}
                 </span>

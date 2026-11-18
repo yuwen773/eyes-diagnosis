@@ -160,6 +160,14 @@ writeFileSync(
         drawsDuringSettleWindow: v.drawsDuringSettleWindow,
         overflowX: v.overflowX,
         failedRequests: v.failedRequests.length,
+        // 入库摘要要能独立支撑「顶栏/标题/双 CTA/信息卡/入口行都在」这条结论，
+        // 否则这些读数只留在不入库的 target/ 里。
+        hasCanvas: v.hasCanvas,
+        hasOpticsSvg: v.hasOpticsSvg,
+        title: v.title,
+        cta: v.cta,
+        hasCard: v.hasCard,
+        entryCount: v.entryCount,
       })),
     },
     null,

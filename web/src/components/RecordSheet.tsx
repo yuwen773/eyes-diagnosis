@@ -75,8 +75,8 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
   // 来源投影只在本人详情接口下发；老记录/读取失败时为 undefined，整段不显示，
   // 绝不能退化成「没有授权、没有归档」。
   const source = result.source
-  // 复核状态带复核人角色：历史上的 REVIEWED 多是管理员写的，标「资质未核验」。
-  const review = humanReviewState(result.humanReviewStatus, source?.reviewerRole)
+  // 复核状态一律带「资质未核验」：账号角色不是临床资质证明（D-01b）。
+  const review = humanReviewState(result.humanReviewStatus)
   const archival = archivalStateOf(source, imageSrc)
   const recos = recommendationLines(result)
   const stampRisk = severityRisk(result.severity)
@@ -233,9 +233,12 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
                     <div className="readout">
                       <span className="readout__label">患者授权</span>
                       <span className="readout__value">
-                        {/* 「不给看」不是「没有」：说成无授权记录，就是替系统陈述一件它没核实过的事。 */}
+                        {/* 「不给看」不是「没有」：说成无授权记录，就是替系统陈述一件它没核实过的事。
+                            粗粒度的授权状态本来就下发了，照实说「已授权 / 待授权」，只隐去细节。 */}
                         {source.authorizationDetailsRestricted
-                          ? authorizationRestrictedLabel()
+                          ? source.authorizationState
+                            ? `${authorizationLabel(source.authorizationState)} · 详情按最小权限不展示`
+                            : authorizationRestrictedLabel()
                           : source.recordSource === "DIRECT" && !source.authorizationState
                             ? "本人上传，无需授权"
                             : authorizationLabel(

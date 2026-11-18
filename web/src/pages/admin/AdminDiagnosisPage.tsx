@@ -48,7 +48,7 @@ import {
   draftReviewLabel,
   recordSourceLabel,
   reviewerRoleLabel,
-  authorizationRestrictedLabel,
+  authorizationLabel,
 } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
@@ -385,12 +385,8 @@ export function AdminDiagnosisPage(): ReactElement {
           />
           <FactRow
             label="人工复核状态"
-            // 复核人角色不是 doctor 时，展示层标「资质未核验」——历史上这些 REVIEWED
-            // 多是管理员写的（系统当时没有资质核验），不能显示成医生正式复核。
-            value={humanReviewStatusLabel(
-              detail.humanReviewStatus,
-              detail.source?.reviewerRole,
-            )}
+            // 一律标「资质未核验」：账号角色不是临床资质证明（D-01b）。
+            value={humanReviewStatusLabel(detail.humanReviewStatus)}
           />
           <FactRow label="判读时间" value={formatTimestamp(detail.createTime)} mono />
         </dl>
@@ -400,41 +396,55 @@ export function AdminDiagnosisPage(): ReactElement {
         {detail.source ? (
           <section className="admin-diagnosis__section">
             <h3 className="admin-diagnosis__section-title">来源与授权 · PROVENANCE</h3>
-            <dl className="admin-diagnosis__drawer-facts">
-              <FactRow
-                label="记录来源"
-                value={recordSourceLabel(detail.source.recordSource)}
-              />
-              <FactRow
-                label="草稿审核"
-                value={
-                  draftReviewLabel(detail.source.draftReviewState) ??
-                  (detail.source.recordSource === "COLLABORATION_DRAFT" ? "未记录" : "—")
-                }
-              />
-              <FactRow
-                label="患者授权"
-                value={
-                  detail.source.authorizationDetailsRestricted
-                    ? authorizationRestrictedLabel()
-                    : detail.source.authorizationState === "APPROVED"
-                      ? "患者已授权保存"
-                      : detail.source.authorizationState ?? "—"
-                }
-              />
-              <FactRow
-                label="复核人角色"
-                value={reviewerRoleLabel(detail.source.reviewerRole)}
-                mono
-              />
-              <FactRow
-                label="影像"
-                value={archivalLabel(detail.source.imageArchivalState)}
-              />
-            </dl>
-            <p className="admin-diagnosis__note">
-              复核人角色取自账号，不是临床资质证明；患者授权保存也不代表完成临床人工复核。
-            </p>
+            {detail.source.recordSource ? (
+              <>
+                <dl className="admin-diagnosis__drawer-facts">
+                  <FactRow
+                    label="记录来源"
+                    value={recordSourceLabel(detail.source.recordSource)}
+                  />
+                  <FactRow
+                    label="草稿审核"
+                    value={
+                      draftReviewLabel(detail.source.draftReviewState) ??
+                      (detail.source.recordSource === "COLLABORATION_DRAFT" ? "未记录" : "—")
+                    }
+                  />
+                  <FactRow
+                    label="患者授权"
+                    // 回执/时间被隐去不等于「没有授权」：粗粒度的授权状态照常显示。
+                    value={
+                      detail.source.authorizationDetailsRestricted
+                        ? detail.source.authorizationState === "APPROVED"
+                          ? "患者已授权保存 · 详情按最小权限不展示"
+                          : authorizationLabel(detail.source.authorizationState)
+                        : detail.source.recordSource === "DIRECT" &&
+                            !detail.source.authorizationState
+                          ? "本人上传，无需授权"
+                          : authorizationLabel(detail.source.authorizationState)
+                    }
+                  />
+                  <FactRow
+                    label="复核人角色"
+                    value={reviewerRoleLabel(detail.source.reviewerRole)}
+                    mono
+                  />
+                  <FactRow
+                    label="影像"
+                    value={archivalLabel(detail.source.imageArchivalState)}
+                  />
+                </dl>
+                <p className="admin-diagnosis__note">
+                  复核人角色取自账号，不是临床资质证明；患者授权保存也不代表完成临床人工复核。
+                </p>
+              </>
+            ) : (
+              // 投影查询失败时后端下发全空 + UNKNOWN：说成「未记录」「—」就是编事实。
+              <p className="admin-diagnosis__note">
+                来源与授权这次没有读到：无法确认这条记录来自本人上传还是协作草稿，也无法确认是否经过患者授权。
+                「读不到」不等于「没有」，刷新后可再试。
+              </p>
+            )}
           </section>
         ) : null}
 

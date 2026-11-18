@@ -464,9 +464,10 @@ R2 解决了「品牌材质是否存在」，R2.5 解决「产品是否像一个
 **当前完成状态**
 🅿 **首屏在 PR #52**：品牌令牌（`--brand-*`、`--font-brand`、`--radius-xl/2xl`、`.iris2`
 语境类）、`LandingHero.tsx`（眉线 / 标题 / 双 CTA / 玻璃流程卡 / 三张入口卡 /
-仪器读数条 / 免责条）、`HeroPrism.tsx` + `Prism.tsx`（WebGL2 棱镜 + 多色光 +
-静态降级 + `prefers-reduced-motion` 冻结）、`brand.css`。验收截图随 PR #52 入库于 `docs/assets/iris2/`
-（390/768/1440/1920 × 亮暗 + 两条降级路径）。
+仪器读数条 / 免责条）、`HeroFusion.tsx`（首屏**现行**主视觉：全幅环境光 + 壳内受控光学主体，5 秒可见时间窗后定格；
+`HeroPrism.tsx` / `Prism.tsx` 保留作历史与设计对照）、`brand.css`。
+当前验收截图在 `docs/reviews/assets/iris-roundtable-final-integration/`
+（390/820/1440/1920 × 亮暗，2026-11-18 实时复验）；PR #52 的旧截图留在 `docs/assets/iris2/`。
 
 🅿 **首页下半页已按品牌层重排（R2.5-02，PR #63）**：眼底影像示意、样本局部、
 流程、判读记录、Agent 演示、边界声明、行动区，链接都指向真实路由；
@@ -1332,7 +1333,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 能力 | 状态 | 依据 |
 |---|---|---|
 | 品牌令牌 `--brand-*` / `--font-brand` / `--radius-xl` / `--radius-2xl` / `.iris2` | 🅿 | PR #52（`ui` 上尚未存在） |
-| 首屏光学主视觉（WebGL2 棱镜 + 多色光 + 静态降级 + reduced-motion 冻结） | 🅿 | `HeroPrism.tsx` / `Prism.tsx` |
+| 首屏光学主视觉（全幅环境光 + 壳内光学主体，5 秒定格 + 静态降级 + reduced-motion 冻结） | ✅ | `HeroFusion.tsx`（历史 `HeroPrism.tsx` / `Prism.tsx`） |
 | 首屏品牌排版（眉线 / Manrope 标题 / 双 CTA / 玻璃流程卡 / 三张入口卡 / 仪器读数条 / 免责条） | 🅿 | PR #52 `LandingHero.tsx` |
 | 品牌层对比度断言 | 🅿 | PR #52 `tokens.contrast.test.ts` |
 | 管理端 7 个页面 + TanStack Query/Table + Recharts + Base UI 弹层 | ✅ | `web/src/pages/admin/` |

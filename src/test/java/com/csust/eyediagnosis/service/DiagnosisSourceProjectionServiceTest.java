@@ -95,6 +95,51 @@ class DiagnosisSourceProjectionServiceTest {
     }
 
     @Test
+    void nonOwnerViewWithholdsReceiptTimeAndTaskIdButKeepsCoarseFacts() {
+        // 最小权限（§4.2）：非本人（管理端复核视角）不拿授权凭证，
+        // 但「有没有授权」这个粗粒度事实照常下发——隐去细节不等于没有授权。
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        when(jdbc.queryForList(anyString(), eq(String.class), any(Object[].class))).thenAnswer(inv -> {
+            String sql = inv.getArgument(0);
+            if (sql.contains("patientTaskId")) {
+                return List.of("task-9");
+            }
+            if (sql.contains("objectKey")) {
+                return List.of("private/task-9/fundus.jpg");
+            }
+            if (sql.contains("userRole")) {
+                return List.of("doctor");
+            }
+            return List.of();
+        });
+        when(jdbc.queryForList(anyString(), any(Object[].class))).thenAnswer(inv -> {
+            String sql = inv.getArgument(0);
+            if (sql.contains("t_doctor_review")) {
+                return List.of(Map.of("status", "APPROVED"));
+            }
+            if (sql.contains("t_patient_authorization")) {
+                return List.of(Map.of(
+                        "status", "APPROVED",
+                        "receiptId", "abcdef12-3456-7890-abcd-ef1234567890",
+                        "authorizedAt", "2026-11-17T14:10:00Z"));
+            }
+            return List.of();
+        });
+
+        DiagnosisSourceProjection view =
+                new DiagnosisSourceProjectionService(jdbc).project(9L, "", true);
+
+        assertTrue(view.authorizationDetailsRestricted());
+        assertNull(view.patientTaskId());
+        assertNull(view.authorizedAt());
+        assertNull(view.authorizationReceipt());
+        assertEquals("APPROVED", view.authorizationState());
+        assertEquals("APPROVED", view.draftReviewState());
+        assertEquals("doctor", view.reviewerRole());
+        assertEquals(DiagnosisSourceProjection.Archival.ARCHIVED_NOT_PUBLIC, view.imageArchivalState());
+    }
+
+    @Test
     void recordWithoutObjectKeyIsReportedAsNotArchivedNotAsRestricted() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
         when(jdbc.queryForList(anyString(), eq(String.class), any(Object[].class))).thenAnswer(inv -> {

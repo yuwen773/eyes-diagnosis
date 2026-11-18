@@ -119,7 +119,7 @@ export function RecordDetailPage() {
             />
 
             <p className="report__note no-print">
-              复诊申请在记录列表里提交：这条记录进入复诊队列后，复核状态会随之更新。
+              复诊申请在记录列表里提交：这条记录进入复诊队列后，复诊状态会随之更新。
             </p>
           </>
         ) : null}

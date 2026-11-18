@@ -221,18 +221,15 @@ export function severityRisk(severity?: string): Risk {
  *   <li>AI_ONLY = **只有 AI 结论，没有进入复核队列**。以前这里统一显示「待复核」，
  *       等于替系统承诺了一件没发生的事：队列里根本没有这条。</li>
  *   <li>AWAITING_REVIEW 才是真的进了队列。</li>
- *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统没有
- *       可核验的临床资质，复核人角色看 {@code source.reviewerRole}（D-01b）。</li>
+ *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统从来没有
+ *       核验过任何临床资质（D-01b）。{@code source.reviewerRole} 只是账号角色，
+ *       而且账号角色可以被管理员随时改派，用它当资质证明等于把角色当资历。</li>
  * </ul>
  *
- * @param reviewerRole 复核人的账号角色。只有 `doctor` 才不加限定词；
- *   其余（admin / user / 未知）一律标「资质未核验」——历史上这些记录是管理员写的，
- *   展示成「医生复核」就是伪造医学事实。
+ * <p>因此 REVIEWED 一律带「资质未核验」，**不看** reviewerRole：历史复核多是管理员
+ * 写的，`doctor` 也只是账号上的一个字符串。
  */
-export function humanReviewState(
-  status?: string | null,
-  reviewerRole?: string | null,
-): { label: string; risk: Risk } {
+export function humanReviewState(status?: string | null): { label: string; risk: Risk } {
   switch (status) {
     case "PENDING_AI":
       return { label: "待模型出结论", risk: "unknown" }
@@ -241,9 +238,7 @@ export function humanReviewState(
     case "AWAITING_REVIEW":
       return { label: "已进入复核队列 · 待复核", risk: "attention" }
     case "REVIEWED":
-      return reviewerRole === "doctor"
-        ? { label: "人工复核已记录", risk: "normal" }
-        : { label: "人工复核已记录 · 资质未核验", risk: "attention" }
+      return { label: "人工复核已记录 · 资质未核验", risk: "attention" }
     case "OVERRIDDEN":
       return { label: "人工结论已推翻 AI", risk: "attention" }
     default:
@@ -349,7 +344,7 @@ export function authorizationLabel(
  * 说成「无授权记录」就是在替系统陈述一件它没核实过的事。
  */
 export function authorizationRestrictedLabel(): string {
-  return "授权详情按最小权限不展示（管理员视角）"
+  return "授权详情按最小权限不展示"
 }
 
 /**

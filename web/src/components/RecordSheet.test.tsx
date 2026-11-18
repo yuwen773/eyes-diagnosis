@@ -96,14 +96,14 @@ describe("RecordSheet 人工复核状态的措辞", () => {
     expect(screen.getAllByText("已进入复核队列 · 待复核").length).toBeGreaterThan(0)
   })
 
-  it("REVIEWED 不冒充医生复核：缺复核人角色时标「资质未核验」", () => {
+  it("REVIEWED 不冒充医生复核：没有角色信息时也标「资质未核验」", () => {
     render(<RecordSheet result={{ result: "正常", humanReviewStatus: "REVIEWED" } as DiagnosisResult} />)
 
     expect(screen.getAllByText("人工复核已记录 · 资质未核验").length).toBeGreaterThan(0)
     expect(screen.queryByText(/医生复核/)).toBeNull()
   })
 
-  it("REVIEWED 且复核人角色是 doctor 时只陈述「已记录」", () => {
+  it("REVIEWED 一律标「资质未核验」：账号角色不是资质证明", () => {
     const result = {
       result: "正常",
       humanReviewStatus: "REVIEWED",
@@ -111,7 +111,7 @@ describe("RecordSheet 人工复核状态的措辞", () => {
     } as DiagnosisResult
     render(<RecordSheet result={result} />)
 
-    expect(screen.getAllByText("人工复核已记录").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("人工复核已记录 · 资质未核验").length).toBeGreaterThan(0)
     expect(screen.queryByText(/医生复核/)).toBeNull()
   })
 })
@@ -178,7 +178,7 @@ describe("RecordSheet 来源与授权投影", () => {
 
   it("授权细节按最小权限隐去时说「不展示」，不说「无授权记录」", () => {
     // 非本人查看（管理端复核视角）：服务端不下发回执前缀、授权时间与任务 id。
-    // 「不给看」与「没有」是两件事，前端不能替系统陈述它没核实过的事。
+    // 粗粒度状态仍然下发——「不给看细节」与「没有授权」是两件事。
     const result = {
       result: "正常",
       humanReviewStatus: "AI_ONLY",
@@ -193,7 +193,24 @@ describe("RecordSheet 来源与授权投影", () => {
 
     render(<RecordSheet result={result} />)
 
-    expect(screen.getByText("授权详情按最小权限不展示（管理员视角）")).toBeTruthy()
+    expect(screen.getByText("患者已授权保存 · 详情按最小权限不展示")).toBeTruthy()
+    expect(screen.queryByText(/无授权记录/)).toBeNull()
+  })
+
+  it("授权状态本身也没下发时，只说不展示，不猜有没有授权", () => {
+    const result = {
+      result: "正常",
+      humanReviewStatus: "AI_ONLY",
+      source: {
+        recordSource: "COLLABORATION_DRAFT",
+        authorizationDetailsRestricted: true,
+        imageArchivalState: "ARCHIVED_NOT_PUBLIC",
+      },
+    } as DiagnosisResult
+
+    render(<RecordSheet result={result} />)
+
+    expect(screen.getByText("授权详情按最小权限不展示")).toBeTruthy()
     expect(screen.queryByText(/无授权记录/)).toBeNull()
   })
 
