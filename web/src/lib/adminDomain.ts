@@ -295,7 +295,9 @@ export function humanReviewStatusLabel(status?: string | null): string {
     case "PENDING_AI":
       return "待模型出结论"
     case "AI_ONLY":
-      return "仅 AI 结论 · 待复核"
+      // 与患者端 humanReviewState 同一口径：AI_ONLY 没有进入复核队列，
+      // 写成「待复核」等于替系统承诺一件没发生的事。
+      return "仅 AI 结论 · 未进入复核队列"
     case "AWAITING_REVIEW":
       return "拒识 / 低置信 · 待复核"
     case "REVIEWED":

@@ -134,6 +134,33 @@ describe("RecordSheet 来源与授权投影", () => {
     expect(screen.queryByText("未留存影像")).toBeNull()
   })
 
+  it("协作记录没有公开地址，整张纸也不能一边说已归档一边说未归档", () => {
+    // 回归：`t_diagnosis.url` 恒为 ''（PatientAuthorizationService 保存授权时只写空串），
+    // RecordDetailPage 传下来的 imageSrc 因此是 undefined。合并前投影行说「已归档」、
+    // 印章与免责说「未归档 / 无法回放」，同一张报告自相矛盾。
+    const result = {
+      result: "正常",
+      humanReviewStatus: "AI_ONLY",
+      source: {
+        recordSource: "COLLABORATION_DRAFT",
+        patientTaskId: "task-1",
+        draftReviewState: "APPROVED",
+        authorizationState: "APPROVED",
+        authorizedAt: "2026-11-17 22:10:00",
+        authorizationReceipt: "abcdef12…",
+        reviewerRole: null,
+        imageArchivalState: "ARCHIVED_NOT_PUBLIC",
+      },
+    } as DiagnosisResult
+
+    render(<RecordSheet result={result} />)
+
+    expect(screen.queryByText("未归档")).toBeNull()
+    expect(screen.queryByText(/未成功归档/)).toBeNull()
+    expect(screen.queryByText(/无法回放原图/)).toBeNull()
+    expect(screen.getByText("已归档 · 不公开地址")).toBeTruthy()
+  })
+
   it("直接判读没有授权记录时说明「无需授权」，不显示成缺失", () => {
     const result = {
       result: "正常",
@@ -163,6 +190,31 @@ describe("RecordSheet 来源与授权投影", () => {
 
     expect(screen.getByText("归档状态无法确认")).toBeTruthy()
     expect(screen.queryByText("未留存影像")).toBeNull()
+    // 印章与免责同样不能把「不知道」说成「没有」。
+    expect(screen.getByText("无法确认")).toBeTruthy()
+    expect(screen.queryByText("未归档")).toBeNull()
+    expect(screen.getByText(/归档状态暂时无法确认/)).toBeTruthy()
+  })
+
+  it("投影读失败时（source 在但内容全空）说读不到，不说「无授权记录」", () => {
+    // 后端在投影查询失败时下发 recordSource=null + UNKNOWN 的 source
+    // （DiagnosisController#getDiagnosisResultVO）。前端把 null 落成「未记录 / 无授权记录」
+    // 就等于把「查不到」写成「没有」——这正是服务自己立的规矩要避免的事。
+    const result = {
+      result: "正常",
+      humanReviewStatus: "AI_ONLY",
+      source: {
+        recordSource: null,
+        imageArchivalState: "UNKNOWN",
+      },
+    } as DiagnosisResult
+
+    render(<RecordSheet result={result} />)
+
+    expect(screen.getByText(/来源与授权这次没有读到/)).toBeTruthy()
+    expect(screen.queryByText(/无授权记录/)).toBeNull()
+    expect(screen.queryByText("未记录")).toBeNull()
+    expect(screen.queryByText("本人上传，无需授权")).toBeNull()
   })
 
   it("管理员做的复核显示为管理员，绝不写成医生", () => {

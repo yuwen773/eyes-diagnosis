@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Check, ChevronDown, CircleDashed, CircleHelp, Pause, Sparkles } from "lucide-react"
+import { Check, ChevronDown, CircleDashed, CircleHelp, CircleSlash, Pause, Sparkles, XCircle } from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
 import { stepStateLabel } from "@/lib/agentSteps"
@@ -8,7 +8,7 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
 const PREVIEW_LIMIT = 180
 
-/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停。 */
+/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停 / 失败 / 已取消。 */
 function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "done") {
     return <Check size={13} strokeWidth={2.6} aria-hidden="true" />
@@ -18,6 +18,12 @@ function StateIcon({ state }: { state: AgentStep["state"] }) {
   }
   if (state === "paused") {
     return <Pause size={13} strokeWidth={2.4} aria-hidden="true" />
+  }
+  if (state === "failed") {
+    return <XCircle size={13} strokeWidth={2.4} aria-hidden="true" />
+  }
+  if (state === "cancelled") {
+    return <CircleSlash size={13} strokeWidth={2.2} aria-hidden="true" />
   }
   // 未确认：不是「还在转」，是一个问号——结果不知道。
   return <CircleHelp size={13} strokeWidth={2} aria-hidden="true" />

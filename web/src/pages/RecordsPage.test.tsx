@@ -31,11 +31,10 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     listMyDiagnoses: vi.fn(),
     getMyStats: vi.fn(),
-    getMyDiagnosis: vi.fn(),
   }
 })
 
-import { getMyDiagnosis, getMyStats, listMyDiagnoses } from "@/lib/api"
+import { getMyStats, listMyDiagnoses } from "@/lib/api"
 
 beforeEach(() => {
   sessionState.status = "authed"
@@ -47,7 +46,6 @@ afterEach(() => {
   cleanup()
   vi.mocked(listMyDiagnoses).mockReset()
   vi.mocked(getMyStats).mockReset()
-  vi.mocked(getMyDiagnosis).mockReset()
 })
 
 function stubMatchMedia() {
