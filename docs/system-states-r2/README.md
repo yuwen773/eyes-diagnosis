@@ -52,8 +52,9 @@ R1 已确认本机 502 根因是后端 `:8081` 未启动，Vite 代理返回 502
 - `npm run check:gate-tests`：PASS，3/3
 - `npm run test:e2e -- --grep "Iris System States R2"`：PASS，14 passed / 0 skipped
   （受控缓存失效替代 31 秒固定等待；约 33s 完成）
-- GitHub Actions：7/7 completed + success（PR head `ae4f46ef` 记录；最新 head CI 待本轮推送后复核）
-  （`watchdog` / `python` / `frontend` / `backend-unit` / `flyway-mysql` / `backend-compile` / `web`）
+- GitHub Actions（head `a7c7cb76`）：8/8 completed + success
+  （`watchdog` / `python` / `frontend` / `backend-unit` / `flyway-mysql` / `backend-compile` /
+  `web` / `web-e2e-system-states`）
 
 R1 的 14 条 E2E 与本轮 14 条运行在同一个 Playwright 配置；本轮没有运行全量 E2E，
 因此不声称全量 E2E PASS。
