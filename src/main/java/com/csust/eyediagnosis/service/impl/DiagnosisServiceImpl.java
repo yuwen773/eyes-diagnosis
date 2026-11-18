@@ -116,7 +116,14 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
         //插入/更新
         boolean result = this.saveOrUpdate(diagnosis);
-        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
+        if (!result) {
+            // 明确 0 行 = 记录没写进去，这张原图没有任何东西引用它。
+            // 与 doDiagnosis 同一口径：删掉刚上传的那一个对象，否则它会在
+            // public/ 前缀下永久滞留（该前缀没有对账器）。
+            // 注意只在「明确失败」时删：saveOrUpdate 抛异常属于提交结果未知，那里不删。
+            fileManager.deleteUploadedPictureQuietly(uploadPictureDetail.getObjectKey());
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, PICTURE_FAIL_UPLOAD);
+        }
         return DiagnosisManageVO.objToVo(diagnosis);
     }
 
