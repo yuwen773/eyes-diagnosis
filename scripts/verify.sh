@@ -5,7 +5,7 @@
 #   - 不带 profile 时 EyeDiagnosisApplicationTests 因 COS 凭据为空启动失败；
 #   - 带 SPRING_PROFILES_ACTIVE=ci 时 application-ci.yml 指向 CI 的
 #     127.0.0.1:3306/diagnosis_ci，本机通常没有这套实例；
-#   - 三个 MySQL 集成测试（FlywayMySqlIntegrationTest 断言空库 migrate 12 个、
+#   - 三个 MySQL 集成测试（FlywayMySqlIntegrationTest 断言空库 migrate 到 V28、
 #     UploadTaskMapperMySqlIntegrationTest 直连 JDBC 做 CRUD、ToolAuditMySqlIntegrationTest
 #     校验 V28 审计表）与 Spring 上下文的 Flyway 共用一个 schema 会互相污染，故按 CI
 #     的编排分两遍跑。

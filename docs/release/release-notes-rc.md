@@ -94,4 +94,4 @@ Spring AI Alibaba 1.1.2.2 的 `AgentToolNode#executeSyncTool` 对 `ToolExecution
 
 ## 5. 升级注意
 
-见 `upgrade-rollback-manual.md`。相对基线**无新增 Flyway 迁移**，升级不需要执行数据库变更。
+见 `upgrade-rollback-manual.md`。相对基线 **无新增 Flyway 迁移**：目标库已在 V28 时，升级不需要执行任何数据库变更；从 `master` 线（V17）升上来的库仍需按 `docs/architecture/migration-matrix.md` 依次执行 V18–V28。

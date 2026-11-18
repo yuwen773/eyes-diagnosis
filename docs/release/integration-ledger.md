@@ -1,7 +1,7 @@
 # Iris 发版集成台账（Integration Ledger）
 
 > 本轮集成的唯一记录处。每完成一批就更新，不依赖对话记忆。
-> 起始时间：2026-11-18 晚；最后更新：2026-11-19 00:35（+08:00）。
+> 起始时间：2026-11-18 晚；最后更新：2026-11-19 02:20（+08:00）。
 
 ## 0. 基线与工作树
 
@@ -62,15 +62,40 @@
 - **修法**：只有「排在最后且后面再没有消息」的过程块才可能保留 running。
 - **验收**：`agentSteps.test.ts` 跨回合 3 项回归。
 
-## 4. 尚未关闭
+### P1 · 影像分析失败被包装成「成功」（Reviewer C）
+
+- **现象**：`EyeImageAnalyzerTool#analyzeOwnedImage` 把视觉模型不可用写成
+  `EyeAnalysisResult("图像分析失败")`，框架看到的是正常返回 → 步骤状态 `succeeded` → 界面显示「完成」。
+- **修法**：异常向上抛（`BusinessException(SYSTEM_ERROR)`），由 `ToolFailureBoundaryInterceptor`
+  转成真正的工具错误；模型空返回也按失败处理；不再把模型原文写进日志。
+- **验收**：`UserBoundEyeImageAnalyzerToolTest`（断言抛 50000 且 COS 已读）。
+
+### P1 · 图片附件先落库后校验（Reviewer C）
+
+- **风险**：`imageUrls` 先写进 `t_agent_message`，才在 `DiagnosisAgent` 里做归属校验；
+  被拒绝的请求仍会在历史里留下外部图片地址，下次回放自动加载，
+  绕过「不加载远程图片」的策略。
+- **修法**：`AgentController` 在 `saveUserMessage` 之前逐条调
+  `AgentImageUploadService#resolveOwnedImageId`，与 `DiagnosisAgent` 同一份口径。
+
+### P2 · 历史回放的「幽灵步骤」（Reviewer A）
+
+- **现象**：请求行只存模糊标签、不带 `toolCallId`，终态行带 id，回放时配不上，
+  一次调用被拆成「未确认 + 完成」两步。
+- **修法**：请求行改存 `{toolCallId,name,stepLabel}`（单次为对象、多次为数组）；
+  参数仍不入库；前端 `parsePersistedToolCall` 同时认对象与数组。
+- **验收**：`agentSteps.test.ts`（单次配对、多工具各自成步）、`agentStream.test.ts`（数组解析）、
+  `DiagnosisAgentRedactionTest`（请求行含 id 但不含参数）。
+
+## 4. 阻断进度
 
 | 编号 | 项 | 级别 | 状态 |
 |---|---|---|---|
-| O-1 | #101 / 清理类 PR 尚未合入 | 批次未做 | 进行中 |
-| O-2 | 完整后端全量验证（`scripts/verify.sh`） | 门禁 | 运行中，见 `verification-matrix.md` |
-| O-3 | 真实后端链路（SSE / 工具失败 / 权限隔离） | 门禁 | 未执行 |
-| O-4 | 四路独立 Review（A/B/C/D） | 门禁 | 未执行 |
-| O-5 | 发布说明、升级/回滚手册 | 交付物 | 未开始 |
+| O-1 | #101 与清理类 PR 合入 | 批次 | ✅ 已关闭（12 个 merge） |
+| O-2 | 完整后端全量验证（`scripts/verify.sh`） | 门禁 | ✅ 在最终代码 SHA 上重跑，结果见 `verification-matrix.md` |
+| O-3 | 真实后端链路（SSE / 工具失败 / 权限隔离） | 门禁 | ❌ 未执行（需 DashScope 凭据） |
+| O-4 | 四路独立 Review（A/B/C/D） | 门禁 | ✅ 已完成，结论与整改见 §6 |
+| O-5 | 发布说明、升级/回滚手册 | 交付物 | ✅ 已入库 |
 
 ## 5. 边界
 
@@ -78,3 +103,18 @@
 - 不修改冻结 tag，不删除历史证据脚本。
 - 冻结范围内（首页/品牌层、管理端、知识库、新闻工作台）不做视觉迭代；
   #102 因此推迟。
+
+## 6. 四路独立 Review（2026-11-19）
+
+四个独立 agent 各自读实现与测试，不看实施方摘要。结论与处置：
+
+| Reviewer | 视角 | 结论 | 关键发现 | 处置 |
+|---|---|---|---|---|
+| A | Agent / Java | PASS_WITH_P2 | P0 修复三层独立核实成立（拦截链顺序、`alwaysThrow` 真抛、逃逸后会话继续）；无第二套状态机；预算 per-run | P2-1 请求行缺 `toolCallId` 导致回放幽灵步骤 → 已修；P2-2/P2-3 登记为债务 |
+| B | React / UI | PASS（详见 `verification-matrix.md`） | P1 修复的四个边界（停止 / 断流 / 刷新 / 乱序）成立；状态词表统一 | 无必修项 |
+| C | 安全与医学 | BLOCKED → 已修 | P1-1 影像分析失败被包装成成功结果；P1-2 图片 URL 先落库后校验 | 两条均已修并有回归；P2-1 日志出口一处脱敏缺口已随 P1-1 修（不再打印模型原文） |
+| D | QA / 发版 | BLOCKED → 部分关闭 | 候选 SHA 未跑 CI、文档 SHA 过期、交付物未入库、`verify.sh` 结果绑定旧 SHA | 交付物已入库；文档已更正；CI 仍是外部门禁（见 `release-candidate-readiness.md`） |
+
+**评审纪律说明**：Reviewer C/D 给的是 BLOCKED，不是「形式不通过」——
+C 的两条是真实的医学语义与安全问题，已修；D 的阻断里只有「CI 未跑」无法在本地消除，
+其余（文档不一致、交付物未入库、结果绑定旧 SHA）已全部关闭。

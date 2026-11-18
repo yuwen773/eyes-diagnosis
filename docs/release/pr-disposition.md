@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | #111 | `feat/r3-agent-correctness` | `03932ab7` | R3 Agent 正确性 | **INCLUDE** | 已合入集成分支（`995097fc`），冲突与 P0/P1 处理见 `conflict-resolution.md` |
 | #112 | `fix/agent-runtime-guardrails` | `a6962631` | Agent 运行时护栏 | **INCLUDE** | 已合入（`eaa8f409`），预算 + 递归上限接线完成 |
-| #101 | `fix/system-states-r2` | `1010def3` | System States R2 | **INCLUDE** | 已 Ready、8/8 CI 绿、不改冻结视觉范围，Batch 2 |
+| #101 | `fix/system-states-r2` | `1010def3` | System States R2 | **INCLUDE** | 已合入（`8ad5d38c`）。注：PR 自报的「8/8 CI 绿」是它当时 head 上的 8 个 job，**不包含**合并树携带的另 12 个门禁（原子级 test 数不能当整树证据） |
 | #105 | `docs/ui-freeze-exceptions` | `ecd1610a` | UI 冻结例外登记 | **INCLUDE** | 纯文档，补齐冻结期例外口径 |
 | #106 | `chore/remove-dead-configs` | `59a1ff5f` | 移除死配置键 | **INCLUDE** | 删除无消费者配置，需 rebase 解冲突 |
 | #107 | `chore/remove-todo-javadoc` | `a0c9ebc5` | 删除 TODO 占位 | **INCLUDE** | 纯注释清理，MERGEABLE |
@@ -27,7 +27,7 @@
 
 ## 汇总
 
-- **INCLUDE**：14 个（其中 2 个已实际合入： #111、 #112）
+- **INCLUDE**：13 个，**全部已实际合入**集成分支
 - **DEFER**：3 个（#102 冻结范围、#103 混入配置中心、#104 文档冲突）
 - **ABSORB**：2 个（#68、#14，祖先关系已证实）
 - **HOLD / SUPERSEDED**：0 个
