@@ -279,13 +279,22 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
     }
 
     case "tool-response": {
+      const state = stateFromToolStatus(msg.toolStatus)
+      // 状态增量不是结果：后端把 running 帧也走这条通道下发，content 恒为空。
+      // 照单全收地标 received 会在「执行中」旁边写「工具返回了空结果」——
+      // 慢工具和「已停止」的回合都会撞上。
+      if (state === "running") {
+        const running = findPendingToolStep(steps, msg.toolCallId)
+        if (running && !running.received) running.state = "running"
+        return []
+      }
       // 返回原文是外部系统的输出，展示前先过文本脱敏。
       const output = redactText(msg.content)
       const target = findPendingToolStep(steps, msg.toolCallId)
       if (target) {
         target.output = output
         target.received = true
-        target.state = stateFromToolStatus(msg.toolStatus)
+        target.state = state
         return []
       }
       return [
@@ -295,7 +304,7 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
           label: toolLabel(msg.toolName),
           toolName: msg.toolName,
           toolCallId: msg.toolCallId,
-          state: stateFromToolStatus(msg.toolStatus),
+          state,
           output,
           received: true,
         },

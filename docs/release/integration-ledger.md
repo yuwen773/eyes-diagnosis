@@ -87,6 +87,29 @@
 - **验收**：`agentSteps.test.ts`（单次配对、多工具各自成步）、`agentStream.test.ts`（数组解析）、
   `DiagnosisAgentRedactionTest`（请求行含 id 但不含参数）。
 
+### P2 · 工具正在跑却显示「返回了空结果」（Reviewer B）
+
+- **现象**：`ToolStepSink` 的 RUNNING 帧也用 `tool-result` 发（content 恒空），
+  前端 `tool-response` 分支无差别地标 `received=true`；慢工具与被「停止」的回合都会在「执行中」旁边
+  写「工具返回了空结果」。
+- **修法**：`agentSteps` 对 `running` 状态帧只更新状态，不标已返回、不写输出。
+- **验收**：`agentSteps.test.ts`（running 帧不冒充结果）。
+
+### P2 · 老库上超长工具结果静默丢行（Reviewer A）
+
+- **风险**：32,000 字符上限不等于字节上限；V27 之前建库的 `content` 列仍是
+  `TEXT`（65,535 字节），32k 中文约 96 KB，写入 1406 失败发生在异步队列里，
+  用户只看到「刷新后这一步变成未确认」。
+- **修法**：对外发正文再按 UTF-8 **字节**收敛到 48,000，只在码点边界断开。
+
+### P2 · P0 缺端到端证据（Reviewer A）
+
+- **风险**：原有用例覆盖的是拦截器本身，不是「框架真会把异常交给拦截链」；
+  若 `alwaysThrow` 或 boundary 顺序被改，单测仍然全绿。
+- **修法**：新增 `AgentToolFailureEndToEndTest`：真 `@Tool` 抛异常 + 真 `ReactAgent`，
+  断言终态为 `failed`、成功数为 0、模型在异常后仍被调用收尾；
+  另加一条对照组（工具正常返回必须记成功），防止边界被写成「一律失败」。
+
 ## 4. 阻断进度
 
 | 编号 | 项 | 级别 | 状态 |
@@ -110,8 +133,8 @@
 
 | Reviewer | 视角 | 结论 | 关键发现 | 处置 |
 |---|---|---|---|---|
-| A | Agent / Java | PASS_WITH_P2 | P0 修复三层独立核实成立（拦截链顺序、`alwaysThrow` 真抛、逃逸后会话继续）；无第二套状态机；预算 per-run | P2-1 请求行缺 `toolCallId` 导致回放幽灵步骤 → 已修；P2-2/P2-3 登记为债务 |
-| B | React / UI | PASS（详见 `verification-matrix.md`） | P1 修复的四个边界（停止 / 断流 / 刷新 / 乱序）成立；状态词表统一 | 无必修项 |
+| A | Agent / Java | PASS_WITH_P2 | P0 修复三层独立核实成立（拦截链顺序、`alwaysThrow` 真抛、逃逸后会话继续）；无第二套状态机；预算 per-run | P2-1 幽灵步骤、P2-3 老库 TEXT 字节上限、P2-4 P0 缺端到端证据 → 均已修；P2-2/P2-5 登记为债务 |
+| B | React / UI | PASS_WITH_P2 | 无 P0/P1；P1 修复的四个边界（停止 / 断流 / 刷新 / 乱序）成立 | P2：`running` 帧走 `tool-result` 通道被标成「已返回空结果」 → 已修 |
 | C | 安全与医学 | BLOCKED → 已修 | P1-1 影像分析失败被包装成成功结果；P1-2 图片 URL 先落库后校验 | 两条均已修并有回归；P2-1 日志出口一处脱敏缺口已随 P1-1 修（不再打印模型原文） |
 | D | QA / 发版 | BLOCKED → 部分关闭 | 候选 SHA 未跑 CI、文档 SHA 过期、交付物未入库、`verify.sh` 结果绑定旧 SHA | 交付物已入库；文档已更正；CI 仍是外部门禁（见 `release-candidate-readiness.md`） |
 

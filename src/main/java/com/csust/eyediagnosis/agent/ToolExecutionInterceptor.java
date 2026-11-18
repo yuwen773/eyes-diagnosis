@@ -42,6 +42,16 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
     /** 工具正文出站前的硬上限：历史行有长度约束，整段 JSON 结果不适合原样下发。 */
     static final int MAX_TOOL_RESULT_CHARS = 32_000;
 
+    /**
+     * 字节上限，比字符上限更硬。
+     *
+     * <p>历史表的 {@code content} 列在 V27 之前建库的实例上仍是 {@code TEXT}
+     * （65,535 <b>字节</b>）——V27 的 {@code CREATE TABLE IF NOT EXISTS} 不会改造旧表。
+     * 32,000 个中文字符约 96 KB，写进去会触发 1406，而且失败发生在会话写队列的
+     * 异步任务里，用户只看到「刷新后这一步变成未确认」。这里按 UTF-8 字节再兜一刀。
+     */
+    static final int MAX_TOOL_RESULT_BYTES = 48_000;
+
     private final ToolStepSink sink;
     private final ObjectMapper json = new ObjectMapper();
     private final byte[] hmacKey;
@@ -99,6 +109,11 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
     }
 
     private static String truncate(String content) {
+        String cut = byChars(content);
+        return byBytes(cut, cut.length() < content.length());
+    }
+
+    private static String byChars(String content) {
         if (content.length() <= MAX_TOOL_RESULT_CHARS) {
             return content;
         }
@@ -109,6 +124,25 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
             cut -= 1;
         }
         return content.substring(0, cut) + "\n…（工具结果过长，已截断）";
+    }
+
+    /** 再按 UTF-8 字节收敛一次；只在中文字符边界切断，不留半个码点。 */
+    private static String byBytes(String content, boolean alreadyTruncated) {
+        byte[] utf8 = content.getBytes(StandardCharsets.UTF_8);
+        if (utf8.length <= MAX_TOOL_RESULT_BYTES) {
+            return content;
+        }
+        int bytes = 0;
+        int end = 0;
+        while (end < content.length()) {
+            int codePoint = content.codePointAt(end);
+            int width = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8).length;
+            if (bytes + width > MAX_TOOL_RESULT_BYTES) break;
+            bytes += width;
+            end += Character.charCount(codePoint);
+        }
+        String suffix = alreadyTruncated ? "" : "\n…（工具结果过长，已截断）";
+        return content.substring(0, end) + suffix;
     }
 
     /** Sorted argument key names only. Malformed JSON degrades to a fixed marker. */

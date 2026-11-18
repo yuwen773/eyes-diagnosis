@@ -191,6 +191,28 @@ describe("buildThread", () => {
     expect(steps[1].state).toBe("error")
   })
 
+  it("running 状态帧不冒充结果：不标已返回、不写空输出", () => {
+    // 回归：后端把 running 帧也走 tool-result 通道发（content 恒空），
+    // 一律标 received 会在「执行中」旁边写「工具返回了空结果」。
+    const items = buildThread(
+      [
+        msg({
+          id: "r1",
+          type: "tool-request",
+          toolCallId: "call_x",
+          toolCalls: [{ id: "call_x", name: "searchDocuments", args: {} }],
+        }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "call_x", toolStatus: "running", content: "" }),
+      ],
+      true,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(1)
+    expect(steps[0].state).toBe("running")
+    expect(steps[0].received).toBeFalsy()
+    expect(steps[0].output).toBeUndefined()
+  })
+
   it("有状态回执就以回执为准：succeeded / failed / cancelled 各自成态", () => {
     // 回归：合并进来的后端每个工具状态帧都带 toolCallId + toolStatus，content 恒为空，
     // 前端永远收不到 tool-response。只按消息类型推断会把成功的工具一直标成「未确认」。
