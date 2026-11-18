@@ -46,3 +46,28 @@ describe("系统状态 · 严重度标签对比度", () => {
     expect(contrast(value(tokens, "--on-dark"), value(dark, "--surface-2"))).toBeGreaterThanOrEqual(4.5)
   })
 })
+
+/**
+ * 语义色只做第二通道：严重度文字一律使用 --fg / --surface-2，
+ * 不直接染成 --risk-*（早期实测在浅色衬底只有 3.69–4.16:1）。
+ */
+describe("R2 分层状态对比度约束", () => {
+  it("表单与内容区严重度文字用前景色，不用风险色直接做文字", () => {
+    for (const selector of [".iris-form-alert__title", ".iris-form-alert__severity", ".iris-section-state__severity", ".iris-refresh-notice__text"]) {
+      const block = css.split(selector)[1]?.split("}")[0] ?? ""
+      expect(block).toMatch(/color:\s*var\(--fg\)/)
+      expect(block).not.toMatch(/color:\s*var\(--risk-/)
+    }
+  })
+
+  it("所有恢复动作保持 44px 触控目标", () => {
+    const block = css.split(".iris-form-alert__retry,")[1]?.split("}")[0] ?? ""
+    expect(block).toContain("min-height: 44px")
+  })
+
+  it("reduced-motion 下恢复动作不transition", () => {
+    const reduced = css.split("prefers-reduced-motion: reduce")[1] ?? ""
+    expect(reduced).toContain(".iris-form-alert__retry")
+    expect(reduced).toContain("transition: none")
+  })
+})

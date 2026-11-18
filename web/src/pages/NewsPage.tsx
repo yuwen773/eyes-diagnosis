@@ -5,8 +5,9 @@ import { useQuery } from "@tanstack/react-query"
 import { describeError, listNews } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
 import { newsDate } from "@/lib/news"
+import { faultFromError } from "@/lib/faults"
 import { useRevealScan } from "@/lib/useInView"
-import { FaultPanel } from "@/components/FaultPanel"
+import { IrisRefreshNotice, IrisSectionError } from "@/components/system/IrisSectionState"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { BrandFooter } from "@/components/brand/BrandFooter"
@@ -38,6 +39,10 @@ export function NewsPage() {
 
   const loading = listQuery.isPending
   const fault = listQuery.error ? describeError(listQuery.error) : null
+  const faultSeverity = listQuery.error ? faultFromError(listQuery.error, { intent: "load" }).severity : "attention"
+  // 查询键包含筛选条件，data 与 error 同属当前键。有缓存数据时失败的只是刷新，
+  // 不能拿错误面板盖掉用户已经看到的列表。
+  const hasData = listQuery.data !== undefined
   const data = listQuery.data ?? null
 
   const records = useMemo(() => data?.records ?? [], [data])
@@ -117,7 +122,7 @@ export function NewsPage() {
 
       <main className="wrap news" ref={listRef}>
         {/* 一条编辑口径的元信息，不是四列 KPI：总数、更新日期、页码都是列表接口的真实读数。 */}
-        {fault || loading ? null : (
+        {(fault && !hasData) || loading ? null : (
           <p className="news__meta num">
             <span>共 {total} 条</span>
             {showLatest ? (
@@ -144,13 +149,13 @@ export function NewsPage() {
               </div>
             ))}
           </div>
-        ) : fault ? (
-          <FaultPanel
-            code={fault.code}
+        ) : fault && !hasData ? (
+          <IrisSectionError
+            severity={faultSeverity}
             title="资讯没能读出来"
-            body={fault.text}
-            endpoint="POST /news/list/page/vo"
-            onRetry={() => void listQuery.refetch()}
+            detail={fault.text}
+            actionLabel="重试"
+            onAction={() => void listQuery.refetch()}
           />
         ) : records.length === 0 ? (
           <div className="news-empty">
@@ -179,7 +184,11 @@ export function NewsPage() {
           </>
         )}
 
-        {pages > 1 && !loading && !fault ? (
+        {fault && hasData ? (
+          <IrisRefreshNotice detail={fault.text} onRetry={() => void listQuery.refetch()} />
+        ) : null}
+
+        {pages > 1 && !loading && !(fault && !hasData) ? (
           <nav className="news__pager" aria-label="分页">
             <button
               className="news__pager-step"

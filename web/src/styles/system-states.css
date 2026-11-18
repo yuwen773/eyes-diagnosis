@@ -423,3 +423,269 @@
     transition: none;
   }
 }
+
+/* ============================================================
+   R2 分层状态：Inline/Form 与 Section/Content
+   ------------------------------------------------------------
+   表单错误只说「发生了什么、接下来怎么办」，不放机器标签与端点。
+   内容区错误只替换内容，外壳与筛选保留；有缓存时错误降级成
+   一条可重试提示，不把用户已经读到的内容盖掉。
+   ============================================================ */
+
+.iris-form-alert {
+  --iris-form-tone: var(--risk-attention);
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid color-mix(in srgb, var(--iris-form-tone) 26%, var(--hr));
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.iris-form-alert--critical {
+  --iris-form-tone: var(--risk-critical);
+}
+
+.iris-form-alert--info {
+  --iris-form-tone: var(--brand-cyan);
+}
+
+.iris-form-alert__title {
+  display: block;
+  font-family: var(--font-brand);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+.iris-form-alert__title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  vertical-align: 2px;
+  border-radius: var(--radius-circle);
+  background: var(--iris-form-tone);
+}
+
+.iris-form-alert__detail {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+
+.iris-form-alert__action {
+  display: flex;
+  margin-top: 4px;
+}
+
+.iris-form-alert__retry,
+.iris-section-state__action,
+.iris-refresh-notice__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--hr-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color var(--fast), background var(--fast);
+}
+
+.iris-form-alert__retry:hover,
+.iris-section-state__action:hover,
+.iris-refresh-notice__action:hover {
+  border-color: var(--brand-primary);
+  background: var(--surface-2);
+}
+
+.iris-form-alert__retry:focus-visible,
+.iris-section-state__action:focus-visible,
+.iris-refresh-notice__action:focus-visible {
+  outline: 2px solid var(--brand-cyan);
+  outline-offset: 2px;
+}
+
+/* 字段级：贴着输入框，只出一行，不做一个厚卡片。 */
+.iris-form-alert.is-field {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.iris-form-alert.is-field .iris-form-alert__title {
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* ── Section / Content 层 ─────────────────────────────────── */
+
+.iris-section-state {
+  --iris-section-tone: var(--risk-attention);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  max-width: 720px;
+  margin: 8px 0 24px;
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, var(--iris-section-tone) 20%, var(--hr));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: left;
+}
+
+.iris-section-state--critical {
+  --iris-section-tone: var(--risk-critical);
+}
+
+.iris-section-state--info {
+  --iris-section-tone: var(--brand-cyan);
+}
+
+.iris-section-state.is-dense {
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+}
+
+.iris-section-state__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--iris-section-tone) 10%, var(--surface));
+  color: var(--fg);
+}
+
+.iris-section-state__severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+.iris-section-state__severity::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--iris-section-tone);
+}
+
+.iris-section-state__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(16px, 1.8vw, 19px);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--fg);
+}
+
+.iris-section-state__detail {
+  margin: 6px 0 0;
+  max-width: 56ch;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  overflow-wrap: anywhere;
+}
+
+.iris-refresh-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 22px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--risk-attention) 24%, var(--hr));
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.iris-refresh-notice__dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: var(--radius-circle);
+  background: var(--risk-attention);
+}
+
+.iris-refresh-notice__text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-brand);
+  font-size: 12.5px;
+  color: var(--fg);
+}
+
+.iris-refresh-notice__detail {
+  color: var(--fg-2);
+}
+
+@media (max-width: 480px) {
+  .iris-section-state {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 12px;
+    padding: 16px;
+  }
+
+  .iris-section-state__action {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .iris-refresh-notice__action {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iris-form-alert__retry,
+  .iris-section-state__action,
+  .iris-refresh-notice__action {
+    transition: none;
+  }
+}
+
+/* 表单级严重度：颜色只是第二通道，文字始终可辨。 */
+.iris-form-alert__severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-family: var(--font-brand);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+.iris-form-alert__severity::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: var(--iris-form-tone);
+}
