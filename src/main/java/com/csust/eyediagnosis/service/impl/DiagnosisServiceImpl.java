@@ -115,8 +115,25 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         diagnosis.setUserId(loginUser.getId());
 
         //插入/更新
-        boolean result = this.saveOrUpdate(diagnosis);
-        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
+        boolean result;
+        try {
+            result = this.saveOrUpdate(diagnosis);
+        } catch (RuntimeException e) {
+            // 与 doDiagnosis 同一类「提交结果未知」：不删（可能已经提交，删了不可逆）。
+            // 但这条日志是事后唯一能找回这个对象的线索——public/ 没有对账器，
+            // 不记就彻底查不到这张原图去了哪里。
+            log.warn("影像已上传但落库结果未知，保留对象待人工排查, objectKey={}",
+                    uploadPictureDetail.getObjectKey(), e);
+            throw e;
+        }
+        if (!result) {
+            // 明确 0 行 = 记录没写进去，这张原图没有任何东西引用它。
+            // 与 doDiagnosis 同一口径：删掉刚上传的那一个对象，否则它会在
+            // public/ 前缀下永久滞留（该前缀没有对账器）。
+            // 注意只在「明确失败」时删：saveOrUpdate 抛异常属于提交结果未知，那里不删。
+            fileManager.deleteUploadedPictureQuietly(uploadPictureDetail.getObjectKey());
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, PICTURE_FAIL_UPLOAD);
+        }
         return DiagnosisManageVO.objToVo(diagnosis);
     }
 
@@ -286,10 +303,11 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
 
             // 4-5. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）并落库。
-            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入，
-            // 任何一步失败都必须把已经上传的对象删掉，否则留下无人引用的孤儿影像。
+            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入。
+            // 默认把已经上传的对象删掉，唯一例外是**落库结果未知**（见下方 catch：
+            // 回查到记录、或回查本身失败时保留对象——删掉被引用的原图不可逆）。
             DiagnosisResultVO vo;
-            Diagnosis diagnosis;
+            Diagnosis diagnosis = null;
             boolean saved;
             try {
                 vo = buildDiagnosisResult(grpcResponse, evidence);
@@ -305,8 +323,19 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 evidence.applyTo(diagnosis);
                 saved = this.save(diagnosis);
             } catch (RuntimeException e) {
-                // 对象已写入、记录没落库：删掉这个对象，避免留下无人引用的孤儿影像。
-                fileManager.deleteUploadedPictureQuietly(imageKey);
+                // 对象已写入、记录可能没落库。**不能一律删对象**：
+                // 无事务时 `save` 走自动提交，可能已经提交成功、只是驱动在返回
+                // 途中抛了超时——这时记录在库、原图却被删掉，是最坏的结果。
+                // 先按主键回查一次：查不到（且查询本身没失败）才认为记录确实没落库。
+                if (diagnosis != null && recordMayExist(diagnosis)) {
+                    // 注意：public/ 前缀下**没有**自动对账器（UploadCompensationService
+                    // 只扫 agent-chat/），这里留下的对象需要人工排查或后续接入对账。
+                    // 仍然选择保留：删掉一张可能被正式记录引用的原图不可逆。
+                    log.warn("诊断记录落库结果未知，保留已上传影像以免误删被引用对象（public/ 暂无常驻对账）, diagnosisId={}, objectKey={}",
+                            diagnosis.getId(), imageKey);
+                } else {
+                    fileManager.deleteUploadedPictureQuietly(imageKey);
+                }
                 throw e;
             }
             if (!saved) {
@@ -324,6 +353,34 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 落库抛异常之后，判断这条记录是不是其实已经提交成功了。
+     *
+     * <p>doDiagnosis 没有包裹事务，每次 Mapper 调用各自提交，所以「提交超时」
+     * 与「插入失败」在调用方看来是同一个异常。用主键回查找出区别：
+     * 查到说明提交确实生效，它引用的对象**绝不能删**；明确查不到才允许补偿删除；
+     * 查询本身失败（连接还没恢复）属于「结果未知」，一律按可能存在处理——
+     * 删掉一张被正式记录引用的原图不可逆；而多留的那个对象**没有**自动对账器
+     * （{@code UploadCompensationService} 只扫 {@code agent-chat/}），只能人工排查。
+     * 两害相权，选那个还能靠人查回来的。
+     *
+     * <p>已知不足：这条回查没有单独的 statement timeout，DB 全挂时会和写入一样
+     * 等连接超时（一次失败请求可能等两倍）。方向是安全的（超时也走「可能存在」），
+     * 但会放大故障期间的线程占用，登记为 follow-up。
+     */
+    private boolean recordMayExist(Diagnosis diagnosis) {
+        Long id = diagnosis.getId();
+        if (id == null) {
+            return false;
+        }
+        try {
+            return this.getById(id) != null;
+        } catch (Exception readError) {
+            log.warn("诊断记录回查失败，按「可能已落库」处理, diagnosisId={}", id, readError);
+            return true;
         }
     }
 

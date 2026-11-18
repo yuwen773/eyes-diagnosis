@@ -85,7 +85,14 @@ public class FileManager {
             uploadPictureDetail.setObjectKey(uploadPath);
             return uploadPictureDetail;
         } catch (Exception e) {
-            log.error("图片上传到对象存储失败",e);
+            // 对象可能已经写进存储，只是回包解析失败（CI 字段缺失、宽高信息为空等）：
+            // 那种情况下 key 从未返回给调用方，落库也不会发生，不删就是一张永久孤儿原图
+            // ——public/ 前缀没有对账器，只能靠人工排查。
+            //
+            // 为什么可以无条件删：uploadPath 是本方法刚用日期 + 16 位随机数现生成的，
+            // 没有任何记录引用它；deleteObject 对不存在的 key 是幂等成功的。
+            log.error("图片上传到对象存储失败，清理可能已写入的对象: key={}", uploadPath, e);
+            deleteUploadedPictureQuietly(uploadPath);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, FileConstant.FAIL_UPLOAD);
         }finally{
             this.deleteTemFile(file);
