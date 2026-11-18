@@ -5,16 +5,14 @@ import { IrisFormAlert } from "@/components/system/IrisFormAlert"
 import { useFormSubmit } from "@/components/system/useFormSubmit"
 import { authFormMessage } from "@/lib/authForm"
 import { useSession } from "@/lib/session"
+import { safeRedirect } from "@/lib/redirect"
 import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 
 export function LoginPage() {
   const { signIn } = useSession()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const requested = params.get("redirect")
-  const redirect = requested && requested.startsWith("/") && !requested.startsWith("//")
-    ? requested
-    : "/diagnosis"
+  const redirect = safeRedirect(params.get("redirect"))
 
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")

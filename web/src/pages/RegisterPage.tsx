@@ -1,19 +1,17 @@
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { AuthShell } from "@/components/AuthShell"
 import { IrisFormAlert } from "@/components/system/IrisFormAlert"
 import { useFormSubmit } from "@/components/system/useFormSubmit"
 import { authFormMessage } from "@/lib/authForm"
 import { register } from "@/lib/api"
+import { safeRedirect } from "@/lib/redirect"
 import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const requested = params.get("redirect")
-  const redirect = requested && requested.startsWith("/") && !requested.startsWith("//")
-    ? requested
-    : "/diagnosis"
+  const redirect = safeRedirect(params.get("redirect"))
 
   const [account, setAccount] = useState("")
   const [password, setPassword] = useState("")
@@ -21,7 +19,6 @@ export function RegisterPage() {
   const [fault, setFault] = useState<Fault | null>(null)
   const [field, setField] = useState<"account" | "password" | "confirm" | null>(null)
   const [pending, setPending] = useState(false)
-  const formRef = useRef<HTMLFormElement>(null)
 
   const submit = useFormSubmit(async () => {
     if (account.trim().length < 4) {
@@ -61,12 +58,6 @@ export function RegisterPage() {
     }
   })
 
-  function onRetry() {
-    setFault(null)
-    setField(null)
-    formRef.current?.requestSubmit()
-  }
-
   const message = fault ? authFormMessage(fault, "register") : null
 
   function onFieldChange(
@@ -87,19 +78,12 @@ export function RegisterPage() {
       title="建立你的判读档案"
       sub="注册后，每次判读都会归档到你的账号下，随时可以回看记录。"
     >
-      <form className="form" ref={formRef} onSubmit={submit} noValidate>
+      <form className="form" onSubmit={submit} noValidate>
         {message && !field ? (
           <IrisFormAlert
             severity={message.tone}
             title={message.title}
             detail={message.detail}
-            action={
-              message.retryable ? (
-                <button className="iris-form-alert__retry" type="button" onClick={onRetry}>
-                  再试一次
-                </button>
-              ) : undefined
-            }
           />
         ) : null}
 

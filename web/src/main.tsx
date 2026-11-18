@@ -16,6 +16,14 @@ import "./index.css"
 import App from "./App.tsx"
 import { queryClient } from "./lib/queryClient"
 
+// 仅供浏览器契约测试：在受控环境下提供一个确定性的缓存失效入口，
+// 避免用 31 秒真实等待去赌 staleTime。生产构建不带这个标记，挂不上钩子。
+if (import.meta.env.VITE_E2E_REFRESH_HOOK === "1") {
+  ;(window as unknown as { __irisRefetch?: () => void }).__irisRefetch = () => {
+    void queryClient.invalidateQueries({ queryKey: ["news", "list"], refetchType: "all" })
+  }
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

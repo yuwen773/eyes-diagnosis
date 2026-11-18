@@ -190,3 +190,35 @@ jobs:
       - run: npm run lint
       - run: npm run check:e2e-fixme
       - run: npm run check:gate-tests
+
+  web-e2e-system-states:
+    # R2 核心浏览器契约门禁：认证表单与资讯错误恢复的 14 条 Playwright。
+    # 全部用 page.route 注入合成故障，不需要 Java / MySQL / Redis；playwright.config.ts
+    # 刻意不配 webServer，所以这里显式起 Vite 再等端口就绪。
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: 启动 Vite 并等待就绪
+        run: |
+          VITE_E2E_REFRESH_HOOK=1 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/iris-web-e2e-vite.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/iris-web-e2e-vite.log
+          exit 1
+      - run: npm run test:e2e -- --grep "Iris System States R2"
+        env:
+          CI: "true"
+          E2E_BASE_URL: http://127.0.0.1:5173

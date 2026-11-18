@@ -34,6 +34,11 @@ async function login5xx(page) {
   await page.route('**/api/user/login', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ code: 502, msg: 'bad gateway' }) }))
 }
 
+async function register5xx(page) {
+  await routeAnon(page)
+  await page.route('**/api/user/register', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ code: 502, msg: 'bad gateway' }) }))
+}
+
 async function news502(page) {
   await routeAnon(page)
   await page.route('**/api/news/list/page/vo', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ code: 502, msg: 'bad gateway' }) }))
@@ -52,15 +57,14 @@ async function shoot(name, theme, vp, setup, url, waitText) {
   if (name === 'news-cached-refresh-502') {
     await page.waitForFunction(() => document.body.innerText.includes('合成缓存条目'))
     await page.route('**/api/news/list/page/vo', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ code: 502, msg: 'bad gateway' }) }))
-    // staleTime=30s：缓存过期后短暂断网再上线，TanStack Query 会在保留缓存的同时后台 refetch。
-    await page.waitForTimeout(31000)
-    await page.context().setOffline(true)
-    await page.waitForTimeout(200)
-    await page.context().setOffline(false)
+    // 受控失效入口触发后台 refetch，不用真实等待 30 秒。
+    await page.evaluate(() => window.__irisRefetch())
+    await page.getByText('内容没有刷新成功').first().waitFor({ timeout: 15000 })
   }
-  if (name.startsWith('login-')) {
+  if (name.startsWith('login-') || name.startsWith('register-')) {
     await page.locator('#account, input[autocomplete="username"]').first().fill('synthetic-user')
-    await page.locator('#password, input[autocomplete="current-password"]').first().fill('synthetic-pass')
+    await page.locator('#password, input[autocomplete="current-password"], input[autocomplete="new-password"]').first().fill('synthetic-pass')
+    if (name.startsWith('register-')) await page.locator('input[autocomplete="new-password"]').last().fill('synthetic-pass')
     await page.locator('form.form button[type="submit"]').click()
   }
   if (waitText) await page.getByText(waitText).first().waitFor({ timeout: 15000 })
@@ -85,6 +89,7 @@ for (const theme of ['light', 'dark']) {
 if (PHASE === 'after') {
   for (const theme of ['light', 'dark']) {
     const vp = viewports.find((v) => v.name === '1440')
+    await shoot('register-5xx', theme, vp, register5xx, '/register', '服务这会儿没有响应')
     await shoot('login-network', theme, vp, async (page) => {
       await routeAnon(page)
       await page.route('**/api/user/login', (r) => r.abort('internetdisconnected'))

@@ -74,6 +74,22 @@ test.describe("Iris System States R2 · 认证表单", () => {
     await expect(page.locator(".iris-form-alert")).toContainText("连不上服务")
   })
 
+  test("反斜杠 redirect 不被当成站内跳转", async ({ page }) => {
+    await ANON(page)
+    await page.route("**/api/user/login", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ code: 0, data: { id: "1", userAccount: "synthetic-user" } }),
+      }),
+    )
+    await page.goto("/login?redirect=%2F%5Cevil.com")
+    await page.locator("#account").fill("synthetic-user")
+    await page.locator("#password").fill("synthetic-pass")
+    await page.locator('form.form button[type="submit"]').click()
+    await expect(page).toHaveURL(/\/diagnosis$/)
+  })
+
   test("快速两次提交只发一次请求", async ({ page }) => {
     await ANON(page)
     let attempts = 0
@@ -121,7 +137,7 @@ test.describe("Iris System States R2 · 注册表单", () => {
     await expect(page.locator("#account")).toHaveAttribute("aria-describedby", "account-error")
   })
 
-  test("5xx：表单级提示提供再试一次，重复提交只发一次", async ({ page }) => {
+  test("5xx：表单级提示不提供盲重试，重复提交只发一次", async ({ page }) => {
     await ANON(page)
     let attempts = 0
     await page.route("**/api/user/register", async (route) => {
@@ -137,6 +153,7 @@ test.describe("Iris System States R2 · 注册表单", () => {
     await submit.dispatchEvent("click")
     await submit.dispatchEvent("click")
     await expect(page.locator(".iris-form-alert")).toContainText("服务这会儿没有响应")
+    await expect(page.getByRole("button", { name: "再试一次" })).toHaveCount(0)
     expect(attempts).toBe(1)
   })
 })
@@ -198,7 +215,6 @@ test.describe("Iris System States R2 · 资讯内容区", () => {
   })
 
   test("缓存刷新失败保留列表内容并给非阻断提示", async ({ page }) => {
-    test.setTimeout(70_000)
     await ANON(page)
     let calls = 0
     await page.route("**/api/news/list/page/vo", (route) => {
@@ -214,10 +230,9 @@ test.describe("Iris System States R2 · 资讯内容区", () => {
     })
     await page.goto("/news")
     await expect(page.getByText("缓存保留的资讯")).toBeVisible()
-    await page.waitForTimeout(31_000)
-    await page.context().setOffline(true)
-    await page.waitForTimeout(200)
-    await page.context().setOffline(false)
+    // 受控失效入口代替 30 秒 staleTime 等待：触发真实的后台 refetch，
+    // 保留缓存内容，显示非阻断恢复提示。钩子只在 VITE_E2E_REFRESH_HOOK=1 时挂载。
+    await page.evaluate(() => (window as unknown as { __irisRefetch: () => void }).__irisRefetch())
     await expect(page.locator(".iris-refresh-notice")).toBeVisible()
     await expect(page.getByText("缓存保留的资讯")).toBeVisible()
   })
