@@ -5,9 +5,10 @@ import { ArrowLeft } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
 import { describeError, getNews, listNews } from "@/lib/api"
+import { faultFromError } from "@/lib/faults"
 import { queryKeys } from "@/lib/queryKeys"
 import { useRevealScan } from "@/lib/useInView"
-import { FaultPanel } from "@/components/FaultPanel"
+import { IrisRefreshNotice, IrisSectionError } from "@/components/system/IrisSectionState"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
@@ -32,6 +33,10 @@ export function NewsDetailPage() {
 
   const loading = detailQuery.isLoading
   const fault = detailQuery.error ? describeError(detailQuery.error) : null
+  const faultSeverity = detailQuery.error
+    ? faultFromError(detailQuery.error, { intent: "load" }).severity
+    : "attention"
+  const hasData = detailQuery.data !== undefined
   const item = detailQuery.data ?? null
 
   const others = useMemo(
@@ -65,15 +70,15 @@ export function NewsDetailPage() {
               <span className="news-detail__skeleton-block" />
             </div>
           </>
-        ) : fault ? (
+        ) : fault && !hasData ? (
           <>
             <h1 className="sr-only">资讯详情</h1>
-            <FaultPanel
-              code={fault.code}
+            <IrisSectionError
+              severity={faultSeverity}
               title="这条资讯没能读出来"
-              body={fault.text}
-              endpoint={`GET /news/get/${id}`}
-              onRetry={() => void detailQuery.refetch()}
+              detail={fault.text}
+              actionLabel="重试"
+              onAction={() => void detailQuery.refetch()}
             />
           </>
         ) : !item ? (
@@ -87,6 +92,10 @@ export function NewsDetailPage() {
           </div>
         ) : (
           <>
+            {fault && hasData ? (
+              <IrisRefreshNotice detail={fault.text} onRetry={() => void detailQuery.refetch()} />
+            ) : null}
+
             {/* 版式与后台预览共用一份实现：公开页看到的就是预览看到的。 */}
             <NewsArticleView article={item} />
 
