@@ -369,19 +369,27 @@ export function buildThread(
       index += 1
     }
 
-    // 流结束了：**所有**还没拿到返回的工具步骤都转成「未确认」。
-    // 只看最后一个是不够的——一次请求可能连续调多个工具，前面的步骤
-    // 会一直挂着「执行中」，像是永远没跑完。已有失败结论的步骤保持原状。
-    if (!streaming) {
-      for (const step of steps) {
-        if (step.kind === "tool" && step.state === "running") {
-          step.state = "pending"
-        }
-      }
-    }
-
     if (steps.length > 0) {
       items.push({ type: "process", id: `process-${blockId}`, steps })
+    }
+  }
+
+  // 收敛「执行中」：只有**当前这一段**可能是真的还在跑。
+  //
+  // <p>`streaming` 是页面级状态，代表「现在有请求在飞」，不是「这一块还在跑」。
+  // 新回合一开始它就为真；如果照着它给所有过程块放行，上一回合那些本来该是
+  // 「未确认」的步骤会集体退回「执行中」——看起来像历史回合又活过来了。
+  // 判据收紧为：只有排在最后、后面再没有任何消息的那一块，才允许保留「执行中」。
+  const lastItem = items.length > 0 ? items[items.length - 1] : undefined
+  for (const item of items) {
+    if (item.type !== "process") continue
+    const mayStillRun = streaming && item === lastItem
+    if (mayStillRun) continue
+    for (const step of item.steps) {
+      if (step.kind === "tool" && step.state === "running") {
+        // 已有失败/成功结论的步骤保持原状；只把「没结论的」如实标成未确认。
+        step.state = "pending"
+      }
     }
   }
 

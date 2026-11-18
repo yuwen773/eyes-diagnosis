@@ -379,6 +379,49 @@ describe("buildThread", () => {
   })
 })
 
+describe("buildThread · 跨回合", () => {
+  it("新回合开始后，上一回合没结论的工具步骤保持「未确认」，不退回「执行中」", () => {
+    // 回归：streaming 是页面级状态，新回合一开始就为真。
+    // 若照它给所有过程块放行，旧回合的步骤会集体变回「执行中」。
+    const items = buildThread(
+      [
+        msg({ id: "u1", type: "user", content: "第一问" }),
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "a1", type: "assistant", content: "第一答" }),
+        msg({ id: "u2", type: "user", content: "第二问" }),
+        msg({ id: "t2", type: "tool-request", toolCallId: "b", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+      ],
+      true,
+    )
+    const states = stepsOf(items).map((s) => s.state)
+    expect(states).toEqual(["pending", "running"])
+  })
+
+  it("上一回合结束后又来了新消息，最后一块也不再算「执行中」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "a1", type: "assistant", content: "答" }),
+      ],
+      true,
+    )
+    expect(stepsOf(items)[0].state).toBe("pending")
+  })
+
+  it("流仍在跑、且过程块就是最后一项时，才保留「执行中」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "u1", type: "user", content: "问" }),
+        msg({ id: "r1", type: "reasoning", content: "想一想" }),
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+      ],
+      true,
+    )
+    const toolStep = stepsOf(items).find((step) => step.kind === "tool")
+    expect(toolStep?.state).toBe("running")
+  })
+})
+
 describe("stepStateLabel", () => {
   it("每个状态都有中文标签", () => {
     expect(stepStateLabel("done")).toBe("完成")
