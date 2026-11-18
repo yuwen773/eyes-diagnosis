@@ -861,7 +861,7 @@ test("existing task admission creates one session and one run, preserving ordina
     })
   )
   await page.getByRole("button", { name: "返回问答", exact: true }).click()
-  await page.locator(".agent-input__textarea").fill("合成普通问题")
+  await page.locator(".prompt__input").fill("合成普通问题")
   await page.getByRole("button", { name: "发送", exact: true }).click()
   await expect(
     page.getByText("合成普通问答回复", { exact: true })

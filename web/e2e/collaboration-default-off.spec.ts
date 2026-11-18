@@ -23,7 +23,7 @@ test("production default-off keeps collaboration closed and ordinary chat indepe
   expect(protectedRequests).toEqual([])
   await page.getByRole("link", { name: "返回普通问答" }).click()
   await expect(page).toHaveURL(/\/agent$/)
-  await expect(page.locator(".agent-input__textarea")).toBeVisible()
+  await expect(page.locator(".prompt__input")).toBeVisible()
   await expect(
     page.getByRole("region", { name: "实时协作工作台" })
   ).toHaveCount(0)
