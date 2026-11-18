@@ -30,8 +30,6 @@ spring:
         client:
           host: <chroma-host>
           port: 8000
-        tenant-name: default_tenant
-        database-name: default_database
         collection-name: diagnosis-knowledge
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
