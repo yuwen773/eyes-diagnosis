@@ -10,13 +10,15 @@
 - 要跨检出比较时，用 `git show <ref>:<path>` 读内容，不用 `git -C` 把命令指回主检出。
 - 复合命令（`a && b`、`a; b`、管道里再跑 git、脚本读文件内容后跑 git）拆成多次调用，一次一条。
 
-会话隔离守卫会拒绝「无法证明只作用于本工作树」的命令，包括：
+部分会话的隔离守卫会拒绝「无法证明只作用于本工作树」的命令，包括：
 
 - `git -C <共享检出> ...`、`git --git-dir=...`
 - `cmd /c ...`、`powershell -Command ...` 这类把 shell 文本交给另一个解释器的包装
 - 过于复杂、静态检查无法判定边界的复合 git 命令
 
 遇到拒绝时按上面拆成普通单条命令重试，不要换解释器绕过。
+守卫是否启用随会话配置而定：2026-11-18 的 worktree 会话里 `git -C` 与 `powershell` 可直接运行，
+不要把上一条当成「一定被拒」的绝对事实。
 
 ## Windows 进程操作
 
@@ -31,8 +33,38 @@ MSYS_NO_PATHCONV=1 /c/Windows/System32/taskkill.exe /PID <pid> /F
 ## 退出与清理
 
 - `ExitWorktree` 只有「拥有」该工作树（本会话创建）才会移除；`EnterWorktree({path})` 进入的既有工作树要用 `action: "keep"`，移除交给拥有者会话。
-- 删分支前确认提交已在 `origin/master`：`git merge-base --is-ancestor <branch> origin/master`。未合并且确认要丢弃才用 `git branch -D`。
+- 删分支前确认提交已在 `origin/ui` 或 `origin/master`（`git merge-base --is-ancestor <branch> origin/ui`；`scripts/worktree-hygiene.sh branches` 会批量做这个检查）。未合并且确认要丢弃才用 `git branch -D`。
 - 临时验证产物（临时数据库、`application-dev.yml` 副本、`target/e2e-*`、CDP 脚本）用完即删。
+
+## 收尾：工作树与服务（2026-11-18 起）
+
+2026-11-18 一次盘点清出 28 棵工作树、约 18 GB，其中 8 棵是 7–8 月就没人动的。
+根因不是不会删，而是「收尾」从来没有固定动作。现在收尾只跑这四条：
+
+```bash
+scripts/worktree-hygiene.sh report              # 只读：每棵树的状态与建议
+scripts/dev-servers.sh list                     # 只读：开发端口上还有谁在监听
+scripts/worktree-hygiene.sh reap --apply        # 删「干净 + 提交在远端」的树
+scripts/dev-servers.sh stop --all               # 停全部开发端口
+```
+
+有未提交改动的树不硬删，先归档再删：
+
+```bash
+scripts/worktree-hygiene.sh reap --archive-dirty --apply
+scripts/worktree-hygiene.sh reap --archive-dirty --older-than 7 --apply   # 只动 7 天没更新的
+scripts/worktree-hygiene.sh branches --apply                              # 已并入 ui/master 的本地分支
+```
+
+规则：
+
+- 归档落在 `.worktrees/_archive/<日期>/`：`<树名>.patch`（已跟踪改动）、`<树名>-untracked.tar.gz`（未跟踪文件）、`<树名>.meta.txt`（HEAD/分支/status）。该目录已被 `.gitignore` 忽略。
+- 想长期保留的树，把分支名或绝对路径写进 `.worktrees/_keep.txt`（一行一个）；`reap` 与 `branches` 永不碰。
+- `--archive-dirty` / `--drop-unique` 默认只动 HEAD 超过 3 天的树，避免删掉别的会话正在改的树；`--older-than N` 可调。
+- 永不自动删除：主检出、当前工作树、挂着开放 PR 的工作树、`master` / `ui` 分支。
+- 基础设施端口（MySQL 3306/3307、Redis 6379/6380、Chroma 8000）不在 `--all` 范围内，要停必须显式写端口号。
+- 删目录报 `Device or resource busy`：有进程 cwd 停在里面。MSYS 进程看 `/proc/*/cwd`；Windows 进程用 PEB 读 cwd。先确认是不是别的会话，别硬删。
+
 
 ## 编码
 

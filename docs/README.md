@@ -6,7 +6,7 @@
 
 | 文档 | 何时读 |
 |---|---|
-| `agent-worktree-conventions.md` | 在多个工作树里跑 git、杀 Windows 进程、清理临时验证产物 |
+| `agent-worktree-conventions.md` | 在多个工作树里跑 git、杀 Windows 进程、清理临时验证产物、工作树与服务收尾（`scripts/worktree-hygiene.sh` / `scripts/dev-servers.sh`） |
 | `backend-image-storage-failure-semantics.md` | 改判读影像上传 / 对象存储失败处理前读：影像存储失败为何终止而不是落「无原图记录」、补偿删除边界、已知限制 |
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
