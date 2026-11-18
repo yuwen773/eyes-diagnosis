@@ -87,6 +87,26 @@ export async function request<T>(
 }
 
 /**
+ * SSE 打开阶段遇到非流式响应（错误信封、意外 JSON、代理错误页）时的统一口径：
+ * 解析响应体 → 认证类业务码广播未登录 → 抛出带真实 code 的 ApiError。
+ * 响应体不是 JSON 时退回 HTTP 状态码，绝不把异常响应当成流继续读。
+ */
+export async function rejectNonStreamResponse(
+  response: Response,
+  fallback: string,
+): Promise<never> {
+  let payload: Envelope<unknown> | null = null
+  try {
+    payload = (await response.json()) as Envelope<unknown>
+  } catch {
+    // 响应体不是 JSON（代理错误页、空体）：退回 HTTP 状态码。
+  }
+  const code = payload?.code
+  if (code !== undefined && AUTH_CODES.has(code)) notifyAuthExpired(code)
+  throw new ApiError(code ?? response.status, payload?.msg || fallback)
+}
+
+/**
  * 分页信封。计数字段线上是字符串（后端全局 Long→String），
  * 统一转回 number，分页算术才不会踩到 "13" 这种值。
  */

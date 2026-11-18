@@ -30,6 +30,10 @@ const BASELINE: Record<string, number> = {
   "brand.css": 47,
   "fault.css": 1,
   "news.css": 2,
+  // 协作四角色的 CRITIC 金（浅/深两版）：现有令牌里没有对应色，
+  // 又不属于 mask / SVG / print 这类"必须写死"。登记为待办，等设计层决定是否
+  // 升成正式令牌；在此之前不新增第三条字面色。
+  "roundtable.css": 2,
   "shell.css": 2,
 }
 

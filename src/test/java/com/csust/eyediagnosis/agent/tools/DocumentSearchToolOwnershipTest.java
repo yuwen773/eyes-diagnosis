@@ -16,6 +16,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -25,7 +26,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,6 +73,47 @@ class DocumentSearchToolOwnershipTest {
         Filter.Expression corpusOperand = assertInstanceOf(Filter.Expression.class, filter.right());
         assertOwnerEquals(ownerOperand, 42L);
         assertOwnerEquals(corpusOperand, 0L);
+    }
+
+    @Test
+    void sourceTypeRestrictionIsDefaultOffAndOnlyRemovesWhenEnabled() {
+        Document builtin = new Document("a", "ok", Map.of("ownerUserId", 0L, "corpus", "builtin"));
+        Document unknown = new Document("b", "legacy", Map.of("ownerUserId", 42L));
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(List.of(builtin, unknown));
+
+        // @Value fields are not injected here; sourceTypeRestrictionEnabled=false
+        // is the documented default. Explicitly set the unrelated numeric knobs.
+        ReflectionTestUtils.setField(tool, "searchTopK", 20);
+        ReflectionTestUtils.setField(tool, "finalTopK", 5);
+        ReflectionTestUtils.setField(tool, "hybridSearchEnabled", false);
+        ReflectionTestUtils.setField(tool, "rerankEnabled", false);
+        String off = tool.searchDocuments("青光眼", 42L);
+        assertTrue(off.contains("legacy"), "default-off keeps the pre-B2 behavior");
+
+        ReflectionTestUtils.setField(tool, "sourceTypeRestrictionEnabled", true);
+        String on = tool.searchDocuments("青光眼", 42L);
+        assertTrue(on.contains("ok"));
+        assertFalse(on.contains("legacy"), "enabled restriction removes UNKNOWN chunks");
+    }
+
+    @Test
+    void hybridFusionCannotBypassSourceTypeRestriction() {
+        Document builtin = new Document("a", "ok", Map.of("ownerUserId", 0L, "corpus", "builtin"));
+        Document unknown = new Document("b", "legacy", Map.of("ownerUserId", 42L));
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(List.of(builtin, unknown));
+        ReflectionTestUtils.setField(tool, "searchTopK", 20);
+        ReflectionTestUtils.setField(tool, "finalTopK", 5);
+        ReflectionTestUtils.setField(tool, "rrfK", 60);
+        ReflectionTestUtils.setField(tool, "hybridSearchEnabled", true);
+        ReflectionTestUtils.setField(tool, "rerankEnabled", false);
+        ReflectionTestUtils.setField(tool, "sourceTypeRestrictionEnabled", true);
+
+        String on = tool.searchDocuments("青光眼", 42L);
+        assertTrue(on.contains("ok"));
+        assertFalse(on.contains("legacy"),
+                "the BM25 cache path must not reintroduce an UNKNOWN chunk after fusion");
     }
 
     private void assertOwnerEquals(Filter.Expression expression, long expectedOwnerId) {
@@ -125,6 +169,8 @@ class DocumentSearchToolOwnershipTest {
             assertEquals(ownerId, chunk.getMetadata().get("ownerUserId"),
                     "ownerUserId 必须写进 chunk，否则检索隔离失效");
             assertEquals(docId, chunk.getMetadata().get("documentId"));
+            assertEquals("user_upload", chunk.getMetadata().get("sourceType"),
+                    "server-derived source marker must be on every chunk");
         }
         // chunk id 由 docId + 序号生成，保证同一文档的 chunk 可追溯。
         assertEquals("doc_99_chunk_0", stored.get(0).getId());

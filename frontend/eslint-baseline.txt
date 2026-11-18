@@ -1,0 +1,52 @@
+# ESLint baseline — pre-existing debt, do not grow.
+# Regenerate: npm run lint:baseline
+# Format: relative/path:line:column ruleId
+
+src/api/diagnosisController.ts:1:1 @typescript-eslint/ban-ts-comment
+src/api/knowledgeController.ts:39:17 @typescript-eslint/no-explicit-any
+src/api/knowledgeController.ts:46:17 @typescript-eslint/no-explicit-any
+src/api/knowledgeController.ts:52:17 @typescript-eslint/no-explicit-any
+src/api/mcpController.ts:6:39 @typescript-eslint/no-explicit-any
+src/api/mcpController.ts:9:39 @typescript-eslint/no-explicit-any
+src/api/newsController.ts:1:1 @typescript-eslint/ban-ts-comment
+src/api/userController.ts:1:1 @typescript-eslint/ban-ts-comment
+src/components/GlobalHeader.vue:48:32 @typescript-eslint/no-explicit-any
+src/components/agent/message/ToolRequestMessage.vue:103:43 @typescript-eslint/no-explicit-any
+src/components/agent/message/ToolRequestMessage.vue:47:24 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:233:32 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:310:38 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:312:79 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:335:34 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:356:40 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:366:83 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:398:42 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServerForm.vue:445:40 @typescript-eslint/no-explicit-any
+src/components/agent/settings/McpServicePanel.vue:183:73 @typescript-eslint/no-explicit-any
+src/components/tables/StatsCard.vue:8:10 @typescript-eslint/no-explicit-any
+src/components/user/DiagnosisReportDetail.vue:263:29 @typescript-eslint/no-explicit-any
+src/composables/useAgentStream.ts:14:24 @typescript-eslint/no-explicit-any
+src/composables/useAgentStream.ts:163:50 @typescript-eslint/no-explicit-any
+src/composables/useAgentStream.ts:8:15 @typescript-eslint/no-explicit-any
+src/composables/useDiagnosisExport.ts:11:33 @typescript-eslint/no-explicit-any
+src/composables/useDiagnosisExport.ts:16:31 @typescript-eslint/no-explicit-any
+src/composables/useDiagnosisExport.ts:35:33 @typescript-eslint/no-explicit-any
+src/composables/useDiagnosisExport.ts:63:23 @typescript-eslint/no-explicit-any
+src/pages/admin/KnowledgePage.vue:145:33 @typescript-eslint/no-explicit-any
+src/pages/agent/AgentChatPage.vue:177:16 @typescript-eslint/no-explicit-any
+src/pages/agent/__tests__/AgentChatPage.test.ts:116:10 @typescript-eslint/no-explicit-any
+src/pages/agent/__tests__/AgentChatPage.test.ts:14:17 @typescript-eslint/no-explicit-any
+src/pages/agent/__tests__/AgentChatPage.test.ts:17:28 @typescript-eslint/no-explicit-any
+src/pages/diagnosis/__tests__/DiagnosisTasksPage.test.ts:46:26 @typescript-eslint/no-explicit-any
+src/pages/news/NewsEditPage.vue:36:22 @typescript-eslint/no-explicit-any
+src/pages/user/UserLoginPage.vue:18:37 @typescript-eslint/no-explicit-any
+src/pages/user/UserRegisterPage.vue:25:37 @typescript-eslint/no-explicit-any
+src/pages/userCenter/Profile.vue:1:1 vue/multi-word-component-names
+src/types/mcp.ts:26:18 @typescript-eslint/no-explicit-any
+src/utils/access/checkAccess.ts:10:32 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:117:30 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:17:42 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:30:31 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:55:43 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:73:46 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:74:35 @typescript-eslint/no-explicit-any
+src/utils/jsonHighlight.ts:81:45 @typescript-eslint/no-explicit-any

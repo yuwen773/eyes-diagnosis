@@ -270,6 +270,7 @@ a {
 
 /* 品牌标：光学虹膜。两版一起挂在 DOM 里，靠 <html>.dark 换。
    不用 filter: invert()——那会把折射高光翻成脏灰，中心星也会变色。 */
+/* 品牌标：光学虹膜。两版一起挂在 DOM 里，靠 <html>.dark 换。 */
 .wordmark__iris {
   align-self: center;
   display: block;

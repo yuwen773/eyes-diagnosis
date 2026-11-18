@@ -6,10 +6,9 @@
 import {
   ApiError,
   BASE_URL,
-  notifyAuthExpired,
+  rejectNonStreamResponse,
   request,
   toPage,
-  type Envelope,
   type RawPage,
 } from "./http"
 
@@ -206,7 +205,28 @@ export type ChatHistoryVO = {
 export function getSessions(beforeId?: string, limit = 20) {
   let path = `/agent/sessions?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<AgentSessionVO[]>(path)
+  return request<AgentSessionVO[]>(path).then((sessions) =>
+    sessions.map((session) => ({
+      ...session,
+      createdTime: chatDate(session.createdTime),
+      updatedTime: chatDate(session.updatedTime),
+    }))
+  )
+}
+
+/** Java Long 经 JsonConfig 序列化为字符串；兼容工具直接给数字。 */
+function chatDate(value: string | number | null) {
+  return typeof value === "number" ? new Date(value).toISOString() : (value ?? "")
+}
+
+/** 协作受理前创建所属会话；沿用现有 HTTP 信封与身份失效处理。 */
+export function createAgentSession(sessionId: string, signal: AbortSignal) {
+  return request<{ sessionId: string }>("/agent/sessions", {
+    method: "POST",
+    body: JSON.stringify({ sessionId }),
+    signal,
+    cache: "no-store",
+  })
 }
 
 export function deleteSession(sessionId: string) {
@@ -244,7 +264,13 @@ export function generateTitle(sessionId: string, firstMessage: string) {
 export function getChatHistory(threadId: string, beforeId?: string, limit = 40) {
   let path = `/agent/history/${threadId}?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<ChatHistoryVO>(path)
+  return request<ChatHistoryVO>(path).then((history) => ({
+    ...history,
+    messages: history.messages.map((message) => ({
+      ...message,
+      createdTime: chatDate(message.createdTime),
+    })),
+  }))
 }
 
 export function exportSession(sessionId: string, format: "markdown" | "json") {
@@ -367,8 +393,14 @@ export function requestReexamine(id: string) {
 export type AgentStreamDTO = {
   messageType: string
   content?: string
-  toolCalls?: { name: string; arguments: string }[]
+  toolCalls?: { name: string; arguments: string; id?: string; stepLabel?: string }[]
   toolName?: string
+  /* ── 普通聊天工具步骤契约：全部可选，历史消息与旧后端不带这些字段。 ── */
+  toolCallId?: string
+  toolStatus?: string
+  stepLabel?: string
+  finishReason?: string
+  errorCategory?: string
 }
 
 export type StreamChatHandlers = {
@@ -411,19 +443,15 @@ export async function streamChat(
     openWhenHidden: true,
 
     async onopen(response) {
-      if (!response.ok) {
-        throw new ApiError(response.status, `服务返回 ${response.status}`)
-      }
+      const contentType = response.headers.get("content-type") ?? ""
       // 匿名访问时后端抛 BusinessException(NO_AUTH_ERROR)，返回的是 200 + JSON 信封，
       // 而不是 SSE 流——把它当流读会一直等到超时。识别出来并转成未登录事件。
-      const contentType = response.headers.get("content-type") ?? ""
+      // 错误响应体同样要解析：否则 401/403 的信封不会广播未登录，会话也不会失效。
       if (contentType.includes("application/json")) {
-        const payload = (await response.json().catch(() => null)) as Envelope<unknown> | null
-        const code = payload?.code ?? -1
-        if (code === 40100 || code === 40101) {
-          notifyAuthExpired(code)
-        }
-        throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
+        await rejectNonStreamResponse(response, "对话服务拒绝了这次请求")
+      }
+      if (!response.ok) {
+        await rejectNonStreamResponse(response, `服务返回 ${response.status}`)
       }
       // 走到这里说明服务端已经受理这次请求（拿到 2xx 流响应头）。
       // 注意口径：受理 = 用户消息已**入队**，落库是会话队列里的异步任务，

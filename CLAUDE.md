@@ -19,7 +19,7 @@ Base package: `com.csust.eyediagnosis`
 - 写前端样式 / 评审前端 diff → 仓库根 `DESIGN.md`（**Iris 2.0 · Adaptive Visual System**，
   目标规范）+ `web/src/styles/tokens.css`（**已实现的令牌事实**）。
   两者不一致时以 `tokens.css` 为准，差异记在 `DESIGN.md` §8。
-- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`。
+- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`，各目标库的升级路径见 `docs/architecture/migration-matrix.md`。
 - 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
 - 多工作树协作、Windows 进程操作、临时验证产物清理 → `docs/agent-worktree-conventions.md`。
 
@@ -58,14 +58,20 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 | UserController | `/api/user/*` | Auth, CRUD |
 | AdminStatsController | `/api/stats/*` | 管理端总览读数（Dashboard 与数据分析共用口径） |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| DiagnosisTaskController / PatientAuthorizationController / PatientExplanationController / PatientFollowUpController | `/api/diagnosis-tasks/*` | 患者影像任务、保存授权、分层解释与随访 |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| McpServerController | `/api/mcp/*` | MCP server CRUD |
+| AgentImageUploadController | `/api/agent/image/*` | Authenticated agent image upload and deletion |
+| CollaborationRunController | `/api/agent/collaboration-runs/*` | 多 Agent 协作运行：准入、授权快照/SSE、取消（默认关闭） |
+| McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
 | NewsController | `/api/news/*` | News CRUD |
+| ControlledReferenceController | `/api/controlled-references/*` | 受控参考资料上传、治理与检索 |
+| DoctorReviewController | `/api/doctor-reviews/*` | 医生复核冻结草稿 |
+| PatientDraftTestController / PatientDraftSeedController | `/api/patient-draft-test/*` | 仅管理员、需显式开启的草稿校验 |
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V28; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_agent_tool_audit`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -79,6 +85,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
+- **协作工作台（多 Agent）**: 前端入口由构建期变量 `VITE_COLLABORATION_ENABLED` 控制（`web/src/components/shell/navLinks.ts`），未设为 `true` 时导航不出现协作入口；后端能力由 `eye-diagnosis.collaboration.*` 控制，默认全 `false`。**两者必须同时开启**协作才真正可用；本分支（R1.2）不开启、不部署、不做临床启用。
 
 ## Design Context
 

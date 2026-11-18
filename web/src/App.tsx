@@ -18,6 +18,12 @@ const DiagnosisPage = lazy(() =>
 const AgentPage = lazy(() =>
   import("@/pages/AgentPage").then((m) => ({ default: m.AgentPage })),
 )
+const CollaborationPage = lazy(() =>
+  import("@/pages/CollaborationPage").then((m) => ({ default: m.CollaborationPage })),
+)
+const DoctorReviewsPage = lazy(() =>
+  import("@/pages/DoctorReviewsPage").then((m) => ({ default: m.DoctorReviewsPage })),
+)
 const NewsPage = lazy(() =>
   import("@/pages/NewsPage").then((m) => ({ default: m.NewsPage })),
 )
@@ -139,6 +145,8 @@ export function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/diagnosis" element={<DiagnosisPage />} />
           <Route path="/agent" element={<AgentPage />} />
+          <Route path="/agent/collaboration" element={<CollaborationPage />} />
+          <Route path="/doctor-reviews" element={<DoctorReviewsPage />} />
           <Route path="/news" element={<NewsPage />} />
           <Route path="/news/:id" element={<NewsDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />

@@ -25,3 +25,4 @@ cos:
     secretKey: ci-placeholder-secret-key
     region: ap-guangzhou
     bucket: ci-placeholder-bucket
+spring.autoconfigure.exclude: com.alibaba.cloud.ai.agent.studio.SaaStudioWebModuleAutoConfiguration
