@@ -378,11 +378,13 @@ export type StreamChatHandlers = {
   /**
    * 服务端已受理：拿到了 2xx 的 SSE 响应头。
    *
-   * <p>这不是「开始生成」的同义词，但它比「收到第一条助手内容」可靠得多：
-   * `AgentController` 在校验会话归属之后、返回 Flux 之前**同步**落库用户消息，
-   * 所以响应头到达就意味着这条用户轮次已经写进 `t_agent_message`。反过来说，
-   * 没触发 `onAccepted` 就失败时，**不能**推断服务端没收到——请求可能已经
-   * 到达并落库，只是响应头没回来。
+   * <p>只到「请求已被接受、用户消息已入队」为止，**不**等于已经落库：
+   * `AgentController` 调 `ChatHistoryService.saveUserMessage`，后者把写库任务
+   * 提交进 `SessionMessageQueue` 就返回（没有等待 Future）。控制器方法体确实在
+   * 响应头之前执行完，但落库是后台任务，可能还没写、也可能写失败。
+   *
+   * <p>所以：`onAccepted` 之前失败 **不能**推断服务端没收到；`onAccepted` 之后
+   * 失败也不能断言「服务端一定有这条」。两端都只能说到「受理」或「不知道」。
    */
   onAccepted?(): void
 }

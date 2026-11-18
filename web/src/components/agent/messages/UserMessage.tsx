@@ -10,7 +10,9 @@ import type { StreamMessage } from "@/lib/agentStream"
 const DELIVERY_NOTE: Partial<Record<NonNullable<StreamMessage["delivery"]>, { mark: string; text: string }>> = {
   sending: { mark: "…", text: "发送中" },
   unconfirmed: { mark: "?", text: "送达未确认 · 刷新后可核对" },
-  failed: { mark: "!", text: "未送达 · 服务端没有这条记录" },
+  // 只有服务端**明确拒绝**（未登录 / 无权限）才走到这里。查不到历史不算——
+  // 落库是异步的，长会话的历史分页也未必带得到刚发的那条。
+  failed: { mark: "!", text: "未送达 · 服务端拒绝了这次请求" },
 }
 
 /**

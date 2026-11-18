@@ -6,7 +6,7 @@
  * 信息性终点卡——后端图中断后流即结束，没有确认回传端点。
  */
 import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react"
-import { streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
+import { ApiError, streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
 import { extractResources, type AgentResources } from "./agentResources"
 import { newId } from "./id"
 
@@ -43,19 +43,30 @@ export type StreamMessage = {
   delivery?: "sending" | "accepted" | "unconfirmed" | "failed"
 }
 
+/** 服务端明确拒绝这次请求的错误码（未登录 / 无权限）。 */
+const REJECTED_CODES = new Set([40100, 40101, 40300])
+
 /**
- * 发送失败。`accepted` 说明服务端是否已经受理这条用户消息——
- * `true` 表示拿到了 2xx 流响应头（`AgentController` 在此之前已同步落库），
- * `false` 表示没拿到响应头，**不代表**服务端没收到。
+ * 发送失败。两个标记回答两个不同的问题：
+ *
+ * <ul>
+ *   <li>`accepted`：拿到 2xx 流响应头了吗？拿到 = 服务端受理了**这次请求**
+ *       （用户消息已入队）；<b>不代表已经落库</b>——落库是会话队列里的异步任务。
+ *       没拿到 = 不知道服务端收没收到。</li>
+ *   <li>`rejected`：服务端是否**明确拒绝**（40100/40101/40300）？只有这一种
+ *       情况能断言「这条消息没有进入服务端记录」。网络失败、超时、5xx 都不算。</li>
+ * </ul>
  */
 export class AgentSendError extends Error {
   readonly accepted: boolean
+  readonly rejected: boolean
   readonly cause?: unknown
 
   constructor(accepted: boolean, message: string, cause?: unknown) {
     super(message)
     this.name = "AgentSendError"
     this.accepted = accepted
+    this.rejected = !accepted && cause instanceof ApiError && REJECTED_CODES.has(cause.code)
     this.cause = cause
   }
 }
@@ -268,7 +279,8 @@ export function useAgentStream() {
       const controller = new AbortController()
       abortRef.current = { token, controller }
       // 服务端是否已受理（拿到 2xx 响应头）。失败时这是判断能不能撤回
-      // 乐观用户气泡的唯一可靠依据——见 AgentSendError。
+      // 乐观用户气泡的唯一依据——见 AgentSendError。注意它只说明「请求被受理」，
+      // 不说明「已落库」。
       let accepted = false
 
       // 只操作自己这一流：晚到的旧流不得清掉新流的流式态与光标。

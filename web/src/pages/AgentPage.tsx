@@ -160,9 +160,18 @@ export function AgentPage() {
         if (seq !== historySeq.current || threadIdRef.current !== id) return
         // 换了账号：这条历史属于上一个身份，不写回。
         if (userKeyRef.current !== expectedUser) return
-        // 请求期间用户又发了消息：历史里没有这条，整表替换会把它抹掉。
-        if (turnCounter.current !== turnsAtRequest) return
-        setMessages((data.messages ?? []).map(mapHistoryMessage))
+        const history = (data.messages ?? []).map(mapHistoryMessage)
+        if (turnCounter.current !== turnsAtRequest) {
+          // 请求期间用户又发了消息：历史里没有这条，整表替换会把它抹掉。
+          // 但直接丢弃会让这段历史**永远**加载不上（守卫不会复位）。所以把
+          // 这一轮本地发出的用户气泡接在历史后面——既不丢历史，也不丢提问。
+          setMessages((prev) => [
+            ...history,
+            ...prev.filter((message) => message.type === "user" && message.delivery),
+          ])
+          return
+        }
+        setMessages(history)
       } catch (e) {
         if (seq === historySeq.current) pushFault(faultFromError(e, { intent: "load" }))
       } finally {
@@ -239,7 +248,10 @@ export function AgentPage() {
         const lastUser = [...(data.messages ?? [])]
           .reverse()
           .find((message) => (message.role ?? "").toUpperCase() === "USER")
-        markDelivery(localId, lastUser && lastUser.content === text ? "accepted" : "failed")
+        // 只能「升级」不能「证伪」：历史接口不带游标时返回**最早**的一页，
+        // 长会话里刚发的消息根本不在这一页；落库又还在队列里。查不到 ≠ 没送到，
+        // 所以结论停在「未确认」，绝不标成「未送达」。
+        if (lastUser && lastUser.content === text) markDelivery(localId, "accepted")
       } catch {
         // 核对不了就保持「未确认」：不猜服务端有没有收到。
       }
@@ -312,9 +324,15 @@ export function AgentPage() {
           //      「没有助手内容」**不能**推断「服务端没收到」，所以也不撤回，
           //      标成「未确认」并用历史接口核对；绝不自动重发。
           const accepted = e instanceof AgentSendError ? e.accepted : false
+          const rejected = e instanceof AgentSendError ? e.rejected : false
           const inner = e instanceof AgentSendError ? e.cause : e
           if (accepted) {
+            // 服务端受理了这次请求（用户消息已入队）。落库是后台任务，可能还没写，
+            // 但撤回气泡只会让界面和服务端更不一致，所以保留。
             markDelivery(localId, "accepted")
+          } else if (rejected) {
+            // 服务端明确拒绝（未登录 / 无权限）：这是唯一能断言「没有进记录」的情况。
+            markDelivery(localId, "failed")
           } else {
             markDelivery(localId, "unconfirmed")
             void reconcileDelivery(localId, usedThreadId, text)

@@ -368,11 +368,17 @@
 }
 
 .agent-msg__delivery.is-unconfirmed {
-  color: var(--risk-attention, var(--fg-2));
+  /* --signal 管「当前态」；--risk-* 留给医学严重度，不拿来说明送达。 */
+  color: var(--signal);
 }
 
 .agent-msg__delivery.is-failed {
-  color: var(--risk-critical, var(--fg-2));
+  /* 明确的拒绝（未登录 / 无权限）用正文色 + 实心标记，强调由故障提示承担。 */
+  color: var(--fg-1);
+}
+
+.agent-msg__delivery.is-failed .agent-msg__delivery-mark {
+  border-width: 2px;
 }
 
 .agent-msg__imggrid {

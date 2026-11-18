@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
-import { getChatHistory, getSessions, type AgentSessionVO, type ChatHistoryVO } from "@/lib/api"
+import { ApiError, getChatHistory, getSessions, type AgentSessionVO, type ChatHistoryVO } from "@/lib/api"
+import { AgentSendError } from "@/lib/agentStream"
 import { AgentPage } from "./AgentPage"
 
 const sessionState = vi.hoisted(() => ({
@@ -321,6 +322,38 @@ describe("AgentPage 未登录", () => {
     expect(
       screen.queryAllByText("其实已经落库了").filter((node) => node.tagName !== "TEXTAREA"),
     ).toHaveLength(1)
+  })
+
+  it("服务端明确拒绝（未登录）：标「未送达」且不再去核对历史", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    // 页面测试把 hook mock 掉了，所以这里要抛真实的 AgentSendError——
+    // rejected 由 agentStream 依据 ApiError 码计算。
+    sendMock.mockRejectedValueOnce(
+      new AgentSendError(false, "会话标识或用户为空", new ApiError(40100, "会话标识或用户为空")),
+    )
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const textarea = (await screen.findByPlaceholderText(
+      /Enter 发送/,
+    )) as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: "被拒绝的话" } })
+    fireEvent.keyDown(textarea, { key: "Enter" })
+
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText(/服务端拒绝了这次请求/)).toBeTruthy()
+    // 明确被拒 = 服务端没有这条，不必（也不该）再查历史
+    expect(getChatHistory).not.toHaveBeenCalled()
   })
 
   it("流已产生内容后失败：保留用户气泡，不制造「没有提问的回答」", async () => {
