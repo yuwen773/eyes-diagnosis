@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @ClassNameDiagnosisController
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/21 下午8:38
  * @Version 1.0
