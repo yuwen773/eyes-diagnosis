@@ -197,7 +197,7 @@
 | 同上 | `nav-breakpoint`（flag 开 :5273 → 8 passed；「协作关闭」那条改在 flag 关 :5274） | **9 passed / 0 failed**（两档构建各跑对应分组） |
 | 同上 | `ui-freeze-regression`（13 路由 × 6 宽度 × 明暗） | **2 passed**，无横向溢出、无未捕获异常 |
 | 真实后端冒烟 | `smoke.spec.ts`（:5275 代理 → :8081，`7fc98733` 后重跑，合成账号 `smoke_r5_u1` + 合成资讯/记录种子） | **9 passed** |
-| 协作夹具 | `collaboration.spec.ts`（flag 开 :5273） | **43 passed** |
+| 协作夹具 | `collaboration.spec.ts`（flag 开 :5275，`7fc98733` 后重跑） | **43 passed**，同次重生成协作证据截图 |
 | 协作默认关 | `collaboration-default-off.spec.ts`（flag 关 :5274） | **1 passed** |
 | 协作真后端 | `collaboration-backend.spec.ts` + `collaboration-safety.spec.ts`（:5275 → :18085） | **5 passed** |
 | 截图归档 | `node scripts/evidence/joint-r5-capture.mjs`（`7fc98733` 后重跑） | **48 张**，横向溢出 0 |
@@ -224,6 +224,10 @@
 | `web/test-results/roundtable-evidence/`（56 张 png + 18 份 json） | 协作工作台 9 档宽度 × 明暗 + 抽屉 / 表单态 | `e2e/collaboration.spec.ts` |
 
 三处都在 gitignore 范围内：证据随候选留存在本地，重建命令写在上面，不随分支推送。
+
+**注意**：Playwright 每次运行都会清空 `test-results/`（`outputDir`），所以 `web/test-results/roundtable-evidence/`
+不是持久归档——本轮重跑前端类用例后它被清过一次，已用 `collaboration.spec.ts` 重跑重新生成。
+长期留存看 `docs/testing/roundtable-evidence-20261117/`（12 张 webp，已入库）。
 
 ## 12. 未关闭的 P0 / P1 / P2
 
