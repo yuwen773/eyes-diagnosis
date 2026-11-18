@@ -1,11 +1,14 @@
 package com.csust.eyediagnosis.agent;
 
+import com.alibaba.cloud.ai.graph.CompileConfig;
 import com.alibaba.cloud.ai.graph.NodeOutput;
 import com.alibaba.cloud.ai.graph.RunnableConfig;
 import com.alibaba.cloud.ai.graph.action.InterruptionMetadata;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
+import com.alibaba.cloud.ai.graph.checkpoint.config.SaverConfig;
 import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.agent.guard.ToolCallBudgetInterceptor;
 import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
@@ -90,17 +93,44 @@ public class DiagnosisAgent {
     @Resource
     private DocumentSearchTool documentSearchTool;
 
-    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId) {
+    ReactAgent buildAgent(ToolCallback[] extraTools, Long userId) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
                 .model(chatModel)
                 .instruction(SYSTEM_PROMPT)
                 .methodTools(eyeImageAnalyzerTool,
-                        new UserBoundDocumentSearchTool(documentSearchTool, userId));
+                        new UserBoundDocumentSearchTool(documentSearchTool, userId))
+                // 预算按对话回合计：拦截器实例随 agent 每次请求重建，不能做成单例。
+                .interceptors(new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations())))
+                .compileConfig(guardedCompileConfig(agentConstants.getModelCallLimit()));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
         }
         return builder.build();
+    }
+
+    /**
+     * 图执行的硬上限。
+     *
+     * <p>不能省：{@code ReactAgent.builder()} 在不显式给 {@code CompileConfig} 时，
+     * 框架把 {@code recursionLimit} 设成 {@code Integer.MAX_VALUE}（1.1.2.2
+     * {@code Builder#buildConfig()}），模型反复调工具就没有终点。
+     *
+     * <p>达到上限时框架按「正常完成」结束流（{@code CompiledGraph} 判定
+     * {@code isMaxIterationsReached} → {@code handleCompletion}），不会报错，
+     * 所以它只能是兜底：首道闸是 {@link ToolCallBudgetInterceptor}，把超预算变成
+     * 工具错误交还模型收尾。
+     *
+     * <p>{@code saverConfig} 显式留空：agent 每次请求重建，没有跨请求复用的 thread 状态；
+     * 不写这行，{@code CompileConfig} 默认会塞一个 {@code MemorySaver}，每步多做一次快照。
+     */
+    static CompileConfig guardedCompileConfig(int modelCallLimit) {
+        int modelCalls = Math.max(1, modelCallLimit);
+        return CompileConfig.builder()
+                // 一个 ReAct 回合 = 模型节点 + 工具节点，各占一步；另留 2 步给开场与收尾。
+                .recursionLimit(modelCalls * 2 + 2)
+                .saverConfig(SaverConfig.builder().build())
+                .build();
     }
 
     /**
