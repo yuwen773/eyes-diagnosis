@@ -11,6 +11,8 @@
 //   HERO_COMPARE_BASE（对照台，默认 http://localhost:4173）
 //   HERO_OPTIC_BASE  （原生 OpticFlow，默认 http://localhost:4174）
 //   E2E_CHROMIUM_PATH
+//   HERO_COMPARE_PERF_ONLY=1（只重跑性能与降级读数，截图沿用上一轮，
+//                            结果并回上一轮的 manifest.json）
 //
 // 产出：
 //   docs/reviews/assets/iris-hero-comparison/   核心桌面截图 + 三版对照拼图（入库）
@@ -29,6 +31,7 @@ const DOC_DIR = resolve(ROOT, "docs/reviews/assets/iris-hero-comparison")
 const TARGET_DIR = resolve(ROOT, "target/iris-hero-comparison")
 const COMPARE_BASE = process.env.HERO_COMPARE_BASE ?? "http://localhost:4173"
 const OPTIC_BASE = process.env.HERO_OPTIC_BASE ?? "http://localhost:4174"
+const PERF_ONLY = process.env.HERO_COMPARE_PERF_ONLY === "1"
 const CHROME =
   process.env.E2E_CHROMIUM_PATH ??
   "C:/Users/yuwen/AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe"
@@ -342,118 +345,120 @@ async function contactSheet(items, outFile, title) {
 // ---------------------------------------------------------------------------
 // 1) 核心矩阵：3 方案 × 4 视口 × 2 主题 × 2 构图
 // ---------------------------------------------------------------------------
-console.log("· 核心矩阵")
-for (const shell of SHELLS) {
-  for (const viewport of VIEWPORTS) {
-    for (const theme of ["light", "dark"]) {
-      for (const variant of VARIANTS) {
-        await capture({
-          name: `matrix-${shell.key}-${variant.code}-${variant.key}-${viewport.key}-${theme}`,
-          variantKey: variant.key,
-          group: "matrix",
-          shell: shell.key,
-          url: compareUrl(variant.key, { shell: shell.key }),
-          selector: variant.selector,
-          viewport,
-          theme,
-          saveToDoc: viewport.key === "desktop",
-        })
+if (!PERF_ONLY) {
+    console.log("· 核心矩阵")
+  for (const shell of SHELLS) {
+    for (const viewport of VIEWPORTS) {
+      for (const theme of ["light", "dark"]) {
+        for (const variant of VARIANTS) {
+          await capture({
+            name: `matrix-${shell.key}-${variant.code}-${variant.key}-${viewport.key}-${theme}`,
+            variantKey: variant.key,
+            group: "matrix",
+            shell: shell.key,
+            url: compareUrl(variant.key, { shell: shell.key }),
+            selector: variant.selector,
+            viewport,
+            theme,
+            saveToDoc: viewport.key === "desktop",
+          })
+        }
       }
     }
   }
-}
 
-// ---------------------------------------------------------------------------
-// 2) 原生页面参考：ui@b805377f 的 /（Prism）与 9a6dbcb6 的 /（OpticFlow）
-// ---------------------------------------------------------------------------
-console.log("· 原生页面参考")
-for (const theme of ["light", "dark"]) {
-  await capture({
-    name: `native-prism-ui-b805377f-desktop-${theme}`,
-    variantKey: "prism",
-    group: "native",
-    url: `${COMPARE_BASE}/`,
-    selector: ".hero-prism",
-    viewport: VIEWPORTS[2],
-    theme,
-    saveToDoc: true,
-    animationState: "live (Prism 自动循环 5s 窗口内)",
-  })
-  await capture({
-    name: `native-optic-9a6dbcb6-desktop-${theme}`,
-    variantKey: "optic",
-    group: "native",
-    url: `${OPTIC_BASE}/`,
-    selector: ".optic-flow",
-    viewport: VIEWPORTS[2],
-    theme,
-    saveToDoc: true,
-    animationState: "live",
-  })
-}
-for (const viewport of [VIEWPORTS[0], VIEWPORTS[2]]) {
-  await capture({
-    name: `native-optic-9a6dbcb6-${viewport.key}-light`,
-    variantKey: "optic",
-    group: "native",
-    url: `${OPTIC_BASE}/`,
-    selector: ".optic-flow",
-    viewport,
-    theme: "light",
-  })
-}
+  // ---------------------------------------------------------------------------
+  // 2) 原生页面参考：ui@b805377f 的 /（Prism）与 9a6dbcb6 的 /（OpticFlow）
+  // ---------------------------------------------------------------------------
+  console.log("· 原生页面参考")
+  for (const theme of ["light", "dark"]) {
+    await capture({
+      name: `native-prism-ui-b805377f-desktop-${theme}`,
+      variantKey: "prism",
+      group: "native",
+      url: `${COMPARE_BASE}/`,
+      selector: ".hero-prism",
+      viewport: VIEWPORTS[2],
+      theme,
+      saveToDoc: true,
+      animationState: "live (Prism 自动循环 5s 窗口内)",
+    })
+    await capture({
+      name: `native-optic-9a6dbcb6-desktop-${theme}`,
+      variantKey: "optic",
+      group: "native",
+      url: `${OPTIC_BASE}/`,
+      selector: ".optic-flow",
+      viewport: VIEWPORTS[2],
+      theme,
+      saveToDoc: true,
+      animationState: "live",
+    })
+  }
+  for (const viewport of [VIEWPORTS[0], VIEWPORTS[2]]) {
+    await capture({
+      name: `native-optic-9a6dbcb6-${viewport.key}-light`,
+      variantKey: "optic",
+      group: "native",
+      url: `${OPTIC_BASE}/`,
+      selector: ".optic-flow",
+      viewport,
+      theme: "light",
+    })
+  }
 
-// ---------------------------------------------------------------------------
-// 3) 冻结帧：A/C 用 ?paused=1，B 等过 Prism 的 5s 自动停住
-// ---------------------------------------------------------------------------
-console.log("· 冻结帧")
-for (const variant of VARIANTS) {
-  await capture({
-    name: `settled-${variant.code}-${variant.key}-desktop-light`,
-    variantKey: variant.key,
-    group: "settled",
-    url: compareUrl(variant.key, { paused: variant.key !== "prism" }),
-    selector: variant.selector,
-    viewport: VIEWPORTS[2],
-    theme: "light",
-    settleFirst: variant.key === "prism" ? 6500 : 600,
-    expectMode: null,
-    animationState: "settled / paused",
-    saveToDoc: true,
-  })
-}
+  // ---------------------------------------------------------------------------
+  // 3) 冻结帧：A/C 用 ?paused=1，B 等过 Prism 的 5s 自动停住
+  // ---------------------------------------------------------------------------
+  console.log("· 冻结帧")
+  for (const variant of VARIANTS) {
+    await capture({
+      name: `settled-${variant.code}-${variant.key}-desktop-light`,
+      variantKey: variant.key,
+      group: "settled",
+      url: compareUrl(variant.key, { paused: variant.key !== "prism" }),
+      selector: variant.selector,
+      viewport: VIEWPORTS[2],
+      theme: "light",
+      settleFirst: variant.key === "prism" ? 6500 : 600,
+      expectMode: null,
+      animationState: "settled / paused",
+      saveToDoc: true,
+    })
+  }
 
-// ---------------------------------------------------------------------------
-// 4) Reduced Motion 与 WebGL 降级
-// ---------------------------------------------------------------------------
-console.log("· Reduced Motion / WebGL 降级")
-for (const variant of VARIANTS) {
-  await capture({
-    name: `reduced-motion-${variant.code}-${variant.key}-desktop-light`,
-    variantKey: variant.key,
-    group: "reduced-motion",
-    url: compareUrl(variant.key),
-    selector: variant.selector,
-    viewport: VIEWPORTS[2],
-    theme: "light",
-    reducedMotion: "reduce",
-    expectMode: null,
-    animationState: "prefers-reduced-motion: reduce",
-    saveToDoc: true,
-  })
-  await capture({
-    name: `webgl-disabled-${variant.code}-${variant.key}-desktop-light`,
-    variantKey: variant.key,
-    group: "webgl-disabled",
-    url: compareUrl(variant.key),
-    selector: variant.selector,
-    viewport: VIEWPORTS[2],
-    theme: "light",
-    disableWebgl: true,
-    expectMode: null,
-    animationState: "WebGL2 不可用（静态降级）",
-    saveToDoc: true,
-  })
+  // ---------------------------------------------------------------------------
+  // 4) Reduced Motion 与 WebGL 降级
+  // ---------------------------------------------------------------------------
+  console.log("· Reduced Motion / WebGL 降级")
+  for (const variant of VARIANTS) {
+    await capture({
+      name: `reduced-motion-${variant.code}-${variant.key}-desktop-light`,
+      variantKey: variant.key,
+      group: "reduced-motion",
+      url: compareUrl(variant.key),
+      selector: variant.selector,
+      viewport: VIEWPORTS[2],
+      theme: "light",
+      reducedMotion: "reduce",
+      expectMode: null,
+      animationState: "prefers-reduced-motion: reduce",
+      saveToDoc: true,
+    })
+    await capture({
+      name: `webgl-disabled-${variant.code}-${variant.key}-desktop-light`,
+      variantKey: variant.key,
+      group: "webgl-disabled",
+      url: compareUrl(variant.key),
+      selector: variant.selector,
+      viewport: VIEWPORTS[2],
+      theme: "light",
+      disableWebgl: true,
+      expectMode: null,
+      animationState: "WebGL2 不可用（静态降级）",
+      saveToDoc: true,
+    })
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -488,15 +493,19 @@ for (const variant of VARIANTS) {
   }
 
   // 停机之后：Prism 5s 自动停；A / C 切到暂停帧。
+  let pauseQuirk = null
   if (variant.key === "prism") {
     await tab.waitForTimeout(4000)
   } else {
     await tab.getByRole("button", { name: "暂停动效" }).click()
-    // 点击会把指针留在工具栏上，而工具栏压在 hero 画布范围内——Beams 的
-    // `mouseInteraction` 会让光带继续跟随指针，于是「暂停」了 GPU 仍在画。
-    // 要量的是「动效停了以后还画不画」，所以先把指针移出画布再采样。
+    // Beams 引擎的 `paused` 只是**停止状态推进**，不直接停 rAF 循环；循环要等
+    // `settling` 条件全部落空才收尾，其中 `state.reach`（指针参与度）从 ≈1 衰减到
+    // 0.002 需要 ln(500)/1.8 ≈ 3.45 s。先量一段「点完暂停立刻采样」，把这段尾巴
+    // 如实记下来。
+    pauseQuirk = await sampleOnce(tab, 1000)
+    // 要量的是「动效停了以后还画不画」，所以先把指针移出画布，再等 reach 衰减完。
     await tab.mouse.move(4, 4)
-    await tab.waitForTimeout(600)
+    await tab.waitForTimeout(4200)
   }
   const settledSample = await sampleOnce(tab, 2000)
   const settledPointerInside = await tab.evaluate((selector) => {
@@ -550,10 +559,38 @@ for (const variant of VARIANTS) {
   }))
 
   const meta = await tab.evaluate(collectMeta, variant.selector)
+
+  // 「页面一打开就是暂停态」的独立读数：指针从未进入画布，`state.reach` 恒为 0，
+  // 循环应当在 intro 结束后立刻收尾——这才是「暂停态本身会不会停机」的干净读数。
+  // B（Prism）没有手动暂停概念（`HeroPrism` 不接 `paused`），它 5s 后自动停，
+  // 所以这里只量 A / C。
+  let freshPaused = null
+  if (variant.key !== "prism") {
+    const probe = await context.newPage()
+    await probe.goto(compareUrl(variant.key, { paused: true }), {
+      waitUntil: "load",
+      timeout: 45_000,
+    })
+    await probe.waitForSelector(variant.selector, { timeout: 20_000 })
+    await probe.waitForTimeout(3200)
+    freshPaused = await sampleOnce(probe, 2000)
+    await probe.close()
+  }
+
   perf[variant.key] = {
     variant: `${variant.code} ${variant.name}`,
     animation,
     settled: { sample: settledSample, pointerOutsideCanvas: settledPointerInside },
+    pauseQuirk: pauseQuirk
+      ? {
+          sample: pauseQuirk,
+          note:
+            "点完「暂停动效」后的 1s 窗口：Beams 的 reach 指针参与度尚未衰减完，rAF 仍在逐帧 draw",
+        }
+      : null,
+    freshPaused: freshPaused
+      ? { sample: freshPaused, note: "直接以 ?paused=1 打开，指针从未进入画布" }
+      : null,
     hidden: { sample: hiddenSample, meta: hiddenMeta },
     navigationCleanup: {
       drawCallsBefore: beforeNav,
@@ -569,6 +606,7 @@ for (const variant of VARIANTS) {
   console.log(
     `  ${variant.code} ${variant.name}: 动效 ${animation.medianFps}fps · p95 ${animation.medianP95FrameMs}ms · ` +
       `draws/s ${animation.drawCallsPerSec} · 停机后 draws/s ${settledSample.drawCallsPerSec} · ` +
+      `暂停瞬间 draws/s ${pauseQuirk?.drawCallsPerSec ?? "—"} · 全新暂停态 draws/s ${freshPaused?.drawCallsPerSec ?? "—"} · ` +
       `离屏 draws/s ${hiddenSample.drawCallsPerSec} · 换页后停止绘制 ${afterNav2 === afterNav.drawCalls}`,
   )
   await context.close()
@@ -614,133 +652,149 @@ for (const variant of VARIANTS) {
 // ---------------------------------------------------------------------------
 console.log("· 动效录屏")
 const videos = []
-for (const variant of VARIANTS) {
-  try {
-    const context = await browser.newContext({
-      viewport: { width: 1440, height: 900 },
-      deviceScaleFactor: 1,
-      recordVideo: { dir: resolve(TARGET_DIR, "video"), size: { width: 1440, height: 900 } },
-    })
-    await context.addInitScript(initScript, { theme: "light", disableWebgl: false })
-    const tab = await context.newPage()
-    await tab.goto(compareUrl(variant.key), {
-      waitUntil: "load",
-    })
-    await tab.waitForSelector(`${variant.selector}[data-mode="live"]`, { timeout: 20_000 })
-    await tab.waitForTimeout(5000)
-    const video = tab.video()
-    await tab.close()
-    if (video) {
-      const target = resolve(TARGET_DIR, `motion-${variant.code}-${variant.key}-desktop-light.webm`)
-      await video.saveAs(target)
-      videos.push(target)
-      console.log(`  录屏 motion-${variant.code}-${variant.key}-desktop-light.webm`)
+if (!PERF_ONLY) {
+  for (const variant of VARIANTS) {
+    try {
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        deviceScaleFactor: 1,
+        recordVideo: { dir: resolve(TARGET_DIR, "video"), size: { width: 1440, height: 900 } },
+      })
+      await context.addInitScript(initScript, { theme: "light", disableWebgl: false })
+      const tab = await context.newPage()
+      await tab.goto(compareUrl(variant.key), {
+        waitUntil: "load",
+      })
+      await tab.waitForSelector(`${variant.selector}[data-mode="live"]`, { timeout: 20_000 })
+      await tab.waitForTimeout(5000)
+      const video = tab.video()
+      await tab.close()
+      if (video) {
+        const target = resolve(TARGET_DIR, `motion-${variant.code}-${variant.key}-desktop-light.webm`)
+        await video.saveAs(target)
+        videos.push(target)
+        console.log(`  录屏 motion-${variant.code}-${variant.key}-desktop-light.webm`)
+      }
+      await context.close()
+    } catch (error) {
+      console.log(`  跳过 ${variant.code} 录屏：${String(error).split("\n")[0]}`)
     }
-    await context.close()
-  } catch (error) {
-    console.log(`  跳过 ${variant.code} 录屏：${String(error).split("\n")[0]}`)
-  }
 }
+
 
 // ---------------------------------------------------------------------------
 // 6) 对照拼图
 // ---------------------------------------------------------------------------
-console.log("· 对照拼图")
-async function sheet(name, title, shell, theme, viewport) {
-  const items = []
-  for (const variant of VARIANTS) {
-    const file = `matrix-${shell}-${variant.code}-${variant.key}-${viewport.key}-${theme}.png`
-    const buffer = readFileSync(resolve(TARGET_DIR, file))
-    items.push({
-      buffer,
-      caption: `${variant.code} · ${variant.name}`,
-      detail: `${viewport.label} · ${theme} · ${file}`,
-    })
+  console.log("· 对照拼图")
+  async function sheet(name, title, shell, theme, viewport) {
+    const items = []
+    for (const variant of VARIANTS) {
+      const file = `matrix-${shell}-${variant.code}-${variant.key}-${viewport.key}-${theme}.png`
+      const buffer = readFileSync(resolve(TARGET_DIR, file))
+      items.push({
+        buffer,
+        caption: `${variant.code} · ${variant.name}`,
+        detail: `${viewport.label} · ${theme} · ${file}`,
+      })
+    }
+    await contactSheet(items, name, title)
   }
-  await contactSheet(items, name, title)
-}
 
-for (const shell of SHELLS) {
-  const tag = shell.key === "bleed" ? "全幅" : "壳内"
-  await sheet(
-    `compare-${shell.key}-light-desktop.png`,
-    `E-09 · 三方案统一外壳 · ${tag}构图 · Light · 1440×900（同一布局 / 同一尺寸 / 同一取帧时点）`,
-    shell.key,
-    "light",
-    VIEWPORTS[2],
-  )
-  await sheet(
-    `compare-${shell.key}-dark-desktop.png`,
-    `E-09 · 三方案统一外壳 · ${tag}构图 · Dark · 1440×900`,
-    shell.key,
-    "dark",
-    VIEWPORTS[2],
-  )
-  await sheet(
-    `compare-${shell.key}-light-phone.png`,
-    `E-09 · 三方案统一外壳 · ${tag}构图 · Light · 390×844`,
-    shell.key,
-    "light",
-    VIEWPORTS[0],
-  )
-  await sheet(
-    `compare-${shell.key}-dark-phone.png`,
-    `E-09 · 三方案统一外壳 · ${tag}构图 · Dark · 390×844`,
-    shell.key,
-    "dark",
-    VIEWPORTS[0],
-  )
-}
-{
-  const items = []
-  for (const theme of ["light", "dark"]) {
-    for (const variant of VARIANTS) {
-      const file = `matrix-bleed-${variant.code}-${variant.key}-desktop-${theme}.png`
-      items.push({
-        buffer: readFileSync(resolve(TARGET_DIR, file)),
-        caption: `${variant.code} · ${variant.name} · ${theme}`,
-        detail: file,
-      })
-    }
+  for (const shell of SHELLS) {
+    const tag = shell.key === "bleed" ? "全幅" : "壳内"
+    await sheet(
+      `compare-${shell.key}-light-desktop.png`,
+      `E-09 · 三方案统一外壳 · ${tag}构图 · Light · 1440×900（同一布局 / 同一尺寸 / 同一取帧时点）`,
+      shell.key,
+      "light",
+      VIEWPORTS[2],
+    )
+    await sheet(
+      `compare-${shell.key}-dark-desktop.png`,
+      `E-09 · 三方案统一外壳 · ${tag}构图 · Dark · 1440×900`,
+      shell.key,
+      "dark",
+      VIEWPORTS[2],
+    )
+    await sheet(
+      `compare-${shell.key}-light-phone.png`,
+      `E-09 · 三方案统一外壳 · ${tag}构图 · Light · 390×844`,
+      shell.key,
+      "light",
+      VIEWPORTS[0],
+    )
+    await sheet(
+      `compare-${shell.key}-dark-phone.png`,
+      `E-09 · 三方案统一外壳 · ${tag}构图 · Dark · 390×844`,
+      shell.key,
+      "dark",
+      VIEWPORTS[0],
+    )
   }
-  await contactSheet(items, "compare-all-desktop.png", "E-09 · 三方案 × 双主题 · 全幅构图 · 1440×900")
-}
-{
-  const items = []
-  for (const theme of ["light", "dark"]) {
-    for (const variant of VARIANTS) {
-      const file = `matrix-contained-${variant.code}-${variant.key}-desktop-${theme}.png`
-      items.push({
-        buffer: readFileSync(resolve(TARGET_DIR, file)),
-        caption: `${variant.code} · ${variant.name} · ${theme}`,
-        detail: file,
-      })
+  {
+    const items = []
+    for (const theme of ["light", "dark"]) {
+      for (const variant of VARIANTS) {
+        const file = `matrix-bleed-${variant.code}-${variant.key}-desktop-${theme}.png`
+        items.push({
+          buffer: readFileSync(resolve(TARGET_DIR, file)),
+          caption: `${variant.code} · ${variant.name} · ${theme}`,
+          detail: file,
+        })
+      }
     }
+    await contactSheet(items, "compare-all-desktop.png", "E-09 · 三方案 × 双主题 · 全幅构图 · 1440×900")
   }
-  await contactSheet(items, "compare-all-contained-desktop.png", "E-09 · 三方案 × 双主题 · 壳内构图 · 1440×900")
-}
-{
-  const items = []
-  for (const theme of ["light", "dark"]) {
-    for (const variant of VARIANTS) {
-      const file = `native-${variant.key === "optic" ? "optic-9a6dbcb6" : "prism-ui-b805377f"}-desktop-${theme}.png`
-      items.push({
-        buffer: readFileSync(resolve(TARGET_DIR, file)),
-        caption: `${variant.code} 原生 · ${theme}`,
-        detail: file,
-      })
+  {
+    const items = []
+    for (const theme of ["light", "dark"]) {
+      for (const variant of VARIANTS) {
+        const file = `matrix-contained-${variant.code}-${variant.key}-desktop-${theme}.png`
+        items.push({
+          buffer: readFileSync(resolve(TARGET_DIR, file)),
+          caption: `${variant.code} · ${variant.name} · ${theme}`,
+          detail: file,
+        })
+      }
     }
+    await contactSheet(items, "compare-all-contained-desktop.png", "E-09 · 三方案 × 双主题 · 壳内构图 · 1440×900")
   }
-  await contactSheet(items, "compare-native-desktop.png", "E-09 · 原生页面参考（各分支自己的构图）")
+  {
+    const items = []
+    for (const theme of ["light", "dark"]) {
+      for (const variant of VARIANTS) {
+        const file = `native-${variant.key === "optic" ? "optic-9a6dbcb6" : "prism-ui-b805377f"}-desktop-${theme}.png`
+        items.push({
+          buffer: readFileSync(resolve(TARGET_DIR, file)),
+          caption: `${variant.code} 原生 · ${theme}`,
+          detail: file,
+        })
+      }
+    }
+    await contactSheet(items, "compare-native-desktop.png", "E-09 · 原生页面参考（各分支自己的构图）")
+  }
 }
 
 // ---------------------------------------------------------------------------
 // 7) manifest
 // ---------------------------------------------------------------------------
+// PERF_ONLY：只重测性能与降级读数，截图沿用上一轮，但 manifest 必须写全，
+// 否则报告会引用到一份只剩性能段落的清单。
+// ---------------------------------------------------------------------------
+const previous = PERF_ONLY
+  ? JSON.parse(readFileSync(resolve(TARGET_DIR, "manifest.json"), "utf8"))
+  : null
+if (PERF_ONLY && !previous) {
+  throw new Error("HERO_COMPARE_PERF_ONLY=1 但找不到上一轮的 manifest.json，请先完整跑一轮。")
+}
+const allEntries = previous ? previous.entries : entries
+const allVideos = previous ? previous.videos : videos
+
 const manifest = {
   task: "E-09 · OpticFlow × Prism 三方案真实浏览器对照",
   status: "VISUAL_REVIEW_PENDING",
-  capturedAt: new Date().toISOString(),
+  capturedAt: previous?.capturedAt ?? new Date().toISOString(),
+  perfMeasuredAt: new Date().toISOString(),
   commit: COMMIT,
   branch: BRANCH,
   browser: browserPath,
@@ -753,10 +807,10 @@ const manifest = {
     "cd <feat/iris21-multiagent-integration 的 web> && npx vite build && npx vite preview --port 4174 --strictPort",
     "node web/scripts/evidence/hero-compare.mjs",
   ],
-  entries,
+  entries: allEntries,
   performance: perf,
   reducedMotionChecks: reducedChecks,
-  videos,
+  videos: allVideos,
 }
 
 writeFileSync(
@@ -772,10 +826,11 @@ writeFileSync(
       branch: BRANCH,
       browserVersion: browser.version(),
       capturedAt: manifest.capturedAt,
-      frames: entries.length,
+      perfMeasuredAt: manifest.perfMeasuredAt,
+      frames: allEntries.length,
       performance: perf,
       reducedMotionChecks: reducedChecks,
-      videos,
+      videos: allVideos,
     },
     null,
     2,
@@ -785,6 +840,6 @@ writeFileSync(
 
 await browser.close()
 
-console.log(`\n共 ${entries.length} 张截图。`)
+console.log(`\n共 ${allEntries.length} 张截图。`)
 console.log(`全量：${TARGET_DIR}`)
 console.log(`入库：${DOC_DIR}`)
