@@ -115,7 +115,6 @@ eye-diagnosis:
       # 宽限期：最近 N 分钟内被修改的对象不参与清理，避免误删正在上传的图片
       min-age-minutes: 30
   inference:
-    hash-algorithm: SHA-256
     model-version: efficientnet-b4@1.0.0
     model-weight-sha256: ${MODEL_WEIGHTS_SHA256:}
     preprocess-version: v1
@@ -146,6 +145,4 @@ eye-diagnosis:
     # 可见集合（BUILTIN/USER_UPLOAD 保留，UNKNOWN/AUTHORIZED_EXTERNAL 一律排除），
     # 绝不扩大默认可见性；不参与受控引用库的准入判定。
     source-type:
-      enabled: false
-    evaluation:
       enabled: false
