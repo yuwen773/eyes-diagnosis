@@ -17,6 +17,8 @@
 | `design/iris-2-r2-5-product-shell-audit.md` | 查 R2.5 全站视觉审计（逐路由现状/目标/复用/风险）与 Shared Product Shell 的 PR 拆分 |
 | `design/iris2-r2-5-release-integration.md` | 查 R2/R2.5 的 13 步合并序列与三条绕行规则（跳过 #53、关闭 #60、逐级 retarget）——**已执行完毕的归档记录**，文中的 SHA 是当时快照 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
+| `architecture/codebase-archaeology-2026-11-17.md` | 查架构演变时间线、有意设计 vs 历史包袱的归因、可安全移除清单（基线 `3c302504`） |
+| `architecture/css-architecture-contract.md` | 查 Tailwind / Iris CSS 的职责边界、混用三档与 `@layer` 迁移路径（提案，基线 `origin/ui@b805377f`） |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |
 
