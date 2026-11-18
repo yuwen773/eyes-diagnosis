@@ -29,6 +29,48 @@ body {
   font-synthesis-weight: none;
 }
 
+/* ==========================================================================
+   NProgress 顶部进度条：统一改写成 Iris 的场景语义色，不用库默认的亮蓝。
+   层级压在顶栏之上、模态之下（modal 常用 z-index 100+）。
+   ========================================================================== */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: 2px;
+  background: var(--brand-primary);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-primary) 45%, transparent);
+}
+
+/* 管理端外壳内换管理紫，与当前语境一致。 */
+html:has(#root > .is-admin) #nprogress .bar {
+  background: var(--admin-primary);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--admin-primary) 45%, transparent);
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 90px;
+  height: 100%;
+  opacity: 1;
+  transform: rotate(3deg) translate(0, -4px);
+  box-shadow:
+    0 0 10px var(--brand-primary),
+    0 0 5px var(--brand-primary);
+}
+
+html:has(#root > .is-admin) #nprogress .peg {
+  box-shadow:
+    0 0 10px var(--admin-primary),
+    0 0 5px var(--admin-primary);
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -298,10 +340,11 @@ a:hover .wordmark__iris {
 }
 
 .wordmark__zh {
-  /* 字标走品牌字 Manrope（DESIGN §1.6.1）；不用位图字标，避免任意尺寸放大失真。 */
-  font-family: var(--font-brand);
+  /* 品牌点缀用 Dancing Script（DESIGN §2.1 的 2.2 例外）：只染拉丁品名。
+     不用位图字标，避免任意尺寸放大失真。 */
+  font-family: var(--font-script);
   font-weight: 700;
-  font-size: 20px;
+  font-size: 24px;
   letter-spacing: 0.02em;
 }
 

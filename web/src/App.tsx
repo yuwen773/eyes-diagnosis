@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { FaultProvider, FaultToaster } from "@/components/fault"
 import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
+import { routeBegin, routeEnd } from "@/lib/progress"
 import { PageSkeleton } from "@/components/PageSkeleton"
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary"
 import { NotFoundPage } from "@/components/system/IrisStates"
@@ -66,6 +67,22 @@ const AdminDataAnalysisPage = lazy(() =>
 const AdminNewsEditPage = lazy(() =>
   import("@/pages/admin/AdminNewsEditPage").then((m) => ({ default: m.AdminNewsEditPage })),
 )
+
+/**
+ * 路由切换时启动顶部进度条，覆盖 lazy chunk 下载 + 页面挂载。
+ * 与 API 进度共用 progress.ts 的引用计数，不会互相踩。
+ * 收尾放在 cleanup：下一次路由变化（或卸载）时才结束，条不会在 lazy 加载中途消失。
+ */
+function RouteProgress() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    routeBegin()
+    return () => routeEnd()
+  }, [pathname])
+
+  return null
+}
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -132,6 +149,7 @@ export function App() {
         {/* 故障提示宿主：一处渲染，全站任何一次失败都从这儿浮出来。 */}
         <FaultProvider>
         <ScrollToTop />
+        <RouteProgress />
         <AuthRedirect />
         <Suspense fallback={<PageSkeleton />}>
         <RouteBoundary>

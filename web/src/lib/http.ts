@@ -10,6 +10,7 @@
  */
 
 import { ApiError } from "./api-error"
+import { apiBegin, apiEnd } from "./progress"
 
 export { ApiError }
 
@@ -53,37 +54,44 @@ export async function request<T>(
   const isForm = init.body instanceof FormData
   let response: Response
 
+  // 进度条包住整条请求链：fetch、状态码判定与 JSON 解包都算在内。
+  // 引用计数在 progress.ts 里做，并发请求只有一个先返回不会把条关掉。
+  apiBegin()
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
-      credentials: "include",
-      ...init,
-      headers: {
-        Accept: "application/json",
-        ...(isForm ? {} : { "Content-Type": "application/json" }),
-        ...init.headers,
-      },
-    })
-  } catch (error) {
-    // 调用方主动取消（切账号 / 组件卸载）不是网络故障：原样抛出 AbortError，
-    // TanStack Query 才能把它识别成取消而不是「网络不可用」。
-    if (init.signal?.aborted) throw error
-    throw new ApiError(-1, "网络不可用，请检查连接后重试")
-  }
-
-  if (!response.ok) {
-    throw new ApiError(response.status, `服务返回 ${response.status}`)
-  }
-
-  const payload = (await response.json()) as Envelope<T>
-  if (payload.code !== 0) {
-    const code = payload.code ?? -1
-    if (AUTH_CODES.has(code) && !options.silentAuth) {
-      notifyAuthExpired(code)
+    try {
+      response = await fetch(`${BASE_URL}${path}`, {
+        credentials: "include",
+        ...init,
+        headers: {
+          Accept: "application/json",
+          ...(isForm ? {} : { "Content-Type": "application/json" }),
+          ...init.headers,
+        },
+      })
+    } catch (error) {
+      // 调用方主动取消（切账号 / 组件卸载）不是网络故障：原样抛出 AbortError，
+      // TanStack Query 才能把它识别成取消而不是「网络不可用」。
+      if (init.signal?.aborted) throw error
+      throw new ApiError(-1, "网络不可用，请检查连接后重试")
     }
-    throw new ApiError(code, payload.msg || "请求未完成")
-  }
 
-  return payload.data as T
+    if (!response.ok) {
+      throw new ApiError(response.status, `服务返回 ${response.status}`)
+    }
+
+    const payload = (await response.json()) as Envelope<T>
+    if (payload.code !== 0) {
+      const code = payload.code ?? -1
+      if (AUTH_CODES.has(code) && !options.silentAuth) {
+        notifyAuthExpired(code)
+      }
+      throw new ApiError(code, payload.msg || "请求未完成")
+    }
+
+    return payload.data as T
+  } finally {
+    apiEnd()
+  }
 }
 
 /**

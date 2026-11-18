@@ -94,6 +94,9 @@
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong",
     "SimSun", Georgia, serif;
   --font-display: "Instrument Serif", "Noto Serif SC", Georgia, serif;
+  /* Iris 2.2 品牌点缀：Dancing Script（latin-400）只用于 wordmark 的拉丁品名与
+     品牌层极少数营销标题；不进正文、不进管理端/临床读数。无汉字，回退 Noto Sans SC。 */
+  --font-script: "Dancing Script", "Noto Sans SC", cursive;
   /* Iris 2.0 品牌/UI 主字体：拉丁字形用 Manrope，中文按字形回退到 Noto Sans SC
      （Manrope 没有汉字，别指望它兜底）。 */
   --font-brand: "Manrope Variable", "Manrope", "Noto Sans SC", "PingFang SC",

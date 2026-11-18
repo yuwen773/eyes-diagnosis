@@ -143,8 +143,16 @@ Hugeicons。图标一律用既有的 `lucide-react` 静态命名导入。
 
 - **Manrope**（拉丁品牌字体）经 `@fontsource-variable/manrope` 引入，
   SIL Open Font License 1.1，包内已含许可证。
+- **Dancing Script**（品牌点缀字体，仅用于 wordmark 拉丁品名）经
+  `@fontsource/dancing-script` 引入，SIL Open Font License 1.1。
+  Copyright (c) 2010 Pablo Impallari, Igino Marini；Reserved Font Name: Dancing Script。
+  来源：https://www.fontsquirrel.com/fonts/dancing-script-ot
 - **Noto Sans SC / Noto Serif SC / IBM Plex Mono** 沿用项目既有依赖，
   均为 SIL Open Font License 1.1。
+
+## 工具库
+
+- **NProgress**（顶部路由 / API 进度条）MIT License，版权所有 (c) 2014 Rico Sta. Cruz。
 
 ## 未引入的依赖
 
