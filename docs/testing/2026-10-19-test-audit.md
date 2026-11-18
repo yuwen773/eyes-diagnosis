@@ -52,7 +52,7 @@ Additional coverage corrections:
 | From `algorithm/`: `python -m pytest eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py -q -ra` | **25 passed, 3 skipped**. Skips require POSIX process-group / signal semantics; no Linux/WSL gate was substituted. |
 | From `frontend/`: `npm run test -- --run` | **17 passed** across four files. All original 12 frontend tests remain. |
 | From `frontend/`: `npm run build` | **PASS**, type checking and Vite production build. Existing large-chunk warning remains. |
-| `bash scripts/tests/test-setup-github-facade.sh` and Bash syntax checks | **PASS**, all four smoke cases, no network operations. |
+| `bash scripts/tests/test-setup-github-facade.sh` and Bash syntax checks | **PASS**, all four smoke cases, no network operations. _(script and fixture removed 2026-11-18 as a one-off migration artifact; this row records the audit-time result)_ |
 | `git diff --check` | **PASS**. |
 | Existing work preservation | Audit-start tracked changes compared against the saved original diff: unchanged. Historical SQL, P1 code/config/fixtures, checkpoints, and unrelated untracked refactor scripts were not modified. |
 
