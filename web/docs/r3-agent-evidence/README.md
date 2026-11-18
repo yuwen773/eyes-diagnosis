@@ -122,12 +122,13 @@ rerank 异常回退、空响应回退、rerank 无分结果、无 `docId` 不登
 真实 COS、真实 DashScope（qwen + gte-rerank-v2）、真实 Chroma，脚本不拦截任何请求
 （先起后端：`java -jar target/eye-diagnosis-0.0.1-SNAPSHOT.jar --server.port=18081
 --spring.profiles.active=local,dev`，然后 `R3_API_BASE=http://localhost:18081/api node
-scripts/evidence/<脚本>.mjs`）：
+scripts/evidence/<脚本>.mjs`；18081 被别的实例占用时换个端口，`R3_API_BASE` 跟着改即可 ——
+下表数字取自 2026-11-18 在 18082 的一次复跑）：
 
 | 脚本 | 结果 |
 | --- | --- |
-| `r3-agent-real-backend.mjs` | 218 个 SSE 时间戳全部带时区偏移；`searchDocuments` → `success`（结果 2604 字符）；6 条历史消息时间带偏移；`done` 收口 |
-| `r3-resources-real-backend.mjs` | COS 上传可达 HTTP 200；tool-result 携带 2 条结构化引用：`builtin:05-glaucoma`（rerank 0.2158 / 检索 0.7190）、`builtin:01-normal`（0.1812 / 0.5776）；历史恢复出同一批 2 条来源；上传对象已删除 |
+| `r3-agent-real-backend.mjs` | 187 个 SSE 时间戳全部带时区偏移；`searchDocuments` → `success`（结果 2604 字符）；6 条历史消息时间带偏移；`done` 收口 |
+| `r3-resources-real-backend.mjs` | COS 上传可达 HTTP 200；tool-result 携带 2 条结构化引用：`builtin:05-glaucoma`（rerank 0.1998 / 检索 0.7124）、`builtin:01-normal`（0.1808 / 0.5697）；历史恢复出同一批 2 条来源；上传对象已删除 |
 | `r3-authz-real-backend.mjs` | B 读 A 的历史 → `40101`（不泄露消息）；B 的会话列表 0 条；未登录 → `40100`；A 自读 3 条（正对照） |
 
 真实链**未覆盖**：工具失败 / 超时 / 中断的真实链路（不破坏共享服务就无法稳定构造），
