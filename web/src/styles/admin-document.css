@@ -251,6 +251,7 @@
 .admin-doc__pane-title {
   margin: 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -474,12 +475,14 @@
   border-radius: var(--radius-sm);
   background: var(--admin-surface-deep);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   line-height: 1.6;
 }
 
 .admin-doc__prose code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 

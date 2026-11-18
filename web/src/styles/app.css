@@ -29,6 +29,18 @@ body {
   font-synthesis-weight: none;
 }
 
+/* 数字契约（DESIGN.md §3.3 / §Clinical / §Management）：读数、计数、时间戳一律
+   等宽且表格数字对齐。.num 给需要主动声明的数字元素复用；所有 mono 声明处
+   也已补上 tabular-nums，连回退字体（Consolas / ui-monospace）都保持一致。 */
+.num,
+.font-mono,
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ==========================================================================
    NProgress 顶部进度条：统一改写成 Iris 的场景语义色，不用库默认的亮蓝。
    层级压在顶栏之上、模态之下（modal 常用 z-index 100+）。
@@ -195,7 +207,7 @@ a {
 .h3 {
   margin: 0;
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: 400;
   font-size: 19px;
   line-height: 1.35;
   letter-spacing: -0.01em;
@@ -283,6 +295,7 @@ a {
 
 .sec-head__code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -350,6 +363,7 @@ a:hover .wordmark__iris {
 
 .wordmark__en {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -494,6 +508,7 @@ a.acct__trigger--anon:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   line-height: 1.2;
   letter-spacing: 0.02em;
@@ -596,6 +611,7 @@ a.acct__trigger--anon:hover {
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   letter-spacing: 0.04em;
   color: var(--brand-muted);
@@ -873,6 +889,7 @@ a.acct__trigger--anon:hover {
   padding-top: 14px;
   border-top: 1px solid var(--line);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--fg-3);
@@ -901,6 +918,7 @@ a.acct__trigger--anon:hover {
 
 .site-foot__nav-label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -956,6 +974,7 @@ a.acct__trigger--anon:hover {
   display: block;
   margin-bottom: 6px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1037,6 +1056,7 @@ a.acct__trigger--anon:hover {
 
 .btn__key {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.1em;
   opacity: 0.5;
@@ -1090,6 +1110,7 @@ a.acct__trigger--anon:hover {
 
 .link__mark {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   opacity: 0.7;
 }
@@ -1294,6 +1315,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .index__code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
@@ -1368,12 +1390,14 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .readout__value--mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11.5px;
   letter-spacing: 0.02em;
 }
 
 .strip__cell .readout__value {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 
@@ -1654,6 +1678,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .composer__eyebrow {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2011,6 +2036,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .kv__row dd {
   margin: 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12.5px;
   line-height: 1.6;
 }
@@ -2099,6 +2125,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .console__meta {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--on-dark-3);
@@ -2109,6 +2136,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--signal-text);
@@ -2148,6 +2176,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .trace__role {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--on-dark-2);
@@ -2435,6 +2464,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .dial__unit {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2460,6 +2490,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .scale__code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--fg-3);
@@ -2532,6 +2563,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2923,6 +2955,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .proc__mark {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   min-width: 1ch;
 }
@@ -3118,6 +3151,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   flex-wrap: wrap;
   gap: 8px 22px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3301,6 +3335,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .slot__hint {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -3457,6 +3492,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 /* 判读日志 */
 .journal {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11.5px;
   line-height: 1.9;
   color: var(--fg-2);
@@ -3784,6 +3820,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .recos li::before {
   content: counter(reco, decimal-leading-zero);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--ink-3);
@@ -3808,6 +3845,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .recos__flag {
   flex: none;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   line-height: 1.6;
   padding: 0 5px;
@@ -3836,6 +3874,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .notice__mark {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--risk-attention);
@@ -4071,6 +4110,7 @@ html:not(.dark) .auth__beam {
 
 .auth__code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--auth-fg-3);
@@ -4124,6 +4164,7 @@ html:not(.dark) .auth__beam {
   padding-block: 10px;
   border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--auth-fg-3);
@@ -4232,6 +4273,7 @@ html:not(.dark) .auth__beam {
   margin-bottom: 22px;
   border-bottom: 1px solid var(--auth-line-soft);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -4285,6 +4327,7 @@ html:not(.dark) .auth__beam {
   align-items: center;
   gap: 9px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--auth-fg-3);
@@ -4356,6 +4399,7 @@ html:not(.dark) .auth__beam {
 
 .field__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -4371,6 +4415,7 @@ html:not(.dark) .auth__beam {
   border-radius: 0;
   color: var(--ink);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   letter-spacing: 0.02em;
   transition:

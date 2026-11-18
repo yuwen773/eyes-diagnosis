@@ -251,6 +251,7 @@
 
 .iris-error__readout dt {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -260,6 +261,7 @@
 .iris-error__readout dd {
   margin: 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--fg);
   overflow-wrap: anywhere;

@@ -30,6 +30,7 @@ html.dark .disclaimer-bar {
 
 .disclaimer-bar__mark {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;

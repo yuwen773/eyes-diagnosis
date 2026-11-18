@@ -112,8 +112,8 @@ html:not(.dark) .admin-side__mark--dark {
 }
 
 .admin-side__brand-sub {
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
+  font-size: var(--fs-11);
+  letter-spacing: 0.08em;
   color: var(--admin-text-faint);
 }
 
@@ -843,6 +843,7 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
 .admin-dt__head {
   padding: 12px 16px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
@@ -941,6 +942,7 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   padding: 12px 16px;
   border-top: 1px solid var(--admin-line);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--admin-text-muted);
 }
@@ -962,6 +964,7 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   background: var(--admin-surface);
   color: var(--admin-text);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   cursor: pointer;
   transition: border-color var(--fast), color var(--fast);
@@ -991,6 +994,7 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   background: var(--admin-surface);
   color: var(--admin-text);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   cursor: pointer;
 }
@@ -1207,6 +1211,7 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   background: transparent;
   color: var(--admin-text-muted);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   line-height: 1.6;
   cursor: pointer;
@@ -1278,6 +1283,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 .admin-viz__th {
   padding: 10px 12px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
@@ -1475,6 +1481,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   background: var(--admin-primary-soft);
   color: var(--admin-primary);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -1661,6 +1668,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-users__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1795,6 +1803,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-news__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1944,6 +1953,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-diagnosis__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2152,6 +2162,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 .admin-diagnosis__section-title {
   margin: 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;
@@ -2206,6 +2217,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-diagnosis__review-label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2600,6 +2612,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-newsedit__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2906,6 +2919,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 
 .admin-form__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3061,6 +3075,7 @@ html.dark .admin-dt__check:indeterminate {
 
 .admin-knowledge__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3125,6 +3140,7 @@ html.dark .admin-dt__check:indeterminate {
 
 .admin-knowledge__fact dt {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -3154,6 +3170,7 @@ html.dark .admin-dt__check:indeterminate {
   border: 1px solid var(--admin-line);
   color: var(--admin-text-muted);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -3322,6 +3339,7 @@ html.dark .admin-dt__check:indeterminate {
   background: var(--admin-surface);
   color: var(--admin-text-muted);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   cursor: pointer;
   transition: border-color var(--fast), color var(--fast), background var(--fast);

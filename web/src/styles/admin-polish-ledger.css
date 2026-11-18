@@ -29,6 +29,7 @@
 
 .admin-ledger__grouplabel {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -132,6 +133,7 @@
      在暗色下对比度不够（实测偏灰糊）。 */
   margin-top: 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.01em;
   line-height: 1.45;

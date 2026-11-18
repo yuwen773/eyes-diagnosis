@@ -105,6 +105,21 @@
     system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "Cascadia Mono",
     Consolas, monospace;
+  /* 承载运行时内容（CMS 新闻 / 模型回答 / 用户昵称）的容器用：系统中文栈前置，
+     绕开只有 1210 字的静态子集，避免缺字时同一行混排两种中文字体。 */
+  --font-cjk-ugc: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+    "Noto Sans SC", system-ui, sans-serif;
+
+  /* ── 字号梯（2026-11-18 收敛；DESIGN.md §3.3 期望字号走令牌）──
+     只在新增/改写处引用，存量硬编码不要求一次改完。 */
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-15: 15px;
+  --fs-17: 17px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
 
   /* ── 版心与节奏 ─────────────────────────────── */
   --maxw: 1240px;

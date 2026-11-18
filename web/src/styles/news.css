@@ -559,6 +559,7 @@
   gap: 8px;
   margin-bottom: 20px;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--brand-muted);
@@ -729,6 +730,7 @@
   content: "▾";
   margin-left: auto;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   transition: transform var(--fast);
 }
 

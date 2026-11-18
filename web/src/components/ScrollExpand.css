@@ -172,6 +172,7 @@
 
 .scroll-expand__title-kicker {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -186,6 +187,7 @@
   bottom: 6%;
   text-align: center;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -204,6 +206,7 @@
 
 .scroll-expand__caption-kicker {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -351,6 +354,7 @@
 
 .specimen-grid__reading-code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--signal-night, #ef7a45);
@@ -386,6 +390,7 @@
 .specimen-hint {
   margin: 16px 0 0;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
@@ -433,6 +438,7 @@ body:has(dialog[open]) {
 
 .specimen-lightbox__index {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
@@ -508,6 +514,7 @@ body:has(dialog[open]) {
   background: none;
   color: var(--fg);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   cursor: pointer;
   transition:
@@ -522,6 +529,7 @@ body:has(dialog[open]) {
 
 .specimen-lightbox__note {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
@@ -539,6 +547,7 @@ body:has(dialog[open]) {
 
 .scroll-expand__caption-note {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

@@ -256,6 +256,7 @@
   padding-block: 10px;
   border-bottom: 1px solid var(--aa-line);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--aa-muted);

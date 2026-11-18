@@ -166,6 +166,7 @@
 
 .records__code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
@@ -199,12 +200,14 @@
 
 .records__conf {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 15px;
   letter-spacing: 0.02em;
 }
 
 .records__caret {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 16px;
   color: var(--fg-3);
   text-align: center;
@@ -575,6 +578,7 @@
 
 .profile__label {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;

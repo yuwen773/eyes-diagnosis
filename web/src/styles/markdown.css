@@ -76,6 +76,7 @@
 
 .markdown-body code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   background: var(--bg);
   border: 1px solid var(--hr);
@@ -97,6 +98,7 @@
   padding: 4px 10px;
   border-bottom: 1px solid var(--hr);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--fg-3);
@@ -121,4 +123,14 @@
   border: 1px solid var(--hr);
   padding: 4px 10px;
   text-align: left;
+}
+
+/* UGC 正文（CMS 新闻 / Agent 回答）：字形不受静态子集清单约束，系统中文栈前置
+   避免缺字回退造成同一行混排两种中文字体。令牌定义见 tokens.css。 */
+.markdown-body,
+.news-paper__body,
+.news-article__body,
+.agent-msg__body,
+.agent-msg__text {
+  font-family: var(--font-cjk-ugc);
 }
