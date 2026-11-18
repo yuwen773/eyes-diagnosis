@@ -33,6 +33,9 @@ CI 里是根 `verify.yml` 的 `web` job），Vue 已弃用线看 `frontend/packa
 
 Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local.md`（不入库，工作树不自动继承）；Codex 侧同一份在 `~/.codex/AGENTS.md`。
 
+**本地收尾**：工作树与测试服务的盘点/回收走 `scripts/worktree-hygiene.sh`（`report` / `reap` / `branches`）
+与 `scripts/dev-servers.sh`（`list` / `stop`），规则见 `docs/agent-worktree-conventions.md` §收尾。
+
 ## Architecture
 
 **Backend**: Controller → Service → Mapper (MyBatis Plus). `BaseResponse<T>{code:0, data, msg}` unified response. Auth: Spring Session + Redis, `@AuthCheck(mustRole=...)` AOP. MyBatis Plus `map-underscore-to-camel-case: false`.
