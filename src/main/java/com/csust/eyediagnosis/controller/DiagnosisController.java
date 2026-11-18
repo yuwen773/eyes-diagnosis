@@ -19,7 +19,9 @@ import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
+import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisSourceProjection;
 import com.csust.eyediagnosis.service.DiagnosisService;
+import com.csust.eyediagnosis.service.DiagnosisSourceProjectionService;
 import com.csust.eyediagnosis.service.UserService;
 import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,8 @@ public class DiagnosisController {
     private UserService userService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private DiagnosisSourceProjectionService sourceProjectionService;
 
     /**
      * 诊断图片上传
@@ -185,8 +189,17 @@ public class DiagnosisController {
                                                                 HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
+        // 归属校验在前：投影里含授权时间与回执前缀，只能给这条记录的主人（或管理端复核人）。
         Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
-        return ResultUtils.success(DiagnosisResultVO.objToVo(diagnosis));
+        DiagnosisResultVO vo = DiagnosisResultVO.objToVo(diagnosis);
+        try {
+            vo.setSource(sourceProjectionService.project(id, diagnosis.getUrl()));
+        } catch (DiagnosisSourceProjectionService.ProjectionUnavailable e) {
+            // 读不出来源就说读不出来。不能退化成「没有授权、没有归档」——那是在编事实。
+            vo.setSource(new DiagnosisSourceProjection(
+                    null, null, null, null, null, null, DiagnosisSourceProjection.Archival.UNKNOWN));
+        }
+        return ResultUtils.success(vo);
     }
 
     /**
