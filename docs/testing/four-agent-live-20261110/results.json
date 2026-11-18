@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-10",
+  "completed_utc": "2026-11-10T13:15:22.416159+00:00",
+  "baseline_commit": "74cf7d8246c6fb30ad58bd0497f8e08f94be749f",
+  "candidate": "existing uncommitted worktree; four-agent product source unmodified in this validation",
+  "overall": "PARTIAL_REAL_PROVIDER_VALIDATION; ONE_VERIFIED_FOUR_ROLE_COMPLETION_OF_TWO_SCENARIOS",
+  "scope": "unmodified Java PatientDraftCoordinator, DraftAgents and ControlledEvidenceRetriever; real qwen3.5-plus provider; synthetic upstream and source eligibility fixtures",
+  "credential_source": "Windows user environment DASHSCOPE_API_KEY; explicitly inherited for this run",
+  "source_sha256": {
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftAgents.java": "9e0477524893be9f3f95881ed138a4c0db93f5a7cc7f2c585f6e519c693be7f5",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java": "ba54b55802084863242cbd7efb96a8307680f45ac19b89d71ed718ed6ccf6159",
+    "src/main/java/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever.java": "184fef1bea92794736297f213cab37878aaea3c5b4ede5747a90b2f1aa3b5ea8",
+    "src/test/java/com/csust/eyediagnosis/patientdraft/PatientDraftTest.java": "47b9ac5f74de4360b66b57718d2fab6c56d066fe17ad5fa96753a1c2dea15d47"
+  },
+  "harness_sha256": "d9c662b80b3302b341336e66c050c30131a2d4b03509c6fa25e32e7aaca7d87e",
+  "trace_verifier_sha256": "ac202d78a0377662ba28209fbe53b07639bdbd8cf8fd6ccc26de265ea9c47e12",
+  "engineering_suite": {
+    "tests": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+    "xml_sha256": "983d3cd99f6b550c2a1a81b5606fc570e6bdf2fcb86550a4b4a215a08e7d2e73",
+    "log_sha256": "2bba0e1df33fcd348f74a01586c92271fdf81314eea46627d7133271825bdac6",
+    "report_gate": "PASS",
+    "boundary": "real isolated MySQL; deterministic provider substitutes"
+  },
+  "live_no_thinking": {
+    "scenarios": 2,
+    "verified_four_role_completions": 1,
+    "physical_http_requests": 7,
+    "http_200": 7,
+    "prompt_tokens": 4364,
+    "completion_tokens": 1490,
+    "request_identity_or_object_location_detected": false
+  },
+  "runtime_budgets": {
+    "max_calls": 8,
+    "total_ms": 90000,
+    "call_ms": 20000
+  },
+  "negative_not_evaluated_inference": {
+    "task_id": "cbddf38a-0177-41da-838d-f5b3d6d822c0",
+    "reserved_calls": 0,
+    "observed_http_calls": 0,
+    "status": "RESTRICTED",
+    "stop_reason": "INVALID_INFERENCE"
+  },
+  "model_and_scope_limits": [
+    "Synthetic inference and source eligibility; not actual model image inference or domain-approved medical references",
+    "One successful scenario does not establish reliability or clinical effectiveness",
+    "Live supplement/rewrite loop not observed; covered by deterministic engineering suite",
+    "Default qwen3.5-plus runs exceeded call deadline; successful run explicitly disabled thinking",
+    "One real-model explanation produced invalid concatenated quotations and was rejected",
+    "No browser, doctor decision, patient authorization, clinical or production acceptance in this run"
+  ],
+  "cleanup": {
+    "dedicated_container_removed": true,
+    "generated_credential_copies_removed": true
+  },
+  "harness_fingerprint_scope": "Current temporary helper after JSON-node comparison correction; exact original harness fingerprint was not recorded at run time",
+  "compiled_product_classes_sha256": {
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Claim.class": "a75bc1ac2bbb2c07dc43915b64662dc4379d9c25d6124fea54c88b81de01acf0",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$CriticAgent.class": "28a458c5172fb46850f24c3f1b165936b554a9585c25c2d66328903710203124",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$CriticContext.class": "1b64fbe85780416d4bb7b5f9c12b3c266b3879cd74ef7d540f316d1019efb50a",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Critique.class": "2feff6457ba890fc9fe0925ea08491bd90dd9d6c784903ada9cd32140139d717",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Draft.class": "7763c4d05bf53f4a55791b0eb73271be922bd35d206de4eb70d73affe9a62373",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$EvidenceAgent.class": "bc478f6de624e6ab87937f702fe6d527b8d3f2588a0267072acdcf002b340c6d",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$EvidenceContext.class": "d05f7b7afc8569033e1e82fc9bda8e4af75fb64922f4ad547b7749239a96497d",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$ExplanationAgent.class": "bf232f15d9617a0fc8c9c3516ee914c6d2c6e93290dc4e22196a57b4d91f10c2",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$ExplanationContext.class": "4bc504c034bb6ce38db64adc56e12935f0fe3d9d9688a9cb499ecbdde4631d7c",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Inference.class": "d880a4daf847b70e10c447506a63bf4e1810571e4307c097b51fb7eee3b8d9e3",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Objection.class": "d55a383a6a30912db631b6af0250f14c2e101fa61ec69c59f48f30c79ed73a09",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Reference.class": "75ca6c894bfa44b6b6f2cd9281af2c01371f998cc472750b6faf21bde1f747a0",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Retrieved.class": "6195d102238ce51533b8aeef383c5c57f8ea949c95cf14654963832165763b8b",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Search.class": "db59d262f670a0e1ca27d2d123a041946046b453e6e021cfb36952b7c0ae908c",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Transport.class": "fa1572ddd5c51109be52ad507f473acab7ba2188244c447413eae29a1c594f99",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$Vision.class": "8c32852e55e066bda56cdfaa28ce5b96f937a9da514f029dc036cc4dcc8bcee7",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents$VisionAgent.class": "09fcd907227d3b11159ea7d1566bb1ecc82c1eba340a8e1a3511192fed0acfb6",
+    "target/classes/com/csust/eyediagnosis/patientdraft/DraftAgents.class": "8048fb2c51076456f6606f99ec7e2b6dd3ca1e1598caadf469475135888dcfd7",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$1.class": "6d5c2a0e3e6403c5f094b24c2a6f6e5cfb1ae327317b5b9a2efb78529d3926cb",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$2.class": "54da919b32242d0a7ae6b8fada82d564b92d627a7b50fcff990c07ef7ecb0eb6",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Bound.class": "f85d29429f25ae2a70cd2b7673f5c27c57ff529d2a56eab6f8ab08616b606cf3",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Budget.class": "e1550ce1e5ee0e8cfeb78ea613173a56adf2975e316eaac2b6b9d79fb079aa21",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Claimed.class": "013c8de02d299277a8e4bdebd14593738f2b4fa4429274cddf3a01a752417383",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Evidence.class": "40a3fc121f5ddf74e91282ed3f479d4bbcb286f4fd89b62d91a45a4c685061f3",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Gate.class": "c8ea46055f531ac730cae3c6a10c0d42f295e3f6c5877c4f5eaaeb639ea6b516",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Message.class": "7114ab022e42163d11787a3fb466966965ba9e402b7e130d2a7ab1f7bf1911e1",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Report.class": "351bc68120f7b2c066fd92ede62628bb32af82c7b5fb88b3cb0bf8e1931e0dcf",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$RunGate.class": "0ab0fc2ef7a0afc0859da5c3e1286726fe93c5f99cef3175ba4057bcbd498902",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator$Stop.class": "d94225d9203572c323f6fd536575dc2a118994ee8b098c36fcd75b2ba8255f5f",
+    "target/classes/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.class": "ed75ec816157f307b8b36bad9c85385a1e8277693972e548775834a35f670b00",
+    "target/classes/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever$Citation.class": "27bd2b1e5a60f63c76ff2660ec5b9e180523b9cd4884ce31376c90a40d83a6e7",
+    "target/classes/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever$EvidenceUnavailable.class": "d88e03b52b45ec3ef12ce601aa5bd442b8427e4cd74d06bffba916fcc9a7dc99",
+    "target/classes/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever$Scored.class": "c3df4fa264a6fa218021637f0fbc56e2f3b2a700bafd4e877ef846d217ce9c5e",
+    "target/classes/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever.class": "8683ac223c9364abb8260c5398803f7df52e042a80fcc3ccb2d708d6b31f209c"
+  },
+  "classpath_manifest_sha256": "59a52432c2944ab098fdb2e70e69e52b254faee177f6805b7b9d8058fa7306ab"
+}

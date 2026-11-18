@@ -99,6 +99,20 @@ public class AgentImageUploadService {
         }
     }
 
+    /** Convert only an exact server-issued upload URL; never fetch a user URL. */
+    public String resolveOwnedImageId(String imageUrl, Long userId) {
+        ThrowUtils.throwIf(imageUrl == null || userId == null, ErrorCode.NO_AUTH_ERROR);
+        String key = extractOwnedObjectKey(imageUrl);
+        ThrowUtils.throwIf(!imageUrl.equals(cosClientConfig.getHost() + "/" + key)
+                        || !key.matches("agent-chat/" + userId + "/[A-Za-z0-9_-]+\\.(png|jpg)"),
+                ErrorCode.NO_AUTH_ERROR, "图片引用未获授权");
+        var task = uploadTaskMapper.selectByObjectKey(userId, key);
+        ThrowUtils.throwIf(task == null || !userId.equals(task.getUserId())
+                        || !key.equals(task.getObjectKey()) || !UploadStatus.activeCodes().contains(task.getStatus()),
+                ErrorCode.PARAMS_ERROR, "图片不存在或已删除");
+        return key;
+    }
+
     public void deleteImage(String imageUrl, Long userId) {
         ThrowUtils.throwIf(imageUrl == null || userId == null, ErrorCode.NO_AUTH_ERROR);
         String objectKey = extractOwnedObjectKey(imageUrl);

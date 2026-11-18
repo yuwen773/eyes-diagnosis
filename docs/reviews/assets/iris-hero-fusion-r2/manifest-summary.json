@@ -1,0 +1,187 @@
+{
+  "task": "E-09 R2 · Fusion Refinement（C 方案定向视觉精修与真实浏览器复验）",
+  "status": "VISUAL_REVIEW_PENDING",
+  "commit": "c292e416cf3316532dd4ee892f761aabd48daa32",
+  "branch": "local/e09-hero-compare-20261118",
+  "browserVersion": "151.0.7922.34",
+  "capturedAt": "2026-11-18T11:51:34.589Z",
+  "frames": 31,
+  "states": {
+    "settled": {
+      "file": "r2-c-settled-desktop-light.png",
+      "mode": "settled",
+      "drawCalls": 500
+    },
+    "reduced-motion": {
+      "file": "r2-c-reduced-motion-desktop-light.png",
+      "mode": "frozen",
+      "drawCalls": 6
+    },
+    "webgl-disabled": {
+      "file": "r2-c-webgl-disabled-desktop-light.png",
+      "mode": "static",
+      "drawCalls": 0
+    }
+  },
+  "c4": {
+    "settleDelayMs": 4926,
+    "settleDelayFromNavMs": 5275,
+    "settled": {
+      "drawCallsIn2s": 0,
+      "drawCallsPerSec": 0,
+      "fps": 216.2,
+      "mode": "settled"
+    },
+    "hoverAfterSettled": {
+      "pointerMovingThroughoutWindow": true,
+      "drawCallsIn1_5s": 0,
+      "drawCallsPerSec": 0,
+      "mode": "settled"
+    },
+    "themeSwitchWhileSettled": {
+      "drawCalls": 2,
+      "newContexts": 0,
+      "mode": "settled",
+      "theme": "dark"
+    },
+    "routeLeave": {
+      "canvasesAfter": 0,
+      "stoppedDrawing": true
+    },
+    "reducedMotion": {
+      "drawCallsIn2s": 0,
+      "drawCallsPerSec": 0,
+      "cssAnimations": 0
+    },
+    "contextLost": {
+      "supported": true,
+      "mode": "static",
+      "canvases": 0,
+      "staticWash": true,
+      "prism": true
+    },
+    "pageHidden": {
+      "measured": false,
+      "note": "Playwright 无法制造真实的 document.hidden；由 beamsMount.test.ts 的可控桩覆盖"
+    }
+  },
+  "interleavedPerf": [
+    {
+      "round": 1,
+      "order": [
+        "optic",
+        "fusion"
+      ],
+      "samples": {
+        "optic": {
+          "medianFps": 83.5,
+          "medianP95FrameMs": 22.6,
+          "medianDrawCallsPerSec": 168.3,
+          "droppedFrames": 9
+        },
+        "fusion": {
+          "medianFps": 72,
+          "medianP95FrameMs": 18.3,
+          "medianDrawCallsPerSec": 145,
+          "droppedFrames": 6
+        }
+      }
+    },
+    {
+      "round": 2,
+      "order": [
+        "fusion",
+        "optic"
+      ],
+      "samples": {
+        "fusion": {
+          "medianFps": 68.9,
+          "medianP95FrameMs": 18.3,
+          "medianDrawCallsPerSec": 138.3,
+          "droppedFrames": 7
+        },
+        "optic": {
+          "medianFps": 72.2,
+          "medianP95FrameMs": 22.8,
+          "medianDrawCallsPerSec": 145,
+          "droppedFrames": 18
+        }
+      }
+    },
+    {
+      "round": 3,
+      "order": [
+        "optic",
+        "fusion"
+      ],
+      "samples": {
+        "optic": {
+          "medianFps": 73.4,
+          "medianP95FrameMs": 22.8,
+          "medianDrawCallsPerSec": 148.3,
+          "droppedFrames": 12
+        },
+        "fusion": {
+          "medianFps": 62.1,
+          "medianP95FrameMs": 23.2,
+          "medianDrawCallsPerSec": 125,
+          "droppedFrames": 15
+        }
+      }
+    },
+    {
+      "round": 4,
+      "order": [
+        "fusion",
+        "optic"
+      ],
+      "samples": {
+        "fusion": {
+          "medianFps": 63.8,
+          "medianP95FrameMs": 22.8,
+          "medianDrawCallsPerSec": 128.3,
+          "droppedFrames": 14
+        },
+        "optic": {
+          "medianFps": 77.1,
+          "medianP95FrameMs": 18.3,
+          "medianDrawCallsPerSec": 155,
+          "droppedFrames": 6
+        }
+      }
+    }
+  ],
+  "geometry": {
+    "phone": {
+      "hard": [],
+      "info": [],
+      "rayCount": 3
+    },
+    "tablet": {
+      "hard": [],
+      "info": [
+        "光带包围盒与 cta 相交（需看像素复核）"
+      ],
+      "rayCount": 3
+    },
+    "desktop": {
+      "hard": [],
+      "info": [
+        "光带包围盒与 title 相交（需看像素复核）",
+        "光带包围盒与 sub 相交（需看像素复核）",
+        "光带包围盒与 cta 相交（需看像素复核）"
+      ],
+      "rayCount": 3
+    },
+    "wide": {
+      "hard": [],
+      "info": [
+        "光带包围盒与 title 相交（需看像素复核）",
+        "光带包围盒与 sub 相交（需看像素复核）",
+        "光带包围盒与 cta 相交（需看像素复核）"
+      ],
+      "rayCount": 3
+    }
+  },
+  "video": "D:\\Work\\code\\eye-diagnosis\\.worktrees\\r5-joint-v2\\target\\iris-hero-fusion-r2\\r2-c-motion-desktop-light.webm"
+}

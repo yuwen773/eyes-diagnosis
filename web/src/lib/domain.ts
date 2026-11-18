@@ -212,35 +212,186 @@ export function severityRisk(severity?: string): Risk {
 }
 
 /**
- * 复核状态 → 展示文案与风险色。
+ * 人工复核状态 → 展示文案与风险色。
  *
- * 后端写的是 `HumanReviewStatus` 的五个值（`PENDING_AI / AI_ONLY /
- * AWAITING_REVIEW / REVIEWED / OVERRIDDEN`）；早期前端只认
- * `APPROVED / REJECTED / PENDING` 那一组，结果**已复核的记录也被写成“待复核”**。
- * 两套都认，未知值才落到保守的“待复核”。
+ * <p>取值来自后端 {@code HumanReviewStatus}（PENDING_AI / AI_ONLY / AWAITING_REVIEW /
+ * REVIEWED / OVERRIDDEN）。三条不能混的说法：
+ *
+ * <ul>
+ *   <li>AI_ONLY = **只有 AI 结论，没有进入复核队列**。以前这里统一显示「待复核」，
+ *       等于替系统承诺了一件没发生的事：队列里根本没有这条。</li>
+ *   <li>AWAITING_REVIEW 才是真的进了队列。</li>
+ *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统从来没有
+ *       核验过任何临床资质（D-01b）。{@code source.reviewerRole} 只是账号角色，
+ *       而且账号角色可以被管理员随时改派，用它当资质证明等于把角色当资历。</li>
+ * </ul>
+ *
+ * <p>因此 REVIEWED 一律带「资质未核验」，**不看** reviewerRole：历史复核多是管理员
+ * 写的，`doctor` 也只是账号上的一个字符串。
  */
-export function reviewState(status?: string): { label: string; risk: Risk } {
+export function humanReviewState(status?: string | null): { label: string; risk: Risk } {
   switch (status) {
-    case "APPROVED":
-    case "REVIEWED":
-      return { label: "已复核", risk: "normal" }
-    case "REJECTED":
-      return { label: "已退回", risk: "critical" }
-    case "OVERRIDDEN":
-      // 医生推翻 AI 结论：这是人工结论，不是 AI 结论，风险色跟着人工判断走。
-      return { label: "已人工改判", risk: "normal" }
-    case "PENDING":
-    case "AWAITING_REVIEW":
-      return { label: "待复核", risk: "attention" }
-    case "AI_ONLY":
     case "PENDING_AI":
+      return { label: "待模型出结论", risk: "unknown" }
+    case "AI_ONLY":
+      return { label: "仅 AI 结论 · 未进入复核队列", risk: "unknown" }
+    case "AWAITING_REVIEW":
+      return { label: "已进入复核队列 · 待复核", risk: "attention" }
+    case "REVIEWED":
+      return { label: "人工复核已记录 · 资质未核验", risk: "attention" }
+    case "OVERRIDDEN":
+      return { label: "人工结论已推翻 AI", risk: "attention" }
     default:
-      return { label: "待复核", risk: "attention" }
+      return { label: "未记录", risk: "unknown" }
   }
 }
 
 /**
- * 置信度分档。
+ * 记录来源 → 展示文案。
+ *
+ * <p>只陈述「这条记录挂在哪个流程上」：`COLLABORATION_DRAFT` 说明它由协作草稿生成，
+ * **不**说明草稿已获批、患者已授权——那两件事分别看 `draftReviewState` 与
+ * `authorizationState`。把它们折叠成一句「已授权诊断」就是在编事实。
+ */
+export function recordSourceLabel(source?: string | null): string {
+  switch (source) {
+    case "DIRECT":
+      return "本人上传 · 直接判读"
+    case "COLLABORATION_DRAFT":
+      return "协作任务 · 由草稿生成"
+    default:
+      return "未记录"
+  }
+}
+
+/** 协作草稿审核状态 → 文案。无关联草稿返回 null（调用方整行不显示）。 */
+export function draftReviewLabel(state?: string | null): string | null {
+  switch (state) {
+    case "APPROVED":
+      return "草稿已审核通过"
+    case "REJECTED":
+      return "草稿被退回"
+    case "PENDING":
+      return "草稿待审核"
+    default:
+      return null
+  }
+}
+
+/**
+ * 授权时间 → 展示文本。
+ *
+ * <p>后端下发的是 **ISO-8601 UTC**（`2026-11-17T14:10:00Z`）。这里转成本地时间
+ * 并**把时区写出来**：只写「2026-11-17 22:10」会让读者按自己的时区去猜，
+ * 差 8 小时是常事。
+ *
+ * <p>历史数据是 `2026-11-17 22:10:00.0` 这种**没有时区标注**的字面量——
+ * 那种值判定不出是哪个时区的几点，就原样回读并标明「未标注时区」，
+ * 不替它猜一个偏移。
+ */
+export function formatAuthorizedAt(value?: string | null): string | null {
+  if (!value) return null
+  const raw = value.trim()
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)
+  if (!hasZone) return `${raw}（未标注时区）`
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return `${raw}（时间无法解析）`
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZoneName: "short",
+    }).format(parsed)
+  } catch {
+    return parsed.toISOString()
+  }
+}
+
+/**
+ * 患者授权保存 → 文案。授权**不等于**临床人工复核，也不等于草稿获批。
+ *
+ * <p>回执只给前缀：完整回执是否对本人开放是产品决策，前端不补全也不展示全文。
+ */
+export function authorizationLabel(
+  state?: string | null,
+  authorizedAt?: string | null,
+  receipt?: string | null,
+): string {
+  switch (state) {
+    case "APPROVED": {
+      const when = authorizedAt ? ` · ${formatAuthorizedAt(authorizedAt) ?? authorizedAt}` : ""
+      const code = receipt ? ` · 回执 ${receipt}` : ""
+      return `患者已授权保存${when}${code}`
+    }
+    case "OFFERED":
+      return "已向患者提出，待授权"
+    case "EXPIRED":
+      return "授权已过期"
+    default:
+      return "无授权记录"
+  }
+}
+
+/**
+ * 授权细节按最小权限被隐去时的文案。
+ *
+ * <p>与「无授权记录」是两件事：这里说的是**不给看**，不是**没有**。
+ * 说成「无授权记录」就是在替系统陈述一件它没核实过的事。
+ */
+export function authorizationRestrictedLabel(): string {
+  return "授权详情按最小权限不展示"
+}
+
+/**
+ * 影像归档状态 → 文案。
+ *
+ * <p>刻意不用「有没有公开 URL」代替：协作影像按隐私策略不提供公开地址，
+ * 但对象**确实归档了**，把它显示成「未保存」就是在说一件不成立的事。
+ * `ARCHIVED` 也只说「记录里有这个地址」，本轮没有存储侧存在性探测。
+ */
+export function archivalLabel(state?: string | null): string {
+  switch (state) {
+    case "ARCHIVED":
+      return "已归档 · 有公开地址"
+    case "ARCHIVED_NOT_PUBLIC":
+      return "已归档 · 按隐私策略不公开"
+    case "NOT_ARCHIVED":
+      return "未留存影像"
+    default:
+      return "归档状态无法确认"
+  }
+}
+
+/**
+ * 复核人角色 → 文案（D-01b）。
+ *
+ * <p>**只说账号角色，不说职称**：系统里没有可核验的执业资质数据源，
+ * 把 `admin` 的操作写成「医生复核」是伪造医学事实。角色本身也照原码给出，
+ * 便于核对。
+ */
+export function reviewerRoleLabel(role?: string | null): string {
+  switch (role) {
+    case "doctor":
+      return "医生（doctor）"
+    case "admin":
+      return "管理员（admin）"
+    case "user":
+      return "普通用户（user）"
+    case null:
+    case undefined:
+    case "":
+      return "未记录"
+    default:
+      return role
+  }
+}
+
+/**
  *
  * 三档，不把 0.4 与 0.6 折叠成同一个标签：患者看到「低置信」时无从判断该多担心，
  * 两档折叠等于把风险信息直接丢掉。阈值沿用 0.75 / 0.60（低于 0.6 不宜单独下结论）。

@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.controller;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.service.DiagnosisService;
+import com.csust.eyediagnosis.service.DiagnosisSourceProjectionService;
 import com.csust.eyediagnosis.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,7 @@ class DiagnosisPrivacyTest {
     private static final String HASH = "$2a$10$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG";
 
     private DiagnosisService diagnosisService;
+    private DiagnosisSourceProjectionService sourceProjectionService;
     private UserService userService;
     private MockMvc diagnosisMvc;
     private MockMvc userMvc;
@@ -45,10 +47,13 @@ class DiagnosisPrivacyTest {
     @BeforeEach
     void setUp() {
         diagnosisService = mock(DiagnosisService.class);
+        // 来源投影是只读旁路：这里不关心它返回什么，但 controller 依赖它，缺了就是 NPE。
+        sourceProjectionService = mock(DiagnosisSourceProjectionService.class);
         userService = mock(UserService.class);
 
         DiagnosisController diagnosisController = new DiagnosisController();
         ReflectionTestUtils.setField(diagnosisController, "diagnosisService", diagnosisService);
+        ReflectionTestUtils.setField(diagnosisController, "sourceProjectionService", sourceProjectionService);
         ReflectionTestUtils.setField(diagnosisController, "userService", userService);
         diagnosisMvc = MockMvcBuilders.standaloneSetup(diagnosisController).build();
 

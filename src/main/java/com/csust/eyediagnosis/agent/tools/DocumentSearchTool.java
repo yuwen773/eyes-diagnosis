@@ -5,6 +5,7 @@ import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
+import com.csust.eyediagnosis.agent.rag.SourceTypePolicy;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -40,6 +41,14 @@ public class DocumentSearchTool {
 
     @Value("${eye-diagnosis.rag.hybrid-search.rrf-k:60}")
     private int rrfK;
+
+    /**
+     * B2 source-type restriction. Default OFF: turning it on can only REMOVE
+     * candidates (BUILTIN / USER_UPLOAD survive; UNKNOWN / AUTHORIZED_EXTERNAL
+     * are fail-closed). It never changes the existing owner OR filter.
+     */
+    @Value("${eye-diagnosis.rag.source-type.enabled:false}")
+    private boolean sourceTypeRestrictionEnabled;
 
     @Autowired(required = false)
     private VectorStore vectorStore;
@@ -89,6 +98,12 @@ public class DocumentSearchTool {
                 candidates = rrfFusion(vectorStore.similaritySearch(searchRequest), bm25Results, searchTopK);
             } else {
                 candidates = vectorStore.similaritySearch(searchRequest);
+            }
+
+            // Restrictive only: never widens the owner-filtered result set.
+            // Applied to the fused result so the BM25 cache path cannot bypass it.
+            if (sourceTypeRestrictionEnabled) {
+                candidates = SourceTypePolicy.restrict(candidates, currentUserId);
             }
 
             if (candidates.isEmpty()) {

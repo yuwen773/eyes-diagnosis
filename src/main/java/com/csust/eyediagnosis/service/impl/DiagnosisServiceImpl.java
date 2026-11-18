@@ -34,6 +34,7 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisEvidence;
+import com.csust.eyediagnosis.service.ClinicalReviewQualification;
 import com.csust.eyediagnosis.utils.DateRanges;
 import com.csust.eyediagnosis.utils.JsonUtils;
 import com.csust.eyediagnosis.service.DiagnosisService;
@@ -390,9 +391,18 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         ThrowUtils.throwIf(reviewer == null, ErrorCode.NO_AUTH_ERROR);
         ThrowUtils.throwIf(diagnosisId == null || diagnosisId <= 0, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(dto == null, ErrorCode.PARAMS_ERROR);
-        // 仅允许管理员；其他角色绝不能写入 human* 字段
-        ThrowUtils.throwIf(!AuthConstant.ADMIN_ROLE.equals(reviewer.getUserRole()),
-                ErrorCode.NO_AUTH_ERROR, "仅管理员可写入人工复核字段");
+        // D-01b（2026-11-18 产品已裁定）：正式临床复核只能由具有有效、已核验授权的
+        // 医生执行；管理员与医生职责分离，管理员默认最小权限。
+        //
+        // 系统当前没有可核验的资质数据源（t_user 只有一个 userRole，没有执业证书编号、
+        // 没有核验记录、没有开通/吊销流程），所以正式复核的写入路径**安全关闭**：
+        // 管理员、doctor 角色都不例外。既不用 ADMIN_ROLE 顶替资格，也不用
+        // userRole=doctor 顶替资质证明。
+        //
+        // 历史 REVIEWED 记录与 t_diagnosis_audit 审计行保持原样；展示层据
+        // source.reviewerRole 标明「资质未核验」，不写成医生正式复核。
+        ThrowUtils.throwIf(!ClinicalReviewQualification.mayWriteFormalClinicalReview(reviewer),
+                ErrorCode.NO_AUTH_ERROR, ClinicalReviewQualification.SAFE_OFF_REASON);
         // humanResult 必填；防止空 DTO 通过校验
         ThrowUtils.throwIf(StrUtil.isBlank(dto.getHumanResult()),
                 ErrorCode.PARAMS_ERROR, "必须填写人工结论");

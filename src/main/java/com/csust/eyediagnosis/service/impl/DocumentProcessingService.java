@@ -1,6 +1,7 @@
 package com.csust.eyediagnosis.service.impl;
 
 import com.csust.eyediagnosis.agent.rag.DocumentParser;
+import com.csust.eyediagnosis.agent.rag.SourceTypePolicy;
 import com.csust.eyediagnosis.agent.rag.TextChunkerService;
 import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
 import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
@@ -84,6 +85,8 @@ public class DocumentProcessingService {
             metadata.put("docId", docId.toString());
             metadata.put("documentId", docId);
             metadata.put("ownerUserId", knowledgeDocument.getUserId());
+            // Server-derived source marker. Never accepts a client-supplied value.
+            metadata.put(SourceTypePolicy.METADATA_KEY, SourceTypePolicy.SourceType.USER_UPLOAD.wire());
             log.info("[ETL-Transform] Metadata 构建完成: docId={}, metadata={}", docId, metadata);
 
             // 文本分块
@@ -102,6 +105,9 @@ public class DocumentProcessingService {
                 Map<String, Object> chunkMetadata = new HashMap<>(chunk.getMetadata());
                 chunkMetadata.put("ownerUserId", knowledgeDocument.getUserId());
                 chunkMetadata.put("documentId", docId);
+                // Re-stamp on every rebuilt chunk so no chunk can miss the marker.
+                chunkMetadata.put(SourceTypePolicy.METADATA_KEY,
+                        SourceTypePolicy.SourceType.USER_UPLOAD.wire());
                 ownedChunks.add(new Document(chunkId, chunk.getText(), chunkMetadata));
                 log.debug("[ETL-Transform] Chunk[{}]: id={}, text长度={}", i, chunkId, chunk.getText().length());
             }

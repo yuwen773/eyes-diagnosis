@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ThoughtLine } from "./ThoughtLine"
 import type { AgentStep } from "@/lib/agentSteps"
@@ -131,6 +131,76 @@ describe("ThoughtLine", () => {
     expect(head.hasAttribute("disabled")).toBe(false)
     fireEvent.click(head)
     expect(screen.getByText(/无法确认它是否执行完成/)).toBeTruthy()
+  })
+
+  it("运行中只报真实已用时长，不编造百分比或「预计剩余」", () => {
+    vi.useFakeTimers()
+    try {
+      render(<ThoughtLine steps={[runningToolStep]} />)
+      // 第一秒之前不摆一个「0s」出来假装在动。
+      expect(document.querySelector(".thought__elapsed")).toBeNull()
+      act(() => {
+        vi.advanceTimersByTime(3000)
+      })
+      expect(document.querySelector(".thought__elapsed")?.textContent).toBe("3s")
+      expect(screen.queryByText(/%/)).toBeNull()
+      expect(screen.queryByText(/预计|剩余/)).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("换一个工具继续跑时读数重新起算，不把上一轮的时长带过去", () => {
+    // 一次更新里「第一个 done、第二个 running」是真实会发生的：只按运行中的步数
+    // 做依赖，计数恒为 1，新步骤会直接显示上一轮的 3s。
+    vi.useFakeTimers()
+    try {
+      const { rerender } = render(<ThoughtLine steps={[runningToolStep]} />)
+      act(() => {
+        vi.advanceTimersByTime(3000)
+      })
+      expect(document.querySelector(".thought__elapsed")?.textContent).toBe("3s")
+
+      const nextRunning: AgentStep = { ...runningToolStep, id: "t99", label: "检索知识库文档" }
+      rerender(<ThoughtLine steps={[doneToolStep, nextRunning]} />)
+      // 换步后的第一帧不能沿用上一轮的 3s。
+      expect(document.querySelector(".thought__elapsed")).toBeNull()
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
+      expect(document.querySelector(".thought__elapsed")?.textContent).toBe("2s")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("并发两个工具时各算各的：后开始的步骤不把先开始的读数清零", () => {
+    // 一次请求可能连续调多个工具，前面的步骤会一直挂着「执行中」。
+    vi.useFakeTimers()
+    try {
+      const second: AgentStep = { ...runningToolStep, id: "t98", label: "检索知识库文档" }
+      const { rerender } = render(<ThoughtLine steps={[runningToolStep]} />)
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
+      expect(document.querySelector(".thought__elapsed")?.textContent).toBe("2s")
+
+      rerender(<ThoughtLine steps={[runningToolStep, second]} />)
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+      const readings = Array.from(document.querySelectorAll(".thought__elapsed")).map(
+        (node) => node.textContent,
+      )
+      expect(readings).toEqual(["3s", "1s"])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("已完成 / 未确认的步骤不显示计时", () => {
+    render(<ThoughtLine steps={[doneToolStep]} />)
+    expect(document.querySelector(".thought__elapsed")).toBeNull()
   })
 
   it("没有步骤时不渲染任何东西", () => {

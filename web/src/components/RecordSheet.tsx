@@ -4,15 +4,21 @@ import { ClassScale } from "@/components/ClassScale"
 import { ConfidenceDial } from "@/components/ConfidenceDial"
 import { RiskTag } from "@/components/RiskTag"
 import {
+  archivalLabel,
+  authorizationLabel,
+  authorizationRestrictedLabel,
   canonicalClassName,
   classCode,
   confidenceBand,
   confidencePercent,
+  draftReviewLabel,
   formatTimestamp,
+  humanReviewState,
   normalizeConfidence,
   rankClasses,
   recommendationLines,
-  reviewState,
+  recordSourceLabel,
+  reviewerRoleLabel,
   severityLabel,
   severityRisk,
   shortHash,
@@ -33,6 +39,31 @@ type RecordSheetProps = {
 }
 
 /**
+ * 影像归档只有一个真源：服务端的来源投影。
+ *
+ * `ARCHIVED` / `ARCHIVED_NOT_PUBLIC` 都是「对象已归档」，后者只是不给公开地址——
+ * 协作影像走的就是这一档（`t_diagnosis.url` 恒为空），用地址空值反推会把它写成「未归档」。
+ * `NOT_ARCHIVED` 才是真没有；`UNKNOWN` 与投影缺失都是「不知道」，不能落成「没有」。
+ * 完全没有投影时（老记录、演示记录）才退回看地址，而且退路只说明地址存在。
+ */
+type ArchivalState = "archived" | "restricted" | "missing" | "unknown"
+
+function archivalStateOf(source: DiagnosisResult["source"], imageSrc?: string): ArchivalState {
+  switch (source?.imageArchivalState) {
+    case "ARCHIVED":
+      return "archived"
+    case "ARCHIVED_NOT_PUBLIC":
+      return "restricted"
+    case "NOT_ARCHIVED":
+      return "missing"
+    case "UNKNOWN":
+      return "unknown"
+    default:
+      return imageSrc ? "archived" : "missing"
+  }
+}
+
+/**
  * 判读记录：整站唯一的报告呈现。
  * paper 皮肤在纸面上下文（.is-sheet）使用；night 皮肤消费暗房反转令牌。
  */
@@ -41,7 +72,12 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
   const rows = rankClasses(result)
   const confidence = normalizeConfidence(result.confidence ?? result.probability)
   const band = confidenceBand(result.confidence ?? result.probability)
-  const review = reviewState(result.humanReviewStatus)
+  // 来源投影只在本人详情接口下发；老记录/读取失败时为 undefined，整段不显示，
+  // 绝不能退化成「没有授权、没有归档」。
+  const source = result.source
+  // 复核状态一律带「资质未核验」：账号角色不是临床资质证明（D-01b）。
+  const review = humanReviewState(result.humanReviewStatus)
+  const archival = archivalStateOf(source, imageSrc)
   const recos = recommendationLines(result)
   const stampRisk = severityRisk(result.severity)
   // 主诊断用规范类名展示：后端枚举给的是短名（「糖尿病」），
@@ -174,6 +210,71 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
             </section>
           ) : null}
 
+          {source ? (
+            <section className="sheet__section" data-provenance="record">
+              <div className="sheet__section-head">
+                <span className="overline">来源与授权 · PROVENANCE</span>
+                <span className="overline">只读</span>
+              </div>
+              {source.recordSource ? (
+                <>
+                  <div className="sheet__facts">
+                    <div className="readout">
+                      <span className="readout__label">记录来源</span>
+                      <span className="readout__value">{recordSourceLabel(source.recordSource)}</span>
+                    </div>
+                    <div className="readout">
+                      <span className="readout__label">草稿审核</span>
+                      <span className="readout__value">
+                        {draftReviewLabel(source.draftReviewState) ??
+                          (source.recordSource === "COLLABORATION_DRAFT" ? "未记录" : "—")}
+                      </span>
+                    </div>
+                    <div className="readout">
+                      <span className="readout__label">患者授权</span>
+                      <span className="readout__value">
+                        {/* 「不给看」不是「没有」：说成无授权记录，就是替系统陈述一件它没核实过的事。
+                            粗粒度的授权状态本来就下发了，照实说「已授权 / 待授权」，只隐去细节。 */}
+                        {source.authorizationDetailsRestricted
+                          ? source.authorizationState
+                            ? `${authorizationLabel(source.authorizationState)} · 详情按最小权限不展示`
+                            : authorizationRestrictedLabel()
+                          : source.recordSource === "DIRECT" && !source.authorizationState
+                            ? "本人上传，无需授权"
+                            : authorizationLabel(
+                                source.authorizationState,
+                                source.authorizedAt,
+                                source.authorizationReceipt,
+                              )}
+                      </span>
+                    </div>
+                    <div className="readout">
+                      <span className="readout__label">复核人角色</span>
+                      <span className="readout__value readout__value--mono">
+                        {reviewerRoleLabel(source.reviewerRole)}
+                      </span>
+                    </div>
+                    <div className="readout">
+                      <span className="readout__label">影像</span>
+                      <span className="readout__value">{archivalLabel(source.imageArchivalState)}</span>
+                    </div>
+                  </div>
+                  <p className="sheet__note">
+                    复核人角色取自账号，系统内没有可核验的执业资质数据；角色不等于临床资质证明。
+                    患者授权保存只表示同意保存这份材料，不表示已完成临床复核。
+                  </p>
+                </>
+              ) : (
+                // 投影带回来了但内容读不出（后端查询失败时下发全空 + UNKNOWN 的 source）：
+                // 这时说「无授权记录」「未记录」就是编事实——只能说读不到。
+                <p className="sheet__note">
+                  来源与授权这次没有读到：无法确认这条记录来自本人上传还是协作草稿，也无法确认是否经过患者授权。
+                  「读不到」不等于「没有」，刷新后可再试。
+                </p>
+              )}
+            </section>
+          ) : null}
+
           <section className="sheet__section">
             <div className="sheet__section-head">
               <span className="overline">类别概率 · CLASS PROBABILITY</span>
@@ -245,8 +346,12 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
             <div className="readout">
               <span className="readout__label">原始影像</span>
               <span className="readout__value">
-                {imageSrc ? (
+                {archival === "archived" ? (
                   <span className="num">已归档</span>
+                ) : archival === "restricted" ? (
+                  <span className="num">已归档 · 不公开地址</span>
+                ) : archival === "unknown" ? (
+                  <span className="num">无法确认</span>
                 ) : (
                   <RiskTag risk="attention">未归档</RiskTag>
                 )}
@@ -300,9 +405,13 @@ export function RecordSheet({ result, recordId, actions, specimen = false, image
         <p>
           {result.disclaimer ||
             "本记录由 AI 辅助判读生成，仅供参考，不构成诊断结论，不能替代执业医师的检查与判断。"}
-          {specimen || imageSrc
-            ? "影像、模型版本与权重指纹随记录保存，可在复核时回放。"
-            : "模型版本与权重指纹随记录保存；本次原始影像未成功归档，复核时无法回放原图。"}
+          {archival === "missing" && !specimen
+            ? "模型版本与权重指纹随记录保存；本次原始影像未成功归档，复核时无法回放原图。"
+            : archival === "restricted"
+              ? "模型版本与权重指纹随记录保存；影像已归档，按隐私策略不公开地址。"
+              : archival === "unknown"
+                ? "模型版本与权重指纹随记录保存；本次影像的归档状态暂时无法确认。"
+                : "影像、模型版本与权重指纹随记录保存，可在复核时回放。"}
         </p>
       </div>
 

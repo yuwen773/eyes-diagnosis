@@ -573,6 +573,18 @@
   border-color: color-mix(in srgb, var(--brand-aurora) 46%, transparent);
 }
 
+/* 失败与取消是**已知结果**，不是「未确认」：两者必须能分开看，
+   否则成功 / 失败 / 不知道三种情况在界面上没有区别。 */
+.thought__step.is-failed .thought__dot {
+  color: var(--risk-critical);
+  border-color: color-mix(in srgb, var(--risk-critical) 42%, transparent);
+}
+
+.thought__step.is-cancelled .thought__dot {
+  color: var(--fg-3);
+  border-color: var(--brand-outline);
+}
+
 .thought__head {
   display: flex;
   align-items: center;
@@ -642,6 +654,24 @@
 .thought__state.is-paused {
   color: var(--brand-aurora);
   background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
+}
+
+.thought__state.is-failed {
+  color: var(--risk-critical);
+  background: color-mix(in srgb, var(--risk-critical) 12%, transparent);
+}
+
+.thought__state.is-cancelled {
+  color: var(--fg-3);
+  background: var(--brand-soft);
+}
+
+/* 运行中的已用时长：只报真实过去的时间，没有「预计剩余」。 */
+.thought__elapsed {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
 }
 
 .thought__chevron {

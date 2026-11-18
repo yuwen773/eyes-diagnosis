@@ -57,7 +57,7 @@ type Outcome = { key: "classified" | "rejected" | "review"; label: string; risk:
 
 function outcomeOf(result: DiagnosisResult): Outcome {
   if (result.aiRejected) return { key: "rejected", label: "模型未给出结论", risk: "attention" }
-  if (result.requiresReview) return { key: "review", label: "已转医生复核", risk: "attention" }
+  if (result.requiresReview) return { key: "review", label: "已转入人工复核队列", risk: "attention" }
   return { key: "classified", label: "已给出分类", risk: "normal" }
 }
 
@@ -433,7 +433,7 @@ function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) 
         {/* 拒识与待复核是两个独立维度：算法在拒识时同样会置 requiresReview，
             拒识记录也在人工复核队列里。不能因为拒识就把复核要求藏起来。 */}
         {result.requiresReview ? (
-          <span className="dx__outcome-note">已转入人工复核队列，医生签字前不构成诊断</span>
+          <span className="dx__outcome-note">已转入人工复核队列，复核完成前不构成诊断</span>
         ) : null}
       </div>
 
@@ -475,7 +475,7 @@ function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) 
             <p className="dx__panel-text">质量门说明：{result.qualityReasons}</p>
           ) : null}
           <p className="dx__fineprint">
-            置信度是模型对这一分类的把握程度，不是患病概率，也不等于确诊。最终判断以医生复核为准。
+            置信度是模型对这一分类的把握程度，不是患病概率，也不等于确诊。最终判断以人工复核结论为准。
           </p>
         </>
       )}

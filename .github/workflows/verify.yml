@@ -6,6 +6,19 @@ on:
     branches: [master]
 
 jobs:
+  docs-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the architecture design document contract
+        run: python3 scripts/check_design_doc.py
+      - name: Verify steering docs match migrations and controllers
+        run: python3 scripts/check_steering_docs.py
+      - name: Verify the gRPC probability scale contract
+        run: python3 scripts/check_probability_scale.py
+      - name: Verify the report gate unit tests
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+
   python:
     runs-on: ubuntu-latest
     defaults:
@@ -117,10 +130,402 @@ jobs:
           java-version: '21'
           cache: maven
       - run: timeout 60 bash -c 'until curl -fsS http://localhost:8000/api/v2/heartbeat; do sleep 2; done'
-      - run: mvn test
+      # A failing Maven run still has to leave reports for the skip gate, so
+      # capture the exit code instead of letting `mvn` short-circuit the step.
+      - name: Backend unit tests
+        run: |
+          set +e
+          mvn -B test
+          echo "$?" > /tmp/mvn-exit-code
+      - name: Require no silently skipped or dropped tests
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports backend-unit
+      - name: Fail the job if Maven failed
+        run: test "$(cat /tmp/mvn-exit-code)" -eq 0
+
+  issue17-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue17_test
+          MYSQL_USER: issue17
+          MYSQL_PASSWORD: issue17
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue17 -pissue17 issue17_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE17_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue17_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Verify report gates
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+      - name: Verify MySQL health check
+        env:
+          ISSUE17_MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: python3 -m unittest discover -s scripts/tests -p test_issue17_mysql_health.py
+      - name: Run patient task and recovery tests
+        run: mvn -B -Dtest=DiagnosisTaskApiTest,DiagnosisTaskRecoveryTest,CosDiagnosisTaskStorageTest test
+      - name: Require all patient task tests to run
+        run: python3 scripts/check_issue17_reports.py target/surefire-reports
+
+  issue18-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue18_test
+          MYSQL_USER: issue18
+          MYSQL_PASSWORD: issue18
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue18 -pissue18 issue18_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE18_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue18_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Verify report gates
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+      - name: Run controlled reference lifecycle and eligibility tests
+        run: mvn -B -Dtest=ControlledReferenceApiTest test
+      - name: Require every controlled reference case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue18
+
+  issue19-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue19_test
+          MYSQL_USER: issue19
+          MYSQL_PASSWORD: issue19
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue19 -pissue19 issue19_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE19_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue19_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Verify report gates
+        run: python3 -m unittest discover -s scripts/tests -p "test_check_*.py"
+      - name: Run four-agent draft, timeout and process recovery tests
+        run: mvn -B -Dtest=PatientDraftTest test
+      - name: Require every draft case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue19
+
+  collaboration-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: collaboration_test
+          MYSQL_USER: collaboration
+          MYSQL_PASSWORD: collaboration
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -ucollaboration -pcollaboration collaboration_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      COLLABORATION_TEST_URL: jdbc:mysql://127.0.0.1:3306/collaboration_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run durable events, authorization, cancellation and HTTP SSE tests
+        run: mvn -B -Dtest=CollaborationRunTest test
+      - name: Require every collaboration case to run
+        if: always()
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports collaboration
+
+  graph-execution-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: graph_execution_test
+          MYSQL_USER: graph_execution
+          MYSQL_PASSWORD: graph_execution
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -ugraph_execution -pgraph_execution graph_execution_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      GRAPH_EXECUTION_TEST_URL: jdbc:mysql://127.0.0.1:3306/graph_execution_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run Graph equivalence, process-death recovery and fencing
+        # Only this disposable service enables the failure-injection trigger.
+        # The application's database account keeps schema-only privileges.
+        run: |
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password -e 'SET GLOBAL log_bin_trust_function_creators=1'
+          mvn -B -Dtest=GraphExecutionTest,RealtimeGraphSpikeTest,CoordinationPocTest test
+      - name: Require every Graph case to run
+        if: always()
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports graph-execution
+
+  issue24-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue19_test
+          MYSQL_USER: issue19
+          MYSQL_PASSWORD: issue19
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue19 -pissue19 issue19_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE19_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue19_test
+      ISSUE21_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue21_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Create the isolated patient HTTP database
+        env:
+          MYSQL_PWD: root-password
+        run: |
+          mysql -h 127.0.0.1 -uroot <<'SQL'
+          CREATE DATABASE issue21_test;
+          CREATE USER 'issue21'@'%' IDENTIFIED BY 'issue21';
+          GRANT ALL ON issue21_test.* TO 'issue21'@'%';
+          SQL
+      - name: Verify the public evaluation CLIs
+        run: |
+          python3 -m unittest discover -s scripts/tests -p 'test_evaluate_agent_collaboration.py'
+          python3 -m unittest discover -s scripts/tests -p 'test_evaluate_rag_query_expansion.py'
+      - name: Run current coordinator and patient HTTP reliability cases
+        run: mvn -B -Dtest=PatientDraftTest,PatientExplanationApiTest test
+      - name: Require complete zero-skip reliability evidence
+        if: always()
+        run: |
+          python3 scripts/check_surefire_skips.py target/surefire-reports issue19
+          python3 scripts/check_surefire_skips.py target/surefire-reports issue21
+      - name: Execute fixed scripted role ablations and import current reliability results
+        if: always()
+        run: >-
+          python3 scripts/evaluate_agent_collaboration.py
+          --corpus evaluation/agent-collaboration/corpus.json
+          --surefire-dir target/surefire-reports
+          --output target/agent-collaboration
+      - name: Execute deterministic whitelist retrieval evaluation
+        if: always()
+        run: >-
+          python3 scripts/evaluate_rag_query_expansion.py
+          --corpus evaluation/rag-query-expansion/corpus.json
+          --output target/rag-query-expansion
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue24-evaluation
+          path: |
+            target/agent-collaboration/
+            target/rag-query-expansion/
+            target/surefire-reports/TEST-*.xml
+          if-no-files-found: error
+
+  issue20-mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: issue20_test
+          MYSQL_USER: issue20
+          MYSQL_PASSWORD: issue20
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue20 -pissue20 issue20_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE20_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue20_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run doctor authorization, frozen review and concurrent decision tests
+        run: mvn -B -Dtest=DoctorReviewApiTest test
+      - name: Require every review case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue20
+
+  issue21-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue21_test
+          MYSQL_USER: issue21
+          MYSQL_PASSWORD: issue21
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue21 -pissue21 issue21_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE21_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue21_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run patient visibility, citation authorization and live release gate tests
+        run: mvn -B -Dtest=PatientExplanationApiTest test
+      - name: Require every patient explanation case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue21
+
+  issue22-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue22_test
+          MYSQL_USER: issue22
+          MYSQL_PASSWORD: issue22
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue22 -pissue22 issue22_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE22_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue22_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Enable fault injection on this disposable MySQL service
+        run: docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password -e 'SET GLOBAL log_bin_trust_function_creators=1'
+      - name: Run patient consent, rollback, frozen save and concurrent receipt tests
+        run: mvn -B -Dtest=PatientAuthorizationApiTest test
+      - name: Require every patient authorization case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue22
+
+  issue23-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0.36
+        env:
+          MYSQL_DATABASE: issue23_test
+          MYSQL_USER: issue23
+          MYSQL_PASSWORD: issue23
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysql -h 127.0.0.1 -uissue23 -pissue23 issue23_test -e 'SELECT 1'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      ISSUE23_TEST_URL: jdbc:mysql://127.0.0.1:3306/issue23_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - name: Run patient follow-up scope, live evidence and read-only invariant tests
+        run: mvn -B -Dtest=PatientFollowUpApiTest test
+      - name: Require every patient follow-up case to run
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports issue23
 
   flyway-mysql:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        run-order: [alphabetical, reversealphabetical]
     services:
       mysql:
         image: mysql:8.0
@@ -147,8 +552,43 @@ jobs:
           distribution: corretto
           java-version: '21'
           cache: maven
-      - run: mvn -Dtest=FlywayMySqlIntegrationTest test
-      - run: mvn -Dtest=UploadTaskMapperMySqlIntegrationTest test
+      - name: Allow disposable empty-schema migration checks
+        run: >-
+          docker exec ${{ job.services.mysql.id }} mysql -uroot -proot-password
+          -e 'GRANT ALL PRIVILEGES ON `diagnosis_ci_empty_%`.* TO "eyeuser"@"%"; GRANT ALL PRIVILEGES ON `diagnosis_ci_audit_%`.* TO "eyeuser"@"%";'
+      # Each matrix job runs all three suites together, so order dependence cannot hide.
+      - run: mvn -B -Dtest=FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest,ToolAuditMySqlIntegrationTest -Dsurefire.runOrder=${{ matrix.run-order }} test
+      - name: Require all Flyway suites to run fully
+        run: python3 scripts/check_surefire_skips.py target/surefire-reports flyway
+
+  product-contract:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: product_acceptance_test
+          MYSQL_USER: product_acceptance
+          MYSQL_PASSWORD: product_acceptance
+          MYSQL_ROOT_PASSWORD: root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      PRODUCT_ACCEPTANCE_TEST_URL: jdbc:mysql://127.0.0.1:3306/product_acceptance_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+          cache: maven
+      - run: mvn -B -Dtest=ProductSchemaTest,CollaborationImagesTest,ProductProviderLedgerTest,AgentSessionAdmissionTest test
+      - run: python3 scripts/check_surefire_skips.py target/surefire-reports product
 
   frontend:
     runs-on: ubuntu-latest
@@ -165,6 +605,7 @@ jobs:
       - run: npm ci
       - run: npm run lint:check
       - run: npm run test -- --run
+      - run: npm run lint:check
       - run: npm run build
 
   web:
@@ -178,6 +619,9 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - name: Check collaboration wire contract
+        working-directory: .
+        run: python3 scripts/check_collaboration_fixture.py --backend-root . --output target/collaboration-contract.json
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

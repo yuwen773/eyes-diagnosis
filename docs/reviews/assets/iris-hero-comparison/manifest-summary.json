@@ -1,0 +1,477 @@
+{
+  "commit": "add10bb9c69ddc1d3337a5bacf6f3571b16c2c3c",
+  "branch": "local/e09-hero-compare-20261118",
+  "browserVersion": "151.0.7922.34",
+  "capturedAt": "2026-11-18T07:16:32.459Z",
+  "perfMeasuredAt": "2026-11-18T07:21:25.574Z",
+  "frames": 63,
+  "performance": {
+    "optic": {
+      "variant": "A OpticFlow",
+      "animation": {
+        "samples": [
+          {
+            "sampledFrames": 76,
+            "averageFps": 75.6,
+            "averageFrameMs": 13.23,
+            "p95FrameMs": 18.3,
+            "maxFrameMs": 27.3,
+            "droppedFrames": 2,
+            "longTasksMs": [],
+            "drawCalls": 152,
+            "drawCallsPerSec": 152
+          },
+          {
+            "sampledFrames": 73,
+            "averageFps": 72.5,
+            "averageFrameMs": 13.79,
+            "p95FrameMs": 27.4,
+            "maxFrameMs": 31.9,
+            "droppedFrames": 13,
+            "longTasksMs": [],
+            "drawCalls": 146,
+            "drawCallsPerSec": 146
+          },
+          {
+            "sampledFrames": 74,
+            "averageFps": 73.9,
+            "averageFrameMs": 13.53,
+            "p95FrameMs": 22.8,
+            "maxFrameMs": 27.4,
+            "droppedFrames": 9,
+            "longTasksMs": [],
+            "drawCalls": 148,
+            "drawCallsPerSec": 148
+          }
+        ],
+        "medianFps": 73.9,
+        "minFps": 72.5,
+        "medianP95FrameMs": 22.8,
+        "droppedFrames": 24,
+        "sampledFrames": 223,
+        "longTasksMs": [],
+        "drawCallsPerSec": 148
+      },
+      "settled": {
+        "sample": {
+          "sampledFrames": 441,
+          "averageFps": 220,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 6.7,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "pointerOutsideCanvas": {
+          "inside": false
+        }
+      },
+      "pauseQuirk": {
+        "sample": {
+          "sampledFrames": 81,
+          "averageFps": 81,
+          "averageFrameMs": 12.35,
+          "p95FrameMs": 22.8,
+          "maxFrameMs": 104.8,
+          "droppedFrames": 6,
+          "longTasksMs": [],
+          "drawCalls": 162,
+          "drawCallsPerSec": 162
+        },
+        "note": "点完「暂停动效」后的 1s 窗口：Beams 的 reach 指针参与度尚未衰减完，rAF 仍在逐帧 draw"
+      },
+      "freshPaused": {
+        "sample": {
+          "sampledFrames": 441,
+          "averageFps": 220.3,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 4.9,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "note": "直接以 ?paused=1 打开，指针从未进入画布"
+      },
+      "hidden": {
+        "sample": {
+          "sampledFrames": 331,
+          "averageFps": 220.5,
+          "averageFrameMs": 4.53,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 5.5,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "meta": {
+          "mode": "paused",
+          "theme": "light",
+          "webgl2Contexts": 1,
+          "drawCalls": 1442,
+          "canvas": {
+            "buffer": "2160×1176",
+            "css": "1440×784"
+          },
+          "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "cssAnimations": 0,
+          "horizontalOverflow": false,
+          "devicePixelRatio": 1,
+          "hardwareConcurrency": 16,
+          "heroHeight": 784
+        }
+      },
+      "navigationCleanup": {
+        "drawCallsBefore": 1442,
+        "drawCallsAfter": 1442,
+        "drawCallsLater": 1442,
+        "canvasesAfter": 0,
+        "heroAfter": 0,
+        "stoppedDrawing": true
+      },
+      "themeSwitch": {
+        "before": {
+          "contexts": 2,
+          "theme": false
+        },
+        "after": {
+          "contexts": 2,
+          "theme": true,
+          "heroTheme": "dark",
+          "canvases": 1
+        },
+        "newContexts": 0
+      },
+      "meta": {
+        "mode": "live",
+        "theme": "dark",
+        "webgl2Contexts": 2,
+        "drawCalls": 1672,
+        "canvas": {
+          "buffer": "2160×1176",
+          "css": "1440×784"
+        },
+        "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "cssAnimations": 3,
+        "horizontalOverflow": false,
+        "devicePixelRatio": 1,
+        "hardwareConcurrency": 16,
+        "heroHeight": 784
+      }
+    },
+    "prism": {
+      "variant": "B Prism",
+      "animation": {
+        "samples": [
+          {
+            "sampledFrames": 80,
+            "averageFps": 78.9,
+            "averageFrameMs": 12.68,
+            "p95FrameMs": 22.8,
+            "maxFrameMs": 27.3,
+            "droppedFrames": 9,
+            "longTasksMs": [],
+            "drawCalls": 80,
+            "drawCallsPerSec": 80
+          },
+          {
+            "sampledFrames": 80,
+            "averageFps": 79.1,
+            "averageFrameMs": 12.65,
+            "p95FrameMs": 22.7,
+            "maxFrameMs": 22.8,
+            "droppedFrames": 6,
+            "longTasksMs": [],
+            "drawCalls": 80,
+            "drawCallsPerSec": 80
+          },
+          {
+            "sampledFrames": 80,
+            "averageFps": 79.3,
+            "averageFrameMs": 12.61,
+            "p95FrameMs": 22.8,
+            "maxFrameMs": 22.8,
+            "droppedFrames": 10,
+            "longTasksMs": [],
+            "drawCalls": 80,
+            "drawCallsPerSec": 80
+          }
+        ],
+        "medianFps": 79.1,
+        "minFps": 78.9,
+        "medianP95FrameMs": 22.8,
+        "droppedFrames": 25,
+        "sampledFrames": 240,
+        "longTasksMs": [],
+        "drawCallsPerSec": 80
+      },
+      "settled": {
+        "sample": {
+          "sampledFrames": 440,
+          "averageFps": 220,
+          "averageFrameMs": 4.55,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 7.9,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "pointerOutsideCanvas": {
+          "inside": false
+        }
+      },
+      "pauseQuirk": null,
+      "freshPaused": null,
+      "hidden": {
+        "sample": {
+          "sampledFrames": 331,
+          "averageFps": 220.5,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 5.5,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "meta": {
+          "mode": "settled",
+          "theme": "light",
+          "webgl2Contexts": 1,
+          "drawCalls": 389,
+          "canvas": {
+            "buffer": "1080×588",
+            "css": "1440×784"
+          },
+          "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "cssAnimations": 0,
+          "horizontalOverflow": false,
+          "devicePixelRatio": 1,
+          "hardwareConcurrency": 16,
+          "heroHeight": 784
+        }
+      },
+      "navigationCleanup": {
+        "drawCallsBefore": 389,
+        "drawCallsAfter": 389,
+        "drawCallsLater": 389,
+        "canvasesAfter": 0,
+        "heroAfter": 0,
+        "stoppedDrawing": true
+      },
+      "themeSwitch": {
+        "before": {
+          "contexts": 2,
+          "theme": false
+        },
+        "after": {
+          "contexts": 2,
+          "theme": true,
+          "heroTheme": "dark",
+          "canvases": 1
+        },
+        "newContexts": 0
+      },
+      "meta": {
+        "mode": "live",
+        "theme": "dark",
+        "webgl2Contexts": 2,
+        "drawCalls": 504,
+        "canvas": {
+          "buffer": "1080×588",
+          "css": "1440×784"
+        },
+        "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "cssAnimations": 0,
+        "horizontalOverflow": false,
+        "devicePixelRatio": 1,
+        "hardwareConcurrency": 16,
+        "heroHeight": 784
+      }
+    },
+    "fusion": {
+      "variant": "C OpticFlow × Prism",
+      "animation": {
+        "samples": [
+          {
+            "sampledFrames": 84,
+            "averageFps": 83,
+            "averageFrameMs": 12.04,
+            "p95FrameMs": 18.3,
+            "maxFrameMs": 22.8,
+            "droppedFrames": 3,
+            "longTasksMs": [],
+            "drawCalls": 168,
+            "drawCallsPerSec": 168
+          },
+          {
+            "sampledFrames": 75,
+            "averageFps": 74,
+            "averageFrameMs": 13.51,
+            "p95FrameMs": 18.3,
+            "maxFrameMs": 22.7,
+            "droppedFrames": 2,
+            "longTasksMs": [],
+            "drawCalls": 150,
+            "drawCallsPerSec": 150
+          },
+          {
+            "sampledFrames": 84,
+            "averageFps": 83.3,
+            "averageFrameMs": 12,
+            "p95FrameMs": 18.2,
+            "maxFrameMs": 22.9,
+            "droppedFrames": 3,
+            "longTasksMs": [],
+            "drawCalls": 168,
+            "drawCallsPerSec": 168
+          }
+        ],
+        "medianFps": 83,
+        "minFps": 74,
+        "medianP95FrameMs": 18.3,
+        "droppedFrames": 8,
+        "sampledFrames": 243,
+        "longTasksMs": [],
+        "drawCallsPerSec": 168
+      },
+      "settled": {
+        "sample": {
+          "sampledFrames": 441,
+          "averageFps": 220.2,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 5.9,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "pointerOutsideCanvas": {
+          "inside": false
+        }
+      },
+      "pauseQuirk": {
+        "sample": {
+          "sampledFrames": 93,
+          "averageFps": 92.3,
+          "averageFrameMs": 10.84,
+          "p95FrameMs": 18.3,
+          "maxFrameMs": 95.6,
+          "droppedFrames": 2,
+          "longTasksMs": [],
+          "drawCalls": 186,
+          "drawCallsPerSec": 186
+        },
+        "note": "点完「暂停动效」后的 1s 窗口：Beams 的 reach 指针参与度尚未衰减完，rAF 仍在逐帧 draw"
+      },
+      "freshPaused": {
+        "sample": {
+          "sampledFrames": 441,
+          "averageFps": 220.3,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 4.7,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "note": "直接以 ?paused=1 打开，指针从未进入画布"
+      },
+      "hidden": {
+        "sample": {
+          "sampledFrames": 331,
+          "averageFps": 220.5,
+          "averageFrameMs": 4.54,
+          "p95FrameMs": 4.6,
+          "maxFrameMs": 5.5,
+          "droppedFrames": 0,
+          "longTasksMs": [],
+          "drawCalls": 0,
+          "drawCallsPerSec": 0
+        },
+        "meta": {
+          "mode": "paused",
+          "theme": "light",
+          "webgl2Contexts": 1,
+          "drawCalls": 1624,
+          "canvas": {
+            "buffer": "2160×1176",
+            "css": "1440×784"
+          },
+          "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "cssAnimations": 0,
+          "horizontalOverflow": false,
+          "devicePixelRatio": 1,
+          "hardwareConcurrency": 16,
+          "heroHeight": 784
+        }
+      },
+      "navigationCleanup": {
+        "drawCallsBefore": 1624,
+        "drawCallsAfter": 1626,
+        "drawCallsLater": 1626,
+        "canvasesAfter": 0,
+        "heroAfter": 0,
+        "stoppedDrawing": true
+      },
+      "themeSwitch": {
+        "before": {
+          "contexts": 2,
+          "theme": false
+        },
+        "after": {
+          "contexts": 2,
+          "theme": true,
+          "heroTheme": "dark",
+          "canvases": 1
+        },
+        "newContexts": 0
+      },
+      "meta": {
+        "mode": "live",
+        "theme": "dark",
+        "webgl2Contexts": 2,
+        "drawCalls": 1836,
+        "canvas": {
+          "buffer": "2160×1176",
+          "css": "1440×784"
+        },
+        "renderer": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x0000164E) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "cssAnimations": 6,
+        "horizontalOverflow": false,
+        "devicePixelRatio": 1,
+        "hardwareConcurrency": 16,
+        "heroHeight": 784
+      }
+    }
+  },
+  "reducedMotionChecks": {
+    "optic": {
+      "drawCallsIn2s": 0,
+      "cssAnimations": 0,
+      "mode": "paused"
+    },
+    "prism": {
+      "drawCallsIn2s": 0,
+      "cssAnimations": 0,
+      "mode": "frozen"
+    },
+    "fusion": {
+      "drawCallsIn2s": 0,
+      "cssAnimations": 0,
+      "mode": "frozen"
+    }
+  },
+  "videos": [
+    "D:\\Work\\code\\eye-diagnosis\\.worktrees\\r5-joint-v2\\target\\iris-hero-comparison\\motion-A-optic-desktop-light.webm",
+    "D:\\Work\\code\\eye-diagnosis\\.worktrees\\r5-joint-v2\\target\\iris-hero-comparison\\motion-B-prism-desktop-light.webm",
+    "D:\\Work\\code\\eye-diagnosis\\.worktrees\\r5-joint-v2\\target\\iris-hero-comparison\\motion-C-fusion-desktop-light.webm"
+  ]
+}

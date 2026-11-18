@@ -9,6 +9,7 @@ import { StrictMode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { useAgentStream, AgentSendError, type StreamMessage } from "./agentStream"
+import type { AgentStreamDTO } from "./api"
 
 const streamChatMock = vi.hoisted(() => vi.fn())
 
@@ -25,6 +26,46 @@ function renderHarness() {
     wrapper: ({ children }) => <StrictMode>{children}</StrictMode>,
   })
   result = rendered.result
+}
+
+/** 造一个可手动推进的流：返回 handlers 与一个「结束」动作。 */
+function fakeStream() {
+  let end: () => void = () => {}
+  let handlers: {
+    onEvent(dto: AgentStreamDTO): void
+    onDone(): void
+    onError(err: unknown): void
+  } | null = null
+  let signal: AbortSignal | null = null
+
+  streamChatMock.mockImplementation(
+    async (_body: unknown, h: typeof handlers, sig: AbortSignal) => {
+      handlers = h
+      signal = sig
+      // 挂起，直到 abort 或测试主动结束
+      await new Promise<void>((resolve) => {
+        end = resolve
+        sig.addEventListener("abort", () => resolve(), { once: true })
+      })
+    },
+  )
+
+  return {
+    emit(dto: AgentStreamDTO) {
+      act(() => {
+        handlers?.onEvent(dto)
+      })
+    },
+    finish() {
+      act(() => {
+        handlers?.onDone()
+        end()
+      })
+    },
+    get signal() {
+      return signal
+    },
+  }
 }
 
 const api = () => result.current
@@ -101,6 +142,17 @@ describe("useAgentStream · 受理语义", () => {
     expect(outcome).toEqual({ accepted: true, aborted: false, abortedBy: null })
   })
 
+  it("请求 → 确认 → done/finally 保持等待确认，不产生已取消卡", async () => {
+    const stream = fakeStream()
+    renderHarness()
+    await act(async () => { void api().send("查一下", "thread-A") })
+    stream.emit({ messageType: "tool-request", toolCalls: [{ name: "searchDocuments", arguments: "{}", id: "a" }] })
+    stream.emit({ messageType: "tool-confirm", toolCallId: "a", content: "等待审批" })
+    await act(async () => { stream.finish() })
+    expect(api().isStreaming).toBe(false)
+    expect(api().messages.find((m) => m.type === "tool-request")?.toolStatus).toBe("awaiting-confirm")
+    expect(api().messages.some((m) => m.toolStatus === "cancelled")).toBe(false)
+  })
   it("响应头到达前被「停止」：返回 accepted=false / aborted=true，且不抛错", async () => {
     // fetch-event-source 在 abort 时是 resolve 而不是 reject——`await send()`
     // 会正常返回。调用方若把「没抛异常」当成功，就会把一次根本没拿到响应头的
@@ -283,5 +335,42 @@ describe("useAgentStream · 生命周期", () => {
     await act(async () => {
       await second
     })
+  })
+
+  it("切会话后旧流的事件不再写进消息表", async () => {
+    const stream = fakeStream()
+    renderHarness()
+
+    await act(async () => {
+      void api().send("你好", "thread-A")
+    })
+    stream.emit({ messageType: "assistant", content: "旧流的内容" })
+    expect(api().messages.length).toBeGreaterThan(0)
+
+    act(() => {
+      api().reset()
+    })
+    expect(api().messages).toHaveLength(0)
+
+    // 旧流在 reset 之后才送来的事件——不能落进新会话的消息表。
+    stream.emit({ messageType: "assistant", content: "迟到的旧流内容" })
+    expect(api().messages).toHaveLength(0)
+  })
+
+  it("工具调用后前一条 assistant 不再是流式态（不永久闪烁）", async () => {
+    const stream = fakeStream()
+    renderHarness()
+
+    await act(async () => {
+      void api().send("查一下", "thread-A")
+    })
+    stream.emit({ messageType: "assistant", content: "我先查一下知识库" })
+    stream.emit({
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+
+    expect(api().messages.find((m) => m.type === "assistant")?.isLoading).toBe(false)
   })
 })

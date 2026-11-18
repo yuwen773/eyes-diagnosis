@@ -114,4 +114,64 @@ describe("RecordDetailPage", () => {
 
     expect(await screen.findByText("这份报告没有读出来")).toBeTruthy()
   })
+
+  it("跨账号读不到时只给降级提示，绝不泄漏授权与回执", async () => {
+    // 拿别人的记录 id 打开报告：后端按归属拒绝，前端不得渲染任何投影字段。
+    vi.mocked(getMyDiagnosis).mockRejectedValue(new ApiError(40300, "无权访问该记录"))
+
+    renderAt("/records/9001")
+
+    expect(await screen.findByText("这份报告没有读出来")).toBeTruthy()
+    expect(screen.queryByText("来源与授权 · PROVENANCE")).toBeNull()
+    expect(screen.queryByText(/回执/)).toBeNull()
+  })
+
+  it("历史记录没有投影字段：报告照常出，不编来源，也不冒充待复核", async () => {
+    vi.mocked(getMyDiagnosis).mockResolvedValue({
+      id: "9001",
+      result: "正常",
+      confidence: 0.9,
+      severity: "NORMAL",
+      createTime: "2026-11-17 22:00:00",
+      humanReviewStatus: "AI_ONLY",
+    } as never)
+
+    renderAt("/records/9001")
+
+    expect(await screen.findByText(/AI 判读结果/)).toBeTruthy()
+    expect(screen.queryByText("来源与授权 · PROVENANCE")).toBeNull()
+    // AI_ONLY 没有被排进复核队列，就不能显示成「待复核」
+    expect(screen.queryByText("待复核")).toBeNull()
+  })
+
+  it("协作记录展示四类事实：来源 / 草稿 / 授权 / 影像", async () => {
+    vi.mocked(getMyDiagnosis).mockResolvedValue({
+      id: "9001",
+      result: "正常",
+      confidence: 0.9,
+      severity: "NORMAL",
+      createTime: "2026-11-17 22:00:00",
+      humanReviewStatus: "AI_ONLY",
+      source: {
+        recordSource: "COLLABORATION_DRAFT",
+        patientTaskId: "task-1",
+        draftReviewState: "APPROVED",
+        authorizationState: "APPROVED",
+        authorizedAt: "2026-11-17 22:10:00",
+        authorizationReceipt: "abcdef12…",
+        reviewerRole: "admin",
+        imageArchivalState: "ARCHIVED_NOT_PUBLIC",
+      },
+    } as never)
+
+    renderAt("/records/9001")
+
+    expect(await screen.findByText("来源与授权 · PROVENANCE")).toBeTruthy()
+    expect(screen.getByText("协作任务 · 由草稿生成")).toBeTruthy()
+    expect(screen.getByText(/患者已授权保存 · 2026-11-17 22:10:00（未标注时区） · 回执 abcdef12…/)).toBeTruthy()
+    expect(screen.getByText("已归档 · 按隐私策略不公开")).toBeTruthy()
+    // D-01b：写复核的人是管理员，报告上就不能出现「医生」
+    expect(screen.getByText("管理员（admin）")).toBeTruthy()
+    expect(screen.queryByText(/医生复核/)).toBeNull()
+  })
 })

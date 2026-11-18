@@ -27,9 +27,20 @@ const BASELINE: Record<string, number> = {
   "agent.css": 3,
   "app.css": 97,
   "auth.css": 24,
-  "brand.css": 47,
+  // 47 → 67（E-09，2026-11-18）：新增的 20 条全部来自 `OpticFlow` 的光学带调色板，
+  // 且是从 `feat/iris21-multiagent-integration@9a6dbcb6` **逐字**取回的——SVG
+  // `stop-color` 与 mask 的 `#000` / `transparent` 属本棘轮明确允许的写死类别，
+  // 本轮没有新写任何一个字面色。此处只登记，不放松其他文件。
+  // 67 → 75（E-09 接入，2026-11-18）：`≤1024` 档把 `.landing-hero__flow` 的横向遮罩
+  // 换成竖向渐隐，8 条全部是 mask 的灰度停点（3 个 rgba 透明度 + `#000`，双前缀各一份），
+  // 同属本棘轮允许的 mask 类别；`-webkit-` 前缀沿用仓库既有的双写约定。
+  "brand.css": 75,
   "fault.css": 1,
   "news.css": 2,
+  // 协作四角色的 CRITIC 金（浅/深两版）：现有令牌里没有对应色，
+  // 又不属于 mask / SVG / print 这类"必须写死"。登记为待办，等设计层决定是否
+  // 升成正式令牌；在此之前不新增第三条字面色。
+  "roundtable.css": 2,
   "shell.css": 2,
 }
 

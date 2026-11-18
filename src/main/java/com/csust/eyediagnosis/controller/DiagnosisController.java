@@ -19,7 +19,9 @@ import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
+import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisSourceProjection;
 import com.csust.eyediagnosis.service.DiagnosisService;
+import com.csust.eyediagnosis.service.DiagnosisSourceProjectionService;
 import com.csust.eyediagnosis.service.UserService;
 import com.csust.eyediagnosis.service.impl.DiagnosisServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,8 @@ public class DiagnosisController {
     private UserService userService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private DiagnosisSourceProjectionService sourceProjectionService;
 
     /**
      * 判读记录里有患者影像结论和报告正文，浏览器或中间代理都不该留副本。
@@ -201,13 +205,32 @@ public class DiagnosisController {
                                                                 HttpServletRequest request){
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
+        // 归属校验在前：投影里含授权时间与回执前缀，只能给这条记录的主人（或管理端复核人）。
         Diagnosis diagnosis = diagnosisService.getOwnedDiagnosis(id, loginUser);
-        return ResultUtils.success(DiagnosisResultVO.objToVo(diagnosis));
+        DiagnosisResultVO vo = DiagnosisResultVO.objToVo(diagnosis);
+        // 最小权限：管理员为做记录管理可以读到这条记录，但「是谁、何时、凭哪张回执授权保存」
+        // 属于患者的授权凭证，不随管理端视角扩散。非本人查看时隐去回执前缀、授权时间与任务 id。
+        boolean restrictAuthorizationDetails = !loginUser.getId().equals(diagnosis.getUserId());
+        try {
+            vo.setSource(sourceProjectionService.project(id, diagnosis.getUrl(),
+                    restrictAuthorizationDetails));
+        } catch (DiagnosisSourceProjectionService.ProjectionUnavailable e) {
+            // 读不出来源就说读不出来。不能退化成「没有授权、没有归档」——那是在编事实。
+            vo.setSource(new DiagnosisSourceProjection(
+                    null, null, null, null, null, null, null,
+                    DiagnosisSourceProjection.Archival.UNKNOWN, false));
+        }
+        return ResultUtils.success(vo);
     }
 
     /**
      * 人工复诊：仅允许写入 humanResult / humanSeverity / humanRecommendations / humanReviewNote；
      * AI 字段（result/probability/confidence/details/severity）不可通过本接口覆盖。
+     *
+     * <p><b>当前安全关闭</b>（D-01b，2026-11-18 产品已裁定）：正式临床复核只能由具有
+     * 有效、已核验授权的医生执行，而系统尚无资质数据源。本端点保留路由与 DTO 形状
+     * 是为了历史前端与文档可追溯，**写入一律被服务层拒绝**并回明确理由；
+     * 管理员角色不再能凭 {@code ADMIN_ROLE} 产生 {@code REVIEWED} 结论。
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)

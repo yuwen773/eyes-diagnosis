@@ -134,6 +134,27 @@ describe("buildThread", () => {
     expect(steps[0].args).toEqual([{ key: "query", value: "青光眼" }])
   })
 
+  it("有状态回执就以回执为准：succeeded / failed / cancelled 各自成态", () => {
+    // 回归：合并进来的后端每个工具状态帧都带 toolCallId + toolStatus，content 恒为空，
+    // 前端永远收不到 tool-response。只按消息类型推断会把成功的工具一直标成「未确认」。
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolStatus: "succeeded", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "t2", type: "tool-request", toolCallId: "b", toolStatus: "failed", toolCalls: [{ name: "analyzeEyeImage", args: {} }] }),
+        msg({ id: "t3", type: "tool-request", toolCallId: "c", toolStatus: "cancelled", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+      ],
+      false,
+    )
+    expect(stepsOf(items).map((s) => s.state)).toEqual(["done", "failed", "cancelled"])
+  })
+
+  it("等待确认的回执标「已暂停」，不因为流结束被改写成「未确认」", () => {
+    const items = buildThread(
+      [msg({ id: "t1", type: "tool-request", toolCallId: "a", toolStatus: "awaiting-confirm", toolCalls: [{ name: "analyzeEyeImage", args: {} }] })],
+      false,
+    )
+    expect(stepsOf(items)[0].state).toBe("paused")
+  })
   it("流仍在跑时未返回的工具是「执行中」", () => {
     const items = buildThread(
       [msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] })],
@@ -235,6 +256,8 @@ describe("stepStateLabel", () => {
     expect(stepStateLabel("running")).toBe("执行中")
     // 「未确认」只陈述「没收到返回」，不承诺还会收到回执。
     expect(stepStateLabel("pending")).toBe("未确认")
+    expect(stepStateLabel("failed")).toBe("失败")
+    expect(stepStateLabel("cancelled")).toBe("已取消")
     expect(stepStateLabel("paused")).toBe("已暂停")
   })
 })

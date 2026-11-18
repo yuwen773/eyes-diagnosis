@@ -15,10 +15,13 @@ import type { StreamMessage } from "./agentStream"
 /**
  * 步骤状态。
  *
- * <p>`pending` 是「流已结束、没有收到工具返回」，展示成「未确认」：
+ * <p>`done` / `failed` / `cancelled` 来自后端的状态回执（`toolStatus`）；
+ * `running` 是还没有回执但流仍在跑；`paused` 是图中断的等待确认。
+ *
+ * <p>`pending` 是「流已结束、没有收到任何状态回执」，展示成「未确认」：
  * 既不是完成，也不是还在等——后端不会给已结束的回合补发回执。
  */
-export type AgentStepState = "done" | "running" | "pending" | "paused"
+export type AgentStepState = "done" | "running" | "pending" | "paused" | "failed" | "cancelled"
 
 export type AgentStepKind = "reasoning" | "tool" | "confirm"
 
@@ -30,6 +33,8 @@ export type AgentStep = {
   state: AgentStepState
   /** 工具的原始标识（模型实际调用的函数名）。 */
   toolName?: string
+  /** 后端工具调用 id：状态回执靠它归属到具体一步。 */
+  toolCallId?: string
   /** 工具参数（键值对，已脱敏）。 */
   args?: { key: string; value: string }[]
   /** 工具返回原文。 */
@@ -185,6 +190,27 @@ export function sanitizeToolArgs(
  * 有返回就是「完成」，还没收到返回就是「执行中」（流仍在跑）或「未确认」
  * （流已结束、工具没回）。
  */
+/**
+ * 后端状态回执 → 步骤状态。
+ *
+ * <p>有回执就以回执为准：成功的工具不能因为「没收到 tool-response 消息」而一直挂着
+ * 「执行中 / 未确认」——`tool-result` 状态帧本来就不带正文（后端 content 恒为空）。
+ * 没有回执（历史消息、旧后端）才退回类型推断。
+ */
+function stateOfToolStatus(status: StreamMessage["toolStatus"]): AgentStepState {
+  switch (status) {
+    case "succeeded":
+      return "done"
+    case "failed":
+      return "failed"
+    case "cancelled":
+      return "cancelled"
+    case "awaiting-confirm":
+      return "paused"
+    default:
+      return "running"
+  }
+}
 function toStep(
   msg: StreamMessage,
   steps: AgentStep[],
@@ -210,7 +236,8 @@ function toStep(
         kind: "tool",
         label: calls.map((c) => toolLabel(c.name)).join("、") || msg.toolName || "工具",
         toolName: calls.map((c) => c.name).join("、") || msg.toolName,
-        state: "running",
+        toolCallId: msg.toolCallId,
+        state: stateOfToolStatus(msg.toolStatus),
         args: sanitizeToolArgs(calls[0]?.args),
       }
     }
@@ -315,5 +342,10 @@ export function stepStateLabel(state: AgentStepState): string {
       return "未确认"
     case "paused":
       return "已暂停"
+    case "failed":
+      // 只说失败，不复述错误码：错误分类由后端给，前端不解释成医学含义。
+      return "失败"
+    case "cancelled":
+      return "已取消"
   }
 }

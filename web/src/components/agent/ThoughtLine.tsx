@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react"
-import { Check, ChevronDown, CircleDashed, CircleHelp, Pause, Sparkles } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Check, ChevronDown, CircleDashed, CircleHelp, CircleSlash, Pause, Sparkles, XCircle } from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
 import { stepStateLabel } from "@/lib/agentSteps"
@@ -8,7 +8,7 @@ import { renderMarkdown } from "@/lib/markdown"
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
 const PREVIEW_LIMIT = 180
 
-/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停。 */
+/** 单步的状态图标：完成 / 执行中 / 未确认 / 已暂停 / 失败 / 已取消。 */
 function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "done") {
     return <Check size={13} strokeWidth={2.6} aria-hidden="true" />
@@ -19,8 +19,41 @@ function StateIcon({ state }: { state: AgentStep["state"] }) {
   if (state === "paused") {
     return <Pause size={13} strokeWidth={2.4} aria-hidden="true" />
   }
+  if (state === "failed") {
+    return <XCircle size={13} strokeWidth={2.4} aria-hidden="true" />
+  }
+  if (state === "cancelled") {
+    return <CircleSlash size={13} strokeWidth={2.2} aria-hidden="true" />
+  }
   // 未确认：不是「还在转」，是一个问号——结果不知道。
   return <CircleHelp size={13} strokeWidth={2} aria-hidden="true" />
+}
+
+/**
+ * 单个运行中步骤的真实用时。
+ *
+ * <p>计时状态挂在**这一步自己身上**：并发调用时两行各有各的起点，先开始的工具不会
+ * 因为后一个开始而被清零；换步或结束即卸载，读数自然丢弃，不需要在 effect 里
+ * 同步 setState 复位。只报已经过去的时间，不编造百分比或「预计剩余」。
+ */
+function RunningElapsed() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const startedAt = Date.now()
+    const timer = window.setInterval(
+      () => setSeconds(Math.floor((Date.now() - startedAt) / 1000)),
+      1000,
+    )
+    return () => window.clearInterval(timer)
+  }, [])
+  // 第一秒之前不摆一个「0s」出来假装在动。
+  if (seconds === 0) return null
+  // 读屏软件读到的是完整句子，视觉上仍只是紧凑的读数。
+  return (
+    <span className="thought__elapsed num" aria-label={`已用时 ${seconds} 秒`}>
+      {seconds}s
+    </span>
+  )
 }
 
 function StepDetail({ step }: { step: AgentStep }) {
@@ -138,6 +171,7 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
                 {step.toolName && step.toolName !== step.label ? (
                   <span className="thought__toolname num">{step.toolName}</span>
                 ) : null}
+                {step.state === "running" ? <RunningElapsed /> : null}
                 <span className={`thought__state is-${step.state}`}>
                   {stepStateLabel(step.state)}
                 </span>

@@ -1,0 +1,18 @@
+{
+  "overall": "PARTIAL",
+  "backendMaven": "PASS_414_WITH_3_EXPLICIT_SKIPS",
+  "productContract": "PASS_20",
+  "backendSkipGate": {
+    "status": "FAIL_BASELINE_MISMATCH",
+    "suite": "com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest",
+    "expected": 15,
+    "observed": 7,
+    "sourceEqualsHead": true,
+    "contractNotLowered": true,
+    "sourceSha256": "3aaeab24966b7f0db92dfccc3136849fa36a458d29f01b79d3153ef5f76779e5",
+    "rawLogSha256": "3cd5452921f31e11dd10c9e04f155c2ec00b46e2665153125e7f4d3c7757faf4"
+  },
+  "hostedCI": "NOT_RUN",
+  "production": "NOT_RELEASED",
+  "clinical": "NOT_EVALUATED"
+}
