@@ -509,3 +509,78 @@ describe("stepStateLabel", () => {
     expect(stepStateLabel("cancelled")).toBe("已中断")
   })
 })
+
+describe("stateFromToolResult（失败类别）", () => {
+  it("failed + TIMEOUT 显示为超时，而不是笼统的失败", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "TIMEOUT",
+          toolName: "searchDocuments",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("timeout")
+    expect(step.errorCategory).toBe("TIMEOUT")
+    expect(stepStateLabel(step.state)).toBe("超时")
+  })
+
+  it("failed + CANCELLED 显示为已中断", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "CANCELLED",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("cancelled")
+    expect(stepStateLabel(step.state)).toBe("已中断")
+  })
+
+  it("failed + INVALID_OUTPUT 仍是失败，但类别保留给界面区分措辞", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "analyzeEyeImage", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "INVALID_OUTPUT",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("error")
+    expect(step.errorCategory).toBe("INVALID_OUTPUT")
+  })
+
+  it("没有类别时保持普通失败，不猜", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "c1", toolStatus: "failed", content: "" }),
+      ],
+      false,
+    )
+    expect(stepsOf(items)[0].state).toBe("error")
+  })
+})

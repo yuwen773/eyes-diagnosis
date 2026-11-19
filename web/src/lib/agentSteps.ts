@@ -49,6 +49,12 @@ export type AgentStep = {
   /** 工具返回原文（已脱敏）。 */
   output?: string
   /**
+   * 失败类别（仅失败终态）：TOOL_EXCEPTION / TIMEOUT / INVALID_OUTPUT / CANCELLED。
+   * 状态说「失败了」，类别说「为什么」——界面据此把「稍后重试」和
+   * 「这张图没法分析」区分开。
+   */
+  errorCategory?: string
+  /**
    * 是否真正收到过返回。空字符串结果也是「收到」——
    * 旧实现用 `!output` 判断，把空返回误判成「没有返回」。
    */
@@ -229,6 +235,29 @@ export function stateFromToolStatus(status: string | undefined): AgentStepState 
 }
 
 /**
+ * 终态状态 + 失败类别 → 步骤状态。
+ *
+ * <p>后端把终止事实统一成 `failed`，原因放在 `errorCategory` 里；只看
+ * `toolStatus` 的话，超时、中断与普通异常在界面上长得一模一样。
+ * 只映射后端明确给出的类别，缺省仍是「失败」——不猜。
+ */
+export function stateFromToolResult(
+  status: string | undefined,
+  errorCategory: string | undefined,
+): AgentStepState {
+  const base = stateFromToolStatus(status)
+  if (base !== "error") return base
+  switch ((errorCategory ?? "").toUpperCase()) {
+    case "TIMEOUT":
+      return "timeout"
+    case "CANCELLED":
+      return "cancelled"
+    default:
+      return "error"
+  }
+}
+
+/**
  * 把一段真实事件整理成步骤。
  *
  * <p>tool-request 逐工具调用各成一步；tool-response 先按 `toolCallId`
@@ -259,7 +288,9 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
             label: toolLabel(msg.toolName),
             toolName: msg.toolName,
             toolCallId: msg.toolCallId,
-            state: msg.toolStatus ? stateFromToolStatus(msg.toolStatus) : "running",
+            state: msg.toolStatus
+              ? stateFromToolResult(msg.toolStatus, msg.errorCategory)
+              : "running",
             args: [],
           },
         ]
@@ -273,13 +304,16 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
         toolCallId: call.id,
         // 状态回执可能直接落在请求帧上（content 恒空的状态增量），
         // 没有回执才按「执行中」处理，流结束时再按事实转成「未确认」。
-        state: (msg.toolStatus ? stateFromToolStatus(msg.toolStatus) : "running") as AgentStepState,
+        state: (msg.toolStatus
+          ? stateFromToolResult(msg.toolStatus, msg.errorCategory)
+          : "running") as AgentStepState,
+        errorCategory: msg.errorCategory,
         args: sanitizeToolArgs(call.args),
       }))
     }
 
     case "tool-response": {
-      const state = stateFromToolStatus(msg.toolStatus)
+      const state = stateFromToolResult(msg.toolStatus, msg.errorCategory)
       // 状态增量不是结果：后端把 running 帧也走这条通道下发，content 恒为空。
       // 照单全收地标 received 会在「执行中」旁边写「工具返回了空结果」——
       // 慢工具和「已停止」的回合都会撞上。
@@ -295,6 +329,7 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
         target.output = output
         target.received = true
         target.state = state
+        target.errorCategory = msg.errorCategory
         return []
       }
       return [
@@ -305,6 +340,7 @@ function toSteps(msg: StreamMessage, steps: AgentStep[]): AgentStep[] {
           toolName: msg.toolName,
           toolCallId: msg.toolCallId,
           state,
+          errorCategory: msg.errorCategory,
           output,
           received: true,
         },

@@ -83,7 +83,21 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
                 ToolResourceContext.drain();
                 // 失败/超时/中断的调用不带走任何资源：侧栏不拿它当证据。
                 // 预算拒绝也走这里——工具确实没有产出结果。
-                sink.finished(id, name, false, ToolStepContract.ErrorCategory.TOOL_EXCEPTION);
+                //
+                // 类别优先从响应文本里的稳定标记读回：MCP 工具的异常在到达这里之前
+                // 已被框架转成错误字符串，异常类型丢了；只按 isError() 一律记
+                // TOOL_EXCEPTION 会把「超时」和「取消」抹平。
+                ToolStepContract.ErrorCategory category = response == null
+                        ? ToolStepContract.ErrorCategory.TOOL_EXCEPTION
+                        : java.util.Optional.ofNullable(
+                                ToolStepContract.categoryFromText(response.getResult()))
+                        .orElse(ToolStepContract.ErrorCategory.TOOL_EXCEPTION);
+                sink.finished(id, name, false, category);
+                if (response != null && ToolStepContract.categoryFromText(response.getResult()) != null) {
+                    // 标记只服务于观察者，不把内部标记塞给模型。
+                    return ToolCallResponse.error(id, name,
+                            ToolStepContract.stripErrorTag(response.getResult()));
+                }
             } else {
                 // 资源只来自成功调用；工具不知道框架分配的 toolCallId，在这里补齐。
                 List<ResourceRef> resources = ToolResourceContext.drain().stream()

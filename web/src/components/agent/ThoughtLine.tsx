@@ -91,7 +91,13 @@ function UnresolvedNote({ state }: { state: AgentStep["state"] }) {
 
 /** 失败类的说明：状态来自真实观察，不把失败包装成完成。 */
 function failureNote(step: AgentStep): string | null {
-  if (step.state === "error") return "工具返回了错误，本次结果不能当作医学证据。"
+  if (step.state === "error") {
+    // 无效输出不是「服务坏了」：换一张图或改问法可能有用，重试同一个请求没用。
+    if ((step.errorCategory ?? "").toUpperCase() === "INVALID_OUTPUT") {
+      return "工具返回的内容不可用，本次结果不能当作医学证据。"
+    }
+    return "工具返回了错误，本次结果不能当作医学证据。"
+  }
   if (step.state === "timeout") return "工具执行超时，没有拿到完整结果。"
   if (step.state === "cancelled") return "工具执行被中断，结果不完整。"
   return null
@@ -151,7 +157,9 @@ function StepDetail({ step }: { step: AgentStep }) {
             : step.output}
         </pre>
       ) : null}
-      {received && !hasOutput ? (
+      {received && !hasOutput && !failure ? (
+        // 失败/超时/中断的正文本来就是空的（错误信息走 failureNote），
+        // 再说一句「工具返回了空结果」会把「没跑成」说成「跑成了但没内容」。
         <p className="thought__empty">工具返回了空结果。</p>
       ) : null}
 

@@ -197,6 +197,37 @@ describe("parseServerTime", () => {
 })
 
 describe("mapHistoryMessage", () => {
+  it("历史工具终态保留失败类别，回放能区分超时与普通失败", () => {
+    const m = mapHistoryMessage({
+      id: "9",
+      isSummary: false,
+      role: "ASSISTANT",
+      subType: "tool-result",
+      createdTime: "2026-11-19 10:00:00",
+      content: JSON.stringify({
+        toolCallId: "c1",
+        name: "searchDocuments",
+        status: "failed",
+        errorCategory: "TIMEOUT",
+        output: "",
+      }),
+    })
+    expect(m.toolStatus).toBe("failed")
+    expect(m.errorCategory).toBe("TIMEOUT")
+  })
+
+  it("旧历史行没有类别字段时不补造", () => {
+    const m = mapHistoryMessage({
+      id: "10",
+      isSummary: false,
+      role: "ASSISTANT",
+      subType: "tool-result",
+      createdTime: "2026-11-19 10:00:00",
+      content: JSON.stringify({ toolCallId: "c2", status: "succeeded", output: "ok" }),
+    })
+    expect(m.errorCategory).toBeUndefined()
+  })
+
   it("role/subType 映射表", () => {
     const base = { id: "1", isSummary: false, createdTime: "2026-11-08 10:00:00" }
     expect(mapHistoryMessage({ ...base, role: "USER", subType: "", content: "问" }).type).toBe("user")

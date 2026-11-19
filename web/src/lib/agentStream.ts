@@ -39,6 +39,13 @@ export type StreamMessage = {
    * cancelled / completed / unknown。缺省表示历史旧数据没有回执。
    */
   toolStatus?: string
+  /**
+   * 失败类别（仅失败终态）：TOOL_EXCEPTION / TIMEOUT / INVALID_OUTPUT / CANCELLED。
+   *
+   * <p>状态只说「失败」，类别才说「为什么失败」。没有它，超时、无效输出和普通
+   * 异常在界面上完全一样——用户看到「失败」却不知道该重试还是改问法。
+   */
+  errorCategory?: string
   toolCalls?: ToolCallArg[]
   time?: string
   images?: string[]
@@ -335,6 +342,8 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
       // 旧行没有状态，但「有这一行」本身就说明工具返回过结果：
       // 标 completed（已返回），不冒充 success，也不说未确认。
       toolStatus: parsed.status ?? "completed",
+      // 旧行没有类别字段；缺省就是「不知道」，不要补造。
+      ...(parsed.errorCategory ? { errorCategory: parsed.errorCategory } : {}),
       time,
       ...(resources.length > 0 ? { resources } : {}),
     }
@@ -402,6 +411,7 @@ type ParsedToolResult = {
   toolCallId?: string
   name?: string
   status?: string
+  errorCategory?: string
   output: string
   /** 后端随结果下发的结构化资源（新格式才有）。 */
   resources?: unknown
@@ -424,6 +434,8 @@ function parsePersistedToolResult(content: string): ParsedToolResult {
               : typeof parsed.toolStatus === "string"
                 ? parsed.toolStatus
                 : undefined,
+          errorCategory:
+            typeof parsed.errorCategory === "string" ? parsed.errorCategory : undefined,
           output: typeof parsed.output === "string" ? parsed.output : "",
           resources: parsed.resources,
         }

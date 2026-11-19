@@ -175,7 +175,9 @@ public class DiagnosisAgent {
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
         // 每个请求独立一个 sink/拦截器：不同会话、不同工具卡不会串台。
-        ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record);
+        // 终态落库挂在 sink 的转移上（而不是 SSE 管道），断连/停止也留得下终态。
+        ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record,
+                dto -> persistTerminalToolResult(threadId, userId, dto));
         ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink);
 
         RunnableConfig config = RunnableConfig.builder()
@@ -294,8 +296,7 @@ public class DiagnosisAgent {
 
             // 状态事件来自真实工具执行（拦截器），与图事件合并后按同一 SSE 通道下发。
             // 终态同时落库：历史回放要靠它把「请求」和「结果」配成同一步。
-            Flux<MessageDTO> statusEvents = sink.events().asFlux()
-                    .doOnNext(dto -> persistTerminalToolResult(threadId, userId, dto));
+            Flux<MessageDTO> statusEvents = sink.events().asFlux();
 
             // 图流终止（正常结束 / 报错 / 浏览器取消）时关闭 sink：仍未拿到真实结果的
             // 调用一律 CANCELLED，绝不在缺结果时呈现成功。必须由 graphEvents 自己触发，
@@ -329,6 +330,11 @@ public class DiagnosisAgent {
         payload.put("name", dto.getToolName());
         payload.put("status", status);
         payload.put("output", dto.getContent() == null ? "" : dto.getContent());
+        // 失败类别要进历史：前端回放靠它区分「超时」和普通失败，
+        // 只存 failed 会把两种不同的事实抹成一种。
+        if (dto.getErrorCategory() != null) {
+            payload.put("errorCategory", dto.getErrorCategory());
+        }
         if (dto.getResources() != null && !dto.getResources().isEmpty()) {
             payload.put("resources", dto.getResources());
         }

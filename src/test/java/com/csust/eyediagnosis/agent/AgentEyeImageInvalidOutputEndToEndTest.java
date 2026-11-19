@@ -105,6 +105,8 @@ class AgentEyeImageInvalidOutputEndToEndTest {
         String payload = persisted.getValue();
         assertTrue(payload.contains("\"status\":\"failed\""), "历史终态必须是 failed：" + payload);
         assertTrue(payload.contains("\"toolCallId\":\"call-eye-1\""), "终态必须带关联键：" + payload);
+        assertTrue(payload.contains("\"errorCategory\":\"INVALID_OUTPUT\""),
+                "失败类别必须进历史，回放才能区分「无效输出」与普通失败：" + payload);
 
         // 审计：终态既不是 SUCCEEDED，也不是笼统的 TOOL_EXCEPTION
         ArgumentCaptor<ToolStepSink.ToolAuditRecord> records =

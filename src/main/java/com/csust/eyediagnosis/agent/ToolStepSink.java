@@ -30,6 +30,13 @@ public final class ToolStepSink {
 
     private final Sinks.Many<MessageDTO> events = Sinks.many().unicast().onBackpressureBuffer();
     private final Consumer<ToolAuditRecord> audit;
+    /**
+     * 终态落库回调。**挂在这里而不是 SSE 管道上**：浏览器断连/用户停止时
+     * 订阅会被取消，挂在管道上的 {@code doOnNext} 就再也不会执行，于是一个
+     * 真实发生过的工具调用只在审计表里有记录、历史里没有——刷新后这一步
+     * 变成「未确认」，和审计对不上。sink 的转移不依赖订阅者是否存在。
+     */
+    private final Consumer<MessageDTO> persist;
     private final String sessionId;
     private final Long userId;
     // One monitor owns transitions, audit order and sink emissions together.
@@ -40,9 +47,15 @@ public final class ToolStepSink {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ToolStepSink.class);
 
     public ToolStepSink(String sessionId, Long userId, Consumer<ToolAuditRecord> audit) {
+        this(sessionId, userId, audit, null);
+    }
+
+    public ToolStepSink(String sessionId, Long userId, Consumer<ToolAuditRecord> audit,
+                        Consumer<MessageDTO> persist) {
         this.sessionId = sessionId;
         this.userId = userId;
         this.audit = audit;
+        this.persist = persist;
     }
 
     public Sinks.Many<MessageDTO> events() { return events; }
@@ -121,7 +134,6 @@ public final class ToolStepSink {
     private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
                       ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory,
                       List<ResourceRef> resources, String content) {
-        if (deliveryCancelled) return;
         MessageDTO dto = new MessageDTO();
         dto.setMessageType(MessageType.TOOL_RESULT);
         dto.setContent(content == null ? "" : content);
@@ -135,6 +147,18 @@ public final class ToolStepSink {
         if (reason != null) dto.setFinishReason(reason.wire());
         if (errorCategory != null) dto.setErrorCategory(errorCategory.name());
         if (resources != null && !resources.isEmpty()) dto.setResources(List.copyOf(resources));
+
+        // 先落库、再下发：落库不依赖有没有人在听，断连也留得下终态。
+        if (status != ToolStepContract.Status.RUNNING && persist != null) {
+            try {
+                persist.accept(dto);
+            } catch (RuntimeException e) {
+                // 历史写失败不能让工具状态通道炸掉；审计仍有记录，日志留痕。
+                log.warn("工具终态落库失败, toolCallId={}, status={}", toolCallId, status.wire(), e);
+            }
+        }
+
+        if (deliveryCancelled) return;
         checkEmission(events.tryEmitNext(dto));
     }
 
