@@ -58,7 +58,13 @@ scripts/worktree-hygiene.sh branches --apply                              # 已�
 
 规则：
 
-- 归档落在 `.worktrees/_archive/<日期>/`：`<树名>.patch`（已跟踪改动）、`<树名>-untracked.tar.gz`（未跟踪文件）、`<树名>.meta.txt`（HEAD/分支/status）。该目录已被 `.gitignore` 忽略。
+- 归档落在 `.worktrees/_archive/<日期>/<树名>-<HEAD短SHA>/`：`changes.patch`（已跟踪改动）、
+  `untracked.tar.gz`（未跟踪文件）、`meta.txt`（HEAD/分支/status），有独有提交时另有
+  `history.bundle`（`git bundle verify` 校验过）。该目录已被 `.gitignore` 忽略。
+- **归档失败绝不删除**：任何一步（mkdir / git diff / 打包 / 回读校验 / bundle verify /
+  归档期间工作树变化 / 落盘复检）失败都以非零退出并保留工作树；同名归档不覆盖。
+  回归：`bash scripts/tests/worktree-hygiene-failclosed.sh`（临时仓库 + 替身命令注入故障，
+  失败反例断言 `git worktree remove` 调用次数为 0）。
 - 想长期保留的树，把分支名或绝对路径写进 `.worktrees/_keep.txt`（一行一个）；`reap` 与 `branches` 永不碰。
 - `--archive-dirty` / `--drop-unique` 默认只动 HEAD 超过 3 天的树，避免删掉别的会话正在改的树；`--older-than N` 可调。
 - 永不自动删除：主检出、当前工作树、挂着开放 PR 的工作树、`master` / `ui` 分支。
