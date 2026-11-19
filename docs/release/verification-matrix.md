@@ -9,7 +9,7 @@
 |---|---|
 | 分支 | `integration/iris-release-candidate` |
 | 基线 | `origin/ui@1ff9c71c` |
-| 当前 HEAD | `f6b08841` 起的代码树（第二轮 NO_GO 整改，Draft PR #119） |
+| 当前 HEAD | `07d594f1` 起的代码树（= `f6b08841` 的整改树 + 1 个已被本地跑次覆盖的前端用例文件；Draft PR #119） |
 
 ## 2. 已完成的验证（按 SHA）
 
