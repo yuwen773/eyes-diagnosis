@@ -690,9 +690,20 @@ class GraphExecutionTest {
     }
 
     private Process child(String id, String stage, String feedback, java.nio.file.Path marker, java.nio.file.Path callsLog, java.nio.file.Path output) throws Exception {
-        return new ProcessBuilder(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                "-cp", System.getProperty("java.class.path"), RecoveryWorker.class.getName(), id, stage, feedback, marker.toString(), callsLog.toString())
+        var ready = output.resolveSibling(output.getFileName() + ".ready");
+        Process process = new ProcessBuilder(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                "-cp", System.getProperty("java.class.path"), RecoveryWorker.class.getName(), id, stage, feedback, marker.toString(), callsLog.toString(), ready.toString())
                 .redirectErrorStream(true).redirectOutput(output.toFile()).start();
+        try {
+            // JVM/class loading and connection setup are fixture work, not graph recovery. Keep
+            // bootstrap bounded separately; behavior still has 10 s and the whole case still 30 s.
+            await(() -> java.nio.file.Files.exists(ready) || !process.isAlive());
+            assertTrue(java.nio.file.Files.exists(ready), () -> read(output));
+            return process;
+        } catch (Exception | AssertionError failure) {
+            process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS);
+            throw new AssertionError("Recovery child bootstrap failed: " + read(output), failure);
+        }
     }
     private static String read(java.nio.file.Path path) { try { return java.nio.file.Files.readString(path); } catch (Exception e) { return e.toString(); } }
     /** Asks the lease's own authority, not this JVM's clock, whether another executor still holds it. */
@@ -721,15 +732,15 @@ class GraphExecutionTest {
                     return new ChatResponse(List.of(new Generation(new AssistantMessage(output))));
                 } catch (Exception e) { throw new RuntimeException(e); }
             };
-            // The lease authority is the database clock (PatientDraftCoordinator.takeLease). On this
-            // host Docker Desktop steps the VM clock by its time sync, so a lease the fixture expired
-            // one second ago by its own arithmetic can still read as live here, and the coordinator
-            // then correctly refuses to claim. Wait with the same authority the coordinator uses,
-            // bounded, instead of assuming the fixture write is still in effect.
-            long claimableBy = System.nanoTime() + TimeUnit.SECONDS.toNanos(8);
-            while (leaseLive(args[0]) && System.nanoTime() < claimableBy) Thread.sleep(50);
             try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model)) {
-                coordinator.setCollaborationEvents(new CollaborationEvents(jdbc)); coordinator.run(args[0]);
+                coordinator.setCollaborationEvents(new CollaborationEvents(jdbc));
+                java.nio.file.Files.writeString(java.nio.file.Path.of(args[5]), "ready");
+                // The lease authority is the database clock (PatientDraftCoordinator.takeLease).
+                // Docker Desktop can step its VM clock backwards after the fixture expires the
+                // lease. Wait with that same authority, within the parent's 10 s behavior budget.
+                long claimableBy = System.nanoTime() + TimeUnit.SECONDS.toNanos(4);
+                while (leaseLive(args[0]) && System.nanoTime() < claimableBy) Thread.sleep(50);
+                coordinator.run(args[0]);
             } finally {
                 closePool();
             }
