@@ -87,17 +87,21 @@ public final class ToolStepContract {
         if (interrupted) return ErrorCategory.CANCELLED;
         if (error == null) return ErrorCategory.NONE;
         Throwable cursor = error;
+        boolean invalidOutput = false;
         for (int depth = 0; cursor != null && depth < 8; depth++) {
             if (cursor instanceof java.util.concurrent.TimeoutException) return ErrorCategory.TIMEOUT;
             if (cursor instanceof java.util.concurrent.CancellationException) return ErrorCategory.CANCELLED;
             if (cursor instanceof InterruptedException) return ErrorCategory.CANCELLED;
+            // 无效输出同样沿 cause 链认：框架可能把它包一层 ToolExecutionException。
+            if (cursor instanceof InvalidToolOutputException || cursor instanceof IllegalArgumentException) {
+                invalidOutput = true;
+            }
             String type = cursor.getClass().getSimpleName();
             if (type.contains("Timeout")) return ErrorCategory.TIMEOUT;
             if (type.contains("Cancelled") || type.contains("Canceled")) return ErrorCategory.CANCELLED;
             Throwable next = cursor.getCause();
             cursor = next == cursor ? null : next;
         }
-        if (error instanceof IllegalArgumentException) return ErrorCategory.INVALID_OUTPUT;
-        return ErrorCategory.TOOL_EXCEPTION;
+        return invalidOutput ? ErrorCategory.INVALID_OUTPUT : ErrorCategory.TOOL_EXCEPTION;
     }
 }
