@@ -14,6 +14,8 @@
   vite 5173、Chroma 8000、Redis 6380、MySQL 3306（`diagnosis`，已到 V29）。
 - 种子账号：`acceptance-patient-8til3oiuo` id `9223372036854775801`；cookie `/tmp/eye-cookie.txt`。
 - 证据目录（不入库）：`C:/Users/yuwen/AppData/Local/Temp/eye-overnight-2026-11-19/`。
+- 当前后端启动开关（仅本进程，重启回默认关）：`EYE_DIAGNOSIS_RAG_CORPUS_SEED_ENABLED=true`
+  （真实播种 24 分块）、`AGENT_TOOL_AUDIT_ENABLED=true`（t_agent_tool_audit 写审计）。
 
 ## 1. 当前任务
 
@@ -49,11 +51,11 @@
 - [x] G3-1 真实流式文本 + done + 历史入库回放
 - [x] G3-2 真实 RAG（`text-embedding-v3`→Chroma 24 分块→结构化来源→历史证据引用）。
       仅验证内置语料路径；上传文档 indexVersion 准入未试（D5 无重处理入口）→ G3-2 PARTIAL
-- [ ] G3-3 真实工具失败（SSE/DB/审计/模型可见错误一致）
+- [x] G3-3 真实工具失败：SSE/history/审计/模型可见一致（成功 `succeeded`；Chroma 停机 →
+      `failed/TOOL_EXCEPTION`；审计仅存 key 名，无原文）。PASS
 - [ ] G3-4 SSE 中断、刷新、取消（不制造假成功/不丢终态）
 - [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
-- [ ] G-3 真实 DashScope 场景：G3-1 流式文本 / G3-2 RAG / G3-3 工具失败 / G3-4 中断取消 /
-      G3-5 附件信任边界 / G3-6 视觉成功 / G3-7 COS 上传（视凭据）
+- [ ] G-3 汇总：G3-1/G3-3/G3-5/G3-6 PASS；G3-2 PARTIAL（内建语料）；G3-4 待做；G3-7 COS 真实上传（视凭据）
 - [ ] G-5 浏览器视觉验收（390/768/1440，深浅双主题，登录/Agent/判读/管理端/错误态）
 - [ ] V17→V29 隔离库迁移 + 备份恢复演练
 - [ ] ui→master 发布候选 PR + 完整 GitHub CI
@@ -79,5 +81,5 @@
 
 ## 6. 判定
 
-- 当前：**CONDITIONAL**（P0 视觉误报已修并有真实证据；G3-1/G3-5/G3-6 已证；
-  剩 G3-2 RAG / G3-3 工具失败 / G3-4 中断取消、G-5 浏览器验收、V17→V29 迁移演练、ui→master PR+CI）。
+- 当前：**CONDITIONAL**（P0 视觉误报已修 + 真实证据；G3-1/G3-3/G3-5/G3-6 PASS，G3-2 PARTIAL；
+  剩 G3-4 中断取消、G3-7 COS、G-5 浏览器验收、V17→V29 迁移演练、ui→master PR+CI、版本号/Release Notes）。
