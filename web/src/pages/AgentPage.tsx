@@ -27,7 +27,7 @@ import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { newId } from "@/lib/id"
 import { formatClock } from "@/lib/time"
 import { useMediaQuery } from "@/lib/useMediaQuery"
-import { faultFromError } from "@/lib/faults"
+import { faultFromError, fault } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { Dialog } from "@/components/ui/dialog"
 import { MessageList } from "@/components/agent/MessageList"
@@ -202,6 +202,18 @@ export function AgentPage() {
         if (seq !== historySeq.current || threadIdRef.current !== id) return
         // 换了账号：这条历史属于上一个身份，不写回。
         if (userKeyRef.current !== expectedUser) return
+        // 服务端说本会话有没落库的消息终态：历史照常显示，但**必须说明它不完整**，
+        // 否则用户会把「读得到多少算多少」当成「这就是全部」。
+        if (data.uncommittedTerminal) {
+          pushFault(
+            fault({
+              severity: "attention",
+              kind: "info",
+              title: "这段历史可能不完整",
+              detail: "本会话有消息没能写入数据库，刷新后可能缺失。",
+            }),
+          )
+        }
         const raw = data.messages ?? []
         const history = raw.map(mapHistoryMessage)
         // 时间门槛与 reconcileDelivery 同一口径：只比内容会把「用户十分钟前问过

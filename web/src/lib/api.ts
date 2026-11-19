@@ -242,6 +242,11 @@ export type ChatHistoryVO = {
   messages: HistoryMessageVO[]
   hasMore: boolean
   nextCursor: string | null
+  /**
+   * 本会话存在未提交的消息终态（写入失败或待恢复）。
+   * 历史仍会返回，但**不完整**——界面必须显式说明，不能装作完整。
+   */
+  uncommittedTerminal?: boolean
 }
 
 export function getSessions(beforeId?: string, limit = 20) {
