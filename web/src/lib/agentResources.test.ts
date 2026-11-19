@@ -240,6 +240,37 @@ describe("引用核验表", () => {
     const keys = citationKeysByRound(resources).get(1) ?? []
     expect(new Set(keys.map((c) => c.key)).size).toBe(keys.length)
   })
+
+  it("同一片段在后面的回合再次检索到，前面回合的角标仍然可核验", () => {
+    const rehit = deriveResources([
+      msg({
+        id: "u1",
+        type: "user",
+        content: "第一问",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        ],
+      }),
+      msg({ id: "a1", type: "assistant", content: "回答一" }),
+      msg({ id: "u2", type: "user", content: "第二问" }),
+      msg({
+        id: "t2",
+        type: "tool-response",
+        content: "又检索到同一片",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        ],
+      }),
+    ])
+    const byRound = citationKeysByRound(rehit)
+    // 先出现的回合不能失去核验
+    expect(byRound.get(1)?.map((c) => c.key)).toEqual(["42#0"])
+    // 后出现的回合同样可核验
+    expect(byRound.get(2)?.map((c) => c.key)).toEqual(["42#0"])
+    // 资源栏仍只有一条：位置与出处停在首次出现处，不搬家
+    expect(rehit.documents).toHaveLength(1)
+    expect(rehit.documents[0].round).toBe(1)
+  })
 })
 
 describe("deriveResources —— 回合与定位", () => {

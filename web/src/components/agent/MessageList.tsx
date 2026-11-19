@@ -190,9 +190,20 @@ export function MessageList({
 
   // 引用核验表只在资源变化时重算；消息→回合是纯整数映射，可以跟着消息走，
   // 这样行组件拿到的是稳定的数组与数字，memo 仍然只放行正在流式的那一行。
+  //
+  // 资源数组每片 token 都会换新（deriveResources 跟着 messages 走），所以这里
+  // 再按「这一回合的证据键」做一层身份缓存：键没变就复用旧数组，否则历史行
+  // 的 citations prop 每片都换引用，memo 会全线失效、整篇重渲。
+  // 用「证据内容签名」而不是 resources 的引用做依赖：resources 数组每片
+  // token 都换新，跟引用算等于让每条历史行的 citations prop 每片换引用，
+  // memo 全线失效。键与回合都不变时，直接复用上一次的结果。
+  const citationSignature = (resources?.documents ?? [])
+    .map((doc) => `${doc.id}#${(doc.rounds ?? (doc.round ? [doc.round] : [])).join(",")}`)
+    .join("|")
   const citationsByRound = useMemo(
     () => citationKeysByRound(resources ?? EMPTY_RESOURCES),
-    [resources],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只随证据内容变，不随数组引用变
+    [citationSignature],
   )
   const roundById = useMemo(() => messageRoundById(messages), [messages])
 

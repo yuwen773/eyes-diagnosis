@@ -475,7 +475,10 @@ export function AgentPage() {
    */
   const handleRegenerate = useCallback(
     async (userMessageId: string) => {
-      if (isStreaming) return
+      // 与发送同一道同步闸门：isStreaming 是异步状态，上传/刚受理的窗口里
+      // 连点会并发起两条流，服务端会留下两份版本、正文交错追加。
+      if (isStreaming || sendingRef.current) return
+      sendingRef.current = true
       const usedThreadId = threadId
       const reload = () => {
         if (threadIdRef.current === usedThreadId) void loadHistoryMessages(usedThreadId)
@@ -487,6 +490,8 @@ export function AgentPage() {
         pushFault(faultFromError(e, { intent: "send" }))
         // 已受理但流中断：服务端可能已经留下半截版本，重读历史如实显示。
         if (e instanceof AgentSendError && e.accepted) reload()
+      } finally {
+        sendingRef.current = false
       }
     },
     [isStreaming, threadId, regenerate, loadHistoryMessages, pushFault],

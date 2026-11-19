@@ -32,6 +32,7 @@ vi.mock("@/lib/session", () => ({
 const sendMock = vi.hoisted(() => vi.fn())
 // reset 必须整个会话稳定——否则初始化 effect 每次渲染都重跑，历史被反复拉取。
 const resetMock = vi.hoisted(() => vi.fn())
+const regenerateMock = vi.hoisted(() => vi.fn())
 // 让用例在 send 抛错之前往消息表里塞一条「本回合已流出的内容」，
 // 用来区分「服务端已受理后失败」与「压根没发出去」两种回滚语义。
 const streamControls = vi.hoisted(() => ({ push: (message: unknown) => { void message } }))
@@ -50,6 +51,7 @@ vi.mock("@/lib/agentStream", async (importOriginal) => {
         isStreaming: false,
         resources: { images: [], documents: [], links: [] },
         send: sendMock,
+        regenerate: regenerateMock,
         abort: vi.fn(),
         pushUser: (message: unknown) => setMessages((prev) => [...prev, message]),
         setMessages,
@@ -91,6 +93,8 @@ beforeEach(() => {
   // 不是 undefined——页面据它决定要不要写回会话 id、生成标题。
   sendMock.mockReset()
   sendMock.mockResolvedValue({ accepted: true, aborted: false, abortedBy: null })
+  regenerateMock.mockReset()
+  regenerateMock.mockResolvedValue({ accepted: true, aborted: false, abortedBy: null })
   // 标题生成按用例断言「有没有被触发」，必须逐例清零
   vi.mocked(generateTitle).mockClear()
 })
@@ -872,5 +876,79 @@ describe("AgentPage 发送互斥", () => {
     await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
     // 只发了一条，且带的是这一次上传的图片。
     expect(sendMock.mock.calls[0][2]).toEqual(["https://cos.example/fundus.jpg"])
+  })
+
+  it("重新生成连点只发一条流：同步闸门挡住第二次", async () => {
+    sessionState.status = "authed"
+    sessionState.user = { id: 1, userAccount: "tester" }
+    // 页面只按本地保存的会话 id 恢复历史（没有就停在欢迎屏）。
+    localStorage.setItem("agent_current_thread_id:1", "s-regen")
+    // 有一个已保存的会话，页面才会去读它的历史（否则停在欢迎屏）。
+    vi.mocked(getSessions).mockResolvedValue([
+      {
+        sessionId: "s-regen",
+        title: "关于版本的会话",
+        lastMessage: "上一轮的回答",
+        messageCount: 2,
+        summaryContent: "",
+        createdTime: "2026-11-19 10:00:00",
+        updatedTime: "2026-11-19 10:00:01",
+      },
+    ])
+    vi.mocked(getChatHistory).mockResolvedValue({
+      messages: [
+        {
+          id: "11",
+          role: "USER",
+          subType: "",
+          content: "上一轮的问题",
+          isSummary: false,
+          createdTime: nowStamp(),
+          selectedVariantId: "v1",
+        },
+        {
+          id: "12",
+          role: "ASSISTANT",
+          subType: "text",
+          content: "上一轮的回答",
+          isSummary: false,
+          createdTime: nowStamp(),
+          replyToId: "11",
+          variantId: "v1",
+        },
+      ],
+      hasMore: false,
+      nextCursor: null,
+    })
+    // 第一条流挂起不返回，模拟「已受理、还在生成」的窗口
+    let release: (value: unknown) => void = () => {}
+    regenerateMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = resolve
+      }),
+    )
+    stubMatchMedia()
+
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/agent"]}>
+          <Routes>
+            <Route path="/agent" element={<AgentPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+
+    const button = await screen.findByText("重新生成")
+    fireEvent.click(button)
+    fireEvent.click(button)
+    // isStreaming 还是 false 的窗口里，第二次点击也必须被同步闸门挡住：
+    // 否则服务端会留下两份版本，正文交错追加。
+    expect(regenerateMock).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      release({ accepted: true, aborted: false, abortedBy: null })
+    })
+    await waitFor(() => expect(getChatHistory).toHaveBeenCalled())
   })
 })

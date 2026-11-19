@@ -347,12 +347,6 @@ export function selectAgentVariant(threadId: string, userMessageId: string, vari
   })
 }
 
-export function getAgentVariants(threadId: string, userMessageId: string) {
-  return request<TurnVariantsVO>(
-    `/agent/chat/variants/${encodeURIComponent(threadId)}/${encodeURIComponent(userMessageId)}`,
-  )
-}
-
 export function exportSession(sessionId: string, format: "markdown" | "json") {
   return request<string>(`/agent/history/${sessionId}/export?format=${format}`)
 }

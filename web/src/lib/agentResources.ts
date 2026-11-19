@@ -59,8 +59,18 @@ export type AgentResource = {
   messageId?: string
   /** 产生这条资源的工具调用，用于「定位到执行步骤」。 */
   toolCallId?: string
-  /** 所属回合（从 1 开始，按用户提问切分），用于按回合筛选。 */
+  /**
+   * 首次出现的回合（从 1 开始，按用户提问切分），用于按回合筛选。
+   * 资源栏按首次出现的位置归组，不因后续回合再次检索到而搬家。
+   */
   round?: number
+  /**
+   * 所有检索到过这一片的回合（含 `round`）。
+   *
+   * <p>同一片段在后面的回合被再次检索到，前面回合的正文引用**仍然可以核验**——
+   * 只记一个 round 会让先出现的角标在资源被覆盖后退回「未核验」。
+   */
+  rounds?: number[]
 }
 
 export type AgentResources = {
@@ -278,7 +288,15 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
     if (seen.has(resource.id)) {
       if (resource.kind === "document") {
         const existing = documents.findIndex((entry) => entry.id === resource.id)
-        if (existing >= 0) documents[existing] = resource
+        if (existing >= 0) {
+          // 同一片段在后面的回合又被检索到：保留首次出现的位置与出处，
+          // 只把新回合记进 rounds——否则前面回合已核验的引用会退回「未核验」。
+          const previous = documents[existing]
+          const rounds = roundsOf(previous)
+          if (resource.round && !rounds.includes(resource.round)) {
+            documents[existing] = { ...previous, rounds: [...rounds, resource.round] }
+          }
+        }
       }
       return
     }
@@ -387,13 +405,21 @@ export function citationKeysByRound(resources: AgentResources): Map<number, Mess
   const byRound = new Map<number, MessageCitations>()
   for (const doc of resources.documents) {
     const key = evidenceKeyOf(doc)
-    if (!key || !doc.round) continue
-    const list = byRound.get(doc.round) ?? []
-    if (list.some((entry) => entry.key === key)) continue
-    list.push({ key, title: doc.title })
-    byRound.set(doc.round, list)
+    if (!key) continue
+    for (const round of roundsOf(doc)) {
+      const list = byRound.get(round) ?? []
+      if (list.some((entry) => entry.key === key)) continue
+      list.push({ key, title: doc.title })
+      byRound.set(round, list)
+    }
   }
   return byRound
+}
+
+/** 资源出现过的回合；旧数据/未标注时按 `round` 单值处理。 */
+function roundsOf(resource: AgentResource): number[] {
+  if (resource.rounds?.length) return resource.rounds
+  return resource.round ? [resource.round] : []
 }
 
 /** 消息 → 回合（与 `deriveResources` 同一口径：每条用户提问切一回合）。 */
