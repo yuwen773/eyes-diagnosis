@@ -94,4 +94,14 @@ Spring AI Alibaba 1.1.2.2 的 `AgentToolNode#executeSyncTool` 对 `ToolExecution
 
 ## 5. 升级注意
 
-见 `upgrade-rollback-manual.md`。相对基线 **无新增 Flyway 迁移**：目标库已在 V28 时，升级不需要执行任何数据库变更；从 `master` 线（V17）升上来的库仍需按 `docs/architecture/migration-matrix.md` 依次执行 V18–V28。
+见 `upgrade-rollback-manual.md`。相对基线 **无新增 Flyway 迁移**，但升级动作取决于目标库的历史：
+
+- **已在 V28 的库**（ui 线）：升级不执行任何数据库变更；回滚只需换回旧产物。
+- **master 线 V17 的库**：升级会实际执行 V18–V28（对既有表只有 V22 给 `t_diagnosis` 加一列可空
+  `patientTaskId`）。回滚 jar 后旧代码可正常启动（V18–V28 对它记为 future 并被默认忽略）；
+  若要回到 V17 的 schema 形态，只能恢复到升级前备份的新库并切流，不在生产上删表。
+- **history 含 V10–V14 的旧 Java 线 / 旧 release 库**：本候选不认这些版本，Flyway 会判 missing
+  拒绝启动，只能按迁移矩阵重建。
+
+逐路径步骤与数据差异核对见 `upgrade-rollback-manual.md` §2–§4；实测依据见
+`docs/architecture/migration-matrix.md` §2.1。

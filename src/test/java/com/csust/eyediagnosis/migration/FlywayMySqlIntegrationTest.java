@@ -1,6 +1,7 @@
 package com.csust.eyediagnosis.migration;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlywayMySqlIntegrationTest {
@@ -135,6 +137,123 @@ class FlywayMySqlIntegrationTest {
                 statement.executeUpdate("DROP DATABASE `" + schema + "`");
             }
         }
+    }
+
+    @Test
+    void anOldMasterJarStillStartsAfterTheDatabaseWasUpgradedToV28() throws Exception {
+        // P1-04：手册要写清「回滚 jar 到底能不能直接起」。
+        // 实测：从 master V17 升到 V28 之后，旧 jar（classpath 只到 V17）把
+        // V18–V28 判成 FUTURE_SUCCESS——Flyway 默认 ignoreMigrationPatterns=*:future
+        // 会放行，服务能起。所以这条不是「起不来」，而是「能起但库里多了东西」。
+        //
+        // 这里把结论钉在真实 MySQL 上；手册的措辞（含 V22 只加可空列这一前提）据此书写。
+        String url = System.getenv("FLYWAY_TEST_URL");
+        Assumptions.assumeTrue(url != null && !url.isBlank(), "Requires isolated MySQL Flyway gate");
+        String username = System.getenv("FLYWAY_TEST_USERNAME");
+        String password = System.getenv("FLYWAY_TEST_PASSWORD");
+
+        java.nio.file.Path oldHome = oldReleaseMigrationHome(v -> v <= 17);
+        Assumptions.assumeTrue(oldHome != null, "classpath resources are not expanded; skip");
+
+        String schema = "diagnosis_ci_upgrade_" + UUID.randomUUID().toString().replace("-", "");
+        try (var connection = DriverManager.getConnection(url, username, password);
+             var statement = connection.createStatement()) {
+            statement.executeUpdate("CREATE DATABASE `" + schema + "`");
+            try {
+                assertEquals(12, jarFlyway(url, username, password, schema, oldHome).migrate().migrationsExecuted,
+                        "升级前：旧 jar 自己的迁移集合跑到 V17");
+                Flyway rc = Flyway.configure().dataSource(url, username, password).schemas(schema)
+                        .locations("classpath:db/migration", "classpath:db/callback").load();
+                assertEquals(11, rc.migrate().migrationsExecuted);
+                assertEquals("28", rc.info().current().getVersion().toString());
+
+                Flyway oldJar = jarFlyway(url, username, password, schema, oldHome);
+                assertEquals(0, oldJar.migrate().migrationsExecuted, "旧 jar 在 V28 库上不执行任何迁移");
+                for (var info : oldJar.info().all()) {
+                    int version = Integer.parseInt(info.getVersion().toString());
+                    if (version < 18) continue;
+                    assertEquals("FUTURE_SUCCESS", info.getState().name(),
+                            "V" + version + " 对旧 jar 是 future，不是 missing——这决定了它能不能起");
+                }
+
+                // 回滚后旧代码继续写 t_diagnosis：V22 只加了可空列，旧插入语句不受影响
+                statement.executeUpdate("INSERT INTO `" + schema + "`.t_diagnosis (userId,url,result) "
+                        + "VALUES (1,'https://cos/x.png','正常')");
+            } finally {
+                statement.executeUpdate("DROP DATABASE `" + schema + "`");
+            }
+        }
+    }
+
+    @Test
+    void aJarRejectsAHistoryThatContainsVersionsItDoesNotResolve() throws Exception {
+        // 反过来的一半：history 里出现本 jar 不认识、且低于它已知最高版本的迁移
+        // （旧 release 线的 V10–V14 就是这种形状），Flyway 判 missing 并拒绝启动。
+        // 手册据此规定：这类库只能按迁移矩阵重建，不能靠回滚 jar 或 repair 掩盖。
+        String url = System.getenv("FLYWAY_TEST_URL");
+        Assumptions.assumeTrue(url != null && !url.isBlank(), "Requires isolated MySQL Flyway gate");
+        String username = System.getenv("FLYWAY_TEST_USERNAME");
+        String password = System.getenv("FLYWAY_TEST_PASSWORD");
+
+        // 造一个「认识 V1–V17 与 V23–V28、不认识 V18–V22」的 jar
+        java.nio.file.Path gapHome = oldReleaseMigrationHome(v -> v <= 17 || v >= 23);
+        Assumptions.assumeTrue(gapHome != null, "classpath resources are not expanded; skip");
+
+        String schema = "diagnosis_ci_gap_" + UUID.randomUUID().toString().replace("-", "");
+        try (var connection = DriverManager.getConnection(url, username, password);
+             var statement = connection.createStatement()) {
+            statement.executeUpdate("CREATE DATABASE `" + schema + "`");
+            try {
+                Flyway full = Flyway.configure().dataSource(url, username, password).schemas(schema)
+                        .locations("classpath:db/migration", "classpath:db/callback").load();
+                assertEquals(full.info().all().length, full.migrate().migrationsExecuted);
+
+                var failure = assertThrows(FlywayException.class,
+                        () -> jarFlyway(url, username, password, schema, gapHome).migrate(),
+                        "history 里有自己解析不了的版本时必须拒绝启动");
+                String message = String.valueOf(failure.getMessage());
+                assertTrue(message.contains("18"), "失败原因应点名缺失的 V18：" + message);
+            } finally {
+                statement.executeUpdate("DROP DATABASE `" + schema + "`");
+            }
+        }
+    }
+
+    private static Flyway jarFlyway(String url, String username, String password,
+                                    String schema, java.nio.file.Path home) {
+        return Flyway.configure().dataSource(url, username, password).schemas(schema)
+                .locations("filesystem:" + home.resolve("migration"), "filesystem:" + home.resolve("callback"))
+                .baselineOnMigrate(true).baselineVersion("0").load();
+    }
+
+    /**
+     * 把符合条件的脚本抄到一个临时目录，模拟某个历史 jar 的 classpath 内容。
+     * 仅供隔离 schema 使用，不触碰真实迁移目录。
+     */
+    private static java.nio.file.Path oldReleaseMigrationHome(java.util.function.IntPredicate include)
+            throws Exception {
+        java.net.URL dir = FlywayMySqlIntegrationTest.class.getResource("/db/migration");
+        if (dir == null || !"file".equals(dir.getProtocol())) return null;
+        java.nio.file.Path source = java.nio.file.Path.of(dir.toURI());
+        java.nio.file.Path home = java.nio.file.Files.createTempDirectory("old-release-flyway");
+        java.nio.file.Files.createDirectories(home.resolve("migration"));
+        java.nio.file.Files.createDirectories(home.resolve("callback"));
+        java.util.regex.Pattern version = java.util.regex.Pattern.compile("^V(\\d+)__.*\\.sql$");
+        try (var files = java.nio.file.Files.list(source)) {
+            for (java.nio.file.Path file : files.toList()) {
+                var matcher = version.matcher(file.getFileName().toString());
+                if (!matcher.matches() || !include.test(Integer.parseInt(matcher.group(1)))) continue;
+                java.nio.file.Files.copy(file, home.resolve("migration").resolve(file.getFileName()));
+            }
+        }
+        java.net.URL callback = FlywayMySqlIntegrationTest.class.getResource("/db/callback");
+        if (callback == null || !"file".equals(callback.getProtocol())) return null;
+        try (var files = java.nio.file.Files.list(java.nio.file.Path.of(callback.toURI()))) {
+            for (java.nio.file.Path file : files.toList()) {
+                java.nio.file.Files.copy(file, home.resolve("callback").resolve(file.getFileName()));
+            }
+        }
+        return home;
     }
 
     @Test

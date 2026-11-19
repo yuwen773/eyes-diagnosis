@@ -36,6 +36,20 @@
 
 `spring.flyway.out-of-order` 必须保持 `false`。本整合方案不依赖 out-of-order，也不允许把它当作跳过版本缺口的开关。
 
+### 2.1 回滚方向（谁能在什么库上起服务）
+
+上表只讲「往前走」，回滚方向单独有两条实测结论（隔离 MySQL schema 上真跑，
+见 `FlywayMySqlIntegrationTest`）：
+
+| 库的 history | 更旧的 jar（只认到 V17）能否直接启动 | 依据 |
+| --- | --- | --- |
+| 升到 V28 之后（master V17 线上来的） | **能**。V18–V28 对它记为 `FUTURE_SUCCESS`，Flyway 默认 `ignoreMigrationPatterns=*:future` 放行，迁移数 0；对既有表只有 V22 加的一列可空 `patientTaskId` | `#anOldMasterJarStillStartsAfterTheDatabaseWasUpgradedToV28` |
+| history 里含本 jar 解析不了、且低于其已知最高版本的版本（如旧 release 线 V10–V14） | **不能**。Flyway 判 missing 并拒绝启动 | `#aJarRejectsAHistoryThatContainsVersionsItDoesNotResolve` |
+
+所以「代码回滚」在 master V17 升上来的库上是可行的（新表在旧代码下不再写入），
+**但要回到 V17 的 schema 形态**只能恢复到升级前备份的新库并切流；路径与演练要求见
+`docs/release/upgrade-rollback-manual.md` §4。V10–V14 这类历史不提供回滚路径，只能重建。
+
 ## 3. 发布前检查
 
 1. 导出目标库 history：
@@ -62,7 +76,9 @@ JAVA_HOME=/c/Users/yuwen/.jdks/corretto-21.0.7 \
 mvn -o -B -Dtest=FlywayMySqlIntegrationTest test
 ```
 
-三个用例分别覆盖：master V17 → V28、空库 → V28、V23 → V24 历史行标注不改写冻结消息。测试会为每次运行创建并删除独立 schema，不触碰现有库。
+三个用例分别覆盖：master V17 → V28、空库 → V28、V23 → V24 历史行标注不改写冻结消息。
+另有两个回滚方向用例（升级后旧 jar 能否启动、history 含无法解析版本时是否拒绝启动，见 §2.1）。
+测试会为每次运行创建并删除独立 schema，不触碰现有库。
 
 ## 5. 约束
 
