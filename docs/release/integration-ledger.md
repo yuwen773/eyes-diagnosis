@@ -166,3 +166,54 @@ C 的两条是真实的医学语义与安全问题，已修；D 的阻断里「C
 - 逐条细节：`docs/release/codex-no-go-remediation.md`。
 - 证据（本地三段 verify、CI 21/21、双主题断言、工作树故障注入、真实后端冒烟）：`verification-matrix.md` §2.6。
 - 终态：`CONDITIONAL`——**NO_GO 是否解除由 Codex 复验决定**，自验收不能替代。
+
+## 9. G-3 真实外部集成与 Codex 复验交接（2026-11-19）
+
+### 9.1 G-3 已执行
+
+上一版只有「提供方不可用时的失败出口」。本轮拿到**真实 DashScope 凭据**（取自环境变量
+`DASHSCOPE_API_KEY`），在候选代码树 `03b14efd` 上跑完 5 个真实链路场景：
+
+| # | 场景 | 关键读数 |
+|---|---|---|
+| G3-1 | 真模型流式问答 | 逐帧 `assistant` + `event:done`，时间戳带 `+08:00` |
+| G3-2 | 真工具成功 + 真 RAG 命中 | 真 `text-embedding-v3` 向量化 → 真 ChromaDB 写 24 分块；命中 `builtin:03-cataract` **0.809** / `04-diabetes` 0.648 / `07-myopia` 0.385，终态 `succeeded`/`NONE` |
+| G3-3 | 真工具失败 | `analyzeEyeImage` 传不存在的 imageId → `failed` / `TOOL_ERROR` / `TOOL_EXCEPTION`，**四出口一致**（SSE / 历史 / `t_agent_tool_audit` / 给模型的错误响应）；模型未编造影像结论 |
+| G3-4 | SSE 断流 | 客户端 6s 断开（25 帧、无 `done`）→ 12s 后两个并行 `searchDocuments` 都带终态 `succeeded` |
+| G3-5 | P1-03 用户文本伪装信封 | 逐字保留为纯文本、`images=null`，未合成附件 |
+
+逐项证据、环境参数与实测读数见 `docs/release/verification-matrix.md` §2.7。
+
+**未覆盖（如实记录）**：视觉工具**成功**路径、真实对象存储上传（占位 COS 凭据，
+`qwen-vl-plus` 从未被真实调用）；运行环境不是生产拓扑；协作与临床复核开关按禁令保持关闭。
+
+**收尾**：后端已停；schema `diagnosis_g3` 已删；Chroma collection 恢复 0 条；
+Redis 只删本轮 12 个会话键（其余 5 个属其他工作树，未动）；含凭据的临时目录、
+启动日志与临时脚本已删除；仓库 `git status` 干净、仓库内无凭据。
+
+### 9.2 交给 Codex 复验
+
+**自验收不能代替独立复验**——NO_GO 由审查方给出，也要由审查方解除。本侧不改、不覆盖
+Codex 的原始结论（`D:\Work\code\iris-codex-audit-7dc3422b\docs\release\codex-independent-review.md`，只读）。
+
+| 项 | 值 |
+|---|---|
+| 复验对象（代码） | `03b14efd8f9bcc8d6326a104396d8b68a30d5e8b` |
+| 复验对象（当前 head） | `0c3856c8`（只改 `docs/**`；`git diff 03b14efd 0c3856c8 -- src web scripts pom.xml` 为空） |
+| 候选 PR | #119（**仍为 Draft**） |
+| 逐条台账 | `docs/release/codex-no-go-remediation.md`（每条含根因 / 改动 / 提交 / 回归用例） |
+| 逐 SHA 证据 | `docs/release/verification-matrix.md` §2.6（工程门禁）、§2.7（G-3 外部集成） |
+| 已知偏差 | P1-04：审查报告推断「升级后旧 jar 无法启动」，**实测相反**（可启动，V18–V28 为 `FUTURE_SUCCESS`）；台账按实测记录，审查结论未被修改 |
+| 请复验方判定 | 7 条是否全部关闭；P1-04 偏差是否接受；G-5 截图证据是否成立 |
+
+复验方可用的复跑入口（都在候选树上）：
+
+- `scripts/verify.sh`（本地全量三段）
+- `mvn -Dtest=FlywayMySqlIntegrationTest test`（P1-04 的 5 条真实 MySQL 用例）
+- `mvn -Dtest=EyeImageAnalyzerToolOutputValidationTest,AgentEyeImageInvalidOutputEndToEndTest test`（P0-01）
+- `mvn -Dtest=ToolFailureCategoryTest,AgentBudgetExhaustionTest test`（P1-01 / P1-05）
+- `mvn -Dtest=DocumentProcessingServiceChunkRollbackTest,DocumentSearchToolReadyOnlyTest test`（P1-02）
+- `mvn -Dtest=ChatHistoryServiceUserMessageTest test` + `web/` 的 `agentStream` / `agentResources` / `UserMessage` 用例（P1-03）
+- `bash scripts/tests/worktree-hygiene-failclosed.sh`（P0-02）
+- 真实外部链路（G3-1…G3-5）：环境参数见 `verification-matrix.md` §2.7；凭据走环境变量，
+  仓库外临时配置目录注入，跑完须清理临时 schema / Chroma 分块 / 会话键 / 临时目录
