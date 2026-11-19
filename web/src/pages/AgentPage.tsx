@@ -148,6 +148,16 @@ export function AgentPage() {
     },
     [compact],
   )
+
+  /**
+   * 正文证据角标 → 资源栏。面板必须真的打开，否则「点了一下什么都没发生」；
+   * nonce 让连点同一角标也能重新滚动并高亮。
+   */
+  const [citeFocus, setCiteFocus] = useState<{ key: string; nonce: number } | null>(null)
+  const focusCitation = useCallback((key: string) => {
+    setPanelOpen(true)
+    setCiteFocus({ key, nonce: Date.now() })
+  }, [])
   // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
   const { push: pushFault } = useFault()
 
@@ -589,6 +599,7 @@ export function AgentPage() {
       onClose={() => setPanelOpen(false)}
       onPreviewImage={setPreviewUrl}
       onLocate={locateResource}
+      focus={citeFocus}
     />
   )
 
@@ -626,6 +637,7 @@ export function AgentPage() {
           <div className="agent-main">
             <MessageList
               messages={messages}
+              resources={resources}
               loading={historyLoading}
               streaming={isStreaming}
               waiting={waiting}
@@ -633,6 +645,7 @@ export function AgentPage() {
               onSend={handleSendText}
               onPreviewImage={setPreviewUrl}
               onPickImage={pickImage}
+              onCite={focusCitation}
               headLeft={
                 <>
                   {compact ? (

@@ -1,6 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 import type { StreamMessage } from "@/lib/agentStream"
+import {
+  citationKeysByRound,
+  EMPTY_RESOURCES,
+  messageRoundById,
+  type AgentResources,
+  type MessageCitations,
+} from "@/lib/agentResources"
 import { buildThread } from "@/lib/agentSteps"
 import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
@@ -17,18 +24,24 @@ const BOTTOM_EPSILON = 80
  * 消息的对象引用，只有正在流式的那一条会换新对象。因此每片 token 只需
  * 重渲染最后一行，而不是整个列表。
  */
+const EMPTY_CITATIONS: MessageCitations = []
+
 const MessageRow = memo(function MessageRow({
   msg,
+  citations,
   onPreviewImage,
+  onCite,
 }: {
   msg: StreamMessage
+  citations: MessageCitations
   onPreviewImage?: (url: string) => void
+  onCite?: (evidenceKey: string) => void
 }) {
   switch (msg.type) {
     case "user":
       return <UserMessage msg={msg} onPreviewImage={onPreviewImage} />
     case "assistant":
-      return <AssistantMessage msg={msg} />
+      return <AssistantMessage msg={msg} citations={citations} onCite={onCite} />
     default:
       // reasoning / tool-* / confirm 都在 buildThread 里并入「执行过程」块，
       // 不再逐条平铺。走到这里的只可能是历史数据里的未知类型，不渲染。
@@ -48,6 +61,7 @@ const MessageRow = memo(function MessageRow({
  */
 export function MessageList({
   messages,
+  resources,
   loading,
   streaming,
   waiting,
@@ -55,10 +69,13 @@ export function MessageList({
   onSend,
   onPreviewImage,
   onPickImage,
+  onCite,
   headLeft,
   headRight,
 }: {
   messages: StreamMessage[]
+  /** 会话资源：正文里的证据角标只按这里的片段核验，不认模型自己写的编号。 */
+  resources?: AgentResources
   loading: boolean
   streaming: boolean
   /** 等第一条真实事件到达：上传中 / 等待首个回复。 */
@@ -69,6 +86,8 @@ export function MessageList({
   onPreviewImage?: (url: string) => void
   /** 欢迎屏「上传眼底图像」：预填引导句并打开输入区的选图对话框。 */
   onPickImage: (prefill: string) => void
+  /** 点正文里的证据角标：打开资源栏并定位到那一段。 */
+  onCite?: (evidenceKey: string) => void
   /** 顶栏左侧插槽：折叠后的左栏操作钮组。 */
   headLeft?: ReactNode
   /** 顶栏右侧插槽：资源面板切换钮。 */
@@ -153,6 +172,14 @@ export function MessageList({
   // 所以历史行仍然被 memo 跳过，只有正在流式的那一行会重渲染。
   const thread = useMemo(() => buildThread(messages, streaming), [messages, streaming])
 
+  // 引用核验表只在资源变化时重算；消息→回合是纯整数映射，可以跟着消息走，
+  // 这样行组件拿到的是稳定的数组与数字，memo 仍然只放行正在流式的那一行。
+  const citationsByRound = useMemo(
+    () => citationKeysByRound(resources ?? EMPTY_RESOURCES),
+    [resources],
+  )
+  const roundById = useMemo(() => messageRoundById(messages), [messages])
+
   return (
     <div className="agent-thread">
       <div className="agent-thread__bar">
@@ -175,7 +202,9 @@ export function MessageList({
               <MessageRow
                 key={item.message.id}
                 msg={item.message}
+                citations={citationsByRound.get(roundById.get(item.message.id) ?? 0) ?? EMPTY_CITATIONS}
                 onPreviewImage={onPreviewImage}
+                onCite={onCite}
               />
             ),
           )}

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  citationKeysByRound,
   countResources,
   deriveResources,
   evidenceKeyOf,
   isAutoLoadableImage,
   isTrustedAttachmentUrl,
+  messageRoundById,
   parseResourceRefs,
   type AgentResource,
   type ResourceSourceMessage,
@@ -198,6 +200,45 @@ describe("deriveResources —— 知识来源", () => {
     expect(parsed.id).toBe("doc:42")
     expect(evidenceKeyOf(parsed)).toBeNull()
     expect(evidenceKeyOf({ ...parsed, kind: "link", chunkIndex: 0, url: "https://x.test" })).toBeNull()
+  })
+})
+
+describe("引用核验表", () => {
+  const resources = deriveResources([
+    msg({
+      id: "u1",
+      type: "user",
+      content: "第一问",
+      resources: [
+        { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        { id: "doc:42#1", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 1 },
+      ],
+    }),
+    msg({ id: "a1", type: "assistant", content: "回答一" }),
+    msg({ id: "u2", type: "user", content: "第二问" }),
+    msg({ id: "a2", type: "assistant", content: "回答二" }),
+  ])
+
+  it("按回合给出可引用证据，顺序即资源顺序", () => {
+    const byRound = citationKeysByRound(resources)
+    expect(byRound.get(1)?.map((c) => c.key)).toEqual(["42#0", "42#1"])
+    expect(byRound.get(1)?.[0].title).toBe("共识")
+    expect(byRound.get(2)).toBeUndefined()
+  })
+
+  it("消息到回合的映射与资源派生同一口径", () => {
+    const rounds = messageRoundById([
+      msg({ id: "a0", type: "assistant", content: "开场" }),
+      msg({ id: "u1", type: "user", content: "问" }),
+      msg({ id: "a1", type: "assistant", content: "答" }),
+    ])
+    expect(rounds.get("a0")).toBe(0)
+    expect(rounds.get("a1")).toBe(1)
+  })
+
+  it("同一文档的不同片段各占一个键，不折叠", () => {
+    const keys = citationKeysByRound(resources).get(1) ?? []
+    expect(new Set(keys.map((c) => c.key)).size).toBe(keys.length)
   })
 })
 

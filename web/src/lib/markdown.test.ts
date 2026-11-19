@@ -162,6 +162,70 @@ describe("流式过程中的结构成形", () => {
   })
 })
 
+describe("正文证据引用", () => {
+  const ctx = {
+    citations: [
+      { key: "42#3", title: "干眼症诊疗共识" },
+      { key: "57#0" },
+    ],
+  }
+
+  it("可核验的引用渲染成带编号的可点角标，编号按资源顺序", () => {
+    const html = renderMarkdown("睑板腺功能障碍是主要原因[[42#3]]。", ctx)
+    expect(html).toContain('class="cite"')
+    expect(html).toContain('data-cite-key="42#3"')
+    expect(html).toContain('aria-label="依据 1：干眼症诊疗共识"')
+    expect(html).toContain(">1</button>")
+    expect(html).not.toContain("[[42#3]]")
+  })
+
+  it("同一句可以连写多个引用，各自编号", () => {
+    const html = renderMarkdown("证据一致[[42#3]][[57#0]]。", ctx)
+    expect(html).toContain('data-cite-key="42#3"')
+    expect(html).toContain('data-cite-key="57#0"')
+    expect(html).toContain(">2</button>")
+  })
+
+  it("不在本回合资源里的引用不会被悄悄抹掉，标成「未核验」", () => {
+    const html = renderMarkdown("依据[[99#1]]。", ctx)
+    expect(html).toContain("is-unverified")
+    expect(html).toContain("未核验")
+    expect(html).not.toContain('data-cite-key="99#1"')
+  })
+
+  it("没有上下文时（推理块、资讯）标记按原文保留，不假装核验过", () => {
+    const html = renderMarkdown("依据[[42#3]]。")
+    expect(html).toContain("[[42#3]]")
+    expect(html).not.toContain('class="cite"')
+  })
+
+  it("形状不对的方括号不是引用", () => {
+    const html = renderMarkdown("[[42]]、[[42#x]]、[[未核验的写法]]", ctx)
+    expect(html).toContain("[[42]]")
+    expect(html).not.toContain('class="cite"')
+  })
+
+  it("代码块里的标记保持原样：那是代码，不是引用", () => {
+    const html = renderMarkdown("```\n[[42#3]]\n```", ctx)
+    expect(html).toContain("[[42#3]]")
+    expect(html).not.toContain('class="cite"')
+  })
+
+  it("流式增量渲染下引用同样成立，且上下文变化后整段重判", () => {
+    const renderer = createIncrementalMarkdownRenderer()
+    const streamed = renderer.render("原因[[42#3]]。\n\n下一段", true, ctx)
+    expect(streamed).toContain('data-cite-key="42#3"')
+
+    // 资源在这之后才到（或换了回合）：旧判定必须作废。
+    const afterReset = renderer.render(
+      "原因[[42#3]]。\n\n下一段",
+      true,
+      { citations: [] },
+    )
+    expect(afterReset).toContain("未核验")
+  })
+})
+
 describe("stableBoundary", () => {
   it("在顶层空行处切分", () => {
     expect(stableBoundary("a\n\nb\n")).toBe(3)

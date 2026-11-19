@@ -369,3 +369,42 @@ export function evidenceKeyOf(resource: AgentResource): string | null {
   if (!resource.documentId || resource.chunkIndex === undefined) return null
   return `${resource.documentId}#${resource.chunkIndex}`
 }
+
+/** 一条消息可以引用的证据：按资源出现顺序，编号即正文角标。 */
+export type MessageCitations = { key: string; title?: string }[]
+
+/**
+ * 每个回合里**可以引用**的证据，按资源在面板里的出现顺序排列。
+ *
+ * <p>为什么按回合而不是按整段会话：模型这一轮只见过这一轮工具返回的片段，
+ * 引用上一轮的内容无法核验。为什么顺序取自资源而不是正文：这样角标编号在
+ * 流式过程中不会因为新引用出现而整体重排，也和资源栏的顺序一一对应。
+ *
+ * <p>只在 `resources` 变化时重算：消息每片 token 都换新，跟着算等于让每条
+ * 历史消息的引用数组每片都换引用，`memo` 行全部重渲染。
+ */
+export function citationKeysByRound(resources: AgentResources): Map<number, MessageCitations> {
+  const byRound = new Map<number, MessageCitations>()
+  for (const doc of resources.documents) {
+    const key = evidenceKeyOf(doc)
+    if (!key || !doc.round) continue
+    const list = byRound.get(doc.round) ?? []
+    if (list.some((entry) => entry.key === key)) continue
+    list.push({ key, title: doc.title })
+    byRound.set(doc.round, list)
+  }
+  return byRound
+}
+
+/** 消息 → 回合（与 `deriveResources` 同一口径：每条用户提问切一回合）。 */
+export function messageRoundById(
+  messages: readonly ResourceSourceMessage[],
+): Map<string, number> {
+  const out = new Map<string, number>()
+  let round = 0
+  for (const msg of messages) {
+    if (msg.type === "user") round += 1
+    out.set(msg.id, round)
+  }
+  return out
+}

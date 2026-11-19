@@ -85,6 +85,12 @@ public class DiagnosisAgent {
 ### RAG 工具
 - 当需要查找专业眼科医学知识时，使用 searchDocuments 工具搜索知识库。
 - 基于检索到的信息回答问题时，请引用来源。
+
+### 引用证据（必须遵守）
+- searchDocuments 的返回里，片段末尾带 `(证据: 文档ID#片段序号)` 的，才是可核验的检索结果。
+- 某句话依据某个片段时，就在这句话后面紧接着写 `[[文档ID#片段序号]]`，例如 `[[42#3]]`。可以连写多个：`[[42#3]][[57#0]]`。
+- 只能引用本轮工具输出里真实出现过的证据键。不要自己编号、不要改写文档 ID 或序号，也不要引用上一轮对话或没有检索到的文档。
+- 没有检索结果支撑的内容不要加引用，也不要编造「参考文献」列表——依据由界面按上面的标记统一展示。
 """;
 
     @Resource
@@ -304,6 +310,15 @@ public class DiagnosisAgent {
                         }
                         String fullResponse = assistantContent.toString();
                         if (!fullResponse.isEmpty()) {
+                            // 引用审计只记条数：正文原样落库，渲染时由前端按本回合
+                            // 资源逐条核验。这里发现的是「模型引用了这一轮没见过的
+                            // 片段」——提示词失效或编造引用的信号，不是用户可见文案。
+                            EvidenceCitations.Audit citations =
+                                    EvidenceCitations.audit(fullResponse, sink.evidenceKeys());
+                            if (citations.hasUnverifiable()) {
+                                log.warn("回答含无法核验的证据引用, threadId={}, cited={}, unverifiable={}",
+                                        threadId, citations.keys().size(), citations.unverifiable().size());
+                            }
                             chatHistoryService.saveAssistantMessage(threadId, userId, fullResponse, "text");
                         }
                     });

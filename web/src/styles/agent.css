@@ -2311,6 +2311,51 @@ html:not(.dark) .welcome__mark-img--dark {
   color: var(--fg-3);
 }
 
+/* 正文证据角标：编号与资源栏顺序一一对应，点一下定位到那一段。
+   它是读物的旁注，不是按钮墙——小、克制、只在悬停时给出可点的提示。 */
+.agent-msg__body .cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  margin: 0 1px;
+  padding: 0 3px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 32%, transparent);
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--brand-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  vertical-align: 0.35em;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.agent-msg__body .cite:hover {
+  background: var(--brand-soft);
+}
+
+.agent-msg__body .cite:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* 无法核验不是「小一号的正常引用」：用中性虚线圈 + 文字说清楚，
+   不借用医学严重度的红色——那会读成「这条证据很危险」。 */
+.agent-msg__body .cite.is-unverified {
+  padding: 0 5px;
+  border-style: dashed;
+  border-color: var(--brand-line);
+  color: var(--fg-3);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  vertical-align: 0.2em;
+  cursor: default;
+}
+
 /* 从资源栏定位回对话：目标短暂高亮，说明「就是这里」 */
 .is-located {
   border-radius: var(--radius-md);
