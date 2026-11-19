@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -45,48 +46,57 @@ class ChatHistoryServiceUserMessageTest {
     private SessionMessageQueue queue;
     @Mock
     private ChatMessageWriter writer;
+    @Mock
+    private AgentImageUploadService images;
 
     private ChatHistoryService service() {
         ChatHistoryService service = new ChatHistoryService(
                 sessionMapper, messageMapper, new ObjectMapper(), queue, writer);
         service.setTitleGenerationService(titleGenerationService);
+        service.setImageUploadService(images);
         return service;
     }
 
     /** 取出提交给会话队列的写库任务并执行，返回真正写进库的内容。 */
     @SuppressWarnings("unchecked")
     private String runQueuedWrite() throws Exception {
-        ArgumentCaptor<Callable<Object>> task = ArgumentCaptor.forClass(Callable.class);
-        verify(queue).submit(eq(SESSION), task.capture());
+        ArgumentCaptor<Callable<Void>> task = ArgumentCaptor.forClass(Callable.class);
+        verify(queue).submitRecoverableAndWait(eq(SESSION), anyString(), task.capture());
         task.getValue().call();
 
         ArgumentCaptor<String> content = ArgumentCaptor.forClass(String.class);
-        verify(writer).writeUserMessage(eq(SESSION), eq(USER), content.capture());
-        return content.getValue();
+        var writes = org.mockito.Mockito.mockingDetails(writer).getInvocations().stream()
+                .filter(i -> i.getMethod().getName().equals("writeUserMessage")).toList();
+        assertEquals(1, writes.size());
+        return writes.get(0).getArgument(2);
     }
 
     @Test
     void imagesArePersistedInACanonicalEnvelope() throws Exception {
         when(sessionMapper.selectBySessionId(SESSION)).thenReturn(null);
+        when(images.authorizedViewUrl("https://cos.example.com/a.jpg", USER)).thenReturn("/api/agent/image/view/a.jpg");
+        when(images.authorizedViewUrl("https://cos.example.com/b.jpg", USER)).thenReturn("/api/agent/image/view/b.jpg");
         service().saveUserMessage(SESSION, USER, "帮我看看这张图",
                 List.of("https://cos.example.com/a.jpg", "https://cos.example.com/b.jpg"));
 
         JsonNode stored = new ObjectMapper().readTree(runQueuedWrite());
         assertEquals("帮我看看这张图", stored.get("text").asText());
         assertEquals(2, stored.get("images").size());
-        assertEquals("https://cos.example.com/a.jpg", stored.get("images").get(0).asText());
+        assertEquals("/api/agent/image/view/a.jpg", stored.get("images").get(0).asText());
     }
 
     @Test
-    void envelopeCarriesTheServerMarker() throws Exception {
-        // P1-03：前端只认带标记的信封为服务端验证过的附件。标记字面量是跨语言契约，
-        // 与 web/src/lib/agentStream.ts 的 USER_MESSAGE_ENVELOPE_KIND 必须逐字一致。
+    void attachmentIdentityUsesIndependentServerSubtype() throws Exception {
+        // P1-03：附件身份放在服务端可控的 subType 列，正文里的公开 kind 字符串不再授予身份。
+        // 旧信封即使被用户原样打出，也只是普通正文。
         when(sessionMapper.selectBySessionId(SESSION)).thenReturn(null);
+        when(images.authorizedViewUrl("https://cos.example.com/a.jpg", USER)).thenReturn("/api/agent/image/view/a.jpg");
         service().saveUserMessage(SESSION, USER, "看图", List.of("https://cos.example.com/a.jpg"));
 
         JsonNode stored = new ObjectMapper().readTree(runQueuedWrite());
-        assertEquals("iris.user-message.v1", stored.get("kind").asText(),
-                "没有标记，前端无法把服务端信封与用户打出的同形 JSON 区分开");
+        assertTrue(!stored.has("kind"));
+        verify(writer).writeUserMessage(eq(SESSION), eq(USER), anyString(),
+                eq("user-attachments-v1"), anyLong());
     }
 
     @Test

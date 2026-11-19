@@ -36,6 +36,18 @@ public class ChatHistoryService {
     private final SessionMessageQueue messageQueue;
     private final ChatMessageWriter messageWriter;
     private TitleGenerationService titleGenerationService;
+    private AgentImageUploadService imageUploadService;
+    private com.csust.eyediagnosis.agent.tools.DocumentSearchTool documentSearchTool;
+
+    @Autowired
+    public void setDocumentSearchTool(com.csust.eyediagnosis.agent.tools.DocumentSearchTool documentSearchTool) {
+        this.documentSearchTool = documentSearchTool;
+    }
+
+    @Autowired
+    public void setImageUploadService(AgentImageUploadService imageUploadService) {
+        this.imageUploadService = imageUploadService;
+    }
 
     @Autowired
     public ChatHistoryService(AgentSessionMapper sessionMapper, AgentMessageMapper messageMapper,
@@ -57,42 +69,32 @@ public class ChatHistoryService {
         saveUserMessage(sessionId, userId, content, null);
     }
 
-    /**
-     * 服务端写入的附件信封类型标记。
-     *
-     * <p>前端只认带这个标记的内容为「服务端验证过的上传附件」。用户自己在聊天框里
-     * 打出同样形状的 JSON 只是普通文本——不能凭「长得像信封」就获得可信附件身份。
-     * 改这里必须同步改 {@code web/src/lib/agentStream.ts} 的同名常量。
-     */
-    public static final String USER_MESSAGE_ENVELOPE_KIND = "iris.user-message.v1";
+    public static final String USER_ATTACHMENTS_SUBTYPE = "user-attachments-v1";
 
     /**
      * 带附件的用户消息落库。
      *
-     * <p>t_agent_message 没有附件列，用同一个「规范 JSON」约定扩展内容：
-     * {@code {"kind":"iris.user-message.v1","text":"…","images":["https://…"]}}。
-     * 没有附件时仍写纯文本——旧行、旧前端都不需要知道这个信封。
-     *
-     * <p>{@code kind} 不是装饰：图片地址在进入本方法之前已经过
-     * {@code AgentController#assertOwnedImages} 的归属校验，标记就是这段校验的凭证。
+     * <p>附件身份放在客户端不能写入的 subType 列，正文里的公开字符串不授予身份。
+     * 写入与历史读取均通过上传任务复核归属；旧的无 subType 行保留原文。
      */
     public void saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
         String payload = content;
         if (imageUrls != null && !imageUrls.isEmpty()) {
             Map<String, Object> envelope = new java.util.LinkedHashMap<>();
-            envelope.put("kind", USER_MESSAGE_ENVELOPE_KIND);
             envelope.put("text", content == null ? "" : content);
-            envelope.put("images", imageUrls);
+            envelope.put("images", imageUrls.stream()
+                    .map(url -> imageUploadService.authorizedViewUrl(url, userId)).toList());
             try {
                 payload = objectMapper.writeValueAsString(envelope);
             } catch (JsonProcessingException e) {
-                log.warn("用户消息附件序列化失败, images={}", imageUrls.size());
-                payload = content;
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "用户消息附件保存失败");
             }
         }
         String stored = payload;
-        messageQueue.submit(sessionId, () -> {
-            messageWriter.writeUserMessage(sessionId, userId, stored);
+        long messageId = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
+        messageQueue.submitRecoverableAndWait(sessionId, Long.toString(messageId), () -> {
+            messageWriter.writeUserMessage(sessionId, userId, stored,
+                    imageUrls != null && !imageUrls.isEmpty() ? USER_ATTACHMENTS_SUBTYPE : null, messageId);
 
             AgentSession session = sessionMapper.selectBySessionId(sessionId);
             if (session != null && session.getMessageCount() == 1) {
@@ -103,8 +105,9 @@ public class ChatHistoryService {
     }
 
     public void saveAssistantMessage(String sessionId, Long userId, String content, String subType) {
-        messageQueue.submit(sessionId, () -> {
-            messageWriter.writeAssistantMessage(sessionId, content, subType);
+        long messageId = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
+        messageQueue.submitRecoverableAndWait(sessionId, Long.toString(messageId), () -> {
+            messageWriter.writeAssistantMessage(sessionId, content, subType, messageId);
             return null;
         });
     }
@@ -126,6 +129,7 @@ public class ChatHistoryService {
     }
 
     public ChatHistoryVO loadHistory(String sessionId, Long beforeId, int limit) {
+        messageQueue.recoverPending(sessionId);
         List<AgentMessage> entities;
         if (beforeId == null) {
             entities = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, limit);
@@ -227,6 +231,7 @@ public class ChatHistoryService {
         if (!"json".equalsIgnoreCase(format) && !"markdown".equalsIgnoreCase(format)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "仅支持 markdown 或 json 导出");
         }
+        messageQueue.recoverPending(sessionId);
         List<AgentMessage> messages = messageMapper.selectBySessionIdOrderByTimeASC(sessionId, 1000);
         AgentSession session = sessionMapper.selectBySessionId(sessionId);
 
@@ -245,7 +250,7 @@ public class ChatHistoryService {
         result.put("sessionId", session.getSessionId());
         result.put("title", session.getTitle());
         result.put("createdAt", session.getCreatedTime());
-        result.put("messages", messages.stream().map(m -> {
+        result.put("messages", messages.stream().map(this::toMessageVO).map(m -> {
             Map<String, Object> msg = new HashMap<>();
             msg.put("role", m.getRole());
             msg.put("content", m.getContent());
@@ -261,7 +266,7 @@ public class ChatHistoryService {
         sb.append("会话 ID: ").append(session.getSessionId()).append("\n");
         sb.append("创建时间: ").append(TimeFormats.toHumanLocal(session.getCreatedTime())).append("\n\n");
         sb.append("---\n\n");
-        for (AgentMessage m : messages) {
+        for (MessageVO m : messages.stream().map(this::toMessageVO).toList()) {
             String role = "USER".equals(m.getRole()) ? "用户" : "AI";
             sb.append("## ").append(role).append("\n");
             sb.append(escapeMarkdown(m.getContent())).append("\n\n");
@@ -304,6 +309,61 @@ public class ChatHistoryService {
     private MessageVO toMessageVO(AgentMessage entity) {
         MessageVO messageVO = new MessageVO();
         BeanUtils.copyProperties(entity, messageVO);
+        if ("ASSISTANT".equals(entity.getRole()) && "turn-end".equals(entity.getSubType())) {
+            try {
+                var terminal = objectMapper.readTree(entity.getContent());
+                if (!terminal.path("output").isTextual() || !terminal.path("finishReason").isTextual()) {
+                    throw new IllegalArgumentException("Invalid turn end payload");
+                }
+                messageVO.setContent(terminal.path("output").asText());
+                messageVO.setFinishReason(terminal.path("finishReason").asText());
+            } catch (JsonProcessingException | IllegalArgumentException invalid) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "回合终止记录无法读取");
+            }
+        }
+        if ("ASSISTANT".equals(entity.getRole()) && "tool-result".equals(entity.getSubType())) {
+            try {
+                var payload = objectMapper.readTree(entity.getContent());
+                if (payload instanceof com.fasterxml.jackson.databind.node.ObjectNode result
+                        && result.path("resources").isArray() && !result.path("resources").isEmpty()) {
+                    var refs = objectMapper.convertValue(result.path("resources"),
+                            new com.fasterxml.jackson.core.type.TypeReference<List<com.csust.eyediagnosis.model.dto.agent.ResourceRef>>() {});
+                    AgentSession session = sessionMapper.selectBySessionId(entity.getSessionId());
+                    if (session == null) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+                    var valid = documentSearchTool.validateResourceRefs(refs, session.getUserId());
+                    if (valid.size() != refs.size()) {
+                        result.set("resources", objectMapper.valueToTree(valid));
+                        result.put("output", "历史知识来源已失效，请重新检索当前版本。");
+                        messageVO.setContent(objectMapper.writeValueAsString(result));
+                    }
+                }
+            } catch (JsonProcessingException invalidLegacy) {
+                // Unstructured legacy tool output is preserved as text, without verified sources.
+            }
+        }
+        if ("USER".equals(entity.getRole()) && USER_ATTACHMENTS_SUBTYPE.equals(entity.getSubType())) {
+            AgentSession session = sessionMapper.selectBySessionId(entity.getSessionId());
+            if (session == null) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            try {
+                var payload = objectMapper.readTree(entity.getContent());
+                if (!payload.path("text").isTextual() || !payload.path("images").isArray()) {
+                    throw new IllegalArgumentException("Invalid attachment payload");
+                }
+                java.util.ArrayList<String> images = new java.util.ArrayList<>();
+                for (var image : payload.path("images")) {
+                    if (!image.isTextual()) continue;
+                    try {
+                        images.add(imageUploadService.authorizedViewUrl(image.asText(), session.getUserId()));
+                    } catch (BusinessException denied) {
+                        // Deleted/revoked uploads are no longer attachments on replay.
+                    }
+                }
+                messageVO.setContent(payload.path("text").asText());
+                messageVO.setImages(List.copyOf(images));
+            } catch (JsonProcessingException | IllegalArgumentException invalid) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "附件历史无法读取");
+            }
+        }
         return messageVO;
     }
 

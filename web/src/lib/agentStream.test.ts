@@ -357,7 +357,7 @@ describe("资源闭环（Phase R）", () => {
   it("工具结果事件把后端结构化资源带进消息，并进而进入资源栏", () => {
     const msgs = applyStreamEvent(
       [
-        { id: "u1", type: "user", content: "干眼怎么治", images: ["https://cos.example.com/e.jpg"] },
+        { id: "u1", type: "user", content: "干眼怎么治", images: ["/api/agent/image/view/e.jpg"] },
       ],
       {
         messageType: "tool-result",
@@ -434,27 +434,22 @@ describe("资源闭环（Phase R）", () => {
     expect(deriveResources([m]).documents).toEqual([])
   })
 
-  it("带服务端标记的信封能恢复上传图片，刷新/切会话后影像不丢", () => {
+  it("服务端独立附件字段能恢复上传图片，刷新/切会话后影像不丢", () => {
     const m = mapHistoryMessage({
       id: "10",
       role: "USER",
       subType: "",
-      content: JSON.stringify({
-        kind: "iris.user-message.v1",
-        text: "帮我看看",
-        images: ["https://cos.example.com/agent-chat/7/f.jpg"],
-      }),
+      content: "帮我看看",
+      images: ["/api/agent/image/view/f.jpg"],
       isSummary: false,
       createdTime: "2026-11-08T10:00:00Z",
     })
     expect(m.content).toBe("帮我看看")
-    expect(m.images).toEqual(["https://cos.example.com/agent-chat/7/f.jpg"])
+    expect(m.images).toEqual(["/api/agent/image/view/f.jpg"])
     expect(deriveResources([m]).images).toHaveLength(1)
   })
 
-  it("信封标记是与后端逐字对齐的跨语言契约", () => {
-    // 改这里必须同步改 ChatHistoryService.USER_MESSAGE_ENVELOPE_KIND，
-    // 否则线上所有附件消息都会被当成普通文本（或反之）。
+  it("旧公开信封标记仅用于兼容识别，不是授权凭证", () => {
     expect(USER_MESSAGE_ENVELOPE_KIND).toBe("iris.user-message.v1")
   })
 
@@ -488,9 +483,8 @@ describe("资源闭环（Phase R）", () => {
     expect(envelope.images).toEqual([])
   })
 
-  it("带标记但地址不在上传命名空间的附件被丢弃，正文照常恢复", () => {
-    const envelope = parseUserEnvelope(
-      JSON.stringify({
+  it("公开标记和上传形状路径均不能改写普通正文", () => {
+    const content = JSON.stringify({
         kind: "iris.user-message.v1",
         text: "正文",
         images: [
@@ -498,10 +492,10 @@ describe("资源闭环（Phase R）", () => {
           "https://tracker.example.net/pixel.png",
           "//cos.example.com/agent-chat/7/protocol-relative.png",
         ],
-      }),
-    )
-    expect(envelope.text).toBe("正文")
-    expect(envelope.images).toEqual(["https://cos.example.com/agent-chat/7/ok.png"])
+      })
+    const envelope = parseUserEnvelope(content)
+    expect(envelope.text).toBe(content)
+    expect(envelope.images).toEqual([])
   })
 
   it("旧版纯文本用户消息不会被误当信封解析", () => {

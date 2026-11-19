@@ -32,6 +32,7 @@ export type ToolCallArg = {
 }
 
 export type StreamMessage = {
+  finishReason?: string
   id: string
   type: StreamMsgType
   content: string
@@ -143,12 +144,14 @@ export function applyStreamEvent(
             content: target.content + content,
             // 首片时间就是这一轮的落点；后续分片不再改写它。
             time: target.time ?? time,
+            ...(dto.finishReason ? { finishReason: dto.finishReason } : {}),
           },
         ]
       }
       return [
         ...msgs,
-        { id: newId(), type: "assistant", content, isLoading: true, time },
+        { id: newId(), type: "assistant", content, isLoading: true, time,
+          ...(dto.finishReason ? { finishReason: dto.finishReason } : {}) },
       ]
     }
 
@@ -207,6 +210,7 @@ export function applyStreamEvent(
           toolName: dto.toolName,
           toolCallId: dto.toolCallId,
           toolStatus: dto.toolStatus,
+          errorCategory: dto.errorCategory,
           time,
           ...(resources.length > 0 ? { resources } : {}),
         },
@@ -308,15 +312,13 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
   const time = formatHistoryTime(m.createdTime)
 
   if (type === "user") {
-    // 新落库格式是 {"text":…,"images":[…]} 信封；旧行是纯文本。
-    // 旧行里的图片找不回来——这里不做任何猜测。
-    const envelope = parseUserEnvelope(m.content)
+    const images = (m.images ?? []).filter(isTrustedAttachmentUrl)
     return {
       id: newId(),
       type,
-      content: envelope.text,
+      content: m.content,
       time,
-      ...(envelope.images.length > 0 ? { images: envelope.images } : {}),
+      ...(images.length > 0 ? { images } : {}),
     }
   }
 
@@ -359,6 +361,7 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     type,
     content: m.content,
     time,
+    ...(m.finishReason ? { finishReason: m.finishReason } : {}),
   }
 }
 
@@ -470,21 +473,7 @@ export const USER_MESSAGE_ENVELOPE_KIND = "iris.user-message.v1"
  * 也不凭空补造一条「已验证的上传附件」。
  */
 export function parseUserEnvelope(content: string): { text: string; images: string[] } {
-  const plain = { text: content ?? "", images: [] as string[] }
-  const trimmed = (content ?? "").trim()
-  if (!trimmed.startsWith("{")) return plain
-  try {
-    const parsed = JSON.parse(trimmed) as Record<string, unknown>
-    if (parsed.kind !== USER_MESSAGE_ENVELOPE_KIND) return plain
-    if (typeof parsed.text !== "string" || !Array.isArray(parsed.images)) return plain
-    const images = parsed.images.filter(
-      (url): url is string => typeof url === "string" && isTrustedAttachmentUrl(url),
-    )
-    // 标记在但一条地址都不合格：正文照常恢复，附件不补造
-    return { text: parsed.text, images }
-  } catch {
-    return plain
-  }
+  return { text: content ?? "", images: [] }
 }
 
 /** 「工具名: 参数 JSON」→ { name, args }；解析不出时返回 null。 */

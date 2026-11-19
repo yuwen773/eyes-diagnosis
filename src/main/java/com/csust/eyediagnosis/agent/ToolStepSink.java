@@ -153,8 +153,13 @@ public final class ToolStepSink {
             try {
                 persist.accept(dto);
             } catch (RuntimeException e) {
-                // 历史写失败不能让工具状态通道炸掉；审计仍有记录，日志留痕。
-                log.warn("工具终态落库失败, toolCallId={}, status={}", toolCallId, status.wire(), e);
+                // 原写任务由会话队列保留。没有提交反馈时不发送终态，客户端必须
+                // 看见流错误；重读历史会显式尝试恢复，不能静默返回陈旧状态。
+                log.warn("Tool terminal persistence failed, errorType={}", e.getClass().getSimpleName());
+                if (!deliveryCancelled) checkEmission(events.tryEmitError(
+                        new IllegalStateException("Tool terminal history could not be committed")));
+                deliveryCancelled = true;
+                return;
             }
         }
 

@@ -153,14 +153,15 @@ public class MCPManager {
             future.cancel(true);
             throw new McpTimeoutException("tool timeout: " + request.getToolName());
         } catch (InterruptedException e) {
+            future.cancel(true);
             Thread.currentThread().interrupt();
-            throw new McpTimeoutException("tool interrupted: " + request.getToolName());
+            throw new java.util.concurrent.CancellationException("MCP tool call cancelled");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             if (cause instanceof RuntimeException re) {
                 throw re;
             }
-            throw new McpTimeoutException("tool failed: " + cause.getMessage());
+            throw new IllegalStateException("MCP tool call failed", cause);
         } finally {
             gate.release();
         }

@@ -226,6 +226,7 @@ export type AgentSessionVO = {
 }
 
 export type HistoryMessageVO = {
+  finishReason?: string
   /** 雪花 id，线上是字符串。 */
   id: string
   role: string
@@ -233,6 +234,8 @@ export type HistoryMessageVO = {
   content: string
   isSummary: boolean
   createdTime: string
+  /** Server-authorized upload references, revalidated when history is read. */
+  images?: string[]
 }
 
 export type ChatHistoryVO = {

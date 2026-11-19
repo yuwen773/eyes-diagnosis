@@ -41,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 眼科诊断Agent
@@ -335,7 +336,7 @@ public class DiagnosisAgent {
     }
 
     /**
-     * 回合结束时的终止说明：**只在没有产出任何回答时**发，且如实区分原因。
+     * 回合结束时的终止说明：无回答，或最后模型节点仍要求工具而被预算截断时发。
      *
      * <p>为什么必须发：模型预算耗尽时框架以「正常完成」收尾，图不报错、
      * 流正常 done。没有这一条，用户看到的是「工具都执行成功，然后什么都没有」——
@@ -346,21 +347,28 @@ public class DiagnosisAgent {
      */
     private Flux<MessageDTO> closingNotice(String threadId, Long userId, StringBuilder assistantContent,
                                            ToolCallBudgetInterceptor budget, CountingChatModel model) {
-        if (!assistantContent.toString().isBlank()) return Flux.empty();
+        if (!assistantContent.toString().isBlank() && !model.endedWithToolRequest()) return Flux.empty();
         String notice;
+        String finishReason;
         if (budget.rejected() > 0) {
+            finishReason = "TOOL_BUDGET_EXHAUSTED";
             notice = "本轮工具调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
         } else if (model.calls() >= Math.max(1, agentConstants.getModelCallLimit())) {
+            finishReason = "MODEL_BUDGET_EXHAUSTED";
             notice = "本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
         } else {
+            if (!assistantContent.toString().isBlank()) return Flux.empty();
+            finishReason = "EMPTY_RESPONSE";
             notice = "这次没有生成最终回答，可以重试或换个问法。";
         }
         MessageDTO dto = new MessageDTO();
         dto.setMessageType(MessageType.ASSISTANT);
         dto.setContent(notice);
+        dto.setFinishReason(finishReason);
         dto.setTimestamp(TimeFormats.nowIsoOffset());
         // 同样落库：刷新后用户仍然看得到这次回合是怎么结束的。
-        chatHistoryService.saveAssistantMessage(threadId, userId, notice, "text");
+        chatHistoryService.saveAssistantMessage(threadId, userId,
+                JsonUtils.toJson(Map.of("output", notice, "finishReason", finishReason)), "turn-end");
         return Flux.just(dto);
     }
 
@@ -368,6 +376,7 @@ public class DiagnosisAgent {
     static final class CountingChatModel implements ChatModel {
         private final ChatModel delegate;
         private final AtomicInteger calls = new AtomicInteger();
+        private final AtomicBoolean lastModelRequestedTools = new AtomicBoolean();
 
         CountingChatModel(ChatModel delegate) {
             this.delegate = delegate;
@@ -376,13 +385,28 @@ public class DiagnosisAgent {
         @Override
         public ChatResponse call(Prompt prompt) {
             calls.incrementAndGet();
-            return delegate.call(prompt);
+            lastModelRequestedTools.set(false);
+            ChatResponse response = delegate.call(prompt);
+            observe(response);
+            return response;
         }
 
         @Override
         public Flux<ChatResponse> stream(Prompt prompt) {
             calls.incrementAndGet();
-            return delegate.stream(prompt);
+            lastModelRequestedTools.set(false);
+            return delegate.stream(prompt).doOnNext(this::observe);
+        }
+
+        private void observe(ChatResponse response) {
+            if (response != null && response.getResults().stream()
+                    .anyMatch(generation -> generation.getOutput().hasToolCalls())) {
+                lastModelRequestedTools.set(true);
+            }
+        }
+
+        boolean endedWithToolRequest() {
+            return lastModelRequestedTools.get();
         }
 
         int calls() {

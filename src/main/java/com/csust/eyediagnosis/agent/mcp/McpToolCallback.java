@@ -55,6 +55,10 @@ public class McpToolCallback implements ToolCallback {
         McpServerCallToolResponse response;
         try {
             response = mcpManager.callTool(request, mcpServer);
+        } catch (java.util.concurrent.CancellationException e) {
+            throw new IllegalStateException(
+                    ToolStepContract.tagError(ToolStepContract.ErrorCategory.CANCELLED,
+                            "MCP 工具调用已取消"), e);
         } catch (McpTimeoutException e) {
             // 失败类别必须活到拦截器：框架会把这里逃出的异常转成错误响应字符串，
             // 异常类型随之丢失。标记进文本，观察者才能把「超时」和普通失败分开。

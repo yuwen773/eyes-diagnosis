@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -22,6 +23,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 无效输出都会记成同一个 TOOL_EXCEPTION，前端与历史也没法区分。
  */
 class ToolFailureCategoryTest {
+
+    @Test
+    void failedTerminalPersistenceFailsTheStreamWithoutAnUncommittedFrame() {
+        List<MessageDTO> frames = new CopyOnWriteArrayList<>();
+        var error = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        ToolStepSink sink = new ToolStepSink("commit-failure", 7L, record -> { },
+                dto -> { throw new IllegalStateException("synthetic write failure"); });
+        sink.events().asFlux().subscribe(frames::add, error::set);
+        sink.started("call", "searchDocuments", null, null);
+        sink.finished("call", "searchDocuments", true, ToolStepContract.ErrorCategory.NONE);
+        sink.closePending();
+        assertNotNull(error.get());
+        assertEquals(1, frames.size(), "no committed terminal means no terminal frame");
+        assertEquals("running", frames.getFirst().getToolStatus());
+    }
 
     private static final String THREAD = "thread-cat";
     private static final long USER = 7L;

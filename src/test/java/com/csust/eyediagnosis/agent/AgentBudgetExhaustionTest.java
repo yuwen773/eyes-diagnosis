@@ -45,6 +45,39 @@ class AgentBudgetExhaustionTest {
     private static final long USER_ID = 7L;
 
     @Test
+    void preambleBeforeToolRequestDoesNotHideModelBudgetExhaustion() {
+        AgentConstants constants = new AgentConstants();
+        constants.setMaxIterations(10);
+        constants.setModelCallLimit(1);
+        DocumentSearchTool tool = mock(DocumentSearchTool.class);
+        when(tool.searchDocuments(anyString(), any())).thenReturn("[]");
+        ChatHistoryService history = mock(ChatHistoryService.class);
+        AtomicInteger calls = new AtomicInteger();
+        ChatModel model = new ChatModel() {
+            @Override public ChatResponse call(Prompt prompt) { throw new UnsupportedOperationException(); }
+            @Override public Flux<ChatResponse> stream(Prompt prompt) {
+                calls.incrementAndGet();
+                return Flux.just(
+                        new ChatResponse(List.of(new Generation(new AssistantMessage("我先查询资料。")))),
+                        new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("")
+                                .toolCalls(List.of(new AssistantMessage.ToolCall("preamble-call", "function",
+                                        "searchDocuments", "{\"query\":\"资料\"}"))).build()))));
+            }
+        };
+        List<MessageDTO> events = newAgent(constants, tool, history, model)
+                .stream("查询", null, "thread-preamble", USER_ID, null, null)
+                .collectList().block(Duration.ofSeconds(30));
+        assertNotNull(events);
+        assertEquals("我先查询资料。本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。",
+                assistantText(events));
+        assertEquals(1, calls.get(), "终止说明不得额外调用模型");
+        verify(history).saveAssistantMessage("thread-preamble", USER_ID, "我先查询资料。", "text");
+        assertNoticeStored(history, "thread-preamble", "MODEL_BUDGET_EXHAUSTED",
+                "本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。");
+        assertEquals("MODEL_BUDGET_EXHAUSTED", events.getLast().getFinishReason());
+    }
+
+    @Test
     void toolBudgetExhaustionEndsWithAnExplicitNotice() {
         AgentConstants constants = new AgentConstants();
         constants.setMaxIterations(1);
@@ -66,7 +99,7 @@ class AgentBudgetExhaustionTest {
                 "工具预算耗尽必须给出明确的终止说明：" + summarize(events));
 
         // 同一条说明要落库：刷新后回合仍然解释得清
-        verify(history).saveAssistantMessage(eq("thread-budget"), eq(USER_ID), eq(notice), eq("text"));
+        assertNoticeStored(history, "thread-budget", "TOOL_BUDGET_EXHAUSTED", notice);
     }
 
     @Test
@@ -88,13 +121,14 @@ class AgentBudgetExhaustionTest {
         assertEquals("本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。",
                 assistantText(events), "模型调用上限与工具预算必须说清楚是哪一道：" + summarize(events));
         assertTrue(model.calls() >= 1);
+        assertNoticeStored(history, "thread-budget-model", "MODEL_BUDGET_EXHAUSTED", assistantText(events));
     }
 
     @Test
     void normalAnswerIsNotReplacedByANotice() {
         AgentConstants constants = new AgentConstants();
         constants.setMaxIterations(5);
-        constants.setModelCallLimit(5);
+        constants.setModelCallLimit(1);
 
         DocumentSearchTool tool = mock(DocumentSearchTool.class);
         ChatHistoryService history = mock(ChatHistoryService.class);
@@ -118,6 +152,15 @@ class AgentBudgetExhaustionTest {
         assertTrue(assistantText(events).contains("正常回答"));
         verify(history, never()).saveAssistantMessage(eq("thread-normal"), eq(USER_ID), eq(
                 "这次没有生成最终回答，可以重试或换个问法。"), eq("text"));
+        verify(history, never()).saveAssistantMessage(eq("thread-normal"), eq(USER_ID), anyString(), eq("turn-end"));
+    }
+
+    private static void assertNoticeStored(ChatHistoryService history, String thread, String reason, String notice) {
+        var stored = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(history).saveAssistantMessage(eq(thread), eq(USER_ID), stored.capture(), eq("turn-end"));
+        var payload = com.csust.eyediagnosis.utils.JsonUtils.fromJsonToMap(stored.getValue());
+        assertEquals(reason, payload.get("finishReason"));
+        assertEquals(notice, payload.get("output"));
     }
 
     private static String assistantText(List<MessageDTO> events) {
