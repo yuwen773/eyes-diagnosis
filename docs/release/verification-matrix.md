@@ -325,7 +325,7 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 |---|---|---|
 | `a57d89fc` | 44505605737 | ✅ 21/21（上一轮候选；`f6b08841` 的 `docs-contract` 失败已修，rerun 与本次均通过） |
 | `4d092798` | 44513684042 | ⚠️ **20/21**：`backend-unit` 失败，其余 20 个 job 全过。失败原因是**真实缺陷、不是抖动**：新加的 `DocumentSearchToolStaleGenerationTest` 检索成功后没有清 `ToolResourceContext`（线程局部收集器），残留来源被同一线程随后执行的 `DocumentSearchToolOwnershipTest#failedRetrievalRegistersNoCitations` 读到（`expected: <[]>` / `actual: [ResourceRef[… indexVersion=attempt-2]]`）。已在 `61941e9a` 修正（两条用例 `try/finally` 清理），**失败 attempt 保留，不重写记录** |
-| `61941e9a`（本轮代码树） | 推送后补记 | 推送后补记 |
+| `61941e9a`（本轮代码树） | [44518173289](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44518173289) | ✅ **21/21**。首次运行时 `issue17-mysql` 失败，原因是 Maven Central 返回 **HTTP 429（Too Many Requests）**，拉不到 `surefire-junit-platform:3.5.4`——**基础设施问题，一个测试都没执行**；重跑该 job 后全绿。失败 attempt 保留不重写 |
 | 本文件所在提交（只改 `docs/**`） | 以 PR #119 当前 Checks 为准 | 同左 |
 
 ## 3. 未执行 / 未完成的门禁

@@ -93,6 +93,7 @@ G-3 原始证据未留存、G-5 截图证据仍缺、独立复验未闭环——
 |---|---|---|
 | `f6b08841` | [44504778424](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44504778424) | ⚠️ **20/21**：`docs-contract` 失败——`check_steering_docs.py` 抓出 `CLAUDE.md` 仍写 V28 而迁移已到 V29（新增迁移没同步项目说明）。**这是真缺陷，已修**，本地同一门禁复跑通过。失败 attempt 保留不重写 |
 | `a57d89fc` | [44505605737](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44505605737) | ✅ 21/21 |
+| `61941e9a` | [44518173289](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44518173289) | ✅ **21/21**。首次运行时 `issue17-mysql` 失败是 Maven Central **HTTP 429** 拉不到 `surefire-junit-platform:3.5.4`——基础设施问题、无测试执行；重跑该 job 后全绿 |
 | `4d092798` | [44513684042](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44513684042) | ⚠️ **20/21**：`backend-unit` 失败，其余 20 个 job 全过。失败原因是**真实缺陷、不是抖动**——新加的 RAG 真实路径用例检索成功后没清 `ToolResourceContext`（线程局部），残留来源被同一线程随后执行的 `DocumentSearchToolOwnershipTest#failedRetrievalRegistersNoCitations` 读到。已在 `61941e9a` 修正（`try/finally` 清理），本地按 CI 的执行顺序（反向字典序）复跑四类全绿。失败 attempt 保留不重写 |
 | 本报告所在提交 | 推送后补记 | 只改 `docs/**` 与 `CLAUDE.md`，不改变代码树 |
 
