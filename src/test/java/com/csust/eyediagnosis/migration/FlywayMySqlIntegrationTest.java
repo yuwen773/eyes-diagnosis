@@ -48,7 +48,7 @@ class FlywayMySqlIntegrationTest {
                 assertEquals(12, masterMigrations);
                 Flyway latest = Flyway.configure().dataSource(url, username, password).schemas(schema)
                         .locations("classpath:db/migration", "classpath:db/callback").load();
-                assertEquals(11, latest.migrate().migrationsExecuted);
+                assertEquals(12, latest.migrate().migrationsExecuted);
                 try (var account = statement.executeQuery("SELECT userAccount,userPassword,userRole,legacyMarker FROM `"
                         + schema + "`.t_user WHERE id=7")) {
                     assertTrue(account.next());
@@ -86,7 +86,7 @@ class FlywayMySqlIntegrationTest {
 
                 int expectedMigrations = flyway.info().all().length;
                 assertEquals(expectedMigrations, flyway.migrate().migrationsExecuted);
-                assertEquals("28", flyway.info().current().getVersion().toString());
+                assertEquals("29", flyway.info().current().getVersion().toString());
 
                 // 空库 migrate 后必须拥有全部被实体使用的表，否则登录、资讯、
                 // Agent 会话、知识库会在启动时无表可写。
@@ -140,13 +140,9 @@ class FlywayMySqlIntegrationTest {
     }
 
     @Test
-    void anOldMasterJarStillStartsAfterTheDatabaseWasUpgradedToV28() throws Exception {
-        // P1-04：手册要写清「回滚 jar 到底能不能直接起」。
-        // 实测：从 master V17 升到 V28 之后，旧 jar（classpath 只到 V17）把
-        // V18–V28 判成 FUTURE_SUCCESS——Flyway 默认 ignoreMigrationPatterns=*:future
-        // 会放行，服务能起。所以这条不是「起不来」，而是「能起但库里多了东西」。
-        //
-        // 这里把结论钉在真实 MySQL 上；手册的措辞（含 V22 只加可空列这一前提）据此书写。
+    void oldMigrationSetAcceptsFutureVersionsWithoutCertifyingArtifactSafety() throws Exception {
+        // This exercises Flyway with copied migration resources, not an executable old JAR.
+        // Successful migration validation proves neither business compatibility nor clinical safety.
         String url = System.getenv("FLYWAY_TEST_URL");
         Assumptions.assumeTrue(url != null && !url.isBlank(), "Requires isolated MySQL Flyway gate");
         String username = System.getenv("FLYWAY_TEST_USERNAME");
@@ -164,16 +160,16 @@ class FlywayMySqlIntegrationTest {
                         "升级前：旧 jar 自己的迁移集合跑到 V17");
                 Flyway rc = Flyway.configure().dataSource(url, username, password).schemas(schema)
                         .locations("classpath:db/migration", "classpath:db/callback").load();
-                assertEquals(11, rc.migrate().migrationsExecuted);
-                assertEquals("28", rc.info().current().getVersion().toString());
+                assertEquals(12, rc.migrate().migrationsExecuted);
+                assertEquals("29", rc.info().current().getVersion().toString());
 
                 Flyway oldJar = jarFlyway(url, username, password, schema, oldHome);
-                assertEquals(0, oldJar.migrate().migrationsExecuted, "旧 jar 在 V28 库上不执行任何迁移");
+                assertEquals(0, oldJar.migrate().migrationsExecuted, "旧迁移集合不会执行 future 版本");
                 for (var info : oldJar.info().all()) {
                     int version = Integer.parseInt(info.getVersion().toString());
                     if (version < 18) continue;
                     assertEquals("FUTURE_SUCCESS", info.getState().name(),
-                            "V" + version + " 对旧 jar 是 future，不是 missing——这决定了它能不能起");
+                            "V" + version + " 对旧迁移集合是 future，不是 missing");
                 }
 
                 // 回滚后旧代码继续写 t_diagnosis：V22 只加了可空列，旧插入语句不受影响

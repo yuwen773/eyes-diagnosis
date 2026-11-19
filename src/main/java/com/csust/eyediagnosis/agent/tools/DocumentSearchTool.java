@@ -60,7 +60,7 @@ public class DocumentSearchTool {
     @Autowired(required = false)
     private RerankModel rerankModel;
 
-    /** 就绪校验用的文档表；缺失（单测/裁剪部署）时跳过校验，不假装有。 */
+    /** 上传文档的发布版本准入；不可查询时不放行上传片段。 */
     @Autowired(required = false)
     private KnowledgeDocumentMapper knowledgeDocumentMapper;
 
@@ -140,18 +140,12 @@ public class DocumentSearchTool {
     }
 
     /**
-     * 证据准入：过滤掉「文档本身没有成功入库」的残留片段。
-     *
-     * <p>为什么需要：向量写入按 10 条一批，第 2 批失败时第 1 批已经在向量库里，
-     * 而 MySQL 把文档标成失败（status=2）。这些残片带着同一份 documentId，
-     * 语义上属于一份**没有完成**的上传——不能因为向量库碰巧搜得到就被当作来源。
-     *
-     * <p>规则：带 documentId 的片段，只有对应文档 status=1（已完成）才保留；
-     * 不带 documentId 的片段（旧数据 / 直写内置语料）保持原样，不凭空判死。
-     * 状态查询本身失败时 fail-closed：丢弃带 documentId 的片段，宁可少引用。
+     * 只有 READY 且 indexVersion 与当前发布版本相等的上传片段可以作为证据。
+     * 失败清理和 BM25 缓存均可能留下旧代，不能仅凭 documentId 对应行已经 READY 放行。
+     * 旧上传无版本不能证明处理完整，须重新处理；不带 documentId 的内置语料保持原契约。
      */
     List<Document> readyOnly(List<Document> candidates) {
-        if (knowledgeDocumentMapper == null || candidates == null || candidates.isEmpty()) {
+        if (candidates == null || candidates.isEmpty()) {
             return candidates;
         }
         Set<Long> docIds = new HashSet<>();
@@ -161,12 +155,13 @@ public class DocumentSearchTool {
         }
         if (docIds.isEmpty()) return candidates;
 
-        Set<Long> ready;
+        Map<Long, String> ready;
         try {
+            if (knowledgeDocumentMapper == null) throw new IllegalStateException("文档发布状态不可用");
             ready = knowledgeDocumentMapper.selectBatchIds(docIds).stream()
                     .filter(doc -> Integer.valueOf(1).equals(doc.getStatus()))
-                    .map(KnowledgeDocument::getId)
-                    .collect(Collectors.toSet());
+                    .filter(doc -> doc.getIndexVersion() != null && !doc.getIndexVersion().isBlank())
+                    .collect(Collectors.toMap(KnowledgeDocument::getId, KnowledgeDocument::getIndexVersion));
         } catch (Exception e) {
             log.warn("知识库文档状态校验失败，本轮丢弃带 documentId 的片段: {}", e.getMessage());
             return candidates.stream().filter(doc -> documentIdOf(doc) == null).toList();
@@ -174,9 +169,35 @@ public class DocumentSearchTool {
         return candidates.stream()
                 .filter(doc -> {
                     Long id = documentIdOf(doc);
-                    return id == null || ready.contains(id);
+                    return id == null || ready.containsKey(id)
+                            && ready.get(id).equals(doc.getMetadata().get("indexVersion"));
                 })
                 .toList();
+    }
+
+    /** 历史来源沿用实时检索的准入：旧代、失败代、已删除或越权引用不再暴露片段。 */
+    public List<ResourceRef> validateResourceRefs(List<ResourceRef> resources, Long currentUserId) {
+        if (resources == null || resources.isEmpty()) return resources;
+        return resources.stream().filter(ref -> {
+            if (!"document".equals(ref.kind()) || !"knowledge-base".equals(ref.source())) return true;
+            Long id;
+            try {
+                id = Long.valueOf(ref.documentId());
+            } catch (RuntimeException e) {
+                // 非上传的内置语料不使用数据库文档 id。
+                return ref.documentId() != null && ref.documentId().startsWith("builtin:");
+            }
+            if (knowledgeDocumentMapper == null || currentUserId == null || ref.indexVersion() == null) return false;
+            try {
+                KnowledgeDocument doc = knowledgeDocumentMapper.selectById(id);
+                return doc != null && currentUserId.equals(doc.getUserId())
+                        && Integer.valueOf(1).equals(doc.getStatus())
+                        && ref.indexVersion().equals(doc.getIndexVersion());
+            } catch (Exception e) {
+                log.warn("历史文档来源状态不可确认: docId={}", id);
+                return false;
+            }
+        }).toList();
     }
 
     /** 分片元数据里的 documentId；没有或不是数字时返回 null（不猜、不判死）。 */
@@ -290,7 +311,8 @@ public class DocumentSearchTool {
             String title = doc.getMetadata().get("title") == null
                     ? snippetOf(doc.getText()) : String.valueOf(doc.getMetadata().get("title"));
             ToolResourceContext.record(ResourceRef.document(
-                    docId, title, hit.score(), hit.retrievalScore(), snippetOf(doc.getText()), null));
+                    docId, title, hit.score(), hit.retrievalScore(), snippetOf(doc.getText()), null)
+                    .withIndexVersion((String) doc.getMetadata().get("indexVersion")));
         }
     }
 

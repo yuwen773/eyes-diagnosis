@@ -245,6 +245,7 @@ class DocumentSearchToolOwnershipTest {
         KnowledgeDocument doc = new KnowledgeDocument();
         doc.setId(docId);
         doc.setUserId(ownerId);
+        doc.setIndexVersion("attempt");
 
         // 这一组 mock 只服务于 processDocument 的真实实现路径。
         when(parser.parse(anyString(), anyString())).thenReturn(List.of("第一段", "第二段"));
@@ -265,7 +266,7 @@ class DocumentSearchToolOwnershipTest {
         setField(service, "vectorStore", vectorStore);
 
         File file = tempDir.resolve("doc.txt").toFile();
-        service.processDocument(docId, file, "txt", "标题");
+        service.processDocument(docId, file, "txt", "标题", "attempt");
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Document>> captor = ArgumentCaptor.forClass(List.class);
@@ -277,12 +278,13 @@ class DocumentSearchToolOwnershipTest {
             assertEquals(ownerId, chunk.getMetadata().get("ownerUserId"),
                     "ownerUserId 必须写进 chunk，否则检索隔离失效");
             assertEquals(docId, chunk.getMetadata().get("documentId"));
+            assertEquals("attempt", chunk.getMetadata().get("indexVersion"));
             assertEquals("user_upload", chunk.getMetadata().get("sourceType"),
                     "server-derived source marker must be on every chunk");
         }
-        // chunk id 由 docId + 序号生成，保证同一文档的 chunk 可追溯。
-        assertEquals("doc_99_chunk_0", stored.get(0).getId());
-        assertEquals("doc_99_chunk_1", stored.get(1).getId());
+        // 不同处理代使用不同 id，较短重试不会覆盖部分旧块后重新暴露剩余旧块。
+        assertEquals("doc_99_attempt_chunk_0", stored.get(0).getId());
+        assertEquals("doc_99_attempt_chunk_1", stored.get(1).getId());
     }
 
     private static void setField(Object target, String name, Object value) {

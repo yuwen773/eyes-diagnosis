@@ -49,6 +49,7 @@ class DocumentProcessingServiceChunkRollbackTest {
         KnowledgeDocument row = new KnowledgeDocument();
         row.setId(124L);
         row.setUserId(42L);
+        row.setIndexVersion("attempt");
         when(mapper.selectById(124L)).thenReturn(row);
 
         DocumentParser parser = mock(DocumentParser.class);
@@ -70,20 +71,18 @@ class DocumentProcessingServiceChunkRollbackTest {
         ReflectionTestUtils.setField(service, "documentParser", parser);
         ReflectionTestUtils.setField(service, "textChunkerService", chunker);
 
-        service.processDocument(124L, temp, ".txt", "t");
+        service.processDocument(124L, temp, ".txt", "t", "attempt");
 
         // 残留按 documentId 元数据清理（不依赖 chunkCount —— 失败文档没有它）
         ArgumentCaptor<Filter.Expression> filter = ArgumentCaptor.forClass(Filter.Expression.class);
         verify(vectorStore, atLeastOnce()).delete(filter.capture());
         Filter.Expression expression = filter.getValue();
-        assertEquals(Filter.ExpressionType.EQ, expression.type());
-        assertEquals("documentId", ((Filter.Key) expression.left()).key());
+        assertEquals(Filter.ExpressionType.AND, expression.type());
+        assertEquals("documentId", ((Filter.Key) ((Filter.Expression) expression.left()).left()).key());
+        assertEquals("indexVersion", ((Filter.Key) ((Filter.Expression) expression.right()).left()).key());
 
         // 状态落成 2（失败），且没有写 chunkCount
-        ArgumentCaptor<KnowledgeDocument> updated = ArgumentCaptor.forClass(KnowledgeDocument.class);
-        verify(mapper, times(1)).updateById(updated.capture());
-        assertEquals(2, updated.getValue().getStatus());
-        assertEquals(null, updated.getValue().getChunkCount());
+        verify(mapper).finishIndex(124L, "attempt", 2, null);
 
         temp.delete();
     }
@@ -95,6 +94,7 @@ class DocumentProcessingServiceChunkRollbackTest {
         KnowledgeDocument row = new KnowledgeDocument();
         row.setId(125L);
         row.setUserId(42L);
+        row.setIndexVersion("attempt");
         when(mapper.selectById(125L)).thenReturn(row);
 
         DocumentParser parser = mock(DocumentParser.class);
@@ -113,12 +113,9 @@ class DocumentProcessingServiceChunkRollbackTest {
         ReflectionTestUtils.setField(service, "documentParser", parser);
         ReflectionTestUtils.setField(service, "textChunkerService", chunker);
 
-        service.processDocument(125L, temp, ".txt", "t");
+        service.processDocument(125L, temp, ".txt", "t", "attempt");
 
-        ArgumentCaptor<KnowledgeDocument> updated = ArgumentCaptor.forClass(KnowledgeDocument.class);
-        verify(mapper).updateById(updated.capture());
-        assertEquals(1, updated.getValue().getStatus());
-        assertEquals(1, updated.getValue().getChunkCount());
+        verify(mapper).finishIndex(125L, "attempt", 1, 1);
         verify(vectorStore, times(0)).delete(any(Filter.Expression.class));
 
         temp.delete();

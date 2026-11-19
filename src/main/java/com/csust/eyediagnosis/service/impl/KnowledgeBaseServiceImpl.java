@@ -125,9 +125,10 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
                     doc.setFileType(fileType);
                     doc.setContentHash(contentHash);
                     doc.setStatus(0);
+                    doc.setIndexVersion(UUID.randomUUID().toString());
                     baseMapper.insert(doc);
 
-                    documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle());
+                    documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle(), doc.getIndexVersion());
                     return new UploadResult(doc.getId(), originalFilename, null);
                 } catch (IOException e) {
                     log.error("文件上传失败: filename={}", originalFilename, e);
@@ -304,11 +305,12 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             doc.setFileType(fileType);
             doc.setTitle(title != null ? title : originalFilename);
             doc.setStatus(0);
+            doc.setIndexVersion(UUID.randomUUID().toString());
             doc.setChunkCount(null);
             baseMapper.updateById(doc);
 
             // 4. 异步重新处理文档
-            documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle());
+            documentProcessingService.processDocument(doc.getId(), tempFile, fileType, doc.getTitle(), doc.getIndexVersion());
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "文件更新失败");
         }
@@ -379,8 +381,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
      * 按入库时的同一套规则重放解析与切分，得到这份文档的切片清单。
      *
      * <p>拼接方式与 {@link DocumentProcessingService} 保持逐字一致：
-     * 段落以空行相接、首尾去空白，切片编号沿用入库时的
-     * {@code doc_{id}_chunk_{i}} 约定——管理员看到的第 3 块就是第 3 块。
+     * 段落以空行相接、首尾去空白；片段序号对应当前文件的处理规则。
      *
      * <p>这里只重放「规则」，不推断向量库里的存量：入库条数只有库里那一个
      * 计数（{@code chunkCount}），向量库实际存了多少条没有接口可查，界面就不说。
@@ -439,35 +440,21 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
     /**
      * 删除一份文档在向量库里的全部分块。
      *
-     * <p>有 chunkCount 时按确定的 chunkId 删；**失败文档恰恰没有 chunkCount**
-     * （处理中途就挂了），旧实现因此一个残片也删不掉。这种情况改按
-     * documentId 元数据删除；真删不掉也不阻塞记录删除——检索侧只接受
-     * 「整份文档就绪」的片段，残片进不了证据链。
+     * <p>按 documentId 清理所有版本（包括无版本的旧残片），不依赖 chunkCount。
+     * 清理失败也不阻塞逻辑删除；检索侧还要求就绪、当前版本匹配。
      */
     private void deleteVectors(KnowledgeDocument doc) {
         if (doc == null || doc.getId() == null) return;
         try {
             var vectorStore = documentProcessingService.getVectorStore();
             if (vectorStore == null) return;
-            if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
-                vectorStore.delete(buildChunkIds(doc.getId(), doc.getChunkCount()));
-            } else {
-                vectorStore.delete(new org.springframework.ai.vectorstore.filter.Filter.Expression(
-                        org.springframework.ai.vectorstore.filter.Filter.ExpressionType.EQ,
-                        new org.springframework.ai.vectorstore.filter.Filter.Key("documentId"),
-                        new org.springframework.ai.vectorstore.filter.Filter.Value(doc.getId())));
-            }
+            vectorStore.delete(new org.springframework.ai.vectorstore.filter.Filter.Expression(
+                    org.springframework.ai.vectorstore.filter.Filter.ExpressionType.EQ,
+                    new org.springframework.ai.vectorstore.filter.Filter.Key("documentId"),
+                    new org.springframework.ai.vectorstore.filter.Filter.Value(doc.getId())));
         } catch (Exception e) {
             log.warn("向量删除失败，继续删除数据库记录: docId={}", doc.getId(), e);
         }
-    }
-
-    private List<String> buildChunkIds(Long docId, int chunkCount) {
-        List<String> chunkIds = new ArrayList<>(chunkCount);
-        for (int i = 0; i < chunkCount; i++) {
-            chunkIds.add("doc_" + docId + "_chunk_" + i);
-        }
-        return chunkIds;
     }
 
     /** 切片清单 + 原文（纯文本直读用）。 */

@@ -39,12 +39,24 @@ public record ResourceRef(
         /** 命中的片段（来自检索结果原文）。 */
         String snippet,
         /** 产生这条资源的工具调用，便于和执行步骤对上。 */
-        String toolCallId
+        String toolCallId,
+        /** 上传文档的已发布索引版本；历史读取时再次核验。 */
+        String indexVersion
 ) {
+    public ResourceRef(String id, String kind, String title, String source, String url, String documentId,
+                       Double score, Double retrievalScore, String snippet, String toolCallId) {
+        this(id, kind, title, source, url, documentId, score, retrievalScore, snippet, toolCallId, null);
+    }
+
     public static ResourceRef document(String documentId, String title, Double score, Double retrievalScore,
                                        String snippet, String toolCallId) {
         return new ResourceRef("doc:" + documentId, "document", title, "knowledge-base",
                 null, documentId, score, retrievalScore, snippet, toolCallId);
+    }
+
+    public ResourceRef withIndexVersion(String indexVersion) {
+        return new ResourceRef(id, kind, title, source, url, documentId, score, retrievalScore, snippet,
+                toolCallId, indexVersion);
     }
 
     /**
@@ -59,6 +71,6 @@ public record ResourceRef(
             return this;
         }
         return new ResourceRef(id, kind, title, source, url, documentId, score, retrievalScore, snippet,
-                toolCallId);
+                toolCallId, indexVersion);
     }
 }

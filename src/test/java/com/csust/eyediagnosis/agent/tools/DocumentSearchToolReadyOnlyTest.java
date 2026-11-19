@@ -24,6 +24,7 @@ class DocumentSearchToolReadyOnlyTest {
     private static Document chunk(String id, Object documentId) {
         Map<String, Object> metadata = new HashMap<>();
         if (documentId != null) metadata.put("documentId", documentId);
+        metadata.put("indexVersion", "current");
         return new Document(id, "片段 " + id, metadata);
     }
 
@@ -31,6 +32,7 @@ class DocumentSearchToolReadyOnlyTest {
         KnowledgeDocument row = new KnowledgeDocument();
         row.setId(id);
         row.setStatus(status);
+        row.setIndexVersion("current");
         return row;
     }
 
@@ -81,5 +83,23 @@ class DocumentSearchToolReadyOnlyTest {
 
         List<Document> kept = tool.readyOnly(List.of(chunk("a", "3")));
         assertEquals(1, kept.size());
+    }
+
+    @Test
+    void readyDocumentDoesNotRepublishFailedOrLegacyGenerations() {
+        KnowledgeDocumentMapper mapper = mock(KnowledgeDocumentMapper.class);
+        when(mapper.selectBatchIds(any())).thenReturn(List.of(doc(3L, 1)));
+        Document stale = new Document("stale", "failed generation", Map.of("documentId", 3L, "indexVersion", "failed"));
+        Document legacy = new Document("legacy", "unversioned generation", Map.of("documentId", 3L));
+        DocumentSearchTool tool = new DocumentSearchTool();
+        ReflectionTestUtils.setField(tool, "knowledgeDocumentMapper", mapper);
+        assertEquals(List.of("current"), tool.readyOnly(List.of(stale, legacy, chunk("current", 3L)))
+                .stream().map(Document::getId).toList());
+    }
+
+    @Test
+    void missingMapperDoesNotGrantUploadEvidence() {
+        DocumentSearchTool tool = new DocumentSearchTool();
+        assertEquals(List.of(), tool.readyOnly(List.of(chunk("upload", 3L))));
     }
 }
