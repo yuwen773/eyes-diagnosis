@@ -1,5 +1,6 @@
 package com.csust.eyediagnosis.agent.tools;
 
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
 import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import org.junit.jupiter.api.Test;
@@ -75,7 +76,15 @@ class DocumentSearchToolStaleGenerationTest {
                 chunk("stale-attempt-1", 1L, "attempt-1"),
                 chunk("fresh-attempt-2", 1L, "attempt-2")));
 
-        String answer = tool(vectorStore, mapper).searchDocuments("青光眼", 7L);
+        String answer;
+        try {
+            answer = tool(vectorStore, mapper).searchDocuments("青光眼", 7L);
+        } finally {
+            // 检索成功会往 ToolResourceContext（线程内）登记来源。
+            // 不清掉的话，同一线程上跑的下一个用例会看到本用例的残留来源——
+            // 那会让无关用例变成顺序相关的假失败（CI 上已出现过一次）。
+            ToolResourceContext.drain();
+        }
 
         assertFalse(answer.contains("stale-attempt-1"), "旧代片段不得作为证据交给模型");
         assertTrue(answer.contains("fresh-attempt-2"), "当前代的片段必须照常返回");
@@ -93,7 +102,12 @@ class DocumentSearchToolStaleGenerationTest {
                 chunk("stale-attempt-1", 1L, "attempt-1"),
                 chunk("fresh-attempt-2", 1L, "attempt-2")));
 
-        String answer = tool(vectorStore, mapper).searchDocuments("青光眼", 7L);
+        String answer;
+        try {
+            answer = tool(vectorStore, mapper).searchDocuments("青光眼", 7L);
+        } finally {
+            ToolResourceContext.drain();
+        }
 
         assertFalse(answer.contains("attempt-1"));
         assertFalse(answer.contains("attempt-2"), "处理未完成的文档不能当证据");
