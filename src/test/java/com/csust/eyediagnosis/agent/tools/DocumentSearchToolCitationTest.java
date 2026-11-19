@@ -198,6 +198,37 @@ class DocumentSearchToolCitationTest {
         assertEquals(List.of(), ToolResourceContext.drain(), "不可核验的片段不进资源栏");
     }
 
+    /**
+     * 证据登记的线程前提被破坏时，工具必须**原样抛出**护栏异常。
+     *
+     * <p>如果被兜底 catch 包成「知识库检索暂时不可用」，真正的原因（工具跑到
+     * 了别的线程、证据会静默丢失）就只剩一个被包住的 cause，日志与审计都会
+     * 把它记成一次检索故障。
+     */
+    @Test
+    void evidenceThreadViolationIsNotRepackagedAsRetrievalFailure() throws Exception {
+        Document first = doc("c1", "101", "第一段。", 0.9);
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(first)));
+
+        // 拦截器在本线程登记了一次调用，但工具被调度到另一个线程执行。
+        ToolResourceContext.begin();
+        var failure = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Thread worker = Thread.startVirtualThread(() -> {
+            try {
+                tool.searchDocuments("干眼", 42L);
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        worker.join(2_000);
+
+        assertTrue(failure.get() instanceof com.csust.eyediagnosis.agent.observability.EvidenceContextViolation,
+                "跨线程登记必须报出护栏异常本身，而不是检索失败");
+        assertFalse(String.valueOf(failure.get().getMessage()).contains("暂时不可用"),
+                "不能把线程前提问题包装成检索故障");
+    }
+
     private static Document doc(String id, String docId, String text, double score) {
         return Document.builder()
                 .id(id)

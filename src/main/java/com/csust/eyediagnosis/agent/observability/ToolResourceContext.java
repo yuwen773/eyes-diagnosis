@@ -32,6 +32,10 @@ public final class ToolResourceContext {
     /**
      * 正在执行工具调用的线程。必须在进程级可见：ThreadLocal 在新线程里读不到，
      * 而「工具被调度到别的线程」正是要发现的情况。
+     *
+     * <p>代价是：在别的线程上**绕过拦截器**直调工具（只在单测/内部脚本里有），
+     * 若恰好有别的请求正在执行工具，会被判成越界。生产路径上工具只经
+     * {@code ToolExecutionInterceptor} 进入，所以这里选择「宁可报错，也不静默丢证据」。
      */
     private static final java.util.Set<Long> ACTIVE_THREADS =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -59,9 +63,10 @@ public final class ToolResourceContext {
         // 有工具调用正在进行、而当前线程不是任何一次调用的执行线程：工具被调度
         // 到了别处。此时写进去的资源没人取走，必须在工具内部直接失败。
         if (!ACTIVE_THREADS.isEmpty() && !ACTIVE_THREADS.contains(Thread.currentThread().threadId())) {
-            throw new IllegalStateException(
+            throw new EvidenceContextViolation(
                     "证据登记发生在工具调用线程之外（登记线程 " + Thread.currentThread().getName()
-                            + "）。并行/异步执行工具时 ThreadLocal 收集会静默丢证据，"
+                            + "）。可能是工具被并行/异步调度到了别的线程，也可能是绕开拦截器"
+                            + "直调工具；两种情况下 ThreadLocal 收集都会静默丢证据，"
                             + "必须改为显式传递（如 ToolContext）。");
         }
         List<ResourceRef> list = CURRENT.get();

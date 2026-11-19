@@ -73,7 +73,7 @@ class ChatHistoryVariantsTest {
 
     @Test
     void variantsKeepGenerationOrder() {
-        when(messageMapper.selectVariants(SESSION)).thenReturn(List.of(
+        when(messageMapper.selectVariants(SESSION, List.of(TURN))).thenReturn(List.of(
                 variantRow(TURN, "v2", 20L),
                 variantRow(TURN, "v1", 10L)));
         when(messageMapper.selectById(TURN)).thenReturn(userMessage(TURN, "v2"));
@@ -86,7 +86,7 @@ class ChatHistoryVariantsTest {
 
     @Test
     void selectingAVersionThatDoesNotExistIsRejected() {
-        when(messageMapper.selectVariants(SESSION)).thenReturn(List.of(variantRow(TURN, "v1", 10L)));
+        when(messageMapper.selectVariants(SESSION, List.of(TURN))).thenReturn(List.of(variantRow(TURN, "v1", 10L)));
 
         BusinessException error = assertThrows(BusinessException.class,
                 () -> history.selectVariant(SESSION, USER_ID, TURN, "v9"));
@@ -97,7 +97,7 @@ class ChatHistoryVariantsTest {
 
     @Test
     void selectingARealVersionIsPersisted() {
-        when(messageMapper.selectVariants(SESSION)).thenReturn(List.of(
+        when(messageMapper.selectVariants(SESSION, List.of(TURN))).thenReturn(List.of(
                 variantRow(TURN, "v1", 10L), variantRow(TURN, "v2", 20L)));
 
         history.selectVariant(SESSION, USER_ID, TURN, "v1");
@@ -109,7 +109,7 @@ class ChatHistoryVariantsTest {
     void historyAnnotatesUserRowsWithTheirVariants() {
         when(messageMapper.selectBySessionIdOrderByTimeASC(SESSION, 40))
                 .thenReturn(List.of(userMessage(TURN, "v1")));
-        when(messageMapper.selectVariants(SESSION)).thenReturn(List.of(
+        when(messageMapper.selectVariants(SESSION, List.of(TURN))).thenReturn(List.of(
                 variantRow(TURN, "v1", 10L), variantRow(TURN, "v2", 20L)));
 
         ChatHistoryVO page = history.loadHistory(SESSION, null, 40);
@@ -123,7 +123,7 @@ class ChatHistoryVariantsTest {
     void historyWithoutVariantsStillLoads() {
         when(messageMapper.selectBySessionIdOrderByTimeASC(SESSION, 40))
                 .thenReturn(List.of(userMessage(TURN, null)));
-        when(messageMapper.selectVariants(SESSION)).thenReturn(List.of());
+        when(messageMapper.selectVariants(SESSION, List.of(TURN))).thenReturn(List.of());
 
         ChatHistoryVO page = history.loadHistory(SESSION, null, 40);
 
@@ -152,5 +152,38 @@ class ChatHistoryVariantsTest {
         assertEquals("问题", turn.text());
         assertEquals(TURN, turn.messageId());
         assertFalse(turn.text().isBlank());
+    }
+
+    @Test
+    void legacyAnswersAreAdoptedIntoOneVersionBeforeRegeneration() {
+        when(messageMapper.selectNextUserMessageId(SESSION, TURN)).thenReturn(2000L);
+        when(messageMapper.countLegacyAnswers(SESSION, TURN, 2000L)).thenReturn(3);
+
+        String variantId = history.adoptLegacyAnswers(SESSION, USER_ID, TURN);
+
+        assertEquals("legacy-" + TURN, variantId, "版本 id 由用户消息派生，重复调用不会越跑越多");
+        verify(messageMapper).adoptLegacyAnswers(SESSION, TURN, "legacy-" + TURN, TURN, 2000L);
+    }
+
+    @Test
+    void lastTurnAdoptsUpToTheEndOfTheSession() {
+        when(messageMapper.selectNextUserMessageId(SESSION, TURN)).thenReturn(null);
+        when(messageMapper.countLegacyAnswers(SESSION, TURN, Long.MAX_VALUE)).thenReturn(1);
+
+        assertEquals("legacy-" + TURN, history.adoptLegacyAnswers(SESSION, USER_ID, TURN));
+
+        verify(messageMapper).adoptLegacyAnswers(SESSION, TURN, "legacy-" + TURN, TURN, Long.MAX_VALUE);
+    }
+
+    @Test
+    void turnsWithoutLegacyAnswersAreLeftAlone() {
+        when(messageMapper.selectNextUserMessageId(SESSION, TURN)).thenReturn(null);
+        when(messageMapper.countLegacyAnswers(SESSION, TURN, Long.MAX_VALUE)).thenReturn(0);
+
+        assertEquals(null, history.adoptLegacyAnswers(SESSION, USER_ID, TURN));
+        verify(messageMapper, never()).adoptLegacyAnswers(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong());
     }
 }

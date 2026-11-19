@@ -120,7 +120,16 @@ public class AgentController {
                 });
     }
 
-    public record RegenerateRequest(String threadId, Long userMessageId) {}
+    /**
+     * @param enabledMcpServers  可选：与原回合一致的会话级 MCP 选择。本仓库的 web
+     *                           客户端不发送它（发送侧本来就不传），所以「再跑一遍」
+     *                           与首轮等价；其他客户端若按回合自定义过工具集合，
+     *                           应在这里原样带上，否则会退回默认解析。
+     * @param disableMcpDefault  可选：同上。用户关掉 MCP 时不带上的话，重新生成
+     *                           会按默认重新加载工具——那是用户没有同意的外部调用。
+     */
+    public record RegenerateRequest(String threadId, Long userMessageId,
+                                    List<String> enabledMcpServers, Boolean disableMcpDefault) {}
 
     public record SelectVariantRequest(String threadId, Long userMessageId, String variantId) {}
 
@@ -147,6 +156,10 @@ public class AgentController {
         // 附件在读取时按当前归属复核过；这里再走一次入口校验，口径与首轮一致。
         assertOwnedImages(turn.images(), userId);
 
+        // 升级前的回答没有版本信息：先归入「旧版本」，否则新版本写入后旧行
+        // 既隐藏不掉，切换器也会少算一版。
+        chatHistoryService.adoptLegacyAnswers(request.threadId(), userId, turn.messageId());
+
         String requestId = UUID.randomUUID().toString();
         log.info("Agent 重新生成请求, requestId={}, threadId={}, userIdHash={}, messageLength={}, imageCount={}",
                 requestId, request.threadId(), anonymize(userId),
@@ -154,7 +167,8 @@ public class AgentController {
 
         return toSse(diagnosisAgent.stream(turn.text(),
                         turn.images().isEmpty() ? null : turn.images(),
-                        request.threadId(), userId, null, null,
+                        request.threadId(), userId,
+                        request.enabledMcpServers(), request.disableMcpDefault(),
                         new DiagnosisAgent.TurnStamp(turn.messageId(), UUID.randomUUID().toString())),
                 requestId);
     }
@@ -173,17 +187,6 @@ public class AgentController {
                 request.userMessageId(), request.variantId());
         return ResultUtils.success(chatHistoryService.variants(
                 request.threadId(), loginUser.getId(), request.userMessageId()));
-    }
-
-    @GetMapping("/chat/variants/{threadId}/{userMessageId}")
-    public BaseResponse<ChatHistoryService.TurnVariants> variants(@PathVariable String threadId,
-                                                                  @PathVariable long userMessageId,
-                                                                  HttpServletRequest httpRequest) {
-        User loginUser = userService.getLoginUser(httpRequest);
-        if (loginUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
-        return ResultUtils.success(chatHistoryService.variants(threadId, loginUser.getId(), userMessageId));
     }
 
     @GetMapping("/history/{threadId}")

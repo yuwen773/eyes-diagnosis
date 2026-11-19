@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.csust.eyediagnosis.agent.observability.EvidenceContextViolation;
 import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
@@ -132,6 +133,10 @@ public class DocumentSearchTool {
             List<Hit> hits = reranked ? rerank(query, candidates) : topHits(candidates);
             recordCitations(hits);
             return formatHits(hits);
+        } catch (EvidenceContextViolation e) {
+            // 证据登记的线程前提被破坏：这不是「检索暂时不可用」，包装成检索故障
+            // 会让真正的原因（线程前提）只剩一个 cause。原样抛出。
+            throw e;
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
             // 不能把失败包装成一句正常返回值：那样工具生命周期是「成功」，

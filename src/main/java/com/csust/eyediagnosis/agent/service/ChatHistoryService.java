@@ -192,9 +192,12 @@ public class ChatHistoryService {
      * 靠时间戳猜先后。
      */
     private void annotateVariants(String sessionId, List<MessageVO> vos) {
-        boolean anyUser = vos.stream().anyMatch(vo -> "USER".equals(vo.getRole()));
-        if (!anyUser) return;
-        Map<Long, List<String>> byTurn = variantsByTurn(sessionId);
+        List<Long> turnIds = vos.stream()
+                .filter(vo -> "USER".equals(vo.getRole()) && vo.getId() != null)
+                .map(MessageVO::getId)
+                .toList();
+        if (turnIds.isEmpty()) return;
+        Map<Long, List<String>> byTurn = variantsByTurn(sessionId, turnIds);
         for (MessageVO vo : vos) {
             if (!"USER".equals(vo.getRole())) continue;
             List<String> variants = byTurn.get(vo.getId());
@@ -202,9 +205,11 @@ public class ChatHistoryService {
         }
     }
 
-    private Map<Long, List<String>> variantsByTurn(String sessionId) {
+    /** 只查给定的这几轮：整会话聚合会在每次翻页时重扫全部行。 */
+    private Map<Long, List<String>> variantsByTurn(String sessionId, List<Long> replyToIds) {
         Map<Long, List<String>> byTurn = new java.util.LinkedHashMap<>();
-        for (Map<String, Object> row : messageMapper.selectVariants(sessionId)) {
+        if (replyToIds.isEmpty()) return byTurn;
+        for (Map<String, Object> row : messageMapper.selectVariants(sessionId, replyToIds)) {
             Object replyTo = row.get("replyToId");
             Object variant = row.get("variantId");
             if (!(replyTo instanceof Number turn) || variant == null) continue;
@@ -242,10 +247,31 @@ public class ChatHistoryService {
                 vo.getImages() == null ? List.of() : List.copyOf(vo.getImages()));
     }
 
+    /**
+     * 升级前的回答没有版本信息（replyToId/variantId 为 NULL）。给这一轮重新生成
+     * 之前，先把它们归入一个「旧版本」，否则新版本写入后旧行永远匹配不上
+     * 选中状态——旧回答既隐藏不掉，切换器还会显示成「只有 1 个版本」。
+     *
+     * <p>只补元数据、不改内容，且只在「这条用户消息之后、下一轮提问之前」生效。
+     * 幂等：没有旧行时什么也不做。返回归入的版本 id；没有旧行返回 null。
+     */
+    public String adoptLegacyAnswers(String sessionId, Long userId, long userMessageId) {
+        assertSessionOwner(sessionId, userId);
+        Long nextUserId = messageMapper.selectNextUserMessageId(sessionId, userMessageId);
+        long before = nextUserId != null ? nextUserId : Long.MAX_VALUE;
+        if (messageMapper.countLegacyAnswers(sessionId, userMessageId, before) == 0) {
+            return null;
+        }
+        // 版本 id 由用户消息 id 派生：重复调用落成同一个版本，不会越跑越多。
+        String variantId = "legacy-" + userMessageId;
+        messageMapper.adoptLegacyAnswers(sessionId, userMessageId, variantId, userMessageId, before);
+        return variantId;
+    }
+
     /** 切换某一轮显示的版本；版本必须真实存在于该轮，不接受任意字符串。 */
     public void selectVariant(String sessionId, Long userId, long userMessageId, String variantId) {
         assertSessionOwner(sessionId, userId);
-        List<String> variants = variantsByTurn(sessionId).get(userMessageId);
+        List<String> variants = variantsByTurn(sessionId, List.of(userMessageId)).get(userMessageId);
         if (variants == null || !variants.contains(variantId)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "该回答版本不存在");
         }
@@ -271,7 +297,8 @@ public class ChatHistoryService {
         if (entity == null || !sessionId.equals(entity.getSessionId()) || !"USER".equals(entity.getRole())) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "找不到这一轮用户消息");
         }
-        List<String> ids = variantsByTurn(sessionId).getOrDefault(userMessageId, List.of());
+        List<String> ids = variantsByTurn(sessionId, List.of(userMessageId))
+                .getOrDefault(userMessageId, List.of());
         return new TurnVariants(List.copyOf(ids), entity.getSelectedVariantId());
     }
 

@@ -145,7 +145,9 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
 
             verifyBudgetTurn(history, audit, writer, jdbc);
 
-            verifyVariantHistory(history, writer);
+            verifyVariantHistory(history, writer, jdbc);
+
+            verifyLegacyTurnAdoption(history, writer);
         } finally {
             queue.shutdown();
             admin.execute("DROP DATABASE `" + schema + "`");
@@ -244,7 +246,8 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
      * LIMIT，翻页出现空页。这里直接打真库，验证三种状态：未选择时全部可见、
      * 选中后只剩该版本、版本列表按生成顺序返回。
      */
-    private static void verifyVariantHistory(ChatHistoryService history, ChatMessageWriter writer) {
+    private static void verifyVariantHistory(ChatHistoryService history, ChatMessageWriter writer,
+                                             JdbcTemplate jdbc) {
         writer.claimOrValidateSession("variants", 42L, "synthetic");
         long userRow = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
         writer.writeUserMessage("variants", 42L, "同一问题的原文", null, userRow);
@@ -286,6 +289,49 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
         // 选一个不存在的版本必须被拒绝，而不是写进一个假状态
         assertThrows(com.csust.eyediagnosis.exception.BusinessException.class,
                 () -> history.selectVariant("variants", 42L, userRow, "v9"));
+
+        // 会话统计与「用户看得到的行」一致：隐藏的 v1 行不计入
+        assertEquals(selected.size(), jdbc.queryForObject(
+                "SELECT messageCount FROM t_agent_session WHERE sessionId='variants'", Integer.class),
+                "messageCount 必须按可见口径重算，而不是每次重新生成都累加");
+        assertEquals("第二版推理", jdbc.queryForObject(
+                "SELECT lastMessage FROM t_agent_session WHERE sessionId='variants'", String.class),
+                "lastMessage 跟随可见的最后一行，不被隐藏版本覆盖");
+    }
+
+    /**
+     * 升级前的回答（replyToId/variantId 为 NULL）在重新生成前被归入一个旧版本：
+     * 否则新版本写入后旧行永远匹配不上选中状态——隐藏不掉，切换器还少算一版。
+     */
+    private static void verifyLegacyTurnAdoption(ChatHistoryService history, ChatMessageWriter writer) {
+        writer.claimOrValidateSession("legacy", 42L, "synthetic");
+        long userRow = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
+        writer.writeUserMessage("legacy", 42L, "升级前的问题", null, userRow);
+        // 旧口径：不带 replyToId / variantId
+        writer.writeAssistantMessage("legacy", "升级前的回答", "text",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        // 另一个回合，不能被一并收养
+        long nextUser = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
+        writer.writeUserMessage("legacy", 42L, "下一轮问题", null, nextUser);
+        writer.writeAssistantMessage("legacy", "下一轮的回答", "text",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+
+        assertEquals("legacy-" + userRow, history.adoptLegacyAnswers("legacy", 42L, userRow));
+        assertEquals(java.util.List.of("legacy-" + userRow),
+                history.variants("legacy", 42L, userRow).variantIds());
+        assertTrue(history.variants("legacy", 42L, nextUser).variantIds().isEmpty(),
+                "只收养这一轮的回答，下一轮的旧行原样保留");
+
+        // 新版本写入后选中它：旧回答隐藏，版本列表两版
+        writer.writeAssistantMessage("legacy", "重新生成的回答", "text",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId(), userRow, "v2");
+        history.selectVariant("legacy", 42L, userRow, "v2");
+        var page = history.loadHistory("legacy", null, 100).getMessages();
+        assertTrue(page.stream().noneMatch(m -> "升级前的回答".equals(m.getContent())),
+                "收养后旧回答可以被隐藏");
+        assertTrue(page.stream().anyMatch(m -> "重新生成的回答".equals(m.getContent())));
+        assertEquals(java.util.List.of("legacy-" + userRow, "v2"),
+                history.variants("legacy", 42L, userRow).variantIds());
     }
 
     private static ToolStepSink sink(String session, ChatHistoryService history, ToolAuditService audit) {

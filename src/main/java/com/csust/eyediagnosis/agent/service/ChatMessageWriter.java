@@ -126,6 +126,12 @@ public class ChatMessageWriter {
                 .eq(AgentMessage::getSessionId, sessionId)
                 .eq(AgentMessage::getId, userMessageId)
                 .set(AgentMessage::getSelectedVariantId, variantId));
+        // 每写一行都 +1（含之后被隐藏的未选中版本）。切换是唯一一次「哪些行
+        // 算数」发生变化的时刻，在这里按可见口径重算，会话列表与历史保持一致。
+        String lastVisible = messageMapper.selectLastVisibleContent(sessionId);
+        sessionMapper.setVisibleMessageStats(sessionId,
+                messageMapper.countVisibleMessages(sessionId),
+                lastVisible == null ? null : truncate(lastVisible));
     }
 
     private AgentMessage buildMessage(String sessionId, String role, String subType, String content) {

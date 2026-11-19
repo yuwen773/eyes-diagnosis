@@ -30,6 +30,18 @@ public interface AgentSessionMapper extends BaseMapper<AgentSession> {
     int updateMessageCount(@Param("sessionId") String sessionId,
                           @Param("lastMessage") String lastMessage);
 
+    /**
+     * 按「用户看得到的行」重写条数与最后一条正文（版本切换后调用）。
+     *
+     * <p>{@code lastMessage} 传 null 表示没有可见行，保留原值而不是写成空串。
+     */
+    @Update("UPDATE t_agent_session SET messageCount = #{messageCount}, " +
+            "lastMessage = COALESCE(#{lastMessage}, lastMessage), updatedTime = NOW() " +
+            "WHERE sessionId = #{sessionId}")
+    int setVisibleMessageStats(@Param("sessionId") String sessionId,
+                               @Param("messageCount") int messageCount,
+                               @Param("lastMessage") String lastMessage);
+
     @Update("UPDATE t_agent_session SET checkpointData = #{checkpointData} " +
             "WHERE sessionId = #{sessionId}")
     int updateCheckpointData(@Param("sessionId") String sessionId,
