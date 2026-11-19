@@ -9,6 +9,7 @@ import {
   generateTitle,
   getChatHistory,
   getSessions,
+  selectAgentVariant,
   updatePinStatus,
   updateSessionTitle,
   type AgentSessionVO,
@@ -78,7 +79,8 @@ export function AgentPage() {
 
   // 与 useAgentStream 的 messages 单一数据源：历史加载也走 setMessages
   const stream = useAgentStream()
-  const { messages, isStreaming, resources, send, abort, pushUser, setMessages, reset } = stream
+  const { messages, isStreaming, resources, send, regenerate, abort, pushUser, setMessages, reset } =
+    stream
   // 上传器每次创建返新对象——不固定住的话 handleSend 的 useCallback
   // 依赖每渲染都变，等于没有 memo。用惰性 state 只建一次。
   const [uploader] = useState(createAgentUploader)
@@ -464,6 +466,46 @@ export function AgentPage() {
     [isStreaming, messages.length, threadId, userKey, uploader, pushUser, send, refreshSessions, pushFault, markDelivery, reconcileDelivery],
   )
 
+  /**
+   * 重新生成最后一轮。
+   *
+   * <p>`userMessageId` 为空表示「刚发完、还没有服务端 id」：服务端按本会话最后
+   * 一条用户提问解析。生成中的内容照常追加；结束后重读历史，把显示版本与
+   * 切换器一起换成服务端的真实状态（而不是本地凑一份）。
+   */
+  const handleRegenerate = useCallback(
+    async (userMessageId: string) => {
+      if (isStreaming) return
+      const usedThreadId = threadId
+      const reload = () => {
+        if (threadIdRef.current === usedThreadId) void loadHistoryMessages(usedThreadId)
+      }
+      try {
+        const outcome = await regenerate(usedThreadId, userMessageId)
+        if (outcome.accepted) reload()
+      } catch (e) {
+        pushFault(faultFromError(e, { intent: "send" }))
+        // 已受理但流中断：服务端可能已经留下半截版本，重读历史如实显示。
+        if (e instanceof AgentSendError && e.accepted) reload()
+      }
+    },
+    [isStreaming, threadId, regenerate, loadHistoryMessages, pushFault],
+  )
+
+  /** 切换某一轮显示的回答版本；切完以服务端历史为准重读这一页。 */
+  const handleSelectVariant = useCallback(
+    async (userMessageId: string, variantId: string) => {
+      const usedThreadId = threadId
+      try {
+        await selectAgentVariant(usedThreadId, userMessageId, variantId)
+        if (threadIdRef.current === usedThreadId) await loadHistoryMessages(usedThreadId)
+      } catch (e) {
+        pushFault(faultFromError(e, { intent: "load" }))
+      }
+    },
+    [threadId, loadHistoryMessages, pushFault],
+  )
+
   const handleNewChat = useCallback(() => {
     saveThreadId(userKey, "")
     setCurrentThreadId("")
@@ -646,6 +688,10 @@ export function AgentPage() {
               onPreviewImage={setPreviewUrl}
               onPickImage={pickImage}
               onCite={focusCitation}
+              onRegenerate={(userMessageId) => void handleRegenerate(userMessageId)}
+              onSelectVariant={(userMessageId, variantId) =>
+                void handleSelectVariant(userMessageId, variantId)
+              }
               headLeft={
                 <>
                   {compact ? (

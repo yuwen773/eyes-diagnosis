@@ -91,7 +91,14 @@ export type ThreadItem =
    * 页面级 `streaming` 不能直接当这个判据（新回合一开始它就为真），否则历史回合
    * 会显示成「正在执行」。
    */
-  | { type: "process"; id: string; steps: AgentStep[]; active: boolean }
+  | {
+      type: "process"
+      id: string
+      steps: AgentStep[]
+      active: boolean
+      /** 所属回合（从 1 开始）：版本切换器要挂在这一轮的最后一条之后。 */
+      round?: number
+    }
 
 /** 会进入执行过程的四种真实事件。 */
 function isProcessMessage(msg: StreamMessage): boolean {
@@ -402,6 +409,13 @@ export function buildThread(
 ): ThreadItem[] {
   const items: ThreadItem[] = []
   let index = 0
+  // 与 deriveResources 同一口径：每条用户提问切一回合。
+  let round = 0
+  const roundBefore: number[] = []
+  for (const message of messages) {
+    if (message.type === "user") round += 1
+    roundBefore.push(round)
+  }
 
   while (index < messages.length) {
     const current = messages[index]
@@ -420,7 +434,13 @@ export function buildThread(
     }
 
     if (steps.length > 0) {
-      items.push({ type: "process", id: `process-${blockId}`, steps, active: false })
+      items.push({
+        type: "process",
+        id: `process-${blockId}`,
+        steps,
+        active: false,
+        round: roundBefore[Math.max(0, index - 1)],
+      })
     }
   }
 

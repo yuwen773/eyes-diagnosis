@@ -1,4 +1,13 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 
 import type { StreamMessage } from "@/lib/agentStream"
 import {
@@ -13,6 +22,7 @@ import { computeUnread } from "@/lib/agentScroll"
 import { UserMessage } from "./messages/UserMessage"
 import { AssistantMessage } from "./messages/AssistantMessage"
 import { ThoughtLine } from "./ThoughtLine"
+import { TurnActions } from "./TurnActions"
 import { LatticeLoader } from "./LatticeLoader"
 import { WelcomeScreen } from "./WelcomeScreen"
 
@@ -70,6 +80,8 @@ export function MessageList({
   onPreviewImage,
   onPickImage,
   onCite,
+  onRegenerate,
+  onSelectVariant,
   headLeft,
   headRight,
 }: {
@@ -88,6 +100,10 @@ export function MessageList({
   onPickImage: (prefill: string) => void
   /** 点正文里的证据角标：打开资源栏并定位到那一段。 */
   onCite?: (evidenceKey: string) => void
+  /** 按这一轮已存的原文重新生成（只给最后一轮）。参数是用户消息的服务端 id。 */
+  onRegenerate?: (userMessageId: string) => void
+  /** 切换某一轮显示的回答版本。 */
+  onSelectVariant?: (userMessageId: string, variantId: string) => void
   /** 顶栏左侧插槽：折叠后的左栏操作钮组。 */
   headLeft?: ReactNode
   /** 顶栏右侧插槽：资源面板切换钮。 */
@@ -180,6 +196,30 @@ export function MessageList({
   )
   const roundById = useMemo(() => messageRoundById(messages), [messages])
 
+  // 每回合的用户提问（版本切换器挂在它这一轮的最后一条之后）。
+  const turnUserByRound = useMemo(() => {
+    const byRound = new Map<number, StreamMessage>()
+    for (const message of messages) {
+      if (message.type !== "user") continue
+      const round = roundById.get(message.id)
+      if (round) byRound.set(round, message)
+    }
+    return byRound
+  }, [messages, roundById])
+  const lastRound = useMemo(
+    () => Math.max(0, ...[...turnUserByRound.keys()]),
+    [turnUserByRound],
+  )
+  const lastIndexByRound = useMemo(() => {
+    const byRound = new Map<number, number>()
+    thread.forEach((item, index) => {
+      const round =
+        item.type === "process" ? (item.round ?? 0) : (roundById.get(item.message.id) ?? 0)
+      byRound.set(round, index)
+    })
+    return byRound
+  }, [thread, roundById])
+
   return (
     <div className="agent-thread">
       <div className="agent-thread__bar">
@@ -195,19 +235,49 @@ export function MessageList({
           {loading ? <div className="agent-load">读取历史会话…</div> : null}
           {empty ? <WelcomeScreen onSend={onSend} onPickImage={onPickImage} /> : null}
 
-          {thread.map((item) =>
-            item.type === "process" ? (
-              <ThoughtLine key={item.id} steps={item.steps} active={item.active} />
-            ) : (
-              <MessageRow
-                key={item.message.id}
-                msg={item.message}
-                citations={citationsByRound.get(roundById.get(item.message.id) ?? 0) ?? EMPTY_CITATIONS}
-                onPreviewImage={onPreviewImage}
-                onCite={onCite}
-              />
-            ),
-          )}
+          {thread.map((item, index) => {
+            const row =
+              item.type === "process" ? (
+                <ThoughtLine key={item.id} steps={item.steps} active={item.active} />
+              ) : (
+                <MessageRow
+                  key={item.message.id}
+                  msg={item.message}
+                  citations={
+                    citationsByRound.get(roundById.get(item.message.id) ?? 0) ?? EMPTY_CITATIONS
+                  }
+                  onPreviewImage={onPreviewImage}
+                  onCite={onCite}
+                />
+              )
+            const round =
+              item.type === "process" ? (item.round ?? 0) : (roundById.get(item.message.id) ?? 0)
+            const turnUser = turnUserByRound.get(round)
+            const isLastTurn = round === lastRound
+            // 版本条挂在这一轮最后一条之后；只有最后一轮能重新生成。
+            // 刚发的这一轮还没有服务端 id（要等历史回读）：此时重新生成按
+            // 「本会话最后一条提问」处理，由服务端解析，界面不必猜 id。
+            if (!turnUser || (!turnUser.serverId && !isLastTurn) || lastIndexByRound.get(round) !== index) {
+              return <Fragment key={item.type === "process" ? item.id : item.message.id}>{row}</Fragment>
+            }
+            const userMessageId = turnUser.serverId
+            return (
+              <Fragment key={item.type === "process" ? item.id : item.message.id}>
+                {row}
+                <TurnActions
+                  variantIds={turnUser.variantIds}
+                  selectedVariantId={turnUser.selectedVariantId}
+                  canRegenerate={isLastTurn && Boolean(onRegenerate)}
+                  busy={streaming}
+                  onRegenerate={() => onRegenerate?.(userMessageId ?? "")}
+                  onSelectVariant={(variantId) => {
+                    // 没有服务端 id 的一轮不可能已经有多版本，这里只是防御。
+                    if (userMessageId) onSelectVariant?.(userMessageId, variantId)
+                  }}
+                />
+              </Fragment>
+            )
+          })}
         </div>
       </div>
 

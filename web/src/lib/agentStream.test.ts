@@ -227,6 +227,48 @@ describe("mapHistoryMessage", () => {
     expect(m.errorCategory).toBeUndefined()
   })
 
+  it("用户行带上服务端 id 与这一轮的版本列表（切换器按它工作）", () => {
+    const m = mapHistoryMessage({
+      id: "1001",
+      role: "USER",
+      subType: "",
+      content: "问",
+      isSummary: false,
+      createdTime: "2026-11-19 10:00:00",
+      variantIds: ["v1", "v2"],
+      selectedVariantId: "v2",
+    })
+    expect(m.serverId).toBe("1001")
+    expect(m.variantIds).toEqual(["v1", "v2"])
+    expect(m.selectedVariantId).toBe("v2")
+  })
+
+  it("回答侧行带上所属轮次与版本，旧数据不补造", () => {
+    const v2 = mapHistoryMessage({
+      id: "1002",
+      role: "ASSISTANT",
+      subType: "text",
+      content: "答",
+      isSummary: false,
+      createdTime: "2026-11-19 10:00:01",
+      replyToId: "1001",
+      variantId: "v2",
+    })
+    expect(v2.replyToId).toBe("1001")
+    expect(v2.variantId).toBe("v2")
+
+    const legacy = mapHistoryMessage({
+      id: "1",
+      role: "ASSISTANT",
+      subType: "text",
+      content: "旧答",
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(legacy.variantId).toBeUndefined()
+    expect(legacy.replyToId).toBeUndefined()
+  })
+
   it("role/subType 映射表", () => {
     const base = { id: "1", isSummary: false, createdTime: "2026-11-08 10:00:00" }
     expect(mapHistoryMessage({ ...base, role: "USER", subType: "", content: "问" }).type).toBe("user")
