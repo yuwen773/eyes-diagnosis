@@ -4,6 +4,7 @@ import { ExternalLink, FileText, ImageOff, LocateFixed, X } from "lucide-react"
 import {
   evidenceKeyOf,
   isAutoLoadableImage,
+  roundsOf,
   type AgentResource,
   type AgentResources,
 } from "@/lib/agentResources"
@@ -46,13 +47,15 @@ export function ResourcePanel({
   const rounds = useMemo(() => {
     const set = new Set<number>()
     for (const list of [resources.images, resources.documents, resources.links]) {
-      for (const item of list) if (item.round) set.add(item.round)
+      for (const item of list) for (const value of roundsOf(item)) set.add(value)
     }
     return [...set].sort((a, b) => b - a)
   }, [resources])
 
+  // 按「所有检索到过的回合」筛，而不是只看首次出现：同一片段在后面的回合
+  // 又被检索到时，它也是本轮来源，不能因为首次出现更早就被筛掉。
   const filter = (list: AgentResource[]) =>
-    round === "all" ? list : list.filter((item) => item.round === round)
+    round === "all" ? list : list.filter((item) => roundsOf(item).includes(round))
 
   const images = filter(resources.images)
   const documents = filter(resources.documents)

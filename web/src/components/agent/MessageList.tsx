@@ -198,7 +198,7 @@ export function MessageList({
   // token 都换新，跟引用算等于让每条历史行的 citations prop 每片换引用，
   // memo 全线失效。键与回合都不变时，直接复用上一次的结果。
   const citationSignature = (resources?.documents ?? [])
-    .map((doc) => `${doc.id}#${(doc.rounds ?? (doc.round ? [doc.round] : [])).join(",")}`)
+    .map((doc) => `${doc.id}#${(doc.rounds ?? (doc.round ? [doc.round] : [])).join(",")}|${doc.title}`)
     .join("|")
   const citationsByRound = useMemo(
     () => citationKeysByRound(resources ?? EMPTY_RESOURCES),

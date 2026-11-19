@@ -53,6 +53,32 @@ describe("ResourcePanel", () => {
     expect(container.textContent).toContain("影像 1 · 来源 1 · 链接 1")
   })
 
+  it("回合筛选按「所有检索到过的回合」算：后续回合重检到的片段也在", () => {
+    const { container } = panel({
+      ...EMPTY,
+      documents: [
+        {
+          id: "doc:42#0",
+          kind: "document",
+          title: "干眼共识",
+          source: "knowledge-base",
+          documentId: "42",
+          chunkIndex: 0,
+          round: 1,
+          rounds: [1, 3],
+        },
+      ],
+    })
+    fireEvent.click(container.querySelectorAll('[role="tab"]')[1])
+    const select = container.querySelector("#agent-resource-round") as HTMLSelectElement
+    expect([...select.options].map((option) => option.value)).toEqual(["all", "3", "1"])
+
+    fireEvent.change(select, { target: { value: "3" } })
+    expect(container.textContent).toContain("干眼共识")
+    fireEvent.change(select, { target: { value: "2" } })
+    expect(container.textContent).not.toContain("干眼共识")
+  })
+
   it("知识来源卡片展示真实相关度与片段，并标注来自检索结果", () => {
     const { container } = panel({
       ...EMPTY,
