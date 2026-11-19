@@ -117,6 +117,9 @@ public class DocumentProcessingService {
                 chunkMetadata.put("ownerUserId", knowledgeDocument.getUserId());
                 chunkMetadata.put("documentId", docId);
                 chunkMetadata.put("indexVersion", version);
+                // 片段序号显式落元数据：正文引用的证据键是 documentId#chunkIndex，
+                // 检索侧不必再从 id 字符串反解（id 解析只作为旧数据的兜底）。
+                chunkMetadata.put("chunkIndex", i);
                 // Re-stamp on every rebuilt chunk so no chunk can miss the marker.
                 chunkMetadata.put(SourceTypePolicy.METADATA_KEY,
                         SourceTypePolicy.SourceType.USER_UPLOAD.wire());

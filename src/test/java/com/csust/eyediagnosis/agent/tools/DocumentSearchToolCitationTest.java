@@ -207,6 +207,76 @@ class DocumentSearchToolCitationTest {
                 .build();
     }
 
+    /** 片段级证据：序号从元数据读；同一文档两段各占一条资源。 */
+    @Test
+    void citationKeepsChunkIdentitySoTwoChunksOfOneDocumentStayDistinct() {
+        Document first = Document.builder()
+                .id("doc_101_v1_chunk_0")
+                .text("第一段。" )
+                .metadata(Map.of("docId", "101", "title", "共识", "chunkIndex", 0))
+                .score(0.9)
+                .build();
+        Document second = Document.builder()
+                .id("doc_101_v1_chunk_4")
+                .text("第四段。")
+                .metadata(Map.of("docId", "101", "title", "共识", "chunkIndex", 4))
+                .score(0.8)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(first, second)));
+
+        String output = tool.searchDocuments("干眼", 42L);
+
+        List<ResourceRef> refs = ToolResourceContext.drain();
+        assertEquals(2, refs.size(), "同一文档的两段是两条证据，不能按文档去重");
+        assertEquals(List.of("doc:101#0", "doc:101#4"), refs.stream().map(ResourceRef::id).toList());
+        assertEquals(List.of(0, 4), refs.stream().map(ResourceRef::chunkIndex).toList());
+        assertEquals("doc_101_v1_chunk_0", refs.get(0).chunkId());
+        assertEquals("101#0", refs.get(0).evidenceKey());
+        assertTrue(output.contains("(证据: 101#0)"), "交给模型的文本要带可引用句柄");
+        assertTrue(output.contains("(证据: 101#4)"));
+    }
+
+    /** 已入索引的旧数据没有 chunkIndex 元数据：从稳定分块 id 末尾解析，不要求重灌。 */
+    @Test
+    void chunkIndexIsParsedFromStableChunkIdWhenMetadataIsMissing() {
+        Document builtin = Document.builder()
+                .id("builtin_dry-eye_chunk_7")
+                .text("内置语料片段。")
+                .metadata(Map.of("docId", "builtin:dry-eye", "title", "内置"))
+                .score(0.9)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(builtin)));
+
+        tool.searchDocuments("干眼", 42L);
+
+        List<ResourceRef> refs = ToolResourceContext.drain();
+        assertEquals(1, refs.size());
+        assertEquals(7, refs.get(0).chunkIndex());
+        assertEquals("builtin:dry-eye#7", refs.get(0).evidenceKey());
+    }
+
+    /** 既没有元数据、id 也不以序号结尾：不给片段粒度，不猜序号。 */
+    @Test
+    void chunkIndexStaysNullWhenNeitherMetadataNorIdCarriesIt() {
+        Document legacy = Document.builder()
+                .id("legacy-chunk")
+                .text("旧格式片段。")
+                .metadata(Map.of("docId", "101", "title", "旧"))
+                .score(0.9)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(legacy)));
+
+        tool.searchDocuments("干眼", 42L);
+
+        ResourceRef ref = ToolResourceContext.drain().get(0);
+        assertNull(ref.chunkIndex());
+        assertEquals("doc:101", ref.id(), "拿不到序号时退回文档级 id");
+        assertNull(ref.evidenceKey(), "没有序号就不是可核验证据");
+    }
+
     private static DocumentWithScore scored(Document document, double score) {
         return DocumentWithScore.builder().withDocument(document).withScore(score).build();
     }
