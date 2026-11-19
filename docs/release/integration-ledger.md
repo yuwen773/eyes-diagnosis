@@ -199,7 +199,7 @@ Codex 的原始结论（`D:\Work\code\iris-codex-audit-7dc3422b\docs\release\cod
 | 项 | 值 |
 |---|---|
 | 复验对象（代码） | `03b14efd8f9bcc8d6326a104396d8b68a30d5e8b` |
-| 复验对象（当前 head） | `0c3856c8`（只改 `docs/**`；`git diff 03b14efd 0c3856c8 -- src web scripts pom.xml` 为空） |
+| 复验对象（当前 head） | 以 PR #119 的 head 为准（2026-11-19 为 `eb21acc7`）：`03b14efd` + 1 个**测试夹具**提交 `534108b0`（见 §10），其余只改 `docs/**`；`git diff 03b14efd HEAD -- src/main` 为空 |
 | 候选 PR | #119（**仍为 Draft**） |
 | 逐条台账 | `docs/release/codex-no-go-remediation.md`（每条含根因 / 改动 / 提交 / 回归用例） |
 | 逐 SHA 证据 | `docs/release/verification-matrix.md` §2.6（工程门禁）、§2.7（G-3 外部集成） |
@@ -274,6 +274,7 @@ CLAIM-NULL lease hostUtc=2026-11-19T06:40:25.317Z
 | 修复后单独复跑该方法 | 8 次尝试（64 个场景）**8/8 全绿** |
 | 全量 `scripts/verify.sh`（`534108b0`） | ✅ `verify green`：pass1 `751/0/0`（303 skip 按设计）、pass2 `9/0`、pass3 `303/0` |
 | CI（run 44476142935，`534108b0`） | ✅ **21/21**。首次跑次 `backend-unit` 因 Maven Central 解析不到 `surefire-junit-platform:3.5.4` 失败（无断言失败），`gh run rerun --failed` 后全绿；未改代码、未放宽门禁 |
+| CI（run 44477715234，文档 head `eb21acc7`） | ✅ **21/21**。同样先撞 `surefire-junit-platform:3.5.4` 解析失败（`product-contract` / `issue22-mysql`，无断言失败），重跑后全绿；同一时刻该构件在 Central 返回 200 |
 
 ### 10.5 残余风险（如实记录）
 
