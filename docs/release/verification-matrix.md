@@ -9,7 +9,7 @@
 |---|---|
 | 分支 | `integration/iris-release-candidate` |
 | 基线 | `origin/ui@1ff9c71c` |
-| 当前 HEAD | `dfca3801`（仅 `docs/**`；**代码树 = `03b14efd`**，逐字节相同，已推送；Draft PR #119） |
+| 当前 HEAD | `534108b0` 起的代码树（`03b14efd` + 1 个测试夹具修复；Draft PR #119） |
 
 ## 2. 已完成的验证（按 SHA）
 
@@ -178,6 +178,26 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 - Redis `:6380` 只删除本轮产生的 12 个会话键，其余 5 个（属其他工作树）未动。
 - 临时配置目录（含真实 API key）、启动日志、临时脚本全部删除；仓库 `git status` 干净，仓库内无凭据。
 
+### 2.8 `534108b0` · 不稳定用例治理（pass 3 的唯一失败项已定位并修复）
+
+上一轮全量跑次在 pass 3 上失败过一次：`GraphExecutionTest#processDeathRestoresOnlyCommittedNodesAndPreservesBudgets`
+（`[6] JOIN:EXHAUSTED_BUDGET`，`done()` 有界等待未见终态）。本轮按 §7.3 定位并修复，
+根因、探针读数与取舍见 `integration-ledger.md` §10。
+
+| 门禁（同一棵树 `534108b0`） | 结果 |
+|---|---|
+| 修复前：一次性 MySQL 8.0.26 + Redis 上单独复跑该方法 | 8 次尝试 **4 次失败** |
+| 修复后：同样的单独复跑 | 8 次尝试（64 个场景）**8/8 全绿** |
+| pass 1/3 完整 `mvn test` | ✅ `Tests run: 751, Failures: 0, Errors: 0, Skipped: 303`（skip 为按设计的环境门控） |
+| pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC） | ✅ 9 项，0 失败 |
+| pass 3/3 隔离库协作套件 | ✅ **303 项，0 失败** |
+| CI（run 44476142935） | ✅ **21/21**（`backend-unit` 首跑因 Maven Central 解析不到 `surefire-junit-platform:3.5.4` 失败，重跑后全绿；无断言失败） |
+| 收尾 | ✅ `verify green`，容器自动清理 |
+
+修复只动测试夹具（`GraphExecutionTest.RecoveryWorker` 领取前用**数据库时钟**有界等待租约
+真正过期），**没有放宽任何断言超时**：`done()` 仍 10s、`await(...)` 仍 10s、场景断言逐条未改；
+生产侧 `PatientDraftCoordinator` 零改动。
+
 ## 3. 未执行 / 未完成的门禁
 
 | 门禁 | 状态 | 原因 |
@@ -196,3 +216,5 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 - **真实外部集成通过 ≠ 真实临床能力通过**：2.7 证明的是工程链路在真实提供方下行为正确，
   不构成任何疗效或安全性结论；视觉工具成功路径与真实对象存储仍未验证。
 - 医疗边界保持默认关闭：医生正式复核写入门禁、多 Agent 生产开关均未改动。
+- 2.8 的代码树 = `03b14efd` + 1 个**测试夹具**提交（`534108b0`），生产代码相对
+  `03b14efd` 仍逐字节相同：`git diff 03b14efd 534108b0 -- src/main` 为空。

@@ -52,7 +52,12 @@
 | Flyway 回滚方向实测 | ✅ 5/5（含「升级后旧 jar 可启动」「history 含无法解析版本则拒绝启动」） |
 | **真实外部集成 G-3**（真 DashScope → SSE 全链路） | ✅ 5 个场景：流式问答 / 真工具成功 + 真 RAG 命中（score 0.809）/ 真工具失败（四出口一致 `failed`）/ SSE 断流后终态仍落库 / 用户文本伪装信封不被当作附件 |
 
-逐 SHA 明细见 `verification-matrix.md` §2.6（G-3 见 §2.7）。
+**增量（`534108b0`，仅测试夹具）**：pass 3 曾出现的 `processDeathRestoresOnlyCommittedNodesAndPreservesBudgets`
+失败已定位为 Docker Desktop VM 时钟回拨导致的夹具前提失效（协调器行为正确），修复后
+本地 `verify green`（pass3 `303/0`），单独复跑 8/8 全绿。见 `verification-matrix.md` §2.8、
+`integration-ledger.md` §10。**生产代码相对 `03b14efd` 未改动**（`git diff 03b14efd 534108b0 -- src/main` 为空）。
+
+逐 SHA 明细见 `verification-matrix.md` §2.6（G-3 见 §2.7，不稳定用例治理见 §2.8）。
 
 ## 4. 仍未关闭的门禁
 
@@ -78,6 +83,7 @@
 - 终态：**`CONDITIONAL`**
 - 判定时间：2026-11-19（+08:00）
 - 代码 SHA：`03b14efd8f9bcc8d6326a104396d8b68a30d5e8b`
+  （其后 1 个**测试夹具**提交 `534108b0`；`src/main` 相对 `03b14efd` 逐字节相同）
 - 结论：Codex 提出的 2 P0 + 5 P1 全部整改，且每条都有走真实执行路径的回归用例；
   本地全量与 CI 21/21 通过；真实后端的鉴权、跨用户隔离、迁移与失败出口已验证；
   **真实外部集成（G-3）已在真实 DashScope 下跑完 5 个场景**（流式问答 / 真工具成功且真 RAG 命中 /

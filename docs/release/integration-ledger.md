@@ -217,3 +217,68 @@ Codex 的原始结论（`D:\Work\code\iris-codex-audit-7dc3422b\docs\release\cod
 - `bash scripts/tests/worktree-hygiene-failclosed.sh`（P0-02）
 - 真实外部链路（G3-1…G3-5）：环境参数见 `verification-matrix.md` §2.7；凭据走环境变量，
   仓库外临时配置目录注入，跑完须清理临时 schema / Chroma 分块 / 会话键 / 临时目录
+
+## 10. 不稳定测试治理：`processDeathRestoresOnlyCommittedNodesAndPreservesBudgets`（2026-11-19）
+
+上一轮本地全量 `scripts/verify.sh` 的 pass 3 在这条参数化用例上失败过一次
+（`done:151->await:157 Bounded condition did not become true`，即恢复后始终未到终态）。
+本轮按 §7.3 的要求先定位、再按「同一轮内量基线」的方式修，没有调大任何断言超时。
+
+### 10.1 复现
+
+一次性 MySQL 8.0.26（`:33309`）+ Redis（`:36381`）+ 隔离 schema `graph_execution_test`，
+单独复跑该方法：**8 次尝试中 4 次失败**，失败点固定在第 6 个场景
+`JOIN:EXHAUSTED_BUDGET`，症状与全量跑一致（`done()` 10s 内未观测到终态）。
+
+### 10.2 根因（有实测读数，不是推断）
+
+在 `PatientDraftCoordinator.claim()` 的各条 `return null` 分支加临时探针后抓到：
+
+```
+CLAIM-NULL lease hostUtc=2026-11-19T06:40:25.317Z
+  dbNow=2026-11-19 06:40:22.024757
+  leaseUntil=2026-11-19T06:40:22.391446   fencingToken=1
+```
+
+- 夹具在拉起恢复子进程前写 `leaseUntil=TIMESTAMPADD(SECOND,-1,NOW(6))`，**按夹具自己的
+  算术**这条租约已过期 1 秒。
+- 但子进程读到的数据库时钟是 `06:40:22.02`，而 `leaseUntil=06:40:22.39` ——
+  **按数据库时钟租约仍然有效 0.37 秒**。`takeLease` 遂返回 null，`claim()` 按设计不领取，
+  恢复没有发生；`done()` 的 10 秒有界等待到点失败。
+- 同一轮内量到的宿主机↔数据库偏移：本场景第一个子进程 `host−db = 0.77s`，两秒后第二个
+  子进程变成 `3.30s` —— 宿主机时钟没有回拨，是 **MySQL 容器（Docker Desktop / WSL2 VM）
+  的时钟在这 2 秒内向后步进了约 2.5 秒**。相邻场景的偏移在 0.77–3.30s 之间漂移，
+  说明这台机器上 VM 时钟被时间同步反复步进，而不是一次性偏差。
+
+**结论**：协调器行为正确（租约只认数据库时钟，这正是它防客户端时钟偏移的设计），
+缺陷在测试夹具的前提——它假定「父进程写进去的过期时间在同一轮内一直成立」。
+
+### 10.3 修复
+
+`GraphExecutionTest.RecoveryWorker` 在领取前，用**与协调器相同的权威**
+（`SELECT leaseUntil>CURRENT_TIMESTAMP(6)`）有界等待租约真正过期（上限 8s），再调用
+`coordinator.run()`。
+
+- 没有放宽任何断言：`done()` 仍是 10s，`await(...)` 仍是 10s，场景断言逐条未改。
+- 有界：若时钟步进超过上限（或租约确实仍被持有），测试照样失败，只是失败原因变得可读。
+- 语义未削弱：等待期间没有任何模型调用、没有任何状态写入；恢复仍是「一次领取」，
+  不是靠重试堆出来的通过。生产侧的对应事实是 `CollaborationRunService.recoverPending()`
+  每 250ms 扫一次，时钟步进只会让恢复晚几百毫秒，不会丢恢复，也不会造成二次提交
+  （`fencingToken` + `checkLease` 挡住陈旧执行者）。
+
+### 10.4 验证
+
+| 项 | 结果 |
+|---|---|
+| 修复前单独复跑该方法 | 8 次尝试 **4 次失败** |
+| 修复后单独复跑该方法 | 8 次尝试（64 个场景）**8/8 全绿** |
+| 全量 `scripts/verify.sh`（`534108b0`） | ✅ `verify green`：pass1 `751/0/0`（303 skip 按设计）、pass2 `9/0`、pass3 `303/0` |
+| CI（run 44476142935，`534108b0`） | ✅ **21/21**。首次跑次 `backend-unit` 因 Maven Central 解析不到 `surefire-junit-platform:3.5.4` 失败（无断言失败），`gh run rerun --failed` 后全绿；未改代码、未放宽门禁 |
+
+### 10.5 残余风险（如实记录）
+
+- 租约本身仍是**壁钟**语义。数据库时钟若向后步进超过租约时长（10s），恢复会被推迟
+  相应时长；向后步进不会造成重复提交，向前步进由 fencing token 兜住。
+- `JOIN:DEADLINE` 场景里 `deadlineAt` 由数据库时钟写入、由 JVM 的 `clock.instant()` 比较；
+  本机数据库时钟**落后**宿主 1–3 秒，只会让「已过期」判定更早成立，故本轮未观察到它抖动。
+  若将来出现数据库时钟**领先**宿主的机器，这条用例需要按同一方法处理。
