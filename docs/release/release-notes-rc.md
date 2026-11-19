@@ -91,6 +91,9 @@ Spring AI Alibaba 1.1.2.2 的 `AgentToolNode#executeSyncTool` 对 `ToolExecution
    `verification-matrix.md` 与 `release-candidate-readiness.md` 为准，不在此处重复声明。
 3. **`frontend/`（Vue）已弃用**：本版本不含 Vue 前端任何变更，也不作为设计参考。
 4. **冻结范围内不做视觉迭代**：首页/品牌层、管理端、知识库、新闻工作台保持冻结基线外观。
+5. **老会话的图片附件不再自动渲染**：修复「普通文本可被误认作受信附件」后，历史解析只认
+   带服务端标记（`iris.user-message.v1`）的信封；修复前写入的老信封会按纯文本原样显示，
+   正文不丢、图片不自动加载。见 `codex-no-go-remediation.md` §5。
 
 ## 5. 升级注意
 
