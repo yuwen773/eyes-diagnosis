@@ -9,7 +9,7 @@
 |---|---|
 | 分支 | `integration/iris-release-candidate` |
 | 基线 | `origin/ui@1ff9c71c` |
-| 当前 HEAD | `dcf68d0f`（代码 + 文档，均已推送） |
+| 当前 HEAD | `6ff5a889`（代码 + 文档，已推送；Draft PR #119） |
 
 ## 2. 已完成的验证（按 SHA）
 
@@ -58,31 +58,51 @@
 | pass 2/3 MySQL 集成门禁 | ✅ 绿 |
 | pass 3/3 隔离库协作套件 | ⚠️ **未完成**：运行中被系统因内存不足终止（宿主仅剩 0.5 GB），不是测试失败 |
 
-### 2.5 `dcf68d0f`（当前 HEAD，评审整改第二批）
+### 2.5 `6ff5a889`（当前 HEAD）
+
+**本地全量 `scripts/verify.sh`（三段）**
+
+| 门禁 | 结果 |
+|---|---|
+| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 719, Failures: 0, Errors: 0, Skipped: 303` |
+| pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC + 工具审计表） | ✅ `Tests run: 7, Failures: 0` |
+| pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0` |
+| 收尾 | ✅ `verify green`，容器自动清理 |
+
+> pass 1 的 303 个 skipped 是**按设计**：隔离库协作套件在 pass 3 用独立 schema 跑，
+> 两遍合起来覆盖 719 个用例，不是被跳过没跑。
+
+**GitHub Actions（PR #119 → `ui`，head `6ff5a889`，run 44442060009）**
+
+| 结果 | 明细 |
+|---|---|
+| ✅ **21/21 job 通过** | `docs-contract`、`python`、`watchdog`、`backend-compile`、`backend-unit`、`collaboration-mysql`、`graph-execution-mysql`、`flyway-mysql ×2`、`product-contract`、`frontend`、`web`、`web-e2e-system-states`、`issue17–24-mysql`、`issue24-evaluation` |
+
+这一次跑的就是合并树实际携带的门禁（不是 #101 自报的 8 个 job）：
+backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` 三段互为对照。
+
+**定向回归（整改面）**
 
 | 门禁 | 命令 | 结果 |
 |---|---|---|
-| Java 编译 / 测试编译 | `mvn -o -DskipTests test-compile` | ✅ |
-| **P0 端到端**（真 `@Tool` 抛异常 + 真 `ReactAgent`） | `-Dtest=AgentToolFailureEndToEndTest` | ✅ 2 项（失败终态 1、成功 0；对照组成功 1） |
+| P0 端到端（真 `@Tool` 抛异常 + 真 `ReactAgent`） | `-Dtest=AgentToolFailureEndToEndTest` | ✅ 2 项 |
 | Agent 定向单测 | `-Dtest='DiagnosisAgentToolEventTest,DiagnosisAgentRedactionTest,UserBoundEyeImageAnalyzerToolTest,AgentGuardrailWiringTest,ToolStepContractTest,ToolCallBudgetInterceptorTest,ToolStepConcurrencyTest'` | ✅ 28 项 |
-| Web 类型 / Lint / 构建 | `typecheck` / `lint` / `build` | ✅ |
 | Web 全量单测 | `vitest run --no-file-parallelism` | ✅ 93 文件 / 1009 项 |
-| 后端全量 `scripts/verify.sh` | — | ❌ **未在此 SHA 上执行**（见 §4） |
+| Web 类型 / Lint / 构建 | `typecheck` / `lint` / `build` | ✅（CI `web` job 在最终 SHA 上复跑通过） |
+| 时钟偏移用例 | `-Dtest='GraphExecutionTest#databaseLeaseSurvivesHostClockSkew'` 连跑 2 次 | ✅ 2/2 |
 
 ## 3. 未执行 / 未完成的门禁
 
 | 门禁 | 状态 | 原因 |
 |---|---|---|
-| 后端全量 `scripts/verify.sh`（三段） | ❌ 未在当前 HEAD 执行 | 上一轮被系统因内存不足终止；宿主机空闲内存 ~1.8 GB，低于该脚本同时拉起 MySQL 容器 + Maven + Surefire 的峰值 |
-| GitHub Actions（20 个 job） | ❌ 未执行 | `verify.yml` 只在 `pull_request` 与 push `master` 触发；候选分支已推送但未开 PR |
-| 真实后端链路（SSE 全链路 / 工具失败 / 跨用户隔离） | ❌ 未执行 | 需要真实 DashScope 凭据；本轮只做到「未登录被拒绝」级别的静态核实 |
-| Playwright `web-e2e-system-states`（14 条） | ❌ 未执行 | 本机缺 Playwright chromium-1254，安装被中止 |
-| 双主题 / 响应式回归截图 | ❌ 未执行 | 需浏览器证据 |
-| Python / 算法侧 | —（不适用） | `algorithm/`、`frontend/` 相对基线零改动 |
+| 真实后端链路（真 DashScope → SSE 全链路） | ❌ 未执行 | 需要真实凭据；本地无可用 key |
+| 双主题 / 响应式回归截图 | ❌ 未执行 | 需浏览器截图证据（仅 R2 14 条断言式门禁已跑） |
+| Python / 算法侧 | —（不适用） | `algorithm/`、`frontend/` 相对基线零改动（CI `python` job 仍跑过） |
 
 ## 4. 口径说明
 
 - 合成单测通过 **不等于** 真实临床能力通过。
-- 2.4 / 2.5 的定向用例只覆盖**改动面**，不能替代全量回归；全量结果仍以
-  `93bb07d3` 与 `3c1fdf19` 的 pass 1/2 为准，**但这两个 SHA 不是当前 HEAD**。
+- 2.4 的定向用例只覆盖**改动面**，不能替代全量回归。
+- 2.5 已是当前 HEAD 的**全量**结果（本地 `verify.sh` 三段 + CI 21/21），
+  不再拿其他 SHA 的跑次顶替，也不用旧 SHA 的结果证明新 HEAD。
 - 医疗边界保持默认关闭：医生正式复核写入门禁、多 Agent 生产开关均未改动。

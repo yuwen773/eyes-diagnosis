@@ -119,6 +119,9 @@
 | O-3 | 真实后端链路（SSE / 工具失败 / 权限隔离） | 门禁 | ❌ 未执行（需 DashScope 凭据） |
 | O-4 | 四路独立 Review（A/B/C/D） | 门禁 | ✅ 已完成，结论与整改见 §6 |
 | O-5 | 发布说明、升级/回滚手册 | 交付物 | ✅ 已入库 |
+| O-6 | GitHub Actions（候选 SHA 对应的全部 job） | 门禁 | ✅ PR #119 head `6ff5a889` **21/21 成功**（run 44442060009） |
+| O-7 | Playwright `web-e2e-system-states`（R2 14 条） | 门禁 | ✅ 由 CI job 跑过（本机缺 chromium） |
+| O-8 | 双主题 / 响应式回归截图 | 门禁 | ❌ 未执行（需浏览器截图证据） |
 
 ## 5. 边界
 
@@ -136,8 +139,9 @@
 | A | Agent / Java | PASS_WITH_P2 | P0 修复三层独立核实成立（拦截链顺序、`alwaysThrow` 真抛、逃逸后会话继续）；无第二套状态机；预算 per-run | P2-1 幽灵步骤、P2-3 老库 TEXT 字节上限、P2-4 P0 缺端到端证据 → 均已修；P2-2/P2-5 登记为债务 |
 | B | React / UI | PASS_WITH_P2 | 无 P0/P1；P1 修复的四个边界（停止 / 断流 / 刷新 / 乱序）成立 | P2：`running` 帧走 `tool-result` 通道被标成「已返回空结果」 → 已修 |
 | C | 安全与医学 | BLOCKED → 已修 | P1-1 影像分析失败被包装成成功结果；P1-2 图片 URL 先落库后校验 | 两条均已修并有回归；P2-1 日志出口一处脱敏缺口已随 P1-1 修（不再打印模型原文） |
-| D | QA / 发版 | BLOCKED → 部分关闭 | 候选 SHA 未跑 CI、文档 SHA 过期、交付物未入库、`verify.sh` 结果绑定旧 SHA | 交付物已入库；文档已更正；CI 仍是外部门禁（见 `release-candidate-readiness.md`） |
+| D | QA / 发版 | BLOCKED → 部分关闭 | 候选 SHA 未跑 CI、文档 SHA 过期、交付物未入库、`verify.sh` 结果绑定旧 SHA | 交付物已入库；文档已更正；CI 已在 `6ff5a889` 上 21/21 绿；剩余为 G-3/G-5 外部门禁（见 `release-candidate-readiness.md`） |
 
 **评审纪律说明**：Reviewer C/D 给的是 BLOCKED，不是「形式不通过」——
-C 的两条是真实的医学语义与安全问题，已修；D 的阻断里只有「CI 未跑」无法在本地消除，
+C 的两条是真实的医学语义与安全问题，已修；D 的阻断里「CI 未跑」当时无法在本地消除，后续已通过开 PR 关闭，
 其余（文档不一致、交付物未入库、结果绑定旧 SHA）已全部关闭。
+后续：CI 已在 `6ff5a889` 上跑完 21/21 全绿，D 的“CI 未跑”一项也已关闭。
