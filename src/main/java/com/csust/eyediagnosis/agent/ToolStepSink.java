@@ -6,10 +6,11 @@ import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
 import com.csust.eyediagnosis.utils.TimeFormats;
 import reactor.core.publisher.Sinks;
 
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -25,6 +26,12 @@ import java.util.function.Consumer;
  * <p>This class owns the pending set so cancellation is race-safe even if the
  * SSE subscriber cancels before the interceptor thread finishes. Only calls that
  * never received a real terminal result are marked CANCELLED.
+ *
+ * <p><b>锁的边界</b>：状态（pending / started / closed）用 {@code this} 监视器保护，
+ * 只在极短的临界区内修改；<b>落库与下发不在状态监视器内</b>——落库是一次数据库往返，
+ * 拿它去持锁会把「数据库慢」放大成「整个 sink 卡死」。
+ * 落库与下发的顺序由单独的 {@code emissionLock} 保证：先提交、再下发，且不会有帧
+ * 排在 complete 之后。
  */
 public final class ToolStepSink {
 
@@ -39,11 +46,18 @@ public final class ToolStepSink {
     private final Consumer<MessageDTO> persist;
     private final String sessionId;
     private final Long userId;
-    // One monitor owns transitions, audit order and sink emissions together.
+    // 状态（pending / started / closed）由 this 监视器保护，临界区极短。
     private final Map<String, String> pending = new HashMap<>();
     private final Set<String> started = new HashSet<>();
     private boolean closed;
-    private boolean deliveryCancelled;
+    /** 传输已取消（订阅者走了）：此后只保留审计，不再往下游发帧。 */
+    private volatile boolean deliveryCancelled;
+    /** 落库失败：终态没进历史，客户端必须看见流错误。 */
+    private volatile boolean persistenceFailed;
+    /** 流已结束（complete 之后）：不再有帧发得出去。 */
+    private volatile boolean fluxTerminated;
+    /** 帧的顺序与「不得排在 complete 之后」由它保证。 */
+    private final Object emissionLock = new Object();
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ToolStepSink.class);
 
     public ToolStepSink(String sessionId, Long userId, Consumer<ToolAuditRecord> audit) {
@@ -60,15 +74,22 @@ public final class ToolStepSink {
 
     public Sinks.Many<MessageDTO> events() { return events; }
 
+    /** 终态落库失败过（诊断用：流会以错误结束，历史里会标出未提交）。 */
+    public boolean persistenceFailed() { return persistenceFailed; }
+
     /** Emit RUNNING for exactly one tool call. id is the graph's tool-call id. */
-    public synchronized void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
-        if (closed || !started.add(toolCallId)) return;
-        pending.put(toolCallId, toolName);
-        if (audit != null) {
-            audit.accept(ToolAuditRecord.start(sessionId, userId, toolCallId, toolName)
-                    .withDigest(argsDigest, argsKeyNames));
+    public void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
+        ToolAuditRecord record = null;
+        synchronized (this) {
+            if (closed || !started.add(toolCallId)) return;
+            pending.put(toolCallId, toolName);
+            if (audit != null) {
+                record = ToolAuditRecord.start(sessionId, userId, toolCallId, toolName)
+                        .withDigest(argsDigest, argsKeyNames);
+            }
         }
-        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null);
+        if (record != null) audit.accept(record);
+        emit(toolCallId, toolName, ToolStepContract.Status.RUNNING, null, null, null, null);
     }
 
     /**
@@ -78,26 +99,32 @@ public final class ToolStepSink {
      * 前端据此展示工具输出，不需要第二条「tool-response」通道。
      * {@code resources} 只来自成功调用——失败/超时/中断的调用不带走任何证据。
      */
-    public synchronized void finished(String toolCallId, String toolName, boolean success,
+    public void finished(String toolCallId, String toolName, boolean success,
                          ToolStepContract.ErrorCategory errorCategory,
                          List<ResourceRef> resources, String content) {
-        if (closed || !pending.containsKey(toolCallId)) return;
-        toolName = pending.remove(toolCallId);
-        ToolStepContract.Status status = success
-                ? ToolStepContract.Status.SUCCEEDED : ToolStepContract.Status.FAILED;
-        ToolStepContract.FinishReason reason = success
-                ? ToolStepContract.FinishReason.SUCCESS : ToolStepContract.FinishReason.TOOL_ERROR;
-        if (audit != null) {
-            audit.accept(ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
-                    status, errorCategory));
+        ToolStepContract.Status status;
+        ToolStepContract.FinishReason reason;
+        ToolAuditRecord record = null;
+        synchronized (this) {
+            if (closed || !pending.containsKey(toolCallId)) return;
+            toolName = pending.remove(toolCallId);
+            status = success
+                    ? ToolStepContract.Status.SUCCEEDED : ToolStepContract.Status.FAILED;
+            reason = success
+                    ? ToolStepContract.FinishReason.SUCCESS : ToolStepContract.FinishReason.TOOL_ERROR;
+            if (audit != null) {
+                record = ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
+                        status, errorCategory);
+            }
         }
+        if (record != null) audit.accept(record);
         emit(toolCallId, toolName, status, reason, errorCategory,
                 success ? resources : null,
                 success ? content : null);
     }
 
     /** 旧签名：只关心成败、不需要正文与资源的调用方使用。 */
-    public synchronized void finished(String toolCallId, String toolName, boolean success,
+    public void finished(String toolCallId, String toolName, boolean success,
                          ToolStepContract.ErrorCategory errorCategory) {
         finished(toolCallId, toolName, success, errorCategory, null, null);
     }
@@ -107,14 +134,24 @@ public final class ToolStepSink {
      * Marks every call that never received a real result CANCELLED, never SUCCEEDED,
      * then closes the status flux so {@code Flux.merge} can terminate.
      */
-    public synchronized void closePending() {
-        if (closed) return;
-        closed = true;
-        for (Map.Entry<String, String> entry : pending.entrySet()) {
+    public void closePending() {
+        List<Map.Entry<String, String>> waiting;
+        synchronized (this) {
+            if (closed) return;
+            closed = true;
+            waiting = new ArrayList<>(pending.entrySet());
+            pending.clear();
+        }
+        for (Map.Entry<String, String> entry : waiting) {
             cancelled(entry.getKey(), entry.getValue());
         }
-        pending.clear();
-        if (!deliveryCancelled) checkEmission(events.tryEmitComplete());
+        synchronized (emissionLock) {
+            // 流已经以错误结束（终态落库失败）时不能再 complete：那会得到
+            // FAIL_TERMINATED 并把异常抛回调用方。
+            if (fluxTerminated) return;
+            fluxTerminated = true;
+            if (!deliveryCancelled) checkEmission(events.tryEmitComplete());
+        }
     }
 
     private void cancelled(String toolCallId, String toolName) {
@@ -123,14 +160,18 @@ public final class ToolStepSink {
                     ToolStepContract.Status.CANCELLED, ToolStepContract.ErrorCategory.CANCELLED));
         }
         emit(toolCallId, toolName, ToolStepContract.Status.CANCELLED,
-                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED);
+                ToolStepContract.FinishReason.STREAM_CLOSED, ToolStepContract.ErrorCategory.CANCELLED,
+                null, null);
     }
 
-    private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
-                      ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory) {
-        emit(toolCallId, toolName, status, reason, errorCategory, null, null);
-    }
-
+    /**
+     * 先落库、再下发。
+     *
+     * <p>落库在锁外：它是一次数据库往返，锁内等它会把「数据库慢」放大成
+     * 「整个 sink 卡死」——关闭流、后续状态转移都会被拖住。落库本身有界
+     * （会话队列的等待上限），失败会变成流错误，不会静默丢帧。
+     * 下发在 {@code emissionLock} 内：保证帧序、且不会有帧排在 complete 之后。
+     */
     private void emit(String toolCallId, String toolName, ToolStepContract.Status status,
                       ToolStepContract.FinishReason reason, ToolStepContract.ErrorCategory errorCategory,
                       List<ResourceRef> resources, String content) {
@@ -156,15 +197,22 @@ public final class ToolStepSink {
                 // 原写任务由会话队列保留。没有提交反馈时不发送终态，客户端必须
                 // 看见流错误；重读历史会显式尝试恢复，不能静默返回陈旧状态。
                 log.warn("Tool terminal persistence failed, errorType={}", e.getClass().getSimpleName());
-                if (!deliveryCancelled) checkEmission(events.tryEmitError(
-                        new IllegalStateException("Tool terminal history could not be committed")));
-                deliveryCancelled = true;
+                persistenceFailed = true;
+                synchronized (emissionLock) {
+                    if (!deliveryCancelled) checkEmission(events.tryEmitError(
+                            new IllegalStateException("Tool terminal history could not be committed")));
+                    // 流以错误结束，不再有帧发得出去。deliveryCancelled 只表示
+                    // 「订阅者走了」，这两件事不能混成一个开关。
+                    fluxTerminated = true;
+                }
                 return;
             }
         }
 
-        if (deliveryCancelled) return;
-        checkEmission(events.tryEmitNext(dto));
+        synchronized (emissionLock) {
+            if (deliveryCancelled || fluxTerminated) return;
+            checkEmission(events.tryEmitNext(dto));
+        }
     }
 
     private void checkEmission(Sinks.EmitResult result) {
@@ -175,6 +223,8 @@ public final class ToolStepSink {
             log.debug("Tool status subscriber cancelled; subsequent transitions are audit-only");
             return;
         }
+        // 其余（含 FAIL_TERMINATED）都要报出来：流已经结束却还有帧要发，
+        // 说明有第二条路径在往同一条流里写——这是缺陷，不能安静地吞掉。
         result.orThrow();
     }
 
@@ -193,8 +243,8 @@ public final class ToolStepSink {
         }
         /** Attach the protected digest computed from normalized argument key names. */
         public ToolAuditRecord withDigest(String digest, String keys) {
-            return new ToolAuditRecord(sessionId, userId, toolCallId, toolName, status,
-                    errorCategory, atMillis, digest, keys);
+            return new ToolAuditRecord(sessionId, userId, toolCallId, toolName, status, errorCategory,
+                    atMillis, digest, keys);
         }
     }
 }

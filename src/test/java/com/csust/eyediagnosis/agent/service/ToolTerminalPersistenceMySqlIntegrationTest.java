@@ -84,8 +84,11 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
             assertNotNull(streamError.get(), "failed commit must reach SSE as an error");
             assertEquals(1, frames.size(), "only RUNNING, no uncommitted terminal frame");
             assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_agent_message", Integer.class));
-            assertThrows(RuntimeException.class, () -> history.loadHistory("failure", null, 100),
-                    "while recovery still fails, stale history must not be returned");
+            // 恢复失败时历史仍然要能读：读得到多少给多少，但必须**标出它不完整**，
+            // 不能把陈旧历史冒充完整历史，更不能让整个会话 500。
+            var incomplete = history.loadHistory("failure", null, 100);
+            assertTrue(incomplete.isUncommittedTerminal(), "recovery failed: history must be marked incomplete");
+            assertEquals(0, incomplete.getMessages().size());
             assertEquals("TIMEOUT", jdbc.queryForObject("SELECT errorCategory FROM t_agent_tool_audit "
                     + "WHERE sessionId='failure' AND toolStatus='failed'", String.class));
             jdbc.execute("DROP TRIGGER fail_terminal");
@@ -138,10 +141,44 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
             assertEquals(1, jdbc.queryForObject("SELECT messageCount FROM t_agent_session WHERE sessionId='ack-loss'", Integer.class));
             assertEquals(2, attempts.get(), "one initial attempt and one explicit read recovery");
 
+            verifyPoisonedSessionSurvives(history, writer, jdbc);
+
             verifyBudgetTurn(history, audit, writer, jdbc);
         } finally {
             queue.shutdown();
             admin.execute("DROP DATABASE `" + schema + "`");
+        }
+    }
+
+    /**
+     * 一个永久失败的写不能毒死整个会话。
+     *
+     * <p>真实路径：MySQL 触发器让 tool-result 插入必然失败 → 初次写失败 →
+     * 两次历史读取各触发一次恢复重试，三次失败后该写被淘汰并记账 →
+     * 之后的消息照常落库 → 历史读得到后来的消息，
+     * 并且**明确标出**有一条没提交成功。
+     */
+    private static void verifyPoisonedSessionSurvives(ChatHistoryService history, ChatMessageWriter writer,
+                                                       JdbcTemplate jdbc) {
+        writer.claimOrValidateSession("poisoned", 42L, "synthetic");
+        jdbc.execute("CREATE TRIGGER fail_poison BEFORE INSERT ON t_agent_message FOR EACH ROW "
+                + "BEGIN IF NEW.subType='tool-result' THEN SIGNAL SQLSTATE '45000' "
+                + "SET MESSAGE_TEXT='synthetic permanent failure'; END IF; END");
+        try {
+            assertThrows(RuntimeException.class,
+                    () -> history.saveToolResultMessage("poisoned", 42L, "{\"output\":\"poison\"}"),
+                    "a failing terminal write must surface to the caller");
+            // 两次读取各触发一次恢复重试：第三次失败后这个键被淘汰，不再堵队列。
+            history.loadHistory("poisoned", null, 100);
+            history.loadHistory("poisoned", null, 100);
+            // 之后的写照常落库：失败的那一条被淘汰，不再挡住后面的消息。
+            history.saveAssistantMessage("poisoned", 42L, "later message", "assistant");
+            var after = history.loadHistory("poisoned", null, 100);
+            assertTrue(after.getMessages().stream().anyMatch(message -> "later message".equals(message.getContent())),
+                    "a permanently failing write must not block later messages");
+            assertTrue(after.isUncommittedTerminal(), "the dropped write must be reported as uncommitted");
+        } finally {
+            jdbc.execute("DROP TRIGGER fail_poison");
         }
     }
 

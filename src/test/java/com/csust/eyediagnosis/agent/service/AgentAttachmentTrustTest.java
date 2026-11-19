@@ -70,6 +70,65 @@ class AgentAttachmentTrustTest {
     }
 
     @Test
+    void legacyRowRestoresReadableBodyOnlyWhenAnOwnedUploadProvesItWasAnEnvelope() {
+        owned();
+        AgentSession session = new AgentSession(); session.setUserId(7L);
+        when(sessions.selectBySessionId("s")).thenReturn(session);
+        String legacy = "{\"kind\":\"iris.user-message.v1\",\"text\":\"x\",\"images\":["
+                + "\"https://owned.invalid/agent-chat/7/a.png\",\"https://other.invalid/agent-chat/7/a.png\"]}";
+        row(legacy, null);
+        var message = history.loadHistory("s", null, 20).getMessages().get(0);
+        // 这一行确实带着当前用户拥有的一张上传 → 它确实是旧服务端写的附件信封：
+        // 正文按信封还原成能读懂的那句话，只有归属复核通过的那一张恢复成附件。
+        assertEquals("x", message.getContent());
+        assertEquals(List.of(VIEW), message.getImages());
+    }
+
+    @Test
+    void legacyRowWithoutOwnedUploadStaysRawAndGrantsNothing() {
+        // 正文形状不是凭证：复核不通过就整段按普通文本原样显示，
+        // 既不改写正文，也不补造附件。
+        AgentSession session = new AgentSession(); session.setUserId(7L);
+        when(sessions.selectBySessionId("s")).thenReturn(session);
+        String legacy = "{\"kind\":\"iris.user-message.v1\",\"text\":\"x\",\"images\":["
+                + "\"https://other.invalid/agent-chat/7/a.png\"]}";
+        row(legacy, null);
+        var message = history.loadHistory("s", null, 20).getMessages().get(0);
+        assertEquals(legacy, message.getContent());
+        assertNull(message.getImages());
+    }
+
+    @Test
+    void staleToolSourcesAreDroppedButTheOriginalOutputSurvives() {
+        var documents = mock(com.csust.eyediagnosis.agent.tools.DocumentSearchTool.class);
+        history.setDocumentSearchTool(documents);
+        AgentSession session = new AgentSession(); session.setUserId(7L);
+        when(sessions.selectBySessionId("s")).thenReturn(session);
+        when(documents.validateResourceRefs(anyList(), any())).thenReturn(List.of());
+        AgentMessage row = new AgentMessage();
+        row.setId(9L); row.setSessionId("s"); row.setRole("ASSISTANT"); row.setSubType("tool-result");
+        row.setContent("{\"output\":\"模型当时说的原文\",\"resources\":["
+                + "{\"id\":\"doc:1\",\"kind\":\"document\",\"source\":\"knowledge-base\",\"documentId\":\"1\"}]}");
+        when(messages.selectBySessionIdOrderByTimeASC("s", 20)).thenReturn(List.of(row));
+
+        var message = history.loadHistory("s", null, 20).getMessages().get(0);
+        // 证据链不能被抹掉：来源失效只淘汰来源，模型当时的原文必须留着。
+        assertTrue(message.getContent().contains("模型当时说的原文"));
+        assertFalse(message.getContent().contains("历史知识来源已失效"));
+        assertTrue(message.getContent().contains("sourcesExpired"));
+    }
+
+    @Test
+    void legacyPlainTextRowStaysPlainTextWithoutTouchingUploads() {
+        String plain = "普通提问 {\"images\":[]}";
+        row(plain, null);
+        var message = history.loadHistory("s", null, 20).getMessages().get(0);
+        assertEquals(plain, message.getContent());
+        assertNull(message.getImages());
+        verifyNoInteractions(uploads);
+    }
+
+    @Test
     void foreignUploadShapedUrlsAndMalformedViewPathsAreDenied() {
         owned();
         for (String url : List.of("https://other.invalid/agent-chat/7/a.png", "https://owned.invalid/agent-chat/8/a.png", VIEW + "?redirect=x", VIEW + "#x", "/api/agent/image/view/../a.png")) {
