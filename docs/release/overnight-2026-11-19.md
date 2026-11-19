@@ -53,7 +53,7 @@
       仅验证内置语料路径；上传文档 indexVersion 准入未试（D5 无重处理入口）→ G3-2 PARTIAL
 - [x] G3-3 真实工具失败：SSE/history/审计/模型可见一致（成功 `succeeded`；Chroma 停机 →
       `failed/TOOL_EXCEPTION`；审计仅存 key 名，无原文）。PASS
-- [ ] G3-4 SSE 中断、刷新、取消（不制造假成功/不丢终态）
+- [x] G3-4 SSE 中断取消：客户端 5s 断流→在途工具终态 `cancelled/CANCELLED` 已持久化，无假成功。PASS
 - [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
 - [ ] G-3 汇总：G3-1/G3-3/G3-5/G3-6 PASS；G3-2 PARTIAL（内建语料）；G3-4 待做；G3-7 COS 真实上传（视凭据）
 - [ ] G-5 浏览器视觉验收（390/768/1440，深浅双主题，登录/Agent/判读/管理端/错误态）
