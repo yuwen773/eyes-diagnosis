@@ -170,7 +170,7 @@ export function MessageList({
 
           {thread.map((item) =>
             item.type === "process" ? (
-              <ThoughtLine key={item.id} steps={item.steps} />
+              <ThoughtLine key={item.id} steps={item.steps} active={item.active} />
             ) : (
               <MessageRow
                 key={item.message.id}

@@ -36,6 +36,14 @@ export type AgentResource = {
   /** 知识库文档标识（来自检索结果）。 */
   documentId?: string
   indexVersion?: string
+  /** 向量库里这一段的稳定 id（服务端生成，不由模型生成）。 */
+  chunkId?: string
+  /**
+   * 这一段在文档内的序号（从 0 起）。
+   * 与 `documentId` 一起构成证据键：正文引用只认 `documentId#chunkIndex`，
+   * 没有片段序号的条目只能当文档级来源，不能当「这一句的依据」。
+   */
+  chunkIndex?: number
   /** 检索相关度——只有检索结果真的带分数时才有。 */
   score?: number
   /**
@@ -210,13 +218,22 @@ export function parseResourceRefs(raw: unknown): AgentResource[] {
         typeof obj.retrievalScore === "number" && Number.isFinite(obj.retrievalScore)
           ? obj.retrievalScore
           : undefined
+      const chunkIndex =
+        typeof obj.chunkIndex === "number" &&
+        Number.isInteger(obj.chunkIndex) &&
+        obj.chunkIndex >= 0
+          ? obj.chunkIndex
+          : undefined
       out.push({
-        id: asText(obj.id) ?? `doc:${documentId}`,
+        // 片段级 id：同一文档的两段是两个来源，不能被去重折叠成一条。
+        id: asText(obj.id) ?? (chunkIndex === undefined ? `doc:${documentId}` : `doc:${documentId}#${chunkIndex}`),
         kind: "document",
         title: asText(obj.title) ?? "知识库文档",
         source: "knowledge-base",
         documentId,
         indexVersion: asText(obj.indexVersion),
+        chunkId: asText(obj.chunkId),
+        chunkIndex,
         score,
         retrievalScore,
         snippet: asText(obj.snippet),
@@ -338,4 +355,17 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
 /** 资源总数（顶栏角标用）。 */
 export function countResources(resources: AgentResources): number {
   return resources.images.length + resources.documents.length + resources.links.length
+}
+
+/**
+ * 证据键：`documentId#chunkIndex`。
+ *
+ * <p>正文引用只认这个键——它同时说明了「哪份文档」和「哪一段」。
+ * 没有片段序号的文档级来源返回 `null`：它可以出现在资源栏，但不能当
+ * 「这句话的依据」。图片与外链永远不是证据。
+ */
+export function evidenceKeyOf(resource: AgentResource): string | null {
+  if (resource.kind !== "document") return null
+  if (!resource.documentId || resource.chunkIndex === undefined) return null
+  return `${resource.documentId}#${resource.chunkIndex}`
 }

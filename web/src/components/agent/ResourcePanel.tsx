@@ -182,6 +182,10 @@ export function ResourcePanel({
                       {doc.documentId ? (
                         <span className="agent-panel__docid num">#{doc.documentId}</span>
                       ) : null}
+                      {/* 片段序号与文档 ID 同属检索结果：同一文档命中两段会各占一条。 */}
+                      {doc.chunkIndex !== undefined ? (
+                        <span className="agent-panel__docid num">片段 {doc.chunkIndex}</span>
+                      ) : null}
                       <LocateButton resource={doc} onLocate={onLocate} toolFirst />
                     </div>
                   </li>

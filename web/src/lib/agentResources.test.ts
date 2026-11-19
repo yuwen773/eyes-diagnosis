@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   countResources,
   deriveResources,
+  evidenceKeyOf,
   isAutoLoadableImage,
   isTrustedAttachmentUrl,
   parseResourceRefs,
@@ -161,6 +162,42 @@ describe("deriveResources —— 知识来源", () => {
     ])
     expect(parsed).toHaveLength(1)
     expect(parsed[0].documentId).toBe("7")
+  })
+
+  it("片段级来源：保留 chunkId / chunkIndex，并给出可核验的证据键", () => {
+    const [parsed] = parseResourceRefs([
+      {
+        kind: "document",
+        documentId: "42",
+        chunkId: "doc_42_abc_chunk_3",
+        chunkIndex: 3,
+        title: "干眼症诊疗共识",
+      },
+    ])
+    expect(parsed.chunkId).toBe("doc_42_abc_chunk_3")
+    expect(parsed.chunkIndex).toBe(3)
+    expect(parsed.id).toBe("doc:42#3")
+    expect(evidenceKeyOf(parsed)).toBe("42#3")
+  })
+
+  it("同一文档的两段是两个来源，不被去重折叠成一条", () => {
+    const r = deriveResources([
+      msg({
+        type: "tool-response",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+          { id: "doc:42#1", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 1 },
+        ],
+      }),
+    ])
+    expect(r.documents.map((d) => d.id)).toEqual(["doc:42#0", "doc:42#1"])
+  })
+
+  it("没有片段序号的文档级来源可以展示，但不构成证据键", () => {
+    const [parsed] = parseResourceRefs([{ kind: "document", documentId: "42", title: "共识" }])
+    expect(parsed.id).toBe("doc:42")
+    expect(evidenceKeyOf(parsed)).toBeNull()
+    expect(evidenceKeyOf({ ...parsed, kind: "link", chunkIndex: 0, url: "https://x.test" })).toBeNull()
   })
 })
 
