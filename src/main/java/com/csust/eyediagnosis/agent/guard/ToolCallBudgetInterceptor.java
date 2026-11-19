@@ -26,6 +26,7 @@ public class ToolCallBudgetInterceptor extends ToolInterceptor {
 
     private final int maxToolCalls;
     private final AtomicInteger used = new AtomicInteger();
+    private final AtomicInteger rejected = new AtomicInteger();
 
     public ToolCallBudgetInterceptor(int maxToolCalls) {
         if (maxToolCalls <= 0) {
@@ -43,6 +44,7 @@ public class ToolCallBudgetInterceptor extends ToolInterceptor {
     public ToolCallResponse interceptToolCall(ToolCallRequest request, ToolCallHandler handler) {
         int callNo = used.incrementAndGet();
         if (callNo > maxToolCalls) {
+            rejected.incrementAndGet();
             return ToolCallResponse.error(
                     request != null ? request.getToolCallId() : null,
                     request != null ? request.getToolName() : null,
@@ -56,6 +58,16 @@ public class ToolCallBudgetInterceptor extends ToolInterceptor {
     /** 本轮已尝试的工具调用次数（含被预算拒绝的那些）。 */
     public int used() {
         return used.get();
+    }
+
+    /**
+     * 被预算拒绝的次数。
+     *
+     * <p>它是「这一轮是不是因为预算而停」的**唯一**可靠信号：模型照样可能
+     * 在拒绝之后给出回答，也可能一声不响地结束。终止摘要据此措辞。
+     */
+    public int rejected() {
+        return rejected.get();
     }
 
     public int maxToolCalls() {

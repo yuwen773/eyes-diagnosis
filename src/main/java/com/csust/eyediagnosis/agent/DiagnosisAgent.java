@@ -28,6 +28,8 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 眼科诊断Agent
@@ -109,9 +112,15 @@ public class DiagnosisAgent {
 
     // package-visible：护栏接线测试要直接校验编译后的图确实带上预算与步数上限。
     ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink) {
+        return buildAgent(extraTools, userId, sink, chatModel,
+                new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations())));
+    }
+
+    ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink,
+                          ChatModel model, ToolCallBudgetInterceptor budget) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
-                .model(chatModel)
+                .model(model)
                 .instruction(SYSTEM_PROMPT)
                 .methodTools(new UserBoundEyeImageAnalyzerTool(eyeImageAnalyzerTool, userId),
                         new UserBoundDocumentSearchTool(documentSearchTool, userId))
@@ -124,7 +133,7 @@ public class DiagnosisAgent {
                         // 观察者包着预算：预算拒绝也算一次有终态的工具调用，UI 不会卡在「执行中」。
                         new ToolExecutionInterceptor(sink, toolAuditService.digestKey()),
                         // 预算按对话回合计：拦截器实例随 agent 每次请求重建，不能做成单例。
-                        new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations())))
+                        budget)
                 .compileConfig(guardedCompileConfig(agentConstants.getModelCallLimit()));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
@@ -178,7 +187,11 @@ public class DiagnosisAgent {
         // 终态落库挂在 sink 的转移上（而不是 SSE 管道），断连/停止也留得下终态。
         ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record,
                 dto -> persistTerminalToolResult(threadId, userId, dto));
-        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink);
+        // 只计数、不改行为：终止摘要要能说清「是撞到了哪一道上限」。
+        CountingChatModel countingModel = new CountingChatModel(chatModel);
+        ToolCallBudgetInterceptor budget =
+                new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations()));
+        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink, countingModel, budget);
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)
@@ -298,10 +311,17 @@ public class DiagnosisAgent {
             // 终态同时落库：历史回放要靠它把「请求」和「结果」配成同一步。
             Flux<MessageDTO> statusEvents = sink.events().asFlux();
 
+            // 预算耗尽时框架按「正常完成」结束图（不会报错），旧实现因此静默收尾：
+            // 用户看到工具步骤都成功，却没有任何回答。这里在正常结束之后补一条
+            // 明确的终止说明（同样落库），并说清楚是撞到了哪一道上限。
+            // 取消/报错不会走 concatWith，不会把中断说成预算耗尽。
+            Flux<MessageDTO> closedTurn = graphEvents.concatWith(Flux.defer(() ->
+                    closingNotice(threadId, userId, assistantContent, budget, countingModel)));
+
             // 图流终止（正常结束 / 报错 / 浏览器取消）时关闭 sink：仍未拿到真实结果的
             // 调用一律 CANCELLED，绝不在缺结果时呈现成功。必须由 graphEvents 自己触发，
             // 放在合并流的 doFinally 会形成循环等待（statusEvents 还开着）。
-            Flux<MessageDTO> boundedGraphEvents = graphEvents
+            Flux<MessageDTO> boundedGraphEvents = closedTurn
                     .doOnComplete(sink::closePending)
                     .doOnError(e -> sink.closePending())
                     .doOnCancel(sink::closePending);
@@ -311,6 +331,62 @@ public class DiagnosisAgent {
             sink.closePending();
             log.error("流式对话执行异常, threadId={}", threadId, e);
             return Flux.error(new RuntimeException("Agent流式执行失败", e));
+        }
+    }
+
+    /**
+     * 回合结束时的终止说明：**只在没有产出任何回答时**发，且如实区分原因。
+     *
+     * <p>为什么必须发：模型预算耗尽时框架以「正常完成」收尾，图不报错、
+     * 流正常 done。没有这一条，用户看到的是「工具都执行成功，然后什么都没有」——
+     * 一次被截断的回合看起来像一次空回答。
+     *
+     * <p>措辞只陈述可核实的事实：工具预算拒绝过、或模型调用次数达到了配置上限、
+     * 或两者都不是（模型就是没说话）。不猜测「是不是网络问题」之类的内部原因。
+     */
+    private Flux<MessageDTO> closingNotice(String threadId, Long userId, StringBuilder assistantContent,
+                                           ToolCallBudgetInterceptor budget, CountingChatModel model) {
+        if (!assistantContent.toString().isBlank()) return Flux.empty();
+        String notice;
+        if (budget.rejected() > 0) {
+            notice = "本轮工具调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
+        } else if (model.calls() >= Math.max(1, agentConstants.getModelCallLimit())) {
+            notice = "本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
+        } else {
+            notice = "这次没有生成最终回答，可以重试或换个问法。";
+        }
+        MessageDTO dto = new MessageDTO();
+        dto.setMessageType(MessageType.ASSISTANT);
+        dto.setContent(notice);
+        dto.setTimestamp(TimeFormats.nowIsoOffset());
+        // 同样落库：刷新后用户仍然看得到这次回合是怎么结束的。
+        chatHistoryService.saveAssistantMessage(threadId, userId, notice, "text");
+        return Flux.just(dto);
+    }
+
+    /** 只计数的模型包装：为了让终止说明能区分「模型调用上限」与其它空回答。 */
+    static final class CountingChatModel implements ChatModel {
+        private final ChatModel delegate;
+        private final AtomicInteger calls = new AtomicInteger();
+
+        CountingChatModel(ChatModel delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public ChatResponse call(Prompt prompt) {
+            calls.incrementAndGet();
+            return delegate.call(prompt);
+        }
+
+        @Override
+        public Flux<ChatResponse> stream(Prompt prompt) {
+            calls.incrementAndGet();
+            return delegate.stream(prompt);
+        }
+
+        int calls() {
+            return calls.get();
         }
     }
 
