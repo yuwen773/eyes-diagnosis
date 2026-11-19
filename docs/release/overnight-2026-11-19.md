@@ -47,6 +47,10 @@
 - [x] G3-5 附件信任边界负例 5/5 拒绝且 0 条外部地址入库（`neg_*.json`）
 - [x] G3-6 真实视觉成功（`qwen3-vl-plus`，结构化 JSON，`status:succeeded`，回放保留）
 - [x] G3-1 真实流式文本 + done + 历史入库回放
+- [x] G3-2 真实 RAG（`text-embedding-v3`→Chroma 24 分块→结构化来源→历史证据引用）。
+      仅验证内置语料路径；上传文档 indexVersion 准入未试（D5 无重处理入口）→ G3-2 PARTIAL
+- [ ] G3-3 真实工具失败（SSE/DB/审计/模型可见错误一致）
+- [ ] G3-4 SSE 中断、刷新、取消（不制造假成功/不丢终态）
 - [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
 - [ ] G-3 真实 DashScope 场景：G3-1 流式文本 / G3-2 RAG / G3-3 工具失败 / G3-4 中断取消 /
       G3-5 附件信任边界 / G3-6 视觉成功 / G3-7 COS 上传（视凭据）
@@ -65,6 +69,8 @@
 - `POST /api/agent/chat/stream`（threadId `ae475ae3…` 修复版）→ 退出码 0，`tool-result status=succeeded`，结构化 JSON。PASS。
 - `GET /api/agent/history/ae475ae3…` → 4 条（user-attachments-v1 / tool-call / tool-result{succeeded} / text）。PASS。
 - G3-5 五个负例 → 全部拒绝，`t_agent_message` 恶意地址计数 = 0。PASS。
+- 后端以 `EYE_DIAGNOSIS_RAG_CORPUS_SEED_ENABLED=true` 重启；Chroma 由 0 → 24 分块（真实 `text-embedding-v3`）。
+- G3-2：`searchDocuments` 真实检索返回 `builtin:03-cataract`，历史回放保留 `resources`。PASS(内建语料)。
 - 证据索引：`C:/Users/yuwen/AppData/Local/Temp/eye-overnight-2026-11-19/EVIDENCE.md`。
 
 ## 5. PR / CI
