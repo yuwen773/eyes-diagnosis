@@ -55,16 +55,20 @@
       `failed/TOOL_EXCEPTION`；审计仅存 key 名，无原文）。PASS
 - [x] G3-4 SSE 中断取消：客户端 5s 断流→在途工具终态 `cancelled/CANCELLED` 已持久化，无假成功。PASS
 - [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
-- [ ] G-3 汇总：G3-1/G3-3/G3-5/G3-6 PASS；G3-2 PARTIAL（内建语料）；G3-4 待做；G3-7 COS 真实上传（视凭据）
-- [ ] G-5 浏览器视觉验收（390/768/1440，深浅双主题，登录/Agent/判读/管理端/错误态）
+- [x] G-3 汇总：G3-1/G3-3/G3-4/G3-5/G3-6/G3-7 PASS；G3-2 PARTIAL（内建语料，上传文档 indexVersion 未试）
+- [x] G-5 浏览器视觉验收：复用并增强 `web/scripts/evidence/rc-final-visual.mjs`（生产构建 + 合成 API，
+      浅/深 × 390/768/1440/1920，覆盖首页/管理端溯源/Agent 资源/新闻 loading·error·empty/登录错误/空会话）。
+      HEAD `6774829f`：**40 张截图**；断言 theme 正确、无 dev client、无 page error、服务资源哈希一致——全过。
+      **发现 1 处真实响应式缺陷：login-error 在 390px 横向溢出 31px（浅/深一致）**，已登记 Issue #122；属冻结 UI，未擅改。
 - [x] G3-7 真实 COS 上传/读取/越权/删除（合成图）PASS；**P1 安全发现：COS 桶公有读，视图 40100 可被直链绕过**（建议私有桶+签名 URL，属 infra，未擅改）
 - [x] V17→V29 隔离库迁移 + 备份恢复演练（3307 MySQL8；12→26 表、旧数据/归属/中文完好；备份 2s 恢复；注：用 SQL 直跑非 Flyway 引擎，旧二进制回退仍非安全路径）
-- [ ] ui→master 发布候选 PR + 完整 GitHub CI
+- [x] ui→master 发布候选 **PR #121（Draft）**；完整 GitHub CI **22/22 绿**（见 §5）
 - [ ] 版本号建议（v1.1.0 vs v2.0.0）+ Release Notes 草案（需 owner 确认）
 
 ## 3. 失败 / 阻塞
 
-- 暂无（继续推进）。
+- **缺陷（P3，冻结 UI，已登记 Issue #122）**：登录错误态（`login-error`）在 390px 两侧均横向溢出 31px
+  （`documentElement.scrollWidth - innerWidth`）。非阻断；属 Iris 2.1 冻结范围，按冻结规矩只登记不擅改。
 
 ## 4. 最近一次命令与结果
 
@@ -78,9 +82,17 @@
 
 ## 5. PR / CI
 
-- 尚无 `ui→master` PR。待候选稳定后创建。
+- **PR #121**（Draft）：`release/v1.1.0-rc.2` → `master`，https://github.com/yuwen773/eyes-diagnosis/pull/121
+  - head = `origin/ui`(`361be4be`) + 7 提交（P0 修复 + 6 docs）。
+  - 触发 verify：run `44554702845`（pull_request，22 个 job）——**22/22 全部通过，run completed success**。
+    含 backend-compile/unit、flyway 正反序、issue17–24、graph-execution、collaboration-mysql、
+    product-contract、web、web-e2e-system-states、python、watchdog 等。
+  - 这是 `ui` 树**首次完整 CI**（master 为严格祖先，fast-forward 可合）。✅ 门禁通过。
+  - **不自行合并**：合并/打 tag/Release/部署需 owner 批准。
 
 ## 6. 判定
 
-- 当前：**CONDITIONAL**（P0 视觉误报已修 + 真实证据；G3-1/G3-3/G3-5/G3-6 PASS，G3-2 PARTIAL；
-  剩 G3-4 中断取消、G3-7 COS、G-5 浏览器验收、V17→V29 迁移演练、ui→master PR+CI、版本号/Release Notes）。
+- 当前：**CONDITIONAL → 接近 GO**（P0 视觉误报已修 + 真实证据；G3-1/3/4/5/6/7 PASS，G3-2 PARTIAL；
+  G-5 40 张截图通过、仅 1 处 390px 登录错误态溢出已登记 Issue；V17→V29 演练完成；**PR #121 CI 22/22 绿**）。
+  剩余：D5 上传文档重处理路径（产品缺口，非本 RC 引入）、版本号/Release Notes 待 owner 确认。
+  合并/打 tag/发布/部署/启用临床**仍需 owner 批准**。
