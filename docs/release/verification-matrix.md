@@ -9,7 +9,7 @@
 |---|---|
 | 分支 | `integration/iris-release-candidate` |
 | 基线 | `origin/ui@1ff9c71c` |
-| 当前 HEAD | `07d594f1` 起的代码树（= `f6b08841` 的整改树 + 1 个已被本地跑次覆盖的前端用例文件；Draft PR #119） |
+| 当前 HEAD | `2e7d08e4` 起的代码树（= 第三轮整改树：后端 `c225d64` + 前端 `2c6f023` + RAG 回归 `2e7d08e4`；Draft PR #119） |
 
 ## 2. 已完成的验证（按 SHA）
 
@@ -238,12 +238,12 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 
 | 门禁 | 结果 |
 |---|---|
-| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 762, Failures: 0, Errors: 0, Skipped: 303` |
+| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 764, Failures: 0, Errors: 0, Skipped: 303` |
 | pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC + 工具审计表 + **终态持久化**） | ✅ `Tests run: 10, Failures: 0, Errors: 0, Skipped: 0` |
 | pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` |
 | 收尾 | ✅ `verify green`，`EXIT=0`，容器自动清理 |
 
-> 与第二轮审查在同一三段上跑的 `751 / 9 / 303` 相比，pass 1 增加 11 条、pass 2 增加 1 条，
+> 与第二轮审查在同一三段上跑的 `751 / 9 / 303` 相比，pass 1 增加 13 条、pass 2 增加 1 条，
 > 差额全部来自本轮新增用例（终态提交、MCP 取消分类、附件信任、预算铺垫、索引版本），
 > **没有删除或跳过任何既有用例**；303 个 skip 仍是按设计的隔离库门控。
 
@@ -269,6 +269,56 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 | ⚠️ **20/21**：`docs-contract` 失败，其余全过 | 失败原因是**真实缺陷、不是抖动**：`scripts/check_steering_docs.py` 报 `CLAUDE.md: states V28, but migrations reach V29` —— 新增 V29 后没同步项目说明里的迁移 head。已在本报告所在提交修正（`CLAUDE.md` → V29），本地同一门禁复跑通过；**失败 attempt 保留，不重写记录** |
 | ✅ 通过 | `python`、`watchdog`、`backend-compile`、`backend-unit`、`collaboration-mysql`、`graph-execution-mysql`、`flyway-mysql ×2`（含新终态持久化用例）、`product-contract`、`frontend`、`web`、`web-e2e-system-states`、`issue17–24-mysql`、`issue24-evaluation` |
 
+### 2.10 第三轮独立交叉复审整改（当前候选）
+
+第三轮独立交叉复审对本候选判 **CONDITIONAL**：两条高危缺陷都落在第二轮整改自己引入的代码上
+（队列毒化、落库持锁挂起），另有两条中危的内容回归与若干低危/用例有效性问题。
+整改台账见 `codex-no-go-remediation.md` §10；判定见 `merge-readiness-report.md` §6。
+
+**本轮提交（按主题）**
+
+| 提交 | 主题 |
+|---|---|
+| ``c225d64`` | 后端整改：落库等待有界、失败逐键隔离、历史恢复降级、旧信封还原正文、失效来源保留原文 |
+| ``2c6f023`` | 前端：历史正文可读性、附件身份边界、未提交提示 |
+| ``2e7d08e4`` | 真实检索路径回归：旧代片段不得成为证据 |
+| 本文件所在提交 | 发布文档与合并就绪报告 |
+
+**本地全量 `scripts/verify.sh`（代码树 = ``2e7d08e4``）**
+
+| 门禁 | 结果 |
+|---|---|
+| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 772, Failures: 0, Errors: 0, Skipped: 303` |
+| pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC + 工具审计表 + **终态持久化**） | ✅ `Tests run: 10, Failures: 0, Errors: 0, Skipped: 0` |
+| pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` |
+| 收尾 | ✅ `verify green`，`EXIT=0`，容器自动清理 |
+
+> 相对上一轮候选的 `764 / 10 / 303`，pass 1 增加 8 条（队列 4、附件信任 3、RAG 真实路径 1 条新增 2 计入其中），
+> 差额全部来自新增用例，**没有删除或跳过任何既有断言**。
+
+**前端（同一棵树）**
+
+| 门禁 | 结果 |
+|---|---|
+| Web 单测（串行，`--no-file-parallelism`） | ✅ **97 文件 / 1038 用例**（比上一轮少 1 条：删除了钉住过期常量的用例） |
+| 类型检查 | ✅ `tsc -b`，exit 0 |
+| Lint | ✅ `eslint .`，exit 0 |
+| 生产构建 | ✅ `tsc -b && vite build`，exit 0（仅保留大 chunk 提示） |
+
+**工作树归档故障注入（P0-02，本轮未改动该脚本）**
+
+| 门禁 | 结果 |
+|---|---|
+| `scripts/tests/worktree-hygiene-failclosed.sh` | ✅ 87 断言 / 12 例全过 |
+
+**GitHub Actions**
+
+| head | run | 结果 |
+|---|---|---|
+| `a57d89fc` | 44505605737 | ✅ 21/21（上一轮候选；`f6b08841` 的 `docs-contract` 失败已修，rerun 与本次均通过） |
+| `2e7d08e4`（本轮代码树） | 推送后补记 | 推送后补记 |
+| 本文件所在提交（只改 `docs/**`） | 以 PR #119 当前 Checks 为准 | 同左 |
+
 ## 3. 未执行 / 未完成的门禁
 
 | 门禁 | 状态 | 原因 |
@@ -291,3 +341,5 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 - **2.9 绑定 `f6b08841`**（本轮整改的最后一个代码提交）。其后只有发布文档提交，
   代码树逐字节相同；文档 head 的 CI 以 PR #119 当前 Checks 为准。
 - 2.5–2.8 属于整改过程记录，其中任何一条都**不能**顶替 2.9 对当前树给出的结论。
+- **2.10 绑定 `2e7d08e4`**（本轮整改后的代码树：后端 `c225d64` + 前端 `2c6f023` + RAG 回归 `2e7d08e4`）；
+  其后只有发布文档提交，代码树逐字节相同。2.9 的 `764` 与 2.10 的 `772` 分属不同代码树，不得互相顶替。
