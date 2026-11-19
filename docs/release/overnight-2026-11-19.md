@@ -57,6 +57,7 @@
 - [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
 - [ ] G-3 汇总：G3-1/G3-3/G3-5/G3-6 PASS；G3-2 PARTIAL（内建语料）；G3-4 待做；G3-7 COS 真实上传（视凭据）
 - [ ] G-5 浏览器视觉验收（390/768/1440，深浅双主题，登录/Agent/判读/管理端/错误态）
+- [x] G3-7 真实 COS 上传/读取/越权/删除（合成图）PASS；**P1 安全发现：COS 桶公有读，视图 40100 可被直链绕过**（建议私有桶+签名 URL，属 infra，未擅改）
 - [ ] V17→V29 隔离库迁移 + 备份恢复演练
 - [ ] ui→master 发布候选 PR + 完整 GitHub CI
 - [ ] 版本号建议（v1.1.0 vs v2.0.0）+ Release Notes 草案（需 owner 确认）
