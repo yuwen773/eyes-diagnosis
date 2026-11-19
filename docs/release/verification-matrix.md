@@ -198,6 +198,22 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 真正过期），**没有放宽任何断言超时**：`done()` 仍 10s、`await(...)` 仍 10s、场景断言逐条未改；
 生产侧 `PatientDraftCoordinator` 零改动。
 
+**本轮收尾增量（`5920d5cd`，启动就绪 + 租约等待收紧至 4s）**：上表 `534108b0` 的历史跑次不替代本轮证据。
+
+| 门禁 | 结果 |
+|---|---|
+| 修复前量化（仅 4s，尚未分离启动） | 5 轮中第 5 轮首子进程检查点超时，39/40 场景通过；完整建连样本最大 2.114s |
+| 临时分段探针 | 8 场景 7 失败；worker main 后初始化与构造合计 7.827s，父进程 10.040s 到点，尚未进入图执行；探针已移除 |
+| 启动就绪修复后 | 新容器完整构建 8/8 + 同一编译产物 4 轮 `surefire:test` 32/32 = **40/40**，0 跳过、0 失败重试；追加 64 次子进程建连最大 3.906s |
+| 本轮全量 `scripts/verify.sh` | ✅ `verify green`：pass1 `751/0/0`（303 skip 按设计）、pass2 `9/0/0`、pass3 `303/0/0`（0 skip）；日志 `target/verify-flaky-20261119.log` |
+| 本轮 CI | ✅ `5920d5cd` · [run 44491362492](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44491362492) · **21/21 成功**。首轮 `issue24-evaluation` / `issue22-mysql` 在 Maven Central 解析 `surefire-junit-platform:3.5.4` 时失败（其中一次明确为 HTTP 429），未进入断言；仅重跑失败 job 后全绿，未改代码或门禁 |
+
+父进程新增 **10s 夹具启动门禁**，等待子进程完成类加载、建连与协调器构造并写就绪标记。
+就绪后的检查点等待、恢复子进程退出、`done()` / `await(...)` **仍各限 10s**，类级
+`@Timeout(30)` 未改。**计时起点明确改为就绪后**；4s 租约等待、图编译和恢复仍计入行为预算，
+预算 / 检查点 / provider 次数 / fencing token 断言逐条未改。生产 `src/main` 仍与 `03b14efd`
+相同；分段读数、复跑方式与源码摘要见 ledger §10.6。
+
 ## 3. 未执行 / 未完成的门禁
 
 | 门禁 | 状态 | 原因 |
@@ -216,5 +232,6 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 - **真实外部集成通过 ≠ 真实临床能力通过**：2.7 证明的是工程链路在真实提供方下行为正确，
   不构成任何疗效或安全性结论；视觉工具成功路径与真实对象存储仍未验证。
 - 医疗边界保持默认关闭：医生正式复核写入门禁、多 Agent 生产开关均未改动。
-- 2.8 的代码树 = `03b14efd` + 1 个**测试夹具**提交（`534108b0`），生产代码相对
-  `03b14efd` 仍逐字节相同：`git diff 03b14efd 534108b0 -- src/main` 为空。
+- 2.8 的历史结果绑定 `534108b0`，收尾结果绑定 `5920d5cd`。当前代码树 = `03b14efd`
+  + 2 个**测试夹具**提交（`534108b0` / `5920d5cd`），生产代码仍逐字节相同：
+  `git diff 03b14efd HEAD -- src/main` 为空。后续文档 head 的 CI 以 PR #119 当前 Checks 为准。

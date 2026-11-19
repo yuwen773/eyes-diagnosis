@@ -1,7 +1,7 @@
 # Iris 发版集成台账（Integration Ledger）
 
 > 本轮集成的唯一记录处。每完成一批就更新，不依赖对话记忆。
-> 起始时间：2026-11-18 晚；最后更新：2026-11-19 12:45（+08:00，NO_GO 定向整改轮）。
+> 起始时间：2026-11-18 晚；最后更新：2026-11-19（+08:00，NO_GO 整改与不稳定用例收尾）。
 
 ## 0. 基线与工作树
 
@@ -199,7 +199,7 @@ Codex 的原始结论（`D:\Work\code\iris-codex-audit-7dc3422b\docs\release\cod
 | 项 | 值 |
 |---|---|
 | 复验对象（代码） | `03b14efd8f9bcc8d6326a104396d8b68a30d5e8b` |
-| 复验对象（当前 head） | 以 PR #119 的 head 为准（2026-11-19 为 `eb21acc7`）：`03b14efd` + 1 个**测试夹具**提交 `534108b0`（见 §10），其余只改 `docs/**`；`git diff 03b14efd HEAD -- src/main` 为空 |
+| 复验对象（当前 head） | 以 PR #119 的 head 为准：生产代码基线 `03b14efd` + 测试夹具修复 `534108b0` 与本轮启动就绪收尾 `5920d5cd`（见 §10），其余只改 `docs/**`；`git diff 03b14efd HEAD -- src/main` 为空 |
 | 候选 PR | #119（**仍为 Draft**） |
 | 逐条台账 | `docs/release/codex-no-go-remediation.md`（每条含根因 / 改动 / 提交 / 回归用例） |
 | 逐 SHA 证据 | `docs/release/verification-matrix.md` §2.6（工程门禁）、§2.7（G-3 外部集成） |
@@ -256,8 +256,15 @@ CLAIM-NULL lease hostUtc=2026-11-19T06:40:25.317Z
 ### 10.3 修复
 
 `GraphExecutionTest.RecoveryWorker` 在领取前，用**与协调器相同的权威**
-（`SELECT leaseUntil>CURRENT_TIMESTAMP(6)`）有界等待租约真正过期（上限 8s），再调用
-`coordinator.run()`。
+（`SELECT leaseUntil>CURRENT_TIMESTAMP(6)`）有界等待租约真正过期，再调用
+`coordinator.run()`。首个修复 `534108b0` 的上限为 8s；本轮收尾收紧为 **4s**，
+让租约等待落在父进程 **10s 行为预算**内。
+
+本轮还将 JVM / 类加载 / 建连与协调器构造划为夹具启动阶段：子进程准备完成后写独立
+`*.log.ready` 标记，父进程 `child(...)` 在独立 **10s 启动门禁**内确认就绪，再开始原有
+检查点等待或 `second.waitFor(10s)`。标记在租约查询与 `coordinator.run()` **之前**写入，
+因此租约等待、图编译、模型派发、持久化和恢复仍计入行为预算。启动失败会终止并回收
+子进程，附子进程日志失败；没有重试或绕过断言，类级 **`@Timeout(30)` 保持不变**。
 
 - 没有放宽任何断言：`done()` 仍是 10s，`await(...)` 仍是 10s，场景断言逐条未改。
 - 有界：若时钟步进超过上限（或租约确实仍被持有），测试照样失败，只是失败原因变得可读。
@@ -271,15 +278,57 @@ CLAIM-NULL lease hostUtc=2026-11-19T06:40:25.317Z
 | 项 | 结果 |
 |---|---|
 | 修复前单独复跑该方法 | 8 次尝试 **4 次失败** |
-| 修复后单独复跑该方法 | 8 次尝试（64 个场景）**8/8 全绿** |
+| 首个修复 `534108b0` 后单独复跑该方法（历史证据） | 8 次尝试（64 个场景）**8/8 全绿** |
+| 本轮仅收紧为 4s、尚未分离启动时 | 5 次尝试共 40 场景，前 4 轮通过，第 5 轮 `[4] FEEDBACK:SUPPLEMENT` 在首个检查点前超时（39/40） |
+| 本轮启动就绪修复后 | 新库完整构建 8/8 + 同一编译产物连续 4 轮 `surefire:test` 32/32，合计 **40/40，无跳过、无失败重试** |
+| 本轮全量 `scripts/verify.sh` | ✅ `verify green`：pass1 `751/0/0`（303 skip 按设计）、pass2 `9/0/0`、pass3 `303/0/0`（0 skip）；日志 `target/verify-flaky-20261119.log` |
+| 本轮 CI | ✅ `5920d5cd` · [run 44491362492](https://github.com/yuwen773/eyes-diagnosis/actions/runs/44491362492) · **21/21 成功**。首轮 `issue24-evaluation` / `issue22-mysql` 在 Maven Central 解析 `surefire-junit-platform:3.5.4` 时失败（其中一次明确为 HTTP 429），未进入断言；仅重跑失败 job 后全绿，未改代码或门禁 |
 | 全量 `scripts/verify.sh`（`534108b0`） | ✅ `verify green`：pass1 `751/0/0`（303 skip 按设计）、pass2 `9/0`、pass3 `303/0` |
 | CI（run 44476142935，`534108b0`） | ✅ **21/21**。首次跑次 `backend-unit` 因 Maven Central 解析不到 `surefire-junit-platform:3.5.4` 失败（无断言失败），`gh run rerun --failed` 后全绿；未改代码、未放宽门禁 |
 | CI（run 44477715234，文档 head `eb21acc7`） | ✅ **21/21**。同样先撞 `surefire-junit-platform:3.5.4` 解析失败（`product-contract` / `issue22-mysql`，无断言失败），重跑后全绿；同一时刻该构件在 Central 返回 200 |
 
 ### 10.5 残余风险（如实记录）
 
+- 启动阶段仍必须在 10s 内就绪，每个场景总计仍限 30s；超过边界的整机/JVM/容器停顿
+  会正常失败，不宣称在任意宿主负载下无抖动。本轮未引入按样本放大的自适应超时。
 - 租约本身仍是**壁钟**语义。数据库时钟若向后步进超过租约时长（10s），恢复会被推迟
   相应时长；向后步进不会造成重复提交，向前步进由 fencing token 兜住。
 - `JOIN:DEADLINE` 场景里 `deadlineAt` 由数据库时钟写入、由 JVM 的 `clock.instant()` 比较；
   本机数据库时钟**落后**宿主 1–3 秒，只会让「已过期」判定更早成立，故本轮未观察到它抖动。
   若将来出现数据库时钟**领先**宿主的机器，这条用例需要按同一方法处理。
+
+### 10.6 本轮宿主慢启动量化与分段取证
+
+保留 4s 租约等待、尚未分离启动时，先在一次性 MySQL 8.0.26 / Redis 上量化 5 轮：
+
+| 尝试 | 场景通过数 | 完整子进程连接样本数 | 最大 `Starting → Added connection` |
+|---|---|---|---|
+| 1 | 8/8 | 16 | 1.596s |
+| 2 | 8/8 | 16 | 1.218s |
+| 3 | 8/8 | 16 | 1.360s |
+| 4 | 8/8 | 16 | 1.821s |
+| 5 | 7/8 | 15（失败场景未启动恢复子进程） | 2.114s |
+
+第 5 轮失败发生在首个子进程的 `await(marker)`，不是租约未过期；失败子进程已连接数据库
+并开始图执行，来不及到达指定检查点。新增一次临时分段探针复跑后 **7/8 失败**，其中
+`JOIN:NONE` 在 worker main 之后，数据库初始化用了 **7.567s**、协调器构造完成时累计
+**7.827s**；父进程在 **10.040s** 到点，此时日志尚未进入图执行。探针揭示启动与行为
+共用边界的前提在慢宿主上失效；探针已全部移除，生产代码始终未修改。
+
+修复后先做一次新容器、完整 `mvn -o test` 构建（8/8），再在同一编译产物和隔离 schema
+上连续跑 4 次 `mvn -o surefire:test
+-Dtest=GraphExecutionTest#processDeathRestoresOnlyCommittedNodesAndPreservesBudgets`：每次
+仍新建 surefire JVM、每个场景仍新建崩溃/恢复子 JVM，夹具逐场景清表，未复用工作进程。
+
+| 追加轮次 | 场景通过数 | 子进程连接样本数 | 最大建连耗时 |
+|---|---|---|---|
+| 1 | 8/8 | 16 | 3.906s |
+| 2 | 8/8 | 16 | 2.025s |
+| 3 | 8/8 | 16 | 0.962s |
+| 4 | 8/8 | 16 | 0.905s |
+
+这些建连耗时来自同一宿主 JVM 日志时间戳，仅作诊断读数，不是新门禁。修复后的测试源文件
+SHA-256 为 `e47efac42cb2925d9ad3c665d896af322f5245c1c403a8f7d6f785360e83b234`。
+本地原始证据位于工作树忽略目录 `target/flaky-quantification-20261119/`、
+`target/flaky-probe-20261119.log`、`target/flaky-ready-check-20261119.log` 与
+`target/flaky-ready-quantification-20261119/`；全量日志为 `target/verify-flaky-20261119.log`。
