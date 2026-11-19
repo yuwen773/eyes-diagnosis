@@ -284,16 +284,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
         KnowledgeDocument doc = loadDocument(documentId);
         if (!doc.getUserId().equals(userId)) throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
 
-        if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
-            try {
-                var vectorStore = documentProcessingService.getVectorStore();
-                if (vectorStore != null) {
-                    vectorStore.delete(buildChunkIds(documentId, doc.getChunkCount()));
-                }
-            } catch (Exception e) {
-                log.warn("旧向量删除失败: docId={}", documentId, e);
-            }
-        }
+        deleteVectors(doc);
 
         // 2. 上传新文件到 COS
         String originalFilename = file.getOriginalFilename();
@@ -345,16 +336,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
 
     /** 删除文档本体：向量 + 对象存储 + 数据库行。 */
     private void purgeDocument(KnowledgeDocument doc) {
-        if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
-            try {
-                var vectorStore = documentProcessingService.getVectorStore();
-                if (vectorStore != null) {
-                    vectorStore.delete(buildChunkIds(doc.getId(), doc.getChunkCount()));
-                }
-            } catch (Exception e) {
-                log.warn("向量删除失败，继续删除数据库记录: docId={}", doc.getId(), e);
-            }
-        }
+        deleteVectors(doc);
 
         try {
             cosManager.deleteObject(doc.getFileUrl());
@@ -452,6 +434,32 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeDocumentMappe
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件类型: " + type + "，支持: " + ALLOWED_TYPES);
         }
         return type;
+    }
+
+    /**
+     * 删除一份文档在向量库里的全部分块。
+     *
+     * <p>有 chunkCount 时按确定的 chunkId 删；**失败文档恰恰没有 chunkCount**
+     * （处理中途就挂了），旧实现因此一个残片也删不掉。这种情况改按
+     * documentId 元数据删除；真删不掉也不阻塞记录删除——检索侧只接受
+     * 「整份文档就绪」的片段，残片进不了证据链。
+     */
+    private void deleteVectors(KnowledgeDocument doc) {
+        if (doc == null || doc.getId() == null) return;
+        try {
+            var vectorStore = documentProcessingService.getVectorStore();
+            if (vectorStore == null) return;
+            if (doc.getChunkCount() != null && doc.getChunkCount() > 0) {
+                vectorStore.delete(buildChunkIds(doc.getId(), doc.getChunkCount()));
+            } else {
+                vectorStore.delete(new org.springframework.ai.vectorstore.filter.Filter.Expression(
+                        org.springframework.ai.vectorstore.filter.Filter.ExpressionType.EQ,
+                        new org.springframework.ai.vectorstore.filter.Filter.Key("documentId"),
+                        new org.springframework.ai.vectorstore.filter.Filter.Value(doc.getId())));
+            }
+        } catch (Exception e) {
+            log.warn("向量删除失败，继续删除数据库记录: docId={}", doc.getId(), e);
+        }
     }
 
     private List<String> buildChunkIds(Long docId, int chunkCount) {

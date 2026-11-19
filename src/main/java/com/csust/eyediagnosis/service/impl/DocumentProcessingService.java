@@ -10,6 +10,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -118,7 +119,15 @@ public class DocumentProcessingService {
             log.info("[ETL-Load] 开始存储到向量数据库: docId={}, chunk数量={}", docId, chunks.size());
             long loadStart = System.currentTimeMillis();
             if (vectorStore != null) {
-                EmbeddingBatchWriter.add(vectorStore, chunks);
+                try {
+                    EmbeddingBatchWriter.add(vectorStore, chunks);
+                } catch (RuntimeException e) {
+                    // 分批写不是原子的：第 2 批失败时第 1 批已经进了向量库，
+                    // 而 MySQL 会把文档标成失败。半份文档不能作为「来源」被引用——
+                    // 先把已写入的片段清掉；清理失败也照样标记失败，检索侧另有就绪校验兜底。
+                    purgeVectors(docId);
+                    throw e;
+                }
                 log.info("[ETL-Load] 向量存储完成: docId={}, 耗时={}ms", docId, System.currentTimeMillis() - loadStart);
             } else {
                 log.warn("[ETL-Load] VectorStore 未配置，跳过向量存储: docId={}", docId);
@@ -129,6 +138,8 @@ public class DocumentProcessingService {
             log.info("[ETL] 文档处理完成: docId={}, chunkCount={}, 总耗时={}ms", docId, chunks.size(), System.currentTimeMillis() - startTime);
         } catch (Exception e) {
             log.error("[ETL] 文档处理失败: docId={}, 耗时={}ms, error={}", docId, System.currentTimeMillis() - startTime, e.getMessage(), e);
+            // 失败文档不留可检索的残片（幂等：成功路径已清过就再清一次也无害）。
+            purgeVectors(docId);
             updateStatus(docId, 2, null);
         } finally {
             if (file != null && file.exists()) {
@@ -137,6 +148,29 @@ public class DocumentProcessingService {
                 } else {
                     log.debug("[ETL] 临时文件已删除: {}", file.getAbsolutePath());
                 }
+            }
+        }
+    }
+
+    /**
+     * 按 documentId 元数据删除某个文档的全部分块。
+     *
+     * <p>不能靠 {@code chunkCount}：失败文档恰恰没有写这个字段，用计数拼 chunkId
+     * 会一个也删不掉。这里按元数据删除，重试一次；仍失败也不抛——正确性由
+     * 检索侧的「文档就绪」校验保证，这里的清理只是为了不留垃圾。
+     */
+    void purgeVectors(Long docId) {
+        if (vectorStore == null || docId == null) return;
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                vectorStore.delete(new Filter.Expression(
+                        Filter.ExpressionType.EQ,
+                        new Filter.Key("documentId"),
+                        new Filter.Value(docId)));
+                log.info("[ETL] 已清理文档残留向量: docId={}, attempt={}", docId, attempt);
+                return;
+            } catch (Exception e) {
+                log.warn("[ETL] 残留向量清理失败（第 {} 次）: docId={}", attempt, docId, e.getMessage());
             }
         }
     }

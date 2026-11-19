@@ -7,7 +7,9 @@ import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
 import com.csust.eyediagnosis.agent.rag.SourceTypePolicy;
+import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
 import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
+import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -57,6 +59,10 @@ public class DocumentSearchTool {
 
     @Autowired(required = false)
     private RerankModel rerankModel;
+
+    /** 就绪校验用的文档表；缺失（单测/裁剪部署）时跳过校验，不假装有。 */
+    @Autowired(required = false)
+    private KnowledgeDocumentMapper knowledgeDocumentMapper;
 
     private final Bm25Segmenter segmenter = new Bm25Segmenter();
 
@@ -110,6 +116,9 @@ public class DocumentSearchTool {
                 candidates = SourceTypePolicy.restrict(candidates, currentUserId);
             }
 
+            // 证据准入：只接受「整份文档已完成入库」的片段。
+            candidates = readyOnly(candidates);
+
             if (candidates.isEmpty()) {
                 return "未找到相关文档。";
             }
@@ -128,6 +137,62 @@ public class DocumentSearchTool {
             // 错误结果，观察者据此标 error，页面上如实显示「失败」。
             throw new IllegalStateException("知识库检索暂时不可用，请稍后重试。", e);
         }
+    }
+
+    /**
+     * 证据准入：过滤掉「文档本身没有成功入库」的残留片段。
+     *
+     * <p>为什么需要：向量写入按 10 条一批，第 2 批失败时第 1 批已经在向量库里，
+     * 而 MySQL 把文档标成失败（status=2）。这些残片带着同一份 documentId，
+     * 语义上属于一份**没有完成**的上传——不能因为向量库碰巧搜得到就被当作来源。
+     *
+     * <p>规则：带 documentId 的片段，只有对应文档 status=1（已完成）才保留；
+     * 不带 documentId 的片段（旧数据 / 直写内置语料）保持原样，不凭空判死。
+     * 状态查询本身失败时 fail-closed：丢弃带 documentId 的片段，宁可少引用。
+     */
+    List<Document> readyOnly(List<Document> candidates) {
+        if (knowledgeDocumentMapper == null || candidates == null || candidates.isEmpty()) {
+            return candidates;
+        }
+        Set<Long> docIds = new HashSet<>();
+        for (Document doc : candidates) {
+            Long id = documentIdOf(doc);
+            if (id != null) docIds.add(id);
+        }
+        if (docIds.isEmpty()) return candidates;
+
+        Set<Long> ready;
+        try {
+            ready = knowledgeDocumentMapper.selectBatchIds(docIds).stream()
+                    .filter(doc -> Integer.valueOf(1).equals(doc.getStatus()))
+                    .map(KnowledgeDocument::getId)
+                    .collect(Collectors.toSet());
+        } catch (Exception e) {
+            log.warn("知识库文档状态校验失败，本轮丢弃带 documentId 的片段: {}", e.getMessage());
+            return candidates.stream().filter(doc -> documentIdOf(doc) == null).toList();
+        }
+        return candidates.stream()
+                .filter(doc -> {
+                    Long id = documentIdOf(doc);
+                    return id == null || ready.contains(id);
+                })
+                .toList();
+    }
+
+    /** 分片元数据里的 documentId；没有或不是数字时返回 null（不猜、不判死）。 */
+    private static Long documentIdOf(Document doc) {
+        Map<String, Object> metadata = doc.getMetadata();
+        Object raw = metadata == null ? null : metadata.get("documentId");
+        if (raw instanceof Number number) return number.longValue();
+        if (raw instanceof String text) {
+            try {
+                String trimmed = text.trim();
+                return trimmed.isEmpty() ? null : Long.parseLong(trimmed);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**
