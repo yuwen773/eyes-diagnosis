@@ -47,7 +47,8 @@ class AgentChatPrivacyTest {
         DiagnosisAgent agent = mock(DiagnosisAgent.class);
         when(agent.stream(ArgumentMatchers.anyString(), ArgumentMatchers.any(),
                 ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(),
-                ArgumentMatchers.any())).thenReturn(Flux.empty());
+                ArgumentMatchers.any(), ArgumentMatchers.any(DiagnosisAgent.TurnStamp.class)))
+                .thenReturn(Flux.empty());
 
         AgentController controller = new AgentController();
         ReflectionTestUtils.setField(controller, "userService", userService);
@@ -92,7 +93,8 @@ class AgentChatPrivacyTest {
         DiagnosisAgent failing = mock(DiagnosisAgent.class);
         when(failing.stream(ArgumentMatchers.anyString(), ArgumentMatchers.any(),
                 ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(),
-                ArgumentMatchers.any())).thenReturn(Flux.error(new IllegalStateException(SENSITIVE)));
+                ArgumentMatchers.any(), ArgumentMatchers.any(DiagnosisAgent.TurnStamp.class)))
+                .thenReturn(Flux.error(new IllegalStateException(SENSITIVE)));
         AgentController controller = new AgentController();
         ReflectionTestUtils.setField(controller, "userService", userServiceForUser42());
         ReflectionTestUtils.setField(controller, "chatHistoryService", mock(ChatHistoryService.class));
