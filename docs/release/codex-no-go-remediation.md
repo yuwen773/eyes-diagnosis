@@ -88,13 +88,15 @@
 - **真实链路旁证**（G3-5）：在真实 DashScope 会话里发送与受信信封同形的 JSON
   （含 `kind`/`text`/`images`），历史里**逐字保留为纯文本**、`images=null`，未合成任何附件；
   模型也未把其中的外链当成自己的图片。
-- **已知取舍（第二轮后已补齐）**：修复前写入的老行没有服务端标记。第二轮审查要求
-  「保留原文并支持经归属复核后的附件恢复」，本轮已实现：旧行正文**按原文返回**（不改写、不剥离），
-  其中的图片引用逐张交回 `authorizedViewUrl` 做**当前用户归属复核**，复核通过才恢复成附件；
-  未登记 / 跨用户 / 已删除的引用一律不恢复。伪造正文因此最多只能引用**自己确实拥有的**上传，
-  且正文仍显示为原文 JSON，不会被改写成「附件消息」。测试：
-  `AgentAttachmentTrustTest#legacyRowKeepsRawTextAndRestoresOnlyOwnedUploads`、
+- **已知取舍（第二轮后已补齐；第三轮复审 D3 修订，本节据此改写）**：修复前写入的老行没有服务端标记。当前行为是两条：
+  1. **整行不构成附件凭证**：正文形状（用户自己也能打出来）**不是**信任依据，单凭形状不授予任何附件身份；
+  2. **正文可读性**：只有当这一行确实带着**当前用户拥有的**一张上传（逐张 `authorizedViewUrl` 归属复核通过）时，
+     才把它当作旧信封——正文按 `text` 还原、图片恢复为附件；复核不通过则整段按普通文本**原样显示**，不补造附件。
+  未登记 / 跨用户 / 已删除的引用一律不恢复。测试：
+  `AgentAttachmentTrustTest#legacyRowRestoresReadableBodyOnlyWhenAnOwnedUploadProvesItWasAnEnvelope`、
+  `#legacyRowWithoutOwnedUploadStaysRawAndGrantsNothing`、
   `#legacyPlainTextRowStaysPlainTextWithoutTouchingUploads`。
+  （说明：早先本节写的「按原文返回、不会改写成附件消息」与实现相反，第三轮 delta 复审指出后已更正。）
 
 ## 6. P1-04 · V17 升级后的回滚指引与迁移路径冲突
 
@@ -147,7 +149,7 @@
 | P0-02 | 状态查询失败、未跟踪文件枚举失败、归档期间文件再被修改、bundle 包截断，四种情况仍能进入删除 | 归档改为「可证实才算成功」：所有 git 查询结果显式判定、在空仓库真实导入 bundle 并核对固定 HEAD、按原始字节比对内容清单、删除前再比对当前 HEAD 与快照 | `scripts/tests/worktree-hygiene-failclosed.sh`（87 断言 / 12 例，含四种负例） |
 | P1-01 | 线程中断仍被记成 TIMEOUT、Future 未取消；终态在历史提交前就发出；前端实时映射丢 `errorCategory` | `MCPManager` 中断→`cancel(true)` + 重设中断标志 + `CancellationException`；`ToolStepSink` **先提交后发送**，提交失败不发终态帧而发流错误；`SessionMessageQueue` 提供可等待、可恢复的按会话串行写；实时 DTO 补 `errorCategory` | `ToolTerminalCommitTest`、`McpTerminalCategoryTest`、`ToolFailureCategoryTest`、`ToolTerminalPersistenceMySqlIntegrationTest`（真实 MySQL 注入写失败 → 断流 → 重读恢复 → 迟到结果不覆盖）、`agentStream.terminal.test.ts`、`ThoughtLine.terminal-wire.test.tsx`（TIMEOUT / CANCELLED / INVALID_OUTPUT 实时与回放同渲染） |
 | P1-02 | 清理失败后，较短成功重试会重新接纳上一代残留片段 | 每次处理生成服务端 `indexVersion`：`beginIndex`/`finishIndex` 带版本 CAS，片段与资源带版本，检索只认「READY + 当前版本」，历史资源引用按当前用户 + 版本复核 | `DocumentProcessingServiceChunkRollbackTest`、`DocumentSearchToolReadyOnlyTest`、`DocumentSearchToolOwnershipTest`、`FlywayMySqlIntegrationTest`（V29）、探测器 `scripts/tests/IrisRagGenerationProbe.java` |
-| P1-03 | 公开 `kind` 仍是可伪造的信任凭证；任意第三方同形地址仍获前端放行 | 附件身份移入客户端不可写的 `subType` 列；历史读取逐张按**当前用户**复核上传归属；上传接口只返回 `/api/agent/image/view/<file>`，取图端点服务端复核后 302；前端只认该受保护路径；旧行保留原文并支持**经归属复核**的附件恢复 | `AgentAttachmentTrustTest`（5）、`ChatHistoryServiceUserMessageTest`、`DiagnosisAgentImageReferenceTest`、`agentAttachmentTrust.test.ts`、`agentResources.test.ts`、`UserMessage.test.tsx` |
+| P1-03 | 公开 `kind` 仍是可伪造的信任凭证；任意第三方同形地址仍获前端放行 | 附件身份移入客户端不可写的 `subType` 列；历史读取逐张按**当前用户**复核上传归属；上传接口只返回 `/api/agent/image/view/<file>`，取图端点服务端复核后 302；前端只认该受保护路径；旧行保留原文并支持**经归属复核**的附件恢复 | `AgentAttachmentTrustTest`（本轮后 7）、`ChatHistoryServiceUserMessageTest`、`DiagnosisAgentImageReferenceTest`、`agentAttachmentTrust.test.ts`、`agentResources.test.ts`、`UserMessage.test.tsx` |
 | P1-04 | 旧 JAR 虽能启动，但会恢复正式复核写入与推理输出；手册未要求安全产物；恢复库差异核对有缺口 | 手册改成四项分别验收并写明「旧产物禁止切流」；回滚只能恢复到新库，按**停写源库**逐表对账新增/更新/删除（含 V18–V29 数据）；测试名改为只声明迁移解析兼容 | `docs/release/upgrade-rollback-manual.md` §1/§2/§4；`#oldMigrationSetAcceptsFutureVersionsWithoutCertifyingArtifactSafety`；探测器 `scripts/tests/IrisRollbackDataProbe.java` |
 | P1-05 | 同一模型节点先铺垫文字再请求工具，预算截断后仍无终止说明 | `CountingChatModel` 记录**最后一次**模型调用是否仍要求工具；截至预算耗尽仍要求工具时，追加并持久化终止说明（`finishReason=TOOL_BUDGET_EXHAUSTED / MODEL_BUDGET_EXHAUSTED`），保留既有铺垫 | `AgentBudgetExhaustionTest`（新增「铺垫后请求工具」场景）、`ToolTerminalPersistenceMySqlIntegrationTest#verifyBudgetTurn` |
 
@@ -178,7 +180,30 @@ P0-01 未回退：视觉工具无效输出仍走 `INVALID_OUTPUT` 失败路径�
 | 取消不再打断排队中的写 | 取消只停流，已入队的写仍会提交（按会话串行）。这是「终态不丢」与「立刻停止」之间的取舍：停下写入会让已发生的工具调用在历史里缺终态 | 改它要重做「取消语义」，属于独立议题；本轮只登记 |
 | 队列自死锁风险 | 队列的 `synchronized` 临界区里会调用 `submit`，而执行体又要拿同一把锁——当前实现里临界区不等待执行体（等待发生在临界区之外），因此**现在没有自死锁**；但这个形状对后续改动很敏感 | 当前无缺陷可修；已在代码里用「等待在临界区之外」的写法固定住这一边界 |
 
-### 10.2 结论
+### 10.2 整改后的独立复核（delta 复审，结论 `FINDINGS`）
+
+整改完成后，另一位独立审查方只复核 `a57d89fc..4d092798` 这段 delta（不做全仓复审），结论 **`FINDINGS`**（不是 `BLOCKING`）。
+D1–D4 的改法本身被确认为真实：毒化隔离与有界等待有效、落库确实在锁外、两个开关语义确实分开、
+两条还原路径都做了归属复核（未能构造跨用户附件）、模型原文确实保留。
+
+复审同时指出下列问题。**按本轮收口要求不再展开整改**，逐条如实登记：
+
+| 编号 | 级别 | 问题 | 位置 | 处置 |
+|---|---|---|---|---|
+| E1 | 中高 | 被 `evictOverflow` / `evictExpired` 淘汰的键不会再被尝试，其 flush **正常返回** → 调用方当成「已提交」并发出终态帧，而该行不在库里。触发需要病态负载（单会话 15s 内约 257 条排队写） | `SessionMessageQueue#flush` / `#evictOverflow` / `#evictExpired` | **未改**，登记为已知边界（§10.3）。修复思路见下 |
+| E2 | 中 | 「未提交」判定把**正在排队**的写也算进去，可能在无缺失时提示「历史可能不完整」 | `SessionMessageQueue#recoveryOutcome` | 未改；登记 |
+| E3 | 中 | 一次淘汰后该会话的「可能不完整」标记不会自行清除（只增不减），前端每次打开都提示 | 同上 + `web/src/pages/AgentPage.tsx` | 未改；登记 |
+| E4 | 中低 | 历史读取的恢复等待继承写入预算（默认 15s）：数据库退化时「打开会话」可能等满 15s | `ChatHistoryService#loadHistory` → `recoverPending` → `await` | 未改；登记 |
+| E5 | 低中 | 第二次落库失败时 `tryEmitError` 返回 `FAIL_TERMINATED` 并抛 `EmissionException`，会中断 `closePending` 的取消循环（其余未确认调用失去审计终态） | `ToolStepSink#emit` / `#closePending` | 未改；登记 |
+| E6 | 低 | `sourcesExpired` 只有服务端写、前端不读；`persistenceFailed()` 无调用方；同键重提交被 `putIfAbsent` 静默丢弃；`pendingWritesStayBoundedAfterManyFailures` 对「上限」的断言近乎空转；D2 的「落库在锁外」没有直接回归用例 | 见复审报告 | 未改；登记 |
+
+**为什么不在本轮改**：本轮收口的边界是「完成已开始的验证与交付」，不是再开一轮整改。
+E1 直接触及「终态不先发」这条保证，但它需要病态负载才可达，且**不是本轮整改引入的**（淘汰机制本身就是本轮加的，
+但这条路径在加淘汰时就存在）。半成品修复（在 `flush` 末尾对目标键补 `wasDropped` 判定）已存为补丁
+`target/reviewer-findings-wip.patch`（构建产物目录，不入库）；该补丁**未完成、未测试、未提交**，
+不允许当作已完成的整改引用。
+
+### 10.3 结论
 
 第三轮复审的 `CONDITIONAL` 结论**未被本轮整改推翻，也未被本轮整改解除**：
 两条高危缺陷已逐条整改并有走真实执行路径的回归，但**整改本身尚未经独立复审再次确认**。

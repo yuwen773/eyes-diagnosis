@@ -279,12 +279,13 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 
 | 提交 | 主题 |
 |---|---|
-| ``c225d64`` | 后端整改：落库等待有界、失败逐键隔离、历史恢复降级、旧信封还原正文、失效来源保留原文 |
-| ``2c6f023`` | 前端：历史正文可读性、附件身份边界、未提交提示 |
-| ``2e7d08e4`` | 真实检索路径回归：旧代片段不得成为证据 |
+| `c225d64` | 后端整改：落库等待有界、失败逐键隔离、历史恢复降级、旧信封还原正文、失效来源保留原文 |
+| `2c6f023` | 前端：历史正文可读性、附件身份边界、未提交提示 |
+| `2e7d08e4` | 真实检索路径回归：旧代片段不得成为证据 |
+| `61941e9a` | CI 抓到的用例副作用泄漏：RAG 回归清理线程内资源上下文 |
 | 本文件所在提交 | 发布文档与合并就绪报告 |
 
-**本地全量 `scripts/verify.sh`（代码树 = ``2e7d08e4``）**
+**本地全量 `scripts/verify.sh`（代码树 = `61941e9a`）**
 
 | 门禁 | 结果 |
 |---|---|
@@ -293,7 +294,14 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 | pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` |
 | 收尾 | ✅ `verify green`，`EXIT=0`，容器自动清理 |
 
-> 相对上一轮候选的 `764 / 10 / 303`，pass 1 增加 8 条（队列 4、附件信任 3、RAG 真实路径 1 条新增 2 计入其中），
+> 同一代码树（`61941e9a`）上共跑过两次全量：**第 1 次** pass 3 出现 1 条失败
+> `DiagnosisTaskRecoveryTest#resultCannotCommitAfterLeaseExpiresWhileWaitingForRowLock`
+> （`expected: <PROCESSING>` / `actual: <WAITING_REVIEW>`）——这是 **2026-11-10 起就记录在案的既有
+> 时序敏感用例**，不在本轮改动面上（本轮只改了 agent 队列 / 历史 / sink 与前端渲染）；
+> **第 2 次**（上表）该用例 10/10 通过、全套 `303/0/0`、`EXIT=0`。两次结果都保留，不挑好看的那次。
+>
+> 相对上一轮候选的 `764 / 10 / 303`，pass 1 增加 8 条：队列 4（`SessionMessageQueueTest`）、
+> 附件信任净增 2（3 条新用例替换 1 条旧断言）、RAG 真实检索路径 2（`DocumentSearchToolStaleGenerationTest`）。
 > 差额全部来自新增用例，**没有删除或跳过任何既有断言**。
 
 **前端（同一棵树）**
@@ -316,7 +324,8 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 | head | run | 结果 |
 |---|---|---|
 | `a57d89fc` | 44505605737 | ✅ 21/21（上一轮候选；`f6b08841` 的 `docs-contract` 失败已修，rerun 与本次均通过） |
-| `2e7d08e4`（本轮代码树） | 推送后补记 | 推送后补记 |
+| `4d092798` | 44513684042 | ⚠️ **20/21**：`backend-unit` 失败，其余 20 个 job 全过。失败原因是**真实缺陷、不是抖动**：新加的 `DocumentSearchToolStaleGenerationTest` 检索成功后没有清 `ToolResourceContext`（线程局部收集器），残留来源被同一线程随后执行的 `DocumentSearchToolOwnershipTest#failedRetrievalRegistersNoCitations` 读到（`expected: <[]>` / `actual: [ResourceRef[… indexVersion=attempt-2]]`）。已在 `61941e9a` 修正（两条用例 `try/finally` 清理），**失败 attempt 保留，不重写记录** |
+| `61941e9a`（本轮代码树） | 推送后补记 | 推送后补记 |
 | 本文件所在提交（只改 `docs/**`） | 以 PR #119 当前 Checks 为准 | 同左 |
 
 ## 3. 未执行 / 未完成的门禁
