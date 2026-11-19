@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -71,7 +72,8 @@ class AgentBudgetExhaustionTest {
         assertEquals("我先查询资料。本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。",
                 assistantText(events));
         assertEquals(1, calls.get(), "终止说明不得额外调用模型");
-        verify(history).saveAssistantMessage("thread-preamble", USER_ID, "我先查询资料。", "text");
+        // 旧调用方没有轮次/版本信息，两列为 null（见 DiagnosisAgent.TurnStamp.LEGACY）。
+        verify(history).saveAssistantMessage("thread-preamble", USER_ID, "我先查询资料。", "text", null, null);
         assertNoticeStored(history, "thread-preamble", "MODEL_BUDGET_EXHAUSTED",
                 "本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。");
         assertEquals("MODEL_BUDGET_EXHAUSTED", events.getLast().getFinishReason());
@@ -151,13 +153,16 @@ class AgentBudgetExhaustionTest {
         assertEquals("这是正常回答。", assistantText(events));
         assertTrue(assistantText(events).contains("正常回答"));
         verify(history, never()).saveAssistantMessage(eq("thread-normal"), eq(USER_ID), eq(
-                "这次没有生成最终回答，可以重试或换个问法。"), eq("text"));
-        verify(history, never()).saveAssistantMessage(eq("thread-normal"), eq(USER_ID), anyString(), eq("turn-end"));
+                "这次没有生成最终回答，可以重试或换个问法。"), eq("text"), any(), any());
+        verify(history, never()).saveAssistantMessage(eq("thread-normal"), eq(USER_ID), anyString(), eq("turn-end"),
+                any(), any());
     }
 
     private static void assertNoticeStored(ChatHistoryService history, String thread, String reason, String notice) {
         var stored = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(history).saveAssistantMessage(eq(thread), eq(USER_ID), stored.capture(), eq("turn-end"));
+        // 旧入口（无轮次/版本）落库时两列为 null：它们的语义是「这条历史没有版本信息」。
+        verify(history).saveAssistantMessage(eq(thread), eq(USER_ID), stored.capture(), eq("turn-end"),
+                isNull(), isNull());
         var payload = com.csust.eyediagnosis.utils.JsonUtils.fromJsonToMap(stored.getValue());
         assertEquals(reason, payload.get("finishReason"));
         assertEquals(notice, payload.get("output"));

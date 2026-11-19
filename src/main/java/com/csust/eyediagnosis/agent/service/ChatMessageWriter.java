@@ -98,11 +98,34 @@ public class ChatMessageWriter {
 
     @Transactional
     public void writeAssistantMessage(String sessionId, String content, String subType, Long messageId) {
+        writeAssistantMessage(sessionId, content, subType, messageId, null, null);
+    }
+
+    /**
+     * 带版本信息的回答侧写入。
+     *
+     * @param replyToId 本回合的用户消息 id；旧调用方传 null
+     * @param variantId 本次生成的版本组；同一组 reasoning/tool/text 必须一致
+     */
+    @Transactional
+    public void writeAssistantMessage(String sessionId, String content, String subType, Long messageId,
+                                      Long replyToId, String variantId) {
         AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
         if (messageId != null) message.setId(messageId);
+        message.setReplyToId(replyToId);
+        message.setVariantId(variantId);
         if (alreadyCommitted(message)) return;
         messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
+    }
+
+    /** 切换某一轮显示的回答版本；只能落在这些版本真实存在的组合上由调用方校验。 */
+    @Transactional
+    public void selectVariant(String sessionId, Long userMessageId, String variantId) {
+        messageMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AgentMessage>()
+                .eq(AgentMessage::getSessionId, sessionId)
+                .eq(AgentMessage::getId, userMessageId)
+                .set(AgentMessage::getSelectedVariantId, variantId));
     }
 
     private AgentMessage buildMessage(String sessionId, String role, String subType, String content) {

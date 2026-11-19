@@ -25,7 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -212,10 +214,11 @@ class DiagnosisAgentToolEventTest {
         terminal.setToolStatus(ToolStepContract.Status.SUCCEEDED.wire());
         terminal.setContent("检索到 3 段文档");
 
-        ReflectionTestUtils.invokeMethod(agent, "persistTerminalToolResult", THREAD_ID, USER_ID, terminal);
+        ReflectionTestUtils.invokeMethod(agent, "persistTerminalToolResult", THREAD_ID, USER_ID, terminal,
+                DiagnosisAgent.TurnStamp.LEGACY);
 
         ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
-        verify(history).saveToolResultMessage(eq(THREAD_ID), eq(USER_ID), json.capture());
+        verify(history).saveToolResultMessage(eq(THREAD_ID), eq(USER_ID), json.capture(), isNull(), isNull());
         JsonNode node = new ObjectMapper().readTree(json.getValue());
         assertEquals("call_1", node.get("toolCallId").asText());
         assertEquals("searchDocuments", node.get("name").asText());
@@ -233,11 +236,12 @@ class DiagnosisAgentToolEventTest {
         running.setToolCallId("call_1");
         running.setToolStatus(ToolStepContract.Status.RUNNING.wire());
 
-        ReflectionTestUtils.invokeMethod(agent, "persistTerminalToolResult", THREAD_ID, USER_ID, running);
+        ReflectionTestUtils.invokeMethod(agent, "persistTerminalToolResult", THREAD_ID, USER_ID, running,
+                DiagnosisAgent.TurnStamp.LEGACY);
 
         verify(history, org.mockito.Mockito.never())
                 .saveToolResultMessage(org.mockito.ArgumentMatchers.anyString(),
                         org.mockito.ArgumentMatchers.any(Long.class),
-                        org.mockito.ArgumentMatchers.anyString());
+                        org.mockito.ArgumentMatchers.anyString(), any(), any());
     }
 }

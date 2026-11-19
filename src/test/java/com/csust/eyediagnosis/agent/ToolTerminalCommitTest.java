@@ -40,7 +40,8 @@ class ToolTerminalCommitTest {
             gate.countDown();
             terminal.join(2_000);
             assertFalse(terminal.isAlive());
-            verify(writer).writeAssistantMessage(eq("session"), eq("TIMEOUT"), eq("tool-result"), anyLong());
+            verify(writer).writeAssistantMessage(eq("session"), eq("TIMEOUT"), eq("tool-result"), anyLong(),
+                    isNull(), isNull());
             assertEquals("TIMEOUT", frames.getLast().getErrorCategory());
         } finally {
             gate.countDown();

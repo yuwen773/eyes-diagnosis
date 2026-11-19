@@ -144,6 +144,8 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
             verifyPoisonedSessionSurvives(history, writer, jdbc);
 
             verifyBudgetTurn(history, audit, writer, jdbc);
+
+            verifyVariantHistory(history, writer);
         } finally {
             queue.shutdown();
             admin.execute("DROP DATABASE `" + schema + "`");
@@ -233,6 +235,57 @@ class ToolTerminalPersistenceMySqlIntegrationTest {
         assertTrue(replay.stream().anyMatch(message -> "我先查询资料。".equals(message.getContent())));
         assertTrue(jdbc.queryForObject("SELECT content FROM t_agent_message WHERE sessionId='budget-preamble' "
                 + "AND subType='turn-end'", String.class).contains("MODEL_BUDGET_EXHAUSTED"));
+    }
+
+    /**
+     * 多版本回答的真实 SQL 语义（Mockito 测不到 JOIN 与 GROUP BY 的行为）。
+     *
+     * <p>版本过滤必须在 SQL 里：先取页再在内存过滤会让未显示的旧版本占满
+     * LIMIT，翻页出现空页。这里直接打真库，验证三种状态：未选择时全部可见、
+     * 选中后只剩该版本、版本列表按生成顺序返回。
+     */
+    private static void verifyVariantHistory(ChatHistoryService history, ChatMessageWriter writer) {
+        writer.claimOrValidateSession("variants", 42L, "synthetic");
+        long userRow = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
+        writer.writeUserMessage("variants", 42L, "同一问题的原文", null, userRow);
+        writer.writeAssistantMessage("variants", "第一版回答", "text",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId(), userRow, "v1");
+        writer.writeAssistantMessage("variants", "第二版回答", "text",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId(), userRow, "v2");
+        writer.writeAssistantMessage("variants", "第二版推理", "reasoning",
+                com.baomidou.mybatisplus.core.toolkit.IdWorker.getId(), userRow, "v2");
+
+        // 还没选中：两版都返回，用户行带上按生成顺序排列的版本列表
+        var all = history.loadHistory("variants", null, 100).getMessages();
+        assertTrue(all.stream().anyMatch(m -> "第一版回答".equals(m.getContent())));
+        assertTrue(all.stream().anyMatch(m -> "第二版回答".equals(m.getContent())));
+        var userBefore = all.stream().filter(m -> "USER".equals(m.getRole())).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("v1", "v2"), userBefore.getVariantIds());
+        assertNull(userBefore.getSelectedVariantId());
+
+        // 选中 v2：SQL 过滤掉 v1 的行，选中状态回到用户行
+        history.selectVariant("variants", 42L, userRow, "v2");
+        var selected = history.loadHistory("variants", null, 100).getMessages();
+        assertTrue(selected.stream().noneMatch(m -> "第一版回答".equals(m.getContent())),
+                "未选中的版本不能出现在历史里");
+        assertTrue(selected.stream().anyMatch(m -> "第二版推理".equals(m.getContent())),
+                "同一版本组的所有行一起保留");
+        var userAfter = selected.stream().filter(m -> "USER".equals(m.getRole())).findFirst().orElseThrow();
+        assertEquals("v2", userAfter.getSelectedVariantId());
+
+        // 游标分页与版本过滤一致：小页也不被隐藏版本占位
+        var firstPage = history.loadHistory("variants", null, 2).getMessages();
+        assertEquals(2, firstPage.size());
+        assertTrue(firstPage.stream().noneMatch(m -> "第一版回答".equals(m.getContent())));
+
+        // 版本列表与原文回放走服务层（含归属校验）
+        assertEquals(new ChatHistoryService.TurnVariants(java.util.List.of("v1", "v2"), "v2"),
+                history.variants("variants", 42L, userRow));
+        assertEquals("同一问题的原文", history.loadUserTurn("variants", 42L, userRow).text());
+
+        // 选一个不存在的版本必须被拒绝，而不是写进一个假状态
+        assertThrows(com.csust.eyediagnosis.exception.BusinessException.class,
+                () -> history.selectVariant("variants", 42L, userRow, "v9"));
     }
 
     private static ToolStepSink sink(String session, ChatHistoryService history, ToolAuditService audit) {
