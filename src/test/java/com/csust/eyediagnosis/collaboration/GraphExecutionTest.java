@@ -498,9 +498,16 @@ class GraphExecutionTest {
     void databaseLeaseSurvivesHostClockSkew(int seconds) throws Exception {
         streams.close(); runs.close(); coordinator.close();
         Clock hostClock = Clock.offset(Clock.systemUTC(), Duration.ofSeconds(seconds));
-        var dbNow = jdbc.queryForObject("SELECT CURRENT_TIMESTAMP(6)", java.sql.Timestamp.class).toInstant();
-        long measuredSkew = Duration.between(dbNow, hostClock.instant()).toMillis();
-        assertTrue(Math.abs(measuredSkew - seconds * 1000L) < 1000, "Controlled database/host skew: " + measuredSkew);
+        // 宿主机与容器时钟本来就不是同一个：WSL2/Docker 的 VM 时钟相对 Windows
+        // 有稳定的漂移（本机实测 1.3 s 量级）。因此不能直接断言「测得偏移 ≈ ±6 s」——
+        // 那等于把 VM 漂移也算成被测对象的错。先在同一轮里量基线，再断言**增量**；
+        // 容差仍按增量给 1 s，没有放宽。
+        long baseline = skewMillis(Clock.systemUTC());
+        long measuredSkew = skewMillis(hostClock);
+        long injected = measuredSkew - baseline;
+        assertTrue(Math.abs(injected - seconds * 1000L) < 1000,
+                "Controlled database/host skew: injected=" + injected
+                        + "ms, baseline=" + baseline + "ms, measured=" + measuredSkew + "ms");
         ChatModel model = prompt -> { calls.incrementAndGet(); return new ChatResponse(List.of(new Generation(new AssistantMessage(answer.apply(prompt))))); };
         coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model, hostClock,
                 new PatientDraftCoordinator.Budget(8, 90_000, 20_000));
@@ -511,6 +518,12 @@ class GraphExecutionTest {
         // Same real call sequence and unchanged renewal/fencing assertions as the
         // original failure, with the previously uncontrolled clock offset pinned.
         heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders();
+    }
+
+    /** 数据库时钟与给定宿主时钟的差值（毫秒）。同一轮里调用两次即得增量。 */
+    private long skewMillis(Clock host) {
+        var dbNow = jdbc.queryForObject("SELECT CURRENT_TIMESTAMP(6)", java.sql.Timestamp.class).toInstant();
+        return Duration.between(dbNow, host.instant()).toMillis();
     }
 
     @Test void heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders() throws Exception {
