@@ -283,24 +283,25 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 | `2c6f023` | 前端：历史正文可读性、附件身份边界、未提交提示 |
 | `2e7d08e4` | 真实检索路径回归：旧代片段不得成为证据 |
 | `61941e9a` | CI 抓到的用例副作用泄漏：RAG 回归清理线程内资源上下文 |
+| `9992f59` | 复审 E1：淘汰的写不再返回成功（按键记账 + 收尾核对 + 负例/正例） |
 | 本文件所在提交 | 发布文档与合并就绪报告 |
 
-**本地全量 `scripts/verify.sh`（代码树 = `61941e9a`）**
+**本地全量 `scripts/verify.sh`（代码树 = `9992f59`）**
 
 | 门禁 | 结果 |
 |---|---|
-| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 772, Failures: 0, Errors: 0, Skipped: 303` |
+| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 774, Failures: 0, Errors: 0, Skipped: 303` |
 | pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC + 工具审计表 + **终态持久化**） | ✅ `Tests run: 10, Failures: 0, Errors: 0, Skipped: 0` |
 | pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` |
 | 收尾 | ✅ `verify green`，`EXIT=0`，容器自动清理 |
 
-> 同一代码树（`61941e9a`）上共跑过两次全量：**第 1 次** pass 3 出现 1 条失败
+> 上一棵代码树（`61941e9a`）上跑过两次全量：**第 1 次** pass 3 出现 1 条失败
 > `DiagnosisTaskRecoveryTest#resultCannotCommitAfterLeaseExpiresWhileWaitingForRowLock`
 > （`expected: <PROCESSING>` / `actual: <WAITING_REVIEW>`）——这是 **2026-11-10 起就记录在案的既有
 > 时序敏感用例**，不在本轮改动面上（本轮只改了 agent 队列 / 历史 / sink 与前端渲染）；
 > **第 2 次**（上表）该用例 10/10 通过、全套 `303/0/0`、`EXIT=0`。两次结果都保留，不挑好看的那次。
 >
-> 相对上一轮候选的 `764 / 10 / 303`，pass 1 增加 8 条：队列 4（`SessionMessageQueueTest`）、
+> 相对上一轮候选的 `764 / 10 / 303`，pass 1 增加 10 条：队列 6（4 条第二轮复审项 + E1 的负例与正例）、
 > 附件信任净增 2（3 条新用例替换 1 条旧断言）、RAG 真实检索路径 2（`DocumentSearchToolStaleGenerationTest`）。
 > 差额全部来自新增用例，**没有删除或跳过任何既有断言**。
 
@@ -350,5 +351,5 @@ P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.m
 - **2.9 绑定 `f6b08841`**（本轮整改的最后一个代码提交）。其后只有发布文档提交，
   代码树逐字节相同；文档 head 的 CI 以 PR #119 当前 Checks 为准。
 - 2.5–2.8 属于整改过程记录，其中任何一条都**不能**顶替 2.9 对当前树给出的结论。
-- **2.10 绑定 `2e7d08e4`**（本轮整改后的代码树：后端 `c225d64` + 前端 `2c6f023` + RAG 回归 `2e7d08e4`）；
-  其后只有发布文档提交，代码树逐字节相同。2.9 的 `764` 与 2.10 的 `772` 分属不同代码树，不得互相顶替。
+- **2.10 绑定 `9992f59`**（本轮整改后的代码树：后端 `c225d64` + 前端 `2c6f023` + RAG 回归 `2e7d08e4`）；
+  其后只有发布文档提交，代码树逐字节相同。2.9 的 `764` 与 2.10 的 `774` 分属不同代码树，不得互相顶替。

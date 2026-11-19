@@ -15,7 +15,7 @@
 | 项 | 值 |
 |---|---|
 | 候选分支 | `integration/iris-release-candidate`（已推送 origin） |
-| **候选代码 SHA** | `2e7d08e4`（第三轮整改的最后一个代码提交；其后仅 `docs/**`） |
+| **候选代码 SHA** | `9992f59`（第三轮整改 + E1 修复的最后一个代码提交；其后仅 `docs/**`） |
 | 基线 | `origin/ui@1ff9c71c` |
 | 建议版本号 | `v1.1.0-rc.1`（编号不变；本轮整改不新增功能） |
 | 数据库迁移 | 最高 `V29__knowledge_index_version.sql`（相对基线**新增 1 条**，只加一列可空列） |
@@ -37,11 +37,11 @@
 | P1-04 | STILL_OPEN → 已整改（文档） | 手册重写四项验收与逐表对账；测试改名 | `FlywayMySqlIntegrationTest` 5/5 |
 | P1-05 | STILL_OPEN → 已整改 | 最后模型节点仍要求工具时追加终止说明 | `AgentBudgetExhaustionTest` 新场景 + 真实 MySQL 用例 |
 
-## 3. 已完成的验证（绑定 `2e7d08e4`）
+## 3. 已完成的验证（绑定 `9992f59`）
 
 | 门禁 | 结果 |
 |---|---|
-| 本地 `scripts/verify.sh` 三段 | ✅ pass1 `772/0/0`（303 skip 按设计）、pass2 `10/0/0`、pass3 `303/0/0`，`verify green` |
+| 本地 `scripts/verify.sh` 三段 | ✅ pass1 `774/0/0`（303 skip 按设计）、pass2 `10/0/0`、pass3 `303/0/0`，`verify green` |
 | Web 单测 / 类型 / Lint / 构建 | ✅ 97 文件 1038 用例；`typecheck`/`lint`/`build` exit 0 |
 | 工作树归档故障注入 | ✅ 87 断言 / 12 例 |
 | GitHub Actions | 见 `verification-matrix.md` §2.10（本轮） / §2.9（上一轮，含一次 `docs-contract` 失败与修复记录） |

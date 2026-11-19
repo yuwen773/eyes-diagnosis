@@ -190,18 +190,16 @@ D1–D4 的改法本身被确认为真实：毒化隔离与有界等待有效、
 
 | 编号 | 级别 | 问题 | 位置 | 处置 |
 |---|---|---|---|---|
-| E1 | 中高 | 被 `evictOverflow` / `evictExpired` 淘汰的键不会再被尝试，其 flush **正常返回** → 调用方当成「已提交」并发出终态帧，而该行不在库里。触发需要病态负载（单会话 15s 内约 257 条排队写） | `SessionMessageQueue#flush` / `#evictOverflow` / `#evictExpired` | **未改**，登记为已知边界（§10.3）。修复思路见下 |
+| E1 | 中高 | 被 `evictOverflow` / `evictExpired` 淘汰的键不会再被尝试，其 flush **正常返回** → 调用方当成「已提交」并发出终态帧，而该行不在库里。触发需要病态负载（单会话 15s 内约 257 条排队写） | `SessionMessageQueue#flush` / `#evictOverflow` / `#evictExpired` | **已修复**：淘汰改为**按键记账**（`droppedKeys`，带 TTL 上界），`flush` 收尾显式核对目标键——「不在待写集合」不再等于「已提交」；`writePending` 对已淘汰的键同样失败。新增负例 `anEvictedWriteNeverReportsSuccess`（去掉修复即失败，已验证非空转）与正例 `aCommittedWriteStillReportsSuccess` |
 | E2 | 中 | 「未提交」判定把**正在排队**的写也算进去，可能在无缺失时提示「历史可能不完整」 | `SessionMessageQueue#recoveryOutcome` | 未改；登记 |
 | E3 | 中 | 一次淘汰后该会话的「可能不完整」标记不会自行清除（只增不减），前端每次打开都提示 | 同上 + `web/src/pages/AgentPage.tsx` | 未改；登记 |
 | E4 | 中低 | 历史读取的恢复等待继承写入预算（默认 15s）：数据库退化时「打开会话」可能等满 15s | `ChatHistoryService#loadHistory` → `recoverPending` → `await` | 未改；登记 |
 | E5 | 低中 | 第二次落库失败时 `tryEmitError` 返回 `FAIL_TERMINATED` 并抛 `EmissionException`，会中断 `closePending` 的取消循环（其余未确认调用失去审计终态） | `ToolStepSink#emit` / `#closePending` | 未改；登记 |
 | E6 | 低 | `sourcesExpired` 只有服务端写、前端不读；`persistenceFailed()` 无调用方；同键重提交被 `putIfAbsent` 静默丢弃；`pendingWritesStayBoundedAfterManyFailures` 对「上限」的断言近乎空转；D2 的「落库在锁外」没有直接回归用例 | 见复审报告 | 未改；登记 |
 
-**为什么不在本轮改**：本轮收口的边界是「完成已开始的验证与交付」，不是再开一轮整改。
-E1 直接触及「终态不先发」这条保证，但它需要病态负载才可达，且**不是本轮整改引入的**（淘汰机制本身就是本轮加的，
-但这条路径在加淘汰时就存在）。半成品修复（在 `flush` 末尾对目标键补 `wasDropped` 判定）已存为补丁
-`target/reviewer-findings-wip.patch`（构建产物目录，不入库）；该补丁**未完成、未测试、未提交**，
-不允许当作已完成的整改引用。
+**E2–E6 不在本轮改**：本轮收口的边界是「完成已开始的验证与交付」，不是再开一轮整改。
+E1 是唯一触及「终态不先发」这条保证的一条，已按 owner 要求单独修复并补了负例；
+E2–E6 只影响提示准确度、读取时延与异常路径，已逐条登记为 §10.3 的已知边界。
 
 ### 10.3 结论
 
