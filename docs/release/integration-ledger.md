@@ -332,3 +332,37 @@ SHA-256 为 `e47efac42cb2925d9ad3c665d896af322f5245c1c403a8f7d6f785360e83b234`�
 本地原始证据位于工作树忽略目录 `target/flaky-quantification-20261119/`、
 `target/flaky-probe-20261119.log`、`target/flaky-ready-check-20261119.log` 与
 `target/flaky-ready-quantification-20261119/`；全量日志为 `target/verify-flaky-20261119.log`。
+
+## 11. 第二轮 NO_GO 整改（2026-11-19）
+
+第二轮独立复验（`D:\Work\code\iris-codex-audit-round2\codex-independent-review-round2.md`）
+对 `03b14efd` 判 **NO_GO**：P0-01 CLOSED，其余 6 条 STILL_OPEN。本轮只做定向整改，
+**不重启全仓 PR 集成**、不新建工作树、不合并 PR #119。
+
+### 11.1 逐条处置
+
+| 编号 | 审查方最小任务 | 本轮实现 | 提交 |
+|---|---|---|---|
+| P0-02 | 状态/枚举失败不得进入删除；删前比对内容清单与 HEAD | 归档「可证实才算成功」：显式判定每次 git 查询、真实导入 bundle、原始字节对账、删除前再比对 | `c0047093`（上一轮已提交）+ `f6b08841`（夹具） |
+| P1-01 | 中断保留为取消并取消传输 Future；写失败可恢复；实时映射补 `errorCategory` | `MCPManager` 中断→`cancel(true)`；`ToolStepSink` 先提交后发送；`SessionMessageQueue` 可等待可恢复；前端实时映射补齐字段 | `623c9d57`、`9ad4f421` |
+| P1-02 | 用处理版本区分向量、按已发布版本检索、清理失败不得被 READY 行重新接纳 | 服务端 `indexVersion` + `beginIndex/finishIndex` CAS + 检索与历史引用按版本准入 | `50a00205` |
+| P1-03 | 附件类型与已校验引用放服务端字段，历史按当前用户复核，正文始终当正文 | `subType` 列 + `authorizedViewUrl` 逐张复核 + 受保护取图端点 + 前端只认该路径 | `04041575` |
+| P1-04 | 指定安全回滚产物与限制条件，恢复按停写源库逐表对账，修正测试名称与证据范围 | `upgrade-rollback-manual.md` 重写 §1/§2/§4；迁移矩阵改名与范围声明 | 本文件所在提交 |
+| P1-05 | 追踪最后模型节点是否仍要求工具，预算截断时追加并持久化说明，不增加调用额度 | `CountingChatModel` 记录最后一次调用是否要求工具；`closingNotice` 据此判定 | `623c9d57` |
+
+### 11.2 本轮门禁（绑定 `f6b08841`）
+
+| 门禁 | 结果 |
+|---|---|
+| `scripts/verify.sh` 三段 | ✅ pass1 `762/0/0`（303 skip 按设计）、pass2 `10/0/0`、pass3 `303/0/0`，`verify green`（`EXIT=0`） |
+| Web 单测 / 类型 / Lint / 构建 | ✅ 97 文件 1039 用例；`typecheck` / `lint` / `build` 全部 exit 0 |
+| 工作树归档故障注入 | ✅ 87 断言 / 12 例 |
+| 逐 SHA 明细 | `verification-matrix.md` §2.9 |
+
+### 11.3 本轮不做的事（边界）
+
+- **未合并 PR #119**、未改 `ui` / `master`、未 force push、未移动冻结 tag。
+- **未开启任何生产临床能力**：协作与正式复核仍默认关闭。
+- **未重跑真实 DashScope**：G-3 的原始证据已在上轮收尾时删除，本轮无凭据、也不伪造证据；
+  G-3 与 G-5 仍 OPEN，见 `release-candidate-readiness.md` §4。
+- **未重启全仓集成**，也未新建工作树；本轮全部在 `integration-rc` 工作树内完成。

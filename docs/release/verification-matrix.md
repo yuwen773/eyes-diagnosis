@@ -9,7 +9,7 @@
 |---|---|
 | 分支 | `integration/iris-release-candidate` |
 | 基线 | `origin/ui@1ff9c71c` |
-| 当前 HEAD | `534108b0` 起的代码树（`03b14efd` + 1 个测试夹具修复；Draft PR #119） |
+| 当前 HEAD | `f6b08841` 起的代码树（第二轮 NO_GO 整改，Draft PR #119） |
 
 ## 2. 已完成的验证（按 SHA）
 
@@ -58,7 +58,7 @@
 | pass 2/3 MySQL 集成门禁 | ✅ 绿 |
 | pass 3/3 隔离库协作套件 | ⚠️ **未完成**：运行中被系统因内存不足终止（宿主仅剩 0.5 GB），不是测试失败 |
 
-### 2.5 `6ff5a889`（当前 HEAD）
+### 2.5 `6ff5a889`（历史候选）
 
 **本地全量 `scripts/verify.sh`（三段）**
 
@@ -125,11 +125,16 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 > 已单独修复并留痕：新 Flyway 用例用了 CI 未授权的库名前缀、skip 契约计数未同步。
 > 没有放宽任何门禁（见提交 `03b14efd`）。
 
-### 2.7 `03b14efd` · G-3 真实外部集成（真 DashScope → SSE 全链路）
+### 2.7 `03b14efd` · G-3 真实外部集成（真 DashScope → SSE 全链路，**原始证据未留存**）
 
 上一版只跑到「提供方不可用时的失败出口」。本轮拿到**真实 DashScope 凭据**（取自环境变量
 `DASHSCOPE_API_KEY`），在候选代码树上跑完 5 个真实链路场景。凭据只经**仓库外**的临时配置目录
 注入（`SPRING_CONFIG_ADDITIONAL_LOCATION`），仓库内未新增任何凭据文件；跑完即删除临时目录与启动日志。
+
+> **范围声明（第二轮审查后补）**：本节结论是**自述记录**。运行时采集的 SSE 帧、会话历史行、
+> `t_agent_tool_audit` 行与提供方调用记录**在收尾时一并删除**，独立审查只能读到本表，
+> 无法交叉核验；它也绑定旧代码树 `03b14efd`，不是当前候选（2.9）的证据。
+> 因此本节**不构成**「真实外部集成已通过」的结论，真实视觉成功路径与真实 COS 上传仍未执行。
 
 | 项 | 值 |
 |---|---|
@@ -214,11 +219,61 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 预算 / 检查点 / provider 次数 / fencing token 断言逐条未改。生产 `src/main` 仍与 `03b14efd`
 相同；分段读数、复跑方式与源码摘要见 ledger §10.6。
 
+### 2.9 `f6b08841` · 第二轮 NO_GO 整改（当前候选）
+
+第二轮独立复验对象为 `03b14efd`（代码）/ `dfca3801`（文档），结论 **NO_GO**：
+P0-01 CLOSED，另 6 条 STILL_OPEN。整改台账见 `codex-no-go-remediation.md` §9；
+本轮提交（按主题）：
+
+| 提交 | 主题 |
+|---|---|
+| `623c9d57` | 工具终态先提交再发送，取消与中断不再记为超时 |
+| `50a00205` | RAG 文档索引版本作用域（V29） |
+| `04041575` | 附件身份移到服务端字段，历史按当前用户复核 |
+| `9ad4f421` | 终态持久化用例接入三段验证与 surefire 契约 |
+| `f6b08841` | 工作树夹具钉死 `autocrlf`（不改断言） |
+| 本文件所在提交 | 发布文档与合并就绪报告 |
+
+**本地全量 `scripts/verify.sh`（代码树 = `f6b08841`）**
+
+| 门禁 | 结果 |
+|---|---|
+| pass 1/3 完整 `mvn test`（一次性 MySQL 8 + Redis + `ci` profile） | ✅ `Tests run: 762, Failures: 0, Errors: 0, Skipped: 303` |
+| pass 2/3 MySQL 集成门禁（空库 Flyway + 直连 JDBC + 工具审计表 + **终态持久化**） | ✅ `Tests run: 10, Failures: 0, Errors: 0, Skipped: 0` |
+| pass 3/3 隔离库协作套件 | ✅ `Tests run: 303, Failures: 0, Errors: 0, Skipped: 0` |
+| 收尾 | ✅ `verify green`，`EXIT=0`，容器自动清理 |
+
+> 与第二轮审查在同一三段上跑的 `751 / 9 / 303` 相比，pass 1 增加 11 条、pass 2 增加 1 条，
+> 差额全部来自本轮新增用例（终态提交、MCP 取消分类、附件信任、预算铺垫、索引版本），
+> **没有删除或跳过任何既有用例**；303 个 skip 仍是按设计的隔离库门控。
+
+**前端（同一棵树）**
+
+| 门禁 | 结果 |
+|---|---|
+| Web 单测（串行，`--no-file-parallelism`） | ✅ **97 文件 / 1039 用例**，`TEST_EXIT=0` |
+| 类型检查 | ✅ `tsc -b`，`TYPECHECK_EXIT=0` |
+| Lint | ✅ `eslint .`，`LINT_EXIT=0` |
+| 生产构建 | ✅ `tsc -b && vite build`，`BUILD_EXIT=0`（仅保留大 chunk 提示） |
+
+**工作树归档故障注入（P0-02）**
+
+| 门禁 | 结果 |
+|---|---|
+| `scripts/tests/worktree-hygiene-failclosed.sh` | ✅ 87 断言 / 12 例全过（含「状态查询失败」「未跟踪文件枚举失败」「归档期间再修改」「bundle 截断」四种不得删除的反例） |
+
+**GitHub Actions（head `f6b08841`，run 44504778424）**
+
+| 结果 | 明细 |
+|---|---|
+| ⚠️ **20/21**：`docs-contract` 失败，其余全过 | 失败原因是**真实缺陷、不是抖动**：`scripts/check_steering_docs.py` 报 `CLAUDE.md: states V28, but migrations reach V29` —— 新增 V29 后没同步项目说明里的迁移 head。已在本报告所在提交修正（`CLAUDE.md` → V29），本地同一门禁复跑通过；**失败 attempt 保留，不重写记录** |
+| ✅ 通过 | `python`、`watchdog`、`backend-compile`、`backend-unit`、`collaboration-mysql`、`graph-execution-mysql`、`flyway-mysql ×2`（含新终态持久化用例）、`product-contract`、`frontend`、`web`、`web-e2e-system-states`、`issue17–24-mysql`、`issue24-evaluation` |
+
 ## 3. 未执行 / 未完成的门禁
 
 | 门禁 | 状态 | 原因 |
 |---|---|---|
-| 真实后端链路（真 DashScope → SSE 全链路） | ✅ **已执行**（2.7） | 真实凭据已跑完 5 个场景；**视觉工具成功路径、真实 COS 上传、生产等价性仍未验证**，见 2.7 的「未能覆盖的部分」 |
+| 真实后端链路（真 DashScope → SSE 全链路） | ⚠️ **只作自述记录**（2.7） | 5 个场景确实跑过，但**原始证据（SSE 帧 / 历史行 / 审计行 / 提供方调用记录）在验证后即删除**，独立审查无法交叉核验；视觉工具成功路径、真实 COS 上传、生产等价性从未验证 |
 | 双主题 / 响应式**截图**证据 | ❌ 未执行（断言式已跑） | 现有 light/dark × 390/768/1440 只验证对比度与版式断言；Codex 侧 72 张截图需复核覆盖度/SHA/产物后才能作为 G-5 证据 |
 | Python / 算法侧 | —（不适用） | `algorithm/`、`frontend/` 相对基线零改动（CI `python` job 仍跑过） |
 
@@ -232,6 +287,7 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 - **真实外部集成通过 ≠ 真实临床能力通过**：2.7 证明的是工程链路在真实提供方下行为正确，
   不构成任何疗效或安全性结论；视觉工具成功路径与真实对象存储仍未验证。
 - 医疗边界保持默认关闭：医生正式复核写入门禁、多 Agent 生产开关均未改动。
-- 2.8 的历史结果绑定 `534108b0`，收尾结果绑定 `5920d5cd`。当前代码树 = `03b14efd`
-  + 2 个**测试夹具**提交（`534108b0` / `5920d5cd`），生产代码仍逐字节相同：
-  `git diff 03b14efd HEAD -- src/main` 为空。后续文档 head 的 CI 以 PR #119 当前 Checks 为准。
+- 2.8 的历史结果绑定 `534108b0`，收尾结果绑定 `5920d5cd`。
+- **2.9 绑定 `f6b08841`**（本轮整改的最后一个代码提交）。其后只有发布文档提交，
+  代码树逐字节相同；文档 head 的 CI 以 PR #119 当前 Checks 为准。
+- 2.5–2.8 属于整改过程记录，其中任何一条都**不能**顶替 2.9 对当前树给出的结论。

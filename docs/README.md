@@ -37,6 +37,7 @@
 | `release/upgrade-rollback-manual.md` | 部署前核对、升级步骤与回滚路径（**不授权部署**） |
 | `release/codex-no-go-remediation.md` | 查 Codex NO_GO（2 P0 + 5 P1）逐条整改的根因、提交与回归证据 |
 | `release/release-candidate-readiness.md` | 查终态判定与仍未关闭的阻断 |
+| `release/merge-readiness-report.md` | 查本轮接管的整改、门禁结果与「现在能不能合并」的逐项判定 |
 
 ## 知识库
 

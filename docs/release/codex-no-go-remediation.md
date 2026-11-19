@@ -18,6 +18,10 @@
 | P1-04 V17 升级后的回滚指引与迁移路径冲突 | 已修（文档 + 实测用例） | `33bdf2a7` | `FlywayMySqlIntegrationTest` 新增 2 例，本机 MySQL 8 隔离 schema 5/5 绿 | 待复验 |
 | P1-05 模型预算耗尽以正常结束掩盖未生成回答 | 已修 | `c3a56ae9` | `AgentBudgetExhaustionTest`（3，真实 `ReactAgent` 图） | 待复验 |
 
+> **第二轮复验结果（2026-11-19）**：P0-01 **CLOSED**；其余 6 条第一轮修法未覆盖全部路径，
+> 判 **STILL_OPEN**，本轮按审查方给出的最小任务重新整改，逐条改法与证据见 §9。
+> 本表 §1–§7 保留第一轮记录不改写，只作历史。
+
 ## 1. P0-01 · 视觉工具把无效上游输出登记为成功
 
 - **根因**：`EyeImageAnalyzerTool` 用宽松解析把视觉模型返回的任何文本都拼成 `EyeAnalysisResult`
@@ -118,10 +122,31 @@
 
 ## 8. 尚未解除的边界（不作通过声明）
 
-- **G-3 真实 DashScope**：✅ 已于 2026-11-19 用真实凭据执行（5 个场景：流式问答 / 真工具成功且真 RAG 命中 /
+- **G-3 真实 DashScope**：已于 2026-11-19 用真实凭据执行（5 个场景：流式问答 / 真工具成功且真 RAG 命中 /
   真工具失败且四出口一致 / SSE 断流后终态仍落库 / 用户文本伪装信封不被当作附件），
-  证据见 `verification-matrix.md` §2.7。**但视觉工具成功路径与真实对象存储上传仍未验证**
-  （占位 COS 凭据 → 无法上传真实影像，`qwen-vl-plus` 从未被真实调用）；
-  外部集成通过**不等于**真实临床能力通过。
-- **G-5 双主题响应式截图**：以 Codex 侧 72 张截图为准，需复核覆盖度/质量/SHA/产物一致性。
+  证据见 `verification-matrix.md` §2.7。**但原始链路证据（SSE 帧、历史行、审计行、提供方调用记录）
+  在验证后即删除，第二轮独立审查只能读到自述与汇总表，无法交叉核验**——按「不同 SHA / 不可核验的
+  证据不能顶替」的口径，G-3 的工程链路结论只作自述记录，**不作为已通过的外部集成证据**；
+  视觉工具成功路径与真实对象存储上传仍未验证（占位 COS 凭据 → 无法上传真实影像，
+  `qwen-vl-plus` 从未被真实调用）。外部集成通过**不等于**真实临床能力通过。
+- **G-5 双主题响应式截图**：仍 OPEN。旧 72 张截图属于首轮 `7dc3422b` 的 Vite 验收，缺少可独立确认的
+  构建内容指纹，不能整体升级为新 SHA 证据；断言式门禁（对比度 / 版式）已跑，但不等于截图证据。
 - 医疗默认值与冻结基线未改动：协作默认关闭、医生复核写入保持关闭、冻结 tag 未移动。
+
+## 9. 第二轮独立复验（2026-11-19）
+
+第二轮审查报告：`D:\Work\code\iris-codex-audit-round2\codex-independent-review-round2.md`，
+审查对象 `03b14efd`（代码）/ `dfca3801`（文档），结论 **NO_GO**：P0-01 CLOSED，
+其余 6 条 **STILL_OPEN**。第二轮的缺口不是「没修」，而是首轮修法没覆盖到的路径。
+
+| 编号 | 第二轮指出的缺口 | 本轮改法 | 回归证据 |
+|---|---|---|---|
+| P0-02 | 状态查询失败、未跟踪文件枚举失败、归档期间文件再被修改、bundle 包截断，四种情况仍能进入删除 | 归档改为「可证实才算成功」：所有 git 查询结果显式判定、在空仓库真实导入 bundle 并核对固定 HEAD、按原始字节比对内容清单、删除前再比对当前 HEAD 与快照 | `scripts/tests/worktree-hygiene-failclosed.sh`（87 断言 / 12 例，含四种负例） |
+| P1-01 | 线程中断仍被记成 TIMEOUT、Future 未取消；终态在历史提交前就发出；前端实时映射丢 `errorCategory` | `MCPManager` 中断→`cancel(true)` + 重设中断标志 + `CancellationException`；`ToolStepSink` **先提交后发送**，提交失败不发终态帧而发流错误；`SessionMessageQueue` 提供可等待、可恢复的按会话串行写；实时 DTO 补 `errorCategory` | `ToolTerminalCommitTest`、`McpTerminalCategoryTest`、`ToolFailureCategoryTest`、`ToolTerminalPersistenceMySqlIntegrationTest`（真实 MySQL 注入写失败 → 断流 → 重读恢复 → 迟到结果不覆盖）、`agentStream.terminal.test.ts`、`ThoughtLine.terminal-wire.test.tsx`（TIMEOUT / CANCELLED / INVALID_OUTPUT 实时与回放同渲染） |
+| P1-02 | 清理失败后，较短成功重试会重新接纳上一代残留片段 | 每次处理生成服务端 `indexVersion`：`beginIndex`/`finishIndex` 带版本 CAS，片段与资源带版本，检索只认「READY + 当前版本」，历史资源引用按当前用户 + 版本复核 | `DocumentProcessingServiceChunkRollbackTest`、`DocumentSearchToolReadyOnlyTest`、`DocumentSearchToolOwnershipTest`、`FlywayMySqlIntegrationTest`（V29）、探测器 `scripts/tests/IrisRagGenerationProbe.java` |
+| P1-03 | 公开 `kind` 仍是可伪造的信任凭证；任意第三方同形地址仍获前端放行 | 附件身份移入客户端不可写的 `subType` 列；历史读取逐张按**当前用户**复核上传归属；上传接口只返回 `/api/agent/image/view/<file>`，取图端点服务端复核后 302；前端只认该受保护路径 | `AgentAttachmentTrustTest`、`ChatHistoryServiceUserMessageTest`、`DiagnosisAgentImageReferenceTest`、`agentAttachmentTrust.test.ts`、`agentResources.test.ts`、`UserMessage.test.tsx` |
+| P1-04 | 旧 JAR 虽能启动，但会恢复正式复核写入与推理输出；手册未要求安全产物；恢复库差异核对有缺口 | 手册改成四项分别验收并写明「旧产物禁止切流」；回滚只能恢复到新库，按**停写源库**逐表对账新增/更新/删除（含 V18–V29 数据）；测试名改为只声明迁移解析兼容 | `docs/release/upgrade-rollback-manual.md` §1/§2/§4；`#oldMigrationSetAcceptsFutureVersionsWithoutCertifyingArtifactSafety`；探测器 `scripts/tests/IrisRollbackDataProbe.java` |
+| P1-05 | 同一模型节点先铺垫文字再请求工具，预算截断后仍无终止说明 | `CountingChatModel` 记录**最后一次**模型调用是否仍要求工具；截至预算耗尽仍要求工具时，追加并持久化终止说明（`finishReason=TOOL_BUDGET_EXHAUSTED / MODEL_BUDGET_EXHAUSTED`），保留既有铺垫 | `AgentBudgetExhaustionTest`（新增「铺垫后请求工具」场景）、`ToolTerminalPersistenceMySqlIntegrationTest#verifyBudgetTurn` |
+
+P0-01 未回退：视觉工具无效输出仍走 `INVALID_OUTPUT` 失败路径，四出口一致。
+
