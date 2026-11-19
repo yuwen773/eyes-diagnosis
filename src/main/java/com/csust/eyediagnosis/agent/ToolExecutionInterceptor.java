@@ -4,6 +4,9 @@ import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallHandler;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallRequest;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolCallResponse;
 import com.alibaba.cloud.ai.graph.agent.interceptor.ToolInterceptor;
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
+import com.csust.eyediagnosis.utils.SensitiveDataRedactor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -11,6 +14,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -26,8 +30,27 @@ import java.util.TreeSet;
  *       secrets) are never read, logged or persisted. A shared low-entropy value
  *       cannot be recovered from a key-name digest, and the HMAC key is server-side.</li>
  * </ul>
+ *
+ * <p><b>失败语义</b>：本类只陈述自己观察到的事实。它向内层 handler 要结果时，
+ * 异常会原样抛出，由最外层的
+ * {@link com.csust.eyediagnosis.agent.guard.ToolFailureBoundaryInterceptor}
+ * 转成 {@code ToolCallResponse.error(...)}。不要在这里把异常吞成正常结果——
+ * 那正是 1.1.2.2 内置 {@code ToolExecutionException} 处理会犯的错。
  */
 public final class ToolExecutionInterceptor extends ToolInterceptor {
+
+    /** 工具正文出站前的硬上限：历史行有长度约束，整段 JSON 结果不适合原样下发。 */
+    static final int MAX_TOOL_RESULT_CHARS = 32_000;
+
+    /**
+     * 字节上限，比字符上限更硬。
+     *
+     * <p>历史表的 {@code content} 列在 V27 之前建库的实例上仍是 {@code TEXT}
+     * （65,535 <b>字节</b>）——V27 的 {@code CREATE TABLE IF NOT EXISTS} 不会改造旧表。
+     * 32,000 个中文字符约 96 KB，写进去会触发 1406，而且失败发生在会话写队列的
+     * 异步任务里，用户只看到「刷新后这一步变成未确认」。这里按 UTF-8 字节再兜一刀。
+     */
+    static final int MAX_TOOL_RESULT_BYTES = 48_000;
 
     private final ToolStepSink sink;
     private final ObjectMapper json = new ObjectMapper();
@@ -50,19 +73,90 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
         String argsDigest = digestOfKeyNames(request.getArguments());
         String keyNames = keyNamesOf(request.getArguments());
 
+        // 上一次调用若异常退出可能留下残渣：开始前清空，避免串到这一次。
+        ToolResourceContext.drain();
         sink.started(id, name, argsDigest, keyNames);
         try {
             ToolCallResponse response = handler.call(request);
             boolean failed = response == null || response.isError();
-            ToolStepContract.ErrorCategory category = failed
-                    ? ToolStepContract.ErrorCategory.TOOL_EXCEPTION
-                    : ToolStepContract.ErrorCategory.NONE;
-            sink.finished(id, name, !failed, category);
+            if (failed) {
+                ToolResourceContext.drain();
+                // 失败/超时/中断的调用不带走任何资源：侧栏不拿它当证据。
+                // 预算拒绝也走这里——工具确实没有产出结果。
+                //
+                // 类别优先从响应文本里的稳定标记读回：MCP 工具的异常在到达这里之前
+                // 已被框架转成错误字符串，异常类型丢了；只按 isError() 一律记
+                // TOOL_EXCEPTION 会把「超时」和「取消」抹平。
+                ToolStepContract.ErrorCategory category = response == null
+                        ? ToolStepContract.ErrorCategory.TOOL_EXCEPTION
+                        : java.util.Optional.ofNullable(
+                                ToolStepContract.categoryFromText(response.getResult()))
+                        .orElse(ToolStepContract.ErrorCategory.TOOL_EXCEPTION);
+                sink.finished(id, name, false, category);
+                if (response != null && ToolStepContract.categoryFromText(response.getResult()) != null) {
+                    // 标记只服务于观察者，不把内部标记塞给模型。
+                    return ToolCallResponse.error(id, name,
+                            ToolStepContract.stripErrorTag(response.getResult()));
+                }
+            } else {
+                // 资源只来自成功调用；工具不知道框架分配的 toolCallId，在这里补齐。
+                List<ResourceRef> resources = ToolResourceContext.drain().stream()
+                        .map(ref -> ref.withToolCallId(id))
+                        .toList();
+                sink.finished(id, name, true, ToolStepContract.ErrorCategory.NONE,
+                        resources, outboundContent(response));
+            }
             return response;
         } catch (RuntimeException e) {
+            ToolResourceContext.drain();
             sink.finished(id, name, false, ToolStepContract.categorize(e, false));
             throw e;
         }
+    }
+
+    /** 出站前统一脱敏 + 截断；两种处理都在这里做一次，避免各处口径漂移。 */
+    static String outboundContent(ToolCallResponse response) {
+        if (response == null || response.getResult() == null) {
+            return "";
+        }
+        return truncate(SensitiveDataRedactor.redact(response.getResult()));
+    }
+
+    private static String truncate(String content) {
+        String cut = byChars(content);
+        return byBytes(cut, cut.length() < content.length());
+    }
+
+    private static String byChars(String content) {
+        if (content.length() <= MAX_TOOL_RESULT_CHARS) {
+            return content;
+        }
+        int cut = MAX_TOOL_RESULT_CHARS;
+        // 切点落在代理对中间会留下孤立高代理：浏览器渲染成替换符，
+        // utf8mb4 列也可能拒收整行历史。
+        if (Character.isHighSurrogate(content.charAt(cut - 1))) {
+            cut -= 1;
+        }
+        return content.substring(0, cut) + "\n…（工具结果过长，已截断）";
+    }
+
+    /** 再按 UTF-8 字节收敛一次；只在中文字符边界切断，不留半个码点。 */
+    private static String byBytes(String content, boolean alreadyTruncated) {
+        byte[] utf8 = content.getBytes(StandardCharsets.UTF_8);
+        if (utf8.length <= MAX_TOOL_RESULT_BYTES) {
+            return content;
+        }
+        int bytes = 0;
+        int end = 0;
+        while (end < content.length()) {
+            int codePoint = content.codePointAt(end);
+            int width = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8).length;
+            if (bytes + width > MAX_TOOL_RESULT_BYTES) break;
+            bytes += width;
+            end += Character.charCount(codePoint);
+        }
+        String suffix = alreadyTruncated ? "" : "\n…（工具结果过长，已截断）";
+        return content.substring(0, end) + suffix;
     }
 
     /** Sorted argument key names only. Malformed JSON degrades to a fixed marker. */

@@ -98,7 +98,7 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
                 .filter(id -> !currentIds.contains(id))
                 .toList();
 
-        vectorStore.add(documents);
+        EmbeddingBatchWriter.add(vectorStore, documents);
         if (!staleIds.isEmpty()) {
             try {
                 vectorStore.delete(staleIds);

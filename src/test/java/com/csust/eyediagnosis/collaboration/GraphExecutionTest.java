@@ -498,9 +498,16 @@ class GraphExecutionTest {
     void databaseLeaseSurvivesHostClockSkew(int seconds) throws Exception {
         streams.close(); runs.close(); coordinator.close();
         Clock hostClock = Clock.offset(Clock.systemUTC(), Duration.ofSeconds(seconds));
-        var dbNow = jdbc.queryForObject("SELECT CURRENT_TIMESTAMP(6)", java.sql.Timestamp.class).toInstant();
-        long measuredSkew = Duration.between(dbNow, hostClock.instant()).toMillis();
-        assertTrue(Math.abs(measuredSkew - seconds * 1000L) < 1000, "Controlled database/host skew: " + measuredSkew);
+        // 宿主机与容器时钟本来就不是同一个：WSL2/Docker 的 VM 时钟相对 Windows
+        // 有稳定的漂移（本机实测 1.3 s 量级）。因此不能直接断言「测得偏移 ≈ ±6 s」——
+        // 那等于把 VM 漂移也算成被测对象的错。先在同一轮里量基线，再断言**增量**；
+        // 容差仍按增量给 1 s，没有放宽。
+        long baseline = skewMillis(Clock.systemUTC());
+        long measuredSkew = skewMillis(hostClock);
+        long injected = measuredSkew - baseline;
+        assertTrue(Math.abs(injected - seconds * 1000L) < 1000,
+                "Controlled database/host skew: injected=" + injected
+                        + "ms, baseline=" + baseline + "ms, measured=" + measuredSkew + "ms");
         ChatModel model = prompt -> { calls.incrementAndGet(); return new ChatResponse(List.of(new Generation(new AssistantMessage(answer.apply(prompt))))); };
         coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model, hostClock,
                 new PatientDraftCoordinator.Budget(8, 90_000, 20_000));
@@ -511,6 +518,12 @@ class GraphExecutionTest {
         // Same real call sequence and unchanged renewal/fencing assertions as the
         // original failure, with the previously uncontrolled clock offset pinned.
         heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders();
+    }
+
+    /** 数据库时钟与给定宿主时钟的差值（毫秒）。同一轮里调用两次即得增量。 */
+    private long skewMillis(Clock host) {
+        var dbNow = jdbc.queryForObject("SELECT CURRENT_TIMESTAMP(6)", java.sql.Timestamp.class).toInstant();
+        return Duration.between(dbNow, host.instant()).toMillis();
     }
 
     @Test void heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders() throws Exception {
@@ -677,11 +690,27 @@ class GraphExecutionTest {
     }
 
     private Process child(String id, String stage, String feedback, java.nio.file.Path marker, java.nio.file.Path callsLog, java.nio.file.Path output) throws Exception {
-        return new ProcessBuilder(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                "-cp", System.getProperty("java.class.path"), RecoveryWorker.class.getName(), id, stage, feedback, marker.toString(), callsLog.toString())
+        var ready = output.resolveSibling(output.getFileName() + ".ready");
+        Process process = new ProcessBuilder(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                "-cp", System.getProperty("java.class.path"), RecoveryWorker.class.getName(), id, stage, feedback, marker.toString(), callsLog.toString(), ready.toString())
                 .redirectErrorStream(true).redirectOutput(output.toFile()).start();
+        try {
+            // JVM/class loading and connection setup are fixture work, not graph recovery. Keep
+            // bootstrap bounded separately; behavior still has 10 s and the whole case still 30 s.
+            await(() -> java.nio.file.Files.exists(ready) || !process.isAlive());
+            assertTrue(java.nio.file.Files.exists(ready), () -> read(output));
+            return process;
+        } catch (Exception | AssertionError failure) {
+            process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS);
+            throw new AssertionError("Recovery child bootstrap failed: " + read(output), failure);
+        }
     }
     private static String read(java.nio.file.Path path) { try { return java.nio.file.Files.readString(path); } catch (Exception e) { return e.toString(); } }
+    /** Asks the lease's own authority, not this JVM's clock, whether another executor still holds it. */
+    private static boolean leaseLive(String taskId) {
+        var live = jdbc.queryForList("SELECT leaseUntil>CURRENT_TIMESTAMP(6) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId);
+        return !live.isEmpty() && Boolean.TRUE.equals(live.getFirst());
+    }
 
     /** Another JVM connects only to the opt-in disposable schema; it cannot reset the fixture. */
     public static class RecoveryWorker {
@@ -704,7 +733,14 @@ class GraphExecutionTest {
                 } catch (Exception e) { throw new RuntimeException(e); }
             };
             try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model)) {
-                coordinator.setCollaborationEvents(new CollaborationEvents(jdbc)); coordinator.run(args[0]);
+                coordinator.setCollaborationEvents(new CollaborationEvents(jdbc));
+                java.nio.file.Files.writeString(java.nio.file.Path.of(args[5]), "ready");
+                // The lease authority is the database clock (PatientDraftCoordinator.takeLease).
+                // Docker Desktop can step its VM clock backwards after the fixture expires the
+                // lease. Wait with that same authority, within the parent's 10 s behavior budget.
+                long claimableBy = System.nanoTime() + TimeUnit.SECONDS.toNanos(4);
+                while (leaseLive(args[0]) && System.nanoTime() < claimableBy) Thread.sleep(50);
+                coordinator.run(args[0]);
             } finally {
                 closePool();
             }

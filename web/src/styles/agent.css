@@ -11,7 +11,8 @@
    - 输入区从「贴着屏幕底的细工具栏」改成多行 Prompt Bar。
 
    令牌：只消费品牌层（--brand-*）与语义层（--fg / --hr / --risk-*）。
-   --signal 是临床「重点/当前」的语义色，不在这一层复用。
+   三套语义色互不顶替：--signal 只在「送达未确认」这类当前态上作文字色，
+   不做填充也不当错误色；工具失败 / 超时走 --risk-*；--danger 只留给删除。
    双主题由 html.dark 翻转，本文件不写第二套色值。
    ============================================================ */
 
@@ -278,17 +279,10 @@
   word-break: break-word;
 }
 
-.agent-msg__body--streaming {
-  white-space: pre-wrap;
-}
-
-.agent-msg__streaming {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 光标：只在真正流式中出现。 */
-.caret-blink {
+/* 流式正文：Markdown 边生成边成形；光标画在最后一块的行末，
+   让它读起来是「字还在往下写」，而不是正文下方一块游离的方块。 */
+.markdown-body.is-streaming > :last-child::after {
+  content: "";
   display: inline-block;
   width: 7px;
   height: 1em;
@@ -298,6 +292,95 @@
   animation: agent-caret 1s steps(2, start) infinite;
 }
 
+/* 助手正文的阅读排版：比资讯正文更松，标题层级更明确，
+   但保留 Iris 的克制——不做卡片、不加大色块。 */
+.agent-msg__body .markdown-body {
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.agent-msg__body .markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.agent-msg__body .markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
+.agent-msg__body .markdown-body p {
+  margin: 0 0 0.78em;
+}
+
+.agent-msg__body .markdown-body h1,
+.agent-msg__body .markdown-body h2,
+.agent-msg__body .markdown-body h3,
+.agent-msg__body .markdown-body h4 {
+  line-height: 1.35;
+  margin: 1.4em 0 0.55em;
+}
+
+.agent-msg__body .markdown-body h1 {
+  font-size: 22px;
+}
+
+.agent-msg__body .markdown-body h2 {
+  font-size: 18.5px;
+}
+
+.agent-msg__body .markdown-body h3 {
+  font-size: 16.5px;
+}
+
+.agent-msg__body .markdown-body h4 {
+  font-size: 15px;
+}
+
+.agent-msg__body .markdown-body ul,
+.agent-msg__body .markdown-body ol {
+  margin: 0 0 0.85em;
+  padding-left: 1.5em;
+}
+
+.agent-msg__body .markdown-body li {
+  margin: 0.3em 0;
+}
+
+.agent-msg__body .markdown-body li > p {
+  margin: 0 0 0.35em;
+}
+
+.agent-msg__body .markdown-body blockquote {
+  margin: 0.9em 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--brand-line);
+  color: var(--fg-2);
+}
+
+.agent-msg__body .markdown-body hr {
+  margin: 1.6em 0;
+  border: 0;
+  border-top: 1px solid var(--hr);
+}
+
+.agent-msg__body .markdown-body table {
+  margin: 1em 0;
+  font-size: 13.5px;
+}
+
+.agent-msg__body .markdown-body th {
+  background: var(--brand-glass-soft);
+  font-weight: 600;
+}
+
+.agent-msg__body .markdown-body pre.code-block {
+  margin: 1em 0;
+  border-radius: var(--radius-md);
+}
+
+.agent-msg__body .markdown-body pre.code-block code {
+  line-height: 1.65;
+}
+
 @keyframes agent-caret {
   50% {
     opacity: 0;
@@ -305,7 +388,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caret-blink {
+  .markdown-body.is-streaming > :last-child::after {
     animation: none;
   }
 }
@@ -573,18 +656,6 @@
   border-color: color-mix(in srgb, var(--brand-aurora) 46%, transparent);
 }
 
-/* 失败与取消是**已知结果**，不是「未确认」：两者必须能分开看，
-   否则成功 / 失败 / 不知道三种情况在界面上没有区别。 */
-.thought__step.is-failed .thought__dot {
-  color: var(--risk-critical);
-  border-color: color-mix(in srgb, var(--risk-critical) 42%, transparent);
-}
-
-.thought__step.is-cancelled .thought__dot {
-  color: var(--fg-3);
-  border-color: var(--brand-outline);
-}
-
 .thought__head {
   display: flex;
   align-items: center;
@@ -637,7 +708,9 @@
   border-radius: var(--radius-pill);
   font-size: 11px;
   line-height: 1.6;
-  color: var(--fg-3);
+  /* 压在同色系抬升面上，--fg-3 只有约 4.1:1；药丸本身已有底色与描边区分，
+     层次不需要靠压暗取得。 */
+  color: var(--fg-2);
   background: var(--brand-soft);
 }
 
@@ -656,22 +729,38 @@
   background: color-mix(in srgb, var(--brand-aurora) 12%, transparent);
 }
 
-.thought__state.is-failed {
+/* 「结果不可用」一个族：失败与超时用 --risk-*（DESIGN.md §3.11：错误色不用品牌橙），
+   中断回中性——用户自己按的停止不是故障。--danger 只留给删除这类不可逆动作。 */
+.thought__state.is-error {
   color: var(--risk-critical);
-  background: color-mix(in srgb, var(--risk-critical) 12%, transparent);
+  background: color-mix(in srgb, var(--risk-critical) 10%, transparent);
 }
 
-.thought__state.is-cancelled {
-  color: var(--fg-3);
+.thought__state.is-timeout {
+  /* 琥珀淡底标出「这一族不顺利」，文字用中性：浅色下 --risk-attention 当 11px
+     文字只有 3.9:1，靠「超时」二字与时钟图标区分，不拿颜色当唯一载体。 */
+  color: var(--fg-2);
+  background: color-mix(in srgb, var(--risk-attention) 14%, transparent);
+}
+
+.thought__state.is-cancelled,
+.thought__state.is-returned {
+  color: var(--fg-2);
   background: var(--brand-soft);
 }
 
-/* 运行中的已用时长：只报真实过去的时间，没有「预计剩余」。 */
-.thought__elapsed {
-  flex-shrink: 0;
-  font-size: 11px;
+.thought__step.is-error .thought__dot {
+  color: var(--risk-critical);
+  border-color: color-mix(in srgb, var(--risk-critical) 46%, transparent);
+}
+
+.thought__step.is-timeout .thought__dot {
+  color: var(--risk-attention);
+  border-color: color-mix(in srgb, var(--risk-attention) 46%, transparent);
+}
+
+.thought__step.is-cancelled .thought__dot {
   color: var(--fg-2);
-  font-variant-numeric: tabular-nums;
 }
 
 .thought__chevron {
@@ -701,6 +790,68 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+/* 原始参数默认折叠：展开步骤后先看结果，参数是核对用的第二层。 */
+.thought__args-wrap {
+  margin: 0;
+}
+
+.thought__args-summary::-webkit-details-marker {
+  display: none;
+}
+
+.thought__args-summary::before {
+  content: "›";
+  display: inline-block;
+  transition: transform 0.18s var(--ease);
+}
+
+.thought__args-wrap[open] > .thought__args-summary::before {
+  transform: rotate(90deg);
+}
+
+.thought__args-wrap[open] > .thought__args {
+  margin-top: 4px;
+}
+
+.thought__failure {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--risk-critical);
+}
+
+/* 超时只说「没拿到完整结果」，不说「结果错了」——不给它失败红，
+   与「未确认」同一档中性强调；红色留给确实返回了错误的那一种。 */
+.thought__failure.is-muted {
+  color: var(--fg-2);
+}
+
+/* 「没收到返回」是这一步唯一的实质信息，不压成脚注。 */
+.thought__unresolved {
+  font-size: 12.5px;
+  color: var(--fg-2);
+}
+
+/* 「调用参数」是展开步骤后唯一的二级入口，热区要够大、要看得出能点。 */
+.thought__args-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.thought__args-summary:hover,
+.thought__args-summary:focus-visible {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .thought__arg {
@@ -1961,6 +2112,229 @@ html:not(.dark) .welcome__mark-img--dark {
   font-size: 11.5px;
   line-height: 1.7;
   color: var(--fg-3);
+}
+
+/* ── 资源面板：会话资源与证据中心 ─────────────────────── */
+
+.agent-panel__subtitle {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fg-3);
+}
+
+.agent-panel__filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.agent-panel__filterlabel {
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+
+.agent-panel__select {
+  flex: 1;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+.agent-panel__select:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+/* 图片占位：外部图片未加载 / 加载失败 */
+.agent-panel__img.is-gated,
+.agent-panel__img.is-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: 1;
+  padding: 8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--fg-3);
+  background: var(--brand-soft);
+}
+
+.agent-panel__img.is-gated {
+  cursor: pointer;
+}
+
+.agent-panel__img.is-gated:hover {
+  color: var(--fg);
+  border-color: var(--brand-primary);
+}
+
+/* 知识来源卡片 */
+.agent-panel__docs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-panel__doc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-md);
+  background: var(--brand-surface);
+}
+
+.agent-panel__dochead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-panel__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--brand-primary);
+}
+
+.agent-panel__score {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.agent-panel__doctitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+.agent-panel__snippet {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--fg-3);
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.agent-panel__doctail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-panel__docid {
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+
+.agent-panel__locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--fg-3);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.agent-panel__locate:hover {
+  background: var(--brand-soft);
+  color: var(--brand-primary);
+}
+
+.agent-panel__locate:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* 链接行：分隔线移到整行，定位按钮与链接同一行 */
+.agent-panel__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.agent-panel__link a {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+}
+
+.agent-panel__linkmeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.agent-panel__linktag {
+  padding: 0 6px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+/* 从资源栏定位回对话：目标短暂高亮，说明「就是这里」 */
+.is-located {
+  border-radius: var(--radius-md);
+  animation: agent-located 1.6s var(--ease);
+}
+
+@keyframes agent-located {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 55%, transparent);
+  }
+  25% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-located {
+    animation: none;
+    outline: 2px solid color-mix(in srgb, var(--brand-primary) 55%, transparent);
+    outline-offset: 3px;
+  }
 }
 
 /* ── 紧凑档抽屉（平板 / 手机）──────────────────────────── */

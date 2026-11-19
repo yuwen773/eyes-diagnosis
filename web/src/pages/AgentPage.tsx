@@ -21,11 +21,13 @@ import {
   type StreamMessage,
 } from "@/lib/agentStream"
 import { createAgentUploader } from "@/lib/agentUpload"
+import { countResources, type AgentResource } from "@/lib/agentResources"
 import { useSession } from "@/lib/session"
 import { loadThreadId, saveThreadId } from "@/lib/threadStorage"
 import { newId } from "@/lib/id"
+import { formatClock } from "@/lib/time"
 import { useMediaQuery } from "@/lib/useMediaQuery"
-import { faultFromError } from "@/lib/faults"
+import { faultFromError, fault } from "@/lib/faults"
 import { useFault } from "@/components/fault"
 import { Dialog } from "@/components/ui/dialog"
 import { MessageList } from "@/components/agent/MessageList"
@@ -120,6 +122,32 @@ export function AgentPage() {
     chatInputRef.current?.prefill(prefill)
     chatInputRef.current?.pickImage()
   }, [])
+
+  /**
+   * 资源 → 对话里的出处。优先定位到工具执行步骤，退而定位到消息。
+   * 找不到就什么都不做——不假装「已经带你看到」。
+   */
+  const locateResource = useCallback(
+    (resource: AgentResource) => {
+      const find = (attr: string, value?: string) => {
+        if (!value) return null
+        for (const el of document.querySelectorAll<HTMLElement>(`[${attr}]`)) {
+          if (el.getAttribute(attr) === value) return el
+        }
+        return null
+      }
+      const target =
+        find("data-tool-call-id", resource.toolCallId) ??
+        find("data-msg-id", resource.messageId)
+      if (!target) return
+      target.scrollIntoView({ block: "center", behavior: "smooth" })
+      target.classList.add("is-located")
+      window.setTimeout(() => target.classList.remove("is-located"), 1600)
+      // 紧凑档面板是抽屉，盖在正文上：定位后先收起，别让锚点藏在抽屉后面。
+      if (compact) setPanelOpen(false)
+    },
+    [compact],
+  )
   // 失败一律走全站统一的瞬时读数，不再在正文里插一条横幅。
   const { push: pushFault } = useFault()
 
@@ -174,6 +202,18 @@ export function AgentPage() {
         if (seq !== historySeq.current || threadIdRef.current !== id) return
         // 换了账号：这条历史属于上一个身份，不写回。
         if (userKeyRef.current !== expectedUser) return
+        // 服务端说本会话有没落库的消息终态：历史照常显示，但**必须说明它不完整**，
+        // 否则用户会把「读得到多少算多少」当成「这就是全部」。
+        if (data.uncommittedTerminal) {
+          pushFault(
+            fault({
+              severity: "attention",
+              kind: "info",
+              title: "这段历史可能不完整",
+              detail: "本会话有消息没能写入数据库，刷新后可能缺失。",
+            }),
+          )
+        }
         const raw = data.messages ?? []
         const history = raw.map(mapHistoryMessage)
         // 时间门槛与 reconcileDelivery 同一口径：只比内容会把「用户十分钟前问过
@@ -339,7 +379,7 @@ export function AgentPage() {
           id: localId,
           type: "user",
           content: text,
-          time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+          time: formatClock(new Date()),
           images: imageUrls,
           delivery: "sending",
         })
@@ -548,6 +588,7 @@ export function AgentPage() {
       resources={resources}
       onClose={() => setPanelOpen(false)}
       onPreviewImage={setPreviewUrl}
+      onLocate={locateResource}
     />
   )
 
@@ -630,10 +671,8 @@ export function AgentPage() {
                   title="资源面板"
                 >
                   <PanelRight size={18} strokeWidth={2} aria-hidden="true" />
-                  {resources.images.length + resources.links.length > 0 ? (
-                    <span className="agent-iconbtn__badge">
-                      {resources.images.length + resources.links.length}
-                    </span>
+                  {countResources(resources) > 0 ? (
+                    <span className="agent-iconbtn__badge">{countResources(resources)}</span>
                   ) : null}
                 </button>
               }

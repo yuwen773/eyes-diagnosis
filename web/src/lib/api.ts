@@ -226,6 +226,7 @@ export type AgentSessionVO = {
 }
 
 export type HistoryMessageVO = {
+  finishReason?: string
   /** 雪花 id，线上是字符串。 */
   id: string
   role: string
@@ -233,12 +234,19 @@ export type HistoryMessageVO = {
   content: string
   isSummary: boolean
   createdTime: string
+  /** Server-authorized upload references, revalidated when history is read. */
+  images?: string[]
 }
 
 export type ChatHistoryVO = {
   messages: HistoryMessageVO[]
   hasMore: boolean
   nextCursor: string | null
+  /**
+   * 本会话存在未提交的消息终态（写入失败或待恢复）。
+   * 历史仍会返回，但**不完整**——界面必须显式说明，不能装作完整。
+   */
+  uncommittedTerminal?: boolean
 }
 
 export function getSessions(beforeId?: string, limit = 20) {
@@ -429,6 +437,28 @@ export function requestReexamine(id: string) {
 /* ── Agent SSE 流 ──────────────────────────────────────── */
 
 /** 后端 MessageDTO 的流事件载荷。messageType 序列化自枚举，大小写不保证。 */
+/**
+ * 工具结果里携带的结构化资源（目前只有知识库检索命中）。
+ * 三个字段都由后端从真实检索结果取值：`documentId` 是文档主键，
+ * `score` 是检索相关度，`snippet` 是命中片段原文。
+ */
+export type ResourceRefDTO = {
+  id?: string
+  /** image | document | link */
+  kind?: string
+  title?: string
+  /** upload | assistant | tool | knowledge-base */
+  source?: string
+  url?: string
+  documentId?: string
+  score?: number
+  /** 原始检索分：rerank 生效时与 score（重排序分）分开记录。 */
+  retrievalScore?: number
+  snippet?: string
+  /** 产生这条资源的工具调用。 */
+  toolCallId?: string
+}
+
 export type AgentStreamDTO = {
   messageType: string
   content?: string
@@ -440,6 +470,10 @@ export type AgentStreamDTO = {
   stepLabel?: string
   finishReason?: string
   errorCategory?: string
+  /** 服务端时间点，带时区偏移的 ISO-8601。 */
+  timestamp?: string
+  /** 工具结果携带的结构化资源；失败或没有命中时缺省。 */
+  resources?: ResourceRefDTO[]
 }
 
 export type StreamChatHandlers = {

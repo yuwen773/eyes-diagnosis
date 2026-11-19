@@ -8,7 +8,6 @@ import java.io.Serializable;
 
 /**
  * @ClassNameNewsQueryDTO
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/23 下午7:20
  * @Version 1.0

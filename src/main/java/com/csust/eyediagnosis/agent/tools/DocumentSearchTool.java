@@ -3,9 +3,13 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
 import com.csust.eyediagnosis.agent.rag.SourceTypePolicy;
+import com.csust.eyediagnosis.mapper.KnowledgeDocumentMapper;
+import com.csust.eyediagnosis.model.dto.agent.ResourceRef;
+import com.csust.eyediagnosis.model.entity.KnowledgeDocument;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -56,6 +60,10 @@ public class DocumentSearchTool {
     @Autowired(required = false)
     private RerankModel rerankModel;
 
+    /** 上传文档的发布版本准入；不可查询时不放行上传片段。 */
+    @Autowired(required = false)
+    private KnowledgeDocumentMapper knowledgeDocumentMapper;
+
     private final Bm25Segmenter segmenter = new Bm25Segmenter();
 
     private final Map<Long, UserDocumentCache> documentCaches = new HashMap<>();
@@ -77,11 +85,13 @@ public class DocumentSearchTool {
      * 不得由模型输入控制。
      */
     public String searchDocuments(String query, Long currentUserId) {
+        // 这两种「没做成」不能写成一句正常返回值：观察者会记 success，
+        // 界面显示「完成」，而实际上一次检索都没发生。
         if (currentUserId == null) {
-            return "[]";
+            throw new IllegalStateException("知识库检索需要登录用户上下文。");
         }
         if (vectorStore == null) {
-            return "知识库暂未启用，请稍后再试。";
+            throw new IllegalStateException("知识库暂未启用，请稍后再试。");
         }
         try {
             SearchRequest searchRequest = SearchRequest.builder()
@@ -106,59 +116,233 @@ public class DocumentSearchTool {
                 candidates = SourceTypePolicy.restrict(candidates, currentUserId);
             }
 
+            // 证据准入：只接受「整份文档已完成入库」的片段。
+            candidates = readyOnly(candidates);
+
             if (candidates.isEmpty()) {
                 return "未找到相关文档。";
             }
 
-            if (rerankEnabled && rerankModel != null) {
-                return rerankAndFormat(query, candidates);
-            }
-
-            List<Document> topDocs = candidates.stream().limit(finalTopK).toList();
-            return formatDocuments(topDocs);
+            // 先定「最终交给模型的片段」，再从同一份结果登记结构化来源。
+            // 侧栏的知识来源必须与模型真正拿到的片段一致：同集合、同顺序、同分数。
+            // 早于 rerank 与 finalTopK 登记，会把没交给模型的候选也写成「证据」。
+            boolean reranked = rerankEnabled && rerankModel != null;
+            List<Hit> hits = reranked ? rerank(query, candidates) : topHits(candidates);
+            recordCitations(hits);
+            return formatHits(hits);
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
-            return "知识库检索暂时不可用，请稍后重试。";
+            // 不能把失败包装成一句正常返回值：那样工具生命周期是「成功」，
+            // 模型与用户都拿不到「这次检索没做成」的事实。异常交给框架转成
+            // 错误结果，观察者据此标 error，页面上如实显示「失败」。
+            throw new IllegalStateException("知识库检索暂时不可用，请稍后重试。", e);
         }
     }
 
-    private String rerankAndFormat(String query, List<Document> candidates) {
+    /**
+     * 只有 READY 且 indexVersion 与当前发布版本相等的上传片段可以作为证据。
+     * 失败清理和 BM25 缓存均可能留下旧代，不能仅凭 documentId 对应行已经 READY 放行。
+     * 旧上传无版本不能证明处理完整，须重新处理；不带 documentId 的内置语料保持原契约。
+     */
+    List<Document> readyOnly(List<Document> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return candidates;
+        }
+        Set<Long> docIds = new HashSet<>();
+        for (Document doc : candidates) {
+            Long id = documentIdOf(doc);
+            if (id != null) docIds.add(id);
+        }
+        if (docIds.isEmpty()) return candidates;
+
+        Map<Long, String> ready;
         try {
-            RerankRequest rerankRequest = new RerankRequest(query, candidates);
-            RerankResponse response = rerankModel.call(rerankRequest);
+            if (knowledgeDocumentMapper == null) throw new IllegalStateException("文档发布状态不可用");
+            ready = knowledgeDocumentMapper.selectBatchIds(docIds).stream()
+                    .filter(doc -> Integer.valueOf(1).equals(doc.getStatus()))
+                    .filter(doc -> doc.getIndexVersion() != null && !doc.getIndexVersion().isBlank())
+                    .collect(Collectors.toMap(KnowledgeDocument::getId, KnowledgeDocument::getIndexVersion));
+        } catch (Exception e) {
+            log.warn("知识库文档状态校验失败，本轮丢弃带 documentId 的片段: {}", e.getMessage());
+            return candidates.stream().filter(doc -> documentIdOf(doc) == null).toList();
+        }
+        return candidates.stream()
+                .filter(doc -> {
+                    Long id = documentIdOf(doc);
+                    return id == null || ready.containsKey(id)
+                            && ready.get(id).equals(doc.getMetadata().get("indexVersion"));
+                })
+                .toList();
+    }
 
-            if (response == null || response.getResults() == null || response.getResults().isEmpty()) {
-                log.warn("Rerank 返回空结果，使用原始检索结果");
-                return formatDocuments(candidates.stream().limit(finalTopK).toList());
+    /** 历史来源沿用实时检索的准入：旧代、失败代、已删除或越权引用不再暴露片段。 */
+    public List<ResourceRef> validateResourceRefs(List<ResourceRef> resources, Long currentUserId) {
+        if (resources == null || resources.isEmpty()) return resources;
+        return resources.stream().filter(ref -> {
+            if (!"document".equals(ref.kind()) || !"knowledge-base".equals(ref.source())) return true;
+            Long id;
+            try {
+                id = Long.valueOf(ref.documentId());
+            } catch (RuntimeException e) {
+                // 非上传的内置语料不使用数据库文档 id。
+                return ref.documentId() != null && ref.documentId().startsWith("builtin:");
             }
+            if (knowledgeDocumentMapper == null || currentUserId == null || ref.indexVersion() == null) return false;
+            try {
+                KnowledgeDocument doc = knowledgeDocumentMapper.selectById(id);
+                return doc != null && currentUserId.equals(doc.getUserId())
+                        && Integer.valueOf(1).equals(doc.getStatus())
+                        && ref.indexVersion().equals(doc.getIndexVersion());
+            } catch (Exception e) {
+                log.warn("历史文档来源状态不可确认: docId={}", id);
+                return false;
+            }
+        }).toList();
+    }
 
-            return response.getResults().stream()
-                    .limit(finalTopK)
-                    .map(dws -> {
-                        Document doc = dws.getOutput();
-                        StringBuilder sb = new StringBuilder("【文档片段】").append(doc.getText());
-                        Object docId = doc.getMetadata().get("docId");
-                        if (docId != null) {
-                            sb.append("\n(文档ID: ").append(docId).append(")");
-                        }
-                        if (dws.getScore() != null && dws.getScore() > 0) {
-                            sb.append(String.format("\n(相关度: %.2f)", dws.getScore()));
-                        }
-                        return sb.toString();
-                    })
-                    .collect(Collectors.joining("\n\n---\n\n"));
+    /** 分片元数据里的 documentId；没有或不是数字时返回 null（不猜、不判死）。 */
+    private static Long documentIdOf(Document doc) {
+        Map<String, Object> metadata = doc.getMetadata();
+        Object raw = metadata == null ? null : metadata.get("documentId");
+        if (raw instanceof Number number) return number.longValue();
+        if (raw instanceof String text) {
+            try {
+                String trimmed = text.trim();
+                return trimmed.isEmpty() ? null : Long.parseLong(trimmed);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 最终结果的一条命中。
+     *
+     * <p>两种分数的语义必须分清：
+     * <ul>
+     *   <li>{@code score} —— <b>最终排序分</b>。rerank 生效时是重排序分；
+     *       否则是文档自带的检索分（向量相似度；BM25-only 的片段可能没有分数）。</li>
+     *   <li>{@code retrievalScore} —— <b>原始检索分</b>。只在 rerank 成功且这一条拿到了
+     *       重排序分时单独记录；没有 rerank（含回退、或无重排序分）时它与 {@code score}
+     *       同源，置 null，避免制造「两个不同分数」的错觉。</li>
+     * </ul>
+     * {@code reranked} 表示这一条的 {@code score} 是否真的来自重排序模型——回退路径
+     * 即使走的是 rerank 开关打开的分支，也必须是 false，不把检索分说成重排序分。
+     */
+    private record Hit(Document document, Double score, Double retrievalScore, boolean reranked) {
+    }
+
+    /** 没有 rerank 时的最终结果：前 finalTopK 条，分数即检索分。 */
+    private List<Hit> topHits(List<Document> candidates) {
+        return candidates.stream()
+                .limit(finalTopK)
+                .map(doc -> new Hit(doc, doc.getScore(), null, false))
+                .toList();
+    }
+
+    /**
+     * 重排序后的最终结果。失败或空响应都回退到原始检索：
+     * 回退只影响排序质量，不影响「这次工具调用是成功的」——但回退后的分数
+     * 必须如实标成检索分，不冒充重排序分。
+     */
+    private List<Hit> rerank(String query, List<Document> candidates) {
+        try {
+            RerankResponse response = rerankModel.call(new RerankRequest(query, candidates));
+            List<Hit> hits = response == null || response.getResults() == null
+                    ? List.of()
+                    : response.getResults().stream()
+                            .filter(result -> result.getOutput() != null)
+                            .limit(finalTopK)
+                            .map(result -> {
+                                Document doc = result.getOutput();
+                                Double rerankScore = result.getScore();
+                                // rerank 没给分时 score 回退成检索分；这时原始检索分不再单独记录，
+                                // 否则同一个数字会被展示成两个「不一样的分数」。
+                                return new Hit(doc,
+                                        rerankScore != null ? rerankScore : doc.getScore(),
+                                        rerankScore != null ? retrievalScoreOf(candidates, doc) : null,
+                                        rerankScore != null);
+                            })
+                            .toList();
+            if (hits.isEmpty()) {
+                log.warn("Rerank 返回空结果，使用原始检索结果");
+                return topHits(candidates);
+            }
+            return hits;
         } catch (Exception e) {
             log.warn("Rerank 失败，回退到原始检索: {}", e.getMessage());
-            return formatDocuments(candidates.stream().limit(finalTopK).toList());
+            return topHits(candidates);
         }
     }
 
-    private String formatDocuments(List<Document> docs) {
-        return docs.stream()
-                .map(doc -> {
-                    String content = doc.getText();
+    /** 在原始候选里找同一条片段，取它进 rerank 之前的分数。 */
+    private static Double retrievalScoreOf(List<Document> candidates, Document target) {
+        if (target == null) {
+            return null;
+        }
+        for (Document candidate : candidates) {
+            if (candidate == target) {
+                return candidate.getScore();
+            }
+        }
+        for (Document candidate : candidates) {
+            if (Objects.equals(candidate.getId(), target.getId())
+                    && Objects.equals(candidate.getText(), target.getText())) {
+                return candidate.getScore();
+            }
+        }
+        return null;
+    }
+
+    /** 把最终交给模型的片段登记为会话资源（同 id 去重，由上下文负责）。 */
+    private void recordCitations(List<Hit> hits) {
+        for (Hit hit : hits) {
+            Document doc = hit.document();
+            if (doc == null) {
+                continue;
+            }
+            String docId = doc.getMetadata().get("docId") == null
+                    ? null : String.valueOf(doc.getMetadata().get("docId"));
+            if (docId == null || docId.isBlank()) {
+                // 没有稳定文档标识的片段不能当「可核验来源」展示。
+                continue;
+            }
+            String title = doc.getMetadata().get("title") == null
+                    ? snippetOf(doc.getText()) : String.valueOf(doc.getMetadata().get("title"));
+            ToolResourceContext.record(ResourceRef.document(
+                    docId, title, hit.score(), hit.retrievalScore(), snippetOf(doc.getText()), null)
+                    .withIndexVersion((String) doc.getMetadata().get("indexVersion")));
+        }
+    }
+
+    private static String snippetOf(String text) {
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.strip().replaceAll("\\s+", " ");
+        return trimmed.length() <= 300 ? trimmed : trimmed.substring(0, 300) + "…";
+    }
+
+    /**
+     * 与模型看到的文本保持一致：同一份 hits、同一顺序。
+     *
+     * <p>只在分数<b>确实来自重排序</b>时才印「相关度」——回退路径的检索分不往回印，
+     * 免得模型把检索分当成「重排序也认可」。
+     */
+    private String formatHits(List<Hit> hits) {
+        return hits.stream()
+                .map(hit -> {
+                    Document doc = hit.document();
+                    StringBuilder sb = new StringBuilder("【文档片段】").append(doc.getText());
                     Object docId = doc.getMetadata().get("docId");
-                    return "【文档片段】" + content + (docId != null ? "\n(文档ID: " + docId + ")" : "");
+                    if (docId != null) {
+                        sb.append("\n(文档ID: ").append(docId).append(")");
+                    }
+                    if (hit.reranked() && hit.score() != null && hit.score() > 0) {
+                        sb.append(String.format("\n(相关度: %.2f)", hit.score()));
+                    }
+                    return sb.toString();
                 })
                 .collect(Collectors.joining("\n\n---\n\n"));
     }

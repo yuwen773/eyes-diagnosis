@@ -1,7 +1,10 @@
 package com.csust.eyediagnosis.agent;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Ordinary-chat tool step contract. This is deliberately NOT part of the medical
@@ -55,6 +58,40 @@ public final class ToolStepContract {
     }
 
     /**
+     * 失败类别在工具错误文本里的稳定标记。
+     *
+     * <p>为什么需要：MCP 工具的失败会先被框架转成 {@code ToolCallResponse.error}，
+     * 拦截器拿到的是一个字符串，**异常类型已经丢了**——只看 {@code isError()} 的话，
+     * 超时会被记成笼统的 TOOL_EXCEPTION，取消也会。工具实现抛异常前先打上标记，
+     * 观察者在失败响应里把类别读回来；模型看到的说明里也保留这个标记（它是有意义的
+     * 中文说明，不是内部堆栈）。
+     */
+    private static final Pattern ERROR_TAG = Pattern.compile("\\[TOOL_ERROR:([A-Z_]+)]");
+
+    public static String tagError(ErrorCategory category, String message) {
+        if (category == null || category == ErrorCategory.NONE) return message;
+        return "[TOOL_ERROR:" + category.name() + "] " + message;
+    }
+
+    /** 从失败文本里读回类别；没有标记时返回 null（不要猜）。 */
+    public static ErrorCategory categoryFromText(String text) {
+        if (text == null || text.isEmpty()) return null;
+        Matcher matcher = ERROR_TAG.matcher(text);
+        if (!matcher.find()) return null;
+        try {
+            return ErrorCategory.valueOf(matcher.group(1).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** 去掉标记后的文本：真正交给模型与落库的说明不应带内部标记。 */
+    public static String stripErrorTag(String text) {
+        if (text == null) return null;
+        return ERROR_TAG.matcher(text).replaceAll("").trim();
+    }
+
+    /**
      * Closed label whitelist. Unknown / MCP-supplied tool names all collapse to the
      * generic label, so a third-party tool description can never become patient-facing text.
      */
@@ -77,13 +114,33 @@ public final class ToolStepContract {
         return toolName != null && KNOWN_TOOLS.contains(toolName);
     }
 
-    /** Sanitize an error into a stable category without persisting the message. */
+    /**
+     * Sanitize an error into a stable category without persisting the message.
+     *
+     * <p>沿 cause 链走一段再判定：框架把工具异常包成 {@code ToolExecutionException}，
+     * 真正的超时/取消原因在里层；只看最外层的类名会把它们统一记成 TOOL_EXCEPTION。
+     */
     public static ErrorCategory categorize(Throwable error, boolean interrupted) {
         if (interrupted) return ErrorCategory.CANCELLED;
         if (error == null) return ErrorCategory.NONE;
-        String type = error.getClass().getSimpleName();
-        if (type.contains("Timeout") || type.contains("Interrupted")) return ErrorCategory.TIMEOUT;
-        if (error instanceof IllegalArgumentException) return ErrorCategory.INVALID_OUTPUT;
-        return ErrorCategory.TOOL_EXCEPTION;
+        Throwable cursor = error;
+        boolean invalidOutput = false;
+        for (int depth = 0; cursor != null && depth < 8; depth++) {
+            if (cursor instanceof java.util.concurrent.TimeoutException) return ErrorCategory.TIMEOUT;
+            if (cursor instanceof java.util.concurrent.CancellationException) return ErrorCategory.CANCELLED;
+            if (cursor instanceof InterruptedException) return ErrorCategory.CANCELLED;
+            // 无效输出同样沿 cause 链认：框架可能把它包一层 ToolExecutionException。
+            if (cursor instanceof InvalidToolOutputException || cursor instanceof IllegalArgumentException) {
+                invalidOutput = true;
+            }
+            String type = cursor.getClass().getSimpleName();
+            ErrorCategory tagged = categoryFromText(cursor.getMessage());
+            if (tagged != null) return tagged;
+            if (type.contains("Timeout")) return ErrorCategory.TIMEOUT;
+            if (type.contains("Cancelled") || type.contains("Canceled")) return ErrorCategory.CANCELLED;
+            Throwable next = cursor.getCause();
+            cursor = next == cursor ? null : next;
+        }
+        return invalidOutput ? ErrorCategory.INVALID_OUTPUT : ErrorCategory.TOOL_EXCEPTION;
     }
 }

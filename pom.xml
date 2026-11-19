@@ -152,10 +152,6 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
         <!-- Spring Security Crypto (BCrypt for password migration) -->
         <dependency>
             <groupId>org.springframework.security</groupId>

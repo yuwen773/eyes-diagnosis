@@ -40,6 +40,24 @@ class DiagnosisAgentRedactionTest {
     }
 
     @Test
+    void persistedToolCallReferenceCarriesIdButNeverArguments() {
+        // 请求行必须带 toolCallId 才能和历史里的终态行配对；但参数原文依然不落库。
+        String single = DiagnosisAgent.persistedToolCallsJson(
+                java.util.List.of(DiagnosisAgent.persistedToolCallRef("call_1", "searchDocuments")));
+        assertEquals("call_1", JsonUtils.fromJsonToMap(single).get("toolCallId"));
+        assertEquals("searchDocuments", JsonUtils.fromJsonToMap(single).get("name"));
+        assertFalse(single.contains("arguments"));
+        assertFalse(single.contains("query"));
+
+        String many = DiagnosisAgent.persistedToolCallsJson(java.util.List.of(
+                DiagnosisAgent.persistedToolCallRef("call_a", "searchDocuments"),
+                DiagnosisAgent.persistedToolCallRef("call_b", "analyzeEyeImage")));
+        assertTrue(many.startsWith("["), "多工具调用要落成数组: " + many);
+        assertTrue(many.contains("call_a") && many.contains("call_b"));
+        assertFalse(many.contains("arguments"));
+    }
+
+    @Test
     void messageDtoNewFieldsAreOptionalAndSerializeWithoutBreakingOldClients() throws Exception {
         ObjectMapper json = new ObjectMapper();
         MessageDTO legacy = new MessageDTO();

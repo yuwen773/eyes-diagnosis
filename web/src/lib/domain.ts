@@ -1,4 +1,5 @@
 import type { DiagnosisResult } from "@/lib/api"
+import { formatLocalDateTime } from "@/lib/time"
 
 export type Risk = "normal" | "attention" | "critical" | "unknown"
 
@@ -526,13 +527,8 @@ export const TRIAGE_FALLBACK =
 
 export function formatTimestamp(value?: string) {
   if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
-    `${pad(date.getHours())}:${pad(date.getMinutes())}`
-  )
+  // 统一走 parseApiDate：新 API 是带偏移的 ISO，旧 API 的无偏移字符串按 UTC 解析。
+  return formatLocalDateTime(value) || value
 }
 
 /** 权重指纹在记录纸上只留首尾，保持可核对又不喧宾夺主。 */

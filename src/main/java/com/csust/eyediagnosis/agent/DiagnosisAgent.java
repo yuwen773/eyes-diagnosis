@@ -1,14 +1,18 @@
 package com.csust.eyediagnosis.agent;
 
+import com.alibaba.cloud.ai.graph.CompileConfig;
 import com.alibaba.cloud.ai.graph.NodeOutput;
 import com.alibaba.cloud.ai.graph.RunnableConfig;
 import com.alibaba.cloud.ai.graph.action.InterruptionMetadata;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
+import com.alibaba.cloud.ai.graph.checkpoint.config.SaverConfig;
 import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.agent.guard.ToolCallBudgetInterceptor;
+import com.csust.eyediagnosis.agent.guard.ToolFailureBoundaryInterceptor;
 import com.csust.eyediagnosis.agent.interceptor.TextMcpModelInterceptor;
-import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.agent.service.AgentImageUploadService;
+import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.agent.service.ToolAuditService;
 import com.csust.eyediagnosis.agent.tools.DocumentSearchTool;
 import com.csust.eyediagnosis.agent.tools.EyeImageAnalyzerTool;
@@ -17,20 +21,27 @@ import com.csust.eyediagnosis.agent.tools.UserBoundEyeImageAnalyzerTool;
 import com.csust.eyediagnosis.model.dto.agent.AgentChatRequest;
 import com.csust.eyediagnosis.model.dto.agent.MessageDTO;
 import com.csust.eyediagnosis.model.dto.agent.MessageType;
-import jakarta.annotation.PostConstruct;
+import com.csust.eyediagnosis.utils.JsonUtils;
+import com.csust.eyediagnosis.utils.SensitiveDataRedactor;
+import com.csust.eyediagnosis.utils.TimeFormats;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 眼科诊断Agent
@@ -100,19 +111,59 @@ public class DiagnosisAgent {
     @Resource
     private ToolAuditService toolAuditService;
 
-    private ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink) {
+    // package-visible：护栏接线测试要直接校验编译后的图确实带上预算与步数上限。
+    ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink) {
+        return buildAgent(extraTools, userId, sink, chatModel,
+                new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations())));
+    }
+
+    ReactAgent buildAgent(ToolCallback[] extraTools, Long userId, ToolStepSink sink,
+                          ChatModel model, ToolCallBudgetInterceptor budget) {
         var builder = ReactAgent.builder()
                 .name("eye_diagnosis_assistant")
-                .model(chatModel)
+                .model(model)
                 .instruction(SYSTEM_PROMPT)
                 .methodTools(new UserBoundEyeImageAnalyzerTool(eyeImageAnalyzerTool, userId),
-                        new UserBoundDocumentSearchTool(documentSearchTool, userId));
+                        new UserBoundDocumentSearchTool(documentSearchTool, userId))
+                // 失败边界必须是最外层：框架会把 ToolExecutionException 转成字符串，
+                // 只有让异常先逃出来、再由边界转成 ToolCallResponse.error，
+                // 观察者才不会把真实失败记成 success。详见 ToolFailureBoundaryInterceptor。
+                .toolExecutionExceptionProcessor(new DefaultToolExecutionExceptionProcessor(true))
+                .interceptors(
+                        new ToolFailureBoundaryInterceptor(),
+                        // 观察者包着预算：预算拒绝也算一次有终态的工具调用，UI 不会卡在「执行中」。
+                        new ToolExecutionInterceptor(sink, toolAuditService.digestKey()),
+                        // 预算按对话回合计：拦截器实例随 agent 每次请求重建，不能做成单例。
+                        budget)
+                .compileConfig(guardedCompileConfig(agentConstants.getModelCallLimit()));
         if (extraTools != null && extraTools.length > 0) {
             builder.tools(extraTools);
         }
-        // Per-request interceptor: observes real tool execution for status + audit.
-        builder.interceptors(new ToolExecutionInterceptor(sink, toolAuditService.digestKey()));
         return builder.build();
+    }
+
+    /**
+     * 图执行的硬上限。
+     *
+     * <p>不能省：{@code ReactAgent.builder()} 在不显式给 {@code CompileConfig} 时，
+     * 框架把 {@code recursionLimit} 设成 {@code Integer.MAX_VALUE}（1.1.2.2
+     * {@code Builder#buildConfig()}），模型反复调工具就没有终点。
+     *
+     * <p>达到上限时框架按「正常完成」结束流（{@code CompiledGraph} 判定
+     * {@code isMaxIterationsReached} → {@code handleCompletion}），不会报错，
+     * 所以它只能是兜底：首道闸是 {@link ToolCallBudgetInterceptor}，把超预算变成
+     * 工具错误交还模型收尾。
+     *
+     * <p>{@code saverConfig} 显式留空：agent 每次请求重建，没有跨请求复用的 thread 状态；
+     * 不写这行，{@code CompileConfig} 默认会塞一个 {@code MemorySaver}，每步多做一次快照。
+     */
+    static CompileConfig guardedCompileConfig(int modelCallLimit) {
+        int modelCalls = Math.max(1, modelCallLimit);
+        return CompileConfig.builder()
+                // 一个 ReAct 回合 = 模型节点 + 工具节点，各占一步；另留 2 步给开场与收尾。
+                .recursionLimit(modelCalls * 2 + 2)
+                .saverConfig(SaverConfig.builder().build())
+                .build();
     }
 
     /**
@@ -134,8 +185,14 @@ public class DiagnosisAgent {
         ToolCallback[] mcpCallbacks = textMcpModelInterceptor.resolveMcpCallbacks(chatRequest, userId);
 
         // 每个请求独立一个 sink/拦截器：不同会话、不同工具卡不会串台。
-        ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record);
-        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink);
+        // 终态落库挂在 sink 的转移上（而不是 SSE 管道），断连/停止也留得下终态。
+        ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record,
+                dto -> persistTerminalToolResult(threadId, userId, dto));
+        // 只计数、不改行为：终止摘要要能说清「是撞到了哪一道上限」。
+        CountingChatModel countingModel = new CountingChatModel(chatModel);
+        ToolCallBudgetInterceptor budget =
+                new ToolCallBudgetInterceptor(Math.max(1, agentConstants.getMaxIterations()));
+        ReactAgent activeAgent = buildAgent(mcpCallbacks, userId, sink, countingModel, budget);
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)
@@ -161,6 +218,7 @@ public class DiagnosisAgent {
                             Object msg = streamingOutput.message();
                             if (msg instanceof AssistantMessage assistantMessage) {
                                 MessageDTO messageDTO = new MessageDTO();
+                                messageDTO.setTimestamp(TimeFormats.nowIsoOffset());
                                 Map<String, Object> metadata = assistantMessage.getMetadata();
 
                                 // 工具请求：只给浏览器白名单标签和状态，不把参数原文落库。
@@ -173,37 +231,40 @@ public class DiagnosisAgent {
                                     messageDTO.setMessageType(MessageType.TOOL_REQUEST);
                                     messageDTO.setContent("");
                                     List<Map<String, Object>> toolCallingList = new ArrayList<>();
-                                    StringBuilder redactedDesc = new StringBuilder();
+                                    List<Map<String, Object>> persistedCalls = new ArrayList<>();
                                     for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
                                         Map<String, Object> tcMap = new HashMap<>();
                                         tcMap.put("name", toolCall.name());
                                         // SSE 给浏览器保留参数供展示；落库文本走白名单脱敏，两者分离。
-                                        tcMap.put("arguments", toolCall.arguments());
+                                        // 展示前仍过一遍凭据脱敏：模型可能把用户贴进来的 token 放进参数。
+                                        tcMap.put("arguments", SensitiveDataRedactor.redact(toolCall.arguments()));
                                         tcMap.put("id", toolCall.id());
                                         tcMap.put("stepLabel", ToolStepContract.stepLabel(toolCall.name()));
                                         toolCallingList.add(tcMap);
-                                        if (redactedDesc.length() > 0) redactedDesc.append("\n");
-                                        redactedDesc.append(redactedToolCall(toolCall.name()));
+                                        persistedCalls.add(persistedToolCallRef(toolCall.id(), toolCall.name()));
                                     }
                                     messageDTO.setToolCalls(toolCallingList);
                                     messageDTO.setToolStatus(ToolStepContract.Status.RUNNING.wire());
                                     messageDTO.setStepLabel(toolCallingList.size() == 1
                                             ? ToolStepContract.stepLabel(assistantMessage.getToolCalls().get(0).name())
                                             : null);
-                                    chatHistoryService.saveToolCallMessage(threadId, userId, redactedDesc.toString());
+                                    chatHistoryService.saveToolCallMessage(threadId, userId,
+                                            persistedToolCallsJson(persistedCalls));
                                 }
                                 // reasoning 消息：默认不展示、不落库（见 agent.expose-reasoning）
                                 else if (metadata.get("reasoningContent") != null
                                         && !"".equals(metadata.get("reasoningContent"))) {
                                     if (!agentConstants.isExposeReasoning()) return null;
-                                    String reasoningText = (String) metadata.get("reasoningContent");
+                                    // 推理正文可能复述工具结果里的凭据，出站前统一脱敏。
+                                    String reasoningText = SensitiveDataRedactor.redact(
+                                            (String) metadata.get("reasoningContent"));
                                     reasoningContent.append(reasoningText);
                                     messageDTO.setContent(reasoningText);
                                     messageDTO.setMessageType(MessageType.REASONING);
                                 }
                                 // 普通文本消息：不是工具执行结果，绝不据此推断工具成功。
                                 else {
-                                    String text = assistantMessage.getText();
+                                    String text = SensitiveDataRedactor.redact(assistantMessage.getText());
                                     assistantContent.append(text);
                                     messageDTO.setContent(text);
                                     messageDTO.setMessageType(MessageType.ASSISTANT);
@@ -214,6 +275,7 @@ public class DiagnosisAgent {
                             MessageDTO messageDTO = new MessageDTO();
                             messageDTO.setMessageType(MessageType.TOOL_CONFIRM);
                             messageDTO.setToolStatus(ToolStepContract.Status.AWAITING_CONFIRM.wire());
+                            messageDTO.setTimestamp(TimeFormats.nowIsoOffset());
                             StringBuilder sb = new StringBuilder();
                             StringBuilder persisted = new StringBuilder();
                             List<InterruptionMetadata.ToolFeedback> feedbacks = interruptionMetadata.toolFeedbacks();
@@ -229,7 +291,7 @@ public class DiagnosisAgent {
                                 messageDTO.setToolCallId(feedbacks.get(0).getId());
                                 messageDTO.setStepLabel(ToolStepContract.stepLabel(feedbacks.get(0).getName()));
                             }
-                            messageDTO.setContent(sb.toString());
+                            messageDTO.setContent(SensitiveDataRedactor.redact(sb.toString()));
                             chatHistoryService.saveToolConfirmMessage(threadId, userId, persisted.toString());
                             return messageDTO;
                         }
@@ -247,12 +309,20 @@ public class DiagnosisAgent {
                     });
 
             // 状态事件来自真实工具执行（拦截器），与图事件合并后按同一 SSE 通道下发。
+            // 终态同时落库：历史回放要靠它把「请求」和「结果」配成同一步。
             Flux<MessageDTO> statusEvents = sink.events().asFlux();
+
+            // 预算耗尽时框架按「正常完成」结束图（不会报错），旧实现因此静默收尾：
+            // 用户看到工具步骤都成功，却没有任何回答。这里在正常结束之后补一条
+            // 明确的终止说明（同样落库），并说清楚是撞到了哪一道上限。
+            // 取消/报错不会走 concatWith，不会把中断说成预算耗尽。
+            Flux<MessageDTO> closedTurn = graphEvents.concatWith(Flux.defer(() ->
+                    closingNotice(threadId, userId, assistantContent, budget, countingModel)));
 
             // 图流终止（正常结束 / 报错 / 浏览器取消）时关闭 sink：仍未拿到真实结果的
             // 调用一律 CANCELLED，绝不在缺结果时呈现成功。必须由 graphEvents 自己触发，
             // 放在合并流的 doFinally 会形成循环等待（statusEvents 还开着）。
-            Flux<MessageDTO> boundedGraphEvents = graphEvents
+            Flux<MessageDTO> boundedGraphEvents = closedTurn
                     .doOnComplete(sink::closePending)
                     .doOnError(e -> sink.closePending())
                     .doOnCancel(sink::closePending);
@@ -266,12 +336,139 @@ public class DiagnosisAgent {
     }
 
     /**
+     * 回合结束时的终止说明：无回答，或最后模型节点仍要求工具而被预算截断时发。
+     *
+     * <p>为什么必须发：模型预算耗尽时框架以「正常完成」收尾，图不报错、
+     * 流正常 done。没有这一条，用户看到的是「工具都执行成功，然后什么都没有」——
+     * 一次被截断的回合看起来像一次空回答。
+     *
+     * <p>措辞只陈述可核实的事实：工具预算拒绝过、或模型调用次数达到了配置上限、
+     * 或两者都不是（模型就是没说话）。不猜测「是不是网络问题」之类的内部原因。
+     */
+    private Flux<MessageDTO> closingNotice(String threadId, Long userId, StringBuilder assistantContent,
+                                           ToolCallBudgetInterceptor budget, CountingChatModel model) {
+        if (!assistantContent.toString().isBlank() && !model.endedWithToolRequest()) return Flux.empty();
+        String notice;
+        String finishReason;
+        if (budget.rejected() > 0) {
+            finishReason = "TOOL_BUDGET_EXHAUSTED";
+            notice = "本轮工具调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
+        } else if (model.calls() >= Math.max(1, agentConstants.getModelCallLimit())) {
+            finishReason = "MODEL_BUDGET_EXHAUSTED";
+            notice = "本轮模型调用次数已达上限，没能生成最终回答。可以继续追问，或把问题拆小一些。";
+        } else {
+            if (!assistantContent.toString().isBlank()) return Flux.empty();
+            finishReason = "EMPTY_RESPONSE";
+            notice = "这次没有生成最终回答，可以重试或换个问法。";
+        }
+        MessageDTO dto = new MessageDTO();
+        dto.setMessageType(MessageType.ASSISTANT);
+        dto.setContent(notice);
+        dto.setFinishReason(finishReason);
+        dto.setTimestamp(TimeFormats.nowIsoOffset());
+        // 同样落库：刷新后用户仍然看得到这次回合是怎么结束的。
+        chatHistoryService.saveAssistantMessage(threadId, userId,
+                JsonUtils.toJson(Map.of("output", notice, "finishReason", finishReason)), "turn-end");
+        return Flux.just(dto);
+    }
+
+    /** 只计数的模型包装：为了让终止说明能区分「模型调用上限」与其它空回答。 */
+    static final class CountingChatModel implements ChatModel {
+        private final ChatModel delegate;
+        private final AtomicInteger calls = new AtomicInteger();
+        private final AtomicBoolean lastModelRequestedTools = new AtomicBoolean();
+
+        CountingChatModel(ChatModel delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public ChatResponse call(Prompt prompt) {
+            calls.incrementAndGet();
+            lastModelRequestedTools.set(false);
+            ChatResponse response = delegate.call(prompt);
+            observe(response);
+            return response;
+        }
+
+        @Override
+        public Flux<ChatResponse> stream(Prompt prompt) {
+            calls.incrementAndGet();
+            lastModelRequestedTools.set(false);
+            return delegate.stream(prompt).doOnNext(this::observe);
+        }
+
+        private void observe(ChatResponse response) {
+            if (response != null && response.getResults().stream()
+                    .anyMatch(generation -> generation.getOutput().hasToolCalls())) {
+                lastModelRequestedTools.set(true);
+            }
+        }
+
+        boolean endedWithToolRequest() {
+            return lastModelRequestedTools.get();
+        }
+
+        int calls() {
+            return calls.get();
+        }
+    }
+
+    /**
+     * 工具终态落库：{@code {"toolCallId","name","status","output","resources"}}。
+     *
+     * <p>只有终态写历史，RUNNING 不写；正文已经是拦截器出站前脱敏截断过的版本，
+     * 这里不再二次加工，避免两处口径漂移。失败/取消的调用不带 resources。
+     */
+    private void persistTerminalToolResult(String threadId, Long userId, MessageDTO dto) {
+        String status = dto.getToolStatus();
+        if (status == null || ToolStepContract.Status.RUNNING.wire().equals(status)) {
+            return;
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("toolCallId", dto.getToolCallId());
+        payload.put("name", dto.getToolName());
+        payload.put("status", status);
+        payload.put("output", dto.getContent() == null ? "" : dto.getContent());
+        // 失败类别要进历史：前端回放靠它区分「超时」和普通失败，
+        // 只存 failed 会把两种不同的事实抹成一种。
+        if (dto.getErrorCategory() != null) {
+            payload.put("errorCategory", dto.getErrorCategory());
+        }
+        if (dto.getResources() != null && !dto.getResources().isEmpty()) {
+            payload.put("resources", dto.getResources());
+        }
+        chatHistoryService.saveToolResultMessage(threadId, userId, JsonUtils.toJson(payload));
+    }
+
+    /**
      * 历史落库用的脱敏工具调用文本：只有白名单工具名 + 固定标签。
      * 模型生成的参数 JSON、评估描述、自由文本一律不进 t_agent_message。
      * package-visible 以便针对性单测验证无敏感原文泄漏。
      */
     static String redactedToolCall(String toolName) {
         return ToolStepContract.stepLabel(toolName);
+    }
+
+    /**
+     * 请求行的落库形状：只留关联键与白名单工具名，**不含参数**。
+     *
+     * <p>为什么要带 {@code toolCallId}：终态行（{@link #persistTerminalToolResult}）
+     * 用同一个 id 落库；请求行没有 id 时，前端回放只能按顺序猜，一次调用会被
+     * 拆成「未确认 + 完成」两步。参数仍然不进历史，这条只加关联键。
+     */
+    static Map<String, Object> persistedToolCallRef(String toolCallId, String toolName) {
+        Map<String, Object> ref = new LinkedHashMap<>();
+        ref.put("toolCallId", toolCallId);
+        ref.put("name", toolName);
+        ref.put("stepLabel", ToolStepContract.stepLabel(toolName));
+        return ref;
+    }
+
+    /** 单次调用落成对象、多次调用落成数组；前端两种形状都认。 */
+    static String persistedToolCallsJson(List<Map<String, Object>> refs) {
+        if (refs == null || refs.isEmpty()) return "";
+        return JsonUtils.toJson(refs.size() == 1 ? refs.get(0) : refs);
     }
 
     /**

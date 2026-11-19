@@ -61,8 +61,9 @@ public class MCPManager {
 
         mcpConnectionPolicy.assertRuntimeConnectionAllowed(entity.getInstallType(), url);
 
-        log.info("创建 MCP 客户端 - serverCode: {}, URL: {}, installType: {}",
-                entity.getMcpServerCode(), url, entity.getInstallType());
+        // URL 的 query 里可能带 token：只记 host 与安装类型。
+        log.info("创建 MCP 客户端 - serverCode: {}, host: {}, installType: {}",
+                entity.getMcpServerCode(), hostOf(url), entity.getInstallType());
 
         if ("STREAMABLE_HTTP".equalsIgnoreCase(entity.getInstallType())) {
             log.info("使用 Streamable HTTP 传输");
@@ -113,7 +114,9 @@ public class MCPManager {
     }
 
     private List<McpTool> fetchTools(McpServer entity) {
-        log.info("开始 fetchTools - serverCode: {}, deployConfig: {}", entity.getMcpServerCode(), entity.getDeployConfig());
+        // deployConfig 里有 authorization / envValue 等凭据，不写进日志。
+        log.info("开始 fetchTools - serverCode: {}, installType: {}",
+                entity.getMcpServerCode(), entity.getInstallType());
         try (McpSyncClient client = getMcpSyncClient(entity)) {
             client.initialize();
             McpSchema.ListToolsResult result = client.listTools();
@@ -150,14 +153,15 @@ public class MCPManager {
             future.cancel(true);
             throw new McpTimeoutException("tool timeout: " + request.getToolName());
         } catch (InterruptedException e) {
+            future.cancel(true);
             Thread.currentThread().interrupt();
-            throw new McpTimeoutException("tool interrupted: " + request.getToolName());
+            throw new java.util.concurrent.CancellationException("MCP tool call cancelled");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             if (cause instanceof RuntimeException re) {
                 throw re;
             }
-            throw new McpTimeoutException("tool failed: " + cause.getMessage());
+            throw new IllegalStateException("MCP tool call failed", cause);
         } finally {
             gate.release();
         }
@@ -195,6 +199,20 @@ public class MCPManager {
             client.close();
         }
         return response;
+    }
+
+    /** 只保留 scheme://host[:port]：URL 的路径与 query 可能带 token，不进日志。 */
+    private static String hostOf(String url) {
+        try {
+            java.net.URI uri = java.net.URI.create(url);
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return "…";
+            }
+            return uri.getScheme() + "://" + uri.getHost()
+                    + (uri.getPort() > 0 ? ":" + uri.getPort() : "");
+        } catch (RuntimeException e) {
+            return "…";
+        }
     }
 
     private McpServerDeployConfig parseConfig(String configJson) {

@@ -121,7 +121,13 @@ describe("buildThread", () => {
     const items = buildThread(
       [
         msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: { query: "青光眼" } }] }),
-        msg({ id: "t2", type: "tool-response", content: "检索到 3 段文档", toolName: "searchDocuments" }),
+        msg({
+          id: "t2",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolStatus: "success",
+        }),
       ],
       false,
     )
@@ -132,6 +138,79 @@ describe("buildThread", () => {
     expect(steps[0].state).toBe("done")
     expect(steps[0].output).toBe("检索到 3 段文档")
     expect(steps[0].args).toEqual([{ key: "query", value: "青光眼" }])
+  })
+
+  it("历史回放：请求行带 toolCallId 时与结果行配对，不产生幽灵步骤", () => {
+    // 回归：请求行若只落「模糊标签」而没有 toolCallId，回放时结果行配不上它，
+    // 一次调用会显示成「工具/未确认 + 检索知识库文档/完成」两步。
+    const items = buildThread(
+      [
+        msg({
+          id: "h1",
+          type: "tool-request",
+          toolCallId: "call_1",
+          toolCalls: [{ id: "call_1", name: "searchDocuments", args: {} }],
+        }),
+        msg({
+          id: "h2",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolCallId: "call_1",
+          toolStatus: "succeeded",
+        }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(1)
+    expect(steps[0].state).toBe("done")
+    expect(steps[0].output).toBe("检索到 3 段文档")
+  })
+
+  it("历史回放：一次请求里的多个工具各自成步并按 id 配对", () => {
+    const items = buildThread(
+      [
+        msg({
+          id: "h3",
+          type: "tool-request",
+          toolCallId: "call_a",
+          toolCalls: [
+            { id: "call_a", name: "searchDocuments", args: {} },
+            { id: "call_b", name: "analyzeEyeImage", args: {} },
+          ],
+        }),
+        msg({ id: "h4", type: "tool-response", content: "3 段", toolCallId: "call_a", toolStatus: "succeeded" }),
+        msg({ id: "h5", type: "tool-response", content: "失败", toolCallId: "call_b", toolStatus: "failed" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(2)
+    expect(steps[0].state).toBe("done")
+    expect(steps[1].state).toBe("error")
+  })
+
+  it("running 状态帧不冒充结果：不标已返回、不写空输出", () => {
+    // 回归：后端把 running 帧也走 tool-result 通道发（content 恒空），
+    // 一律标 received 会在「执行中」旁边写「工具返回了空结果」。
+    const items = buildThread(
+      [
+        msg({
+          id: "r1",
+          type: "tool-request",
+          toolCallId: "call_x",
+          toolCalls: [{ id: "call_x", name: "searchDocuments", args: {} }],
+        }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "call_x", toolStatus: "running", content: "" }),
+      ],
+      true,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(1)
+    expect(steps[0].state).toBe("running")
+    expect(steps[0].received).toBeFalsy()
+    expect(steps[0].output).toBeUndefined()
   })
 
   it("有状态回执就以回执为准：succeeded / failed / cancelled 各自成态", () => {
@@ -145,7 +224,7 @@ describe("buildThread", () => {
       ],
       false,
     )
-    expect(stepsOf(items).map((s) => s.state)).toEqual(["done", "failed", "cancelled"])
+    expect(stepsOf(items).map((s) => s.state)).toEqual(["done", "error", "cancelled"])
   })
 
   it("等待确认的回执标「已暂停」，不因为流结束被改写成「未确认」", () => {
@@ -183,16 +262,40 @@ describe("buildThread", () => {
     expect(stepsOf(items).map((s) => s.state)).toEqual(["pending", "pending", "pending"])
   })
 
-  it("多工具里只有最后一个收到返回：其余仍是「未确认」，不会一起算完成", () => {
+  it("多工具里只回来一条：旧数据按先进先出配对，其余仍是「未确认」", () => {
     const items = buildThread(
       [
         msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
         msg({ id: "t2", type: "tool-request", toolCalls: [{ name: "analyzeEyeImage", args: {} }] }),
-        msg({ id: "t3", type: "tool-response", content: "分析完成", toolName: "analyzeEyeImage" }),
+        msg({
+          id: "t3",
+          type: "tool-response",
+          content: "检索到 3 段文档",
+          toolName: "searchDocuments",
+          toolStatus: "success",
+        }),
       ],
       false,
     )
-    expect(stepsOf(items).map((s) => s.state)).toEqual(["pending", "done"])
+    const steps = stepsOf(items)
+    expect(steps.map((s) => s.state)).toEqual(["done", "pending"])
+    // 结果落在第一条调用上，不跳到最后一个未回执的步骤。
+    expect(steps[0].output).toBe("检索到 3 段文档")
+    expect(steps[1].output).toBeUndefined()
+  })
+
+  it("老数据没有 status：结果回来了但成败未知，显示「已返回」而不是「完成」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "t2", type: "tool-response", content: "检索到 3 段文档", toolName: "searchDocuments" }),
+      ],
+      false,
+    )
+    const step = stepsOf(items)[0]
+    expect(step.received).toBe(true)
+    expect(step.state).toBe("returned")
+    expect(stepStateLabel(step.state)).toBe("已返回")
   })
 
   it("工具返回原文里的凭据在展示前被抹掉", () => {
@@ -248,16 +351,236 @@ describe("buildThread", () => {
     expect(items).toHaveLength(1)
     expect(stepsOf(items)).toHaveLength(2)
   })
+
+  it("一次请求里的多个工具调用各自成步，不与结果串配", () => {
+    const items = buildThread(
+      [
+        msg({
+          id: "t1",
+          type: "tool-request",
+          toolCalls: [
+            { id: "call_a", name: "searchDocuments", args: { query: "青光眼" } },
+            { id: "call_b", name: "analyzeEyeImage", args: { url: "u" } },
+          ],
+        }),
+        // 乱序返回：先回 b，再回 a
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_b", toolStatus: "success", content: "图像结果" }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "call_a", toolStatus: "success", content: "文档结果" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    expect(steps).toHaveLength(2)
+    expect(steps[0].toolCallId).toBe("call_a")
+    expect(steps[0].output).toBe("文档结果")
+    expect(steps[0].state).toBe("done")
+    expect(steps[1].toolCallId).toBe("call_b")
+    expect(steps[1].output).toBe("图像结果")
+  })
+
+  it("空字符串结果也是「已返回」：不能停在未确认", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_a", toolStatus: "success", content: "" }),
+      ],
+      false,
+    )
+    const step = stepsOf(items)[0]
+    expect(step.received).toBe(true)
+    expect(step.output).toBe("")
+    expect(step.state).toBe("done")
+  })
+
+  it("失败/超时/中断有真实观察依据，不伪装成完成", () => {
+    const cases: { status: string; expected: AgentStep["state"] }[] = [
+      { status: "error", expected: "error" },
+      { status: "timeout", expected: "timeout" },
+      { status: "cancelled", expected: "cancelled" },
+      // 「框架返回了结果」不等于「执行成功」：completed 只够说「已返回」。
+      { status: "completed", expected: "returned" },
+      // 缺失 / 还不认识的 status 同样不落成完成——不确定性要显示出来。
+      { status: "", expected: "returned" },
+      { status: "partial", expected: "returned" },
+    ]
+    for (const { status, expected } of cases) {
+      const items = buildThread(
+        [
+          msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+          msg({
+            id: "r1",
+            type: "tool-response",
+            toolCallId: "call_a",
+            toolStatus: status,
+            content: status === "error" ? "检索失败" : "",
+          }),
+        ],
+        false,
+      )
+      expect(stepsOf(items)[0].state).toBe(expected)
+    }
+  })
+
+  it("流结束时只把仍在执行的步骤转为未确认，已有失败结论的保持原状", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ id: "call_a", name: "searchDocuments", args: {} }] }),
+        msg({ id: "t2", type: "tool-request", toolCalls: [{ id: "call_b", name: "analyzeEyeImage", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", toolCallId: "call_a", toolStatus: "error", content: "失败" }),
+      ],
+      false,
+    )
+    expect(stepsOf(items).map((s) => s.state)).toEqual(["error", "pending"])
+  })
+
+  it("旧数据没有 toolCallId 时按顺序配对，且不会重复占用同一步", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "r1", type: "tool-response", content: "第一次" }),
+        msg({ id: "r2", type: "tool-response", content: "第二次" }),
+      ],
+      false,
+    )
+    const steps = stepsOf(items)
+    // 第一个回执吃掉唯一的请求步；第二个没有可配对的，独立成步。
+    expect(steps).toHaveLength(2)
+    expect(steps[0].output).toBe("第一次")
+    expect(steps[0].received).toBe(true)
+    expect(steps[1].output).toBe("第二次")
+    expect(steps[1].received).toBe(true)
+  })
+})
+
+describe("buildThread · 跨回合", () => {
+  it("新回合开始后，上一回合没结论的工具步骤保持「未确认」，不退回「执行中」", () => {
+    // 回归：streaming 是页面级状态，新回合一开始就为真。
+    // 若照它给所有过程块放行，旧回合的步骤会集体变回「执行中」。
+    const items = buildThread(
+      [
+        msg({ id: "u1", type: "user", content: "第一问" }),
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "a1", type: "assistant", content: "第一答" }),
+        msg({ id: "u2", type: "user", content: "第二问" }),
+        msg({ id: "t2", type: "tool-request", toolCallId: "b", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+      ],
+      true,
+    )
+    const states = stepsOf(items).map((s) => s.state)
+    expect(states).toEqual(["pending", "running"])
+  })
+
+  it("上一回合结束后又来了新消息，最后一块也不再算「执行中」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+        msg({ id: "a1", type: "assistant", content: "答" }),
+      ],
+      true,
+    )
+    expect(stepsOf(items)[0].state).toBe("pending")
+  })
+
+  it("流仍在跑、且过程块就是最后一项时，才保留「执行中」", () => {
+    const items = buildThread(
+      [
+        msg({ id: "u1", type: "user", content: "问" }),
+        msg({ id: "r1", type: "reasoning", content: "想一想" }),
+        msg({ id: "t1", type: "tool-request", toolCallId: "a", toolCalls: [{ name: "searchDocuments", args: {} }] }),
+      ],
+      true,
+    )
+    const toolStep = stepsOf(items).find((step) => step.kind === "tool")
+    expect(toolStep?.state).toBe("running")
+  })
 })
 
 describe("stepStateLabel", () => {
   it("每个状态都有中文标签", () => {
     expect(stepStateLabel("done")).toBe("完成")
+    // 「已返回」与「完成」分开：前者只说明结果回来了，没说成败。
+    expect(stepStateLabel("returned")).toBe("已返回")
     expect(stepStateLabel("running")).toBe("执行中")
     // 「未确认」只陈述「没收到返回」，不承诺还会收到回执。
     expect(stepStateLabel("pending")).toBe("未确认")
-    expect(stepStateLabel("failed")).toBe("失败")
-    expect(stepStateLabel("cancelled")).toBe("已取消")
     expect(stepStateLabel("paused")).toBe("已暂停")
+    expect(stepStateLabel("error")).toBe("失败")
+    expect(stepStateLabel("timeout")).toBe("超时")
+    expect(stepStateLabel("cancelled")).toBe("已中断")
+  })
+})
+
+describe("stateFromToolResult（失败类别）", () => {
+  it("failed + TIMEOUT 显示为超时，而不是笼统的失败", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "TIMEOUT",
+          toolName: "searchDocuments",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("timeout")
+    expect(step.errorCategory).toBe("TIMEOUT")
+    expect(stepStateLabel(step.state)).toBe("超时")
+  })
+
+  it("failed + CANCELLED 显示为已中断", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "CANCELLED",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("cancelled")
+    expect(stepStateLabel(step.state)).toBe("已中断")
+  })
+
+  it("failed + INVALID_OUTPUT 仍是失败，但类别保留给界面区分措辞", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "analyzeEyeImage", args: {}, id: "c1" }] }),
+        msg({
+          id: "r2",
+          type: "tool-response",
+          toolCallId: "c1",
+          toolStatus: "failed",
+          errorCategory: "INVALID_OUTPUT",
+          content: "",
+        }),
+      ],
+      false,
+    )
+    const [step] = stepsOf(items)
+    expect(step.state).toBe("error")
+    expect(step.errorCategory).toBe("INVALID_OUTPUT")
+  })
+
+  it("没有类别时保持普通失败，不猜", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({ id: "r2", type: "tool-response", toolCallId: "c1", toolStatus: "failed", content: "" }),
+      ],
+      false,
+    )
+    expect(stepsOf(items)[0].state).toBe("error")
   })
 })

@@ -117,10 +117,11 @@ class UserBoundEyeImageAnalyzerToolTest {
         // vision client 未初始化（无外部依赖），说明读取只发生在 COS 校验之后
         when(cosManager.getObject(eq(OWN_KEY))).thenReturn(cosObject(new byte[]{1, 2, 3}));
 
-        // 这里只验证所有权与存储读取路径：直接调 analyzeOwnedImage 会因 vision client
-        // 为 null 落入兜底结果（模型调用失败路径），但 COS 必须已被读取。
-        var result = inner.analyzeOwnedImage(OWN_KEY, USER);
-        assertEquals("图像分析失败", result.getDescription());
+        // 模型不可用必须表现为**失败**，不能返回一份「图像分析失败」的假结果：
+        // 假结果会被工具观察者记成 succeeded，界面显示「完成」。
+        BusinessException fault = assertThrows(BusinessException.class,
+                () -> inner.analyzeOwnedImage(OWN_KEY, USER));
+        assertEquals(50000, fault.getCode());
         verify(cosManager).getObject(eq(OWN_KEY));
     }
 

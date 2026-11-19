@@ -208,3 +208,38 @@ describe("ThoughtLine", () => {
     expect(container.firstChild).toBeNull()
   })
 })
+
+describe("ThoughtLine · 失败终态", () => {
+  it("超时步骤说明超时，且不再说「工具返回了空结果」", () => {
+    const timeoutStep: AgentStep = {
+      id: "t9",
+      kind: "tool",
+      label: "检索知识库文档",
+      toolName: "searchDocuments",
+      state: "timeout",
+      errorCategory: "TIMEOUT",
+      received: true,
+      output: "",
+    }
+    render(<ThoughtLine steps={[timeoutStep]} />)
+    fireEvent.click(screen.getByRole("button", { name: /检索知识库文档/ }))
+    expect(screen.getByText(/工具执行超时/)).toBeTruthy()
+    expect(screen.queryByText("工具返回了空结果。")).toBeNull()
+  })
+
+  it("无效输出用「内容不可用」措辞，而不是笼统的工具错误", () => {
+    const invalidStep: AgentStep = {
+      id: "t10",
+      kind: "tool",
+      label: "分析眼底图像",
+      toolName: "analyzeEyeImage",
+      state: "error",
+      errorCategory: "INVALID_OUTPUT",
+      received: true,
+      output: "",
+    }
+    render(<ThoughtLine steps={[invalidStep]} />)
+    fireEvent.click(screen.getByRole("button", { name: /分析眼底图像/ }))
+    expect(screen.getByText(/工具返回的内容不可用/)).toBeTruthy()
+  })
+})
