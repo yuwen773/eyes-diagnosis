@@ -33,8 +33,9 @@ import java.util.concurrent.TimeoutException;
  *   <li><b>有淘汰</b>：待写集合按会话限额与存活时长淘汰，失败的键不会无限堆积。</li>
  * </ol>
  *
- * <p>被淘汰的写计数记在 {@link #droppedWrites}，历史读取会据此显式声明「本会话存在未提交的
- * 终态」，而不是把陈旧历史当作完整历史返回。
+ * <p>被淘汰的写在 {@link #droppedKeys} 里留键（按存活时长过期）：历史读取据此显式声明
+ * 「本会话存在未提交的终态」；落库回调据此把「没写成功」和「已提交」分开，
+ * 不会把一条没落库的终态发给客户端。
  */
 public class SessionMessageQueue {
 
@@ -45,24 +46,39 @@ public class SessionMessageQueue {
     /** 同一键连续失败多少次后淘汰：再多的重试也不会成功，只会把会话堵死。 */
     static final int MAX_ATTEMPTS = 3;
     /** 单会话待写上限：超出时淘汰最早的键（已提交的不在此列）。 */
-    static final int MAX_PENDING_PER_SESSION = 256;    /** 待写键的最长存活时间：超过即淘汰，避免失败的键永久占用内存。 */
+    static final int MAX_PENDING_PER_SESSION = 256;
+    /** 待写键的最长存活时间：超过即淘汰，避免失败的键永久占用内存。 */
     static final Duration PENDING_TTL = Duration.ofMinutes(30);
+    /** 被淘汰键的记录保留多久：够回答「这个键写了没」，又不至于永久占用内存。 */
+    static final Duration DROPPED_TTL = Duration.ofMinutes(30);
 
     private final ExecutorService executor;
     private final Map<String, CompletableFuture<?>> tails = new ConcurrentHashMap<>();
     private final Map<String, Map<String, PendingWrite>> pendingWrites = new ConcurrentHashMap<>();
-    /** 每个会话被淘汰的写次数（只计数，不留键：键集合会随会话数无界增长）。 */
-    private final Map<String, Integer> droppedWrites = new ConcurrentHashMap<>();
+    /**
+     * 每会话被淘汰的键（键 → 淘汰时间）。
+     *
+     * <p><b>必须留键，不能只记数</b>：一条写的终态有三种，只有两种能靠「在不在待写集合里」分开——
+     * 在 → 还没写；不在 → 写过了**或被淘汰了**。后者表示消息不在库里，绝不能被当成成功。
+     * 记录按 {@link #DROPPED_TTL} 过期，内存占用有上界。
+     */
+    private final Map<String, Map<String, Long>> droppedKeys = new ConcurrentHashMap<>();
     private final Duration awaitTimeout;
+    private final int maxPendingPerSession;
 
     public SessionMessageQueue(int parallelism) {
-        this(parallelism, DEFAULT_AWAIT_TIMEOUT);
+        this(parallelism, DEFAULT_AWAIT_TIMEOUT, MAX_PENDING_PER_SESSION);
     }
 
     public SessionMessageQueue(int parallelism, Duration awaitTimeout) {
+        this(parallelism, awaitTimeout, MAX_PENDING_PER_SESSION);
+    }
+
+    SessionMessageQueue(int parallelism, Duration awaitTimeout, int maxPendingPerSession) {
         this.executor = Executors.newFixedThreadPool(Math.max(1, parallelism));
         this.awaitTimeout = awaitTimeout == null || awaitTimeout.isZero() || awaitTimeout.isNegative()
                 ? DEFAULT_AWAIT_TIMEOUT : awaitTimeout;
+        this.maxPendingPerSession = Math.max(1, maxPendingPerSession);
     }
 
     public synchronized <T> Future<T> submit(String sessionId, Callable<T> task) {
@@ -131,7 +147,9 @@ public class SessionMessageQueue {
         synchronized (this) {
             Map<String, PendingWrite> pending = pendingWrites.get(sessionId);
             stillPending = pending == null ? List.of() : new ArrayList<>(pending.keySet());
-            dropped = droppedWrites.getOrDefault(sessionId, 0);
+            Map<String, Long> droppedForSession = droppedKeys.get(sessionId);
+            if (droppedForSession != null) pruneDropped(sessionId, droppedForSession);
+            dropped = droppedForSession == null ? 0 : droppedForSession.size();
         }
         boolean uncommitted = !stillPending.isEmpty() || dropped > 0;
         return new RecoveryOutcome(uncommitted, stillPending.size(), dropped);
@@ -147,6 +165,10 @@ public class SessionMessageQueue {
      *   <li><b>前面某个键失败</b> → 顺序不能乱，后面的键先不写；但如果那个键
      *       已经被淘汰（重试到上限），它就不再挡路，继续写后面的。</li>
      * </ul>
+     *
+     * <p><b>收尾必须核对目标键的三种结果</b>：它可能在本轮写成功，也可能在遍历开始时
+     * 就已经被淘汰（超限/过期）——后者不会出现在 {@code keys} 里，循环走完也不会报错。
+     * 两种都「安静地结束」就等于把「没写」当成了「写了」，所以这里要显式判定。
      */
     private void flush(String sessionId, String targetKey) throws Exception {
         List<String> keys = pendingKeys(sessionId);
@@ -162,6 +184,12 @@ public class SessionMessageQueue {
                 // 前面某个键失败且还没被淘汰：顺序不能乱，后面的键先不写。
                 throw failure;
             }
+        }
+        // 走到这里：目标键要么写成功（不在待写集合里、也没有淘汰记录），
+        // 要么在遍历开始前就被淘汰了（因此根本没被尝试）。后者不能当成功。
+        if (wasDropped(sessionId, targetKey)) {
+            throw new IllegalStateException(
+                    "Message write was dropped before it could be committed");
         }
     }
 
@@ -191,12 +219,20 @@ public class SessionMessageQueue {
 
     private void writePending(String sessionId, String key) throws Exception {
         PendingWrite pending;
+        boolean dropped;
         synchronized (this) {
             Map<String, PendingWrite> map = pendingWrites.get(sessionId);
-            if (map == null) return;
-            pending = map.get(key);
+            pending = map == null ? null : map.get(key);
+            dropped = pending == null && wasDropped(sessionId, key);
         }
-        if (pending == null) return;
+        if (pending == null) {
+            if (dropped) {
+                // 不在待写集合里不等于写成功：它可能刚被淘汰（消息没落库）。
+                throw new DroppedWriteException(
+                        new IllegalStateException("Message write was dropped before it could be committed"));
+            }
+            return;
+        }
         try {
             pending.task.call();
         } catch (Exception failure) {
@@ -229,7 +265,7 @@ public class SessionMessageQueue {
             if (pending.attempts < MAX_ATTEMPTS) return false;
             map.remove(key);
             if (map.isEmpty()) pendingWrites.remove(sessionId);
-            droppedWrites.merge(sessionId, 1, Integer::sum);
+            recordDropped(sessionId, key);
             log.error("Dropping permanently failing message write, sessionId={}, key={}, attempts={}",
                     sessionId, key, pending.attempts);
             return true;
@@ -238,12 +274,12 @@ public class SessionMessageQueue {
 
     /** 单会话待写超过上限：淘汰最早的键。 */
     private void evictOverflow(String sessionId, Map<String, PendingWrite> pending) {
-        while (pending.size() > MAX_PENDING_PER_SESSION) {
+        while (pending.size() > maxPendingPerSession) {
             Iterator<String> keys = pending.keySet().iterator();
             if (!keys.hasNext()) return;
             String oldest = keys.next();
             keys.remove();
-            droppedWrites.merge(sessionId, 1, Integer::sum);
+            recordDropped(sessionId, oldest);
             log.error("Dropping oldest pending message write (session over cap), sessionId={}, key={}",
                     sessionId, oldest);
         }
@@ -257,9 +293,28 @@ public class SessionMessageQueue {
             Map.Entry<String, PendingWrite> entry = iterator.next();
             if (now - entry.getValue().createdAt < PENDING_TTL.toMillis()) continue;
             iterator.remove();
-            droppedWrites.merge(sessionId, 1, Integer::sum);
+            recordDropped(sessionId, entry.getKey());
             log.error("Dropping expired pending message write, sessionId={}, key={}", sessionId, entry.getKey());
         }
+    }
+
+    /** 记下「这个键被淘汰了」——flush / writePending 靠它把「已提交」和「没提交」分开。 */
+    private void recordDropped(String sessionId, String key) {
+        Map<String, Long> dropped = droppedKeys.computeIfAbsent(sessionId, ignored -> new LinkedHashMap<>());
+        dropped.put(key, System.currentTimeMillis());
+        pruneDropped(sessionId, dropped);
+    }
+
+    private void pruneDropped(String sessionId, Map<String, Long> dropped) {
+        long now = System.currentTimeMillis();
+        dropped.entrySet().removeIf(entry -> now - entry.getValue() > DROPPED_TTL.toMillis());
+        if (dropped.isEmpty()) droppedKeys.remove(sessionId);
+    }
+
+    /** 这个键是否已被淘汰（消息确定没落库）。 */
+    private boolean wasDropped(String sessionId, String key) {
+        Map<String, Long> dropped = droppedKeys.get(sessionId);
+        return dropped != null && dropped.containsKey(key);
     }
 
     /** 取消线程也必须等终态写入反馈，之后恢复中断标志，不取消写任务。 */

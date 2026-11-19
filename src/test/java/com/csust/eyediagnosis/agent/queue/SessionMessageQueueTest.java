@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -167,6 +168,80 @@ class SessionMessageQueueTest {
             queue.recoverPending("s1");
             assertTrue(queue.hasUncommitted("s1"));
             assertFalse(queue.hasUncommitted("other-session"));
+        } finally {
+            queue.shutdown();
+        }
+    }
+
+    /**
+     * 被淘汰的写**绝不能返回成功**。
+     *
+     * <p>复审 E1：`flush` 遍历的是「当时还在待写集合里的键」。如果一个键在遍历开始前就被
+     * 淘汰（超限/过期），它根本不会被尝试，循环安静走完——调用方于是以为「已提交」，
+     * 终态帧就发给了一个库里不存在的行。这条用例把那个静默成功的路径钉死：
+     * 目标键在待写集合里查不到时，必须再确认它是被淘汰（失败）而不是已提交（成功）。
+     */
+    @Test
+    void anEvictedWriteNeverReportsSuccess() throws Exception {
+        // 上限设为 1：第二条待写一定会把第一条挤掉。
+        SessionMessageQueue queue = new SessionMessageQueue(1, Duration.ofSeconds(10), 1);
+        CountDownLatch blockerStarted = new CountDownLatch(1);
+        CountDownLatch gate = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicReference<Throwable> firstOutcome =
+                new java.util.concurrent.atomic.AtomicReference<>(new IllegalStateException("did not finish"));
+        try {
+            // 占住唯一的执行线程，让两条写的 flush 都排在后面。
+            queue.submit("s1", () -> {
+                blockerStarted.countDown();
+                gate.await();
+                return null;
+            });
+            assertTrue(blockerStarted.await(2, TimeUnit.SECONDS));
+
+            Thread first = new Thread(() -> {
+                try {
+                    queue.submitRecoverableAndWait("s1", "k1", () -> null);
+                    firstOutcome.set(null);   // 返回成功——正是不能出现的结果
+                } catch (Throwable failure) {
+                    firstOutcome.set(failure);
+                }
+            });
+            first.start();
+            Thread.sleep(200);   // k1 已登记，它的 flush 排在 blocker 后面
+
+            Thread second = new Thread(() -> {
+                try {
+                    queue.submitRecoverableAndWait("s1", "k2", () -> null);
+                } catch (Throwable ignored) {
+                    // 第二条是否成功不在本用例的断言范围
+                }
+            });
+            second.start();
+            Thread.sleep(200);   // 上限 1 → k1 被 evictOverflow 淘汰
+
+            gate.countDown();
+            first.join(5000);
+            second.join(5000);
+
+            assertNotNull(firstOutcome.get(),
+                    "被淘汰的写不能以成功返回：那等于宣称「已提交」，而库里没有这一行");
+            assertEquals(1, queue.recoveryOutcome("s1").droppedCount(),
+                    "淘汰必须记到具体键上，而不是只记一个数");
+        } finally {
+            gate.countDown();
+            queue.shutdown();
+        }
+    }
+
+    /** 正常写入仍然是成功（三种结果的第三种）：不能因为加固把成功也变成异常。 */
+    @Test
+    void aCommittedWriteStillReportsSuccess() {
+        SessionMessageQueue queue = new SessionMessageQueue(2);
+        try {
+            queue.submitRecoverableAndWait("s1", "ok", () -> null);
+            assertFalse(queue.hasUncommitted("s1"), "写成功的会话不能报「历史可能不完整」");
+            assertEquals(0, queue.recoveryOutcome("s1").droppedCount());
+            assertEquals(0, queue.recoveryOutcome("s1").pendingCount());
         } finally {
             queue.shutdown();
         }
