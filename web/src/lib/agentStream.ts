@@ -7,7 +7,12 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react"
 import { ApiError, streamChat, type AgentStreamDTO, type HistoryMessageVO } from "./api"
-import { deriveResources, parseResourceRefs, type AgentResource } from "./agentResources"
+import {
+  deriveResources,
+  isTrustedAttachmentUrl,
+  parseResourceRefs,
+  type AgentResource,
+} from "./agentResources"
 import { newId } from "./id"
 import { formatClock, parseApiDate, parseApiTime } from "./time"
 
@@ -448,23 +453,37 @@ function parsePersistedToolResult(content: string): ParsedToolResult {
 }
 
 /**
- * 用户消息落库信封 `{"text":…,"images":[…]} → { text, images }。
+ * 服务端写入附件信封时使用的类型标记；必须与后端
+ * {@code ChatHistoryService.USER_MESSAGE_ENVELOPE_KIND} 保持一致。
+ */
+export const USER_MESSAGE_ENVELOPE_KIND = "iris.user-message.v1"
+
+/**
+ * 用户消息落库信封 `{"kind":"iris.user-message.v1","text":…,"images":[…]}`
+ * → `{ text, images }`。
  *
- * <p>只认结构完全对得上的对象：有一条 `text` 字符串和一组字符串 `images`。
- * 老版本用户消息就是纯文本（哪怕它本身长得像 JSON），不会走到这里被误解。
+ * <p>只有带服务端标记的信封才算附件：标记是「这些地址已经过归属校验」的凭证。
+ * 用户自己在聊天框里打出同样形状的 JSON，或者模型生成的文本长得像信封，
+ * 一律按普通文本原样显示——不凭形状授予可信附件身份。
+ *
+ * <p>老版本信封没有标记，也一并按纯文本处理：宁可让历史消息显示出原始 JSON，
+ * 也不凭空补造一条「已验证的上传附件」。
  */
 export function parseUserEnvelope(content: string): { text: string; images: string[] } {
+  const plain = { text: content ?? "", images: [] as string[] }
   const trimmed = (content ?? "").trim()
-  if (!trimmed.startsWith("{")) return { text: content ?? "", images: [] }
+  if (!trimmed.startsWith("{")) return plain
   try {
     const parsed = JSON.parse(trimmed) as Record<string, unknown>
-    if (typeof parsed.text !== "string" || !Array.isArray(parsed.images)) {
-      return { text: content ?? "", images: [] }
-    }
-    const images = parsed.images.filter((url): url is string => typeof url === "string" && !!url)
+    if (parsed.kind !== USER_MESSAGE_ENVELOPE_KIND) return plain
+    if (typeof parsed.text !== "string" || !Array.isArray(parsed.images)) return plain
+    const images = parsed.images.filter(
+      (url): url is string => typeof url === "string" && isTrustedAttachmentUrl(url),
+    )
+    // 标记在但一条地址都不合格：正文照常恢复，附件不补造
     return { text: parsed.text, images }
   } catch {
-    return { text: content ?? "", images: [] }
+    return plain
   }
 }
 

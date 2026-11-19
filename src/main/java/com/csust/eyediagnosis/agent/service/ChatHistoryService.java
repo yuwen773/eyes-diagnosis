@@ -58,16 +58,29 @@ public class ChatHistoryService {
     }
 
     /**
+     * 服务端写入的附件信封类型标记。
+     *
+     * <p>前端只认带这个标记的内容为「服务端验证过的上传附件」。用户自己在聊天框里
+     * 打出同样形状的 JSON 只是普通文本——不能凭「长得像信封」就获得可信附件身份。
+     * 改这里必须同步改 {@code web/src/lib/agentStream.ts} 的同名常量。
+     */
+    public static final String USER_MESSAGE_ENVELOPE_KIND = "iris.user-message.v1";
+
+    /**
      * 带附件的用户消息落库。
      *
      * <p>t_agent_message 没有附件列，用同一个「规范 JSON」约定扩展内容：
-     * {@code {"text":"…","images":["https://…"]}}。没有附件时仍写纯文本——
-     * 旧行、旧前端都不需要知道这个信封。
+     * {@code {"kind":"iris.user-message.v1","text":"…","images":["https://…"]}}。
+     * 没有附件时仍写纯文本——旧行、旧前端都不需要知道这个信封。
+     *
+     * <p>{@code kind} 不是装饰：图片地址在进入本方法之前已经过
+     * {@code AgentController#assertOwnedImages} 的归属校验，标记就是这段校验的凭证。
      */
     public void saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
         String payload = content;
         if (imageUrls != null && !imageUrls.isEmpty()) {
             Map<String, Object> envelope = new java.util.LinkedHashMap<>();
+            envelope.put("kind", USER_MESSAGE_ENVELOPE_KIND);
             envelope.put("text", content == null ? "" : content);
             envelope.put("images", imageUrls);
             try {

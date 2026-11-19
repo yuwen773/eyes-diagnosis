@@ -110,6 +110,30 @@ function toMediaUrl(raw: string | undefined | null): string | null {
   return url ? url.toString() : null
 }
 
+/** 服务端上传对象键的固定前缀（后端 `UploadCompensationService.OBJECT_KEY_PREFIX`）。 */
+const UPLOAD_OBJECT_PREFIX = "/agent-chat/"
+
+/**
+ * 附件地址准入：什么样的地址才可以被当成「用户上传的影像」去渲染。
+ *
+ * <p>只认两类：站内根相对路径，以及上传命名空间里的 https 地址
+ * （`https://<cosHost>/agent-chat/<userId>/<uuid>.png`）。其余——包括任何第三方
+ * https 地址——一律不当作附件：图片一旦渲染，就等于把「这位用户看过这一页」
+ * 告诉了外站。地址形状只是第二道闸，第一道是落库信封上的服务端标记。
+ */
+export function isTrustedAttachmentUrl(raw: string | undefined | null): boolean {
+  const trimmed = (raw ?? "").trim()
+  if (!trimmed) return false
+  if (trimmed.startsWith("//") || trimmed.startsWith("\\")) return false
+  if (trimmed.startsWith("/")) return true
+  const url = toHttpUrl(trimmed)
+  if (!url) return false
+  if (url.protocol === "https:" && url.pathname.startsWith(UPLOAD_OBJECT_PREFIX)) return true
+  // 同源绝对地址（本地开发与反向代理同域部署）不产生跨站请求，可以放行
+  if (typeof window !== "undefined" && url.origin === window.location.origin) return true
+  return false
+}
+
 function normalizeHttpUrl(url: URL): string {
   const copy = new URL(url.toString())
   copy.hash = ""

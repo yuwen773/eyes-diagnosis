@@ -4,6 +4,7 @@ import {
   countResources,
   deriveResources,
   isAutoLoadableImage,
+  isTrustedAttachmentUrl,
   parseResourceRefs,
   type AgentResource,
   type ResourceSourceMessage,
@@ -230,6 +231,33 @@ describe("isAutoLoadableImage", () => {
         url: "/uploads/a.png",
       }),
     ).toBe(true)
+  })
+})
+
+describe("isTrustedAttachmentUrl", () => {
+  it("上传命名空间里的 COS 地址可以当附件", () => {
+    expect(isTrustedAttachmentUrl("https://cos.example.com/agent-chat/7/a.png")).toBe(true)
+  })
+
+  it("站内根相对路径可以当附件", () => {
+    expect(isTrustedAttachmentUrl("/uploads/a.png")).toBe(true)
+  })
+
+  it("第三方 https 地址不获得附件身份", () => {
+    expect(isTrustedAttachmentUrl("https://tracker.example.net/pixel.png")).toBe(false)
+    // 路径里带上 agent-chat 也不能冒充：上传地址固定落在对象键根下，
+    // 但真正拦住它的是第一道闸（信封标记），这里只是不额外放行第三方域名
+    expect(isTrustedAttachmentUrl("https://tracker.example.net/x?p=/agent-chat/7/a.png")).toBe(false)
+  })
+
+  it("协议相对地址与反斜杠地址一律拒绝", () => {
+    expect(isTrustedAttachmentUrl("//tracker.example.net/pixel.png")).toBe(false)
+    expect(isTrustedAttachmentUrl("\\\\tracker.example.net\\pixel.png")).toBe(false)
+  })
+
+  it("非 http(s) 协议拒绝", () => {
+    expect(isTrustedAttachmentUrl("javascript:alert(1)")).toBe(false)
+    expect(isTrustedAttachmentUrl("data:image/png;base64,AAAA")).toBe(false)
   })
 })
 

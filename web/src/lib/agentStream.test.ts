@@ -4,6 +4,7 @@ import {
   clearAllLoading,
   mapHistoryMessage,
   parseUserEnvelope,
+  USER_MESSAGE_ENVELOPE_KIND,
   type StreamMessage,
 } from "./agentStream"
 import { deriveResources } from "./agentResources"
@@ -433,21 +434,74 @@ describe("资源闭环（Phase R）", () => {
     expect(deriveResources([m]).documents).toEqual([])
   })
 
-  it("用户消息信封能恢复上传图片，刷新/切会话后影像不丢", () => {
+  it("带服务端标记的信封能恢复上传图片，刷新/切会话后影像不丢", () => {
     const m = mapHistoryMessage({
       id: "10",
       role: "USER",
       subType: "",
       content: JSON.stringify({
+        kind: "iris.user-message.v1",
         text: "帮我看看",
-        images: ["https://cos.example.com/f.jpg"],
+        images: ["https://cos.example.com/agent-chat/7/f.jpg"],
       }),
       isSummary: false,
       createdTime: "2026-11-08T10:00:00Z",
     })
     expect(m.content).toBe("帮我看看")
-    expect(m.images).toEqual(["https://cos.example.com/f.jpg"])
+    expect(m.images).toEqual(["https://cos.example.com/agent-chat/7/f.jpg"])
     expect(deriveResources([m]).images).toHaveLength(1)
+  })
+
+  it("信封标记是与后端逐字对齐的跨语言契约", () => {
+    // 改这里必须同步改 ChatHistoryService.USER_MESSAGE_ENVELOPE_KIND，
+    // 否则线上所有附件消息都会被当成普通文本（或反之）。
+    expect(USER_MESSAGE_ENVELOPE_KIND).toBe("iris.user-message.v1")
+  })
+
+  it("用户自己打出来的信封形状文本只是普通文本，不获得附件身份", () => {
+    // P1-03 的复现：正文长得像附件 JSON，旧实现会把 text 换成正文、把外链当上传影像。
+    const spoof = JSON.stringify({
+      text: "这句话才是用户真正打的",
+      images: ["https://tracker.example.net/pixel.png"],
+    })
+    const m = mapHistoryMessage({
+      id: "11",
+      role: "USER",
+      subType: "",
+      content: spoof,
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe(spoof)
+    expect(m.images).toBeUndefined()
+    expect(deriveResources([m]).images).toEqual([])
+  })
+
+  it("老信封没有标记时按纯文本保守处理，不补造已验证附件", () => {
+    // 标记是「地址已过归属校验」的凭证；老行没有凭证，就不给附件身份。
+    const legacy = JSON.stringify({
+      text: "旧会话里的附件消息",
+      images: ["https://cos.example.com/agent-chat/7/legacy.jpg"],
+    })
+    const envelope = parseUserEnvelope(legacy)
+    expect(envelope.text).toBe(legacy)
+    expect(envelope.images).toEqual([])
+  })
+
+  it("带标记但地址不在上传命名空间的附件被丢弃，正文照常恢复", () => {
+    const envelope = parseUserEnvelope(
+      JSON.stringify({
+        kind: "iris.user-message.v1",
+        text: "正文",
+        images: [
+          "https://cos.example.com/agent-chat/7/ok.png",
+          "https://tracker.example.net/pixel.png",
+          "//cos.example.com/agent-chat/7/protocol-relative.png",
+        ],
+      }),
+    )
+    expect(envelope.text).toBe("正文")
+    expect(envelope.images).toEqual(["https://cos.example.com/agent-chat/7/ok.png"])
   })
 
   it("旧版纯文本用户消息不会被误当信封解析", () => {

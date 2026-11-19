@@ -1,3 +1,4 @@
+import { isTrustedAttachmentUrl } from "@/lib/agentResources"
 import type { StreamMessage } from "@/lib/agentStream"
 
 /**
@@ -22,7 +23,8 @@ const DELIVERY_NOTE: Partial<Record<NonNullable<StreamMessage["delivery"]>, { ma
  * 回答更重。图片网格最多 4 张，多于 4 张在角落叠 +N。
  */
 export function UserMessage({ msg, onPreviewImage }: { msg: StreamMessage; onPreviewImage?: (url: string) => void }) {
-  const images = msg.images ?? []
+  // 第二道闸：即使消息体带上了 images，也只渲染服务端上传命名空间里的地址。
+  const images = (msg.images ?? []).filter(isTrustedAttachmentUrl)
   const shown = images.slice(0, 4)
   const more = images.length - shown.length
   const gridCols = Math.min(images.length, 4)

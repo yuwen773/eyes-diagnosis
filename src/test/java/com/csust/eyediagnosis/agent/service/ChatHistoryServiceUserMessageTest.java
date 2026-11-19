@@ -78,6 +78,18 @@ class ChatHistoryServiceUserMessageTest {
     }
 
     @Test
+    void envelopeCarriesTheServerMarker() throws Exception {
+        // P1-03：前端只认带标记的信封为服务端验证过的附件。标记字面量是跨语言契约，
+        // 与 web/src/lib/agentStream.ts 的 USER_MESSAGE_ENVELOPE_KIND 必须逐字一致。
+        when(sessionMapper.selectBySessionId(SESSION)).thenReturn(null);
+        service().saveUserMessage(SESSION, USER, "看图", List.of("https://cos.example.com/a.jpg"));
+
+        JsonNode stored = new ObjectMapper().readTree(runQueuedWrite());
+        assertEquals("iris.user-message.v1", stored.get("kind").asText(),
+                "没有标记，前端无法把服务端信封与用户打出的同形 JSON 区分开");
+    }
+
+    @Test
     void messageWithoutImagesStaysPlainText() throws Exception {
         when(sessionMapper.selectBySessionId(SESSION)).thenReturn(null);
         service().saveUserMessage(SESSION, USER, "普通提问", List.of());
