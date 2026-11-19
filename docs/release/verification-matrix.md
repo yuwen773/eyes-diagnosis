@@ -118,6 +118,9 @@ backend-unit / collaboration / graph-execution / flyway 与本地 `verify.sh` �
 |---|---|
 | ✅ **21/21 job 通过** | `docs-contract`、`python`、`watchdog`、`backend-compile`、`backend-unit`、`collaboration-mysql`、`graph-execution-mysql`、`flyway-mysql ×2`、`product-contract`、`frontend`、`web`、`web-e2e-system-states`、`issue17–24-mysql`、`issue24-evaluation` |
 
+> 收尾文档提交（`c5965778`，只改 `docs/**`）在其自己的 head 上也跑了一次 CI：
+> run 44460599844，同样 **21/21 通过**。结论树仍是 `03b14efd`，两者代码树逐字节相同。
+>
 > 首轮 CI（run 44458627170，head `c1f2e998`）有 2 个 job 失败，均为**用例自身**的问题，
 > 已单独修复并留痕：新 Flyway 用例用了 CI 未授权的库名前缀、skip 契约计数未同步。
 > 没有放宽任何门禁（见提交 `03b14efd`）。

@@ -15,6 +15,7 @@
 |---|---|
 | 候选分支 | `integration/iris-release-candidate`（已推送 origin） |
 | **候选代码 SHA** | `03b14efd8f9bcc8d6326a104396d8b68a30d5e8b` |
+| 收尾文档提交 | `c5965778`（只改 `docs/**`；其 head 上 CI run 44460599844 同样 21/21） |
 | **本轮审查对象（旧）** | `7dc3422b70828d400ad1d3a09e8c29aa12f48309`（代码 `6ff5a889`），Codex 判 NO_GO |
 | 基线 | `origin/ui@1ff9c71c` |
 | 建议版本号 | `v1.1.0-rc.1`（编号不变；本轮整改不新增功能） |
