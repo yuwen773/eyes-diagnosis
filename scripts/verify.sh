@@ -81,7 +81,7 @@ export SPRING_DATA_REDIS_HOST=127.0.0.1
 export SPRING_DATA_REDIS_PORT="$REDIS_PORT"
 
 echo "==> pass 1/3: full unit suite (including contextLoads)"
-mvn -o test -Dtest='!FlywayMySqlIntegrationTest,!UploadTaskMapperMySqlIntegrationTest,!ToolAuditMySqlIntegrationTest' "$@"
+mvn -o test -Dtest='!FlywayMySqlIntegrationTest,!UploadTaskMapperMySqlIntegrationTest,!ToolAuditMySqlIntegrationTest,!ToolTerminalPersistenceMySqlIntegrationTest' "$@"
 
 # 第二遍要一个从未被 Spring 的 Flyway 碰过的空库。
 echo "==> pass 2/3: MySQL integration gates on a fresh schema"
@@ -92,7 +92,7 @@ export FLYWAY_TEST_URL="$IT_URL"
 export FLYWAY_TEST_USERNAME=root
 export FLYWAY_TEST_PASSWORD=root-password
 export FLYWAY_TEST_SCHEMA=diagnosis_ci
-mvn -o test -Dtest='FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest,ToolAuditMySqlIntegrationTest' "$@"
+mvn -o test -Dtest='FlywayMySqlIntegrationTest,UploadTaskMapperMySqlIntegrationTest,ToolAuditMySqlIntegrationTest,ToolTerminalPersistenceMySqlIntegrationTest' "$@"
 
 # 第三遍：协作 / 患者草稿 / 医生复核 / 任务恢复等隔离库套件。
 #
