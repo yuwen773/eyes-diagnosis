@@ -16,7 +16,7 @@
 #
 # 永不触碰：主检出、当前工作树、分支挂着开放 PR 的工作树、_keep.txt 里登记的分支/路径。
 # 归档落在 <主检出>/.worktrees/_archive/<日期>/<树名>-<HEAD短SHA>/（该目录已被 .gitignore 忽略）：
-#   changes.patch（已跟踪改动）/ meta.txt / untracked.tar.gz / history.bundle（有独有提交时）。
+#   changes.patch / index.patch / worktree.patch / meta.txt / untracked.tar.gz / history.bundle。
 # **归档任何一步失败都不会删除工作树**；同名同日归档不会互相覆盖。
 # 想长期保留某棵树，把分支名或路径写进 <主检出>/.worktrees/_keep.txt（一行一个）。
 #
@@ -25,8 +25,10 @@
 #   IRIS_NO_PR_LOOKUP=1 不查 GitHub 开放 PR
 set -uo pipefail
 
-MAIN="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
-CURRENT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+WORKTREE_LIST="$(git worktree list --porcelain)" || exit 1
+MAIN="$(printf '%s\n' "$WORKTREE_LIST" | sed -n '1s/^worktree //p')"
+CURRENT="$(git rev-parse --show-toplevel)" || exit 1
+[ -n "$MAIN" ] && [ -n "$CURRENT" ] || exit 1
 # 归档目录可用环境变量覆盖：回归脚本要把它指到临时目录。
 ARCHIVE_BASE="${IRIS_ARCHIVE_BASE:-$MAIN/.worktrees/_archive/$(date +%Y-%m-%d)}"
 KEEP_FILE="$MAIN/.worktrees/_keep.txt"
@@ -53,7 +55,7 @@ keep_for() {
 }
 
 worktrees() {
-  git worktree list --porcelain | awk '
+  printf '%s\n' "$WORKTREE_LIST" | awk '
     /^worktree /{w=substr($0,10)}
     /^HEAD /{h=substr($0,6)}
     /^branch /{b=substr($0,8); sub("refs/heads/","",b)}
@@ -62,25 +64,48 @@ worktrees() {
     END{if(w)print w"\t"h"\t"b}'
 }
 
-reachable() { [ -n "$(git -C "$1" branch -r --contains "$2" 2>/dev/null | grep -v '\->' | head -1)" ]; }
+reachable() {
+  local refs
+  refs="$(git -C "$1" branch -r --contains "$2")" || return 2
+  [ -n "$(printf '%s\n' "$refs" | grep -v '\->')" ]
+}
 
 age_days() {
   local ts now
-  ts="$(git -C "$1" log -1 --format=%ct 2>/dev/null)" || { echo "?"; return; }
-  now="$(date +%s)"
+  ts="$(git -C "$1" log -1 --format=%ct)" || return 1
+  [[ "$ts" =~ ^[0-9]+$ ]] || return 1
+  now="$(date +%s)" || return 1
   echo $(( (now - ts) / 86400 ))
 }
 
 classify() {
   # $1=path $2=head $3=branch → 建议
-  local p="$1" h="$2" b="$3" pn dirty=0 unique=0
+  local p="$1" h="$2" b="$3" pn dirty=0 unique=0 status others diff_rc current_head current_branch
   if [ "$(norm "$p")" = "$MAIN_N" ]; then echo "KEEP:main"; return; fi
   if [ "$(norm "$p")" = "$CURRENT_N" ]; then echo "KEEP:current"; return; fi
   if keep_for "$b" "$p"; then echo "KEEP:keep-list"; return; fi
   pn="$(pr_for "$b")"
   if [ -n "$pn" ]; then echo "KEEP:open-pr#$pn"; return; fi
-  [ "$(git -C "$p" status --porcelain 2>/dev/null | wc -l)" -gt 0 ] && dirty=1
-  reachable "$p" "$h" || unique=1
+  case "$b" in master|main|ui) echo "KEEP:protected-branch"; return;; esac
+  current_head="$(git -C "$p" rev-parse HEAD)" || return 1
+  [[ "$current_head" =~ ^[0-9a-f]{40}$ ]] && [ "$current_head" = "$h" ] || return 1
+  current_branch="$(git -C "$p" rev-parse --abbrev-ref HEAD)" || return 1
+  [ -n "$current_branch" ] || return 1
+  if [ "$b" = '(detached)' ]; then
+    [ "$current_branch" = HEAD ] || return 1
+  else
+    [ "$current_branch" = "$b" ] || return 1
+  fi
+  status="$(git -C "$p" status --porcelain)" || return 1
+  others="$(git -C "$p" ls-files --others --exclude-standard)" || return 1
+  git -C "$p" diff --quiet HEAD --; diff_rc=$?
+  [ "$diff_rc" -le 1 ] || return 1
+  if [ -n "$status" ] || [ -n "$others" ] || [ "$diff_rc" = 1 ]; then dirty=1; fi
+  # 空输出不能把真实改动重新归类为 SAFE。
+  if [ -z "$status" ] && { [ -n "$others" ] || [ "$diff_rc" = 1 ]; }; then return 1; fi
+  reachable "$p" "$h"; local reachable_rc=$?
+  [ "$reachable_rc" -le 1 ] || return 1
+  [ "$reachable_rc" = 0 ] || unique=1
   # 脏且唯一必须单独标出来：只加 --archive-dirty 的树也可能有独有提交，
   # 那种情况不能靠 diff 补丁 + 文件包宣称保全了历史（要 Git bundle）。
   if [ "$dirty" = 1 ] && [ "$unique" = 1 ]; then echo "ARCHIVE:dirty+unique"; return; fi
@@ -96,136 +121,154 @@ classify() {
 # 所以 tar 失败、磁盘满、diff 写不进去时函数照样返回 0，调用方照删不误。
 # 现在每一步都显式检查；归档先写临时目录，校验通过后再原子改名发布。
 #
-# 用法：archive_worktree <路径> <是否需要保全历史:0|1>
-#   1 = 该树有独有的提交，必须额外生成 Git bundle 并用 `git bundle verify` 校验；
-#       仅靠 diff 补丁 + 文件压缩包无法保全提交历史。
+# 用法：archive_worktree <路径>；归档始终自包含，并在隔离仓库验证实际恢复。
 # ---------------------------------------------------------------------------
-archive_worktree() {
-  local p="$1" need_history="${2:-0}"
-  local name head branch before_status untracked_list staging final
+# 快照同时覆盖暂存区、工作区和未跟踪文件的实际字节。NUL 分隔支持换行文件名。
+snapshot_worktree() {
+  local p="$1" out="$2" f hash head
+  mkdir -p "$out" || return 1
+  head="$(git -C "$p" rev-parse HEAD)" || return 1
+  [[ "$head" =~ ^[0-9a-f]{40}$ ]] || return 1
+  printf '%s\n' "$head" > "$out/head" || return 1
+  git -C "$p" status --porcelain -z > "$out/status" || return 1
+  git -C "$p" ls-files --stage -z > "$out/index" || return 1
+  git -C "$p" ls-files -z --cached --others --exclude-standard > "$out/files.raw" || return 1
+  sort -zu "$out/files.raw" > "$out/files" || return 1
+  : > "$out/content" || return 1
+  while IFS= read -r -d '' f; do
+    if [ -L "$p/$f" ]; then
+      hash="$(readlink "$p/$f" | git hash-object --stdin)" || return 1
+      printf 'link\0%s\0%s\0' "$f" "$hash" >> "$out/content" || return 1
+    elif [ -f "$p/$f" ]; then
+      hash="$(git -C "$p" hash-object --no-filters -- "$f")" || return 1
+      [[ "$hash" =~ ^[0-9a-f]{40}$ ]] || return 1
+      printf 'file\0%s\0%s\0' "$f" "$hash" >> "$out/content" || return 1
+    elif [ ! -e "$p/$f" ]; then
+      printf 'missing\0%s\0' "$f" >> "$out/content" || return 1
+    else
+      # 子模块、设备文件等不具备本脚本支持的恢复证明，保守保留。
+      return 1
+    fi
+  done < "$out/files"
+}
 
-  name="$(basename "$p")"
-  head="$(git -C "$p" rev-parse HEAD 2>/dev/null)" || {
-    echo "归档失败：读不到 HEAD（$p）" >&2; return 1; }
-  branch="$(git -C "$p" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '(detached)')"
-  before_status="$(git -C "$p" status --porcelain 2>/dev/null)" || {
-    echo "归档失败：读不到工作树状态（$p）" >&2; return 1; }
+same_snapshot() {
+  local a="$1" b="$2" part
+  for part in head status index files content; do
+    cmp -s "$a/$part" "$b/$part" || return 1
+  done
+}
 
-  # 同名同日归档不得覆盖：目标名带 HEAD 短 SHA。
-  final="$ARCHIVE_BASE/$name-$(printf '%s' "$head" | cut -c1-8)"
-  if [ -e "$final" ]; then
-    echo "归档失败：目标已存在，拒绝覆盖: $final" >&2
-    return 1
+# 只回收本次验证创建、且确实位于归档目录内的临时检出/清单。
+remove_verification_dir() {
+  local target parent
+  target="$(cd "$1" && pwd -P)" || return 1
+  parent="$(cd "$2" && pwd -P)" || return 1
+  case "$target" in
+    "$parent"/restore.*|"$parent"/after.*|"$parent"/pre-remove.*) rm -rf -- "$target" ;;
+    *) return 1 ;;
+  esac
+}
+
+# 不能用 verify 或 tar 条目数作为可恢复证明：在全新仓库真正重建两个工作版本。
+restore_archive() {
+  local archive="$1" restore="$2" head="$3"
+  git init -q "$restore" || return 1
+  git -C "$restore" config core.autocrlf false || return 1
+  git -C "$restore" bundle verify "$archive/history.bundle" >/dev/null 2>&1 || return 1
+  git -C "$restore" bundle unbundle "$archive/history.bundle" >/dev/null 2>&1 || return 1
+  git -C "$restore" fsck --full --no-reflogs "$head" >/dev/null 2>&1 || return 1
+  git -C "$restore" checkout -q --detach "$head" || return 1
+  if [ -s "$archive/index.patch" ]; then
+    git -C "$restore" apply --binary --index "$archive/index.patch" || return 1
   fi
-  staging="$final.staging.$$"
-  rm -rf "$staging" 2>/dev/null
-  mkdir -p "$staging" || { echo "归档失败：无法创建暂存目录 $staging" >&2; return 1; }
+  if [ -s "$archive/worktree.patch" ]; then
+    git -C "$restore" apply --binary "$archive/worktree.patch" || return 1
+  fi
+  tar -xzf "$archive/untracked.tar.gz" -C "$restore" || return 1
+  snapshot_worktree "$restore" "$restore/.git/restored-snapshot" || return 1
+  same_snapshot "$archive/snapshot" "$restore/.git/restored-snapshot"
+}
+
+ARCHIVED_PATH=""
+ARCHIVE_DIGEST=""
+archive_digest() {
+  (cd "$1" && sha256sum history.bundle index.patch worktree.patch changes.patch \
+    untracked.tar.gz meta.txt branch snapshot/head snapshot/status snapshot/index snapshot/files snapshot/content)
+}
+archive_worktree() {
+  local p="$1" name head branch staging final restore after
+  ARCHIVED_PATH=""
+  ARCHIVE_DIGEST=""
+  name="$(basename "$p")"
+  head="$(git -C "$p" rev-parse HEAD)" || return 1
+  [[ "$head" =~ ^[0-9a-f]{40}$ ]] || return 1
+  branch="$(git -C "$p" rev-parse --abbrev-ref HEAD)" || return 1
+  [ -n "$branch" ] || return 1
+  final="$ARCHIVE_BASE/$name-${head:0:8}"
+  [ ! -e "$final" ] || { echo "归档失败：目标已存在: $final" >&2; return 1; }
+  mkdir -p "$ARCHIVE_BASE" || return 1
+  staging="$(mktemp -d "$final.staging.XXXXXX")" || return 1
 
   _archive_abort() {
-    echo "归档失败：$1 —— 工作树已保留: $p" >&2
-    rm -rf "$staging" 2>/dev/null
+    echo "归档失败：$1 —— 工作树已保留: $p；临时证据: $staging" >&2
     return 1
   }
-
-  # 1) 已跟踪文件的改动
-  if ! git -C "$p" diff --binary HEAD > "$staging/changes.patch"; then
-    _archive_abort "git diff 写入失败"
-    return 1
-  fi
-  if [ -n "$before_status" ] && printf '%s\n' "$before_status" | grep -qv '^??' \
-      && [ ! -s "$staging/changes.patch" ]; then
-    _archive_abort "存在已跟踪改动但改动补丁为空"
-    return 1
-  fi
-
-  # 2) 未跟踪文件：列表 → 打包 → 回读校验条目数
-  untracked_list="$staging/untracked.list"
-  if [ -n "$(git -C "$p" ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
-    if ! git -C "$p" ls-files -z --others --exclude-standard > "$untracked_list"; then
-      _archive_abort "未跟踪文件列表写入失败"
-      return 1
-    fi
-    local expected actual
-    expected="$(tr -cd '\0' < "$untracked_list" | wc -c | tr -d ' ')"
-    if ! tar -czf "$staging/untracked.tar.gz" -C "$p" --null -T "$untracked_list"; then
-      _archive_abort "未跟踪文件打包失败"
-      return 1
-    fi
-    if ! tar -tzf "$staging/untracked.tar.gz" > "$staging/untracked.toc" 2>/dev/null; then
-      _archive_abort "未跟踪文件归档不可读"
-      return 1
-    fi
-    actual="$(wc -l < "$staging/untracked.toc" | tr -d ' ')"
-    if [ "$expected" != "$actual" ]; then
-      _archive_abort "未跟踪文件归档条目数不符（期望 $expected，实际 $actual）"
-      return 1
-    fi
-    rm -f "$untracked_list"
-  fi
-
-  # 3) 独有提交：Git bundle 保全对象，并当场 verify
-  if [ "$need_history" = 1 ]; then
-    if ! git -C "$p" bundle create "$staging/history.bundle" HEAD >/dev/null 2>&1; then
-      _archive_abort "无法生成历史 bundle"
-      return 1
-    fi
-    if ! git -C "$p" bundle verify "$staging/history.bundle" >/dev/null 2>&1; then
-      _archive_abort "历史 bundle 校验失败"
-      return 1
-    fi
-  fi
-
-  # 4) 元数据
+  snapshot_worktree "$p" "$staging/snapshot" || { _archive_abort "无法读取完整快照"; return 1; }
+  [ "$(cat "$staging/snapshot/head")" = "$head" ] || return 1
+  git -C "$p" diff --binary HEAD > "$staging/changes.patch" || { _archive_abort "git diff 失败"; return 1; }
+  git -C "$p" diff --binary --cached HEAD > "$staging/index.patch" || return 1
+  git -C "$p" diff --binary > "$staging/worktree.patch" || return 1
+  git -C "$p" ls-files -z --others --exclude-standard > "$staging/untracked.list" || return 1
+  tar -czf "$staging/untracked.tar.gz" -C "$p" --null -T "$staging/untracked.list" || { _archive_abort "未跟踪文件打包失败"; return 1; }
+  tar -tzf "$staging/untracked.tar.gz" > "$staging/untracked.toc" || return 1
+  # 所有归档自包含，不依赖原仓库仍然存在或远端未来仍可达。
+  git -C "$p" bundle create "$staging/history.bundle" "$head" HEAD >/dev/null 2>&1 || return 1
+  git -C "$p" bundle verify "$staging/history.bundle" >/dev/null 2>&1 || return 1
   {
-    echo "path: $p"
-    echo "branch: $branch"
-    echo "head: $head"
-    echo "archived: $(date +%F)"
-    echo "status:"
-    printf '%s\n' "$before_status"
-  } > "$staging/meta.txt" || { _archive_abort "元数据写入失败"; return 1; }
+    printf 'path: %s\nbranch: %s\nhead: %s\narchived: %s\n' "$p" "$branch" "$head" "$(date +%F)"
+    git -C "$p" status --porcelain
+  } > "$staging/meta.txt" || return 1
+  printf '%s\n' "$branch" > "$staging/branch" || return 1
 
-  # 5) 归档期间工作树不得变化：变了说明还有别的进程在写，删除不安全
-  if [ "$(git -C "$p" rev-parse HEAD 2>/dev/null)" != "$head" ]; then
-    _archive_abort "归档期间 HEAD 变化"
-    return 1
-  fi
-  if [ "$(git -C "$p" status --porcelain 2>/dev/null)" != "$before_status" ]; then
-    _archive_abort "归档期间工作树内容变化"
-    return 1
-  fi
-
-  # 6) 原子发布（同一文件系统内 mv 是原子的）
-  if ! mv "$staging" "$final"; then
-    _archive_abort "归档发布失败"
-    return 1
-  fi
-
-  # 7) 发布后再校验一遍：落盘的才是真正要依赖的东西
-  [ -s "$final/meta.txt" ] || { echo "归档失败：meta 缺失（$final）" >&2; return 1; }
-  if [ -f "$final/untracked.tar.gz" ] \
-      && ! tar -tzf "$final/untracked.tar.gz" >/dev/null 2>&1; then
-    echo "归档失败：落盘压缩包损坏（$final）" >&2
-    return 1
-  fi
-  if [ -f "$final/history.bundle" ] \
-      && ! git -C "$p" bundle verify "$final/history.bundle" >/dev/null 2>&1; then
-    echo "归档失败：落盘 bundle 校验失败（$final）" >&2
-    return 1
-  fi
-
-  echo "  已归档到 $final（patch/meta$([ -f "$final/untracked.tar.gz" ] && echo '/未跟踪文件')$([ -f "$final/history.bundle" ] && echo '/history.bundle')）"
-  return 0
+  restore="$(mktemp -d "$staging/restore.XXXXXX")" || return 1
+  restore_archive "$staging" "$restore" "$head" || { _archive_abort "隔离仓库恢复校验失败"; return 1; }
+  # 仅删除本函数在归档暂存目录内创建的恢复检出。
+  remove_verification_dir "$restore" "$staging" || return 1
+  after="$(mktemp -d "$staging/after.XXXXXX")" || return 1
+  snapshot_worktree "$p" "$after" && same_snapshot "$staging/snapshot" "$after" || { _archive_abort "归档期间内容变化"; return 1; }
+  remove_verification_dir "$after" "$staging" || return 1
+  mv "$staging" "$final" || return 1
+  # 原子发布后的内容也必须能够从零恢复；失败保留已发布工件供调查。
+  restore="$(mktemp -d "$final/restore.XXXXXX")" || return 1
+  restore_archive "$final" "$restore" "$head" || { echo "归档失败：发布后恢复失败 $final" >&2; return 1; }
+  remove_verification_dir "$restore" "$final" || return 1
+  ARCHIVE_DIGEST="$(archive_digest "$final")" || return 1
+  ARCHIVED_PATH="$final"
+  echo "  已归档并验证真实恢复: $final"
 }
 
 # 删除前最后一道确认：重新分类，结果与预期不符就不删。
 # 树在归档期间可能被别的 Agent 重新占用（新建分支、加未提交内容、开 PR）。
 remove_worktree_if_still_expected() {
-  local p="$1" h="$2" b="$3" expected="$4" rec
-  rec="$(classify "$p" "$h" "$b")"
+  local p="$1" h="$2" b="$3" expected="$4" rec snapshot branch digest
+  rec="$(classify "$p" "$h" "$b")" || return 1
   if [ "$rec" != "$expected" ]; then
     echo "拒绝删除：$p 状态已从 $expected 变为 $rec" >&2
     return 1
+  fi
+  if [ "$expected" != SAFE ]; then
+    [ -n "$ARCHIVED_PATH" ] && [ -d "$ARCHIVED_PATH" ] || return 1
+    digest="$(archive_digest "$ARCHIVED_PATH")" || return 1
+    [ -n "$ARCHIVE_DIGEST" ] && [ "$digest" = "$ARCHIVE_DIGEST" ] || return 1
+    branch="$(git -C "$p" rev-parse --abbrev-ref HEAD)" || return 1
+    [ "$branch" = "$(cat "$ARCHIVED_PATH/branch")" ] || return 1
+    snapshot="$(mktemp -d "$ARCHIVED_PATH/pre-remove.XXXXXX")" || return 1
+    if ! snapshot_worktree "$p" "$snapshot" || ! same_snapshot "$ARCHIVED_PATH/snapshot" "$snapshot"; then
+      echo "拒绝删除：归档后工作树内容发生变化或无法读取（$p）" >&2
+      return 1
+    fi
+    remove_verification_dir "$snapshot" "$ARCHIVED_PATH" || return 1
   fi
   if ! git worktree remove --force "$p"; then
     echo "删除失败：git worktree remove 返回非零（$p）" >&2
@@ -262,8 +305,18 @@ cmd_reap() {
   [ "$apply" = 0 ] && echo "（干跑。加 --apply 才真正删除）"
   local removed=0 failures=0
   while IFS=$'\t' read -r p h b; do
-    local rec; rec="$(classify "$p" "$h" "$b")"
-    local age; age="$(age_days "$p")"
+    local rec
+    if ! rec="$(classify "$p" "$h" "$b")"; then
+      echo "无法确认工作树状态，已保留: $p" >&2
+      failures=$((failures + 1))
+      continue
+    fi
+    local age
+    if ! age="$(age_days "$p")"; then
+      echo "无法确认工作树年龄，已保留: $p" >&2
+      failures=$((failures + 1))
+      continue
+    fi
     local old_enough=1
     case "$age" in ''|'?') old_enough=0 ;; *) [ "$age" -ge "$min_age" ] || old_enough=0 ;; esac
     case "$rec" in
@@ -301,7 +354,7 @@ cmd_reap() {
         else
           echo "归档后删除 $p ($b，含独有提交)"
           if [ "$apply" = 1 ]; then
-            # 独有提交必须由 bundle 保全并通过 verify，才允许删除。
+            # 独有提交必须由 bundle 保全并通过隔离恢复，才允许删除。
             if archive_worktree "$p" 1; then
               remove_worktree_if_still_expected "$p" "$h" "$b" "$rec"                 || { echo "已跳过: $p" >&2; failures=$((failures + 1)); }
             else

@@ -13,6 +13,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT="$HERE/../worktree-hygiene.sh"
 REAL_GIT="$(command -v git)"
 REAL_TAR="$(command -v tar)"
+REAL_MV="$(command -v mv)"
 
 ROOT="$(mktemp -d 2>/dev/null || mktemp -d -t hyster)"
 BIN="$ROOT/bin"
@@ -45,6 +46,29 @@ fi
 if [ "\${FAKE_FAIL_BUNDLE_VERIFY:-0}" = 1 ]; then
   case " \$* " in *" bundle verify "*) exit 7 ;; esac
 fi
+case " \$* " in
+  *" status --porcelain "*)
+    [ "\${FAKE_FAIL_STATUS:-0}" != 1 ] || exit 77
+    [ "\${FAKE_EMPTY_STATUS:-0}" != 1 ] || exit 0 ;;
+  *" rev-parse HEAD "*) [ "\${FAKE_EMPTY_HEAD:-0}" != 1 ] || exit 0 ;;
+  *" log -1 --format=%ct "*) [ "\${FAKE_EMPTY_AGE:-0}" != 1 ] || exit 0 ;;
+  *" ls-files "*)
+    [ "\${FAKE_FAIL_LIST:-0}" != 1 ] || exit 78
+    [ "\${FAKE_EMPTY_LIST:-0}" != 1 ] || exit 0 ;;
+  *" branch -r --contains "*) [ "\${FAKE_FAIL_REACHABILITY:-0}" != 1 ] || exit 79 ;;
+  *" diff --binary HEAD "*)
+    if [ "\${FAKE_MUTATE_TRACKED:-0}" = 1 ]; then
+      "$REAL_GIT" "\$@" || exit \$?
+      printf 'changed while already dirty\n' > "\$FAKE_MUTATE_PATH/a.txt"
+      exit 0
+    fi ;;
+  *" bundle create "*)
+    if [ "\${FAKE_TRUNCATE_BUNDLE:-0}" = 1 ]; then
+      "$REAL_GIT" "\$@" || exit \$?
+      for arg; do case "\$arg" in *.bundle) truncate -s -16 "\$arg";; esac; done
+      exit 0
+    fi ;;
+esac
 exec "$REAL_GIT" "\$@"
 SHIM
 chmod +x "$BIN/git"
@@ -67,10 +91,30 @@ if [ "\$1" = "-czf" ]; then
   if [ "\${FAKE_TAR_MUTATE:-0}" = 1 ] && [ -n "\${FAKE_TAR_MUTATE_PATH:-}" ]; then
     echo "concurrent edit" > "\$FAKE_TAR_MUTATE_PATH/raced-in.txt"
   fi
+  if [ "\${FAKE_TAR_WRONG_BYTES:-0}" = 1 ]; then
+    mkdir -p "\$FAKE_MUTATE_PATH/tar-source"
+    printf 'wrong payload\n' > "\$FAKE_MUTATE_PATH/tar-source/u.txt"
+    exec "$REAL_TAR" -czf "\$2" -C "\$FAKE_MUTATE_PATH/tar-source" u.txt
+  fi
 fi
 exec "$REAL_TAR" "\$@"
 SHIM
 chmod +x "$BIN/tar"
+
+cat > "$BIN/mv" <<SHIM
+#!/usr/bin/env bash
+"$REAL_MV" "\$@" || exit \$?
+if [ "\${FAKE_AFTER_ARCHIVE_MUTATE:-0}" = 1 ]; then
+  printf 'changed after archive publication\n' > "\$FAKE_MUTATE_PATH/a.txt"
+fi
+if [ "\${FAKE_AFTER_ARCHIVE_HEAD:-0}" = 1 ]; then
+  "$REAL_GIT" -C "\$FAKE_MUTATE_PATH" commit --allow-empty -qm late-commit || exit \$?
+fi
+if [ "\${FAKE_AFTER_ARCHIVE_BRANCH:-0}" = 1 ]; then
+  "$REAL_GIT" -C "\$FAKE_MUTATE_PATH" switch -qc late-branch || exit \$?
+fi
+SHIM
+chmod +x "$BIN/mv"
 
 # ---------------------------------------------------------------------------
 # 夹具
@@ -124,7 +168,7 @@ run_reap() {
     cd "$CASE_REPO" || exit 90
     PATH="$BIN:$PATH" \
     IRIS_NO_PR_LOOKUP=1 IRIS_ARCHIVE_BASE="$CASE_ARCHIVE" \
-    CALL_LOG="$CALL_LOG" REAL_GIT="$REAL_GIT" REAL_TAR="$REAL_TAR" \
+    CALL_LOG="$CALL_LOG" REAL_GIT="$REAL_GIT" REAL_TAR="$REAL_TAR" FAKE_MUTATE_PATH="$CASE_WT" \
     bash "$SCRIPT" reap --older-than 0 --apply "$@"
   ) > "$ROOT/last-run.log" 2>&1
   echo $?
@@ -144,6 +188,7 @@ assert_blocked() {
   [ "$n" = 0 ] && ok || bad "$label: 删除命令被调用 $n 次（必须为 0）"
   wt_alive && ok || bad "$label: 工作树已被删除"
   [ "$rc" != 0 ] || bad "$label: 脚本整体返回 0（应非零）"
+  [ "$rc" != 0 ] && ok
 }
 
 # ---------------------------------------------------------------------------
@@ -211,7 +256,7 @@ if setup_case c8 dirty; then
   [ -s "$arch/meta.txt" ] && ok || bad "c8: 归档缺少 meta.txt"
   [ -s "$arch/changes.patch" ] && ok || bad "c8: 归档缺少改动补丁"
   [ -f "$arch/untracked.tar.gz" ] && ok || bad "c8: 归档缺少未跟踪文件包"
-  [ -f "$arch/history.bundle" ] && bad "c8: 无独有提交的树不该生成 history.bundle" || ok
+  [ -f "$arch/history.bundle" ] && ok || bad "c8: 归档必须自包含，不依赖原仓库或远端"
 else bad "c8 夹具创建失败"; fi
 
 echo "== 9. 同名归档已存在：拒绝覆盖、拒绝删除 =="
@@ -234,6 +279,49 @@ if setup_case c10 unique; then
   git -C "$CASE_REPO" bundle verify "$arch/history.bundle" >/dev/null 2>&1 \
     && ok || bad "c10: history.bundle 无法通过 git bundle verify"
 else bad "c10 夹具创建失败"; fi
+
+echo "== 11–23. 第二轮独立反例与相邻失败路径 =="
+for fault in FAIL_STATUS EMPTY_STATUS EMPTY_HEAD EMPTY_AGE FAIL_LIST EMPTY_LIST FAIL_REACHABILITY TRUNCATE_BUNDLE MUTATE_TRACKED TAR_WRONG_BYTES AFTER_ARCHIVE_MUTATE AFTER_ARCHIVE_HEAD AFTER_ARCHIVE_BRANCH; do
+  if setup_case "fault-$fault" unique; then
+    rc="$(export "FAKE_$fault=1"; run_reap --archive-dirty --drop-unique)"
+    assert_blocked "$fault" "$rc"
+  else bad "$fault 夹具创建失败"; fi
+done
+
+echo "== 24. 独立空仓库恢复 HEAD、暂存/未暂存版本和未跟踪字节 =="
+if setup_case c20 unique; then
+  printf 'index version\n' > "$CASE_WT/a.txt"
+  git -C "$CASE_WT" add a.txt
+  printf 'working version\n' > "$CASE_WT/a.txt"
+  printf '\0\1\377binary\n' > "$CASE_WT/u.txt"
+  printf 'newline filename\n' > "$CASE_WT/"$'line\nbreak.txt'
+  head="$(git -C "$CASE_WT" rev-parse HEAD)"
+  rc="$(run_reap --archive-dirty --drop-unique)"
+  [ "$rc" = 0 ] && ok || bad "c20: 归档失败 $rc"
+  [ "$(remove_calls)" = 1 ] && ok || bad "c20: 成功对照未进入删除"
+  arch="$(find "$CASE_ARCHIVE" -mindepth 1 -maxdepth 1 -type d -print -quit)"
+  restore="$ROOT/c20/independent-restore"
+  git init -q "$restore"
+  git -C "$restore" config core.autocrlf false
+  git -C "$restore" bundle unbundle "$arch/history.bundle" >/dev/null 2>&1 \
+    && ok || bad "c20: 独立 bundle 恢复失败"
+  git -C "$restore" checkout -q --detach "$head" \
+    && ok || bad "c20: 独有 HEAD 无法恢复"
+  git -C "$restore" apply --binary --index "$arch/index.patch" \
+    && ok || bad "c20: 暂存补丁恢复失败"
+  git -C "$restore" apply --binary "$arch/worktree.patch" \
+    && ok || bad "c20: 工作区补丁恢复失败"
+  tar -xzf "$arch/untracked.tar.gz" -C "$restore" \
+    && ok || bad "c20: 未跟踪包恢复失败"
+  cmp -s "$restore/a.txt" "$CASE_WT/a.txt" && ok || bad "c20: 工作区字节不符"
+  cmp -s "$restore/u.txt" "$CASE_WT/u.txt" && ok || bad "c20: 未跟踪二进制字节不符"
+  cmp -s "$restore/"$'line\nbreak.txt' "$CASE_WT/"$'line\nbreak.txt' \
+    && ok || bad "c20: 换行文件名恢复失败"
+  [ "$(git -C "$restore" show :a.txt)" = 'index version' ] \
+    && ok || bad "c20: 暂存版本丢失"
+  [ "$(git -C "$restore" rev-parse HEAD)" = "$head" ] \
+    && ok || bad "c20: HEAD 不符"
+else bad "c20 夹具创建失败"; fi
 
 echo
 echo "通过 $PASS，失败 $FAIL"
