@@ -695,6 +695,11 @@ class GraphExecutionTest {
                 .redirectErrorStream(true).redirectOutput(output.toFile()).start();
     }
     private static String read(java.nio.file.Path path) { try { return java.nio.file.Files.readString(path); } catch (Exception e) { return e.toString(); } }
+    /** Asks the lease's own authority, not this JVM's clock, whether another executor still holds it. */
+    private static boolean leaseLive(String taskId) {
+        var live = jdbc.queryForList("SELECT leaseUntil>CURRENT_TIMESTAMP(6) FROM t_patient_graph_execution WHERE taskId=?", Boolean.class, taskId);
+        return !live.isEmpty() && Boolean.TRUE.equals(live.getFirst());
+    }
 
     /** Another JVM connects only to the opt-in disposable schema; it cannot reset the fixture. */
     public static class RecoveryWorker {
@@ -716,6 +721,13 @@ class GraphExecutionTest {
                     return new ChatResponse(List.of(new Generation(new AssistantMessage(output))));
                 } catch (Exception e) { throw new RuntimeException(e); }
             };
+            // The lease authority is the database clock (PatientDraftCoordinator.takeLease). On this
+            // host Docker Desktop steps the VM clock by its time sync, so a lease the fixture expired
+            // one second ago by its own arithmetic can still read as live here, and the coordinator
+            // then correctly refuses to claim. Wait with the same authority the coordinator uses,
+            // bounded, instead of assuming the fixture write is still in effect.
+            long claimableBy = System.nanoTime() + TimeUnit.SECONDS.toNanos(8);
+            while (leaseLive(args[0]) && System.nanoTime() < claimableBy) Thread.sleep(50);
             try (var coordinator = new PatientDraftCoordinator(jdbc, new ControlledEvidenceRetriever(jdbc), model)) {
                 coordinator.setCollaborationEvents(new CollaborationEvents(jdbc)); coordinator.run(args[0]);
             } finally {
