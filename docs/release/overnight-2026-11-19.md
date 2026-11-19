@@ -42,8 +42,12 @@
 
 ## 2. 待办（按优先级）
 
-- [ ] P0 视觉 imageId 归一化修复 + 单测（进行中）
-- [ ] P0 用真实模型复跑确认修复后仍成功，并补负例（非法/跨用户/已删除/外链）
+- [x] P0 视觉 imageId 归一化修复 + 单测 — 提交 `c964fe8a`，本类 10/10 通过
+- [x] P0 真实模型复跑（修复后）成功 + 历史回放通过（thread `ae475ae3…`，`sse-run2-fixed.txt`）
+- [x] G3-5 附件信任边界负例 5/5 拒绝且 0 条外部地址入库（`neg_*.json`）
+- [x] G3-6 真实视觉成功（`qwen3-vl-plus`，结构化 JSON，`status:succeeded`，回放保留）
+- [x] G3-1 真实流式文本 + done + 历史入库回放
+- [ ] P1 观察项：SSE 端点 BusinessException → 500 空体（`GlobalExceptionHandler` 内容协商失败，非本次引入；请求仍被正确拒绝、无入库）
 - [ ] G-3 真实 DashScope 场景：G3-1 流式文本 / G3-2 RAG / G3-3 工具失败 / G3-4 中断取消 /
       G3-5 附件信任边界 / G3-6 视觉成功 / G3-7 COS 上传（视凭据）
 - [ ] G-5 浏览器视觉验收（390/768/1440，深浅双主题，登录/Agent/判读/管理端/错误态）
@@ -57,8 +61,11 @@
 
 ## 4. 最近一次命令与结果
 
-- `POST /api/agent/chat/stream`（threadId `10f5f8ef…`）→ 退出码 0，SSE 12083 字节，工具成功。PASS。
-- 日志取证：seed 用户 22:09 session `d7233829…` 有 1 次 NO_AUTH 失败。CONFIRMED。
+- 修复后重建 + 重启后端（`mvn spring-boot:run`，`local,dev`）→ `Started`。
+- `POST /api/agent/chat/stream`（threadId `ae475ae3…` 修复版）→ 退出码 0，`tool-result status=succeeded`，结构化 JSON。PASS。
+- `GET /api/agent/history/ae475ae3…` → 4 条（user-attachments-v1 / tool-call / tool-result{succeeded} / text）。PASS。
+- G3-5 五个负例 → 全部拒绝，`t_agent_message` 恶意地址计数 = 0。PASS。
+- 证据索引：`C:/Users/yuwen/AppData/Local/Temp/eye-overnight-2026-11-19/EVIDENCE.md`。
 
 ## 5. PR / CI
 
@@ -66,4 +73,5 @@
 
 ## 6. 判定
 
-- 当前：**CONDITIONAL**（P0 修复在途；G-3 部分已证（视觉成功）、G-5 与迁移未做）。
+- 当前：**CONDITIONAL**（P0 视觉误报已修并有真实证据；G3-1/G3-5/G3-6 已证；
+  剩 G3-2 RAG / G3-3 工具失败 / G3-4 中断取消、G-5 浏览器验收、V17→V29 迁移演练、ui→master PR+CI）。
