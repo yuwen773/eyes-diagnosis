@@ -20,12 +20,12 @@ describe("deriveResources —— 影像", () => {
       msg({
         type: "user",
         content: "看看这张",
-        images: ["https://cos.example.com/a.jpg", "https://cos.example.com/b.jpg"],
+        images: ["/api/agent/image/view/a.jpg", "/api/agent/image/view/b.jpg"],
       }),
     ])
     expect(r.images.map((i) => i.url)).toEqual([
-      "https://cos.example.com/a.jpg",
-      "https://cos.example.com/b.jpg",
+      "/api/agent/image/view/a.jpg",
+      "/api/agent/image/view/b.jpg",
     ])
     expect(r.images.every((i) => i.source === "upload")).toBe(true)
     expect(r.documents).toEqual([])
@@ -34,8 +34,8 @@ describe("deriveResources —— 影像", () => {
 
   it("助手把同一张上传图再贴一遍时不重复，也不改写它的出处", () => {
     const r = deriveResources([
-      msg({ type: "user", content: "看图", images: ["https://cos.example.com/a.jpg"] }),
-      msg({ type: "assistant", content: "这是你的图 ![原图](https://cos.example.com/a.jpg)" }),
+      msg({ type: "user", content: "看图", images: ["/api/agent/image/view/a.jpg"] }),
+      msg({ type: "assistant", content: "这是你的图 ![原图](/api/agent/image/view/a.jpg)" }),
     ])
     expect(r.images).toHaveLength(1)
     expect(r.images[0].source).toBe("upload")
@@ -167,7 +167,7 @@ describe("deriveResources —— 知识来源", () => {
 describe("deriveResources —— 回合与定位", () => {
   it("按用户提问切回合，资源带上所属回合与消息 id", () => {
     const r = deriveResources([
-      msg({ id: "u1", type: "user", content: "第一问", images: ["https://cos/a.jpg"] }),
+      msg({ id: "u1", type: "user", content: "第一问", images: ["/api/agent/image/view/a.jpg"] }),
       msg({ id: "a1", type: "assistant", content: "回答" }),
       msg({ id: "u2", type: "user", content: "第二问" }),
       msg({ id: "a2", type: "assistant", content: "[链接](https://x.example.com/p)" }),
@@ -200,11 +200,11 @@ describe("isAutoLoadableImage", () => {
   it("上传影像自动加载", () => {
     expect(
       isAutoLoadableImage({
-        id: "image:https://cos.example.com/a.jpg",
+        id: "image:/api/agent/image/view/a.jpg",
         kind: "image",
         title: "上传的影像",
         source: "upload",
-        url: "https://cos.example.com/a.jpg",
+        url: "/api/agent/image/view/a.jpg",
       }),
     ).toBe(true)
   })
@@ -235,12 +235,13 @@ describe("isAutoLoadableImage", () => {
 })
 
 describe("isTrustedAttachmentUrl", () => {
-  it("上传命名空间里的 COS 地址可以当附件", () => {
-    expect(isTrustedAttachmentUrl("https://cos.example.com/agent-chat/7/a.png")).toBe(true)
+  it("仅上传形状的 COS 地址不再证明附件身份", () => {
+    expect(isTrustedAttachmentUrl("https://cos.example.com/agent-chat/7/a.png")).toBe(false)
   })
 
-  it("站内根相对路径可以当附件", () => {
-    expect(isTrustedAttachmentUrl("/uploads/a.png")).toBe(true)
+  it("只有同源授权资源入口可以当附件", () => {
+    expect(isTrustedAttachmentUrl("/uploads/a.png")).toBe(false)
+    expect(isTrustedAttachmentUrl("/api/agent/image/view/a.png")).toBe(true)
   })
 
   it("第三方 https 地址不获得附件身份", () => {

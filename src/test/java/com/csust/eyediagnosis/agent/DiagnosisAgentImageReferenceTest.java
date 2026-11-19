@@ -89,8 +89,11 @@ class DiagnosisAgentImageReferenceTest {
 
     @Test void untrustedCrossUserMissingAndDeletedReferencesNeverReachModelOrStorageRead() {
         String key = registered.keySet().iterator().next();
+        // 上传接口现在返回受保护取图路径（/api/agent/image/view/<file>），不再直给 COS 地址。
+        // 负例同时覆盖：外站 COS 形态、跨用户、缺失对象、带查询串、路径穿越、未登记的站内路径。
         for (String reference : List.of("https://attacker.invalid/" + key, "https://fixture.invalid/agent-chat/43/other.png",
-                "https://fixture.invalid/agent-chat/42/missing.png", url + "?signature=untrusted", url.replace("https://", "https://user@"), url.replace("fixture.invalid", "fixture.invalid:444"))) {
+                "https://fixture.invalid/agent-chat/42/missing.png", url + "?signature=untrusted",
+                url.replace("/view/", "/view/../"), "/api/agent/image/view/other.png")) {
             assertThrows(BusinessException.class, () -> chat(reference), reference);
         }
         registered.get(key).setStatus(5);

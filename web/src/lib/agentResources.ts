@@ -35,6 +35,7 @@ export type AgentResource = {
   url?: string
   /** 知识库文档标识（来自检索结果）。 */
   documentId?: string
+  indexVersion?: string
   /** 检索相关度——只有检索结果真的带分数时才有。 */
   score?: number
   /**
@@ -111,27 +112,25 @@ function toMediaUrl(raw: string | undefined | null): string | null {
 }
 
 /** 服务端上传对象键的固定前缀（后端 `UploadCompensationService.OBJECT_KEY_PREFIX`）。 */
-const UPLOAD_OBJECT_PREFIX = "/agent-chat/"
+const AUTHORIZED_IMAGE_PATH = /^\/api\/agent\/image\/view\/[A-Za-z0-9_-]+\.(?:png|jpg)$/
 
 /**
  * 附件地址准入：什么样的地址才可以被当成「用户上传的影像」去渲染。
  *
- * <p>只认两类：站内根相对路径，以及上传命名空间里的 https 地址
- * （`https://<cosHost>/agent-chat/<userId>/<uuid>.png`）。其余——包括任何第三方
- * https 地址——一律不当作附件：图片一旦渲染，就等于把「这位用户看过这一页」
- * 告诉了外站。地址形状只是第二道闸，第一道是落库信封上的服务端标记。
+ * <p>只认服务端受保护取图接口 {@code /api/agent/image/view/<file>.png|jpg}（无查询串、无锚点）。
+ * 合同形如旧 COS 路径（{@code https://<cosHost>/agent-chat/<userId>/<uuid>.png}）的第三方地址
+ * 一律不当作附件：图片一旦渲染，就等于把「这位用户看过这一页」告诉了外站。
+ * 地址形状只是第二道闸，第一道是后端按当前用户复核上传归属后返回的 {@code images}。
  */
 export function isTrustedAttachmentUrl(raw: string | undefined | null): boolean {
   const trimmed = (raw ?? "").trim()
   if (!trimmed) return false
   if (trimmed.startsWith("//") || trimmed.startsWith("\\")) return false
-  if (trimmed.startsWith("/")) return true
+  if (trimmed.startsWith("/")) return AUTHORIZED_IMAGE_PATH.test(trimmed)
   const url = toHttpUrl(trimmed)
   if (!url) return false
-  if (url.protocol === "https:" && url.pathname.startsWith(UPLOAD_OBJECT_PREFIX)) return true
-  // 同源绝对地址（本地开发与反向代理同域部署）不产生跨站请求，可以放行
-  if (typeof window !== "undefined" && url.origin === window.location.origin) return true
-  return false
+  return typeof window !== "undefined" && url.origin === window.location.origin
+    && !url.search && !url.hash && AUTHORIZED_IMAGE_PATH.test(url.pathname)
 }
 
 function normalizeHttpUrl(url: URL): string {
@@ -160,7 +159,7 @@ function asText(value: unknown): string | undefined {
  * 医学场景下这本身就是隐私泄露。
  */
 export function isAutoLoadableImage(resource: AgentResource): boolean {
-  if (resource.source === "upload") return true
+  if (resource.source === "upload") return isTrustedAttachmentUrl(resource.url)
   const url = resource.url
   if (!url) return false
   if (url.startsWith("/") && !url.startsWith("//")) return true
@@ -217,6 +216,7 @@ export function parseResourceRefs(raw: unknown): AgentResource[] {
         title: asText(obj.title) ?? "知识库文档",
         source: "knowledge-base",
         documentId,
+        indexVersion: asText(obj.indexVersion),
         score,
         retrievalScore,
         snippet: asText(obj.snippet),
@@ -257,7 +257,14 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
   let round = 0
 
   const add = (resource: AgentResource) => {
-    if (!resource.id || seen.has(resource.id)) return
+    if (!resource.id) return
+    if (seen.has(resource.id)) {
+      if (resource.kind === "document") {
+        const existing = documents.findIndex((entry) => entry.id === resource.id)
+        if (existing >= 0) documents[existing] = resource
+      }
+      return
+    }
     seen.add(resource.id)
     if (resource.kind === "image") images.push(resource)
     else if (resource.kind === "document") documents.push(resource)
@@ -271,6 +278,7 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
 
     if (msg.type === "user") {
       for (const raw of msg.images ?? []) {
+        if (!isTrustedAttachmentUrl(raw)) continue
         const url = toMediaUrl(raw)
         if (!url) continue
         add({

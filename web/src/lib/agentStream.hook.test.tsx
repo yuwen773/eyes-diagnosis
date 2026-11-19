@@ -421,7 +421,7 @@ describe("useAgentStream · 会话资源", () => {
         id: "h1",
         type: "user",
         content: "看看这张图",
-        images: ["https://cos.example.com/f.jpg"],
+        images: ["/api/agent/image/view/f.jpg"],
       },
       {
         id: "h2",

@@ -37,7 +37,7 @@ describe("ResourcePanel", () => {
   it("三类 tab 都有计数，会话级汇总同时可见", () => {
     const { container } = panel({
       images: [
-        { id: "image:https://cos.example.com/a.jpg", kind: "image", title: "上传的影像", source: "upload", url: "https://cos.example.com/a.jpg" },
+        { id: "image:/api/agent/image/view/a.jpg", kind: "image", title: "上传的影像", source: "upload", url: "/api/agent/image/view/a.jpg" },
       ],
       documents: [
         { id: "doc:1", kind: "document", title: "干眼共识", source: "knowledge-base", documentId: "1", score: 0.812, snippet: "睑板腺" },
@@ -105,7 +105,7 @@ describe("ResourcePanel", () => {
   it("上传影像自动加载；第三方图片先要求显式点击，避免把访问行为泄露给外站", () => {
     const { container } = panel({
       images: [
-        { id: "image:https://cos.example.com/a.jpg", kind: "image", title: "上传的影像", source: "upload", url: "https://cos.example.com/a.jpg" },
+        { id: "image:/api/agent/image/view/a.jpg", kind: "image", title: "上传的影像", source: "upload", url: "/api/agent/image/view/a.jpg" },
         { id: "image:https://cdn.third.com/b.png", kind: "image", title: "外站图", source: "assistant", url: "https://cdn.third.com/b.png" },
       ],
       documents: [],
@@ -122,7 +122,7 @@ describe("ResourcePanel", () => {
   it("图片加载失败时显示失败态，而不是留一个破图", () => {
     const { container } = panel({
       images: [
-        { id: "image:https://cos.example.com/gone.jpg", kind: "image", title: "已过期", source: "upload", url: "https://cos.example.com/gone.jpg" },
+        { id: "image:/api/agent/image/view/gone.jpg", kind: "image", title: "已过期", source: "upload", url: "/api/agent/image/view/gone.jpg" },
       ],
       documents: [],
       links: [],
