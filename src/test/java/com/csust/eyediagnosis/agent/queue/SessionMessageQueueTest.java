@@ -187,8 +187,9 @@ class SessionMessageQueueTest {
         SessionMessageQueue queue = new SessionMessageQueue(1, Duration.ofSeconds(10), 1);
         CountDownLatch blockerStarted = new CountDownLatch(1);
         CountDownLatch gate = new CountDownLatch(1);
+        // 初值为 null：线程没跑完 / 静默成功 都会让断言失败，不留「没执行也算过」的口子。
         java.util.concurrent.atomic.AtomicReference<Throwable> firstOutcome =
-                new java.util.concurrent.atomic.AtomicReference<>(new IllegalStateException("did not finish"));
+                new java.util.concurrent.atomic.AtomicReference<>();
         try {
             // 占住唯一的执行线程，让两条写的 flush 都排在后面。
             queue.submit("s1", () -> {
@@ -207,7 +208,8 @@ class SessionMessageQueueTest {
                 }
             });
             first.start();
-            Thread.sleep(200);   // k1 已登记，它的 flush 排在 blocker 后面
+            // 等 k1 真的登记进待写集合，而不是靠 sleep 猜。
+            awaitCondition(() -> queue.recoveryOutcome("s1").pendingCount() == 1, 2000);
 
             Thread second = new Thread(() -> {
                 try {
@@ -217,12 +219,14 @@ class SessionMessageQueueTest {
                 }
             });
             second.start();
-            Thread.sleep(200);   // 上限 1 → k1 被 evictOverflow 淘汰
+            // 等上限 1 生效、k1 真的被淘汰。
+            awaitCondition(() -> queue.recoveryOutcome("s1").droppedCount() == 1, 2000);
 
             gate.countDown();
             first.join(5000);
             second.join(5000);
 
+            assertFalse(first.isAlive(), "第一条写必须在超时前结束，否则本用例什么都没证明");
             assertNotNull(firstOutcome.get(),
                     "被淘汰的写不能以成功返回：那等于宣称「已提交」，而库里没有这一行");
             assertEquals(1, queue.recoveryOutcome("s1").droppedCount(),
@@ -231,6 +235,17 @@ class SessionMessageQueueTest {
             gate.countDown();
             queue.shutdown();
         }
+    }
+
+    /** 轮询等待一个条件成立；超时即断言失败（不靠固定 sleep 排序）。 */
+    private static void awaitCondition(java.util.function.BooleanSupplier condition, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        while (System.nanoTime() < deadline) {
+            if (condition.getAsBoolean()) return;
+            Thread.sleep(10);
+        }
+        assertTrue(condition.getAsBoolean(), "条件在 " + timeoutMs + "ms 内没有成立");
     }
 
     /** 正常写入仍然是成功（三种结果的第三种）：不能因为加固把成功也变成异常。 */
