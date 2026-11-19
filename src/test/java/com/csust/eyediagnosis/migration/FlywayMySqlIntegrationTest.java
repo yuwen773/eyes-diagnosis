@@ -155,7 +155,7 @@ class FlywayMySqlIntegrationTest {
         java.nio.file.Path oldHome = oldReleaseMigrationHome(v -> v <= 17);
         Assumptions.assumeTrue(oldHome != null, "classpath resources are not expanded; skip");
 
-        String schema = "diagnosis_ci_upgrade_" + UUID.randomUUID().toString().replace("-", "");
+        String schema = "diagnosis_ci_empty_upgrade_" + UUID.randomUUID().toString().replace("-", "");
         try (var connection = DriverManager.getConnection(url, username, password);
              var statement = connection.createStatement()) {
             statement.executeUpdate("CREATE DATABASE `" + schema + "`");
@@ -199,7 +199,7 @@ class FlywayMySqlIntegrationTest {
         java.nio.file.Path gapHome = oldReleaseMigrationHome(v -> v <= 17 || v >= 23);
         Assumptions.assumeTrue(gapHome != null, "classpath resources are not expanded; skip");
 
-        String schema = "diagnosis_ci_gap_" + UUID.randomUUID().toString().replace("-", "");
+        String schema = "diagnosis_ci_empty_gap_" + UUID.randomUUID().toString().replace("-", "");
         try (var connection = DriverManager.getConnection(url, username, password);
              var statement = connection.createStatement()) {
             statement.executeUpdate("CREATE DATABASE `" + schema + "`");
