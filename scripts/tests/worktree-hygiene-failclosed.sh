@@ -139,6 +139,10 @@ setup_case() {
   git -C "$CASE_REPO" config user.email tester@example.invalid
   git -C "$CASE_REPO" config user.name tester
   git -C "$CASE_REPO" config commit.gpgsign false
+  # 夹具钉死 autocrlf=false：补丁按 git 规范化后的字节往返，若宿主开着
+  # autocrlf=true，工作区里被检出的 CRLF 与被追加的 LF 混合，补丁无法逐字节复原。
+  # 那是「归档不可证实→fail-closed 保留」的正确安全行为，不该被当成归档成功用例。
+  git -C "$CASE_REPO" config core.autocrlf false
   echo base > "$CASE_REPO/a.txt"
   git -C "$CASE_REPO" add . && git -C "$CASE_REPO" commit -qm base || return 1
 
