@@ -7,7 +7,6 @@ import java.util.Date;
 
 /**
  * @ClassNameUserLoginVO
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/12 下午4:26
  * @Version 1.0

@@ -1,0 +1,11 @@
+{
+  "tests": 27,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+  "xml_sha256": "983d3cd99f6b550c2a1a81b5606fc570e6bdf2fcb86550a4b4a215a08e7d2e73",
+  "log_sha256": "2bba0e1df33fcd348f74a01586c92271fdf81314eea46627d7133271825bdac6",
+  "report_gate": "PASS",
+  "boundary": "real isolated MySQL; deterministic provider substitutes"
+}

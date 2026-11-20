@@ -1,7 +1,9 @@
 package com.csust.eyediagnosis.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.constant.NewsStatus;
+import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.exception.ThrowUtils;
 import com.csust.eyediagnosis.mapper.NewsAuditMapper;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -102,6 +105,92 @@ public class NewsLifecycleService {
         audit(newsId, actor, "DELETE", current.getStatus(), null,
                 Map.of("deleted", true));
         return rows > 0;
+    }
+
+    /**
+     * 批量软删除：逐条执行，部分失败如实回执。
+     *
+     * <p>批量动作天然是「部分成功」形态：10 条里 8 条删得掉、2 条因为状态非法
+     * 没删掉。只回一个 boolean 会让管理员不知道哪几条没成、也无法据此重试，
+     * 因此回执里带上失败的 id 与原因。
+     */
+    public BatchResultVO softDeleteBatch(List<Long> newsIds, User actor) {
+        List<Long> targets = normalizeIds(newsIds);
+        List<String> failedIds = new ArrayList<>();
+        List<String> reasons = new ArrayList<>();
+        int succeeded = 0;
+        for (Long id : targets) {
+            try {
+                softDelete(id, actor);
+                succeeded++;
+            } catch (Exception e) {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：" + reasonOf(e));
+            }
+        }
+        String message = reasons.isEmpty()
+                ? "已删除 " + succeeded + " 篇资讯"
+                : String.join("；", reasons);
+        return new BatchResultVO(targets.size(), succeeded, failedIds, message);
+    }
+
+    /**
+     * 批量改发布状态：逐条按状态迁移表校验，非法迁移的那条不执行。
+     *
+     * @param newsIds 目标文章 id
+     * @param status  目标状态
+     * @param note    审核意见 / 下架原因（可空）
+     */
+    public BatchResultVO changeStatusBatch(List<Long> newsIds, Integer status, String note, User actor) {
+        ThrowUtils.throwIf(!NewsStatus.isValid(status), ErrorCode.PARAMS_ERROR,
+                "非法目标状态: " + NewsStatus.label(status));
+        List<Long> targets = normalizeIds(newsIds);
+        List<String> failedIds = new ArrayList<>();
+        List<String> reasons = new ArrayList<>();
+        int succeeded = 0;
+        for (Long id : targets) {
+            try {
+                News patch = new News();
+                patch.setId(id);
+                patch.setStatus(status);
+                Long applied = applyEdit(patch, actor, note);
+                if (applied == null) {
+                    failedIds.add(String.valueOf(id));
+                    reasons.add(id + "：状态未变更");
+                    continue;
+                }
+                succeeded++;
+            } catch (Exception e) {
+                failedIds.add(String.valueOf(id));
+                reasons.add(id + "：" + reasonOf(e));
+            }
+        }
+        String message = reasons.isEmpty()
+                ? "已更新 " + succeeded + " 篇资讯的状态"
+                : String.join("；", reasons);
+        return new BatchResultVO(targets.size(), succeeded, failedIds, message);
+    }
+
+    /** id 列表去重 + 去空。 */
+    private List<Long> normalizeIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> unique = new LinkedHashSet<>();
+        for (Long id : ids) {
+            if (id != null && id > 0) {
+                unique.add(id);
+            }
+        }
+        return new ArrayList<>(unique);
+    }
+
+    /** 把异常翻译成一句人话（业务异常带自己的文案，其余按未知失败处理）。 */
+    private static String reasonOf(Exception e) {
+        if (e instanceof BusinessException business) {
+            return business.getMessage();
+        }
+        return "操作失败";
     }
 
     /** 合法迁移表：DRAFT→PUBLISHED 是前端「发布」按钮的兼容通道，须保留。 */

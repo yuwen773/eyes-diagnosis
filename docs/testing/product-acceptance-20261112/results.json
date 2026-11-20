@@ -1,0 +1,3207 @@
+{
+  "generatedAt": "2026-11-11T17:59:48.794978+00:00",
+  "overall": "PARTIAL",
+  "acceptanceReportSha256": "d1c7c3700e222dbc22e9df20d77cbcea773c09cc74543a7dc1e61b1d6ba21f56",
+  "head": "6572743169027bb1e7c27d7d969a26ed89d99cd1",
+  "branch": "codex/realtime-product-acceptance",
+  "candidateFiles": {
+    ".gitattributes": "808beb314f6e4c676aad07aa0b10738222b67dd2bbd9cac461c4d2cf24317ed8",
+    ".github/workflows/verify.yml": "48186f616ddadac3ae086e8ba60d515c7fc84ee470ec62bbb7772e0fbc9d681b",
+    ".gitignore": "f38efead7efa435b639a9449b23ae0658149cb3df270a5e852284e3a4bd275df",
+    "AGENTS.md": "cc255e82b04dcf9d5b5494b8e32c17506dcb658af057c9816eef75d4916a8e23",
+    "CLAUDE.md": "3ad4151f1f95169d544ab648da1abb7acd9abaf6bcf88c653d0e32cf1edf9b36",
+    "CONTEXT.md": "71225a542c927abd685dd5f81b828346e92169987c96eec5edf63346166a67bf",
+    "DESIGN.md": "42c70cecb273c5f3f2d861a5a2c2e5b8f4553e033b0b208021fb275aea4a0358",
+    "LICENSE": "5127b99af39c375edd1b0001c78e1d2a3210830c1e1f848ca456e5cc644355b6",
+    "README.md": "58f93a3afbe48a9f4a3d143648f3edb6e2c1a4ed78c75a8c3cffbc4e6dee3e0c",
+    "algorithm/README.md": "88ff802b30e8b30feef7253e41476090f75199a459958c3b67f623ade73fb360",
+    "algorithm/checkpoints/registry.json": "dcaf1c84d363c3467803f851e4f86f97cdb245e7816c04211cd9e3c1016107d9",
+    "algorithm/configs/calibration/efficientnet_b4_temperature.json": "31cdc4da9b0530553cf63dc60da600239f2f9ba606899fa7360aea8a25938fad",
+    "algorithm/datasets/frozen_validation_manifest.example.json": "07ac27ec8015cf9b74feadfead849bcf57bed9d9cf20da086e2639e18c114ff0",
+    "algorithm/evaluate_model.py": "fb2554ad37115ac00b536518f00e2df106f922a58518242ee302649e629436aa",
+    "algorithm/eye_diagnosis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algorithm/eye_diagnosis/abstain.py": "e3acffdc20b5c4cf7c1472cbe7240a0bde79b61ebd7df0efd848df23027eadac",
+    "algorithm/eye_diagnosis/calibration.py": "ccea7a5bac63c114cac027d0d6131170123edabd11e921de00264ddf6b2f9fdd",
+    "algorithm/eye_diagnosis/frozen_eval.py": "214a298f2add8618cea895559dc57eb8350b4e822bf544961efba6a131c843c5",
+    "algorithm/eye_diagnosis/metrics.py": "6cb1c56656f2bba85920fb04419a86f8546042cbd22be3560566da2800c46fed",
+    "algorithm/eye_diagnosis/ood.py": "1f6b9c4c7032e19bf157b00a0591a7d825bb58c1c128913226f2544e1f7ac5e1",
+    "algorithm/eye_diagnosis/quality.py": "ded2561711b3661cbba258a9ba50e7a2e112e331617f2d6ee11e48f433b0f631",
+    "algorithm/eye_diagnosis/registry.py": "f987a0768a18c08824fd8a912b1a21e3b40e45eacda2ab50f736163a84370820",
+    "algorithm/eye_diagnosis/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algorithm/eye_diagnosis/tests/test_abstain.py": "7215bc611911db0136d0df2346d0ef298ca23858faf5a4b910381cfd73d7b201",
+    "algorithm/eye_diagnosis/tests/test_calibration.py": "6a82cd26cf5de483e1a94044305822507317d962a62957143dff00d7b0154ad9",
+    "algorithm/eye_diagnosis/tests/test_frozen_eval.py": "130f7dde497e92c764c5cb37fff07aa975dac5bc0ff2fcda50db7d5427850b48",
+    "algorithm/eye_diagnosis/tests/test_frozen_eval_cli.py": "607fcee7938c016a76a04a65ecbfafaa3295b320f7549a3838531637d99d902f",
+    "algorithm/eye_diagnosis/tests/test_metrics.py": "ff3b1259ba281e0d993f660aca074e700e5e60ec10bcda6061cd82b15f7e0bd7",
+    "algorithm/eye_diagnosis/tests/test_ood.py": "d6283bf3c5dcf0d2101cfca3ccdd8d3c4a3f7294ff551ab95f1692c3131ce940",
+    "algorithm/eye_diagnosis/tests/test_quality.py": "fc8a1438d2be4976a782fe0334eaea3513b10c2e0bca1bb23ab79b93d068aead",
+    "algorithm/eye_diagnosis/tests/test_registry.py": "3ae8306196e7fe3e3259958f09a0ccb66bc2e90f0729fc44392b58ca880dc3ab",
+    "algorithm/eye_diagnosis_p1/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algorithm/eye_diagnosis_p1/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algorithm/eye_diagnosis_p1/tests/conftest.py": "d7b33f0dae612af6156af40c4864c9a329ef2cef04693ae5fa8baf8fee593d36",
+    "algorithm/eye_diagnosis_p1/tests/fakes/__init__.py": "791c92d8cbcc74ea1fcf5e23c510bee09e37c3c20d7775e8fdc64dbf71dbe080",
+    "algorithm/eye_diagnosis_p1/tests/fakes/dataloader.py": "e96ef6295b799fcf4100b6b84f9e5fc2b8c60bed7e9137ddc91358c622d87f43",
+    "algorithm/eye_diagnosis_p1/tests/fakes/environment.py": "e8cf3da26262f0c4c9f15237bd9cb698d58b880fc34f4c131df828ebd7e324db",
+    "algorithm/eye_diagnosis_p1/tests/fakes/fold_assignment.py": "54d239272ab8ed78669f8edc6af23799ed42ee02e666dec55b69a9858d57cdf3",
+    "algorithm/eye_diagnosis_p1/tests/fakes/manifest.py": "ab93792e8f428053b03c5e589858ce03ff605512c504eeff36897cb28c688a6e",
+    "algorithm/eye_diagnosis_p1/tests/fakes/model.py": "cac712b8eb7be2c3b921a984e9f19968f95f8fedff9b803144e9bbf3840d5787",
+    "algorithm/eye_diagnosis_p1/tests/fakes/protocol.py": "adbad4e94cede7952d1858397d2fdea729e068f859ce5e7d5600b6c1224c7e97",
+    "algorithm/eye_diagnosis_p1/tests/fakes/torch.py": "9455e65f38e65f1a08715124032a87c15e6b7c1932f3355cecdd1240cee6c649",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/build_fixture.py": "eede18e960c54b4e36e1e7c168ba52c56d38f0908f3b33db4ed0fbcf391e05f1",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/fold_assignment_v1.csv": "4b2ea83a173619d11825401f7dc53bc38ace46f23f95cdb27c1ffebc037000ea",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p000_left.jpg": "6800be2926f144c4c73acef1414f27b7b8e2fe5ff131cfb22c64c33e4d389d83",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p000_right.jpg": "6800be2926f144c4c73acef1414f27b7b8e2fe5ff131cfb22c64c33e4d389d83",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p001_left.jpg": "eb77abbe77e7c5c3f6a2771921885e7c503d52aa1519f9f38872eeab976d3b48",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p001_right.jpg": "eb77abbe77e7c5c3f6a2771921885e7c503d52aa1519f9f38872eeab976d3b48",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p002_left.jpg": "dad4cfee7f5203a6375ac216735c1bd8d2d7d3165f3a91392d65297d1416b863",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p002_right.jpg": "dad4cfee7f5203a6375ac216735c1bd8d2d7d3165f3a91392d65297d1416b863",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p003_left.jpg": "17b12d227c9bbaf438fb2dc220039b09b90cb398102ecad2ce281bda9769241b",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p003_right.jpg": "17b12d227c9bbaf438fb2dc220039b09b90cb398102ecad2ce281bda9769241b",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p004_left.jpg": "6575a4fb9703f64518b06b959e23d4f6537cb51fcef187642d4646e7aa72f450",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p004_right.jpg": "6575a4fb9703f64518b06b959e23d4f6537cb51fcef187642d4646e7aa72f450",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p005_left.jpg": "8bdf80916de876bbfc21696e8ebd53b8ba4dea196326782373993c4d000c6157",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p005_right.jpg": "8bdf80916de876bbfc21696e8ebd53b8ba4dea196326782373993c4d000c6157",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p006_left.jpg": "6ab81c574aa90505751ff660c620b1ba4578e759d82f03b570f3455c5f02aac8",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p006_right.jpg": "6ab81c574aa90505751ff660c620b1ba4578e759d82f03b570f3455c5f02aac8",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p007_left.jpg": "6f7ee376b09bcc0183e775235fd357250bac4a4ab749b572f001ea7ec9560ec0",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p007_right.jpg": "6f7ee376b09bcc0183e775235fd357250bac4a4ab749b572f001ea7ec9560ec0",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p008_left.jpg": "5ccba669fc2d8ab2e936317fcd3cc84e40393c2183775ba3398c11380959fed6",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p008_right.jpg": "5ccba669fc2d8ab2e936317fcd3cc84e40393c2183775ba3398c11380959fed6",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p009_left.jpg": "2936f75374de2301836797369b50b84e5a6bb12efe5d7a0a6b451211c8701474",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/images/p009_right.jpg": "2936f75374de2301836797369b50b84e5a6bb12efe5d7a0a6b451211c8701474",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/patient_manifest_v1.parquet": "1959a45b50d1aa65992ff7a57c69ce1a391200d33d5188845b2d0488bae5b039",
+    "algorithm/eye_diagnosis_p1/tests/fixtures/split_assignment_v1.csv": "2cdec7ac1434626ae81d51bcfd90649c77603a14f87f531c36ffd56a2487286c",
+    "algorithm/eye_diagnosis_p1/tests/test_audit.py": "54b753376c56808c8d5a487a9a9722b10099fd5bdceed7a87c838fcfb9938e5e",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_compute.py": "03f60eac96a5ed4bfd089a141da949b824f3aa6c9a67ebcfd74bc3b7a1b244b5",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_decision.py": "c97e105fdfd35fca348156f8e4b651a40c4d317892d32b5ca330f64dcbec7fc4",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_make_decision.py": "87f8f4bc674291c1ee440d53acc63e30e7b21e34578280c56ea1c5f142dba12f",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_model.py": "346e4f58ae38233f06fdcd93ae60e5ee1ad506c373f0daa9dbf6e2a47a07c409",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_preprocess.py": "4446c362f60d3d6124caee3e68f1fdfc74f0655c39f87519df56fab97b060077",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_realio.py": "a9545c85182585f3e8a3db9064c080573f9946d9121a123460ac60184a08ae94",
+    "algorithm/eye_diagnosis_p1/tests/test_benchmark_select.py": "5bb58a50fc3f6a4d06e3f64c45378dd7eaedecc9a635f6bb585f5756c9403fbb",
+    "algorithm/eye_diagnosis_p1/tests/test_gpu_marker_contract.py": "fa6fe96b4073babbe1c7fc6fbe0619c89686888db7dc25f881934a2637b61723",
+    "algorithm/eye_diagnosis_p1/tests/test_manifest.py": "392c026e3f3fb2a2004c36323327b297848f5ddda6df0af34203cd799340f03b",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_probe_autocast.py": "52960edfddc0e8072fc6bf69c1aa50f5f52250ffe397f28eeb0fd26887d556da",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_stability_cli.py": "b8cadeba054335b47c7918185b25413c056e57a00c22c5b594b29d22c0c60d6c",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_stability_probe.py": "967fb2c63cb3f3114cfcd5aa01c93abdf661c7661aa7b2a3c20f3028e225cd2e",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_stability_protocol.py": "5c7859a2bd51ba45862d9d77fb0d9c2a2b968606fead1fee0f3d066b3b196d9d",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_stability_stages.py": "29683d61c493812557a14bb71459ed372686adcdac6b6765489d128e3f233da4",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t3_classify.py": "7b48f251ee28a8a45b6427d151d157d1d8043c5ec7ab304d2fb127802ccbf8ed",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t3_cli.py": "603ed03f8295b2b563bb4a4d9c19761beb952d9c0d96df205a0b50baac5c59a1",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t3_environment.py": "ce0c41d2617d13b258debf5295f208be9a27f3106e181c0fa14cd8f15f746de4",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t3_integration.py": "6470fc4b753c70209fbf6fd3f56cd10b581347f55be0d4a2b94520e13993695b",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t3_preflight.py": "9b05f5c480650967f3bf000d758981edee959f3ac9a217dd4181776dec12f0f1",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_t4.py": "ad0a4e0718ee8ec6fd73d4797d3f9e362503c78d369d97a19f0d63ce6a06a073",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_watchdog_integration.py": "06df9f2ac4805857e310290e2fe79c9e7afb13d6357f2b2324f380fb34d22500",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02a_watchdog_unit.py": "f3e7729600cc93d8cc9b9e4fb10be628b01d87df44527883dda5b02d16f635ba",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_checkpoint.py": "f03c9ef0aefb49c44a48e0d50085629ef6cc4613c7599f7355aae8b3c46890c1",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_ci_smoke.py": "6c904b6d4abe0395b34b3e6ad77c3587e9ccb3d2627a3e884c462dac89bf1b8d",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_cli_formal.py": "1f8c783e7b252aaaf9b2003efcfdd22605124c148baf7d8f3dc9d1da42cf284e",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_engine.py": "777eea8b03886ab1d1ff9ef99694e899efa1885ec6229a5a89fb87503fb101af",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_formal_fold_runner.py": "ecc850478a2422d52390bc1a237534a54a0ca0f19ce6b5cb9ed60228a97023c7",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_metrics.py": "99dd7b364588f0744448e448b6800a17ab1378077e0f329448bdb01bfd9e40db",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_orchestrator.py": "25baca078419e20643065b0844b542bb15ce5d1c00202a16e29219c41c8d45b1",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_receipts.py": "a960e321a09d4eaffa9dc775d45228c57a31daf2dd7e35089594c0fd6b4a4ea0",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02b_spec_7_3.py": "82d7410e31a2932239781bc3da1ade27206bc2597028d0861bea6e088a590af8",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02c_cli_formal_heartbeat.py": "9171857b9a06360fdc47a101aaacf7978a99c8a4b6adaa9517e14f4857d1e802",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02c_fold0_smoke.py": "1d59c8e3acc1f5688d93ba48329dbb383b16b8209d9fa61b62fb2d8dc7f58d59",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02c_integration.py": "cfe2bc89e87c8074d6b8ddef50923fd03c3215e99bf356e5eaa3be5e4350f463",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02c_reload_verify.py": "353c448d4ea7b84ab28bccd4012659a1f40fedad80a7722ef23b54652322109e",
+    "algorithm/eye_diagnosis_p1/tests/test_p2_02c_training_watchdog.py": "a12ff99f3087de28c95d62220a79a40e97e3e64222b55370d71c851cfce87034",
+    "algorithm/eye_diagnosis_p1/tests/test_split.py": "6c1fb58b6c22aadcf89a0502beec8c3daf322b8d4634899753fc46358f54f312",
+    "algorithm/eye_diagnosis_p1/tests/test_training_cli.py": "e55cdd90e77cf793833febc2e04e76a83c1dc2f27ebda26e1b2d6769cb82a46e",
+    "algorithm/eye_diagnosis_p1/tests/test_training_cli_e2e.py": "57826e09982ffcb3130da945b4be8d3afbcead5b1295749321d19fbdb6810947",
+    "algorithm/eye_diagnosis_p1/tests/test_training_e2_assignment.py": "4dec40b741cf988867b2d2998fafb01eb58465e2dd3b6e7a4abfbc0c56083de8",
+    "algorithm/eye_diagnosis_p1/tests/test_training_fold_runner.py": "47bb3c7a01641ef108f785ee4b1fdf1ed3f5548b696ab6464f513baf99276c38",
+    "algorithm/eye_diagnosis_p1/tests/test_training_freeze_folds.py": "188efc8086b870b335eeb3283f105d02628b13d52361637860f0bf8e389ffb8f",
+    "algorithm/eye_diagnosis_p1/tests/test_training_frozen_inputs.py": "e0b84ebd1933862581e2bf55a93321458519ccb660149a0f8d692a2cdcea64f2",
+    "algorithm/eye_diagnosis_p1/tests/test_training_models.py": "ab58841d9436b50f07b11a23e89fcbaabb53f21911fd6620d903803ab6d35fbe",
+    "algorithm/eye_diagnosis_p1/tests/test_training_oof.py": "925f474cc9be447c8a5f6ed5681d2610d3070e02b414faa0b471285c29607bc2",
+    "algorithm/eye_diagnosis_p1/tests/test_training_preflight.py": "17738768b46d4f41e4146b5bc0c8cd8f4efedd58ed1cbcebbb61fe553110f9ef",
+    "algorithm/eye_diagnosis_p1/tests/test_training_protocol.py": "d49202b1c0d3795906664fcbcea90a5de466449775f1dce6b8b28b58d1c7ed08",
+    "algorithm/eye_disease_model.py": "1feb4eac48d9be2456c8c590e8b90868bf09ec009cd3ed0bb7bdc9b3b9de779a",
+    "algorithm/generate_proto.py": "4c3eff58a24ca3bafc04af49309641ff31868779d5491d8bd01874e64d5c9a15",
+    "algorithm/grpc_server.py": "e7696e9931042587e08a76e87290fecc060103ae231b603b0acfdc5bf1e6688a",
+    "algorithm/mcp_server/__init__.py": "00ee4674f8678c4684a713afbe5020688bbe9ab81a15fa5b8f91468d68aacc91",
+    "algorithm/mcp_server/config.py": "58d65d3163fdd5019440362e77a643ab2f52a399278dd875ad500bb52604878a",
+    "algorithm/mcp_server/diagnosis.py": "23eb31c4484dcd8a9a1be7617a35d8635f735f15aea461cb6f25c3f404275e9f",
+    "algorithm/mcp_server/image_handler.py": "92cf62f5090155c9b640e8daba72d4daebb7f234ba980d9a2f7981796fc62e6c",
+    "algorithm/mcp_server/server.py": "646c8e598af9ba435ee383c9d00ff45f34f8f7fb38d8904a513dbf4b156f2f89",
+    "algorithm/mcp_server/tests/__init__.py": "111aa0e922b178d2b4e7e9ac63228dae6ef979bd538643bf64b5e343b5a03725",
+    "algorithm/mcp_server/tests/test_config.py": "9ebbcd212faf48e847e6272adb4aee519b299d0a72cdd069217f0d8f91e95ac0",
+    "algorithm/mcp_server/tests/test_diagnosis.py": "d9aa7c8dcac340c93469e0010852a2a23496c5555f251bb5ed862e02984e1b4d",
+    "algorithm/mcp_server/tests/test_image_handler.py": "2580e8ecb040645bc4cfcff2b9305009bd4ee16b889bae395595eb72095cb44e",
+    "algorithm/mcp_server/tests/test_tools.py": "f1ca810cca922894e6c552d154256f548ad9fbf46bbb01bbe224fcaf679698fa",
+    "algorithm/mcp_server/tools.py": "37ba1af6c30405e0914d99cb4e95f325de90eaae8f4a91d31cc51810ae6d8406",
+    "algorithm/p1/__init__.py": "f22c2dba06fb7adefd5c26c4406c386aa00ad8b4465023e09641ca3aa0a0a33f",
+    "algorithm/p1/audit.py": "c3aac61ac879d885b46ee88cabe4eb0f178a16e3fb7f16baea352d62bebccce4",
+    "algorithm/p1/benchmark/__init__.py": "3c9c014b941c276542a8b06acfd967ee34222fbb3bc0f9d92cf2b27f20ccca39",
+    "algorithm/p1/benchmark/compute.py": "139221993d990cee15ac4e40ee8cda4cb96925befe910b0e179b67cc543cd4d4",
+    "algorithm/p1/benchmark/cuda_runtime.py": "de7554344c23e973480ff964952a9118ba362174b601054bbe8579ae5bcac430",
+    "algorithm/p1/benchmark/decision.py": "6ef6bf207f9af3916257071348ab9f14e589f0a1f6d2ecdde5e03255102e8d22",
+    "algorithm/p1/benchmark/model.py": "892a4b43bfc139a4c3ddd81fa9fdf88dd13caf2a2dc6aec85111e0e863857123",
+    "algorithm/p1/benchmark/preprocess.py": "04756251c3fc33bcfb5d0c97ea9b1bf0ccbfc65cad5b019e2a17b28952305ea0",
+    "algorithm/p1/benchmark/realio.py": "df14ec3d5a667e2c28024cce7159507210c7abed75fe68a299819513754b64b7",
+    "algorithm/p1/benchmark/run.py": "56d11a1b2d8767ba66e52477b62b4e5274b41613293c920e57977adec61f2c0c",
+    "algorithm/p1/benchmark/select.py": "58bd4d5b4a3d67e3a37149fc2d3c38a2157d499ea32b74f5025a76bcc520efb7",
+    "algorithm/p1/manifest.py": "a3807179ff03e2897f655b556737ec7eabd87e2307c4f5e713533d5cf652e024",
+    "algorithm/p1/protocol_e0_e3_v1.json": "c115ac23a19c3b3a1aaef5a7a7344a4c39b3f631af6f23a7e2e0c4f8aa749ec6",
+    "algorithm/p1/protocol_p2_02a_v1.json": "9b3226174af8675ae2d8eda67e289b34be6da569343128a6fdf49b34a2f3b575",
+    "algorithm/p1/split.py": "56eb4eaf18c2017ae75e1bfdd39df54ea2703ff5b489c7f324309519e71f6c29",
+    "algorithm/p1/stability/__init__.py": "747517bfdc98fdb9d73053229ac3d473cb5acf35bb675c74715879aab42b93d8",
+    "algorithm/p1/stability/cli.py": "6923fd160c897ecadf5c3a3cfc088e5d66f8136202501548cc0b6427c4b54acb",
+    "algorithm/p1/stability/environment.py": "42f4a3e155afedcda588f2a4b6de586686ba4c4ea7c0b1e4eca15cefcd380ff8",
+    "algorithm/p1/stability/matrix.py": "bed89f8b8b0617ff600795326d3c2962f428382170f8e8d7745a45b9176f5a68",
+    "algorithm/p1/stability/matrix_cli.py": "e82da6f0fdd1fd1e4ed74c8ec1c75309382457b0dcd49ddf135c3c3da3270da2",
+    "algorithm/p1/stability/matrix_runner.py": "65738db396e0e41987dd4841d7339ab69ce73be168f5a07bf356e182545dc9f8",
+    "algorithm/p1/stability/preflight.py": "8191ad1a6ae58fffbf3fcb2331272058335d6da56044c2eb6072f3de58e68690",
+    "algorithm/p1/stability/probe.py": "668c595df2b93a59d03c30654c8e4a9cfd0e15efa21dd1f6712adc5d04b34d82",
+    "algorithm/p1/stability/protocol.py": "d51492eb333407178c4fdbac9b4b3d46dc2c8334bd67b76efc9efc686729067b",
+    "algorithm/p1/stability/schema.py": "8463dc070d8571cadc6cc43191a8a7a8ddb34d4d9775f7538e8131e0d062915f",
+    "algorithm/p1/stability/stages.py": "57710c51ae09ae09a08e29e200cfb70c208aca8c258998e38e1283a1c45044b7",
+    "algorithm/p1/stability/t4.py": "bca9885c9a0bfabd3bb9797d2744dc83f0c0dc7c5ecb8dbe7874e5d04a44ac84",
+    "algorithm/p1/stability/watchdog.py": "5d51bc149541f31cb29ec52ef57e8170ecf3beac94897f5e1ebdd271bd74f843",
+    "algorithm/p1/stability/watchdog_cli.py": "fe96a81bbcf018c5dfb0f787dc6217ca0c44bd4c2edb1f8c267e3b9e9513d224",
+    "algorithm/p1/training/__init__.py": "5d3b603733324419b5f659423f91b6e15c6564a6d18b8b94548e75629a5c44f2",
+    "algorithm/p1/training/_atomic_io.py": "0131c7501d773e39bf45061ebd60c25eb6bc8437d23ab496918bd2f3568a566f",
+    "algorithm/p1/training/checkpoint.py": "0d3edd2de9280e124582b2c9da06064a0da72a3be100b2e95030332821de5ab2",
+    "algorithm/p1/training/cli.py": "31b26044b26105dee57a931e283f54b5b87a8dda1aa11d0e0e03a9dad264356a",
+    "algorithm/p1/training/cli_formal.py": "6f91b717a93c8fd6b6eaa8077d8d2965c1ff2ad78f27c10e917cd55b2829eb8c",
+    "algorithm/p1/training/e2_assignment.py": "6adb7a599ba113a76c87268d075def3d4e5040744c74909dc36f6335be067c5e",
+    "algorithm/p1/training/engine.py": "0d8fecaebb7ae1abcc84cd26453f8d0746e44ea5ac5dbb7d337ec46dd39d0ea3",
+    "algorithm/p1/training/fold0_smoke.py": "6dcf691368102590aad0148f9c4e14090817bd3701bf540303a7f197ad3bb700",
+    "algorithm/p1/training/fold_runner.py": "695fb2e2f2eaca48448f76b4a5632d9dd4b3e142372973581ebf8511dd266d34",
+    "algorithm/p1/training/formal_fold_runner.py": "9e22eb84462799dfc8e1201ac7a5b3f7cc63fadacfe99456135c4b32204e5615",
+    "algorithm/p1/training/freeze_folds.py": "91929b7dd9014f6536f901786e1b12f75eb1e882c639f1bf6c6d12d71160cf7f",
+    "algorithm/p1/training/frozen_inputs.py": "c5bcf46b3fab0c49355cf10f8d4ecf9203afdc1421a9eaf529737e40dc01ad99",
+    "algorithm/p1/training/metrics.py": "c3b6ed88aa539411966955e35372f34f9d367c74fa70c12ddbc82ac73653d999",
+    "algorithm/p1/training/models.py": "7c5368fb3bad65672206fc76590065c0c15e9d7e506dd45516660616900b7755",
+    "algorithm/p1/training/oof.py": "a5359ea85b31e0060131b20e0bc73826c71aa501c8fd3e9c0aa3b597b6c9b48e",
+    "algorithm/p1/training/orchestrator.py": "490edcddeb885fa95b75bd7b37097f9aa16b489ef87d81ecd3a628c9d701b168",
+    "algorithm/p1/training/preflight.py": "c03e5de27a119405c5e431537b19113d731562576a20832a9c9f17f27c0aee18",
+    "algorithm/p1/training/protocol.py": "21124f76323ebf4bee9b90ee864b1e0edb3551fcf4f0a126373b4a0ec1578acd",
+    "algorithm/p1/training/receipts.py": "1e0e18484901669d028af99a9a06efdd23954af7833c8b12564f61f0488c1617",
+    "algorithm/p1/training/reload_verify.py": "9231533478710226c946256dbf96a73c107aeaa2c41ad36df1840a4ddbc68c11",
+    "algorithm/p1/training/training_watchdog.py": "75d9356fa3f81687164021d6cff06d30cd9b61adb1a42201f5f71748b17bea52",
+    "algorithm/prepare_data.py": "cbee35ed5dbf249548b1228a1a29b5125d817a59f101484a107f8bf147e134f2",
+    "algorithm/requirements-p1.txt": "0c9622671c6b6cc5a96f19606767d664856c7ef9268a6ae1cff89a60d64ba55b",
+    "algorithm/requirements.txt": "2a573979c9cf35fbaccf69dfd0bfa151f65166a352f4ea08d8101aa8dec68fb8",
+    "algorithm/run_mcp_server.py": "4e609bd5bf9fafc5a2e3e5092eb29ffa9ea90d9c35416a7ff5420a139c33f6e6",
+    "algorithm/tests/test_evaluate_model.py": "67b701331e8579f7af9a6e273e427fd7863f9beaba6b99068eb7d2a54c3bbe91",
+    "algorithm/tests/test_grpc_server_startup.py": "d6bb701ecc2cf19857e178b6d73e29831c6d2b35476ad30d5a66f452937b76cb",
+    "algorithm/tests/test_model_loading.py": "c31741f97dfe6590b21f7f730ad65bfb4f6e493d7a80b3e33f32982736abd51f",
+    "algorithm/train_model.py": "325b0542f6d15a9d3067cddb9a2585e8d36c220470d00985ee2446e08e110f7e",
+    "docker-compose.yml": "95639f924c6731efe4abbdac9f472b649f11942f2e374cea6806f3c2fbe3dc3d",
+    "docs/architecture/multi-agent-adr.md": "fcdace55cb4052f4c5b32afba193ed493dc7a9287877195ef793deb6cd30150f",
+    "docs/assets/readme/agent-rag-flow.png": "dbb10b9396edf77bc8ea781597c11ee0f3409026336253cf2e62598ee778585d",
+    "docs/assets/readme/api-roadmap.png": "4d4b373e4c0b1e52ba5460369a553869eca1a15b93059616896de8cd7a00f527",
+    "docs/assets/readme/architecture-diagram.png": "1a22261dc4ac527f6a00d62223d39dd3449277231786376287999a608cb0bc30",
+    "docs/assets/readme/database-er.png": "3cd9ad52c7fe02675c202593483dca4bb35e114379d64a68597d7857ef1cd614",
+    "docs/assets/readme/diagnosis-flow.png": "3fe653c3b425920f5a3037c1cb6ee8bed4cd1d120aee96439b2ddfe4e9ab6357",
+    "docs/assets/readme/features-overview.png": "a9b1ca9d033b03a6b99b386512d049991ca79e368b0ccdf5b35a59d5e4c9eeb8",
+    "docs/assets/readme/mcp-extension-flow.png": "8c4876fdf4d6957af89907c5d2e1b2c954e427de251a8bf3f46488bfae9fb3e2",
+    "docs/assets/readme/quick-start.png": "443b0ffaaee8f1a93c606d69e32994f00cd581689438112067fb8085c38cd18f",
+    "docs/backend-split.md": "094a1cc8652a80c16f57c3b65339130698b22b9187496c1f6b02cda5b3f2f4ad",
+    "docs/collaboration-client.md": "4ff82d8089c489aaf07739ba98fa238565923c772fcbdaff23fffda044522411",
+    "docs/collaboration-release-runbook.md": "ed163b2fe0378f66c8b884b79bb84edfc53d1ecf408ba2503eb7c42de0f71870",
+    "docs/collaboration-runs.md": "39fa9a3bdc4e341789c175ebc126c27a45199c49fa672c42da783f84f5656d2c",
+    "docs/controlled-references.md": "7fa5e0d5dbb563382d0e1459a45ccf46c5e199e26185b013e10af1e0656aaca8",
+    "docs/diagnosis-task.md": "56a32550645d8fa143ef74321077bf7edf8b78083af5dea1410920dfe1081e51",
+    "docs/doctor-review.md": "09fe50f806024adb0537a5d7770e9af4fe99faa14f1095136f878d5754669d7b",
+    "docs/flyway-migration-history-plan.md": "68c75d8c543cf79555c4c15e143dbfcdb0e7578d5cc84ee9e932ad14563034fe",
+    "docs/graph-execution.md": "4426dc3e80723a121cb70087b95e16172c3c3fc453ef499f1a5c3ff8c70de35e",
+    "docs/patient-authorization.md": "dd9968671b9dac45fb959480a2923f3d7d4cac6b4ff6acfc1afc150be4e1624c",
+    "docs/patient-draft.md": "a3b860c0c4cce1fe0d7c8569215f3354f8459bc08e3fa7cb6568b55a5bf6c83c",
+    "docs/patient-explanation.md": "2c4f5cd435ffb43c061b498f486afc85210ac3f74cf96a273fb85140af08739b",
+    "docs/patient-follow-up.md": "30a242d56ef10c27f358ba5154f28ae484a6916be76e411988a27334f68ea65c",
+    "docs/plans/2026-04-22-agent-diagnosis移植设计.md": "798a79fbb446a79b2834054d7ddd4603e48ddcaf741bdf460ca894a918d69ec6",
+    "docs/plans/2026-04-22-agent-implementation-plan.md": "732147948047ab7b91b375476286142e859f353e8e65f8be6eb4170a16ef9ec3",
+    "docs/plans/2026-04-23-admin-ui-refactor-design.md": "a6b1cbb18db2352108761a1635d10baf7ab7d40b7c7e25d6335bd720117ddae0",
+    "docs/plans/2026-04-23-admin-ui-refactor-plan.md": "6d1a690d7e5d74028c48d8702e9779801f6f7eef4b30bb9612f97f8c453a65f1",
+    "docs/plans/2026-04-23-agentic-rag.md": "1488527d625f034365afeb12b0d7553bc14a67af1029e00ccddd0c8cbda58489",
+    "docs/plans/2026-04-23-grpc-diagnosis-implementation.md": "21659cf033607a14ed3e16d5c2ece1603fd7549a7562f3114308b65af8a4794d",
+    "docs/plans/2026-04-23-grpc-diagnosis-redesign.md": "bc0a6471e28a5939f97641dca203127b8b87d600ef0fa8da84c7fa4fc2533d6d",
+    "docs/plans/2026-04-23-mcp-server-design.md": "0b6bca96022a53ddea2b0e7dc334ac1398d53f609a4a2e182e988e5d2b364316",
+    "docs/plans/2026-04-23-mcp-server-plan.md": "a284b8de827973ccbdb2b500450da4fedc0f7cfdfda3f605659a72292c2016c1",
+    "docs/plans/2026-04-24-find-lock-design.md": "9211f4f213d021e2f968479b9141c6ff9d31821b00d1424e0f2a908ee355128e",
+    "docs/plans/2026-04-24-find-lock-plan.md": "13c32d63c0d14207212d5894cded8a1f61a00725baa50161c33e30fd567d802d",
+    "docs/plans/2026-04-24-user-center-redesign-design.md": "208ccacfeaa0d72a5ef73da00ee33c5e163b819ef3416e12435b79d1b24d4747",
+    "docs/plans/2026-04-24-user-center-redesign-plan.md": "317db60dad94fd081aebb0a72aa8bbf0158c3ebc58a13c92c09662a56185d32a",
+    "docs/plans/2026-04-28-agent-session-management-design.md": "a477308e7687b98ad9518b6df9cf5e5a4b8b6fb9a8622ae4737e89ab4e9f9f36",
+    "docs/plans/2026-04-28-agent-session-management-implementation-plan.md": "4edcaadbe28bbf74329d98c82fcb8d9784af01e3bdb7a0a1fb4de6670b3fba3d",
+    "docs/plans/2026-11-04-java-multi-agent-architecture-design.md": "e1539acc59b21ee3d3899bbfc32ffef0dc073d59481951e93950d0ea197e2615",
+    "docs/plans/2026-11-05-coordination-recovery-poc.md": "c476e606baf1a43063df135d7fe725a6b25552e5bf6743e97bd932410b395ee8",
+    "docs/plans/2026-11-05-multi-agent-implementation-plan.md": "4b83fcf672f11d8f73cf7f115e2e7572227822d047d8aaf903dc78ff037da076",
+    "docs/plans/2026-11-05-multi-agent-spec-draft.md": "0c9794fe6a86c8bfd2aec539656339effa7fc2142f4bce82d3d9a56f9144bad9",
+    "docs/plans/2026-11-05-patent-multi-agent-evolution-adr.md": "7a0c0b0a6f14d39a531907956911fbf173b7c4b6f84b4672be16ad5d3dff7641",
+    "docs/plans/2026-11-10-autonomous-four-agent-spec-proposal.md": "28feb9f603a524752a420ea6e1ebcef1fd58a9a0c1064b8b67598fa58284c5ed",
+    "docs/plans/2026-11-11-realtime-multi-agent-implementation-readiness.md": "9d2bf3c7647a26a04e69b8960af19859f55dfdda7c5a7b280c7a77e8599575a6",
+    "docs/plans/2026-11-12-product-acceptance-live-protocol.md": "4a63440a881438f889a454475026a3a2eb64821575ac59c76d8be8cb4e79c954",
+    "docs/plans/EyesDiagnosis_RealTime_MultiAgent_Implementation_Plan_v1.1.md": "cd3b1bcd51fed7efb6479dbf6ab38b04584a7ac194c06dfc9392676cbe8990bb",
+    "docs/plans/design-doc-contract.json": "2a7e930c5981a495fa0a61d1d32cbcaabb974970f9806112884075392ff77982",
+    "docs/reproducibility/p1_f01_fold_repair.md": "a4bf19110f58588d3185b5800c9874a91d7cc8966b46b9eb03c0dcbb0259d79f",
+    "docs/reproducibility/p1_f01_fold_repair_receipt.json": "8d8a6b2751b8ec432ab9236e9843d0a4a656f9028d8368f650892379ff134fca",
+    "docs/research/2026-11-05-spring-ai-alibaba-multi-agent-projects.md": "fe81734b9ed5a7bdf69821515cf138608798d74a279f49417078c9a0321d2bb2",
+    "docs/social-preview.png": "422582936adf24ae978d7efca94b282c2dba2330a54549ef4878736a469c9b4d",
+    "docs/subagent-delegation.md": "45f50be387136fdb1bc436432713ddb70328fda2cd474b4613ce17938edf8df7",
+    "docs/superpowers/plans/2026-06-29-github-facelift.md": "c8bc60c55c6a79a9deb24a9f6289984433a000a608a44bc044036aff95362667",
+    "docs/superpowers/plans/2026-07-23-batch3-medical-reliability.md": "41fbbe4691028aba8fad70f345e4d54d249ad41c7ee4dfdb386fdced293ae905",
+    "docs/superpowers/plans/2026-07-24-p2-01-e0-e3-bilateral-baselines.md": "f4e223d5f23a88abd7555c040e48ad0c6b2d6275f0f866eda5611a677a074327",
+    "docs/superpowers/plans/2026-07-24-p2-01r-oof-integrity-repair.md": "0c8dfb0cdeec46f93781995637c5776358aa893c0aaabf9e59648e0eabc060d6",
+    "docs/superpowers/plans/2026-07-25-p2-02a-t2-watchdog.md": "6ff2ac093e2cb45b52d57779a64c734d1bc9711a7a93a5d97c835853b6151090",
+    "docs/superpowers/plans/2026-07-27-p2-02a-t3-matrix.md": "e10bd2d5c083caf363e9305cc77be1775bb4856e033051b712621503e54157bd",
+    "docs/superpowers/plans/2026-07-27-p2-02b-formal-epoch-loop.md": "350f3384bf4cde819b20242be6283aebf7060f032fb4426a301479e609e92f6f",
+    "docs/superpowers/plans/2026-07-28-p2-02c-fold0-gpu-smoke.md": "23997bec9a4a2e566c112a37fdf32c969a52e958e1dae8c52d9fa497529eef88",
+    "docs/superpowers/plans/2026-11-05-java-multi-agent-design-review-revision.md": "aef0de5843bb41248bf0cfdc365ce154227cfcdf7a200ce613a410357b9445d4",
+    "docs/superpowers/specs/2026-06-29-github-facelift-design.md": "ccbd9024aff5459f9c02c7a5dc886210b0a7ef7373a3ed8add8e453fbfad7b22",
+    "docs/superpowers/specs/2026-07-23-repo-cleanup-design.md": "dddb8707875859bdd6e8bdf841de59bb8b080c46a2ed622f7e79f60c18260fd8",
+    "docs/superpowers/specs/2026-07-24-p2-01-e0-e3-formal-baselines-design.md": "46e37e10444bedabf993c88285633be540802f4726f08b9b3066fd152ab28bd0",
+    "docs/superpowers/specs/2026-07-25-p2-02a-t2-watchdog-design.md": "cf4f25c6286a8f70d5c6f47f36034d79fcd22f53534ab60bc4234adc4260057e",
+    "docs/superpowers/specs/2026-07-27-p2-02a-t3-matrix-design.md": "db7b09d3e6fbb7c366db204631afaf84cf33edeeff7c302789aeafe2254a7270",
+    "docs/superpowers/specs/2026-07-27-p2-02b-formal-epoch-loop-design.md": "05b5fba51cd58ddfb9e8b3e071e455745f7cb6c46a9e123b45cf14fb52f3908d",
+    "docs/superpowers/specs/2026-07-28-p2-02c-fold0-gpu-smoke-design.md": "2e2ef23c8d25f9707b0cb9291a7a52397ac55ba1096f6c2645538f8cfb04c0a9",
+    "docs/眼科疾病知识库.md": "eb4b1c1a98286d45c237e29ff8d8106653bb6462c0c8e64c58a7bb186529ceb5",
+    "docs/知识库使用指南.md": "ac1abc7580b138a64a6d5d275964520fecea799a9fdbfb966ba00eecfa93c4e5",
+    "evaluation/agent-collaboration/README.md": "eda3d9ad7e03082ea0433aa96428b216ab4459c1ec9ceac0f19c3f3f53728e8b",
+    "evaluation/agent-collaboration/corpus.json": "1a21a71cc46b1a5809d6d31a3407933c847c3db1b9f75dde62dbf2741246ea47",
+    "frontend/.editorconfig": "b45945e86d0be801420062a40c76ce900eb3815324ac3bdbea56a4c05e9d98a1",
+    "frontend/.env.development": "241515d5228dcd95d0ebac3afe4dfbad5648c37d73b9d44be252fffc281a9ea9",
+    "frontend/.env.production": "1abb29f1e30a5742b4184cfbb5dedb6f458568d707467f5502a4372d9c92efea",
+    "frontend/.gitignore": "b139d4bb52dd1e7a70f35ea7f244443c9e8407162b878ec1b7f632ab60144a49",
+    "frontend/.prettierrc.json": "ab8898a58c20e2af31e7e4af64c168eb64eb8e920175f986d9e300838d5ecd71",
+    "frontend/README.md": "53ea89a8c22034316145487040d118946c0c3fd24796164dc235ca78f254956c",
+    "frontend/env.d.ts": "424faf9241dd699dda995b367ed36665732da1e6ec1f33b2fd40394488ecac92",
+    "frontend/eslint-baseline.txt": "7744fde772b37afbaf53a4b4da11ad1fa6bd93973bff30ffc727aa726765be4f",
+    "frontend/eslint.config.js": "dd325e1875563c95fb10fcf4b7d99b9c6e4d4fa865f8e4c23d94a50e287e0a70",
+    "frontend/index.html": "1b6d975e350b3e902502dddfb572983d14d2cbf92bc9825ca99457c9ba9fa1cc",
+    "frontend/openapi.config.js": "783a291744b379f9fd5b78e9d8642bd3ffff4f04eb6be671efef0fd137e1955c",
+    "frontend/package-lock.json": "631b6af613ca2424af6d718f1142c926b0b5b617fe0ff884d0985d1ca71c88e5",
+    "frontend/package.json": "1e9cbb32a607e32d5688f0fd23f78c16433e6bf952a51f515fa693e8b8ee8e63",
+    "frontend/public/favicon.ico": "d28927d3ea3b9419472fad09482e6be44f22dc7bde0f6ad89c709baa03506b4f",
+    "frontend/src/App.vue": "af5ccd5d3c2d19df4fdb4d0d8631982bed58122acc1eb5ed9acca1f99e71e451",
+    "frontend/src/api/agentController.ts": "3947b6072f35ffc5dbdad799a4e27a1387c0f95adb6cb8348fa0da11a9e9e743",
+    "frontend/src/api/controlledReference.ts": "821916bc924e556ed33bdfdb114a6a2a5f91b0e92f9cf1398153c48e08f5b2b6",
+    "frontend/src/api/diagnosisController.ts": "06fc1d0b49c735e4981dd1c836167c29084e7dbece65333835f777aaad90d101",
+    "frontend/src/api/doctorReview.ts": "c1a9ede6d7d9934695f69c84f292595798f688059ebaa76016ac7a88ca2b6ee4",
+    "frontend/src/api/knowledgeController.ts": "ae289175128713a1190b6fd39f49b26c7aee735c589e5ce581ef5ea078213401",
+    "frontend/src/api/mcpController.ts": "974296f1ec06ebbc913e0bdff6679b83db5c1026b510eed643e86f5d9363fa8a",
+    "frontend/src/api/newsController.ts": "2478dc1d0d897c8011d2c670f3befc409efacbd0f205e85f474f41307360487a",
+    "frontend/src/api/patientAuthorization.ts": "a89bc0aab57fb474924a1ab82d4e1dc5feaad79d2d7c3a607df83d1fd1f31281",
+    "frontend/src/api/patientDraftTest.ts": "b0f2796030db266bd6738e579109a43854f1cfb91df436ad6ed38016474d3d13",
+    "frontend/src/api/patientExplanation.ts": "252a720ede6c3029c4f3c9e045b79903eed4cb5612406f8e62633fa02286ff8d",
+    "frontend/src/api/patientFollowUp.ts": "819dd9ba8298baf938828a7fa521db3aa9117682eefffd9b551d22f294cd8276",
+    "frontend/src/api/typings.d.ts": "8e1f8394bfa5a85faf4c956ca8da9e79df6e71921840cd4a9bb60482883b7f20",
+    "frontend/src/api/userController.ts": "74554020b882ba6efdd6f4d28100ec06be921a58d3fa39820a9c8c3e774adc38",
+    "frontend/src/assets/agent-theme.css": "5f91a4950311b65950d16ea03bd554a46bb47e18bcca70e260de3fcfa3add666",
+    "frontend/src/assets/base.css": "1b8dc1d33a378c4332541d5e0901976b3bdff82f4820801a1ff75142534a614e",
+    "frontend/src/assets/claude-tokens.css": "187fc1c818d1166f7747e214b8c8ac410272457366491b39a2a48b3c95b5ccb7",
+    "frontend/src/assets/eyesight-logo.svg": "6f14aafa9f5083214571e88dbcb9a0a926762c8947af9342f516be9ad8733ae8",
+    "frontend/src/assets/main.css": "e90c77103ca956853468bf87d30a0486bebf8404e8c463ffdd216b1ed32cdb49",
+    "frontend/src/components/GlobalFooter.vue": "ecac420d8573c006339feeff1b9da601b97d758603b34d0f5d1012ccbdd1a7eb",
+    "frontend/src/components/GlobalHeader.vue": "35588b72fce2e0ad61ad8c7ab988e4344e6a2a65c47fea3456a78425952f865d",
+    "frontend/src/components/ImagePreview.vue": "03bdd68f4b677d3f5b7f1f526b08f56951786380f9f81634ee10064975061d8c",
+    "frontend/src/components/ScrollToTop.vue": "720b71ec43124a98d7cae33210860eadd1fdaa7a97c060f3d3218fd9b021284f",
+    "frontend/src/components/admin/AdminHeader.vue": "8676c31a5ffcd389e3f7f43c30fed549e4d471e4dd0a9016c65f340b79161b74",
+    "frontend/src/components/admin/AdminSidebar.vue": "286a2219da7967ac61b3d31fe8ab761461d0e54550ae17c7f931f1df2b78a400",
+    "frontend/src/components/agent/AgentChatInput.vue": "11be6eb1d823290490420de24f2a2c92930db95e617e72894398d47851cdba71",
+    "frontend/src/components/agent/AgentChatLayout.vue": "fa580a73e545089728e2c2f8cb814aa7aa187131b2980f9263dfc431efbffad4",
+    "frontend/src/components/agent/AgentMessageList.vue": "665fa6db4c4c44f2c865d65f254a6cd3f5d0495c136775dcbe74f039a16f111e",
+    "frontend/src/components/agent/AgentResourcePanel.vue": "67538adc8df13767cb4b405efdd23cec49cd93a91201b0e81bbeeb27ee6bfbbe",
+    "frontend/src/components/agent/LeftSidebar.vue": "8985069c513bae2365a471b736356f78c9917ef6c07bb20e03da65ce9d3c9acf",
+    "frontend/src/components/agent/message/AssistantMessage.vue": "6fb3fb7d57cc911dca9228b72f1a3ce36d63a34f90643e3cb1eeaca3b137c211",
+    "frontend/src/components/agent/message/ReasoningMessage.vue": "d810fc442cbcd7f14782b2105c8536fb6b382c4cd3606b24465ea07c42c420d3",
+    "frontend/src/components/agent/message/ToolConfirmMessage.vue": "bbec75ad75855c7466172fc6aeb29055c8c5e088062fbdbba38074cc1205b92b",
+    "frontend/src/components/agent/message/ToolRequestMessage.vue": "7133544f37345a3d97ebbf6cfa4ae687a419cfe096dde793770377beae6f539a",
+    "frontend/src/components/agent/message/ToolResponseMessage.vue": "5dd753151ff5302d3a9605baa43749b93418a9c5310ec1db8ba7ec100d8051ed",
+    "frontend/src/components/agent/message/UserMessage.vue": "8b7682bbc25e6db976f058bd62aa26e0f5baa646d0bd02e9fd2c65bd9e9066a5",
+    "frontend/src/components/agent/settings/McpServerForm.vue": "05658dc9bf0361ba6145bab9b8b606f43cc3a8ae40fbaf0f7074ef7ddacc6e47",
+    "frontend/src/components/agent/settings/McpServicePanel.vue": "f80728b5d3d9e2a8a5d4238cb917be2251be7b77d79d7496267e6eb4d1339c84",
+    "frontend/src/components/agent/settings/SettingsModal.vue": "722f33172ec445a154bf17022d67bb4ec47f2f62f63d58b1044d97e951360c1a",
+    "frontend/src/components/agent/types.ts": "a7a4d6aa27ff4c073d929fb58f8337ab45377e0886e66004456ee9c8fe71183f",
+    "frontend/src/components/diagnosis/DiagnosisResult.vue": "c4294906dadcf87e236ee13755080ac6dd252399d10b08df822ce425da8f6258",
+    "frontend/src/components/diagnosis/ImageUploader.vue": "7e8e856e645807c23ec4d868b22812f95d841b2b44e6ec9b1c8c2c188ab26db1",
+    "frontend/src/components/medical/AbstainNotice.vue": "f4274ca9fa2e32dd156b64fc1c4a4f270aed326a0481014abf349586f3ea617e",
+    "frontend/src/components/medical/HumanReviewBadge.vue": "bad6f0a9bbe4fd1af97224b508bed60a516523a640bd8026306dc7ecc64446d3",
+    "frontend/src/components/medical/MedicalDisclaimer.vue": "9e102140f4c2231aebb275e61fef71987e130c5d9a61618bd588c15f274ff690",
+    "frontend/src/components/medical/ModelProvenance.vue": "3ba9474521aa2695180a4d276c74cddb458cdbe0a63d1f0e84c462c43fa88079",
+    "frontend/src/components/medical/PatientFollowUpPanel.vue": "b404914669377109c051098b65657742954d5e066bb7a481179d5339f7b4eb2e",
+    "frontend/src/components/medical/__tests__/AbstainNotice.test.ts": "cde557eb3c381181d1568ef82e1000c7afe523bacc7f73efba12305d7e4366e6",
+    "frontend/src/components/medical/__tests__/MedicalDisclaimer.test.ts": "8caf3d2a3c45002acec448c73a9504a7d953cac5e37bbd72dc0c2b8b96feb15e",
+    "frontend/src/components/tables/BarChart.vue": "8a134f85bd8d0cc1af51e75647ee9d0adf33b82240cc7eb1f000522e43ae8b1e",
+    "frontend/src/components/tables/DiagnosisPie.vue": "4c220f5ead9bed7a1db7de5f27e165151d7ac5923f1ff0bb4c88e3f8a30bc879",
+    "frontend/src/components/tables/LineChart.vue": "e9b29e0614d9660f353cf1a03bbbd22da065b6399e3f0b0d755407dbc7297f27",
+    "frontend/src/components/tables/PieChart.vue": "3f4ef7bcb083678178284790a2efe09328efcb807ff4bf5d90afa30b3ed1e88a",
+    "frontend/src/components/tables/StatsCard.vue": "db7b96181020ebf3e07ff895afcf17c76f1fcc90b96744e6c7fad636ddd93d2e",
+    "frontend/src/components/user/AvatarDropdown.vue": "d171a60de01ac85e43e8cf0ae837267c5a7b331c43e698ec7a78d5460e516a4c",
+    "frontend/src/components/user/AvatarUploadModal.vue": "7f5db3f8c85a1d1dde79b79d8235bb50416390cb09b2107eb832ab5af1c9cdbd",
+    "frontend/src/components/user/DiagnosisReportDetail.vue": "f639ce77a58c1d8a3290db9bacae94b297870434e2f54e1712536755f8bf569c",
+    "frontend/src/components/user/DiagnosisSearchBar.vue": "60e656f9404c73db8f696bbff556e06fbe17b25150ac70818f1770ce2d44782f",
+    "frontend/src/components/user/DiagnosisTable.vue": "068138de119a457cbc451a7433745cd68b60166d7445aaa81a0af4edab17e7aa",
+    "frontend/src/components/user/DiagnosisTrendChart.vue": "cb3d3dee4edba5f39e467ddc5d1cd58d2eeadb647b3511d244f340638d0bc842",
+    "frontend/src/components/user/NotificationItem.vue": "d32f22a2e18dccaab5e9effc56e93491de07e8e2ea5be3de54838c1f48652e14",
+    "frontend/src/components/user/NotificationStats.vue": "c7718be0817280866eceeda3e365b1467fd0161fb4cc6ca7c3a189ceebbbd610",
+    "frontend/src/components/user/UserMobileTabs.vue": "11e94db6acb070813f528625fcd7ced8ed4ed18d17ff0102f446005ad9e76dab",
+    "frontend/src/components/user/UserSider.vue": "aa7588533a6b6d71f6e427a4681cdee1f7d4d954200a6bd8d4bcb9c8e6ceff82",
+    "frontend/src/composables/__tests__/useAgentStream.test.ts": "51616722f36f533786673c93096c6032ef7e92811de3903c2896ca5f9757ba41",
+    "frontend/src/composables/__tests__/useAgentUpload.test.ts": "9b1a7ebd1120efae83e8d125e0d70eca180591df303284ce2a1d1bc45d2f1bf6",
+    "frontend/src/composables/agentImageOwnership.ts": "22040fd08688bc2aec10de8e8950ca424df70afd16b83bde548b568723501849",
+    "frontend/src/composables/useAgentStream.ts": "0aad9fd388718bda34d153b5a1c2a5d32a3f7f08f0af135cc96d63f8118607eb",
+    "frontend/src/composables/useAgentUpload.ts": "fcd9207092afcd0adea6c06ee63102ae011c05a7103107d788b36683367c80a9",
+    "frontend/src/composables/useDiagnosisExport.ts": "5fe7c7bd90c4d325cd9b4553c523151909f860cf5fe2d4eaef654c3cf99a0e2a",
+    "frontend/src/composables/useDiagramRenderer.ts": "fefbd05e46105ce02208db17d25739fbf9a34d947c8f8778d9645173cf3a7189",
+    "frontend/src/config/env.ts": "3fd7d5591a76df35c65bf7117002e22e1d4c8c8ca8ed6fa362d6149d7c3e7161",
+    "frontend/src/layouts/AdminLayout.vue": "f54113fa363f10e32ad6cb56e2fba1207b9bf630fa6f9038e3b2c1139c3dfbe7",
+    "frontend/src/layouts/BasicLayout.vue": "ac78c482ab54f19b8b8fbc40aaa6c00c51a9a7cb53f954e37ceb98ea071cc634",
+    "frontend/src/main.ts": "7018d706e9ada8dd24ee110d1c31575f0dac679d4e3cc7d3875d60bb3f795270",
+    "frontend/src/pages/HomePage.vue": "672ac027c3f82a963dcf240f2f7fd6178b7f0526e27b352a226162dc25daaefd",
+    "frontend/src/pages/NoAuth.vue": "ffbaddee630c89649540a3dec0078119f8f6c4940ab59265b7706292a8273234",
+    "frontend/src/pages/admin/AgentCollabPage.vue": "60c056fd74c1ba40b5bf39e287a324dd60858fae740b566dfd653765b6bf9965",
+    "frontend/src/pages/admin/ControlledReferencesPage.vue": "aaff14f8074a8205b5769f8913629895bff29adf9a6c74582ee6f92122983825",
+    "frontend/src/pages/admin/DashboardPage.vue": "ccd2a65a173a1b1ce808bfb076da1b1e4c30624d36e18641d14ac0d14a2238a6",
+    "frontend/src/pages/admin/DataAnalysisPage.vue": "9fc6802afc4f7e2f1b0c835959a4eda89b8fac66c320923fb4c34ef7075fe700",
+    "frontend/src/pages/admin/DiagnosisManagePage.vue": "0e7df942c0f057a488fc98eeb551ddedd6a8da109614e84803bd93b6c23dda88",
+    "frontend/src/pages/admin/DiscussionDocketPage.vue": "9ce41c13922785d1a07f7b8c0d9c132978ae8d73db5e46a4d80af819a448bec1",
+    "frontend/src/pages/admin/DraftTestPage.vue": "2f5d6402972619713ab2aff4ff36b7d402ca1a9a41ef8d393a7934043a31f57d",
+    "frontend/src/pages/admin/KnowledgePage.vue": "428b4b3aa9e75f467bc2caa51eaaf26e8a02bf7787f1c3546e01555903b5a538",
+    "frontend/src/pages/admin/NewsManagePage.vue": "b95bb34d7f59c5334b83c63e8cc543a61a8a16fbf4f2505b004b1118dbea54a0",
+    "frontend/src/pages/admin/UserManagePage.vue": "7cb49389d43f210a85431fe3f5f86e47a140bdc4ec6bb2cd55766dc632e3a647",
+    "frontend/src/pages/admin/__tests__/AgentCollabPage.test.ts": "72877769e97cc30de46a5555e085edd6b70a4c49211a0c3cdceadb7be9c8bfb4",
+    "frontend/src/pages/admin/__tests__/ControlledReferencesPage.test.ts": "ed57d3f348f567a0bb35c41ff0df31fbf312f93f099ab4e309994dca4897c114",
+    "frontend/src/pages/admin/__tests__/DiscussionDocketPage.test.ts": "17c6b414b37ad10009b67be7507bc821a36fca1381b153dcfd7ddd1ad199634c",
+    "frontend/src/pages/admin/__tests__/DraftTestPage.test.ts": "a029df8eeb8ac1c27dbb53738edf2e27ca36a7b543587b98d08f90a1ecdb855a",
+    "frontend/src/pages/admin/agentCollab.ts": "488bfed2a11a095393b0ee341187d10b79916763660837f74d38d3faeb3fe5ae",
+    "frontend/src/pages/admin/components/AutonomyCollabView.vue": "f1153331e741c4f55617da6e16fc77aa826d75f243f7e7f7b16879b66b82a235",
+    "frontend/src/pages/admin/components/LiveCollabView.vue": "f0a0782f578b716eb103fd595a7bc97524044b51a3402d7e6b618ba56757792a",
+    "frontend/src/pages/admin/components/TraceValue.vue": "00fef3ae8a7e25cc5892ece8de8972b7540fd0f06313e56e161ab2b04f30d50d",
+    "frontend/src/pages/admin/useDraftTrace.ts": "f3ffd4a56655fa01ffa634736e2afd425948ae655f2cd7af07825c427f4b61a6",
+    "frontend/src/pages/agent/AgentChatPage.vue": "81100aa4cee9f5371ccea8c7a9f0e9b4a12d5351e13f551f7aec1da143115b2e",
+    "frontend/src/pages/agent/__tests__/AgentChatPage.test.ts": "550eafdccaed32c6aa8256dab79119793218a1d024d40e5eda57803f03d2feaf",
+    "frontend/src/pages/diagnosis/DiagnosisPage.vue": "7da9d8e7e5876481b8da125c6e07c49be0b8a184e6f2731d051894c8e1e49df4",
+    "frontend/src/pages/diagnosis/DiagnosisTasksPage.vue": "a7e823a8ed042c3fa8be156fba6ffe0c85e07f1e41d308d06f1de59ff54e31f5",
+    "frontend/src/pages/diagnosis/__tests__/DiagnosisTasksPage.test.ts": "97dad52fe8e5e5da3b770d86785d2666380cafceeea9825d08a30d6223c24fd4",
+    "frontend/src/pages/doctor/DoctorReviewsPage.vue": "741487b759bb3c8c352b5daea742278b172c8dd5a2e2af89216e33684f172c9b",
+    "frontend/src/pages/doctor/__tests__/DoctorReviewsPage.test.ts": "39607824371096c3fdcbc4e4d023c82029b8325a66da09bbda3a2759c3512446",
+    "frontend/src/pages/news/NewsDetailPage.vue": "04aec1532b95289a7ea69bfd7b7202f31321af2a59def39180499dd4ba71aac3",
+    "frontend/src/pages/news/NewsEditPage.vue": "34c568c98beee2c6940ec53f86ac80eb1b66d76fb6a87192cd07979e89ecb78f",
+    "frontend/src/pages/news/NewsPage.vue": "6a7706a46951b5486bcb9c993f826db93060ad9a415e8d38fa88c5d0349a3304",
+    "frontend/src/pages/user/UserLoginPage.vue": "ea4757e53bc203afcd9fcef935db9f2a0ed3e37fb4fb402cfb11a66256c5e47b",
+    "frontend/src/pages/user/UserRegisterPage.vue": "2aa0b73403dca29bd62b19db676d515eefa08d8ee99786edea1ca22ccf9ad631",
+    "frontend/src/pages/userCenter/AccountSetting.vue": "0969ad26d0c02810885222153e69ebd84a99cdfca56599621f9a18693b7b2a3a",
+    "frontend/src/pages/userCenter/DiagnosisHistory.vue": "427c5daf560accc3b81dad82ff34826523d90a55b79dfef044b872bad1383134",
+    "frontend/src/pages/userCenter/NotificationCenter.vue": "f3fdfe1cbeb3dcccce243d75a969d9457a6b4df833b00f7da1e02dd1371dea56",
+    "frontend/src/pages/userCenter/Profile.vue": "392df897d97b2bf12907c215e28a091655ba3b50b4457b3a61ed3bcc424b187c",
+    "frontend/src/pages/userCenter/UserCenter.vue": "44a0f953149fcfffd89f51b958449f19baceaa009f73075e83d08e05db3afb1f",
+    "frontend/src/request.ts": "cf18726d61da0b627a6dc8c330eb74d31ba2c0acc028e92b4a3d8dcef1e45882",
+    "frontend/src/router/index.ts": "756bfd5584d6ccc584821d45317a8c5d8975fdf3e97359571710ee31c65defa3",
+    "frontend/src/router/modules/adminRoutes.ts": "e0279ca7b7a1c6cadd7dc02beef274958163bb9bfac299313b31829bbcc9367c",
+    "frontend/src/stores/diagnosis.ts": "44d7e5e75b6e73733d3ab3d89b85eb31eca5ea3cf5f8b2c57793c75d3215b420",
+    "frontend/src/stores/notification.ts": "fc7fe049543e5eec08879e90e82e5a5a5153d4e41bc05460899a1d5068635378",
+    "frontend/src/stores/user.ts": "c8e7aa9b01f2de9afb0a23f78645b115d6a0924c6e0ca9eeeca6d082466c8523",
+    "frontend/src/styles/design-system/variables.css": "c7a0a8623eb3c0b9c3b60355f258858e51737463a07ff9e4e6adb5641e0b037b",
+    "frontend/src/types/mcp.ts": "9fc4b196a6d32376f9ae8088b26c54a63706378dc90b2369d62f9dd7957a4a10",
+    "frontend/src/utils/access/ACCESS_ENUM.ts": "adc0aa2057958da2bfa9cd1427ab453e4ef45d37126c3efac0fb335485998b4f",
+    "frontend/src/utils/access/checkAccess.ts": "1330a7661680ec63a4fbbc7892e240c9c07c8ab8e9d4bf277b852b5292953de8",
+    "frontend/src/utils/access/index.ts": "988eddd569e9cc026e74d657719a8f2aa367f1832624a33cfea7ca3e39ad7992",
+    "frontend/src/utils/exportUtils.ts": "b2f8ec82c9943f05c597586788f784cf48cce603c89e73052ce658cd4a5219a6",
+    "frontend/src/utils/jsonHighlight.ts": "e3fa6a2990124d93d200367a1dcb3b9f6515dd9ee362315cb032226e6b6fd02c",
+    "frontend/src/utils/markdown.ts": "eaaf1eeea99b23ca080388fe405853b20c6c9d7693d7f0a7cb804bd7caac3296",
+    "frontend/tsconfig.app.json": "3d96270a629ad08d3e6a16ca06f50ff557af0340006ec2f5fbe776d21d6a4e8a",
+    "frontend/tsconfig.json": "522fc3f109c815105d4fac4156d2a96fa05ed3e23ca2e9ea86772a11da0ba269",
+    "frontend/tsconfig.node.json": "63982adea05795155f81565c93d73c4347dd4b1ab7d73c05ac765f4210e2a9f3",
+    "frontend/vite.config.ts": "8feea1304fd876162e45dd3280f9d0cb91dcb6a8458bd32656f5028b2efa1c36",
+    "frontend/vitest.config.ts": "6784c22fb164dff25308c71a5275ab18b97b8e11c6f2e74a53ca2c50a471b21a",
+    "pom.xml": "433441367fa4f2c7945a67d4dba27835ce9687a09de5836a80529ea80e5c2610",
+    "scripts/capture_product_provider_evidence.py": "2cc6524867ae328e75c9dee428298494532a6aa3abf8c15715eec715fee30dff",
+    "scripts/check-eslint-baseline.cjs": "5c48135862d4b61ace2753b79b56d401c7b1766c04e6c5532d7ad6c5e88c4aa9",
+    "scripts/check_collaboration_fixture.py": "762f40b952edd710f98220df106223b13fb057fbde65e82fe9cb18ef3aea2913",
+    "scripts/check_design_doc.py": "5fb4f5f8b78624fee663cb06453531bd9b627eddc6491735eaff9ab953b3bf5f",
+    "scripts/check_issue17_reports.py": "6eae719c9f08b25e719fac755a590eb39fd6fd26cbb456bfb73032d5d02cc266",
+    "scripts/check_probability_scale.py": "5adec40ca35566ef05bff3e5e2fbbd64e29041fd4e5296ea7d1930470f74d173",
+    "scripts/check_steering_docs.py": "0537a2b70e14c32b19193458bae4fb1fd038d904c7ca7087b3ed32cb02582e73",
+    "scripts/check_surefire_skips.py": "91f43aaa026dff7fc63ea13ad21837e2f97ace50594661689804f6569cc257b3",
+    "scripts/check_task02_inputs.py": "ed96eec4aedf6ad2517cd209b82e8c16f7ede473561e24ce3fb63cb4e3b7484e",
+    "scripts/check_task05_inputs.py": "3a1c58ada0dc2660734d01756ffb78a188449b8568ced331ed3e45b4298388d5",
+    "scripts/collect_product_acceptance.py": "2c228dd73e5e30a406885afb11dafd61333eb673bf8408cdaf27d375b13f7e5d",
+    "scripts/collect_task05_evidence.py": "dd5c64f5c9c9a9451c2b1ecb5ef787ba1b556dfbdeb9ab6a266aceea4dea616b",
+    "scripts/collect_task07_evidence.py": "4503edf5f8e26cebb8f7b66727dffc1bd0d3c981889acec7312bbaddf42e26e5",
+    "scripts/evaluate_agent_collaboration.py": "72d61d2f539941799af20a75d5786533265cc9f1b9a4bf188adc411cc02c000b",
+    "scripts/fixtures/CollaborationWireFixture.java": "7de6d908c031edf3e307ab9027f481cefbf9c019363f9256de1d2750bc4dc511",
+    "scripts/freeze_product_acceptance_live.py": "b4f3bb17a7cffec46f4846c4cc0980fe9526ec06f45fab7870a833af15a99092",
+    "scripts/product_acceptance_inputs.py": "1db514a25ba5108d3a671a11c4a93e52131348e00246c1428dc7499cd35b8b05",
+    "scripts/run_task05_browser_server.ps1": "1a7d5052ec3aa71a1433f18323cf7e0e71d37c2d59c3b75939253db8f3001074",
+    "scripts/setup-github-facade.sh": "13a572dc9bc6c8752e22ce91a7ba4c609a684a43505c157452b1a17365505446",
+    "scripts/task07_inputs.py": "123da9df76507bab984d3a77bdfda3d030985ef7dc7a34190f0ebba7d15f96df",
+    "scripts/tests/fixtures/expected-MIT.txt": "5127b99af39c375edd1b0001c78e1d2a3210830c1e1f848ca456e5cc644355b6",
+    "scripts/tests/test-setup-github-facade.sh": "6e66c31de05b67cf6be0fa8706187c5808496e2c988888eb44da505fcf182810",
+    "scripts/tests/test_check_issue17_reports.py": "929da100429616457827461c029a36d12b2af37cf0f9e2aa916513b8f4eaefe4",
+    "scripts/tests/test_check_retro_gates.py": "b173e00e1ccb754ac53c8b4307d52bcc6e813f375d16d72d5fa796a5f1af7941",
+    "scripts/tests/test_check_surefire_skips.py": "9369cd862e8b7c5686ff42c6315debb3d1327034829e7f819b110eacabd2936c",
+    "scripts/tests/test_evaluate_agent_collaboration.py": "c056d72f928edb6b12d0ce42c4d9865d77d5fca4c8aee8f05a3e05d914cbbb1d",
+    "scripts/tests/test_issue17_mysql_health.py": "bc962667be92d5733c573524d83c3c16dfadf55da3837a45d39c1a067bb2bc91",
+    "scripts/write-eslint-baseline.cjs": "473b71123d80ae96ad5c88be9b627f1310107efed68cdfcc7982e577af015654",
+    "skills-lock.json": "7a0294bc4bbf94b748cfc6bef3fc219de2732caa6476b907241b746627b6e8f5",
+    "src/README.md": "3c685ae28d77310f6fdd012c88af016b80b07de5fade7501303f108896dfde99",
+    "src/main/java/com/csust/eyediagnosis/EyeDiagnosisApplication.java": "8eda1cb8330c6a714fc9d2978b37ee343aa6e7aa8b90b275d3ca9d31c371c661",
+    "src/main/java/com/csust/eyediagnosis/agent/DiagnosisAgent.java": "2699916b98248009947914da53055f613d0526242d4e2336f43a5309419ab65a",
+    "src/main/java/com/csust/eyediagnosis/agent/config/AgentConstants.java": "f7964a642f150d02963bfeb7e8982f6ce6d164702a3a1da9c2e16cf9bd493d57",
+    "src/main/java/com/csust/eyediagnosis/agent/config/AgentExecutorConfig.java": "6d90843e82d81f3669b06f2d9ecf170d79f4e86214e8269c6b3ea9fd7d09643f",
+    "src/main/java/com/csust/eyediagnosis/agent/config/VectorStoreConfig.java": "84a3ec937e401fafcddff565be29a4b7db021a53f917a66500ae3509520e6697",
+    "src/main/java/com/csust/eyediagnosis/agent/controller/AgentImageUploadController.java": "222b7d6f47368889c2020cd5a62a7d0f455e31d93dcb04de446473ded13e4234",
+    "src/main/java/com/csust/eyediagnosis/agent/exception/McpOverloadException.java": "5a90652c575103cd98df7b5c192a64fad63a056bc3505b7afc089dfef8ecec3d",
+    "src/main/java/com/csust/eyediagnosis/agent/exception/McpTimeoutException.java": "8358a7a968648a85a3d31b0dafe99769431882c07eed6a31fe1e3b6267c2d6da",
+    "src/main/java/com/csust/eyediagnosis/agent/interceptor/TextMcpModelInterceptor.java": "038a72ac3f13c842456d4352d98211ec6184e002651e401efd0f181d267a210d",
+    "src/main/java/com/csust/eyediagnosis/agent/manager/MCPManager.java": "99f78db46a6ac1005bf93c873a4f21663934a7762e137f5f542289c5d6e5f965",
+    "src/main/java/com/csust/eyediagnosis/agent/mcp/McpToolCallback.java": "c4029f5fefc05674b1d2653a1a5d08c07e11704a8b437d97e1a6ace3d0413c5c",
+    "src/main/java/com/csust/eyediagnosis/agent/mcp/McpToolCallbackProvider.java": "2915c9a2b3e3d28b2408beb765effcdaa6413fd4ec4967404c712de1c886b51a",
+    "src/main/java/com/csust/eyediagnosis/agent/model/EyeAnalysisResult.java": "d73130926d0124b0decec8928aa3801e752a87d2032d24131e34f9836f0c25d2",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxDispatcher.java": "30cc9ea147f6e958783575ded292b9d32cb5d60180a0fe06e06cf2bdb4c0c091",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxEntity.java": "81fedff4a417e2f35136f913dc3fe18e43a1fa1a82d19674186d2dc1be7c5ef5",
+    "src/main/java/com/csust/eyediagnosis/agent/outbox/AgentMessageOutboxService.java": "d134241029ce8a1a8a1bc35a4d7413ea3104a00b000b59864427d81514e1761c",
+    "src/main/java/com/csust/eyediagnosis/agent/policy/McpConnectionPolicy.java": "6b44055f25adfcdf7219440faedf446e1a15bcc45275fb856fd5f76609158fd7",
+    "src/main/java/com/csust/eyediagnosis/agent/queue/AgentQueueConfig.java": "fb7312c5d6ec19c78b742f32fa10c1efdf9acf274f29d211d371090cae5831fa",
+    "src/main/java/com/csust/eyediagnosis/agent/queue/SessionMessageQueue.java": "2d49b48f9746fe338c0035398562b36bfee08fd7fc2791c58d570ced39fac537",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/Bm25Segmenter.java": "859c89b3b03abf78c2ab3e9afa237b29c4da64c32ac62e097946614140be57f7",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/BuiltinCorpus.java": "3b1dcf2e56cc1bf6b09f1b5671d61eaeccf2ff481dd97bd1598bcd1cefcf58f2",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/BuiltinCorpusSeeder.java": "af499dcc6a5c70d771ec3a2799d43907c33ff530505073e52525c6ec3466bd30",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/DocumentParser.java": "f08e0cb8aaa3184f3d33b5b91cca2a89a1c283f25c1f467f690fae3b9ea0e95a",
+    "src/main/java/com/csust/eyediagnosis/agent/rag/TextChunkerService.java": "89e8c147bdf4ae0ae526deffb418ee783fb690e3955d0efbb7c837aee2a338ce",
+    "src/main/java/com/csust/eyediagnosis/agent/service/AgentImageUploadService.java": "473692a7a813c0f83d39f2012aca31b52fa29195e8ee0877f253f2b7dc86e30b",
+    "src/main/java/com/csust/eyediagnosis/agent/service/ChatHistoryService.java": "bfba93483cae9811c7204d6eb13990a4ccc40b86bb765292e309c8ebc9e5b60c",
+    "src/main/java/com/csust/eyediagnosis/agent/service/McpServerService.java": "fe6cd94f5e455331799db3a7e2d71801035a683dfbc53416c4066ec372bf6473",
+    "src/main/java/com/csust/eyediagnosis/agent/service/TitleGenerationService.java": "f0239622a43c6677d12f21a4e0b466ef63c4bad74590b50c971211c6d60aeaa6",
+    "src/main/java/com/csust/eyediagnosis/agent/service/impl/McpServerServiceImpl.java": "3481709511430002bf923df81997c2cc562d1e194bbcd8f22d9da8d64a3892f8",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/DocumentSearchTool.java": "17b6c3dab6715c7c7affa562820241329d0f849e2628e9eccf5b300dfbd6499f",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/EyeImageAnalyzerTool.java": "1771083627560ea9a3a04a93db15ed4ecc8aeaac5e27b9bcc74f4ed00eb71d1e",
+    "src/main/java/com/csust/eyediagnosis/agent/tools/UserBoundDocumentSearchTool.java": "36445f1dcb5c3fc4864c10cdcf64d71f39404fbfc81dc321993cc136a2e04666",
+    "src/main/java/com/csust/eyediagnosis/annotation/AuthCheck.java": "038cef97b75c55983d5b61cef4112d4285d75c003b2c2c55595562503a9674a7",
+    "src/main/java/com/csust/eyediagnosis/aop/AuthInterceptor.java": "174797c66d65cba4bb11e6356fd3c0a4cebc13f0267ad06e87c0edc38f1741cc",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationCursor.java": "7b741deec59c4dc0248949bd4b5ab3817645c2e198302950373e0a031149e12c",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationEvents.java": "a1266525a862a4796548f3926a481a67a30394b010fea26b91fcdf563e88d6ce",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationImages.java": "5c087eab6057d862c049648c38d6ab429970f6e4500c8e6af3eecaf7795f3058",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "76bee1a0e7b486811b983b2858fe6a4004cb0cbd9705cb54b90a45291a1eb0df",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationStreams.java": "115448d0914215e54e3c157388b2ee94291617ebea0ceeac231d17fad2d7d056",
+    "src/main/java/com/csust/eyediagnosis/common/BaseResponse.java": "ff6dd78e3c7ac1544535d00c92a561f45620c4efa5aac0b79f92500ac039360f",
+    "src/main/java/com/csust/eyediagnosis/common/DeleteRequest.java": "8e0c9e0732241c1e2b3845a5d0be31b8cb3e80dc260ac599df3ab42166be0351",
+    "src/main/java/com/csust/eyediagnosis/common/PageRequest.java": "e0b2c2045d49711fb0fc361b0c9d4ba35eaed43f83defdff973f3550e476e6e9",
+    "src/main/java/com/csust/eyediagnosis/common/ResultUtils.java": "552f01d0c9a9cee8c4184018a2fcd0c50c01618c707714e7061df94afbca13eb",
+    "src/main/java/com/csust/eyediagnosis/config/AsyncConfig.java": "580f6f1ae53665fc3ef58256d057b1ab2b72d7636c7116c438a6da9fdfda5e6a",
+    "src/main/java/com/csust/eyediagnosis/config/CorsConfig.java": "fd53f6e4175caac22b4aae1115f7a83ce2718df2f4e359b10f7898503d988141",
+    "src/main/java/com/csust/eyediagnosis/config/CosClientConfig.java": "a9ff3b570915ffd8729119446c7f8944c063e25f45fc85a3710244e1061805a2",
+    "src/main/java/com/csust/eyediagnosis/config/GrpcConfig.java": "97cd05ee22bbcf5846138347e45b2850752e314777838ac06df7e6424cde2afe",
+    "src/main/java/com/csust/eyediagnosis/config/JsonConfig.java": "fd251b5db119cebe81ce6a8ffd97a1e9eccfaed1f26cdfe2d38137052d94dcd8",
+    "src/main/java/com/csust/eyediagnosis/config/MybatisPlusConfig.java": "7b0746e1b2fadb5306572d83256fdda11abc3ea954fbb366e8cfc31c2ffdc173",
+    "src/main/java/com/csust/eyediagnosis/constant/AuthConstant.java": "157e5508baff1720cee027703d7d5dfb49da02a69ca0cff509636b5173c1b469",
+    "src/main/java/com/csust/eyediagnosis/constant/DiagnosisCategoryEnum.java": "0edb8e44db7919b4a8a73674f25b16e3654e4a549a6593d070c4bcf0ee9de406",
+    "src/main/java/com/csust/eyediagnosis/constant/DiagnosisRecommendationEnum.java": "4aec906a44411709cf82f388d13e435972224c1393e35d9774df7b93cc47e758",
+    "src/main/java/com/csust/eyediagnosis/constant/ExceptionConstant.java": "1f90c022ce4f702fcdbe8be75cab9d81d543031a429f5b3ba33f268adb237b26",
+    "src/main/java/com/csust/eyediagnosis/constant/FileConstant.java": "98e1e40d28c2b908f901aec31c0a6d62fb7776ec01012538a22f63165436c998",
+    "src/main/java/com/csust/eyediagnosis/constant/HumanReviewStatus.java": "17ec24611362971a0aa0349008b673198f47bdcda6d13991f4e309196a1f9cda",
+    "src/main/java/com/csust/eyediagnosis/constant/OrderConstant.java": "acb779c2d94c0895313e427a47bd602bb4ab7b436bebfdc9a88bce1ed6008b9a",
+    "src/main/java/com/csust/eyediagnosis/constant/ReexamineConstant.java": "3e379a3613b505f5e5154658edfba542355da11fa2ab1227ebd7a30197e35dd0",
+    "src/main/java/com/csust/eyediagnosis/constant/StatusConstant.java": "a261df15268f96706ebb82c11667d74c247c0187e478ca66e34dd4302766171d",
+    "src/main/java/com/csust/eyediagnosis/constant/UserConstant.java": "d1d3abcd980944e1036ec104c2eaaa1f84d5156cadca837e41b5935e15ee5628",
+    "src/main/java/com/csust/eyediagnosis/controlledreference/ControlledEvidenceRetriever.java": "728ccbb7d4a3d902f62e476489f4c1fef02161b051afa88d49c2e9313aeca3fc",
+    "src/main/java/com/csust/eyediagnosis/controlledreference/ControlledReferenceService.java": "8f10dd46759385b3888bb0035f4a220f3ee0ead9aaf4c95a721ec9531dcda0d4",
+    "src/main/java/com/csust/eyediagnosis/controller/AgentController.java": "ce4434110a2dc24d3a605597d2ac544607140edf18087a3c1eae63dd1af596e1",
+    "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "741ad5fda1ac940dd3ce18cbdf19c636a19aee3fd6490315bd66facdb2450e00",
+    "src/main/java/com/csust/eyediagnosis/controller/ControlledReferenceController.java": "979fb1aa2e03d7ba0f99d7e71d606a6ab6594c5279db9b76c7a5087bd63c0443",
+    "src/main/java/com/csust/eyediagnosis/controller/DiagnosisController.java": "660ecdbc1c64773cb69200494cb52c2b57e7b5ac46dcf425b782a19e2154f64b",
+    "src/main/java/com/csust/eyediagnosis/controller/DiagnosisTaskController.java": "93e167a1da01eb2f309c44fc835759088772865f9975a7be6275f761b7b14ca2",
+    "src/main/java/com/csust/eyediagnosis/controller/DoctorReviewController.java": "97832aa5e6e7d4eb5e70795594795474c65eedcbf6dec4971dd0c87a82a00890",
+    "src/main/java/com/csust/eyediagnosis/controller/KnowledgeBaseController.java": "3be1532101136cd994a5d0a114aadcf7c54608bdf9e56536e5a82e641d9d89b0",
+    "src/main/java/com/csust/eyediagnosis/controller/McpServerController.java": "21420b7e2b877d821de08b2f706a90c49e7c59085aa6ab3fb823ac1d2397e4a8",
+    "src/main/java/com/csust/eyediagnosis/controller/NewsController.java": "bf9aaa75b1d5444071d7f111affcd8551f665d85ddd308aa785b8cff6c803b00",
+    "src/main/java/com/csust/eyediagnosis/controller/PatientAuthorizationController.java": "c896b2e87193501d0a45f7cd48ae752744109c771ad3feb25d0e2b3469836d72",
+    "src/main/java/com/csust/eyediagnosis/controller/PatientDraftSeedController.java": "9f8f3d95cead40fa9edfa12093ce5ce6967ca9a21d80b4f3278f5c36346336f0",
+    "src/main/java/com/csust/eyediagnosis/controller/PatientDraftTestController.java": "98b7517be2ffdeb96511103abc6e379ee4ead9fa3883b05a9e72d928082ca8eb",
+    "src/main/java/com/csust/eyediagnosis/controller/PatientExplanationController.java": "accaeb48dd357b9fe7035d705e8265c6b452f5b190b181f1dc33620662b878e4",
+    "src/main/java/com/csust/eyediagnosis/controller/PatientFollowUpController.java": "9fa42bc6b9252ce9e001612761ad6f59855383ca28970519930b5c4a23f1824e",
+    "src/main/java/com/csust/eyediagnosis/controller/UserController.java": "1516d19c1a135620e97ae5e3e81fe036321eb3d3d446717215f15b06d0918c40",
+    "src/main/java/com/csust/eyediagnosis/diagnosistask/CosDiagnosisTaskStorage.java": "63105932e3b83fb869219786ac1fb577e659dc16581009627eab6a2a87d72e41",
+    "src/main/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskRunner.java": "ed17d1e45deac5ddcecfd02aeba87487ed2b23784b32d1e442c34c45680138f1",
+    "src/main/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskService.java": "283b5afcd729ba397984f1c1921923d2861df8ba69e8816c287142f0a07d4beb",
+    "src/main/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskStorage.java": "8ae9dac6f9ced9fac6cc48576e40a2f498a87fa1385574e667bba231963b0b6b",
+    "src/main/java/com/csust/eyediagnosis/doctorreview/DoctorReviewService.java": "64ea2fead79335135c4aa8e1d2edef86a25247d80bea56f8f15c9ee66b5f9eb1",
+    "src/main/java/com/csust/eyediagnosis/exception/BusinessException.java": "cdb3def23ea41c6a4bf4a9b537853be839d9f7b1c4295f0c54cfa8c397c027c4",
+    "src/main/java/com/csust/eyediagnosis/exception/ErrorCode.java": "8f4640a7a33d4ea123fffa8d81da34e44cd07b48a894a163bc33dedffd31876a",
+    "src/main/java/com/csust/eyediagnosis/exception/GlobalExceptionHandler.java": "52777a7ba6a62f12110da86b4d364c8b862db7674a8a2b5374ebd8d5f0fad7d9",
+    "src/main/java/com/csust/eyediagnosis/exception/ThrowUtils.java": "7096ceae33f8b43e3e66c50f53575e88925ed2b4b4b99ac5ce5091b1c42af2e8",
+    "src/main/java/com/csust/eyediagnosis/grpc/DiagnosisGrpcClient.java": "41b51ab1a4e4c7ff5139c6d78c4927ccfd0e446766211ab4b7f0ec4cf13c6ee2",
+    "src/main/java/com/csust/eyediagnosis/manager/CosManager.java": "3df35662d68baa9b30bceaea792978195ac70534213a239a46b13ad4bbda05c7",
+    "src/main/java/com/csust/eyediagnosis/manager/FileManager.java": "502c5b399706cbfcf8bce8d510fade383d0d8ede5489ab628784dc47bff65203",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentMessageMapper.java": "739094410d12c5587c85b84b8d2c897a8d47060452b7dea96a886bb2ba99e2bf",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentMessageOutboxMapper.java": "06b728eec0c220dbfbb02efa682e1570aef93b1e74e7756b410a7c6e88ddd75e",
+    "src/main/java/com/csust/eyediagnosis/mapper/AgentSessionMapper.java": "b007e8be4243f011e110b5cbdac80ee5c15c9193b2a4b6e45ad45b7c2cfc5126",
+    "src/main/java/com/csust/eyediagnosis/mapper/DiagnosisMapper.java": "14042f43529014a503f03edf1af18e4273dc51fdac58347eef832d4c236b24ff",
+    "src/main/java/com/csust/eyediagnosis/mapper/InferenceCacheMapper.java": "9650361209493e6d1717163fbbf88ddc7d3d852fb0f32aafe9ac86b8a44079da",
+    "src/main/java/com/csust/eyediagnosis/mapper/KnowledgeDocumentMapper.java": "f5f4aaeea044e9bc4ed1595d4d3eff8c30e76786784699e043ad2a397de7d487",
+    "src/main/java/com/csust/eyediagnosis/mapper/McpServerMapper.java": "ba8047960eb2a165d7d5d939ee4f92d4efae7fa12247925abecd42729bf191d1",
+    "src/main/java/com/csust/eyediagnosis/mapper/NewsMapper.java": "2e490dc0279247ba268a5254c5ce339c434d428875821e53101d4ee45a7f9489",
+    "src/main/java/com/csust/eyediagnosis/mapper/UploadTaskMapper.java": "d06dd425dd2970860af3eb6b76bae442d253426326bb5b7b5e53dddc60792371",
+    "src/main/java/com/csust/eyediagnosis/mapper/UserMapper.java": "be6c09a35ad19934e7a2a15be7770240a9cfdec2ca8acaf3d22ac61acced73f9",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/AgentChatRequest.java": "76955b6c68d13f9bcd021a721ca7082ff86c1de03fba616161fa47d1de70f0ff",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/ChatHistoryVO.java": "40566914b0e209c77007e37e6c250414dda86931bbf2d67dd2ae3d4643e6da4d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageDTO.java": "20ccc2c937a880ee0d52db5878a0311cd8e538696d60e82168e9d7ba526dadbd",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageType.java": "8f01e2a0ca419aeee8b66f49b5cfb675a5de804048fe3af6cc35886985557efa",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/MessageVO.java": "efd38690715a457643ec217517f3e1a7ac92ee81e3db3f7cf9bc0e104b6ec6e5",
+    "src/main/java/com/csust/eyediagnosis/model/dto/agent/SessionVO.java": "3a25598a7e4b97bb58c0e2575bcdbf7709ee85f187d17512c3246d5fc655e70d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisQueryDTO.java": "9812f2aa328bc17defc5cd386c36ea00a95a85ed7fb3ebed280b8764249efc3f",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisReexamineDTO.java": "406eb80c171bc74f973f7f28d54f6c6bc1fd9cc911b67bea453ac69d0a6c0f01",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisResultDTO.java": "0fcddbcdffa7c9060d9295c43c222fa518004e091bbf1a3e24eab625be87dbed",
+    "src/main/java/com/csust/eyediagnosis/model/dto/diagnosis/DiagnosisUploadDTO.java": "5c68391b4a8ce21cdba72a222665bff2442bc6518dab406495b2efa3b647ae73",
+    "src/main/java/com/csust/eyediagnosis/model/dto/file/UploadPictureDetail.java": "85cca31b009ace08198d8bcd2ac2cd6f8843d409aec1659438f4eaf6148a4d05",
+    "src/main/java/com/csust/eyediagnosis/model/dto/knowledge/KnowledgeUploadRequest.java": "98eb62c307d53a0c1c121019384e619eac7573a197d9b6e022130b07bf79816a",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/InputSchema.java": "8d89b1650a66fb4d3cd95e17c7dbe11b88b2e7f3dd787cc72bc4993668bed10f",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerCallToolRequest.java": "dfcf6c016783e75620b9aabdfeedaeadc60fc2525fb63cbfde4c9c80cc43fc9c",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerCallToolResponse.java": "917be496b0a3820c37338d696407c7aa16980cddf37ae467a1212b6bec45b1cc",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerDeployConfig.java": "e3c4522d77ef29ec1d9b9cccad8276eeab87b6cf72412dfc813f34ea578e4407",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpServerDetail.java": "5b1bc64047fd96624cf0b897d04b105ef916a376d1c4920726543351ff5105c4",
+    "src/main/java/com/csust/eyediagnosis/model/dto/mcp/McpTool.java": "83f739482476eda44dac33443cb19a12284bab373f20b32c4e8d9649789cb798",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsQueryDTO.java": "47853cd3e7c8be55dd62136d04b76ee1303f1e4731fbe5cd56d2f3faa441d42e",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsUpdateDTO.java": "860e8a50d6eedb2306e94adc2f213f6fdd4d15810400fd91bf3c9fff598e0dd1",
+    "src/main/java/com/csust/eyediagnosis/model/dto/news/NewsUploadDTO.java": "66cc0e9d601178c31c4cd95565db7743feea058e0f21c04800083d8cc50764d5",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserAddDTO.java": "c97ae0771863d4a9a62b2799d299c8ed1c3a5bdc63b584f1b2a0ac2f7c687899",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserEditDTO.java": "ff830ff609a998caf27ddbec72ced65d84784b52ffe7e3ba01f9f9a11d39093d",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserLoginDTO.java": "b2073b87e68870396f12ac25eeb3a40975e1d55048f4df5951b5119cb6126529",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserQueryDTO.java": "1237d2afd866888823b3046b00ca3a17a014ed6955dd45dd840817dde15ce645",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserRegisterDTO.java": "33b7bf136fe7ade2f2693421400d8a97b64565a10037bf299c8a72f29a2fe313",
+    "src/main/java/com/csust/eyediagnosis/model/dto/user/UserUpdateDTO.java": "aa2b896f253e86291309bf62dfa10ba50c001b5219672450acfb67a1351b78ee",
+    "src/main/java/com/csust/eyediagnosis/model/entity/AgentMessage.java": "0660ab27b78c127288857bd71970bf9867482bf565e70b77f7a19678f82cc3b7",
+    "src/main/java/com/csust/eyediagnosis/model/entity/AgentSession.java": "4f36f9b29b175b60b6d71704083dbeba56e81501a63ee9105352c7a96d7faac3",
+    "src/main/java/com/csust/eyediagnosis/model/entity/Diagnosis.java": "9278e2c10ee8c7e00475406d58d8bb03cc4ac4635cdf1b48f4b6c54beab370c2",
+    "src/main/java/com/csust/eyediagnosis/model/entity/InferenceCache.java": "00e77b6edb1a9ea225ef15ef08713a842074e0405ab1f30e1d5b3bdb0071b574",
+    "src/main/java/com/csust/eyediagnosis/model/entity/KnowledgeDocument.java": "f47aa233c94c926c0a0bc61cc9b17c4c1313737cc4da7af417f182b90ec366bc",
+    "src/main/java/com/csust/eyediagnosis/model/entity/McpServer.java": "ec756244528d0c23d4374e2dda9e6d3da8f1ad02c9fe97106a7a203df25a3bed",
+    "src/main/java/com/csust/eyediagnosis/model/entity/News.java": "d0007f979b3b771ee64531d8896bbbdb1d4e7ed41dc723075ae7a35cf3104422",
+    "src/main/java/com/csust/eyediagnosis/model/entity/UploadTask.java": "4556205ca512173b5efa53fcb0b725f89cf9e7fd387bc1e1af3420870c8648d6",
+    "src/main/java/com/csust/eyediagnosis/model/entity/User.java": "20575bd850b4d1398425b816b79e076a31c5f3d3d96553d736e65c6bfe1e741b",
+    "src/main/java/com/csust/eyediagnosis/model/enums/UserRole.java": "2f1dcd2568992e423db39200d057ca43ee9fe3a5eceb1260522b1ff529f60ae1",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisManageVO.java": "edca78ee7f00ef43ce558751d4019cc65d5a349b9c2a641631014ecc393565c1",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/DiagnosisResultVO.java": "5c56d5c40d1bad4d3f45a21b541b2d4c9cdcbd2d40db24db295c99572456d8c1",
+    "src/main/java/com/csust/eyediagnosis/model/vo/diagnosis/Disease.java": "8a8688bba88be30e2347e88fb39b158431adedf066e991f4b436c15e3afc8aa7",
+    "src/main/java/com/csust/eyediagnosis/model/vo/news/NewsVO.java": "438c38f3ad5ea789a6582d52ee3e3a00d747398791cfd096f3e5bdb628d14f5d",
+    "src/main/java/com/csust/eyediagnosis/model/vo/user/LoginUserVO.java": "932d11b71cc1d99bc8a5f42188252bc42261dc478679a6e11701c972bda447c9",
+    "src/main/java/com/csust/eyediagnosis/model/vo/user/UserVO.java": "035f8d42d38aae43fd90666e6bf24ff198fda5c6a81872c2a8fd987b4f3ec633",
+    "src/main/java/com/csust/eyediagnosis/patientauthorization/PatientAuthorizationService.java": "61b9bce11af11379a98db839f7c435bbfd3450187f8650b307c936faf94c9f71",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftAgents.java": "2874689d9cc492ba82076f0a9ebf684fe9ca707ef23fb801b288f8eded3bdd61",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftGraph.java": "2d641a75735c87fc590c27f9006f0e71cb9003e4eb61f50ec99c82dda1f9e982",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftMailbox.java": "72019c71a260e7dde97439aa8d05b24c44897ade179e7cc71d957a3c68207d87",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java": "e1adeb4a08a5a902942db6eba925214c7ff05a0c38202e07729c9f5a2b31bfeb",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftRunner.java": "89c7e8b1d3f802b34d5a3545e5ce5a8a41b05c9bd173f3ad923484f58dd04b0a",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftTestService.java": "590552c2507a0ce33713dac7c0f2d28bff0f3927a21483cedf667e3b3fa6e2e5",
+    "src/main/java/com/csust/eyediagnosis/patientexplanation/PatientExplanationService.java": "018033958486606f6ec773a1f71089cae88bdcc1b45ebf4f1f8efb062fc4d102",
+    "src/main/java/com/csust/eyediagnosis/patientfollowup/PatientFollowUpService.java": "3f86ac94805df400435a8d582159457731cae016aa846baf1644ccb224077e18",
+    "src/main/java/com/csust/eyediagnosis/security/PasswordService.java": "4833ce8df0d96b977727a6b68594fa4fe2a3425c97f859d16e24b08a174fa49f",
+    "src/main/java/com/csust/eyediagnosis/service/DiagnosisService.java": "9d048b5b726fcbded70904604d4ed6ab85a7a348d5ed801d08217be7bdca3f69",
+    "src/main/java/com/csust/eyediagnosis/service/KnowledgeBaseService.java": "c9c1ca3116466423f5b648ca44fe30889f2b9d887272533289239aa698709c24",
+    "src/main/java/com/csust/eyediagnosis/service/NewsService.java": "4e6003ed1bbaa15cc4e4c4518c547081a81f36bdf80730f59e6b3f7ded91bdf5",
+    "src/main/java/com/csust/eyediagnosis/service/UserService.java": "f245e678500edcec3a7c2b15be513eed29ccf9ab14cb343c9f3bfc5811875faa",
+    "src/main/java/com/csust/eyediagnosis/service/impl/DiagnosisServiceImpl.java": "cdd92aaf52ed4177b6e3c49e8cd6839c8303bde259c1efe534b4b87febc40c5a",
+    "src/main/java/com/csust/eyediagnosis/service/impl/DocumentProcessingService.java": "8875e3c344bc5a25b94e3c130802ca6fc681e20bdcebe82e94e79ac67e6c7131",
+    "src/main/java/com/csust/eyediagnosis/service/impl/KnowledgeBaseServiceImpl.java": "25621fe01097acff9f403c6f0f7fd907a9fce98e3363a73272df5be861feef8c",
+    "src/main/java/com/csust/eyediagnosis/service/impl/NewsServiceImpl.java": "a48c846da8708943f56b92e765f6a0a6a3432a601738764844a6fcc6c742f47e",
+    "src/main/java/com/csust/eyediagnosis/service/impl/UserServiceImpl.java": "1cb4cd05cc04e96cc502682bb39960ce0a7a2a516f3ccae063299d74914b4274",
+    "src/main/java/com/csust/eyediagnosis/upload/state/IllegalStateTransitionException.java": "2bafe9b73d21a5f6776498b0266b48dadfedd4d86ebd577b2ff339cd4a2f36fb",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadCompensationScheduler.java": "f672f71ad4342a8e51f18b3efc46e7500ba8620c425c0e62bf5e1013437fe407",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadCompensationService.java": "522c59b246452494bb521011f3679e78ca0536b2013d2aaf499ae1478640e4ee",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadStateMachine.java": "83d0779f4993021b395ba93ef192b9f5e6d490b5456bf637aea2a12de3a056ff",
+    "src/main/java/com/csust/eyediagnosis/upload/state/UploadStatus.java": "9e21805eec06f72f2aebec9b77d177bcc0c20d21d8879c3f359d128d925a345c",
+    "src/main/java/com/csust/eyediagnosis/utils/IdGenerator.java": "214ceecd9553fa6052a16448e2390718edd165a9054fa57b3e15f34e9fd467e9",
+    "src/main/java/com/csust/eyediagnosis/utils/JsonUtils.java": "ebc350a133b1408e4916319c73d74de458ce15c473e32d14ec6dea498ddecea5",
+    "src/main/proto/diagnosis.proto": "086b9aee4e2f6d7ac7b4cf1411082d980ae90c01f2a858fd184abc9d955a1096",
+    "src/main/resources/application-server.example.yml": "89a9da275e633ff8b5787b12c7802a30b96034618fb6343599ed9607dd02fde7",
+    "src/main/resources/application.yml": "74c56cbca83a32b195be14f60cf76685f48596cc8b889a2c82ebc47fa73ddbb8",
+    "src/main/resources/db/callback/beforeMigrate__bootstrap_legacy_flyway_schema.sql": "979382199f49fa27cd606078736807ec7d4d78c5b41eac99395c00a91a69c880",
+    "src/main/resources/db/migration/V10__diagnosis_task.sql": "59efa750d510e5a5868b130a97a0c5c0d97d36557197288b57f0a992ab786e69",
+    "src/main/resources/db/migration/V11__controlled_reference.sql": "5f305e58d1696c7c5d35831f47db39078888d6293d2234b0509a564a2cc2fe56",
+    "src/main/resources/db/migration/V12__patient_draft.sql": "b2c6719dc6c7cf3fe3298365b87c4fcf29ce3be88a1fdb21d1bffa84da80c479",
+    "src/main/resources/db/migration/V13__doctor_review.sql": "9ea39781a38fb2e93be63592cffd57d01c3694e9126bd9e2c94016213ca81401",
+    "src/main/resources/db/migration/V14__patient_authorization.sql": "ec9e4a771fce79c1295a699826947a5e02bf2d2ababe37e8c08f978294fbd217",
+    "src/main/resources/db/migration/V15__bootstrap_user_table.sql": "f9cc5245e71b3676d06db4dde09936d60520ed16947166b9a17839e60b419480",
+    "src/main/resources/db/migration/V16__patient_draft_message_timing.sql": "accc2c4ee2aceee90f097260a11198e637eba5fb91be49d06c2df539fd3d8850",
+    "src/main/resources/db/migration/V17__autonomous_draft_workflow.sql": "987f6f0c358fa8bce7de76d24d5d55759c5e171393629d0bef48c7ff0c7adea0",
+    "src/main/resources/db/migration/V18__collaboration_events.sql": "c9e80f8c2b60ddddb5bc149b3ffd0088c465d564aa43f4f756bce5693eb80b03",
+    "src/main/resources/db/migration/V19__graph_execution.sql": "253fe130e88b7cc355d312a00a809ed1451b86c5173b709426e1befbedcb1db7",
+    "src/main/resources/db/migration/V1__baseline_rename_mcp_user_id.sql": "d0344b8109a80ae0476ed3d6958229e407cf1576d50bd42ff8309ade989c2d6d",
+    "src/main/resources/db/migration/V20__bootstrap_agent_history.sql": "b2287e8fe25362a7620aedc644bacf02b1230fe2a35fe1a7b618ac4463a14b70",
+    "src/main/resources/db/migration/V2__split_inference_cache.sql": "ec0699932e9aa261dd31294b0438fe7efd8c42eb3727a6e34f0ac7b5d75ec987",
+    "src/main/resources/db/migration/V3__upload_state_machine.sql": "7d8f61f2c2584de515527ab981122b514a919de8b124086509f72d2ae1b9189e",
+    "src/main/resources/db/migration/V4__agent_message_outbox.sql": "a892dfda12c8e0260146896b79a91c130c54bd55f145304aeb1ee1b9e001b88d",
+    "src/main/resources/db/migration/V5__medical_reliability.sql": "f797b4d2ced55ebdcc1661d57f9bd57cd7c3160987fc7f480831631348a0abcc",
+    "src/main/resources/db/migration/V6__align_mcp_entity_columns.sql": "49526fa11623640a4472d6a6517551ff0c18bbe343f5a6bd390a8870c7b1962b",
+    "src/main/resources/db/migration/V7__complete_inference_cache_safety_fields.sql": "d4a215fc79f6cf29331d9fe92c5edf23a16cafefe643c8a455a85932ca0f2b45",
+    "src/main/resources/db/migration/V8__add_mcp_server_description.sql": "ff535251feb193b31151224e93f65fc50e521486a60b17f04758101dd95ea010",
+    "src/main/resources/db/migration/V9__version_inference_safety_policy.sql": "933f58aea99a49101e786e3cac34a469af6cf085b18f714b4eed09737b9ed8ce",
+    "src/main/resources/mapper/AgentMessageOutboxMapper.xml": "040c8c3fdf290b3a761eb92dca5ac4d2be23d712723f8d335c055e0ddb0fc691",
+    "src/main/resources/mapper/DiagnosisMapper.xml": "b82a1d7534e709c8db73742d50e8822e4880b48473d94fff0dc577b612be3617",
+    "src/main/resources/mapper/InferenceCacheMapper.xml": "3bf0162fd101191317adafe5340fa95c4bc8c1fe51ddbf8195c897a4ef7ff942",
+    "src/main/resources/mapper/NewsMapper.xml": "8dcd083e7d02893774734c20910f34bc4fd660df72176c2b54dc4b2699d2e1a1",
+    "src/main/resources/mapper/UploadTaskMapper.xml": "8dba735417087368d606a32f2417b163ebbe9d961aad6cc70ca3da748490e87a",
+    "src/main/resources/mapper/UserMapper.xml": "bd00d94bbae3ee440afc7bb5e7641a7679f9e9156513995d32a241010f9efdf8",
+    "src/main/resources/rag/01-normal.md": "0e81061fd0eea1473f247fa558d21bdf3fab6d18da2b6395afd25c73a51fadc1",
+    "src/main/resources/rag/02-amd.md": "6352aa8456a299f51b3b99675623c60a95f232152302be9a2bc87e6087647245",
+    "src/main/resources/rag/03-cataract.md": "18ba3bdb9e02c283b3fa327b181100ee26d7d233b427be2cbe9c79fe0acf1d2e",
+    "src/main/resources/rag/04-diabetes.md": "f5b9baeb9a7c4e664b5ec01657e7e30226c1ac059910dfc21ab3558dc2616b25",
+    "src/main/resources/rag/05-glaucoma.md": "febbf13a7c4375febba14eae429ca39c775ede95bbed3c2b56fa3054d05497ef",
+    "src/main/resources/rag/06-hypertension.md": "ad93f603db94b4e9b19ddbcb5b5da8d6d4414508f57c699eae7ed32192e60e44",
+    "src/main/resources/rag/07-myopia.md": "f288ca050a1edad49dfbd76703f6f956552aa2feadfb2e1278309f85935a7f98",
+    "src/main/resources/rag/08-other.md": "88e14f36bbab74dee3f47da07d6a480aa8dbe3939f4c6e20dcdbb96acea28dfa",
+    "src/test/java/com/csust/eyediagnosis/EyeDiagnosisApplicationTests.java": "06d3321b8e0219430ec80ee1febc9730c2987ab500ca348b6040f6d4b63db117",
+    "src/test/java/com/csust/eyediagnosis/agent/config/AgentExecutorConfigTest.java": "fcd41b3ad1d032952da1b168f65b39335aa05ff45c1996fd1444462121d71b96",
+    "src/test/java/com/csust/eyediagnosis/agent/config/VectorStoreConfigTest.java": "f825504772b5000dad95521b8e7b2e96a1a5f2f60d1083c3859cf560e8da7475",
+    "src/test/java/com/csust/eyediagnosis/agent/mcp/McpToolCallbackProviderTest.java": "91a29066fa41e6df917176484dc51a9953899d7cc501af01c0983fb10e9f90c2",
+    "src/test/java/com/csust/eyediagnosis/agent/policy/McpConnectionPolicyTest.java": "462eddb0032ff367a356ae82776addf26747cdfb82398a8f908a18929a6fb698",
+    "src/test/java/com/csust/eyediagnosis/agent/queue/SessionMessageQueueTest.java": "5dc89f6c03cf522728293858d2bf1dbea5420d90d5251ae239cb696e74360ee1",
+    "src/test/java/com/csust/eyediagnosis/agent/rag/Bm25SegmenterTest.java": "cfeb3c1f0890c3f0a2c3e65d45770ce50a58b70a457f3b43476ba71f70195b36",
+    "src/test/java/com/csust/eyediagnosis/agent/rag/BuiltinCorpusSeederTest.java": "72d5ea9e6af1738dd503dc2c0eff8d8064d718bce0178ee02199feb89d926a8e",
+    "src/test/java/com/csust/eyediagnosis/agent/rag/RAGEvaluationTest.java": "91554d14cbd3082efb501b9eb922faf389ba6db18733dd3a04861bea0465a9d9",
+    "src/test/java/com/csust/eyediagnosis/agent/rag/TextChunkerServiceTest.java": "03b3273e9e045c0d63d249759f15289b9dfdb2702207492af5343a3d59184c5b",
+    "src/test/java/com/csust/eyediagnosis/agent/service/AgentImageUploadServiceTest.java": "0ea511ed518062dce4f9d2b4a5ee2ee200e4b3e7f2b78c6855ab46e389cfa471",
+    "src/test/java/com/csust/eyediagnosis/agent/service/ChatHistoryServiceOwnershipTest.java": "22a8d9238b3bd4eb8b9933b8caeefa61d8b59ce4371bd0edc853c310885510f6",
+    "src/test/java/com/csust/eyediagnosis/agent/tools/DocumentSearchToolOwnershipTest.java": "a5ec82dcb803281d784978306ad9d0fb45291ea58b23a0d3990c6551ab40a0cc",
+    "src/test/java/com/csust/eyediagnosis/agent/tools/RrfFusionRankResetTest.java": "9e5affefb4b896c2d6d8aa6065169fc004b25062013b0d6cf7c8055e0f180453",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationBrowserServer.java": "190f914125fc4ff0f7025f92e1ddfd042934ce275db0320b5e2a5dcf2a11d742",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationImagesTest.java": "26b95a5993b314869ac2f4e71c515aa6c4ccb5334b4f8ccf991cbe47df15ba64",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationReplayWorker.java": "c7460145041d6843cfd78cb9d11391a54c9292f1333f38438aea3b9340fecdd1",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationRunTest.java": "7c7f5cdab430be75c51850dbd8a53c424f3c25320c4d8545383e910a689476ce",
+    "src/test/java/com/csust/eyediagnosis/collaboration/GraphExecutionTest.java": "8c5006de43f73fcbb5267c74e103c346efbdd0723caa9af3e024dac943048aee",
+    "src/test/java/com/csust/eyediagnosis/collaboration/ProductAcceptanceServer.java": "1a3aee2b26a45e4f6ec4956c2e48bbf3169a2a8d65a8750243ec109ef8450f47",
+    "src/test/java/com/csust/eyediagnosis/collaboration/ProductProviderLedger.java": "d2fcfc100ef14b43c50bd01c0b0c6fb84770fb1a06ccfacc5e0c35fa6cf6394b",
+    "src/test/java/com/csust/eyediagnosis/collaboration/ProductProviderLedgerTest.java": "40b2ceeb71cfa7ec997795a5da2135d467192c1aad2e7a0ad2620066d6fff3c7",
+    "src/test/java/com/csust/eyediagnosis/collaboration/ProductSchemaTest.java": "35aa36a7c993f8ac8f825c8dca76f8fc5442fa4eeefe17f4edf0c83295846247",
+    "src/test/java/com/csust/eyediagnosis/config/CorsConfigTest.java": "99062369358cd0c88dd5374c4ab6e06ee71344a158fd5753f5d1c277c31c484d",
+    "src/test/java/com/csust/eyediagnosis/controlledreference/ControlledReferenceApiTest.java": "4510c3fe63710bd68bba2395a209ed7b9c441bab8d6c0bb05233fd304b4fbfef",
+    "src/test/java/com/csust/eyediagnosis/controller/AgentControllerHistoryTest.java": "93b9d1f25f84c00b848aff8fe9954fa96d828612d3a158e1690a0fb35f59c7eb",
+    "src/test/java/com/csust/eyediagnosis/controller/AgentSessionAdmissionTest.java": "f95d717b8905905477b501b961c7db2f1b971d42f71685bc743b69b9f5c37ac2",
+    "src/test/java/com/csust/eyediagnosis/controller/UserControllerOwnershipTest.java": "823d089a7ac18e99760a91d9a364804ffd939d5ea0bb447d9e244f4b1969aada",
+    "src/test/java/com/csust/eyediagnosis/diagnosistask/CosDiagnosisTaskStorageTest.java": "2f571751913f5aeb1562c86243fb106c60e89e6bf19c77e67b141acdd5585f59",
+    "src/test/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskApiTest.java": "3aaeab24966b7f0db92dfccc3136849fa36a458d29f01b79d3153ef5f76779e5",
+    "src/test/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskCrashWorker.java": "e0ff80669f449a048acbd7415ac8292beae7dd24dbacb0a85a8e5e4d5ea12f46",
+    "src/test/java/com/csust/eyediagnosis/diagnosistask/DiagnosisTaskRecoveryTest.java": "93a5b1170270ad5ea1fae64db244b725f6fa65aa302f1db9d166620c63688e71",
+    "src/test/java/com/csust/eyediagnosis/doctorreview/DoctorReviewApiTest.java": "df8e1909dcfd29b1163718bad5d6dcc684eb4f9b550304cb89acba117cb44958",
+    "src/test/java/com/csust/eyediagnosis/migration/FlywayMySqlIntegrationTest.java": "9db3c8926d524bcc843a5c390eacb71f0aa668ba23ebfa5f5813189a254b3778",
+    "src/test/java/com/csust/eyediagnosis/patientauthorization/PatientAuthorizationApiTest.java": "620b52c0b624f69637d035ce53ffdf070c4b5d123f595faa6a881c429665dee3",
+    "src/test/java/com/csust/eyediagnosis/patientdraft/PatientDraftCrashWorker.java": "20c6ccc398fe5c915f2e5c46ee01c0b65d7e64db3c3f6b7728de40b2d4359808",
+    "src/test/java/com/csust/eyediagnosis/patientdraft/PatientDraftTest.java": "7108933d4cbc83e4d850f4194dd6387ed7ac312987e6d03962ec7077d6bf5726",
+    "src/test/java/com/csust/eyediagnosis/patientexplanation/PatientExplanationApiTest.java": "af0a64fb8e42923473626c6a95a8a853c11e52626b4554b8bb7297aba7f9fd0e",
+    "src/test/java/com/csust/eyediagnosis/patientfollowup/PatientFollowUpApiTest.java": "03a1a3560edc7aa875d1c912e4ac0361877845e604b52e1bdbe6338d5af0035f",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationCrashWorker.java": "03374d3432d3604faf3df16e77df28858cc487be8b0766a0c1926ccbbff22568",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationFencedWorker.java": "c61764825af45ed595413f9bbae98dd3fc4334d11880bb94562d6bfa7151d60f",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationGraphWorker.java": "dde9429b1f32e4a69bd6f3304d9f540da4519537971c9aa6d12866d9064046e2",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationMySqlTest.java": "0ab0ac1155f243698f7cb820dd451de944c44a72c43e0aaecb18216056e58cf1",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationPoc.java": "996a0253e4411d5821fe49b9104bd9c7bb4fa0866fa8097e4fd8900a7e279df8",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationPocTest.java": "e208b9880720d500971d3342b9d00d436a0dd043101f8a96d666b9a8c4cb1f52",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationResumeWorker.java": "e14e22fb17a4166751f438823502f2ef4cb0dd87d5f14ef5556dbcee47e9d9bd",
+    "src/test/java/com/csust/eyediagnosis/poc/CoordinationStore.java": "ab5bcac5d2dfec2c4ba8b7bd34c210e74418fe455776d7f04df02e5bea004e4b",
+    "src/test/java/com/csust/eyediagnosis/poc/RecordingSaver.java": "44c179c3b1ed168f0a21d77d429b309ebf18ed206eb767cdbec5bc46e06f3fa7",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/FourRoleGraph.java": "373fcde0c3425474ea03dc30351232d33649d73644b900933f3228cec8d39b6c",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/GraphSpikeResumeWorker.java": "b0b3c3fc153a2cc522326bcd808ed031c047b0c1ecb7e6f0c82c9ebecaaf2ee0",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/RealtimeGraphSpikeTest.java": "6a2f8afb40c00eed011661a75fd861efe3f6ac2460f080ba1e4f783a48a15378",
+    "src/test/java/com/csust/eyediagnosis/security/PasswordServiceTest.java": "dd7070fd5ea60b71bd824dbb5ec275e32fad1f01df116373bcfe8484f0f001b4",
+    "src/test/java/com/csust/eyediagnosis/service/DiagnosisHumanReviewTest.java": "552fac03465972dcc0b00067122c0cef04d005cfeaa76560dde3ed6c1b660b43",
+    "src/test/java/com/csust/eyediagnosis/service/DiagnosisOwnershipTest.java": "b795a5474c0fa12a31690efab1938a12db044edde43380891b5f725dc00bcd1e",
+    "src/test/java/com/csust/eyediagnosis/service/InferenceCacheTest.java": "0786ef3a89f24bc2baf064323c18aa38fcb545313331caa26da83f16d74e198e",
+    "src/test/java/com/csust/eyediagnosis/service/NewsCoverUpdateTest.java": "8996660a46c85b692ac22939793752625ffec126c3e943e5e097409776505afc",
+    "src/test/java/com/csust/eyediagnosis/upload/state/UploadCompensationServiceTest.java": "15e012a8c93bb4cc941403c1cba8bac75912ce1ae15890f760d3d9020e2c8e2e",
+    "src/test/java/com/csust/eyediagnosis/upload/state/UploadStateMachineTest.java": "e301bc2d781bb2cdad66fa945f37cb9d2c8614292af7756d43b63283b2515a32",
+    "src/test/java/com/csust/eyediagnosis/upload/state/UploadStatusTest.java": "9ea79311139d1f77747c415149116cfb09f862b343dbf9a71fc02fd9b1e5be37",
+    "src/test/java/com/csust/eyediagnosis/upload/state/UploadTaskMapperMySqlIntegrationTest.java": "734e6d475c76b7ac94a8915883e6f39135833f94cba572e379fde9ff7ebcc706",
+    "src/test/resources/application-ci.yml": "9b41b0439e7a18e57f579eb575207bb5a5835c6d79f2f113d0644b4043dc51d8",
+    "web/.gitignore": "dc3b80afacb939692aa3809fcac4fd463cd96ec23d1374e0b5b804ed0e528a6f",
+    "web/.prettierignore": "076f6e6ef92809c7ab3ccb63cafcbb16e71c29671085c26a33daf23d6a3b4301",
+    "web/.prettierrc": "6d35c23a00707c440bbd156e0e4ec7c1f7ec45e971fefd1ec468bc17e9949fbd",
+    "web/DESIGN.md": "b975d88d9427a1f575d4d1d6a0aeb100e421831b24e02538fadc3eb70a39936b",
+    "web/README.md": "6f92f7ceab867cbbb626a40ffae47b233b8ac71b25d400beb9b2b8e27edad543",
+    "web/components.json": "156858e2da20785ac0f1853580c7e34d5b8496f519e8839d2176e85947d4f779",
+    "web/docs/superpowers/plans/2026-11-10-web-acceptance-remediation.md": "db32276ed32641110e2574e9a577d139565f80b5bbe0e70accff4aa8af15d034",
+    "web/docs/superpowers/specs/2026-11-10-web-acceptance-remediation-design.md": "672d952ee2430282b2a4f4a90c185424411098fb7ffac5d02afa9805314adeee",
+    "web/e2e/README.md": "852fabb498ce0b61d2ed30124221ddd109a584c41da3ca4a8ea6b306805ff0b6",
+    "web/e2e/collaboration-backend.spec.ts": "097c3110fe9d59de0bb3021ae2cc9d2d7afb3205fd8703f4ba8b92376ff46f02",
+    "web/e2e/collaboration-default-off.spec.ts": "84db84e0262c6d4a1adba38f5cd72fcc7713dfc6432a2df702aaac10d226deb3",
+    "web/e2e/collaboration-safety.spec.ts": "0b46d1806a9a1d0e6ce967c81b0dc247b76836cd6c9cf36f40e13eaa57df002c",
+    "web/e2e/collaboration.spec.ts": "40274389e3ffcc1efa038a235ea0cc6258fed9a93803bf15b9637f130a39fdf7",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-dark-desktop-chromium-win32.png": "9317126c6a38b7048e0d40377eb5fd9679a7f564e3683e84ca20485028ee9227",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-dark-mobile-chromium-win32.png": "0109f853c71ea5dd1f07b9593627e408387abe878c6fd450c6e3470c9808802a",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-light-desktop-chromium-win32.png": "83f7babad1c4df6f0b79969b7f6fa5c8812e1a10eda0c65e79b46228c8fab519",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-light-mobile-chromium-win32.png": "162be409e91b6dee71e18625edc07a8e4d0309b2ac8300d8773cf5490b43ddb5",
+    "web/e2e/product-acceptance.spec.ts": "b3166b74c6071d8624aa0aaffdb59619dc100fac1407cf1a20bfa12ff1008988",
+    "web/e2e/product-real-provider.spec.ts": "0232b0c7cb7e38a57fa937377f8e261294df6e24b9c9e826f85eb9e25efbe0b1",
+    "web/e2e/smoke.spec.ts": "b21e664c6eed5ba9374f712a8b354334fc403a54c906e598c39598cb31677500",
+    "web/eslint.config.js": "1148ce22cedc6e6b20867eff5f72c98b2a07e21e37ee8faa2594af3970862d9a",
+    "web/index.html": "3dbef60ed0016bf9e023ef424363ffb63425427cc2d68f34181cd6816d57f348",
+    "web/package-lock.json": "fbfd6d66da25f2ecb45a2ebd5bbaecdfa77ef040741b4ada5522bf2dfcf0c5a0",
+    "web/package.json": "1f0c76562ace67708ea11833297da66b280d03a48c09f856bcc805d5eb2111f1",
+    "web/playwright.config.ts": "ce2abd5cdece4ffabbbc63847016d9861b29dcaf354cc4bb5375f689462bc709",
+    "web/public/fundus-demo.jpg": "904d66eb1b7621da06cb574c04ff8d3c498c38bec6819c80d659b9d77c8068af",
+    "web/public/iris-mark-metallic-dark.svg": "02b1a483d5ca14da89823750643ead74a58206ddc05347b23cc324be7679df53",
+    "web/public/iris-mark-metallic-light.svg": "88a21f59fb77f21f0b7ae14716c9496acc135e57dbe58ca2d99c95981ddb780f",
+    "web/public/mark.svg": "d2b4c3284169f12f66ad2aa0574ec25d2de0060ada82fa7feb24e20d4e1f0bbf",
+    "web/public/scroll-expand-dark.webp": "cee94f736c654353ba9dc0b4d4e89c7981f2d8f1d79fc782c99043ef6ae3ea98",
+    "web/public/scroll-expand-light.webp": "763e0e36033753874438c235f4b4a3d472f9f349e0ee9b958a825246d1d3b8c7",
+    "web/public/vite.svg": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb",
+    "web/src/App.tsx": "0219d602606c256bd2a929b08991d0eb409cbb49344731eea55cc7dbeaae5d68",
+    "web/src/assets/react.svg": "35ef61ed53b323ae94a16a8ec659b3d0af3880698791133f23b084085ab1c2e5",
+    "web/src/components/AccountMenu.tsx": "b43ef021447451caf19a1da82fd77898cc380619fcd723225a075ae83ef0ce12",
+    "web/src/components/AgentComposer.test.tsx": "1d4c4eb30543e622ceced6957cebfde679bf36842e3d35772ddd8e1b04ef9c9e",
+    "web/src/components/AgentComposer.tsx": "99c8f9e280681f78ed9504414a79f796f0d29d28ea61ddd3171396b4afc2d496",
+    "web/src/components/AgentScreenDeck.tsx": "8775cfd8cb99a6f51957e8628aeddd845cada4fa56eda0266c8651184bb30434",
+    "web/src/components/AuthShell.tsx": "5cfce695d08693111a7de97757ea5c9d4ae085a4797ca1ffed4943f4a2cec943",
+    "web/src/components/CardSwap.css": "191401e3c46a29f5515c90a507f661224661a4fc7f40260eb67da80a47b76088",
+    "web/src/components/CardSwap.tsx": "44891927487514f612c9f6750f95065b3793e9562a69fe2a8522356945a96331",
+    "web/src/components/ChromaGrid.css": "cbb6889c25feacc820f2539a66acc38187258e740dc02702c25d2ec1429150db",
+    "web/src/components/ChromaGrid.tsx": "f40f389480bfdf502de3734fe0815a658fa56d6fc8a5fbd9c4e6e7e3290e9b61",
+    "web/src/components/ClassScale.tsx": "7cdffa5e36f9f011526d71a3659c45dc9f7386e082bde3533b3d1500e2277afc",
+    "web/src/components/ConfidenceDial.tsx": "c662fdd5c2943a0f52d64e8e5b2cd413e3dc52beccda5e3537d816be3fd0cb47",
+    "web/src/components/DisclaimerBar.tsx": "959817c9a0e14d10908116b4a93c6bbabfa243d0c7fa3ea14c78cb394a269f3f",
+    "web/src/components/ElectricBorder.css": "d474a1f976eaca972cd2c265a20c3fb0a49103c38d300970056b617d60a5e200",
+    "web/src/components/ElectricBorder.tsx": "dfadbfd1fae9fbc2472249607a3585980e9601a933a90bf79d051c2601e177c2",
+    "web/src/components/EmptyFrame.tsx": "7231842096468703a97e07dab41246e812b2a023c908cbe8611ee4c141177aa1",
+    "web/src/components/FaultPanel.tsx": "38791ecf1684bf87ebf93df7f4afd4b315e44fc6fb3894f547e156ac5b7469fe",
+    "web/src/components/GridScan.css": "f73a04ca8750d86987b49038fe7ec2d459ec993d49ed46756f9c7b208de4a631",
+    "web/src/components/GridScan.tsx": "a6ff23859f009ba0ab5d3eb8ca038ed2fa3b8b19e76b632690468b420a96d560",
+    "web/src/components/LaserFlow.css": "5bcb99b06cb44fdafc14c3eb71d2b4408678c8d16decfcb50e301616605edbf5",
+    "web/src/components/LaserFlow.tsx": "e4fdaad50ada830ac463a4f9802d0920331e5ea69ea9842b1eb729f575d08422",
+    "web/src/components/MobileNav.tsx": "108155c6c5dac3efdab77c00790b603a6a445179d6fb2c67460224bbfccd69da",
+    "web/src/components/PlaceholderPage.tsx": "a85afc3f4d50c9c6763fda3ba28651acb30d5c12715e05f9571230dcc2e0f52a",
+    "web/src/components/RecordSheet.test.tsx": "bfb276022237df8be0add0db5b45c7581263b1d191339a116c087b590da23c24",
+    "web/src/components/RecordSheet.tsx": "58aa352800322093d5ffba38ac67adf2ff7b8a55752b25a226078f48c3bd0ad3",
+    "web/src/components/RiskTag.tsx": "ba5f112498cec277f6f8743bf171f198328393f03bb30fdaa7d9354bf143a315",
+    "web/src/components/ScrollExpand.css": "05108206a74e27aebede278c87eb57b1fc81d30e7c862b1875755a24a0bfce00",
+    "web/src/components/ScrollExpand.tsx": "e7a8611b26225daa2c4794aaa6e8f68bdf9aa9353db04e6c075124b2abaa9ea4",
+    "web/src/components/SectionHead.tsx": "0d0cd61af3650479a035ff9ac110e7c98d75375c0cfba4a5723c27d7c1018e21",
+    "web/src/components/SiteFooter.tsx": "947c5c4226517b81e955b599e12e04aad4c43c2c0b5ae27d9ff6b1ce84da58f5",
+    "web/src/components/SiteHeader.tsx": "42ebdc107906eed98d37fa30113e527912c0a6c7c8c26b60dfa7fc1333dccdb5",
+    "web/src/components/TargetCursor.css": "ea6d8f8778fa8821e973349c1cb0e4694eb31993ff3906d61b6cf33ae2db29c1",
+    "web/src/components/TargetCursor.tsx": "8b591733a39994c27e8103ddc40fb03e7b55fcbcbe3f5f6ef0c986957408f1ba",
+    "web/src/components/admin/AdminGate.tsx": "e5d632fb98a80c433a449112098b68fa35d2ad13bc70f3b5d33b50ea5b442553",
+    "web/src/components/admin/AdminLayout.tsx": "8ff9f4c212c6d714a1b3cb44bd47d5a8ecfc63f9a8338552281825e204bdbef6",
+    "web/src/components/admin/DataTable.tsx": "0e3e1c68f59e565c53d94c96fb773d57d3b74acdace16117fef9f43d34493dc5",
+    "web/src/components/admin/Drawer.tsx": "2ca5713cd8ade71a3633a16f1d2b9c86b08d9289ac59a310ab2282813dec43ed",
+    "web/src/components/admin/Modal.test.tsx": "d7b4872e0ab936c47e2862070c84ef0444c57394497eaba372e858072e915f54",
+    "web/src/components/admin/Modal.tsx": "e7cb42335cd08e3f9a82f1cb0e0e336c782218830451db461c04eae9ee3693d5",
+    "web/src/components/admin/StatTile.tsx": "2711382ed65cc3216c98cf3e06b337621bfa37a1f1dcb396f115a61810219a34",
+    "web/src/components/admin/Toolbar.tsx": "944533caa44bc8ce91010167a12d18e02a676fdb5dd85e607bc56742ff6403a7",
+    "web/src/components/admin/charts/MiniBars.tsx": "d7a1264fb851c8b3e468eedb4b61a75ef71bdc20bb0ff74ecb62705edbae162a",
+    "web/src/components/admin/charts/MiniTrend.tsx": "4ac1d9579a9fcb02f07e2b832ebf833441fcf88543a2b3e8f273dd0ff3aec6b3",
+    "web/src/components/admin/charts/RankedBars.tsx": "225b693099afe8f6ecbc7a347b1ec4da876304b0063593bd0098b2fc644ddfba",
+    "web/src/components/admin/charts/TrendChart.tsx": "7a832491f19d6b6c79d559d47c77bea1350e687b7c62e809f51c59b12d337e63",
+    "web/src/components/admin/charts/chartGeometry.test.ts": "1fd3e7770664935fe4804975998aeef328a4486b2bc18eec83db4f39b068bf7e",
+    "web/src/components/admin/charts/chartGeometry.ts": "0132526e193616fe8c2e03e718335cfee6dd6b73f74d3a8546191a463ccba7e4",
+    "web/src/components/admin/charts/useMeasuredWidth.ts": "768c0a570a815413b080cbff2c9bec24eba7e8937f872654cddab69e4ccea4d7",
+    "web/src/components/agent/AuthorizedRunImage.tsx": "77de77286ad29e7d4540032404ce5dbe02f4e050112f5696310a7583ad82ec40",
+    "web/src/components/agent/ChatInput.test.tsx": "02561851d90671c22bb77850e1d38b9a148ffe2e052689f8db70f3dfb6ee7a8a",
+    "web/src/components/agent/ChatInput.tsx": "8183cdc36ee06a6c1118ac1a001ecd866e0cd530d205593c5d41e830d5dd96c2",
+    "web/src/components/agent/ClinicalContent.tsx": "46593c297de85a2b129429cf92629aeaa7756f2cc53820e5d8da0e0f6127586e",
+    "web/src/components/agent/CollaborationTaskForm.test.tsx": "79d255eb9e373dc232bd96f63e3212ad0bcd733c431721d2bed1f1aa1725a22c",
+    "web/src/components/agent/CollaborationTaskForm.tsx": "c47580d7ff891ba2fed015e139b0951656fb74589b75d7b67ce31199d2cd30e2",
+    "web/src/components/agent/CollaborationTimeline.tsx": "9d49ad8a410e5ca56090044b6011b2a033f469efbd6008ac8a14e613c7304ed9",
+    "web/src/components/agent/CollaborationWorkspace.test.tsx": "2958860d077c2bf2b78899da131e51bd384236db0566da48ef53491f7bd7ac46",
+    "web/src/components/agent/CollaborationWorkspace.tsx": "3052d9178c7d35d6e310f0a2acddb2a0f0337e2ca61130f51b2f0afa962b06f5",
+    "web/src/components/agent/DoctorReviewImage.tsx": "39b35396c474ad2ea5cdaaa174ed8068bc57a7e659bfe9a3465a6e136c856e26",
+    "web/src/components/agent/MessageList.tsx": "40900cc195c40344eaf3846388d406d9be91784f1c145fbfeb1ff1352d7ca20c",
+    "web/src/components/agent/PatientResultPanel.test.tsx": "84eeab3bf062b8f8cc2fe9f4825863d98f658ee39c9b87fb7372d9298cce055d",
+    "web/src/components/agent/PatientResultPanel.tsx": "aac98f273674752a876d70ae741801f9baa0f1c69c8e3467acfbc9932537e50c",
+    "web/src/components/agent/ResourcePanel.tsx": "fe08b762956e4e904b41dc6c72297342b2e197d23c905dd71cdd6ee8a19ba9c3",
+    "web/src/components/agent/SessionList.test.tsx": "9af526821df3b67492e876ae5ede9295e2518cade299fc1093e9069efadab9f9",
+    "web/src/components/agent/SessionList.tsx": "a43f5594ce68993a1777be7ff5a15c85ba3d69666b63cefcd436d8af5a5ea4d5",
+    "web/src/components/agent/WelcomeScreen.tsx": "f05fa55f854df28e91c72a1798205dd88dde7c2176b4bca3f683109609912e84",
+    "web/src/components/agent/collaborationLabels.ts": "9deaab617bb6830a092566109afe045cbb2f267d9cd3cff5666bee1278ca561d",
+    "web/src/components/agent/messages/AssistantMessage.tsx": "aba435438041aea1b026dba3cfc26db4d92bdab6641799c4845285913065ce92",
+    "web/src/components/agent/messages/ConfirmMessage.tsx": "302e302ca233dab44e83ea0eb121048844de15d402abdc61af0fa37add307847",
+    "web/src/components/agent/messages/ReasoningMessage.tsx": "ca20eaf03b0c10d36556aa2be91527f2a27710f35800e5facd8ca9afc7f9b735",
+    "web/src/components/agent/messages/ToolRequestMessage.tsx": "545ec4bf94b0bcc316894344fdeb3da72432bd13cdd49a85097e9872bab3b7d4",
+    "web/src/components/agent/messages/ToolResponseMessage.tsx": "f46de3f98c2374506fd51c601c42470390f576b2ffbfa5a86ff60649ff16d92e",
+    "web/src/components/agent/messages/UserMessage.tsx": "b9832ae5cd77656d3bf408b2a3580da937d3df4932e8f28bc3dc54582e467cf0",
+    "web/src/components/fault/FaultNote.tsx": "cd31eaf340472ab96e5957d684aa8cc0f7864bee2aa323bb32e6416ab0a273ac",
+    "web/src/components/fault/FaultToaster.tsx": "8e82a2c14ae1667038ced14da656aa1a68fc7eca53283a6acba094d969ef6d1d",
+    "web/src/components/fault/fault.test.tsx": "ea4fa64ae5a698becdae7ee81d446bcf6e41e6e6624492379ad0e2ca25e97fb3",
+    "web/src/components/fault/index.ts": "8e88656b05796638585db7177578ca42e23abdaa7eb4772248ebdc6ab2696cb3",
+    "web/src/components/theme-provider.test.tsx": "b9770a3d39267e0743ffac5af6555f90f395235e52024487b8fcc22e641b70fb",
+    "web/src/components/theme-provider.tsx": "c70b0adcd7b0d554391548a2150956c47cce1c27ca5943e416c622db92832ebe",
+    "web/src/index.css": "75423dae7c1a7c5a5bd2e6ab1112c0f0916b1653fd5a569c1dd8686447029bf5",
+    "web/src/lib/__fixtures__/collaboration.v1.json": "9f2737640278dec002d37fc5e90698afaed837073ad0acf10667b33fdfaee88a",
+    "web/src/lib/__fixtures__/collaboration.wire.v1.json": "03476a85c5639c037ddfd5221b9dc3433ebf8a747e16e8c2f65d8c3b72194962",
+    "web/src/lib/adminApi.ts": "40422214f6df59f7e7497185d7f8554d0660e69b767911bfc2853084f9ce353e",
+    "web/src/lib/adminDomain.test.ts": "add7b7c4ece191c7683b9c631c1faeca5823341677ac370ec737576e8cede2e4",
+    "web/src/lib/adminDomain.ts": "f98bf849314fdd40cfa069f6a49af2233690063989e72d63a75207116021ed18",
+    "web/src/lib/agentAttachments.test.ts": "a89a9bc1c88174ba4420519e94fd518f454a161fa9f61cc78df314836ef1b620",
+    "web/src/lib/agentAttachments.ts": "a4cea36ee31546021c5c18e422d73d135259f03d7997d27d21ee0212192e1124",
+    "web/src/lib/agentDraft.test.ts": "66e7aa0e58ccbfcbb5434b2567b018505d8b4f3a28061611de0b952a4f4d29e0",
+    "web/src/lib/agentDraft.ts": "5ef4bf5c285f37032c569aacf03c359de113f6d0f9afc8630f9116ef975f161b",
+    "web/src/lib/agentImageOwnership.test.ts": "b9e79406a28df53d4fb79b97b687d9301052f749fc59cc8fe86176a7f3c75e6c",
+    "web/src/lib/agentImageOwnership.ts": "261a220034fe278325be8f1d581446f3955ef4611bbb18e44138b7fea5ba27dc",
+    "web/src/lib/agentResources.test.ts": "65fcceb39a4db652769289647d99b1431c2f7795e7b42a5531d7122eb61f715c",
+    "web/src/lib/agentResources.ts": "72a74f78f3191de1f1c4c3ac18f1e2cca14cc96882be8c8fc941a5c34436877d",
+    "web/src/lib/agentScroll.test.ts": "dbcdab500928bb3e93200b7e74ab185e087e0a9b6c0c62a964e967c295806d09",
+    "web/src/lib/agentScroll.ts": "c6723924ec72ba4a9890ca271d6ef36670bf6527c9f9c158c43b4c133551149f",
+    "web/src/lib/agentStream.hook.test.tsx": "da55ba40075e4e1352251052fb8ba1df5a443583fdc099b8d86e25e1980ce803",
+    "web/src/lib/agentStream.test.ts": "b1e4d831f5ff9b083ebcb9e3840eb82feb859a2710f33e4e0c1d4fb5fd1a9ff7",
+    "web/src/lib/agentStream.ts": "a0743cdff4e8d16de08411134cacec476427522c21214d0e8d54cd8f7a7ac29c",
+    "web/src/lib/agentUpload.test.ts": "8c3132b2dedfac4d805ed77ff78111c22166a50a12b68010f977e715a809936c",
+    "web/src/lib/agentUpload.ts": "1873c307fd29ff8e8b000100f4c895f0eb7806cef481ed88c7f8ffc09c48078b",
+    "web/src/lib/api.auth.test.ts": "0a95debf7ce38314cfe1f169a9fad49758e19540f875ede2ca2d55dc0cb41884",
+    "web/src/lib/api.ts": "64094acc78e7667a9c5c74653720b8d976ed9ab9a707017e6d1dc9d5769bee60",
+    "web/src/lib/collaborationApi.test.ts": "da6adc5d8c03b735ddd282217290e3724d8071092a7da71d5b45b7b2eb838f78",
+    "web/src/lib/collaborationApi.ts": "bba1ed28605ace8c0158c6f7e04ef30fad4c4e0debbf9eed292fc3674716fb58",
+    "web/src/lib/collaborationProtocol.ts": "af106ade3e1ac560f22518cac647a536d905dab19c8eab7c789ab7d78c77b4cc",
+    "web/src/lib/collaborationReducer.test.ts": "82f357e12e18f212af120368c3f7f98e16e70ebdc53862b1d0edc098afd981eb",
+    "web/src/lib/collaborationReducer.ts": "ba5cfc93377a51845dc2eeec115822961d96e989b5421f3bcdfb592107b63d1e",
+    "web/src/lib/collaborationTestFixtures.ts": "899a4db92ebc1d9c7120b92361c1b387698583c7a0ee985d4827d78b66e6d81b",
+    "web/src/lib/color.ts": "3cc122d1191de6adb7457c2a022257e45cf5eb23b384edbb115848b4a4c854f8",
+    "web/src/lib/diagnosisTaskApi.test.ts": "4cf7a41eb17ea681292f49e4f9172b0e8e56bddc5ef9991bc9803bfa6b22f27a",
+    "web/src/lib/diagnosisTaskApi.ts": "fe1899a9a0c1ae98e7dea78c7bef8ee11bcf830853bd7d2ea67b7612fd6d9f6f",
+    "web/src/lib/domain.test.ts": "c65e41f02a67f6aad72960e4754839e3787ccbe45772cfd7211d7ca07cd947f6",
+    "web/src/lib/domain.ts": "d24d5da9de20afcd8bc8911991507f34cda926d7251eb30de5ab533676ad25cf",
+    "web/src/lib/faults.test.ts": "6600a6e09f3c87aeae75856c40ca9de54cf761d642f7f504be0009b0ea321e77",
+    "web/src/lib/faults.ts": "5b25b370ffb90e0ac6a8d5ee49977c2c221ff2e139cc387dc7b34f38c3bceff2",
+    "web/src/lib/htmlToMarkdown.test.ts": "398d7834bd85f9ed782b0c02ed4b45ab07e978046f28b09757879be896e5df59",
+    "web/src/lib/htmlToMarkdown.ts": "0cb43fa3691ee1f9509a81f86593b79045abd2c9e053f6ddc9029db60b074b9f",
+    "web/src/lib/markdown.ts": "42a698ae61eead6dc837d307c0baa67e817b49f23832dff33f606efa297f746a",
+    "web/src/lib/news.ts": "0c82c8ba69eb4a07e05a1ac5633ddac47a264eec6fb77d8c894de1a30956bfdf",
+    "web/src/lib/pendingUpload.test.ts": "2bb68ed37592492a8d3ffcf4bfe42cc8af6d39773b902ee71bc8d56f9af40afa",
+    "web/src/lib/pendingUpload.ts": "54fe36be8c1484c029141ec0dc762bba1196cc3c4faa0e7ca0b7bac5339733af",
+    "web/src/lib/records.test.ts": "fdfa2127f3d0c3f62168f496e4bff9fc5eff8e82262eb7a3520dcac32a19bd3b",
+    "web/src/lib/records.ts": "ed511698e337d355c5cefd481fd6625294eb91358167f776873c5323211ea419",
+    "web/src/lib/reviewApi.ts": "1a1dfae43e4af9d3dfbc4c7e7937ffda1e78454fdf5e8f78a2565c2809d49664",
+    "web/src/lib/sanitize.test.ts": "63c3223527228c8ec3a1fa118cf88de0ebf63d4393808a426d59f9163a42e07f",
+    "web/src/lib/sanitize.ts": "07929de230c58ac07a2d76af672f9d801eba678561646cce64514b6e355062c2",
+    "web/src/lib/session.tsx": "eb464e9879dc2dfbe36c277aff3977e63d80e2eb0dd35a4ba1052ba28043f451",
+    "web/src/lib/sessionWire.test.ts": "8c0242bb749ab4179ef692acb5d66bef06252493f9278e54a9b2fd85511c6cab",
+    "web/src/lib/threadStorage.test.ts": "af4f914465e1094c211b0234cfb2ced72524348c0680a42cb62adf15bdca2275",
+    "web/src/lib/threadStorage.ts": "01a0c1215cd80477d16bb87a5414dc9bb1a2ebdef424967af72704d161a1b37a",
+    "web/src/lib/useCollaborationRun.test.tsx": "8a15c8b7034c3ec8be94c7fcb826a7968ab68aedba78d01365ea1e0266cab542",
+    "web/src/lib/useCollaborationRun.ts": "0bedade0084d6f5839bfd513c0bbcc682d688b7fa5aee12fc145072a818b6179",
+    "web/src/lib/useInView.ts": "1cf321df6fb6e35aca6b994cf63ed2a31658d8b3bcf889e06371c4dc88b5cf3b",
+    "web/src/lib/useMediaQuery.test.tsx": "4ec2ea796c3efe5999bb1ffbc31d27375b75de34cb8a30163f5f83f26f753c1c",
+    "web/src/lib/useMediaQuery.ts": "73c12ece9da09ca69f4800f53b0293212ab92929b6ea04d88539943869972715",
+    "web/src/lib/utils.ts": "f1b72b7326a013a224f356feaf4ccb1f3c2ebf448c9cf869e369568d2622b07d",
+    "web/src/main.tsx": "045bd31f3d438fefcd43c8684864694332c70e1477fd45e8ffe5a7bd0b81175e",
+    "web/src/pages/AgentPage.collaboration.test.tsx": "da97db2f12265f622d5564fe029330cfa676dfadbee4eed754ba502256b435f2",
+    "web/src/pages/AgentPage.test.tsx": "a1f79f46636126d7b97cbd411e109f62522dea23817900d2c8e0c69db6ccda43",
+    "web/src/pages/AgentPage.tsx": "544fdcbcd8a5e07375abfca5db7ae21768919e76148ec35026d47514fa98d0a4",
+    "web/src/pages/DiagnosisPage.tsx": "ea7f6355d035ec5cb3405d69289ba0eb2a3ef3ed0688a7fea29f3394db2f1def",
+    "web/src/pages/DoctorReviewsPage.tsx": "c06fa66849370689f319cf198caca8597ce022d48db79a2e849c19038f47b7e6",
+    "web/src/pages/LandingPage.tsx": "111ce291fa3151a3fa30e4e043874cb8dec51f98d4a2f74d1d945b4f7fefd99a",
+    "web/src/pages/LoginPage.tsx": "147b70ac44b1471743b1f51a654f4045d08822c509e0de0ab5c7a91b47c764ce",
+    "web/src/pages/NewsDetailPage.tsx": "8d8349931afd889a3831bb28dfba37e66148c4323eccf74a33a804f49dc04cb3",
+    "web/src/pages/NewsPage.tsx": "c2e084983f84258f347a91b255499db7707628d24a4bf7b7296bb2ffe4596e7f",
+    "web/src/pages/ProfilePage.tsx": "aa4788743af951c0cbe94c4e99aaa9ad991c73fcc59d6f11b4aa8d47c5207e5d",
+    "web/src/pages/RecordsPage.test.tsx": "a8024d6e8301268f218d40631364a55497c07b6fee52bbf312749cadace2f8d1",
+    "web/src/pages/RecordsPage.tsx": "d3dca1369ef680dc3fc9f87d9832bf8ef7b39653656a21820140548b5acfec34",
+    "web/src/pages/RegisterPage.tsx": "68820a26a43e263aa6bc0d0fea431f2a93c4152325013efa6439c980fc6f7aa9",
+    "web/src/pages/admin/AdminDashboardPage.tsx": "63f54537ed475192083496062a1ca7eb0efa3646a666e70845cdc9f2086edf4d",
+    "web/src/pages/admin/AdminDataAnalysisPage.tsx": "091afe5e042399e51ee75129ee13d370bddf9fe4d164983b15f7cf1c79f5dd56",
+    "web/src/pages/admin/AdminDiagnosisPage.tsx": "1f7118a65112645b8eb88efa3afe8127c55e47ca7559defea6845a23b766197e",
+    "web/src/pages/admin/AdminKnowledgePage.tsx": "8ce70dba5f5ef3e2b3294579bbb99ea68cd14721d7c1bc95cde0a040bd72bb23",
+    "web/src/pages/admin/AdminNewsEditPage.tsx": "30c35131105741d35cfeca4f309daf6c3feb5aac90f201d92aeea4c74d85aa2b",
+    "web/src/pages/admin/AdminNewsPage.tsx": "fbf7c976cf3cb9f5dafde5f98ac577ab3826235eb28e56d021c8238cf7305943",
+    "web/src/pages/admin/AdminUsersPage.tsx": "aba5153fbee3112cae956abf22ab46f72672b90cbd9b96ba8d3a60f195f76aee",
+    "web/src/styles/admin.css": "30804e3e1a2854647c8fa573a54408eadcfdf7df962466832fa4f7f5394053bb",
+    "web/src/styles/agent.css": "fc749a5c0ae40825bd9b30c929de9ffdc3a8f66a6875889e09660a6b7acec17a",
+    "web/src/styles/app.css": "f0a7861aab467a3a4feae2eee6d4085b381e87a3e926377b430db28180657a01",
+    "web/src/styles/collaboration.css": "45e8fb8efa7047d2f8b488526618a908164f4b71298d9809e03645840f5fedfe",
+    "web/src/styles/disclaimer.css": "8d7bed85e7218f5db68df1ecb65815c5a9f57b34696383f48962e0a598955ba4",
+    "web/src/styles/fault.css": "ee7ece47e4c7d316532212cdba88d8ceef8c241acabd66becbfbaccd7736d355",
+    "web/src/styles/news.css": "27b91af8ff38a03c2565289309e6862dd622eeae216567a1948f48f214ba122b",
+    "web/src/styles/records.css": "7d60c0f83e20176eabc87f5d64be86eab45d734d20ab21f7a76530e48c29cca3",
+    "web/src/styles/tokens.contrast.test.ts": "d18c8e48ba1fe3cc14b17a140e1d262a7dbd1b298ed1cc1f5086d8176b81360a",
+    "web/src/styles/tokens.css": "04941a37c4c53cd12c7fe961176b67ed1457a3a6c89655026ee8f23bf4a6ab64",
+    "web/tsconfig.app.json": "9080094cd9a121b2086148ccd1676ead6f5260850db90cee9af6f0ab02da9b5a",
+    "web/tsconfig.json": "23c57da26bcec4996c4168f01187840c8ec08a1d60c2dd0edad6d984f5c33680",
+    "web/tsconfig.node.json": "c7a65fc2be982212721c93c724ebb8f799f2e54a060447f9ad31fa27f3a5631f",
+    "web/vite.config.ts": "7843ea40a90c06c48918111c890e00bcb7e92168d6ff51cfa544dc6bf90f6bf3"
+  },
+  "indexEmpty": true,
+  "backend": {
+    "counts": {
+      "PASS": 414,
+      "SKIPPED": 3
+    },
+    "suites": [
+      {
+        "suite": "com.csust.eyediagnosis.agent.config.AgentExecutorConfigTest",
+        "reportSha256": "8c53b6056712050fb1dfc957ed736684326dc6738984a75d445bace196a6e14f",
+        "cases": [
+          {
+            "name": "boundedExecutorRejectsWhenSaturated",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.config.VectorStoreConfigTest",
+        "reportSha256": "bb9a9c079a0ecc4028ff014b261b82754560412020d7e4edbbad383500f05a47",
+        "cases": [
+          {
+            "name": "test",
+            "status": "SKIPPED"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.mcp.McpToolCallbackProviderTest",
+        "reportSha256": "b789775fcfa3279791461a8ace72028333acea4beb11307590db6afc90bc1ce5",
+        "cases": [
+          {
+            "name": "noCallbacksWithoutServerCodes",
+            "status": "PASS"
+          },
+          {
+            "name": "callbacksComeOnlyFromTheCallingUsersEnabledServers",
+            "status": "PASS"
+          },
+          {
+            "name": "callbacksAreBuiltPerToolAndOneFailingServerDoesNotSinkTheRest",
+            "status": "PASS"
+          },
+          {
+            "name": "noCallbacksWithoutUserId",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.policy.McpConnectionPolicyTest",
+        "reportSha256": "e23e2087e250f6b87b50f8f5d42e970d2e2891f95a8c119f599941634ea4a83f",
+        "cases": [
+          {
+            "name": "userConfigMustRejectStdio",
+            "status": "PASS"
+          },
+          {
+            "name": "remoteUrlMustBeHttpsAndExactlyAllowlisted",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.queue.SessionMessageQueueTest",
+        "reportSha256": "060dd7e533400cd524383fd16a4cbf732fa6e4e5d7cd19fae54e993e68f4c522",
+        "cases": [
+          {
+            "name": "differentSessionsRunInParallel",
+            "status": "PASS"
+          },
+          {
+            "name": "messagesAreSerializedPerSession",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.rag.Bm25SegmenterTest",
+        "reportSha256": "9e75d650e4f7b68a76f6eb2bfbf0246865c0ff753d5196e96ba6a1136f2d5966",
+        "cases": [
+          {
+            "name": "singleChineseCharIsKeptAsUnigram",
+            "status": "PASS"
+          },
+          {
+            "name": "chineseTextProducesBigrams",
+            "status": "PASS"
+          },
+          {
+            "name": "asciiTokensAreKeptVerbatim",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.rag.BuiltinCorpusSeederTest",
+        "reportSha256": "5d7d1cc260004a9757dc21ca12cbbef2f0c181cafbcb197b4cd3a00ccaf29b3a",
+        "cases": [
+          {
+            "name": "keepsChunksWhoseIdIsStillInUse",
+            "status": "PASS"
+          },
+          {
+            "name": "removesChunksThatNoLongerExistInTheCorpus",
+            "status": "PASS"
+          },
+          {
+            "name": "chunkIdsAreStableAcrossSeeds",
+            "status": "PASS"
+          },
+          {
+            "name": "builtinFilterKeepsUserDocumentsAndSharedCorpus",
+            "status": "PASS"
+          },
+          {
+            "name": "doesNotTouchVectorStoreWhenNoBuiltinResourceIsFound",
+            "status": "PASS"
+          },
+          {
+            "name": "seedsEveryBuiltinDocumentWithSystemOwner",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.rag.RAGEvaluationTest",
+        "reportSha256": "3661be6314d9809b651dbd15aa003798edf01bb6012b112808a5a7989b5861f4",
+        "cases": [
+          {
+            "name": "testPrecisionAtK",
+            "status": "SKIPPED"
+          },
+          {
+            "name": "testRetrievalMetrics",
+            "status": "SKIPPED"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.rag.TextChunkerServiceTest",
+        "reportSha256": "7fe6abe79e01f77e90dffa7a26c3b13a16c9614a3c8c97a8d7544506cc24967a",
+        "cases": [
+          {
+            "name": "paragraphCrossingBoundaryAppearsOnceAfterPreviousChunkSuffix",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.service.AgentImageUploadServiceTest",
+        "reportSha256": "55857b30d0a0ac5cdc0849d82c36203ac6dae5fed1d63648784039af7d0c8050",
+        "cases": [
+          {
+            "name": "deleteCallsCosManagerWithOwnedObjectKey",
+            "status": "PASS"
+          },
+          {
+            "name": "deleteSkipsCallWhenObjectMissing",
+            "status": "PASS"
+          },
+          {
+            "name": "deletionRejectsForeignObjectKey",
+            "status": "PASS"
+          },
+          {
+            "name": "deleteRegistersDeletionIntentBeforeTouchingCos",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectsExecutableRenamedAsPng",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.service.ChatHistoryServiceOwnershipTest",
+        "reportSha256": "de30cc32a1ceb9dd2e81a62a2c00692f6b118442c2d23b95e96061d1c9f7694f",
+        "cases": [
+          {
+            "name": "existingSessionOwnedByAnotherUserIsRejected",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.tools.DocumentSearchToolOwnershipTest",
+        "reportSha256": "364fdbfcad77e7eb45e01f1d5e02fcf047feda76f51042486800546e82e8ff78",
+        "cases": [
+          {
+            "name": "searchIncludesOwnerAndBuiltinCorpusFilter",
+            "status": "PASS"
+          },
+          {
+            "name": "processDocumentWritesOwnerAndDocumentIdIntoEveryChunk(Path)",
+            "status": "PASS"
+          },
+          {
+            "name": "searchWithoutUserContextReturnsEmptyAndDoesNotQueryStore",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.agent.tools.RrfFusionRankResetTest",
+        "reportSha256": "6cd82fe78ee83a3368ad1263a229ff52dcac64d5456b060405a9bcd71ad9eda0",
+        "cases": [
+          {
+            "name": "secondResultListStartsFromRankOne",
+            "status": "PASS"
+          },
+          {
+            "name": "rrfScoresAreSymmetricForTwoSingleDocLists",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.collaboration.CollaborationImagesTest",
+        "reportSha256": "40eb1b5fc3de729a14afc9108f5ceb6c4454aaec1536705a3c36f25fe288ecc3",
+        "cases": [
+          {
+            "name": "metadataAdminCannotReadClinicalImage",
+            "status": "PASS"
+          },
+          {
+            "name": "patientOrAssignedDoctorReadsOnlyTheBoundVersion(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "patientOrAssignedDoctorReadsOnlyTheBoundVersion(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "storageFailureDoesNotExposePrivateLocations",
+            "status": "PASS"
+          },
+          {
+            "name": "revokedGrantDuringStorageReadCannotReturnBytes",
+            "status": "PASS"
+          },
+          {
+            "name": "mismatchedBytesAreNeverReturned",
+            "status": "PASS"
+          },
+          {
+            "name": "otherUserIsDeniedBeforeStorage",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.collaboration.CollaborationRunTest",
+        "reportSha256": "a2baa5944918b9e9847567ce6caa18853292e4f46b639517e97bbce95ec9a643",
+        "cases": [
+          {
+            "name": "normalCoordinatorPersistsOrderedFactsAndKeepsPatientDraftPrivate",
+            "status": "PASS"
+          },
+          {
+            "name": "clinicalOwnerNeverGainsClinicianProjectionOfTheirOwnDraft",
+            "status": "PASS"
+          },
+          {
+            "name": "disablingPatientProgressClosesActiveStreamWithoutCancellingWork",
+            "status": "PASS"
+          },
+          {
+            "name": "changedInferenceBindingIsRejectedBeforeAnyModelCall",
+            "status": "PASS"
+          },
+          {
+            "name": "operationsAreAdminOnlyAggregatesAndRemainAvailableDuringDrain",
+            "status": "PASS"
+          },
+          {
+            "name": "ownerCanStillCancelWhileAllProgressAndAdmissionAreDisabled",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellationBeforeDispatchAndRecoveryOfCommittedCancelIntentNeverCallProviders",
+            "status": "PASS"
+          },
+          {
+            "name": "replayAndDuplicateCreationNeverRepeatTheCoordinator",
+            "status": "PASS"
+          },
+          {
+            "name": "stoppingAdmissionPreservesIdempotentReplayAndRunningCompletion",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellingAtFinalCriticBoundaryCannotCommitReviewReady",
+            "status": "PASS"
+          },
+          {
+            "name": "restrictedAndUnreadyInputsDoNotStartAgents",
+            "status": "PASS"
+          },
+          {
+            "name": "eventsAreIncrementalWhileVisionIsStillInFlightAndSnapshotHasExactBoundary",
+            "status": "PASS"
+          },
+          {
+            "name": "activeSubscriptionStopsOnSessionRevocationAndDisconnectDoesNotCancelRun",
+            "status": "PASS"
+          },
+          {
+            "name": "separateJvmReplaysTheSameCommittedFactsAndOpaqueCursorWithoutExecuting",
+            "status": "PASS"
+          },
+          {
+            "name": "slowSubscriberHasFiniteBufferAndCanReplayEveryDurableFactAfterClosure",
+            "status": "PASS"
+          },
+          {
+            "name": "assignedDoctorLosesExistingSubscriptionWhenGrantIsWithdrawn",
+            "status": "PASS"
+          },
+          {
+            "name": "liveHttpSseReplaysRealEventsAndRejectsFaultsBeforeOpeningTheStream",
+            "status": "PASS"
+          },
+          {
+            "name": "rolledBackDomainStateNeverPublishesAnEvent",
+            "status": "PASS"
+          },
+          {
+            "name": "newSafetySwitchesDefaultClosedWithoutDispatchingWork",
+            "status": "PASS"
+          },
+          {
+            "name": "providerFailuresAreClassifiedSeparatelyFromRestrictedModelOutput",
+            "status": "PASS"
+          },
+          {
+            "name": "subscriptionLimitAndShutdownReleaseSlotsWithoutCancellingTheRun",
+            "status": "PASS"
+          },
+          {
+            "name": "idempotencyConflictsAndConcurrentAdmissionsCannotCreateDuplicateRuns",
+            "status": "PASS"
+          },
+          {
+            "name": "crossAccountAndUnassignedDoctorCannotReadSubscribeOrCancelAndMissingRunsMatch",
+            "status": "PASS"
+          },
+          {
+            "name": "idleSubscriptionImmediatelyEmitsAuthenticatedHeartbeatAtSnapshotWatermark",
+            "status": "PASS"
+          },
+          {
+            "name": "opaqueCursorsRejectTamperingCrossSubjectConflictsExpiryAndChangedProjection",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellationWinsAgainstUncooperativeInFlightProvidersAndRepeatedCancellationIsIdempotent",
+            "status": "PASS"
+          },
+          {
+            "name": "concurrentSnapshotWaitsForCancellationStateAndItsEventWatermarkTogether",
+            "status": "PASS"
+          },
+          {
+            "name": "disablingClinicianDetailsRejectsExistingSubscriptionsAndOldCursors",
+            "status": "PASS"
+          },
+          {
+            "name": "feedbackFactsComeFromActualCriticRouting(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "feedbackFactsComeFromActualCriticRouting(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "deletedOrDemotedAdminCannotReuseOperationsOrClinicianCursor",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.collaboration.GraphExecutionTest",
+        "reportSha256": "08656901dcf6562ed98a1d6bbb8fe04c7510c93b84b633b5ebfcabe4df81cad3",
+        "cases": [
+          {
+            "name": "checkpointCommitFailureRollsBackEvidenceAndItsPublicFactsTogether",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[8]",
+            "status": "PASS"
+          },
+          {
+            "name": "heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellingQueuedGraphRunCallsNoProviderAfterRestart",
+            "status": "PASS"
+          },
+          {
+            "name": "closingNewGraphAdmissionDoesNotReassignAnExistingRunAndReplayDoesNotExecute",
+            "status": "PASS"
+          },
+          {
+            "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "persistentCancelRejectsLateProvidersAndNeverSubmitsReview",
+            "status": "PASS"
+          },
+          {
+            "name": "evidenceIsVisibleWhileVisionBlocksAndExplanationWaitsForBoth",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellationAtFinalCriticCannotCommitReviewReady",
+            "status": "PASS"
+          },
+          {
+            "name": "timeoutAndCallBudgetsMatchCoordinator(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "timeoutAndCallBudgetsMatchCoordinator(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "timeoutAndCallBudgetsMatchCoordinator(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[8]",
+            "status": "PASS"
+          },
+          {
+            "name": "safetyAndProviderFailuresMatchCoordinator(String)[9]",
+            "status": "PASS"
+          },
+          {
+            "name": "expiryTakeoverFencesOldProviderAndReusesCommittedEvidence",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectedInferenceAndChangedBindingNeverCallProviders",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.collaboration.ProductProviderLedgerTest",
+        "reportSha256": "f337074f393fb148565a510a6a4af3bd0e6ab3d9888f2923d837f6f3cc5b6c38",
+        "cases": [
+          {
+            "name": "outboundIdentityFieldsFailBeforeReservationOrNetwork",
+            "status": "PASS"
+          },
+          {
+            "name": "reopeningTheSameDirectoryCannotResetTheBudget",
+            "status": "PASS"
+          },
+          {
+            "name": "authenticationFailureStopsSubsequentCallsWithoutRetry",
+            "status": "PASS"
+          },
+          {
+            "name": "budgetReservationsAreDurableBeforeIoAndCall33NeverSends",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.collaboration.ProductSchemaTest",
+        "reportSha256": "ad49b1584e916331ec65be2d289426276019b4c6fd5a8080874e0b4f4e457846",
+        "cases": [
+          {
+            "name": "freshSchemaContainsRealLoginAndEmptyChatDependencies",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.config.CorsConfigTest",
+        "reportSha256": "c010f8e404f57525cda6b1142e5d7391b226a7c0300b92f59af5fe7f3c45b723",
+        "cases": [
+          {
+            "name": "configDoesNotUseWildcard",
+            "status": "PASS"
+          },
+          {
+            "name": "allowlistedOriginIsConfiguredAndCredentialsEnabled",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.controlledreference.ControlledReferenceApiTest",
+        "reportSha256": "27bfe6c393828123314792142da7447500b26ffdc71ef812b8f979e1addba092",
+        "cases": [
+          {
+            "name": "ineligibleAndTestSourcesNeverEnterClinicalRetrieval(String, String, boolean, boolean)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "ineligibleAndTestSourcesNeverEnterClinicalRetrieval(String, String, boolean, boolean)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "ineligibleAndTestSourcesNeverEnterClinicalRetrieval(String, String, boolean, boolean)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "ineligibleAndTestSourcesNeverEnterClinicalRetrieval(String, String, boolean, boolean)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "ineligibleAndTestSourcesNeverEnterClinicalRetrieval(String, String, boolean, boolean)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "administratorCanRemoveCandidateAndDeletedSourceCannotBeReused",
+            "status": "PASS"
+          },
+          {
+            "name": "withdrawalCommittedWhileConsumerWaitsForLockIsObservedBeforeUse",
+            "status": "PASS"
+          },
+          {
+            "name": "administratorUploadsPendingCandidateThatReviewerCanRead",
+            "status": "PASS"
+          },
+          {
+            "name": "frozenCitationIsUsableOnlyWhileItsApprovedGovernanceIsCurrent",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyReviewerCanApproveAndStaleGovernanceCannotUndoWithdrawal",
+            "status": "PASS"
+          },
+          {
+            "name": "originalFileCanBeReadOnlyByAuthorizedManagers",
+            "status": "PASS"
+          },
+          {
+            "name": "unauthorizedUsersCannotUploadOrReviewAndApprovalRequiresDomainAttestation",
+            "status": "PASS"
+          },
+          {
+            "name": "alteredCitationAndCorruptStoredExcerptFailClosed",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.controller.AgentControllerHistoryTest",
+        "reportSha256": "7249cbbda6da66bd04fc213f08a211910d1f9b67a3a5ae0b18aec557eb374209",
+        "cases": [
+          {
+            "name": "historyKeepsValidPageSizesAndCapsLargeRequests(int, int)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "historyKeepsValidPageSizesAndCapsLargeRequests(int, int)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "sessionsRejectNonpositivePageSizes(int)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "sessionsRejectNonpositivePageSizes(int)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "historyRejectsNonpositivePageSizesWithoutQueryingMessages(int)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "historyRejectsNonpositivePageSizesWithoutQueryingMessages(int)[2]",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.controller.AgentSessionAdmissionTest",
+        "reportSha256": "cd06f6899302a26870a49678d0cbb6136b30cd13ec81e62d589f710b6349a8cf",
+        "cases": [
+          {
+            "name": "inactiveAndExpiredThreadsCannotBeRevived(boolean)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "inactiveAndExpiredThreadsCannotBeRevived(boolean)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "anotherOwnerCannotClaimAnExistingThread",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidIdentifiersAreRejected(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidIdentifiersAreRejected(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidIdentifiersAreRejected(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidIdentifiersAreRejected(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "emptySessionCreationAndReplayNeverGenerateChatOrModelCalls",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.controller.UserControllerOwnershipTest",
+        "reportSha256": "bbfa5df2f7c21d8dad0a9c9afe15affd2e22853897e7ada8c3e7973b7e298aca",
+        "cases": [
+          {
+            "name": "userCenterUpdateUsesSessionUserInsteadOfRequestId",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.diagnosistask.CosDiagnosisTaskStorageTest",
+        "reportSha256": "ea2dddd75cfbfaa27b526c871dacaa5b2691e72df66909a9e816f412cf15dd4f",
+        "cases": [
+          {
+            "name": "readsOnlyTheRequestedVersionAndRejectsMissingOrDifferentVersions",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.diagnosistask.DiagnosisTaskApiTest",
+        "reportSha256": "f88f308f8a474658dec787daba4ed7b38dd0701f102fcf2100d192e04c812a1c",
+        "cases": [
+          {
+            "name": "patientCannotReadAnotherPatientsTask",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidImageIsRejectedAndMissingVersionCreatesRestrictedTask",
+            "status": "PASS"
+          },
+          {
+            "name": "unauthenticatedRequestCannotReachTaskService",
+            "status": "PASS"
+          },
+          {
+            "name": "actualDatabaseQueryRestrictsOwnerAndUnknownState",
+            "status": "PASS"
+          },
+          {
+            "name": "truncatedJpegIsRejectedBeforeStorage",
+            "status": "PASS"
+          },
+          {
+            "name": "creationReplaysIdenticalRequestAndRejectsChangedImage",
+            "status": "PASS"
+          },
+          {
+            "name": "simultaneousIdenticalRequestsReturnOneTask",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.diagnosistask.DiagnosisTaskRecoveryTest",
+        "reportSha256": "5530a3047b829b3d908b43984a93536b7384ea02a4a1af315e83cecdd87974d2",
+        "cases": [
+          {
+            "name": "explicitInvalidArgumentDoesNotRetry",
+            "status": "PASS"
+          },
+          {
+            "name": "changedObjectAndRejectionAreRestrictedWithoutRetry",
+            "status": "PASS"
+          },
+          {
+            "name": "unknownInternalStatesAreNeverClaimed",
+            "status": "PASS"
+          },
+          {
+            "name": "unevaluatedOodIsRestrictedButPreservesBoundSnapshot",
+            "status": "PASS"
+          },
+          {
+            "name": "resultCannotCommitAfterLeaseExpiresWhileWaitingForRowLock",
+            "status": "PASS"
+          },
+          {
+            "name": "failuresAndUncertainCallsRespectTheBudget",
+            "status": "PASS"
+          },
+          {
+            "name": "simultaneousExecutorsOnlyOneCanClaimTask",
+            "status": "PASS"
+          },
+          {
+            "name": "scheduledTickReturnsWhileInferenceIsBlockedAndDoesNotQueueDuplicates",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathAroundReservationAndResultCommitRecoversConservatively",
+            "status": "PASS"
+          },
+          {
+            "name": "expiredExecutorCannotReplaceRecoveredSnapshot",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.doctorreview.DoctorReviewApiTest",
+        "reportSha256": "e3fde6029b234ab86dd523b4a2941a666fc12b5657e4a96130bd92676381755c",
+        "cases": [
+          {
+            "name": "duplicateDecisionsReplayTheReceiptAndConflictsCannotOverwriteIt",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsRequireANewReview(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "selfReviewAndUnauthorizedOrOverwritingAssignmentsAreDenied",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalCannotReadATaskSnapshotFromBeforeItAcquiredTheTaskLock",
+            "status": "PASS"
+          },
+          {
+            "name": "submissionMustMatchTheVersionTheDoctorRead(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "submissionMustMatchTheVersionTheDoctorRead(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "submissionMustMatchTheVersionTheDoctorRead(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "submissionMustMatchTheVersionTheDoctorRead(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[8]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalWaitsForConcurrentWithdrawalAndCannotUseOldEligibility",
+            "status": "PASS"
+          },
+          {
+            "name": "missingDoctorKeepsWaitingAndNeitherReviewOutcomeExposesDraftsToPatients",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorCanRejectWithdrawnEvidenceWithReasonWithoutPublishing",
+            "status": "PASS"
+          },
+          {
+            "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "competingDecisionsHaveExactlyOneWinner",
+            "status": "PASS"
+          },
+          {
+            "name": "assignedDoctorReviewsFrozenMaterialsAndDecisionSurvivesRestart",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectedReviewRemainsTraceableAndPatientSeesOnlyRestrictedStatus",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.EyeDiagnosisApplicationTests",
+        "reportSha256": "17f7f7146ab65d1de78b91025a9d90a4307a378e6166842e52474288eb1f584f",
+        "cases": [
+          {
+            "name": "contextLoads",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.migration.FlywayMySqlIntegrationTest",
+        "reportSha256": "38668412d1a6f5690d5963c431ecb9c8931b89fc1247182706007ed7ab390f88",
+        "cases": [
+          {
+            "name": "preservesExistingAccountsWhenUpgradingFromV14",
+            "status": "PASS"
+          },
+          {
+            "name": "upgradingV16LabelsHistoricalRunsWithoutRewritingFrozenMessages",
+            "status": "PASS"
+          },
+          {
+            "name": "migratesAnEmptyMySqlDatabaseThroughTheCurrentSafetySchema",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.patientauthorization.PatientAuthorizationApiTest",
+        "reportSha256": "e532240700a2cae11d9a1b28f0cd843eda0585d70bc4062247f4cf7e27241a55",
+        "cases": [
+          {
+            "name": "concurrentApprovalsReturnOneRecordAndTheSameReceipt",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalMustMatchTheExactContentThePatientViewed(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalMustMatchTheExactContentThePatientViewed(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalMustMatchTheExactContentThePatientViewed(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalMustMatchTheExactContentThePatientViewed(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalMustMatchTheExactContentThePatientViewed(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[8]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[9]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[10]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[11]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[12]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[13]",
+            "status": "PASS"
+          },
+          {
+            "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[14]",
+            "status": "PASS"
+          },
+          {
+            "name": "committedReceiptReplaysAfterSourceWithdrawalAndExpiryWithoutAnotherSave",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalsWaitingForLocksObserveWithdrawalAndMaterialChanges(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "approvalsWaitingForLocksObserveWithdrawalAndMaterialChanges(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "writeFailuresRollBackTheRecordAuthorizationAndReceiptTogether(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "writeFailuresRollBackTheRecordAuthorizationAndReceiptTogether(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "savedHistoryKeepsTheSameProbabilityAsTheFrozenInference",
+            "status": "PASS"
+          },
+          {
+            "name": "explicitPatientApprovalCreatesOneQueryableReceipt",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "autonomousMaterialsPassDoctorAndPatientGatesAndMessageTamperingRejectsSave(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "autonomousMaterialsPassDoctorAndPatientGatesAndMessageTamperingRejectsSave(String)[2]",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+        "reportSha256": "7a61fef30c1aba579f35b2090972bf69ca8aa797d0fa21aea1f87761429bf711",
+        "cases": [
+          {
+            "name": "absentEligibleEvidenceStopsAndDoesNotAskForExplanation",
+            "status": "PASS"
+          },
+          {
+            "name": "evidenceFailureStopsWithoutWaitingForAnUncooperativeVisionPeer",
+            "status": "PASS"
+          },
+          {
+            "name": "operatorEntryIsOptInAndAdminOnly",
+            "status": "PASS"
+          },
+          {
+            "name": "seededSyntheticTaskIsRunnableAndLabelledAsSynthetic",
+            "status": "PASS"
+          },
+          {
+            "name": "repeatedFeedbackStopsInsteadOfLooping(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "repeatedFeedbackStopsInsteadOfLooping(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "providerRejectionIsNotReportedAsModelOutputFault",
+            "status": "PASS"
+          },
+          {
+            "name": "operatorEntrySerializesTraceWithoutRawInference",
+            "status": "PASS"
+          },
+          {
+            "name": "concurrentInitialRolesCannotExceedASingleRemainingCall",
+            "status": "PASS"
+          },
+          {
+            "name": "timeoutDiscardsLateResultAndKeepsReservedCall",
+            "status": "PASS"
+          },
+          {
+            "name": "withdrawalDuringCriticPreventsReadyTransition",
+            "status": "PASS"
+          },
+          {
+            "name": "operatorTraceReportsRoleTimingCitationChecksAndSectionCoverage",
+            "status": "PASS"
+          },
+          {
+            "name": "duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion",
+            "status": "PASS"
+          },
+          {
+            "name": "supplementationCreatesNewFrozenEvidenceAndRewritesOnlyOnce",
+            "status": "PASS"
+          },
+          {
+            "name": "providerTransportIOExceptionIsReportedAsProviderFault",
+            "status": "PASS"
+          },
+          {
+            "name": "transportFailureSeparatesOutputFaultsFromProviderFaults",
+            "status": "PASS"
+          },
+          {
+            "name": "totalDeadlineIsCheckedAfterModelReturns",
+            "status": "PASS"
+          },
+          {
+            "name": "omittedCitationIndexIsInvalidEvenWhenZeroWouldMatch",
+            "status": "PASS"
+          },
+          {
+            "name": "providerOutageIsReportedAsProviderFault",
+            "status": "PASS"
+          },
+          {
+            "name": "operatorTraceShowsRejectedDraftAndTheReferenceThatFailed",
+            "status": "PASS"
+          },
+          {
+            "name": "patientSeesOnlySafeProgressAndNeverDraftOrAgentOutput",
+            "status": "PASS"
+          },
+          {
+            "name": "operatorTriggerStartsTheCoordinatorOnceAndReplayAddsNoCalls",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidAgentOutputsStopBeforeReview(String, String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "totalCallBudgetCannotBeResetByReconstructingCoordinator",
+            "status": "PASS"
+          },
+          {
+            "name": "providerToolRequestsCannotExecuteAnyTool",
+            "status": "PASS"
+          },
+          {
+            "name": "fourIndependentAgentsProduceFrozenReviewableDraftWithoutPublishing",
+            "status": "PASS"
+          },
+          {
+            "name": "visionAndEvidenceEnterTheProviderConcurrentlyBeforeEitherReturns",
+            "status": "PASS"
+          },
+          {
+            "name": "twoCoordinatorsCannotGenerateTheSameTaskTwice",
+            "status": "PASS"
+          },
+          {
+            "name": "ambiguousDuplicateJsonKeysCannotChooseEvidenceQuery",
+            "status": "PASS"
+          },
+          {
+            "name": "providerRateLimitDoesNotTriggerHiddenTransportRetries",
+            "status": "PASS"
+          },
+          {
+            "name": "deliveredRoleMessagesBindActualInputsAndKeepSourceMetadataOutOfExplanation",
+            "status": "PASS"
+          },
+          {
+            "name": "processCrashKeepsSpentBudgetAndRecoveryRestrictsWithoutNewCall",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+        "reportSha256": "6079dec27b9fd35fb9088e89e49bc682a8630401764f699a9e13b9d1d8c45d47",
+        "cases": [
+          {
+            "name": "collaborationProgressUsesFixedNotesWithoutLeakingAgentOutput",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedApprovedMaterialsCannotBePublished(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "citationsRequireOwnershipAndTheSameLiveReleaseGate",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorApprovedPatientCanReadLayeredExplanationWithoutInternalMaterials",
+            "status": "PASS"
+          },
+          {
+            "name": "readsWaitingForTaskLockObserveTheCommittedMaterialVersion",
+            "status": "PASS"
+          },
+          {
+            "name": "completedImageInferenceWithoutADraftRunWaitsForCollaborationNotADoctor",
+            "status": "PASS"
+          },
+          {
+            "name": "missingOrRejectingDoctorNeverPublishesAndUnknownStatesFailClosed",
+            "status": "PASS"
+          },
+          {
+            "name": "readsWaitForWithdrawalAndDoNotUseTheOldEligibility",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "restrictedCasesGiveOnlySafeActionableHints(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "restrictedCasesGiveOnlySafeActionableHints(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "restrictedCasesGiveOnlySafeActionableHints(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "everyResultReadRevalidatesFrozenSources(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[5]",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.patientfollowup.PatientFollowUpApiTest",
+        "reportSha256": "242ef3e3944bb180fa9e7360757dba1b4facd9cdc84b4a5528c2301cb5e5c85e",
+        "cases": [
+          {
+            "name": "aReadWaitingForSourceWithdrawalUsesTheCommittedEligibility",
+            "status": "PASS"
+          },
+          {
+            "name": "ownerCanFindPublishedInformationWithItsApprovedSources",
+            "status": "PASS"
+          },
+          {
+            "name": "followUpsNeverAlterConsentRecordsReceiptsOrFrozenMaterials(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "followUpsNeverAlterConsentRecordsReceiptsOrFrozenMaterials(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "followUpsNeverAlterConsentRecordsReceiptsOrFrozenMaterials(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "changedFrozenMaterialsCannotBeUsedOrRewritten(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectsInvalidQuestions(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectsInvalidQuestions(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectsInvalidQuestions(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "doesNotReturnUnreferencedSourcesOrUnmatchedClaims",
+            "status": "PASS"
+          },
+          {
+            "name": "chineseQuestionsFindOnlyMatchingPublishedClaims",
+            "status": "PASS"
+          },
+          {
+            "name": "unpublishedOrMissingResultsCannotBeUsed(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "unpublishedOrMissingResultsCannotBeUsed(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "unpublishedOrMissingResultsCannotBeUsed(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "unpublishedOrMissingResultsCannotBeUsed(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[5]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[6]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[7]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[8]",
+            "status": "PASS"
+          },
+          {
+            "name": "invalidSourcesRestrictTheAnswerWithoutChangingAnyWorkflowState(String)[9]",
+            "status": "PASS"
+          },
+          {
+            "name": "findsInformationThroughItsExactApprovedExcerpt",
+            "status": "PASS"
+          },
+          {
+            "name": "doesNotInventAnAnswerOrUseOtherPrivateOrModelKnowledge",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotAskAboutTheResult(String)[1]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotAskAboutTheResult(String)[2]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotAskAboutTheResult(String)[3]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotAskAboutTheResult(String)[4]",
+            "status": "PASS"
+          },
+          {
+            "name": "otherIdentitiesCannotAskAboutTheResult(String)[5]",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.poc.CoordinationMySqlTest",
+        "reportSha256": "ebc9d5d35c2e9edd84e258bff93f614afc9bd7aada2b8191f94c7b5db4d2945e",
+        "cases": [
+          {
+            "name": "simultaneousRecoveryClaimsAllowOnlyOneWorker",
+            "status": "PASS"
+          },
+          {
+            "name": "staleGraphWorkerCannotPersistCheckpointOrAdvanceWorkflow",
+            "status": "PASS"
+          },
+          {
+            "name": "competingClaimsAndExpiredWorkerCannotCommit",
+            "status": "PASS"
+          },
+          {
+            "name": "bothEnginesResumeTheTaskOnlyOnceInNewProcesses",
+            "status": "PASS"
+          },
+          {
+            "name": "incompatibleRecordedSaverVersionStopsRecovery",
+            "status": "PASS"
+          },
+          {
+            "name": "graphCheckpointCommitsWithWorkflowAndFailsClosedOnVersionMismatch",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathDuringRecoveryKeepsSaverAndBusinessStateAtomic",
+            "status": "PASS"
+          },
+          {
+            "name": "graphRecoversCommittedCheckpointInAnotherProcess",
+            "status": "PASS"
+          },
+          {
+            "name": "recoveryCannotBypassGraphVersionWithAnotherEngine",
+            "status": "PASS"
+          },
+          {
+            "name": "competingRecoveryWorkersFenceExpiredResultsForBothEngines",
+            "status": "PASS"
+          },
+          {
+            "name": "processDeathBeforeAndAfterCommitLeavesOnlyCommittedState",
+            "status": "PASS"
+          },
+          {
+            "name": "bothEnginesUseFencedTransactionsAcrossProcessCrashes",
+            "status": "PASS"
+          },
+          {
+            "name": "saverWritesInBothSegmentsCommitOnlyWithFencedBusinessState",
+            "status": "PASS"
+          },
+          {
+            "name": "businessTransitionAndNextTaskRollbackTogether",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.poc.CoordinationPocTest",
+        "reportSha256": "f5f3e9f7cb5b656935a910efd7a49136b651108d987cc2d006114e452bd36b22",
+        "cases": [
+          {
+            "name": "graphTransitionAndCheckpointComeFromTheSameInterruptedRun",
+            "status": "PASS"
+          },
+          {
+            "name": "interruptedGraphCheckpointCanBeSerializedAndResumed",
+            "status": "PASS"
+          },
+          {
+            "name": "bothEnginesApplyTheSameFixedBusinessTransition",
+            "status": "PASS"
+          },
+          {
+            "name": "domainRecoveryTransitionsOnlyFromWaitingReview",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.poc.realtime.RealtimeGraphSpikeTest",
+        "reportSha256": "59624eb7dd1342547a45bf46be97df37e16277c50c6751e0d7e8ad85c65e5f0d",
+        "cases": [
+          {
+            "name": "supplementRechecksDraftAgainstNewEvidenceWithoutRerunningVision",
+            "status": "PASS"
+          },
+          {
+            "name": "cancellingSubscriberStopsDownstreamButDoesNotStopProviderOrLateLifecycleCallbacks",
+            "status": "PASS"
+          },
+          {
+            "name": "lifecycleListenerExceptionDoesNotVetoExecution",
+            "status": "PASS"
+          },
+          {
+            "name": "roleFailurePreventsExplanationAndCritique",
+            "status": "PASS"
+          },
+          {
+            "name": "parallelLifecycleReportsEvidenceBeforeVisionCompletesButAfterStateIsNotTheResult",
+            "status": "PASS"
+          },
+          {
+            "name": "missingFeedbackCannotBeTreatedAsSuccessfulReview",
+            "status": "PASS"
+          },
+          {
+            "name": "applicationFeedbackBudgetStopsRepeatedRewrite",
+            "status": "PASS"
+          },
+          {
+            "name": "fourRoleCheckpointResumesInAnotherJvmWithoutRepeatingCompletedRoles(Path)",
+            "status": "PASS"
+          },
+          {
+            "name": "rewriteRechecksNewDraftWithoutRerunningVisionOrEvidence",
+            "status": "PASS"
+          },
+          {
+            "name": "parallelBranchesJoinBeforeExplanationWithoutLosingState",
+            "status": "PASS"
+          },
+          {
+            "name": "nodeStreamEmitsExplanationWhileCriticIsStillInFlight",
+            "status": "PASS"
+          },
+          {
+            "name": "frameworkRecursionLimitCanCloseStreamWithoutSuccessfulEnd",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.security.PasswordServiceTest",
+        "reportSha256": "efdd4521410aca9aee18b399e5c974ea1f4e9b761f172f6e7e8396a51255b7f5",
+        "cases": [
+          {
+            "name": "legacyMd5MatchRequestsUpgrade",
+            "status": "PASS"
+          },
+          {
+            "name": "bcryptUsesCostTwelveAndMatches",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.service.DiagnosisHumanReviewTest",
+        "reportSha256": "4bb2a5d45c4b2e8e4c36c1870ee64c59ad91c26faeac9883c41b90d7f5fd276b",
+        "cases": [
+          {
+            "name": "dtoHasNoAiFields",
+            "status": "PASS"
+          },
+          {
+            "name": "blankHumanResultIsRejected",
+            "status": "PASS"
+          },
+          {
+            "name": "nonAdminIsRejected",
+            "status": "PASS"
+          },
+          {
+            "name": "statusEnumContainsExpectedValues",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.service.DiagnosisOwnershipTest",
+        "reportSha256": "de50db588919646b50a401fc03b7bcbec6665367fd8ff9a9d7f149296507f727",
+        "cases": [
+          {
+            "name": "severityIsNeverRandomlyInferred",
+            "status": "PASS"
+          },
+          {
+            "name": "regularUserCannotReadAnotherUsersDiagnosis",
+            "status": "PASS"
+          },
+          {
+            "name": "imageCacheLookupMustIncludeUserId",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.service.InferenceCacheTest",
+        "reportSha256": "5b18e36bc4df857e88205e0354143d2f378f55714a4a5d2b3b4846ce11073c39",
+        "cases": [
+          {
+            "name": "doDiagnosisServesCacheHitWithoutCallingGrpc",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectedHistoryListContainsNoAiConclusion",
+            "status": "PASS"
+          },
+          {
+            "name": "rejectedResponseContainsNoAiConclusion",
+            "status": "PASS"
+          },
+          {
+            "name": "doDiagnosisSkipsCacheWhenDeploymentFingerprintIsIncomplete",
+            "status": "PASS"
+          },
+          {
+            "name": "doDiagnosisCacheHitStillWritesTheCallingUsersId",
+            "status": "PASS"
+          },
+          {
+            "name": "doDiagnosisMissCallsGrpcAndUpsertsCache",
+            "status": "PASS"
+          },
+          {
+            "name": "historicalRejectedResponseContainsNoAiConclusionAndDerivesReviewStatus",
+            "status": "PASS"
+          },
+          {
+            "name": "cacheRequiresOneCompleteNormalizedDeploymentFingerprint",
+            "status": "PASS"
+          },
+          {
+            "name": "cacheRoundTripPreservesEveryMedicalSafetyField",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.service.NewsCoverUpdateTest",
+        "reportSha256": "abccb937f8cd9d14eff348dc523bcf1d2bedc51eef4bfc9a27b6f4f1e412362c",
+        "cases": [
+          {
+            "name": "uploadingCoverWithoutIdStillCreatesNewsWithCover",
+            "status": "PASS"
+          },
+          {
+            "name": "uploadingCoverOnlyUpdatesCoverColumnsAndLeavesTitleAndAuthorUntouched",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.upload.state.UploadCompensationServiceTest",
+        "reportSha256": "08dbfb86263ff4c593a17b95b060c2a6f23f25cf878bf8d7f9190dd2501cda48",
+        "cases": [
+          {
+            "name": "markDeletedMovesPersistedTaskToDeleted",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileSkipsObjectsStillInsideGracePeriod",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileDeletesOrphanObjectsUnderOwnerPrefix",
+            "status": "PASS"
+          },
+          {
+            "name": "markDeletedReturnsFalseWhenNoTaskRowExists",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileAllIgnoresKeysWithoutOwnerPrefix",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileSkipsObjectsWithoutLastModifiedTime",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileAllGroupsObjectsByOwner",
+            "status": "PASS"
+          },
+          {
+            "name": "markDeletedIsIdempotentForAlreadyDeletedTask",
+            "status": "PASS"
+          },
+          {
+            "name": "reconcileKeepsObjectsWhoseTaskIsStillActive",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.upload.state.UploadStateMachineTest",
+        "reportSha256": "ed62cf02a89c310479c69fb1aafd2141b7fad1fe3ff6385a8ec267cb0faeed8c",
+        "cases": [
+          {
+            "name": "canFallbackUploadingToFailed",
+            "status": "PASS"
+          },
+          {
+            "name": "deletedIsTerminal",
+            "status": "PASS"
+          },
+          {
+            "name": "canMarkPersistedTaskAsDeleted",
+            "status": "PASS"
+          },
+          {
+            "name": "cannotJumpFromUploadingToCompleted",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.upload.state.UploadStatusTest",
+        "reportSha256": "836bc3312383d778417ab0338dcb87cffb0cc80cf3da8eeb1903d9b5dea48e02",
+        "cases": [
+          {
+            "name": "activeCodesKeepPersistedTasksAndDropFailedOrDeletedOnes",
+            "status": "PASS"
+          },
+          {
+            "name": "fromCodeResolvesKnownCodesOnly",
+            "status": "PASS"
+          },
+          {
+            "name": "codesMatchTheValuesPersistedInTheDatabase",
+            "status": "PASS"
+          }
+        ]
+      },
+      {
+        "suite": "com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest",
+        "reportSha256": "c468a32213b8c7676d7975e54105783f943443a6d23327f3b10786066f7ab756",
+        "cases": [
+          {
+            "name": "deletedTaskKeyDropsOutOfTheActiveSet",
+            "status": "PASS"
+          },
+          {
+            "name": "persistedTaskKeyIsRetainedWhileFailedTaskKeyIsNot",
+            "status": "PASS"
+          },
+          {
+            "name": "updateStatusIsCompareAndSet",
+            "status": "PASS"
+          }
+        ]
+      }
+    ]
+  },
+  "rawReports": {
+    "target/product-backend-all.log": "d26cb2b74f4bea364a11931bcd74b9c69a8eeb8f94582d08c29a23ad0a8782ad",
+    "target/product-backend-first.log": "b18dc7ce16f30d243573e35c5e3637a5ce8cbe0d2a45ff1ca28f913dd769ddfe",
+    "target/product-context-first.xml": "47673ef1af5ef74666fa7cac8ff0ad8325f3aef2149dee7c4e25899295bcfd05",
+    "target/product-vitest.json": "9f67e9d069122aaaca5ecb8c41d62e385d2c940ff21cc7266d75d1df3598796d",
+    "target/product-skip-gate.log": "3cd5452921f31e11dd10c9e04f155c2ec00b46e2665153125e7f4d3c7757faf4",
+    "target/product-fixture-before-update.json": "8f1bbcd5047192333c43442e15ebe692a6be93b608069192d1edd92648ead855",
+    "target/product-date-red.json": "32aa89fc22988572e58c8392619dd59ceb5b6f069785017751e1f38cdd00911b",
+    "target/product-date-green.json": "841012a33b80c57941f3bb58627d8be3679b17531f075f47432a693110980add",
+    "target/product-history-date-red.json": "7f9cb95318b3844c8abf880a0d592067bff33d39863e551e72c20885c14220dd",
+    "target/product-history-date-green.json": "472f006a2f72a784027dfaca5fd043bdc90c83f9b1119228a82132eaed411799"
+  },
+  "frontend": {
+    "numTotalTests": 339,
+    "numPassedTests": 339,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "browser": {
+    "product": {
+      "stats": {
+        "startTime": "2026-11-11T17:49:15.548Z",
+        "duration": 76464.167,
+        "expected": 16,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "sha256": "afdc980681ffa8568e8486481535d6bd92d85b8d7e7d9702e56b00ccbaaf8f4a",
+      "tests": [
+        {
+          "title": "P01: fresh registration → empty session upload → real parallel events → doctor UI approval → patient citation and explicit unique save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P02: patient/other patient/unassigned doctor/metadata admin cannot read images or frozen clinical materials without their grant",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P03-REWRITE: real Graph feedback route is visible as locatable frozen objection for doctor only",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P03-SUPPLEMENT: real Graph feedback route is visible as locatable frozen objection for doctor only",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-PROVIDER_AUTH: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-PROVIDER_RATE_LIMIT: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-PROVIDER_UNAVAILABLE: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-INVALID_JSON: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-INVALID_CITATION: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-OOD: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P04-QUALITY: classified failure/restriction has no review or patient save",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P05: explicit cancellation rejects late results; logout clears active protected image without cancelling execution",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P06: withdrawal blocks pending doctor approval and clears old form",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P07: mobile dark/light, keyboard and reduced motion preserve the review boundary",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P08: Coordinator doctor rejection in React never publishes or saves the draft",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "P09: source withdrawal after patient consent display blocks save and removes stale text and checkbox",
+          "statuses": [
+            "expected"
+          ]
+        }
+      ]
+    },
+    "fixtures": {
+      "stats": {
+        "startTime": "2026-11-11T17:47:25.981Z",
+        "duration": 28358.163,
+        "expected": 12,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "sha256": "aacd32a41a454042376cf512b5b1fde881afb6fec564d73d7ef74bf1faef63db",
+      "tests": [
+        {
+          "title": "completed workbench screenshot / light / desktop",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "completed workbench screenshot / light / mobile",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "completed workbench screenshot / dark / desktop",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "completed workbench screenshot / dark / mobile",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "patient progress hides handoff details; clinician projection can expand real metadata",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "terminal boundary RESTRICTED never fabricates completion",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "terminal boundary FAILED never fabricates completion",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "terminal boundary CANCELLED never fabricates completion",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "authorization denial clears all protected panels and offers explicit recovery",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "refresh and session switch never create a collaboration run",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "long records fold and a reader can stop following incoming events",
+          "statuses": [
+            "expected"
+          ]
+        },
+        {
+          "title": "keyboard, names, contrast and reduced motion are usable on both themes",
+          "statuses": [
+            "expected"
+          ]
+        }
+      ]
+    },
+    "defaultOff": {
+      "stats": {
+        "startTime": "2026-11-11T17:45:02.248Z",
+        "duration": 5151.386,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "sha256": "15d152542dbfd75e25fad1defcb33c28cb4d356f6f86a6e720560aacc0cf5ac6",
+      "tests": [
+        {
+          "title": "default build preserves ordinary chat and never calls collaboration APIs",
+          "statuses": [
+            "expected"
+          ]
+        }
+      ]
+    },
+    "liveHarness": {
+      "stats": {
+        "startTime": "2026-11-11T17:51:58.268Z",
+        "duration": 65639.33099999999,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "sha256": "04289a1720edada04f2b214a8b628bf73337852ce66ef6338f232b0a74a3662a",
+      "tests": [
+        {
+          "title": "one-shot real provider: safe negatives then Graph and Coordinator, with all failures retained",
+          "statuses": [
+            "expected"
+          ]
+        }
+      ]
+    }
+  },
+  "provider": {
+    "realRequests": 11,
+    "hardLimit": 32,
+    "states": {
+      "RETURNED": 11
+    },
+    "normalReadyCells": 0,
+    "modelGate": "NOT_PASSED",
+    "usage": {
+      "prompt_tokens": 6951,
+      "completion_tokens": 2467,
+      "total_tokens": 9418
+    },
+    "cells": [
+      {
+        "cell": "OOD",
+        "status": "RESTRICTED",
+        "realRequests": 0
+      },
+      {
+        "cell": "QUALITY",
+        "status": "RESTRICTED",
+        "realRequests": 0
+      },
+      {
+        "cell": "GRAPH",
+        "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+        "taskId": "0ca68a95-36c5-4df9-9535-5af021ac37e0",
+        "status": "RESTRICTED",
+        "reviewStatus": "NOT_SUBMITTED",
+        "reason": "INSUFFICIENT_EVIDENCE",
+        "elapsedMillis": 23388,
+        "doctorUi": "NOT_RUN_NOT_READY",
+        "patientSaveUi": "NOT_RUN_NOT_READY",
+        "requestIds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "realRequests": 5
+      },
+      {
+        "cell": "COORDINATOR",
+        "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+        "taskId": "cb134299-d0b7-40d2-899e-4259d9ca4342",
+        "status": "RESTRICTED",
+        "reviewStatus": "NOT_SUBMITTED",
+        "reason": "FEEDBACK_LIMIT",
+        "elapsedMillis": 36443,
+        "doctorUi": "NOT_RUN_NOT_READY",
+        "patientSaveUi": "NOT_RUN_NOT_READY",
+        "requestIds": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "realRequests": 6
+      }
+    ]
+  },
+  "evidence": {
+    "docs/testing/product-acceptance-20261112/01-incremental.png": "88774584ef97791a7434f353de4da0c161a8c217891f1723a6968978ab9f76ab",
+    "docs/testing/product-acceptance-20261112/02-doctor-approved.png": "15fc6dbc7a85588ca7282ec79f663ef47a7060aa8c968a326488cbd59749d7d0",
+    "docs/testing/product-acceptance-20261112/03-patient-receipt.png": "76ec6b57a4d263520b3675ed5227e46ab2cbd62191157ceead99d860cf852a2f",
+    "docs/testing/product-acceptance-20261112/cleanup.json": "8898bd5e742669c5d24ea6d1f1d325992bd569a408305c02b810090ecfb710b3",
+    "docs/testing/product-acceptance-20261112/feedback-rewrite.png": "308a946e4cab2fd69067f85a0f19f9a12c1985cf7931d454f448a5a21db74017",
+    "docs/testing/product-acceptance-20261112/feedback-supplement.png": "d2ec571ef0bbc794a0b96d9225bb9532b74f56e942da6fc68202179ab709b71c",
+    "docs/testing/product-acceptance-20261112/inputs.json": "da89f5c40f6bab3672ce956712a08d2a9577d965ba7021d76b9f0bd3cfc5a757",
+    "docs/testing/product-acceptance-20261112/live-preregistration.json": "70362cff4103d2fc0d071ba30b602a22a84a433693c52ac79d8281b4399b70d5",
+    "docs/testing/product-acceptance-20261112/live-seal.json": "9bc7e3baaee073810420edf241a3ebed6ecd3b4a08280bcc3144b36489462384",
+    "docs/testing/product-acceptance-20261112/mobile-dark.png": "4fea41a85243f67d915dd62204cc5e961a1bdb14828868f365c0f10ada6d4028",
+    "docs/testing/product-acceptance-20261112/mobile-light.png": "24e3224d54f0fed952880d2efd09490484a9dce264cbacedd51af464e9c105de",
+    "docs/testing/product-acceptance-20261112/real-coordinator.png": "d6d645645c7aff6f4ee3e9920db8277e67e40916f40560412e8b7596a7f29e77",
+    "docs/testing/product-acceptance-20261112/real-graph.png": "2c5a7b6d8f0c6579254776edfc532e930ddbdbc95c2f6515f9259de8e4c6c6f8",
+    "docs/testing/product-acceptance-20261112/real-provider-domain-audit.json": "74d93dc3289075107e322ae6305d2c0f6198b93ae432221e33f36d88c912d1b1",
+    "docs/testing/product-acceptance-20261112/real-provider-observations.json": "cece17410d631e89bd81287c62bcbeb5c698eab06fc85bdc4275ab70d79d5cb6",
+    "docs/testing/product-acceptance-20261112/real-provider-requests.json": "8a81c5b730871e99c2f822a6ac07d08f19e48dfae819f1426e8b8bf071a923ff",
+    "docs/testing/product-acceptance-20261112/real-provider-structure.json": "335810cf83c67d114dde0854b16c8792cac00ad05e95dfb92ae939074da34a7c",
+    "docs/testing/product-acceptance-20261112/release-gates.json": "bf85357a4ab977ba881c108ee0814ab1e333c35a0f4d978b8a9371d4bd190409"
+  },
+  "limitations": [
+    "SYNTHETIC_UPSTREAM",
+    "CLINICAL_NOT_EVALUATED",
+    "NORMAL_MEDICAL_OOD_INPUTS_MISSING",
+    "THREE_EXTERNAL_CASES_SKIPPED",
+    "BASELINE_SKIP_CONTRACT_MISMATCH_15_VS_7",
+    "PRODUCTION_OPERATIONS_NOT_RUN",
+    "HOSTED_CI_NOT_RUN"
+  ]
+}

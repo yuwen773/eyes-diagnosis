@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisReexamineDTO;
 import com.csust.eyediagnosis.model.dto.user.UserEditDTO;
 import com.csust.eyediagnosis.model.dto.user.UserQueryDTO;
@@ -113,7 +114,27 @@ public interface UserService extends IService<User> {
     boolean updateOwnProfile(UserEditDTO input, User loginUser);
 
     /**
-     * 对原始密码执行 BCrypt cost 12 编码，供 Controller 在创建/重置密码时使用。
+     * 对 BCrypt 密码执行编码，供 Controller 在创建/重置密码时使用。
      */
     String encodePassword(String rawPassword);
+
+    /**
+     * 批量删除用户。
+     *
+     * <p>管理员账号不在可删范围内：删掉唯一的管理员之后这套系统就没人能管了，
+     * 因此这类目标会被跳过并写进失败清单，而不是静默删除。
+     *
+     * @param userIds 目标用户 id
+     * @return 逐条结果回执
+     */
+    BatchResultVO deleteUsers(List<Long> userIds);
+
+    /**
+     * 批量改角色（封禁 / 解封 / 提权）。
+     *
+     * @param userIds  目标用户 id
+     * @param userRole 目标角色：user / ban / admin
+     * @return 逐条结果回执
+     */
+    BatchResultVO updateUserRole(List<Long> userIds, String userRole);
 }

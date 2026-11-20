@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "rrfK": 60,
+  "finalTopK": 5,
+  "maxExpansions": 2,
+  "latencyCeilingMs": 250,
+  "controlledTerms": [
+    {"id": "builtin_01-normal", "title": "正常眼底", "aliases": ["normal", "正常"]},
+    {"id": "builtin_02-amd", "title": "年龄相关性黄斑变性", "aliases": ["amd", "年龄相关性黄斑变性"]},
+    {"id": "builtin_03-cataract", "title": "白内障", "aliases": ["cataract", "白内障"]},
+    {"id": "builtin_04-diabetes", "title": "糖尿病视网膜病变", "aliases": ["diabetes", "糖尿病视网膜病变"]},
+    {"id": "builtin_05-glaucoma", "title": "青光眼", "aliases": ["glaucoma", "青光眼"]},
+    {"id": "builtin_06-hypertension", "title": "高血压视网膜病变", "aliases": ["hypertension", "高血压视网膜病变"]},
+    {"id": "builtin_07-myopia", "title": "近视", "aliases": ["myopia", "近视"]},
+    {"id": "builtin_08-other", "title": "其他眼病", "aliases": ["other", "其他眼病"]}
+  ],
+  "documents": [
+    {"id": "builtin_01-normal", "ownerUserId": 0, "text": "正常眼底 视盘 黄斑 视网膜血管 normal fundus", "tokens": ["正常", "眼底", "视盘", "黄斑", "视网膜", "血管", "normal", "fundus"]},
+    {"id": "builtin_02-amd", "ownerUserId": 0, "text": "年龄相关性黄斑变性 脉络膜新生血管 AMD", "tokens": ["年龄", "相关", "黄斑", "变性", "脉络膜", "新生", "血管", "amd"]},
+    {"id": "builtin_03-cataract", "ownerUserId": 0, "text": "白内障 晶状体混浊 视力下降 cataract", "tokens": ["白内障", "晶状体", "混浊", "视力", "下降", "cataract"]},
+    {"id": "builtin_04-diabetes", "ownerUserId": 0, "text": "糖尿病视网膜病变 微血管瘤 出血渗出 diabetes", "tokens": ["糖尿病", "视网膜", "病变", "微血管", "出血", "渗出", "diabetes"]},
+    {"id": "builtin_05-glaucoma", "ownerUserId": 0, "text": "青光眼 眼压 视神经 视野缺损 glaucoma", "tokens": ["青光眼", "眼压", "视神经", "视野", "缺损", "glaucoma"]},
+    {"id": "builtin_06-hypertension", "ownerUserId": 0, "text": "高血压视网膜病变 动脉变细 动静脉交叉 hypertension", "tokens": ["高血压", "视网膜", "病变", "动脉", "变细", "交叉", "hypertension"]},
+    {"id": "builtin_07-myopia", "ownerUserId": 0, "text": "近视 眼轴增长 豹纹状眼底 myopia", "tokens": ["近视", "眼轴", "增长", "豹纹", "眼底", "myopia"]},
+    {"id": "builtin_08-other", "ownerUserId": 0, "text": "其他眼病 罕见眼病 转诊 other", "tokens": ["其他", "眼病", "罕见", "转诊", "other"]},
+    {"id": "user_42_upload_1", "ownerUserId": 42, "text": "用户上传的青光眼随访记录", "tokens": ["用户", "上传", "青光眼", "随访", "记录"]},
+    {"id": "user_99_upload_1", "ownerUserId": 99, "text": "其他用户的私有病历", "tokens": ["其他", "用户", "私有", "病历"]}
+  ],
+  "queries": [
+    {
+      "case": "glaucoma_alias",
+      "query": "IOP 升高 视神经损伤 左眼",
+      "relevant": ["builtin_05-glaucoma"],
+      "constraints": {"disease": "glaucoma", "site": "optic_nerve", "laterality": "left"},
+      "expansionTerms": ["glaucoma", "青光眼"],
+      "baselineHits": ["builtin_01-normal", "builtin_06-hypertension", "builtin_07-myopia", "user_42_upload_1"],
+      "expandedHits": ["builtin_05-glaucoma", "user_42_upload_1", "builtin_01-normal"]
+    },
+    {
+      "case": "amd_alias",
+      "query": "脉络膜新生血管 右眼",
+      "relevant": ["builtin_02-amd"],
+      "constraints": {"disease": "amd", "site": "choroid", "laterality": "right"},
+      "expansionTerms": ["amd", "年龄相关性黄斑变性"],
+      "baselineHits": ["builtin_04-diabetes", "builtin_06-hypertension"],
+      "expandedHits": ["builtin_02-amd", "builtin_04-diabetes"]
+    },
+    {
+      "case": "diabetes_alias",
+      "query": "微血管瘤 双眼",
+      "relevant": ["builtin_04-diabetes"],
+      "constraints": {"disease": "diabetes", "site": "retina", "laterality": "both"},
+      "expansionTerms": ["diabetes", "糖尿病视网膜病变"],
+      "baselineHits": ["builtin_06-hypertension", "builtin_02-amd"],
+      "expandedHits": ["builtin_04-diabetes", "builtin_06-hypertension"]
+    },
+    {
+      "case": "cataract_alias",
+      "query": "lens opacity 右眼",
+      "relevant": ["builtin_03-cataract"],
+      "constraints": {"disease": "cataract", "site": "lens", "laterality": "right"},
+      "expansionTerms": ["cataract", "白内障"],
+      "baselineHits": ["builtin_01-normal", "builtin_08-other"],
+      "expandedHits": ["builtin_03-cataract", "builtin_01-normal"]
+    },
+    {
+      "case": "myopia_alias",
+      "query": "眼轴增长 左眼",
+      "relevant": ["builtin_07-myopia"],
+      "constraints": {"disease": "myopia", "site": "axial_length", "laterality": "left"},
+      "expansionTerms": ["myopia", "近视"],
+      "baselineHits": ["builtin_01-normal", "builtin_05-glaucoma"],
+      "expandedHits": ["builtin_07-myopia", "builtin_01-normal"]
+    },
+    {
+      "case": "hypertension_alias",
+      "query": "动静脉交叉 双眼",
+      "relevant": ["builtin_06-hypertension"],
+      "constraints": {"disease": "hypertension", "site": "retina", "laterality": "both"},
+      "expansionTerms": ["hypertension", "高血压视网膜病变"],
+      "baselineHits": ["builtin_04-diabetes", "builtin_01-normal"],
+      "expandedHits": ["builtin_06-hypertension", "builtin_04-diabetes"]
+    },
+    {
+      "case": "ambiguous_retinopathy",
+      "query": "视网膜病变 左右眼不确定",
+      "relevant": ["builtin_04-diabetes", "builtin_06-hypertension"],
+      "constraints": {"disease": "unspecified", "site": "retina", "laterality": "unknown"},
+      "expansionTerms": [],
+      "baselineHits": ["builtin_04-diabetes", "builtin_06-hypertension", "builtin_01-normal"],
+      "expandedHits": ["builtin_04-diabetes", "builtin_06-hypertension", "builtin_01-normal", "builtin_02-amd"]
+    },
+    {
+      "case": "cross_user_isolation",
+      "query": "其他用户 私有病历 青光眼",
+      "relevant": ["builtin_05-glaucoma"],
+      "constraints": {"disease": "glaucoma", "site": "unspecified", "laterality": "unknown"},
+      "expansionTerms": ["青光眼"],
+      "baselineHits": ["builtin_05-glaucoma"],
+      "expandedHits": ["builtin_05-glaucoma"],
+      "mustNotReturn": ["user_99_upload_1"],
+      "candidateOwner": 42
+    },
+    {
+      "case": "ood_negative",
+      "query": "这张照片是不是猫",
+      "relevant": [],
+      "constraints": {"disease": "ood", "site": "unspecified", "laterality": "unknown"},
+      "expansionTerms": [],
+      "baselineHits": [],
+      "expandedHits": [],
+      "reject": "OOD"
+    },
+    {
+      "case": "quality_negative",
+      "query": "图像模糊 请重拍",
+      "relevant": [],
+      "constraints": {"disease": "quality", "site": "unspecified", "laterality": "unknown"},
+      "expansionTerms": [],
+      "baselineHits": [],
+      "expandedHits": [],
+      "reject": "QUALITY"
+    }
+  ]
+}

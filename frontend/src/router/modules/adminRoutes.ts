@@ -3,6 +3,16 @@ import ACCESS_ENUM from '@/utils/access/ACCESS_ENUM'
 
 const adminRoutes: RouteRecordRaw[] = [
   {
+    path: '/controlled-references',
+    component: () => import('@/layouts/BasicLayout.vue'),
+    children: [{
+      path: '',
+      name: '受控参考资料',
+      component: () => import('@/pages/admin/ControlledReferencesPage.vue'),
+      meta: { access: ACCESS_ENUM.EVIDENCE_MANAGER, icon: 'ReadOutlined' },
+    }],
+  },
+  {
     path: '/admin',
     name: 'adminLayout',
     component: () => import('@/layouts/AdminLayout.vue'),
@@ -61,6 +71,33 @@ const adminRoutes: RouteRecordRaw[] = [
         path: 'data-analysis',
         name: '数据分析',
         component: () => import('@/pages/admin/DataAnalysisPage.vue'),
+        meta: {
+          access: ACCESS_ENUM.ADMIN,
+          hideInMenu: true,
+        },
+      },
+      {
+        path: 'draft-test',
+        name: '四 Agent 试验台',
+        component: () => import('@/pages/admin/DraftTestPage.vue'),
+        meta: {
+          access: ACCESS_ENUM.ADMIN,
+          hideInMenu: true,
+        },
+      },
+      {
+        path: 'agent-collab',
+        name: '四 Agent 协作效果',
+        component: () => import('@/pages/admin/AgentCollabPage.vue'),
+        meta: {
+          access: ACCESS_ENUM.ADMIN,
+          hideInMenu: true,
+        },
+      },
+      {
+        path: 'agent-discussion',
+        name: '四角色会诊议事录',
+        component: () => import('@/pages/admin/DiscussionDocketPage.vue'),
         meta: {
           access: ACCESS_ENUM.ADMIN,
           hideInMenu: true,

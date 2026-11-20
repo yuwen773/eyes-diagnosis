@@ -173,7 +173,7 @@ const THEMES: Record<"dark" | "light", Record<string, string>> = {
     "--swap-tile-edge": "rgba(244, 245, 241, 0.14)",
     "--swap-tile-highlight": "rgba(255, 255, 255, 0.07)",
     "--swap-shadow":
-      "0 30px 60px -26px rgba(0, 0, 0, 0.85), 0 10px 24px -14px rgba(0, 0, 0, 0.6)",
+      "0 5px 12px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3)",
     "--swap-media-edge": "rgba(244, 245, 241, 0.08)",
     "--swap-ink": "#f0f1ed",
     "--swap-badge": "rgba(244, 245, 241, 0.07)",
@@ -184,7 +184,7 @@ const THEMES: Record<"dark" | "light", Record<string, string>> = {
     "--swap-tile-edge": "rgba(20, 23, 26, 0.12)",
     "--swap-tile-highlight": "rgba(255, 255, 255, 1)",
     "--swap-shadow":
-      "0 30px 60px -30px rgba(20, 23, 26, 0.3), 0 10px 24px -16px rgba(20, 23, 26, 0.16)",
+      "0 5px 12px rgba(20, 23, 26, 0.1), 0 2px 6px rgba(20, 23, 26, 0.08)",
     "--swap-media-edge": "rgba(20, 23, 26, 0.06)",
     "--swap-ink": "#14171a",
     "--swap-badge": "rgba(20, 23, 26, 0.05)",
@@ -360,8 +360,13 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
       const root = rootRef.current
       const stage = stageRef.current
       if (!root || !stage || !count) return undefined
-      const reduce =
-        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+      // 系统「减弱动效」开关可能在页面打开期间被切换，监听它而不是只读一次。
+      const motionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      let reduce = motionQuery?.matches ?? false
+      const onMotionPreference = () => {
+        reduce = motionQuery?.matches ?? false
+        schedule()
+      }
       const now = performance.now()
       const s0 = settingsRef.current
 
@@ -940,6 +945,7 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
       root.addEventListener("pointercancel", onUp)
       root.addEventListener("click", onClick)
       document.addEventListener("visibilitychange", onVisibility)
+      motionQuery?.addEventListener("change", onMotionPreference)
       schedule()
 
       return () => {
@@ -955,13 +961,16 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
         root.removeEventListener("pointercancel", onUp)
         root.removeEventListener("click", onClick)
         document.removeEventListener("visibilitychange", onVisibility)
+        motionQuery?.removeEventListener("change", onMotionPreference)
         apiRef.current = null
       }
     }, [count])
 
+    // refresh 会重排整副牌并重新量尺寸（fit 读布局），只在几何/动画参数变化时跑，
+    // 而不是每次渲染都跑一遍。
     useIsomorphicLayoutEffect(() => {
       apiRef.current?.refresh()
-    })
+    }, [bounds, cards, delay, autoplay, dim, draggable])
 
     const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {

@@ -26,7 +26,10 @@ public class CorsConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowCredentials(true)
                 .allowedOrigins(allowedOrigins.toArray(String[]::new))
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                // HEAD 必须显式允许：HEAD 不是 CORS 简单方法，跨域时先走预检，
+                // 预检被 allowedMethods 挡掉的话，文档阅读器的 PDF 探针（HEAD）
+                // 在跨域部署下会直接失败——同源部署碰不到这条，一换域名就踩。
+                .allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("Content-Type", "X-Requested-With", "Authorization")
                 .exposedHeaders()
                 .maxAge(3600);

@@ -70,6 +70,21 @@ function writeStoredTheme(storageKey: string, theme: Theme): void {
   }
 }
 
+/**
+ * 移动端浏览器地址栏与系统 UI 取 `theme-color`。
+ * 必须跟着应用内实际主题走（用户可能在系统浅色下选了暗色），
+ * 不能只靠 index.html 的静态值或 `prefers-color-scheme`。
+ * 色值与 tokens.css 的品牌画布保持一致：浅色 #f2f6fc / 暗色 #0b1425。
+ */
+function syncThemeColorMeta(resolved: ResolvedTheme) {
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (!meta) {
+    return
+  }
+
+  meta.setAttribute("content", resolved === "dark" ? "#0b1425" : "#f2f6fc")
+}
+
 function disableTransitionsTemporarily() {
   const style = document.createElement("style")
   style.appendChild(
@@ -149,6 +164,7 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
+      syncThemeColorMeta(resolvedTheme)
 
       if (restoreTransitions) {
         restoreTransitions()

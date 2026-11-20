@@ -85,11 +85,12 @@ export function AgentScreenDeck({ dark }: { dark: boolean }) {
               </header>
               <div className="screen__body">
                 <div className="msg">
-                  <span className="msg__role num">USER</span>
+                  {/* 说话人由气泡位置与文案本身表达，不另立「USER」眉线。 */}
                   <p className="msg__text">
                     右眼这两周看东西发暗，这张是上周拍的眼底照。
                   </p>
-                  <span className="chip num">fundus_od.jpg · 2.1 MB</span>
+                  {/* 附件是消息的一部分，不是标签：去掉药丸描边，按正文行内读数排。 */}
+                  <span className="msg__attach num">fundus_od.jpg · 2.1 MB</span>
                 </div>
                 <div className="msg msg--tool">
                   <div className="msg__call">

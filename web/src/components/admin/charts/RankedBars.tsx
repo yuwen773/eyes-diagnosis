@@ -1,154 +1,101 @@
 import type { ReactElement } from "react"
-import type { Ranked } from "@/lib/adminDomain"
-import { useMeasuredWidth } from "./useMeasuredWidth"
 import {
-  RANK_BAR_H as RB_BAR_H,
-  RANK_MIN_W as RB_MIN_W,
-  RANK_PAD_Y as RB_PAD_Y,
-  RANK_ROW_H as RB_ROW_H,
-  RANK_TICKS as RB_TICKS,
-  rankedGeometry,
-} from "./chartGeometry"
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
+
+import type { Ranked } from "@/lib/adminDomain"
 import {
   ChartView,
+  VIZ,
+  VIZ_AXIS_TICK,
+  VizTooltip,
   formatVizNumber,
   formatVizPercent,
-  rightRoundedBarPath,
-} from "./TrendChart"
-
-/* ── 排序横条几何：viewBox 把「名称带 / 刻度轨 / 数值+占比带」全部算进去，
- * 容器不裁轴。逻辑宽取容器实测宽（见 useMeasuredWidth）→ 缩放比恒为 1，
- * 名称与数值带保持设计字号，刻度轨随容器变长；行高是逻辑单位，恒为 40px。
- * 几何计算见 chartGeometry.ts（纯函数，有单测钉住）。
- * 刻度轨同构复刻 app.css 的 .scale__track / .scale__ticks 词汇（发丝轨 +
- * 无字刻度），另起 admin-viz__rank-* 命名空间，不污染全站判读页的尺子。
- * ───────────────────────────────────────────────────────────────────────── */
+  vizSeriesColor,
+} from "./ChartFrame"
 
 /**
- * 排序横条（疾病分布，饼图撤掉后的替代）：名称（--fg-2，恒在条外左侧）+
- * 刻度轨横条（--viz-accent，数据端 4px 圆角 / 基线端方角）+ 数值与占比 mono
- * （--fg）。配 ChartView 的「图 / 表」切换，占比与数值常驻读数表，不依赖 tooltip。
+ * 排序横条（病种分布、状态分布）。
  *
- * barLabelFits 不适用：本设计名称恒在条外左侧，绝不把名称放进条内，
- * 故无需守卫「条内标签放不放得下」（brief 裁定不 import，仅此说明）。
+ * <p>名称恒在条外左侧（--fg-2）；放不下时按轴宽截断（完整名称与占比在
+ * 「表」视图与 tooltip 里常驻）。数据端 4px 圆角、基线端方角（radius 只给右侧）。
  *
- * 键盘可达（选「整图 tabIndex=0」）：排序条无准线 / 逐点 tooltip，整图作单一
- * tab 站，aria-label 顺序播报全部读数，数据另由「图 / 表」读数表常驻提供；
- * hover 微亮仅为装饰，不承担读数职责。
+ * <p>饼图不用：类别多、名称长，排序横条比饼图更容易比大小，也更符合
+ * 「白色仪器」的账目读法。
  */
+/**
+ * 轴标签的字号（px）：一个全角字约占一个字号宽，半角约 0.55 个。
+ */
+const AXIS_FONT_SIZE = 12.5
+
+/** 名称折算成「全角字」的宽度。 */
+function unitWidth(text: string): number {
+  return [...text].reduce(
+    (sum, ch) => sum + (ch.charCodeAt(0) <= 0xff ? 0.55 : 1),
+    0,
+  )
+}
+
+/**
+ * 轴宽能放下多少「全角字」。
+ *
+ * <p>算的是<b>轴宽本身</b>能容下几个字，与名字自身长度无关：轴宽除以字号。
+ * 之前那版拿「名字的长度」去除像素预算，量纲不对——名字越长算出的上限越小，
+ * 于是一个 19 字的病种被砍到 6 字（明明放得下 9 个），而 9 字的反而不砍。
+ *
+ * <p>少算一个字，标签就会被 SVG 左边缘裁掉——被裁掉的是<b>字首</b>
+ * （「年龄相关性黄斑变性」变成「龄相关性黄斑变…」），恰恰是最要命的位置。
+ */
+function fitUnits(nameWidth: number): number {
+  // recharts 的 Y 轴在 'left' 位置留给文字的是 `width - tickSize(6) - tickMargin(2)`，
+  // 即 8px 的轴线与留白；预算按它算，标签才不会把首字顶出 SVG 左缘。
+  const budget = nameWidth - 8
+  return Math.max(3, Math.floor(budget / AXIS_FONT_SIZE))
+}
+
+/**
+ * 按全角单位截断，超出部分用省略号收尾（省略号自己占一格）。
+ */
+function truncateByUnits(name: string, maxUnits: number): string {
+  if (unitWidth(name) <= maxUnits) return name
+  const limit = Math.max(1, maxUnits - 1)
+  let used = 0
+  let out = ""
+  for (const ch of name) {
+    const unit = ch.charCodeAt(0) <= 0xff ? 0.55 : 1
+    if (used + unit > limit) return `${out}…`
+    used += unit
+    out += ch
+  }
+  return `${out}…`
+}
+
 export function RankedBars(props: {
   rows: Ranked[]
   ariaLabel: string
+  /** 数值列的单位后缀（如「条」） */
+  unit?: string
+  emptyText?: string
+  /** 名称列宽度：容器窄时收窄，给条形让出空间 */
+  nameWidth?: number
 }): ReactElement {
-  const { rows, ariaLabel } = props
-  const { ref: figureRef, width } = useMeasuredWidth<HTMLDivElement>(RB_MIN_W)
-
-  // 逻辑宽 = 容器实测宽：名称带 / 数值带固定，刻度轨吃掉余量。
-  // 轨道末与数值列留 48px：数值是 4~5 位 mono 数字（约 32px 宽），
-  // 只留 16px 会被最长那根条顶到数字上（数值右对齐，文字往左探）。
-  const { height, trackX0: rbTrackX0, trackX1: rbTrackX1, trackW: rbTrackW, valueX: rbValueX, shareX: rbShareX } =
-    rankedGeometry(width, rows.length)
+  const { rows, ariaLabel, unit, emptyText, nameWidth = 140 } = props
   const leading = Math.max(0, ...rows.map((row) => row.value))
-  const readout = rows
-    .map(
-      (row) =>
-        `${row.name} ${formatVizNumber(row.value)} ${formatVizPercent(row.share)}`,
-    )
-    .join("，")
-
-  const figure = (
-    <div
-      className="admin-viz__figure admin-viz__figure--static"
-      ref={figureRef}
-      tabIndex={0}
-      role="group"
-      aria-label={`${ariaLabel}，按数值降序：${readout || "暂无数据"}`}
-    >
-      <svg
-        className="admin-viz__svg"
-        viewBox={`0 0 ${width} ${height}`}
-        aria-hidden="true"
-      >
-        {rows.map((row, i) => {
-          const cy = RB_PAD_Y + i * RB_ROW_H + RB_ROW_H / 2
-          const ratio = leading > 0 ? Math.max(0, row.value) / leading : 0
-          const barW = ratio * rbTrackW
-          return (
-            <g className="admin-viz__rank-row" key={`${row.name}-${i}`}>
-              {/* 名称恒在条外左侧（--fg-2），不进条内 */}
-              <text
-                className="admin-viz__rank-name"
-                x={rbTrackX0 - 12}
-                y={cy}
-                textAnchor="end"
-                dominantBaseline="middle"
-              >
-                {row.name}
-              </text>
-
-              {/* 刻度轨：1px 实线发丝轨（--hr）+ 无字刻度（--hr-strong） */}
-              <line
-                className="admin-viz__rule"
-                x1={rbTrackX0}
-                x2={rbTrackX1}
-                y1={cy + RB_BAR_H / 2}
-                y2={cy + RB_BAR_H / 2}
-              />
-              {Array.from({ length: RB_TICKS }, (_, t) => {
-                const tx = rbTrackX0 + (t / (RB_TICKS - 1)) * rbTrackW
-                return (
-                  <line
-                    key={t}
-                    className="admin-viz__rank-tick"
-                    x1={tx}
-                    x2={tx}
-                    y1={cy - RB_BAR_H / 2}
-                    y2={cy + RB_BAR_H / 2}
-                  />
-                )
-              })}
-
-              {/* 数据条：单色 --viz-accent，数据端圆角 / 基线端方角 */}
-              <path
-                className="admin-viz__rank-fill"
-                d={rightRoundedBarPath(
-                  rbTrackX0,
-                  cy - RB_BAR_H / 2,
-                  barW,
-                  RB_BAR_H,
-                )}
-              />
-
-              {/* 数值 + 占比：均 mono、--fg，文字不穿数据色 */}
-              <text
-                className="admin-viz__rank-value num"
-                x={rbValueX}
-                y={cy}
-                textAnchor="end"
-                dominantBaseline="middle"
-              >
-                {formatVizNumber(row.value)}
-              </text>
-              <text
-                className="admin-viz__rank-share num"
-                x={rbShareX}
-                y={cy}
-                textAnchor="end"
-                dominantBaseline="middle"
-              >
-                {formatVizPercent(row.share)}
-              </text>
-            </g>
-          )
-        })}
-      </svg>
-    </div>
-  )
+  const height = Math.max(rows.length * 34 + 12, 64)
 
   return (
     <ChartView
       title={ariaLabel}
       ariaLabel={ariaLabel}
+      emptyText={emptyText}
       labelHeader="类别"
       extraHeader="占比"
       rows={rows.map((row) => ({
@@ -156,7 +103,58 @@ export function RankedBars(props: {
         value: formatVizNumber(row.value),
         extra: formatVizPercent(row.share),
       }))}
-      figure={figure}
+      figure={
+        <div className="admin-viz__chart">
+          <ResponsiveContainer width="100%" height={height}>
+            <BarChart
+              data={rows}
+              layout="vertical"
+              margin={{ top: 4, right: 64, bottom: 4, left: 0 }}
+              barCategoryGap={12}
+            >
+              <CartesianGrid horizontal={false} stroke={VIZ.rule} />
+              <XAxis
+                type="number"
+                domain={[0, leading]}
+                tick={VIZ_AXIS_TICK}
+                axisLine={{ stroke: VIZ.rule }}
+                tickLine={false}
+                allowDecimals={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={nameWidth}
+                tick={{ fill: "var(--fg-2)", fontSize: 12.5 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(name: string) => truncateByUnits(name, fitUnits(nameWidth))}
+              />
+              <Tooltip
+                content={<VizTooltip unit={unit} />}
+                cursor={{ fill: "var(--surface-2)", fillOpacity: 0.6 }}
+              />
+              <Bar
+                dataKey="value"
+                name={unit ?? "数量"}
+                radius={[0, 4, 4, 0]}
+                isAnimationActive={false}
+              >
+                {rows.map((row, index) => (
+                  <Cell key={`${row.name}-${index}`} fill={vizSeriesColor(index)} />
+                ))}
+                <LabelList
+                  dataKey="value"
+                  position="right"
+                  offset={8}
+                  className="admin-viz__bar-value"
+                  formatter={(label: unknown) => formatVizNumber(Number(label))}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      }
     />
   )
 }

@@ -8,6 +8,7 @@ import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.ListObjectsRequest;
 import com.qcloud.cos.model.ObjectListing;
+import com.qcloud.cos.model.ObjectMetadata;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
@@ -15,6 +16,10 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -56,6 +61,48 @@ public class CosManager {
     public COSObject getObject(String key) {
         GetObjectRequest getObjectRequest = new GetObjectRequest(cosClientConfig.getBucket(), key);
         return cosClient.getObject(getObjectRequest);
+    }
+
+    /**
+     * 只取对象元信息（HEAD 语义：一次往返，不下载正文）。
+     *
+     * <p>与 {@link #getObject(String)} 的区别是这里不拉对象体：探一份文档是不是
+     * PDF、有多大，只需要头部。管理端阅读器的 PDF 探针就走这条——否则每开一份
+     * 文档都会把整个文件从对象存储拉一遍，探针本身成了第二遍下载。
+     *
+     * @param key 唯一键
+     * @return 对象元信息（长度、类型等）
+     */
+    public ObjectMetadata getObjectMetadata(String key) {
+        return cosClient.getObjectMetadata(cosClientConfig.getBucket(), key);
+    }
+
+    /**
+     * 生成限时下载/预览链接。
+     *
+     * <p>对象存储里的 key 是私有的，浏览器不能直接拿着 key 取文件。管理端要预览
+     * 一份 PDF 或一份 Markdown，就得先换一条带签名、有有效期的 URL——签名过期后
+     * 链接自动作废，不会变成一把长期有效的万能钥匙。
+     *
+     * @param key        对象 key
+     * @param expiration 过期时刻
+     * @return 带签名的 URL 字符串
+     */
+    public String generatePresignedUrl(String key, Date expiration) {
+        return cosClient.generatePresignedUrl(cosClientConfig.getBucket(), key, expiration).toString();
+    }
+
+    /**
+     * 把对象下载到本地文件（管理端预览解析用）。
+     *
+     * @param key    对象 key
+     * @param target 目标文件
+     */
+    public void downloadToFile(String key, File target) throws IOException {
+        COSObject object = getObject(key);
+        try (InputStream in = object.getObjectContent()) {
+            Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**

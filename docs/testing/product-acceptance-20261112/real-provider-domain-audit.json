@@ -1,0 +1,475 @@
+{
+  "evidenceKind": "SYNTHETIC_UPSTREAM_REAL_PROVIDER",
+  "runs": [
+    {
+      "taskId": "0ca68a95-36c5-4df9-9535-5af021ac37e0",
+      "status": "RESTRICTED",
+      "stopReason": "INSUFFICIENT_EVIDENCE",
+      "callCount": "5",
+      "supplementCount": "1",
+      "rewriteCount": "1"
+    },
+    {
+      "taskId": "cb134299-d0b7-40d2-899e-4259d9ca4342",
+      "status": "RESTRICTED",
+      "stopReason": "FEEDBACK_LIMIT",
+      "callCount": "6",
+      "supplementCount": "0",
+      "rewriteCount": "1"
+    }
+  ],
+  "drafts": [
+    {
+      "taskId": "0ca68a95-36c5-4df9-9535-5af021ac37e0",
+      "version": "1",
+      "evidenceVersion": "1"
+    },
+    {
+      "taskId": "cb134299-d0b7-40d2-899e-4259d9ca4342",
+      "version": "1",
+      "evidenceVersion": "1"
+    },
+    {
+      "taskId": "cb134299-d0b7-40d2-899e-4259d9ca4342",
+      "version": "2",
+      "evidenceVersion": "1"
+    }
+  ],
+  "evidence": [
+    {
+      "taskId": "0ca68a95-36c5-4df9-9535-5af021ac37e0",
+      "version": "1",
+      "citationCount": "1"
+    },
+    {
+      "taskId": "cb134299-d0b7-40d2-899e-4259d9ca4342",
+      "version": "1",
+      "citationCount": "1"
+    }
+  ],
+  "publicEvents": [
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "2",
+      "type": "run.started",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"RUNNING\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "3",
+      "type": "agent.started",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "4",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "5",
+      "type": "evidence.verified",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "6",
+      "type": "agent.completed",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "7",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "8",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:2:CRITIC\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "9",
+      "type": "agent.completed",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "10",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:1:EVIDENCE\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "11",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "12",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:1:CRITIC\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "13",
+      "type": "agent.started",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "14",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"draftVersion\": 1, \"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "15",
+      "type": "agent.completed",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "16",
+      "type": "agent.handoff",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:3:CRITIC\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "17",
+      "type": "agent.started",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "18",
+      "type": "agent.completed",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "19",
+      "type": "agent.handoff",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 4, \"kind\": \"SUPPLEMENT_REQUESTED\", \"messageId\": \"0ca68a95-36c5-4df9-9535-5af021ac37e0:4:EVIDENCE\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "20",
+      "type": "agent.feedback.requested",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"action\": \"SUPPLEMENT\"}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "21",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 5}"
+    },
+    {
+      "runId": "9ecea340-a012-42c0-bbc2-8366f55ab329",
+      "seq": "22",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INSUFFICIENT_EVIDENCE\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "a10f7902-24fb-40cd-a954-a29ef8e2f25e",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "a10f7902-24fb-40cd-a954-a29ef8e2f25e",
+      "seq": "2",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INPUT_RESTRICTED\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "bd6161f0-1aad-4491-bf77-4cbd15c5a46f",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "bd6161f0-1aad-4491-bf77-4cbd15c5a46f",
+      "seq": "2",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"INPUT_RESTRICTED\", \"status\": \"RESTRICTED\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "1",
+      "type": "run.accepted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"ACCEPTED\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "2",
+      "type": "run.started",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"status\": \"RUNNING\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "3",
+      "type": "agent.started",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "4",
+      "type": "agent.started",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "5",
+      "type": "evidence.verified",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "6",
+      "type": "agent.completed",
+      "actor": "EVIDENCE",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 2}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "7",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:2:EXPLANATION\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "8",
+      "type": "agent.handoff",
+      "actor": "EVIDENCE",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 2, \"kind\": \"EVIDENCE_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:2:CRITIC\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "9",
+      "type": "agent.completed",
+      "actor": "VISION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 1}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "10",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EVIDENCE\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:1:EVIDENCE\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "11",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:1:EXPLANATION\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "12",
+      "type": "agent.handoff",
+      "actor": "VISION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 1, \"kind\": \"VISION_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:1:CRITIC\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "13",
+      "type": "agent.started",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "14",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"draftVersion\": 1, \"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "15",
+      "type": "agent.completed",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 3}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "16",
+      "type": "agent.handoff",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 3, \"kind\": \"DRAFT_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:3:CRITIC\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "17",
+      "type": "agent.started",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "18",
+      "type": "agent.completed",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "19",
+      "type": "agent.handoff",
+      "actor": "CRITIC",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"EXPLANATION\", \"call\": 4, \"kind\": \"REWRITE_REQUESTED\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:4:EXPLANATION\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "20",
+      "type": "agent.feedback.requested",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 4, \"action\": \"REWRITE\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "21",
+      "type": "agent.started",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 5}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "22",
+      "type": "agent.revision.completed",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"draftVersion\": 2, \"evidenceVersion\": 1}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "23",
+      "type": "agent.completed",
+      "actor": "EXPLANATION",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 5}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "24",
+      "type": "agent.handoff",
+      "actor": "EXPLANATION",
+      "visibility": "CLINICIAN",
+      "payloadJson": "{\"to\": \"CRITIC\", \"call\": 5, \"kind\": \"DRAFT_READY\", \"messageId\": \"cb134299-d0b7-40d2-899e-4259d9ca4342:5:CRITIC\"}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "25",
+      "type": "agent.started",
+      "actor": "CRITIC",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"call\": 6}"
+    },
+    {
+      "runId": "fd5aa930-2827-4fae-b7cc-d626547e4ae4",
+      "seq": "26",
+      "type": "run.restricted",
+      "actor": "COORDINATOR",
+      "visibility": "PATIENT",
+      "payloadJson": "{\"reason\": \"FEEDBACK_LIMIT\", \"status\": \"RESTRICTED\"}"
+    }
+  ],
+  "sideEffects": [
+    {
+      "reviewCount": "0",
+      "authorizationCount": "0",
+      "diagnosisCount": "0"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "when": "2026-11-18T14:55:18.693Z",
+  "base": "http://localhost:4173",
+  "viewports": [
+    {
+      "viewport": "390",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "phone",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "390",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "phone",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "820",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "tablet",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "820",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "tablet",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "1920",
+      "theme": "light",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    },
+    {
+      "viewport": "1920",
+      "theme": "dark",
+      "mode": "settled",
+      "breakpoint": "wide",
+      "drawsDuringSettleWindow": 0,
+      "overflowX": 0,
+      "failedRequests": 0,
+      "hasCanvas": true,
+      "hasOpticsSvg": true,
+      "title": "VISION,REIMAGINED.看见更多，理解更深。",
+      "cta": [
+        "探索影像分析",
+        "探索 AI 协作"
+      ],
+      "hasCard": true,
+      "entryCount": 3
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "id": 1,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 2,
+    "role": "VISION",
+    "validJson": true,
+    "topLevelKeys": [
+      "summary",
+      "limitations",
+      "reanalysisSuggestion"
+    ]
+  },
+  {
+    "id": 3,
+    "role": "EXPLANATION",
+    "validJson": true,
+    "topLevelKeys": [
+      "evidenceVersion",
+      "claims"
+    ]
+  },
+  {
+    "id": 4,
+    "role": "CRITIC",
+    "validJson": true,
+    "topLevelKeys": [
+      "action",
+      "objections"
+    ],
+    "action": "SUPPLEMENT",
+    "objections": [
+      {
+        "target": "claim:c1",
+        "reason": "The claim states the finding is 'unsupported by visual evidence' which is an inference; the direct fact is that the image quality score is 0, making any visual evidence assessment impossible rather than just unsupported."
+      },
+      {
+        "target": "claim:c4",
+        "reason": "The phrase 'total uncertainty' is an overconfident characterization of the statistical state; while reliability is zero, the model did output a specific probability distribution, and 'total uncertainty' implies a lack of any output data rather than invalid input data."
+      },
+      {
+        "target": "evidence:0",
+        "reason": "The cited excerpt 'Synthetic glaucoma follow-up requires an eye examination' does not substantiate the specific technical claims regarding image quality scores, calibration status, or acquisition failure described in claims c1 through c6."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 6,
+    "role": "VISION",
+    "validJson": true,
+    "topLevelKeys": [
+      "summary",
+      "limitations",
+      "reanalysisSuggestion"
+    ]
+  },
+  {
+    "id": 7,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  },
+  {
+    "id": 8,
+    "role": "EXPLANATION",
+    "validJson": true,
+    "topLevelKeys": [
+      "evidenceVersion",
+      "claims"
+    ]
+  },
+  {
+    "id": 9,
+    "role": "CRITIC",
+    "validJson": true,
+    "topLevelKeys": [
+      "action",
+      "objections"
+    ],
+    "action": "SUPPLEMENT",
+    "objections": [
+      {
+        "target": "claim:c1",
+        "reason": "The claim states the prediction is based on 'submitted image data' without explicitly noting that the quality score of 0 indicates the data was insufficient for valid feature extraction, making the basis of the prediction technically void."
+      },
+      {
+        "target": "claim:c2",
+        "reason": "The citation 'Synthetic glaucoma follow-up requires an eye examination' does not provide evidence regarding image quality scores or assessment failure; the link between the evidence and the specific risk of invalidity due to quality score 0 is unsupported by the provided excerpt."
+      },
+      {
+        "target": "claim:c4",
+        "reason": "The excerpt provided does not contain information about probability calibration or the specific meaning of the 70.0% value; citing it to support the claim about uncalibrated probabilities is an unsupported connection."
+      },
+      {
+        "target": "claim:c5",
+        "reason": "The cited excerpt mentions 'synthetic glaucoma follow-up' but does not explicitly state that the model version limits applicability to real-world scenarios; this interpretation is an overreach of the provided text."
+      },
+      {
+        "target": "claim:c6",
+        "reason": "While the claim correctly identifies the zero quality score as a limitation, the supporting quote regarding 'eye examination' does not technically substantiate the mechanism of 'preventing reliable feature extraction'; the evidence does not match the specific technical assertion."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "role": "EVIDENCE",
+    "validJson": true,
+    "topLevelKeys": [
+      "query"
+    ]
+  }
+]

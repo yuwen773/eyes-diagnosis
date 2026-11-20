@@ -1,0 +1,139 @@
+Iris R1.1 verification manifest - 2026-11-15
+Development product SHA: 747656f196ac1729b430b1bbd84f6fe9ae6fc302
+Development final test SHA: 2dc6820f486ca80e77e98c96bbc5ff713b7674a5
+Integration Java verification SHA: c2815fcdbc1af593daec1dd1ea79ce3c28482303
+Integration final code/test SHA: e4e13aadb9673a85cc494d75cff9d9b94001b360
+Overall verdict: REQUEST_CHANGES; historical Graph silent interval causality OPEN.
+
+Runtime: Java21.0.7, native isolated MySQL8.0.26 + Redis7.4, UTC JVM/DB.
+Full Boot external model/grpc/storage replacements; loopback Chroma collection-initialization fixture only.
+No real providers, patient data, push, merge or deployment.
+
+Command groups:
+Tools RED: mvn -o test -Dtest=ToolStepConcurrencyTest (3 old-implementation failures)
+Image RED: mvn -o test -Dtest=DiagnosisAgentImageReferenceTest (2 old-implementation failures)
+Lifecycle RED: mvn -o test -Dtest=GraphExecutionTest (32 originals PASS; new deletion test FAIL)
+Clock RED: mvn -o test -Dtest=GraphExecutionTest#databaseLeaseSurvivesHostClockSkew (2 failures at unchanged original await)
+Claim RED: fastClockCompetitorCannotStealLiveDatabaseLease (only old claim comparison restored temporarily; expected0 got4)
+Final complete: mvn -o test (ci + GRAPH_EXECUTION_TEST_URL); backend-unit skip gate PASS
+Isolates: verify.sh pass3 class selection; all12 exact-count gate PASS
+Browser: collaboration.spec.ts + ui-freeze-regression.spec.ts (31), production default-off (1)
+Real Java browser: collaboration-backend.spec.ts + collaboration-safety.spec.ts --workers=1 (5)
+
+Raw remediation target/r11-runtime/ logs (SHA256, bytes, final summaries):
+
+r11-red-tools.log SHA256=29a55f1e23dffe89e85604794368dbf5b3d51abb06e33f3daf3ec4598bae310c bytes=10806
+[ERROR] Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.299 s <<< FAILURE! -- in com.csust.eyediagnosis.agent.ToolStepConcurrencyTest
+[ERROR]   ToolStepConcurrencyTest.duplicateStartAndFinishCannotReopenACompletedCall:74 expected: <[running, succeeded]> but was: <[running, succeeded, succeeded, running, cancelled]>
+[ERROR]   ToolStepConcurrencyTest.lateAndDuplicateResultsCannotAcquireASecondTerminalState:62 expected: <[running, cancelled]> but was: <[running, cancelled, succeeded, failed, running]>
+[ERROR]   ToolStepConcurrencyTest.overlappingCompletionsDeliverEveryAuditedFrameInOrder:47 expected: <[one:running, two:running, one:succeeded, two:succeeded]> but was: <[one:running, two:running, one:succeeded]>
+[ERROR] Tests run: 3, Failures: 3, Errors: 0, Skipped: 0
+
+r11-red-images.log SHA256=6459d2ce98bd79fbeef9b61fe3a847e04d39ae427af7868de6a40b7fe4e4d23a bytes=11186
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 9.994 s <<< FAILURE! -- in com.csust.eyediagnosis.agent.DiagnosisAgentImageReferenceTest
+[ERROR]   DiagnosisAgentImageReferenceTest.actualUploadUrlBecomesRegisteredObjectIdBeforeModelAndToolBoundary:82 [<image-analysis>https://fixture.invalid/agent-chat/42/e7fe02f9-a153-4187-be73-fb99a8b12866.png</image-analysis>
+[ERROR]   DiagnosisAgentImageReferenceTest.untrustedCrossUserMissingAndDeletedReferencesNeverReachModelOrStorageRead:94 https://attacker.invalid/agent-chat/42/f31d271e-9a99-48c3-a704-6a03807e6b02.png ==> Expected com.csust.eyediagnosis.exception.BusinessException to be thrown, but nothing was thrown.
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
+
+graph-red.log SHA256=cdfa23190ee0e9734d4c943e40060dbd00d6ef0cb38b823c886007b95229aadb bytes=39816
+[ERROR] Tests run: 33, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 119.0 s <<< FAILURE! -- in com.csust.eyediagnosis.collaboration.GraphExecutionTest
+[ERROR]   GraphExecutionTest.deletedChatClosesLiveDeliveryButPreservesAuditAndBackgroundRun:439->fault:133 Expected com.csust.eyediagnosis.collaboration.CollaborationRunService.Fault to be thrown, but nothing was thrown.
+[ERROR] Tests run: 33, Failures: 1, Errors: 0, Skipped: 0
+
+heartbeat-repeat.log SHA256=f951db80ba41c7475cafb5c195e59f8c477a34b0b18a6074284c024766cc0003 bytes=1197
+HEARTBEAT_PROBE 7 PASS
+HEARTBEAT_PROBE 8 PASS
+HEARTBEAT_PROBE 9 PASS
+HEARTBEAT_PROBE 10 PASS
+HEARTBEAT_PROBE 11 PASS
+
+heartbeat-skew-red.log SHA256=cdec66e1a1e2e8749f055143e1fe40c511840145ee82754d039fe5a5576cf4e5 bytes=24888
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 26.30 s <<< FAILURE! -- in com.csust.eyediagnosis.collaboration.GraphExecutionTest
+[ERROR]   GraphExecutionTest.databaseLeaseSurvivesHostClockSkew:468->heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders:477->await:129 Bounded condition did not become true ==> expected: <true> but was: <false>
+[ERROR]   GraphExecutionTest.databaseLeaseSurvivesHostClockSkew:468->heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders:477->await:129 Bounded condition did not become true ==> expected: <true> but was: <false>
+[ERROR] Tests run: 2, Failures: 2, Errors: 0, Skipped: 0
+
+heartbeat-skew-green.log SHA256=4b9bff729927547797f5db722b3b2fad5ce1d587c0137eab724fe1a8fbcc9ffa bytes=6549
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.84 s -- in com.csust.eyediagnosis.collaboration.GraphExecutionTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+
+fast-claim-red.log SHA256=47c01851f0431e3c1dcf19430bc5d6803038dabd7894ed68a53bb9680c438d80 bytes=13456
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 4.425 s <<< FAILURE! -- in com.csust.eyediagnosis.collaboration.GraphExecutionTest
+[ERROR]   GraphExecutionTest.fastClockCompetitorCannotStealLiveDatabaseLease:462 A fast host clock cannot steal a database-live lease ==> expected: <0> but was: <4>
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+
+pass1-accepted.log SHA256=489b8bdb4cde9c1610dd750dc405e83cb1cf5afe69c8d554e68d0bdf80f2e3d6 bytes=376366
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.033 s -- in com.csust.eyediagnosis.upload.state.UploadCompensationServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.csust.eyediagnosis.upload.state.UploadStateMachineTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.csust.eyediagnosis.upload.state.UploadStatusTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.csust.eyediagnosis.utils.DateRangesTest
+[WARNING] Tests run: 610, Failures: 0, Errors: 0, Skipped: 301
+
+pass1-skip-gate.log SHA256=aff514178166152be99703d83865c58710ae91ccb74b704f7f62101f03568f76 bytes=1947
+skip gate failed: com.csust.eyediagnosis.migration.FlywayMySqlIntegrationTest: no Surefire report
+skip gate failed: com.csust.eyediagnosis.agent.service.ToolAuditMySqlIntegrationTest: no Surefire report
+skip gate failed: com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest: no Surefire report
+
+pass2-accepted.log SHA256=3007cc33cfee31909fe6f107baf97f1c29690eb30c2bbc22c4d7d5362f76205d bytes=42226
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.509 s -- in com.csust.eyediagnosis.agent.service.ToolAuditMySqlIntegrationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.296 s -- in com.csust.eyediagnosis.migration.FlywayMySqlIntegrationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.233 s -- in com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+
+pass2-skip-gate.log SHA256=c3a1c7d3963d219f43b466ddc702476f4b5c9c007a457adf9866225071fc8b19 bytes=336
+skip gate passed: no unexpected skipped or dropped tests
+
+pass3-accepted.log SHA256=0a4c999678ad0d2cd99939e880a0825d94f27e9b9b87e886dff9ec24800774e4 bytes=1298008
+[INFO] Tests run: 41, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 31.01 s -- in com.csust.eyediagnosis.patientdraft.PatientDraftTest
+[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 33.25 s -- in com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest
+[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 45.02 s -- in com.csust.eyediagnosis.patientfollowup.PatientFollowUpApiTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 75.62 s -- in com.csust.eyediagnosis.poc.CoordinationMySqlTest
+[INFO] Tests run: 301, Failures: 0, Errors: 0, Skipped: 0
+
+pass3-all-gate.log SHA256=72c8ed09a88dc19bafcc4f4e89ee9bb2a11d96f23163dcf7624187af9e4c3ee3 bytes=1100
+skip gate passed: no unexpected skipped or dropped tests
+
+complete-graph-app.log SHA256=98469fffcb93bef69ee6342791f10ac45a0d361a0b959569afc6bd0907f94b94 bytes=399769
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.csust.eyediagnosis.upload.state.UploadStateMachineTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.csust.eyediagnosis.upload.state.UploadStatusTest
+[WARNING] Tests run: 3, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 0.004 s -- in com.csust.eyediagnosis.upload.state.UploadTaskMapperMySqlIntegrationTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.csust.eyediagnosis.utils.DateRangesTest
+[WARNING] Tests run: 617, Failures: 0, Errors: 0, Skipped: 272
+
+complete-skip-gate.log SHA256=aa0822ca831be4669c647ff27356eddb0745408ca1a07f7aed379acf95ba1e43 bytes=2036
+skip gate passed: no unexpected skipped or dropped tests
+
+web-tests.log SHA256=654d88b44caeadecd67df0dfd70d9b0355a2e9db04d6630e5fefdb6f4a62a21f bytes=3134
+ Test Files  66 passed (66)
+      Tests  636 passed (636)
+
+web-build.log SHA256=0199bb11e26c7dbbe848a097dde30f3b0d7962596608d4fa232088a35a60e3db bytes=16247
+
+browser.log SHA256=99c7b89962d96daea849da25f750beedae9ecc78724758378bd24d827816ace5 bytes=4397
+  31 passed (5.7m)
+
+default-off.log SHA256=0c8c0e0d03085dff9852db8af1629daefd433b8e270ad9edfd72f1b4a636185f bytes=378
+  1 passed (3.2s)
+
+doctor-browser.log SHA256=2337cbb95d1933b3d093776d5efdd30642317c70e2ef57ac8f5389f4276751e9 bytes=107
+Doctor frozen Vision browser assertions PASS; synthetic image denial is intentional; no providers called.
+
+browser-backend.log SHA256=3fc35019dc4d7e2badb133f7681f631b8b7bc96e41fd223eb8da82b900cbdddf bytes=6882
+
+browser-backend-final.log SHA256=e873c6e6c489bf69214ca371cb11c31cc58832f3e70d3a20adc534cf81629d0f bytes=1059
+  5 passed (29.4s)
+
+Complete-invocation key Surefire reports:
+agent.ToolStepConcurrencyTest: tests=5, failures=0, errors=0, skipped=0
+agent.DiagnosisAgentImageReferenceTest: tests=2, failures=0, errors=0, skipped=0
+collaboration.GraphExecutionTest: tests=36, failures=0, errors=0, skipped=0
+integration.FullApplicationAcceptanceTest: tests=7, failures=0, errors=0, skipped=0
+EyeDiagnosisApplicationTests: tests=1, failures=0, errors=0, skipped=0
+config.SameOriginFilterTest: tests=10, failures=0, errors=0, skipped=0
+
+First pass1 skip gate FAILED because verify.sh excludes Flyway suites; final full invocation includes their expected skipped reports and gate PASSED.
+Old real-browser attempt 2FAIL/3NOTRUN entered obsolete chat route; final corrected tests5PASS, timeouts unchanged.
+Docker scripts/verify.sh FAILED starting first Redis: Docker Desktop is unable to start. Native equivalents are separate evidence.
+Exploratory overlapping-Maven class-scan run discarded; accepted invocations sequential per worktree.
+Cleanup: local test services stopped. Recursive deletion of stopped target/r11-runtime/mysql rejected twice by automatic safety policy (blocked by policy), directory retained without bypass.
+Docker Desktop normal stop also timed out (context deadline exceeded); native test ports are closed, Desktop processes were not force-killed.

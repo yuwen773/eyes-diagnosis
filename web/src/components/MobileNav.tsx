@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { ShieldCheck } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSession } from "@/lib/session"
-import { NAV_LINKS } from "./SiteHeader"
+import { NAV_LINKS } from "./shell/navLinks"
 
 /**
  * 移动端导航。顶栏收成一个汉堡按钮，点开是左侧滑入的窄抽屉；
@@ -56,6 +57,9 @@ export function MobileNav() {
   }
 
   const authed = status === "authed" && user
+  // 与 AccountMenu 同一条角色判断：窄屏把顶栏账号区收进抽屉后，/admin
+  // 不能跟着消失。这里只补管理员入口，不改任何服务端的业务权限。
+  const isAdmin = authed && user.userRole === "admin"
 
   return (
     <>
@@ -88,6 +92,7 @@ export function MobileNav() {
         role="dialog"
         aria-modal="true"
         aria-label="主导航"
+        aria-hidden={!open}
         data-open={open ? "true" : "false"}
         inert={!open}
         onKeyDown={trap}
@@ -112,6 +117,7 @@ export function MobileNav() {
               className="drawer__link"
               onClick={() => setOpen(false)}
             >
+              <item.icon size={15} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
             </Link>
           ))}
@@ -126,8 +132,18 @@ export function MobileNav() {
                 个人中心
               </Link>
               <Link to="/records" className="drawer__link" onClick={() => setOpen(false)}>
-                诊断记录
+                判读记录
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="drawer__link"
+                  onClick={() => setOpen(false)}
+                >
+                  <ShieldCheck size={15} strokeWidth={1.75} aria-hidden="true" />
+                  系统管理
+                </Link>
+              )}
               <button
                 type="button"
                 className="drawer__link"

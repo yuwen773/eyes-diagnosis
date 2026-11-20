@@ -10,3 +10,21 @@ Navigation、验证命令、设计真源都读它，本文只补 Codex 侧的环
 - Maven / Java 验证用 JDK 21：`C:\Users\yuwen\.jdks\corretto-21.0.7`。
   新 shell 里设 `JAVA_HOME` 指向它即可（POSIX shell：`JAVA_HOME=<path> mvn ...`）。
   后端全量验证直接跑 `scripts/verify.sh`，它自带 JDK 路径、一次性 MySQL 8 + Redis 与 ci profile。
+
+## Java 21 Runtime
+
+Use the installed JDK 21 at `C:\Users\yuwen\.jdks\corretto-21.0.7` for all Maven and Java validation. Bash shell (Git Bash) must use MSYS-style paths — a `C:/...` `JAVA_HOME` breaks `PATH` parsing:
+
+```bash
+export JAVA_HOME="/c/Users/yuwen/.jdks/corretto-21.0.7"
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+## Worktree shell guard
+
+Worktree-isolated sessions reject any Bash command whose text cannot be statically shown to stay inside this worktree. Commands refused include `docker ... SELECT ...`, `powershell`, `git -C <other-checkout>`, runtime-computed `sed`/`cd`, and commands whose name is a shell variable. Use one plain command per call with literal paths; for read-only checks of another branch use `git show <branch>:<path>` instead of `cd`.
+
+Shell state does not persist between Bash tool calls, but the **primary working
+directory does**: a `cd frontend` updates it for later calls, so subsequent
+commands with relative paths resolve under `frontend/`. Prefer absolute paths
+in tool arguments, or re-`cd` inside each invocation.

@@ -1,5 +1,10 @@
 import { uploadAgentImage } from "./api"
 import {
+  ACCEPTED_IMAGE_TYPES,
+  UPLOAD_LIMIT_BYTES,
+  exceedsUploadLimit,
+} from "./uploadLimits"
+import {
   acquireAgentImage,
   releaseAgentImage,
   retainAgentImage,
@@ -7,20 +12,26 @@ import {
 
 const inFlight = new Map<string, Promise<string>>()
 
-/** 单张图片上限 10MB。 */
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024
-
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|heic|tiff?)$/i
-
 /**
- * 只放行图片、且不超过大小上限。
- * 部分浏览器剪贴板不给 MIME 类型，此时按扩展名兜底。
+ * 单张图片上限沿用服务端真值（`AgentImageUploadService.MAX_SIZE` = 2 MB）。
+ * 前端曾写 10 MB，用户能选 3 MB 的图，上传到服务端才被拒——本地就该拦。
  */
+export const MAX_IMAGE_SIZE = UPLOAD_LIMIT_BYTES
+
+/** 服务端只收 jpeg / png；扩展名兜底同样只认这两种。 */
+const IMAGE_EXT = /\.(png|jpe?g)$/i
+
+function isAcceptedImage(file: File): boolean {
+  if (file.type) {
+    return ACCEPTED_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_IMAGE_TYPES)[number])
+  }
+  // 部分浏览器剪贴板不给 MIME 类型，此时按扩展名兜底。
+  return IMAGE_EXT.test(file.name)
+}
+
+/** 只放行服务端接受的图片类型，且不超过大小上限。 */
 export function filterImageFiles(files: File[]): File[] {
-  return files.filter((f) => {
-    const isImage = f.type.startsWith("image/") || (!f.type && IMAGE_EXT.test(f.name))
-    return isImage && f.size <= MAX_IMAGE_SIZE
-  })
+  return files.filter((f) => isAcceptedImage(f) && !exceedsUploadLimit(f.size))
 }
 
 /**
@@ -71,12 +82,26 @@ export function createAgentUploader() {
     }
   }
 
-  /** 消息未送达：释放持有权，无人持有时删除对象 */
+  /** 消息明确被拒（未登录 / 无权限）：释放持有权，无人持有时删除对象 */
   function commitFailure(urls: string[]) {
     for (const url of urls) {
       releaseAgentImage(url)
     }
   }
 
-  return { uploadFiles, commitSuccess, commitFailure }
+  /**
+   * 发送结果未知：按「可能已被引用」处理，**不删**。
+   *
+   * <p>请求可能已经到了服务端并落库，只是响应没回来。删掉一张被消息引用的
+   * 图片不可逆（历史记录里留着一条打不开的图）；多留的对象虽然也要人工清理
+   * ——`agent-chat/` 有对账，但 {@code PERSISTED} 状态的任务仍在活跃集合里，
+   * 对账不会回收它——两害相权选那个还能查回来的。与后端 C-12 同一取舍。
+   */
+  function commitUnknown(urls: string[]) {
+    for (const url of urls) {
+      retainAgentImage(url)
+    }
+  }
+
+  return { uploadFiles, commitSuccess, commitFailure, commitUnknown }
 }

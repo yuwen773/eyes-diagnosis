@@ -1,0 +1,18 @@
+{
+  "browser": "Chrome/157.0.8103.39",
+  "checks": [
+    "Administrator page loads real task list",
+    "Real REVIEW_READY task renders four lanes and persisted addressed messages with valid times",
+    "Replay starts through a visible control",
+    "390px dark layout has no horizontal document overflow",
+    "All three views clicked with the same actual task",
+    "Actual invalid-citation task remains visibly restricted",
+    "Replay/view switching preserved call counts 3 and 4"
+  ],
+  "uncaughtExceptions": [],
+  "modelCalls": [
+    3,
+    4
+  ],
+  "mode": "real local backend; two authorized synthetic model runs"
+}

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AUTH_EXPIRED_EVENT, getLoginUser, getSessions, streamChat } from "./api"
+import { applyStreamEvent, clearAllLoading, type StreamMessage } from "./agentStream"
 
 let calls: number
 let codes: number[]
@@ -75,5 +76,137 @@ describe("未登录处理", () => {
 
     expect(calls).toBe(1)
     expect(codes).toEqual([40101])
+  })
+  it("SSE 收到 200 + text/event-stream 时回调 onAccepted（受理信号）", async () => {
+    // 这条钉住发射点本身：把 api.ts 里的 onAccepted?.() 删掉，本用例必须红。
+    let onAcceptedCalls = 0
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "text/event-stream" }),
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('event: done\ndata: \n\n'))
+            controller.close()
+          },
+        }),
+      }),
+    )
+
+    await streamChat({ message: "你好", threadId: "t-1" }, {
+      onEvent: () => {},
+      onDone: () => {},
+      onError: () => {},
+      onAccepted: () => { onAcceptedCalls += 1 },
+    }, new AbortController().signal)
+
+    expect(onAcceptedCalls).toBe(1)
+  })
+
+  it("SSE 回的是 JSON 信封时不回调 onAccepted——请求根本没被受理", async () => {
+    let onAcceptedCalls = 0
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ code: 40101, data: null, msg: "会话标识或用户为空" }),
+        text: async () => JSON.stringify({ code: 40101 }),
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+        onAccepted: () => { onAcceptedCalls += 1 },
+      }, new AbortController().signal),
+    ).rejects.toThrow()
+
+    expect(onAcceptedCalls).toBe(0)
+  })
+
+  it("SSE 端点回的是错误状态 + 认证信封时也广播未登录（与协作 SSE 同一口径）", async () => {
+    // 错误响应体同样要解析：只看 HTTP 状态会让 401/403 的信封静默失效。
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ code: 40100, data: null, msg: "未登录" }),
+        text: async () => JSON.stringify({ code: 40100, data: null, msg: "未登录" }),
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+      }, new AbortController().signal),
+    ).rejects.toThrow()
+
+    expect(calls).toBe(1)
+    expect(codes).toEqual([40100])
+  })
+
+  it("SSE 端点回的是非 JSON 错误体时按 HTTP 状态失败，不广播未登录", async () => {
+    // 代理错误页不是 JSON：既不能当成流继续读，也不能冒充成未登录。
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        headers: new Headers({ "content-type": "text/html" }),
+        json: async () => {
+          throw new SyntaxError("Unexpected token '<'")
+        },
+        text: async () => "<html>502</html>",
+      }),
+    )
+
+    await expect(
+      streamChat({ message: "你好", threadId: "t-1" }, {
+        onEvent: () => {},
+        onDone: () => {},
+        onError: () => {},
+      }, new AbortController().signal),
+    ).rejects.toThrow(/502/)
+
+    expect(calls).toBe(0)
+  })
+})
+
+describe("普通聊天 SSE 可选字段契约", () => {
+  it.each([true, false])("旧字段显式 null / 省略均可消费：null=%s", async (explicitNull) => {
+    const empty = explicitNull ? { content: null, toolCalls: null } : {}
+    const frames = [
+      explicitNull ? { ...empty, messageType: null } : {},
+      { ...empty, messageType: "assistant" },
+      { messageType: "assistant", content: "安全回复" },
+      { ...empty, messageType: "tool-request" },
+    ]
+    const wire = frames.map((frame) => `data: ${JSON.stringify(frame)}\n\n`).join("")
+      + "event: done\ndata: {}\n\n"
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(wire, {
+      headers: { "content-type": "text/event-stream" },
+    })))
+    let messages: StreamMessage[] = []
+    const onDone = vi.fn(() => { messages = clearAllLoading(messages) })
+    const onError = vi.fn()
+    await streamChat({ message: "你好", threadId: "synthetic" }, {
+      onEvent(dto) { messages = applyStreamEvent(messages, dto) },
+      onDone,
+      onError,
+    }, new AbortController().signal)
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toMatchObject({ type: "assistant", content: "安全回复", isLoading: false })
+    expect(onDone).toHaveBeenCalledOnce()
+    expect(onError).not.toHaveBeenCalled()
   })
 })

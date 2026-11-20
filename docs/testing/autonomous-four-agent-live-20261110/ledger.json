@@ -1,0 +1,24 @@
+{
+  "maxTasks": 2,
+  "maxCalls": 16,
+  "tasks": [
+    {
+      "taskId": "9ef45c3a-4b2a-4991-aedf-765f2690cad4",
+      "label": "other",
+      "triggered": true,
+      "status": "RESTRICTED",
+      "stopReason": "INVALID_CITATION",
+      "calls": 3,
+      "elapsedMs": "8188"
+    },
+    {
+      "taskId": "b8d71767-a020-4dc3-b010-b37e4857ad2f",
+      "label": "glaucoma",
+      "triggered": true,
+      "status": "REVIEW_READY",
+      "stopReason": null,
+      "calls": 4,
+      "elapsedMs": "10569"
+    }
+  ]
+}

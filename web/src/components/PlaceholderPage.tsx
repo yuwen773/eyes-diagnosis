@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { SectionHead } from "./SectionHead"
 import { SiteFooter } from "./SiteFooter"
-import { SiteHeader } from "./SiteHeader"
+import { ProductHeader } from "./shell/ProductHeader"
 
 export type PlaceholderPageProps = {
   /** 章节号或代号，出现在章节头左侧。 */
@@ -30,7 +30,7 @@ export function PlaceholderPage({
 }: PlaceholderPageProps) {
   return (
     <div className="is-field">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap placeholder">
         <SectionHead code={code} kicker={kicker} en={en} />

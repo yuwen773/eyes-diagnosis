@@ -120,7 +120,23 @@ python run_mcp_server.py
 - 推理缓存仅在图片哈希、模型版本、权重 SHA-256、预处理版本和安全策略版本全部一致时复用；并发写入采用原子 UPSERT。
 - 当前 OOD 状态为 `NOT_EVALUATED`，不表示图片已被确认属于训练分布。
 - 当前温度配置为 `1.0` 且状态为 `NOT_CALIBRATED`；界面显示的是模型置信分数，不是诊断可靠性或医学结论。
-- 数据库升级使用 Flyway。现有已应用 V8 的数据库在升级前须遵循 [Flyway 迁移历史计划](docs/flyway-migration-history-plan.md)。
+- 数据库升级使用 Flyway，当前迁移到 **V27**（V18–V27 为 Java 线协作与草稿链路）。已应用迁移的数据库升级前须遵循 [Flyway 迁移矩阵](docs/architecture/migration-matrix.md)；已应用的迁移脚本不得再修改。
+
+## 🧪 验证与 CI 门禁
+
+CI 定义在 `.github/workflows/verify.yml`。本地复现：
+
+| 检查 | 命令 | 说明 |
+|---|---|---|
+| 前端类型检查 + 构建 | `cd frontend && npm run build` | 包含 `vue-tsc` |
+| 前端测试 | `cd frontend && npm run test -- --run` | Vitest |
+| 前端 lint 棘轮 | `cd frontend && npm run lint:check` | 只拦新增违规；`npm run lint:baseline` 重生成基线 |
+| 门禁自测 | `python3 -m unittest discover -s scripts/tests -p "test_check_*.py"` | 报告门禁的单测 |
+| 跳过检查 | `python3 scripts/check_surefire_skips.py target/surefire-reports backend-unit` | 契约见脚本内的 `CONTRACTS`；可选 `issue17` / `flyway` |
+| #17 报告门禁 | `python3 scripts/check_issue17_reports.py target/surefire-reports` | 要求三个套件全跑且用例数精确 |
+| 架构文档契约 | `python3 scripts/check_design_doc.py` | 契约在 `docs/plans/design-doc-contract.json`；改动文档后用 `--update` 重生成 |
+
+Maven 的 `Assumptions` 跳过会让 `mvn test` 显示 **BUILD SUCCESS**，所以 `backend-unit` 单独跑跳过门禁；契约里记录每个 opt-in 套件的精确用例数，新增或删除用例都要同步改契约。设计文档的结构性检查同理，见 [docs/subagent-delegation.md](docs/subagent-delegation.md)。
 
 ## 🩺 核心功能详解
 
@@ -173,10 +189,13 @@ python run_mcp_server.py
 |---|------------|----------|------|
 | 1 | `UserController` | `/api/user/*` | 用户认证、信息管理、CRUD |
 | 2 | `DiagnosisController` | `/api/diagnosis/*` | 图像上传、诊断推理、记录查询 |
-| 3 | `AgentController` | `/api/agent/*` | SSE 流式对话、会话管理、Agent 能力 |
-| 4 | `McpServerController` | `/api/mcp/*` | MCP 服务器配置与管理 |
-| 5 | `KnowledgeBaseController` | `/api/knowledge/*` | 知识库文档上传、索引与检索 |
-| 6 | `NewsController` | `/api/news/*` | 健康资讯内容管理 |
+| 3 | `DiagnosisTaskController` | `/api/diagnosis-tasks/*` | 患者图片分析任务：提交、幂等重放、安全状态查询 |
+| 4 | `AgentController` | `/api/agent/*` | SSE 流式对话、会话管理、Agent 能力 |
+| 5 | `McpServerController` | `/api/mcp-server/*` | MCP 服务器配置与管理 |
+| 6 | `KnowledgeBaseController` | `/api/knowledge/*` | 知识库文档上传、索引与检索 |
+| 7 | `NewsController` | `/api/news/*` | 健康资讯内容管理 |
+
+任务入口与普通诊断相互独立，不创建正式诊断记录、不向患者展示预测；契约见 [docs/diagnosis-task.md](docs/diagnosis-task.md)。
 
 ## 🗄 数据库设计
 
@@ -184,10 +203,11 @@ python run_mcp_server.py
 
 MySQL 数据库名 `diagnosis`，schema 以 `src/main/resources/db/migration/` 下的 Flyway 迁移脚本为唯一权威来源（新库基线表由 `src/main/resources/db/callback/` 提供），应用启动时自动执行；已应用的迁移脚本不得再修改。
 
-**以 `t_user` 为中心的 7 张核心表**（均为 `1:N` 一对多关系）：
+**核心表**（Flyway 迁移为唯一权威来源）：
 
 - `t_user` — 用户
-- `t_diagnosis` — 诊断记录
+- `t_diagnosis` — 正式诊断记录
+- `t_diagnosis_task` — 患者图片分析任务（V10；租约协调、幂等键、安全状态；不等于正式诊断记录）
 - `t_agent_session` / `t_agent_message` — Agent 会话与消息
 - `t_mcp_server` — MCP 服务器配置
 - `t_knowledge_document` — 知识库文档
@@ -200,7 +220,7 @@ eye-diagnosis/
 ├── src/                    # Java 后端（Spring Boot）
 │   └── main/java/com/csust/eyediagnosis/
 │       ├── agent/          # AI Agent 系统（ReactAgent、MCP、RAG、工具）
-│       ├── controller/     # REST 控制器（6 个）
+│       ├── controller/     # REST 控制器（7 个）
 │       ├── service/        # 业务逻辑层
 │       ├── mapper/         # MyBatis Plus 数据访问层
 │       ├── model/          # 实体、DTO、VO、枚举

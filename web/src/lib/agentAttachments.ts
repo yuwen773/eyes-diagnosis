@@ -6,6 +6,8 @@
  * 这里把 url 随文件一起存，删除按 id 走，天然不错位。
  */
 
+import { newId } from "./id"
+
 export type Attachment = {
   id: string
   name: string
@@ -13,11 +15,6 @@ export type Attachment = {
   /** 原文件——发送时要用，预览 URL 只用于显示。 */
   file: File
 }
-
-const newId = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
 /** 追加文件，url 由调用方注入（createObjectURL）。 */
 export function addFiles(

@@ -1,0 +1,15 @@
+{
+  "sealedAt": "2026-11-11T17:56:18.315134+00:00",
+  "hardLimit": 32,
+  "spentRequests": 11,
+  "experimentClosed": true,
+  "automaticRetries": 0,
+  "ledgerSha256": "8a81c5b730871e99c2f822a6ac07d08f19e48dfae819f1426e8b8bf071a923ff",
+  "preregistrationSha256": "70362cff4103d2fc0d071ba30b602a22a84a433693c52ac79d8281b4399b70d5",
+  "restartForbidden": true,
+  "allHttp200": true,
+  "providerTimeouts": 0,
+  "providerFailures": 0,
+  "normalReadyCells": 0,
+  "plannedNormalCells": 2
+}

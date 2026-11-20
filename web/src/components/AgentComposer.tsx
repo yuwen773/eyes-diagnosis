@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import type { ClipboardEvent, KeyboardEvent } from "react"
+import { ArrowRight, ArrowUp, CirclePlus, ImagePlus } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { BRAND_BLUE_DARK, BRAND_BLUE_LIGHT } from "@/lib/brandPalette"
 import { ElectricBorder } from "@/components/ElectricBorder"
 import { saveDraft } from "@/lib/agentDraft"
 import { useSession } from "@/lib/session"
@@ -9,7 +11,7 @@ import { useSession } from "@/lib/session"
 const MAX_HEIGHT = 132
 
 /**
- * 落地页的问诊输入框：电流边框包着一条真输入。
+ * 落地页的问诊输入框：品牌蓝玻璃边缘光包着一条真输入。
  *
  * 提交不是「假演示」：文字存进 agentDraft，跳到 /agent，真实输入框挂载时
  * 会自动把草稿取回来。图片没法跨页传递，所以附件按钮直接带人去 Agent 页，
@@ -53,8 +55,10 @@ export function AgentComposer({ dark }: { dark: boolean }) {
   return (
     <div className="composer">
       <ElectricBorder
-        color={dark ? "#e2622b" : "#d9541f"}
-        glowColor={dark ? "#e2622b" : "#d9541f"}
+        /* 首页是 Brand 场景：光标跟随的边框走钴蓝 / 冰蓝，
+           不再用信号橙——橙色只留给临床重点态（DESIGN §3.4）。 */
+        color={dark ? BRAND_BLUE_DARK : BRAND_BLUE_LIGHT}
+        glowColor={dark ? BRAND_BLUE_DARK : BRAND_BLUE_LIGHT}
         theme={dark ? "dark" : "light"}
         borderRadius={22}
         thickness={1.9}
@@ -104,37 +108,12 @@ export function AgentComposer({ dark }: { dark: boolean }) {
                 navigate("/agent")
               }}
             >
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
+              <ImagePlus size={19} strokeWidth={1.8} aria-hidden="true" />
             </button>
 
             <span className="composer__mode num">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3v18M3 12h18" />
-              </svg>
-              全面诊断
+              <CirclePlus size={13} strokeWidth={2} aria-hidden="true" />
+              影像与知识库检索
             </span>
 
             <span className="composer__spacer" />
@@ -146,20 +125,7 @@ export function AgentComposer({ dark }: { dark: boolean }) {
               disabled={text.trim().length === 0}
               onClick={submit}
             >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="12" y1="19" x2="12" y2="5" />
-                <polyline points="5 12 12 5 19 12" />
-              </svg>
+              <ArrowUp size={17} strokeWidth={2.2} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -170,7 +136,8 @@ export function AgentComposer({ dark }: { dark: boolean }) {
           {hint || "ENTER 发送 · SHIFT+ENTER 换行"}
         </p>
         <p className="small composer__note">
-          Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。
+          Agent 不确诊、不开处方；涉及用药与手术，一律建议到眼科门诊。发送后进入
+          Agent 页，由你的账号发起真实会话。
         </p>
         <Link
           to="/agent"
@@ -179,7 +146,7 @@ export function AgentComposer({ dark }: { dark: boolean }) {
           data-cursor-label="诊断 Agent"
         >
           {status === "authed" ? "进入完整诊断 Agent" : "登录后体验诊断 Agent"}
-          <span className="link__mark">→</span>
+          <ArrowRight className="link__mark" size={14} strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
     </div>

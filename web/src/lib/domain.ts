@@ -1,4 +1,5 @@
 import type { DiagnosisResult } from "@/lib/api"
+import { formatLocalDateTime } from "@/lib/time"
 
 export type Risk = "normal" | "attention" | "critical" | "unknown"
 
@@ -18,12 +19,153 @@ const CODE_BY_NAME: Record<string, string> = Object.fromEntries(
   CLASSES.map((item) => [item.name, item.code]),
 )
 
+/**
+ * 别名 → 规范类名。
+ *
+ * <p>真实判读响应里同一个类别会以三种写法出现：
+ * 算法侧的英文标签（`diabetes`）、后端枚举的中文短名（`糖尿病`）、
+ * 以及记录纸用的规范名（`糖尿病视网膜病变`）。三处不统一的话，
+ * 记录纸的概率表会出现英文行、「—」短码，以及主诊断被列两遍。
+ *
+ * <p>这里的别名表是**前端展示口径**，不新增也不修改后端契约：
+ * 后端给什么，前端都要归到 `CLASSES` 里的同一类；实在认不出的原样显示，不猜。
+ */
+const CLASS_ALIASES: Record<string, string> = {
+  // 算法侧英文标签
+  normal: "正常",
+  amd: "年龄相关性黄斑变性",
+  cataract: "白内障",
+  diabetes: "糖尿病视网膜病变",
+  glaucoma: "青光眼",
+  hypertension: "高血压性视网膜病变",
+  myopia: "病理性近视",
+  other: "其他",
+  // 后端枚举的中文短名
+  糖尿病: "糖尿病视网膜病变",
+  高血压: "高血压性视网膜病变",
+  近视: "病理性近视",
+}
+
+/**
+ * 把任意写法的类别名归到 `CLASSES` 里的规范名。
+ *
+ * @returns 规范类名；认不出时返回 `null`（调用方按「未知类别」处理，不猜）。
+ */
+export function canonicalClassName(name?: string): string | null {
+  if (!name) return null
+  const trimmed = name.trim()
+  if (!trimmed) return null
+
+  const alias = CLASS_ALIASES[trimmed.toLowerCase()]
+  if (alias) return alias
+  if (CODE_BY_NAME[trimmed]) return trimmed
+
+  // 「疑似糖尿病视网膜病变」「糖尿病视网膜病变（DR）」这类带修饰的写法。
+  const hit = CLASSES.find((item) => trimmed.includes(item.name) || item.name.includes(trimmed))
+  return hit?.name ?? null
+}
+
 export function classCode(name?: string) {
   if (!name) return "—"
   const exact = CODE_BY_NAME[name]
   if (exact) return exact
-  const hit = CLASSES.find((item) => name.includes(item.name) || item.name.includes(name))
-  return hit?.code ?? "—"
+  const canonical = canonicalClassName(name)
+  if (canonical) return CODE_BY_NAME[canonical] ?? "—"
+  return "—"
+}
+
+/** 规范名 → 库内原始标签（后端落库值）。 */
+const CLASS_SEARCH_LABELS: Record<string, string> = {
+  正常: "正常",
+  年龄相关性黄斑变性: "年龄相关性黄斑变性",
+  白内障: "白内障",
+  糖尿病视网膜病变: "糖尿病",
+  青光眼: "青光眼",
+  高血压性视网膜病变: "高血压",
+  病理性近视: "近视",
+  其他: "其他",
+}
+
+/**
+ * 输入 → 命中的规范类名（按别名表 + 子串关系）。
+ *
+ * <p>子串匹配让「病理性」这类只写一半的输入也能落到一个类上；
+ * 命中多个时（`视网膜病变` 同时是 DR 与 HR 的子串）返回多个，
+ * 由调用方决定怎么提示——后端只在 `result` 一列上做 LIKE，覆盖不了多值。
+ */
+export function classSearchMatches(name?: string): string[] {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return []
+  const alias = CLASS_ALIASES[trimmed.toLowerCase()]
+  if (alias) return [alias]
+  if (CODE_BY_NAME[trimmed]) return [trimmed]
+  return CLASSES.filter(
+    (item) => trimmed.includes(item.name) || item.name.includes(trimmed),
+  ).map((item) => item.name)
+}
+
+/**
+ * 库里可能出现的**原值集合**：后端枚举的中文短名 ∪ 算法侧的英文标签。
+ *
+ * <p>不是所有落库值都走 `getChineseLabelByEnglishLabel`：历史数据里有直接写
+ * 英文标签的行（本机 3306 实存一条 `result='myopia'`）。这些值照抄进筛选框
+ * 本来就查得到，换算成另一个标签反而把这一类行查丢。
+ */
+const STORED_LABELS = new Set<string>([
+  ...Object.values(CLASS_SEARCH_LABELS),
+  ...Object.keys(CLASS_ALIASES),
+])
+
+/**
+ * 输入 → 库内原始标签（检索用）。
+ *
+ * <p>后端 `DiagnosisCategoryEnum` 落库的是短名，与前端规范名有三处不同：
+ * 糖尿病 / 高血压 / 近视。管理端的筛选最终落到后端
+ * `queryWrapper.like("result", …)`——按库内原值模糊匹配，**不认规范名**。
+ * 用户在列表里看到的是规范名，照抄进筛选框会一条都查不到。
+ *
+ * <p>两种情况原样透传，不换算：
+ * <ol>
+ *   <li>输入**本身就是库内原值**（中文短名或英文标签）——换算会把这一类行查丢；</li>
+ *   <li>命中多个规范类——后端单列 LIKE 一次覆盖不了，宁可原样检索，
+ *       也不静默只查其中一个（界面会提示命中的候选类别）。</li>
+ * </ol>
+ *
+ * @param name 用户输入；命中唯一规范名时返回库内标签，否则返回 `null`（原样检索）。
+ */
+export function classSearchLabel(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  // 输入已经是库内原值：原样透传（英文标签 'myopia' 换算成 '近视' 就查不到那一行）。
+  if (STORED_LABELS.has(trimmed) || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return trimmed
+  }
+  const matches = classSearchMatches(name)
+  if (matches.length !== 1) return null
+  return CLASS_SEARCH_LABELS[matches[0]] ?? null
+}
+
+/** 检索口径提示：换算对照、命中歧义，都要写在脸上。 */
+export function classSearchHint(name?: string): string | null {
+  const trimmed = name?.trim() ?? ""
+  if (!trimmed) return null
+  const matches = classSearchMatches(trimmed)
+  if (matches.length === 0) return null
+  if (matches.length > 1) {
+    // 多命中：原样透传给后端（LIKE 可能同时命中多类），把候选写出来供人挑。
+    return `「${trimmed}」可能命中 ${matches.length} 个类别：${matches.join(" / ")} · 可补全类别名缩小范围`
+  }
+  const canonical = matches[0]
+  const label = CLASS_SEARCH_LABELS[canonical]
+  if (!label) return null
+  // 输入本身就是库内原值（例：糖尿病 / myopia）：不换算，只告诉它属于哪一类。
+  if (label === trimmed || STORED_LABELS.has(trimmed.toLowerCase())) {
+    return canonical === trimmed ? null : canonical
+  }
+  if (label === canonical) return null
+  return canonical === trimmed
+    ? `${canonical} → ${label}`
+    : `「${trimmed}」→ ${canonical}（库内：${label}）`
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -31,45 +173,226 @@ const SEVERITY_LABEL: Record<string, string> = {
   mild: "轻度",
   moderate: "中度",
   severe: "严重",
+  // 人工严重程度用另一组值（管理端下拉写入的就是这一组）。此前这里没有它们，
+  // 患者端记录纸会把「high」原样显示出来——同一字段两种语言。
+  low: "低风险",
+  medium: "中风险",
+  high: "高风险",
   NOT_ASSESSED: "未评估",
 }
 
 export function severityLabel(severity?: string) {
   if (!severity) return "未评估"
-  return SEVERITY_LABEL[severity] ?? severity
+  // 大小写不敏感：人工严重程度既有 "high"（管理端下拉写入），也可能出现
+  // "MODERATE" 这类大写写法；查不到就原样返回，绝不吞掉未知取值。
+  return (
+    SEVERITY_LABEL[severity] ??
+    SEVERITY_LABEL[severity.toUpperCase()] ??
+    SEVERITY_LABEL[severity.toLowerCase()] ??
+    severity
+  )
 }
 
 export function severityRisk(severity?: string): Risk {
-  switch (severity) {
-    case "normal":
+  // 与 severityLabel 同样大小写不敏感，避免 "HIGH" 落到 unknown。
+  const key = severity?.toUpperCase()
+  switch (key) {
+    case "NORMAL":
       return "normal"
-    case "mild":
-    case "moderate":
+    case "MILD":
+    case "LOW":
+    case "MODERATE":
+    case "MEDIUM":
       return "attention"
-    case "severe":
+    case "SEVERE":
+    case "HIGH":
       return "critical"
     default:
       return "unknown"
   }
 }
 
-/** 复核状态 → 展示文案与风险色。 */
-export function reviewState(status?: string): { label: string; risk: Risk } {
+/**
+ * 人工复核状态 → 展示文案与风险色。
+ *
+ * <p>取值来自后端 {@code HumanReviewStatus}（PENDING_AI / AI_ONLY / AWAITING_REVIEW /
+ * REVIEWED / OVERRIDDEN）。三条不能混的说法：
+ *
+ * <ul>
+ *   <li>AI_ONLY = **只有 AI 结论，没有进入复核队列**。以前这里统一显示「待复核」，
+ *       等于替系统承诺了一件没发生的事：队列里根本没有这条。</li>
+ *   <li>AWAITING_REVIEW 才是真的进了队列。</li>
+ *   <li>REVIEWED 只说明**有人做过人工复核**，不说明那个人是医生——本系统从来没有
+ *       核验过任何临床资质（D-01b）。{@code source.reviewerRole} 只是账号角色，
+ *       而且账号角色可以被管理员随时改派，用它当资质证明等于把角色当资历。</li>
+ * </ul>
+ *
+ * <p>因此 REVIEWED 一律带「资质未核验」，**不看** reviewerRole：历史复核多是管理员
+ * 写的，`doctor` 也只是账号上的一个字符串。
+ */
+export function humanReviewState(status?: string | null): { label: string; risk: Risk } {
   switch (status) {
-    case "APPROVED":
-      return { label: "已签字", risk: "normal" }
-    case "REJECTED":
-      return { label: "已退回", risk: "critical" }
-    case "PENDING":
-      return { label: "待复核", risk: "attention" }
     case "PENDING_AI":
+      return { label: "待模型出结论", risk: "unknown" }
+    case "AI_ONLY":
+      return { label: "仅 AI 结论 · 未进入复核队列", risk: "unknown" }
+    case "AWAITING_REVIEW":
+      return { label: "已进入复核队列 · 待复核", risk: "attention" }
+    case "REVIEWED":
+      return { label: "人工复核已记录 · 资质未核验", risk: "attention" }
+    case "OVERRIDDEN":
+      return { label: "人工结论已推翻 AI", risk: "attention" }
     default:
-      return { label: "待复核", risk: "attention" }
+      return { label: "未记录", risk: "unknown" }
   }
 }
 
 /**
- * 置信度分档。
+ * 记录来源 → 展示文案。
+ *
+ * <p>只陈述「这条记录挂在哪个流程上」：`COLLABORATION_DRAFT` 说明它由协作草稿生成，
+ * **不**说明草稿已获批、患者已授权——那两件事分别看 `draftReviewState` 与
+ * `authorizationState`。把它们折叠成一句「已授权诊断」就是在编事实。
+ */
+export function recordSourceLabel(source?: string | null): string {
+  switch (source) {
+    case "DIRECT":
+      return "本人上传 · 直接判读"
+    case "COLLABORATION_DRAFT":
+      return "协作任务 · 由草稿生成"
+    default:
+      return "未记录"
+  }
+}
+
+/** 协作草稿审核状态 → 文案。无关联草稿返回 null（调用方整行不显示）。 */
+export function draftReviewLabel(state?: string | null): string | null {
+  switch (state) {
+    case "APPROVED":
+      return "草稿已审核通过"
+    case "REJECTED":
+      return "草稿被退回"
+    case "PENDING":
+      return "草稿待审核"
+    default:
+      return null
+  }
+}
+
+/**
+ * 授权时间 → 展示文本。
+ *
+ * <p>后端下发的是 **ISO-8601 UTC**（`2026-11-17T14:10:00Z`）。这里转成本地时间
+ * 并**把时区写出来**：只写「2026-11-17 22:10」会让读者按自己的时区去猜，
+ * 差 8 小时是常事。
+ *
+ * <p>历史数据是 `2026-11-17 22:10:00.0` 这种**没有时区标注**的字面量——
+ * 那种值判定不出是哪个时区的几点，就原样回读并标明「未标注时区」，
+ * 不替它猜一个偏移。
+ */
+export function formatAuthorizedAt(value?: string | null): string | null {
+  if (!value) return null
+  const raw = value.trim()
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)
+  if (!hasZone) return `${raw}（未标注时区）`
+  const parsed = new Date(raw)
+  if (Number.isNaN(parsed.getTime())) return `${raw}（时间无法解析）`
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZoneName: "short",
+    }).format(parsed)
+  } catch {
+    return parsed.toISOString()
+  }
+}
+
+/**
+ * 患者授权保存 → 文案。授权**不等于**临床人工复核，也不等于草稿获批。
+ *
+ * <p>回执只给前缀：完整回执是否对本人开放是产品决策，前端不补全也不展示全文。
+ */
+export function authorizationLabel(
+  state?: string | null,
+  authorizedAt?: string | null,
+  receipt?: string | null,
+): string {
+  switch (state) {
+    case "APPROVED": {
+      const when = authorizedAt ? ` · ${formatAuthorizedAt(authorizedAt) ?? authorizedAt}` : ""
+      const code = receipt ? ` · 回执 ${receipt}` : ""
+      return `患者已授权保存${when}${code}`
+    }
+    case "OFFERED":
+      return "已向患者提出，待授权"
+    case "EXPIRED":
+      return "授权已过期"
+    default:
+      return "无授权记录"
+  }
+}
+
+/**
+ * 授权细节按最小权限被隐去时的文案。
+ *
+ * <p>与「无授权记录」是两件事：这里说的是**不给看**，不是**没有**。
+ * 说成「无授权记录」就是在替系统陈述一件它没核实过的事。
+ */
+export function authorizationRestrictedLabel(): string {
+  return "授权详情按最小权限不展示"
+}
+
+/**
+ * 影像归档状态 → 文案。
+ *
+ * <p>刻意不用「有没有公开 URL」代替：协作影像按隐私策略不提供公开地址，
+ * 但对象**确实归档了**，把它显示成「未保存」就是在说一件不成立的事。
+ * `ARCHIVED` 也只说「记录里有这个地址」，本轮没有存储侧存在性探测。
+ */
+export function archivalLabel(state?: string | null): string {
+  switch (state) {
+    case "ARCHIVED":
+      return "已归档 · 有公开地址"
+    case "ARCHIVED_NOT_PUBLIC":
+      return "已归档 · 按隐私策略不公开"
+    case "NOT_ARCHIVED":
+      return "未留存影像"
+    default:
+      return "归档状态无法确认"
+  }
+}
+
+/**
+ * 复核人角色 → 文案（D-01b）。
+ *
+ * <p>**只说账号角色，不说职称**：系统里没有可核验的执业资质数据源，
+ * 把 `admin` 的操作写成「医生复核」是伪造医学事实。角色本身也照原码给出，
+ * 便于核对。
+ */
+export function reviewerRoleLabel(role?: string | null): string {
+  switch (role) {
+    case "doctor":
+      return "医生（doctor）"
+    case "admin":
+      return "管理员（admin）"
+    case "user":
+      return "普通用户（user）"
+    case null:
+    case undefined:
+    case "":
+      return "未记录"
+    default:
+      return role
+  }
+}
+
+/**
  *
  * 三档，不把 0.4 与 0.6 折叠成同一个标签：患者看到「低置信」时无从判断该多担心，
  * 两档折叠等于把风险信息直接丢掉。阈值沿用 0.75 / 0.60（低于 0.6 不宜单独下结论）。
@@ -118,7 +441,13 @@ export type RankedClass = {
   benign: boolean
 }
 
-/** 主诊断 + 其他诊断合成按概率排序的八类分布。 */
+/**
+ * 主诊断 + 其他诊断合成按概率排序的类别分布。
+ *
+ * <p>真实响应里 `result` 是后端给的中文名，`otherDisease` 是算法给的英文标签，
+ * 而且 top-1 会同时出现在两边——不归一就会把同一类列两遍、并且混进英文行。
+ * 这里先归一到规范类名，再按类去重（同一类取概率大的那个），最后排序。
+ */
 export function rankClasses(result?: DiagnosisResult): RankedClass[] {
   if (!result) return []
 
@@ -140,10 +469,21 @@ export function rankClasses(result?: DiagnosisResult): RankedClass[] {
     })
   }
 
-  rows.sort((a, b) => b.probability - a.probability)
-  const highest = rows[0]?.probability ?? 0
+  // 同一类只留一行：取概率大的那条，别把主诊断列两遍。
+  const merged = new Map<string, { name: string; probability: number }>()
+  for (const row of rows) {
+    const key = canonicalClassName(row.name) ?? row.name.trim()
+    const hit = merged.get(key)
+    if (!hit || row.probability > hit.probability) {
+      merged.set(key, { name: key, probability: row.probability })
+    }
+  }
 
-  return rows.map((row) => ({
+  const list = [...merged.values()]
+  list.sort((a, b) => b.probability - a.probability)
+  const highest = list[0]?.probability ?? 0
+
+  return list.map((row) => ({
     code: classCode(row.name),
     name: row.name,
     probability: row.probability,
@@ -187,13 +527,8 @@ export const TRIAGE_FALLBACK =
 
 export function formatTimestamp(value?: string) {
   if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
-    `${pad(date.getHours())}:${pad(date.getMinutes())}`
-  )
+  // 统一走 parseApiDate：新 API 是带偏移的 ISO，旧 API 的无偏移字符串按 UTC 解析。
+  return formatLocalDateTime(value) || value
 }
 
 /** 权重指纹在记录纸上只留首尾，保持可核对又不喧宾夺主。 */

@@ -1,11 +1,14 @@
 /**
  * Iris · 设计令牌
  * ---------------------------------------------
- * 方向：白色仪器（The White Instrument）
+ * 方向：Iris 2.0 · Adaptive Visual System（见根 DESIGN.md）。
  *
- * 不用影像做视觉，靠三样东西撑住：极端的字号对比、贯穿全页的发丝线、
- * 以及仪器读数一样的等宽数字。彩色只出现在两处——
- * 风险语义，和唯一一个强调色（信号橙），其余一律墨色。
+ * 一套品牌身份，四种表达强度：Brand（钴蓝 + 银蓝光学）/ Management（管理紫）/
+ * Intelligence（运行态蓝青）/ Clinical（骨白仪器台 + 墨色）。
+ * 三套语义色互不顶替：--signal 管当前态、--brand-* 管品牌身份、--risk-* 管
+ * 医学严重度。骨白与等宽读数仍是 Clinical 场景的底色，不再是全站默认。
+ *
+ * 本文件仍是令牌真源；DESIGN.md 是目标规范，两者冲突时以这里为准。
  */
 
 :root {
@@ -30,6 +33,17 @@
   --line: var(--paper-line);
   --line-strong: var(--paper-line-strong);
 
+  /* 上下文别名的根级兜底：语境类（.is-field / .is-sheet / .is-dark）之外的
+     固定层组件（例如挂在 App 根部的故障浮条）也能拿到墨色与发丝线，
+     不会因为 var(--hr) 未定义而整条 border 声明失效。 */
+  /* --bg 也在其中：::selection 的 color 用的是它，根级没有语境类时不能为空。 */
+  --bg: var(--field);
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --fg-3: var(--ink-3);
+  --hr: var(--line);
+  --hr-strong: var(--line-strong);
+
   /* ── 唯一的强调色：信号橙（纸面原语 + 上下文别名）── */
   --paper-signal: #d9541f;
   --signal: var(--paper-signal);
@@ -49,6 +63,20 @@
   --risk-attention-lit: #cf9a37;
   --risk-critical-lit: #d96153;
 
+  /* ── 通用破坏性操作（数据删除）────────────────────
+     与医学严重度 --risk-* 分开：删除一个会话不是临床风险。
+     玫瑰红取另一条色相，不与 --risk-critical 的砖红同值；
+     只用于「删除」这类不可逆的数据动作，不用于医学提示。
+     纸面原语 + 上下文别名：纸面上的删除红不随主题翻转，暗主题用 lit 变体。 */
+  --paper-danger: #b4374a;
+  --paper-danger-soft: rgba(180, 55, 74, 0.1);
+  --danger: var(--paper-danger);
+  --danger-soft: var(--paper-danger-soft);
+  --danger-lit: #ff9aa6;
+  /* 破坏性按钮上的文字色。暗主题的 --danger 是提亮版（粉），压白字只有
+     1.9:1，所以这一项要跟着主题翻：浅主题压白，暗主题压深墨。 */
+  --danger-fg: #ffffff;
+
   /* ── 反相带（全页只有一段）──────────────────── */
   --dark: #161a18;
   --on-dark: #f4f5f1;
@@ -66,6 +94,10 @@
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong",
     "SimSun", Georgia, serif;
   --font-display: "Instrument Serif", "Noto Serif SC", Georgia, serif;
+  /* Iris 2.0 品牌/UI 主字体：拉丁字形用 Manrope，中文按字形回退到 Noto Sans SC
+     （Manrope 没有汉字，别指望它兜底）。 */
+  --font-brand: "Manrope Variable", "Manrope", "Noto Sans SC", "PingFang SC",
+    "Microsoft YaHei", system-ui, sans-serif;
   --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI",
     system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "Cascadia Mono",
@@ -74,16 +106,175 @@
   /* ── 版心与节奏 ─────────────────────────────── */
   --maxw: 1240px;
   --gutter: 40px;
-  --nav-h: 64px;
+  --nav-h: 80px;
 
   /* ── 动效 ──────────────────────────────────── */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --fast: 140ms var(--ease);
-  --base: 240ms var(--ease);
+  --motion-fast: 140ms;
+  --motion-base: 240ms;
+  --motion-slow: 420ms;
+  --fast: var(--motion-fast) var(--ease);
+  --base: var(--motion-base) var(--ease);
+
+  /* ── 圆角梯（A 档临床默认 0；B 档浮层 2–8；C 档品牌面板 8–12）── */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  /* 中间档与微圆角：数值沿用既有实现，只是不再让各处写自由像素。
+     panel 是大面板（介于 lg 与 xl 之间）；chip / hair 给芯片、按钮与微控件。 */
+  --radius-panel: 22px;
+  --radius-panel-sm: 18px;
+  --radius-field: 11px;
+  --radius-chip: 9px;
+  --radius-chip-sm: 7px;
+  --radius-chip-xs: 5px;
+  --radius-hair: 3px;
+  --radius-hair-sm: 2px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+  /* 品牌层专用（C 档）：大容器与大圆角卡片。临床页不用这两档。 */
+  --radius-xl: 24px;
+  --radius-2xl: 38px;
+
+  /* ── 深度（一律墨色，不用纯黑）──────────────── */
+  --shadow-overlay: 0 10px 26px rgba(20, 23, 26, 0.09);
+  --shadow-modal: 0 22px 46px -32px rgba(20, 23, 26, 0.55);
+
+  /* ── 滚动条（app.css 的全局规则消费）──────────────────────
+     轨道透明，滑块是从 --fg 派生的胶囊：浅色 / 深色 / 暗房 / 管理端
+     各自换色，不需要每个容器再写一份。12px 是 Windows 经典滚动条的
+     收窄值，滑块再用 3px 透明描边收成 6px 可见截面。 */
+  --scrollbar-size: 12px;
+  --scrollbar-thumb-mix: 30%;
+  --scrollbar-thumb-mix-hover: 52%;
+  --scrollbar-track: transparent;
+
+  /* ── Iris 2.0 管理端 · Purple Medical SaaS（DESIGN.md §2.2）─────────────
+     管理端独立的语义令牌：紫色承担管理品牌、主操作、当前导航、精选强调与
+     图表强调；医学严重度仍走 --risk-*，复核/拒识语义照旧——紫不冒充风险。
+     全部色值经 tokens.contrast.test.ts 实测锁定（文字 ≥ 4.5:1、图形 ≥ 3:1），
+     且与 --risk-* 六个值互不相同。圆角沿用既有令牌梯（8–12px），不另立像素。 */
+  --admin-canvas: #f4f1fa; /* 管理端页面底：浅紫灰 */
+  --admin-surface: #ffffff; /* 卡片 / 表格 / 图表容器 */
+  --admin-surface-deep: #ece7f6; /* 次级抬升 / 嵌入容器 */
+  --admin-sidebar: #f8f5fd; /* 侧栏表面：比画布浅半档的紫白 */
+  --admin-text: #211b33; /* 紫墨正文 */
+  --admin-text-muted: #5d5670;
+  --admin-text-faint: #69617e;
+  --admin-line: rgba(72, 49, 141, 0.14);
+  --admin-line-strong: rgba(72, 49, 141, 0.3);
+  --admin-primary: #6d28d9; /* 管理紫：主操作、当前导航文字 */
+  --admin-primary-strong: #5b21b6; /* hover / active 压深一档 */
+  --admin-on-primary: #ffffff; /* 压在管理紫上的文字（7.10:1） */
+  --admin-primary-soft: rgba(109, 40, 217, 0.09); /* 当前导航底、精选卡淡紫衬 */
+  --admin-accent: #7c3aed; /* 图表强调 / 指示条：亮一档的管理紫 */
+  --admin-shadow: 0 6px 22px rgba(61, 44, 105, 0.12);
+  --admin-shadow-overlay: 0 14px 34px rgba(61, 44, 105, 0.16);
+
+  /* ── 管理端 · 表面材质（Iris 2.1，DESIGN.md §2.2）─────────────
+     管理端的卡片改走「柔和阴影 + 更轻的发丝描边」：层级靠影深与留白
+     立起来，不靠一圈硬描边撑着。圆角给管理端作用域令牌（18px 主要卡片 /
+     20px 重点卡 / 10px 控件），**不改全局 --radius-lg**——品牌层与
+     临床层继续用 8–12px 的旧梯，两边互不影响。 */
+  --admin-line-soft: rgba(72, 49, 141, 0.1); /* 卡片描边：比分隔线更轻 */
+  --admin-shadow-card: 0 1px 2px rgba(61, 44, 105, 0.04),
+    0 14px 32px -22px rgba(61, 44, 105, 0.38);
+  --admin-radius-control: 10px; /* 按钮 / 输入 / 段控 */
+  --admin-radius-card: 18px; /* 主要卡片、表格、图表容器 */
+  --admin-radius-card-lg: 20px; /* 重点卡（待复核）与大容器 */
+
+  /* 画布氛围：极低对比、静态的品牌紫晕。只做背景层，不参与任何
+     前景对比度判定——实测最坏情况下 --admin-text-faint 仍有 4.6:1
+     （tokens.contrast.test.ts 里锁住这条）。 */
+  --admin-ambient: color-mix(in srgb, var(--admin-accent) 7%, transparent);
+
+  /* ── Iris 2.0 品牌层（§3.9；C 档用）──────────────
+     品牌色与医学语义色是两套东西：--risk-* 只表示病情（正常/注意/危急），
+     --brand-* 只表示品牌与信息层。两者不互相顶替，也不共用同一枚色值。
+     令牌定义在根级，任何上下文都能取；`.iris2` 只是「品牌面」的语境类。 */
+  --brand-canvas: #f2f6fc;
+  --brand-surface: #ffffff;
+  --brand-text: #16233a;
+  --brand-muted: #5b6b82;
+  --brand-primary: #2457c9; /* 钴蓝：主 CTA、链接、当前态 */
+  --brand-primary-fg: #ffffff; /* 压在钴蓝上的文字 */
+  --brand-cyan: #006f82; /* 光学材质里的冷调高光 */
+  --brand-aurora: #6b56c5; /* 极光紫：只做局部点缀 */
+  --brand-spark: #2e8bdd;
+  --brand-line: rgba(22, 35, 58, 0.12);
+  --brand-line-strong: rgba(22, 35, 58, 0.28);
+  --brand-outline: rgba(38, 76, 136, 0.12);
+  --brand-glass: rgba(255, 255, 255, 0.68);
+  --brand-glass-strong: rgba(255, 255, 255, 0.84);
+  --brand-hairline: rgba(255, 255, 255, 0.79);
+  --brand-soft: rgba(9, 43, 110, 0.08);
+  --brand-shadow: 0 20px 54px rgba(51, 84, 143, 0.09);
+
+  /* ── 品牌材质 · 五种（DESIGN.md §2.1.1）─────────────────
+     「统一」不等于所有面板用同一个 blur：导航要稳、信息卡要透、
+     入口卡要轻、页脚要实。每种材质 = 底色 + 描边 + 内侧高光 + 模糊强度。
+     --brand-glass-optical-* 给 WebGL 渲染器与边缘高光用；其余四种由 CSS 消费。 */
+  --brand-glass-optical-tint: #2f6fc9;
+  --brand-glass-optical-edge: rgba(255, 255, 255, 0.92);
+
+  --brand-glass-frosted: rgba(255, 255, 255, 0.62);
+  --brand-glass-frosted-edge: rgba(255, 255, 255, 0.82);
+  --brand-glass-frosted-inner: rgba(255, 255, 255, 0.5);
+  --brand-glass-frosted-blur: 18px;
+
+  --brand-glass-layered: rgba(255, 255, 255, 0.7);
+  --brand-glass-layered-edge: rgba(255, 255, 255, 0.86);
+  --brand-glass-layered-inner: rgba(255, 255, 255, 0.58);
+  --brand-glass-layered-blur: 22px;
+
+  --brand-glass-soft: rgba(255, 255, 255, 0.55);
+  --brand-glass-soft-edge: rgba(22, 35, 58, 0.12);
+  --brand-glass-soft-inner: rgba(255, 255, 255, 0.4);
+  --brand-glass-soft-blur: 10px;
+
+  /* 不支持 backdrop-filter 时的静态替代：提高不透明度、保留描边与内侧高光。
+     不能让玻璃塌成一块灰，也不能让它变成完全透明的空气。 */
+  --brand-glass-fallback: rgba(252, 253, 255, 0.94);
+
+  /* 深海蓝实体品牌面：页脚与承载大量文字的区域，可读性优先于材质。 */
+  --brand-surface-deep: #0a1a33;
+  --brand-surface-deep-2: #102646;
+  --brand-deep-text: #eaf2ff;
+  --brand-deep-muted: #9fb3cf;
+  --brand-deep-line: rgba(190, 220, 255, 0.16);
+  --brand-deep-hairline: rgba(190, 220, 255, 0.26);
+  /* 信号橙在深底上的提亮版：深底不随主题翻转，所以这组值也固定。
+     只用于深海蓝实体面上的印章等点缀，不改写 --signal 本身。 */
+  --brand-deep-signal: #ef7a45;
+  --brand-deep-signal-text: #ffa07a;
+
+  /* ── 深色浮层遮罩（图片预览一类）──────────────
+     遮罩本身就是深色蒙版，不随主题翻转，所以这一族不分 Light/Dark。
+     压在照片或深色画布上的小角标也走这里，避免各页面各写一套黑。 */
+  --brand-scrim: rgba(6, 12, 24, 0.82);
+  --brand-scrim-fg: #ffffff;
+  --brand-scrim-fg-2: #dbe7fb;
+  --brand-scrim-line: rgba(255, 255, 255, 0.28);
+  --brand-scrim-surface: rgba(255, 255, 255, 0.12);
+  --brand-scrim-surface-hover: rgba(255, 255, 255, 0.22);
+  --brand-scrim-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  --brand-scrim-chip: rgba(9, 16, 28, 0.72);
+  --brand-scrim-chip-fg: #eaf2ff;
 
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
   --viz-accent: #d9541f;
   --viz-mute: #8b9195;
+
+  /* ── 分类色板（B 档数据图表专用；不占用 --signal / --risk-*）──
+     浅色底对 #ffffff 对比度 4.45–5.48:1；红绿色弱下蓝/青/绿仍接近，
+     所以系列必须同时有直标、读数表或线型区分，颜色不是唯一载体。 */
+  --viz-series-1: #356f95;
+  --viz-series-2: #3f7d72;
+  --viz-series-3: #6a7f3f;
+  --viz-series-4: #7a5f8a;
+  --viz-series-5: #96694a;
+  --viz-series-6: #6f767b;
 }
 
 /* ==========================================================================
@@ -103,6 +294,13 @@
   :root {
     --maxw: 1760px;
     --gutter: 56px;
+  }
+}
+
+/* 窄屏版心缩进收一档：正文仍留出呼吸，但不能贴到屏幕边缘。 */
+@media (max-width: 600px) {
+  :root {
+    --gutter: 24px;
   }
 }
 
@@ -133,6 +331,11 @@
   --risk-normal: var(--paper-risk-normal);
   --risk-attention: var(--paper-risk-attention);
   --risk-critical: var(--paper-risk-critical);
+  /* 删除红也钉回纸面值：暗主题的 --danger 是提亮版，落在白纸上约 1.7:1。 */
+  --danger: var(--paper-danger);
+  --danger-soft: var(--paper-danger-soft);
+  /* 同理，按钮上的文字色也要跟着钉回白字。 */
+  --danger-fg: #ffffff;
   --fg: var(--ink);
   --fg-2: var(--ink-2);
   --fg-3: var(--ink-3);
@@ -147,8 +350,7 @@
 
 /* 反相令牌：反相带、整页暗房、反相顶栏共用同一份映射，改一处即可。 */
 .is-dark,
-.is-night,
-.site-head.is-invert {
+.is-night {
   --fg: var(--on-dark);
   --fg-2: var(--on-dark-2);
   --fg-3: var(--on-dark-3);
@@ -184,6 +386,116 @@
 }
 
 /* ==========================================================================
+   Iris 2.0 品牌页作用域（.is-brand-page）
+   --------------------------------------------------------------------------
+   只在落地页根上叠加，用来消除「上半页钴蓝光学品牌、下半页骨白仪器台」的
+   底色断层（R2-04）。**只换画布与发丝线**：
+   - 换：页面底 --field / --bg、分隔线 --line / --line-strong；
+   - 不换：--ink / --fg 系列（文字色）、--risk-* / --signal（临床语义）、
+     --paper-*（判读记录永远是同一张白纸）。
+   所以它不是一个「把整页涂成蓝色」的滤镜，而是换掉舞台底色，
+   其余上下文类（.is-field / .is-night / .is-sheet）继续各管各的。
+   ========================================================================== */
+.is-brand-page {
+  --field: var(--brand-canvas);
+  --bg: var(--brand-canvas);
+  /* 内容表面阶梯也换到品牌色系：故障面板、输入框、空态框、弹层都消费
+     --surface*，不接管的话会在品牌画布上掉回旧仪器风的冷绿灰
+     （#e9ebe6 / 暗色 #242a27）。这里用「实底 + 少量品牌墨」混出抬升面，
+     不用半透明玻璃——玻璃只留给品牌组件自己的装饰面（--brand-glass-*），
+     内容表面必须保证文字可读与遮挡一致。
+     判读记录纸不受影响：.sheet 自己带 .is-sheet，暗色下该作用域会把
+     --surface 钉回纸面原语（纸仍是白的）。 */
+  --surface: var(--brand-surface);
+  --surface-2: color-mix(in srgb, var(--brand-surface) 92%, var(--brand-text));
+  --surface-3: color-mix(in srgb, var(--brand-surface) 84%, var(--brand-text));
+  --line: var(--brand-line);
+  --line-strong: var(--brand-line-strong);
+  --hr: var(--brand-line);
+  --hr-strong: var(--brand-line-strong);
+  background: var(--brand-canvas);
+  color: var(--brand-text);
+}
+
+/* 暗色主题的 `.night` 直接用 `--night-sky` 铺底，和 `.is-brand-page` 同特异性
+   却更晚出现（app.css 在 tokens.css 之后），会把品牌画布盖回绿黑夜色。
+   落地页同时带这两个类，这里用更高特异性把它锁在同一块品牌画布上；
+   浅色主题走 `html:not(.dark) .night { background: var(--bg) }`，本来就是对的。 */
+.night.is-brand-page {
+  background: var(--brand-canvas);
+}
+
+/* 整页根容器：品牌画布至少铺满一屏。
+   上面这条作用域只换画布与发丝线，不管画布有多高——页面内容比视口短时
+   （判读页空态、个人中心、诊断记录、资讯详情），画布在免责声明条处就结束，
+   剩下的高度露出 body 的骨白 / 近黑底，与品牌画布形成一条横带
+   （浅色 #F2F6FC vs #F3F4F1，暗色 #0B1425 vs #0B0D0C）。
+   这里只补「不低于一屏」，不改任何布局与尺寸。
+
+   选择器必须锚在 #root 的直接子元素上：`.is-brand-page` 还被复用在
+   落地页的判读记录弹层（.landing-record__modal）与管理端新闻编辑的
+   设备预览（.admin-newsedit__device-page）里，那两处是页内容器，
+   不能被撑成一屏高。 */
+#root > .is-brand-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ==========================================================================
+   Iris 2.0 管理页作用域（.is-admin）
+   --------------------------------------------------------------------------
+   只在管理外壳根上叠加，把舞台底色从骨白换成浅紫灰（暗主题翻深紫蓝）。
+   与 .is-brand-page 同一手法：只换画布与发丝线，不碰 --ink/--fg 系列、
+   --risk-* / --signal（临床语义）与 --paper-*（判读记录永远同一张纸）。
+   管理令牌 --admin-* 在 :root / html.dark 各有一套，这里把「当前语境」
+   指向它们，让 .is-admin 内的 --bg / --hr 走紫白 SaaS 而不是骨白仪器。
+   ========================================================================== */
+.is-admin {
+  --field: var(--admin-canvas);
+  --bg: var(--admin-canvas);
+  --surface: var(--admin-surface);
+  --surface-2: var(--admin-surface-deep);
+  --line: var(--admin-line);
+  --line-strong: var(--admin-line-strong);
+  --hr: var(--admin-line);
+  --hr-strong: var(--admin-line-strong);
+  --ink: var(--admin-text);
+  --ink-2: var(--admin-text-muted);
+  --ink-3: var(--admin-text-faint);
+  --fg: var(--admin-text);
+  --fg-2: var(--admin-text-muted);
+  --fg-3: var(--admin-text-faint);
+  background: var(--admin-canvas);
+  color: var(--admin-text);
+}
+
+/* 文档画布跟随路由语境。
+   全局滚动条是透明轨道（app.css），轨道底下露出的其实是 body 的画布。
+   品牌页 / 管理页把 --field 换在内容容器上，body 仍是根级骨白（暗色近黑），
+   于是右侧 12px 轨道会成一条异色竖带。这里让 body 与路由画布同底——
+   只影响滚动条轨道与过卷区域，内容容器本来就已经铺了同一块底色。 */
+html:has(#root > .is-brand-page) body {
+  background: var(--brand-canvas);
+}
+
+html:has(#root > .is-admin) body {
+  background: var(--admin-canvas);
+}
+
+/* ==========================================================================
+   Iris 2.0 品牌面（.iris2）
+   --------------------------------------------------------------------------
+   这里只做一件事：把一块区域声明成品牌面（品牌画布 + 品牌文字色）。
+   品牌色板本身在 :root / html.dark 里定义，任何上下文都取得到。
+   浅色：骨白偏冷 + 玻璃发丝线；深色：深蓝底 + 冰青高光。
+   对比度已由 tokens.contrast.test.ts 实跑锁定（正文与 muted ≥ 4.5:1）。
+   ========================================================================== */
+.iris2 {
+  background: var(--brand-canvas);
+  color: var(--brand-text);
+}
+
+/* ==========================================================================
    根级双主题
    ==========================================================================
    主题切在 <html> 的 .dark 类上，翻的是「页面底色语境」这一层：
@@ -198,11 +510,8 @@ html.dark {
   --surface-2: #242a27;
   --surface-3: #2c332f;
 
-  --paper-ink: #f0f1ed;
-  --paper-ink-2: #a7aeaa;
-  --paper-ink-3: #767d79;
-  --paper-line: rgba(244, 245, 241, 0.14);
-  --paper-line-strong: rgba(244, 245, 241, 0.32);
+  /* 注意：--paper-* 不在这里翻转。纸面原语的定义就是「任何主题下都是那张纸」，
+     墨色/线条的反转交给下面的 --ink/--line。 */
 
   --signal: #ef7a45;
   --signal-text: #ef7a45;
@@ -212,8 +521,100 @@ html.dark {
   --risk-attention: var(--risk-attention-lit);
   --risk-critical: var(--risk-critical-lit);
 
+  --danger: var(--danger-lit);
+  --danger-soft: rgba(255, 154, 166, 0.14);
+  /* 提亮版粉底上压深墨，白字在 1.9:1 过不了。 */
+  --danger-fg: #0b1425;
+
   --viz-accent: #d9591f;
   --viz-mute: #767d79;
+
+  /* 暗底提亮一档；对 #1d2220 的对比度 5.66–7.08:1。 */
+  --viz-series-1: #6fa8c9;
+  --viz-series-2: #6fb3a4;
+  --viz-series-3: #9fb46d;
+  --viz-series-4: #b094c0;
+  --viz-series-5: #c48d6c;
+  --viz-series-6: #9aa1a6;
+
+  /* Iris 2.0 品牌层的暗色版本：同一组语义角色，换一套色值。
+     钴蓝在暗底上提亮成 #85B5FF（8.81:1），压字用深底色，不是白色。 */
+  --brand-canvas: #0b1425;
+  --brand-surface: #17263d;
+  --brand-text: #eff6ff;
+  --brand-muted: #a9bbd3;
+  --brand-primary: #85b5ff;
+  --brand-primary-fg: #0b1425;
+  --brand-cyan: #60d7e6;
+  --brand-aurora: #c0acff;
+  --brand-spark: #7ce6fb;
+  --brand-line: rgba(191, 220, 255, 0.29);
+  --brand-line-strong: rgba(191, 220, 255, 0.46);
+  --brand-outline: rgba(183, 211, 255, 0.13);
+  --brand-glass: rgba(19, 39, 68, 0.78);
+  --brand-glass-strong: rgba(22, 44, 74, 0.9);
+  --brand-hairline: rgba(210, 231, 255, 0.25);
+  --brand-soft: rgba(113, 159, 255, 0.12);
+  --brand-shadow: 0 22px 58px rgba(0, 0, 0, 0.24);
+
+  /* 暗色材质：午夜蓝底 + 冰蓝边缘光。不是把浅色值调暗——
+     透明度的取法也不同：暗底上玻璃要更实一点，否则背后的光带会吃掉文字。 */
+  --brand-glass-optical-tint: #7cc4ff;
+  --brand-glass-optical-edge: rgba(235, 248, 255, 0.78);
+
+  --brand-glass-frosted: rgba(16, 34, 60, 0.84);
+  --brand-glass-frosted-edge: rgba(196, 222, 255, 0.26);
+  --brand-glass-frosted-inner: rgba(255, 255, 255, 0.07);
+  --brand-glass-frosted-blur: 20px;
+
+  /* 0.82 是「背后是光带最亮处」时的可读性下限：再透，次要文字就会
+     被经过的冰青高光吃掉（tokens.contrast.test.ts 有断言）。 */
+  --brand-glass-layered: rgba(19, 40, 70, 0.84);
+  --brand-glass-layered-edge: rgba(200, 228, 255, 0.28);
+  --brand-glass-layered-inner: rgba(255, 255, 255, 0.08);
+  --brand-glass-layered-blur: 24px;
+
+  --brand-glass-soft: rgba(17, 34, 58, 0.52);
+  --brand-glass-soft-edge: rgba(191, 220, 255, 0.18);
+  --brand-glass-soft-inner: rgba(255, 255, 255, 0.05);
+  --brand-glass-soft-blur: 12px;
+
+  --brand-glass-fallback: rgba(13, 29, 52, 0.94);
+
+  --brand-surface-deep: #071120;
+  --brand-surface-deep-2: #0d1c33;
+  --brand-deep-text: #eaf2ff;
+  --brand-deep-muted: #9fb3cf;
+  --brand-deep-line: rgba(190, 220, 255, 0.14);
+  --brand-deep-hairline: rgba(190, 220, 255, 0.24);
+  --brand-deep-signal: #ef7a45;
+  --brand-deep-signal-text: #ffa07a;
+
+  /* Iris 2.0 管理端的暗色版本：深紫蓝分层面板，同一组语义角色换一套值。
+     管理紫在暗底上提亮成 #b39dfb，压字用深紫墨 #171322，不用白色；
+     图表强调再亮一档（#c4b5fd）保证 9.5:1。与 --risk-*-lit 六值互不相同。 */
+  --admin-canvas: #12101c;
+  --admin-surface: #1a1727;
+  --admin-surface-deep: #211d31;
+  --admin-sidebar: #191527;
+  --admin-text: #ecebf5;
+  --admin-text-muted: #a69fbf;
+  --admin-text-faint: #918aad;
+  --admin-line: rgba(190, 176, 236, 0.18);
+  --admin-line-strong: rgba(190, 176, 236, 0.38);
+  --admin-primary: #b39dfb;
+  --admin-primary-strong: #c4b5fd;
+  --admin-on-primary: #171322;
+  --admin-primary-soft: rgba(179, 157, 251, 0.16);
+  --admin-accent: #c4b5fd;
+  --admin-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
+  --admin-shadow-overlay: 0 14px 34px rgba(0, 0, 0, 0.36);
+
+  /* 暗色下的材质：描边比浅色更实（暗底吃边），阴影更深一档，
+     否则卡片会「浮不起来」；氛围紫晕跟着 --admin-accent 自动翻亮。 */
+  --admin-line-soft: rgba(190, 176, 236, 0.15);
+  --admin-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.32),
+    0 18px 38px -24px rgba(0, 0, 0, 0.66);
 }
 
 /* 暗主题下默认语境就是暗房：墨色/线条这些原始令牌一并反转，
@@ -224,28 +625,11 @@ html.dark {
   --ink-3: var(--on-dark-3);
   --line: var(--dark-line);
   --line-strong: var(--dark-line-strong);
-
-  /* 暗主题下的纸面原语：纸仍是白的，纸上的墨是深色的。 */
-  --paper-ink-dark: #14171a;
-  --paper-ink-2-dark: #5c6367;
-  --paper-ink-3-dark: #676e72;
-  --paper-line-dark: rgba(20, 23, 26, 0.13);
-  --paper-line-strong-dark: rgba(20, 23, 26, 0.34);
 }
 
-/* 纸面在暗主题下钉回纸白：判读记录仍是纸，墨色回到纸上的墨。 */
+/* 纸面在暗主题下钉回纸白。墨色不需要在这里再钉一遍：--paper-* 从不翻转，
+   .is-sheet 自己的规则已经取到纸上的墨与线。 */
 html.dark .is-sheet {
   --surface: var(--paper-surface);
-  --ink: var(--paper-ink-dark);
-  --ink-2: var(--paper-ink-2-dark);
-  --ink-3: var(--paper-ink-3-dark);
-  --line: var(--paper-line-dark);
-  --line-strong: var(--paper-line-strong-dark);
-  --signal-text: var(--paper-signal-text);
 }
 
-/* 反相顶栏里的抬升面板跟着翻深，别留白板（账号菜单 / 移动抽屉）。 */
-.site-head.is-invert {
-  --surface: var(--dark-surface);
-  --field: var(--dark-surface);
-}

@@ -1,24 +1,26 @@
-import { useEffect, useMemo, useState } from "react"
+import "@/styles/records.css"
+
+import { useMemo, useState } from "react"
+import { ArrowRight, ArrowUpRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   describeError,
-  getMyDiagnosis,
   listMyDiagnoses,
   requestReexamine,
-  type DiagnosisManage,
-  type ErrorDetail,
-  type RecordPage,
-  type DiagnosisResult,
 } from "@/lib/api"
 import {
-  loadMyStats,
+  highRiskCell,
+  loadServerStats,
   reexamineLabel,
   reexamineView,
+  resolveScopedStats,
   statsLabels,
-  summarizeRecords,
-  type ScopedStats,
 } from "@/lib/records"
+import { queryKeys } from "@/lib/queryKeys"
+import { useSession } from "@/lib/session"
 import {
+  canonicalClassName,
   classCode,
   confidencePercent,
   formatTimestamp,
@@ -27,177 +29,122 @@ import {
 } from "@/lib/domain"
 import { faultFromError } from "@/lib/faults"
 import { useFault } from "@/components/fault"
-import { RecordSheet } from "@/components/RecordSheet"
 import { RiskTag } from "@/components/RiskTag"
 import { EmptyFrame } from "@/components/EmptyFrame"
 import { FaultPanel } from "@/components/FaultPanel"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 
 const PAGE_SIZE = 10
 
-type ListState = {
-  key: string
-  data: RecordPage<DiagnosisManage> | null
-  fault: ErrorDetail | null
-}
-
-type DetailState = {
-  id: string
-  result: DiagnosisResult | null
-  fault: ErrorDetail | null
-  /** 复诊申请提交成功后置 true，行内状态翻成「复审中」。 */
-  reexamined: boolean
-  submitting: boolean
-}
-
 export function RecordsPage() {
   const [page, setPage] = useState(1)
-  const [reload, setReload] = useState(0)
   const { push } = useFault()
+  const queryClient = useQueryClient()
+  const { status, scope } = useSession()
+  /** 只有确认登录了才发个人请求：会话未知时不去猜，匿名时更不该问。 */
+  const authed = status === "authed"
 
-  const requestKey = `${page}|${reload}`
-  const [list, setList] = useState<ListState>({ key: "", data: null, fault: null })
+  /**
+   * 列表：筛选 / 翻页就是换查询键，取数由 React Query 接管。
+   * page 1 / pageSize 10 与个人中心同键，两页共享缓存。
+   * 键里带 scope：换账号后 B 读的是另一个键，A 的缓存不会被 B 读到。
+   */
+  const listKey = queryKeys.records.mine(scope, { current: page, pageSize: PAGE_SIZE })
+  const listQuery = useQuery({
+    queryKey: listKey,
+    queryFn: ({ signal }) =>
+      listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }, signal),
+    enabled: authed,
+  })
 
-  useEffect(() => {
-    let alive = true
-
-    listMyDiagnoses({ current: page, pageSize: PAGE_SIZE }).then(
-      (value) => {
-        if (alive) setList({ key: requestKey, data: value, fault: null })
-      },
-      (cause) => {
-        if (!alive) return
-        setList({ key: requestKey, data: null, fault: describeError(cause) })
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [requestKey, page])
-
-  const loading = list.key !== requestKey
-  const fault = list.key === requestKey ? list.fault : null
-  const data = list.key === requestKey ? list.data : null
+  const data = listQuery.data
   const records = useMemo(() => data?.records ?? [], [data])
+  // 首次加载与「失败后重试」都算加载态；重试期间先收起故障面板，回到骨架。
+  const loading = listQuery.isPending || (listQuery.isFetching && data === undefined)
+  // 后台重取失败时保留已有列表，只有拿不到数据才整块出故障面板。
+  const fault =
+    !loading && data === undefined && listQuery.error
+      ? describeError(listQuery.error)
+      : null
 
-  const [scoped, setScoped] = useState<ScopedStats | null>(null)
+  // 服务端聚合与列表是两个独立端点，并行发出；接口未上线或失败时
+  // 在渲染期回退到本页汇总，并把口径标成 page。
+  // 统计是账号级的，查询键不带页码：翻页不换键，个人中心与这里共享同一份缓存。
+  const statsQuery = useQuery({
+    queryKey: queryKeys.records.stats(scope),
+    queryFn: ({ signal }) => loadServerStats(signal),
+    enabled: authed,
+  })
+  const serverStats = statsQuery.data ?? null
 
-  // 服务端聚合优先；接口未上线或失败时 loadMyStats 自己降级到本页。
-  useEffect(() => {
-    if (list.key !== requestKey || !data) return
-    let alive = true
-    void loadMyStats(records, data.total ?? 0).then((value) => {
-      if (alive) setScoped(value)
-    })
-    return () => {
-      alive = false
-    }
-  }, [data, records, list.key, requestKey])
+  const scoped = resolveScopedStats(serverStats, records, data?.total ?? 0)
+  const stats = scoped.stats
+  const labels = statsLabels(scoped.scope)
+  const risk = highRiskCell(stats, scoped.scope)
 
-  const stats = scoped?.stats ?? summarizeRecords(records, data?.total ?? 0)
-  const labels = statsLabels(scoped?.scope ?? "page")
-
-  /** 展开的记录详情。同一时刻只开一条。 */
-  const [openId, setOpenId] = useState<string | null>(null)
-  const [detail, setDetail] = useState<DetailState | null>(null)
-  const [detailKey, setDetailKey] = useState(0)
-
-  useEffect(() => {
-    if (!openId) return
-    let alive = true
-
-    getMyDiagnosis(openId).then(
-      (value) => {
-        if (alive) setDetail((prev) => (prev?.id === openId ? { ...prev, result: value } : prev))
-      },
-      (cause) => {
-        if (!alive) return
-        setDetail((prev) =>
-          prev?.id === openId ? { ...prev, fault: describeError(cause) } : prev,
-        )
-      },
-    )
-
-    return () => {
-      alive = false
-    }
-  }, [openId, detailKey])
+  /** 本次会话里刚提交过复诊的记录 id：列表重取落地前先把行内状态翻成「复审中」。 */
+  const [reexaminedId, setReexaminedId] = useState<string | null>(null)
+  const [submittingId, setSubmittingId] = useState<string | null>(null)
 
   async function submitReexamine(id: string) {
-    setDetail((prev) => (prev?.id === id ? { ...prev, submitting: true } : prev))
+    setSubmittingId(id)
     try {
       await requestReexamine(id)
-      setDetail((prev) =>
-        prev?.id === id ? { ...prev, reexamined: true, submitting: false } : prev,
-      )
-      // 行内状态也要跟着翻：本地翻转，不再发一次列表请求。
-      setList((prev) => {
-        if (!prev.data) return prev
-        return {
-          ...prev,
-          data: {
-            ...prev.data,
-            records: prev.data.records?.map((item) =>
-              item.id === id ? { ...item, reexamineStatus: 2 } : item,
-            ),
-          },
-        }
-      })
+      setReexaminedId(id)
+      // 行内状态跟着翻：列表重取后 reexamineStatus 变 2，无需手工改缓存。
+      void queryClient.invalidateQueries({ queryKey: listKey, exact: true })
     } catch (cause) {
-      setDetail((prev) => (prev?.id === id ? { ...prev, submitting: false } : prev))
       push(faultFromError(cause, { intent: "generic", action: { label: "重试", run: () => void submitReexamine(id) } }))
+    } finally {
+      setSubmittingId(null)
     }
-  }
-
-  function closeDetail() {
-    setOpenId(null)
-    setDetail(null)
-  }
-
-  function openDetail(id: string) {
-    setOpenId(id)
-    setDetail({ id, result: null, fault: null, reexamined: false, submitting: false })
-  }
-
-  function toggle(id: string) {
-    if (openId === id) closeDetail()
-    else openDetail(id)
-  }
-
-  function retryDetail() {
-    setDetail((prev) => (prev ? { ...prev, result: null, fault: null } : prev))
-    setDetailKey((value) => value + 1)
   }
 
   function retry() {
-    closeDetail()
-    setScoped(null)
-    setReload((value) => value + 1)
+    void listQuery.refetch()
   }
 
   function goPage(next: number) {
-    closeDetail()
-    setScoped(null)
     setPage(next)
   }
 
   const pages = Math.max(1, data?.pages ?? 1)
 
+  if (status === "anon") {
+    // 匿名：整页都是个人数据，不发请求，也不假装「没有记录」——给登录入口。
+    return (
+      <div className="is-field is-brand-page">
+        <ProductHeader scene="clinical" />
+        <main className="wrap records">
+          <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
+          <div className="records__empty">
+            <EmptyFrame label="未登录" />
+            <p className="records__empty-title">登录后才能查看判读记录</p>
+            <p className="records__empty-body">记录、统计与复核状态都跟着账号走。</p>
+            <Link className="btn" to="/login?redirect=%2Frecords">
+              去登录 <ArrowUpRight className="btn__key" size={13} strokeWidth={2} aria-hidden="true" />
+            </Link>
+          </div>
+        </main>
+        <DisclaimerBar />
+      </div>
+    )
+  }
+
   return (
-    <div className="is-field">
-      <SiteHeader />
+    <div className="is-field is-brand-page">
+      <ProductHeader scene="clinical" />
 
       <main className="wrap records">
-        <SectionHead code="04" kicker="诊断记录" en="RECORDS · MY READINGS" />
+        <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
 
         <div className="records__intro">
-          <p className="overline">Ledger · 判读台账</p>
-          <h1 className="display records__title">诊断记录</h1>
+          <p className="overline">Reading history · 判读记录</p>
+          <h1 className="records__title">判读记录</h1>
           <p className="lead">
-            你名下所有的判读，每一条都保留模型版本与权重指纹。点开一条，展开就是那张记录纸。
+            你名下所有的判读，每一条都保留模型版本与权重指纹。点开任意一行会打开独立的报告页，可直接打印与追溯。
           </p>
         </div>
 
@@ -210,8 +157,10 @@ export function RecordsPage() {
           </div>
           <div className="strip__cell">
             <div className="readout">
-              <span className="readout__label">{labels.highRisk}</span>
-              <span className="readout__value num">{stats.highRisk}</span>
+              <span className="readout__label">{risk.label}</span>
+              <span className="readout__value num" data-unknown={risk.unknown ? "true" : undefined}>
+                {risk.value}
+              </span>
             </div>
           </div>
           <div className="strip__cell">
@@ -230,9 +179,11 @@ export function RecordsPage() {
           </div>
         </div>
 
-        {scoped?.scope === "all" ? null : (
+        {risk.note ? <p className="records__scope">{risk.note}。</p> : null}
+
+        {serverStats ? null : (
           <p className="records__scope">
-            总数是你名下的全部判读；带「本页」的三项只统计当前这一页（第 {page} / {pages}
+            总数是你名下的全部判读；标「本页」的两项只统计当前这一页（第 {page} / {pages}
             页），翻页会变。服务端聚合上线后会自动切到全量。
           </p>
         )}
@@ -240,7 +191,7 @@ export function RecordsPage() {
         {fault ? (
           <FaultPanel
             code={fault.code}
-            title="判读台账没有读出来"
+            title="判读记录没有读出来"
             body={fault.text}
             endpoint="POST /diagnosis/list/page/my"
             onRetry={retry}
@@ -260,10 +211,10 @@ export function RecordsPage() {
             <EmptyFrame label="暂无判读" />
             <p className="records__empty-title">还没有属于你的判读</p>
             <p className="records__empty-body">
-              上传一张眼底影像开始第一次判读，记录会按时间倒序落在这本台账里。
+              上传一张眼底影像开始第一次判读，记录会按时间倒序排在下面。
             </p>
             <Link className="btn" to="/diagnosis">
-              去判读 <span className="btn__key">↗</span>
+              去判读 <ArrowUpRight className="btn__key" size={13} strokeWidth={2} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
@@ -273,13 +224,7 @@ export function RecordsPage() {
             <ul className="records__list">
               {records.map((item, index) => (
                 <li key={item.id} className="records__item">
-                  <button
-                    type="button"
-                    className="records__row"
-                    data-cursor
-                    aria-expanded={openId === item.id}
-                    onClick={() => toggle(item.id)}
-                  >
+                  <Link className="records__row" to={`/records/${item.id}`} data-cursor>
                     <span className="records__index num">
                       {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, "0")}
                     </span>
@@ -294,19 +239,17 @@ export function RecordsPage() {
 
                     <span className="records__main">
                       <span className="records__disease">
-                        {item.aiRejected ? "AI 拒识" : item.result || "未给出判读结果"}
+                        {item.aiRejected
+                          ? "AI 拒识"
+                          : canonicalClassName(item.result ?? undefined) ?? item.result ?? "未给出判读结果"}
                         <span className="records__code num">{classCode(item.result ?? undefined)}</span>
                       </span>
                       <span className="records__meta">
                         <span className="num">{formatTimestamp(item.createTime)}</span>
-                        <span>·</span>
                         <span>{reexamineLabel(item.reexamineStatus)}</span>
-                        {item.requiresReview && !item.aiRejected ? (
-                          <>
-                            <span>·</span>
-                            <span>待人工复核</span>
-                          </>
-                        ) : null}
+                        {/* 拒识与待复核是两个维度：算法拒识时同样置 requiresReview，
+                            这条记录也在人工复核队列里，不能因为拒识就不显示。 */}
+                        {item.requiresReview ? <span>待人工复核</span> : null}
                       </span>
                     </span>
 
@@ -325,98 +268,69 @@ export function RecordsPage() {
                     </span>
 
                     <span className="records__caret" aria-hidden="true">
-                      {openId === item.id ? "−" : "+"}
+                      →
                     </span>
-                  </button>
+                  </Link>
 
-                  {openId === item.id ? (
-                    <div className="records__detail">
-                      {detail?.id === item.id ? (
-                        detail.fault ? (
-                          <FaultPanel
-                            code={detail.fault.code}
-                            title="这条记录没有读出来"
-                            body={detail.fault.text}
-                            endpoint={`GET /diagnosis/get/${item.id}`}
-                            onRetry={retryDetail}
-                          />
-                        ) : detail.result ? (
-                          <>
-                            <RecordSheet
-                              result={detail.result}
-                              recordId={`IRIS-${item.id}`}
-                              imageSrc={item.url ?? detail.result.url}
-                              tone="paper"
-                            />
-                            {(() => {
-                              const view = reexamineView(item, detail.reexamined)
-                              if (!view) return null
-                              if (view === "receipt") {
-                                return (
-                                  <div className="records__actions">
-                                    <span className="records__actions-done">
-                                      <RiskTag risk="attention">复审中</RiskTag>
-                                      申请已提交，等待医生安排复诊。
-                                    </span>
-                                  </div>
-                                )
-                              }
-                              return (
-                                <div className="records__actions">
-                                  {view === "reviewed" ? (
-                                    <RiskTag risk="normal">已复审</RiskTag>
-                                  ) : null}
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    disabled={detail.submitting}
-                                    onClick={() => void submitReexamine(item.id)}
-                                  >
-                                    {detail.submitting
-                                      ? "提交中…"
-                                      : view === "reviewed"
-                                        ? "再次申请复诊"
-                                        : "申请复诊"}
-                                    <span className="btn__key">↻</span>
-                                  </button>
-                                  <span className="records__actions-note">
-                                    提交后这条记录进入复诊队列，状态变为「复审中」。
-                                  </span>
-                                </div>
-                              )
-                            })()}
-                          </>
-                        ) : (
-                          <div className="records__detail-loading num">读取中…</div>
-                        )
-                      ) : null}
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const view = reexamineView(item, reexaminedId === item.id)
+                    if (!view) return null
+                    if (view === "receipt") {
+                      return (
+                        <div className="records__actions records__actions--row">
+                          <span className="records__actions-done">
+                            <RiskTag risk="attention">复审中</RiskTag>
+                            申请已提交，等待医生安排复诊。
+                          </span>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className="records__actions records__actions--row">
+                        {view === "reviewed" ? <RiskTag risk="normal">已复审</RiskTag> : null}
+                        <button
+                          type="button"
+                          className="btn btn--sm"
+                          disabled={submittingId === item.id}
+                          onClick={() => void submitReexamine(item.id)}
+                        >
+                          {submittingId === item.id
+                            ? "提交中…"
+                            : view === "reviewed"
+                              ? "再次申请复诊"
+                              : "申请复诊"}
+                        </button>
+                        <span className="records__actions-note">
+                          提交后这条记录进入复诊队列，状态变为「复审中」。
+                        </span>
+                      </div>
+                    )
+                  })()}
                 </li>
               ))}
             </ul>
 
-            <div className="news__pager">
+            <nav className="records__pager" aria-label="判读记录分页">
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page <= 1}
                 onClick={() => goPage(page - 1)}
               >
                 ← 上一页
               </button>
-              <span className="news__pager-state num">
+              <span className="records__pager-state num">
                 {page} / {pages} · 共 {stats.total} 条
               </span>
               <button
                 type="button"
-                className="news__pager-step"
+                className="records__pager-step"
                 disabled={page >= pages}
                 onClick={() => goPage(page + 1)}
               >
-                下一页 →
+                下一页 <ArrowRight size={13} strokeWidth={2} aria-hidden="true" />
               </button>
-            </div>
+            </nav>
           </>
         ) : null}
       </main>

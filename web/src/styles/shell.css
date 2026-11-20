@@ -1,0 +1,306 @@
+/* ==========================================================================
+   产品外壳 · Shared Product Shell（DESIGN.md §1.6 + Visual Completion U2）
+   --------------------------------------------------------------------------
+   公开路由共用同一个顶栏组件，共享同一套 Iris 悬浮玻璃导航身份：
+
+     所有场景    光学虹膜标 + Manrope 字标 + Frosted Glass 胶囊导航 +
+                 钴蓝实心当前态 + 钴蓝主 CTA + 同一套控件形态
+
+   scene 只剩一个用途：标记当前语境（U2，DESIGN.md §2.1.2）。
+   **所有场景同一构图**：同高（--nav-h）、同一块 Frosted Glass 胶囊、
+   同一套控件与主 CTA——判读 / Agent 的顶栏与新闻 / 落地页完全一致，
+   不再有呼吸间距差、高度差或 CTA 出现与否的差异（U2 复检）。
+   Agent 的视口高度用 --nav-h 算，顶栏钉在同一个数上，整页不会多滚动条。
+
+   结构、导航数据、账号菜单、主题切换、移动抽屉在所有场景里是同一份实现；
+   顶栏表面全部走品牌画布。旧版 clinical 的纸面胶囊 + 信号橙底线、
+   intelligence 的冰青底线已删除——场景差异不等于品牌身份变化（DESIGN.md §1.2）。
+   ========================================================================== */
+
+.product-head {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  color: var(--shell-ink, var(--fg));
+  background: var(--shell-surface, var(--field));
+  transition:
+    background var(--base),
+    border-color var(--base);
+}
+
+/* 顶部一条页面底色的幕：内容从它下面滚过时字标仍然清楚。
+   幕分两半——顶栏自身高度内是实色（保证底部任何时刻都不透字），
+   下沿再挂一段渐隐，所以过渡是软的、不是一条硬边。 */
+.product-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--shell-surface, var(--field)), transparent);
+  pointer-events: none;
+}
+
+.product-head__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3.2vw, 48px);
+  /* 内容高度 = --nav-h 减掉顶栏自己的上下 8px 呼吸。 */
+  min-height: calc(var(--nav-h) - 16px);
+}
+
+.product-head__brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ── 场景：只剩语境标记，构图零差异（U2 复检）──────────────────── */
+
+.product-head {
+  /* 所有场景同一块品牌画布顶栏：表面、文字、发丝线取品牌令牌。 */
+  --shell-surface: var(--brand-canvas);
+  --shell-ink: var(--brand-text);
+  --shell-muted: var(--brand-muted);
+  --shell-line: var(--brand-line);
+  /* 顶栏上下留呼吸：导航胶囊不再贴住视口最上沿。
+     高度仍钉在 --nav-h（= 上下 8px + 内容 64px），Agent 的视口高度
+     用它算，多出几像素就会让整页多一条滚动条。 */
+  min-height: var(--nav-h);
+  padding: 8px 0;
+}
+
+.product-head .wordmark__en {
+  color: var(--brand-muted);
+}
+
+/* ── 导航胶囊：所有场景同一块 Frosted Glass ───────────────────── */
+
+.product-head__nav {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-pill);
+  background: var(--brand-glass);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+
+/* 不支持 backdrop-filter 的环境：玻璃退到静态替代——提高底色不透明度、
+   保留描边与投影，不能塌成一块灰（DESIGN.md §2.1.1）。 */
+@supports not (backdrop-filter: blur(1px)) {
+  .product-head__nav {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+/* ── 导航项 ───────────────────────────────────────────────────── */
+
+.product-head__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* 触控目标 ≥ 44×44：平板上（>900px 胶囊可见）这三项就是主导航。 */
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  color: var(--shell-muted);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.product-head__icon {
+  flex: none;
+  opacity: 0.75;
+  transition: opacity 140ms ease;
+}
+
+.product-head__link:hover .product-head__icon,
+.product-head__link[aria-current="page"] .product-head__icon {
+  opacity: 1;
+}
+
+.product-head__link:hover {
+  color: var(--shell-ink);
+  background: color-mix(in srgb, var(--shell-ink) 7%, transparent);
+}
+
+/* 当前路由是独立高亮胶囊：钴蓝实心，所有用户端场景一致（U2）。 */
+.product-head__link[aria-current="page"] {
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.product-head__link:focus-visible,
+.product-head__cta:focus-visible,
+.product-head__brand:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+
+/* ── 右侧功能区 ───────────────────────────────────────────────── */
+
+.product-head__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-head .theme-toggle,
+.product-head .acct__trigger,
+.product-head .burger {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.product-head .theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-circle);
+  border-color: var(--shell-line);
+  color: var(--shell-muted);
+}
+
+.product-head .theme-toggle:hover {
+  border-color: var(--brand-primary);
+  color: var(--shell-ink);
+}
+
+.product-head .acct__trigger {
+  height: 44px;
+  border-radius: var(--radius-pill);
+  border-color: var(--shell-line);
+  color: var(--shell-ink);
+  font-family: var(--font-brand);
+}
+
+.product-head .acct__trigger:hover {
+  border-color: var(--brand-primary);
+}
+
+/* 「登录」不是一个实心墨色按钮：右侧只能有一个主 CTA。
+   这里收回共享样式里的填充与信号橙 hover，改成描边胶囊——
+   所有场景同一套形态（U2）。 */
+.product-head a.acct__trigger--anon {
+  justify-content: center;
+  background: transparent;
+  border-color: var(--brand-outline);
+  color: var(--shell-ink);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.product-head a.acct__trigger--anon:hover {
+  background: transparent;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+/* 汉堡是圆形胶囊，和主题切换、账号按钮同一套形状语言。 */
+.product-head .burger {
+  border-radius: var(--radius-circle);
+  border-color: var(--brand-outline);
+  color: var(--shell-ink);
+}
+
+.product-head .burger:hover {
+  border-color: var(--brand-primary);
+}
+
+/* ── 主 CTA：钴蓝药丸，所有用户端场景一致 ─────────────────────── */
+
+.product-head__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  font-family: var(--font-brand);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(36, 87, 201, 0.22);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.product-head__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(36, 87, 201, 0.28);
+}
+
+.product-head__cta-go {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* ── 断点 ─────────────────────────────────────────────────────── */
+
+/* 窄屏不把胶囊压扁塞进去：导航收进共享 MobileNav 抽屉。
+   801–900px 这一段共享 `.burger` 默认还不显示，必须由外壳放出来，
+   否则顶栏没有任何导航入口。 */
+@media (max-width: 900px) {
+  .product-head__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .product-head__nav,
+  .product-head__cta,
+  .product-head__actions .acct {
+    display: none;
+  }
+
+  .product-head .burger {
+    display: inline-flex;
+  }
+}
+
+/* 四个入口与登录控件在窄桌面会碰撞，沿用同一个导航抽屉。 */
+@media (900px < width <= 1099px) {
+  .product-head:has(.product-head__link[href="/agent/collaboration"]) .product-head__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .product-head:has(.product-head__link[href="/agent/collaboration"])
+    :is(.product-head__nav, .product-head__cta, .product-head__actions .acct) {
+    display: none;
+  }
+
+  .product-head:has(.product-head__link[href="/agent/collaboration"]) .burger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-head .wordmark__en {
+    display: none;
+  }
+}
