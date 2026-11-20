@@ -135,7 +135,7 @@ html:not(.dark) .admin-side__mark--dark {
 .admin-side__group-label {
   margin: 6px 10px 2px;
   font-family: var(--font-brand);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--admin-text-faint);
@@ -1328,10 +1328,18 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   width: 100%;
 }
 
-/* Recharts 自带的 focus 轮廓会画出一圈浏览器默认描边，与仪器的克制冲突。 */
+/* Recharts 自带的 focus 轮廓会画出一圈浏览器默认描边，与仪器的克制冲突。
+   但不能直接抹掉：键盘聚焦图表时必须有可见焦点，换成管理紫细描边。 */
 .admin-viz__chart .recharts-wrapper:focus,
 .admin-viz__chart .recharts-surface:focus {
   outline: none;
+}
+
+.admin-viz__chart .recharts-wrapper:focus-visible,
+.admin-viz__chart .recharts-surface:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
 }
 
 /* 柱 / 折线上的数值直标：mono、tabular-nums，颜色不穿数据色。 */
@@ -1475,7 +1483,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   background: var(--admin-primary-soft);
   color: var(--admin-primary);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   line-height: 1.5;
@@ -1514,7 +1522,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 .admin-viz__mini-foot {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--admin-text-faint);
   overflow: hidden;
@@ -1999,7 +2007,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   margin: 22px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--admin-line);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--admin-text-faint);
 }
@@ -2434,7 +2442,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   margin: 22px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--admin-line);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--admin-text-faint);
 }
@@ -2538,6 +2546,18 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   font-size: 13px;
   text-align: center;
   color: var(--admin-text-faint);
+}
+
+/* 编辑器按需加载：块下载期间用与编辑器同高的占位，表单不能先塌一跳。 */
+.admin-newsedit__editor-loading {
+  display: grid;
+  place-items: center;
+  min-height: 520px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  font-size: 13px;
 }
 
 .admin-newsedit__fault {
@@ -2820,7 +2840,7 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
   margin: 26px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--admin-line);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--admin-text-faint);
 }
@@ -3830,7 +3850,7 @@ html.dark .feature-card__cta {
 .admin-diagnosis__field .admin-diagnosis__label,
 .admin-knowledge__field .admin-knowledge__label {
   font-family: var(--font-brand);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
 }
 

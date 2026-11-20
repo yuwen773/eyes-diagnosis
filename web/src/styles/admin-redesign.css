@@ -33,7 +33,7 @@
   gap: 9px;
   margin: 0 0 10px;
   font-family: var(--font-brand);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -49,7 +49,7 @@
   border-radius: var(--radius-pill);
   background: var(--admin-primary-soft);
   color: var(--admin-primary);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
 }
 
@@ -334,7 +334,7 @@
   height: 40px;
   padding: 0 16px;
   background: color-mix(in srgb, var(--admin-surface-deep) 52%, var(--admin-surface));
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
 }
 
@@ -523,7 +523,7 @@
 .admin-chip {
   height: 23px;
   padding-inline: 9px;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.05em;
 }
 
@@ -581,7 +581,7 @@
 .admin-user-cell__sub {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-3);
   white-space: nowrap;
   overflow: hidden;
@@ -658,7 +658,7 @@
 
 .admin-file-cell__sub {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--fg-3);
   /* 类型 + 大小是一体读数：窄屏截断时给省略号，完整值在 title 里。 */
@@ -770,7 +770,7 @@
 
 .admin-metric-card__delta {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-3);
 }
 
@@ -1191,7 +1191,7 @@ html.dark .feature-card--calm .feature-card__cta {
   border: 1px dashed var(--admin-line-strong);
   background: var(--admin-surface-deep);
   color: var(--fg-3);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
 }
 
@@ -1677,7 +1677,7 @@ html.dark .admin-newsedit .w-md-editor {
 .admin-analysis__title-note {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-3);
 }
 
@@ -1717,7 +1717,7 @@ html.dark .admin-newsedit .w-md-editor {
 }
 
 .admin-newsedit__editor-count {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-3);
 }
 
@@ -1735,7 +1735,7 @@ html.dark .admin-newsedit .w-md-editor {
 }
 
 .admin-newsedit__cover-hint {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--fg-3);
 }
 
@@ -1743,7 +1743,7 @@ html.dark .admin-newsedit .w-md-editor {
   margin: 0;
   padding-top: 12px;
   border-top: 1px solid var(--admin-line);
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fg-3);
 }
 

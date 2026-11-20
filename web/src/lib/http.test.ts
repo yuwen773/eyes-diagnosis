@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ApiError } from "./api-error"
-import { AUTH_EXPIRED_EVENT, request, toPage } from "./http"
+import { AUTH_EXPIRED_EVENT, REQUEST_TIMEOUT_MS, request, toPage } from "./http"
 
 type Envelope = { code?: number; data?: unknown; msg?: string }
 
@@ -95,15 +95,68 @@ describe("request", () => {
     })
   })
 
-  it("把调用方的 AbortSignal 原样交给 fetch（取消才真的能停下请求）", async () => {
+  it("把调用方的 AbortSignal 转发给 fetch（取消才真的能停下请求）", async () => {
     const fetchMock = stubFetch({ code: 0, data: { ok: true } })
     const controller = new AbortController()
 
     await request<{ ok: boolean }>("/x", { signal: controller.signal })
 
     const init = fetchMock.mock.calls[0][1]
-    expect(init?.signal).toBe(controller.signal)
+    expect(init?.signal).toBeInstanceOf(AbortSignal)
+    expect(init?.signal).not.toBe(controller.signal)
     expect(init?.credentials).toBe("include")
+  })
+
+  it("请求在途时调用方取消：fetch 手里的信号跟着停，原样抛 AbortError", async () => {
+    let seen: AbortSignal | undefined
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: RequestInfo | URL, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            seen = init?.signal ?? undefined
+            seen?.addEventListener("abort", () =>
+              reject(new DOMException("The operation was aborted.", "AbortError")),
+            )
+          }),
+      ),
+    )
+    const controller = new AbortController()
+
+    const caught = request("/x", { signal: controller.signal }).catch((error: unknown) => error)
+    controller.abort()
+    const error = await caught
+
+    expect((error as Error).name).toBe("AbortError")
+    expect(seen?.aborted).toBe(true)
+  })
+
+  it("后端一直不响应：15 秒后按超时失败，而不是永远挂着", async () => {
+    vi.useFakeTimers()
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          (_url: RequestInfo | URL, init?: RequestInit) =>
+            new Promise<Response>((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("The operation was aborted.", "AbortError")),
+              )
+            }),
+        ),
+      )
+
+      // 先接住 rejection，避免推进假时钟时出现未处理的拒绝。
+      const caught = request("/x").catch((error: unknown) => error)
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS)
+
+      await expect(caught).resolves.toMatchObject({
+        code: -1,
+        message: "请求超时，请检查网络后重试",
+      })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

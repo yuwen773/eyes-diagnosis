@@ -151,7 +151,7 @@ describe("AdminNewsEditPage 完整文章预览", () => {
   it("预览反映未保存的标题与正文，且不触发保存", async () => {
     await openEditor(LEGACY_HTML)
     fireEvent.change(screen.getByLabelText("标题"), { target: { value: "还没保存的标题" } })
-    fireEvent.change(screen.getByTestId("md-editor"), {
+    fireEvent.change(await screen.findByTestId("md-editor"), {
       target: { value: "## 第一节\n\n这是预览里应该出现的正文。" },
     })
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))
@@ -267,7 +267,7 @@ describe("AdminNewsEditPage 完整文章预览", () => {
     expect(screen.getByText("正文不足 30 个字符，保存会被拒绝")).toBeTruthy()
 
     fireEvent.click(screen.getByRole("tab", { name: "编辑" }))
-    fireEvent.change(screen.getByTestId("md-editor"), {
+    fireEvent.change(await screen.findByTestId("md-editor"), {
       target: { value: "一".repeat(40) },
     })
     fireEvent.click(screen.getByRole("tab", { name: "预览" }))

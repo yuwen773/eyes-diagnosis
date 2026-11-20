@@ -176,7 +176,7 @@ export function DesignHeroComparePage(): ReactElement {
         </div>
       )}
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <HeroCompareStage visual={variant} theme={theme} paused={paused} shell={shell} />
       </main>
     </div>

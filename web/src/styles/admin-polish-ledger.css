@@ -29,7 +29,7 @@
 
 .admin-ledger__grouplabel {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--admin-text-faint);
@@ -87,7 +87,7 @@
 .admin-ledger__chip-count {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--admin-text-faint);
 }
 
@@ -195,7 +195,7 @@
 .admin-diagnosis__result-sub {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   line-height: 1.4;
   color: var(--admin-text-faint);
@@ -368,7 +368,7 @@
   border-top: 1px solid var(--admin-line);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--admin-text-faint);
@@ -463,7 +463,7 @@
 
 .admin-users__rolecell .admin-chip {
   height: 22px;
-  font-size: 10.5px;
+  font-size: 11px;
 }
 
 /* 雪花 id 退到第三层：等宽但更淡，长串不再抢用户名的视线。 */
@@ -478,7 +478,7 @@
 .admin-users__protected {
   display: block;
   margin-top: 3px;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--admin-text-faint);
 }

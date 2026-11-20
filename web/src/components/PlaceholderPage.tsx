@@ -32,7 +32,7 @@ export function PlaceholderPage({
     <div className="is-field">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap placeholder">
+      <main id="main-content" tabIndex={-1} className="wrap placeholder">
         <SectionHead code={code} kicker={kicker} en={en} />
 
         <h1 className="h2 placeholder__title">{title}</h1>

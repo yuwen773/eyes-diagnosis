@@ -123,6 +123,27 @@ test.describe("Iris System States R2 · 认证表单", () => {
     })
     expect(overflow).toBeLessThanOrEqual(1)
   })
+
+  test("390 / 768 两档认证页没有横向溢出（P1 回归）", async ({ page }) => {
+    await ANON(page)
+    for (const [width, height] of [
+      [390, 844],
+      [768, 1024],
+    ] as const) {
+      await page.setViewportSize({ width, height })
+      for (const path of ["/login", "/register"]) {
+        await page.goto(path)
+        await expect(page.locator(".auth-auth")).toBeVisible()
+        // 越界的曾是对称装饰光带 `.auth-auth__wash`（right: -8%）。
+        // 判据用整页读数：只看某个元素量不到浏览器真的会不会出横向滚动条。
+        const overflow = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        }))
+        expect(overflow.scrollWidth, `${path} @ ${width}px`).toBe(overflow.clientWidth)
+      }
+    }
+  })
 })
 
 test.describe("Iris System States R2 · 注册表单", () => {

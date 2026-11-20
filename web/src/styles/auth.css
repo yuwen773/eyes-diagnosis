@@ -437,7 +437,10 @@
 
 @media (max-width: 900px) {
   .auth-auth {
-    overflow: visible;
+    /* 只裁横向：装饰光带 `right: -8%` 会把手机/平板页撑出 30–60px 横向滚动。
+       纵向保持 visible——窄屏内容比一屏高时不能把它裁掉。 */
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .auth-auth__grid {

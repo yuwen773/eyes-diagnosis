@@ -1,7 +1,7 @@
 import "@/styles/agent.css"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Menu, PanelRight } from "lucide-react"
+import { Menu, PanelRight, X } from "lucide-react"
 import {
   batchDeleteSessions,
   deleteSession,
@@ -596,7 +596,7 @@ export function AgentPage() {
     return (
       <div className="is-field is-brand-page">
         <ProductHeader scene="intelligence" />
-        <main className="agent-viewport">
+        <main id="main-content" tabIndex={-1} className="agent-viewport">
           <IrisPageLoading title="正在核对登录状态" hint="正在准备对话工作区，请稍候。" />
         </main>
       </div>
@@ -609,7 +609,7 @@ export function AgentPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="intelligence" />
 
-      <main className="agent-viewport">
+      <main id="main-content" tabIndex={-1} className="agent-viewport">
         <div
           className={`agent-workspace${compact ? " is-compact" : ""}${
             !compact && navCollapsed ? " is-nav-collapsed" : ""
@@ -738,7 +738,7 @@ export function AgentPage() {
               setPreviewUrl("")
             }}
           >
-            ✕
+            <X size={16} strokeWidth={2} aria-hidden="true" />
           </button>
           <img src={previewUrl} alt="预览" onClick={(e) => e.stopPropagation()} />
           <a

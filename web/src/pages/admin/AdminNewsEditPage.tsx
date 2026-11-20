@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useDeferredValue,
   useEffect,
   useLayoutEffect,
@@ -22,10 +24,6 @@ import {
   Trash2,
   Upload,
 } from "lucide-react"
-import MDEditor from "@uiw/react-md-editor"
-
-import "@uiw/react-md-editor/markdown-editor.css"
-import "@uiw/react-markdown-preview/markdown.css"
 
 import "@/styles/admin-news-preview.css"
 import "@/styles/admin-polish-cms.css"
@@ -55,6 +53,9 @@ import {
 } from "@/lib/newsPreview"
 import { sanitizeNewsHtml } from "@/lib/sanitize"
 import { htmlToMarkdown } from "@/lib/htmlToMarkdown"
+
+/** 编辑器单独成块：约 1.1MB 的编辑器与高亮库不随编辑页路由块一起下载。 */
+const NewsMarkdownEditor = lazy(() => import("@/components/admin/NewsMarkdownEditor"))
 
 /** 表单是唯一真源：加载完成后把 getNews 的结果一次灌进来。
  *  status 缺省表示「后端没给」（老数据）——保存时省略该键，靠 MyBatis-Plus
@@ -570,20 +571,24 @@ function NewsEditor(props: {
               </span>
             </div>
             {tab === "edit" ? (
-              <MDEditor
-                value={form.content}
-                onChange={(value) => {
-                  patch({ content: value ?? "" })
-                }}
-                preview="edit"
-                visibleDragbar={false}
-                height={520}
-                extraCommands={[]}
-                textareaProps={{
-                  placeholder: "用 Markdown 撰写正文…",
-                  "aria-label": "正文",
-                }}
-              />
+              <Suspense
+                fallback={
+                  <div
+                    className="admin-newsedit__editor-loading"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    正在加载正文编辑器…
+                  </div>
+                }
+              >
+                <NewsMarkdownEditor
+                  value={form.content}
+                  onChange={(value) => {
+                    patch({ content: value })
+                  }}
+                />
+              </Suspense>
             ) : (
               <div className="admin-newsedit__preview">
                 <div className="admin-newsedit__preview-bar">
