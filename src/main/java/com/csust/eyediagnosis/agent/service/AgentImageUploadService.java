@@ -50,6 +50,9 @@ public class AgentImageUploadService {
     private static final String OBJECT_KEY_PREFIX = UploadCompensationService.OBJECT_KEY_PREFIX;
     public static final String VIEW_PREFIX = "/api/agent/image/view/";
 
+    /** 视图签名 URL 有效期：短时；过期即失效，页面再次渲染时重新换取。 */
+    private static final long VIEW_URL_TTL_MILLIS = 5 * 60 * 1000L;
+
     public String uploadImage(MultipartFile file, Long userId) {
         ThrowUtils.throwIf(userId == null, ErrorCode.NO_AUTH_ERROR, "用户未登录");
         ThrowUtils.throwIf(file == null || file.isEmpty(), ErrorCode.PARAMS_ERROR, "文件不能为空");
@@ -73,7 +76,9 @@ public class AgentImageUploadService {
             uploadStateMachine.transition(taskId, null, UploadStatus.UPLOADING);
             tempFile = File.createTempFile("upload-", extension);
             file.transferTo(tempFile);
-            cosManager.putObject(objectKey, tempFile);
+            // 敏感影像显式私有：对象级 ACL 覆盖公有读桶的默认继承，
+            // 匿名直链读取被拒；随后只能经 /view 的短时签名 URL 访问。
+            cosManager.putObject(objectKey, tempFile, com.qcloud.cos.model.CannedAccessControlList.Private);
             uploadStateMachine.transition(taskId, UploadStatus.UPLOADING, UploadStatus.PERSISTED);
 
             UploadTask task = new UploadTask();
@@ -124,7 +129,9 @@ public class AgentImageUploadService {
 
     public String resolveViewTarget(String fileName, Long userId) {
         String key = resolveOwnedImageId(VIEW_PREFIX + fileName, userId);
-        return cosClientConfig.getHost() + "/" + key;
+        // 不再回裸公有 URL：换短时签名 URL，私有对象匿名直链读不到，授权用户仍可取图。
+        return cosManager.generatePresignedUrl(key,
+                new java.util.Date(System.currentTimeMillis() + VIEW_URL_TTL_MILLIS));
     }
 
     public void deleteImage(String imageUrl, Long userId) {

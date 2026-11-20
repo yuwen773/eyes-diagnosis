@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.manager;
 import com.csust.eyediagnosis.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.CannedAccessControlList;
 import com.qcloud.cos.model.DeleteObjectsRequest;
 import com.qcloud.cos.model.DeleteObjectRequest;
 import com.qcloud.cos.model.GetObjectRequest;
@@ -51,6 +52,25 @@ public class CosManager {
     public PutObjectResult putObject(String key, File file) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
                 file);
+        return cosClient.putObject(putObjectRequest);
+    }
+
+    /**
+     * 上传对象并显式指定对象级 ACL。
+     *
+     * <p>对象级 ACL 优先于桶的默认 ACL：即使整个桶当前是公有读，给敏感对象设
+     * {@link CannedAccessControlList#Private} 也能让匿名直链读取被拒绝。用于把
+     * 眼科影像等敏感对象收敛为「私有 + 短时签名访问」，而不必一次性改动整桶
+     * （新闻封面 / 头像等公开资源仍可继承桶设置）。
+     *
+     * @param key  唯一键
+     * @param file 文件
+     * @param acl  对象级 ACL
+     */
+    public PutObjectResult putObject(String key, File file, CannedAccessControlList acl) {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key,
+                file);
+        putObjectRequest.withCannedAcl(acl);
         return cosClient.putObject(putObjectRequest);
     }
     /**

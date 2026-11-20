@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.service;
 import com.csust.eyediagnosis.agent.queue.SessionMessageQueue;
 import com.csust.eyediagnosis.config.CosClientConfig;
 import com.csust.eyediagnosis.exception.BusinessException;
+import com.csust.eyediagnosis.manager.CosManager;
 import com.csust.eyediagnosis.mapper.*;
 import com.csust.eyediagnosis.model.entity.*;
 import com.csust.eyediagnosis.upload.state.UploadStatus;
@@ -17,6 +18,7 @@ class AgentAttachmentTrustTest {
     private final AgentSessionMapper sessions = mock(AgentSessionMapper.class);
     private final AgentMessageMapper messages = mock(AgentMessageMapper.class);
     private final UploadTaskMapper uploads = mock(UploadTaskMapper.class);
+    private final CosManager cosManager = mock(CosManager.class);
     private final AgentImageUploadService images = new AgentImageUploadService();
     private final ChatHistoryService history = new ChatHistoryService(sessions, messages, new ObjectMapper(), mock(SessionMessageQueue.class), mock(ChatMessageWriter.class));
     private static final String VIEW = "/api/agent/image/view/a.png";
@@ -26,6 +28,10 @@ class AgentAttachmentTrustTest {
         when(config.getHost()).thenReturn("https://owned.invalid");
         ReflectionTestUtils.setField(images, "cosClientConfig", config);
         ReflectionTestUtils.setField(images, "uploadTaskMapper", uploads);
+        ReflectionTestUtils.setField(images, "cosManager", cosManager);
+        // 视图目标是短时签名 URL：断言归属校验通过后用的是签名而非裸公有地址。
+        when(cosManager.generatePresignedUrl(anyString(), any()))
+                .thenAnswer(inv -> "https://signed.invalid/" + inv.getArgument(0) + "?sign=stub");
         history.setImageUploadService(images);
     }
 
@@ -63,7 +69,9 @@ class AgentAttachmentTrustTest {
         var message = history.loadHistory("s", null, 20).getMessages().get(0);
         assertEquals("body", message.getContent());
         assertEquals(List.of(VIEW), message.getImages());
-        assertEquals("https://owned.invalid/agent-chat/7/a.png", images.resolveViewTarget("a.png", 7L));
+        assertEquals("https://signed.invalid/agent-chat/7/a.png?sign=stub",
+                images.resolveViewTarget("a.png", 7L));
+        verify(cosManager).generatePresignedUrl(eq("agent-chat/7/a.png"), any());
         when(uploads.selectByObjectKey(7L, "agent-chat/7/a.png")).thenReturn(null);
         assertEquals(List.of(), history.loadHistory("s", null, 20).getMessages().get(0).getImages());
         assertThrows(BusinessException.class, () -> images.resolveViewTarget("a.png", 7L));
