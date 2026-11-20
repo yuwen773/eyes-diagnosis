@@ -24,11 +24,11 @@
 
 ## 规则（写代码时必须遵守）
 
-1. **先定场景再写样式**：Clinical 用直角 + 墨色主 CTA + 信号橙语义（包装在品牌壳内，
-   RecordSheet 纸面不动）；Management 用 8–12px 圆角 + **管理紫 `--admin-*` 主操作**
+1. **先定场景再写样式**：Clinical 用直角 + 品牌钴蓝主 CTA（U3 统一品牌壳）+ 信号橙语义
+   （RecordSheet 纸面不动）；Management 用 8–12px 圆角 + **管理紫 `--admin-*` 主操作**
    + 分类数据色；Brand 用 24–38px 圆角 + 玻璃材质 + 钴蓝；
    Intelligence 用 12px 圆角 + 运行态蓝/青。**组件变体矩阵见根 `DESIGN.md` §4。**
-   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫、Clinical 墨色。**
+   **主 CTA 口径：Brand/Intelligence/Clinical 钴蓝、Management 管理紫。**
 2. **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
    `--risk-*`（医学严重度）。信号橙**不是主 CTA 色**、不大面积填充；
    承载文字时用 `--signal-text`（纸面 `#bd4515`，暗底 `#ef7a45`）——`--signal`

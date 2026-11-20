@@ -145,7 +145,7 @@ Clinical 低指的是视觉干扰少，不是信息少。
 
 | 旧档 | 新归属 | 变化 |
 |---|---|---|
-| **A 临床判读** | → **Clinical** | 规则保留：仍是直角、发丝线、单强调色、等宽读数，**主 CTA 仍是墨色** |
+| **A 临床判读** | → **Clinical** | 规则保留：仍是直角、发丝线、单强调色、等宽读数；主 CTA 自 U3 起统一为品牌钴蓝（§2.4） |
 | **B 管理 / 数据分析** | → **Management** | **放宽**：卡片与面板允许 16–20px 圆角（管理端作用域令牌，见 §2.2）与实体层次；主操作允许用品牌钴蓝 |
 | **C 品牌 / Agent 视觉层** | → 拆成 **Brand**（品牌材质与动效预算）+ **Intelligence**（协作与工作台） | **拆分**：Brand 的渐变/大圆角/玻璃不进工作台；工作台的面板分栏与运行态反馈不进首页 |
 
@@ -756,7 +756,7 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 ### 2.4 Clinical Experience · 诊断记录、人工复核、医学判读
 
 参考代号无新增——这一场景**保留旧版全部已验证规则**，并把两处此前散落各处的
-规定收拢到一处：主 CTA 的颜色（仍是墨色）、复核与拒识的状态区分。
+规定收拢到一处：主 CTA 的颜色（U3 起统一为品牌钴蓝，见下）、复核与拒识的状态区分。
 
 **Visual Completion U3/U7 的定位**：临床页的专业语义（纸面、风险色、证据链）
 **全部保留**，但**包装层**（页头、页面背景、上传卡片、容器、按钮、列表、表单）
@@ -795,8 +795,9 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 
 **颜色与材质**
 - 信号橙 `--signal` 是**本页的强调色**（当前态、模型标记、top 条、链接强调）。
-- **主 CTA 在临床页保持墨色**（`--ink`），因为这里的主操作常常是"上传""提交复核"
-  这类与医疗责任相关的动作，用彩色会把"重点"和"危险"混在一起。
+- **主 CTA 在临床页使用品牌钴蓝**（`--brand-primary`，U3 统一品牌壳）。旧版
+  “墨色 CTA”规定已作废：品牌色只进操作层（上传、提交、跳转），风险仍只由
+  `--risk-*` 承担，信号橙仍是本页的语义强调色——彩色没有被用来表达危险。
 - 风险语义 `--risk-*` 与品牌色**完全解耦**，改一个不动另一个。
 - 材质：纸面 + 发丝线，**方角**（`--radius-none`）。
 
@@ -829,9 +830,9 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
 `RiskTag`、`ClassScale`、`ConfidenceDial`、`DisclaimerBar`。
 规则与实现基本一致；**唯一差口**是复核字段在类型上可选（见上），界面上要补齐位置。
 
-🗓 **计划中的小幅放宽**：主 CTA 颜色在临床页**保持墨色不变**；放宽只发生在
-管理端（§2.2）与品牌层（§2.1）。如果将来要在临床页引入品牌色，只能作为
-**非语义装饰**，且不得靠近判读结论区。
+**U3 已落地（2026-11-13）**：临床页主 CTA 从墨色统一到品牌钴蓝，与用户端
+Blue Optical Glass 身份连续；品牌色**只进操作层**（上传、提交、跳转），
+判读结论区与 `RecordSheet` 仍是纸面 + 风险语义色，不得混入品牌色。
 
 ---
 
@@ -942,8 +943,8 @@ tool-request / tool-response / confirm`）+ 会话列表 + 资源面板 + 附件
    `tokens.contrast.test.ts` 是门禁的一部分。
 2. **颜色不是唯一信息载体**：所有状态必须同时有文字标签或第二通道
    （读数表 / 直标 / 图例 / 线型 / marker / `aria-label`）。
-3. **信号橙不是主 CTA 色**（Brand / Intelligence 主 CTA 是钴蓝；
-   Management 主 CTA 是管理紫；Clinical 主 CTA 保持墨色）。
+3. **信号橙不是主 CTA 色**（Brand / Intelligence / Clinical 主 CTA 是钴蓝；
+   Management 主 CTA 是管理紫）。
    橙色表示"这里是重点/当前"，不表示"这里最危险"，不表示"点这里提交"。
 4. **分类色只用于 Management / Intelligence 的数据图表**，不占用 `--signal`、
    `--risk-*` 与 `--admin-*`。
@@ -1202,8 +1203,8 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 
 | | Brand | Management | Intelligence | Clinical |
 |---|---|---|---|---|
-| 主操作底色 | `--brand-primary` | 🗓 `--admin-primary`（管理紫，Visual Completion） | `--brand-primary` | `--ink`（墨色） |
-| 主操作字色 | `--brand-primary-fg` | 🗓 `--admin-on-primary`（实现名） | `--brand-primary-fg` | `--bg` |
+| 主操作底色 | `--brand-primary` | 🗓 `--admin-primary`（管理紫，Visual Completion） | `--brand-primary` | `--brand-primary`（U3 统一品牌壳） |
+| 主操作字色 | `--brand-primary-fg` | 🗓 `--admin-on-primary`（实现名） | `--brand-primary-fg` | `--brand-primary-fg` |
 | 圆角 | `--radius-pill` / `--radius-lg` | `--radius-md` | `--radius-md` | `--radius-none` |
 | 高度 | 48–52px | 40–44px | 40–44px | 52px |
 | 次级 | 玻璃面板 + 发丝描边 | 白底 + 发丝描边 + 柔和阴影 | 深底 + 发丝描边 | 透明底 + `--hr-strong` 描边 |
@@ -1211,8 +1212,8 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
 | 状态反馈 | 品牌色描边 + 底部 2px 指示条 | 🗓 描边加亮 + 极淡紫底 | 运行态脉冲（有事件才亮） | 描边 + `--signal` 底 |
 | 危险操作 | 不用品牌色 | `--risk-critical` + 文字确认 | `--risk-critical` + 文字确认 | `--risk-critical` + 文字确认 |
 
-> 主 CTA 颜色的完整口径（§3.4 规则 3）：Brand/Intelligence 钴蓝、
-> Management 管理紫、Clinical 墨色、信号橙任何场景都不是主 CTA。
+> 主 CTA 颜色的完整口径（§3.4 规则 3）：Brand/Intelligence/Clinical 钴蓝、
+> Management 管理紫、信号橙任何场景都不是主 CTA。
 
 ### 4.2 卡片 / 面板
 
@@ -1420,7 +1421,7 @@ Brand 场景的玻璃面板用 `--brand-shadow`（蓝墨投影），其余场景
             永远同时给文字标签
 分类色      --viz-series-1..6（仅 Management / Intelligence 图表，浅/暗两套）
 
-主 CTA      Brand/Intelligence 钴蓝 · Management 管理紫 · Clinical 墨色 · 橙永不
+主 CTA      Brand/Intelligence/Clinical 钴蓝 · Management 管理紫 · 橙永不
 标题        --font-serif（Noto Serif SC 栈），weight 400
 正文        --font-sans
 数字        --font-mono + tabular-nums
