@@ -29,6 +29,7 @@
 
 | 文档 | 何时读 |
 |---|---|
+| `release/v1.1.0-release-notes.md` | **v1.1.0 正式发布说明（中英文，随版本维护）**：本版本内容、升级注意、默认关闭开关、已知限制与产物 SHA-256 |
 | `release/integration-ledger.md` | 查本轮集成的批次进度、契约裁定与已关闭阻断（想知道「为什么是这个实现」先读它） |
 | `release/pr-disposition.md` | 查每个 PR 的去向（INCLUDE / ABSORB / DEFER / SUPERSEDED / HOLD）与依据 |
 | `release/conflict-resolution.md` | 查冲突文件的语义裁定——哪一侧为何被否决、哪些断言调整不是放水 |
