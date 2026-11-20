@@ -120,7 +120,7 @@ rerank 异常回退、空响应回退、rerank 无分结果、无 `docId` 不登
 ### 真实后端复跑（同一 HEAD 的 jar，profile `local,dev`）
 
 真实 COS、真实 DashScope（qwen + gte-rerank-v2）、真实 Chroma，脚本不拦截任何请求
-（先起后端：`java -jar target/eye-diagnosis-0.0.1-SNAPSHOT.jar --server.port=18081
+（先起后端：`java -jar target/eye-diagnosis-1.1.0.jar --server.port=18081
 --spring.profiles.active=local,dev`，然后 `R3_API_BASE=http://localhost:18081/api node
 scripts/evidence/<脚本>.mjs`；18081 被别的实例占用时换个端口，`R3_API_BASE` 跟着改即可 ——
 下表数字取自 2026-11-18 在 18082 的一次复跑）：
