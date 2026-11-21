@@ -1,13 +1,27 @@
-version: '3.8'
+name: eye-diagnosis
+
+# 持续开发服务（不是测试资源）：数据库卷必须长期保留。
+# 测试入口用 scripts/lib/docker-test-harness.sh 的 eye.* 标签区分所有权；
+# scripts/docker-test-resources.sh 把本 compose 项目整体列为 PROTECTED_DEV。
 services:
   chroma:
     image: ghcr.io/chroma-core/chroma:1.0.0
+    # 本地已有该镜像时不再重复拉取；CI 的 services 不走这里。
+    pull_policy: missing
     ports:
       - "8000:8000"
     environment:
       - IS_PERSISTENT=TRUE
     volumes:
       - chroma-data:/chroma/chroma
+    labels:
+      eye.owner: eye-diagnosis
+      eye.kind: dev-service
+      eye.protected: "true"
 
 volumes:
   chroma-data:
+    labels:
+      eye.owner: eye-diagnosis
+      eye.kind: dev-service
+      eye.protected: "true"
