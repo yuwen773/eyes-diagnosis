@@ -17,7 +17,6 @@ import org.springframework.util.StringUtils;
 
 import java.net.URL;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -68,6 +67,8 @@ public class McpServerServiceImpl implements McpServerService {
         entity.setUpdateTime(new Date());
 
         mcpServerMapper.updateById(entity);
+        // 连接参数可能已变，旧工具列表不能再等 5 分钟 TTL 自然过期。
+        mcpManager.invalidateToolsCache(userId, entity.getMcpServerCode());
     }
 
     @Override
@@ -75,6 +76,8 @@ public class McpServerServiceImpl implements McpServerService {
         McpServer entity = getByCodeAndUser(mcpServerCode, userId);
         entity.setStatus(3);
         mcpServerMapper.updateById(entity);
+        // 软删不改 code 也不改 key，不主动清就会继续返回已删服务的工具。
+        mcpManager.invalidateToolsCache(userId, entity.getMcpServerCode());
     }
 
     @Override
@@ -112,21 +115,6 @@ public class McpServerServiceImpl implements McpServerService {
         Page<McpServerDetail> detailPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal());
         detailPage.setRecords(entityPage.getRecords().stream().map(this::convertToDetail).toList());
         return detailPage;
-    }
-
-    @Override
-    public List<McpTool> getTools(String mcpServerCode, Long userId) {
-        McpServer entity = getByCodeAndUser(mcpServerCode, userId);
-        return mcpManager.getTools(entity);
-    }
-
-    @Override
-    public McpServerCallToolResponse callTool(McpServerCallToolRequest request, Long userId) {
-        McpServer entity = getByCodeAndUser(request.getMcpServerCode(), userId);
-        if (entity == null) {
-            throw new IllegalArgumentException("MCP server not found");
-        }
-        return mcpManager.callTool(request, entity);
     }
 
     private McpServer getByCodeAndUser(String mcpServerCode, Long userId) {

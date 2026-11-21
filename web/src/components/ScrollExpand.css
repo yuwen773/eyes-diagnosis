@@ -77,8 +77,6 @@
   width: 100%;
   overflow: hidden;
   background: var(--field);
-  /* 顶栏反相时用它当底色，跟画面的黑底一致。 */
-  --head-bg: #000;
 }
 
 .scroll-expand__frame {

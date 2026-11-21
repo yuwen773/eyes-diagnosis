@@ -745,17 +745,6 @@ html.dark .admin-theme__btn[aria-pressed="true"] {
   letter-spacing: 0.02em;
 }
 
-/* ── Toolbar：一行 flex，底部发丝线收口 ─────────────────── */
-
-.admin-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  padding-block: 14px;
-  border-bottom: 1px solid var(--admin-line);
-}
-
 /* ── StatTile：精致统计卡（白卡 + 发丝边 + 柔和阴影）────── */
 
 .admin-tile {
@@ -1629,8 +1618,8 @@ html.dark .admin-viz__toggle-btn[aria-pressed="true"] {
 /* ==========================================================================
    管理后台 · 用户管理段（Task 7）
    --------------------------------------------------------------------------
-   与仪表盘同版式：页首章节头发丝线 → 工具条（检索表单，底部发丝线由
-   Toolbar 给出）→ 表格。只吃上下文令牌 --bg / --fg-* / --hr / --surface /
+   与仪表盘同版式：页首章节头发丝线 → 工具条（检索表单）→ 表格。只吃上下文令牌
+   --bg / --fg-* / --hr / --surface /
    --signal，零写死色值；状态色一律由 .risk / .fault-note 自带的 --risk-* 语义
    色承担，不碰信号橙。双主题随 html.dark 自动翻，无需逐条改写。
    ========================================================================== */

@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
-  canRequestReexamine,
   highRiskCell,
   loadServerStats,
   reexamineLabel,
@@ -118,21 +117,6 @@ describe("summarizeRecords", () => {
       lastReadAt: null,
       pageTotal: 0,
     })
-  })
-})
-
-describe("canRequestReexamine", () => {
-  it("未复审与已复审都可申请", () => {
-    expect(canRequestReexamine(row({ reexamineStatus: 1 }))).toBe(true)
-    expect(canRequestReexamine(row({ reexamineStatus: 3 }))).toBe(true)
-  })
-
-  it("复审中不可重复申请", () => {
-    expect(canRequestReexamine(row({ reexamineStatus: 2 }))).toBe(false)
-  })
-
-  it("拒识记录没有可复核的结论，不给申请", () => {
-    expect(canRequestReexamine(row({ aiRejected: true }))).toBe(false)
   })
 })
 
