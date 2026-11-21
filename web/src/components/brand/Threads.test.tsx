@@ -113,4 +113,21 @@ describe("Threads 生命周期", () => {
     raf.flush()
     expect(raf.pending()).toBe(1)
   })
+
+  it("减少动态效果时指针划过不重启循环", () => {
+    installFakeWebgl2()
+    const raf = installRafHarness()
+    installMatchMedia(true)
+
+    render(<Threads enableMouseInteraction />)
+    raf.flush()
+    expect(raf.pending()).toBe(0)
+
+    // 鼠标跟随曾经是「settling」的一部分：只要指针动过，循环就会自己续上，
+    // 「停在当前帧」只在指针不动的页面里成立。
+    window.dispatchEvent(new MouseEvent("pointermove", { clientX: 12, clientY: 12 }))
+    expect(raf.pending()).toBe(0)
+    raf.flush()
+    expect(raf.pending()).toBe(0)
+  })
 })

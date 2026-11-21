@@ -9,13 +9,16 @@ import "./Threads.css"
  * MIT + Commons Clause License Condition v1.0，Copyright (c) 2026 David Haz。
  * 许可、固定 commit 与取用记录见同目录 `THIRD-PARTY-NOTICES.md`。
  *
- * <p>上游是 JavaScript + CSS 版本，这里做了五件事：
+ * <p>上游是 JavaScript + CSS 版本，这里做了六件事：
  * <ul>
  *   <li>补 TypeScript 类型，纳入 `tsc -b` 门禁；</li>
- *   <li>`prefers-reduced-motion` 改为**实时订阅**（上游只在挂载时读一次）；</li>
+ *   <li>`prefers-reduced-motion` 改为**实时订阅**（上游只在挂载时读一次），
+ *       并且 reduce 期间**不续帧、不唤醒**——鼠标划过也不重新开跑，
+ *       否则「停在当前帧」只在指针不动时成立；</li>
  *   <li>补 `onUnavailable`：WebGL2 不可用、着色器编译失败、上下文丢失时
  *       由调用方切到静态画面；</li>
  *   <li>删去渲染期写 ref 的赋值（`settingsRef.current = settings` 移进 effect）；</li>
+ *   <li>挂载末尾显式 `wake()` 起首帧，删掉上游「每次渲染都叫醒」的无依赖 effect；</li>
  *   <li>去掉上游的 `{...rest}` 透传——这里只做画布，不需要把它当通用容器。</li>
  * </ul>
  *
@@ -591,11 +594,15 @@ export default function Threads({
         Math.abs(state.targetPointer[0] - state.pointer[0]) > 0.05 ||
         Math.abs(state.targetPointer[1] - state.pointer[1]) > 0.05 ||
         Math.abs((state.inside && s.parting > 0 ? 1 : 0) - state.presence) > 0.002
-      if (moving || settling) raf = requestAnimationFrame(frame)
+      // 减少动态效果时不再续帧：`settling` 里含鼠标跟随，只看它会让
+      // 「停在当前帧」在指针划过之后重新开跑。
+      if (!reduce && (moving || settling)) raf = requestAnimationFrame(frame)
       else last = 0
     }
 
     const wake = () => {
+      // 同一个理由：指针划过、可见性变化都调这里，reduce 下不该借它重启循环。
+      if (reduce) return
       if (!raf && alive && visible && !document.hidden) raf = requestAnimationFrame(frame)
     }
 

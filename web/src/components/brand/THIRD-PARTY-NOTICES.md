@@ -232,7 +232,7 @@ E-09 的融合候选（`HeroFusion.tsx`）**没有**复制任何新的上游源�
 | 位置 | 改动 | 理由 |
 |---|---|---|
 | `Threads.tsx` | 补 TypeScript 类型标注（含 props 与 settings），纳入 `tsc -b` 门禁 | 与项目其余代码同一套类型检查 |
-| `Threads.tsx` | `prefers-reduced-motion` 从「挂载时读一次」改为**实时订阅**（`matchMedia` 的 `change`） | 用户运行中切换系统动效偏好要当场停帧 |
+| `Threads.tsx` | `prefers-reduced-motion` 从「挂载时读一次」改为**实时订阅**（`matchMedia` 的 `change`），且 reduce 期间**不续帧、不唤醒**（指针划过与可见性变化都不重启循环） | 用户运行中切换系统动效偏好要当场停帧；只判断 `moving` 时，鼠标跟随仍会让循环重新开跑 |
 | `Threads.tsx` | 新增 `onUnavailable`：WebGL2 不可用、着色器编译/链接失败、`webglcontextlost` 时通知调用方 | 认证页必须有静态降级，不能留一块空画布 |
 | `Threads.tsx` | 删去渲染期写 ref 的 `settingsRef.current = settings`，改到 effect 里 | 避免 React Hooks 的 refs-during-render 规则 |
 | `Threads.tsx` | 挂载末尾显式 `wake()`；删掉上游「每次渲染都叫醒」的无依赖 effect | 同一目的（首帧就起循环），不每渲染都排帧 |
