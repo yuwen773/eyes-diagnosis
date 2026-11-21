@@ -15,10 +15,17 @@ describe("filterImageFiles", () => {
     expect(out).toEqual([png])
   })
 
-  it("超过大小上限的丢弃", () => {
-    const big = mkFile("big.png", "image/png", 20 * 1024 * 1024)
+  it("超过大小上限的丢弃（服务端硬限 2 MB）", () => {
+    const big = mkFile("big.png", "image/png", 3 * 1024 * 1024)
     const small = mkFile("s.png", "image/png", 1024)
     expect(filterImageFiles([big, small])).toEqual([small])
+  })
+
+  it("服务端不收的图片类型（gif / webp）也丢弃", () => {
+    const gif = mkFile("a.gif", "image/gif", 1024)
+    const webp = mkFile("b.webp", "image/webp", 1024)
+    const png = mkFile("c.png", "image/png", 1024)
+    expect(filterImageFiles([gif, webp, png])).toEqual([png])
   })
 
   it("类型为空但有图片扩展名也放行（部分浏览器剪贴板不给 MIME）", () => {

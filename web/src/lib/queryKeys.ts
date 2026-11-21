@@ -36,6 +36,12 @@ export const queryKeys = {
       scope: string,
       q: { current?: number; pageSize?: number; result?: string },
     ) => ["records", "mine", scope, q] as const,
+    /**
+     * 账号级统计：与分页无关，所以键里不带页码。
+     * 翻页时列表换键、统计不换——否则同一个全量接口会被翻页重复请求，
+     * 个人中心与记录页也拿不到同一份缓存。
+     */
+    stats: (scope: string) => ["records", "stats", scope] as const,
     detail: (scope: string, id: string) => ["records", "detail", scope, id] as const,
   },
   profile: {

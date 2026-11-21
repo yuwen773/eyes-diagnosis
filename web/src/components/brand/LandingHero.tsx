@@ -6,8 +6,10 @@ import { BrandKicker, BrandPanel } from "./BrandPanel"
 import { useTheme } from "@/components/theme-provider"
 
 // 光学主视觉独立成块：首屏文字与 CTA 不等它——主包先落地，动效随后到。
-const HeroPrism = lazy(() =>
-  import("./HeroPrism").then((m) => ({ default: m.HeroPrism })),
+// E-09 Fusion R2-b（2026-11-18 产品已批准视觉）：OpticFlow 光带 × Prism 棱镜，
+// 全幅环境光 + 壳内受控光学主体。同一时刻只有一个 WebGL 渲染循环。
+const HeroFusion = lazy(() =>
+  import("./HeroFusion").then((m) => ({ default: m.HeroFusion })),
 )
 
 /** 首屏下缘三张入口卡。链接都指向真实去处，没有假按钮。 */
@@ -49,7 +51,8 @@ const LAYERS = [
  * 光学带、半透明信息卡、底部产品体验区），但**内容全部是真的**：CTA 指向
  * 真实路由，卡片写的是产品实际做的事，没有任何一处冒充模型结论或患者数据。
  *
- * <p>主视觉是一个渲染器（见 HeroPrism）；这一层只负责排版与信息层级。
+ * <p>主视觉是 Fusion（见 HeroFusion）：环境光层铺满 hero，光学主体层裁在壳里。
+ * 这一层只负责排版与信息层级。
  */
 export function LandingHero(): ReactElement {
   const { resolvedTheme } = useTheme()
@@ -61,7 +64,7 @@ export function LandingHero(): ReactElement {
           玻璃外壳是叠加层，不再把画面裁在 1240px 里。 */}
       <div className="landing-hero__flow">
         <Suspense fallback={<div className="landing-hero__visual-hold" aria-hidden="true" />}>
-          <HeroPrism theme={theme} />
+          <HeroFusion theme={theme} />
         </Suspense>
       </div>
 

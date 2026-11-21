@@ -1,9 +1,17 @@
 # 第三方来源与许可
 
-本目录下的 `Prism.tsx` 与 `Prism.css` 是**上游第三方组件的 vendor 副本**，
-不是本项目原创。其余文件（`HeroPrism.tsx`、`HeroPrism.test.tsx`、`LandingHero.tsx`、
-`BrandPanel.tsx`、`BrandFooter.tsx`、`notices.test.ts`）由本项目编写。
+本目录下有**两组**上游第三方组件的 vendor 副本，不是本项目原创：
+
+- `Prism.tsx` + `Prism.css` —— React Bits · **Prism**（首屏方案 B）；
+- `beamsEngine.ts` + `beamsMount.ts` —— React Bits · **Beams**（首屏方案 A 与融合候选 C 的动态光场）。
+
+其余文件（`HeroPrism.tsx`、`HeroFusion.tsx`、`OpticFlow.tsx`、`HeroCompareStage.tsx`、
+`LandingHero.tsx`、`BrandPanel.tsx`、`BrandFooter.tsx` 及各自的测试）由本项目编写。
 品牌顶栏的虹膜标与字标已随 R2.5-01 移到 `src/components/shell/Wordmark.tsx`，同样是本项目编写。
+
+> **E-09（2026-11-18）**：`OpticFlow.tsx` / `beamsEngine.ts` / `beamsMount.ts` 是**逐字**从
+> `feat/iris21-multiagent-integration@9a6dbcb6` 取回的方案 A 基线，为的是让三方案对照
+> 跑的是真实组件，而不是复刻版。E-09 没有引入任何新的第三方依赖。
 
 ---
 
@@ -45,8 +53,7 @@ Copyright (c) 2026 David Haz
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-Software **as part of an application, website, or product**, subject to the following conditions:
+to use, copy, modify, merge, publish, distribute the Software **as part of an application, website, or product**, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -70,26 +77,125 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### 许可判断（**待产品负责人确认，不是结论**）
+### 分发授权核对（2026-11-16）
 
-这段话允许的：**把它作为应用 / 网站 / 产品的一部分使用，包含商业用途**，允许修改。
-这段话限制的：**不得销售、再许可、再分发「组件本身」——单独、打包、或以移植版的形式。**
+**已核对上游原文**：`https://raw.githubusercontent.com/DavidHDev/react-bits/main/LICENSE.md`
+（HTTP 200，2026-11-16）；README 的 License 段落写的是
+"MIT + Commons Clause, free for personal and commercial use"。
 
-本项目符合的部分：
+允许的：把软件**作为应用 / 网站 / 产品的一部分**使用、复制、修改、合并、发布与分发，
+包含商业用途；版权与许可声明随附。
 
-- 它只作为 Iris 内部产品的一个首屏背景使用，不单独售卖、不再许可；
-- 版权与许可声明在两处保留（本文件 + `Prism.tsx` 文件头）。
+限制的（Commons Clause）：**不得销售、再许可、再分发「组件本身」——单独、打包、
+或以移植版的形式。**
 
-**需要确认的一点**：本仓库是**公开仓库**，`Prism.tsx` 是一份「补类型 + 改生命周期的
-移植版」，并且随仓库公开分发。严格按字面，"redistribute the components themselves …
-as a ported version" 覆盖这种情况。合规的做法有三条路，按代价从低到高：
+**与本仓库的关系**：`Prism.tsx` 是补类型并改生命周期的**移植版**，本仓库是
+**公开仓库**（GitHub `yuwen773/eyes-diagnosis`，PUBLIC）。严格按字面，
+「公开仓库里的移植版源码」落在 "redistribute … as a ported version" 的限制范围内；
+MIT 的 "as part of an application" 是否覆盖公开源码分发，原文没有给出明确许可。
 
-1. **保持现状 + 记录在案**：由负责人书面确认「内部产品、公开仓库、非商业分发」这一解释；
-2. **仓库里不放 vendored 副本**：把 `Prism.tsx` / `Prism.css` 移到运行时私有依赖
-   或构建期注入，开源仓库只留接口与说明；
-3. **换成自研或更宽松许可的实现**。
+### 分发授权结论（2026-11-16，负责人确认）
 
-本文件只做第 1 条的「记录在案」，不擅自替负责人做合规判断。
+产品负责人于 2026-11-16 确认按以下解释**保留现状**：
+
+- 本仓库是公开的**非商业演示 / 学术项目**（Iris 眼底判读），Prism 只作为应用
+  首屏背景的一部分使用；
+- 不销售、不再许可、不把 Prism 组件本身（含移植版）作为独立组件、模板或
+  付费产品分发；
+- 版权与许可声明保留在本文件与 `Prism.tsx` 文件头。
+
+这是项目方对 Commons Clause 公开源码分发解释的**风险接受**，不是上游的书面授权。
+若后续项目商业化、改为组件库，或上游提出异议，应重新评估；必要时改为私有依赖
+或自研实现。
+
+---
+
+## React Bits · R3 用户端体验重设计（2026-11-17）
+
+R3 的 Phase 1（Agent 工作区）与 Phase 2（Journal 资讯体验）**参考**了 React Bits 的
+五种交互形态：Prompt Bar、Thought Line、Lattice Loader、Animated Content、
+Glare Hover。
+
+**这五种交互全部是本仓库独立实现的**：没有复制上游源码，没有引入上游依赖，
+`package.json` 没有因此多出任何一个包。上游许可（MIT + Commons Clause v1.0，
+见上节照录；2026-11-17 复核 `LICENSE.md` 仍为 "MIT + Commons Clause License
+Condition v1.0"，`Copyright (c) 2026 David Haz`）允许把软件作为应用的一部分使用与
+修改，但 Commons Clause 明确禁止
+**销售、再许可、再分发组件本身——单独、打包、或以移植版的形式**。本仓库是公开
+仓库，把上游组件源码搬进来正落在「移植版再分发」这一条上；**「免费使用」不等于
+「可以抄源码」**。因此这里走的是「读懂交互意图，自己写一份」的路线：自研实现不
+构成 `redistribute … the component`，该限制不触发。
+
+上游无 tag，参考阅读时的 `main` HEAD 为
+`d01aa914dcbe76da8b2923ebf871b5c8b1066e4c`（2026-11-16）；对应文件为
+`src/ts-default/Micro/{PromptBar,ThoughtLine,LatticeLoader}/` 与
+`src/ts-default/Animations/{AnimatedContent,GlareHover}/`——**仅阅读，未复制**。
+上游这几个组件自身的依赖是 `motion`、`@hugeicons/react`、
+`@hugeicons/core-free-icons`（Prompt Bar、Thought Line）与 `gsap`（Animated
+Content），本仓库一个都没有引入。
+
+| 交互 | 上游做法 | 本仓库实现 | 文件 |
+|------|---------|-----------|------|
+| Prompt Bar | 自带输入与附件状态；`motion` + `@hugeicons` + 2D canvas 火花 | 无状态摆件 `PromptBar`，状态仍在 `ChatInput`；多行输入、Enter/Shift+Enter、IME 保护、附件增删、草稿存取、发送/停止全在原组件 | `web/src/components/agent/PromptBar.tsx` |
+| Thought Line | DOM + CSS + `motion` 动画的执行行 | 纯 CSS 状态行；数据来自 `buildThread` 的**纯派生**，不额外维护一份状态机 | `web/src/components/agent/ThoughtLine.tsx` |
+| Lattice Loader | 纯 DOM + CSS 点阵 | 纯 CSS 点阵；屏外 / 后台 / 减弱动效下不启动 | `web/src/components/agent/LatticeLoader.tsx` |
+| Animated Content | `gsap` + ScrollTrigger 滚动触发 | 复用本仓库既有 `.reveal → .is-in` 基元与 `useRevealScan`（CSS transition，无 GSAP） | `web/src/lib/useInView.ts` |
+| Glare Hover | 纯 CSS 效果 | 一层 CSS 径向渐变跟随指针（位置写进 `--gx` / `--gy`，不触发 React 重渲染）；触屏与减弱动效下不生效 | `web/src/components/news/GlareImage.tsx` |
+
+**没有引入的东西**：Motion、GSAP、Three.js / React Three Fiber、`@react-three/*`、
+Hugeicons。图标一律用既有的 `lucide-react` 静态命名导入。
+
+---
+
+## React Bits · Beams
+
+| 项 | 内容 |
+|----|------|
+| 上游 | https://github.com/DavidHDev/react-bits |
+| 源文件 | `src/content/Backgrounds/Beams/Beams.jsx` |
+| **固定 commit** | **`ed33ebe4acfe29e60fb759bcccc70a138ce2dcef`**（2026-11-08，"Fix/responsive preview flicker (#1109)"） |
+| 取用时间 | 2026-11-12，取 `main` 当时该文件的最新一次提交 |
+| 作者 | David Haz |
+| 许可 | MIT License **+ Commons Clause License Condition v1.0**（Copyright (c) 2026 David Haz） |
+| 署名位置 | 本文件 + `beamsEngine.ts` 文件头，两处都保留 |
+
+> 上游没有给这个组件打版本标签，所以**只认 commit SHA**。换了 SHA 就要重做逐字比对。
+
+### 与固定 commit 的逐字比对（2026-11-12）
+
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 结论 |
+|---|---|---|---|
+| 顶点 | `254cf7532230` | `254cf7532230` | 逐字一致 |
+| FIELD | `ce0437306e9d` | `3663510bac21` | 已改动（见下） |
+| COMPOSITE | `39bf1cf8ca1a` | `05e950c06437` | 已改动（见下） |
+
+> 计算口径：取模板字符串**两个反引号之间的全部内容**，先把行尾统一成 `LF` 再算
+> SHA-256。换行符不统一会得到完全不同的哈希，下次比对请沿用这个口径。
+
+### 相对上游的改动
+
+| 位置 | 改动 | 理由 |
+|---|---|---|
+| `beamsEngine.ts` | 删去 React 组件外壳与其自带 CSS；补 TypeScript 类型标注；顶点着色器逐字保留 | 让引擎能脱离 React 使用并纳入 `tsc -b` |
+| `FIELD.main()` | 新增 `edgeDist` / `rim`，输出改为 `vec4(value.x, value.y, min(hot, 6.0), rim)`（上游 `.a` 恒为 `1.0`） | 首屏要做「光学玻璃带」而不是「一团发光」，需要可辨认的带边 |
+| `COMPOSITE.main()` | 读取 `.a` 作为 `rim`，亮色压低边缘 alpha、暗色加一道冰蓝反光 | 亮环境读作「透明体 + 亮边」，暗环境给带体厚度与前后关系 |
+| `beamsMount.ts` | 把上游写在 `useEffect` 里的挂载逻辑抽成普通函数 `mountBeams()`；补 `webglcontextlost` 处理、`prefers-reduced-motion` 运行时订阅、`dispose()` 幂等与「不主动丢上下文」 | 支持 WebGL2 不可用 / 上下文丢失 / 减少动效 / StrictMode 重复挂载四条路径 |
+
+其余语句——噪声、lobe、ACES、泛光采样顺序、feather、抖动——与上游一致。
+
+### 分发授权结论
+
+Beams 与 Prism 出自同一上游、同一份 `LICENSE.md`（MIT + Commons Clause v1.0，
+`Copyright (c) 2026 David Haz`），Commons Clause 的限制也相同：**不得销售、再许可或
+再分发「组件本身」——单独、打包或以移植版的形式。**
+
+产品负责人 2026-11-16 对 Prism 作出的**风险接受**（见上一节「分发授权结论」）在
+E-09 一并适用于 Beams：本仓库是公开的**非商业演示 / 学术项目**，组件只作为首屏背景
+的一部分使用，不单独售卖、不再许可、不作为组件库分发，版权与许可声明保留在本文件
+与源文件头。若后续商业化、改为组件库，或上游提出异议，应重新评估。
+
+E-09 的融合候选（`HeroFusion.tsx`）**没有**复制任何新的上游源码：它复用上面两份已
+记录的 vendor 副本，其余（棱镜、色散扇、细纤维）是自研 SVG / CSS。
 
 ---
 

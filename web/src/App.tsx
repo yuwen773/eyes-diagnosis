@@ -1,10 +1,12 @@
-import { lazy, Suspense, useEffect } from "react"
+import { lazy, Suspense, useEffect, type ReactNode } from "react"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 import { ThemeProvider } from "@/components/theme-provider"
 import { FaultProvider, FaultToaster } from "@/components/fault"
 import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { PageSkeleton } from "@/components/PageSkeleton"
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary"
+import { NotFoundPage } from "@/components/system/IrisStates"
 import { LandingPage } from "@/pages/LandingPage"
 
 // 首页保持同步：它是第一屏，分包只会多一次往返。其余路由按需下载——
@@ -15,6 +17,12 @@ const DiagnosisPage = lazy(() =>
 )
 const AgentPage = lazy(() =>
   import("@/pages/AgentPage").then((m) => ({ default: m.AgentPage })),
+)
+const CollaborationPage = lazy(() =>
+  import("@/pages/CollaborationPage").then((m) => ({ default: m.CollaborationPage })),
+)
+const DoctorReviewsPage = lazy(() =>
+  import("@/pages/DoctorReviewsPage").then((m) => ({ default: m.DoctorReviewsPage })),
 )
 const NewsPage = lazy(() =>
   import("@/pages/NewsPage").then((m) => ({ default: m.NewsPage })),
@@ -27,6 +35,9 @@ const ProfilePage = lazy(() =>
 )
 const RecordsPage = lazy(() =>
   import("@/pages/RecordsPage").then((m) => ({ default: m.RecordsPage })),
+)
+const RecordDetailPage = lazy(() =>
+  import("@/pages/RecordDetailPage").then((m) => ({ default: m.RecordDetailPage })),
 )
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
@@ -61,6 +72,22 @@ const AdminDataAnalysisPage = lazy(() =>
 const AdminNewsEditPage = lazy(() =>
   import("@/pages/admin/AdminNewsEditPage").then((m) => ({ default: m.AdminNewsEditPage })),
 )
+
+/**
+ * E-09 设计对照台：**只在开发期或显式打开 `VITE_DESIGN_PREVIEW=true` 的构建里注册**。
+ * 正式生产构建两条都不满足，`/design/hero-compare` 会落到 404 路由，
+ * 不会把设计选择器暴露给线上用户。
+ */
+const DESIGN_PREVIEW_ENABLED =
+  import.meta.env.DEV || import.meta.env.VITE_DESIGN_PREVIEW === "true"
+
+const DesignHeroComparePage = DESIGN_PREVIEW_ENABLED
+  ? lazy(() =>
+      import("@/pages/DesignHeroComparePage").then((m) => ({
+        default: m.DesignHeroComparePage,
+      })),
+    )
+  : null
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation()
@@ -107,6 +134,18 @@ export function AuthRedirect() {
   return null
 }
 
+/**
+ * 把错误边界绑到当前路由上：换页自动复位，不会把上一页的崩溃状态带过去。
+ */
+function RouteBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  return (
+    <RouteErrorBoundary resetKey={`${location.pathname}${location.search}`}>
+      {children}
+    </RouteErrorBoundary>
+  )
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -117,14 +156,18 @@ export function App() {
         <ScrollToTop />
         <AuthRedirect />
         <Suspense fallback={<PageSkeleton />}>
+        <RouteBoundary>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/diagnosis" element={<DiagnosisPage />} />
           <Route path="/agent" element={<AgentPage />} />
+          <Route path="/agent/collaboration" element={<CollaborationPage />} />
+          <Route path="/doctor-reviews" element={<DoctorReviewsPage />} />
           <Route path="/news" element={<NewsPage />} />
           <Route path="/news/:id" element={<NewsDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/records" element={<RecordsPage />} />
+          <Route path="/records/:id" element={<RecordDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
@@ -167,8 +210,12 @@ export function App() {
             />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
+          {DesignHeroComparePage ? (
+            <Route path="/design/hero-compare" element={<DesignHeroComparePage />} />
+          ) : null}
         </Routes>
+        </RouteBoundary>
         </Suspense>
         <FaultToaster />
         </FaultProvider>

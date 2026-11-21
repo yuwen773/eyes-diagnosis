@@ -34,6 +34,7 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.service.DiagnosisEvidence;
+import com.csust.eyediagnosis.service.ClinicalReviewQualification;
 import com.csust.eyediagnosis.utils.DateRanges;
 import com.csust.eyediagnosis.utils.JsonUtils;
 import com.csust.eyediagnosis.service.DiagnosisService;
@@ -115,8 +116,25 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         diagnosis.setUserId(loginUser.getId());
 
         //插入/更新
-        boolean result = this.saveOrUpdate(diagnosis);
-        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,PICTURE_FAIL_UPLOAD);
+        boolean result;
+        try {
+            result = this.saveOrUpdate(diagnosis);
+        } catch (RuntimeException e) {
+            // 与 doDiagnosis 同一类「提交结果未知」：不删（可能已经提交，删了不可逆）。
+            // 但这条日志是事后唯一能找回这个对象的线索——public/ 没有对账器，
+            // 不记就彻底查不到这张原图去了哪里。
+            log.warn("影像已上传但落库结果未知，保留对象待人工排查, objectKey={}",
+                    uploadPictureDetail.getObjectKey(), e);
+            throw e;
+        }
+        if (!result) {
+            // 明确 0 行 = 记录没写进去，这张原图没有任何东西引用它。
+            // 与 doDiagnosis 同一口径：删掉刚上传的那一个对象，否则它会在
+            // public/ 前缀下永久滞留（该前缀没有对账器）。
+            // 注意只在「明确失败」时删：saveOrUpdate 抛异常属于提交结果未知，那里不删。
+            fileManager.deleteUploadedPictureQuietly(uploadPictureDetail.getObjectKey());
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, PICTURE_FAIL_UPLOAD);
+        }
         return DiagnosisManageVO.objToVo(diagnosis);
     }
 
@@ -262,34 +280,108 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 }
             }
 
-            // 3. 异步上传 COS
-            String imageUrl = null;
+            // 3. 上传对象存储。
+            // 这一步失败必须终止本次请求：此前异常被吞掉，仍会落一条没有影像的
+            // 正式记录——用户拿到结论，报告却核验不了原图。推理结果已按图片哈希
+            // 写入推理缓存（缓存启用时），重试不会重复计算。
+            String imageUrl;
+            String imageKey;
             try {
                 String uploadPrefix = String.format("public/%s", loginUser.getId());
                 UploadPictureDetail detail = fileManager.uploadPicture(file, uploadPrefix);
                 imageUrl = detail.getUrl();
-            } catch (Exception e) {
-                log.error("COS upload failed", e);
+                imageKey = detail.getObjectKey();
+            } catch (BusinessException e) {
+                if (e.getCode() == ErrorCode.SYSTEM_ERROR.getCode()) {
+                    // 存储侧失败（超时 / 鉴权 / 服务端异常），换成本次请求的语义：
+                    // 没有归档，可以重试。用独立的 STORAGE_ERROR 码，前端才能把它
+                    // 与笼统的「服务没响应」分开说。
+                    throw new BusinessException(ErrorCode.STORAGE_ERROR,
+                            "影像存储失败，本次判读未归档，请重试");
+                }
+                // 体积 / 格式等校验失败原样上抛，不能被包装成「存储失败」。
+                throw e;
             }
 
-            // 4. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）
-            DiagnosisResultVO vo = buildDiagnosisResult(grpcResponse, evidence);
-            vo.setUrl(imageUrl);
+            // 4-5. 构建诊断结果 VO（不读取任何旧 Diagnosis 记录）并落库。
+            // 补偿范围要覆盖「上传之后的全部工作」：VO 构建、证据写回、插入。
+            // 默认把已经上传的对象删掉，唯一例外是**落库结果未知**（见下方 catch：
+            // 回查到记录、或回查本身失败时保留对象——删掉被引用的原图不可逆）。
+            DiagnosisResultVO vo;
+            Diagnosis diagnosis = null;
+            boolean saved;
+            try {
+                vo = buildDiagnosisResult(grpcResponse, evidence);
+                vo.setUrl(imageUrl);
 
-            // 5. 保存到诊断记录表 —— 仅写入用户字段，绝不复用旧记录
-            Diagnosis diagnosis = DiagnosisResultVO.voToObj(vo);
-            diagnosis.setUserId(loginUser.getId());
-            if (imageUrl != null) {
-                diagnosis.setUrl(imageUrl);
+                // 仅写入用户字段，绝不复用旧记录
+                diagnosis = DiagnosisResultVO.voToObj(vo);
+                diagnosis.setUserId(loginUser.getId());
+                if (imageUrl != null) {
+                    diagnosis.setUrl(imageUrl);
+                }
+                // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
+                evidence.applyTo(diagnosis);
+                saved = this.save(diagnosis);
+            } catch (RuntimeException e) {
+                // 对象已写入、记录可能没落库。**不能一律删对象**：
+                // 无事务时 `save` 走自动提交，可能已经提交成功、只是驱动在返回
+                // 途中抛了超时——这时记录在库、原图却被删掉，是最坏的结果。
+                // 先按主键回查一次：查不到（且查询本身没失败）才认为记录确实没落库。
+                if (diagnosis != null && recordMayExist(diagnosis)) {
+                    // 注意：public/ 前缀下**没有**自动对账器（UploadCompensationService
+                    // 只扫 agent-chat/），这里留下的对象需要人工排查或后续接入对账。
+                    // 仍然选择保留：删掉一张可能被正式记录引用的原图不可逆。
+                    log.warn("诊断记录落库结果未知，保留已上传影像以免误删被引用对象（public/ 暂无常驻对账）, diagnosisId={}, objectKey={}",
+                            diagnosis.getId(), imageKey);
+                } else {
+                    fileManager.deleteUploadedPictureQuietly(imageKey);
+                }
+                throw e;
             }
-            // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
-            evidence.applyTo(diagnosis);
-            this.save(diagnosis);
+            if (!saved) {
+                // save() 返回 false 表示插入 0 行（不抛异常）：同样是「有图、无记录」，
+                // 必须当作失败处理并补偿删除。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR,
+                        "诊断记录保存失败，本次判读未归档，请重试");
+            }
             vo.setId(diagnosis.getId());
 
             return vo;
+        } catch (BusinessException e) {
+            // 业务异常带着可读错误码与文案，不能被压成一条笼统的「诊断失败」。
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 落库抛异常之后，判断这条记录是不是其实已经提交成功了。
+     *
+     * <p>doDiagnosis 没有包裹事务，每次 Mapper 调用各自提交，所以「提交超时」
+     * 与「插入失败」在调用方看来是同一个异常。用主键回查找出区别：
+     * 查到说明提交确实生效，它引用的对象**绝不能删**；明确查不到才允许补偿删除；
+     * 查询本身失败（连接还没恢复）属于「结果未知」，一律按可能存在处理——
+     * 删掉一张被正式记录引用的原图不可逆；而多留的那个对象**没有**自动对账器
+     * （{@code UploadCompensationService} 只扫 {@code agent-chat/}），只能人工排查。
+     * 两害相权，选那个还能靠人查回来的。
+     *
+     * <p>已知不足：这条回查没有单独的 statement timeout，DB 全挂时会和写入一样
+     * 等连接超时（一次失败请求可能等两倍）。方向是安全的（超时也走「可能存在」），
+     * 但会放大故障期间的线程占用，登记为 follow-up。
+     */
+    private boolean recordMayExist(Diagnosis diagnosis) {
+        Long id = diagnosis.getId();
+        if (id == null) {
+            return false;
+        }
+        try {
+            return this.getById(id) != null;
+        } catch (Exception readError) {
+            log.warn("诊断记录回查失败，按「可能已落库」处理, diagnosisId={}", id, readError);
+            return true;
         }
     }
 
@@ -299,9 +391,18 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         ThrowUtils.throwIf(reviewer == null, ErrorCode.NO_AUTH_ERROR);
         ThrowUtils.throwIf(diagnosisId == null || diagnosisId <= 0, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(dto == null, ErrorCode.PARAMS_ERROR);
-        // 仅允许管理员；其他角色绝不能写入 human* 字段
-        ThrowUtils.throwIf(!AuthConstant.ADMIN_ROLE.equals(reviewer.getUserRole()),
-                ErrorCode.NO_AUTH_ERROR, "仅管理员可写入人工复核字段");
+        // D-01b（2026-11-18 产品已裁定）：正式临床复核只能由具有有效、已核验授权的
+        // 医生执行；管理员与医生职责分离，管理员默认最小权限。
+        //
+        // 系统当前没有可核验的资质数据源（t_user 只有一个 userRole，没有执业证书编号、
+        // 没有核验记录、没有开通/吊销流程），所以正式复核的写入路径**安全关闭**：
+        // 管理员、doctor 角色都不例外。既不用 ADMIN_ROLE 顶替资格，也不用
+        // userRole=doctor 顶替资质证明。
+        //
+        // 历史 REVIEWED 记录与 t_diagnosis_audit 审计行保持原样；展示层据
+        // source.reviewerRole 标明「资质未核验」，不写成医生正式复核。
+        ThrowUtils.throwIf(!ClinicalReviewQualification.mayWriteFormalClinicalReview(reviewer),
+                ErrorCode.NO_AUTH_ERROR, ClinicalReviewQualification.SAFE_OFF_REASON);
         // humanResult 必填；防止空 DTO 通过校验
         ThrowUtils.throwIf(StrUtil.isBlank(dto.getHumanResult()),
                 ErrorCode.PARAMS_ERROR, "必须填写人工结论");

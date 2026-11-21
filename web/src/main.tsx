@@ -2,10 +2,12 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClientProvider } from "@tanstack/react-query"
 
-import "@fontsource/ibm-plex-mono/400.css"
-import "@fontsource/ibm-plex-mono/500.css"
-import "@fontsource/ibm-plex-mono/600.css"
-import "@fontsource/instrument-serif/400.css"
+// 只引 latin 子集：等宽读数与衬线标题只承载拉丁字母与数字，CJK 由 Noto 子集
+// 兜底。整包 400.css 会连带 cyrillic / greek / vietnamese 两套格式一起产出。
+import "@fontsource/ibm-plex-mono/latin-400.css"
+import "@fontsource/ibm-plex-mono/latin-500.css"
+import "@fontsource/ibm-plex-mono/latin-600.css"
+import "@fontsource/instrument-serif/latin-400.css"
 // Iris 2.0 品牌/UI 主字体。unicode-range 分片，浏览器只下命中的子集（拉丁 ~25KB）。
 import "@fontsource-variable/manrope"
 
@@ -13,6 +15,14 @@ import "./fonts-subset.css"
 import "./index.css"
 import App from "./App.tsx"
 import { queryClient } from "./lib/queryClient"
+
+// 仅供浏览器契约测试：在受控环境下提供一个确定性的缓存失效入口，
+// 避免用 31 秒真实等待去赌 staleTime。生产构建不带这个标记，挂不上钩子。
+if (import.meta.env.VITE_E2E_REFRESH_HOOK === "1") {
+  ;(window as unknown as { __irisRefetch?: () => void }).__irisRefetch = () => {
+    void queryClient.invalidateQueries({ queryKey: ["news", "list"], refetchType: "all" })
+  }
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

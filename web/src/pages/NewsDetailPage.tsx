@@ -5,13 +5,15 @@ import { ArrowLeft } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useParams } from "react-router-dom"
 import { describeError, getNews, listNews } from "@/lib/api"
+import { faultFromError } from "@/lib/faults"
 import { queryKeys } from "@/lib/queryKeys"
-import { newsDate } from "@/lib/news"
-import { FaultPanel } from "@/components/FaultPanel"
+import { useRevealScan } from "@/lib/useInView"
+import { IrisRefreshNotice, IrisSectionError } from "@/components/system/IrisSectionState"
 import { SectionHead } from "@/components/SectionHead"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { NewsArticleView } from "@/components/news/NewsArticleView"
+import { NewsCard } from "@/components/news/NewsCard"
 
 export function NewsDetailPage() {
   const { id = "" } = useParams<{ id: string }>()
@@ -31,6 +33,10 @@ export function NewsDetailPage() {
 
   const loading = detailQuery.isLoading
   const fault = detailQuery.error ? describeError(detailQuery.error) : null
+  const faultSeverity = detailQuery.error
+    ? faultFromError(detailQuery.error, { intent: "load" }).severity
+    : "attention"
+  const hasData = detailQuery.data !== undefined
   const item = detailQuery.data ?? null
 
   const others = useMemo(
@@ -40,6 +46,9 @@ export function NewsDetailPage() {
         .slice(0, 4),
     [othersQuery.data, id],
   )
+
+  // 相关阅读的卡片是数据到位后才挂上的，入场扫描要跟着数据重跑一次。
+  useRevealScan([others.length])
 
   return (
     <div className="is-field is-brand-page">
@@ -61,15 +70,15 @@ export function NewsDetailPage() {
               <span className="news-detail__skeleton-block" />
             </div>
           </>
-        ) : fault ? (
+        ) : fault && !hasData ? (
           <>
             <h1 className="sr-only">资讯详情</h1>
-            <FaultPanel
-              code={fault.code}
+            <IrisSectionError
+              severity={faultSeverity}
               title="这条资讯没能读出来"
-              body={fault.text}
-              endpoint={`GET /news/get/${id}`}
-              onRetry={() => void detailQuery.refetch()}
+              detail={fault.text}
+              actionLabel="重试"
+              onAction={() => void detailQuery.refetch()}
             />
           </>
         ) : !item ? (
@@ -83,6 +92,10 @@ export function NewsDetailPage() {
           </div>
         ) : (
           <>
+            {fault && hasData ? (
+              <IrisRefreshNotice detail={fault.text} onRetry={() => void detailQuery.refetch()} />
+            ) : null}
+
             {/* 版式与后台预览共用一份实现：公开页看到的就是预览看到的。 */}
             <NewsArticleView article={item} />
 
@@ -95,28 +108,10 @@ export function NewsDetailPage() {
             {others.length > 0 ? (
               <section className="news-detail__more">
                 <SectionHead code="更多" kicker="More bulletins" en="LATEST" />
-                <ul className="news-rows">
-                  {others.map((row) => {
-                    const rowDate = newsDate(row.publishTime)
-                    return (
-                      <li className="news-rows__item" key={row.id}>
-                        <Link
-                          to={`/news/${row.id}`}
-                          className="news-row"
-                          data-cursor
-                          data-cursor-label="阅读全文"
-                        >
-                          <span className="news-row__date num">{rowDate.date}</span>
-                          <span className="news-row__main">
-                            <span className="news-row__title">{row.title}</span>
-                          </span>
-                          <span className="news-row__mark" aria-hidden="true">
-                            ↗
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
+                <ul className="journal-grid journal-grid--related">
+                  {others.map((row, index) => (
+                    <NewsCard item={row} index={index} key={row.id} />
+                  ))}
                 </ul>
               </section>
             ) : null}

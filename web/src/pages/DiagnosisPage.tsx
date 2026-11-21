@@ -1,94 +1,71 @@
-import { memo, useEffect, useRef, useState, type CSSProperties } from "react"
+import "@/styles/diagnosis.css"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ApiError, runDiagnosis, type DiagnosisResult } from "@/lib/api"
-import { CLASSES } from "@/lib/domain"
+import {
+  CLASSES,
+  canonicalClassName,
+  classCode,
+  confidenceBand,
+  confidencePercent,
+  type Risk,
+} from "@/lib/domain"
 import { useSession } from "@/lib/session"
 import { rememberPendingUpload, takePendingUpload } from "@/lib/pendingUpload"
+import {
+  ACCEPTED_IMAGE_TYPES,
+  UPLOAD_LIMIT_HINT,
+  exceedsUploadLimit,
+  uploadLimitError,
+} from "@/lib/uploadLimits"
 import { FaultNote } from "@/components/fault"
 import { faultFromError, infoFault, validationFault, type Fault } from "@/lib/faults"
-import { RecordSheet } from "@/components/RecordSheet"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 
 type Stage = "empty" | "ready" | "running" | "done" | "error"
-type StepState = "idle" | "active" | "run" | "done" | "fail"
 
-type LogLine = { key: string; text: string; note?: string; state: "done" | "run" | "fail" }
-
-const MAX_BYTES = 5 * 1024 * 1024
-const ACCEPTED = ["image/jpeg", "image/png"]
+/**
+ * 单张影像上限 = 服务端真实上限（`FileManager.validPicture`），
+ * 口径集中在 `@/lib/uploadLimits`，不在页面里写字面量。
+ *
+ * <p>之前前端写 5 MB、服务端只收 2 MB：2–5 MB 的片子能判读出结果，
+ * 但存图那步失败被吞掉，记录里**没有原图**——用户拿到结论却核验不了影像。
+ * 前端口径与服务端对齐：本地就拦下并说清楚。
+ */
+const ACCEPTED = ACCEPTED_IMAGE_TYPES
 
 function validate(file: File): string | null {
-  if (!ACCEPTED.includes(file.type)) return "只接受 JPG 与 PNG 格式的影像"
-  if (file.size > MAX_BYTES) return "影像超过 5 MB，请压缩后重试"
+  if (!ACCEPTED.includes(file.type as (typeof ACCEPTED)[number]))
+    return "只接受 JPG 与 PNG 格式的影像"
+  if (exceedsUploadLimit(file.size)) return uploadLimitError("影像")
   return null
 }
 
-/* 分划板：眼底相机目镜里的那圈刻度。空槽时是取景参考，读片时绕着影像转。 */
-const RETICLE_TICKS = Array.from({ length: 72 }, (_, index) => {
-  const angle = (index / 72) * Math.PI * 2
-  const major = index % 6 === 0
-  const inner = major ? 84 : 89
-  return {
-    x1: 100 + Math.cos(angle) * inner,
-    y1: 100 + Math.sin(angle) * inner,
-    x2: 100 + Math.cos(angle) * 94,
-    y2: 100 + Math.sin(angle) * 94,
-    major,
-  }
-})
-
-/* 无 props，memo 后秒表每 100ms 重渲时不再重建 72 格刻度。 */
-const Reticle = memo(function Reticle() {
-  return (
-    <svg className="slot__reticle" viewBox="0 0 200 200" aria-hidden="true">
-      <g className="slot__ring">
-        <circle cx="100" cy="100" r="94" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.45" />
-        {RETICLE_TICKS.map((tick, index) => (
-          <line
-            key={index}
-            x1={tick.x1}
-            y1={tick.y1}
-            x2={tick.x2}
-            y2={tick.y2}
-            stroke="currentColor"
-            strokeWidth={tick.major ? 1 : 0.5}
-            opacity={tick.major ? 0.85 : 0.4}
-          />
-        ))}
-      </g>
-      <circle cx="100" cy="100" r="76" fill="none" stroke="currentColor" strokeWidth="0.75" opacity="0.55" />
-      {/* 十字线只在环带里，中心留给提示文案 */}
-      <line x1="100" y1="12" x2="100" y2="40" stroke="currentColor" strokeWidth="0.75" />
-      <line x1="100" y1="160" x2="100" y2="188" stroke="currentColor" strokeWidth="0.75" />
-      <line x1="12" y1="100" x2="40" y2="100" stroke="currentColor" strokeWidth="0.75" />
-      <line x1="160" y1="100" x2="188" y2="100" stroke="currentColor" strokeWidth="0.75" />
-    </svg>
-  )
-})
-
-/** 秒表读数：分:秒.十分位，定宽不跳。 */
+/** 秒表读数：分:秒。等待时长是真实耗时，不是进度。 */
 function clock(seconds: number) {
   const m = Math.floor(seconds / 60)
-  const s = seconds - m * 60
-  return `${String(m).padStart(2, "0")}:${s.toFixed(1).padStart(4, "0")}`
+  const s = Math.floor(seconds - m * 60)
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
 }
 
-const STEP_DEFS = [
-  { code: "01", zh: "影像" },
-  { code: "02", zh: "判读" },
-  { code: "03", zh: "记录" },
-]
+/**
+ * 结果的四种结局。区分是硬要求：拒识、待复核、有效分类、失败不能混成一句「完成」。
+ * 全部来自响应字段，不从界面推断。
+ */
+type Outcome = { key: "classified" | "rejected" | "review"; label: string; risk: Risk }
 
-const STEP_MARK: Record<StepState, string> = { idle: "", active: "·", run: "›", done: "✓", fail: "×" }
-
-const STAGE_EN: Record<Stage, string> = {
-  empty: "STANDBY",
-  ready: "READY",
-  running: "READING",
-  done: "DONE",
-  error: "FAIL",
+function outcomeOf(result: DiagnosisResult): Outcome {
+  if (result.aiRejected) return { key: "rejected", label: "模型未给出结论", risk: "attention" }
+  if (result.requiresReview) return { key: "review", label: "已转入人工复核队列", risk: "attention" }
+  return { key: "classified", label: "已给出分类", risk: "normal" }
 }
+
+const STEPS = [
+  { key: "upload", zh: "上传影像" },
+  { key: "read", zh: "等待判读" },
+  { key: "result", zh: "查看结果" },
+] as const
 
 export function DiagnosisPage() {
   const { status } = useSession()
@@ -102,16 +79,16 @@ export function DiagnosisPage() {
   )
   const previewRef = useRef<string | null>(preview)
   const [stage, setStage] = useState<Stage>(restored ? "ready" : "empty")
-  // 故障只有一份：要么是这张图没通过检查（贴槽位），
-  // 要么是这次判读没成（给重试）。
+  // 故障只有一份：要么是这张图没通过检查（贴影像区），要么是这次判读没成（给重试）。
   const [fault, setFault] = useState<Fault | null>(() =>
     restored ? infoFault("已为你保留上次选择的影像，继续判读即可") : null,
   )
   const [faultScope, setFaultScope] = useState<"slot" | "run">("slot")
   const [needsLogin, setNeedsLogin] = useState(false)
   const [result, setResult] = useState<DiagnosisResult | null>(null)
-  const [elapsed, setElapsed] = useState(0)
   const [dragging, setDragging] = useState(false)
+  // 真实等待秒数：只用于显示已经等了多久，不做进度条。
+  const [elapsed, setElapsed] = useState(0)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const startedAt = useRef<number>(0)
@@ -126,19 +103,18 @@ export function DiagnosisPage() {
     }
   }, [])
 
-  // 计时器：只显示真实等待时长，不做进度假动作。
+  // 等待计时：只显示真实等待时长，不做进度假动作。
   useEffect(() => {
     if (stage !== "running") return
-    const timer = window.setInterval(() => {
-      setElapsed((Date.now() - startedAt.current) / 1000)
-    }, 100)
+    const tick = () => setElapsed((Date.now() - startedAt.current) / 1000)
+    tick()
+    const timer = window.setInterval(tick, 1000)
     return () => window.clearInterval(timer)
   }, [stage])
 
   function accept(next: File | null) {
     if (!next) return
-    // 判读进行中不换图。在途请求的结论属于旧影像，落到新影像上就是张冠李戴，
-    // 屏幕上会出现「这张片子的诊断结论配另一张片子」。等这次结果出来再换。
+    // 判读进行中不换图。在途请求的结论属于旧影像，落到新影像上就是张冠李戴。
     if (stage === "running") {
       setFault(infoFault("判读进行中，请等这次结果出来再换图"))
       setFaultScope("slot")
@@ -174,8 +150,6 @@ export function DiagnosisPage() {
 
     try {
       const value = await runDiagnosis(file)
-      const floor = 900 - (Date.now() - startedAt.current)
-      if (floor > 0) await new Promise((resolve) => window.setTimeout(resolve, floor))
       // 号对不上：这次判读期间用户换了图或点了重置，结果已经没有归属，丢掉。
       if (runId.current !== id) return
       setResult(value)
@@ -208,138 +182,47 @@ export function DiagnosisPage() {
     setStage("empty")
     setFault(null)
     setNeedsLogin(false)
+    setElapsed(0)
     if (inputRef.current) inputRef.current.value = ""
   }
 
   // 未登录时撞上 40100：路由层会送人去登录页，这里只把话说清楚。
   const showLoginHint = needsLogin && status === "anon"
 
-  if (result) {
-    return (
-      // 结果区也落在品牌画布上：记录纸（.is-sheet）自己钉住纸面，
-      // 包装层与操作区共用同一块品牌舞台，不再上下换底色（U3）。
-      <div className="is-field is-brand-page">
-        <ProductHeader scene="clinical" />
-
-        <div className="sheet-shell">
-          <div className="wrap">
-            <header className="diag-result__head no-print">
-              <p className="diag-hero__kicker num">READING RECORD · 判读记录</p>
-              <h1 className="diag-result__title">AI 辅助判读结果</h1>
-              <p className="diag-result__lead">
-                结果可打印留档；换一张影像会清空当前结果，重新选图后再开始判读。
-              </p>
-            </header>
-
-            <RecordSheet
-              result={result}
-              recordId={result.id ? `IRIS-${result.id}` : undefined}
-              imageSrc={preview ?? undefined}
-              actions={
-                <>
-                  <button className="btn btn--ghost btn--sm" type="button" onClick={() => window.print()}>
-                    打印记录
-                  </button>
-                  <button className="btn btn--ghost btn--sm" type="button" onClick={reset}>
-                    换一张影像
-                  </button>
-                  <Link className="link" to="/" style={{ marginLeft: "auto" }}>
-                    返回首页
-                  </Link>
-                </>
-              }
-            />
-          </div>
-        </div>
-
-        <DisclaimerBar />
-      </div>
-    )
-  }
-
-  // 程序条三步的状态。第三步（记录）在本页永远是路标——出结果即跳去记录纸。
-  function stepStateOf(index: number): StepState {
-    if (index === 0) return file ? "done" : "active"
-    if (index === 1) {
-      if (stage === "running") return "run"
-      if (stage === "error") return "fail"
-      if (stage === "done") return "done"
-      return file ? "active" : "idle"
-    }
-    return "idle"
-  }
-
+  const stepIndex = result ? 2 : stage === "running" ? 1 : 0
   const sizeMB = file ? (file.size / 1048576).toFixed(1) : null
 
-  const log: LogLine[] = []
-  if (file) {
-    log.push({
-      key: "check",
-      text: file.name,
-      // 这一步只核对了格式与体积，不是模型的质量门结论。
-      note: `${sizeMB} MB · 本地检查 PASS`,
-      state: "done",
-    })
-  }
-  if (stage === "running" || stage === "done") {
-    log.push({ key: "send", text: "发送判读请求", note: "POST /diagnosis/diagnosis", state: "done" })
-    log.push({
-      key: "wait",
-      text: "等待模型响应",
-      note: `${elapsed.toFixed(1)} s`,
-      state: stage === "running" ? "run" : "done",
-    })
-  }
-  if (stage === "error") {
-    log.push({ key: "fail", text: fault?.title ?? "请求失败", note: "FAIL", state: "fail" })
-  }
-
   return (
-    // 品牌工作区画布（U3）：.is-brand-page 把 --field/--bg 换成品牌银蓝
-    // （暗主题是午夜蓝），只换舞台底色与发丝线，文字色与临床语义令牌不动。
-    // 操作区升级为 Blue Optical Glass——不再停留在骨白仪器台。
     <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap diag-hero">
-        <header className="diag-hero__head">
-          <div className="diag-hero__intro">
-            <p className="diag-hero__kicker num">DIAGNOSIS · 影像判读</p>
-            <h1 className="diag-hero__title">上传一张彩色眼底照片，开始 AI 辅助判读</h1>
-            <p className="diag-hero__lead">
-              单眼、清晰、光照均匀。系统会先过质量门，不合格的影像不会给出结论。
-            </p>
-          </div>
-
-          <div className="diag-hero__rail">
-            <div className="proc" role="list" aria-label="判读流程">
-              {STEP_DEFS.map((step, index) => {
-                const state = stepStateOf(index)
-                return (
-                  <div
-                    className="proc__step rise"
-                    style={{ "--d": `${index * 90}ms` } as CSSProperties}
-                    data-state={state}
-                    role="listitem"
-                    key={step.code}
-                  >
-                    <span className="proc__code num">{step.code}</span>
-                    <span className="proc__zh">{step.zh}</span>
-                    <span className="proc__mark" aria-hidden="true">
-                      {STEP_MARK[state]}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="proc__state num" data-state={stage}>
-              {STAGE_EN[stage]}
-            </div>
-          </div>
+      <main className="wrap dx">
+        <header className="dx__head">
+          <p className="dx__kicker">影像判读</p>
+          <h1 className="dx__title">上传一张彩色眼底照片</h1>
+          <p className="dx__lead">
+            单眼、清晰、光照均匀。系统先过质量门，不合格的影像不会给出结论。
+          </p>
         </header>
 
-        <div className="diag">
-          <section className="diag__left rise" aria-label="影像上传">
+        <ol className="dx__steps" aria-label="判读流程">
+          {STEPS.map((step, index) => (
+            <li
+              key={step.key}
+              className="dx__step"
+              data-state={
+                index < stepIndex ? "done" : index === stepIndex ? "current" : "todo"
+              }
+              aria-current={index === stepIndex ? "step" : undefined}
+            >
+              <span className="dx__step-no">{index + 1}</span>
+              <span className="dx__step-zh">{step.zh}</span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="dx__body">
+          <section className="dx__media" aria-label="影像">
             <input
               ref={inputRef}
               type="file"
@@ -349,102 +232,82 @@ export function DiagnosisPage() {
               onChange={(event) => accept(event.target.files?.[0] ?? null)}
             />
 
-            <button
-              type="button"
-              className="slot"
-              data-busy={stage === "running"}
-              data-drag={dragging}
-              data-filled={preview ? "true" : "false"}
-              onClick={() => {
-                if (stage !== "running") inputRef.current?.click()
-              }}
-              onDragOver={(event) => {
-                event.preventDefault()
-                setDragging(true)
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(event) => {
-                event.preventDefault()
-                setDragging(false)
-                accept(event.dataTransfer.files?.[0] ?? null)
-              }}
-              aria-label="选择或拖入眼底照片"
-            >
-              <span className="slot__ticks" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <Reticle />
-
-              {preview ? (
-                <>
-                  <img className="slot__img" src={preview} alt="待判读的眼底照片" />
-                  <span className="slot__crosshair" aria-hidden="true" />
-                  {stage === "running" ? (
-                    <span className="slot__timer num" aria-hidden="true">
-                      <span>READING · B4</span>
-                      <span>T+ {clock(elapsed)}</span>
-                    </span>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  {/* 空槽里铺一张示例眼底：取景框对着真片子，
-                      比一个空框更能说明「要上传的是什么」。 */}
-                  <img
-                    className="slot__specimen"
-                    src="/fundus-demo.jpg"
-                    alt="示例眼底照片：视盘、血管弓与黄斑区"
-                  />
-                  <span className="slot__prompt">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path
-                        d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"
-                        stroke="currentColor"
-                        strokeWidth="1.25"
-                        strokeLinecap="square"
-                      />
-                      <path d="M4 15v4.5h16V15" stroke="currentColor" strokeWidth="1.25" />
-                    </svg>
-                    <span className="slot__title">{dragging ? "松手，放入影像" : "点击或拖入影像"}</span>
-                    <span className="slot__hint">JPG · PNG · ≤ 5 MB</span>
+            {preview ? (
+              <div className="dx__frame" data-busy={stage === "running"}>
+                <img className="dx__img" src={preview} alt="待判读的眼底照片" />
+                {stage === "running" ? (
+                  <span className="dx__waiting" role="status">
+                    <span className="dx__waiting-dot" aria-hidden="true" />
+                    正在判读 · 已等待 {clock(elapsed)}
                   </span>
-                  <span className="slot__specimen-note num">示例影像 · 非真实患者</span>
-                </>
-              )}
-            </button>
-
-            <div className="slot__actions">
-              {stage === "ready" || stage === "error" ? (
-                <button className="btn" type="button" onClick={diagnose}>
-                  开始判读
-                  <span className="btn__key">B4</span>
-                </button>
-              ) : null}
-              {stage === "running" ? (
-                <button className="btn" type="button" disabled>
-                  正在判读…
-                </button>
-              ) : null}
-              {file ? (
-                <button className="btn btn--ghost" type="button" onClick={reset} disabled={stage === "running"}>
-                  移除
-                </button>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="dx__drop"
+                data-drag={dragging}
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  setDragging(true)
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  setDragging(false)
+                  accept(event.dataTransfer.files?.[0] ?? null)
+                }}
+                aria-label="选择或拖入眼底照片"
+              >
+                <img
+                  className="dx__specimen"
+                  src="/fundus-demo.jpg"
+                  alt="示例眼底照片：视盘、血管弓与黄斑区"
+                />
+                <span className="dx__drop-copy">
+                  <span className="dx__drop-title">
+                    {dragging ? "松手，放入影像" : "点击或拖入影像"}
+                  </span>
+                  <span className="dx__drop-hint">JPG · PNG · {UPLOAD_LIMIT_HINT}</span>
+                  <span className="dx__drop-note">示例影像 · 非真实患者</span>
+                </span>
+              </button>
+            )}
 
             {file ? (
-              <p className="slot__meta num">
-                {file.name} · {file.type === "image/png" ? "PNG" : "JPEG"} · {sizeMB} MB
-              </p>
+              <div className="dx__filebar">
+                <p className="dx__filemeta">
+                  {file.name} · {file.type === "image/png" ? "PNG" : "JPEG"} · {sizeMB} MB
+                </p>
+                <button
+                  className="link"
+                  type="button"
+                  onClick={reset}
+                  disabled={stage === "running"}
+                >
+                  换一张
+                </button>
+              </div>
+            ) : null}
+          </section>
+
+          <aside className="dx__panel">
+            {result ? (
+              <ResultSummary result={result} onReset={reset} />
+            ) : stage === "running" ? (
+              <RunningPanel elapsed={elapsed} file={file} />
             ) : (
-              <p className="slot__note">选图后先在本机预览，开始判读时才发送影像。</p>
+              <UploadPanel
+                file={file}
+                stage={stage}
+                onStart={() => void diagnose()}
+                onPick={() => inputRef.current?.click()}
+              />
             )}
 
             {showLoginHint ? (
-              <div className="diag-hero__fault">
+              <div className="dx__fault">
                 <FaultNote
                   fault={{
                     severity: "attention",
@@ -461,73 +324,193 @@ export function DiagnosisPage() {
                 />
               </div>
             ) : fault ? (
-              <div className="diag-hero__fault" data-scope={faultScope}>
+              <div className="dx__fault" data-scope={faultScope}>
                 <FaultNote fault={fault} variant={faultScope === "run" ? "block" : "field"} />
               </div>
             ) : null}
-          </section>
-
-          <section className="diag__right rise" style={{ "--d": "90ms" } as CSSProperties} aria-label="判读读数">
-            <div className="readout-head">
-              <p className="diag-panel__title">判读日志</p>
-              <span className="readout-head__state num" data-state={stage}>
-                {/* 与流程轨用同一套状态词（STANDBY / READY / READING / DONE / FAIL），
-                    同一页上不出现两套说法。 */}
-                {STAGE_EN[stage]}
-              </span>
-            </div>
-
-            {/* 没有上传时右栏不是白屏：示例影像已铺在左侧取景槽里，
-                这里用一行说明把示例与真实判读区分开。 */}
-            {!file ? (
-              <p className="specimen-note small">
-                左侧取景框里是示例眼底照片。上传后，这里会实时列出模型的判读日志。
-              </p>
-            ) : null}
-
-            <ol className="journal" aria-live="polite">
-              {log.length === 0 ? (
-                <li data-state="idle">
-                  <span>·</span>
-                  <span>等待影像</span>
-                  <span>—</span>
-                </li>
-              ) : (
-                log.map((line) => (
-                  <li key={line.key} data-state={line.state}>
-                    <span>{line.state === "run" ? "›" : line.state === "fail" ? "×" : "✓"}</span>
-                    <span>{line.text}</span>
-                    <span>{line.note}</span>
-                  </li>
-                ))
-              )}
-            </ol>
-
-            <div className="roster">
-              <p className="diag-panel__title">八类判读范围</p>
-              <ul className="roster__list">
-                {CLASSES.map((item) => (
-                  <li key={item.code}>
-                    <span className="roster__code num">{item.code}</span>
-                    <span className="roster__name">{item.name}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="small">
-                无法归入八类的改变会标为「其他」，并转人工判读。
-              </p>
-            </div>
-
-            <div className="diag__foot" aria-hidden="true">
-              <span>MODEL · EFFICIENTNET-B4</span>
-              <span>GATE · ON</span>
-              <span>SESSION · {status.toUpperCase()}</span>
-            </div>
-          </section>
+          </aside>
         </div>
       </main>
 
       <DisclaimerBar />
     </div>
+  )
+}
+
+/* ── 阶段一：上传与预览 ─────────────────────────────── */
+
+function UploadPanel(props: {
+  file: File | null
+  stage: Stage
+  onStart: () => void
+  onPick: () => void
+}) {
+  const { file, stage, onStart, onPick } = props
+  return (
+    <>
+      <h2 className="dx__panel-title">{file ? "影像已就绪" : "先选一张影像"}</h2>
+      <p className="dx__panel-text">
+        {file
+          ? "影像只在本机预览，点「开始判读」时才会上传。判读期间不能换图——结论必须对应同一张影像。"
+          : `支持彩色眼底照片（JPG / PNG，${UPLOAD_LIMIT_HINT}）。选图后可以在本机先看清再决定是否判读。`}
+      </p>
+
+      <div className="dx__actions">
+        {file ? (
+          <button className="btn" type="button" onClick={onStart} disabled={stage === "running"}>
+            开始判读
+          </button>
+        ) : (
+          <button className="btn" type="button" onClick={onPick}>
+            选择影像
+          </button>
+        )}
+      </div>
+
+      <section className="dx__range" aria-label="判读范围">
+        <h3 className="dx__sub-title">可识别的八类改变</h3>
+        <ul className="dx__range-list">
+          {CLASSES.map((item) => (
+            <li key={item.code}>
+              <span className="dx__range-code">{item.code}</span>
+              <span>{item.name}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="dx__fineprint">
+          无法归入八类的改变会标为「其他」并转人工判读。判读结果不构成诊断，需由医生结合临床判断。
+        </p>
+      </section>
+    </>
+  )
+}
+
+/* ── 阶段二：真实等待 ─────────────────────────────── */
+
+function RunningPanel(props: { elapsed: number; file: File | null }) {
+  return (
+    <>
+      <h2 className="dx__panel-title">正在判读</h2>
+      <p className="dx__panel-text">
+        影像已上传。模型需要完成质量门与分类，耗时取决于排队情况。
+      </p>
+      <dl className="dx__facts">
+        <div>
+          <dt>已等待</dt>
+          <dd>{clock(props.elapsed)}</dd>
+        </div>
+        {props.file ? (
+          <div>
+            <dt>本次影像</dt>
+            <dd>{props.file.name}</dd>
+          </div>
+        ) : null}
+      </dl>
+      <p className="dx__fineprint">
+        这里没有进度条：后端不返回判读进度，画出百分比就是编的。质量门不通过时，结果会明确写成「拒识」而不是硬给一个类别。
+      </p>
+    </>
+  )
+}
+
+/* ── 阶段三：结果摘要 ─────────────────────────────── */
+
+function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) {
+  const { result, onReset } = props
+  const outcome = outcomeOf(result)
+  const band = confidenceBand(result.confidence ?? result.probability)
+  const className = canonicalClassName(result.result) ?? result.result ?? null
+  const code = className ? classCode(className) : null
+  const recordId = result.id
+  // 记录 id 只证明「这条判读落库了」；原图是否留存要看影像地址。
+  // 后端在对象存储失败时不写 url（它会吞掉异常继续落库），两者必须分开说。
+  const imageArchived = Boolean(result.url)
+
+  return (
+    <>
+      <div className="dx__outcome" data-outcome={outcome.key} data-risk={outcome.risk}>
+        <span className="dx__outcome-label">{outcome.label}</span>
+        {/* 拒识与待复核是两个独立维度：算法在拒识时同样会置 requiresReview，
+            拒识记录也在人工复核队列里。不能因为拒识就把复核要求藏起来。 */}
+        {result.requiresReview ? (
+          <span className="dx__outcome-note">已转入人工复核队列，复核完成前不构成诊断</span>
+        ) : null}
+      </div>
+
+      {result.aiRejected ? (
+        <>
+          <h2 className="dx__panel-title">模型没有给出分类</h2>
+          <p className="dx__panel-text">
+            {result.abstainReason || "影像未达到给出结论的条件（例如质量不足或超出判读范围）。"}
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 className="dx__panel-title">
+            {className ?? "未提供分类"}
+            {code ? <span className="dx__class-code">{code}</span> : null}
+          </h2>
+          <dl className="dx__facts">
+            <div>
+              <dt>模型置信度</dt>
+              <dd>
+                {confidencePercent(result.confidence ?? result.probability)}
+                <span className="dx__band" data-risk={band.risk}>
+                  {band.label}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>模型版本</dt>
+              <dd>{result.modelVersion ?? "未提供"}</dd>
+            </div>
+            {typeof result.qualityScore === "number" ? (
+              <div>
+                <dt>质量门</dt>
+                <dd>{result.qualityScore.toFixed(2)}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {result.qualityReasons ? (
+            <p className="dx__panel-text">质量门说明：{result.qualityReasons}</p>
+          ) : null}
+          <p className="dx__fineprint">
+            置信度是模型对这一分类的把握程度，不是患病概率，也不等于确诊。最终判断以人工复核结论为准。
+          </p>
+        </>
+      )}
+
+      <div className="dx__actions">
+        {recordId ? (
+          <Link className="btn" to={`/records/${recordId}`}>
+            查看完整报告
+          </Link>
+        ) : null}
+        <button className="btn btn--ghost" type="button" onClick={onReset}>
+          换一张影像
+        </button>
+      </div>
+
+      {recordId ? (
+        <p className="dx__fineprint">
+          报告编号 IRIS-{recordId} · 原始影像{imageArchived ? "已随记录归档" : "未保存"}
+        </p>
+      ) : (
+        <p className="dx__fineprint">
+          这次结果没有返回记录编号，未归档。需要留存请重试，或在记录页确认是否已有这条记录。
+        </p>
+      )}
+
+      {/* 有记录但没影像：结论可查、原图不可追溯。这与「未归档」是两件事，
+          不能合并成一句，也不能用成功态盖过去。 */}
+      {recordId && !imageArchived ? (
+        <div className="dx__outcome" data-risk="attention">
+          <span className="dx__outcome-label">原始影像未保存</span>
+          <span className="dx__outcome-note">
+            影像存储失败，记录与结论仍可查看，但原图暂不可追溯。需要留存请重新判读或申请人工复核。
+          </span>
+        </div>
+      ) : null}
+    </>
   )
 }

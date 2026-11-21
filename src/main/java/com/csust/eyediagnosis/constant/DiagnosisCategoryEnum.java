@@ -48,13 +48,4 @@ public enum DiagnosisCategoryEnum {
         DiagnosisCategoryEnum category = getEnumByEnglishLabel(englishLabel);
         return category != null ? category.getChineseLabel() : null;
     }
-
-    public static void main(String[] args) {
-        // 测试示例
-        String result = getChineseLabelByEnglishLabel("normal");
-        System.out.println(result); // 输出: 正常
-
-        DiagnosisCategoryEnum category = getEnumByEnglishLabel("myopia");
-        System.out.println(category.getChineseLabel()); // 输出: 近视
-    }
 }

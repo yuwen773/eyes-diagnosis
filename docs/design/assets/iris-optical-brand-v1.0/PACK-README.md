@@ -42,4 +42,4 @@
 - `png/lockup/` 横向字标组合 PNG
 - `png/favicon/` 不透明应用磁贴和 ICO
 - `preview/` 静态品牌展示板和界面概念排版
-- `docs/INTEGRATION.md` React 接入建议
+- `INTEGRATION.md` React 接入建议

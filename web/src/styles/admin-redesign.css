@@ -338,6 +338,15 @@
   letter-spacing: 0.12em;
 }
 
+/* 列定义给的宽度写成 --col-w，这里统一落成 width：不再走行内样式，
+   窄屏要收窄固定列时普通规则就够，不需要 !important。
+   只作用于「声明了列宽」的表头（DataTable 写 data-col-w）：没列宽的列
+   （勾选列）不吃这条规则——table-layout:fixed 下 auto 列会吸走整表的
+   富余宽度，数据列缩成名义宽度，宽表整张向右歪。 */
+.admin-dt__head[data-col-w] {
+  width: var(--col-w);
+}
+
 .admin-dt__head-row {
   border-bottom: 1px solid var(--admin-line);
 }
@@ -1479,13 +1488,15 @@ html.dark .admin-newsedit .w-md-editor {
     min-width: 932px;
   }
 
-  /* 列定义给 <th> 写了行内 width（160–190px），行内样式压过本表；
-     390 档必须 !important 才能把固定的 sticky 操作列收窄——
-     否则它会盖住判读结果列，把「AI 拒识」chip 切掉半截。 */
+  /* 390 档把固定的 sticky 操作列收窄，否则它会盖住判读结果列，
+     把「AI 拒识」chip 切掉半截。列宽走 --col-w（见 .admin-dt__head），
+     不再有行内 width 要压，普通声明即可。
+     表头选择器写成 .admin-dt__head.admin-dt__head--action：它要压过
+     .admin-dt__head[data-col-w]（列宽那条），特异度得持平或更高。 */
   .admin-dt__cell--action,
-  .admin-dt__head--action {
-    width: 96px !important;
-    min-width: 96px !important;
+  .admin-dt__head.admin-dt__head--action {
+    width: 96px;
+    min-width: 96px;
   }
 
   .admin-dt__scroll {
@@ -1511,19 +1522,19 @@ html.dark .admin-newsedit .w-md-editor {
     min-width: 0;
   }
 
-  .admin-dashboard__recent .admin-dt__head:nth-child(1),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(1),
-  .admin-dashboard__recent .admin-dt__head:nth-child(6),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(6) {
+  .admin-dashboard__recent .admin-dt__head[data-col="url"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="url"],
+  .admin-dashboard__recent .admin-dt__head[data-col="createTime"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="createTime"] {
     display: none;
   }
 }
 
 @media (max-width: 600px) {
-  .admin-dashboard__recent .admin-dt__head:nth-child(2),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(2),
-  .admin-dashboard__recent .admin-dt__head:nth-child(4),
-  .admin-dashboard__recent .admin-dt__cell:nth-child(4) {
+  .admin-dashboard__recent .admin-dt__head[data-col="username"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="username"],
+  .admin-dashboard__recent .admin-dt__head[data-col="confidence"],
+  .admin-dashboard__recent .admin-dt__cell[data-col="confidence"] {
     display: none;
   }
 }
@@ -1739,12 +1750,6 @@ html.dark .admin-newsedit .w-md-editor {
 .admin-newsedit__rail .admin-newsedit__field {
   display: grid;
   gap: 8px;
-}
-
-/* 旧样式里的工具栏外壳不再使用，收掉残留的底边距。 */
-.admin-newsedit__form > .admin-toolbar {
-  border-bottom: 0;
-  padding-block: 0;
 }
 
 /* ── 紫色重点卡：底部真实读数，填住卡片空间 ───────────────── */

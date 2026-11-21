@@ -2,7 +2,6 @@ package com.csust.eyediagnosis.constant;
 
 /**
  * @ClassNameExceptionConstant
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/23 下午7:32
  * @Version 1.0

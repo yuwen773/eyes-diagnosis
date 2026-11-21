@@ -470,3 +470,16 @@
     font-size: 26px;
   }
 }
+
+/* R2 分层状态落到认证玻璃卡时，跟随蓝青品牌面而不是根级纸面色。 */
+.auth-auth.is-light {
+  --surface-2: var(--aa-field-bg);
+  --hr: var(--aa-field-line);
+  --hr-strong: var(--aa-field-line-hover);
+}
+
+.auth-auth.is-dark {
+  --surface-2: var(--aa-field-bg);
+  --hr: var(--aa-field-line);
+  --hr-strong: var(--aa-field-line-hover);
+}

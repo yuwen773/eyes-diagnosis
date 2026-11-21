@@ -1,6 +1,6 @@
 /// <reference types="node" />
 // app 的 tsconfig 只带 vite/client；这个测试跑 node 环境，单独把 node 类型引进来。
-import { readFileSync } from "node:fs"
+import { readFileSync, readdirSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 function lin(c: number) {
@@ -184,6 +184,55 @@ describe("品牌材质 · 文字压在半透明玻璃上", () => {
         expect(contrast(darkValue(fg), surface)).toBeGreaterThanOrEqual(4.5)
       }
     }
+  })
+})
+
+/**
+ * Agent 执行过程的状态药丸。
+ *
+ * <p>药丸压在同色系抬升面（`--brand-soft` 叠在 `--brand-canvas`）上，
+ * 而不是纯画布上——按字面值算出来的对比度会比实际好看一档，所以这里
+ * 按合成后的底色算。`--fg-3` 在这一层只有约 4.13:1，不达标，故药丸
+ * 一律用 `--fg-2`；失败 / 超时用 `--risk-*`（错误色不用品牌橙）。
+ */
+describe("Agent 状态药丸 · 抬升面上的文字", () => {
+  const mix = (color: string, weight: number, base: string) => {
+    const { r, g, b } = parseColor(color)
+    return over(`rgba(${r}, ${g}, ${b}, ${weight})`, base)
+  }
+
+  it("浅色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawValue("--brand-soft"), value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("暗色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawDarkValue("--brand-soft"), darkValue("--brand-canvas"))
+    // --on-dark-2 只定义一次、双主题共用，不走 darkValue。
+    expect(contrast(value("--on-dark-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("失败药丸在淡底上 ≥ 4.5", () => {
+    expect(
+      contrast(value("--paper-risk-critical"), mix(value("--paper-risk-critical"), 0.1, value("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(value("--risk-critical-lit"), mix(value("--risk-critical-lit"), 0.1, darkValue("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("超时圆点是图形元素：琥珀在画布上 ≥ 3:1（文字走中性）", () => {
+    expect(contrast(value("--paper-risk-attention"), value("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(value("--risk-attention-lit"), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+  })
+
+  it("超时药丸的琥珀淡底上，中性文字仍 ≥ 4.5", () => {
+    // 底色是 14% 琥珀叠在画布上；--risk-attention 自己当 11px 文字只有 3.9:1，
+    // 所以药丸文字必须是 --fg-2。
+    const pill = mix(value("--paper-risk-attention"), 0.14, value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+    const darkPill = mix(value("--risk-attention-lit"), 0.14, darkValue("--brand-canvas"))
+    expect(contrast(value("--on-dark-2"), darkPill)).toBeGreaterThanOrEqual(4.5)
   })
 })
 
@@ -392,5 +441,198 @@ describe("Iris 2.0 管理端 · Purple Medical SaaS（--admin-*）", () => {
     for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
       expect(contrast(darkValue(fg), darkWash)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+})
+
+
+/* ==========================================================================
+   上下文解析
+   --------------------------------------------------------------------------
+   上面的断言测的是「令牌的字面值」；但真正决定页面上是什么颜色的，是
+   「在某个上下文里这些令牌解析成什么」。`--paper-*` 曾经靠
+   `html.dark .is-sheet` 的一次特异性巧合才钉得住纸面，字面值测试对此完全无感。
+   这里用一个最小的级联解析器把「上下文 → 最终色值」也算一遍。
+
+   解析规则只覆盖本文件用到的形态：普通规则块、逗号分组选择器、@media 里
+   的规则（其声明只影响 --maxw / --gutter，不参与颜色断言）、var(--x[, 兜底])。
+   ========================================================================== */
+
+type Rule = { selector: string; order: number; decls: Map<string, string> }
+
+function parseDecls(body: string) {
+  const decls = new Map<string, string>()
+  for (const part of body.split(";")) {
+    const at = part.indexOf(":")
+    if (at === -1) continue
+    const name = part.slice(0, at).trim()
+    const value = part.slice(at + 1).trim()
+    if (name.startsWith("--") && value) decls.set(name, value)
+  }
+  return decls
+}
+
+function parseRules(source: string): Rule[] {
+  const text = source.replace(/\/\*[\s\S]*?\*\//g, "")
+  const rules: Rule[] = []
+  let order = 0
+  let index = 0
+  while (index < text.length) {
+    const open = text.indexOf("{", index)
+    if (open === -1) break
+    const rawSelector = text.slice(index, open).trim()
+    let depth = 1
+    let cursor = open + 1
+    while (cursor < text.length && depth > 0) {
+      if (text[cursor] === "{") depth += 1
+      else if (text[cursor] === "}") depth -= 1
+      cursor += 1
+    }
+    const body = text.slice(open + 1, cursor - 1)
+    if (rawSelector.startsWith("@")) {
+      // 媒体查询等容器块：内部仍是普通规则，展开继续解析。
+      rules.push(...parseRules(body))
+    } else {
+      const decls = parseDecls(body)
+      for (const selector of rawSelector.split(",")) {
+        const clean = selector.trim().replace(/\s+/g, " ")
+        if (clean) rules.push({ selector: clean, order: order++, decls })
+      }
+    }
+    index = cursor
+  }
+  return rules
+}
+
+const RULES = parseRules(css)
+
+/** 简单特异性：id > 类/属性/伪类 > 元素。够区分本文件里的选择器。 */
+function weight(selector: string) {
+  const ids = (selector.match(/#/g) ?? []).length
+  const classes = (selector.match(/\.[\w-]+|\[[^\]]*\]|:(?!:)[\w-]+/g) ?? []).length
+  const elements = (selector.match(/(^|[\s>+~])[a-zA-Z][\w-]*/g) ?? []).length
+  return ids * 10000 + classes * 100 + elements
+}
+
+/** 元素自身的声明：特异性高者胜，同分取靠后的。 */
+function ownDecl(layer: string[], name: string) {
+  let best: { score: number; order: number; value: string } | undefined
+  for (const rule of RULES) {
+    if (!layer.includes(rule.selector)) continue
+    const value = rule.decls.get(name)
+    if (value === undefined) continue
+    const score = weight(rule.selector)
+    if (!best || score > best.score || (score === best.score && rule.order > best.order)) {
+      best = { score, order: rule.order, value }
+    }
+  }
+  return best?.value
+}
+
+/** 继承链：列表按「远 → 近」排列，最近的祖先胜出（与特异性无关）。 */
+function inheritedDecl(chain: string[], name: string) {
+  let value: string | undefined
+  for (const selector of chain) {
+    const rule = RULES.find((item) => item.selector === selector)
+    const next = rule?.decls.get(name)
+    if (next !== undefined) value = next
+  }
+  return value
+}
+
+/** 解析 var() 链；未定义且没有兜底时返回空串。 */
+function resolve(own: string[], inherited: string[], name: string, depth = 0): string {
+  if (depth > 12) throw new Error(`var() 解析成环：${name}`)
+  const raw = ownDecl(own, name) ?? inheritedDecl(inherited, name)
+  if (raw === undefined) return ""
+  const ref = /^var\(\s*(--[\w-]+)\s*(?:,\s*([\s\S]+))?\)$/.exec(raw.trim())
+  if (!ref) return raw.trim()
+  const inner = resolve(own, inherited, ref[1], depth + 1)
+  return inner || (ref[2] ?? "").trim()
+}
+
+const LIGHT = { own: [":root"], inherited: [] as string[] }
+const DARK = { own: ["html.dark"], inherited: [":root"] }
+const LIGHT_SHEET = { own: [".is-sheet"], inherited: [":root"] }
+const DARK_SHEET = {
+  own: [".is-sheet", "html.dark .is-sheet"],
+  inherited: [":root", "html.dark"],
+}
+const DARK_SHEET_IN_NIGHT = {
+  own: [".is-sheet", "html.dark .is-sheet"],
+  inherited: [":root", "html.dark", ".is-night"],
+}
+
+const at = (ctx: { own: string[]; inherited: string[] }, name: string) =>
+  resolve(ctx.own, ctx.inherited, name)
+
+describe("上下文解析 · 纸面原语在任何主题下都是那张纸", () => {
+  it("暗主题不翻转 --paper-*（它只翻转 --ink / --line）", () => {
+    expect(at(DARK, "--paper-ink")).toBe(at(LIGHT, "--paper-ink"))
+    expect(at(DARK, "--paper-ink-3")).toBe(at(LIGHT, "--paper-ink-3"))
+    expect(at(DARK, "--ink")).not.toBe(at(LIGHT, "--ink"))
+  })
+
+  it("暗主题下的 .is-sheet 解析成白纸深墨", () => {
+    expect(at(DARK_SHEET, "--surface")).toBe("#ffffff")
+    expect(at(DARK_SHEET, "--ink")).toBe("#14171a")
+    expect(at(DARK_SHEET, "--fg")).toBe("#14171a")
+    expect(contrast(at(DARK_SHEET, "--fg"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("纸面嵌在暗房里也仍是白纸深墨", () => {
+    expect(at(DARK_SHEET_IN_NIGHT, "--ink")).toBe("#14171a")
+    expect(at(DARK_SHEET_IN_NIGHT, "--surface")).toBe("#ffffff")
+  })
+
+  it("删除红在纸上钉回纸面值：暗主题下仍 ≥ 4.5", () => {
+    expect(at(DARK_SHEET, "--danger")).toBe(at(LIGHT_SHEET, "--danger"))
+    expect(contrast(at(DARK_SHEET, "--danger"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("橙色文字在纸上 ≥ 4.5", () => {
+    expect(contrast(at(DARK_SHEET, "--signal-text"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("上下文解析 · 根级兜底", () => {
+  it("--bg 在根级有定义（::selection 的 color 依赖它）", () => {
+    expect(at(LIGHT, "--bg")).toBe(at(LIGHT, "--field"))
+    expect(at(DARK, "--bg")).toBe(at(DARK, "--field"))
+  })
+
+  it("--fg / --hr 在根级有定义（固定层组件不在语境类里）", () => {
+    expect(at(LIGHT, "--fg")).not.toBe("")
+    expect(at(LIGHT, "--hr")).not.toBe("")
+    expect(at(DARK, "--fg")).not.toBe("")
+  })
+})
+
+// ── 组件层取色：悬空 var() 与「橙色当正文」─────────────────────────────
+//
+// R5 审查在 Agent 送达读数上一次性踩了两个坑，而令牌对比度测试全绿：
+//   ① `--fg-1` 全仓未定义 —— 声明在计算值阶段就失效，颜色靠继承父级「碰巧」看着对；
+//   ② `--signal` 承载文字 —— 浅色画布上只有 3.7:1，够不着正文 4.5:1 底线。
+// 令牌测试只测令牌自己，测不到组件怎么用它们，所以这里对 agent.css 做静态检查。
+
+describe("Agent 送达读数的取色", () => {
+  const agent = readFileSync(new URL("./agent.css", import.meta.url), "utf8")
+  const allCss = readdirSync(new URL("./", import.meta.url))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), "utf8"))
+    .join("\n")
+
+  it("橙色正文压在 Agent 画布上仍 ≥ 4.5", () => {
+    expect(contrast(value("--paper-signal-text"), value("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("不把 --signal 直接当 color 用（它只做标记，不做正文）", () => {
+    const offenders = agent.split("\n").filter((line) => /^\s*color:\s*var\(--signal\)\s*;/.test(line))
+    expect(offenders).toEqual([])
+  })
+
+  it("agent.css 引用的变量都在样式层定义过（悬空 var() 会静默继承父级）", () => {
+    const defined = new Set([...allCss.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((m) => m[1]))
+    const used = [...new Set([...agent.matchAll(/var\((--[a-z0-9-]+)/gi)].map((m) => m[1]))]
+    expect(used.filter((name) => !defined.has(name))).toEqual([])
   })
 })

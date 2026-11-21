@@ -36,6 +36,8 @@
   /* 上下文别名的根级兜底：语境类（.is-field / .is-sheet / .is-dark）之外的
      固定层组件（例如挂在 App 根部的故障浮条）也能拿到墨色与发丝线，
      不会因为 var(--hr) 未定义而整条 border 声明失效。 */
+  /* --bg 也在其中：::selection 的 color 用的是它，根级没有语境类时不能为空。 */
+  --bg: var(--field);
   --fg: var(--ink);
   --fg-2: var(--ink-2);
   --fg-3: var(--ink-3);
@@ -64,10 +66,16 @@
   /* ── 通用破坏性操作（数据删除）────────────────────
      与医学严重度 --risk-* 分开：删除一个会话不是临床风险。
      玫瑰红取另一条色相，不与 --risk-critical 的砖红同值；
-     只用于「删除」这类不可逆的数据动作，不用于医学提示。 */
-  --danger: #b4374a;
-  --danger-soft: rgba(180, 55, 74, 0.1);
+     只用于「删除」这类不可逆的数据动作，不用于医学提示。
+     纸面原语 + 上下文别名：纸面上的删除红不随主题翻转，暗主题用 lit 变体。 */
+  --paper-danger: #b4374a;
+  --paper-danger-soft: rgba(180, 55, 74, 0.1);
+  --danger: var(--paper-danger);
+  --danger-soft: var(--paper-danger-soft);
   --danger-lit: #ff9aa6;
+  /* 破坏性按钮上的文字色。暗主题的 --danger 是提亮版（粉），压白字只有
+     1.9:1，所以这一项要跟着主题翻：浅主题压白，暗主题压深墨。 */
+  --danger-fg: #ffffff;
 
   /* ── 反相带（全页只有一段）──────────────────── */
   --dark: #161a18;
@@ -76,7 +84,6 @@
   --on-dark-3: #8d948f;
   --dark-line: rgba(244, 245, 241, 0.16);
   --dark-line-strong: rgba(244, 245, 241, 0.34);
-  --dark-surface: #1d2220; /* 反相顶栏里的抬升面板（账号菜单 / 抽屉） */
 
   /* ── 暗房（落地页 / 认证页共用底色）─────────── */
   --night-bg: #0b0d0c;
@@ -113,6 +120,16 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  /* 中间档与微圆角：数值沿用既有实现，只是不再让各处写自由像素。
+     panel 是大面板（介于 lg 与 xl 之间）；chip / hair 给芯片、按钮与微控件。 */
+  --radius-panel: 22px;
+  --radius-panel-sm: 18px;
+  --radius-field: 11px;
+  --radius-chip: 9px;
+  --radius-chip-sm: 7px;
+  --radius-chip-xs: 5px;
+  --radius-hair: 3px;
+  --radius-hair-sm: 2px;
   --radius-pill: 999px;
   --radius-circle: 50%;
   /* 品牌层专用（C 档）：大容器与大圆角卡片。临床页不用这两档。 */
@@ -231,8 +248,20 @@
   --brand-deep-signal: #ef7a45;
   --brand-deep-signal-text: #ffa07a;
 
+  /* ── 深色浮层遮罩（图片预览一类）──────────────
+     遮罩本身就是深色蒙版，不随主题翻转，所以这一族不分 Light/Dark。
+     压在照片或深色画布上的小角标也走这里，避免各页面各写一套黑。 */
+  --brand-scrim: rgba(6, 12, 24, 0.82);
+  --brand-scrim-fg: #ffffff;
+  --brand-scrim-fg-2: #dbe7fb;
+  --brand-scrim-line: rgba(255, 255, 255, 0.28);
+  --brand-scrim-surface: rgba(255, 255, 255, 0.12);
+  --brand-scrim-surface-hover: rgba(255, 255, 255, 0.22);
+  --brand-scrim-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  --brand-scrim-chip: rgba(9, 16, 28, 0.72);
+  --brand-scrim-chip-fg: #eaf2ff;
+
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
-  --viz-accent: #d9541f;
   --viz-mute: #8b9195;
 
   /* ── 分类色板（B 档数据图表专用；不占用 --signal / --risk-*）──
@@ -300,6 +329,11 @@
   --risk-normal: var(--paper-risk-normal);
   --risk-attention: var(--paper-risk-attention);
   --risk-critical: var(--paper-risk-critical);
+  /* 删除红也钉回纸面值：暗主题的 --danger 是提亮版，落在白纸上约 1.7:1。 */
+  --danger: var(--paper-danger);
+  --danger-soft: var(--paper-danger-soft);
+  /* 同理，按钮上的文字色也要跟着钉回白字。 */
+  --danger-fg: #ffffff;
   --fg: var(--ink);
   --fg-2: var(--ink-2);
   --fg-3: var(--ink-3);
@@ -339,7 +373,6 @@
    深色页面上不需要逐条改写；--surface 保持纸白，判读记录在暗房里仍是纸。 */
 .is-night {
   --bg: var(--night-bg);
-  --head-bg: var(--night-bg);
   --ink: var(--on-dark);
   --ink-2: var(--on-dark-2);
   --ink-3: var(--on-dark-3);
@@ -474,11 +507,8 @@ html.dark {
   --surface-2: #242a27;
   --surface-3: #2c332f;
 
-  --paper-ink: #f0f1ed;
-  --paper-ink-2: #a7aeaa;
-  --paper-ink-3: #767d79;
-  --paper-line: rgba(244, 245, 241, 0.14);
-  --paper-line-strong: rgba(244, 245, 241, 0.32);
+  /* 注意：--paper-* 不在这里翻转。纸面原语的定义就是「任何主题下都是那张纸」，
+     墨色/线条的反转交给下面的 --ink/--line。 */
 
   --signal: #ef7a45;
   --signal-text: #ef7a45;
@@ -490,8 +520,9 @@ html.dark {
 
   --danger: var(--danger-lit);
   --danger-soft: rgba(255, 154, 166, 0.14);
+  /* 提亮版粉底上压深墨，白字在 1.9:1 过不了。 */
+  --danger-fg: #0b1425;
 
-  --viz-accent: #d9591f;
   --viz-mute: #767d79;
 
   /* 暗底提亮一档；对 #1d2220 的对比度 5.66–7.08:1。 */
@@ -590,23 +621,11 @@ html.dark {
   --ink-3: var(--on-dark-3);
   --line: var(--dark-line);
   --line-strong: var(--dark-line-strong);
-
-  /* 暗主题下的纸面原语：纸仍是白的，纸上的墨是深色的。 */
-  --paper-ink-dark: #14171a;
-  --paper-ink-2-dark: #5c6367;
-  --paper-ink-3-dark: #676e72;
-  --paper-line-dark: rgba(20, 23, 26, 0.13);
-  --paper-line-strong-dark: rgba(20, 23, 26, 0.34);
 }
 
-/* 纸面在暗主题下钉回纸白：判读记录仍是纸，墨色回到纸上的墨。 */
+/* 纸面在暗主题下钉回纸白。墨色不需要在这里再钉一遍：--paper-* 从不翻转，
+   .is-sheet 自己的规则已经取到纸上的墨与线。 */
 html.dark .is-sheet {
   --surface: var(--paper-surface);
-  --ink: var(--paper-ink-dark);
-  --ink-2: var(--paper-ink-2-dark);
-  --ink-3: var(--paper-ink-3-dark);
-  --line: var(--paper-line-dark);
-  --line-strong: var(--paper-line-strong-dark);
-  --signal-text: var(--paper-signal-text);
 }
 

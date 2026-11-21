@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  * @ClassNameFileConstant
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/17 下午1:27
  * @Version 1.0
@@ -15,6 +14,8 @@ public class FileConstant {
     public static final String FAIL_UPLOAD = "上传失败";
     public static final String FAIL_DOWNLOAD = "下载失败";
     public static final String FILE_CAN_NOT_BE_NULL = "图片不能为空";
+    /** 空文件（0 字节）：不是合法图片，直接拒掉，别让对象存储收下一份空对象。 */
+    public static final String FILE_CONTENT_EMPTY = "图片内容为空，请重新选择";
     public static final long ONE_M = 1024 * 1024L; ;
     public static final String FILE_SIZE_ERROR = "文件大小不能超过2M";
 

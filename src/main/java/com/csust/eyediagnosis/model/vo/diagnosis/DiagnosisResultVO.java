@@ -101,6 +101,14 @@ public class DiagnosisResultVO  implements Serializable {
     /** OOD 分数 */
     private Double oodScore;
 
+    /**
+     * 来源与复核投影（只读，仅详情接口下发）。
+     *
+     * <p>列表接口不带这个字段：它含回执前缀与患者授权时间，不该随管理端分页
+     * 无条件扩散。null 表示本条记录没有提供投影（老客户端/老接口）。
+     */
+    private DiagnosisSourceProjection source;
+
     private static final long serialVersionUID = 1L;
     /**
      * 封装类转对象

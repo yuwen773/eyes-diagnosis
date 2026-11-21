@@ -1,30 +1,20 @@
 import "@/styles/news.css"
 
-import { useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Link } from "react-router-dom"
-import { describeError, listNews, type NewsItem } from "@/lib/api"
+import { describeError, listNews } from "@/lib/api"
 import { queryKeys } from "@/lib/queryKeys"
-import { newsDate, newsExcerpt, newsOpening } from "@/lib/news"
-import { FaultPanel } from "@/components/FaultPanel"
+import { newsDate } from "@/lib/news"
+import { faultFromError } from "@/lib/faults"
+import { useRevealScan } from "@/lib/useInView"
+import { IrisRefreshNotice, IrisSectionError } from "@/components/system/IrisSectionState"
 import { DisclaimerBar } from "@/components/DisclaimerBar"
 import { ProductHeader } from "@/components/shell/ProductHeader"
 import { BrandFooter } from "@/components/brand/BrandFooter"
+import { JournalHeader } from "@/components/news/JournalHeader"
+import { NewsCard } from "@/components/news/NewsCard"
 
 const PAGE_SIZE = 9
-
-/** 日期 / 作者这行共用一套口径：有就写，没有就不占位。 */
-function metaLine(item: NewsItem) {
-  const { date, time } = newsDate(item.publishTime)
-  return [date, time, item.author].filter(Boolean).join(" · ")
-}
-
-/** 列表行的摘要只给有封面的条目：无封面短讯的摘要基本是标题的回声。 */
-function rowExcerpt(item: NewsItem) {
-  if (!item.coverImage) return ""
-  // 优先用正文开头：后端的 summary 常是标题的回声，摆在标题下面读两遍。
-  return newsOpening(item.content, 64) || newsExcerpt(item.content, item.summary, 64)
-}
 
 export function NewsPage() {
   const [page, setPage] = useState(1)
@@ -49,6 +39,10 @@ export function NewsPage() {
 
   const loading = listQuery.isPending
   const fault = listQuery.error ? describeError(listQuery.error) : null
+  const faultSeverity = listQuery.error ? faultFromError(listQuery.error, { intent: "load" }).severity : "attention"
+  // 查询键包含筛选条件，data 与 error 同属当前键。有缓存数据时失败的只是刷新，
+  // 不能拿错误面板盖掉用户已经看到的列表。
+  const hasData = listQuery.data !== undefined
   const data = listQuery.data ?? null
 
   const records = useMemo(() => data?.records ?? [], [data])
@@ -56,18 +50,48 @@ export function NewsPage() {
   const pages = Math.max(1, data?.pages ?? 1)
 
   // 后端默认按 publishTime 倒序，所以第一页第一条就是最新一条。
-  // 只有第一页给它头版位置；翻页后全部回到列表，不制造「每页都有精选」。
+  // 只有第一页、未检索时它才进抬头当头条；翻页或检索后全部回到网格，
+  // 不制造「每页都有精选」。
   const featured = page === 1 && !query ? records[0] : undefined
-  const rows = featured ? records.slice(1) : records
+  // slice 每次渲染都会产出新数组，先固定引用，下面的派生才缓存得住。
+  const rows = useMemo(() => (featured ? records.slice(1) : records), [featured, records])
 
-  const latest = records.reduce<string>((acc, item) => {
-    const { date } = newsDate(item.publishTime)
-    return !acc || date > acc ? date : acc
-  }, "")
+  const latest = useMemo(
+    () =>
+      records.reduce<string>((acc, item) => {
+        const { date } = newsDate(item.publishTime)
+        return !acc || date > acc ? date : acc
+      }, ""),
+    [records]
+  )
   // 「更新至」只在第一页且有数据、未检索时成立：此时 records[0] 才是全站最新一条；
   // 翻页或检索后它只是当前结果集的日期，不能冒充站点更新时间。
   // 空库不写「更新至 —」——那是在报一个不存在的更新时间。
   const showLatest = page === 1 && !query && records.length > 0
+
+  // 入场动画：网格卡片是数据到位后才挂上的，扫描要跟着数据重跑一次。
+  useRevealScan([records.length, page, query])
+
+  // 换页之后回到列表开头：留在上一条的滚动位置，读者会以为「点了没反应」——
+  // 新一页的第一行在屏幕外，谁也看不见。
+  //
+  // **只有翻页按钮会滚**。只看 `page` 变没变是不够的：在第 2 页检索时
+  // `setPage(1)` 也会改页码，一滚就把刚用过的检索框推出视口，结果页上
+  // 看不到自己搜的是什么。所以用一次性标记把「翻页动作」和「页码变化」分开。
+  const listRef = useRef<HTMLElement>(null)
+  const pagerScroll = useRef(false)
+  useEffect(() => {
+    if (!pagerScroll.current) return
+    pagerScroll.current = false
+    listRef.current?.scrollIntoView({ block: "start" })
+  }, [page])
+
+  /** 翻页入口：只有走这里才把下一次页码变化标记成「要回到列表开头」。 */
+  function goToPage(next: number) {
+    if (next === page) return
+    pagerScroll.current = true
+    setPage(next)
+  }
 
   function search(event: FormEvent) {
     event.preventDefault()
@@ -86,45 +110,19 @@ export function NewsPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="editorial" />
 
-      {/* 头版 Hero：品牌化的编辑式门面。玻璃材质透出品牌画布，
-          排版仍左对齐（DESIGN.md §2.1 反例：不做居中 hero）。 */}
-      <section className="news-hero" aria-label="资讯门户">
-        <div className="wrap news-hero__inner">
-          <p className="news-hero__eyebrow num">IRIS · BRIEFING</p>
-          <h1 className="news-hero__title">眼科前沿</h1>
-          <p className="news-hero__sub">
-            眼健康科普、学科动态与院内公告。按发布时间排列，条目打开即为全文。
-          </p>
+      {/* 期刊抬头：刊名 + 检索 + 真实头条，压掉旧版 hero 的半屏空白。 */}
+      <JournalHeader
+        latest={featured}
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        onSearch={search}
+        onClear={clear}
+        searching={Boolean(query)}
+      />
 
-          <form className="news__search news-hero__search" onSubmit={search}>
-            <label className="news__search-label overline" htmlFor="news-search">
-              检索标题 · SEARCH
-            </label>
-            <div className="news__search-row">
-              <input
-                id="news-search"
-                className="news__input"
-                type="search"
-                value={keyword}
-                placeholder="按标题检索…"
-                onChange={(event) => setKeyword(event.target.value)}
-              />
-              <button className="news__submit" type="submit">
-                检索
-              </button>
-              {query ? (
-                <button className="news__clear" type="button" onClick={clear}>
-                  清除
-                </button>
-              ) : null}
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <main className="wrap news">
+      <main className="wrap news" ref={listRef}>
         {/* 一条编辑口径的元信息，不是四列 KPI：总数、更新日期、页码都是列表接口的真实读数。 */}
-        {fault || loading ? null : (
+        {(fault && !hasData) || loading ? null : (
           <p className="news__meta num">
             <span>共 {total} 条</span>
             {showLatest ? (
@@ -141,21 +139,23 @@ export function NewsPage() {
         )}
 
         {loading ? (
+          // 骨架与真卡同形：加载完切过去时版式不跳。
           <div className="news-skeleton" aria-hidden="true">
-            <div className="news-skeleton__lead" />
-            <div className="news-skeleton__rows">
-              {Array.from({ length: 6 }, (_, index) => (
-                <span className="news-skeleton__row" key={index} />
-              ))}
-            </div>
+            {Array.from({ length: 6 }, (_, index) => (
+              <div className="news-skeleton__card" key={index}>
+                <span className="news-skeleton__plate" />
+                <span className="news-skeleton__line" />
+                <span className="news-skeleton__line is-short" />
+              </div>
+            ))}
           </div>
-        ) : fault ? (
-          <FaultPanel
-            code={fault.code}
+        ) : fault && !hasData ? (
+          <IrisSectionError
+            severity={faultSeverity}
             title="资讯没能读出来"
-            body={fault.text}
-            endpoint="POST /news/list/page/vo"
-            onRetry={() => void listQuery.refetch()}
+            detail={fault.text}
+            actionLabel="重试"
+            onAction={() => void listQuery.refetch()}
           />
         ) : records.length === 0 ? (
           <div className="news-empty">
@@ -174,96 +174,27 @@ export function NewsPage() {
           </div>
         ) : (
           <>
-            {featured ? (
-              <article
-                className={`news-lead${featured.coverImage ? "" : " news-lead--text"}`}
-              >
-                <div className="news-lead__body">
-                  <p className="overline">最新 · LATEST</p>
-                  <p className="news-lead__meta num">{metaLine(featured)}</p>
-                  <h2 className="news-lead__title">
-                    <Link
-                      to={`/news/${featured.id}`}
-                      data-cursor
-                      data-cursor-label="阅读全文"
-                    >
-                      {featured.title}
-                    </Link>
-                  </h2>
-                  <p className="news-lead__excerpt">
-                    {newsOpening(featured.content, featured.coverImage ? 140 : 200) ||
-                      newsExcerpt(featured.content, featured.summary, 120)}
-                  </p>
-                  <Link className="news-lead__more" to={`/news/${featured.id}`} data-cursor>
-                    阅读全文
-                    <span className="news-lead__more-mark" aria-hidden="true">
-                      ↗
-                    </span>
-                  </Link>
-                </div>
-
-                {featured.coverImage ? (
-                  <figure className="news-lead__plate">
-                    <img
-                      className="news-lead__img"
-                      src={featured.coverImage}
-                      alt=""
-                      loading="eager"
-                      fetchPriority="high"
-                    />
-                  </figure>
-                ) : null}
-              </article>
-            ) : null}
-
             {rows.length > 0 ? (
-              <ul className="news-rows">
-                {rows.map((item) => {
-                  const { date } = newsDate(item.publishTime)
-                  const excerpt = rowExcerpt(item)
-                  return (
-                    <li className="news-rows__item" key={item.id}>
-                      <Link
-                        className="news-row"
-                        to={`/news/${item.id}`}
-                        data-cursor
-                        data-cursor-label="阅读全文"
-                      >
-                        <span className="news-row__date num">{date}</span>
-                        <span className="news-row__main">
-                          <span className="news-row__title">{item.title}</span>
-                          {excerpt ? (
-                            <span className="news-row__excerpt">{excerpt}</span>
-                          ) : null}
-                        </span>
-                        {item.coverImage ? (
-                          <img
-                            className="news-row__thumb"
-                            src={item.coverImage}
-                            alt=""
-                            loading="lazy"
-                          />
-                        ) : (
-                          <span className="news-row__mark" aria-hidden="true">
-                            ↗
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  )
-                })}
+              <ul className="journal-grid">
+                {rows.map((item, index) => (
+                  <NewsCard item={item} index={index} key={item.id} />
+                ))}
               </ul>
             ) : null}
           </>
         )}
 
-        {pages > 1 && !loading && !fault ? (
+        {fault && hasData ? (
+          <IrisRefreshNotice detail={fault.text} onRetry={() => void listQuery.refetch()} />
+        ) : null}
+
+        {pages > 1 && !loading && !(fault && !hasData) ? (
           <nav className="news__pager" aria-label="分页">
             <button
               className="news__pager-step"
               type="button"
               disabled={page <= 1}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              onClick={() => goToPage(Math.max(1, page - 1))}
             >
               <span aria-hidden="true">‹</span> 上一页
             </button>
@@ -274,7 +205,7 @@ export function NewsPage() {
               className="news__pager-step"
               type="button"
               disabled={page >= pages}
-              onClick={() => setPage((value) => Math.min(pages, value + 1))}
+              onClick={() => goToPage(Math.min(pages, page + 1))}
             >
               下一页 <span aria-hidden="true">›</span>
             </button>

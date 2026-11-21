@@ -240,7 +240,7 @@ export function AdminDashboardPage(): ReactElement {
         </div>
         <dl className="feature-card__stats">
           <div>
-            <dt>已复核</dt>
+            <dt>人工复核已记录</dt>
             <dd className="num">{read(stats?.diagnosisReviewed)}</dd>
           </div>
           <div>
@@ -505,7 +505,7 @@ export function AdminDashboardPage(): ReactElement {
       {stats ? (
         <p className="admin-dashboard__note num">
           平均置信度 {confidencePercent(stats.avgConfidence)}（模型自评的置信度均值，
-          <b>不是诊断准确率</b>） · 已复核 {formatStatNumber(stats.diagnosisReviewed)} 条 ·
+          <b>不是诊断准确率</b>） · 人工复核已记录 {formatStatNumber(stats.diagnosisReviewed)} 条 ·
           AI 拒识 {formatStatNumber(stats.diagnosisAiRejected)} 条 · 资讯{" "}
           {formatStatNumber(stats.newsTotal)} 篇
         </p>

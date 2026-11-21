@@ -19,7 +19,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * @ClassNameAuthInterceptor
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/12 下午5:12
  * @Version 1.0

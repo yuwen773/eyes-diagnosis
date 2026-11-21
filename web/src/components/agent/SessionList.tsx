@@ -1,8 +1,9 @@
-import { useRef, useState } from "react"
+import { memo, useMemo, useRef, useState } from "react"
 import {
   ChevronLeft,
   Download,
   Ellipsis,
+  ListChecks,
   Pencil,
   Pin,
   PinOff,
@@ -10,15 +11,13 @@ import {
   Trash2,
 } from "lucide-react"
 import type { AgentSessionVO } from "@/lib/api"
+import { dayKey, formatSessionStamp, yesterdayKey } from "@/lib/time"
 import { Dialog } from "@/components/ui/dialog"
 import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu"
 
 type Group = { label: string; sessions: AgentSessionVO[] }
 
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-const pad = (n: number) => String(n).padStart(2, "0")
-
-/** 置顶区 + 今天/昨天/更早 分组（按 updatedTime 本地零点比较）。 */
+/** 置顶区 + 今天/昨天/更早 分组（按 updatedTime 的本地日历日比较）。 */
 function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; groups: Group[] } {
   const pinned: AgentSessionVO[] = []
   const today: AgentSessionVO[] = []
@@ -26,17 +25,17 @@ function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; 
   const earlier: AgentSessionVO[] = []
 
   const now = new Date()
-  const todayStart = startOfDay(now)
-  const yesterdayStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
+  const todayKey = dayKey(now)
+  const yesterdayKeyValue = yesterdayKey(now)
 
   for (const s of sessions) {
     if (s.isPinned) {
       pinned.push(s)
       continue
     }
-    const t = s.updatedTime ? new Date(s.updatedTime.replace(" ", "T")).getTime() : 0
-    if (t >= todayStart) today.push(s)
-    else if (t >= yesterdayStart) yesterday.push(s)
+    const key = dayKey(s.updatedTime)
+    if (key && key === todayKey) today.push(s)
+    else if (key && key === yesterdayKeyValue) yesterday.push(s)
     else earlier.push(s)
   }
 
@@ -48,30 +47,6 @@ function groupSessions(sessions: AgentSessionVO[]): { pinned: AgentSessionVO[]; 
 }
 
 /**
- * 行内日期读数：今天 / 昨天给到时刻，更早只给日期。
- * 用真实 updatedTime 换算，不做「刚刚 / 3 分钟前」这类会随着刷新失真的措辞。
- */
-function formatSessionStamp(value?: string): string {
-  if (!value) return ""
-  const time = new Date(value.replace(" ", "T"))
-  if (Number.isNaN(time.getTime())) return value.slice(0, 10)
-
-  const now = new Date()
-  const day = startOfDay(time)
-  const today = startOfDay(now)
-  const clock = `${pad(time.getHours())}:${pad(time.getMinutes())}`
-
-  if (day === today) return `今天 ${clock}`
-  if (day === startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))) {
-    return `昨天 ${clock}`
-  }
-  if (time.getFullYear() === now.getFullYear()) {
-    return `${pad(time.getMonth() + 1)}-${pad(time.getDate())}`
-  }
-  return `${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}`
-}
-
-/**
  * 会话列表：分组、行内重命名、多选批量删、置顶、导出。
  * 所有操作上抛页面执行——组件自己不调 API，页面成功后刷新列表。
  *
@@ -80,7 +55,11 @@ function formatSessionStamp(value?: string): string {
  * boolean 作为「服务端真的成功了」的唯一依据：失败时保留输入、保留选中、
  * 保留会话本身，不假装成功。
  */
-export function SessionList({
+/**
+ * 会话栏与流式内容无关：memo 后只有 sessions / activeId / busy / 回调变化时
+ * 才重渲染。回调由 AgentPage 用 useCallback 固定引用。
+ */
+export const SessionList = memo(function SessionList({
   sessions,
   activeId,
   busy,
@@ -103,7 +82,7 @@ export function SessionList({
   onBatchDelete: (ids: string[]) => Promise<boolean>
   onTogglePin: (id: string, pinned: boolean) => void
   onExport: (id: string, format: "markdown" | "json") => void
-  onCollapse: () => void
+  onCollapse?: () => void
 }) {
   const [selectMode, setSelectMode] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
@@ -120,9 +99,14 @@ export function SessionList({
   const [batchPending, setBatchPending] = useState(false)
   const [batchError, setBatchError] = useState("")
 
-  const { pinned, groups } = groupSessions(sessions)
+  // 分组含逐条 new Date()，勾选过滤是全表遍历；两者只依赖 sessions / checked，
+  // 不该跟着流式 token 每片重算。
+  const { pinned, groups } = useMemo(() => groupSessions(sessions), [sessions])
   // 只把当前列表里真实存在的勾选项交给删除接口——刷新后消失的 id 不再冒充。
-  const selectedIds = sessions.filter((s) => checked.has(s.sessionId)).map((s) => s.sessionId)
+  const selectedIds = useMemo(
+    () => sessions.filter((s) => checked.has(s.sessionId)).map((s) => s.sessionId),
+    [sessions, checked],
+  )
 
   function toggleCheck(id: string) {
     setChecked((prev) => {
@@ -392,15 +376,17 @@ export function SessionList({
       <div className="agent-sessions__head">
         <div className="agent-sessions__brand">
           <span className="agent-sessions__brandname">会话</span>
-          <button
-            type="button"
-            className="agent-sessions__collapse"
-            onClick={onCollapse}
-            aria-label="收起会话栏"
-            title="收起会话栏"
-          >
-            <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
-          </button>
+          {onCollapse ? (
+            <button
+              type="button"
+              className="agent-sessions__collapse"
+              onClick={onCollapse}
+              aria-label="收起会话栏"
+              title="收起会话栏"
+            >
+              <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
 
         {selectMode ? (
@@ -440,7 +426,8 @@ export function SessionList({
               className="agent-sessions__select"
               onClick={() => setSelectMode(true)}
             >
-              选择
+              <ListChecks size={14} strokeWidth={2} aria-hidden="true" />
+              <span>选择</span>
             </button>
           </div>
         )}
@@ -546,4 +533,4 @@ export function SessionList({
       </Dialog>
     </aside>
   )
-}
+})

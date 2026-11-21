@@ -1,4 +1,5 @@
 import {
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -45,6 +46,7 @@ import { queryKeys } from "@/lib/queryKeys"
 import { fault, infoFault, validationFault } from "@/lib/faults"
 import { renderNewsHtml } from "@/lib/markdown"
 import { newsPlainText } from "@/lib/news"
+import { UPLOAD_LIMIT_BYTES, UPLOAD_LIMIT_MB } from "@/lib/uploadLimits"
 import {
   PREVIEW_DEVICE_HEIGHT,
   PREVIEW_DEVICE_WIDTH,
@@ -63,20 +65,20 @@ type Form = { title: string; content: string; coverImage?: string; status?: numb
 /** 新建默认草稿：后端在 status 缺席时也落草稿，显式给出让下拉能显示当前值。 */
 const EMPTY_FORM: Form = { title: "", content: "", status: 0 }
 
-const MAX_COVER_BYTES = 5 * 1024 * 1024
+const MAX_COVER_BYTES = UPLOAD_LIMIT_BYTES
 const COVER_ACCEPT = "image/jpeg,image/png"
 const SUMMARY_HINT = "正文至少 30 个字符（后端以正文前 30 个字符生成摘要）"
 const LEAVE_CONFIRM = "有未保存的修改，确定离开编辑页吗？未保存的内容会丢失。"
 /** 新建模式封面引导：uploadCover 需要已存在的 id，首次保存后才能上传。 */
 const NEW_COVER_HINT = "新建保存后会生成记录并进入编辑模式，之后可上传封面。"
 
-/** 封面预检：JPG/PNG + ≤5MB。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
+/** 封面预检：JPG/PNG + 服务端单张上限。返回 null 表示通过，否则给出页内提示文案（句号收尾）。 */
 function coverProblem(file: File): string | null {
   if (file.type !== "image/jpeg" && file.type !== "image/png") {
     return "只能上传 JPG/PNG 格式的图片。"
   }
   if (file.size > MAX_COVER_BYTES) {
-    return "图片大小不能超过 5MB。"
+    return `图片大小不能超过 ${UPLOAD_LIMIT_MB}MB。`
   }
   return null
 }
@@ -89,8 +91,11 @@ function coverProblem(file: File): string | null {
  *  文章眉线上的「N 字」是另一套口径（`newsWordCount`：汉字按字、拉丁按词），
  *  与公开页同一个组件、同一个读数。两者数字不同是口径不同，不是少了字，
  *  所以界面上把编辑器这一侧写成「字符」，不跟眉线的「字」混用。 */
+/** 正则字面量提到模块级：每次按键新建 RegExp 没有必要。 */
+const WHITESPACE_RUN = /\s+/g
+
 function visibleLength(content: string): number {
-  return newsPlainText(renderNewsHtml(content)).replace(/\s+/g, " ").trim().length
+  return newsPlainText(renderNewsHtml(content)).replace(WHITESPACE_RUN, " ").trim().length
 }
 
 /**
@@ -310,19 +315,24 @@ function NewsEditor(props: {
     setForm((prev) => ({ ...prev, ...next }))
   }
 
-  const contentLength = useMemo(() => visibleLength(form.content), [form.content])
+  // 字数走 markdown 渲染 + 剥标签，长文每次按键约 30–45ms。延迟内容让输入
+  // 保持紧急优先级，读数落后一帧用户看不出来。
+  const deferredContent = useDeferredValue(form.content)
+  const contentLength = useMemo(() => visibleLength(deferredContent), [deferredContent])
   // 预览内容与「保存时会写进库的东西」保持一致：旧版 HTML 且正文没改时，
   // 保存提交的是原始 HTML，预览就按 HTML 渲染，避免有损往返让预览与线上不一样。
   const previewContent = legacyHtml && !contentDirty ? legacyHtml : form.content
   const previewFormat: "html" | "markdown" = legacyHtml && !contentDirty ? "html" : "markdown"
   // 摘要真实口径：后端取剥标签后正文的前 30 字。这里显示同一段文字，不另编摘要。
   const summaryText = useMemo(() => {
+    // 摘要只在预览页签消费；编辑态算它就是每个按键白跑一遍 markdown + 净化。
+    if (tab !== "preview") return ""
     // 旧版 HTML 原样提交时按 HTML 剥标签；Markdown 先走渲染管线再剥——两条路径
     // 都必须得到可见文字，不能把 <p> 当摘要显示出来。
     const html =
       previewFormat === "html" ? sanitizeNewsHtml(previewContent) : renderNewsHtml(previewContent)
     return newsPlainText(html).replace(/\s+/g, " ").trim().slice(0, 30)
-  }, [previewContent, previewFormat])
+  }, [tab, previewContent, previewFormat])
   // 侧栏读数位窄：同一状态用短标签，避免「没有未保存的修改」把数字列挤歪。
   const saveStateShort = saving
     ? "保存中…"
@@ -792,7 +802,7 @@ function NewsEditor(props: {
                     </button>
                   </>
                 ) : null}
-                <span className="admin-newsedit__cover-hint num">JPG / PNG · ≤5MB</span>
+                <span className="admin-newsedit__cover-hint num">JPG / PNG · ≤{UPLOAD_LIMIT_MB}MB</span>
               </div>
             </div>
           </section>

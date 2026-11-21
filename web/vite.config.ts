@@ -23,7 +23,8 @@ export default defineConfig({
     proxy: {
       // Spring Boot dev server: context-path /api
       "/api": {
-        target: "http://localhost:8081",
+        // 默认指向本地 Spring Boot；验收脚本可用环境变量指到另一份后端实例。
+        target: process.env.VITE_PROXY_TARGET ?? "http://localhost:8081",
         changeOrigin: true,
         // 后端 CORS 是精确白名单（默认只有 5173）。dev server 换端口（5199 等）
         // 时 Origin 会跟着变，把 Origin 改写成 target，代理后就是同源请求。

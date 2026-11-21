@@ -1,0 +1,12 @@
+{
+  "base": "http://localhost:4290",
+  "when": "2026-11-20T08:47:59.582Z",
+  "files": [
+    "landing-light.jpg",
+    "landing-dark.jpg",
+    "agent-dark.jpg",
+    "admin-dashboard-light.jpg",
+    "diagnosis-light.jpg"
+  ],
+  "note": "JPEG q92, 1200px wide, downscaled from 1440x900 captures"
+}

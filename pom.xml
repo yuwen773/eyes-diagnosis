@@ -10,11 +10,14 @@
     </parent>
     <groupId>com.csust</groupId>
     <artifactId>eye-diagnosis</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.1.0</version>
     <name>eye-diagnosis</name>
     <description>eye-diagnosis</description>
     <properties>
         <java.version>21</java.version>
+        <!-- 可复现构建：固定归档条目时间戳，使两次构建的产物逐字节一致。
+             发版后用 `sha256sum` 核对 GitHub 资产与本地产物。 -->
+        <project.build.outputTimestamp>2026-11-20T00:00:00Z</project.build.outputTimestamp>
         <!-- Windows GBK 控制台会把中文异常信息变成乱码；测试 JVM 固定 UTF-8 输出。 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -82,6 +85,11 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- 隔离库夹具显式使用 HikariCP 池化数据源（与生产数据源一致）；版本由 Spring Boot BOM 管理 -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -93,6 +101,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- TASK-08/PR-08A：仅测试作用域的 Studio 复用验证 Spike，不进生产类路径 -->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-studio</artifactId>
+            <version>${spring-ai-alibaba.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -139,10 +154,6 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
         </dependency>
         <!-- Spring Security Crypto (BCrypt for password migration) -->
         <dependency>

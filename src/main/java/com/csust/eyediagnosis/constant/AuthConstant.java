@@ -2,7 +2,6 @@ package com.csust.eyediagnosis.constant;
 
 /**
  * @ClassNameUserAuthConstant
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/12 下午5:55
  * @Version 1.0

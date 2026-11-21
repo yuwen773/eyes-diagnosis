@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-21T00:00:00Z",
+  "title": "Design System: Iris 2.0 · Adaptive Visual System",
+  "extensions": {
+    "colorMeta": {
+      "brand-primary": {
+        "role": "primary",
+        "displayName": "Cobalt Blue",
+        "canonical": "#2457c9",
+        "dark": "#85b5ff",
+        "tonalRamp": [
+          "#0a1c47",
+          "#102c6b",
+          "#163c8f",
+          "#2457c9",
+          "#5a86dd",
+          "#8fb0e9",
+          "#c2d4f4",
+          "#e9f0fb"
+        ]
+      },
+      "brand-cyan": {
+        "role": "primary",
+        "displayName": "Optical Cyan",
+        "canonical": "#006f82",
+        "dark": "#60d7e6",
+        "tonalRamp": [
+          "#03222a",
+          "#063a47",
+          "#075466",
+          "#006f82",
+          "#3a9cae",
+          "#75c5d1",
+          "#b6e3e9",
+          "#eaf8fa"
+        ]
+      },
+      "brand-aurora": {
+        "role": "primary",
+        "displayName": "Aurora Violet",
+        "canonical": "#6b56c5",
+        "dark": "#c0acff",
+        "tonalRamp": [
+          "#1d1442",
+          "#2e2263",
+          "#45348c",
+          "#6b56c5",
+          "#8f7fd7",
+          "#b2a6e5",
+          "#d5cdf2",
+          "#f1edfb"
+        ]
+      },
+      "admin-primary": {
+        "role": "secondary",
+        "displayName": "Management Violet",
+        "canonical": "#6d28d9",
+        "dark": "#b39dfb",
+        "tonalRamp": [
+          "#22094f",
+          "#341078",
+          "#4a17a4",
+          "#6d28d9",
+          "#9161e5",
+          "#b694ef",
+          "#d8c7f7",
+          "#f0eafa"
+        ]
+      },
+      "admin-accent": {
+        "role": "secondary",
+        "displayName": "Violet Signal",
+        "canonical": "#7c3aed",
+        "dark": "#c4b5fd",
+        "tonalRamp": [
+          "#260c4f",
+          "#3b1479",
+          "#551fa6",
+          "#7c3aed",
+          "#9e6cf2",
+          "#c09bf7",
+          "#ddcbfa",
+          "#f3edfe"
+        ]
+      },
+      "paper-signal": {
+        "role": "tertiary",
+        "displayName": "Signal Orange",
+        "canonical": "#d9541f",
+        "dark": "#ef7a45",
+        "tonalRamp": [
+          "#3d1406",
+          "#641f0a",
+          "#8f2c0f",
+          "#d9541f",
+          "#e98257",
+          "#f2ab8a",
+          "#f8d0bd",
+          "#fdf0e9"
+        ]
+      },
+      "risk-normal": {
+        "role": "tertiary",
+        "displayName": "Medical Normal",
+        "canonical": "#2f7d55",
+        "dark": "#58b183",
+        "tonalRamp": [
+          "#0a1f14",
+          "#113b28",
+          "#1c593c",
+          "#2f7d55",
+          "#5da982",
+          "#8fc7ab",
+          "#c0e2d2",
+          "#e9f5ef"
+        ]
+      },
+      "risk-attention": {
+        "role": "tertiary",
+        "displayName": "Medical Attention",
+        "canonical": "#96690f",
+        "dark": "#cf9a37",
+        "tonalRamp": [
+          "#2b1d03",
+          "#4a3207",
+          "#6d4a0b",
+          "#96690f",
+          "#c19438",
+          "#dcb972",
+          "#eedaae",
+          "#f9f3e3"
+        ]
+      },
+      "risk-critical": {
+        "role": "tertiary",
+        "displayName": "Medical Critical",
+        "canonical": "#a83226",
+        "dark": "#d96153",
+        "tonalRamp": [
+          "#2f0b08",
+          "#4f150f",
+          "#752019",
+          "#a83226",
+          "#cf6256",
+          "#e3978e",
+          "#f1c6c0",
+          "#fbebe8"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Destructive Rose",
+        "canonical": "#b4374a",
+        "dark": "#ff9aa6",
+        "tonalRamp": [
+          "#330a12",
+          "#50101c",
+          "#7a1729",
+          "#b4374a",
+          "#d06b7b",
+          "#e5a0ab",
+          "#f3cbd1",
+          "#fceef0"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Cool Bone",
+        "canonical": "#f3f4f1",
+        "dark": "#0b0d0c",
+        "tonalRamp": [
+          "#2f312c",
+          "#454841",
+          "#5f635a",
+          "#7d8177",
+          "#a0a49a",
+          "#c2c6bd",
+          "#f3f4f1",
+          "#fbfbf9"
+        ]
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "#14171a",
+        "dark": "#f4f5f1",
+        "tonalRamp": [
+          "#050506",
+          "#0a0c0e",
+          "#101316",
+          "#14171a",
+          "#3f464b",
+          "#6b7479",
+          "#a2a9ad",
+          "#e4e6e7"
+        ]
+      },
+      "brand-canvas": {
+        "role": "neutral",
+        "displayName": "Silver-Blue Canvas",
+        "canonical": "#f2f6fc",
+        "dark": "#0b1425",
+        "tonalRamp": [
+          "#1b2433",
+          "#2f3d54",
+          "#485d7d",
+          "#6c86ab",
+          "#9db3d0",
+          "#c6d7ea",
+          "#f2f6fc",
+          "#fbfcfe"
+        ]
+      },
+      "admin-canvas": {
+        "role": "neutral",
+        "displayName": "Violet Canvas",
+        "canonical": "#f4f1fa",
+        "dark": "#12101c",
+        "tonalRamp": [
+          "#241c38",
+          "#3b2f5a",
+          "#57457f",
+          "#7a63a8",
+          "#a690c9",
+          "#cdbfe3",
+          "#f4f1fa",
+          "#fcfbfe"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "品牌页主标题；一屏只出现一次。"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "章节标题与判读结论。"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "卡片、面板与小节标题。"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "正文与界面文字。"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "字段标签、章节说明与按钮文字。"
+      },
+      "mono": {
+        "displayName": "Readout",
+        "purpose": "置信度、概率、计数、时间戳、哈希与状态短码。"
+      },
+      "brand-ui": {
+        "displayName": "Brand UI",
+        "purpose": "品牌层拉丁字形、导航与 CTA；汉字按字形回退。"
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "界面按钮文字：14.5px / 500，字距 0.02em。"
+      },
+      "readout": {
+        "displayName": "Readout",
+        "purpose": "输入框正文与读数：13px 等宽 + tabular-nums。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay",
+        "value": "0 10px 26px rgba(20, 23, 26, 0.09)",
+        "purpose": "下拉、tooltip、轻浮层。"
+      },
+      {
+        "name": "modal",
+        "value": "0 22px 46px -32px rgba(20, 23, 26, 0.55)",
+        "purpose": "模态与抽屉。"
+      },
+      {
+        "name": "brand-shadow",
+        "value": "0 20px 54px rgba(51, 84, 143, 0.09)",
+        "purpose": "品牌玻璃面板的蓝墨投影。"
+      },
+      {
+        "name": "brand-hero-glow",
+        "value": "0 14px 28px rgba(36, 87, 201, 0.18)",
+        "purpose": "品牌主 CTA 的钴蓝光晕；暗主题改纯黑投影。"
+      },
+      {
+        "name": "admin-shadow",
+        "value": "0 6px 22px rgba(61, 44, 105, 0.12)",
+        "purpose": "管理端轻浮层。"
+      },
+      {
+        "name": "admin-shadow-card",
+        "value": "0 1px 2px rgba(61, 44, 105, 0.04), 0 14px 32px -22px rgba(61, 44, 105, 0.38)",
+        "purpose": "管理端卡片与台账容器。"
+      },
+      {
+        "name": "admin-shadow-overlay",
+        "value": "0 14px 34px rgba(61, 44, 105, 0.16)",
+        "purpose": "管理端模态与抽屉。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.2, 0.7, 0.2, 1)",
+        "purpose": "全站默认缓动。"
+      },
+      {
+        "name": "motion-fast",
+        "value": "140ms",
+        "purpose": "hover、按下、描边与颜色过渡。"
+      },
+      {
+        "name": "motion-base",
+        "value": "240ms",
+        "purpose": "状态切换、面板显隐。"
+      },
+      {
+        "name": "motion-slow",
+        "value": "420ms",
+        "purpose": "品牌层氛围与较大位移；需尊重 prefers-reduced-motion。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "390px"
+      },
+      {
+        "name": "sm",
+        "value": "560px"
+      },
+      {
+        "name": "md",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "768px"
+      },
+      {
+        "name": "primary",
+        "value": "900px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "ultrawide",
+        "value": "2200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button Family",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "三套真实按钮形态：Clinical 墨色直角、Brand 钴蓝药丸、Management 管理紫小按钮。",
+      "html": "<div class=\"ds-btn-row\"><button class=\"ds-btn\">上传眼底影像</button><a class=\"ds-btn-brand\" href=\"#\">探索影像分析</a><button class=\"ds-admin-btn\">新建用户</button></div>",
+      "css": ".ds-btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; } .ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 12px; height: 52px; padding-inline: 26px; border: 1px solid transparent; border-radius: 0; background: var(--fg, #14171a); color: var(--bg, #f3f4f1); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); font-size: 14.5px; font-weight: 500; letter-spacing: 0.02em; cursor: pointer; transition: background 140ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 140ms cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-btn:hover { background: color-mix(in srgb, var(--fg, #14171a) 85%, var(--surface, #fff)); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; } .ds-btn:disabled { opacity: 0.35; cursor: not-allowed; } .ds-btn-brand { display: inline-flex; align-items: center; gap: 10px; padding: 13px 22px; border: 1px solid transparent; border-radius: 999px; background: var(--brand-primary, #2457c9); color: var(--brand-primary-fg, #fff); font-family: var(--font-brand, 'Manrope', sans-serif); font-size: 14.5px; font-weight: 600; text-decoration: none; box-shadow: 0 14px 28px rgba(36, 87, 201, 0.18); transition: background 140ms cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-btn-brand:hover { background: color-mix(in srgb, var(--brand-primary, #2457c9) 86%, #ffffff); } .ds-btn-brand:focus-visible { outline: 2px solid var(--brand-primary, #2457c9); outline-offset: 3px; } .ds-admin-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding-inline: 16px; border: 1px solid transparent; border-radius: var(--radius-md, 8px); background: var(--admin-primary, #6d28d9); color: var(--admin-on-primary, #fff); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 140ms cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-admin-btn:hover { background: var(--admin-primary-strong, #5b21b6); } .ds-admin-btn:focus-visible { outline: 2px solid var(--admin-accent, #7c3aed); outline-offset: 2px; }"
+    },
+    {
+      "name": "Brand Glass Panel",
+      "kind": "card",
+      "refersTo": "brand-panel",
+      "description": "品牌层唯一玻璃入口；底色、描边、内侧高光与模糊四件套，默认 Layered Glass。",
+      "html": "<article class=\"ds-brand-panel\"><span class=\"ds-brand-panel__label\">影像 · 分析 · 证据</span><h3 class=\"ds-brand-panel__title\">从一张眼底照片开始</h3><p class=\"ds-brand-panel__body\">流程示意 · 非实时结果</p></article>",
+      "css": ".ds-brand-panel { position: relative; isolation: isolate; padding: 24px; border: 1px solid var(--brand-glass-layered-edge, rgba(255, 255, 255, 0.86)); border-radius: var(--radius-xl, 24px); background: var(--brand-glass-layered, rgba(255, 255, 255, 0.7)); box-shadow: var(--brand-shadow, 0 20px 54px rgba(51, 84, 143, 0.09)); color: var(--brand-text, #16233a); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); backdrop-filter: blur(22px) saturate(120%); -webkit-backdrop-filter: blur(22px) saturate(120%); } .ds-brand-panel::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: linear-gradient(180deg, var(--brand-glass-layered-inner, rgba(255, 255, 255, 0.58)) 0%, transparent 48%); pointer-events: none; } .ds-brand-panel__label { display: block; font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; letter-spacing: 0.1em; color: var(--brand-muted, #5b6b82); } .ds-brand-panel__title { margin: 10px 0 6px; font-family: var(--font-serif, Georgia, serif); font-size: 21px; font-weight: 400; line-height: 1.3; } .ds-brand-panel__body { margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--brand-muted, #5b6b82); }"
+    },
+    {
+      "name": "RecordSheet",
+      "kind": "custom",
+      "description": "整站唯一的判读记录纸；纸面原语在任何主题下都是同一张白纸。",
+      "html": "<article class=\"ds-sheet\"><header class=\"ds-sheet__head\"><span>判读记录 · READING RECORD</span><span>MODEL-B4 · 2026-11-21</span></header><div class=\"ds-sheet__body\"><div><h3 class=\"ds-sheet__verdict\"><span class=\"ds-sheet__prefix\">AI 判读结果 · DR</span>糖尿病视网膜病变</h3><div class=\"ds-sheet__facts\"><span><b>置信度</b> 87.0%</span><span><b>严重程度</b> 关注</span><span><b>人工复核</b> 待复核</span></div></div><div class=\"ds-sheet__dial\"><span>87.0%</span><small>CONF</small></div></div><footer class=\"ds-sheet__foot\">AI 辅助信息展示 · 不构成临床诊断结论</footer></article>",
+      "css": ".ds-sheet { background: var(--paper-surface, #fff); color: var(--paper-ink, #14171a); border: 1px solid var(--paper-line-strong, rgba(20, 23, 26, 0.34)); padding: clamp(24px, 3.2vw, 46px); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); } .ds-sheet__head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--paper-line-strong, rgba(20, 23, 26, 0.34)); font-size: 14.5px; font-weight: 500; } .ds-sheet__body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(24px, 3vw, 48px); align-items: start; padding-block: clamp(24px, 3vw, 38px); } .ds-sheet__verdict { margin: 0; font-family: var(--font-serif, Georgia, serif); font-weight: 400; font-size: clamp(28px, 3vw, 42px); line-height: 1.2; letter-spacing: -0.02em; } .ds-sheet__prefix { display: inline-block; margin-right: 0.6em; font-family: var(--font-sans, 'Noto Sans SC', sans-serif); font-size: 14.5px; font-weight: 500; color: var(--paper-ink-2, #5c6367); vertical-align: 0.25em; } .ds-sheet__facts { display: flex; flex-wrap: wrap; gap: 10px 40px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--paper-line, rgba(20, 23, 26, 0.13)); font-size: 13.5px; } .ds-sheet__facts b { display: block; font-size: 12px; font-weight: 500; color: var(--paper-ink-2, #5c6367); } .ds-sheet__dial { display: grid; place-content: center; width: 104px; height: 104px; border: 1px solid var(--paper-line-strong, rgba(20, 23, 26, 0.34)); border-radius: 50%; font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-variant-numeric: tabular-nums; } .ds-sheet__dial span { font-size: 20px; letter-spacing: -0.03em; line-height: 1; text-align: center; } .ds-sheet__dial small { font-size: 11px; letter-spacing: 0.16em; text-align: center; color: var(--paper-ink-3, #676e72); } .ds-sheet__foot { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--paper-line, rgba(20, 23, 26, 0.13)); font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; letter-spacing: 0.1em; color: var(--paper-ink-3, #676e72); }"
+    },
+    {
+      "name": "Risk Tag",
+      "kind": "chip",
+      "refersTo": "risk-tag",
+      "description": "医学严重度标记；永远带文字与方点，不整块填色。",
+      "html": "<span class=\"ds-risk\" data-risk=\"normal\">正常</span> <span class=\"ds-risk\" data-risk=\"attention\">关注</span> <span class=\"ds-risk\" data-risk=\"critical\">高</span>",
+      "css": ".ds-risk { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: var(--risk-critical, #a83226); } .ds-risk::before { content: ''; width: 5px; height: 5px; background: currentColor; flex: none; } .ds-risk[data-risk='normal'] { color: var(--risk-normal, #2f7d55); } .ds-risk[data-risk='attention'] { color: var(--risk-attention, #96690f); } .ds-risk[data-risk='critical'] { color: var(--risk-critical, #a83226); }"
+    },
+    {
+      "name": "Confidence Dial",
+      "kind": "custom",
+      "description": "置信环；一圈刻度加一段弧，读数用等宽百分比。",
+      "html": "<div class=\"ds-dial\" role=\"img\" aria-label=\"置信度 87.0%\"><svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle class=\"ds-dial__track\" cx=\"50\" cy=\"50\" r=\"40\" fill=\"none\" stroke-width=\"1\"></circle><circle class=\"ds-dial__value\" cx=\"50\" cy=\"50\" r=\"40\" fill=\"none\" stroke-width=\"2\" pathLength=\"100\" stroke-dasharray=\"100\" stroke-dashoffset=\"13\"></circle></svg><div class=\"ds-dial__center\"><span class=\"ds-dial__num\">87.0%</span><span class=\"ds-dial__unit\">CONF</span></div></div>",
+      "css": ".ds-dial { position: relative; display: inline-grid; place-items: center; width: 104px; height: 104px; color: var(--paper-ink, #14171a); } .ds-dial svg { display: block; width: 104px; height: 104px; transform: rotate(-90deg); } .ds-dial__track { stroke: var(--paper-line, rgba(20, 23, 26, 0.13)); } .ds-dial__value { stroke: var(--fg, #14171a); transition: stroke-dashoffset 900ms cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-dial__center { position: absolute; inset: 0; display: grid; place-content: center; gap: 1px; text-align: center; } .ds-dial__num { font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-variant-numeric: tabular-nums; font-size: 20px; letter-spacing: -0.03em; line-height: 1; } .ds-dial__unit { font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--paper-ink-3, #676e72); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "直角、透明底、等宽输入；标签是 11px 等宽大写。",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">账号 · ACCOUNT</span><input class=\"ds-field__input\" placeholder=\"请输入用户名\" /></label>",
+      "css": ".ds-field { display: grid; gap: 7px; max-width: 320px; } .ds-field__label { font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper-ink-3, #676e72); } .ds-field__input { height: 46px; width: 100%; padding-inline: 13px; background: transparent; border: 1px solid var(--paper-line-strong, rgba(20, 23, 26, 0.34)); border-radius: 0; color: var(--paper-ink, #14171a); font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 13px; letter-spacing: 0.02em; transition: border-color 140ms cubic-bezier(0.2, 0.7, 0.2, 1), background 140ms cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-field__input::placeholder { color: var(--paper-ink-3, #676e72); letter-spacing: 0.04em; } .ds-field__input:hover { border-color: var(--paper-ink-3, #676e72); } .ds-field__input:focus { border-color: var(--paper-ink, #14171a); background: var(--field, #f3f4f1); } .ds-field__input:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }"
+    },
+    {
+      "name": "Product Header",
+      "kind": "nav",
+      "refersTo": "nav-pill",
+      "description": "公开路由唯一顶栏：光学虹膜标 + Manrope 字标 + Frosted Glass 胶囊导航 + 钴蓝当前态。",
+      "html": "<header class=\"ds-head\"><a class=\"ds-head__brand\" href=\"#\">Iris</a><nav class=\"ds-head__nav\" aria-label=\"主导航\"><a class=\"ds-head__link\" href=\"#\" aria-current=\"page\">影像分析</a><a class=\"ds-head__link\" href=\"#\">AI 协作</a><a class=\"ds-head__link\" href=\"#\">资讯</a></nav><a class=\"ds-head__cta\" href=\"#\">开始判读</a></header>",
+      "css": ".ds-head { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; min-height: 80px; padding: 8px clamp(16px, 3.2vw, 48px); background: var(--brand-canvas, #f2f6fc); color: var(--brand-text, #16233a); font-family: var(--font-brand, 'Manrope', sans-serif); } .ds-head__brand { justify-self: start; font-size: 18px; font-weight: 700; letter-spacing: 0.01em; text-decoration: none; color: inherit; } .ds-head__nav { justify-self: center; display: flex; align-items: center; gap: 2px; padding: 5px; border: 1px solid var(--brand-line, rgba(22, 35, 58, 0.12)); border-radius: 999px; background: var(--brand-glass, rgba(255, 255, 255, 0.68)); box-shadow: var(--brand-shadow, 0 20px 54px rgba(51, 84, 143, 0.09)); backdrop-filter: blur(18px) saturate(1.25); -webkit-backdrop-filter: blur(18px) saturate(1.25); } .ds-head__link { display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 999px; color: var(--brand-muted, #5b6b82); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: color 140ms ease, background 140ms ease; } .ds-head__link:hover { color: var(--brand-primary, #2457c9); } .ds-head__link[aria-current='page'] { background: var(--brand-primary, #2457c9); color: var(--brand-primary-fg, #fff); } .ds-head__cta { justify-self: end; display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 999px; background: var(--brand-primary, #2457c9); color: var(--brand-primary-fg, #fff); font-size: 13.5px; font-weight: 700; text-decoration: none; box-shadow: 0 10px 22px rgba(36, 87, 201, 0.22); transition: transform 140ms ease, box-shadow 140ms ease; } .ds-head__cta:hover { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(36, 87, 201, 0.28); } .ds-head__link:focus-visible, .ds-head__cta:focus-visible, .ds-head__brand:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }"
+    },
+    {
+      "name": "Admin Modal",
+      "kind": "custom",
+      "description": "管理端弹层；统一 Base UI 行为，视觉为紫墨描边白卡。",
+      "html": "<div class=\"ds-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"ds-modal-title\"><header class=\"ds-modal__head\"><h2 id=\"ds-modal-title\">新建用户</h2><button class=\"ds-modal__close\" aria-label=\"关闭\">×</button></header><div class=\"ds-modal__body\"><p>表单内容</p></div><footer class=\"ds-modal__foot\"><button class=\"ds-modal__btn\">取消</button><button class=\"ds-modal__btn ds-modal__btn--primary\">保存</button></footer></div>",
+      "css": ".ds-modal { width: min(560px, calc(100vw - 40px)); max-height: min(720px, calc(100svh - 64px)); display: flex; flex-direction: column; overflow: hidden; background: var(--admin-surface, #fff); color: var(--admin-text, #211b33); border: 1px solid var(--admin-line-strong, rgba(72, 49, 141, 0.3)); border-radius: var(--radius-lg, 12px); box-shadow: var(--admin-shadow-overlay, 0 14px 34px rgba(61, 44, 105, 0.16)); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); } .ds-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); } .ds-modal__head h2 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-weight: 400; font-size: 20px; line-height: 1.35; } .ds-modal__close { border: 0; background: none; color: var(--admin-text-muted, #5d5670); font-size: 14px; cursor: pointer; } .ds-modal__close:hover { color: var(--admin-text, #211b33); } .ds-modal__close:focus-visible { outline: 2px solid var(--admin-accent, #7c3aed); outline-offset: 2px; } .ds-modal__body { padding: 22px; overflow: auto; font-size: 13px; line-height: 1.7; } .ds-modal__foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); } .ds-modal__btn { height: 36px; padding-inline: 14px; border: 1px solid var(--admin-line-strong, rgba(72, 49, 141, 0.3)); border-radius: var(--radius-md, 8px); background: transparent; color: var(--admin-text, #211b33); font-family: var(--font-brand, 'Manrope', sans-serif); font-size: 12.5px; font-weight: 600; cursor: pointer; } .ds-modal__btn:hover { border-color: var(--admin-primary, #6d28d9); color: var(--admin-primary, #6d28d9); } .ds-modal__btn--primary { border-color: transparent; background: var(--admin-primary, #6d28d9); color: var(--admin-on-primary, #fff); } .ds-modal__btn--primary:hover { background: var(--admin-primary-strong, #5b21b6); color: var(--admin-on-primary, #fff); } .ds-modal__btn:focus-visible { outline: 2px solid var(--admin-accent, #7c3aed); outline-offset: 2px; }"
+    },
+    {
+      "name": "Admin Data Table",
+      "kind": "custom",
+      "description": "管理端台账：mono 表头、发丝线行、18px 卡片容器与强制分页口径。",
+      "html": "<div class=\"ds-table\"><table><thead><tr><th>用户</th><th>角色</th><th class=\"ds-table__num\">判读数</th><th>状态</th></tr></thead><tbody><tr><td>reviewer01</td><td>医生</td><td class=\"ds-table__num\">128</td><td><span class=\"ds-table__chip\">已启用</span></td></tr><tr><td>admin</td><td>管理员</td><td class=\"ds-table__num\">—</td><td><span class=\"ds-table__chip\">已启用</span></td></tr></tbody></table><div class=\"ds-table__pager\"><span>本页 2 / 全量 2</span><span><button>上一页</button><button>下一页</button></span></div></div>",
+      "css": ".ds-table { overflow: hidden; background: var(--admin-surface, #fff); border: 1px solid var(--admin-line-soft, rgba(72, 49, 141, 0.1)); border-radius: var(--admin-radius-card, 18px); box-shadow: var(--admin-shadow-card, 0 1px 2px rgba(61, 44, 105, 0.04), 0 14px 32px -22px rgba(61, 44, 105, 0.38)); color: var(--admin-text, #211b33); font-family: var(--font-sans, 'Noto Sans SC', sans-serif); } .ds-table table { width: 100%; border-collapse: collapse; } .ds-table th { padding: 12px 16px; font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; text-align: left; color: var(--admin-text-faint, #69617e); border-bottom: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); white-space: nowrap; } .ds-table td { padding: 13px 16px; font-size: 13px; line-height: 1.5; border-bottom: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); } .ds-table tbody tr:last-child td { border-bottom: 0; } .ds-table tbody tr { transition: background 140ms ease; } .ds-table tbody tr:hover { background: var(--admin-surface-deep, #ece7f6); } .ds-table__num { text-align: right; font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-variant-numeric: tabular-nums; } .ds-table__chip { display: inline-block; padding: 3px 9px; border-radius: 999px; background: var(--admin-primary-soft, rgba(109, 40, 217, 0.09)); color: var(--admin-primary, #6d28d9); font-size: 11px; } .ds-table__pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 11px; color: var(--admin-text-muted, #5d5670); } .ds-table__pager button { padding: 6px 12px; border: 1px solid var(--admin-line, rgba(72, 49, 141, 0.14)); background: var(--admin-surface, #fff); color: var(--admin-text, #211b33); font-family: inherit; font-size: 11px; cursor: pointer; } .ds-table__pager button:hover { border-color: var(--admin-text-muted, #5d5670); } .ds-table__pager button:focus-visible { outline: 2px solid var(--admin-accent, #7c3aed); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Light over Measurement · 光包住的测量",
+    "overview": "Iris 的外壳是光：钴蓝、银蓝与冰青的光学玻璃，让公开层看起来像一支能把复杂视觉信息讲清楚的团队。内核是测量：白纸、墨字、发丝线、等宽读数与印章，让临床层读起来像一份可以被复核的报告。仪器不是全站的皮肤，而是被光包住的那一层。\n\n产品按使用场景分配表达强度：Brand 高、Management 中、Intelligence 中高、Clinical 低。强度指的是材质、圆角与动效预算，不是信息量，更不是品牌身份。首页、判读、Agent、新闻、记录与个人中心共享同一个产品外壳与同一套导航语言；管理端走独立的紫色医疗 SaaS 令牌；判读记录在任何场景下都是同一张白纸。\n\n温度靠文案与留白表达，不靠暖色；彩色只做语义。医学措辞、风险标签、人工复核、证据链、数据隔离与可访问性不因场景放松。Iris 2.1 UI 已于 2026-11-15 冻结：一般视觉优化登记 Issue，阻断性故障与安全修复例外，详见根 CLAUDE.md。",
+    "keyCharacteristics": [
+      "两条视觉产品线：用户端 Blue Optical Glass（钴蓝 + 银蓝光学玻璃），管理端 Purple Medical SaaS（管理紫）。",
+      "四种场景共享令牌与语义，不共享骨架；KPI + 台账只属于台账型页面。",
+      "三套语义色互不顶替：--signal 当前态、--brand-* 品牌身份、--risk-* 医学严重度。",
+      "纸面原语 --paper-* 永不随主题翻转；判读记录永远是一张白纸。",
+      "发丝线优先，阴影只做浮层；玻璃的厚度来自内侧高光，不来自更厚的模糊。",
+      "数字是读数：等宽 + tabular-nums；严重度永远带文字标签。"
+    ],
+    "rules": [
+      {
+        "name": "The Three Sets Rule",
+        "body": "`--signal`、`--brand-*`、`--risk-*` 是三条独立的语义轴，任何一条都不得顶替另一条。管理紫 `--admin-*` 是第四条轴，只表示管理品牌与操作。改品牌色不动风险色，改风险色不动品牌色。",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "`--paper-*` 永不随主题翻转。判读记录在任何主题、任何外壳里都是同一张白纸；暗主题只翻页面底，不翻纸。",
+        "section": "colors"
+      },
+      {
+        "name": "The Rarity Rule",
+        "body": "信号橙只做标记与当前态，面积克制，永远不是主 CTA。它的稀缺性就是它的语义。",
+        "section": "colors"
+      },
+      {
+        "name": "The Readout Rule",
+        "body": "所有数字、时间戳、哈希、置信度、概率与计数一律 `--font-mono` + `font-variant-numeric: tabular-nums`。置信度一律百分比 + 一位小数，缺省显示 `—` 而不是 `0`。数字是读数，不是装饰。",
+        "section": "typography"
+      },
+      {
+        "name": "The Serif-400 Rule",
+        "body": "衬线标题只用 400，不合成加粗，不用斜体。需要更强层级时放大字号或换场景，不换字重。",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Micro-Label Rule",
+        "body": "标签停在 11–13px 的正文或等宽档，不缩成 10px 大写眉线。章节信息并入标题行（`.sec-head__line`），不压在标题上方另起一行。",
+        "section": "typography"
+      },
+      {
+        "name": "The Reading Width Rule",
+        "body": "版心是阅读宽度：1240px 在 1920 屏上留白是呼吸，不是空洞；只有 ≥2200px 才放宽到 1760px，不为填满屏幕而拉长行长。",
+        "section": "layout"
+      },
+      {
+        "name": "The Scene Owns the Skeleton Rule",
+        "body": "场景决定骨架，不决定是否高级。KPI 条 + 台账只属于台账型页面；概览页以 KPI 与图表为主，编辑页以表单为主，认证页是双栏，Agent 是工作区。",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline First Rule",
+        "body": "默认分层用发丝线，不用阴影。只有浮层、模态与管理卡才允许投影；临床纸面永远不加阴影。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Glass Thickness Rule",
+        "body": "玻璃的厚度来自内侧高光与边缘描边，不来自更厚的 `blur()`。做不到「能透出背景层次、边界清楚」，就不要叫它玻璃。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Scene Owns the Corner Rule",
+        "body": "圆角由场景决定：Clinical 0、Management 8–20px、Intelligence 12px、Brand 24–38px。同一个按钮在四个场景取四个变体，不追求全站同一种圆角。",
+        "section": "shapes"
+      },
+      {
+        "name": "The One Header Rule",
+        "body": "公开路由只有一个顶栏实现。`scene` 只允许调语境与密度，不允许换回纸面胶囊、橙色底线或另一套 Logo 字标。",
+        "section": "components"
+      },
+      {
+        "name": "The No-Invented-State Rule",
+        "body": "状态动效必须绑定真实请求或真实运行事件；没有事件就不许动。氛围动效只属于 Brand，且不得暗示未发生的业务行为。",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** 先判断场景（Brand / Management / Intelligence / Clinical），再选圆角、主色与动效预算。",
+      "**Do** 让严重度同时有文字标签与颜色；`RiskTag` 永远带字。",
+      "**Do** 用 `--font-mono` + `tabular-nums` 排所有数字与读数。",
+      "**Do** 把判读记录放进纸面原语（`.is-sheet`），并保证暗主题下仍是白纸。",
+      "**Do** 用 `--signal` 标记当前态与重点，用 `--admin-primary` 做管理端主操作。",
+      "**Do** 默认用发丝线分层；只有浮层、模态与管理卡才上阴影。",
+      "**Do** 复用同一个 `ProductHeader` 与 Base UI 弹层。",
+      "**Do** 让状态动效绑定真实 SSE / 请求事件，并在 `prefers-reduced-motion` 下当场停。",
+      "**Do** 双主题都验收；纸面原语是唯一例外。",
+      "**Do** 空 / 错 / 加载按「错误 > 空 > 加载」的优先级处理。",
+      "**Do** 所有 AI 输出配「不构成诊断结论，不能替代执业医师」免责；界面用「判读」而不是「诊断」，只有「诊断 Agent」保留为产品名。",
+      "**Do** 保留人工复核状态、复核人、复核结论与意见，以及证据链（模型版本、权重指纹、影像来源、工具来源），不降级为脚注。",
+      "**Do** 按账号 scope 隔离数据；换账号不得看到旧账号的任何读数。",
+      "**Do** 让每个数字都能追到后端端点与口径；全量 / 窗口 / 分页写在标签上。"
+    ],
+    "donts": [
+      "**Don't** 用品牌钴蓝或管理紫表示医学严重度。",
+      "**Don't** 把信号橙当主 CTA，或大面积铺橙。",
+      "**Don't** 在暗主题下把判读记录翻成深底白字。",
+      "**Don't** 给 Clinical 页面加圆角卡片、玻璃面板或阴影。",
+      "**Don't** 给每个管理页都套 KPI + 台账；概览页与编辑页各有骨架。",
+      "**Don't** 新增第二个顶栏、第二套弹层或第二个 GPU 背景循环。",
+      "**Don't** 在组件里写死十六进制色值；颜色必须来自令牌。",
+      "**Don't** 画假进度、虚构运行态或虚构业务数字。",
+      "**Don't** 用纯黑页面底或纯黑投影。",
+      "**Don't** 用 10px 大写眉线堆章节标签；标签停在 11–13px。",
+      "**Don't** 省略免责、人工复核或证据链；也不要承诺诊断结论。"
+    ]
+  }
+}

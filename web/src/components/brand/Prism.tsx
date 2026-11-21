@@ -518,10 +518,16 @@ export function Prism({
       wake()
     }
 
-    const onPointerMove = (event: PointerEvent) => {
+    // 高刷鼠标的 pointermove 每秒可达上千次，而每次 getBoundingClientRect 都可能
+    // 强制布局。合帧到每帧最多读一次；坐标取最后一次事件，手感没有差别。
+    let moveRaf = 0
+    let pendingX = 0
+    let pendingY = 0
+    const applyPointer = () => {
+      moveRaf = 0
       const rect = container.getBoundingClientRect()
-      const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1
-      const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1
+      const x = ((pendingX - rect.left) / Math.max(1, rect.width)) * 2 - 1
+      const y = ((pendingY - rect.top) / Math.max(1, rect.height)) * 2 - 1
       pointer.inside = Math.abs(x) <= 1 && Math.abs(y) <= 1
       pointer.x = clamp(x, -1, 1)
       pointer.y = clamp(y, -1, 1)
@@ -529,7 +535,20 @@ export function Prism({
       if (s.interactive || s.animationType === "hover") wake()
     }
 
+    const onPointerMove = (event: PointerEvent) => {
+      pendingX = event.clientX
+      pendingY = event.clientY
+      if (!moveRaf) moveRaf = requestAnimationFrame(applyPointer)
+    }
+
     const onPointerLeave = () => {
+      // 离开时把已排队的合帧取消：applyPointer 会拿离开前的最后坐标重算
+      // inside，把刚清掉的「在容器内」又置回 true，棱镜就卡在 hover 态
+      // （要等下一次移动才恢复）。
+      if (moveRaf) {
+        cancelAnimationFrame(moveRaf)
+        moveRaf = 0
+      }
       pointer.inside = false
       wake()
     }
@@ -572,6 +591,7 @@ export function Prism({
 
     return () => {
       cancelAnimationFrame(raf)
+      if (moveRaf) cancelAnimationFrame(moveRaf)
       wakeRef.current = null
       resizeObserver.disconnect()
       intersection.disconnect()

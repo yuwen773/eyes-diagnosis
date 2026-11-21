@@ -27,10 +27,18 @@ export function newsDate(value?: string): { date: string; time: string } {
   }
 }
 
+/**
+ * 剥标签结果缓存：资讯列表每行、每次渲染都会对同一篇正文重跑 6 遍正则，
+ * 而正文在两次渲染之间不变。键是正文本身（只存引用，不复制内容）。
+ */
+const plainTextCache = new Map<string, string>()
+
 /** 去掉 HTML 标签，保留可读文字。 */
 export function newsPlainText(html?: string): string {
   if (!html) return ""
-  return html
+  const cached = plainTextCache.get(html)
+  if (cached !== undefined) return cached
+  const out = html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|h2|h3|li|div)>/gi, "\n")
     .replace(/<[^>]+>/g, "")
@@ -38,6 +46,10 @@ export function newsPlainText(html?: string): string {
     .replace(/[ \t]+/g, " ")
     .replace(/\n{2,}/g, "\n")
     .trim()
+  // 简单上界：超过 128 条整体清空，避免正文常驻内存。
+  if (plainTextCache.size >= 128) plainTextCache.clear()
+  plainTextCache.set(html, out)
+  return out
 }
 
 /** 摘要优先用后端给的；没有就从正文里截。 */

@@ -1,0 +1,21 @@
+CREATE TABLE t_diagnosis_task (
+    taskId VARCHAR(36) NOT NULL PRIMARY KEY,
+    userId BIGINT NOT NULL,
+    idempotencyKey VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    requestDigest CHAR(64) NOT NULL,
+    imageDigest CHAR(64) NOT NULL,
+    objectKey VARCHAR(512) NOT NULL,
+    objectVersion VARCHAR(255),
+    imageFormat VARCHAR(16) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    leaseToken BIGINT NOT NULL DEFAULT 0,
+    leaseOwner VARCHAR(36),
+    leaseUntil DATETIME(6),
+    attemptCount INT NOT NULL DEFAULT 0,
+    inferenceSnapshot JSON,
+    createdAt DATETIME(6) NOT NULL,
+    updatedAt DATETIME(6) NOT NULL,
+    UNIQUE KEY uk_diagnosis_task_request (userId, idempotencyKey),
+    KEY idx_diagnosis_task_claim (status, leaseUntil)
+) ENGINE=InnoDB;
