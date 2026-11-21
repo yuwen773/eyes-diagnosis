@@ -84,7 +84,6 @@
   --on-dark-3: #8d948f;
   --dark-line: rgba(244, 245, 241, 0.16);
   --dark-line-strong: rgba(244, 245, 241, 0.34);
-  --dark-surface: #1d2220; /* 反相顶栏里的抬升面板（账号菜单 / 抽屉） */
 
   /* ── 暗房（落地页 / 认证页共用底色）─────────── */
   --night-bg: #0b0d0c;
@@ -263,7 +262,6 @@
   --brand-scrim-chip-fg: #eaf2ff;
 
   /* ── 图表基色（spec §4.2，校验器实跑值，勿改）───── */
-  --viz-accent: #d9541f;
   --viz-mute: #8b9195;
 
   /* ── 分类色板（B 档数据图表专用；不占用 --signal / --risk-*）──
@@ -375,7 +373,6 @@
    深色页面上不需要逐条改写；--surface 保持纸白，判读记录在暗房里仍是纸。 */
 .is-night {
   --bg: var(--night-bg);
-  --head-bg: var(--night-bg);
   --ink: var(--on-dark);
   --ink-2: var(--on-dark-2);
   --ink-3: var(--on-dark-3);
@@ -526,7 +523,6 @@ html.dark {
   /* 提亮版粉底上压深墨，白字在 1.9:1 过不了。 */
   --danger-fg: #0b1425;
 
-  --viz-accent: #d9591f;
   --viz-mute: #767d79;
 
   /* 暗底提亮一档；对 #1d2220 的对比度 5.66–7.08:1。 */

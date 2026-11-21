@@ -136,22 +136,6 @@ export type DiagnosisSource = {
   authorizationDetailsRestricted?: boolean | null
 }
 
-export type UploadedPicture = {
-  /** 雪花 id，线上是字符串。 */
-  id?: string
-  url?: string
-  status?: string
-}
-
-export function uploadPicture(file: File) {
-  const form = new FormData()
-  form.append("file", file)
-  return request<UploadedPicture>("/diagnosis/upload", {
-    method: "POST",
-    body: form,
-  })
-}
-
 export function runDiagnosis(file: File) {
   const form = new FormData()
   form.append("file", file)

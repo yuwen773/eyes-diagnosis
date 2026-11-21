@@ -1752,12 +1752,6 @@ html.dark .admin-newsedit .w-md-editor {
   gap: 8px;
 }
 
-/* 旧样式里的工具栏外壳不再使用，收掉残留的底边距。 */
-.admin-newsedit__form > .admin-toolbar {
-  border-bottom: 0;
-  padding-block: 0;
-}
-
 /* ── 紫色重点卡：底部真实读数，填住卡片空间 ───────────────── */
 
 /* 卡片与同排图表等高时，内容按 space-between 均匀铺开：

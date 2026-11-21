@@ -1,6 +1,5 @@
 package com.csust.eyediagnosis.common;
 
-import com.csust.eyediagnosis.exception.ErrorCode;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -31,11 +30,5 @@ public class BaseResponse<T> implements Serializable {
         this.code = code;
         this.msg = msg;
         this.data = data;
-    }
-    public BaseResponse(int code, T data) {
-        this(code,data,"");
-    }
-    public BaseResponse(ErrorCode errorCode){
-        this(errorCode.getCode(), null, errorCode.getMessage());
     }
 }
