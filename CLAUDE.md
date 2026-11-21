@@ -66,7 +66,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
 | AdminStatsController | `/api/stats/*` | 管理端总览读数（Dashboard 与数据分析共用口径） |
-| DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query, cancel an in-flight run |
 | DiagnosisTaskController / PatientAuthorizationController / PatientExplanationController / PatientFollowUpController | `/api/diagnosis-tasks/*` | 患者影像任务、保存授权、分层解释与随访 |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
 | AgentImageUploadController | `/api/agent/image/*` | Authenticated agent image upload and deletion |
@@ -80,7 +80,7 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V30; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_agent_tool_audit`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V31; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_agent_tool_audit`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`, `t_diagnosis_run`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 

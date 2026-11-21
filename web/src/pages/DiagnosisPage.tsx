@@ -1,7 +1,7 @@
 import "@/styles/diagnosis.css"
 import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ApiError, runDiagnosis, type DiagnosisResult } from "@/lib/api"
+import { ApiError, cancelDiagnosis, runDiagnosis, type DiagnosisResult } from "@/lib/api"
 import {
   CLASSES,
   canonicalClassName,
@@ -11,6 +11,7 @@ import {
   type Risk,
 } from "@/lib/domain"
 import { useSession } from "@/lib/session"
+import { newId } from "@/lib/id"
 import { rememberPendingUpload, takePendingUpload } from "@/lib/pendingUpload"
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -95,6 +96,10 @@ export function DiagnosisPage() {
   // 本次判读的代号。每次真正发起判读就换号，回来时先核对号对不对得上：
   // 对不上说明这次结果已经被换图或重置取代了，直接丢掉，绝不落到新的影像上。
   const runId = useRef(0)
+  // 交给服务端的运行标识：只有它能被 `/diagnosis/cancel/{runId}` 真正取消。
+  const serverRunId = useRef<string | null>(null)
+  // 等待中的连接。取消时断开它——断开只终止「等」，停不停服务端由 runId 决定。
+  const abortRef = useRef<AbortController | null>(null)
 
   // 本地预览的 object URL 在换图/重置时手动释放；卸载时兜底清理一次。
   useEffect(() => {
@@ -141,6 +146,11 @@ export function DiagnosisPage() {
   async function diagnose() {
     if (!file) return
     const id = ++runId.current
+    // 每次判读换一个运行标识：取消要能指名道姓地停下「这一次」。
+    const run = newId()
+    serverRunId.current = run
+    const controller = new AbortController()
+    abortRef.current = controller
     setStage("running")
     setFault(null)
     setNeedsLogin(false)
@@ -149,13 +159,23 @@ export function DiagnosisPage() {
     startedAt.current = Date.now()
 
     try {
-      const value = await runDiagnosis(file)
+      const value = await runDiagnosis(file, { runId: run, signal: controller.signal })
       // 号对不上：这次判读期间用户换了图或点了重置，结果已经没有归属，丢掉。
       if (runId.current !== id) return
+      serverRunId.current = null
       setResult(value)
       setStage("done")
     } catch (cause) {
+      // 用户自己点了取消：代号已经换过，这里什么都不用说，页面已经是「已就绪」。
       if (runId.current !== id) return
+      serverRunId.current = null
+      // 服务端判定这次运行已被取消：按「按你的要求停下了」处理，不当失败提示。
+      if (cause instanceof ApiError && cause.code === 40013) {
+        setStage(file ? "ready" : "empty")
+        setFaultScope("run")
+        setFault(infoFault("这次判读已取消，没有留下记录；影像还在本机，可以重新开始"))
+        return
+      }
       setStage("error")
       setFaultScope("run")
       const loginRequired = cause instanceof ApiError && cause.code === 40100
@@ -168,6 +188,8 @@ export function DiagnosisPage() {
           action: { label: "重试", run: () => void diagnose() },
         }),
       )
+    } finally {
+      if (abortRef.current === controller) abortRef.current = null
     }
   }
 
@@ -189,14 +211,44 @@ export function DiagnosisPage() {
   /**
    * 取消本次判读：作废在途请求，但**保留影像**，回到「已就绪」。
    * 与 reset 的区别在于它只撤销这一次动作，不替用户清空已经选好的图。
+   *
+   * <p>取消要真的取消，不能只放弃等待：把运行标识发给服务端，由它决定这次判读
+   * 算不算数。回执说「已经结束」时如实告诉用户结果已归档——这时候再说「已取消」
+   * 就是骗人。
    */
   function cancelRun() {
+    const run = serverRunId.current
+    serverRunId.current = null
     runId.current += 1
+    abortRef.current?.abort()
+    abortRef.current = null
     setElapsed(0)
     setResult(null)
     setStage(file ? "ready" : "empty")
     setFault(infoFault("已取消这次判读；影像还在本机，可以重新开始"))
     setFaultScope("run")
+    if (!run) return
+
+    void cancelDiagnosis(run)
+      .then((receipt) => {
+        if (receipt.outcome === "CANCELLED") return
+        if (receipt.outcome === "ALREADY_FINISHED") {
+          setFault(
+            infoFault(
+              "这次判读在你点取消之前已经完成，结果已归档——可以在「判读记录」里查看",
+            ),
+          )
+          return
+        }
+        setFault(
+          infoFault("服务端没有这次判读的运行记录，结果可能已经生成；请到「判读记录」确认"),
+        )
+      })
+      .catch(() => {
+        setFault(
+          infoFault("取消请求没有送达服务端，这次判读可能仍在进行；请到「判读记录」确认"),
+        )
+      })
   }
 
   // 未登录时撞上 40100：路由层会送人去登录页，这里只把话说清楚。

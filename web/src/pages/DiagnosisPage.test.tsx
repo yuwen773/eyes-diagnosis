@@ -23,6 +23,7 @@ vi.mock("@/lib/session", () => ({
 vi.mock("@/lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api")>()),
   runDiagnosis: vi.fn(),
+  cancelDiagnosis: vi.fn(),
 }))
 
 vi.mock("@/lib/pendingUpload", () => ({
@@ -30,7 +31,7 @@ vi.mock("@/lib/pendingUpload", () => ({
   rememberPendingUpload: vi.fn(),
 }))
 
-import { runDiagnosis } from "@/lib/api"
+import { cancelDiagnosis, runDiagnosis } from "@/lib/api"
 
 function stubMatchMedia() {
   Object.defineProperty(window, "matchMedia", {
@@ -73,6 +74,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.mocked(runDiagnosis).mockReset()
+  vi.mocked(cancelDiagnosis).mockReset()
 })
 
 describe("DiagnosisPage 影像上限", () => {
@@ -104,6 +106,10 @@ describe("DiagnosisPage 判读可取消", () => {
   it("判读中给出「取消判读」，取消后影像保留、可以重新开始", async () => {
     // 悬而未决的请求：模拟「一直在排队」的判读。
     vi.mocked(runDiagnosis).mockReturnValue(new Promise(() => {}) as never)
+    vi.mocked(cancelDiagnosis).mockResolvedValue({
+      runId: "r",
+      outcome: "CANCELLED",
+    })
     renderPage()
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     const { fireEvent } = await import("@testing-library/react")
@@ -115,6 +121,36 @@ describe("DiagnosisPage 判读可取消", () => {
     // 取消不是清空：影像还在，回到「已就绪」，可以直接重新开始。
     expect(await screen.findByRole("button", { name: "开始判读" })).toBeTruthy()
     expect(screen.getByText(/已取消这次判读/)).toBeTruthy()
+  })
+
+  it("判读带上运行标识，取消时用同一个标识通知服务端", async () => {
+    vi.mocked(runDiagnosis).mockReturnValue(new Promise(() => {}) as never)
+    vi.mocked(cancelDiagnosis).mockResolvedValue({ runId: "r", outcome: "CANCELLED" })
+    renderPage()
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    const { fireEvent, waitFor } = await import("@testing-library/react")
+    fireEvent.change(input, { target: { files: [fileOfSize("ok.jpg", 1024 * 1024)] } })
+    fireEvent.click(await screen.findByRole("button", { name: "开始判读" }))
+
+    const [, options] = vi.mocked(runDiagnosis).mock.calls[0]
+    // 不带运行标识的判读服务端取消不了，取消就又会变成前端自己的谎言。
+    expect(options?.runId).toBeTruthy()
+
+    fireEvent.click(await screen.findByRole("button", { name: "取消判读" }))
+    await waitFor(() => expect(cancelDiagnosis).toHaveBeenCalledWith(options?.runId))
+  })
+
+  it("服务端说这次判读已经结束时，如实说结果已归档，而不是继续说「已取消」", async () => {
+    vi.mocked(runDiagnosis).mockReturnValue(new Promise(() => {}) as never)
+    vi.mocked(cancelDiagnosis).mockResolvedValue({ runId: "r", outcome: "ALREADY_FINISHED" })
+    renderPage()
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    const { fireEvent } = await import("@testing-library/react")
+    fireEvent.change(input, { target: { files: [fileOfSize("ok.jpg", 1024 * 1024)] } })
+    fireEvent.click(await screen.findByRole("button", { name: "开始判读" }))
+    fireEvent.click(await screen.findByRole("button", { name: "取消判读" }))
+
+    expect(await screen.findByText(/在你点取消之前已经完成/)).toBeTruthy()
   })
 })
 
