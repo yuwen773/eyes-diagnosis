@@ -127,7 +127,13 @@
 - ~~用户端 scene 变体仍存在旧仪器回退~~：**已修**——`ProductHeader` 的 `scene` 只标记
   语境与密度，不再切换旧仪器皮肤（`data-scene` 已无回退样式）；
 - ~~认证页仍是橙色 LaserFlow + 暗房叙事~~：**已修 2026-11-13（U6）**，AuthShell
-  改为蓝青光学 CSS 背景，LaserFlow 死组件已删除；不要再引入 GPU 渲染器；
+  改为蓝青光学 CSS 背景，LaserFlow 死组件已删除；
+- 认证页背景（**2026-11-21 修订**，PR #137）：允许引入**一个** GPU 渲染器（当前为
+  React Bits · Threads，裸 WebGL2，许可见 `web/src/components/brand/THIRD-PARTY-NOTICES.md`）。
+  条件是**四条同时成立**：全页只有一个、画布 `aria-hidden` 纯装饰、WebGL2 不可用 /
+  着色器编译失败 / `webglcontextlost` 时退回纯 CSS 光学资产、离屏或标签页隐藏停帧且
+  `prefers-reduced-motion` 期间**不续帧也不唤醒**（指针滑过也不行）。其余页面仍不允许
+  新增 GPU 渲染器；同一页不得出现第二个 GPU 背景循环（根 `DESIGN.md` → Don't）；
 - ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
 - ~~`--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` 只在 PR #52 里~~：
