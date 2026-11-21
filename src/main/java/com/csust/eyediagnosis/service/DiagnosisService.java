@@ -56,12 +56,22 @@ public interface DiagnosisService extends IService<Diagnosis> {
     DiagnosisManageVO getDiagnosisManageVO(Diagnosis Diagnosis);
 
     /**
-     * 根据上传的图片进行诊断
+     * 根据上传的图片进行诊断。
+     *
      * @param file 上传的图片文件
      * @param loginUser 登录用户
      * @return vo
      */
     DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser);
+
+    /**
+     * 带运行标识的判读：`runId` 让这次运行可以被 {@code /diagnosis/cancel/{runId}} 取消。
+     *
+     * <p>`runId` 为 null 时行为与两参版本完全一致（旧客户端 / 旧调用方）。
+     * 非 null 时，落库与「占用运行」在同一个事务里完成：取消赢了就一行都不写，
+     * 已上传的原图同时删除。
+     */
+    DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser, String runId);
 
     /**
      * 加载当前用户有权访问的诊断详情（普通用户仅限本人；管理员可访问全部）。

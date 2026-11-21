@@ -30,7 +30,14 @@ public enum ErrorCode {
 
     DIAGNOSIS_REJECTED_QUALITY(40010,"图片质量不合格"),
     DIAGNOSIS_REJECTED_OOD(40011,"图像分布外"),
-    DIAGNOSIS_NEEDS_REVIEW(40012,"诊断结果需人工复核")
+    DIAGNOSIS_NEEDS_REVIEW(40012,"诊断结果需人工复核"),
+    /**
+     * 用户在判读进行中取消了本次运行。
+     *
+     * 单独一个码而不是复用一个笼统的错误：前端要能把它识别成「按你的要求停下了」，
+     * 既不当失败提示，也不重试。服务端保证此时没有落库、没有留下原图。
+     */
+    DIAGNOSIS_CANCELLED(40013,"判读已取消")
     ;
     /**
      * 状态码

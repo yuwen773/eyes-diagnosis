@@ -136,13 +136,40 @@ export type DiagnosisSource = {
   authorizationDetailsRestricted?: boolean | null
 }
 
-export function runDiagnosis(file: File) {
+export type RunDiagnosisOptions = {
+  /**
+   * 这次判读的运行标识。带上它，服务端才认得出「用户点取消的是哪一次」，
+   * 才能真正停下并且不落库；不带就退回旧行为——取消只是放弃等待，记录照样写。
+   */
+  runId?: string
+  /** 断开等待用的 signal。它只终止「等」，不改变服务端的结论。 */
+  signal?: AbortSignal
+}
+
+export function runDiagnosis(file: File, options: RunDiagnosisOptions = {}) {
   const form = new FormData()
   form.append("file", file)
+  if (options.runId) form.append("runId", options.runId)
   return request<DiagnosisResult>("/diagnosis/diagnosis", {
     method: "POST",
     body: form,
+    signal: options.signal,
   })
+}
+
+/** 取消回执：取消是可能「来不及」的动作，结果以服务端的实际状态为准。 */
+export type DiagnosisCancelOutcome = "CANCELLED" | "ALREADY_FINISHED" | "NOT_FOUND"
+
+export type DiagnosisCancelReceipt = {
+  runId: string
+  outcome: DiagnosisCancelOutcome
+}
+
+export function cancelDiagnosis(runId: string) {
+  return request<DiagnosisCancelReceipt>(
+    `/diagnosis/cancel/${encodeURIComponent(runId)}`,
+    { method: "POST" },
+  )
 }
 
 /* ── 新闻资讯 ───────────────────────────────────────────── */

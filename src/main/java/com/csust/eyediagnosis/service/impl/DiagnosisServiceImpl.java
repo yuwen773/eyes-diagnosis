@@ -38,13 +38,18 @@ import com.csust.eyediagnosis.service.ClinicalReviewQualification;
 import com.csust.eyediagnosis.utils.DateRanges;
 import com.csust.eyediagnosis.utils.JsonUtils;
 import com.csust.eyediagnosis.service.DiagnosisService;
+import com.csust.eyediagnosis.service.DiagnosisRunService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import javax.sql.DataSource;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -82,6 +87,21 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     private InferenceCacheMapper inferenceCacheMapper;
     @Resource
     private DiagnosisAuditMapper diagnosisAuditMapper;
+    @Resource
+    private DiagnosisRunService diagnosisRunService;
+    @Resource
+    private DataSource dataSource;
+
+    /**
+     * 「占用运行 + 落库」必须同事务：取消与落库是两条并发的写路径，
+     * 只有把条件更新和插入放在一个事务里，取消赢了才能连插入一起回滚。
+     */
+    private TransactionTemplate transactions;
+
+    @PostConstruct
+    void initTransactions() {
+        this.transactions = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+    }
 
     @Value("${eye-diagnosis.inference.model-version:efficientnet-b4@1.0.0}")
     private String modelVersion;
@@ -244,7 +264,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
      */
     @Override
     public DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser) {
+        return doDiagnosis(file, loginUser, null);
+    }
+
+    @Override
+    public DiagnosisResultVO doDiagnosis(MultipartFile file, User loginUser, String runId) {
         try {
+            // 先登记这次运行：同一 runId 重复进来（网络重试 / 连点）在推理开始前就被挡掉。
+            if (runId != null) {
+                diagnosisRunService.begin(runId, loginUser.getId());
+            }
             byte[] imageBytes = file.getBytes();
             String imageFormat = file.getContentType();
 
@@ -278,6 +307,11 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 } else {
                     log.warn("Skip inference cache because deployment and response fingerprints do not match");
                 }
+            }
+
+            // 推理期间用户可能已经点了取消：此时还没上传，直接停下，省掉一次上传。
+            if (runId != null && diagnosisRunService.isCancelled(runId)) {
+                throw new BusinessException(ErrorCode.DIAGNOSIS_CANCELLED, CANCELLED_MESSAGE);
             }
 
             // 3. 上传对象存储。
@@ -322,7 +356,11 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
                 }
                 // 医疗可靠性字段与 VO 来自同一份证据快照，不再各写一遍
                 evidence.applyTo(diagnosis);
-                saved = this.save(diagnosis);
+                saved = commitDiagnosis(diagnosis, runId);
+            } catch (DiagnosisCancelledException cancelled) {
+                // 取消赢了：事务已回滚，库里没有这一次判读；原图也没有任何记录引用它。
+                fileManager.deleteUploadedPictureQuietly(imageKey);
+                throw new BusinessException(ErrorCode.DIAGNOSIS_CANCELLED, CANCELLED_MESSAGE);
             } catch (RuntimeException e) {
                 // 对象已写入、记录可能没落库。**不能一律删对象**：
                 // 无事务时 `save` 走自动提交，可能已经提交成功、只是驱动在返回
@@ -354,6 +392,40 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("诊断失败: " + e.getMessage(), e);
+        }
+    }
+
+    private static final String CANCELLED_MESSAGE = "这次判读已取消，没有留下记录";
+
+    /**
+     * 落库，并在 {@code runId} 存在时与「占用这次运行」放进同一个事务。
+     *
+     * <p>顺序是先占用再插入：条件更新 PENDING→DONE 会拿到行锁，并发的取消要么
+     * 抢在前面（这里更新 0 行，抛 {@code DiagnosisCancelledException} 让整个事务回滚），
+     * 要么排在后面（取消看到 DONE，回「已完成」，不静默删医疗记录）。
+     * 无论哪种，都不会出现「用户以为取消了、记录却在库里」。
+     */
+    private boolean commitDiagnosis(Diagnosis diagnosis, String runId) {
+        if (runId == null) {
+            return this.save(diagnosis);
+        }
+        Boolean saved = transactions.execute(status -> {
+            if (!diagnosisRunService.claim(runId)) {
+                throw new DiagnosisCancelledException();
+            }
+            if (!this.save(diagnosis)) {
+                return Boolean.FALSE;
+            }
+            diagnosisRunService.attachDiagnosis(runId, diagnosis.getId());
+            return Boolean.TRUE;
+        });
+        return Boolean.TRUE.equals(saved);
+    }
+
+    /** 只用于在事务里中断落库；对外一律翻译成 DIAGNOSIS_CANCELLED。 */
+    private static final class DiagnosisCancelledException extends RuntimeException {
+        DiagnosisCancelledException() {
+            super("diagnosis run cancelled", null, false, false);
         }
     }
 

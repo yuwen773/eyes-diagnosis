@@ -17,9 +17,11 @@ import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
 import com.csust.eyediagnosis.model.entity.Diagnosis;
 import com.csust.eyediagnosis.model.entity.User;
+import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisCancelVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisManageVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisResultVO;
 import com.csust.eyediagnosis.model.vo.diagnosis.DiagnosisSourceProjection;
+import com.csust.eyediagnosis.service.DiagnosisRunService;
 import com.csust.eyediagnosis.service.DiagnosisService;
 import com.csust.eyediagnosis.service.DiagnosisSourceProjectionService;
 import com.csust.eyediagnosis.service.UserService;
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit;
 public class DiagnosisController {
     @Resource
     private DiagnosisService diagnosisService;
+    @Resource
+    private DiagnosisRunService diagnosisRunService;
     @Resource
     private UserService userService;
     @Resource
@@ -181,18 +185,56 @@ public class DiagnosisController {
         return ResultUtils.success(diagnosisService.deleteDiagnoses(batchRequest.getIds()));
     }
 
+    /**
+     * 发起一次判读。
+     *
+     * <p>{@code runId} 是客户端为这次判读生成的标识（可选，旧客户端不传）。带上它之后，
+     * 这次运行才可以被 {@code POST /diagnosis/cancel/{runId}} 取消——取消成功时服务端
+     * 不落库、不留原图；不带则行为与以往完全一致。
+     */
     @PostMapping("/diagnosis")
     @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
     public BaseResponse<DiagnosisResultVO> doDiagnosis(
             @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "runId", required = false) String runId,
             HttpServletRequest request) {
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请上传诊断图片");
         }
         User loginUser = userService.getLoginUser(request);
-        DiagnosisResultVO diagnosisResultVO = diagnosisService.doDiagnosis(file, loginUser);
+        DiagnosisResultVO diagnosisResultVO = diagnosisService.doDiagnosis(file, loginUser, normalizeRunId(runId));
         return ResultUtils.success(diagnosisResultVO);
     }
+
+    /**
+     * 取消一次仍在进行中的判读。
+     *
+     * <p>只有本人能取消；别人的 runId 一律按「没有这次运行」回答，不泄露存在性。
+     * 结果已经生成时不会静默删除医疗记录，而是回 {@code ALREADY_FINISHED} 让前端如实告知。
+     */
+    @PostMapping("/cancel/{runId}")
+    @AuthCheck(mustRole = AuthConstant.DEFAULT_ROLE)
+    public BaseResponse<DiagnosisCancelVO> cancelDiagnosis(@PathVariable("runId") String runId,
+                                                           HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String normalized = normalizeRunId(runId);
+        DiagnosisRunService.CancelOutcome outcome = diagnosisRunService.cancel(normalized, loginUser.getId());
+        return ResultUtils.success(DiagnosisCancelVO.of(normalized, outcome.name()));
+    }
+
+    /** 空串按「没传」处理；超长直接拒绝（列宽 64）。 */
+    private static String normalizeRunId(String runId) {
+        if (runId == null) {
+            return null;
+        }
+        String trimmed = runId.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        ThrowUtils.throwIf(trimmed.length() > 64, ErrorCode.PARAMS_ERROR, "runId 过长");
+        return trimmed;
+    }
+
     /**
      * 获取诊断记录
      * @param id id
