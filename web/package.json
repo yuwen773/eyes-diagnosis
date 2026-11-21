@@ -18,6 +18,7 @@
     "check:e2e-fixme": "node scripts/e2e/check-fixme.mjs",
     "check:gate-tests": "node --test scripts/gate-checks.node.mjs scripts/playwright-config.node.mjs",
     "check:report": "node scripts/evidence/check-report.mjs",
+    "check:css-boundary": "node scripts/audit/css-boundary-audit.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
