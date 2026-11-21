@@ -21,6 +21,7 @@
 | `design/iris2-r2-5-release-integration.md` | 查 R2/R2.5 的 13 步合并序列与三条绕行规则（跳过 #53、关闭 #60、逐级 retarget）——**已执行完毕的归档记录**，文中的 SHA 是当时快照 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
+| `testing/verification-levels.md` | 决定这次改动该跑 L0/L1/L2/L3 的哪一级，以及各模块至少跑什么（`scripts/verify-fast.sh`） |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |
 | `security-governance-plan-2026-11-18.md` | 判断 MD5→BCrypt 存量迁移的退出条件、配置中心三条上线门禁、CSRF 该按什么载体判定——写安全相关结论前先读，避免把「缺注解」直接当漏洞 |
 | `cleanup-ledger-2026-11-18.md` | 接手「考古报告逐项清理」前先读：哪些已交付成 PR、报告哪几条结论被实测修正、哪些还等 owner 拍板 |

@@ -30,6 +30,11 @@ Base package: `com.csust.eyediagnosis`
 CI 里是根 `verify.yml` 的 `web` job），Vue 已弃用线看 `frontend/package.json`，算法服务看
 `algorithm/requirements.txt` 与 `run_mcp_server.py` / `grpc_server.py`；`docker-compose.yml` 起 ChromaDB :8000。
 
+**日常改动走分级验证 `scripts/verify-fast.sh`**（L0 / L1 / L2 / L3，**默认 L1**）：
+按改动范围点名要跑的用例，改一两个文件不必启动全量。涉及数据库状态、迁移、权限、
+RAG 证据、Spring 装配时升到 L2（`--db`）；准备合并时才用 L3。规则与逐模块影响映射见
+`docs/testing/verification-levels.md`。
+
 **后端全量验证走 `scripts/verify.sh`**：它自带一次性 MySQL 8 + Redis、注入 `SPRING_PROFILES_ACTIVE=ci`、跑完整 `mvn test`（含 `contextLoads` 与两个 MySQL 集成门禁），结束自动清理容器。JDK 21 由脚本设为 `C:\Users\yuwen\.jdks\corretto-21.0.7`；手工跑 Maven 时用 `JAVA_HOME=<该路径> mvn ...`。
 
 Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local.md`（不入库，工作树不自动继承）；Codex 侧同一份在 `~/.codex/AGENTS.md`。
