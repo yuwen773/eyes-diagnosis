@@ -269,6 +269,7 @@ public class ChatHistoryService {
     }
 
     /** 切换某一轮显示的版本；版本必须真实存在于该轮，不接受任意字符串。 */
+    @Transactional
     public void selectVariant(String sessionId, Long userId, long userMessageId, String variantId) {
         assertSessionOwner(sessionId, userId);
         List<String> variants = variantsByTurn(sessionId, List.of(userMessageId)).get(userMessageId);
