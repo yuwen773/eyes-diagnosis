@@ -664,7 +664,7 @@ export function LandingPage() {
           <div className="reveal">
             <h2 className="pitch__title">先读一张片子试试</h2>
             <p className="lead" style={{ marginTop: 16 }}>
-              不需要说明书——上传、过质量门、读记录，四步之内就能看见判断依据。
+              不需要说明书——上传、过质量门、读记录，三步之内就能看见判断依据。
             </p>
           </div>
 
