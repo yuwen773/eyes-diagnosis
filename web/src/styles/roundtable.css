@@ -312,7 +312,8 @@
 
 .roundtable-dialog {
   position: fixed;
-  z-index: 102;
+  /* 并入全站刻度：遮罩 70、弹层 80（与 Agent 弹层、管理端 modal 同层）。 */
+  z-index: 80;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -326,7 +327,7 @@
   background: var(--roundtable-panel);
   box-shadow: var(--brand-shadow);
 }
-.roundtable-backdrop { position: fixed; inset: 0; z-index: 101; background: color-mix(in srgb, var(--brand-surface-deep) 55%, transparent); }
+.roundtable-backdrop { position: fixed; inset: 0; z-index: 70; background: color-mix(in srgb, var(--brand-surface-deep) 55%, transparent); }
 .roundtable-dialog__head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .roundtable-dialog__head h2 { font: 700 19px var(--font-sans); margin: 0; }
 .roundtable-dialog__head p, .roundtable-dialog > p { color: var(--roundtable-muted); font-size: 13px; margin: 3px 0; }
@@ -380,12 +381,12 @@
   .roundtable-member__copy { gap: 1px; }
   .roundtable-member__copy small, .roundtable-member__duty, .collab-role__status svg { display: none; }
   .roundtable-member__copy strong { font-size: 12px; }
-  .collab-role__status { justify-content: center; font-size: 10px; }
+  .collab-role__status { justify-content: center; font-size: 11px; }
   .roundtable-panel__head { padding: 9px 10px; min-height: 45px; }
   .roundtable-panel__head h2 { font-size: 14px; }
   .collab-timeline__scroll { min-height: 210px; max-height: max(220px, calc(100dvh - 515px)); padding: 10px; }
   .roundtable-event__head { gap: 5px; }
-  .roundtable-event__head time { font-size: 10px; }
+  .roundtable-event__head time { font-size: 11px; }
   .roundtable-event__card { margin-inline-start: 30px; padding: 8px; }
   .roundtable-drawer { border-radius: 0; }
   .roundtable-drawer .roundtable-inspector__content { padding-inline: 4px; }

@@ -45,6 +45,11 @@ export type RequestOptions = {
   silentAuth?: boolean
 }
 
+/** 单次请求的硬超时：后端无响应时骨架屏不会永远转。 */
+export const REQUEST_TIMEOUT_MS = 15_000
+
+const TIMEOUT_MESSAGE = "请求超时，请检查网络后重试"
+
 export async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -53,10 +58,22 @@ export async function request<T>(
   const isForm = init.body instanceof FormData
   let response: Response
 
+  // 自己持有一个可超时的 controller，并把调用方的取消转发过来：
+  // 调用方 signal（切账号 / 组件卸载 / TanStack 取消）仍是「取消」，
+  // 我们自己触发的 abort 才是「超时」——两者在 catch 里分开处理。
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const forwardAbort = () => controller.abort(init.signal?.reason)
+  if (init.signal) {
+    if (init.signal.aborted) forwardAbort()
+    else init.signal.addEventListener("abort", forwardAbort, { once: true })
+  }
+
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       credentials: "include",
       ...init,
+      signal: controller.signal,
       headers: {
         Accept: "application/json",
         ...(isForm ? {} : { "Content-Type": "application/json" }),
@@ -67,7 +84,12 @@ export async function request<T>(
     // 调用方主动取消（切账号 / 组件卸载）不是网络故障：原样抛出 AbortError，
     // TanStack Query 才能把它识别成取消而不是「网络不可用」。
     if (init.signal?.aborted) throw error
+    // 自己 abort 的才是超时；其余都按网络不可用报。
+    if (controller.signal.aborted) throw new ApiError(-1, TIMEOUT_MESSAGE)
     throw new ApiError(-1, "网络不可用，请检查连接后重试")
+  } finally {
+    clearTimeout(timer)
+    init.signal?.removeEventListener("abort", forwardAbort)
   }
 
   if (!response.ok) {

@@ -127,7 +127,7 @@ export function AdminLayout(): ReactElement {
           </div>
         </header>
 
-        <main className="admin-main">
+        <main id="main-content" tabIndex={-1} className="admin-main">
           <Outlet />
         </main>
       </div>

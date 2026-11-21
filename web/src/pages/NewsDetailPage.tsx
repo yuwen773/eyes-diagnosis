@@ -54,7 +54,7 @@ export function NewsDetailPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="editorial" />
 
-      <main className="wrap news-detail">
+      <main id="main-content" tabIndex={-1} className="wrap news-detail">
         <Link className="news-detail__back" to="/news" data-cursor>
           <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" /> 资讯列表
         </Link>

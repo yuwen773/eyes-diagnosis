@@ -176,7 +176,7 @@ export function NotFoundPage(): ReactElement {
   return (
     <div className="is-field is-brand-page">
       <ProductHeader scene="brand" />
-      <main className="iris-notfound iris-state-enter">
+      <main id="main-content" tabIndex={-1} className="iris-notfound iris-state-enter">
         <p className="iris-notfound__code" aria-hidden="true">
           404
         </p>

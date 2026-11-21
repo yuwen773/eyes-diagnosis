@@ -119,6 +119,28 @@ a {
   border: 0;
 }
 
+/* 跳转链接：键盘用户的第一站。平时收在视口外，聚焦才出现——
+   顶栏每页有五个导航项 + 主题 + 账号 + CTA，不跳过就得 Tab 六七次才进正文。 */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 80;
+  padding: 10px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--field);
+  color: var(--fg);
+  font-size: 13px;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--fast);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 /* ==========================================================================
    版式
    ========================================================================== */
@@ -451,7 +473,7 @@ a.acct__trigger--anon:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: var(--fg-3);
@@ -553,7 +575,7 @@ a.acct__trigger--anon:hover {
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--brand-muted);
   overflow: hidden;
@@ -571,7 +593,7 @@ a.acct__trigger--anon:hover {
   border: 1px solid color-mix(in srgb, var(--brand-primary) 34%, transparent);
   border-radius: var(--radius-pill);
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--brand-primary);
 }
@@ -728,10 +750,18 @@ a.acct__trigger--anon:hover {
 }
 
 .drawer__close {
+  /* 抽屉唯一的关闭入口（Esc 之外）：点击目标必须 ≥44px。
+     头部用负外边距吸收按钮的留白，视觉高度不变。 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px -12px -12px 0;
   border: 0;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--fg-2);
-  font-size: 14px;
   line-height: 1;
   cursor: pointer;
 }
@@ -3433,7 +3463,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   }
 
   .proc__state {
-    font-size: 10.5px;
+    font-size: 11px;
   }
 }
 

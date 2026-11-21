@@ -196,7 +196,7 @@ export function DiagnosisPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap dx">
+      <main id="main-content" tabIndex={-1} className="wrap dx">
         <header className="dx__head">
           <p className="dx__kicker">影像判读</p>
           <h1 className="dx__title">上传一张彩色眼底照片</h1>

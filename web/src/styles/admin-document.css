@@ -251,14 +251,14 @@
 .admin-doc__pane-title {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.14em;
   color: var(--admin-text-muted);
 }
 
 .admin-doc__pane-note {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--admin-text-faint);
 }
 
@@ -283,7 +283,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 14px;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--admin-text-faint);
 }
 
@@ -318,7 +318,7 @@
 
 .admin-doc__reader-note {
   margin: 0;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.7;
   color: var(--admin-text-faint);
 }
@@ -533,7 +533,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 12px;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--admin-text-faint);
 }
@@ -611,7 +611,7 @@
   border: 0;
   background: none;
   color: var(--admin-text-muted);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   text-align: left;
   cursor: pointer;
@@ -643,7 +643,7 @@
   border-radius: var(--radius-sm);
   background: none;
   color: var(--admin-text-faint);
-  font-size: 10.5px;
+  font-size: 11px;
   cursor: pointer;
   transition:
     color var(--fast),

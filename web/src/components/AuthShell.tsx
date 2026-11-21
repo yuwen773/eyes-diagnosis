@@ -79,7 +79,7 @@ export function AuthShell({
           </ul>
         </aside>
 
-        <main className="auth-auth__panel">
+        <main id="main-content" tabIndex={-1} className="auth-auth__panel">
           <div className="auth-auth__stack">
             <div className="auth-auth__glass">
               <p className="overline">{kicker}</p>

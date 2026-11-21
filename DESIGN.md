@@ -369,7 +369,7 @@ Iris 的外壳是光：钴蓝、银蓝与冰青的光学玻璃，让公开层看
 按钮有三套真实形态，按产品线与场景分开，不互相冒充。
 
 - **Shape:** Clinical 直角（0），高 52px；Management 8px 圆角，高 40px；Brand 药丸（999px），首屏内边距 13×22px、顶栏 0 18px。
-- **Primary（Clinical）:** 墨色实底、上下文底色（`--bg`）文字，消费 `--fg` / `--bg`；hover 用 `color-mix` 压深，active 下移 1px。
+- **Primary（Clinical）:** 分两层看。组件基类 `.btn` 是墨色实底 + 上下文底色（`--bg`）文字，消费 `--fg` / `--bg`；Clinical 路由自 U3 起统一带 `.is-brand-page`，产品外壳内的 `.btn` 因此渲染为钴蓝实底 + `--brand-primary-fg` 文字（`.dx .btn--ghost` 在判读页恢复透明描边，保住主次层级）。几何（直角、52px）、hover 的 `color-mix` 压深与 active 下移 1px 不因换色改变；品牌色只进操作层，风险仍只由 `--risk-*` 承担。
 - **Primary（Brand）:** 钴蓝实底、白字。首屏 CTA 用 Manrope 600 14.5px + `0 14px 28px` 钴蓝投影；顶栏 CTA 用 Manrope 700 13.5px + `0 10px 22px` 投影；品牌页收尾的 `.btn` 继承 Clinical 的 52px 直角几何，只换钴蓝底。
 - **Primary（Management）:** 管理紫实底、白字，`--font-sans` 13px/500，高 40px、8px 圆角；hover 用 `--admin-primary-strong`。
 - **Ghost:** 透明底 + `--line-strong` / `--admin-line-strong` 描边；hover 提亮描边，不填色。

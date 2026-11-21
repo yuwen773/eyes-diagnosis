@@ -97,7 +97,7 @@
 .brand-kicker {
   display: block;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -361,7 +361,7 @@ html.dark .landing-hero__btn--primary {
 }
 
 .landing-hero__steps .num {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--brand-primary);
 }
@@ -377,7 +377,7 @@ html.dark .landing-hero__btn--primary {
 .landing-hero__card-note {
   display: block;
   margin-top: 12px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--brand-muted);
@@ -414,8 +414,7 @@ html.dark .landing-hero__btn--primary {
   position: absolute;
   top: 14px;
   right: 18px;
-  font-size: 26px;
-  font-weight: 300;
+  display: inline-flex;
   color: var(--brand-primary);
   opacity: 0.85;
 }
@@ -887,7 +886,7 @@ html.dark .brand-foot {
 
 .brand-foot__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--foot-muted);
@@ -942,7 +941,7 @@ html.dark .brand-foot {
   display: block;
   margin-bottom: 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   color: var(--foot-text);
 }
@@ -967,7 +966,7 @@ html.dark .brand-foot {
 }
 
 .brand-foot__copy {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--foot-muted);
 }
@@ -1211,7 +1210,7 @@ html.dark .is-brand-page .btn:hover {
 .landing-step__readout {
   grid-column: 2;
   margin-top: 10px;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--brand-primary);
 }
@@ -1264,7 +1263,7 @@ html.dark .is-brand-page .btn:hover {
 }
 
 .landing-record__peek-note {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--brand-muted);
 }
@@ -1287,7 +1286,7 @@ html.dark .is-brand-page .btn:hover {
 }
 
 .landing-record__stamp {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--brand-muted);
 }
@@ -1331,7 +1330,7 @@ html.dark .is-brand-page .btn:hover {
 }
 
 .landing-record__foot span {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.12em;
 }
 
@@ -1448,7 +1447,7 @@ html.dark .is-brand-page .btn:hover {
 }
 
 .landing-agent__code {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--brand-primary);
 }

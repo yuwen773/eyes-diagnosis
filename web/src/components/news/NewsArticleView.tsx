@@ -178,7 +178,8 @@ export function NewsArticleView(props: NewsArticleViewProps): ReactNode {
           <img
             className="news-article__img"
             src={article.coverImage}
-            alt=""
+            // 封面是文章内容的一部分（不是纯装饰）：用标题作可访问名称。
+            alt={article.title ? `封面：${article.title}` : "文章封面"}
             // 固有宽高只用于加载前预留位置（CSS 的 width:100% / max-height 仍决定
             // 实际尺寸），否则图片解码前高度为 0，正文会被顶下来一次。
             width={1600}

@@ -169,7 +169,7 @@ export function CollaborationPage() {
   return (
     <div className="is-field is-brand-page collaboration-page">
       <ProductHeader scene="intelligence" />
-      <main className="collab-page-main">
+      <main id="main-content" tabIndex={-1} className="collab-page-main">
         {status === "loading" ? (
           <p className="collab-gate" role="status">
             正在核对登录状态…

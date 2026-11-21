@@ -24,11 +24,13 @@
 
 ## 规则（写代码时必须遵守）
 
-1. **先定场景再写样式**：Clinical 用直角 + 墨色主 CTA + 信号橙语义（包装在品牌壳内，
+1. **先定场景再写样式**：Clinical 用直角 + 信号橙语义（主 CTA 见下条口径，
    RecordSheet 纸面不动）；Management 用 8–12px 圆角 + **管理紫 `--admin-*` 主操作**
    + 分类数据色；Brand 用 24–38px 圆角 + 玻璃材质 + 钴蓝；
    Intelligence 用 12px 圆角 + 运行态蓝/青。**组件规则见根 `DESIGN.md` → Components。**
-   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫、Clinical 墨色。**
+   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫；Clinical 分两层——
+   `.btn` 基类是墨色，但 Clinical 路由统一带 `.is-brand-page`，实际渲染为钴蓝
+   （基类归组件，外壳归场景，两层都不算错；见根 `DESIGN.md` → Components → Buttons）。**
 2. **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
    `--risk-*`（医学严重度）。信号橙**不是主 CTA 色**、不大面积填充；
    承载文字时用 `--signal-text`（纸面 `#bd4515`，暗底 `#ef7a45`）——`--signal`
