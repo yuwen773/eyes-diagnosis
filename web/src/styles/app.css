@@ -1026,7 +1026,8 @@ a.acct__trigger--anon:hover {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
-  opacity: 0.5;
+  /* 0.5 压在钴蓝上实测 2.79:1；抬到 0.85 才够 AA。 */
+  opacity: 0.85;
   padding-left: 12px;
   border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
@@ -1178,6 +1179,40 @@ html:not(.dark) .night > .night__grain {
   border-radius: 0;
 }
 
+/* 收尾的第二条路：没有眼底照片的人先看一份示例记录（打开 §04 同一个弹层）。 */
+.pitch__sample {
+  padding: 0 0 3px;
+  border: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pitch__sample:hover {
+  border-bottom-color: var(--signal);
+  color: var(--signal-text);
+}
+
+/* 上传前提：普通手机照片会被质量门拒识，写在按钮旁边而不是藏进帮助页。
+   两行分开写：合成一行时等宽字在窄卡片里会把「JPG / PNG」折成一个孤零零的 PNG。 */
+.pitch__hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  color: var(--fg-2);
+}
+
+.pitch__hint span {
+  display: block;
+}
+
 /* 浅主题下的收尾玻璃：同一块磨砂，开灯版（参数与 .auth--light 里那块一致）。 */
 html:not(.dark) .pitch__glass.auth__glass {
   border-color: rgba(20, 23, 26, 0.14);
@@ -1286,6 +1321,21 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 
 .index__row:hover .index__code,
 .index__row:hover .index__rate {
+  color: var(--signal-text);
+}
+
+/* 示例记录的最大类：按概率排序后的第一行，先把答案摆出来。
+   衬线标题按 Serif-400 规则不合成加粗，强调靠颜色与发丝线。 */
+.index__row--top {
+  border-top-color: var(--line-strong);
+}
+
+.index__row--top .index__name {
+  color: var(--fg);
+}
+
+.index__row--top .index__code,
+.index__row--top .index__rate {
   color: var(--signal-text);
 }
 
@@ -1602,7 +1652,8 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0 24px;
-  align-items: center;
+  /* 输入框按顶部对齐：卡片组比它高，居中会在左栏上方留下近 300px 的空洞。 */
+  align-items: start;
   margin-top: clamp(40px, 5vw, 64px);
 }
 
@@ -1848,7 +1899,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--swap-ink);
-  opacity: 0.4;
+  opacity: 0.68;
 }
 
 .screen__body {
@@ -1884,7 +1935,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   margin: 0;
   font-size: 14px;
   color: var(--swap-ink);
-  opacity: 0.55;
+  opacity: 0.78;
 }
 
 .screen__hints {
@@ -1903,7 +1954,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   border-radius: 999px;
   font-size: 13px;
   color: var(--swap-ink);
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 .screen__foot {
@@ -1912,7 +1963,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--swap-ink);
-  opacity: 0.42;
+  opacity: 0.68;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1933,7 +1984,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--swap-ink);
-  opacity: 0.4;
+  opacity: 0.68;
 }
 
 .msg__text {
@@ -1946,7 +1997,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .msg__attach {
   font-size: 12.5px;
   color: var(--swap-ink);
-  opacity: 0.55;
+  opacity: 0.78;
 }
 
 .msg__note {
@@ -1954,7 +2005,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   font-size: 13px;
   line-height: 1.6;
   color: var(--swap-ink);
-  opacity: 0.55;
+  opacity: 0.78;
 }
 
 .chip {
@@ -1964,7 +2015,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   border-radius: 999px;
   font-size: 11.5px;
   color: var(--swap-ink);
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 .msg__call {
@@ -1983,7 +2034,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .msg__args {
   font-size: 12.5px;
   color: var(--swap-ink);
-  opacity: 0.55;
+  opacity: 0.78;
 }
 
 .kv {
@@ -2015,7 +2066,7 @@ html:not(.dark) .pitch__glass.auth__glass::before {
 .kv__row dt {
   letter-spacing: 0.06em;
   color: var(--swap-ink);
-  opacity: 0.45;
+  opacity: 0.68;
 }
 
 .kv__row dd {
@@ -2062,7 +2113,28 @@ html:not(.dark) .pitch__glass.auth__glass::before {
   font-size: 12px;
   text-align: right;
   color: var(--swap-ink);
-  opacity: 0.5;
+  opacity: 0.72;
+}
+
+/* 暗色演示卡：同一档弱化色压在深底上只有 1.8–3.9:1，暗主题再抬一档。 */
+html.dark .screen__meta,
+html.dark .msg__role {
+  opacity: 0.82;
+}
+
+html.dark .screen__sub,
+html.dark .msg__note,
+html.dark .msg__attach,
+html.dark .msg__args,
+html.dark .screen__hint,
+html.dark .chip {
+  opacity: 0.88;
+}
+
+html.dark .screen__foot,
+html.dark .kv__row dt,
+html.dark .hits__score {
+  opacity: 0.8;
 }
 
 .quote {

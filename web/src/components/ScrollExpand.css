@@ -38,8 +38,9 @@
   --se-frame-bg: var(--field);
   --se-ink: #14171a;
   --se-ink-2: rgba(20, 23, 26, 0.72);
-  --se-ink-3: rgba(20, 23, 26, 0.52);
-  --se-kicker: rgba(20, 23, 26, 0.55);
+  /* 说明与免责压在亮底片上：0.52 / 0.55 实测 3.5–3.9:1，过不了 AA。 */
+  --se-ink-3: rgba(20, 23, 26, 0.68);
+  --se-kicker: rgba(20, 23, 26, 0.7);
   --se-scrim:
     radial-gradient(
       120% 95% at 0% 100%,
@@ -98,6 +99,16 @@
   transform-origin: center;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+/* 窄屏竖屏：16:9 画面按 contain 放，上下各空出一大块，整块光幕缩成一条细带。
+   这里改成铺满画框（缩放倍数在组件里按 cover 算），代价是裁掉左右余量。
+   水平焦点取 76%：瞳孔在源图 61%–72% 之间（实测），居中对齐会把虹膜主体推出右边缘。 */
+@media (max-width: 719px) {
+  .scroll-expand__media {
+    object-fit: cover;
+    object-position: 76% center;
+  }
 }
 
 .scroll-expand__scrim {
@@ -196,8 +207,23 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   max-width: 34em;
+  /* 说明块是一层毛玻璃，不是实心纸：深色主题下虹膜辉光能透过来，
+     浅色主题下它压在光桌上，仍读得出「这是片子上的一张标签」。
+     底色定在 68%：再薄（试过 58%）浅色主题就只剩一行字浮在光里，锚点没了。 */
+  background: color-mix(in srgb, var(--field) 68%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 70%, transparent);
+  padding: clamp(14px, 1.6vw, 20px) clamp(16px, 1.8vw, 22px);
+}
+
+/* 不支持背景模糊就退回实心纸面：宁可失去透光，也不让正文直接压在照片上。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scroll-expand__caption {
+    background: var(--field);
+  }
 }
 
 .scroll-expand__caption-kicker {
@@ -224,9 +250,6 @@
   font-size: 14.5px;
   line-height: 1.75;
   color: var(--se-ink-2);
-  /* 满幅照片上读正文，要给一块稳定的白纸底，不靠半透明压暗层赌对比度。 */
-  background: var(--field);
-  padding: 10px 14px;
 }
 
 /* 真实眼底样本局部：三张同一张片子的裁切，按仪器读片顺序并排。 */
