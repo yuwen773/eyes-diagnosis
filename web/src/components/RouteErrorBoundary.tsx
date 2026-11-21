@@ -39,7 +39,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.failed) return this.props.children
     return (
-      <main className="route-fault">
+      <main id="main-content" tabIndex={-1} className="route-fault">
         <IrisErrorState
           fault={fault({
             severity: "critical",

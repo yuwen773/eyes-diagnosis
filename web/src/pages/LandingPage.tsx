@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, ArrowUpRight, X } from "lucide-react"
 import {
   lazy,
   Suspense,
@@ -259,7 +259,7 @@ export function LandingPage() {
 
       <ProductHeader scene="brand" />
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <LandingHero />
 
         <section className="plate" aria-label="眼底影像示意">
@@ -372,7 +372,7 @@ export function LandingPage() {
                     onClick={closeSpecimen}
                     aria-label="关闭大图"
                   >
-                    ✕
+                    <X size={16} strokeWidth={2} aria-hidden="true" />
                   </button>
                 </div>
                 <div className="specimen-lightbox__stage">
@@ -536,7 +536,7 @@ export function LandingPage() {
                 aria-label="关闭示例记录"
                 onClick={() => setRecordPreviewOpen(false)}
               >
-                ✕
+                <X size={15} strokeWidth={2} aria-hidden="true" />
               </button>
             </header>
             <div className="landing-record__modal-body">

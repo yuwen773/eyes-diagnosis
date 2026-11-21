@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ExternalLink, FileText, ImageOff, LocateFixed, X } from "lucide-react"
 
 import {
+  evidenceKeyOf,
   isAutoLoadableImage,
+  roundsOf,
   type AgentResource,
   type AgentResources,
 } from "@/lib/agentResources"
@@ -25,6 +27,7 @@ export function ResourcePanel({
   onClose,
   onPreviewImage,
   onLocate,
+  focus,
 }: {
   open: boolean
   resources: AgentResources
@@ -32,6 +35,11 @@ export function ResourcePanel({
   onPreviewImage: (url: string) => void
   /** 把资源定位回它的消息 / 工具步骤；目标不存在时不显示按钮。 */
   onLocate?: (resource: AgentResource) => void
+  /**
+   * 从正文证据角标跳进来：切到「知识来源」、筛到对应回合并高亮那一段。
+   * `nonce` 让连点同一角标也能再次触发。
+   */
+  focus?: { key: string; nonce: number } | null
 }) {
   const [picked, setPicked] = useState<PanelTab | null>(null)
   const [round, setRound] = useState<number | "all">("all")
@@ -39,13 +47,15 @@ export function ResourcePanel({
   const rounds = useMemo(() => {
     const set = new Set<number>()
     for (const list of [resources.images, resources.documents, resources.links]) {
-      for (const item of list) if (item.round) set.add(item.round)
+      for (const item of list) for (const value of roundsOf(item)) set.add(value)
     }
     return [...set].sort((a, b) => b - a)
   }, [resources])
 
+  // 按「所有检索到过的回合」筛，而不是只看首次出现：同一片段在后面的回合
+  // 又被检索到时，它也是本轮来源，不能因为首次出现更早就被筛掉。
   const filter = (list: AgentResource[]) =>
-    round === "all" ? list : list.filter((item) => item.round === round)
+    round === "all" ? list : list.filter((item) => roundsOf(item).includes(round))
 
   const images = filter(resources.images)
   const documents = filter(resources.documents)
@@ -61,6 +71,49 @@ export function ResourcePanel({
           ? "links"
           : "images"
   const tab: PanelTab = picked ?? autoTab
+
+  // 正文角标 → 面板：切页签与回合是「props 变了就调整状态」，在渲染期直接改，
+  // 不放进 effect（effect 里同步 setState 会多一轮级联渲染）。回合放宽到全部：
+  // 引用的片段可能来自上一答，宁可多给一条也不装「找不到」。
+  const [handledFocus, setHandledFocus] = useState<number | null>(null)
+  if (focus && focus.nonce !== handledFocus) {
+    setHandledFocus(focus.nonce)
+    setPicked("documents")
+    setRound("all")
+  }
+
+  // 滚动与高亮是真正的外部系统操作，放在 effect 里；按 nonce 去重，
+  // 避免后续无关渲染把同一个目标反复滚动。
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const appliedFocus = useRef<number | null>(null)
+  const focusTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!open || !focus || tab !== "documents") return
+    if (focus.nonce === appliedFocus.current) return
+    const el = [...(bodyRef.current?.querySelectorAll<HTMLElement>("[data-evidence-key]") ?? [])].find(
+      (node) => node.getAttribute("data-evidence-key") === focus.key,
+    )
+    if (!el) return
+    appliedFocus.current = focus.nonce
+    el.scrollIntoView({ block: "center", behavior: "smooth" })
+    el.classList.add("is-located")
+    // 键盘用户也要落到这一段，否则「定位」只对鼠标成立。
+    el.focus({ preventScroll: true })
+    if (focusTimer.current !== null) window.clearTimeout(focusTimer.current)
+    focusTimer.current = window.setTimeout(() => {
+      el.classList.remove("is-located")
+      focusTimer.current = null
+    }, 1600)
+    // round 与列表本身都要看：切回合 / 新资源到达后元素才真的在 DOM 里。
+  }, [open, tab, round, focus, documents])
+
+  useEffect(
+    () => () => {
+      if (focusTimer.current !== null) window.clearTimeout(focusTimer.current)
+    },
+    [],
+  )
 
   if (!open) return null
 
@@ -130,7 +183,7 @@ export function ResourcePanel({
         </div>
       ) : null}
 
-      <div className="agent-panel__body">
+      <div className="agent-panel__body" ref={bodyRef}>
         {tab === "images" ? (
           images.length === 0 ? (
             <p className="agent-panel__empty">
@@ -162,7 +215,13 @@ export function ResourcePanel({
             <>
               <ul className="agent-panel__docs">
                 {documents.map((doc) => (
-                  <li key={doc.id} className="agent-panel__doc">
+                  <li
+                    key={doc.id}
+                    className="agent-panel__doc"
+                    // 正文证据角标按这个键定位到具体片段（同一文档两段各一条）。
+                    data-evidence-key={evidenceKeyOf(doc) ?? undefined}
+                    tabIndex={-1}
+                  >
                     <div className="agent-panel__dochead">
                       <span className="agent-panel__badge">
                         <FileText size={12} strokeWidth={2} aria-hidden="true" />
@@ -182,6 +241,10 @@ export function ResourcePanel({
                       {doc.documentId ? (
                         <span className="agent-panel__docid num">#{doc.documentId}</span>
                       ) : null}
+                      {/* 片段序号与文档 ID 同属检索结果：同一文档命中两段会各占一条。 */}
+                      {doc.chunkIndex !== undefined ? (
+                        <span className="agent-panel__docid num">片段 {doc.chunkIndex}</span>
+                      ) : null}
                       <LocateButton resource={doc} onLocate={onLocate} toolFirst />
                     </div>
                   </li>
@@ -189,6 +252,7 @@ export function ResourcePanel({
               </ul>
               <p className="agent-panel__caveat">
                 来源信息（文档 ID、相关度、片段）取自检索结果本身，不是模型生成的引用。
+                正文角标只按本回合这里的片段核验；不在其中的会标成「未核验」。
               </p>
             </>
           )

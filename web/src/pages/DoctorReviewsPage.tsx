@@ -344,7 +344,7 @@ export function DoctorReviewsPage() {
   return (
     <div className="is-field is-brand-page collaboration-page">
       <ProductHeader scene="intelligence" />
-      <main className="wrap review-page">
+      <main id="main-content" tabIndex={-1} className="wrap review-page">
         {import.meta.env.VITE_COLLABORATION_ENABLED === "true" &&
         status === "authed" &&
         ["doctor", "admin"].includes(role) ? (

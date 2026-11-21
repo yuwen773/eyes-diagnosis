@@ -124,7 +124,7 @@ export function RecordsPage() {
     return (
       <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
-        <main className="wrap records">
+        <main id="main-content" tabIndex={-1} className="wrap records">
           <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
           <div className="records__empty">
             <EmptyFrame label="未登录" />
@@ -144,7 +144,7 @@ export function RecordsPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap records">
+      <main id="main-content" tabIndex={-1} className="wrap records">
         <SectionHead code="04" kicker="判读记录" en="RECORDS · MY READINGS" />
 
         <div className="records__intro">

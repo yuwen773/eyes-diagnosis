@@ -37,7 +37,7 @@ export function RecordDetailPage() {
     return (
       <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
-        <main className="wrap records">
+        <main id="main-content" tabIndex={-1} className="wrap records">
           <div className="records__empty">
             <p className="records__empty-title">登录后才能查看这份报告</p>
             <p className="records__empty-body">报告只对记录归属人有权限。</p>
@@ -59,7 +59,7 @@ export function RecordDetailPage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap records report">
+      <main id="main-content" tabIndex={-1} className="wrap records report">
         <nav className="report__crumb no-print" aria-label="面包屑">
           <Link className="link" to="/records">
             ← 判读记录

@@ -56,6 +56,9 @@ const AGENT_ALLOWED_ATTR = [
   "aria-label",
   "data-code",
   "data-lang",
+  // 证据引用角标携带的可核验键（documentId#chunkIndex），点击时用它定位来源。
+  // 它由 markdown 的 evidence_citation 规则写入，只做查表键，不参与任何 DOM 解释。
+  "data-cite-key",
 ]
 
 let hooked = false

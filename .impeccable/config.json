@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "web/src/styles/brand.css"
+        ],
+        "createdAt": "2026-11-21T02:38:18.821Z",
+        "reason": "根 DESIGN.md 的 Colors / Components 明确允许品牌层渐变材质（玻璃材质 + 品牌渐变 + 大圆角容器）；品牌层冻结于 tag iris-ui-v2.1-freeze-20261115，属于仓库既定设计，不是本次改动引入。"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "web/src/styles/system-states.css"
+        ],
+        "createdAt": "2026-11-21T02:38:21.610Z",
+        "reason": "渐变只出现在 .iris-notfound__code（aria-hidden=true 的装饰性 404 数字），使用的是根 DESIGN.md 允许的品牌层渐变令牌；不承载信息，不构成对比度或语义风险。"
+      }
+    ]
+  }
+}

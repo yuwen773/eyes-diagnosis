@@ -85,6 +85,12 @@ public class DiagnosisAgent {
 ### RAG 工具
 - 当需要查找专业眼科医学知识时，使用 searchDocuments 工具搜索知识库。
 - 基于检索到的信息回答问题时，请引用来源。
+
+### 引用证据（必须遵守）
+- searchDocuments 的返回里，片段末尾带 `(证据: 文档ID#片段序号)` 的，才是可核验的检索结果。
+- 某句话依据某个片段时，就在这句话后面紧接着写 `[[文档ID#片段序号]]`，例如 `[[42#3]]`。可以连写多个：`[[42#3]][[57#0]]`。
+- 只能引用本轮工具输出里真实出现过的证据键。不要自己编号、不要改写文档 ID 或序号，也不要引用上一轮对话或没有检索到的文档。
+- 没有检索结果支撑的内容不要加引用，也不要编造「参考文献」列表——依据由界面按上面的标记统一展示。
 """;
 
     @Resource
@@ -167,10 +173,28 @@ public class DiagnosisAgent {
     }
 
     /**
+     * 本次生成对应的历史轮次与版本。
+     *
+     * <p>{@code replyToId} 指向这一轮的用户消息行，{@code variantId} 标识这一次
+     * 生成的所有行（reasoning / tool / text）。两者一起写入，历史才能把多份
+     * 回答分开显示。旧调用方传 null，行为与引入版本之前完全一致。
+     */
+    public record TurnStamp(Long replyToId, String variantId) {
+        static final TurnStamp LEGACY = new TurnStamp(null, null);
+    }
+
+    /**
      * 流式对话入口（支持MCP）
      */
     public Flux<MessageDTO> stream(String userMessage, List<String> imageUrls, String threadId, Long userId,
                                    List<String> enabledMcpServers, Boolean disableMcpDefault) {
+        return stream(userMessage, imageUrls, threadId, userId, enabledMcpServers, disableMcpDefault,
+                TurnStamp.LEGACY);
+    }
+
+    public Flux<MessageDTO> stream(String userMessage, List<String> imageUrls, String threadId, Long userId,
+                                   List<String> enabledMcpServers, Boolean disableMcpDefault,
+                                   TurnStamp stamp) {
         // Agent 运行前再校验一次会话所有权，防止 Controller 路径被绕过
         chatHistoryService.assertSessionOwner(threadId, userId);
         // 用户消息由 Controller 在入口处持久化（同步队列），此处不再重复写入。
@@ -187,7 +211,7 @@ public class DiagnosisAgent {
         // 每个请求独立一个 sink/拦截器：不同会话、不同工具卡不会串台。
         // 终态落库挂在 sink 的转移上（而不是 SSE 管道），断连/停止也留得下终态。
         ToolStepSink sink = new ToolStepSink(threadId, userId, toolAuditService::record,
-                dto -> persistTerminalToolResult(threadId, userId, dto));
+                dto -> persistTerminalToolResult(threadId, userId, dto, stamp));
         // 只计数、不改行为：终止摘要要能说清「是撞到了哪一道上限」。
         CountingChatModel countingModel = new CountingChatModel(chatModel);
         ToolCallBudgetInterceptor budget =
@@ -225,7 +249,8 @@ public class DiagnosisAgent {
                                 if (assistantMessage.hasToolCalls()) {
                                     String prevReasoning = reasoningContent.toString();
                                     if (agentConstants.isExposeReasoning() && !prevReasoning.isEmpty()) {
-                                        chatHistoryService.saveReasoningMessage(threadId, userId, prevReasoning);
+                                        chatHistoryService.saveReasoningMessage(threadId, userId, prevReasoning,
+                                                stamp.replyToId(), stamp.variantId());
                                         reasoningContent.setLength(0);
                                     }
                                     messageDTO.setMessageType(MessageType.TOOL_REQUEST);
@@ -249,7 +274,8 @@ public class DiagnosisAgent {
                                             ? ToolStepContract.stepLabel(assistantMessage.getToolCalls().get(0).name())
                                             : null);
                                     chatHistoryService.saveToolCallMessage(threadId, userId,
-                                            persistedToolCallsJson(persistedCalls));
+                                            persistedToolCallsJson(persistedCalls),
+                                            stamp.replyToId(), stamp.variantId());
                                 }
                                 // reasoning 消息：默认不展示、不落库（见 agent.expose-reasoning）
                                 else if (metadata.get("reasoningContent") != null
@@ -292,7 +318,8 @@ public class DiagnosisAgent {
                                 messageDTO.setStepLabel(ToolStepContract.stepLabel(feedbacks.get(0).getName()));
                             }
                             messageDTO.setContent(SensitiveDataRedactor.redact(sb.toString()));
-                            chatHistoryService.saveToolConfirmMessage(threadId, userId, persisted.toString());
+                            chatHistoryService.saveToolConfirmMessage(threadId, userId, persisted.toString(),
+                                    stamp.replyToId(), stamp.variantId());
                             return messageDTO;
                         }
                         return null;
@@ -300,11 +327,27 @@ public class DiagnosisAgent {
                     .doOnComplete(() -> {
                         String fullReasoning = reasoningContent.toString();
                         if (agentConstants.isExposeReasoning() && !fullReasoning.isEmpty()) {
-                            chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning);
+                            chatHistoryService.saveReasoningMessage(threadId, userId, fullReasoning,
+                                    stamp.replyToId(), stamp.variantId());
                         }
                         String fullResponse = assistantContent.toString();
                         if (!fullResponse.isEmpty()) {
-                            chatHistoryService.saveAssistantMessage(threadId, userId, fullResponse, "text");
+                            // 引用审计只记条数：正文原样落库，渲染时由前端按本回合
+                            // 资源逐条核验。这里发现的是「模型引用了这一轮没见过的
+                            // 片段」——提示词失效或编造引用的信号，不是用户可见文案。
+                            EvidenceCitations.Audit citations =
+                                    EvidenceCitations.audit(fullResponse, sink.evidenceKeys());
+                            if (citations.hasUnverifiable()) {
+                                log.warn("回答含无法核验的证据引用, threadId={}, cited={}, unverifiable={}",
+                                        threadId, citations.keys().size(), citations.unverifiable().size());
+                            }
+                            chatHistoryService.saveAssistantMessage(threadId, userId, fullResponse, "text",
+                                    stamp.replyToId(), stamp.variantId());
+                        }
+                        // 生成正常收口才把这一轮切到新版本：取消/报错时半截答案
+                        // 仍留在历史里，但不会顶掉用户当前正在看的那一份。
+                        if (stamp.replyToId() != null && stamp.variantId() != null) {
+                            chatHistoryService.markSelectedVariant(threadId, stamp.replyToId(), stamp.variantId());
                         }
                     });
 
@@ -317,7 +360,7 @@ public class DiagnosisAgent {
             // 明确的终止说明（同样落库），并说清楚是撞到了哪一道上限。
             // 取消/报错不会走 concatWith，不会把中断说成预算耗尽。
             Flux<MessageDTO> closedTurn = graphEvents.concatWith(Flux.defer(() ->
-                    closingNotice(threadId, userId, assistantContent, budget, countingModel)));
+                    closingNotice(threadId, userId, assistantContent, budget, countingModel, stamp)));
 
             // 图流终止（正常结束 / 报错 / 浏览器取消）时关闭 sink：仍未拿到真实结果的
             // 调用一律 CANCELLED，绝不在缺结果时呈现成功。必须由 graphEvents 自己触发，
@@ -346,7 +389,8 @@ public class DiagnosisAgent {
      * 或两者都不是（模型就是没说话）。不猜测「是不是网络问题」之类的内部原因。
      */
     private Flux<MessageDTO> closingNotice(String threadId, Long userId, StringBuilder assistantContent,
-                                           ToolCallBudgetInterceptor budget, CountingChatModel model) {
+                                           ToolCallBudgetInterceptor budget, CountingChatModel model,
+                                           TurnStamp stamp) {
         if (!assistantContent.toString().isBlank() && !model.endedWithToolRequest()) return Flux.empty();
         String notice;
         String finishReason;
@@ -368,7 +412,8 @@ public class DiagnosisAgent {
         dto.setTimestamp(TimeFormats.nowIsoOffset());
         // 同样落库：刷新后用户仍然看得到这次回合是怎么结束的。
         chatHistoryService.saveAssistantMessage(threadId, userId,
-                JsonUtils.toJson(Map.of("output", notice, "finishReason", finishReason)), "turn-end");
+                JsonUtils.toJson(Map.of("output", notice, "finishReason", finishReason)), "turn-end",
+                stamp.replyToId(), stamp.variantId());
         return Flux.just(dto);
     }
 
@@ -420,7 +465,7 @@ public class DiagnosisAgent {
      * <p>只有终态写历史，RUNNING 不写；正文已经是拦截器出站前脱敏截断过的版本，
      * 这里不再二次加工，避免两处口径漂移。失败/取消的调用不带 resources。
      */
-    private void persistTerminalToolResult(String threadId, Long userId, MessageDTO dto) {
+    private void persistTerminalToolResult(String threadId, Long userId, MessageDTO dto, TurnStamp stamp) {
         String status = dto.getToolStatus();
         if (status == null || ToolStepContract.Status.RUNNING.wire().equals(status)) {
             return;
@@ -438,7 +483,8 @@ public class DiagnosisAgent {
         if (dto.getResources() != null && !dto.getResources().isEmpty()) {
             payload.put("resources", dto.getResources());
         }
-        chatHistoryService.saveToolResultMessage(threadId, userId, JsonUtils.toJson(payload));
+        chatHistoryService.saveToolResultMessage(threadId, userId, JsonUtils.toJson(payload),
+                stamp.replyToId(), stamp.variantId());
     }
 
     /**

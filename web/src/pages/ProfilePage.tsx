@@ -168,7 +168,7 @@ export function ProfilePage() {
     return (
       <div className="is-field is-brand-page">
         <ProductHeader scene="clinical" />
-        <main className="wrap records">
+        <main id="main-content" tabIndex={-1} className="wrap records">
           <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
           <div className="records__empty">
             <EmptyFrame label="未登录" />
@@ -188,7 +188,7 @@ export function ProfilePage() {
     <div className="is-field is-brand-page">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap records">
+      <main id="main-content" tabIndex={-1} className="wrap records">
         <SectionHead code="05" kicker="个人中心" en="ACCOUNT · PROFILE" />
 
         <div className="records__intro">

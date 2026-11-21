@@ -6,6 +6,7 @@ import { SessionProvider, useSession } from "@/lib/session"
 import { AUTH_EXPIRED_EVENT } from "@/lib/api"
 import { PageSkeleton } from "@/components/PageSkeleton"
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary"
+import { SkipLink } from "@/components/SkipLink"
 import { NotFoundPage } from "@/components/system/IrisStates"
 import { LandingPage } from "@/pages/LandingPage"
 
@@ -153,6 +154,8 @@ export function App() {
         <SessionProvider>
         {/* 故障提示宿主：一处渲染，全站任何一次失败都从这儿浮出来。 */}
         <FaultProvider>
+        {/* 键盘第一站：跳过导航直达 <main>（各页面地标的 id 见 #main-content）。 */}
+        <SkipLink />
         <ScrollToTop />
         <AuthRedirect />
         <Suspense fallback={<PageSkeleton />}>

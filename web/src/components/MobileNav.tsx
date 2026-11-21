@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
-import { ShieldCheck } from "lucide-react"
+import { ShieldCheck, X } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSession } from "@/lib/session"
 import { NAV_LINKS } from "./shell/navLinks"
@@ -105,7 +105,7 @@ export function MobileNav() {
             aria-label="关闭导航"
             onClick={() => setOpen(false)}
           >
-            ✕
+            <X size={18} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 

@@ -23,9 +23,13 @@ it("协作会话创建沿用HTTP层，发送sessionId及取消信号，禁止缓
     expect.objectContaining({
       method: "POST",
       body: JSON.stringify({ sessionId: "synthetic-session" }),
-      signal: controller.signal,
       cache: "no-store",
       credentials: "include",
     })
   )
+  // HTTP 层会把调用方信号转发到自己的可超时控制器上，所以不是同一个对象；
+  // 但取消必须真的传下去。
+  const init = fetch.mock.calls[0][1] as RequestInit
+  expect(init.signal).toBeInstanceOf(AbortSignal)
+  expect(init.signal).not.toBe(controller.signal)
 })

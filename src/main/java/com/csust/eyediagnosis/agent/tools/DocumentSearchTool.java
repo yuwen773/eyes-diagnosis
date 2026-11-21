@@ -3,6 +3,7 @@ package com.csust.eyediagnosis.agent.tools;
 import com.alibaba.cloud.ai.model.RerankModel;
 import com.alibaba.cloud.ai.model.RerankRequest;
 import com.alibaba.cloud.ai.model.RerankResponse;
+import com.csust.eyediagnosis.agent.observability.EvidenceContextViolation;
 import com.csust.eyediagnosis.agent.observability.ToolResourceContext;
 import com.csust.eyediagnosis.agent.rag.Bm25Segmenter;
 import com.csust.eyediagnosis.agent.rag.BuiltinCorpus;
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -130,6 +133,10 @@ public class DocumentSearchTool {
             List<Hit> hits = reranked ? rerank(query, candidates) : topHits(candidates);
             recordCitations(hits);
             return formatHits(hits);
+        } catch (EvidenceContextViolation e) {
+            // 证据登记的线程前提被破坏：这不是「检索暂时不可用」，包装成检索故障
+            // 会让真正的原因（线程前提）只剩一个 cause。原样抛出。
+            throw e;
         } catch (Exception e) {
             log.error("文档检索失败: {}", e.getMessage(), e);
             // 不能把失败包装成一句正常返回值：那样工具生命周期是「成功」，
@@ -310,11 +317,46 @@ public class DocumentSearchTool {
             }
             String title = doc.getMetadata().get("title") == null
                     ? snippetOf(doc.getText()) : String.valueOf(doc.getMetadata().get("title"));
-            ToolResourceContext.record(ResourceRef.document(
-                    docId, title, hit.score(), hit.retrievalScore(), snippetOf(doc.getText()), null)
+            ToolResourceContext.record(ResourceRef.documentChunk(
+                    docId, doc.getId(), chunkIndexOf(doc), title,
+                    hit.score(), hit.retrievalScore(), snippetOf(doc.getText()), null)
                     .withIndexVersion((String) doc.getMetadata().get("indexVersion")));
         }
     }
+
+    /**
+     * 片段序号：优先读元数据，缺失时从稳定的分块 id 末尾解析。
+     *
+     * <p>两种分块 id 都由服务端生成且以序号结尾：
+     * 上传文档 {@code doc_<docId>_<indexVersion>_chunk_<i>}、
+     * 内置语料 {@code builtin_<slug>_chunk_<i>}。已入索引的旧数据没有
+     * {@code chunkIndex} 元数据，不能为此要求重灌；id 是同一事实的另一份来源。
+     * 两处都拿不到就返回 {@code null}——宁可不给片段粒度，也不猜一个序号。
+     */
+    static Integer chunkIndexOf(Document doc) {
+        if (doc == null) {
+            return null;
+        }
+        Object fromMetadata = doc.getMetadata().get("chunkIndex");
+        if (fromMetadata instanceof Number number) {
+            return number.intValue();
+        }
+        if (fromMetadata != null) {
+            try {
+                return Integer.valueOf(String.valueOf(fromMetadata).trim());
+            } catch (NumberFormatException ignored) {
+                // 元数据不是数字时不据此下结论，继续按 id 解析。
+            }
+        }
+        String id = doc.getId();
+        if (id == null) {
+            return null;
+        }
+        Matcher matcher = CHUNK_SUFFIX.matcher(id);
+        return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
+    }
+
+    private static final Pattern CHUNK_SUFFIX = Pattern.compile("_chunk_(\\d+)$");
 
     private static String snippetOf(String text) {
         if (text == null) {
@@ -338,6 +380,12 @@ public class DocumentSearchTool {
                     Object docId = doc.getMetadata().get("docId");
                     if (docId != null) {
                         sb.append("\n(文档ID: ").append(docId).append(")");
+                    }
+                    // 可引用句柄：只有它能变成正文角标。文档级 ID 不唯一到片段，
+                    // 同一文档命中两段时模型无法说清引的是哪一段。
+                    Integer chunkIndex = chunkIndexOf(doc);
+                    if (docId != null && chunkIndex != null) {
+                        sb.append("\n(证据: ").append(docId).append("#").append(chunkIndex).append(")");
                     }
                     if (hit.reranked() && hit.score() != null && hit.score() > 0) {
                         sb.append(String.format("\n(相关度: %.2f)", hit.score()));

@@ -198,6 +198,37 @@ class DocumentSearchToolCitationTest {
         assertEquals(List.of(), ToolResourceContext.drain(), "不可核验的片段不进资源栏");
     }
 
+    /**
+     * 证据登记的线程前提被破坏时，工具必须**原样抛出**护栏异常。
+     *
+     * <p>如果被兜底 catch 包成「知识库检索暂时不可用」，真正的原因（工具跑到
+     * 了别的线程、证据会静默丢失）就只剩一个被包住的 cause，日志与审计都会
+     * 把它记成一次检索故障。
+     */
+    @Test
+    void evidenceThreadViolationIsNotRepackagedAsRetrievalFailure() throws Exception {
+        Document first = doc("c1", "101", "第一段。", 0.9);
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(first)));
+
+        // 拦截器在本线程登记了一次调用，但工具被调度到另一个线程执行。
+        ToolResourceContext.begin();
+        var failure = new java.util.concurrent.atomic.AtomicReference<Throwable>();
+        Thread worker = Thread.startVirtualThread(() -> {
+            try {
+                tool.searchDocuments("干眼", 42L);
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        worker.join(2_000);
+
+        assertTrue(failure.get() instanceof com.csust.eyediagnosis.agent.observability.EvidenceContextViolation,
+                "跨线程登记必须报出护栏异常本身，而不是检索失败");
+        assertFalse(String.valueOf(failure.get().getMessage()).contains("暂时不可用"),
+                "不能把线程前提问题包装成检索故障");
+    }
+
     private static Document doc(String id, String docId, String text, double score) {
         return Document.builder()
                 .id(id)
@@ -205,6 +236,76 @@ class DocumentSearchToolCitationTest {
                 .metadata(Map.of("docId", docId, "title", "文档 " + docId))
                 .score(score)
                 .build();
+    }
+
+    /** 片段级证据：序号从元数据读；同一文档两段各占一条资源。 */
+    @Test
+    void citationKeepsChunkIdentitySoTwoChunksOfOneDocumentStayDistinct() {
+        Document first = Document.builder()
+                .id("doc_101_v1_chunk_0")
+                .text("第一段。" )
+                .metadata(Map.of("docId", "101", "title", "共识", "chunkIndex", 0))
+                .score(0.9)
+                .build();
+        Document second = Document.builder()
+                .id("doc_101_v1_chunk_4")
+                .text("第四段。")
+                .metadata(Map.of("docId", "101", "title", "共识", "chunkIndex", 4))
+                .score(0.8)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(first, second)));
+
+        String output = tool.searchDocuments("干眼", 42L);
+
+        List<ResourceRef> refs = ToolResourceContext.drain();
+        assertEquals(2, refs.size(), "同一文档的两段是两条证据，不能按文档去重");
+        assertEquals(List.of("doc:101#0", "doc:101#4"), refs.stream().map(ResourceRef::id).toList());
+        assertEquals(List.of(0, 4), refs.stream().map(ResourceRef::chunkIndex).toList());
+        assertEquals("doc_101_v1_chunk_0", refs.get(0).chunkId());
+        assertEquals("101#0", refs.get(0).evidenceKey());
+        assertTrue(output.contains("(证据: 101#0)"), "交给模型的文本要带可引用句柄");
+        assertTrue(output.contains("(证据: 101#4)"));
+    }
+
+    /** 已入索引的旧数据没有 chunkIndex 元数据：从稳定分块 id 末尾解析，不要求重灌。 */
+    @Test
+    void chunkIndexIsParsedFromStableChunkIdWhenMetadataIsMissing() {
+        Document builtin = Document.builder()
+                .id("builtin_dry-eye_chunk_7")
+                .text("内置语料片段。")
+                .metadata(Map.of("docId", "builtin:dry-eye", "title", "内置"))
+                .score(0.9)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(builtin)));
+
+        tool.searchDocuments("干眼", 42L);
+
+        List<ResourceRef> refs = ToolResourceContext.drain();
+        assertEquals(1, refs.size());
+        assertEquals(7, refs.get(0).chunkIndex());
+        assertEquals("builtin:dry-eye#7", refs.get(0).evidenceKey());
+    }
+
+    /** 既没有元数据、id 也不以序号结尾：不给片段粒度，不猜序号。 */
+    @Test
+    void chunkIndexStaysNullWhenNeitherMetadataNorIdCarriesIt() {
+        Document legacy = Document.builder()
+                .id("legacy-chunk")
+                .text("旧格式片段。")
+                .metadata(Map.of("docId", "101", "title", "旧"))
+                .score(0.9)
+                .build();
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(new ArrayList<>(List.of(legacy)));
+
+        tool.searchDocuments("干眼", 42L);
+
+        ResourceRef ref = ToolResourceContext.drain().get(0);
+        assertNull(ref.chunkIndex());
+        assertEquals("doc:101", ref.id(), "拿不到序号时退回文档级 id");
+        assertNull(ref.evidenceKey(), "没有序号就不是可核验证据");
     }
 
     private static DocumentWithScore scored(Document document, double score) {

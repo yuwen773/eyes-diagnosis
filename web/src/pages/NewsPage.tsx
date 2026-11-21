@@ -120,7 +120,7 @@ export function NewsPage() {
         searching={Boolean(query)}
       />
 
-      <main className="wrap news" ref={listRef}>
+      <main id="main-content" tabIndex={-1} className="wrap news" ref={listRef}>
         {/* 一条编辑口径的元信息，不是四列 KPI：总数、更新日期、页码都是列表接口的真实读数。 */}
         {(fault && !hasData) || loading ? null : (
           <p className="news__meta num">
@@ -140,9 +140,11 @@ export function NewsPage() {
 
         {loading ? (
           // 骨架与真卡同形：加载完切过去时版式不跳。
-          <div className="news-skeleton" aria-hidden="true">
+          // 外层是 live region：视觉用户看到骨架，读屏用户听到「正在加载」。
+          <div className="news-skeleton" role="status" aria-live="polite">
+            <span className="sr-only">正在加载资讯…</span>
             {Array.from({ length: 6 }, (_, index) => (
-              <div className="news-skeleton__card" key={index}>
+              <div className="news-skeleton__card" key={index} aria-hidden="true">
                 <span className="news-skeleton__plate" />
                 <span className="news-skeleton__line" />
                 <span className="news-skeleton__line is-short" />

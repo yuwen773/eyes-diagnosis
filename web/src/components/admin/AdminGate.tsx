@@ -13,7 +13,7 @@ import { useSession } from "@/lib/session"
 function LoadingState() {
   return (
     <div className="is-field admin-gate">
-      <main className="wrap admin-gate__inner">
+      <main id="main-content" tabIndex={-1} className="wrap admin-gate__inner">
         <SectionHead code="00" kicker="系统管理 · ADMINISTRATION" en="ACCESS" />
         <p className="overline">正在核对访问权限</p>
         <div className="readout">
@@ -26,7 +26,7 @@ function LoadingState() {
 }
 
 /**
- * 兜底无权限说明页。自绘，不复用 PlaceholderPage 的「装配中」语义——
+ * 兜底无权限说明页。自绘，不使用「装配中」占位语义——
  * 这里不是页面没做完，是访问被拒。沿用全站外壳 + .sec-head / .overline / .btn 原语。
  * 匿名与非管理员共用同一版式，文案按原因区分。
  */
@@ -35,7 +35,7 @@ function DeniedPage({ anon }: { anon: boolean }) {
     <div className="is-field admin-denied">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap admin-denied__inner">
+      <main id="main-content" tabIndex={-1} className="wrap admin-denied__inner">
         <SectionHead
           code="00"
           kicker="系统管理 · ADMINISTRATION"
@@ -99,7 +99,7 @@ function UnavailablePage({
     <div className="is-field admin-denied">
       <ProductHeader scene="clinical" />
 
-      <main className="wrap admin-denied__inner">
+      <main id="main-content" tabIndex={-1} className="wrap admin-denied__inner">
         <SectionHead
           code="00"
           kicker="系统管理 · ADMINISTRATION"

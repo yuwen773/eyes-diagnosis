@@ -10,8 +10,8 @@
 | `backend-image-storage-failure-semantics.md` | 改判读影像上传 / 对象存储失败处理前读：影像存储失败为何终止而不是落「无原图记录」、补偿删除边界、已知限制 |
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
-| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准） |
-| **UI 冻结基线** tag `iris-ui-v2.1-freeze-20261115`（→ `80f53f7f`） | 查 Iris 2.1 UI 冻结点、冻结范围与冻结后的变更规则——规则正文在 `../DESIGN.md` 头部（2026-11-15 条） |
+| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准）。旧版（2026-11-21 重写前）见 `git show 34e94c9a:DESIGN.md` |
+| **UI 冻结基线** tag `iris-ui-v2.1-freeze-20261115`（→ `80f53f7f`） | 查 Iris 2.1 UI 冻结点、冻结范围与冻结后的变更规则——规则正文见 `../DESIGN.md` 的 Overview（冻结说明）与 `design/iris21-ui-freeze-exceptions.md` |
 | `design/iris21-ui-freeze-exceptions.md` | 判断某笔改动「算不算冻结面、有没有被授权」——冻结后 `ui` 的 13 个 PR 放行台账与待裁定项 |
 | `design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` | 查 Iris 2.0 的视觉参考来源与取舍（A/B/F/G/H/I 代号定义、原始链接） |
 | `design/iris-2-rule-change-matrix.md` | 查旧「白色仪器」规则改成了什么、为什么改、落地到哪一步 |
@@ -20,7 +20,10 @@
 | `design/iris-r3-user-experience-inventory.md` | 查 R3 用户端体验重设计的**现状盘点**：保留清单、不改的契约、要删的旧样式、资讯字段真实读数、React Bits 许可结论、已知后端缺口 |
 | `design/iris2-r2-5-release-integration.md` | 查 R2/R2.5 的 13 步合并序列与三条绕行规则（跳过 #53、关闭 #60、逐级 retarget）——**已执行完毕的归档记录**，文中的 SHA 是当时快照 |
 | `design-system.md` | 仅 `frontend/`（Vue **已弃用**线）青绿 `--iris-*` 的旧规则，不再是产品前端真源 |
+| `architecture/codebase-archaeology-2026-11-17.md` | 查架构演变时间线、有意设计 vs 历史包袱的归因、可安全移除清单（基线 `3c302504`） |
+| `architecture/css-architecture-contract.md` | 查 Tailwind / Iris CSS 的职责边界、混用三档与 `@layer` 迁移路径（提案，基线 `origin/ui@b805377f`） |
 | `testing/2026-10-19-test-audit.md` | 质疑某个测试是否真的调用了被测实现 |
+| `testing/verification-levels.md` | 决定这次改动该跑 L0/L1/L2/L3 的哪一级，以及各模块至少跑什么（`scripts/verify-fast.sh`） |
 | `reproducibility/p1_f01_fold_repair.md` | 追溯 P1-F01 冻结折修复的来历 |
 | `security-governance-plan-2026-11-18.md` | 判断 MD5→BCrypt 存量迁移的退出条件、配置中心三条上线门禁、CSRF 该按什么载体判定——写安全相关结论前先读，避免把「缺注解」直接当漏洞 |
 | `cleanup-ledger-2026-11-18.md` | 接手「考古报告逐项清理」前先读：哪些已交付成 PR、报告哪几条结论被实测修正、哪些还等 owner 拍板 |
@@ -47,6 +50,8 @@
 
 ## 计划与规格（按时间倒序，检出时以文件名为准）
 
+- `product/iris-control-center-1.0-mvp-prd.md` — 系统配置中心 MVP PRD（V0.1，**待评审，未进入开发**；WP-00 源码审计是开发前置）
+- `product/wp-00/` — WP-00 源代码审计交付物（配置项清单、模型调用清单、配置边界、ADR、API 契约、审计结论）；基线 `f42065e4`
 - `plans/` — 2026-04 的移植、Admin UI、gRPC、MCP、find-lock、用户中心、会话管理设计/实施计划
 - `superpowers/specs/` — 设计规格：GitHub 门面、仓库深度整理、P2 系列基线 / watchdog / GPU matrix / epoch loop / fold0 smoke、React 管理后台移植
 - `superpowers/plans/` — 对应实施计划：P2 系列、React 管理后台 / Agent 对话页移植、Java 管理后台缺陷修复

@@ -136,22 +136,6 @@ export type DiagnosisSource = {
   authorizationDetailsRestricted?: boolean | null
 }
 
-export type UploadedPicture = {
-  /** 雪花 id，线上是字符串。 */
-  id?: string
-  url?: string
-  status?: string
-}
-
-export function uploadPicture(file: File) {
-  const form = new FormData()
-  form.append("file", file)
-  return request<UploadedPicture>("/diagnosis/upload", {
-    method: "POST",
-    body: form,
-  })
-}
-
 export function runDiagnosis(file: File) {
   const form = new FormData()
   form.append("file", file)
@@ -236,6 +220,20 @@ export type HistoryMessageVO = {
   createdTime: string
   /** Server-authorized upload references, revalidated when history is read. */
   images?: string[]
+  /** 回答侧行所属的用户消息 id；旧数据为 null。 */
+  replyToId?: string | null
+  /** 本次生成的版本组；旧数据为 null。 */
+  variantId?: string | null
+  /** 仅用户行：当前显示哪一份回答。 */
+  selectedVariantId?: string | null
+  /** 仅用户行：这一轮出现过的版本，按生成顺序。 */
+  variantIds?: string[]
+}
+
+/** 一轮的版本状态（与后端 ChatHistoryService.TurnVariants 对应）。 */
+export type TurnVariantsVO = {
+  variantIds: string[]
+  selectedVariantId: string | null
 }
 
 export type ChatHistoryVO = {
@@ -318,6 +316,19 @@ export function getChatHistory(threadId: string, beforeId?: string, limit = 40) 
       createdTime: chatDate(message.createdTime),
     })),
   }))
+}
+
+/**
+ * 切换某一轮显示的回答版本。
+ *
+ * <p>「哪个版本存在」由服务端判定：这里不接受界面拼出来的 id，切换失败就是
+ * 失败，不假装成功（成功后调用方重新读历史，以服务端为准）。
+ */
+export function selectAgentVariant(threadId: string, userMessageId: string, variantId: string) {
+  return request<TurnVariantsVO>("/agent/chat/select-variant", {
+    method: "POST",
+    body: JSON.stringify({ threadId, userMessageId, variantId }),
+  })
 }
 
 export function exportSession(sessionId: string, format: "markdown" | "json") {
@@ -499,15 +510,21 @@ export type StreamChatHandlers = {
  * 未收到 done 事件就断流（网络闪断、服务重启）时抛「连接中断」，
  * 调用方据此回滚本回合上传的图片。
  */
+/** 两种 SSE 请求体：新提问，或「按已存原文重新生成某一轮」。 */
+export type StreamChatBody =
+  | { message: string; threadId: string; imageUrls?: string[] }
+  | { threadId: string; userMessageId: string }
+
 export async function streamChat(
-  body: { message: string; threadId: string; imageUrls?: string[] },
+  body: StreamChatBody,
   handlers: StreamChatHandlers,
   signal: AbortSignal,
+  path: "/agent/chat/stream" | "/agent/chat/regenerate" = "/agent/chat/stream",
 ): Promise<void> {
   let completed = false
   // 按需加载：SSE 客户端只有 /agent 用，静态引入会把它塞进所有路由的首屏包。
   const { fetchEventSource } = await import("@microsoft/fetch-event-source")
-  await fetchEventSource(`${BASE_URL}/agent/chat/stream`, {
+  await fetchEventSource(`${BASE_URL}${path}`, {
     method: "POST",
     headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
     body: JSON.stringify(body),

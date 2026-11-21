@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 
 import type { AgentStep } from "@/lib/agentSteps"
-import { stepStateLabel } from "@/lib/agentSteps"
+import { processHeadline, stepStateLabel } from "@/lib/agentSteps"
 import { renderMarkdown } from "@/lib/markdown"
 
 /** 折叠时输出预览的最大长度——原始内容默认不抢正文的阅读空间。 */
@@ -189,14 +189,10 @@ function StepDetail({ step }: { step: AgentStep }) {
  * <p>「模型推理」一栏如实标注它是模型内部推理，不是可核验的医学证据；
  * 「已暂停」是信息性终点，不提供批准动作（后端没有确认回传端点）。
  */
-export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
+export function ThoughtLine({ steps, active = false }: { steps: AgentStep[]; active?: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null)
 
-  const summary = useMemo(() => {
-    const tools = steps.filter((s) => s.kind === "tool").length
-    if (tools === 0) return "执行过程"
-    return `执行过程 · ${tools} 个工具调用`
-  }, [steps])
+  const summary = useMemo(() => processHeadline(steps, active), [steps, active])
 
   if (steps.length === 0) return null
 
@@ -205,6 +201,7 @@ export function ThoughtLine({ steps }: { steps: AgentStep[] }) {
       <p className="thought__summary">
         <Sparkles size={13} strokeWidth={2} aria-hidden="true" />
         <span>{summary}</span>
+        {active ? <RunningElapsed /> : null}
       </p>
 
       <ol className="thought__steps">

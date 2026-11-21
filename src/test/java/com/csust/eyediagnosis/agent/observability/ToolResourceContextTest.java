@@ -8,15 +8,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 资源收集器是线程内的：一次工具调用不能看到、也不能带走别的线程登记的资源。
- *
- * <p>这里刻意用真线程（而不是同一个测试线程重复 drain）验证隔离与清理——
- * 收集器活在 {@code ThreadLocal} 里，串线只会发生在跨线程。
+ * 证据收集的线程前提必须是**显式**的：并行/异步执行时 ThreadLocal 会静默丢证据，
+ * 那是最坏的一种失败——工具显示成功，侧栏少一条来源。跨线程登记必须当场报错。
  */
 class ToolResourceContextTest {
+
+    private static ResourceRef ref(String documentId, int chunkIndex) {
+        return ResourceRef.documentChunk(documentId, "doc_" + documentId + "_chunk_" + chunkIndex,
+                chunkIndex, "共识", 0.9, null, "片段", null);
+    }
 
     @AfterEach
     void clear() {
@@ -24,48 +28,77 @@ class ToolResourceContextTest {
     }
 
     @Test
-    void resourcesRegisteredOnAnotherThreadAreInvisible() throws Exception {
-        AtomicReference<List<ResourceRef>> seenFromWorker = new AtomicReference<>();
+    void recordsWithinTheInvocationThreadAreDrained() {
+        ToolResourceContext.begin();
+        ToolResourceContext.record(ref("42", 0));
+        ToolResourceContext.record(ref("42", 0));
 
-        Thread worker = new Thread(() -> {
-            ToolResourceContext.record(ResourceRef.document("10", "并发线程的来源", 0.7, null, "片段", null));
-            seenFromWorker.set(ToolResourceContext.drain());
-        }, "tool-resource-worker");
-        worker.start();
-        worker.join();
-
-        assertEquals(1, seenFromWorker.get().size(), "登记线程自己能取到");
-        assertEquals(List.of(), ToolResourceContext.drain(),
-                "别的线程不能看到这次调用登记的资源");
-    }
-
-    @Test
-    void drainClearsSoRepeatedDrainIsEmpty() {
-        ToolResourceContext.record(ResourceRef.document("11", "来源", 0.6, null, "片段", null));
-
-        assertEquals(1, ToolResourceContext.drain().size());
-        assertEquals(List.of(), ToolResourceContext.drain(), "取走即清空，不残留到下一次调用");
-    }
-
-    @Test
-    void duplicateIdsKeepFirstAndIdlessRefsAreIgnored() {
-        ToolResourceContext.record(ResourceRef.document("12", "第一条", 0.9, null, "片段", null));
-        ToolResourceContext.record(ResourceRef.document("12", "重复", 0.1, null, "片段", null));
-        ToolResourceContext.record(new ResourceRef(null, "document", "无 id", "knowledge-base",
-                null, "13", 0.5, null, "片段", null));
-
-        List<ResourceRef> refs = ToolResourceContext.drain();
-        assertEquals(1, refs.size());
-        assertEquals("第一条", refs.get(0).title());
-    }
-
-    @Test
-    void returnedListIsASnapshot() {
-        ToolResourceContext.record(ResourceRef.document("14", "来源", 0.5, null, "片段", null));
         List<ResourceRef> drained = ToolResourceContext.drain();
-        ToolResourceContext.record(ResourceRef.document("15", "后登记", 0.5, null, "片段", null));
+        assertEquals(1, drained.size(), "同一次调用的重复 id 只留第一条");
+        assertEquals("doc:42#0", drained.get(0).id());
+    }
 
-        assertEquals(1, drained.size(), "取走的列表不会被之后登记的条目改写");
-        assertTrue(drained.stream().noneMatch(ref -> "15".equals(ref.documentId())));
+    @Test
+    void recordingFromAnotherThreadFailsLoudlyInsteadOfLosingTheEvidence() throws Exception {
+        ToolResourceContext.begin();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread worker = Thread.startVirtualThread(() -> {
+            try {
+                ToolResourceContext.record(ref("42", 0));
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        worker.join(2_000);
+
+        assertNotNull(failure.get(), "跨线程登记不能静默成功");
+        assertTrue(failure.get() instanceof IllegalStateException);
+        assertEquals(List.of(), ToolResourceContext.drain(),
+                "调用线程取不到别人线程写的资源——这正是必须报错的理由");
+    }
+
+    @Test
+    void directToolCallsWithoutAnInterceptorKeepWorking() {
+        // 单测/内部直接调用没有拦截器 begin()：不做跨线程校验，行为保持原样。
+        ToolResourceContext.record(ref("7", 2));
+        assertEquals(1, ToolResourceContext.drain().size());
+    }
+
+    @Test
+    void drainAlsoClearsOwnershipSoTheNextCallStartsClean() throws Exception {
+        ToolResourceContext.begin();
+        ToolResourceContext.drain();
+
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread worker = Thread.startVirtualThread(() -> {
+            try {
+                ToolResourceContext.record(ref("42", 1));
+                ToolResourceContext.drain();
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        worker.join(2_000);
+        assertEquals(null, failure.get(), "drain 之后归属线程已清除，新线程不再被当成越界");
+    }
+
+    @Test
+    void endAloneReleasesOwnershipSoAFailedInvocationDoesNotPoisonLaterOnes() throws Exception {
+        // 拦截器的 finally 只调 end()（Error 路径不会走到 drain）：归属必须释放，
+        // 否则 ACTIVE_THREADS 永远非空，之后每个线程的登记都会被误判为越界。
+        ToolResourceContext.begin();
+        ToolResourceContext.end();
+
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread worker = Thread.startVirtualThread(() -> {
+            try {
+                ToolResourceContext.record(ref("42", 2));
+                ToolResourceContext.drain();
+            } catch (Throwable e) {
+                failure.set(e);
+            }
+        });
+        worker.join(2_000);
+        assertEquals(null, failure.get(), "end 之后归属线程已清除");
     }
 }

@@ -65,8 +65,8 @@ public class ChatHistoryService {
         this.titleGenerationService = titleGenerationService;
     }
 
-    public void saveUserMessage(String sessionId, Long userId, String content) {
-        saveUserMessage(sessionId, userId, content, null);
+    public long saveUserMessage(String sessionId, Long userId, String content) {
+        return saveUserMessage(sessionId, userId, content, null);
     }
 
     public static final String USER_ATTACHMENTS_SUBTYPE = "user-attachments-v1";
@@ -77,7 +77,7 @@ public class ChatHistoryService {
      * <p>附件身份放在客户端不能写入的 subType 列，正文里的公开字符串不授予身份。
      * 写入与历史读取均通过上传任务复核归属；旧的无 subType 行保留原文。
      */
-    public void saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
+    public long saveUserMessage(String sessionId, Long userId, String content, List<String> imageUrls) {
         String payload = content;
         if (imageUrls != null && !imageUrls.isEmpty()) {
             Map<String, Object> envelope = new java.util.LinkedHashMap<>();
@@ -102,30 +102,63 @@ public class ChatHistoryService {
             }
             return null;
         });
+        return messageId;
     }
 
     public void saveAssistantMessage(String sessionId, Long userId, String content, String subType) {
+        saveAssistantMessage(sessionId, userId, content, subType, null, null);
+    }
+
+    /**
+     * 回答侧落库（带版本信息）。
+     *
+     * @param replyToId 本回合的用户消息 id，用来把同一次生成的多行归到同一轮；
+     *                  旧调用方为 null（历史行按旧口径读取）
+     * @param variantId 本次生成的版本组；同一组 reasoning / tool / text 必须一致
+     */
+    public void saveAssistantMessage(String sessionId, Long userId, String content, String subType,
+                                     Long replyToId, String variantId) {
         long messageId = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
         messageQueue.submitRecoverableAndWait(sessionId, Long.toString(messageId), () -> {
-            messageWriter.writeAssistantMessage(sessionId, content, subType, messageId);
+            messageWriter.writeAssistantMessage(sessionId, content, subType, messageId, replyToId, variantId);
             return null;
         });
     }
 
     public void saveReasoningMessage(String sessionId, Long userId, String content) {
-        saveAssistantMessage(sessionId, userId, content, "reasoning");
+        saveReasoningMessage(sessionId, userId, content, null, null);
+    }
+
+    public void saveReasoningMessage(String sessionId, Long userId, String content,
+                                     Long replyToId, String variantId) {
+        saveAssistantMessage(sessionId, userId, content, "reasoning", replyToId, variantId);
     }
 
     public void saveToolCallMessage(String sessionId, Long userId, String content) {
-        saveAssistantMessage(sessionId, userId, content, "tool-call");
+        saveToolCallMessage(sessionId, userId, content, null, null);
+    }
+
+    public void saveToolCallMessage(String sessionId, Long userId, String content,
+                                    Long replyToId, String variantId) {
+        saveAssistantMessage(sessionId, userId, content, "tool-call", replyToId, variantId);
     }
 
     public void saveToolResultMessage(String sessionId, Long userId, String content) {
-        saveAssistantMessage(sessionId, userId, content, "tool-result");
+        saveToolResultMessage(sessionId, userId, content, null, null);
+    }
+
+    public void saveToolResultMessage(String sessionId, Long userId, String content,
+                                      Long replyToId, String variantId) {
+        saveAssistantMessage(sessionId, userId, content, "tool-result", replyToId, variantId);
     }
 
     public void saveToolConfirmMessage(String sessionId, Long userId, String content) {
-        saveAssistantMessage(sessionId, userId, content, "mcp-confirm");
+        saveToolConfirmMessage(sessionId, userId, content, null, null);
+    }
+
+    public void saveToolConfirmMessage(String sessionId, Long userId, String content,
+                                       Long replyToId, String variantId) {
+        saveAssistantMessage(sessionId, userId, content, "mcp-confirm", replyToId, variantId);
     }
 
     public ChatHistoryVO loadHistory(String sessionId, Long beforeId, int limit) {
@@ -143,11 +176,131 @@ public class ChatHistoryService {
         boolean hasMore = entities.size() == limit;
         Long nextCursor = hasMore ? entities.get(entities.size() - 1).getId() : null;
 
-        List<MessageVO> vos = entities.stream()
+        List<MessageVO> vos = new java.util.ArrayList<>(entities.stream()
                 .map(this::toMessageVO)
-                .toList();
+                .toList());
+        annotateVariants(sessionId, vos);
 
         return new ChatHistoryVO(vos, hasMore, nextCursor, messageQueue.hasUncommitted(sessionId));
+    }
+
+    /**
+     * 给用户行补上「这一轮有哪些回答版本」。
+     *
+     * <p>只标注用户行：切换器挂在提问下，回答行本身已经有 variantId。
+     * 版本列表取生成顺序（首次出现的 id），界面据此显示「2/3」而不是
+     * 靠时间戳猜先后。
+     */
+    private void annotateVariants(String sessionId, List<MessageVO> vos) {
+        List<Long> turnIds = vos.stream()
+                .filter(vo -> "USER".equals(vo.getRole()) && vo.getId() != null)
+                .map(MessageVO::getId)
+                .toList();
+        if (turnIds.isEmpty()) return;
+        Map<Long, List<String>> byTurn = variantsByTurn(sessionId, turnIds);
+        for (MessageVO vo : vos) {
+            if (!"USER".equals(vo.getRole())) continue;
+            List<String> variants = byTurn.get(vo.getId());
+            vo.setVariantIds(variants == null ? List.of() : List.copyOf(variants));
+        }
+    }
+
+    /** 只查给定的这几轮：整会话聚合会在每次翻页时重扫全部行。 */
+    private Map<Long, List<String>> variantsByTurn(String sessionId, List<Long> replyToIds) {
+        Map<Long, List<String>> byTurn = new java.util.LinkedHashMap<>();
+        if (replyToIds.isEmpty()) return byTurn;
+        for (Map<String, Object> row : messageMapper.selectVariants(sessionId, replyToIds)) {
+            Object replyTo = row.get("replyToId");
+            Object variant = row.get("variantId");
+            if (!(replyTo instanceof Number turn) || variant == null) continue;
+            byTurn.computeIfAbsent(turn.longValue(), key -> new java.util.ArrayList<>())
+                    .add(String.valueOf(variant));
+        }
+        return byTurn;
+    }
+
+    /** 一轮用户提问的原文与附件：重新生成按这一份原文再跑，不改写历史。 */
+    public record UserTurn(long messageId, String text, List<String> images) {}
+
+    /**
+     * 解析要重新生成的那一轮。
+     *
+     * <p>{@code userMessageId} 为空时取本会话最后一条用户提问：刚发完的那一轮
+     * 客户端还没有服务端 id（id 要等历史回读），此时不能要求界面自己猜。
+     */
+    public UserTurn loadUserTurn(String sessionId, Long userId, Long userMessageId) {
+        assertSessionOwner(sessionId, userId);
+        Long resolvedId = userMessageId;
+        if (resolvedId == null) {
+            resolvedId = messageMapper.selectLastUserMessageId(sessionId);
+            if (resolvedId == null) {
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "这个会话还没有用户提问");
+            }
+        }
+        AgentMessage entity = messageMapper.selectById(resolvedId);
+        if (entity == null || !sessionId.equals(entity.getSessionId()) || !"USER".equals(entity.getRole())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "找不到这一轮用户消息");
+        }
+        // 复用历史回放的解码口径：附件归属在读取时再次复核，已撤销的引用不还原。
+        MessageVO vo = toMessageVO(entity);
+        return new UserTurn(entity.getId(), vo.getContent(),
+                vo.getImages() == null ? List.of() : List.copyOf(vo.getImages()));
+    }
+
+    /**
+     * 升级前的回答没有版本信息（replyToId/variantId 为 NULL）。给这一轮重新生成
+     * 之前，先把它们归入一个「旧版本」，否则新版本写入后旧行永远匹配不上
+     * 选中状态——旧回答既隐藏不掉，切换器还会显示成「只有 1 个版本」。
+     *
+     * <p>只补元数据、不改内容，且只在「这条用户消息之后、下一轮提问之前」生效。
+     * 幂等：没有旧行时什么也不做。返回归入的版本 id；没有旧行返回 null。
+     */
+    public String adoptLegacyAnswers(String sessionId, Long userId, long userMessageId) {
+        assertSessionOwner(sessionId, userId);
+        Long nextUserId = messageMapper.selectNextUserMessageId(sessionId, userMessageId);
+        long before = nextUserId != null ? nextUserId : Long.MAX_VALUE;
+        if (messageMapper.countLegacyAnswers(sessionId, userMessageId, before) == 0) {
+            return null;
+        }
+        // 版本 id 由用户消息 id 派生：重复调用落成同一个版本，不会越跑越多。
+        String variantId = "legacy-" + userMessageId;
+        messageMapper.adoptLegacyAnswers(sessionId, userMessageId, variantId, userMessageId, before);
+        return variantId;
+    }
+
+    /** 切换某一轮显示的版本；版本必须真实存在于该轮，不接受任意字符串。 */
+    @Transactional
+    public void selectVariant(String sessionId, Long userId, long userMessageId, String variantId) {
+        assertSessionOwner(sessionId, userId);
+        List<String> variants = variantsByTurn(sessionId, List.of(userMessageId)).get(userMessageId);
+        if (variants == null || !variants.contains(variantId)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该回答版本不存在");
+        }
+        messageWriter.selectVariant(sessionId, userMessageId, variantId);
+    }
+
+    /**
+     * 生成正常收口后把这一轮切到新版本。
+     *
+     * <p>由流自己调用，不经过 SSE 管道：浏览器断连或取消时不应把「半截答案」
+     * 设为当前显示；取消的版本保留在历史里但保持隐藏。
+     */
+    public void markSelectedVariant(String sessionId, long userMessageId, String variantId) {
+        messageWriter.selectVariant(sessionId, userMessageId, variantId);
+    }
+
+    /** 一轮的版本状态：界面切换器据此显示「2/3」。 */
+    public record TurnVariants(List<String> variantIds, String selectedVariantId) {}
+
+    public TurnVariants variants(String sessionId, Long userId, long userMessageId) {
+        assertSessionOwner(sessionId, userId);
+        AgentMessage entity = messageMapper.selectById(userMessageId);
+        if (entity == null || !sessionId.equals(entity.getSessionId()) || !"USER".equals(entity.getRole())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "找不到这一轮用户消息");
+        }
+        List<String> ids = variantsByTurn(sessionId, List.of(userMessageId))
+                .getOrDefault(userMessageId, List.of());
+        return new TurnVariants(List.copyOf(ids), entity.getSelectedVariantId());
     }
 
     public List<SessionVO> getUserSessions(Long userId, Long beforeId, int limit) {

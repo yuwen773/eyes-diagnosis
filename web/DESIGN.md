@@ -20,15 +20,17 @@
   精选卡/图表强调；医学严重度仍用 `--risk-*`，紫色不冒充医学风险。
 
 场景决定圆角与动效预算；**没有"全站通用"的一套控件外观**。
-细则见根 `DESIGN.md` §1–§4。
+细则见根 `DESIGN.md` 的 Overview / Layout / Components。
 
 ## 规则（写代码时必须遵守）
 
-1. **先定场景再写样式**：Clinical 用直角 + 墨色主 CTA + 信号橙语义（包装在品牌壳内，
+1. **先定场景再写样式**：Clinical 用直角 + 信号橙语义（主 CTA 见下条口径，
    RecordSheet 纸面不动）；Management 用 8–12px 圆角 + **管理紫 `--admin-*` 主操作**
    + 分类数据色；Brand 用 24–38px 圆角 + 玻璃材质 + 钴蓝；
-   Intelligence 用 12px 圆角 + 运行态蓝/青。**组件变体矩阵见根 `DESIGN.md` §4。**
-   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫、Clinical 墨色。**
+   Intelligence 用 12px 圆角 + 运行态蓝/青。**组件规则见根 `DESIGN.md` → Components。**
+   **主 CTA 口径：Brand/Intelligence 钴蓝、Management 管理紫；Clinical 分两层——
+   `.btn` 基类是墨色，但 Clinical 路由统一带 `.is-brand-page`，实际渲染为钴蓝
+   （基类归组件，外壳归场景，两层都不算错；见根 `DESIGN.md` → Components → Buttons）。**
 2. **三套语义色互不顶替**：`--signal`（临床重点/当前态）、`--brand-*`（品牌身份）、
    `--risk-*`（医学严重度）。信号橙**不是主 CTA 色**、不大面积填充；
    承载文字时用 `--signal-text`（纸面 `#bd4515`，暗底 `#ef7a45`）——`--signal`
@@ -37,8 +39,9 @@
 4. **一切数字用 `--font-mono` + `tabular-nums`**：置信度、概率、计数、耗时、时间戳、哈希。
 5. **衬线标题 weight 只允许 400**（`--font-serif`）。禁 700+、禁斜体。
    品牌拉丁字用 `--font-brand`（Manrope，**无汉字，不许兜底中文**）。
-6. **圆角只用令牌梯** `--radius-none/sm/md/lg/xl/2xl/circle/pill`，按场景取，
-   不写像素自由值，不堆圆角。
+6. **圆角只用令牌梯** `--radius-none/hair/sm/chip-xs/chip-sm/md/chip/field/lg/`
+   `panel-sm/panel/xl/2xl/pill/circle`，管理端另用 `--admin-radius-control/card/card-lg`；
+   按场景取，不写像素自由值，不堆圆角。
 7. **发丝线优先于阴影**。需要抬升用极淡的墨色阴影，禁用纯黑投影
    （品牌玻璃用 `--brand-shadow`）。
 8. **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
@@ -48,20 +51,19 @@
    真实后端事件/请求状态）。状态动效**四个场景都允许**：Clinical 与 Auth 的上传、
    提交、保存、加载、错误反馈同样是真实状态，只是表现更克制；
    **任何场景都禁止假进度、虚构执行状态与无意义的伪加载**。两类都：离屏即停、
-   `prefers-reduced-motion` **实时订阅**当场停、可手动暂停。见根 `DESIGN.md` §3.7。
+   `prefers-reduced-motion` **实时订阅**当场停、可手动暂停。见根 `DESIGN.md` → Components → Named Rules。
 10. **不虚构业务能力**：界面上的每个数字都能追到后端端点与口径；
     **设计稿里有 ≠ 产品里有**。
 11. **术语**：界面用「判读」，不是「诊断」；只有「诊断 Agent」保留为产品名。
 12. **口径**：置信度一律百分比一位小数，缺省 `—`；分页量与全量不得混排而不标注。
 13. **页面骨架按页面类型选**：只有台账页（`RecordsPage`、`pages/admin/` 下的
-    列表页 users/news/diagnosis/knowledge）用
-    「KPI 条 + overline + 台账行 + `.card-accent`」；管理端概览页与数据分析页
-    **以 KPI 与图表为主**、新闻编辑页**以表单为主**，别给 `pages/admin/*` 每页
-    都加四列 KPI；登录/注册是品牌双栏，个人中心是资料区 + 读数卡，
-    资讯是编辑式列表，诊断页是上传槽 → 记录纸。
-    逐路由归属见根 `DESIGN.md` §1.5；加载/错误/空态见根 `DESIGN.md` §3.11。
-14. **品牌首屏**：外层画布全幅，玻璃外壳在 1240px 版心内，光带裁在壳里（根 `DESIGN.md` §3.6）。
-15. **公开路由共用一个产品外壳**（R2.5，根 `DESIGN.md` §1.6）：`/`、`/news`、
+    列表页 users/news/diagnosis/knowledge）用「KPI 条 + 章节说明 + 台账行」；
+    管理端概览页与数据分析页**以 KPI 与图表为主**、新闻编辑页**以表单为主**，
+    别给 `pages/admin/*` 每页都加四列 KPI；登录/注册是品牌双栏，
+    个人中心是资料区 + 读数卡，资讯是编辑式列表，诊断页是上传槽 → 记录纸。
+    逐路由归属见根 `DESIGN.md` → Layout；加载/错误/空态见根 `DESIGN.md` → Components → States。
+14. **品牌首屏**：外层画布全幅，玻璃外壳在 1240px 版心内，光带裁在壳里（根 `DESIGN.md` → Layout）。
+15. **公开路由共用一个产品外壳**（R2.5，根 `DESIGN.md` → Components → Navigation）：`/`、`/news`、
     `/diagnosis`、`/agent`、`/profile`、`/records` 用同一个顶栏组件与导航数据。
     **U2 收紧（Visual Completion）**：scene 只允许改背景透明度与空间密度，
     **不允许**通过 `scene="clinical"` / `scene="intelligence"` 换回旧版纸面胶囊、
@@ -79,7 +81,7 @@
     新增手写功能性图标必须在此说明理由。品牌验收过的精细图形（主题切换
     半满读数环）不替换。
 17. **滚动条全站一套，不在页面里另写**：透明轨道 + 从 `--fg` 派生的胶囊滑块，
-    尺寸与浓度由 `--scrollbar-*` 令牌控制（根 `DESIGN.md` §3.5）。页面级滚动、
+    尺寸与浓度由 `--scrollbar-*` 令牌控制（根 `DESIGN.md` → Elevation & Depth）。页面级滚动、
     弹层正文、侧栏、消息流、输入框自动一致；只有滚动驱动动画容器
     （`ScrollExpand`）显式隐藏。**禁止**在页面文件里写 `::-webkit-scrollbar`
     或 `scrollbar-color`，否则会出现第二套滚动条。
@@ -98,41 +100,44 @@
 组件只消费 `--fg / --fg-2 / --fg-3 / --bg / --hr / --hr-strong` 这组别名，
 它们由 `.is-field / .is-sheet / .is-dark / .is-night` 定义。
 **不要**在组件里直接读 `--ink / --line`（那会绕过主题与纸面翻转）。
-品牌视觉容器另加 `.iris2` 语境类——它**只是容器**，只在首页首屏与认证壳（U6）；
+品牌视觉容器另加 `.iris2` 语境类——它**只是容器**，只用在首页首屏（`LandingHero` /
+`HeroCompareStage`）；认证页用 `AuthShell` 的 `.auth-auth`，不是 `.iris2`。
 `--brand-*` 是**跨场景的令牌**（Agent 运行态、品牌强调都可取用），
 两者不是一回事，别把 `.iris2` 当成"用品牌色的开关"。
-管理面 `.is-admin` **已落地**（含 `--admin-*` 令牌；2026-11-13 工作包 C）；
+管理面 `.is-admin` **已落地**（含 `--admin-*` 令牌）；
 工作台面 `.is-console` 尚未实现，别提前写依赖它的样式。
 
 ## 已知债务
 
-根 `DESIGN.md` §8 有完整清单。改到这些地方时顺手修，不要照着复刻：
+完整清单见本节；旧版偏差表见 `git show 34e94c9a:DESIGN.md` 的 §8。
+改到这些地方时顺手修，不要照着复刻：
 
 - ~~Tailwind v4 的 `.overline` 工具类给眉线多加一条上划线~~：**已修 2026-11-13（R2.5-06）**——
   `app.css` 的 `.overline` 显式写了 `text-decoration-line: none`（未分层，优先级高于
   Tailwind 的 utilities 层）；不要照着复刻旧写法，也不要再写新的 `.overline` 变体；
-- 断点未完全收敛（各页 `@media` 有 18 个不同取值），新写样式只用 390 / 768 / 900，
-  验收过 390 / 768 / 820 / 900 / 1440 / 1920 六档（根 `DESIGN.md` §3.6「R2.5 起的断点分工」）；
+- 断点未完全收敛（2026-11-21 快照：900px 为主断点，640 / 768 次之，另有 480–1600
+  之间的历史取值），新写样式只用 390 / 768 / 900，验收过 390 / 768 / 820 / 900 /
+  1440 / 1920 六档（根 `DESIGN.md` → Layout 的断点段）；
 - ~~管理端仍是旧 B 档外观（主按钮墨色、0 圆角；信号橙只做当前态与焦点环），
   与新规范不一致——Visual Completion 工作包 C（Purple SaaS）落地 `--admin-*`~~：
   **已修 2026-11-13（工作包 C 落地）**——`--admin-*` 令牌、紫色 SaaS 侧栏、
   管理紫主操作与当前导航态均已实现（`tokens.css` + `admin.css`）；
-  `feat/admin-visual-redesign` 已完成七页**视觉质量**升级（Bento 构图、
-  台账行操作、Markdown 编辑工作流），证据见
+  七页**视觉质量**升级已完成（Bento 构图、台账行操作、Markdown 编辑工作流），证据见
   `docs/design/admin-redesign-after/r1/`；视觉验收仍待人工复核；
-- 用户端 scene 变体仍存在旧仪器回退（U2 收紧前的遗留），Visual Completion 工作包 B 处理；
+- ~~用户端 scene 变体仍存在旧仪器回退~~：**已修**——`ProductHeader` 的 `scene` 只标记
+  语境与密度，不再切换旧仪器皮肤（`data-scene` 已无回退样式）；
 - ~~认证页仍是橙色 LaserFlow + 暗房叙事~~：**已修 2026-11-13（U6）**，AuthShell
   改为蓝青光学 CSS 背景，LaserFlow 死组件已删除；不要再引入 GPU 渲染器；
 - ~~**两套顶栏并存**（`BrandHeader` / `SiteHeader`）~~：R2.5-01 已收敛为单一
   `ProductHeader` + `scene` 变体；任何新页面都不要再写第三套；
-- `--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` **只在 PR #52 里，尚未进入 `ui`**，
-  合并前取不到；按本文档写品牌组件前必须先合并 PR #52；
-- **仍有 2 处 `outline: none`**：`CardSwap.css` 的装饰容器、
-  `admin.css` 里 Recharts 图表 wrapper 的 `:focus`（`agent.css` 输入区那处
-  **已修 2026-11-13，R2.5-05**：textarea 保留全局焦点环、容器用
-  `:focus-within` 补柔光描边，不依赖 `:has()`）。
-  前两处是装饰/弹层容器（焦点不在其上），**Recharts 那处会让图表聚焦时没有
-  可见焦点环**——要改成可见焦点样式，不要留着。
+- ~~`--brand-*` 令牌、`.iris2` 容器类与 `--radius-xl/2xl` 只在 PR #52 里~~：
+  **已落地**——均在 `tokens.css` 定义，可直接引用；
+- **仍有 8 处 `outline: none`（2026-11-21 快照）**：`admin-redesign.css`（2）、
+  `admin.css`（2，含 Recharts 图表 wrapper）、`agent.css`（2）、`app.css`（1）、
+  `diagnosis.css`（1）。其余多为装饰/弹层容器（焦点不在其上）；
+  **Recharts 那处会让图表聚焦时没有可见焦点环**——要改成可见焦点样式，不要留着；
+- **管理端仍有 10.5px 大写标签**（`DataTable` 表头、筛选组标签等），
+  低于 11px 下限；新增标签一律 ≥11px，改到旧标签时顺手提到 11px。
 
 2026-11-10 验收批次已修掉的（别再当成债，也别照着复刻旧写法）：
 

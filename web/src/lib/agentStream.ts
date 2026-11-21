@@ -68,6 +68,21 @@ export type StreamMessage = {
    * 请求发出去了但没拿到 2xx 响应头，服务端到底有没有落库**不知道**。
    */
   delivery?: "sending" | "accepted" | "unconfirmed" | "failed"
+  /**
+   * 服务端消息 id（只有历史行有）。
+   *
+   * <p>版本切换与「重新生成」必须按服务端 id 定位这一轮：客户端每次加载都会
+   * 生成新的本地 id，拿它去请求服务端没有任何意义。
+   */
+  serverId?: string
+  /** 回答侧行：属于哪一份生成。 */
+  variantId?: string
+  /** 仅用户行：这一轮出现过的回答版本，按生成顺序。 */
+  variantIds?: string[]
+  /** 仅用户行：当前显示哪一份；null 表示旧数据（只有一份）。 */
+  selectedVariantId?: string | null
+  /** 回答侧行：所属用户消息的服务端 id。 */
+  replyToId?: string | null
 }
 
 /** 服务端明确拒绝这次请求的错误码（未登录 / 无权限）。 */
@@ -311,14 +326,26 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
 
   const time = formatHistoryTime(m.createdTime)
 
+  // 版本信息只来自服务端：旧行没有就是没有，不补造。
+  const variantMeta = {
+    ...(m.id == null ? {} : { serverId: String(m.id) }),
+    ...(m.replyToId == null ? {} : { replyToId: String(m.replyToId) }),
+    ...(m.variantId == null ? {} : { variantId: m.variantId }),
+  }
+
   if (type === "user") {
     const images = (m.images ?? []).filter(isTrustedAttachmentUrl)
+    const variantIds = (m.variantIds ?? []).filter((id) => typeof id === "string" && id.length > 0)
     return {
       id: newId(),
+      serverId: m.id == null ? undefined : String(m.id),
       type,
       content: m.content,
       time,
       ...(images.length > 0 ? { images } : {}),
+      ...(variantIds.length > 0
+        ? { variantIds, selectedVariantId: m.selectedVariantId ?? null }
+        : {}),
     }
   }
 
@@ -327,6 +354,7 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     const parsed = parsePersistedToolCall(m.content)
     return {
       id: newId(),
+      ...variantMeta,
       type,
       content: "",
       toolName: parsed[0]?.name,
@@ -342,6 +370,7 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
     const resources = evidenceResources(parsed.status, parsed.resources)
     return {
       id: newId(),
+      ...variantMeta,
       type,
       content: parsed.output,
       toolName: parsed.name,
@@ -358,6 +387,7 @@ export function mapHistoryMessage(m: HistoryMessageVO): StreamMessage {
 
   return {
     id: newId(),
+    ...variantMeta,
     type,
     content: m.content,
     time,
@@ -524,16 +554,13 @@ export function useAgentStream() {
     [],
   )
 
-  const send = useCallback(
+  /** 两类请求（新提问 / 重新生成）共用一条流的生命周期与中止语义。 */
+  const runStream = useCallback(
     async (
-      message: string,
-      threadId: string,
-      urls: string[] = [],
-      /**
-       * 响应头到达时立刻回调一次。用户气泡的「已受理」必须在这里翻，
-       * 不能等整条流结束——流中途断掉时那一轮**确实已经受理**，
-       * 等流结束再标会把它写成「未确认」。
-       */
+      invoke: (
+        handlers: Parameters<typeof streamChat>[1],
+        signal: AbortSignal,
+      ) => Promise<void>,
       onAccepted?: () => void,
     ): Promise<SendOutcome> => {
       setIsStreaming(true)
@@ -555,12 +582,7 @@ export function useAgentStream() {
       }
 
       try {
-        await streamChat(
-          {
-            message,
-            threadId,
-            imageUrls: urls.length > 0 ? urls : undefined,
-          },
+        await invoke(
           {
             onEvent(dto) {
               if (eventToken !== eventSeq.current) return
@@ -605,6 +627,46 @@ export function useAgentStream() {
     [],
   )
 
+  const send = useCallback(
+    (
+      message: string,
+      threadId: string,
+      urls: string[] = [],
+      /**
+       * 响应头到达时立刻回调一次。用户气泡的「已受理」必须在这里翻，
+       * 不能等整条流结束——流中途断掉时那一轮**确实已经受理**，
+       * 等流结束再标会把它写成「未确认」。
+       */
+      onAccepted?: () => void,
+    ) =>
+      runStream(
+        (handlers, signal) =>
+          streamChat(
+            { message, threadId, imageUrls: urls.length > 0 ? urls : undefined },
+            handlers,
+            signal,
+          ),
+        onAccepted,
+      ),
+    [runStream],
+  )
+
+  /**
+   * 按服务端存下的原文重新生成某一轮。
+   *
+   * <p>不推新的用户气泡：这一轮提问本来就在。新生成的内容照常追加到流末尾，
+   * 完成后由调用方重新读历史，以服务端选中的版本为准。
+   */
+  const regenerate = useCallback(
+    (threadId: string, userMessageId: string, onAccepted?: () => void) =>
+      runStream(
+        (handlers, signal) =>
+          streamChat({ threadId, userMessageId }, handlers, signal, "/agent/chat/regenerate"),
+        onAccepted,
+      ),
+    [runStream],
+  )
+
   const abort = useCallback(() => {
     // 闸门递增：被中止的流随后送来的事件不算数（收尾清理照旧）。
     eventSeq.current += 1
@@ -645,6 +707,7 @@ export function useAgentStream() {
     isStreaming,
     resources,
     send,
+    regenerate,
     abort,
     pushUser,
     setMessages: setMessagesAll,

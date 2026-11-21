@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactElement } from "react"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, Bot, FileCheck2, ScanEye } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { BrandKicker, BrandPanel } from "./BrandPanel"
@@ -19,21 +19,21 @@ const ENTRIES = [
     code: "01",
     title: "影像分析",
     body: "上传眼底照片，得到一条可复核的判读记录",
-    glyph: "◎",
+    icon: ScanEye,
   },
   {
     to: "/#agent",
     code: "02",
     title: "Agent 协作",
     body: "与诊断 Agent 对话，工具调用回执全程可见",
-    glyph: "✳",
+    icon: Bot,
   },
   {
     to: "#record",
     code: "03",
     title: "证据与复核",
     body: "概率、质量门与复核状态写在同一张记录上",
-    glyph: "◇",
+    icon: FileCheck2,
   },
 ]
 
@@ -126,7 +126,7 @@ export function LandingHero(): ReactElement {
             <li key={entry.code}>
               <Link className="brand-panel brand-panel--soft landing-hero__entry" to={entry.to}>
                 <span className="landing-hero__entry-glyph" aria-hidden="true">
-                  {entry.glyph}
+                  <entry.icon size={20} strokeWidth={1.75} />
                 </span>
                 <span className="landing-hero__entry-title">{entry.title}</span>
                 <span className="landing-hero__entry-body">{entry.body}</span>

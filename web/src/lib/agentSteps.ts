@@ -86,7 +86,19 @@ export function toolLabel(name: string | undefined): string {
 /** 线程里的一段：一条普通消息，或一整块执行过程。 */
 export type ThreadItem =
   | { type: "message"; message: StreamMessage }
-  | { type: "process"; id: string; steps: AgentStep[] }
+  /**
+   * `active` 表示「这一块仍可能真的在跑」：只有流仍在进行、且它是最后一块时为真。
+   * 页面级 `streaming` 不能直接当这个判据（新回合一开始它就为真），否则历史回合
+   * 会显示成「正在执行」。
+   */
+  | {
+      type: "process"
+      id: string
+      steps: AgentStep[]
+      active: boolean
+      /** 所属回合（从 1 开始）：版本切换器要挂在这一轮的最后一条之后。 */
+      round?: number
+    }
 
 /** 会进入执行过程的四种真实事件。 */
 function isProcessMessage(msg: StreamMessage): boolean {
@@ -397,6 +409,13 @@ export function buildThread(
 ): ThreadItem[] {
   const items: ThreadItem[] = []
   let index = 0
+  // 与 deriveResources 同一口径：每条用户提问切一回合。
+  let round = 0
+  const roundBefore: number[] = []
+  for (const message of messages) {
+    if (message.type === "user") round += 1
+    roundBefore.push(round)
+  }
 
   while (index < messages.length) {
     const current = messages[index]
@@ -415,7 +434,13 @@ export function buildThread(
     }
 
     if (steps.length > 0) {
-      items.push({ type: "process", id: `process-${blockId}`, steps })
+      items.push({
+        type: "process",
+        id: `process-${blockId}`,
+        steps,
+        active: false,
+        round: roundBefore[Math.max(0, index - 1)],
+      })
     }
   }
 
@@ -429,6 +454,7 @@ export function buildThread(
   for (const item of items) {
     if (item.type !== "process") continue
     const mayStillRun = streaming && item === lastItem
+    item.active = mayStillRun
     if (mayStillRun) continue
     for (const step of item.steps) {
       if (step.kind === "tool" && step.state === "running") {
@@ -439,6 +465,40 @@ export function buildThread(
   }
 
   return items
+}
+
+/**
+ * 执行过程标题：一句话说明「现在在做什么 / 这一轮做完了什么」。
+ *
+ * <p>只从已有步骤推导，不生成任何新事实：跑着的步骤决定进行态措辞，
+ * 结束后的计数来自真实终态。`active` 必须来自 `buildThread` 的 `item.active`，
+ * 不能用页面级 `streaming`——否则历史回合会被说成「正在生成」。
+ */
+export function processHeadline(steps: AgentStep[], active: boolean): string {
+  const running = steps.find((step) => step.state === "running")
+  if (running) {
+    if (running.kind === "reasoning") return "正在推理…"
+    if (running.kind === "tool") {
+      const name = running.toolName
+      // 认得的工具用中文动作；不认得的（用户自配 MCP）不硬译，说「在执行工具」。
+      if (name && toolLabel(name) !== name) return `正在${toolLabel(name)}…`
+      return "正在执行工具…"
+    }
+  }
+  if (active) return "正在生成回答…"
+
+  const tools = steps.filter((step) => step.kind === "tool")
+  const unfinished = tools.filter(
+    (step) =>
+      step.state === "error" ||
+      step.state === "timeout" ||
+      step.state === "cancelled",
+  ).length
+  if (unfinished > 0) return `执行过程 · ${unfinished} 步未完成`
+  const pending = tools.filter((step) => step.state === "pending").length
+  if (pending > 0) return `执行过程 · ${pending} 步未确认`
+  if (tools.length > 0) return `执行过程 · ${tools.length} 个工具调用`
+  return "执行过程"
 }
 
 /** 步骤状态 → 中文标签。 */

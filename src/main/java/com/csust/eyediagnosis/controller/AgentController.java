@@ -76,7 +76,8 @@ public class AgentController {
 
         // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
         // 图片附件随消息一起落库：刷新/换会话后资源栏要能恢复，不能只在内存里活一轮。
-        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage(), request.getImageUrls());
+        long userMessageId = chatHistoryService.saveUserMessage(
+                threadId, userId, request.getMessage(), request.getImageUrls());
 
         // 日志只记录关联 ID 与长度：症状、病史等原文不得进入运行日志。
         // 采用 ui 侧的匿名化口径（userIdHash），并在其后追加 #111 的 imageCount。
@@ -86,9 +87,20 @@ public class AgentController {
                 request.getMessage() == null ? 0 : request.getMessage().length(),
                 request.getImageUrls() == null ? 0 : request.getImageUrls().size());
 
-        return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
-                request.getEnabledMcpServers(), request.getDisableMcpDefault())
-                .filter(Objects::nonNull)
+        return toSse(diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
+                request.getEnabledMcpServers(), request.getDisableMcpDefault(),
+                new DiagnosisAgent.TurnStamp(userMessageId, UUID.randomUUID().toString())), requestId);
+    }
+
+    /**
+     * 事件流 → SSE 的统一出口。
+     *
+     * <p>正常结束补 {@code event: done}；出错时只回一句固定文案——提供方异常
+     * 文本可能夹带请求内容，分类与关联 ID 只进日志。
+     */
+    private Flux<ServerSentEvent<String>> toSse(Flux<com.csust.eyediagnosis.model.dto.agent.MessageDTO> stream,
+                                                String requestId) {
+        return stream.filter(Objects::nonNull)
                 .map(data -> ServerSentEvent.<String>builder()
                         .data(toJson(data))
                         .build())
@@ -99,7 +111,6 @@ public class AgentController {
                                 .build()
                 ))
                 .onErrorResume(error -> {
-                    // 提供方异常文本可能夹带请求内容，只记录分类与关联 ID
                     log.warn("Agent 流式对话失败, requestId={}, errorType={}", requestId, error.getClass().getSimpleName());
                     log.debug("Agent 流式对话失败详情, requestId={}", requestId, error);
                     return Flux.just(ServerSentEvent.<String>builder()
@@ -107,6 +118,75 @@ public class AgentController {
                             .data("系统繁忙，请稍后重试")
                             .build());
                 });
+    }
+
+    /**
+     * @param enabledMcpServers  可选：与原回合一致的会话级 MCP 选择。本仓库的 web
+     *                           客户端不发送它（发送侧本来就不传），所以「再跑一遍」
+     *                           与首轮等价；其他客户端若按回合自定义过工具集合，
+     *                           应在这里原样带上，否则会退回默认解析。
+     * @param disableMcpDefault  可选：同上。用户关掉 MCP 时不带上的话，重新生成
+     *                           会按默认重新加载工具——那是用户没有同意的外部调用。
+     */
+    public record RegenerateRequest(String threadId, Long userMessageId,
+                                    List<String> enabledMcpServers, Boolean disableMcpDefault) {}
+
+    public record SelectVariantRequest(String threadId, Long userMessageId, String variantId) {}
+
+    /**
+     * 重新生成某一轮的回答。
+     *
+     * <p>按**历史里存下的原文与附件**再跑一遍，不新增用户消息、不改写旧版本：
+     * 每次生成是一组新的 {@code variantId}，生成正常结束后才切到新版本。
+     * 代理本身不带跨轮上下文，重跑一轮与当初发送它在语义上等价。
+     */
+    @PostMapping(value = "/chat/regenerate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> regenerate(@RequestBody RegenerateRequest request,
+                                                    HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        Long userId = loginUser.getId();
+        if (request.threadId() == null || request.threadId().isBlank()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "缺少会话标识");
+        }
+        ChatHistoryService.UserTurn turn = chatHistoryService.loadUserTurn(
+                request.threadId(), userId, request.userMessageId());
+        // 附件在读取时按当前归属复核过；这里再走一次入口校验，口径与首轮一致。
+        assertOwnedImages(turn.images(), userId);
+
+        // 升级前的回答没有版本信息：先归入「旧版本」，否则新版本写入后旧行
+        // 既隐藏不掉，切换器也会少算一版。
+        chatHistoryService.adoptLegacyAnswers(request.threadId(), userId, turn.messageId());
+
+        String requestId = UUID.randomUUID().toString();
+        log.info("Agent 重新生成请求, requestId={}, threadId={}, userIdHash={}, messageLength={}, imageCount={}",
+                requestId, request.threadId(), anonymize(userId),
+                turn.text() == null ? 0 : turn.text().length(), turn.images().size());
+
+        return toSse(diagnosisAgent.stream(turn.text(),
+                        turn.images().isEmpty() ? null : turn.images(),
+                        request.threadId(), userId,
+                        request.enabledMcpServers(), request.disableMcpDefault(),
+                        new DiagnosisAgent.TurnStamp(turn.messageId(), UUID.randomUUID().toString())),
+                requestId);
+    }
+
+    @PostMapping("/chat/select-variant")
+    public BaseResponse<ChatHistoryService.TurnVariants> selectVariant(@RequestBody SelectVariantRequest request,
+                                                                      HttpServletRequest httpRequest) {
+        User loginUser = userService.getLoginUser(httpRequest);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        if (request.threadId() == null || request.userMessageId() == null || request.variantId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "缺少会话、消息或版本标识");
+        }
+        chatHistoryService.selectVariant(request.threadId(), loginUser.getId(),
+                request.userMessageId(), request.variantId());
+        return ResultUtils.success(chatHistoryService.variants(
+                request.threadId(), loginUser.getId(), request.userMessageId()));
     }
 
     @GetMapping("/history/{threadId}")

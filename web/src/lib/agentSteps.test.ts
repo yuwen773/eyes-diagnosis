@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import type { StreamMessage } from "./agentStream"
 import {
   buildThread,
+  processHeadline,
   REDACTED,
   sanitizeToolArgs,
   stepStateLabel,
@@ -582,5 +583,65 @@ describe("stateFromToolResult（失败类别）", () => {
       false,
     )
     expect(stepsOf(items)[0].state).toBe("error")
+  })
+})
+
+describe("processHeadline · 进行态与完成态", () => {
+  const running = (partial: Partial<AgentStep>): AgentStep => ({
+    id: "s1",
+    kind: "tool",
+    label: "检索知识库文档",
+    state: "running",
+    ...partial,
+  })
+
+  it("工具执行中按真实工具名说「正在做什么」，不显示原始函数名", () => {
+    expect(processHeadline([running({ toolName: "searchDocuments" })], true)).toBe(
+      "正在检索知识库文档…",
+    )
+    expect(processHeadline([running({ toolName: "analyzeEyeImage" })], true)).toBe(
+      "正在分析眼底图像…",
+    )
+  })
+
+  it("不认得的工具（用户自配 MCP）不硬译成中文动作", () => {
+    expect(processHeadline([running({ toolName: "my_mcp_tool" })], true)).toBe("正在执行工具…")
+  })
+
+  it("推理进行中说「正在推理」", () => {
+    expect(processHeadline([running({ kind: "reasoning", label: "模型推理" })], true)).toBe(
+      "正在推理…",
+    )
+  })
+
+  it("步骤都结束了但这一块仍是最后一块，才说「正在生成回答」", () => {
+    const done: AgentStep = { id: "s1", kind: "tool", label: "检索", state: "done" }
+    expect(processHeadline([done], true)).toBe("正在生成回答…")
+    expect(processHeadline([done], false)).toBe("执行过程 · 1 个工具调用")
+  })
+
+  it("结束后按真实终态计数：失败优先于未确认，未确认优先于普通计数", () => {
+    const failed: AgentStep = { id: "s1", kind: "tool", label: "检索", state: "error" }
+    const pending: AgentStep = { id: "s2", kind: "tool", label: "检索", state: "pending" }
+    const done: AgentStep = { id: "s3", kind: "tool", label: "检索", state: "done" }
+    expect(processHeadline([failed, done], false)).toBe("执行过程 · 1 步未完成")
+    expect(processHeadline([pending, done], false)).toBe("执行过程 · 1 步未确认")
+    expect(processHeadline([done, done], false)).toBe("执行过程 · 2 个工具调用")
+    expect(processHeadline([], false)).toBe("执行过程")
+  })
+
+  it("buildThread 标记的 active 只属于最后一块，历史块不会假装在跑", () => {
+    const items = buildThread(
+      [
+        msg({ id: "r1", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c1" }] }),
+        msg({ id: "a1", type: "assistant", content: "第一轮回答" }),
+        msg({ id: "r2", type: "tool-request", toolCalls: [{ name: "searchDocuments", args: {}, id: "c2" }] }),
+      ],
+      true,
+    )
+    const processes = items.filter((item) => item.type === "process")
+    expect(processes).toHaveLength(2)
+    expect(processes[0].type === "process" && processes[0].active).toBe(false)
+    expect(processes[1].type === "process" && processes[1].active).toBe(true)
   })
 })

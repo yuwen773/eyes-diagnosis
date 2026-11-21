@@ -137,7 +137,10 @@ public class BuiltinCorpusSeeder implements ApplicationRunner {
             // 分块 id 必须稳定：重复播种时靠它覆盖旧向量，而不是不断追加。
             // 稳定 id 依赖 ChromaVectorStore.doAdd 走 upsert（同名即覆盖）。
             String chunkId = BuiltinCorpus.CORPUS_TAG + "_" + slug + "_chunk_" + i;
-            result.add(new Document(chunkId, chunks.get(i).getText(), chunks.get(i).getMetadata()));
+            // 与用户上传文档同口径：片段序号显式入元数据，正文引用按 documentId#chunkIndex 校验。
+            Map<String, Object> chunkMetadata = new HashMap<>(chunks.get(i).getMetadata());
+            chunkMetadata.put("chunkIndex", i);
+            result.add(new Document(chunkId, chunks.get(i).getText(), chunkMetadata));
         }
         return result;
     }

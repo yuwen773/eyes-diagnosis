@@ -74,7 +74,9 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
         String keyNames = keyNamesOf(request.getArguments());
 
         // 上一次调用若异常退出可能留下残渣：开始前清空，避免串到这一次。
-        ToolResourceContext.drain();
+        // begin() 同时登记归属线程：工具若被调度到别的线程，登记证据会当场失败，
+        // 而不是写进一个没人取走的列表、静默丢掉。
+        ToolResourceContext.begin();
         sink.started(id, name, argsDigest, keyNames);
         try {
             ToolCallResponse response = handler.call(request);
@@ -111,6 +113,10 @@ public final class ToolExecutionInterceptor extends ToolInterceptor {
             ToolResourceContext.drain();
             sink.finished(id, name, false, ToolStepContract.categorize(e, false));
             throw e;
+        } finally {
+            // 正常情况下各分支已 drain；这里兜住 Error（如 OOM）路径，
+            // 不让线程 id 残留在 ACTIVE_THREADS 里污染后续调用。
+            ToolResourceContext.end();
         }
     }
 
