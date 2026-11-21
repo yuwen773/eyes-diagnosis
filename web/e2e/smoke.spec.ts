@@ -293,7 +293,10 @@ test.describe("验收冒烟", () => {
 
     // 流结束了但后端没有 tool-response：不能一直挂着「执行中」，
     // 也不能说「完成」——只能说「未确认」。
-    await expect(page.getByText("未确认")).toBeVisible({ timeout: 15_000 })
-    await expect(page.locator(".thought__state").filter({ hasText: "执行中" })).toHaveCount(0)
+    // 断言限定在状态徽标上：摘要行「执行过程 · 1 步未确认」也含这三个字，
+    // 整页 getByText 会同时命中两处，strict mode 直接报错。
+    const state = page.locator(".thought__state")
+    await expect(state.filter({ hasText: "未确认" })).toBeVisible({ timeout: 15_000 })
+    await expect(state.filter({ hasText: "执行中" })).toHaveCount(0)
   })
 })
