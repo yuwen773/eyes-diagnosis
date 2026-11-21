@@ -55,6 +55,15 @@ const TAG_BY_KIND: Record<FaultKind, string> = {
   info: "NOTE",
 }
 
+/**
+ * 认证接口 40000 会带回这几句业务文案（与后端 `UserConstant` 对应）。
+ * 只认字面相等：后端换了措辞就退回通用说法，宁可含糊也不把原因说错。
+ */
+const AUTH_BACKEND_MESSAGES = {
+  credentials: "用户不存在或密码错误",
+  accountRepeated: "账号重复",
+} as const
+
 /** 手工造一个故障（校验失败、纯提示这类不走接口的场合）。 */
 export function fault(spec: {
   severity: FaultSeverity
@@ -174,6 +183,31 @@ export function faultFromError(
         code,
         action,
       })
+    }
+
+    // 认证接口的 40000 携带的是能直接给用户看的业务文案（见后端 UserConstant），
+    // 别让它落进通用的「条件不对」：输错密码与账号重复必须各自说清。
+    if (code === 40000 && (intent === "login" || intent === "register")) {
+      if (cause.message === AUTH_BACKEND_MESSAGES.accountRepeated) {
+        return fault({
+          severity: "attention",
+          kind: "auth",
+          title: "这个账号已经注册过了",
+          detail: "换一个账号，或直接用这个账号登录。",
+          code,
+          action,
+        })
+      }
+      if (cause.message === AUTH_BACKEND_MESSAGES.credentials) {
+        return fault({
+          severity: "critical",
+          kind: "auth",
+          title: "账号或密码不对",
+          detail: "再试一次，或确认你注册的是这个账号。",
+          code,
+          action,
+        })
+      }
     }
 
     if (code === 40000) {

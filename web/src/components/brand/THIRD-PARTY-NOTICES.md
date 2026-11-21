@@ -1,9 +1,10 @@
 # 第三方来源与许可
 
-本目录下有**两组**上游第三方组件的 vendor 副本，不是本项目原创：
+本目录下有**三组**上游第三方组件的 vendor 副本，不是本项目原创：
 
 - `Prism.tsx` + `Prism.css` —— React Bits · **Prism**（首屏方案 B）；
-- `beamsEngine.ts` + `beamsMount.ts` —— React Bits · **Beams**（首屏方案 A 与融合候选 C 的动态光场）。
+- `beamsEngine.ts` + `beamsMount.ts` —— React Bits · **Beams**（首屏方案 A 与融合候选 C 的动态光场）；
+- `Threads.tsx` + `Threads.css` —— React Bits · **Threads**（认证页背景，2026-11-21）。
 
 其余文件（`HeroPrism.tsx`、`HeroFusion.tsx`、`OpticFlow.tsx`、`HeroCompareStage.tsx`、
 `LandingHero.tsx`、`BrandPanel.tsx`、`BrandFooter.tsx` 及各自的测试）由本项目编写。
@@ -196,6 +197,65 @@ E-09 一并适用于 Beams：本仓库是公开的**非商业演示 / 学术项�
 
 E-09 的融合候选（`HeroFusion.tsx`）**没有**复制任何新的上游源码：它复用上面两份已
 记录的 vendor 副本，其余（棱镜、色散扇、细纤维）是自研 SVG / CSS。
+
+---
+
+## React Bits · Threads（认证页背景，2026-11-21）
+
+| 项 | 内容 |
+|----|------|
+| 上游 | https://github.com/DavidHDev/react-bits |
+| 源文件 | `src/content/Backgrounds/Threads/Threads.jsx` + `Threads.css`（JavaScript + CSS 版本） |
+| **固定 commit** | **`701a8acc34f718b305d1ff0cc7d4700df0e1f1c9`**（2026-11-21 取 `main` 当时该文件的最新提交） |
+| 取用时间 | 2026-11-21 |
+| 作者 | David Haz |
+| 许可 | MIT License **+ Commons Clause License Condition v1.0**（Copyright (c) 2026 David Haz） |
+| 用在何处 | `AuthShell` 的认证页背景（登录 / 注册），全页唯一 GPU 渲染器 |
+| 署名位置 | 本文件 + `Threads.tsx` 文件头，两处都保留 |
+
+> 上游同样没有给这个组件打版本标签，**只认 commit SHA**。换了 SHA 就要重做逐字比对。
+
+### 与固定 commit 的逐字比对（2026-11-21）
+
+| 着色器 | 上游 SHA-256 前 12 位 | 本仓库 | 结论 |
+|---|---|---|---|
+| LINE_VERTEX | `8cb69f327fa9` | `8cb69f327fa9` | 逐字一致 |
+| LINE_FRAGMENT | `ad2fec632eab` | `ad2fec632eab` | 逐字一致 |
+| SCREEN_VERTEX | `60e96dee6785` | `60e96dee6785` | 逐字一致 |
+| SCREEN_FRAGMENT | `dc108d18dae2` | `dc108d18dae2` | 逐字一致 |
+
+> 计算口径与 Beams 一节相同：取模板字符串**两个反引号之间的全部内容**，先把行尾统一成
+> `LF` 再算 SHA-256。换行符不统一会得到完全不同的哈希，下次比对请沿用这个口径。
+
+### 相对上游的改动
+
+| 位置 | 改动 | 理由 |
+|---|---|---|
+| `Threads.tsx` | 补 TypeScript 类型标注（含 props 与 settings），纳入 `tsc -b` 门禁 | 与项目其余代码同一套类型检查 |
+| `Threads.tsx` | `prefers-reduced-motion` 从「挂载时读一次」改为**实时订阅**（`matchMedia` 的 `change`），且 reduce 期间**不续帧、不唤醒**（指针划过与可见性变化都不重启循环） | 用户运行中切换系统动效偏好要当场停帧；只判断 `moving` 时，鼠标跟随仍会让循环重新开跑 |
+| `Threads.tsx` | 新增 `onUnavailable`：WebGL2 不可用、着色器编译/链接失败、`webglcontextlost` 时通知调用方 | 认证页必须有静态降级，不能留一块空画布 |
+| `Threads.tsx` | 删去渲染期写 ref 的 `settingsRef.current = settings`，改到 effect 里 | 避免 React Hooks 的 refs-during-render 规则 |
+| `Threads.tsx` | 挂载末尾显式 `wake()`；删掉上游「每次渲染都叫醒」的无依赖 effect | 同一目的（首帧就起循环），不每渲染都排帧 |
+| `Threads.tsx` | 去掉上游的 `{...rest}` 透传，只保留 `className` | 这里只做画布，不把它当通用容器 |
+
+渲染流程（实例化纤维带 → 离屏合成、DPR 上限 2、`MAX_RENDER_DIM` 截断、鼠标分离、
+可见性/离屏停帧）与上游一致。
+
+### 分发授权结论
+
+Threads 与 Prism / Beams 出自同一上游、同一份 `LICENSE.md`（MIT + Commons Clause v1.0，
+`Copyright (c) 2026 David Haz`），限制相同：**不得销售、再许可或再分发「组件本身」——
+单独、打包或以移植版的形式。**
+
+Prism 一节记录的**风险接受**（2026-11-16，负责人确认）在本轮一并适用于 Threads：本仓库是
+公开的**非商业演示 / 学术项目**，组件只作为认证页背景的一部分使用，不单独售卖、不再许可、
+不作为组件库分发，版权与许可声明保留在本文件与源文件头。若后续商业化、改为组件库，或
+上游提出异议，应重新评估。
+
+> **与 DESIGN.md 的关系**：`DESIGN.md` 曾记录「认证页不要再引入 GPU 渲染器」（U6 的
+> 决定）。Iris 2.2 由产品负责人于 2026-11-21 明确推翻这一条：认证页改为
+> Threads 主视觉 + 纯 CSS 光学资产降级，仍满足「同一时刻只有一个 GPU 主视觉」。
+> 该决定需在 `DESIGN.md` 下次改版时写回，规则正文以 `DESIGN.md` 为准。
 
 ---
 

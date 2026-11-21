@@ -1,7 +1,7 @@
 import { vi } from "vitest"
 
 /**
- * Prism 生命周期测试用的浏览器桩。
+ * Prism / Threads 生命周期测试用的浏览器桩。
  *
  * <p>jsdom 没有 WebGL2、rAF 调度、IntersectionObserver 回调与真实可见性状态，
  * 这里只模拟「引擎会调用到的接口」与「能观察到调度的开关」，不模拟像素。
@@ -48,6 +48,17 @@ export function installFakeWebgl2() {
     RGBA: 0x1908,
     UNSIGNED_BYTE: 0x1401,
     TRIANGLES: 0x0004,
+    TRIANGLE_STRIP: 0x0005,
+    ARRAY_BUFFER: 0x8892,
+    STATIC_DRAW: 0x88e4,
+    FLOAT: 0x1406,
+    FRAMEBUFFER: 0x8d40,
+    COLOR_ATTACHMENT0: 0x8ce0,
+    COLOR_BUFFER_BIT: 0x4000,
+    BLEND: 0x0be2,
+    ONE: 1,
+    ONE_MINUS_SRC_ALPHA: 0x0303,
+    NEAREST: 0x2600,
     TEXTURE0: 0x84c0,
     createShader: vi.fn(() => ({})),
     shaderSource: vi.fn(),
@@ -84,6 +95,8 @@ export function installFakeWebgl2() {
     viewport: vi.fn(),
     useProgram: vi.fn(),
     uniform2f: vi.fn(),
+    uniform3f: vi.fn(),
+    uniform4f: vi.fn(),
     uniformMatrix3fv: vi.fn(),
     uniform1f: vi.fn(),
     uniform1i: vi.fn(),
@@ -91,6 +104,26 @@ export function installFakeWebgl2() {
     drawArrays: vi.fn(() => {
       stats.draws += 1
     }),
+    // Threads 用 instanced 画纤维带，并自己开一张离屏纹理做合成。
+    drawArraysInstanced: vi.fn(() => {
+      stats.draws += 1
+    }),
+    createBuffer: vi.fn(() => ({})),
+    bindBuffer: vi.fn(),
+    bufferData: vi.fn(),
+    deleteBuffer: vi.fn(),
+    createFramebuffer: vi.fn(() => ({})),
+    bindFramebuffer: vi.fn(),
+    framebufferTexture2D: vi.fn(),
+    deleteFramebuffer: vi.fn(),
+    getAttribLocation: vi.fn(() => 0),
+    enableVertexAttribArray: vi.fn(),
+    vertexAttribPointer: vi.fn(),
+    clearColor: vi.fn(),
+    clear: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    blendFunc: vi.fn(),
     getExtension: vi.fn((name: string) =>
       name === "WEBGL_lose_context" ? { loseContext } : null,
     ),

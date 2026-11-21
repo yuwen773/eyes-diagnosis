@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { AuthShell } from "@/components/AuthShell"
 import { IrisFormAlert } from "@/components/system/IrisFormAlert"
 import { useFormSubmit } from "@/components/system/useFormSubmit"
@@ -11,14 +11,21 @@ import { faultFromError, validationFault, type Fault } from "@/lib/faults"
 export function LoginPage() {
   const { signIn } = useSession()
   const navigate = useNavigate()
+  const location = useLocation()
   const [params] = useSearchParams()
   const redirect = safeRedirect(params.get("redirect"))
 
-  const [account, setAccount] = useState("")
+  // 注册页回执：成功创建后跳到这里，带着账号与本页提示。
+  const receipt = location.state as { created?: boolean; account?: string } | null
+
+  const [account, setAccount] = useState(receipt?.created ? (receipt.account ?? "") : "")
   const [password, setPassword] = useState("")
   const [fault, setFault] = useState<Fault | null>(null)
   const [field, setField] = useState<"account" | "password" | null>(null)
   const [pending, setPending] = useState(false)
+  const [notice, setNotice] = useState(
+    receipt?.created ? "请用刚才的账号登录。" : null,
+  )
   const formRef = useRef<HTMLFormElement>(null)
 
   const submit = useFormSubmit(async () => {
@@ -38,6 +45,7 @@ export function LoginPage() {
     setPending(true)
     setFault(null)
     setField(null)
+    setNotice(null)
     try {
       await signIn(account.trim(), password)
       navigate(redirect, { replace: true })
@@ -64,6 +72,10 @@ export function LoginPage() {
       sub="用已有账号登录。未登录时也可以先看一份示例记录。"
     >
       <form className="form" ref={formRef} onSubmit={submit} noValidate>
+        {notice && !message ? (
+          <IrisFormAlert severity="info" title="账号已创建" detail={notice} />
+        ) : null}
+
         {message && !field ? (
           <IrisFormAlert
             severity={message.tone}
@@ -128,7 +140,7 @@ export function LoginPage() {
             }}
             placeholder="••••••••"
             aria-invalid={field === "password" || undefined}
-            aria-describedby={field === "password" ? "password-error" : undefined}
+            aria-describedby={`password-hint${field === "password" ? " password-error" : ""}`}
           />
           {field === "password" && message ? (
             <IrisFormAlert
@@ -138,6 +150,9 @@ export function LoginPage() {
               field
             />
           ) : null}
+          <p className="field__hint" id="password-hint">
+            忘记密码？请联系管理员重置。
+          </p>
         </div>
 
         <button className="btn btn--block" type="submit" disabled={pending}>

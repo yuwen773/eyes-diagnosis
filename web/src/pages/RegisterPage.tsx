@@ -49,7 +49,11 @@ export function RegisterPage() {
         userPassword: password,
         checkPassword: confirm,
       })
-      navigate(`/login?redirect=${encodeURIComponent(redirect)}`, { replace: true })
+      navigate(`/login?redirect=${encodeURIComponent(redirect)}`, {
+        replace: true,
+        // 注册成功后要给出回执：登录页据此提示「账号已创建」并预填账号。
+        state: { created: true, account: account.trim() },
+      })
     } catch (cause) {
       setFault(faultFromError(cause, { intent: "register" }))
       setField(null)
