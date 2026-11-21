@@ -3,7 +3,7 @@
 **默认跑 L1。** 改一两个文件就启动 `scripts/verify.sh`（全量）既慢又浪费，
 真实后果不是「更安全」，而是人和 Agent 开始用「少跑」换速度——那才是真正降低门禁。
 
-入口只有一个：`scripts/verify-fast.sh`。`scripts/verify.sh` 原样保留，行为不变，它是 L3。
+入口只有一个：`scripts/verify-fast.sh`。`scripts/verify.sh` 不被它取代，仍是 L3，自己负责一次性服务栈的编排与资源回收。
 
 ---
 
@@ -14,7 +14,7 @@
 | **L0** | git 差异摘要 + 受影响语言的编译/类型检查（`mvn test-compile`、`tsc -b`），**不执行任何用例** | 十几秒到 1 分钟（增量） | 只改了注释、文档、重命名；想先确认「它能不能编译」 |
 | **L1**（默认） | 你显式点名的 Java 用例与/或 Vitest 文件 | 单个类 20–60s；web 单文件 5–15s | 绝大多数改动：改了一个类 / 一个组件，语义边界没跨出去 |
 | **L2** | L1 + 一次性 MySQL 8 + Redis + Chroma（隔离端口） | 集成套件 1–5 分钟 | 改动涉及**数据库状态、schema/迁移、权限与角色、RAG 证据、Spring 上下文装配** |
-| **L3** | `scripts/verify.sh`：全量 `mvn test` + 两个 MySQL 集成门禁 | 10 分钟以上 | 准备合并、准备交付、或 L1/L2 结果无法解释时 |
+| **L3** | `scripts/verify.sh`：全量 `mvn test` 三遍（单测 / MySQL 集成门禁 / 隔离库协作套件）；一次性 MySQL + Redis 走 `scripts/lib/docker-test-harness.sh`（随机端口、命名卷、退出断言无残留） | 10 分钟以上 | 准备合并、准备交付、或 L1/L2 结果无法解释时 |
 
 `--level` 不变时也可以叠加：`--static` 在任何级别前加一段 L0，`--db` 把 L1 升成 L2。
 

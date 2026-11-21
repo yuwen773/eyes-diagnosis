@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.36
         env:
           MYSQL_DATABASE: diagnosis_ci
           MYSQL_USER: eyeuser
@@ -108,7 +108,7 @@ jobs:
           --health-timeout=5s
           --health-retries=10
       redis:
-        image: redis:7-alpine
+        image: redis:7.2.4
         ports:
           - 6379:6379
         options: >-
@@ -396,7 +396,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.36
         env:
           MYSQL_DATABASE: issue20_test
           MYSQL_USER: issue20
@@ -528,7 +528,7 @@ jobs:
         run-order: [alphabetical, reversealphabetical]
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.36
         env:
           MYSQL_DATABASE: diagnosis_ci
           MYSQL_USER: eyeuser
@@ -565,7 +565,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.0.36
         env:
           MYSQL_DATABASE: product_acceptance_test
           MYSQL_USER: product_acceptance
@@ -666,3 +666,17 @@ jobs:
         env:
           CI: "true"
           E2E_BASE_URL: http://127.0.0.1:5173
+
+  docker-lifecycle:
+    # 资源回收门禁：证明测试容器在成功 / 失败 / 超时 / 中断 / 并发后都不留
+    # 容器、卷、网络残留；同时守住镜像版本与「禁止全局 prune」的静态契约。
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static Docker contract (image pins, no global prune)
+        run: bash scripts/tests/test-docker-image-pins.sh
+      - name: Docker test resource lifecycle
+        run: bash scripts/tests/test-docker-lifecycle.sh
+      - name: Reaper safety (never touch running/other-project/protected resources)
+        run: bash scripts/tests/test-docker-reaper.sh
