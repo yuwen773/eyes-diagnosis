@@ -16,6 +16,10 @@
   box-sizing: border-box;
   border-style: solid;
   border-color: var(--target-cursor-color, #ffffff);
+  /* 尺寸只随 props 变化，交给变量，动画帧里不再逐角写 width/height/borderWidth。 */
+  width: var(--tc-corner, 12px);
+  height: var(--tc-corner, 12px);
+  border-width: var(--tc-thickness, 3px) 0 0 var(--tc-thickness, 3px);
   transform-origin: 0 0;
   will-change: transform;
 }
@@ -24,6 +28,8 @@
   position: absolute;
   top: 0;
   left: 0;
+  width: var(--tc-dot, 4px);
+  height: var(--tc-dot, 4px);
   border-radius: 50%;
   background: var(--target-cursor-color, #ffffff);
   will-change: transform;
@@ -35,7 +41,7 @@
   left: 0;
   color: var(--target-cursor-color, #ffffff);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: 0.14em;

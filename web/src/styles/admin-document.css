@@ -1,0 +1,670 @@
+/* ==========================================================================
+   管理端 · 文档工作区（知识库阅读器）
+   --------------------------------------------------------------------------
+   抽屉展宽成双栏工作台：左侧读原文，右侧核对 RAG 切片。窄屏退化为
+   「原文 / 切片」页签 + 全屏面板。颜色只消费 --admin-* / --fg-*，
+   圆角取 --radius-md / --radius-lg（Management 档 8–12px）。
+   ========================================================================== */
+
+/* ── 抽屉：workspace 尺寸 ─────────────────────────────────── */
+
+/* 抽屉从内容区右侧展开，左缘不得压住 248px 管理侧栏（1280 视口下会被切掉
+   半个导航）。1440 时正好落在 1180 上限。 */
+.admin-drawer.admin-drawer--workspace {
+  width: min(1180px, calc(100vw - 248px));
+}
+
+/* 双栏工作台自己管滚动：外层不滚，两栏各自滚，头不动。 */
+.admin-drawer--workspace .admin-drawer__body {
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .admin-drawer.admin-drawer--workspace {
+    width: 100vw;
+    border-left: 0;
+    border-radius: 0;
+  }
+}
+
+/* ── 工作区骨架 ───────────────────────────────────────────── */
+
+.admin-doc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-doc__state {
+  margin: 0;
+  padding: 44px 22px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__fault {
+  margin: 22px;
+}
+
+.admin-doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex: none;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--admin-line);
+  background: color-mix(in srgb, var(--admin-surface-deep) 42%, var(--admin-surface));
+}
+
+.admin-doc__head-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-doc__head-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+  color: var(--admin-primary);
+}
+
+.admin-doc__head-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-doc__name {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--admin-text);
+  overflow-wrap: anywhere;
+}
+
+.admin-doc__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--admin-text-faint);
+}
+
+/* 分隔点挂在后一项前面：换行时点和它的内容一起走，不会留下孤零零的「·」。 */
+.admin-doc__meta > span + span::before {
+  content: "·";
+  margin-inline-end: 6px;
+  color: var(--admin-line-strong);
+}
+
+.admin-doc__meta > span {
+  white-space: nowrap;
+}
+
+.admin-doc__head-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+/* 全屏面板里没有遮罩可点，关闭是唯一出口：给足 40×40 命中区。 */
+.admin-doc__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: -8px -8px -8px 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: color var(--fast), background var(--fast);
+}
+
+.admin-doc__close:hover {
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
+}
+
+/* 窄屏：头部换行后「下载 / 关闭」会落到第二行左对齐，关闭键离右缘很远，
+   容易和旁边的下载按钮误触。把关闭键提到头部右上角，位置与宽屏一致。 */
+@media (max-width: 560px) {
+  .admin-doc__head {
+    position: relative;
+    padding-right: 64px;
+  }
+
+  .admin-doc__close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    margin: 0;
+  }
+
+  /* 窄屏元信息经常换行，分隔点会孤零零地领起一行（看着像 bullet）：
+     这里去掉点，改用更宽的间距区分各项。 */
+  .admin-doc__meta {
+    gap: 4px 12px;
+  }
+
+  .admin-doc__meta > span + span::before {
+    content: none;
+  }
+}
+
+/* ── 窄屏页签 ─────────────────────────────────────────────── */
+
+.admin-doc__tabs {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+}
+
+.admin-doc__tab {
+  padding: 8px 14px;
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast),
+    background var(--fast);
+}
+
+.admin-doc__tab:hover {
+  border-color: var(--admin-text-muted);
+  color: var(--admin-text);
+}
+
+.admin-doc__tab[aria-selected="true"] {
+  border-color: var(--admin-text-muted);
+  background: var(--admin-surface-deep);
+  color: var(--admin-text);
+}
+
+.admin-doc__tab:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* ── 双栏 ─────────────────────────────────────────────────── */
+
+.admin-doc__panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-doc__panes.is-narrow {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-doc__pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.admin-doc__pane--reader {
+  border-right: 1px solid var(--admin-line);
+}
+
+.admin-doc__pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--admin-line);
+  background: var(--admin-surface);
+}
+
+.admin-doc__pane-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--admin-text-muted);
+}
+
+.admin-doc__pane-note {
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 18px 24px;
+  overscroll-behavior: contain;
+}
+
+/* ── 原文阅读 ─────────────────────────────────────────────── */
+
+.admin-doc__reader-inner {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+}
+
+.admin-doc__reader-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 10.5px;
+  color: var(--admin-text-faint);
+}
+
+/* 格式标签只是说明，不是第三个页签：不加边框、不抢页签的视觉语言。 */
+.admin-doc__reader-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: var(--admin-text-faint);
+  letter-spacing: 0.06em;
+}
+
+.admin-doc__tools-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--admin-line-strong);
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.admin-doc__tools-link:hover {
+  color: var(--admin-primary);
+  border-color: var(--admin-primary);
+}
+
+.admin-doc__reader-note {
+  margin: 0;
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__reader-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__reader-fault {
+  margin: 0;
+}
+
+.admin-doc__spin {
+  animation: admin-doc-spin 0.9s linear infinite;
+}
+
+@keyframes admin-doc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-doc__spin {
+    animation: none;
+  }
+}
+
+/* PDF：浏览器内嵌查看器。高度跟视口走，窄屏给足正文区。 */
+.admin-doc__pdf {
+  width: 100%;
+  height: clamp(420px, 66vh, 820px);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+}
+
+/* TXT：不套等宽——长中文段落等宽字读起来反而累，行距与可换行优先。 */
+.admin-doc__text {
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+/* Markdown / DOCX：共用 .markdown-body 的基础排版，这里只放大阅读字号。 */
+.admin-doc__prose {
+  padding: 18px 20px 26px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-md);
+  background: var(--admin-surface);
+  font-size: 13.5px;
+  line-height: 1.9;
+}
+
+.admin-doc__prose {
+  overflow-wrap: anywhere;
+}
+
+.admin-doc__prose h1,
+.admin-doc__prose h2,
+.admin-doc__prose h3,
+.admin-doc__prose h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  color: var(--admin-text);
+  margin: 1.5em 0 0.5em;
+}
+
+.admin-doc__prose h1 {
+  font-size: 22px;
+}
+
+.admin-doc__prose h2 {
+  font-size: 18px;
+}
+
+.admin-doc__prose h3 {
+  font-size: 15.5px;
+}
+
+.admin-doc__prose p,
+.admin-doc__prose li {
+  color: var(--admin-text);
+}
+
+.admin-doc__prose ul,
+.admin-doc__prose ol {
+  padding-left: 1.5em;
+  list-style: revert;
+}
+
+/* Markdown 里的 --- 是章节分隔，不是下划线：给它正常的上下的留白和一条细线。 */
+.admin-doc__prose hr {
+  margin: 24px 0;
+  border: 0;
+  border-top: 1px solid var(--admin-line);
+}
+
+.admin-doc__prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.admin-doc__prose th,
+.admin-doc__prose td {
+  border: 1px solid var(--admin-line-strong);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.admin-doc__prose th {
+  background: var(--admin-surface-deep);
+  font-weight: 500;
+}
+
+.admin-doc__prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
+  border-radius: var(--radius-sm);
+}
+
+.admin-doc__prose blockquote {
+  margin: 1em 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--admin-accent);
+  color: var(--admin-text-muted);
+}
+
+.admin-doc__prose pre {
+  margin: 1em 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface-deep);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-doc__prose code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.admin-doc__prose a {
+  color: var(--admin-primary);
+}
+
+/* DOCX：mammoth 输出的是语义结构，段距按 Word 习惯略收一点。 */
+.admin-doc__prose--docx p {
+  margin: 0 0 0.9em;
+}
+
+/* ── 不支持格式 ───────────────────────────────────────────── */
+
+.admin-doc__unsupported {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 26px 24px;
+  /* 实线：这是结论页，不是可拖放的接收区；虚线只留给真正的 drop target。 */
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--admin-line) 28%, var(--admin-surface));
+}
+
+.admin-doc__unsupported-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--admin-text);
+}
+
+.admin-doc__unsupported-body {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--admin-text-muted);
+}
+
+/* ── 切片检查 ─────────────────────────────────────────────── */
+
+.admin-doc__chunk-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-doc__chunks-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__chunks-state {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--admin-text-muted);
+}
+
+.admin-doc__chunks-state p {
+  margin: 0;
+}
+
+.admin-doc__chunks-fault {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--risk-attention);
+}
+
+/* 切片未入库时的说明：这是重放结果，不是检索能看到的内容。 */
+.admin-doc__chunks-hint {
+  margin: 0;
+  padding: 8px 10px;
+  border-inline-start: 2px solid var(--admin-line-strong);
+  background: var(--admin-surface-deep);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__chunk-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-doc__chunk {
+  border: 1px solid var(--admin-line);
+  border-radius: var(--radius-sm);
+  background: var(--admin-surface);
+  /* clip 保留圆角裁剪但不建立滚动容器：overflow:hidden 会让卡片自己成为
+     最近滚动容器，sticky 的切片头就只能在卡片内粘（而卡片不滚），等于没吸顶。 */
+  overflow: clip;
+}
+
+.admin-doc__chunk-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 8px 6px 6px;
+  border-bottom: 1px solid var(--admin-line);
+  background: color-mix(in srgb, var(--admin-surface-deep) 38%, var(--admin-surface));
+}
+
+.admin-doc__chunk-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--admin-text-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-doc__chunk-toggle:hover {
+  color: var(--admin-text);
+}
+
+.admin-doc__chunk-toggle:focus-visible,
+.admin-doc__chunk-copy:focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.admin-doc__chunk-chars {
+  margin-left: auto;
+  color: var(--admin-text-faint);
+}
+
+.admin-doc__chunk-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--admin-text-faint);
+  font-size: 10.5px;
+  cursor: pointer;
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.admin-doc__chunk-copy:hover {
+  border-color: var(--admin-line-strong);
+  color: var(--admin-text);
+}
+
+.admin-doc__chunk-text {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--admin-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-doc__chunk-more {
+  justify-self: start;
+}

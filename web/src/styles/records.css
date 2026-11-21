@@ -1,8 +1,12 @@
 /**
- * 用户端 · 诊断记录 + 个人中心
+ * 用户端 · 判读记录 + 个人中心（Visual Completion U7）
  *
- * 不发明新视觉：KPI 用全站 .strip/.readout，列表按台账语言搭
- * （发丝线 + 行号 + 缩略影像 + mono 读数），详情内嵌现成的记录纸。
+ * 业务容器、数据卡、列表、表单统一到 Blue Optical Glass 品牌语言：
+ * 页面画布落在品牌工作区（.is-brand-page 银蓝/午夜蓝）；KPI 读数条与
+ * 读数卡是 Layered/Soft Glass 面板（发丝描边 + 内侧高光 + @supports 静态
+ * 替代），台账当前态与悬服用品牌钴蓝。Clinical 场景密度不变——行距、
+ * mono 读数、口径标注都保留；医学语义（RiskTag、拒识、复核状态）不动；
+ * 记录纸（RecordSheet）仍是那张白纸。
  */
 
 /* ── 页头 ─────────────────────────────────────────────── */
@@ -10,18 +14,43 @@
 .records__intro {
   display: grid;
   gap: 10px;
-  padding: clamp(30px, 5vh, 54px) 0 30px;
+  padding: clamp(20px, 3.4vh, 34px) 0 clamp(18px, 2.4vh, 26px);
 }
 
+/* 标题降一档：Clinical 的页面标题是「章节名」，不是首屏大字。
+   字号取 28–38px，衬线 400，与下面的读数条形成层级而不是压场。 */
 .records__title {
   margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 2.6vw, 38px);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
 }
 
-/* ── KPI 条 ───────────────────────────────────────────── */
+/* ── KPI 读数条（U7 重做：四格读数装进 Layered Glass 品牌面板） ── */
 
 .records__strip {
   margin-bottom: 10px;
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
 }
+
+@supports not (backdrop-filter: blur(1px)) {
+  .records__strip {
+    background: var(--brand-glass-fallback);
+  }
+}
+
+.records__strip .strip__cell {
+  border-right-color: var(--brand-line);
+}
+
+/* 台账列表本身也立在玻璃台面上：行是画布上的直接内容，靠玻璃条带分层。 */
 
 /* 口径说明：总数是全量，其余三项只覆盖当前页。不写清楚，读者会把一页的风险数
    当成名下全部风险数——那正是会让临床判断出错的读法。 */
@@ -36,13 +65,23 @@
 
 .records__list {
   margin: 0;
-  padding: 0;
+  padding: clamp(6px, 1vw, 12px) clamp(14px, 2vw, 24px);
   list-style: none;
-  border-top: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
+  -webkit-backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+  backdrop-filter: blur(var(--brand-glass-soft-blur)) saturate(1.1);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .records__list {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .records__item {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
 }
 
 .records__item:last-child {
@@ -65,7 +104,13 @@
 }
 
 .records__row:hover {
-  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 4%, transparent);
+}
+
+/* 展开中的行：左侧品牌蓝当前态细条，与 Agent 会话列表同一套语言（U7）。 */
+.records__row[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+  box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
 .records__index {
@@ -76,15 +121,15 @@
 }
 
 .records__row:hover .records__index {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 /* 缩略影像：发丝线框，装不下时就摆一块「无影像」的读数。 */
 .records__thumb {
   width: 76px;
   height: 56px;
-  border: 1px solid var(--line);
-  background: var(--surface-2);
+  border: 1px solid var(--brand-line);
+  background: color-mix(in srgb, var(--brand-canvas) 55%, var(--brand-surface));
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -98,8 +143,8 @@
 }
 
 .records__thumb-none {
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
 }
 
@@ -121,10 +166,10 @@
 
 .records__code {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fg-3);
-  border: 1px solid var(--line);
+  border: 1px solid var(--brand-line);
   padding: 1px 6px;
   flex: none;
 }
@@ -132,9 +177,17 @@
 .records__meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
   color: var(--fg-2);
+}
+
+/* 分隔点挂在后一项前面：单独一个「·」span 在窄屏换行后会孤零零留一行。 */
+.records__meta > span + span::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--fg-3);
 }
 
 /* 行尾读数：置信度 + 风险标签纵排。 */
@@ -158,9 +211,12 @@
   transition: color var(--fast);
 }
 
-.records__row:hover .records__caret,
+.records__row:hover .records__caret {
+  color: var(--brand-primary);
+}
+
 .records__row[aria-expanded="true"] .records__caret {
-  color: var(--signal-text);
+  color: var(--brand-primary);
 }
 
 /* 展开区：记录纸在台账里要缩进出一圈呼吸位。 */
@@ -196,15 +252,60 @@
   color: var(--fg-3);
 }
 
+/* ── 翻页 ─────────────────────────────────────────────────
+   记录页自己带翻页样式：之前借用 .news__pager，而 news.css 是路由级
+   样式、不在记录页加载，页码那行因此完全没有控件外观。 */
+
+.records__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 0 4px;
+  border-top: 1px solid var(--brand-line);
+}
+
+.records__pager-step {
+  min-height: 44px;
+  padding: 0 16px;
+  /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃面板。 */
+  border: 1px solid var(--brand-line-strong);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast);
+}
+
+.records__pager-step:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+}
+
+.records__pager-step:disabled {
+  color: var(--fg-3);
+  border-color: var(--brand-line);
+  cursor: not-allowed;
+}
+
+.records__pager-state {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
 /* ── 骨架 / 空态 ──────────────────────────────────────── */
 
 .records__skeleton {
-  border-top: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
 }
 
 .records__skeleton-row {
   height: 88px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--brand-line);
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -230,8 +331,9 @@
   place-items: center;
   gap: 8px;
   padding: clamp(40px, 8vh, 80px) 20px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
   text-align: center;
 }
 
@@ -264,6 +366,55 @@
 
 /* ── 个人中心 ─────────────────────────────────────────── */
 
+/* 读数卡：个人域不套四列 KPI 条（DESIGN.md §1.5）。
+   四张卡各自成卡，发丝线分隔，口径写在标签上。
+   U7：卡头挂一枚品牌蓝短杠（非语义装饰），与判读页 kicker 同语。 */
+.profile__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.profile__stat {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-md);
+  background: var(--brand-glass-soft);
+}
+
+.profile__stat::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 18px;
+  width: 26px;
+  height: 2px;
+  background: var(--brand-primary);
+}
+
+.profile__stat-value {
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+/* 日期与角色不是计数：跟计数同字号会抢读数卡的视线。 */
+.profile__stat-value--date {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.profile__stat-value--text {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 .profile__grid {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -271,10 +422,85 @@
   align-items: start;
 }
 
+/* 左列：头像卡 + 最近判读卡叠放，右列是资料表单——两列高度自然接近。 */
+.profile__side {
+  display: grid;
+  gap: clamp(16px, 2vw, 24px);
+  align-content: start;
+}
+
+/* 最近判读：真实记录的前三条，够看又不铺满台账。 */
+.profile__recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile__recent-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.profile__recent-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.profile__recent-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.profile__recent-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+/* 置信度带口径标签（与台账同一读法），百分比不再悬空。 */
+.profile__recent-conf {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.profile__recent-conf .readout__label {
+  font-size: 11px;
+}
+
+.profile__recent-empty {
+  margin: 0;
+  padding: 8px 0 12px;
+  font-size: 13px;
+  color: var(--fg-3);
+}
+
+.profile__card--recent .profile__ledger-link {
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
 .profile__card {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--brand-glass-layered-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-layered);
+  box-shadow: var(--brand-shadow);
   padding: clamp(20px, 2.6vw, 32px);
+  -webkit-backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--brand-glass-layered-blur)) saturate(1.2);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .profile__card {
+    background: var(--brand-glass-fallback);
+  }
 }
 
 .profile__card-head {
@@ -283,7 +509,14 @@
   justify-content: space-between;
   padding-bottom: 14px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--hr);
+}
+
+/* 卡片小节标题：一句正文大小的说明，不是压在内容上的微型眉线。 */
+.profile__card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg);
 }
 
 .profile__avatar-row {
@@ -296,11 +529,11 @@
   width: 96px;
   height: 96px;
   flex: none;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--brand-line-strong);
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--brand-canvas) 55%, var(--brand-surface));
 }
 
 .profile__avatar img {
@@ -342,8 +575,8 @@
 
 .profile__label {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-2);
 }
@@ -352,7 +585,7 @@
   width: 100%;
   padding: 10px 12px;
   background: var(--field);
-  border: 1px solid var(--line);
+  border: 1px solid var(--brand-line);
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -362,18 +595,18 @@
 }
 
 .profile__input:hover {
-  border-color: var(--line-strong);
+  border-color: var(--brand-line-strong);
 }
 
 .profile__input:focus {
-  border-color: var(--signal);
-  background: var(--surface);
+  border-color: var(--brand-primary);
+  background: var(--brand-surface);
 }
 
 .profile__input:disabled {
   color: var(--fg-3);
   cursor: not-allowed;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--brand-canvas) 45%, var(--brand-surface));
 }
 
 .profile__input--area {
@@ -398,27 +631,52 @@
 .profile__ledger-link {
   margin-top: clamp(24px, 3.6vh, 40px);
   padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--brand-line);
 }
 
 /* ── 响应式 ───────────────────────────────────────────── */
 
+@media (max-width: 1080px) {
+  .profile__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
+  /* 窄屏台账：置信度与风险标签不能藏（临床信息），挪到第二行横排。 */
   .records__row {
     grid-template-columns: 34px 56px minmax(0, 1fr) 20px;
+    grid-template-areas:
+      "index thumb main caret"
+      "index thumb readout caret";
+    row-gap: 10px;
   }
 
   .records__index {
+    grid-area: index;
     font-size: 15px;
   }
 
   .records__thumb {
+    grid-area: thumb;
     width: 56px;
     height: 44px;
   }
 
+  .records__main {
+    grid-area: main;
+  }
+
   .records__readout {
-    display: none;
+    grid-area: readout;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .records__caret {
+    grid-area: caret;
   }
 
   .records__detail {
@@ -430,6 +688,19 @@
   }
 }
 
+@media (max-width: 390px) {
+  .profile__stats {
+    /* 手机档读数卡允许 2×2（DESIGN.md §3.6 手机档例外，见 §8 断点口径）：
+       深窄屏上单列会把四张卡摊满两屏，读数对不上视线。 */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .records__pager {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
 /* 超宽屏：台账与双卡摊得更开。 */
 @media (min-width: 2200px) {
   .records__disease {
@@ -438,5 +709,182 @@
 
   .profile__grid {
     grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  }
+}
+
+/* ── R3 Phase 3：记录行变成链接、报告独立成页 ───────── */
+
+/* 行本身是 <Link>：去掉下划线与链接色，保留整行可点。 */
+a.records__row {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.records__row:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* 复诊申请从「展开区」移到行下方：与整行链接并列，避免可交互元素嵌套。 */
+.records__actions--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 16px 140px;
+}
+
+@media (max-width: 900px) {
+  .records__actions--row {
+    padding-left: 0;
+  }
+}
+
+/* ── 独立报告页 ───────────────────────────────────── */
+
+.report {
+  padding-bottom: 72px;
+}
+
+.report__crumb {
+  margin: 24px 0 18px;
+}
+
+.report__head {
+  margin-bottom: 18px;
+}
+
+.report__title {
+  margin: 6px 0 8px;
+  font-family: var(--font-serif, serif);
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.18;
+  color: var(--fg);
+}
+
+.report__meta {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.report__note {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+/* ── R3 Phase 3：个人中心先看人，再看数 ─────────────── */
+
+.profile__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  border: 1px solid var(--brand-glass-soft-edge);
+  border-radius: var(--radius-lg);
+  background: var(--brand-glass-soft);
+}
+
+.profile__identity-main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* 统计摘要靠右一列：宽屏不再吊着一大片空白。 */
+.profile__identity-stats {
+  flex: 0 0 auto;
+  max-width: 340px;
+  text-align: right;
+}
+
+.profile__identity-stats-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+.profile__name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+.profile__identity-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+/* 统计降级成一行摘要：仍在，但不抢身份的视线。 */
+.profile__identity-stats {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.profile__identity-stats .profile__identity-stats-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+.profile__identity-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.profile__avatar--lg {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 auto;
+}
+
+.profile__avatar--lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.profile__avatar--lg .profile__avatar-fallback {
+  font-size: 32px;
+}
+
+.profile__identity .profile__avatar-actions {
+  margin-top: 6px;
+}
+
+.profile__recent-link {
+  display: grid;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-sm);
+}
+
+.profile__recent-link:hover .profile__recent-name,
+.profile__recent-link:focus-visible .profile__recent-name {
+  color: var(--brand-primary);
+}
+
+.profile__recent-link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .profile__identity {
+    flex-direction: column;
+    gap: 14px;
   }
 }

@@ -1,4 +1,4 @@
-import { Wordmark } from "./SiteHeader"
+import { Wordmark } from "./shell/Wordmark"
 
 export type FooterSection = {
   href: string

@@ -143,3 +143,219 @@ export function barLabelFits(barWidthPx: number, label: string): boolean {
  * 页面会把一条拒识记录读成「0.0% 的诊断」——那是在说一条不存在的结论。
  */
 export { confidencePercent } from "@/lib/domain"
+
+/* ══════════════════════════════════════════════════════════════════════════
+   筛选与统计的纯函数层
+   --------------------------------------------------------------------------
+   这些映射被多个页面复用：表格里的状态标签、工具条里的下拉选项、统计图里
+   的中文口径，必须是同一份。写在一处，页面各处只消费，不再各写一套。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/** 用户角色 → 标签与风险档。只吃 --risk-* 语义色，与品牌信号橙解耦。 */
+export function userRoleView(role?: string | null): { label: string; risk: Risk } {
+  switch (role) {
+    case "admin":
+      return { label: "管理员", risk: "attention" }
+    case "ban":
+      return { label: "已封禁", risk: "critical" }
+    case "user":
+      return { label: "普通用户", risk: "normal" }
+    default:
+      // 未知角色不猜：老数据里没写角色的账号按「未标注」显示，
+      // 而不是被显示成「普通用户」。
+      return { label: role || "未标注", risk: "unknown" }
+  }
+}
+
+/** 角色筛选下拉（值即后端 userRole，空串 = 不限）。 */
+export const USER_ROLE_FILTER_OPTIONS = [
+  { value: "", label: "全部角色" },
+  { value: "user", label: "普通用户" },
+  { value: "admin", label: "管理员" },
+  { value: "ban", label: "已封禁" },
+] as const
+
+/** 可被指派的角色（新建 / 编辑 / 批量改角色都用这一份）。 */
+export const USER_ROLE_ASSIGN_OPTIONS = [
+  { value: "user", label: "普通用户" },
+  { value: "ban", label: "已封禁" },
+  { value: "admin", label: "管理员" },
+] as const
+
+/** 知识文档处理状态 → 标签与风险档。 */
+export function knowledgeStatusView(status?: number | null): { label: string; risk: Risk } {
+  switch (status) {
+    case 0:
+      return { label: "处理中", risk: "attention" }
+    case 1:
+      return { label: "已完成", risk: "normal" }
+    case 2:
+      return { label: "失败", risk: "critical" }
+    default:
+      return { label: "未知", risk: "unknown" }
+  }
+}
+
+/** 知识文档状态筛选下拉。 */
+export const KNOWLEDGE_STATUS_FILTER_OPTIONS = [
+  { value: "", label: "全部状态" },
+  { value: "0", label: "处理中" },
+  { value: "1", label: "已完成" },
+  { value: "2", label: "失败" },
+] as const
+
+/** 知识库支持的文件类型（与后端白名单一致）。 */
+export const KNOWLEDGE_FILE_TYPES = [
+  "pdf",
+  "doc",
+  "docx",
+  "txt",
+  "md",
+  "markdown",
+] as const
+
+/**
+ * 知识文档类型筛选下拉。
+ *
+ * <p>`md` 与 `markdown` 是同一种格式、两个扩展名：后端按扩展名精确匹配
+ * （`eq(fileType)`），所以两个值都得能筛。但并列摆成「MD / MARKDOWN」
+ * 会被读成两种格式，这里把长扩展名那个标成「MD（.markdown）」，
+ * 说清是同一格式的另一种扩展名。
+ */
+export const KNOWLEDGE_FILE_TYPE_OPTIONS = [
+  { value: "", label: "全部类型" },
+  ...KNOWLEDGE_FILE_TYPES.map((value) => ({
+    value,
+    label: value === "markdown" ? "MD（.markdown）" : value.toUpperCase(),
+  })),
+] as const
+
+/**
+ * 判读记录的复核状态筛选。
+ *
+ * 值是自造的语义键，落到后端参数时再翻译（见 diagnosisFilterParams）：
+ * 后端的 reexamineStatus 是复诊流程状态，humanReviewStatus 是医生复核状态，
+ * 两套语义混在一张表里，前端不直接暴露它们的数字。
+ */
+export type DiagnosisReviewFilter =
+  | ""
+  | "requiresReview"
+  | "aiRejected"
+  | "reviewed"
+  | "reviewing"
+  | "notReviewed"
+
+export const DIAGNOSIS_REVIEW_FILTER_OPTIONS: {
+  value: DiagnosisReviewFilter
+  label: string
+}[] = [
+  { value: "", label: "全部状态" },
+  { value: "requiresReview", label: "待人工复核" },
+  { value: "aiRejected", label: "AI 拒识" },
+  { value: "reviewed", label: "已复审" },
+  { value: "reviewing", label: "复审中" },
+  { value: "notReviewed", label: "未复审" },
+]
+
+/** 复核状态筛选 → 后端查询参数。空串返回空对象（不限）。 */
+export function diagnosisFilterParams(key: DiagnosisReviewFilter): {
+  reexamineStatus?: number
+  humanReviewStatus?: string
+  aiRejected?: boolean
+  requiresReview?: boolean
+} {
+  switch (key) {
+    case "requiresReview":
+      return { requiresReview: true }
+    case "aiRejected":
+      return { aiRejected: true }
+    case "reviewed":
+      return { reexamineStatus: 3 }
+    case "reviewing":
+      return { reexamineStatus: 2 }
+    case "notReviewed":
+      // 落库值是 0，不是 DTO 注释里写的 1：判读链路不写复审状态，
+      // Diagnosis.reexamineStatus 是 primitive int，新记录落库即 0
+      // （写路径只有 2=复审中、3=已复审，没有任何路径产出 1）。
+      // 按 1 检索会一条都查不到——后端只支持单值等值匹配，覆盖不到 0 与 1 两档。
+      return { reexamineStatus: 0 }
+    default:
+      return {}
+  }
+}
+
+/**
+ * 人工复核状态（humanReviewStatus）→ 中文标签。
+ *
+ * 这列后端给的是代码（PENDING_AI / AI_ONLY / …），仪表盘与数据分析要显示
+ * 人话；映射写在这里，两页共用一份。
+ *
+ * <p>REVIEWED 一律写「已复核 · 资质未核验」：本系统没有资质数据源，账号角色
+ * （`reviewerRole`）也不是资质证明，展示层不按角色给出"干净"的「已复核」。
+ * 仪表盘聚合图例与逐条抽屉共用同一口径。
+ */
+export function humanReviewStatusLabel(status?: string | null): string {
+  switch (status) {
+    case "PENDING_AI":
+      return "待模型出结论"
+    case "AI_ONLY":
+      // 与患者端 humanReviewState 同一口径：AI_ONLY 没有进入复核队列，
+      // 写成「待复核」等于替系统承诺一件没发生的事。
+      return "仅 AI 结论 · 未进入复核队列"
+    case "AWAITING_REVIEW":
+      return "拒识 / 低置信 · 待复核"
+    case "REVIEWED":
+      // 历史 REVIEWED 多是管理员写的（系统当时没有资质核验），不能显示成医生正式复核。
+      return "已复核 · 资质未核验"
+    case "OVERRIDDEN":
+      return "已推翻 AI 结论"
+    default:
+      return "未记录"
+  }
+}
+
+/** 计数读数：千分位 + 等宽字体（在 StatTile 里用）。 */
+export function formatStatNumber(value: number): string {
+  if (!Number.isFinite(value)) return "—"
+  return Math.round(value).toLocaleString("zh-CN")
+}
+
+/** 百分比读数（一位小数）。入参是 0–1 的比例。 */
+export function formatStatPercent(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—"
+  return `${(value * 100).toFixed(1)}%`
+}
+
+/**
+ * 「没有结论」怎么显示——仪表盘与诊断台账共用一份口径。
+ *
+ * <p>空结论有两种，不能混为一谈：
+ * - 模型明确拒识（后端 `aiRejected` 标记）：显示「未出结论」，并带上拒识原因；
+ * - 其它空结论：显示「无判读结果」——那只是没跑出结果，不是拒识。
+ *
+ * <p>把空结果一律标成「AI 拒识」会让医生把没跑出结果的记录当成模型拒识；
+ * 界面口径必须与后端的 `aiRejected` 标记一致，拒识条数才对得上。
+ */
+export type NoConclusionView = {
+  /** 展示文字：「未出结论」/「无判读结果」。 */
+  label: string
+  /** 是否拒识（决定标签色，以及是否带拒识原因）。 */
+  rejected: boolean
+  /** 拒识原因（仅拒识行有，后端 `abstainReason`）。 */
+  reason?: string
+}
+
+/**
+ * 判读没有结论时的展示口径。
+ *
+ * <p>判定只认后端的 `aiRejected` 标记，不看 `result` 是否为空——
+ * 空结果可能是拒识，也可能只是没判读出来，两者的临床含义不同。
+ */
+export function noConclusionView(
+  row: Pick<AdminDiagnosis, "aiRejected" | "abstainReason">,
+): NoConclusionView {
+  if (row.aiRejected === true) {
+    return { label: "未出结论", rejected: true, reason: row.abstainReason ?? undefined }
+  }
+  return { label: "无判读结果", rejected: false }
+}

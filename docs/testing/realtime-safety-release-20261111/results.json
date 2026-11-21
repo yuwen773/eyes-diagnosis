@@ -1,0 +1,2862 @@
+{
+  "recordedAt": "2026-11-11T14:57:32.118096+00:00",
+  "evidence": "REAL_HTTP_SSE_MYSQL_GRAPH_SYNTHETIC_MODEL_INFERENCE_STORAGE_SESSION_BOOTSTRAP",
+  "engineeringScope": "PASS",
+  "overall": "PARTIAL",
+  "realProviderCalls": 0,
+  "head": "6572743169027bb1e7c27d7d969a26ed89d99cd1",
+  "branch": "codex/realtime-safety-release",
+  "backend": [
+    {
+      "suite": "com.csust.eyediagnosis.collaboration.CollaborationRunTest",
+      "tests": 31,
+      "sha256": "99f4f29dce71d4d2cd84fc5a59d3bd33825f8d006ab678c3da3783aa73bbd2e0",
+      "cases": [
+        {
+          "name": "normalCoordinatorPersistsOrderedFactsAndKeepsPatientDraftPrivate",
+          "seconds": "1.425"
+        },
+        {
+          "name": "clinicalOwnerNeverGainsClinicianProjectionOfTheirOwnDraft",
+          "seconds": "1.012"
+        },
+        {
+          "name": "disablingPatientProgressClosesActiveStreamWithoutCancellingWork",
+          "seconds": "0.909"
+        },
+        {
+          "name": "changedInferenceBindingIsRejectedBeforeAnyModelCall",
+          "seconds": "0.842"
+        },
+        {
+          "name": "operationsAreAdminOnlyAggregatesAndRemainAvailableDuringDrain",
+          "seconds": "0.768"
+        },
+        {
+          "name": "ownerCanStillCancelWhileAllProgressAndAdmissionAreDisabled",
+          "seconds": "0.355"
+        },
+        {
+          "name": "cancellationBeforeDispatchAndRecoveryOfCommittedCancelIntentNeverCallProviders",
+          "seconds": "0.846"
+        },
+        {
+          "name": "replayAndDuplicateCreationNeverRepeatTheCoordinator",
+          "seconds": "0.899"
+        },
+        {
+          "name": "stoppingAdmissionPreservesIdempotentReplayAndRunningCompletion",
+          "seconds": "0.69"
+        },
+        {
+          "name": "cancellingAtFinalCriticBoundaryCannotCommitReviewReady",
+          "seconds": "0.726"
+        },
+        {
+          "name": "restrictedAndUnreadyInputsDoNotStartAgents",
+          "seconds": "0.424"
+        },
+        {
+          "name": "eventsAreIncrementalWhileVisionIsStillInFlightAndSnapshotHasExactBoundary",
+          "seconds": "0.75"
+        },
+        {
+          "name": "activeSubscriptionStopsOnSessionRevocationAndDisconnectDoesNotCancelRun",
+          "seconds": "0.637"
+        },
+        {
+          "name": "separateJvmReplaysTheSameCommittedFactsAndOpaqueCursorWithoutExecuting",
+          "seconds": "2.254"
+        },
+        {
+          "name": "slowSubscriberHasFiniteBufferAndCanReplayEveryDurableFactAfterClosure",
+          "seconds": "1.384"
+        },
+        {
+          "name": "assignedDoctorLosesExistingSubscriptionWhenGrantIsWithdrawn",
+          "seconds": "1.139"
+        },
+        {
+          "name": "liveHttpSseReplaysRealEventsAndRejectsFaultsBeforeOpeningTheStream",
+          "seconds": "3.661"
+        },
+        {
+          "name": "rolledBackDomainStateNeverPublishesAnEvent",
+          "seconds": "0.766"
+        },
+        {
+          "name": "newSafetySwitchesDefaultClosedWithoutDispatchingWork",
+          "seconds": "0.297"
+        },
+        {
+          "name": "providerFailuresAreClassifiedSeparatelyFromRestrictedModelOutput",
+          "seconds": "0.904"
+        },
+        {
+          "name": "subscriptionLimitAndShutdownReleaseSlotsWithoutCancellingTheRun",
+          "seconds": "0.686"
+        },
+        {
+          "name": "idempotencyConflictsAndConcurrentAdmissionsCannotCreateDuplicateRuns",
+          "seconds": "1.163"
+        },
+        {
+          "name": "crossAccountAndUnassignedDoctorCannotReadSubscribeOrCancelAndMissingRunsMatch",
+          "seconds": "0.905"
+        },
+        {
+          "name": "idleSubscriptionImmediatelyEmitsAuthenticatedHeartbeatAtSnapshotWatermark",
+          "seconds": "0.437"
+        },
+        {
+          "name": "opaqueCursorsRejectTamperingCrossSubjectConflictsExpiryAndChangedProjection",
+          "seconds": "0.819"
+        },
+        {
+          "name": "cancellationWinsAgainstUncooperativeInFlightProvidersAndRepeatedCancellationIsIdempotent",
+          "seconds": "0.478"
+        },
+        {
+          "name": "concurrentSnapshotWaitsForCancellationStateAndItsEventWatermarkTogether",
+          "seconds": "0.43"
+        },
+        {
+          "name": "disablingClinicianDetailsRejectsExistingSubscriptionsAndOldCursors",
+          "seconds": "0.77"
+        },
+        {
+          "name": "feedbackFactsComeFromActualCriticRouting(String)[1]",
+          "seconds": "0.874"
+        },
+        {
+          "name": "feedbackFactsComeFromActualCriticRouting(String)[2]",
+          "seconds": "0.956"
+        },
+        {
+          "name": "deletedOrDemotedAdminCannotReuseOperationsOrClinicianCursor",
+          "seconds": "0.711"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.collaboration.GraphExecutionTest",
+      "tests": 32,
+      "sha256": "6c3d83c603979dd32de080ad75bf8cba8402c19a336725dbb283343faa939613",
+      "cases": [
+        {
+          "name": "checkpointCommitFailureRollsBackEvidenceAndItsPublicFactsTogether",
+          "seconds": "1.235"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[1]",
+          "seconds": "5.706"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[2]",
+          "seconds": "7.981"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[3]",
+          "seconds": "8.046"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[4]",
+          "seconds": "7.441"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[5]",
+          "seconds": "5.483"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[6]",
+          "seconds": "5.692"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[7]",
+          "seconds": "4.502"
+        },
+        {
+          "name": "processDeathRestoresOnlyCommittedNodesAndPreservesBudgets(String)[8]",
+          "seconds": "4.268"
+        },
+        {
+          "name": "heartbeatRenewsLeaseAndConcurrentClaimDoesNotDispatchProviders",
+          "seconds": "1.669"
+        },
+        {
+          "name": "cancellingQueuedGraphRunCallsNoProviderAfterRestart",
+          "seconds": "0.326"
+        },
+        {
+          "name": "closingNewGraphAdmissionDoesNotReassignAnExistingRunAndReplayDoesNotExecute",
+          "seconds": "0.69"
+        },
+        {
+          "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[1]",
+          "seconds": "1.3"
+        },
+        {
+          "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[2]",
+          "seconds": "1.737"
+        },
+        {
+          "name": "sameInputsMatchCoordinatorVersionsMessagesBudgetAndPublicFacts(String)[3]",
+          "seconds": "2.036"
+        },
+        {
+          "name": "persistentCancelRejectsLateProvidersAndNeverSubmitsReview",
+          "seconds": "0.546"
+        },
+        {
+          "name": "evidenceIsVisibleWhileVisionBlocksAndExplanationWaitsForBoth",
+          "seconds": "0.812"
+        },
+        {
+          "name": "cancellationAtFinalCriticCannotCommitReviewReady",
+          "seconds": "0.791"
+        },
+        {
+          "name": "timeoutAndCallBudgetsMatchCoordinator(String)[1]",
+          "seconds": "0.955"
+        },
+        {
+          "name": "timeoutAndCallBudgetsMatchCoordinator(String)[2]",
+          "seconds": "0.864"
+        },
+        {
+          "name": "timeoutAndCallBudgetsMatchCoordinator(String)[3]",
+          "seconds": "0.978"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[1]",
+          "seconds": "0.87"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[2]",
+          "seconds": "1.035"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[3]",
+          "seconds": "0.842"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[4]",
+          "seconds": "0.891"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[5]",
+          "seconds": "0.99"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[6]",
+          "seconds": "0.922"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[7]",
+          "seconds": "1.352"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[8]",
+          "seconds": "1.153"
+        },
+        {
+          "name": "safetyAndProviderFailuresMatchCoordinator(String)[9]",
+          "seconds": "1.072"
+        },
+        {
+          "name": "expiryTakeoverFencesOldProviderAndReusesCommittedEvidence",
+          "seconds": "0.883"
+        },
+        {
+          "name": "rejectedInferenceAndChangedBindingNeverCallProviders",
+          "seconds": "0.449"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.doctorreview.DoctorReviewApiTest",
+      "tests": 36,
+      "sha256": "0349eda7dc2fde663caea609847cef3d262775aa91a4322fd788f4efb332bc8b",
+      "cases": [
+        {
+          "name": "duplicateDecisionsReplayTheReceiptAndConflictsCannotOverwriteIt",
+          "seconds": "5.079"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[1]",
+          "seconds": "0.889"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[2]",
+          "seconds": "0.831"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[3]",
+          "seconds": "0.786"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[4]",
+          "seconds": "0.754"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[5]",
+          "seconds": "0.667"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[6]",
+          "seconds": "0.677"
+        },
+        {
+          "name": "changedFrozenMaterialsRequireANewReview(String)[7]",
+          "seconds": "0.772"
+        },
+        {
+          "name": "selfReviewAndUnauthorizedOrOverwritingAssignmentsAreDenied",
+          "seconds": "0.832"
+        },
+        {
+          "name": "approvalCannotReadATaskSnapshotFromBeforeItAcquiredTheTaskLock",
+          "seconds": "1.08"
+        },
+        {
+          "name": "submissionMustMatchTheVersionTheDoctorRead(String)[1]",
+          "seconds": "0.492"
+        },
+        {
+          "name": "submissionMustMatchTheVersionTheDoctorRead(String)[2]",
+          "seconds": "0.502"
+        },
+        {
+          "name": "submissionMustMatchTheVersionTheDoctorRead(String)[3]",
+          "seconds": "0.522"
+        },
+        {
+          "name": "submissionMustMatchTheVersionTheDoctorRead(String)[4]",
+          "seconds": "0.541"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[1]",
+          "seconds": "0.581"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[2]",
+          "seconds": "0.485"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[3]",
+          "seconds": "0.541"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[4]",
+          "seconds": "0.562"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[5]",
+          "seconds": "0.453"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[6]",
+          "seconds": "0.461"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[7]",
+          "seconds": "0.512"
+        },
+        {
+          "name": "changedSourceCannotBeApprovedAndInvalidationIsDurable(String)[8]",
+          "seconds": "0.495"
+        },
+        {
+          "name": "approvalWaitsForConcurrentWithdrawalAndCannotUseOldEligibility",
+          "seconds": "0.841"
+        },
+        {
+          "name": "missingDoctorKeepsWaitingAndNeitherReviewOutcomeExposesDraftsToPatients",
+          "seconds": "0.845"
+        },
+        {
+          "name": "doctorCanRejectWithdrawnEvidenceWithReasonWithoutPublishing",
+          "seconds": "0.466"
+        },
+        {
+          "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[1]",
+          "seconds": "0.528"
+        },
+        {
+          "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[2]",
+          "seconds": "0.534"
+        },
+        {
+          "name": "everyDecisionRequiresAValidChoiceAndMeaningfulReason(String)[3]",
+          "seconds": "0.541"
+        },
+        {
+          "name": "competingDecisionsHaveExactlyOneWinner",
+          "seconds": "0.597"
+        },
+        {
+          "name": "assignedDoctorReviewsFrozenMaterialsAndDecisionSurvivesRestart",
+          "seconds": "0.513"
+        },
+        {
+          "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[1]",
+          "seconds": "0.633"
+        },
+        {
+          "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[2]",
+          "seconds": "0.599"
+        },
+        {
+          "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[3]",
+          "seconds": "0.527"
+        },
+        {
+          "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[4]",
+          "seconds": "0.427"
+        },
+        {
+          "name": "otherIdentitiesCannotReadOrDecideAssignedMaterials(long, String)[5]",
+          "seconds": "0.476"
+        },
+        {
+          "name": "rejectedReviewRemainsTraceableAndPatientSeesOnlyRestrictedStatus",
+          "seconds": "0.595"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.patientauthorization.PatientAuthorizationApiTest",
+      "tests": 37,
+      "sha256": "08b6d028867bf403d3fd512a2161c4e60f9e34860a5e03f9ecb4339eaf811360",
+      "cases": [
+        {
+          "name": "concurrentApprovalsReturnOneRecordAndTheSameReceipt",
+          "seconds": "1.634"
+        },
+        {
+          "name": "approvalMustMatchTheExactContentThePatientViewed(String)[1]",
+          "seconds": "1.018"
+        },
+        {
+          "name": "approvalMustMatchTheExactContentThePatientViewed(String)[2]",
+          "seconds": "1.142"
+        },
+        {
+          "name": "approvalMustMatchTheExactContentThePatientViewed(String)[3]",
+          "seconds": "0.898"
+        },
+        {
+          "name": "approvalMustMatchTheExactContentThePatientViewed(String)[4]",
+          "seconds": "0.91"
+        },
+        {
+          "name": "approvalMustMatchTheExactContentThePatientViewed(String)[5]",
+          "seconds": "1.248"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[1]",
+          "seconds": "1.602"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[2]",
+          "seconds": "1.142"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[3]",
+          "seconds": "1.437"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[4]",
+          "seconds": "1.189"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[5]",
+          "seconds": "0.997"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[6]",
+          "seconds": "0.849"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[7]",
+          "seconds": "0.844"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[8]",
+          "seconds": "0.888"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[9]",
+          "seconds": "0.79"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[10]",
+          "seconds": "0.835"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[11]",
+          "seconds": "1.028"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[12]",
+          "seconds": "0.753"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[13]",
+          "seconds": "0.681"
+        },
+        {
+          "name": "changesBeforeApprovalRejectSaveAndPersistRestrictedState(String)[14]",
+          "seconds": "0.686"
+        },
+        {
+          "name": "committedReceiptReplaysAfterSourceWithdrawalAndExpiryWithoutAnotherSave",
+          "seconds": "0.622"
+        },
+        {
+          "name": "approvalsWaitingForLocksObserveWithdrawalAndMaterialChanges(String)[1]",
+          "seconds": "0.928"
+        },
+        {
+          "name": "approvalsWaitingForLocksObserveWithdrawalAndMaterialChanges(String)[2]",
+          "seconds": "0.909"
+        },
+        {
+          "name": "writeFailuresRollBackTheRecordAuthorizationAndReceiptTogether(String)[1]",
+          "seconds": "0.734"
+        },
+        {
+          "name": "writeFailuresRollBackTheRecordAuthorizationAndReceiptTogether(String)[2]",
+          "seconds": "0.726"
+        },
+        {
+          "name": "savedHistoryKeepsTheSameProbabilityAsTheFrozenInference",
+          "seconds": "0.635"
+        },
+        {
+          "name": "explicitPatientApprovalCreatesOneQueryableReceipt",
+          "seconds": "0.69"
+        },
+        {
+          "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[1]",
+          "seconds": "0.513"
+        },
+        {
+          "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[2]",
+          "seconds": "0.62"
+        },
+        {
+          "name": "doctorDecisionsAndResultReadsNeverCreatePatientAuthorization(String)[3]",
+          "seconds": "0.651"
+        },
+        {
+          "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[1]",
+          "seconds": "0.652"
+        },
+        {
+          "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[2]",
+          "seconds": "0.72"
+        },
+        {
+          "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[3]",
+          "seconds": "0.652"
+        },
+        {
+          "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[4]",
+          "seconds": "0.696"
+        },
+        {
+          "name": "onlyTheTaskOwnerCanPrepareApproveAndQueryTheReceipt(String)[5]",
+          "seconds": "0.618"
+        },
+        {
+          "name": "autonomousMaterialsPassDoctorAndPatientGatesAndMessageTamperingRejectsSave(String)[1]",
+          "seconds": "1.084"
+        },
+        {
+          "name": "autonomousMaterialsPassDoctorAndPatientGatesAndMessageTamperingRejectsSave(String)[2]",
+          "seconds": "1.174"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+      "tests": 41,
+      "sha256": "70787f17758a0d0d08c23398402bc72c7d3288bb1e76fbd2beac1cff70167165",
+      "cases": [
+        {
+          "name": "absentEligibleEvidenceStopsAndDoesNotAskForExplanation",
+          "seconds": "0.456"
+        },
+        {
+          "name": "evidenceFailureStopsWithoutWaitingForAnUncooperativeVisionPeer",
+          "seconds": "0.304"
+        },
+        {
+          "name": "operatorEntryIsOptInAndAdminOnly",
+          "seconds": "0.178"
+        },
+        {
+          "name": "seededSyntheticTaskIsRunnableAndLabelledAsSynthetic",
+          "seconds": "0.712"
+        },
+        {
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[1]",
+          "seconds": "0.772"
+        },
+        {
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[2]",
+          "seconds": "0.689"
+        },
+        {
+          "name": "providerRejectionIsNotReportedAsModelOutputFault",
+          "seconds": "0.811"
+        },
+        {
+          "name": "operatorEntrySerializesTraceWithoutRawInference",
+          "seconds": "0.665"
+        },
+        {
+          "name": "concurrentInitialRolesCannotExceedASingleRemainingCall",
+          "seconds": "0.286"
+        },
+        {
+          "name": "timeoutDiscardsLateResultAndKeepsReservedCall",
+          "seconds": "0.722"
+        },
+        {
+          "name": "withdrawalDuringCriticPreventsReadyTransition",
+          "seconds": "0.464"
+        },
+        {
+          "name": "operatorTraceReportsRoleTimingCitationChecksAndSectionCoverage",
+          "seconds": "0.488"
+        },
+        {
+          "name": "duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion",
+          "seconds": "0.554"
+        },
+        {
+          "name": "supplementationCreatesNewFrozenEvidenceAndRewritesOnlyOnce",
+          "seconds": "0.709"
+        },
+        {
+          "name": "providerTransportIOExceptionIsReportedAsProviderFault",
+          "seconds": "0.336"
+        },
+        {
+          "name": "transportFailureSeparatesOutputFaultsFromProviderFaults",
+          "seconds": "0.16"
+        },
+        {
+          "name": "totalDeadlineIsCheckedAfterModelReturns",
+          "seconds": "0.275"
+        },
+        {
+          "name": "omittedCitationIndexIsInvalidEvenWhenZeroWouldMatch",
+          "seconds": "0.389"
+        },
+        {
+          "name": "providerOutageIsReportedAsProviderFault",
+          "seconds": "0.313"
+        },
+        {
+          "name": "operatorTraceShowsRejectedDraftAndTheReferenceThatFailed",
+          "seconds": "0.424"
+        },
+        {
+          "name": "patientSeesOnlySafeProgressAndNeverDraftOrAgentOutput",
+          "seconds": "0.501"
+        },
+        {
+          "name": "operatorTriggerStartsTheCoordinatorOnceAndReplayAddsNoCalls",
+          "seconds": "1.035"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[1]",
+          "seconds": "0.287"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[2]",
+          "seconds": "0.256"
+        },
+        {
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[3]",
+          "seconds": "0.249"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[1]",
+          "seconds": "0.287"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[2]",
+          "seconds": "0.308"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[3]",
+          "seconds": "0.385"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[4]",
+          "seconds": "0.463"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[5]",
+          "seconds": "0.588"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[6]",
+          "seconds": "0.42"
+        },
+        {
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[7]",
+          "seconds": "0.479"
+        },
+        {
+          "name": "totalCallBudgetCannotBeResetByReconstructingCoordinator",
+          "seconds": "0.627"
+        },
+        {
+          "name": "providerToolRequestsCannotExecuteAnyTool",
+          "seconds": "0.342"
+        },
+        {
+          "name": "fourIndependentAgentsProduceFrozenReviewableDraftWithoutPublishing",
+          "seconds": "0.55"
+        },
+        {
+          "name": "visionAndEvidenceEnterTheProviderConcurrentlyBeforeEitherReturns",
+          "seconds": "0.481"
+        },
+        {
+          "name": "twoCoordinatorsCannotGenerateTheSameTaskTwice",
+          "seconds": "0.536"
+        },
+        {
+          "name": "ambiguousDuplicateJsonKeysCannotChooseEvidenceQuery",
+          "seconds": "0.324"
+        },
+        {
+          "name": "providerRateLimitDoesNotTriggerHiddenTransportRetries",
+          "seconds": "0.317"
+        },
+        {
+          "name": "deliveredRoleMessagesBindActualInputsAndKeepSourceMetadataOutOfExplanation",
+          "seconds": "0.461"
+        },
+        {
+          "name": "processCrashKeepsSpentBudgetAndRecoveryRestrictsWithoutNewCall",
+          "seconds": "2.058"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+      "tests": 37,
+      "sha256": "2496598fa92b8b6c9f33ba12576d45bcf64f98a23cee61bebf6c941381457139",
+      "cases": [
+        {
+          "name": "collaborationProgressUsesFixedNotesWithoutLeakingAgentOutput",
+          "seconds": "0.346"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[1]",
+          "seconds": "0.639"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[2]",
+          "seconds": "0.608"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[3]",
+          "seconds": "0.581"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[4]",
+          "seconds": "0.563"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[5]",
+          "seconds": "0.627"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[6]",
+          "seconds": "0.655"
+        },
+        {
+          "name": "changedApprovedMaterialsCannotBePublished(String)[7]",
+          "seconds": "0.633"
+        },
+        {
+          "name": "citationsRequireOwnershipAndTheSameLiveReleaseGate",
+          "seconds": "0.771"
+        },
+        {
+          "name": "doctorApprovedPatientCanReadLayeredExplanationWithoutInternalMaterials",
+          "seconds": "0.507"
+        },
+        {
+          "name": "readsWaitingForTaskLockObserveTheCommittedMaterialVersion",
+          "seconds": "0.793"
+        },
+        {
+          "name": "completedImageInferenceWithoutADraftRunWaitsForCollaborationNotADoctor",
+          "seconds": "0.347"
+        },
+        {
+          "name": "missingOrRejectingDoctorNeverPublishesAndUnknownStatesFailClosed",
+          "seconds": "0.619"
+        },
+        {
+          "name": "readsWaitForWithdrawalAndDoNotUseTheOldEligibility",
+          "seconds": "0.742"
+        },
+        {
+          "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[1]",
+          "seconds": "0.51"
+        },
+        {
+          "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[2]",
+          "seconds": "0.524"
+        },
+        {
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[1]",
+          "seconds": "0.347"
+        },
+        {
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[2]",
+          "seconds": "0.343"
+        },
+        {
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[3]",
+          "seconds": "0.387"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[1]",
+          "seconds": "0.531"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[2]",
+          "seconds": "0.544"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[3]",
+          "seconds": "0.548"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[4]",
+          "seconds": "0.563"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[5]",
+          "seconds": "0.6"
+        },
+        {
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[6]",
+          "seconds": "0.638"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[1]",
+          "seconds": "0.598"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[2]",
+          "seconds": "0.565"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[3]",
+          "seconds": "0.606"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[4]",
+          "seconds": "0.632"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[5]",
+          "seconds": "0.67"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[6]",
+          "seconds": "0.691"
+        },
+        {
+          "name": "everyResultReadRevalidatesFrozenSources(String)[7]",
+          "seconds": "0.724"
+        },
+        {
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[1]",
+          "seconds": "0.563"
+        },
+        {
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[2]",
+          "seconds": "0.565"
+        },
+        {
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[3]",
+          "seconds": "0.503"
+        },
+        {
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[4]",
+          "seconds": "0.511"
+        },
+        {
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[5]",
+          "seconds": "0.441"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.poc.CoordinationPocTest",
+      "tests": 4,
+      "sha256": "7470d4dda0b519a7c5ed89ad7350f7e6bbfb184afa2cc8a983037fe478df7177",
+      "cases": [
+        {
+          "name": "graphTransitionAndCheckpointComeFromTheSameInterruptedRun",
+          "seconds": "0.013"
+        },
+        {
+          "name": "interruptedGraphCheckpointCanBeSerializedAndResumed",
+          "seconds": "0.001"
+        },
+        {
+          "name": "bothEnginesApplyTheSameFixedBusinessTransition",
+          "seconds": "0.001"
+        },
+        {
+          "name": "domainRecoveryTransitionsOnlyFromWaitingReview",
+          "seconds": "0.0"
+        }
+      ]
+    },
+    {
+      "suite": "com.csust.eyediagnosis.poc.realtime.RealtimeGraphSpikeTest",
+      "tests": 12,
+      "sha256": "4fcb310446a86893a28acbc975067eaf2f098259392a1c351150ffb08caf49b2",
+      "cases": [
+        {
+          "name": "supplementRechecksDraftAgainstNewEvidenceWithoutRerunningVision",
+          "seconds": "0.007"
+        },
+        {
+          "name": "cancellingSubscriberStopsDownstreamButDoesNotStopProviderOrLateLifecycleCallbacks",
+          "seconds": "0.007"
+        },
+        {
+          "name": "lifecycleListenerExceptionDoesNotVetoExecution",
+          "seconds": "0.005"
+        },
+        {
+          "name": "roleFailurePreventsExplanationAndCritique",
+          "seconds": "0.004"
+        },
+        {
+          "name": "parallelLifecycleReportsEvidenceBeforeVisionCompletesButAfterStateIsNotTheResult",
+          "seconds": "0.006"
+        },
+        {
+          "name": "missingFeedbackCannotBeTreatedAsSuccessfulReview",
+          "seconds": "0.003"
+        },
+        {
+          "name": "applicationFeedbackBudgetStopsRepeatedRewrite",
+          "seconds": "0.003"
+        },
+        {
+          "name": "fourRoleCheckpointResumesInAnotherJvmWithoutRepeatingCompletedRoles(Path)",
+          "seconds": "1.165"
+        },
+        {
+          "name": "rewriteRechecksNewDraftWithoutRerunningVisionOrEvidence",
+          "seconds": "0.003"
+        },
+        {
+          "name": "parallelBranchesJoinBeforeExplanationWithoutLosingState",
+          "seconds": "0.002"
+        },
+        {
+          "name": "nodeStreamEmitsExplanationWhileCriticIsStillInFlight",
+          "seconds": "0.004"
+        },
+        {
+          "name": "frameworkRecursionLimitCanCloseStreamWithoutSuccessfulEnd",
+          "seconds": "0.001"
+        }
+      ]
+    }
+  ],
+  "frontend": {
+    "passed": 332,
+    "sha256": "259ff89513cea59b8ee03251970f7862b6450065c469370baa95e7b8f2ca9c23",
+    "suites": [
+      {
+        "file": "web/src/components/AgentComposer.test.tsx",
+        "cases": [
+          {
+            "name": "AgentComposer Enter 提交：把文字存进草稿并跳到 Agent 页",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer 空输入按 Enter 不跳转",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer Shift+Enter 换行不提交",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer 中文输入法组字中的 Enter 不提交",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer 点附件按钮直接去 Agent 页上传图片",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer 带着已输入的文字点附件：先存草稿再去 Agent 页",
+            "status": "passed"
+          },
+          {
+            "name": "AgentComposer 粘贴图片时提示到 Agent 页上传",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/RecordSheet.test.tsx",
+        "cases": [
+          {
+            "name": "RecordSheet 人工复核结论 有复核结论时同时展示 AI 初判与人工结论",
+            "status": "passed"
+          },
+          {
+            "name": "RecordSheet 人工复核结论 没有复核结论时不渲染该区块",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/theme-provider.test.tsx",
+        "cases": [
+          {
+            "name": "ThemeProvider localStorage 不可用时照常渲染（无痕模式不白屏）",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/adminDomain.test.ts",
+        "cases": [
+          {
+            "name": "reviewView aiRejected 优先于一切",
+            "status": "passed"
+          },
+          {
+            "name": "reviewView requiresReview 次之",
+            "status": "passed"
+          },
+          {
+            "name": "reviewView reexamineStatus 1/2/3/缺省",
+            "status": "passed"
+          },
+          {
+            "name": "canDeleteUser 目标是 admin → 不给删",
+            "status": "passed"
+          },
+          {
+            "name": "canDeleteUser 目标是普通用户 → 可删",
+            "status": "passed"
+          },
+          {
+            "name": "canDeleteUser 目标缺失 → 不给删",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusView 0/1/2 映射后端语义：草稿 / 已发布 / 已下架",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusView 3 是待审核（后端 PENDING_REVIEW），不能再读成未知",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusView 缺省读「未知」而不是「草稿」——老数据没写状态不能冒充草稿",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusOptionsFor 草稿可保持草稿、提交待审核或直接发布",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusOptionsFor 已发布只能下架或退回草稿，不能直接改回待审核",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusOptionsFor 待审核可发布、驳回草稿或下架",
+            "status": "passed"
+          },
+          {
+            "name": "newsStatusOptionsFor 状态未知时返回全量，老数据仍可编辑",
+            "status": "passed"
+          },
+          {
+            "name": "newsContentValid 29 字拦 / 30 字放",
+            "status": "passed"
+          },
+          {
+            "name": "newsContentValid 不 trim——29 字加空白仍拦",
+            "status": "passed"
+          },
+          {
+            "name": "rankDistribution 降序 + 占比",
+            "status": "passed"
+          },
+          {
+            "name": "rankDistribution total 0 → share 全 0，不产生 NaN",
+            "status": "passed"
+          },
+          {
+            "name": "barLabelFits 长名窄条放不下",
+            "status": "passed"
+          },
+          {
+            "name": "barLabelFits 短名宽条放得下",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent 0–1 概率形态 → 百分比",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent 0–100 百分数形态 → 同一个读数",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent null（AI 拒识，后端置空）→ 「—」，不是 0.0%",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent undefined / NaN → 「—」",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentAttachments.test.ts",
+        "cases": [
+          {
+            "name": "agentAttachments 添加文件生成带 url 的附件项",
+            "status": "passed"
+          },
+          {
+            "name": "agentAttachments 删除某项后其余项的 url 与自己保持绑定（错位回归测试）",
+            "status": "passed"
+          },
+          {
+            "name": "agentAttachments 删除不存在的 id 不改变列表",
+            "status": "passed"
+          },
+          {
+            "name": "agentAttachments 同名文件各自独立（id 不冲突，url 各自绑定）",
+            "status": "passed"
+          },
+          {
+            "name": "agentAttachments 类型：Attachment 只暴露组件需要的字段",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentDraft.test.ts",
+        "cases": [
+          {
+            "name": "agentDraft 存取草稿",
+            "status": "passed"
+          },
+          {
+            "name": "agentDraft 清空草稿",
+            "status": "passed"
+          },
+          {
+            "name": "agentDraft 空文本等于清掉草稿",
+            "status": "passed"
+          },
+          {
+            "name": "agentDraft 没有草稿时返回空串",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentImageOwnership.test.ts",
+        "cases": [
+          {
+            "name": "agentImageOwnership acquire 两次 release 一次不删",
+            "status": "passed"
+          },
+          {
+            "name": "agentImageOwnership 最后持有者 release 才删",
+            "status": "passed"
+          },
+          {
+            "name": "agentImageOwnership retain 后永不删（消息已送达，对象归消息所有）",
+            "status": "passed"
+          },
+          {
+            "name": "agentImageOwnership 同一 URL 重复删除只发一次请求",
+            "status": "passed"
+          },
+          {
+            "name": "agentImageOwnership 空串 no-op；未登记的 URL 按 0 持有者释放=删除（与 Vue 版语义一致）",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentResources.test.ts",
+        "cases": [
+          {
+            "name": "extractResources 提取 markdown 图片",
+            "status": "passed"
+          },
+          {
+            "name": "extractResources 提取非图片链接且排除图片语法（Vue 版 (?!!) bug 的回归测试）",
+            "status": "passed"
+          },
+          {
+            "name": "extractResources 累积时按 URL 去重",
+            "status": "passed"
+          },
+          {
+            "name": "extractResources 无效 URL 不产生链接条目",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentScroll.test.ts",
+        "cases": [
+          {
+            "name": "computeUnread 贴底时清零",
+            "status": "passed"
+          },
+          {
+            "name": "computeUnread 不在底部且是新消息才累加",
+            "status": "passed"
+          },
+          {
+            "name": "computeUnread 流式内容增长不累加（一条 200 token 的回复只算一条）",
+            "status": "passed"
+          },
+          {
+            "name": "computeUnread 不在底部且既非新消息也非内容增长时保持不变",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentStream.hook.test.tsx",
+        "cases": [
+          {
+            "name": "useAgentStream 切会话（reset）会中断在途 SSE，不让旧回合的 token 写进新会话",
+            "status": "passed"
+          },
+          {
+            "name": "useAgentStream 停止（abort）后消息收尾：不再有 isLoading 的消息",
+            "status": "passed"
+          },
+          {
+            "name": "useAgentStream 旧流收尾不清掉新流的停止句柄",
+            "status": "passed"
+          },
+          {
+            "name": "useAgentStream 切会话后旧流的事件不再写进消息表",
+            "status": "passed"
+          },
+          {
+            "name": "useAgentStream 工具调用后前一条 assistant 不再是流式态（不永久闪烁）",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentStream.test.ts",
+        "cases": [
+          {
+            "name": "applyStreamEvent assistant 首片 push isLoading，后续原地累加",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent reasoning 独立累加；来 assistant 时 reasoning 不再续写",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent tool-request 复位 assistant 累加并逐 toolCall push 卡片",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent tool-request 截断时把前一条 assistant 的 isLoading 置 false（不再永久闪烁）",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent clearAllLoading 清掉所有流式中的 assistant",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent tool-confirm/mcp-confirm 都映射为 confirm 信息卡",
+            "status": "passed"
+          },
+          {
+            "name": "applyStreamEvent tool-response push 卡片（含 toolName）",
+            "status": "passed"
+          },
+          {
+            "name": "mapHistoryMessage role/subType 映射表",
+            "status": "passed"
+          },
+          {
+            "name": "mapHistoryMessage 历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）",
+            "status": "passed"
+          },
+          {
+            "name": "mapHistoryMessage 历史 tool-call 参数不是合法 JSON 时保留原文",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/agentUpload.test.ts",
+        "cases": [
+          {
+            "name": "filterImageFiles 只保留图片类型",
+            "status": "passed"
+          },
+          {
+            "name": "filterImageFiles 超过大小上限的丢弃",
+            "status": "passed"
+          },
+          {
+            "name": "filterImageFiles 类型为空但有图片扩展名也放行（部分浏览器剪贴板不给 MIME）",
+            "status": "passed"
+          },
+          {
+            "name": "filterImageFiles 空数组原样返回",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/api.auth.test.ts",
+        "cases": [
+          {
+            "name": "未登录处理 业务接口返回 40100 时广播未登录事件（供路由跳登录页）",
+            "status": "passed"
+          },
+          {
+            "name": "未登录处理 会话探测（getLoginUser）返回 40100 不广播——匿名访问是常态，不能把人一脚踢去登录",
+            "status": "passed"
+          },
+          {
+            "name": "未登录处理 其它错误码不广播",
+            "status": "passed"
+          },
+          {
+            "name": "未登录处理 SSE 端点回的是 JSON 错误信封（匿名时后端抛 NO_AUTH_ERROR）时也广播未登录",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/collaborationApi.test.ts",
+        "cases": [
+          {
+            "name": "collaborationApi creates only by explicit POST with the supplied idempotency key and session credentials",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi reads a snapshot with an encoded run id and no request body",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 400 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 403 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 409 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 410 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 429 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi retains HTTP 503 and the server's classified reason",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi rejects a success HTTP status with a failed BaseResponse",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi posts cancellation to the selected run without treating the acknowledgement as a clinical result",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi uses the real SSE parser across split UTF-8 chunks, applying facts before the heartbeat cursor",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi exposes SSE preflight 409 to the hook without automatic library retries",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi exposes SSE preflight 410 to the hook without automatic library retries",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationApi rejects unknown critical SSE types before delivering or persisting their cursor",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/collaborationReducer.test.ts",
+        "cases": [
+          {
+            "name": "collaboration v1 contract normalizes the snapshot watermark serialized by the actual application JsonConfig",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.accepted with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.started with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.started with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.completed with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.handoff with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO evidence.verified with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.revision.completed with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO agent.feedback.requested with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.review_ready with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.completed with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.restricted with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.failed with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.cancel_requested with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract consumes actual Jackson wire DTO run.cancelled with string long sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"9007199254740992\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"-1\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"1e2\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"1.5\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \" 2\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unsafe or ambiguous string sequence \"02\"",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.accepted payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.started payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete agent.started payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete agent.completed payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete agent.handoff payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete evidence.verified payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete agent.revision.completed payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete agent.feedback.requested payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.review_ready payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.completed payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.restricted payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.failed payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.cancel_requested payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates the complete run.cancelled payload",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"schemaVersion\":2}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"sequence\":-1}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"sequence\":9007199254740992}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"eventId\":\"fact-id-instead-of-run-sequence\"}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"actor\":\"VISION\"}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"visibility\":\"CLINICIAN\"}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"payload\":{\"status\":\"RUNNING\",\"reasoning\":\"private\"}}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"payload\":{\"status\":\"SUCCEEDED\"}}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"hiddenDraft\":\"private\"}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects incompatible or sensitive fields {\"occurredAt\":\"yesterday\"}",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract rejects unknown type, mismatched SSE name, empty cursor, malformed JSON and oversized data",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract accepts only versioned metadata heartbeat",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration v1 contract validates snapshot enums, required fields and absence of draft content",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer replays patient-filtered sequence gaps without creating a missing-event failure",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer ignores duplicates, out-of-order facts and pre-snapshot events without rolling back the cursor",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer replaces state at the snapshot watermark and advances heartbeats after applied facts",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer completes execution with a separately pending doctor review",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer never reopens terminal SUCCEEDED",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer never reopens terminal FAILED",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer never reopens terminal RESTRICTED",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer never reopens terminal CANCELLED",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer stops in-flight roles on run.failed without submitting review",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer stops in-flight roles on run.restricted without submitting review",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer holds cancellation pending until the durable cancellation event arrives",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer refuses a different run or thread before checking sequence",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer requests snapshot on unexplained state transitions",
+            "status": "passed"
+          },
+          {
+            "name": "collaborationReducer keeps a bounded timeline while retaining the latest cursor",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/diagnosisTaskApi.test.ts",
+        "cases": [
+          {
+            "name": "owned image task transport uploads with browser multipart boundary, credentials and stable key",
+            "status": "passed"
+          },
+          {
+            "name": "owned image task transport rejects malformed safe-status response null",
+            "status": "passed"
+          },
+          {
+            "name": "owned image task transport rejects malformed safe-status response {}",
+            "status": "passed"
+          },
+          {
+            "name": "owned image task transport rejects malformed safe-status response { taskId: 'task', status: 'SUCCEEDED' }",
+            "status": "passed"
+          },
+          {
+            "name": "owned image task transport does not accept a business error just because HTTP is 200",
+            "status": "passed"
+          },
+          {
+            "name": "owned image task transport lists only validated task DTOs",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/domain.test.ts",
+        "cases": [
+          {
+            "name": "normalizeConfidence 0–1 的概率原样返回",
+            "status": "passed"
+          },
+          {
+            "name": "normalizeConfidence 0–100 的百分数除以 100",
+            "status": "passed"
+          },
+          {
+            "name": "normalizeConfidence 缺省与 NaN 读作 0（没有结论时不要抛）",
+            "status": "passed"
+          },
+          {
+            "name": "normalizeConfidence 越界值夹紧到 0–1",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent 两种量纲读同一个数——这是全站唯一的置信度口径",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent 没有结论显示破折号，不显示 0.0%",
+            "status": "passed"
+          },
+          {
+            "name": "confidencePercent 0 是一个结论，不是缺失",
+            "status": "passed"
+          },
+          {
+            "name": "confidenceBand 三档不折叠：0.40 与 0.65 不是同一个标签",
+            "status": "passed"
+          },
+          {
+            "name": "confidenceBand 边界值落在较高一档",
+            "status": "passed"
+          },
+          {
+            "name": "confidenceBand 百分数量纲也分对档",
+            "status": "passed"
+          },
+          {
+            "name": "confidenceBand 档位带风险色，低置信不是「正常」",
+            "status": "passed"
+          },
+          {
+            "name": "confidenceBand 缺失读作未评估，不猜",
+            "status": "passed"
+          },
+          {
+            "name": "isUrgentAdvice 急性表现算急症",
+            "status": "passed"
+          },
+          {
+            "name": "isUrgentAdvice 泛化建议不算急症——标红一旦泛滥就等于没标",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/faults.test.ts",
+        "cases": [
+          {
+            "name": "faultFromError 断网（-1）说的是「连不上服务」，不是技术描述",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 上传场景把断网说成「图片没传上去」",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 发送场景把断网说成「消息没送出去」",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 登录表单里的 40100 是「账号或密码不对」，不是「需要登录」",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 读取场景里的 40100 是「需要登录」",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 40300 是权限问题，措辞与未登录区分开",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 404 说成「已经不在了」，并带上状态码读数",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 5xx 是服务故障，最严重",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 非 ApiError 的意外给出兜底说法",
+            "status": "passed"
+          },
+          {
+            "name": "faultFromError 动作原样带出来，供提示里放「重试」",
+            "status": "passed"
+          },
+          {
+            "name": "手工故障 校验类是琥珀色，不是红色",
+            "status": "passed"
+          },
+          {
+            "name": "手工故障 提示是中性的",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/htmlToMarkdown.test.ts",
+        "cases": [
+          {
+            "name": "htmlToMarkdown 标题按层级转井号",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 段落之间留空行",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 加粗与斜体",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 链接与图片",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 无序与有序列表",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 嵌套列表按缩进输出",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 引用、分隔线与换行",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 未知标签剥标签保留文本",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 解码 HTML 实体",
+            "status": "passed"
+          },
+          {
+            "name": "htmlToMarkdown 代码块转为围栏",
+            "status": "passed"
+          },
+          {
+            "name": "保存链路 Markdown 里手写的 HTML 被转义，不会变成可执行标签",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/pendingUpload.test.ts",
+        "cases": [
+          {
+            "name": "pendingUpload 取出一次后即清空，避免跨账号泄漏",
+            "status": "passed"
+          },
+          {
+            "name": "pendingUpload 没有暂存时返回 null",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/records.test.ts",
+        "cases": [
+          {
+            "name": "reexamineLabel 三种复审状态各有文案",
+            "status": "passed"
+          },
+          {
+            "name": "reexamineLabel 缺省按未复审处理",
+            "status": "passed"
+          },
+          {
+            "name": "summarizeRecords total 取信封值而不是数 records",
+            "status": "passed"
+          },
+          {
+            "name": "summarizeRecords 高风险只数未拒识且 severity=severe 的记录",
+            "status": "passed"
+          },
+          {
+            "name": "summarizeRecords 待复核数 requiresReview 为真的记录",
+            "status": "passed"
+          },
+          {
+            "name": "summarizeRecords 最近判读时间取 createTime 的最大值",
+            "status": "passed"
+          },
+          {
+            "name": "summarizeRecords 空列表：总数照传、时间与计数归零",
+            "status": "passed"
+          },
+          {
+            "name": "canRequestReexamine 未复审与已复审都可申请",
+            "status": "passed"
+          },
+          {
+            "name": "canRequestReexamine 复审中不可重复申请",
+            "status": "passed"
+          },
+          {
+            "name": "canRequestReexamine 拒识记录没有可复核的结论，不给申请",
+            "status": "passed"
+          },
+          {
+            "name": "reexamineView 复审中显示回执，重新打开也能看到",
+            "status": "passed"
+          },
+          {
+            "name": "reexamineView 提交成功后的乐观态优先显示回执",
+            "status": "passed"
+          },
+          {
+            "name": "reexamineView 未复审与已复审都显示可申请",
+            "status": "passed"
+          },
+          {
+            "name": "reexamineView 拒识或没有复审状态时不渲染整块",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 服务端聚合可用时用全量口径",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 接口未实现（404）时降级到当前页并标注 page",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 网络错误同样降级，不向上抛",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 服务端返回空对象时降级到本页口径（不冒充全量）",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 服务端返回 null 时降级到本页口径",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 字段缺一（缺 highRisk）时降级到本页口径",
+            "status": "passed"
+          },
+          {
+            "name": "loadMyStats 数值字段不是有限数字时降级到本页口径",
+            "status": "passed"
+          },
+          {
+            "name": "statsLabels 全量口径不带「本页」",
+            "status": "passed"
+          },
+          {
+            "name": "statsLabels 本页口径必须写明「本页」",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/sanitize.test.ts",
+        "cases": [
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 一级标题保留为标题",
+            "status": "passed"
+          },
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 代码块保留 pre/code 结构",
+            "status": "passed"
+          },
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 表格保留 table 结构",
+            "status": "passed"
+          },
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 脚本仍然被剥掉",
+            "status": "passed"
+          },
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 编辑页预览与公开页同一条管线：所见即所存",
+            "status": "passed"
+          },
+          {
+            "name": "资讯正文：Markdown 渲染后经净化仍保留结构 代码块里的复制按钮不作为正文残留",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/threadStorage.test.ts",
+        "cases": [
+          {
+            "name": "threadStorage 不同用户各存各的",
+            "status": "passed"
+          },
+          {
+            "name": "threadStorage 匿名态单独一份",
+            "status": "passed"
+          },
+          {
+            "name": "threadStorage 保存空串等于清除",
+            "status": "passed"
+          },
+          {
+            "name": "threadStorage key 带用户 id 前缀",
+            "status": "passed"
+          },
+          {
+            "name": "threadStorage localStorage 抛错时按空值处理，不崩页面",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/useCollaborationRun.test.tsx",
+        "cases": [
+          {
+            "name": "useCollaborationRun does not read or create when scope is inactive {\"enabled\":false}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun does not read or create when scope is inactive {\"identityKey\":null}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun does not read or create when scope is inactive {\"runId\":null}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun starts at the snapshot cursor and replays filtered gaps and duplicate facts",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"threadId\":\"thread-b\"}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"identityKey\":2}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun hides the prior run immediately and ignores late frames on scope change {\"runId\":\"run-b\"}",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun ignores a late snapshot from a previous identity",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun rejects a snapshot for another thread before opening SSE",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun unmount only disconnects; it never cancels the persistent task",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun reconnects from the last applied heartbeat cursor without creating or rerunning a task",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun replaces projection/snapshot after 409 and never POSTs a new run",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun replaces projection/snapshot after 410 and never POSTs a new run",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun clears protected state and stops after permission revocation",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun refreshes once on an incompatible protocol, then stops instead of looping",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun cancels only the selected run, deduplicates clicks and re-reads the winning terminal state",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun never cancels a new selection through a retained old callback",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun ignores late cancellation acknowledgement after switching accounts",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun keeps cancellation failure unconfirmed and never invents CANCELLED",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun uses an authoritative terminal snapshot without opening a live stream or treating approval as execution",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun supports React StrictMode cleanup without duplicate active subscriptions",
+            "status": "passed"
+          },
+          {
+            "name": "useCollaborationRun does not redisplay a stale projection before reconnect authorization succeeds",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/lib/useMediaQuery.test.tsx",
+        "cases": [
+          {
+            "name": "useMediaQuery 挂载时返回当前匹配结果",
+            "status": "passed"
+          },
+          {
+            "name": "useMediaQuery 媒体查询变化时跟着更新",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/styles/tokens.contrast.test.ts",
+        "cases": [
+          {
+            "name": "正文三级色对比度 浅底 paper-ink-3 ≥ 4.5",
+            "status": "passed"
+          },
+          {
+            "name": "正文三级色对比度 暗底 on-dark-3 ≥ 4.5（含二级抬升面）",
+            "status": "passed"
+          },
+          {
+            "name": "正文三级色对比度 橙色文字 ≥ 4.5",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/pages/AgentPage.collaboration.test.tsx",
+        "cases": [
+          {
+            "name": "/agent collaboration scope integration binds an explicitly selected run to the authenticated user's restored conversation",
+            "status": "passed"
+          },
+          {
+            "name": "/agent collaboration scope integration leaves ordinary /agent visits and the default-off feature free of collaboration requests",
+            "status": "passed"
+          },
+          {
+            "name": "/agent collaboration scope integration does not infer a collaboration run from an ordinary chat thread",
+            "status": "passed"
+          },
+          {
+            "name": "/agent collaboration scope integration new conversation clears the selected run and only disconnects its stream",
+            "status": "passed"
+          },
+          {
+            "name": "/agent collaboration scope integration logout clears the protected view and prevents selected-run cancellation",
+            "status": "passed"
+          },
+          {
+            "name": "/agent collaboration scope integration exposes cancellation for only the selected run through the workbench context",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/pages/AgentPage.test.tsx",
+        "cases": [
+          {
+            "name": "AgentPage 未登录 先展示界面，不直接把人踢去登录页",
+            "status": "passed"
+          },
+          {
+            "name": "AgentPage 未登录 收起会话栏后左栏折叠（常驻 DOM + 宽度动画），对话区不被压窄",
+            "status": "passed"
+          },
+          {
+            "name": "AgentPage 未登录 切换会话后旧历史不落到新会话",
+            "status": "passed"
+          },
+          {
+            "name": "AgentPage 未登录 非安全上下文没有 crypto.randomUUID 时也能发送",
+            "status": "passed"
+          },
+          {
+            "name": "AgentPage 未登录 发送失败时撤回乐观消息，输入框保留原文",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/pages/RecordsPage.test.tsx",
+        "cases": [
+          {
+            "name": "RecordsPage 统计口径 服务端聚合未上线时，三项计数标注「本页」",
+            "status": "passed"
+          },
+          {
+            "name": "RecordsPage 统计口径 服务端聚合可用时使用全量口径",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/admin/Modal.test.tsx",
+        "cases": [
+          {
+            "name": "Modal 焦点陷阱 Tab 从最后一个可聚焦元素回到第一个",
+            "status": "passed"
+          },
+          {
+            "name": "Modal 焦点陷阱 Shift+Tab 从第一个回到最后一个",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/agent/ChatInput.test.tsx",
+        "cases": [
+          {
+            "name": "ChatInput 流式期间按 Enter 不发送、也不清空已输入的文字",
+            "status": "passed"
+          },
+          {
+            "name": "ChatInput 非流式时 Enter 发送并清空",
+            "status": "passed"
+          },
+          {
+            "name": "ChatInput 发送失败时保留文字与附件，草稿不清",
+            "status": "passed"
+          },
+          {
+            "name": "ChatInput 中文输入法组字中的 Enter 不发送",
+            "status": "passed"
+          },
+          {
+            "name": "ChatInput 流式期间显示的是停止按钮",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/agent/CollaborationTaskForm.test.tsx",
+        "cases": [
+          {
+            "name": "explicit image task admission file selection alone never uploads or creates a run; repeated submit admits once",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission requires an existing authenticated conversation",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission rejects invalid attachment File {} before a request",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission rejects invalid attachment File {} before a request",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission rejects invalid attachment File {} before a request",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission chooses an owned task without reuploading or associating a different image",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission retries ambiguous admission with the same task and key",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission does not accept a mismatched task binding",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission unmount aborts polling and ignores late receipts",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission explains already-bound and legacy tasks without starting a replacement",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission waits for actual inference readiness before creating collaboration",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission bounds inference polling and resumes without reuploading",
+            "status": "passed"
+          },
+          {
+            "name": "explicit image task admission restricted tasks without a trusted snapshot stop without faking role execution",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/agent/CollaborationWorkspace.test.tsx",
+        "cases": [
+          {
+            "name": "collaboration workbench visibility marks only observed roles; Vision says it interprets an existing snapshot",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility keeps clinician handoffs hidden for the patient even if passed to the view",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility shows structured handoffs only with authorized projection v1:admin",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility shows structured handoffs only with authorized projection v1:doctor:review-42",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility separates successful execution and review PENDING without publishing text",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility separates successful execution and review APPROVED without publishing text",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility separates successful execution and review REJECTED without publishing text",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility separates successful execution and review INVALIDATED without publishing text",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility does not fabricate completion for RESTRICTED",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility does not fabricate completion for FAILED",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility does not fabricate completion for CANCELLED",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility clears protected panels during forbidden",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility clears protected panels during reconnecting",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility returning to chat does not cancel, explicit cancellation does",
+            "status": "passed"
+          },
+          {
+            "name": "collaboration workbench visibility folds long records and lets a reader pause auto-follow",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/agent/SessionList.test.tsx",
+        "cases": [
+          {
+            "name": "SessionList 置顶 置顶的会话进「置顶」分组，不留在「今天」分组里",
+            "status": "passed"
+          },
+          {
+            "name": "SessionList 置顶 已置顶的会话菜单显示「取消置顶」，未置顶的显示「置顶」",
+            "status": "passed"
+          },
+          {
+            "name": "SessionList 置顶 点「取消置顶」把 isPinned=false 抛给页面",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/fault/fault.test.tsx",
+        "cases": [
+          {
+            "name": "FaultNote 行内提示带上标签、结论与补充",
+            "status": "passed"
+          },
+          {
+            "name": "FaultNote 字段级不摆标签，只留一行小字",
+            "status": "passed"
+          },
+          {
+            "name": "FaultNote 整块读数摆出状态码与端点读数",
+            "status": "passed"
+          },
+          {
+            "name": "FaultNote 动作可点",
+            "status": "passed"
+          },
+          {
+            "name": "FaultToaster 投放后浮出读数条，带标签与状态码",
+            "status": "passed"
+          },
+          {
+            "name": "FaultToaster 关闭按钮收掉那条读数",
+            "status": "passed"
+          },
+          {
+            "name": "FaultToaster 没有 Provider 时投放不报错（组件单测里单独渲染也不该崩）",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "file": "web/src/components/admin/charts/chartGeometry.test.ts",
+        "cases": [
+          {
+            "name": "trendGeometry 窄容器：逻辑高压到下限 240，绘图区随宽度缩",
+            "status": "passed"
+          },
+          {
+            "name": "trendGeometry 常规宽度（640）：逻辑高仍是 240——与移植前的固定 viewBox 同形",
+            "status": "passed"
+          },
+          {
+            "name": "trendGeometry 宽屏（1100）：逻辑高封顶 360，不再被拉成扁带",
+            "status": "passed"
+          },
+          {
+            "name": "trendGeometry 绘图区宽度随逻辑宽单调变长（宽屏 = 更长的横轴）",
+            "status": "passed"
+          },
+          {
+            "name": "rankedGeometry 轨道末与数值列留够净距：最长那条条不撞数字",
+            "status": "passed"
+          },
+          {
+            "name": "rankedGeometry 占比列右缘贴右留白，数值列在其左侧",
+            "status": "passed"
+          },
+          {
+            "name": "rankedGeometry 行块高度 = 上下留白 + 每行 40px",
+            "status": "passed"
+          },
+          {
+            "name": "rankedGeometry 容器变宽时轨道吃掉余量（名称带与数值带不跟着长）",
+            "status": "passed"
+          },
+          {
+            "name": "trendLabelStep 宽绘图区：每个点都画标签（步长 1）",
+            "status": "passed"
+          },
+          {
+            "name": "trendLabelStep 窄绘图区：按最小净距抽稀，隔一个画一个",
+            "status": "passed"
+          },
+          {
+            "name": "trendLabelStep 单个点不抽稀",
+            "status": "passed"
+          },
+          {
+            "name": "miniGeometry 小格：逻辑高落到下限 64",
+            "status": "passed"
+          },
+          {
+            "name": "miniGeometry 宽格：逻辑高封顶 120（不会被拉成扁带）",
+            "status": "passed"
+          }
+        ]
+      }
+    ]
+  },
+  "browserSafety": {
+    "stats": {
+      "startTime": "2026-11-11T14:51:16.433Z",
+      "duration": 14802.434000000001,
+      "expected": 4,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "name": "Graph: patient/doctor isolation, approved read, explicit save and immutable receipt after withdrawal",
+        "seconds": 6.239
+      },
+      {
+        "name": "rollout: stop admissions and patient display while active Graph finishes under its original runtime",
+        "seconds": 3.551
+      },
+      {
+        "name": "Coordinator: doctor rejection blocks patient publication and saving",
+        "seconds": 1.999
+      },
+      {
+        "name": "source withdrawal before doctor decision invalidates frozen review without changing execution history",
+        "seconds": 1.185
+      }
+    ],
+    "sha256": "8ef4298bea07f5b8bf7a8e4f00788f77f00aa3a1dd331687e2e4500de6c82982"
+  },
+  "browserDefaultOffSyntheticChat": {
+    "stats": {
+      "startTime": "2026-11-11T14:52:47.918Z",
+      "duration": 4398.066,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "name": "default build preserves ordinary chat and never calls collaboration APIs",
+        "seconds": 1.843
+      }
+    ],
+    "sha256": "8c44027577dd9430b3ca684ac40cea4dffeaa5a72b764a2519734dcdae11b61e"
+  },
+  "wireContract": {
+    "evidenceType": "SOURCE_CONTRACT_AND_REAL_JACKSON_SYNTHETIC_DTOS",
+    "eventTypes": 14,
+    "snapshotFields": 12,
+    "backendSourceSha256": {
+      "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationEvents.java": "a1266525a862a4796548f3926a481a67a30394b010fea26b91fcdf563e88d6ce",
+      "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "76bee1a0e7b486811b983b2858fe6a4004cb0cbd9705cb54b90a45291a1eb0df",
+      "src/main/java/com/csust/eyediagnosis/config/JsonConfig.java": "fd251b5db119cebe81ce6a8ffd97a1e9eccfaed1f26cdfe2d38137052d94dcd8",
+      "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "e9b3b5028283c5a574a0f7c8b427da747aa70915af6b8a363cea044c6310d0da"
+    },
+    "wireFixtureSha256": "03476a85c5639c037ddfd5221b9dc3433ebf8a747e16e8c2f65d8c3b72194962",
+    "status": "PASS"
+  },
+  "cleanup": {
+    "services": [
+      "disposable-mysql",
+      "test-browser-backend",
+      "vite-development",
+      "default-off-preview"
+    ],
+    "recordedAt": "2026-11-11T14:57:19.3901797+00:00",
+    "allClosed": true
+  },
+  "candidateFileSha256": {
+    ".github/workflows/verify.yml": "af978bc4e153870623ca40e8a5550d25de7ab8414a266e0ee480ea8c12f5a00e",
+    "AGENTS.md": "ba3c0fd1ef0061c70bab541a1fe9bea836b8dfe440e98dd8f4be6672a5f3f153",
+    "CLAUDE.md": "b75c44f66c1538bd85acd910064c9e8516903fbae7d71d584efea968b4f819ef",
+    "DESIGN.md": "42c70cecb273c5f3f2d861a5a2c2e5b8f4553e033b0b208021fb275aea4a0358",
+    "docs/architecture/multi-agent-adr.md": "fcdace55cb4052f4c5b32afba193ed493dc7a9287877195ef793deb6cd30150f",
+    "docs/collaboration-client.md": "58faf6056a8838b59b2c23183637bd8dd19dde1deedf4af9cec9de55e335e177",
+    "docs/collaboration-release-runbook.md": "856dd53606142fe665a436487ca80c2c9a835eca1788e6276af12e2864ac7e01",
+    "docs/collaboration-runs.md": "39fa9a3bdc4e341789c175ebc126c27a45199c49fa672c42da783f84f5656d2c",
+    "docs/graph-execution.md": "4426dc3e80723a121cb70087b95e16172c3c3fc453ef499f1a5c3ff8c70de35e",
+    "docs/plans/2026-11-11-realtime-multi-agent-implementation-readiness.md": "9d2bf3c7647a26a04e69b8960af19859f55dfdda7c5a7b280c7a77e8599575a6",
+    "docs/plans/EyesDiagnosis_RealTime_MultiAgent_Implementation_Plan_v1.1.md": "cd3b1bcd51fed7efb6479dbf6ab38b04584a7ac194c06dfc9392676cbe8990bb",
+    "docs/testing/2026-11-11-realtime-collaboration-ui.md": "d8223b85082af7daf9decfc56efa8cb3a768c04884dbd7015a54aa40eb63f947",
+    "docs/testing/2026-11-11-realtime-coordinator-events.md": "cbdde04b531d2387bebc14c1ea36e2686a71e40f30a3c038b8430d97855378e3",
+    "docs/testing/2026-11-11-realtime-graph-runtime.md": "43daa3df40dd3a1ab13db2f74fe7322f453048743a39f5e6a0f9543fd5beea51",
+    "docs/testing/2026-11-11-realtime-graph-spike.md": "715c99f16459521d978b0308ae94c8a075a0bc78596c75e3aaab2230720e6a79",
+    "docs/testing/2026-11-11-realtime-react-events.md": "e5673e95cc7b91c914a21ed768900d239ebfd022ef0ba3bd8a4e84f8b664e4e5",
+    "docs/testing/2026-11-11-realtime-safety-release.md": "2f6e6a3db03a72876c6fe8ae85ff75462639fc9ceb0676d7007e384306f8c027",
+    "docs/testing/realtime-collaboration-ui-20261111/inputs.json": "191fa4309c6bceb98941eb5a62d21a4f41812c4ac6a9def9d9cd12bfb4b0a6d3",
+    "docs/testing/realtime-collaboration-ui-20261111/real-http-restored.png": "051d4217239ebccd17e460b8cae86e2c0b7a5f1a4c6d28d6d7761bacf62dfb7e",
+    "docs/testing/realtime-collaboration-ui-20261111/real-http-running.png": "a81def731f2a2c7ff1cd09424549e94ebc67b8ddda82636c8c2785d212612080",
+    "docs/testing/realtime-collaboration-ui-20261111/results.json": "0c081eb00607700fa84dbeda1b27474c223c9f77ec8d547b78554e102345d370",
+    "docs/testing/realtime-collaboration-ui-20261111/source-contract.json": "93c9aa8efb365feeb981f1c59bf53645c052aa7f681be2ccddc2c86c266d5950",
+    "docs/testing/realtime-coordinator-events-20261111/results.json": "d9fe49c245424ff5049ecb567ff4be8babdcda47bff034e0fe7b2a70fc53653b",
+    "docs/testing/realtime-graph-runtime-20261111/inputs.json": "85039dd85f6a4d75c680225445ce9cec90927a7052f3d7c9aaf9fe8fa99bfaab",
+    "docs/testing/realtime-graph-runtime-20261111/results.json": "19a3044214a3d5b2225a923e12d1a1c761a3a8f26cffca6fc7da82c16d355058",
+    "docs/testing/realtime-graph-spike-20261111/results.json": "02d30ab5101ddfdb639558c3a68742fd4a5d8912b80df6c73126d120b4bd6145",
+    "docs/testing/realtime-react-events-20261111/results.json": "86640166791c9e5c477035869936f88c7342a487bee4179a5e58b71ca0df8571",
+    "docs/testing/realtime-react-events-20261111/source-contract.json": "93c9aa8efb365feeb981f1c59bf53645c052aa7f681be2ccddc2c86c266d5950",
+    "docs/testing/realtime-safety-release-20261111/approved-metadata.png": "f9ef96622c2877f3f8cc2de5e348731f3d8545852a7e377c2e1e5f3b25ccbef4",
+    "docs/testing/realtime-safety-release-20261111/drained-graph.png": "e2c051d02b5e4fae35473aaebf10fbb30f11ec5bf7c85effb59df988c30c9d50",
+    "docs/testing/realtime-safety-release-20261111/inputs.json": "7f233951d568b84c6fc28bb006dfb56f57359ba8ca98ae594f432fd35b5e63e3",
+    "scripts/check_collaboration_fixture.py": "762f40b952edd710f98220df106223b13fb057fbde65e82fe9cb18ef3aea2913",
+    "scripts/check_surefire_skips.py": "7df2dd06d549375a68f0febd9209cef54a1220ff622ebdd06fddb43a401cb99e",
+    "scripts/check_task02_inputs.py": "ed96eec4aedf6ad2517cd209b82e8c16f7ede473561e24ce3fb63cb4e3b7484e",
+    "scripts/check_task05_inputs.py": "3a1c58ada0dc2660734d01756ffb78a188449b8568ced331ed3e45b4298388d5",
+    "scripts/collect_task05_evidence.py": "dd5c64f5c9c9a9451c2b1ecb5ef787ba1b556dfbdeb9ab6a266aceea4dea616b",
+    "scripts/collect_task07_evidence.py": "4503edf5f8e26cebb8f7b66727dffc1bd0d3c981889acec7312bbaddf42e26e5",
+    "scripts/fixtures/CollaborationWireFixture.java": "7de6d908c031edf3e307ab9027f481cefbf9c019363f9256de1d2750bc4dc511",
+    "scripts/run_task05_browser_server.ps1": "1a7d5052ec3aa71a1433f18323cf7e0e71d37c2d59c3b75939253db8f3001074",
+    "scripts/task07_inputs.py": "123da9df76507bab984d3a77bdfda3d030985ef7dc7a34190f0ebba7d15f96df",
+    "scripts/tests/test_check_surefire_skips.py": "8ebcac40cce9620796205cb7be398bf80cc58ebed911ff602b62997491b3584a",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationCursor.java": "7b741deec59c4dc0248949bd4b5ab3817645c2e198302950373e0a031149e12c",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationEvents.java": "a1266525a862a4796548f3926a481a67a30394b010fea26b91fcdf563e88d6ce",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "76bee1a0e7b486811b983b2858fe6a4004cb0cbd9705cb54b90a45291a1eb0df",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationStreams.java": "115448d0914215e54e3c157388b2ee94291617ebea0ceeac231d17fad2d7d056",
+    "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "e9b3b5028283c5a574a0f7c8b427da747aa70915af6b8a363cea044c6310d0da",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftGraph.java": "2d641a75735c87fc590c27f9006f0e71cb9003e4eb61f50ec99c82dda1f9e982",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/DraftMailbox.java": "72019c71a260e7dde97439aa8d05b24c44897ade179e7cc71d957a3c68207d87",
+    "src/main/java/com/csust/eyediagnosis/patientdraft/PatientDraftCoordinator.java": "e1adeb4a08a5a902942db6eba925214c7ff05a0c38202e07729c9f5a2b31bfeb",
+    "src/main/resources/application.yml": "74c56cbca83a32b195be14f60cf76685f48596cc8b889a2c82ebc47fa73ddbb8",
+    "src/main/resources/db/migration/V18__collaboration_events.sql": "c9e80f8c2b60ddddb5bc149b3ffd0088c465d564aa43f4f756bce5693eb80b03",
+    "src/main/resources/db/migration/V19__graph_execution.sql": "253fe130e88b7cc355d312a00a809ed1451b86c5173b709426e1befbedcb1db7",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationBrowserServer.java": "72eec68e2c44d7ddd83e4dfef24e3c65210d881b817626ba479a38abeb09a3ec",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationReplayWorker.java": "c7460145041d6843cfd78cb9d11391a54c9292f1333f38438aea3b9340fecdd1",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationRunTest.java": "1063195e2c7546e6e3406b9f210e14bc54b452f3ba1ab1cc9f77f4ffe05bfba6",
+    "src/test/java/com/csust/eyediagnosis/collaboration/GraphExecutionTest.java": "8c5006de43f73fcbb5267c74e103c346efbdd0723caa9af3e024dac943048aee",
+    "src/test/java/com/csust/eyediagnosis/migration/FlywayMySqlIntegrationTest.java": "6f92657cc7a16a0a5feb28f663d06819e08cefa75e769d3aea0ac6ec4f0997d3",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/FourRoleGraph.java": "373fcde0c3425474ea03dc30351232d33649d73644b900933f3228cec8d39b6c",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/GraphSpikeResumeWorker.java": "b0b3c3fc153a2cc522326bcd808ed031c047b0c1ecb7e6f0c82c9ebecaaf2ee0",
+    "src/test/java/com/csust/eyediagnosis/poc/realtime/RealtimeGraphSpikeTest.java": "6a2f8afb40c00eed011661a75fd861efe3f6ac2460f080ba1e4f783a48a15378",
+    "web/.gitignore": "dc3b80afacb939692aa3809fcac4fd463cd96ec23d1374e0b5b804ed0e528a6f",
+    "web/.prettierignore": "076f6e6ef92809c7ab3ccb63cafcbb16e71c29671085c26a33daf23d6a3b4301",
+    "web/.prettierrc": "6d35c23a00707c440bbd156e0e4ec7c1f7ec45e971fefd1ec468bc17e9949fbd",
+    "web/DESIGN.md": "b975d88d9427a1f575d4d1d6a0aeb100e421831b24e02538fadc3eb70a39936b",
+    "web/README.md": "6f92f7ceab867cbbb626a40ffae47b233b8ac71b25d400beb9b2b8e27edad543",
+    "web/components.json": "156858e2da20785ac0f1853580c7e34d5b8496f519e8839d2176e85947d4f779",
+    "web/docs/superpowers/plans/2026-11-10-web-acceptance-remediation.md": "db32276ed32641110e2574e9a577d139565f80b5bbe0e70accff4aa8af15d034",
+    "web/docs/superpowers/specs/2026-11-10-web-acceptance-remediation-design.md": "672d952ee2430282b2a4f4a90c185424411098fb7ffac5d02afa9805314adeee",
+    "web/e2e/README.md": "852fabb498ce0b61d2ed30124221ddd109a584c41da3ca4a8ea6b306805ff0b6",
+    "web/e2e/collaboration-backend.spec.ts": "097c3110fe9d59de0bb3021ae2cc9d2d7afb3205fd8703f4ba8b92376ff46f02",
+    "web/e2e/collaboration-default-off.spec.ts": "84db84e0262c6d4a1adba38f5cd72fcc7713dfc6432a2df702aaac10d226deb3",
+    "web/e2e/collaboration-safety.spec.ts": "0b46d1806a9a1d0e6ce967c81b0dc247b76836cd6c9cf36f40e13eaa57df002c",
+    "web/e2e/collaboration.spec.ts": "40274389e3ffcc1efa038a235ea0cc6258fed9a93803bf15b9637f130a39fdf7",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-dark-desktop-chromium-win32.png": "666ace65c6fa1740a59dc039b325022c0f42478fe07459aab7bbd1bb9db9a75b",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-dark-mobile-chromium-win32.png": "cbf9565f917b36087eab80cb44820ec68defe596cceffa6731242fe2b5705615",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-light-desktop-chromium-win32.png": "87e301c79c2d41a749677fc7222fadd2779178ab5fd4b33426e0201efc81bc58",
+    "web/e2e/collaboration.spec.ts-snapshots/collaboration-light-mobile-chromium-win32.png": "c33bbfc1dbfbb741325eac95c0a67c2526445754c80c8ffb87d6b5c8499912c0",
+    "web/e2e/smoke.spec.ts": "b21e664c6eed5ba9374f712a8b354334fc403a54c906e598c39598cb31677500",
+    "web/eslint.config.js": "1148ce22cedc6e6b20867eff5f72c98b2a07e21e37ee8faa2594af3970862d9a",
+    "web/index.html": "3dbef60ed0016bf9e023ef424363ffb63425427cc2d68f34181cd6816d57f348",
+    "web/package-lock.json": "fbfd6d66da25f2ecb45a2ebd5bbaecdfa77ef040741b4ada5522bf2dfcf0c5a0",
+    "web/package.json": "1f0c76562ace67708ea11833297da66b280d03a48c09f856bcc805d5eb2111f1",
+    "web/playwright.config.ts": "ce2abd5cdece4ffabbbc63847016d9861b29dcaf354cc4bb5375f689462bc709",
+    "web/public/fundus-demo.jpg": "904d66eb1b7621da06cb574c04ff8d3c498c38bec6819c80d659b9d77c8068af",
+    "web/public/iris-mark-metallic-dark.svg": "02b1a483d5ca14da89823750643ead74a58206ddc05347b23cc324be7679df53",
+    "web/public/iris-mark-metallic-light.svg": "88a21f59fb77f21f0b7ae14716c9496acc135e57dbe58ca2d99c95981ddb780f",
+    "web/public/mark.svg": "d2b4c3284169f12f66ad2aa0574ec25d2de0060ada82fa7feb24e20d4e1f0bbf",
+    "web/public/scroll-expand-dark.webp": "cee94f736c654353ba9dc0b4d4e89c7981f2d8f1d79fc782c99043ef6ae3ea98",
+    "web/public/scroll-expand-light.webp": "763e0e36033753874438c235f4b4a3d472f9f349e0ee9b958a825246d1d3b8c7",
+    "web/public/vite.svg": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb",
+    "web/src/App.tsx": "78159ffc816beeab5385edf882a8ecbc5ee0186fe1b732877c03dd30e431dd4b",
+    "web/src/assets/react.svg": "35ef61ed53b323ae94a16a8ec659b3d0af3880698791133f23b084085ab1c2e5",
+    "web/src/components/AccountMenu.tsx": "5384b0b5d8cb3850821f29874ba20911b0c8cd42bfbaac67548139b2cc7c2791",
+    "web/src/components/AgentComposer.test.tsx": "1d4c4eb30543e622ceced6957cebfde679bf36842e3d35772ddd8e1b04ef9c9e",
+    "web/src/components/AgentComposer.tsx": "99c8f9e280681f78ed9504414a79f796f0d29d28ea61ddd3171396b4afc2d496",
+    "web/src/components/AgentScreenDeck.tsx": "8775cfd8cb99a6f51957e8628aeddd845cada4fa56eda0266c8651184bb30434",
+    "web/src/components/AuthShell.tsx": "5cfce695d08693111a7de97757ea5c9d4ae085a4797ca1ffed4943f4a2cec943",
+    "web/src/components/CardSwap.css": "191401e3c46a29f5515c90a507f661224661a4fc7f40260eb67da80a47b76088",
+    "web/src/components/CardSwap.tsx": "44891927487514f612c9f6750f95065b3793e9562a69fe2a8522356945a96331",
+    "web/src/components/ChromaGrid.css": "cbb6889c25feacc820f2539a66acc38187258e740dc02702c25d2ec1429150db",
+    "web/src/components/ChromaGrid.tsx": "f40f389480bfdf502de3734fe0815a658fa56d6fc8a5fbd9c4e6e7e3290e9b61",
+    "web/src/components/ClassScale.tsx": "7cdffa5e36f9f011526d71a3659c45dc9f7386e082bde3533b3d1500e2277afc",
+    "web/src/components/ConfidenceDial.tsx": "c662fdd5c2943a0f52d64e8e5b2cd413e3dc52beccda5e3537d816be3fd0cb47",
+    "web/src/components/DisclaimerBar.tsx": "959817c9a0e14d10908116b4a93c6bbabfa243d0c7fa3ea14c78cb394a269f3f",
+    "web/src/components/ElectricBorder.css": "d474a1f976eaca972cd2c265a20c3fb0a49103c38d300970056b617d60a5e200",
+    "web/src/components/ElectricBorder.tsx": "dfadbfd1fae9fbc2472249607a3585980e9601a933a90bf79d051c2601e177c2",
+    "web/src/components/EmptyFrame.tsx": "7231842096468703a97e07dab41246e812b2a023c908cbe8611ee4c141177aa1",
+    "web/src/components/FaultPanel.tsx": "38791ecf1684bf87ebf93df7f4afd4b315e44fc6fb3894f547e156ac5b7469fe",
+    "web/src/components/GridScan.css": "f73a04ca8750d86987b49038fe7ec2d459ec993d49ed46756f9c7b208de4a631",
+    "web/src/components/GridScan.tsx": "a6ff23859f009ba0ab5d3eb8ca038ed2fa3b8b19e76b632690468b420a96d560",
+    "web/src/components/LaserFlow.css": "5bcb99b06cb44fdafc14c3eb71d2b4408678c8d16decfcb50e301616605edbf5",
+    "web/src/components/LaserFlow.tsx": "e4fdaad50ada830ac463a4f9802d0920331e5ea69ea9842b1eb729f575d08422",
+    "web/src/components/MobileNav.tsx": "108155c6c5dac3efdab77c00790b603a6a445179d6fb2c67460224bbfccd69da",
+    "web/src/components/PlaceholderPage.tsx": "a85afc3f4d50c9c6763fda3ba28651acb30d5c12715e05f9571230dcc2e0f52a",
+    "web/src/components/RecordSheet.test.tsx": "bfb276022237df8be0add0db5b45c7581263b1d191339a116c087b590da23c24",
+    "web/src/components/RecordSheet.tsx": "58aa352800322093d5ffba38ac67adf2ff7b8a55752b25a226078f48c3bd0ad3",
+    "web/src/components/RiskTag.tsx": "ba5f112498cec277f6f8743bf171f198328393f03bb30fdaa7d9354bf143a315",
+    "web/src/components/ScrollExpand.css": "05108206a74e27aebede278c87eb57b1fc81d30e7c862b1875755a24a0bfce00",
+    "web/src/components/ScrollExpand.tsx": "e7a8611b26225daa2c4794aaa6e8f68bdf9aa9353db04e6c075124b2abaa9ea4",
+    "web/src/components/SectionHead.tsx": "0d0cd61af3650479a035ff9ac110e7c98d75375c0cfba4a5723c27d7c1018e21",
+    "web/src/components/SiteFooter.tsx": "947c5c4226517b81e955b599e12e04aad4c43c2c0b5ae27d9ff6b1ce84da58f5",
+    "web/src/components/SiteHeader.tsx": "42ebdc107906eed98d37fa30113e527912c0a6c7c8c26b60dfa7fc1333dccdb5",
+    "web/src/components/TargetCursor.css": "ea6d8f8778fa8821e973349c1cb0e4694eb31993ff3906d61b6cf33ae2db29c1",
+    "web/src/components/TargetCursor.tsx": "8b591733a39994c27e8103ddc40fb03e7b55fcbcbe3f5f6ef0c986957408f1ba",
+    "web/src/components/admin/AdminGate.tsx": "e5d632fb98a80c433a449112098b68fa35d2ad13bc70f3b5d33b50ea5b442553",
+    "web/src/components/admin/AdminLayout.tsx": "8ff9f4c212c6d714a1b3cb44bd47d5a8ecfc63f9a8338552281825e204bdbef6",
+    "web/src/components/admin/DataTable.tsx": "0e3e1c68f59e565c53d94c96fb773d57d3b74acdace16117fef9f43d34493dc5",
+    "web/src/components/admin/Drawer.tsx": "2ca5713cd8ade71a3633a16f1d2b9c86b08d9289ac59a310ab2282813dec43ed",
+    "web/src/components/admin/Modal.test.tsx": "d7b4872e0ab936c47e2862070c84ef0444c57394497eaba372e858072e915f54",
+    "web/src/components/admin/Modal.tsx": "e7cb42335cd08e3f9a82f1cb0e0e336c782218830451db461c04eae9ee3693d5",
+    "web/src/components/admin/StatTile.tsx": "2711382ed65cc3216c98cf3e06b337621bfa37a1f1dcb396f115a61810219a34",
+    "web/src/components/admin/Toolbar.tsx": "944533caa44bc8ce91010167a12d18e02a676fdb5dd85e607bc56742ff6403a7",
+    "web/src/components/admin/charts/MiniBars.tsx": "d7a1264fb851c8b3e468eedb4b61a75ef71bdc20bb0ff74ecb62705edbae162a",
+    "web/src/components/admin/charts/MiniTrend.tsx": "4ac1d9579a9fcb02f07e2b832ebf833441fcf88543a2b3e8f273dd0ff3aec6b3",
+    "web/src/components/admin/charts/RankedBars.tsx": "225b693099afe8f6ecbc7a347b1ec4da876304b0063593bd0098b2fc644ddfba",
+    "web/src/components/admin/charts/TrendChart.tsx": "7a832491f19d6b6c79d559d47c77bea1350e687b7c62e809f51c59b12d337e63",
+    "web/src/components/admin/charts/chartGeometry.test.ts": "1fd3e7770664935fe4804975998aeef328a4486b2bc18eec83db4f39b068bf7e",
+    "web/src/components/admin/charts/chartGeometry.ts": "0132526e193616fe8c2e03e718335cfee6dd6b73f74d3a8546191a463ccba7e4",
+    "web/src/components/admin/charts/useMeasuredWidth.ts": "768c0a570a815413b080cbff2c9bec24eba7e8937f872654cddab69e4ccea4d7",
+    "web/src/components/agent/ChatInput.test.tsx": "02561851d90671c22bb77850e1d38b9a148ffe2e052689f8db70f3dfb6ee7a8a",
+    "web/src/components/agent/ChatInput.tsx": "8183cdc36ee06a6c1118ac1a001ecd866e0cd530d205593c5d41e830d5dd96c2",
+    "web/src/components/agent/CollaborationTaskForm.test.tsx": "5bca14a46cc6ed8892768aa5ae401f8bf86b5875cb6167e3e8bd0a1a19788c41",
+    "web/src/components/agent/CollaborationTaskForm.tsx": "0af26adec057595a45cfe21def67f43272baff38efb75f63e78d233f7c520cbe",
+    "web/src/components/agent/CollaborationTimeline.tsx": "9d49ad8a410e5ca56090044b6011b2a033f469efbd6008ac8a14e613c7304ed9",
+    "web/src/components/agent/CollaborationWorkspace.test.tsx": "2958860d077c2bf2b78899da131e51bd384236db0566da48ef53491f7bd7ac46",
+    "web/src/components/agent/CollaborationWorkspace.tsx": "696b7505b00ac9b90ceec16e762710d89bea7b6ef6ec0de38faaec333fcb7c59",
+    "web/src/components/agent/MessageList.tsx": "40900cc195c40344eaf3846388d406d9be91784f1c145fbfeb1ff1352d7ca20c",
+    "web/src/components/agent/ResourcePanel.tsx": "fe08b762956e4e904b41dc6c72297342b2e197d23c905dd71cdd6ee8a19ba9c3",
+    "web/src/components/agent/SessionList.test.tsx": "9af526821df3b67492e876ae5ede9295e2518cade299fc1093e9069efadab9f9",
+    "web/src/components/agent/SessionList.tsx": "a43f5594ce68993a1777be7ff5a15c85ba3d69666b63cefcd436d8af5a5ea4d5",
+    "web/src/components/agent/WelcomeScreen.tsx": "f05fa55f854df28e91c72a1798205dd88dde7c2176b4bca3f683109609912e84",
+    "web/src/components/agent/collaborationLabels.ts": "9deaab617bb6830a092566109afe045cbb2f267d9cd3cff5666bee1278ca561d",
+    "web/src/components/agent/messages/AssistantMessage.tsx": "aba435438041aea1b026dba3cfc26db4d92bdab6641799c4845285913065ce92",
+    "web/src/components/agent/messages/ConfirmMessage.tsx": "302e302ca233dab44e83ea0eb121048844de15d402abdc61af0fa37add307847",
+    "web/src/components/agent/messages/ReasoningMessage.tsx": "ca20eaf03b0c10d36556aa2be91527f2a27710f35800e5facd8ca9afc7f9b735",
+    "web/src/components/agent/messages/ToolRequestMessage.tsx": "545ec4bf94b0bcc316894344fdeb3da72432bd13cdd49a85097e9872bab3b7d4",
+    "web/src/components/agent/messages/ToolResponseMessage.tsx": "f46de3f98c2374506fd51c601c42470390f576b2ffbfa5a86ff60649ff16d92e",
+    "web/src/components/agent/messages/UserMessage.tsx": "b9832ae5cd77656d3bf408b2a3580da937d3df4932e8f28bc3dc54582e467cf0",
+    "web/src/components/fault/FaultNote.tsx": "cd31eaf340472ab96e5957d684aa8cc0f7864bee2aa323bb32e6416ab0a273ac",
+    "web/src/components/fault/FaultToaster.tsx": "8e82a2c14ae1667038ced14da656aa1a68fc7eca53283a6acba094d969ef6d1d",
+    "web/src/components/fault/fault.test.tsx": "ea4fa64ae5a698becdae7ee81d446bcf6e41e6e6624492379ad0e2ca25e97fb3",
+    "web/src/components/fault/index.ts": "8e88656b05796638585db7177578ca42e23abdaa7eb4772248ebdc6ab2696cb3",
+    "web/src/components/theme-provider.test.tsx": "b9770a3d39267e0743ffac5af6555f90f395235e52024487b8fcc22e641b70fb",
+    "web/src/components/theme-provider.tsx": "c70b0adcd7b0d554391548a2150956c47cce1c27ca5943e416c622db92832ebe",
+    "web/src/index.css": "75423dae7c1a7c5a5bd2e6ab1112c0f0916b1653fd5a569c1dd8686447029bf5",
+    "web/src/lib/__fixtures__/collaboration.v1.json": "9f2737640278dec002d37fc5e90698afaed837073ad0acf10667b33fdfaee88a",
+    "web/src/lib/__fixtures__/collaboration.wire.v1.json": "03476a85c5639c037ddfd5221b9dc3433ebf8a747e16e8c2f65d8c3b72194962",
+    "web/src/lib/adminApi.ts": "40422214f6df59f7e7497185d7f8554d0660e69b767911bfc2853084f9ce353e",
+    "web/src/lib/adminDomain.test.ts": "add7b7c4ece191c7683b9c631c1faeca5823341677ac370ec737576e8cede2e4",
+    "web/src/lib/adminDomain.ts": "f98bf849314fdd40cfa069f6a49af2233690063989e72d63a75207116021ed18",
+    "web/src/lib/agentAttachments.test.ts": "a89a9bc1c88174ba4420519e94fd518f454a161fa9f61cc78df314836ef1b620",
+    "web/src/lib/agentAttachments.ts": "a4cea36ee31546021c5c18e422d73d135259f03d7997d27d21ee0212192e1124",
+    "web/src/lib/agentDraft.test.ts": "66e7aa0e58ccbfcbb5434b2567b018505d8b4f3a28061611de0b952a4f4d29e0",
+    "web/src/lib/agentDraft.ts": "5ef4bf5c285f37032c569aacf03c359de113f6d0f9afc8630f9116ef975f161b",
+    "web/src/lib/agentImageOwnership.test.ts": "b9e79406a28df53d4fb79b97b687d9301052f749fc59cc8fe86176a7f3c75e6c",
+    "web/src/lib/agentImageOwnership.ts": "261a220034fe278325be8f1d581446f3955ef4611bbb18e44138b7fea5ba27dc",
+    "web/src/lib/agentResources.test.ts": "65fcceb39a4db652769289647d99b1431c2f7795e7b42a5531d7122eb61f715c",
+    "web/src/lib/agentResources.ts": "72a74f78f3191de1f1c4c3ac18f1e2cca14cc96882be8c8fc941a5c34436877d",
+    "web/src/lib/agentScroll.test.ts": "dbcdab500928bb3e93200b7e74ab185e087e0a9b6c0c62a964e967c295806d09",
+    "web/src/lib/agentScroll.ts": "c6723924ec72ba4a9890ca271d6ef36670bf6527c9f9c158c43b4c133551149f",
+    "web/src/lib/agentStream.hook.test.tsx": "da55ba40075e4e1352251052fb8ba1df5a443583fdc099b8d86e25e1980ce803",
+    "web/src/lib/agentStream.test.ts": "b1e4d831f5ff9b083ebcb9e3840eb82feb859a2710f33e4e0c1d4fb5fd1a9ff7",
+    "web/src/lib/agentStream.ts": "a0743cdff4e8d16de08411134cacec476427522c21214d0e8d54cd8f7a7ac29c",
+    "web/src/lib/agentUpload.test.ts": "8c3132b2dedfac4d805ed77ff78111c22166a50a12b68010f977e715a809936c",
+    "web/src/lib/agentUpload.ts": "1873c307fd29ff8e8b000100f4c895f0eb7806cef481ed88c7f8ffc09c48078b",
+    "web/src/lib/api.auth.test.ts": "0a95debf7ce38314cfe1f169a9fad49758e19540f875ede2ca2d55dc0cb41884",
+    "web/src/lib/api.ts": "dc89c77761df15b7c0dbd2fbb7d225e398af221f65b2fe9ef19468709d71b157",
+    "web/src/lib/collaborationApi.test.ts": "da6adc5d8c03b735ddd282217290e3724d8071092a7da71d5b45b7b2eb838f78",
+    "web/src/lib/collaborationApi.ts": "bba1ed28605ace8c0158c6f7e04ef30fad4c4e0debbf9eed292fc3674716fb58",
+    "web/src/lib/collaborationProtocol.ts": "af106ade3e1ac560f22518cac647a536d905dab19c8eab7c789ab7d78c77b4cc",
+    "web/src/lib/collaborationReducer.test.ts": "82f357e12e18f212af120368c3f7f98e16e70ebdc53862b1d0edc098afd981eb",
+    "web/src/lib/collaborationReducer.ts": "ba5cfc93377a51845dc2eeec115822961d96e989b5421f3bcdfb592107b63d1e",
+    "web/src/lib/collaborationTestFixtures.ts": "899a4db92ebc1d9c7120b92361c1b387698583c7a0ee985d4827d78b66e6d81b",
+    "web/src/lib/color.ts": "3cc122d1191de6adb7457c2a022257e45cf5eb23b384edbb115848b4a4c854f8",
+    "web/src/lib/diagnosisTaskApi.test.ts": "4cf7a41eb17ea681292f49e4f9172b0e8e56bddc5ef9991bc9803bfa6b22f27a",
+    "web/src/lib/diagnosisTaskApi.ts": "fe1899a9a0c1ae98e7dea78c7bef8ee11bcf830853bd7d2ea67b7612fd6d9f6f",
+    "web/src/lib/domain.test.ts": "c65e41f02a67f6aad72960e4754839e3787ccbe45772cfd7211d7ca07cd947f6",
+    "web/src/lib/domain.ts": "d24d5da9de20afcd8bc8911991507f34cda926d7251eb30de5ab533676ad25cf",
+    "web/src/lib/faults.test.ts": "6600a6e09f3c87aeae75856c40ca9de54cf761d642f7f504be0009b0ea321e77",
+    "web/src/lib/faults.ts": "5b25b370ffb90e0ac6a8d5ee49977c2c221ff2e139cc387dc7b34f38c3bceff2",
+    "web/src/lib/htmlToMarkdown.test.ts": "398d7834bd85f9ed782b0c02ed4b45ab07e978046f28b09757879be896e5df59",
+    "web/src/lib/htmlToMarkdown.ts": "0cb43fa3691ee1f9509a81f86593b79045abd2c9e053f6ddc9029db60b074b9f",
+    "web/src/lib/markdown.ts": "42a698ae61eead6dc837d307c0baa67e817b49f23832dff33f606efa297f746a",
+    "web/src/lib/news.ts": "0c82c8ba69eb4a07e05a1ac5633ddac47a264eec6fb77d8c894de1a30956bfdf",
+    "web/src/lib/pendingUpload.test.ts": "2bb68ed37592492a8d3ffcf4bfe42cc8af6d39773b902ee71bc8d56f9af40afa",
+    "web/src/lib/pendingUpload.ts": "54fe36be8c1484c029141ec0dc762bba1196cc3c4faa0e7ca0b7bac5339733af",
+    "web/src/lib/records.test.ts": "fdfa2127f3d0c3f62168f496e4bff9fc5eff8e82262eb7a3520dcac32a19bd3b",
+    "web/src/lib/records.ts": "ed511698e337d355c5cefd481fd6625294eb91358167f776873c5323211ea419",
+    "web/src/lib/sanitize.test.ts": "63c3223527228c8ec3a1fa118cf88de0ebf63d4393808a426d59f9163a42e07f",
+    "web/src/lib/sanitize.ts": "07929de230c58ac07a2d76af672f9d801eba678561646cce64514b6e355062c2",
+    "web/src/lib/session.tsx": "eb464e9879dc2dfbe36c277aff3977e63d80e2eb0dd35a4ba1052ba28043f451",
+    "web/src/lib/threadStorage.test.ts": "af4f914465e1094c211b0234cfb2ced72524348c0680a42cb62adf15bdca2275",
+    "web/src/lib/threadStorage.ts": "01a0c1215cd80477d16bb87a5414dc9bb1a2ebdef424967af72704d161a1b37a",
+    "web/src/lib/useCollaborationRun.test.tsx": "8a15c8b7034c3ec8be94c7fcb826a7968ab68aedba78d01365ea1e0266cab542",
+    "web/src/lib/useCollaborationRun.ts": "0bedade0084d6f5839bfd513c0bbcc682d688b7fa5aee12fc145072a818b6179",
+    "web/src/lib/useInView.ts": "1cf321df6fb6e35aca6b994cf63ed2a31658d8b3bcf889e06371c4dc88b5cf3b",
+    "web/src/lib/useMediaQuery.test.tsx": "4ec2ea796c3efe5999bb1ffbc31d27375b75de34cb8a30163f5f83f26f753c1c",
+    "web/src/lib/useMediaQuery.ts": "73c12ece9da09ca69f4800f53b0293212ab92929b6ea04d88539943869972715",
+    "web/src/lib/utils.ts": "f1b72b7326a013a224f356feaf4ccb1f3c2ebf448c9cf869e369568d2622b07d",
+    "web/src/main.tsx": "045bd31f3d438fefcd43c8684864694332c70e1477fd45e8ffe5a7bd0b81175e",
+    "web/src/pages/AgentPage.collaboration.test.tsx": "da97db2f12265f622d5564fe029330cfa676dfadbee4eed754ba502256b435f2",
+    "web/src/pages/AgentPage.test.tsx": "a1f79f46636126d7b97cbd411e109f62522dea23817900d2c8e0c69db6ccda43",
+    "web/src/pages/AgentPage.tsx": "55db826a94411aaccfbe849237d12abd8ee4069f02884dbc0623a9ce61b529fa",
+    "web/src/pages/DiagnosisPage.tsx": "ea7f6355d035ec5cb3405d69289ba0eb2a3ef3ed0688a7fea29f3394db2f1def",
+    "web/src/pages/LandingPage.tsx": "111ce291fa3151a3fa30e4e043874cb8dec51f98d4a2f74d1d945b4f7fefd99a",
+    "web/src/pages/LoginPage.tsx": "147b70ac44b1471743b1f51a654f4045d08822c509e0de0ab5c7a91b47c764ce",
+    "web/src/pages/NewsDetailPage.tsx": "8d8349931afd889a3831bb28dfba37e66148c4323eccf74a33a804f49dc04cb3",
+    "web/src/pages/NewsPage.tsx": "c2e084983f84258f347a91b255499db7707628d24a4bf7b7296bb2ffe4596e7f",
+    "web/src/pages/ProfilePage.tsx": "aa4788743af951c0cbe94c4e99aaa9ad991c73fcc59d6f11b4aa8d47c5207e5d",
+    "web/src/pages/RecordsPage.test.tsx": "a8024d6e8301268f218d40631364a55497c07b6fee52bbf312749cadace2f8d1",
+    "web/src/pages/RecordsPage.tsx": "d3dca1369ef680dc3fc9f87d9832bf8ef7b39653656a21820140548b5acfec34",
+    "web/src/pages/RegisterPage.tsx": "68820a26a43e263aa6bc0d0fea431f2a93c4152325013efa6439c980fc6f7aa9",
+    "web/src/pages/admin/AdminDashboardPage.tsx": "63f54537ed475192083496062a1ca7eb0efa3646a666e70845cdc9f2086edf4d",
+    "web/src/pages/admin/AdminDataAnalysisPage.tsx": "091afe5e042399e51ee75129ee13d370bddf9fe4d164983b15f7cf1c79f5dd56",
+    "web/src/pages/admin/AdminDiagnosisPage.tsx": "1f7118a65112645b8eb88efa3afe8127c55e47ca7559defea6845a23b766197e",
+    "web/src/pages/admin/AdminKnowledgePage.tsx": "8ce70dba5f5ef3e2b3294579bbb99ea68cd14721d7c1bc95cde0a040bd72bb23",
+    "web/src/pages/admin/AdminNewsEditPage.tsx": "30c35131105741d35cfeca4f309daf6c3feb5aac90f201d92aeea4c74d85aa2b",
+    "web/src/pages/admin/AdminNewsPage.tsx": "fbf7c976cf3cb9f5dafde5f98ac577ab3826235eb28e56d021c8238cf7305943",
+    "web/src/pages/admin/AdminUsersPage.tsx": "aba5153fbee3112cae956abf22ab46f72672b90cbd9b96ba8d3a60f195f76aee",
+    "web/src/styles/admin.css": "30804e3e1a2854647c8fa573a54408eadcfdf7df962466832fa4f7f5394053bb",
+    "web/src/styles/agent.css": "fc749a5c0ae40825bd9b30c929de9ffdc3a8f66a6875889e09660a6b7acec17a",
+    "web/src/styles/app.css": "f0a7861aab467a3a4feae2eee6d4085b381e87a3e926377b430db28180657a01",
+    "web/src/styles/collaboration.css": "53f05e7db82f6d5bed9fab7e46e8de5c6af8a90ef36200787441ac95641a5569",
+    "web/src/styles/disclaimer.css": "8d7bed85e7218f5db68df1ecb65815c5a9f57b34696383f48962e0a598955ba4",
+    "web/src/styles/fault.css": "ee7ece47e4c7d316532212cdba88d8ceef8c241acabd66becbfbaccd7736d355",
+    "web/src/styles/news.css": "27b91af8ff38a03c2565289309e6862dd622eeae216567a1948f48f214ba122b",
+    "web/src/styles/records.css": "7d60c0f83e20176eabc87f5d64be86eab45d734d20ab21f7a76530e48c29cca3",
+    "web/src/styles/tokens.contrast.test.ts": "d18c8e48ba1fe3cc14b17a140e1d262a7dbd1b298ed1cc1f5086d8176b81360a",
+    "web/src/styles/tokens.css": "04941a37c4c53cd12c7fe961176b67ed1457a3a6c89655026ee8f23bf4a6ab64",
+    "web/tsconfig.app.json": "9080094cd9a121b2086148ccd1676ead6f5260850db90cee9af6f0ab02da9b5a",
+    "web/tsconfig.json": "23c57da26bcec4996c4168f01187840c8ec08a1d60c2dd0edad6d984f5c33680",
+    "web/tsconfig.node.json": "c7a65fc2be982212721c93c724ebb8f799f2e54a060447f9ad31fa27f3a5631f",
+    "web/vite.config.ts": "7843ea40a90c06c48918111c890e00bcb7e92168d6ff51cfa544dc6bf90f6bf3"
+  },
+  "task07FileSha256": {
+    ".github/workflows/verify.yml": "af978bc4e153870623ca40e8a5550d25de7ab8414a266e0ee480ea8c12f5a00e",
+    "AGENTS.md": "ba3c0fd1ef0061c70bab541a1fe9bea836b8dfe440e98dd8f4be6672a5f3f153",
+    "CLAUDE.md": "b75c44f66c1538bd85acd910064c9e8516903fbae7d71d584efea968b4f819ef",
+    "docs/collaboration-release-runbook.md": "856dd53606142fe665a436487ca80c2c9a835eca1788e6276af12e2864ac7e01",
+    "docs/collaboration-runs.md": "39fa9a3bdc4e341789c175ebc126c27a45199c49fa672c42da783f84f5656d2c",
+    "docs/testing/2026-11-11-realtime-safety-release.md": "2f6e6a3db03a72876c6fe8ae85ff75462639fc9ceb0676d7007e384306f8c027",
+    "docs/testing/realtime-safety-release-20261111/approved-metadata.png": "f9ef96622c2877f3f8cc2de5e348731f3d8545852a7e377c2e1e5f3b25ccbef4",
+    "docs/testing/realtime-safety-release-20261111/drained-graph.png": "e2c051d02b5e4fae35473aaebf10fbb30f11ec5bf7c85effb59df988c30c9d50",
+    "docs/testing/realtime-safety-release-20261111/inputs.json": "7f233951d568b84c6fc28bb006dfb56f57359ba8ca98ae594f432fd35b5e63e3",
+    "scripts/check_surefire_skips.py": "7df2dd06d549375a68f0febd9209cef54a1220ff622ebdd06fddb43a401cb99e",
+    "scripts/collect_task07_evidence.py": "4503edf5f8e26cebb8f7b66727dffc1bd0d3c981889acec7312bbaddf42e26e5",
+    "scripts/task07_inputs.py": "123da9df76507bab984d3a77bdfda3d030985ef7dc7a34190f0ebba7d15f96df",
+    "scripts/tests/test_check_surefire_skips.py": "8ebcac40cce9620796205cb7be398bf80cc58ebed911ff602b62997491b3584a",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "76bee1a0e7b486811b983b2858fe6a4004cb0cbd9705cb54b90a45291a1eb0df",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationStreams.java": "115448d0914215e54e3c157388b2ee94291617ebea0ceeac231d17fad2d7d056",
+    "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "e9b3b5028283c5a574a0f7c8b427da747aa70915af6b8a363cea044c6310d0da",
+    "src/main/resources/application.yml": "74c56cbca83a32b195be14f60cf76685f48596cc8b889a2c82ebc47fa73ddbb8",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationBrowserServer.java": "72eec68e2c44d7ddd83e4dfef24e3c65210d881b817626ba479a38abeb09a3ec",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationReplayWorker.java": "c7460145041d6843cfd78cb9d11391a54c9292f1333f38438aea3b9340fecdd1",
+    "src/test/java/com/csust/eyediagnosis/collaboration/CollaborationRunTest.java": "1063195e2c7546e6e3406b9f210e14bc54b452f3ba1ab1cc9f77f4ffe05bfba6",
+    "src/test/java/com/csust/eyediagnosis/collaboration/GraphExecutionTest.java": "8c5006de43f73fcbb5267c74e103c346efbdd0723caa9af3e024dac943048aee",
+    "web/e2e/README.md": "852fabb498ce0b61d2ed30124221ddd109a584c41da3ca4a8ea6b306805ff0b6",
+    "web/e2e/collaboration-safety.spec.ts": "0b46d1806a9a1d0e6ce967c81b0dc247b76836cd6c9cf36f40e13eaa57df002c"
+  },
+  "backendLogSha256": "761a7f643ea4256dd402d9f92d324f06f8523e272c53a49e7619dbcd673bcc18",
+  "notRun": [
+    "real medical input/OOD",
+    "real provider",
+    "full backend",
+    "hosted CI",
+    "React doctor decision and patient save UI",
+    "production history upgrade",
+    "production configuration rollout",
+    "old binary rollback",
+    "load/SLO/alert delivery"
+  ]
+}

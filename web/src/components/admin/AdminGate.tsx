@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react"
+import { ArrowUpRight } from "lucide-react"
 import { Link } from "react-router-dom"
 import { SectionHead } from "@/components/SectionHead"
 import { SiteFooter } from "@/components/SiteFooter"
-import { SiteHeader } from "@/components/SiteHeader"
+import { ProductHeader } from "@/components/shell/ProductHeader"
 import { useSession } from "@/lib/session"
 
 /**
@@ -25,14 +26,14 @@ function LoadingState() {
 }
 
 /**
- * 兜底无权限说明页。自绘，不复用 PlaceholderPage 的「装配中」语义——
+ * 兜底无权限说明页。自绘，不使用「装配中」占位语义——
  * 这里不是页面没做完，是访问被拒。沿用全站外壳 + .sec-head / .overline / .btn 原语。
  * 匿名与非管理员共用同一版式，文案按原因区分。
  */
 function DeniedPage({ anon }: { anon: boolean }) {
   return (
     <div className="is-field admin-denied">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap admin-denied__inner">
         <SectionHead
@@ -67,7 +68,7 @@ function DeniedPage({ anon }: { anon: boolean }) {
           {anon ? (
             <Link className="link" to="/login?redirect=/admin">
               去登录
-              <span className="link__mark">↗</span>
+              <ArrowUpRight className="link__mark" size={14} strokeWidth={2} aria-hidden="true" />
             </Link>
           ) : null}
         </div>
@@ -96,7 +97,7 @@ function UnavailablePage({
   const [busy, setBusy] = useState(false)
   return (
     <div className="is-field admin-denied">
-      <SiteHeader />
+      <ProductHeader scene="clinical" />
 
       <main className="wrap admin-denied__inner">
         <SectionHead
@@ -132,7 +133,7 @@ function UnavailablePage({
           </button>
           <Link className="link" to="/">
             回首页
-            <span className="link__mark">↗</span>
+            <ArrowUpRight className="link__mark" size={14} strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </main>

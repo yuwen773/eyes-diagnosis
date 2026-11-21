@@ -23,6 +23,8 @@ public class KnowledgeDocument {
     private String fileType;
     @TableField("contentHash")
     private String contentHash;
+    @TableField("indexVersion")
+    private String indexVersion;
     @TableField("chunkCount")
     private Integer chunkCount;
     @TableField("status")

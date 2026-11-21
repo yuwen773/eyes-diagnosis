@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 /**
  * @ClassNameDiagnosisDTO
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/27 下午7:16
  * @Version 1.0

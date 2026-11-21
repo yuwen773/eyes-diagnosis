@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { CSSProperties, RefObject } from "react"
 import { createPortal } from "react-dom"
+import { useMediaQuery } from "@/lib/useMediaQuery"
 import "./TargetCursor.css"
 
 const CORNER_ANGLES = [0, 90, 180, 270]
@@ -94,6 +95,8 @@ export function TargetCursor({
   container,
 }: TargetCursorProps) {
   const [host, setHost] = useState<HTMLElement | null>(null)
+  // 跟随系统「减弱动效」开关；在设置里切换后不用刷新页面。
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)")
   const rootRef = useRef<HTMLDivElement>(null)
   const cornerRefs = useRef<Array<HTMLSpanElement | null>>([])
   const dotRef = useRef<HTMLSpanElement>(null)
@@ -137,7 +140,7 @@ export function TargetCursor({
     const root = rootRef.current
     if (!host || !root) return undefined
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const reduce = reduceMotion
     const style = document.createElement("style")
     document.head.appendChild(style)
 
@@ -300,9 +303,6 @@ export function TargetCursor({
         left = Math.min(left, x)
         top = Math.min(top, y)
         corner.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${(CORNER_ANGLES[i] + degrees).toFixed(2)}deg)`
-        corner.style.width = `${s.cornerSize}px`
-        corner.style.height = `${s.cornerSize}px`
-        corner.style.borderWidth = `${s.thickness}px 0 0 ${s.thickness}px`
         corner.style.borderTopLeftRadius = `${r.toFixed(2)}px`
       })
 
@@ -310,8 +310,6 @@ export function TargetCursor({
       if (dot) {
         const dotScale = 1 - press.x * 0.35
         dot.style.transform = `translate3d(${pointer.x}px, ${pointer.y}px, 0) translate(-50%, -50%) scale(${dotScale.toFixed(3)})`
-        dot.style.width = `${s.dotSize}px`
-        dot.style.height = `${s.dotSize}px`
       }
 
       const label = labelRef.current
@@ -419,10 +417,17 @@ export function TargetCursor({
       wake()
     }
 
+    // 命中测试（elementFromPoint）会强制布局。滚动期间每个 scroll 事件都做
+    // 一次就是持续回流，这里合帧到每帧最多一次。
+    let scrollRaf = 0
     const onScroll = () => {
-      if (!pointer.inside) return
-      lockOn(findTarget(pointer.x, pointer.y))
-      wake()
+      if (!pointer.inside || scrollRaf) return
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0
+        if (!pointer.inside) return
+        lockOn(findTarget(pointer.x, pointer.y))
+        wake()
+      })
     }
 
     window.addEventListener("pointermove", onPointerMove, { passive: true })
@@ -434,6 +439,7 @@ export function TargetCursor({
 
     return () => {
       cancelAnimationFrame(raf)
+      if (scrollRaf) cancelAnimationFrame(scrollRaf)
       wakeRef.current = null
       window.removeEventListener("pointermove", onPointerMove)
       window.removeEventListener("pointerdown", onPointerDown)
@@ -444,7 +450,7 @@ export function TargetCursor({
       lastScope?.removeAttribute("data-target-cursor-scope")
       style.remove()
     }
-  }, [host])
+  }, [host, reduceMotion])
 
   // 每次渲染后把最新的 props 交给动画循环（上一帧可能已停下）。
   useEffect(() => {
@@ -457,7 +463,16 @@ export function TargetCursor({
     <div
       ref={rootRef}
       className="target-cursor"
-      style={{ mixBlendMode: blendMode, opacity: 0 }}
+      style={
+        {
+          mixBlendMode: blendMode,
+          opacity: 0,
+          // 括号与圆点的尺寸是常量，走变量让 CSS 接管，动画帧里只写 transform。
+          "--tc-corner": `${Math.max(2, cornerSize)}px`,
+          "--tc-thickness": `${Math.max(0.5, thickness)}px`,
+          "--tc-dot": `${Math.max(0, dotSize)}px`,
+        } as CSSProperties
+      }
       aria-hidden="true"
     >
       {CORNER_ANGLES.map((angle, i) => (

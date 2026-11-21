@@ -1,0 +1,6562 @@
+{
+  "kind": "SCRIPTED_REPLAY",
+  "controls": {
+    "data": "Eight entirely synthetic snapshots; no patient images or real medical references.",
+    "provider": "NONE; shared hand-authored role-response scripts executed by a test-only reference workflow, not the production coordinator.",
+    "pairing": "Every condition scores each identical case exactly once. Gold text, sources and safety expectations are shared.",
+    "ablation": "One role actually omitted from reference workflow execution; without_explanation emits no draft. No production workflow bypass is added.",
+    "baseline": "One synthetic SINGLE response per case, same input/gold/source availability and deterministic safety gates.",
+    "limits": "Fixture perturbations deliberately seed omissions and unsupported assertions; effects are not empirical role contributions. False-quote scoring is covered separately by CLI mutation tests.",
+    "timing_cost": "Local scripted workflow and scoring are timed separately. Zero provider calls/USD. Real model latency, token use and pricing are NOT_RUN."
+  },
+  "provenance": {
+    "source_commit": "6072339fa351e7cdb698245e7fd680716737702a",
+    "corpus_sha256": "1a21a71cc46b1a5809d6d31a3407933c847c3db1b9f75dde62dbf2741246ea47",
+    "evaluator_sha256": "f8cf7251683cd5a0f4787a8abc6a2244d308773184a335d9bfe86bbfe208bb2a",
+    "created_at": "2026-11-10T06:48:13.051150+00:00"
+  },
+  "conditions": {
+    "single_agent": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 9,
+        "denominator": 10,
+        "value": 0.9
+      },
+      "quote_traceability": {
+        "numerator": 10,
+        "denominator": 10,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 1,
+        "denominator": 10,
+        "value": 0.1
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 12,
+        "value": 0.25
+      },
+      "status_correctness": {
+        "numerator": 8,
+        "denominator": 8,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 4,
+        "denominator": 4,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.1099,
+      "offline_workflow_ms": 0.1752,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    },
+    "four_agent": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 12,
+        "denominator": 12,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 12,
+        "denominator": 12,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 12,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 12,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 8,
+        "denominator": 8,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 4,
+        "denominator": 4,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.062,
+      "offline_workflow_ms": 0.42099999999999993,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    },
+    "without_vision": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 11,
+        "denominator": 11,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 11,
+        "denominator": 11,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 11,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 12,
+        "value": 0.08333333333333333
+      },
+      "status_correctness": {
+        "numerator": 8,
+        "denominator": 8,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 4,
+        "denominator": 4,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.0558,
+      "offline_workflow_ms": 0.34980000000000006,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    },
+    "without_evidence": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 12,
+        "denominator": 12,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 4,
+        "denominator": 8,
+        "value": 0.5
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.0382,
+      "offline_workflow_ms": 0.0549,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    },
+    "without_explanation": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 12,
+        "denominator": 12,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 4,
+        "denominator": 8,
+        "value": 0.5
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.037,
+      "offline_workflow_ms": 0.1039,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    },
+    "without_critic": {
+      "samples": 8,
+      "citation_correctness": {
+        "numerator": 10,
+        "denominator": 11,
+        "value": 0.9090909090909091
+      },
+      "quote_traceability": {
+        "numerator": 11,
+        "denominator": 11,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 1,
+        "denominator": 11,
+        "value": 0.09090909090909091
+      },
+      "omissions": {
+        "numerator": 2,
+        "denominator": 12,
+        "value": 0.16666666666666666
+      },
+      "status_correctness": {
+        "numerator": 8,
+        "denominator": 8,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 4,
+        "denominator": 4,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 4,
+        "value": 0.0
+      },
+      "replay_scoring_ms": 0.0588,
+      "offline_workflow_ms": 0.34,
+      "provider_calls": 0,
+      "provider_cost_usd": 0,
+      "model_latency": "NOT_RUN",
+      "model_tokens": "NOT_RUN",
+      "model_cost": "NOT_RUN"
+    }
+  },
+  "rows": [
+    {
+      "case": "complete",
+      "condition": "single_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "SINGLE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0544
+          }
+        ],
+        "offline_workflow_ms": 0.0687
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "single_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "SINGLE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0296
+          }
+        ],
+        "offline_workflow_ms": 0.0363
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 2,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "limitation"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "single_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic label G proves a definitive diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "SINGLE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic label G proves a definitive diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0323
+          }
+        ],
+        "offline_workflow_ms": 0.038
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 3,
+        "value": 0.6666666666666666
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "incorrect_citation",
+          "claim": 0,
+          "reference": {
+            "sourceId": "ref-1",
+            "quote": "label G is not a diagnosis"
+          }
+        },
+        {
+          "kind": "unsupported_claim",
+          "claim": 0,
+          "text": "Synthetic label G proves a definitive diagnosis."
+        },
+        {
+          "kind": "omission",
+          "facts": [
+            "finding"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "critic_omission",
+      "condition": "single_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "SINGLE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0243
+          }
+        ],
+        "offline_workflow_ms": 0.0287
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 2,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "next_step"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "single_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0014
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "single_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0006
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "single_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0006
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "single_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0009
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "complete",
+      "condition": "four_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.007
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0078
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0306
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0204
+          }
+        ],
+        "offline_workflow_ms": 0.074
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "four_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": [
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ]
+            },
+            "replay_ms": 0.0099
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": [
+                  {
+                    "factId": "limitation",
+                    "text": "Synthetic snapshot is uncalibrated.",
+                    "references": [
+                      {
+                        "sourceId": "ref-1",
+                        "quote": "Calibration is unavailable"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0111
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": [
+                  {
+                    "factId": "limitation",
+                    "text": "Synthetic snapshot is uncalibrated.",
+                    "references": [
+                      {
+                        "sourceId": "ref-1",
+                        "quote": "Calibration is unavailable"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0357
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0184
+          }
+        ],
+        "offline_workflow_ms": 0.0823
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "four_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0059
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0075
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic label G proves a definitive diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0302
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic label G proves a definitive diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "REWRITE"
+            },
+            "replay_ms": 0.0191
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": true,
+              "feedback": {
+                "action": "REWRITE"
+              }
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0315
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": true
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0183
+          }
+        ],
+        "offline_workflow_ms": 0.1216
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "critic_omission",
+      "condition": "four_agent",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0058
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0084
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0229
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "REWRITE"
+            },
+            "replay_ms": 0.017
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": true,
+              "feedback": {
+                "action": "REWRITE"
+              }
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0314
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": true
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0179
+          }
+        ],
+        "offline_workflow_ms": 0.1106
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "four_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0057
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0085
+          }
+        ],
+        "offline_workflow_ms": 0.0162
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "four_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0005
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "four_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0006
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "four_agent",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0058
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0074
+          }
+        ],
+        "offline_workflow_ms": 0.0152
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "complete",
+      "condition": "without_vision",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0079
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0308
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0179
+          }
+        ],
+        "offline_workflow_ms": 0.0624
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "without_vision",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0078
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.024
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0147
+          }
+        ],
+        "offline_workflow_ms": 0.0512
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 2,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "limitation"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "without_vision",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0088
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic label G proves a definitive diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0305
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic label G proves a definitive diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "REWRITE"
+            },
+            "replay_ms": 0.0176
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": true,
+              "feedback": {
+                "action": "REWRITE"
+              }
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0323
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": true
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0181
+          }
+        ],
+        "offline_workflow_ms": 0.1139
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "critic_omission",
+      "condition": "without_vision",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0075
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0227
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": false
+            },
+            "output": {
+              "action": "REWRITE"
+            },
+            "replay_ms": 0.0158
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": true,
+              "feedback": {
+                "action": "REWRITE"
+              }
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0304
+          },
+          {
+            "role": "CRITIC",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "draft": [
+                {
+                  "factId": "finding",
+                  "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "label G is not a diagnosis"
+                    }
+                  ]
+                },
+                {
+                  "factId": "next_step",
+                  "text": "Synthetic protocol requires independent review.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Independent review is required"
+                    }
+                  ]
+                },
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ],
+              "rewritten": true
+            },
+            "output": {
+              "action": "NONE"
+            },
+            "replay_ms": 0.0192
+          }
+        ],
+        "offline_workflow_ms": 0.1031
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "without_vision",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0075
+          }
+        ],
+        "offline_workflow_ms": 0.0089
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "without_vision",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0005
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "without_vision",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0004
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "without_vision",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0079
+          }
+        ],
+        "offline_workflow_ms": 0.0094
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "complete",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.006
+          }
+        ],
+        "offline_workflow_ms": 0.0085
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": [
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ]
+            },
+            "replay_ms": 0.0137
+          }
+        ],
+        "offline_workflow_ms": 0.0152
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0059
+          }
+        ],
+        "offline_workflow_ms": 0.0073
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "critic_omission",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0076
+          }
+        ],
+        "offline_workflow_ms": 0.0088
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0054
+          }
+        ],
+        "offline_workflow_ms": 0.0067
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0004
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0005
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "without_evidence",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0055
+          }
+        ],
+        "offline_workflow_ms": 0.0075
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "complete",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "NO_EXPLANATION",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0057
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0075
+          }
+        ],
+        "offline_workflow_ms": 0.0164
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "NO_EXPLANATION",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": [
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ]
+            },
+            "replay_ms": 0.0092
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": [
+                  {
+                    "factId": "limitation",
+                    "text": "Synthetic snapshot is uncalibrated.",
+                    "references": [
+                      {
+                        "sourceId": "ref-1",
+                        "quote": "Calibration is unavailable"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0123
+          }
+        ],
+        "offline_workflow_ms": 0.0237
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "NO_EXPLANATION",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0067
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0076
+          }
+        ],
+        "offline_workflow_ms": 0.0168
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "critic_omission",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "NO_EXPLANATION",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0058
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0074
+          }
+        ],
+        "offline_workflow_ms": 0.0152
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "status_correctness": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "finding",
+            "limitation",
+            "next_step"
+          ]
+        },
+        {
+          "kind": "wrong_status",
+          "expected": "REVIEW_READY",
+          "actual": "RESTRICTED"
+        }
+      ]
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0056
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0072
+          }
+        ],
+        "offline_workflow_ms": 0.0143
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0004
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0005
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "without_explanation",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0068
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0082
+          }
+        ],
+        "offline_workflow_ms": 0.0166
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "complete",
+      "condition": "without_critic",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.1041
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0076
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0362
+          }
+        ],
+        "offline_workflow_ms": 0.1545
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "vision_limitation",
+      "condition": "without_critic",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": [
+                {
+                  "factId": "limitation",
+                  "text": "Synthetic snapshot is uncalibrated.",
+                  "references": [
+                    {
+                      "sourceId": "ref-1",
+                      "quote": "Calibration is unavailable"
+                    }
+                  ]
+                }
+              ]
+            },
+            "replay_ms": 0.0093
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": [
+                  {
+                    "factId": "limitation",
+                    "text": "Synthetic snapshot is uncalibrated.",
+                    "references": [
+                      {
+                        "sourceId": "ref-1",
+                        "quote": "Calibration is unavailable"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0118
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": [
+                  {
+                    "factId": "limitation",
+                    "text": "Synthetic snapshot is uncalibrated.",
+                    "references": [
+                      {
+                        "sourceId": "ref-1",
+                        "quote": "Calibration is unavailable"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0345
+          }
+        ],
+        "offline_workflow_ms": 0.0611
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 3,
+        "value": 0.0
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": []
+    },
+    {
+      "case": "critic_unsupported",
+      "condition": "without_critic",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic label G proves a definitive diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "next_step",
+            "text": "Synthetic protocol requires independent review.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Independent review is required"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0059
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0085
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic label G proves a definitive diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "next_step",
+                "text": "Synthetic protocol requires independent review.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Independent review is required"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.03
+          }
+        ],
+        "offline_workflow_ms": 0.0494
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 3,
+        "value": 0.6666666666666666
+      },
+      "quote_traceability": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "incorrect_citation",
+          "claim": 0,
+          "reference": {
+            "sourceId": "ref-1",
+            "quote": "label G is not a diagnosis"
+          }
+        },
+        {
+          "kind": "unsupported_claim",
+          "claim": 0,
+          "text": "Synthetic label G proves a definitive diagnosis."
+        },
+        {
+          "kind": "omission",
+          "facts": [
+            "finding"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "critic_omission",
+      "condition": "without_critic",
+      "observation": {
+        "status": "REVIEW_READY",
+        "claims": [
+          {
+            "factId": "finding",
+            "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "label G is not a diagnosis"
+              }
+            ]
+          },
+          {
+            "factId": "limitation",
+            "text": "Synthetic snapshot is uncalibrated.",
+            "references": [
+              {
+                "sourceId": "ref-1",
+                "quote": "Calibration is unavailable"
+              }
+            ]
+          }
+        ],
+        "stopReason": null,
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0067
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0075
+          },
+          {
+            "role": "EXPLANATION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "sources": [
+                {
+                  "id": "ref-1",
+                  "excerpt": "Synthetic protocol: label G is not a diagnosis. Independent review is required. Calibration is unavailable."
+                }
+              ],
+              "vision": {
+                "additions": []
+              },
+              "rewrite": false
+            },
+            "output": [
+              {
+                "factId": "finding",
+                "text": "Synthetic snapshot label is G; this is not a diagnosis.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "label G is not a diagnosis"
+                  }
+                ]
+              },
+              {
+                "factId": "limitation",
+                "text": "Synthetic snapshot is uncalibrated.",
+                "references": [
+                  {
+                    "sourceId": "ref-1",
+                    "quote": "Calibration is unavailable"
+                  }
+                ]
+              }
+            ],
+            "replay_ms": 0.0227
+          }
+        ],
+        "offline_workflow_ms": 0.0423
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "quote_traceability": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 2,
+        "value": 0.0
+      },
+      "omissions": {
+        "numerator": 1,
+        "denominator": 3,
+        "value": 0.3333333333333333
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "failures": [
+        {
+          "kind": "omission",
+          "facts": [
+            "next_step"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "insufficient_evidence",
+      "condition": "without_critic",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0057
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0084
+          }
+        ],
+        "offline_workflow_ms": 0.016
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "quality_rejected",
+      "condition": "without_critic",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0005
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "ood_rejected",
+      "condition": "without_critic",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "UNSAFE_INFERENCE",
+        "trace": [],
+        "offline_workflow_ms": 0.0004
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    },
+    {
+      "case": "withdrawn_source",
+      "condition": "without_critic",
+      "observation": {
+        "status": "RESTRICTED",
+        "claims": [],
+        "stopReason": "INSUFFICIENT_EVIDENCE",
+        "trace": [
+          {
+            "role": "VISION",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              }
+            },
+            "output": {
+              "additions": []
+            },
+            "replay_ms": 0.0057
+          },
+          {
+            "role": "EVIDENCE",
+            "context": {
+              "inference": {
+                "snapshot": "synthetic-snapshot-v1",
+                "label": "G",
+                "calibration": "NOT_CALIBRATED",
+                "quality": "PASS",
+                "ood": false,
+                "image": "NO_IMAGE_SYNTHETIC"
+              },
+              "vision": {
+                "additions": []
+              }
+            },
+            "output": {
+              "sourceIds": [
+                "ref-1"
+              ]
+            },
+            "replay_ms": 0.0074
+          }
+        ],
+        "offline_workflow_ms": 0.0158
+      },
+      "samples": 1,
+      "citation_correctness": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "quote_traceability": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "unsupported_claims": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "omissions": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "status_correctness": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0
+      },
+      "ready_recall": {
+        "numerator": 0,
+        "denominator": 0,
+        "value": null
+      },
+      "false_ready": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0
+      },
+      "failures": []
+    }
+  ],
+  "evidence": {
+    "real_model_service": {
+      "status": "NOT_RUN"
+    },
+    "real_python_inference": {
+      "status": "NOT_RUN"
+    },
+    "browser": {
+      "status": "NOT_RUN"
+    },
+    "domain_review": {
+      "status": "NOT_RUN"
+    },
+    "clinical": {
+      "status": "NOT_RUN"
+    },
+    "production": {
+      "status": "NOT_RUN"
+    },
+    "offline_scripted_replay": {
+      "status": "RUN"
+    },
+    "java_mysql_http": {
+      "status": "PASS",
+      "passed": 64,
+      "denominator": 64,
+      "groups": {
+        "insufficient_evidence": {
+          "passed": 1,
+          "denominator": 1,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+              "name": "absentEligibleEvidenceStopsAndDoesNotAskForExplanation",
+              "status": "PASS",
+              "elapsed_seconds": 0.552
+            }
+          ]
+        },
+        "tool_privilege": {
+          "passed": 1,
+          "denominator": 1,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+              "name": "providerToolRequestsCannotExecuteAnyTool",
+              "status": "PASS",
+              "elapsed_seconds": 0.433
+            }
+          ]
+        },
+        "crash_recovery": {
+          "passed": 1,
+          "denominator": 1,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+              "name": "processCrashKeepsSpentBudgetAndRecoveryRestrictsWithoutNewCall",
+              "status": "PASS",
+              "elapsed_seconds": 1.788
+            }
+          ]
+        },
+        "restricted_state": {
+          "passed": 3,
+          "denominator": 3,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "restrictedCasesGiveOnlySafeActionableHints(String)[1]",
+              "status": "PASS",
+              "elapsed_seconds": 0.477
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "restrictedCasesGiveOnlySafeActionableHints(String)[2]",
+              "status": "PASS",
+              "elapsed_seconds": 0.436
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "restrictedCasesGiveOnlySafeActionableHints(String)[3]",
+              "status": "PASS",
+              "elapsed_seconds": 0.457
+            }
+          ]
+        },
+        "patient_ownership": {
+          "passed": 5,
+          "denominator": 5,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[1]",
+              "status": "PASS",
+              "elapsed_seconds": 0.512
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[2]",
+              "status": "PASS",
+              "elapsed_seconds": 0.841
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[3]",
+              "status": "PASS",
+              "elapsed_seconds": 0.565
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[4]",
+              "status": "PASS",
+              "elapsed_seconds": 0.505
+            },
+            {
+              "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+              "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[5]",
+              "status": "PASS",
+              "elapsed_seconds": 0.499
+            }
+          ]
+        },
+        "late_output": {
+          "passed": 1,
+          "denominator": 1,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+              "name": "timeoutDiscardsLateResultAndKeepsReservedCall",
+              "status": "PASS",
+              "elapsed_seconds": 0.802
+            }
+          ]
+        },
+        "withdrawal": {
+          "passed": 1,
+          "denominator": 1,
+          "cases": [
+            {
+              "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+              "name": "withdrawalDuringCriticPreventsReadyTransition",
+              "status": "PASS",
+              "elapsed_seconds": 0.657
+            }
+          ]
+        }
+      },
+      "cases": [
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "absentEligibleEvidenceStopsAndDoesNotAskForExplanation",
+          "status": "PASS",
+          "elapsed_seconds": 0.552
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.794
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "repeatedFeedbackStopsInsteadOfLooping(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.69
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "timeoutDiscardsLateResultAndKeepsReservedCall",
+          "status": "PASS",
+          "elapsed_seconds": 0.802
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "withdrawalDuringCriticPreventsReadyTransition",
+          "status": "PASS",
+          "elapsed_seconds": 0.657
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "duplicateOnlySupplementStopsWithoutIdenticalEvidenceVersion",
+          "status": "PASS",
+          "elapsed_seconds": 0.656
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "supplementationCreatesNewFrozenEvidenceAndRewritesOnlyOnce",
+          "status": "PASS",
+          "elapsed_seconds": 0.805
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "totalDeadlineIsCheckedAfterModelReturns",
+          "status": "PASS",
+          "elapsed_seconds": 0.411
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "omittedCitationIndexIsInvalidEvenWhenZeroWouldMatch",
+          "status": "PASS",
+          "elapsed_seconds": 0.514
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "patientSeesOnlySafeProgressAndNeverDraftOrAgentOutput",
+          "status": "PASS",
+          "elapsed_seconds": 0.545
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.294
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.253
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "changedSnapshotIdentityIsRejectedBeforeAnyProviderCall(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.307
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.318
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.385
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.458
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[4]",
+          "status": "PASS",
+          "elapsed_seconds": 0.479
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[5]",
+          "status": "PASS",
+          "elapsed_seconds": 0.536
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[6]",
+          "status": "PASS",
+          "elapsed_seconds": 0.333
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "invalidAgentOutputsStopBeforeReview(String, String)[7]",
+          "status": "PASS",
+          "elapsed_seconds": 0.444
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "totalCallBudgetCannotBeResetByReconstructingCoordinator",
+          "status": "PASS",
+          "elapsed_seconds": 0.559
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "providerToolRequestsCannotExecuteAnyTool",
+          "status": "PASS",
+          "elapsed_seconds": 0.433
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "fourIndependentAgentsProduceFrozenReviewableDraftWithoutPublishing",
+          "status": "PASS",
+          "elapsed_seconds": 0.624
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "twoCoordinatorsCannotGenerateTheSameTaskTwice",
+          "status": "PASS",
+          "elapsed_seconds": 0.642
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "ambiguousDuplicateJsonKeysCannotChooseEvidenceQuery",
+          "status": "PASS",
+          "elapsed_seconds": 0.449
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "providerRateLimitDoesNotTriggerHiddenTransportRetries",
+          "status": "PASS",
+          "elapsed_seconds": 0.524
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientdraft.PatientDraftTest",
+          "name": "processCrashKeepsSpentBudgetAndRecoveryRestrictsWithoutNewCall",
+          "status": "PASS",
+          "elapsed_seconds": 1.788
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "collaborationProgressUsesFixedNotesWithoutLeakingAgentOutput",
+          "status": "PASS",
+          "elapsed_seconds": 0.43
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.637
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.691
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.801
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[4]",
+          "status": "PASS",
+          "elapsed_seconds": 0.749
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[5]",
+          "status": "PASS",
+          "elapsed_seconds": 0.686
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[6]",
+          "status": "PASS",
+          "elapsed_seconds": 0.647
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "changedApprovedMaterialsCannotBePublished(String)[7]",
+          "status": "PASS",
+          "elapsed_seconds": 0.65
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "citationsRequireOwnershipAndTheSameLiveReleaseGate",
+          "status": "PASS",
+          "elapsed_seconds": 0.728
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "doctorApprovedPatientCanReadLayeredExplanationWithoutInternalMaterials",
+          "status": "PASS",
+          "elapsed_seconds": 0.548
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "readsWaitingForTaskLockObserveTheCommittedMaterialVersion",
+          "status": "PASS",
+          "elapsed_seconds": 0.862
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "completedImageInferenceWithoutADraftRunWaitsForCollaborationNotADoctor",
+          "status": "PASS",
+          "elapsed_seconds": 0.414
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "missingOrRejectingDoctorNeverPublishesAndUnknownStatesFailClosed",
+          "status": "PASS",
+          "elapsed_seconds": 0.699
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "readsWaitForWithdrawalAndDoNotUseTheOldEligibility",
+          "status": "PASS",
+          "elapsed_seconds": 0.835
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.674
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "doctorApprovalCannotBypassDeterministicDraftValidation(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.624
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.477
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.436
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "restrictedCasesGiveOnlySafeActionableHints(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.457
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.655
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.733
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.765
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[4]",
+          "status": "PASS",
+          "elapsed_seconds": 0.712
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[5]",
+          "status": "PASS",
+          "elapsed_seconds": 0.727
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "unsafeInferenceCannotBeReleasedDespiteDoctorApproval(String)[6]",
+          "status": "PASS",
+          "elapsed_seconds": 0.761
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.869
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.946
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.725
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[4]",
+          "status": "PASS",
+          "elapsed_seconds": 0.733
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[5]",
+          "status": "PASS",
+          "elapsed_seconds": 0.776
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[6]",
+          "status": "PASS",
+          "elapsed_seconds": 0.749
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "everyResultReadRevalidatesFrozenSources(String)[7]",
+          "status": "PASS",
+          "elapsed_seconds": 0.757
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[1]",
+          "status": "PASS",
+          "elapsed_seconds": 0.512
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[2]",
+          "status": "PASS",
+          "elapsed_seconds": 0.841
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[3]",
+          "status": "PASS",
+          "elapsed_seconds": 0.565
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[4]",
+          "status": "PASS",
+          "elapsed_seconds": 0.505
+        },
+        {
+          "suite": "com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest",
+          "name": "otherAccountsAndAnonymousCannotReadTasksOrCitations(String)[5]",
+          "status": "PASS",
+          "elapsed_seconds": 0.499
+        }
+      ],
+      "files": [
+        {
+          "file": "TEST-com.csust.eyediagnosis.patientdraft.PatientDraftTest.xml",
+          "sha256": "e02e05600117babfbc73723614b992755e7c5d959463c4956ed603de68355aac"
+        },
+        {
+          "file": "TEST-com.csust.eyediagnosis.patientexplanation.PatientExplanationApiTest.xml",
+          "sha256": "65145bba8ffdc512887fb4e675ef7ea4ce75811d91a17bfefd0d5c6dc9b1b3a7"
+        }
+      ],
+      "scope": "Actual Java coordinator and HTTP + isolated MySQL; synthetic model, identities and references. No real model service."
+    }
+  }
+}

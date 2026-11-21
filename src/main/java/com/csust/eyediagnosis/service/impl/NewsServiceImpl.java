@@ -20,6 +20,7 @@ import com.csust.eyediagnosis.model.entity.User;
 import com.csust.eyediagnosis.model.vo.news.NewsVO;
 import com.csust.eyediagnosis.service.NewsService;
 import com.csust.eyediagnosis.service.UserService;
+import com.csust.eyediagnosis.utils.DateRanges;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.csust.eyediagnosis.constant.ExceptionConstant.PARAMS_IS_NULL;
@@ -50,6 +52,13 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
     private FileManager fileManager;
 
 
+    /**
+     * 列表排序字段白名单：排序字段来自请求体，直接拼进 ORDER BY 等于把 SQL 片段
+     * 交给客户端，这里只认这几个列名。
+     */
+    private static final Set<String> NEWS_SORT_FIELDS = Set.of(
+            "id", "title", "status", "publishTime", "editTime");
+
     @Override
     public QueryWrapper<News> getNewsQueryWrapper(NewsQueryDTO newsQueryDTO) {
         if(newsQueryDTO==null){
@@ -66,12 +75,27 @@ public class NewsServiceImpl extends ServiceImpl<NewsMapper, News>
         queryWrapper.eq(ObjUtil.isNotNull(newsId),"id", newsId);
         queryWrapper.like(StrUtil.isNotBlank(title),"title", title);
         queryWrapper.like(StrUtil.isNotBlank(summary),"summary", summary);
+        // 状态 / 分类筛选：管理端要能分头挑「待审核的」「这周发的」
+        queryWrapper.eq(ObjUtil.isNotNull(newsQueryDTO.getStatus()),"status", newsQueryDTO.getStatus());
+        queryWrapper.eq(StrUtil.isNotBlank(newsQueryDTO.getCategory()),"category", newsQueryDTO.getCategory());
+        // 发布时间区间
+        queryWrapper.ge(DateRanges.start(newsQueryDTO.getStartDate()) != null,"publishTime",
+                DateRanges.start(newsQueryDTO.getStartDate()));
+        queryWrapper.le(DateRanges.end(newsQueryDTO.getEndDate()) != null,"publishTime",
+                DateRanges.end(newsQueryDTO.getEndDate()));
         // 公开端只看已发布；管理员（visibleOnly=false）看全部状态以便审核。
         // 默认值为 true，任何漏设 visibleOnly 的调用点都不会泄漏草稿/待审核文章。
         if (newsQueryDTO.isVisibleOnly()) {
             queryWrapper.eq("status", com.csust.eyediagnosis.constant.NewsStatus.PUBLIC_VISIBLE);
         }
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),sortOrder.equals(ASC),sortField);
+        // 排序字段走白名单；未指定时默认按发布时间倒序
+        String safeSortField = StrUtil.isNotBlank(sortField) && NEWS_SORT_FIELDS.contains(sortField)
+                ? sortField : null;
+        if (safeSortField != null) {
+            queryWrapper.orderBy(true, ASC.equals(sortOrder), safeSortField);
+        } else {
+            queryWrapper.orderByDesc("publishTime");
+        }
         //返回query
         return queryWrapper;
     }

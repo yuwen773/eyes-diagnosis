@@ -16,7 +16,11 @@ Base package: `com.csust.eyediagnosis`
 
 - 领域命名、模块边界、易混术语 → `GLOSSARY.md`（架构评审与新增概念前读）。
 - 找设计 / 计划 / 验收 / 迁移文档 → `docs/README.md`（按主题分组的索引）。
-- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`。
+- 写前端样式 / 评审前端 diff → 仓库根 `DESIGN.md`（**Iris 2.0 · Adaptive Visual System**，
+  官方 DESIGN.md 格式：YAML 令牌 + 八段规范）+ `web/src/styles/tokens.css`（**已实现的令牌事实**）。
+  两者不一致时以 `tokens.css` 为准；规则变更史见 `docs/design/iris-2-rule-change-matrix.md`，
+  实现偏差登记 Issue（冻结期见 Issue #84），规范里不再维护状态表。
+- 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`，各目标库的升级路径见 `docs/architecture/migration-matrix.md`。
 - 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
 - 多工作树协作、Windows 进程操作、临时验证产物清理 → `docs/agent-worktree-conventions.md`。
 
@@ -34,6 +38,9 @@ RAG 证据、Spring 装配时升到 L2（`--db`）；准备合并时才用 L3。
 **后端全量验证走 `scripts/verify.sh`**：它自带一次性 MySQL 8 + Redis、注入 `SPRING_PROFILES_ACTIVE=ci`、跑完整 `mvn test`（含 `contextLoads` 与两个 MySQL 集成门禁），结束自动清理容器。JDK 21 由脚本设为 `C:\Users\yuwen\.jdks\corretto-21.0.7`；手工跑 Maven 时用 `JAVA_HOME=<该路径> mvn ...`。
 
 Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local.md`（不入库，工作树不自动继承）；Codex 侧同一份在 `~/.codex/AGENTS.md`。
+
+**本地收尾**：工作树与测试服务的盘点/回收走 `scripts/worktree-hygiene.sh`（`report` / `reap` / `branches`）
+与 `scripts/dev-servers.sh`（`list` / `stop`），规则见 `docs/agent-worktree-conventions.md` §收尾。
 
 ## Architecture
 
@@ -58,15 +65,22 @@ Java 21 与本机 MySQL 实例的环境事实见主检出目录的 `CLAUDE.local
 | Controller | Path | Purpose |
 |------------|------|---------|
 | UserController | `/api/user/*` | Auth, CRUD |
+| AdminStatsController | `/api/stats/*` | 管理端总览读数（Dashboard 与数据分析共用口径） |
 | DiagnosisController | `/api/diagnosis/*` | Upload image, gRPC diagnosis, page query |
+| DiagnosisTaskController / PatientAuthorizationController / PatientExplanationController / PatientFollowUpController | `/api/diagnosis-tasks/*` | 患者影像任务、保存授权、分层解释与随访 |
 | AgentController | `/api/agent/*` | SSE chat stream, session/history |
-| McpServerController | `/api/mcp/*` | MCP server CRUD |
+| AgentImageUploadController | `/api/agent/image/*` | Authenticated agent image upload and deletion |
+| CollaborationRunController | `/api/agent/collaboration-runs/*` | 多 Agent 协作运行：准入、授权快照/SSE、取消（默认关闭） |
+| McpServerController | `/api/mcp-server/*` | MCP server CRUD |
 | KnowledgeBaseController | `/api/knowledge/*` | RAG document management |
 | NewsController | `/api/news/*` | News CRUD |
+| ControlledReferenceController | `/api/controlled-references/*` | 受控参考资料上传、治理与检索 |
+| DoctorReviewController | `/api/doctor-reviews/*` | 医生复核冻结草稿 |
+| PatientDraftTestController / PatientDraftSeedController | `/api/patient-draft-test/*` | 仅管理员、需显式开启的草稿校验 |
 
 ## Database (MySQL `diagnosis`)
 
-Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Key tables: `t_user`, `t_diagnosis`, `t_agent_session`, `t_agent_message`, `t_mcp_server`, `t_knowledge_document`, `t_news`.
+Schema: `src/main/resources/db/migration/V*.sql` (Flyway migrations — authoritative; `db/callback/` bootstraps fresh installs). Never edit an applied migration; add a new one. Current head is V29; upgrade paths per target database are in `docs/architecture/migration-matrix.md`. Key tables: `t_user`, `t_diagnosis`, `t_diagnosis_task`, `t_agent_session`, `t_agent_message`, `t_agent_tool_audit`, `t_mcp_server`, `t_knowledge_document`, `t_news`, `t_controlled_reference`, `t_patient_draft_run`, `t_doctor_review`, `t_patient_authorization`.
 
 **命名规范**: 数据库列名统一使用**小驼峰**命名（如 `userId`, `fileName`, `isDelete`），与 Java 实体类字段保持一致。MyBatis Plus 配置 `map-underscore-to-camel-case: false`，不会自动转换下划线。
 
@@ -80,7 +94,7 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **MCP integration**: User config → `MCPManager` creates client → discover tools → inject as `ToolCallback[]` into ReactAgent
 - **RAG pipeline**: Upload → `DocumentParser` → `TextChunkerService` → ChromaDB → `DocumentSearchTool` retrieval
 - **Protobuf codegen**: `src/main/proto/diagnosis.proto` → `protobuf-maven-plugin` → generated Java stubs; Python bindings via `algorithm/generate_proto.py`
-- **Frontend API**: `npm run openapi` generates `src/api/*Controller.ts` from backend OpenAPI spec
+- **协作工作台（多 Agent）**: 前端入口由构建期变量 `VITE_COLLABORATION_ENABLED` 控制（`web/src/components/shell/navLinks.ts`），未设为 `true` 时导航不出现协作入口；后端能力由 `eye-diagnosis.collaboration.*` 控制，默认全 `false`。**两者必须同时开启**协作才真正可用；本分支（R1.2）不开启、不部署、不做临床启用。
 
 ## Design Context
 
@@ -88,26 +102,77 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 混合用户群——眼科医生（临床检查）、医院管理员（记录管理/系统运维）、普通患者（AI 自助诊断）。三种角色技术熟练度和使用场景差异大，界面需根据角色调整复杂度。
 
 ### Brand Personality
-**冷静、精密、克制**。骨白工作台 + 信号橙作唯一强调 + 衬线标题 + 等宽读数，传达"这是一台可信的临床仪器"，而不是一个健康 App。温度靠文案与留白表达，不靠暖色调。
+**冷静、精密、克制**；Iris 2.0 起加一句：**同一套品牌身份，四种表达强度**。
+判读纸面（白纸 + 墨字 + 发丝线）+ 衬线标题 + 等宽读数传达"这是一台可信的临床仪器"；
+首页/品牌层用钴蓝 + 银蓝光学材质表达"这是一个能把复杂视觉信息讲清楚的团队"。
+温度靠文案与留白表达，不靠暖色调。
 
 ### Aesthetic Direction
-**白色仪器（The White Instrument）**。设计真源是仓库根 `DESIGN.md`，令牌实现是 `web/src/styles/tokens.css`。
-两条前端线：`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）**已弃用（deprecated）**，仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
-写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`（品牌令牌、双主题、页面骨架、参考实现）。后端任务不需要读。
+**Iris 2.0 · Adaptive Visual System**。设计真源是仓库根 `DESIGN.md`（目标规范），
+令牌实现是 `web/src/styles/tokens.css`（已实现的事实）。
+`web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）**已弃用（deprecated）**，
+仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
+写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`
+（四场景、令牌、组件、双主题、可访问性、数据真实性）。后端任务不需要读。
 
-### Design Rules（写前端必须遵守）
-- **品牌强调色是信号橙 `--signal: #d9541f`**（暗底 `#ef7a45`）。它**不是主 CTA 色**——主按钮是墨色 `--ink`；橙色只做语义强调（当前态、聚焦边框、模型标记、top 条），不做大面积填充。
-- **严重度语义色与品牌色解耦**：`--risk-normal/attention/critical`，且必须同时给文字标签，颜色不是唯一信息载体。
-- **所有数字用等宽字体** `--font-mono`（IBM Plex Mono）+ `tabular-nums`——置信度、概率、计数、时间戳、哈希。
-- **衬线标题用 `--font-serif`（Noto Serif SC 栈），weight 只允许 400**，禁止 700+ 与斜体；正文与控件用 `--font-sans`。
-- **圆角默认 0**（按钮、输入、卡片、表格），圆形用 50%，药丸 999px；不要堆圆角。
-- **发丝线优先于厚重卡片阴影**，需要层级时才用极淡的墨色阴影。
-- **AI 装饰零容忍**：不用粒子、扫描线、光环动画、圆形渐变装饰、居中 hero 大标题。
-- **纸面原语 `--paper-*` 不参与主题翻转**：判读记录在任何主题下都是同一张白纸。
-- 页面骨架：顶部 KPI 条（mono 指标 4 列）+ 章节 overline + 台账行 + `.card-accent` 顶部条。
+### 四种体验场景（写前端先判断自己在哪个场景）
+`DESIGN.md` 的 **Overview** 定义四场景，**Layout** 里有**逐路由归属表**（每个真实路由
+属于哪个场景、用什么容器类），**Components** 按组件直述变体与签名组件。
+**没有"全站通用"的一套控件外观**；也**不是每个页面都套 KPI + 台账**。
+
+| 场景 | 页面 | 主色 | 圆角 | 气质 |
+|---|---|---|---|---|
+| **Brand** | `LandingPage`/`LoginPage`/`RegisterPage`/`NewsPage`/`NewsDetailPage` | 钴蓝 `--brand-primary` | 24–38px | 精致、清透、留白足 |
+| **Management** | `pages/admin/*` | 管理紫 `--admin-primary` 主操作 + `--signal` 当前态 | 8–12px | 成熟 SaaS、信息密度高 |
+| **Intelligence** | `AgentPage`、未来的影像工作台 | 运行态蓝/青、类别紫 | 12px | 专业、看得见协作 |
+| **Clinical** | `DiagnosisPage`/`RecordsPage`/`ProfilePage`/`RecordSheet` | 墨色主 CTA + `--signal` 语义 | 0 | 克制、纸面稳定 |
+
+登录/注册走品牌层双栏，个人中心与资讯是资料/编辑式排版——都不以 KPI + 台账开头。
+
+### 规则入口（写 / 评审 `web/` 前读这几处，规则正文不在本文件）
+
+| 要判断的事 | 读 |
+|---|---|
+| 路由属于哪个场景、用什么容器类、什么版式骨架 | `DESIGN.md` → Layout → 路由归属 |
+| 组件外观（按钮 / 卡片 / 图表 / 导航 / 弹层 / 表格 / 表单 / 状态标记） | `DESIGN.md` → Components |
+| 语义色、等宽读数、圆角令牌梯、阴影与发丝线、纸面原语 | `DESIGN.md` → Colors / Typography / Shapes / Elevation & Depth；令牌真值看 `web/src/styles/tokens.css`（与 DESIGN.md 冲突时以它为准） |
+| 动效预算（氛围 / 状态）与 `prefers-reduced-motion` | `DESIGN.md` → Components → Named Rules（No-Invented-State） |
+| 图标 | `web/DESIGN.md` 规则 16（`lucide-react` 静态命名导入） |
+| 品牌首屏构图 / 公开路由共用外壳 | `DESIGN.md` → Layout / Components → Navigation；`web/DESIGN.md` |
+
+三条不可让渡的判据（正文仍在 `DESIGN.md`）：
+
+- **场景先定**：Brand / Management / Intelligence / Clinical 四选一，它决定圆角、主色与密度。
+- **三套语义色互不顶替**：`--signal` 管当前态、`--brand-*` 管品牌身份、`--risk-*` 管医学严重度。
+- **严重度永远带文字标签**，颜色不是唯一信息载体。
+
+### UI 冻结（2026-11-15）
+
+**Iris 2.1 UI 开发已冻结**，冻结基线 = annotated tag `iris-ui-v2.1-freeze-20261115`
+→ 提交 `80f53f7f55955c2d30a1a9c98479dcb87682051b`（冻结当时的 `ui` tip，tag 不移动）。
+
+- **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
+- **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。
+- **例外**：阻断性故障与安全修复。
+- 后续重心转向**多 Agent 系统**（PR #68 已合入 master；协作能力仍默认关闭、未部署）。
+- 规则正文见 `DESIGN.md` 的 Overview（冻结说明）与 `docs/design/iris21-ui-freeze-exceptions.md`，此处只作指针。
 
 ### 参考实现
-`web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
+`web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
+`web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。
+`web/src/components/brand/HeroFusion.tsx` / `OpticFlow.tsx`（品牌层首屏）与 `--brand-*` /
+`.iris2` / `--radius-xl|2xl` 均已在 `tokens.css` 有定义，可直接引用。
+Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
+
+### 设计文档
+| 文档 | 何时读 |
+|---|---|
+| `DESIGN.md` | 写 `web/` 页面/组件/样式，或评审前端 diff（**目标规范**）。旧版（2026-11-21 重写前）见 `git show 34e94c9a:DESIGN.md` |
+| `web/src/styles/tokens.css` | 查令牌真值（**已实现的事实**，与 DESIGN.md 冲突时以它为准） |
+| `docs/design/iris-2-rule-change-matrix.md` | 想知道旧「白色仪器」规则改成了什么、为什么改 |
+| `docs/design/iris-2-implementation-roadmap.md` | 想知道首页/管理端/协作台各自的实施顺序与门禁 |
+| `docs/design/iris-2-r2-5-product-shell-audit.md` | 想知道 R2.5 为什么统一外壳、逐页现状与目标、PR 拆分 |
+| `docs/design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` + `docs/design/assets/` | 查视觉参考来源与取舍（**灵感，不是实现**） |
 
 ### Priority Areas
 1. **诊断流程**：登录、首页、图片上传、诊断结果——用户最先接触的核心路径
@@ -115,8 +180,11 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 3. **Agent 智能对话**：AI 对话、会话管理、资源面板——最复杂的交互界面
 
 ### Design Principles
-1. **克制 = 信任**：骨白与墨色为主，彩色只做语义，界面读起来像一份可信的判读报告
+1. **克制 = 信任**（Clinical 场景）：骨白与墨色为主，彩色只做语义，界面读起来像一份可信的判读报告
 2. **角色自适应**：医生看专业数据，患者看通俗解读，同一系统不同复杂度
-3. **橙只做语义**：信号橙标记"重点/当前"，铺满就失去意义
-4. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
-5. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转
+3. **橙只做语义**：信号橙标记"重点/当前"，铺满就失去意义；品牌钴蓝也不做大面积填充
+4. **场景决定表达强度**：Brand / Management / Intelligence / Clinical 各有各的密度与材质，
+   但安全、医学措辞、可访问性、统计口径、证据链**不因场景放松**
+5. **流畅过渡**：状态变化有流畅动效，传递系统响应性和可靠性
+6. **双主题一致性**：浅色/深色传达相同品牌性格，非简单颜色翻转
+7. **不虚构**：界面上的每个数字都能追到后端与口径；设计稿里有 ≠ 产品里有

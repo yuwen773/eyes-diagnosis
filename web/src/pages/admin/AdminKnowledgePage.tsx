@@ -1,45 +1,73 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react"
+import "@/styles/admin-document.css"
+import "@/styles/admin-polish-cms.css"
 
-import { SectionHead } from "@/components/SectionHead"
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+  type ReactElement,
+} from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useSearchParams } from "react-router-dom"
+import {
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  FileText,
+  Pencil,
+  Trash2,
+  Upload,
+} from "lucide-react"
+
+import { useMediaQuery } from "@/lib/useMediaQuery"
+
+import { AdminEmpty } from "@/components/admin/AdminEmpty"
+import { AdminPageHead } from "@/components/admin/AdminPageHead"
+import { RowMenu } from "@/components/admin/RowMenu"
 import { DataTable, type Column } from "@/components/admin/DataTable"
-import { Toolbar } from "@/components/admin/Toolbar"
 import { Modal } from "@/components/admin/Modal"
+import { KnowledgeWorkspace } from "@/components/admin/KnowledgeWorkspace"
+import { BatchBar } from "@/components/admin/BatchBar"
 import { RiskTag } from "@/components/RiskTag"
 import { FaultNote } from "@/components/fault"
 import {
   deleteKnowledge,
+  deleteKnowledgeBatch,
   listKnowledge,
+  updateKnowledgeTitle,
   uploadKnowledge,
   type KnowledgeDoc,
-  type Page,
+  type KnowledgeQuery,
 } from "@/lib/adminApi"
+import {
+  knowledgeStatusView,
+  KNOWLEDGE_FILE_TYPE_OPTIONS,
+  KNOWLEDGE_STATUS_FILTER_OPTIONS,
+} from "@/lib/adminDomain"
 import { describeError, type ErrorDetail } from "@/lib/api"
-import { formatTimestamp, type Risk } from "@/lib/domain"
+import { queryKeys } from "@/lib/queryKeys"
+import { formatTimestamp } from "@/lib/domain"
 import { fault } from "@/lib/faults"
 
 const DEFAULT_PAGE_SIZE = 10
 const POLL_MS = 3000
 const ACCEPT = ".pdf,.doc,.docx,.txt,.md,.markdown"
 
-/** 加载 / 错误 / 数据三态同源；不在各事件里散着维护布尔量（对齐 AdminUsersPage）。 */
-type View = { data: Page<KnowledgeDoc> | null; fault: ErrorDetail | null; loading: boolean }
-
-/** 状态 → 风险档 + 文字。其他值走 .risk[data-risk="unknown"] 的 default 档。 */
-function statusView(status: number): { label: string; risk: Risk } {
-  switch (status) {
-    case 0:
-      return { label: "处理中", risk: "attention" }
-    case 1:
-      return { label: "已完成", risk: "normal" }
-    case 2:
-      return { label: "失败", risk: "critical" }
-    default:
-      return { label: "未知", risk: "unknown" }
-  }
+/** 已应用的筛选条件。 */
+type Query = {
+  fileName: string
+  title: string
+  status: string
+  fileType: string
+  startDate: string
+  endDate: string
 }
 
 /** 文件大小 B / KB / MB 格式化函数（brief 逐字）。数值列统一 mono。 */
-function formatFileSize(bytes?: string): string {
+function formatFileSize(bytes?: string | number): string {
   const size = Number(bytes)
   if (!size || size < 0 || !Number.isFinite(size)) return "—"
   if (size < 1024) return `${size} B`
@@ -47,8 +75,20 @@ function formatFileSize(bytes?: string): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/** 文件类型短码：PDF / DOC / DOCX / TXT / MD，认不出的原样显示。 */
+function fileTypeCode(fileType?: string | null): string {
+  const value = (fileType ?? "").trim()
+  if (!value) return "—"
+  // .markdown 与 .md 是同一种格式，短码统一成 MD；原始扩展名留在 title 里。
+  if (value.toLowerCase() === "markdown") return "MD"
+  return value.toUpperCase()
+}
+
+/** 扩展名白名单：与后端一致，拖放进来的文件也按同一套判定。 */
+const ACCEPTED_EXTENSIONS = ACCEPT.split(",").map((item) => item.replace(".", ""))
+
 /**
- * 知识库（真实端点：上传 / 轮询 / 删除）。
+ * 知识库（真实端点：上传 / 轮询 / 预览 / 删除 / 改名）。
  *
  * 取数逐字对齐 AdminUsersPage：requestSeq 递增序号挡过期响应，View 三态同源派生，
  * 首次挂载只用一个 useEffect 发一次请求；事件驱动 startLoad 在事件里同步置 loading。
@@ -62,130 +102,201 @@ function formatFileSize(bytes?: string): string {
  * pollTimerRef 再挡一道重入，组件卸载走同一 cleanup 清定时器。
  */
 export function AdminKnowledgePage(): ReactElement {
+  // 下钻入口：仪表盘的「知识库处理失败」带 ?status=2 进来，直接落到失败筛选上。
+  // 只认合法的状态码，其余忽略。
+  const [searchParams] = useSearchParams()
+  // 初始值只在挂载时用一次：惰性初始化，避免每次渲染都重读 URL 参数。
+  const readInitialStatus = () => {
+    const value = searchParams.get("status")
+    return value !== null && KNOWLEDGE_STATUS_FILTER_OPTIONS.some((o) => o.value === value)
+      ? value
+      : ""
+  }
+  const [fileNameDraft, setFileNameDraft] = useState("")
+  const [titleDraft, setTitleDraft] = useState("")
+  const [statusDraft, setStatusDraft] = useState(readInitialStatus)
+  const [fileTypeDraft, setFileTypeDraft] = useState("")
+  const [startDraft, setStartDraft] = useState("")
+  const [endDraft, setEndDraft] = useState("")
+  const [query, setQuery] = useState<Query>(() => ({
+    fileName: "",
+    title: "",
+    status: readInitialStatus(),
+    fileType: "",
+    startDate: "",
+    endDate: "",
+  }))
   const [page, setPage] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE })
-  const [view, setView] = useState<View>({ data: null, fault: null, loading: true })
-  const requestSeq = useRef(0)
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [dropNote, setDropNote] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  // 「处理中」队列：仅放本次会话新上传、且服务端仍标记 status===0 的文件名
-  // （Vue 版 processingFiles 语义）。轮询开关另用 hasProcessing 承接「列表存在
-  // status===0」，两者同源（都取自加载结果），但不混为一个布尔量。
-  const [processingNames, setProcessingNames] = useState<string[]>([])
-  const [hasProcessing, setHasProcessing] = useState(false)
-  // 轮询定时器句柄；防重入（已有 timer 不再起）+ 卸载清理都靠它。
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  // 轮询单飞：上一次轮询还没回就不发下一次，避免慢响应把请求堆叠起来。
-  const pollInFlightRef = useRef(false)
+  // 本次会话上传过的文件名：用于「处理中」条立即显示，列表回来后再按服务端状态收口。
+  const [uploadedNames, setUploadedNames] = useState<string[]>([])
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeDoc | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 批量删除的待确认目标：选中文档 id 的快照。批量删除不可撤销，
+   *  必须先过确认弹层（与资讯页批量删除同口径）。 */
+  const [batchDeleteTarget, setBatchDeleteTarget] = useState<string[] | null>(null)
   const [actionError, setActionError] = useState<ErrorDetail | null>(null)
+  const [actionNote, setActionNote] = useState<string | null>(null)
+  const [batchBusy, setBatchBusy] = useState(false)
 
-  /** 成功取数后的统一落盘：三态 + 处理中队列 + 轮询开关，全在 Promise 续体里。 */
-  const applyLoaded = useCallback((seq: number, data: Page<KnowledgeDoc>) => {
-    if (seq !== requestSeq.current) return
-    const records = data.records ?? []
-    const status0Names = new Set(
-      records.filter((doc) => doc.status === 0).map((doc) => doc.fileName),
-    )
-    // Vue watch 语义：队列只保留服务端仍在处理的文件名；内容不变时沿用 prev，
-    // 避免每 3 秒轮询都触发一次无谓重渲染。
-    setProcessingNames((prev) => {
-      const next = prev.filter((name) => status0Names.has(name))
-      return next.length === prev.length ? prev : next
-    })
-    setHasProcessing(status0Names.size > 0)
-    setView({ data: { ...data, records }, fault: null, loading: false })
-  }, [])
+  // 预览抽屉：元信息 + 原文阅读 + 切片清单。详情查询在 KnowledgeWorkspace 内。
+  const [previewTarget, setPreviewTarget] = useState<KnowledgeDoc | null>(null)
 
-  /** 失败：静默轮询不打断（保留上一帧数据与轮询开关，timer 继续），全量取数才报错。 */
-  const applyFailed = useCallback((seq: number, cause: unknown, silent: boolean) => {
-    if (seq !== requestSeq.current) return
-    if (silent) return
-    setView({ data: null, fault: describeError(cause), loading: false })
-  }, [])
+  // 改名弹层
+  const [renameTarget, setRenameTarget] = useState<KnowledgeDoc | null>(null)
+  const [renameTitle, setRenameTitle] = useState("")
+  const [renaming, setRenaming] = useState(false)
+  const [renameError, setRenameError] = useState<ErrorDetail | null>(null)
 
-  /**
-   * 纯发请求：不在此同步写任何 state，全部交给续体（合规 react-hooks/set-state-in-effect）。
-   * 交互取数（首次挂载 / startLoad）递增 requestSeq 成为「最新权威请求」；静默轮询
-   * 只读取当前序号、不递增——这样一次失败的静默轮询不会占住赢家序号、把仍在飞行的
-   * 交互请求结果作废（背景拉取失败不该让页面卡在 loading）。轮询成功仅在没有更新的
-   * 交互请求插队时才提交（applyLoaded 的 seq 比对），保证「最新数据胜出」。
-   * 静默轮询另用 pollInFlightRef 单飞：上一次未回就跳过本次，避免慢响应堆叠、
-   * 更晚发起的轮询被更早的响应覆盖。
-   */
-  const fireLoad = useCallback(
-    (current: number, pageSize: number, silent: boolean) => {
-      if (silent && pollInFlightRef.current) return
-      if (silent) pollInFlightRef.current = true
-      const seq = silent ? requestSeq.current : ++requestSeq.current
-      const settle = () => {
-        if (silent) pollInFlightRef.current = false
-      }
-      listKnowledge(current, pageSize).then(
-        (data) => {
-          settle()
-          applyLoaded(seq, data)
-        },
-        (cause) => {
-          settle()
-          applyFailed(seq, cause, silent)
-        },
-      )
-    },
-    [applyLoaded, applyFailed],
+  const queryClient = useQueryClient()
+
+  /** 已应用的筛选 + 分页：同时是查询键和请求体。 */
+  const { current, pageSize } = page
+  const params = useMemo<KnowledgeQuery>(
+    () => ({
+      current,
+      pageSize,
+      ...(query.fileName ? { fileName: query.fileName } : {}),
+      ...(query.title ? { title: query.title } : {}),
+      ...(query.status ? { status: Number(query.status) } : {}),
+      ...(query.fileType ? { fileType: query.fileType } : {}),
+      ...(query.startDate ? { startDate: query.startDate } : {}),
+      ...(query.endDate ? { endDate: query.endDate } : {}),
+    }),
+    [current, pageSize, query],
   )
 
-  // 首次挂载加载一次：初始 view 已是 loading=true，effect 里只发请求、不写 state。
-  useEffect(() => {
-    fireLoad(1, DEFAULT_PAGE_SIZE, false)
-  }, [fireLoad])
+  const listQuery = useQuery({
+    queryKey: queryKeys.admin.knowledge(params),
+    queryFn: () => listKnowledge(params),
+    // 列表里还有 status===0 的文档时 3 秒静默重拉；后台刷新不清空数据、
+    // 不把页面打回 loading，这就是原来自研轮询想达到的效果。
+    refetchInterval: (q) =>
+      (q.state.data?.records ?? []).some((doc) => doc.status === 0) ? POLL_MS : false,
+  })
+  const listData = listQuery.data
+  const listFault = listQuery.error ? describeError(listQuery.error) : null
 
   /**
-   * 轮询：列表存在 status===0 时 3 秒 setInterval 重拉；无则停；卸载清定时器；
-   * 防重入（已有 timer 不再起）。轮询用 silent 刷新——不置 loading、不清空 data，
-   * 因此 hasProcessing 在轮询期间保持稳定 true，单个 timer 不会被反复重挂。
+   * 「处理中」文件名：本次上传过、且服务端仍标记 status===0。
+   * 只认列表里真实存在的行：文档被翻到别的页或处理完成后，条目自然消失，
+   * 不会留下永远「处理中」的幽灵名。
    */
-  useEffect(() => {
-    if (!hasProcessing) return
-    if (pollTimerRef.current !== null) return
-    pollTimerRef.current = setInterval(() => {
-      fireLoad(page.current, page.pageSize, true)
-    }, POLL_MS)
-    return () => {
-      if (pollTimerRef.current !== null) {
-        clearInterval(pollTimerRef.current)
-        pollTimerRef.current = null
-      }
-      // 定时器停了就把单飞标记复位，避免下次重新起轮询时被上一次的残留挡住。
-      pollInFlightRef.current = false
-    }
-  }, [hasProcessing, page, fireLoad])
+  const processingNames = useMemo(() => {
+    const status = new Map((listData?.records ?? []).map((doc) => [doc.fileName, doc.status]))
+    return uploadedNames.filter((name) => status.get(name) === 0)
+  }, [uploadedNames, listData])
 
-  /** 事件驱动的全量刷新：在事件里同步置 loading，再发请求（effect 只负责首次挂载）。 */
-  function startLoad(current: number, pageSize: number) {
-    setActionError(null) // 任何一次重新取数都清掉上一次操作失败的页内读数
-    setView({ data: null, fault: null, loading: true })
-    fireLoad(current, pageSize, false)
+  /** 写操作成功后失效知识库域与统计域（失败文档数在仪表盘上）。 */
+  const refreshKnowledge = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.knowledgeAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.statsAll }),
+    ])
+
+  function onSearch(event: FormEvent) {
+    event.preventDefault()
+    setActionError(null)
+    setQuery({
+      fileName: fileNameDraft.trim(),
+      title: titleDraft.trim(),
+      status: statusDraft,
+      fileType: fileTypeDraft,
+      startDate: startDraft,
+      endDate: endDraft,
+    })
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
+  function onReset() {
+    setFileNameDraft("")
+    setTitleDraft("")
+    setStatusDraft("")
+    setFileTypeDraft("")
+    setStartDraft("")
+    setEndDraft("")
+    setActionError(null)
+    setQuery({ fileName: "", title: "", status: "", fileType: "", startDate: "", endDate: "" })
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
+  /** 枚举筛选（处理状态 / 文件类型）用段控件，点一下即生效。 */
+  function applyStatusFilter(value: string) {
+    setStatusDraft(value)
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, status: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
+  }
+
+  function applyTypeFilter(value: string) {
+    setFileTypeDraft(value)
+    setActionError(null)
+    setQuery((prev) => ({ ...prev, fileType: value }))
+    setPage((prev) => ({ ...prev, current: 1 }))
+    setSelectedIds([])
   }
 
   function onPageChange(next: { current: number; pageSize: number }) {
     // pageSize 变化一律回第 1 页（DataTable 已传 current:1，这里再钉死一次）。
-    const nextPage =
+    setActionError(null)
+    setPage(
       next.pageSize !== page.pageSize
         ? { current: 1, pageSize: next.pageSize }
-        : { current: next.current, pageSize: next.pageSize }
-    setPage(nextPage)
-    startLoad(nextPage.current, nextPage.pageSize)
+        : { current: next.current, pageSize: next.pageSize },
+    )
+    setSelectedIds([])
+  }
+
+  /**
+   * 收下选择的文件：按后端白名单过滤扩展名，被挡下的明确说出来，
+   * 不静默丢弃。文件选择与拖放走同一条路，上传管线不变。
+   */
+  function addFiles(list: File[]) {
+    if (list.length === 0) return
+    const accepted = list.filter((file) => {
+      const name = file.name.toLowerCase()
+      return ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(`.${ext}`))
+    })
+    const rejected = list.length - accepted.length
+    setDropNote(
+      rejected > 0
+        ? `${rejected} 个文件类型不受支持（仅 PDF / DOC / DOCX / TXT / MD），已忽略。`
+        : null,
+    )
+    if (accepted.length > 0) setPendingFiles((prev) => [...prev, ...accepted])
   }
 
   function onPickFiles(event: ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(event.target.files ?? [])
-    if (picked.length > 0) setPendingFiles((prev) => [...prev, ...picked])
+    addFiles(Array.from(event.target.files ?? []))
     event.target.value = "" // 允许再次选择同名文件
+  }
+
+  function onDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragging(false)
+    addFiles(Array.from(event.dataTransfer.files ?? []))
+  }
+
+  function onDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragging(true)
+  }
+
+  function onDragLeave(event: DragEvent<HTMLDivElement>) {
+    // 只在指针真正离开这块区域时才收起高亮：子元素之间移动也会触发 dragleave。
+    if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+    setDragging(false)
   }
 
   function removePending(index: number) {
@@ -201,14 +312,8 @@ export function AdminKnowledgePage(): ReactElement {
       await uploadKnowledge(files)
       // 清待传：只移除这次真正上传的 File 对象，上传期间新选择的文件仍留在待传列表。
       setPendingFiles((prev) => prev.filter((file) => !files.includes(file)))
-      // 新上传文件进「处理中」队列：页内处理中条立即显示文件名。
-      setProcessingNames((prev) => {
-        const next = new Set(prev)
-        files.forEach((file) => next.add(file.name))
-        return [...next]
-      })
-      setHasProcessing(true) // 立即起轮询（随后的列表刷新会再按服务端状态确认）
-      startLoad(page.current, page.pageSize) // 刷新列表
+      setUploadedNames((prev) => [...new Set([...prev, ...files.map((file) => file.name)])])
+      await refreshKnowledge()
     } catch (cause) {
       // 上传失败：FaultNote 页内读数 + 保留待传列表，用户可直接重试。
       setActionError(describeError(cause))
@@ -235,7 +340,9 @@ export function AdminKnowledgePage(): ReactElement {
     try {
       await deleteKnowledge(target.id) // 后端 JsonConfig 全局 Long→String，id 线上为 string，直接传
       setDeleteTarget(null)
-      startLoad(page.current, page.pageSize) // 成功后刷新当前页
+      setSelectedIds((prev) => prev.filter((id) => id !== target.id))
+      setUploadedNames((prev) => prev.filter((name) => name !== target.fileName))
+      await refreshKnowledge()
     } catch (cause) {
       setDeleteTarget(null) // 收起弹层，让页内提示露出来
       setActionError(describeError(cause))
@@ -244,94 +351,423 @@ export function AdminKnowledgePage(): ReactElement {
     }
   }
 
+  /** 批量删除：先弹确认，不直接执行。 */
+  function requestBatchDelete() {
+    if (selectedIds.length === 0) return
+    setActionError(null)
+    setBatchDeleteTarget([...selectedIds])
+  }
+
+  function closeBatchDelete() {
+    if (batchBusy) return
+    setBatchDeleteTarget(null)
+  }
+
+  /** 批量删除：逐条鉴权与执行，部分失败如实回执。 */
+  async function runBatchDelete() {
+    if (batchBusy || selectedIds.length === 0) return
+    const ids = batchDeleteTarget ?? selectedIds
+    setBatchDeleteTarget(null)
+    setBatchBusy(true)
+    setActionError(null)
+    setActionNote(null)
+    try {
+      const result = await deleteKnowledgeBatch(ids)
+      const succeeded = result.succeeded ?? 0
+      const failed = result.failed ?? 0
+      setActionNote(
+        failed > 0
+          ? `批量删除：成功 ${succeeded} 份，失败 ${failed} 份。${result.message ?? ""}`
+          : `批量删除：成功 ${succeeded} 份。`,
+      )
+      if (failed === 0) setSelectedIds([])
+      await refreshKnowledge()
+    } catch (cause) {
+      setActionError(describeError(cause))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  /* ── 预览（原文 + 切片） ───────────────────────────────── */
+
+  function openPreview(row: KnowledgeDoc) {
+    setPreviewTarget(row)
+  }
+
+  function closePreview() {
+    setPreviewTarget(null)
+  }
+
+  /* ── 改名 ───────────────────────────────────────────────── */
+
+  function openRename(row: KnowledgeDoc) {
+    setRenameTitle(row.title ?? row.fileName ?? "")
+    setRenameError(null)
+    setRenameTarget(row)
+  }
+
+  function closeRename() {
+    if (renaming) return
+    setRenameTarget(null)
+    setRenameError(null)
+  }
+
+  async function confirmRename() {
+    if (!renameTarget || renaming) return
+    const title = renameTitle.trim()
+    if (!title) {
+      setRenameError({ code: 40000, text: "标题不能为空" })
+      return
+    }
+    setRenaming(true)
+    setRenameError(null)
+    try {
+      await updateKnowledgeTitle(renameTarget.id, title)
+      setRenameTarget(null)
+      setActionNote("已改名")
+      await refreshKnowledge()
+    } catch (cause) {
+      setRenameError(describeError(cause))
+    } finally {
+      setRenaming(false)
+    }
+  }
+
   const columns: Column<KnowledgeDoc>[] = [
-    { key: "fileName", title: "文件名" },
+    {
+      key: "fileName",
+      title: "文档",
+      // 列宽用百分比：表格随视口变宽时各列按比例走，文档列不会独吞
+      // 整条余量（1920 档尤其明显），窄屏换卡片后这些宽度整体失效。
+      width: "37%",
+      render: (row) => {
+        // 标题与文件名常常相同：相同就不重复占一行，不同才显示——那是真信息。
+        const title = (row.title ?? "").trim()
+        const fileName = row.fileName || "未命名文件"
+        const showTitle = title.length > 0 && title !== fileName
+        return (
+          <div className="admin-cms__filecell">
+            <span className="admin-cms__filecell__icon" aria-hidden="true">
+              <FileText size={16} strokeWidth={1.8} />
+            </span>
+            <span className="admin-cms__filecell__text">
+              <span className="admin-cms__filecell__name" title={fileName}>
+                {fileName}
+              </span>
+              {/* 标题与文件名常常相同：相同就不占第二行，不同才显示——那是真信息。 */}
+              {showTitle ? (
+                <span className="admin-cms__filecell__sub" title={title}>
+                  {title}
+                </span>
+              ) : null}
+            </span>
+          </div>
+        )
+      },
+    },
     {
       key: "fileType",
-      title: "类型",
-      width: "92px",
-      render: (row) => (row.fileType ? row.fileType.toUpperCase() : "—"),
+      title: "类型 / 体积",
+      width: "12%",
+      render: (row) => (
+        <div className="admin-cms__typecell">
+          <span
+            className="admin-cms__typecell__code"
+            title={row.fileType ? `扩展名 .${row.fileType}` : undefined}
+          >
+            {fileTypeCode(row.fileType)}
+          </span>
+          <span className="admin-cms__typecell__size num">{formatFileSize(row.fileSize)}</span>
+        </div>
+      ),
     },
     {
-      key: "fileSize",
-      title: "大小",
-      width: "108px",
-      mono: true,
-      render: (row) => formatFileSize(row.fileSize),
+      key: "chunkCount",
+      title: "分块数",
+      width: "8%",
+      render: (row) => {
+        const count =
+          typeof row.chunkCount === "number" && Number.isFinite(row.chunkCount)
+            ? row.chunkCount
+            : null
+        return (
+          <span className="admin-cms__chunkcell num">
+            {count ?? "—"}
+            {count === null ? null : <span className="admin-cms__chunkcell__unit">块</span>}
+          </span>
+        )
+      },
     },
-    { key: "chunkCount", title: "分块数", width: "88px", mono: true },
     {
       key: "status",
-      title: "状态",
-      width: "112px",
+      title: "处理状态",
+      width: "12%",
       render: (row) => {
-        const v = statusView(row.status)
-        return <RiskTag risk={v.risk}>{v.label}</RiskTag>
+        const v = knowledgeStatusView(row.status)
+        return (
+          <span className="admin-cms__status">
+            <RiskTag risk={v.risk}>{v.label}</RiskTag>
+          </span>
+        )
       },
     },
     {
       key: "createTime",
       title: "上传时间",
-      width: "158px",
+      width: "15%",
       mono: true,
       render: (row) => formatTimestamp(row.createTime),
     },
     {
       key: "action",
       title: "操作",
-      width: "92px",
+      width: "12%",
       render: (row) => (
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={() => openDelete(row)}
-        >
-          删除
-        </button>
+        <div className="admin-dt__row-actions admin-knowledge__rowactions">
+          {/* 主动作（预览）收进图标按钮：窄屏下文字版会把操作列撑到
+              盖住文件名列；标签交给 title/aria-label。 */}
+          <button
+            type="button"
+            className="admin-btn admin-btn--primary admin-btn--icon-sm"
+            title="预览文档"
+            aria-label={`预览文档：${row.fileName || "未命名文件"}`}
+            onClick={() => openPreview(row)}
+          >
+            <Eye size={14} strokeWidth={2} aria-hidden="true" />
+          </button>
+          <RowMenu
+            label={`更多文档操作：${row.fileName || row.id}`}
+            items={[
+              {
+                label: "改名",
+                icon: <Pencil size={14} strokeWidth={2} aria-hidden="true" />,
+                onSelect: () => openRename(row),
+              },
+              {
+                label: "删除文档",
+                icon: <Trash2 size={14} strokeWidth={2} aria-hidden="true" />,
+                danger: true,
+                onSelect: () => openDelete(row),
+              },
+            ]}
+          />
+        </div>
       ),
     },
   ]
 
   // 三态同源：loading / error / 数据都从 view 读；加载与出错时 rows 都是 undefined。
-  const rows = view.data?.records
-  const total = view.data?.total ?? 0
+  const rows = listData?.records
+  const total = listData?.total ?? 0
+  // 静默轮询失败不该把已有列表换成错误页；只有一次数据都没拿到才报错。
+  const listError = listData === undefined ? (listFault?.text ?? null) : null
+  const activeFilters = Object.values(query).filter(Boolean).length
+
+  // 390px 档：筛选面板默认收进一条紧凑工具栏，字段区折叠；
+  // 已应用筛选数常驻可见，折叠态也不会骗用户「没有条件在生效」。
+  const compact = useMediaQuery("(max-width: 640px)")
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const showFields = !compact || filtersOpen
 
   return (
     <div className="admin-knowledge">
-      <div className="admin-knowledge__head">
-        <SectionHead code="05" kicker="知识库" en="ADMIN · KNOWLEDGE" />
-      </div>
+      <AdminPageHead
+        code="05"
+        title="知识库"
+        eyebrow="ADMIN · KNOWLEDGE"
+        description="上传、解析并向量化医疗文档，管理 RAG 切片与处理状态。"
+        meta={
+          <span className="admin-filter__note num">
+            {listData ? `共 ${total} 份文档` : "文档数读取中"}
+          </span>
+        }
+      />
 
-      <Toolbar>
-        <div className="admin-knowledge__upload-row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={ACCEPT}
-            className="admin-knowledge__file-input"
-            onChange={onPickFiles}
-            aria-label="选择知识库文件"
-          />
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            选择文件
-          </button>
-          <span className="admin-knowledge__hint num">PDF / DOC / DOCX / TXT / MD · 可多选</span>
+      <section className="admin-filter" aria-label="知识库筛选与上传">
+        <form className="admin-knowledge__form" onSubmit={onSearch}>
+          <div className="admin-filter__head">
+            <h2 className="admin-filter__title">筛选与上传</h2>
+            {activeFilters > 0 ? (
+              <span className="admin-filter__count num">已应用 {activeFilters} 项</span>
+            ) : null}
+            <div className="admin-filter__actions">
+              {compact ? (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn--ghost admin-btn--sm"
+                  aria-expanded={filtersOpen}
+                  onClick={() => setFiltersOpen((open) => !open)}
+                >
+                  {filtersOpen ? (
+                    <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  {filtersOpen ? "收起筛选" : "展开筛选"}
+                </button>
+              ) : null}
+              <button className="admin-btn admin-btn--primary" type="submit">
+                查询
+              </button>
+              <button className="admin-btn admin-btn--ghost" type="button" onClick={onReset}>
+                重置
+              </button>
+            </div>
+          </div>
+          {/* 处理状态与文件类型都是枚举：段控件一次点得中，
+              不用先点开下拉才知道有哪些值。这一段常驻可见——
+              最常用的筛选不该藏在「展开筛选」后面。 */}
+          <div className="admin-cms__chipsgroup">
+            <span className="admin-cms__chipslabel" id="admin-knowledge-status-label">
+              处理状态 · STATUS
+            </span>
+            <div
+              className="admin-cms__chips"
+              role="group"
+              aria-labelledby="admin-knowledge-status-label"
+            >
+              {KNOWLEDGE_STATUS_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value || "all"}
+                  type="button"
+                  className="admin-cms__chip"
+                  aria-pressed={query.status === option.value}
+                  onClick={() => applyStatusFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="admin-cms__chipsgroup">
+            <span className="admin-cms__chipslabel" id="admin-knowledge-type-label">
+              文件类型 · TYPE
+            </span>
+            <div
+              className="admin-cms__chips"
+              role="group"
+              aria-labelledby="admin-knowledge-type-label"
+            >
+              {KNOWLEDGE_FILE_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value || "all"}
+                  type="button"
+                  className="admin-cms__chip"
+                  aria-pressed={query.fileType === option.value}
+                  onClick={() => applyTypeFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {/* 两枚相邻的 MD 是同一格式的两个扩展名：后端按扩展名精确匹配，
+                两个值都得能筛。不解释就会被读成两种格式。 */}
+            <span className="admin-knowledge__fieldhint num">
+              MD 与 MD（.markdown）是同一格式的两个扩展名 · 后端按扩展名精确匹配，故并列两枚
+            </span>
+          </div>
+          {showFields ? (
+          <div className="admin-filter__fields">
+          <label className="admin-knowledge__field">
+            <span className="admin-knowledge__label">文件名 · FILE</span>
+            <input
+              className="admin-knowledge__input"
+              type="text"
+              value={fileNameDraft}
+              onChange={(event) => setFileNameDraft(event.target.value)}
+              placeholder="按文件名模糊检索…"
+              aria-label="文件名"
+            />
+          </label>
+          <label className="admin-knowledge__field">
+            <span className="admin-knowledge__label">标题 · TITLE</span>
+            <input
+              className="admin-knowledge__input"
+              type="text"
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              placeholder="按标题模糊检索…"
+              aria-label="标题"
+            />
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">上传自 · FROM</span>
+            <input
+              className="admin-knowledge__input"
+              type="date"
+              value={startDraft}
+              onChange={(event) => setStartDraft(event.target.value)}
+              aria-label="上传时间起"
+            />
+          </label>
+          <label className="admin-knowledge__field admin-knowledge__field--narrow">
+            <span className="admin-knowledge__label">上传至 · TO</span>
+            <input
+              className="admin-knowledge__input"
+              type="date"
+              value={endDraft}
+              onChange={(event) => setEndDraft(event.target.value)}
+              aria-label="上传时间止"
+            />
+          </label>
+          </div>
+          ) : null}
+        </form>
+
+        {/* 上传区：可点选也可拖放，两条路走同一个上传管线。
+            拖放只改「怎么把文件送进来」，解析与向量化流程不变。 */}
+        <div
+          className="admin-knowledge__upload"
+          data-dragging={dragging}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          <div className="admin-knowledge__upload-lead">
+            <span className="admin-knowledge__upload-icon" aria-hidden="true">
+              <Upload size={17} strokeWidth={1.8} />
+            </span>
+            <div className="admin-knowledge__upload-text">
+              <p className="admin-knowledge__upload-title">上传医疗文档</p>
+              <p className="admin-knowledge__upload-hint num">
+                PDF / DOC / DOCX / TXT / MD / MARKDOWN · 可多选 · 也可直接拖到这块区域
+              </p>
+            </div>
+          </div>
           <div className="admin-knowledge__upload-actions">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={ACCEPT}
+              className="admin-knowledge__file-input"
+              onChange={onPickFiles}
+              aria-label="选择知识库文件"
+            />
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--ghost"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              选择文件
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--primary"
               onClick={startUpload}
               disabled={pendingFiles.length === 0 || uploading}
             >
-              {uploading ? "上传中…" : "开始上传"}
+              {uploading
+                ? "上传中…"
+                : pendingFiles.length > 0
+                  ? `开始上传 · ${pendingFiles.length}`
+                  : "开始上传"}
             </button>
           </div>
         </div>
+
+        {dropNote ? <p className="admin-knowledge__dropnote">{dropNote}</p> : null}
 
         {pendingFiles.length > 0 ? (
           <div className="admin-knowledge__pending">
@@ -341,7 +777,12 @@ export function AdminKnowledgePage(): ReactElement {
             <ul className="admin-knowledge__chips">
               {pendingFiles.map((file, index) => (
                 <li key={`${file.name}-${index}`} className="admin-knowledge__chip">
-                  <span className="admin-knowledge__chip-name">{file.name}</span>
+                  <span className="admin-knowledge__chip-name" title={file.name}>
+                    {file.name}
+                  </span>
+                  <span className="admin-knowledge__chip-size num">
+                    {formatFileSize(file.size)}
+                  </span>
                   <button
                     type="button"
                     className="admin-knowledge__chip-remove"
@@ -355,7 +796,7 @@ export function AdminKnowledgePage(): ReactElement {
             </ul>
           </div>
         ) : null}
-      </Toolbar>
+      </section>
 
       {/* 上传 / 删除失败的页内读数：describeError → fault → FaultNote，语法全站一致。 */}
       {actionError ? (
@@ -369,6 +810,8 @@ export function AdminKnowledgePage(): ReactElement {
           })}
         />
       ) : null}
+
+      {actionNote ? <p className="admin-knowledge__note num">{actionNote}</p> : null}
 
       {/* 处理中条：显示本次会话新上传、服务端仍在处理的文件名；全部完成自动收起。 */}
       {processingNames.length > 0 ? (
@@ -387,22 +830,120 @@ export function AdminKnowledgePage(): ReactElement {
         </section>
       ) : null}
 
+      <BatchBar count={selectedIds.length} onClear={() => setSelectedIds([])} label="知识文档批量操作">
+        <button
+          type="button"
+          className="admin-btn admin-btn--danger"
+          disabled={batchBusy}
+          onClick={requestBatchDelete}
+        >
+          批量删除
+        </button>
+      </BatchBar>
+
       <section className="admin-knowledge__table" aria-label="知识文档列表">
         <DataTable<KnowledgeDoc>
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          loading={view.loading}
-          error={view.fault?.text ?? null}
+          loading={listQuery.isPending}
+          error={listError}
           emptyText="暂无文档"
+          emptyContent={
+            <AdminEmpty
+              icon={FileText}
+              title="知识库里还没有文档"
+              description={
+                activeFilters > 0
+                  ? "当前筛选条件下没有文档。放宽文件名、状态或上传时间后再看。"
+                  : "上传 PDF / Word / Markdown 后，系统会解析、切块并写入向量库。"
+              }
+              action={
+                /* 空态也要有出口（DESIGN.md §3.11）：有筛选给「清筛选」，
+                   没筛选给本页主操作（直接唤起文件选择）。 */
+                activeFilters > 0 ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={onReset}
+                  >
+                    清筛选
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--primary"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    上传文档
+                  </button>
+                )
+              }
+            />
+          }
           page={{ current: page.current, pageSize: page.pageSize, total }}
           onPageChange={onPageChange}
+          selectable
+          selectedKeys={selectedIds}
+          onSelectionChange={setSelectedIds}
         />
       </section>
 
       <p className="admin-knowledge__footer num">
-        列出的是你名下上传的知识文档（后端数据边界，见设计文档 §7）
+        列出的是全站知识文档（管理员视角）；普通用户只看到自己上传的
       </p>
+
+      {/* 文档工作区：原文阅读 + 切片检查。详情请求与分栏布局都在组件内，
+          页面只负责选中哪一份文档。 */}
+      <KnowledgeWorkspace target={previewTarget} onClose={closePreview} />
+
+      {/* 改名弹层 */}
+      <Modal
+        open={renameTarget != null}
+        title="修改标题"
+        onClose={closeRename}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeRename}
+              disabled={renaming}
+            >
+              取消
+            </button>
+            <button type="button" className="admin-btn admin-btn--primary" onClick={confirmRename} disabled={renaming}>
+              {renaming ? "保存中…" : "保存"}
+            </button>
+          </>
+        }
+      >
+        <div className="admin-form">
+          <label className="admin-form__field">
+            <span className="admin-form__label">标题 · TITLE</span>
+            <input
+              className="admin-users__input"
+              value={renameTitle}
+              onChange={(event) => setRenameTitle(event.target.value)}
+              aria-label="标题"
+            />
+          </label>
+          <p className="admin-form__hint">
+            只改标题，不动文件本体；换文件请重新上传，旧的切片会被一并替换。
+          </p>
+          {renameError ? (
+            <FaultNote
+              className="admin-form__fault"
+              fault={fault({
+                severity: "attention",
+                kind: "client",
+                title: renameError.text,
+                code: renameError.code,
+              })}
+            />
+          ) : null}
+        </div>
+      </Modal>
 
       <Modal
         open={deleteTarget != null}
@@ -412,7 +953,7 @@ export function AdminKnowledgePage(): ReactElement {
           <>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className="admin-btn admin-btn--ghost"
               onClick={closeDelete}
               disabled={deleting}
             >
@@ -420,7 +961,7 @@ export function AdminKnowledgePage(): ReactElement {
             </button>
             <button
               type="button"
-              className="btn btn--sm"
+              className="admin-btn admin-btn--danger"
               onClick={confirmDelete}
               disabled={deleting}
             >
@@ -434,6 +975,42 @@ export function AdminKnowledgePage(): ReactElement {
             确定删除文档{" "}
             <span className="admin-knowledge__modal-name">{deleteTarget.fileName}</span>{" "}
             吗？此操作不可撤销。
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={batchDeleteTarget != null}
+        title="批量删除知识文档"
+        onClose={closeBatchDelete}
+        footer={
+          <>
+            <button
+              type="button"
+              className="admin-btn admin-btn--ghost"
+              onClick={closeBatchDelete}
+              disabled={batchBusy}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--danger"
+              onClick={runBatchDelete}
+              disabled={batchBusy}
+            >
+              {batchBusy ? "删除中…" : "确认删除"}
+            </button>
+          </>
+        }
+      >
+        {batchDeleteTarget ? (
+          <p className="admin-knowledge__modal-text">
+            确定删除选中的{" "}
+            <span className="admin-knowledge__modal-name">
+              {batchDeleteTarget.length} 份文档
+            </span>{" "}
+            吗？批量删除不可撤销。
           </p>
         ) : null}
       </Modal>

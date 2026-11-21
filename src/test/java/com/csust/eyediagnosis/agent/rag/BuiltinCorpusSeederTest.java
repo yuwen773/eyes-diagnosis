@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,8 +59,12 @@ class BuiltinCorpusSeederTest {
         int chunks = seeder.seed();
 
         assertTrue(chunks > 0, "内置语料应当产生分块");
-        verify(vectorStore).add(documentsCaptor.capture());
-        List<Document> documents = documentsCaptor.getValue();
+        // 嵌入接口一次只收 10 条，写入是分多批的：把所有批合起来看。
+        verify(vectorStore, atLeastOnce()).add(documentsCaptor.capture());
+        List<Document> documents = documentsCaptor.getAllValues().stream()
+                .flatMap(List::stream)
+                .toList();
+        assertEquals(chunks, documents.size());
 
         Set<String> sources = documents.stream()
                 .map(document -> (String) document.getMetadata().get("source"))
@@ -68,22 +74,38 @@ class BuiltinCorpusSeederTest {
         for (Document document : documents) {
             assertEquals(BuiltinCorpus.SYSTEM_OWNER_ID, document.getMetadata().get("ownerUserId"));
             assertEquals(BuiltinCorpus.CORPUS_TAG, document.getMetadata().get("corpus"));
+            assertEquals("builtin", document.getMetadata().get("sourceType"),
+                    "builtin chunks must carry the server-derived source marker");
             assertTrue(document.getId().startsWith("builtin_"), "分块 id 需要稳定: " + document.getId());
         }
+        // 任何一批都不能超过嵌入接口的上限。
+        assertTrue(documentsCaptor.getAllValues().stream()
+                        .allMatch(batch -> batch.size() <= EmbeddingBatchWriter.MAX_BATCH_SIZE),
+                "单批不得超过嵌入接口上限");
     }
 
     @Test
     void chunkIdsAreStableAcrossSeeds() {
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
 
+        ArgumentCaptor<List<Document>> firstCaptor = ArgumentCaptor.forClass(List.class);
         seeder.seed();
-        seeder.seed();
+        verify(vectorStore, atLeastOnce()).add(firstCaptor.capture());
+        List<String> firstRun = firstCaptor.getAllValues().stream()
+                .flatMap(List::stream)
+                .map(Document::getId)
+                .toList();
 
-        verify(vectorStore, times(2)).add(documentsCaptor.capture());
-        List<String> firstRun = documentsCaptor.getAllValues().get(0).stream()
-                .map(Document::getId).collect(Collectors.toList());
-        List<String> secondRun = documentsCaptor.getAllValues().get(1).stream()
-                .map(Document::getId).collect(Collectors.toList());
+        // 只看第二次播种的写入：清掉调用记录，stubbing 仍然有效。
+        clearInvocations(vectorStore);
+        ArgumentCaptor<List<Document>> secondCaptor = ArgumentCaptor.forClass(List.class);
+        seeder.seed();
+        verify(vectorStore, atLeastOnce()).add(secondCaptor.capture());
+        List<String> secondRun = secondCaptor.getAllValues().stream()
+                .flatMap(List::stream)
+                .map(Document::getId)
+                .toList();
+
         assertEquals(firstRun, secondRun);
     }
 
@@ -118,6 +140,23 @@ class BuiltinCorpusSeederTest {
 
     @Test
     void builtinFilterKeepsUserDocumentsAndSharedCorpus() {
-        assertEquals("ownerUserId == 42 || ownerUserId == 0", BuiltinCorpus.ownerFilter(42L));
+        // 构造型表达式：雪花 ID 走不到「文本按 Integer 解析」那条会溢出的路径。
+        assertOwnerFilter(BuiltinCorpus.ownerFilter(42L), 42L);
+        assertOwnerFilter(BuiltinCorpus.ownerFilter(2123010432165113858L), 2123010432165113858L);
+    }
+
+    private static void assertOwnerFilter(
+            org.springframework.ai.vectorstore.filter.Filter.Expression filter, long ownerId) {
+        assertEquals(org.springframework.ai.vectorstore.filter.Filter.ExpressionType.OR, filter.type());
+        var left = (org.springframework.ai.vectorstore.filter.Filter.Expression) filter.left();
+        var right = (org.springframework.ai.vectorstore.filter.Filter.Expression) filter.right();
+        assertEquals("ownerUserId",
+                ((org.springframework.ai.vectorstore.filter.Filter.Key) left.left()).key());
+        assertEquals(ownerId,
+                ((Number) ((org.springframework.ai.vectorstore.filter.Filter.Value) left.right()).value())
+                        .longValue());
+        assertEquals(0L,
+                ((Number) ((org.springframework.ai.vectorstore.filter.Filter.Value) right.right()).value())
+                        .longValue());
     }
 }

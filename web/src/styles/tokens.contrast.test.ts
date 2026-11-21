@@ -1,6 +1,6 @@
 /// <reference types="node" />
 // app 的 tsconfig 只带 vite/client；这个测试跑 node 环境，单独把 node 类型引进来。
-import { readFileSync } from "node:fs"
+import { readFileSync, readdirSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 function lin(c: number) {
@@ -18,6 +18,45 @@ function contrast(a: string, b: string) {
 
 const css = readFileSync(new URL("./tokens.css", import.meta.url), "utf8")
 const value = (name: string) => new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(css)![1]
+// 暗主题覆盖写在 html.dark 块里，同名令牌取第一段 html.dark 之后的值。
+const darkCss = css.slice(css.indexOf("html.dark {"))
+const darkValue = (name: string) =>
+  new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`).exec(darkCss)![1]
+
+/** 玻璃材质是 rgba：对比度必须按「压在画布上合成之后的实际颜色」算，不能只看字面 alpha。 */
+type Rgba = { r: number; g: number; b: number; a: number }
+
+function parseColor(raw: string): Rgba {
+  const rgba = /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)/.exec(raw)
+  if (rgba) {
+    return {
+      r: Number(rgba[1]),
+      g: Number(rgba[2]),
+      b: Number(rgba[3]),
+      a: rgba[4] === undefined ? 1 : Number(rgba[4]),
+    }
+  }
+  const hex = /^#([0-9a-fA-F]{6})$/.exec(raw)
+  if (!hex) throw new Error(`不认识的色值：${raw}`)
+  const n = parseInt(hex[1], 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, a: 1 }
+}
+
+/** 把半透明前景合成到不透明背景上，返回不透明十六进制。 */
+function over(foreground: string, background: string): string {
+  const fg = parseColor(foreground)
+  const bg = parseColor(background)
+  const mix = (f: number, b: number) => Math.round(f * fg.a + b * (1 - fg.a))
+  return `#${[mix(fg.r, bg.r), mix(fg.g, bg.g), mix(fg.b, bg.b)]
+    .map((v) => v.toString(16).padStart(2, "0"))
+    .join("")}`
+}
+
+/** 取令牌的原始字面值（可能是 #hex，也可能是 rgba）。 */
+const rawValue = (name: string) =>
+  new RegExp(`${name}:\\s*([^;]+);`).exec(css)![1].trim()
+const rawDarkValue = (name: string) =>
+  new RegExp(`${name}:\\s*([^;]+);`).exec(darkCss)![1].trim()
 
 describe("正文三级色对比度", () => {
   it("浅底 paper-ink-3 ≥ 4.5", () => {
@@ -30,5 +69,570 @@ describe("正文三级色对比度", () => {
   it("橙色文字 ≥ 4.5", () => {
     expect(contrast(value("--paper-signal-text"), value("--field"))).toBeGreaterThanOrEqual(4.5)
     expect(contrast(value("--paper-signal-text"), value("--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("图表分类色板", () => {
+  const LIGHT = [1, 2, 3, 4, 5, 6].map((n) => value(`--viz-series-${n}`))
+  const DARK = [1, 2, 3, 4, 5, 6].map((n) => darkValue(`--viz-series-${n}`))
+
+  it("浅色底上每色 ≥ 3:1（图形元素可辨识下限）", () => {
+    for (const color of LIGHT) {
+      expect(contrast(color, value("--surface"))).toBeGreaterThanOrEqual(3)
+      expect(contrast(color, value("--field"))).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it("暗色底上每色 ≥ 3:1", () => {
+    for (const color of DARK) {
+      expect(contrast(color, "#1d2220")).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it("六色互不重复：颜色虽非唯一载体，但重复会直接抹掉系列区分", () => {
+    expect(new Set(LIGHT).size).toBe(LIGHT.length)
+    expect(new Set(DARK).size).toBe(DARK.length)
+  })
+})
+
+describe("Iris 2.0 品牌层", () => {
+  it("浅色：正文与次要文字在画布与卡片上都 ≥ 4.5", () => {
+    for (const fg of ["--brand-text", "--brand-muted"]) {
+      expect(contrast(value(fg), value("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(value(fg), value("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("暗色：正文与次要文字在画布与卡片上都 ≥ 4.5", () => {
+    for (const fg of ["--brand-text", "--brand-muted"]) {
+      expect(contrast(darkValue(fg), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(darkValue(fg), darkValue("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("主色当按钮底时，压在上面的文字 ≥ 4.5", () => {
+    expect(contrast(value("--brand-primary-fg"), value("--brand-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(darkValue("--brand-primary-fg"), darkValue("--brand-primary")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("青与极光紫当文字色时也 ≥ 4.5——点缀色不豁免可读性", () => {
+    for (const fg of ["--brand-cyan", "--brand-aurora"]) {
+      expect(contrast(value(fg), value("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(darkValue(fg), darkValue("--brand-surface"))).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("品牌色不得与医学风险色同值：两种语义不能共用一枚颜色", () => {
+    const risks = [
+      "--paper-risk-normal",
+      "--paper-risk-attention",
+      "--paper-risk-critical",
+      "--risk-normal-lit",
+      "--risk-attention-lit",
+      "--risk-critical-lit",
+    ].map((name) => value(name))
+    for (const brand of ["--brand-primary", "--brand-cyan", "--brand-aurora"]) {
+      for (const risk of risks) {
+        expect(value(brand)).not.toBe(risk)
+        expect(darkValue(brand)).not.toBe(risk)
+      }
+    }
+  })
+})
+
+describe("品牌材质 · 文字压在半透明玻璃上", () => {
+  const GLASS = [
+    "--brand-glass-frosted",
+    "--brand-glass-layered",
+    "--brand-glass-soft",
+  ]
+
+  it("浅色：正文与次要文字合成到画布后仍 ≥ 4.5", () => {
+    for (const glass of GLASS) {
+      const surface = over(rawValue(glass), value("--brand-canvas"))
+      for (const fg of ["--brand-text", "--brand-muted"]) {
+        expect(contrast(value(fg), surface)).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("浅色：玻璃的静态替代面也 ≥ 4.5", () => {
+    const surface = over(rawValue("--brand-glass-fallback"), value("--brand-canvas"))
+    for (const fg of ["--brand-text", "--brand-muted"]) {
+      expect(contrast(value(fg), surface)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("暗色：合成到午夜蓝画布后仍 ≥ 4.5", () => {
+    for (const glass of GLASS) {
+      const surface = over(rawDarkValue(glass), darkValue("--brand-canvas"))
+      for (const fg of ["--brand-text", "--brand-muted"]) {
+        expect(contrast(darkValue(fg), surface)).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("暗色最坏情况：玻璃背后是纯白高光，文字仍要 ≥ 4.5", () => {
+    // 首屏信息卡与状态胶囊压在光带上。着色器的高光/bloom 可以比 --brand-cyan
+    // 更亮，所以背衬不能拿青色的字面值当上限——按纯白取真正的最坏值。
+    // 玻璃若不够实，次要文字会在高光经过时被吃掉。
+    for (const glass of ["--brand-glass-layered", "--brand-glass-frosted"]) {
+      const surface = over(rawDarkValue(glass), "#ffffff")
+      for (const fg of ["--brand-text", "--brand-muted"]) {
+        expect(contrast(darkValue(fg), surface)).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+})
+
+/**
+ * Agent 执行过程的状态药丸。
+ *
+ * <p>药丸压在同色系抬升面（`--brand-soft` 叠在 `--brand-canvas`）上，
+ * 而不是纯画布上——按字面值算出来的对比度会比实际好看一档，所以这里
+ * 按合成后的底色算。`--fg-3` 在这一层只有约 4.13:1，不达标，故药丸
+ * 一律用 `--fg-2`；失败 / 超时用 `--risk-*`（错误色不用品牌橙）。
+ */
+describe("Agent 状态药丸 · 抬升面上的文字", () => {
+  const mix = (color: string, weight: number, base: string) => {
+    const { r, g, b } = parseColor(color)
+    return over(`rgba(${r}, ${g}, ${b}, ${weight})`, base)
+  }
+
+  it("浅色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawValue("--brand-soft"), value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("暗色：药丸正文 ≥ 4.5", () => {
+    const pill = over(rawDarkValue("--brand-soft"), darkValue("--brand-canvas"))
+    // --on-dark-2 只定义一次、双主题共用，不走 darkValue。
+    expect(contrast(value("--on-dark-2"), pill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("失败药丸在淡底上 ≥ 4.5", () => {
+    expect(
+      contrast(value("--paper-risk-critical"), mix(value("--paper-risk-critical"), 0.1, value("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(value("--risk-critical-lit"), mix(value("--risk-critical-lit"), 0.1, darkValue("--brand-canvas"))),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("超时圆点是图形元素：琥珀在画布上 ≥ 3:1（文字走中性）", () => {
+    expect(contrast(value("--paper-risk-attention"), value("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(value("--risk-attention-lit"), darkValue("--brand-canvas"))).toBeGreaterThanOrEqual(3)
+  })
+
+  it("超时药丸的琥珀淡底上，中性文字仍 ≥ 4.5", () => {
+    // 底色是 14% 琥珀叠在画布上；--risk-attention 自己当 11px 文字只有 3.9:1，
+    // 所以药丸文字必须是 --fg-2。
+    const pill = mix(value("--paper-risk-attention"), 0.14, value("--brand-canvas"))
+    expect(contrast(value("--paper-ink-2"), pill)).toBeGreaterThanOrEqual(4.5)
+    const darkPill = mix(value("--risk-attention-lit"), 0.14, darkValue("--brand-canvas"))
+    expect(contrast(value("--on-dark-2"), darkPill)).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("品牌材质 · 样式硬约束（静态检查 brand.css）", () => {
+  const brandCss = readFileSync(new URL("./brand.css", import.meta.url), "utf8")
+
+  it("五种材质各有独立的模糊强度，不是一个值套到底", () => {
+    const blur = (token: string) => {
+      const match = new RegExp(`${token}:\\s*(\\d+)px`).exec(css)
+      expect(match, `${token} 未定义`).not.toBeNull()
+      return Number(match![1])
+    }
+    const values = [
+      blur("--brand-glass-frosted-blur"),
+      blur("--brand-glass-layered-blur"),
+      blur("--brand-glass-soft-blur"),
+    ]
+    // 两两不同：三种材质共用一个 blur 时，这条测试必须失败。
+    expect(new Set(values).size).toBe(values.length)
+  })
+
+  it("不支持 backdrop-filter 时有静态替代，不能塌成一块灰", () => {
+    expect(brandCss).toContain("@supports not")
+    expect(brandCss).toContain("--brand-glass-fallback")
+  })
+
+  it("内侧高光单独一层，玻璃厚度不靠加厚阴影", () => {
+    expect(brandCss).toContain(".brand-panel::before")
+    expect(brandCss).toContain("var(--glass-inner)")
+  })
+
+  it("不使用 backdrop-filter 的实体面明确关掉模糊", () => {
+    expect(brandCss).toMatch(/\.brand-panel--solid[\s\S]*?backdrop-filter:\s*none/)
+  })
+})
+
+describe("品牌页脚 · 深海蓝实体面", () => {
+  const FOOTER = ["--brand-surface-deep"]
+  const DARK_FOOTER = ["--brand-surface-deep"]
+
+  it("浅色页面上的页脚：正文与次要文字 ≥ 4.5", () => {
+    for (const surface of FOOTER.map(value)) {
+      expect(contrast(value("--brand-deep-text"), surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(value("--brand-deep-muted"), surface)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it("暗色页面上的页脚仍有独立明度层级：与页面底色不同", () => {
+    for (const surface of DARK_FOOTER.map(darkValue)) {
+      expect(contrast(darkValue("--brand-deep-text"), surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(darkValue("--brand-deep-muted"), surface)).toBeGreaterThanOrEqual(4.5)
+      // 不能与画布同色——那样页脚会融进主体消失。
+      expect(surface.toLowerCase()).not.toBe(darkValue("--brand-canvas").toLowerCase())
+      expect(contrast(surface, darkValue("--brand-canvas"))).toBeGreaterThan(1)
+    }
+  })
+
+  it("深底信号橙：印章文字 ≥ 4.5，描边 ≥ 3", () => {
+    for (const surface of FOOTER.map(value)) {
+      expect(contrast(value("--brand-deep-signal-text"), surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contrast(value("--brand-deep-signal"), surface)).toBeGreaterThanOrEqual(3)
+    }
+  })
+})
+
+describe("品牌页作用域 · .is-brand-page（R2-04）", () => {
+  const brandCss = readFileSync(new URL("./brand.css", import.meta.url), "utf8")
+
+  function block(source: string, selector: string) {
+    const start = source.indexOf(selector)
+    expect(start).toBeGreaterThanOrEqual(0)
+    const end = source.indexOf("}", start)
+    return source.slice(start, end)
+  }
+
+  it("只换画布与发丝线：不碰临床语义色、纸面原语与文字色令牌", () => {
+    const body = block(css, ".is-brand-page {")
+    expect(body).toContain("--field: var(--brand-canvas)")
+    expect(body).toContain("--line: var(--brand-line)")
+    for (const forbidden of ["--signal", "--risk-", "--paper-", "--ink", "--fg:"]) {
+      expect(body).not.toContain(forbidden)
+    }
+  })
+
+  it("品牌样式不写共享顶栏 .site-head（品牌变体只能改自己的类名）", () => {
+    expect(brandCss).not.toMatch(/(^|\n)\.site-head/)
+    expect(brandCss).not.toMatch(/\.site-head\s+\./)
+  })
+
+  it("暗色主题下落地页仍锁在品牌画布：.night.is-brand-page 覆盖必须存在", () => {
+    // app.css 在 tokens.css 之后加载，`.night { background: var(--night-sky) }`
+    // 同特异性会盖掉 `.is-brand-page`；少了这条，暗色首页下半页会回到绿黑夜色。
+    const body = block(css, ".night.is-brand-page {")
+    expect(body).toContain("background: var(--brand-canvas)")
+  })
+})
+
+describe("Iris 2.0 管理端 · Purple Medical SaaS（--admin-*）", () => {
+  const ADMIN_SURFACES_LIGHT = ["--admin-canvas", "--admin-surface", "--admin-surface-deep", "--admin-sidebar"]
+  const ADMIN_SURFACES_DARK = ADMIN_SURFACES_LIGHT
+
+  const riskValues = [
+    "--paper-risk-normal",
+    "--paper-risk-attention",
+    "--paper-risk-critical",
+    "--risk-normal-lit",
+    "--risk-attention-lit",
+    "--risk-critical-lit",
+  ].map((name) => value(name))
+  const darkRiskValues = riskValues
+
+  it("浅色：正文三级色在画布、卡片、侧栏上都 ≥ 4.5", () => {
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      for (const surface of ADMIN_SURFACES_LIGHT) {
+        expect(contrast(value(fg), value(surface))).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("暗色：正文三级色在画布、卡片、侧栏上都 ≥ 4.5", () => {
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      for (const surface of ADMIN_SURFACES_DARK) {
+        expect(contrast(darkValue(fg), darkValue(surface))).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  it("浅色：管理紫当文字色时 ≥ 4.5；白字压在管理紫上 ≥ 4.5", () => {
+    for (const surface of ADMIN_SURFACES_LIGHT) {
+      expect(contrast(value("--admin-primary"), value(surface))).toBeGreaterThanOrEqual(4.5)
+    }
+    // hover 压深一档也要能当文字色。
+    expect(contrast(value("--admin-primary-strong"), value("--admin-surface"))).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(value("--admin-on-primary"), value("--admin-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(value("--admin-on-primary"), value("--admin-primary-strong")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("暗色：提亮的管理紫当文字色 ≥ 4.5；压在上面的深紫墨 ≥ 4.5", () => {
+    for (const surface of ADMIN_SURFACES_DARK) {
+      expect(contrast(darkValue("--admin-primary"), darkValue(surface))).toBeGreaterThanOrEqual(4.5)
+    }
+    expect(contrast(darkValue("--admin-on-primary"), darkValue("--admin-primary"))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrast(darkValue("--admin-on-primary"), darkValue("--admin-primary-strong")),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("图表强调紫：浅底 ≥ 3（图形下限）、暗底当文字也 ≥ 4.5", () => {
+    expect(contrast(value("--admin-accent"), value("--admin-canvas"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(value("--admin-accent"), value("--admin-surface"))).toBeGreaterThanOrEqual(3)
+    expect(contrast(darkValue("--admin-accent"), darkValue("--admin-canvas"))).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(darkValue("--admin-accent"), darkValue("--admin-surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("当前导航态：primary 文字落在 primary-soft 高亮底上仍 ≥ 4.5", () => {
+    // 侧栏当前项 = primary-soft（半透明紫衬）合成到侧栏表面。
+    const lightNavBg = over(rawValue("--admin-primary-soft"), value("--admin-sidebar"))
+    expect(contrast(value("--admin-primary"), lightNavBg)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(value("--admin-text-muted"), lightNavBg)).toBeGreaterThanOrEqual(4.5)
+    const darkNavBg = over(rawDarkValue("--admin-primary-soft"), darkValue("--admin-sidebar"))
+    expect(contrast(darkValue("--admin-primary"), darkNavBg)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(darkValue("--admin-text-muted"), darkNavBg)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("管理紫不得与医学风险色同值：紫色永不冒充严重度", () => {
+    for (const admin of [
+      "--admin-primary",
+      "--admin-primary-strong",
+      "--admin-accent",
+      "--admin-on-primary",
+    ]) {
+      for (const risk of riskValues) {
+        expect(value(admin)).not.toBe(risk)
+      }
+      for (const risk of darkRiskValues) {
+        expect(darkValue(admin)).not.toBe(risk)
+      }
+    }
+  })
+
+  it("亮暗两套紫不是同一枚色值：暗色是提亮版，不是简单复用", () => {
+    for (const admin of ["--admin-primary", "--admin-accent", "--admin-canvas"]) {
+      expect(value(admin)).not.toBe(darkValue(admin))
+    }
+  })
+
+  it("画布氛围底（--admin-ambient）不得吃掉画布上的文字对比度", () => {
+    // 氛围底是管理紫的极低对比版本（7%），只作画布上的一层静态晕：
+    // 压在画布上之后，正文三级色仍要 ≥ 4.5；卡片不参与这层晕（卡片是实心表面）。
+    const ambientLiteral = rawValue("--admin-ambient")
+    expect(ambientLiteral).toContain("7%")
+
+    const alpha = (hex: string, pct: number) => {
+      const n = parseInt(hex.slice(1), 16)
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${pct})`
+    }
+
+    const lightWash = over(alpha(value("--admin-accent"), 0.07), value("--admin-canvas"))
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      expect(contrast(value(fg), lightWash)).toBeGreaterThanOrEqual(4.5)
+    }
+
+    const darkWash = over(alpha(darkValue("--admin-accent"), 0.07), darkValue("--admin-canvas"))
+    for (const fg of ["--admin-text", "--admin-text-muted", "--admin-text-faint"]) {
+      expect(contrast(darkValue(fg), darkWash)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+})
+
+
+/* ==========================================================================
+   上下文解析
+   --------------------------------------------------------------------------
+   上面的断言测的是「令牌的字面值」；但真正决定页面上是什么颜色的，是
+   「在某个上下文里这些令牌解析成什么」。`--paper-*` 曾经靠
+   `html.dark .is-sheet` 的一次特异性巧合才钉得住纸面，字面值测试对此完全无感。
+   这里用一个最小的级联解析器把「上下文 → 最终色值」也算一遍。
+
+   解析规则只覆盖本文件用到的形态：普通规则块、逗号分组选择器、@media 里
+   的规则（其声明只影响 --maxw / --gutter，不参与颜色断言）、var(--x[, 兜底])。
+   ========================================================================== */
+
+type Rule = { selector: string; order: number; decls: Map<string, string> }
+
+function parseDecls(body: string) {
+  const decls = new Map<string, string>()
+  for (const part of body.split(";")) {
+    const at = part.indexOf(":")
+    if (at === -1) continue
+    const name = part.slice(0, at).trim()
+    const value = part.slice(at + 1).trim()
+    if (name.startsWith("--") && value) decls.set(name, value)
+  }
+  return decls
+}
+
+function parseRules(source: string): Rule[] {
+  const text = source.replace(/\/\*[\s\S]*?\*\//g, "")
+  const rules: Rule[] = []
+  let order = 0
+  let index = 0
+  while (index < text.length) {
+    const open = text.indexOf("{", index)
+    if (open === -1) break
+    const rawSelector = text.slice(index, open).trim()
+    let depth = 1
+    let cursor = open + 1
+    while (cursor < text.length && depth > 0) {
+      if (text[cursor] === "{") depth += 1
+      else if (text[cursor] === "}") depth -= 1
+      cursor += 1
+    }
+    const body = text.slice(open + 1, cursor - 1)
+    if (rawSelector.startsWith("@")) {
+      // 媒体查询等容器块：内部仍是普通规则，展开继续解析。
+      rules.push(...parseRules(body))
+    } else {
+      const decls = parseDecls(body)
+      for (const selector of rawSelector.split(",")) {
+        const clean = selector.trim().replace(/\s+/g, " ")
+        if (clean) rules.push({ selector: clean, order: order++, decls })
+      }
+    }
+    index = cursor
+  }
+  return rules
+}
+
+const RULES = parseRules(css)
+
+/** 简单特异性：id > 类/属性/伪类 > 元素。够区分本文件里的选择器。 */
+function weight(selector: string) {
+  const ids = (selector.match(/#/g) ?? []).length
+  const classes = (selector.match(/\.[\w-]+|\[[^\]]*\]|:(?!:)[\w-]+/g) ?? []).length
+  const elements = (selector.match(/(^|[\s>+~])[a-zA-Z][\w-]*/g) ?? []).length
+  return ids * 10000 + classes * 100 + elements
+}
+
+/** 元素自身的声明：特异性高者胜，同分取靠后的。 */
+function ownDecl(layer: string[], name: string) {
+  let best: { score: number; order: number; value: string } | undefined
+  for (const rule of RULES) {
+    if (!layer.includes(rule.selector)) continue
+    const value = rule.decls.get(name)
+    if (value === undefined) continue
+    const score = weight(rule.selector)
+    if (!best || score > best.score || (score === best.score && rule.order > best.order)) {
+      best = { score, order: rule.order, value }
+    }
+  }
+  return best?.value
+}
+
+/** 继承链：列表按「远 → 近」排列，最近的祖先胜出（与特异性无关）。 */
+function inheritedDecl(chain: string[], name: string) {
+  let value: string | undefined
+  for (const selector of chain) {
+    const rule = RULES.find((item) => item.selector === selector)
+    const next = rule?.decls.get(name)
+    if (next !== undefined) value = next
+  }
+  return value
+}
+
+/** 解析 var() 链；未定义且没有兜底时返回空串。 */
+function resolve(own: string[], inherited: string[], name: string, depth = 0): string {
+  if (depth > 12) throw new Error(`var() 解析成环：${name}`)
+  const raw = ownDecl(own, name) ?? inheritedDecl(inherited, name)
+  if (raw === undefined) return ""
+  const ref = /^var\(\s*(--[\w-]+)\s*(?:,\s*([\s\S]+))?\)$/.exec(raw.trim())
+  if (!ref) return raw.trim()
+  const inner = resolve(own, inherited, ref[1], depth + 1)
+  return inner || (ref[2] ?? "").trim()
+}
+
+const LIGHT = { own: [":root"], inherited: [] as string[] }
+const DARK = { own: ["html.dark"], inherited: [":root"] }
+const LIGHT_SHEET = { own: [".is-sheet"], inherited: [":root"] }
+const DARK_SHEET = {
+  own: [".is-sheet", "html.dark .is-sheet"],
+  inherited: [":root", "html.dark"],
+}
+const DARK_SHEET_IN_NIGHT = {
+  own: [".is-sheet", "html.dark .is-sheet"],
+  inherited: [":root", "html.dark", ".is-night"],
+}
+
+const at = (ctx: { own: string[]; inherited: string[] }, name: string) =>
+  resolve(ctx.own, ctx.inherited, name)
+
+describe("上下文解析 · 纸面原语在任何主题下都是那张纸", () => {
+  it("暗主题不翻转 --paper-*（它只翻转 --ink / --line）", () => {
+    expect(at(DARK, "--paper-ink")).toBe(at(LIGHT, "--paper-ink"))
+    expect(at(DARK, "--paper-ink-3")).toBe(at(LIGHT, "--paper-ink-3"))
+    expect(at(DARK, "--ink")).not.toBe(at(LIGHT, "--ink"))
+  })
+
+  it("暗主题下的 .is-sheet 解析成白纸深墨", () => {
+    expect(at(DARK_SHEET, "--surface")).toBe("#ffffff")
+    expect(at(DARK_SHEET, "--ink")).toBe("#14171a")
+    expect(at(DARK_SHEET, "--fg")).toBe("#14171a")
+    expect(contrast(at(DARK_SHEET, "--fg"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("纸面嵌在暗房里也仍是白纸深墨", () => {
+    expect(at(DARK_SHEET_IN_NIGHT, "--ink")).toBe("#14171a")
+    expect(at(DARK_SHEET_IN_NIGHT, "--surface")).toBe("#ffffff")
+  })
+
+  it("删除红在纸上钉回纸面值：暗主题下仍 ≥ 4.5", () => {
+    expect(at(DARK_SHEET, "--danger")).toBe(at(LIGHT_SHEET, "--danger"))
+    expect(contrast(at(DARK_SHEET, "--danger"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("橙色文字在纸上 ≥ 4.5", () => {
+    expect(contrast(at(DARK_SHEET, "--signal-text"), at(DARK_SHEET, "--surface"))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe("上下文解析 · 根级兜底", () => {
+  it("--bg 在根级有定义（::selection 的 color 依赖它）", () => {
+    expect(at(LIGHT, "--bg")).toBe(at(LIGHT, "--field"))
+    expect(at(DARK, "--bg")).toBe(at(DARK, "--field"))
+  })
+
+  it("--fg / --hr 在根级有定义（固定层组件不在语境类里）", () => {
+    expect(at(LIGHT, "--fg")).not.toBe("")
+    expect(at(LIGHT, "--hr")).not.toBe("")
+    expect(at(DARK, "--fg")).not.toBe("")
+  })
+})
+
+// ── 组件层取色：悬空 var() 与「橙色当正文」─────────────────────────────
+//
+// R5 审查在 Agent 送达读数上一次性踩了两个坑，而令牌对比度测试全绿：
+//   ① `--fg-1` 全仓未定义 —— 声明在计算值阶段就失效，颜色靠继承父级「碰巧」看着对；
+//   ② `--signal` 承载文字 —— 浅色画布上只有 3.7:1，够不着正文 4.5:1 底线。
+// 令牌测试只测令牌自己，测不到组件怎么用它们，所以这里对 agent.css 做静态检查。
+
+describe("Agent 送达读数的取色", () => {
+  const agent = readFileSync(new URL("./agent.css", import.meta.url), "utf8")
+  const allCss = readdirSync(new URL("./", import.meta.url))
+    .filter((name) => name.endsWith(".css"))
+    .map((name) => readFileSync(new URL(`./${name}`, import.meta.url), "utf8"))
+    .join("\n")
+
+  it("橙色正文压在 Agent 画布上仍 ≥ 4.5", () => {
+    expect(contrast(value("--paper-signal-text"), value("--brand-canvas"))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it("不把 --signal 直接当 color 用（它只做标记，不做正文）", () => {
+    const offenders = agent.split("\n").filter((line) => /^\s*color:\s*var\(--signal\)\s*;/.test(line))
+    expect(offenders).toEqual([])
+  })
+
+  it("agent.css 引用的变量都在样式层定义过（悬空 var() 会静默继承父级）", () => {
+    const defined = new Set([...allCss.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((m) => m[1]))
+    const used = [...new Set([...agent.matchAll(/var\((--[a-z0-9-]+)/gi)].map((m) => m[1]))]
+    expect(used.filter((name) => !defined.has(name))).toEqual([])
   })
 })

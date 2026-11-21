@@ -1,5 +1,7 @@
 # GitHub 项目门面补齐 · Implementation Plan
 
+> **归档说明（2026-11-18）**：本计划是一次性 GitHub 门面任务，已执行完毕。文中提到的 `scripts/setup-github-facade.sh`、`scripts/tests/test-setup-github-facade.sh` 与 `docs/social-preview.png` 已删除（Social Preview 图已上传到 GitHub 仓库设置，删仓库副本无影响）；原文保留作为当时决策的记录。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 为 `yuwen773/eyes-diagnosis` 仓库补齐 5 项 GitHub 门面配置（默认分支 / LICENSE / Description+Topics / Social Preview / README 可见性），通过一个持久化、可重跑的 bash 脚本完成。

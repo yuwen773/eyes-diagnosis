@@ -73,25 +73,59 @@ public class ChatMessageWriter {
 
     @Transactional
     public void writeUserMessage(String sessionId, Long userId, String content) {
+        writeUserMessage(sessionId, userId, content, null);
+    }
+
+    @Transactional
+    public void writeUserMessage(String sessionId, Long userId, String content, String subType) {
+        writeUserMessage(sessionId, userId, content, subType, null);
+    }
+
+    @Transactional
+    public void writeUserMessage(String sessionId, Long userId, String content, String subType, Long messageId) {
         claimOrValidateSession(sessionId, userId, content);
-        messageMapper.insert(buildMessage(sessionId, "USER", null, content));
+        AgentMessage message = buildMessage(sessionId, "USER", subType, content);
+        if (messageId != null) message.setId(messageId);
+        if (alreadyCommitted(message)) return;
+        messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
     }
 
     @Transactional
     public void writeAssistantMessage(String sessionId, String content, String subType) {
-        messageMapper.insert(buildMessage(sessionId, "ASSISTANT", subType, content));
+        writeAssistantMessage(sessionId, content, subType, null);
+    }
+
+    @Transactional
+    public void writeAssistantMessage(String sessionId, String content, String subType, Long messageId) {
+        AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
+        if (messageId != null) message.setId(messageId);
+        if (alreadyCommitted(message)) return;
+        messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
     }
 
     private AgentMessage buildMessage(String sessionId, String role, String subType, String content) {
         AgentMessage message = new AgentMessage();
+        message.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
         message.setSessionId(sessionId);
         message.setRole(role);
         message.setSubType(subType);
         message.setContent(content);
         message.setCreatedTime(new Date());
         return message;
+    }
+
+    private boolean alreadyCommitted(AgentMessage message) {
+        AgentMessage existing = messageMapper.selectById(message.getId());
+        if (existing == null) return false;
+        if (!java.util.Objects.equals(message.getSessionId(), existing.getSessionId())
+                || !java.util.Objects.equals(message.getRole(), existing.getRole())
+                || !java.util.Objects.equals(message.getSubType(), existing.getSubType())
+                || !java.util.Objects.equals(message.getContent(), existing.getContent())) {
+            throw new IllegalStateException("Message identity conflict");
+        }
+        return true;
     }
 
     private String truncate(String content) {

@@ -3,9 +3,12 @@ package com.csust.eyediagnosis.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.csust.eyediagnosis.annotation.AuthCheck;
 import com.csust.eyediagnosis.common.BaseResponse;
+import com.csust.eyediagnosis.common.BatchIdsRequest;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.common.ResultUtils;
 import com.csust.eyediagnosis.constant.AuthConstant;
 import com.csust.eyediagnosis.exception.BusinessException;
@@ -116,9 +119,23 @@ public class UserController {
         ThrowUtils.throwIf(userAddDTO.getUserPassword() == null
                 || userAddDTO.getUserPassword().isBlank(),
                 ErrorCode.PARAMS_ERROR, "必须提供初始密码");
+        ThrowUtils.throwIf(userAddDTO.getUserAccount() == null
+                || userAddDTO.getUserAccount().isBlank(),
+                ErrorCode.PARAMS_ERROR, "账号不能为空");
+        // 角色只能取白名单里的三档，别让请求体把 userRole 写成任意字符串
+        String role = userAddDTO.getUserRole() == null || userAddDTO.getUserRole().isBlank()
+                ? "user" : userAddDTO.getUserRole();
+        ThrowUtils.throwIf(!List.of("user", "ban", "admin").contains(role),
+                ErrorCode.PARAMS_ERROR, "角色只能是 user / ban / admin");
+        // 账号唯一：t_user 上有 uk_userAccount 唯一键，但让它在应用层先炸，
+        // 回执是可读的业务错误，而不是一条看不懂的数据库约束冲突
+        long existed = userService.count(new QueryWrapper<User>()
+                .eq("userAccount", userAddDTO.getUserAccount()));
+        ThrowUtils.throwIf(existed > 0, ErrorCode.PARAMS_ERROR, "账号已存在");
         User user = new User();
         // 仅复制安全字段；userPassword 走 BCrypt 单独写入
         BeanUtil.copyProperties(userAddDTO,user);
+        user.setUserRole(role);
         String encoded = userService.encodePassword(userAddDTO.getUserPassword());
         user.setUserPassword(encoded);
         boolean result  = userService.save(user);
@@ -245,6 +262,29 @@ public class UserController {
         ThrowUtils.throwIf(id<=0, ErrorCode.PARAMS_ERROR);
         boolean result = userService.removeById(id);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量删除用户：逐条执行，部分失败如实回执。
+     */
+    @PostMapping("/delete/batch")
+    @Operation(summary ="批量删除用户")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<BatchResultVO> deleteUsersBatch(@RequestBody BatchIdsRequest batchRequest){
+        ThrowUtils.throwIf(batchRequest==null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(userService.deleteUsers(batchRequest.getIds()));
+    }
+
+    /**
+     * 批量改角色（封禁 / 解封）：逐条执行，部分失败如实回执。
+     */
+    @PostMapping("/update/role/batch")
+    @Operation(summary ="批量修改用户角色")
+    @AuthCheck(mustRole = AuthConstant.ADMIN_ROLE)
+    public BaseResponse<BatchResultVO> updateUserRoleBatch(@RequestBody UserBatchRoleDTO roleRequest){
+        ThrowUtils.throwIf(roleRequest==null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(
+                userService.updateUserRole(roleRequest.getIds(), roleRequest.getUserRole()));
     }
 
     @PostMapping("/update/userCenter")

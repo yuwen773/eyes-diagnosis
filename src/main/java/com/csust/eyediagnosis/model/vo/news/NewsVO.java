@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.util.Date;
 /**
  * @ClassNameNewsVO
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/23 下午7:17
  * @Version 1.0

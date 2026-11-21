@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { applyStreamEvent, clearAllLoading, mapHistoryMessage, type StreamMessage } from "./agentStream"
+import {
+  applyStreamEvent,
+  clearAllLoading,
+  mapHistoryMessage,
+  type StreamMessage,
+} from "./agentStream"
+import { deriveResources } from "./agentResources"
 
 describe("applyStreamEvent", () => {
   it("assistant 首片 push isLoading，后续原地累加", () => {
@@ -58,6 +64,47 @@ describe("applyStreamEvent", () => {
     expect(msgs).toHaveLength(3)
     expect(msgs[2].isLoading).toBe(true)
   })
+  it("首个事件即 tool-request：返回新数组，不改写上一份 state", () => {
+    // 回归：truncate 在无流式 assistant 时原样返回同一引用，就地 push 会让
+    // setMessages 的 updater 返回同引用，React 按 Object.is 跳过渲染（卡片不出现）。
+    const prev: StreamMessage[] = []
+    const next = applyStreamEvent(prev, {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+    expect(next).not.toBe(prev)
+    expect(prev).toHaveLength(0)
+    expect(next).toHaveLength(1)
+  })
+
+  it("reasoning 之后紧跟 tool-request 也不改写旧 state", () => {
+    // reasoning 不带 isLoading，同样走 truncate 的「原样返回」分支。
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, { messageType: "reasoning", content: "先想想" })
+    const prev = msgs
+    const next = applyStreamEvent(prev, {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    })
+    expect(next).not.toBe(prev)
+    expect(prev).toHaveLength(1)
+    expect(next).toHaveLength(2)
+  })
+
+  it("updater 可重复调用（StrictMode 双执行）不产生重复卡片", () => {
+    const prev: StreamMessage[] = []
+    const dto = {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [{ name: "searchDocuments", arguments: "{}" }],
+    }
+    expect(applyStreamEvent(prev, dto)).toHaveLength(1)
+    expect(applyStreamEvent(prev, dto)).toHaveLength(1)
+    expect(prev).toHaveLength(0)
+  })
+
   it("clearAllLoading 清掉所有流式中的 assistant", () => {
     let msgs: StreamMessage[] = []
     msgs = applyStreamEvent(msgs, { messageType: "assistant", content: "一" })
@@ -77,11 +124,111 @@ describe("applyStreamEvent", () => {
     msgs = applyStreamEvent(msgs, { messageType: "tool-response", content: "结果", toolName: "searchDocuments" })
     expect(msgs[0]).toMatchObject({ type: "tool-response", content: "结果", toolName: "searchDocuments" })
   })
+
+  it("tool-result 是后端新契约的别名，携带 toolCallId 与状态", () => {
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, {
+      messageType: "tool-result",
+      content: "检索到 3 段文档",
+      toolName: "searchDocuments",
+      toolCallId: "call_1",
+      toolStatus: "succeeded",
+      timestamp: "2026-11-08T10:20:00Z",
+    })
+    expect(msgs[0]).toMatchObject({
+      type: "tool-response",
+      content: "检索到 3 段文档",
+      toolName: "searchDocuments",
+      toolCallId: "call_1",
+      toolStatus: "succeeded",
+    })
+    // 时间戳按本地时钟展示（测试进程时区可能与 UTC 不同，这里只要求非空且形如 HH:mm）
+    expect(msgs[0].time).toMatch(/^\d{2}:\d{2}$/)
+  })
+
+  it("tool-request 的每个调用都带 toolCallId，逐条成消息", () => {
+    const msgs = applyStreamEvent([], {
+      messageType: "tool-request",
+      content: "",
+      toolCalls: [
+        { id: "call_a", name: "searchDocuments", arguments: '{"query":"青光眼"}' },
+        { id: "call_b", name: "analyzeEyeImage", arguments: '{"url":"x"}' },
+      ],
+    })
+    expect(msgs).toHaveLength(2)
+    expect(msgs.map((m) => m.toolCallId)).toEqual(["call_a", "call_b"])
+    expect(msgs.map((m) => m.toolCalls?.[0].id)).toEqual(["call_a", "call_b"])
+  })
+
+  it("assistant 首片写入服务端时间，后续分片不改写", () => {
+    let msgs: StreamMessage[] = []
+    msgs = applyStreamEvent(msgs, {
+      messageType: "assistant",
+      content: "你",
+      timestamp: "2026-11-08T10:20:00Z",
+    })
+    const first = msgs[0].time
+    msgs = applyStreamEvent(msgs, {
+      messageType: "assistant",
+      content: "好",
+      timestamp: "2026-11-08T10:21:00Z",
+    })
+    expect(msgs).toHaveLength(1)
+    expect(msgs[0].time).toBe(first)
+  })
+
+  it("SSE 没有时间戳时留空，不编造本地时间", () => {
+    const msgs = applyStreamEvent([], { messageType: "assistant", content: "答" })
+    expect(msgs[0].time).toBeUndefined()
+  })
+})
+
+describe("parseServerTime", () => {
+  it("旧格式按 UTC 解析，与 reconcile 的 epoch 口径一致", async () => {
+    const { parseServerTime } = await import("./agentStream")
+    expect(parseServerTime("2026-11-08 10:20:00")).toBe(Date.UTC(2026, 10, 8, 10, 20, 0))
+    expect(parseServerTime("2026-11-08T10:20:00Z")).toBe(Date.UTC(2026, 10, 8, 10, 20, 0))
+    expect(parseServerTime("2026-11-08T18:20:00+08:00")).toBe(
+      Date.UTC(2026, 10, 8, 10, 20, 0),
+    )
+    expect(parseServerTime("nope")).toBeNull()
+  })
 })
 
 describe("mapHistoryMessage", () => {
+  it("历史工具终态保留失败类别，回放能区分超时与普通失败", () => {
+    const m = mapHistoryMessage({
+      id: "9",
+      isSummary: false,
+      role: "ASSISTANT",
+      subType: "tool-result",
+      createdTime: "2026-11-19 10:00:00",
+      content: JSON.stringify({
+        toolCallId: "c1",
+        name: "searchDocuments",
+        status: "failed",
+        errorCategory: "TIMEOUT",
+        output: "",
+      }),
+    })
+    expect(m.toolStatus).toBe("failed")
+    expect(m.errorCategory).toBe("TIMEOUT")
+  })
+
+  it("旧历史行没有类别字段时不补造", () => {
+    const m = mapHistoryMessage({
+      id: "10",
+      isSummary: false,
+      role: "ASSISTANT",
+      subType: "tool-result",
+      createdTime: "2026-11-19 10:00:00",
+      content: JSON.stringify({ toolCallId: "c2", status: "succeeded", output: "ok" }),
+    })
+    expect(m.errorCategory).toBeUndefined()
+  })
+
   it("role/subType 映射表", () => {
-    const base = { id: 1, isSummary: false, createdTime: "2026-11-08 10:00:00" }
+    const base = { id: "1", isSummary: false, createdTime: "2026-11-08 10:00:00" }
     expect(mapHistoryMessage({ ...base, role: "USER", subType: "", content: "问" }).type).toBe("user")
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "reasoning", content: "想" }).type).toBe("reasoning")
     expect(mapHistoryMessage({ ...base, role: "ASSISTANT", subType: "tool-call", content: "t: {}" }).type).toBe("tool-request")
@@ -92,7 +239,7 @@ describe("mapHistoryMessage", () => {
 
   it("历史 tool-call 解析出工具名与参数（否则历史里的工具步骤渲染成空白行）", () => {
     const m = mapHistoryMessage({
-      id: 2,
+      id: "2",
       role: "ASSISTANT",
       subType: "tool-call",
       // 后端落库格式：工具名: 参数 JSON（DiagnosisAgent.java:168-173）
@@ -107,7 +254,7 @@ describe("mapHistoryMessage", () => {
 
   it("历史 tool-call 参数不是合法 JSON 时保留原文", () => {
     const m = mapHistoryMessage({
-      id: 3,
+      id: "3",
       role: "ASSISTANT",
       subType: "tool-call",
       content: "broken: {not json",
@@ -115,5 +262,273 @@ describe("mapHistoryMessage", () => {
       createdTime: "2026-11-08 10:00:00",
     })
     expect(m.toolCalls?.[0].args).toEqual({ _raw: "{not json" })
+  })
+
+  it("新落库 JSON 数组能恢复一次请求里的多个 toolCallId", () => {
+    const m = mapHistoryMessage({
+      id: "6",
+      role: "ASSISTANT",
+      subType: "tool-call",
+      content: JSON.stringify([
+        { toolCallId: "call_a", name: "searchDocuments", stepLabel: "检索知识库文档" },
+        { toolCallId: "call_b", name: "analyzeEyeImage", stepLabel: "分析影像" },
+      ]),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.type).toBe("tool-request")
+    expect(m.toolCalls).toHaveLength(2)
+    expect(m.toolCalls?.[0].id).toBe("call_a")
+    expect(m.toolCalls?.[1]).toEqual({ id: "call_b", name: "analyzeEyeImage", args: {} })
+  })
+
+  it("新落库 JSON 能恢复 toolCallId 与返回状态", () => {
+    const call = mapHistoryMessage({
+      id: "4",
+      role: "ASSISTANT",
+      subType: "tool-call",
+      content: JSON.stringify({
+        toolCallId: "call_9",
+        name: "searchDocuments",
+        arguments: '{"query":"白内障"}',
+      }),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(call.type).toBe("tool-request")
+    expect(call.toolCallId).toBe("call_9")
+    expect(call.toolCalls?.[0]).toMatchObject({
+      id: "call_9",
+      name: "searchDocuments",
+      args: { query: "白内障" },
+    })
+
+    const result = mapHistoryMessage({
+      id: "5",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: JSON.stringify({
+        toolCallId: "call_9",
+        name: "searchDocuments",
+        toolStatus: "failed",
+        output: "检索服务超时",
+      }),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:01Z",
+    })
+    expect(result.type).toBe("tool-response")
+    expect(result.toolCallId).toBe("call_9")
+    expect(result.toolStatus).toBe("failed")
+    expect(result.content).toBe("检索服务超时")
+  })
+
+  it("旧 tool-result 行没有状态，标 completed（已返回）而不是未确认", () => {
+    const m = mapHistoryMessage({
+      id: "6",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: "检索到 2 段文档",
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(m.toolStatus).toBe("completed")
+    expect(m.content).toBe("检索到 2 段文档")
+  })
+
+  it("历史时间按统一口径解析：旧格式 10:20 UTC = 上海 18:20", async () => {
+    const { formatClock } = await import("./time")
+    const m = mapHistoryMessage({
+      id: "7",
+      role: "USER",
+      subType: "",
+      content: "问",
+      isSummary: false,
+      createdTime: "2026-11-08 10:20:00",
+    })
+    // 只在当前进程时区可换算时不强断言具体时分；这里验证遇到旧格式不抛错且非空。
+    expect(m.time === undefined || /^\d{2}:\d{2}$/.test(m.time)).toBe(true)
+    expect(formatClock(new Date(Date.UTC(2026, 10, 8, 10, 20)), "Asia/Shanghai")).toBe("18:20")
+  })
+})
+
+describe("资源闭环（Phase R）", () => {
+  it("工具结果事件把后端结构化资源带进消息，并进而进入资源栏", () => {
+    const msgs = applyStreamEvent(
+      [
+        { id: "u1", type: "user", content: "干眼怎么治", images: ["/api/agent/image/view/e.jpg"] },
+      ],
+      {
+        messageType: "tool-result",
+        content: "检索到 1 段文档",
+        toolName: "searchDocuments",
+        toolCallId: "call_1",
+        toolStatus: "succeeded",
+        resources: [
+          {
+            id: "doc:42",
+            kind: "document",
+            title: "干眼症诊疗共识",
+            source: "knowledge-base",
+            documentId: "42",
+            score: 0.81,
+            snippet: "睑板腺功能障碍是干眼的主要原因之一。",
+            toolCallId: "call_1",
+          },
+        ],
+      },
+    )
+    expect(msgs[msgs.length - 1].resources).toHaveLength(1)
+
+    const resources = deriveResources(msgs)
+    expect(resources.images).toHaveLength(1)
+    expect(resources.images[0].source).toBe("upload")
+    expect(resources.documents[0]).toMatchObject({ documentId: "42", score: 0.81 })
+  })
+
+  it("失败的工具结果没有资源，不得补造证据", () => {
+    const msgs = applyStreamEvent([], {
+      messageType: "tool-result",
+      content: "工具返回了错误",
+      toolCallId: "call_2",
+      toolStatus: "failed",
+      resources: [{ kind: "document", documentId: "9", title: "不该出现的来源" }],
+    })
+    expect(msgs[0].resources).toBeUndefined()
+    // 但后端若真下发了资源，前端仍按数据展示——这里的主防线在后端（失败不带资源）。
+    const withFake = deriveResources(msgs)
+    expect(withFake.documents).toHaveLength(0)
+  })
+
+  it("历史工具结果能从落库 JSON 恢复资源", () => {
+    const m = mapHistoryMessage({
+      id: "8",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: JSON.stringify({
+        toolCallId: "call_3",
+        name: "searchDocuments",
+        toolStatus: "succeeded",
+        output: "【文档片段】…",
+        resources: [
+          { id: "doc:5", kind: "document", title: "白内障指南", documentId: "5", score: 0.7 },
+        ],
+      }),
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.resources?.[0]).toMatchObject({ documentId: "5", source: "knowledge-base" })
+  })
+
+  it("旧的历史工具结果行没有资源字段：资源栏空着，而不是编造来源", () => {
+    const m = mapHistoryMessage({
+      id: "9",
+      role: "ASSISTANT",
+      subType: "tool-result",
+      content: "检索到 2 段文档",
+      isSummary: false,
+      createdTime: "2026-11-08 10:00:00",
+    })
+    expect(m.resources).toBeUndefined()
+    expect(deriveResources([m]).documents).toEqual([])
+  })
+
+  it("服务端独立附件字段能恢复上传图片，刷新/切会话后影像不丢", () => {
+    const m = mapHistoryMessage({
+      id: "10",
+      role: "USER",
+      subType: "",
+      content: "帮我看看",
+      images: ["/api/agent/image/view/f.jpg"],
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe("帮我看看")
+    expect(m.images).toEqual(["/api/agent/image/view/f.jpg"])
+    expect(deriveResources([m]).images).toHaveLength(1)
+  })
+
+  it("附件身份只认服务端独立字段，正文形状不构成凭证", () => {
+    // 服务端已经把旧信封还原成正文 + 逐张复核过的图片；前端不再自己拆信封。
+    // 这里守住的是另一半：正文原样可读，形状本身不授予任何附件身份。
+    const spoof = JSON.stringify({
+      text: "这句话才是用户真正打的",
+      images: ["https://tracker.example.net/pixel.png"],
+    })
+    const m = mapHistoryMessage({
+      id: "11",
+      role: "USER",
+      subType: "",
+      content: spoof,
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe(spoof)
+    expect(m.images).toBeUndefined()
+    expect(deriveResources([m]).images).toEqual([])
+  })
+
+  it("旧行正文原样可读：服务端没还原的旧信封不补造附件", () => {
+    // 老信封没有服务端标记时按纯文本保守处理：正文照样读得出来（不被吞掉），
+    // 但不凭形状补造「已验证的上传附件」。
+    const legacy = JSON.stringify({
+      text: "旧会话里的附件消息",
+      images: ["https://cos.example.com/agent-chat/7/legacy.jpg"],
+    })
+    const m = mapHistoryMessage({
+      id: "12",
+      role: "USER",
+      subType: "",
+      content: legacy,
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe(legacy)
+    expect(m.images).toBeUndefined()
+    expect(deriveResources([m]).images).toEqual([])
+  })
+
+  it("公开标记和上传形状路径均不能改写普通正文", () => {
+    const content = JSON.stringify({
+        kind: "iris.user-message.v1",
+        text: "正文",
+        images: [
+          "https://cos.example.com/agent-chat/7/ok.png",
+          "https://tracker.example.net/pixel.png",
+          "//cos.example.com/agent-chat/7/protocol-relative.png",
+        ],
+      })
+    const m = mapHistoryMessage({
+      id: "13",
+      role: "USER",
+      subType: "",
+      content,
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(m.content).toBe(content)
+    expect(m.images).toBeUndefined()
+    expect(deriveResources([m]).images).toEqual([])
+  })
+
+  it("旧版纯文本用户消息不会被误当信封解析", () => {
+    const plain = mapHistoryMessage({
+      id: "14",
+      role: "USER",
+      subType: "",
+      content: "普通提问",
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(plain.content).toBe("普通提问")
+    const jsonish = mapHistoryMessage({
+      id: "15",
+      role: "USER",
+      subType: "",
+      content: '{"foo":"bar"}',
+      isSummary: false,
+      createdTime: "2026-11-08T10:00:00Z",
+    })
+    expect(jsonish.content).toBe('{"foo":"bar"}')
+    expect(jsonish.images).toBeUndefined()
   })
 })

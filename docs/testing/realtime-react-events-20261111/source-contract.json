@@ -1,0 +1,13 @@
+{
+  "evidenceType": "SOURCE_CONTRACT_AND_REAL_JACKSON_SYNTHETIC_DTOS",
+  "eventTypes": 14,
+  "snapshotFields": 12,
+  "backendSourceSha256": {
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationEvents.java": "e808bd9336e4c96ed36fd98e755435ca7fdccf75eb4197b20dd01082a9beb771",
+    "src/main/java/com/csust/eyediagnosis/collaboration/CollaborationRunService.java": "6b696c4c81cc53cc598c028de7ebde98e2f31bff053653d0496e5bee4f6e5bc0",
+    "src/main/java/com/csust/eyediagnosis/config/JsonConfig.java": "fd251b5db119cebe81ce6a8ffd97a1e9eccfaed1f26cdfe2d38137052d94dcd8",
+    "src/main/java/com/csust/eyediagnosis/controller/CollaborationRunController.java": "57972a768d1263a224aeb44ea2a214d12017ae3f5dd8a6b1061601f7801091ec"
+  },
+  "wireFixtureSha256": "03476a85c5639c037ddfd5221b9dc3433ebf8a747e16e8c2f65d8c3b72194962",
+  "status": "PASS"
+}

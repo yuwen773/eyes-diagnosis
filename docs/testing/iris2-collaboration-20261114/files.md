@@ -1,0 +1,83 @@
+# 完整改动文件清单
+
+基线：`a1758c86add936d81690b0802fee26e2f20fe1d6`。所有项目均未暂存、未提交。`M` 为已有文件修改，`??` 为新增文件。忽略目录 `target/` 的本地日志及 `web/dist/` 不列入交付变更。
+
+2026-11-15 补验后共 **74 个文件**：已有修改 6，新增 68（新增的 1 个已跟踪修改为 `web/vite.config.ts` 的 dev-only 代理开关）。11-14 原始交付为 73 个（5 改 + 68 新），此处同步为当前工作树实际状态。
+
+| 状态 | 文件 |
+| --- | --- |
+| `??` | [docs/testing/iris2-collaboration-20261114/files.md](../../../docs/testing/iris2-collaboration-20261114/files.md) |
+| `??` | [docs/testing/iris2-collaboration-20261114/report.md](../../../docs/testing/iris2-collaboration-20261114/report.md) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-1920.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-1920.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-390.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-390.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-768.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-768.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-820.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-820.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-900.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-dark-900.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-1920.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-1920.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-390.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-390.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-768.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-768.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-820.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-820.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-900.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-light-900.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-dark-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-dark-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-dark-390.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-dark-390.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-light-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-light-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-light-390.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/collaboration-new-light-390.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/doctor-review-dark-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/doctor-review-dark-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/doctor-review-light-1440.png](../../../docs/testing/iris2-collaboration-20261114/screenshots/doctor-review-light-1440.png) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-1440.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-1440.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-1920.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-1920.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-390.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-390.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-768.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-768.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-820.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-820.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-900.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-dark-900.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-1440.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-1440.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-1920.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-1920.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-390.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-390.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-768.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-768.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-820.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-820.json) |
+| `??` | [docs/testing/iris2-collaboration-20261114/screenshots/ui-light-900.json](../../../docs/testing/iris2-collaboration-20261114/screenshots/ui-light-900.json) |
+| `??` | [scripts/check_collaboration_fixture.py](../../../scripts/check_collaboration_fixture.py) |
+| `??` | [web/e2e/collaboration-default-off.spec.ts](../../../web/e2e/collaboration-default-off.spec.ts) |
+| `??` | [web/e2e/collaboration.spec.ts](../../../web/e2e/collaboration.spec.ts) |
+| `??` | [web/e2e/fixtures/collaboration-synthetic.png](../../../web/e2e/fixtures/collaboration-synthetic.png) |
+| `??` | [web/e2e/fixtures/create_synthetic_image.py](../../../web/e2e/fixtures/create_synthetic_image.py) |
+| `M` | [web/package.json](../../../web/package.json) |
+| `??` | [web/scripts/evidence/collaboration-workspace.mjs](../../../web/scripts/evidence/collaboration-workspace.mjs) |
+| `M` | [web/src/App.tsx](../../../web/src/App.tsx) |
+| `??` | [web/src/components/agent/collaboration/AuthorizedRunImage.tsx](../../../web/src/components/agent/collaboration/AuthorizedRunImage.tsx) |
+| `??` | [web/src/components/agent/collaboration/ClinicalContent.tsx](../../../web/src/components/agent/collaboration/ClinicalContent.tsx) |
+| `??` | [web/src/components/agent/collaboration/collaborationLabels.ts](../../../web/src/components/agent/collaboration/collaborationLabels.ts) |
+| `??` | [web/src/components/agent/collaboration/CollaborationRoles.tsx](../../../web/src/components/agent/collaboration/CollaborationRoles.tsx) |
+| `??` | [web/src/components/agent/collaboration/CollaborationTaskForm.test.tsx](../../../web/src/components/agent/collaboration/CollaborationTaskForm.test.tsx) |
+| `??` | [web/src/components/agent/collaboration/CollaborationTaskForm.tsx](../../../web/src/components/agent/collaboration/CollaborationTaskForm.tsx) |
+| `??` | [web/src/components/agent/collaboration/CollaborationTimeline.tsx](../../../web/src/components/agent/collaboration/CollaborationTimeline.tsx) |
+| `??` | [web/src/components/agent/collaboration/CollaborationWorkspace.test.tsx](../../../web/src/components/agent/collaboration/CollaborationWorkspace.test.tsx) |
+| `??` | [web/src/components/agent/collaboration/CollaborationWorkspace.tsx](../../../web/src/components/agent/collaboration/CollaborationWorkspace.tsx) |
+| `??` | [web/src/components/agent/collaboration/DoctorReviewImage.tsx](../../../web/src/components/agent/collaboration/DoctorReviewImage.tsx) |
+| `??` | [web/src/components/agent/collaboration/PatientResultPanel.test.tsx](../../../web/src/components/agent/collaboration/PatientResultPanel.test.tsx) |
+| `??` | [web/src/components/agent/collaboration/PatientResultPanel.tsx](../../../web/src/components/agent/collaboration/PatientResultPanel.tsx) |
+| `M` | [web/src/components/shell/navLinks.ts](../../../web/src/components/shell/navLinks.ts) |
+| `M` | [web/src/components/shell/ProductHeader.tsx](../../../web/src/components/shell/ProductHeader.tsx) |
+| `??` | [web/src/hooks/useCollaborationRun.test.tsx](../../../web/src/hooks/useCollaborationRun.test.tsx) |
+| `??` | [web/src/hooks/useCollaborationRun.ts](../../../web/src/hooks/useCollaborationRun.ts) |
+| `??` | [web/src/lib/__fixtures__/collaboration.v1.json](../../../web/src/lib/__fixtures__/collaboration.v1.json) |
+| `??` | [web/src/lib/__fixtures__/collaboration.wire.v1.json](../../../web/src/lib/__fixtures__/collaboration.wire.v1.json) |
+| `M` | [web/src/lib/api.ts](../../../web/src/lib/api.ts) |
+| `??` | [web/src/lib/collaborationApi.test.ts](../../../web/src/lib/collaborationApi.test.ts) |
+| `??` | [web/src/lib/collaborationApi.ts](../../../web/src/lib/collaborationApi.ts) |
+| `??` | [web/src/lib/collaborationProtocol.ts](../../../web/src/lib/collaborationProtocol.ts) |
+| `??` | [web/src/lib/collaborationReducer.test.ts](../../../web/src/lib/collaborationReducer.test.ts) |
+| `??` | [web/src/lib/collaborationReducer.ts](../../../web/src/lib/collaborationReducer.ts) |
+| `??` | [web/src/lib/collaborationSession.test.ts](../../../web/src/lib/collaborationSession.test.ts) |
+| `??` | [web/src/lib/collaborationTestFixtures.ts](../../../web/src/lib/collaborationTestFixtures.ts) |
+| `??` | [web/src/lib/diagnosisTaskApi.test.ts](../../../web/src/lib/diagnosisTaskApi.test.ts) |
+| `??` | [web/src/lib/diagnosisTaskApi.ts](../../../web/src/lib/diagnosisTaskApi.ts) |
+| `??` | [web/src/lib/reviewApi.ts](../../../web/src/lib/reviewApi.ts) |
+| `??` | [web/src/pages/CollaborationPage.test.tsx](../../../web/src/pages/CollaborationPage.test.tsx) |
+| `??` | [web/src/pages/CollaborationPage.tsx](../../../web/src/pages/CollaborationPage.tsx) |
+| `??` | [web/src/pages/DoctorReviewsPage.tsx](../../../web/src/pages/DoctorReviewsPage.tsx) |
+| `M` | [web/vite.config.ts](../../../web/vite.config.ts) |
+| `??` | [web/src/styles/collaboration.css](../../../web/src/styles/collaboration.css) |
+

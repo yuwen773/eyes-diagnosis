@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.csust.eyediagnosis.common.BatchResultVO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisQueryDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisResultDTO;
 import com.csust.eyediagnosis.model.dto.diagnosis.DiagnosisUploadDTO;
@@ -71,4 +72,12 @@ public interface DiagnosisService extends IService<Diagnosis> {
      * 人工复核记录。AI 字段不得由本接口覆盖。
      */
     void recordHumanReview(Long diagnosisId, User reviewer, DiagnosisResultDTO dto);
+
+    /**
+     * 批量删除判读记录：逐条执行，部分失败如实回执。
+     *
+     * @param diagnosisIds 目标判读 id
+     * @return 逐条结果回执
+     */
+    BatchResultVO deleteDiagnoses(List<Long> diagnosisIds);
 }

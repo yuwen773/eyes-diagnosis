@@ -3,87 +3,23 @@
  * 统一返回 { code: 0, data, msg }，会话走 Spring Session Cookie。
  */
 
-import { fetchEventSource } from "@microsoft/fetch-event-source"
+import {
+  ApiError,
+  BASE_URL,
+  rejectNonStreamResponse,
+  request,
+  toPage,
+  type RawPage,
+} from "./http"
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api"
-
-/**
- * 未登录事件。业务接口回 40100 时广播，由路由层跳登录页（带回跳地址）。
- * 会话探测 getLoginUser 不广播——匿名访问是常态，不能把人一脚踢去登录。
- */
-export const AUTH_EXPIRED_EVENT = "eye:auth-expired"
-
-/** 事件负载：错误码。40100=未登录；40101=无权限（匿名访问会话时后端也用这个码）。 */
-export type AuthExpiredDetail = { code: number }
-
-function notifyAuthExpired(code: number) {
-  window.dispatchEvent(
-    new CustomEvent<AuthExpiredDetail>(AUTH_EXPIRED_EVENT, { detail: { code } }),
-  )
-}
-
-export class ApiError extends Error {
-  readonly code: number
-
-  constructor(code: number, message: string) {
-    super(message)
-    this.name = "ApiError"
-    this.code = code
-  }
-}
-
-type Envelope<T> = {
-  code?: number
-  data?: T
-  msg?: string
-}
-
-type RequestOptions = {
-  /** 40100 不广播未登录事件（用于会话探测这类「匿名也是正常结果」的调用）。 */
-  silentAuth?: boolean
-}
-
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-  options: RequestOptions = {},
-): Promise<T> {
-  const isForm = init.body instanceof FormData
-  let response: Response
-
-  try {
-    response = await fetch(`${BASE_URL}${path}`, {
-      credentials: "include",
-      ...init,
-      headers: {
-        Accept: "application/json",
-        ...(isForm ? {} : { "Content-Type": "application/json" }),
-        ...init.headers,
-      },
-    })
-  } catch {
-    throw new ApiError(-1, "网络不可用，请检查连接后重试")
-  }
-
-  if (!response.ok) {
-    throw new ApiError(response.status, `服务返回 ${response.status}`)
-  }
-
-  const payload = (await response.json()) as Envelope<T>
-  if (payload.code !== 0) {
-    if (payload.code === 40100 && !options.silentAuth) {
-      notifyAuthExpired(40100)
-    }
-    throw new ApiError(payload.code ?? -1, payload.msg || "请求未完成")
-  }
-
-  return payload.data as T
-}
+export { ApiError, AUTH_EXPIRED_EVENT, type AuthExpiredDetail } from "./http"
+export type { Page as RecordPage } from "./http"
 
 /* ── 用户 ─────────────────────────────────────────────── */
 
 export type LoginUser = {
-  id?: number
+  /** 后端 JsonConfig 全局 Long→String，雪花 id 线上是字符串。 */
+  id?: string
   userAccount?: string
   userName?: string
   userAvatar?: string
@@ -104,7 +40,7 @@ export function register(body: {
   userPassword: string
   checkPassword: string
 }) {
-  return request<number>("/user/register", {
+  return request<string>("/user/register", {
     method: "POST",
     body: JSON.stringify(body),
   })
@@ -128,7 +64,8 @@ export type Disease = {
 }
 
 export type DiagnosisResult = {
-  id?: number
+  /** 雪花 id，线上是字符串。 */
+  id?: string
   url?: string
   result?: string
   probability?: number
@@ -158,21 +95,45 @@ export type DiagnosisResult = {
   calibrationStatus?: string
   oodStatus?: string
   oodScore?: number
+  /**
+   * 来源与复核的只读投影（仅详情接口下发；列表接口**不带**）。
+   *
+   * <p>缺省有两种含义：老记录走的是没有投影的接口，或投影读取失败——
+   * 后者后端仍会下发一个只有 `imageArchivalState: "UNKNOWN"` 的对象。
+   * 两种情况都不能当成「没有授权、没有归档」。
+   */
+  source?: DiagnosisSource
 }
 
-export type UploadedPicture = {
-  id?: number
-  url?: string
-  status?: string
-}
-
-export function uploadPicture(file: File) {
-  const form = new FormData()
-  form.append("file", file)
-  return request<UploadedPicture>("/diagnosis/upload", {
-    method: "POST",
-    body: form,
-  })
+/**
+ * 来源投影：把库里**本来分开存着**的三件事并排摆出来，不让报告页再互相猜。
+ *
+ * <p>草稿是否被批准、患者是否授权保存、有没有做过人工复核——三者不能互相替代。
+ * 全部字段只读，后端不接受它们作为写入参数。
+ */
+export type DiagnosisSource = {
+  /** DIRECT = 本人上传直接判读；COLLABORATION_DRAFT = 由协作草稿生成（不代表草稿已获批）。 */
+  recordSource?: string | null
+  /** 关联的影像任务 id；直接判读为 null。 */
+  patientTaskId?: string | null
+  /** 协作草稿审核状态 PENDING / APPROVED / REJECTED；无关联草稿为 null。 */
+  draftReviewState?: string | null
+  /** 患者授权状态 OFFERED / APPROVED / EXPIRED；无授权记录为 null。 */
+  authorizationState?: string | null
+  /** 授权时间：ISO-8601 **UTC**（带 Z）。展示层负责转本地时间并标注时区。 */
+  authorizedAt?: string | null
+  /** 回执号**前缀**（前 8 位 + 省略号）；完整回执未开放。 */
+  authorizationReceipt?: string | null
+  /** 复核人**账号角色**（admin / doctor / user）；不是临床资质证明。 */
+  reviewerRole?: string | null
+  /** ARCHIVED / ARCHIVED_NOT_PUBLIC / NOT_ARCHIVED / UNKNOWN。 */
+  imageArchivalState?: string | null
+  /**
+   * 授权细节是否按最小权限被隐去（非本人查看时为 true）。
+   *
+   * <p>为 true 表示「不给看」，**不是**「没有授权」——展示层不得退化成「无授权记录」。
+   */
+  authorizationDetailsRestricted?: boolean | null
 }
 
 export function runDiagnosis(file: File) {
@@ -188,7 +149,7 @@ export function runDiagnosis(file: File) {
 
 export type NewsItem = {
   /** 后端把 Long 序列化成字符串（雪花 id 超出 JS 安全整数）。 */
-  id?: string | number
+  id: string
   title?: string
   author?: string
   avatar?: string | null
@@ -249,24 +210,54 @@ export type AgentSessionVO = {
 }
 
 export type HistoryMessageVO = {
-  id: number
+  finishReason?: string
+  /** 雪花 id，线上是字符串。 */
+  id: string
   role: string
   subType: string
   content: string
   isSummary: boolean
   createdTime: string
+  /** Server-authorized upload references, revalidated when history is read. */
+  images?: string[]
 }
 
 export type ChatHistoryVO = {
   messages: HistoryMessageVO[]
   hasMore: boolean
-  nextCursor: number | null
+  nextCursor: string | null
+  /**
+   * 本会话存在未提交的消息终态（写入失败或待恢复）。
+   * 历史仍会返回，但**不完整**——界面必须显式说明，不能装作完整。
+   */
+  uncommittedTerminal?: boolean
 }
 
 export function getSessions(beforeId?: string, limit = 20) {
   let path = `/agent/sessions?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<AgentSessionVO[]>(path)
+  return request<AgentSessionVO[]>(path).then((sessions) =>
+    sessions.map((session) => ({
+      ...session,
+      createdTime: chatDate(session.createdTime),
+      updatedTime: chatDate(session.updatedTime),
+    }))
+  )
+}
+
+/** Java Long 经 JsonConfig 序列化为字符串；兼容工具直接给数字。 */
+function chatDate(value: string | number | null) {
+  return typeof value === "number" ? new Date(value).toISOString() : (value ?? "")
+}
+
+/** 协作受理前创建所属会话；沿用现有 HTTP 信封与身份失效处理。 */
+export function createAgentSession(sessionId: string, signal: AbortSignal) {
+  return request<{ sessionId: string }>("/agent/sessions", {
+    method: "POST",
+    body: JSON.stringify({ sessionId }),
+    signal,
+    cache: "no-store",
+  })
 }
 
 export function deleteSession(sessionId: string) {
@@ -301,10 +292,16 @@ export function generateTitle(sessionId: string, firstMessage: string) {
   })
 }
 
-export function getChatHistory(threadId: string, beforeId?: number, limit = 40) {
+export function getChatHistory(threadId: string, beforeId?: string, limit = 40) {
   let path = `/agent/history/${threadId}?limit=${limit}`
   if (beforeId) path += `&beforeId=${beforeId}`
-  return request<ChatHistoryVO>(path)
+  return request<ChatHistoryVO>(path).then((history) => ({
+    ...history,
+    messages: history.messages.map((message) => ({
+      ...message,
+      createdTime: chatDate(message.createdTime),
+    })),
+  }))
 }
 
 export function exportSession(sessionId: string, format: "markdown" | "json") {
@@ -331,7 +328,7 @@ export function deleteAgentImage(url: string) {
 
 export type UserVO = {
   /** 后端 JsonConfig 全局 Long→String，id 线上是字符串。 */
-  id?: string | number
+  id?: string
   userAccount?: string
   userName?: string
   userAvatar?: string
@@ -371,7 +368,7 @@ export type DiagnosisManage = {
   result?: string | null
   confidence?: number | null
   severity?: string | null
-  /** 1 未复审 / 2 复审中 / 3 已复审。 */
+  /** 复诊状态：0 未复审（历史值 1 同义）/ 2 复审中 / 3 已复审 */
   reexamineStatus?: number
   createTime?: string
   status?: string
@@ -380,86 +377,105 @@ export type DiagnosisManage = {
   requiresReview?: boolean
 }
 
-/**
- * 分页信封。计数字段线上是字符串（后端全局 Long→String），
- * 统一转回 number，分页算术才不会踩到 "13" 这种值。
- */
-type RawPage<T> = {
-  records?: T[]
-  total?: number | string
-  size?: number | string
-  current?: number | string
-  pages?: number | string
-}
-
-export type RecordPage<T> = {
-  records?: T[]
-  total?: number
-  size?: number
-  current?: number
-  pages?: number
-}
-
-function toPage<T>(raw: RawPage<T>): RecordPage<T> {
-  const num = (value?: number | string) =>
-    value === undefined || value === null ? undefined : Number(value)
-  return {
-    records: raw.records,
-    total: num(raw.total),
-    size: num(raw.size),
-    current: num(raw.current),
-    pages: num(raw.pages),
-  }
-}
-
 export function listMyDiagnoses(
   q: { current?: number; pageSize?: number; result?: string } = {},
+  signal?: AbortSignal,
 ) {
-  return request<RawPage<DiagnosisManage>>("/diagnosis/list/page/my", {
-    method: "POST",
-    body: JSON.stringify({ current: 1, pageSize: 10, ...q }),
-  }).then(toPage)
+  return request<RawPage<DiagnosisManage>>(
+    "/diagnosis/list/page/my",
+    {
+      method: "POST",
+      body: JSON.stringify({ current: 1, pageSize: 10, ...q }),
+      signal,
+    },
+  ).then(toPage)
 }
 
 export type MyDiagnosisStats = {
   total: number
+  /** 有真实严重度分级的条数；缺了它，highRisk=0 无法与「未评估」区分。 */
+  assessed: number
   highRisk: number
   awaitingReview: number
   lastReadAt: string | null
 }
 
 /** 服务端聚合。接口未上线时返回 404，调用方据此降级到当前页口径。 */
-export function getMyStats() {
-  return request<MyDiagnosisStats>("/diagnosis/stats/my", { method: "GET" })
+export function getMyStats(signal?: AbortSignal) {
+  return request<MyDiagnosisStats>("/diagnosis/stats/my", { method: "GET", signal })
 }
 
 /** 本人判读详情（后端做归属校验）。返回完整记录纸字段。 */
-export function getMyDiagnosis(id: string | number) {
-  return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET" })
+export function getMyDiagnosis(id: string | number, signal?: AbortSignal) {
+  return request<DiagnosisResult>(`/diagnosis/get/${id}`, { method: "GET", signal })
 }
 
 /**
  * 申请复诊。后端 DTO 无 @RequestBody，id 走 query；只允许本人记录，
  * 提交后 reexamineStatus 置为 2（复审中）。
  */
-export function requestReexamine(id: string | number) {
+export function requestReexamine(id: string) {
   return request<boolean>(`/user/diagnosis/reexamine?id=${id}`, { method: "POST" })
 }
 
 /* ── Agent SSE 流 ──────────────────────────────────────── */
 
 /** 后端 MessageDTO 的流事件载荷。messageType 序列化自枚举，大小写不保证。 */
+/**
+ * 工具结果里携带的结构化资源（目前只有知识库检索命中）。
+ * 三个字段都由后端从真实检索结果取值：`documentId` 是文档主键，
+ * `score` 是检索相关度，`snippet` 是命中片段原文。
+ */
+export type ResourceRefDTO = {
+  id?: string
+  /** image | document | link */
+  kind?: string
+  title?: string
+  /** upload | assistant | tool | knowledge-base */
+  source?: string
+  url?: string
+  documentId?: string
+  score?: number
+  /** 原始检索分：rerank 生效时与 score（重排序分）分开记录。 */
+  retrievalScore?: number
+  snippet?: string
+  /** 产生这条资源的工具调用。 */
+  toolCallId?: string
+}
+
 export type AgentStreamDTO = {
   messageType: string
   content?: string
-  toolCalls?: { name: string; arguments: string }[]
+  toolCalls?: { name: string; arguments: string; id?: string; stepLabel?: string }[]
   toolName?: string
+  /* ── 普通聊天工具步骤契约：全部可选，历史消息与旧后端不带这些字段。 ── */
+  toolCallId?: string
+  toolStatus?: string
+  stepLabel?: string
+  finishReason?: string
+  errorCategory?: string
+  /** 服务端时间点，带时区偏移的 ISO-8601。 */
+  timestamp?: string
+  /** 工具结果携带的结构化资源；失败或没有命中时缺省。 */
+  resources?: ResourceRefDTO[]
 }
 
 export type StreamChatHandlers = {
   onEvent(dto: AgentStreamDTO): void
   onDone(): void
   onError(err: unknown): void
+  /**
+   * 服务端已受理：拿到了 2xx 的 SSE 响应头。
+   *
+   * <p>只到「请求已被接受、用户消息已入队」为止，**不**等于已经落库：
+   * `AgentController` 调 `ChatHistoryService.saveUserMessage`，后者把写库任务
+   * 提交进 `SessionMessageQueue` 就返回（没有等待 Future）。控制器方法体确实在
+   * 响应头之前执行完，但落库是后台任务，可能还没写、也可能写失败。
+   *
+   * <p>所以：`onAccepted` 之前失败 **不能**推断服务端没收到；`onAccepted` 之后
+   * 失败也不能断言「服务端一定有这条」。两端都只能说到「受理」或「不知道」。
+   */
+  onAccepted?(): void
 }
 
 /**
@@ -473,6 +489,8 @@ export async function streamChat(
   signal: AbortSignal,
 ): Promise<void> {
   let completed = false
+  // 按需加载：SSE 客户端只有 /agent 用，静态引入会把它塞进所有路由的首屏包。
+  const { fetchEventSource } = await import("@microsoft/fetch-event-source")
   await fetchEventSource(`${BASE_URL}/agent/chat/stream`, {
     method: "POST",
     headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
@@ -482,20 +500,20 @@ export async function streamChat(
     openWhenHidden: true,
 
     async onopen(response) {
-      if (!response.ok) {
-        throw new ApiError(response.status, `服务返回 ${response.status}`)
-      }
+      const contentType = response.headers.get("content-type") ?? ""
       // 匿名访问时后端抛 BusinessException(NO_AUTH_ERROR)，返回的是 200 + JSON 信封，
       // 而不是 SSE 流——把它当流读会一直等到超时。识别出来并转成未登录事件。
-      const contentType = response.headers.get("content-type") ?? ""
+      // 错误响应体同样要解析：否则 401/403 的信封不会广播未登录，会话也不会失效。
       if (contentType.includes("application/json")) {
-        const payload = (await response.json().catch(() => null)) as Envelope<unknown> | null
-        const code = payload?.code ?? -1
-        if (code === 40100 || code === 40101) {
-          notifyAuthExpired(code)
-        }
-        throw new ApiError(code, payload?.msg || "对话服务拒绝了这次请求")
+        await rejectNonStreamResponse(response, "对话服务拒绝了这次请求")
       }
+      if (!response.ok) {
+        await rejectNonStreamResponse(response, `服务返回 ${response.status}`)
+      }
+      // 走到这里说明服务端已经受理这次请求（拿到 2xx 流响应头）。
+      // 注意口径：受理 = 用户消息已**入队**，落库是会话队列里的异步任务，
+      // 未必此刻已经写进 t_agent_message——所以「没有助手内容」推不出「没收到」。
+      handlers.onAccepted?.()
     },
 
     onmessage(event) {

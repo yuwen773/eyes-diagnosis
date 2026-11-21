@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 /**
  * @ClassNamePictureUploadDTO
- * @Description TODO
  * @Author钰玟
  * @Date2025/4/17 下午2:13
  * @Version 1.0

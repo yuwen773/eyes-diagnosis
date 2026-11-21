@@ -1,0 +1,1640 @@
+/*
+ * Iris 2.0 品牌层样式。
+ *
+ * 只在 .iris2 上下文里生效。颜色一律消费 --brand-* 令牌，
+ * 不引用 --field / --ink / --signal —— 品牌层与临床层互不串味。
+ */
+
+/* ==========================================================================
+   品牌材质（DESIGN.md §2.1.1）
+   --------------------------------------------------------------------------
+   五种材质共用同一套结构（底色 / 描边 / 内侧高光 / 模糊 / 投影），
+   只换这几组值。`.brand-panel` 是唯一入口，不另起一套玻璃组件。
+   默认落在 Layered Glass——Hero 信息卡是它最常见的用途。
+   ========================================================================== */
+
+.brand-panel {
+  position: relative;
+  isolation: isolate;
+  --glass-bg: var(--brand-glass-layered);
+  --glass-edge: var(--brand-glass-layered-edge);
+  --glass-inner: var(--brand-glass-layered-inner);
+  --glass-blur: var(--brand-glass-layered-blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  box-shadow: var(--brand-shadow);
+  color: var(--brand-text);
+  /* 背景模糊是 GPU 合成，只给少量面板用；离屏面板不常驻。 */
+  backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+}
+
+/* 内侧高光：玻璃的「厚度」来自这一层，不是靠加厚阴影。 */
+.brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--glass-inner) 0%, transparent 48%);
+  pointer-events: none;
+}
+
+/* 1 · Layered Glass —— Hero 信息卡：最透，层次最多（默认值即此） */
+.brand-panel--layered,
+.brand-panel--glass {
+  --glass-bg: var(--brand-glass-layered);
+  --glass-edge: var(--brand-glass-layered-edge);
+  --glass-inner: var(--brand-glass-layered-inner);
+  --glass-blur: var(--brand-glass-layered-blur);
+}
+
+/* 2 · Frosted Glass —— 悬浮导航：更实、更稳，先保证可读 */
+.brand-panel--frosted {
+  --glass-bg: var(--brand-glass-frosted);
+  --glass-edge: var(--brand-glass-frosted-edge);
+  --glass-inner: var(--brand-glass-frosted-inner);
+  --glass-blur: var(--brand-glass-frosted-blur);
+  border-radius: var(--radius-pill);
+}
+
+/* 3 · Soft Glass —— 首页入口卡：清爽、细描边、有限模糊 */
+.brand-panel--soft {
+  --glass-bg: var(--brand-glass-soft);
+  --glass-edge: var(--brand-glass-soft-edge);
+  --glass-inner: var(--brand-glass-soft-inner);
+  --glass-blur: var(--brand-glass-soft-blur);
+}
+
+/* 4 · Solid Brand Surface —— 承载大量文字的区域，不用模糊 */
+.brand-panel--solid {
+  --glass-bg: var(--brand-surface);
+  --glass-edge: var(--brand-outline);
+  --glass-inner: transparent;
+  background: var(--brand-surface);
+  border-color: var(--brand-outline);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.brand-panel--solid::before {
+  display: none;
+}
+
+/* 不支持 backdrop-filter：退到更实的静态表面，保留描边与内侧高光。
+   不能塌成一块灰，也不能变成完全透明的空气。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .brand-panel {
+    background: var(--brand-glass-fallback);
+  }
+
+  .brand-panel--solid {
+    background: var(--brand-surface);
+  }
+}
+
+.brand-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 暗底上的玻璃边由 --brand-glass-*-edge 的暗色取值负责（更实的冰蓝），
+   不再在类上单独覆写 border-color——材质令牌已经把双主题差异收在一处。 */
+
+/* ==========================================================================
+   首屏：Iris 2.0 光学台
+   ========================================================================== */
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 0 0;
+  font-family: var(--font-brand);
+}
+
+.landing-hero__shell {
+  position: relative;
+  z-index: 1;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 30px clamp(20px, 3.2vw, 48px) 30px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 46%);
+  box-shadow: var(--brand-shadow);
+  overflow: hidden;
+}
+
+html.dark .landing-hero__shell {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 42%);
+  border-color: var(--brand-outline);
+}
+
+/* 标题与正文 */
+.landing-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 56px);
+  align-items: center;
+  min-height: clamp(400px, 52vh, 600px);
+  margin-top: 18px;
+}
+
+.landing-hero__copy {
+  position: relative;
+  z-index: 2;
+  padding: clamp(18px, 3vw, 40px) 0;
+}
+
+.landing-hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 26px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+/* 眉线是 mono overline：字重按 §4 的 overline 规格走 500。
+   继承 700 会让浏览器去取 mono 的 700 字面（本地没有，回落 600），
+   白白多下一份 15KB 的字重文件。 */
+.landing-hero__eyebrow .num {
+  font-weight: 500;
+}
+
+.landing-hero__eyebrow-rule {
+  width: 38px;
+  height: 1px;
+  background: var(--brand-primary);
+}
+
+.landing-hero__eyebrow-sub {
+  color: var(--brand-muted);
+  font-weight: 600;
+}
+
+.landing-hero__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(44px, 6.4vw, 92px);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  color: var(--brand-text);
+}
+
+.landing-hero__title-line {
+  display: block;
+}
+
+.landing-hero__title-line--brand {
+  background-image: linear-gradient(99deg, #1649b7 15%, #258acb 67%, #26b7d0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+html.dark .landing-hero__title-line--brand {
+  background-image: linear-gradient(95deg, #f3f7ff 4%, #a6d2ff 50%, #77ddeb 97%);
+}
+
+.landing-hero__title-zh {
+  display: block;
+  margin-top: 14px;
+  font-family: var(--font-sans);
+  font-size: clamp(20px, 2.4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-hero__sub {
+  max-width: 34em;
+  margin: 26px 0 0;
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 1.9;
+  color: var(--brand-muted);
+}
+
+.landing-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.landing-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-hero__btn:hover {
+  border-color: var(--brand-primary);
+}
+
+.landing-hero__btn--primary {
+  border-color: transparent;
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  box-shadow: 0 14px 28px rgba(36, 87, 201, 0.18);
+}
+
+html.dark .landing-hero__btn--primary {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+/* 右栏只放信息卡；光学主视觉已经铺到整个 hero 区段。 */
+.landing-hero__visual {
+  position: relative;
+  z-index: 2;
+  min-height: 320px;
+}
+
+.landing-hero__flow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* 不铺白底：让 Prism 自己在左侧渐隐。文字落在画布/玻璃壳上，
+     不会出现一块与背景割裂的白色矩形。 */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 18%,
+    rgba(0, 0, 0, 0.55) 38%,
+    #000 62%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 18%,
+    rgba(0, 0, 0, 0.55) 38%,
+    #000 62%
+  );
+}
+
+/* ≤1024：Fusion 把光学主体挪到左侧/下半区，旧的「左隐右实」横向遮罩正好压在最亮的主体上
+   （实测 820 亮色档棱镜与底色的 R 通道差只有 2–22，低于 18 的门槛）。
+   平板与手机改为竖向渐隐：文字带仍收，光学主体所在的底部放行。 */
+@media (max-width: 1024px) {
+  .landing-hero__flow {
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.45) 35%,
+      rgba(0, 0, 0, 0.85) 60%,
+      #000 78%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.45) 35%,
+      rgba(0, 0, 0, 0.85) 60%,
+      #000 78%
+    );
+  }
+}
+
+.landing-hero__visual-hold {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 56% 46%,
+    rgba(78, 148, 240, 0.16),
+    rgba(78, 148, 240, 0) 62%
+  );
+}
+
+/* 浮在光带上的信息卡 */
+.landing-hero__card {
+  position: absolute;
+  right: 4%;
+  bottom: 12%;
+  z-index: 3;
+  width: min(320px, 62%);
+  padding: 20px 22px 18px;
+}
+
+.landing-hero__card-title {
+  margin: 12px 0 14px;
+  font-family: var(--font-brand);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-hero__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-hero__steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 9px;
+  border-top: 1px solid var(--brand-line);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.landing-hero__steps .num {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--brand-primary);
+}
+
+.landing-hero__card-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--brand-muted);
+}
+
+.landing-hero__card-note {
+  display: block;
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* 底部三张入口卡 */
+.landing-hero__entries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--brand-line);
+  list-style: none;
+}
+
+/* 材质（底色 / 描边 / 内侧高光 / 模糊）由 .brand-panel--soft 提供，
+   这里只管版式与交互态。 */
+.landing-hero__entry {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 18px 20px 20px;
+  color: var(--brand-text);
+  text-decoration: none;
+}
+
+.landing-hero__entry:hover {
+  border-color: var(--brand-primary);
+}
+
+.landing-hero__entry-glyph {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--brand-primary);
+  opacity: 0.85;
+}
+
+.landing-hero__entry-title {
+  font-family: var(--font-brand);
+  font-size: 16.5px;
+  font-weight: 700;
+}
+
+.landing-hero__entry-body {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+.landing-hero__entry-go {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--brand-primary);
+}
+
+/* ==========================================================================
+   光学渲染器
+   ========================================================================== */
+
+.hero-prism {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Prism 背后的环境光晕：让棱镜落在画布里，而不是浮在一块平板上。 */
+.hero-prism::before {
+  content: "";
+  position: absolute;
+  inset: 6% 2% 0 8%;
+  background: radial-gradient(
+    closest-side,
+    rgba(78, 148, 240, 0.16),
+    rgba(78, 148, 240, 0) 72%
+  );
+  pointer-events: none;
+}
+
+html.dark .hero-prism::before {
+  background: radial-gradient(
+    closest-side,
+    rgba(124, 196, 255, 0.18),
+    rgba(124, 196, 255, 0) 72%
+  );
+}
+
+.hero-prism__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-prism__halo-core { stop-color: #2f6fc9; stop-opacity: 0.18; }
+.hero-prism__halo-fade { stop-color: #2f6fc9; stop-opacity: 0; }
+.hero-prism__face-a { stop-color: #2457c9; stop-opacity: 0.18; }
+.hero-prism__face-b { stop-color: #2e8bdd; stop-opacity: 0.04; }
+.hero-prism__edge-a { stop-color: #2f6fc9; stop-opacity: 0.76; }
+.hero-prism__edge-b { stop-color: #2e8bdd; stop-opacity: 0.52; }
+
+.hero-prism__rays path {
+  fill: none;
+  stroke: #2f6fc9;
+  stroke-width: 1;
+  opacity: 0.3;
+}
+
+.hero-prism__face { stroke-width: 1.4; }
+
+.hero-prism__facet {
+  fill: none;
+  stroke: #2f6fc9;
+  stroke-width: 1;
+  opacity: 0.36;
+}
+
+.hero-prism__facet--base { opacity: 0.52; }
+
+html.dark .hero-prism__halo-core { stop-color: #7cc4ff; stop-opacity: 0.22; }
+html.dark .hero-prism__halo-fade { stop-color: #7cc4ff; stop-opacity: 0; }
+html.dark .hero-prism__face-a { stop-color: #85b5ff; stop-opacity: 0.16; }
+html.dark .hero-prism__face-b { stop-color: #60d7e6; stop-opacity: 0.05; }
+html.dark .hero-prism__edge-a { stop-color: #a6d2ff; stop-opacity: 0.84; }
+html.dark .hero-prism__edge-b { stop-color: #60d7e6; stop-opacity: 0.6; }
+html.dark .hero-prism__rays path { stroke: #9fd8ff; opacity: 0.24; }
+html.dark .hero-prism__facet { stroke: #bfe0ff; opacity: 0.42; }
+
+/* ==========================================================================
+   光学渲染器
+   ========================================================================== */
+
+.optic-flow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.optic-flow__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 玻璃体：一条连续光带 = 柔和鞘 + 内部纤维 + 边缘高光。
+   `--optic-*` 是这层自己的调色板，双主题不是反色而是两种材质：
+   - 亮色：鞘是钴蓝到青色，外缘画银白反光；
+   - 暗色：鞘是冰蓝，外缘高光更亮。
+
+   关于 `mix-blend-mode`：它写在组（`<g>`）上，而根节点带 `opacity` 与
+   `mask-image`，两者都会让根形成一个独立的合成组——所以这些混合模式
+   **只作用于纤维与纤维之间的重叠**，不会再穿透到下层 WebGL 画布上。
+   纤维层与画布之间是普通 alpha 合成；边缘淡出靠下面那条径向遮罩。
+   如果要让纤维真正与画布混合，必须把遮罩和根透明度都拿掉（二者与
+   「穿透画布混合」不可兼得），这属于另一次视觉评审，不在本轮。 */
+.optic-flow__fibers {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+
+.optic-flow__sheath {
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* 带体的两端必须在容器边界之前就消失。
+   容器的 overflow 裁剪会留下一条笔直的硬边（窄屏上尤其明显：
+   光带被切成一条水平断口），所以统一用一层径向遮罩把四周收掉。 */
+.optic-flow__fibers,
+.optic-flow__fallback {
+  -webkit-mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+  mask-image: radial-gradient(125% 95% at 58% 42%, #000 58%, transparent 100%);
+}
+
+.optic-stop--sheath-far {
+  stop-color: #9fc4ef;
+  stop-opacity: 0;
+}
+
+.optic-stop--sheath-mid {
+  stop-color: #4e94f0;
+  stop-opacity: 0.72;
+}
+
+.optic-stop--sheath-near {
+  stop-color: #2f6fc9;
+  stop-opacity: 0.56;
+}
+
+.optic-stop--sheath-tip {
+  stop-color: #64cadd;
+  stop-opacity: 0;
+}
+
+.optic-stop--core-far {
+  stop-color: #b7d8f7;
+  stop-opacity: 0;
+}
+
+.optic-stop--core-mid {
+  stop-color: #2f6fc4;
+  stop-opacity: 0.4;
+}
+
+.optic-stop--core-near {
+  stop-color: #8f7fe0;
+  stop-opacity: 0;
+}
+
+html.dark .optic-stop--sheath-far {
+  stop-color: #7cc4ff;
+}
+
+html.dark .optic-stop--sheath-mid {
+  stop-color: #5aa8ff;
+  stop-opacity: 0.34;
+}
+
+html.dark .optic-stop--sheath-near {
+  stop-color: #8fd6ff;
+  stop-opacity: 0.2;
+}
+
+html.dark .optic-stop--sheath-tip {
+  stop-color: #9ff0ff;
+}
+
+html.dark .optic-stop--core-far {
+  stop-color: #cfeeff;
+}
+
+html.dark .optic-stop--core-mid {
+  stop-color: #9fd8ff;
+  stop-opacity: 0.3;
+}
+
+html.dark .optic-stop--core-near {
+  stop-color: #b9a9ff;
+}
+
+.optic-flow {
+  --optic-fiber: rgba(38, 84, 160, 0.26);
+  --optic-fiber-core: rgba(36, 87, 201, 0.42);
+  --optic-fiber-rim: var(--brand-glass-optical-edge);
+}
+
+html.dark .optic-flow {
+  --optic-fiber: rgba(190, 230, 255, 0.3);
+  --optic-fiber-core: rgba(225, 244, 255, 0.5);
+  /* 外缘高光取自 `--brand-glass-optical-edge`，它随主题翻转，不必在这里重复。 */
+}
+
+.optic-flow__fiber-set {
+  mix-blend-mode: multiply;
+}
+
+html.dark .optic-flow__fiber-set {
+  mix-blend-mode: screen;
+}
+
+.optic-flow__fiber-set path {
+  fill: none;
+  stroke: var(--optic-fiber);
+  stroke-width: 0.9;
+}
+
+.optic-flow__fiber-set--core {
+  mix-blend-mode: multiply;
+}
+
+html.dark .optic-flow__fiber-set--core {
+  mix-blend-mode: screen;
+}
+
+.optic-flow__fiber-set--core path {
+  stroke: var(--optic-fiber-core);
+  stroke-width: 1.1;
+}
+
+/* 外缘镜面高光：亮色里就是白线（直接叠上去），暗色里是冰蓝加光。 */
+.optic-flow__fiber-set--rim {
+  mix-blend-mode: normal;
+}
+
+html.dark .optic-flow__fiber-set--rim {
+  mix-blend-mode: screen;
+}
+
+.optic-flow__fiber-set--rim path {
+  stroke: var(--optic-fiber-rim);
+  stroke-width: 1.6;
+}
+
+.optic-flow__fibers.is-drifting .optic-flow__fiber-set {
+  animation: optic-drift 18s ease-in-out infinite alternate;
+}
+
+.optic-flow__fibers.is-drifting .optic-flow__fiber-set--rim {
+  animation-duration: 24s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes optic-drift {
+  from {
+    transform: translate3d(-1.4%, 0.6%, 0);
+  }
+  to {
+    transform: translate3d(1.4%, -0.6%, 0);
+  }
+}
+
+.optic-flow__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optic-flow__fibers.is-drifting .optic-flow__fiber-set {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   窄屏：主动简化背景，而不是把桌面图压扁
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .landing-hero__grid {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .landing-hero__visual {
+    min-height: 360px;
+  }
+
+  .landing-hero__card {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(360px, 100%);
+    margin: 0 0 18px auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-hero {
+    padding-top: 16px;
+  }
+
+  .landing-hero__shell {
+    padding: 20px 18px 22px;
+  }
+
+  .landing-hero__title {
+    font-size: clamp(38px, 11vw, 56px);
+    letter-spacing: -0.04em;
+  }
+
+  .landing-hero__eyebrow-sub {
+    display: none;
+  }
+
+  .landing-hero__sub {
+    font-size: 14px;
+    line-height: 1.85;
+  }
+
+  .landing-hero__visual {
+    min-height: 300px;
+  }
+
+  .landing-hero__entries {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-hero__entry {
+    padding: 14px 16px 16px;
+  }
+}
+
+/* ==========================================================================
+   品牌页脚（DESIGN.md §2.1.3）
+   --------------------------------------------------------------------------
+   Solid Brand Surface：一块实体深海蓝，不做整块玻璃模糊。
+   三层：品牌收尾 → 信息导航 → 可信信息。页脚承载大量文字与免责条款，
+   可读性优先于材质表现，也不挂任何 GPU 特效。
+   ========================================================================== */
+
+.brand-foot {
+  /* 页脚是**实体品牌面，但跟随主题**：
+     浅色主题下是亮白实体面（不能突然掉进暗房，那会和整页蓝青光学品牌断开），
+     暗色主题下才是深海蓝。四组取值都用局部变量收口，
+     下面的子规则只消费 --foot-*，不再直接读 --brand-deep-*。 */
+  --foot-surface: var(--brand-surface);
+  --foot-surface-2: color-mix(in srgb, var(--brand-surface) 72%, var(--brand-canvas));
+  --foot-text: var(--brand-text);
+  --foot-muted: var(--brand-muted);
+  --foot-line: var(--brand-line);
+  --foot-hairline: var(--brand-line-strong);
+  --foot-accent: var(--brand-primary);
+  position: relative;
+  margin-top: clamp(48px, 8vw, 112px);
+  background: var(--foot-surface);
+  color: var(--foot-text);
+  /* 与页面主体之间用一根发丝线过渡，不做硬切。 */
+  border-top: 1px solid var(--foot-hairline);
+}
+
+html.dark .brand-foot {
+  --foot-surface: var(--brand-surface-deep);
+  --foot-surface-2: var(--brand-surface-deep-2);
+  --foot-text: var(--brand-deep-text);
+  --foot-muted: var(--brand-deep-muted);
+  --foot-line: var(--brand-deep-line);
+  --foot-hairline: var(--brand-deep-hairline);
+  --foot-accent: #9fd8ff;
+}
+
+/* 页脚与上方主体之间加一段同色系渐变：不是硬切，而是让画布自然过渡。
+   浅色主题是画布 → 页脚亮面，暗色主题是画布 → 深海蓝。 */
+.brand-foot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: clamp(56px, 7vw, 96px);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--foot-surface-2) 62%,
+    var(--foot-surface)
+  );
+  pointer-events: none;
+}
+
+.brand-foot__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.55fr);
+  gap: clamp(28px, 4vw, 64px);
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(40px, 5vw, 68px) clamp(20px, 3.2vw, 48px) 0;
+}
+
+/* ── 第一层：品牌收尾 ── */
+
+.brand-foot__brand {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.brand-foot .wordmark__zh {
+  color: var(--foot-text);
+}
+
+.brand-foot .wordmark__en {
+  color: var(--foot-muted);
+}
+
+.brand-foot__claim {
+  margin: 4px 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--foot-text);
+}
+
+.brand-foot__lead {
+  margin: 0;
+  max-width: 34em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--foot-muted);
+}
+
+/* ── 第二层：信息导航 ── */
+
+.brand-foot__nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px clamp(18px, 2.4vw, 40px);
+  align-content: start;
+}
+
+.brand-foot__group {
+  display: grid;
+  gap: 9px;
+  align-content: start;
+}
+
+.brand-foot__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--foot-muted);
+}
+
+.brand-foot__link {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  /* 13px 文字的行盒只有 ~21px；补到 28px 才过 WCAG 2.5.8 的 24px 下限。 */
+  min-height: 28px;
+  color: var(--foot-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.brand-foot__link:hover {
+  color: var(--foot-accent);
+}
+
+.brand-foot__spec {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--foot-muted);
+}
+
+/* ── 第三层：可信信息 ── */
+
+.brand-foot__trust {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(24px, 4vw, 64px);
+  max-width: var(--maxw);
+  margin: clamp(32px, 4vw, 52px) auto 0;
+  padding: 24px clamp(20px, 3.2vw, 48px) 0;
+  border-top: 1px solid var(--foot-line);
+}
+
+.brand-foot__note {
+  margin: 0;
+  max-width: 62em;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.85;
+  color: var(--foot-muted);
+}
+
+.brand-foot__note-mark {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--foot-text);
+}
+
+.brand-foot__stamp {
+  flex: none;
+  font-size: 9.5px;
+  line-height: 1.6;
+  letter-spacing: 0.18em;
+  text-align: right;
+  color: var(--foot-muted);
+}
+
+.brand-foot__legal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 22px clamp(20px, 3.2vw, 48px) clamp(26px, 3vw, 40px);
+}
+
+.brand-foot__copy {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--foot-muted);
+}
+
+.brand-foot__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--foot-text);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.brand-foot__top:hover {
+  color: var(--foot-accent);
+}
+
+.brand-foot__top-mark {
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .brand-foot__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-foot__nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-foot__nav {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .brand-foot__trust {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .brand-foot__stamp {
+    text-align: left;
+  }
+
+  .brand-foot__legal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* ==========================================================================
+   整页品牌统一（R2-04）
+   --------------------------------------------------------------------------
+   品牌页作用域换的是画布与发丝线（见 tokens.css 的 .is-brand-page）。
+   剩下两处「旧语境遗留色」在这里逐条收口，不做整页滤镜：
+   ========================================================================== */
+
+/* 章节短码在品牌页上用钴蓝，不再借用临床的信号橙——
+   信号橙是「重点/当前」的临床语义，不该在这里当装饰色。 */
+.is-brand-page .sec-head__code {
+  color: var(--brand-primary);
+}
+
+/* 品牌页的收尾 CTA 是品牌主操作，不是临床主操作：
+   `.btn` 默认用墨色（Clinical 的规矩），这里在品牌页作用域内换成钴蓝。 */
+.is-brand-page .btn {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+  border-color: var(--brand-primary);
+}
+
+.is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #ffffff);
+}
+
+html.dark .is-brand-page .btn:hover {
+  background: color-mix(in srgb, var(--brand-primary) 86%, #000000);
+}
+
+/* ==========================================================================
+   精简品牌页脚（R2.5 · Shared Product Shell）
+   --------------------------------------------------------------------------
+   资讯列表这类门户页需要品牌收尾，但不需要整页的攻略式页脚。
+   去掉长主张、平台读数与印章后，收紧上边距，避免把列表压出长滚动。
+   ========================================================================== */
+
+.brand-foot--compact {
+  margin-top: clamp(32px, 5vw, 64px);
+}
+
+.brand-foot--compact .brand-foot__inner {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-top: clamp(28px, 3.4vw, 44px);
+}
+
+.brand-foot--compact .brand-foot__brand {
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .brand-foot--compact .brand-foot__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   首页 Hero 之后的品牌区块（R2.5-02）
+   --------------------------------------------------------------------------
+   只改构图、材质、字阶与间距；业务内容与数据口径一条不动。
+   记录纸仍在品牌画框里保持白纸（--paper-* 不参与主题翻转）。
+   ========================================================================== */
+
+.landing-section {
+  padding-block: clamp(72px, 10vh, 128px);
+}
+
+.landing-section .sec-head {
+  margin-bottom: clamp(26px, 4vh, 42px);
+}
+
+/* 章节标题从「一行正文」抬到品牌层的版式标题；短码仍由 R2-04 的钴蓝规则接管。 */
+.landing-section .sec-head__title {
+  font-family: var(--font-serif);
+  font-size: clamp(23px, 2.3vw, 32px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.landing-section .sec-head__note {
+  color: var(--brand-muted);
+}
+
+/* ── 流程：左「八类覆盖」实体板 + 右步骤卡 ─────────────────────── */
+
+.landing-how {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+  margin-top: clamp(26px, 4vh, 44px);
+}
+
+.landing-how__classes {
+  padding: clamp(22px, 2.4vw, 34px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+  box-shadow: var(--brand-shadow);
+}
+
+.landing-how__classes .index__head {
+  padding-top: 0;
+}
+
+.landing-how__classes .index__row {
+  border-top-color: var(--brand-line);
+}
+
+.landing-how__classes .index__row:hover {
+  border-top-color: var(--brand-primary);
+}
+
+.landing-how__classes .index__row:hover .index__code,
+.landing-how__classes .index__row:hover .index__rate {
+  color: var(--brand-primary);
+}
+
+.landing-how__classes .index__code,
+.landing-how__classes .index__rate,
+.landing-how__classes .overline,
+.landing-how__classes .index__note {
+  color: var(--brand-muted);
+}
+
+.landing-how__classes .index__name {
+  color: var(--brand-text);
+}
+
+.landing-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.landing-step {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 6px 18px;
+  align-items: start;
+  padding: clamp(18px, 1.8vw, 24px) clamp(18px, 2vw, 26px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass);
+  transition:
+    border-color var(--fast),
+    transform var(--fast);
+}
+
+.landing-step:hover {
+  border-color: var(--brand-line-strong);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-step:hover {
+    transform: none;
+  }
+}
+
+.landing-step__index {
+  grid-row: span 2;
+  padding-top: 3px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--brand-primary);
+}
+
+.landing-step__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--brand-text);
+}
+
+.landing-step__body {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+.landing-step__readout {
+  grid-column: 2;
+  margin-top: 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--brand-primary);
+}
+
+/* ── 判读记录：品牌画框陈列纸面（Visual Completion U1）────────── */
+
+/* 章节引言：标题 + 价值说明 + 「查看示例」入口，两栏对齐。 */
+.landing-record__intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+  gap: clamp(20px, 3vw, 48px);
+  align-items: end;
+  margin-bottom: clamp(24px, 4vh, 40px);
+}
+
+.landing-record__value {
+  margin: 16px 0 0;
+  max-width: 46em;
+}
+
+.landing-record__actions {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.landing-record__peek {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--brand-line-strong);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--brand-text);
+  font-family: var(--font-brand);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--fast),
+    color var(--fast),
+    background var(--fast);
+}
+
+.landing-record__peek:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.landing-record__peek-note {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--brand-muted);
+}
+
+.landing-record {
+  padding: clamp(10px, 1.4vw, 18px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-glass);
+  box-shadow: var(--brand-shadow);
+}
+
+.landing-record__bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 10px 14px;
+  color: var(--brand-muted);
+}
+
+.landing-record__stamp {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--brand-muted);
+}
+
+/* 画框只负责裁边：纸、墨、风险色仍由 RecordSheet 的纸面原语决定。 */
+.landing-record__paper {
+  position: relative;
+  overflow: hidden;
+  /* 纸面内衬取最小档：画框是 24px，纸自己几乎方角，符合记录纸的物理感。 */
+  border-radius: var(--radius-sm);
+  background: var(--paper-surface);
+}
+
+/* 展示视窗：完整记录纸太高，页面上只陈列上部（结论、置信、八类概率），
+   下缘用纸色渐隐收口。完整记录走弹层，不整张长纸堆在页面中央。 */
+.landing-record__viewport {
+  max-height: clamp(420px, 52vh, 620px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 渐隐层铺在视窗下缘；纸色是同一张白纸的收口，不是页面底色。 */
+.landing-record__fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(72px, 12vh, 128px);
+  background: linear-gradient(to bottom, transparent, var(--paper-surface) 82%);
+  pointer-events: none;
+}
+
+.landing-record__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 14px 10px 2px;
+  color: var(--brand-muted);
+}
+
+.landing-record__foot span {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.landing-record__foot-btn {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  min-height: 36px;
+  color: var(--brand-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--fast);
+}
+
+.landing-record__foot-btn:hover {
+  color: color-mix(in srgb, var(--brand-primary) 80%, #000);
+}
+
+/* 完整示例记录弹层：Brand 弹层 = 玻璃实体面 + --radius-xl，
+   语境类 .is-brand-page 让纸面原语与品牌画布在 Portal 里都取到正确值。 */
+.landing-record__modal {
+  position: fixed;
+  z-index: 80;
+  top: 50%;
+  left: 50%;
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100svh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+  color: var(--brand-text);
+  box-shadow: var(--brand-shadow);
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  transition: opacity var(--base);
+}
+
+.landing-record__modal[data-starting-style],
+.landing-record__modal[data-ending-style] {
+  opacity: 0;
+}
+
+.landing-record__modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: none;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--brand-line);
+}
+
+.landing-record__modal-head .overline {
+  color: var(--brand-primary);
+}
+
+.landing-record__modal-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-circle);
+  background: none;
+  color: var(--brand-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    color var(--fast),
+    border-color var(--fast);
+}
+
+.landing-record__modal-close:hover {
+  color: var(--brand-text);
+  border-color: var(--brand-primary);
+}
+
+.landing-record__modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(16px, 2.4vw, 28px);
+  background: var(--brand-canvas);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-record__modal {
+    transition: none;
+  }
+}
+
+/* ── Agent：四点从台账行改成品牌信息卡 ────────────────────────── */
+
+.landing-agent__points {
+  list-style: none;
+  margin: clamp(30px, 4.5vh, 54px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landing-agent__point {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: clamp(18px, 1.8vw, 24px);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-xl);
+  background: var(--brand-surface);
+}
+
+.landing-agent__code {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--brand-primary);
+}
+
+.landing-agent__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--brand-text);
+}
+
+.landing-agent__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--brand-muted);
+}
+
+/* ── 责任边界：实体品牌面，**随主题**（浅色亮面 / 暗色深海蓝）───── */
+
+/* 这一段承载免责条款与四条硬规则，属于「承载大量文字的区域」，
+   用实体面而不是玻璃。但实体面不等于永远深色：浅色主题下是和页脚
+   同一套亮白实体面，深色主题下才是深海蓝。正文/发丝线取 --stat-*，
+   信号橙只在印章上出现（浅色走 --signal，深色走深底提亮版）。 */
+.is-brand-page .statute {
+  --stat-surface: var(--brand-surface);
+  --stat-panel: color-mix(in srgb, var(--brand-primary) 4%, var(--brand-surface));
+  --stat-text: var(--brand-text);
+  --stat-muted: var(--brand-muted);
+  --stat-hairline: var(--brand-line-strong);
+  --fg: var(--stat-text);
+  --fg-2: var(--stat-muted);
+  --fg-3: var(--stat-muted);
+  --hr: var(--brand-line);
+  --hr-strong: var(--stat-hairline);
+  --line: var(--brand-line);
+  --line-strong: var(--stat-hairline);
+  margin-top: clamp(24px, 4vh, 56px);
+  border-top-color: var(--stat-hairline);
+  border-bottom-color: var(--stat-hairline);
+  background: var(--stat-surface);
+  color: var(--stat-text);
+}
+
+html.dark .is-brand-page .statute {
+  --stat-surface: var(--brand-surface-deep);
+  --stat-panel: color-mix(in srgb, #ffffff 4%, transparent);
+  --stat-text: var(--brand-deep-text);
+  --stat-muted: var(--brand-deep-muted);
+  --stat-hairline: var(--brand-deep-hairline);
+  --hr: var(--brand-deep-hairline);
+  --hr-strong: var(--brand-deep-hairline);
+  --line: var(--brand-deep-hairline);
+  --line-strong: var(--brand-deep-hairline);
+}
+
+.is-brand-page .statute__panel {
+  border-color: var(--stat-hairline);
+  border-radius: var(--radius-xl);
+  background: var(--stat-panel);
+}
+
+.is-brand-page .statute__seal {
+  border-color: var(--signal);
+  color: var(--signal-text);
+}
+
+html.dark .is-brand-page .statute__seal {
+  border-color: var(--brand-deep-signal);
+  color: var(--brand-deep-signal-text);
+}
+
+.is-brand-page .statute__overline,
+.is-brand-page .statute__code,
+.is-brand-page .statute__body {
+  color: var(--stat-muted);
+}
+
+.is-brand-page .statute__title,
+.is-brand-page .statute__name,
+.is-brand-page .statute__lead {
+  color: var(--stat-text);
+}
+
+/* ── 收尾：品牌层留白与提示语 ─────────────────────────────────── */
+
+.landing-start {
+  padding-block: clamp(64px, 9vh, 112px);
+}
+
+.landing-start .pitch__title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+.landing-start .pitch__glass.auth__glass {
+  /* 收尾卡是 Brand 场景的面板：圆角取 --radius-xl；
+     `.pitch__glass.auth__glass` 在 app.css 里被压成 0，是旧仪器语境的遗留。 */
+  border-radius: var(--radius-xl);
+}
+
+.landing-start .btn {
+  /* Brand 按钮取胶囊形；0 圆角只属于 Clinical。 */
+  border-radius: var(--radius-pill);
+}
+
+.landing-start .pitch__glass .small {
+  color: var(--brand-muted);
+}
+
+/* ── 断点：只用 900 / 768 两档 ───────────────────────────────── */
+
+@media (max-width: 900px) {
+  .landing-how {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-agent__points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Agent 展示：品牌蓝/青语义覆盖（Visual Completion U1）─────── */
+/* app.css 里 composer/deck/screen 的强调色走 --signal（临床重点橙）。
+   首页是 Brand 场景：品牌段内把运行态强调换成品牌蓝/冰青，
+   不改 app.css 本体——判读页与 Agent 工作区的橙色语义不受影响。 */
+
+.is-brand-page .composer__icon:hover {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+
+.is-brand-page .composer__send {
+  background: var(--brand-primary);
+  color: var(--brand-primary-fg);
+}
+
+.is-brand-page .composer__send:not(:disabled):hover {
+  background: color-mix(in srgb, var(--brand-primary) 88%, #ffffff);
+}
+
+html.dark .is-brand-page .composer__send:not(:disabled):hover {
+  background: color-mix(in srgb, var(--brand-primary) 84%, #000000);
+}
+
+.is-brand-page .screen__eye,
+.is-brand-page .msg__tool,
+.is-brand-page .hits__rank,
+.is-brand-page .deck__index {
+  color: var(--brand-primary);
+}
+
+.is-brand-page .quote {
+  border-left-color: var(--brand-primary);
+}
+
+@media (max-width: 768px) {
+  .landing-agent__points {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-step {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-step__index {
+    grid-row: auto;
+  }
+
+  .landing-step__readout {
+    grid-column: 1;
+  }
+
+  .landing-record__bar {
+    flex-direction: column;
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
+  .landing-record__intro {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .landing-record__viewport {
+    max-height: 480px;
+  }
+}

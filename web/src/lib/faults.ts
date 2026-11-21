@@ -187,6 +187,21 @@ export function faultFromError(
       })
     }
 
+    // 影像存储失败（50002）：后端已经把「本次判读未归档」写进 message，
+    // 这句话是处置依据（没归档，可以重试），不能被笼统的 5xx 文案盖掉。
+    if (code === 50002) {
+      return fault({
+        severity: "critical",
+        kind: "server",
+        title: "影像没有保存下来",
+        detail:
+          cause.message ||
+          "这次判读没有归档（没有留下原始影像），可以重试一次。",
+        code,
+        action,
+      })
+    }
+
     if (code >= 500) {
       return fault({
         severity: "critical",

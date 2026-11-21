@@ -48,6 +48,7 @@ public class AgentImageUploadService {
     );
 
     private static final String OBJECT_KEY_PREFIX = UploadCompensationService.OBJECT_KEY_PREFIX;
+    public static final String VIEW_PREFIX = "/api/agent/image/view/";
 
     public String uploadImage(MultipartFile file, Long userId) {
         ThrowUtils.throwIf(userId == null, ErrorCode.NO_AUTH_ERROR, "用户未登录");
@@ -83,7 +84,7 @@ public class AgentImageUploadService {
             task.setRetryCount(0);
             uploadTaskMapper.insertPending(task);
 
-            return cosClientConfig.getHost() + "/" + objectKey;
+            return VIEW_PREFIX + objectKey.substring(objectKey.lastIndexOf('/') + 1);
         } catch (Exception e) {
             log.error("图片上传失败: {}", e.getMessage(), e);
             try {
@@ -99,9 +100,37 @@ public class AgentImageUploadService {
         }
     }
 
+    /** Convert only an exact server-issued upload URL; never fetch a user URL. */
+    public String resolveOwnedImageId(String imageUrl, Long userId) {
+        ThrowUtils.throwIf(imageUrl == null || userId == null, ErrorCode.NO_AUTH_ERROR);
+        String key = imageUrl.startsWith(VIEW_PREFIX)
+                ? OBJECT_KEY_PREFIX + userId + "/" + imageUrl.substring(VIEW_PREFIX.length())
+                : extractOwnedObjectKey(imageUrl);
+        ThrowUtils.throwIf((!imageUrl.equals(cosClientConfig.getHost() + "/" + key)
+                        && !imageUrl.equals(VIEW_PREFIX + key.substring(key.lastIndexOf('/') + 1)))
+                        || !key.matches("agent-chat/" + userId + "/[A-Za-z0-9_-]+\\.(png|jpg)"),
+                ErrorCode.NO_AUTH_ERROR, "图片引用未获授权");
+        var task = uploadTaskMapper.selectByObjectKey(userId, key);
+        ThrowUtils.throwIf(task == null || !userId.equals(task.getUserId())
+                        || !key.equals(task.getObjectKey()) || !UploadStatus.activeCodes().contains(task.getStatus()),
+                ErrorCode.PARAMS_ERROR, "图片不存在或已删除");
+        return key;
+    }
+
+    public String authorizedViewUrl(String imageUrl, Long userId) {
+        String key = resolveOwnedImageId(imageUrl, userId);
+        return VIEW_PREFIX + key.substring(key.lastIndexOf('/') + 1);
+    }
+
+    public String resolveViewTarget(String fileName, Long userId) {
+        String key = resolveOwnedImageId(VIEW_PREFIX + fileName, userId);
+        return cosClientConfig.getHost() + "/" + key;
+    }
+
     public void deleteImage(String imageUrl, Long userId) {
         ThrowUtils.throwIf(imageUrl == null || userId == null, ErrorCode.NO_AUTH_ERROR);
-        String objectKey = extractOwnedObjectKey(imageUrl);
+        String objectKey = imageUrl.startsWith(VIEW_PREFIX)
+                ? resolveOwnedImageId(imageUrl, userId) : extractOwnedObjectKey(imageUrl);
         String ownerPrefix = OBJECT_KEY_PREFIX + userId + "/";
         ThrowUtils.throwIf(!objectKey.startsWith(ownerPrefix), ErrorCode.NO_AUTH_ERROR,
                 "无权删除他人图片");

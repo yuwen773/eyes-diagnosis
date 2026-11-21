@@ -2,6 +2,7 @@ package com.csust.eyediagnosis.controller;
 
 import com.csust.eyediagnosis.agent.DiagnosisAgent;
 import com.csust.eyediagnosis.agent.config.AgentConstants;
+import com.csust.eyediagnosis.agent.service.AgentImageUploadService;
 import com.csust.eyediagnosis.agent.service.ChatHistoryService;
 import com.csust.eyediagnosis.common.BaseResponse;
 import com.csust.eyediagnosis.common.ResultUtils;
@@ -23,6 +24,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +51,9 @@ public class AgentController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private AgentImageUploadService agentImageUploadService;
+
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chatStream(@RequestBody AgentChatRequest request,
                                                      HttpServletRequest httpRequest) {
@@ -61,10 +68,23 @@ public class AgentController {
         // 入口处校验会话所有权：跨用户访问会立即拒绝
         chatHistoryService.claimOrValidateSession(threadId, userId, request.getMessage());
 
-        // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
-        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage());
+        // 图片必须在**落库之前**完成归属校验。落库的是客户端原样传来的 URL 列表，
+        // 历史回放时前端会把它当图片地址渲染；先存后校验会让一次被拒绝的请求
+        // （500）仍在历史里留下外部图片地址，下次打开该会话就会被自动请求——
+        // 等于把「禁止远程图片」的策略绕过去，还留下一个可追踪像素。
+        assertOwnedImages(request.getImageUrls(), userId);
 
-        log.info("Agent 流式对话请求, threadId={}, userId={}, message={}", threadId, userId, request.getMessage());
+        // 同步持久化用户消息；ChatHistoryService 内部按 sessionId 串行
+        // 图片附件随消息一起落库：刷新/换会话后资源栏要能恢复，不能只在内存里活一轮。
+        chatHistoryService.saveUserMessage(threadId, userId, request.getMessage(), request.getImageUrls());
+
+        // 日志只记录关联 ID 与长度：症状、病史等原文不得进入运行日志。
+        // 采用 ui 侧的匿名化口径（userIdHash），并在其后追加 #111 的 imageCount。
+        String requestId = UUID.randomUUID().toString();
+        log.info("Agent 流式对话请求, requestId={}, threadId={}, userIdHash={}, messageLength={}, imageCount={}",
+                requestId, threadId, anonymize(userId),
+                request.getMessage() == null ? 0 : request.getMessage().length(),
+                request.getImageUrls() == null ? 0 : request.getImageUrls().size());
 
         return diagnosisAgent.stream(request.getMessage(), request.getImageUrls(), threadId, userId,
                 request.getEnabledMcpServers(), request.getDisableMcpDefault())
@@ -79,7 +99,9 @@ public class AgentController {
                                 .build()
                 ))
                 .onErrorResume(error -> {
-                    log.error("流式对话错误", error);
+                    // 提供方异常文本可能夹带请求内容，只记录分类与关联 ID
+                    log.warn("Agent 流式对话失败, requestId={}, errorType={}", requestId, error.getClass().getSimpleName());
+                    log.debug("Agent 流式对话失败详情, requestId={}", requestId, error);
                     return Flux.just(ServerSentEvent.<String>builder()
                             .event("error")
                             .data("系统繁忙，请稍后重试")
@@ -104,6 +126,18 @@ public class AgentController {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         return ResultUtils.success(chatHistoryService.loadHistory(threadId, beforeId, Math.min(limit, agentConstants.getMaxHistoryPageSize())));
+    }
+
+    public record SessionCreate(String sessionId) {}
+
+    @PostMapping("/sessions")
+    public BaseResponse<SessionVO> createSession(@RequestBody SessionCreate request, HttpServletRequest servlet,
+                                                jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store");
+        User user = userService.getLoginUser(servlet);
+        if (user == null || user.getId() == null) throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        if (request == null) throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(chatHistoryService.createEmptySession(request.sessionId(), user.getId()));
     }
 
     @GetMapping("/sessions")
@@ -205,6 +239,30 @@ public class AgentController {
         }
         String content = chatHistoryService.exportSession(sessionId, loginUser.getId(), format);
         return ResultUtils.success(content);
+    }
+
+    /** 日志中只保留可关联、不可直接识别身份的短哈希。 */
+    /**
+     * 图片附件进入历史之前的归属校验。抛错即中止请求，任何一条都不会被落库。
+     * 校验口径与 {@code DiagnosisAgent#stream} 完全一致：同一份
+     * {@code AgentImageUploadService#resolveOwnedImageId}，不另立一套规则。
+     */
+    private void assertOwnedImages(List<String> imageUrls, Long userId) {
+        if (imageUrls == null || imageUrls.isEmpty()) return;
+        for (String url : imageUrls) {
+            agentImageUploadService.resolveOwnedImageId(url, userId);
+        }
+    }
+
+    private static String anonymize(Long userId) {
+        if (userId == null) return "anonymous";
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(String.valueOf(userId).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest).substring(0, 12);
+        } catch (Exception e) {
+            return "unavailable";
+        }
     }
 
     private String toJson(Object obj) {

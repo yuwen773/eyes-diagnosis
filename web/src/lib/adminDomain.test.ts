@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest"
-import { barLabelFits, canDeleteUser, confidencePercent, newsContentValid, newsStatusOptionsFor, newsStatusView, rankDistribution, reviewView } from "./adminDomain"
+import {
+  barLabelFits,
+  canDeleteUser,
+  confidencePercent,
+  diagnosisFilterParams,
+  formatStatNumber,
+  formatStatPercent,
+  humanReviewStatusLabel,
+  knowledgeStatusView,
+  newsContentValid,
+  newsStatusOptionsFor,
+  newsStatusView,
+  noConclusionView,
+  rankDistribution,
+  reviewView,
+  userRoleView,
+} from "./adminDomain"
 
 describe("reviewView", () => {
   it("aiRejected 优先于一切", () => {
@@ -17,6 +33,27 @@ describe("reviewView", () => {
       label: "已复审", risk: "normal", tone: "plain",
     })
     expect(reviewView({ requiresReview: false, aiRejected: false }).label).toBe("未复审")
+  })
+})
+
+describe("noConclusionView", () => {
+  it("aiRejected 为真 → 未出结论，并带上拒识原因", () => {
+    expect(noConclusionView({ aiRejected: true, abstainReason: "图像质量不足" })).toEqual({
+      label: "未出结论", rejected: true, reason: "图像质量不足",
+    })
+  })
+  it("空结果但不是拒识 → 无判读结果，不能冒充拒识", () => {
+    expect(noConclusionView({ aiRejected: false })).toEqual({
+      label: "无判读结果", rejected: false,
+    })
+  })
+  it("aiRejected 缺省也按未拒识处理", () => {
+    expect(noConclusionView({})).toEqual({ label: "无判读结果", rejected: false })
+  })
+  it("拒识但没有原因时，reason 不给 undefined 之外的东西", () => {
+    expect(noConclusionView({ aiRejected: true })).toEqual({
+      label: "未出结论", rejected: true, reason: undefined,
+    })
   })
 })
 
@@ -113,5 +150,81 @@ describe("confidencePercent", () => {
   it("undefined / NaN → 「—」", () => {
     expect(confidencePercent(undefined)).toBe("—")
     expect(confidencePercent(NaN)).toBe("—")
+  })
+})
+
+describe("userRoleView", () => {
+  it("三档角色各归其位", () => {
+    expect(userRoleView("admin").label).toBe("管理员")
+    expect(userRoleView("user").label).toBe("普通用户")
+    expect(userRoleView("ban").label).toBe("已封禁")
+  })
+  it("未知角色不猜成「普通用户」", () => {
+    // 老数据里没写角色的账号，按「未标注」显示，而不是被显示成普通用户。
+    expect(userRoleView(undefined).label).toBe("未标注")
+    expect(userRoleView("").label).toBe("未标注")
+    expect(userRoleView("root").label).toBe("root")
+  })
+})
+
+describe("diagnosisFilterParams", () => {
+  it("空筛选 = 不限", () => {
+    expect(diagnosisFilterParams("")).toEqual({})
+  })
+  it("待人工复核 / AI 拒识 走各自的布尔列", () => {
+    expect(diagnosisFilterParams("requiresReview")).toEqual({ requiresReview: true })
+    expect(diagnosisFilterParams("aiRejected")).toEqual({ aiRejected: true })
+  })
+  it("已复审 / 复审中 / 未复审 走 reexamineStatus", () => {
+    expect(diagnosisFilterParams("reviewed")).toEqual({ reexamineStatus: 3 })
+    expect(diagnosisFilterParams("reviewing")).toEqual({ reexamineStatus: 2 })
+    // 「未复审」筛的是落库值 0，不是 DTO 注释里的 1。
+    //
+    // 依据（2026-11-15 实测 + 读后端写路径）：
+    // - Diagnosis.reexamineStatus 是 primitive int，判读落库不写它 → 新记录落库即 0；
+    // - 全仓只有两处写它：复核写 3、患者申请复诊写 2，**没有任何路径产出 1**；
+    // - 两个本机库里 0 与 1 并存（历史数据用的是注释里的 1）。
+    // 按 1 检索会一条都查不到（后端只支持单值 eq，覆盖不到 0 与 1 两档）。
+    // 旧期望写死 1，等于把「筛不出来」这个缺陷固化成了契约。
+    expect(diagnosisFilterParams("notReviewed")).toEqual({ reexamineStatus: 0 })
+  })
+})
+
+describe("knowledgeStatusView", () => {
+  it("0 处理中 / 1 已完成 / 2 失败", () => {
+    expect(knowledgeStatusView(0).label).toBe("处理中")
+    expect(knowledgeStatusView(1).label).toBe("已完成")
+    expect(knowledgeStatusView(2).label).toBe("失败")
+  })
+  it("缺省读「未知」", () => {
+    expect(knowledgeStatusView(undefined).label).toBe("未知")
+  })
+})
+
+describe("humanReviewStatusLabel", () => {
+  it("代码翻成人话", () => {
+    // 系统没有资质数据源，REVIEWED 不按账号角色给出"干净"的「已复核」。
+    expect(humanReviewStatusLabel("REVIEWED")).toBe("已复核 · 资质未核验")
+    expect(humanReviewStatusLabel("AWAITING_REVIEW")).toBe("拒识 / 低置信 · 待复核")
+    expect(humanReviewStatusLabel(null)).toBe("未记录")
+  })
+
+  it("AI_ONLY 不写「待复核」：与患者端同一口径，没入队就不能装作在排队", () => {
+    expect(humanReviewStatusLabel("AI_ONLY")).toBe("仅 AI 结论 · 未进入复核队列")
+    expect(humanReviewStatusLabel("AI_ONLY")).not.toContain("待复核")
+  })
+})
+
+describe("formatStatNumber / formatStatPercent", () => {
+  it("计数千分位", () => {
+    expect(formatStatNumber(8452)).toBe("8,452")
+    expect(formatStatNumber(0)).toBe("0")
+  })
+  it("非有限值给破折号", () => {
+    expect(formatStatNumber(NaN)).toBe("—")
+  })
+  it("比例 → 一位小数百分比", () => {
+    expect(formatStatPercent(0.874)).toBe("87.4%")
+    expect(formatStatPercent(null)).toBe("—")
   })
 })

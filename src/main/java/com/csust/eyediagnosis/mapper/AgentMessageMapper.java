@@ -10,13 +10,15 @@ import java.util.List;
 @Mapper
 public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
 
-    String SUBTYPE_SORT = "CASE subType WHEN 'reasoning' THEN 1 WHEN 'tool-call' THEN 2 WHEN 'tool-result' THEN 3 WHEN 'mcp-confirm' THEN 4 WHEN 'text' THEN 5 ELSE 0 END";
-
+    // 只按 id 排序：写入由 SessionMessageQueue 按会话串行、id 单调递增，
+    // id 序就是事件序。旧的「createdTime 主序 + subtype 次序」在秒级时间戳下
+    // 会把同一秒的 reasoning/tool-call/tool-result 重新洗牌，且与游标
+    // （id < beforeId）不一致——翻页会重复返回同一段。
     @Select("<script>" +
             "SELECT * FROM t_agent_message " +
             "WHERE sessionId = #{sessionId} " +
             "<if test='beforeId != null'> AND id &lt; #{beforeId} </if>" +
-            "ORDER BY createdTime DESC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}" +
+            "ORDER BY id DESC LIMIT #{limit} " +
             "</script>")
     List<AgentMessage> selectByCursor(
             @Param("sessionId") String sessionId,
@@ -25,7 +27,7 @@ public interface AgentMessageMapper extends BaseMapper<AgentMessage> {
 
     @Select("SELECT * FROM t_agent_message " +
             "WHERE sessionId = #{sessionId} " +
-            "ORDER BY createdTime ASC, " + SUBTYPE_SORT + " ASC LIMIT #{limit}")
+            "ORDER BY id ASC LIMIT #{limit}")
     List<AgentMessage> selectBySessionIdOrderByTimeASC(
             @Param("sessionId") String sessionId,
             @Param("limit") int limit);

@@ -1,0 +1,91 @@
+/* Intelligence: existing Iris optical tokens; isolated from ordinary /agent. */
+.collaboration-page {
+  --fg: var(--brand-text);
+  --fg-2: var(--brand-muted);
+  --fg-3: var(--brand-muted);
+  --hr: var(--brand-line);
+  --hr-strong: var(--brand-line-strong);
+  color: var(--fg);
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+}
+.collab-page-main { width: min(1680px, 100%); padding: 20px var(--gutter) 22px; margin: auto; }
+.collab-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin: 0 0 14px; }
+.collab-eyebrow { display: flex; align-items: center; gap: 8px; color: var(--fg-2); font: 10px var(--font-mono); letter-spacing: .12em; margin-bottom: 12px; }
+.collab-page-heading .collab-eyebrow { font: 650 12px var(--font-brand); letter-spacing: .02em; margin-bottom: 6px; }
+.collab-page-heading h1 { font: 700 clamp(24px, 2.35vw, 34px)/1.24 var(--font-brand); letter-spacing: -.035em; margin: 0; }
+.collab-page-actions { display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+.collab-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--hr-strong); border-radius: var(--radius-md); padding: 11px 15px; color: var(--fg); background: var(--brand-glass-strong); font: 500 13px/1.5 var(--font-sans); cursor: pointer; min-height: 44px; min-width: 44px; text-decoration: none; }
+.collab-button { border-color: var(--brand-muted); }
+.collab-button:hover { border-color: var(--brand-primary); }
+.collab-button:disabled { opacity: .6; cursor: not-allowed; }
+.collab-button--primary { background: var(--brand-primary); color: var(--brand-primary-fg); border-color: var(--brand-primary); }
+.collab-text-button { display: inline-flex; align-items: center; font: 500 13px var(--font-sans); color: var(--brand-primary); padding: 10px 0; cursor: pointer; background: none; border: 0; min-height: 44px; min-width: 44px; text-underline-offset: 4px; }
+.collaboration-page :is(button, a, input, select, textarea, summary):focus-visible,
+.collab-timeline__scroll:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 4px; }
+.collab-gate { padding: 48px; border: 1px solid var(--hr); border-radius: var(--radius-lg); background: var(--brand-glass-strong); line-height: 1.8; }
+.collab-gate h2 { font: 400 26px var(--font-serif); margin: 16px 0; }
+.collab-gate p { color: var(--fg-2); }
+.collab-submit h3 { font: 400 26px var(--font-serif); margin: 0; }
+.collab-fault { color: var(--danger); font-size: 13px; line-height: 1.85; overflow-wrap: anywhere; }
+.collab-launch { display: grid; grid-template-columns: minmax(320px, 44%) minmax(0, 1fr); gap: 24px; align-items: start; }
+.collab-submit, .collab-launch-guide { padding: 30px; border: 1px solid var(--hr); border-radius: var(--radius-lg); background: var(--brand-glass-strong); }
+.collab-submit p, .collab-launch-guide > p { color: var(--fg-2); font-size: 13px; line-height: 1.85; }
+.collab-launch-guide h2 { font: 400 25px var(--font-serif); margin: 14px 0; }
+.collab-submit label { font-size: 13px; color: var(--fg-2); display: flex; flex-direction: column; gap: 12px; }
+.collab-file { margin: 24px 0; padding: 28px 20px; border: 1px dashed var(--brand-line-strong); background: var(--brand-soft); border-radius: var(--radius-md); }
+.collab-file input { max-width: 100%; min-width: 0; color: var(--fg); min-height: 44px; font: inherit; }
+.collab-file input::file-selector-button { min-height: 44px; border: 1px solid var(--brand-muted); border-radius: var(--radius-sm); color: var(--fg); background: var(--brand-glass-strong); padding: 8px 12px; margin-right: 10px; cursor: pointer; }
+.collab-task-picker { display: grid; gap: 16px; margin: 20px 0; }
+.collab-task-picker select { background: var(--brand-surface); border: 1px solid var(--brand-muted); border-radius: var(--radius-md); color: var(--fg); padding: 12px; min-height: 44px; width: 100%; }
+.collab-submit > .collab-button--primary { width: 100%; }
+.collab-boundary { display: flex; align-items: start; gap: 12px; color: var(--fg-2); margin-top: 24px; }
+.collab-boundary svg { flex-shrink: 0; margin-top: 4px; }
+.collab-boundary p { font-size: 12px; line-height: 1.85; margin: 0; }
+.clinical-panel { border-top: 1px solid var(--hr-strong); padding-block: 24px; font-size: 13px; line-height: 1.85; }
+.clinical-panel h3, .clinical-panel h4 { margin: 16px 0 8px; }
+.clinical-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 16px; }
+.clinical-claims section, .clinical-source { border-top: 1px solid var(--hr); padding-block: 12px; overflow-wrap: anywhere; }
+.clinical-claims p, .clinical-source p, .clinical-source blockquote { margin-block: 8px; }
+.clinical-notice { border-left: 2px solid var(--hr-strong); padding-left: 14px; }
+.clinical-panel details, .review-workspace details { margin-block: 18px; }
+.clinical-panel summary, .review-workspace summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.clinical-consent { border: 1px solid var(--hr-strong); padding: 18px; }
+.clinical-review-image { border: 1px solid var(--hr); padding: 16px; margin-block: 20px; }
+.clinical-review-image img { display: block; max-width: 100%; max-height: 360px; margin: auto; object-fit: contain; }
+.clinical-review-image a { display: block; background: var(--dark); border-radius: var(--radius-md); overflow: hidden; }
+.clinical-consent label { display: flex; align-items: start; gap: 12px; margin-block: 18px; min-height: 44px; }
+.clinical-consent input { margin-top: 6px; min-width: 20px; min-height: 20px; }
+.clinical-panel .num, .review-workspace .num { overflow-wrap: anywhere; }
+.review-page { padding-block: 48px; min-height: calc(100dvh - var(--nav-h)); }
+.review-workspace { font-size: 14px; line-height: 1.8; }
+.review-workspace h1 { font: 400 36px var(--font-serif); }
+.review-workspace h2 { font: 400 28px var(--font-serif); }
+.review-workspace h4 { font-size: 14px; font-weight: 500; }
+.review-workspace form { display: grid; gap: 18px; max-width: 680px; }
+.review-workspace label { display: grid; gap: 8px; }
+.review-workspace input, .review-workspace textarea { border: 1px solid var(--brand-muted); background: var(--bg); color: var(--fg); padding: 12px; width: 100%; min-height: 44px; }
+.review-workspace textarea { min-height: 120px; resize: vertical; }
+.review-columns { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: 32px; margin-top: 32px; }
+.review-columns aside { border-right: 1px solid var(--hr); padding-right: 24px; }
+.review-columns ul { list-style: none; padding: 0; }
+.review-columns li { margin-top: 12px; }
+.review-columns li button { display: grid; gap: 8px; text-align: left; width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  .collab-page-heading { align-items: center; }
+  .collab-launch { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) {
+  .collab-page-main { padding: 14px 20px 24px; }
+  .collab-submit, .collab-launch-guide, .collab-gate { padding: 24px 20px; }
+  .review-columns { grid-template-columns: minmax(0, 1fr); }
+  .review-columns aside { border-right: 0; border-bottom: 1px solid var(--hr); padding: 0 0 20px; }
+}
+@media (max-width: 390px) {
+  .collab-page-main { padding-inline: 16px; }
+  .collab-page-actions .collab-button { padding-inline: 8px; }
+
+}
+@media (prefers-reduced-motion: reduce) {
+  .collaboration-page { scroll-behavior: auto; }
+}

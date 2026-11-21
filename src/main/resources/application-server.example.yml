@@ -7,7 +7,9 @@ spring:
     username: <db-user>
     password: <db-password>
   jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
+    # 不要设置 date-format：无 time-zone 的 SimpleDateFormat 会按 UTC 输出
+    # 无偏移墙钟，正是 R3 修掉的 8 小时时差。时间格式统一由 JsonConfig 的
+    # ApiDateSerializer 产出带偏移的 ISO-8601。
     serialization:
       write-dates-as-timestamps: false
   session:
@@ -30,8 +32,6 @@ spring:
         client:
           host: <chroma-host>
           port: 8000
-        tenant-name: default_tenant
-        database-name: default_database
         collection-name: diagnosis-knowledge
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
