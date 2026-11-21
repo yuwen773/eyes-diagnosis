@@ -2,10 +2,12 @@ package com.csust.eyediagnosis.agent.tools;
 
 import com.csust.eyediagnosis.agent.InvalidToolOutputException;
 import com.csust.eyediagnosis.agent.model.EyeAnalysisResult;
+import com.csust.eyediagnosis.agent.service.AgentImageUploadService;
 import com.csust.eyediagnosis.exception.BusinessException;
 import com.csust.eyediagnosis.exception.ErrorCode;
 import com.csust.eyediagnosis.manager.CosManager;
 import com.csust.eyediagnosis.mapper.UploadTaskMapper;
+import com.csust.eyediagnosis.upload.state.UploadCompensationService;
 import com.csust.eyediagnosis.upload.state.UploadStatus;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -60,6 +62,9 @@ public class EyeImageAnalyzerTool {
     private final UploadTaskMapper uploadTaskMapper;
 
     private static final long MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+    /** 与上传侧同一份对象键前缀，避免两处各写一份 "agent-chat/" 漂移。 */
+    private static final String OBJECT_KEY_PREFIX = UploadCompensationService.OBJECT_KEY_PREFIX;
 
     private ChatClient visionChatClient;
 
@@ -145,23 +150,49 @@ public class EyeImageAnalyzerTool {
         }
     }
 
-    /** 只允许 agent-chat/{userId}/ 前缀的登记对象；imageId 不是 URL，模型给的 URL 在这里被截断。 */
+    /**
+     * 把模型给回的 imageId 归一化到「当前用户命名空间下的登记对象键」，再做归属 + 活跃校验。
+     *
+     * <p>不能假设模型逐字复述完整对象键：实测模型有时把 {@code agent-chat/{uid}/{file}.jpg}
+     * 截成裸文件名 {@code {file}.jpg}，或改用上传接口返回的视图 URL
+     * {@code /api/agent/image/view/{file}.jpg}。旧实现按前缀严格匹配，会把这两种合法形状
+     * 都判成「无权分析他人图片」（NO_AUTH），用户看到一次本不该发生的失败。这里接受
+     * 服务端签发过的三种形状，统一收敛为 {@code agent-chat/{uid}/{file}}；越权前缀、外部
+     * URL、路径穿越、非法字符仍一律拒绝。
+     *
+     * <p>安全边界不变：归一化之后仍然要 (1) 落在 {@code agent-chat/{当前用户}/} 前缀内，
+     * (2) 在 {@code t_upload_task} 中存在归属当前用户且处于活跃状态的行。模型无法借此访问他人图片。
+     */
     private String resolveOwnedObjectKey(String imageId, Long currentUserId) {
-        if (imageId == null || imageId.isBlank() || imageId.contains(":")
-                || imageId.contains("?") || imageId.contains("..") || imageId.contains("\\")) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "imageId 非法");
-        }
-        // imageId 即上传时返回的对象 key（agent-chat/{userId}/{uuid}.{ext}），
-        // 由 AgentImageUploadService 生成；前缀归属校验同时排除路径穿越与跨用户访问。
-        String ownerPrefix = "agent-chat/" + (currentUserId != null ? currentUserId : "") + "/";
-        if (!imageId.startsWith(ownerPrefix) || imageId.substring(ownerPrefix.length()).contains("/")) {
+        if (imageId == null || currentUserId == null) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权分析他人图片");
         }
-        var task = uploadTaskMapper.selectByObjectKey(currentUserId, imageId);
+        String raw = imageId.trim();
+        boolean explicitKey = raw.startsWith(OBJECT_KEY_PREFIX);
+        String fileName;
+        if (explicitKey) {
+            fileName = raw.substring(raw.lastIndexOf('/') + 1);
+        } else if (raw.startsWith(AgentImageUploadService.VIEW_PREFIX)) {
+            fileName = raw.substring(AgentImageUploadService.VIEW_PREFIX.length());
+        } else {
+            fileName = raw;
+        }
+        // 归一化后 fileName 必须是单一、安全的对象名：不接受分隔符、协议串、查询串或穿越段。
+        if (fileName.isBlank() || fileName.contains("/") || fileName.contains("\\")
+                || fileName.contains(":") || fileName.contains("?") || fileName.contains("..")
+                || fileName.contains("<") || fileName.contains(">")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "imageId 非法");
+        }
+        String objectKey = OBJECT_KEY_PREFIX + currentUserId + "/" + fileName;
+        // 模型若给的是完整对象键却不在本用户命名空间（显式越权），按权限错误拒绝，不静默改写。
+        if (explicitKey && !raw.equals(objectKey)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权分析他人图片");
+        }
+        var task = uploadTaskMapper.selectByObjectKey(currentUserId, objectKey);
         if (task == null || !UploadStatus.activeCodes().contains(task.getStatus())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "图片不存在或已删除");
         }
-        return imageId;
+        return objectKey;
     }
 
     private byte[] readImage(String objectKey) {

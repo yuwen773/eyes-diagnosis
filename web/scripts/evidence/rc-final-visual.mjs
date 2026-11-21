@@ -58,6 +58,8 @@ const manifest = {
 await writeFile(join(out, "build-manifest.json"), JSON.stringify(manifest, null, 2))
 const server = await preview({ root: webRoot, build: { outDir: dist }, preview: { host: "127.0.0.1", port: Number(values.port), strictPort: true } })
 const base = `http://127.0.0.1:${values.port}`
+// 横向溢出是真实响应式缺陷：记录后继续抓取全部场景，最后统一断言（仍会使本次运行失败）。
+const overflowDefects = []
 function executablePath() {
   const explicit = process.env.E2E_CHROMIUM_PATH || process.env.E2E_CHROMIUM_EXECUTABLE_PATH
   if (explicit) return explicit
@@ -142,7 +144,7 @@ async function scenario(theme, width, scene, run) {
     await Promise.all(pending)
     const state = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, dark: document.documentElement.classList.contains("dark"), overflow: document.documentElement.scrollWidth - innerWidth, devClient: !!document.querySelector("script[src='/@vite/client']") }))
     assert.equal(state.dark, theme === "dark")
-    assert.ok(state.overflow <= 1, `${scene}: horizontal overflow ${state.overflow}`)
+    if (state.overflow > 1) overflowDefects.push({ scene, theme, width, overflow: state.overflow })
     assert.equal(state.devClient, false)
     assert.deepEqual(pageErrors, [])
     assert.deepEqual(assetFailures, [])
@@ -163,7 +165,7 @@ try {
   manifest.chromium = browser.version()
   for (const theme of ["light", "dark"]) {
     if (fixtureMode) {
-      for (const width of [390, 820, 1440]) await scenario(theme, width, "collaboration", async (page, capture) => {
+      for (const width of [390, 768, 1440]) await scenario(theme, width, "collaboration", async (page, capture) => {
         await page.goto(`${base}/agent/collaboration?runId=run-a&threadId=thread-a`)
         await expect(page.getByText("协作完成", { exact: true })).toBeVisible()
         await expect(page.locator(".collab-summary")).toContainText("待医生复核")
@@ -175,14 +177,25 @@ try {
       })
       continue
     }
-    for (const width of [390, 820, 1440, 1920]) await scenario(theme, width, "home", async (page, capture) => {
+    for (const width of [390, 768, 1440, 1920]) await scenario(theme, width, "home", async (page, capture) => {
       await page.goto(base)
       await page.locator(".hero-fusion__prism").waitFor({ state: "visible", timeout: 60000 })
-      await expect(page.locator("a[href='/agent']").first()).toBeVisible()
+      if (width <= 900) {
+        // ≤900px 顶栏导航收进 MobileNav 抽屉（shell.css max-width:900 隐藏 .product-head__nav）；
+        // 入口经汉堡可达，不是消失。这里验证真实移动可发现性，而非要求桌面链接可见。
+        const burger = page.locator(".product-head .burger")
+        await expect(burger).toBeVisible()
+        await burger.click()
+        await expect(page.locator("#mobile-nav a[href='/agent']")).toBeVisible()
+        await page.keyboard.press("Escape")
+        await expect(burger).toBeVisible()
+      } else {
+        await expect(page.locator("a[href='/agent']").first()).toBeVisible()
+      }
       await capture("home-e09", ".hero-fusion__prism", { hero: await page.locator(".hero-fusion__stage").getAttribute("data-breakpoint") })
       assert.equal(await page.locator("a[href='/agent/collaboration']").count(), 0, "production collaboration navigation must remain off")
     })
-    for (const width of [390, 820, 1440]) {
+    for (const width of [390, 768, 1440]) {
       await scenario(theme, width, "provenance", async (page, capture) => {
         await page.goto(`${base}/admin/diagnosis`)
         await page.getByRole("button", { name: "详情", exact: true }).click()
@@ -223,6 +236,8 @@ try {
       })
     }
   }
+  manifest.overflowDefects = overflowDefects
+  assert.equal(overflowDefects.length, 0, `horizontal overflow defects: ${JSON.stringify(overflowDefects)}`)
   assert.equal(git("rev-parse", "HEAD"), values.sha, "HEAD moved during evidence capture")
   git("diff", "--quiet", "HEAD", "--", "web/src", "web/public", "web/vite.config.ts", "web/package.json", "web/package-lock.json")
 } catch (error) {

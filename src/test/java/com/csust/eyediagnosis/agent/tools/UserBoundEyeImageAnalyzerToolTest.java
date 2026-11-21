@@ -144,4 +144,41 @@ class UserBoundEyeImageAnalyzerToolTest {
         assertEquals(40101, fault.getCode());
         verify(cosManager, never()).getObject(any());
     }
+
+    @Test
+    void bareFileNameResolvesToOwnedKeyAndStillChecksOwnership() {
+        registerTask(OWN_KEY, 2 /* PERSISTED */);
+        when(cosManager.getObject(eq(OWN_KEY))).thenReturn(cosObject(new byte[]{1, 2, 3}));
+
+        // 模型把对象键截断成裸文件名时，必须归一化到本用户登记键再读 COS，
+        // 而不是误报 NO_AUTH；视觉客户端未初始化 → 失败终态（50000），不是假成功。
+        BusinessException fault = assertThrows(BusinessException.class,
+                () -> inner.analyzeOwnedImage("abcd-uuid.jpg", USER));
+        assertEquals(50000, fault.getCode());
+        verify(taskMapper).selectByObjectKey(USER, OWN_KEY);
+        verify(cosManager).getObject(eq(OWN_KEY));
+    }
+
+    @Test
+    void serverViewUrlResolvesToOwnedKey() {
+        registerTask(OWN_KEY, 2 /* PERSISTED */);
+        when(cosManager.getObject(eq(OWN_KEY))).thenReturn(cosObject(new byte[]{1, 2, 3}));
+
+        // 上传接口返回的是视图 URL；模型改写回视图 URL 时也要归一化到登记键。
+        BusinessException fault = assertThrows(BusinessException.class,
+                () -> inner.analyzeOwnedImage("/api/agent/image/view/abcd-uuid.jpg", USER));
+        assertEquals(50000, fault.getCode());
+        verify(taskMapper).selectByObjectKey(USER, OWN_KEY);
+        verify(cosManager).getObject(eq(OWN_KEY));
+    }
+
+    @Test
+    void bareFileNameNeverReachesUnregisteredObject() {
+        // 裸文件名归一化后仍要查登记表；未登记/他人的文件名一律判「不存在」，不触达 COS。
+        when(taskMapper.selectByObjectKey(USER, "agent-chat/42/stranger.jpg")).thenReturn(null);
+        BusinessException fault = assertThrows(BusinessException.class,
+                () -> inner.analyzeOwnedImage("stranger.jpg", USER));
+        assertEquals(40000, fault.getCode());
+        verify(cosManager, never()).getObject(any());
+    }
 }

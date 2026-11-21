@@ -237,24 +237,6 @@ public class MCPManager {
                         config.setUrl((String) serverConfig.get("url"));
                         log.info("成功解析 SSE URL: {}", config.getUrl());
                     }
-                    if (serverConfig.containsKey("command")) {
-                        config.setCommand((String) serverConfig.get("command"));
-                    }
-                    if (serverConfig.containsKey("args")) {
-                        @SuppressWarnings("unchecked")
-                        List<String> args = (List<String>) serverConfig.get("args");
-                        config.setArgs(args);
-                    }
-                    if (serverConfig.containsKey("env")) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> env = (Map<String, String>) serverConfig.get("env");
-                        config.setEnvValue(env);
-                    }
-                    if (serverConfig.containsKey("headers")) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> headers = (Map<String, String>) serverConfig.get("headers");
-                        config.setRemoteHeader(headers);
-                    }
                 }
             }
         } catch (Exception e) {
