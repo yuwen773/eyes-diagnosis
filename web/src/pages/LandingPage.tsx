@@ -62,6 +62,12 @@ const SPECIMEN_RATE: Record<string, string> = {
   OTH: "0.01",
 }
 
+/** 索引按示例概率从高到低：先看到这条记录的最大类，再扫其余。
+ *  原来按代码排，0.78 的答案落在第四行，读者得自己找。 */
+const CLASS_ROWS = [...CLASSES].sort(
+  (a, b) => Number(SPECIMEN_RATE[b.code] ?? 0) - Number(SPECIMEN_RATE[a.code] ?? 0),
+)
+
 /** 页脚章节索引。顶栏只放跨产品目的地，页面内的章节从这里进。 */
 const LANDING_SECTIONS = [
   { href: "#specimen", label: "模型读什么" },
@@ -262,16 +268,16 @@ export function LandingPage() {
       <main id="main-content" tabIndex={-1}>
         <LandingHero />
 
-        <section className="plate" aria-label="眼底影像示意">
+        <section className="plate" aria-label="品牌渲染 · 虹膜示意">
           <Deferred minHeight="100svh">
           <ScrollExpand
             src={dark ? "/scroll-expand-dark.webp" : "/scroll-expand-light.webp"}
             tone={dark ? "dark" : "light"}
-            alt="眼底示意渲染：虹膜与血管分布的示意画，非真实患者影像"
+            alt="品牌渲染：虹膜与血管分布的示意画，非真实患者影像"
             title={
               <span className="scroll-expand__title-inner">
-                <span className="scroll-expand__title-kicker">RENDER · 眼底示意</span>
-                <span className="scroll-expand__title-main">模型的唯一输入</span>
+                <span className="scroll-expand__title-kicker">RENDER · 品牌渲染</span>
+                <span className="scroll-expand__title-main">输入是一张眼底照片</span>
               </span>
             }
             scrollHint="滚动展开 · SCROLL"
@@ -293,7 +299,7 @@ export function LandingPage() {
                 模型只读这一张图。清晰度、对比度与视野完整性先过质量门，
                 达标才给出判读；不达标就拒识。
               </p>
-              <span className="scroll-expand__caption-note">眼底示意渲染 · 非真实患者影像</span>
+              <span className="scroll-expand__caption-note">品牌渲染 · 非真实患者影像</span>
             </div>
           </ScrollExpand>
           </Deferred>
@@ -424,8 +430,11 @@ export function LandingPage() {
                     <span className="overline">08 CLASSES</span>
                   </div>
 
-                  {CLASSES.map((item) => (
-                    <div className="index__row" key={item.code}>
+                  {CLASS_ROWS.map((item, index) => (
+                    <div
+                      className={"index__row" + (index === 0 ? " index__row--top" : "")}
+                      key={item.code}
+                    >
                       <span className="index__code">{item.code}</span>
                       <span className="index__name">{item.name}</span>
                       <span className="index__rate num">{SPECIMEN_RATE[item.code]}</span>
@@ -481,7 +490,7 @@ export function LandingPage() {
                   查看完整示例记录
                   <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
                 </button>
-                <span className="landing-record__peek-note num">示例 · 非真实患者</span>
+                <span className="landing-record__peek-note num">示例 · 非真实患者 · 不构成诊断结论</span>
               </div>
             </div>
 
@@ -655,7 +664,7 @@ export function LandingPage() {
           <div className="reveal">
             <h2 className="pitch__title">先读一张片子试试</h2>
             <p className="lead" style={{ marginTop: 16 }}>
-              不需要说明书——上传、等待、读记录，三步之内就能看见判断依据。
+              不需要说明书——上传、过质量门、读记录，四步之内就能看见判断依据。
             </p>
           </div>
 
@@ -666,6 +675,20 @@ export function LandingPage() {
                 上传眼底照片
                 <span className="btn__key">JPG · PNG</span>
               </Link>
+              <button
+                type="button"
+                className="pitch__sample"
+                onClick={() => setRecordPreviewOpen(true)}
+                aria-haspopup="dialog"
+              >
+                没有影像？先看一份示例记录 →
+              </button>
+              {/* 普通患者最容易踩的坑：随手拍的手机照片过不了质量门。判读页只收
+                  眼底相机拍摄的眼底照片，这句话必须在按钮旁边说清楚。 */}
+              <p className="pitch__hint num">
+                <span>需要眼底相机拍摄的眼底照片</span>
+                <span>单张{UPLOAD_LIMIT_HINT} · JPG / PNG</span>
+              </p>
               <p className="small">
                 继续即表示你已阅读并理解：本系统输出为 AI 辅助判读，不构成诊断结论。
               </p>

@@ -168,9 +168,10 @@ export function ScrollExpand({
     // ── 写阶段 ──────────────────────────────────────────────
     const e = smoothstep(0, 1, p)
 
-    // 窄屏上舞台比例不同，静止尺寸跟着调，免得裁成一条缝。
-    const startW = compact ? Math.max(c.startWidth, 92) : c.startWidth
-    const startH = compact ? Math.min(c.startHeight, 26) : c.startHeight
+    // 窄屏上舞台比例不同，静止尺寸跟着调：至少留出 78×56 的画面，
+    // 不再压成一条 92×26 的细缝。
+    const startW = compact ? Math.max(c.startWidth, 78) : c.startWidth
+    const startH = compact ? Math.min(c.startHeight, 56) : c.startHeight
     const zoom = compact ? 1.02 : c.mediaZoom
 
     const w = startW + (100 - startW) * e
@@ -190,10 +191,17 @@ export function ScrollExpand({
     }
 
     // 媒体按窗口尺寸缩放：静止时整张照片正好落在小窗里，展开时一路涨到满屏。
-    // object-fit: contain 之后的实际成像框。
-    const contentW = Math.min(elW, elH * ar)
-    const contentH = contentW / ar
-    const fit = Math.min((elW * w) / 100 / contentW, (elH * h) / 100 / contentH)
+    // 窄屏改走 cover（见 CSS）：画面已经铺满元素框，倍数按画框占舞台的比例取最大值，
+    // 竖屏里不再上下各留一大块空。
+    let fit: number
+    if (compact) {
+      fit = Math.max(w, h) / 100
+    } else {
+      // object-fit: contain 之后的实际成像框。
+      const contentW = Math.min(elW, elH * ar)
+      const contentH = contentW / ar
+      fit = Math.min((elW * w) / 100 / contentW, (elH * h) / 100 / contentH)
+    }
     media.style.transform = `scale(${fit * (zoom + (1 - zoom) * e)})`
 
     if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim * e}`
@@ -214,7 +222,9 @@ export function ScrollExpand({
     }
 
     if (overlayRef.current) {
-      const inn = smoothstep(0.78, 1, p)
+      // 说明层在画框张到 ~75% 时就该读得清：原来 0.78 才起步、
+      // 而 p=1 恰好是舞台开始离开视口的一刻，等于全程没出现过不透明的说明。
+      const inn = smoothstep(0.5, 0.85, p)
       overlayRef.current.style.opacity = `${inn}`
       overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`
     }
@@ -237,7 +247,11 @@ export function ScrollExpand({
 
     const measure = () => {
       const c = propsRef.current
-      stageH = c.useWindowScroll ? window.innerHeight : root.clientHeight
+      // 窄屏把舞台收到 ~72svh：静止画面 78×56 之后，上下不再各留一大块空白。
+      const compact = window.innerWidth < 720
+      stageH = c.useWindowScroll
+        ? Math.round(window.innerHeight * (compact ? 0.72 : 1))
+        : root.clientHeight
       if (stageH <= 0) return
       stage.style.height = `${stageH}px`
       const travel = reduceMotion
