@@ -45,8 +45,13 @@ const pausedStep: AgentStep = {
 }
 
 describe("ThoughtLine", () => {
-  it("汇总标题只统计真实的工具调用", () => {
+  it("正在执行工具时，标题说清在做什么，而不是笼统的「执行过程」", () => {
     render(<ThoughtLine steps={[reasoningStep, runningToolStep]} />)
+    expect(screen.getByText("正在检索知识库文档…")).toBeTruthy()
+  })
+
+  it("收口后按真实结果统计工具调用数", () => {
+    render(<ThoughtLine steps={[reasoningStep, doneToolStep]} />)
     expect(screen.getByText("执行过程 · 1 个工具调用")).toBeTruthy()
   })
 

@@ -53,6 +53,32 @@ describe("ResourcePanel", () => {
     expect(container.textContent).toContain("影像 1 · 来源 1 · 链接 1")
   })
 
+  it("回合筛选按「所有检索到过的回合」算：后续回合重检到的片段也在", () => {
+    const { container } = panel({
+      ...EMPTY,
+      documents: [
+        {
+          id: "doc:42#0",
+          kind: "document",
+          title: "干眼共识",
+          source: "knowledge-base",
+          documentId: "42",
+          chunkIndex: 0,
+          round: 1,
+          rounds: [1, 3],
+        },
+      ],
+    })
+    fireEvent.click(container.querySelectorAll('[role="tab"]')[1])
+    const select = container.querySelector("#agent-resource-round") as HTMLSelectElement
+    expect([...select.options].map((option) => option.value)).toEqual(["all", "3", "1"])
+
+    fireEvent.change(select, { target: { value: "3" } })
+    expect(container.textContent).toContain("干眼共识")
+    fireEvent.change(select, { target: { value: "2" } })
+    expect(container.textContent).not.toContain("干眼共识")
+  })
+
   it("知识来源卡片展示真实相关度与片段，并标注来自检索结果", () => {
     const { container } = panel({
       ...EMPTY,
@@ -83,6 +109,48 @@ describe("ResourcePanel", () => {
       ],
     })
     expect(container.querySelector(".agent-panel__locate")).toBeNull()
+  })
+
+  it("正文角标跳进来：切到知识来源、筛到对应回合并高亮那一段", () => {
+    const scrollIntoView = vi.fn()
+    // jsdom 没有实现滚动；只验证「确实滚到了这一条」。
+    Element.prototype.scrollIntoView = scrollIntoView
+
+    const docs = [
+      { id: "doc:1#0", kind: "document" as const, title: "共识", source: "knowledge-base" as const, documentId: "1", chunkIndex: 0, round: 1 },
+      { id: "doc:1#1", kind: "document" as const, title: "共识", source: "knowledge-base" as const, documentId: "1", chunkIndex: 1, round: 1 },
+      { id: "doc:2#0", kind: "document" as const, title: "别的", source: "knowledge-base" as const, documentId: "2", chunkIndex: 0, round: 2 },
+    ]
+    const { container } = panel(
+      {
+        ...EMPTY,
+        // 有影像时默认停在「影像」页签：角标必须把面板切过去。
+        images: [{ id: "image:/x.png", kind: "image", title: "图", source: "upload", url: "/x.png" }],
+        documents: docs,
+      },
+      { focus: { key: "1#1", nonce: 1 } },
+    )
+
+    // 页签切到「知识来源」，「全部回合」保留其余片段。
+    const tabs = container.querySelectorAll('[role="tab"]')
+    expect(tabs[1].getAttribute("aria-selected")).toBe("true")
+    const items = [...container.querySelectorAll<HTMLElement>("[data-evidence-key]")]
+    expect(items.map((el) => el.getAttribute("data-evidence-key"))).toEqual(["1#0", "1#1", "2#0"])
+    const target = items.find((el) => el.getAttribute("data-evidence-key") === "1#1")
+    expect(target?.classList.contains("is-located")).toBe(true)
+    expect(document.activeElement).toBe(target)
+    expect(scrollIntoView).toHaveBeenCalled()
+  })
+
+  it("引用的片段不在筛选结果里时退回全部回合，不装「找不到」", () => {
+    const docs = [
+      { id: "doc:7#2", kind: "document" as const, title: "旧回合", source: "knowledge-base" as const, documentId: "7", chunkIndex: 2, round: 1 },
+      { id: "doc:8#0", kind: "document" as const, title: "新回合", source: "knowledge-base" as const, documentId: "8", chunkIndex: 0, round: 2 },
+    ]
+    const { container } = panel({ ...EMPTY, documents: docs }, { focus: { key: "7#2", nonce: 1 } })
+    expect(
+      container.querySelector('[data-evidence-key="7#2"]')?.classList.contains("is-located"),
+    ).toBe(true)
   })
 
   it("定位按钮把来源对回执行步骤", () => {

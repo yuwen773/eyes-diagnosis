@@ -101,7 +101,8 @@ class AgentEyeImageInvalidOutputEndToEndTest {
 
         // 历史：失败终态落库，且正文为空（不把上游原文写进库）
         ArgumentCaptor<String> persisted = ArgumentCaptor.forClass(String.class);
-        org.mockito.Mockito.verify(history).saveToolResultMessage(eq("thread-p0-1"), eq(USER_ID), persisted.capture());
+        org.mockito.Mockito.verify(history).saveToolResultMessage(eq("thread-p0-1"), eq(USER_ID), persisted.capture(),
+                org.mockito.ArgumentMatchers.<Long>isNull(), org.mockito.ArgumentMatchers.<String>isNull());
         String payload = persisted.getValue();
         assertTrue(payload.contains("\"status\":\"failed\""), "历史终态必须是 failed：" + payload);
         assertTrue(payload.contains("\"toolCallId\":\"call-eye-1\""), "终态必须带关联键：" + payload);

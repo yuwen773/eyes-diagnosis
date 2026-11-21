@@ -85,6 +85,58 @@ const md = new MarkdownIt({
   },
 })
 
+/* ── 证据引用 ────────────────────────────────────────────── */
+
+/**
+ * 正文里的证据引用：`[[<documentId>#<chunkIndex>]]`。
+ *
+ * <p>键由检索工具真实产出（工具输出里写着 `(证据: id#n)`），模型只负责把它
+ * 标在支持该句的位置。**能不能核验由前端判定**：键出现在本回合的资源里才
+ * 算数，否则显示「未核验」——不把模型写出来的任何编号直接当成依据。
+ */
+export type EvidenceCitation = { key: string; title?: string }
+
+/** 一段正文可引用的证据：顺序即正文角标编号（从 1 开始）。 */
+export type CitationContext = { citations: readonly EvidenceCitation[] }
+
+/** 证据键的字面形状；含空白或标点的标记不当作引用，按原文保留。 */
+const CITE_KEY_RE = /^([A-Za-z0-9_.:-]+)#(\d+)$/
+/** 标记自身的长度上限：挡住正文里意外出现的长 `[[...]]`。 */
+const CITE_MARKER_MAX = 120
+
+/** 当前这次渲染的引用上下文。渲染是同步的，用模块变量传进 inline 规则。 */
+let citationNumbers: Map<string, EvidenceCitation & { n: number }> | null = null
+
+md.inline.ruler.before("link", "evidence_citation", (state, silent) => {
+  const numbers = citationNumbers
+  if (!numbers) return false
+  const src = state.src
+  const start = state.pos
+  if (src.charCodeAt(start) !== 0x5b || src.charCodeAt(start + 1) !== 0x5b) return false
+  const end = src.indexOf("]]", start + 2)
+  if (end < 0) return false
+  const raw = src.slice(start + 2, end)
+  if (raw.length === 0 || raw.length > CITE_MARKER_MAX) return false
+  const match = CITE_KEY_RE.exec(raw)
+  if (!match) return false
+  if (silent) return true
+
+  const token = state.push("html_inline", "", 0)
+  const known = numbers.get(`${match[1]}#${match[2]}`)
+  if (known) {
+    token.content =
+      `<button type="button" class="cite" data-cite-key="${md.utils.escapeHtml(known.key)}"` +
+      ` aria-label="依据 ${known.n}${known.title ? `：${md.utils.escapeHtml(known.title)}` : ""}">` +
+      `${known.n}</button>`
+  } else {
+    // 医学正文里不能把无法核验的引用悄悄抹掉：读者要看得见这一句没有依据。
+    token.content =
+      '<span class="cite is-unverified" title="这条引用不在本回合的检索结果里，无法核验">未核验</span>'
+  }
+  state.pos = end + 2
+  return true
+})
+
 /**
  * 渲染计量：只统计真正跑过的 markdown-it 解析次数与字符量。
  * 流式性能验证靠它给出确定性数字（渲染次数、处理的字符总量），
@@ -101,17 +153,30 @@ export function resetMarkdownRenderStats(): void {
   renderStats.chars = 0
 }
 
-/** 未净化的原始渲染。 */
-function renderRaw(content: string): string {
+/** 未净化的原始渲染。`ctx` 为空时不识别证据标记，正文按原文显示。 */
+function renderRaw(content: string, ctx?: CitationContext | null): string {
   renderStats.renders += 1
   renderStats.chars += content.length
-  return md.render(content)
+  const previous = citationNumbers
+  citationNumbers = ctx
+    ? new Map(ctx.citations.map((citation, index) => [citation.key, { ...citation, n: index + 1 }]))
+    : null
+  try {
+    return md.render(content)
+  } finally {
+    citationNumbers = previous
+  }
 }
 
-/** 渲染并净化（Agent 正文）。 */
-export function renderMarkdown(content: string): string {
+/**
+ * 渲染并净化（Agent 正文）。
+ *
+ * <p>`ctx` 只在助手正文里传：它决定哪些 `[[证据键]]` 能核验、编号是几。
+ * 推理块、资讯等没有资源上下文的正文不传，标记按原文保留。
+ */
+export function renderMarkdown(content: string, ctx?: CitationContext | null): string {
   if (!content) return ""
-  return sanitizeAgentHtml(renderRaw(content))
+  return sanitizeAgentHtml(renderRaw(content, ctx))
 }
 
 /* ── 流式增量渲染 ────────────────────────────────────────────── */
@@ -255,25 +320,43 @@ export function createIncrementalMarkdownRenderer() {
   let stableHtml = ""
   let lastFinalSource: string | null = null
   let lastFinalHtml = ""
+  /**
+   * 引用上下文的签名。稳定段缓存里已经写死了角标编号与「可核验」判定，
+   * 上下文一变（资源晚到/换了回合）就必须整篇重来，否则旧段落停在旧判定上。
+   */
+  let stableCitationSignature: string | null = null
 
   function reset() {
     stableSource = ""
     stableHtml = ""
     lastFinalSource = null
     lastFinalHtml = ""
+    stableCitationSignature = null
   }
 
   return {
     reset,
-    render(content: string, streaming: boolean): string {
+    render(content: string, streaming: boolean, ctx?: CitationContext | null): string {
       if (!content) {
         reset()
         return ""
       }
 
+      // 区分「不识别引用」与「识别，但这一回合没有可核验来源」：两者签名不能相同。
+      const signature = ctx
+        ? `ctx:${ctx.citations.map((citation) => citation.key).join("\u0000")}`
+        : "none"
+      if (stableCitationSignature !== null && stableCitationSignature !== signature) {
+        // 上下文变了：缓存段作废，但已渲染内容仍可作为下一次的起点。
+        stableSource = ""
+        stableHtml = ""
+        lastFinalSource = null
+      }
+      stableCitationSignature = signature
+
       if (!streaming) {
         if (lastFinalSource === content) return lastFinalHtml
-        const html = renderMarkdown(content)
+        const html = renderMarkdown(content, ctx)
         lastFinalSource = content
         lastFinalHtml = html
         stableSource = content
@@ -284,7 +367,7 @@ export function createIncrementalMarkdownRenderer() {
       // 引用式链接定义是全文作用域，分段会丢引用——整篇渲染。
       if (REFERENCE_DEFINITION.test(content)) {
         stableSource = content
-        stableHtml = renderMarkdown(content)
+        stableHtml = renderMarkdown(content, ctx)
         return stableHtml
       }
 
@@ -297,7 +380,7 @@ export function createIncrementalMarkdownRenderer() {
       const cut = stableBoundary(content, stableSource.length)
       if (cut > stableSource.length) {
         const segment = content.slice(stableSource.length, cut)
-        stableHtml += sanitizeAgentHtml(renderRaw(segment))
+        stableHtml += sanitizeAgentHtml(renderRaw(segment, ctx))
         stableSource = content.slice(0, cut)
       }
 
@@ -306,7 +389,7 @@ export function createIncrementalMarkdownRenderer() {
       suppressHighlight = openFence
       let tailHtml: string
       try {
-        tailHtml = sanitizeAgentHtml(renderRaw(closeUnclosedFences(tail)))
+        tailHtml = sanitizeAgentHtml(renderRaw(closeUnclosedFences(tail), ctx))
       } finally {
         suppressHighlight = false
       }

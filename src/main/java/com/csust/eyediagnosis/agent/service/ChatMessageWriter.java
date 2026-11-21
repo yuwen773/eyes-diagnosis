@@ -98,11 +98,40 @@ public class ChatMessageWriter {
 
     @Transactional
     public void writeAssistantMessage(String sessionId, String content, String subType, Long messageId) {
+        writeAssistantMessage(sessionId, content, subType, messageId, null, null);
+    }
+
+    /**
+     * 带版本信息的回答侧写入。
+     *
+     * @param replyToId 本回合的用户消息 id；旧调用方传 null
+     * @param variantId 本次生成的版本组；同一组 reasoning/tool/text 必须一致
+     */
+    @Transactional
+    public void writeAssistantMessage(String sessionId, String content, String subType, Long messageId,
+                                      Long replyToId, String variantId) {
         AgentMessage message = buildMessage(sessionId, "ASSISTANT", subType, content);
         if (messageId != null) message.setId(messageId);
+        message.setReplyToId(replyToId);
+        message.setVariantId(variantId);
         if (alreadyCommitted(message)) return;
         messageMapper.insert(message);
         sessionMapper.updateMessageCount(sessionId, truncate(content));
+    }
+
+    /** 切换某一轮显示的回答版本；只能落在这些版本真实存在的组合上由调用方校验。 */
+    @Transactional
+    public void selectVariant(String sessionId, Long userMessageId, String variantId) {
+        messageMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AgentMessage>()
+                .eq(AgentMessage::getSessionId, sessionId)
+                .eq(AgentMessage::getId, userMessageId)
+                .set(AgentMessage::getSelectedVariantId, variantId));
+        // 每写一行都 +1（含之后被隐藏的未选中版本）。切换是唯一一次「哪些行
+        // 算数」发生变化的时刻，在这里按可见口径重算，会话列表与历史保持一致。
+        String lastVisible = messageMapper.selectLastVisibleContent(sessionId);
+        sessionMapper.setVisibleMessageStats(sessionId,
+                messageMapper.countVisibleMessages(sessionId),
+                lastVisible == null ? null : truncate(lastVisible));
     }
 
     private AgentMessage buildMessage(String sessionId, String role, String subType, String content) {

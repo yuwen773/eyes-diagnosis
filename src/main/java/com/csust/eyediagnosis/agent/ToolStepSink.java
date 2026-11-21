@@ -9,6 +9,7 @@ import reactor.core.publisher.Sinks;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,12 @@ public final class ToolStepSink {
     // 状态（pending / started / closed）由 this 监视器保护，临界区极短。
     private final Map<String, String> pending = new HashMap<>();
     private final Set<String> started = new HashSet<>();
+    /**
+     * 本请求里真实返回过的证据键（documentId#chunkIndex），只来自成功调用。
+     * 回答收口时用它审计正文引用：模型引用了这一轮没见过的东西是可观测的回归，
+     * 不能只靠前端「未核验」标签让用户去发现。
+     */
+    private final Set<String> evidenceKeys = new LinkedHashSet<>();
     private boolean closed;
     /** 传输已取消（订阅者走了）：此后只保留审计，不再往下游发帧。 */
     private volatile boolean deliveryCancelled;
@@ -76,6 +83,13 @@ public final class ToolStepSink {
 
     /** 终态落库失败过（诊断用：流会以错误结束，历史里会标出未提交）。 */
     public boolean persistenceFailed() { return persistenceFailed; }
+
+    /** 本请求真实返回过的证据键快照（成功调用、且片段有可核验序号）。 */
+    public Set<String> evidenceKeys() {
+        synchronized (this) {
+            return Set.copyOf(evidenceKeys);
+        }
+    }
 
     /** Emit RUNNING for exactly one tool call. id is the graph's tool-call id. */
     public void started(String toolCallId, String toolName, String argsDigest, String argsKeyNames) {
@@ -112,6 +126,12 @@ public final class ToolStepSink {
                     ? ToolStepContract.Status.SUCCEEDED : ToolStepContract.Status.FAILED;
             reason = success
                     ? ToolStepContract.FinishReason.SUCCESS : ToolStepContract.FinishReason.TOOL_ERROR;
+            if (success && resources != null) {
+                for (ResourceRef resource : resources) {
+                    String key = resource.evidenceKey();
+                    if (key != null) evidenceKeys.add(key);
+                }
+            }
             if (audit != null) {
                 record = ToolAuditRecord.finish(sessionId, userId, toolCallId, toolName,
                         status, errorCategory);

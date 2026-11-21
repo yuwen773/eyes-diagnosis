@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react"
 import type { StreamMessage } from "@/lib/agentStream"
+import type { MessageCitations } from "@/lib/agentResources"
 import { useFault } from "@/components/fault"
 import { infoFault } from "@/lib/faults"
 import { useStreamingMarkdown } from "@/lib/useStreamingMarkdown"
@@ -46,16 +47,31 @@ function IrisMark() {
  * <p>流式期间同样按 Markdown 富文本渲染（增量 + 合帧），不再先显示原始
  * 记号、结束时整篇换一次——那种「纯文本 → 富文本」的跳变正是本轮要修掉的。
  */
-export function AssistantMessage({ msg }: { msg: StreamMessage }) {
+export function AssistantMessage({
+  msg,
+  citations,
+  onCite,
+}: {
+  msg: StreamMessage
+  /** 本回合可核验的证据键，决定正文里哪些引用角标成立。 */
+  citations?: MessageCitations
+  /** 点角标 → 在资源栏里定位到那一段；没有处理器时不渲染成可点。 */
+  onCite?: (evidenceKey: string) => void
+}) {
   const { push } = useFault()
-  const html = useStreamingMarkdown(msg.content, Boolean(msg.isLoading))
+  const html = useStreamingMarkdown(msg.content, Boolean(msg.isLoading), citations)
   const streaming = Boolean(msg.isLoading)
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
-    if (e.target instanceof Element) {
-      const text = resolveCopyText(e.target)
-      if (text) void copyText(text, (message) => push(infoFault(message)))
+    if (!(e.target instanceof Element)) return
+    const cite = e.target.closest("[data-cite-key]")
+    if (cite && onCite) {
+      const key = cite.getAttribute("data-cite-key")
+      if (key) onCite(key)
+      return
     }
+    const text = resolveCopyText(e.target)
+    if (text) void copyText(text, (message) => push(infoFault(message)))
   }
 
   return (

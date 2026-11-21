@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  citationKeysByRound,
   countResources,
   deriveResources,
+  evidenceKeyOf,
   isAutoLoadableImage,
   isTrustedAttachmentUrl,
+  messageRoundById,
   parseResourceRefs,
   type AgentResource,
   type ResourceSourceMessage,
@@ -161,6 +164,112 @@ describe("deriveResources —— 知识来源", () => {
     ])
     expect(parsed).toHaveLength(1)
     expect(parsed[0].documentId).toBe("7")
+  })
+
+  it("片段级来源：保留 chunkId / chunkIndex，并给出可核验的证据键", () => {
+    const [parsed] = parseResourceRefs([
+      {
+        kind: "document",
+        documentId: "42",
+        chunkId: "doc_42_abc_chunk_3",
+        chunkIndex: 3,
+        title: "干眼症诊疗共识",
+      },
+    ])
+    expect(parsed.chunkId).toBe("doc_42_abc_chunk_3")
+    expect(parsed.chunkIndex).toBe(3)
+    expect(parsed.id).toBe("doc:42#3")
+    expect(evidenceKeyOf(parsed)).toBe("42#3")
+  })
+
+  it("同一文档的两段是两个来源，不被去重折叠成一条", () => {
+    const r = deriveResources([
+      msg({
+        type: "tool-response",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+          { id: "doc:42#1", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 1 },
+        ],
+      }),
+    ])
+    expect(r.documents.map((d) => d.id)).toEqual(["doc:42#0", "doc:42#1"])
+  })
+
+  it("没有片段序号的文档级来源可以展示，但不构成证据键", () => {
+    const [parsed] = parseResourceRefs([{ kind: "document", documentId: "42", title: "共识" }])
+    expect(parsed.id).toBe("doc:42")
+    expect(evidenceKeyOf(parsed)).toBeNull()
+    expect(evidenceKeyOf({ ...parsed, kind: "link", chunkIndex: 0, url: "https://x.test" })).toBeNull()
+  })
+})
+
+describe("引用核验表", () => {
+  const resources = deriveResources([
+    msg({
+      id: "u1",
+      type: "user",
+      content: "第一问",
+      resources: [
+        { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        { id: "doc:42#1", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 1 },
+      ],
+    }),
+    msg({ id: "a1", type: "assistant", content: "回答一" }),
+    msg({ id: "u2", type: "user", content: "第二问" }),
+    msg({ id: "a2", type: "assistant", content: "回答二" }),
+  ])
+
+  it("按回合给出可引用证据，顺序即资源顺序", () => {
+    const byRound = citationKeysByRound(resources)
+    expect(byRound.get(1)?.map((c) => c.key)).toEqual(["42#0", "42#1"])
+    expect(byRound.get(1)?.[0].title).toBe("共识")
+    expect(byRound.get(2)).toBeUndefined()
+  })
+
+  it("消息到回合的映射与资源派生同一口径", () => {
+    const rounds = messageRoundById([
+      msg({ id: "a0", type: "assistant", content: "开场" }),
+      msg({ id: "u1", type: "user", content: "问" }),
+      msg({ id: "a1", type: "assistant", content: "答" }),
+    ])
+    expect(rounds.get("a0")).toBe(0)
+    expect(rounds.get("a1")).toBe(1)
+  })
+
+  it("同一文档的不同片段各占一个键，不折叠", () => {
+    const keys = citationKeysByRound(resources).get(1) ?? []
+    expect(new Set(keys.map((c) => c.key)).size).toBe(keys.length)
+  })
+
+  it("同一片段在后面的回合再次检索到，前面回合的角标仍然可核验", () => {
+    const rehit = deriveResources([
+      msg({
+        id: "u1",
+        type: "user",
+        content: "第一问",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        ],
+      }),
+      msg({ id: "a1", type: "assistant", content: "回答一" }),
+      msg({ id: "u2", type: "user", content: "第二问" }),
+      msg({
+        id: "t2",
+        type: "tool-response",
+        content: "又检索到同一片",
+        resources: [
+          { id: "doc:42#0", kind: "document", title: "共识", source: "knowledge-base", documentId: "42", chunkIndex: 0 },
+        ],
+      }),
+    ])
+    const byRound = citationKeysByRound(rehit)
+    // 先出现的回合不能失去核验
+    expect(byRound.get(1)?.map((c) => c.key)).toEqual(["42#0"])
+    // 后出现的回合同样可核验
+    expect(byRound.get(2)?.map((c) => c.key)).toEqual(["42#0"])
+    // 资源栏仍只有一条：位置与出处停在首次出现处，不搬家
+    expect(rehit.documents).toHaveLength(1)
+    expect(rehit.documents[0].round).toBe(1)
   })
 })
 

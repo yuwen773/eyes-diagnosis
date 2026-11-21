@@ -36,6 +36,14 @@ export type AgentResource = {
   /** 知识库文档标识（来自检索结果）。 */
   documentId?: string
   indexVersion?: string
+  /** 向量库里这一段的稳定 id（服务端生成，不由模型生成）。 */
+  chunkId?: string
+  /**
+   * 这一段在文档内的序号（从 0 起）。
+   * 与 `documentId` 一起构成证据键：正文引用只认 `documentId#chunkIndex`，
+   * 没有片段序号的条目只能当文档级来源，不能当「这一句的依据」。
+   */
+  chunkIndex?: number
   /** 检索相关度——只有检索结果真的带分数时才有。 */
   score?: number
   /**
@@ -51,8 +59,18 @@ export type AgentResource = {
   messageId?: string
   /** 产生这条资源的工具调用，用于「定位到执行步骤」。 */
   toolCallId?: string
-  /** 所属回合（从 1 开始，按用户提问切分），用于按回合筛选。 */
+  /**
+   * 首次出现的回合（从 1 开始，按用户提问切分），用于按回合筛选。
+   * 资源栏按首次出现的位置归组，不因后续回合再次检索到而搬家。
+   */
   round?: number
+  /**
+   * 所有检索到过这一片的回合（含 `round`）。
+   *
+   * <p>同一片段在后面的回合被再次检索到，前面回合的正文引用**仍然可以核验**——
+   * 只记一个 round 会让先出现的角标在资源被覆盖后退回「未核验」。
+   */
+  rounds?: number[]
 }
 
 export type AgentResources = {
@@ -210,13 +228,22 @@ export function parseResourceRefs(raw: unknown): AgentResource[] {
         typeof obj.retrievalScore === "number" && Number.isFinite(obj.retrievalScore)
           ? obj.retrievalScore
           : undefined
+      const chunkIndex =
+        typeof obj.chunkIndex === "number" &&
+        Number.isInteger(obj.chunkIndex) &&
+        obj.chunkIndex >= 0
+          ? obj.chunkIndex
+          : undefined
       out.push({
-        id: asText(obj.id) ?? `doc:${documentId}`,
+        // 片段级 id：同一文档的两段是两个来源，不能被去重折叠成一条。
+        id: asText(obj.id) ?? (chunkIndex === undefined ? `doc:${documentId}` : `doc:${documentId}#${chunkIndex}`),
         kind: "document",
         title: asText(obj.title) ?? "知识库文档",
         source: "knowledge-base",
         documentId,
         indexVersion: asText(obj.indexVersion),
+        chunkId: asText(obj.chunkId),
+        chunkIndex,
         score,
         retrievalScore,
         snippet: asText(obj.snippet),
@@ -259,9 +286,18 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
   const add = (resource: AgentResource) => {
     if (!resource.id) return
     if (seen.has(resource.id)) {
-      if (resource.kind === "document") {
-        const existing = documents.findIndex((entry) => entry.id === resource.id)
-        if (existing >= 0) documents[existing] = resource
+      const bucket =
+        resource.kind === "image" ? images : resource.kind === "document" ? documents : links
+      const existing = bucket.findIndex((entry) => entry.id === resource.id)
+      if (existing >= 0) {
+        // 同一资源在后面的回合又出现：保留首次出现的位置与出处，只把新回合
+        // 记进 rounds——否则前面回合已核验的引用会退回「未核验」，回合筛选
+        // 也会漏掉「本轮确实又检索到、但首次出现在更早回合」的条目。
+        const previous = bucket[existing]
+        const rounds = roundsOf(previous)
+        if (resource.round && !rounds.includes(resource.round)) {
+          bucket[existing] = { ...previous, rounds: [...rounds, resource.round] }
+        }
       }
       return
     }
@@ -338,4 +374,64 @@ export function deriveResources(messages: readonly ResourceSourceMessage[]): Age
 /** 资源总数（顶栏角标用）。 */
 export function countResources(resources: AgentResources): number {
   return resources.images.length + resources.documents.length + resources.links.length
+}
+
+/**
+ * 证据键：`documentId#chunkIndex`。
+ *
+ * <p>正文引用只认这个键——它同时说明了「哪份文档」和「哪一段」。
+ * 没有片段序号的文档级来源返回 `null`：它可以出现在资源栏，但不能当
+ * 「这句话的依据」。图片与外链永远不是证据。
+ */
+export function evidenceKeyOf(resource: AgentResource): string | null {
+  if (resource.kind !== "document") return null
+  if (!resource.documentId || resource.chunkIndex === undefined) return null
+  return `${resource.documentId}#${resource.chunkIndex}`
+}
+
+/** 一条消息可以引用的证据：按资源出现顺序，编号即正文角标。 */
+export type MessageCitations = { key: string; title?: string }[]
+
+/**
+ * 每个回合里**可以引用**的证据，按资源在面板里的出现顺序排列。
+ *
+ * <p>为什么按回合而不是按整段会话：模型这一轮只见过这一轮工具返回的片段，
+ * 引用上一轮的内容无法核验。为什么顺序取自资源而不是正文：这样角标编号在
+ * 流式过程中不会因为新引用出现而整体重排，也和资源栏的顺序一一对应。
+ *
+ * <p>只在 `resources` 变化时重算：消息每片 token 都换新，跟着算等于让每条
+ * 历史消息的引用数组每片都换引用，`memo` 行全部重渲染。
+ */
+export function citationKeysByRound(resources: AgentResources): Map<number, MessageCitations> {
+  const byRound = new Map<number, MessageCitations>()
+  for (const doc of resources.documents) {
+    const key = evidenceKeyOf(doc)
+    if (!key) continue
+    for (const round of roundsOf(doc)) {
+      const list = byRound.get(round) ?? []
+      if (list.some((entry) => entry.key === key)) continue
+      list.push({ key, title: doc.title })
+      byRound.set(round, list)
+    }
+  }
+  return byRound
+}
+
+/** 资源出现过的回合；旧数据/未标注时按 `round` 单值处理。 */
+export function roundsOf(resource: AgentResource): number[] {
+  if (resource.rounds?.length) return resource.rounds
+  return resource.round ? [resource.round] : []
+}
+
+/** 消息 → 回合（与 `deriveResources` 同一口径：每条用户提问切一回合）。 */
+export function messageRoundById(
+  messages: readonly ResourceSourceMessage[],
+): Map<string, number> {
+  const out = new Map<string, number>()
+  let round = 0
+  for (const msg of messages) {
+    if (msg.type === "user") round += 1
+    out.set(msg.id, round)
+  }
+  return out
 }

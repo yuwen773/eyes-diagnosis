@@ -78,6 +78,42 @@ describe("AssistantMessage", () => {
     expect(container.querySelector("[onerror]")).toBeNull()
   })
 
+  it("证据角标只在可核验时出现，点击回传证据键", () => {
+    const onCite = vi.fn()
+    const { container } = render(
+      <AssistantMessage
+        msg={assistant({ content: "睑板腺功能障碍是主要原因[[42#3]]。另见[[99#1]]。" })}
+        citations={[{ key: "42#3", title: "干眼症诊疗共识" }]}
+        onCite={onCite}
+      />,
+    )
+    const cite = container.querySelector<HTMLButtonElement>(".cite[data-cite-key]")
+    expect(cite?.textContent).toBe("1")
+    expect(cite?.getAttribute("aria-label")).toBe("依据 1：干眼症诊疗共识")
+    fireEvent.click(cite as HTMLButtonElement)
+    expect(onCite).toHaveBeenCalledWith("42#3")
+
+    // 不在本回合资源里的引用显式标成未核验，不可点。
+    const unknown = container.querySelector(".cite.is-unverified")
+    expect(unknown?.textContent).toBe("未核验")
+    expect(unknown?.getAttribute("data-cite-key")).toBeNull()
+  })
+
+  it("这一回合没有可核验来源时，引用显式标成未核验而不是抹掉", () => {
+    const { container } = render(
+      <AssistantMessage msg={assistant({ content: "依据[[42#3]]。" })} citations={[]} />,
+    )
+    expect(container.querySelector(".cite.is-unverified")?.textContent).toBe("未核验")
+  })
+
+  it("完全不给证据上下文时标记按原文保留（不是所有正文都走核验）", () => {
+    const { container } = render(
+      <AssistantMessage msg={assistant({ content: "依据[[42#3]]。" })} />,
+    )
+    expect(container.querySelector(".cite")).toBeNull()
+    expect(container.textContent).toContain("[[42#3]]")
+  })
+
   it("没有服务端时间就不显示时间，不拿本地时钟冒充", () => {
     const { container } = render(<AssistantMessage msg={assistant({ content: "答" })} />)
     expect(container.querySelector(".agent-author__time")).toBeNull()
