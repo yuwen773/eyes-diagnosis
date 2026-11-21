@@ -50,6 +50,12 @@
   border-right-color: var(--brand-line);
 }
 
+/* `.strip` 原设计是全幅条带，首格刻意贴左；放进有描边和圆角的玻璃卡后，
+   这条零内边距会把「判读总数」压在描边上。卡片作用域内把内边距还回来。 */
+.records__strip .strip__cell:first-child {
+  padding-left: 20px;
+}
+
 /* 台账列表本身也立在玻璃台面上：行是画布上的直接内容，靠玻璃条带分层。 */
 
 /* 口径说明：总数是全量，其余三项只覆盖当前页。不写清楚，读者会把一页的风险数
@@ -266,6 +272,12 @@
 }
 
 .records__pager-step {
+  /* 默认 block 排法会把 13px 箭头折到「下一页」下面，按成两行；文字与图标同行。 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
   min-height: 44px;
   padding: 0 16px;
   /* Clinical 次级按钮形态（§4.1）：透明底 + 强发丝线描边，不吃面板。 */

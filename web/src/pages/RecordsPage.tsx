@@ -112,6 +112,13 @@ export function RecordsPage() {
 
   const pages = Math.max(1, data?.pages ?? 1)
 
+  /**
+   * 零记录时不用读数带开场。空档案的第一屏应该是「下一步」，
+   * 而不是四格 0 / 未评估加两段部署状态——没有数字时就别画仪表盘。
+   */
+  const emptyArchive =
+    !loading && !fault && records.length === 0 && Number(stats.total) === 0
+
   if (status === "anon") {
     // 匿名：整页都是个人数据，不发请求，也不假装「没有记录」——给登录入口。
     return (
@@ -148,44 +155,48 @@ export function RecordsPage() {
           </p>
         </div>
 
-        <div className="strip records__strip">
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{labels.total}</span>
-              <span className="readout__value num">{stats.total}</span>
+        {emptyArchive ? null : (
+          <>
+            <div className="strip records__strip">
+              <div className="strip__cell">
+                <div className="readout">
+                  <span className="readout__label">{labels.total}</span>
+                  <span className="readout__value num">{stats.total}</span>
+                </div>
+              </div>
+              <div className="strip__cell">
+                <div className="readout">
+                  <span className="readout__label">{risk.label}</span>
+                  <span className="readout__value num" data-unknown={risk.unknown ? "true" : undefined}>
+                    {risk.value}
+                  </span>
+                </div>
+              </div>
+              <div className="strip__cell">
+                <div className="readout">
+                  <span className="readout__label">{labels.awaitingReview}</span>
+                  <span className="readout__value num">{stats.awaitingReview}</span>
+                </div>
+              </div>
+              <div className="strip__cell">
+                <div className="readout">
+                  <span className="readout__label">{labels.lastReadAt}</span>
+                  <span className="readout__value readout__value--mono">
+                    {stats.lastReadAt ? formatTimestamp(stats.lastReadAt) : "—"}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{risk.label}</span>
-              <span className="readout__value num" data-unknown={risk.unknown ? "true" : undefined}>
-                {risk.value}
-              </span>
-            </div>
-          </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{labels.awaitingReview}</span>
-              <span className="readout__value num">{stats.awaitingReview}</span>
-            </div>
-          </div>
-          <div className="strip__cell">
-            <div className="readout">
-              <span className="readout__label">{labels.lastReadAt}</span>
-              <span className="readout__value readout__value--mono">
-                {stats.lastReadAt ? formatTimestamp(stats.lastReadAt) : "—"}
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {risk.note ? <p className="records__scope">{risk.note}。</p> : null}
+            {risk.note ? <p className="records__scope">{risk.note}。</p> : null}
 
-        {serverStats ? null : (
-          <p className="records__scope">
-            总数是你名下的全部判读；标「本页」的两项只统计当前这一页（第 {page} / {pages}
-            页），翻页会变。服务端聚合上线后会自动切到全量。
-          </p>
+            {serverStats ? null : (
+              <p className="records__scope">
+                总数是你名下的全部判读；标「本页」的两项只统计当前这一页（第 {page} / {pages}
+                页），翻页会变。服务端聚合上线后会自动切到全量。
+              </p>
+            )}
+          </>
         )}
 
         {fault ? (

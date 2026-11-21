@@ -82,16 +82,16 @@ function renderPage() {
 }
 
 describe("RecordsPage 统计口径", () => {
-  it("服务端聚合未上线时，计数标注「本页」且严重度显示未评估", async () => {
+  it("零记录时不渲染读数带，直接给出下一步", async () => {
     vi.mocked(listMyDiagnoses).mockResolvedValue({ records: [], total: 0 })
     vi.mocked(getMyStats).mockRejectedValue(new ApiError(404, "服务返回 404"))
 
     renderPage()
 
-    expect(await screen.findByText("本页严重度 · 未评估")).toBeTruthy()
-    expect(screen.getByText("本页待人工复核 · REVIEW")).toBeTruthy()
-    // 「未评估」是读数本身，不能退化成 0。
-    expect(screen.getByText("未评估")).toBeTruthy()
+    expect(await screen.findByText("还没有属于你的判读")).toBeTruthy()
+    // 空档案不用 0 / 未评估 开场：读数带整块不渲染。
+    expect(screen.queryByText("本页严重度 · 未评估")).toBeNull()
+    expect(screen.queryByText("后端尚未产出严重度分级，高风险计数暂不可用。")).toBeNull()
   })
 
   it("服务端聚合可用时使用全量口径", async () => {

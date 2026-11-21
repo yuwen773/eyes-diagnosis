@@ -186,6 +186,19 @@ export function DiagnosisPage() {
     if (inputRef.current) inputRef.current.value = ""
   }
 
+  /**
+   * 取消本次判读：作废在途请求，但**保留影像**，回到「已就绪」。
+   * 与 reset 的区别在于它只撤销这一次动作，不替用户清空已经选好的图。
+   */
+  function cancelRun() {
+    runId.current += 1
+    setElapsed(0)
+    setResult(null)
+    setStage(file ? "ready" : "empty")
+    setFault(infoFault("已取消这次判读；影像还在本机，可以重新开始"))
+    setFaultScope("run")
+  }
+
   // 未登录时撞上 40100：路由层会送人去登录页，这里只把话说清楚。
   const showLoginHint = needsLogin && status === "anon"
 
@@ -223,11 +236,14 @@ export function DiagnosisPage() {
 
         <div className="dx__body">
           <section className="dx__media" aria-label="影像">
+            {/* 键盘与读屏只走可见的拖拽区：隐藏输入不占 Tab 位，也不重复播报。 */}
             <input
               ref={inputRef}
               type="file"
               accept="image/jpeg,image/png"
               className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
               disabled={stage === "running"}
               onChange={(event) => accept(event.target.files?.[0] ?? null)}
             />
@@ -293,19 +309,7 @@ export function DiagnosisPage() {
           </section>
 
           <aside className="dx__panel">
-            {result ? (
-              <ResultSummary result={result} onReset={reset} />
-            ) : stage === "running" ? (
-              <RunningPanel elapsed={elapsed} file={file} />
-            ) : (
-              <UploadPanel
-                file={file}
-                stage={stage}
-                onStart={() => void diagnose()}
-                onPick={() => inputRef.current?.click()}
-              />
-            )}
-
+            {/* 故障贴着动作放：说清「刚才那一下为什么没成」，而不是排在八类清单后面。 */}
             {showLoginHint ? (
               <div className="dx__fault">
                 <FaultNote
@@ -328,6 +332,19 @@ export function DiagnosisPage() {
                 <FaultNote fault={fault} variant={faultScope === "run" ? "block" : "field"} />
               </div>
             ) : null}
+
+            {result ? (
+              <ResultSummary result={result} onReset={reset} />
+            ) : stage === "running" ? (
+              <RunningPanel elapsed={elapsed} file={file} onCancel={cancelRun} />
+            ) : (
+              <UploadPanel
+                file={file}
+                stage={stage}
+                onStart={() => void diagnose()}
+                onPick={() => inputRef.current?.click()}
+              />
+            )}
           </aside>
         </div>
       </main>
@@ -352,7 +369,7 @@ function UploadPanel(props: {
       <p className="dx__panel-text">
         {file
           ? "影像只在本机预览，点「开始判读」时才会上传。判读期间不能换图——结论必须对应同一张影像。"
-          : `支持彩色眼底照片（JPG / PNG，${UPLOAD_LIMIT_HINT}）。选图后可以在本机先看清再决定是否判读。`}
+          : "选图后可以在本机先看清，再决定是否判读。"}
       </p>
 
       <div className="dx__actions">
@@ -361,8 +378,9 @@ function UploadPanel(props: {
             开始判读
           </button>
         ) : (
-          <button className="btn" type="button" onClick={onPick}>
-            选择影像
+          /* 主按钮只有一个：空态的主动作是左侧拖拽区，这里只做补充入口。 */
+          <button className="link" type="button" onClick={onPick}>
+            或从本机选择…
           </button>
         )}
       </div>
@@ -387,7 +405,7 @@ function UploadPanel(props: {
 
 /* ── 阶段二：真实等待 ─────────────────────────────── */
 
-function RunningPanel(props: { elapsed: number; file: File | null }) {
+function RunningPanel(props: { elapsed: number; file: File | null; onCancel: () => void }) {
   return (
     <>
       <h2 className="dx__panel-title">正在判读</h2>
@@ -406,8 +424,13 @@ function RunningPanel(props: { elapsed: number; file: File | null }) {
           </div>
         ) : null}
       </dl>
+      <div className="dx__actions">
+        <button className="link" type="button" onClick={props.onCancel}>
+          取消判读
+        </button>
+      </div>
       <p className="dx__fineprint">
-        这里没有进度条：后端不返回判读进度，画出百分比就是编的。质量门不通过时，结果会明确写成「拒识」而不是硬给一个类别。
+        这里没有进度条：后端不返回判读进度，画出百分比就是编的。质量门不通过时，结果会明确写成「拒识」而不是硬给一个类别。取消后影像仍留在本机，可以重新开始。
       </p>
     </>
   )
@@ -431,9 +454,14 @@ function ResultSummary(props: { result: DiagnosisResult; onReset: () => void }) 
       <div className="dx__outcome" data-outcome={outcome.key} data-risk={outcome.risk}>
         <span className="dx__outcome-label">{outcome.label}</span>
         {/* 拒识与待复核是两个独立维度：算法在拒识时同样会置 requiresReview，
-            拒识记录也在人工复核队列里。不能因为拒识就把复核要求藏起来。 */}
+            拒识记录也在人工复核队列里。不能因为拒识就把复核要求藏起来。
+            待复核时标题已经说了「已转入人工复核队列」，副句只补它没说的事。 */}
         {result.requiresReview ? (
-          <span className="dx__outcome-note">已转入人工复核队列，复核完成前不构成诊断</span>
+          <span className="dx__outcome-note">
+            {outcome.key === "review"
+              ? "复核完成前不构成诊断"
+              : "已转入人工复核队列，复核完成前不构成诊断"}
+          </span>
         ) : null}
       </div>
 
