@@ -36,6 +36,35 @@ describe("faultFromError", () => {
     expect(f.severity).toBe("attention")
   })
 
+  it("登录接口的 40000 说「账号或密码不对」，不是「条件不对」", () => {
+    const f = faultFromError(new ApiError(40000, "用户不存在或密码错误"), {
+      intent: "login",
+    })
+    expect(f.kind).toBe("auth")
+    expect(f.tag).toBe("AUTH")
+    expect(f.severity).toBe("critical")
+    expect(f.title).toBe("账号或密码不对")
+  })
+
+  it("注册重复账号说的是「已经注册过」，并给出下一步", () => {
+    const f = faultFromError(new ApiError(40000, "账号重复"), { intent: "register" })
+    expect(f.kind).toBe("auth")
+    expect(f.title).toBe("这个账号已经注册过了")
+    expect(f.detail).toContain("登录")
+  })
+
+  it("认证意图下不认识的 40000 仍退回通用说法，不编原因", () => {
+    const f = faultFromError(new ApiError(40000, "参数为空"), { intent: "login" })
+    expect(f.kind).toBe("validation")
+    expect(f.title).toBe("这次请求的条件不对")
+  })
+
+  it("非认证意图的 40000 保持「条件不对」", () => {
+    const f = faultFromError(new ApiError(40000, "用户不存在或密码错误"))
+    expect(f.kind).toBe("validation")
+    expect(f.title).toBe("这次请求的条件不对")
+  })
+
   it("40300 是权限问题，措辞与未登录区分开", () => {
     const f = faultFromError(new ApiError(40300, "forbidden"))
     expect(f.title).toBe("你没有查看这条的权限")
