@@ -17,8 +17,9 @@ Base package: `com.csust.eyediagnosis`
 - 领域命名、模块边界、易混术语 → `GLOSSARY.md`（架构评审与新增概念前读）。
 - 找设计 / 计划 / 验收 / 迁移文档 → `docs/README.md`（按主题分组的索引）。
 - 写前端样式 / 评审前端 diff → 仓库根 `DESIGN.md`（**Iris 2.0 · Adaptive Visual System**，
-  目标规范）+ `web/src/styles/tokens.css`（**已实现的令牌事实**）。
-  两者不一致时以 `tokens.css` 为准，差异记在 `DESIGN.md` §8。
+  官方 DESIGN.md 格式：YAML 令牌 + 八段规范）+ `web/src/styles/tokens.css`（**已实现的令牌事实**）。
+  两者不一致时以 `tokens.css` 为准；规则变更史见 `docs/design/iris-2-rule-change-matrix.md`，
+  实现偏差登记 Issue（冻结期见 Issue #84），规范里不再维护状态表。
 - 改数据库 → `src/main/resources/db/migration/V*.sql` 是迁移真源；版本编号与历史决策见 `docs/flyway-migration-history-plan.md`，各目标库的升级路径见 `docs/architecture/migration-matrix.md`。
 - 评审代码风格与判断类约定 → `CODING_STANDARDS.md`。
 - 多工作树协作、Windows 进程操作、临时验证产物清理 → `docs/agent-worktree-conventions.md`。
@@ -97,8 +98,8 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 
 ### Brand Personality
 **冷静、精密、克制**；Iris 2.0 起加一句：**同一套品牌身份，四种表达强度**。
-骨白工作台 + 衬线标题 + 等宽读数传达"这是一台可信的临床仪器"；首页/品牌层用
-钴蓝 + 银蓝光学材质表达"这是一个能把复杂视觉信息讲清楚的团队"。
+判读纸面（白纸 + 墨字 + 发丝线）+ 衬线标题 + 等宽读数传达"这是一台可信的临床仪器"；
+首页/品牌层用钴蓝 + 银蓝光学材质表达"这是一个能把复杂视觉信息讲清楚的团队"。
 温度靠文案与留白表达，不靠暖色调。
 
 ### Aesthetic Direction
@@ -107,12 +108,12 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 `web/`（React）是产品前端，本文件的规则都指它；`frontend/`（Vue）**已弃用（deprecated）**，
 仍跑旧的青绿 `--iris-*`，**不再作为设计参考，新代码不要写进 `frontend/`**。
 写 `web/` 页面、组件、样式，或评审前端 diff 前 → 读根 `DESIGN.md`
-（场景规范、组件变体矩阵、双主题、可访问性、数据真实性）。后端任务不需要读。
+（四场景、令牌、组件、双主题、可访问性、数据真实性）。后端任务不需要读。
 
 ### 四种体验场景（写前端先判断自己在哪个场景）
-`DESIGN.md` §1–§2 是场景规范，§1.5 是**逐路由归属表**（每个真实路由属于哪个场景、
-用什么容器类），§4 是**组件变体矩阵**（按钮/卡片/图表/导航/弹层/表格/表单/状态标记
-× 四场景）。**没有"全站通用"的一套控件外观**；也**不是每个页面都套 KPI + 台账**。
+`DESIGN.md` 的 **Overview** 定义四场景，**Layout** 里有**逐路由归属表**（每个真实路由
+属于哪个场景、用什么容器类），**Components** 按组件直述变体与签名组件。
+**没有"全站通用"的一套控件外观**；也**不是每个页面都套 KPI + 台账**。
 
 | 场景 | 页面 | 主色 | 圆角 | 气质 |
 |---|---|---|---|---|
@@ -127,12 +128,12 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 
 | 要判断的事 | 读 |
 |---|---|
-| 路由属于哪个场景、用什么容器类、什么版式骨架 | `DESIGN.md` §1.5 |
-| 组件外观（按钮 / 卡片 / 图表 / 导航 / 弹层 / 表格 / 表单 / 状态标记 × 四场景） | `DESIGN.md` §4 |
-| 语义色、等宽读数、圆角令牌梯、阴影与发丝线、纸面原语 | `DESIGN.md` §2–§3；令牌真值看 `web/src/styles/tokens.css`（与 DESIGN.md 冲突时以它为准） |
-| 动效预算（氛围 / 状态）与 `prefers-reduced-motion` | `DESIGN.md` §3.7 |
+| 路由属于哪个场景、用什么容器类、什么版式骨架 | `DESIGN.md` → Layout → 路由归属 |
+| 组件外观（按钮 / 卡片 / 图表 / 导航 / 弹层 / 表格 / 表单 / 状态标记） | `DESIGN.md` → Components |
+| 语义色、等宽读数、圆角令牌梯、阴影与发丝线、纸面原语 | `DESIGN.md` → Colors / Typography / Shapes / Elevation & Depth；令牌真值看 `web/src/styles/tokens.css`（与 DESIGN.md 冲突时以它为准） |
+| 动效预算（氛围 / 状态）与 `prefers-reduced-motion` | `DESIGN.md` → Components → Named Rules（No-Invented-State） |
 | 图标 | `web/DESIGN.md` 规则 16（`lucide-react` 静态命名导入） |
-| 品牌首屏构图 / 公开路由共用外壳 | `DESIGN.md` §3.6 / §1.6 |
+| 品牌首屏构图 / 公开路由共用外壳 | `DESIGN.md` → Layout / Components → Navigation；`web/DESIGN.md` |
 
 三条不可让渡的判据（正文仍在 `DESIGN.md`）：
 
@@ -148,21 +149,20 @@ MySQL | Redis (session + cache) | ChromaDB (vector RAG) | DashScope (LLM + embed
 - **冻结范围**：首页 / 品牌层、管理端（外壳 + Dashboard + 六页）、知识库、新闻工作台。
 - **不再主动视觉迭代**这几处；一般 UI 优化**登记 Issue**，不在冻结基线上直接改。
 - **例外**：阻断性故障与安全修复。
-- 后续重心转向**多 Agent 系统**（主线 PR #68 `codex/realtime-product-acceptance`，
-  暂不并入 `ui`，后续单独集成）。
-- 规则正文见 `DESIGN.md` 头部（2026-11-15 条），此处只作指针。
+- 后续重心转向**多 Agent 系统**（PR #68 已合入 master；协作能力仍默认关闭、未部署）。
+- 规则正文见 `DESIGN.md` 的 Overview（冻结说明）与 `docs/design/iris21-ui-freeze-exceptions.md`，此处只作指针。
 
 ### 参考实现
 `web/src/styles/tokens.css`（全部令牌）、`web/src/components/RecordSheet.tsx`（记录纸）、
 `web/src/pages/LandingPage.tsx`、`web/src/pages/DiagnosisPage.tsx`。
-`web/src/components/brand/OpticFlow.tsx`（品牌层首屏）与 `--brand-*` / `.iris2` /
-`--radius-xl|2xl` 均已在 `ui`（`tokens.css` 有定义），可直接引用。
+`web/src/components/brand/HeroFusion.tsx` / `OpticFlow.tsx`（品牌层首屏）与 `--brand-*` /
+`.iris2` / `--radius-xl|2xl` 均已在 `tokens.css` 有定义，可直接引用。
 Vue 版的 `HomePage.vue` 等三页已弃用，仅作历史参考。
 
 ### 设计文档
 | 文档 | 何时读 |
 |---|---|
-| `DESIGN.md` | 写 `web/` 页面/组件/样式，或评审前端 diff（**目标规范**） |
+| `DESIGN.md` | 写 `web/` 页面/组件/样式，或评审前端 diff（**目标规范**）。旧版（2026-11-21 重写前）见 `git show 34e94c9a:DESIGN.md` |
 | `web/src/styles/tokens.css` | 查令牌真值（**已实现的事实**，与 DESIGN.md 冲突时以它为准） |
 | `docs/design/iris-2-rule-change-matrix.md` | 想知道旧「白色仪器」规则改成了什么、为什么改 |
 | `docs/design/iris-2-implementation-roadmap.md` | 想知道首页/管理端/协作台各自的实施顺序与门禁 |

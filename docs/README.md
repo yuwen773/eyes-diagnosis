@@ -10,8 +10,8 @@
 | `backend-image-storage-failure-semantics.md` | 改判读影像上传 / 对象存储失败处理前读：影像存储失败为何终止而不是落「无原图记录」、补偿删除边界、已知限制 |
 | `backend-split.md` | 改动 `frontend/` 或 `algorithm/` 共享目录，判断是否需要人工搬运到另一条后端线 |
 | `flyway-migration-history-plan.md` | 新增迁移版本、处理 V8 checksum、`flyway repair`、分支版本号撞车 |
-| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准） |
-| **UI 冻结基线** tag `iris-ui-v2.1-freeze-20261115`（→ `80f53f7f`） | 查 Iris 2.1 UI 冻结点、冻结范围与冻结后的变更规则——规则正文在 `../DESIGN.md` 头部（2026-11-15 条） |
+| `../DESIGN.md` | 写 `web/` 页面 / 组件 / 样式，或评审前端 diff（**Iris 2.0 · Adaptive Visual System**，目标规范；令牌事实以 `web/src/styles/tokens.css` 为准）。旧版（2026-11-21 重写前）见 `git show 34e94c9a:DESIGN.md` |
+| **UI 冻结基线** tag `iris-ui-v2.1-freeze-20261115`（→ `80f53f7f`） | 查 Iris 2.1 UI 冻结点、冻结范围与冻结后的变更规则——规则正文见 `../DESIGN.md` 的 Overview（冻结说明）与 `design/iris21-ui-freeze-exceptions.md` |
 | `design/iris21-ui-freeze-exceptions.md` | 判断某笔改动「算不算冻结面、有没有被授权」——冻结后 `ui` 的 13 个 PR 放行台账与待裁定项 |
 | `design/IRIS_2_DESIGN_REFERENCE_BRIEF.md` | 查 Iris 2.0 的视觉参考来源与取舍（A/B/F/G/H/I 代号定义、原始链接） |
 | `design/iris-2-rule-change-matrix.md` | 查旧「白色仪器」规则改成了什么、为什么改、落地到哪一步 |
