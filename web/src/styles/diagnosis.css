@@ -436,6 +436,14 @@
   color: var(--ink-3);
 }
 
+/* 390 宽时两列各剩 141px：最长一条「年龄相关性黄斑变性」差 3px，会被拆成
+   「变 / 性」，把词从中间断开。到手机档就让八类回到单列，不另加新断点。 */
+@media (max-width: 390px) {
+  .dx__range-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .dx__fault {
   margin-top: 2px;
 }

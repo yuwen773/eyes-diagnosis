@@ -100,6 +100,24 @@ describe("DiagnosisPage 影像上限", () => {
   })
 })
 
+describe("DiagnosisPage 判读可取消", () => {
+  it("判读中给出「取消判读」，取消后影像保留、可以重新开始", async () => {
+    // 悬而未决的请求：模拟「一直在排队」的判读。
+    vi.mocked(runDiagnosis).mockReturnValue(new Promise(() => {}) as never)
+    renderPage()
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    const { fireEvent } = await import("@testing-library/react")
+    fireEvent.change(input, { target: { files: [fileOfSize("ok.jpg", 1024 * 1024)] } })
+    fireEvent.click(await screen.findByRole("button", { name: "开始判读" }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "取消判读" }))
+
+    // 取消不是清空：影像还在，回到「已就绪」，可以直接重新开始。
+    expect(await screen.findByRole("button", { name: "开始判读" })).toBeTruthy()
+    expect(screen.getByText(/已取消这次判读/)).toBeTruthy()
+  })
+})
+
 describe("DiagnosisPage 口径与结果语义", () => {
   it("上传说明用服务端真实上限（2 MB），不再写 5 MB", async () => {
     renderPage()

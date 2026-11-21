@@ -1001,6 +1001,16 @@ a.acct__trigger--anon:hover {
   border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
 }
 
+/* `.btn__key` 的本义是等宽「键位」文本（HOME / ↵ / JPG · PNG）：左竖线、字距与
+   半透明度都是给字形调的。被当图标容器用时（记录页与个人中心的 ↗），这几样落到
+   矢量上只剩一根发丝线和一个几乎看不见的箭头——按图标形态单独收回来。 */
+svg.btn__key {
+  padding-left: 0;
+  border-left: 0;
+  letter-spacing: normal;
+  opacity: 0.9;
+}
+
 .btn--ghost {
   background: transparent;
   color: var(--fg);
